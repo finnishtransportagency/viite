@@ -170,6 +170,26 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
+  private val getRoadLinksOfWholeRoadPart: SwaggerSupportSyntax.OperationBuilder = (
+    apiOperation[Seq[Seq[Map[String, Any]]]]("getRoadAddress")
+      .parameters(
+        queryParam[Long]("roadNumber").description("Road number of the road address"),
+        queryParam[Long]("roadPartNumber").description("Road part number of the road address")
+      )
+      tags "ViiteAPI - RoadAddresses"
+      summary "Returns all the road addresses of the road part"
+    )
+
+  get("/roadlinks/wholeroadpart/", operation(getRoadLinksOfWholeRoadPart)) {
+    response.setHeader("Access-Control-Allow-Headers", "*")
+    val roadNumber = params.getOrElse("roadnumber", "0").toInt
+    val roadPartNumber = params.getOrElse("roadpart", "0").toInt
+    val trackCode = params.getOrElse("trackcode", "0").toInt
+    time(logger, s"GET request for /roadlinks (roadnumber: $roadNumber) (roadpart: ${roadPartNumber}) (trackcode ${trackCode})") {
+      getRoadAddressLinksByRoadAndPartNumber(roadNumber, roadPartNumber, trackCode)
+    }
+  }
+
   private val getNodesAndJunctions: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Seq[Seq[Map[String, Any]]]]("getNodesAndJunctions")
       .parameters(
@@ -1112,6 +1132,14 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     time(logger, operationName = "Partition road links") {
       val partitionedRoadLinks = RoadAddressLinkPartitioner.groupByHomogeneousSection(viiteRoadLinks)
       (partitionedRoadLinks.map{_.map(roadAddressLinkToApi)}, viiteRoadLinks)
+    }
+  }
+
+  private def getRoadAddressLinksByRoadAndPartNumber(roadNumber: Long, roadPartNumber: Long, trackCode: Long): Seq[Seq[Map[String, Any]]] = {
+    val viiteRoadLinks = roadAddressService.getRoadAddressLinksOfWholeRoadPart(roadNumber, roadPartNumber, trackCode)
+    time(logger, operationName = "Partition road links") {
+      val partitionedRoadLinks = RoadAddressLinkPartitioner.groupByHomogeneousSection(viiteRoadLinks)
+      partitionedRoadLinks.map{_.map(roadAddressLinkToApi)}
     }
   }
 

@@ -56,7 +56,7 @@
     };
   };
 
-  root.RoadCollection = function (backend) {
+  root.RoadCollection = function (backend, selectedLinkProperty, linkPropertyLayer) {
     var currentAllRoadLinks = [];
     var unaddressedUnknownRoadLinkGroups = [];
     var currentZoom = -1;
@@ -73,15 +73,57 @@
     var SelectionType = LinkValues.SelectionType;
     var ConstructionType = LinkValues.ConstructionType;
     var Anomaly = LinkValues.Anomaly;
+    var clicked = false;
 
     var roadLinks = function () {
       return _.flatten(roadLinkGroups);
     };
 
+    /*
     var getSelectedRoadLinks = function () {
       return _.filter(roadLinks().concat(underConstructionRoadLinks()), function (roadLink) {
         return roadLink.isSelected() && roadLink.getData().anomaly === Anomaly.None.value;
       });
+    };
+
+     */
+
+    var selectedRoadNumber = 0;
+    var selectedRoadPartNumber = 0;
+
+    var getSelectedRoadLinks = function () {
+      var selected_road = _.find(roadLinks() , function (roadLink) {
+        return roadLink.isSelected() && roadLink.getData().anomaly === Anomaly.None.value;
+      });
+      if (selected_road) {
+        selectedRoadNumber = selected_road.getData().roadNumber;
+        selectedRoadPartNumber = selected_road.getData().roadPartNumber;
+      }
+    };
+
+    var getGroupByLinearLocationId = function (linearLocationId) {
+      return _.find(roadLinkGroups, function (roadLinkGroup) {
+        return _.some(roadLinkGroup, function (roadLink) {
+          return roadLink.getData().linearLocationId === linearLocationId;
+        });
+      });
+    };
+
+    var updateGroup = function (linearLocationId, group) {
+      var index = roadLinkGroups.indexOf(getGroupByLinearLocationId(linearLocationId));
+      group.forEach((roadLink) => {
+        console.log("forEach roadlink: ");
+        console.log(roadLink);
+        if(roadLink.linearLocationId === linearLocationId){
+          console.log("linearlocation match found!");
+        }
+        else
+          console.log("no match");
+        roadLink.anomaly = 0;
+        roadLink.select();
+      });
+      roadLinkGroups[index] = group;
+
     };
 
     this.getDate = function () {
@@ -102,8 +144,19 @@
         boundingBox: boundingBox, zoom: zoom,
         withHistory: withHistory, day: day, month: month, year: year
       }, function (fetchedRoadLinks) {
+        console.log('normal fetch process with boundingbox..');
         currentAllRoadLinks = fetchedRoadLinks;
         fetchProcess(fetchedRoadLinks, zoom);
+      });
+    };
+
+    this.fetchWholeRoadPart = function (roadNumber, roadPart, trackCode) {
+      backend.getRoadLinksOfWholeRoadPart({
+        roadNumber: roadNumber, roadPartNumber: roadPart, trackCode: trackCode
+      }, function (fetchedRoadLinks) {
+        console.log('backend returned these links: ');
+        console.log(fetchedRoadLinks);
+        updateGroupToContainWholeRoadPart(fetchedRoadLinks);
       });
     };
 
@@ -119,6 +172,55 @@
     eventbus.on("linkProperties:drawUnknowns", function () {
       fetchProcess(currentAllRoadLinks, currentZoom, true);
     });
+
+    var updateGroupToContainWholeRoadPart = function (fetchedRoadLinks, drawUnknowns) {
+      var group = fetchedRoadLinks[0];
+      console.log("group:");
+      console.log(group);
+      var firstRoadLinkInGroup = group[0];
+      console.log("firstRoadLinInGroup:");
+      console.log(firstRoadLinkInGroup);
+      var linearlocationID = firstRoadLinkInGroup.linearLocationId;
+      console.log("linearlocationID:");
+      console.log(linearlocationID);
+
+      var fetchedRoadLinkModels = _.map(fetchedRoadLinks[0], function (roadLink) {
+        return new RoadLinkModel(roadLink);
+      });
+
+      console.log("fetchedRoadLinkModels");
+      console.log(fetchedRoadLinkModels);
+
+      var nonHistoryConstructionRoadLinkGroups = _.reject(roadLinkGroups, function (group) {
+        return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface);
+      });
+
+
+      console.log("group before update:");
+      console.log(getGroupByLinearLocationId(linearlocationID));
+
+      updateGroup(linearlocationID, fetchedRoadLinkModels);
+      console.log("roadlink group updated!");
+      console.log("group after update");
+      console.log(getGroupByLinearLocationId(linearlocationID));
+
+
+      var selectedLinkIds = _.map(getSelectedRoadLinks(), function (roadLink) {
+        return roadLink.getId();
+      });
+
+
+      clicked = true;
+
+      console.log("selectedLinkIds");
+      console.log(selectedLinkIds);
+
+      eventbus.trigger('roadCollection:wholeRoadPartFetched');
+      eventbus.trigger('roadLinks:fetched:wholeRoadPart', nonHistoryConstructionRoadLinkGroups, (!_.isUndefined(drawUnknowns) && drawUnknowns), selectedLinkIds);
+      clicked = false;
+
+    };
+
 
     var fetchProcess = function (fetchedRoadLinks, zoom, drawUnknowns) {
       var selectedLinkIds = _.map(getSelectedRoadLinks(), function (roadLink) {
@@ -233,6 +335,10 @@
       return _.map(roadLinks(), function (roadLink) {
         return roadLink.getData();
       });
+    };
+
+    this.getClickedStatus = function () {
+      return clicked;
     };
 
     this.getUnaddressedRoadLinkGroups = function () {

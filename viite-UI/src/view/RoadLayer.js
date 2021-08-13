@@ -8,6 +8,7 @@
     var roadVector = new ol.source.Vector({
       loader: function (_extent, _resolution, _projection) {
         eventbus.once('roadLinks:fetched', function () {
+          console.log("roadlinks:fetched eventbus once");
           var features = _.map(roadCollection.getAll(), function (roadLink) {
             var points = _.map(roadLink.points, function (point) {
               return [point.x, point.y];
@@ -19,6 +20,28 @@
             return feature;
           });
           loadFeatures(features);
+          if (roadCollection.getClickedStatus() === true ) {
+            console.log("clicked!!!!!!");
+            eventbus.trigger('roadCollection:wholeRoadPartFetched');
+          }
+        });
+        eventbus.once('roadLinks:fetched:wholeRoadPart', function () {
+          console.log("roadlinks:fetched12 roadVector eventbus");
+          var features = _.map(roadCollection.getAll(), function (roadLink) {
+            var points = _.map(roadLink.points, function (point) {
+              return [point.x, point.y];
+            });
+            var feature = new ol.Feature({
+              geometry: new ol.geom.LineString(points)
+            });
+            feature.linkData = roadLink;
+            return feature;
+          });
+          loadFeatures(features);
+          if (roadCollection.getClickedStatus() == true ) {
+            console.log("clicked!!!!!!");
+            eventbus.trigger('roadCollection:wholeRoadPartFetched');
+          }
         });
       },
       strategy: ol.loadingstrategy.bbox

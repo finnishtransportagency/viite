@@ -49,6 +49,7 @@
     };*/
 
     var setCurrent = function (data) {
+      console.log("setting current");
       current = data;
     };
 
@@ -129,6 +130,11 @@
     };
 
     var open = function (data, isSingleClick, visibleFeatures) {
+      console.log("open");
+      console.log("visibleFeatures");
+      console.log(visibleFeatures);
+      console.log("data");
+      console.log(data);
       if (isSingleClick) {
         openSingleClick(data);
       } else {
@@ -833,6 +839,7 @@
       cancelAfterDefloat: cancelAfterDefloat,
       cancelAndReselect: cancelAndReselect,
       clearAndReset: clearAndReset,
+      roadCollection: roadCollection,
       setTrafficDirection: setTrafficDirection,
       setFunctionalClass: setFunctionalClass,
       setLinkType: setLinkType,
