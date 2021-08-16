@@ -73,7 +73,7 @@
     var SelectionType = LinkValues.SelectionType;
     var ConstructionType = LinkValues.ConstructionType;
     var Anomaly = LinkValues.Anomaly;
-    var clicked = false;
+    var clickedLinearLocationId = 0;
 
     var roadLinks = function () {
       return _.flatten(roadLinkGroups);
@@ -109,21 +109,19 @@
       });
     };
 
-    var updateGroup = function (linearLocationId, group) {
-      var index = roadLinkGroups.indexOf(getGroupByLinearLocationId(linearLocationId));
-      group.forEach((roadLink) => {
-        console.log("forEach roadlink: ");
-        console.log(roadLink);
-        if(roadLink.linearLocationId === linearLocationId){
-          console.log("linearlocation match found!");
-        }
-        else
-          console.log("no match");
-        roadLink.anomaly = 0;
+    var updateGroup = function (linearLocationId, fetchedGroups) {
+      var indexOfGroupToBeUpdated = roadLinkGroups.indexOf(getGroupByLinearLocationId(linearLocationId));
+
+      var fetchedGroupThatWasClicked = _.find(fetchedGroups, function (roadLinkGroup) {
+        return _.some(roadLinkGroup, function (roadLink) {
+          return roadLink.getData().linearLocationId === linearLocationId;
+        });
+      });
+
+      fetchedGroupThatWasClicked.forEach((roadLink) => {
         roadLink.select();
       });
-      roadLinkGroups[index] = group;
-
+      roadLinkGroups[indexOfGroupToBeUpdated] = fetchedGroupThatWasClicked;
     };
 
     this.getDate = function () {
@@ -144,7 +142,6 @@
         boundingBox: boundingBox, zoom: zoom,
         withHistory: withHistory, day: day, month: month, year: year
       }, function (fetchedRoadLinks) {
-        console.log('normal fetch process with boundingbox..');
         currentAllRoadLinks = fetchedRoadLinks;
         fetchProcess(fetchedRoadLinks, zoom);
       });
@@ -154,8 +151,6 @@
       backend.getRoadLinksOfWholeRoadPart({
         roadNumber: roadNumber, roadPartNumber: roadPart, trackCode: trackCode
       }, function (fetchedRoadLinks) {
-        console.log('backend returned these links: ');
-        console.log(fetchedRoadLinks);
         updateGroupToContainWholeRoadPart(fetchedRoadLinks);
       });
     };
@@ -174,51 +169,25 @@
     });
 
     var updateGroupToContainWholeRoadPart = function (fetchedRoadLinks, drawUnknowns) {
-      var group = fetchedRoadLinks[0];
-      console.log("group:");
-      console.log(group);
-      var firstRoadLinkInGroup = group[0];
-      console.log("firstRoadLinInGroup:");
-      console.log(firstRoadLinkInGroup);
-      var linearlocationID = firstRoadLinkInGroup.linearLocationId;
-      console.log("linearlocationID:");
-      console.log(linearlocationID);
 
-      var fetchedRoadLinkModels = _.map(fetchedRoadLinks[0], function (roadLink) {
-        return new RoadLinkModel(roadLink);
+      var fetchedRoadLinkModels = _.map(fetchedRoadLinks, function (roadLinkGroup) {
+        return _.map(roadLinkGroup, function (roadLink) {
+          return new RoadLinkModel(roadLink);
+        });
       });
-
-      console.log("fetchedRoadLinkModels");
-      console.log(fetchedRoadLinkModels);
 
       var nonHistoryConstructionRoadLinkGroups = _.reject(roadLinkGroups, function (group) {
         return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface);
       });
 
-
-      console.log("group before update:");
-      console.log(getGroupByLinearLocationId(linearlocationID));
-
-      updateGroup(linearlocationID, fetchedRoadLinkModels);
-      console.log("roadlink group updated!");
-      console.log("group after update");
-      console.log(getGroupByLinearLocationId(linearlocationID));
-
+      updateGroup(clickedLinearLocationId, fetchedRoadLinkModels);
 
       var selectedLinkIds = _.map(getSelectedRoadLinks(), function (roadLink) {
         return roadLink.getId();
       });
 
-
-      clicked = true;
-
-      console.log("selectedLinkIds");
-      console.log(selectedLinkIds);
-
       eventbus.trigger('roadCollection:wholeRoadPartFetched');
       eventbus.trigger('roadLinks:fetched:wholeRoadPart', nonHistoryConstructionRoadLinkGroups, (!_.isUndefined(drawUnknowns) && drawUnknowns), selectedLinkIds);
-      clicked = false;
-
     };
 
 
@@ -337,8 +306,8 @@
       });
     };
 
-    this.getClickedStatus = function () {
-      return clicked;
+    this.setClickedLinearLocationId = function (linearlocationId) {
+      clickedLinearLocationId = linearlocationId;
     };
 
     this.getUnaddressedRoadLinkGroups = function () {

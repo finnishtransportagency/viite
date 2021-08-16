@@ -87,30 +87,25 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   /**
-    * Returns all linearlocations in roadpart based on 1 or more linear locations in roadpart
+    * Returns all linear locations in road part based on roadNumber, roadPartNumber and trackCode
     *
-    * @param
+    * @param roadNumber The road number of the road part
+    * @param roadPartNumber The road part number of the road part
+    * @param trackCode The track that
     */
 
-  def getLinearLocationsOfWholeRoadway(roadNumber: Long, roadPartNumber: Long, trackCode: Long): Seq[LinearLocation] = {
-
-    // get roadways with road and part numbers
-    val allRoadways = roadwayDAO.fetchAllByRoadAndPart(roadNumber, roadPartNumber)
+  def getLinearLocationsInRoadPartAndTrack(roadNumber: Long, roadPartNumber: Long, trackCode: Long): Seq[LinearLocation] = {
 
     // get roadways that are on the specified track
-    val roadwaysWithCorrectTrack = allRoadways.filter(_.track.value == trackCode)
-
-    roadwaysWithCorrectTrack.foreach(rw => logger.info(s"------roadways ${rw}"))
+    val roadwaysWithCorrectTrack = roadwayDAO.fetchAllByRoadAndPart(roadNumber, roadPartNumber).filter(_.track.value == trackCode)
 
     // get all the roadwayNumbers from the roadways
     val allRoadwayNumbersInRoadParts = roadwaysWithCorrectTrack.map(rw => rw.roadwayNumber)
-    allRoadwayNumbersInRoadParts.foreach(rwn => logger.info(s" ----allroadwaynumbers in roadparts ${rwn}"))
 
-    // get all the linearlocations of the roadparts
+    // get all the linear locations on the roadway numbers
     val allLinearLocations =  {
       linearLocationDAO.fetchByRoadwayNumber(allRoadwayNumbersInRoadParts).toSeq
     }
-    allLinearLocations.foreach(ll => logger.info(s" ----allLinearlocations ${ll}"))
 
     allLinearLocations
   }
@@ -175,27 +170,24 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     getRoadAddressLinks(boundingBoxResult)
   }
 
-  def getRoadAddressLinksOfWholeRoadPart(roadNumber: Long, roadPartNumber: Long, trackCode: Long) = {
-    logger.info(s"-------roadNumber ${roadNumber} roadPart: ${roadPartNumber} trackCode: ${trackCode}")
+  def getRoadAddressLinksOfWholeRoadPart(roadNumber: Long, roadPartNumber: Long, trackCode: Long): Seq[RoadAddressLink] = {
 
     val allLinearLocations = withDynSession {
       time(logger, "Fetch addresses") {
-        getLinearLocationsOfWholeRoadway(roadNumber, roadPartNumber, trackCode)
+        getLinearLocationsInRoadPartAndTrack(roadNumber, roadPartNumber, trackCode)
       }
     }
-    logger.info(s"------allLinearlocations: ${allLinearLocations} ")
+
     val linearLocationsLinkIds = allLinearLocations.map(_.linkId).toSet
 
-    logger.info(s"---------linearlocationids: ${linearLocationsLinkIds}")
-
-    val boundingBoxResult = BoundingBoxResult(
+    val result = BoundingBoxResult(
       roadLinkService.getChangeInfoFromVVHF(linearLocationsLinkIds),
       Future((allLinearLocations, roadLinkService.getRoadLinksHistoryFromVVH(linearLocationsLinkIds))),
       Future(roadLinkService.getRoadLinksByLinkIdsFromVVH(linearLocationsLinkIds)),
       Future(Seq())
     )
 
-    getRoadAddressLinks(boundingBoxResult)
+    getRoadAddressLinks(result)
   }
 
   /**

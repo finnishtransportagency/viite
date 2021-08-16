@@ -308,14 +308,15 @@
         } else {
           selectedLinkProperty.close();
           setGeneralOpacity(0.2);
-          console.log("single click: getting whole roadpart from backend...");
-          roadCollection.fetchWholeRoadPart(selection.roadNumber, selection.roadPartNumber, selection.trackCode);
-          eventbus.listenTo(eventbus,'roadCollection:wholeRoadPartFetched', function () {
-            console.log("whole roadpart fetched to roadcollection and ready to OPEN");
-            //redraw();
-            var allTheFeatures2 = getAllFeatures(true, true, true, true, true, true, true, true, true);
-            selectedLinkProperty.open(selection, true, allTheFeatures2);
-          });
+          if (selection.roadNumber != 0) {
+            roadCollection.setClickedLinearLocationId(selection.linearLocationId);
+            roadCollection.fetchWholeRoadPart(selection.roadNumber, selection.roadPartNumber, selection.trackCode);
+            eventbus.listenTo(eventbus,'roadCollection:wholeRoadPartFetched', function () {
+              var features = getAllFeatures(true, true, true, true, true, true, true, true, true);
+              selectedLinkProperty.open(selection, true, features);
+            });
+          }
+
           selectedLinkProperty.open(selection, true, allFeatures);
 
         }
@@ -459,7 +460,6 @@
     };
 
     var redraw = function () {
-      console.log("redraw");
       cachedMarker = new LinkPropertyMarker(selectedLinkProperty);
       removeSelectInteractions();
       var allRoadLinks = roadCollection.getAll();
@@ -741,7 +741,6 @@
       });
 
       eventListener.listenTo(eventbus, 'unAddressedRoadLinks:fetched', function (unAddressedRoads) {
-        console.log(" eventbus, 'unAddressedRoadLinks:fetched'");
 
         var ol3noInfoRoads =
           _.map(_.flatten(unAddressedRoads), function (road) {

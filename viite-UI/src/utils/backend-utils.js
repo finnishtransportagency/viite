@@ -28,7 +28,6 @@
       var roadNumber = params.roadNumber;
       var roadPart = params.roadPartNumber;
       var trackCode = params.trackCode;
-      console.log("getting roadlinks trough API request");
       return {
         url: 'api/viite/roadlinks/wholeroadpart/?roadnumber=' + roadNumber + '&roadpart=' + roadPart + '&trackcode=' + trackCode
       };
