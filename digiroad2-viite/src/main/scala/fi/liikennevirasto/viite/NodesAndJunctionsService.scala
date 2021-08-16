@@ -791,7 +791,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       logger.info(s"Terminated roadway numbers : $terminatedRoadwayNumbers")
       val roadwayPointIds = roadwayPointDAO.fetchByRoadwayNumbers(terminatedRoadwayNumbers).map(_.id)
       logger.info(s"Roadway points for terminated roadways : $roadwayPointIds")
-      val nodePointsToTerminate = nodePointDAO.fetchByRoadwayPointIds(roadwayPointIds)
+      val nodePointsToTerminate = nodePointDAO.fetchByRoadwayPointIds(roadwayPointIds) ++  // get still eligible nodepoints
+                                  nodePointDAO.fetchRoadwiseOrphansByRoadwayPointIds(roadwayPointIds) // get oprhaned  nodePoints
       val junctionPointsToTerminate = junctionPointDAO.fetchByRoadwayPointIds(roadwayPointIds)
 
       logger.info(s"Node points to Expire : ${nodePointsToTerminate.map(_.id)}")
