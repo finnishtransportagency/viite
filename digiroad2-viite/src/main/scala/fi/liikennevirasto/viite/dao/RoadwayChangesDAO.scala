@@ -169,8 +169,8 @@ class RoadwayChangesDAO {
   }
 
   /**
-    * Merge all the change rows by source and target road number, road part number, road type, ely, change type and reversed.
-    * Then if the end address of the previous row is equal to the start of the next one and the dicontinuity is equal the merge is performed.
+    * Merge all the change rows by source and target road number, road part number, administrative class, ely, change type and reversed.
+    * Then if the end address of the previous row is equal to the start of the next one and the discontinuity is equal the merge is performed.
     *
     * @param resultList
     * @return
