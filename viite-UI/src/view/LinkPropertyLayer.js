@@ -309,9 +309,11 @@
           selectedLinkProperty.close();
           setGeneralOpacity(0.2);
           if (selection.roadNumber != 0) {
+            applicationModel.addSpinner();
             roadCollection.setClickedLinearLocationId(selection.linearLocationId);
             roadCollection.fetchWholeRoadPart(selection.roadNumber, selection.roadPartNumber, selection.trackCode);
             eventbus.listenTo(eventbus,'roadCollection:wholeRoadPartFetched', function () {
+              applicationModel.removeSpinner();
               var features = getAllFeatures(true, true, true, true, true, true, true, true, true);
               selectedLinkProperty.open(selection, true, features);
             });
