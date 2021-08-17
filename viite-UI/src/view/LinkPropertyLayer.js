@@ -1294,7 +1294,6 @@
     return {
       show: showLayer,
       hide: hideLayer,
-      getAllFeatures: getAllFeatures,
       minZoomForContent: me.minZoomForContent
     };
   };

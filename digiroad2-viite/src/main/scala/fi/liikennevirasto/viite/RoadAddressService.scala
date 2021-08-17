@@ -170,7 +170,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     getRoadAddressLinks(boundingBoxResult)
   }
 
-  def getRoadAddressLinksOfWholeRoadPart(roadNumber: Long, roadPartNumber: Long, trackCode: Long): Seq[RoadAddressLink] = {
+  def getRoadAddressLinksOfWholeRoadPartAndTrack(roadNumber: Long, roadPartNumber: Long, trackCode: Long): Seq[RoadAddressLink] = {
 
     val allLinearLocations = withDynSession {
       time(logger, "Fetch addresses") {

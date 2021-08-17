@@ -56,7 +56,7 @@
     };
   };
 
-  root.RoadCollection = function (backend, selectedLinkProperty, linkPropertyLayer) {
+  root.RoadCollection = function (backend) {
     var currentAllRoadLinks = [];
     var unaddressedUnknownRoadLinkGroups = [];
     var currentZoom = -1;
@@ -78,16 +78,7 @@
     var roadLinks = function () {
       return _.flatten(roadLinkGroups);
     };
-
-    /*
-    var getSelectedRoadLinks = function () {
-      return _.filter(roadLinks().concat(underConstructionRoadLinks()), function (roadLink) {
-        return roadLink.isSelected() && roadLink.getData().anomaly === Anomaly.None.value;
-      });
-    };
-
-     */
-
+    
     var selectedRoadNumber = 0;
     var selectedRoadPartNumber = 0;
 
