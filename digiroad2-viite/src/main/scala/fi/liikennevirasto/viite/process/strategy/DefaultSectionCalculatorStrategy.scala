@@ -111,7 +111,15 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       (continuousProjectLinks.headOption.map(_.roadwayNumber).get, givenRoadwayNumber)
     } else {
       val originalAddresses = getRoadAddressesByRoadwayIds(originalHistorySection.map(_.roadwayId))
-      val isSameAddressLengthSection = (continuousProjectLinks.last.endAddrMValue - continuousProjectLinks.head.startAddrMValue) == (originalAddresses.last.endAddrMValue - originalAddresses.head.startAddrMValue)
+
+      val isSameAddressLengthSection = {
+        if(originalAddresses.isEmpty || continuousProjectLinks.isEmpty) {
+          false
+        } else {
+          (continuousProjectLinks.last.endAddrMValue - continuousProjectLinks.head.startAddrMValue)
+          == (originalAddresses.last.endAddrMValue - originalAddresses.head.startAddrMValue)
+        }
+      }
 
       if (isSameAddressLengthSection)
         (continuousProjectLinks.headOption.map(_.roadwayNumber).get, givenRoadwayNumber)

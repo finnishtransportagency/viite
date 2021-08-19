@@ -1538,9 +1538,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
       val projectLinks = projectLinkDAO.fetchProjectLinks(projectId)
       /* Remove user defined calibration points before (re)calc. */
-      val udcpRemovedProjectLinks = projectLinks.tail.scanLeft(projectLinks.head) { (p, r) => {
-        if (r.calibrationPoints._2.getOrElse(NoCP) == UserDefinedCP) r.copy(calibrationPointTypes = (r.startCalibrationPointType, NoCP)) else if (r.calibrationPoints._1.getOrElse(NoCP) == UserDefinedCP) r.copy(calibrationPointTypes = (NoCP, r.startCalibrationPointType)) else r
-      }
+      val udcpRemovedProjectLinks = if(projectLinks.isEmpty) {
+        Seq()
+      } else { projectLinks.tail.scanLeft(projectLinks.head) { (p, r) => {
+        if      (r.calibrationPoints._2.getOrElse(NoCP) == UserDefinedCP) r.copy(calibrationPointTypes = (r.startCalibrationPointType, NoCP))
+        else if (r.calibrationPoints._1.getOrElse(NoCP) == UserDefinedCP) r.copy(calibrationPointTypes = (NoCP, r.endCalibrationPointType))
+        else r
+        }}
       }
 
       val (terminated, others) = udcpRemovedProjectLinks.partition(_.status == LinkStatus.Terminated)
