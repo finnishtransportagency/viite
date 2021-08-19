@@ -929,7 +929,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Test revertLinks When new roads have name Then the revert should remove the road name") {
+  test("Test revertLinksByRoadPart When new roads have name Then the revert should remove the road name") {
     runWithRollback {
       val testRoad: (Long, Long, String) = {
         (99999L, 1L, "Test name")
@@ -2087,7 +2087,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   }
 
-  test("Test revertLinks When reverting the road Then the road address geometry after reverting should be the same as VVH") {
+  test("Test revertLinksByRoadPart When reverting the road Then the road address geometry after reverting should be the same as VVH") {
     val projectId = 0L
     val user = "TestUser"
     val (roadNumber, roadPartNumber) = (26020L, 12L)
