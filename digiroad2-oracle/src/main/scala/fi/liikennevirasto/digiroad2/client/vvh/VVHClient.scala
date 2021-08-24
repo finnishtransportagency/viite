@@ -355,22 +355,55 @@ trait VVHClientOperations {
     URLEncoder.encode(layerDefinitionWithoutEncoding(filter, customFieldSelection), "UTF-8")
   }
 
+
+  /** Tries up to ten times to fetch the given <i>url</i> from VVH.
+    * @return Right(mapFields---) in success, or an Left(VVHError) at the end of the tenth failed try.
+    */
   protected def fetchVVHFeatures(url: String): Either[VVHError, List[Map[String, Any]]] = {
-      time(logger, s"Fetch VVH features with url '$url'") {
+    val MaxTries = 10
+    var trycounter = 0 /// For do-while check. Up to MaxTries.
+    var success = true /// For do-while check. Set to false when exception.
+    var result : Either[VVHError, List[Map[String, Any]]] = Left(VVHError(Map(("Dummy start value", "nothing here")), url))
+
+    do {
+      trycounter += 1
+      success = true
+      result = time(logger, s"Fetch VVH features, (try $trycounter)") {
         val request = new HttpGet(url)
         val client = HttpClientBuilder.create().build()
         var response: CloseableHttpResponse = null
+
         try {
           response = client.execute(request)
           mapFields(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]], url)
         } catch {
-          case _: IOException => Left(VVHError(Map(("VVH FETCH failure", "IO Exception during VVH fetch. Check connection to VVH")), url))
+          case e: IOException => {
+            success = false
+            // Before the last possible try, log the failure. If the last try, just return the error.
+            if (trycounter < MaxTries) {
+              logger.warn(s"fetching $url failed, try $trycounter. IO Exception during VVH fetch. Exception: $e")
+              Left(VVHError(Map((
+                s"VVH FETCH failure, try $trycounter.",
+                "IO Exception during VVH fetch. Trying again.")), url))
+            }
+            else // basically, if(trycounter == MaxTries)
+              Left(VVHError(Map((
+                "VVH FETCH failure, tried ten (10) times, giving up.",
+                "IO Exception during VVH fetch. Check connection to VVH")), url))
+          }
         } finally {
           if (response != null) {
             response.close()
           }
         }
       }
+      result match {
+        case Left(a) => println(s"entering round ${trycounter +1}")
+        case Right(b) => Unit
+      }
+
+    } while (trycounter < MaxTries && !success)
+    result
   }
 
   protected def fetchFeaturesAndLog(url: String): Seq[VVHType] = {
