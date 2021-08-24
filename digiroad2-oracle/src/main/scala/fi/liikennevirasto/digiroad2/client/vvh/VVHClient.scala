@@ -356,21 +356,21 @@ trait VVHClientOperations {
   }
 
   protected def fetchVVHFeatures(url: String): Either[VVHError, List[Map[String, Any]]] = {
-    time(logger, s"Fetch VVH features with url '$url'") {
-      val request = new HttpGet(url)
-      val client = HttpClientBuilder.create().build()
-      var response: CloseableHttpResponse = null
-      try {
-        response = client.execute(request)
-        mapFields(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]], url)
-      } catch {
-        case _: IOException => Left(VVHError(Map(("VVH FETCH failure", "IO Exception during VVH fetch. Check connection to VVH")), url))
-      } finally {
-        if (response != null) {
-          response.close()
+      time(logger, s"Fetch VVH features with url '$url'") {
+        val request = new HttpGet(url)
+        val client = HttpClientBuilder.create().build()
+        var response: CloseableHttpResponse = null
+        try {
+          response = client.execute(request)
+          mapFields(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]], url)
+        } catch {
+          case _: IOException => Left(VVHError(Map(("VVH FETCH failure", "IO Exception during VVH fetch. Check connection to VVH")), url))
+        } finally {
+          if (response != null) {
+            response.close()
+          }
         }
       }
-    }
   }
 
   protected def fetchFeaturesAndLog(url: String): Seq[VVHType] = {
