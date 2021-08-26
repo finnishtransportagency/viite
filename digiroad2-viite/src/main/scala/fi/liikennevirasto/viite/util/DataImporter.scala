@@ -79,11 +79,11 @@ class DataImporter {
   case class AdministrativeClassChangePoints(roadNumber: Long, roadPartNumber: Long, addrM: Long, before: AdministrativeClass, after: AdministrativeClass, elyCode: Long)
 
   /**
-    * Get administrative class for road address object with a list of road type change points
+    * Get administrative class for road address object with a list of administrative class change points
     *
-    * @param changePoints Road part change points for road types
+    * @param changePoints Road part change points for administrative classes
     * @param roadAddress Road address to get the dministrative class for
-    * @return dministrative class for the road address or if a split is needed then a split point (address) and road types for first and second split
+    * @return administrative class for the road address, or if a split is needed then a split point (address) and administrative classes for first and second split
     */
   def getAdministrativeClass(changePoints: Seq[AdministrativeClassChangePoints], roadAddress: RoadAddress): Either[AdministrativeClass, (Long, AdministrativeClass, AdministrativeClass)] = {
     // Check if this road address overlaps the change point and needs to be split

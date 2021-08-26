@@ -325,8 +325,6 @@ object DataFixture {
         importMunicipalityCodes()
       case Some("flyway_init") =>
         flywayInit()
-      case Some("flyway_migrate") =>
-        migrateAll()
       case Some("test_integration_api_all_municipalities") =>
         testIntegrationAPIWithAllMunicipalities()
       case Some("import_nodes_and_junctions") =>

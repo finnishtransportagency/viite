@@ -122,6 +122,9 @@
         inputFieldRequired('Solmun nimi', 'nodeName', '', nodeName, 'maxlength', 32) +
         addNodeTypeDropdown('Solmutyyppi', 'nodeTypeDropdown', getNodeType(node.type)) +
         inputFieldRequired('Alkupvm', 'nodeStartDate', 'pp.kk.vvvv', startDate, 'disabled', true) +
+        '   <div class="form-check-date-notifications"> ' +
+        '     <p id="nodeStartDate-validation-notification"> </p>' +
+        '   </div>' +
         '   </div>' +
         '   <div>' +
         '     <p class="node-info">' + NODE_POINTS_TITLE + '</p>' +
@@ -701,7 +704,7 @@
           var nodePointTemplates = !_.isUndefined(templates) && _.has(templates, 'nodePoints') && templates.nodePoints;
           var junctionTemplates = !_.isUndefined(templates) && _.has(templates, 'junctions') && templates.junctions;
           rootElement.html(nodeForm('Solmun tiedot:', currentNode));
-          addDatePicker($('#nodeStartDate'), currentNode.startDate || moment("1.1.2000", dateutil.FINNISH_DATE_FORMAT).toDate());
+          addDatePicker($('#nodeStartDate'), currentNode.startDate || moment("1.1.1900", dateutil.FINNISH_DATE_FORMAT).toDate());
           disableAutoComplete(); // this code should broke on different browsers
 
           //  setting nodePoints on the form
@@ -731,6 +734,27 @@
             selectedNodesAndJunctions.setNodeName(nodeName);
           });
 
+          var checkDateNotification = function (nodeStartDate) {
+            var nodeNotificationText = "";
+            var parts_DMY=nodeStartDate.split('.');
+
+            var nodeSD = new Date(parts_DMY[2], parts_DMY[1] - 1, parts_DMY[0]);
+            var nowDate = new Date();
+            if(nodeSD.getFullYear() < nowDate.getFullYear()-20) {
+              nodeNotificationText = 'Vanha päiväys. Solmun alkupäivämäärä yli 20 vuotta historiassa. Varmista päivämäärän oikeellisuus ennen tallennusta.';
+            }
+            else if(nodeSD.getFullYear() > nowDate.getFullYear()+1){
+              nodeNotificationText = 'Tulevaisuuden päiväys. Solmun alkupäivä yli vuoden verran tulevaisuudessa. Varmista päivämäärän oikeellisuus ennen tallennusta.';
+            }
+            return  '<div class="form-check-date-notifications"> ' +
+                '  <p id="nodeStartDate-validation-notification">' + nodeNotificationText + '</p>' +
+                '</div>';
+          };
+
+          eventbus.on('change:nodeStartDate', function (nodeStartDate) {
+            $('#nodeStartDate-validation-notification').html(checkDateNotification(nodeStartDate));
+          });
+
           eventbus.on('change:nodeTypeDropdown', function (nodeType) {
             var typeHasChanged = selectedNodesAndJunctions.typeHasChanged(parseInt(nodeType));
             selectedNodesAndJunctions.setNodeType(parseInt(nodeType));
@@ -753,6 +777,11 @@
           eventbus.on('change:node-coordinates change:nodeName change:nodeTypeDropdown change:nodeStartDate ' +
             'junction:validate junctionPoint:validate junction:detach nodePoint:detach junction:attach nodePoint:attach', function () {
             $('.btn-edit-node-save').prop('disabled', formIsInvalid());
+          });
+
+          eventbus.on('nodeStartDate:setCustomValidity', function (startDate, errorMessage) {
+            document.getElementById('nodeStartDate').setCustomValidity(errorMessage);
+            $('#nodeStartDate-validation-notification').html(errorMessage);
           });
 
           eventbus.on('junction:setCustomValidity', function (junctions, errorMessage) {

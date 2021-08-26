@@ -649,7 +649,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     1)  The nodes are created only for tracks 0 and 1
     2)  A node template is always created if :
       2.1)  road number is < 20000 or between 40000-70000
-      2.2)  and at the beginning/end of each road part, ely borders, or when road type changes
+      2.2)  and at the beginning/end of each road part, ely borders, or when administrative class changes
       2.3)  on each junction with a road number (except number over 70 000)
      */
   def handleNodePoints(roadwayChanges: List[ProjectRoadwayChange], projectLinks: Seq[ProjectLink], mappedRoadwayNumbers: Seq[ProjectRoadLinkChange], username: String = "-"): Unit = {
@@ -791,7 +791,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       logger.info(s"Terminated roadway numbers : $terminatedRoadwayNumbers")
       val roadwayPointIds = roadwayPointDAO.fetchByRoadwayNumbers(terminatedRoadwayNumbers).map(_.id)
       logger.info(s"Roadway points for terminated roadways : $roadwayPointIds")
-      val nodePointsToTerminate = nodePointDAO.fetchByRoadwayPointIds(roadwayPointIds)
+      val nodePointsToTerminate = nodePointDAO.fetchByRoadwayPointIds(roadwayPointIds) ++  // get still eligible nodepoints
+                                  nodePointDAO.fetchRoadwiseOrphansByRoadwayPointIds(roadwayPointIds) // get oprhaned  nodePoints
       val junctionPointsToTerminate = junctionPointDAO.fetchByRoadwayPointIds(roadwayPointIds)
 
       logger.info(s"Node points to Expire : ${nodePointsToTerminate.map(_.id)}")
@@ -928,7 +929,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     val terminated = filteredProjectLinks.filter(_.status == LinkStatus.Terminated)
 
     val terminatedRoadwayNumbers = terminated.map(_.roadwayNumber).distinct
-    val (terminatedNodePoints, terminatedJunctionPoints): (Seq[NodePoint], Seq[JunctionPoint]) = getNodePointsAndJunctionPointsByTerminatedRoadwayNumbers(terminatedRoadwayNumbers)
+    val (terminatedNodePoints, terminatedJunctionPoints): (Seq[NodePoint], Seq[JunctionPoint]) =
+      getNodePointsAndJunctionPointsByTerminatedRoadwayNumbers(terminatedRoadwayNumbers)
 
     val projectLinkSections = filteredProjectLinks.groupBy(projectLink => (projectLink.roadNumber, projectLink.roadPartNumber))
     val obsoletePointsFromModifiedRoadways: Seq[(Seq[NodePoint], Seq[JunctionPoint])] = projectLinkSections.mapValues { section: Seq[ProjectLink] =>
