@@ -20,6 +20,8 @@ class JunctionPointDAO extends BaseDAO {
 
   val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 
+  /** Get joined roadway-roadwayPoint-junctionPoint, junction-junctionPoint information for
+    * still viable (end_date, and valid-to are null) junctionPoints in db */
   val junctionPointQuery =
     """
       SELECT JP.ID, JP.BEFORE_AFTER, JP.ROADWAY_POINT_ID, JP.JUNCTION_ID, J.START_DATE, J.END_DATE, JP.VALID_FROM, JP.VALID_TO, JP.CREATED_BY, JP.CREATED_TIME,
@@ -30,6 +32,8 @@ class JunctionPointDAO extends BaseDAO {
       JOIN ROADWAY RW ON (RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER)
     """
 
+  /** Get joined roadway-roadwayPoint-junctionPoint, junction-junctionPoint information for
+    * all junctionPoints in db */
   val junctionPointHistoryQuery =
     """
       SELECT JP.ID, JP.BEFORE_AFTER, JP.ROADWAY_POINT_ID, JP.JUNCTION_ID, J.START_DATE, J.END_DATE, JP.VALID_FROM, JP.VALID_TO, JP.CREATED_BY, JP.CREATED_TIME,
@@ -134,6 +138,7 @@ class JunctionPointDAO extends BaseDAO {
     fetchByRoadwayPointIds(Seq(roadwayPointId))
   }
 
+  /** Get viable (end_date, and valid_to are null) junctionPoints having given roadway points. */
   def fetchByRoadwayPointIds(roadwayPointIds: Seq[Long]): Seq[JunctionPoint] = {
     if (roadwayPointIds.isEmpty) {
       Seq()

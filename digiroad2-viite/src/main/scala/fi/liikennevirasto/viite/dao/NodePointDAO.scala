@@ -91,6 +91,11 @@ class NodePointDAO extends BaseDAO {
 
   val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 
+  /** Select/join clause for retrieving joined nodepoint~roadway_point~roadway, node~nodepoint data, where:
+    * <li>nodepoint must match preserved roadway_point by roadway_point_id, as well as </li>
+    * <li>roadway_point must match preserved roadway by roadway_number, and roadway must be eligible (end_date, and valid_to must be nulls) for it to match. </li>
+    * <li>The existence of the corresponding node is not required, but it is serached by node_number matching
+    *     that of node_point, and it must be still eligible for it to match.</li> */
   val selectFromNodePoint = """SELECT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NP.NODE_NUMBER, NP.TYPE, N.START_DATE, N.END_DATE,
                              NP.VALID_FROM, NP.VALID_TO, NP.CREATED_BY, NP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M,
                              RW.ROAD_NUMBER, RW.ROAD_PART_NUMBER, RW.TRACK, RW.ELY
@@ -147,6 +152,8 @@ class NodePointDAO extends BaseDAO {
     fetchByNodeNumbers(Seq(nodeNumber))
   }
 
+  /** Retrieves those eligible (valid_to is null) NodePoints, whose node_number matches any of  those in <i>nodeNumbers</i>.
+    * Uses {@link selectFromNodePoint} as the select/join clause. */
   def fetchByNodeNumbers(nodeNumbers: Seq[Long]): Seq[NodePoint] = {
     if (nodeNumbers.isEmpty) Seq()
     else {
@@ -159,6 +166,11 @@ class NodePointDAO extends BaseDAO {
     }
   }
 
+  /** Retrieves those NodePoints, whose roadway_point_id matches any of  those in <i>roadwayPointIds</i>.
+    * Uses altered version of {@link selectFromNodePoint}, where roadway needs NOT to be eligible.
+    * Gets joined NodePoint, Node, RoadwayPoint, and Roadway info where
+    * nodePoint~roadPoint~roadway, and nodePoint~node,
+    * and <b>nodePoint is still eligible</b> (end_date, and valid_to are nulls) */
   def fetchByRoadwayPointIds(roadwayPointIds: Seq[Long]): Seq[NodePoint] = {
     if (roadwayPointIds.isEmpty) {
       Seq()
@@ -174,10 +186,39 @@ class NodePointDAO extends BaseDAO {
           JOIN ROADWAY RW on (RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER)
           where NP.ROADWAY_POINT_ID in (${roadwayPointIds.mkString(", ")}) and NP.valid_to is null
         """
+      logger.debug(s"******* Querying by roadwaypointId.s: ${roadwayPointIds.mkString(", ")} \n    query: : $query")
       queryList(query)
     }
   }
 
+  /** Gets joined NodePoint, Node, RoadwayPoint, and Roadway info where
+    * nodePoint~roadPoint~roadway, and nodePoint~node,
+    * and nodePoint is still eligible (end_date, and valid_to are nulls)
+    * <b>but there is no more corresponding roadway available.</b>*/
+  def fetchRoadwiseOrphansByRoadwayPointIds(roadwayPointIds: Seq[Long]): Seq[NodePoint] = {
+    if (roadwayPointIds.isEmpty) {
+      Seq()
+    } else {
+      val query =
+        s"""
+           SELECT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NP.NODE_NUMBER, NP.TYPE,
+                  N.START_DATE, N.END_DATE,
+                  NP.VALID_FROM, NP.VALID_TO, NP.CREATED_BY, NP.CREATED_TIME,
+                  RP.ROADWAY_NUMBER, RP.ADDR_M,
+                  RW.ROAD_NUMBER, RW.ROAD_PART_NUMBER, RW.TRACK, RW.ELY
+           FROM            NODE_POINT NP
+           INNER JOIN      ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
+           LEFT OUTER JOIN NODE N     ON (N.NODE_NUMBER = np.NODE_NUMBER AND N.VALID_TO IS NULL AND N.END_DATE IS NULL)
+           LEFT OUTER JOIN ROADWAY RW ON (RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER)
+           WHERE           NP.ROADWAY_POINT_ID IN (${roadwayPointIds.mkString(", ")}) AND NP.valid_to is null
+                           AND RW.ROADWAY_NUMBER is null
+        """
+      logger.debug(s"******* Querying Roadwaywise orphan Nodes by roadwaypointId.s: ${roadwayPointIds.mkString(", ")} \n    query: : $query")
+      queryList(query)
+    }
+  }
+
+  /** Get the eligible (valid_to is null) NodePoints that have the given roadwayPointId. */
   def fetchByRoadwayPointId(roadwayPointId: Long): Seq[NodePoint] = {
     val query =
       s"""
@@ -187,6 +228,7 @@ class NodePointDAO extends BaseDAO {
     queryList(query)
   }
 
+  /** Get the eligible (valid_to is null) NodePoints that have the given roadwayNumber. */
   def fetchByRoadwayNumber(roadwayNumber: Long): Seq[NodePoint] = {
     val query =
       s"""
@@ -196,6 +238,8 @@ class NodePointDAO extends BaseDAO {
     queryList(query)
   }
 
+  /** Get the eligible (valid_to is null) NodePoints that have a roadway number belonging to
+    * the given roadwayNumbers sequence . */
   def fetchRoadAddressNodePoints(roadwayNumbers: Seq[Long]): Seq[NodePoint] = {
     if (roadwayNumbers.isEmpty) Seq()
     else {
@@ -333,8 +377,10 @@ class NodePointDAO extends BaseDAO {
       """
     if (ids.isEmpty)
       0
-    else
+    else {
+      logger.debug(s"Expiring by id: ${ids.mkString(", ")} \n    query: : $query")
       Q.updateNA(query).first
+    }
   }
 
   def expireByNodeNumberAndType(nodeNumber: Long, nodePointType: NodePointType): Unit = {
@@ -343,6 +389,7 @@ class NodePointDAO extends BaseDAO {
         Update NODE_POINT Set valid_to = CURRENT_TIMESTAMP where valid_to IS NULL AND node_number = $nodeNumber
         AND type = ${nodePointType.value}
       """
+    logger.debug(s"Expiring by number and type: ${nodeNumber}, ${nodePointType.value} \n    query: : $query")
     Q.updateNA(query).execute
   }
 
