@@ -15,13 +15,14 @@ import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
 import fi.liikennevirasto.viite.dao.LinkStatus.{NotHandled, UnChanged}
-import fi.liikennevirasto.viite.process.InvalidAddressDataException
+import fi.liikennevirasto.viite.process.{InvalidAddressDataException, RoadwaySection}
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
+
 
 //TODO naming SQL conventions
 
@@ -54,6 +55,20 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
 
   lazy val isNotCalculated: Boolean = endAddrMValue == 0L
 
+  lazy val roadway = roadwayDAO.fetchAllByRoadwayId(Seq(roadwayId)).headOption
+
+  def originalRoadNumber = if (roadway.isDefined) roadway.get.roadNumber else roadNumber
+
+  def originalRoadPartNumber = if (roadway.isDefined) roadway.get.roadPartNumber else roadPartNumber
+
+  def originalAdministrativeClass = if (roadway.isDefined) roadway.get.administrativeClass else administrativeClass
+
+  def originalTrack = if (roadway.isDefined) roadway.get.track else track
+
+  def originalEly = if (roadway.isDefined) roadway.get.ely else ely
+
+  def originalDiscontinuity = if (roadway.isDefined) roadway.get.discontinuity else discontinuity
+
   def oppositeEndPoint(point: Point) : Point = {
     if (GeometryUtils.areAdjacent(point, geometry.head)) geometry.last else geometry.head
   }
@@ -75,6 +90,10 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
 
   def addrMLength(): Long = {
     endAddrMValue - startAddrMValue
+  }
+
+  def addrMOriginalLength: Long = {
+    originalEndAddrMValue - originalStartAddrMValue
   }
 
   def getFirstPoint: Point = {
@@ -293,13 +312,7 @@ class ProjectLinkDAO {
       val roadwayNumber = r.nextLong()
       val projectRoadwayNumber = r.nextLong()
 
-      ProjectLink(projectLinkId, roadNumber, roadPartNumber, trackCode, discontinuityType, startAddrM, endAddrM,
-        originalStartAddrMValue, originalEndAddrMValue, startDate, endDate, createdBy, linkId, startMValue, endMValue,
-        sideCode, calibrationPoints, originalCalibrationPointTypes, PostGISDatabase.loadJGeometryToGeometry(geom),
-        projectId, status, administrativeClass, source, length, roadwayId, linearLocationId, ely, reversed, connectedLinkId,
-        geometryTimeStamp, if (projectRoadwayNumber == 0 || projectRoadwayNumber == NewIdValue) roadwayNumber else projectRoadwayNumber , Some(roadName),
-        roadAddressEndAddrM.map(endAddr => endAddr - roadAddressStartAddrM.getOrElse(0L)),
-        roadAddressStartAddrM, roadAddressEndAddrM, roadAddressTrack, roadAddressRoadNumber, roadAddressRoadPart)
+        ProjectLink(projectLinkId, roadNumber, roadPartNumber, trackCode, discontinuityType, startAddrM, endAddrM, originalStartAddrMValue, originalEndAddrMValue, startDate, endDate, createdBy, linkId, startMValue, endMValue, sideCode, calibrationPoints, originalCalibrationPointTypes, PostGISDatabase.loadJGeometryToGeometry(geom), projectId, status, administrativeClass, source, length, roadwayId, linearLocationId, ely, reversed, connectedLinkId, geometryTimeStamp, if (projectRoadwayNumber == 0 || projectRoadwayNumber == NewIdValue) roadwayNumber else projectRoadwayNumber, Some(roadName), roadAddressEndAddrM.map(endAddr => endAddr - roadAddressStartAddrM.getOrElse(0L)), roadAddressStartAddrM, roadAddressEndAddrM, roadAddressTrack, roadAddressRoadNumber, roadAddressRoadPart)
     }
   }
 
@@ -410,9 +423,7 @@ class ProjectLinkDAO {
           if (!pl.isSplit && nonUpdatingStatus.contains(pl.status) && addresses.map(_.linearLocationId).contains(pl.linearLocationId) && !maxInEachTracks.contains(pl.id)) {
             val ra = addresses.find(_.linearLocationId == pl.linearLocationId).get
             // Discontinuity, administrative class and calibration points may change with Unchanged status
-            pl.copy(roadNumber = ra.roadNumber, roadPartNumber = ra.roadPartNumber, track = ra.track,
-              startAddrMValue = ra.startAddrMValue, endAddrMValue = ra.endAddrMValue,
-              reversed = false)
+            pl.copy(roadNumber = ra.roadNumber, roadPartNumber = ra.roadPartNumber, track = ra.track, startAddrMValue = ra.startAddrMValue, endAddrMValue = ra.endAddrMValue, reversed = false)
           } else
             pl
         }
@@ -475,6 +486,25 @@ class ProjectLinkDAO {
       }
       projectLinkPS.executeBatch()
       projectLinkPS.close()
+    }
+  }
+
+  /* Used from updateProjectLinks() to remove cp from pl when connected to a terminated link.
+  *  Used from twoTrackUtils.
+  * */
+  def updateProjectLinkCalibrationPoints(
+                                          projectLink: ProjectLink,
+                                          cals: (CalibrationPointDAO.CalibrationPointType, CalibrationPointDAO.CalibrationPointType)
+                                        ): Unit = {
+    time(logger,
+      "Update project link calibrationpoints.") {
+      sqlu"""
+                update project_link
+                set modified_date = current_timestamp,
+                    start_calibration_point = ${cals._1.value},
+                    end_calibration_point = ${cals._2.value}
+                where id = ${projectLink.id}
+      """.execute
     }
   }
 

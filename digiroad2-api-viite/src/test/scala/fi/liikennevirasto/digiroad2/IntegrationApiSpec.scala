@@ -130,8 +130,8 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     when(mockRoadNameService.getUpdatedRoadNames(any[DateTime], any[Option[DateTime]])).thenReturn(Right(Seq()))
     get("/roadnames/changes?since=9999-01-01") {
       status should equal(200)
-      response.getHeader("Content-Type") should equal("application/json;charset=utf-8")
-      response.body should equal("[]")
+      response.getHeader("Content-Type").toLowerCase should equal("application/json;charset=utf-8")
+      response.body.toString should equal("[]")
     }
   }
 
@@ -198,7 +198,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     when(mockRoadNameService.getUpdatedRoadNames(any[DateTime], any[Option[DateTime]])).thenReturn(Right(Seq()))
     get("/roadnames/changes?since=9999-01-01&until=9999-01-01") {
       status should equal(200)
-      response.getHeader("Content-Type") should equal("application/json;charset=utf-8")
+      response.getHeader("Content-Type").toLowerCase should equal("application/json;charset=utf-8")
       response.body should equal("[]")
     }
   }

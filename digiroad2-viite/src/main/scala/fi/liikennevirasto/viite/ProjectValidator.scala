@@ -554,7 +554,10 @@ class ProjectValidator {
     val invalidUnchangedLinks: Seq[ProjectLink] = projectLinks.groupBy(s => (s.roadNumber, s.roadPartNumber)).flatMap { g =>
       val (unchanged, others) = g._2.partition(_.status == UnChanged)
       //foreach number and part and foreach UnChanged found in that group, we will check if there is some link in some other different action, that is connected by geometry and addressM values to the UnChanged link starting point
-      unchanged.filter(u => others.filterNot(_.status == LinkStatus.NotHandled).exists(o => u.startAddrMValue >= o.startAddrMValue))
+      unchanged.groupBy(_.track) // Check per track
+        .flatMap(upl => upl._2
+          .filter(u => others.filterNot(opl => opl.status == LinkStatus.NotHandled || opl.track != upl._1)
+            .exists(o => u.startAddrMValue >= o.startAddrMValue)))
     }.toSeq
 
     if (invalidUnchangedLinks.nonEmpty) {
@@ -597,27 +600,22 @@ class ProjectValidator {
     }
 
     def checkMinMaxTrackAdministrativeClasses(trackInterval: Seq[ProjectLink]) = {
-      val diffLinks = trackInterval.groupBy(_.administrativeClass).flatMap { projectLinksByAdministrativeClass: (AdministrativeClass, Seq[ProjectLink]) =>
-        projectLinksByAdministrativeClass._2.partition(_.track == Track.LeftSide) match {
+        val diffLinks = trackInterval.groupBy(_.administrativeClass).flatMap { projectLinksByAdministrativeClass: (AdministrativeClass, Seq[ProjectLink]) =>
+          projectLinksByAdministrativeClass._2.partition(_.track == Track.LeftSide) match {
           case (left, right) if left.nonEmpty && right.nonEmpty =>
-            val leftSection = (projectLinksByAdministrativeClass._1, left.minBy(_.startAddrMValue).startAddrMValue, left.maxBy(_.endAddrMValue).endAddrMValue)
-            val rightSection = (projectLinksByAdministrativeClass._1, right.minBy(_.startAddrMValue).startAddrMValue, right.maxBy(_.endAddrMValue).endAddrMValue)
-            val startSectionAdrr = Seq(leftSection._2, rightSection._2).max
-            val endSectionAddr = Seq(leftSection._3, rightSection._3).min
-            if (leftSection != rightSection) {
-              val criticalLeftLinks = left
-                .filterNot(link => {link.startAddrMValue >= startSectionAdrr && link.endAddrMValue <= endSectionAddr})
-                .filterNot(link => {right.map(_.startAddrMValue).contains(link.startAddrMValue) || right.map(_.endAddrMValue).contains(link.endAddrMValue)})
-              val criticalRightLinks = right.filterNot(link => {link.startAddrMValue >= startSectionAdrr && link.endAddrMValue <= endSectionAddr})
-                .filterNot(link => {left.map(_.startAddrMValue).contains(link.startAddrMValue) || left.map(_.endAddrMValue).contains(link.endAddrMValue)})
-              criticalLeftLinks ++ criticalRightLinks
-            } else Seq.empty[ProjectLink]
-          case (left, right) if left.isEmpty || right.isEmpty => left ++ right
-        }
-      }.toSeq
-      if (diffLinks.nonEmpty)
-        Some(diffLinks)
-      else None
+                val leftSection      = (projectLinksByAdministrativeClass._1, left.minBy(_.startAddrMValue).startAddrMValue, left.maxBy(_.endAddrMValue).endAddrMValue)
+                val rightSection     = (projectLinksByAdministrativeClass._1, right.minBy(_.startAddrMValue).startAddrMValue, right.maxBy(_.endAddrMValue).endAddrMValue)
+                val startSectionAdrr = Seq(leftSection._2, rightSection._2).max
+                val endSectionAddr   = Seq(leftSection._3, rightSection._3).min
+                if (leftSection != rightSection) {
+                  val criticalLeftLinks  = left.filterNot(link => {link.startAddrMValue >= startSectionAdrr && link.endAddrMValue <= endSectionAddr}).filterNot(link => {right.map(_.startAddrMValue).contains(link.startAddrMValue) || right.map(_.endAddrMValue).contains(link.endAddrMValue)})
+                  val criticalRightLinks = right.filterNot(link => {link.startAddrMValue >= startSectionAdrr && link.endAddrMValue <= endSectionAddr}).filterNot(link => {left.map(_.startAddrMValue).contains(link.startAddrMValue) || left.map(_.endAddrMValue).contains(link.endAddrMValue)})
+                  criticalLeftLinks ++ criticalRightLinks
+                } else Seq.empty[ProjectLink]
+            case (left, right) if left.isEmpty || right.isEmpty => left ++ right
+          }
+        }.toSeq
+        if (diffLinks.nonEmpty) Some(diffLinks) else None
     }
 
     def validateTrackTopology(trackInterval: Seq[ProjectLink]): Seq[ProjectLink] = {
@@ -660,13 +658,13 @@ class ProjectValidator {
       }
     }
 
-    def getTwoTrackInterval(links: Seq[ProjectLink], interval: Seq[(Long, Seq[ProjectLink])]): Seq[(Long, Seq[ProjectLink])] = {
+    def getTwoTrackInterval(links   : Seq[ProjectLink], interval: Seq[(Long, Seq[ProjectLink])]): Seq[(Long, Seq[ProjectLink])] = {
       if (links.isEmpty) {
         interval
       } else {
-        val trackToCheck = links.head.track
+        val trackToCheck  = links.head.track
         val trackInterval = getTrackInterval(links.sortBy(o => (o.roadNumber, o.roadPartNumber, o.track.value, o.startAddrMValue)), trackToCheck)
-        val headerAddr = trackInterval.minBy(_.startAddrMValue).startAddrMValue
+        val headerAddr    = trackInterval.minBy(_.startAddrMValue).startAddrMValue
         getTwoTrackInterval(links.filterNot(l => trackInterval.exists(lt => lt.id == l.id)), interval ++ Seq(headerAddr -> trackInterval.filterNot(_.track == Track.Combined)))
       }
     }

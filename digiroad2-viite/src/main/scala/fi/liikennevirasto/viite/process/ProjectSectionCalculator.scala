@@ -103,62 +103,110 @@ object ProjectSectionCalculator {
       seq.span(pl => pl.roadAddressTrack.getOrElse(Track.Unknown) == track && (if(status.equals(LinkStatus.Terminated)) pl.status == status else !pl.status.equals(LinkStatus.Terminated)))
     }
 
-    def adjustTerminatedTracksToMatch(leftLinks: Seq[ProjectLink], rightLinks: Seq[ProjectLink], previousStart: Option[Long]): (Seq[ProjectLink], Seq[ProjectLink]) = {
-      if (rightLinks.isEmpty && leftLinks.isEmpty) {
-        (Seq(), Seq())
-      } else {
-        val (right, othersRight) = getContinuousTrack(rightLinks)
-        val (left, othersLeft) = getContinuousTrack(leftLinks)
-
-        val ((firstRight, restRight), (firstLeft, restLeft)): ((Seq[ProjectLink], Seq[ProjectLink]), (Seq[ProjectLink], Seq[ProjectLink])) =
-          if (!right.exists(_.status != LinkStatus.Terminated) && !left.exists(_.status != LinkStatus.Terminated)) {
-
-            val strategy = TrackCalculatorContext.getStrategy(left, right)
-            val addrSt = strategy.getFixedAddress(left.head, right.head)._1
-
-            val (recalculatedLeft, recalculatedRestLeft) = getContinuousTrack(ProjectSectionMValueCalculator.assignTerminatedLinkValues(left ++ othersLeft, addrSt = addrSt))
-            val (recalculatedRight, recalculatedRestRight) = getContinuousTrack(ProjectSectionMValueCalculator.assignTerminatedLinkValues(right ++ othersRight, addrSt = addrSt))
-            TrackSectionRoadway.handleRoadwayNumbers(
-              recalculatedLeft ++ recalculatedRestLeft, recalculatedRight, recalculatedRestRight,
-              recalculatedRight ++ recalculatedRestRight, recalculatedLeft, recalculatedRestLeft)
-          } else ((right, othersRight), (left, othersLeft))
-
-        if (firstRight.isEmpty || firstLeft.isEmpty) {
-          throw new RoadAddressException(s"Mismatching tracks for terminated links, R ${firstRight.size}, L ${firstLeft.size}")
-        }
-
-        if (firstRight.count(_.roadwayNumber == NewIdValue) + firstRight.filter(_.roadwayNumber != NewIdValue).map(_.roadwayNumber).distinct.size != firstLeft.count(_.roadwayNumber == NewIdValue) + firstLeft.filter(_.roadwayNumber != NewIdValue).map(_.roadwayNumber).distinct.size) {
-          throw new MissingRoadwayNumberException(s"Roadway numbers doesn't match on both terminated tracks, R ${firstRight.map(_.roadwayNumber).distinct.size}, L ${firstLeft.map(_.roadwayNumber).distinct.size}")
-        }
-
-        val strategy = TrackCalculatorContext.getStrategy(firstLeft, firstRight)
-        logger.info(s"${strategy.name} strategy")
-        val trackCalcResult = strategy.assignTrackMValues(previousStart, firstLeft, firstRight, Map())
-
-        val (adjustedRestRight, adjustedRestLeft) = adjustTerminatedTracksToMatch(trackCalcResult.restLeft ++ restLeft, trackCalcResult.restRight ++ restRight, Some(trackCalcResult.endAddrMValue))
-
-        (trackCalcResult.leftProjectLinks ++ adjustedRestRight, trackCalcResult.rightProjectLinks ++ adjustedRestLeft)
-
-      }
-    }
-
     val left = projectLinks.filter(pl => pl.roadAddressTrack.getOrElse(pl.track) != Track.RightSide).sortBy(_.roadAddressStartAddrM)
     val right = projectLinks.filter(pl => pl.roadAddressTrack.getOrElse(pl.track) != Track.LeftSide).sortBy(_.roadAddressStartAddrM)
     if (left.isEmpty || right.isEmpty) {
       Seq[ProjectLink]()
     } else {
-      val leftLinks: Seq[ProjectLink] = ProjectSectionMValueCalculator.assignTerminatedLinkValues(left, addrSt = 0)
-      val rightLinks: Seq[ProjectLink] = ProjectSectionMValueCalculator.assignTerminatedLinkValues(right, addrSt = 0)
-      val (leftAdjusted, rightAdjusted) = adjustTerminatedTracksToMatch(leftLinks, rightLinks, None)
-      val (completedAdjustedLeft, completedAdjustedRight) = TrackSectionOrder.setCalibrationPoints(leftAdjusted, rightAdjusted, Map())
-      val calculatedSections = TrackSectionOrder.createCombinedSectionss(groupIntoSections(completedAdjustedRight), groupIntoSections(completedAdjustedLeft))
-      calculatedSections.flatMap { sec =>
-        if (sec.right == sec.left)
-          sec.right.links
+      val leftTerminated = left.filter(_.status == LinkStatus.Terminated)
+      val rightTerminated = right.filter(_.status == LinkStatus.Terminated)
+
+      /* Set terminated link heads to new calculated values. */
+      val leftReassignedStart: Seq[ProjectLink] = leftTerminated.map(leftTerminatedpl => {
+        val startingPointLink = projectLinks.filterNot(_.status == LinkStatus.Terminated).sortBy(_.startAddrMValue).find(pl => {
+          pl.id != leftTerminatedpl.id && (pl.startingPoint.connected(leftTerminatedpl.startingPoint))
+        })
+        if (startingPointLink.isDefined) leftTerminatedpl.copy(startAddrMValue = startingPointLink.get.startAddrMValue)
+        else {
+          val endingPointLink = projectLinks.filterNot(_.status == LinkStatus.Terminated).sortBy(_.startAddrMValue).find(pl => {
+            pl.id != leftTerminatedpl.id && (pl.endPoint.connected(leftTerminatedpl.startingPoint))
+          })
+          if (endingPointLink.isDefined) leftTerminatedpl.copy(startAddrMValue = endingPointLink.get.endAddrMValue)
+          else leftTerminatedpl
+        }
+      }
+      )
+
+      val leftReassignedEnd: Seq[ProjectLink] = leftReassignedStart.map(leftTerminatedpl => {
+        val startingPointLink = projectLinks.filterNot(_.status == LinkStatus.Terminated).sortBy(_.startAddrMValue).find(pl =>
+          (pl.id != leftTerminatedpl.id && ( pl.startingPoint.connected(leftTerminatedpl.endPoint))
+        ))
+        if (startingPointLink.isDefined) leftTerminatedpl.copy(endAddrMValue = startingPointLink.get.startAddrMValue)
+        else {
+          val endPointLink = projectLinks.filterNot(_.status == LinkStatus.Terminated).sortBy(_.startAddrMValue).find(pl =>
+            pl.id != leftTerminatedpl.id && (pl.endPoint.connected(leftTerminatedpl.endPoint))
+          )
+          if (endPointLink.isDefined) leftTerminatedpl.copy(endAddrMValue = endPointLink.get.endAddrMValue)
+          else leftTerminatedpl
+        }
+      }
+      )
+
+      val rightReassignedStart: Seq[ProjectLink] = rightTerminated.map(rightTerminatedpl => {
+        val startingPointLink = projectLinks.filterNot(_.status == LinkStatus.Terminated).sortBy(_.startAddrMValue).find(pl =>
+          pl.id != rightTerminatedpl.id && (pl.startingPoint.connected(rightTerminatedpl.startingPoint))
+        )
+        if (startingPointLink.isDefined) rightTerminatedpl.copy(startAddrMValue = startingPointLink.get.startAddrMValue)
+        else {
+          val endingPointLink = projectLinks.filterNot(_.status == LinkStatus.Terminated).sortBy(_.startAddrMValue).find(pl =>
+            pl.id != rightTerminatedpl.id && (pl.endPoint.connected(rightTerminatedpl.startingPoint))
+          )
+          if (endingPointLink.isDefined) rightTerminatedpl.copy(startAddrMValue = endingPointLink.get.endAddrMValue)
+          else rightTerminatedpl
+        }
+      }
+      )
+
+      val rightReassignedEnd: Seq[ProjectLink] = rightReassignedStart.map(rightTerminatedpl => {
+        val startingPointLink = projectLinks.filterNot(_.status == LinkStatus.Terminated).sortBy(_.startAddrMValue).find(pl => {
+          pl.id != rightTerminatedpl.id && (pl.startingPoint.connected(rightTerminatedpl.endPoint))
+        })
+        if (startingPointLink.isDefined) rightTerminatedpl.copy(endAddrMValue = startingPointLink.get.startAddrMValue)
+        else {
+          val endPointLink = projectLinks.filterNot(_.status == LinkStatus.Terminated).sortBy(_.startAddrMValue).find(pl => {
+            pl.id != rightTerminatedpl.id && (pl.endPoint.connected(rightTerminatedpl.endPoint))
+          })
+          if (endPointLink.isDefined) rightTerminatedpl.copy(endAddrMValue = endPointLink.get.endAddrMValue)
+          else rightTerminatedpl
+        }
+      }
+      )
+
+      def retval: Seq[ProjectLink] = {
+        if (rightReassignedEnd == leftReassignedEnd)
+          rightReassignedEnd
         else
-          sec.right.links ++ sec.left.links
-      }.filter(_.status == LinkStatus.Terminated)
-    }
+          rightReassignedEnd ++ leftReassignedEnd
+      }
+      def checkAverage: Seq[ProjectLink] =  {
+        val maxrpl      = rightReassignedEnd.maxBy(_.endAddrMValue)
+        val maxlpl      = leftReassignedEnd.maxBy(_.endAddrMValue)
+        val endAddrDiff = Math.abs(maxrpl.endAddrMValue - maxlpl.endAddrMValue)
+        val minLength   = Math.min(maxrpl.geometryLength, maxrpl.geometryLength)
+        // Ensure difference is not too great, i.e. links are about aligned.
+        if (endAddrDiff < minLength) {
+          val avg = Math.round((maxrpl.endAddrMValue + maxlpl.endAddrMValue) / 2)
+          (rightReassignedEnd.filterNot(_.id == maxrpl.id) :+ maxrpl.copy(endAddrMValue = avg)) ++
+          (leftReassignedEnd.filterNot(_.track == Track.Combined).filterNot(_.id == maxlpl.id) :+ maxlpl.copy(endAddrMValue = avg))
+        } else
+          retval
+      }
+
+      /* Average end values for change table when terminated links are the last links on the road part. */
+      if (rightReassignedEnd.nonEmpty && leftReassignedEnd.nonEmpty) {
+        val rightReassignedMax = rightReassignedEnd.maxBy(_.endAddrMValue).endAddrMValue
+        val leftReassignedMax  = leftReassignedEnd.maxBy(_.endAddrMValue).endAddrMValue
+        val leftmax            = left.maxBy(_.endAddrMValue).endAddrMValue
+        val rightmax           = right.maxBy(_.endAddrMValue).endAddrMValue
+
+        if (rightReassignedMax != leftReassignedMax && leftmax <= leftReassignedMax && rightmax <= rightReassignedMax)
+          checkAverage
+        else
+          retval
+      }
+      else
+        retval
+      }
   }
 }
 

@@ -3,7 +3,7 @@ package fi.liikennevirasto.viite.process
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
-import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectLink}
+import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectLink, ProjectLinkDAO}
 
 object ProjectSectionMValueCalculator {
 
@@ -45,23 +45,30 @@ object ProjectSectionMValueCalculator {
     unchanged.map(resetEndAddrMValue) ++ assignLinkValues(others, calibrationPoints, unchanged.map(_.endAddrMValue.toDouble).sorted.lastOption, None)
   }
 
+  def isSameTrack(previous: ProjectLink, currentLink: ProjectLink): Boolean = {
+    previous.roadNumber == currentLink.roadNumber && previous.roadPartNumber == currentLink.roadPartNumber && previous.track == currentLink.track
+  }
+
   def assignLinkValues(seq: Seq[ProjectLink], cps: Map[Long, UserDefinedCalibrationPoint], addrSt: Option[Double], addrEn: Option[Double], coEff: Double = 1.0): Seq[ProjectLink] = {
-    val newAddressValues = seq.scanLeft(addrSt.getOrElse(0.0)) { case (m, pl) =>
-      val someCalibrationPoint: Option[UserDefinedCalibrationPoint] = cps.get(pl.id)
-      if (!pl.isSplit) {
-        val addressValue = if (someCalibrationPoint.nonEmpty) someCalibrationPoint.get.addressMValue else m + pl.geometryLength * coEff
-        pl.status match {
-          case LinkStatus.New => addressValue
-          case LinkStatus.Transfer | LinkStatus.NotHandled | LinkStatus.Numbering | LinkStatus.UnChanged => m + pl.addrMLength
-          case LinkStatus.Terminated => pl.endAddrMValue
-          case _ => throw new InvalidAddressDataException(s"Invalid status found at value assignment ${pl.status}, linkId: ${pl.linkId}")
-        }
-      } else {
-        pl.endAddrMValue
+    if (seq.isEmpty) Seq() else {
+      val endPoints       = TrackSectionOrder.findChainEndpoints(seq)
+      val mappedEndpoints = (endPoints.head._1, endPoints.last._1)
+      val orderedPairs    = TrackSectionOrder.orderProjectLinksTopologyByGeometry(mappedEndpoints, seq)
+      val ordered         = if (seq.exists(_.track == Track.RightSide || seq.forall(_.track == Track.Combined))) orderedPairs._1 else orderedPairs._2.reverse
+
+      val newAddressValues = ordered.scanLeft(addrSt.getOrElse(0.0)) { case (m, pl) => {
+        val someCalibrationPoint: Option[UserDefinedCalibrationPoint] = cps.get(pl.id)
+          val addressValue = if (someCalibrationPoint.nonEmpty) someCalibrationPoint.get.addressMValue else m + Math.abs(pl.geometryLength) * coEff
+          pl.status match {
+            case LinkStatus.New => addressValue
+            case LinkStatus.Transfer | LinkStatus.NotHandled | LinkStatus.Numbering | LinkStatus.UnChanged => m + pl.addrMLength
+            case LinkStatus.Terminated => pl.endAddrMValue
+            case _ => throw new InvalidAddressDataException(s"Invalid status found at value assignment ${pl.status}, linkId: ${pl.linkId}")
+          }
       }
-    }
-    seq.zip(newAddressValues.zip(newAddressValues.tail)).map { case (pl, (st, en)) =>
-      pl.copy(startAddrMValue = Math.round(st), endAddrMValue = Math.round(en))
+      }
+      seq.zip(newAddressValues.zip(newAddressValues.tail)).map { case (pl, (st, en)) => pl.copy(startAddrMValue = Math.round(st), endAddrMValue = Math.round(en))
+      }
     }
   }
 
