@@ -8,10 +8,16 @@ services:
       POSTGRES_PASSWORD: viite
       POSTGRES_DB: viite
     volumes:
-      - data:/var/lib/postgresql/data
+      ## use (enable here, and start)    data    volume when doing generic development, regression tests, or generic manunal testing.
+    # - data:/var/lib/postgresql/data
+      ## use (enable here, and start)  unittests volume when doing unit testing.
+      - unittests:/var/lib/postgresql/data
     ports:
       - 5432:5432
 #    command: ["postgres", "-c", "log_statement=all"]
 
 volumes:
+  ## data: volume for Initial import data, and generic manual testing.
   data:
+  ## unittests: volume for running unit tests. Run Fixture reset once for this, then unit testing only.
+  unittests:
