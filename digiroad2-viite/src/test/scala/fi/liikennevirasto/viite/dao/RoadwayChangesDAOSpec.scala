@@ -4,10 +4,12 @@ import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite.{NewIdValue}
+import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
+import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.process._
+import fi.liikennevirasto.viite.util.projectLinkDAO
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
@@ -65,26 +67,29 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
   }
 
   test("Test RoadwayChangesDAO().insertDeltaToRoadChangeTable() When inserting the results of the delta calculation for a project Then when querying directly the roadway_changes it should confirm data insertion.") {
-    val newProjectLink = ProjectLink(1, 1, 1, Track.Unknown, Discontinuity.Continuous, 0, 0, 0, 0, None, None, None, 0, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), List(), 1, LinkStatus.New, AdministrativeClass.Unknown, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 5, reversed = false, None, 748800L)
-    val delta = Delta(DateTime.now(), Seq(newProjectLink), Termination(Seq()), Unchanged(Seq()), Transferred(Seq()), ReNumeration(Seq()))
     runWithRollback {
       addprojects()
       val project1 = projectDAO.fetchById(1).get
       val reservedParts = Seq(ProjectReservedPart(0, 1, 1, Some(0), Some(Discontinuity.Continuous), Some(8L), None, None, None, Some(12345L)))
-      new RoadwayChangesDAO().insertDeltaToRoadChangeTable(delta, 1, Some(project1.copy(reservedParts = reservedParts)))
+      new RoadwayChangesDAO().insertDeltaToRoadChangeTable(1, Some(project1.copy(reservedParts = reservedParts)))
       sql"""Select Project_Id From ROADWAY_CHANGES Where Project_Id In (1)""".as[Long].firstOption.getOrElse(0) should be(1)
     }
   }
 
   test("Test RoadwayChangesDAO().insertDeltaToRoadChangeTable() When inserting the results of the delta calculation for a project, the inserted ely code should be the roadway ely instead of project ely") {
     val newProjectLink = ProjectLink(1, 1, 1, Track.Unknown, Discontinuity.Continuous, 0, 0, 0, 0, None, None, None, 0, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), List(), 1, LinkStatus.New, AdministrativeClass.Unknown, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 5, reversed = false, None, 748800L)
-    val delta = Delta(DateTime.now(), Seq(newProjectLink), Termination(Seq()), Unchanged(Seq()), Transferred(Seq()), ReNumeration(Seq()))
     runWithRollback {
       addprojects()
       val project1 = projectDAO.fetchById(1).get
+      val projectLinks = projectLinkDAO.fetchProjectLinks(1)
+      val projectLink1 = projectLinks.head
+      val ra = Seq(
+        RoadAddress(12345, projectLink1.linearLocationId, projectLink1.roadNumber, projectLink1.roadPartNumber, projectLink1.administrativeClass, projectLink1.track, projectLink1.discontinuity, projectLink1.startAddrMValue, projectLink1.endAddrMValue, projectLink1.startDate, projectLink1.endDate, projectLink1.createdBy, projectLink1.linkId, projectLink1.startMValue, projectLink1.endMValue, projectLink1.sideCode, DateTime.now().getMillis, projectLink1.calibrationPoints, projectLink1.geometry, projectLink1.linkGeomSource, 8, NoTermination, projectLink1.roadwayNumber, None, None, None)
+      )
+      projectLinkDAO.updateProjectLinks(Seq(newProjectLink), project1.createdBy, ra)
       val reservedParts = Seq(ProjectReservedPart(0, 1, 1, Some(0), Some(Discontinuity.Continuous), Some(8L), None, None, None, Some(12345L)))
       val dao = new RoadwayChangesDAO()
-      dao.insertDeltaToRoadChangeTable(delta, 1, Some(project1.copy(reservedParts = reservedParts)))
+      dao.insertDeltaToRoadChangeTable(1, Some(project1.copy(reservedParts = reservedParts)))
       val changes = dao.fetchRoadwayChanges(Set(1))
       changes.foreach(c => {
         c.changeInfo.target.ely.get should be(5)
