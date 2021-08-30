@@ -277,7 +277,7 @@
      * sending them to the selectedLinkProperty.open for further processing.
      */
     selectSingleClick.on('select', function (event) {
-      var allFeatures = getAllFeatures(true, true, true, true, true, true, true, true, true);
+      var visibleFeatures = getVisibleFeatures(true, true, true, true, true, true, true, true, true);
       selectDoubleClick.getFeatures().clear();
       var selectedF = _.find(event.selected, function (selectionTarget) {
         return !_.isUndefined(selectionTarget.linkData);
@@ -290,7 +290,7 @@
         }
         if (selection.floating === SelectionType.Floating.value && !applicationModel.isReadOnly()) {
           selectedLinkProperty.close();
-          selectedLinkProperty.openFloating(selection, true, allFeatures);
+          selectedLinkProperty.openFloating(selection, true, visibleFeatures);
           floatingMarkerLayer.setOpacity(1);
           anomalousMarkerLayer.setOpacity(1);
         } else if (selection.floating !== SelectionType.Floating.value && applicationModel.selectionTypeIs(SelectionType.Floating) && !applicationModel.isReadOnly() && event.deselected.length !== 0) {
@@ -300,7 +300,7 @@
           addFeaturesToSelection(floatings);
         } else if (applicationModel.selectionTypeIs(SelectionType.Unknown) && !applicationModel.isReadOnly()) {
           if ((selection.anomaly === Anomaly.NoAddressGiven.value || selection.anomaly === Anomaly.GeometryChanged.value) && selection.roadLinkType !== SelectionType.Floating.value) {
-            selectedLinkProperty.openUnknown(selection, allFeatures);
+            selectedLinkProperty.openUnknown(selection, visibleFeatures);
           } else {
             removeFeaturesFromSelection(event.selected);
             addFeaturesToSelection(event.deselected);
@@ -310,17 +310,20 @@
           setGeneralOpacity(0.2);
           if (selection.roadNumber != 0) {
             applicationModel.addSpinner();
+            // set the clicked linear location id so we know what road link group to update after fetching road links in backend
             roadCollection.setClickedLinearLocationId(selection.linearLocationId);
+            // gets all the road links from backend and starts a cycle that updates road link group in RoadCollection.js
             roadCollection.fetchWholeRoadPart(selection.roadNumber, selection.roadPartNumber, selection.trackCode);
+
+            // listens to the event when the road link group is updated (with whole roadpart) and then continues the process normally with the updated road link groups
             eventbus.listenTo(eventbus,'roadCollection:wholeRoadPartFetched', function () {
               applicationModel.removeSpinner();
               var features = getAllFeatures(true, true, true, true, true, true, true, true, true);
               selectedLinkProperty.open(selection, true, features);
             });
           }
-
-          selectedLinkProperty.open(selection, true, allFeatures);
-
+          // opens only the visible parts of the roads (bounding box view)
+          selectedLinkProperty.open(selection, true, visibleFeatures);
         }
         if (applicationModel.selectionTypeIs(SelectionType.Unknown) && selection.floating !== SelectionType.Floating.value && (selection.anomaly === Anomaly.NoAddressGiven.value || selection.anomaly === Anomaly.GeometryChanged.value)) {
           greenRoadLayer.setOpacity(1);

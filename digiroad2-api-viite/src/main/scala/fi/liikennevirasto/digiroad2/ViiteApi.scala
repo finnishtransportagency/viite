@@ -173,9 +173,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   private val getRoadLinksOfWholeRoadPartByTrack: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Seq[Seq[Map[String, Any]]]]("getRoadAddress")
       .parameters(
-        queryParam[Long]("roadNumber").description("Road number of the road address"),
-        queryParam[Long]("roadPartNumber").description("Road part number of the road address"),
-        queryParam[Long]("trackCode").description("Track code of the road address")
+        queryParam[Long]("roadnumber").description("Road number of the road address"),
+        queryParam[Long]("roadpart").description("Road part number of the road address"),
+        queryParam[Long]("trackcode").description("Track code of the road address")
       )
       tags "ViiteAPI - RoadAddresses"
       summary "Returns all the road addresses of the road part that are on the specified track"

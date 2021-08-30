@@ -83,7 +83,7 @@
     var selectedRoadPartNumber = 0;
 
     var getSelectedRoadLinks = function () {
-      var selected_road = _.find(roadLinks() , function (roadLink) {
+      var selected_road = _.find(roadLinks(), function (roadLink) {
         return roadLink.isSelected() && roadLink.getData().anomaly === Anomaly.None.value;
       });
       if (selected_road) {
@@ -167,18 +167,10 @@
         });
       });
 
-      var nonHistoryConstructionRoadLinkGroups = _.reject(roadLinkGroups, function (group) {
-        return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface);
-      });
-
+      // update the roadlink group (that was clicked) with the newly fetched road links (containing whole road part instead of just the visible part of the road part)
       updateGroup(clickedLinearLocationId, fetchedRoadLinkModels);
 
-      var selectedLinkIds = _.map(getSelectedRoadLinks(), function (roadLink) {
-        return roadLink.getId();
-      });
-
-      eventbus.trigger('roadCollection:wholeRoadPartFetched');
-      eventbus.trigger('roadLinks:fetched:wholeRoadPart', nonHistoryConstructionRoadLinkGroups, (!_.isUndefined(drawUnknowns) && drawUnknowns), selectedLinkIds);
+      eventbus.trigger('roadLinks:fetched:wholeRoadPart');
     };
 
 
