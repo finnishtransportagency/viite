@@ -11,7 +11,6 @@
 #  (Note: when using this from windows, e.g. Bash seems to just hang -> use CMD instead)
 #
 # python3 aws/login/vaylaAssumeRoleAWSCLI.py --username <Your Väylä username> --account 783354560127 --role ViiteAdmin --region eu-west-1
-# python aws/login/vaylaAssumeRoleAWSCLI.py --username K407165 --account 783354560127 --role ViiteAdmin --region eu-west-1
 
 
 # === the registration: ===
