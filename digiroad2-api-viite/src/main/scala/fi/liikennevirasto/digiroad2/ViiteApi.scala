@@ -183,9 +183,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   get("/roadlinks/wholeroadpart/", operation(getRoadLinksOfWholeRoadPartByTrack)) {
     response.setHeader("Access-Control-Allow-Headers", "*")
-    val roadNumber = params.getOrElse("roadnumber", "0").toInt
-    val roadPartNumber = params.getOrElse("roadpart", "0").toInt
-    val trackCode = params.getOrElse("trackcode", "0").toInt
+    val roadNumber = params("roadnumber").toInt
+    val roadPartNumber = params("roadpart").toInt
+    val trackCode = params("trackcode").toInt
     time(logger, s"GET request for /roadlinks (roadnumber: $roadNumber) (roadpart: ${roadPartNumber}) (trackcode ${trackCode})") {
       getRoadAddressLinksByRoadPartNumberAndTrack(roadNumber, roadPartNumber, trackCode)
     }
