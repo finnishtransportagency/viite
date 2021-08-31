@@ -61,6 +61,11 @@ class OAGProxyServlet extends ProxyServlet {
   }
 
   override def sendProxyRequest(clientRequest: HttpServletRequest, proxyResponse: HttpServletResponse, proxyRequest: Request): Unit = {
+    // Viite-2605
+    proxyRequest.getHeaders.remove("X-Iam-Data")
+    proxyRequest.getHeaders.remove("X-Iam-Accesstoken")
+    proxyRequest.getHeaders.remove("X-Amzn-Trace-Id")
+    proxyRequest.getHeaders.remove("X-Iam-Identity")
     super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest)
   }
 }
@@ -77,6 +82,11 @@ class OAGRasterServiceProxyServlet extends ProxyServlet {
   }
 
   override def sendProxyRequest(clientRequest: HttpServletRequest, proxyResponse: HttpServletResponse, proxyRequest: Request): Unit = {
+    // Viite-2605
+    proxyRequest.getHeaders.remove("X-Iam-Data")
+    proxyRequest.getHeaders.remove("X-Iam-Accesstoken")
+    proxyRequest.getHeaders.remove("X-Amzn-Trace-Id")
+    proxyRequest.getHeaders.remove("X-Iam-Identity")
     super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest)
   }
 }
