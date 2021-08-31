@@ -86,6 +86,31 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     roadwayAddressMapper.getCurrentRoadAddressesByLinearLocation(linearLocations)
   }
 
+  /**
+    * Returns all linear locations in road part based on roadNumber, roadPartNumber and trackCode
+    *
+    * @param roadNumber The road number of the road part
+    * @param roadPartNumber The road part number of the road part
+    * @param trackCode Track code
+    */
+
+  def getLinearLocationsInRoadPartAndTrack(roadNumber: Long, roadPartNumber: Long, trackCode: Long): Seq[LinearLocation] = {
+
+    // get roadways that are on the specified track
+    val roadwaysWithSpecifiedTrack = roadwayDAO.fetchAllByRoadAndPart(roadNumber, roadPartNumber).filter(_.track.value == trackCode)
+
+    // get all the roadwayNumbers from the roadways
+    val allRoadwayNumbersInRoadParts = roadwaysWithSpecifiedTrack.map(rw => rw.roadwayNumber)
+
+    // get all the linear locations on the roadway numbers
+    val allLinearLocations =  {
+      linearLocationDAO.fetchByRoadwayNumber(allRoadwayNumbersInRoadParts).toSeq
+    }
+
+    allLinearLocations
+  }
+
+
   private def getRoadAddressLinks(boundingBoxResult: BoundingBoxResult): Seq[RoadAddressLink] = {
     val boundingBoxResultF =
       for {
@@ -138,6 +163,36 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     val boundingBoxResult = BoundingBoxResult(
       roadLinkService.getChangeInfoFromVVHF(linearLocationsLinkIds),
       Future((linearLocations, roadLinkService.getRoadLinksHistoryFromVVH(linearLocationsLinkIds))),
+      Future(roadLinkService.getRoadLinksByLinkIdsFromVVH(linearLocationsLinkIds)),
+      Future(Seq())
+    )
+
+    getRoadAddressLinks(boundingBoxResult)
+  }
+
+  /**
+    * Returns all road address links (combination between our roadway, linear location and vvh information) based on road number, road part number and track code
+    *
+    * @param roadNumber : Road number of the road
+    * @param roadPartNumber : Road part number of the road
+    * @param trackCode : Track code of the road
+    * @return
+    */
+
+  def getRoadAddressLinksOfWholeRoadPartAndTrack(roadNumber: Long, roadPartNumber: Long, trackCode: Long): Seq[RoadAddressLink] = {
+
+    val allLinearLocations = withDynSession {
+      time(logger, s"Fetch addresses on track: ${trackCode} in road: ${roadNumber} & part: ${roadPartNumber} ") {
+        getLinearLocationsInRoadPartAndTrack(roadNumber, roadPartNumber, trackCode)
+      }
+    }
+
+    val linearLocationsLinkIds = allLinearLocations.map(_.linkId).toSet
+
+    // mimic bounding box result even though we didnt get these linear locations from the bounding box view like we normally would
+    val boundingBoxResult = BoundingBoxResult(
+      roadLinkService.getChangeInfoFromVVHF(linearLocationsLinkIds),
+      Future((allLinearLocations, roadLinkService.getRoadLinksHistoryFromVVH(linearLocationsLinkIds))),
       Future(roadLinkService.getRoadLinksByLinkIdsFromVVH(linearLocationsLinkIds)),
       Future(Seq())
     )

@@ -20,6 +20,20 @@
           });
           loadFeatures(features);
         });
+        eventbus.once('roadLinks:fetched:wholeRoadPart', function () {
+          var features = _.map(roadCollection.getAll(), function (roadLink) {
+            var points = _.map(roadLink.points, function (point) {
+              return [point.x, point.y];
+            });
+            var feature = new ol.Feature({
+              geometry: new ol.geom.LineString(points)
+            });
+            feature.linkData = roadLink;
+            return feature;
+          });
+          loadFeatures(features);
+          eventbus.trigger('roadCollection:wholeRoadPartFetched');
+        });
       },
       strategy: ol.loadingstrategy.bbox
     });

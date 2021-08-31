@@ -24,6 +24,15 @@
         };
     });
 
+    this.getRoadLinksOfWholeRoadPart = createCallbackRequestor(function (params) {
+      var roadNumber = params.roadNumber;
+      var roadPart = params.roadPartNumber;
+      var trackCode = params.trackCode;
+      return {
+        url: 'api/viite/roadlinks/wholeroadpart/?roadnumber=' + roadNumber + '&roadpart=' + roadPart + '&trackcode=' + trackCode
+      };
+    });
+
     this.getNodesAndJunctions = createCallbackRequestor(function (params) {
       var zoom = params.zoom;
       var boundingBox = params.boundingBox;

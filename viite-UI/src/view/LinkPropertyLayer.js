@@ -308,6 +308,21 @@
         } else {
           selectedLinkProperty.close();
           setGeneralOpacity(0.2);
+          if (selection.roadNumber != 0) {
+            applicationModel.addSpinner();
+            // set the clicked linear location id so we know what road link group to update after fetching road links in backend
+            roadCollection.setClickedLinearLocationId(selection.linearLocationId);
+            // gets all the road links from backend and starts a cycle that updates road link group in RoadCollection.js
+            roadCollection.fetchWholeRoadPart(selection.roadNumber, selection.roadPartNumber, selection.trackCode);
+
+            // listens to the event when the road link group is updated (with whole roadpart) and then continues the process normally with the updated road link groups
+            eventbus.listenTo(eventbus,'roadCollection:wholeRoadPartFetched', function () {
+              applicationModel.removeSpinner();
+              var features = getAllFeatures(true, true, true, true, true, true, true, true, true);
+              selectedLinkProperty.open(selection, true, features);
+            });
+          }
+          // opens only the visible parts of the roads (bounding box view)
           selectedLinkProperty.open(selection, true, visibleFeatures);
         }
         if (applicationModel.selectionTypeIs(SelectionType.Unknown) && selection.floating !== SelectionType.Floating.value && (selection.anomaly === Anomaly.NoAddressGiven.value || selection.anomaly === Anomaly.GeometryChanged.value)) {
@@ -398,6 +413,19 @@
       var visibleUnAddressedRoads = withVisibleUnAddressedRoads ? unAddressedRoadLayer.getSource().getFeaturesInExtent(extent) : [];
       var visibleGeometryChanged = withGeometryChanged ? geometryChangedLayer.getSource().getFeaturesInExtent(extent) : [];
       return visibleRoads.concat(visibleAnomalyMarkers).concat(visibleFloatingMarkers).concat(visibleGreenRoadLayer).concat(visibleDirectionalMarkers).concat(visibleUnderConstructionMarkers).concat(visibleUnderConstructionRoads).concat(visibleUnAddressedRoads).concat(visibleGeometryChanged);
+    };
+
+    var getAllFeatures = function (withRoads, withAnomalyMarkers, withFloatingMarkers, withGreenRoads, withPickRoads, withDirectionalMarkers, withunderConstructionRoads, withGeometryChanged, withVisibleUnAddressedRoads) {
+      var Roads = withRoads ? roadLayer.layer.getSource().getFeatures() : [];
+      var AnomalyMarkers = withAnomalyMarkers ? anomalousMarkerLayer.getSource().getFeatures() : [];
+      var FloatingMarkers = withFloatingMarkers ? floatingMarkerLayer.getSource().getFeatures() : [];
+      var GreenRoadLayer = withGreenRoads ? greenRoadLayer.getSource().getFeatures() : [];
+      var DirectionalMarkers = withDirectionalMarkers ? directionMarkerLayer.getSource().getFeatures() : [];
+      var UnderConstructionMarkers = withDirectionalMarkers ? underConstructionMarkerLayer.getSource().getFeatures() : [];
+      var UnderConstructionRoads = withunderConstructionRoads ? underConstructionRoadLayer.getSource().getFeatures() : [];
+      var UnAddressedRoads = withVisibleUnAddressedRoads ? unAddressedRoadLayer.getSource().getFeatures() : [];
+      var GeometryChanged = withGeometryChanged ? geometryChangedLayer.getSource().getFeatures() : [];
+      return Roads.concat(AnomalyMarkers).concat(FloatingMarkers).concat(GreenRoadLayer).concat(DirectionalMarkers).concat(UnderConstructionMarkers).concat(UnderConstructionRoads).concat(UnAddressedRoads).concat(GeometryChanged);
     };
 
     /**
@@ -718,7 +746,6 @@
       });
 
       eventListener.listenTo(eventbus, 'unAddressedRoadLinks:fetched', function (unAddressedRoads) {
-        console.log(" eventbus, 'unAddressedRoadLinks:fetched'");
 
         var ol3noInfoRoads =
           _.map(_.flatten(unAddressedRoads), function (road) {
