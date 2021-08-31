@@ -183,11 +183,32 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   get("/roadlinks/wholeroadpart/", operation(getRoadLinksOfWholeRoadPartByTrack)) {
     response.setHeader("Access-Control-Allow-Headers", "*")
-    val roadNumber = params("roadnumber").toInt
-    val roadPartNumber = params("roadpart").toInt
-    val trackCode = params("trackcode").toInt
+      val roadNumber: Long = params.get("roadnumber") match {
+        case Some(s) if s != "" && s.toLong != 0 => s.toLong
+        case _ => 0L
+      }
+      val roadPartNumber: Long = params.get("roadpart") match {
+        case Some(s) if s != "" && s.toLong != 0 => s.toLong
+        case _ => 0L
+      }
+    val trackCode: Long = params.get("trackcode") match {
+        case Some(s) if s == "0" || s == "1" || s == "2" => s.toLong
+        case _ => 99L
+      }
+
     time(logger, s"GET request for /roadlinks (roadnumber: $roadNumber) (roadpart: ${roadPartNumber}) (trackcode ${trackCode})") {
-      getRoadAddressLinksByRoadPartNumberAndTrack(roadNumber, roadPartNumber, trackCode)
+      if (roadNumber == 0){
+        BadRequest("Missing mandatory 'roadnumber' parameter")
+      }
+      else if (roadPartNumber == 0) {
+        BadRequest("Missing mandatory 'roadpart' parameter")
+      }
+      else if (trackCode == 99) {
+        BadRequest("Missing mandatory 'trackcode' parameter")
+      }
+      else {
+        getRoadAddressLinksByRoadPartNumberAndTrack(roadNumber, roadPartNumber, trackCode)
+      }
     }
   }
 
