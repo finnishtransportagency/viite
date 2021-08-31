@@ -73,15 +73,46 @@
     var SelectionType = LinkValues.SelectionType;
     var ConstructionType = LinkValues.ConstructionType;
     var Anomaly = LinkValues.Anomaly;
+    var clickedLinearLocationId = 0;
 
     var roadLinks = function () {
       return _.flatten(roadLinkGroups);
     };
+    
+    var selectedRoadNumber = 0;
+    var selectedRoadPartNumber = 0;
 
     var getSelectedRoadLinks = function () {
-      return _.filter(roadLinks().concat(underConstructionRoadLinks()), function (roadLink) {
+      var selected_road = _.find(roadLinks(), function (roadLink) {
         return roadLink.isSelected() && roadLink.getData().anomaly === Anomaly.None.value;
       });
+      if (selected_road) {
+        selectedRoadNumber = selected_road.getData().roadNumber;
+        selectedRoadPartNumber = selected_road.getData().roadPartNumber;
+      }
+    };
+
+    var getGroupByLinearLocationId = function (linearLocationId) {
+      return _.find(roadLinkGroups, function (roadLinkGroup) {
+        return _.some(roadLinkGroup, function (roadLink) {
+          return roadLink.getData().linearLocationId === linearLocationId;
+        });
+      });
+    };
+
+    var updateGroup = function (linearLocationId, fetchedGroups) {
+      var indexOfGroupToBeUpdated = roadLinkGroups.indexOf(getGroupByLinearLocationId(linearLocationId));
+
+      var fetchedGroupThatWasClicked = _.find(fetchedGroups, function (roadLinkGroup) {
+        return _.some(roadLinkGroup, function (roadLink) {
+          return roadLink.getData().linearLocationId === linearLocationId;
+        });
+      });
+
+      fetchedGroupThatWasClicked.forEach((roadLink) => {
+        roadLink.select();
+      });
+      roadLinkGroups[indexOfGroupToBeUpdated] = fetchedGroupThatWasClicked;
     };
 
     this.getDate = function () {
@@ -107,6 +138,14 @@
       });
     };
 
+    this.fetchWholeRoadPart = function (roadNumber, roadPart, trackCode) {
+      backend.getRoadLinksOfWholeRoadPart({
+        roadNumber: roadNumber, roadPartNumber: roadPart, trackCode: trackCode
+      }, function (fetchedRoadLinks) {
+        updateGroupToContainWholeRoadPart(fetchedRoadLinks);
+      });
+    };
+
     this.fetchWithNodes = function (boundingBox, zoom, callback) {
       currentZoom = zoom;
       backend.getNodesAndJunctions({boundingBox: boundingBox, zoom: zoom}, function (fetchedNodesAndJunctions) {
@@ -119,6 +158,21 @@
     eventbus.on("linkProperties:drawUnknowns", function () {
       fetchProcess(currentAllRoadLinks, currentZoom, true);
     });
+
+    var updateGroupToContainWholeRoadPart = function (fetchedRoadLinks, drawUnknowns) {
+
+      var fetchedRoadLinkModels = _.map(fetchedRoadLinks, function (roadLinkGroup) {
+        return _.map(roadLinkGroup, function (roadLink) {
+          return new RoadLinkModel(roadLink);
+        });
+      });
+
+      // update the roadlink group (that was clicked) with the newly fetched road links (containing whole road part instead of just the visible part of the road part)
+      updateGroup(clickedLinearLocationId, fetchedRoadLinkModels);
+
+      eventbus.trigger('roadLinks:fetched:wholeRoadPart');
+    };
+
 
     var fetchProcess = function (fetchedRoadLinks, zoom, drawUnknowns) {
       var selectedLinkIds = _.map(getSelectedRoadLinks(), function (roadLink) {
@@ -233,6 +287,10 @@
       return _.map(roadLinks(), function (roadLink) {
         return roadLink.getData();
       });
+    };
+
+    this.setClickedLinearLocationId = function (linearlocationId) {
+      clickedLinearLocationId = linearlocationId;
     };
 
     this.getUnaddressedRoadLinkGroups = function () {

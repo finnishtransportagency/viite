@@ -172,6 +172,48 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
+  private val getRoadLinksOfWholeRoadPartByTrack: SwaggerSupportSyntax.OperationBuilder = (
+    apiOperation[Seq[Seq[Map[String, Any]]]]("getRoadAddress")
+      .parameters(
+        queryParam[Long]("roadnumber").description("Road number of the road address"),
+        queryParam[Long]("roadpart").description("Road part number of the road address"),
+        queryParam[Long]("trackcode").description("Track code of the road address")
+      )
+      tags "ViiteAPI - RoadAddresses"
+      summary "Returns all the road addresses of the road part that are on the specified track"
+    )
+
+  get("/roadlinks/wholeroadpart/", operation(getRoadLinksOfWholeRoadPartByTrack)) {
+    response.setHeader("Access-Control-Allow-Headers", "*")
+      val roadNumber: Long = params.get("roadnumber") match {
+        case Some(s) if s != "" && s.toLong != 0 => s.toLong
+        case _ => 0L
+      }
+      val roadPartNumber: Long = params.get("roadpart") match {
+        case Some(s) if s != "" && s.toLong != 0 => s.toLong
+        case _ => 0L
+      }
+    val trackCode: Long = params.get("trackcode") match {
+        case Some(s) if s == "0" || s == "1" || s == "2" => s.toLong
+        case _ => 99L
+      }
+
+    time(logger, s"GET request for /roadlinks (roadnumber: $roadNumber) (roadpart: ${roadPartNumber}) (trackcode ${trackCode})") {
+      if (roadNumber == 0){
+        BadRequest("Missing mandatory 'roadnumber' parameter")
+      }
+      else if (roadPartNumber == 0) {
+        BadRequest("Missing mandatory 'roadpart' parameter")
+      }
+      else if (trackCode == 99) {
+        BadRequest("Missing mandatory 'trackcode' parameter")
+      }
+      else {
+        getRoadAddressLinksByRoadPartNumberAndTrack(roadNumber, roadPartNumber, trackCode)
+      }
+    }
+  }
+
   private val getNodesAndJunctions: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Seq[Seq[Map[String, Any]]]]("getNodesAndJunctions")
       .parameters(
@@ -1128,6 +1170,14 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     time(logger, operationName = "Partition road links") {
       val partitionedRoadLinks = RoadAddressLinkPartitioner.groupByHomogeneousSection(viiteRoadLinks)
       (partitionedRoadLinks.map{_.map(roadAddressLinkToApi)}, viiteRoadLinks)
+    }
+  }
+
+  private def getRoadAddressLinksByRoadPartNumberAndTrack(roadNumber: Long, roadPartNumber: Long, trackCode: Long): Seq[Seq[Map[String, Any]]] = {
+    val viiteRoadLinks = roadAddressService.getRoadAddressLinksOfWholeRoadPartAndTrack(roadNumber, roadPartNumber, trackCode)
+    time(logger, operationName = "Partition road links") {
+      val partitionedRoadLinks = RoadAddressLinkPartitioner.groupByHomogeneousSection(viiteRoadLinks)
+      partitionedRoadLinks.map{_.map(roadAddressLinkToApi)}
     }
   }
 
