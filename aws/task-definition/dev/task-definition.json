@@ -79,7 +79,7 @@
         }
     ],
     "memory": "4096",
-    "taskRoleArn": "arn:aws:iam::783354560127:role/Viite-dev-ALB-ECSTaskExecutionRole-1STE9GFL3ZCWY",
+    "taskRoleArn": "arn:aws:iam::783354560127:role/Viite-dev-ALB-ECSTaskExecutionRole-1HNI00KIMUQ5O",
     "family": "Viite",
     "requiresCompatibilities": [
         "FARGATE"
