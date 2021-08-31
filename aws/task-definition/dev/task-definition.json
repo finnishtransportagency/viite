@@ -5,7 +5,7 @@
             "logConfiguration": {
                 "logDriver": "awslogs",
                 "options": {
-                    "awslogs-group": "/ecs/Viite-dev",
+                    "awslogs-group": "/ecs/Viite-ECS-logs",
                     "awslogs-region": "eu-west-1",
                     "awslogs-stream-prefix": "ecs"
                 }
@@ -24,8 +24,8 @@
                 { "name": "eventBus", "value": "fi.liikennevirasto.digiroad2.DigiroadEventBus" },
                 { "name": "vvhServiceHost", "value": "haproxy.vayla.fi" },
                 { "name": "oagProxyServer", "value": "oag.vayla.fi" },
-                { "name": "oagProxyURL", "value": "http://oag.vayla.fi" },
-                { "name": "rasterServiceURL", "value": "http://oag.vayla.fi/rasteripalvelu-mml" },
+                { "name": "oagProxyURL", "value": "https://oag.vayla.fi" },
+                { "name": "rasterServiceURL", "value": "https://oag.vayla.fi/rasteripalvelu-mml" },
                 { "name": "vvhRestApiEndPoint", "value": "https://haproxy.vayla.fi:2027/vvhdata/" },
                 { "name": "vvhRoadlink.frozen", "value": "true" },
                 { "name": "vkmUrl", "value": "https://oag.vayla.fi" },
@@ -79,7 +79,7 @@
         }
     ],
     "memory": "4096",
-    "taskRoleArn": "arn:aws:iam::783354560127:role/Viite-dev-ALB-ECSTaskExecutionRole-1STE9GFL3ZCWY",
+    "taskRoleArn": "arn:aws:iam::783354560127:role/Viite-dev-ALB-ECSTaskExecutionRole-1HNI00KIMUQ5O",
     "family": "Viite",
     "requiresCompatibilities": [
         "FARGATE"
