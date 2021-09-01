@@ -245,7 +245,7 @@ Resources:
       Type: CNAME
       Name: viitealb
       Records:
-        - internal-Viite-ApplicationLoadBalancer-1844865942.eu-west-1.elb.amazonaws.com
+        - !GetAtt PrivateLoadBalancer.DNSName
       Comment: Application load balancer
 
 Outputs:
