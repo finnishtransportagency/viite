@@ -1,15 +1,17 @@
-# CLI autentikointi -skripti
+# AWS CLI käyttö (autentikointi, tunnelointi) 
 
-## Kuvaus
+## AWS CLI autentikointiskripti
 Skripti ```vaylaAssumeRoleAWSCLI.py``` auttaa käyttäjän autentikoitumaan Väylän pääsynhallintaa vasten ja saamaan AWS CLI:lle väliaikaiset credentiaalit.
 Näiden avulla voi sitten mm. ajaa AWS CLI-komentoja sekä kehittää AWS SDK:lla ja CDK:lla.
+Viitten kehitystiimillä on pääsy vain Viiteen kehitysversioon.
 
 ## Käyttöohje
 
-### Esivaatimukset
+Edellytykset skriptin käytölle: Työasemallasi pitää olla asennettuna Python 3.X ja ao. kirjastot.  
+Sinulla täytyy olla koneeltasi pääsy Väylän palveluihin, eli käytännössä (olemassa oleva Väylä-tunnus ja) Väylän VPN:n (2021: Citrix Gateway) on oltava päällä.
+Sitten voitkin käyttää skriptiä autentikoitumiseen.
 
-Työasemallasi pitää olla asennettuna Python 3.X ja ao. kirjastot.
-
+###Python
 #### Pythonin asennus
 
 Tarkista ensin, että sinulla ei jo ole Python 3.X -asennettuna ajamalla komento   
@@ -36,10 +38,17 @@ Kun Python 3 on asennettu, pitää vielä asentaa seuraavat kirjastot:
 Tämä tapahtuu komennolla:   
 ```pip install requests bs4 boto3 pytz```
 
+### Väylätunnukset ja VPN
+Väylän tunnukset ja ohjeet VPN:n käyttöön saat Väylän tuoteomistajan luvalla/pyynnöstä.   
+(Nämä yleensä toki hoidetaan kuntoon heti projektin pariin liittyessäsi.)
 
-### Login jollekin tilille jollekin roolille
+### Login jollekin AWS-tilille, jollekin roolille
 
-Peruskäyttötapa, kun haluataan kredentiaalit jollekin Väyläviraston AWS-tilille, on seuraava:
+Peruskäyttötapa, kun haluataan kredentiaalit jollekin Väyläviraston AWS-tilille, on seuraava _(Huom. Windows, cmd:llä ajo toimii.)_:
+```
+python vaylaAssumeRoleAWSCLI.py --username <Your Väylä username> --account <AWS-tili> --role <haluttu_rooli> --region eu-west-1
+```
+Viitteen tapauksessa tämä on käytännössä:
 ```
 python vaylaAssumeRoleAWSCLI.py --username <Your Väylä username> --account 783354560127 --role ViiteAdmin --region eu-west-1
 ```
@@ -47,6 +56,8 @@ Eli
 ```--username``` -parametrina annetaan Väyläviraston käyttäjätunnus.   
 ```--account``` -parametrina annetaan AWS-tilin numero, jolle ollaan menossa.   
 ```--role``` -parametrina annetaan AWS-tilin roolin nimi, jolle ollaan menossa.   
+```--region``` -parametrina annetaan AWSin eu-west-1 -region, jolla Viitteen palvelut sijaitsevat.   
+(Muista mahdollisista parametreista tarkempi listaus jäljempänä.)
 
 Kun komento ajetaan, kysyy se ensin Väyläviraston käyttäjätunnuksen salasanan.   
 Seuraavaksi se kysyy SMS:nä tulevan PIN-koodin.   
@@ -89,6 +100,24 @@ python vaylaAssumeRoleAWSCLI.py --refresh true
     ```
     python vaylaAssumeRoleAWSCLI.py --refresh true --profile appadmin
     ```
+
+## Tunnelointi
+
+Voit tarvita tunnelointia vaikkapa testataksesi vasta AWSin sisällä pyöriviä, mutta vielä ulospäin näkymättömiä palveluita.
+
+Ennakkovaatimukset: Pystyt kirjautumaan AWS-tilille kuten yllä. Ja sitten pääsy hyppykoneelle / julkinen ssh-avaimesi hyppykoneella.
+
+### SSH-avain hyppykoneelle
+(TODO)
+
+### Putken rakentaminen
+* Loggaudu ensin sisään AWS-tilille, kuten yllä (ks. _Login jollekin AWS-tilille, jollekin roolille_)   
+* Käynnistä AWS:n porttiforwardointi-istunto hyppykoneelle jommalla kummalla skriptillä: aws-ssm-start-session-dev-\[a|b\].sh _(Huom. Windows: Bashilla ajo toimii.)_      
+  Valmiit skriptit avaavat tunnelin lokaalikoneellesi (kirjoitushetkellä vaylaapp-profiilille, portista 22 porttiin 2222, mutta varmista skripteistä)
+* Putkita AWS-yhteytesi tunnelin läpi ssh:lla. _(Huom. Windows, cmd:lla ajo toimii.)_   
+```ssh -i ~/.ssh/id_rsa -p <porttiforwardoinnin lokaaliportti> ec2-user@localhost -L <lokaaliportti jonne palvelu avataan>:<putkitettava_AWS-palvelusi-tai-stackisi>:<AWS-host-portti--usein-http-80>```   
+  Esimerkiksi Viitteen kuormantasaajaan pääset kiinni kytkeytymällä ALBin AWS:n sisäiseen DNS-nimeen:    
+```ssh -i ~/.ssh/id_rsa -p 2222 ec2-user@localhost -L <joku-vapaa-lokaaliportti-koeta-esim-8073>:internal-Viite-Priva-UI82LTCHLWBV-1396902879.eu-west-1.elb.amazonaws.com:80```
 
 ### CodeCommit:in käyttö (Git)
 TODO:

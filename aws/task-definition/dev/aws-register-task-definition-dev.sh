@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Registers new version of the task definition.
+# Registers new version of the task definition to AWS.
 # Before this you must be authenticated. After running this you need to take the new task definition in use for the AWS service.
 # If only the Docker container has changed, you don't need to run this.
 # Usually you need to run this if environment variables have changed.
