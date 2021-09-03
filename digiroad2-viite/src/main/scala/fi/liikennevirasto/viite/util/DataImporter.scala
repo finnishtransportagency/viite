@@ -347,6 +347,7 @@ class DataImporter {
     val linearLocationDAO = new LinearLocationDAO
     val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer, geometryFrozen)
     var changed = 0
+    var skipped = 0 /// For log information about update-skipped linear locations, skip due to sameness to the old data
     withLinkIdChunks {
       case (min, max) =>
         withDynTransaction {
@@ -359,6 +360,9 @@ class DataImporter {
             segmentsOnViiteDatabase.foreach(segment => {
               val newGeom = GeometryUtils.truncateGeometry3D(roadLink.geometry, segment.startMValue, segment.endMValue)
               if (!segment.geometry.equals(Nil) && !newGeom.equals(Nil)) {
+                if(skipped%100==0 && skipped>0){ // print some progress info, though nothing has been changing for a while
+                  println(s"Skipped geometry updates on ${skipped} linear locations")
+                }
                 val distanceFromHeadToHead = segment.geometry.head.distance2DTo(newGeom.head)
                 val distanceFromHeadToLast = segment.geometry.head.distance2DTo(newGeom.last)
                 val distanceFromLastToHead = segment.geometry.last.distance2DTo(newGeom.head)
@@ -367,16 +371,24 @@ class DataImporter {
                   (distanceFromHeadToLast > MinDistanceForGeometryUpdate)) ||
                   ((distanceFromLastToHead > MinDistanceForGeometryUpdate) &&
                     (distanceFromLastToLast > MinDistanceForGeometryUpdate))) {
+                  if(skipped>0){
+                    println(s"Skipped geometry updates on ${skipped} linear locations (minimal or no change on geometry)")
+                    skipped = 0
+                  }
                   updateGeometry(segment.id, newGeom)
                   println("Changed geometry on linear location id " + segment.id + " and linkId =" + segment.linkId)
                   changed += 1
                 } else {
-                  println(s"Skipped geometry update on linear location ID : ${segment.id} and linkId: ${segment.linkId}")
+//                  println(s"Skipped geometry update on linear location ID : ${segment.id} and linkId: ${segment.linkId}")
+                  skipped +=1
                 }
               }
             })
           })
         }
+    }
+    if(skipped>0){
+      println(s"Skipped geometry updates on ${skipped} linear locations")
     }
     println(s"Geometries changed count: $changed")
   }

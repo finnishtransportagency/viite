@@ -261,7 +261,7 @@ trait VVHClientOperations {
 
   protected implicit val jsonFormats: Formats = DefaultFormats
 
-  protected def mapFields(content: Map[String, Any], url: String): Either[List[Map[String, Any]], VVHError]
+  protected def mapFields(content: Map[String, Any], url: String): Either[VVHError, List[Map[String, Any]]]
 
   protected def defaultOutFields(): String
 
@@ -355,39 +355,67 @@ trait VVHClientOperations {
     URLEncoder.encode(layerDefinitionWithoutEncoding(filter, customFieldSelection), "UTF-8")
   }
 
-  protected def fetchVVHFeatures(url: String): Either[List[Map[String, Any]], VVHError] = {
-    time(logger, s"Fetch VVH features with url '$url'") {
-      val request = new HttpGet(url)
-      val client = HttpClientBuilder.create().build()
-      var response: CloseableHttpResponse = null
-      try {
-        response = client.execute(request)
-        mapFields(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]], url)
-      } catch {
-        case _: IOException => Right(VVHError(Map(("VVH FETCH failure", "IO Exception during VVH fetch. Check connection to VVH")), url))
-      } finally {
-        if (response != null) {
-          response.close()
-          if (response.getStatusLine.getStatusCode >= 300) {
-            return Right(VVHError(Map(("VVH FETCH failure", "VVH response code was <300 (unsuccessful)")), url))
+
+  /** Tries up to ten times to fetch the given <i>url</i> from VVH.
+    * @return Right(mapFields---) in success, or an Left(VVHError) at the end of the tenth failed try.
+    */
+  protected def fetchVVHFeatures(url: String): Either[VVHError, List[Map[String, Any]]] = {
+    val MaxTries = 10
+    var trycounter = 0 /// For do-while check. Up to MaxTries.
+    var success = true /// For do-while check. Set to false when exception.
+    var result : Either[VVHError, List[Map[String, Any]]] = Left(VVHError(Map(("Dummy start value", "nothing here")), url))
+
+    do {
+      trycounter += 1
+      success = true
+      result = time(logger, s"Fetch VVH features, (try $trycounter)") {
+        val request = new HttpGet(url)
+        val client = HttpClientBuilder.create().build()
+        var response: CloseableHttpResponse = null
+
+        try {
+          response = client.execute(request)
+          mapFields(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]], url)
+        } catch {
+          case e: IOException => {
+            success = false
+            // Before the last possible try, log the failure. If the last try, just return the error.
+            if (trycounter < MaxTries) {
+              logger.warn(s"fetching $url failed, try $trycounter. IO Exception during VVH fetch. Exception: $e")
+              Left(VVHError(Map((
+                s"VVH FETCH failure, try $trycounter.",
+                "IO Exception during VVH fetch. Trying again.")), url))
+            }
+            else // basically, if(trycounter == MaxTries)
+              Left(VVHError(Map((
+                "VVH FETCH failure, tried ten (10) times, giving up.",
+                "IO Exception during VVH fetch. Check connection to VVH")), url))
           }
-        } else {
-          return Right(VVHError(Map(("VVH FETCH failure", "VVH response was null.")), url))
+        } finally {
+          if (response != null) {
+            response.close()
+          }
         }
       }
-    }
+      result match {
+        case Left(a) => println(s"entering round ${trycounter +1}")
+        case Right(b) => Unit
+      }
+
+    } while (trycounter < MaxTries && !success)
+    result
   }
 
   protected def fetchFeaturesAndLog(url: String): Seq[VVHType] = {
     fetchVVHFeatures(url) match {
-      case Left(features) => features.map(extractVVHFeature)
-      case Right(error) =>
+      case Right(features) => features.map(extractVVHFeature)
+      case Left(error) =>
         logger.error("VVH error: " + error)
         throw new VVHClientException(error.toString)
     }
   }
 
-  protected def fetchVVHFeatures(url: String, formparams: util.ArrayList[NameValuePair]): Either[List[Map[String, Any]], VVHError] = {
+  protected def fetchVVHFeatures(url: String, formparams: util.ArrayList[NameValuePair]): Either[VVHError, List[Map[String, Any]]] = {
     time(logger, s"Fetch VVH features with url '$url'") {
       val request = new HttpPost(url)
       request.setEntity(new UrlEncodedFormEntity(formparams, "utf-8"))
@@ -399,11 +427,11 @@ trait VVHClientOperations {
         } finally {
           response.close()
           if (response.getStatusLine.getStatusCode >= 300) {
-          return  Right(VVHError(Map(("VVH FETCH failure", "VVH response code was <300 (unsuccessful)")), url))
+          return  Left(VVHError(Map(("VVH FETCH failure", "VVH response code was <300 (unsuccessful)")), url))
           }
         }
       } catch {
-        case _: IOException => Right(VVHError(Map(("VVH FETCH failure", "IO Exception during VVH fetch. Check connection to VVH")), url))
+        case _: IOException => Left(VVHError(Map(("VVH FETCH failure", "IO Exception during VVH fetch. Check connection to VVH")), url))
       }
     }
   }
@@ -510,11 +538,11 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations 
     "MTKID,LINKID,MUNICIPALITYCODE,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,GEOMETRYLENGTH"
   }
 
-  protected override def mapFields(content: Map[String, Any], url: String): Either[List[Map[String, Any]], VVHError] = {
+  protected override def mapFields(content: Map[String, Any], url: String): Either[VVHError, List[Map[String, Any]]] = {
     val optionalLayers = content.get("layers").map(_.asInstanceOf[List[Map[String, Any]]])
     val optionalFeatureLayer = optionalLayers.flatMap { layers => layers.find { layer => layer.contains("features") } }
     val optionalFeatures = optionalFeatureLayer.flatMap { featureLayer => featureLayer.get("features").map(_.asInstanceOf[List[Map[String, Any]]]) }
-    optionalFeatures.map(_.filter(roadLinkStatusFilter)).map(Left(_)).getOrElse(Right(VVHError(content, url)))
+    optionalFeatures.map(_.filter(roadLinkStatusFilter)).map(Right(_)).getOrElse(Left(VVHError(content, url)))
   }
 
   /**
@@ -571,12 +599,12 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations 
       val url = serviceUrl(definition, queryParameters(fetchGeometry))
 
       fetchVVHFeatures(url) match {
-        case Left(features) => features.map { feature =>
+        case Right(features) => features.map { feature =>
           val attributes = extractFeatureAttributes(feature)
           val geometry = if (fetchGeometry) extractFeatureGeometry(feature) else Nil
           resultTransition(attributes, geometry)
         }
-        case Right(error) =>
+        case Left(error) =>
           logger.error("VVH error: " + error)
           throw new VVHClientException(error.toString)
       }
@@ -828,11 +856,11 @@ class VVHChangeInfoClient(vvhRestApiEndPoint: String) extends VVHClientOperation
     "OLD_ID,NEW_ID,MTKID,CHANGETYPE,OLD_START,OLD_END,NEW_START,NEW_END,CREATED_DATE,CONSTRUCTIONTYPE"
   }
 
-  protected override def mapFields(content: Map[String, Any], url: String): Either[List[Map[String, Any]], VVHError] = {
+  protected override def mapFields(content: Map[String, Any], url: String): Either[VVHError, List[Map[String, Any]]] = {
     val optionalLayers = content.get("layers").map(_.asInstanceOf[List[Map[String, Any]]])
     val optionalFeatureLayer = optionalLayers.flatMap { layers => layers.find { layer => layer.contains("features") } }
     val optionalFeatures = optionalFeatureLayer.flatMap { featureLayer => featureLayer.get("features").map(_.asInstanceOf[List[Map[String, Any]]]) }
-    optionalFeatures.map(Left(_)).getOrElse(Right(VVHError(content, url)))
+    optionalFeatures.map(Right(_)).getOrElse(Left(VVHError(content, url)))
   }
 
   protected override def extractVVHFeature(feature: Map[String, Any]): ChangeInfo = {
@@ -987,7 +1015,7 @@ class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvh
     "MTKID,LINKID,MUNICIPALITYCODE,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,END_DATE,CREATED_DATE,CONSTRUCTIONTYPE,GEOMETRYLENGTH"
   }
 
-  protected override def mapFields(content: Map[String, Any], url: String): Either[List[Map[String, Any]], VVHError] = {
+  protected override def mapFields(content: Map[String, Any], url: String): Either[VVHError, List[Map[String, Any]]] = {
     val optionalFeatures = if (content.contains("layers")) {
       val optionalLayers = content.get("layers").map(_.asInstanceOf[List[Map[String, Any]]])
       val optionalFeatureLayer = optionalLayers.flatMap { layers => layers.find { layer => layer.contains("features") } }
@@ -996,7 +1024,7 @@ class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvh
     else {
       content.get("features").map(_.asInstanceOf[List[Map[String, Any]]])
     }
-    optionalFeatures.map(Left(_)).getOrElse(Right(VVHError(content, url)))
+    optionalFeatures.map(Right(_)).getOrElse(Left(VVHError(content, url)))
   }
 
   protected def extractVVHHistoricFeature(feature: Map[String, Any]): VVHHistoryRoadLink = {
@@ -1038,8 +1066,8 @@ class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvh
         val url = serviceUrl(definition, queryParameters())
 
         fetchVVHFeatures(url) match {
-          case Left(features) => features.map(extractVVHHistoricFeature)
-          case Right(error) =>
+          case Right(features) => features.map(extractVVHHistoricFeature)
+          case Left(error) =>
             logger.error("VVH error: " + error)
             throw new VVHClientException(error.toString)
         }
