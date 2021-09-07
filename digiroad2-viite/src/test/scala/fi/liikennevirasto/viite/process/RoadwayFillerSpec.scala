@@ -171,7 +171,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       val roadwayChanges = roadways.values.map(r => RoadwayFiller.RwChanges(r, Seq.empty[Roadway], projectLinks.filterNot(_.status == LinkStatus.New))).toSeq
       val result2 = RoadwayFiller.applyRoadwayChanges(roadwayChanges).flatten.filter(_._1.nonEmpty)
       val result3 = RoadwayFiller.applyNewLinks(projectLinks.filter(_.status == LinkStatus.New))
-      val result = (result2.flatMap(_._1) ++ result3.flatMap(_._1)).groupBy(_.roadwayNumber).values.toSeq.sortBy(_.sortBy(_.startAddrMValue).head.startAddrMValue)
+      val result = (result2.flatMap(_._1) ++ result3.flatMap(_._1)).groupBy(_.roadwayNumber).values.toSeq.sortBy(_.head.endAddrMValue)
 
       result.size should be(4)
       //Unchanged
