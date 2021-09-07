@@ -53,9 +53,12 @@ object RoadwayFiller {
         })
         (historyRowsOfTerminatedRoadway, roadwayAddressMapper.mapLinearLocations(oldTerminatedRoadway.get, terminatedProjectLinksWithGivenAttributes), terminatedProjectLinksWithGivenAttributes)
       } else (Seq(), Seq(), Seq())
-      val existingHistoryRoadways = if(projectLinksInRoadway.forall(pl => pl.status != LinkStatus.Terminated)) {
+
+      val existingHistoryRoadways = if (projectLinksInRoadway.forall(pl => pl.status != LinkStatus.Terminated)) {
         (historyRoadways.map(rw => rw.copy(id = NewIdValue, roadwayNumber = roadways._1.head.roadwayNumber)), Seq(), Seq())
-      }else (Seq(), Seq(), Seq())
+      } else {
+        (Seq(), Seq(), Seq())
+      }
 
       Seq(roadways, createdTerminatedHistoryRoadways, existingHistoryRoadways)
     })
