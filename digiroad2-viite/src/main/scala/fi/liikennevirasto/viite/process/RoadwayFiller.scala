@@ -11,7 +11,7 @@ import org.joda.time.DateTime
 object RoadwayFiller {
   case class RwChanges(currentRoadway: Roadway, historyRoadways: Seq[Roadway], projectLinks: Seq[ProjectLink])
 
-  private val projectDAO = new ProjectDAO
+  val projectDAO = new ProjectDAO
 
   def applyRoadwayChanges(rwChanges: Seq[RwChanges]): Seq[Seq[(Seq[Roadway], Seq[LinearLocation], Seq[ProjectLink])]] = {
     rwChanges.map(changes => {
