@@ -103,7 +103,7 @@ object ProjectDeltaCalculator {
     val sameStatus = pl1.status == pl2.status
     val bothNew = pl1.status == LinkStatus.New && pl2.status == LinkStatus.New && pl1.track != Track.Combined && pl2.track != Track.Combined
     val matchAddr = pl1.endAddrMValue == pl2.startAddrMValue
-    val isContinuous = pl1.discontinuity == Discontinuity.Continuous
+    val matchContinuity = pl1.discontinuity == Discontinuity.Continuous
     val oppositePl1 = allNonTerminatedProjectLinks.filter( pl => pl.track != pl1.track && pl.track != Track.Combined && pl.endAddrMValue == pl1.endAddrMValue).filter(_.status != LinkStatus.Terminated)
     val oppositePl2 = allNonTerminatedProjectLinks.filter( pl => pl.track != pl1.track && pl.track != Track.Combined && pl.startAddrMValue == pl1.endAddrMValue).filter(_.status != LinkStatus.Terminated)
     val oppositeStatusChange = oppositePl1.nonEmpty && oppositePl2.nonEmpty && oppositePl1.last.status != oppositePl2.last.status
@@ -113,11 +113,11 @@ object ProjectDeltaCalculator {
     val originalTrackContinuous = pl1.originalTrack == pl2.originalTrack
     val administrativeClassesMatch = pl1.administrativeClass == pl2.administrativeClass
 
-    val hasParallelLinkOnCalibrationPoint = hasCalibrationPoint && bothNew && isContinuous && allNonTerminatedProjectLinks.exists(pl => {
+    val hasParallelLinkOnCalibrationPoint = hasCalibrationPoint && bothNew && matchContinuity && allNonTerminatedProjectLinks.exists(pl => {
       pl.roadNumber == pl1.roadNumber && pl.roadPartNumber == pl1.roadPartNumber && pl.status != LinkStatus.Terminated && pl.track != pl1.track && pl.track != Track.Combined && pl.endAddrMValue == pl1.endAddrMValue && pl.hasCalibrationPointAtEnd
     })
 
-    if (!oppositeStatusChange && (matchAddr && sameStatus && isContinuous && administrativeClassesMatch && trackNotUpdated && originalTrackContinuous && oppositeTrackNotUpdated && !(hasCalibrationPoint || hasParallelLinkOnCalibrationPoint)) &&
+    if (!oppositeStatusChange && (matchAddr && sameStatus && matchContinuity && administrativeClassesMatch && trackNotUpdated && originalTrackContinuous && oppositeTrackNotUpdated && !(hasCalibrationPoint || hasParallelLinkOnCalibrationPoint)) &&
         administrativeClassesMatch) {
       Seq(
             pl1.copy(endAddrMValue = pl2.endAddrMValue, discontinuity = pl2.discontinuity,
