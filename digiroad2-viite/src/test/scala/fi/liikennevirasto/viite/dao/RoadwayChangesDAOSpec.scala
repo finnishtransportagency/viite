@@ -1,15 +1,14 @@
 package fi.liikennevirasto.viite.dao
 
-import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
+import fi.liikennevirasto.digiroad2.asset.AdministrativeClass.{Municipality, State}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.NewIdValue
-import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{JunctionPointCP, NoCP, RoadAddressCP}
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
-import fi.liikennevirasto.viite.process._
-import fi.liikennevirasto.viite.util.projectLinkDAO
+import fi.liikennevirasto.viite.util.{projectLinkDAO, projectReservedPartDAO}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
@@ -94,6 +93,68 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
       changes.foreach(c => {
         c.changeInfo.target.ely.get should be(5)
       })
+    }
+  }
+
+  test("Test RoadwayChangesDAO().insertDeltaToRoadChangeTable() When .") {
+    val projId1      = 1
+    runWithRollback {
+    val (rw1,rw2,rw3,rw4,rw5) = (Sequences.nextRoadwayId, Sequences.nextRoadwayId, Sequences.nextRoadwayId, Sequences.nextRoadwayId, Sequences.nextRoadwayId)
+    val projectLink1 = ProjectLink(1, 1, 1, Track.LeftSide, Discontinuity.Continuous, 15, 20, 0, 5, None, None, Some("test"), 0, 0.0, 0.0, SideCode.Unknown, (JunctionPointCP, RoadAddressCP), (JunctionPointCP, JunctionPointCP), List(), projId1, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, 0.0, rw1, 0, 5, reversed = true, None, 748800L, 1111)
+    val projectLink2 = ProjectLink(2, 1, 1, Track.RightSide, Discontinuity.Continuous, 15, 20, 0, 5, None, None, Some("test"), 0, 0.0, 0.0, SideCode.Unknown, (JunctionPointCP, JunctionPointCP), (JunctionPointCP, JunctionPointCP), List(), projId1, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, 0.0, rw2, 0, 5, reversed = true, None, 748800L, 1112)
+    val projectLink3 = ProjectLink(3, 1, 1, Track.LeftSide, Discontinuity.Continuous, 10, 15, 5, 10, None, None, Some("test"), 0, 0.0, 0.0, SideCode.Unknown, (RoadAddressCP, JunctionPointCP), (JunctionPointCP, NoCP), List(), projId1, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, 0.0, rw1, 0, 5, reversed = true, None, 748800L, 1111)
+    val projectLink4 = ProjectLink(4, 1, 1, Track.RightSide, Discontinuity.Continuous, 10, 15, 5, 10, None, None, Some("test"), 0, 0.0, 0.0, SideCode.Unknown, (RoadAddressCP, JunctionPointCP), (JunctionPointCP, NoCP), List(), projId1, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, 0.0, rw2, 0, 5, reversed = true, None, 748800L, 1112)
+    val projectLink5 = ProjectLink(5, 1, 1, Track.Combined, Discontinuity.Continuous, 0, 10, 10, 20, None, None, Some("test"), 0, 0.0, 0.0, SideCode.Unknown, (RoadAddressCP, RoadAddressCP), (NoCP, RoadAddressCP), List(), projId1, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, 0.0, rw3, 0, 5, reversed = true, None, 748800L, 1113)
+
+    val projectLink6 = ProjectLink(6, 1, 1, Track.LeftSide, Discontinuity.Continuous, 20, 25, 0, 5, None, None, Some("test"), 0, 0.0, 0.0, SideCode.Unknown, (RoadAddressCP, JunctionPointCP), (JunctionPointCP, JunctionPointCP), List(), projId1, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, 0.0, rw4, 0, 5, reversed = false, None, 748800L, 2221)
+    val projectLink7 = ProjectLink(7, 1, 1, Track.RightSide, Discontinuity.Discontinuous, 20, 60, 0, 40, None, None, Some("test"), 0, 0.0, 0.0, SideCode.Unknown, (JunctionPointCP, RoadAddressCP), (JunctionPointCP, JunctionPointCP), List(), projId1, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, 0.0, rw5, 0, 5, reversed = false, None, 748800L, 2222)
+    val projectLink8 = ProjectLink(8, 1, 1, Track.LeftSide, Discontinuity.Discontinuous, 25, 60, 5, 40, None, None, Some("test"), 0, 0.0, 0.0, SideCode.Unknown, (JunctionPointCP, RoadAddressCP), (JunctionPointCP, JunctionPointCP), List(), projId1, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, 0.0, rw4, 0, 5, reversed = false, None, 748800L, 2221)
+
+
+      val rap = dummyProject(projId1, ProjectState.Incomplete, List(ProjectReservedPart(1, 1, 1), ProjectReservedPart(1, 2, 1)), None)
+      projectDAO.create(rap)
+      projectReservedPartDAO.reserveRoadPart(projId1, 1, 1, "test")
+      projectReservedPartDAO.reserveRoadPart(projId1, 2, 1, "test")
+      val reservedParts     = projectReservedPartDAO.fetchReservedRoadParts(projId1)
+      val project1   = projectDAO.fetchById(projId1).get
+      val rw         = Seq(
+        Roadway(rw1, projectLink1.roadwayNumber, 1, 1, AdministrativeClass.Municipality, Track.RightSide, Discontinuity.Continuous, 0, 10, reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 5L, NoTermination),
+        Roadway(rw2, projectLink2.roadwayNumber, 1, 1, AdministrativeClass.Municipality, Track.LeftSide, Discontinuity.Continuous, 0, 10, reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 5L, NoTermination),
+        Roadway(rw3, projectLink5.roadwayNumber, 1, 1, AdministrativeClass.Municipality, Track.Combined, Discontinuity.Discontinuous, 10, 20, reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 5L, NoTermination),
+
+        Roadway(rw4, projectLink6.roadwayNumber, 2, 1, AdministrativeClass.Municipality, Track.LeftSide, Discontinuity.Discontinuous, 0, 40, reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 5L, NoTermination),
+        Roadway(rw5, projectLink7.roadwayNumber, 2, 1, AdministrativeClass.Municipality, Track.RightSide, Discontinuity.Discontinuous, 0, 40, reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 5L, NoTermination)
+
+      )
+      val roadwayDAO = new RoadwayDAO
+      roadwayDAO.create(rw)
+      projectLinkDAO.create(Seq(projectLink1, projectLink2, projectLink3, projectLink4, projectLink5, projectLink6, projectLink7, projectLink8))
+//      val reservedParts     = Seq(ProjectReservedPart(0, 1, 1, Some(0), Some(Discontinuity.Discontinuous), Some(8L), None, None, None, Some(12345L)))
+
+      val roadwayChangesDAO = new RoadwayChangesDAO()
+      roadwayChangesDAO.insertDeltaToRoadChangeTable(projId1, Some(project1.copy(reservedParts = reservedParts)))
+      val changes = roadwayChangesDAO.fetchRoadwayChanges(Set(1))
+      changes should have size 2
+      changes.foreach(c => {
+        c.changeInfo.source.roadNumber.get should be(1)
+        c.changeInfo.source.startRoadPartNumber.get should be(1)
+        c.changeInfo.source.trackCode.get should be(0)
+        c.changeInfo.source.ely.get should be(5)
+        c.changeInfo.target.roadNumber.get should be(1)
+        c.changeInfo.target.startRoadPartNumber.get should be(1)
+        c.changeInfo.target.trackCode.get should be(0)
+        c.changeInfo.target.ely.get should be(5)
+      })
+      val (changesToMunicipality, changesToState) = changes.sortBy(_.changeInfo.orderInChangeTable).partition(_.changeInfo.target.startAddressM.get == 0)
+      changesToMunicipality.head.changeInfo.source.administrativeClass should be(Some(Municipality))
+      changesToMunicipality.head.changeInfo.target.administrativeClass should be(Some(Municipality))
+      changesToMunicipality.head.changeInfo.source.discontinuity should be(Some(Discontinuity.Continuous))
+      changesToMunicipality.head.changeInfo.target.discontinuity should be(Some(Discontinuity.Continuous))
+
+      changesToState.head.changeInfo.source.administrativeClass should be(Some(Municipality))
+      changesToState.head.changeInfo.target.administrativeClass should be(Some(State))
+      changesToState.head.changeInfo.source.discontinuity should be(Some(Discontinuity.Discontinuous))
+      changesToState.head.changeInfo.target.discontinuity should be(Some(Discontinuity.Discontinuous))
     }
   }
 
