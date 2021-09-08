@@ -11,6 +11,8 @@ import org.joda.time.DateTime
 object RoadwayFiller {
   case class RwChanges(currentRoadway: Roadway, historyRoadways: Seq[Roadway], projectLinks: Seq[ProjectLink])
 
+  val projectDAO = new ProjectDAO
+
   def applyRoadwayChanges(rwChanges: Seq[RwChanges]): Seq[Seq[(Seq[Roadway], Seq[LinearLocation], Seq[ProjectLink])]] = {
     rwChanges.map(changes => {
       val currentRoadway                               = changes.currentRoadway
@@ -19,13 +21,14 @@ object RoadwayFiller {
       val (terminatedProjectLinks, others)             = projectLinksInRoadway.partition(_.status == LinkStatus.Terminated)
       val administrativeClassDiscontinuityOrElyChanged = if (others.nonEmpty) currentRoadway.administrativeClass != others.head.administrativeClass || currentRoadway.discontinuity != others.last.discontinuity || currentRoadway.ely != others.head.ely else false
       val lengthChanged                                = if (others.nonEmpty) (others.last.endAddrMValue - others.head.startAddrMValue) != (currentRoadway.endAddrMValue - currentRoadway.startAddrMValue) else false
+      val project = projectDAO.fetchById(projectLinksInRoadway.head.projectId)
 
       val roadways = if (others.exists(pl => {
         pl.roadwayNumber != currentRoadway.roadwayNumber || pl.reversed
       }) || administrativeClassDiscontinuityOrElyChanged || lengthChanged) {
         val rwGroupedProjectLinks                      = others.groupBy(_.roadwayNumber)
         val roadwaysWithLinearlocationsAndProjectLinks = rwGroupedProjectLinks.values.flatMap(pls => {
-          val rws                        = generateNewRoadwaysWithHistory2(pls, currentRoadway, projectLinksInRoadway.head.startDate.get, pls.head.roadwayNumber)
+          val rws                        = generateNewRoadwaysWithHistory2(pls, currentRoadway, project.get.startDate, pls.head.roadwayNumber)
           val (new_roadway, old_roadway) = rws.partition(_.endDate.isEmpty)
           new_roadway.map(nr => {
             val projectLinksWithGivenAttributes = pls.map(pl => {
@@ -86,13 +89,14 @@ object RoadwayFiller {
     val reversed         = projectLinks.forall(pl => pl.reversed)
     val newStartAddressM = if (reversed) lastProjectLink.originalStartAddrMValue else headProjectLink.originalStartAddrMValue
     val newEndAddressM   = if (reversed) headProjectLink.originalEndAddrMValue else lastProjectLink.originalEndAddrMValue
+    val oldAdministrativeClass = headProjectLink.originalAdministrativeClass
 
     val historyRoadway   = Roadway(
                             NewIdValue,
                             roadwayNumber,
                             currentRoadway.roadNumber,
                             currentRoadway.roadPartNumber,
-                            currentRoadway.administrativeClass,
+                            oldAdministrativeClass,
                             currentRoadway.track,
                             currentRoadway.discontinuity,
                             newStartAddressM,
