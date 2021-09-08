@@ -2,10 +2,8 @@ package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.RightSide
-import fi.liikennevirasto.{GeometryUtils, viite}
-import fi.liikennevirasto.viite.dao.LinkStatus._
+import fi.liikennevirasto.viite
 import fi.liikennevirasto.viite.dao.{ProjectLink, _}
-import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import org.joda.time.DateTime
 
 /**
@@ -329,7 +327,7 @@ object ProjectDeltaCalculator {
   def partitionWithProjectLinks(projectLinks: Seq[ProjectLink], allNonTerminatedProjectLinks: Seq[ProjectLink]): ChangeTableRows2 = {
     val (terminated, others) = projectLinks.partition(_.status == LinkStatus.Terminated)
     val grouped = others.groupBy(pl => {
-      (pl.roadNumber, pl.roadPartNumber, pl.track)
+      (pl.roadNumber, pl.roadPartNumber, pl.track, pl.reversed)
     }) ++ terminated.groupBy((_.roadwayNumber))
 
     val sectioned    = grouped.mapValues((pls: Seq[ProjectLink]) => {
