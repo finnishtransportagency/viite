@@ -1,19 +1,29 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LinkGeomSource, SideCode}
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
+import fi.liikennevirasto.viite.Dummies
+import fi.liikennevirasto.viite.Dummies._
+import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous}
+import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao._
+import fi.liikennevirasto.viite.util.toProjectLink
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
-import fi.liikennevirasto.viite.Dummies._
-import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
-import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
-import fi.liikennevirasto.viite.util.toProjectLink
+import slick.driver.JdbcDriver.backend.Database
+import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
 class TrackSectionOrderSpec extends FunSuite with Matchers {
+
+  private def runWithRollback(f: => Unit): Unit = {
+    Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
+      f
+      dynamicSession.rollback()
+    }
+  }
 
   private def toDummyProjectLink(id: Long, geom: Seq[Point], track: Track = Track.Combined) = {
     dummyProjectLink(1L, 1L, track, Discontinuity.Continuous, 0, 10, Some(DateTime.now), linkId = id, status = LinkStatus.NotHandled, geometry = geom)
@@ -295,6 +305,46 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     val (chainStartPointLink, chainEndPointLink) = (endPoints.head, endPoints.last)
     chainStartPointLink._1 should be (chainStartPointLink._2.startingPoint)
     chainEndPointLink._1 should be (chainEndPointLink._2.endPoint)
+  }
+
+  test("Test orderProjectLinksTopologyByGeometry When ") {
+      val points1 = Seq(Point( 0, 0),Point(10, 0))
+    val points2 = Seq(Point(10, 0),Point(20, 0))
+    val points3 = Seq(Point(20, 0),Point(30, 0))
+    val (rwn1,rwn2) = (99998,99999)
+
+    val projectLinks = List(
+      Dummies.dummyProjectLink(1,1,Track.Combined,Continuous,0,10,None,None,0,0,10,SideCode.TowardsDigitizing,LinkStatus.Transfer, geometry=points1, roadwayNumber=rwn1),
+      Dummies.dummyProjectLink(1,1,Track.Combined,Continuous,10,20,None,None,0,0,10,SideCode.TowardsDigitizing,LinkStatus.Transfer, geometry=points2, roadwayNumber=rwn1),
+      Dummies.dummyProjectLink(1,1,Track.Combined,Discontinuous,20,30,None,None,1,0,30,SideCode.AgainstDigitizing,LinkStatus.Transfer, geometry=points3, roadwayNumber=rwn2)
+    )
+    runWithRollback {
+      val (rightOrdered, _) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(0, 0), Point(30, 0)), projectLinks)
+      rightOrdered.map(_.sideCode).foreach(sidecode => sidecode should be(SideCode.TowardsDigitizing))
+    }
+  }
+  test("Test orderProjectLinksTopologyByGeometry When a part of a road is transfered to another road sidecodes should be equal and the transfered part ith opposite sidecode should be reversed.") {
+    val points1 = Seq(Point( 0, 0),Point(10, 0))
+    val points2 = Seq(Point(10, 0),Point(20, 0))
+    val points3 = Seq(Point(20, 0),Point(30, 0))
+    val (rwn1,rwn2) = (99998,99999)
+
+    val projectLinks = List(
+      Dummies.dummyProjectLink(1,1,Track.Combined,Continuous,0,10,None,None,0,0,10,SideCode.TowardsDigitizing,LinkStatus.UnChanged, geometry=points1, roadwayNumber=rwn1).copy(roadwayId = 0),
+      Dummies.dummyProjectLink(1,1,Track.Combined,Continuous,10,20,None,None,0,0,10,SideCode.TowardsDigitizing,LinkStatus.UnChanged, geometry=points2, roadwayNumber=rwn1).copy(roadwayId = 0),
+      Dummies.dummyProjectLink(1,1,Track.Combined,Discontinuous,20,30,None,None,1,0,10,SideCode.AgainstDigitizing,LinkStatus.Transfer, geometry=points3, roadwayNumber=rwn2).copy(roadwayId = 1)
+    )
+    runWithRollback {
+      val rw         = Seq(
+        Roadway(0, rwn1, 1, 1, AdministrativeClass.State, Track.Combined, Discontinuity.Discontinuous, 0, 20, reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 8L, NoTermination),
+        Roadway(1, rwn2, 2, 1, AdministrativeClass.State, Track.Combined, Discontinuity.Discontinuous, 0, 10, reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 8L, NoTermination)
+      )
+      val roadwayDAO = new RoadwayDAO
+      roadwayDAO.create(rw)
+      val (rightOrdered, _) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(0, 0), Point(30, 0)), projectLinks)
+      rightOrdered.map(_.sideCode).foreach(sidecode => sidecode should be(SideCode.TowardsDigitizing))
+      rightOrdered.map(_.reversed) should be(List(false,false,true))
+    }
   }
 
 }
