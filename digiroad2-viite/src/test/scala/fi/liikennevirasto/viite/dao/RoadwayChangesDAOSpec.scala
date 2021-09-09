@@ -1,15 +1,14 @@
 package fi.liikennevirasto.viite.dao
 
-import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
+import fi.liikennevirasto.digiroad2.asset.AdministrativeClass.{Municipality, State}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.NewIdValue
-import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
-import fi.liikennevirasto.viite.process._
-import fi.liikennevirasto.viite.util.projectLinkDAO
+import fi.liikennevirasto.viite.util.{projectLinkDAO, projectReservedPartDAO}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
@@ -49,7 +48,6 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
         5170979, 1500079296000, 1, ST_GeomFromText('LINESTRING EMPTY', 3067), 0, 86, NULL,
         3, 3, 3, 3
       )""".execute
-
   }
 
   test("Test RoadwayChangesDAO().fetchRoadwayChanges() When searching for changes on a project with roadway changes Then return said changes."){
@@ -94,6 +92,49 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
       changes.foreach(c => {
         c.changeInfo.target.ely.get should be(5)
       })
+    }
+  }
+
+  test("Test RoadwayChangesDAO().insertDeltaToRoadChangeTable() When administrative class changes in the middle of an existing road.") {
+    val projId1      = 1
+    val projectLink1 = ProjectLink(1, 1, 1, Track.Combined, Discontinuity.Continuous, 0, 10, 0, 10, None, None, Some("test"), 0, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), List(), projId1, LinkStatus.UnChanged, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 5, reversed = false, None, 748800L, 1111)
+    val projectLink2 = ProjectLink(2, 1, 1, Track.Combined, Discontinuity.Continuous, 10, 20, 10, 20, None, None, Some("test"), 0, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), List(), projId1, LinkStatus.UnChanged, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 5, reversed = false, None, 748800L, 1111)
+    val projectLink3 = ProjectLink(3, 1, 1, Track.Combined, Discontinuity.Continuous, 20, 30, 20, 30, None, None, Some("test"), 0, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), List(), projId1, LinkStatus.UnChanged, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 5, reversed = false, None, 748800L, 1111)
+    val projectLink4 = ProjectLink(4, 1, 1, Track.Combined, Discontinuity.Discontinuous, 30, 40, 30, 40, None, None, Some("test"), 0, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), List(), projId1, LinkStatus.UnChanged, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 5, reversed = false, None, 748800L, 1111)
+    runWithRollback {
+      val rap = dummyProject(projId1, ProjectState.Incomplete, List(ProjectReservedPart(1, 1, 1)), None)
+      projectDAO.create(rap)
+      projectReservedPartDAO.reserveRoadPart(projId1, 1, 1, "test")
+      val project1   = projectDAO.fetchById(projId1).get
+      val rw         = Seq(Roadway(0, 1111, projectLink4.roadNumber, projectLink4.roadPartNumber, AdministrativeClass.Municipality, Track.Combined, Discontinuity.Discontinuous, 0, 40, reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 5L, NoTermination))
+      val roadwayDAO = new RoadwayDAO
+      roadwayDAO.create(rw)
+      projectLinkDAO.create(Seq(projectLink1, projectLink2, projectLink3, projectLink4))
+      val reservedParts     = Seq(ProjectReservedPart(0, 1, 1, Some(0), Some(Discontinuity.Discontinuous), Some(8L), None, None, None, Some(12345L)))
+      val roadwayChangesDAO = new RoadwayChangesDAO()
+      roadwayChangesDAO.insertDeltaToRoadChangeTable(1, Some(project1.copy(reservedParts = reservedParts)))
+      val changes = roadwayChangesDAO.fetchRoadwayChanges(Set(1))
+      changes should have size 2
+      changes.foreach(c => {
+        c.changeInfo.source.roadNumber.get should be(1)
+        c.changeInfo.source.startRoadPartNumber.get should be(1)
+        c.changeInfo.source.trackCode.get should be(0)
+        c.changeInfo.source.ely.get should be(5)
+        c.changeInfo.target.roadNumber.get should be(1)
+        c.changeInfo.target.startRoadPartNumber.get should be(1)
+        c.changeInfo.target.trackCode.get should be(0)
+        c.changeInfo.target.ely.get should be(5)
+      })
+      val (changesToMunicipality, changesToState) = changes.sortBy(_.changeInfo.orderInChangeTable).partition(_.changeInfo.target.startAddressM.get == 0)
+      changesToMunicipality.head.changeInfo.source.administrativeClass should be(Some(Municipality))
+      changesToMunicipality.head.changeInfo.target.administrativeClass should be(Some(Municipality))
+      changesToMunicipality.head.changeInfo.source.discontinuity should be(Some(Discontinuity.Continuous))
+      changesToMunicipality.head.changeInfo.target.discontinuity should be(Some(Discontinuity.Continuous))
+
+      changesToState.head.changeInfo.source.administrativeClass should be(Some(Municipality))
+      changesToState.head.changeInfo.target.administrativeClass should be(Some(State))
+      changesToState.head.changeInfo.source.discontinuity should be(Some(Discontinuity.Discontinuous))
+      changesToState.head.changeInfo.target.discontinuity should be(Some(Discontinuity.Discontinuous))
     }
   }
 
