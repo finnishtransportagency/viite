@@ -116,7 +116,12 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
       projectReservedPartDAO.reserveRoadPart(projId1, 2, 1, "test")
       val reservedParts = projectReservedPartDAO.fetchReservedRoadParts(projId1)
       val project1      = projectDAO.fetchById(projId1).get
-      val rw            = Seq(Roadway(rw1, projectLink1.roadwayNumber, 1, 1, AdministrativeClass.Municipality, Track.RightSide, Discontinuity.Continuous, 0, 10, reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 5L, NoTermination), Roadway(rw2, projectLink2.roadwayNumber, 1, 1, AdministrativeClass.Municipality, Track.LeftSide, Discontinuity.Continuous, 0, 10, reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 5L, NoTermination), Roadway(rw3, projectLink5.roadwayNumber, 1, 1, AdministrativeClass.Municipality, Track.Combined, Discontinuity.Discontinuous, 10, 20, reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 5L, NoTermination), Roadway(rw4, projectLink6.roadwayNumber, 2, 1, AdministrativeClass.Municipality, Track.LeftSide, Discontinuity.Discontinuous, 10, 50, reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 5L, NoTermination), Roadway(rw5, projectLink7.roadwayNumber, 2, 1, AdministrativeClass.Municipality, Track.RightSide, Discontinuity.Discontinuous, 10, 50, reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 5L, NoTermination))
+      val rw            = Seq(Roadway(rw1, projectLink1.roadwayNumber, 1, 1, AdministrativeClass.Municipality, Track.RightSide, Discontinuity.Continuous, 0, 10, reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 5L, NoTermination),
+                              Roadway(rw2, projectLink2.roadwayNumber, 1, 1, AdministrativeClass.Municipality, Track.LeftSide, Discontinuity.Continuous, 0, 10, reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 5L, NoTermination),
+                              Roadway(rw3, projectLink5.roadwayNumber, 1, 1, AdministrativeClass.Municipality, Track.Combined, Discontinuity.Discontinuous, 10, 20, reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 5L, NoTermination),
+                              Roadway(rw4, projectLink6.roadwayNumber, 2, 1, AdministrativeClass.Municipality, Track.LeftSide, Discontinuity.Discontinuous, 10, 50, reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 5L, NoTermination),
+                              Roadway(rw5, projectLink7.roadwayNumber, 2, 1, AdministrativeClass.Municipality, Track.RightSide, Discontinuity.Discontinuous, 10, 50, reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 5L, NoTermination)
+                             )
 
       val roadwayDAO = new RoadwayDAO
       roadwayDAO.create(rw)
