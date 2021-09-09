@@ -15,7 +15,7 @@ import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
 import fi.liikennevirasto.viite.dao.LinkStatus.{NotHandled, UnChanged}
-import fi.liikennevirasto.viite.process.{InvalidAddressDataException, RoadwaySection}
+import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -57,17 +57,19 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
 
   lazy val roadway = roadwayDAO.fetchAllByRoadwayId(Seq(roadwayId)).headOption
 
-  def originalRoadNumber = if (roadway.isDefined) roadway.get.roadNumber else roadNumber
+  def originalRoadNumber: Long = if (roadway.isDefined) roadway.get.roadNumber else roadNumber
 
-  def originalRoadPartNumber = if (roadway.isDefined) roadway.get.roadPartNumber else roadPartNumber
+  def originalRoadPartNumber: Long = if (roadway.isDefined) roadway.get.roadPartNumber else roadPartNumber
 
   def originalAdministrativeClass = if (roadway.isDefined) roadway.get.administrativeClass else administrativeClass
 
   def originalTrack = if (roadway.isDefined) roadway.get.track else track
 
-  def originalEly = if (roadway.isDefined) roadway.get.ely else ely
+  def originalEly: Long = if (roadway.isDefined) roadway.get.ely else ely
 
-  def originalDiscontinuity = if (roadway.isDefined) roadway.get.discontinuity else discontinuity
+  private def isTheLastProjectLinkOnRoadway = roadway.isDefined && this.originalEndAddrMValue == roadway.get.endAddrMValue
+
+  def originalDiscontinuity = if (isTheLastProjectLinkOnRoadway) roadway.get.discontinuity else if (roadway.isDefined) Discontinuity.Continuous else discontinuity
 
   def oppositeEndPoint(point: Point) : Point = {
     if (GeometryUtils.areAdjacent(point, geometry.head)) geometry.last else geometry.head
