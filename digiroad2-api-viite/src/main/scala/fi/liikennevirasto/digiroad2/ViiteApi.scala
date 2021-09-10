@@ -492,16 +492,18 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         val projectSaved = projectService.saveProject(roadAddressProject)
         val firstLink = projectService.getFirstProjectLink(projectSaved)
         Map("project" -> roadAddressProjectToApi(projectSaved, projectService.getProjectEly(projectSaved.id)), "projectAddresses" -> firstLink,
-          "reservedInfo" -> projectSaved.reservedParts.map(projectReservedPartToApi), "formedInfo" -> projectSaved.formedParts.map(projectFormedPartToApi(Some(projectSaved.id))),
-          "success" -> true, "projectErrors" -> projectService.validateProjectById(project.id).map(errorPartsToApi))
+          "reservedInfo" -> projectSaved.reservedParts.map(projectReservedPartToApi),
+          "formedInfo" -> projectSaved.formedParts.map(projectFormedPartToApi(Some(projectSaved.id))),
+          "success" -> true,
+          "projectErrors" -> projectService.validateProjectById(project.id).map(errorPartsToApi))
       } catch {
-        case _: IllegalStateException => Map("success" -> false, "errorMessage" -> "Projekti ei ole enää muokattavissa")
-        case _: IllegalArgumentException => NotFound(s"Project id ${project.id} not found")
-        case e: MappingException =>
+        case _: IllegalStateException       => Map("success" -> false, "errorMessage" -> "Projekti ei ole enää muokattavissa")
+        case _: IllegalArgumentException    => NotFound(s"Project id ${project.id} not found")
+        case e: MappingException            =>
           logger.warn("Exception treating road links", e)
           BadRequest("Missing mandatory ProjectLink parameter")
-        case ex: RuntimeException => Map("success" -> false, "errorMessage" -> ex.getMessage)
-        case ex: RoadPartReservedException => Map("success" -> false, "errorMessage" -> ex.getMessage)
+        case ex: RuntimeException           => Map("success" -> false, "errorMessage" -> ex.getMessage)
+        case ex: RoadPartReservedException  => Map("success" -> false, "errorMessage" -> ex.getMessage)
       }
     }
   }
