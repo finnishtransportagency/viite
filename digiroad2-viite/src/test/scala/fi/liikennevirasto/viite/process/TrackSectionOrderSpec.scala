@@ -332,6 +332,7 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
                           )
       val roadwayDAO = new RoadwayDAO
       roadwayDAO.create(rws)
+
       val (rightOrdered, _) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(0, 0), Point(30, 0)), projectLinks)
       rightOrdered.map(_.sideCode).foreach(sidecode => {
         sidecode should be(SideCode.TowardsDigitizing)
