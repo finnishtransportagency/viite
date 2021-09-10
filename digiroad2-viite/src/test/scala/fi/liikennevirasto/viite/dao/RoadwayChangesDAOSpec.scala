@@ -95,7 +95,7 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test RoadwayChangesDAO().insertDeltaToRoadChangeTable() When a road is transfered to an other road with reverse changes should have one road reversed and the others roadnumber changed .") {
+  test("Test RoadwayChangesDAO().insertDeltaToRoadChangeTable() When a road is transfered to an other road with reverse then roadway changetable should have one road reversed and the others roadnumber changed .") {
     val projId1 = 1
     runWithRollback {
       val (rw1, rw2, rw3, rw4, rw5) = (Sequences.nextRoadwayId, Sequences.nextRoadwayId, Sequences.nextRoadwayId, Sequences.nextRoadwayId, Sequences.nextRoadwayId)
@@ -110,13 +110,13 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
       val projectLink8 = ProjectLink(8, 1, 1, Track.LeftSide, Discontinuity.Discontinuous, 25, 60, 15, 50, None, None, Some("test"), 0, 0.0, 0.0, SideCode.Unknown, (JunctionPointCP, RoadAddressCP), (JunctionPointCP, JunctionPointCP), List(), projId1, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, 0.0, rw4, 0, 5, reversed = false, None, 748800L, 2221)
 
 
-      val rap = dummyProject(projId1, ProjectState.Incomplete, List(ProjectReservedPart(1, 1, 1), ProjectReservedPart(1, 2, 1)), None)
-      projectDAO.create(rap)
+      val project = dummyProject(projId1, ProjectState.Incomplete, List(ProjectReservedPart(1, 1, 1), ProjectReservedPart(1, 2, 1)), None)
+      projectDAO.create(project)
       projectReservedPartDAO.reserveRoadPart(projId1, 1, 1, "test")
       projectReservedPartDAO.reserveRoadPart(projId1, 2, 1, "test")
       val reservedParts = projectReservedPartDAO.fetchReservedRoadParts(projId1)
       val project1      = projectDAO.fetchById(projId1).get
-      val rw            = Seq(Roadway(rw1, projectLink1.roadwayNumber, 1, 1, AdministrativeClass.Municipality, Track.RightSide, Discontinuity.Continuous, 0, 10, reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 5L, NoTermination),
+      val rws            = Seq(Roadway(rw1, projectLink1.roadwayNumber, 1, 1, AdministrativeClass.Municipality, Track.RightSide, Discontinuity.Continuous, 0, 10, reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 5L, NoTermination),
                               Roadway(rw2, projectLink2.roadwayNumber, 1, 1, AdministrativeClass.Municipality, Track.LeftSide, Discontinuity.Continuous, 0, 10, reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 5L, NoTermination),
                               Roadway(rw3, projectLink5.roadwayNumber, 1, 1, AdministrativeClass.Municipality, Track.Combined, Discontinuity.Discontinuous, 10, 20, reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 5L, NoTermination),
                               Roadway(rw4, projectLink6.roadwayNumber, 2, 1, AdministrativeClass.Municipality, Track.LeftSide, Discontinuity.Discontinuous, 10, 50, reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 5L, NoTermination),
@@ -124,13 +124,13 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
                              )
 
       val roadwayDAO = new RoadwayDAO
-      roadwayDAO.create(rw)
+      roadwayDAO.create(rws)
       projectLinkDAO.create(Seq(projectLink1, projectLink2, projectLink3, projectLink4, projectLink5, projectLink6, projectLink7, projectLink8))
 
       val roadwayChangesDAO = new RoadwayChangesDAO()
       roadwayChangesDAO.insertDeltaToRoadChangeTable(projId1, Some(project1.copy(reservedParts = reservedParts)))
 
-      val changes = roadwayChangesDAO.fetchRoadwayChanges(Set(1))
+      val changes = roadwayChangesDAO.fetchRoadwayChanges(Set(projId1))
       changes should have size 5
 
       val (reversedRoad, notReversedRoad) = changes.partition(_.changeInfo.reversed)
