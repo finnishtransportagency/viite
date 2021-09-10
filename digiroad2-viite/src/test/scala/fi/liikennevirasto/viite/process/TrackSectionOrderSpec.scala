@@ -313,7 +313,7 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     chainEndPointLink._1 should be (chainEndPointLink._2.endPoint)
   }
 
-  test("Test orderProjectLinksTopologyByGeometry When a part of a road is transfered to another road sidecodes should be equal and the transfered part ith opposite sidecode should be reversed.") {
+  test("Test orderProjectLinksTopologyByGeometry When a part of a road is transfered to another then road sidecodes should be equal and the transfered part ith opposite sidecode should be reversed.") {
     val points1      = Seq(Point(0, 0), Point(10, 0))
     val points2      = Seq(Point(10, 0), Point(20, 0))
     val points3      = Seq(Point(20, 0), Point(30, 0))
