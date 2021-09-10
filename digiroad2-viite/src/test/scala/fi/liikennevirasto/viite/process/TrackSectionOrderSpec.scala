@@ -65,8 +65,10 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     val list = geom.zip(0 to 3).map{ case (g, id) =>
       dummyProjectLink(5, 1, Track.Combined, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), id, 0.0, 0.0, SideCode.Unknown, LinkStatus.New, geometry = g)
     }
-    val (ordered, _) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(100,110), Point(100,110)), list)
-    ordered.map(_.linkId) should be (Seq(0L, 1L, 2L, 3L))
+    runWithRollback {
+      val (ordered, _) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(100, 110), Point(100, 110)), list)
+      ordered.map(_.linkId) should be(Seq(0L, 1L, 2L, 3L))
+    }
   }
 
   test("Test mValueRoundabout When roundabout with Towards facing starting link Then side code should be different") {
@@ -179,10 +181,11 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
       toDummyProjectLink(0L, Seq(Point(10, 10), Point(15, 10), Point(20, 10))),
       toDummyProjectLink(2L, Seq(Point(20, 10), Point(25, 15), Point(30, 10)))
     )
+    runWithRollback {
+      val (ordered, _) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(10, 10), Point(10, 10)), projectLinks)
 
-    val (ordered, _) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(10, 10), Point(10, 10)), projectLinks)
-
-    ordered.map(_.linkId) should be (List(0L, 1L, 2L))
+      ordered.map(_.linkId) should be(List(0L, 1L, 2L))
+    }
   }
 
   test("Test orderProjectLinksTopologyByGeometry When choosing two connected links Then pick the most forward one") {
@@ -210,11 +213,12 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
       toDummyProjectLink(6L, Seq(Point(4, 1), Point(4, 2), Point(4, 4)), Track.RightSide),
       toDummyProjectLink(7L, Seq(Point(2, 6), Point(3, 5), Point(4, 4)), Track.RightSide)
     )
+    runWithRollback {
+      val (rightOrdered, leftOrdered) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(4, 1), Point(2, 1)), projectLinks)
 
-    val (rightOrdered, leftOrdered) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(4, 1), Point(2, 1)), projectLinks)
-
-    rightOrdered.map(_.linkId) should be(List(6L, 4L, 7L, 5L))
-    leftOrdered.map(_.linkId) should be(List(1L, 2L, 3L))
+      rightOrdered.map(_.linkId) should be(List(6L, 4L, 7L, 5L))
+      leftOrdered.map(_.linkId) should be(List(1L, 2L, 3L))
+    }
   }
 
   test("Test orderProjectLinksTopologyByGeometry When choosing the once connected Then there is any with the same track code on ordered list") {
@@ -232,11 +236,12 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
       toDummyProjectLink(3L, Seq(Point(1, 4), Point(2, 4), Point(3, 4)), Track.Combined),
       toDummyProjectLink(4L, Seq(Point(3, 4), Point(4, 4), Point(50, 4)), Track.Combined)
     )
+    runWithRollback {
+      val (rightOrdered, leftOrdered) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(3, 1), Point(1, 1)), projectLinks)
 
-    val (rightOrdered, leftOrdered) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(3, 1), Point(1, 1)), projectLinks)
-
-    rightOrdered.map(_.linkId) should be(List(2L, 3L, 4L))
-    leftOrdered.map(_.linkId) should be(List(1L, 3L, 4L))
+      rightOrdered.map(_.linkId) should be(List(2L, 3L, 4L))
+      leftOrdered.map(_.linkId) should be(List(1L, 3L, 4L))
+    }
   }
 
   test("Test orderProjectLinksTopologyByGeometry When choosing the same track when there is 2 connected Then links with only one with same track code should be picked") {
@@ -254,11 +259,12 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
       toDummyProjectLink(3L, Seq(Point(3, 1), Point(3, 2), Point(3, 4)), Track.LeftSide),
       toDummyProjectLink(4L, Seq(Point(5, 1), Point(5, 3), Point(5, 4)), Track.RightSide)
     )
+    runWithRollback {
+      val (rightOrdered, leftOrdered) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(1, 1), Point(1, 1)), projectLinks)
 
-    val (rightOrdered, leftOrdered) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(1, 1), Point(1, 1)), projectLinks)
-
-    rightOrdered.map(_.linkId) should be(List(1L, 2L, 4L))
-    leftOrdered.map(_.linkId) should be(List(1L, 2L, 3L))
+      rightOrdered.map(_.linkId) should be(List(1L, 2L, 4L))
+      leftOrdered.map(_.linkId) should be(List(1L, 2L, 3L))
+    }
   }
 
   test("Test findChainEndpoints When there is a discontinuity in a project link chain Then should not get the once connected points of the discontinuity") {
@@ -307,43 +313,30 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     chainEndPointLink._1 should be (chainEndPointLink._2.endPoint)
   }
 
-  test("Test orderProjectLinksTopologyByGeometry When ") {
-      val points1 = Seq(Point( 0, 0),Point(10, 0))
-    val points2 = Seq(Point(10, 0),Point(20, 0))
-    val points3 = Seq(Point(20, 0),Point(30, 0))
-    val (rwn1,rwn2) = (99998,99999)
-
-    val projectLinks = List(
-      Dummies.dummyProjectLink(1,1,Track.Combined,Continuous,0,10,None,None,0,0,10,SideCode.TowardsDigitizing,LinkStatus.Transfer, geometry=points1, roadwayNumber=rwn1),
-      Dummies.dummyProjectLink(1,1,Track.Combined,Continuous,10,20,None,None,0,0,10,SideCode.TowardsDigitizing,LinkStatus.Transfer, geometry=points2, roadwayNumber=rwn1),
-      Dummies.dummyProjectLink(1,1,Track.Combined,Discontinuous,20,30,None,None,1,0,30,SideCode.AgainstDigitizing,LinkStatus.Transfer, geometry=points3, roadwayNumber=rwn2)
-    )
-    runWithRollback {
-      val (rightOrdered, _) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(0, 0), Point(30, 0)), projectLinks)
-      rightOrdered.map(_.sideCode).foreach(sidecode => sidecode should be(SideCode.TowardsDigitizing))
-    }
-  }
   test("Test orderProjectLinksTopologyByGeometry When a part of a road is transfered to another road sidecodes should be equal and the transfered part ith opposite sidecode should be reversed.") {
-    val points1 = Seq(Point( 0, 0),Point(10, 0))
-    val points2 = Seq(Point(10, 0),Point(20, 0))
-    val points3 = Seq(Point(20, 0),Point(30, 0))
-    val (rwn1,rwn2) = (99998,99999)
+    val points1      = Seq(Point(0, 0), Point(10, 0))
+    val points2      = Seq(Point(10, 0), Point(20, 0))
+    val points3      = Seq(Point(20, 0), Point(30, 0))
+    val (rwn1, rwn2) = (99998, 99999)
 
     val projectLinks = List(
-      Dummies.dummyProjectLink(1,1,Track.Combined,Continuous,0,10,None,None,0,0,10,SideCode.TowardsDigitizing,LinkStatus.UnChanged, geometry=points1, roadwayNumber=rwn1).copy(roadwayId = 0),
-      Dummies.dummyProjectLink(1,1,Track.Combined,Continuous,10,20,None,None,0,0,10,SideCode.TowardsDigitizing,LinkStatus.UnChanged, geometry=points2, roadwayNumber=rwn1).copy(roadwayId = 0),
-      Dummies.dummyProjectLink(1,1,Track.Combined,Discontinuous,20,30,None,None,1,0,10,SideCode.AgainstDigitizing,LinkStatus.Transfer, geometry=points3, roadwayNumber=rwn2).copy(roadwayId = 1)
+      Dummies.dummyProjectLink(1, 1, Track.Combined, Continuous, 0, 10, None, None, 0, 0, 10, SideCode.TowardsDigitizing, LinkStatus.UnChanged, geometry = points1, roadwayNumber = rwn1).copy(roadwayId = 0),
+      Dummies.dummyProjectLink(1, 1, Track.Combined, Continuous, 10, 20, None, None, 0, 0, 10, SideCode.TowardsDigitizing, LinkStatus.UnChanged, geometry = points2, roadwayNumber = rwn1).copy(roadwayId = 0),
+      Dummies.dummyProjectLink(1, 1, Track.Combined, Discontinuous, 20, 30, None, None, 1, 0, 10, SideCode.AgainstDigitizing, LinkStatus.Transfer, geometry = points3, roadwayNumber = rwn2).copy(roadwayId = 1)
     )
+
     runWithRollback {
-      val rw         = Seq(
-        Roadway(0, rwn1, 1, 1, AdministrativeClass.State, Track.Combined, Discontinuity.Discontinuous, 0, 20, reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 8L, NoTermination),
-        Roadway(1, rwn2, 2, 1, AdministrativeClass.State, Track.Combined, Discontinuity.Discontinuous, 0, 10, reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 8L, NoTermination)
-      )
+      val rws         = Seq(
+                            Roadway(0, rwn1, 1, 1, AdministrativeClass.State, Track.Combined, Discontinuity.Discontinuous, 0, 20, reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 8L, NoTermination),
+                            Roadway(1, rwn2, 2, 1, AdministrativeClass.State, Track.Combined, Discontinuity.Discontinuous, 0, 10, reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 8L, NoTermination)
+                          )
       val roadwayDAO = new RoadwayDAO
-      roadwayDAO.create(rw)
+      roadwayDAO.create(rws)
       val (rightOrdered, _) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(0, 0), Point(30, 0)), projectLinks)
-      rightOrdered.map(_.sideCode).foreach(sidecode => sidecode should be(SideCode.TowardsDigitizing))
-      rightOrdered.map(_.reversed) should be(List(false,false,true))
+      rightOrdered.map(_.sideCode).foreach(sidecode => {
+        sidecode should be(SideCode.TowardsDigitizing)
+      })
+      rightOrdered.map(_.reversed) should be(List(false, false, true))
     }
   }
 
