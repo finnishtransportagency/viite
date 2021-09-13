@@ -5,7 +5,7 @@
     var currentPublishedNetworkDate;
     var formCommon = new FormCommon('');
     var ProjectStatus = LinkValues.ProjectStatus;
-    var editableStatus = [ProjectStatus.Incomplete.value, ProjectStatus.ErrorInTR.value, ProjectStatus.Unknown.value];
+    var editableStatus = [ProjectStatus.Incomplete.value, ProjectStatus.Unknown.value];
     var staticField = function (labelText, dataField) {
       var field;
       field = '<div class="form-group">' +
@@ -530,11 +530,7 @@
       };
 
       rootElement.on('click', '#generalNext', function () {
-        if (currentProject.statusCode === ProjectStatus.ErrorInTR.value) {
-          currentProject.statusCode = ProjectStatus.Incomplete.value;
-          currentProject.statusDescription = ProjectStatus.Incomplete.description;
-          saveAndNext();
-        } else if (currentProject.isDirty ) {
+        if (currentProject.isDirty ) {
           if (currentProject.id === 0) {
             createNewProject();
           } else {

@@ -140,7 +140,7 @@
       if (projectChangeData && projectChangeData.validationErrors && projectChangeData.validationErrors.length === 0) {
         $('.change-table-header').html($('<div class="font-resize">Validointi ok. Alla näet muutokset projektissa.</div>'));
         var currentProject = projectCollection.getCurrentProject();
-        if ($('.change-table-frame').css('display') === "block" && (currentProject.project.statusCode === ProjectStatus.Incomplete.value || currentProject.project.statusCode === ProjectStatus.ErrorInTR.value)) {
+        if ($('.change-table-frame').css('display') === "block" && (currentProject.project.statusCode === ProjectStatus.Incomplete.value)) {
           $('#send-button').attr('disabled', false); //enables send button if changetable is open
         }
       } else {

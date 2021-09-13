@@ -209,10 +209,6 @@
                 html += '<td><button class="project-open btn btn-new-error" style="alignment: right; margin-bottom: 6px; margin-left: 25px; visibility: hidden" data-projectStatus="' + proj.statusCode + '">Avaa uudelleen</button></td>' +
                   '</tr>';
                 break;
-              case projectStatus.ErrorInTR.value:
-                  html += '<td id="innerOpenProjectButton"><button class="project-open btn btn-new-error" style="alignment: right; margin-bottom: 6px; margin-left: 25px" id="reopen-project-' + proj.id + '" value="' + proj.id + '" data-projectStatus="'+ proj.statusCode + '">Avaa uudelleen</button></td>' +
-                    '</tr>';
-                break;
               default:
                 html += '<td id="innerOpenProjectButton"><button class="project-open btn btn-new" style="alignment: right; margin-bottom: 6px; margin-left: 50px" id="open-project-' + proj.id + '" value="' + proj.id + '" data-projectStatus="' + proj.statusCode + '">Avaa</button></td>' +
                   '</tr>';

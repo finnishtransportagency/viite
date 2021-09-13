@@ -215,7 +215,6 @@ package object viite {
     "|      0      |           Closed           |                Suljettu               |\n" +
     "|      1      |         Incomplete         |             Keskeneräinen             |\n" +
     "|      2      |           Sent2TR          |        Lähetetty tierekisteriin       |\n" +
-    "|      3      |          ErrorInTR         |         Virhe tierekisterissä         |\n" +
     "|      4      |        TRProcessing        |      Tierekisterissä käsittelyssä     |\n" +
     "|      5      |          Saved2TR          |          Viety tierekisteriin         |\n" +
     "|      6      | Failed2GenerateTRIdInViite | Tierekisteri ID:tä ei voitu muodostaa |\n" +
