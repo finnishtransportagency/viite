@@ -534,20 +534,20 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  private val sendProjectToTRByProjectId: SwaggerSupportSyntax.OperationBuilder = (
+  private val sendProjectChangesToViiteByProjectId: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String, Any]]("sendProjectToTRByProjectId")
       .parameters(
-        bodyParam[Long]("projectID").description("The id of the project to send to TR.")
+        bodyParam[Long]("projectID").description("The id of the project whose changes are to be accepted to the road network.")
       )
       tags "ViiteAPI - Project"
-      summary "This will send a project and all dependant information, that shares the given ProjectId to TR for further analysis. We assume that the project has no validation issues."
+      summary "This will send a project and all dependant information, that shares the given ProjectId to Viite for further analysis, and for saving to Road Network. We assume that the project has no validation issues."
     )
 
-  post("/roadlinks/roadaddress/project/sendToTR", operation(sendProjectToTRByProjectId)) {
+  post("/roadlinks/roadaddress/project/sendProjectChangesToViite", operation(sendProjectChangesToViiteByProjectId)) {
     val projectID = (parsedBody \ "projectID").extract[Long]
-    time(logger, s"POST request for /roadlinks/roadaddress/project/sendToTR (projectID: $projectID)") {
+    time(logger, s"POST request for /roadlinks/roadaddress/project/sendProjectChangesToViite (projectID: $projectID)") {
       val projectWritableError = projectService.projectWritableCheck(projectID)
-      if (projectWritableError.isEmpty) {
+      if (projectWritableError.isEmpty) { // empty error if project is writable
         val sendStatus = projectService.publishProject(projectID)
         if (sendStatus.validationSuccess && sendStatus.sendSuccess) {
           Map("sendSuccess" -> true)

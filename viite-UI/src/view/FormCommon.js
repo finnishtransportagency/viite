@@ -28,7 +28,7 @@
 
     const projectButtons = function () {
       return '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
-        '<button disabled id ="send-button" class="send btn btn-block btn-send">Lähetä muutosilmoitus Tierekisteriin</button>';
+        '<button disabled id ="send-button" class="send btn btn-block btn-send">Hyväksy tieosoitemuutokset</button>';
     };
 
     const newRoadAddressInfo = function (project, selected, links, road) {

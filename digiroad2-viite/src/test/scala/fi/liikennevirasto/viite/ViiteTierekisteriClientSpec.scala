@@ -59,16 +59,6 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test ViiteTierekisteriClient.sendJsonMessage() When sending a ChangeProject Id = 0 meaning the project will not be added to TR Then return statusCode 201 and \"Created\" as the reason.") {
-    assume(testConnection)
-    val message = ViiteTierekisteriClient.sendJsonMessage(ChangeProject(0, "Testproject", "TestUser", "2017-06-01", Seq {
-      defaultChangeInfo // projectid 0 wont be added to TR
-    }))
-    message.projectId should be(0)
-    message.status should be(201)
-    message.reason should startWith("Created")
-  }
-
   test("Test ViiteTierekisteriClient.getProjectStatus() When asking for the test project ID (0) Then return a positive response object from TR") {
     assume(testConnection)
     val response = ViiteTierekisteriClient.getProjectStatus(0)

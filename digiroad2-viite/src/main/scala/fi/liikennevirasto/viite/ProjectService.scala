@@ -302,10 +302,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  /** @return None if the project is writable, or Some(&lt;errorstring&gt;) else. */
   def projectWritableCheckInSession(projectId: Long): Option[String] = {
     projectDAO.fetchProjectStatus(projectId) match {
       case Some(projectState) =>
-        if (projectState == ProjectState.Incomplete || projectState == ProjectState.ErrorInViite || projectState == ProjectState.ErrorInTR)
+        if (projectState == ProjectState.Incomplete || projectState == ProjectState.ErrorInViite)
           return None
         Some("Projektin tila ei ole keskeneräinen") //project state is not incomplete
       case None => Some("Projektia ei löytynyt") //project could not be found
@@ -956,16 +957,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         logger.info(s"Change: ${c.toStringWithFields}")
       })
     })
-  }
-
-  def getRoadwayChangesAndSendToTR(projectId: Set[Long]): ProjectChangeStatus = {
-    logger.info(s"Fetching all road address changes for projects: ${projectId.mkString(", ")}")
-    val roadwayChanges = roadwayChangesDAO.fetchRoadwayChanges(projectId)
-    prettyPrintLog(roadwayChanges)
-    logger.info(s"Sending changes to TR")
-    val sentObj = ViiteTierekisteriClient.sendChanges(roadwayChanges)
-    logger.info(s"Changes Sent to TR")
-    sentObj
   }
 
   def getProjectAddressLinksByLinkIds(linkIdsToGet: Set[Long]): Seq[ProjectAddressLink] = {
@@ -1678,7 +1669,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   /**
-    * Publish project with id projectId
+    * Publish project with id projectId: recalculates the change table.
     *
     * @param projectId Project to publish
     * @return optional error message, empty if no error
@@ -1686,42 +1677,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def publishProject(projectId: Long): PublishResult = {
     logger.info(s"Preparing to send Project ID: $projectId to TR")
     withDynTransaction {
-      try {
-        if (!recalculateChangeTable(projectId)._1) {
-          return PublishResult(validationSuccess = false, sendSuccess = false, Some("Muutostaulun luonti epäonnistui. Tarkasta ely"))
-        }
-        projectDAO.assignNewProjectTRId(projectId) //Generate new TR_ID
-        val trProjectStateMessage = getRoadwayChangesAndSendToTR(Set(projectId))
-        if (trProjectStateMessage.status == ProjectState.Failed2GenerateTRIdInViite.value) {
-          logger.error(s"Publishing project $projectId failed. Failed to generate TR ID in Viite.")
-          return PublishResult(validationSuccess = false, sendSuccess = false, Some(trProjectStateMessage.reason))
-        }
-        trProjectStateMessage.status match {
-          case it if 200 until 300 contains it =>
-            setProjectStatus(projectId, Sent2TR, withSession = false)
-            logger.info(s"Sending to TR successful: ${trProjectStateMessage.reason}")
-            PublishResult(validationSuccess = true, sendSuccess = true, Some(trProjectStateMessage.reason))
-          case 500 =>
-            logger.error(s"Sending project ${trProjectStateMessage.projectId} to TR failed. Status: ${trProjectStateMessage.status} Error message: ${trProjectStateMessage.reason}")
-            val returningMessage = if (trProjectStateMessage.reason.nonEmpty) trProjectStateMessage.reason else TrConnectionError
-            projectDAO.updateProjectStatus(projectId, SendingToTR)
-            PublishResult(validationSuccess = true, sendSuccess = false, Some(returningMessage))
-          case _ =>
-            //rollback
-            logger.error(s"Sending project ${trProjectStateMessage.projectId} to TR failed. Status: ${trProjectStateMessage.status} Error message: ${trProjectStateMessage.reason}")
-            val returningMessage = if (trProjectStateMessage.reason.nonEmpty) trProjectStateMessage.reason else TrConnectionError
-            PublishResult(validationSuccess = true, sendSuccess = false, Some(returningMessage))
-        }
-      } catch {
-        //Exceptions taken out val response = client.execute(request) of sendJsonMessage in ViiteTierekisteriClient
-        case ioe@(_: IOException | _: ClientProtocolException) =>
-          logger.error(s"Error occurred while publishing project ${projectId}.", ioe)
-          projectDAO.updateProjectStatus(projectId, SendingToTR)
-          PublishResult(validationSuccess = false, sendSuccess = false, Some(TrConnectionError))
-        case NonFatal(_) =>
-          logger.error(s"Error occurred while publishing project ${projectId}.")
-          projectDAO.updateProjectStatus(projectId, ErrorInViite)
-          PublishResult(validationSuccess = false, sendSuccess = false, Some(GenericViiteErrorMessage))
+      if (!recalculateChangeTable(projectId)._1) {
+        return PublishResult(validationSuccess = false, sendSuccess = false, Some("Muutostaulun luonti epäonnistui. Tarkasta ely"))
+      }
+      else {
+        projectDAO.assignNewProjectTRId(projectId) //Generate new TR_ID // TODO TR id handling to be removed
+
+        setProjectStatus(projectId, TRProcessing, withSession = false) //TODO change to Processing
+        logger.info(s"Returning dummy 'Yesyes, TR part ok', as TR call removed")
+        PublishResult(validationSuccess = true, sendSuccess = true, Some(""))
       }
     }
   }

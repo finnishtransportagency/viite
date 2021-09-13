@@ -493,7 +493,7 @@
     };
 
     this.publishProject = function () {
-      backend.sendProjectToTR(
+      backend.sendProjectChangesToViite(
         projectInfo.id,
         function (result) {
           if (result.sendSuccess) { eventbus.trigger('roadAddress:projectSentSuccess');
