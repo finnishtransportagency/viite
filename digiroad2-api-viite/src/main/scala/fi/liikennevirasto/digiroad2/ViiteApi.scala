@@ -922,6 +922,36 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
+  private val recalculateAndValidateProject: SwaggerSupportSyntax.OperationBuilder =(
+    apiOperation[Map[String, Any]]("validateProjectAndValidateProject")
+      .parameters(
+        pathParam[Long]("projectId").description("Id of a project")
+      )
+      tags "ViiteAPI - Project"
+      summary "Given a valid projectId, this will run recalculate() and the validations to the project in question."
+    )
+
+  get("/project/recalculateProject/:projectId", operation(recalculateAndValidateProject)) {
+    val projectId = params("projectId").toLong
+    logger.info(s"---------GET request for /project/recalculateProject/$projectId")
+    try {
+      withDynTransaction {
+        val project = projectService.fetchProjectById(projectId).get
+        projectService.recalculateProjectLinks(projectId, project.modifiedBy)
+      }
+    } catch {
+      case ex: RoadAddressException =>
+        logger.info("Road address Exception: " + ex.getMessage)
+      case ex: ProjectValidationException => Some(ex.getMessage)
+      case ex: Exception => Some(ex.getMessage)
+    }
+
+    time(logger, s"GET request for /project/recalculateProject/$projectId") {
+      val validationErrors = projectService.validateProjectById(projectId).map(mapValidationIssues)
+      Map("validationErrors" -> validationErrors)
+    }
+  }
+
 
   //  private val splitSuravageLinkByLinkId: SwaggerSupportSyntax.OperationBuilder = (
   //    apiOperation[Map[String, Any]]("splitSuravageLinkByLinkId")

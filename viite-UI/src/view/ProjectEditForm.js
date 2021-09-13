@@ -1,5 +1,5 @@
 (function (root) {
-  root.ProjectEditForm = function (map, projectCollection, selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend) {
+  root.ProjectEditForm = function (map, projectCollection, selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend, projectForm) {
     var LinkStatus = LinkValues.LinkStatus;
     var CalibrationCode = LinkValues.CalibrationCode;
     var editableStatus = [LinkValues.ProjectStatus.Incomplete.value, LinkValues.ProjectStatus.ErrorInTR.value, LinkValues.ProjectStatus.Unknown.value];
@@ -17,6 +17,11 @@
     var showProjectChangeButton = function () {
       return '<div class="project-form form-controls">' +
         formCommon.projectButtons() + '</div>';
+    };
+
+    var showProjectRecalculateButton = function () {
+      return '<div class="project-form form-controls">' +
+          formCommon.projectButtons2() + '</div>';
     };
 
     var transitionModifiers = function (targetStatus, currentStatus) {
@@ -135,6 +140,7 @@
     };
 
     var emptyTemplate = function (project) {
+      console.log("aseta napit");
       return _.template('' +
         '<header>' +
         formCommon.titleWithEditingTool(project) +
@@ -144,7 +150,8 @@
         '<label class="highlighted">JATKA VALITSEMALLA KOHDE KARTALTA.</label>' +
         '<div class="form-group" id="project-errors"></div>' +
         '</div></div></br></br>' +
-        '<footer>' + showProjectChangeButton() + '</footer>');
+        //'<footer>' + showProjectChangeButton() + '</footer>');
+          '<footer>' + showProjectRecalculateButton() + '</footer>');
     };
 
     var isProjectPublishable = function () {
@@ -606,6 +613,37 @@
         } else {
           $('footer').html(projectChangesButton);
         }
+      });
+
+      // when recalculate button is clicked
+      rootElement.on('click', '.project-form button.recalculate', function () {
+        // remove the button after click
+        //$(this).empty();
+        //projectChangeTable.show();
+        var projectChangesButton = showProjectRecalculateButton();
+        // get current project
+        var currentProject = projectCollection.getCurrentProject();
+        console.log(currentProject);
+        // add spinner
+        applicationModel.addSpinner();
+        // fire backend call to recalculate the current project with the project id
+        backend.recalculateProject(currentProject.project.id, function (errors) {
+          if (Object.keys(errors.validationErrors).length === 0) {
+            $('footer').html(projectChangesButton);
+          }
+
+          // remove spinner after calculations are done and we are in a callback function
+          applicationModel.removeSpinner();
+        });
+
+
+        //var projectChangesButton = showProjectChangeButton();
+        //if (isProjectPublishable() && isProjectEditable()) {
+        //formCommon.setInformationContent();
+        //$('footer').html(formCommon.sendRoadAddressChangeButton('project-', projectCollection.getCurrentProject()));
+        //} else {
+        //$('footer').html(projectChangesButton);
+        //}
       });
 
       rootElement.on('change input', '.form-control.small-input', function (event) {

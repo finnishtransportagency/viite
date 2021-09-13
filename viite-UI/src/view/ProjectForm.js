@@ -130,6 +130,8 @@
     };
 
     var selectedProjectLinkTemplate = function (project) {
+      console.log("projectErrors");
+      console.log(projectCollection.projectErrors);
       return _.template('' +
         '<header>' +
         title(project.name) +
@@ -156,9 +158,20 @@
 
     var showProjectChangeButton = function () {
       return '<div class="project-form form-controls">' +
-        '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
+          '<button disabled id = "recalculate-button" class="recalculate btn btn-block btn-recalculate">Laske projekti (1)</button>' +
+          '<button disabled id = "show-changes-button" class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
         '<button disabled id ="send-button" class="send btn btn-block btn-send">Lähetä muutosilmoitus Tierekisteriin</button></div>';
     };
+
+    var enableRecalculateButton = function () {
+      document.getElementById('recalculate-button').disabled = false;
+    };
+
+    var enableChangesButton = function () {
+      document.getElementById('show-changes-button').disabled = false;
+    };
+
+
 
     var addSmallLabel = function (label) {
       return '<label class="control-label-small">' + label + '</label>';
@@ -452,6 +465,28 @@
 
       eventbus.on('roadAddressProject:writeProjectErrors', function () {
         $('#project-errors').html(errorsList());
+        console.log("write errors");
+
+        //var errors = formCommon.getProjectErrors();
+        var errors = projectCollection.getProjectErrors();
+        console.log("testi errors");
+        //console.log(errors);
+        console.log(errors);
+        if (Object.keys(errors).length > 0) {
+          errors.forEach((error) => {
+            if (error.errorCode === 8 ) {
+              console.log(" löytyi koodi 8");
+            } else {
+              console.log("ei löytynyt koodia 8");
+              console.log("enable recalc button");
+              enableRecalculateButton();
+            }
+          });
+        } else {
+          console.log("ei löytynyt koodia 8 length 0");
+          console.log("enable recalc button");
+          enableRecalculateButton();
+        }
         applicationModel.removeSpinner();
       });
 
@@ -737,5 +772,8 @@
       });
     };
     bindEvents();
+    return {
+      enableChangesButton: enableChangesButton
+    };
   };
 }(this));

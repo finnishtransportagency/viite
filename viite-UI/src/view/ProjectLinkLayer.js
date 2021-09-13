@@ -411,6 +411,7 @@
       projectLinkVector.clear();
       directionMarkerLayer.getSource().clear();
       me.eventListener.listenToOnce(eventbus, 'roadAddressProject:fetched', function () {
+        console.log("open");
         selectedProjectLinkProperty.open(getSelectedId(selectedProjectLinkProperty.get()[0]), selectedProjectLinkProperty.isMultiLink());
       });
       projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), zoomlevels.getViewZoom(map) + 1, undefined, projectCollection.getPublishableStatus());
@@ -564,6 +565,7 @@
     });
 
     me.eventListener.listenTo(eventbus, 'roadAddressProject:fetched', function () {
+      console.log("redraw");
       me.redraw();
       _.defer(function () {
         highlightFeatures();
