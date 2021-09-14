@@ -217,7 +217,6 @@ package object viite {
     "|      2      |           Sent2TR          |        Lähetetty tierekisteriin       |\n" +
     "|      4      |        TRProcessing        |      Tierekisterissä käsittelyssä     |\n" +
     "|      5      |          Saved2TR          |          Viety tierekisteriin         |\n" +
-    "|      6      | Failed2GenerateTRIdInViite | Tierekisteri ID:tä ei voitu muodostaa |\n" +
     "|      7      |           Deleted          |           Poistettu projekti          |\n" +
     "|      8      |        ErrorInViite        |       Virhe Viite-sovelluksessa       |\n" +
     "|      9      |         SendingToTR        |        Lähettää Tierekisteriin        |\n" +
