@@ -14,15 +14,27 @@
 
     var endDistanceOriginalValue = '--';
 
-    var showProjectChangeButton = function () {
+    var showProjectButtons = function () {
       return '<div class="project-form form-controls">' +
         formCommon.projectButtons() + '</div>';
     };
 
     var showProjectRecalculateButton = function () {
       return '<div class="project-form form-controls">' +
-          formCommon.projectButtons2() + '</div>';
+          formCommon.projectButtonsRecalculate() + '</div>';
     };
+
+    var showProjectDisabledButtons = function () {
+      return '<div class="project-form form-controls">' +
+          formCommon.projectButtonsDisabled() + '</div>';
+    };
+
+    var showProjectSendButtons = function () {
+      return '<div class="project-form form-controls">' +
+          formCommon.projectButtonsSend() + '</div>';
+    };
+
+
 
     var transitionModifiers = function (targetStatus, currentStatus) {
       var mod;
@@ -150,8 +162,49 @@
         '<label class="highlighted">JATKA VALITSEMALLA KOHDE KARTALTA.</label>' +
         '<div class="form-group" id="project-errors"></div>' +
         '</div></div></br></br>' +
-        //'<footer>' + showProjectChangeButton() + '</footer>');
+          '<footer>' + showProjectButtons() + '</footer>');
+    };
+
+    var emptyTemplateDisabledButtons = function (project) {
+      console.log("aseta napit");
+      return _.template('' +
+          '<header>' +
+          formCommon.titleWithEditingTool(project) +
+          '</header>' +
+          '<div class="wrapper read-only">' +
+          '<div class="form form-horizontal form-dark">' +
+          '<label class="highlighted">JATKA VALITSEMALLA KOHDE KARTALTA.</label>' +
+          '<div class="form-group" id="project-errors"></div>' +
+          '</div></div></br></br>' +
+          '<footer>' + showProjectDisabledButtons() + '</footer>');
+    };
+
+    var emptyTemplateRecalculateButtons = function (project) {
+      console.log("aseta napit");
+      return _.template('' +
+          '<header>' +
+          formCommon.titleWithEditingTool(project) +
+          '</header>' +
+          '<div class="wrapper read-only">' +
+          '<div class="form form-horizontal form-dark">' +
+          '<label class="highlighted">JATKA VALITSEMALLA KOHDE KARTALTA.</label>' +
+          '<div class="form-group" id="project-errors"></div>' +
+          '</div></div></br></br>' +
           '<footer>' + showProjectRecalculateButton() + '</footer>');
+    };
+
+    var emptyTemplateSendButtons = function (project) {
+      console.log("aseta napit");
+      return _.template('' +
+          '<header>' +
+          formCommon.titleWithEditingTool(project) +
+          '</header>' +
+          '<div class="wrapper read-only">' +
+          '<div class="form form-horizontal form-dark">' +
+          '<label class="highlighted">JATKA VALITSEMALLA KOHDE KARTALTA.</label>' +
+          '<div class="form-group" id="project-errors"></div>' +
+          '</div></div></br></br>' +
+          '<footer>' + showProjectSendButtons() + '</footer>');
     };
 
     var isProjectPublishable = function () {
@@ -330,6 +383,8 @@
       });
 
       eventbus.on('roadAddress:projectLinksUpdated', function (data) {
+        console.log("roadAddress:projectLinksUpdated");
+        console.log("TALLENNA NAPPI");
         //eventbus.trigger('projectChangeTable:refresh');
         projectCollection.setTmpDirty([]);
         projectCollection.setDirty([]);
@@ -337,7 +392,30 @@
         selectedProjectLinkProperty.setDirty(false);
         selectedProjectLink = false;
         selectedProjectLinkProperty.cleanIds();
-        rootElement.html(emptyTemplate(projectCollection.getCurrentProject().project));
+        console.log("data");
+        console.log(data);
+        var projectErrors = data.projectErrors;
+
+        if (Object.keys(projectErrors).length > 0) {
+          projectErrors.forEach((error) => {
+            if (error.errorCode === 8 ) {
+              console.log(" löytyi koodi 8");
+              rootElement.html(emptyTemplateDisabledButtons(projectCollection.getCurrentProject().project));
+            } else {
+              console.log("ei löytynyt koodia 8");
+              console.log("enable recalculate button");
+              rootElement.html(emptyTemplateRecalculateButtons(projectCollection.getCurrentProject().project));
+
+            }
+          });
+        } else {
+          console.log("ei erroreita length 0");
+          console.log("enable reacalculate button");
+          rootElement.html(emptyTemplateRecalculateButtons(projectCollection.getCurrentProject().project));
+        }
+
+
+
         formCommon.toggleAdditionalControls();
         applicationModel.removeSpinner();
         if (typeof data !== 'undefined' && typeof data.publishable !== 'undefined' && data.publishable) {
@@ -606,7 +684,7 @@
       rootElement.on('click', '.project-form button.show-changes', function () {
         $(this).empty();
         projectChangeTable.show();
-        var projectChangesButton = showProjectChangeButton();
+        var projectChangesButton = showProjectSendButtons();
         if (isProjectPublishable() && isProjectEditable()) {
           formCommon.setInformationContent();
           $('footer').html(formCommon.sendRoadAddressChangeButton('project-', projectCollection.getCurrentProject()));
@@ -620,10 +698,9 @@
         // remove the button after click
         //$(this).empty();
         //projectChangeTable.show();
-        var projectChangesButton = showProjectRecalculateButton();
+        var projectChangesButton = showProjectSendButtons();
         // get current project
         var currentProject = projectCollection.getCurrentProject();
-        console.log(currentProject);
         // add spinner
         applicationModel.addSpinner();
         // fire backend call to recalculate the current project with the project id

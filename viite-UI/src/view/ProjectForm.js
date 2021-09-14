@@ -129,19 +129,46 @@
         '<footer>' + actionButtons() + '</footer>');
     };
 
-    var selectedProjectLinkTemplate = function (project) {
-      console.log("projectErrors");
-      console.log(projectCollection.projectErrors);
+    var selectedProjectLinkTemplateDisabledButtons = function (project) {
+      console.log("PROEJKTIN AVAUS disabled");
       return _.template('' +
         '<header>' +
-        title(project.name) +
+          formCommon.titleWithEditingTool(project) +
         '</header>' +
         '<div class="wrapper read-only">' +
         '<div class="form form-horizontal form-dark">' +
         '<label class="highlighted">ALOITA VALITSEMALLA KOHDE KARTALTA.</label>' +
         '<div class="form-group" id="project-errors"></div>' +
         '</div></div></br></br>' +
-        '<footer>' + showProjectChangeButton() + '</footer>');
+        '<footer>' + showProjectDisabledButtons() + '</footer>');
+    };
+
+    var selectedProjectLinkTemplateRecalculateButton = function (project) {
+      console.log("PROEJKTIN AVAUS recalculate");
+      return _.template('' +
+          '<header>' +
+          formCommon.titleWithEditingTool(project) +
+          '</header>' +
+          '<div class="wrapper read-only">' +
+          '<div class="form form-horizontal form-dark">' +
+          '<label class="highlighted">ALOITA VALITSEMALLA KOHDE KARTALTA.</label>' +
+          '<div class="form-group" id="project-errors"></div>' +
+          '</div></div></br></br>' +
+          '<footer>' + showProjectRecalculateButton() + '</footer>');
+    };
+
+    var selectedProjectLinkTemplateSendButton = function (project) {
+      console.log("PROEJKTIN AVAUS send");
+      return _.template('' +
+          '<header>' +
+          formCommon.titleWithEditingTool(project) +
+          '</header>' +
+          '<div class="wrapper read-only">' +
+          '<div class="form form-horizontal form-dark">' +
+          '<label class="highlighted">ALOITA VALITSEMALLA KOHDE KARTALTA.</label>' +
+          '<div class="form-group" id="project-errors"></div>' +
+          '</div></div></br></br>' +
+          '<footer>' + showProjectSendButton() + '</footer>');
     };
 
     var errorsList = function () {
@@ -156,19 +183,25 @@
 
     };
 
-    var showProjectChangeButton = function () {
+    var showProjectDisabledButtons = function () {
       return '<div class="project-form form-controls">' +
-          '<button disabled id = "recalculate-button" class="recalculate btn btn-block btn-recalculate">Laske projekti (1)</button>' +
+          '<button disabled class="recalculate btn btn-block btn-recalculate">Laske projekti</button>' +
           '<button disabled id = "show-changes-button" class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
         '<button disabled id ="send-button" class="send btn btn-block btn-send">Lähetä muutosilmoitus Tierekisteriin</button></div>';
     };
 
-    var enableRecalculateButton = function () {
-      document.getElementById('recalculate-button').disabled = false;
+    var showProjectRecalculateButton = function () {
+      return '<div class="project-form form-controls">' +
+          '<button class="recalculate btn btn-block btn-recalculate">Laske projekti</button>' +
+          '<button disabled id = "show-changes-button" class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
+          '<button disabled id ="send-button" class="send btn btn-block btn-send">Lähetä muutosilmoitus Tierekisteriin</button></div>';
     };
 
-    var enableChangesButton = function () {
-      document.getElementById('show-changes-button').disabled = false;
+    var showProjectSendButton = function () {
+      return '<div class="project-form form-controls">' +
+          '<button class="recalculate btn btn-block btn-recalculate">Laske projekti</button>' +
+          '<button id = "show-changes-button" class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
+          '<button disabled id ="send-button" class="send btn btn-block btn-send">Lähetä muutosilmoitus Tierekisteriin</button></div>';
     };
 
 
@@ -347,11 +380,12 @@
       };
 
       var nextStage = function () {
+        console.log("next stage");
         applicationModel.addSpinner();
         currentProject.isDirty = false;
         jQuery('.modal-overlay').remove();
         eventbus.trigger('roadAddressProject:openProject', currentProject);
-        rootElement.html(selectedProjectLinkTemplate(currentProject));
+        rootElement.html(selectedProjectLinkTemplateDisabledButtons(currentProject));
         _.defer(function () {
           applicationModel.selectLayer('roadAddressProject');
           toggleAdditionalControls();
@@ -368,7 +402,8 @@
             eventbus.trigger('linkProperties:selectedProject', result.projectAddresses.linkId, result.project);
           }
           eventbus.trigger('roadAddressProject:openProject', result.project);
-          rootElement.html(selectedProjectLinkTemplate(currentProject));
+          console.log("create new project");
+          rootElement.html(selectedProjectLinkTemplateDisabledButtons(currentProject));
           _.defer(function () {
             applicationModel.selectLayer('roadAddressProject');
             toggleAdditionalControls();
@@ -464,29 +499,28 @@
       });
 
       eventbus.on('roadAddressProject:writeProjectErrors', function () {
-        $('#project-errors').html(errorsList());
-        console.log("write errors");
-
-        //var errors = formCommon.getProjectErrors();
+        console.log("roadAddressProject:writeProjectErrors");
         var errors = projectCollection.getProjectErrors();
-        console.log("testi errors");
-        //console.log(errors);
+        console.log("WRITE ERRORS");
         console.log(errors);
         if (Object.keys(errors).length > 0) {
           errors.forEach((error) => {
             if (error.errorCode === 8 ) {
               console.log(" löytyi koodi 8");
+              rootElement.html(selectedProjectLinkTemplateDisabledButtons(currentProject));
             } else {
               console.log("ei löytynyt koodia 8");
               console.log("enable recalc button");
-              enableRecalculateButton();
+              //rootElement.html(selectedProjectLinkTemplateRecalculateButton(currentProject));
+              rootElement.html(selectedProjectLinkTemplateSendButton(currentProject));
             }
           });
         } else {
-          console.log("ei löytynyt koodia 8 length 0");
+          console.log("ei erroreita length 0");
           console.log("enable recalc button");
-          enableRecalculateButton();
+          rootElement.html(selectedProjectLinkTemplateRecalculateButton(currentProject));
         }
+        $('#project-errors').html(errorsList());
         applicationModel.removeSpinner();
       });
 
@@ -772,8 +806,5 @@
       });
     };
     bindEvents();
-    return {
-      enableChangesButton: enableChangesButton
-    };
   };
 }(this));

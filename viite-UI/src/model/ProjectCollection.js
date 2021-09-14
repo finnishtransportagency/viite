@@ -73,7 +73,6 @@
     };
 
     this.fetch = function (boundingBox, zoom, projectId, isPublishable) {
-      console.log("project collection fetch()");
       var id = projectId;
       if (typeof id === 'undefined' && typeof projectInfo !== 'undefined')
         id = projectInfo.id;
@@ -222,7 +221,7 @@
             publishableProject = response.publishable;
             me.setProjectErrors(response.projectErrors);
             me.setFormedParts(response.formedInfo);
-            eventbus.trigger('projectLink:revertedChanges');
+            eventbus.trigger('projectLink:revertedChanges', response);
           } else {
             if (response.status === INTERNAL_SERVER_ERROR_500 || response.status === BAD_REQUEST_400) {
               eventbus.trigger('roadAddress:projectLinksUpdateFailed', response.status);

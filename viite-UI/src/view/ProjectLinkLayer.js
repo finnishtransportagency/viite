@@ -422,10 +422,10 @@
       applicationModel.removeSpinner();
     });
 
-    me.eventListener.listenTo(eventbus, 'projectLink:revertedChanges', function () {
+    me.eventListener.listenTo(eventbus, 'projectLink:revertedChanges', function (data) {
       isNotEditingData = true;
       selectedProjectLinkProperty.setDirty(false);
-      eventbus.trigger('roadAddress:projectLinksUpdated');
+      eventbus.trigger('roadAddress:projectLinksUpdated', data);
       projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), zoomlevels.getViewZoom(map) + 1, undefined, projectCollection.getPublishableStatus());
     });
 
