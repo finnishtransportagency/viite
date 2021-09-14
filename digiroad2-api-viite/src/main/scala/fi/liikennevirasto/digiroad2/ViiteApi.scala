@@ -947,7 +947,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
 
     time(logger, s"GET request for /project/recalculateProject/$projectId") {
-      val validationErrors = projectService.validateProjectById(projectId).map(mapValidationIssues)
+      val validationErrors = projectService.validateProjectById(projectId).map(errorPartsToApi)
       Map("validationErrors" -> validationErrors)
     }
   }

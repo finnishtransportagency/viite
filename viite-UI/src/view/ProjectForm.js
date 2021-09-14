@@ -380,12 +380,16 @@
       };
 
       var nextStage = function () {
-        console.log("next stage");
         applicationModel.addSpinner();
         currentProject.isDirty = false;
         jQuery('.modal-overlay').remove();
         eventbus.trigger('roadAddressProject:openProject', currentProject);
-        rootElement.html(selectedProjectLinkTemplateDisabledButtons(currentProject));
+        var projectErrors = projectCollection.getProjectErrors();
+        if (Object.keys(projectErrors).length === 0) {
+          rootElement.html(selectedProjectLinkTemplateRecalculateButton(currentProject));
+        } else {
+          rootElement.html(selectedProjectLinkTemplateDisabledButtons(currentProject));
+        }
         _.defer(function () {
           applicationModel.selectLayer('roadAddressProject');
           toggleAdditionalControls();
@@ -499,27 +503,6 @@
       });
 
       eventbus.on('roadAddressProject:writeProjectErrors', function () {
-        console.log("roadAddressProject:writeProjectErrors");
-        var errors = projectCollection.getProjectErrors();
-        console.log("WRITE ERRORS");
-        console.log(errors);
-        if (Object.keys(errors).length > 0) {
-          errors.forEach((error) => {
-            if (error.errorCode === 8 ) {
-              console.log(" löytyi koodi 8");
-              rootElement.html(selectedProjectLinkTemplateDisabledButtons(currentProject));
-            } else {
-              console.log("ei löytynyt koodia 8");
-              console.log("enable recalc button");
-              //rootElement.html(selectedProjectLinkTemplateRecalculateButton(currentProject));
-              rootElement.html(selectedProjectLinkTemplateSendButton(currentProject));
-            }
-          });
-        } else {
-          console.log("ei erroreita length 0");
-          console.log("enable recalc button");
-          rootElement.html(selectedProjectLinkTemplateRecalculateButton(currentProject));
-        }
         $('#project-errors').html(errorsList());
         applicationModel.removeSpinner();
       });

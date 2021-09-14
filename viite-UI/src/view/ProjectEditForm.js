@@ -695,9 +695,6 @@
 
       // when recalculate button is clicked
       rootElement.on('click', '.project-form button.recalculate', function () {
-        // remove the button after click
-        //$(this).empty();
-        //projectChangeTable.show();
         var projectChangesButton = showProjectSendButtons();
         // get current project
         var currentProject = projectCollection.getCurrentProject();
@@ -705,22 +702,13 @@
         applicationModel.addSpinner();
         // fire backend call to recalculate the current project with the project id
         backend.recalculateProject(currentProject.project.id, function (errors) {
+          projectCollection.setProjectErrors(errors.validationErrors);
+          eventbus.trigger('roadAddressProject:writeProjectErrors');
           if (Object.keys(errors.validationErrors).length === 0) {
             $('footer').html(projectChangesButton);
           }
-
-          // remove spinner after calculations are done and we are in a callback function
           applicationModel.removeSpinner();
         });
-
-
-        //var projectChangesButton = showProjectChangeButton();
-        //if (isProjectPublishable() && isProjectEditable()) {
-        //formCommon.setInformationContent();
-        //$('footer').html(formCommon.sendRoadAddressChangeButton('project-', projectCollection.getCurrentProject()));
-        //} else {
-        //$('footer').html(projectChangesButton);
-        //}
       });
 
       rootElement.on('change input', '.form-control.small-input', function (event) {
