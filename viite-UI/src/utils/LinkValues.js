@@ -81,7 +81,6 @@
     Sent2TR: {value: 2, description: "Lähetetty tierekisteriin"},
     TRProcessing: {value: 4, description: "Tierekisterissä käsittelyssä"},
     Saved2TR: {value: 5, description: "Viety tierekisteriin"},
-    Failed2GenerateTRIdInViite: {value: 6, description: "Tierekisteri ID:tä ei voitu muodostaa"},
     Deleted: {value: 7, description: "Poistettu projekti"},
     ErrorInViite: {value: 8, description: "Virhe Viite-sovelluksessa"},
     SendingToTR: {value: 9, description: "Lähettää Tierekisteriin"},
