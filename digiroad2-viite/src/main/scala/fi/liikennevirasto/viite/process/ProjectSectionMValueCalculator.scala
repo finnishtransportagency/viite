@@ -3,7 +3,7 @@ package fi.liikennevirasto.viite.process
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
-import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectLink, ProjectLinkDAO}
+import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectLink}
 
 object ProjectSectionMValueCalculator {
 
@@ -51,7 +51,7 @@ object ProjectSectionMValueCalculator {
 
   def assignLinkValues(seq: Seq[ProjectLink], cps: Map[Long, UserDefinedCalibrationPoint], addrSt: Option[Double], addrEn: Option[Double], coEff: Double = 1.0): Seq[ProjectLink] = {
     if (seq.isEmpty) Seq() else {
-      val endPoints       = TrackSectionOrder.findChainEndpoints(seq)
+      val endPoints       = TrackSectionOrder.findChainEndpoints(TrackSectionOrder.findOnceConnectedLinks(seq).values.toSeq)
       val mappedEndpoints = (endPoints.head._1, endPoints.last._1)
       val orderedPairs    = TrackSectionOrder.orderProjectLinksTopologyByGeometry(mappedEndpoints, seq)
       val ordered         = if (seq.exists(_.track == Track.RightSide || seq.forall(_.track == Track.Combined))) orderedPairs._1 else orderedPairs._2.reverse
