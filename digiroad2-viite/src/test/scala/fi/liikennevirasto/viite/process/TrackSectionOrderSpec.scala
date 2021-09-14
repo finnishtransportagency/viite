@@ -313,30 +313,36 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     chainEndPointLink._1 should be (chainEndPointLink._2.endPoint)
   }
 
-  test("Test orderProjectLinksTopologyByGeometry When a part of a road is transfered to another then road sidecodes should be equal and the transfered part ith opposite sidecode should be reversed.") {
+  test("Test orderProjectLinksTopologyByGeometry " +
+                 "When a part of a road is transferred to another " +
+                 "Then road sidecodes should be equal and the transferred part with opposite sidecode should be reversed.") {
     val points1      = Seq(Point(0, 0), Point(10, 0))
     val points2      = Seq(Point(10, 0), Point(20, 0))
     val points3      = Seq(Point(20, 0), Point(30, 0))
     val (rwn1, rwn2) = (99998, 99999)
 
+    /* Two unchanged projectLinks and one with different side code and road istransferred to the unchanged road. */
     val projectLinks = List(
       Dummies.dummyProjectLink(1, 1, Track.Combined, Continuous, 0, 10, None, None, 0, 0, 10, SideCode.TowardsDigitizing, LinkStatus.UnChanged, geometry = points1, roadwayNumber = rwn1).copy(roadwayId = 0),
       Dummies.dummyProjectLink(1, 1, Track.Combined, Continuous, 10, 20, None, None, 0, 0, 10, SideCode.TowardsDigitizing, LinkStatus.UnChanged, geometry = points2, roadwayNumber = rwn1).copy(roadwayId = 0),
       Dummies.dummyProjectLink(1, 1, Track.Combined, Discontinuous, 20, 30, None, None, 1, 0, 10, SideCode.AgainstDigitizing, LinkStatus.Transfer, geometry = points3, roadwayNumber = rwn2).copy(roadwayId = 1)
     )
 
+    val rws         = Seq(
+      Roadway(0, rwn1, 1, 1, AdministrativeClass.State, Track.Combined, Discontinuity.Discontinuous, 0, 20, reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 8L, NoTermination),
+      Roadway(1, rwn2, 2, 1, AdministrativeClass.State, Track.Combined, Discontinuity.Discontinuous, 0, 10, reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 8L, NoTermination)
+    )
+
     runWithRollback {
-      val rws         = Seq(
-                            Roadway(0, rwn1, 1, 1, AdministrativeClass.State, Track.Combined, Discontinuity.Discontinuous, 0, 20, reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 8L, NoTermination),
-                            Roadway(1, rwn2, 2, 1, AdministrativeClass.State, Track.Combined, Discontinuity.Discontinuous, 0, 10, reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 8L, NoTermination)
-                          )
       val roadwayDAO = new RoadwayDAO
       roadwayDAO.create(rws)
 
       val (rightOrdered, _) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(0, 0), Point(30, 0)), projectLinks)
+
       rightOrdered.map(_.sideCode).foreach(sidecode => {
         sidecode should be(SideCode.TowardsDigitizing)
       })
+
       rightOrdered.map(_.reversed) should be(List(false, false, true))
     }
   }
