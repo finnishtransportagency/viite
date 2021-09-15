@@ -316,11 +316,9 @@
       $.getJSON('api/viite/project/getchangetable/' + id, callback);
     }, 500);
 
-
-    this.recalculateProject = function (id, callback) {
+    this.recalculateAndValidateProject = function (id, callback) {
       $.getJSON('api/viite/project/recalculateProject/' + id, callback);
     };
-
 
     this.getUserRoles = function () {
       $.get('api/viite/user', function (response) {

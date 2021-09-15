@@ -1,5 +1,5 @@
 (function (root) {
-  root.ProjectEditForm = function (map, projectCollection, selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend, projectForm) {
+  root.ProjectEditForm = function (map, projectCollection, selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend) {
     var LinkStatus = LinkValues.LinkStatus;
     var CalibrationCode = LinkValues.CalibrationCode;
     var editableStatus = [LinkValues.ProjectStatus.Incomplete.value, LinkValues.ProjectStatus.ErrorInTR.value, LinkValues.ProjectStatus.Unknown.value];
@@ -19,22 +19,20 @@
         formCommon.projectButtons() + '</div>';
     };
 
-    var showProjectRecalculateButton = function () {
+    var showProjectButtonRecalculate = function () {
       return '<div class="project-form form-controls">' +
           formCommon.projectButtonsRecalculate() + '</div>';
     };
 
-    var showProjectDisabledButtons = function () {
+    var showProjectButtonsDisabled = function () {
       return '<div class="project-form form-controls">' +
           formCommon.projectButtonsDisabled() + '</div>';
     };
 
-    var showProjectSendButtons = function () {
+    var showProjectButtonsRecalculateAndChanges = function () {
       return '<div class="project-form form-controls">' +
-          formCommon.projectButtonsSend() + '</div>';
+          formCommon.projectButtonsRecalculateAndChanges() + '</div>';
     };
-
-
 
     var transitionModifiers = function (targetStatus, currentStatus) {
       var mod;
@@ -151,22 +149,7 @@
       return '<label class="control-label-small" style="text-transform: none">' + label + '</label>';
     };
 
-    var emptyTemplate = function (project) {
-      console.log("aseta napit");
-      return _.template('' +
-        '<header>' +
-        formCommon.titleWithEditingTool(project) +
-        '</header>' +
-        '<div class="wrapper read-only">' +
-        '<div class="form form-horizontal form-dark">' +
-        '<label class="highlighted">JATKA VALITSEMALLA KOHDE KARTALTA.</label>' +
-        '<div class="form-group" id="project-errors"></div>' +
-        '</div></div></br></br>' +
-          '<footer>' + showProjectButtons() + '</footer>');
-    };
-
     var emptyTemplateDisabledButtons = function (project) {
-      console.log("aseta napit");
       return _.template('' +
           '<header>' +
           formCommon.titleWithEditingTool(project) +
@@ -176,11 +159,10 @@
           '<label class="highlighted">JATKA VALITSEMALLA KOHDE KARTALTA.</label>' +
           '<div class="form-group" id="project-errors"></div>' +
           '</div></div></br></br>' +
-          '<footer>' + showProjectDisabledButtons() + '</footer>');
+          '<footer>' + showProjectButtonsDisabled() + '</footer>');
     };
 
     var emptyTemplateRecalculateButtons = function (project) {
-      console.log("aseta napit");
       return _.template('' +
           '<header>' +
           formCommon.titleWithEditingTool(project) +
@@ -190,21 +172,7 @@
           '<label class="highlighted">JATKA VALITSEMALLA KOHDE KARTALTA.</label>' +
           '<div class="form-group" id="project-errors"></div>' +
           '</div></div></br></br>' +
-          '<footer>' + showProjectRecalculateButton() + '</footer>');
-    };
-
-    var emptyTemplateSendButtons = function (project) {
-      console.log("aseta napit");
-      return _.template('' +
-          '<header>' +
-          formCommon.titleWithEditingTool(project) +
-          '</header>' +
-          '<div class="wrapper read-only">' +
-          '<div class="form form-horizontal form-dark">' +
-          '<label class="highlighted">JATKA VALITSEMALLA KOHDE KARTALTA.</label>' +
-          '<div class="form-group" id="project-errors"></div>' +
-          '</div></div></br></br>' +
-          '<footer>' + showProjectSendButtons() + '</footer>');
+          '<footer>' + showProjectButtonRecalculate() + '</footer>');
     };
 
     var isProjectPublishable = function () {
@@ -383,8 +351,6 @@
       });
 
       eventbus.on('roadAddress:projectLinksUpdated', function (data) {
-        console.log("roadAddress:projectLinksUpdated");
-        console.log("TALLENNA NAPPI");
         //eventbus.trigger('projectChangeTable:refresh');
         projectCollection.setTmpDirty([]);
         projectCollection.setDirty([]);
@@ -392,30 +358,21 @@
         selectedProjectLinkProperty.setDirty(false);
         selectedProjectLink = false;
         selectedProjectLinkProperty.cleanIds();
-        console.log("data");
-        console.log(data);
         var projectErrors = data.projectErrors;
-
         if (Object.keys(projectErrors).length > 0) {
           projectErrors.forEach((error) => {
             if (error.errorCode === 8 ) {
-              console.log(" löytyi koodi 8");
+              // if notHandled project links error then disable all three buttons (recalculate, changes and send)
               rootElement.html(emptyTemplateDisabledButtons(projectCollection.getCurrentProject().project));
             } else {
-              console.log("ei löytynyt koodia 8");
-              console.log("enable recalculate button");
+              // if there are errors but not error code 8, then show recalculate button
               rootElement.html(emptyTemplateRecalculateButtons(projectCollection.getCurrentProject().project));
-
             }
           });
         } else {
-          console.log("ei erroreita length 0");
-          console.log("enable reacalculate button");
+          // if no validation errors are present, then show recalculate button
           rootElement.html(emptyTemplateRecalculateButtons(projectCollection.getCurrentProject().project));
         }
-
-
-
         formCommon.toggleAdditionalControls();
         applicationModel.removeSpinner();
         if (typeof data !== 'undefined' && typeof data.publishable !== 'undefined' && data.publishable) {
@@ -684,7 +641,7 @@
       rootElement.on('click', '.project-form button.show-changes', function () {
         $(this).empty();
         projectChangeTable.show();
-        var projectChangesButton = showProjectSendButtons();
+        var projectChangesButton = showProjectButtonsRecalculateAndChanges();
         if (isProjectPublishable() && isProjectEditable()) {
           formCommon.setInformationContent();
           $('footer').html(formCommon.sendRoadAddressChangeButton('project-', projectCollection.getCurrentProject()));
@@ -695,17 +652,20 @@
 
       // when recalculate button is clicked
       rootElement.on('click', '.project-form button.recalculate', function () {
-        var projectChangesButton = showProjectSendButtons();
+        var projectButtonsRecalculateAndChanges = showProjectButtonsRecalculateAndChanges();
         // get current project
         var currentProject = projectCollection.getCurrentProject();
         // add spinner
         applicationModel.addSpinner();
-        // fire backend call to recalculate the current project with the project id
-        backend.recalculateProject(currentProject.project.id, function (errors) {
+        // fire backend call to recalculate and validate the current project with the project id
+        backend.recalculateAndValidateProject(currentProject.project.id, function (errors) {
+          // set project errors that were returned by the backend validations
           projectCollection.setProjectErrors(errors.validationErrors);
+          // display the validation errors
           eventbus.trigger('roadAddressProject:writeProjectErrors');
           if (Object.keys(errors.validationErrors).length === 0) {
-            $('footer').html(projectChangesButton);
+            // if no validation errors are present, show recalculate button and changes button
+            $('footer').html(projectButtonsRecalculateAndChanges);
           }
           applicationModel.removeSpinner();
         });

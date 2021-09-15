@@ -28,11 +28,11 @@
 
     const projectButtons = function () {
       return '<button class="recalculate btn btn-block btn-recalculate">Laske projekti</button>' +
-      '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
+        '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
         '<button id ="send-button" class="send btn btn-block btn-send">Lähetä muutosilmoitus Tierekisteriin</button>';
     };
 
-    const projectButtonsSend = function () {
+    const projectButtonsRecalculateAndChanges = function () {
       return  '<button class="recalculate btn btn-block btn-recalculate">Laske projekti</button>' +
           '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
           '<button disabled id ="send-button" class="send btn btn-block btn-send">Lähetä muutosilmoitus Tierekisteriin</button>';
@@ -45,11 +45,10 @@
     };
 
     const projectButtonsDisabled = function () {
-      return  '<button disabled id = "recalculate-button" class="recalculate btn btn-block btn-recalculate">Laske projekti</button>' +
+      return  '<button disabled class="recalculate btn btn-block btn-recalculate">Laske projekti</button>' +
           '<button disabled class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
           '<button disabled id ="send-button" class="send btn btn-block btn-send">Lähetä muutosilmoitus Tierekisteriin</button>';
     };
-
 
     const newRoadAddressInfo = function (project, selected, links, road) {
       const roadNumber = road.roadNumber;
@@ -276,15 +275,15 @@
     const setInformationContent = function () {
       $('#information-content').html('' +
         '<div class="form form-horizontal">' +
-        '<p class = "validation-text">Validointi ok. Voit tehdä tieosoitteenmuutosilmoituksen<br>' +
+        '<p class="validation-text">Validointi ok. Voit tehdä tieosoitteenmuutosilmoituksen<br>' +
         'tai jatkaa muokkauksia.</p>' +
         '</div>');
     };
 
     const sendRoadAddressChangeButton = function (localPrefix) {
       return '<div class="' + localPrefix + 'form form-controls">' +
-          '<button id = "recalculate-button" class="recalculate btn btn-block btn-recalculate">Laske projekti</button>' +
-          '<button id = "show-changes-button" class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
+          '<button class="recalculate btn btn-block btn-recalculate">Laske projekti</button>' +
+          '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
           '<button id ="send-button" class="send btn btn-block btn-send">Lähetä muutosilmoitus Tierekisteriin</button></div>';
     };
 
@@ -381,7 +380,7 @@
       projectButtons: projectButtons,
       projectButtonsDisabled: projectButtonsDisabled,
       projectButtonsRecalculate: projectButtonsRecalculate,
-      projectButtonsSend: projectButtonsSend,
+      projectButtonsRecalculateAndChanges: projectButtonsRecalculateAndChanges,
       staticField: staticField,
       getProjectErrors: getProjectErrors
     };

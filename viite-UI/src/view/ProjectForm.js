@@ -130,7 +130,6 @@
     };
 
     var selectedProjectLinkTemplateDisabledButtons = function (project) {
-      console.log("PROEJKTIN AVAUS disabled");
       return _.template('' +
         '<header>' +
           formCommon.titleWithEditingTool(project) +
@@ -144,7 +143,6 @@
     };
 
     var selectedProjectLinkTemplateRecalculateButton = function (project) {
-      console.log("PROEJKTIN AVAUS recalculate");
       return _.template('' +
           '<header>' +
           formCommon.titleWithEditingTool(project) +
@@ -155,20 +153,6 @@
           '<div class="form-group" id="project-errors"></div>' +
           '</div></div></br></br>' +
           '<footer>' + showProjectRecalculateButton() + '</footer>');
-    };
-
-    var selectedProjectLinkTemplateSendButton = function (project) {
-      console.log("PROEJKTIN AVAUS send");
-      return _.template('' +
-          '<header>' +
-          formCommon.titleWithEditingTool(project) +
-          '</header>' +
-          '<div class="wrapper read-only">' +
-          '<div class="form form-horizontal form-dark">' +
-          '<label class="highlighted">ALOITA VALITSEMALLA KOHDE KARTALTA.</label>' +
-          '<div class="form-group" id="project-errors"></div>' +
-          '</div></div></br></br>' +
-          '<footer>' + showProjectSendButton() + '</footer>');
     };
 
     var errorsList = function () {
@@ -196,15 +180,6 @@
           '<button disabled id = "show-changes-button" class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
           '<button disabled id ="send-button" class="send btn btn-block btn-send">Lähetä muutosilmoitus Tierekisteriin</button></div>';
     };
-
-    var showProjectSendButton = function () {
-      return '<div class="project-form form-controls">' +
-          '<button class="recalculate btn btn-block btn-recalculate">Laske projekti</button>' +
-          '<button id = "show-changes-button" class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
-          '<button disabled id ="send-button" class="send btn btn-block btn-send">Lähetä muutosilmoitus Tierekisteriin</button></div>';
-    };
-
-
 
     var addSmallLabel = function (label) {
       return '<label class="control-label-small">' + label + '</label>';
@@ -406,7 +381,6 @@
             eventbus.trigger('linkProperties:selectedProject', result.projectAddresses.linkId, result.project);
           }
           eventbus.trigger('roadAddressProject:openProject', result.project);
-          console.log("create new project");
           rootElement.html(selectedProjectLinkTemplateDisabledButtons(currentProject));
           _.defer(function () {
             applicationModel.selectLayer('roadAddressProject');

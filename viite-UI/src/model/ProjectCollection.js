@@ -280,9 +280,6 @@
           } else {
             backend.updateProjectLinks(dataJson, function (successObject) {
               if (successObject.success) {
-                console.log("success object");
-                console.log(successObject);
-                // jos projektissa ei ole käsittelemättömiä linkkejä (succesObject.projectErrors._.errorCode != 8) voidaan enabloida "Laske projekti" painike
                 publishableProject = successObject.publishable;
                 me.setProjectErrors(successObject.projectErrors);
                 me.setFormedParts(successObject.formedInfo);
