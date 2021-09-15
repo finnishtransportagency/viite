@@ -779,7 +779,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
             Some(links.coordinates)) match {
             case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
             case None =>
-              val projectErrors = projectService.validateProjectById(links.projectId).map(errorPartsToApi)
+              val projectErrors = projectService.validateProjectByIdHighPriorityOnly(links.projectId).map(errorPartsToApi)
               val project = projectService.getSingleProjectById(links.projectId).get
               Map("success" -> true, "id" -> links.projectId,
                 "publishable" -> projectErrors.isEmpty,

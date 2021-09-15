@@ -2265,6 +2265,17 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  def validateProjectByIdHighPriorityOnly(projectId: Long, newSession: Boolean = true): Seq[projectValidator.ValidationErrorDetails] = {
+    if (newSession) {
+      withDynSession {
+        projectValidator.projectLinksHighPriorityValidation(fetchProjectById(projectId).get, projectLinkDAO.fetchProjectLinks(projectId))
+      }
+    }
+    else {
+      projectValidator.projectLinksHighPriorityValidation(fetchProjectById(projectId).get, projectLinkDAO.fetchProjectLinks(projectId))
+    }
+  }
+
   def validateLinkTrack(track: Int): Boolean = {
     Track.values.filterNot(_.value == Track.Unknown.value).exists(_.value == track)
   }
