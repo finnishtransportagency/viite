@@ -360,10 +360,13 @@
         jQuery('.modal-overlay').remove();
         eventbus.trigger('roadAddressProject:openProject', currentProject);
         var projectErrors = projectCollection.getProjectErrors();
-        if (Object.keys(projectErrors).length === 0) {
-          rootElement.html(selectedProjectLinkTemplateRecalculateButton(currentProject));
-        } else {
+        var highPriorityProjectErrors = projectErrors.filter((error) => error.errorCode === 8);
+        if (highPriorityProjectErrors.length > 0) {
+          // high priority errors
           rootElement.html(selectedProjectLinkTemplateDisabledButtons(currentProject));
+        } else {
+          // normal priority errors OR no errors
+          rootElement.html(selectedProjectLinkTemplateRecalculateButton(currentProject));
         }
         _.defer(function () {
           applicationModel.selectLayer('roadAddressProject');
