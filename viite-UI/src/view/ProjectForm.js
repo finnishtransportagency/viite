@@ -157,7 +157,7 @@
     var showProjectChangeButton = function () {
       return '<div class="project-form form-controls">' +
         '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
-        '<button disabled id ="send-button" class="send btn btn-block btn-send">Lähetä muutosilmoitus Tierekisteriin</button></div>';
+        '<button disabled id ="send-button" class="send btn btn-block btn-send">Hyväksy tieosoitemuutokset</button></div>';
     };
 
     var addSmallLabel = function (label) {
