@@ -360,17 +360,10 @@
         selectedProjectLinkProperty.cleanIds();
         var projectErrors = data.projectErrors;
         if (Object.keys(projectErrors).length > 0) {
-          projectErrors.forEach((error) => {
-            if (error.errorCode === 8 ) {
-              // if notHandled project links error then disable all three buttons (recalculate, changes and send)
-              rootElement.html(emptyTemplateDisabledButtons(projectCollection.getCurrentProject().project));
-            } else {
-              // if there are errors but not error code 8, then show recalculate button
-              rootElement.html(emptyTemplateRecalculateButtons(projectCollection.getCurrentProject().project));
-            }
-          });
+          // if there is validation errors (only high priority errors are returned when updating project links) after updating project links then show disabled buttons
+          rootElement.html(emptyTemplateDisabledButtons(projectCollection.getCurrentProject().project));
         } else {
-          // if no validation errors are present, then show recalculate button
+          // if no (high priority) validation errors are present, then show recalculate button
           rootElement.html(emptyTemplateRecalculateButtons(projectCollection.getCurrentProject().project));
         }
         formCommon.toggleAdditionalControls();
