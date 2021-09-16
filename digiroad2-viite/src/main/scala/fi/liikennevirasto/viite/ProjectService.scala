@@ -1769,14 +1769,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     ViiteTierekisteriClient.getProjectStatus(projectId)
   }
 
-  private def getTRErrorMessage(trProject: Option[TRProjectStatus]): String = {
-    trProject match {
-      case Some(trProjectobject) => trProjectobject.errorMessage.getOrElse("")
-      case None => ""
-      case _ => ""
-    }
-  }
-
   def setProjectStatus(projectId: Long, newStatus: ProjectState, withSession: Boolean = true): Unit = {
     if (withSession) {
       withDynSession {
@@ -1848,12 +1840,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       case Some(trId) =>
         val roadNumbers: Option[Set[Long]] = projectDAO.fetchProjectStatus(projectID).map { currentState =>
           logger.info(s"Current status is $currentState, fetching TR state")
-          val trProjectState = ViiteTierekisteriClient.getProjectStatusObject(trId)
-          logger.info(s"Retrieved TR status: ${trProjectState.getOrElse(None)}")
           val newState = if(currentState==ProjectState.TRProcessing) ProjectState.Saved2TR else currentState
-          val errorMessage = getTRErrorMessage(trProjectState)
-          logger.info(s"TR returned project status for $projectID: $currentState -> $newState, errMsg: $errorMessage")
-          val updatedStatus = updateProjectStatusIfNeeded(currentState, newState, errorMessage, projectID)
+          val updatedStatus = updateProjectStatusIfNeeded(currentState, newState, "", projectID)
           if (updatedStatus == Saved2TR) {
             logger.info(s"Starting project $projectID road addresses importing to road address table")
             updateRoadwaysAndLinearLocationsWithProjectLinks(updatedStatus, projectID)
