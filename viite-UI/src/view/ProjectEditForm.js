@@ -646,16 +646,24 @@
         // add spinner
         applicationModel.addSpinner();
         // fire backend call to recalculate and validate the current project with the project id
-        backend.recalculateAndValidateProject(currentProject.project.id, function (errors) {
-          // set project errors that were returned by the backend validations
-          projectCollection.setProjectErrors(errors.validationErrors);
-          // display the validation errors
-          eventbus.trigger('roadAddressProject:writeProjectErrors');
-          if (Object.keys(errors.validationErrors).length === 0) {
-            // if no validation errors are present, show recalculate button and changes button
-            $('footer').html(projectButtonsRecalculateAndChanges);
+        backend.recalculateAndValidateProject(currentProject.project.id, function (successObject) {
+          // if recalculation and validation did not throw exceptions in the backend
+          if (successObject.success) {
+            // set project errors that were returned by the backend validations
+            projectCollection.setProjectErrors(successObject.validationErrors);
+            // display the validation errors
+            eventbus.trigger('roadAddressProject:writeProjectErrors');
+            if (Object.keys(successObject.validationErrors).length === 0) {
+              // if no validation errors are present, show recalculate button and changes button
+              $('footer').html(projectButtonsRecalculateAndChanges);
+            }
+            applicationModel.removeSpinner();
           }
-          applicationModel.removeSpinner();
+          // if something went wrong during recalculation or validation, show error to user
+          else {
+            new ModalConfirm(successObject.errorMessage);
+            applicationModel.removeSpinner();
+          }
         });
       });
 

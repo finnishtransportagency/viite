@@ -941,12 +941,17 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         }
         val validationErrors = projectService.validateProjectById(projectId).map(errorPartsToApi)
         // return validation errors
-        Map("validationErrors" -> validationErrors)
+        Map("success" -> true, "validationErrors" -> validationErrors)
       } catch {
         case ex: RoadAddressException =>
           logger.info("Road address Exception: " + ex.getMessage)
-        case ex: ProjectValidationException => Some(ex.getMessage)
-        case ex: Exception => Some(ex.getMessage)
+          Map("success" -> false, "errorMessage" -> ex.getMessage)
+        case ex: ProjectValidationException =>
+          Some(ex.getMessage)
+          Map("success" -> false, "errorMessage" -> ex.getMessage)
+        case ex: Exception =>
+          Some(ex.getMessage)
+          Map("success" -> false, "errorMessage" -> ex.getMessage)
       }
     }
   }
