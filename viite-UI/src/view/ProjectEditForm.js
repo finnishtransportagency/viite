@@ -345,7 +345,7 @@
         }
       });
 
-      eventbus.on('roadAddress:projectLinksUpdated', function (data) {
+      eventbus.on('roadAddress:projectLinksUpdated', function (response) {
         //eventbus.trigger('projectChangeTable:refresh');
         projectCollection.setTmpDirty([]);
         projectCollection.setDirty([]);
@@ -353,7 +353,7 @@
         selectedProjectLinkProperty.setDirty(false);
         selectedProjectLink = false;
         selectedProjectLinkProperty.cleanIds();
-        var projectErrors = data.projectErrors;
+        var projectErrors = response.projectErrors;
         if (Object.keys(projectErrors).length > 0) {
           // if there is validation errors (only high priority errors are returned when updating project links) after updating project links then show disabled buttons
           rootElement.html(emptyTemplateDisabledButtons(projectCollection.getCurrentProject().project));
@@ -363,8 +363,8 @@
         }
         formCommon.toggleAdditionalControls();
         applicationModel.removeSpinner();
-        if (typeof data !== 'undefined' && typeof data.publishable !== 'undefined' && data.publishable) {
-          eventbus.trigger('roadAddressProject:projectLinkSaved', data.id, data.publishable);
+        if (typeof response !== 'undefined' && typeof response.publishable !== 'undefined' && response.publishable) {
+          eventbus.trigger('roadAddressProject:projectLinkSaved', response.id, response.publishable);
         } else {
           eventbus.trigger('roadAddressProject:projectLinkSaved');
         }
