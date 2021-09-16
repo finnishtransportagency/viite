@@ -316,6 +316,7 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
   test("Test orderProjectLinksTopologyByGeometry " +
                  "When a part of a road is transferred to another " +
                  "Then road sidecodes should be equal and the transferred part with opposite sidecode should be reversed.") {
+    /* Two links on an unchanging roadway (0), and third that is on a changing roadway (1) to be reversed, and side code to be changed at ordering. */
     val points1      = Seq(Point(0, 0), Point(10, 0))
     val points2      = Seq(Point(10, 0), Point(20, 0))
     val points3      = Seq(Point(20, 0), Point(30, 0))
@@ -337,6 +338,7 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
       val roadwayDAO = new RoadwayDAO
       roadwayDAO.create(rws)
 
+      /* Ordering given projectLinks between two points. The last link should get reversed status, and side code changed accordingly. */
       val (rightOrdered, _) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(0, 0), Point(30, 0)), projectLinks)
 
       rightOrdered.map(_.sideCode).foreach(sidecode => {
