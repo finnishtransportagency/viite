@@ -27,8 +27,27 @@
     };
 
     const projectButtons = function () {
-      return '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
-        '<button disabled id ="send-button" class="send btn btn-block btn-send">Lähetä muutosilmoitus Tierekisteriin</button>';
+      return '<button class="recalculate btn btn-block btn-recalculate">Päivitä etäisyyslukemat</button>' +
+        '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
+        '<button id ="send-button" class="send btn btn-block btn-send">Lähetä muutosilmoitus Tierekisteriin</button>';
+    };
+
+    const projectButtonsRecalculateAndChanges = function () {
+      return  '<button class="recalculate btn btn-block btn-recalculate">Päivitä etäisyyslukemat</button>' +
+          '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
+          '<button disabled id ="send-button" class="send btn btn-block btn-send">Lähetä muutosilmoitus Tierekisteriin</button>';
+    };
+
+    const projectButtonsRecalculate = function () {
+      return  '<button class="recalculate btn btn-block btn-recalculate">Päivitä etäisyyslukemat</button>' +
+          '<button disabled class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
+          '<button disabled id ="send-button" class="send btn btn-block btn-send">Lähetä muutosilmoitus Tierekisteriin</button>';
+    };
+
+    const projectButtonsDisabled = function () {
+      return  '<button disabled class="recalculate btn btn-block btn-recalculate">Päivitä etäisyyslukemat</button>' +
+          '<button disabled class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
+          '<button disabled id ="send-button" class="send btn btn-block btn-send">Lähetä muutosilmoitus Tierekisteriin</button>';
     };
 
     const newRoadAddressInfo = function (project, selected, links, road) {
@@ -256,15 +275,16 @@
     const setInformationContent = function () {
       $('#information-content').html('' +
         '<div class="form form-horizontal">' +
-        '<p>Validointi ok. Voit tehdä tieosoitteenmuutosilmoituksen<br>' +
+        '<p class="validation-text">Validointi ok. Voit tehdä tieosoitteenmuutosilmoituksen<br>' +
         'tai jatkaa muokkauksia.</p>' +
         '</div>');
     };
 
     const sendRoadAddressChangeButton = function (localPrefix) {
       return '<div class="' + localPrefix + 'form form-controls">' +
-        '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
-        '<button id ="send-button" class="send btn btn-block btn-send">Lähetä muutosilmoitus Tierekisteriin</button></div>';
+          '<button class="recalculate btn btn-block btn-recalculate">Päivitä etäisyyslukemat</button>' +
+          '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
+          '<button id ="send-button" class="send btn btn-block btn-send">Lähetä muutosilmoitus Tierekisteriin</button></div>';
     };
 
     const distanceValue = function () {
@@ -358,6 +378,9 @@
       titleWithEditingTool: titleWithEditingTool,
       captionTitle: captionTitle,
       projectButtons: projectButtons,
+      projectButtonsDisabled: projectButtonsDisabled,
+      projectButtonsRecalculate: projectButtonsRecalculate,
+      projectButtonsRecalculateAndChanges: projectButtonsRecalculateAndChanges,
       staticField: staticField,
       getProjectErrors: getProjectErrors
     };
