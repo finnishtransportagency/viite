@@ -18,6 +18,8 @@ import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
 class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
+  val roadwayDAO = new RoadwayDAO
+
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
   def runWithRollback[T](f: => T): T = {
@@ -69,7 +71,6 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
 
   test("Test ProjectDeltaCalculator.partition When executing a Unchanged and 2 transfer on single road part Then returns the correct From RoadSection -> To RoadSection mapping.") {
     runWithRollback {
-      val roadwayDAO = new RoadwayDAO
       val addresses  = (0 to 10).map(i => {
         createRoadAddress(i * 10, 10L)
       })
@@ -111,7 +112,6 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
 
   test("Test ProjectDeltaCalculator.partition When executing a numbering operation on single road part Then returns the correct From RoadSection -> To RoadSection mapping with the new road number/road part number.") {
     runWithRollback {
-      val roadwayDAO = new RoadwayDAO
       val addresses      = (0 to 10).map(i => {
         createRoadAddress(i * 10, 10L)
       })
@@ -188,7 +188,6 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       val terminations = Seq(toProjectLink(project, LinkStatus.Terminated)(addresses.last), toProjectLink(project, LinkStatus.Terminated)(addresses2.last))
       val unchanged    = (addresses.init ++ addresses2.init).map(toTransition(project, LinkStatus.UnChanged))
 
-//      val termPart  = ProjectDeltaCalculator.partition(terminations, Seq())
       val termPart2 = ProjectDeltaCalculator.partitionWithProjectLinks(terminations, Seq()).adjustedSections
 
       termPart2 should have size 2
@@ -246,7 +245,6 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
 
   test("Test ProjectDeltaCalculator.partition When executing a Unchanged operation but changing it's ELY value Then returns the correct From RoadSection -> To RoadSection mapping, ensuring the new ELY is in effect.") {
     runWithRollback {
-      val roadwayDAO = new RoadwayDAO
       val addresses   = (0 to 9).map(i => {
         createRoadAddress(i * 12, 12L)
       })
@@ -276,7 +274,6 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       val newDiscontinuity      = Discontinuity.Discontinuous
 
       /* A road of length 120 is split from 60 to two parts and discontinuity is changed. */
-      val roadwayDAO = new RoadwayDAO
       val addresses  = (0 to 9).map(i => {
        createRoadAddress(i * 12, 12L)
       })
@@ -339,7 +336,6 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
 
   test("Test ProjectDeltaCalculator.partition When executing a Unchanged operation but changing it's Discontinuity value Then returns the correct From RoadSection -> To RoadSection mapping, ensuring the new Discontinuity is in effect.") {
     runWithRollback {
-      val roadwayDAO = new RoadwayDAO
       val addresses   = (0 to 9).map(i => {
         createRoadAddress(i * 12, 12L)
       })
