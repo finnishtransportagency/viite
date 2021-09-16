@@ -302,7 +302,9 @@ object TrackSectionOrder {
           case _ =>
             SideCode.TowardsDigitizing
         }
-        recursiveFindAndExtend(nextPoint, ready ++ Seq(nextLink.copy(sideCode = sideCode)), unprocessed.filterNot(pl => pl == nextLink), oppositeTrack)
+        /* Sets reverse flag if sidecode change occurs with road/roadpart change. */
+        def setReverseFlag = if (sideCode != nextLink.sideCode && (nextLink.roadNumber != nextLink.originalRoadNumber || nextLink.roadPartNumber != nextLink.originalRoadPartNumber)) !nextLink.reversed else nextLink.reversed
+        recursiveFindAndExtend(nextPoint, ready ++ Seq(nextLink.copy(sideCode = sideCode, reversed = setReverseFlag)), unprocessed.filterNot(pl => pl == nextLink), oppositeTrack)
       }
     }
 
