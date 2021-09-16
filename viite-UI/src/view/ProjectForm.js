@@ -171,14 +171,14 @@
       return '<div class="project-form form-controls">' +
           '<button disabled class="recalculate btn btn-block btn-recalculate">Päivitä etäisyyslukemat</button>' +
           '<button disabled id = "show-changes-button" class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
-        '<button disabled id ="send-button" class="send btn btn-block btn-send">Lähetä muutosilmoitus Tierekisteriin</button></div>';
+        '<button disabled id ="send-button" class="send btn btn-block btn-send">Hyväksy tieosoitemuutokset</button></div>';
     };
 
     var showProjectRecalculateButton = function () {
       return '<div class="project-form form-controls">' +
           '<button class="recalculate btn btn-block btn-recalculate">Päivitä etäisyyslukemat</button>' +
           '<button disabled id = "show-changes-button" class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
-          '<button disabled id ="send-button" class="send btn btn-block btn-send">Lähetä muutosilmoitus Tierekisteriin</button></div>';
+          '<button disabled id ="send-button" class="send btn btn-block btn-send">Hyväksy tieosoitemuutokset</button></div>';
     };
 
     var addSmallLabel = function (label) {
