@@ -14,11 +14,6 @@
 
     var endDistanceOriginalValue = '--';
 
-    var showProjectButtons = function () {
-      return '<div class="project-form form-controls">' +
-        formCommon.projectButtons() + '</div>';
-    };
-
     var showProjectButtonRecalculate = function () {
       return '<div class="project-form form-controls">' +
           formCommon.projectButtonsRecalculate() + '</div>';

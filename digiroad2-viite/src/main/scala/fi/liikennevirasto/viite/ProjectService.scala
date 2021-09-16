@@ -474,7 +474,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                 Map("success" -> false, "errorMessage" -> errorMessage)
               }
               case None => {
-                Map("success" -> true, "projectErrors" -> validateProjectById(projectId, newSession = false))
+                Map("success" -> true, "projectErrors" -> validateProjectByIdHighPriorityOnly(projectId, newSession = false))
               }
             }
           }
