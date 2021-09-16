@@ -933,22 +933,21 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   get("/project/recalculateProject/:projectId", operation(recalculateAndValidateProject)) {
     val projectId = params("projectId").toLong
-    try {
-      withDynTransaction {
-        val project = projectService.fetchProjectById(projectId).get
-        projectService.recalculateProjectLinks(projectId, project.modifiedBy)
-      }
-    } catch {
-      case ex: RoadAddressException =>
-        logger.info("Road address Exception: " + ex.getMessage)
-      case ex: ProjectValidationException => Some(ex.getMessage)
-      case ex: Exception => Some(ex.getMessage)
-    }
-
     time(logger, s"GET request for /project/recalculateProject/$projectId") {
-      val validationErrors = projectService.validateProjectById(projectId).map(errorPartsToApi)
-      // return validation errors
-      Map("validationErrors" -> validationErrors)
+      try {
+        withDynTransaction {
+          val project = projectService.fetchProjectById(projectId).get
+          projectService.recalculateProjectLinks(projectId, project.modifiedBy)
+        }
+        val validationErrors = projectService.validateProjectById(projectId).map(errorPartsToApi)
+        // return validation errors
+        Map("validationErrors" -> validationErrors)
+      } catch {
+        case ex: RoadAddressException =>
+          logger.info("Road address Exception: " + ex.getMessage)
+        case ex: ProjectValidationException => Some(ex.getMessage)
+        case ex: Exception => Some(ex.getMessage)
+      }
     }
   }
 
