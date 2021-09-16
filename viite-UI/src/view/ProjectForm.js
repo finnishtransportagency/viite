@@ -360,6 +360,7 @@
         jQuery('.modal-overlay').remove();
         eventbus.trigger('roadAddressProject:openProject', currentProject);
         var projectErrors = projectCollection.getProjectErrors();
+        // errorCode 8 means there are projectLinks in the project with status "NotHandled"
         var highPriorityProjectErrors = projectErrors.filter((error) => error.errorCode === 8);
         if (highPriorityProjectErrors.length > 0) {
           // high priority errors
