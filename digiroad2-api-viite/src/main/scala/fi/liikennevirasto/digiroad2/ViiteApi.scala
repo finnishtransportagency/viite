@@ -781,7 +781,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
             Some(links.coordinates)) match {
             case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
             case None =>
-              val projectErrors = projectService.validateProjectById(links.projectId).map(errorPartsToApi)
+              val projectErrors = projectService.validateProjectByIdHighPriorityOnly(links.projectId).map(errorPartsToApi)
               val project = projectService.getSingleProjectById(links.projectId).get
               Map("success" -> true, "id" -> links.projectId,
                 "publishable" -> projectErrors.isEmpty,
@@ -924,6 +924,39 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
+  private val recalculateAndValidateProject: SwaggerSupportSyntax.OperationBuilder =(
+    apiOperation[Map[String, Any]]("recalculateAndValidateProject")
+      .parameters(
+        pathParam[Long]("projectId").description("Id of a project")
+      )
+      tags "ViiteAPI - Project"
+      summary "Given a valid projectId, this will run recalculation and the validations to the project in question."
+    )
+
+  get("/project/recalculateProject/:projectId", operation(recalculateAndValidateProject)) {
+    val projectId = params("projectId").toLong
+    time(logger, s"GET request for /project/recalculateProject/$projectId") {
+      try {
+        withDynTransaction {
+          val project = projectService.fetchProjectById(projectId).get
+          projectService.recalculateProjectLinks(projectId, project.modifiedBy)
+        }
+        val validationErrors = projectService.validateProjectById(projectId).map(errorPartsToApi)
+        // return validation errors
+        Map("success" -> true, "validationErrors" -> validationErrors)
+      } catch {
+        case ex: RoadAddressException =>
+          logger.info("Road address Exception: " + ex.getMessage)
+          Map("success" -> false, "errorMessage" -> ex.getMessage)
+        case ex: ProjectValidationException =>
+          Some(ex.getMessage)
+          Map("success" -> false, "errorMessage" -> ex.getMessage)
+        case ex: Exception =>
+          Some(ex.getMessage)
+          Map("success" -> false, "errorMessage" -> ex.getMessage)
+      }
+    }
+  }
 
   //  private val splitSuravageLinkByLinkId: SwaggerSupportSyntax.OperationBuilder = (
   //    apiOperation[Map[String, Any]]("splitSuravageLinkByLinkId")

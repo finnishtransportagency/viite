@@ -475,7 +475,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                 Map("success" -> false, "errorMessage" -> errorMessage)
               }
               case None => {
-                Map("success" -> true, "projectErrors" -> validateProjectById(projectId, newSession = false))
+                Map("success" -> true, "projectErrors" -> validateProjectByIdHighPriorityOnly(projectId, newSession = false))
               }
             }
           }
@@ -2194,6 +2194,17 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
     else {
       projectValidator.validateProject(fetchProjectById(projectId).get, projectLinkDAO.fetchProjectLinks(projectId))
+    }
+  }
+
+  def validateProjectByIdHighPriorityOnly(projectId: Long, newSession: Boolean = true): Seq[projectValidator.ValidationErrorDetails] = {
+    if (newSession) {
+      withDynSession {
+        projectValidator.projectLinksHighPriorityValidation(fetchProjectById(projectId).get, projectLinkDAO.fetchProjectLinks(projectId))
+      }
+    }
+    else {
+      projectValidator.projectLinksHighPriorityValidation(fetchProjectById(projectId).get, projectLinkDAO.fetchProjectLinks(projectId))
     }
   }
 
