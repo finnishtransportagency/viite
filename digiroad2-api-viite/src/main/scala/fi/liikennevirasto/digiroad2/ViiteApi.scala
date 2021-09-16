@@ -492,16 +492,18 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         val projectSaved = projectService.saveProject(roadAddressProject)
         val firstLink = projectService.getFirstProjectLink(projectSaved)
         Map("project" -> roadAddressProjectToApi(projectSaved, projectService.getProjectEly(projectSaved.id)), "projectAddresses" -> firstLink,
-          "reservedInfo" -> projectSaved.reservedParts.map(projectReservedPartToApi), "formedInfo" -> projectSaved.formedParts.map(projectFormedPartToApi(Some(projectSaved.id))),
-          "success" -> true, "projectErrors" -> projectService.validateProjectById(project.id).map(errorPartsToApi))
+          "reservedInfo" -> projectSaved.reservedParts.map(projectReservedPartToApi),
+          "formedInfo" -> projectSaved.formedParts.map(projectFormedPartToApi(Some(projectSaved.id))),
+          "success" -> true,
+          "projectErrors" -> projectService.validateProjectById(project.id).map(errorPartsToApi))
       } catch {
-        case _: IllegalStateException => Map("success" -> false, "errorMessage" -> "Projekti ei ole enää muokattavissa")
-        case _: IllegalArgumentException => NotFound(s"Project id ${project.id} not found")
-        case e: MappingException =>
+        case _: IllegalStateException       => Map("success" -> false, "errorMessage" -> "Projekti ei ole enää muokattavissa")
+        case _: IllegalArgumentException    => NotFound(s"Project id ${project.id} not found")
+        case e: MappingException            =>
           logger.warn("Exception treating road links", e)
           BadRequest("Missing mandatory ProjectLink parameter")
-        case ex: RuntimeException => Map("success" -> false, "errorMessage" -> ex.getMessage)
-        case ex: RoadPartReservedException => Map("success" -> false, "errorMessage" -> ex.getMessage)
+        case ex: RuntimeException           => Map("success" -> false, "errorMessage" -> ex.getMessage)
+        case ex: RoadPartReservedException  => Map("success" -> false, "errorMessage" -> ex.getMessage)
       }
     }
   }
@@ -532,20 +534,20 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  private val sendProjectToTRByProjectId: SwaggerSupportSyntax.OperationBuilder = (
+  private val sendProjectChangesToViiteByProjectId: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String, Any]]("sendProjectToTRByProjectId")
       .parameters(
-        bodyParam[Long]("projectID").description("The id of the project to send to TR.")
+        bodyParam[Long]("projectID").description("The id of the project whose changes are to be accepted to the road network.")
       )
       tags "ViiteAPI - Project"
-      summary "This will send a project and all dependant information, that shares the given ProjectId to TR for further analysis. We assume that the project has no validation issues."
+      summary "This will send a project and all dependant information, that shares the given ProjectId to Viite for further analysis, and for saving to Road Network. We assume that the project has no validation issues."
     )
 
-  post("/roadlinks/roadaddress/project/sendToTR", operation(sendProjectToTRByProjectId)) {
+  post("/roadlinks/roadaddress/project/sendProjectChangesToViite", operation(sendProjectChangesToViiteByProjectId)) {
     val projectID = (parsedBody \ "projectID").extract[Long]
-    time(logger, s"POST request for /roadlinks/roadaddress/project/sendToTR (projectID: $projectID)") {
+    time(logger, s"POST request for /roadlinks/roadaddress/project/sendProjectChangesToViite (projectID: $projectID)") {
       val projectWritableError = projectService.projectWritableCheck(projectID)
-      if (projectWritableError.isEmpty) {
+      if (projectWritableError.isEmpty) { // empty error if project is writable
         val sendStatus = projectService.publishProject(projectID)
         if (sendStatus.validationSuccess && sendStatus.sendSuccess) {
           Map("sendSuccess" -> true)

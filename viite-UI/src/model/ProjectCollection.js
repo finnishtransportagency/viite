@@ -493,15 +493,17 @@
     };
 
     this.publishProject = function () {
-      backend.sendProjectToTR(projectInfo.id, function (result) {
-        if (result.sendSuccess) {
-          eventbus.trigger('roadAddress:projectSentSuccess');
-        } else {
-          eventbus.trigger('roadAddress:projectSentFailed', result.errorMessage);
+      backend.sendProjectChangesToViite(
+        projectInfo.id,
+        function (result) {
+          if (result.sendSuccess) { eventbus.trigger('roadAddress:projectSentSuccess');
+          } else                  { eventbus.trigger('roadAddress:projectSentFailed', result.errorMessage);
+          }
+        },
+        function (result) {
+          eventbus.trigger('roadAddress:projectSentFailed', result.status);
         }
-      }, function (result) {
-        eventbus.trigger('roadAddress:projectSentFailed', result.status);
-      });
+      );
     };
 
     var addSmallLabelWithIds = function (label, id) {

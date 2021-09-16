@@ -209,14 +209,14 @@
       });
     });
 
-    this.sendProjectToTR = _.throttle(function (projectID, success, failure) {
+    this.sendProjectChangesToViite = _.throttle(function (projectID, success, failure) {
       var Json = {
         projectID: projectID
       };
       $.ajax({
         contentType: "application/json",
         type: "POST",
-        url: "api/viite/roadlinks/roadaddress/project/sendToTR",
+        url: "api/viite/roadlinks/roadaddress/project/sendProjectChangesToViite",
         data: JSON.stringify(Json),
         dataType: "json",
         success: success,

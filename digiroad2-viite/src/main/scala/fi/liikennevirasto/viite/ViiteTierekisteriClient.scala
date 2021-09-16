@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.util.ViiteProperties
 import fi.liikennevirasto.viite.dao.AddressChangeType._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.util.{OAGAuthPropertyReader, ViiteTierekisteriAuthPropertyReader}
-import org.apache.http.client.methods.{HttpGet, HttpPost}
+import org.apache.http.client.methods.HttpGet
 import org.apache.http.entity.{ContentType, StringEntity}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.format.DateTimeFormat
@@ -202,46 +202,6 @@ object ViiteTierekisteriClient {
     val json = Serialization.write(Extraction.decompose(trProject))
     logger.info(s"Message to TR: $json")
     new StringEntity(json, ContentType.APPLICATION_JSON)
-  }
-
-  def sendChanges(changes: List[ProjectRoadwayChange]): ProjectChangeStatus = {
-    val projectChange=convertToChangeProject(changes)
-    if (projectChange.id==nullRotatingTRProjectId)
-      return ProjectChangeStatus(changes.head.projectId,ProjectState.Failed2GenerateTRIdInViite.value,"Could not generate required TR ID")
-    sendJsonMessage(projectChange)
-  }
-
-  def sendJsonMessage(trProject: ChangeProject): ProjectChangeStatus = {
-    implicit val formats = DefaultFormats
-    if (ViiteProperties.tierekisteriEnabled) {
-      val request = new HttpPost(getRestEndPoint + "addresschange/")
-      request.addHeader("X-Authorization", "Basic " + auth.getAuthInBase64)
-      request.addHeader("Authorization", "Basic " + oagAuth.getAuthInBase64)
-      request.setEntity(createJsonMessage(trProject))
-      val response = client.execute(request)
-      try {
-        val statusCode = response.getStatusLine.getStatusCode
-        if (statusCode == 500) {
-          val errorMessage = parse(StreamInput(response.getEntity.getContent)).extractOpt[TRErrorResponse].getOrElse(TRErrorResponse("")) // would be nice if we didn't need case class for parsing of one attribute
-          ProjectChangeStatus(trProject.id, statusCode, errorMessage.error_message)
-        } else if (statusCode > 500) {
-          logger.info(scala.io.Source.fromInputStream(response.getEntity.getContent).getLines().mkString("\n"))
-          throw new RuntimeException("Unable to submit: Tierekisteri error > 500")
-        } else {
-          val errorMessage = parse(StreamInput(response.getEntity.getContent)).extractOpt[TRErrorResponse].getOrElse(TRErrorResponse("")) // would be nice if we didn't need case class for parsing of one attribute
-          ProjectChangeStatus(trProject.id, statusCode, errorMessage.error_message)
-        }
-      } catch {
-        case NonFatal(e) =>
-          logger.error(s"Submit to Tierekisteri failed: ${e.getMessage}", e)
-          ProjectChangeStatus(trProject.id, ProjectState.Incomplete.value, FailedToSendToTRMessage) // sending project to tierekisteri failed
-      } finally {
-        response.close()
-      }
-    } else {
-      logger.info(s"""Mock Tierekisteri in use. Project "${trProject.name}" changes were not really sent to Tierekisteri.""")
-      ProjectChangeStatus(trProject.id, 200, "")
-    }
   }
 
   def getProjectStatus(projectId: Long): Map[String,Any] = {

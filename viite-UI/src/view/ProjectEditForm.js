@@ -371,7 +371,7 @@
       });
 
       eventbus.on('roadAddress:projectSentSuccess', function () {
-        new ModalConfirm("Muutosilmoitus lähetetty Tierekisteriin.");
+        new ModalConfirm("Muutoksia viedään tieosoiteverkolle.");
         //TODO: make more generic layer change/refresh
         applicationModel.selectLayer('linkProperty');
         selectedProjectLinkProperty.close();
@@ -599,7 +599,7 @@
       });
 
       rootElement.on('click', '.project-form button.send', function () {
-        new GenericConfirmPopup("Haluatko lähettää muutosilmoituksen Tierekisteriin?", {
+        new GenericConfirmPopup("Haluatko hyväksyä projektin muutokset osaksi tieosoiteverkkoa?", {
           successCallback: function () {
             projectCollection.publishProject();
             closeProjectMode(true, true);
