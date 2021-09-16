@@ -1769,14 +1769,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     ViiteTierekisteriClient.getProjectStatus(projectId)
   }
 
-  private def getStatusFromTRObject(trProject: Option[TRProjectStatus]): Option[ProjectState] = {
-    trProject match {
-      case Some(trProjectObject) => mapTRStateToViiteState(trProjectObject.status.getOrElse(""))
-      case None => None
-      case _ => None
-    }
-  }
-
   private def getTRErrorMessage(trProject: Option[TRProjectStatus]): String = {
     trProject match {
       case Some(trProjectobject) => trProjectobject.errorMessage.getOrElse("")
@@ -1858,7 +1850,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           logger.info(s"Current status is $currentState, fetching TR state")
           val trProjectState = ViiteTierekisteriClient.getProjectStatusObject(trId)
           logger.info(s"Retrieved TR status: ${trProjectState.getOrElse(None)}")
-          val newState = getStatusFromTRObject(trProjectState).getOrElse(ProjectState.Unknown)
+          val newState = if(currentState==ProjectState.TRProcessing) ProjectState.Saved2TR else currentState
           val errorMessage = getTRErrorMessage(trProjectState)
           logger.info(s"TR returned project status for $projectID: $currentState -> $newState, errMsg: $errorMessage")
           val updatedStatus = updateProjectStatusIfNeeded(currentState, newState, errorMessage, projectID)
@@ -1880,18 +1872,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       case None =>
         logger.info(s"During status checking VIITE wasn't able to find TR_ID to project $projectID")
         appendStatusInfo(fetchProjectById(projectID).head, " Failed to find TR-ID ")
-    }
-  }
-
-  private def mapTRStateToViiteState(trState: String): Option[ProjectState] = {
-
-    trState match {
-      case "S" => Some(ProjectState.apply(ProjectState.TRProcessing.value))
-      case "K" => Some(ProjectState.apply(ProjectState.TRProcessing.value))
-      case "T" => Some(ProjectState.apply(ProjectState.Saved2TR.value))
-      case "V" => Some(ProjectState.apply(ProjectState.ErrorInTR.value))
-      case "null" => Some(ProjectState.apply(ProjectState.ErrorInTR.value))
-      case _ => None
     }
   }
 
