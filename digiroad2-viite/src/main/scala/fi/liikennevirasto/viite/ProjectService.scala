@@ -1783,11 +1783,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     if (currentStatus.value != newStatus.value && newStatus != ProjectState.Unknown) {
       logger.info(s"Status update is needed as Project Current status ($currentStatus) differs from TR Status($newStatus)")
       val project = fetchProjectById(projectId)
-      if (project.nonEmpty && newStatus == ProjectState.ErrorInTR) {
-        // We write error message and clear old TR_ID which was stored there, so user wont see it in hower
-        logger.info(s"Writing error message and clearing old TR_ID: ($errorMessage)")
-        projectDAO.updateProjectStateInfo(errorMessage, projectId)
-      }
       projectDAO.updateProjectStatus(projectId, newStatus)
     }
     if (newStatus != ProjectState.Unknown) {
