@@ -2,18 +2,16 @@ package fi.liikennevirasto.viite.process.strategy
 
 import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.SideCode
-import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.util.Track.LeftSide
 import fi.liikennevirasto.digiroad2.util.{MissingRoadwayNumberException, MissingTrackException, RoadAddressException, Track}
 import fi.liikennevirasto.digiroad2.{Point, Vector3d}
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{JunctionPointCP, NoCP, UserDefinedCP}
+import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process._
-import fi.liikennevirasto.viite.{MaxThresholdDistance, NewIdValue}
-import org.slf4j.LoggerFactory
 import fi.liikennevirasto.viite.util.TwoTrackRoadUtils
+import org.slf4j.LoggerFactory
 
 import scala.annotation.tailrec
 import scala.collection.immutable.ListMap
@@ -445,7 +443,19 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         val endPointsWithValues = ListMap(chainEndPoints.filter(link => link._2.startAddrMValue >= 0 && link._2.endAddrMValue != 0).toSeq
           .sortWith(_._2.startAddrMValue < _._2.startAddrMValue): _*)
 
-        val foundConnectedLinks = TrackSectionOrder.findOnceConnectedLinks(remainLinks).values.filter(link => link.startAddrMValue == 0 && link.endAddrMValue != 0)
+        def hasTripleConnectionPoint = {
+          val pointMap = remainLinks.flatMap(l => {
+            val (p1, p2) = l.getEndPoints
+            Seq(p1, p2)
+          }).groupBy(_.x)
+          pointMap.find(_._2.size == 3).isDefined
+        }
+
+        val onceConnectedLinks         = TrackSectionOrder.findOnceConnectedLinks(remainLinks)
+        var foundConnectedLinks = onceConnectedLinks.values.filter(link => link.startAddrMValue == 0 && link.endAddrMValue != 0)
+        /* Check if an existing road with loop end is reversed. */
+        if (onceConnectedLinks.size == 1 && foundConnectedLinks.isEmpty && hasTripleConnectionPoint && remainLinks.forall(pl => pl.status == LinkStatus.Transfer && pl.reversed))
+          foundConnectedLinks = Iterable(remainLinks.maxBy(pl => pl.originalEndAddrMValue))
 
         // In case there is some old starting link, we want to prioritize the one that didn't change or was not treated yet.
         // We could have more than two starting link since one of them can be Transferred from any part to this one.
@@ -458,6 +468,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
             None
           }
 
+        /* One saved link. */
         if (endPointsWithValues.size == 1) {
           val endLinkWithValues = endPointsWithValues.head._2
           val (currentEndPoint, otherEndPoint) = chainEndPoints.partition(_._2.id == endPointsWithValues.head._2.id)
