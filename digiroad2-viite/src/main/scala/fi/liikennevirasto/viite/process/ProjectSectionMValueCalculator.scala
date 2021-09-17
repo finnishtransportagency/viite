@@ -51,7 +51,8 @@ object ProjectSectionMValueCalculator {
 
   def assignLinkValues(seq: Seq[ProjectLink], cps: Map[Long, UserDefinedCalibrationPoint], addrSt: Option[Double], addrEn: Option[Double], coEff: Double = 1.0): Seq[ProjectLink] = {
     if (seq.isEmpty) Seq() else {
-      val endPoints       = TrackSectionOrder.findChainEndpoints(TrackSectionOrder.findOnceConnectedLinks(seq).values.toSeq)
+      val seqOfEnds       = TrackSectionOrder.findOnceConnectedLinks(seq).values.toSeq // Some complex cases may need simplifying to find ends correctly.
+      val endPoints       = TrackSectionOrder.findChainEndpoints(seqOfEnds)
       val mappedEndpoints = (endPoints.head._1, endPoints.last._1)
       val orderedPairs    = TrackSectionOrder.orderProjectLinksTopologyByGeometry(mappedEndpoints, seq)
       val ordered         = if (seq.exists(_.track == Track.RightSide || seq.forall(_.track == Track.Combined))) orderedPairs._1 else orderedPairs._2.reverse
