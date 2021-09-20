@@ -692,7 +692,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           val user = userProvider.getCurrentUser().username
           projectService.revertLinks(linksToRevert.projectId, linksToRevert.roadNumber, linksToRevert.roadPartNumber, linksToRevert.links, linksToRevert.coordinates, user) match {
             case None =>
-              val projectErrors = projectService.validateProjectById(linksToRevert.projectId).map(errorPartsToApi)
+              val projectErrors = projectService.validateProjectByIdHighPriorityOnly(linksToRevert.projectId).map(errorPartsToApi)
               val project = projectService.getSingleProjectById(linksToRevert.projectId).get
               Map("success" -> true,
                 "publishable" -> projectErrors.isEmpty,
