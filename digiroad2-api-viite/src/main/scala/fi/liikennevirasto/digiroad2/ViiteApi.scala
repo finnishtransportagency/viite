@@ -4,9 +4,8 @@ import java.text.SimpleDateFormat
 
 import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.authentication.{JWTAuthentication, RequestHeaderAuthentication}
+import fi.liikennevirasto.digiroad2.authentication.JWTAuthentication
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-//import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
@@ -536,8 +535,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         if (sendStatus.validationSuccess && sendStatus.sendSuccess) {
           Map("sendSuccess" -> true)
         } else {
-          logger.error(s"Failed to send project ${projectID} to TR. Error: ${sendStatus.errorMessage.getOrElse("-")}")
-          Map("sendSuccess" -> false, "errorMessage" -> sendStatus.errorMessage.getOrElse(FailedToSendToTRMessage))
+          logger.error(s"Failed to append project ${projectID} to road network. Error: ${sendStatus.errorMessage.getOrElse("-")}")
+          Map("sendSuccess" -> false, "errorMessage" -> sendStatus.errorMessage.getOrElse(ProjectCouldNotBeAppendedToRoadNetwork))
         }
       } else {
         logger.error(s"Failed to send project ${projectID} to TR. Error: ${projectWritableError.get}")
