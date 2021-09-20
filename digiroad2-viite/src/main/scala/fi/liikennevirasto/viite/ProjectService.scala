@@ -1,9 +1,7 @@
 package fi.liikennevirasto.viite
 
-import java.io.IOException
 import java.sql.SQLException
 import java.util.Date
-
 import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, switch}
@@ -25,8 +23,8 @@ import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectDAO, RoadwayDAO, _}
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink}
 import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.util.SplitOptions
-import org.apache.http.client.ClientProtocolException
 import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ListBuffer
@@ -34,6 +32,14 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import scala.util.control.NonFatal
+
+// note, ChangeProject moved here from former ViiteTierekisteriClient at Tierekisteri removal (2021-09)
+case class ChangeProject(id:Long,
+                         name:String,
+                         user:String,
+                         changeDate:String,
+                         changeInfoSeq:Seq[RoadwayChangeInfo]
+                        )
 
 sealed trait RoadNameSource {
   def value: Long
@@ -937,7 +943,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val (recalculate, warningMessage) = recalculateChangeTable(projectId)
       if (recalculate) {
         val roadwayChanges = roadwayChangesDAO.fetchRoadwayChangesResume(Set(projectId))
-        (Some(ViiteTierekisteriClient.convertToChangeProject(roadwayChanges)), warningMessage)
+        (Some(convertToChangeProject(roadwayChanges)), warningMessage)
       } else {
         (None, None)
       }
@@ -947,6 +953,30 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         (None, None)
     }
   }
+
+  /** Returns a {@link ChangeProject}
+    * @throw IllegalArgumentException if <i>changeData</i> has
+    * multiple project is'd, project names, change dates, or users
+    * @note functionality moved here from former ViiteTierekisteriClient at Tierekisteri removal (2021-09) */
+  def convertToChangeProject(changeData: List[ProjectRoadwayChange]): ChangeProject = {
+    val projects = changeData.map(cd => {
+      convertChangeDataToChangeProject(cd)
+    })
+    val grouped = projects.groupBy(p => (p.id, p.name, p.changeDate, p.user))
+    if (grouped.keySet.size > 1)
+      throw new IllegalArgumentException("Multiple projects, users or change dates in single data set")
+    projects.tail.foldLeft(projects.head) { case (proj1, proj2) =>
+      proj1.copy(changeInfoSeq = proj1.changeInfoSeq ++ proj2.changeInfoSeq)
+    }
+  }
+  private val nullRotatingChangeProjectId = -1   // note: previously nullRotatingTRProjectId, refers to project's TR_ID field in DB
+
+  private def convertChangeDataToChangeProject(changeData: ProjectRoadwayChange): ChangeProject = {
+    val changeInfo = changeData.changeInfo
+    ChangeProject(changeData.rotatingTRId.getOrElse(nullRotatingChangeProjectId), changeData.projectName.getOrElse(""), changeData.user,
+      DateTimeFormat.forPattern("yyyy-MM-dd").print(changeData.projectStartDate), Seq(changeInfo))
+  }
+
 
   def prettyPrintLog(roadwayChanges: List[ProjectRoadwayChange]): Unit = {
     roadwayChanges.groupBy(a => (a.projectId, a.projectName, a.projectStartDate, a.ely)).foreach(g => {
@@ -1763,10 +1793,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
     val (roadLinks, complementaryLinks) = Await.result(combinedFuture, Duration.Inf)
     (roadLinks, complementaryLinks)
-  }
-
-  def getProjectStatusFromTR(projectId: Long): Map[String, Any] = {
-    ViiteTierekisteriClient.getProjectStatus(projectId)
   }
 
   def setProjectStatus(projectId: Long, newStatus: ProjectState, withSession: Boolean = true): Unit = {
