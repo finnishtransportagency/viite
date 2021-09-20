@@ -16,8 +16,6 @@ trait ViiteProperties {
   val vvhRestApiEndPoint: String
   val vvhRoadlinkFrozen: Boolean
   val vkmUrl: String
-  val tierekisteriViiteRestApiEndPoint: String
-  val tierekisteriEnabled: Boolean
   val httpProxySet: Boolean
   val httpProxyHost: String
   val httpNonProxyHosts: String
@@ -32,8 +30,6 @@ trait ViiteProperties {
   val conversionBonecpPassword: String
   val oagUsername: String
   val oagPassword: String
-  val viitetierekisteriUsername: String
-  val viitetierekisteriPassword: String
   val latestDeploy: String
   val env: String
 
@@ -66,8 +62,6 @@ class ViitePropertiesFromEnv extends ViiteProperties {
   val vvhRestApiEndPoint: String = scala.util.Properties.envOrElse("vvhRestApiEndPoint", null)
   val vvhRoadlinkFrozen: Boolean = scala.util.Properties.envOrElse("vvhRoadlink.frozen", "false").toBoolean
   val vkmUrl: String = scala.util.Properties.envOrElse("vkmUrl", null)
-  val tierekisteriViiteRestApiEndPoint: String = scala.util.Properties.envOrElse("tierekisteriViiteRestApiEndPoint", "http://localhost:8080/api/tierekisteri/")
-  val tierekisteriEnabled: Boolean = scala.util.Properties.envOrElse("tierekisteri.enabled", "false").toBoolean
   val httpProxySet: Boolean = scala.util.Properties.envOrElse("http.proxySet", "false").toBoolean
   val httpProxyHost: String = scala.util.Properties.envOrElse("http.proxyHost", null)
   val httpNonProxyHosts: String = scala.util.Properties.envOrElse("http.nonProxyHosts", "")
@@ -82,8 +76,6 @@ class ViitePropertiesFromEnv extends ViiteProperties {
   val conversionBonecpPassword: String = scala.util.Properties.envOrElse("conversion.bonecp.password", null)
   val oagUsername: String = scala.util.Properties.envOrElse("oag.username", null)
   val oagPassword: String = scala.util.Properties.envOrElse("oag.password", null)
-  val viitetierekisteriUsername: String = scala.util.Properties.envOrElse("viiteTierekisteri.username", null)
-  val viitetierekisteriPassword: String = scala.util.Properties.envOrElse("viiteTierekisteri.password", null)
   val latestDeploy: String = revisionProperties.getProperty("latestDeploy", "-")
   val env: String = scala.util.Properties.envOrElse("env", "Unknown")
 
@@ -149,8 +141,6 @@ class ViitePropertiesFromFile extends ViiteProperties {
   override val vvhRestApiEndPoint: String = scala.util.Properties.envOrElse("vvhRestApiEndPoint", envProps.getProperty("vvhRestApiEndPoint"))
   override val vvhRoadlinkFrozen: Boolean = envProps.getProperty("vvhRoadlink.frozen", "false").toBoolean
   override val vkmUrl: String = scala.util.Properties.envOrElse("vkmUrl", envProps.getProperty("vkmUrl"))
-  override val tierekisteriViiteRestApiEndPoint: String = envProps.getProperty("tierekisteriViiteRestApiEndPoint", "http://localhost:8080/api/tierekisteri/")
-  override val tierekisteriEnabled: Boolean = envProps.getProperty("tierekisteri.enabled", "false").toBoolean
   override val httpProxySet: Boolean = envProps.getProperty("http.proxySet", "false").toBoolean
   override val httpProxyHost: String = envProps.getProperty("http.proxyHost")
   override val httpNonProxyHosts: String = envProps.getProperty("http.nonProxyHosts", "")
@@ -165,8 +155,6 @@ class ViitePropertiesFromFile extends ViiteProperties {
   override val conversionBonecpPassword: String = scala.util.Properties.envOrElse("conversionBonecpPassword", envProps.getProperty("conversion.bonecp.password"))
   override val oagUsername: String = envProps.getProperty("oag.username")
   override val oagPassword: String = envProps.getProperty("oag.password")
-  override val viitetierekisteriUsername: String = envProps.getProperty("viiteTierekisteri.username")
-  override val viitetierekisteriPassword: String = envProps.getProperty("viiteTierekisteri.password")
   override val latestDeploy: String = revisionProperties.getProperty("latestDeploy", "-")
   override val env: String = envProps.getProperty("env")
 
@@ -229,8 +217,6 @@ object ViiteProperties {
   lazy val vvhRestApiEndPoint: String = properties.vvhRestApiEndPoint
   lazy val vvhRoadlinkFrozen: Boolean = properties.vvhRoadlinkFrozen
   lazy val vkmUrl: String = properties.vkmUrl
-  lazy val tierekisteriViiteRestApiEndPoint: String = properties.tierekisteriViiteRestApiEndPoint
-  lazy val tierekisteriEnabled: Boolean = properties.tierekisteriEnabled
   lazy val httpProxySet: Boolean = properties.httpProxySet
   lazy val httpProxyHost: String = properties.httpProxyHost
   lazy val httpNonProxyHosts: String = properties.httpNonProxyHosts
@@ -245,8 +231,6 @@ object ViiteProperties {
   lazy val conversionBonecpPassword: String = properties.conversionBonecpPassword
   lazy val oagUsername: String = properties.oagUsername
   lazy val oagPassword: String = properties.oagPassword
-  lazy val viitetierekisteriUsername: String = properties.viitetierekisteriUsername
-  lazy val viitetierekisteriPassword: String = properties.viitetierekisteriPassword
   lazy val latestDeploy: String = properties.latestDeploy
   lazy val env: String = properties.env
   lazy val bonecpProperties: Properties = properties.bonecpProperties
