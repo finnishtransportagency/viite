@@ -1,24 +1,16 @@
 package fi.liikennevirasto.viite
 
-import java.net.ConnectException
-
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.DigiroadEventBus
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.ViiteProperties
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
-import org.apache.http.client.config.RequestConfig
-import org.apache.http.client.methods.HttpGet
-import org.apache.http.conn.{ConnectTimeoutException, HttpHostConnectException}
-import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import org.mockito.Mockito.reset
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.StaticQuery.interpolation
 
 class ProjectServiceTRSpec extends FunSuite with Matchers with BeforeAndAfter {
   val mockProjectService: ProjectService = MockitoSugar.mock[ProjectService]
@@ -74,28 +66,6 @@ class ProjectServiceTRSpec extends FunSuite with Matchers with BeforeAndAfter {
       val t = f
       dynamicSession.rollback()
       t
-    }
-  }
-
-  private def testConnection: Boolean = {
-    val url = ViiteProperties.tierekisteriViiteRestApiEndPoint
-    val request = new HttpGet(url)
-    request.setConfig(RequestConfig.custom().setConnectTimeout(2500).build())
-    val client = HttpClientBuilder.create().build()
-    try {
-      val response = client.execute(request)
-      try {
-        response.getStatusLine.getStatusCode >= 200
-      } finally {
-        response.close()
-      }
-    } catch {
-      case e: HttpHostConnectException =>
-        false
-      case e: ConnectTimeoutException =>
-        false
-      case e: ConnectException =>
-        false
     }
   }
 
