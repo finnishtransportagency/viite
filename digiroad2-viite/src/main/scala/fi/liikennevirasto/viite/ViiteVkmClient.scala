@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory
 import java.net.URL
 
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
-import fi.liikennevirasto.viite.ViiteTierekisteriClient.oagAuth
 import fi.liikennevirasto.viite.util.OAGAuthPropertyReader
 
 import scala.util.control.NonFatal
