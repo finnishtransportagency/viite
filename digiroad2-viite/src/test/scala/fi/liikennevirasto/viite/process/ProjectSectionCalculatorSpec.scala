@@ -10,11 +10,10 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, asset}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{JunctionPointCP, NoCP, RoadAddressCP}
-import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous, EndOfRoad, MinorDiscontinuity, ParallelLink}
+import fi.liikennevirasto.viite.dao.Discontinuity._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao.{LinkStatus, _}
-import fi.liikennevirasto.viite.process.strategy.TrackCalculatorContext
 import fi.liikennevirasto.viite.util._
 import org.joda.time.DateTime
 import org.scalatest.mockito.MockitoSugar
@@ -1703,6 +1702,44 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
         pl.reversed should be(false)
       }
       )
+    }
+  }
+
+    test("Test assignMValues " +
+         "When a combined road has a loopend is reversed with transfer status" +
+         "Then addresses, directions and link ordering should be correct.") {
+    runWithRollback {
+      val geom1 = Seq(Point(372017, 6669721), Point(371826, 6669765))
+      val geom2 = Seq(Point(372017, 6669721), Point(372026, 6669819))
+      val geom3 = Seq(Point(372026, 6669819), Point(371880, 6669863))
+      val geom4 = Seq(Point(371826, 6669765), Point(371880, 6669863))
+      val geom5 = Seq(Point(371704, 6669673), Point(371826, 6669765))
+      val geom6 = Seq(Point(371637, 6669626), Point(371704, 6669673))
+
+      val plId = Sequences.nextProjectLinkId
+      // ProjectLinks after ChangeDirection() and set to correct addresses.
+      val projectLinkSeq = Seq(
+        ProjectLink(plId + 1, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 199L, 602L, 801L, None, None, None, 12345L, 0.0, 10.0, SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP), geom1, 0L, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom1), 0L, 0, 0, reversed = true, None, 86400L),
+        ProjectLink(plId + 2, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 199L, 298L, 503L, 602L, None, None, None, 12346L, 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), geom2, 0L, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom2), 0L, 0, 0, reversed = true, None, 86400L),
+        ProjectLink(plId + 3, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 298L, 453L, 348L, 503L, None, None, None, 12347L, 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), geom3, 0L, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom3), 0L, 0, 0, reversed = true, None, 86400L),
+        ProjectLink(plId + 4, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 453L, 565L, 236L, 348L, None, None, None, 12348L, 0.0, 10.0, SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP), geom4, 0L, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom4), 0L, 0, 0, reversed = true, None, 86400L),
+        ProjectLink(plId + 5, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 565L, 719L, 82L, 236L, None, None, None, 12349L, 0.0, 10.0, SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP), geom5, 0L, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom5), 0L, 0, 0, reversed = true, None, 86400L),
+        ProjectLink(plId + 6, 9999L, 1L, Track.Combined, Discontinuity.Discontinuous, 719L, 801L, 0L, 82L, None, None, None, 12350L, 0.0, 10.0, SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP), geom6, 0L, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom6), 0L, 0, 0, reversed = true, None, 86400L)
+      )
+
+      val output = ProjectSectionCalculator.assignMValues(projectLinkSeq).sortBy(_.startAddrMValue)
+
+      output.length should be(6)
+      output.map(_.linkId) shouldBe sorted
+
+      // Check correct addresses have not changed.
+      output.foreach(o => {
+        val projectLinkBefore = projectLinkSeq.find(_.id == o.id).get
+        o.startAddrMValue should be(projectLinkBefore.startAddrMValue)
+        o.endAddrMValue should be(projectLinkBefore.endAddrMValue)
+        o.sideCode should be(projectLinkBefore.sideCode)
+        o.reversed should be(projectLinkBefore.reversed)
+      })
     }
   }
 

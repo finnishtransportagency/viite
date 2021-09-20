@@ -281,7 +281,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
 
   test("Test findStartingPoints " +
        "When a combined road has a loopend" +
-       "Then startingpoint from triple connection should be founc.") {
+       "Then startingpoint from triple connection should be found.") {
     runWithRollback {
       val geom1 = Seq(Point(372017, 6669721), Point(371826, 6669765))
       val geom2 = Seq(Point(372017, 6669721), Point(372026, 6669819))
@@ -303,8 +303,9 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
 
       val newProjectLinks = Seq()
 
+      // Validate correct starting point for reversed combined road.
       val startingPointsForCalculations = defaultSectionCalculatorStrategy.findStartingPoints(newProjectLinks, otherProjectLinks, Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
-      startingPointsForCalculations should be (Point(371826.0,6669765.0,0.0),Point(371826.0,6669765.0,0.0))
+      startingPointsForCalculations should be (geom1.last,geom1.last)
     }
   }
 

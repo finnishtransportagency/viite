@@ -275,7 +275,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     val rightLinks = ProjectSectionMValueCalculator.calculateMValuesForTrack(rightSections, userDefinedCalibrationPoint)
     val leftLinks = ProjectSectionMValueCalculator.calculateMValuesForTrack(leftSections, userDefinedCalibrationPoint)
 
-    /* Adjust addresses before splits,  calibrationpoints after splits don't restrict calculation. */
+    /* Adjust addresses before splits, calibrationpoints after splits don't restrict calculation. */
     /* TODO: Check if userDefinedCalibrationPoint should be included here -> calculate with user given addresses. */
     val (adjustedLeftLinksBeforeStatusSplits, adjustedRightLinksBeforeStatusSplits) = adjustTracksToMatch(leftLinks, rightLinks, None, userDefinedCalibrationPoint)
 
