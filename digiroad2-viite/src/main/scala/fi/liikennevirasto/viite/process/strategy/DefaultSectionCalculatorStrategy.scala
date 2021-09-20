@@ -448,7 +448,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
             val (p1, p2) = l.getEndPoints
             Seq(p1, p2)
           }).groupBy(_.x)
-          pointMap.find(_._2.size == 3).isDefined
+          pointMap.exists(_._2.size == 3)
         }
 
         val onceConnectedLinks = TrackSectionOrder.findOnceConnectedLinks(remainLinks)
