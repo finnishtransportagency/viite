@@ -400,22 +400,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  private val getProjectStatusFromTR: SwaggerSupportSyntax.OperationBuilder = (
-    apiOperation[Map[String, Any]]("getProjectStatusFromTR")
-      .parameters(
-        queryParam[Long]("projectId").description("Id of project")
-      )
-      tags "ViiteAPI - Project"
-      summary "Get project status from Tierekisteri"
-    )
-
-  get("/roadlinks/checkproject/", operation(getProjectStatusFromTR)) {
-    val projectId = params("projectId").toLong
-    time(logger, s"GET request for /roadlinks/checkproject/ (projectId: $projectId)") {
-      projectService.getProjectStatusFromTR(projectId)
-    }
-  }
-
   private val getProjectAddressLinksByLinkIds: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String,Any]]("getProjectAddressLinksByLinkIds")
       .parameters(
