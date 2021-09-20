@@ -1706,7 +1706,9 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test assignMValues When ") {
+  test("Test assignMValues " +
+       "When a long road with one part having discontinuities and track changes is transferred" +
+       "Then addresses should be calculated in correct order. ") {
     runWithRollback {
       sqlu"""INSERT INTO public.project (id,state,"name",created_by,created_date,modified_by,modified_date,add_info,start_date,status_info,tr_id,coord_x,coord_y,zoom) VALUES
         (1088,1,'40921','silari','2021-09-10 10:52:28.106','silari','2021-09-10 10:52:28.106','','2021-09-11','',NULL,370312.481,6670979.546,12)""".execute
@@ -1803,7 +1805,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       lefts.zip(lefts.tail).foreach { case (prev, next) => prev.originalEndAddrMValue should be(next.originalStartAddrMValue)
       }
       rights.zip(rights.tail).foreach { case (prev, next) => prev.endAddrMValue should be(next.startAddrMValue)
-      } /* check posotove lengths. */
+      } /* check positive lengths. */
       output.foreach(pl => {
         (pl.endAddrMValue - pl.startAddrMValue) should be > 0L
       })
