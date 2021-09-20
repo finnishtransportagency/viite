@@ -651,13 +651,12 @@
           if (response.success) {
             // set project errors that were returned by the backend validations
             projectCollection.setProjectErrors(response.validationErrors);
-            // display the validation errors
-            eventbus.trigger('roadAddressProject:writeProjectErrors');
             if (Object.keys(response.validationErrors).length === 0) {
               // if no validation errors are present, show recalculate button and changes button
               $('footer').html(projectButtonsRecalculateAndChanges);
             }
-            applicationModel.removeSpinner();
+            // fetch the recalculated project links and redraw map (this also writes the validation errors on the screen and removes the spinner)
+            projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), zoomlevels.getViewZoom(map) + 1, currentProject.project.id, projectCollection.getPublishableStatus());
           }
           // if something went wrong during recalculation or validation, show error to user
           else {
