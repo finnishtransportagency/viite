@@ -451,7 +451,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
           pointMap.find(_._2.size == 3).isDefined
         }
 
-        val onceConnectedLinks         = TrackSectionOrder.findOnceConnectedLinks(remainLinks)
+        val onceConnectedLinks = TrackSectionOrder.findOnceConnectedLinks(remainLinks)
         var foundConnectedLinks = onceConnectedLinks.values.filter(link => link.startAddrMValue == 0 && link.endAddrMValue != 0)
         /* Check if an existing road with loop end is reversed. */
         if (onceConnectedLinks.size == 1 && foundConnectedLinks.isEmpty && hasTripleConnectionPoint && remainLinks.forall(pl => pl.status == LinkStatus.Transfer && pl.reversed))
