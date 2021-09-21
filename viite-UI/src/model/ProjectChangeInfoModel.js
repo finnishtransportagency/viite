@@ -24,7 +24,7 @@
       changeDate: "1980-01-28",
       changeInfoSeq: changesInfo
     };
-    var projectChanges = {changeTable: changeTable, validationErrors: []};
+    var projectChanges = {changeTable: changeTable};
 
     function loadChanges() {
       var warningM = projectChanges.warningMessage;
