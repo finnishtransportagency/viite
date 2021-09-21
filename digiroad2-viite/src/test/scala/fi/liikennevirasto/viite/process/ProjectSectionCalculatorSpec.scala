@@ -1794,7 +1794,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val rightsBefore = projectLinkSeq.filterNot(_.track == Track.LeftSide).sortBy(_.startAddrMValue)
       val rights       = output.filterNot(_.track == Track.LeftSide).sortBy(_.startAddrMValue)
 
-      /* Check order of links remains. */
+      /* Check that order of links remains. */
       leftsBefore.map(_.id) should be(lefts.map(_.id))
       rightsBefore.map(_.id) should be(rights.map(_.id))
 
@@ -1802,10 +1802,11 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       }
       lefts.zip(lefts.tail).foreach { case (prev, next) => prev.endAddrMValue should be(next.startAddrMValue)
       }
-      lefts.zip(lefts.tail).foreach { case (prev, next) => prev.originalEndAddrMValue should be(next.originalStartAddrMValue)
+      rights.zip(rights.tail).foreach { case (prev, next) => prev.originalEndAddrMValue should be(next.originalStartAddrMValue)
       }
       rights.zip(rights.tail).foreach { case (prev, next) => prev.endAddrMValue should be(next.startAddrMValue)
-      } /* check positive lengths. */
+      }
+      /* check positive lengths. */
       output.foreach(pl => {
         (pl.endAddrMValue - pl.startAddrMValue) should be > 0L
       })
