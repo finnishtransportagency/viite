@@ -863,34 +863,20 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  private val validateProjectAndReturnChangeTableById: SwaggerSupportSyntax.OperationBuilder =(
-    apiOperation[Map[String, Any]]("validateProjectAndReturnChangeTableById")
+  private val returnChangeTableById: SwaggerSupportSyntax.OperationBuilder =(
+    apiOperation[Map[String, Any]]("returnChangeTableById")
       .parameters(
         pathParam[Long]("projectId").description("Id of a project")
       )
       tags "ViiteAPI - Project"
-      summary "Given a valid projectId, this will run the validations to the project in question and it will also fetch all the changes made on said project."
+      summary "Given a valid projectId, this will fetch all the changes made on said project."
     )
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
-  get("/project/getchangetable/:projectId", operation(validateProjectAndReturnChangeTableById)) {
+  get("/project/getchangetable/:projectId", operation(returnChangeTableById)) {
     val projectId = params("projectId").toLong
-    try {
-      withDynTransaction {
-       val project = projectService.fetchProjectById(projectId).get
-        projectService.recalculateProjectLinks(projectId, project.modifiedBy)
-      }
-    } catch {
-      case ex: RoadAddressException =>
-        logger.info("Road address Exception: " + ex.getMessage)
-        Some(s"Tieosoitevirhe: ${ex.getMessage}")
-      case ex: ProjectValidationException => Some(ex.getMessage)
-      case ex: Exception => Some(ex.getMessage)
-    }
 
     time(logger, s"GET request for /project/getchangetable/$projectId") {
-      val validationErrors = projectService.validateProjectById(projectId).map(mapValidationIssues)
-      //TODO change UI to not override project validator errors on change table call
       val (changeProject, warningMessage) = projectService.getChangeProject(projectId)
       val changeTableData = changeProject.map(project =>
         Map(
@@ -903,7 +889,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
               "discontinuity" -> changeInfo.discontinuity.value, "source" -> changeInfo.source,
               "target" -> changeInfo.target, "reversed" -> changeInfo.reversed)))
       ).getOrElse(None)
-      Map("changeTable" -> changeTableData, "validationErrors" -> validationErrors, "warningMessage" -> warningMessage)
+      Map("changeTable" -> changeTableData, "warningMessage" -> warningMessage)
     }
   }
 
