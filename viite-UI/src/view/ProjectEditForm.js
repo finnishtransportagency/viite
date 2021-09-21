@@ -2,7 +2,7 @@
   root.ProjectEditForm = function (map, projectCollection, selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend) {
     var LinkStatus = LinkValues.LinkStatus;
     var CalibrationCode = LinkValues.CalibrationCode;
-    var editableStatus = [LinkValues.ProjectStatus.Incomplete.value, LinkValues.ProjectStatus.ErrorInTR.value, LinkValues.ProjectStatus.Unknown.value];
+    var editableStatus = [LinkValues.ProjectStatus.Incomplete.value, LinkValues.ProjectStatus.Unknown.value];
     var ValidElys = _.map(LinkValues.ElyCodes, function (ely) {
       return ely;
     });
@@ -14,9 +14,19 @@
 
     var endDistanceOriginalValue = '--';
 
-    var showProjectChangeButton = function () {
+    var showProjectButtonRecalculate = function () {
       return '<div class="project-form form-controls">' +
-        formCommon.projectButtons() + '</div>';
+          formCommon.projectButtonsRecalculate() + '</div>';
+    };
+
+    var showProjectButtonsDisabled = function () {
+      return '<div class="project-form form-controls">' +
+          formCommon.projectButtonsDisabled() + '</div>';
+    };
+
+    var showProjectButtonsRecalculateAndChanges = function () {
+      return '<div class="project-form form-controls">' +
+          formCommon.projectButtonsRecalculateAndChanges() + '</div>';
     };
 
     var transitionModifiers = function (targetStatus, currentStatus) {
@@ -134,17 +144,30 @@
       return '<label class="control-label-small" style="text-transform: none">' + label + '</label>';
     };
 
-    var emptyTemplate = function (project) {
+    var emptyTemplateDisabledButtons = function (project) {
       return _.template('' +
-        '<header>' +
-        formCommon.titleWithEditingTool(project) +
-        '</header>' +
-        '<div class="wrapper read-only">' +
-        '<div class="form form-horizontal form-dark">' +
-        '<label class="highlighted">JATKA VALITSEMALLA KOHDE KARTALTA.</label>' +
-        '<div class="form-group" id="project-errors"></div>' +
-        '</div></div></br></br>' +
-        '<footer>' + showProjectChangeButton() + '</footer>');
+          '<header>' +
+          formCommon.titleWithEditingTool(project) +
+          '</header>' +
+          '<div class="wrapper read-only">' +
+          '<div class="form form-horizontal form-dark">' +
+          '<label class="highlighted">JATKA VALITSEMALLA KOHDE KARTALTA.</label>' +
+          '<div class="form-group" id="project-errors"></div>' +
+          '</div></div></br></br>' +
+          '<footer>' + showProjectButtonsDisabled() + '</footer>');
+    };
+
+    var emptyTemplateRecalculateButtons = function (project) {
+      return _.template('' +
+          '<header>' +
+          formCommon.titleWithEditingTool(project) +
+          '</header>' +
+          '<div class="wrapper read-only">' +
+          '<div class="form form-horizontal form-dark">' +
+          '<label class="highlighted">JATKA VALITSEMALLA KOHDE KARTALTA.</label>' +
+          '<div class="form-group" id="project-errors"></div>' +
+          '</div></div></br></br>' +
+          '<footer>' + showProjectButtonRecalculate() + '</footer>');
     };
 
     var isProjectPublishable = function () {
@@ -322,7 +345,7 @@
         }
       });
 
-      eventbus.on('roadAddress:projectLinksUpdated', function (data) {
+      eventbus.on('roadAddress:projectLinksUpdated', function (response) {
         //eventbus.trigger('projectChangeTable:refresh');
         projectCollection.setTmpDirty([]);
         projectCollection.setDirty([]);
@@ -330,18 +353,25 @@
         selectedProjectLinkProperty.setDirty(false);
         selectedProjectLink = false;
         selectedProjectLinkProperty.cleanIds();
-        rootElement.html(emptyTemplate(projectCollection.getCurrentProject().project));
+        var projectErrors = response.projectErrors;
+        if (Object.keys(projectErrors).length > 0) {
+          // if there is validation errors (only high priority errors are returned when updating project links) after updating project links then show disabled buttons
+          rootElement.html(emptyTemplateDisabledButtons(projectCollection.getCurrentProject().project));
+        } else {
+          // if no (high priority) validation errors are present, then show recalculate button
+          rootElement.html(emptyTemplateRecalculateButtons(projectCollection.getCurrentProject().project));
+        }
         formCommon.toggleAdditionalControls();
         applicationModel.removeSpinner();
-        if (typeof data !== 'undefined' && typeof data.publishable !== 'undefined' && data.publishable) {
-          eventbus.trigger('roadAddressProject:projectLinkSaved', data.id, data.publishable);
+        if (typeof response !== 'undefined' && typeof response.publishable !== 'undefined' && response.publishable) {
+          eventbus.trigger('roadAddressProject:projectLinkSaved', response.id, response.publishable);
         } else {
           eventbus.trigger('roadAddressProject:projectLinkSaved');
         }
       });
 
       eventbus.on('roadAddress:projectSentSuccess', function () {
-        new ModalConfirm("Muutosilmoitus lähetetty Tierekisteriin.");
+        new ModalConfirm("Muutoksia viedään tieosoiteverkolle.");
         //TODO: make more generic layer change/refresh
         applicationModel.selectLayer('linkProperty');
         selectedProjectLinkProperty.close();
@@ -569,7 +599,7 @@
       });
 
       rootElement.on('click', '.project-form button.send', function () {
-        new GenericConfirmPopup("Haluatko lähettää muutosilmoituksen Tierekisteriin?", {
+        new GenericConfirmPopup("Haluatko hyväksyä projektin muutokset osaksi tieosoiteverkkoa?", {
           successCallback: function () {
             projectCollection.publishProject();
             closeProjectMode(true, true);
@@ -599,13 +629,41 @@
       rootElement.on('click', '.project-form button.show-changes', function () {
         $(this).empty();
         projectChangeTable.show();
-        var projectChangesButton = showProjectChangeButton();
+        var projectChangesButton = showProjectButtonsRecalculateAndChanges();
         if (isProjectPublishable() && isProjectEditable()) {
           formCommon.setInformationContent();
           $('footer').html(formCommon.sendRoadAddressChangeButton('project-', projectCollection.getCurrentProject()));
         } else {
           $('footer').html(projectChangesButton);
         }
+      });
+
+      // when recalculate button is clicked
+      rootElement.on('click', '.project-form button.recalculate', function () {
+        var projectButtonsRecalculateAndChanges = showProjectButtonsRecalculateAndChanges();
+        // get current project
+        var currentProject = projectCollection.getCurrentProject();
+        // add spinner
+        applicationModel.addSpinner();
+        // fire backend call to recalculate and validate the current project with the project id
+        backend.recalculateAndValidateProject(currentProject.project.id, function (response) {
+          // if recalculation and validation did not throw exceptions in the backend
+          if (response.success) {
+            // set project errors that were returned by the backend validations
+            projectCollection.setProjectErrors(response.validationErrors);
+            if (Object.keys(response.validationErrors).length === 0) {
+              // if no validation errors are present, show recalculate button and changes button
+              $('footer').html(projectButtonsRecalculateAndChanges);
+            }
+            // fetch the recalculated project links and redraw map (this also writes the validation errors on the screen and removes the spinner)
+            projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), zoomlevels.getViewZoom(map) + 1, currentProject.project.id, projectCollection.getPublishableStatus());
+          }
+          // if something went wrong during recalculation or validation, show error to user
+          else {
+            new ModalConfirm(response.errorMessage);
+            applicationModel.removeSpinner();
+          }
+        });
       });
 
       rootElement.on('change input', '.form-control.small-input', function (event) {

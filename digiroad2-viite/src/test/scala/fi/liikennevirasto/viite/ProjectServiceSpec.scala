@@ -139,6 +139,17 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     dummyRoadLink(linkId = 124L, Seq(0.0, 10.0), NormalLinkInterface)
   )
 
+  // note, functionality moved here from former ViiteTierekisteriClient at Tierekisteri removal (2021-09)
+  val defaultChangeInfo = RoadwayChangeInfo(
+    AddressChangeType.apply(2),
+    RoadwayChangeSection(None, None, None, None, None, None, None, None, None),
+    RoadwayChangeSection(Option(403), Option(0), Option(8), Option(0), Option(8), Option(1001),
+      Option(AdministrativeClass.State), Option(Discontinuity.Continuous), Option(5)),
+    Discontinuity.apply(1),
+    AdministrativeClass.apply(1),
+    reversed = false,
+    1)
+
   private def createProjectLinks(linkIds: Seq[Long], projectId: Long, roadNumber: Long, roadPartNumber: Long, track: Int, discontinuity: Int, administrativeClass: Int, roadLinkSource: Int, roadEly: Long, user: String, roadName: String) = {
     projectService.createProjectLinks(linkIds, projectId, roadNumber, roadPartNumber, Track.apply(track), Discontinuity.apply(discontinuity), AdministrativeClass.apply(administrativeClass), LinkGeomSource.apply(roadLinkSource), roadEly, user, roadName)
   }
@@ -1271,7 +1282,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Test createRoadLinkProject When project in writable state Then  Service should identify states (Incomplete, ErrorInViite and ErrorInTR)") {
+  test("Test createRoadLinkProject When project in writable state Then  Service should identify states (Incomplete, and ErrorInViite)") {
     runWithRollback {
       val incomplete = Project(0L, ProjectState.apply(1), "I am Incomplete", "TestUser", DateTime.parse("1901-01-01"),
         "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
@@ -1281,13 +1292,8 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
         Seq(), Seq(), None)
       val errorInViiteProject = projectService.createRoadLinkProject(errorInViite)
-      val erroredInTR = Project(0L, ProjectState.apply(1), "I am ErroredInTR", "TestUser", DateTime.parse("1901-01-01"),
-        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
-        Seq(), Seq(), None)
-      val erroredInTRProject = projectService.createRoadLinkProject(erroredInTR)
       projectService.isWritableState(incompleteProject.id) should be(true)
       projectService.isWritableState(errorInViiteProject.id) should be(true)
-      projectService.isWritableState(erroredInTRProject.id) should be(true)
     }
   }
 
@@ -2827,6 +2833,16 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       roadwayPoints.size should be(1)
 
     }
+  }
+
+  // note, functionality moved here from former ViiteTierekisteriClient at Tierekisteri removal (2021-09)
+  test("Test projectService.convertToChangeProject() " +
+    "When sending a default ProjectRoadwayChange " +
+    "Then check that project_id is replaced with tr_id attribute") {
+    val change = projectService.convertToChangeProject(
+      List(ProjectRoadwayChange(100L, Some("testproject"), 1, "user", DateTime.now(),
+      defaultChangeInfo, DateTime.now(), Some(2))))
+    change.id should be(2)
   }
 
   def toRoadwayAndLinearLocation(p: ProjectLink):(LinearLocation, Roadway) = {

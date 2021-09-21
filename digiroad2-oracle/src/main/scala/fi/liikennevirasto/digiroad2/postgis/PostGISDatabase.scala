@@ -21,6 +21,9 @@ object PostGISDatabase {
     override def initialValue(): Boolean = { false }
   }
 
+  /** Opens a transaction session, for db operations to be processed as an atomic set.
+    * The transaction, and session are closed at return.
+    *  @throws IllegalThreadStateException, if a session is already open. */
   def withDynTransaction[T](f: => T): T = {
     if (transactionOpen.get())
       throw new IllegalThreadStateException("Attempted to open nested transaction")
@@ -37,8 +40,11 @@ object PostGISDatabase {
     }
   }
 
+  /** Opens a transaction session for non-atomic db operations, or just runs the given function,
+    * if a transaction is already open.
+    * If the transaction, and session were opened, they are closed at return. */
   def withDynTransactionNewOrExisting[T](f: => T): T = {
-    if (transactionOpen.get()) {
+    if (transactionOpen.get()) { // TODO Fix error, where f is run without transaction, if withDynSession called before this, instead of withDynTransaction
       f
     } else {
       try {
@@ -53,6 +59,10 @@ object PostGISDatabase {
     }
   }
 
+  /** Opens a session for non-atomic db operations.
+    * Session is closed at return.
+    *  If you need atomicity, use {@link withDynTransaction} instead.
+    *  @throws IllegalThreadStateException, if a session is already open. */
   def withDynSession[T](f: => T): T = {
     if (transactionOpen.get())
       throw new IllegalThreadStateException("Attempted to open nested session")

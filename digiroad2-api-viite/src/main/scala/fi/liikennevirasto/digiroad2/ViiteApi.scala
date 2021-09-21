@@ -4,9 +4,8 @@ import java.text.SimpleDateFormat
 
 import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.authentication.{JWTAuthentication, RequestHeaderAuthentication}
+import fi.liikennevirasto.digiroad2.authentication.JWTAuthentication
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-//import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
@@ -400,22 +399,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  private val getProjectStatusFromTR: SwaggerSupportSyntax.OperationBuilder = (
-    apiOperation[Map[String, Any]]("getProjectStatusFromTR")
-      .parameters(
-        queryParam[Long]("projectId").description("Id of project")
-      )
-      tags "ViiteAPI - Project"
-      summary "Get project status from Tierekisteri"
-    )
-
-  get("/roadlinks/checkproject/", operation(getProjectStatusFromTR)) {
-    val projectId = params("projectId").toLong
-    time(logger, s"GET request for /roadlinks/checkproject/ (projectId: $projectId)") {
-      projectService.getProjectStatusFromTR(projectId)
-    }
-  }
-
   private val getProjectAddressLinksByLinkIds: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String,Any]]("getProjectAddressLinksByLinkIds")
       .parameters(
@@ -492,16 +475,18 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         val projectSaved = projectService.saveProject(roadAddressProject)
         val firstLink = projectService.getFirstProjectLink(projectSaved)
         Map("project" -> roadAddressProjectToApi(projectSaved, projectService.getProjectEly(projectSaved.id)), "projectAddresses" -> firstLink,
-          "reservedInfo" -> projectSaved.reservedParts.map(projectReservedPartToApi), "formedInfo" -> projectSaved.formedParts.map(projectFormedPartToApi(Some(projectSaved.id))),
-          "success" -> true, "projectErrors" -> projectService.validateProjectById(project.id).map(errorPartsToApi))
+          "reservedInfo" -> projectSaved.reservedParts.map(projectReservedPartToApi),
+          "formedInfo" -> projectSaved.formedParts.map(projectFormedPartToApi(Some(projectSaved.id))),
+          "success" -> true,
+          "projectErrors" -> projectService.validateProjectById(project.id).map(errorPartsToApi))
       } catch {
-        case _: IllegalStateException => Map("success" -> false, "errorMessage" -> "Projekti ei ole enää muokattavissa")
-        case _: IllegalArgumentException => NotFound(s"Project id ${project.id} not found")
-        case e: MappingException =>
+        case _: IllegalStateException       => Map("success" -> false, "errorMessage" -> "Projekti ei ole enää muokattavissa")
+        case _: IllegalArgumentException    => NotFound(s"Project id ${project.id} not found")
+        case e: MappingException            =>
           logger.warn("Exception treating road links", e)
           BadRequest("Missing mandatory ProjectLink parameter")
-        case ex: RuntimeException => Map("success" -> false, "errorMessage" -> ex.getMessage)
-        case ex: RoadPartReservedException => Map("success" -> false, "errorMessage" -> ex.getMessage)
+        case ex: RuntimeException           => Map("success" -> false, "errorMessage" -> ex.getMessage)
+        case ex: RoadPartReservedException  => Map("success" -> false, "errorMessage" -> ex.getMessage)
       }
     }
   }
@@ -532,26 +517,26 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  private val sendProjectToTRByProjectId: SwaggerSupportSyntax.OperationBuilder = (
+  private val sendProjectChangesToViiteByProjectId: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String, Any]]("sendProjectToTRByProjectId")
       .parameters(
-        bodyParam[Long]("projectID").description("The id of the project to send to TR.")
+        bodyParam[Long]("projectID").description("The id of the project whose changes are to be accepted to the road network.")
       )
       tags "ViiteAPI - Project"
-      summary "This will send a project and all dependant information, that shares the given ProjectId to TR for further analysis. We assume that the project has no validation issues."
+      summary "This will send a project and all dependant information, that shares the given ProjectId to Viite for further analysis, and for saving to Road Network. We assume that the project has no validation issues."
     )
 
-  post("/roadlinks/roadaddress/project/sendToTR", operation(sendProjectToTRByProjectId)) {
+  post("/roadlinks/roadaddress/project/sendProjectChangesToViite", operation(sendProjectChangesToViiteByProjectId)) {
     val projectID = (parsedBody \ "projectID").extract[Long]
-    time(logger, s"POST request for /roadlinks/roadaddress/project/sendToTR (projectID: $projectID)") {
+    time(logger, s"POST request for /roadlinks/roadaddress/project/sendProjectChangesToViite (projectID: $projectID)") {
       val projectWritableError = projectService.projectWritableCheck(projectID)
-      if (projectWritableError.isEmpty) {
+      if (projectWritableError.isEmpty) { // empty error if project is writable
         val sendStatus = projectService.publishProject(projectID)
         if (sendStatus.validationSuccess && sendStatus.sendSuccess) {
           Map("sendSuccess" -> true)
         } else {
-          logger.error(s"Failed to send project ${projectID} to TR. Error: ${sendStatus.errorMessage.getOrElse("-")}")
-          Map("sendSuccess" -> false, "errorMessage" -> sendStatus.errorMessage.getOrElse(FailedToSendToTRMessage))
+          logger.error(s"Failed to append project ${projectID} to road network. Error: ${sendStatus.errorMessage.getOrElse("-")}")
+          Map("sendSuccess" -> false, "errorMessage" -> sendStatus.errorMessage.getOrElse(ProjectCouldNotBeAppendedToRoadNetwork))
         }
       } else {
         logger.error(s"Failed to send project ${projectID} to TR. Error: ${projectWritableError.get}")
@@ -690,7 +675,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           val user = userProvider.getCurrentUser().username
           projectService.revertLinks(linksToRevert.projectId, linksToRevert.roadNumber, linksToRevert.roadPartNumber, linksToRevert.links, linksToRevert.coordinates, user) match {
             case None =>
-              val projectErrors = projectService.validateProjectById(linksToRevert.projectId).map(errorPartsToApi)
+              val projectErrors = projectService.validateProjectByIdHighPriorityOnly(linksToRevert.projectId).map(errorPartsToApi)
               val project = projectService.getSingleProjectById(linksToRevert.projectId).get
               Map("success" -> true,
                 "publishable" -> projectErrors.isEmpty,
@@ -779,7 +764,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
             Some(links.coordinates)) match {
             case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
             case None =>
-              val projectErrors = projectService.validateProjectById(links.projectId).map(errorPartsToApi)
+              val projectErrors = projectService.validateProjectByIdHighPriorityOnly(links.projectId).map(errorPartsToApi)
               val project = projectService.getSingleProjectById(links.projectId).get
               Map("success" -> true, "id" -> links.projectId,
                 "publishable" -> projectErrors.isEmpty,
@@ -878,34 +863,20 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  private val validateProjectAndReturnChangeTableById: SwaggerSupportSyntax.OperationBuilder =(
-    apiOperation[Map[String, Any]]("validateProjectAndReturnChangeTableById")
+  private val returnChangeTableById: SwaggerSupportSyntax.OperationBuilder =(
+    apiOperation[Map[String, Any]]("returnChangeTableById")
       .parameters(
         pathParam[Long]("projectId").description("Id of a project")
       )
       tags "ViiteAPI - Project"
-      summary "Given a valid projectId, this will run the validations to the project in question and it will also fetch all the changes made on said project."
+      summary "Given a valid projectId, this will fetch all the changes made on said project."
     )
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
-  get("/project/getchangetable/:projectId", operation(validateProjectAndReturnChangeTableById)) {
+  get("/project/getchangetable/:projectId", operation(returnChangeTableById)) {
     val projectId = params("projectId").toLong
-    try {
-      withDynTransaction {
-       val project = projectService.fetchProjectById(projectId).get
-        projectService.recalculateProjectLinks(projectId, project.modifiedBy)
-      }
-    } catch {
-      case ex: RoadAddressException =>
-        logger.info("Road address Exception: " + ex.getMessage)
-        Some(s"Tieosoitevirhe: ${ex.getMessage}")
-      case ex: ProjectValidationException => Some(ex.getMessage)
-      case ex: Exception => Some(ex.getMessage)
-    }
 
     time(logger, s"GET request for /project/getchangetable/$projectId") {
-      val validationErrors = projectService.validateProjectById(projectId).map(mapValidationIssues)
-      //TODO change UI to not override project validator errors on change table call
       val (changeProject, warningMessage) = projectService.getChangeProject(projectId)
       val changeTableData = changeProject.map(project =>
         Map(
@@ -918,10 +889,43 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
               "discontinuity" -> changeInfo.discontinuity.value, "source" -> changeInfo.source,
               "target" -> changeInfo.target, "reversed" -> changeInfo.reversed)))
       ).getOrElse(None)
-      Map("changeTable" -> changeTableData, "validationErrors" -> validationErrors, "warningMessage" -> warningMessage)
+      Map("changeTable" -> changeTableData, "warningMessage" -> warningMessage)
     }
   }
 
+  private val recalculateAndValidateProject: SwaggerSupportSyntax.OperationBuilder =(
+    apiOperation[Map[String, Any]]("recalculateAndValidateProject")
+      .parameters(
+        pathParam[Long]("projectId").description("Id of a project")
+      )
+      tags "ViiteAPI - Project"
+      summary "Given a valid projectId, this will run recalculation and the validations to the project in question."
+    )
+
+  get("/project/recalculateProject/:projectId", operation(recalculateAndValidateProject)) {
+    val projectId = params("projectId").toLong
+    time(logger, s"GET request for /project/recalculateProject/$projectId") {
+      try {
+        withDynTransaction {
+          val project = projectService.fetchProjectById(projectId).get
+          projectService.recalculateProjectLinks(projectId, project.modifiedBy)
+        }
+        val validationErrors = projectService.validateProjectById(projectId).map(errorPartsToApi)
+        // return validation errors
+        Map("success" -> true, "validationErrors" -> validationErrors)
+      } catch {
+        case ex: RoadAddressException =>
+          logger.info("Road address Exception: " + ex.getMessage)
+          Map("success" -> false, "errorMessage" -> ex.getMessage)
+        case ex: ProjectValidationException =>
+          Some(ex.getMessage)
+          Map("success" -> false, "errorMessage" -> ex.getMessage)
+        case ex: Exception =>
+          Some(ex.getMessage)
+          Map("success" -> false, "errorMessage" -> ex.getMessage)
+      }
+    }
+  }
 
   //  private val splitSuravageLinkByLinkId: SwaggerSupportSyntax.OperationBuilder = (
   //    apiOperation[Map[String, Any]]("splitSuravageLinkByLinkId")

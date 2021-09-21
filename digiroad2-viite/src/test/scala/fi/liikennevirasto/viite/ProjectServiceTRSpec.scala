@@ -1,24 +1,16 @@
 package fi.liikennevirasto.viite
 
-import java.net.ConnectException
-
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.DigiroadEventBus
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.ViiteProperties
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
-import org.apache.http.client.config.RequestConfig
-import org.apache.http.client.methods.HttpGet
-import org.apache.http.conn.{ConnectTimeoutException, HttpHostConnectException}
-import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import org.mockito.Mockito.reset
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.StaticQuery.interpolation
 
 class ProjectServiceTRSpec extends FunSuite with Matchers with BeforeAndAfter {
   val mockProjectService: ProjectService = MockitoSugar.mock[ProjectService]
@@ -77,42 +69,6 @@ class ProjectServiceTRSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  private def testConnection: Boolean = {
-    val url = ViiteProperties.tierekisteriViiteRestApiEndPoint
-    val request = new HttpGet(url)
-    request.setConfig(RequestConfig.custom().setConnectTimeout(2500).build())
-    val client = HttpClientBuilder.create().build()
-    try {
-      val response = client.execute(request)
-      try {
-        response.getStatusLine.getStatusCode >= 200
-      } finally {
-        response.close()
-      }
-    } catch {
-      case e: HttpHostConnectException =>
-        false
-      case e: ConnectTimeoutException =>
-        false
-      case e: ConnectException =>
-        false
-    }
-  }
-
-  test("Test projectService.getRoadwayChangesAndSendToTR() When trying to send a roadway changes of a project to TR Then check for a affirmative response.") {
-    assume(testConnection)
-    runWithRollback {
-      val project = Project(1, ProjectState.Incomplete, "testiprojekti", "Test", DateTime.now(), "Test",
-        DateTime.now(), DateTime.now(), "info", List(
-          ProjectReservedPart(5: Long, 203: Long, 203: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)), List(), None)
-      projectDAO.create(project)
-      sqlu""" insert into ROADWAY_CHANGES(project_id,change_type,new_road_number,new_road_part_number,new_TRACK,new_start_addr_m,new_end_addr_m,new_discontinuity,NEW_ADMINISTRATIVE_CLASS,new_ely,roadway_change_id) Values(1,1,6,1,1,0,10.5,1,1,8,1) """.execute
-      //Assuming that there is data to show
-      val responses = projectService.getRoadwayChangesAndSendToTR(Set(1))
-      responses.projectId should be(1)
-    }
-  }
-
   test("update ProjectStatus when TR saved") {
     val sent2TRState = ProjectState.apply(2)
     val savedState = ProjectState.apply(5)
@@ -126,17 +82,4 @@ class ProjectServiceTRSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Update to TRerror state") {
-    val sent2TRState = ProjectState.apply(2)
-    val savedState = ProjectState.apply(3)
-    val projectId = 0
-    val addresses = List(ProjectReservedPart(5: Long, 203: Long, 203: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
-    val roadAddressProject = Project(projectId, ProjectState.apply(2), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(), List(), None)
-    runWithRollback {
-      val saved = projectService.createRoadLinkProject(roadAddressProject)
-      val stateAfterCheck = projectService.updateProjectStatusIfNeeded(sent2TRState, savedState, "failed", saved.id)
-      stateAfterCheck.description should be(ProjectState.ErrorInTR.description)
-    }
-
-  }
 }

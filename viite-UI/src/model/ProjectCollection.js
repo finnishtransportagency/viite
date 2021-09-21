@@ -221,7 +221,7 @@
             publishableProject = response.publishable;
             me.setProjectErrors(response.projectErrors);
             me.setFormedParts(response.formedInfo);
-            eventbus.trigger('projectLink:revertedChanges');
+            eventbus.trigger('projectLink:revertedChanges', response);
           } else {
             if (response.status === INTERNAL_SERVER_ERROR_500 || response.status === BAD_REQUEST_400) {
               eventbus.trigger('roadAddress:projectLinksUpdateFailed', response.status);
@@ -493,15 +493,17 @@
     };
 
     this.publishProject = function () {
-      backend.sendProjectToTR(projectInfo.id, function (result) {
-        if (result.sendSuccess) {
-          eventbus.trigger('roadAddress:projectSentSuccess');
-        } else {
-          eventbus.trigger('roadAddress:projectSentFailed', result.errorMessage);
+      backend.sendProjectChangesToViite(
+        projectInfo.id,
+        function (result) {
+          if (result.sendSuccess) { eventbus.trigger('roadAddress:projectSentSuccess');
+          } else                  { eventbus.trigger('roadAddress:projectSentFailed', result.errorMessage);
+          }
+        },
+        function (result) {
+          eventbus.trigger('roadAddress:projectSentFailed', result.status);
         }
-      }, function (result) {
-        eventbus.trigger('roadAddress:projectSentFailed', result.status);
-      });
+      );
     };
 
     var addSmallLabelWithIds = function (label, id) {
@@ -534,7 +536,7 @@
     };
 
     var deleteButton = function (index, roadNumber, roadPartNumber, selector) {
-      var disabledInput = !_.isUndefined(currentProject) && (currentProject.project.statusCode === ProjectStatus.ErrorInTR.value || currentProject.project.statusCode === ProjectStatus.SendingToTR.value);
+      var disabledInput = !_.isUndefined(currentProject) && (currentProject.project.statusCode === ProjectStatus.SendingToTR.value);
       return '<i roadNumber="' + roadNumber + '" roadPartNumber="' + roadPartNumber + '" id="' + index + '" class="delete btn-delete ' + selector + ' fas fa-trash-alt fa-lg" ' + (disabledInput ? 'disabled' : '') + '></i>';
     };
 

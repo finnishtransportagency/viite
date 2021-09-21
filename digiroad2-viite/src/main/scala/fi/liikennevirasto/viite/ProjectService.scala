@@ -1,9 +1,7 @@
 package fi.liikennevirasto.viite
 
-import java.io.IOException
 import java.sql.SQLException
 import java.util.Date
-
 import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, switch}
@@ -25,8 +23,8 @@ import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectDAO, RoadwayDAO, _}
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink}
 import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.util.SplitOptions
-import org.apache.http.client.ClientProtocolException
 import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ListBuffer
@@ -34,6 +32,14 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import scala.util.control.NonFatal
+
+// note, ChangeProject moved here from former ViiteTierekisteriClient at Tierekisteri removal (2021-09)
+case class ChangeProject(id:Long,
+                         name:String,
+                         user:String,
+                         changeDate:String,
+                         changeInfoSeq:Seq[RoadwayChangeInfo]
+                        )
 
 sealed trait RoadNameSource {
   def value: Long
@@ -302,10 +308,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  /** @return None if the project is writable, or Some(&lt;errorstring&gt;) else. */
   def projectWritableCheckInSession(projectId: Long): Option[String] = {
     projectDAO.fetchProjectStatus(projectId) match {
       case Some(projectState) =>
-        if (projectState == ProjectState.Incomplete || projectState == ProjectState.ErrorInViite || projectState == ProjectState.ErrorInTR)
+        if (projectState == ProjectState.Incomplete || projectState == ProjectState.ErrorInViite)
           return None
         Some("Projektin tila ei ole keskeneräinen") //project state is not incomplete
       case None => Some("Projektia ei löytynyt") //project could not be found
@@ -474,7 +481,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                 Map("success" -> false, "errorMessage" -> errorMessage)
               }
               case None => {
-                Map("success" -> true, "projectErrors" -> validateProjectById(projectId, newSession = false))
+                Map("success" -> true, "projectErrors" -> validateProjectByIdHighPriorityOnly(projectId, newSession = false))
               }
             }
           }
@@ -936,7 +943,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val (recalculate, warningMessage) = recalculateChangeTable(projectId)
       if (recalculate) {
         val roadwayChanges = roadwayChangesDAO.fetchRoadwayChangesResume(Set(projectId))
-        (Some(ViiteTierekisteriClient.convertToChangeProject(roadwayChanges)), warningMessage)
+        (Some(convertToChangeProject(roadwayChanges)), warningMessage)
       } else {
         (None, None)
       }
@@ -947,6 +954,30 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  /** Returns a {@link ChangeProject}
+    * @throw IllegalArgumentException if <i>changeData</i> has
+    * multiple project is'd, project names, change dates, or users
+    * @note functionality moved here from former ViiteTierekisteriClient at Tierekisteri removal (2021-09) */
+  def convertToChangeProject(changeData: List[ProjectRoadwayChange]): ChangeProject = {
+    val projects = changeData.map(cd => {
+      convertChangeDataToChangeProject(cd)
+    })
+    val grouped = projects.groupBy(p => (p.id, p.name, p.changeDate, p.user))
+    if (grouped.keySet.size > 1)
+      throw new IllegalArgumentException("Multiple projects, users or change dates in single data set")
+    projects.tail.foldLeft(projects.head) { case (proj1, proj2) =>
+      proj1.copy(changeInfoSeq = proj1.changeInfoSeq ++ proj2.changeInfoSeq)
+    }
+  }
+  private val nullRotatingChangeProjectId = -1   // note: previously nullRotatingTRProjectId, refers to project's TR_ID field in DB
+
+  private def convertChangeDataToChangeProject(changeData: ProjectRoadwayChange): ChangeProject = {
+    val changeInfo = changeData.changeInfo
+    ChangeProject(changeData.rotatingTRId.getOrElse(nullRotatingChangeProjectId), changeData.projectName.getOrElse(""), changeData.user,
+      DateTimeFormat.forPattern("yyyy-MM-dd").print(changeData.projectStartDate), Seq(changeInfo))
+  }
+
+
   def prettyPrintLog(roadwayChanges: List[ProjectRoadwayChange]): Unit = {
     roadwayChanges.groupBy(a => (a.projectId, a.projectName, a.projectStartDate, a.ely)).foreach(g => {
       val (projectId, projectName, projectStartDate, projectEly) = g._1
@@ -956,16 +987,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         logger.info(s"Change: ${c.toStringWithFields}")
       })
     })
-  }
-
-  def getRoadwayChangesAndSendToTR(projectId: Set[Long]): ProjectChangeStatus = {
-    logger.info(s"Fetching all road address changes for projects: ${projectId.mkString(", ")}")
-    val roadwayChanges = roadwayChangesDAO.fetchRoadwayChanges(projectId)
-    prettyPrintLog(roadwayChanges)
-    logger.info(s"Sending changes to TR")
-    val sentObj = ViiteTierekisteriClient.sendChanges(roadwayChanges)
-    logger.info(s"Changes Sent to TR")
-    sentObj
   }
 
   def getProjectAddressLinksByLinkIds(linkIdsToGet: Set[Long]): Seq[ProjectAddressLink] = {
@@ -1678,7 +1699,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   /**
-    * Publish project with id projectId
+    * Publish project with id projectId: recalculates the change table.
     *
     * @param projectId Project to publish
     * @return optional error message, empty if no error
@@ -1686,42 +1707,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def publishProject(projectId: Long): PublishResult = {
     logger.info(s"Preparing to send Project ID: $projectId to TR")
     withDynTransaction {
-      try {
-        if (!recalculateChangeTable(projectId)._1) {
-          return PublishResult(validationSuccess = false, sendSuccess = false, Some("Muutostaulun luonti epäonnistui. Tarkasta ely"))
-        }
-        projectDAO.assignNewProjectTRId(projectId) //Generate new TR_ID
-        val trProjectStateMessage = getRoadwayChangesAndSendToTR(Set(projectId))
-        if (trProjectStateMessage.status == ProjectState.Failed2GenerateTRIdInViite.value) {
-          logger.error(s"Publishing project $projectId failed. Failed to generate TR ID in Viite.")
-          return PublishResult(validationSuccess = false, sendSuccess = false, Some(trProjectStateMessage.reason))
-        }
-        trProjectStateMessage.status match {
-          case it if 200 until 300 contains it =>
-            setProjectStatus(projectId, Sent2TR, withSession = false)
-            logger.info(s"Sending to TR successful: ${trProjectStateMessage.reason}")
-            PublishResult(validationSuccess = true, sendSuccess = true, Some(trProjectStateMessage.reason))
-          case 500 =>
-            logger.error(s"Sending project ${trProjectStateMessage.projectId} to TR failed. Status: ${trProjectStateMessage.status} Error message: ${trProjectStateMessage.reason}")
-            val returningMessage = if (trProjectStateMessage.reason.nonEmpty) trProjectStateMessage.reason else TrConnectionError
-            projectDAO.updateProjectStatus(projectId, SendingToTR)
-            PublishResult(validationSuccess = true, sendSuccess = false, Some(returningMessage))
-          case _ =>
-            //rollback
-            logger.error(s"Sending project ${trProjectStateMessage.projectId} to TR failed. Status: ${trProjectStateMessage.status} Error message: ${trProjectStateMessage.reason}")
-            val returningMessage = if (trProjectStateMessage.reason.nonEmpty) trProjectStateMessage.reason else TrConnectionError
-            PublishResult(validationSuccess = true, sendSuccess = false, Some(returningMessage))
-        }
-      } catch {
-        //Exceptions taken out val response = client.execute(request) of sendJsonMessage in ViiteTierekisteriClient
-        case ioe@(_: IOException | _: ClientProtocolException) =>
-          logger.error(s"Error occurred while publishing project ${projectId}.", ioe)
-          projectDAO.updateProjectStatus(projectId, SendingToTR)
-          PublishResult(validationSuccess = false, sendSuccess = false, Some(TrConnectionError))
-        case NonFatal(_) =>
-          logger.error(s"Error occurred while publishing project ${projectId}.")
-          projectDAO.updateProjectStatus(projectId, ErrorInViite)
-          PublishResult(validationSuccess = false, sendSuccess = false, Some(GenericViiteErrorMessage))
+      if (!recalculateChangeTable(projectId)._1) {
+        return PublishResult(validationSuccess = false, sendSuccess = false, Some("Muutostaulun luonti epäonnistui. Tarkasta ely"))
+      }
+      else {
+        projectDAO.assignNewProjectTRId(projectId) //Generate new TR_ID // TODO TR id handling to be removed
+
+        setProjectStatus(projectId, TRProcessing, withSession = false) //TODO change to Processing
+        logger.info(s"Returning dummy 'Yesyes, TR part ok', as TR call removed")
+        PublishResult(validationSuccess = true, sendSuccess = true, Some(""))
       }
     }
   }
@@ -1801,26 +1795,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     (roadLinks, complementaryLinks)
   }
 
-  def getProjectStatusFromTR(projectId: Long): Map[String, Any] = {
-    ViiteTierekisteriClient.getProjectStatus(projectId)
-  }
-
-  private def getStatusFromTRObject(trProject: Option[TRProjectStatus]): Option[ProjectState] = {
-    trProject match {
-      case Some(trProjectObject) => mapTRStateToViiteState(trProjectObject.status.getOrElse(""))
-      case None => None
-      case _ => None
-    }
-  }
-
-  private def getTRErrorMessage(trProject: Option[TRProjectStatus]): String = {
-    trProject match {
-      case Some(trProjectobject) => trProjectobject.errorMessage.getOrElse("")
-      case None => ""
-      case _ => ""
-    }
-  }
-
   def setProjectStatus(projectId: Long, newStatus: ProjectState, withSession: Boolean = true): Unit = {
     if (withSession) {
       withDynSession {
@@ -1835,11 +1809,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     if (currentStatus.value != newStatus.value && newStatus != ProjectState.Unknown) {
       logger.info(s"Status update is needed as Project Current status ($currentStatus) differs from TR Status($newStatus)")
       val project = fetchProjectById(projectId)
-      if (project.nonEmpty && newStatus == ProjectState.ErrorInTR) {
-        // We write error message and clear old TR_ID which was stored there, so user wont see it in hower
-        logger.info(s"Writing error message and clearing old TR_ID: ($errorMessage)")
-        projectDAO.updateProjectStateInfo(errorMessage, projectId)
-      }
       projectDAO.updateProjectStatus(projectId, newStatus)
     }
     if (newStatus != ProjectState.Unknown) {
@@ -1892,12 +1861,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       case Some(trId) =>
         val roadNumbers: Option[Set[Long]] = projectDAO.fetchProjectStatus(projectID).map { currentState =>
           logger.info(s"Current status is $currentState, fetching TR state")
-          val trProjectState = ViiteTierekisteriClient.getProjectStatusObject(trId)
-          logger.info(s"Retrieved TR status: ${trProjectState.getOrElse(None)}")
-          val newState = getStatusFromTRObject(trProjectState).getOrElse(ProjectState.Unknown)
-          val errorMessage = getTRErrorMessage(trProjectState)
-          logger.info(s"TR returned project status for $projectID: $currentState -> $newState, errMsg: $errorMessage")
-          val updatedStatus = updateProjectStatusIfNeeded(currentState, newState, errorMessage, projectID)
+          val newState = if(currentState==ProjectState.TRProcessing) ProjectState.Saved2TR else currentState
+          val updatedStatus = updateProjectStatusIfNeeded(currentState, newState, "", projectID)
           if (updatedStatus == Saved2TR) {
             logger.info(s"Starting project $projectID road addresses importing to road address table")
             updateRoadwaysAndLinearLocationsWithProjectLinks(updatedStatus, projectID)
@@ -1916,18 +1881,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       case None =>
         logger.info(s"During status checking VIITE wasn't able to find TR_ID to project $projectID")
         appendStatusInfo(fetchProjectById(projectID).head, " Failed to find TR-ID ")
-    }
-  }
-
-  private def mapTRStateToViiteState(trState: String): Option[ProjectState] = {
-
-    trState match {
-      case "S" => Some(ProjectState.apply(ProjectState.TRProcessing.value))
-      case "K" => Some(ProjectState.apply(ProjectState.TRProcessing.value))
-      case "T" => Some(ProjectState.apply(ProjectState.Saved2TR.value))
-      case "V" => Some(ProjectState.apply(ProjectState.ErrorInTR.value))
-      case "null" => Some(ProjectState.apply(ProjectState.ErrorInTR.value))
-      case _ => None
     }
   }
 
@@ -2262,6 +2215,17 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
     else {
       projectValidator.validateProject(fetchProjectById(projectId).get, projectLinkDAO.fetchProjectLinks(projectId))
+    }
+  }
+
+  def validateProjectByIdHighPriorityOnly(projectId: Long, newSession: Boolean = true): Seq[projectValidator.ValidationErrorDetails] = {
+    if (newSession) {
+      withDynSession {
+        projectValidator.projectLinksHighPriorityValidation(fetchProjectById(projectId).get, projectLinkDAO.fetchProjectLinks(projectId))
+      }
+    }
+    else {
+      projectValidator.projectLinksHighPriorityValidation(fetchProjectById(projectId).get, projectLinkDAO.fetchProjectLinks(projectId))
     }
   }
 

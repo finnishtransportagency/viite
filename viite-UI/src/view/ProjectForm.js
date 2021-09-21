@@ -5,7 +5,7 @@
     var currentPublishedNetworkDate;
     var formCommon = new FormCommon('');
     var ProjectStatus = LinkValues.ProjectStatus;
-    var editableStatus = [ProjectStatus.Incomplete.value, ProjectStatus.ErrorInTR.value, ProjectStatus.Unknown.value];
+    var editableStatus = [ProjectStatus.Incomplete.value, ProjectStatus.Unknown.value];
     var staticField = function (labelText, dataField) {
       var field;
       field = '<div class="form-group">' +
@@ -129,17 +129,30 @@
         '<footer>' + actionButtons() + '</footer>');
     };
 
-    var selectedProjectLinkTemplate = function (project) {
+    var selectedProjectLinkTemplateDisabledButtons = function (project) {
       return _.template('' +
         '<header>' +
-        title(project.name) +
+          formCommon.titleWithEditingTool(project) +
         '</header>' +
         '<div class="wrapper read-only">' +
         '<div class="form form-horizontal form-dark">' +
         '<label class="highlighted">ALOITA VALITSEMALLA KOHDE KARTALTA.</label>' +
         '<div class="form-group" id="project-errors"></div>' +
         '</div></div></br></br>' +
-        '<footer>' + showProjectChangeButton() + '</footer>');
+        '<footer>' + showProjectDisabledButtons() + '</footer>');
+    };
+
+    var selectedProjectLinkTemplateRecalculateButton = function (project) {
+      return _.template('' +
+          '<header>' +
+          formCommon.titleWithEditingTool(project) +
+          '</header>' +
+          '<div class="wrapper read-only">' +
+          '<div class="form form-horizontal form-dark">' +
+          '<label class="highlighted">ALOITA VALITSEMALLA KOHDE KARTALTA.</label>' +
+          '<div class="form-group" id="project-errors"></div>' +
+          '</div></div></br></br>' +
+          '<footer>' + showProjectRecalculateButton() + '</footer>');
     };
 
     var errorsList = function () {
@@ -154,10 +167,18 @@
 
     };
 
-    var showProjectChangeButton = function () {
+    var showProjectDisabledButtons = function () {
       return '<div class="project-form form-controls">' +
-        '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
-        '<button disabled id ="send-button" class="send btn btn-block btn-send">Lähetä muutosilmoitus Tierekisteriin</button></div>';
+          '<button disabled class="recalculate btn btn-block btn-recalculate">Päivitä etäisyyslukemat</button>' +
+          '<button disabled id = "show-changes-button" class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
+        '<button disabled id ="send-button" class="send btn btn-block btn-send">Hyväksy tieosoitemuutokset</button></div>';
+    };
+
+    var showProjectRecalculateButton = function () {
+      return '<div class="project-form form-controls">' +
+          '<button class="recalculate btn btn-block btn-recalculate">Päivitä etäisyyslukemat</button>' +
+          '<button disabled id = "show-changes-button" class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
+          '<button disabled id ="send-button" class="send btn btn-block btn-send">Hyväksy tieosoitemuutokset</button></div>';
     };
 
     var addSmallLabel = function (label) {
@@ -338,7 +359,16 @@
         currentProject.isDirty = false;
         jQuery('.modal-overlay').remove();
         eventbus.trigger('roadAddressProject:openProject', currentProject);
-        rootElement.html(selectedProjectLinkTemplate(currentProject));
+        var projectErrors = projectCollection.getProjectErrors();
+        // errorCode 8 means there are projectLinks in the project with status "NotHandled"
+        var highPriorityProjectErrors = projectErrors.filter((error) => error.errorCode === 8);
+        if (highPriorityProjectErrors.length > 0) {
+          // high priority errors
+          rootElement.html(selectedProjectLinkTemplateDisabledButtons(currentProject));
+        } else {
+          // normal priority errors OR no errors
+          rootElement.html(selectedProjectLinkTemplateRecalculateButton(currentProject));
+        }
         _.defer(function () {
           applicationModel.selectLayer('roadAddressProject');
           toggleAdditionalControls();
@@ -355,7 +385,7 @@
             eventbus.trigger('linkProperties:selectedProject', result.projectAddresses.linkId, result.project);
           }
           eventbus.trigger('roadAddressProject:openProject', result.project);
-          rootElement.html(selectedProjectLinkTemplate(currentProject));
+          rootElement.html(selectedProjectLinkTemplateDisabledButtons(currentProject));
           _.defer(function () {
             applicationModel.selectLayer('roadAddressProject');
             toggleAdditionalControls();
@@ -500,11 +530,7 @@
       };
 
       rootElement.on('click', '#generalNext', function () {
-        if (currentProject.statusCode === ProjectStatus.ErrorInTR.value) {
-          currentProject.statusCode = ProjectStatus.Incomplete.value;
-          currentProject.statusDescription = ProjectStatus.Incomplete.description;
-          saveAndNext();
-        } else if (currentProject.isDirty ) {
+        if (currentProject.isDirty ) {
           if (currentProject.id === 0) {
             createNewProject();
           } else {

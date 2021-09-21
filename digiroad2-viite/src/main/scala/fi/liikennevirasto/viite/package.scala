@@ -97,9 +97,7 @@ package object viite {
   val RoadNotAvailableMessage = s"Tieosaa ei ole varattu projektiin tai se on varattuna toisessa projektissa."
   val RoadReservedOtherProjectMessage = s"Tie %d osa %d on jo varattuna projektissa %s, tarkista tiedot."
   val ProjectNotFoundMessage = "Projektia ei löytynyt, ota yhteys pääkäyttäjään."
-  val FailedToSendToTRMessage = s"Lähetys tierekisteriin epäonnistui, ota yhteys pääkäyttäjään."
-  val TrConnectionError = s"Muutosilmoitus ei tavoittanut Tierekisteriä. Muutosilmoitus lähetetään automaattisesti uudelleen aina 5 minuutin välein.\r\n" +
-    s"Virhetilanteen jatkuessa ota yhteytta ylläpitoon."
+  val ProjectCouldNotBeAppendedToRoadNetwork = "Projektin lisäys tieverkolle ei onnistunut."
   val GenericViiteErrorMessage = s"Muutosilmoituksen lähetys epäonnistui Viiteen sisäisen virheen vuoksi. Ota yhteyttä ylläpitoon. "
   val ProjectNotWritable = s"Projekti ei ole enää muokattavissa."
   val ErrorMaxRoadNumberDemandingRoadNameMessage = s"Tien nimi on pakollinen tieto lukuunottamatta kevyen liikenteen väyliä."
@@ -215,10 +213,8 @@ package object viite {
     "|      0      |           Closed           |                Suljettu               |\n" +
     "|      1      |         Incomplete         |             Keskeneräinen             |\n" +
     "|      2      |           Sent2TR          |        Lähetetty tierekisteriin       |\n" +
-    "|      3      |          ErrorInTR         |         Virhe tierekisterissä         |\n" +
     "|      4      |        TRProcessing        |      Tierekisterissä käsittelyssä     |\n" +
     "|      5      |          Saved2TR          |          Viety tierekisteriin         |\n" +
-    "|      6      | Failed2GenerateTRIdInViite | Tierekisteri ID:tä ei voitu muodostaa |\n" +
     "|      7      |           Deleted          |           Poistettu projekti          |\n" +
     "|      8      |        ErrorInViite        |       Virhe Viite-sovelluksessa       |\n" +
     "|      9      |         SendingToTR        |        Lähettää Tierekisteriin        |\n" +
