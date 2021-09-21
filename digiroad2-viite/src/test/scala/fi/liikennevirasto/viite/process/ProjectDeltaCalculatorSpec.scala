@@ -278,45 +278,45 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
        createRoadAddress(i * 12, 12L)
       })
 
-      val splitAddress = 60
-      val links        = addresses.filter(_.endAddrMValue <= splitAddress).map(a => {
+      val splitAddress       = 60
+      val linksForRoad205    = addresses.filter(_.endAddrMValue <= splitAddress).map(a => {
         toProjectLink(project, LinkStatus.UnChanged)(a).copy(roadwayId = 0)
       })
-      val links2 = addresses.filter(a => {
+      val linksForRoad206rw1 = addresses.filter(a => {
         a.endAddrMValue > splitAddress && a.endAddrMValue < 90
       }).map(a => {
         toProjectLink(project, LinkStatus.Transfer)(a).copy(roadwayId = 1, roadPartNumber = 206)
       })
-                                                                          val links2a = addresses.filter(a => {
+      val linksForRoad206rw2 = addresses.filter(a => {
         a.endAddrMValue > 90
       }).map(a => {
         toProjectLink(project, LinkStatus.Transfer)(a).copy(roadwayId = 2, roadPartNumber = 206)
       })
 
       /* The first part has one roadway, the seconds has two roadways. */
-      val roadway205_1 = toRoadway(links)
-      val roadway205_2 = toRoadway(links2).copy(id = 1)
+      val roadway205_1 = toRoadway(linksForRoad205)
+      val roadway205_2 = toRoadway(linksForRoad206rw1).copy(id = 1)
 
-      val roadway205_3 = toRoadway(links2a).copy(id = 2, discontinuity = originalDiscontinuity)
+      val roadway205_3 = toRoadway(linksForRoad206rw2).copy(id = 2, discontinuity = originalDiscontinuity)
       roadwayDAO.create(Seq(roadway205_1, roadway205_2, roadway205_3))
 
-      val links3      = (links2 ++ links2a).map(pl => {
+      val addressedRoad206Links      = (linksForRoad206rw1 ++ linksForRoad206rw2).map(pl => {
         pl.copy(startAddrMValue = pl.startAddrMValue - splitAddress, endAddrMValue = pl.endAddrMValue - splitAddress)
       })
 
-      val links4      = links3.init :+ links3.last.copy(discontinuity = newDiscontinuity)
-      val partitions  = ProjectDeltaCalculator.partitionWithProjectLinks(links ++ links4, links)
-      val partitions2 = partitions.adjustedSections.zip(partitions.originalSections)
+      val road206Links      = addressedRoad206Links.init :+ addressedRoad206Links.last.copy(discontinuity = newDiscontinuity)
+      val partitions  = ProjectDeltaCalculator.partitionWithProjectLinks(linksForRoad205 ++ road206Links, linksForRoad205)
+      val pairedPartitions = partitions.adjustedSections.zip(partitions.originalSections)
 
-      partitions2.size should be(2)
-      val partitions3 = partitions2.partition(par => {
+      pairedPartitions.size should be(2)
+      val road205and206Partitions = pairedPartitions.partition(par => {
         par._1.roadPartNumberStart == 205 && par._2.roadPartNumberStart == 205
       })
-      partitions3._1 should have size 1
-      partitions3._2 should have size 1
+      road205and206Partitions._1 should have size 1
+      road205and206Partitions._2 should have size 1
 
       /* Check continuities and road addresses. */
-      val (to1, fr1) = partitions3._1.head
+      val (to1, fr1) = road205and206Partitions._1.head
       fr1.startMAddr should be(0)
       fr1.endMAddr should be(splitAddress)
       fr1.discontinuity should be(Discontinuity.Continuous)
@@ -324,7 +324,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       to1.endMAddr should be(splitAddress)
       to1.discontinuity should be(Discontinuity.Continuous)
 
-      val (to2, fr2) = partitions3._2.head
+      val (to2, fr2) = road205and206Partitions._2.head
       fr2.startMAddr should be(splitAddress)
       fr2.endMAddr should be(120)
       fr2.discontinuity should be(originalDiscontinuity)
