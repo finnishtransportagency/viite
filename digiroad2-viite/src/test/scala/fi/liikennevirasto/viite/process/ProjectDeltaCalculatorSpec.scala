@@ -1,25 +1,25 @@
 package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.GeometryUtils
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
+import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LinkGeomSource}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, RoadAddressCP}
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, MinorDiscontinuity}
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao._
+import fi.liikennevirasto.viite.util.{toProjectLink, toTransition}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import fi.liikennevirasto.viite.util.toProjectLink
-import fi.liikennevirasto.viite.util.toTransition
 
 class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
+  val roadwayDAO = new RoadwayDAO
+
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
   def runWithRollback[T](f: => T): T = {
@@ -71,7 +71,6 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
 
   test("Test ProjectDeltaCalculator.partition When executing a Unchanged and 2 transfer on single road part Then returns the correct From RoadSection -> To RoadSection mapping.") {
     runWithRollback {
-      val roadwayDAO = new RoadwayDAO
       val addresses  = (0 to 10).map(i => {
         createRoadAddress(i * 10, 10L)
       })
@@ -113,19 +112,17 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
 
   test("Test ProjectDeltaCalculator.partition When executing a numbering operation on single road part Then returns the correct From RoadSection -> To RoadSection mapping with the new road number/road part number.") {
     runWithRollback {
-      val roadwayDAO = new RoadwayDAO
       val addresses      = (0 to 10).map(i => {
         createRoadAddress(i * 10, 10L)
       })
       val numberingLinks = addresses.map(a => {
         (a, a.copy(roadNumber = 12345, roadPartNumber = 1))
       }).map(x => {
-        (x._1, toProjectLink(project, LinkStatus.Numbering)(x._2))
+        (x._1, toProjectLink(project, LinkStatus.Numbering)(x._2).copy(roadwayId = 0))
       })
 
       val roadway205 = toRoadway(numberingLinks.map(_._2).map(_.copy(roadNumber = 5, roadPartNumber = 205)))
       roadwayDAO.create(Seq(roadway205))
-
       val unchangedParts2 = ProjectDeltaCalculator.partitionWithProjectLinks(numberingLinks.map(_._2), numberingLinks.map(_._2))
       val unchangedParts3 = unchangedParts2.adjustedSections.zip(unchangedParts2.originalSections)
 
@@ -191,7 +188,6 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       val terminations = Seq(toProjectLink(project, LinkStatus.Terminated)(addresses.last), toProjectLink(project, LinkStatus.Terminated)(addresses2.last))
       val unchanged    = (addresses.init ++ addresses2.init).map(toTransition(project, LinkStatus.UnChanged))
 
-//      val termPart  = ProjectDeltaCalculator.partition(terminations, Seq())
       val termPart2 = ProjectDeltaCalculator.partitionWithProjectLinks(terminations, Seq()).adjustedSections
 
       termPart2 should have size 2
@@ -249,17 +245,15 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
 
   test("Test ProjectDeltaCalculator.partition When executing a Unchanged operation but changing it's ELY value Then returns the correct From RoadSection -> To RoadSection mapping, ensuring the new ELY is in effect.") {
     runWithRollback {
-      val roadwayDAO = new RoadwayDAO
       val addresses   = (0 to 9).map(i => {
         createRoadAddress(i * 12, 12L)
       })
       val links       = addresses.filter(_.endAddrMValue < 61).map(a => {
-        (a, toProjectLink(project, LinkStatus.UnChanged)(a.copy(ely = 5)))
+        (a, toProjectLink(project, LinkStatus.UnChanged)(a.copy(ely = 5)).copy(roadwayId = 0))
       })
       val roadway205 = toRoadway(links.map(_._2).map(_.copy(ely = 8)))
       roadwayDAO.create(Seq(roadway205))
 
-//      val partitioned = ProjectDeltaCalculator.partition(links, Seq()).adjustedSections.map(_._1)
       val partitions  = ProjectDeltaCalculator.partitionWithProjectLinks(links.map(_._2), links.map(_._2))
       val partitions2 = partitions.adjustedSections.zip(partitions.originalSections)
 
@@ -272,15 +266,82 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Test ProjectDeltaCalculator.partition " +
+       "When transferring a part of an existing roadpart to as another roadpart with more than one roadway" +
+       "Then continuity codes should be correct.") {
+    runWithRollback {
+      val originalDiscontinuity = Discontinuity.EndOfRoad
+      val newDiscontinuity      = Discontinuity.Discontinuous
+
+      /* A road of length 120 is split from 60 to two parts and discontinuity is changed. */
+      val addresses  = (0 to 9).map(i => {
+       createRoadAddress(i * 12, 12L)
+      })
+
+      val splitAddress       = 60
+      val linksForRoad205    = addresses.filter(_.endAddrMValue <= splitAddress).map(a => {
+        toProjectLink(project, LinkStatus.UnChanged)(a).copy(roadwayId = 0)
+      })
+      val linksForRoad206rw1 = addresses.filter(a => {
+        a.endAddrMValue > splitAddress && a.endAddrMValue < 90
+      }).map(a => {
+        toProjectLink(project, LinkStatus.Transfer)(a).copy(roadwayId = 1, roadPartNumber = 206)
+      })
+      val linksForRoad206rw2 = addresses.filter(a => {
+        a.endAddrMValue > 90
+      }).map(a => {
+        toProjectLink(project, LinkStatus.Transfer)(a).copy(roadwayId = 2, roadPartNumber = 206)
+      })
+
+      /* The first part has one roadway, the seconds has two roadways. */
+      val roadway205_1 = toRoadway(linksForRoad205)
+      val roadway205_2 = toRoadway(linksForRoad206rw1).copy(id = 1)
+
+      val roadway205_3 = toRoadway(linksForRoad206rw2).copy(id = 2, discontinuity = originalDiscontinuity)
+      roadwayDAO.create(Seq(roadway205_1, roadway205_2, roadway205_3))
+
+      val addressedRoad206Links      = (linksForRoad206rw1 ++ linksForRoad206rw2).map(pl => {
+        pl.copy(startAddrMValue = pl.startAddrMValue - splitAddress, endAddrMValue = pl.endAddrMValue - splitAddress)
+      })
+
+      val road206Links      = addressedRoad206Links.init :+ addressedRoad206Links.last.copy(discontinuity = newDiscontinuity)
+      val partitions  = ProjectDeltaCalculator.partitionWithProjectLinks(linksForRoad205 ++ road206Links, linksForRoad205)
+      val pairedPartitions = partitions.adjustedSections.zip(partitions.originalSections)
+
+      pairedPartitions.size should be(2)
+      val road205and206Partitions = pairedPartitions.partition(par => {
+        par._1.roadPartNumberStart == 205 && par._2.roadPartNumberStart == 205
+      })
+      road205and206Partitions._1 should have size 1
+      road205and206Partitions._2 should have size 1
+
+      /* Check continuities and road addresses. */
+      val (to1, fr1) = road205and206Partitions._1.head
+      fr1.startMAddr should be(0)
+      fr1.endMAddr should be(splitAddress)
+      fr1.discontinuity should be(Discontinuity.Continuous)
+      to1.startMAddr should be(0)
+      to1.endMAddr should be(splitAddress)
+      to1.discontinuity should be(Discontinuity.Continuous)
+
+      val (to2, fr2) = road205and206Partitions._2.head
+      fr2.startMAddr should be(splitAddress)
+      fr2.endMAddr should be(120)
+      fr2.discontinuity should be(originalDiscontinuity)
+      to2.startMAddr should be(0)
+      to2.endMAddr should be(splitAddress)
+      to2.discontinuity should be(newDiscontinuity)
+    }
+  }
+
   test("Test ProjectDeltaCalculator.partition When executing a Unchanged operation but changing it's Discontinuity value Then returns the correct From RoadSection -> To RoadSection mapping, ensuring the new Discontinuity is in effect.") {
     runWithRollback {
-      val roadwayDAO = new RoadwayDAO
       val addresses   = (0 to 9).map(i => {
         createRoadAddress(i * 12, 12L)
       })
       val links       = addresses.map(a => {
         if (a.endAddrMValue == 60) {
-          (a, toProjectLink(project, LinkStatus.UnChanged)(a.copy(discontinuity = Discontinuity.MinorDiscontinuity)))
+          (a, toProjectLink(project, LinkStatus.UnChanged)(a.copy(discontinuity = Discontinuity.MinorDiscontinuity)).copy(roadwayId = 0))
         } else {
           toTransition(project, LinkStatus.UnChanged)(a)
         }
