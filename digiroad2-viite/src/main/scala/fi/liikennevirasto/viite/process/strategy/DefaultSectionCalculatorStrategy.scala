@@ -356,18 +356,12 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         val endPointsWithValues = ListMap(chainEndPoints.filter(link => link._2.startAddrMValue >= 0 && link._2.endAddrMValue != 0).toSeq
           .sortWith(_._2.startAddrMValue < _._2.startAddrMValue): _*)
 
-        def hasTripleConnectionPoint = {
-          val pointMap = remainLinks.flatMap(l => {
-            val (p1, p2) = l.getEndPoints
-            Seq(p1, p2)
-          }).groupBy(p => (p.x, p.y))
-          pointMap.exists(_._2.size == 3)
-        }
+
 
         val onceConnectedLinks = TrackSectionOrder.findOnceConnectedLinks(remainLinks)
         var foundConnectedLinks = onceConnectedLinks.values.filter(link => link.startAddrMValue == 0 && link.endAddrMValue != 0)
         /* Check if an existing road with loop end is reversed. */
-        if (onceConnectedLinks.size == 1 && foundConnectedLinks.isEmpty && hasTripleConnectionPoint && remainLinks.forall(pl => pl.status == LinkStatus.Transfer && pl.reversed))
+        if (onceConnectedLinks.size == 1 && foundConnectedLinks.isEmpty && TrackSectionOrder.hasTripleConnectionPoint(remainLinks) && remainLinks.forall(pl => pl.status == LinkStatus.Transfer && pl.reversed))
           foundConnectedLinks = Iterable(remainLinks.maxBy(pl => pl.originalEndAddrMValue))
 
         // In case there is some old starting link, we want to prioritize the one that didn't change or was not treated yet.

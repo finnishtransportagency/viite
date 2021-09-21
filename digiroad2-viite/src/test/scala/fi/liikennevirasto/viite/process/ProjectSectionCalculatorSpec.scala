@@ -1728,7 +1728,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
         ProjectLink(plId + 3, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 298L, 453L, 348L, 503L, None, None, None, 12347L, 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), geom3, 0L, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom3), 0L, 0, 0, reversed = true, None, 86400L),
         ProjectLink(plId + 4, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 453L, 565L, 236L, 348L, None, None, None, 12348L, 0.0, 10.0, SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP), geom4, 0L, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom4), 0L, 0, 0, reversed = true, None, 86400L),
         ProjectLink(plId + 5, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 565L, 719L, 82L, 236L, None, None, None, 12349L, 0.0, 10.0, SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP), geom5, 0L, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom5), 0L, 0, 0, reversed = true, None, 86400L),
-        ProjectLink(plId + 6, 9999L, 1L, Track.Combined, Discontinuity.Discontinuous, 719L, 801L, 0L, 82L, None, None, None, 12350L, 0.0, 10.0, SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP), geom6, 0L, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom6), 0L, 0, 0, reversed = true, None, 86400L)
+        ProjectLink(plId + 6, 9999L, 1L, Track.Combined, Discontinuity.EndOfRoad, 719L, 801L, 0L, 82L, None, None, None, 12350L, 0.0, 10.0, SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP), geom6, 0L, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom6), 0L, 0, 0, reversed = true, None, 86400L)
       )
 
       val output = ProjectSectionCalculator.assignMValues(projectLinkSeq).sortBy(_.startAddrMValue)
@@ -1836,8 +1836,8 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val rights       = output.filterNot(_.track == Track.LeftSide).sortBy(_.startAddrMValue)
 
       /* Check that order of links remains. */
-      leftsBefore.map(_.id) should be(lefts.map(_.id))
-      rightsBefore.map(_.id) should be(rights.map(_.id))
+      leftsBefore.map(_.id).toList should be(lefts.map(_.id).toList)
+      rightsBefore.map(_.id).toList should be(rights.map(_.id).toList)
 
       lefts.zip(lefts.tail).foreach { case (prev, next) => prev.originalEndAddrMValue should be(next.originalStartAddrMValue)
       }

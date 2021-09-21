@@ -79,6 +79,36 @@ object TrackSectionOrder {
     }
   }
 
+  def groupConnectionPoints(seq: Seq[ProjectLink]): Map[(Double, Double), Seq[Point]] = {
+    seq.flatMap(l => {
+      val (p1, p2) = l.getEndPoints
+      Seq(p1, p2)
+    }).groupBy(p => (p.x, p.y))
+  }
+
+  def hasTripleConnectionPoint(seq: Seq[ProjectLink]): Boolean = {
+    val pointMap = groupConnectionPoints(seq)
+    pointMap.exists(_._2.size == 3)
+  }
+
+  def getTripleConnectionPoint(seq: Seq[ProjectLink]): Option[Point] = {
+    val pointMap = groupConnectionPoints(seq)
+    val triplePoint = pointMap.find(_._2.size == 3)
+    if (triplePoint.isDefined)
+      Some(Point(triplePoint.get._1._1, triplePoint.get._1._2))
+    else
+      None
+  }
+
+  def getUnConnectedPoint(seq: Seq[ProjectLink]): Option[Point] = {
+    val pointMap = groupConnectionPoints(seq)
+    val unConnectedPoint = pointMap.find(_._2.size == 1)
+    if (unConnectedPoint.isDefined)
+      Some(Point(unConnectedPoint.get._1._1, unConnectedPoint.get._1._2))
+    else
+      None
+  }
+
   /**
     * Returns a mapping of the startPoint or endPoint and all adjacent BaseRoadAddresses to said point
     *
