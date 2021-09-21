@@ -1709,14 +1709,17 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
          "When a combined road has a loopend is reversed with transfer status" +
          "Then addresses, directions and link ordering should be correct.") {
     runWithRollback {
-      val geom1 = Seq(Point(372017, 6669721), Point(371826, 6669765))
+      val triplePoint = Point(371826, 6669765)
+
+      val geom1 = Seq(Point(372017, 6669721), triplePoint)
       val geom2 = Seq(Point(372017, 6669721), Point(372026, 6669819))
       val geom3 = Seq(Point(372026, 6669819), Point(371880, 6669863))
-      val geom4 = Seq(Point(371826, 6669765), Point(371880, 6669863))
-      val geom5 = Seq(Point(371704, 6669673), Point(371826, 6669765))
+      val geom4 = Seq(triplePoint, Point(371880, 6669863))
+      val geom5 = Seq(Point(371704, 6669673), triplePoint)
       val geom6 = Seq(Point(371637, 6669626), Point(371704, 6669673))
 
       val plId = Sequences.nextProjectLinkId
+
       // ProjectLinks after ChangeDirection() and set to correct addresses.
       val projectLinkSeq = Seq(
         ProjectLink(plId + 1, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 199L, 602L, 801L, None, None, None, 12345L, 0.0, 10.0, SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP), geom1, 0L, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom1), 0L, 0, 0, reversed = true, None, 86400L),
@@ -1732,7 +1735,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       output.length should be(6)
       output.map(_.linkId) shouldBe sorted
 
-      // Check correct addresses have not changed.
+      // Check that correct addresses have not changed.
       output.foreach(o => {
         val projectLinkBefore = projectLinkSeq.find(_.id == o.id).get
         o.startAddrMValue should be(projectLinkBefore.startAddrMValue)

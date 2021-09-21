@@ -447,7 +447,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
           val pointMap = remainLinks.flatMap(l => {
             val (p1, p2) = l.getEndPoints
             Seq(p1, p2)
-          }).groupBy(_.x)
+          }).groupBy(p => (p.x, p.y))
           pointMap.exists(_._2.size == 3)
         }
 
