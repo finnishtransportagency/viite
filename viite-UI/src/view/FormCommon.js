@@ -35,19 +35,19 @@
     const projectButtonsRecalculateAndChanges = function () {
       return  '<button class="recalculate btn btn-block btn-recalculate">Päivitä etäisyyslukemat</button>' +
           '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
-        '<button disabled id ="send-button" class="send btn btn-block btn-send">Hyväksy tieosoitemuutokset</button>';
+        '<button disabled title="Hyväksy yhteenvedon jälkeen" id="send-button" class="send btn btn-block btn-send">Hyväksy tieosoitemuutokset</button>';
     };
 
     const projectButtonsRecalculate = function () {
       return  '<button class="recalculate btn btn-block btn-recalculate">Päivitä etäisyyslukemat</button>' +
-          '<button disabled class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
-          '<button disabled id ="send-button" class="send btn btn-block btn-send">Hyväksy tieosoitemuutokset</button>';
+          '<button disabled title="Projektin tulee läpäistä validoinnit" class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
+          '<button disabled title="Hyväksy yhteenvedon jälkeen" id="send-button" class="send btn btn-block btn-send">Hyväksy tieosoitemuutokset</button>';
     };
 
     const projectButtonsDisabled = function () {
-      return  '<button disabled class="recalculate btn btn-block btn-recalculate">Päivitä etäisyyslukemat</button>' +
-          '<button disabled class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
-          '<button disabled id ="send-button" class="send btn btn-block btn-send">Hyväksy tieosoitemuutokset</button>';
+      return  '<button disabled title="Kaikki linkit tulee olla käsiteltyjä" class="recalculate btn btn-block btn-recalculate">Päivitä etäisyyslukemat</button>' +
+          '<button disabled title="Projektin tulee läpäistä validoinnit" class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
+          '<button disabled title="Hyväksy yhteenvedon jälkeen" id="send-button" class="send btn btn-block btn-send">Hyväksy tieosoitemuutokset</button>';
     };
 
     const newRoadAddressInfo = function (project, selected, links, road) {
