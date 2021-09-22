@@ -275,9 +275,12 @@
     const setInformationContent = function () {
       $('#information-content').html('' +
         '<div class="form form-horizontal">' +
-        '<p class="validation-text">Validointi ok. Voit tehdä tieosoitteenmuutosilmoituksen<br>' +
-        'tai jatkaa muokkauksia.</p>' +
+          '<p id="information-content-text" class="validation-text"></p>' +
         '</div>');
+    };
+
+    const setInformationContentText = function (text) {
+      $('#information-content-text').html(text);
     };
 
     const sendRoadAddressChangeButton = function (localPrefix) {
@@ -372,6 +375,7 @@
       checkInputs: checkInputs,
       clearInformationContent: clearInformationContent,
       setInformationContent: setInformationContent,
+      setInformationContentText: setInformationContentText,
       sendRoadAddressChangeButton: sendRoadAddressChangeButton,
       distanceValue: distanceValue,
       title: title,
