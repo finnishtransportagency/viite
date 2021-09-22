@@ -510,14 +510,16 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                 existingLinks = if (existingLinks.isEmpty && newRoadPartNumber > 1)
                 projectLinkDAO.fetchByProjectRoadPart(newRoadNumber, newRoadPartNumber - 1, projectId)
                 else Seq()
-            val existingLinksGeoms = existingLinks.map(nl => (nl.geometry.head, nl.geometry.last))
+            val existingLinksGeoms = existingLinks.map(pl => (pl.geometry.head, pl.geometry.last))
             val onceConnectedNewLinks = TrackSectionOrder.findOnceConnectedLinks(newLinks)
-            val endLinkOfNewLinks = onceConnectedNewLinks.filterNot(ep => existingLinksGeoms.exists(el => ep._1.connected(el._1) || ep._1.connected(el._2))).map(_._2).toList
+            val endLinkOfNewLinks = onceConnectedNewLinks.filterNot(onceConnected => existingLinksGeoms.exists(el => onceConnected._1.connected(el._1) || onceConnected._1.connected(el._2))).values.toList
             if (endLinkOfNewLinks.distinct.size == 1) {
               newLinks.filterNot(_.equals(endLinkOfNewLinks.head)) :+ endLinkOfNewLinks.head.copy(discontinuity = discontinuity)
             }
-            else
+            else {
+//              onceConnectedNewLinks
               newLinks.init :+ newLinks.last.copy(discontinuity = discontinuity)
+            }
           }
           else
           newLinks
