@@ -360,6 +360,8 @@
         } else {
           // if no (high priority) validation errors are present, then show recalculate button
           rootElement.html(emptyTemplateRecalculateButtons(projectCollection.getCurrentProject().project));
+          formCommon.setInformationContent();
+          formCommon.setInformationContentText("Päivitä etäisyyslukemat jatkaaksesi projektia.");
         }
         formCommon.toggleAdditionalControls();
         applicationModel.removeSpinner();
@@ -632,6 +634,7 @@
         var projectChangesButton = showProjectButtonsRecalculateAndChanges();
         if (isProjectPublishable() && isProjectEditable()) {
           formCommon.setInformationContent();
+          formCommon.setInformationContentText("Validointi ok. Voit tehdä tieosoitteen muutosilmoituksen tai jatkaa muokkauksia.");
           $('footer').html(formCommon.sendRoadAddressChangeButton('project-', projectCollection.getCurrentProject()));
         } else {
           $('footer').html(projectChangesButton);
@@ -640,6 +643,8 @@
 
       // when recalculate button is clicked
       rootElement.on('click', '.project-form button.recalculate', function () {
+        // clear the information text
+        $('#information-content').empty();
         var projectButtonsRecalculateAndChanges = showProjectButtonsRecalculateAndChanges();
         // get current project
         var currentProject = projectCollection.getCurrentProject();
