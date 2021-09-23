@@ -13,6 +13,7 @@
     var LinkStatus = LinkValues.LinkStatus;
     var ProjectStatus = LinkValues.ProjectStatus;
     var windowMaximized = false;
+    var formCommon = new FormCommon('');
 
     var changeTable =
       $('<div class="change-table-frame"></div>');
@@ -149,15 +150,12 @@
         $('.change-table-header').html($('<div class="font-resize">Validointi ok. Alla näet muutokset projektissa.</div>'));
         var currentProject = projectCollection.getCurrentProject();
         // disable recalculate button if changetable is open and set title attribute
-        $('#recalculate-button').attr('disabled', true);
-        $('#recalculate-button').attr('title', 'Etäisyyslukemia ei voida päivittää yhteenvetotaulukon ollessa auki');
+        formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Etäisyyslukemia ei voida päivittää yhteenvetotaulukon ollessa auki");
         // disable changes button if changetable is open and set title attribute
-        $('#changes-button').attr('disabled', true);
-        $('#changes-button').attr('title', 'Yhteenvetotaulukko on jo auki');
+        formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Yhteenvetotaulukko on jo auki");
         if ($('.change-table-frame').css('display') === "block" && (currentProject.project.statusCode === ProjectStatus.Incomplete.value)) {
           //enable send button if changetable is open and remove title attribute
-          $('#send-button').attr('disabled', false);
-          $('#send-button').removeAttr('title');
+          formCommon.setDisabledAndTitleAttributesById("send-button", false, "");
         }
       } else {
         $('.change-table-header').html($('<div class="font-resize" style="color: rgb(255, 255, 0)">Tarkista validointitulokset. Yhteenvetotaulukko voi olla puutteellinen.</div>'));
