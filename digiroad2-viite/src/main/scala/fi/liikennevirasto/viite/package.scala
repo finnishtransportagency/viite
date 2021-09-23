@@ -212,7 +212,6 @@ package object viite {
     "|:-----------:|:--------------------------:|:-------------------------------------:|\n" +
     "|      0      |           Closed           |                Suljettu               |\n" +
     "|      1      |         Incomplete         |             Keskeneräinen             |\n" +
-    "|      2      |           Sent2TR          |        Lähetetty tierekisteriin       |\n" +
     "|      4      |        TRProcessing        |      Tierekisterissä käsittelyssä     |\n" +
     "|      5      |          Saved2TR          |          Viety tierekisteriin         |\n" +
     "|      7      |           Deleted          |           Poistettu projekti          |\n" +

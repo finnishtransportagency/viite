@@ -19,7 +19,7 @@ import fi.liikennevirasto.viite.Dummies._
 import fi.liikennevirasto.digiroad2.asset.AdministrativeClass.State
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, RoadAddressCP}
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous}
-import fi.liikennevirasto.viite.dao.ProjectState.{Sent2TR, UpdatingToRoadNetwork}
+import fi.liikennevirasto.viite.dao.ProjectState.{Incomplete, UpdatingToRoadNetwork}
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectRoadwayChange, RoadwayDAO, _}
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLinkLike}
@@ -810,7 +810,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       val user = Some("user")
 
-      val roadAddressProject = Project(0L, Sent2TR, "split", user.get, DateTime.now(), user.get,
+      val roadAddressProject = Project(0L, Incomplete, "split", user.get, DateTime.now(), user.get,
         DateTime.now().plusMonths(2), DateTime.now(), "", Seq(), Seq(), None, None)
 
       val project = projectService.createRoadLinkProject(roadAddressProject)
@@ -828,7 +828,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       val user = Some("user")
 
-      val roadAddressProject = Project(0L, Sent2TR, "split", user.get, DateTime.now(), user.get,
+      val roadAddressProject = Project(0L, Incomplete, "split", user.get, DateTime.now(), user.get,
         DateTime.now().plusMonths(2), DateTime.now(), "", Seq(), Seq(), None, None)
 
       val project = projectService.createRoadLinkProject(roadAddressProject)
@@ -2521,7 +2521,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
     val linearLocationId = Sequences.nextLinearLocationId
     val user = Some("user")
-    val project = Project(-1L, Sent2TR, "split", user.get, DateTime.now(), user.get,
+    val project = Project(-1L, Incomplete, "split", user.get, DateTime.now(), user.get,
       DateTime.now().plusMonths(2), DateTime.now(), "", Seq(), None, None)
 
     // Original road address: 1024 -> 1547

@@ -20,7 +20,7 @@ sealed trait ProjectState {
 
 object ProjectState {
 
-  val values = Set(Closed, Incomplete, Sent2TR, TRProcessing, Saved2TR,
+  val values = Set(Closed, Incomplete, TRProcessing, Saved2TR,
     Deleted, ErrorInViite, SendingToTR, InUpdateQueue, UpdatingToRoadNetwork, Unknown)
 
   // These states are final
@@ -32,7 +32,6 @@ object ProjectState {
 
   case object Closed extends ProjectState {def value = 0; def description = "Suljettu"}
   case object Incomplete extends ProjectState {def value = 1; def description = "Keskeneräinen"}
-  case object Sent2TR extends ProjectState {def value = 2; def description = "Lähetetty tierekisteriin"}
   case object TRProcessing extends ProjectState {def value = 4; def description = "Tierekisterissä käsittelyssä"}
   case object Saved2TR extends ProjectState{def value = 5; def description = "Viety tierekisteriin"}
   case object Deleted extends ProjectState {def value = 7; def description = "Poistettu projekti"}
@@ -154,26 +153,6 @@ class ProjectDAO {
     sqlu""" update project set state=${state.value} WHERE id=$projectID""".execute
   }
 
-  def fetchProjectTRIdsWithWaitingTRStatus: List[Long] = {
-    val query =
-      s"""
-         SELECT tr_id
-         FROM project
-         WHERE state=${ProjectState.Sent2TR.value} OR state=${ProjectState.TRProcessing.value}
-       """
-    Q.queryNA[Long](query).list
-  }
-
-  def fetchProjectIdsWithWaitingTRStatus: List[Long] = {
-    val query =
-      s"""
-         SELECT id
-         FROM project
-         WHERE state=${ProjectState.Sent2TR.value} OR state=${ProjectState.TRProcessing.value}
-       """
-    Q.queryNA[Long](query).list
-  }
-
   /** Returns an id of a single project waiting for being updated to the road network.
     * @throws NoSuchElementException (from DB query) in case there is no such project available */
   def fetchSingleProjectIdWithInUpdateQueueStatus: Long = {
@@ -187,6 +166,15 @@ class ProjectDAO {
     Q.queryNA[Long](query).first
   }
 
+  def fetchProjectIdsWithToBePreservedStatus: List[Long] = {
+    val query =
+      s"""
+         SELECT id
+         FROM project
+         WHERE state=${ProjectState.InUpdateQueue.value} OR state=${ProjectState.UpdatingToRoadNetwork.value}
+       """
+    Q.queryNA[Long](query).list
+  }
 
   def fetchProjectIdsWithSendingToTRStatus: List[Long] = {
     val query =

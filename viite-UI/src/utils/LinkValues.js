@@ -78,7 +78,6 @@
   root.ProjectStatus = {
     Closed: {value: 0, description: "Suljettu"},
     Incomplete: {value: 1, description: "Keskeneräinen"},
-    Sent2TR: {value: 2, description: "Lähetetty tierekisteriin"},
     TRProcessing: {value: 4, description: "Tierekisterissä käsittelyssä"},
     Saved2TR: {value: 5, description: "Viety tierekisteriin"},
     Deleted: {value: 7, description: "Poistettu projekti"},
@@ -89,7 +88,7 @@
     Unknown: {value: 99, description: "Tuntematon"}
   };
 
-  root.ProjectStatusToDisplay = [root.ProjectStatus.Incomplete.value, root.ProjectStatus.Sent2TR.value,
+  root.ProjectStatusToDisplay = [root.ProjectStatus.Incomplete.value,
     root.ProjectStatus.InUpdateQueue.value, root.ProjectStatus.UpdatingToRoadNetwork.value,
     root.ProjectStatus.TRProcessing.value, root.ProjectStatus.ErrorInViite.value, root.ProjectStatus.SendingToTR.value];
 
