@@ -1843,6 +1843,68 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       }
     }
   }
+  /** Reserves a road network project for preserving the project information onto the road network.
+    * Enclosing withDynTransaction ensures that the retrieved project cannot be given to multiple
+    * handler calls at the same time.
+    * @return (true, projectId), when there was a reservable project, (false, ...) if not.
+    * @throws Exception if an unexpected exception occurred. */
+  def atomicallyReserveProjectInUpdateQueue: (Boolean,Long) = {
+    val noSuchProjectDummy = -1.0.toLong
+    var reserveStatus = (false, noSuchProjectDummy) // nothing reserved yet
+
+    withDynTransaction { // to ensure uniquely retrieved projectId for each calling handler thread
+      reserveStatus = {
+        try {
+          val projectId = projectDAO.fetchSingleProjectIdWithInUpdateQueueStatus // may throw NoSuchElementException
+          projectDAO.updateProjectStatus(projectId, ProjectState.UpdatingToRoadNetwork)
+          (true, projectId)
+        } catch {
+          case t: NoSuchElementException => { // Expected exception when nothing to update.
+            logger.debug(s"No projects waiting to be preserved: ${t.getMessage}", t)
+            (false, noSuchProjectDummy)
+          }
+          case t: Exception => {
+            logger.warn(s"Unexpected exception while reserving a project for preserving: ${t.getMessage}", t)
+            throw t // Rethrow the unexpected error.
+          }
+        }
+      }
+    } // withDynTransaction
+    reserveStatus
+  }
+
+
+  /** Preserves the information of a single road network project to the road network,
+    * if any such project is waiting.
+    * @throws SQLException if there is an error with preserving the reserved project to the db.
+    * @throws Exception if an unexpected exception occurred. */
+  def preserveSingleProjectInUpdateQueue(): Unit = {
+    val noSuchProjectDummy = -1.0.toLong
+
+    // get a project to update to db, if any
+    val (gotProjectToUpdate: Boolean, projectId: Long) = atomicallyReserveProjectInUpdateQueue
+
+    // try preserving the project to the db, if got one
+    if(gotProjectToUpdate) {
+      try {
+        time(logger, s"Preserve the project $projectId to the road network") {
+          atomicallyUpdateProject(projectId)
+        }
+      } catch {
+        // if caught an error, set project status to ProjectState.ErrorInViite
+        case t: SQLException => {
+          logger.error(s"SQL error while preserving the project $projectId" +
+                       s" to road network. ${t.getMessage}", t)
+          projectDAO.updateProjectStatus(projectId, ProjectState.ErrorInViite)
+        }
+        case t: Exception => {
+          logger.warn(s"Unexpected exception while preserving the project $projectId", t.getMessage)
+          projectDAO.updateProjectStatus(projectId, ProjectState.ErrorInViite)
+          throw t  // Rethrow the unexpected error.
+        }
+      }
+    }
+  }
 
   def getProjectState(projectId: Long): Option[ProjectState] = {
     withDynTransaction {
@@ -1856,16 +1918,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @param projectID : Long - The project Id
     * @return
     */
-  private def checkAndUpdateProjectStatus(projectID: Long): Unit = {
-    projectDAO.fetchTRIdByProjectId(projectID) match {
+  private def atomicallyUpdateProject(projectID: Long): Unit = {
+    withDynTransaction {
+      projectDAO.fetchTRIdByProjectId(projectID) match {
       case Some(trId) =>
         val roadNumbers: Option[Set[Long]] = projectDAO.fetchProjectStatus(projectID).map { currentState =>
-          logger.info(s"Current status is $currentState, fetching TR state")
-          val newState = if(currentState==ProjectState.TRProcessing) ProjectState.Saved2TR else currentState
-          val updatedStatus = updateProjectStatusIfNeeded(currentState, newState, "", projectID)
-          if (updatedStatus == Saved2TR) {
-            logger.info(s"Starting project $projectID road addresses importing to road address table")
-            updateRoadwaysAndLinearLocationsWithProjectLinks(updatedStatus, projectID)
+          logger.info(s"Current status is $currentState")
+          if (currentState == UpdatingToRoadNetwork) {
+            logger.info(s"Start importing road addresses of project $projectID to the road network")
+            updateRoadwaysAndLinearLocationsWithProjectLinks(projectID)
           } else Set.empty[Long]
         }
         if (roadNumbers.isEmpty || roadNumbers.get.isEmpty) {
@@ -1881,6 +1942,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       case None =>
         logger.info(s"During status checking VIITE wasn't able to find TR_ID to project $projectID")
         appendStatusInfo(fetchProjectById(projectID).head, " Failed to find TR-ID ")
+      }
     }
   }
 
@@ -1941,7 +2003,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     roadwayDAO.expireHistory(Set(roadwayId))
   }
 
-  def updateRoadwaysAndLinearLocationsWithProjectLinks(newState: ProjectState, projectID: Long): Set[Long] = {
+  /**
+    *
+    * @throws RuntimeException when the given project is not in UpdatingToRoadNetwork state when starting.
+    * @throws InvalidAddressDataException when there are no links to process.
+    * @throws re-throws explicitly ProjectValidationException, SQLException, Exception
+    */
+  def updateRoadwaysAndLinearLocationsWithProjectLinks(projectID: Long): Set[Long] = {
     implicit def datetimeOrdering: Ordering[DateTime] = Ordering.fromLessThan(_ isAfter _)
     def handleRoadPrimaryTables(currentRoadways: Map[Long, Roadway], historyRoadways: Map[Long, Roadway], roadwaysToInsert: Iterable[Roadway], historyRoadwaysToKeep: Seq[Long], linearLocationsToInsert: Iterable[LinearLocation], project: Project): Seq[Long] = {
       logger.debug(s"Creating history rows based on operation")
@@ -2017,6 +2085,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       roadwayIds
     }
 
+    /* @throws RuntimeException whe the given project is not in UpdatingToRoadNetwork state
+     * @throws InvalidAddressDataException when there are no links to process. */
     def handleRoadComplementaryTables(roadwayChanges: List[ProjectRoadwayChange], projectLinkChanges: Seq[ProjectRoadLinkChange], linearLocationsToInsert: Iterable[LinearLocation],
                                       roadwayIds: Seq[Long], generatedRoadways: Seq[(Seq[Roadway], Seq[LinearLocation], Seq[ProjectLink])], projectLinks: Seq[ProjectLink],
                                       endDate: Option[DateTime], nodeIds: Seq[Long], username: String): Unit = {
@@ -2047,9 +2117,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       nodesAndJunctionsService.calculateNodePointsForNodes(nodeIds, username)
     }
 
-    if (newState != Saved2TR) {
-      logger.error(s" Project state not at Saved2TR")
-      throw new RuntimeException(s"Project state not at Saved2TR: $newState")
+    val pState = projectDAO.fetchProjectStatus(projectID)
+    if (pState != UpdatingToRoadNetwork) {
+      logger.error(s" Project state not at UpdatingToRoadNetwork")
+      throw new RuntimeException(s"Project state not at UpdatingToRoadNetwork: $pState")
     }
     val project = projectDAO.fetchById(projectID).get
     val nodeIds = nodeDAO.fetchNodeNumbersByProject(projectID)
