@@ -1,12 +1,13 @@
 package fi.liikennevirasto.viite.process.strategy
 
 import fi.liikennevirasto.GeometryUtils
-import fi.liikennevirasto.digiroad2.util.{MissingTrackException, Track}
+import fi.liikennevirasto.digiroad2.util.MissingTrackException
 import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous, MinorDiscontinuity, ParallelLink}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.{ProjectSectionMValueCalculator, TrackAddressingFactors}
+import org.slf4j.LoggerFactory
 
 
 object TrackCalculatorContext {
@@ -150,8 +151,13 @@ trait TrackCalculatorStrategy {
   }
 
   protected def setLastEndAddrMValue(projectLinks: Seq[ProjectLink], endAddressMValue: Long): Seq[ProjectLink] = {
-    if (projectLinks.last.status != LinkStatus.NotHandled)
+    if (projectLinks.last.status != LinkStatus.NotHandled) {
+      if (projectLinks.last.startAddrMValue >= endAddressMValue) {
+        val logger = LoggerFactory.getLogger(getClass)
+        logger.warn("Averaged address caused negative length. ")
+      }
       projectLinks.init :+ projectLinks.last.copy(endAddrMValue = endAddressMValue)
+    }
     else
       projectLinks
   }

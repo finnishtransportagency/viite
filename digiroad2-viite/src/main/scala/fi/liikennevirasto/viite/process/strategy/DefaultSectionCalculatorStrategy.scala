@@ -2,18 +2,16 @@ package fi.liikennevirasto.viite.process.strategy
 
 import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.SideCode
-import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.util.Track.LeftSide
 import fi.liikennevirasto.digiroad2.util.{MissingRoadwayNumberException, MissingTrackException, RoadAddressException, Track}
 import fi.liikennevirasto.digiroad2.{Point, Vector3d}
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{JunctionPointCP, NoCP, UserDefinedCP}
+import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process._
-import fi.liikennevirasto.viite.{MaxThresholdDistance, NewIdValue}
-import org.slf4j.LoggerFactory
 import fi.liikennevirasto.viite.util.TwoTrackRoadUtils
+import org.slf4j.LoggerFactory
 
 import scala.annotation.tailrec
 import scala.collection.immutable.ListMap
@@ -300,6 +298,9 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         udcpsToUpdate
       }
     }}
+
+    val x = udcpsFromRightSideSplits.diff(updatedudcpsFromRightSideSplits).map(_.get.projectLinkId)
+    val updatedudcpsFromLeftSideSplits = udcpsFromLeftSideSplits.filterNot((u: Option[UserDefinedCalibrationPoint]) => x.contains(u.get.projectLinkId))
 
     val splitCreatedCpsFromRightSide: Map[Long, UserDefinedCalibrationPoint] = (updatedudcpsFromRightSideSplits ).filter(udcp => udcp.isDefined && udcp.get.isInstanceOf[UserDefinedCalibrationPoint]).map( ucp => ucp.get).map(c => c.projectLinkId -> c).toMap
     val splitCreatedCpsFromLeftSide: Map[Long, UserDefinedCalibrationPoint] = (udcpsFromLeftSideSplits).filter(udcp => udcp.isDefined && udcp.get.isInstanceOf[UserDefinedCalibrationPoint]).map( ucp => ucp.get).map(c => c.projectLinkId -> c).toMap

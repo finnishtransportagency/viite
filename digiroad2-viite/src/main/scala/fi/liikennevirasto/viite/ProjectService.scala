@@ -506,18 +506,20 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           /* Set discontinuity to the last new link if not continuous.
            * Finds the link by assuming the end is not connected, i.e. before round about. */
           if (discontinuity != Discontinuity.Continuous) {
-            var existingLinks = projectLinkDAO.fetchByProjectRoadPart(newRoadNumber, newRoadPartNumber, projectId)
-                existingLinks = if (existingLinks.isEmpty && newRoadPartNumber > 1)
-                projectLinkDAO.fetchByProjectRoadPart(newRoadNumber, newRoadPartNumber - 1, projectId)
-                else Seq()
-            val existingLinksGeoms = existingLinks.map(pl => (pl.geometry.head, pl.geometry.last))
+            val existingLinks = projectLinkDAO.fetchByProjectRoadPart(newRoadNumber, newRoadPartNumber, projectId).filter(_.track == newLinks.head.track)
+            val prevRoadPartGeom = if (existingLinks.isEmpty && newRoadPartNumber > 1) {
+              val rw = roadwayDAO.fetchAllByRoadAndPart(newRoadNumber, newRoadPartNumber - 1, false, true).filter(_.track == newLinks.head.track)
+              linearLocationDAO.fetchByRoadways(rw.map(_.roadwayNumber).toSet).sortBy(_.orderNumber).map(l => {
+                (l.getFirstPoint, l.getLastPoint)
+              })
+            } else Seq()
+            val existingLinksGeoms = if (existingLinks.nonEmpty) existingLinks.map(pl => (pl.geometry.head, pl.geometry.last)) else prevRoadPartGeom
             val onceConnectedNewLinks = TrackSectionOrder.findOnceConnectedLinks(newLinks)
             val endLinkOfNewLinks = onceConnectedNewLinks.filterNot(onceConnected => existingLinksGeoms.exists(el => onceConnected._1.connected(el._1) || onceConnected._1.connected(el._2))).values.toList
             if (endLinkOfNewLinks.distinct.size == 1) {
               newLinks.filterNot(_.equals(endLinkOfNewLinks.head)) :+ endLinkOfNewLinks.head.copy(discontinuity = discontinuity)
             }
             else {
-//              onceConnectedNewLinks
               newLinks.init :+ newLinks.last.copy(discontinuity = discontinuity)
             }
           }
