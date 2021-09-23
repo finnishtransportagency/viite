@@ -69,17 +69,4 @@ class ProjectServiceTRSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("update ProjectStatus when TR saved") {
-    val sent2TRState = ProjectState.apply(2)
-    val savedState = ProjectState.apply(5)
-    val projectId = 0
-    val addresses = List(ProjectReservedPart(5: Long, 203: Long, 203: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
-    val roadAddressProject = Project(projectId, ProjectState.apply(2), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(), List(), None)
-    runWithRollback {
-      val saved = projectService.createRoadLinkProject(roadAddressProject)
-      val stateAfterCheck = projectService.updateProjectStatusIfNeeded(sent2TRState, savedState, "", saved.id)
-      stateAfterCheck.description should be(ProjectState.Saved2TR.description)
-    }
-  }
-
 }

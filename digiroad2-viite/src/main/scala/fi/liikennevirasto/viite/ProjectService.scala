@@ -1805,44 +1805,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def updateProjectStatusIfNeeded(currentStatus: ProjectState, newStatus: ProjectState, errorMessage: String, projectId: Long): ProjectState = {
-    if (currentStatus.value != newStatus.value && newStatus != ProjectState.Unknown) {
-      logger.info(s"Status update is needed as Project Current status ($currentStatus) differs from TR Status($newStatus)")
-      val project = fetchProjectById(projectId)
-      projectDAO.updateProjectStatus(projectId, newStatus)
-    }
-    if (newStatus != ProjectState.Unknown) {
-      newStatus
-    } else {
-      currentStatus
-    }
-  }
-
-  def getProjectTRIdsPendingInTR: Seq[Long] = {
-    withDynSession {
-      projectDAO.fetchProjectTRIdsWithWaitingTRStatus
-    }
-  }
-
-  def getProjectsPendingInTR: Seq[Long] = {
-    withDynSession {
-      projectDAO.fetchProjectIdsWithWaitingTRStatus
-    }
-  }
-
-  def updateProjectsWaitingResponseFromTR(): Unit = {
-    val listOfPendingProjects = getProjectsPendingInTR
-    for (project <- listOfPendingProjects) {
-      try {
-        withDynTransaction {
-          checkAndUpdateProjectStatus(project)
-        }
-      } catch {
-        case t: SQLException => logger.error(s"SQL error while importing project: $project! ${t.getMessage}", t)
-        case t: Exception => logger.warn(s"Couldn't update project $project", t.getMessage)
-      }
-    }
-  }
   /** Reserves a road network project for preserving the project information onto the road network.
     * Enclosing withDynTransaction ensures that the retrieved project cannot be given to multiple
     * handler calls at the same time.
@@ -1921,27 +1883,27 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   private def atomicallyUpdateProject(projectID: Long): Unit = {
     withDynTransaction {
       projectDAO.fetchTRIdByProjectId(projectID) match {
-      case Some(trId) =>
-        val roadNumbers: Option[Set[Long]] = projectDAO.fetchProjectStatus(projectID).map { currentState =>
-          logger.info(s"Current status is $currentState")
-          if (currentState == UpdatingToRoadNetwork) {
-            logger.info(s"Start importing road addresses of project $projectID to the road network")
-            updateRoadwaysAndLinearLocationsWithProjectLinks(projectID)
-          } else Set.empty[Long]
-        }
-        if (roadNumbers.isEmpty || roadNumbers.get.isEmpty) {
-          logger.error(s"No road numbers available in project $projectID")
-        } else if (roadNetworkDAO.hasCurrentNetworkErrorsForOtherNumbers(roadNumbers.get)) {
-          logger.error(s"Current network have errors for another project roads, solve Them first.")
-        } else {
-          val currNetworkVersion = roadNetworkDAO.getLatestRoadNetworkVersionId
-          if (currNetworkVersion.isDefined)
-            eventbus.publish("roadAddress:RoadNetworkChecker", RoadCheckOptions(Seq(), roadNumbers.get, currNetworkVersion, currNetworkVersion.get + 1L, throughActor = true))
-          else logger.info(s"There is no published version for the network so far")
-        }
-      case None =>
-        logger.info(s"During status checking VIITE wasn't able to find TR_ID to project $projectID")
-        appendStatusInfo(fetchProjectById(projectID).head, " Failed to find TR-ID ")
+        case Some(trId) =>
+          val roadNumbers: Option[Set[Long]] = projectDAO.fetchProjectStatus(projectID).map { currentState =>
+            logger.info(s"Current status is $currentState")
+            if (currentState == UpdatingToRoadNetwork) {
+              logger.info(s"Start importing road addresses of project $projectID to the road network")
+              updateRoadwaysAndLinearLocationsWithProjectLinks(projectID)
+            } else Set.empty[Long]
+          }
+          if (roadNumbers.isEmpty || roadNumbers.get.isEmpty) {
+            logger.error(s"No road numbers available in project $projectID")
+          } else if (roadNetworkDAO.hasCurrentNetworkErrorsForOtherNumbers(roadNumbers.get)) {
+            logger.error(s"Current network have errors for another project roads, solve Them first.")
+          } else {
+            val currNetworkVersion = roadNetworkDAO.getLatestRoadNetworkVersionId
+            if (currNetworkVersion.isDefined)
+              eventbus.publish("roadAddress:RoadNetworkChecker", RoadCheckOptions(Seq(), roadNumbers.get, currNetworkVersion, currNetworkVersion.get + 1L, throughActor = true))
+            else logger.info(s"There is no published version for the network so far")
+          }
+        case None =>
+          logger.info(s"During status checking VIITE wasn't able to find TR_ID to project $projectID")
+          appendStatusInfo(fetchProjectById(projectID).head, " Failed to find TR-ID ")
       }
     }
   }
