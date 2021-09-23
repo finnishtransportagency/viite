@@ -1174,7 +1174,8 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
         check_two_track_continuous(two_track_nonterminated_sources)
         check_two_track_continuous(two_track_nonterminated_targets)
 
-        projectService_db.updateRoadwaysAndLinearLocationsWithProjectLinks(ProjectState.Saved2TR, projectSaved.id)
+        projectDAO.updateProjectStatus(projectSaved.id, ProjectState.UpdatingToRoadNetwork)
+        projectService_db.updateRoadwaysAndLinearLocationsWithProjectLinks(projectSaved.id)
         val roadways = roadwayDAO.fetchAllByRoadAndPart(test_road_number,test_road_part_number, withHistory = true).toList
         val linearLocations = linearLocationDAO.fetchByRoadways(roadways.map(_.roadwayNumber).toSet).toList
 

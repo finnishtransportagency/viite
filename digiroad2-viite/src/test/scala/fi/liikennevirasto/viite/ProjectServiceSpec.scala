@@ -20,7 +20,7 @@ import fi.liikennevirasto.viite.Dummies._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, RoadAddressCP}
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous, EndOfRoad}
-import fi.liikennevirasto.viite.dao.ProjectState.Sent2TR
+import fi.liikennevirasto.viite.dao.ProjectState.{Sent2TR, UpdatingToRoadNetwork}
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectRoadwayChange, RoadwayDAO, _}
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLinkLike}
@@ -552,10 +552,10 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       runWithRollback {
         projectDAO.create(rap)
         projectDAO.assignNewProjectTRId(projectId)
-        projectService.updateProjectsWaitingResponseFromTR()
+        projectService.preserveSingleProjectInUpdateQueue()
         val project = projectService.fetchProjectById(projectId).head
         project.statusInfo.getOrElse("").length should be(0)
-        projectService.updateProjectsWaitingResponseFromTR()
+        projectService.preserveSingleProjectInUpdateQueue()
       }
     }
   }
@@ -566,7 +566,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val rap = Project(projectId, ProjectState.apply(2), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], Seq(), None)
       runWithRollback {
         projectDAO.create(rap)
-        projectService.updateProjectsWaitingResponseFromTR()
+        projectService.preserveSingleProjectInUpdateQueue()
         val project = projectService.fetchProjectById(projectId).head
         project.statusInfo.getOrElse("") contains "Failed to find TR-ID" should be(true)
       }
@@ -1839,7 +1839,8 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val namesBeforeUpdate = RoadNameDAO.getLatestRoadName(70001)
       namesBeforeUpdate.isEmpty should be(true)
       when(mockNodesAndJunctionsService.expireObsoleteNodesAndJunctions(any[Seq[ProjectLink]], any[Option[DateTime]], any[String])).thenReturn(Seq())
-      projectService.updateRoadwaysAndLinearLocationsWithProjectLinks(ProjectState.Saved2TR, projectId)
+      projectDAO.updateProjectStatus(projectId, UpdatingToRoadNetwork)
+      projectService.updateRoadwaysAndLinearLocationsWithProjectLinks(projectId)
 
       val project = projectService.getSingleProjectById(projectId)
       val namesAfterUpdate = RoadNameDAO.getLatestRoadName(70001)
@@ -2906,7 +2907,8 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sqlu"""Insert into ROADWAY_CHANGES_LINK (ROADWAY_CHANGE_ID,PROJECT_ID,PROJECT_LINK_ID) values ('1000758','1000351','1000364')""".execute
       sqlu"""Insert into ROADWAY_CHANGES_LINK (ROADWAY_CHANGE_ID,PROJECT_ID,PROJECT_LINK_ID) values ('1000759','1000351','1000358')""".execute
       when(mockNodesAndJunctionsService.expireObsoleteNodesAndJunctions(any[Seq[ProjectLink]], any[Option[DateTime]], any[String])).thenReturn(Seq())
-      projectService.updateRoadwaysAndLinearLocationsWithProjectLinks(ProjectState.Saved2TR, 1000351)
+      projectDAO.updateProjectStatus(1000351, UpdatingToRoadNetwork)
+      projectService.updateRoadwaysAndLinearLocationsWithProjectLinks(1000351)
 
       val roadwayPoints = roadwayPointDAO.fetch(Seq((166883763L, 0l)))
 
