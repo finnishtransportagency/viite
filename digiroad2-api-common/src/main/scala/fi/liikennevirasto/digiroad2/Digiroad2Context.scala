@@ -62,13 +62,16 @@ object Digiroad2Context {
   val system = ActorSystem("Digiroad2")
   import system.dispatcher
   val logger: Logger = LoggerFactory.getLogger(getClass)
+
+  /** Schedule periodical retrieval, and preservance of a road network project
+    * to the road network (that is, to the Viite DB).*/
   system.scheduler.schedule(FiniteDuration(2, TimeUnit.MINUTES), FiniteDuration(1, TimeUnit.MINUTES)) { // first query after 2 minutes, then once per minute
     try {
-      projectService.updateProjectsWaitingResponseFromTR()
+      projectService.preserveSingleProjectInUpdateQueue()
     } catch {
       case  NonFatal(ex) =>
-        logger.error("Exception at TR checks:" + ex.getMessage)
-        System.err.println("Exception at TR checks: " + ex.getMessage)
+        logger.error("Exception at preserving a project :" + ex.getMessage)
+        System.err.println("Exception at preserving a project: " + ex.getMessage)
     }
   }
 

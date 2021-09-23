@@ -84,6 +84,8 @@
     Deleted: {value: 7, description: "Poistettu projekti"},
     ErrorInViite: {value: 8, description: "Virhe Viite-sovelluksessa"},
     SendingToTR: {value: 9, description: "Lähettää Tierekisteriin"},
+    InUpdateQueue: {value: 10, description: "Odottaa tieverkolle päivittämistä"},
+    UpdatingToRoadNetwork: {value: 11, description: "Päivitetään tieverkolle"},
     Unknown: {value: 99, description: "Tuntematon"}
   };
 
