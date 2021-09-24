@@ -21,7 +21,7 @@ sealed trait ProjectState {
 object ProjectState {
 
   val values = Set(Closed, Incomplete, TRProcessing, Saved2TR,
-    Deleted, ErrorInViite, SendingToTR, InUpdateQueue, UpdatingToRoadNetwork, Unknown)
+    Deleted, ErrorInViite, InUpdateQueue, UpdatingToRoadNetwork, Unknown)
 
   // These states are final
   val nonActiveStates = Set(ProjectState.Closed.value, ProjectState.Saved2TR.value)
@@ -36,7 +36,6 @@ object ProjectState {
   case object Saved2TR extends ProjectState{def value = 5; def description = "Viety tierekisteriin"}
   case object Deleted extends ProjectState {def value = 7; def description = "Poistettu projekti"}
   case object ErrorInViite extends ProjectState {def value = 8; def description = "Virhe Viite-sovelluksessa"}
-  case object SendingToTR extends ProjectState {def value = 9; def description = "Lähettää Tierekisteriin"}
   case object InUpdateQueue extends ProjectState {def value = 10; def description = "Odottaa tieverkolle päivittämistä"}
   case object UpdatingToRoadNetwork extends ProjectState {def value = 11; def description = "Päivitetään tieverkolle"}
   case object Unknown extends ProjectState {def value = 99; def description = "Tuntematon"}
@@ -166,22 +165,13 @@ class ProjectDAO {
     Q.queryNA[Long](query).first
   }
 
+  /** @return projects, that are currently at either <i>InUpdateQueue</i>, or in <i>UpdatingToRoadNetwork</i> ProjectState */
   def fetchProjectIdsWithToBePreservedStatus: List[Long] = {
     val query =
       s"""
          SELECT id
          FROM project
          WHERE state=${ProjectState.InUpdateQueue.value} OR state=${ProjectState.UpdatingToRoadNetwork.value}
-       """
-    Q.queryNA[Long](query).list
-  }
-
-  def fetchProjectIdsWithSendingToTRStatus: List[Long] = {
-    val query =
-      s"""
-         SELECT id
-         FROM project
-         WHERE state=${ProjectState.SendingToTR.value}
        """
     Q.queryNA[Long](query).list
   }

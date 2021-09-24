@@ -75,14 +75,6 @@ object Digiroad2Context {
     }
   }
 
-  system.scheduler.schedule(FiniteDuration(5, TimeUnit.MINUTES), FiniteDuration(5, TimeUnit.MINUTES)) { // first query after 5 minutes, then once per 5 minute
-    try {
-      projectService.sendProjectsInWaiting()
-    } catch {
-      case ex: Exception => System.err.println("Exception when sending projects to TR: " + ex.getMessage)
-    }
-  }
-
 //  val roadAddressUpdater = system.actorOf(Props(classOf[RoadAddressUpdater], roadAddressService), name = "roadAddressUpdater")
 //  eventbus.subscribe(roadAddressUpdater, "roadAddress:persistUnaddressedRoadLink")
 

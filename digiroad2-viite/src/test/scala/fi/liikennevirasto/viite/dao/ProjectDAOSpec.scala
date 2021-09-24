@@ -243,17 +243,6 @@ class ProjectDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test fetchProjectIdsWithSendingToTRStatus When there is one project in SendingToTR status Then should return that one project") {
-    runWithRollback {
-      val waitingCountP = projectDAO.fetchProjectIdsWithSendingToTRStatus.length
-      val id = Sequences.nextViiteProjectId
-      val rap = dummyProject(id, ProjectState.SendingToTR, List.empty[ProjectReservedPart], None)
-      projectDAO.create(rap)
-      val waitingCountNow = projectDAO.fetchProjectIdsWithSendingToTRStatus.length
-      waitingCountNow - waitingCountP should be(1)
-    }
-  }
-
   test("Test fetchProjectIdsWithToBePreservedStatus " +
     "When project is accepted, but still waiting to be preserved to Viite DB " +
     "Then projects waiting TR response should be increased") {

@@ -268,7 +268,8 @@
         $('#roadAddressProjectFormCut select').prop('disabled', true);
         $('.update').prop('disabled', true);
         $('.btn-pencil-edit').prop('disabled', true);
-        if (projectCollection.getCurrentProject().project.statusCode === ProjectStatus.SendingToTR.value) {
+        if (projectCollection.getCurrentProject().project.statusCode === ProjectStatus.InUpdateQueue.value
+          || projectCollection.getCurrentProject().project.statusCode === ProjectStatus.UpdatingToRoadNetwork.value) {
           $(":input").prop('disabled', true);
           $(".project-form button.cancelLink").prop('disabled', false);
         }

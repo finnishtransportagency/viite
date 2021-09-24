@@ -1657,52 +1657,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  // TODO Mock TR client has changed and it affects this test
-  ignore("Test publishProject When sending changes to TR and provoking a IOException exception when publishing a project Then check if the project state is changed to 9") {
-    var count = 0
-    val roadNumber = 5L
-    val part = 207L
-    val roadLink = RoadLink(5170939L, Seq(Point(535605.272, 6982204.22, 85.90899999999965)), 540.3960283713503, State,
-      99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"),
-      Map("MUNICIPALITYCODE" -> BigInt.apply(749)), InUse, NormalLinkInterface)
-    runWithRollback {
-      val countCurrentProjects = projectService.getAllProjects
-      val id = 0
-      val addresses = List(ProjectReservedPart(5: Long, roadNumber: Long, part: Long, Some(5L), Some(Discontinuity.apply("jatkuva")),
-        Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
-      val project = Project(id, ProjectState.Incomplete, "TestProject", "TestUser", DateTime.now(),
-        "TestUser", DateTime.parse("1970-01-01"), DateTime.now(), "Some additional info", Seq(), Seq(), None)
-      val savedProject = projectService.createRoadLinkProject(project)
-      mockForProject(savedProject.id, roadwayAddressMapper.getRoadAddressesByRoadway(roadwayDAO.fetchAllByRoadAndPart(roadNumber, part)).map(toProjectLink(savedProject)))
-      projectService.saveProject(savedProject.copy(reservedParts = addresses))
-      val countAfterInsertProjects = projectService.getAllProjects
-      count = countCurrentProjects.size + 1
-      countAfterInsertProjects.size should be(count)
-      projectService.allLinksHandled(savedProject.id) should be(false)
-      val projectLinks = projectLinkDAO.fetchProjectLinks(savedProject.id)
-      val partitioned = projectLinks.partition(_.roadPartNumber == part)
-      val linkIds207 = partitioned._1.map(_.linkId).toSet
-      reset(mockRoadLinkService)
-      when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]])).thenAnswer(
-        toMockAnswer(projectLinks, roadLink)
-      )
-      projectService.updateProjectLinks(savedProject.id, Set(), linkIds207.toSeq, LinkStatus.Transfer, "-", roadNumber, part, 0, Option.empty[Int]) should be(None)
-      projectService.updateProjectLinks(savedProject.id, Set(), Seq(5168510), LinkStatus.Terminated, "-", roadNumber, part, 0, Option.empty[Int]) should be(None)
-      projectService.allLinksHandled(savedProject.id) should be(true)
-
-      projectService.updateProjectLinks(project.id, Set(), Seq(5168540), LinkStatus.Terminated, "-", roadNumber, part, 0, Option.empty[Int]) should be(None)
-      //         This will result in a IO exception being thrown and caught inside the publish, making the update of the project for the state SendingToTR
-      //         If the tests ever get a way to have TR connectivity then this needs to be somewhat addressed
-
-      projectService.publishProject(savedProject.id)
-      val currentProjectStatus = projectDAO.fetchProjectStatus(savedProject.id)
-      currentProjectStatus.isDefined should be(true)
-      currentProjectStatus.get.value should be(ProjectState.SendingToTR.value)
-    }
-
-  }
-
   test("Test fillRoadNames When creating one project link for one new road name Then method should get the road name of the created project links") {
     val roadNumber = 5L
     val roadPartNumber = 207L

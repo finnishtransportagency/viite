@@ -2289,23 +2289,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     Track.values.filterNot(_.value == Track.Unknown.value).exists(_.value == track)
   }
 
-  def sendProjectsInWaiting(): Unit = {
-    logger.info(s"Finding projects whose status is SendingToTRStatus/ ${SendingToTR.description}")
-    val listOfProjects = getProjectsWaitingForTR
-    logger.info(s"Found ${listOfProjects.size} projects")
-    for (projectId <- listOfProjects) {
-      logger.info(s"Trying to publish project: $projectId")
-      publishProject(projectId)
-    }
-
-  }
-
-  private def getProjectsWaitingForTR: Seq[Long] = {
-    withDynSession {
-      projectDAO.fetchProjectIdsWithSendingToTRStatus
-    }
-  }
-
   def getRoadAddressesFromFormedRoadPart(roadNumber: Long, roadPartNumber: Long, projectId: Long) = {
     withDynSession {
       val roadAddresses = projectLinkDAO.fetchByProjectRoadPart(roadNumber, roadPartNumber, projectId)
