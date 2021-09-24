@@ -1709,6 +1709,11 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     test("Test assignMValues " +
          "When a combined road has a loopend is reversed with transfer status" +
          "Then addresses, directions and link ordering should be correct.") {
+      /*
+          ______________
+                |      |
+                --------
+       */
     runWithRollback {
       val triplePoint = Point(371826, 6669765)
 

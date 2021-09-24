@@ -79,6 +79,8 @@ object TrackSectionOrder {
     }
   }
 
+  /** Group together points of the given ProjectLinks having the same (x,y) coordinates.*/
+   /* Used for loop road case. */
   def groupConnectionPoints(seq: Seq[ProjectLink]): Map[(Double, Double), Seq[Point]] = {
     seq.flatMap(l => {
       val (p1, p2) = l.getEndPoints
@@ -86,11 +88,13 @@ object TrackSectionOrder {
     }).groupBy(p => (p.x, p.y))
   }
 
+  /* Used for loop road case.*/
   def hasTripleConnectionPoint(seq: Seq[ProjectLink]): Boolean = {
     val pointMap = groupConnectionPoints(seq)
     pointMap.exists(_._2.size == 3)
   }
 
+  /* Used for loop road case.*/
   def getTripleConnectionPoint(seq: Seq[ProjectLink]): Option[Point] = {
     val pointMap = groupConnectionPoints(seq)
     val triplePoint = pointMap.find(_._2.size == 3)
@@ -100,6 +104,7 @@ object TrackSectionOrder {
       None
   }
 
+  /* Used for loop road case.*/
   def getUnConnectedPoint(seq: Seq[ProjectLink]): Option[Point] = {
     val pointMap = groupConnectionPoints(seq)
     val unConnectedPoint = pointMap.find(_._2.size == 1)
