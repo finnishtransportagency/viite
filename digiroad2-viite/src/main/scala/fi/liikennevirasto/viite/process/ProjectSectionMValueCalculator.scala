@@ -1,5 +1,6 @@
 package fi.liikennevirasto.viite.process
 
+import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
@@ -48,14 +49,25 @@ object ProjectSectionMValueCalculator {
   def isSameTrack(previous: ProjectLink, currentLink: ProjectLink): Boolean = {
     previous.roadNumber == currentLink.roadNumber && previous.roadPartNumber == currentLink.roadPartNumber && previous.track == currentLink.track
   }
+  private def orderEndPoints(firstLink: ProjectLink, onceConnected: ProjectLink, unConnectedEndPoint: Point, tripleConnectionEndPoint: Point) = {
+    if (firstLink.id == onceConnected.id)
+      (unConnectedEndPoint, tripleConnectionEndPoint)
+    else
+      (tripleConnectionEndPoint, unConnectedEndPoint)
+  }
 
   def assignLinkValues(seq: Seq[ProjectLink], cps: Map[Long, UserDefinedCalibrationPoint], addrSt: Option[Double], addrEn: Option[Double], coEff: Double = 1.0): Seq[ProjectLink] = {
     if (seq.isEmpty) Seq() else {
-      val seqOfEnds       = TrackSectionOrder.findOnceConnectedLinks(seq).values.toSeq // Some complex cases may need simplifying to find ends correctly.
-      val endPoints       = TrackSectionOrder.findChainEndpoints(seqOfEnds)
-      val mappedEndpoints = (endPoints.head._1, endPoints.last._1)
-      val orderedPairs    = TrackSectionOrder.orderProjectLinksTopologyByGeometry(mappedEndpoints, seq)
-      val ordered         = if (seq.exists(_.track == Track.RightSide || seq.forall(_.track == Track.Combined))) orderedPairs._1 else orderedPairs._2.reverse
+      val seqOfEnds = TrackSectionOrder.findOnceConnectedLinks(seq).values.toSeq // Some complex cases may need simplifying to find ends correctly.
+      val endPoints = TrackSectionOrder.findChainEndpoints(seqOfEnds)
+      val firstLastEndpoint = (endPoints.head._1, endPoints.last._1)
+      val mappedEndpoints   = if (seqOfEnds.size == 1) {
+        val firstEndPoint  = TrackSectionOrder.getUnConnectedPoint(seq)
+        val secondEndPoint = TrackSectionOrder.getTripleConnectionPoint(seq)
+        if (firstEndPoint.isDefined && secondEndPoint.isDefined) orderEndPoints(seq.head, seqOfEnds.head, firstEndPoint.get, secondEndPoint.get) else firstLastEndpoint
+      } else firstLastEndpoint
+      val orderedPairs      = TrackSectionOrder.orderProjectLinksTopologyByGeometry(mappedEndpoints, seq)
+      val ordered           = if (seq.exists(_.track == Track.RightSide || seq.forall(_.track == Track.Combined))) orderedPairs._1 else orderedPairs._2.reverse
 
       val newAddressValues = ordered.scanLeft(addrSt.getOrElse(0.0)) { case (m, pl) => {
         val someCalibrationPoint: Option[UserDefinedCalibrationPoint] = cps.get(pl.id)
