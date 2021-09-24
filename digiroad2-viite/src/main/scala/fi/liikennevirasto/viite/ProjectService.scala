@@ -688,14 +688,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               })))
             checkAndReserve(project, reserved)
             logger.debug(s"Reserve done")
-
-            // remove uses old links.
-//            val test2 = addresses.map(_.linkId).diff(fullMapping.keys.toSeq)
-//
-//            val test = roadLinkService.getCurrentAndHistoryRoadLinksFromVVH(test2.toSet)
-//            val maps = test._2.map(t => (t.linkId -> t)).toMap
-//            val fullMapping2 = fullMapping ++ maps
-//              addresses.map(ra => newProjectTemplate(fullMapping2(ra.linkId), ra, project))
             addresses.map(ra => newProjectTemplate(fullMapping(ra.linkId), ra, project))
         }
       }
