@@ -70,7 +70,15 @@
 
     function hide() {
       $('#information-content').empty();
+      // disable send button and set title attribute
       $('#send-button').attr('disabled', true);
+      $('#send-button').attr('title', 'Hyväksy yhteenvedon jälkeen');
+      // enable recalculate button and remove title attribute from it
+      $('#recalculate-button').attr('disabled', false);
+      $('#recalculate-button').removeAttr('title');
+      // enable changes button and remove title attribute from it
+      $('#changes-button').attr('disabled', false);
+      $('#changes-button').removeAttr('title');
       resetInteractions();
       interact('.change-table-frame').unset();
       $('.change-table-frame').remove();
@@ -140,8 +148,16 @@
       if (projectChangeData) {
         $('.change-table-header').html($('<div class="font-resize">Validointi ok. Alla näet muutokset projektissa.</div>'));
         var currentProject = projectCollection.getCurrentProject();
+        // disable recalculate button if changetable is open and set title attribute
+        $('#recalculate-button').attr('disabled', true);
+        $('#recalculate-button').attr('title', 'Etäisyyslukemia ei voida päivittää yhteenvetotaulukon ollessa auki');
+        // disable changes button if changetable is open and set title attribute
+        $('#changes-button').attr('disabled', true);
+        $('#changes-button').attr('title', 'Yhteenvetotaulukko on jo auki');
         if ($('.change-table-frame').css('display') === "block" && (currentProject.project.statusCode === ProjectStatus.Incomplete.value)) {
-          $('#send-button').attr('disabled', false); //enables send button if changetable is open
+          //enable send button if changetable is open and remove title attribute
+          $('#send-button').attr('disabled', false);
+          $('#send-button').removeAttr('title');
         }
       } else {
         $('.change-table-header').html($('<div class="font-resize" style="color: rgb(255, 255, 0)">Tarkista validointitulokset. Yhteenvetotaulukko voi olla puutteellinen.</div>'));

@@ -123,7 +123,8 @@ object ProjectDeltaCalculator {
             pl1.copy(endAddrMValue = pl2.endAddrMValue, discontinuity = pl2.discontinuity,
               originalEndAddrMValue = pl2.originalEndAddrMValue,
               calibrationPointTypes = (pl1.startCalibrationPointType, pl2.endCalibrationPointType),
-              originalCalibrationPointTypes = (pl1.originalCalibrationPointTypes._1, pl2.originalCalibrationPointTypes._2)
+              originalCalibrationPointTypes = (pl1.originalCalibrationPointTypes._1, pl2.originalCalibrationPointTypes._2),
+              roadwayId = pl2.roadwayId
             )
           )
     }

@@ -356,6 +356,7 @@
         var projectChangesButton = showProjectChangeButton();
         if (isProjectPublishable() && isProjectEditable()) {
           formCommon.setInformationContent();
+          formCommon.setInformationContentText("Validointi ok. Voit tehdä tieosoitteen muutosilmoituksen tai jatkaa muokkauksia.");
           $('footer').html(formCommon.sendRoadAddressChangeButton('split-', projectCollection.getCurrentProject()));
         } else
           $('footer').html(projectChangesButton);

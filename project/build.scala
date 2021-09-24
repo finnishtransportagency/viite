@@ -24,6 +24,7 @@ object Digiroad2Build extends Build {
   val MockitoCoreVersion = "2.18.3"
   val LogbackClassicVersion = "1.2.3"
   val JettyVersion = "9.2.15.v20160210"
+  val TestOutputOptions = Tests.Argument(TestFrameworks.ScalaTest, "-oNCXELOPQRMI") // List only problems, and their summaries. Set suitable logback level to get the effect.
 
   // Get build id to check if executing in aws environment.
   val awsBuildId: String = scala.util.Properties.envOrElse("CODEBUILD_BUILD_ID", null)
@@ -40,6 +41,7 @@ object Digiroad2Build extends Build {
           scalaVersion := ScalaVersion,
           resolvers += Classpaths.typesafeReleases,
           scalacOptions ++= Seq("-unchecked", "-feature"),
+          testOptions in Test += TestOutputOptions,
           libraryDependencies ++= Seq(
             "org.joda" % "joda-convert" % JodaConvertVersion,
             "joda-time" % "joda-time" % JodaTimeVersion,
@@ -69,6 +71,7 @@ object Digiroad2Build extends Build {
           scalaVersion := ScalaVersion,
           resolvers += Classpaths.typesafeReleases,
           scalacOptions ++= Seq("-unchecked", "-feature"),
+          testOptions in Test += TestOutputOptions,
           libraryDependencies ++= Seq(
             "org.joda" % "joda-convert" % JodaConvertVersion,
             "joda-time" % "joda-time" % JodaTimeVersion,
@@ -98,6 +101,7 @@ object Digiroad2Build extends Build {
       scalacOptions ++= Seq("-unchecked", "-feature"),
       testOptions in Test ++= (
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
+      testOptions in Test += TestOutputOptions,
       libraryDependencies ++= Seq(
         "org.apache.commons" % "commons-lang3" % "3.2",
         "commons-codec" % "commons-codec" % "1.9",
@@ -134,6 +138,7 @@ object Digiroad2Build extends Build {
       parallelExecution in Test := false,
       testOptions in Test ++= (
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
+      testOptions in Test += TestOutputOptions,
       libraryDependencies ++= Seq(
         "org.scalatra" %% "scalatra" % ScalatraVersion,
         "org.scalatra" %% "scalatra-json" % ScalatraVersion,
@@ -168,6 +173,7 @@ object Digiroad2Build extends Build {
       //      parallelExecution in Test := false,
       testOptions in Test ++= (
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
+      testOptions in Test += TestOutputOptions,
       libraryDependencies ++= Seq(
         "com.typesafe.akka" %% "akka-actor" % AkkaVersion,
         "org.apache.httpcomponents" % "httpclient" % HttpClientVersion,
@@ -203,6 +209,7 @@ object Digiroad2Build extends Build {
       //      parallelExecution in Test := false,
       testOptions in Test ++= (
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
+      testOptions in Test += TestOutputOptions,
       libraryDependencies ++= Seq(
         "org.scalatra" %% "scalatra" % ScalatraVersion,
         "org.scalatra" %% "scalatra-json" % ScalatraVersion,
@@ -241,6 +248,7 @@ object Digiroad2Build extends Build {
       fork in (Compile,run) := true,
       testOptions in Test ++= (
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
+      testOptions in Test += TestOutputOptions,
       libraryDependencies ++= Seq(
         "org.scalatra" %% "scalatra" % ScalatraVersion,
         "org.scalatra" %% "scalatra-json" % ScalatraVersion,
