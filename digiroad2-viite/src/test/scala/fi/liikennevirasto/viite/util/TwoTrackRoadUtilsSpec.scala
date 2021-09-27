@@ -110,41 +110,42 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
   }
 
 
-//  test("Test splitPlsAtStatusChange() When there is status change at the same distance Then should return unmodified pls with two udcps.") {
-//    runWithRollback {
-//      val geomTrack1_1 = Seq(Point(0.0, 0.0), Point(100.0, 0.0))
-//      val geomTrack1_2 = Seq(Point(100.0, 0.0), Point(200.0, 0.0))
-//      val geomTrack2_1 = Seq(Point(0.0, 10.0), Point(100.0, 10.0))
-//      val geomTrack2_2 = Seq(Point(100.0, 10.0), Point(200.0, 10.0))
-//
-//      val testTrack1 = TestTrack(Seq(LinkStatus.UnChanged, LinkStatus.Transfer), Track.apply(1), Seq(geomTrack1_1, geomTrack1_2))
-//      val testTrack2 = TestTrack(Seq(LinkStatus.UnChanged, LinkStatus.Transfer), Track.apply(2), Seq(geomTrack2_1, geomTrack2_2))
-//
-//      val (rightProjectLinks, leftProjectLinks) = setUpProjectWithLinks(testTrack1, testTrack2).partition(_.track == Track.RightSide)
-//      val (track1, track2, udcp)                = TwoTrackRoadUtils.splitPlsAtStatusChange(rightProjectLinks, leftProjectLinks)
-//
-//      track1 should have size 2
-//      track2 should have size 2
-//      udcp   should have size 2
-//
-//      track1.head.startAddrMValue shouldBe 0
-//      track1.head.endAddrMValue   shouldBe 100
-//      track1.last.startAddrMValue shouldBe 100
-//      track1.last.endAddrMValue   shouldBe 200
-//
-//      track1.head.calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.UserDefinedCP)
-//      track1.last.calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.NoCP)
-//
-//      track2.head.startAddrMValue shouldBe 0
-//      track2.head.endAddrMValue   shouldBe 100
-//      track2.last.startAddrMValue shouldBe 100
-//      track2.last.endAddrMValue   shouldBe 200
-//
-//      track2.head.calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.UserDefinedCP)
-//      track2.last.calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.NoCP)
-//
-//    }
-//  }
+  test("Test splitPlsAtStatusChange() When there is status change at the same distance Then should return unmodified pls without udcps.") {
+    runWithRollback {
+      /* Note: When unchanged and new on the same track calibration points should not exists. */
+      val geomTrack1_1 = Seq(Point(0.0, 0.0), Point(100.0, 0.0))
+      val geomTrack1_2 = Seq(Point(100.0, 0.0), Point(200.0, 0.0))
+      val geomTrack2_1 = Seq(Point(0.0, 10.0), Point(100.0, 10.0))
+      val geomTrack2_2 = Seq(Point(100.0, 10.0), Point(200.0, 10.0))
+
+      val testTrack1 = TestTrack(Seq(LinkStatus.UnChanged, LinkStatus.Transfer), Track.apply(1), Seq(geomTrack1_1, geomTrack1_2))
+      val testTrack2 = TestTrack(Seq(LinkStatus.UnChanged, LinkStatus.Transfer), Track.apply(2), Seq(geomTrack2_1, geomTrack2_2))
+
+      val (rightProjectLinks, leftProjectLinks) = setUpProjectWithLinks(testTrack1, testTrack2).partition(_.track == Track.RightSide)
+      val (track1, track2, udcp)                = TwoTrackRoadUtils.splitPlsAtStatusChange(rightProjectLinks, leftProjectLinks)
+
+      track1 should have size 2
+      track2 should have size 2
+      udcp   should have size 2
+
+      track1.head.startAddrMValue shouldBe 0
+      track1.head.endAddrMValue   shouldBe 100
+      track1.last.startAddrMValue shouldBe 100
+      track1.last.endAddrMValue   shouldBe 200
+
+      track1.head.calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.NoCP)
+      track1.last.calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.NoCP)
+
+      track2.head.startAddrMValue shouldBe 0
+      track2.head.endAddrMValue   shouldBe 100
+      track2.last.startAddrMValue shouldBe 100
+      track2.last.endAddrMValue   shouldBe 200
+
+      track2.head.calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.NoCP)
+      track2.last.calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.NoCP)
+
+    }
+  }
 
   test("Test splitPlsAtStatusChange() When other track has two parts with different status Then returns opposite track splitted at status change distance with udcp.") {
     runWithRollback {

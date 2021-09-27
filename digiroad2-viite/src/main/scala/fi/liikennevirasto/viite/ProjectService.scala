@@ -506,14 +506,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           /* Set discontinuity to the last new link if not continuous.
            * Finds the link by assuming the end is not connected, i.e. before round about. */
           if (discontinuity != Discontinuity.Continuous) {
-            val existingLinks = projectLinkDAO.fetchByProjectRoadPart(newRoadNumber, newRoadPartNumber, projectId).filter(_.track == newLinks.head.track)
+            val existingLinks = projectLinkDAO.fetchByProjectRoadPart(newRoadNumber, newRoadPartNumber, projectId).filter(_.track == newLinks.head.track).map(pl => (pl.geometry.head, pl.geometry.last))
             val prevRoadPartGeom = if (existingLinks.isEmpty && newRoadPartNumber > 1) {
               val rw = roadwayDAO.fetchAllByRoadAndPart(newRoadNumber, newRoadPartNumber - 1, false, true).filter(_.track == newLinks.head.track)
               linearLocationDAO.fetchByRoadways(rw.map(_.roadwayNumber).toSet).sortBy(_.orderNumber).map(l => {
                 (l.getFirstPoint, l.getLastPoint)
               })
             } else Seq()
-            val existingLinksGeoms = if (existingLinks.nonEmpty) existingLinks.map(pl => (pl.geometry.head, pl.geometry.last)) else prevRoadPartGeom
+            val existingLinksGeoms = if (existingLinks.nonEmpty) existingLinks else prevRoadPartGeom
             val onceConnectedNewLinks = TrackSectionOrder.findOnceConnectedLinks(newLinks)
             val endLinkOfNewLinks = onceConnectedNewLinks.filterNot(onceConnected => existingLinksGeoms.exists(el => onceConnected._1.connected(el._1) || onceConnected._1.connected(el._2))).values.toList
             if (endLinkOfNewLinks.distinct.size == 1) {

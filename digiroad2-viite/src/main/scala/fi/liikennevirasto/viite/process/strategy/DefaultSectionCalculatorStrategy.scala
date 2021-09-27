@@ -212,9 +212,6 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       }
     }}
 
-    val x = udcpsFromRightSideSplits.diff(updatedudcpsFromRightSideSplits).map(_.get.projectLinkId)
-    val updatedudcpsFromLeftSideSplits = udcpsFromLeftSideSplits.filterNot((u: Option[UserDefinedCalibrationPoint]) => x.contains(u.get.projectLinkId))
-
     val splitCreatedCpsFromRightSide: Map[Long, UserDefinedCalibrationPoint] = (updatedudcpsFromRightSideSplits ).filter(udcp => udcp.isDefined && udcp.get.isInstanceOf[UserDefinedCalibrationPoint]).map( ucp => ucp.get).map(c => c.projectLinkId -> c).toMap
     val splitCreatedCpsFromLeftSide: Map[Long, UserDefinedCalibrationPoint] = (udcpsFromLeftSideSplits).filter(udcp => udcp.isDefined && udcp.get.isInstanceOf[UserDefinedCalibrationPoint]).map( ucp => ucp.get).map(c => c.projectLinkId -> c).toMap
 
