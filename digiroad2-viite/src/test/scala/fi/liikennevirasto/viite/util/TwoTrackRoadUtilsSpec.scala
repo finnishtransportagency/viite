@@ -110,9 +110,8 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
   }
 
 
-  test("Test splitPlsAtStatusChange() When there is status change at the same distance Then should return unmodified pls without udcps.") {
+  test("Test splitPlsAtStatusChange() When there is status change at the same distance Then should return unmodified pls with two udcps.") {
     runWithRollback {
-      /* Note: When unchanged and new on the same track calibration points should not exists. */
       val geomTrack1_1 = Seq(Point(0.0, 0.0), Point(100.0, 0.0))
       val geomTrack1_2 = Seq(Point(100.0, 0.0), Point(200.0, 0.0))
       val geomTrack2_1 = Seq(Point(0.0, 10.0), Point(100.0, 10.0))
@@ -133,7 +132,7 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
       track1.last.startAddrMValue shouldBe 100
       track1.last.endAddrMValue   shouldBe 200
 
-      track1.head.calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.NoCP)
+      track1.head.calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.UserDefinedCP)
       track1.last.calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.NoCP)
 
       track2.head.startAddrMValue shouldBe 0
@@ -141,7 +140,7 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
       track2.last.startAddrMValue shouldBe 100
       track2.last.endAddrMValue   shouldBe 200
 
-      track2.head.calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.NoCP)
+      track2.head.calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.UserDefinedCP)
       track2.last.calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.NoCP)
 
     }

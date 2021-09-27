@@ -203,7 +203,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     /* Update udcp pl if splitted after second pass. */
     val updatedudcpsFromRightSideSplits = dups.foldLeft(udcpsFromRightSideSplits) { (udcpsToUpdate, cur) => {
       val splittedLeftLink       = splittedLeftLinks.find(_.id == cur._1)
-      if (splittedLeftLink.isDefined) {
+      if (splittedLeftLink.isDefined && splittedLeftLink.get.connectedLinkId.isDefined) {
         val newLink = splittedLeftLinks.find(_.startAddrMValue == splittedLeftLink.get.endAddrMValue).get
         val maybeMaybePoint = udcpsToUpdate.find(_.get.projectLinkId == cur._1)
         udcpsToUpdate.filterNot(_.get.projectLinkId == cur._1) :+ Some(maybeMaybePoint.get.get.copy(projectLinkId = newLink.id))

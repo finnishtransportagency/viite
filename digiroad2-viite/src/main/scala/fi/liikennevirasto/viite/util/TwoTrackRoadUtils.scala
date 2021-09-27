@@ -76,6 +76,14 @@ object TwoTrackRoadUtils {
               prevPl_othersidePls_udcps._3 ++ splitted_pls._2
             else prevPl_othersidePls_udcps._3
           )
+        } else if (splitted_pls._2.nonEmpty) {// && !(currentPl.status == LinkStatus.New && prevPl_othersidePls_udcps._1.last.status == LinkStatus.UnChanged)) { // Had same addresses
+          (
+            prevPl_othersidePls_udcps._1.init :+ splitted_pls._3.get._1 :+ currentPl,
+            (prevPl_othersidePls_udcps._2.filterNot(rl => {
+              splitted_pls._3.get._2.linkId == rl.linkId && rl.startAddrMValue == splitted_pls._3.get._2.startAddrMValue
+            }) :+ splitted_pls._3.get._2).sortBy(_.startAddrMValue),
+            prevPl_othersidePls_udcps._3 ++ splitted_pls._2
+          )
         } else
           (
             prevPl_othersidePls_udcps._1 :+ currentPl,
