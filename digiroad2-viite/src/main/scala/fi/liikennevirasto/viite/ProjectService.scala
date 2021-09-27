@@ -21,7 +21,7 @@ import fi.liikennevirasto.viite.dao.ProjectState._
 import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Termination}
 import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectDAO, RoadwayDAO, _}
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink}
-import fi.liikennevirasto.viite.process._
+import fi.liikennevirasto.viite.process.{InvalidAddressDataException, _}
 import fi.liikennevirasto.viite.util.SplitOptions
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
@@ -1853,12 +1853,18 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           atomicallyUpdateProject(projectId)
         }
       } catch {
-        // if caught an error, set project status to ProjectState.ErrorInViite
+        // in case of an expected error, set project status to ProjectState.ErrorInViite
+        case t: InvalidAddressDataException => {
+          logger.warn(s"InvalidAddressDataException while preserving the project $projectId" +
+                       s" to road network. ${t.getMessage}", t)
+          projectDAO.updateProjectStatus(projectId, ProjectState.ErrorInViite)
+        }
         case t: SQLException => {
           logger.error(s"SQL error while preserving the project $projectId" +
                        s" to road network. ${t.getMessage}", t)
           projectDAO.updateProjectStatus(projectId, ProjectState.ErrorInViite)
         }
+        // re-throw unexpected errors
         case t: Exception => {
           logger.warn(s"Unexpected exception while preserving the project $projectId", t.getMessage)
           projectDAO.updateProjectStatus(projectId, ProjectState.ErrorInViite)
@@ -1888,7 +1894,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             logger.info(s"Current status is $currentState")
             if (currentState == UpdatingToRoadNetwork) {
               logger.info(s"Start importing road addresses of project $projectID to the road network")
-              updateRoadwaysAndLinearLocationsWithProjectLinks(projectID)
+              try {
+                updateRoadwaysAndLinearLocationsWithProjectLinks(projectID)
+              } catch {
+                case t: InvalidAddressDataException => {
+                  throw t  // Rethrow the unexpected error.
+                }
+              }
             } else Set.empty[Long]
           }
           if (roadNumbers.isEmpty || roadNumbers.get.isEmpty) {
@@ -2079,11 +2091,22 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       nodesAndJunctionsService.calculateNodePointsForNodes(nodeIds, username)
     }
 
-    val pState = projectDAO.fetchProjectStatus(projectID)
-    if (pState != UpdatingToRoadNetwork) {
-      logger.error(s" Project state not at UpdatingToRoadNetwork")
-      throw new RuntimeException(s"Project state not at UpdatingToRoadNetwork: $pState")
+    projectDAO.fetchProjectStatus(projectID) match {
+      case Some(pState) => {
+        if (pState == UpdatingToRoadNetwork) {
+          /* just continue */
+        }
+        else {
+          logger.error(s"Project state not at UpdatingToRoadNetwork: $pState")
+          throw new RuntimeException(s"Project state not at UpdatingToRoadNetwork: $pState")
+        }
+      }
+      case None => {
+        logger.error(s"Project $projectID was not found (and thus, state not at UpdatingToRoadNetwork)")
+        throw new RuntimeException(s"Project $projectID was not found when fetching ProjectStatus")
+      }
     }
+
     val project = projectDAO.fetchById(projectID).get
     val nodeIds = nodeDAO.fetchNodeNumbersByProject(projectID)
     /* Remove userdefined calibrationpoints from calculation. Assume udcp:s defined at projectlink splits. */
@@ -2100,8 +2123,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val mappedRoadwayChanges = currentRoadways.values.map(r => RoadwayFiller.RwChanges(r, findHistoryRoadways(r.roadwayNumber), projectLinks.filter(_.roadwayId == r.id))).toList
 
     if (projectLinks.isEmpty) {
-      logger.error(s" There are no addresses to update, rollbacking update ${project.id}")
-      throw new InvalidAddressDataException(s"There are no addresses to update , rollbacking update ${project.id}")
+      logger.error(s" There are no addresses to update, rollbacking update of project ${project.id}")
+      throw new InvalidAddressDataException(s"There were no addresses to update in project ${project.id}")
     }
     logger.debug(s"Moving project links to project link history.")
     projectLinkDAO.moveProjectLinksToHistory(projectID)
