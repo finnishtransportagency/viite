@@ -269,6 +269,10 @@
         rootElement.html(selectedProjectLinkTemplate(currentProject.project, selectedProjectLink));
         formCommon.replaceAddressInfo(backend, selectedProjectLink, currentProject.project.id);
         updateForm();
+        // disable form interactions (action dropdown, save and cancel buttons) if change table is open
+        if (projectChangeTable.isChangeTableOpen()) {
+          formCommon.disableFormInteractions();
+        }
         _.defer(function () {
           $('#beginDistance').on("change", function (changedData) {
             eventbus.trigger('projectLink:editedBeginDistance', changedData.target.value);
