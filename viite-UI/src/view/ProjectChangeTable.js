@@ -9,11 +9,17 @@
       'Numerointi',
       'Lakkautettu'
     ];
-
+    // change table is not open in the beginning of the project
+    var changeTableOpen = false;
     var LinkStatus = LinkValues.LinkStatus;
     var ProjectStatus = LinkValues.ProjectStatus;
     var windowMaximized = false;
     var formCommon = new FormCommon('');
+
+    // checks if change table state is open
+    var isChangeTableOpen = function () {
+      return changeTableOpen;
+    };
 
     var changeTable =
       $('<div class="change-table-frame"></div>');
@@ -70,6 +76,10 @@
     }
 
     function hide() {
+      // set change table state
+      changeTableOpen = false;
+      // enable action dropdown, save and cancel buttons
+      formCommon.enableFormInteractions();
       $('#information-content').empty();
       // disable send button and set title attribute
       $('#send-button').attr('disabled', true);
@@ -146,6 +156,8 @@
       }
       $('.row-changes').remove();
       $('.change-table-dimensions').append($(htmlTable));
+      // set change table state to open
+      changeTableOpen = true;
       if (projectChangeData) {
         $('.change-table-header').html($('<div class="font-resize">Validointi ok. Alla näet muutokset projektissa.</div>'));
         var currentProject = projectCollection.getCurrentProject();
@@ -377,7 +389,8 @@
     return {
       show: show,
       hide: hide,
-      bindEvents: bindEvents
+      bindEvents: bindEvents,
+      isChangeTableOpen: isChangeTableOpen
     };
   };
 }(this));
