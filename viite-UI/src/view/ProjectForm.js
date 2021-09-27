@@ -341,8 +341,16 @@
         // errorCode 8 means there are projectLinks in the project with status "NotHandled"
         var highPriorityProjectErrors = projectErrors.filter((error) => error.errorCode === 8);
         if (highPriorityProjectErrors.length === 0) {
-          // enable recalculate button and set title text to empty string
-          formCommon.setDisabledAndTitleAttributesById("recalculate-button", false, "");
+          // if change table is open then button titles should tell user to close the change table
+          if ($('.change-table-frame').css('display') === "block") {
+            formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Etäisyyslukemia ei voida päivittää yhteenvetotaulukon ollessa auki");
+            formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Yhteenvetotaulukko on jo auki");
+          } else {
+            //if no high priority errors are present and change table is not open enable recalculate button and set title text to empty string
+            // set changes button title
+            formCommon.setDisabledAndTitleAttributesById("recalculate-button", false, "");
+            formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Projektin tulee läpäistä validoinnit");
+          }
         }
         _.defer(function () {
           applicationModel.selectLayer('roadAddressProject');
