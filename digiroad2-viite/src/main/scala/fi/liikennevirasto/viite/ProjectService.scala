@@ -22,7 +22,9 @@ import fi.liikennevirasto.viite.dao.ProjectState._
 import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Termination}
 import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectDAO, RoadwayDAO, _}
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink}
+import fi.liikennevirasto.viite.process.TrackSectionOrder.findChainEndpoints
 import fi.liikennevirasto.viite.process._
+//import fi.liikennevirasto.viite.process.strategy.RoadAddressSectionCalculatorContext.defaultSectionCalculatorStrategy.findStartingPoints
 import fi.liikennevirasto.viite.util.SplitOptions
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
@@ -506,25 +508,32 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           /* Set discontinuity to the last new link if not continuous.
            * Finds the link by assuming the end is not connected, i.e. before round about. */
           if (discontinuity != Discontinuity.Continuous) {
-            val existingLinks = projectLinkDAO.fetchByProjectRoadPart(newRoadNumber, newRoadPartNumber, projectId).filter(_.track == newLinks.head.track).map(pl => (pl.geometry.head, pl.geometry.last))
-            val prevRoadPartGeom = if (existingLinks.isEmpty && newRoadPartNumber > 1) {
+            val existingLinks         = projectLinkDAO.fetchByProjectRoadPart(newRoadNumber, newRoadPartNumber, projectId).filter(_.track == newLinks.head.track).map(pl => {
+              (pl.geometry.head, pl.geometry.last)
+            })
+            val prevRoadPartGeom      = if (existingLinks.isEmpty && newRoadPartNumber > 1) {
               val rw = roadwayDAO.fetchAllByRoadAndPart(newRoadNumber, newRoadPartNumber - 1, false, true).filter(_.track == newLinks.head.track)
               linearLocationDAO.fetchByRoadways(rw.map(_.roadwayNumber).toSet).sortBy(_.orderNumber).map(l => {
                 (l.getFirstPoint, l.getLastPoint)
               })
             } else Seq()
-            val existingLinksGeoms = if (existingLinks.nonEmpty) existingLinks else prevRoadPartGeom
+            val existingLinksGeoms    = if (existingLinks.nonEmpty) existingLinks else prevRoadPartGeom
             val onceConnectedNewLinks = TrackSectionOrder.findOnceConnectedLinks(newLinks)
-            val endLinkOfNewLinks = onceConnectedNewLinks.filterNot(onceConnected => existingLinksGeoms.exists(el => onceConnected._1.connected(el._1) || onceConnected._1.connected(el._2))).values.toList
+            val endLinkOfNewLinks     = onceConnectedNewLinks.filterNot(onceConnected => {
+              existingLinksGeoms.exists(el => {
+                onceConnected._1.connected(el._1) || onceConnected._1.connected(el._2)
+              })
+            }).values.toList
             if (endLinkOfNewLinks.distinct.size == 1) {
               newLinks.filterNot(_.equals(endLinkOfNewLinks.head)) :+ endLinkOfNewLinks.head.copy(discontinuity = discontinuity)
-            }
-            else {
+            } else if (endLinkOfNewLinks.distinct.size == 2 && existingLinksGeoms.isEmpty) {
+              val endPoints = findChainEndpoints(newLinks)
+              val endLink   = if (endPoints.head._1.distance2DTo(Point(0, 0)) > endPoints.last._1.distance2DTo(Point(0, 0))) endPoints.head._2 else endPoints.last._2
+              newLinks.filterNot(_.equals(endLink)) :+ endLink.copy(discontinuity = discontinuity)
+            } else {
               newLinks.init :+ newLinks.last.copy(discontinuity = discontinuity)
             }
-          }
-          else
-          newLinks
+          } else newLinks
         }
 
       projectLinkDAO.create(createLinks.map(_.copy(createdBy = Some(user))))
