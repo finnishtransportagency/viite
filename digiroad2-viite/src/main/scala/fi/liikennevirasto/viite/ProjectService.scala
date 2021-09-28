@@ -24,7 +24,6 @@ import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectDAO, RoadwayDAO, _}
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink}
 import fi.liikennevirasto.viite.process.TrackSectionOrder.findChainEndpoints
 import fi.liikennevirasto.viite.process._
-//import fi.liikennevirasto.viite.process.strategy.RoadAddressSectionCalculatorContext.defaultSectionCalculatorStrategy.findStartingPoints
 import fi.liikennevirasto.viite.util.SplitOptions
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat

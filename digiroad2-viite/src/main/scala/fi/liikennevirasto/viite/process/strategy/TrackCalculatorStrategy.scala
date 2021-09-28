@@ -158,7 +158,8 @@ trait TrackCalculatorStrategy {
                      s"projectlink.id: ${projectLinks.last.id} " +
                      s"startAddrMValue: ${projectLinks.last.startAddrMValue} " +
                      s"endAddressMValue: ${endAddressMValue}")
-        throw new RoadAddressException(UnsuccessfulRecalculationMessage)}
+        throw new RoadAddressException(UnsuccessfulRecalculationMessage)
+      }
       projectLinks.init :+ projectLinks.last.copy(endAddrMValue = endAddressMValue)
     }
     else
