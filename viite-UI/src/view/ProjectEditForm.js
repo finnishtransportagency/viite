@@ -174,7 +174,7 @@
       var administrativeClassCodeDropdown = $('#administrativeClassDropdown')[0];
       filled = filled && !_.isUndefined(administrativeClassCodeDropdown) && !_.isUndefined(administrativeClassCodeDropdown.value) && administrativeClassCodeDropdown.value !== '0'  && administrativeClassCodeDropdown.value !== '99';
 
-      if (filled) {
+      if (filled && !projectChangeTable.isChangeTableOpen()) {
         rootElement.find('.project-form button.update').prop("disabled", false);
       } else {
         rootElement.find('.project-form button.update').prop("disabled", true);
