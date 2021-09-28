@@ -49,6 +49,7 @@
       setDisabledAndTitleAttributesById("dropDown_0", true, 'Sulje yhteenvetotaulukko muokataksesi projektia');
       setDisabledAndTitleAttributesById("saveButton", true, 'Sulje yhteenvetotaulukko muokataksesi projektia');
       setDisabledAndTitleAttributesById("cancelButton", true, 'Sulje yhteenvetotaulukko muokataksesi projektia');
+      setDisabledAndTitleAttributesById("changeDirectionButton", true, 'Sulje yhteenvetotaulukko muokataksesi projektia');
     };
 
     // Enable form interactions (action dropdown, save and cancel buttons) and set titles to empty string
@@ -56,6 +57,7 @@
       setDisabledAndTitleAttributesById("dropDown_0", false, '');
       setDisabledAndTitleAttributesById("saveButton", false, '');
       setDisabledAndTitleAttributesById("cancelButton", false, '');
+      setDisabledAndTitleAttributesById("changeDirectionButton", false, '');
     };
 
     const newRoadAddressInfo = function (project, selected, links, road) {
@@ -213,7 +215,7 @@
       const reversedInGroup = _.uniq(_.map(selected, 'reversed'));
       const isPartialReversed = reversedInGroup.length > 1;
       return '<div hidden class="' + prefix + 'form-group changeDirectionDiv" style="margin-top:15px">' +
-        '<button class="' + prefix + 'form-group changeDirection btn btn-primary">Käännä tieosan kasvusuunta</button>' +
+        '<button id="changeDirectionButton" class="' + prefix + 'form-group changeDirection btn btn-primary">Käännä tieosan kasvusuunta</button>' +
         directionChangedInfo(selected, isPartialReversed) +
         '</div>';
     };
