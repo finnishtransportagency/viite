@@ -44,6 +44,22 @@
       $(`#${id}`).attr('title', titleText);
     };
 
+    // Disable form interactions (action dropdown, save and cancel buttons) and set titles
+    var disableFormInteractions = function () {
+      setDisabledAndTitleAttributesById("dropDown_0", true, 'Sulje yhteenvetotaulukko muokataksesi projektia');
+      setDisabledAndTitleAttributesById("saveButton", true, 'Sulje yhteenvetotaulukko muokataksesi projektia');
+      setDisabledAndTitleAttributesById("cancelButton", true, 'Sulje yhteenvetotaulukko muokataksesi projektia');
+      setDisabledAndTitleAttributesById("changeDirectionButton", true, 'Sulje yhteenvetotaulukko muokataksesi projektia');
+    };
+
+    // Enable form interactions (action dropdown, save and cancel buttons) and set titles to empty string
+    var enableFormInteractions = function () {
+      setDisabledAndTitleAttributesById("dropDown_0", false, '');
+      setDisabledAndTitleAttributesById("saveButton", false, '');
+      setDisabledAndTitleAttributesById("cancelButton", false, '');
+      setDisabledAndTitleAttributesById("changeDirectionButton", false, '');
+    };
+
     const newRoadAddressInfo = function (project, selected, links, road) {
       const roadNumber = road.roadNumber;
       const part = road.roadPartNumber;
@@ -199,7 +215,7 @@
       const reversedInGroup = _.uniq(_.map(selected, 'reversed'));
       const isPartialReversed = reversedInGroup.length > 1;
       return '<div hidden class="' + prefix + 'form-group changeDirectionDiv" style="margin-top:15px">' +
-        '<button class="' + prefix + 'form-group changeDirection btn btn-primary">Käännä tieosan kasvusuunta</button>' +
+        '<button id="changeDirectionButton" class="' + prefix + 'form-group changeDirection btn btn-primary">Käännä tieosan kasvusuunta</button>' +
         directionChangedInfo(selected, isPartialReversed) +
         '</div>';
     };
@@ -230,8 +246,8 @@
 
     const actionButtons = function (btnPrefix, notDisabled) {
       return '<div class="' + btnPrefix + 'form form-controls" id="actionButtons">' +
-        '<button class="update btn btn-save" ' + (notDisabled ? '' : 'disabled') + ' style="width:auto;">Tallenna</button>' +
-        '<button class="cancelLink btn btn-cancel">Peruuta</button>' +
+        '<button id="saveButton" class="update btn btn-save" ' + (notDisabled ? '' : 'disabled') + ' style="width:auto;">Tallenna</button>' +
+        '<button id="cancelButton" class="cancelLink btn btn-cancel">Peruuta</button>' +
         '</div>';
     };
 
@@ -379,7 +395,9 @@
       projectButtonsDisabled: projectButtonsDisabled,
       staticField: staticField,
       getProjectErrors: getProjectErrors,
-      setDisabledAndTitleAttributesById: setDisabledAndTitleAttributesById
+      setDisabledAndTitleAttributesById: setDisabledAndTitleAttributesById,
+      disableFormInteractions: disableFormInteractions,
+      enableFormInteractions: enableFormInteractions
     };
   };
 }(this));

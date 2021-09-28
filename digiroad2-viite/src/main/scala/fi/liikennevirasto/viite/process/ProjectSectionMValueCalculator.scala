@@ -59,7 +59,7 @@ object ProjectSectionMValueCalculator {
   def assignLinkValues(seq: Seq[ProjectLink], cps: Map[Long, UserDefinedCalibrationPoint], addrSt: Option[Double], addrEn: Option[Double], coEff: Double = 1.0): Seq[ProjectLink] = {
     if (seq.isEmpty) Seq() else {
       val seqOfEnds = TrackSectionOrder.findOnceConnectedLinks(seq).values.toSeq // Some complex cases may need simplifying to find ends correctly.
-      val endPoints = TrackSectionOrder.findChainEndpoints(seqOfEnds)
+      val endPoints = if (seq.exists(pl => pl.endAddrMValue == 0)) TrackSectionOrder.findChainEndpoints(seq) else  TrackSectionOrder.findChainEndpoints(seqOfEnds)
       val firstLastEndpoint = (endPoints.head._1, endPoints.last._1)
       val mappedEndpoints   = if (seqOfEnds.size == 1) {
         val firstEndPoint  = TrackSectionOrder.getUnConnectedPoint(seq)

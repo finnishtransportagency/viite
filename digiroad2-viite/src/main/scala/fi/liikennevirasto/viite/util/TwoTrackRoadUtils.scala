@@ -5,11 +5,7 @@ import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.NewIdValue
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{
-  JunctionPointCP,
-  NoCP,
-  UserDefinedCP
-}
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{JunctionPointCP, NoCP, UserDefinedCP}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.{RoadwayAddressMapper, TrackSectionOrder}
@@ -80,7 +76,7 @@ object TwoTrackRoadUtils {
               prevPl_othersidePls_udcps._3 ++ splitted_pls._2
             else prevPl_othersidePls_udcps._3
           )
-        } else if (splitted_pls._2.nonEmpty) { // Had same addresses
+        } else if (splitted_pls._2.nonEmpty) {
           (
             prevPl_othersidePls_udcps._1.init :+ splitted_pls._3.get._1 :+ currentPl,
             (prevPl_othersidePls_udcps._2.filterNot(rl => {

@@ -174,7 +174,7 @@
       var administrativeClassCodeDropdown = $('#administrativeClassDropdown')[0];
       filled = filled && !_.isUndefined(administrativeClassCodeDropdown) && !_.isUndefined(administrativeClassCodeDropdown.value) && administrativeClassCodeDropdown.value !== '0'  && administrativeClassCodeDropdown.value !== '99';
 
-      if (filled) {
+      if (filled && !projectChangeTable.isChangeTableOpen()) {
         rootElement.find('.project-form button.update').prop("disabled", false);
       } else {
         rootElement.find('.project-form button.update').prop("disabled", true);
@@ -269,6 +269,10 @@
         rootElement.html(selectedProjectLinkTemplate(currentProject.project, selectedProjectLink));
         formCommon.replaceAddressInfo(backend, selectedProjectLink, currentProject.project.id);
         updateForm();
+        // disable form interactions (action dropdown, save and cancel buttons) if change table is open
+        if (projectChangeTable.isChangeTableOpen()) {
+          formCommon.disableFormInteractions();
+        }
         _.defer(function () {
           $('#beginDistance').on("change", function (changedData) {
             eventbus.trigger('projectLink:editedBeginDistance', changedData.target.value);
