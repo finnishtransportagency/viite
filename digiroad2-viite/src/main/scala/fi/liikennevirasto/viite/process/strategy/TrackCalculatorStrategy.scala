@@ -6,7 +6,7 @@ import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous, MinorDiscontinuity, ParallelLink}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.process.{ProjectSectionMValueCalculator, TrackAddressingFactors}
+import fi.liikennevirasto.viite.process.{InvalidAddressDataException, ProjectSectionMValueCalculator, TrackAddressingFactors}
 import org.slf4j.LoggerFactory
 
 
@@ -154,7 +154,8 @@ trait TrackCalculatorStrategy {
     if (projectLinks.last.status != LinkStatus.NotHandled) {
       if (projectLinks.last.startAddrMValue >= endAddressMValue) {
         val logger = LoggerFactory.getLogger(getClass)
-        logger.warn("Averaged address caused negative length. ")
+        logger.error("Averaged address caused negative length.")
+        throw new InvalidAddressDataException("Averaged address caused negative length.")
       }
       projectLinks.init :+ projectLinks.last.copy(endAddrMValue = endAddressMValue)
     }
