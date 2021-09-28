@@ -20,7 +20,7 @@ sealed trait ProjectState {
 
 object ProjectState {
 
-  val values = Set(Closed, Incomplete, TRProcessing, Saved2TR,
+  val values = Set(Closed, Incomplete, Saved2TR,
     Deleted, ErrorInViite, InUpdateQueue, UpdatingToRoadNetwork, Unknown)
 
   // These states are final
@@ -32,7 +32,6 @@ object ProjectState {
 
   case object Closed extends ProjectState {def value = 0; def description = "Suljettu"}
   case object Incomplete extends ProjectState {def value = 1; def description = "Keskeneräinen"}
-  case object TRProcessing extends ProjectState {def value = 4; def description = "Tierekisterissä käsittelyssä"}
   case object Saved2TR extends ProjectState{def value = 5; def description = "Viety tierekisteriin"}
   case object Deleted extends ProjectState {def value = 7; def description = "Poistettu projekti"}
   case object ErrorInViite extends ProjectState {def value = 8; def description = "Virhe Viite-sovelluksessa"}

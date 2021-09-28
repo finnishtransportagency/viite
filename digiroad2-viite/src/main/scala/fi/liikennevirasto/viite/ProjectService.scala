@@ -1713,7 +1713,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       else {
         projectDAO.assignNewProjectTRId(projectId) //Generate new TR_ID // TODO TR id handling to be removed
 
-        setProjectStatus(projectId, TRProcessing, withSession = false) //TODO change to Processing
+        projectDAO.updateProjectStatus(projectId, InUpdateQueue)
         logger.info(s"Returning dummy 'Yesyes, TR part ok', as TR call removed")
         PublishResult(validationSuccess = true, sendSuccess = true, Some(""))
       }
@@ -1795,15 +1795,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     (roadLinks, complementaryLinks)
   }
 
-  def setProjectStatus(projectId: Long, newStatus: ProjectState, withSession: Boolean = true): Unit = {
-    if (withSession) {
-      withDynSession {
-        projectDAO.updateProjectStatus(projectId, newStatus)
-      }
-    } else {
-      projectDAO.updateProjectStatus(projectId, newStatus)
-    }
-  }
 
   /** Reserves a road network project for preserving the project information onto the road network.
     * Enclosing withDynTransaction ensures that the retrieved project cannot be given to multiple
@@ -1871,12 +1862,20 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           throw t  // Rethrow the unexpected error.
         }
       }
+      setProjectStatusWithDynSession(projectId, ProjectState.Closed)
     }
   }
 
   def getProjectState(projectId: Long): Option[ProjectState] = {
     withDynTransaction {
       projectDAO.fetchProjectStatus(projectId)
+    }
+  }
+  /** Calls projectDAO.updateProjectStatus within dynSession.
+    * To be called instead the direct dao function, when there is no session readily open.  */
+  def setProjectStatusWithDynSession(projectId: Long, newStatus: ProjectState): Unit = {
+    withDynSession {
+      projectDAO.updateProjectStatus(projectId, newStatus)
     }
   }
 
