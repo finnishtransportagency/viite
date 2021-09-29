@@ -409,10 +409,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             return Map("success" -> false,
               "errorMessage" -> (linkIds.toSet -- roadLinks.keySet).mkString(ErrorRoadLinkNotFound + " puuttuvat id:t ", ", ", ""))
           val project = fetchProjectById(projectId).getOrElse(throw new RuntimeException(s"Missing project $projectId"))
-          val existingProjectLinks = projectLinkDAO.fetchByProjectRoadPart(roadNumber, roadPartNumber, projectId)
-
           val projectLinks: Seq[ProjectLink] = linkIds.toSet.map { id: Long =>
-            newProjectLink(roadLinks(id), project, roadNumber, roadPartNumber, track, Continuous, administrativeClass, roadEly, roadName, reversed)
+            newProjectLink(roadLinks(id), project, roadNumber, roadPartNumber, track, Continuous, administrativeClass, roadEly, roadName)
           }.toSeq
 
           if (isConnectedtoOtherProjects(projectId, projectLinks)) {
