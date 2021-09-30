@@ -3,7 +3,6 @@ package fi.liikennevirasto.viite.dao
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.ProjectState.{Incomplete, Saved2TR}
 import org.joda.time.DateTime
 import org.slf4j.{Logger, LoggerFactory}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -20,23 +19,24 @@ sealed trait ProjectState {
 
 object ProjectState {
 
-  val values = Set(Closed, Incomplete, Saved2TR,
-    Deleted, ErrorInViite, InUpdateQueue, UpdatingToRoadNetwork, Unknown)
+  val values = Set(Incomplete, DeprecatedSaved2TR,
+    Deleted, ErrorInViite, InUpdateQueue, UpdatingToRoadNetwork, Accepted, Unknown)
 
   // These states are final
-  val nonActiveStates = Set(ProjectState.Closed.value, ProjectState.Saved2TR.value)
+  val finalProjectStates = Set(ProjectState.Accepted.value, ProjectState.DeprecatedSaved2TR.value)
 
   def apply(value: Long): ProjectState = {
-    values.find(_.value == value).getOrElse(Closed)
+    println(s"applying projectStatus $value => ${values.find(_.value == value).getOrElse(Unknown)}")
+    values.find(_.value == value).getOrElse(Unknown)
   }
 
-  case object Closed extends ProjectState {def value = 0; def description = "Suljettu"}
   case object Incomplete extends ProjectState {def value = 1; def description = "Keskeneräinen"}
-  case object Saved2TR extends ProjectState{def value = 5; def description = "Viety tierekisteriin"}
+  case object DeprecatedSaved2TR extends ProjectState{def value = 5; def description = "Hyväksytty (Viety Tierekisteriin)"} // Old deprecated Tierekisteri accepted state
   case object Deleted extends ProjectState {def value = 7; def description = "Poistettu projekti"}
   case object ErrorInViite extends ProjectState {def value = 8; def description = "Virhe Viite-sovelluksessa"}
   case object InUpdateQueue extends ProjectState {def value = 10; def description = "Odottaa tieverkolle päivittämistä"}
   case object UpdatingToRoadNetwork extends ProjectState {def value = 11; def description = "Päivitetään tieverkolle"}
+  case object Accepted extends ProjectState {def value = 12; def description = "Hyväksytty"}
   case object Unknown extends ProjectState {def value = 99; def description = "Tuntematon"}
 }
 
@@ -70,7 +70,7 @@ class ProjectDAO {
       s"""SELECT P.ID
              FROM PROJECT P
             JOIN PROJECT_LINK PL ON P.ID=PL.PROJECT_ID
-            WHERE P.STATE = ${Incomplete.value} AND PL.LINK_ID=$linkId"""
+            WHERE P.STATE = ${ProjectState.Incomplete.value} AND PL.LINK_ID=$linkId"""
     Q.queryNA[Long](query).list
   }
 

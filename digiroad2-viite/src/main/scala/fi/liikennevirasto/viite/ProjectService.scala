@@ -1039,7 +1039,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
     val fetchUnaddressedRoadLinkStartTime = System.currentTimeMillis()
     val (addresses, currentProjectLinks) = Await.result(fetchRoadAddressesByBoundingBoxF.zip(fetchProjectLinksF), Duration.Inf)
-    val projectLinks = if (projectState.isDefined && projectState.get == Saved2TR) {
+    val projectLinks = if (projectState.isDefined && finalProjectStates.contains(projectState.get.value)) {
       fetchProjectHistoryLinks(projectId)
     }
     else currentProjectLinks
@@ -1100,7 +1100,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
     val fetchProjectLinksF = Future(withDynSession {
       val projectState = projectDAO.fetchProjectStatus(projectId)
-      if (projectState.isDefined && projectState.get == Saved2TR)
+      if (projectState.isDefined && finalProjectStates.contains(projectState.get.value))
         projectLinkDAO.fetchProjectLinksHistory(projectId).groupBy(_.linkId)
       else
         projectLinkDAO.fetchProjectLinks(projectId).groupBy(_.linkId)
@@ -1634,9 +1634,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       throw new IllegalArgumentException("Project not found")
     val project = projectOpt.get
     project.status match {
-      case ProjectState.Saved2TR => (true, None)
-      case _ =>
-        setProjectDeltaToDB(projectId, projectOpt)
+      case ProjectState.UpdatingToRoadNetwork => { logger.error(s"recalculateChangeTable: UpdatingToRoadNetwork"); (true, None)}
+      case ProjectState.DeprecatedSaved2TR => { logger.error(s"recalculateChangeTable: UpdatingToRoadNetwork"); (true, None)}
+      case status => { logger.error(s"recalculateChangeTable: $status")
+        setProjectDeltaToDB(projectId, projectOpt);
+      }
     }
   }
 
@@ -1862,7 +1864,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           throw t  // Rethrow the unexpected error.
         }
       }
-      setProjectStatusWithDynSession(projectId, ProjectState.Closed)
+      setProjectStatusWithDynSession(projectId, ProjectState.Accepted)
     }
   }
 

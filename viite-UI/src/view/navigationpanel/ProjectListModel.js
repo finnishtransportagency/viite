@@ -164,7 +164,7 @@
 
       var createProjectList = function (projects) {
         var unfinishedProjects = _.filter(projects, function (proj) {
-          if (proj.statusCode === projectStatus.Saved2TR.value) {
+          if (proj.statusCode === projectStatus.Accepted.value || proj.statusCode === projectStatus.DeprecatedSaved2TR.value) {
             var hoursInDay = 24;
             var millisecondsToHours = 1000 * 60 * 60;
             //check if show all TR projects checkbox is checked or the project has been sent to TR less than two days ago

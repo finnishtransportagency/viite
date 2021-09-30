@@ -76,13 +76,13 @@
   };
 
   root.ProjectStatus = {
-    Closed: {value: 0, description: "Suljettu"},
     Incomplete: {value: 1, description: "Keskeneräinen"},
-    Saved2TR: {value: 5, description: "Viety tierekisteriin"},
+    DeprecatedSaved2TR: {value: 5, description: "Hyväksytty (Viety Tierekisteriin)"}, // Old deprecated Tierekisteri accepted state
     Deleted: {value: 7, description: "Poistettu projekti"},
     ErrorInViite: {value: 8, description: "Virhe Viite-sovelluksessa"},
     InUpdateQueue: {value: 10, description: "Odottaa tieverkolle päivittämistä"},
     UpdatingToRoadNetwork: {value: 11, description: "Päivitetään tieverkolle"},
+    Accepted: {value: 12, description: "Hyväksytty"},
     Unknown: {value: 99, description: "Tuntematon"}
   };
 
