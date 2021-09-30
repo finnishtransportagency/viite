@@ -1,6 +1,7 @@
 package fi.liikennevirasto.viite.process
 
 
+import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.NewIdValue
@@ -14,18 +15,23 @@ object RoadwayFiller {
   val projectDAO = new ProjectDAO
 
   def applyRoadwayChanges(rwChanges: Seq[RwChanges]): Seq[Seq[(Seq[Roadway], Seq[LinearLocation], Seq[ProjectLink])]] = {
-    rwChanges.map(changes => {
-      val currentRoadway                               = changes.currentRoadway
-      val historyRoadways                              = changes.historyRoadways
-      val projectLinksInRoadway                        = changes.projectLinks
-      val (terminatedProjectLinks, others)             = projectLinksInRoadway.partition(_.status == LinkStatus.Terminated)
-      val discontinuityOrElyChanged                    = if (others.nonEmpty) currentRoadway.discontinuity != others.last.discontinuity || currentRoadway.ely != others.head.ely else false
-      val lengthChanged                                = if (others.nonEmpty) (others.last.endAddrMValue - others.head.startAddrMValue) != (currentRoadway.endAddrMValue - currentRoadway.startAddrMValue) else false
-      val project = projectDAO.fetchById(projectLinksInRoadway.head.projectId)
+    def discontinuityChanged(classed: ((AdministrativeClass, Long), Seq[ProjectLink])): Boolean = {
+      val maxLink = classed._2.maxBy(_.endAddrMValue)
+      maxLink.discontinuity != maxLink.originalDiscontinuity
+    }
 
+    rwChanges.map(changes => {
+      val currentRoadway                   = changes.currentRoadway
+      val historyRoadways                  = changes.historyRoadways
+      val projectLinksInRoadway            = changes.projectLinks
+      val (terminatedProjectLinks, others) = projectLinksInRoadway.partition(_.status == LinkStatus.Terminated)
+      val elyChanged                       = if (others.nonEmpty) currentRoadway.ely != others.head.ely else false
+      val addressChanged                   = if (others.nonEmpty) (others.last.endAddrMValue != currentRoadway.endAddrMValue || (others.head.startAddrMValue) != currentRoadway.startAddrMValue) else false
+      val project                          = projectDAO.fetchById(projectLinksInRoadway.head.projectId)
       val adminClassed = others.groupBy(pl => (pl.administrativeClass, pl.roadwayNumber))
+
       val roadways = adminClassed.map(classed => if (classed._2.exists(pl => {
-         pl.reversed}) || discontinuityOrElyChanged || classed._1._1 != currentRoadway.administrativeClass || lengthChanged) {
+         pl.reversed}) || discontinuityChanged(classed) || elyChanged || classed._1._1 != currentRoadway.administrativeClass || addressChanged) {
         val rwGroupedProjectLinks                      = classed._2.groupBy(_.roadwayNumber)
         val roadwaysWithLinearlocationsAndProjectLinks = rwGroupedProjectLinks.values.flatMap(pls => {
           val rws                        = generateNewRoadwaysWithHistory2(pls, currentRoadway, project.get.startDate, pls.head.roadwayNumber)
