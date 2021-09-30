@@ -409,11 +409,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             return Map("success" -> false,
               "errorMessage" -> (linkIds.toSet -- roadLinks.keySet).mkString(ErrorRoadLinkNotFound + " puuttuvat id:t ", ", ", ""))
           val project = fetchProjectById(projectId).getOrElse(throw new RuntimeException(s"Missing project $projectId"))
-          val existingProjectLinks = projectLinkDAO.fetchByProjectRoadPart(roadNumber, roadPartNumber, projectId)
-          val reversed = if (existingProjectLinks.nonEmpty) existingProjectLinks.forall(_.reversed) else false
-
           val projectLinks: Seq[ProjectLink] = linkIds.toSet.map { id: Long =>
-            newProjectLink(roadLinks(id), project, roadNumber, roadPartNumber, track, Continuous, administrativeClass, roadEly, roadName, reversed)
+            newProjectLink(roadLinks(id), project, roadNumber, roadPartNumber, track, Continuous, administrativeClass, roadEly, roadName)
           }.toSeq
 
           if (isConnectedtoOtherProjects(projectId, projectLinks)) {
@@ -1690,8 +1687,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
    ProjectLink(NewIdValue, ra.roadNumber, ra.roadPartNumber, ra.track, ra.discontinuity, ra.startAddrMValue, ra.endAddrMValue, ra.startAddrMValue, ra.endAddrMValue, ra.startDate, ra.endDate, Some(project.modifiedBy), ra.linkId, ra.startMValue, ra.endMValue, ra.sideCode, ra.calibrationPointTypes, (ra.startCalibrationPointType, ra.endCalibrationPointType), geometry, project.id, LinkStatus.NotHandled, ra.administrativeClass, ra.linkGeomSource, GeometryUtils.geometryLength(geometry), ra.id, ra.linearLocationId, newEly, ra.reversed, None, ra.adjustedTimestamp, roadAddressLength = Some(ra.endAddrMValue - ra.startAddrMValue))
   }
 
-  private def newProjectLink(rl: RoadLinkLike, project: Project, roadNumber: Long, roadPartNumber: Long, trackCode: Track, discontinuity: Discontinuity, administrativeClass: AdministrativeClass, ely: Long, roadName: String = "", reversed: Boolean = false): ProjectLink = {
-    ProjectLink(NewIdValue, roadNumber, roadPartNumber, trackCode, discontinuity, 0L, 0L, 0L, 0L, Some(project.startDate), None, Some(project.modifiedBy), rl.linkId, 0.0, rl.length, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), rl.geometry, project.id, LinkStatus.New, administrativeClass, rl.linkSource, rl.length, 0L, 0L, ely, reversed, None, rl.vvhTimeStamp, roadName = Some(roadName))
+  private def newProjectLink(rl: RoadLinkLike, project: Project, roadNumber: Long, roadPartNumber: Long, trackCode: Track, discontinuity: Discontinuity, administrativeClass: AdministrativeClass, ely: Long, roadName: String = "") = {
+    ProjectLink(NewIdValue, roadNumber, roadPartNumber, trackCode, discontinuity, 0L, 0L, 0L, 0L, Some(project.startDate), None, Some(project.modifiedBy), rl.linkId, 0.0, rl.length, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), rl.geometry, project.id, LinkStatus.New, administrativeClass, rl.linkSource, rl.length, 0L, 0L, ely, false, None, rl.vvhTimeStamp, roadName = Some(roadName))
   }
 
   private def newProjectLink(rl: RoadLinkLike, project: Project, splitOptions: SplitOptions): ProjectLink = {
