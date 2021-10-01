@@ -67,19 +67,11 @@ object Digiroad2Context {
     * to the road network (that is, to the Viite DB).*/
   system.scheduler.schedule(FiniteDuration(2, TimeUnit.MINUTES), FiniteDuration(1, TimeUnit.MINUTES)) { // first query after 2 minutes, then once per minute
     try {
-      projectService.preserveSingleProjectInUpdateQueue()
+      projectService.atomicallyPreserveSingleProjectInUpdateQueue()
     } catch {
       case  NonFatal(ex) =>
         logger.error("Exception at preserving a project :" + ex.getMessage)
         System.err.println("Exception at preserving a project: " + ex.getMessage)
-    }
-  }
-
-  system.scheduler.schedule(FiniteDuration(5, TimeUnit.MINUTES), FiniteDuration(5, TimeUnit.MINUTES)) { // first query after 5 minutes, then once per 5 minute
-    try {
-      projectService.sendProjectsInWaiting()
-    } catch {
-      case ex: Exception => System.err.println("Exception when sending projects to TR: " + ex.getMessage)
     }
   }
 

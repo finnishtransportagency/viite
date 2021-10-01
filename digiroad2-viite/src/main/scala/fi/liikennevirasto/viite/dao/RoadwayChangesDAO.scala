@@ -213,6 +213,7 @@ class RoadwayChangesDAO {
     sqlu"""DELETE FROM ROADWAY_CHANGES WHERE project_id = $projectId""".execute
   }
 
+  /** @return false, if project has no reservedParts, and no formedParts. True else. */
   def insertDeltaToRoadChangeTable(projectId: Long, project: Option[Project]): (Boolean, Option[String]) = {
     def addToBatch(roadwaySection: RoadwaySection, addressChangeType: AddressChangeType,
                    roadwayChangePS: PreparedStatement, roadWayChangesLinkPS: PreparedStatement): Unit = {
