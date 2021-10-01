@@ -19,19 +19,16 @@ sealed trait ProjectState {
 
 object ProjectState {
 
-  val values = Set(Incomplete, DeprecatedSaved2TR,
-    Deleted, ErrorInViite, InUpdateQueue, UpdatingToRoadNetwork, Accepted, Unknown)
+  val values = Set(Incomplete, Deleted, ErrorInViite, InUpdateQueue, UpdatingToRoadNetwork, Accepted, Unknown)
 
   // These states are final
-  val finalProjectStates = Set(ProjectState.Accepted.value, ProjectState.DeprecatedSaved2TR.value)
+  val finalProjectStates = Set(ProjectState.Accepted.value)
 
   def apply(value: Long): ProjectState = {
-    println(s"applying projectStatus $value => ${values.find(_.value == value).getOrElse(Unknown)}")
     values.find(_.value == value).getOrElse(Unknown)
   }
 
   case object Incomplete extends ProjectState {def value = 1; def description = "Keskeneräinen"}
-  case object DeprecatedSaved2TR extends ProjectState{def value = 5; def description = "Hyväksytty (Viety Tierekisteriin)"} // Old deprecated Tierekisteri accepted state
   case object Deleted extends ProjectState {def value = 7; def description = "Poistettu projekti"}
   case object ErrorInViite extends ProjectState {def value = 8; def description = "Virhe Viite-sovelluksessa"}
   case object InUpdateQueue extends ProjectState {def value = 10; def description = "Odottaa tieverkolle päivittämistä"}

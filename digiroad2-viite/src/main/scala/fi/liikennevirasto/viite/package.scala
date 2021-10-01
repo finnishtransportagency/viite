@@ -211,7 +211,6 @@ package object viite {
     "| Status Code |       Project Status       |              Description              |\n" +
     "|:-----------:|:--------------------------:|:-------------------------------------:|\n" +
     "|      1      |         Incomplete         |             Keskeneräinen             |\n" +
-    "|      5      |     DeprecatedSaved2TR     |   Hyväksytty (Viety Tierekisteriin)   |\n" +
     "|      7      |           Deleted          |           Poistettu projekti          |\n" +
     "|      8      |        ErrorInViite        |       Virhe Viite-sovelluksessa       |\n" +
     "|      10     |        InUpdateQueue       |   Odottaa tieverkolle päivittämistä   |\n" +

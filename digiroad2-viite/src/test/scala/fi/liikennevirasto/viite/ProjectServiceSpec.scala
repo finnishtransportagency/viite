@@ -553,10 +553,10 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       runWithRollback {
         projectDAO.create(rap)
         projectDAO.assignNewProjectTRId(projectId)
-        projectService.preserveSingleProjectInUpdateQueue()
+        projectService.atomicallyPreserveSingleProjectInUpdateQueue()
         val project = projectService.fetchProjectById(projectId).head
         project.statusInfo.getOrElse("").length should be(0)
-        projectService.preserveSingleProjectInUpdateQueue()
+        projectService.atomicallyPreserveSingleProjectInUpdateQueue()
       }
     }
   }
@@ -569,7 +569,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val rap = Project(projectId, ProjectState.apply(ProjectState.InUpdateQueue.value), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], Seq(), None)
       runWithRollback {
         projectDAO.create(rap)
-        projectService.preserveSingleProjectInUpdateQueue()
+        projectService.atomicallyPreserveSingleProjectInUpdateQueue()
         val project = projectService.fetchProjectById(projectId).head
         project.statusInfo.getOrElse("") contains "Failed to find TR-ID" should be(true)
       }

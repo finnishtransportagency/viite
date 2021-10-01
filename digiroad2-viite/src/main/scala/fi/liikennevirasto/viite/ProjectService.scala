@@ -1628,16 +1628,21 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }.toSeq
   }
 
+  /** @throws IllegalArgumentException when the given project is not found. */
   private def recalculateChangeTable(projectId: Long): (Boolean, Option[String]) = {
     val projectOpt = fetchProjectById(projectId)
     if (projectOpt.isEmpty)
       throw new IllegalArgumentException("Project not found")
     val project = projectOpt.get
     project.status match {
-      case ProjectState.UpdatingToRoadNetwork => { logger.error(s"recalculateChangeTable: UpdatingToRoadNetwork"); (true, None)}
-      case ProjectState.DeprecatedSaved2TR => { logger.error(s"recalculateChangeTable: UpdatingToRoadNetwork"); (true, None)}
-      case status => { logger.error(s"recalculateChangeTable: $status")
-        setProjectDeltaToDB(projectId, projectOpt);
+
+      // For final ProjectState UpdatingToRoadNetwork we do nothing, but return "everything's fine" (...?)
+      case ProjectState.UpdatingToRoadNetwork => (true, None)
+
+      // For other than final states, proceed to recalculation
+      case _ => {
+        roadwayChangesDAO.clearRoadChangeTable(projectId)
+        roadwayChangesDAO.insertDeltaToRoadChangeTable(projectId, projectOpt)
       }
     }
   }
@@ -1833,17 +1838,18 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * if any such project is waiting.
     * @throws SQLException if there is an error with preserving the reserved project to the db.
     * @throws Exception if an unexpected exception occurred. */
-  def preserveSingleProjectInUpdateQueue(): Unit = {
+  def atomicallyPreserveSingleProjectInUpdateQueue(): Unit = {
     val noSuchProjectDummy = -1.0.toLong
 
     // get a project to update to db, if any
     val (gotProjectToUpdate: Boolean, projectId: Long) = atomicallyReserveProjectInUpdateQueue
 
-    // try preserving the project to the db, if got one
+    // try preserving the project to the db, in there was one to be updated
+    withDynTransaction {
     if(gotProjectToUpdate) {
       try {
         time(logger, s"Preserve the project $projectId to the road network") {
-          atomicallyUpdateProject(projectId)
+          preserveProjectToDB(projectId)
         }
       } catch {
         // in case of an expected error, set project status to ProjectState.ErrorInViite
@@ -1864,20 +1870,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           throw t  // Rethrow the unexpected error.
         }
       }
-      setProjectStatusWithDynSession(projectId, ProjectState.Accepted)
+      projectDAO.updateProjectStatus(projectId, ProjectState.Accepted)
+    }
     }
   }
 
   def getProjectState(projectId: Long): Option[ProjectState] = {
     withDynTransaction {
       projectDAO.fetchProjectStatus(projectId)
-    }
-  }
-  /** Calls projectDAO.updateProjectStatus within dynSession.
-    * To be called instead the direct dao function, when there is no session readily open.  */
-  def setProjectStatusWithDynSession(projectId: Long, newStatus: ProjectState): Unit = {
-    withDynSession {
-      projectDAO.updateProjectStatus(projectId, newStatus)
     }
   }
 
@@ -1887,8 +1887,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @param projectID : Long - The project Id
     * @return
     */
-  private def atomicallyUpdateProject(projectID: Long): Unit = {
-    withDynTransaction {
+  private def preserveProjectToDB(projectID: Long): Unit = {
       projectDAO.fetchTRIdByProjectId(projectID) match {
         case Some(trId) =>
           val roadNumbers: Option[Set[Long]] = projectDAO.fetchProjectStatus(projectID).map { currentState =>
@@ -1918,7 +1917,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           logger.info(s"During status checking VIITE wasn't able to find TR_ID to project $projectID")
           appendStatusInfo(fetchProjectById(projectID).head, " Failed to find TR-ID ")
       }
-    }
   }
 
   //TODO: Currently only used on the Project Service Spec, can it be removed?

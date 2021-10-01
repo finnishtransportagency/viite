@@ -77,7 +77,6 @@
 
   root.ProjectStatus = {
     Incomplete: {value: 1, description: "Keskeneräinen"},
-    DeprecatedSaved2TR: {value: 5, description: "Hyväksytty (Viety Tierekisteriin)"}, // Old deprecated Tierekisteri accepted state
     Deleted: {value: 7, description: "Poistettu projekti"},
     ErrorInViite: {value: 8, description: "Virhe Viite-sovelluksessa"},
     InUpdateQueue: {value: 10, description: "Odottaa tieverkolle päivittämistä"},
