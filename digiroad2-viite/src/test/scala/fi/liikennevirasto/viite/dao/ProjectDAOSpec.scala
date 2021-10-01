@@ -202,27 +202,6 @@ class ProjectDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test fetchProjectIdsWithWaitingTRStatus When project is sent to TR Then projects waiting TR response should be increased") {
-    val reservedPart = ProjectReservedPart(5: Long, 203: Long, 203: Long, Some(6L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
-    runWithRollback {
-      val waitingCountP = projectDAO.fetchProjectIdsWithWaitingTRStatus.length
-      val id = Sequences.nextViiteProjectId
-      val rap =  dummyProject(id, ProjectState.Sent2TR, List(reservedPart), None)
-        projectDAO.create(rap)
-      val waitingCountNow = projectDAO.fetchProjectIdsWithWaitingTRStatus.length
-      waitingCountNow - waitingCountP should be(1)
-    }
-  }
-
-  test("Test updateProjectStatus When Update project status Then project status should be updated") {
-    runWithRollback {
-      val id = Sequences.nextViiteProjectId
-      val rap =  dummyProject(id, ProjectState.Sent2TR, List(), None)
-      projectDAO.create(rap)
-      projectDAO.updateProjectStatus(id, ProjectState.Saved2TR)
-      projectDAO.fetchProjectStatus(id) should be(Some(ProjectState.Saved2TR))
-    }
-  }
 
   test("Test update When Update project info Then should update the project infos such as project name, additional info, startDate") {
     val reservedPart = ProjectReservedPart(5: Long, 203: Long, 203: Long, Some(6L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
@@ -264,14 +243,35 @@ class ProjectDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test fetchProjectIdsWithSendingToTRStatus When there is one project in SendingToTR status Then should return that one project") {
+  test("Test fetchProjectIdsWithToBePreservedStatus " +
+    "When project is accepted, but still waiting to be preserved to Viite DB " +
+    "Then projects waiting TR response should be increased") {
+    val reservedPart = ProjectReservedPart(5: Long, 203: Long, 203: Long, Some(6L), Some(Discontinuity.apply("jatkuva")),
+                                           Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
     runWithRollback {
-      val waitingCountP = projectDAO.fetchProjectIdsWithSendingToTRStatus.length
+      val startWaitingCount = projectDAO.fetchProjectIdsWithToBePreservedStatus.length
+
       val id = Sequences.nextViiteProjectId
-      val rap = dummyProject(id, ProjectState.SendingToTR, List.empty[ProjectReservedPart], None)
-      projectDAO.create(rap)
-      val waitingCountNow = projectDAO.fetchProjectIdsWithSendingToTRStatus.length
-      waitingCountNow - waitingCountP should be(1)
+      val project1 =  dummyProject(id, ProjectState.InUpdateQueue, List(reservedPart), None)
+      projectDAO.create(project1) // Project waiting to be picked for preserving
+      val id2 = Sequences.nextViiteProjectId
+      val project2 =  dummyProject(id2, ProjectState.UpdatingToRoadNetwork, List(reservedPart), None)
+      projectDAO.create(project2) // Project currently being preserved
+
+      val waitingCountNow = projectDAO.fetchProjectIdsWithToBePreservedStatus.length
+      waitingCountNow - startWaitingCount should be(2) // There should be the waiting, and the currently preserved one
+    }
+  }
+
+  test("Test updateProjectStatus " +
+    "When given a status to update to " +
+    "Then project status should be updated to the given status") {
+    runWithRollback {
+      val id = Sequences.nextViiteProjectId
+      val project = dummyProject(id, ProjectState.InUpdateQueue, List(), None)
+      projectDAO.create(project)
+      projectDAO.updateProjectStatus(id, ProjectState.UpdatingToRoadNetwork)
+      projectDAO.fetchProjectStatus(id) should be(Some(ProjectState.UpdatingToRoadNetwork))
     }
   }
 }

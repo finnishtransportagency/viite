@@ -164,7 +164,7 @@
 
       var createProjectList = function (projects) {
         var unfinishedProjects = _.filter(projects, function (proj) {
-          if (proj.statusCode === projectStatus.Saved2TR.value) {
+          if (proj.statusCode === projectStatus.Accepted.value) {
             var hoursInDay = 24;
             var millisecondsToHours = 1000 * 60 * 60;
             //check if show all TR projects checkbox is checked or the project has been sent to TR less than two days ago
@@ -219,8 +219,9 @@
           $('#project-list').html(html);
           $('[id*="open-project"]').click(function (event) {
             var button = $(this);
-            if (parseInt(button.attr("data-projectStatus")) === projectStatus.SendingToTR.value) {
-              new GenericConfirmPopup("Projektin muokkaaminen ei ole mahdollista, koska sitä lähetetään Tierekisteriin. Haluatko avata sen?", {
+            if (parseInt(button.attr("data-projectStatus")) === projectStatus.InUpdateQueue.value
+              || parseInt(button.attr("data-projectStatus")) === projectStatus.UpdatingToRoadNetwork.value) {
+              new GenericConfirmPopup("Projektin muokkaaminen ei ole mahdollista, koska sitä päivitetään tievetkolle. Haluatko avata sen?", {
                 successCallback: function () {
                   triggerOpening(event, button);
                 },
