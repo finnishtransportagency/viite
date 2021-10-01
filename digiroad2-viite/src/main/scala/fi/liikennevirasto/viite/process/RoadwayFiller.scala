@@ -8,16 +8,25 @@ import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent}
 import fi.liikennevirasto.viite.dao._
 import org.joda.time.DateTime
+import org.slf4j.LoggerFactory
 
 object RoadwayFiller {
   case class RwChanges(currentRoadway: Roadway, historyRoadways: Seq[Roadway], projectLinks: Seq[ProjectLink])
 
   val projectDAO = new ProjectDAO
+  val logger = LoggerFactory.getLogger(getClass)
 
   def applyRoadwayChanges(rwChanges: Seq[RwChanges]): Seq[Seq[(Seq[Roadway], Seq[LinearLocation], Seq[ProjectLink])]] = {
     def discontinuityChanged(classed: ((AdministrativeClass, Long), Seq[ProjectLink])): Boolean = {
       val maxLink = classed._2.maxBy(_.endAddrMValue)
       maxLink.discontinuity != maxLink.originalDiscontinuity
+    }
+
+    def trackChanged(pls: Seq[ProjectLink], currentRoadway: Roadway): Boolean = {
+      val track = pls.groupBy(_.track)
+      if (track.keySet.size != 1)
+        logger.error("Multiple tracks on roadway.")
+      track.keySet.head != currentRoadway.track
     }
 
     rwChanges.map(changes => {
@@ -28,10 +37,12 @@ object RoadwayFiller {
       val elyChanged                       = if (others.nonEmpty) currentRoadway.ely != others.head.ely else false
       val addressChanged                   = if (others.nonEmpty) (others.last.endAddrMValue != currentRoadway.endAddrMValue || (others.head.startAddrMValue) != currentRoadway.startAddrMValue) else false
       val project                          = projectDAO.fetchById(projectLinksInRoadway.head.projectId)
-      val adminClassed = others.groupBy(pl => (pl.administrativeClass, pl.roadwayNumber))
+      val adminClassed                     = others.groupBy(pl => {
+        (pl.administrativeClass, pl.roadwayNumber)
+      })
 
       val roadways = adminClassed.map(classed => if (classed._2.exists(pl => {
-         pl.reversed}) || discontinuityChanged(classed) || elyChanged || classed._1._1 != currentRoadway.administrativeClass || addressChanged) {
+         pl.reversed}) || trackChanged(classed._2, currentRoadway) || discontinuityChanged(classed) || elyChanged || classed._1._1 != currentRoadway.administrativeClass || addressChanged) {
         val rwGroupedProjectLinks                      = classed._2.groupBy(_.roadwayNumber)
         val roadwaysWithLinearlocationsAndProjectLinks = rwGroupedProjectLinks.values.flatMap(pls => {
           val rws                        = generateNewRoadwaysWithHistory2(pls, currentRoadway, project.get.startDate, pls.head.roadwayNumber)
