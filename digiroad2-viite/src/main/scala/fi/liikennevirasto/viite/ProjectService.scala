@@ -1039,7 +1039,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
     val fetchUnaddressedRoadLinkStartTime = System.currentTimeMillis()
     val (addresses, currentProjectLinks) = Await.result(fetchRoadAddressesByBoundingBoxF.zip(fetchProjectLinksF), Duration.Inf)
-    val projectLinks = if (projectState.isDefined && projectState.get == Saved2TR) {
+    val projectLinks = if (projectState.isDefined && finalProjectStates.contains(projectState.get.value)) {
       fetchProjectHistoryLinks(projectId)
     }
     else currentProjectLinks
@@ -1100,7 +1100,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
     val fetchProjectLinksF = Future(withDynSession {
       val projectState = projectDAO.fetchProjectStatus(projectId)
-      if (projectState.isDefined && projectState.get == Saved2TR)
+      if (projectState.isDefined && finalProjectStates.contains(projectState.get.value))
         projectLinkDAO.fetchProjectLinksHistory(projectId).groupBy(_.linkId)
       else
         projectLinkDAO.fetchProjectLinks(projectId).groupBy(_.linkId)
@@ -1628,15 +1628,22 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }.toSeq
   }
 
+  /** @throws IllegalArgumentException when the given project is not found. */
   private def recalculateChangeTable(projectId: Long): (Boolean, Option[String]) = {
     val projectOpt = fetchProjectById(projectId)
     if (projectOpt.isEmpty)
       throw new IllegalArgumentException("Project not found")
     val project = projectOpt.get
     project.status match {
-      case ProjectState.Saved2TR => (true, None)
-      case _ =>
-        setProjectDeltaToDB(projectId, projectOpt)
+
+      // For final ProjectState UpdatingToRoadNetwork we do nothing, but return "everything's fine" (...?)
+      case ProjectState.UpdatingToRoadNetwork => (true, None)
+
+      // For other than final states, proceed to recalculation
+      case _ => {
+        roadwayChangesDAO.clearRoadChangeTable(projectId)
+        roadwayChangesDAO.insertDeltaToRoadChangeTable(projectId, projectOpt)
+      }
     }
   }
 
@@ -1713,7 +1720,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       else {
         projectDAO.assignNewProjectTRId(projectId) //Generate new TR_ID // TODO TR id handling to be removed
 
-        setProjectStatus(projectId, TRProcessing, withSession = false) //TODO change to Processing
+        projectDAO.updateProjectStatus(projectId, InUpdateQueue)
         logger.info(s"Returning dummy 'Yesyes, TR part ok', as TR call removed")
         PublishResult(validationSuccess = true, sendSuccess = true, Some(""))
       }
@@ -1795,15 +1802,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     (roadLinks, complementaryLinks)
   }
 
-  def setProjectStatus(projectId: Long, newStatus: ProjectState, withSession: Boolean = true): Unit = {
-    if (withSession) {
-      withDynSession {
-        projectDAO.updateProjectStatus(projectId, newStatus)
-      }
-    } else {
-      projectDAO.updateProjectStatus(projectId, newStatus)
-    }
-  }
 
   /** Reserves a road network project for preserving the project information onto the road network.
     * Enclosing withDynTransaction ensures that the retrieved project cannot be given to multiple
@@ -1840,17 +1838,18 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * if any such project is waiting.
     * @throws SQLException if there is an error with preserving the reserved project to the db.
     * @throws Exception if an unexpected exception occurred. */
-  def preserveSingleProjectInUpdateQueue(): Unit = {
+  def atomicallyPreserveSingleProjectInUpdateQueue(): Unit = {
     val noSuchProjectDummy = -1.0.toLong
 
     // get a project to update to db, if any
     val (gotProjectToUpdate: Boolean, projectId: Long) = atomicallyReserveProjectInUpdateQueue
 
-    // try preserving the project to the db, if got one
+    // try preserving the project to the db, in there was one to be updated
+    withDynTransaction {
     if(gotProjectToUpdate) {
       try {
         time(logger, s"Preserve the project $projectId to the road network") {
-          atomicallyUpdateProject(projectId)
+          preserveProjectToDB(projectId)
         }
       } catch {
         // in case of an expected error, set project status to ProjectState.ErrorInViite
@@ -1871,6 +1870,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           throw t  // Rethrow the unexpected error.
         }
       }
+      projectDAO.updateProjectStatus(projectId, ProjectState.Accepted)
+    }
     }
   }
 
@@ -1886,8 +1887,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @param projectID : Long - The project Id
     * @return
     */
-  private def atomicallyUpdateProject(projectID: Long): Unit = {
-    withDynTransaction {
+  private def preserveProjectToDB(projectID: Long): Unit = {
       projectDAO.fetchTRIdByProjectId(projectID) match {
         case Some(trId) =>
           val roadNumbers: Option[Set[Long]] = projectDAO.fetchProjectStatus(projectID).map { currentState =>
@@ -1917,7 +1917,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           logger.info(s"During status checking VIITE wasn't able to find TR_ID to project $projectID")
           appendStatusInfo(fetchProjectById(projectID).head, " Failed to find TR-ID ")
       }
-    }
   }
 
   //TODO: Currently only used on the Project Service Spec, can it be removed?
@@ -2287,23 +2286,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   def validateLinkTrack(track: Int): Boolean = {
     Track.values.filterNot(_.value == Track.Unknown.value).exists(_.value == track)
-  }
-
-  def sendProjectsInWaiting(): Unit = {
-    logger.info(s"Finding projects whose status is SendingToTRStatus/ ${SendingToTR.description}")
-    val listOfProjects = getProjectsWaitingForTR
-    logger.info(s"Found ${listOfProjects.size} projects")
-    for (projectId <- listOfProjects) {
-      logger.info(s"Trying to publish project: $projectId")
-      publishProject(projectId)
-    }
-
-  }
-
-  private def getProjectsWaitingForTR: Seq[Long] = {
-    withDynSession {
-      projectDAO.fetchProjectIdsWithSendingToTRStatus
-    }
   }
 
   def getRoadAddressesFromFormedRoadPart(roadNumber: Long, roadPartNumber: Long, projectId: Long) = {

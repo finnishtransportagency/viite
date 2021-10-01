@@ -210,16 +210,12 @@ package object viite {
   val projectStatusStructure = "" +
     "| Status Code |       Project Status       |              Description              |\n" +
     "|:-----------:|:--------------------------:|:-------------------------------------:|\n" +
-    "|      0      |           Closed           |                Suljettu               |\n" +
     "|      1      |         Incomplete         |             Keskeneräinen             |\n" +
-    "|      2      |           Sent2TR          |        Lähetetty tierekisteriin       |\n" +
-    "|      4      |        TRProcessing        |      Tierekisterissä käsittelyssä     |\n" +
-    "|      5      |          Saved2TR          |          Viety tierekisteriin         |\n" +
     "|      7      |           Deleted          |           Poistettu projekti          |\n" +
     "|      8      |        ErrorInViite        |       Virhe Viite-sovelluksessa       |\n" +
-    "|      9      |         SendingToTR        |        Lähettää Tierekisteriin        |\n" +
     "|      10     |        InUpdateQueue       |   Odottaa tieverkolle päivittämistä   |\n" +
     "|      11     |    UpdatingToRoadNetwork   |        Päivitetään tieverkolle        |\n" +
+    "|      12     |          Accepted          |               Hyväksytty              |\n" +
     "|      99     |           Unknown          |               Tuntematon              |"
 
 

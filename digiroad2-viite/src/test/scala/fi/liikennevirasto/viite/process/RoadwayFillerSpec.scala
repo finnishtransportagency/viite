@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.Dummies._
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
-import fi.liikennevirasto.viite.dao.ProjectState.Saved2TR
+import fi.liikennevirasto.viite.dao.ProjectState.UpdatingToRoadNetwork
 import fi.liikennevirasto.viite.dao.TerminationCode._
 import fi.liikennevirasto.viite.dao._
 import org.joda.time.DateTime
@@ -74,7 +74,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
         (0L, dummyRoadway(roadwayNumber = 1L, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 400L, DateTime.now(), None))
       )
 
-      val project = dummyProject(Saved2TR, DateTime.now(), DateTime.now(), DateTime.now(),
+      val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(),
                                   Seq(ProjectReservedPart(0L, 1L, 1L,  None, None,  None, None,  None, None, None)),
                                   Seq(), None)
       projectDAO.create(project)
@@ -121,7 +121,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
         (0L, dummyRoadway(roadwayNumber = 1L, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 200L, DateTime.now(), None))
       )
 
-      val project = dummyProject(Saved2TR, DateTime.now(), DateTime.now(), DateTime.now(),
+      val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(),
                                   Seq(ProjectReservedPart(0L, 1L, 1L,  None, None,  None, None,  None, None, None)),
                                   Seq(), None)
       projectDAO.create(project)
@@ -149,7 +149,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
         (0L, dummyRoadway(roadwayNumber = 1L, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 200L, DateTime.now(), None))
       )
 
-      val project = dummyProject(Saved2TR, DateTime.now(), DateTime.now(), DateTime.now(),
+      val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(),
                                   Seq(ProjectReservedPart(0L, 1L, 1L,  None, None,  None, None,  None, None, None)),
                                   Seq(), None)
       projectDAO.create(project)
@@ -177,7 +177,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
         (0L, dummyRoadway(roadwayNumber = 1L, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 300L, DateTime.now(), None))
       )
 
-      val project = dummyProject(Saved2TR, DateTime.now(), DateTime.now(), DateTime.now(),
+      val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(),
                                   Seq(ProjectReservedPart(0L, 1L, 1L,  None, None,  None, None,  None, None, None)),
                                   Seq(), None)
       projectDAO.create(project)
@@ -285,7 +285,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
         (0L, dummyRoadway(roadwayNumber = 1L, roadNumber = 9999L, roadPartNumber = 2L, startAddrM = 0L, endAddrM = 1000L, DateTime.now(), None))
       )
 
-      val project = dummyProject(Saved2TR, DateTime.now(), DateTime.now(), DateTime.now(),
+      val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(),
                                   Seq(ProjectReservedPart(0L, 9999L, 1L,  None, None,  None, None,  None, None, None),
                                       ProjectReservedPart(0L, 9999L, 2L,  None, None,  None, None,  None, None, None)),
                                   Seq(), None)
