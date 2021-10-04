@@ -2472,7 +2472,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   //TODO remove after cleaning all floating code
-  /*test("If the suplied, old, road address has a valid_to < current_date then the outputted, new, road addresses are floating") {
+  /*test("If the supplied, old, road address has a valid_to < current_date then the outputted, new, road addresses are floating") {
     val road = 5L
     val roadPart = 205L
     val origStartM = 1024L
