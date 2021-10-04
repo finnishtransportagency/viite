@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, ParallelLink}
 import fi.liikennevirasto.viite.process.ProjectDeltaCalculator.projectLinkDAO
-import fi.liikennevirasto.viite.process.{Delta, ProjectDeltaCalculator, RoadwaySection}
+import fi.liikennevirasto.viite.process.{ProjectDeltaCalculator, RoadwaySection}
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import org.slf4j.LoggerFactory

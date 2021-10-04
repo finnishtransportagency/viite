@@ -212,37 +212,6 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Test RoadwayFiller.fillRoadways() When dealing with the numbering operation Then check correctly assigned roadway id's.") {
-    withDynTransaction {
-      val roadways = Map(
-        (0L, dummyRoadway(roadwayNumber = 1L, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 200L, DateTime.now(), None))
-      )
-
-      val changeInfos = Seq(
-        RoadwayChangeInfo(AddressChangeType.ReNumeration,
-          source = dummyRoadwayChangeSection(Some(1L), Some(1L), Some(0L), Some(0L), Some(200L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
-          target = dummyRoadwayChangeSection(Some(1L), Some(2L), Some(0L), Some(0L), Some(200L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
-          Continuous, AdministrativeClass.apply(1), reversed = false, 1)
-      )
-
-      val projectLinks = Seq(
-        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 100L, Some(DateTime.now()), status = LinkStatus.Numbering, administrativeClass = AdministrativeClass.apply(1), roadwayNumber = roadways.head._2.roadwayNumber),
-        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 100L, 200L, Some(DateTime.now()), status = LinkStatus.Numbering, administrativeClass = AdministrativeClass.apply(1), roadwayNumber = roadways.head._2.roadwayNumber)
-      )
-
-      val changes = Seq(
-        (ProjectRoadwayChange(0L, Some("projectName"), 8, "Test", DateTime.now(), changeInfos.head, DateTime.now(), Some(0)), projectLinks)
-      )
-
-      val result = RoadwayFiller.fillRoadways(roadways, Map[Long, Roadway](), changes)
-      result.size should be(1)
-      result.head._1.size should be(2)
-      result.head._1.head.roadwayNumber should be(roadways.head._2.roadwayNumber)
-      result.head._1.head.endDate.isDefined should be(true)
-      result.head._1.head.roadwayNumber should be(result.head._1.last.roadwayNumber)
-    }
-  }
-
   test("Test RoadwayFiller.fillRoadways() When dealing with a termination of a roadway with history Then check correctly assigned roadway id's.") {
     withDynTransaction {
       val roadways = Map(

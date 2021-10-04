@@ -11,7 +11,6 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 
 import scala.collection.immutable.HashMap
 import scala.collection.mutable.ListBuffer
-//import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{Track, ViiteProperties}
 import fi.liikennevirasto.viite.dao._
