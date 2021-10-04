@@ -120,7 +120,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Test RoadwayFiller.applyRoadwayChanges() #Confluence: Change in the Middle of the Roadway. " +
                 "When dealing with one unchanged road having no history with administrative class change in the middle " +
                 "Then should return 3 new roadways and one new history row.") {
-    runWithRollback{
+    runWithRollback {
       val roadway = dummyRoadway(roadwayNumber = 1L, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 400L, DateTime.now(), None).copy(discontinuity = Discontinuity.EndOfRoad, ely = 8)
       roadwayDAO.create(Seq(roadway))
 
@@ -511,37 +511,6 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       //Transfer
       result(3).size should be(2) //History row + new row
       result(3).head.roadwayNumber should not be roadways.head._2.roadwayNumber
-    }
-  }
-
-  test("Test RoadwayFiller.fillRoadways() When dealing with the numbering operation Then check correctly assigned roadway id's.") {
-    withDynTransaction {
-      val roadways = Map(
-        (0L, dummyRoadway(roadwayNumber = 1L, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 200L, DateTime.now(), None))
-      )
-
-      val changeInfos = Seq(
-        RoadwayChangeInfo(AddressChangeType.ReNumeration,
-          source = dummyRoadwayChangeSection(Some(1L), Some(1L), Some(0L), Some(0L), Some(200L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
-          target = dummyRoadwayChangeSection(Some(1L), Some(2L), Some(0L), Some(0L), Some(200L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
-          Continuous, AdministrativeClass.apply(1), reversed = false, 1)
-      )
-
-      val projectLinks = Seq(
-        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 100L, Some(DateTime.now()), status = LinkStatus.Numbering, administrativeClass = AdministrativeClass.apply(1), roadwayNumber = roadways.head._2.roadwayNumber),
-        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 100L, 200L, Some(DateTime.now()), status = LinkStatus.Numbering, administrativeClass = AdministrativeClass.apply(1), roadwayNumber = roadways.head._2.roadwayNumber)
-      )
-
-      val changes = Seq(
-        (ProjectRoadwayChange(0L, Some("projectName"), 8, "Test", DateTime.now(), changeInfos.head, DateTime.now(), Some(0)), projectLinks)
-      )
-
-      val result = RoadwayFiller.fillRoadways(roadways, Map[Long, Roadway](), changes)
-      result.size should be(1)
-      result.head._1.size should be(2)
-      result.head._1.head.roadwayNumber should be(roadways.head._2.roadwayNumber)
-      result.head._1.head.endDate.isDefined should be(true)
-      result.head._1.head.roadwayNumber should be(result.head._1.last.roadwayNumber)
     }
   }
 

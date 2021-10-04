@@ -1681,11 +1681,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  private def setProjectDeltaToDB(projectId: Long, project: Option[Project]) = {
-    roadwayChangesDAO.clearRoadChangeTable(projectId)
-    roadwayChangesDAO.insertDeltaToRoadChangeTable(projectId, project)
-  }
-
   private def newProjectTemplate(rl: RoadLinkLike, ra: RoadAddress, project: Project): ProjectLink = {
     val geometry = GeometryUtils.truncateGeometry3D(rl.geometry, ra.startMValue, ra.endMValue)
     val newEly = project.reservedParts.find(rp => rp.roadNumber == ra.roadNumber && rp.roadPartNumber == ra.roadPartNumber) match {
