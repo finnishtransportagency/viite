@@ -134,6 +134,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     projectDAO.updateProjectCoordinates(projectId, coordinates)
   }
 
+  @deprecated ("Tierekisteri connection has been removed from Viite. TRId to be removed, too.")
   def fetchProjectInfoByTRId(trProjectId: Long): Option[Project] = {
     withDynTransaction {
       projectDAO.fetchByTRId(trProjectId)
@@ -1670,6 +1671,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @param projectId project-id
     * @return returns option error string
     */
+  @deprecated ("Tierekisteri connection has been removed from Viite. TRId to be removed, too.")
   def removeRotatingTRId(projectId: Long): Option[String] = {
     withDynSession {
       val project = fetchProjectById(projectId)
