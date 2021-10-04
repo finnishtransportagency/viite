@@ -43,7 +43,7 @@ object Digiroad2Context {
     * to the road network (that is, to the Viite DB). */
   system.scheduler.schedule(FiniteDuration(2, TimeUnit.MINUTES), FiniteDuration(1, TimeUnit.MINUTES)) { // first query after 2 minutes, then once per minute
     try {
-      projectService.atomicallyPreserveSingleProjectInUpdateQueue()
+      projectService.preserveSingleProjectToBeTakenToRoadNetwork()
     } catch {
       case  NonFatal(ex) =>
         logger.error("Exception at preserving a project :" + ex.getMessage)

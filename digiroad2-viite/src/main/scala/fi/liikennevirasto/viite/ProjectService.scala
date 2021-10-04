@@ -1786,7 +1786,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * if any such project is waiting.
     * @throws SQLException if there is an error with preserving the reserved project to the db.
     * @throws Exception if an unexpected exception occurred. */
-  def atomicallyPreserveSingleProjectInUpdateQueue(): Unit = {
+  def preserveSingleProjectToBeTakenToRoadNetwork(): Unit = {
 
     // get a project to update to db, if any
     val projectIdOpt: Option[Long] = atomicallyReserveProjectInUpdateQueue
