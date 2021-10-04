@@ -22,7 +22,7 @@ object PostGISDatabase {
 
   /** Opens a transaction session, for db operations to be processed as an atomic set.
     * The transaction, and session are closed at return.
-    *  @throws IllegalThreadStateException, if a session is already open. */
+    *  @throws IllegalThreadStateException when a session is already open. */
   def withDynTransaction[T](f: => T): T = {
     if (transactionOpen.get())
       throw new IllegalThreadStateException("Attempted to open nested transaction")
