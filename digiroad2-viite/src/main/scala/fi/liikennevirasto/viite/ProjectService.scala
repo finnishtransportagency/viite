@@ -134,6 +134,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     projectDAO.updateProjectCoordinates(projectId, coordinates)
   }
 
+  @deprecated ("Tierekisteri connection has been removed from Viite. TRId to be removed, too.")
   def fetchProjectInfoByTRId(trProjectId: Long): Option[Project] = {
     withDynTransaction {
       projectDAO.fetchByTRId(trProjectId)
@@ -1670,6 +1671,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @param projectId project-id
     * @return returns option error string
     */
+  @deprecated ("Tierekisteri connection has been removed from Viite. TRId to be removed, too.")
   def removeRotatingTRId(projectId: Long): Option[String] = {
     withDynSession {
       val project = fetchProjectById(projectId)
@@ -1725,11 +1727,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         PublishResult(validationSuccess = true, sendSuccess = true, Some(""))
       }
     }
-  }
-
-  private def setProjectDeltaToDB(projectId: Long, project: Option[Project]) = {
-    roadwayChangesDAO.clearRoadChangeTable(projectId)
-    roadwayChangesDAO.insertDeltaToRoadChangeTable(projectId, project)
   }
 
   private def newProjectTemplate(rl: RoadLinkLike, ra: RoadAddress, project: Project): ProjectLink = {
@@ -1846,32 +1843,32 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
     // try preserving the project to the db, in there was one to be updated
     withDynTransaction {
-    if(gotProjectToUpdate) {
-      try {
-        time(logger, s"Preserve the project $projectId to the road network") {
-          preserveProjectToDB(projectId)
+      if(gotProjectToUpdate) {
+        try {
+          time(logger, s"Preserve the project $projectId to the road network") {
+            preserveProjectToDB(projectId)
+          }
+        } catch {
+          // in case of an expected error, set project status to ProjectState.ErrorInViite
+          case t: InvalidAddressDataException => {
+            logger.warn(s"InvalidAddressDataException while preserving the project $projectId" +
+                         s" to road network. ${t.getMessage}", t)
+            projectDAO.updateProjectStatus(projectId, ProjectState.ErrorInViite)
+          }
+          case t: SQLException => {
+            logger.error(s"SQL error while preserving the project $projectId" +
+                         s" to road network. ${t.getMessage}", t)
+            projectDAO.updateProjectStatus(projectId, ProjectState.ErrorInViite)
+          }
+          // re-throw unexpected errors
+          case t: Exception => {
+            logger.warn(s"Unexpected exception while preserving the project $projectId", t.getMessage)
+            projectDAO.updateProjectStatus(projectId, ProjectState.ErrorInViite)
+            throw t  // Rethrow the unexpected error.
+          }
         }
-      } catch {
-        // in case of an expected error, set project status to ProjectState.ErrorInViite
-        case t: InvalidAddressDataException => {
-          logger.warn(s"InvalidAddressDataException while preserving the project $projectId" +
-                       s" to road network. ${t.getMessage}", t)
-          projectDAO.updateProjectStatus(projectId, ProjectState.ErrorInViite)
-        }
-        case t: SQLException => {
-          logger.error(s"SQL error while preserving the project $projectId" +
-                       s" to road network. ${t.getMessage}", t)
-          projectDAO.updateProjectStatus(projectId, ProjectState.ErrorInViite)
-        }
-        // re-throw unexpected errors
-        case t: Exception => {
-          logger.warn(s"Unexpected exception while preserving the project $projectId", t.getMessage)
-          projectDAO.updateProjectStatus(projectId, ProjectState.ErrorInViite)
-          throw t  // Rethrow the unexpected error.
-        }
+        projectDAO.updateProjectStatus(projectId, ProjectState.Accepted)
       }
-      projectDAO.updateProjectStatus(projectId, ProjectState.Accepted)
-    }
     }
   }
 
@@ -1888,35 +1885,35 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @return
     */
   private def preserveProjectToDB(projectID: Long): Unit = {
-      projectDAO.fetchTRIdByProjectId(projectID) match {
-        case Some(trId) =>
-          val roadNumbers: Option[Set[Long]] = projectDAO.fetchProjectStatus(projectID).map { currentState =>
-            logger.info(s"Current status is $currentState")
-            if (currentState == UpdatingToRoadNetwork) {
-              logger.info(s"Start importing road addresses of project $projectID to the road network")
-              try {
-                updateRoadwaysAndLinearLocationsWithProjectLinks(projectID)
-              } catch {
-                case t: InvalidAddressDataException => {
-                  throw t  // Rethrow the unexpected error.
-                }
+    projectDAO.fetchTRIdByProjectId(projectID) match {
+      case Some(trId) =>
+        val roadNumbers: Option[Set[Long]] = projectDAO.fetchProjectStatus(projectID).map { currentState =>
+          logger.info(s"Current status is $currentState")
+          if (currentState == UpdatingToRoadNetwork) {
+            logger.info(s"Start importing road addresses of project $projectID to the road network")
+            try {
+              updateRoadwaysAndLinearLocationsWithProjectLinks(projectID)
+            } catch {
+              case t: InvalidAddressDataException => {
+                throw t  // Rethrow the unexpected error.
               }
-            } else Set.empty[Long]
-          }
-          if (roadNumbers.isEmpty || roadNumbers.get.isEmpty) {
-            logger.error(s"No road numbers available in project $projectID")
-          } else if (roadNetworkDAO.hasCurrentNetworkErrorsForOtherNumbers(roadNumbers.get)) {
-            logger.error(s"Current network have errors for another project roads, solve Them first.")
-          } else {
-            val currNetworkVersion = roadNetworkDAO.getLatestRoadNetworkVersionId
-            if (currNetworkVersion.isDefined)
-              eventbus.publish("roadAddress:RoadNetworkChecker", RoadCheckOptions(Seq(), roadNumbers.get, currNetworkVersion, currNetworkVersion.get + 1L, throughActor = true))
-            else logger.info(s"There is no published version for the network so far")
-          }
-        case None =>
-          logger.info(s"During status checking VIITE wasn't able to find TR_ID to project $projectID")
-          appendStatusInfo(fetchProjectById(projectID).head, " Failed to find TR-ID ")
-      }
+            }
+          } else Set.empty[Long]
+        }
+        if (roadNumbers.isEmpty || roadNumbers.get.isEmpty) {
+          logger.error(s"No road numbers available in project $projectID")
+        } else if (roadNetworkDAO.hasCurrentNetworkErrorsForOtherNumbers(roadNumbers.get)) {
+          logger.error(s"Current network have errors for another project roads, solve Them first.")
+        } else {
+          val currNetworkVersion = roadNetworkDAO.getLatestRoadNetworkVersionId
+          if (currNetworkVersion.isDefined)
+            eventbus.publish("roadAddress:RoadNetworkChecker", RoadCheckOptions(Seq(), roadNumbers.get, currNetworkVersion, currNetworkVersion.get + 1L, throughActor = true))
+          else logger.info(s"There is no published version for the network so far")
+        }
+      case None =>
+        logger.info(s"During status checking VIITE wasn't able to find TR_ID to project $projectID")
+        appendStatusInfo(fetchProjectById(projectID).head, " Failed to find TR-ID ")
+    }
   }
 
   //TODO: Currently only used on the Project Service Spec, can it be removed?

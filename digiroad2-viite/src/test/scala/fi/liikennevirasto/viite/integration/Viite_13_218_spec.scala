@@ -11,7 +11,6 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 
 import scala.collection.immutable.HashMap
 import scala.collection.mutable.ListBuffer
-//import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{Track, ViiteProperties}
 import fi.liikennevirasto.viite.dao._
@@ -214,7 +213,10 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
             (t._1, "")
           }) else tt
           val tttt = ttt.map(t => {
-            if (t._1 == "endRoadPartNumber" && t._2.toString.nonEmpty) ("length", ttt.find(_._1 == "endAddressM").get._2.asInstanceOf[Long] - ttt.find(_._1 == "startAddressM").get._2.asInstanceOf[Long]) else t
+            if (t._1 == "endRoadPartNumber" && t._2.toString.nonEmpty)
+              ("length", ttt.find(_._1 == "endAddressM").get._2.asInstanceOf[Long] - ttt.find(_._1 == "startAddressM").get._2.asInstanceOf[Long])
+            else
+              t
           })
           val t    = List(tttt.head, tttt(6), tttt(5), tttt(2), tttt(8), tttt(3), tttt(7), tttt(1), tttt(4))
 

@@ -39,7 +39,8 @@ object ProjectState {
 
 case class Project(id: Long, status: ProjectState, name: String, createdBy: String, createdDate: DateTime,
                    modifiedBy: String, startDate: DateTime, dateModified: DateTime, additionalInfo: String,
-                   reservedParts: Seq[ProjectReservedPart], formedParts: Seq[ProjectReservedPart], statusInfo: Option[String], coordinates: Option[ProjectCoordinates] = Some(ProjectCoordinates())) {
+                   reservedParts: Seq[ProjectReservedPart], formedParts: Seq[ProjectReservedPart],
+                   statusInfo: Option[String], coordinates: Option[ProjectCoordinates] = Some(ProjectCoordinates())) {
   def isReserved(roadNumber: Long, roadPartNumber: Long): Boolean = {
     reservedParts.exists(p => p.roadNumber == roadNumber && p.roadPartNumber == roadPartNumber)
   }
@@ -91,6 +92,7 @@ class ProjectDAO {
     Q.queryNA[Long](query).list
   }
 
+  @deprecated ("Tierekisteri connection has been removed from Viite. TRId to be removed, too.")
   def fetchByTRId(trProjectId: Long): Option[Project] = {
     time(logger, "Fetch project by tr_id") {
       fetch(query => s"""$query where tr_id = $trProjectId""").headOption
@@ -124,10 +126,12 @@ class ProjectDAO {
     }
   }
 
+  @deprecated ("Tierekisteri connection has been removed from Viite. TRId to be removed, too.")
   def assignNewProjectTRId(projectId: Long): Unit = {
     Q.updateNA(s"UPDATE PROJECT SET TR_ID = nextval('viite_project_seq') WHERE ID= $projectId").execute
   }
 
+  @deprecated ("Tierekisteri connection has been removed from Viite. TRId to be removed, too.")
   def removeProjectTRId(projectId: Long): Unit = {
     Q.updateNA(s"UPDATE PROJECT SET TR_ID = NULL WHERE ID= $projectId").execute
   }
@@ -140,6 +144,7 @@ class ProjectDAO {
     Q.updateNA(s"UPDATE PROJECT SET COORD_X = ${coordinates.x},COORD_Y = ${coordinates.y}, ZOOM = ${coordinates.zoom} WHERE ID= $projectId").execute
   }
 
+  @deprecated ("Tierekisteri connection has been removed from Viite. TRId to be removed, too.")
   def fetchTRIdByProjectId(projectId: Long): Option[Long] = {
     Q.queryNA[Long](s"Select tr_id From Project WHERE Id=$projectId AND tr_id IS NOT NULL ").list.headOption
   }

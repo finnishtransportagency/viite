@@ -286,42 +286,6 @@ object RoadwayFiller {
     }
   }
 
-  def fillRoadways(allRoadways: Map[Long, Roadway], historyRoadways: Map[Long, Roadway], changesWithProjectLinks: Seq[(ProjectRoadwayChange, Seq[ProjectLink])]): Seq[(Seq[Roadway], Seq[LinearLocation], Seq[ProjectLink])] = {
-//    mergeRoadwayChanges(changesWithProjectLinks).flatMap {
-      changesWithProjectLinks.sortBy(_._1.changeInfo.orderInChangeTable).flatMap {
-      roadwayChange =>
-        roadwayChange._1.changeInfo.changeType match {
-          case AddressChangeType.Unchanged =>
-            val currentRoadways = roadwayChange._2.map(_.roadwayId).distinct.map(roadwayNumber => allRoadways.getOrElse(roadwayNumber, throw new Exception))
-            applyUnchanged(roadwayChange._1, roadwayChange._2.sortBy(_.startAddrMValue),
-              currentRoadways, historyRoadways.filter(historyRoadway => historyRoadway._2.endDate.isDefined && currentRoadways.map(_.roadwayNumber).distinct.contains(historyRoadway._2.roadwayNumber)).values.toSeq)
-
-          case AddressChangeType.New =>
-            applyNew(roadwayChange._1, roadwayChange._2.sortBy(_.startAddrMValue))
-
-          case AddressChangeType.Transfer =>
-            val currentRoadways = roadwayChange._2.map(_.roadwayId).distinct.map(roadwayNumber => allRoadways.getOrElse(roadwayNumber, throw new Exception))
-            applyTransfer(roadwayChange._1, roadwayChange._2.sortBy(_.startAddrMValue),
-              currentRoadways, historyRoadways.filter(historyRoadway => historyRoadway._2.endDate.isDefined && currentRoadways.map(_.roadwayNumber).distinct.contains(historyRoadway._2.roadwayNumber)).values.toSeq)
-
-          case AddressChangeType.ReNumeration =>
-            val currentRoadways = roadwayChange._2.map(_.roadwayId).distinct.map(roadwayNumber => allRoadways.getOrElse(roadwayNumber, throw new Exception))
-            applyNumbering(roadwayChange._1, roadwayChange._2.sortBy(_.startAddrMValue),
-              currentRoadways, historyRoadways.filter(historyRoadway => historyRoadway._2.endDate.isDefined && currentRoadways.map(_.roadwayNumber).distinct.contains(historyRoadway._2.roadwayNumber)).values.toSeq)
-
-          case AddressChangeType.Termination =>
-            val currentRoadways = roadwayChange._2.map(_.roadwayId).distinct.map(roadwayNumber => allRoadways.getOrElse(roadwayNumber, throw new Exception))
-            applyTerminated(roadwayChange._1, roadwayChange._2.sortBy(_.startAddrMValue),
-              currentRoadways, historyRoadways.filter(historyRoadway => historyRoadway._2.endDate.isDefined && currentRoadways.map(_.roadwayNumber).distinct.contains(historyRoadway._2.roadwayNumber)).values.toSeq)
-
-          case AddressChangeType.Unknown =>
-            applyNew(roadwayChange._1, roadwayChange._2.sortBy(_.startAddrMValue))
-          case AddressChangeType.NotHandled =>
-            applyNew(roadwayChange._1, roadwayChange._2.sortBy(_.startAddrMValue))
-        }
-    }
-  }
-
   def mergeRoadwayChanges(changesWithLinks: Seq[(ProjectRoadwayChange, Seq[ProjectLink])]): Seq[(ProjectRoadwayChange, Seq[ProjectLink])] = {
     def groupedSections(changes: Seq[(ProjectRoadwayChange, Seq[ProjectLink])]) = {
       changes.groupBy(c => (c._1.changeInfo.source.roadNumber, c._1.changeInfo.source.startRoadPartNumber, c._1.changeInfo.source.trackCode, c._1.changeInfo.source.administrativeClass, c._1.changeInfo.source.ely,
