@@ -39,7 +39,8 @@ object ProjectState {
 
 case class Project(id: Long, status: ProjectState, name: String, createdBy: String, createdDate: DateTime,
                    modifiedBy: String, startDate: DateTime, dateModified: DateTime, additionalInfo: String,
-                   reservedParts: Seq[ProjectReservedPart], formedParts: Seq[ProjectReservedPart], statusInfo: Option[String], coordinates: Option[ProjectCoordinates] = Some(ProjectCoordinates())) {
+                   reservedParts: Seq[ProjectReservedPart], formedParts: Seq[ProjectReservedPart],
+                   statusInfo: Option[String], coordinates: Option[ProjectCoordinates] = Some(ProjectCoordinates())) {
   def isReserved(roadNumber: Long, roadPartNumber: Long): Boolean = {
     reservedParts.exists(p => p.roadNumber == roadNumber && p.roadPartNumber == roadPartNumber)
   }
