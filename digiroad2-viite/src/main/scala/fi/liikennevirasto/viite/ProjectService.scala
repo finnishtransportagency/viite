@@ -888,23 +888,19 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   def getChangeProject(projectId: Long): (Option[ChangeProject], Option[String]) = {
     withDynTransaction {
-      getChangeProjectInTX(projectId)
-    }
-  }
-
-  def getChangeProjectInTX(projectId: Long): (Option[ChangeProject], Option[String]) = {
-    try {
-      val (recalculate, warningMessage) = recalculateChangeTable(projectId)
-      if (recalculate) {
-        val roadwayChanges = roadwayChangesDAO.fetchRoadwayChangesResume(Set(projectId))
-        (Some(convertToChangeProject(roadwayChanges)), warningMessage)
-      } else {
-        (None, None)
+      try {
+        val (recalculate, warningMessage) = recalculateChangeTable(projectId)
+        if (recalculate) {
+          val roadwayChanges = roadwayChangesDAO.fetchRoadwayChangesResume(Set(projectId))
+          (Some(convertToChangeProject(roadwayChanges)), warningMessage)
+        } else {
+          (None, None)
+        }
+      } catch {
+        case NonFatal(e) =>
+          logger.info(s"Change info not available for project $projectId: " + e.getMessage)
+          (None, None)
       }
-    } catch {
-      case NonFatal(e) =>
-        logger.info(s"Change info not available for project $projectId: " + e.getMessage)
-        (None, None)
     }
   }
 
