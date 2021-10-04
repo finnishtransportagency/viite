@@ -840,6 +840,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
+  @deprecated ("Tierekisteri connection has been removed from Viite. TRId to be removed, too.")
   private val removeRotatingTRIdByProjectId: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String, Any]]("removeRotatingTRIdByProjectId")
       .parameters(
