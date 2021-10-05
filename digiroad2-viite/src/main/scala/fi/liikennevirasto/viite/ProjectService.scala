@@ -185,11 +185,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   /**
-    * Creates the new project
-    * Adds the road addresses from the reserved parts to the project link table
+    * Creates a new project. Adds the road addresses from the reserved road parts to the project link table.
     *
-    * @param roadAddressProject
+    * @param roadAddressProject Project to be created
     * @return the created project
+    * @throws RoadPartReservedException
     */
   private def createProject(roadAddressProject: Project): Project = {
     val id = Sequences.nextViiteProjectId
@@ -887,23 +887,19 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   def getChangeProject(projectId: Long): (Option[ChangeProject], Option[String]) = {
     withDynTransaction {
-      getChangeProjectInTX(projectId)
-    }
-  }
-
-  def getChangeProjectInTX(projectId: Long): (Option[ChangeProject], Option[String]) = {
-    try {
-      val (recalculate, warningMessage) = recalculateChangeTable(projectId)
-      if (recalculate) {
-        val roadwayChanges = roadwayChangesDAO.fetchRoadwayChangesResume(Set(projectId))
-        (Some(convertToChangeProject(roadwayChanges)), warningMessage)
-      } else {
-        (None, None)
+      try {
+        val (recalculate, warningMessage) = recalculateChangeTable(projectId)
+        if (recalculate) {
+          val roadwayChanges = roadwayChangesDAO.fetchRoadwayChangesResume(Set(projectId))
+          (Some(convertToChangeProject(roadwayChanges)), warningMessage)
+        } else {
+          (None, None)
+        }
+      } catch {
+        case NonFatal(e) =>
+          logger.info(s"Change info not available for project $projectId: " + e.getMessage)
+          (None, None)
       }
-    } catch {
-      case NonFatal(e) =>
-        logger.info(s"Change info not available for project $projectId: " + e.getMessage)
-        (None, None)
     }
   }
 
@@ -1581,7 +1577,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }.toSeq
   }
 
-  /** @throws IllegalArgumentException when the given project is not found. */
+  /** @return Whether we did the recalculation or not
+    * @throws IllegalArgumentException when the given project is not found. */
   private def recalculateChangeTable(projectId: Long): (Boolean, Option[String]) = {
     val projectOpt = fetchProjectById(projectId)
     if (projectOpt.isEmpty)
@@ -1785,7 +1782,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * if any such project is waiting.
     * @throws SQLException if there is an error with preserving the reserved project to the db.
     * @throws Exception if an unexpected exception occurred. */
-  def atomicallyPreserveSingleProjectInUpdateQueue(): Unit = {
+  def preserveSingleProjectToBeTakenToRoadNetwork(): Unit = {
 
     // get a project to update to db, if any
     val projectIdOpt: Option[Long] = atomicallyReserveProjectInUpdateQueue
@@ -1823,6 +1820,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           throw t  // Rethrow the unexpected error.
         }
       }
+      // got through without Exceptions -> the project was successfully preserved
       projectDAO.updateProjectStatus(projectId, ProjectState.Accepted)
     }
   }
@@ -1834,7 +1832,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   /**
-    * Convert all the project links into regular road addresses, and save them on the linear location, and roadway tables.
+    * Converts all the project links of project <i>projectId</i> into regular road addresses,
+    * and saves them to the linear location, and roadway tables.
     *
     * @param projectID : Long - The id of the project to be persisted.
     */

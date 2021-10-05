@@ -39,11 +39,12 @@ object Digiroad2Context {
   import system.dispatcher
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
-  /** Schedule periodical retrieval, and preservance of a road network project
-    * to the road network (that is, to the Viite DB). */
-  system.scheduler.schedule(FiniteDuration(2, TimeUnit.MINUTES), FiniteDuration(1, TimeUnit.MINUTES)) { // first query after 2 minutes, then once per minute
+  /** Runs periodically to check, if there are projects to be accepted to the road network,
+    * that is, to be updated to Viite DB.
+    * First query after startup after 2 minutes, then once every minute. */
+  system.scheduler.schedule(FiniteDuration(2, TimeUnit.MINUTES), FiniteDuration(1, TimeUnit.MINUTES)) {
     try {
-      projectService.atomicallyPreserveSingleProjectInUpdateQueue()
+      projectService.preserveSingleProjectToBeTakenToRoadNetwork()
     } catch {
       case  NonFatal(ex) =>
         logger.error("Exception at preserving a project :" + ex.getMessage)
