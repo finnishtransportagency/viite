@@ -539,7 +539,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           Map("sendSuccess" -> false, "errorMessage" -> sendStatus.errorMessage.getOrElse(ProjectCouldNotBeAppendedToRoadNetwork))
         }
       } else {
-        logger.error(s"Failed to send project ${projectID} to TR. Error: ${projectWritableError.get}")
+        logger.error(s"Cannot append project ${projectID} to the road network. Error: ${projectWritableError.get}")
         Map("sendSuccess" -> false, "errorMessage" -> projectWritableError.get)
       }
     }
