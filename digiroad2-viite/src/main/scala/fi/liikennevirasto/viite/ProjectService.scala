@@ -1755,22 +1755,21 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   /** Reserves a road network project for preserving the project information onto the road network.
     * Enclosing withDynTransaction ensures that the retrieved project cannot be given to multiple
     * handler calls at the same time.
-    * @return (true, projectId), when there was a reservable project, (false, ...) if not.
+    * @return Some(projectId), when there was a reservable project, None if not.
     * @throws Exception if an unexpected exception occurred. */
-  def atomicallyReserveProjectInUpdateQueue: (Boolean,Long) = {
-    val noSuchProjectDummy = -1.0.toLong
-    var reserveStatus = (false, noSuchProjectDummy) // nothing reserved yet
+  def atomicallyReserveProjectInUpdateQueue: Option[Long] = {
+    var reserveStatus: Option[Long] = None  // nothing reserved yet
 
     withDynTransaction { // to ensure uniquely retrieved projectId for each calling handler thread
       reserveStatus = {
         try {
           val projectId = projectDAO.fetchSingleProjectIdWithInUpdateQueueStatus // may throw NoSuchElementException
           projectDAO.updateProjectStatus(projectId, ProjectState.UpdatingToRoadNetwork)
-          (true, projectId)
+          Some(projectId)
         } catch {
           case t: NoSuchElementException => { // Expected exception when nothing to update.
             logger.debug(s"No projects waiting to be preserved: ${t.getMessage}", t)
-            (false, noSuchProjectDummy)
+            None
           }
           case t: Exception => {
             logger.warn(s"Unexpected exception while reserving a project for preserving: ${t.getMessage}", t)
@@ -1782,45 +1781,49 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     reserveStatus
   }
 
-
   /** Preserves the information of a single road network project to the road network,
     * if any such project is waiting.
     * @throws SQLException if there is an error with preserving the reserved project to the db.
     * @throws Exception if an unexpected exception occurred. */
   def atomicallyPreserveSingleProjectInUpdateQueue(): Unit = {
-    val noSuchProjectDummy = -1.0.toLong
 
     // get a project to update to db, if any
-    val (gotProjectToUpdate: Boolean, projectId: Long) = atomicallyReserveProjectInUpdateQueue
+    val projectIdOpt: Option[Long] = atomicallyReserveProjectInUpdateQueue
+    var projectId: Long = -1L // dummy
 
     // try preserving the project to the db, in there was one to be updated
     withDynTransaction {
-      if(gotProjectToUpdate) {
-        try {
-          time(logger, s"Preserve the project $projectId to the road network") {
-            preserveProjectToDB(projectId)
-          }
-        } catch {
-          // in case of an expected error, set project status to ProjectState.ErrorInViite
-          case t: InvalidAddressDataException => {
-            logger.warn(s"InvalidAddressDataException while preserving the project $projectId" +
-                         s" to road network. ${t.getMessage}", t)
-            projectDAO.updateProjectStatus(projectId, ProjectState.ErrorInViite)
-          }
-          case t: SQLException => {
-            logger.error(s"SQL error while preserving the project $projectId" +
-                         s" to road network. ${t.getMessage}", t)
-            projectDAO.updateProjectStatus(projectId, ProjectState.ErrorInViite)
-          }
-          // re-throw unexpected errors
-          case t: Exception => {
-            logger.warn(s"Unexpected exception while preserving the project $projectId", t.getMessage)
-            projectDAO.updateProjectStatus(projectId, ProjectState.ErrorInViite)
-            throw t  // Rethrow the unexpected error.
+      try {
+        projectIdOpt match {
+          case None =>
+            logger.debug(s"No projects to update to the road network.")
+          case Some(id) => {
+            projectId = id
+            time(logger, s"Preserve the project $projectId to the road network") {
+              preserveProjectToDB(projectId)
+            }
           }
         }
-        projectDAO.updateProjectStatus(projectId, ProjectState.Accepted)
+      } catch {
+        // in case of an expected error, set project status to ProjectState.ErrorInViite
+        case t: InvalidAddressDataException => {
+          logger.warn(s"InvalidAddressDataException while preserving the project $projectId" +
+                       s" to road network. ${t.getMessage}", t)
+          projectDAO.updateProjectStatus(projectId, ProjectState.ErrorInViite)
+        }
+        case t: SQLException => {
+          logger.error(s"SQL error while preserving the project $projectId" +
+                       s" to road network. ${t.getMessage}", t)
+          projectDAO.updateProjectStatus(projectId, ProjectState.ErrorInViite)
+        }
+        // re-throw unexpected errors
+        case t: Exception => {
+          logger.warn(s"Unexpected exception while preserving the project $projectId", t.getMessage)
+          projectDAO.updateProjectStatus(projectId, ProjectState.ErrorInViite)
+          throw t  // Rethrow the unexpected error.
+        }
       }
+      projectDAO.updateProjectStatus(projectId, ProjectState.Accepted)
     }
   }
 
