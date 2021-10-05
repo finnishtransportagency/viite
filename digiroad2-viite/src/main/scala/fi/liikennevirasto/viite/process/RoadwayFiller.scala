@@ -47,8 +47,8 @@ object RoadwayFiller {
                                                           project       : Option[Project],
                                                           projectLinkSeq: Seq[ProjectLink]
                                                         ): GeneratedRoadway = {
-      val generateNewRoadways      = generateNewRoadwaysWithHistory2(projectLinkSeq, currentRoadway, project.get.startDate, projectLinkSeq.head.roadwayNumber)
-      val (newRoadway, oldRoadway) = generateNewRoadways.partition(_.endDate.isEmpty)
+      val generatedNewRoadways      = generateNewRoadwaysWithHistory2(projectLinkSeq, currentRoadway, project.get.startDate, projectLinkSeq.head.roadwayNumber)
+      val (newRoadway, oldRoadway) = generatedNewRoadways.partition(_.endDate.isEmpty)
       val roadwaysWithLinearlocationsAndProjectLinkSeqs = newRoadway.map(nrw => {
         val projectLinksWithGivenAttributes = projectLinkSeq.map(pl => {
           pl.copy(linearLocationId = Sequences.nextLinearLocationId, roadwayNumber = nrw.roadwayNumber)
@@ -87,7 +87,7 @@ object RoadwayFiller {
         } else GeneratedRoadway(Seq(), Seq(), Seq())
       }}.toSeq
 
-      val roadwaysWithLocs = (roadways.flatMap(_.roadway), roadways.flatMap(_.linearLocations), roadways.flatMap(_.projectLinks))
+      val roadwaysWithLinearlocations = (roadways.flatMap(_.roadway), roadways.flatMap(_.linearLocations), roadways.flatMap(_.projectLinks))
       val historyRowsOfTerminatedRoadway = terminatedHistory(historyRoadways, currentRoadway, terminatedProjectLinks)
       val oldTerminatedRoadway = historyRowsOfTerminatedRoadway.find(_.terminated == TerminationCode.Termination)
 
@@ -99,12 +99,12 @@ object RoadwayFiller {
       } else (Seq(), Seq(), Seq())
 
       val existingHistoryRoadways = if (projectLinksInRoadway.forall(pl => pl.status != LinkStatus.Terminated)) {
-        (historyRoadways.map(rw => rw.copy(id = NewIdValue, roadwayNumber = roadwaysWithLocs._1.head.roadwayNumber)), Seq(), Seq())
+        (historyRoadways.map(rw => rw.copy(id = NewIdValue, roadwayNumber = roadwaysWithLinearlocations._1.head.roadwayNumber)), Seq(), Seq())
       } else {
         (Seq(), Seq(), Seq())
       }
 
-      Seq(roadwaysWithLocs, createdTerminatedHistoryRoadways, existingHistoryRoadways)
+      Seq(roadwaysWithLinearlocations, createdTerminatedHistoryRoadways, existingHistoryRoadways)
     })
   }
 

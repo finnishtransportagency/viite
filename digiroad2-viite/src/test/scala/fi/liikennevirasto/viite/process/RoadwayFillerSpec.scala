@@ -133,12 +133,13 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
         dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.EndOfRoad, 200L, 400L, Some(DateTime.now()), status = LinkStatus.UnChanged, administrativeClass = AdministrativeClass.State, roadwayNumber = NewIdValue+2)
       )
 
-      val changeAdminProjectLink = projectLinks(1)
-      val roadwayChanges         = Seq(RoadwayFiller.RwChanges(roadway, Seq.empty[Roadway], projectLinks))
-      val result                 = RoadwayFiller.applyRoadwayChanges(roadwayChanges).flatten.filter(_._1.nonEmpty)
+      val changeAdminClassProjectLink = projectLinks(1)
+      val roadwayChanges              = Seq(RoadwayFiller.RwChanges(roadway, Seq.empty[Roadway], projectLinks))
+      val result                      = RoadwayFiller.applyRoadwayChanges(roadwayChanges).flatten.filter(_._1.nonEmpty)
 
       result should have size 1
 
+      // Check Test assertion 3 new roadways and one new history row.
       val resultHead = result.head
       resultHead._1 should have size 4
       resultHead._2 should have size 3
@@ -152,9 +153,9 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       val historyRoadways = resultHead._1.filter(r => r.endDate.nonEmpty && r.validTo.isEmpty)
       historyRoadways should have size 1
       historyRoadways.head.administrativeClass should be(roadway.administrativeClass)
-      historyRoadways.head.discontinuity       should be(changeAdminProjectLink.discontinuity)
-      historyRoadways.head.startAddrMValue     should be(changeAdminProjectLink.startAddrMValue)
-      historyRoadways.head.endAddrMValue       should be(changeAdminProjectLink.endAddrMValue)
+      historyRoadways.head.discontinuity       should be(changeAdminClassProjectLink.discontinuity)
+      historyRoadways.head.startAddrMValue     should be(changeAdminClassProjectLink.startAddrMValue)
+      historyRoadways.head.endAddrMValue       should be(changeAdminClassProjectLink.endAddrMValue)
     }
   }
 
@@ -178,6 +179,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       result should have size 1
 
+      // Check old roadway is expired and a new is created .
       val resultHead = result.head
       resultHead._1 should have size 2
       resultHead._2 should have size 1
@@ -211,7 +213,6 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       val unChangedProjectLink = dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 100L, 170L, Some(DateTime.now()), status = LinkStatus.UnChanged, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber).copy(originalStartAddrMValue = roadway.startAddrMValue, originalEndAddrMValue = roadway.endAddrMValue)
       val newProjectLink = dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 170L, 200L, Some(DateTime.now()), status = LinkStatus.New, administrativeClass = AdministrativeClass.State)
-
 
       val roadwayChanges = Seq(RoadwayFiller.RwChanges(roadway, Seq.empty[Roadway], Seq(unChangedProjectLink)))
       val resultForUnchanged = RoadwayFiller.applyRoadwayChanges(roadwayChanges).flatten.filter(_._1.nonEmpty)
@@ -256,6 +257,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       val roadwayChanges = Seq(RoadwayFiller.RwChanges(roadway, Seq.empty[Roadway], projectLinks))
       val resultForUnchanged = RoadwayFiller.applyRoadwayChanges(roadwayChanges).flatten.filter(_._1.nonEmpty)
 
+      // Two new roadways are created and one expired.
       val resultHead = resultForUnchanged.head
       resultHead._1 should have size 3
       resultHead._2 should have size 2
