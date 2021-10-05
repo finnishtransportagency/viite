@@ -1667,7 +1667,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @return optional error message, empty if no error
     */
   def publishProject(projectId: Long): PublishResult = {
-    logger.info(s"Preparing to send Project ID: $projectId to TR")
+    logger.info(s"Preparing to persist changes of project $projectId to the road network")
     withDynTransaction {
       if (!recalculateChangeTable(projectId)._1) {
         return PublishResult(validationSuccess = false, sendSuccess = false, Some("Muutostaulun luonti epäonnistui. Tarkasta ely"))
@@ -1835,10 +1835,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   /**
-    * Checks the project information from TR. If TR reply is such then we convert all the project links into regular road addresses and save them on the linear location and roadway tables.
+    * Convert all the project links into regular road addresses, and save them on the linear location, and roadway tables.
     *
-    * @param projectID : Long - The project Id
-    * @return
+    * @param projectID : Long - The id of the project to be persisted.
     */
   private def preserveProjectToDB(projectID: Long): Unit = {
     projectDAO.fetchTRIdByProjectId(projectID) match {
