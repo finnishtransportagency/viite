@@ -110,6 +110,7 @@ class ProjectDAOSpec extends FunSuite with Matchers {
     }
   }
 
+  /** @deprecated Tierekisteri connection has been removed from Viite. TRId to be removed, too. */
   test("Test fetchTRIdByProjectId When the project has Tierekisteri identifier Then should return Tierekisteri identifier") {
     runWithRollback {
       val projectId = Sequences.nextViiteProjectId
@@ -125,6 +126,7 @@ class ProjectDAOSpec extends FunSuite with Matchers {
     }
   }
 
+  /** @deprecated Tierekisteri connection has been removed from Viite. TRId to be removed, too. */
   test("Test assignNewProjectTRId When the project has Tierekisteri identifier Then should assign a new Tierekisteri identifier to the project") {
     runWithRollback {
       val projectId = Sequences.nextViiteProjectId
@@ -141,6 +143,7 @@ class ProjectDAOSpec extends FunSuite with Matchers {
     }
   }
 
+  /** @deprecated Tierekisteri connection has been removed from Viite. TRId to be removed, too. */
   test("Test removeProjectTRId When the project has Tierekisteri identifier Then should be removed") {
     runWithRollback {
       val projectId = Sequences.nextViiteProjectId
@@ -253,8 +256,8 @@ class ProjectDAOSpec extends FunSuite with Matchers {
   }
 
   test("Test fetchProjectIdsWithToBePreservedStatus " +
-    "When project is accepted, but still waiting to be preserved to Viite DB " +
-    "Then projects waiting TR response should be increased") {
+    "When project is accepted, but yet waiting to be preserved, or at preserving to Viite DB, " +
+    "Then fetchProjectIdsWithToBePreservedStatus should be increased") {
     val reservedPart = ProjectReservedPart(5: Long, 203: Long, 203: Long, Some(6L), Some(Discontinuity.apply("jatkuva")),
                                            Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
     runWithRollback {
