@@ -3,11 +3,10 @@ package fi.liikennevirasto.viite.process
 import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
-import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, RoadAddressCP}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
@@ -18,8 +17,6 @@ import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
-
-import scala.collection.immutable.ListMap
 
 class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
   def runWithRollback(f: => Unit): Unit = {
@@ -279,6 +276,38 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
 
       val startingPointsForCalculations = defaultSectionCalculatorStrategy.findStartingPoints(newProjectLinks, otherProjectLinks, Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
       startingPointsForCalculations should be((Road1TransferRightLink.geometry.head, Road1TransferLeftLink.geometry.head))
+    }
+  }
+
+  test("Test findStartingPoints " +
+       "When a combined road has a loopend" +
+       "Then startingpoint from triple connection should be found.") {
+    runWithRollback {
+
+      val triplePoint = Point(371826, 6669765)
+      val geom1 = Seq(Point(372017, 6669721), triplePoint)// Point(371826, 6669765) found in three geometries
+      val geom2 = Seq(Point(372017, 6669721), Point(372026, 6669819))
+      val geom3 = Seq(Point(372026, 6669819), Point(371880, 6669863))
+      val geom4 = Seq(triplePoint, Point(371880, 6669863))
+      val geom5 = Seq(Point(371704, 6669673), triplePoint)
+      val geom6 = Seq(Point(371637, 6669626), Point(371704, 6669673))
+
+      val plId = Sequences.nextProjectLinkId
+
+      val otherProjectLinks = Seq(
+        ProjectLink(plId + 1, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None, None, 12345L, 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), geom1, 0L, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom1), 0L, 0, 0, reversed = true, None, 86400L),
+        ProjectLink(plId + 2, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None, None, 12346L, 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), geom2, 0L, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom2), 0L, 0, 0, reversed = true, None, 86400L),
+        ProjectLink(plId + 3, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None, None, 12347L, 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), geom3, 0L, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom3), 0L, 0, 0, reversed = true, None, 86400L),
+        ProjectLink(plId + 4, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None, None, 12348L, 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), geom4, 0L, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom4), 0L, 0, 0, reversed = true, None, 86400L),
+        ProjectLink(plId + 4, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None, None, 12349L, 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), geom5, 0L, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom5), 0L, 0, 0, reversed = true, None, 86400L),
+        ProjectLink(plId + 5, 9999L, 1L, Track.Combined, Discontinuity.Discontinuous, 0L, 0L, 0L, 0L, None, None, None, 12350L, 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), geom6, 0L, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom6), 0L, 0, 0, reversed = true, None, 86400L)
+      )
+
+      val newProjectLinks = Seq()
+
+      // Validate correct starting point for reversed combined road.
+      val startingPointsForCalculations = defaultSectionCalculatorStrategy.findStartingPoints(newProjectLinks, otherProjectLinks, Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
+      startingPointsForCalculations should be (triplePoint, triplePoint)
     }
   }
 

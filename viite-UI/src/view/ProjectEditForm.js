@@ -14,19 +14,10 @@
 
     var endDistanceOriginalValue = '--';
 
-    var showProjectButtonRecalculate = function () {
-      return '<div class="project-form form-controls">' +
-          formCommon.projectButtonsRecalculate() + '</div>';
-    };
 
     var showProjectButtonsDisabled = function () {
       return '<div class="project-form form-controls">' +
           formCommon.projectButtonsDisabled() + '</div>';
-    };
-
-    var showProjectButtonsRecalculateAndChanges = function () {
-      return '<div class="project-form form-controls">' +
-          formCommon.projectButtonsRecalculateAndChanges() + '</div>';
     };
 
     var transitionModifiers = function (targetStatus, currentStatus) {
@@ -157,19 +148,6 @@
           '<footer>' + showProjectButtonsDisabled() + '</footer>');
     };
 
-    var emptyTemplateRecalculateButtons = function (project) {
-      return _.template('' +
-          '<header>' +
-          formCommon.titleWithEditingTool(project) +
-          '</header>' +
-          '<div class="wrapper read-only">' +
-          '<div class="form form-horizontal form-dark">' +
-          '<label class="highlighted">JATKA VALITSEMALLA KOHDE KARTALTA.</label>' +
-          '<div class="form-group" id="project-errors"></div>' +
-          '</div></div></br></br>' +
-          '<footer>' + showProjectButtonRecalculate() + '</footer>');
-    };
-
     var isProjectPublishable = function () {
       return projectCollection.getPublishableStatus();
     };
@@ -196,7 +174,7 @@
       var administrativeClassCodeDropdown = $('#administrativeClassDropdown')[0];
       filled = filled && !_.isUndefined(administrativeClassCodeDropdown) && !_.isUndefined(administrativeClassCodeDropdown.value) && administrativeClassCodeDropdown.value !== '0'  && administrativeClassCodeDropdown.value !== '99';
 
-      if (filled) {
+      if (filled && !projectChangeTable.isChangeTableOpen()) {
         rootElement.find('.project-form button.update').prop("disabled", false);
       } else {
         rootElement.find('.project-form button.update').prop("disabled", true);
@@ -292,6 +270,10 @@
         rootElement.html(selectedProjectLinkTemplate(currentProject.project, selectedProjectLink));
         formCommon.replaceAddressInfo(backend, selectedProjectLink, currentProject.project.id);
         updateForm();
+        // disable form interactions (action dropdown, save and cancel buttons) if change table is open
+        if (projectChangeTable.isChangeTableOpen()) {
+          formCommon.disableFormInteractions();
+        }
         _.defer(function () {
           $('#beginDistance').on("change", function (changedData) {
             eventbus.trigger('projectLink:editedBeginDistance', changedData.target.value);
@@ -355,12 +337,11 @@
         selectedProjectLink = false;
         selectedProjectLinkProperty.cleanIds();
         var projectErrors = response.projectErrors;
-        if (Object.keys(projectErrors).length > 0) {
-          // if there is validation errors (only high priority errors are returned when updating project links) after updating project links then show disabled buttons
-          rootElement.html(emptyTemplateDisabledButtons(projectCollection.getCurrentProject().project));
-        } else {
-          // if no (high priority) validation errors are present, then show recalculate button
-          rootElement.html(emptyTemplateRecalculateButtons(projectCollection.getCurrentProject().project));
+        // show disabled buttons
+        rootElement.html(emptyTemplateDisabledButtons(projectCollection.getCurrentProject().project));
+        if (Object.keys(projectErrors).length === 0) {
+          // if no (high priority) validation errors are present, then show recalculate button and remove title
+          formCommon.setDisabledAndTitleAttributesById("recalculate-button", false, "");
           formCommon.setInformationContent();
           formCommon.setInformationContentText("Päivitä etäisyyslukemat jatkaaksesi projektia.");
         }
@@ -630,15 +611,10 @@
       };
 
       rootElement.on('click', '.project-form button.show-changes', function () {
-        $(this).empty();
         projectChangeTable.show();
-        var projectChangesButton = showProjectButtonsRecalculateAndChanges();
         if (isProjectPublishable() && isProjectEditable()) {
           formCommon.setInformationContent();
           formCommon.setInformationContentText("Validointi ok. Voit tehdä tieosoitteen muutosilmoituksen tai jatkaa muokkauksia.");
-          $('footer').html(formCommon.sendRoadAddressChangeButton('project-', projectCollection.getCurrentProject()));
-        } else {
-          $('footer').html(projectChangesButton);
         }
       });
 
@@ -646,7 +622,6 @@
       rootElement.on('click', '.project-form button.recalculate', function () {
         // clear the information text
         $('#information-content').empty();
-        var projectButtonsRecalculateAndChanges = showProjectButtonsRecalculateAndChanges();
         // get current project
         var currentProject = projectCollection.getCurrentProject();
         // add spinner
@@ -658,8 +633,8 @@
             // set project errors that were returned by the backend validations
             projectCollection.setProjectErrors(response.validationErrors);
             if (Object.keys(response.validationErrors).length === 0) {
-              // if no validation errors are present, show recalculate button and changes button
-              $('footer').html(projectButtonsRecalculateAndChanges);
+              // if no validation errors are present, show changes button and remove title
+              formCommon.setDisabledAndTitleAttributesById("changes-button", false, "");
             }
             // fetch the recalculated project links and redraw map (this also writes the validation errors on the screen and removes the spinner)
             projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), zoomlevels.getViewZoom(map) + 1, currentProject.project.id, projectCollection.getPublishableStatus());

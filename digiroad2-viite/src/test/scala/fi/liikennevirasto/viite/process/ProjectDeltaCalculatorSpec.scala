@@ -423,4 +423,63 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       secondSection.endMAddr should be(projectLinksWithCp.last._2.endAddrMValue)
     }
   }
+
+  test("Test partitioner When a roadpart is combined to another with a new link having other part reversed" +
+                 "Then Changetable should have a tranfer row reversed and a new row not reversed " +
+                 "and AET and LET values correctly.") {
+    runWithRollback {
+      val addresses = (0 to 5).map(i => {
+        createRoadAddress(i * 2, 2L)
+      })
+
+      val transferLinks = addresses.take(5).sortBy(_.startAddrMValue).map(a => {
+        val projectLink = toProjectLink(project, LinkStatus.Transfer)(a)
+        projectLink.copy(reversed = true, roadwayId = 2)
+      })
+
+      val maxAddr       = transferLinks.last.endAddrMValue
+      val lengthChange  = 2
+      val reversedTrans = transferLinks.map(pl => {
+        pl.copy(startAddrMValue = maxAddr - pl.endAddrMValue, endAddrMValue = maxAddr - pl.startAddrMValue)
+      })
+
+      val transferLinks206 = addresses.sortBy(_.startAddrMValue).map(a => {
+        val projectLink = toProjectLink(project, LinkStatus.Transfer)(a)
+        projectLink.copy(reversed = false, roadwayId = 3, startAddrMValue = maxAddr + lengthChange + a.startAddrMValue, endAddrMValue = maxAddr + lengthChange + a.endAddrMValue)
+      })
+
+      val projectLink = toProjectLink(project, LinkStatus.New)(addresses.head)
+      val newLink     = projectLink.copy(reversed = false, startAddrMValue = maxAddr, endAddrMValue = maxAddr + lengthChange)
+
+      val roadway205 = toRoadway(Seq(transferLinks.head.copy(startAddrMValue = 0, endAddrMValue = addresses.take(5).last.endAddrMValue))).copy(id = 2)
+      val roadway206 = toRoadway(Seq(transferLinks.head.copy(startAddrMValue = 0, endAddrMValue = addresses.last.endAddrMValue, roadPartNumber = 206))).copy(id = 3)
+      roadwayDAO.create(Seq(roadway205, roadway206))
+
+      val partitioned      = ProjectDeltaCalculator.partitionWithProjectLinks((reversedTrans :+ newLink )++ transferLinks206, Seq())
+      val adjustedSections = partitioned.adjustedSections
+      adjustedSections.size should be(3)
+
+      val (firstSection, secondSection) = adjustedSections.partition(_.roadwayNumber == -1000)
+      firstSection  should have(size(1))
+      secondSection should have(size(2))
+
+      firstSection.head.startMAddr  should be(maxAddr)
+      firstSection.head.endMAddr    should be(maxAddr + lengthChange)
+      firstSection.head.reversed    should be(false)
+      secondSection.head.startMAddr should be(maxAddr + lengthChange)
+      secondSection.head.endMAddr   should be(maxAddr + lengthChange + roadway206.endAddrMValue)
+      secondSection.head.reversed   should be(false)
+      secondSection.last.startMAddr should be(0)
+      secondSection.last.endMAddr   should be(maxAddr)
+      secondSection.last.reversed   should be(true)
+
+      val originalSections205 = partitioned.originalSections.find(p => p.roadPartNumberStart == 205 && p.roadwayNumber == 0).get
+      originalSections205.startMAddr should be(0)
+      originalSections205.endMAddr   should be(roadway205.endAddrMValue)
+
+      val originalSections206 = partitioned.originalSections.find(_.roadPartNumberStart == 206).get
+      originalSections206.startMAddr should be(0)
+      originalSections206.endMAddr   should be(roadway206.endAddrMValue)
+    }
+  }
 }

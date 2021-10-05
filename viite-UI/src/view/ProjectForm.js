@@ -139,20 +139,11 @@
         '<label class="highlighted">ALOITA VALITSEMALLA KOHDE KARTALTA.</label>' +
         '<div class="form-group" id="project-errors"></div>' +
         '</div></div></br></br>' +
-        '<footer>' + showProjectDisabledButtons() + '</footer>');
-    };
-
-    var selectedProjectLinkTemplateRecalculateButton = function (project) {
-      return _.template('' +
-          '<header>' +
-          formCommon.titleWithEditingTool(project) +
-          '</header>' +
-          '<div class="wrapper read-only">' +
-          '<div class="form form-horizontal form-dark">' +
-          '<label class="highlighted">ALOITA VALITSEMALLA KOHDE KARTALTA.</label>' +
-          '<div class="form-group" id="project-errors"></div>' +
-          '</div></div></br></br>' +
-          '<footer>' + showProjectRecalculateButton() + '</footer>');
+        '<footer>' +
+        '<div class="project-form form-controls">' +
+          formCommon.projectButtonsDisabled() +
+          '</div>' +
+          '</footer>');
     };
 
     var errorsList = function () {
@@ -165,20 +156,6 @@
       else
         return '';
 
-    };
-
-    var showProjectDisabledButtons = function () {
-      return '<div class="project-form form-controls">' +
-          '<button disabled title="Kaikki linkit tulee olla käsiteltyjä" class="recalculate btn btn-block btn-recalculate">Päivitä etäisyyslukemat</button>' +
-          '<button disabled title="Projektin tulee läpäistä validoinnit" id = "show-changes-button" class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
-        '<button disabled title="Hyväksy yhteenvedon jälkeen" id ="send-button" class="send btn btn-block btn-send">Hyväksy tieosoitemuutokset</button></div>';
-    };
-
-    var showProjectRecalculateButton = function () {
-      return '<div class="project-form form-controls">' +
-          '<button class="recalculate btn btn-block btn-recalculate">Päivitä etäisyyslukemat</button>' +
-          '<button disabled title="Projektin tulee läpäistä validoinnit" id = "show-changes-button" class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
-          '<button disabled title="Hyväksy yhteenvedon jälkeen" id="send-button" class="send btn btn-block btn-send">Hyväksy tieosoitemuutokset</button></div>';
     };
 
     var addSmallLabel = function (label) {
@@ -359,15 +336,21 @@
         currentProject.isDirty = false;
         jQuery('.modal-overlay').remove();
         eventbus.trigger('roadAddressProject:openProject', currentProject);
+        rootElement.html(selectedProjectLinkTemplateDisabledButtons(currentProject));
         var projectErrors = projectCollection.getProjectErrors();
         // errorCode 8 means there are projectLinks in the project with status "NotHandled"
         var highPriorityProjectErrors = projectErrors.filter((error) => error.errorCode === 8);
-        if (highPriorityProjectErrors.length > 0) {
-          // high priority errors
-          rootElement.html(selectedProjectLinkTemplateDisabledButtons(currentProject));
-        } else {
-          // normal priority errors OR no errors
-          rootElement.html(selectedProjectLinkTemplateRecalculateButton(currentProject));
+        if (highPriorityProjectErrors.length === 0) {
+          // if change table is open then button titles should tell user to close the change table
+          if ($('.change-table-frame').css('display') === "block") {
+            formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Etäisyyslukemia ei voida päivittää yhteenvetotaulukon ollessa auki");
+            formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Yhteenvetotaulukko on jo auki");
+          } else {
+            //if no high priority errors are present and change table is not open enable recalculate button and set title text to empty string
+            // set changes button title
+            formCommon.setDisabledAndTitleAttributesById("recalculate-button", false, "");
+            formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Projektin tulee läpäistä validoinnit");
+          }
         }
         _.defer(function () {
           applicationModel.selectLayer('roadAddressProject');

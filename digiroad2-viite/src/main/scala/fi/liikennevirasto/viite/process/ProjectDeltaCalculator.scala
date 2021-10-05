@@ -331,9 +331,18 @@ object ProjectDeltaCalculator {
       (pl.roadNumber, pl.roadPartNumber, pl.track, pl.reversed)
     }) ++ terminated.groupBy((_.roadwayNumber))
 
-    val sectioned    = grouped.mapValues((pls: Seq[ProjectLink]) => {
+
+    def reverseOriginalAddresses(pls: Seq[ProjectLink]): Seq[ProjectLink] = {
+      pls.groupBy(_.status).mapValues(v => {
+        v.zip(v.reverse).map(pl => {
+          pl._1.copy(originalStartAddrMValue = pl._2.originalStartAddrMValue, originalEndAddrMValue = pl._2.originalEndAddrMValue, reversed = if (pl._1.status == LinkStatus.New) false else pl._1.reversed)
+        })
+      }).values.flatten.toSeq
+    }
+
+    val sectioned = grouped.mapValues((pls: Seq[ProjectLink]) => {
       /* If reversed then reverse original addresses for combination logic. */
-      val vv = if (pls.exists(_.reversed)) pls.zip(pls.reverse).map(pl => pl._1.copy(originalStartAddrMValue = pl._2.originalStartAddrMValue, originalEndAddrMValue = pl._2.originalEndAddrMValue)) else pls
+      val vv = if (pls.exists(_.reversed)) reverseOriginalAddresses(pls) else pls
       combineWithProjectLinks(vv.sortBy(_.startAddrMValue), Seq(), allNonTerminatedProjectLinks.filter(pl => {
         pl.roadNumber == vv.head.roadNumber && pl.roadPartNumber == vv.head.roadPartNumber
       }))

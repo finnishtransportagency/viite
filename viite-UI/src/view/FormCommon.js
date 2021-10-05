@@ -32,22 +32,32 @@
         '<button id ="send-button" class="send btn btn-block btn-send">Hyväksy tieosoitemuutokset</button>';
     };
 
-    const projectButtonsRecalculateAndChanges = function () {
-      return  '<button class="recalculate btn btn-block btn-recalculate">Päivitä etäisyyslukemat</button>' +
-          '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
-        '<button disabled title="Hyväksy yhteenvedon jälkeen" id="send-button" class="send btn btn-block btn-send">Hyväksy tieosoitemuutokset</button>';
-    };
-
-    const projectButtonsRecalculate = function () {
-      return  '<button class="recalculate btn btn-block btn-recalculate">Päivitä etäisyyslukemat</button>' +
-          '<button disabled title="Projektin tulee läpäistä validoinnit" class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
-          '<button disabled title="Hyväksy yhteenvedon jälkeen" id="send-button" class="send btn btn-block btn-send">Hyväksy tieosoitemuutokset</button>';
-    };
-
     const projectButtonsDisabled = function () {
-      return  '<button disabled title="Kaikki linkit tulee olla käsiteltyjä" class="recalculate btn btn-block btn-recalculate">Päivitä etäisyyslukemat</button>' +
-          '<button disabled title="Projektin tulee läpäistä validoinnit" class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
-          '<button disabled title="Hyväksy yhteenvedon jälkeen" id="send-button" class="send btn btn-block btn-send">Hyväksy tieosoitemuutokset</button>';
+      return  '<button disabled id="recalculate-button" title="Kaikki linkit tulee olla käsiteltyjä" class="recalculate btn btn-block btn-recalculate">Päivitä etäisyyslukemat</button>' +
+          '<button disabled id="changes-button" title="Projektin tulee läpäistä validoinnit" class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
+          '<button disabled id="send-button" title="Hyväksy yhteenvedon jälkeen" id="send-button" class="send btn btn-block btn-send">Hyväksy tieosoitemuutokset</button>';
+    };
+
+    // set elements title and disabled attributes with the elements id
+    const setDisabledAndTitleAttributesById = function (id, disabled, titleText) {
+      $(`#${id}`).attr('disabled', disabled);
+      $(`#${id}`).attr('title', titleText);
+    };
+
+    // Disable form interactions (action dropdown, save and cancel buttons) and set titles
+    var disableFormInteractions = function () {
+      setDisabledAndTitleAttributesById("dropDown_0", true, 'Sulje yhteenvetotaulukko muokataksesi projektia');
+      setDisabledAndTitleAttributesById("saveButton", true, 'Sulje yhteenvetotaulukko muokataksesi projektia');
+      setDisabledAndTitleAttributesById("cancelButton", true, 'Sulje yhteenvetotaulukko muokataksesi projektia');
+      setDisabledAndTitleAttributesById("changeDirectionButton", true, 'Sulje yhteenvetotaulukko muokataksesi projektia');
+    };
+
+    // Enable form interactions (action dropdown, save and cancel buttons) and set titles to empty string
+    var enableFormInteractions = function () {
+      setDisabledAndTitleAttributesById("dropDown_0", false, '');
+      setDisabledAndTitleAttributesById("saveButton", false, '');
+      setDisabledAndTitleAttributesById("cancelButton", false, '');
+      setDisabledAndTitleAttributesById("changeDirectionButton", false, '');
     };
 
     const newRoadAddressInfo = function (project, selected, links, road) {
@@ -205,7 +215,7 @@
       const reversedInGroup = _.uniq(_.map(selected, 'reversed'));
       const isPartialReversed = reversedInGroup.length > 1;
       return '<div hidden class="' + prefix + 'form-group changeDirectionDiv" style="margin-top:15px">' +
-        '<button class="' + prefix + 'form-group changeDirection btn btn-primary">Käännä tieosan kasvusuunta</button>' +
+        '<button id="changeDirectionButton" class="' + prefix + 'form-group changeDirection btn btn-primary">Käännä tieosan kasvusuunta</button>' +
         directionChangedInfo(selected, isPartialReversed) +
         '</div>';
     };
@@ -236,8 +246,8 @@
 
     const actionButtons = function (btnPrefix, notDisabled) {
       return '<div class="' + btnPrefix + 'form form-controls" id="actionButtons">' +
-        '<button class="update btn btn-save" ' + (notDisabled ? '' : 'disabled') + ' style="width:auto;">Tallenna</button>' +
-        '<button class="cancelLink btn btn-cancel">Peruuta</button>' +
+        '<button id="saveButton" class="update btn btn-save" ' + (notDisabled ? '' : 'disabled') + ' style="width:auto;">Tallenna</button>' +
+        '<button id="cancelButton" class="cancelLink btn btn-cancel">Peruuta</button>' +
         '</div>';
     };
 
@@ -383,10 +393,11 @@
       captionTitle: captionTitle,
       projectButtons: projectButtons,
       projectButtonsDisabled: projectButtonsDisabled,
-      projectButtonsRecalculate: projectButtonsRecalculate,
-      projectButtonsRecalculateAndChanges: projectButtonsRecalculateAndChanges,
       staticField: staticField,
-      getProjectErrors: getProjectErrors
+      getProjectErrors: getProjectErrors,
+      setDisabledAndTitleAttributesById: setDisabledAndTitleAttributesById,
+      disableFormInteractions: disableFormInteractions,
+      enableFormInteractions: enableFormInteractions
     };
   };
 }(this));
