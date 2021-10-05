@@ -483,7 +483,10 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Test getRotatingTRProjectId, removeRotatingTRId and addRotatingTRProjectId  When project has just been created, when project has no TR_ID and when project already has a TR_ID Then returning no TR_ID, then returning a TR_ID") {
+  /** @deprecated Tierekisteri connection has been removed from Viite. TRId to be removed, too. */
+  test("Test getRotatingTRProjectId, removeRotatingTRId and addRotatingTRProjectId" +
+    "When project has just been created, when project has no TR_ID and when project already has a TR_ID " +
+    "Then returning no TR_ID, then returning a TR_ID") {
     runWithRollback {
       val projectId = Sequences.nextViiteProjectId
       val rap = Project(projectId, ProjectState.apply(3), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], Seq(), None)
@@ -551,7 +554,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Test projectService.preserveSingleProjectInUpdateQueue() " +
+  test("Test projectService.preserveSingleProjectToBeTakenToRoadNetwork() " +
     "When project has been created with no reserved parts nor project links " +
     "Then return project status info should be \"\" ") {
     runWithRollback {
@@ -563,12 +566,11 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         projectService.preserveSingleProjectToBeTakenToRoadNetwork()
         val project = projectService.fetchProjectById(projectId).head
         project.statusInfo.getOrElse("").length should be(0)
-        projectService.preserveSingleProjectToBeTakenToRoadNetwork()
       }
     }
   }
 
-  test("Test projectService.preserveSingleProjectInUpdateQueue() " +
+  test("Test projectService.preserveSingleProjectToBeTakenToRoadNetwork() " +
     "When project has been created with no reserved parts nor project links " +
     "Then return project status info should be \"Failed to find TR-ID\" ") {
     runWithRollback {
