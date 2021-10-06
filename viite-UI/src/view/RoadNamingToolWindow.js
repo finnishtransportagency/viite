@@ -25,7 +25,6 @@
       '</div>');
 
     nameToolSearchWindow.append('<div id="road-list" style="width:810px; height:365px; overflow:auto;"></div>');
-    nameToolSearchWindow.append('<label class="content-new footnote-label"><span>Huom! Tallennetut muutokset päivittyvät Tierekisteriin noin 5 min. kuluessa.</span></label>');
 
     var staticFieldRoadNumber = function (dataField, roadId, fieldName) {
       var field;
