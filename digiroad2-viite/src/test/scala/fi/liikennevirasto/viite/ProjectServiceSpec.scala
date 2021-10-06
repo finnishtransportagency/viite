@@ -20,7 +20,7 @@ import fi.liikennevirasto.viite.Dummies._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, RoadAddressCP}
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous, EndOfRoad}
-import fi.liikennevirasto.viite.dao.ProjectState.Sent2TR
+import fi.liikennevirasto.viite.dao.ProjectState.{Incomplete, UpdatingToRoadNetwork}
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectRoadwayChange, RoadwayDAO, _}
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLinkLike}
@@ -156,7 +156,13 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   private def toProjectLink(project: Project, status: LinkStatus)(roadAddress: RoadAddress): ProjectLink = {
-    ProjectLink(id = NewIdValue, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track, roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate, roadAddress.endDate, createdBy = Option(project.createdBy), roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue, roadAddress.sideCode, roadAddress.calibrationPointTypes, (roadAddress.startCalibrationPointType, roadAddress.endCalibrationPointType), roadAddress.geometry, project.id, status, AdministrativeClass.State, roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), if (status == LinkStatus.New) 0 else roadAddress.id, if (status == LinkStatus.New) 0 else roadAddress.linearLocationId, roadAddress.ely, reversed = false, None, roadAddress.adjustedTimestamp)
+    ProjectLink(id = NewIdValue, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track, roadAddress.discontinuity,
+      roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate, roadAddress.endDate,
+      createdBy = Option(project.createdBy), roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue, roadAddress.sideCode,
+      roadAddress.calibrationPointTypes, (roadAddress.startCalibrationPointType, roadAddress.endCalibrationPointType), roadAddress.geometry, project.id, status, AdministrativeClass.State,
+      roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry),
+      if (status == LinkStatus.New) 0 else roadAddress.id,
+      if (status == LinkStatus.New) 0 else roadAddress.linearLocationId, roadAddress.ely, reversed = false, None, roadAddress.adjustedTimestamp)
   }
 
   private def toProjectAddressLink(ral: RoadAddressLinkLike): ProjectAddressLink = {
@@ -477,7 +483,10 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Test getRotatingTRProjectId, removeRotatingTRId and addRotatingTRProjectId  When project has just been created, when project has no TR_ID and when project already has a TR_ID Then returning no TR_ID, then returning a TR_ID") {
+  /** @deprecated Tierekisteri connection has been removed from Viite. TRId to be removed, too. */
+  test("Test getRotatingTRProjectId, removeRotatingTRId and addRotatingTRProjectId" +
+    "When project has just been created, when project has no TR_ID and when project already has a TR_ID " +
+    "Then returning no TR_ID, then returning a TR_ID") {
     runWithRollback {
       val projectId = Sequences.nextViiteProjectId
       val rap = Project(projectId, ProjectState.apply(3), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], Seq(), None)
@@ -545,28 +554,31 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Test projectService.updateProjectsWaitingResponseFromTR() When project has been created with no reserved parts nor project links Then return project status info should be \"\" ") {
+  test("Test projectService.preserveSingleProjectToBeTakenToRoadNetwork() " +
+    "When project has been created with no reserved parts nor project links " +
+    "Then return project status info should be \"\" ") {
     runWithRollback {
       val projectId = Sequences.nextViiteProjectId
-      val rap = Project(projectId, ProjectState.apply(2), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], Seq(), None)
+      val rap = Project(projectId, ProjectState.apply(ProjectState.InUpdateQueue.value), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], Seq(), None)
       runWithRollback {
         projectDAO.create(rap)
         projectDAO.assignNewProjectTRId(projectId)
-        projectService.updateProjectsWaitingResponseFromTR()
+        projectService.preserveSingleProjectToBeTakenToRoadNetwork()
         val project = projectService.fetchProjectById(projectId).head
         project.statusInfo.getOrElse("").length should be(0)
-        projectService.updateProjectsWaitingResponseFromTR()
       }
     }
   }
 
-  test("Test projectService.updateProjectsWaitingResponseFromTR() When project has been created with no reserved parts nor project links Then return project status info should be \"Failed to find TR-ID\" ") {
+  test("Test projectService.preserveSingleProjectToBeTakenToRoadNetwork() " +
+    "When project has been created with no reserved parts nor project links " +
+    "Then return project status info should be \"Failed to find TR-ID\" ") {
     runWithRollback {
       val projectId = Sequences.nextViiteProjectId
-      val rap = Project(projectId, ProjectState.apply(2), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], Seq(), None)
+      val rap = Project(projectId, ProjectState.apply(ProjectState.InUpdateQueue.value), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], Seq(), None)
       runWithRollback {
         projectDAO.create(rap)
-        projectService.updateProjectsWaitingResponseFromTR()
+        projectService.preserveSingleProjectToBeTakenToRoadNetwork()
         val project = projectService.fetchProjectById(projectId).head
         project.statusInfo.getOrElse("") contains "Failed to find TR-ID" should be(true)
       }
@@ -881,12 +893,14 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Test projectService.parsePrefillData() When getting road name data from the Project Link Name table Then return the  correct info with road name pre filled and the correct sources") {
+  test("Test projectService.parsePrefillData() " +
+    "When getting road name data from the Project Link Name table " +
+    "Then return the correct info with road name pre filled, and the correct sources") {
     runWithRollback{
 
       val user = Some("user")
 
-      val roadAddressProject = Project(0L, Sent2TR, "split", user.get, DateTime.now(), user.get,
+      val roadAddressProject = Project(0L, Incomplete, "split", user.get, DateTime.now(), user.get,
         DateTime.now().plusMonths(2), DateTime.now(), "", Seq(), Seq(), None, None)
 
       val project = projectService.createRoadLinkProject(roadAddressProject)
@@ -899,12 +913,14 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Test projectService.parsePrefillData() When road name data exists both in Project Link Name table and Road_Name table Then return the correct info with road name pre filled and the correct sources, in this case RoadAddressSource") {
+  test("Test projectService.parsePrefillData() " +
+    "When road name data exists both in Project Link Name table and Road_Name table " +
+    "Then return the correct info with road name pre filled and the correct sources, in this case RoadAddressSource") {
     runWithRollback{
 
       val user = Some("user")
 
-      val roadAddressProject = Project(0L, Sent2TR, "split", user.get, DateTime.now(), user.get,
+      val roadAddressProject = Project(0L, Incomplete, "split", user.get, DateTime.now(), user.get,
         DateTime.now().plusMonths(2), DateTime.now(), "", Seq(), Seq(), None, None)
 
       val project = projectService.createRoadLinkProject(roadAddressProject)
@@ -1733,52 +1749,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  // TODO Mock TR client has changed and it affects this test
-  ignore("Test publishProject When sending changes to TR and provoking a IOException exception when publishing a project Then check if the project state is changed to 9") {
-    var count = 0
-    val roadNumber = 5L
-    val part = 207L
-    val roadLink = RoadLink(5170939L, Seq(Point(535605.272, 6982204.22, 85.90899999999965)), 540.3960283713503, State,
-      99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"),
-      Map("MUNICIPALITYCODE" -> BigInt.apply(749)), InUse, NormalLinkInterface)
-    runWithRollback {
-      val countCurrentProjects = projectService.getAllProjects
-      val id = 0
-      val addresses = List(ProjectReservedPart(5: Long, roadNumber: Long, part: Long, Some(5L), Some(Discontinuity.apply("jatkuva")),
-        Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
-      val project = Project(id, ProjectState.Incomplete, "TestProject", "TestUser", DateTime.now(),
-        "TestUser", DateTime.parse("1970-01-01"), DateTime.now(), "Some additional info", Seq(), Seq(), None)
-      val savedProject = projectService.createRoadLinkProject(project)
-      mockForProject(savedProject.id, roadwayAddressMapper.getRoadAddressesByRoadway(roadwayDAO.fetchAllByRoadAndPart(roadNumber, part)).map(toProjectLink(savedProject)))
-      projectService.saveProject(savedProject.copy(reservedParts = addresses))
-      val countAfterInsertProjects = projectService.getAllProjects
-      count = countCurrentProjects.size + 1
-      countAfterInsertProjects.size should be(count)
-      projectService.allLinksHandled(savedProject.id) should be(false)
-      val projectLinks = projectLinkDAO.fetchProjectLinks(savedProject.id)
-      val partitioned = projectLinks.partition(_.roadPartNumber == part)
-      val linkIds207 = partitioned._1.map(_.linkId).toSet
-      reset(mockRoadLinkService)
-      when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]])).thenAnswer(
-        toMockAnswer(projectLinks, roadLink)
-      )
-      projectService.updateProjectLinks(savedProject.id, Set(), linkIds207.toSeq, LinkStatus.Transfer, "-", roadNumber, part, 0, Option.empty[Int]) should be(None)
-      projectService.updateProjectLinks(savedProject.id, Set(), Seq(5168510), LinkStatus.Terminated, "-", roadNumber, part, 0, Option.empty[Int]) should be(None)
-      projectService.allLinksHandled(savedProject.id) should be(true)
-
-      projectService.updateProjectLinks(project.id, Set(), Seq(5168540), LinkStatus.Terminated, "-", roadNumber, part, 0, Option.empty[Int]) should be(None)
-      //         This will result in a IO exception being thrown and caught inside the publish, making the update of the project for the state SendingToTR
-      //         If the tests ever get a way to have TR connectivity then this needs to be somewhat addressed
-
-      projectService.publishProject(savedProject.id)
-      val currentProjectStatus = projectDAO.fetchProjectStatus(savedProject.id)
-      currentProjectStatus.isDefined should be(true)
-      currentProjectStatus.get.value should be(ProjectState.SendingToTR.value)
-    }
-
-  }
-
   test("Test fillRoadNames When creating one project link for one new road name Then method should get the road name of the created project links") {
     val roadNumber = 5L
     val roadPartNumber = 207L
@@ -1839,7 +1809,8 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val namesBeforeUpdate = RoadNameDAO.getLatestRoadName(70001)
       namesBeforeUpdate.isEmpty should be(true)
       when(mockNodesAndJunctionsService.expireObsoleteNodesAndJunctions(any[Seq[ProjectLink]], any[Option[DateTime]], any[String])).thenReturn(Seq())
-      projectService.updateRoadwaysAndLinearLocationsWithProjectLinks(ProjectState.Saved2TR, projectId)
+      projectDAO.updateProjectStatus(projectId, UpdatingToRoadNetwork)
+      projectService.updateRoadwaysAndLinearLocationsWithProjectLinks(projectId)
 
       val project = projectService.getSingleProjectById(projectId)
       val namesAfterUpdate = RoadNameDAO.getLatestRoadName(70001)
@@ -2583,7 +2554,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   //TODO remove after cleaning all floating code
-  /*test("If the suplied, old, road address has a valid_to < current_date then the outputted, new, road addresses are floating") {
+  /*test("If the supplied, old, road address has a valid_to < current_date then the outputted, new, road addresses are floating") {
     val road = 5L
     val roadPart = 205L
     val origStartM = 1024L
@@ -2596,7 +2567,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
     val linearLocationId = Sequences.nextLinearLocationId
     val user = Some("user")
-    val project = Project(-1L, Sent2TR, "split", user.get, DateTime.now(), user.get,
+    val project = Project(-1L, Incomplete, "split", user.get, DateTime.now(), user.get,
       DateTime.now().plusMonths(2), DateTime.now(), "", Seq(), None, None)
 
     // Original road address: 1024 -> 1547
@@ -2906,7 +2877,8 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sqlu"""Insert into ROADWAY_CHANGES_LINK (ROADWAY_CHANGE_ID,PROJECT_ID,PROJECT_LINK_ID) values ('1000758','1000351','1000364')""".execute
       sqlu"""Insert into ROADWAY_CHANGES_LINK (ROADWAY_CHANGE_ID,PROJECT_ID,PROJECT_LINK_ID) values ('1000759','1000351','1000358')""".execute
       when(mockNodesAndJunctionsService.expireObsoleteNodesAndJunctions(any[Seq[ProjectLink]], any[Option[DateTime]], any[String])).thenReturn(Seq())
-      projectService.updateRoadwaysAndLinearLocationsWithProjectLinks(ProjectState.Saved2TR, 1000351)
+      projectDAO.updateProjectStatus(1000351, UpdatingToRoadNetwork)
+      projectService.updateRoadwaysAndLinearLocationsWithProjectLinks(1000351)
 
       val roadwayPoints = roadwayPointDAO.fetch(Seq((166883763L, 0l)))
 

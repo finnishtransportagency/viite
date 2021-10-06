@@ -3,7 +3,6 @@ package fi.liikennevirasto.viite.dao
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.ProjectState.{Incomplete, Saved2TR}
 import org.joda.time.DateTime
 import org.slf4j.{Logger, LoggerFactory}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -20,30 +19,28 @@ sealed trait ProjectState {
 
 object ProjectState {
 
-  val values = Set(Closed, Incomplete, Sent2TR, TRProcessing, Saved2TR,
-    Deleted, ErrorInViite, SendingToTR, Unknown)
+  val values = Set(Incomplete, Deleted, ErrorInViite, InUpdateQueue, UpdatingToRoadNetwork, Accepted, Unknown)
 
   // These states are final
-  val nonActiveStates = Set(ProjectState.Closed.value, ProjectState.Saved2TR.value)
+  val finalProjectStates = Set(ProjectState.Accepted.value)
 
   def apply(value: Long): ProjectState = {
-    values.find(_.value == value).getOrElse(Closed)
+    values.find(_.value == value).getOrElse(Unknown)
   }
 
-  case object Closed extends ProjectState {def value = 0; def description = "Suljettu"}
   case object Incomplete extends ProjectState {def value = 1; def description = "Keskeneräinen"}
-  case object Sent2TR extends ProjectState {def value = 2; def description = "Lähetetty tierekisteriin"}
-  case object TRProcessing extends ProjectState {def value = 4; def description = "Tierekisterissä käsittelyssä"}
-  case object Saved2TR extends ProjectState{def value = 5; def description = "Viety tierekisteriin"}
   case object Deleted extends ProjectState {def value = 7; def description = "Poistettu projekti"}
   case object ErrorInViite extends ProjectState {def value = 8; def description = "Virhe Viite-sovelluksessa"}
-  case object SendingToTR extends ProjectState {def value = 9; def description = "Lähettää Tierekisteriin"}
+  case object InUpdateQueue extends ProjectState {def value = 10; def description = "Odottaa tieverkolle päivittämistä"}
+  case object UpdatingToRoadNetwork extends ProjectState {def value = 11; def description = "Päivitetään tieverkolle"}
+  case object Accepted extends ProjectState {def value = 12; def description = "Hyväksytty"}
   case object Unknown extends ProjectState {def value = 99; def description = "Tuntematon"}
 }
 
 case class Project(id: Long, status: ProjectState, name: String, createdBy: String, createdDate: DateTime,
                    modifiedBy: String, startDate: DateTime, dateModified: DateTime, additionalInfo: String,
-                   reservedParts: Seq[ProjectReservedPart], formedParts: Seq[ProjectReservedPart], statusInfo: Option[String], coordinates: Option[ProjectCoordinates] = Some(ProjectCoordinates())) {
+                   reservedParts: Seq[ProjectReservedPart], formedParts: Seq[ProjectReservedPart],
+                   statusInfo: Option[String], coordinates: Option[ProjectCoordinates] = Some(ProjectCoordinates())) {
   def isReserved(roadNumber: Long, roadPartNumber: Long): Boolean = {
     reservedParts.exists(p => p.roadNumber == roadNumber && p.roadPartNumber == roadPartNumber)
   }
@@ -71,7 +68,7 @@ class ProjectDAO {
       s"""SELECT P.ID
              FROM PROJECT P
             JOIN PROJECT_LINK PL ON P.ID=PL.PROJECT_ID
-            WHERE P.STATE = ${Incomplete.value} AND PL.LINK_ID=$linkId"""
+            WHERE P.STATE = ${ProjectState.Incomplete.value} AND PL.LINK_ID=$linkId"""
     Q.queryNA[Long](query).list
   }
 
@@ -95,6 +92,7 @@ class ProjectDAO {
     Q.queryNA[Long](query).list
   }
 
+  @deprecated ("Tierekisteri connection has been removed from Viite. TRId to be removed, too.")
   def fetchByTRId(trProjectId: Long): Option[Project] = {
     time(logger, "Fetch project by tr_id") {
       fetch(query => s"""$query where tr_id = $trProjectId""").headOption
@@ -128,10 +126,12 @@ class ProjectDAO {
     }
   }
 
+  @deprecated ("Tierekisteri connection has been removed from Viite. TRId to be removed, too.")
   def assignNewProjectTRId(projectId: Long): Unit = {
     Q.updateNA(s"UPDATE PROJECT SET TR_ID = nextval('viite_project_seq') WHERE ID= $projectId").execute
   }
 
+  @deprecated ("Tierekisteri connection has been removed from Viite. TRId to be removed, too.")
   def removeProjectTRId(projectId: Long): Unit = {
     Q.updateNA(s"UPDATE PROJECT SET TR_ID = NULL WHERE ID= $projectId").execute
   }
@@ -144,6 +144,7 @@ class ProjectDAO {
     Q.updateNA(s"UPDATE PROJECT SET COORD_X = ${coordinates.x},COORD_Y = ${coordinates.y}, ZOOM = ${coordinates.zoom} WHERE ID= $projectId").execute
   }
 
+  @deprecated ("Tierekisteri connection has been removed from Viite. TRId to be removed, too.")
   def fetchTRIdByProjectId(projectId: Long): Option[Long] = {
     Q.queryNA[Long](s"Select tr_id From Project WHERE Id=$projectId AND tr_id IS NOT NULL ").list.headOption
   }
@@ -152,32 +153,26 @@ class ProjectDAO {
     sqlu""" update project set state=${state.value} WHERE id=$projectID""".execute
   }
 
-  def fetchProjectTRIdsWithWaitingTRStatus: List[Long] = {
-    val query =
-      s"""
-         SELECT tr_id
-         FROM project
-         WHERE state=${ProjectState.Sent2TR.value} OR state=${ProjectState.TRProcessing.value}
-       """
-    Q.queryNA[Long](query).list
-  }
-
-  def fetchProjectIdsWithWaitingTRStatus: List[Long] = {
+  /** Returns an id of a single project waiting for being updated to the road network.
+    * @throws NoSuchElementException (from DB query) in case there is no such project available */
+  def fetchSingleProjectIdWithInUpdateQueueStatus: Long = {
     val query =
       s"""
          SELECT id
          FROM project
-         WHERE state=${ProjectState.Sent2TR.value} OR state=${ProjectState.TRProcessing.value}
+         WHERE state=${ProjectState.InUpdateQueue.value}
+         LIMIT 1
        """
-    Q.queryNA[Long](query).list
+    Q.queryNA[Long](query).first
   }
 
-  def fetchProjectIdsWithSendingToTRStatus: List[Long] = {
+  /** @return projects, that are currently at either <i>InUpdateQueue</i>, or in <i>UpdatingToRoadNetwork</i> ProjectState */
+  def fetchProjectIdsWithToBePreservedStatus: List[Long] = {
     val query =
       s"""
          SELECT id
          FROM project
-         WHERE state=${ProjectState.SendingToTR.value}
+         WHERE state=${ProjectState.InUpdateQueue.value} OR state=${ProjectState.UpdatingToRoadNetwork.value}
        """
     Q.queryNA[Long](query).list
   }

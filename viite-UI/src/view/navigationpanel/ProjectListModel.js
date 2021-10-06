@@ -83,7 +83,7 @@
       '</div>');
     projectList.append('<div id="project-list" style="width:820px; height:390px; overflow:auto;"></div>');
     projectList.append('<div class="content-footer">' +
-      '<label class="tr-visible-checkbox checkbox"><input type="checkbox" name="TRProjectsVisible" value="TRProjectsVisible" id="TRProjectsVisibleCheckbox">Näytä kaikki Tierekisteriin viedyt projektit</label>' +
+      '<label class="tr-visible-checkbox checkbox"><input type="checkbox" name="OldAcceptedProjectsVisible" value="OldAcceptedProjectsVisible" id="OldAcceptedProjectsVisibleCheckbox">Näytä kaikki tieverkolle päivitetyt projektit</label>' +
       '<i id="sync" class="btn-icon btn-refresh fa fa-sync-alt" title="Päivitä lista"></i>' +
       '</div>');
 
@@ -164,11 +164,12 @@
 
       var createProjectList = function (projects) {
         var unfinishedProjects = _.filter(projects, function (proj) {
-          if (proj.statusCode === projectStatus.Saved2TR.value) {
+          if (proj.statusCode === projectStatus.Accepted.value) {
             var hoursInDay = 24;
             var millisecondsToHours = 1000 * 60 * 60;
-            //check if show all TR projects checkbox is checked or the project has been sent to TR less than two days ago
-            return $('#TRProjectsVisibleCheckbox')[0].checked || (new Date() - new Date(proj.dateModified.split('.').reverse().join('-'))) / millisecondsToHours < hoursInDay * 2;
+            //check whether the show all projects checkbox is checked or the project has been saved to Road Network less than two days ago
+            return $('#OldAcceptedProjectsVisibleCheckbox')[0].checked ||
+                (new Date() - new Date(proj.dateModified.split('.').reverse().join('-'))) / millisecondsToHours < hoursInDay * 2;
           }
           return _.includes(statusToDisplay, proj.statusCode);
         });
@@ -181,7 +182,7 @@
           sortedProjects.reverse();
 
         var triggerOpening = function (event, button) {
-          $('#TRProjectsVisibleCheckbox').prop('checked', false);
+          $('#OldAcceptedProjectsVisibleCheckbox').prop('checked', false);
           if (button.length > 0 && button[0].className === "project-open btn btn-new-error") {
             projectCollection.reOpenProjectById(parseInt(event.currentTarget.value));
             eventbus.once("roadAddressProject:reOpenedProject", function (_successData) {
@@ -219,8 +220,9 @@
           $('#project-list').html(html);
           $('[id*="open-project"]').click(function (event) {
             var button = $(this);
-            if (parseInt(button.attr("data-projectStatus")) === projectStatus.SendingToTR.value) {
-              new GenericConfirmPopup("Projektin muokkaaminen ei ole mahdollista, koska sitä lähetetään Tierekisteriin. Haluatko avata sen?", {
+            if (parseInt(button.attr("data-projectStatus")) === projectStatus.InUpdateQueue.value
+              || parseInt(button.attr("data-projectStatus")) === projectStatus.UpdatingToRoadNetwork.value) {
+              new GenericConfirmPopup("Projektin muokkaaminen ei ole mahdollista, koska sitä päivitetään tievetkolle. Haluatko avata sen?", {
                 successCallback: function () {
                   triggerOpening(event, button);
                 },
@@ -272,7 +274,7 @@
         filterByUser();
       });
 
-      $('#TRProjectsVisibleCheckbox').change(function () {
+      $('#OldAcceptedProjectsVisibleCheckbox').change(function () {
         createProjectList(projectArray);
         filterByUser();
       });
@@ -282,7 +284,7 @@
       });
 
       projectList.on('click', 'button.new', function () {
-        $('#TRProjectsVisibleCheckbox').prop('checked', false);
+        $('#OldAcceptedProjectsVisibleCheckbox').prop('checked', false);
         $('.project-list').append('<div class="modal-overlay confirm-modal"><div class="modal-dialog"></div></div>');
         eventbus.trigger('roadAddress:newProject');
         if (applicationModel.isReadOnly()) {
@@ -293,7 +295,7 @@
       projectList.on('click', 'button.close', function () {
         $('#project-list').find('table').hide();
         $('.project-item').remove();
-        $('#TRProjectsVisibleCheckbox').prop('checked', false);
+        $('#OldAcceptedProjectsVisibleCheckbox').prop('checked', false);
         hide();
       });
 
