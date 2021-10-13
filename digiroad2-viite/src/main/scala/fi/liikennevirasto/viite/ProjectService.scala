@@ -1814,6 +1814,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                        s" to road network. ${t.getMessage}", t)
           projectDAO.updateProjectStatus(projectId, ProjectState.ErrorInViite)
         }
+        case t: InvalidOrderingException => {
+          logger.error(s"Invalid link ordering while preserving the project $projectId" +
+                       s" to road network. ${t.getMessage}", t)
+          projectDAO.updateProjectStatus(projectId, ProjectState.ErrorInViite)
+        }
         // re-throw unexpected errors
         case t: Exception => {
           logger.warn(s"Unexpected exception while preserving the project $projectId", t.getMessage)
@@ -2092,7 +2097,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val linsToFuseIds = linsToFuse.flatten.map(_.id).toSeq
       val fusedLinearLocations = linsToFuse.map(lls => {
         val maxOrderNum = lls.map(_.orderNumber).max
-        val firstLl = lls.find(_.orderNumber == 1).get
+
+        // make sure we have the order number 1 in place. If not, throw an Exception
+        lls.find(_.orderNumber == 1) match {
+          case None => throw new InvalidOrderingException("Deficient ordering at linear location ordering")
+          case Some(_) => Unit  // Do nothing; we just proceed.
+        }
+        // ok, now we know we have the order number 1 available; get it
+        val firstLl =  lls.find(_.orderNumber == 1).get
+
         val lastLl = lls.find(_.orderNumber == maxOrderNum).get
         val geometries = lls.sortBy(_.orderNumber).flatMap(_.geometry).distinct
         firstLl.copy(calibrationPoints = (lastLl.startCalibrationPoint, lastLl.endCalibrationPoint), geometry = geometries)
