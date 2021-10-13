@@ -1787,18 +1787,21 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     var projectId: Long = -1L // dummy
 
     // try preserving the project to the db, in there was one to be updated
-    withDynTransaction {
       try {
         projectIdOpt match {
           case None =>
             logger.debug(s"No projects to update to the road network.")
           case Some(id) => {
+          withDynTransaction {
             projectId = id
             time(logger, s"Preserve the project $projectId to the road network") {
               preserveProjectToDB(projectId)
             }
+            // got through without Exceptions -> the project was successfully preserved
+            projectDAO.updateProjectStatus(projectId, ProjectState.Accepted)
           }
         }
+      }
       } catch {
         // in case of an expected error, set project status to ProjectState.ErrorInViite
         case t: InvalidAddressDataException => {
@@ -1818,9 +1821,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           throw t  // Rethrow the unexpected error.
         }
       }
-      // got through without Exceptions -> the project was successfully preserved
-      projectDAO.updateProjectStatus(projectId, ProjectState.Accepted)
-    }
   }
 
   def getProjectState(projectId: Long): Option[ProjectState] = {
