@@ -5,7 +5,7 @@ import java.sql.BatchUpdateException
 import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.AdministrativeClass.State
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{FrozenLinkInterface, NormalLinkInterface}
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
@@ -793,6 +793,36 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
+  test("Test createProjectLinks When adding new links to a new road and roadpart Then discontinuity should be on correct link.") {
+    def runTest(reversed: Boolean) = {
+      val projectId      = Sequences.nextViiteProjectId
+      val roadNumber     = 5
+      val roadPartNumber = 207
+      val user           = "TestUser"
+      val continuous     = Continuous
+      val discontinuity  = EndOfRoad
+      val rap            = Project(projectId, ProjectState.apply(1), "TestProject", user, DateTime.parse("2700-01-01"), user, DateTime.parse("1972-03-03"), DateTime.parse("2700-01-01"), "Some additional info", List.empty[ProjectReservedPart], Seq(), None)
+      val projectLinks   = Seq(toProjectLink(rap, LinkStatus.New)(RoadAddress(Sequences.nextRoadwayId, 123, roadNumber, roadPartNumber, AdministrativeClass.Unknown, Track.Combined, continuous, 0L, 0L, Some(DateTime.parse("1963-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 12345L, 0.0, 9.8, SideCode.Unknown, 0, (None, None), Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)), toProjectLink(rap, LinkStatus.New)(RoadAddress(Sequences.nextRoadwayId, 124, roadNumber, roadPartNumber, AdministrativeClass.Unknown, Track.Combined, continuous, 0L, 0L, Some(DateTime.parse("1963-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 12346L, 0.0, 19.8, SideCode.Unknown, 0, (None, None), Seq(Point(0.0, 9.8), Point(9.8, 29.6)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)))
+      projectDAO.create(rap)
+      projectService.saveProject(rap)
+      projectReservedPartDAO.reserveRoadPart(projectId, roadNumber, roadPartNumber, user)
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]])).thenReturn(projectLinks.map(toRoadLink))
+
+      val longs            = if (reversed) projectLinks.map(_.linkId).reverse else projectLinks.map(_.linkId)
+      val message1project1 = projectService.createProjectLinks(longs, rap.id, roadNumber, roadPartNumber, Track.Combined, discontinuity, State, NormalLinkInterface, 8, user, "new road")
+      val links            = projectLinkDAO.fetchProjectLinks(projectId).toList
+      message1project1("success") shouldBe true
+      val startLink = links.find(_.linkId == longs.head).get
+      val endLink   = links.find(_.linkId == longs.last).get
+
+      startLink.discontinuity should be(continuous)
+      endLink.discontinuity should be(discontinuity)
+    }
+
+    runWithRollback {runTest(false)}
+    runWithRollback {runTest(true)}
+  }
+
   test("Test addNewLinksToProject When adding new links to a new road and roadpart Then values should be correct.") {
     runWithRollback {
       val projectId      = Sequences.nextViiteProjectId
@@ -871,6 +901,47 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
+  test("Test defaultSectionCalculatorStrategy.assignMValues() " +
+       "When a new road and part has the end of road set " +
+       "Then calculated addresses should increase towards the end of the road.") {
+
+    def runTest(reversed: Boolean) = {
+      val user           = "TestUser"
+      val roadNumber     = 10000
+      val roadPartNumber = 1
+      val project_id     = Sequences.nextViiteProjectId
+
+      val headLink    = ProjectLink(1000, roadNumber, roadPartNumber, Combined, Continuous, 0, 0, 0, 0, None, None, Some(user), 5174997, 0.0, 152.337, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), List(Point(536938.0, 6984394.0, 0.0), Point(536926.0, 6984546.0, 0.0)), project_id, LinkStatus.New, AdministrativeClass.Municipality, FrozenLinkInterface, 152.337, 0, 0, 8, false, None, 1548802841000L, 0, Some("testroad"), None, None, None, None, None, None)
+      val lastLink    = ProjectLink(1009, roadNumber, roadPartNumber, Combined, Continuous, 0, 0, 0, 0, None, None, Some(user), 5174584, 0.0, 45.762, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), List(Point(536528.0, 6984439.0, 0.0), Point(536522.0, 6984484.0, 0.0)), project_id, LinkStatus.New, AdministrativeClass.Municipality, FrozenLinkInterface, 45.762, 0, 0, 8, false, None, 1551999616000L, 0, Some("testroad"), None, None, None, None, None, None)
+      val middleLinks = Seq(
+        ProjectLink(1001,roadNumber,roadPartNumber,Combined,Continuous,0,0,0,0,None,None,Some(user),5175001,0.0,72.789,SideCode.Unknown,(NoCP,NoCP),(NoCP,NoCP),List(Point(536938.0,6984394.0,0.0), Point(536865.0,6984398.0,0.0)),project_id,LinkStatus.New,AdministrativeClass.Municipality,FrozenLinkInterface,72.789,0,0,8,false,None,1500418814000L,0,Some("testroad"),None,None,None,None,None,None),
+        ProjectLink(1002,roadNumber,roadPartNumber,Combined,Continuous,0,0,0,0,None,None,Some(user),5174998,0.0,84.091,SideCode.Unknown,(NoCP,NoCP),(NoCP,NoCP),List(Point(536781.0,6984396.0,0.0), Point(536865.0,6984398.0,0.0)),project_id,LinkStatus.New,AdministrativeClass.Municipality,FrozenLinkInterface,84.091,0,0,8,false,None,1500418814000L,0,Some("testroad"),None,None,None,None,None,None),
+        ProjectLink(1003,roadNumber,roadPartNumber,Combined,Continuous,0,0,0,0,None,None,Some(user),5174994,0.0,129.02,SideCode.Unknown,(NoCP,NoCP),(NoCP,NoCP),List(Point(536781.0,6984396.0,0.0), Point(536773.0,6984525.0,0.0)),project_id,LinkStatus.New,AdministrativeClass.Municipality,FrozenLinkInterface,129.02,0,0,8,false,None,1500418814000L,0,Some("testroad"),None,None,None,None,None,None),
+        ProjectLink(1004,roadNumber,roadPartNumber,Combined,Continuous,0,0,0,0,None,None,Some(user),5174545,0.0,89.803,SideCode.Unknown,(NoCP,NoCP),(NoCP,NoCP),List(Point(536684.0,6984513.0,0.0), Point(536773.0,6984525.0,0.0)),project_id,LinkStatus.New,AdministrativeClass.Municipality,FrozenLinkInterface,89.803,0,0,8,false,None,1500418814000L,0,Some("testroad"),None,None,None,None,None,None),
+        ProjectLink(1005,roadNumber,roadPartNumber,Combined,Continuous,0,0,0,0,None,None,Some(user),5174996,0.0,138.959,SideCode.Unknown,(NoCP,NoCP),(NoCP,NoCP),List(Point(536694.0,6984375.0,0.0), Point(536684.0,6984513.0,0.0)),project_id,LinkStatus.New,AdministrativeClass.Municipality,FrozenLinkInterface,138.959,0,0,8,false,None,1551999616000L,0,Some("testroad"),None,None,None,None,None,None),
+        ProjectLink(1006,roadNumber,roadPartNumber,Combined,Continuous,0,0,0,0,None,None,Some(user),5175004,0.0,41.233,SideCode.Unknown,(NoCP,NoCP),(NoCP,NoCP),List(Point(536653.0,6984373.0,0.0), Point(536694.0,6984375.0,0.0)),project_id,LinkStatus.New,AdministrativeClass.Municipality,FrozenLinkInterface,41.233,0,0,8,false,None,1551999616000L,0,Some("testroad"),None,None,None,None,None,None),
+        ProjectLink(1007,roadNumber,roadPartNumber,Combined,Continuous,0,0,0,0,None,None,Some(user),5174936,0.0,117.582,SideCode.Unknown,(NoCP,NoCP),(NoCP,NoCP),List(Point(536535.0,6984364.0,0.0), Point(536653.0,6984373.0,0.0)),project_id,LinkStatus.New,AdministrativeClass.Municipality,FrozenLinkInterface,117.582,0,0,8,false,None,1500418814000L,0,Some("testroad"),None,None,None,None,None,None),
+        ProjectLink(1008,roadNumber,roadPartNumber,Combined,Continuous,0,0,0,0,None,None,Some(user),5174956,0.0,75.055,SideCode.Unknown,(NoCP,NoCP),(NoCP,NoCP),List(Point(536535.0,6984364.0,0.0), Point(536528.0,6984439.0,0.0)),project_id,LinkStatus.New,AdministrativeClass.Municipality,FrozenLinkInterface,75.055,0,0,8,false,None,1500418814000L,0,Some("testroad"),None,None,None,None,None,None)
+      )
+
+      val projectLinks = if (reversed)
+        headLink +: middleLinks :+ lastLink.copy(discontinuity = EndOfRoad)
+      else
+        headLink.copy(discontinuity = EndOfRoad) +: middleLinks :+ lastLink
+
+      val calculatedProjectLinks = ProjectSectionCalculator.assignMValues(projectLinks)
+      val maxLink                = calculatedProjectLinks.maxBy(_.endAddrMValue)
+      if (reversed)
+        maxLink.id should be(lastLink.id)
+      else
+        maxLink.id should be(headLink.id)
+      maxLink.endAddrMValue should be > 0L
+      maxLink.discontinuity should be(EndOfRoad)
+    }
+
+    runWithRollback {runTest(false)}
+    runWithRollback {runTest(true) }
+  }
 
   test("Test projectService.parsePreFillData When supplied a empty sequence of VVHRoadLinks Then return a error message.") {
     projectService.parsePreFillData(Seq.empty[VVHRoadlink]) should be(Left("Link could not be found in VVH"))
