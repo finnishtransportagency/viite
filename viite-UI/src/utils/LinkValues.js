@@ -76,9 +76,9 @@
   };
 
   root.ProjectStatus = {
+    ErrorInViite: {value: 0, description: "Virhe Viite-sovelluksessa"},
     Incomplete: {value: 1, description: "Keskeneräinen"},
     Deleted: {value: 7, description: "Poistettu projekti"},
-    ErrorInViite: {value: 8, description: "Virhe Viite-sovelluksessa"},
     InUpdateQueue: {value: 10, description: "Odottaa tieverkolle päivittämistä"},
     UpdatingToRoadNetwork: {value: 11, description: "Päivitetään tieverkolle"},
     Accepted: {value: 12, description: "Hyväksytty"},
