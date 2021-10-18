@@ -27,10 +27,9 @@ object ProjectState {
   def apply(value: Long): ProjectState = {
     values.find(_.value == value).getOrElse(Unknown)
   }
-
+  case object ErrorInViite extends ProjectState {def value = 0; def description = "Virhe Viite-sovelluksessa"}
   case object Incomplete extends ProjectState {def value = 1; def description = "Keskeneräinen"}
   case object Deleted extends ProjectState {def value = 7; def description = "Poistettu projekti"}
-  case object ErrorInViite extends ProjectState {def value = 8; def description = "Virhe Viite-sovelluksessa"}
   case object InUpdateQueue extends ProjectState {def value = 10; def description = "Odottaa tieverkolle päivittämistä"}
   case object UpdatingToRoadNetwork extends ProjectState {def value = 11; def description = "Päivitetään tieverkolle"}
   case object Accepted extends ProjectState {def value = 12; def description = "Hyväksytty"}
