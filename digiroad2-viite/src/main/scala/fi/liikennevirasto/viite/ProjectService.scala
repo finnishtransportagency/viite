@@ -524,7 +524,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               newLinks.filterNot(_.equals(endLinkOfNewLinks.head)) :+ endLinkOfNewLinks.head.copy(discontinuity = discontinuity)
             } else if (endLinkOfNewLinks.distinct.size == 2) {
               val endLink = endLinkOfNewLinks.filterNot(_.linkId == firstLinkId).head
-              //val endLink   = if (endPoint.head._1.distance2DTo(Point(0, 0)) > endPoint.last._1.distance2DTo(Point(0, 0))) endPoint.head._2 else endPoint.last._2
               newLinks.filterNot(_.equals(endLink)) :+ endLink.copy(discontinuity = discontinuity)
             } else {
               throw new RoadAddressException(AddNewLinksFailed)
