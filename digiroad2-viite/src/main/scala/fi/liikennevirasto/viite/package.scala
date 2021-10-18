@@ -210,9 +210,9 @@ package object viite {
   val projectStatusStructure = "" +
     "| Status Code |       Project Status       |              Description              |\n" +
     "|:-----------:|:--------------------------:|:-------------------------------------:|\n" +
+    "|      0      |        ErrorInViite        |       Virhe Viite-sovelluksessa       |\n" +
     "|      1      |         Incomplete         |             Keskeneräinen             |\n" +
     "|      7      |           Deleted          |           Poistettu projekti          |\n" +
-    "|      8      |        ErrorInViite        |       Virhe Viite-sovelluksessa       |\n" +
     "|      10     |        InUpdateQueue       |   Odottaa tieverkolle päivittämistä   |\n" +
     "|      11     |    UpdatingToRoadNetwork   |        Päivitetään tieverkolle        |\n" +
     "|      12     |          Accepted          |               Hyväksytty              |\n" +
