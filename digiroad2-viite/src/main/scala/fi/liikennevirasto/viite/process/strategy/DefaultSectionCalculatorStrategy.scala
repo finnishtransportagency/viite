@@ -41,6 +41,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
           Seq.empty[ProjectLink]
         }
         val currStartPoints = findStartingPoints(projectLinks, oldLinks, oldRoadLinks, userCalibrationPoints)
+
         val (right, left) = TrackSectionOrder.orderProjectLinksTopologyByGeometry(currStartPoints, projectLinks ++ oldLinks)
         val ordSections = TrackSectionOrder.createCombinedSections(right, left)
 
@@ -356,8 +357,6 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         val endPointsWithValues = ListMap(chainEndPoints.filter(link => link._2.startAddrMValue >= 0 && link._2.endAddrMValue != 0).toSeq
           .sortWith(_._2.startAddrMValue < _._2.startAddrMValue): _*)
 
-
-
         val onceConnectedLinks = TrackSectionOrder.findOnceConnectedLinks(remainLinks)
         var foundConnectedLinks = onceConnectedLinks.values.filter(link => link.startAddrMValue == 0 && link.endAddrMValue != 0)
         /* Check if an existing road with loop end is reversed. */
@@ -442,10 +441,15 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
             val startPoint1 = chainEndPoints.minBy(p => direction.dot(p._1.toVector - midPoint))
             val startPoint2 = chainEndPoints.maxBy(p => direction.dot(p._1.toVector - midPoint))
             val connectingPoint = otherRoadPartLinks.find(l => GeometryUtils.areAdjacent(l.getLastPoint, startPoint1._1) || GeometryUtils.areAdjacent(l.getFirstPoint, startPoint2._1))
-            if (otherRoadPartLinks.isEmpty || connectingPoint.nonEmpty) {
-              startPoint1
+            val continuousLink = chainEndPoints.filter(_._2.discontinuity == Discontinuity.Continuous)
+            if (continuousLink.nonEmpty) {
+              continuousLink.head
             } else {
-              startPoint2
+              if (otherRoadPartLinks.isEmpty || connectingPoint.nonEmpty) {
+                startPoint1
+              } else {
+                startPoint2
+              }
             }
           }
         }
