@@ -802,7 +802,10 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val continuous     = Continuous
       val discontinuity  = EndOfRoad
       val rap            = Project(projectId, ProjectState.apply(1), "TestProject", user, DateTime.parse("2700-01-01"), user, DateTime.parse("1972-03-03"), DateTime.parse("2700-01-01"), "Some additional info", List.empty[ProjectReservedPart], Seq(), None)
-      val projectLinks   = Seq(toProjectLink(rap, LinkStatus.New)(RoadAddress(Sequences.nextRoadwayId, 123, roadNumber, roadPartNumber, AdministrativeClass.Unknown, Track.Combined, continuous, 0L, 0L, Some(DateTime.parse("1963-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 12345L, 0.0, 9.8, SideCode.Unknown, 0, (None, None), Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)), toProjectLink(rap, LinkStatus.New)(RoadAddress(Sequences.nextRoadwayId, 124, roadNumber, roadPartNumber, AdministrativeClass.Unknown, Track.Combined, continuous, 0L, 0L, Some(DateTime.parse("1963-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 12346L, 0.0, 19.8, SideCode.Unknown, 0, (None, None), Seq(Point(0.0, 9.8), Point(9.8, 29.6)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)))
+      val projectLinks   = Seq(
+        toProjectLink(rap, LinkStatus.New)(RoadAddress(Sequences.nextRoadwayId, 123, roadNumber, roadPartNumber, AdministrativeClass.Unknown, Track.Combined, continuous, 0L, 0L, Some(DateTime.parse("1963-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 12345L, 0.0, 9.8, SideCode.Unknown, 0, (None, None), Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)),
+        toProjectLink(rap, LinkStatus.New)(RoadAddress(Sequences.nextRoadwayId, 124, roadNumber, roadPartNumber, AdministrativeClass.Unknown, Track.Combined, continuous, 0L, 0L, Some(DateTime.parse("1963-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 12346L, 0.0, 19.8, SideCode.Unknown, 0, (None, None), Seq(Point(0.0, 9.8), Point(9.8, 29.6)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+      )
       projectDAO.create(rap)
       projectService.saveProject(rap)
       projectReservedPartDAO.reserveRoadPart(projectId, roadNumber, roadPartNumber, user)
