@@ -7,7 +7,7 @@ set -e
 
 echo "Logging in to AWS ECR with Docker"
 aws ecr get-login-password --profile vaylaapp --region eu-west-1 | docker login --username AWS --password-stdin 783354560127.dkr.ecr.eu-west-1.amazonaws.com
-echo " Pull old image"
+echo " Pull dev-test image"
 docker pull 783354560127.dkr.ecr.eu-west-1.amazonaws.com/viite:latest
 echo "Tagging image"
 docker tag 783354560127.dkr.ecr.eu-west-1.amazonaws.com/viite:latest 783354560127.dkr.ecr.eu-west-1.amazonaws.com/viite-qa:latest
