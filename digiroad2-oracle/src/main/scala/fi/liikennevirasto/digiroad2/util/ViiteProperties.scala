@@ -16,6 +16,7 @@ trait ViiteProperties {
   val vvhRestApiEndPoint: String
   val vvhRoadlinkFrozen: Boolean
   val vkmUrl: String
+  val vkmApiKey: String
   val httpProxySet: Boolean
   val httpProxyHost: String
   val httpNonProxyHosts: String
@@ -62,6 +63,7 @@ class ViitePropertiesFromEnv extends ViiteProperties {
   val vvhRestApiEndPoint: String = scala.util.Properties.envOrElse("vvhRestApiEndPoint", null)
   val vvhRoadlinkFrozen: Boolean = scala.util.Properties.envOrElse("vvhRoadlink.frozen", "false").toBoolean
   val vkmUrl: String = scala.util.Properties.envOrElse("vkmUrl", null)
+  val vkmApiKey: String = scala.util.Properties.envOrElse("vkmApiKey", null)
   val httpProxySet: Boolean = scala.util.Properties.envOrElse("http.proxySet", "false").toBoolean
   val httpProxyHost: String = scala.util.Properties.envOrElse("http.proxyHost", null)
   val httpNonProxyHosts: String = scala.util.Properties.envOrElse("http.nonProxyHosts", "")
@@ -141,6 +143,7 @@ class ViitePropertiesFromFile extends ViiteProperties {
   override val vvhRestApiEndPoint: String = scala.util.Properties.envOrElse("vvhRestApiEndPoint", envProps.getProperty("vvhRestApiEndPoint"))
   override val vvhRoadlinkFrozen: Boolean = envProps.getProperty("vvhRoadlink.frozen", "false").toBoolean
   override val vkmUrl: String = scala.util.Properties.envOrElse("vkmUrl", envProps.getProperty("vkmUrl"))
+  override val vkmApiKey: String = scala.util.Properties.envOrElse("vkmApiKey", envProps.getProperty("vkmApiKey"))
   override val httpProxySet: Boolean = envProps.getProperty("http.proxySet", "false").toBoolean
   override val httpProxyHost: String = envProps.getProperty("http.proxyHost")
   override val httpNonProxyHosts: String = envProps.getProperty("http.nonProxyHosts", "")
@@ -217,6 +220,7 @@ object ViiteProperties {
   lazy val vvhRestApiEndPoint: String = properties.vvhRestApiEndPoint
   lazy val vvhRoadlinkFrozen: Boolean = properties.vvhRoadlinkFrozen
   lazy val vkmUrl: String = properties.vkmUrl
+  lazy val vkmApiKey: String = properties.vkmApiKey
   lazy val httpProxySet: Boolean = properties.httpProxySet
   lazy val httpProxyHost: String = properties.httpProxyHost
   lazy val httpNonProxyHosts: String = properties.httpNonProxyHosts
