@@ -1002,11 +1002,11 @@ class ProjectValidator {
                            Track 2  |
                          <----------|
                    */
-                  val nextOppositeTrack = g._2.find(t => t.track != next.track && t.startAddrMValue == next.startAddrMValue)
-                  if (Track.isTrackContinuous(curr.track, next.track) && (checkConnected(curr, Option(next)) || checkConnected(curr, nextOppositeTrack)) || curr.discontinuity == Discontinuity.MinorDiscontinuity || curr.discontinuity == Discontinuity.Discontinuous)
-                    None
-                  else
-                    Some(curr)
+                   val nextOppositeTrack = g._2.find(t => {
+                  t.track != next.track && t.startAddrMValue == next.startAddrMValue
+                })
+                  if (Track.isTrackContinuous(curr.track, next.track) && (checkConnected(curr, Option(next)) || checkConnected(curr, nextOppositeTrack)) || curr.discontinuity == Discontinuity.MinorDiscontinuity || curr.discontinuity == Discontinuity.Discontinuous) None else Some(curr)
+                }
               }
             } else None
           }
