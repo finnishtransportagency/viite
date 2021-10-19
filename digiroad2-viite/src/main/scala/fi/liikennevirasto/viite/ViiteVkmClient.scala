@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory
 import java.net.URL
 
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
-import fi.liikennevirasto.viite.util.OAGAuthPropertyReader
+import org.apache.http.client.config.{CookieSpecs, RequestConfig}
 
 import scala.util.control.NonFatal
 
@@ -30,8 +30,9 @@ class ViiteVkmClient {
     loadedKeyString
   }
 
-  private val client = HttpClientBuilder.create().build
-  private val oagAuth = new OAGAuthPropertyReader
+  private val client = HttpClientBuilder.create()
+    .setDefaultRequestConfig(RequestConfig.custom()
+      .setCookieSpec(CookieSpecs.STANDARD).build()).build()
 
   /**
     * Builds http query fom given parts, executes the query, and returns the result (or error if http>=400).
@@ -54,7 +55,7 @@ class ViiteVkmClient {
       request.setHeader("Host", ViiteProperties.oagProxyServer)
     }
 
-    request.addHeader("Authorization", "Basic " + oagAuth.getAuthInBase64)
+    request.addHeader("X-API-Key", ViiteProperties.vkmApiKey)
 
     val response = client.execute(request)
     try {
