@@ -16,6 +16,7 @@ trait ViiteProperties {
   val vvhRestApiEndPoint: String
   val vvhRoadlinkFrozen: Boolean
   val vkmUrl: String
+  val vkmApiKey: String
   val httpProxySet: Boolean
   val httpProxyHost: String
   val httpNonProxyHosts: String
@@ -28,8 +29,6 @@ trait ViiteProperties {
   val conversionBonecpJdbcUrl: String
   val conversionBonecpUsername: String
   val conversionBonecpPassword: String
-  val oagUsername: String
-  val oagPassword: String
   val latestDeploy: String
   val env: String
 
@@ -62,6 +61,7 @@ class ViitePropertiesFromEnv extends ViiteProperties {
   val vvhRestApiEndPoint: String = scala.util.Properties.envOrElse("vvhRestApiEndPoint", null)
   val vvhRoadlinkFrozen: Boolean = scala.util.Properties.envOrElse("vvhRoadlink.frozen", "false").toBoolean
   val vkmUrl: String = scala.util.Properties.envOrElse("vkmUrl", null)
+  val vkmApiKey: String = scala.util.Properties.envOrElse("vkmApiKey", null)
   val httpProxySet: Boolean = scala.util.Properties.envOrElse("http.proxySet", "false").toBoolean
   val httpProxyHost: String = scala.util.Properties.envOrElse("http.proxyHost", null)
   val httpNonProxyHosts: String = scala.util.Properties.envOrElse("http.nonProxyHosts", "")
@@ -74,8 +74,6 @@ class ViitePropertiesFromEnv extends ViiteProperties {
   val conversionBonecpJdbcUrl: String = scala.util.Properties.envOrElse("conversion.bonecp.jdbcUrl", null)
   val conversionBonecpUsername: String = scala.util.Properties.envOrElse("conversion.bonecp.username", null)
   val conversionBonecpPassword: String = scala.util.Properties.envOrElse("conversion.bonecp.password", null)
-  val oagUsername: String = scala.util.Properties.envOrElse("oag.username", null)
-  val oagPassword: String = scala.util.Properties.envOrElse("oag.password", null)
   val latestDeploy: String = revisionProperties.getProperty("latestDeploy", "-")
   val env: String = scala.util.Properties.envOrElse("env", "Unknown")
 
@@ -141,6 +139,7 @@ class ViitePropertiesFromFile extends ViiteProperties {
   override val vvhRestApiEndPoint: String = scala.util.Properties.envOrElse("vvhRestApiEndPoint", envProps.getProperty("vvhRestApiEndPoint"))
   override val vvhRoadlinkFrozen: Boolean = envProps.getProperty("vvhRoadlink.frozen", "false").toBoolean
   override val vkmUrl: String = scala.util.Properties.envOrElse("vkmUrl", envProps.getProperty("vkmUrl"))
+  override val vkmApiKey: String = scala.util.Properties.envOrElse("vkmApiKey", envProps.getProperty("vkmApiKey"))
   override val httpProxySet: Boolean = envProps.getProperty("http.proxySet", "false").toBoolean
   override val httpProxyHost: String = envProps.getProperty("http.proxyHost")
   override val httpNonProxyHosts: String = envProps.getProperty("http.nonProxyHosts", "")
@@ -153,8 +152,6 @@ class ViitePropertiesFromFile extends ViiteProperties {
   override val conversionBonecpJdbcUrl: String = scala.util.Properties.envOrElse("conversionBonecpJdbcUrl", envProps.getProperty("conversion.bonecp.jdbcUrl"))
   override val conversionBonecpUsername: String = scala.util.Properties.envOrElse("conversionBonecpUsername", envProps.getProperty("conversion.bonecp.username"))
   override val conversionBonecpPassword: String = scala.util.Properties.envOrElse("conversionBonecpPassword", envProps.getProperty("conversion.bonecp.password"))
-  override val oagUsername: String = envProps.getProperty("oag.username")
-  override val oagPassword: String = envProps.getProperty("oag.password")
   override val latestDeploy: String = revisionProperties.getProperty("latestDeploy", "-")
   override val env: String = envProps.getProperty("env")
 
@@ -217,6 +214,7 @@ object ViiteProperties {
   lazy val vvhRestApiEndPoint: String = properties.vvhRestApiEndPoint
   lazy val vvhRoadlinkFrozen: Boolean = properties.vvhRoadlinkFrozen
   lazy val vkmUrl: String = properties.vkmUrl
+  lazy val vkmApiKey: String = properties.vkmApiKey
   lazy val httpProxySet: Boolean = properties.httpProxySet
   lazy val httpProxyHost: String = properties.httpProxyHost
   lazy val httpNonProxyHosts: String = properties.httpNonProxyHosts
@@ -229,8 +227,6 @@ object ViiteProperties {
   lazy val conversionBonecpJdbcUrl: String = properties.conversionBonecpJdbcUrl
   lazy val conversionBonecpUsername: String = properties.conversionBonecpUsername
   lazy val conversionBonecpPassword: String = properties.conversionBonecpPassword
-  lazy val oagUsername: String = properties.oagUsername
-  lazy val oagPassword: String = properties.oagPassword
   lazy val latestDeploy: String = properties.latestDeploy
   lazy val env: String = properties.env
   lazy val bonecpProperties: Properties = properties.bonecpProperties
