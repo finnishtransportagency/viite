@@ -29,8 +29,6 @@ trait ViiteProperties {
   val conversionBonecpJdbcUrl: String
   val conversionBonecpUsername: String
   val conversionBonecpPassword: String
-  val oagUsername: String
-  val oagPassword: String
   val latestDeploy: String
   val env: String
 
@@ -76,8 +74,6 @@ class ViitePropertiesFromEnv extends ViiteProperties {
   val conversionBonecpJdbcUrl: String = scala.util.Properties.envOrElse("conversion.bonecp.jdbcUrl", null)
   val conversionBonecpUsername: String = scala.util.Properties.envOrElse("conversion.bonecp.username", null)
   val conversionBonecpPassword: String = scala.util.Properties.envOrElse("conversion.bonecp.password", null)
-  val oagUsername: String = scala.util.Properties.envOrElse("oag.username", null)
-  val oagPassword: String = scala.util.Properties.envOrElse("oag.password", null)
   val latestDeploy: String = revisionProperties.getProperty("latestDeploy", "-")
   val env: String = scala.util.Properties.envOrElse("env", "Unknown")
 
@@ -156,8 +152,6 @@ class ViitePropertiesFromFile extends ViiteProperties {
   override val conversionBonecpJdbcUrl: String = scala.util.Properties.envOrElse("conversionBonecpJdbcUrl", envProps.getProperty("conversion.bonecp.jdbcUrl"))
   override val conversionBonecpUsername: String = scala.util.Properties.envOrElse("conversionBonecpUsername", envProps.getProperty("conversion.bonecp.username"))
   override val conversionBonecpPassword: String = scala.util.Properties.envOrElse("conversionBonecpPassword", envProps.getProperty("conversion.bonecp.password"))
-  override val oagUsername: String = envProps.getProperty("oag.username")
-  override val oagPassword: String = envProps.getProperty("oag.password")
   override val latestDeploy: String = revisionProperties.getProperty("latestDeploy", "-")
   override val env: String = envProps.getProperty("env")
 
@@ -233,8 +227,6 @@ object ViiteProperties {
   lazy val conversionBonecpJdbcUrl: String = properties.conversionBonecpJdbcUrl
   lazy val conversionBonecpUsername: String = properties.conversionBonecpUsername
   lazy val conversionBonecpPassword: String = properties.conversionBonecpPassword
-  lazy val oagUsername: String = properties.oagUsername
-  lazy val oagPassword: String = properties.oagPassword
   lazy val latestDeploy: String = properties.latestDeploy
   lazy val env: String = properties.env
   lazy val bonecpProperties: Properties = properties.bonecpProperties
