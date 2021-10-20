@@ -23,7 +23,6 @@ import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Termination}
 import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectDAO, RoadwayDAO, _}
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink}
 import fi.liikennevirasto.viite.process.{InvalidAddressDataException, _}
-import fi.liikennevirasto.viite.process.TrackSectionOrder.findChainEndpoints
 import fi.liikennevirasto.viite.util.SplitOptions
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
@@ -410,7 +409,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             return Map("success" -> false,
               "errorMessage" -> (linkIds.toSet -- roadLinks.keySet).mkString(ErrorRoadLinkNotFound + " puuttuvat id:t ", ", ", ""))
           val project = fetchProjectById(projectId).getOrElse(throw new RuntimeException(s"Missing project $projectId"))
-          val projectLinks: Seq[ProjectLink] = linkIds.toSet.map { id: Long =>
+          val projectLinks: Seq[ProjectLink] = linkIds.distinct.map { id: Long =>
             newProjectLink(roadLinks(id), project, roadNumber, roadPartNumber, track, Continuous, administrativeClass, roadEly, roadName)
           }.toSeq
 
@@ -523,12 +522,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             }).values.toList
             if (endLinkOfNewLinks.distinct.size == 1) {
               newLinks.filterNot(_.equals(endLinkOfNewLinks.head)) :+ endLinkOfNewLinks.head.copy(discontinuity = discontinuity)
-            } else if (endLinkOfNewLinks.distinct.size == 2 && existingLinksGeoms.isEmpty) {
-              val endPoints = findChainEndpoints(newLinks)
-              val endLink   = if (endPoints.head._1.distance2DTo(Point(0, 0)) > endPoints.last._1.distance2DTo(Point(0, 0))) endPoints.head._2 else endPoints.last._2
+            } else if (endLinkOfNewLinks.distinct.size == 2) {
+              val endLink = endLinkOfNewLinks.filterNot(_.linkId == firstLinkId).head
               newLinks.filterNot(_.equals(endLink)) :+ endLink.copy(discontinuity = discontinuity)
             } else {
-              newLinks.init :+ newLinks.last.copy(discontinuity = discontinuity)
+              throw new RoadAddressException(AddNewLinksFailed)
             }
           } else newLinks
         }
@@ -690,7 +688,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             val addresses = roadways.flatMap(r =>
               roadwayAddressMapper.mapRoadAddresses(r, (regular ++ complementary).groupBy(_.roadwayNumber).getOrElse(r.roadwayNumber, {
                 logger.error(s"Failed to add links to the project. No links found with roadway number ${r.roadwayNumber}. Reserved parts were: ${project.reservedParts.map(r => s"(road number: ${r.roadNumber}, road part number: ${r.roadPartNumber})").mkString(", ")}")
-                throw new RoadAddressException(s"Linkkien lisääminen projektiin epäonnistui Viitteen sisäisen virheen vuoksi. Ota yhteyttä ylläpitoon.")
+                throw new RoadAddressException(AddNewLinksFailed)
               })))
             checkAndReserve(project, reserved)
             logger.debug(s"Reserve done")

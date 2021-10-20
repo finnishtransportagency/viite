@@ -1,23 +1,23 @@
 package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.GeometryUtils
-import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, Point}
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle}
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.{Track, ViiteProperties}
+import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
-import fi.liikennevirasto.viite.dao.Discontinuity
+import fi.liikennevirasto.digiroad2.util.{Track, ViiteProperties}
+import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, Point}
 import fi.liikennevirasto.viite.dao.LinkStatus._
-import fi.liikennevirasto.viite.dao._
+import fi.liikennevirasto.viite.dao.{Discontinuity, _}
+import fi.liikennevirasto.viite.process.TrackSectionOrder.findChainEndpoints
+import fi.liikennevirasto.viite.process.strategy.DefaultSectionCalculatorStrategy
 import fi.liikennevirasto.viite.process.{RoadwayAddressMapper, TrackSectionOrder}
+import org.joda.time.format.DateTimeFormat
+import org.slf4j.LoggerFactory
 
 import scala.collection.immutable.ListMap
-import org.slf4j.LoggerFactory
-import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.liikennevirasto.viite.process.strategy.DefaultSectionCalculatorStrategy
-import org.joda.time.format.DateTimeFormat
 
 class ProjectValidator {
 
@@ -966,9 +966,23 @@ class ProjectValidator {
         trackIntervals.flatMap {
           interval => {
             if (interval.size > 1) {
-              interval.sortBy(_.startAddrMValue).sliding(2).flatMap {
-                case Seq(curr, next) =>
-                  /*
+              if (interval.exists(_.endAddrMValue == 0)) {
+                val onceConnectedNewLinks = TrackSectionOrder.findOnceConnectedLinks(interval)
+                if (onceConnectedNewLinks.size < 3)
+                  None
+                else {
+                  val endPointLinks     = findChainEndpoints(onceConnectedNewLinks.values.toSeq)
+                  val middleLinks       = (onceConnectedNewLinks.toSet diff endPointLinks.toSet).toMap
+                  val lastLink          = endPointLinks.find(p => p._2.discontinuity != Discontinuity.Continuous).getOrElse(onceConnectedNewLinks.maxBy(_._2.id))
+                  val dists             = middleLinks.map(l => l._1.distance2DTo(lastLink._1) -> l._2)
+                  val discontinuousLink = dists.maxBy(_._1)._2
+                  if (discontinuousLink.discontinuity == Discontinuity.Continuous)
+                    Some(discontinuousLink)
+                  else
+                    None
+                }
+              } else {
+                interval.sortBy(_.startAddrMValue).sliding(2).flatMap { case Seq(curr, next) => /*
                         catches discontinuity between Combined -> RightSide ? true => checks discontinuity between Combined -> LeftSide ? false => No error
                         catches discontinuity between Combined -> RightSide ? true => checks discontinuity between Combined -> LeftSide ? true => Error
                             Track 2
@@ -988,11 +1002,11 @@ class ProjectValidator {
                            Track 2  |
                          <----------|
                    */
-                  val nextOppositeTrack = g._2.find(t => t.track != next.track && t.startAddrMValue == next.startAddrMValue)
-                  if (Track.isTrackContinuous(curr.track, next.track) && (checkConnected(curr, Option(next)) || checkConnected(curr, nextOppositeTrack)) || curr.discontinuity == Discontinuity.MinorDiscontinuity || curr.discontinuity == Discontinuity.Discontinuous)
-                    None
-                  else
-                    Some(curr)
+                   val nextOppositeTrack = g._2.find(t => {
+                  t.track != next.track && t.startAddrMValue == next.startAddrMValue
+                })
+                  if (Track.isTrackContinuous(curr.track, next.track) && (checkConnected(curr, Option(next)) || checkConnected(curr, nextOppositeTrack)) || curr.discontinuity == Discontinuity.MinorDiscontinuity || curr.discontinuity == Discontinuity.Discontinuous) None else Some(curr)
+                }
               }
             } else None
           }
@@ -1037,7 +1051,13 @@ class ProjectValidator {
           interval =>
             val nonTerminated = interval.filter(r => r.status != LinkStatus.Terminated)
             if (nonTerminated.nonEmpty) {
-              val last = nonTerminated.maxBy(_.endAddrMValue)
+
+              val last = if (nonTerminated.forall(_.isNotCalculated)) {
+                val endPointLinks = findChainEndpoints(nonTerminated)
+                val endLink       = endPointLinks.find(_._2.discontinuity == Discontinuity.EndOfRoad).getOrElse(endPointLinks.last)
+                endLink._2
+              } else {nonTerminated.maxBy(_.endAddrMValue)}
+
               val (road, part) = (last.roadNumber, last.roadPartNumber)
               val discontinuity = last.discontinuity
               val projectNextRoadParts = (project.reservedParts++project.formedParts).filter(rp =>
