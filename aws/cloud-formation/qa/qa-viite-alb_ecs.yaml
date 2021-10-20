@@ -31,6 +31,12 @@ Parameters:
   RepositoryURI:
     Type: String
     Description: URI to repository, where the container is
+  CNameRecord:
+    Description: CName of the application (no whitespace or special characters)
+    Type: String
+  SecurityGroupName:
+    Description: SecurityGroupName (no whitespace or special characters)
+    Type: List<String>
 Resources:
   ECSCluster:
     Type: AWS::ECS::Cluster
@@ -87,48 +93,6 @@ Resources:
 #      Description: ECSTaskExecutionRoleForViiteQA
 #      Value: !GetAtt ECSTaskExecutionRoleForViiteQA.Arn
 
-#  ECSTask:
-#    Type: AWS::ECS::TaskDefinition
-#    DependsOn: ECSLogGroup
-#    Properties:
-#      Family: !Join ['-', [!Ref Environment, !Ref ApplicationName]]
-#      # Adjust these according to the needs of your applications containers
-#      Cpu: 2048
-#      Memory: 4096
-#      ExecutionRoleArn: !GetAtt ECSTaskExecutionRoleForViiteQA.Arn
-#      # TaskRoleArn: # Enable and create this role, if your container needs access to other AWS services like SQS, SES, DynamoDB etc.
-#      NetworkMode: awsvpc # This is the only possible option with Fargate mode, but set here to remind of this behaviour
-#      RequiresCompatibilities:
-#        - FARGATE
-#      ContainerDefinitions:
-#        # First container. You can add several containers to one task. You would probably only add sidecar containers though
-#        - Name: !Ref ApplicationName
-#          Image: !Join [':', [!Ref RepositoryURI, !Ref ContainerTag]]
-#          PortMappings:
-#            - ContainerPort: !Ref ContainerPort
-#          # If you want to pass environment variables to the container, uncomment and modify these:
-#          # Environment:
-#          #   - Name: REGION
-#          #     Value: !Ref AWS::Region
-#          Essential: true # One of the container need to be essential. So, if you'd add another container in this task, it's Essential -value should be false.
-#          LogConfiguration:
-#            LogDriver: awslogs
-#            Options:
-#              awslogs-group: !Ref ECSLogGroup
-#              awslogs-region: !Ref "AWS::Region"
-#              awslogs-stream-prefix: ecs
-#          # Adjust this according to the need of your container
-#          #Memory: 512
-#      Tags:
-#        - Key: Name
-#          Value: !Join ['-', [!Ref ApplicationName, 'ECS-Task']]
-#        - Key: Environment
-#          Value: !Ref Environment
-#        - Key: Owner
-#          Value: !Ref Owner
-#        - Key: Project
-#          Value: !Ref Project
-
   PrivateLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
@@ -143,7 +107,7 @@ Resources:
             !Join ['-', [!Ref NetworkStackName, 'Subnet1-Id']]
         - Fn::ImportValue:
             !Join ['-', [!Ref NetworkStackName, 'Subnet2-Id']]
-      SecurityGroups: [!Ref LoadBalancerSecurityGroup]
+      SecurityGroups: !Ref SecurityGroupName
       Tags:
         - Key: Name
           Value: !Join ['-', [!Ref Environment,!Ref ApplicationName, 'LoadBalancer']]
@@ -272,42 +236,7 @@ Resources:
         - Key: Project
           Value: !Ref Project
 
-  #The security group, that is protecting the load balancer.
-  #This probably will allow traffic from the TGW
-  LoadBalancerSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: !Join ['-', [!Ref Environment,!Ref ApplicationName, 'LoadBalancerSecurityGroup']]
-      GroupName: !Join ['-', [!Ref Environment,!Ref ApplicationName, 'LoadBalancerSecurityGroup']]
-      SecurityGroupIngress:
-        - IpProtocol: "-1"
-          CidrIp: 0.0.0.0/0
-        - IpProtocol: "-1"
-          CidrIpv6: ::/0
-      SecurityGroupEgress:
-        - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-          DestinationSecurityGroupId: !Ref WebServiceSecurityGroup
-        - IpProtocol: tcp
-          FromPort: !Ref ContainerPort
-          ToPort: !Ref ContainerPort
-          DestinationSecurityGroupId: !Ref WebServiceSecurityGroup
-      Tags:
-        - Key: Name
-          Value: !Join [ '-', [!Ref Environment, !Ref ApplicationName, 'LoadBalancer-Security-Group' ] ]
-        - Key: Environment
-          Value: !Ref Environment
-        - Key: Owner
-          Value: !Ref Owner
-        - Key: Project
-          Value: !Ref Project
-      VpcId:
-        Fn::ImportValue:
-          !Join [ '-', [ !Ref NetworkStackName, 'VPC-Id' ] ]
-
   #The security group, that is protecting the containers.
-  #This probably will allow traffic only from the VPC
   WebServiceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -352,7 +281,7 @@ Resources:
     Properties:
       ServiceToken: arn:aws:sns:eu-west-1:434599271542:Vaylapilvi-Route53-Record
       Type: CNAME
-      Name: !Ref CName
+      Name: !Ref CNameRecord
       Records:
         - !GetAtt PrivateLoadBalancer.DNSName
       Comment: Application load balancer
