@@ -22,10 +22,7 @@ aws ecs register-task-definition --profile vaylaapp --region eu-west-1 --cli-inp
 # Replace the <VERSION> with the new version. You can find the new version number from the start of the JSON returned by the previous command:
 #         "taskDefinitionArn": "arn:aws:ecs:eu-west-1:783354560127:task-definition/Viite-dev:<VERSION>",
 #
-# Viite-dev-ALB stack:
-# aws ecs update-service --profile vaylaapp --region eu-west-1 --cluster Viite-ECS-Cluster-Private --service Viite-ECS-Service-Private --task-definition Viite:<VERSION> --force-new-deployment
-#
-# Old, manually crafted Viite service stack:
-# aws ecs update-service --profile vaylaapp --region eu-west-1 --cluster VIITE-ECS-Cluster --service viite-dev --task-definition Viite-dev:<VERSION> --force-new-deployment
+# Viite-QA-ALB-stack:
+# aws ecs update-service --profile vaylaapp --region eu-west-1 --cluster QA-viite-test-ECS-Cluster-Private  --service QA-viite-test-ECS-Service-Private --task-definition QA-viite-test:<VERSION> --force-new-deployment
 
 aws ecs update-service --profile vaylaapp --region eu-west-1 --cluster QA-viite-test-ECS-Cluster-Private  --service QA-viite-test-ECS-Service-Private --task-definition QA-viite-test:15 --force-new-deployment

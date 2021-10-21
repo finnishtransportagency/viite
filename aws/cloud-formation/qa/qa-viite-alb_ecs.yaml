@@ -88,10 +88,6 @@ Resources:
                   - 'logs:CreateLogStream'
                   - 'logs:PutLogEvents'
                 Resource: '*'
-#  Outputs:
-#    ECSTaskExecutionRoleForViiteQA:
-#      Description: ECSTaskExecutionRoleForViiteQA
-#      Value: !GetAtt ECSTaskExecutionRoleForViiteQA.Arn
 
   PrivateLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
