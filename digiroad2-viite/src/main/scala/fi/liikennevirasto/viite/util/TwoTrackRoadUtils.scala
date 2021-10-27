@@ -175,7 +175,8 @@ object TwoTrackRoadUtils {
           geometry              = geom,
           status                = pl.status,
           geometryLength        = splitMeasure,
-          connectedLinkId       = Some(pl.linkId)
+          connectedLinkId       = Some(pl.linkId),
+          discontinuity = Discontinuity.Continuous
         ),
         pl.copy(
           id = NewIdValue,
@@ -327,7 +328,7 @@ object TwoTrackRoadUtils {
 
           if (
             (otherSideLink.status == LinkStatus.New && otherSideLink.endAddrMValue != last.endAddrMValue) ||
-            otherSideLink.status != LinkStatus.New && otherSideLink.originalEndAddrMValue != last.originalEndAddrMValue
+            otherSideLink.status != LinkStatus.New && (otherSideLink.originalEndAddrMValue != last.originalEndAddrMValue && otherSideLink.endAddrMValue != last.endAddrMValue)
           ) {
             val endPoints = TrackSectionOrder.findChainEndpoints(
               roadPartLinks.filter(pl =>
@@ -544,14 +545,14 @@ object TwoTrackRoadUtils {
       GeometryUtils.truncateGeometry2D(
         pl.geometry,
         startMeasure = splitMeasure - pl.startMValue,
-        endMeasure   = pl.geometryLength
+        endMeasure   = GeometryUtils.geometryLength(pl.geometry)
       )
     else
       GeometryUtils
         .truncateGeometry2D(
           pl.geometry.reverse,
           startMeasure = splitMeasure - pl.startMValue,
-          endMeasure   = pl.geometryLength
+          endMeasure   = GeometryUtils.geometryLength(pl.geometry)
         )
         .reverse
   }

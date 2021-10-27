@@ -1508,11 +1508,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       /* Remove user defined calibration points before (re)calc. */
       val udcpRemovedProjectLinks = if(projectLinks.isEmpty) {
         Seq()
-      } else { projectLinks.tail.scanLeft(projectLinks.head) { (p, r) => {
-        if      (r.calibrationPoints._2.getOrElse(NoCP) == UserDefinedCP) r.copy(calibrationPointTypes = (r.startCalibrationPointType, NoCP))
-        else if (r.calibrationPoints._1.getOrElse(NoCP) == UserDefinedCP) r.copy(calibrationPointTypes = (NoCP, r.endCalibrationPointType))
-        else r
-        }}
+      } else { projectLinks.tail.scanLeft(projectLinks.head) { (_, pl: ProjectLink) => {
+        val startCP = if (pl.startCalibrationPointType == UserDefinedCP) NoCP else pl.startCalibrationPointType
+        val endCP = if (pl.endCalibrationPointType == UserDefinedCP) NoCP else pl.endCalibrationPointType
+        pl.copy(calibrationPointTypes = (startCP, endCP), connectedLinkId = None)
+      }}
       }
 
       val (terminated, others) = udcpRemovedProjectLinks.partition(_.status == LinkStatus.Terminated)
