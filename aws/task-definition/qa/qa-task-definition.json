@@ -5,7 +5,7 @@
             "logConfiguration": {
                 "logDriver": "awslogs",
                 "options": {
-                    "awslogs-group": "/ecs/Viite-ECS-logs",
+                    "awslogs-group": "/ecs/QA-viite-test-ECS-logs",
                     "awslogs-region": "eu-west-1",
                     "awslogs-stream-prefix": "ecs"
                 }
@@ -28,24 +28,25 @@
                 { "name": "rasterServiceURL", "value": "https://oag.vayla.fi/rasteripalvelu-mml" },
                 { "name": "vvhRestApiEndPoint", "value": "https://haproxy.vayla.fi:2027/vvhdata/" },
                 { "name": "vvhRoadlink.frozen", "value": "true" },
-                { "name": "vkmUrl", "value": "https://devapi.testivaylapilvi.fi" },
+                { "name": "vkmUrl", "value": "https://oag.vayla.fi" },
+                { "name": "oag.username", "value": "svc_cloudviite" },
                 { "name": "http.proxySet", "value": "false" },
                 { "name": "http.proxyHost", "value": "127.0.0.1" },
                 { "name": "http.nonProxyHosts", "value": "127.0.0.1" },
                 { "name": "importOnlyCurrent", "value": "false" },
                 { "name": "authenticationTestMode", "value": "false" },
-                { "name": "bonecp.jdbcUrl", "value": "jdbc:postgresql://vd1bbyq5el8tjd2.c8dj2qlvf50d.eu-west-1.rds.amazonaws.com:5432/viite" },
-                { "name": "bonecp.username", "value": "viite_dev" },
+                { "name": "bonecp.jdbcUrl", "value": "jdbc:postgresql://rdspg13test.chw6qe2cqnfv.eu-west-1.rds.amazonaws.com:5432/viitetest" },
+                { "name": "bonecp.username", "value": "viitetest" },
                 { "name": "conversion.bonecp.jdbcUrl", "value": "jdbc:postgresql://vd1bbyq5el8tjd2.c8dj2qlvf50d.eu-west-1.rds.amazonaws.com:5432/drkonv" },
                 { "name": "conversion.bonecp.username", "value": "drkonv" },
                 { "name": "authentication.admin.basic.username", "value": "admin" },
-                { "name": "env", "value": "Dev" }
+                { "name": "env", "value": "QA" }
             ],
             "mountPoints": [],
             "secrets": [
                 {
                     "name": "bonecp.password",
-                    "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/dev/bonecp.password"
+                    "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/viiteqakanta"
                 },
                 {
                     "name": "conversion.bonecp.password",
@@ -56,14 +57,14 @@
                     "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/dev/authentication.admin.basic.password"
                 },
                 {
-                    "name": "vkmApiKey",
-                    "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/dev/vkmApiKey"
+                    "name": "oag.password",
+                    "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/dev/authentication.oag.basic.password"
                 }
             ],
             "memoryReservation": 2048,
             "volumesFrom": [],
-            "image": "783354560127.dkr.ecr.eu-west-1.amazonaws.com/viite:latest",
-            "name": "Viite",
+            "image": "783354560127.dkr.ecr.eu-west-1.amazonaws.com/viite-qa:latest",
+            "name": "viite-test",
             "healthCheck": {
                 "startPeriod": 15,
                 "command": [ "CMD-SHELL", "curl -f http://127.0.0.1:9080/api/ping/ || exit 1" ]
@@ -71,8 +72,8 @@
         }
     ],
     "memory": "4096",
-    "taskRoleArn": "arn:aws:iam::783354560127:role/Viite-dev-ALB-ECSTaskExecutionRole-1HNI00KIMUQ5O",
-    "family": "Viite",
+    "taskRoleArn": "arn:aws:iam::783354560127:role/ECSTaskExecutionRoleForViiteQA",
+    "family": "QA-viite-test",
     "requiresCompatibilities": [
         "FARGATE"
     ],
@@ -81,9 +82,25 @@
     "inferenceAccelerators": [],
     "volumes": [],
     "tags": [
-        {
-            "key": "Application",
-            "value": "Viite"
-        }
+      {
+        "key": "Name",
+        "value": "Viite-QA"
+      },
+      {
+        "key": "Environment",
+        "value": "QA"
+      },
+      {
+        "key": "Owner",
+        "value": "Vayla"
+      },
+      {
+        "key": "Project",
+        "value": "Viite"
+      },
+      {
+        "key": "Application",
+        "value": "Viite"
+      }
     ]
 }
