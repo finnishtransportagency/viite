@@ -191,9 +191,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     /* Adjust addresses before splits, calibrationpoints after splits don't restrict calculation. */
     /* TODO: Check if userDefinedCalibrationPoint should be included here -> calculate with user given addresses. */
     val (adjustedLeftLinksBeforeStatusSplits, adjustedRightLinksBeforeStatusSplits) = adjustTracksToMatch(leftLinks, rightLinks, None, userDefinedCalibrationPoint)
-//
     val (left_combined,right_combined) = TwoTrackRoadUtils.splitPlsAtRoadwayChange(adjustedLeftLinksBeforeStatusSplits, adjustedRightLinksBeforeStatusSplits)
-//    val (left_combined,right_combined) = TwoTrackRoadUtils.splitPlsAtRoadwayChange(leftLinks, rightLinks)
     val (adjustedRightLinksAfterRoadwaySplits,adjustedLeftLinksAfterRoadwaySplits) = TwoTrackRoadUtils.splitPlsAtRoadwayChange(right_combined, left_combined)
 
     val (leftLinksWithUdcps, splittedRightLinks, udcpsFromRightSideSplits) = TwoTrackRoadUtils.splitPlsAtStatusChange(adjustedLeftLinksAfterRoadwaySplits, adjustedRightLinksAfterRoadwaySplits)
