@@ -166,11 +166,17 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
   val getRoadwayChangesChanges: SwaggerSupportSyntax.OperationBuilder =
     (apiOperation[List[Map[String, Any]]]("getRoadwayChangesChanges")
       .parameters(
-        queryParam[String]("since").description("Start date of ValidFrom. Date in format ISO8601. For example 2020-04-29T13:59:59"),
-        queryParam[String]("until").description("End date of the ValidFrom. Date in format ISO8601").optional
+        queryParam[String]("since")
+          .description("Restricts the returned changes to the ones that have been saved to Viite at this timestamp or later. \n" +
+            "Date in the ISO8601 date and time format, for example: <i>2020-04-29T13:59:59</i>"),
+        queryParam[String]("until")
+          .description("(Optional) Restricts the returned changes to the ones that have been saved to Viite at this timestamp or earlier. \n" +
+            "Date in the ISO8601 date and time format.")
+          .optional
       )
-      tags "Integration (kalpa, oth, viitekehysmuunnin, ...)"
-      summary "Returns all the Roadway_change changes after the given date (including the given date)."
+      tags "Integration (kalpa, Digiroad, Velho, Viitekehysmuunnin, ...)"
+      summary "Returns the Roadway_change changes after the <i>since</> timestamp.\n" +
+      "2021-10: Change within the return value: 'muutospaiva' -> 'voimaantulopaiva'."
       )
 
   get("/roadway_changes/changes", operation(getRoadwayChangesChanges)) {
@@ -198,7 +204,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
         roadwayChangesInfos.map { roadwayChangesInfo =>
           Map(
             "muutostunniste" -> roadwayChangesInfo.roadwayChangeId,
-            "muutospaiva" -> formatDateTimeToIsoString(Option(roadwayChangesInfo.startDate)),
+            "voimaantulopaiva" -> formatDateTimeToIsoString(Option(roadwayChangesInfo.startDate)),
             "laatimisaika" -> formatDateTimeToIsoString(Option(roadwayChangesInfo.validFrom)),
             "muutostyyppi" -> roadwayChangesInfo.change_type,
             "kaannetty" -> roadwayChangesInfo.reversed,
