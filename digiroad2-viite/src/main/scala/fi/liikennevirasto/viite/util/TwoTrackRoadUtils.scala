@@ -326,10 +326,7 @@ object TwoTrackRoadUtils {
 
           val otherSideLink = hasOtherSideLink.head
 
-          if (
-            (otherSideLink.status == LinkStatus.New && otherSideLink.endAddrMValue != last.endAddrMValue) ||
-            otherSideLink.status != LinkStatus.New && (otherSideLink.originalEndAddrMValue != last.originalEndAddrMValue && otherSideLink.endAddrMValue != last.endAddrMValue)
-          ) {
+          if (otherSideLink.endAddrMValue != last.endAddrMValue) {
             val endPoints = TrackSectionOrder.findChainEndpoints(
               roadPartLinks.filter(pl =>
                 pl.endAddrMValue <= otherSideLink.endAddrMValue && pl.track == otherSideLink.track
