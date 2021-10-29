@@ -1804,20 +1804,21 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             projectDAO.updateProjectStatus(projectId, ProjectState.Accepted)
           }
         } catch {
-          // In case of any expected error, set project status to ProjectState.ErrorInViite
+          // In case of any error, set project status to ProjectState.ErrorInViite
           case t: InvalidAddressDataException => {
             logger.warn(s"InvalidAddressDataException while preserving the project $projectId" +
-                         s" to road network. ${t.getMessage}", t)
+                         s" to the road network. ${t.getMessage}", t)
             projectDAO.updateProjectStatus(projectId, ProjectState.ErrorInViite)
           }
           case t: SQLException => {
             logger.error(s"SQL error while preserving the project $projectId" +
-                         s" to road network. ${t.getMessage}", t)
+                         s" to the road network. ${t.getMessage}", t)
             projectDAO.updateProjectStatus(projectId, ProjectState.ErrorInViite)
           }
-          // Re-throw unexpected errors
+          // If we got an unexpected error, re-throw it, too.
           case t: Exception => {
-            logger.warn(s"Unexpected exception while preserving the project $projectId", t.getMessage)
+            logger.error(s"Unexpected exception while preserving the project $projectId" +
+                         s" to the road network.", t.getMessage, t)
             projectDAO.updateProjectStatus(projectId, ProjectState.ErrorInViite)
             throw t  // Rethrow the unexpected error.
           }
@@ -2097,6 +2098,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val linsToFuseIds = linsToFuse.flatten.map(_.id).toSeq
       val fusedLinearLocations = linsToFuse.map(lls => {
         val maxOrderNum = lls.map(_.orderNumber).max
+
         val firstLl =  lls.find(_.orderNumber == 1).get
         val lastLl = lls.find(_.orderNumber == maxOrderNum).get
         val geometries = lls.sortBy(_.orderNumber).flatMap(_.geometry).distinct
