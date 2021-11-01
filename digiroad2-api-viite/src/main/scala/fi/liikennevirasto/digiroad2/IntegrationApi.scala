@@ -14,7 +14,7 @@ import org.joda.time.{DateTime, DateTimeZone}
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport, SwaggerSupportSyntax}
-import org.scalatra.{BadRequest}
+import org.scalatra.BadRequest
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.util.control.NonFatal
@@ -35,7 +35,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
 
   val getRoadAddressesByMunicipality: SwaggerSupportSyntax.OperationBuilder =
     (apiOperation[List[Map[String, Any]]]("getRoadAddressesByMunicipality")
-      tags "Integration (kalpa, oth, viitekehysmuunnin, ...)"
+      tags "Integration (kalpa, Digiroad, Viitekehysmuunnin, ...)"
       summary "Shows all the road address non floating for a given municipalities."
       parameter queryParam[Int]("municipality").description("The municipality identifier")
       parameter queryParam[String]("situationDate").description("Date in format ISO8601. For example 2020-04-29T13:59:59").optional)
@@ -80,7 +80,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
 
   val getRoadNameChanges: SwaggerSupportSyntax.OperationBuilder =
     (apiOperation[List[Map[String, Any]]]("getRoadNameChanges")
-      tags "Integration (kalpa, oth, viitekehysmuunnin, ...)"
+      tags "Integration (kalpa, Digiroad, Viitekehysmuunnin, ...)"
       summary "Returns all the changes to road names between given dates."
       parameter queryParam[String]("since").description(" Date in format ISO8601. For example 2020-04-29T13:59:59")
       parameter queryParam[String]("until").description("Date in format ISO8601").optional)
@@ -100,7 +100,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
           fetchUpdatedRoadNames(since, untilUnformatted)
         } catch {
           case _: IllegalArgumentException =>
-            val message = "The since /until parameter of the service should be in the form ISO8601"
+            val message = "The since / until parameters should be in the ISO8601 date and time format"
             logger.warn(message)
             BadRequest(message)
           case e if NonFatal(e) =>
@@ -113,7 +113,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
 
   val getRoadwayChanges: SwaggerSupportSyntax.OperationBuilder =
     (apiOperation[List[Map[String, Any]]]("getRoadwayChanges")
-      tags "Integration (kalpa, oth, viitekehysmuunnin, ...)"
+      tags "Integration (kalpa, Digiroad, Viitekehysmuunnin, ...)"
       summary "Returns all the changes to roadways after the given date (including the given date)."
       parameter queryParam[String]("since").description("Date in format ISO8601. For example 2020-04-29T13:59:59"))
 
@@ -152,7 +152,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
           ))
         } catch {
           case _: IllegalArgumentException =>
-            val message = "The since parameter of the service should be in the form ISO8601"
+            val message = "The since parameter should be in the ISO8601 date and time format"
             logger.warn(message)
             BadRequest(message)
           case e if NonFatal(e) =>
@@ -166,11 +166,17 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
   val getRoadwayChangesChanges: SwaggerSupportSyntax.OperationBuilder =
     (apiOperation[List[Map[String, Any]]]("getRoadwayChangesChanges")
       .parameters(
-        queryParam[String]("since").description("Start date of ValidFrom. Date in format ISO8601. For example 2020-04-29T13:59:59"),
-        queryParam[String]("until").description("End date of the ValidFrom. Date in format ISO8601").optional
+        queryParam[String]("since")
+          .description("Restricts the returned changes to the ones that have been saved to Viite at this timestamp or later. \n" +
+            "Date in the ISO8601 date and time format, for example: <i>2020-04-29T13:59:59</i>"),
+        queryParam[String]("until")
+          .description("(Optional) Restricts the returned changes to the ones that have been saved to Viite at this timestamp or earlier. \n" +
+            "Date in the ISO8601 date and time format.")
+          .optional
       )
-      tags "Integration (kalpa, oth, viitekehysmuunnin, ...)"
-      summary "Returns all the Roadway_change changes after the given date (including the given date)."
+      tags "Integration (kalpa, Digiroad, Velho, Viitekehysmuunnin, ...)"
+      summary "Returns the Roadway_change changes after the <i>since</> timestamp.\n" +
+      "2021-10: Change within the return value: 'muutospaiva' -> 'voimaantulopaiva'."
       )
 
   get("/roadway_changes/changes", operation(getRoadwayChangesChanges)) {
@@ -183,7 +189,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
       }
     } catch {
       case error: IllegalArgumentException =>
-        val message = "The parameter of the service should be in the form ISO8601. " + error.getMessage
+        val message = "The since / until parameters should be in the ISO8601 date and time format. " + error.getMessage
         logger.warn(message,error)
         BadRequest(message)
       case error: Exception  =>
@@ -198,7 +204,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
         roadwayChangesInfos.map { roadwayChangesInfo =>
           Map(
             "muutostunniste" -> roadwayChangesInfo.roadwayChangeId,
-            "muutospaiva" -> formatDateTimeToIsoString(Option(roadwayChangesInfo.startDate)),
+            "voimaantulopaiva" -> formatDateTimeToIsoString(Option(roadwayChangesInfo.startDate)),
             "laatimisaika" -> formatDateTimeToIsoString(Option(roadwayChangesInfo.validFrom)),
             "muutostyyppi" -> roadwayChangesInfo.change_type,
             "kaannetty" -> roadwayChangesInfo.reversed,
@@ -232,7 +238,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
 
   val getLinearLocationChanges: SwaggerSupportSyntax.OperationBuilder =
     (apiOperation[List[Map[String, Any]]]("getLinearLocationChanges")
-      tags "Integration (kalpa, oth, viitekehysmuunnin, ...)"
+      tags "Integration (kalpa, Digiroad, Viitekehysmuunnin, ...)"
       summary "Returns all the changes to roadways after the given date (including the given date)."
       parameter queryParam[String]("since").description("Date in format ISO8601. For example 2020-04-29T13:59:59"))
 
@@ -265,7 +271,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
           ))
         } catch {
           case _: IllegalArgumentException =>
-            val message = "The since parameter of the service should be in the form ISO8601"
+            val message = "The since parameter should be in the ISO8601 date and time format"
             logger.warn(message)
             BadRequest(message)
           case e if NonFatal(e) =>
@@ -282,7 +288,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
         queryParam[String]("since").description("Start date of nodes. Date in format ISO8601. For example 2020-04-29T13:59:59"),
         queryParam[String]("until").description("End date of the nodes. Date in format ISO8601").optional
       )
-      tags "Integration (kalpa, oth, viitekehysmuunnin, ...)"
+      tags "Integration (kalpa, Digiroad, Viitekehysmuunnin, ...)"
       summary "This will return all the changes found on the nodes that are published between the period defined by the \"since\" and  \"until\" parameters."
     )
 
