@@ -1508,11 +1508,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       /* Remove user defined calibration points before (re)calc. */
       val udcpRemovedProjectLinks = if(projectLinks.isEmpty) {
         Seq()
-      } else { projectLinks.tail.scanLeft(projectLinks.head) { (p, r) => {
-        if      (r.calibrationPoints._2.getOrElse(NoCP) == UserDefinedCP) r.copy(calibrationPointTypes = (r.startCalibrationPointType, NoCP))
-        else if (r.calibrationPoints._1.getOrElse(NoCP) == UserDefinedCP) r.copy(calibrationPointTypes = (NoCP, r.endCalibrationPointType))
-        else r
-        }}
+      } else {
+      val (connectedGroups, unConnectedGroups) = projectLinks.groupBy(_.connectedLinkId).partition(_._1.isDefined)
+        (unConnectedGroups.values ++ connectedGroups.mapValues(v => fuseProjectLinks(v)).values).flatten.toSeq
       }
 
       val (terminated, others) = udcpRemovedProjectLinks.partition(_.status == LinkStatus.Terminated)
@@ -1731,7 +1729,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         }
         val (startM, endM, startA, endA) = (links.map(_.startMValue).min, links.map(_.endMValue).max,
           links.map(_.startAddrMValue).min, links.map(_.endAddrMValue).max)
-        Seq(links.head.copy(discontinuity = links.maxBy(_.startAddrMValue).discontinuity, startAddrMValue = startA, endAddrMValue = endA, startMValue = startM, endMValue = endM, geometry = geom))
+        Seq(links.head.copy(discontinuity = links.maxBy(_.startAddrMValue).discontinuity, startAddrMValue = startA, endAddrMValue = endA, startMValue = startM, endMValue = endM, geometry = geom, geometryLength = GeometryUtils.geometryLength(geom)))
       }
     }
   }

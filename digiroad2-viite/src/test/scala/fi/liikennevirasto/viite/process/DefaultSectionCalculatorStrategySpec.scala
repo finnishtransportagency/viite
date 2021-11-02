@@ -218,7 +218,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       buildTestDataForProject(Some(project), Some(Seq(roadway1.copy(endAddrMValue = roadway2.endAddrMValue))), Some(Seq(linearLocation1, linearLocation2)), Some(leftSideProjectLinks ++ rightSideProjectLinks))
 
       val projectLinksWithAssignedValues = defaultSectionCalculatorStrategy.assignMValues(leftSideProjectLinks, rightSideProjectLinks, Seq.empty[UserDefinedCalibrationPoint])
-      projectLinksWithAssignedValues.filter(pl => pl.endAddrMValue == 0L).isEmpty should be (true)
+      !projectLinksWithAssignedValues.exists(pl => pl.endAddrMValue == 0L) should be (true)
     }
   }
 
@@ -251,7 +251,48 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       buildTestDataForProject(Some(project), Some(Seq(roadway1.copy(endAddrMValue = roadway2.endAddrMValue))), Some(Seq(linearLocation1, linearLocation2)), Some(leftSideProjectLinks ++ rightSideProjectLinks))
 
       val projectLinksWithAssignedValues = defaultSectionCalculatorStrategy.assignMValues(leftSideProjectLinks, rightSideProjectLinks, Seq.empty[UserDefinedCalibrationPoint])
-      projectLinksWithAssignedValues.filter(pl => pl.endAddrMValue == 0L).isEmpty should be (true)
+      !projectLinksWithAssignedValues.exists(pl => pl.endAddrMValue == 0L) should be (true)
+    }
+  }
+
+  test("Test defaultSectionCalculatorStrategy.assignMValues() " +
+                 "When two track road need a split at status change " +
+                 "Then there should be one split and start and end addresses equal.") {
+    runWithRollback {
+      val geomLeft1 = Seq(Point(640585.759, 6945368.243, 82.05899999999383), Point(640581.046, 6945375.263, 82.05999999999767), Point(640549.13, 6945426.148, 82.13800000000629), Point(640527.345, 6945456.853, 82.26099867194839))
+      val geomLeft2 = Seq(Point(640647.318, 6945298.805, 81.94899999999325), Point(640631.604, 6945314.631, 81.86199999999371), Point(640619.909, 6945328.505, 81.71499999999651), Point(640603.459, 6945347.136, 82.12300000000687), Point(640592.482, 6945360.353, 82.10599999999977), Point(640585.759, 6945368.243, 82.05899999999383))
+
+      val projId = Sequences.nextViiteProjectId
+      val roadwayId = Sequences.nextRoadwayId
+      val linearLocationId = Sequences.nextLinearLocationId
+      val projectLinkId = Sequences.nextProjectLinkId
+      val project = Project(projId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
+        "", Seq(), Seq(), None, None)
+
+      val projectLinkRight1 = ProjectLink(projectLinkId, 9999L, 1L, Track.RightSide, Discontinuity.Continuous, 0L, 117L, 0L, 117L, None, None, Some("user"), 12345L, 0.0, 106.169, SideCode.Unknown, (NoCP, NoCP), (CalibrationPointType.NoCP, CalibrationPointType.NoCP), geomLeft1, projId, LinkStatus.UnChanged, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomLeft1), 0L, 0, 0, reversed = false, None, 86400L, roadwayNumber = 12345L)
+      val projectLinkRight2 = ProjectLink(projectLinkId + 1, 9999L, 1L, Track.RightSide, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None, Some("user"), 12346L, 0.0, 92.849, SideCode.Unknown, (NoCP, NoCP), (CalibrationPointType.NoCP, CalibrationPointType.NoCP), geomLeft2, projId, LinkStatus.New, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomLeft2), 0L, 0, 0, reversed = false, None, 86400L)
+
+      val geomRight2 = Seq(Point(640647.318, 6945298.805, 81.94899999999325), Point(640640.688, 6945310.671, 81.96700000000419), Point(640613.581, 6945354.331, 82.08299999999872), Point(640583.638, 6945402.111, 82.11299999999756), Point(640555.489, 6945443.729, 82.16999999999825), Point(640535.923, 6945471.794, 82.31699959446674))
+
+      val projectLinkLeft1 = ProjectLink(projectLinkId + 3, 9999L, 1L, Track.LeftSide, Discontinuity.Continuous, 0L, 228L, 0L, 228L, None, None, Some("user"), 12348L, 0.0, 205.826, SideCode.Unknown, (NoCP, RoadAddressCP), (NoCP, NoCP), geomRight2, projId, LinkStatus.UnChanged, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight2), roadwayId + 1, linearLocationId + 1, 0, reversed = false, None, 86400L, roadwayNumber = 12347L)
+
+      val leftSideProjectLinks = Seq(projectLinkLeft1)
+      val rightSideProjectLinks = Seq(projectLinkRight1, projectLinkRight2)
+      val (linearLocation1, roadway1) = Seq(projectLinkLeft1).map(toRoadwayAndLinearLocation).head
+      val (linearLocation2, roadway2) = Seq(projectLinkRight1).map(toRoadwayAndLinearLocation).head
+
+      buildTestDataForProject(Some(project), Some(Seq(roadway1, roadway2)), Some(Seq(linearLocation1, linearLocation2)), Some(leftSideProjectLinks ++ rightSideProjectLinks))
+
+      val projectLinksWithAssignedValues = defaultSectionCalculatorStrategy.assignMValues(Seq(projectLinkRight2), Seq(projectLinkLeft1, projectLinkRight1), Seq.empty[UserDefinedCalibrationPoint])
+      val grouped = projectLinksWithAssignedValues.groupBy(_.track)
+
+      grouped should have size 2
+      val leftCalculated  = grouped(Track.LeftSide)
+      val rightCalculated = grouped(Track.RightSide)
+      leftCalculated.maxBy(_.endAddrMValue).endAddrMValue should be(rightCalculated.maxBy(_.endAddrMValue).endAddrMValue)
+      leftCalculated.minBy(_.startAddrMValue).startAddrMValue should be(rightCalculated.minBy(_.startAddrMValue).startAddrMValue)
+      leftCalculated should have size 2
+      rightCalculated should have size 2
     }
   }
 
