@@ -1816,7 +1816,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           // If we got an unexpected error, re-throw it, too.
           case t: Exception => {
             logger.error(s"Unexpected exception while preserving the project $projectId" +
-                         s" to the road network.", t.getMessage, t)
+                         s" to the road network. ${t.getMessage}", t)
             projectDAO.updateProjectStatus(projectId, ProjectState.ErrorInViite)
             throw t  // Rethrow the unexpected error.
           }
