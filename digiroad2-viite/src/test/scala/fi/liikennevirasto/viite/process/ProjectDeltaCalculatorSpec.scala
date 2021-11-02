@@ -17,6 +17,8 @@ import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
+import scala.collection.immutable
+
 class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
   val roadwayDAO = new RoadwayDAO
 
@@ -107,6 +109,123 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       to205.size should be(1)
       remain205.size should be(1)
       start205.map(x => (x._1.startMAddr, x._2.startMAddr, x._1.endMAddr, x._2.endMAddr)) should be(Some((0L, 0L, 110L, 110L)))
+    }
+  }
+
+  test("Test ProjectDeltaCalculator.partition " +
+       "When a road with a combined part + two track part is reversed" +
+       "Then returns the correct From RoadSection -> To RoadSection mapping.") {
+    implicit val ordering: Ordering[RoadAddress] = Ordering.by(_.endAddrMValue)
+    def getMinAddress(pls: Seq[BaseRoadAddress]): Long = pls.minBy(_.startAddrMValue).startAddrMValue
+    def getMaxAddress(pls: Seq[BaseRoadAddress]): Long = pls.maxBy(_.endAddrMValue).endAddrMValue
+    def addressTrackChanges(x: (RoadwaySection, RoadwaySection)): (Long, Long, Long, Long, Track, Track) = (x._1.startMAddr, x._2.startMAddr, x._1.endMAddr, x._2.endMAddr, x._1.track, x._2.track)
+    def toProjectLinks(transferLinks: IndexedSeq[(RoadAddress, ProjectLink)], track: Track)(implicit addresses: Seq[RoadAddress]): IndexedSeq[ProjectLink] = {
+      val roadwayId = transferLinks.head._2.roadwayId
+      transferLinks.map(l => {
+        l._2.copy(reversed = true, track = track, startAddrMValue = addresses.max.endAddrMValue - l._2.endAddrMValue, endAddrMValue = addresses.max.endAddrMValue - l._2.startAddrMValue, roadwayId = roadwayId)
+      })
+    }
+    runWithRollback {
+      val distance = 10L
+      val combinedTrackAddresses  = (0 to 10).map(f = i => {
+        createRoadAddress(i * 10, distance)
+      })
+      val leftTrackAddresses = (11 to 21).map(i => {
+        createRoadAddress(i * 10, distance)
+      }).map(f = a => {a.copy(track = Track.LeftSide)})
+      implicit val rightTrackAddresses: immutable.IndexedSeq[RoadAddress] = (11 to 21).map(i => {
+        createRoadAddress(i * 10, distance)
+      }).map(f = a => a.copy(id = a.id + 1, track = Track.RightSide))
+
+      val transferLinks0 = combinedTrackAddresses.map(toTransition(project, LinkStatus.Transfer))
+      val transferLinks1 = rightTrackAddresses.map(toTransition(project, LinkStatus.Transfer))
+      val transferLinks2 = leftTrackAddresses.map(toTransition(project, LinkStatus.Transfer))
+
+      val projectLinks = toProjectLinks(transferLinks0, Track.Combined) ++ toProjectLinks(transferLinks1, Track.LeftSide) ++ toProjectLinks(transferLinks2, Track.RightSide)
+
+      val combinedLinks = projectLinks.filter(_.track == Track.Combined)
+      val rightLinks    = projectLinks.filter(_.track == Track.RightSide)
+      val leftLinks     = projectLinks.filter(_.track == Track.LeftSide)
+
+      val roadway0      = toRoadway(combinedLinks).copy(track = combinedTrackAddresses.head.track, startAddrMValue = 0, endAddrMValue = combinedTrackAddresses.max.endAddrMValue)
+      val roadway1      = toRoadway(rightLinks).copy(track = leftTrackAddresses.head.track, startAddrMValue = combinedTrackAddresses.max.endAddrMValue, endAddrMValue = leftTrackAddresses.max.endAddrMValue)
+      val roadway2      = toRoadway(leftLinks).copy(track = rightTrackAddresses.head.track, startAddrMValue = combinedTrackAddresses.max.endAddrMValue, endAddrMValue = rightTrackAddresses.max.endAddrMValue)
+
+      roadwayDAO.create(Seq(roadway0, roadway1, roadway2))
+
+      val partitions = ProjectDeltaCalculator.partitionWithProjectLinks(projectLinks, projectLinks)
+      val sectionPairs = partitions.adjustedSections.zip(partitions.originalSections)
+
+      sectionPairs should have size 3
+      val combined = sectionPairs.find(_._1.track == Track.Combined)
+      val track1   = sectionPairs.find(_._1.track == Track.RightSide)
+      val track2   = sectionPairs.find(_._1.track == Track.LeftSide)
+
+      combined.size should be(1)
+      track1.size should be(1)
+      track2.size should be(1)
+
+      combined.map(addressTrackChanges) should be(Some((getMinAddress(combinedLinks), getMinAddress(combinedTrackAddresses), getMaxAddress(combinedLinks), getMaxAddress(combinedTrackAddresses), Track.Combined,  Track.Combined)))
+      track1.map(addressTrackChanges)   should be(Some((getMinAddress(rightLinks),    getMinAddress(rightTrackAddresses),    getMaxAddress(rightLinks),    getMaxAddress(rightTrackAddresses),    Track.RightSide, Track.LeftSide)))
+      track2.map(addressTrackChanges)   should be(Some((getMinAddress(leftLinks),     getMinAddress(leftTrackAddresses),     getMaxAddress(leftLinks),     getMaxAddress(leftTrackAddresses),     Track.LeftSide,  Track.RightSide)))
+    }
+  }
+
+  test("Test ProjectDeltaCalculator.partition " +
+                "When a road with a combined part + two track part where other track is terminated" +
+                "Then returns the correct From RoadSection -> To RoadSection mapping.") {
+    implicit val ordering: Ordering[RoadAddress] = Ordering.by(_.endAddrMValue)
+    def getMinAddress(pls: Seq[BaseRoadAddress]): Long = pls.minBy(_.startAddrMValue).startAddrMValue
+    def getMaxAddress(pls: Seq[BaseRoadAddress]): Long = pls.maxBy(_.endAddrMValue).endAddrMValue
+    def addressTrackChanges(x: (RoadwaySection, RoadwaySection)): (Long, Long, Long, Long, Track, Track) = (x._1.startMAddr, x._2.startMAddr, x._1.endMAddr, x._2.endMAddr, x._1.track, x._2.track)
+    def toProjectLinks(transferLinks: IndexedSeq[(RoadAddress, ProjectLink)], track: Track)(implicit addresses: Seq[RoadAddress]): IndexedSeq[ProjectLink] = {
+      val roadwayId = transferLinks.head._2.roadwayId
+      transferLinks.map(l => {
+        l._2.copy(track = track, roadwayId = roadwayId)
+      })
+    }
+    runWithRollback {
+      val distance = 10L
+      val combinedTrackAddresses  = (0 to 10).map(f = i => {
+        createRoadAddress(i * 10, distance)
+      })
+      val leftTrackAddresses = (11 to 21).map(i => {
+        createRoadAddress(i * 10, distance)
+      }).map(f = a => {a.copy(track = Track.LeftSide)})
+      implicit val rightTrackAddresses: immutable.IndexedSeq[RoadAddress] = (11 to 21).map(i => {
+        createRoadAddress(i * 10, distance)
+      }).map(f = a => a.copy(id = a.id + 1, track = Track.RightSide))
+
+      val transferLinks0 = combinedTrackAddresses.map(toTransition(project, LinkStatus.UnChanged))
+      val transferLinks1 = rightTrackAddresses.map(toTransition(project, LinkStatus.Terminated))
+      val transferLinks2 = leftTrackAddresses.map(toTransition(project, LinkStatus.Transfer))
+
+      val projectLinks = toProjectLinks(transferLinks0, Track.Combined) ++ toProjectLinks(transferLinks1, Track.RightSide) ++ toProjectLinks(transferLinks2, Track.Combined)
+
+      val (combinedLinks, leftLinks) = projectLinks.filter(_.track == Track.Combined).partition(_.endAddrMValue < 120)
+      val rightLinks    = projectLinks.filter(_.track == Track.RightSide)
+
+      val roadway0      = toRoadway(combinedLinks).copy(track = combinedTrackAddresses.head.track, startAddrMValue = 0, endAddrMValue = combinedTrackAddresses.max.endAddrMValue)
+      val roadway1      = toRoadway(leftLinks).copy(track = leftTrackAddresses.head.track, startAddrMValue = combinedTrackAddresses.max.endAddrMValue, endAddrMValue = leftTrackAddresses.max.endAddrMValue)
+      val roadway2      = toRoadway(rightLinks).copy(track = rightTrackAddresses.head.track, startAddrMValue = combinedTrackAddresses.max.endAddrMValue, endAddrMValue = rightTrackAddresses.max.endAddrMValue)
+
+      roadwayDAO.create(Seq(roadway0, roadway1, roadway2))
+
+      val partitions = ProjectDeltaCalculator.partitionWithProjectLinks(projectLinks, projectLinks)
+      val sectionPairs = partitions.adjustedSections.zip(partitions.originalSections)
+
+      sectionPairs should have size 3
+      val combined = sectionPairs.find(_._2.track == Track.Combined)
+      val track1   = sectionPairs.find(_._2.track == Track.RightSide)
+      val track2   = sectionPairs.find(_._2.track == Track.LeftSide)
+
+      combined.size should be(1)
+      track1.size should be(1)
+      track2.size should be(1)
+
+      combined.map(addressTrackChanges) should be(Some((getMinAddress(combinedLinks), getMinAddress(combinedTrackAddresses), getMaxAddress(combinedLinks), getMaxAddress(combinedTrackAddresses), Track.Combined,  Track.Combined)))
+      track1.map(addressTrackChanges)   should be(Some((getMinAddress(rightLinks),    getMinAddress(rightTrackAddresses),    getMaxAddress(rightLinks),    getMaxAddress(rightTrackAddresses),    Track.RightSide, Track.RightSide)))
+      track2.map(addressTrackChanges)   should be(Some((getMinAddress(leftLinks),     getMinAddress(leftTrackAddresses),     getMaxAddress(leftLinks),     getMaxAddress(leftTrackAddresses),     Track.Combined,  Track.LeftSide)))
     }
   }
 
