@@ -102,7 +102,13 @@
       if (selected.length === 1) {
         return String(formCommon.staticField('Linkin pituus', Math.round(selected[0].endMValue - selected[0].startMValue)));
       } else {
-        return '';
+        var combinedLength = 0;
+        _.map(selected, function(roadLink){
+          combinedLength += Math.round(roadLink.endMValue - roadLink.startMValue);
+        });
+        return '' + '<div class="form-group-metadata">' +
+            '<p class="form-control-static asset-log-info-metadata">Linkkien pituus: ' + combinedLength + '</p>' +
+            '</div>';
       }
     };
 

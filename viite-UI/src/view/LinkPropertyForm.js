@@ -420,7 +420,14 @@
             '<p class="form-control-static asset-log-info-metadata">Linkin pituus: ' + Math.round(linkProperties.endMValue - linkProperties.startMValue) + '</p>' +
             '</div>';
       } else {
-        return '';
+        var roadLinks = selectedLinkPropertyToShow.get();
+        var combinedLength = 0;
+        _.map(roadLinks, function(roadLink){
+          combinedLength += Math.round(roadLink.endMValue - roadLink.startMValue);
+        });
+        return '' + '<div class="form-group-metadata">' +
+            '<p class="form-control-static asset-log-info-metadata">Linkkien pituus: ' + combinedLength + '</p>' +
+            '</div>';
       }
     };
 
