@@ -1780,44 +1780,49 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @throws Exception if an unexpected exception occurred. */
   def preserveSingleProjectToBeTakenToRoadNetwork(): Unit = {
 
-    // get a project to update to db, if any
+    // Get a project to update to db, if any. Reserved apart from db preserve, to communicate the reservation asap.
     val projectIdOpt: Option[Long] = atomicallyReserveProjectInUpdateQueue
+
     var projectId: Long = -1L // dummy
 
-    // try preserving the project to the db, in there was one to be updated
-    withDynTransaction {
-      try {
-        projectIdOpt match {
-          case None =>
-            logger.debug(s"No projects to update to the road network.")
-          case Some(id) => {
+    projectIdOpt match {
+
+      case None =>
+        logger.debug(s"No projects to update to the road network.")
+
+      case Some(id) => {
+        // Try preserving the project to the road network
+        try {
+          withDynTransaction {
             projectId = id
             time(logger, s"Preserve the project $projectId to the road network") {
               preserveProjectToDB(projectId)
             }
+            // Got through without Exceptions -> the project was successfully preserved
+            projectDAO.updateProjectStatus(projectId, ProjectState.Accepted)
+          }
+        } catch {
+          // In case of any error, set project status to ProjectState.ErrorInViite
+          case t: InvalidAddressDataException => {
+            logger.warn(s"InvalidAddressDataException while preserving the project $projectId" +
+                         s" to the road network. ${t.getMessage}", t)
+            projectDAO.updateProjectStatus(projectId, ProjectState.ErrorInViite)
+          }
+          case t: SQLException => {
+            logger.error(s"SQL error while preserving the project $projectId" +
+                         s" to the road network. ${t.getMessage}", t)
+            projectDAO.updateProjectStatus(projectId, ProjectState.ErrorInViite)
+          }
+          // If we got an unexpected error, re-throw it, too.
+          case t: Exception => {
+            logger.error(s"Unexpected exception while preserving the project $projectId" +
+                         s" to the road network. ${t.getMessage}", t)
+            projectDAO.updateProjectStatus(projectId, ProjectState.ErrorInViite)
+            throw t  // Rethrow the unexpected error.
           }
         }
-      } catch {
-        // in case of an expected error, set project status to ProjectState.ErrorInViite
-        case t: InvalidAddressDataException => {
-          logger.warn(s"InvalidAddressDataException while preserving the project $projectId" +
-                       s" to road network. ${t.getMessage}", t)
-          projectDAO.updateProjectStatus(projectId, ProjectState.ErrorInViite)
-        }
-        case t: SQLException => {
-          logger.error(s"SQL error while preserving the project $projectId" +
-                       s" to road network. ${t.getMessage}", t)
-          projectDAO.updateProjectStatus(projectId, ProjectState.ErrorInViite)
-        }
-        // re-throw unexpected errors
-        case t: Exception => {
-          logger.warn(s"Unexpected exception while preserving the project $projectId", t.getMessage)
-          projectDAO.updateProjectStatus(projectId, ProjectState.ErrorInViite)
-          throw t  // Rethrow the unexpected error.
-        }
-      }
-      // got through without Exceptions -> the project was successfully preserved
-      projectDAO.updateProjectStatus(projectId, ProjectState.Accepted)
+      } // case Some
+
     }
   }
 
@@ -2056,6 +2061,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val nodeIds = nodeDAO.fetchNodeNumbersByProject(projectID)
     /* Remove userdefined calibrationpoints from calculation. Assume udcp:s defined at projectlink splits. */
     val projectLinks = projectLinkDAO.fetchProjectLinks(projectID).map(pl => if (pl.calibrationPointTypes._2 == CalibrationPointDAO.CalibrationPointType.UserDefinedCP) pl.copy(calibrationPointTypes = (pl.calibrationPointTypes._1, CalibrationPointDAO.CalibrationPointType.NoCP)) else pl )
+    if (projectLinks.isEmpty) {
+      logger.error(s" There are no addresses to update, rollbacking update of project ${project.id}")
+      throw new InvalidAddressDataException(s"There were no addresses to update in project ${project.id}")
+    }
+
     val projectLinkChanges = projectLinkDAO.fetchProjectLinksChange(projectID)
     val currentRoadways = roadwayDAO.fetchAllByRoadwayId(projectLinks.map(pl => pl.roadwayId)).map(roadway => (roadway.id, roadway)).toMap
     val historyRoadways = roadwayDAO.fetchAllByRoadwayNumbers(currentRoadways.map(_._2.roadwayNumber).toSet, withHistory = true).filter(_.endDate.isDefined).map(roadway => (roadway.id, roadway)).toMap
@@ -2067,10 +2077,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val roadwayChanges = roadwayChangesDAO.fetchRoadwayChanges(Set(projectID))
     val mappedRoadwayChanges = currentRoadways.values.map(r => RoadwayFiller.RwChanges(r, findHistoryRoadways(r.roadwayNumber), projectLinks.filter(_.roadwayId == r.id))).toList
 
-    if (projectLinks.isEmpty) {
-      logger.error(s" There are no addresses to update, rollbacking update of project ${project.id}")
-      throw new InvalidAddressDataException(s"There were no addresses to update in project ${project.id}")
-    }
     logger.debug(s"Moving project links to project link history.")
     projectLinkDAO.moveProjectLinksToHistory(projectID)
 
@@ -2090,7 +2096,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val linsToFuseIds = linsToFuse.flatten.map(_.id).toSeq
       val fusedLinearLocations = linsToFuse.map(lls => {
         val maxOrderNum = lls.map(_.orderNumber).max
-        val firstLl = lls.find(_.orderNumber == 1).get
+
+        val firstLl =  lls.find(_.orderNumber == 1).get
         val lastLl = lls.find(_.orderNumber == maxOrderNum).get
         val geometries = lls.sortBy(_.orderNumber).flatMap(_.geometry).distinct
         firstLl.copy(calibrationPoints = (lastLl.startCalibrationPoint, lastLl.endCalibrationPoint), geometry = geometries)

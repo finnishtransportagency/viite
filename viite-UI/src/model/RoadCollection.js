@@ -225,7 +225,7 @@
         return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface);
       });
 
-      setRoadLinkGroups(nonHistoryConstructionRoadLinkGroups.concat(unaddressedUnderConstructionRoadLinkGroups).concat(floatingRoadLinks));
+      setRoadLinkGroups(nonHistoryConstructionRoadLinkGroups.concat(floatingRoadLinks));
       eventbus.trigger('roadLinks:fetched', nonHistoryConstructionRoadLinkGroups, (!_.isUndefined(drawUnknowns) && drawUnknowns), selectedLinkIds);
       if (historicRoadLinks.length !== 0) {
         eventbus.trigger('linkProperty:fetchedHistoryLinks', historicRoadLinks);
