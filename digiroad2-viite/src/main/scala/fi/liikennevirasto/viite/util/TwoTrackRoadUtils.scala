@@ -174,7 +174,7 @@ object TwoTrackRoadUtils {
           calibrationPointTypes = calsForFirstPart,
           geometry              = geom,
           status                = pl.status,
-          geometryLength        = splitMeasure,
+          geometryLength        = splitMeasure - pl.startMValue,
           connectedLinkId       = Some(pl.linkId),
           discontinuity         = Discontinuity.Continuous
         ),
@@ -191,7 +191,7 @@ object TwoTrackRoadUtils {
           calibrationPointTypes   = calsForSecondPart,
           geometry                = new_geometry,
           status                  = pl.status,
-          geometryLength          = pl.geometryLength - splitMeasure,
+          geometryLength          = pl.geometryLength - (splitMeasure - pl.startMValue),
           connectedLinkId         = Some(pl.linkId)
         )
       )
@@ -251,14 +251,9 @@ object TwoTrackRoadUtils {
           last.endAddrMValue
         )
 
-      val newUcpId =
-        if (
-          !roadPartCalibrationPoints.exists(cp =>
-            cp.projectLinkId == otherSideLink.id && cp.addressMValue == last.endAddrMValue
-          )
-        ) {
-          true
-        } else false
+      val newUcpId = !roadPartCalibrationPoints.exists(cp => {
+        cp.projectLinkId == otherSideLink.id && cp.addressMValue == last.endAddrMValue
+      })
 
       val updatedCpToLast = last.copy(calibrationPointTypes = (startCP, endCP))
       val updatedCpToOtherSideLink =
@@ -457,7 +452,7 @@ object TwoTrackRoadUtils {
           calibrationPointTypes = calsForFirstPart,
           geometry              = geom,
           status                = pl.status,
-          geometryLength        = splitMeasure,
+          geometryLength        = splitMeasure - pl.startMValue,
           connectedLinkId       = Some(pl.linkId)
         ),
         pl.copy(
@@ -471,7 +466,7 @@ object TwoTrackRoadUtils {
           calibrationPointTypes   = calsForSecondPart,
           geometry                = new_geometry,
           status                  = pl.status,
-          geometryLength          = pl.geometryLength - splitMeasure, // Should be pl.endMValue - splitMeasure?
+          geometryLength          = pl.geometryLength - (splitMeasure - pl.startMValue),
           connectedLinkId         = Some(pl.linkId)
         )
       )
