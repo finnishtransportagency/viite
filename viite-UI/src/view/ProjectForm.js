@@ -61,7 +61,10 @@
         '<div class="form-group editable form-editable-roadAddressProject"> ' +
         '<form  id="roadAddressProject"  class="input-unit-combination form-group form-horizontal roadAddressProject">' +
         inputFieldRequired('*Nimi', 'nimi', '', '', 32) +
-        inputFieldRequired('*Alkupvm', 'alkupvm', 'pp.kk.vvvv', '') +
+        inputFieldRequired('*Alkupvm', 'projectStartDate', 'pp.kk.vvvv', '') +
+        '   <div class="form-check-date-notifications"> ' +
+        '     <p id="projectStartDate-validation-notification"> </p>' +
+        '   </div>' +
         largeInputField() +
         '<div class="form-group">' +
         '<label class="control-label"></label>' +
@@ -97,7 +100,10 @@
         '<div class="form-group editable form-editable-roadAddressProject"> ' +
         '<form id="roadAddressProject" class="input-unit-combination form-group form-horizontal roadAddressProject">' +
         inputFieldRequired('*Nimi', 'nimi', '', project.name, 32) +
-        inputFieldRequired('*Alkupvm', 'alkupvm', 'pp.kk.vvvv', project.startDate) +
+        inputFieldRequired('*Alkupvm', 'projectStartDate', 'pp.kk.vvvv', project.startDate) +
+        '   <div class="form-check-date-notifications"> ' +
+        '     <p id="projectStartDate-validation-notification"> </p>' +
+        '   </div>' +
         largeInputField(project.additionalInfo) +
         '<div class="form-group">' +
         '<label class="control-label"></label>' +
@@ -175,16 +181,19 @@
     };
 
     var addDatePicker = function () {
-      var $validFrom = $('#alkupvm');
+      var $validFrom = $('#projectStartDate');
       dateutil.addSingleDatePicker($validFrom);
+      $validFrom.on('change', function () {
+        eventbus.trigger('projectStartDate:notificationCheck', $(this).val());
+      });
     };
 
     var formIsInvalid = function (rootElement) {
-      return !(rootElement.find('#nimi').val() && rootElement.find('#alkupvm').val() !== '');
+      return !(rootElement.find('#nimi').val() && rootElement.find('#projectStartDate').val() !== '');
     };
 
     var projDateEmpty = function (rootElement) {
-      return !rootElement.find('#alkupvm').val();
+      return !rootElement.find('#projectStartDate').val();
     };
 
     var addReserveButton = function () {
@@ -247,22 +256,22 @@
         formedParts.append(formedParts.html(newParts));
       };
 
-        var reservedHtmlList = function (list) {
-            var text = '';
-            var index = 0;
-            _.each(list, function (line) {
-                if (!_.isUndefined(line.currentLength)) {
-                    text += '<div class="form-reserved-roads-list">' + projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber, 'reservedList') +
-                        addSmallLabel(line.roadNumber) +
-                        addSmallLabelWithIds(line.roadPartNumber, 'reservedRoadPartNumber') +
-                        addSmallLabelWithIds((line.currentLength), 'reservedRoadLength') +
-                        addSmallLabelWithIds((line.currentDiscontinuity), 'reservedDiscontinuity') +
-                        addSmallLabelWithIds((line.currentEly), 'reservedEly') +
-                        '</div>';
-                }
-            });
-            return text;
-        };
+      var reservedHtmlList = function (list) {
+          var text = '';
+          var index = 0;
+          _.each(list, function (line) {
+              if (!_.isUndefined(line.currentLength)) {
+                  text += '<div class="form-reserved-roads-list">' + projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber, 'reservedList') +
+                      addSmallLabel(line.roadNumber) +
+                      addSmallLabelWithIds(line.roadPartNumber, 'reservedRoadPartNumber') +
+                      addSmallLabelWithIds((line.currentLength), 'reservedRoadLength') +
+                      addSmallLabelWithIds((line.currentDiscontinuity), 'reservedDiscontinuity') +
+                      addSmallLabelWithIds((line.currentEly), 'reservedEly') +
+                      '</div>';
+              }
+          });
+          return text;
+      };
 
       var formedHtmlList = function (list) {
         var text = '';
@@ -399,7 +408,7 @@
 
       var disableAutoComplete = function () {
         $('[id=nimi]').attr('autocomplete', 'off');
-        $('[id=alkupvm]').attr('autocomplete', 'off');
+        $('[id=projectStartDate]').attr('autocomplete', 'off');
         $('[id=lisatiedot]').attr('autocomplete', 'off');
       };
 
@@ -453,6 +462,24 @@
         $('#saveEdit:disabled').prop('disabled', formIsInvalid(rootElement));
         currentProject.isDirty = true;
         emptyFields(['tie', 'aosa', 'losa']);
+      });
+
+      var checkDateNotification = function (projectStartDate) {
+        var projectNotificationText = "";
+        var parts_DMY=projectStartDate.split('.');
+
+        var projectSD = new Date(parts_DMY[2], parts_DMY[1] - 1, parts_DMY[0]);
+        var nowDate = new Date();
+        if(projectSD.getFullYear() < nowDate.getFullYear()-20) {
+          projectNotificationText = 'Vanha päiväys. Projektin alkupäivämäärä yli 20 vuotta historiassa. Varmista päivämäärän oikeellisuus ennen jatkamista.';
+        }
+        else if(projectSD.getFullYear() > nowDate.getFullYear()+1){
+          projectNotificationText = 'Tulevaisuuden päiväys. Projektin alkupäivä yli vuoden verran tulevaisuudessa. Varmista päivämäärän oikeellisuus ennen jatkamista.';
+        }
+        return   projectNotificationText;
+      };
+      eventbus.on('projectStartDate:notificationCheck', function (projectStartDate) {
+        $('#projectStartDate-validation-notification').html(checkDateNotification(projectStartDate));
       });
 
       eventbus.on('roadAddress:projectFailed', function () {
@@ -531,7 +558,7 @@
         if (currentProject) {
           currentProject.isDirty = true;
         }
-        var textIsNonEmpty = $('#nimi').val() !== "" && $('#alkupvm').val() !== "";
+        var textIsNonEmpty = $('#nimi').val() !== "" && $('#projectStartDate').val() !== "";
         var nextAreDisabled = $('#generalNext').is(':disabled') || $('#saveEdit').is(':disabled');
         var reservedRemoved = !_.isUndefined(eventData) && eventData.removedReserved;
 
@@ -557,8 +584,11 @@
       rootElement.on('change', '#nimi', function () {
         textFieldChangeHandler();
       });
-      rootElement.on('change', '#alkupvm', function () {
+      rootElement.on('change', '#projectStartDate', function () {
         textFieldChangeHandler();
+      });
+      rootElement.on('input', '#projectStartDate', function () {
+        eventbus.trigger('projectStartDate:notificationCheck', $(this).val());
       });
       rootElement.on('change', '#lisatiedot', function () {
         textFieldChangeHandler();
