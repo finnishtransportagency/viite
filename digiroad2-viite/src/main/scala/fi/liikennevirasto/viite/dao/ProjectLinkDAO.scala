@@ -76,7 +76,7 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
   }
 
   def copyWithGeometry(newGeometry: Seq[Point]): ProjectLink = {
-    this.copy(geometry = newGeometry)
+    this.copy(geometry = newGeometry, geometryLength = GeometryUtils.geometryLength(newGeometry))
   }
 
   def addrAt(a: Double): Long = {
