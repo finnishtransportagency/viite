@@ -43,16 +43,16 @@
       [5, 'Yhdystie (10001-19999)'],
       [6, 'Numeroitu katu (40000-49999)'],
       [7, 'Ramppi tai kiertoliittymä (20001 - 39999)'],
-      [8, 'Jalka- tai pyörätie (70001 - 89999, 90001 - 99999)'],
+      [8, 'Kävelyn ja pyöräilyn väylä (70001 - 99999)'],
       [9, 'Yksityistie, talvitie tai polku (50001-62999)'],
-      [11, 'Muu tieverkko'],
+      [11, 'Osoitteeton (kunta tai yksityinen)'],
       [98, 'Hallinnollinen luokka kunta tai yksityinen'],
-      [99, 'Tuntematon']
+      [99, 'Osoitteeton (valtio)']
     ];
 
     var constructionTypes = [
-      [0, 'Muu tieverkko, rakenteilla'],
-      [1, 'Maantie, rakenteilla']
+      [0, 'Rakenteilla (kunta/yksityinen)'],
+      [1, 'Rakenteilla (valtio)']
     ];
 
     var nodes = [
