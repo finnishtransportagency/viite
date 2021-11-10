@@ -6,6 +6,18 @@
     var formCommon = new FormCommon('');
     var ProjectStatus = LinkValues.ProjectStatus;
     var editableStatus = [ProjectStatus.Incomplete.value, ProjectStatus.Unknown.value];
+
+    // state to keep track if project links have been recalculated after changes made to project links
+    var recalculatedAfterChangesStatus = false;
+
+    eventbus.on('roadAddressProject:setRecalculatedAfterChangesState', function (bool) {
+      recalculatedAfterChangesStatus = bool;
+    });
+
+    var getRecalculatedAfterChangesState = function () {
+      return recalculatedAfterChangesStatus;
+    };
+
     var staticField = function (labelText, dataField) {
       var field;
       field = '<div class="form-group">' +
@@ -340,31 +352,63 @@
         createOrSaveProject();
       };
 
-      var nextStage = function () {
+      var nextStage = function (reOpenCurrent = false, generalNext = false, saveAndNext = false) {
         applicationModel.addSpinner();
         currentProject.isDirty = false;
         jQuery('.modal-overlay').remove();
-        eventbus.trigger('roadAddressProject:openProject', currentProject);
+        if (generalNext || saveAndNext) {
+          eventbus.trigger('roadAddressProject:openProject', currentProject);
+        }
         rootElement.html(selectedProjectLinkTemplateDisabledButtons(currentProject));
         var projectErrors = projectCollection.getProjectErrors();
         // errorCode 8 means there are projectLinks in the project with status "NotHandled"
         var highPriorityProjectErrors = projectErrors.filter((error) => error.errorCode === 8);
-        if (highPriorityProjectErrors.length === 0) {
-          // if change table is open then button titles should tell user to close the change table
-          if ($('.change-table-frame').css('display') === "block") {
-            formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Etäisyyslukemia ei voida päivittää yhteenvetotaulukon ollessa auki");
-            formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Yhteenvetotaulukko on jo auki");
-          } else {
-            //if no high priority errors are present and change table is not open enable recalculate button and set title text to empty string
-            // set changes button title
-            formCommon.setDisabledAndTitleAttributesById("recalculate-button", false, "");
-            formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Projektin tulee läpäistä validoinnit");
-          }
+        if (generalNext || saveAndNext) { // if the project was opened or project was edited and opened again
+          buttonsWhenOpenProject(projectErrors, highPriorityProjectErrors);
+        } else if (reOpenCurrent) { // if project link form was closed without saving
+          buttonsWhenReOpenCurrent(projectErrors, highPriorityProjectErrors);
         }
         _.defer(function () {
           applicationModel.selectLayer('roadAddressProject');
           toggleAdditionalControls();
         });
+      };
+
+      /**
+       * Set recalculate and changes buttons attributes (disabled, title) when project is opened
+       * */
+      var buttonsWhenOpenProject = function (projectErrors, highPriorityProjectErrors) {
+        if (projectErrors.length === 0 && getRecalculatedAfterChangesState() === true) {
+          formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Etäisyyslukemat on päivitetty");
+          formCommon.setDisabledAndTitleAttributesById("changes-button", false, "");
+        } else if (highPriorityProjectErrors.length === 0 && getRecalculatedAfterChangesState() === true) {
+          formCommon.setDisabledAndTitleAttributesById("recalculate-button", false, "");
+          formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Projektin tulee läpäistä validoinnit");
+        }
+      };
+
+      /**
+       * Set recalculate, changes & send buttons attributes (disabled, title) when project link changes are cancelled
+       * ("Peruuta" button is clicked or clicking anywhere on the map)
+       * */
+      var buttonsWhenReOpenCurrent = function (projectErrors, highPriorityProjectErrors) {
+        eventbus.trigger('roadAddressProject:writeProjectErrors');
+        if (highPriorityProjectErrors.length === 0) {
+          if ($('.change-table-frame').css('display') === "block") {
+            formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Etäisyyslukemia ei voida päivittää yhteenvetotaulukon ollessa auki");
+            formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Yhteenvetotaulukko on jo auki");
+            formCommon.setDisabledAndTitleAttributesById("send-button", false, "");
+          } else if (projectErrors.length === 0 && getRecalculatedAfterChangesState() === false) {
+            formCommon.setDisabledAndTitleAttributesById("recalculate-button", false, "");
+            formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Projektin tulee läpäistä validoinnit");
+          } else if (projectErrors.length === 0 && getRecalculatedAfterChangesState() === true) {
+            formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Etäisyyslukemat on päivitetty");
+            formCommon.setDisabledAndTitleAttributesById("changes-button", false, "");
+          } else if (projectErrors.length !== 0 && getRecalculatedAfterChangesState() === true) {
+            formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Etäisyyslukemat on päivitetty");
+            formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Projektin tulee läpäistä validoinnit");
+          }
+        }
       };
 
       var createNewProject = function () {
@@ -530,7 +574,7 @@
         saveChanges();
         eventbus.once('roadAddress:projectSaved', function () {
           selectedProjectLinkProperty.setDirty(false);
-          nextStage();
+          nextStage(false, false, true);
         });
       };
 
@@ -547,7 +591,7 @@
             saveAndNext();
           }
         } else {
-          nextStage();
+          nextStage(false, true, false);
         }
         if (!isProjectEditable()) {
           $('.btn-pencil-edit').prop('disabled', true);
@@ -713,7 +757,7 @@
       var reOpenCurrent = function () {
         rootElement.empty();
         selectedProjectLinkProperty.setDirty(false);
-        nextStage();
+        nextStage(true, false, false);
         toggleAdditionalControls();
         eventbus.trigger('roadAddressProject:enableInteractions');
       };
