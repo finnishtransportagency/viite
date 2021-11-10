@@ -7,15 +7,15 @@
     var ProjectStatus = LinkValues.ProjectStatus;
     var editableStatus = [ProjectStatus.Incomplete.value, ProjectStatus.Unknown.value];
 
-    // state to keep track if project links have been recalculated after changes made to project links
-    var recalculatedAfterChangesStatus = false;
+    // flag to keep track if the project links have been recalculated after the changes made to the project links
+    var recalculatedAfterChangesFlag = false;
 
-    eventbus.on('roadAddressProject:setRecalculatedAfterChangesState', function (bool) {
-      recalculatedAfterChangesStatus = bool;
+    eventbus.on('roadAddressProject:setRecalculatedAfterChangesFlag', function (bool) {
+      recalculatedAfterChangesFlag = bool;
     });
 
-    var getRecalculatedAfterChangesState = function () {
-      return recalculatedAfterChangesStatus;
+    var getRecalculatedAfterChangesFlag = function () {
+      return recalculatedAfterChangesFlag;
     };
 
     var staticField = function (labelText, dataField) {
@@ -375,21 +375,21 @@
       };
 
       /**
-       * Set recalculate and changes buttons attributes (disabled, title) when project is opened
+       * Set attributes (disabled, title) of the recalculate and changes buttons when the project is opened
        * */
       var buttonsWhenOpenProject = function (projectErrors, highPriorityProjectErrors) {
-        if (projectErrors.length === 0 && getRecalculatedAfterChangesState() === true) {
+        if (projectErrors.length === 0 && getRecalculatedAfterChangesFlag() === true) {
           formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Etäisyyslukemat on päivitetty");
           formCommon.setDisabledAndTitleAttributesById("changes-button", false, "");
-        } else if (highPriorityProjectErrors.length === 0 && getRecalculatedAfterChangesState() === true) {
+        } else if (highPriorityProjectErrors.length === 0 && getRecalculatedAfterChangesFlag() === true) {
           formCommon.setDisabledAndTitleAttributesById("recalculate-button", false, "");
           formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Projektin tulee läpäistä validoinnit");
         }
       };
 
       /**
-       * Set recalculate, changes & send buttons attributes (disabled, title) when project link changes are cancelled
-       * ("Peruuta" button is clicked or clicking anywhere on the map)
+       * Set attributes (disabled, title) of the recalculate, changes & send buttons when project link changes are cancelled
+       * ("Peruuta" button is clicked or clicking anywhere on the map when project edit form is open (i.e. closing the form))
        * */
       var buttonsWhenReOpenCurrent = function (projectErrors, highPriorityProjectErrors) {
         eventbus.trigger('roadAddressProject:writeProjectErrors');
@@ -398,13 +398,13 @@
             formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Etäisyyslukemia ei voida päivittää yhteenvetotaulukon ollessa auki");
             formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Yhteenvetotaulukko on jo auki");
             formCommon.setDisabledAndTitleAttributesById("send-button", false, "");
-          } else if (projectErrors.length === 0 && getRecalculatedAfterChangesState() === false) {
+          } else if (projectErrors.length === 0 && getRecalculatedAfterChangesFlag() === false) {
             formCommon.setDisabledAndTitleAttributesById("recalculate-button", false, "");
             formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Projektin tulee läpäistä validoinnit");
-          } else if (projectErrors.length === 0 && getRecalculatedAfterChangesState() === true) {
+          } else if (projectErrors.length === 0 && getRecalculatedAfterChangesFlag() === true) {
             formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Etäisyyslukemat on päivitetty");
             formCommon.setDisabledAndTitleAttributesById("changes-button", false, "");
-          } else if (projectErrors.length !== 0 && getRecalculatedAfterChangesState() === true) {
+          } else if (projectErrors.length !== 0 && getRecalculatedAfterChangesFlag() === true) {
             formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Etäisyyslukemat on päivitetty");
             formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Projektin tulee läpäistä validoinnit");
           }
