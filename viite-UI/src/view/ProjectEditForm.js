@@ -352,8 +352,8 @@
           formCommon.setInformationContentText("Päivitä etäisyyslukemat jatkaaksesi projektia.");
         }
         formCommon.toggleAdditionalControls();
-        // set recalculated state to false
-        eventbus.trigger('roadAddressProject:setRecalculatedAfterChangesState', false);
+        // changes made to project links, set recalculated flag to false
+        eventbus.trigger('roadAddressProject:setRecalculatedAfterChangesFlag', false);
         applicationModel.removeSpinner();
         if (typeof response !== 'undefined' && typeof response.publishable !== 'undefined' && response.publishable) {
           eventbus.trigger('roadAddressProject:projectLinkSaved', response.id, response.publishable);
@@ -648,8 +648,8 @@
             projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), zoomlevels.getViewZoom(map) + 1, currentProject.project.id, projectCollection.getPublishableStatus());
             // disable recalculate button after recalculation is done
             formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Etäisyyslukemat on päivitetty");
-            // set recalculated state to true
-            eventbus.trigger('roadAddressProject:setRecalculatedAfterChangesState', true);
+            // project was recalculated, set recalculated flag to true
+            eventbus.trigger('roadAddressProject:setRecalculatedAfterChangesFlag', true);
           }
           // if something went wrong during recalculation or validation, show error to user
           else {
