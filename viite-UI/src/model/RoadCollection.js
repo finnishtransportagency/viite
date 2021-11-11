@@ -138,9 +138,9 @@
       });
     };
 
-    this.fetchWholeRoadPart = function (roadNumber, roadPart, trackCode) {
+    this.fetchWholeRoadPart = function (roadNumber, roadPart) {
       backend.getRoadLinksOfWholeRoadPart({
-        roadNumber: roadNumber, roadPartNumber: roadPart, trackCode: trackCode
+        roadNumber: roadNumber, roadPartNumber: roadPart
       }, function (fetchedRoadLinks) {
         updateGroupToContainWholeRoadPart(fetchedRoadLinks);
       });

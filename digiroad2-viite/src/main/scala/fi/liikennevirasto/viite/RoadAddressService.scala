@@ -87,24 +87,23 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   /**
-    * Returns all linear locations in road part based on roadNumber, roadPartNumber and trackCode
+    * Returns all linear locations in road part based on roadNumber and roadPartNumber
     *
     * @param roadNumber The road number of the road part
     * @param roadPartNumber The road part number of the road part
-    * @param trackCode Track code
     */
 
-  def getLinearLocationsInRoadPartAndTrack(roadNumber: Long, roadPartNumber: Long, trackCode: Long): Seq[LinearLocation] = {
+  def getLinearLocationsInRoadPart(roadNumber: Long, roadPartNumber: Long): Seq[LinearLocation] = {
 
-    // get roadways that are on the specified track
-    val roadwaysWithSpecifiedTrack = roadwayDAO.fetchAllByRoadAndPart(roadNumber, roadPartNumber).filter(_.track.value == trackCode)
+    // get roadways of the road part
+    val roadwaysOnPart = roadwayDAO.fetchAllByRoadAndPart(roadNumber, roadPartNumber)
 
     // get all the roadwayNumbers from the roadways
-    val allRoadwayNumbersInRoadParts = roadwaysWithSpecifiedTrack.map(rw => rw.roadwayNumber)
+    val allRoadwayNumbersInRoadPart = roadwaysOnPart.map(rw => rw.roadwayNumber)
 
     // get all the linear locations on the roadway numbers
     val allLinearLocations =  {
-      linearLocationDAO.fetchByRoadwayNumber(allRoadwayNumbersInRoadParts).toSeq
+      linearLocationDAO.fetchByRoadwayNumber(allRoadwayNumbersInRoadPart).toSeq
     }
 
     allLinearLocations
@@ -171,19 +170,18 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   /**
-    * Returns all road address links (combination between our roadway, linear location and vvh information) based on road number, road part number and track code
+    * Returns all road address links (combination between our roadway, linear location and vvh information) based on road number and road part number
     *
     * @param roadNumber : Road number of the road
     * @param roadPartNumber : Road part number of the road
-    * @param trackCode : Track code of the road
     * @return
     */
 
-  def getRoadAddressLinksOfWholeRoadPartAndTrack(roadNumber: Long, roadPartNumber: Long, trackCode: Long): Seq[RoadAddressLink] = {
+  def getRoadAddressLinksOfWholeRoadPart(roadNumber: Long, roadPartNumber: Long): Seq[RoadAddressLink] = {
 
     val allLinearLocations = withDynSession {
-      time(logger, s"Fetch addresses on track: ${trackCode} in road: ${roadNumber} & part: ${roadPartNumber} ") {
-        getLinearLocationsInRoadPartAndTrack(roadNumber, roadPartNumber, trackCode)
+      time(logger, s"Fetch addresses in road: ${roadNumber} & part: ${roadPartNumber} ") {
+        getLinearLocationsInRoadPart(roadNumber, roadPartNumber)
       }
     }
 
