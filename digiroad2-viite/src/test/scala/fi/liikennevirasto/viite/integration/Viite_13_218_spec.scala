@@ -1121,8 +1121,6 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
           )
         }
 
-//        List(1, 2, 2, 3, 3, 3) should contain atLeastOneOf  (1, 2, 3)
-
         val all_projectlinks = projectService_db.getProjectLinks(projectSaved.id)
 
         all_projectlinks.filter(pl => Seq(11910530, 11910544, 11910546).contains(pl.linkId)).exists(pl => pl.discontinuity == Discontinuity.MinorDiscontinuity) shouldBe true
@@ -1131,12 +1129,11 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
 //        withDynTransaction {
                   projectService_db.recalculateProjectLinks(projectSaved.id, projectSaved.modifiedBy)
 //                }
+        val afterCalculatedProjectlinks = projectService_db.getProjectLinks(projectSaved.id)
+        val calculatedProjectlinks      = afterCalculatedProjectlinks.filterNot(_.status == LinkStatus.Terminated)
 
-        val calculatedProjectlinks = projectService_db.getProjectLinks(projectSaved.id).filterNot(_.status == LinkStatus.Terminated)
-
-        val leftSide = (calculatedProjectlinks).filterNot(_.track == Track.LeftSide)
-        val rightSide = (calculatedProjectlinks).filterNot(_.track == Track.RightSide)
-
+        val leftSide = calculatedProjectlinks.filterNot(_.track == Track.RightSide).sortBy(_.startAddrMValue)
+        val rightSide = calculatedProjectlinks.filterNot(_.track == Track.LeftSide).sortBy(_.startAddrMValue)
 
         def continuosAddresses(t: Seq[ProjectLink]) = {
           t.sortBy(_.startAddrMValue).tail.foldLeft(t.head) { (cur, next) =>

@@ -152,7 +152,7 @@ trait TrackCalculatorStrategy {
 
   protected def setLastEndAddrMValue(projectLinks: Seq[ProjectLink], endAddressMValue: Long): Seq[ProjectLink] = {
     if (projectLinks.last.status != LinkStatus.NotHandled) {
-      if (projectLinks.last.startAddrMValue >= endAddressMValue) {
+      if (projectLinks.last.startAddrMValue > endAddressMValue) {
         val logger = LoggerFactory.getLogger(getClass)
         logger.error(s"Averaged address caused negative length. " +
                      s"projectlink.id: ${projectLinks.last.id} " +

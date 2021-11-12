@@ -71,6 +71,9 @@ object ProjectSectionMValueCalculator {
 
       val newAddressValues = ordered.scanLeft(addrSt.getOrElse(0.0)) { case (m, pl) => {
         val someCalibrationPoint: Option[UserDefinedCalibrationPoint] = cps.get(pl.id)
+
+//        if (Math.abs(pl.geometryLength - GeometryUtils.geometryLength(pl.geometry)) > 1) throw new InvalidAddressDataException(s"VÄÄRÄ PITUUS. ${pl.geometryLength}, ${GeometryUtils.geometryLength(pl.geometry)}")
+
           val addressValue = if (someCalibrationPoint.nonEmpty) someCalibrationPoint.get.addressMValue else m + Math.abs(pl.geometryLength) * coEff
           pl.status match {
             case LinkStatus.New => addressValue

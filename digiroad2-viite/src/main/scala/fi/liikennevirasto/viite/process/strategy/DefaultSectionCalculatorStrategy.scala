@@ -7,6 +7,7 @@ import fi.liikennevirasto.digiroad2.util.Track.LeftSide
 import fi.liikennevirasto.digiroad2.util.{MissingRoadwayNumberException, MissingTrackException, RoadAddressException, Track}
 import fi.liikennevirasto.digiroad2.{Point, Vector3d}
 import fi.liikennevirasto.viite.NewIdValue
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.UserDefinedCP
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process._
@@ -15,6 +16,7 @@ import org.slf4j.LoggerFactory
 
 import scala.annotation.tailrec
 import scala.collection.immutable.ListMap
+import scala.language.postfixOps
 
 class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrategy {
 
@@ -190,13 +192,37 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
 
     /* Adjust addresses before splits, calibrationpoints after splits don't restrict calculation. */
     /* TODO: Check if userDefinedCalibrationPoint should be included here -> calculate with user given addresses. */
-    val (adjustedLeftLinksBeforeStatusSplits, adjustedRightLinksBeforeStatusSplits) = adjustTracksToMatch(leftLinks, rightLinks, None, userDefinedCalibrationPoint)
-    val (left_combined,right_combined) = TwoTrackRoadUtils.splitPlsAtRoadwayChange(adjustedLeftLinksBeforeStatusSplits, adjustedRightLinksBeforeStatusSplits)
-    val (adjustedRightLinksAfterRoadwaySplits,adjustedLeftLinksAfterRoadwaySplits) = TwoTrackRoadUtils.splitPlsAtRoadwayChange(right_combined, left_combined)
+    val (adjustedLeftLinksBeforeStatusSplits, adjustedRightLinksBeforeStatusSplits) = adjustTracksToMatch(combineAndSort(leftLinks, t2), combineAndSort(rightLinks, t3), None, userDefinedCalibrationPoint)
+//    val (left_combined,right_combined)                                             = TwoTrackRoadUtils.splitPlsAtRoadwayChange(adjustedLeftLinksBeforeStatusSplits, adjustedRightLinksBeforeStatusSplits)
+//    val (adjustedRightLinksAfterRoadwaySplits,adjustedLeftLinksAfterRoadwaySplits) = TwoTrackRoadUtils.splitPlsAtRoadwayChange(right_combined, left_combined)
 
-    val (leftLinksWithUdcps, splittedRightLinks, udcpsFromRightSideSplits) = TwoTrackRoadUtils.splitPlsAtStatusChange(adjustedLeftLinksAfterRoadwaySplits, adjustedRightLinksAfterRoadwaySplits)
+    val (leftLinksWithUdcps, splittedRightLinks, udcpsFromRightSideSplits) = TwoTrackRoadUtils.splitPlsAtStatusChange(adjustedLeftLinksBeforeStatusSplits, adjustedRightLinksBeforeStatusSplits)
     val (rightLinksWithUdcps, splittedLeftLinks, udcpsFromLeftSideSplits) = TwoTrackRoadUtils.splitPlsAtStatusChange(splittedRightLinks, leftLinksWithUdcps)
 
+    val t4 = (continuousTerminated(rightLinksWithUdcps)
+              ++
+              continuousTerminated(splittedLeftLinks)).distinct.map(l => TwoTrackRoadUtils.findAndCreateSplitAtTerminatedEnd(l, rightLinksWithUdcps))
+    val t5 = (continuousTerminated(rightLinksWithUdcps)
+              ++
+              continuousTerminated(splittedLeftLinks)).distinct.map(l => TwoTrackRoadUtils.findAndCreateSplitAtTerminatedEnd(l, splittedLeftLinks))
+
+    def filterOld(pls: Seq[ProjectLink]) = {
+      val filtered = pls.filter(_.status != LinkStatus.New)
+      if (filtered.nonEmpty) filtered.init else Seq()
+    }
+
+    val udcpSplitsAtOriginalAddresses = (filterOld(rightLinksWithUdcps) ++ filterOld(splittedLeftLinks)).filter(_.endCalibrationPointType == UserDefinedCP).map(_.originalEndAddrMValue).filter(_ > 0)
+
+    val t6 = (continuousTerminated(rightLinksWithUdcps) ++ continuousTerminated(splittedLeftLinks) ++ udcpSplitsAtOriginalAddresses).distinct.sorted.
+                                                                                                   foldLeft(splittedLeftLinks)((l1,l2) => {
+                                                                                                     val s: Seq[Option[(ProjectLink, ProjectLink)]] = Seq(TwoTrackRoadUtils.findAndCreateSplitAtTerminatedEnd(l2, l1))
+                                                                                                     combineAndSort(l1, (s collect toSequence flatten))
+                                                                                                   })
+    val t7 = (continuousTerminated(rightLinksWithUdcps) ++ continuousTerminated(splittedLeftLinks) ++ udcpSplitsAtOriginalAddresses).distinct.sorted.
+                                                                                                   foldLeft(rightLinksWithUdcps)((l1,l2) => {
+                                                                                                     val s: Seq[Option[(ProjectLink, ProjectLink)]] = Seq(TwoTrackRoadUtils.findAndCreateSplitAtTerminatedEnd(l2, l1))
+                                                                                                     combineAndSort(l1, (s collect toSequence flatten))
+                                                                                                   })
     val dups = (udcpsFromRightSideSplits ++ udcpsFromLeftSideSplits).filter(udcp => udcp.isDefined && udcp.get.isInstanceOf[UserDefinedCalibrationPoint]).groupBy(_.get.projectLinkId).filter(_._2.size > 1)
     /* Update udcp pl if splitted after second pass. */
     val updatedudcpsFromRightSideSplits = dups.foldLeft(udcpsFromRightSideSplits) { (udcpsToUpdate, cur) => {
@@ -214,7 +240,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     val splitCreatedCpsFromLeftSide: Map[Long, UserDefinedCalibrationPoint] = (udcpsFromLeftSideSplits).filter(udcp => udcp.isDefined && udcp.get.isInstanceOf[UserDefinedCalibrationPoint]).map( ucp => ucp.get).map(c => c.projectLinkId -> c).toMap
 
     val allUdcps =  userDefinedCalibrationPoint ++ splitCreatedCpsFromRightSide ++ splitCreatedCpsFromLeftSide
-    val (adjustedLeft, adjustedRight) = adjustTracksToMatch(splittedLeftLinks.filterNot(_.status == LinkStatus.Terminated), rightLinksWithUdcps.filterNot(_.status == LinkStatus.Terminated), None, allUdcps)
+    val (adjustedLeft, adjustedRight) = adjustTracksToMatch(t6.filterNot(_.status == LinkStatus.Terminated), t7.filterNot(_.status == LinkStatus.Terminated), None, allUdcps)
     val (right, left) = TrackSectionOrder.setCalibrationPoints(adjustedRight, adjustedLeft, userDefinedCalibrationPoint ++ splitCreatedCpsFromRightSide ++ splitCreatedCpsFromLeftSide)
     TrackSectionOrder.createCombinedSections(right, left)
   }
