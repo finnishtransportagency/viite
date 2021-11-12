@@ -146,12 +146,12 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
   }
 
   private def continuousRoadwaySection(seq: Seq[ProjectLink], givenRoadwayNumber: Long): (Seq[ProjectLink], Seq[ProjectLink]) = {
-    val track = seq.headOption.map(_.track).getOrElse(Track.Unknown)
-    val administrativeClass = seq.headOption.map(_.administrativeClass.value).getOrElse(0)
-
+    val track =
+      seq.headOption.map(_.track).getOrElse(Track.Unknown)
     val continuousProjectLinks =
-      seq.takeWhile(pl => pl.track == track && pl.administrativeClass.value == administrativeClass).sortBy(_.startAddrMValue)
-    val assignedContinuousSection = assignRoadwayNumbersInContinuousSection(continuousProjectLinks, givenRoadwayNumber)
+      seq.takeWhile(pl => pl.track == track ).sortBy(_.startAddrMValue)
+    val assignedContinuousSection =
+      assignRoadwayNumbersInContinuousSection(continuousProjectLinks, givenRoadwayNumber)
     (assignedContinuousSection, seq.drop(assignedContinuousSection.size))
   }
 
@@ -199,12 +199,12 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     val (leftLinksWithUdcps, splittedRightLinks, udcpsFromRightSideSplits) = TwoTrackRoadUtils.splitPlsAtStatusChange(adjustedLeftLinksBeforeStatusSplits, adjustedRightLinksBeforeStatusSplits)
     val (rightLinksWithUdcps, splittedLeftLinks, udcpsFromLeftSideSplits) = TwoTrackRoadUtils.splitPlsAtStatusChange(splittedRightLinks, leftLinksWithUdcps)
 
-    val t4 = (continuousTerminated(rightLinksWithUdcps)
+    val t4 = (getContinuousByStatus(rightLinksWithUdcps)
               ++
-              continuousTerminated(splittedLeftLinks)).distinct.map(l => TwoTrackRoadUtils.findAndCreateSplitAtTerminatedEnd(l, rightLinksWithUdcps))
-    val t5 = (continuousTerminated(rightLinksWithUdcps)
+              getContinuousByStatus(splittedLeftLinks)).distinct.map(l => TwoTrackRoadUtils.findAndCreateSplitAtTerminatedEnd(l, rightLinksWithUdcps))
+    val t5 = (getContinuousByStatus(rightLinksWithUdcps)
               ++
-              continuousTerminated(splittedLeftLinks)).distinct.map(l => TwoTrackRoadUtils.findAndCreateSplitAtTerminatedEnd(l, splittedLeftLinks))
+              getContinuousByStatus(splittedLeftLinks)).distinct.map(l => TwoTrackRoadUtils.findAndCreateSplitAtTerminatedEnd(l, splittedLeftLinks))
 
     def filterOld(pls: Seq[ProjectLink]) = {
       val filtered = pls.filter(_.status != LinkStatus.New)
@@ -213,12 +213,12 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
 
     val udcpSplitsAtOriginalAddresses = (filterOld(rightLinksWithUdcps) ++ filterOld(splittedLeftLinks)).filter(_.endCalibrationPointType == UserDefinedCP).map(_.originalEndAddrMValue).filter(_ > 0)
 
-    val t6 = (continuousTerminated(rightLinksWithUdcps) ++ continuousTerminated(splittedLeftLinks) ++ udcpSplitsAtOriginalAddresses).distinct.sorted.
+    val t6 = (getContinuousByStatus(rightLinksWithUdcps) ++ getContinuousByStatus(splittedLeftLinks) ++ udcpSplitsAtOriginalAddresses).distinct.sorted.
                                                                                                    foldLeft(splittedLeftLinks)((l1,l2) => {
                                                                                                      val s: Seq[Option[(ProjectLink, ProjectLink)]] = Seq(TwoTrackRoadUtils.findAndCreateSplitAtTerminatedEnd(l2, l1))
                                                                                                      combineAndSort(l1, (s collect toSequence flatten))
                                                                                                    })
-    val t7 = (continuousTerminated(rightLinksWithUdcps) ++ continuousTerminated(splittedLeftLinks) ++ udcpSplitsAtOriginalAddresses).distinct.sorted.
+    val t7 = (getContinuousByStatus(rightLinksWithUdcps) ++ getContinuousByStatus(splittedLeftLinks) ++ udcpSplitsAtOriginalAddresses).distinct.sorted.
                                                                                                    foldLeft(rightLinksWithUdcps)((l1,l2) => {
                                                                                                      val s: Seq[Option[(ProjectLink, ProjectLink)]] = Seq(TwoTrackRoadUtils.findAndCreateSplitAtTerminatedEnd(l2, l1))
                                                                                                      combineAndSort(l1, (s collect toSequence flatten))
