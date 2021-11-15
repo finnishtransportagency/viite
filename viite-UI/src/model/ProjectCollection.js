@@ -112,6 +112,8 @@
         me.setFormedParts(result.formedInfo);
         publishableProject = result.publishable;
         eventbus.trigger('roadAddressProject:projectFetched', projectInfo);
+        // project was recalculated, set recalculated flag to true
+        eventbus.trigger('roadAddressProject:setRecalculatedAfterChangesFlag', true);
       });
     };
 
