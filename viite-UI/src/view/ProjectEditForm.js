@@ -106,7 +106,7 @@
         _.map(selected, function(roadLink){
           combinedLength += Math.round(roadLink.endMValue - roadLink.startMValue);
         });
-        return '' + '<div class="form-group-metadata">' +
+        return '<div class="form-group-metadata">' +
             '<p class="form-control-static asset-log-info-metadata">Linkkien pituus: ' + combinedLength + '</p>' +
             '</div>';
       }

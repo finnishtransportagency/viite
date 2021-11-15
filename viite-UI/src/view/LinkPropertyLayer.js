@@ -308,7 +308,7 @@
         } else {
           selectedLinkProperty.close();
           setGeneralOpacity(0.2);
-          if (selection.roadNumber != 0) {
+          if (selection.roadNumber !== 0) {
             applicationModel.addSpinner();
             // set the clicked linear location id so we know what road link group to update after fetching road links in backend
             roadCollection.setClickedLinearLocationId(selection.linearLocationId);
