@@ -84,9 +84,7 @@
       // disable send button and set title attribute
       $('#send-button').attr('disabled', true);
       $('#send-button').attr('title', 'Hyväksy yhteenvedon jälkeen');
-      // enable recalculate button and remove title attribute from it
-      $('#recalculate-button').attr('disabled', false);
-      $('#recalculate-button').removeAttr('title');
+      $('#recalculate-button').attr('title', 'Etäisyyslukemat on päivitetty');
       // enable changes button and remove title attribute from it
       $('#changes-button').attr('disabled', false);
       $('#changes-button').removeAttr('title');
