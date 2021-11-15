@@ -1510,7 +1510,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         Seq()
       } else {
       val (connectedGroups, unConnectedGroups) = projectLinks.groupBy(_.connectedLinkId).partition(_._1.isDefined)
-        (unConnectedGroups.values ++ connectedGroups.mapValues(v => fuseProjectLinks(v)).values).flatten.toSeq
+        (unConnectedGroups.values ++ connectedGroups.mapValues(v => {
+          fuseProjectLinks(v.map(f = c => {
+            c.endCalibrationPointType match {case UserDefinedCP => c.copy(calibrationPointTypes = (c.startCalibrationPointType, NoCP)); case _ => c;}
+          }))
+        }).values).flatten.toSeq
       }
 
       val (terminated, others) = udcpRemovedProjectLinks.partition(_.status == LinkStatus.Terminated)

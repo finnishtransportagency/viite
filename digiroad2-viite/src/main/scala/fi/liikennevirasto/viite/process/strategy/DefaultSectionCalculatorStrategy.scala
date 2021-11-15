@@ -12,6 +12,7 @@ import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibr
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.util.TwoTrackRoadUtils
+import fi.liikennevirasto.viite.util.TwoTrackRoadUtils._
 import org.slf4j.LoggerFactory
 
 import scala.annotation.tailrec
@@ -192,38 +193,24 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
 
     /* Adjust addresses before splits, calibrationpoints after splits don't restrict calculation. */
     /* TODO: Check if userDefinedCalibrationPoint should be included here -> calculate with user given addresses. */
-    val (adjustedLeftLinksBeforeStatusSplits, adjustedRightLinksBeforeStatusSplits) = adjustTracksToMatch(combineAndSort(leftLinks, t2), combineAndSort(rightLinks, t3), None, userDefinedCalibrationPoint)
-//    val (left_combined,right_combined)                                             = TwoTrackRoadUtils.splitPlsAtRoadwayChange(adjustedLeftLinksBeforeStatusSplits, adjustedRightLinksBeforeStatusSplits)
-//    val (adjustedRightLinksAfterRoadwaySplits,adjustedLeftLinksAfterRoadwaySplits) = TwoTrackRoadUtils.splitPlsAtRoadwayChange(right_combined, left_combined)
+    val (adjustedLeftLinksBeforeStatusSplits, adjustedRightLinksBeforeStatusSplits) = adjustTracksToMatch(combineAndSort(leftLinks, splitByOriginalAddress(originalStatusEnds, leftLinks)), combineAndSort(rightLinks, splitByOriginalAddress(originalStatusEnds, rightLinks)), None, userDefinedCalibrationPoint)
 
     val (leftLinksWithUdcps, splittedRightLinks, udcpsFromRightSideSplits) = TwoTrackRoadUtils.splitPlsAtStatusChange(adjustedLeftLinksBeforeStatusSplits, adjustedRightLinksBeforeStatusSplits)
     val (rightLinksWithUdcps, splittedLeftLinks, udcpsFromLeftSideSplits) = TwoTrackRoadUtils.splitPlsAtStatusChange(splittedRightLinks, leftLinksWithUdcps)
 
-    val t4 = (getContinuousByStatus(rightLinksWithUdcps)
-              ++
-              getContinuousByStatus(splittedLeftLinks)).distinct.map(l => TwoTrackRoadUtils.findAndCreateSplitAtTerminatedEnd(l, rightLinksWithUdcps))
-    val t5 = (getContinuousByStatus(rightLinksWithUdcps)
-              ++
-              getContinuousByStatus(splittedLeftLinks)).distinct.map(l => TwoTrackRoadUtils.findAndCreateSplitAtTerminatedEnd(l, splittedLeftLinks))
+    val udcpSplitsAtOriginalAddresses = (filterOldLinks(rightLinksWithUdcps) ++ filterOldLinks(splittedLeftLinks)).filter(_.endCalibrationPointType == UserDefinedCP).map(_.originalEndAddrMValue).filter(_ > 0)
+    val sortedSplitOriginalAddresses = (getContinuousByStatus(rightLinksWithUdcps) ++ getContinuousByStatus(splittedLeftLinks) ++ udcpSplitsAtOriginalAddresses).distinct.sorted
 
-    def filterOld(pls: Seq[ProjectLink]) = {
-      val filtered = pls.filter(_.status != LinkStatus.New)
-      if (filtered.nonEmpty) filtered.init else Seq()
-    }
+    val leftLinksWithSplits  = splitByOriginalAddresses(splittedLeftLinks, sortedSplitOriginalAddresses)
+    val rightLinksWithSplits = splitByOriginalAddresses(rightLinksWithUdcps, sortedSplitOriginalAddresses)
 
-    val udcpSplitsAtOriginalAddresses = (filterOld(rightLinksWithUdcps) ++ filterOld(splittedLeftLinks)).filter(_.endCalibrationPointType == UserDefinedCP).map(_.originalEndAddrMValue).filter(_ > 0)
+    def filterUdcps(udcp: Option[UserDefinedCalibrationPoint]) =
+      udcp.isDefined && udcp.get.isInstanceOf[UserDefinedCalibrationPoint]
 
-    val t6 = (getContinuousByStatus(rightLinksWithUdcps) ++ getContinuousByStatus(splittedLeftLinks) ++ udcpSplitsAtOriginalAddresses).distinct.sorted.
-                                                                                                   foldLeft(splittedLeftLinks)((l1,l2) => {
-                                                                                                     val s: Seq[Option[(ProjectLink, ProjectLink)]] = Seq(TwoTrackRoadUtils.findAndCreateSplitAtTerminatedEnd(l2, l1))
-                                                                                                     combineAndSort(l1, (s collect toSequence flatten))
-                                                                                                   })
-    val t7 = (getContinuousByStatus(rightLinksWithUdcps) ++ getContinuousByStatus(splittedLeftLinks) ++ udcpSplitsAtOriginalAddresses).distinct.sorted.
-                                                                                                   foldLeft(rightLinksWithUdcps)((l1,l2) => {
-                                                                                                     val s: Seq[Option[(ProjectLink, ProjectLink)]] = Seq(TwoTrackRoadUtils.findAndCreateSplitAtTerminatedEnd(l2, l1))
-                                                                                                     combineAndSort(l1, (s collect toSequence flatten))
-                                                                                                   })
-    val dups = (udcpsFromRightSideSplits ++ udcpsFromLeftSideSplits).filter(udcp => udcp.isDefined && udcp.get.isInstanceOf[UserDefinedCalibrationPoint]).groupBy(_.get.projectLinkId).filter(_._2.size > 1)
+    val dups = (udcpsFromRightSideSplits ++ udcpsFromLeftSideSplits).filter(udcp => {
+      filterUdcps(udcp)
+    }).groupBy(_.get.projectLinkId).filter(_._2.size > 1)
+
     /* Update udcp pl if splitted after second pass. */
     val updatedudcpsFromRightSideSplits = dups.foldLeft(udcpsFromRightSideSplits) { (udcpsToUpdate, cur) => {
       val splittedLeftLink       = splittedLeftLinks.find(_.id == cur._1)
@@ -236,11 +223,13 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       }
     }}
 
-    val splitCreatedCpsFromRightSide: Map[Long, UserDefinedCalibrationPoint] = (updatedudcpsFromRightSideSplits ).filter(udcp => udcp.isDefined && udcp.get.isInstanceOf[UserDefinedCalibrationPoint]).map( ucp => ucp.get).map(c => c.projectLinkId -> c).toMap
-    val splitCreatedCpsFromLeftSide: Map[Long, UserDefinedCalibrationPoint] = (udcpsFromLeftSideSplits).filter(udcp => udcp.isDefined && udcp.get.isInstanceOf[UserDefinedCalibrationPoint]).map( ucp => ucp.get).map(c => c.projectLinkId -> c).toMap
+    def toUdcpMap(udcp: Seq[Option[UserDefinedCalibrationPoint]]) = udcp.filter(filterUdcps).map(_.get).map(c => c.projectLinkId -> c)
+
+    val splitCreatedCpsFromRightSide = toUdcpMap(updatedudcpsFromRightSideSplits).toMap
+    val splitCreatedCpsFromLeftSide  = toUdcpMap(udcpsFromLeftSideSplits).toMap
 
     val allUdcps =  userDefinedCalibrationPoint ++ splitCreatedCpsFromRightSide ++ splitCreatedCpsFromLeftSide
-    val (adjustedLeft, adjustedRight) = adjustTracksToMatch(t6.filterNot(_.status == LinkStatus.Terminated), t7.filterNot(_.status == LinkStatus.Terminated), None, allUdcps)
+    val (adjustedLeft, adjustedRight) = adjustTracksToMatch(leftLinksWithSplits.filterNot(_.status == LinkStatus.Terminated), rightLinksWithSplits.filterNot(_.status == LinkStatus.Terminated), None, allUdcps)
     val (right, left) = TrackSectionOrder.setCalibrationPoints(adjustedRight, adjustedLeft, userDefinedCalibrationPoint ++ splitCreatedCpsFromRightSide ++ splitCreatedCpsFromLeftSide)
     TrackSectionOrder.createCombinedSections(right, left)
   }
