@@ -64,9 +64,9 @@
         if (decodedLinkProperties.length === 0) {
           decodedLinkProperties = rt + " " + decodeAttributes(attrId, rt);
         } else {
-          decodedLinkProperties = decodedLinkProperties + ", " + "<br> " + rt + " " + decodeAttributes(attrId, rt);
+          decodedLinkProperties = decodedLinkProperties + ', <br> ' + rt + ' ' + decodeAttributes(attrId, rt);
         }
-      })
+      });
       if (floatingTransfer) {
         field = '<div class="form-group">' +
             '<label class="control-label-floating">' + attrId + '</label>' +
@@ -434,7 +434,7 @@
         _.map(roadLinks, function(roadLink){
           combinedLength += Math.round(roadLink.endMValue - roadLink.startMValue);
         });
-        return '' + '<div class="form-group-metadata">' +
+        return '<div class="form-group-metadata">' +
             '<p class="form-control-static asset-log-info-metadata">Linkkien pituus: ' + combinedLength + '</p>' +
             '</div>';
       }
