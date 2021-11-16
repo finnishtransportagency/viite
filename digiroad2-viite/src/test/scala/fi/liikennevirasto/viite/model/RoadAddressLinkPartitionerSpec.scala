@@ -98,7 +98,7 @@ class RoadAddressLinkPartitionerSpec extends FunSuite with Matchers {
     partitionedRoadLinks.size should be (2)
   }
 
-  test("Test partition When 2 links have different TRACK and same ROAD NUMBER & ROAD PART NUMBER Then they will be in same RoadAddressLink group") {
+  test("Test partition When 2 links have different TRACK and same ROAD NUMBER & ROAD PART NUMBER Then they will be in the same RoadAddressLink group") {
     val roadNumber1 = 1
     val roadPartNumber1 = 1
     val track1 = 1
