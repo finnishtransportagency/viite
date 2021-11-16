@@ -98,16 +98,18 @@ class RoadAddressLinkPartitionerSpec extends FunSuite with Matchers {
     partitionedRoadLinks.size should be (2)
   }
 
-  test("Test partition When 2 links have at least different TRACK Then they will be in different groups of RoadAddressLinks") {
+  test("Test partition When 2 links have different TRACK and same ROAD NUMBER & ROAD PART NUMBER Then they will be in same RoadAddressLink group") {
+    val roadNumber1 = 1
+    val roadPartNumber1 = 1
     val track1 = 1
     val track2 = 2
 
-    val roadLinks = Seq(RoadAddressLink(0, 0, 5171208, Seq(Point(532837.14110884, 6993543.6296834), Point(533388.14110884, 6994014.1296834)), 0.0, AdministrativeClass.Municipality, UnknownLinkType, InUse, NormalLinkInterface, AdministrativeClass.Municipality, Some("Vt5"), None, BigInt(0), "", None, None, Map("linkId" -> 5171208, "segmentId" -> 63298), 1, 1, track1, 0, 0, 0, 1, "2015-01-01", "2016-01-01", 0.0, 0.0, SideCode.Unknown, None, None, Anomaly.None, 123),
-      RoadAddressLink(0, 0, 5171208, Seq(Point(532837.14110884, 6993543.6296834), Point(533388.14110884, 6994014.1296834)), 0.0, AdministrativeClass.Municipality, UnknownLinkType, InUse, NormalLinkInterface, AdministrativeClass.Municipality, Some("Vt5"), None, BigInt(0), "", None, None, Map("linkId" -> 5171208, "segmentId" -> 63298), 1, 1, track2, 0, 0, 0, 1, "2015-01-01", "2016-01-01", 0.0, 0.0, SideCode.Unknown, None, None, Anomaly.None, 123)
+    val roadLinks = Seq(RoadAddressLink(0, 0, 5171208, Seq(Point(532837.14110884, 6993543.6296834), Point(533388.14110884, 6994014.1296834)), 0.0, AdministrativeClass.Municipality, UnknownLinkType, InUse, NormalLinkInterface, AdministrativeClass.Municipality, Some("Vt5"), None, BigInt(0), "", None, None, Map("linkId" -> 5171208, "segmentId" -> 63298), roadNumber1, roadPartNumber1, track1, 0, 0, 0, 1, "2015-01-01", "2016-01-01", 0.0, 0.0, SideCode.Unknown, None, None, Anomaly.None, 123),
+      RoadAddressLink(0, 0, 5171208, Seq(Point(532837.14110884, 6993543.6296834), Point(533388.14110884, 6994014.1296834)), 0.0, AdministrativeClass.Municipality, UnknownLinkType, InUse, NormalLinkInterface, AdministrativeClass.Municipality, Some("Vt5"), None, BigInt(0), "", None, None, Map("linkId" -> 5171208, "segmentId" -> 63298), roadNumber1, roadPartNumber1, track2, 0, 0, 0, 1, "2015-01-01", "2016-01-01", 0.0, 0.0, SideCode.Unknown, None, None, Anomaly.None, 123)
     )
 
     val partitionedRoadLinks = RoadAddressLinkPartitioner.groupByHomogeneousSection(roadLinks)
-    partitionedRoadLinks.size should be (2)
+    partitionedRoadLinks.size should be (1)
   }
 
   test("Test partition When 1 link have LinkGeomSource.ComplimentaryLinkInterface and other one have any other LinkGeomSource Then they will be in different groups of RoadAddressLinks") {
