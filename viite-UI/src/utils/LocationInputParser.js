@@ -2,15 +2,15 @@
 (function (root) {
   var parse = function (input) {
     var coordinateRegex = /^\s*(\d+)\s*,\s*(\d+)\s*$/;
-    var streetRegex = /^\s*[^0-9,]+\s*\d*(,\s*[^0-9,]+\s*$)?/;
-    var roadRegex = /^\s*\d*\s*\d*\s*\d*\s*\d+$/;
+    var wildLetterRegex = /^(\s*[*]*[A-Za-zÀ-ÿ].*)/;
+    var roadNumberRegex = /^\s*\d*\s*\d*\s*\d*\s*\d+$/;
 
     var matchedCoordinates = input.match(coordinateRegex);
     if (matchedCoordinates) {
       return parseCoordinates(matchedCoordinates);
-    } else if (input.match(streetRegex)) {
+    } else if (input.match(wildLetterRegex)) {
       return {type: 'street', search: input};
-    } else if (input.match(roadRegex)) {
+    } else if (input.match(roadNumberRegex)) {
       return {type: 'road', search: input};
     } else {
       return {type: 'invalid'};
