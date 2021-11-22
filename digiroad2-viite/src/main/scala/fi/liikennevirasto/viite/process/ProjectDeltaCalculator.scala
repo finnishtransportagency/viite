@@ -137,7 +137,7 @@ object ProjectDeltaCalculator {
       Seq(pl2, pl1)
     }
   }
-  private def combineTerminated(pl1: ProjectLink, pl2: ProjectLink) = {
+  private def combineTerminated(pl1: ProjectLink, pl2: ProjectLink): Seq[ProjectLink] = {
     if (pl1.hasCalibrationPointAtEnd && pl1.roadwayNumber != pl1.roadwayNumber)
       Seq(pl2, pl1)
     else
