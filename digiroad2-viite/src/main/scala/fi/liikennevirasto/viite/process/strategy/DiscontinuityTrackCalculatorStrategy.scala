@@ -55,13 +55,6 @@ class DiscontinuityTrackCalculatorStrategy(discontinuities: Seq[Discontinuity]) 
         adjustTwoTracks(startAddress, newLeft, right, userDefinedCalibrationPoint, newLeftRest, restRight)
 
       case (Continuous, Continuous) => // If both sides have a continuity?
-//        TrackCalculatorResult(
-//          left,
-//          right,
-//          startAddress.getOrElse(getFixedAddress(leftProjectLinks.head, rightProjectLinks.head)._1),
-//          getFixedAddress(left.last, right.last)._2,
-//          restLeft,
-//          restRight)
         adjustTwoTracks(startAddress, left, right, userDefinedCalibrationPoint, restLeft, restRight)
 
       /* left here if needed for some case. Was in place of: case (_, MinorDiscontinuity) above. */

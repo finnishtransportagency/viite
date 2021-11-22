@@ -1206,9 +1206,6 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
         val roadways = roadwayDAO.fetchAllByRoadAndPart(test_road_number,test_road_part_number, withHistory = true).toList
         val linearLocations = linearLocationDAO.fetchByRoadways(roadways.map(_.roadwayNumber).toSet).toList
 
-        val testcurrentRws1 = roadwayDAO.fetchAllByRoadAndPart(test_road_number,test_road_part_number, withHistory = false).toList
-        val testcurrentRws2 = roadways.filterNot(r => r.endDate.isDefined || r.validTo.isDefined)
-
         /* Check Roadways and linearlocations have a match. */
         val currentRws = roadways.filterNot(r => r.endDate.isDefined || r.validTo.isDefined)
         val linearLocationGrps = linearLocations.groupBy(_.roadwayNumber)
@@ -1250,8 +1247,6 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
         /* Check roadAddresses formed correctly. */
         continuosRoadAddressses(addresses.filterNot(_.track == Track.LeftSide).sortBy(_.startAddrMValue))
         continuosRoadAddressses(addresses.filterNot(_.track == Track.RightSide).sortBy(_.startAddrMValue))
-
-
 
         /* Less well tested part below. */
 
