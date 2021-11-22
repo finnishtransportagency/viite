@@ -106,7 +106,7 @@
         _.map(selected, function(roadLink){
           combinedLength += Math.round(roadLink.endMValue - roadLink.startMValue);
         });
-        return '' + '<div class="form-group-metadata">' +
+        return '<div class="form-group-metadata">' +
             '<p class="form-control-static asset-log-info-metadata">Linkkien pituus: ' + combinedLength + '</p>' +
             '</div>';
       }
@@ -352,6 +352,8 @@
           formCommon.setInformationContentText("Päivitä etäisyyslukemat jatkaaksesi projektia.");
         }
         formCommon.toggleAdditionalControls();
+        // changes made to project links, set recalculated flag to false
+        eventbus.trigger('roadAddressProject:setRecalculatedAfterChangesFlag', false);
         applicationModel.removeSpinner();
         if (typeof response !== 'undefined' && typeof response.publishable !== 'undefined' && response.publishable) {
           eventbus.trigger('roadAddressProject:projectLinkSaved', response.id, response.publishable);
@@ -644,6 +646,10 @@
             }
             // fetch the recalculated project links and redraw map (this also writes the validation errors on the screen and removes the spinner)
             projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), zoomlevels.getViewZoom(map) + 1, currentProject.project.id, projectCollection.getPublishableStatus());
+            // disable recalculate button after recalculation is done
+            formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Etäisyyslukemat on päivitetty");
+            // project was recalculated, set recalculated flag to true
+            eventbus.trigger('roadAddressProject:setRecalculatedAfterChangesFlag', true);
           }
           // if something went wrong during recalculation or validation, show error to user
           else {

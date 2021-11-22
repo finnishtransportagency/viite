@@ -308,12 +308,12 @@
         } else {
           selectedLinkProperty.close();
           setGeneralOpacity(0.2);
-          if (selection.roadNumber != 0) {
+          if (selection.roadNumber !== 0) {
             applicationModel.addSpinner();
             // set the clicked linear location id so we know what road link group to update after fetching road links in backend
             roadCollection.setClickedLinearLocationId(selection.linearLocationId);
             // gets all the road links from backend and starts a cycle that updates road link group in RoadCollection.js
-            roadCollection.fetchWholeRoadPart(selection.roadNumber, selection.roadPartNumber, selection.trackCode);
+            roadCollection.fetchWholeRoadPart(selection.roadNumber, selection.roadPartNumber);
 
             // listens to the event when the road link group is updated (with whole roadpart) and then continues the process normally with the updated road link groups
             eventbus.listenTo(eventbus,'roadCollection:wholeRoadPartFetched', function () {
