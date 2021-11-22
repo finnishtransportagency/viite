@@ -67,14 +67,14 @@ object ProjectSectionMValueCalculator {
         if (firstEndPoint.isDefined && secondEndPoint.isDefined) orderEndPoints(seq.head, seqOfEnds.head, firstEndPoint.get, secondEndPoint.get) else firstLastEndpoint
       } else firstLastEndpoint
       val orderedPairs      = TrackSectionOrder.orderProjectLinksTopologyByGeometry(mappedEndpoints, seq)
-      val ordered           = if (seq.exists(_.track == Track.RightSide || seq.forall(_.track == Track.Combined))) orderedPairs._1 else orderedPairs._2.reverse
+      var ordered           = if (seq.exists(_.track == Track.RightSide || seq.forall(_.track == Track.Combined))) orderedPairs._1 else orderedPairs._2.reverse//.map(pl => pl.copy(geometry = pl.geometry.reverse, sideCode = switch(pl.sideCode)))
+
+      ordered = if (seq.exists(pl => pl.endAddrMValue == 0)) ordered else seq
 
       val newAddressValues = ordered.scanLeft(addrSt.getOrElse(0.0)) { case (m, pl) => {
         val someCalibrationPoint: Option[UserDefinedCalibrationPoint] = cps.get(pl.id)
 
 //        if (Math.abs(pl.geometryLength - GeometryUtils.geometryLength(pl.geometry)) > 1) throw new InvalidAddressDataException(s"VÄÄRÄ PITUUS. ${pl.geometryLength}, ${GeometryUtils.geometryLength(pl.geometry)}")
-
-          val addressValue = if (someCalibrationPoint.nonEmpty) someCalibrationPoint.get.addressMValue else m + Math.abs(pl.geometryLength) * coEff
           pl.status match {
             case LinkStatus.New => addressValue
             case LinkStatus.Transfer | LinkStatus.NotHandled | LinkStatus.Numbering | LinkStatus.UnChanged => m + pl.addrMLength

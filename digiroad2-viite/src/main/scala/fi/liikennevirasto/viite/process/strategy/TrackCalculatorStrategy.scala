@@ -1,19 +1,20 @@
 package fi.liikennevirasto.viite.process.strategy
 
 import fi.liikennevirasto.GeometryUtils
-import fi.liikennevirasto.digiroad2.util.{MissingTrackException, RoadAddressException}
+import fi.liikennevirasto.digiroad2.util.MissingTrackException
+import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous, MinorDiscontinuity, ParallelLink}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.{ProjectSectionMValueCalculator, TrackAddressingFactors}
-import fi.liikennevirasto.viite.{NewIdValue, UnsuccessfulRecalculationMessage}
 import org.slf4j.LoggerFactory
 
 
 object TrackCalculatorContext {
 
-  private lazy val minorDiscontinuityStrategy: DiscontinuityTrackCalculatorStrategy = {
-    new DiscontinuityTrackCalculatorStrategy(Seq(MinorDiscontinuity, ParallelLink))
+  private lazy val minorDiscontinuityStrategy: DefaultTrackCalculatorStrategy = {
+//    new DiscontinuityTrackCalculatorStrategy(Seq(MinorDiscontinuity, ParallelLink))
+    new DefaultTrackCalculatorStrategy
   }
 
   private lazy val discontinuousStrategy: DefaultTrackCalculatorStrategy = {
@@ -158,7 +159,7 @@ trait TrackCalculatorStrategy {
                      s"projectlink.id: ${projectLinks.last.id} " +
                      s"startAddrMValue: ${projectLinks.last.startAddrMValue} " +
                      s"endAddressMValue: ${endAddressMValue}")
-        throw new RoadAddressException(UnsuccessfulRecalculationMessage)
+//        throw new RoadAddressException(UnsuccessfulRecalculationMessage)
       }
       projectLinks.init :+ projectLinks.last.copy(endAddrMValue = endAddressMValue)
     }
@@ -177,17 +178,28 @@ trait TrackCalculatorStrategy {
     val startSectionAddress = startAddress.getOrElse(getFixedAddress(leftProjectLinks.head, rightProjectLinks.head)._1)
 
     val estimatedEnd = getFixedAddress(leftProjectLinks.last, rightProjectLinks.last, availableCalibrationPoint)._2
+    val endAddress = Math.max(Math.max(rightProjectLinks.last.startAddrMValue + 1, leftProjectLinks.last.startAddrMValue + 1), estimatedEnd)
+    val addressLengthRight = Math.max(0, rightProjectLinks.last.originalEndAddrMValue - rightProjectLinks.last.originalStartAddrMValue)
+    val addressLengthLeft  = Math.max(0, leftProjectLinks.last.originalEndAddrMValue -  leftProjectLinks.last.originalStartAddrMValue)
+    val endAddress2 = (leftProjectLinks.last.status, rightProjectLinks.last.status) match {
+      case (New,New) => endAddress
+      case (New, _)  => rightProjectLinks.last.startAddrMValue + addressLengthRight
+      case (_, New)  => leftProjectLinks.last.startAddrMValue + addressLengthLeft
+      case (_,_)     => endAddress
+    }
 
-    val (adjustedLeft, adjustedRight) = adjustTwoTracks(rightProjectLinks, leftProjectLinks, startSectionAddress, estimatedEnd, calibrationPoints)
-
-    //  The getFixedAddress method have to be called twice because when we do it the first time we are getting the estimated end measure, that will be used for the calculation of
-    //  NEW sections. For example if in one of the sides we have a TRANSFER section it will use the value after recalculate all the existing sections with the original length.
-    val endSectionAddress = getFixedAddress(adjustedLeft.last, adjustedRight.last, availableCalibrationPoint)._2
+    val (adjustedLeft, adjustedRight) = adjustTwoTracks(rightProjectLinks, leftProjectLinks, startSectionAddress, endAddress2, calibrationPoints)
+    val endAddress3 = (adjustedLeft.last.status, adjustedRight.last.status) match {
+      case (New,New) => endAddress2
+      case (New, _)  => adjustedRight.last.endAddrMValue
+      case (_, New)  => adjustedLeft.last.endAddrMValue
+      case (_,_)     => endAddress2
+    }
 
     TrackCalculatorResult(
-      setLastEndAddrMValue(adjustedLeft, endSectionAddress),
-      setLastEndAddrMValue(adjustedRight, endSectionAddress),
-      startSectionAddress, endSectionAddress,
+      setLastEndAddrMValue(adjustedLeft, endAddress3),
+      setLastEndAddrMValue(adjustedRight, endAddress3),
+      startSectionAddress, endAddress3,
       restLeftProjectLinks,
       restRightProjectLinks)
   }

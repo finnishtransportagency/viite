@@ -11,7 +11,7 @@ import fi.liikennevirasto.digiroad2.util.{Track, ViiteProperties}
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, Point}
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao.{Discontinuity, _}
-import fi.liikennevirasto.viite.process.TrackSectionOrder.findChainEndpoints
+import fi.liikennevirasto.viite.process.TrackSectionOrder.{findChainEndpoints, findOnceConnectedLinks}
 import fi.liikennevirasto.viite.process.strategy.DefaultSectionCalculatorStrategy
 import fi.liikennevirasto.viite.process.{RoadwayAddressMapper, TrackSectionOrder}
 import org.joda.time.format.DateTimeFormat
@@ -603,8 +603,8 @@ class ProjectValidator {
         val diffLinks = trackInterval.groupBy(_.administrativeClass).flatMap { projectLinksByAdministrativeClass: (AdministrativeClass, Seq[ProjectLink]) =>
           projectLinksByAdministrativeClass._2.partition(_.track == Track.LeftSide) match {
           case (left, right) if left.nonEmpty && right.nonEmpty =>
-                val leftSection      = (projectLinksByAdministrativeClass._1, left.minBy(_.startAddrMValue).startAddrMValue, left.maxBy(_.endAddrMValue).endAddrMValue)
-                val rightSection     = (projectLinksByAdministrativeClass._1, right.minBy(_.startAddrMValue).startAddrMValue, right.maxBy(_.endAddrMValue).endAddrMValue)
+                val leftSection: (AdministrativeClass, Long, Long) = (projectLinksByAdministrativeClass._1, left.minBy(_.startAddrMValue).startAddrMValue, left.maxBy(_.endAddrMValue).endAddrMValue)
+                val rightSection                                   = (projectLinksByAdministrativeClass._1, right.minBy(_.startAddrMValue).startAddrMValue, right.maxBy(_.endAddrMValue).endAddrMValue)
                 val startSectionAdrr = Seq(leftSection._2, rightSection._2).max
                 val endSectionAddr   = Seq(leftSection._3, rightSection._3).min
                 if (leftSection != rightSection) {
@@ -663,10 +663,31 @@ class ProjectValidator {
         interval
       } else {
         val trackToCheck  = links.head.track
+
+                if (links.exists(_.isNotCalculated)){
+                  val x = (links.reverse).groupBy(_.track)
+                  val y = x.mapValues(findOnceConnectedLinks)
+                  val sp = y.head._2.minBy(p => (p._1.x, p._1.y))._1
+                  val ordered = TrackSectionOrder.orderProjectLinksTopologyByGeometry((sp,sp), links)
+                  val z = ordered._2.reverse.sliding(2)
+                  var Z = z.next()
+                  while (
+                    GeometryUtils.areAdjacent(Z.head.startingPoint, Z.last.startingPoint) ||
+                    GeometryUtils.areAdjacent(Z.head.startingPoint, Z.last.endPoint) ||
+                    GeometryUtils.areAdjacent(Z.head.endPoint, Z.last.startingPoint) ||
+                    GeometryUtils.areAdjacent(Z.head.endPoint, Z.last.endPoint)) {
+                    Z = z.next()
+                  }
+//                  z.groupBy(_.administrativeClass).mapValues(_.map(_.geometryLength).sum)
+//                  geometria pituuksien mukaan?.
+                  val trackInterval = TrackSectionOrder.orderProjectLinksTopologyByGeometry((sp,sp), x.head._2)._2
+                  val headerAddr    = trackInterval.minBy(_.startAddrMValue).startAddrMValue
+                  getTwoTrackInterval(links.filterNot(l => trackInterval.exists(lt => lt.id == l.id)), interval ++ Seq(headerAddr -> trackInterval.filterNot(_.track == Track.Combined)))
+        } else {
         val trackInterval = getTrackInterval(links.sortBy(o => (o.roadNumber, o.roadPartNumber, o.track.value, o.startAddrMValue)), trackToCheck)
         val headerAddr    = trackInterval.minBy(_.startAddrMValue).startAddrMValue
         getTwoTrackInterval(links.filterNot(l => trackInterval.exists(lt => lt.id == l.id)), interval ++ Seq(headerAddr -> trackInterval.filterNot(_.track == Track.Combined)))
-      }
+      }}
     }
 
     def checkTrackAdministrativeClass(links: Seq[ProjectLink]) = {

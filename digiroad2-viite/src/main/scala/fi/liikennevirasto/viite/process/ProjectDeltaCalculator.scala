@@ -116,10 +116,11 @@ object ProjectDeltaCalculator {
     val hasParallelLinkOnCalibrationPoint = hasCalibrationPoint && bothNew && matchContinuity && allNonTerminatedProjectLinks.exists(pl => {
       pl.roadNumber == pl1.roadNumber && pl.roadPartNumber == pl1.roadPartNumber && pl.status != LinkStatus.Terminated && pl.track != pl1.track && pl.track != Track.Combined && pl.endAddrMValue == pl1.endAddrMValue && pl.hasCalibrationPointAtEnd
     })
-    val x = allNonTerminatedProjectLinks.filter(pl => pl.track != pl1.track && pl.track != Track.Combined && pl1.track != Track.Combined
-                                              && (pl.originalEndAddrMValue == pl1.originalEndAddrMValue || pl.originalStartAddrMValue == pl1.originalEndAddrMValue))
+    val oppositeOriginalAddressLinks = allNonTerminatedProjectLinks.filter(pl => {
+      pl.track != pl1.track && pl.track != Track.Combined && pl1.track != Track.Combined && (pl.originalEndAddrMValue == pl1.originalEndAddrMValue || pl.originalStartAddrMValue == pl1.originalEndAddrMValue)
+    })
 
-    val oppositeStatusNotChanged = if (x.size == 2) x.head.status == x.last.status else true
+    val oppositeStatusNotChanged = if (oppositeOriginalAddressLinks.size == 2) oppositeOriginalAddressLinks.head.status == oppositeOriginalAddressLinks.last.status else true
 
     if (!oppositeStatusChange && (matchAddr && sameStatus && matchContinuity && administrativeClassesMatch && trackNotUpdated && originalTrackContinuous && oppositeTrackNotUpdated && !(hasCalibrationPoint || hasParallelLinkOnCalibrationPoint)) &&
         administrativeClassesMatch) {
@@ -177,7 +178,7 @@ object ProjectDeltaCalculator {
             pl.track != Track.Combined &&
             pl.endAddrMValue == r1.endAddrMValue &&
             pl.hasCalibrationPointAtEnd)
-        !parallelLastOnCalibrationPoint.isEmpty
+        parallelLastOnCalibrationPoint.nonEmpty
       } else
         false
   val hasUdcp = r1.calibrationPointTypes._2 == CalibrationPointDAO.CalibrationPointType.UserDefinedCP && r1.status == LinkStatus.New && r2.status == LinkStatus.New
@@ -463,7 +464,7 @@ object ProjectDeltaCalculator {
       }
     }
     }
-    val warning = sectionsAfterAdjust.map(_._2).flatten.toSeq ++ adjustedStartSourceSections.map(_._2).flatten.toSeq
+    val warning = sectionsAfterAdjust.flatMap(_._2).toSeq ++ adjustedStartSourceSections.flatMap(_._2).toSeq
     (adjustedStartSourceSections.map(_._1).toMap, if (warning.nonEmpty) Option(warning.head) else None)
   }
 
@@ -479,7 +480,7 @@ object ProjectDeltaCalculator {
     }).toSeq).filterNot(_._1.track == Track.Combined).sortBy(_._1.startMAddr).groupBy(p => {
       (p._1.roadNumber, p._1.roadPartNumberStart)
     }).map(p => {
-      p._1 -> p._2.groupBy(_._1.track).map(_._2)
+      p._1 -> p._2.groupBy(_._1.track).values
     })
   }
 

@@ -1,9 +1,9 @@
 package fi.liikennevirasto.viite.process.strategy
 
-import fi.liikennevirasto.viite.{MaxDistanceForSearchDiscontinuityOnOppositeTrack, NewIdValue}
-import fi.liikennevirasto.viite.dao.Discontinuity.{MinorDiscontinuity, ParallelLink, Continuous}
+import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, MinorDiscontinuity, ParallelLink}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.{Discontinuity, ProjectLink}
+import fi.liikennevirasto.viite.{MaxDistanceForSearchDiscontinuityOnOppositeTrack, NewIdValue}
 
 class DiscontinuityTrackCalculatorStrategy(discontinuities: Seq[Discontinuity]) extends TrackCalculatorStrategy {
 
@@ -55,6 +55,13 @@ class DiscontinuityTrackCalculatorStrategy(discontinuities: Seq[Discontinuity]) 
         adjustTwoTracks(startAddress, newLeft, right, userDefinedCalibrationPoint, newLeftRest, restRight)
 
       case (Continuous, Continuous) => // If both sides have a continuity?
+//        TrackCalculatorResult(
+//          left,
+//          right,
+//          startAddress.getOrElse(getFixedAddress(leftProjectLinks.head, rightProjectLinks.head)._1),
+//          getFixedAddress(left.last, right.last)._2,
+//          restLeft,
+//          restRight)
         adjustTwoTracks(startAddress, left, right, userDefinedCalibrationPoint, restLeft, restRight)
 
       /* left here if needed for some case. Was in place of: case (_, MinorDiscontinuity) above. */
