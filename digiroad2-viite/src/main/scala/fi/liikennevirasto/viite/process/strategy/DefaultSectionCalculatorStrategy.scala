@@ -138,6 +138,25 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     (assignedContinuousSection, seq.drop(continuousProjectLinks2.size))
   }
 
+  def checkValues(pls: Seq[ProjectLink]) = {
+    pls.tail.foldLeft(pls.head) { case (seq, next) => {
+      if (seq.endAddrMValue != next.startAddrMValue) throw new RoadAddressException(s"Address not continuous: ${seq.endAddrMValue} ${next.startAddrMValue} linkids: ${seq.linkId} ${next.linkId}")
+      if (!(seq.endAddrMValue > seq.startAddrMValue)) throw new RoadAddressException(s"Address length negative. linkid: ${seq.linkId}")
+      if (seq.status != LinkStatus.New)
+        if (!((seq.endAddrMValue - seq.startAddrMValue) == (seq.originalEndAddrMValue - seq.originalStartAddrMValue))) throw new RoadAddressException(s"Length mismatch new: ${seq.endAddrMValue} ${seq.startAddrMValue} original: ${seq.originalEndAddrMValue} ${seq.originalStartAddrMValue} linkid: ${seq.linkId}")
+      next
+    }
+    }}
+
+  def checkCombined(leftAdj: Seq[ProjectLink], rightAdj: Seq[ProjectLink]) = {
+    val leftCombinedLinks = leftAdj.filter(_.track == Track.Combined)
+    val rightCombinedLinks = rightAdj.filter(_.track == Track.Combined)
+    val grouped = (leftCombinedLinks ++ rightCombinedLinks).groupBy(_.id)
+    if (!grouped.values.forall(_.size == 2)) throw new RoadAddressException(s"Combined links mismatch.")
+    if (!grouped.values.forall(pl => pl.head.startAddrMValue == pl.last.startAddrMValue)) throw new RoadAddressException(s"Combined start address mismatch.")
+    if (!grouped.values.forall(pl => pl.head.endAddrMValue == pl.last.endAddrMValue)) throw new RoadAddressException(s"Combined end address mismatch.")
+  }
+
   private def calculateSectionAddressValues(sections: Seq[CombinedSection],
                                             userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): Seq[CombinedSection] = {
 
@@ -174,7 +193,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
           } else {
             continuousRoadwaySections
           }
-            }
+        }
 
         if (firstRight.isEmpty || firstLeft.isEmpty)
           throw new RoadAddressException(s"Mismatching tracks, R ${firstRight.size}, L ${firstLeft.size}")
@@ -190,15 +209,6 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       }
     }
 
-    def checkValues(pls: Seq[ProjectLink]) = {
-      pls.tail.foldLeft(pls.head) { case (seq, next) => {
-        assert(seq.endAddrMValue == next.startAddrMValue)
-        assert(seq.endAddrMValue > seq.startAddrMValue)
-        if (seq.status != LinkStatus.New)
-          assert(seq.endAddrMValue - seq.startAddrMValue == (seq.originalEndAddrMValue - seq.originalStartAddrMValue))
-        next
-      }
-      }}
     val rightSections     = sections.flatMap(_.right.links).distinct
     val leftSections      = sections.flatMap(_.left.links).distinct
     val rightLinks        = ProjectSectionMValueCalculator.calculateMValuesForTrack(rightSections, userDefinedCalibrationPoint)
@@ -252,20 +262,12 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     val splitCreatedCpsFromRightSide = toUdcpMap(updatedudcpsFromRightSideSplits).toMap
     val splitCreatedCpsFromLeftSide  = toUdcpMap(udcpsFromLeftSideSplits).toMap
 
-    val allUdcps =  userDefinedCalibrationPoint ++ splitCreatedCpsFromRightSide ++ splitCreatedCpsFromLeftSide
     val (adjustedLeft, adjustedRight) = (leftLinksWithSplits.filterNot(_.status == LinkStatus.Terminated), rightLinksWithSplits.filterNot(_.status == LinkStatus.Terminated))
-    //adjustTracksToMatch(leftLinksWithSplits.filterNot(_.status == LinkStatus.Terminated), rightLinksWithSplits.filterNot(_.status == LinkStatus.Terminated), None, allUdcps)
+
     checkValues(adjustedLeft)
     checkValues(adjustedRight)
-    def checkCombined(leftAdj: Seq[ProjectLink], rightAdj: Seq[ProjectLink]) = {
-     val leftCombinedLinks = leftAdj.filter(_.track == Track.Combined)
-     val rightCombinedLinks = rightAdj.filter(_.track == Track.Combined)
-     val grouped = (leftCombinedLinks ++ rightCombinedLinks).groupBy(_.id)
-     assert(grouped.values.forall(_.size == 2))
-     assert(grouped.values.forall(pl => pl.head.startAddrMValue == pl.last.startAddrMValue))
-     assert(grouped.values.forall(pl => pl.head.endAddrMValue == pl.last.endAddrMValue))
-   }
-    //checkCombined(adjustedLeft, adjustedRight)
+    checkCombined(adjustedLeft, adjustedRight)
+
     val (right, left) = TrackSectionOrder.setCalibrationPoints(adjustedRight, adjustedLeft, userDefinedCalibrationPoint ++ splitCreatedCpsFromRightSide ++ splitCreatedCpsFromLeftSide)
     TrackSectionOrder.createCombinedSections(right, left)
   }
