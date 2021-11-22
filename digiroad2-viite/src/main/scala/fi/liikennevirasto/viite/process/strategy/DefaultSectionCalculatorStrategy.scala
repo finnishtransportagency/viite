@@ -15,7 +15,6 @@ import fi.liikennevirasto.viite.util.TwoTrackRoadUtils
 import fi.liikennevirasto.viite.util.TwoTrackRoadUtils._
 import org.slf4j.LoggerFactory
 
-import scala.annotation.tailrec
 import scala.collection.immutable.ListMap
 
 class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrategy {
@@ -78,25 +77,6 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     }.toSeq
   }
 
-  @tailrec
-  private def continuousSection(seq: Seq[ProjectLink], processed: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
-    if (seq.isEmpty)
-      (processed, seq)
-    else if (processed.isEmpty)
-      continuousSection(seq.tail, Seq(seq.head))
-    else {
-      val track = processed.last.track
-      val administrativeClass = processed.last.administrativeClass
-      val discontinuity = processed.last.discontinuity
-      val discontinuousSections = List(Discontinuity.Discontinuous, Discontinuity.MinorDiscontinuity, Discontinuity.ParallelLink)
-      if ((seq.head.track == track && seq.head.track == Track.Combined) || (seq.head.track == track && seq.head.track != Track.Combined && seq.head.administrativeClass == administrativeClass) && !discontinuousSections.contains(discontinuity)) {
-        continuousSection(seq.tail, processed :+ seq.head)
-      } else {
-        (processed, seq)
-      }
-    }
-  }
-
   def assignProperRoadwayNumber(continuousProjectLinks: Seq[ProjectLink], givenRoadwayNumber: Long, originalHistorySection: Seq[ProjectLink]): (Long, Long) = {
     def getRoadAddressesByRoadwayIds(roadwayIds: Seq[Long]): Seq[RoadAddress] = {
       val roadways = roadwayDAO.fetchAllByRoadwayId(roadwayIds)
@@ -152,7 +132,6 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       seq.head.discontinuity
     val continuousProjectLinks =
       seq.takeWhile(pl => pl.track == track && pl.discontinuity == discontinuity).sortBy(_.startAddrMValue)
-//      seq.takeWhile(pl => pl.track == track ).sortBy(_.startAddrMValue)
     val continuousProjectLinks2 = if (seq.size > continuousProjectLinks.size && seq(continuousProjectLinks.size).track == track) seq.take(continuousProjectLinks.size+1) else continuousProjectLinks
     val assignedContinuousSection =
       assignRoadwayNumbersInContinuousSection(continuousProjectLinks2, givenRoadwayNumber)
@@ -170,35 +149,33 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
           throw new MissingTrackException(s"Missing track, R: ${rightLinks.size}, L: ${leftLinks.size}")
         }
 
-
         val hasDiscontinuity = rightLinks.size > 1 && leftLinks.size > 1 && (rightLinks.last.discontinuity != Discontinuity.Continuous || leftLinks.last.discontinuity != Discontinuity.Continuous)
         val (rightInit, leftInit) = if (hasDiscontinuity)
           (rightLinks.init,leftLinks.init) else (rightLinks, leftLinks)
 
         val ((firstRight, restRight), (firstLeft, restLeft)): ((Seq[ProjectLink], Seq[ProjectLink]), (Seq[ProjectLink], Seq[ProjectLink])) = {
-          val newRoadwayNumber1 = Sequences.nextRoadwayNumber
-          val newRoadwayNumber2 = if (rightInit.head.track == Track.Combined || leftInit.head.track == Track.Combined) newRoadwayNumber1 else Sequences.nextRoadwayNumber
-          val x = (continuousRoadwaySection(rightInit, newRoadwayNumber1), continuousRoadwaySection(leftInit, newRoadwayNumber2))
-          val z = if (x._1._1.last.endAddrMValue > x._2._1.last.endAddrMValue && (x._1._1.size > 1) && Math.abs(x._1._1.last.endAddrMValue - x._2._1.last.endAddrMValue) > Math.abs(x._1._1(x._1._1.size-2).endAddrMValue - x._2._1.last.endAddrMValue) && x._2._1.last.discontinuity != x._1._1.last.discontinuity){
-            val y = x._1._1.takeWhile(pl => pl.endAddrMValue <= x._2._1.last.endAddrMValue)
-            if (y.nonEmpty && x._1._1.drop(y.size).nonEmpty && x._2._2.nonEmpty)
-              ((y, x._1._1.drop(y.size) ++ x._1._2), x._2)
+          val newRoadwayNumber1         = Sequences.nextRoadwayNumber
+          val newRoadwayNumber2         = if (rightInit.head.track == Track.Combined || leftInit.head.track == Track.Combined) newRoadwayNumber1 else Sequences.nextRoadwayNumber
+          val continuousRoadwaySections = (continuousRoadwaySection(rightInit, newRoadwayNumber1), continuousRoadwaySection(leftInit, newRoadwayNumber2))
+          val rightSections             = continuousRoadwaySections._1
+          val leftSections              = continuousRoadwaySections._2
+            if (rightSections._1.last.endAddrMValue > leftSections._1.last.endAddrMValue && (rightSections._1.size > 1) && Math.abs(rightSections._1.last.endAddrMValue - leftSections._1.last.endAddrMValue) > Math.abs(rightSections._1(rightSections._1.size - 2).endAddrMValue - leftSections._1.last.endAddrMValue) && leftSections._1.last.discontinuity != rightSections._1.last.discontinuity){
+            val newFirstRight = rightSections._1.takeWhile(pl => pl.endAddrMValue <= leftSections._1.last.endAddrMValue)
+            if (newFirstRight.nonEmpty && rightSections._1.drop(newFirstRight.size).nonEmpty && leftSections._2.nonEmpty)
+              ((newFirstRight, rightSections._1.drop(newFirstRight.size) ++ rightSections._2), leftSections)
             else
-              x
-          } else if (x._1._1.last.endAddrMValue < x._2._1.last.endAddrMValue && (x._2._1.size > 1) && Math.abs(x._2._1.last.endAddrMValue - x._1._1.last.endAddrMValue) > Math.abs(x._2._1(x._2._1.size-2).endAddrMValue - x._1._1.last.endAddrMValue) && x._1._1.last.discontinuity != x._2._1.last.discontinuity){
-            val y = x._2._1.takeWhile(pl => pl.endAddrMValue <= x._1._1.last.endAddrMValue)
-            if (y.nonEmpty && x._2._1.drop(y.size).nonEmpty && x._1._2.nonEmpty)
-            (x._1, (y, x._2._1.drop(y.size) ++ x._2._2))
+              continuousRoadwaySections
+          } else if (rightSections._1.last.endAddrMValue < leftSections._1.last.endAddrMValue && (leftSections._1.size > 1) && Math.abs(leftSections._1.last.endAddrMValue - rightSections._1.last.endAddrMValue) > Math.abs(leftSections._1(leftSections._1.size-2).endAddrMValue - rightSections._1.last.endAddrMValue) && rightSections._1.last.discontinuity != leftSections._1.last.discontinuity){
+            val newFirstLeft = leftSections._1.takeWhile(pl => pl.endAddrMValue <= rightSections._1.last.endAddrMValue)
+            if (newFirstLeft.nonEmpty && leftSections._1.drop(newFirstLeft.size).nonEmpty && rightSections._2.nonEmpty)
+            (rightSections, (newFirstLeft, leftSections._1.drop(newFirstLeft.size) ++ leftSections._2))
             else
-            x
+            continuousRoadwaySections
           } else {
-            x
+            continuousRoadwaySections
           }
-          z
-          //(continuousRoadwaySection(rightInit, newRoadwayNumber1), continuousRoadwaySection(leftInit, newRoadwayNumber2))
-          //track == track
             }
-//lievä epäjatkuvuus toisella ajoradalla.._>
+
         if (firstRight.isEmpty || firstLeft.isEmpty)
           throw new RoadAddressException(s"Mismatching tracks, R ${firstRight.size}, L ${firstLeft.size}")
 
