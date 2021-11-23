@@ -8,13 +8,14 @@ import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, RoadAddressCP}
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, RoadAddressCP, UserDefinedCP}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.strategy.DefaultSectionCalculatorStrategy
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
+import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
@@ -173,7 +174,6 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       val geomRight2 = Seq(Point(5.0, 5.0), Point(5.0, 62.0))
 
       val projectLinkRight1 = ProjectLink(projectLinkId + 2, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 5L, 0L, 5L, None, None, Some("user"), 12347L, 0.0, 5.0, SideCode.Unknown, (RoadAddressCP, NoCP), (NoCP, NoCP), geomRight1, projId, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight1), roadwayId, linearLocationId, 0, reversed = false, None, 86400L, roadwayNumber = 12346L)
-
       val projectLinkRight2 = ProjectLink(projectLinkId + 3, 9999L, 1L, Track.apply(1), Discontinuity.Discontinuous, 5L, 62L, 5L, 62L, None, None, Some("user"), 12348L, 0.0, 57.0, SideCode.Unknown, (NoCP, RoadAddressCP), (NoCP, NoCP), geomRight2, projId, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight2), roadwayId + 1, linearLocationId + 1, 0, reversed = false, None, 86400L, roadwayNumber = 12347L)
 
       val leftSideProjectLinks = Seq(projectLinkLeft1, projectLinkLeft2)
@@ -184,6 +184,145 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       buildTestDataForProject(Some(project), Some(Seq(roadway1, roadway2)), Some(Seq(linearLocation1, linearLocation2)), Some(leftSideProjectLinks ++ rightSideProjectLinks))
 
       defaultSectionCalculatorStrategy.assignMValues(leftSideProjectLinks, rightSideProjectLinks, Seq.empty[UserDefinedCalibrationPoint])
+    }
+  }
+
+  private val logger = LoggerFactory.getLogger(getClass)
+
+  test("Test TrackCalculatorStrategy.setLastEndAddrMValue(...) " +
+       "When adding another track besides the already existing one " +
+       "Then the old, and new lengths must be the same") {
+
+    //    UnChanged    Transferred 0->2-track    Transfer
+    // ---------------o----------------------o------------------
+    //                 \____________________/
+    //                       New 1-track
+
+
+    ///////////////////////////////////////////////////////////////////////
+    ////// Test, part 1: There is a single link added as a new Track //////
+
+    runWithRollback {
+      val projId = Sequences.nextViiteProjectId
+      val roadwayId = Sequences.nextRoadwayId
+      val linearLocationId = Sequences.nextLinearLocationId
+      val projectLinkId = Sequences.nextProjectLinkId
+      val project = Project(projId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
+        "", Seq(), Seq(), None, None)
+
+      val geomOrig1 = Seq(Point( 0.0, 0.0), Point(20.0, 0.0))
+      val geomOrig2 = Seq(Point(20.0, 0.0), Point(40.0, 0.0))
+      val geomOrig3 = Seq(Point(40.0, 0.0), Point(60.0, 0.0))
+      val origProjectLink1 = ProjectLink(projectLinkId,     9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 20L,  0L, 20L, None, None, Some("user"),
+        12345L, 0.0, 0.0, SideCode.Unknown, (RoadAddressCP, NoCP), (RoadAddressCP, NoCP), geomOrig1, projId, LinkStatus.UnChanged,
+        AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomOrig1), 0L, 0, 0, reversed = false, None, 86400L, roadwayNumber = 12345L)
+      val origProjectLink2 = ProjectLink(projectLinkId + 1, 9999L, 1L, Track.LeftSide, Discontinuity.Discontinuous, 20L, 40L, 20L, 40L, None, None, Some("user"),
+        12346L, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), geomOrig2, projId, LinkStatus.Transfer,
+        AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomOrig2), 0L, 0, 0, reversed = false, None, 86400L, roadwayNumber = 12345L)
+      val origProjectLink3 = ProjectLink(projectLinkId + 2, 9999L, 1L, Track.Combined, Discontinuity.EndOfRoad, 40L, 60L, 40L, 60L, None, None, Some("user"),
+        12347L, 0.0, 0.0, SideCode.Unknown, (NoCP, RoadAddressCP), (NoCP, RoadAddressCP), geomOrig3, projId, LinkStatus.Transfer,
+        AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomOrig3), 0L, 0, 0, reversed = false, None, 86400L, roadwayNumber = 12345L)
+
+      val geomNew1   = Seq(Point(20.0,  0.0), Point(25.0, -5.0), Point(35.0, -5.0), Point(40.0,  0.0))
+      val newProjectLink1 = ProjectLink(projectLinkId + 3, 9999L, 1L, Track.RightSide, Discontinuity.Continuous, 0L,  0L,  0L, 24L, None, None, Some("user"),
+        12348L, 0.0, 5.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, UserDefinedCP), geomNew1, projId, LinkStatus.New, AdministrativeClass.Municipality,
+        LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNew1), roadwayId, linearLocationId, 0, reversed = false, None, 86400L, roadwayNumber = 12346L)
+
+      val originalProjectLinks = Seq(origProjectLink1, origProjectLink2, origProjectLink3)
+      val newProjectLinks = Seq(newProjectLink1)
+      val (newLinearLocation, newRoadway) = Seq(newProjectLink1).map(toRoadwayAndLinearLocation).head
+
+
+      buildTestDataForProject(Some(project), Some(Seq(newRoadway)),
+        Some(Seq(newLinearLocation)),
+        Some(originalProjectLinks ++ newProjectLinks))
+
+      // Testing "TrackCalculatorStrategy.setLastEndAddrMValue". That is protected, cannot call directly,
+      // so, test by calling "TrackCalculatorStrategy.adjustTwoTracks". That is also protected, cannot call directly,
+      // so, test by calling "defaultSectionCalculatorStrategy.assignTrackMValues". That is not to be called directly,
+      // so, test by calling "defaultSectionCalculatorStrategy.assignMValues". That is not to be called directly.
+      val projectLinksWithAssignedValues = defaultSectionCalculatorStrategy
+        .assignMValues(newProjectLinks, originalProjectLinks, Seq.empty[UserDefinedCalibrationPoint])
+
+      for(link <- projectLinksWithAssignedValues) {
+        logger.error(
+          s"status: ${link.status}. ${link.originalStartAddrMValue}, ${link.originalEndAddrMValue} " +
+          s"-> : ${link.startAddrMValue}, ${link.endAddrMValue}.   " +
+            s"Pituus sama?: ${(link.originalEndAddrMValue - link.originalStartAddrMValue)} == ${(link.endAddrMValue - link.startAddrMValue)}") }
+
+      // There should be NO Unchanged, or Transferred link, whose length has been changed.
+      projectLinksWithAssignedValues.exists(pl =>
+        (pl.status== LinkStatus.UnChanged || pl.status== LinkStatus.Transfer)
+          && ((pl.endAddrMValue - pl.startAddrMValue) != (pl.originalEndAddrMValue - pl.originalStartAddrMValue))
+      ) should be (false)
+    }
+
+
+    /////////////////////////////////////////////////////////////////////////
+    ////// Test, part 2: There are multiple links added as a new Track //////
+    runWithRollback {
+
+      val projId = Sequences.nextViiteProjectId
+      val roadwayId = Sequences.nextRoadwayId
+      val linearLocationId = Sequences.nextLinearLocationId
+      val projectLinkId = Sequences.nextProjectLinkId
+      val project = Project(projId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
+        "", Seq(), Seq(), None, None)
+
+      val geomOrig1 = Seq(Point( 0.0, 0.0), Point(20.0, 0.0))
+      val geomOrig2 = Seq(Point(20.0, 0.0), Point(40.0, 0.0))
+      val geomOrig3 = Seq(Point(40.0, 0.0), Point(60.0, 0.0))
+      val origProjectLink1 = ProjectLink(projectLinkId,     9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 20L,  0L, 20L, None, None, Some("user"),
+        12345L, 0.0, 0.0, SideCode.Unknown, (RoadAddressCP, NoCP), (RoadAddressCP, NoCP), geomOrig1, projId, LinkStatus.UnChanged,
+        AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomOrig1), 0L, 0, 0, reversed = false, None, 86400L, roadwayNumber = 12345L)
+      val origProjectLink2 = ProjectLink(projectLinkId + 1, 9999L, 1L, Track.LeftSide, Discontinuity.Discontinuous, 20L, 40L, 20L, 40L, None, None, Some("user"),
+        12346L, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), geomOrig2, projId, LinkStatus.Transfer,
+        AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomOrig2), 0L, 0, 0, reversed = false, None, 86400L, roadwayNumber = 12345L)
+      val origProjectLink3 = ProjectLink(projectLinkId + 2, 9999L, 1L, Track.Combined, Discontinuity.EndOfRoad, 40L, 60L, 40L, 60L, None, None, Some("user"),
+        12347L, 0.0, 0.0, SideCode.Unknown, (NoCP, RoadAddressCP), (NoCP, RoadAddressCP), geomOrig3, projId, LinkStatus.Transfer,
+        AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomOrig3), 0L, 0, 0, reversed = false, None, 86400L, roadwayNumber = 12345L)
+
+      val geomNew21   = Seq(Point(20.0,  0.0), Point(25.0, -5.0))
+      val geomNew22   = Seq(Point(25.0, -5.0), Point(35.0, -5.0))
+      val geomNew23   = Seq(Point(35.0, -5.0), Point(40.0,  0.0))
+      val newProjectLink21 = ProjectLink(projectLinkId + 4, 9999L, 1L, Track.RightSide, Discontinuity.Continuous, 0L,  0L,  0L, 24L, None, None, Some("user"),
+        12348L, 0.0, 5.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), geomNew21, projId, LinkStatus.New, AdministrativeClass.Municipality,
+        LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNew21), roadwayId, linearLocationId, 0, reversed = false, None, 86400L, roadwayNumber = 12346L)
+      val newProjectLink22 = ProjectLink(projectLinkId + 5, 9999L, 1L, Track.RightSide, Discontinuity.Continuous, 0L,  0L,  0L, 24L, None, None, Some("user"),
+        12348L, 0.0, 5.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), geomNew22, projId, LinkStatus.New, AdministrativeClass.Municipality,
+        LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNew22), roadwayId, linearLocationId, 0, reversed = false, None, 86400L, roadwayNumber = 12346L)
+      val newProjectLink23 = ProjectLink(projectLinkId + 6, 9999L, 1L, Track.RightSide, Discontinuity.Continuous, 0L,  0L,  0L, 24L, None, None, Some("user"),
+        12348L, 0.0, 5.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, UserDefinedCP), geomNew23, projId, LinkStatus.New, AdministrativeClass.Municipality,
+        LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNew23), roadwayId, linearLocationId, 0, reversed = false, None, 86400L, roadwayNumber = 12346L)
+
+      val originalProjectLinks = Seq(origProjectLink1, origProjectLink2, origProjectLink3)
+      val newProjectLinks = Seq(newProjectLink21, newProjectLink22, newProjectLink23)
+      val (newLinearLocations, newRoadway) = newProjectLinks.map(toRoadwayAndLinearLocation).head
+
+
+      buildTestDataForProject(Some(project), Some(Seq(newRoadway)),
+        Some(Seq(newLinearLocations)),
+        Some(originalProjectLinks ++ newProjectLinks))
+
+      // Testing "TrackCalculatorStrategy.setLastEndAddrMValue". That is protected, cannot call directly,
+      // so, test by calling "TrackCalculatorStrategy.adjustTwoTracks". That is also protected, cannot call directly,
+      // so, test by calling "defaultSectionCalculatorStrategy.assignTrackMValues". That is not to be called directly,
+      // so, test by calling "defaultSectionCalculatorStrategy.assignMValues". That is not to be called directly.
+      val projectLinksWithAssignedValues = defaultSectionCalculatorStrategy
+        .assignMValues(newProjectLinks, originalProjectLinks, Seq.empty[UserDefinedCalibrationPoint])
+
+      for(link <- projectLinksWithAssignedValues) {
+        logger.error(
+          s"status: ${link.status}. ${link.originalStartAddrMValue}, ${link.originalEndAddrMValue} " +
+          s"-> : ${link.startAddrMValue}, ${link.endAddrMValue}.   " +
+            s"Pituus sama?: ${(link.originalEndAddrMValue - link.originalStartAddrMValue)} == ${(link.endAddrMValue - link.startAddrMValue)}") }
+
+      // There should be NO Unchanged, or Transferred link, whose length has been changed.
+      projectLinksWithAssignedValues.exists(pl =>
+        (pl.status== LinkStatus.UnChanged || pl.status== LinkStatus.Transfer)
+          && ((pl.endAddrMValue - pl.startAddrMValue) != (pl.originalEndAddrMValue - pl.originalStartAddrMValue))
+      ) should be (false)
+
     }
   }
 
