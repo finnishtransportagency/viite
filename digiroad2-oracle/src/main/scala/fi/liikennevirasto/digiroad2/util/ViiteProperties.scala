@@ -74,6 +74,7 @@ class ViiteProperties {
   lazy val authenticationMunicipalityBasicPassword: String = authenticationProperties.getProperty("authentication.municipality.basic.password")
   lazy val viitetierekisteriUsername: String = keysProperties.getProperty("viitetierekisteri.username")
   lazy val viitetierekisteriPassword: String = keysProperties.getProperty("viitetierekisteri.password")
+  lazy val vkmApiKey: String = keysProperties.getProperty("viitekehysmuunnin.apikey")
   lazy val revision: String = revisionProperties.getProperty("digiroad2.revision")
   lazy val latestDeploy: String = revisionProperties.getProperty("digiroad2.latestDeploy")
   lazy val env: String = System.getProperty("env")
