@@ -9,15 +9,15 @@
      */
     const geocode = function (street) {
       return backend.getSearchResults(street.search).then(function (coordinateData) {
-        const result = coordinateData[0].street[0];
-        const resultLength = _.get(result, 'results.length');
+        const result = coordinateData[0].street[0].features;
+        const withErrors = _.some(result, function(r) {return !_.isUndefined(r.properties.virheet);});
         const vkmResultToCoordinates = function(r) {
-          return { title: r.address, lon: r.x, lat: r.y};
+          return { title: r.properties.katunimi + " " + r.properties.katunumero + ", " + r.properties.kuntanimi, lon: r.properties.x, lat: r.properties.y};
         };
-        if (resultLength > 0) {
-          return _.map(result.results, vkmResultToCoordinates);
-        } else {
+        if (withErrors) {
           return $.Deferred().reject('Tuntematon katuosoite');
+        } else {
+          return _.map(result, vkmResultToCoordinates);
         }
       });
     };
@@ -64,13 +64,13 @@
         const searchResult = [];
         coordinateData.forEach(function (item) {
           let partialResult;
-          if (item.linkId && item.linkId[0]) {
+          if (item && item.linkId && item.linkId[0]) {
             partialResult = _.first(item.linkId);
             partialResult.title = `linkId, ${input.search}`;
-          } else if (item.mtkId && item.mtkId[0]) {
+          } else if (item && item.mtkId && item.mtkId[0]) {
             partialResult = _.first(item.mtkId);
             partialResult.title = `mtkId, ${input.search}`;
-          } else if (item.road && item.road[0]) {
+          } else if (item && item.road && item.road[0]) {
             const sortedRoad = _.sortBy(_.sortBy(item.road, function (addr) {
               return addr.startAddrMValue;
             }), function (road) {
@@ -78,7 +78,7 @@
             });
             const parsed = _.map(_.words(input.search), _.parseInt);
             partialResult = _.first(roadLocationAPIResultParser(sortedRoad[0], parsed[2]));
-          } else if (item.roadM && item.roadM[0]) {
+          } else if (item && item.roadM && item.roadM[0]) {
             partialResult = _.first(item.roadM);
             partialResult.title = 'Tieosoite, ' + input.search;
           }
