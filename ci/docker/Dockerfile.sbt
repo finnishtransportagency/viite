@@ -32,7 +32,7 @@ RUN curl -L https://downloads.typesafe.com/scala/$SCALA_VERSION/scala-$SCALA_VER
     tar xzf "scala-$SCALA_VERSION.tgz" -C /home/jenkins/
 
 #Install sbt
-RUN curl -L https://github.com/sbt/sbt/releases/download/v$SBT_VERSION/sbt-$SBT_VERSION.tgz --output sbt-$SBT_VERSION.tgz && \
+RUN curl -x http://172.17.208.16:8085 -L https://github.com/sbt/sbt/releases/download/v$SBT_VERSION/sbt-$SBT_VERSION.tgz --output sbt-$SBT_VERSION.tgz && \
     tar xzf "sbt-$SBT_VERSION.tgz" -C /home/jenkins/
 
 ENV PATH "/home/jenkins/sbt/bin:$PATH"
