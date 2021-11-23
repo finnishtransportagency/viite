@@ -39,7 +39,7 @@ class ViiteVkmClient {
     * @param params query parameters. Parameters are expected to be unescaped.
     * @return The query result, or VKMError in case the response was http>=400.
     */
-  def get(path: String, params: Map[String, String]): Either[Any, VKMError] = {
+  def get(path: String, params: Map[String, String]): Either[VKMError, Any] = {
 
     val builder = new URIBuilder(getRestEndPoint + path)
 
@@ -60,11 +60,11 @@ class ViiteVkmClient {
     val response = client.execute(request)
     try {
       if (response.getStatusLine.getStatusCode >= 400)
-        return Right(VKMError(Map("error" -> "Request returned HTTP Error %d".format(response.getStatusLine.getStatusCode)), url))
+        return Left(VKMError(Map("error" -> "Request returned HTTP Error %d".format(response.getStatusLine.getStatusCode)), url))
       val content: Any = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Any]
-      Left(content)
+      Right(content)
     } catch {
-      case e: Exception => Right(VKMError(Map("error" -> e.getMessage), url))
+      case e: Exception => Left(VKMError(Map("error" -> e.getMessage), url))
     } finally {
       response.close()
     }
