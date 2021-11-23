@@ -177,29 +177,29 @@ trait TrackCalculatorStrategy {
 
     val startSectionAddress = startAddress.getOrElse(getFixedAddress(leftProjectLinks.head, rightProjectLinks.head)._1)
 
-    val estimatedEnd = getFixedAddress(leftProjectLinks.last, rightProjectLinks.last, availableCalibrationPoint)._2
-    val endAddress = Math.max(Math.max(rightProjectLinks.last.startAddrMValue + 1, leftProjectLinks.last.startAddrMValue + 1), estimatedEnd)
+    val fixedAddress = getFixedAddress(leftProjectLinks.last, rightProjectLinks.last, availableCalibrationPoint)._2
+    val fixedMinimimumAddress = Math.max(Math.max(rightProjectLinks.last.startAddrMValue + 1, leftProjectLinks.last.startAddrMValue + 1), fixedAddress)
     val addressLengthRight = Math.max(0, rightProjectLinks.last.originalEndAddrMValue - rightProjectLinks.last.originalStartAddrMValue)
     val addressLengthLeft  = Math.max(0, leftProjectLinks.last.originalEndAddrMValue -  leftProjectLinks.last.originalStartAddrMValue)
-    val endAddress2 = (leftProjectLinks.last.status, rightProjectLinks.last.status) match {
-      case (New,New) => endAddress
+    val minimumEndAddress = (leftProjectLinks.last.status, rightProjectLinks.last.status) match {
+      case (New,New) => fixedMinimimumAddress
       case (New, _)  => rightProjectLinks.last.startAddrMValue + addressLengthRight
       case (_, New)  => leftProjectLinks.last.startAddrMValue + addressLengthLeft
-      case (_,_)     => endAddress
+      case (_,_)     => fixedMinimimumAddress
     }
 
-    val (adjustedLeft, adjustedRight) = adjustTwoTracks(rightProjectLinks, leftProjectLinks, startSectionAddress, endAddress2, calibrationPoints)
-    val endAddress3 = (adjustedLeft.last.status, adjustedRight.last.status) match {
-      case (New,New) => endAddress2
+    val (adjustedLeft, adjustedRight) = adjustTwoTracks(rightProjectLinks, leftProjectLinks, startSectionAddress, minimumEndAddress, calibrationPoints)
+    val adjustedMinimumEndAddress = (adjustedLeft.last.status, adjustedRight.last.status) match {
+      case (New,New) => minimumEndAddress
       case (New, _)  => adjustedRight.last.endAddrMValue
       case (_, New)  => adjustedLeft.last.endAddrMValue
-      case (_,_)     => endAddress2
+      case (_,_)     => minimumEndAddress
     }
 
     TrackCalculatorResult(
-      setLastEndAddrMValue(adjustedLeft, endAddress3),
-      setLastEndAddrMValue(adjustedRight, endAddress3),
-      startSectionAddress, endAddress3,
+      setLastEndAddrMValue(adjustedLeft, adjustedMinimumEndAddress),
+      setLastEndAddrMValue(adjustedRight, adjustedMinimumEndAddress),
+      startSectionAddress, adjustedMinimumEndAddress,
       restLeftProjectLinks,
       restRightProjectLinks)
   }
