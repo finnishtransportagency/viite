@@ -54,6 +54,7 @@ class ViiteProperties {
   lazy val httpProxySet: Boolean = dr2Properties.getProperty("digiroad2.http.proxySet", "false").toBoolean
   lazy val httpProxyHost: String = dr2Properties.getProperty("digiroad2.http.proxyHost")
   lazy val httpNonProxyHosts: String = dr2Properties.getProperty("digiroad2.http.nonProxyHosts", "")
+  lazy val httpProxyPort: String = dr2Properties.getProperty("digiroad2.http.proxyPort", "")
   lazy val importOnlyCurrent: Boolean = dr2Properties.getProperty("digiroad2.importOnlyCurrent", "false").toBoolean
   lazy val authenticationTestMode: Boolean = dr2Properties.getProperty("digiroad2.authenticationTestMode", "false").toBoolean
   lazy val authenticationTestUser: String = dr2Properties.getProperty("digiroad2.authenticationTestUser")
