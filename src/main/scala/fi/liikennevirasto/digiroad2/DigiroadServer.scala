@@ -70,10 +70,6 @@ class OAGRasterServiceProxyServlet extends ProxyServlet {
   private val logger = LoggerFactory.getLogger(getClass)
   def regex: Regex = "/(viite)".r
 
-  override def newHttpClient(): HttpClient = {
-    new HttpClient(new SslContextFactory)
-  }
-
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val uri = req.getRequestURI
     val url = "http://oag.liikennevirasto.fi" + regex.replaceFirstIn(uri, "") + "?" + req.getQueryString
