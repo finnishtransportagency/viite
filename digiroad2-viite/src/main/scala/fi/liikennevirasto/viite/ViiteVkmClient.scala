@@ -10,6 +10,7 @@ import org.json4s.{DefaultFormats, StreamInput}
 import org.json4s.jackson.JsonMethods.parse
 import org.slf4j.LoggerFactory
 import java.net.URL
+import java.util.Properties
 
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
 import org.apache.http.client.config.{CookieSpecs, RequestConfig}
@@ -31,13 +32,15 @@ class ViiteVkmClient {
     loadedKeyString
   }
 
-  private val client = proxyBuilder().build()
 
   def proxyBuilder(): HttpClientBuilder = {
 
-    val proxyHost = ViiteProperties.httpProxyHost
-    val proxyPort = ViiteProperties.httpProxyPort
-    val proxyStatus = ViiteProperties.httpProxySet
+    val properties = new Properties()
+    properties.load(getClass.getResourceAsStream("/digiroad2.properties"))
+
+    val proxyHost = properties.getProperty("http.proxyHost")
+    val proxyPort = properties.getProperty("http.proxyPort")
+    val proxyStatus = properties.getProperty("http.proxySet", "false").toBoolean
     if (proxyStatus) {
       val hostP = new HttpHost(proxyHost, proxyPort.toInt)
       val routePlanner = new DefaultProxyRoutePlanner(hostP)
@@ -65,6 +68,7 @@ class ViiteVkmClient {
 
     val url = builder.build.toString
     val request = new HttpGet(url)
+    val client = proxyBuilder().build()
 
     if (builder.getHost == "localhost") {
       // allow ssh port forward for developing
@@ -88,7 +92,7 @@ class ViiteVkmClient {
 
   def postFormUrlEncoded(urlPart: String, parameters: Map[String, String]): Any = {
     implicit val formats = DefaultFormats
-
+    val client = proxyBuilder().build()
     val post = new HttpPost(s"${getRestEndPoint}$urlPart")
     val nameValuePairs = new java.util.ArrayList[NameValuePair]()
     parameters.foreach { case (key, value) =>
