@@ -14,7 +14,7 @@
 
 
 # === the registration: ===
-aws ecs register-task-definition --profile vaylaapp --region eu-west-1 --cli-input-json file://aws/task-definition/dev/task-definition.json
+aws ecs register-task-definition --profile vaylaapp --region eu-west-1 --cli-input-json file://aws/task-definition/dev/dev-task-definition.json
 
 
 # === after registration: take the new task definition into use for the service ===
@@ -24,6 +24,3 @@ aws ecs register-task-definition --profile vaylaapp --region eu-west-1 --cli-inp
 #
 # Viite-dev-ALB stack:
 # aws ecs update-service --profile vaylaapp --region eu-west-1 --cluster Viite-ECS-Cluster-Private --service Viite-ECS-Service-Private --task-definition Viite:<VERSION> --force-new-deployment
-#
-# Old, manually crafted Viite service stack:
-# aws ecs update-service --profile vaylaapp --region eu-west-1 --cluster VIITE-ECS-Cluster --service viite-dev --task-definition Viite-dev:<VERSION> --force-new-deployment
