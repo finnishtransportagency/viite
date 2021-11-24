@@ -1,10 +1,10 @@
 package fi.liikennevirasto.viite
 
-import org.apache.http.NameValuePair
+import org.apache.http.{HttpHost, NameValuePair}
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet, HttpPost}
 import org.apache.http.client.utils.URIBuilder
-import org.apache.http.impl.client.HttpClientBuilder
+import org.apache.http.impl.client.{HttpClientBuilder, HttpClients}
 import org.apache.http.message.BasicNameValuePair
 import org.json4s.{DefaultFormats, StreamInput}
 import org.json4s.jackson.JsonMethods.parse
@@ -13,6 +13,7 @@ import java.net.URL
 
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
 import org.apache.http.client.config.{CookieSpecs, RequestConfig}
+import org.apache.http.impl.conn.DefaultProxyRoutePlanner
 
 import scala.util.control.NonFatal
 
@@ -30,9 +31,24 @@ class ViiteVkmClient {
     loadedKeyString
   }
 
-  private val client = HttpClientBuilder.create()
-    .setDefaultRequestConfig(RequestConfig.custom()
-      .setCookieSpec(CookieSpecs.STANDARD).build()).build()
+  private val client = proxyBuilder().build()
+
+  def proxyBuilder(): HttpClientBuilder = {
+
+    val proxyHost = ViiteProperties.httpProxyHost
+    val proxyPort = ViiteProperties.httpProxyPort
+    val proxyStatus = ViiteProperties.httpProxySet
+    if (proxyStatus) {
+      val hostP = new HttpHost(proxyHost, proxyPort.toInt)
+      val routePlanner = new DefaultProxyRoutePlanner(hostP)
+      val clientBuilder = HttpClients.custom()
+      clientBuilder.setRoutePlanner(routePlanner)
+    } else {
+      HttpClientBuilder.create()
+        .setDefaultRequestConfig(RequestConfig.custom()
+          .setCookieSpec(CookieSpecs.STANDARD).build())
+    }
+  }
 
   /**
     * Builds http query fom given parts, executes the query, and returns the result (or error if http>=400).
