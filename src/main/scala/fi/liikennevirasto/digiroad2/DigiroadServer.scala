@@ -10,6 +10,7 @@ import org.eclipse.jetty.jmx.MBeanContainer
 import org.eclipse.jetty.proxy.ProxyServlet
 import org.eclipse.jetty.server.handler.ContextHandlerCollection
 import org.eclipse.jetty.server.{Handler, Server}
+import org.eclipse.jetty.util.ssl.SslContextFactory
 import org.eclipse.jetty.webapp.WebAppContext
 import org.slf4j.LoggerFactory
 
@@ -108,7 +109,7 @@ class ArcGisProxyServlet extends ProxyServlet {
   override def getHttpClient: HttpClient = {
     val client = super.getHttpClient
     if (ViiteProperties.httpProxySet) {
-      val proxy = new HttpProxy("127.0.0.1", 3128)
+      val proxy = new HttpProxy(ViiteProperties.httpProxyHost, ViiteProperties.httpProxyPort.toInt)
       proxy.getExcludedAddresses.addAll(ViiteProperties.httpNonProxyHosts.split("|").toList)
       client.getProxyConfiguration.getProxies.add(proxy)
       client.setIdleTimeout(60000)
