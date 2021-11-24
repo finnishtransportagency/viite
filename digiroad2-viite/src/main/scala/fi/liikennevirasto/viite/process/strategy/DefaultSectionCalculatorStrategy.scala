@@ -106,7 +106,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       // then we now that for sure the addresses increased their length for the part => new roadwayNumber for the new sections
       (givenRoadwayNumber, Sequences.nextRoadwayNumber)
     } else if (continuousProjectLinks.nonEmpty && continuousProjectLinks.exists(_.status == LinkStatus.Numbering)) {
-      // then we now that for sure the addresses didnt change the address length part, only changed the number of road or part => same roadwayNumber
+      // then we know for sure that the addresses didn't change the address length part, only changed the number of road or part => same roadwayNumber
       (continuousProjectLinks.headOption.map(_.roadwayNumber).get, givenRoadwayNumber)
     } else {
       val originalAddresses = getRoadAddressesByRoadwayIds(originalHistorySection.map(_.roadwayId))
@@ -221,13 +221,13 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
 
 
   /**
-    * Find starting point(s) after adding new operation for links in project.
+    * Find starting point(s) after adding new operation for the links in the project.
     *
     * @param newLinks new ProjectLinks
     * @param oldLinks non-terminated already existing ProjectLinks
     * @param otherRoadPartLinks
     * @param calibrationPoints
-    * @return Right and left starting points
+    * @return Right and left track starting points
     */
   def findStartingPoints(newLinks: Seq[ProjectLink], oldLinks: Seq[ProjectLink], otherRoadPartLinks: Seq[ProjectLink],
                          calibrationPoints: Seq[UserDefinedCalibrationPoint]): (Point, Point) = {
@@ -319,9 +319,9 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
   /**
     * Find a starting point for this road part.
     *
-    * @param newLinks          Status = New links that need to have an address
+    * @param newLinks          Status = New: links that need to have an address, not having one yet
     * @param oldLinks          Other non-terminated links that already existed before the current operation
-    * @param calibrationPoints The calibration points set by user as fixed addresses
+    * @param calibrationPoints The calibration points set by the user as the fixed addresses
     * @return Starting point
     */
   private def findStartingPoint(newLinks: Seq[ProjectLink], oldLinks: Seq[ProjectLink], otherRoadPartLinks: Seq[ProjectLink],
@@ -454,6 +454,12 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     )
   }
 
+  /**
+    * Returns the more distant end point of the link compared to the given point
+    * @param link  Link, whose opposite end point is to be found
+    * @param point The point compared to the ends of the link
+    * @return      That end of the given link that is the more distant to the given point
+    */
   private def getOppositeEnd(link: BaseRoadAddress, point: Point): Point = {
     val (st, en) = link.getEndPoints
     if (st.distance2DTo(point) < en.distance2DTo(point)) en else st
