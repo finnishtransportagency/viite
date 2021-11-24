@@ -14,7 +14,7 @@
 
 
 # === the registration: ===
-aws ecs register-task-definition --profile vaylaapp --region eu-west-1 --cli-input-json file://aws/task-definition/dev/qa-task-definition.json
+aws ecs register-task-definition --profile vaylaapp --region eu-west-1 --cli-input-json file://aws/task-definition/qa/qa-task-definition.json
 
 
 # === after registration: take the new task definition into use for the service ===
@@ -24,5 +24,3 @@ aws ecs register-task-definition --profile vaylaapp --region eu-west-1 --cli-inp
 #
 # Viite-QA-ALB-stack:
 # aws ecs update-service --profile vaylaapp --region eu-west-1 --cluster QA-viite-test-ECS-Cluster-Private  --service QA-viite-test-ECS-Service-Private --task-definition QA-viite-test:<VERSION> --force-new-deployment
-
-aws ecs update-service --profile vaylaapp --region eu-west-1 --cluster QA-viite-test-ECS-Cluster-Private  --service QA-viite-test-ECS-Service-Private --task-definition QA-viite-test:15 --force-new-deployment
