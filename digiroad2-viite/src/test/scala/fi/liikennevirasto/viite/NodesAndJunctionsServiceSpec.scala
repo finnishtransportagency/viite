@@ -4052,7 +4052,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     *
     * Expected (the road was “extended”)
     * Node Points should be expired conditionally :
-    * * If the remaining node points referenced by this nodeId are all present in the same road number, road part, track and road type
+    * * If the remaining node points referenced by this nodeId are all present in the same road number, road part, track and administrative class
     * then all of those node points and the node itself should expire.
     */
   test("Test expireObsoleteNodesAndJunctions case When road is extended after the existing road") {
@@ -4145,7 +4145,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     *
     * Expected (the road was “extended”)
     * Node Points should be expired conditionally :
-    * * If the remaining node points referenced by this nodeId are all present in the same road number, road part, track and road type
+    * * If the remaining node points referenced by this nodeId are all present in the same road number, road part, track and administrative class
     * then all of those node points and the node itself should expire.
     */
   test("Test expireObsoleteNodesAndJunctions case When road is extended before the existing road") {
@@ -4657,9 +4657,9 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
   }
 
   /**
-    * Test case for node points when road type changes
+    * Test case for node points when administrative class changes
     */
-  test("Test handleNodePointTemplates and expireObsoleteNodesAndJunctions when road type changes") {
+  test("Test handleNodePointTemplates and expireObsoleteNodesAndJunctions when administrative class changes") {
     runWithRollback {
       /*  |--RT-1-->|--RT-3-->|--RT-1--|  */
 
