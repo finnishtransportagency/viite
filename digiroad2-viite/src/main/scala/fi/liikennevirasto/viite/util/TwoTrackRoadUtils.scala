@@ -640,20 +640,20 @@ object TwoTrackRoadUtils {
         } else None
     }
 
-  def continuousOriginalAddressSection(seq: Seq[ProjectLink], processed: Seq[ProjectLink] = Seq()): (Seq[ProjectLink], Seq[ProjectLink]) = {
+  def getContinuousOriginalAddressSection(seq: Seq[ProjectLink], processed: Seq[ProjectLink] = Seq()): (Seq[ProjectLink], Seq[ProjectLink]) = {
     if (seq.isEmpty)
       (processed, seq)
     else if (processed.isEmpty)
-      continuousOriginalAddressSection(seq.tail, Seq(seq.head))
+      getContinuousOriginalAddressSection(seq.tail, Seq(seq.head))
     else {
       val head     = seq.head
       val track    = processed.last.originalTrack
       val road     = processed.last.originalRoadNumber
       val roadPart = processed.last.originalRoadPartNumber
-      val address  = processed.last.endAddrMValue
+      val address  = processed.last.originalEndAddrMValue
       val status   = processed.last.status
       if (head.originalTrack == track && head.originalRoadNumber == road && head.originalRoadPartNumber == roadPart && head.originalStartAddrMValue == address && head.status == status) {
-        continuousOriginalAddressSection(seq.tail, processed :+ head)
+        getContinuousOriginalAddressSection(seq.tail, processed :+ head)
       } else {
         (processed, seq)
       }
@@ -662,14 +662,17 @@ object TwoTrackRoadUtils {
 
   def splitByOriginalAddress(twoTrackOnlyWithTerminated: Seq[Long], side: Seq[ProjectLink]) = {
     var links = side
-    val rightOnlyWithTerminatedEndAddressesSplits = twoTrackOnlyWithTerminated.map(l => {val res = TwoTrackRoadUtils.findAndCreateSplitsAtOriginalAddress(l, links); if (res.isDefined) {links = (links.filterNot(_.id == res.get._1.id) :+ res.get._1 :+ res.get._2).sortBy(_.startAddrMValue); res} else res})
-//    toProjectLinkSeq(rightOnlyWithTerminatedEndAddressesSplits)
+    val x = side.groupBy(_.linkId).mapValues(_.sortBy(pl => pl.startMValue))
+    val y = x.filter(_._2.size > 1)
+    twoTrackOnlyWithTerminated.map(l => {
+      val res = TwoTrackRoadUtils.findAndCreateSplitsAtOriginalAddress(l, links);
+      if (res.isDefined)
+        {links = (links.filterNot(_.id == res.get._1.id) :+ res.get._1 :+ res.get._2).sortBy(_.startAddrMValue);
+          res}
+      else
+        res
+    })
     links
-//    val x = rightOnlyWithTerminatedEndAddressesSplits.filter(_.isDefined).groupBy(_.get._1.id).mapValues(p => p.flatten).values.flatten.flatMap(p => Seq(p._1,p._2))
-//    val mins = x.minBy(_.endAddrMValue)
-//    val maxs = x.maxBy(_.startAddrMValue)
-//    x.toSeq.diff(Seq(mins,maxs)).sortBy(_.endAddrMValue)
-
   }
 
   def toProjectLinkSeq(plsTupleOptions: Seq[Option[(ProjectLink, ProjectLink)]]) = plsTupleOptions collect toSequence flatten
@@ -678,15 +681,15 @@ object TwoTrackRoadUtils {
     def continuousByStatus(pls: Seq[ProjectLink], result: Seq[Long] = Seq()): Seq[Long] = {
       if (pls.isEmpty) result
       else {
-        val x = continuousOriginalAddressSection(pls)
-        continuousByStatus(x._2, addtomap(x._1, result))
+        val continuousOriginalAddressSection = getContinuousOriginalAddressSection(pls)
+        continuousByStatus(continuousOriginalAddressSection._2, addtomap(continuousOriginalAddressSection._1, result))
       }
     }
     val filterNew = projectLinkSeq.filter(_.status != LinkStatus.New)
     val filteredProjectLinks = if (filterNew.nonEmpty) filterNew.init else Seq()
-    continuousByStatus(filteredProjectLinks)
+    continuousByStatus(filteredProjectLinks.sortBy(_.originalStartAddrMValue))
   }
-  def addtomap(pls: Seq[ProjectLink], res: Seq[Long]): Seq[Long] = res :+ pls.last.endAddrMValue
+  def addtomap(pls: Seq[ProjectLink], res: Seq[Long]): Seq[Long] = res :+ pls.last.originalEndAddrMValue
 
   val toSequence: PartialFunction[Option[(ProjectLink, ProjectLink)], Seq[ProjectLink]] = {
     case x: Some[(ProjectLink, ProjectLink)] => Seq(x.get._1, x.get._2)

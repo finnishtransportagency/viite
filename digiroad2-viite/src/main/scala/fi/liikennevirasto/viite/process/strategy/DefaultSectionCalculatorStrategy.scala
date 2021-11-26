@@ -143,7 +143,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       if (seq.endAddrMValue != next.startAddrMValue) throw new RoadAddressException(s"Address not continuous: ${seq.endAddrMValue} ${next.startAddrMValue} linkids: ${seq.linkId} ${next.linkId}")
       if (!(seq.endAddrMValue > seq.startAddrMValue)) throw new RoadAddressException(s"Address length negative. linkid: ${seq.linkId}")
       if (seq.status != LinkStatus.New)
-        if (!((seq.endAddrMValue - seq.startAddrMValue) == (seq.originalEndAddrMValue - seq.originalStartAddrMValue))) throw new RoadAddressException(s"Length mismatch new: ${seq.endAddrMValue} ${seq.startAddrMValue} original: ${seq.originalEndAddrMValue} ${seq.originalStartAddrMValue} linkid: ${seq.linkId}")
+        if (!((seq.endAddrMValue - seq.startAddrMValue) == (seq.originalEndAddrMValue - seq.originalStartAddrMValue))) throw new RoadAddressException(s"Length mismatch. New: ${seq.startAddrMValue} ${seq.endAddrMValue} original: ${seq.originalStartAddrMValue} ${seq.originalEndAddrMValue} linkid: ${seq.linkId}")
       next
     }
     }}
@@ -214,10 +214,20 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     val rightLinks        = ProjectSectionMValueCalculator.calculateMValuesForTrack(rightSections, userDefinedCalibrationPoint)
     val leftLinks         = ProjectSectionMValueCalculator.calculateMValuesForTrack(leftSections, userDefinedCalibrationPoint)
 
+    def checkMValues(pls: Seq[ProjectLink]) = {
+      pls.tail.foldLeft(pls.head) { case (seq, next) => {
+        if (seq.connectedLinkId.isDefined && seq.connectedLinkId == next.connectedLinkId)
+          assert(seq.endMValue == next.startMValue)
+        next
+      }}}
+
+    checkMValues(leftLinks)
+    checkMValues(rightLinks)
+
     checkValues(leftLinks)
     checkValues(rightLinks)
 
-    val allProjectLinks         = projectLinkDAO.fetchProjectLinks(leftLinks.head.projectId)
+    val allProjectLinks         = (projectLinkDAO.fetchProjectLinks(leftLinks.head.projectId, Some(LinkStatus.Terminated)) ++ leftLinks ++ rightLinks).sortBy(_.startAddrMValue)
     val twoTracksWithTerminated = allProjectLinks.filter(filterExistingLinks)
 
     val (rightOnlyWithTerminated, leftOnlyWithTerminated) = twoTracksWithTerminated.partition(_.track == Track.RightSide)
@@ -263,6 +273,9 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     val splitCreatedCpsFromLeftSide  = toUdcpMap(udcpsFromLeftSideSplits).toMap
 
     val (adjustedLeft, adjustedRight) = (leftLinksWithSplits.filterNot(_.status == LinkStatus.Terminated), rightLinksWithSplits.filterNot(_.status == LinkStatus.Terminated))
+
+    checkMValues(adjustedLeft)
+    checkMValues(adjustedRight)
 
     checkValues(adjustedLeft)
     checkValues(adjustedRight)
