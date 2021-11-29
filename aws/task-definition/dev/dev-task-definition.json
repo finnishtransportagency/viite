@@ -49,11 +49,11 @@
                 },
                 {
                     "name": "conversion.bonecp.password",
-                    "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/dev/conversion.bonecp.password"
+                    "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/allEnvs/conversion.db.password"
                 },
                 {
                     "name": "authentication.admin.basic.password",
-                    "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/dev/authentication.admin.basic.password"
+                    "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/allEnvs/authentication.admin.basic.password"
                 },
                 {
                     "name": "vkmApiKey",
