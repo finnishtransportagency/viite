@@ -1498,7 +1498,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         sorted.forall(_.track == links.head.track) &&
         sorted.tail.scanLeft((true, links.head.endAddrMValue)){ (a,b) => (a._2 == b.startAddrMValue, b.endAddrMValue)}.forall(_._1)
     ) {
-
       val geom = sorted.head.sideCode match {
         case SideCode.AgainstDigitizing => sorted.map(_.geometry).reverse.foldLeft(Seq[Point]())((geometries, ge) => {
           geometries ++ ge
@@ -1507,10 +1506,55 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           geometries ++ ge
         }).distinct
       }
-      val (startM, endM, startA, endA, oStartA, oEndA, startCp, endCp, oStartCp, oEndCp) = (links.map(_.startMValue).min, links.map(_.endMValue).max, links.map(_.startAddrMValue).min, links.map(_.endAddrMValue).max, links.map(_.originalStartAddrMValue).min, links.map(_.originalEndAddrMValue).max, links.minBy(_.startAddrMValue).startCalibrationPointType, links.maxBy(_.endAddrMValue).endCalibrationPointType, links.minBy(_.startAddrMValue).originalStartCalibrationPointType, links.maxBy(_.endAddrMValue).originalEndCalibrationPointType)
-      Seq(sorted.head.copy(connectedLinkId = None, discontinuity = links.maxBy(_.startAddrMValue).discontinuity, startAddrMValue = startA, endAddrMValue = endA, originalStartAddrMValue = oStartA, originalEndAddrMValue = oEndA, startMValue = startM, endMValue = endM, geometry = geom, geometryLength = GeometryUtils.geometryLength(geom), calibrationPointTypes =  (startCp, endCp), originalCalibrationPointTypes = (oStartCp, oEndCp)))
+      val (startM, endM, startA, endA, oStartA, oEndA, startCp, endCp, oStartCp, oEndCp) =
+        (links.map(_.startMValue).min,
+         links.map(_.endMValue).max,
+         links.map(_.startAddrMValue).min,
+         links.map(_.endAddrMValue).max,
+         links.map(_.originalStartAddrMValue).min,
+         links.map(_.originalEndAddrMValue).max,
+         links.minBy(_.startAddrMValue).startCalibrationPointType,
+         links.maxBy(_.endAddrMValue).endCalibrationPointType,
+         links.minBy(_.startAddrMValue).originalStartCalibrationPointType,
+         links.maxBy(_.endAddrMValue).originalEndCalibrationPointType
+        )
+
+      Seq(
+        sorted.head.copy(
+          connectedLinkId               = None,
+          discontinuity                 = links.maxBy(_.startAddrMValue).discontinuity,
+          startAddrMValue               = startA,
+          endAddrMValue                 = endA,
+          originalStartAddrMValue       = oStartA,
+          originalEndAddrMValue         = oEndA,
+          startMValue                   = startM,
+          endMValue                     = endM,
+          geometry                      = geom,
+          geometryLength                = GeometryUtils.geometryLength(geom),
+          calibrationPointTypes         = (startCp, endCp),
+          originalCalibrationPointTypes = (oStartCp, oEndCp)
+        )
+      )
     } else
       links
+  }
+
+  // Remove user defined calibration points and splits before (re)calc.
+  def getFusedProjectLinks(pls: Seq[ProjectLink]) = if (pls.isEmpty) {
+    Seq()
+  } else {
+    val (connectedGroups, unConnectedGroups) = pls.groupBy(_.connectedLinkId).partition(_._1.isDefined)
+    val unConnnected                         = unConnectedGroups.values.flatten.toSeq
+    val connected                            = connectedGroups.values.flatMap(v => {
+      fuseSplittedProjectLinks(v.map(f = c => {
+        c.endCalibrationPointType match {case UserDefinedCP => c.copy(calibrationPointTypes = (c.startCalibrationPointType, NoCP)); case _ => c;}
+      }))
+    }).toSeq
+    val connectedIds                         = connected.map(_.id).toSet
+    val connectedGroupsIds                   = connectedGroups.values.flatten.map(_.id).toSet
+    roadwayChangesDAO.clearRoadChangeTable(pls.head.projectId)
+    projectLinkDAO.removeProjectLinksById(connectedGroupsIds.diff(connectedIds))
+    unConnnected ++ connected
   }
 
   def recalculateProjectLinks(projectId: Long, userName: String, roadParts: Set[(Long, Long)] = Set(), newTrack: Option[Track] = None, newDiscontinuity: Option[Discontinuity] = None, completelyNewLinkIds: Seq[Long] = Seq()): Unit = {
@@ -1526,27 +1570,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       }).mkString(", ")}")
 
     time(logger, "Recalculate links") {
-
-      val projectLinks = projectLinkDAO.fetchProjectLinks(projectId)
-      /* Remove user defined calibration points before (re)calc. */
-      def getFusedProjectLinks(pls: Seq[ProjectLink]) = if (pls.isEmpty) {
-        Seq()
-      } else {
-        val (connectedGroups, unConnectedGroups) = pls.groupBy(_.connectedLinkId).partition(_._1.isDefined)
-        val unConnnected                         = unConnectedGroups.values.flatten.toSeq
-        val connected                            = connectedGroups.values.flatMap(v => {
-          fuseSplittedProjectLinks(v.map(f = c => {
-            c.endCalibrationPointType match {case UserDefinedCP => c.copy(calibrationPointTypes = (c.startCalibrationPointType, NoCP)); case _ => c;}
-          }))
-        }).toSeq
-        val connectedIds                         = connected.map(_.id).toSet
-        val connectedGroupsIds                   = connectedGroups.values.flatten.map(_.id).toSet
-        roadwayChangesDAO.clearRoadChangeTable(projectId)
-        projectLinkDAO.removeProjectLinksById(connectedGroupsIds.diff(connectedIds))
-        unConnnected ++ connected
-      }
-
-      val (terminated, others) = projectLinks.partition(_.status == LinkStatus.Terminated)
+        val projectLinks = projectLinkDAO.fetchProjectLinks(projectId)
+        val (terminated, others) = projectLinks.partition(_.status == LinkStatus.Terminated)
 
         val recalculated = others.groupBy(pl => {
           (pl.roadNumber, pl.roadPartNumber)
