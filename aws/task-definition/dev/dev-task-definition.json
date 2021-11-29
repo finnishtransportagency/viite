@@ -45,7 +45,7 @@
             "secrets": [
                 {
                     "name": "bonecp.password",
-                    "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/dev/bonecp.password"
+                    "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/dev/viite_dev.db.password"
                 },
                 {
                     "name": "conversion.bonecp.password",
