@@ -28,8 +28,7 @@
                 { "name": "rasterServiceURL", "value": "https://oag.vayla.fi/rasteripalvelu-mml" },
                 { "name": "vvhRestApiEndPoint", "value": "https://haproxy.vayla.fi:2027/vvhdata/" },
                 { "name": "vvhRoadlink.frozen", "value": "true" },
-                { "name": "vkmUrl", "value": "https://oag.vayla.fi" },
-                { "name": "oag.username", "value": "svc_cloudviite" },
+                { "name": "vkmUrl", "value": "https://api.vaylapilvi.fi" },
                 { "name": "http.proxySet", "value": "false" },
                 { "name": "http.proxyHost", "value": "127.0.0.1" },
                 { "name": "http.nonProxyHosts", "value": "127.0.0.1" },
@@ -46,19 +45,19 @@
             "secrets": [
                 {
                     "name": "bonecp.password",
-                    "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/viiteqakanta"
+                    "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/QA/qa.rds.viitetest.db.password"
                 },
                 {
                     "name": "conversion.bonecp.password",
-                    "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/dev/conversion.bonecp.password"
+                    "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/allEnvs/conversion.db.password"
                 },
                 {
                     "name": "authentication.admin.basic.password",
-                    "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/dev/authentication.admin.basic.password"
+                    "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/allEnvs/authentication.admin.basic.password"
                 },
                 {
-                    "name": "oag.password",
-                    "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/dev/authentication.oag.basic.password"
+                    "name": "vkmApiKey",
+                    "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/vkmApiKey-vkmprod"
                 }
             ],
             "memoryReservation": 2048,
