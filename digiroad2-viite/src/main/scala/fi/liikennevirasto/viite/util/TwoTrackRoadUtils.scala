@@ -661,18 +661,11 @@ object TwoTrackRoadUtils {
   }
 
   def splitByOriginalAddress(twoTrackOnlyWithTerminated: Seq[Long], side: Seq[ProjectLink]) = {
-    var links = side
-    val x = side.groupBy(_.linkId).mapValues(_.sortBy(pl => pl.startMValue))
-    val y = x.filter(_._2.size > 1)
-    twoTrackOnlyWithTerminated.map(l => {
-      val res = TwoTrackRoadUtils.findAndCreateSplitsAtOriginalAddress(l, links);
-      if (res.isDefined)
-        {links = (links.filterNot(_.id == res.get._1.id) :+ res.get._1 :+ res.get._2).sortBy(_.startAddrMValue);
-          res}
-      else
-        res
-    })
-    links
+    twoTrackOnlyWithTerminated.foldLeft(side) { case (a, b) => {
+        val res = TwoTrackRoadUtils.findAndCreateSplitsAtOriginalAddress(b, a)
+        if (res.isDefined) (a.filterNot(_.id == res.get._1.id) :+ res.get._1 :+ res.get._2).sortBy(_.startAddrMValue) else a
+      }
+    }
   }
 
   def toProjectLinkSeq(plsTupleOptions: Seq[Option[(ProjectLink, ProjectLink)]]) = plsTupleOptions collect toSequence flatten

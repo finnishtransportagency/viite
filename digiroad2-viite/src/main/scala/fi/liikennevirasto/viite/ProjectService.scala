@@ -1529,31 +1529,32 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
       val projectLinks = projectLinkDAO.fetchProjectLinks(projectId)
       /* Remove user defined calibration points before (re)calc. */
-      val udcpRemovedProjectLinks = if (projectLinks.isEmpty) {
+      def getFusedProjectLinks(pls: Seq[ProjectLink]) = if (pls.isEmpty) {
         Seq()
       } else {
-      val (connectedGroups, unConnectedGroups) = projectLinks.groupBy(_.connectedLinkId).partition(_._1.isDefined)
-        val unConnnected = unConnectedGroups.values.flatten.toSeq
-        val connected = connectedGroups.values.flatMap(v => {
+        val (connectedGroups, unConnectedGroups) = pls.groupBy(_.connectedLinkId).partition(_._1.isDefined)
+        val unConnnected                         = unConnectedGroups.values.flatten.toSeq
+        val connected                            = connectedGroups.values.flatMap(v => {
           fuseSplittedProjectLinks(v.map(f = c => {
             c.endCalibrationPointType match {case UserDefinedCP => c.copy(calibrationPointTypes = (c.startCalibrationPointType, NoCP)); case _ => c;}
           }))
         }).toSeq
-        val connectedIds = connected.map(_.id).toSet
-        val connectedGroupsIds = connectedGroups.values.flatten.map(_.id).toSet
+        val connectedIds                         = connected.map(_.id).toSet
+        val connectedGroupsIds                   = connectedGroups.values.flatten.map(_.id).toSet
         roadwayChangesDAO.clearRoadChangeTable(projectId)
         projectLinkDAO.removeProjectLinksById(connectedGroupsIds.diff(connectedIds))
         unConnnected ++ connected
       }
 
-      val (terminated, others) = udcpRemovedProjectLinks.partition(_.status == LinkStatus.Terminated)
+      val (terminated, others) = projectLinks.partition(_.status == LinkStatus.Terminated)
 
         val recalculated = others.groupBy(pl => {
           (pl.roadNumber, pl.roadPartNumber)
         }).flatMap {
           grp =>
+            val fusedLinks = getFusedProjectLinks(grp._2)
             val calibrationPoints = ProjectCalibrationPointDAO.fetchByRoadPart(projectId, grp._1._1, grp._1._2)
-            val calculatedLinks   = ProjectSectionCalculator.assignMValues(grp._2, calibrationPoints).sortBy(_.endAddrMValue)
+            val calculatedLinks   = ProjectSectionCalculator.assignMValues(fusedLinks, calibrationPoints).sortBy(_.endAddrMValue)
             if (!calculatedLinks.exists(_.isNotCalculated) && newDiscontinuity.isDefined && newTrack.isDefined &&
                 roadParts.contains((calculatedLinks.head.roadNumber, calculatedLinks.head.roadPartNumber))) {
               if (completelyNewLinkIds.nonEmpty) {
