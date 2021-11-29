@@ -28,7 +28,7 @@
                 { "name": "rasterServiceURL", "value": "https://oag.vayla.fi/rasteripalvelu-mml" },
                 { "name": "vvhRestApiEndPoint", "value": "https://haproxy.vayla.fi:2027/vvhdata/" },
                 { "name": "vvhRoadlink.frozen", "value": "true" },
-                { "name": "vkmUrl", "value": "https://oag.vayla.fi" },
+                { "name": "vkmUrl", "value": "https://api.vaylapilvi.fi/" },
                 { "name": "http.proxySet", "value": "false" },
                 { "name": "http.proxyHost", "value": "127.0.0.1" },
                 { "name": "http.nonProxyHosts", "value": "127.0.0.1" },
@@ -54,6 +54,10 @@
                 {
                     "name": "authentication.admin.basic.password",
                     "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/dev/authentication.admin.basic.password"
+                },
+                {
+                    "name": "vkmApiKey",
+                    "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/vkmApiKey-vkmprod"
                 }
             ],
             "memoryReservation": 2048,
