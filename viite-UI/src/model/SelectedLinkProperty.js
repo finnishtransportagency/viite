@@ -128,6 +128,18 @@
       }
     };
 
+    var openCtrl = function (linkIds, isCtrlClick, visibleFeatures) {
+      if (isCtrlClick) {
+        setCurrent([]);
+        setCurrent(roadCollection.getByLinkIds(linkIds));
+        _.forEach(current, function (selected) {
+          selected.select();
+        });
+        processOlFeatures(visibleFeatures);
+        eventbus.trigger('linkProperties:selected', extractDataForDisplay(get()));
+      }
+    };
+
     var open = function (data, isSingleClick, visibleFeatures) {
       if (isSingleClick) {
         openSingleClick(data);
@@ -826,6 +838,7 @@
       open: open,
       openFloating: openFloating,
       openUnknown: openUnknown,
+      openCtrl: openCtrl,
       isDirty: isDirty,
       setDirty: setDirty,
       saveTransfer: saveTransfer,

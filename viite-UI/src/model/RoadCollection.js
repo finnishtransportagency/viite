@@ -333,6 +333,12 @@
       return segments;
     };
 
+    this.getByLinkIds = function (ids) {
+      return _.filter(roadLinks(), function (road) {
+        return ids.includes(road.getData().linkId);
+      });
+    };
+
     this.getByLinearLocationId = function (id) {
       var segments = _.filter(roadLinks(), function (road) {
         return road.getData().linearLocationId === id;
