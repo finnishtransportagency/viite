@@ -172,26 +172,59 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         val (rightInit, leftInit) = if (hasDiscontinuity)
           (rightLinks.init,leftLinks.init) else (rightLinks, leftLinks)
 
+        case class FirstRestSections(first:Seq[ProjectLink], rest: Seq[ProjectLink])
+
         val ((firstRight, restRight), (firstLeft, restLeft)): ((Seq[ProjectLink], Seq[ProjectLink]), (Seq[ProjectLink], Seq[ProjectLink])) = {
           val newRoadwayNumber1         = Sequences.nextRoadwayNumber
           val newRoadwayNumber2         = if (rightInit.head.track == Track.Combined || leftInit.head.track == Track.Combined) newRoadwayNumber1 else Sequences.nextRoadwayNumber
           val continuousRoadwaySections = (continuousRoadwaySection(rightInit, newRoadwayNumber1), continuousRoadwaySection(leftInit, newRoadwayNumber2))
-          val rightSections             = continuousRoadwaySections._1
-          val leftSections              = continuousRoadwaySections._2
-            if (rightSections._1.last.endAddrMValue > leftSections._1.last.endAddrMValue && (rightSections._1.size > 1) && Math.abs(rightSections._1.last.endAddrMValue - leftSections._1.last.endAddrMValue) > Math.abs(rightSections._1(rightSections._1.size - 2).endAddrMValue - leftSections._1.last.endAddrMValue) && leftSections._1.last.discontinuity != rightSections._1.last.discontinuity){
-            val newFirstRight = rightSections._1.takeWhile(pl => pl.endAddrMValue <= leftSections._1.last.endAddrMValue)
-            if (newFirstRight.nonEmpty && rightSections._1.drop(newFirstRight.size).nonEmpty && leftSections._2.nonEmpty)
-              ((newFirstRight, rightSections._1.drop(newFirstRight.size) ++ rightSections._2), leftSections)
+          val rightSections             = FirstRestSections tupled continuousRoadwaySections._1
+          val leftSections              = FirstRestSections tupled continuousRoadwaySections._2
+
+
+          def checkTheLastLinkInOppositeRange(Sect: Seq[ProjectLink], OppositeSect: Seq[ProjectLink]): Boolean = {
+            Math.abs(Sect.last.endAddrMValue - OppositeSect.last.endAddrMValue) > Math.abs(Sect(Sect.size - 2).endAddrMValue - OppositeSect.last.endAddrMValue)
+          }
+
+          def sizeMoreThanOne(Sect: Seq[ProjectLink]) =
+            Sect.size > 1
+
+          def lengthCompare = {
+            val firstRightEndAddress = rightSections.first.last.endAddrMValue
+            val firstLeftEndAddress = leftSections.first.last.endAddrMValue
+
+            Seq(firstRightEndAddress == firstLeftEndAddress,
+                firstRightEndAddress > firstLeftEndAddress,
+                firstRightEndAddress < firstLeftEndAddress)
+               .indexOf(true)
+          }
+
+          def differentDiscontinuity =
+            leftSections.first.last.discontinuity != rightSections.first.last.discontinuity
+
+
+          def getEqualRoadwaySections(Sect: FirstRestSections, OppositeSect: FirstRestSections) = {
+            val newFirstSection = Sect.first.takeWhile(_.endAddrMValue <= OppositeSect.first.last.endAddrMValue)
+
+            if (Sect.first.size > newFirstSection.size) {
+              val newRestSection = Sect.first.drop(newFirstSection.size) ++ Sect.rest
+              ((newFirstSection, newRestSection), FirstRestSections.unapply(OppositeSect).get)
+            }
             else
               continuousRoadwaySections
-          } else if (rightSections._1.last.endAddrMValue < leftSections._1.last.endAddrMValue && (leftSections._1.size > 1) && Math.abs(leftSections._1.last.endAddrMValue - rightSections._1.last.endAddrMValue) > Math.abs(leftSections._1(leftSections._1.size-2).endAddrMValue - rightSections._1.last.endAddrMValue) && rightSections._1.last.discontinuity != leftSections._1.last.discontinuity){
-            val newFirstLeft = leftSections._1.takeWhile(pl => pl.endAddrMValue <= rightSections._1.last.endAddrMValue)
-            if (newFirstLeft.nonEmpty && leftSections._1.drop(newFirstLeft.size).nonEmpty && rightSections._2.nonEmpty)
-            (rightSections, (newFirstLeft, leftSections._1.drop(newFirstLeft.size) ++ leftSections._2))
+          }
+
+          def getUpdatedContinuousRoadwaySections(Sect: FirstRestSections, OppositeSect: FirstRestSections) = {
+            if (differentDiscontinuity && sizeMoreThanOne(Sect.first) && checkTheLastLinkInOppositeRange(Sect.first, OppositeSect.first))
+              getEqualRoadwaySections(Sect, OppositeSect)
             else
-            continuousRoadwaySections
-          } else {
-            continuousRoadwaySections
+              continuousRoadwaySections
+          }
+
+          lengthCompare match {
+            case 0 => continuousRoadwaySections
+            case 1 => getUpdatedContinuousRoadwaySections(rightSections, leftSections)
+            case 2 => getUpdatedContinuousRoadwaySections(leftSections,  rightSections)
           }
         }
 
