@@ -218,21 +218,15 @@
       }
       //Since the selected features are moved to a new/temporary layer we just need to reduce the roadlayer's opacity levels.
       if (event.selected.length !== 0) {
+        var selectedF = getSelectedF(ctrlPressed, event);
         if (roadLayer.layer.getOpacity() === 1) {
           setGeneralOpacity(0.2);
         }
-
-        var selectedF = getSelectedF(ctrlPressed, event);
-
         if (!_.isUndefined(selectedF)) {
           var selection = selectedF.linkData;
-          if (ctrlPressed) {
+          if (ctrlPressed) { // if ctrl button was pressed while double clicking the link then we want add the selected link to the selection
             addToPreviousSelection(ctrlPressed, selection);
-          }
-          else if (selection.floating === SelectionType.Floating.value) {
-            selectedLinkProperty.openFloating(selection, true, visibleFeatures);
-            floatingMarkerLayer.setOpacity(1);
-          } else {
+          } else { // otherwise we want to select just the double clicked link
             selectedLinkProperty.open(selection, false, visibleFeatures);
           }
         }
@@ -292,7 +286,8 @@
      * The event holds the selected features in the events.selected and the deselected in event.deselected.
      *
      * In this particular case we are fetching every roadLinkAddress and anomaly marker in view and
-     * sending them to the selectedLinkProperty.open for further processing.
+     * sending them to the selectedLinkProperty.open for further processing,
+     * or adding them to the selection if user pressed ctrl button while clicking.
      */
     selectSingleClick.on('select', function (event) {
       var ctrlPressed = (event.mapBrowserEvent) ? event.mapBrowserEvent.originalEvent.ctrlKey : false;
@@ -306,26 +301,9 @@
         if (roadLayer.layer.getOpacity() === 1) {
           setGeneralOpacity(0.2);
         }
-        if (ctrlPressed) {
+        if (ctrlPressed) {  // if ctrl button was pressed while single clicking then we want to add the clicked link to the previous selection
           addToPreviousSelection(ctrlPressed, selection);
-        } else if (selection.floating === SelectionType.Floating.value && !applicationModel.isReadOnly()) {
-          selectedLinkProperty.close();
-          selectedLinkProperty.openFloating(selection, true, visibleFeatures);
-          floatingMarkerLayer.setOpacity(1);
-          anomalousMarkerLayer.setOpacity(1);
-        } else if (selection.floating !== SelectionType.Floating.value && applicationModel.selectionTypeIs(SelectionType.Floating) && !applicationModel.isReadOnly() && event.deselected.length !== 0) {
-          var floatings = event.deselected;
-          var nonFloatings = event.selected;
-          removeFeaturesFromSelection(nonFloatings);
-          addFeaturesToSelection(floatings);
-        } else if (applicationModel.selectionTypeIs(SelectionType.Unknown) && !applicationModel.isReadOnly()) {
-          if ((selection.anomaly === Anomaly.NoAddressGiven.value || selection.anomaly === Anomaly.GeometryChanged.value) && selection.roadLinkType !== SelectionType.Floating.value) {
-            selectedLinkProperty.openUnknown(selection, visibleFeatures);
-          } else {
-            removeFeaturesFromSelection(event.selected);
-            addFeaturesToSelection(event.deselected);
-          }
-        } else {
+        } else { // otherwise we want to select the whole road part
           selectedLinkProperty.close();
           setGeneralOpacity(0.2);
           if (selection.roadNumber !== 0) {
@@ -345,16 +323,7 @@
           // opens only the visible parts of the roads (bounding box view)
           selectedLinkProperty.open(selection, true, visibleFeatures);
         }
-        if (applicationModel.selectionTypeIs(SelectionType.Unknown) && selection.floating !== SelectionType.Floating.value && (selection.anomaly === Anomaly.NoAddressGiven.value || selection.anomaly === Anomaly.GeometryChanged.value)) {
-          greenRoadLayer.setOpacity(1);
-          var anomalousFeatures = _.uniq(_.filter(selectedLinkProperty.getFeaturesToKeep(), function (ft) {
-            return ft.anomaly === Anomaly.NoAddressGiven.value;
-          }));
-          anomalousFeatures.forEach(function (fmf) {
-            editFeatureDataForGreen(fmf);
-          });
-        }
-      } else {
+      } else { // if selectedF was undefined we want to deselect all selected links
         selectedLinkProperty.close();
       }
     });
