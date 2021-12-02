@@ -328,7 +328,7 @@
         } else {
           selectedLinkProperty.close();
           setGeneralOpacity(0.2);
-          if (!ctrlPressed && selection.roadNumber !== 0) {
+          if (selection.roadNumber !== 0) {
             applicationModel.addSpinner();
             // set the clicked linear location id so we know what road link group to update after fetching road links in backend
             roadCollection.setClickedLinearLocationId(selection.linearLocationId);
@@ -422,19 +422,17 @@
 
 
     var addToPreviousSelection = function (ctrlPressed, selection) {
-       if (ctrlPressed && !_.isUndefined(selectedLinkProperty.get())) {
-         if (!_.isUndefined(selection)) {
-           var selectedLinkIds = _.map(selectedLinkProperty.get(), function (selected) {
-             return getSelectedId(selected);
-           });
-           if (_.includes(selectedLinkIds, getSelectedId(selection))) {
-             selectedLinkIds = _.without(selectedLinkIds, getSelectedId(selection));
-           } else {
-             selectedLinkIds = selectedLinkIds.concat(getSelectedId(selection));
-           }
-           var features = getAllFeatures(true, true, true, true, true, true, true, true, true);
-           selectedLinkProperty.openCtrl(selectedLinkIds, true, features);
+       if (ctrlPressed && !_.isUndefined(selectedLinkProperty.get()) && !_.isUndefined(selection)) {
+         var selectedLinkIds = _.map(selectedLinkProperty.get(), function (selected) {
+           return getSelectedId(selected);
+         });
+         if (_.includes(selectedLinkIds, getSelectedId(selection))) {
+           selectedLinkIds = _.without(selectedLinkIds, getSelectedId(selection));
+         } else {
+           selectedLinkIds = selectedLinkIds.concat(getSelectedId(selection));
          }
+         var features = getAllFeatures(true, true, true, true, true, true, true, true, true);
+         selectedLinkProperty.openCtrl(selectedLinkIds, true, features);
        }
     };
 
