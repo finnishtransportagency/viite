@@ -1,9 +1,9 @@
 --------------------------------------------------------
 --  DDL for the road address initial import data table
---  VVH_TIEOSOITE_KESAKUU_2020
+--  VVH_TIEOSOITE_MARRASKUU_2021
 --------------------------------------------------------
 
-CREATE TABLE VVH_TIEOSOITE_KESAKUU_2020 (
+CREATE TABLE VVH_TIEOSOITE_MARRASKUU_2021 (
 	ID           BIGINT,
 	TIEOSOITEID  BIGINT,
 	LINKID       BIGINT,
