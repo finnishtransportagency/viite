@@ -99,6 +99,32 @@
       return field;
     };
 
+    var textDynamicField = function (labelText, linkProperty) {
+      var floatingTransfer = (!applicationModel.isReadOnly() && compactForm);
+      var field = '';
+      var uniqLinkProperties = _.uniq(_.map(selectedLinkProperty.get(), linkProperty));
+      var linkProperties = "";
+      _.each(uniqLinkProperties, function(rt) {
+        if (linkProperties.length === 0) {
+          linkProperties = rt;
+        } else {
+          linkProperties = linkProperties + ', <br> ' + rt;
+        }
+      });
+      if (floatingTransfer) {
+        field = '<div class="form-group">' +
+            '<label class="control-label-floating">' + labelText + '</label>' +
+            '<p class="form-control-static-floating">' + linkProperties + '</p>' +
+            '</div>';
+      } else {
+        field = '<div class="form-group">' +
+            '<label class="control-label">' + labelText + '</label>' +
+            '<p class="form-control-static">' + linkProperties + '</p>' +
+            '</div>';
+      }
+      return field;
+    };
+
     var floatingListField = function (labelText) {
       return '<div class="form-group">' +
         '<label class="control-label-floating-list">' + labelText + '</label>' +
@@ -293,7 +319,9 @@
       var startAddress = selectedLinkProperty.count() === 1 ? staticField('ALKUETÄISYYS', firstSelectedLinkProperty.startAddressM) : staticField('ALKUETÄISYYS', linkProperties.startAddressM);
       var endAddress = selectedLinkProperty.count() === 1 ? staticField('LOPPUETÄISYYS', firstSelectedLinkProperty.endAddressM) : staticField('LOPPUETÄISYYS', linkProperties.endAddressM);
       var mtkId = selectedLinkProperty.count() === 1 ? '; MTKID: ' + linkProperties.mmlId : '';
-      var roadName = firstSelectedLinkProperty.roadName ? staticField('TIEN NIMI', firstSelectedLinkProperty.roadName) : '';
+      var roadNames = selectedLinkProperty.count() === 1 ? staticField('TIEN NIMI', firstSelectedLinkProperty.roadName) : textDynamicField('TIEN NIMI', 'roadName');
+      var roadNumbers = selectedLinkProperty.count() === 1 ? staticField('TIENUMERO', firstSelectedLinkProperty.roadNumber) : textDynamicField('TIENUMERO', 'roadNumber');
+      var roadPartNumbers = selectedLinkProperty.count() === 1 ? staticField('TIEOSANUMERO', firstSelectedLinkProperty.roadPartNumber) : textDynamicField('TIEOSANUMERO', 'roadPartNumber');
       var startAddrM = selectedLinkProperty.count() === 1 ? firstSelectedLinkProperty.startAddressM : linkProperties.startAddressM;
       var endAddrM = selectedLinkProperty.count() === 1 ? firstSelectedLinkProperty.endAddressM : linkProperties.endAddressM;
       var length = (selectedLinkProperty.count() > 1 && endAddrM - startAddrM === 0) ? '' : endAddrM - startAddrM;
@@ -318,9 +346,9 @@
         showLinkId(selectedLinkProperty, linkProperties) +
         showLinkLength(selectedLinkProperty, linkProperties) +
         '</div>' +
-        roadName +
-        staticField('TIENUMERO', firstSelectedLinkProperty.roadNumber) +
-        staticField('TIEOSANUMERO', firstSelectedLinkProperty.roadPartNumber) +
+        roadNames +
+        roadNumbers +
+        roadPartNumbers +
         tracks +
         startAddress +
         endAddress +

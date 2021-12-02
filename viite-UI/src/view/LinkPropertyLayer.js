@@ -188,6 +188,20 @@
       }
     });
 
+    var getSelectedF = (ctrlPressed, event) => {
+      // if ctrl is pressed we return raw selection so we get linkData we can add to selection
+      if (ctrlPressed) {
+        return map.forEachFeatureAtPixel(event.mapBrowserEvent.pixel, function (feature) {
+          return feature;
+        });
+      } else {
+        // if not, then we want the selection to be undefined if we click a link that was already clicked
+        // OR  if the link that is not already selected was clicked, we get linkData
+        return _.find(event.selected, function (selectionTarget) {
+          return !_.isUndefined(selectionTarget.linkData);
+        });
+      }
+    };
 
     /**
      * We now declare what kind of custom actions we want when the interaction happens.
@@ -197,6 +211,7 @@
     selectDoubleClick.on('select', function (event) {
       var visibleFeatures = getVisibleFeatures(true, true, true, false, false, true, true, true, true);
       selectSingleClick.getFeatures().clear();
+      var ctrlPressed = (event.mapBrowserEvent) ? event.mapBrowserEvent.originalEvent.ctrlKey : false;
 
       if (applicationModel.isReadOnly()) {
         selectDoubleClick.getFeatures().clear();
@@ -206,12 +221,15 @@
         if (roadLayer.layer.getOpacity() === 1) {
           setGeneralOpacity(0.2);
         }
-        var selectedF = _.find(event.selected, function (selectionTarget) {
-          return !_.isUndefined(selectionTarget.linkData);
-        });
+
+        var selectedF = getSelectedF(ctrlPressed, event);
+
         if (!_.isUndefined(selectedF)) {
           var selection = selectedF.linkData;
-          if (selection.floating === SelectionType.Floating.value) {
+          if (ctrlPressed) {
+            addToPreviousSelection(ctrlPressed, selection);
+          }
+          else if (selection.floating === SelectionType.Floating.value) {
             selectedLinkProperty.openFloating(selection, true, visibleFeatures);
             floatingMarkerLayer.setOpacity(1);
           } else {
@@ -280,9 +298,8 @@
       var ctrlPressed = (event.mapBrowserEvent) ? event.mapBrowserEvent.originalEvent.ctrlKey : false;
       var visibleFeatures = getVisibleFeatures(true, true, true, true, true, true, true, true, true);
       selectDoubleClick.getFeatures().clear();
-      var selectedF = _.find(event.selected, function (selectionTarget) {
-        return !_.isUndefined(selectionTarget.linkData);
-      });
+
+      var selectedF = getSelectedF(ctrlPressed, event);
 
       if (selectedF) {
         var selection = selectedF.linkData;
@@ -290,7 +307,7 @@
           setGeneralOpacity(0.2);
         }
         if (ctrlPressed) {
-          selection = addToPreviousSelection(ctrlPressed, selection);
+          addToPreviousSelection(ctrlPressed, selection);
         } else if (selection.floating === SelectionType.Floating.value && !applicationModel.isReadOnly()) {
           selectedLinkProperty.close();
           selectedLinkProperty.openFloating(selection, true, visibleFeatures);
