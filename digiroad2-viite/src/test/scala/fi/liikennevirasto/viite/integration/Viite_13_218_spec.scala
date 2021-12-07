@@ -1204,10 +1204,12 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
        projectService_db.recalculateProjectLinks(projectSaved.id, "")
        val afterSecondCalc = projectService_db.getProjectLinks(projectSaved.id)
        afterSecondCalc.size should be (afterCalculatedProjectlinks.size)
-       afterSecondCalc.sortBy(_.startAddrMValue).zip(afterCalculatedProjectlinks.sortBy(_.startAddrMValue)).foreach{
+       afterSecondCalc.sortBy(pl => (pl.startAddrMValue, pl.track.value)).zip(afterCalculatedProjectlinks.sortBy(pl => (pl.startAddrMValue, pl.track.value))).foreach{
          case (pl1, pl2) => {
            pl1.startAddrMValue should be(pl2.startAddrMValue)
            pl1.endAddrMValue should be(pl2.endAddrMValue)
+           pl1.startMValue should be(pl2.startMValue)
+           pl1.endMValue should be(pl2.endMValue)
          }
        }
 
@@ -1229,7 +1231,7 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
         val regularLinkSource = LinkGeomSource.FrozenLinkInterface
         val regular = if (roadwaysByLinkSource.contains(regularLinkSource)) roadwaysByLinkSource(regularLinkSource) else Seq()
 
-        def continuosRoadways(t: Seq[Roadway]) = {
+        def continuosRoadways(t: Seq[Roadway]): Roadway = {
           t.sortBy(_.startAddrMValue).tail.foldLeft(t.head) { (cur, next) =>
             assert(next.startAddrMValue <= next.endAddrMValue)
             assert(cur.endAddrMValue == next.startAddrMValue)
@@ -1247,7 +1249,7 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
           roadwayAddressMapper.mapRoadAddresses(r, regular)
         })
 
-        def continuosRoadAddressses(t: Seq[RoadAddress]) = {
+        def continuosRoadAddressses(t: Seq[RoadAddress]): RoadAddress = {
           t.sortBy(_.startAddrMValue).tail.foldLeft(t.head) { (cur, next) =>
             assert(next.startAddrMValue <= next.endAddrMValue)
             assert(cur.endAddrMValue == next.startAddrMValue)
@@ -1288,8 +1290,6 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
         val roadAddressCals = cals.filter(_.typeCode == CalibrationPointDAO.CalibrationPointType.RoadAddressCP).groupBy(_.addrM)
         roadAddressCals.minBy(_._1)._1 shouldBe currentRws.minBy(_.startAddrMValue).startAddrMValue
         roadAddressCals.maxBy(_._1)._1 shouldBe currentRws.maxBy(_.endAddrMValue).endAddrMValue
-
-
 
         println("All good! :)")
 
