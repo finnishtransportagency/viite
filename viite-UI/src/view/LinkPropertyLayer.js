@@ -364,23 +364,6 @@
       });
     };
 
-    /**
-     * Simple method that will remove various open layers 3 features from a selection.
-     * @param features
-     */
-    var removeFeaturesFromSelection = function (features) {
-      var olUids = _.map(selectSingleClick.getFeatures().getArray(), function (feature) {
-        return feature.ol_uid;
-      });
-      _.each(features, function (feature) {
-        if (_.includes(olUids, feature.ol_uid)) {
-          selectSingleClick.getFeatures().remove(feature);
-          olUids.push(feature.ol_uid);
-        }
-      });
-
-    };
-
     var getSelectedId = function (selected) {
       if (!_.isUndefined(selected.id) && selected.id > 0) {
         return selected.id;

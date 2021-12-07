@@ -56,8 +56,6 @@
      * @return html template with combined info of the selected links' link property that was specified
      * */
     var dynamicField = function (attrId, linkProperty) {
-      var floatingTransfer = (!applicationModel.isReadOnly() && compactForm);
-      var field = '';
       var uniqLinkProperties = _.uniq(_.map(selectedLinkProperty.get(), linkProperty));
       var decodedLinkProperties = "";
       _.each(uniqLinkProperties, function(rt) {
@@ -67,41 +65,17 @@
           decodedLinkProperties = decodedLinkProperties + ', <br> ' + rt + ' ' + decodeAttributes(attrId, rt);
         }
       });
-      if (floatingTransfer) {
-        field = '<div class="form-group">' +
-            '<label class="control-label-floating">' + attrId + '</label>' +
-            '<p class="form-control-static-floating">' + decodedLinkProperties + '</p>' +
-            '</div>';
-      } else {
-        field = '<div class="form-group" style="margin-bottom: 0">' +
-            '<label class="control-label-short">' + attrId + '</label>' +
-            '<p class="form-control-static-short">' + decodedLinkProperties + '</p>' +
-            '</div>';
-      }
+      var field = constructField(attrId, decodedLinkProperties);
       return field;
     };
 
     var measureDynamicField = function (labelText, measure) {
-      var floatingTransfer = (!applicationModel.isReadOnly() && compactForm);
-      var field = '';
       var addressValue = _.minBy(_.map(selectedLinkProperty.get(), measure));
-      if (floatingTransfer) {
-        field = '<div class="form-group">' +
-          '<label class="control-label-floating">' + labelText + '</label>' +
-          '<p class="form-control-static-floating">' + addressValue + '</p>' +
-          '</div>';
-      } else {
-        field = '<div class="form-group">' +
-          '<label class="control-label">' + labelText + '</label>' +
-          '<p class="form-control-static">' + addressValue + '</p>' +
-          '</div>';
-      }
+      var field = constructField(labelText, addressValue);
       return field;
     };
 
     var textDynamicField = function (labelText, linkProperty) {
-      var floatingTransfer = (!applicationModel.isReadOnly() && compactForm);
-      var field = '';
       var uniqLinkProperties = _.uniq(_.map(selectedLinkProperty.get(), linkProperty));
       var linkProperties = "";
       _.each(uniqLinkProperties, function(rt) {
@@ -111,18 +85,15 @@
           linkProperties = linkProperties + ', <br> ' + rt;
         }
       });
-      if (floatingTransfer) {
-        field = '<div class="form-group">' +
-            '<label class="control-label-floating">' + labelText + '</label>' +
-            '<p class="form-control-static-floating">' + linkProperties + '</p>' +
-            '</div>';
-      } else {
-        field = '<div class="form-group">' +
-            '<label class="control-label">' + labelText + '</label>' +
-            '<p class="form-control-static">' + linkProperties + '</p>' +
-            '</div>';
-      }
+      var field = constructField(labelText, linkProperties);
       return field;
+    };
+
+    var constructField = function (labelText, data) {
+      return '<div class="form-group">' +
+          '<label class="control-label">' + labelText + '</label>' +
+          '<p class="form-control-static">' + data + '</p>' +
+          '</div>';
     };
 
     var floatingListField = function (labelText) {
@@ -257,20 +228,10 @@
     };
 
     var staticField = function (labelText, dataField) {
-      var floatingTransfer = (!applicationModel.isReadOnly() && compactForm);
-      var field;
-
-      if (floatingTransfer) {
-        field = '<div class="form-group">' +
-          '<label class="control-label-floating">' + labelText + '</label>' +
-          '<p class="form-control-static-floating">' + dataField + " " + decodeAttributes(labelText, dataField) + '</p>' +
-          '</div>';
-      } else {
-        field = '<div class="form-group" style="margin-bottom: 0;">' +
+      var field = '<div class="form-group" style="margin-bottom: 0;">' +
           '<label class="control-label-short">' + labelText + '</label>' +
           '<p class="form-control-static-short">' + dataField + " " + decodeAttributes(labelText, dataField) + '</p>' +
           '</div>';
-      }
       return field;
     };
 
