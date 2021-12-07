@@ -1,0 +1,105 @@
+{
+    "executionRoleArn": "arn:aws:iam::783354560127:role/TaskExecutionRole",
+    "containerDefinitions": [
+        {
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/prod-viite-ECS-logs",
+                    "awslogs-region": "eu-west-1",
+                    "awslogs-stream-prefix": "ecs"
+                }
+            },
+            "portMappings": [
+                {
+                    "hostPort": 9080,
+                    "protocol": "tcp",
+                    "containerPort": 9080
+                }
+            ],
+            "cpu": 0,
+            "environment": [
+                { "name": "userProvider", "value": "fi.liikennevirasto.digiroad2.dao.PostGISUserProvider" },
+                { "name": "municipalityProvider", "value": "fi.liikennevirasto.digiroad2.dao.PostGISMunicipalityProvider" },
+                { "name": "eventBus", "value": "fi.liikennevirasto.digiroad2.DigiroadEventBus" },
+                { "name": "vvhServiceHost", "value": "haproxy.vayla.fi" },
+                { "name": "oagProxyServer", "value": "oag.vayla.fi" },
+                { "name": "oagProxyURL", "value": "https://oag.vayla.fi" },
+                { "name": "rasterServiceURL", "value": "https://oag.vayla.fi/rasteripalvelu-mml" },
+                { "name": "vvhRestApiEndPoint", "value": "https://haproxy.vayla.fi:2027/vvhdata/" },
+                { "name": "vvhRoadlink.frozen", "value": "true" },
+                { "name": "vkmUrl", "value": "https://api.vaylapilvi.fi" },
+                { "name": "http.proxySet", "value": "false" },
+                { "name": "http.proxyHost", "value": "127.0.0.1" },
+                { "name": "http.nonProxyHosts", "value": "127.0.0.1" },
+                { "name": "importOnlyCurrent", "value": "false" },
+                { "name": "authenticationTestMode", "value": "false" },
+                { "name": "bonecp.jdbcUrl", "value": "jdbc:postgresql://rdspg13prod.chw6qe2cqnfv.eu-west-1.rds.amazonaws.com:5432/viitetest" },
+                { "name": "bonecp.username", "value": "viite" },
+                { "name": "conversion.bonecp.jdbcUrl", "value": "jdbc:postgresql://vd1bbyq5el8tjd2.c8dj2qlvf50d.eu-west-1.rds.amazonaws.com:5432/drkonv" },
+                { "name": "conversion.bonecp.username", "value": "drkonv" },
+                { "name": "authentication.admin.basic.username", "value": "admin" },
+                { "name": "env", "value": "QA" }
+            ],
+            "mountPoints": [],
+            "secrets": [
+                {
+                    "name": "bonecp.password",
+                    "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/prod/prod.rds.viite.db.password"
+                },
+                {
+                    "name": "conversion.bonecp.password",
+                    "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/allEnvs/conversion.db.password"
+                },
+                {
+                    "name": "authentication.admin.basic.password",
+                    "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/allEnvs/authentication.admin.basic.password"
+                },
+                {
+                    "name": "vkmApiKey",
+                    "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/vkmApiKey-vkmprod"
+                }
+            ],
+            "memoryReservation": 2048,
+            "volumesFrom": [],
+            "image": "783354560127.dkr.ecr.eu-west-1.amazonaws.com/viite-prod:latest",
+            "name": "viite-prod",
+            "healthCheck": {
+                "startPeriod": 15,
+                "command": [ "CMD-SHELL", "curl -f http://127.0.0.1:9080/api/ping/ || exit 1" ]
+            }
+        }
+    ],
+    "memory": "4096",
+    "taskRoleArn": "arn:aws:iam::783354560127:role/ECSTaskExecutionRoleForViiteProd",
+    "family": "Prod-viite",
+    "requiresCompatibilities": [
+        "FARGATE"
+    ],
+    "networkMode": "awsvpc",
+    "cpu": "2048",
+    "inferenceAccelerators": [],
+    "volumes": [],
+    "tags": [
+      {
+        "key": "Name",
+        "value": "Viite-prod"
+      },
+      {
+        "key": "Environment",
+        "value": "prod"
+      },
+      {
+        "key": "Owner",
+        "value": "Vayla"
+      },
+      {
+        "key": "Project",
+        "value": "Viite"
+      },
+      {
+        "key": "Application",
+        "value": "Viite"
+      }
+    ]
+}
