@@ -109,7 +109,7 @@ class DataImporterSpec extends FunSuite with Matchers {
 
     override def enableRoadwayTriggers: Unit = {}
 
-    override def roadwayResetter(): Unit = {}
+    override def roadwaySequenceResetter(): Unit = {}
 
     override def resetRoadAddressSequences(): Unit = {}
 
