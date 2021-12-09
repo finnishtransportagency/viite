@@ -189,7 +189,7 @@
     });
 
     var getSelectedF = (ctrlPressed, event) => {
-      // if ctrl is pressed we return raw selection so we get linkData we can add to selection
+      // if ctrl is pressed, we return the raw selection so that we get the linkData we can add to the selection
       if (ctrlPressed) {
         return map.forEachFeatureAtPixel(event.mapBrowserEvent.pixel, function (feature) {
           return feature;
@@ -224,8 +224,8 @@
         }
         if (!_.isUndefined(selectedF)) {
           var selection = selectedF.linkData;
-          if (ctrlPressed) { // if ctrl button was pressed while double clicking the link then we want add the selected link to the selection
-            addToPreviousSelection(ctrlPressed, selection);
+          if (ctrlPressed) { // if ctrl button was pressed while double clicking the link then we want to add the selected link to the selection
+            modifyPreviousSelection(ctrlPressed, selection);
           } else { // otherwise we want to select just the double clicked link
             selectedLinkProperty.open(selection, false, visibleFeatures);
           }
@@ -302,7 +302,7 @@
           setGeneralOpacity(0.2);
         }
         if (ctrlPressed) {  // if ctrl button was pressed while single clicking then we want to add the clicked link to the previous selection
-          addToPreviousSelection(ctrlPressed, selection);
+          modifyPreviousSelection(ctrlPressed, selection);
         } else { // otherwise we want to select the whole road part
           selectedLinkProperty.close();
           setGeneralOpacity(0.2);
@@ -373,7 +373,7 @@
     };
 
 
-    var addToPreviousSelection = function (ctrlPressed, selection) {
+    var modifyPreviousSelection = function (ctrlPressed, selection) {
        if (ctrlPressed && !_.isUndefined(selectedLinkProperty.get()) && !_.isUndefined(selection)) {
          var selectedLinkIds = _.map(selectedLinkProperty.get(), function (selected) {
            return getSelectedId(selected);
