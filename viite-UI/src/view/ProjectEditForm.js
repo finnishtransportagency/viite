@@ -100,14 +100,14 @@
 
     var showLinkLength = function (selected) {
       if (selected.length === 1) {
-        return String(formCommon.staticField('Linkin pituus', Math.round(selected[0].endMValue - selected[0].startMValue)));
+        return String(formCommon.staticField('Geometrian pituus', Math.round(selected[0].endMValue - selected[0].startMValue)));
       } else {
         var combinedLength = 0;
         _.map(selected, function(roadLink){
           combinedLength += Math.round(roadLink.endMValue - roadLink.startMValue);
         });
         return '<div class="form-group-metadata">' +
-            '<p class="form-control-static asset-log-info-metadata">Linkkien pituus: ' + combinedLength + '</p>' +
+            '<p class="form-control-static asset-log-info-metadata">Geometrioiden yhteenlaskettu pituus: ' + combinedLength + '</p>' +
             '</div>';
       }
     };
