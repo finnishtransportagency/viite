@@ -97,7 +97,8 @@
         var linkLength = link.endAddressM - link.startAddressM;
         length = length + linkLength;
       });
-      return constructField(labelText, length);
+      var field = constructField(labelText, length);
+      return field;
     };
 
     var constructField = function (labelText, data) {

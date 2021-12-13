@@ -106,8 +106,7 @@
       }
       if (applicationModel.getRoadVisibility()) layerToBeShown.show(map);
       applicationModel.setMinDirtyZoomLevel(minZoomForContent());
-      //enableCtrlModifier = (layer === 'roadAddressProject');
-      enableCtrlModifier = true;
+      enableCtrlModifier = (layer === 'roadAddressProject' || layer === 'linkProperty');
     }, this);
 
     map.on('moveend', function () {
