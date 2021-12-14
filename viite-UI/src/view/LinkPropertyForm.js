@@ -56,8 +56,6 @@
      * @return html template with combined info of the selected links' link property that was specified
      * */
     var dynamicField = function (attrId, linkProperty) {
-      var floatingTransfer = (!applicationModel.isReadOnly() && compactForm);
-      var field = '';
       var uniqLinkProperties = _.uniq(_.map(selectedLinkProperty.get(), linkProperty));
       var decodedLinkProperties = "";
       _.each(uniqLinkProperties, function(rt) {
@@ -67,36 +65,47 @@
           decodedLinkProperties = decodedLinkProperties + ', <br> ' + rt + ' ' + decodeAttributes(attrId, rt);
         }
       });
-      if (floatingTransfer) {
-        field = '<div class="form-group">' +
-            '<label class="control-label-floating">' + attrId + '</label>' +
-            '<p class="form-control-static-floating">' + decodedLinkProperties + '</p>' +
-            '</div>';
-      } else {
-        field = '<div class="form-group" style="margin-bottom: 0">' +
-            '<label class="control-label-short">' + attrId + '</label>' +
-            '<p class="form-control-static-short">' + decodedLinkProperties + '</p>' +
-            '</div>';
-      }
+      var field = constructField(attrId, decodedLinkProperties);
       return field;
     };
 
     var measureDynamicField = function (labelText, measure) {
-      var floatingTransfer = (!applicationModel.isReadOnly() && compactForm);
-      var field = '';
       var addressValue = _.minBy(_.map(selectedLinkProperty.get(), measure));
-      if (floatingTransfer) {
-        field = '<div class="form-group">' +
-          '<label class="control-label-floating">' + labelText + '</label>' +
-          '<p class="form-control-static-floating">' + addressValue + '</p>' +
-          '</div>';
-      } else {
-        field = '<div class="form-group">' +
-          '<label class="control-label">' + labelText + '</label>' +
-          '<p class="form-control-static">' + addressValue + '</p>' +
-          '</div>';
-      }
+      var field = constructField(labelText, addressValue);
       return field;
+    };
+
+    var textDynamicField = function (labelText, linkProperty) {
+      var uniqLinkProperties = _.uniq(_.map(selectedLinkProperty.get(), linkProperty));
+      var linkProperties = "";
+      _.each(uniqLinkProperties, function(rt) {
+        if (linkProperties.length === 0) {
+          linkProperties = rt;
+        } else {
+          linkProperties = linkProperties + ', <br> ' + rt;
+        }
+      });
+      var field = constructField(labelText, linkProperties);
+      return field;
+    };
+
+    var lengthDynamicField = function () {
+      var selectedLinks = selectedLinkProperty.get();
+      var length = 0;
+      var labelText = selectedLinks.length === 1 ? 'PITUUS' : 'YHTEENLASKETTU PITUUS';
+      selectedLinks.forEach((link) => {
+        var linkLength = link.endAddressM - link.startAddressM;
+        length = length + linkLength;
+      });
+      var field = constructField(labelText, length);
+      return field;
+    };
+
+    var constructField = function (labelText, data) {
+      return '<div class="form-group">' +
+          '<label class="control-label">' + labelText + '</label>' +
+          '<p class="form-control-static">' + data + '</p>' +
+          '</div>';
     };
 
     var floatingListField = function (labelText) {
@@ -231,20 +240,10 @@
     };
 
     var staticField = function (labelText, dataField) {
-      var floatingTransfer = (!applicationModel.isReadOnly() && compactForm);
-      var field;
-
-      if (floatingTransfer) {
-        field = '<div class="form-group">' +
-          '<label class="control-label-floating">' + labelText + '</label>' +
-          '<p class="form-control-static-floating">' + dataField + " " + decodeAttributes(labelText, dataField) + '</p>' +
-          '</div>';
-      } else {
-        field = '<div class="form-group" style="margin-bottom: 0;">' +
+      var field = '<div class="form-group" style="margin-bottom: 0;">' +
           '<label class="control-label-short">' + labelText + '</label>' +
           '<p class="form-control-static-short">' + dataField + " " + decodeAttributes(labelText, dataField) + '</p>' +
           '</div>';
-      }
       return field;
     };
 
@@ -285,19 +284,31 @@
       }
     };
 
+    var isOnlyOneRoadNumberSelected = function () {
+      return _.uniq(_.map(selectedLinkProperty.get(), 'roadNumber')).length === 1;
+    };
+
+    var isOnlyOneRoadPartNumberSelected = function () {
+      return _.uniq(_.map(selectedLinkProperty.get(), 'roadPartNumber')).length === 1;
+    };
+
+    var isOnlyOneRoadAndPartNumberSelected = function () {
+      var isOneRoadAndPart = isOnlyOneRoadNumberSelected() && isOnlyOneRoadPartNumberSelected();
+      return isOneRoadAndPart;
+    };
+
     var template = function (firstSelectedLinkProperty, linkProperties) {
-      var administrativeClasses = selectedLinkProperty.count() === 1 ? staticField('HALLINNOLLINEN LUOKKA', firstSelectedLinkProperty.administrativeClassId) : dynamicField('HALLINNOLLINEN LUOKKA', 'administrativeClassId');
-      var tracks = selectedLinkProperty.count() === 1 ? staticField('AJORATA', firstSelectedLinkProperty.trackCode) : dynamicField('AJORATA', 'trackCode');
-      var elys = selectedLinkProperty.count() === 1 ? staticField('ELY', firstSelectedLinkProperty.elyCode) : dynamicField('ELY', 'elyCode');
-      var discontinuities = selectedLinkProperty.count() === 1 ? staticField('JATKUVUUS', firstSelectedLinkProperty.discontinuity) : dynamicField('JATKUVUUS', 'discontinuity');
-      var startAddress = selectedLinkProperty.count() === 1 ? staticField('ALKUETÄISYYS', firstSelectedLinkProperty.startAddressM) : staticField('ALKUETÄISYYS', linkProperties.startAddressM);
-      var endAddress = selectedLinkProperty.count() === 1 ? staticField('LOPPUETÄISYYS', firstSelectedLinkProperty.endAddressM) : staticField('LOPPUETÄISYYS', linkProperties.endAddressM);
       var mtkId = selectedLinkProperty.count() === 1 ? '; MTKID: ' + linkProperties.mmlId : '';
-      var roadName = firstSelectedLinkProperty.roadName ? staticField('TIEN NIMI', firstSelectedLinkProperty.roadName) : '';
-      var startAddrM = selectedLinkProperty.count() === 1 ? firstSelectedLinkProperty.startAddressM : linkProperties.startAddressM;
-      var endAddrM = selectedLinkProperty.count() === 1 ? firstSelectedLinkProperty.endAddressM : linkProperties.endAddressM;
-      var length = (selectedLinkProperty.count() > 1 && endAddrM - startAddrM === 0) ? '' : endAddrM - startAddrM;
-      var addrLength = staticField('PITUUS', length);
+      var roadNames = selectedLinkProperty.count() === 1 ? staticField('TIEN NIMI', firstSelectedLinkProperty.roadName) : textDynamicField('TIEN NIMI', 'roadName');
+      var roadNumbers = selectedLinkProperty.count() === 1 ? staticField('TIENUMERO', firstSelectedLinkProperty.roadNumber) : textDynamicField('TIENUMERO', 'roadNumber');
+      var roadPartNumbers = isOnlyOneRoadNumberSelected() ? dynamicField('TIEOSANUMERO', 'roadPartNumber') : constructField('TIEOSANUMERO', '');
+      var tracks = isOnlyOneRoadAndPartNumberSelected() ? dynamicField('AJORATA', 'trackCode') : constructField('AJORATA', '');
+      var startAddress = isOnlyOneRoadAndPartNumberSelected() ? staticField('ALKUETÄISYYS', linkProperties.startAddressM) : constructField('ALKUETÄISYYS', '');
+      var endAddress = isOnlyOneRoadAndPartNumberSelected() ? staticField('LOPPUETÄISYYS', linkProperties.endAddressM) : constructField('LOPPUETÄISYYS', '');
+      var combinedAddrLength = lengthDynamicField();
+      var elys = selectedLinkProperty.count() === 1 ? staticField('ELY', firstSelectedLinkProperty.elyCode) : dynamicField('ELY', 'elyCode');
+      var administrativeClasses = selectedLinkProperty.count() === 1 ? staticField('HALLINNOLLINEN LUOKKA', firstSelectedLinkProperty.administrativeClassId) : dynamicField('HALLINNOLLINEN LUOKKA', 'administrativeClassId');
+      var discontinuities = isOnlyOneRoadAndPartNumberSelected() ? dynamicField('JATKUVUUS', 'discontinuity') : constructField('JATKUVUUS', '');
       return _.template('' +
         '<header>' +
         title() +
@@ -318,13 +329,13 @@
         showLinkId(selectedLinkProperty, linkProperties) +
         showLinkLength(selectedLinkProperty, linkProperties) +
         '</div>' +
-        roadName +
-        staticField('TIENUMERO', firstSelectedLinkProperty.roadNumber) +
-        staticField('TIEOSANUMERO', firstSelectedLinkProperty.roadPartNumber) +
+        roadNames +
+        roadNumbers +
+        roadPartNumbers +
         tracks +
         startAddress +
         endAddress +
-        addrLength +
+        combinedAddrLength +
         elys +
         administrativeClasses +
         discontinuities +
@@ -426,7 +437,7 @@
       if (selectedLinkPropertyToShow.count() === 1) {
         return '' +
             '<div class="form-group-metadata">' +
-            '<p class="form-control-static asset-log-info-metadata">Linkin pituus: ' + Math.round(linkProperties.endMValue - linkProperties.startMValue) + '</p>' +
+            '<p class="form-control-static asset-log-info-metadata">Geometrian pituus: ' + Math.round(linkProperties.endMValue - linkProperties.startMValue) + '</p>' +
             '</div>';
       } else {
         var roadLinks = selectedLinkPropertyToShow.get();
@@ -435,7 +446,7 @@
           combinedLength += Math.round(roadLink.endMValue - roadLink.startMValue);
         });
         return '<div class="form-group-metadata">' +
-            '<p class="form-control-static asset-log-info-metadata">Linkkien pituus: ' + combinedLength + '</p>' +
+            '<p class="form-control-static asset-log-info-metadata">Geometrioiden yhteenlaskettu pituus: ' + combinedLength + '</p>' +
             '</div>';
       }
     };
