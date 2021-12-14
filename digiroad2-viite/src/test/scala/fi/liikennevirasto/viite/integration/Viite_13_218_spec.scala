@@ -180,7 +180,10 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
       val fields = (List[List[(String, Any)]]() /: c.getClass.getDeclaredFields) { (a, f) =>
         f.setAccessible(true)
         var x = f.get(c)
-        x = if (x.isInstanceOf[Option[AnyRef]] && x.asInstanceOf[Option[AnyRef]].isDefined) f.get(c).asInstanceOf[Option[AnyRef]].get else x
+        x = x match {
+          case option: Option[AnyRef] if option.isDefined => f.get(c).asInstanceOf[Option[AnyRef]].get
+          case _ => x
+        }
         val z = if (x.isInstanceOf[RoadwayChangeInfo]) {
           val ss   = (Map[String, Any]() /: x.asInstanceOf[RoadwayChangeInfo].source.getClass.getDeclaredFields) { (b, B) => {
             B.setAccessible(true)
@@ -240,14 +243,21 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
       val fields = (Map[String, Any]() /: c.getClass.getDeclaredFields) { (a, f) =>
         f.setAccessible(true)
         var x = f.get(c)
-        x = if (x.isInstanceOf[Option[AnyRef]] && x.asInstanceOf[Option[AnyRef]].isDefined) f.get(c).asInstanceOf[Option[AnyRef]].get else x
-        val z = if (x.isInstanceOf[RoadwayChangeInfo]) (Map[String, Any]() /: x.asInstanceOf[RoadwayChangeInfo].source.getClass.getDeclaredFields) { (b, B) => {
-          B.setAccessible(true)
-          b + (B.getName -> "")
+        x = x match {
+          case option: Option[String] if option.isDefined =>
+            f.get(c).asInstanceOf[Option[String]].get
+          case _ => x
         }
-        }.asInstanceOf[HashMap.HashTrieMap[String, Option[Any]]].toList.map(t => {
-          t._1 -> t._1
-        }) else List()
+        val z = x match {
+          case info1: RoadwayChangeInfo => (Map[String, Any]() /: info1.source.getClass.getDeclaredFields) { (b, B) => {
+            B.setAccessible(true)
+            b + (B.getName -> "")
+          }
+          }.asInstanceOf[HashMap.HashTrieMap[String, Option[Any]]].toList.map(t => {
+            t._1 -> t._1
+          })
+          case _ => List()
+        }
         if (z.isEmpty) a else a ++ z
       }
       val fks    = fields.keys.toList
@@ -1144,6 +1154,25 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
         continuosAddresses(leftSide)
         continuosAddresses(rightSide)
 
+        val oldAddresses = ((afterCalculatedProjectlinks.filter(pl => pl.status != LinkStatus.New && pl.track != Track.LeftSide)).sortBy(_.originalStartAddrMValue).toList.map(pl => (pl.originalStartAddrMValue, pl.originalEndAddrMValue, pl.status)),
+                      (afterCalculatedProjectlinks.filter(pl => pl.status != LinkStatus.New && pl.track != Track.RightSide)).sortBy(_.originalStartAddrMValue).toList.map(pl => (pl.originalStartAddrMValue, pl.originalEndAddrMValue, pl.status)))
+
+        /* Check original addresses continuos*/
+        assert(oldAddresses._1.head._1 == 0)
+        assert(oldAddresses._1.head._1 == oldAddresses._2.head._1)
+        assert(oldAddresses._1.last._2 == oldAddresses._2.last._2)
+        oldAddresses._1.tail.foldLeft(oldAddresses._1.head) { (cur, n) =>
+          assert(n._1 <= n._2)
+          assert(cur._2 == n._1)
+          n
+        }
+
+        oldAddresses._2.tail.foldLeft(oldAddresses._2.head) { (cur, n) =>
+          assert(n._1 <= n._2)
+          assert(cur._2 == n._1)
+          n
+        }
+
          /* Create change table */
        val (changeProject, warningMessage) = projectService_db.getChangeProject(projectSaved.id)
         println("Change table warning messages:")
@@ -1173,15 +1202,14 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
         })
 
         /* Check two tracks has equal start and end addresses on both tracks and even count of two track lines. */
-        /* Disabled: changes are */
-//        val two_track_groups = two_track_nonterminated_sources.filterNot(_.trackCode.get == 0).groupBy(t => t.startAddressM).values
-//        two_track_groups.foreach(two_track_pair => {
-//          two_track_pair.size should be(2)
-//          two_track_pair.head.trackCode.get should not be two_track_pair.last.trackCode.get
-//          two_track_pair.head.startAddressM.get should be(two_track_pair.last.startAddressM.get)
-//          two_track_pair.head.endAddressM.get should be(two_track_pair.last.endAddressM.get)
-//        }
-//        )
+        val two_track_groups: Iterable[Seq[RoadwayChangeSection]] = two_track_nonterminated_sources.filterNot(_.trackCode.get == 0).groupBy(t => t.startAddressM).values
+        two_track_groups.foreach(two_track_pair => {
+          two_track_pair.size should be(2)
+          two_track_pair.head.trackCode.get should not be two_track_pair.last.trackCode.get
+          two_track_pair.head.startAddressM.get should be(two_track_pair.last.startAddressM.get)
+          two_track_pair.head.endAddressM.get should be(two_track_pair.last.endAddressM.get)
+        }
+        )
 
         /* Check two track addresses are continuous on each track. */
         def check_two_track_continuous(x: Seq[RoadwayChangeSection]) = {

@@ -75,8 +75,8 @@ object ProjectSectionMValueCalculator {
         val someCalibrationPoint: Option[UserDefinedCalibrationPoint] = cps.get(pl.id)
 
           pl.status match {
-            case LinkStatus.New => addressValue
-            case LinkStatus.Transfer | LinkStatus.NotHandled | LinkStatus.Numbering | LinkStatus.UnChanged => m + pl.addrMLength
+          case LinkStatus.New => if (someCalibrationPoint.nonEmpty) someCalibrationPoint.get.addressMValue else m + Math.abs(pl.geometryLength) * coEff
+            case LinkStatus.Transfer | LinkStatus.NotHandled | LinkStatus.Numbering | LinkStatus.UnChanged => m + (pl.originalEndAddrMValue - pl.originalStartAddrMValue)
             case LinkStatus.Terminated => pl.endAddrMValue
             case _ => throw new InvalidAddressDataException(s"Invalid status found at value assignment ${pl.status}, linkId: ${pl.linkId}")
           }
