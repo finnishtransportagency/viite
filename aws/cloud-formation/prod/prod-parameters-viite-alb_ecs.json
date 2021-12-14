@@ -1,0 +1,51 @@
+[
+  {
+    "ParameterKey": "ApplicationName",
+    "ParameterValue": "Viite"
+  },
+  {
+    "ParameterKey": "ContainerPort",
+    "ParameterValue": "9080"
+  },
+  {
+    "ParameterKey": "ContainerTag",
+    "ParameterValue": "latest"
+  },
+  {
+    "ParameterKey": "TaskDefinitionForService",
+    "ParameterValue": "prod-viite"
+  },
+  {
+    "ParameterKey": "Environment",
+    "ParameterValue": "Prod"
+  },
+  {
+    "ParameterKey": "NetworkStackName",
+    "ParameterValue": "viite-prod"
+  },
+  {
+    "ParameterKey": "Owner",
+    "ParameterValue": "Vaylavirasto"
+  },
+  {
+    "ParameterKey": "Project",
+    "ParameterValue": "Viite"
+  },
+  {
+    "ParameterKey": "ApiGatewayUrl",
+    "ParameterValue": "api.vaylapilvi.fi"
+  },
+  {
+    "ParameterKey": "CNameRecord",
+    "ParameterValue": "viiteprod"
+  },
+  {
+    "ParameterKey": "SecurityGroupName",
+    "ParameterValue": "<SECURITY-GROUP>"
+  },
+  {
+    "ParameterKey": "RepositoryURI",
+    "ParameterValue": "<CS-ACCOUNT_SECURITY-NUMBER>.dkr.ecr.eu-west-1.amazonaws.com/viite-prod"
+  }
+]
+
