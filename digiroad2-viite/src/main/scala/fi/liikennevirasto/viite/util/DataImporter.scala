@@ -130,39 +130,63 @@ class DataImporter {
   def importRoadAddressData(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
                             importOptions: ImportOptions): Unit = {
 
+    println(s"\nimportRoadAddressData    started at time:  ${DateTime.now()}")
     withDynTransaction {
+
+      println(s"\nDisabling roadway triggers started at time: ${DateTime.now()}")
       disableRoadwayTriggers
+      println(s"\nDeleting old Alkulataus tables' data")
+      println(s"  Deleting PROJECT_LINK_NAMEs         started at time: ${DateTime.now()}")
       sqlu"""DELETE FROM PROJECT_LINK_NAME""".execute
+      println(s"  Deleting ROADWAY_CHANGES              started at time: ${DateTime.now()}")
       sqlu"""DELETE FROM ROADWAY_CHANGES_LINK""".execute
+      println(s"  Deleting PROJECT_LINKs                  started at time: ${DateTime.now()}")
       sqlu"""DELETE FROM PROJECT_LINK""".execute
+      println(s"  Deleting PROJECT_INK_LHISTORY             started at time: ${DateTime.now()}")
       sqlu"""DELETE FROM PROJECT_LINK_HISTORY""".execute
+      println(s"  Deleting PROJECT_RESERVED_ROAD_PARTs links  started at time: ${DateTime.now()}")
       sqlu"""DELETE FROM PROJECT_RESERVED_ROAD_PART""".execute
+
 
       // Delete other than accepted projects.
       // Accepted states: 0 = ProjectDAO.ProjectState.Accepted; 5 = ProjectState.DeprecatedSaved2ToTR
+      println(s"  Deleting PROJECTs (state != 12|5)           started at time: ${DateTime.now()}")
       sqlu"""DELETE FROM PROJECT WHERE STATE != 12 AND STATE != 5""".execute
 
+      println(s"  Deleting ROADWAY_CHANGESs                 started at time: ${DateTime.now()}")
       sqlu"""DELETE FROM ROADWAY_CHANGES WHERE project_id NOT IN (SELECT id FROM PROJECT)""".execute
+      println(s"  Deleting ROAD_NETWORK_ERRORs            started at time: ${DateTime.now()}")
       sqlu"""DELETE FROM ROAD_NETWORK_ERROR""".execute
+      println(s"  Deleting PUBLISHED_ROADWAYs           started at time: ${DateTime.now()}")
       sqlu"""DELETE FROM PUBLISHED_ROADWAY""".execute
+      println(s"  Deleting PUBLISHED_ROAD_NETWORKs    started at time: ${DateTime.now()}")
       sqlu"""DELETE FROM PUBLISHED_ROAD_NETWORK""".execute
+      println(s"  Deleting LINEAR_LOCATIONs         started at time: ${DateTime.now()}")
       sqlu"""DELETE FROM LINEAR_LOCATION""".execute
+      println(s"  Deleting CALIBRATION_POINTs     started at time: ${DateTime.now()}")
       sqlu"""DELETE FROM CALIBRATION_POINT""".execute
+      println(s"  Deleting JUNCTION_POINTs      started at time: ${DateTime.now()}")
       sqlu"""DELETE FROM JUNCTION_POINT""".execute
+      println(s"  Deleting NODE_POINTs        started at time: ${DateTime.now()}")
       sqlu"""DELETE FROM NODE_POINT""".execute
+      println(s"  Deleting ROADWAY_POINTs   started at time: ${DateTime.now()}")
       sqlu"""DELETE FROM ROADWAY_POINT""".execute
+      println(s"  Deleting JUNCTIONs      started at time: ${DateTime.now()}")
       sqlu"""DELETE FROM JUNCTION""".execute
+      println(s"  Deleting NODEs        started at time: ${DateTime.now()}")
       sqlu"""DELETE FROM NODE""".execute
+      println(s"  Deleting LINKs      started at time: ${DateTime.now()}")
       sqlu"""DELETE FROM LINK""".execute
+      println(s"  Deleting ROADWAYs started at time: ${DateTime.now()}")
       sqlu"""DELETE FROM ROADWAY""".execute
+
       resetRoadAddressSequences()
 
       println(s"${DateTime.now()} - Old address data removed")
-
       val roadAddressImporter = getRoadAddressImporter(conversionDatabase, vvhClient, importOptions)
       roadAddressImporter.importRoadAddress()
 
-      println(s"${DateTime.now()} - Updating terminated roadways information")
+      println(s"\n${DateTime.now()} - Updating terminated roadways information")
       sqlu"""UPDATE ROADWAY SET TERMINATED = 2
             WHERE TERMINATED = 0 AND end_date IS NOT null AND EXISTS (SELECT 1 FROM ROADWAY rw
             	WHERE ROADWAY.ROAD_NUMBER = rw.ROAD_NUMBER
@@ -174,8 +198,9 @@ class DataImporter {
             	AND ROADWAY.END_DATE = rw.start_date - 1
             	AND rw.VALID_TO IS NULL AND rw.TERMINATED = 1)""".execute
 
+      println(s"\nEnabling roadway triggers    started at time: ${DateTime.now()}")
       enableRoadwayTriggers
-      roadwayResetter()
+      roadwaySequenceResetter()
     }
   }
 
@@ -212,6 +237,9 @@ class DataImporter {
   }
 
   def resetRoadAddressSequences() = {
+    println("\nResetting road related sequences started at time: ")
+    println(DateTime.now())
+
     val sequenceResetter = new SequenceResetterDAO()
     sequenceResetter.resetSequenceToNumber("PROJECT_LINK_NAME_SEQ", 1)
     sequenceResetter.resetSequenceToNumber("ROADWAY_CHANGE_LINK", 1)
@@ -225,6 +253,9 @@ class DataImporter {
   }
 
   def resetNodesAndJunctionSequences(): Unit = {
+    println("\nResetting nodes & junctions related sequences started at time: ")
+    println(DateTime.now())
+
     val sequenceResetter = new SequenceResetterDAO()
     sequenceResetter.resetSequenceToNumber("JUNCTION_POINT_SEQ", 1)
     sequenceResetter.resetSequenceToNumber("NODE_POINT_SEQ", 1)
@@ -233,6 +264,9 @@ class DataImporter {
   }
 
   private def updateNodePointType() = {
+    println("\nUpdating nodePointTypes started at time: ")
+    println(DateTime.now())
+
     sqlu"""
       UPDATE NODE_POINT NP SET TYPE = (SELECT CASE
           -- [TYPE = 99] Includes expired node points points or points attached to expired nodes
@@ -278,7 +312,10 @@ class DataImporter {
     sqlu"""ALTER TABLE ROADWAY DISABLE TRIGGER USER""".execute
   }
 
-  def roadwayResetter(): Unit = {
+  /** Resets the roadway sequence to (MAX-of-current-roadway-numbers)+1, or to 1, if no roadways available. */
+  def roadwaySequenceResetter(): Unit = {
+    println(s"\nResetting roadway related sequences started at time: ${DateTime.now()}")
+
     val sequenceResetter = new SequenceResetterDAO()
     sql"""select MAX(ROADWAY_NUMBER) FROM ROADWAY""".as[Long].firstOption match {
       case Some(roadwayNumber) =>
