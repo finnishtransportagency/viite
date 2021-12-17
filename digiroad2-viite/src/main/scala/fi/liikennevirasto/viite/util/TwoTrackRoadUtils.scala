@@ -279,9 +279,7 @@ object TwoTrackRoadUtils {
           pl.track  != Track.Combined &&
           pl.track  != last.track &&
           pl.status != LinkStatus.NotHandled &&
-          ((pl.status == LinkStatus.New && pl.startAddrMValue < last.endAddrMValue && pl.endAddrMValue >= last.endAddrMValue)
-          ||
-          (pl.status != LinkStatus.New && pl.originalStartAddrMValue < last.originalEndAddrMValue && pl.originalEndAddrMValue >= last.originalEndAddrMValue))
+          (pl.startAddrMValue < last.endAddrMValue && pl.endAddrMValue >= last.endAddrMValue)
         )
 
         if (hasOtherSideLink.nonEmpty) {
@@ -303,8 +301,9 @@ object TwoTrackRoadUtils {
             case JunctionPointCP => JunctionPointCP
             case _               => UserDefinedCP
           }
-
-          val otherSideLink = hasOtherSideLink.head
+          val mins = hasOtherSideLink.zipWithIndex.map(pl => (Math.abs(pl._1.endAddrMValue - last.endAddrMValue), pl._2))
+          val indexOfMin = mins.minBy(_._1)._2
+          val otherSideLink = hasOtherSideLink(indexOfMin)
 
           if (otherSideLink.endAddrMValue != last.endAddrMValue) {
             val endPoints = TrackSectionOrder.findChainEndpoints(

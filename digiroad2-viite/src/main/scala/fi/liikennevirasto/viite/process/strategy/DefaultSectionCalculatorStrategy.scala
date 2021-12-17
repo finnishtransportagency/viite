@@ -6,7 +6,6 @@ import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.util.Track.LeftSide
 import fi.liikennevirasto.digiroad2.util.{MissingRoadwayNumberException, MissingTrackException, RoadAddressException, Track}
 import fi.liikennevirasto.digiroad2.{Point, Vector3d}
-import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.UserDefinedCP
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao._
@@ -14,6 +13,7 @@ import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.process.strategy.FirstRestSections.{getUpdatedContinuousRoadwaySections, lengthCompare}
 import fi.liikennevirasto.viite.util.TwoTrackRoadUtils
 import fi.liikennevirasto.viite.util.TwoTrackRoadUtils._
+import fi.liikennevirasto.viite.{NewIdValue, UnsuccessfulRecalculationMessage}
 import org.slf4j.LoggerFactory
 
 import scala.collection.immutable.ListMap
@@ -131,31 +131,121 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       seq.headOption.map(_.track).getOrElse(Track.Unknown)
     val discontinuity =
       seq.head.discontinuity
+    val administrativeClass =
+      seq.head.administrativeClass
     val continuousProjectLinks =
-      seq.takeWhile(pl => pl.track == track && pl.discontinuity == discontinuity).sortBy(_.startAddrMValue)
-    val continuousProjectLinks2 = if (seq.size > continuousProjectLinks.size && seq(continuousProjectLinks.size).track == track) seq.take(continuousProjectLinks.size+1) else continuousProjectLinks
+      seq.takeWhile(pl => pl.track == track && pl.discontinuity == discontinuity && pl.administrativeClass == administrativeClass)
+    def canIncludeNonContinuous: Boolean = {
+      val nextLink = seq(continuousProjectLinks.size)
+      nextLink.track == track && nextLink.administrativeClass == administrativeClass
+    }
+    val continuousProjectLinksWithDiscontinuity =
+      if (seq.size > continuousProjectLinks.size && canIncludeNonContinuous)
+        seq.take(continuousProjectLinks.size+1)
+      else
+        continuousProjectLinks
     val assignedContinuousSection =
-      assignRoadwayNumbersInContinuousSection(continuousProjectLinks2, givenRoadwayNumber)
-    (assignedContinuousSection, seq.drop(continuousProjectLinks2.size))
+      assignRoadwayNumbersInContinuousSection(continuousProjectLinksWithDiscontinuity, givenRoadwayNumber)
+    (assignedContinuousSection, seq.drop(continuousProjectLinksWithDiscontinuity.size))
   }
 
-  def checkValues(pls: Seq[ProjectLink]) = {
-    pls.tail.foldLeft(pls.head) { case (seq, next) => {
-      if (seq.endAddrMValue != next.startAddrMValue) throw new RoadAddressException(s"Address not continuous: ${seq.endAddrMValue} ${next.startAddrMValue} linkids: ${seq.linkId} ${next.linkId}")
-      if (!(seq.endAddrMValue > seq.startAddrMValue)) throw new RoadAddressException(s"Address length negative. linkid: ${seq.linkId}")
-      if (seq.status != LinkStatus.New)
-        if (!((seq.endAddrMValue - seq.startAddrMValue) == (seq.originalEndAddrMValue - seq.originalStartAddrMValue))) throw new RoadAddressException(s"Length mismatch. New: ${seq.startAddrMValue} ${seq.endAddrMValue} original: ${seq.originalStartAddrMValue} ${seq.originalEndAddrMValue} linkid: ${seq.linkId}")
-      next
+  /***
+   * Fetch project name by project id for logging purpose.
+   * @param projectId
+   * @return Project name for the projectId.
+   */
+  def getProjectNameForLogger(projectId: Long): String = {
+    val projectDAO: ProjectDAO = new ProjectDAO
+    val project                = projectDAO.fetchById(projectId)
+    project match {
+      case Some(p) => p.name
+      case None => ""
     }
-    }}
+  }
 
-  def checkCombined(leftAdj: Seq[ProjectLink], rightAdj: Seq[ProjectLink]) = {
-    val leftCombinedLinks = leftAdj.filter(_.track == Track.Combined)
+  /***
+   * Helper function for logging throwing an exception.
+   * Used by calculation helper functions.
+   * @param errorLinks ProjectLinks causing the error.
+   * @param msg Error message for debug console.
+   */
+  def throwExceptionWithErrorInfo(errorLinks: Iterable[ProjectLink], msg: String): Nothing = {
+    val projectId   = errorLinks.head.projectId
+    val projectName = getProjectNameForLogger(projectId)
+    logger.error(
+      s"""$msg: $projectId $projectName:
+         | Error links:
+         | $errorLinks""".stripMargin)
+    throw new RoadAddressException(UnsuccessfulRecalculationMessage)
+  }
+
+  /***
+   * Intented use after all calculation.
+   * Checks combined track links have equal addressess after left side and right side travel.
+   * @param leftAdj Calculated leftside ProjectLinks.
+   * @param rightAdj Calculated leftside ProjectLinks.
+   */
+  def checkCombined(leftAdj: Seq[ProjectLink], rightAdj: Seq[ProjectLink]): Unit = {
+    val leftCombinedLinks  = leftAdj.filter(_.track == Track.Combined)
     val rightCombinedLinks = rightAdj.filter(_.track == Track.Combined)
-    val grouped = (leftCombinedLinks ++ rightCombinedLinks).groupBy(_.id)
-    if (!grouped.values.forall(_.size == 2)) throw new RoadAddressException(s"Combined links mismatch.")
-    if (!grouped.values.forall(pl => pl.head.startAddrMValue == pl.last.startAddrMValue)) throw new RoadAddressException(s"Combined start address mismatch.")
-    if (!grouped.values.forall(pl => pl.head.endAddrMValue == pl.last.endAddrMValue)) throw new RoadAddressException(s"Combined end address mismatch.")
+    val groupedById        = (leftCombinedLinks ++ rightCombinedLinks).groupBy(_.id)
+
+    if (!groupedById.values.forall(_.size == 2)) {
+      val falsePls = groupedById.filter(pls => pls._2.size != 2).values.flatten
+      val msg      = "Combined links pairing mismatch in project"
+      throwExceptionWithErrorInfo(falsePls, msg)
+    }
+    if (!groupedById.values.forall(pl => pl.head.startAddrMValue == pl.last.startAddrMValue)) {
+      val falsePls = groupedById.filter(pls => pls._2.head.startAddrMValue != pls._2.last.startAddrMValue).values.flatten
+      val msg      = "Combined track start address mismatch in project"
+      throwExceptionWithErrorInfo(falsePls, msg)
+    }
+    if (!groupedById.values.forall(pl => pl.head.endAddrMValue == pl.last.endAddrMValue)) {
+      val falsePls = groupedById.filter(pls => pls._2.head.endAddrMValue != pls._2.last.endAddrMValue).values.flatten
+      val msg      = "Combined track end address mismatch in project"
+      throwExceptionWithErrorInfo(falsePls, msg)
+    }
+  }
+
+  /***
+   * Checks splitted links have continuos m-values.
+   * Splitting has not caused wrong ordering.
+   * @param pls ProjectLinks of left or right side with combined track.
+   */
+  def checkMValues(pls: Seq[ProjectLink]): Unit = {
+    if (pls.size > 1) {
+      val it = pls.sliding(2)
+      while (it.hasNext) {
+        it.next() match {
+          case Seq(first, next) => {
+            if (first.connectedLinkId.isDefined && first.connectedLinkId == next.connectedLinkId) if (first.endMValue != next.startMValue) {
+              val falsePls = Iterable(first, next)
+              val msg      = "Discontinuity in splitted links endMValue and startMValue in project"
+              throwExceptionWithErrorInfo(falsePls, msg)
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /***
+   * Checks continuity of addresses, positivity of length and length is preserved.
+   * @param pls Left or right side ProjectLinks with combined to check for continuity of addresses.
+   */
+  def checkValues(pls: Seq[ProjectLink]): Unit = {
+    if (pls.size > 1) {
+      val it = pls.sliding(2)
+      while (it.hasNext) {
+        it.next() match {
+          case Seq(seq, next) => {
+            if (seq.endAddrMValue != next.startAddrMValue) throw new RoadAddressException(s"Address not continuous: ${seq.endAddrMValue} ${next.startAddrMValue} linkids: ${seq.linkId} ${next.linkId}")
+            if (!(seq.endAddrMValue > seq.startAddrMValue)) throw new RoadAddressException(s"Address length negative. linkid: ${seq.linkId}")
+            if (seq.status != LinkStatus.New) if (!((seq.endAddrMValue - seq.startAddrMValue) == (seq.originalEndAddrMValue - seq.originalStartAddrMValue))) throw new RoadAddressException(s"Length mismatch. New: ${seq.startAddrMValue} ${seq.endAddrMValue} original: ${seq.originalStartAddrMValue} ${seq.originalEndAddrMValue} linkid: ${seq.linkId}")
+          }
+        }
+      }
+    }
   }
 
   private def calculateSectionAddressValues(sections: Seq[CombinedSection],
@@ -201,13 +291,6 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     val leftSections      = sections.flatMap(_.left.links).distinct
     val rightLinks        = ProjectSectionMValueCalculator.calculateMValuesForTrack(rightSections, userDefinedCalibrationPoint)
     val leftLinks         = ProjectSectionMValueCalculator.calculateMValuesForTrack(leftSections, userDefinedCalibrationPoint)
-
-    def checkMValues(pls: Seq[ProjectLink]) = {
-      pls.tail.foldLeft(pls.head) { case (seq, next) => {
-        if (seq.connectedLinkId.isDefined && seq.connectedLinkId == next.connectedLinkId)
-          assert(seq.endMValue == next.startMValue)
-        next
-      }}}
 
     checkMValues(leftLinks)
     checkMValues(rightLinks)
@@ -512,10 +595,13 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     val (st, en) = link.getEndPoints
     if (st.distance2DTo(point) < en.distance2DTo(point)) en else st
   }
+
 }
 
+/***
+ * Toolbox for adjustTracksToMatch().
+ */
 case class FirstRestSections(first:Seq[ProjectLink], rest: Seq[ProjectLink])
-
 object FirstRestSections {
   def checkTheLastLinkInOppositeRange(sect: Seq[ProjectLink], oppositeSect: Seq[ProjectLink]): Boolean =
     sect.size > 1 &&

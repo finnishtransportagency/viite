@@ -1539,8 +1539,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       links
   }
 
-  // Remove user defined calibration points and splits before (re)calc.
-  def getFusedProjectLinks(pls: Seq[ProjectLink]) = if (pls.isEmpty) {
+  /***
+   * Required when user calculates project more than once.
+   * Removes user defined calibration points and splits generated in previous calc.
+   * @param pls Non-terminated ProjectLinks in the same road/part.
+   * @return ProjectLinks without split made in previous calculation if any.
+   */
+  def getFusedProjectLinks(pls: Seq[ProjectLink]): Seq[ProjectLink] = if (pls.isEmpty) {
     Seq()
   } else {
     val (connectedGroups, unConnectedGroups) = pls.groupBy(_.connectedLinkId).partition(_._1.isDefined)

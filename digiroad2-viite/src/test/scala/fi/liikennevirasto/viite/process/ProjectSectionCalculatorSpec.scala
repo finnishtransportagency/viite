@@ -1415,7 +1415,8 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
 
       val output = ProjectSectionCalculator.assignMValues(leftProjectLinks ++ rightProjectLinks)
 
-//      output.length should be(14)
+      val splittedLinkCount = output.groupBy(_.connectedLinkId).filterKeys(_.isDefined).mapValues(_.size-1).values.sum
+      output.length should be(leftProjectLinks.size + rightProjectLinks.size + splittedLinkCount)
 
       val (leftCombined, rightCombined): (Seq[ProjectLink], Seq[ProjectLink]) = (output.filter(_.track != Track.RightSide).sortBy(_.startAddrMValue), output.filter(_.track != Track.LeftSide).sortBy(_.startAddrMValue))
 

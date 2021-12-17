@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory
 object TrackCalculatorContext {
 
   private lazy val minorDiscontinuityStrategy: DefaultTrackCalculatorStrategy = {
-//    new DiscontinuityTrackCalculatorStrategy(Seq(MinorDiscontinuity, ParallelLink))
     new DefaultTrackCalculatorStrategy
   }
 
