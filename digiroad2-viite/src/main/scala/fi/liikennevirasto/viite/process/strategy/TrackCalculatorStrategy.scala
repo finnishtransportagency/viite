@@ -176,6 +176,7 @@ trait TrackCalculatorStrategy {
 
     val startSectionAddress = startAddress.getOrElse(getFixedAddress(leftProjectLinks.head, rightProjectLinks.head)._1)
 
+    // With minimum end address we want to maintain existing links' address lengths. Otherwise, average value could cause existing link lengths change.
     val fixedAddress = getFixedAddress(leftProjectLinks.last, rightProjectLinks.last, availableCalibrationPoint)._2
     val fixedMinimimumAddress = Math.max(Math.max(rightProjectLinks.last.startAddrMValue + 1, leftProjectLinks.last.startAddrMValue + 1), fixedAddress)
     val addressLengthRight = Math.max(0, rightProjectLinks.last.originalEndAddrMValue - rightProjectLinks.last.originalStartAddrMValue)

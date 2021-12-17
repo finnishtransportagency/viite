@@ -312,9 +312,7 @@ object TwoTrackRoadUtils {
               )
             )
             val (plPart1, plPart2) =
-              //if (otherSideLink.status == LinkStatus.New)
                 splitAt(otherSideLink, last.endAddrMValue, endPoints)
-             // else splitAt(otherSideLink, last.originalEndAddrMValue, endPoints)
             val (
               newCP: Seq[Option[UserDefinedCalibrationPoint]],
               cpUpdatedPls

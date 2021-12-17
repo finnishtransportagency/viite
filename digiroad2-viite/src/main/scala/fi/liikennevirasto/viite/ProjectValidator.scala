@@ -599,12 +599,12 @@ class ProjectValidator {
       } else None
     }
 
-    def checkMinMaxTrackAdministrativeClasses(trackInterval: Seq[ProjectLink]) = {
+    def checkMinMaxTrackAdministrativeClasses(trackInterval: Seq[ProjectLink]): Option[Seq[ProjectLink]] = {
         val diffLinks = trackInterval.groupBy(_.administrativeClass).flatMap { projectLinksByAdministrativeClass: (AdministrativeClass, Seq[ProjectLink]) =>
           projectLinksByAdministrativeClass._2.partition(_.track == Track.LeftSide) match {
           case (left, right) if left.nonEmpty && right.nonEmpty =>
                 val leftSection      = (projectLinksByAdministrativeClass._1, left.minBy(_.startAddrMValue).startAddrMValue, left.maxBy(_.endAddrMValue).endAddrMValue)
-                val rightSection                                   = (projectLinksByAdministrativeClass._1, right.minBy(_.startAddrMValue).startAddrMValue, right.maxBy(_.endAddrMValue).endAddrMValue)
+                val rightSection     = (projectLinksByAdministrativeClass._1, right.minBy(_.startAddrMValue).startAddrMValue, right.maxBy(_.endAddrMValue).endAddrMValue)
                 val startSectionAdrr = Seq(leftSection._2, rightSection._2).max
                 val endSectionAddr   = Seq(leftSection._3, rightSection._3).min
                 if (leftSection != rightSection) {
@@ -658,8 +658,8 @@ class ProjectValidator {
       }
     }
 
-    def getTwoTrackInterval(links   : Seq[ProjectLink], interval: Seq[(Long, Seq[ProjectLink])]): Seq[(Long, Seq[ProjectLink])] = {
-      if (links.isEmpty) {
+    def getTwoTrackInterval(links: Seq[ProjectLink], interval: Seq[(Long, Seq[ProjectLink])]): Seq[(Long, Seq[ProjectLink])] = {
+      if (links.isEmpty || links.exists(_.isNotCalculated)) {
         interval
       } else {
         val trackToCheck  = links.head.track
@@ -669,7 +669,7 @@ class ProjectValidator {
       }
     }
 
-    def checkTrackAdministrativeClass(links: Seq[ProjectLink]) = {
+    def checkTrackAdministrativeClass(links: Seq[ProjectLink]): Option[ValidationErrorDetails] = {
       val trackIntervals = getTwoTrackInterval(links, Seq())
       val errorLinks = validateTrackAdministrativeClasses(trackIntervals)
       error(project.id, ValidationErrorList.DistinctAdministrativeClassesBetweenTracks)(errorLinks)

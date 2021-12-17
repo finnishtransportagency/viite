@@ -1251,6 +1251,9 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
         val linearLocationGrps = linearLocations.groupBy(_.roadwayNumber)
         currentRws.forall(r => linearLocationGrps.contains(r.roadwayNumber)) shouldBe true
 
+       /* Check current roadways have distinct roadwaynumbers. */
+        currentRws.map(_.roadwayNumber).toSet should have size currentRws.size
+
         /* Check one linearlocation for each roadway, link id pair. */
         val linearLocs = linearLocationDAO.fetchByRoadways(currentRws.map(_.roadwayNumber).toSet).toList.groupBy(ll => (ll.roadwayNumber, ll.linkId))
         linearLocs.foreach(ll => assert(ll._2.size == 1))
@@ -1259,15 +1262,19 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
         val regularLinkSource = LinkGeomSource.FrozenLinkInterface
         val regular = if (roadwaysByLinkSource.contains(regularLinkSource)) roadwaysByLinkSource(regularLinkSource) else Seq()
 
-        def continuosRoadways(t: Seq[Roadway]): Roadway = {
-          t.sortBy(_.startAddrMValue).tail.foldLeft(t.head) { (cur, next) =>
-            assert(next.startAddrMValue <= next.endAddrMValue)
-            assert(cur.endAddrMValue == next.startAddrMValue)
-            next
-          }
-        }
+       def continuosRoadways(t: Seq[Roadway]): Unit = {
+         val it = t.sliding(2)
+         while (it.hasNext) {
+           it.next() match {
+             case Seq(cur, next) => {
+               assert(next.startAddrMValue <= next.endAddrMValue)
+               assert(cur.endAddrMValue == next.startAddrMValue)
+             }
+           }
+         }
+       }
 
-        val currentRwsLeftSide = currentRws.filterNot(_.track == Track.LeftSide)
+       val currentRwsLeftSide = currentRws.filterNot(_.track == Track.LeftSide)
         val currentRwsRightSide = currentRws.filterNot(_.track == Track.RightSide)
 
         continuosRoadways(currentRwsLeftSide)
@@ -1277,13 +1284,18 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
           roadwayAddressMapper.mapRoadAddresses(r, regular)
         })
 
-        def continuosRoadAddressses(t: Seq[RoadAddress]): RoadAddress = {
-          t.sortBy(_.startAddrMValue).tail.foldLeft(t.head) { (cur, next) =>
-            assert(next.startAddrMValue <= next.endAddrMValue)
-            assert(cur.endAddrMValue == next.startAddrMValue)
-            next
-          }
-        }
+       def continuosRoadAddressses(t: Seq[RoadAddress]): Unit = {
+         val it = t.sliding(2)
+         while (it.hasNext) {
+           it.next() match {
+             case Seq(cur, next) => {
+               assert(next.startAddrMValue <= next.endAddrMValue)
+               assert(cur.endAddrMValue == next.startAddrMValue)
+             }
+           }
+         }
+       }
+
         /* Check roadAddresses formed correctly. */
         continuosRoadAddressses(addresses.filterNot(_.track == Track.LeftSide).sortBy(_.startAddrMValue))
         continuosRoadAddressses(addresses.filterNot(_.track == Track.RightSide).sortBy(_.startAddrMValue))

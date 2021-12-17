@@ -354,7 +354,6 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     TrackSectionOrder.createCombinedSections(right, left)
   }
 
-
   /**
     * Find starting point(s) after adding new operation for links in project.
     *
