@@ -319,12 +319,10 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     val leftLinksWithSplits  = splitByOriginalAddresses(splittedLeftLinks, sortedSplitOriginalAddresses)
     val rightLinksWithSplits = splitByOriginalAddresses(rightLinksWithUdcps, sortedSplitOriginalAddresses)
 
-    def filterUdcps(udcp: Option[UserDefinedCalibrationPoint]) =
+    def udcpIsDefined(udcp: Option[UserDefinedCalibrationPoint]) =
       udcp.isDefined && udcp.get.isInstanceOf[UserDefinedCalibrationPoint]
 
-    val dups = (udcpsFromRightSideSplits ++ udcpsFromLeftSideSplits).filter(udcp => {
-      filterUdcps(udcp)
-    }).groupBy(_.get.projectLinkId).filter(_._2.size > 1)
+    val dups = (udcpsFromRightSideSplits ++ udcpsFromLeftSideSplits).filter(udcpIsDefined).groupBy(_.get.projectLinkId).filter(_._2.size > 1)
 
     /* Update udcp pl if splitted after second pass. */
     val updatedudcpsFromRightSideSplits = dups.foldLeft(udcpsFromRightSideSplits) { (udcpsToUpdate, cur) => {
@@ -338,7 +336,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       }
     }}
 
-    def toUdcpMap(udcp: Seq[Option[UserDefinedCalibrationPoint]]) = udcp.filter(filterUdcps).map(_.get).map(c => c.projectLinkId -> c)
+    def toUdcpMap(udcp: Seq[Option[UserDefinedCalibrationPoint]]) = udcp.filter(udcpIsDefined).map(_.get).map(c => c.projectLinkId -> c)
 
     val splitCreatedCpsFromRightSide = toUdcpMap(updatedudcpsFromRightSideSplits).toMap
     val splitCreatedCpsFromLeftSide  = toUdcpMap(udcpsFromLeftSideSplits).toMap
