@@ -72,18 +72,16 @@
     var LinkSource = LinkValues.LinkGeomSource;
     var SelectionType = LinkValues.SelectionType;
     var ConstructionType = LinkValues.ConstructionType;
-    var Anomaly = LinkValues.Anomaly;
     var clickedLinearLocationId = 0;
+    var selectedRoadLinkModels = [];
 
     var roadLinks = function () {
       return _.flatten(roadLinkGroups);
     };
 
 
-    var getSelectedRoadLinks = function () {
-      return _.filter(roadLinks().concat(underConstructionRoadLinks()), function (roadLink) {
-        return roadLink.isSelected() && roadLink.getData().anomaly === Anomaly.None.value;
-      });
+    var getSelectedRoadLinkModels = function () {
+      return selectedRoadLinkModels;
     };
 
     var getGroupByLinearLocationId = function (linearLocationId) {
@@ -169,7 +167,7 @@
 
 
     var fetchProcess = function (fetchedRoadLinks, zoom, drawUnknowns) {
-      var selectedLinkIds = _.map(getSelectedRoadLinks(), function (roadLink) {
+      var selectedLinkIds = _.map(getSelectedRoadLinkModels(), function (roadLink) {
         return roadLink.getId();
       });
       var fetchedRoadLinkModels = _.map(fetchedRoadLinks, function (roadLinkGroup) {
@@ -177,34 +175,34 @@
           return new RoadLinkModel(roadLink);
         });
       });
-      var fetched = _.partition(fetchedRoadLinkModels, function (model) {
+      var [fetchedUnaddressed, fetchedWithAddresses] = _.partition(fetchedRoadLinkModels, function (model) {
         return _.every(model, function (mod) {
           return mod.getData().roadNumber === 0;
         });
       });
 
-      unaddressedRoadLinkGroups = _.partition(fetched[0], function (group) {
+      [unaddressedUnderConstructionRoadLinkGroups, unaddressedUnknownRoadLinkGroups] = _.partition(fetchedUnaddressed, function (group) {
         return groupDataConstructionTypeFilter(group, ConstructionType.UnderConstruction);
       });
 
-      unaddressedUnderConstructionRoadLinkGroups = unaddressedRoadLinkGroups[0];
-      unaddressedUnknownRoadLinkGroups = unaddressedRoadLinkGroups[1];
-
       var includeUnknowns = _.isUndefined(drawUnknowns) && !drawUnknowns;
       if (parseInt(zoom) <= zoomlevels.minZoomForEditMode && (includeUnknowns && !applicationModel.selectionTypeIs(LinkValues.SelectionType.Unknown))) {
-        setRoadLinkGroups(fetched[1]);
+        // only the fetched road links that have an address
+        setRoadLinkGroups(fetchedWithAddresses);
       } else {
+        // ALL fetched road links
         setRoadLinkGroups(fetchedRoadLinkModels);
       }
 
-      if (!_.isEmpty(getSelectedRoadLinks())) {
-        var nonFetchedLinksInSelection = _.reject(getSelectedRoadLinks(), function (selected) {
+      // get the selected links that were not fetched (i.e. were not inside the bounding box) and add them to the roadLinkGroups
+      if (!_.isEmpty(getSelectedRoadLinkModels())) {
+        var nonFetchedLinksInSelection = _.reject(getSelectedRoadLinkModels(), function (selected) {
           var allGroups = _.map(_.flatten(fetchedRoadLinkModels), function (group) {
             return group.getData();
           });
           return _.includes(_.map(allGroups, 'linkId'), selected.getData().linkId);
         });
-        roadLinkGroups.concat(nonFetchedLinksInSelection);
+        setRoadLinkGroups(roadLinkGroups.concat(nonFetchedLinksInSelection));
       }
 
       historicRoadLinks = _.filter(roadLinkGroups, function (group) {
@@ -271,10 +269,6 @@
       } else {
         return group.getData().roadLinkType === dataSource.value;
       }
-    };
-
-    var underConstructionRoadLinks = function () {
-      return _.flatten(unaddressedUnderConstructionRoadLinkGroups);
     };
 
     this.getAll = function () {
@@ -372,6 +366,10 @@
 
     var setRoadLinkGroups = function (groups) {
       roadLinkGroups = groups;
+    };
+
+    this.setSelectedRoadLinkModels = function (selectedRoadLinks) {
+      selectedRoadLinkModels = selectedRoadLinks;
     };
 
     this.reset = function () {

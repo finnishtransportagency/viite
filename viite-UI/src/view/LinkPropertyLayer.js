@@ -374,8 +374,12 @@
          } else {
            selectedLinkIds = selectedLinkIds.concat(selection.linkId);
          }
-         var features = getAllFeatures();
-         selectedLinkProperty.openCtrl(selectedLinkIds, true, features);
+         if (selectedLinkIds.length === 0) {
+           selectedLinkProperty.close();
+         } else {
+           var features = getAllFeatures();
+           selectedLinkProperty.openCtrl(selectedLinkIds, true, features);
+         }
        }
     };
 
