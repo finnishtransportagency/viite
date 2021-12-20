@@ -135,6 +135,8 @@
         _.forEach(current, function (selected) {
           selected.select();
         });
+        var roadLinks = roadCollection.getByLinkIds(linkIds);
+        roadCollection.setSelectedRoadLinkModels(roadLinks);
         processOlFeatures(visibleFeatures);
         eventbus.trigger('linkProperties:selected', extractDataForDisplay(get()));
       }
