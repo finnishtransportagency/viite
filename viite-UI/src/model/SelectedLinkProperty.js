@@ -128,14 +128,14 @@
       }
     };
 
-    var openCtrl = function (linkIds, isCtrlClick, visibleFeatures) {
+    var openCtrl = function (linearLocationIds, isCtrlClick, visibleFeatures) {
       if (isCtrlClick) {
         setCurrent([]);
-        setCurrent(roadCollection.getByLinkIds(linkIds));
+        setCurrent(roadCollection.getRoadLinkModelsByLinearLocationIds(linearLocationIds));
         _.forEach(current, function (selected) {
           selected.select();
         });
-        var roadLinks = roadCollection.getByLinkIds(linkIds);
+        var roadLinks = roadCollection.getRoadLinkModelsByLinearLocationIds(linearLocationIds);
         roadCollection.setSelectedRoadLinkModels(roadLinks);
         processOlFeatures(visibleFeatures);
         eventbus.trigger('linkProperties:selected', extractDataForDisplay(get()));

@@ -366,19 +366,19 @@
 
     var modifyPreviousSelection = function (ctrlPressed, selection) {
        if (ctrlPressed && !_.isUndefined(selectedLinkProperty.get()) && !_.isUndefined(selection)) {
-         var selectedLinkIds = _.map(selectedLinkProperty.get(), function (selected) {
-           return selected.linkId;
+         var selectedLinearLocationIds = _.map(selectedLinkProperty.get(), function (selected) {
+           return selected.linearLocationId;
          });
-         if (_.includes(selectedLinkIds, selection.linkId)) {
-           selectedLinkIds = _.without(selectedLinkIds, selection.linkId);
+         if (_.includes(selectedLinearLocationIds, selection.linearLocationId)) {
+           selectedLinearLocationIds = _.without(selectedLinearLocationIds, selection.linearLocationId);
          } else {
-           selectedLinkIds = selectedLinkIds.concat(selection.linkId);
+           selectedLinearLocationIds = selectedLinearLocationIds.concat(selection.linearLocationId);
          }
-         if (selectedLinkIds.length === 0) {
+         if (selectedLinearLocationIds.length === 0) {
            selectedLinkProperty.close();
          } else {
            var features = getAllFeatures();
-           selectedLinkProperty.openCtrl(selectedLinkIds, true, features);
+           selectedLinkProperty.openCtrl(selectedLinearLocationIds, true, features);
          }
        }
     };
