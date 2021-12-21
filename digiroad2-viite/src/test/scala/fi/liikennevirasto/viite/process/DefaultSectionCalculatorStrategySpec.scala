@@ -275,9 +275,9 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       val projId = Sequences.nextViiteProjectId
       val roadwayId = Sequences.nextRoadwayId
       val linearLocationId = Sequences.nextLinearLocationId
-      def nextPlId: Long = Sequences.nextProjectLinkId
       val project = Project(projId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
+      def nextPlId: Long = Sequences.nextProjectLinkId
       def getEndMValue(ps:  Seq[Point]): Double = ps.last.y - ps.head.y
 
       val projectLinkLeft1 = ProjectLink(nextPlId, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 30L, 0L, 30L, None, None, Some("user"), 12345L, 0.0, getEndMValue(geomLeft1), SideCode.Unknown, (NoCP, NoCP), (CalibrationPointType.NoCP, CalibrationPointType.NoCP), geomLeft1, 0L, LinkStatus.UnChanged, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomLeft1), roadwayId, linearLocationId, 0, reversed = false, None, 86400L, roadwayNumber = 12345L)

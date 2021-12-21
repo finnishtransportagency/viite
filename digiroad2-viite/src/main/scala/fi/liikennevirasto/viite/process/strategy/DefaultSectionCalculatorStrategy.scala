@@ -185,7 +185,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
    * @param leftAdj Calculated leftside ProjectLinks.
    * @param rightAdj Calculated leftside ProjectLinks.
    */
-  def checkCombined(leftAdj: Seq[ProjectLink], rightAdj: Seq[ProjectLink]): Unit = {
+  def validateCombinedLinksEqualAddresses(leftAdj: Seq[ProjectLink], rightAdj: Seq[ProjectLink]): Unit = {
     val leftCombinedLinks  = leftAdj.filter(_.track == Track.Combined)
     val rightCombinedLinks = rightAdj.filter(_.track == Track.Combined)
     val groupedById        = (leftCombinedLinks ++ rightCombinedLinks).groupBy(_.id)
@@ -212,7 +212,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
    * Splitting has not caused wrong ordering.
    * @param pls ProjectLinks of left or right side with combined track.
    */
-  def checkMValues(pls: Seq[ProjectLink]): Unit = {
+  def validateMValuesOfSplittedLinks(pls: Seq[ProjectLink]): Unit = {
     if (pls.size > 1) {
       val it = pls.sliding(2)
       while (it.hasNext) {
@@ -233,7 +233,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
    * Checks continuity of addresses, positivity of length and length is preserved.
    * @param pls Left or right side ProjectLinks with combined to check for continuity of addresses.
    */
-  def checkValues(pls: Seq[ProjectLink]): Unit = {
+  def validateAddresses(pls: Seq[ProjectLink]): Unit = {
     if (pls.size > 1) {
       val it = pls.sliding(2)
       while (it.hasNext) {
@@ -292,11 +292,11 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     val rightLinks        = ProjectSectionMValueCalculator.calculateMValuesForTrack(rightSections, userDefinedCalibrationPoint)
     val leftLinks         = ProjectSectionMValueCalculator.calculateMValuesForTrack(leftSections, userDefinedCalibrationPoint)
 
-    checkMValues(leftLinks)
-    checkMValues(rightLinks)
+    validateMValuesOfSplittedLinks(leftLinks)
+    validateMValuesOfSplittedLinks(rightLinks)
 
-    checkValues(leftLinks)
-    checkValues(rightLinks)
+    validateAddresses(leftLinks)
+    validateAddresses(rightLinks)
 
     val allProjectLinks         = (projectLinkDAO.fetchProjectLinks(leftLinks.head.projectId, Some(LinkStatus.Terminated)) ++ leftLinks ++ rightLinks).sortBy(_.startAddrMValue)
     val twoTracksWithTerminated = allProjectLinks.filter(filterExistingLinks)
@@ -343,12 +343,12 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
 
     val (adjustedLeft, adjustedRight) = (leftLinksWithSplits.filterNot(_.status == LinkStatus.Terminated), rightLinksWithSplits.filterNot(_.status == LinkStatus.Terminated))
 
-    checkMValues(adjustedLeft)
-    checkMValues(adjustedRight)
+    validateMValuesOfSplittedLinks(adjustedLeft)
+    validateMValuesOfSplittedLinks(adjustedRight)
 
-    checkValues(adjustedLeft)
-    checkValues(adjustedRight)
-    checkCombined(adjustedLeft, adjustedRight)
+    validateAddresses(adjustedLeft)
+    validateAddresses(adjustedRight)
+    validateCombinedLinksEqualAddresses(adjustedLeft, adjustedRight)
 
     val (right, left) = TrackSectionOrder.setCalibrationPoints(adjustedRight, adjustedLeft, userDefinedCalibrationPoint ++ splitCreatedCpsFromRightSide ++ splitCreatedCpsFromLeftSide)
     TrackSectionOrder.createCombinedSections(right, left)
