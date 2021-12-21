@@ -128,14 +128,16 @@
       }
     };
 
-    var openCtrl = function (linearLocationIds, isCtrlClick, visibleFeatures) {
+    var openCtrl = function (linearLocationIds, linkIds, isCtrlClick, visibleFeatures) {
       if (isCtrlClick) {
         setCurrent([]);
-        setCurrent(roadCollection.getRoadLinkModelsByLinearLocationIds(linearLocationIds));
+        var addressedRoadLinkModels = roadCollection.getRoadLinkModelsByLinearLocationIds(linearLocationIds);
+        var unAddressedRoadLinkModels = roadCollection.getByLinkIds(linkIds);
+        var roadLinks = addressedRoadLinkModels.concat(unAddressedRoadLinkModels);
+        setCurrent(roadLinks);
         _.forEach(current, function (selected) {
           selected.select();
         });
-        var roadLinks = roadCollection.getRoadLinkModelsByLinearLocationIds(linearLocationIds);
         roadCollection.setSelectedRoadLinkModels(roadLinks);
         processOlFeatures(visibleFeatures);
         eventbus.trigger('linkProperties:selected', extractDataForDisplay(get()));

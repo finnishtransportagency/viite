@@ -364,23 +364,65 @@
       });
     };
 
+    /**
+     * Add/remove ctrl clicked link's:
+     * linearLocationId to/from a list of previously selected linearLocationIds, if the clicked link has an address
+     * OR
+     * linkId to/from a list of previously selected linkIds, if the clicked link is unaddressed
+     *
+     * There are 2 reasons why selections are divided into linkIds and linearLocationIds:
+     * 1) a link with an address might have a "shared" linkId with another link
+     *    and clicking one of those links would select/deselect both of those links.
+     *
+     * 2) unaddressed links all have linearLocationId set to 0 (zero).
+     *    So only using linearLocationId would select/deselect all of them
+     *
+     * So to counter those points:
+     * - Links with an address are kept track of with a list of linearLocationIds,
+     * - Unaddressed links are kept track of with a list of linkIds.
+     *
+     * These two modified lists are then passed on to a function called openCtrl
+     * @param ctrlPressed - boolean
+     * @param selection - link data of the clicked link
+     *
+     * */
     var modifyPreviousSelection = function (ctrlPressed, selection) {
-       if (ctrlPressed && !_.isUndefined(selectedLinkProperty.get()) && !_.isUndefined(selection)) {
-         var selectedLinearLocationIds = _.map(selectedLinkProperty.get(), function (selected) {
-           return selected.linearLocationId;
-         });
-         if (_.includes(selectedLinearLocationIds, selection.linearLocationId)) {
-           selectedLinearLocationIds = _.without(selectedLinearLocationIds, selection.linearLocationId);
-         } else {
-           selectedLinearLocationIds = selectedLinearLocationIds.concat(selection.linearLocationId);
-         }
-         if (selectedLinearLocationIds.length === 0) {
-           selectedLinkProperty.close();
-         } else {
-           var features = getAllFeatures();
-           selectedLinkProperty.openCtrl(selectedLinearLocationIds, true, features);
-         }
-       }
+      var modifiedList = function (listOfIds, id) {
+        if (_.includes(listOfIds, id)) {
+          return _.without(listOfIds, id);
+        } else {
+          return listOfIds.concat(id);
+        }
+      };
+      if (ctrlPressed && !_.isUndefined(selectedLinkProperty.get()) && !_.isUndefined(selection)) {
+
+        var [selectedWithAddress, selectedUnaddressed] = _.partition(selectedLinkProperty.get(), function (selected) {
+          return selected.linearLocationId !== 0;
+        });
+
+        var selectedLinearLocationIds = _.map(selectedWithAddress, function (selected) {
+          return selected.linearLocationId;
+        });
+
+        var selectedLinkIds = _.map(selectedUnaddressed, function (selected) {
+          return selected.linkId;
+        });
+
+        if (selection.linearLocationId === 0) {
+          selectedLinkIds = modifiedList(selectedLinkIds, selection.linkId);
+        } else {
+          selectedLinearLocationIds = modifiedList(selectedLinearLocationIds, selection.linearLocationId);
+        }
+
+        if (selectedLinearLocationIds.length === 0 && selectedLinkIds.length === 0) {
+          // if both lists are empty then the last selected link was "deselected" and we want the UI to behave like no links are currently selected
+          selectedLinkProperty.close();
+        } else {
+          var features = getAllFeatures();
+          // pass the lists to further processing
+          selectedLinkProperty.openCtrl(selectedLinearLocationIds, selectedLinkIds, true, features);
+        }
+      }
     };
 
     /**
