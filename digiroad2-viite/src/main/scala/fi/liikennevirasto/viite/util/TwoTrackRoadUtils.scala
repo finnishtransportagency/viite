@@ -598,7 +598,8 @@ object TwoTrackRoadUtils {
                                 geometry              = geom,
                                 status                = pl.status,
                                 geometryLength        = splitMeasure - pl.startMValue,
-                                connectedLinkId       = Some(pl.linkId)
+                                connectedLinkId       = Some(pl.linkId),
+                                discontinuity         = Discontinuity.Continuous
                               ),
                               pl.copy(
                                 id                      = newPlId,

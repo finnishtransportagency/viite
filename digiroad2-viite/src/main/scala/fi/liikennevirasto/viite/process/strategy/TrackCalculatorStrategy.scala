@@ -112,10 +112,8 @@ trait TrackCalculatorStrategy {
     * @return Returns all the given project links with recalculated measures
     */
   protected def assignValues(seq: Seq[ProjectLink], st: Long, en: Long, factor: TrackAddressingFactors, userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): Seq[ProjectLink] = {
-    val coEff = (en - st) / (factor.newLength + factor.unChangedLength + factor.transferLength)
-    ProjectSectionMValueCalculator.assignLinkValues(seq, userDefinedCalibrationPoint, Some(st.toDouble), Some(en.toDouble), if (coEff.isNaN || coEff.isInfinity || coEff <= 0) 1.0
-    else
-      coEff)
+    val coEff = (en - st - factor.unChangedLength - factor.transferLength) / factor.newLength
+    ProjectSectionMValueCalculator.assignLinkValues(seq, userDefinedCalibrationPoint, Some(st.toDouble), Some(en.toDouble), if (coEff.isNaN || coEff.isInfinity) 1.0 else coEff)
   }
 
   protected def adjustTwoTracks(right: Seq[ProjectLink], left: Seq[ProjectLink], startM: Long, endM: Long, userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]) = {
@@ -177,29 +175,23 @@ trait TrackCalculatorStrategy {
     val startSectionAddress = startAddress.getOrElse(getFixedAddress(leftProjectLinks.head, rightProjectLinks.head)._1)
 
     // With minimum end address we want to maintain existing links' address lengths. Otherwise, average value could cause existing link lengths change.
-    val fixedAddress = getFixedAddress(leftProjectLinks.last, rightProjectLinks.last, availableCalibrationPoint)._2
-    val fixedMinimimumAddress = Math.max(Math.max(rightProjectLinks.last.startAddrMValue + 1, leftProjectLinks.last.startAddrMValue + 1), fixedAddress)
-    val addressLengthRight = Math.max(0, rightProjectLinks.last.originalEndAddrMValue - rightProjectLinks.last.originalStartAddrMValue)
-    val addressLengthLeft  = Math.max(0, leftProjectLinks.last.originalEndAddrMValue -  leftProjectLinks.last.originalStartAddrMValue)
-    val minimumEndAddress = (leftProjectLinks.last.status, rightProjectLinks.last.status) match {
-      case (New,New) => fixedMinimimumAddress
-      case (New, _)  => rightProjectLinks.last.startAddrMValue + addressLengthRight
-      case (_, New)  => leftProjectLinks.last.startAddrMValue + addressLengthLeft
-      case (_,_)     => fixedMinimimumAddress
+    def fixedAddress = getFixedAddress(leftProjectLinks.last, rightProjectLinks.last, availableCalibrationPoint)._2
+    def fixedMinimimumAddress = Math.max(Math.max(rightProjectLinks.last.startAddrMValue + 1, leftProjectLinks.last.startAddrMValue + 1), fixedAddress)
+    def addressLengthRight = Math.max(0, rightProjectLinks.last.originalEndAddrMValue - rightProjectLinks.last.originalStartAddrMValue)
+    def addressLengthLeft  = Math.max(0, leftProjectLinks.last.originalEndAddrMValue  -  leftProjectLinks.last.originalStartAddrMValue)
+    val minimumEndAddress = (leftProjectLinks.exists(_.status == LinkStatus.New), rightProjectLinks.exists(_.status == LinkStatus.New)) match {
+      case (true,true) => fixedMinimimumAddress
+      case (true, false)  => rightProjectLinks.last.startAddrMValue + addressLengthRight
+      case (false, true)  => leftProjectLinks.last.startAddrMValue + addressLengthLeft
+      case (false,false)  => fixedMinimimumAddress
     }
 
     val (adjustedLeft, adjustedRight) = adjustTwoTracks(rightProjectLinks, leftProjectLinks, startSectionAddress, minimumEndAddress, calibrationPoints)
-    val adjustedMinimumEndAddress = (adjustedLeft.last.status, adjustedRight.last.status) match {
-      case (New,New) => minimumEndAddress
-      case (New, _)  => adjustedRight.last.endAddrMValue
-      case (_, New)  => adjustedLeft.last.endAddrMValue
-      case (_,_)     => minimumEndAddress
-    }
 
     TrackCalculatorResult(
-      setLastEndAddrMValue(adjustedLeft, adjustedMinimumEndAddress),
-      setLastEndAddrMValue(adjustedRight, adjustedMinimumEndAddress),
-      startSectionAddress, adjustedMinimumEndAddress,
+      setLastEndAddrMValue(adjustedLeft, minimumEndAddress),
+      setLastEndAddrMValue(adjustedRight, minimumEndAddress),
+      startSectionAddress, minimumEndAddress,
       restLeftProjectLinks,
       restRightProjectLinks)
   }
