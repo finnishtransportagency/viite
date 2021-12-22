@@ -60,7 +60,7 @@
       [3, 'Kiertoliittymä'],
       [4, 'Y-liittymä'],
       [5, 'Eritasoliittymä'],
-      [7, 'Hoitoraja'],
+      [7, 'Hallinnollinen raja'],
       [8, 'ELY-raja'],
       [10, 'Moniajoratainen liittymä'],
       [12, 'Liityntätie'],
