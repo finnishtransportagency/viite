@@ -340,6 +340,12 @@
       return segments;
     };
 
+    this.getRoadLinkModelsByLinearLocationIds = function (ids) {
+      return _.filter(roadLinks(), function (roadLink) {
+        return ids.includes(roadLink.getData().linearLocationId);
+      });
+    };
+
     this.getGroupByLinkId = function (linkId) {
       return _.find(roadLinkGroups, function (roadLinkGroup) {
         return _.some(roadLinkGroup, function (roadLink) {
