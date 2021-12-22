@@ -539,8 +539,8 @@
 
     var deleteButton = function (index, roadNumber, roadPartNumber, selector) {
       var disabledInput = !_.isUndefined(currentProject) &&
-          (currentProject.project.statusCode === ProjectStatus.InUpdateQueue.value
-          || currentProject.project.statusCode === ProjectStatus.UpdatingToRoadNetwork.value);
+          (currentProject.project.statusCode === ProjectStatus.InUpdateQueue.value ||
+              currentProject.project.statusCode === ProjectStatus.UpdatingToRoadNetwork.value);
       return '<i roadNumber="' + roadNumber + '" roadPartNumber="' + roadPartNumber + '" id="' + index + '" class="delete btn-delete ' + selector + ' fas fa-trash-alt fa-lg" ' + (disabledInput ? 'disabled' : '') + '></i>';
     };
 
