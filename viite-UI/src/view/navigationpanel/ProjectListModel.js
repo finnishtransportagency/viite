@@ -220,8 +220,8 @@
           $('#project-list').html(html);
           $('[id*="open-project"]').click(function (event) {
             var button = $(this);
-            if (parseInt(button.attr("data-projectStatus")) === projectStatus.InUpdateQueue.value
-              || parseInt(button.attr("data-projectStatus")) === projectStatus.UpdatingToRoadNetwork.value) {
+            if (parseInt(button.attr("data-projectStatus")) === projectStatus.InUpdateQueue.value ||
+                parseInt(button.attr("data-projectStatus")) === projectStatus.UpdatingToRoadNetwork.value) {
               new GenericConfirmPopup("Projektin muokkaaminen ei ole mahdollista, koska sitä päivitetään tievetkolle. Haluatko avata sen?", {
                 successCallback: function () {
                   triggerOpening(event, button);

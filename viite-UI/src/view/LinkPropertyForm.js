@@ -95,7 +95,7 @@
       var labelText = selectedLinks.length === 1 ? 'PITUUS' : 'YHTEENLASKETTU PITUUS';
       selectedLinks.forEach((link) => {
         var linkLength = link.endAddressM - link.startAddressM;
-        length = length + linkLength;
+        length += linkLength;
       });
       var field = constructField(labelText, length);
       return field;
