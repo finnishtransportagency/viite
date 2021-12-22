@@ -69,7 +69,7 @@ object NodeType {
   case object RoadBoundary extends NodeType {
     def value = 7
 
-    def displayValue = "Hoitoraja"
+    def displayValue = "Hallinnollinen raja"
   }
 
   case object ELYBorder extends NodeType {
