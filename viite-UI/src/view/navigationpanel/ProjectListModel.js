@@ -112,14 +112,13 @@
       bindEvents();
       fetchProjects();
       // start polling projects evey 60 seconds
-      pollProjects = setInterval(fetchProjects, 2000);
+      pollProjects = setInterval(fetchProjects, 60 * 1000);
     }
 
     function hide() {
       projectList.hide();
       eventbus.trigger("roadAddressProject:startAllInteractions");
       $('.modal-overlay').remove();
-      // clear project polling interval
       clearInterval(pollProjects);
     }
 
@@ -230,7 +229,6 @@
                 parseInt(button.attr("data-projectStatus")) === projectStatus.UpdatingToRoadNetwork.value) {
               new GenericConfirmPopup("Projektin muokkaaminen ei ole mahdollista, koska sitä päivitetään tieverkolle. Haluatko avata sen?", {
                 successCallback: function () {
-                  // clear project polling interval
                   clearInterval(pollProjects);
                   triggerOpening(event, button);
                 },
@@ -238,7 +236,6 @@
                 }
               });
             } else {
-              // clear project polling interval
               clearInterval(pollProjects);
               triggerOpening(event, button);
             }
@@ -298,7 +295,6 @@
       projectList.on('click', 'button.new', function () {
         $('#OldAcceptedProjectsVisibleCheckbox').prop('checked', false);
         $('.project-list').append('<div class="modal-overlay confirm-modal"><div class="modal-dialog"></div></div>');
-        // clear project polling interval
         clearInterval(pollProjects);
         eventbus.trigger('roadAddress:newProject');
         if (applicationModel.isReadOnly()) {
