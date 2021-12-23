@@ -103,18 +103,24 @@
       return field;
     };
 
+    var pollProjects = null;
+
     function show() {
       $('.container').append('<div class="modal-overlay confirm-modal" id="projectList"><div class="modal-dialog"></div></div>');
       $('.modal-dialog').append(projectList.show());
       eventbus.trigger("roadAddressProject:deactivateAllSelections");
       bindEvents();
       fetchProjects();
+      // start polling projects evey 60 seconds
+      pollProjects = setInterval(fetchProjects, 2000);
     }
 
     function hide() {
       projectList.hide();
       eventbus.trigger("roadAddressProject:startAllInteractions");
       $('.modal-overlay').remove();
+      // clear project polling interval
+      clearInterval(pollProjects);
     }
 
     function fetchProjects() {
@@ -222,14 +228,20 @@
             var button = $(this);
             if (parseInt(button.attr("data-projectStatus")) === projectStatus.InUpdateQueue.value ||
                 parseInt(button.attr("data-projectStatus")) === projectStatus.UpdatingToRoadNetwork.value) {
-              new GenericConfirmPopup("Projektin muokkaaminen ei ole mahdollista, koska sitä päivitetään tievetkolle. Haluatko avata sen?", {
+              new GenericConfirmPopup("Projektin muokkaaminen ei ole mahdollista, koska sitä päivitetään tieverkolle. Haluatko avata sen?", {
                 successCallback: function () {
+                  // clear project polling interval
+                  clearInterval(pollProjects);
                   triggerOpening(event, button);
                 },
                 closeCallback: function () {
                 }
               });
-            } else triggerOpening(event, button);
+            } else {
+              // clear project polling interval
+              clearInterval(pollProjects);
+              triggerOpening(event, button);
+            }
           });
         } else {
           html += '</table>';
@@ -286,6 +298,8 @@
       projectList.on('click', 'button.new', function () {
         $('#OldAcceptedProjectsVisibleCheckbox').prop('checked', false);
         $('.project-list').append('<div class="modal-overlay confirm-modal"><div class="modal-dialog"></div></div>');
+        // clear project polling interval
+        clearInterval(pollProjects);
         eventbus.trigger('roadAddress:newProject');
         if (applicationModel.isReadOnly()) {
           $('.edit-mode-btn:visible').click();
