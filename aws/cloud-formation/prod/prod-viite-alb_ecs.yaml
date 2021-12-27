@@ -62,7 +62,7 @@ Resources:
       RetentionInDays: 14
 
   # This is a role which is used by the ECS tasks themselves.
-  ECSTaskExecutionRoleForViiteQA:
+  ECSTaskExecutionRoleForViiteProd:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
