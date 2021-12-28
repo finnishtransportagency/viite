@@ -6,8 +6,13 @@ Luo VPC AWS-pilveen kahdella subnetilla.
 Tarkista yhtenevät parametrien nimet, esim. NetworkStackName VPC:n ja CloudFormation parametreistä.
 
 ### parameterStore-entryt
-Lisää parameterStore-entryt.
-Skripti: ViiteProd_parameterStoreEntries.sh. Conflussa, kehitystiimiltä.
+Viitatut tiedostot hakemistossa ***[Viitteen git-juuri]***/aws/cloud-formation/prod
+1. Lisää parametri-aihiot parameterStoreen cloudformation skriptillä. \
+Cloudformation skripti: prod-viite-create-parameters-cloudformation.yaml
+
+2. Päivitä parametri-aihioiden arvot ja tyypit oikein aws CLI komennoilla. \
+Parametrien oikeat arvot Conflussa / kehitystiimiltä \
+AWS CLI komennot: prod-update-parameter-types-and-values.sh
 
 ### Luo Viitteen ALB-stack
 Viitatut tiedostot hakemistossa ***[Viitteen git-juuri]***/aws/cloud-formation/prod
