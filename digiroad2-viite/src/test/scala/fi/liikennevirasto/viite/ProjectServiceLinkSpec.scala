@@ -17,7 +17,7 @@ import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous}
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLinkLike}
-import fi.liikennevirasto.viite.process.{InvalidAddressDataException, ProjectSectionCalculator, RoadwayAddressMapper}
+import fi.liikennevirasto.viite.process.{ProjectSectionCalculator, RoadwayAddressMapper}
 import fi.liikennevirasto.viite.util.{StaticTestData, _}
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
@@ -351,6 +351,8 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
         l.copy(endMValue = GeometryUtils.geometryLength(geom), geometry = geom, geometryLength = GeometryUtils.geometryLength(geom))
       }
       val adjusted = ProjectSectionCalculator.assignMValues(geomToLinks)
+      val projectLinkIds = geomToLinks.map(_.id)
+      projectLinkDAO.create(adjusted.filter(pl => !projectLinkIds.contains(pl.id)))
       projectLinkDAO.updateProjectLinks(adjusted, "-", Seq())
 
       reset(mockRoadLinkService)
@@ -387,15 +389,16 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
           changedLinks.exists(c => c.startAddrMValue == l.endAddrMValue &&
             c.track == l.track || (c.track.value * l.track.value == 0))) should be(true)
       )
-      adjusted.foreach { l =>
+      adjusted.filterNot(_.isSplit).foreach { l =>
         GeometryUtils.geometryEndpoints(mappedGeoms(l.linkId)) should be(GeometryUtils.geometryEndpoints(l.geometry))
       }
 
       val linksFirst = adjusted.minBy(_.id)
       val linksLast = adjusted.maxBy(_.id)
-      val changedLinksFirst = changedLinks.minBy(_.id)
-      val changedLinksLast = changedLinks.maxBy(_.id)
-      adjusted.sortBy(_.id).zip(changedLinks.sortBy(_.id)).foreach {
+      val changedLinksFirst = changedLinks.maxBy(_.id)
+      val changedLinksLast = changedLinks.minBy(_.id)
+      val paired = (adjusted ++ changedLinks).groupBy(_.id).mapValues(v => (v.head, v.last)).values
+      paired.foreach {
         case (oldLink, newLink) =>
           oldLink.startAddrMValue should be((linksLast.endAddrMValue - newLink.endAddrMValue) +- 1)
           oldLink.endAddrMValue should be((linksLast.endAddrMValue - newLink.startAddrMValue) +- 1)
@@ -407,12 +410,12 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
           }
           sideCodeChangeCorrect should be (true)
       }
-      linksFirst.id should be(changedLinksFirst.id)
-      linksLast.id should be(changedLinksLast.id)
+      linksFirst.id should be(changedLinksLast.id)
+      linksLast.id should be(changedLinksFirst.id)
       linksLast.geometryLength should be(changedLinks.maxBy(_.id).geometryLength +- .1)
       linksLast.endMValue should be(changedLinks.maxBy(_.id).endMValue +- .1)
-      linksFirst.endMValue should be(changedLinksFirst.endMValue +- .1)
-      linksLast.endMValue should be(changedLinksLast.endMValue +- .1)
+      linksFirst.endMValue should be(changedLinksLast.endMValue +- .1)
+      linksLast.endMValue should be(changedLinksFirst.endMValue +- .1)
     }
   }
 

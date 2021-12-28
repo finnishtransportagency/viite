@@ -1,9 +1,9 @@
 package fi.liikennevirasto.viite.process.strategy
 
-import fi.liikennevirasto.viite.{MaxDistanceForSearchDiscontinuityOnOppositeTrack, NewIdValue}
-import fi.liikennevirasto.viite.dao.Discontinuity.{MinorDiscontinuity, ParallelLink, Continuous}
+import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, MinorDiscontinuity, ParallelLink}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.{Discontinuity, ProjectLink}
+import fi.liikennevirasto.viite.{MaxDistanceForSearchDiscontinuityOnOppositeTrack, NewIdValue}
 
 class DiscontinuityTrackCalculatorStrategy(discontinuities: Seq[Discontinuity]) extends TrackCalculatorStrategy {
 

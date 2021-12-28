@@ -58,23 +58,25 @@ object ProjectSectionMValueCalculator {
 
   def assignLinkValues(seq: Seq[ProjectLink], cps: Map[Long, UserDefinedCalibrationPoint], addrSt: Option[Double], addrEn: Option[Double], coEff: Double = 1.0): Seq[ProjectLink] = {
     if (seq.isEmpty) Seq() else {
-      val seqOfEnds = TrackSectionOrder.findOnceConnectedLinks(seq).values.toSeq // Some complex cases may need simplifying to find ends correctly.
-      val endPoints = if (seq.exists(pl => pl.endAddrMValue == 0)) TrackSectionOrder.findChainEndpoints(seq) else  TrackSectionOrder.findChainEndpoints(seqOfEnds)
-      val firstLastEndpoint = (endPoints.head._1, endPoints.last._1)
-      val mappedEndpoints   = if (seqOfEnds.size == 1) {
-        val firstEndPoint  = TrackSectionOrder.getUnConnectedPoint(seq)
-        val secondEndPoint = TrackSectionOrder.getTripleConnectionPoint(seq)
-        if (firstEndPoint.isDefined && secondEndPoint.isDefined) orderEndPoints(seq.head, seqOfEnds.head, firstEndPoint.get, secondEndPoint.get) else firstLastEndpoint
-      } else firstLastEndpoint
-      val orderedPairs      = TrackSectionOrder.orderProjectLinksTopologyByGeometry(mappedEndpoints, seq)
-      val ordered           = if (seq.exists(_.track == Track.RightSide || seq.forall(_.track == Track.Combined))) orderedPairs._1 else orderedPairs._2.reverse
+      val ordered = if (seq.exists(pl => pl.isNotCalculated)) {
+        val seqOfEnds = TrackSectionOrder.findOnceConnectedLinks(seq).values.toSeq // Some complex cases may need simplifying to find ends correctly.
+        val endPoints = if (seq.exists(pl => pl.endAddrMValue == 0)) TrackSectionOrder.findChainEndpoints(seq) else  TrackSectionOrder.findChainEndpoints(seqOfEnds)
+        val firstLastEndpoint = (endPoints.head._1, endPoints.last._1)
+        val mappedEndpoints   = if (seqOfEnds.size == 1) {
+          val firstEndPoint  = TrackSectionOrder.getUnConnectedPoint(seq)
+          val secondEndPoint = TrackSectionOrder.getTripleConnectionPoint(seq)
+          if (firstEndPoint.isDefined && secondEndPoint.isDefined) orderEndPoints(seq.head, seqOfEnds.head, firstEndPoint.get, secondEndPoint.get) else firstLastEndpoint
+        } else firstLastEndpoint
+        val orderedPairs      = TrackSectionOrder.orderProjectLinksTopologyByGeometry(mappedEndpoints, seq)
+        if (seq.exists(_.track == Track.RightSide || seq.forall(_.track == Track.Combined))) orderedPairs._1 else orderedPairs._2.reverse
+      } else seq
 
       val newAddressValues = ordered.scanLeft(addrSt.getOrElse(0.0)) { case (m, pl) => {
         val someCalibrationPoint: Option[UserDefinedCalibrationPoint] = cps.get(pl.id)
-          val addressValue = if (someCalibrationPoint.nonEmpty) someCalibrationPoint.get.addressMValue else m + Math.abs(pl.geometryLength) * coEff
+
           pl.status match {
-            case LinkStatus.New => addressValue
-            case LinkStatus.Transfer | LinkStatus.NotHandled | LinkStatus.Numbering | LinkStatus.UnChanged => m + pl.addrMLength
+          case LinkStatus.New => if (someCalibrationPoint.nonEmpty) someCalibrationPoint.get.addressMValue else m + Math.abs(pl.geometryLength) * coEff
+            case LinkStatus.Transfer | LinkStatus.NotHandled | LinkStatus.Numbering | LinkStatus.UnChanged => m + (pl.originalEndAddrMValue - pl.originalStartAddrMValue)
             case LinkStatus.Terminated => pl.endAddrMValue
             case _ => throw new InvalidAddressDataException(s"Invalid status found at value assignment ${pl.status}, linkId: ${pl.linkId}")
           }
