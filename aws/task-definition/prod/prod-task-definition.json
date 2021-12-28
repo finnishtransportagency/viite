@@ -45,19 +45,19 @@
             "secrets": [
                 {
                     "name": "bonecp.password",
-                    "valueFrom": "arn:aws:ssm:eu-west-1:<ACCOUNT-ROLE-PLACEHOLDER>:parameter/Viite/prod.rds.viite.db.password"
+                    "valueFrom": "arn:aws:ssm:eu-west-1:<ACCOUNT-ROLE-PLACEHOLDER>:parameter/Viite/Prod/rds.viite.db.password"
                 },
                 {
                     "name": "conversion.bonecp.password",
-                    "valueFrom": "arn:aws:ssm:eu-west-1:<ACCOUNT-ROLE-PLACEHOLDER>:parameter/Viite/conversion.db.password"
+                    "valueFrom": "arn:aws:ssm:eu-west-1:<ACCOUNT-ROLE-PLACEHOLDER>:parameter/Viite/Prod/conversion.db.password"
                 },
                 {
                     "name": "authentication.admin.basic.password",
-                    "valueFrom": "arn:aws:ssm:eu-west-1:<ACCOUNT-ROLE-PLACEHOLDE>R:parameter/Viite/authentication.admin.basic.password"
+                    "valueFrom": "arn:aws:ssm:eu-west-1:<ACCOUNT-ROLE-PLACEHOLDE>R:parameter/Viite/Prod/authentication.admin.basic.password"
                 },
                 {
                     "name": "vkmApiKey",
-                    "valueFrom": "arn:aws:ssm:eu-west-1:<ACCOUNT-ROLE-PLACEHOLDER>:parameter/Viite/vkmApiKey-vkmprod"
+                    "valueFrom": "arn:aws:ssm:eu-west-1:<ACCOUNT-ROLE-PLACEHOLDER>:parameter/Viite/Prod/vkmApiKey"
                 }
             ],
             "memoryReservation": 2048,
