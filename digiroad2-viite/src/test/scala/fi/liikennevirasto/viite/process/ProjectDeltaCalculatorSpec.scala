@@ -5,10 +5,13 @@ import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LinkGeomSource}
+import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
-import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, MinorDiscontinuity}
+import fi.liikennevirasto.digiroad2.util.Track.{LeftSide, RightSide}
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, RoadAddressCP}
+import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, EndOfRoad, MinorDiscontinuity}
+import fi.liikennevirasto.viite.dao.LinkStatus.{Terminated, Transfer}
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.util.{toProjectLink, toTransition}
@@ -260,6 +263,65 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       correctRoadNumber.map(x => {
         (x._1.startMAddr, x._2.startMAddr, x._1.endMAddr, x._2.endMAddr)
       }) should be(Some((0L, 0L, 110L, 110L)))
+    }
+  }
+
+  test("Test ProjectDeltaCalculator.partition " +
+       "When a two track road is terminated from first links and rest is tranferred" +
+       "Then returns the correct From RoadSection -> To RoadSection mapping.") {
+    runWithRollback {
+      def plId: Long = Sequences.nextProjectLinkId
+      val allProjectLinks = Seq(
+        ProjectLink(plId,1999,1,RightSide,Continuous,0,100,0,100,None,None,Some("test_user"),1286532,0.0,100.0,TowardsDigitizing,(RoadAddressCP,NoCP),(RoadAddressCP,NoCP),List(Point(0.0,0.0,0.0), Point(0.0,100.0,0.0)),1227332,Terminated,AdministrativeClass.State,NormalLinkInterface,100.0,1316836,0,8,false,None,0,1000000000,None,None,None,None,None,None,None),
+        ProjectLink(plId,1999,1,RightSide,Continuous,100,210,100,210,None,None,Some("test_user"),1286533,0.0,110.0,TowardsDigitizing,(RoadAddressCP,NoCP),(RoadAddressCP,NoCP),List(Point(0.0,100.0,0.0), Point(0.0,210.0,0.0)),1227332,Terminated,AdministrativeClass.State,NormalLinkInterface,110.0,1316836,0,8,false,None,0,1000000000,None,None,None,None,None,None,None),
+        ProjectLink(plId,1999,1,LeftSide,Continuous,0,200,0,200,None,None,Some("test_user"),1286538,0.0,200.0,TowardsDigitizing,(RoadAddressCP,NoCP),(RoadAddressCP,NoCP),List(Point(5.0,0.0,0.0), Point(5.0,200.0,0.0)),1227332,Terminated,AdministrativeClass.State,NormalLinkInterface,200.0,1316838,0,8,false,None,0,1000000001,None,None,None,None,None,None,None),
+
+        ProjectLink(plId,1999,1,RightSide,Continuous,0,210,210,420,None,None,Some("test_user"),1286434,0.0,210.0,TowardsDigitizing,(RoadAddressCP,NoCP),(NoCP,NoCP),List(Point(0.0,200.0,0.0), Point(0.0,400.0,0.0)),1227332,Transfer,AdministrativeClass.State,NormalLinkInterface,200.0,1316836,0,8,false,None,0,1417932,None,None,None,None,None,None,None),
+        ProjectLink(plId,1999,1,RightSide,Continuous,210,420,420,630,None,None,Some("test_user"),1286435,0.0,210.0,TowardsDigitizing,(NoCP,NoCP),(NoCP,NoCP),List(Point(0.0,400.0,0.0), Point(0.0,600.0,0.0)),1227332,Transfer,AdministrativeClass.State,NormalLinkInterface,200.0,1316836,0,8,false,None,0,1417932,None,None,None,None,None,None,None),
+        ProjectLink(plId,1999,1,RightSide,Continuous,420,590,630,800,None,None,Some("test_user"),1286436,0.0,161.9047619047619,TowardsDigitizing,(NoCP,NoCP),(NoCP,NoCP),List(Point(0.0,600.0,0.0), Point(0.0,761.905,0.0)),1227332,Transfer,AdministrativeClass.State,NormalLinkInterface,161.9047619047619,1316836,0,8,false,Some(1286436),0,1417932,None,None,None,None,None,None,None),
+        ProjectLink(plId,1999,1,RightSide,Continuous,590,630,800,840,None,None,Some("test_user"),1286436,161.9047619047619,210.0,TowardsDigitizing,(NoCP,NoCP),(NoCP,NoCP),List(Point(0.0,761.905,0.0), Point(0.0,800.0,0.0)),1227332,Transfer,AdministrativeClass.State,NormalLinkInterface,38.0952380952381,1316836,0,8,false,Some(1286436),0,1417932,None,None,None,None,None,None,None),
+        ProjectLink(plId,1999,1,RightSide,EndOfRoad, 630,795,840,1000,None,None,Some("test_user"),1286437,0.0,210.0,TowardsDigitizing,(NoCP,RoadAddressCP),(NoCP,NoCP),List(Point(0.0,800.0,0.0), Point(0.0,1000.0,0.0)),1227332,Transfer,AdministrativeClass.State,NormalLinkInterface,200.0,1316836,0,8,false,None,0,1417932,None,None,None,None,None,None,None),
+
+        ProjectLink(plId,1999,1,LeftSide,Continuous,0,10,200,210,None,None,Some("test_user"),1286438,0.0,10.0,TowardsDigitizing,(RoadAddressCP,NoCP),(NoCP,NoCP),List(Point(5.0,200.0,0.0), Point(5.0,210.0,0.0)),1227332,Transfer,AdministrativeClass.State,NormalLinkInterface,10.0,1316838,0,8,false,None,0,1000000001,None,None,None,None,None,None,None),
+        ProjectLink(plId,1999,1,LeftSide,Continuous,10,200,210,400,None,None,Some("test_user"),1286438,10.0,200.0,TowardsDigitizing,(NoCP,NoCP),(NoCP,NoCP),List(Point(5.0,210.0,0.0), Point(5.0,400.0,0.0)),1227332,Transfer,AdministrativeClass.State,NormalLinkInterface,190.0,1316838,0,8,false,None,0,1000000001,None,None,None,None,None,None,None),
+        ProjectLink(plId,1999,1,LeftSide,Continuous,200,400,400,600,None,None,Some("test_user"),1286440,0.0,200.0,TowardsDigitizing,(NoCP,NoCP),(NoCP,NoCP),List(Point(5.0,400.0,0.0), Point(5.0,600.0,0.0)),1227332,Transfer,AdministrativeClass.State,NormalLinkInterface,200.0,1316838,0,8,false,None,0,1000000001,None,None,None,None,None,None,None),
+        ProjectLink(plId,1999,1,LeftSide,Continuous,400,600,600,800,None,None,Some("test_user"),1286441,0.0,200.0,TowardsDigitizing,(NoCP,NoCP),(NoCP,NoCP),List(Point(5.0,600.0,0.0), Point(5.0,800.0,0.0)),1227332,Transfer,AdministrativeClass.State,NormalLinkInterface,200.0,1316838,0,8,false,None,0,1000000001,None,None,None,None,None,None,None),
+        ProjectLink(plId,1999,1,LeftSide,Continuous,600,640,800,840,None,None,Some("test_user"),1286442,0.0,40.0,TowardsDigitizing,(NoCP,NoCP),(NoCP,NoCP),List(Point(5.0,800.0,0.0), Point(5.0,840.0,0.0)),1227332,Transfer,AdministrativeClass.State,NormalLinkInterface,40.0,1316838,0,8,false,Some(1286442),0,1000000001,None,None,None,None,None,None,None),
+        ProjectLink(plId,1999,1,LeftSide,EndOfRoad, 640,795,840,1000,None,None,Some("test_user"),1286442,40.0,200.0,TowardsDigitizing,(NoCP,RoadAddressCP),(NoCP,NoCP),List(Point(5.0,840.0,0.0), Point(5.0,1000.0,0.0)),1227332,Transfer,AdministrativeClass.State,NormalLinkInterface,160.0,1316838,0,8,false,Some(1286442),0,1000000001,None,None,None,None,None,None,None)
+      )
+
+      val transferred = ProjectDeltaCalculator.partitionWithProjectLinks(allProjectLinks.filter(_.status != LinkStatus.Terminated), allProjectLinks)
+      val transferredPaired = transferred.adjustedSections.zip(transferred.originalSections)
+
+      val terminated = ProjectDeltaCalculator.partitionWithProjectLinks(allProjectLinks.filter(_.status == LinkStatus.Terminated), allProjectLinks)
+
+      val twoTrackOldAddressRoadParts = (transferredPaired.map(roadwaySection => {
+        (roadwaySection._2, "other")
+      }).toSeq ++ terminated.adjustedSections.map(roadwaySection => {
+        (roadwaySection, "terminated")
+      }).toSeq).filterNot(_._1.track == Track.Combined).sortBy(_._1.startMAddr).groupBy(p => {
+        (p._1.roadNumber, p._1.roadPartNumberStart)
+      }).map(p => {
+        p._1 -> p._2.groupBy(_._1.track).values
+      })
+
+      val old_road_two_track_parts = ProjectDeltaCalculator.calc_parts(twoTrackOldAddressRoadParts)
+
+      val twoTrackAdjustedTerminated = old_road_two_track_parts.flatMap(_._1) ++ old_road_two_track_parts.flatMap(_._2)
+      val combinedTerminatedTrack = terminated.adjustedSections.filter(_.track == Track.Combined)
+
+      val adjustedTerminated = combinedTerminatedTrack ++ twoTrackAdjustedTerminated
+
+      transferredPaired should have size 2
+      adjustedTerminated should have size 2
+
+      transferredPaired.map(x => {
+        (x._1.startMAddr, x._2.startMAddr, x._1.endMAddr, x._2.endMAddr)
+      }).foreach(_ should be((0L, 205L, 795L, 1000L)))
+
+      adjustedTerminated.map(x => {
+        (x.startMAddr, x.endMAddr)
+      }).foreach(_ should be((0L, 205L)))
     }
   }
 

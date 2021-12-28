@@ -6,14 +6,16 @@ import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.util.Track.LeftSide
 import fi.liikennevirasto.digiroad2.util.{MissingRoadwayNumberException, MissingTrackException, RoadAddressException, Track}
 import fi.liikennevirasto.digiroad2.{Point, Vector3d}
-import fi.liikennevirasto.viite.NewIdValue
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.UserDefinedCP
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process._
+import fi.liikennevirasto.viite.process.strategy.FirstRestSections.{getUpdatedContinuousRoadwaySections, lengthCompare}
 import fi.liikennevirasto.viite.util.TwoTrackRoadUtils
+import fi.liikennevirasto.viite.util.TwoTrackRoadUtils._
+import fi.liikennevirasto.viite.{NewIdValue, UnsuccessfulRecalculationMessage}
 import org.slf4j.LoggerFactory
 
-import scala.annotation.tailrec
 import scala.collection.immutable.ListMap
 
 class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrategy {
@@ -76,25 +78,6 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     }.toSeq
   }
 
-  @tailrec
-  private def continuousSection(seq: Seq[ProjectLink], processed: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
-    if (seq.isEmpty)
-      (processed, seq)
-    else if (processed.isEmpty)
-      continuousSection(seq.tail, Seq(seq.head))
-    else {
-      val track = processed.last.track
-      val administrativeClass = processed.last.administrativeClass
-      val discontinuity = processed.last.discontinuity
-      val discontinuousSections = List(Discontinuity.Discontinuous, Discontinuity.MinorDiscontinuity, Discontinuity.ParallelLink)
-      if ((seq.head.track == track && seq.head.track == Track.Combined) || (seq.head.track == track && seq.head.track != Track.Combined && seq.head.administrativeClass == administrativeClass) && !discontinuousSections.contains(discontinuity)) {
-        continuousSection(seq.tail, processed :+ seq.head)
-      } else {
-        (processed, seq)
-      }
-    }
-  }
-
   def assignProperRoadwayNumber(continuousProjectLinks: Seq[ProjectLink], givenRoadwayNumber: Long, originalHistorySection: Seq[ProjectLink]): (Long, Long) = {
     def getRoadAddressesByRoadwayIds(roadwayIds: Seq[Long]): Seq[RoadAddress] = {
       val roadways = roadwayDAO.fetchAllByRoadwayId(roadwayIds)
@@ -144,13 +127,125 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
   }
 
   private def continuousRoadwaySection(seq: Seq[ProjectLink], givenRoadwayNumber: Long): (Seq[ProjectLink], Seq[ProjectLink]) = {
-    val track = seq.headOption.map(_.track).getOrElse(Track.Unknown)
-    val administrativeClass = seq.headOption.map(_.administrativeClass.value).getOrElse(0)
-
+    val track =
+      seq.headOption.map(_.track).getOrElse(Track.Unknown)
+    val discontinuity =
+      seq.head.discontinuity
+    val administrativeClass =
+      seq.head.administrativeClass
     val continuousProjectLinks =
-      seq.takeWhile(pl => pl.track == track && pl.administrativeClass.value == administrativeClass).sortBy(_.startAddrMValue)
-    val assignedContinuousSection = assignRoadwayNumbersInContinuousSection(continuousProjectLinks, givenRoadwayNumber)
-    (assignedContinuousSection, seq.drop(assignedContinuousSection.size))
+      seq.takeWhile(pl => pl.track == track && pl.discontinuity == discontinuity && pl.administrativeClass == administrativeClass)
+    def canIncludeNonContinuous: Boolean = {
+      val nextLink = seq(continuousProjectLinks.size)
+      nextLink.track == track && nextLink.administrativeClass == administrativeClass
+    }
+    val continuousProjectLinksWithDiscontinuity =
+      if (seq.size > continuousProjectLinks.size && canIncludeNonContinuous)
+        seq.take(continuousProjectLinks.size+1)
+      else
+        continuousProjectLinks
+    val assignedContinuousSection =
+      assignRoadwayNumbersInContinuousSection(continuousProjectLinksWithDiscontinuity, givenRoadwayNumber)
+    (assignedContinuousSection, seq.drop(continuousProjectLinksWithDiscontinuity.size))
+  }
+
+  /***
+   * Fetch project name by project id for logging purpose.
+   * @param projectId
+   * @return Project name for the projectId.
+   */
+  def getProjectNameForLogger(projectId: Long): String = {
+    val projectDAO: ProjectDAO = new ProjectDAO
+    val project                = projectDAO.fetchById(projectId)
+    project match {
+      case Some(p) => p.name
+      case None => ""
+    }
+  }
+
+  /***
+   * Helper function for logging throwing an exception.
+   * Used by calculation helper functions.
+   * @param errorLinks ProjectLinks causing the error.
+   * @param msg Error message for debug console.
+   */
+  def throwExceptionWithErrorInfo(errorLinks: Iterable[ProjectLink], msg: String): Nothing = {
+    val projectId   = errorLinks.head.projectId
+    val projectName = getProjectNameForLogger(projectId)
+    logger.error(
+      s"""$msg: $projectId $projectName:
+         | Error links:
+         | $errorLinks""".stripMargin)
+    throw new RoadAddressException(UnsuccessfulRecalculationMessage)
+  }
+
+  /***
+   * Intented use after all calculation.
+   * Checks combined track links have equal addressess after left side and right side travel.
+   * @param leftAdj Calculated leftside ProjectLinks.
+   * @param rightAdj Calculated leftside ProjectLinks.
+   */
+  def validateCombinedLinksEqualAddresses(leftAdj: Seq[ProjectLink], rightAdj: Seq[ProjectLink]): Unit = {
+    val leftCombinedLinks  = leftAdj.filter(_.track == Track.Combined)
+    val rightCombinedLinks = rightAdj.filter(_.track == Track.Combined)
+    val groupedById        = (leftCombinedLinks ++ rightCombinedLinks).groupBy(_.id)
+
+    if (!groupedById.values.forall(_.size == 2)) {
+      val falsePls = groupedById.filter(pls => pls._2.size != 2).values.flatten
+      val msg      = "Combined links pairing mismatch in project"
+      throwExceptionWithErrorInfo(falsePls, msg)
+    }
+    if (!groupedById.values.forall(pl => pl.head.startAddrMValue == pl.last.startAddrMValue)) {
+      val falsePls = groupedById.filter(pls => pls._2.head.startAddrMValue != pls._2.last.startAddrMValue).values.flatten
+      val msg      = "Combined track start address mismatch in project"
+      throwExceptionWithErrorInfo(falsePls, msg)
+    }
+    if (!groupedById.values.forall(pl => pl.head.endAddrMValue == pl.last.endAddrMValue)) {
+      val falsePls = groupedById.filter(pls => pls._2.head.endAddrMValue != pls._2.last.endAddrMValue).values.flatten
+      val msg      = "Combined track end address mismatch in project"
+      throwExceptionWithErrorInfo(falsePls, msg)
+    }
+  }
+
+  /***
+   * Checks splitted links have continuos m-values.
+   * Splitting has not caused wrong ordering.
+   * @param pls ProjectLinks of left or right side with combined track.
+   */
+  def validateMValuesOfSplittedLinks(pls: Seq[ProjectLink]): Unit = {
+    if (pls.size > 1) {
+      val it = pls.sliding(2)
+      while (it.hasNext) {
+        it.next() match {
+          case Seq(first, next) => {
+            if (first.connectedLinkId.isDefined && first.connectedLinkId == next.connectedLinkId) if (first.endMValue != next.startMValue) {
+              val falsePls = Iterable(first, next)
+              val msg      = "Discontinuity in splitted links endMValue and startMValue in project"
+              throwExceptionWithErrorInfo(falsePls, msg)
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /***
+   * Checks continuity of addresses, positivity of length and length is preserved.
+   * @param pls Left or right side ProjectLinks with combined to check for continuity of addresses.
+   */
+  def validateAddresses(pls: Seq[ProjectLink]): Unit = {
+    if (pls.size > 1) {
+      val it = pls.sliding(2)
+      while (it.hasNext) {
+        it.next() match {
+          case Seq(seq, next) => {
+            if (seq.endAddrMValue != next.startAddrMValue) throw new RoadAddressException(s"Address not continuous: ${seq.endAddrMValue} ${next.startAddrMValue} linkids: ${seq.linkId} ${next.linkId}")
+            if (!(seq.endAddrMValue > seq.startAddrMValue)) throw new RoadAddressException(s"Address length negative. linkid: ${seq.linkId}")
+            if (seq.status != LinkStatus.New) if (!((seq.endAddrMValue - seq.startAddrMValue) == (seq.originalEndAddrMValue - seq.originalStartAddrMValue))) throw new RoadAddressException(s"Length mismatch. New: ${seq.startAddrMValue} ${seq.endAddrMValue} original: ${seq.originalStartAddrMValue} ${seq.originalEndAddrMValue} linkid: ${seq.linkId}")
+          }
+        }
+      }
+    }
   }
 
   private def calculateSectionAddressValues(sections: Seq[CombinedSection],
@@ -165,39 +260,70 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         }
 
         val ((firstRight, restRight), (firstLeft, restLeft)): ((Seq[ProjectLink], Seq[ProjectLink]), (Seq[ProjectLink], Seq[ProjectLink])) = {
-          val newRoadwayNumber1 = Sequences.nextRoadwayNumber
-          val newRoadwayNumber2 = if (rightLinks.head.track == Track.Combined || leftLinks.head.track == Track.Combined) newRoadwayNumber1 else Sequences.nextRoadwayNumber
-          (continuousRoadwaySection(rightLinks, newRoadwayNumber1), continuousRoadwaySection(leftLinks, newRoadwayNumber2))
-            }
+          val newRoadwayNumber1         = Sequences.nextRoadwayNumber
+          val newRoadwayNumber2         = if (rightLinks.head.track == Track.Combined || leftLinks.head.track == Track.Combined) newRoadwayNumber1 else Sequences.nextRoadwayNumber
+          val continuousRoadwaySections = (continuousRoadwaySection(rightLinks, newRoadwayNumber1), continuousRoadwaySection(leftLinks, newRoadwayNumber2))
+          val rightSections             = FirstRestSections.apply _ tupled continuousRoadwaySections._1
+          val leftSections              = FirstRestSections.apply _ tupled continuousRoadwaySections._2
+
+          lengthCompare(leftSections, rightSections) match {
+            case 0 => continuousRoadwaySections
+            case 1 => getUpdatedContinuousRoadwaySections(rightSections, leftSections).getOrElse(continuousRoadwaySections)
+            case 2 => getUpdatedContinuousRoadwaySections(leftSections, rightSections).getOrElse(continuousRoadwaySections)
+          }
+        }
 
         if (firstRight.isEmpty || firstLeft.isEmpty)
           throw new RoadAddressException(s"Mismatching tracks, R ${firstRight.size}, L ${firstLeft.size}")
 
         val strategy: TrackCalculatorStrategy = TrackCalculatorContext.getStrategy(firstLeft, firstRight)
         logger.info(s"${strategy.name} strategy")
-        val trackCalcResult = strategy.assignTrackMValues(previousStart, firstLeft, firstRight, userDefinedCalibrationPoint)
-
-        val (adjustedRestRight, adjustedRestLeft) = adjustTracksToMatch(trackCalcResult.restLeft ++ restLeft, trackCalcResult.restRight ++ restRight, Some(trackCalcResult.endAddrMValue), userDefinedCalibrationPoint)
+        val trackCalcResult                       = strategy.assignTrackMValues(previousStart, firstLeft, firstRight, userDefinedCalibrationPoint)
+        val restLefts                             = trackCalcResult.restLeft ++ restLeft
+        val restRights                            = trackCalcResult.restRight ++ restRight
+        val (adjustedRestRight, adjustedRestLeft) = adjustTracksToMatch(restLefts, restRights, Some(trackCalcResult.endAddrMValue), userDefinedCalibrationPoint)
 
         (trackCalcResult.leftProjectLinks ++ adjustedRestRight, trackCalcResult.rightProjectLinks ++ adjustedRestLeft)
       }
     }
 
-    val rightSections = sections.flatMap(_.right.links).distinct
-    val leftSections = sections.flatMap(_.left.links).distinct
-    val rightLinks = ProjectSectionMValueCalculator.calculateMValuesForTrack(rightSections, userDefinedCalibrationPoint)
-    val leftLinks = ProjectSectionMValueCalculator.calculateMValuesForTrack(leftSections, userDefinedCalibrationPoint)
+    val rightSections     = sections.flatMap(_.right.links).distinct
+    val leftSections      = sections.flatMap(_.left.links).distinct
+    val rightLinks        = ProjectSectionMValueCalculator.calculateMValuesForTrack(rightSections, userDefinedCalibrationPoint)
+    val leftLinks         = ProjectSectionMValueCalculator.calculateMValuesForTrack(leftSections, userDefinedCalibrationPoint)
+
+    validateMValuesOfSplittedLinks(leftLinks)
+    validateMValuesOfSplittedLinks(rightLinks)
+
+    validateAddresses(leftLinks)
+    validateAddresses(rightLinks)
+
+    val allProjectLinks         = (projectLinkDAO.fetchProjectLinks(leftLinks.head.projectId, Some(LinkStatus.Terminated)) ++ leftLinks ++ rightLinks).sortBy(_.startAddrMValue)
+    val twoTracksWithTerminated = allProjectLinks.filter(filterExistingLinks)
+
+    val (rightOnlyWithTerminated, leftOnlyWithTerminated) = twoTracksWithTerminated.partition(_.track == Track.RightSide)
+    val rightOnlyWithTerminatedEndAddresses               = getContinuousByStatus(rightOnlyWithTerminated)
+    val leftOnlyWithTerminatedEndAddresses                = getContinuousByStatus(leftOnlyWithTerminated)
+    val originalStatusEnds                                = (rightOnlyWithTerminatedEndAddresses ++ leftOnlyWithTerminatedEndAddresses).distinct.sorted
 
     /* Adjust addresses before splits, calibrationpoints after splits don't restrict calculation. */
     /* TODO: Check if userDefinedCalibrationPoint should be included here -> calculate with user given addresses. */
-    val (adjustedLeftLinksBeforeStatusSplits, adjustedRightLinksBeforeStatusSplits) = adjustTracksToMatch(leftLinks, rightLinks, None, userDefinedCalibrationPoint)
-    val (left_combined,right_combined) = TwoTrackRoadUtils.splitPlsAtRoadwayChange(adjustedLeftLinksBeforeStatusSplits, adjustedRightLinksBeforeStatusSplits)
-    val (adjustedRightLinksAfterRoadwaySplits,adjustedLeftLinksAfterRoadwaySplits) = TwoTrackRoadUtils.splitPlsAtRoadwayChange(right_combined, left_combined)
+    val (adjustedLeftLinksBeforeStatusSplits, adjustedRightLinksBeforeStatusSplits) = adjustTracksToMatch(combineAndSort(leftLinks, splitByOriginalAddress(originalStatusEnds, leftLinks)), combineAndSort(rightLinks, splitByOriginalAddress(originalStatusEnds, rightLinks)), None, userDefinedCalibrationPoint)
 
-    val (leftLinksWithUdcps, splittedRightLinks, udcpsFromRightSideSplits) = TwoTrackRoadUtils.splitPlsAtStatusChange(adjustedLeftLinksAfterRoadwaySplits, adjustedRightLinksAfterRoadwaySplits)
+    val (leftLinksWithUdcps, splittedRightLinks, udcpsFromRightSideSplits) = TwoTrackRoadUtils.splitPlsAtStatusChange(adjustedLeftLinksBeforeStatusSplits, adjustedRightLinksBeforeStatusSplits)
     val (rightLinksWithUdcps, splittedLeftLinks, udcpsFromLeftSideSplits) = TwoTrackRoadUtils.splitPlsAtStatusChange(splittedRightLinks, leftLinksWithUdcps)
 
-    val dups = (udcpsFromRightSideSplits ++ udcpsFromLeftSideSplits).filter(udcp => udcp.isDefined && udcp.get.isInstanceOf[UserDefinedCalibrationPoint]).groupBy(_.get.projectLinkId).filter(_._2.size > 1)
+    val udcpSplitsAtOriginalAddresses = (filterOldLinks(rightLinksWithUdcps) ++ filterOldLinks(splittedLeftLinks)).filter(_.endCalibrationPointType == UserDefinedCP).map(_.originalEndAddrMValue).filter(_ > 0)
+    val sortedSplitOriginalAddresses = (getContinuousByStatus(rightLinksWithUdcps) ++ getContinuousByStatus(splittedLeftLinks) ++ udcpSplitsAtOriginalAddresses).distinct.sorted
+
+    val leftLinksWithSplits  = splitByOriginalAddresses(splittedLeftLinks, sortedSplitOriginalAddresses)
+    val rightLinksWithSplits = splitByOriginalAddresses(rightLinksWithUdcps, sortedSplitOriginalAddresses)
+
+    def udcpIsDefined(udcp: Option[UserDefinedCalibrationPoint]) =
+      udcp.isDefined && udcp.get.isInstanceOf[UserDefinedCalibrationPoint]
+
+    val dups = (udcpsFromRightSideSplits ++ udcpsFromLeftSideSplits).filter(udcpIsDefined).groupBy(_.get.projectLinkId).filter(_._2.size > 1)
+
     /* Update udcp pl if splitted after second pass. */
     val updatedudcpsFromRightSideSplits = dups.foldLeft(udcpsFromRightSideSplits) { (udcpsToUpdate, cur) => {
       val splittedLeftLink       = splittedLeftLinks.find(_.id == cur._1)
@@ -210,15 +336,23 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       }
     }}
 
-    val splitCreatedCpsFromRightSide: Map[Long, UserDefinedCalibrationPoint] = (updatedudcpsFromRightSideSplits ).filter(udcp => udcp.isDefined && udcp.get.isInstanceOf[UserDefinedCalibrationPoint]).map( ucp => ucp.get).map(c => c.projectLinkId -> c).toMap
-    val splitCreatedCpsFromLeftSide: Map[Long, UserDefinedCalibrationPoint] = (udcpsFromLeftSideSplits).filter(udcp => udcp.isDefined && udcp.get.isInstanceOf[UserDefinedCalibrationPoint]).map( ucp => ucp.get).map(c => c.projectLinkId -> c).toMap
+    def toUdcpMap(udcp: Seq[Option[UserDefinedCalibrationPoint]]) = udcp.filter(udcpIsDefined).map(_.get).map(c => c.projectLinkId -> c)
 
-    val allUdcps =  userDefinedCalibrationPoint ++ splitCreatedCpsFromRightSide ++ splitCreatedCpsFromLeftSide
-    val (adjustedLeft, adjustedRight) = adjustTracksToMatch(splittedLeftLinks.filterNot(_.status == LinkStatus.Terminated), rightLinksWithUdcps.filterNot(_.status == LinkStatus.Terminated), None, allUdcps)
+    val splitCreatedCpsFromRightSide = toUdcpMap(updatedudcpsFromRightSideSplits).toMap
+    val splitCreatedCpsFromLeftSide  = toUdcpMap(udcpsFromLeftSideSplits).toMap
+
+    val (adjustedLeft, adjustedRight) = (leftLinksWithSplits.filterNot(_.status == LinkStatus.Terminated), rightLinksWithSplits.filterNot(_.status == LinkStatus.Terminated))
+
+    validateMValuesOfSplittedLinks(adjustedLeft)
+    validateMValuesOfSplittedLinks(adjustedRight)
+
+    validateAddresses(adjustedLeft)
+    validateAddresses(adjustedRight)
+    validateCombinedLinksEqualAddresses(adjustedLeft, adjustedRight)
+
     val (right, left) = TrackSectionOrder.setCalibrationPoints(adjustedRight, adjustedLeft, userDefinedCalibrationPoint ++ splitCreatedCpsFromRightSide ++ splitCreatedCpsFromLeftSide)
     TrackSectionOrder.createCombinedSections(right, left)
   }
-
 
   /**
     * Find starting point(s) after adding new operation for the links in the project.
@@ -463,5 +597,41 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
   private def getOppositeEnd(link: BaseRoadAddress, point: Point): Point = {
     val (st, en) = link.getEndPoints
     if (st.distance2DTo(point) < en.distance2DTo(point)) en else st
+  }
+
+}
+
+/***
+ * Toolbox for adjustTracksToMatch().
+ */
+case class FirstRestSections(first:Seq[ProjectLink], rest: Seq[ProjectLink])
+object FirstRestSections {
+  def checkTheLastLinkInOppositeRange(sect: Seq[ProjectLink], oppositeSect: Seq[ProjectLink]): Boolean =
+    sect.size > 1 &&
+    oppositeSect.size > 1 &&
+    sect.last.discontinuity != oppositeSect.last.discontinuity &&
+    Math.abs(sect.last.endAddrMValue - oppositeSect.last.endAddrMValue) > Math.abs(sect(sect.size - 2).endAddrMValue - oppositeSect.last.endAddrMValue)
+
+  def getEqualRoadwaySections(sect: FirstRestSections, oppositeSect: FirstRestSections): Some[((Seq[ProjectLink], Seq[ProjectLink]), (Seq[ProjectLink], Seq[ProjectLink]))] = {
+    val newFirstSection = sect.first.takeWhile(_.endAddrMValue <= oppositeSect.first.last.endAddrMValue)
+    val newRestSection  = sect.first.drop(newFirstSection.size) ++ sect.rest
+    Some((newFirstSection, newRestSection), FirstRestSections.unapply(oppositeSect).get)
+  }
+
+  def getUpdatedContinuousRoadwaySections(sect: FirstRestSections, oppositeSect: FirstRestSections): Option[((Seq[ProjectLink], Seq[ProjectLink]), (Seq[ProjectLink], Seq[ProjectLink]))] = {
+    if (checkTheLastLinkInOppositeRange(sect.first, oppositeSect.first))
+      getEqualRoadwaySections(sect, oppositeSect)
+    else
+      None
+  }
+
+  def lengthCompare(leftSections: FirstRestSections, rightSections: FirstRestSections): Int = {
+    val firstRightEndAddress = rightSections.first.last.endAddrMValue
+    val firstLeftEndAddress  = leftSections.first.last.endAddrMValue
+
+    Seq(firstRightEndAddress == firstLeftEndAddress,
+        firstRightEndAddress  > firstLeftEndAddress,
+        firstRightEndAddress  < firstLeftEndAddress)
+      .indexOf(true)
   }
 }

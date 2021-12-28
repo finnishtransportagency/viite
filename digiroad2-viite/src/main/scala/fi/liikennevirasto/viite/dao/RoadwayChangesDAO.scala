@@ -2,8 +2,8 @@ package fi.liikennevirasto.viite.dao
 
 import java.sql.{PreparedStatement, Timestamp}
 
-import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
+import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, ParallelLink}
 import fi.liikennevirasto.viite.process.ProjectDeltaCalculator.projectLinkDAO
@@ -380,7 +380,7 @@ class RoadwayChangesDAO {
           val old_road_two_track_parts = ProjectDeltaCalculator.calc_parts(twoTrackOldAddressRoadParts)
 
           val twoTrackAdjustedTerminated = old_road_two_track_parts.flatMap(_._1) ++ old_road_two_track_parts.flatMap(_._2)
-          val combinedTerminatedTrack = terminated.originalSections.filter(_.track == Track.Combined)
+          val combinedTerminatedTrack = terminated.adjustedSections.filter(_.track == Track.Combined)
 
           val adjustedTerminated = combinedTerminatedTrack ++ twoTrackAdjustedTerminated
 
