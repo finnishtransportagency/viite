@@ -1228,7 +1228,8 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
         check_two_track_continuous(two_track_nonterminated_sources)
         check_two_track_continuous(two_track_nonterminated_targets)
 
-       /* Check second calculation. */
+       /* Check second calculation.
+       * The result should be the same as after the first calculation. */
        projectService_db.recalculateProjectLinks(projectSaved.id, "")
        val afterSecondCalc = projectService_db.getProjectLinks(projectSaved.id)
        afterSecondCalc.size should be (afterCalculatedProjectlinks.size)

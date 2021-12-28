@@ -351,8 +351,8 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
         l.copy(endMValue = GeometryUtils.geometryLength(geom), geometry = geom, geometryLength = GeometryUtils.geometryLength(geom))
       }
       val adjusted = ProjectSectionCalculator.assignMValues(geomToLinks)
-      val x = geomToLinks.map(_.id)
-      projectLinkDAO.create(adjusted.filter(pl => !x.contains(pl.id)))
+      val projectLinkIds = geomToLinks.map(_.id)
+      projectLinkDAO.create(adjusted.filter(pl => !projectLinkIds.contains(pl.id)))
       projectLinkDAO.updateProjectLinks(adjusted, "-", Seq())
 
       reset(mockRoadLinkService)
