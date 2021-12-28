@@ -1,0 +1,35 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: CloudFormation managed SecureString Parameters
+
+Resources:
+  Parameter1:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /Viite/Prod/conversion.db.password
+      Type: String
+      Value: PlaceHolderValue
+      Description: Password for drkonv db, where the Initial Import data is retrieved
+
+  Parameter2:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /Viite/Prod/authentication.admin.basic.password
+      Type: String
+      Value: PlaceHolderValue
+      Description: Used by the lambdas, to access AdminAPI
+
+  Parameter3:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /Viite/Prod/rds.viite.db.password
+      Type: String
+      Value: PlaceHolderValue
+      Description: RDS password for Viite prod
+
+  Parameter4:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /Viite/Prod/vkmApiKey
+      Type: String
+      Value: PlaceHolderValue
+      Description: Viite access key for Viitekehysmuunnin's production API
