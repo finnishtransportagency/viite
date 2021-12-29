@@ -81,7 +81,7 @@ Huom: [:VERSION] -kohdan pois jättäminen ottaa käyttöön viimeisimmän versi
 >    --cli-input-json file://aws/task-definition/prod/prod-task-definition.json
 
 ### Ota juuri rekisteröity task-definitionin versio käyttöön
-Huom.: [:VERSION] -kohdan pois jättäminen ottaa käyttään viimeisimmän ("latest") 
+Huom.: [:VERSION] -kohdan pois jättäminen ottaa käyttöön viimeisimmän version ("latest") 
 >aws ecs update-service \
 >    --profile [your_Väylä_profile] \
 >    --region eu-west-1 \
