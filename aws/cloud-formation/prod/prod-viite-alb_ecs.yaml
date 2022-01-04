@@ -28,9 +28,6 @@ Parameters:
   ApiGatewayUrl:
     Type: String
     Description: ApiGateWay Url
-  RepositoryURI:
-    Type: String
-    Description: URI to repository, where the container is
   CNameRecord:
     Description: CName of the application (no whitespace or special characters)
     Type: String
