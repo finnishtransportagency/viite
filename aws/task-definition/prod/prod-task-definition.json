@@ -72,7 +72,7 @@
     ],
     "memory": "4096",
     "taskRoleArn": "arn:aws:iam::<ACCOUNT-ROLE-PLACEHOLDER>:role/ECSTaskExecutionRoleForViiteProd",
-    "family": "Prod-viite",
+    "family": "Prod-Viite",
     "requiresCompatibilities": [
         "FARGATE"
     ],
