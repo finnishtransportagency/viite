@@ -16,8 +16,8 @@ Huom. ympäristömuuttujat säilyvät vain shell / cmd session ajan
 
 *Windows Command Prompt*
 ```
-set AWS_DEFAULT_REGION eu-west-1
-set AWS_PROFILE centralized_service_admin
+setx AWS_DEFAULT_REGION eu-west-1
+setx AWS_PROFILE centralized_service_admin
 ```
 
 *Linux / macOS*
