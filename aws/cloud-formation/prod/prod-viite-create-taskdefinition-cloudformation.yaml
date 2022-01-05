@@ -3,7 +3,7 @@ Description: CloudFormation managed taskdefinition
 Parameters:
   RepositoryURL:
     Type: String
-    Description: URL to repository, where the container is
+    Description: URL to repository, where the container is, e.g. 012345678910.dkr.ecr.eu-west-1.amazonaws.com
 Resources:
   taskdefinition:
     Type: AWS::ECS::TaskDefinition
