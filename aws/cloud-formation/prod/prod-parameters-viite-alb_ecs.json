@@ -13,7 +13,7 @@
   },
   {
     "ParameterKey": "TaskDefinitionForService",
-    "ParameterValue": "prod-viite"
+    "ParameterValue": "Prod-Viite"
   },
   {
     "ParameterKey": "Environment",
