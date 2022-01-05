@@ -3,7 +3,7 @@ Description: CloudFormation managed taskdefinition
 Parameters:
   RepositoryURL:
     Type: String
-    Description: URI to repository, where the container is
+    Description: URL to repository, where the container is
 Resources:
   taskdefinition:
     Type: AWS::ECS::TaskDefinition
@@ -74,9 +74,7 @@ Resources:
           - Name: vkmApiKey
             Value: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/Viite/Prod/vkmApiKey'
         MemoryReservation: 2048
-        Image: !Sub
-          - '${repositoryUrl}/viite-prod:latest'
-          - { repositoryUrl: !Ref RepositoryURL}
+        Image: !Sub '${RepositoryURL}/viite-prod:latest'
         Name: Viite-prod
         HealthCheck:
           StartPeriod: 15
