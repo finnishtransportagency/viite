@@ -102,8 +102,8 @@ aws cloudformation update-stack \
 Huom.: [:VERSION] -kohdan pois jättäminen ottaa käyttöön viimeisimmän task definition version ("latest") 
 ```
 aws ecs update-service \
---cluster Prod-Viite-ECS-Cluster-Private \
---service Prod-Viite-ECS-Service-Private \
+--cluster QA-viite-test-ECS-Cluster-Private \
+--service QA-viite-test-ECS-Service-Private \
 --task-definition QA-viite-test[:VERSION] \
 --force-new-deployment
 ```
