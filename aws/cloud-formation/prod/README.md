@@ -46,6 +46,15 @@ aws ssm put-parameter --overwrite --name /Viite/Prod/rds.viite.db.password --typ
 aws ssm put-parameter --overwrite --name /Viite/Prod/vkmApiKey --type SecureString --value X
 ```
 
+### Luo task-definition
+
+```
+aws cloudformation create-stack \
+--stack-name [esim. viite-prod-taskdefinition] \
+--template-body file://aws/cloud-formation/prod/prod-viite-create-taskdefinition-cloudformation.yaml \
+--parameters ParameterKey=RepositoryURL,ParameterValue=[URL repositoryyn jossa kontti sijaitsee esim. 012345678910.dkr.ecr.eu-west-1.amazonaws.com]
+```
+
 ### Luo Viitteen ALB-stack
 ```
 aws cloudformation create-stack \
@@ -53,20 +62,6 @@ aws cloudformation create-stack \
 --on-failure DELETE --capabilities CAPABILITY_NAMED_IAM \
 --template-body file://aws/cloud-formation/prod/prod-viite-alb_ecs.yaml \
 --parameters file://aws/cloud-formation/prod/prod-parameters-viite-alb_ecs.json
-```
-### Rekisteröi task-definition
-```
-aws ecs register-task-definition --cli-input-json file://aws/task-definition/prod/prod-task-definition.json
-```
-
-### Ota juuri rekisteröity task-definitionin versio käyttöön
-Huom: [:VERSION] -kohdan pois jättäminen ottaa käyttöön viimeisimmän version ("latest") 
-```
-aws ecs update-service \
---cluster Prod-Viite-ECS-Cluster-Private \
---service Prod-Viite-ECS-Service-Private \
---task-definition Viite-prod[:VERSION] \
---force-new-deployment
 ```
 
 # Viite tuotanto, päivitys
@@ -76,8 +71,8 @@ Huom. ympäristömuuttujat säilyvät vain shell / cmd session ajan
 
 *Windows Command Prompt*
 ```
-set AWS_DEFAULT_REGION eu-west-1
-set AWS_PROFILE centralized_service_admin
+setx AWS_DEFAULT_REGION eu-west-1
+setx AWS_PROFILE centralized_service_admin
 ```
 
 *Linux / macOS*
@@ -85,8 +80,16 @@ set AWS_PROFILE centralized_service_admin
 export AWS_DEFAULT_REGION=eu-west-1
 export AWS_PROFILE=centralized_service_admin
 ```
+### Task definitionin päivitys
 
-### Päivitä Viitteen ALB-stack
+```
+aws cloudformation update-stack \
+--stack-name [esim. viite-prod-taskdefinition] \
+--template-body file://aws/cloud-formation/prod/prod-viite-create-taskdefinition-cloudformation.yaml \
+--parameters ParameterKey=RepositoryURL,ParameterValue=[URL repositoryyn jossa kontti sijaitsee esim. 012345678910.dkr.ecr.eu-west-1.amazonaws.com]
+```
+
+### ALB-stackin päivitys
 ```
 aws cloudformation update-stack \
 --stack-name [esim. viite-prod] \
@@ -94,16 +97,13 @@ aws cloudformation update-stack \
 --template-body file://aws/cloud-formation/prod/prod-viite-alb_ecs.yaml \
 --parameters file://aws/cloud-formation/prod/prod-parameters-viite-alb_ecs.json
 ```
-### Rekisteröi task-definition
-```
-aws ecs register-task-definition --cli-input-json file://aws/task-definition/prod/prod-task-definition.json
-```
-### Ota juuri rekisteröity task-definitionin versio käyttöön
-Huom.: [:VERSION] -kohdan pois jättäminen ottaa käyttöön viimeisimmän version ("latest") 
+
+### Kontin päivitys
+Huom.: [:VERSION] -kohdan pois jättäminen ottaa käyttöön viimeisimmän task definition version ("latest") 
 ```
 aws ecs update-service \
 --cluster Prod-Viite-ECS-Cluster-Private \
 --service Prod-Viite-ECS-Service-Private \
---task-definition Viite-prod[:VERSION] \
+--task-definition Prod-Viite[:VERSION] \
 --force-new-deployment
 ```
