@@ -80,7 +80,7 @@ setx AWS_PROFILE vaylaapp
 export AWS_DEFAULT_REGION=eu-west-1
 export AWS_PROFILE= vaylaapp
 ```
-### Päivitä task-definition
+### Task definitionin päivitys
 
 ```
 aws cloudformation update-stack \
@@ -89,11 +89,21 @@ aws cloudformation update-stack \
 --parameters ParameterKey=RepositoryURL,ParameterValue=[URL repositoryyn jossa kontti sijaitsee esim. 012345678910.dkr.ecr.eu-west-1.amazonaws.com]
 ```
 
-### Päivitä Viitteen ALB-stack
+### ALB-stackin päivitys
 ```
 aws cloudformation update-stack \
 --stack-name [esim. viite-qa] \
 --on-failure DELETE --capabilities CAPABILITY_NAMED_IAM \
 --template-body file://aws/cloud-formation/qa/qa-viite-alb_ecs.yaml \
 --parameters file://aws/cloud-formation/qa/qa-parameters-viite-alb_ecs.json
+```
+
+### Kontin päivitys
+Huom.: [:VERSION] -kohdan pois jättäminen ottaa käyttöön viimeisimmän task definition version ("latest") 
+```
+aws ecs update-service \
+--cluster Prod-Viite-ECS-Cluster-Private \
+--service Prod-Viite-ECS-Service-Private \
+--task-definition QA-viite-test[:VERSION] \
+--force-new-deployment
 ```
