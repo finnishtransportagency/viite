@@ -1,0 +1,103 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: CloudFormation managed taskdefinition
+Parameters:
+  RepositoryURL:
+    Type: String
+    Description: URL to repository, where the container is, e.g. 012345678910.dkr.ecr.eu-west-1.amazonaws.com
+Resources:
+  taskdefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ExecutionRoleArn: !Sub 'arn:aws:iam::${AWS::AccountId}:role/TaskExecutionRole'
+      ContainerDefinitions:
+        -
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: /ecs/QA-viite-test-ECS-logs
+              awslogs-region: eu-west-1
+              awslogs-stream-prefix: ecs
+          PortMappings:
+            - ContainerPort: 9080
+              HostPort: 9080
+              Protocol: tcp
+          Cpu: 0
+          Environment:
+            - Name: userProvider
+              Value: fi.liikennevirasto.digiroad2.dao.PostGISUserProvider
+            - Name: municipalityProvider
+              Value: fi.liikennevirasto.digiroad2.dao.PostGISMunicipalityProvider
+            - Name: eventBus
+              Value: fi.liikennevirasto.digiroad2.DigiroadEventBus
+            - Name: vvhServiceHost
+              Value: haproxy.vayla.fi
+            - Name: oagProxyServer
+              Value: oag.vayla.fi
+            - Name: oagProxyURL
+              Value: 'https://oag.vayla.fi'
+            - Name: rasterServiceURL
+              Value: 'https://oag.vayla.fi/rasteripalvelu-mml'
+            - Name: vvhRestApiEndPoint
+              Value: 'https://haproxy.vayla.fi:2027/vvhdata/'
+            - Name: vvhRoadlink.frozen
+              Value: 'true'
+            - Name: vkmUrl
+              Value: 'https://api.vaylapilvi.fi'
+            - Name: http.proxySet
+              Value: 'false'
+            - Name: http.proxyHost
+              Value: 127.0.0.1
+            - Name: http.nonProxyHosts
+              Value: 127.0.0.1
+            - Name: importOnlyCurrent
+              Value: 'false'
+            - Name: authenticationTestMode
+              Value: 'false'
+            - Name: bonecp.jdbcUrl
+              Value: 'jdbc:postgresql://rdspg13test.chw6qe2cqnfv.eu-west-1.rds.amazonaws.com:5432/viitetest'
+            - Name: bonecp.username
+              Value: viitetest
+            - Name: conversion.bonecp.jdbcUrl
+              Value: 'jdbc:postgresql://vd1bbyq5el8tjd2.c8dj2qlvf50d.eu-west-1.rds.amazonaws.com:5432/drkonv'
+            - Name: conversion.bonecp.username
+              Value: drkonv
+            - Name: authentication.admin.basic.username
+              Value: admin
+            - Name: env
+              Value: QA
+          Secrets:
+            - Name: bonecp.password
+              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/Viite/QA/rds.viite.db.password'
+            - Name: conversion.bonecp.password
+              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/Viite/QA/conversion.db.password'
+            - Name: authentication.admin.basic.password
+              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/Viite/QA/authentication.admin.basic.password'
+            - Name: vkmApiKey
+              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/Viite/QA/vkmApiKey'
+          MemoryReservation: 2048
+          Image: !Sub '${RepositoryURL}/viite-qa:latest'
+          Name: viite-test
+          HealthCheck:
+            StartPeriod: 15
+            Command:
+              - CMD-SHELL
+              - curl -f http://127.0.0.1:9080/api/ping/ || exit 1
+      Memory: '4096'
+      # TaskRoleArn: ''
+      Family: QA-viite-test
+      RequiresCompatibilities:
+        - FARGATE
+      NetworkMode: awsvpc
+      Cpu: '2048'
+      Tags:
+        - Key: Name
+          Value: Viite-QA
+        - Key: Environment
+          Value: QA
+        - Key: Owner
+          Value: Vayla
+        - Key: Project
+          Value: Viite
+        - Key: Application
+          Value: Viite
+
