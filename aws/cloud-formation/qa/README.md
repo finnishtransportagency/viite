@@ -99,11 +99,7 @@ aws cloudformation update-stack \
 ```
 
 ### Kontin päivitys
-Huom.: [:VERSION] -kohdan pois jättäminen ottaa käyttöön viimeisimmän task definition version ("latest") 
+Aseta Devtest:latest-kontti -> QA:latest-kontiksi
 ```
-aws ecs update-service \
---cluster QA-viite-test-ECS-Cluster-Private \
---service QA-viite-test-ECS-Service-Private \
---task-definition QA-viite-test[:VERSION] \
---force-new-deployment
+aws-deploy-qa.sh
 ```
