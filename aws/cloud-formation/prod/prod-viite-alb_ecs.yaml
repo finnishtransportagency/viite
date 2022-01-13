@@ -31,14 +31,24 @@ Parameters:
   CNameRecord:
     Description: CName of the application (no whitespace or special characters)
     Type: String
-  SecurityGroupName:
-    Description: SecurityGroupName (no whitespace or special characters)
-    Type: String
-Conditions:
-  HasSecurityGroupSpecified:
-    !Not [!Equals ['', !Ref SecurityGroupName]]
 
 Resources:
+  LoadBalancerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow inbound to port 80, Outbound to everything
+      GroupName: !Join ['-', [!Ref Environment,!Ref ApplicationName, 'LoadBalancerSecurityGroup']]
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: "-1"
+          CidrIp: 0.0.0.0/0
+      VpcId:
+        Fn::ImportValue:
+          !Join ['-', [ !Ref NetworkStackName, 'VPC-Id']]
   ECSCluster:
     Type: AWS::ECS::Cluster
     Properties:
@@ -104,7 +114,7 @@ Resources:
             !Join ['-', [!Ref NetworkStackName, 'Subnet1-Id']]
         - Fn::ImportValue:
             !Join ['-', [!Ref NetworkStackName, 'Subnet2-Id']]
-      SecurityGroups: !If [HasSecurityGroupSpecified, [!Ref SecurityGroupName], !Ref AWS::NoValue]
+      SecurityGroups: [!Ref LoadBalancerSecurityGroup]
       Tags:
         - Key: Name
           Value: !Join ['-', [!Ref Environment,!Ref ApplicationName, 'LoadBalancer']]
@@ -167,35 +177,6 @@ Resources:
           Values: ['*']
       ListenerArn: !Ref PrivateLoadBalancerListener
       Priority: 3
-
-  BlockUserFromUsingExternalAPI:
-    Type: AWS::ElasticLoadBalancingV2::ListenerRule
-    DependsOn: PrivateLoadBalancerListener
-    Properties:
-      Actions:
-        - FixedResponseConfig:
-            ContentType: 'text/html'
-            MessageBody: 'Selaink&auml;ytt&ouml; on nyky&auml;&auml;n estetty. Voit k&auml;ytt&auml;&auml; palvelua api.vaylapilvi.fi/viite API-avaimen kanssa.'
-            StatusCode: '403'
-          Type: 'fixed-response'
-      Conditions:
-        - Field: path-pattern
-          Values: [ '/externalApi/*' ]
-      ListenerArn: !Ref PrivateLoadBalancerListener
-      Priority: 2
-
-  AllowApiGateway:
-    Type: AWS::ElasticLoadBalancingV2::ListenerRule
-    DependsOn: PrivateLoadBalancerListener
-    Properties:
-      Actions:
-        - TargetGroupArn: !Ref 'TargetGroup'
-          Type: 'forward'
-      Conditions:
-        - Field: host-header
-          Values: [ !Ref ApiGatewayUrl ]
-      ListenerArn: !Ref PrivateLoadBalancerListener
-      Priority: 1
 
   EcsService:
     Type: AWS::ECS::Service
