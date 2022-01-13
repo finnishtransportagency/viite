@@ -33,7 +33,11 @@ Parameters:
     Type: String
   SecurityGroupName:
     Description: SecurityGroupName (no whitespace or special characters)
-    Type: List<String>
+    Type: String
+Conditions:
+  HasSecurityGroupSpecified:
+    !Not [!Equals ['', !Ref SecurityGroupName]]
+
 Resources:
   ECSCluster:
     Type: AWS::ECS::Cluster
@@ -100,7 +104,7 @@ Resources:
             !Join ['-', [!Ref NetworkStackName, 'Subnet1-Id']]
         - Fn::ImportValue:
             !Join ['-', [!Ref NetworkStackName, 'Subnet2-Id']]
-      SecurityGroups: !Ref SecurityGroupName
+      SecurityGroups: !If [HasSecurityGroupSpecified, [!Ref SecurityGroupName], !Ref AWS::NoValue]
       Tags:
         - Key: Name
           Value: !Join ['-', [!Ref Environment,!Ref ApplicationName, 'LoadBalancer']]
