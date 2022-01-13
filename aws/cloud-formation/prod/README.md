@@ -81,12 +81,21 @@ export AWS_DEFAULT_REGION=eu-west-1
 export AWS_PROFILE=centralized_service_admin
 ```
 ### Task definitionin päivitys
-
+Luo uusi task definition versio
 ```
 aws cloudformation update-stack \
 --stack-name [esim. viite-prod-taskdefinition] \
 --template-body file://aws/cloud-formation/prod/prod-viite-create-taskdefinition-cloudformation.yaml \
 --parameters ParameterKey=RepositoryURL,ParameterValue=[URL repositoryyn jossa kontti sijaitsee esim. 012345678910.dkr.ecr.eu-west-1.amazonaws.com]
+```
+Ota juuri luotu task definition versio käyttöön. \
+Huom.: [:VERSION] -kohdan pois jättäminen ottaa käyttöön viimeisimmän task definition version ("latest") 
+```
+aws ecs update-service \
+--cluster Prod-Viite-ECS-Cluster-Private \
+--service Prod-Viite-ECS-Service-Private \
+--task-definition Prod-Viite[:VERSION] \
+--force-new-deployment
 ```
 
 ### ALB-stackin päivitys
@@ -98,12 +107,3 @@ aws cloudformation update-stack \
 --parameters file://aws/cloud-formation/prod/prod-parameters-viite-alb_ecs.json
 ```
 
-### Kontin päivitys
-Huom.: [:VERSION] -kohdan pois jättäminen ottaa käyttöön viimeisimmän task definition version ("latest") 
-```
-aws ecs update-service \
---cluster Prod-Viite-ECS-Cluster-Private \
---service Prod-Viite-ECS-Service-Private \
---task-definition Prod-Viite[:VERSION] \
---force-new-deployment
-```

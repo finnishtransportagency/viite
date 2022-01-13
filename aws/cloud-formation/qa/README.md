@@ -81,12 +81,21 @@ export AWS_DEFAULT_REGION=eu-west-1
 export AWS_PROFILE= vaylaapp
 ```
 ### Task definitionin päivitys
-
+Luo uusi task definition versio
 ```
 aws cloudformation update-stack \
 --stack-name [esim. viite-qa-taskdefinition] \
 --template-body file://aws/cloud-formation/qa/qa-viite-create-taskdefinition-cloudformation.yaml \
 --parameters ParameterKey=RepositoryURL,ParameterValue=[URL repositoryyn jossa kontti sijaitsee esim. 012345678910.dkr.ecr.eu-west-1.amazonaws.com]
+```
+Ota juuri luotu task definition versio käyttöön. \
+Huom.: [:VERSION] -kohdan pois jättäminen ottaa käyttöön viimeisimmän task definition version ("latest") 
+```
+aws ecs update-service \
+--cluster QA-viite-test-ECS-Cluster-Private \
+--service QA-viite-test-ECS-Service-Private \
+--task-definition QA-viite-test[:VERSION] \
+--force-new-deployment
 ```
 
 ### ALB-stackin päivitys

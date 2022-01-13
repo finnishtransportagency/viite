@@ -41,7 +41,7 @@
   },
   {
     "ParameterKey": "SecurityGroupName",
-    "ParameterValue": "<SECURITY-GROUP>"
+    "ParameterValue": ""
   }
 ]
 
