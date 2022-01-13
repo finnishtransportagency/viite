@@ -32,7 +32,8 @@ Parametrit luodaan tyypillä "String" ja arvolla "placeHolderValue"
 ```
 aws cloudformation create-stack \
 --stack-name [esim. viite-qa-parameter-store-entries] \
---template-body file://aws/cloud-formation/qa/qa-viite-create-parameters-cloudformation.yaml 
+--template-body file://aws/cloud-formation/viite-parameter-store-cloudformation.yaml \
+--parameters ParameterKey=Environment,ParameterValue=QA 
 ```
 ### Päivitä parametrien arvot ja tyypit oikein
 Kunkin parametrin tyypiksi vaihdetaan "SecureString" ja arvoksi asetetaan parametrin oikea arvo (X = arvo löytyy confluencesta)
@@ -60,7 +61,7 @@ aws cloudformation create-stack \
 aws cloudformation create-stack \
 --stack-name [esim. viite-qa] \
 --on-failure DELETE --capabilities CAPABILITY_NAMED_IAM \
---template-body file://aws/cloud-formation/qa/qa-viite-alb_ecs.yaml \
+--template-body file://aws/cloud-formation/viite-alb_ecs.yaml \
 --parameters file://aws/cloud-formation/qa/qa-parameters-viite-alb_ecs.json
 ```
 
@@ -103,7 +104,7 @@ aws ecs update-service \
 aws cloudformation update-stack \
 --stack-name [esim. viite-qa] \
 --on-failure DELETE --capabilities CAPABILITY_NAMED_IAM \
---template-body file://aws/cloud-formation/qa/qa-viite-alb_ecs.yaml \
+--template-body file://aws/cloud-formation/viite-alb_ecs.yaml \
 --parameters file://aws/cloud-formation/qa/qa-parameters-viite-alb_ecs.json
 ```
 
