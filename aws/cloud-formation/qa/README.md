@@ -32,7 +32,8 @@ Parametrit luodaan tyypillä "String" ja arvolla "placeHolderValue"
 ```
 aws cloudformation create-stack \
 --stack-name [esim. viite-qa-parameter-store-entries] \
---template-body file://aws/cloud-formation/qa/qa-viite-create-parameters-cloudformation.yaml 
+--template-body file://aws/cloud-formation/viite-parameter-store-cloudformation.yaml \
+--parameters ParameterKey=Environment,ParameterValue=QA 
 ```
 ### Päivitä parametrien arvot ja tyypit oikein
 Kunkin parametrin tyypiksi vaihdetaan "SecureString" ja arvoksi asetetaan parametrin oikea arvo (X = arvo löytyy confluencesta)
@@ -60,7 +61,7 @@ aws cloudformation create-stack \
 aws cloudformation create-stack \
 --stack-name [esim. viite-qa] \
 --on-failure DELETE --capabilities CAPABILITY_NAMED_IAM \
---template-body file://aws/cloud-formation/qa/qa-viite-alb_ecs.yaml \
+--template-body file://aws/cloud-formation/viite-alb_ecs.yaml \
 --parameters file://aws/cloud-formation/qa/qa-parameters-viite-alb_ecs.json
 ```
 
@@ -81,24 +82,14 @@ export AWS_DEFAULT_REGION=eu-west-1
 export AWS_PROFILE= vaylaapp
 ```
 ### Task definitionin päivitys
-
+Luo uusi task definition versio
 ```
 aws cloudformation update-stack \
 --stack-name [esim. viite-qa-taskdefinition] \
 --template-body file://aws/cloud-formation/qa/qa-viite-create-taskdefinition-cloudformation.yaml \
 --parameters ParameterKey=RepositoryURL,ParameterValue=[URL repositoryyn jossa kontti sijaitsee esim. 012345678910.dkr.ecr.eu-west-1.amazonaws.com]
 ```
-
-### ALB-stackin päivitys
-```
-aws cloudformation update-stack \
---stack-name [esim. viite-qa] \
---on-failure DELETE --capabilities CAPABILITY_NAMED_IAM \
---template-body file://aws/cloud-formation/qa/qa-viite-alb_ecs.yaml \
---parameters file://aws/cloud-formation/qa/qa-parameters-viite-alb_ecs.json
-```
-
-### Kontin päivitys
+Ota juuri luotu task definition versio käyttöön. \
 Huom.: [:VERSION] -kohdan pois jättäminen ottaa käyttöön viimeisimmän task definition version ("latest") 
 ```
 aws ecs update-service \
@@ -106,4 +97,19 @@ aws ecs update-service \
 --service QA-viite-test-ECS-Service-Private \
 --task-definition QA-viite-test[:VERSION] \
 --force-new-deployment
+```
+
+### ALB-stackin päivitys
+```
+aws cloudformation update-stack \
+--stack-name [esim. viite-qa] \
+--on-failure DELETE --capabilities CAPABILITY_NAMED_IAM \
+--template-body file://aws/cloud-formation/viite-alb_ecs.yaml \
+--parameters file://aws/cloud-formation/qa/qa-parameters-viite-alb_ecs.json
+```
+
+### Kontin päivitys
+Aseta Devtest:latest-kontti -> QA:latest-kontiksi
+```
+aws-deploy-qa.sh
 ```

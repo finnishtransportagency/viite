@@ -38,10 +38,6 @@
   {
     "ParameterKey": "CNameRecord",
     "ParameterValue": "viiteprod"
-  },
-  {
-    "ParameterKey": "SecurityGroupName",
-    "ParameterValue": "<SECURITY-GROUP>"
   }
 ]
 
