@@ -38,10 +38,6 @@
   {
     "ParameterKey": "CNameRecord",
     "ParameterValue": "viitetest"
-  },
-  {
-    "ParameterKey": "SecurityGroupName",
-    "ParameterValue": "sg-06725f1f3b50fcf19"
   }
 ]
 

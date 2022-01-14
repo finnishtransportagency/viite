@@ -1,35 +1,38 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: CloudFormation managed SecureString Parameters
-
+Parameters:
+  Environment:
+    Description: "Environment of the application, that these resources are created for. Used when naming the resources"
+    Type: String
 Resources:
-  Parameter1:
+  ConversionDbPassword:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: /Viite/Prod/conversion.db.password
+      Name: !Join ['/', ['/Viite', !Ref Environment, 'conversion.db.password']]
       Type: String
       Value: PlaceHolderValue
       Description: Password for drkonv db, where the Initial Import data is retrieved
 
-  Parameter2:
+  AuthAdminBasicPassword:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: /Viite/Prod/authentication.admin.basic.password
+      Name: !Join ['/', ['/Viite', !Ref Environment, 'authentication.admin.basic.password']]
       Type: String
       Value: PlaceHolderValue
       Description: Used by the lambdas, to access AdminAPI
 
-  Parameter3:
+  RdsDbPassword:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: /Viite/Prod/rds.viite.db.password
+      Name: !Join ['/', ['/Viite', !Ref Environment, 'rds.viite.db.password']]
       Type: String
       Value: PlaceHolderValue
-      Description: RDS password for Viite prod
+      Description: !Join [' ', ['RDS password for Viite ', !Ref Environment]]
 
-  Parameter4:
+  VkmApiKey:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: /Viite/Prod/vkmApiKey
+      Name: !Join ['/', ['/Viite', !Ref Environment, 'vkmApiKey']]
       Type: String
       Value: PlaceHolderValue
       Description: Viite access key for Viitekehysmuunnin's production API
