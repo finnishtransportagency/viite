@@ -46,6 +46,13 @@ aws ssm put-parameter --overwrite --name /Viite/Prod/rds.viite.db.password --typ
 
 aws ssm put-parameter --overwrite --name /Viite/Prod/vkmApiKey --type SecureString --value X
 ```
+### Luo ECR repository
+```
+aws cloudformation create-stack \
+--stack-name [esim. viite-prod-ecr-repository] \
+--template-body file://aws/cloud-formation/viite-create-ecr-repository.yaml \
+--parameters ParameterKey=Environment,ParameterValue=prod
+```
 
 ### Luo task-definition
 
@@ -53,7 +60,7 @@ aws ssm put-parameter --overwrite --name /Viite/Prod/vkmApiKey --type SecureStri
 aws cloudformation create-stack \
 --stack-name [esim. viite-prod-taskdefinition] \
 --template-body file://aws/cloud-formation/prod/prod-viite-create-taskdefinition-cloudformation.yaml \
---parameters ParameterKey=RepositoryURL,ParameterValue=[URL repositoryyn jossa kontti sijaitsee esim. 012345678910.dkr.ecr.eu-west-1.amazonaws.com]
+--parameters ParameterKey=RepositoryURL,ParameterValue=[URL äsken luotuun ECR repositoryyn jossa kontti sijaitsee esim. 012345678910.dkr.ecr.eu-west-1.amazonaws.com]
 ```
 
 ### Luo Viitteen ALB-stack
