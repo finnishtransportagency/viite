@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: CloudFormation managed SecureString Parameters
+Description: CloudFormation managed ECR repository
 Parameters:
   Environment:
     Description: "Environment of the application, that these resources are created for. Used when naming the resources"
