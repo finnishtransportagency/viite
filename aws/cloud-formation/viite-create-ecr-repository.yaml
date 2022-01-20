@@ -1,0 +1,27 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: CloudFormation managed ECR repository
+Parameters:
+  Environment:
+    Description: "Environment of the application, that these resources are created for. Used when naming the resources"
+    Type: String
+Resources:
+  EcrRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      ImageTagMutability: MUTABLE
+      RepositoryName: !Join ['-', ['viite', !Ref Environment]]
+      RepositoryPolicyText:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowCrossAccountPush
+            Effect: Allow
+            Principal:
+              AWS:
+              - arn:aws:iam::783354560127:role/ViiteAdmin
+              - arn:aws:iam::783354560127:role/codebuild-ViiteProd
+            Action:
+              - ecr:BatchCheckLayerAvailability
+              - ecr:CompleteLayerUpload
+              - ecr:InitiateLayerUpload
+              - ecr:PutImage
+              - ecr:UploadLayerPart
