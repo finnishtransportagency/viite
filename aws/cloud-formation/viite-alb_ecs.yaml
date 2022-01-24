@@ -28,9 +28,6 @@ Parameters:
   ApiGatewayUrl:
     Type: String
     Description: ApiGateWay Url
-  CNameRecord:
-    Description: CName of the application (no whitespace or special characters)
-    Type: String
 
 Resources:
   LoadBalancerSecurityGroup:
@@ -71,34 +68,6 @@ Resources:
     Properties:
       LogGroupName: !Join ['', ['/ecs/',!Ref Environment,'-', !Ref ApplicationName, '-ECS-logs']]
       RetentionInDays: 14
-
-  # This is a role which is used by the ECS tasks themselves.
-  ECSTaskExecutionRoleForViite:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: [ecs-tasks.amazonaws.com]
-            Action: ['sts:AssumeRole']
-      Path: /
-      Policies:
-        - PolicyName: AmazonECSTaskExecutionRolePolicy
-          PolicyDocument:
-            Statement:
-              - Effect: Allow
-                Action:
-                  # Allow the ECS Tasks to download images from ECR
-                  - 'ecr:GetAuthorizationToken'
-                  - 'ecr:BatchCheckLayerAvailability'
-                  - 'ecr:GetDownloadUrlForLayer'
-                  - 'ecr:BatchGetImage'
-
-                  # Allow the ECS tasks to upload logs to CloudWatch
-                  - 'logs:CreateLogStream'
-                  - 'logs:PutLogEvents'
-                Resource: '*'
 
   PrivateLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
@@ -252,17 +221,6 @@ Resources:
       VpcId:
         Fn::ImportValue:
           !Join [ '-', [ !Ref NetworkStackName, 'VPC-Id' ] ]
-
-  # Creates CNAME record "alb.<accountName>.vaylapilvi.aws" that points to alb-1234567.eu-west-1.elb.amazonaws.com
-  ViiteCnameRecordToRoute53:
-    Type: Custom::VaylapilviRoute53Record
-    Properties:
-      ServiceToken: arn:aws:sns:eu-west-1:434599271542:Vaylapilvi-Route53-Record
-      Type: CNAME
-      Name: !Ref CNameRecord
-      Records:
-        - !GetAtt PrivateLoadBalancer.DNSName
-      Comment: Application load balancer
 
 Outputs:
   ALBDNSName:

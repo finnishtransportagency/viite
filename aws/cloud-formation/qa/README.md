@@ -52,6 +52,7 @@ aws ssm put-parameter --overwrite --name /Viite/QA/vkmApiKey --type SecureString
 ```
 aws cloudformation create-stack \
 --stack-name [esim. viite-qa-taskdefinition] \
+--capabilities CAPABILITY_NAMED_IAM \
 --template-body file://aws/cloud-formation/qa/qa-viite-create-taskdefinition-cloudformation.yaml \
 --parameters ParameterKey=RepositoryURL,ParameterValue=[URL repositoryyn jossa kontti sijaitsee esim. 012345678910.dkr.ecr.eu-west-1.amazonaws.com]
 ```
@@ -60,9 +61,17 @@ aws cloudformation create-stack \
 ```
 aws cloudformation create-stack \
 --stack-name [esim. viite-qa] \
---on-failure DELETE --capabilities CAPABILITY_NAMED_IAM \
+--on-failure DELETE \
 --template-body file://aws/cloud-formation/viite-alb_ecs.yaml \
 --parameters file://aws/cloud-formation/qa/qa-parameters-viite-alb_ecs.json
+```
+
+### Luo CNAME record-stack
+```
+aws cloudformation create-stack \
+--stack-name [esim. viite-qa-cname-to-route53] \
+--template-body file://aws/cloud-formation/qa/qa-viite-create-cname-record-to-route53.yaml \
+--parameters ParameterKey=CNameRecord,ParameterValue=viitetest ParameterKey=LoadBalancerDNSName,ParameterValue=[Kuormantasaajan DNS nimi esim. internal-viite-Priva-ABCDEFGHIJKL-012345678910.eu-west-1.elb.amazonaws.com]
 ```
 
 # Viite QA, päivitys
