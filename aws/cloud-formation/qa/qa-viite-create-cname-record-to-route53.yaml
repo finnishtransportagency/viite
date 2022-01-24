@@ -1,0 +1,19 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Creates CNAME record "alb.<accountName>.vaylapilvi.aws" that points to alb-1234567.eu-west-1.elb.amazonaws.com
+Parameters:
+  CNameRecord:
+    Description: CName of the application (no whitespace or special characters)
+    Type: String
+  LoadBalancerDNSName:
+    Description: DNS name of the load balancer
+    Type: String
+Resources:
+  ViiteCnameRecordToRoute53:
+    Type: Custom::VaylapilviRoute53Record
+    Properties:
+      ServiceToken: arn:aws:sns:eu-west-1:434599271542:Vaylapilvi-Route53-Record
+      Type: CNAME
+      Name: !Ref CNameRecord
+      Records:
+        - !Ref LoadBalancerDNSName
+      Comment: Application load balancer

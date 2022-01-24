@@ -5,10 +5,40 @@ Parameters:
     Type: String
     Description: URL to repository, where the container is, e.g. 012345678910.dkr.ecr.eu-west-1.amazonaws.com
 Resources:
-  taskdefinition:
+  # This is a role which is used by the ECS tasks themselves.
+  ECSTaskExecutionRoleForViite:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: [ ecs-tasks.amazonaws.com ]
+            Action: [ 'sts:AssumeRole' ]
+      Path: /
+      Policies:
+        - PolicyName: AmazonECSTaskExecutionRolePolicy
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'ssm:GetParameter'
+                  - 'ssm:GetParameters'
+                  - 'ssm:DescribeParameters'
+                  # Allow the ECS Tasks to download images from ECR
+                  - 'ecr:GetAuthorizationToken'
+                  - 'ecr:BatchCheckLayerAvailability'
+                  - 'ecr:GetDownloadUrlForLayer'
+                  - 'ecr:BatchGetImage'
+
+                  # Allow the ECS tasks to upload logs to CloudWatch
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Resource: '*'
+  Taskdefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      ExecutionRoleArn: !Sub 'arn:aws:iam::${AWS::AccountId}:role/TaskExecutionRole'
+      ExecutionRoleArn: !GetAtt ECSTaskExecutionRoleForViite.Arn
       ContainerDefinitions:
         -
           LogConfiguration:
@@ -83,7 +113,6 @@ Resources:
               - CMD-SHELL
               - curl -f http://127.0.0.1:9080/api/ping/ || exit 1
       Memory: '4096'
-      # TaskRoleArn: ''
       Family: QA-viite-test
       RequiresCompatibilities:
         - FARGATE
