@@ -59,6 +59,7 @@ aws cloudformation create-stack \
 ```
 aws cloudformation create-stack \
 --stack-name [esim. viite-prod-taskdefinition] \
+--capabilities CAPABILITY_NAMED_IAM \
 --template-body file://aws/cloud-formation/prod/prod-viite-create-taskdefinition-cloudformation.yaml \
 --parameters ParameterKey=RepositoryURL,ParameterValue=[URL äsken luotuun ECR repositoryyn jossa kontti sijaitsee esim. 012345678910.dkr.ecr.eu-west-1.amazonaws.com]
 ```
@@ -67,7 +68,7 @@ aws cloudformation create-stack \
 ```
 aws cloudformation create-stack \
 --stack-name [esim. viite-prod] \
---on-failure DELETE --capabilities CAPABILITY_NAMED_IAM \
+--on-failure DELETE \
 --template-body file://aws/cloud-formation/viite-alb_ecs.yaml \
 --parameters file://aws/cloud-formation/prod/prod-parameters-viite-alb_ecs.json
 ```

@@ -1,7 +1,7 @@
 [
   {
     "ParameterKey": "ApplicationName",
-    "ParameterValue": "Viite"
+    "ParameterValue": "Viite-prod"
   },
   {
     "ParameterKey": "ContainerPort",
@@ -21,7 +21,7 @@
   },
   {
     "ParameterKey": "NetworkStackName",
-    "ParameterValue": "viite-prod"
+    "ParameterValue": "ViiteProd"
   },
   {
     "ParameterKey": "Owner",
@@ -34,10 +34,6 @@
   {
     "ParameterKey": "ApiGatewayUrl",
     "ParameterValue": "api.vaylapilvi.fi"
-  },
-  {
-    "ParameterKey": "CNameRecord",
-    "ParameterValue": "viiteprod"
   }
 ]
 
