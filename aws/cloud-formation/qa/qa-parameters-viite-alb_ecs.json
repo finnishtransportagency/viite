@@ -34,10 +34,6 @@
   {
     "ParameterKey": "ApiGatewayUrl",
     "ParameterValue": "qaapi.testivaylapilvi.fi"
-  },
-  {
-    "ParameterKey": "CNameRecord",
-    "ParameterValue": "viitetest"
   }
 ]
 
