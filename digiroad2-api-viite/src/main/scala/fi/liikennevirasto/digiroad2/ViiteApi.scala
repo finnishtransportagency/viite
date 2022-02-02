@@ -929,10 +929,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       summary "Checks if the road that the junction points are on, is reserved to a road address project"
     )
 
-  get("/junctions/getReservedStatusOfJunctionPoints/", operation(getReservedStatusOfJunctionPoints)) {
+  get("/junctions/getReservedStatusOfJunctionPoints", operation(getReservedStatusOfJunctionPoints)) {
     response.setHeader("Access-Control-Allow-Headers", "*")
     val ids: Seq[Long] = params.get("ids") match {
-      case Some(s) if s != "" => s.split(",").map(_.trim.toLong).toSeq
+      case Some(s) if s != "" => s.split("-").map(_.trim.toLong).toSeq
       case _ => Seq()
     }
     time(logger, s"GET request for /junctions/getReservedStatusOfJunctionPoints/ (junctionPointIds: ${ids})") {

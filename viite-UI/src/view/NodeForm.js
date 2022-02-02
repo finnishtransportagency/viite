@@ -227,8 +227,7 @@
       };
 
       var junctionPointInputAddr = function (jp) {
-        var junctionPointIds = jp.id.split("-");
-        backend.getJunctionPointReservedStatus(junctionPointIds, jp);
+        backend.getJunctionPointReservedStatus(jp.id, jp);
 
         var range = getMinAndMaxValues(jp);
         var minAddr = range.minAddr;

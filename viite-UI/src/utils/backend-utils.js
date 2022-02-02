@@ -320,7 +320,7 @@
     };
 
     this.getJunctionPointReservedStatus = function (ids, jp) {
-      $.get('api/viite/junctions/getReservedStatusOfJunctionPoints/?ids=' + ids, function (response) {
+      $.get('api/viite/junctions/getReservedStatusOfJunctionPoints?ids=' + ids, function (response) {
         eventbus.trigger('junctionPoint:reservedStatusFetched', response, jp);
       });
     };
