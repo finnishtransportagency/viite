@@ -62,7 +62,7 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
     new JunctionDAO
   }
   val nodesAndJunctionsService_db : NodesAndJunctionsService = {
-    new NodesAndJunctionsService(roadwayDAO, roadwayPointDAO, linearLocationDAO, nodeDAO, nodePointDAO, junctionDAO_db, junctionPointDAO, roadwayChangesDAO)
+    new NodesAndJunctionsService(roadwayDAO, roadwayPointDAO, linearLocationDAO, nodeDAO, nodePointDAO, junctionDAO_db, junctionPointDAO, roadwayChangesDAO, projectReservedPartDAO)
   }
   val vvhClient_db: VVHClient = {
     new VVHClient(ViiteProperties.vvhRestApiEndPoint)

@@ -1,5 +1,5 @@
 (function (root) {
-  root.NodeForm = function (selectedNodesAndJunctions) {
+  root.NodeForm = function (selectedNodesAndJunctions, roadCollection, backend) {
     var formCommon = new FormCommon('node-');
     var NodeType = LinkValues.NodeType;
 
@@ -171,10 +171,73 @@
           ' class="form-control junction-number-input" id="junction-number-textbox-' + junction.id + '" junctionId="' + junction.id + '" maxlength="2" value="' + (junction.junctionNumber || '') + '"/></td>';
       };
 
+
+      /**
+       * If the junction point is on a reserved road part
+       * set the title attribute to notify the user and keep the input field disabled.
+       * Otherwise enable the input field.
+       */
+      eventbus.on('junctionPoint:reservedStatusFetched', function(response, jp) {
+        var validationMessage = '';
+        if (response.isOnReservedPart) {
+          validationMessage = 'Liittymäkohta sijaitsee tieosalla joka on varattuna tieosoiteprojektiin, liittymäkohdan muokkaus ei ole juuri nyt mahdollista';
+        }
+        var inputField = $('#junction-point-address-input-' + jp.id);
+        if(validationMessage.length === 0){
+          inputField.attr('disabled', false);
+        } else {
+          inputField.attr('title', validationMessage);
+        }
+      });
+
+      var getMinAndMaxFromNeighbouringLinks = function (addr, jp) {
+        var neighbouringRoadLinks = _.map(roadCollection.getByRoadPartAndAddr(jp.roadNumber, jp.roadPartNumber, jp.addr), function(roadLink) {
+          return roadLink.getData();
+        });
+        var minAddrByRoadLink = '';
+        var maxAddrByRoadLink = '';
+        neighbouringRoadLinks.forEach((roadLink) => {
+          if (roadLink.endAddressM === addr) { // road link is before the junction
+            minAddrByRoadLink = roadLink.startAddressM + 1;
+          } else if (roadLink.startAddressM === addr) { // road link is after the junction
+            maxAddrByRoadLink = roadLink.endAddressM - 1;
+          }
+        });
+        return { minAddrByRoadLink, maxAddrByRoadLink };
+      };
+
+      var getMinAndMaxValues = function (jp) {
+        var addr = jp.addr;
+        // the address change must be less than 10 meters
+        var maxAddr = jp.addr + 9;
+        var minAddr = jp.addr - 9;
+
+        // the new address must be within neighbouring linear locations / road links
+        var range = getMinAndMaxFromNeighbouringLinks(addr, jp);
+        var minAddrByRoadLink = range.minAddrByRoadLink;
+        var maxAddrByRoadLink = range.maxAddrByRoadLink;
+
+        if (minAddrByRoadLink > minAddr) {
+          minAddr = minAddrByRoadLink;
+        }
+        if (maxAddrByRoadLink < maxAddr) {
+          maxAddr = maxAddrByRoadLink;
+        }
+        return { minAddr, maxAddr };
+      };
+
       var junctionPointInputAddr = function (jp) {
-        return '<input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode === 8 || event.keyCode === 9)"' +
+        var junctionPointIds = jp.id.split("-");
+        backend.getJunctionPointReservedStatus(junctionPointIds, jp);
+
+        var range = getMinAndMaxValues(jp);
+        var minAddr = range.minAddr;
+        var maxAddr = range.maxAddr;
+
+        // at this point the input field is disabled because backend is checking if the junction points are on reserved road parts.
+        return '<input disabled="true" type="number" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode === 8 || event.keyCode === 9)"' +
           ' class="form-control junction-point-address-input" id="junction-point-address-input-' +
-          jp.id + '" junctionPointId="' + jp.id + '" maxlength="5" value="' + jp.addr + '" />';
+          jp.id + '" junctionPointId="' + jp.id + '" maxlength="5" value="' + jp.addr + '" min="' + minAddr + '" max="' + maxAddr + '"/>';
       };
 
       var toMessage = function (junctionsInfo) {
@@ -466,12 +529,17 @@
     };
 
     var formIsInvalid = function () {
+      var junctionInputs = [];
+      $("#junctions-table-info").each(function(){
+        junctionInputs = $(this).find(':input').get(); //<-- Should return all junction input elements as an Array
+      });
 
       return $('#nodeName').val() === "" ||
         $('#nodeTypeDropdown').val() === LinkValues.NodeType.UnknownNodeType.value.toString() ||
         $('#nodeStartDate').val() === "" ||
         !selectedNodesAndJunctions.validateJunctionNumbers() ||
-        !selectedNodesAndJunctions.isDirty();
+        !selectedNodesAndJunctions.isDirty() ||
+        !junctionInputs.every((inp) => inp.validity.valid);
     };
 
     var closeNode = function (cancel) {
@@ -795,6 +863,10 @@
             if (input) {
               input.setCustomValidity(errorMessage);
             }
+            // trigger the validation message to user
+            input.reportValidity();
+            // check if the save button can be enabled (all the input fields in the form need to be valid)
+            $('.btn-edit-node-save').prop('disabled', formIsInvalid());
           });
 
           selectedNodesAndJunctions.addJunctionTemplates(junctionTemplates);

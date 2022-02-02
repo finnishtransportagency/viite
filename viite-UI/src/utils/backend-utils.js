@@ -319,6 +319,12 @@
       $.getJSON('api/viite/project/recalculateProject/' + id, callback);
     };
 
+    this.getJunctionPointReservedStatus = function (ids, jp) {
+      $.get('api/viite/junctions/getReservedStatusOfJunctionPoints/?ids=' + ids, function (response) {
+        eventbus.trigger('junctionPoint:reservedStatusFetched', response, jp);
+      });
+    };
+
     this.getUserRoles = function () {
       $.get('api/viite/user', function (response) {
         eventbus.trigger('userData:fetched', response);

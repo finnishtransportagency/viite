@@ -327,6 +327,14 @@
       return segments;
     };
 
+    this.getByRoadPartAndAddr = function (roadNumber, roadPart, addr) {
+      return _.filter(roadLinks(), function (road) {
+        return road.getData().roadNumber === roadNumber &&
+                road.getData().roadPartNumber === roadPart &&
+                (road.getData().startAddressM === addr || road.getData().endAddressM === addr);
+      });
+    };
+
     this.getByLinkIds = function (ids) {
       return _.filter(roadLinks(), function (road) {
         return ids.includes(road.getData().linkId);

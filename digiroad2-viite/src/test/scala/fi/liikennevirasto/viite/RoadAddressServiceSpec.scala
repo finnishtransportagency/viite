@@ -61,7 +61,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     override val viiteVkmClient = mockViiteVkmClient
   }
 
-  val nodesAndJunctionsService = new NodesAndJunctionsService(mockRoadwayDAO, roadwayPointDAO, mockLinearLocationDAO, nodeDAO, nodePointDAO, junctionDAO, junctionPointDAO, roadwayChangesDAO)
+  val nodesAndJunctionsService = new NodesAndJunctionsService(mockRoadwayDAO, roadwayPointDAO, mockLinearLocationDAO, nodeDAO, nodePointDAO, junctionDAO, junctionPointDAO, roadwayChangesDAO, projectReservedPartDAO)
 
   val projectService = new ProjectService(roadAddressService, mockRoadLinkService, nodesAndJunctionsService, roadwayDAO,
     roadwayPointDAO, linearLocationDAO, projectDAO, projectLinkDAO,

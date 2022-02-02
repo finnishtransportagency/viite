@@ -920,6 +920,27 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
+  private val getReservedStatusOfJunctionPoints: SwaggerSupportSyntax.OperationBuilder = (
+    apiOperation[Map[String, Any]]("getReservedStatusOfJunctionPoints")
+      .parameters(
+        queryParam[Long]("ids").description("Junction point id:s")
+      )
+      tags "ViiteAPI - NodesAndJunctions"
+      summary "Checks if the road that the junction points are on, is reserved to a road address project"
+    )
+
+  get("/junctions/getReservedStatusOfJunctionPoints/", operation(getReservedStatusOfJunctionPoints)) {
+    response.setHeader("Access-Control-Allow-Headers", "*")
+    val ids: Seq[Long] = params.get("ids") match {
+      case Some(s) if s != "" => s.split(",").map(_.trim.toLong).toSeq
+      case _ => Seq()
+    }
+    time(logger, s"GET request for /junctions/getReservedStatusOfJunctionPoints/ (junctionPointIds: ${ids})") {
+      val isOnReservedPart  = nodesAndJunctionsService.areJunctionPointsOnReservedRoadPart(ids)
+      Map("success" -> true, "isOnReservedPart" -> isOnReservedPart)
+    }
+  }
+
   //  private val splitSuravageLinkByLinkId: SwaggerSupportSyntax.OperationBuilder = (
   //    apiOperation[Map[String, Any]]("splitSuravageLinkByLinkId")
   //      .parameters(
