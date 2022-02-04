@@ -1,0 +1,2 @@
+-- trigger VALIDTODATE_VALIDATION now dropped (VIITE-2687) from ROADWAY table. Was created at V0_4_create_triggers.sql
+DROP TRIGGER IF EXISTS VALIDTODATE_VALIDATION ON ROADWAY;
