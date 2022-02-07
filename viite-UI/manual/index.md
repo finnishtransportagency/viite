@@ -185,7 +185,7 @@ _Kuva 5.4: Infolaatikko, kun hiiren kohdistin on viety tieosoitesegmentin pääl
 
 Kohteita voi valita kartalta klikkaamalla, tuplaklikkaamalla ja ctrl+klikkaamalla. 
 
-Kertaklikkauksella sovellus valitsee klikatun tieosan, eli tieosuudet, joilla on sama tienumero ja tieosanumero. Valittu tieosa korostuu kartalla (1), ja sen tiedot tulevat näkyviin karttaikkunan oikean reunan ominaisuustietonäkymään (2).
+Kertaklikkauksella sovellus valitsee klikatun tieosan, eli tielinkit joilla on sama tienumero ja tieosanumero. Valittu tieosa korostuu kartalla (1), ja sen tiedot tulevat näkyviin karttaikkunan oikean reunan ominaisuustietonäkymään (2).
 
 ![Tieosan valinta](k6.jpg)
 
@@ -198,7 +198,7 @@ Kaksoisklikkaus valitsee yhden tielinkin mittaisen osuuden tieosoitteesta. Valit
 _Kuva 5.6: Tielinkin mittaisen osuuden valinta._
 
 Ctrl+klik eli monivalinta. Ctrl-nappula pohjassa linkkejä klikkailemalla voit valita vapaasti kaikenlaisia tielinkkejä samaan valintaan.
-Voit poimia esim. tieosoitteistettuja ja tieosoitteistamattomia linkkejä samaan valintaan approksimoidaksesi tulevia tiepituuksia. 
+Voit esim. poimia tieosoitteistettuja ja tieosoitteistamattomia linkkejä samaan valintaan approksimoidaksesi tulevia tiepituuksia. 
 Monivalituille linkeille ominaisuustiedoissa näytetään vain karkeamman tason tiedot.
 
 ![Ctrl+klik; monivalinta, ääriesimerkki](k71.jpg)
@@ -208,7 +208,7 @@ _Kuva 5.7: Tielinkkien monivalinta._
 5.2 Tieosoitteiden ominaisuustiedot
 --------------------------
 
-Tieosoitteille näytetään seuraavat ominaisuustiedot:
+Valituista tielinkeistä näytetään seuraavat ominaisuustiedot:
 
 |Ominaisuustieto   | Kuvaus|
 |------------------|-------|
