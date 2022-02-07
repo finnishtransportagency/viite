@@ -111,8 +111,17 @@ aws ecs update-service \
 ```
 aws cloudformation update-stack \
 --stack-name [esim. viite-prod] \
---on-failure DELETE --capabilities CAPABILITY_NAMED_IAM \
+--capabilities CAPABILITY_NAMED_IAM \
 --template-body file://aws/cloud-formation/viite-alb_ecs.yaml \
 --parameters file://aws/cloud-formation/prod/prod-parameters-viite-alb_ecs.json
 ```
 
+### Kontin päivitys
+Kehitystiimi puskee uuden kontin ECR repositorioon jonka jälkeen service päivitetään komennolla:
+```
+aws ecs update-service \
+--cluster Prod-Viite-ECS-Cluster-Private \
+--service Prod-Viite-ECS-Service-Private \
+--task-definition Prod-Viite[:VERSION] \
+--force-new-deployment
+```
