@@ -218,15 +218,16 @@ Valituista tielinkeistä näytetään seuraavat ominaisuustiedot:
 |Kunta             | Geometrialinkin kuntatieto.|
 |Linkin ID         | Näytetään, jos valittuna on yksittäinen linkki.|
 |Geometrian pituus/Geometrioiden yhteenlaskettu pituus| Valittujen tielinkkien yhteispituus. Lasketaan kaikkien linkkien tiedoista.|
-|Tienumero         | Tieosoiteverkon mukainen tienumero. Lähtöaineistona Tierekisterin tieosoitteet (joulukuu 2021).|
+|Tien nimi         | Viitteessä tielle annettu tien nimi, tai listaus valinnan tiennimistä.|
+|Tienumero         | Tieosoiteverkon mukainen tienumero, tai listaus valinnan tienumeroista. Lähtöaineistona Tierekisterin tieosoitteet (joulukuu 2021).|
 |Tieosanumero      | Tieosoiteverkon mukainen tieosanumero. Lähtöaineistona Tierekisterin tieosoitteet (joulukuu 2021).|
-|Ajorata           | Tieosoiteverkon mukainen ajoratakoodi. Lähtöaineistona Tierekisterin tieosoitteet (joulukuu 2021).|
+|Ajorata           | Tieosoiteverkon mukainen ajoratakoodi, tai listaus valinnan ajoratakoodeista. Lähtöaineistona Tierekisterin tieosoitteet (joulukuu 2021).|
 |Alkuetäisyys**    | Tieosoiteverkon etäisyyslukemien avulla laskettu alkuetäisyys. Etäisyyslukeman kohdalla alkuetäisyyden lähtöaineistona on Tierekisterin tieosoitteet (joulukuu 2021).|
 |Loppuetäisyys**   | Tieosoiteverkon etäisyyslukemien avulla laskettu loppuetäisyys. Etäisyyslukeman kohdalla loppuetäisyyden lähtöaineistona on Tierekisterin tieosoitteet (joulukuu 2021).|
 |Yhteenlaskettu pituus   | Valinnan mukaisten tieosoitteistettujen tielinkkien tieosoitevälien yhteispituus.| 
-|ELY                     | Tien hallinnoinnista vastaava ELY.|
+|ELY                     | Tien hallinnoinnista vastaava ELY, tai listaus valinnan ELYistä.|
 |Hallinnollinen luokka*3| Lähtöaineistona Maanmittauslaitoksen hallinnollinen luokka -tieto. Jos valituilla tielinkeillä on useita hallinnollisia luokkia, ne listataan pilkulla erotettuna.|
-|Jatkuvuus               | Tieosoiteverkon mukainen jatkuvuustieto. Lähtöaineistona Tierekisterin tieosoitteet (joulukuu 2021).|
+|Jatkuvuus               | Tieosoiteverkon mukainen jatkuvuustieto, tai listaus valinnan jatkuvuuskoodeista. Lähtöaineistona Tierekisterin tieosoitteet (joulukuu 2021).|
 
 *) Muokattu viimeksi -tiedoissa vvh_modified tarkoittaa, että muutos on tullut Maanmittauslaitokselta joko geometriaan tai geometrian ominaisuustietoihin. Muokattu viimeksi -päivät ovat kaikki vähintään 29.10.2015, koska tuolloin on tehty Maanmittauslaitoksen geometrioista alkulataus VVH:n tietokantaan.
 
