@@ -112,7 +112,7 @@ aws ecs update-service \
 ```
 aws cloudformation update-stack \
 --stack-name [esim. viite-qa] \
---on-failure DELETE --capabilities CAPABILITY_NAMED_IAM \
+--capabilities CAPABILITY_NAMED_IAM \
 --template-body file://aws/cloud-formation/viite-alb_ecs.yaml \
 --parameters file://aws/cloud-formation/qa/qa-parameters-viite-alb_ecs.json
 ```
