@@ -11,7 +11,7 @@ __Huom! Suosittelemme käyttämään selaimena Chromea tai Firefoxia.__
 
 __Huom! Käyttöohjeen kuvia voi klikata isommaksi, jolloin tekstit erottuvat paremmin.__
 
-# 1. Miten päästä alkuun
+1 Miten päästä alkuun
 -----------------------
 
 Viite-sovelluksen käyttöä varten tarvitaan Väylän tunnukset (A-, U-, LX-, K- tai L-alkuinen). Mikäli sinulla ei ole Väylän tunnuksia, pyydä ne yhteyshenkilöltäsi Väylästä.
@@ -54,7 +54,7 @@ Sovelluksen toimiessa virheellisesti (esim. kaikki aineistot eivät lataudu oike
 Tämä ohje käsittelee pääasiassa vain Viite-sovelluksen käyttöä, ei niinkään tieosoitejärjestelmää.
 Tarkemmat tiedot tieosoitejärjestelmästä löydät täältä: https://vayla.fi/documents/25230764/35411009/tieosoitejärjestelmä.pdf
 
-# 2. Perustietoja Viite-sovelluksesta
+2 Perustietoja Viite-sovelluksesta
 --------------------------
 
 2.1 Tiedon rakentuminen Viite-sovelluksessa
@@ -78,7 +78,7 @@ Mustaraitaisilla katkoviivoilla piirretään rakenteilla olevat, mutta toistaise
 
 Palautteet geometrian/tielinkkien virheistä voi laittaa Maanmittauslaitokselle, <maasto@maanmittauslaitos.fi>. Mukaan liitetään selvitys virheestä ja sen sijainnista (esim. kuvakaappaus).
 
-# 3. Automatiikka Viite-sovelluksessa
+3 Automatiikka Viite-sovelluksessa
 --------------------------
 Viite-sovelluksessa on muutamia automatiikan tekemiä yleistyksiä tai korjauksia. Automatiikka ei muuta mitään sellaisia tietoja, jotka muuttaisivat varsinaisesti tieosoitteita. Automatiikan tekemät muutokset liittyvät siihen, että tieosoiteverkkoa ylläpidetään keskilinjageometrian päällä, ja tuon keskilinjageometrian ylläpidosta vastaa Maanmittauslaitos. Tietyt automaattiset toimenpiteet helpottavat tieosoiteverkon ylläpitäjää varsinaisessa tieosoiteverkon hallinnassa.
 
@@ -106,7 +106,7 @@ Automatiikka tekee korjaukset, kun
 2. __Maanmittauslaitos yhdistelee tielinkkejä, esimerkiksi poistamalla tonttiliittymiä maanteiden varsilta:__ Tieosoitesegmentit siirretään uudelle geometrialle automaattisesti Väyläverkon hallinnan (VVH) tarjoaman tielinkkien muutosrajapinnan avulla.
 -->
 
-# 4. Karttanäkymän toiminnot
+4 Karttanäkymän toiminnot
 --------------------------
 
 ![Karttanäkymän muokkaus](k3.jpg)
@@ -150,7 +150,7 @@ Kohdistin (6) ilmaisee kartan keskipisteen. Kohdistimen koordinaatit näkyvät k
 
 Merkitse-painike (8) merkitsee sinisen pisteen kartan keskipisteeseen. Merkki poistuu vain, kun merkitään uusi piste kartalta.
 
-# 5. Tieosoiteverkon katselu
+5 Tieosoiteverkon katselu
 --------------------------
 
 Geometrialtaan yleistetty tieosoiteverkko (linkit piirretään pelkkien päätepisteiden perusteella) tulee näkyviin, kun zoomaa tasolle, jonka mittakaavajanassa on lukema 5 km. Tästä tasosta ja sitä lähempää piirretään kartalle valtatiet, kantatiet, seututiet, yhdystiet ja numeroidut kadut. Yleistämätön tieverkko piirtyy mittakaavajanan lukemalla 2 km. 100 metriä (100 metrin mittakaavajanoja on kaksi kappaletta) suuremmilla mittakaavatasoilla tulevat näkyviin kaikki tieverkon kohteet. Tieverkon latautuminen karttanäytölle voi kestää jonkin aikaa. 
