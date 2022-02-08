@@ -926,7 +926,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         queryParam[Long]("ids").description("Junction point id:s")
       )
       tags "ViiteAPI - NodesAndJunctions"
-      summary "Checks if the road that the junction points are on, is reserved to a road address project"
+      summary "Checks if the junction points are on a road part that is reserved to a road address project."
     )
 
   get("/junctions/getReservedStatusOfJunctionPoints", operation(getReservedStatusOfJunctionPoints)) {

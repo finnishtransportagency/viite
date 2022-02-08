@@ -143,7 +143,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
   /**
     * Check if any of the junction points is on a reserved road part (VIITE-2518).
-    * @param junctionPointIds Junction point ids
+    * @param junctionPointIds Ids of the junction points to be checked.
+    * @return True if any of the checked junction points belongs to a reserved road part. False else.
     */
 
   def areJunctionPointsOnReservedRoadPart(junctionPointIds: Seq[Long]): Boolean = {

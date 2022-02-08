@@ -190,7 +190,7 @@
         }
       });
 
-      var getMinAndMaxFromNeighbouringLinks = function (addr, jp) {
+      var getAddressLimitsFromNeighbouringLinks = function (addr, jp) {
         var neighbouringRoadLinks = _.map(roadCollection.getByRoadPartAndAddr(jp.roadNumber, jp.roadPartNumber, jp.addr), function(roadLink) {
           return roadLink.getData();
         });
@@ -206,14 +206,14 @@
         return { minAddrByRoadLink, maxAddrByRoadLink };
       };
 
-      var getMinAndMaxValues = function (jp) {
+      var getAllowedAddrEditRange = function (jp) {
         var addr = jp.addr;
         // the address change must be less than 10 meters
         var maxAddr = jp.addr + 9;
         var minAddr = jp.addr - 9;
 
         // the new address must be within neighbouring linear locations / road links
-        var range = getMinAndMaxFromNeighbouringLinks(addr, jp);
+        var range = getAddressLimitsFromNeighbouringLinks(addr, jp);
         var minAddrByRoadLink = range.minAddrByRoadLink;
         var maxAddrByRoadLink = range.maxAddrByRoadLink;
 
@@ -229,11 +229,15 @@
       var junctionPointInputAddr = function (jp) {
         backend.getJunctionPointReservedStatus(jp.id, jp);
 
-        var range = getMinAndMaxValues(jp);
+        var range = getAllowedAddrEditRange(jp);
         var minAddr = range.minAddr;
         var maxAddr = range.maxAddr;
 
         // at this point the input field is disabled because backend is checking if the junction points are on reserved road parts.
+        // charCodes:
+        // 48 - 57  = 0 - 9
+        // 8        = Backspace / Delete
+        // 9        = Tab
         return '<input disabled="true" type="number" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode === 8 || event.keyCode === 9)"' +
           ' class="form-control junction-point-address-input" id="junction-point-address-input-' +
           jp.id + '" junctionPointId="' + jp.id + '" maxlength="5" value="' + jp.addr + '" min="' + minAddr + '" max="' + maxAddr + '"/>';
@@ -864,7 +868,7 @@
             }
             // trigger the validation message to user
             input.reportValidity();
-            // check if the save button can be enabled (all the input fields in the form need to be valid)
+            // check if the save button can be enabled (all the input fields of the form need to be valid)
             $('.btn-edit-node-save').prop('disabled', formIsInvalid());
           });
 
