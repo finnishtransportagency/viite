@@ -126,7 +126,6 @@
     }
 
     function showChangeTable(projectChangeData) {
-      var projectDate = new Date(projectChangeData.changeTable.changeDate).toLocaleDateString();
       var htmlTable = "";
       var warningM = projectChangeData.warningMessage;
       if (!_.isUndefined(warningM))
@@ -158,6 +157,7 @@
       // set change table state to open
       changeTableOpen = true;
       if (projectChangeData) {
+        var projectDate = new Date(projectChangeData.changeTable.changeDate).toLocaleDateString();
         $('.change-table-header').html($('<div class="font-resize">Validointi ok. Alla näet muutokset projektissa.</div><div class="font-resize">Alkupäivämäärä: ' + projectDate + '</div>'));
         var currentProject = projectCollection.getCurrentProject();
         // disable recalculate button if changetable is open and set title attribute
