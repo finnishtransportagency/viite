@@ -3,28 +3,29 @@ Viite-sovelluksen käyttöohje
 Viite
 -----------------------
 
-Viite on Väylän tieosoitejärjestelmän ylläpitosovellus. Viitteellä hallitaan tieosoitejärjestelmän muutoksia ja se tarjoaa ajantasaisen kuvauksen tiestöstä Digiroadin (VVH:n) ajantasaisella linkkigeometrialla.
+Viite on Väylän tieosoitejärjestelmän ylläpitosovellus. Viitteellä hallitaan tieosoitejärjestelmän muutoksia ja se tarjoaa ajantasaisen kuvauksen tiestöstä <!--Digiroadin (VVH:n) ajantasaisella--> VVH:n jäädytetyllä linkkigeometrialla.
 
-Linkistä https://testiextranet.vayla.fi/extranet/web/fi/viite?kategoria=7457637 (testi) pääsee Väylän extranetin Viite-sivulle (tällä hetkellä testiextranet käytössä, varsinainen extranet-osoite päivitetään myöhemmin), jossa kerrotaan Viitteen yleiskuvaus ja annetaan tiedotteita käyttäjille. Sivulla ylläpidetään myös dokumentaatiota Viitteestä. 
+Linkin https://extranet.vayla.fi/group/extranet/etusivu alta Väylän extranetista löytyy Viite, Viite-sovelluksen yleiskuvaus, linkki tähän ohjeeseen ja tieto järjestelmäpäälliköstä. 
 
-__Huom! Suosittelemme käyttämään selaimena Firefoxia tai Chromea.__
+__Huom! Suosittelemme käyttämään selaimena Chromea tai Firefoxia.__
 
 __Huom! Käyttöohjeen kuvia voi klikata isommaksi, jolloin tekstit erottuvat paremmin.__
 
-# 1. Miten päästä alkuun
+1 Miten päästä alkuun
 -----------------------
 
 Viite-sovelluksen käyttöä varten tarvitaan Väylän tunnukset (A-, U-, LX-, K- tai L-alkuinen). Mikäli sinulla ei ole Väylän tunnuksia, pyydä ne yhteyshenkilöltäsi Väylästä.
 
-Kaikilla Väylän tunnuksilla on pääsy Viite-sovellukseen katselukäyttäjänä.
+Kaikilla Väylän tunnuksilla on pääsy Viite-sovellukseen katselukäyttäjänä.   
+Tietojen muokkausoikeuksista päättää Viitteen järjestelmäpäällikkö.
 
-Viite-sovellukseen kirjaudutaan osoitteessa: <a href="https://extranet.vayla.fi/viite/" target="_blank">https://extranet.vayla.fi/viite/</a>.
+Viite-sovellukseen kirjaudutaan osoitteessa: <a href="https://viite.vaylapilvi.fi" target="_blank"> https://viite.vaylapilvi.fi </a>.
 
-![Kirjautuminen Viite-sovellukseen.](k1.jpg)
+![Kirjautuminen Viite-sovellukseen Väylän tunnuksella.](k1.jpg)
 
-_Kuva 1.1: Kirjautuminen Viite-sovellukseen._
+_Kuva 1.1: Kirjautuminen Viite-sovellukseen Väylän tunnuksella._
 
-Kirjautumisen jälkeen avautuu karttakäyttöliittymässä katselutila.
+Kirjautumisen jälkeen avautuu Viitteen karttakäyttöliittymä katselutilassa. Muokkausoikeudellisen käyttäjän karttakäyttöliittymän zoomitaso ja kartan keskityskohta voivat olla erilaiset kuin katselukäyttäjän näkymässä.
 
 ![Näkymä kirjautumisen jälkeen.](k2.jpg)
 
@@ -33,9 +34,9 @@ _Kuva 1.2: Karttanäkymä kirjautumisen jälkeen._
 Oikeudet on rajattu käyttäjän roolin mukaan:
 
 - Ilman erikseen annettuja oikeuksia Väylän tunnuksilla pääsee katselemaan kaikkia tieosoitteita
-- Tieosoiteprojektit, Tiennimen ylläpito sekä Solmut ja liittymät -painikkeet näkyvät vain käyttäjille, joilla on oikeudet muokata tieosoitteita
+- <!--Tieosoiteprojektit, Tiennimen ylläpito sekä Solmut ja liittymät -painikkeet näkyvät vain käyttäjille,--> Tieosoitetietojen muutokset onnistuvat vain muokkausoikeuksilla.
 
-Jos kirjautumisen jälkeen ei avaudu karttakäyttöliittymän katselutilaa, ei kyseisellä tunnuksella ole pääsyä Väylän extranettiin. Tällöin tulee ottaa yhteyttä Väylässä tai ELYssä omaan yhteyshenkilöön.
+Jos kirjautumisen jälkeen karttakäyttöliittymän katselutila ei avaudu, ei kyseisellä tunnuksella ole pääsyä Väylän extranetiin. Tällöin tulee ottaa yhteyttä Väylässä tai ELYssä omaan yhteyshenkilöön.
 
 1.1 Mistä saada opastusta
 --------------------------
@@ -47,18 +48,20 @@ Viite-sovelluksen käytössä avustaa sovellustoimittaja, <viite.kehitys@vayla.f
 Sovelluksen toimiessa virheellisesti (esim. kaikki aineistot eivät lataudu oikein), menettele seuraavasti:
 
 - Lataa sivu uudelleen näppäimistön F5-painikkeella
-- Tarkista, että selaimestasi on käytössä ajan tasalla oleva versio ja selaimesi on Mozilla Firefox tai Chrome
-- Jos edellä olevat eivät korjaa ongelmaa, ota yhteyttä <viite.kehitys@vayla.fi>
+- Tarkista, että selaimestasi on käytössä ajan tasalla oleva versio, ja selaimesi on Chrome tai Mozilla Firefox 
+- Jos edellä olevat eivät korjaa ongelmaa, ota yhteyttä <viite.kehitys@vayla.fi>.
 
-Tämä ohje käsittelee pääasiassa vain Viite-sovelluksen käyttöä, ei niinkään tieosoitejärjestelmää. Tarkemmat tiedot tieosoitejärjestelmästä löydät täältä: https://vayla.fi/documents/20473/143621/tieosoitejärjestelmä.pdf.
+Tämä ohje käsittelee pääasiassa vain Viite-sovelluksen käyttöä, ei niinkään tieosoitejärjestelmää.
+Tarkemmat tiedot tieosoitejärjestelmästä löydät täältä: https://vayla.fi/documents/25230764/35411009/tieosoitejärjestelmä.pdf
 
-# 2. Perustietoja Viite-sovelluksesta
+2 Perustietoja Viite-sovelluksesta
 --------------------------
 
 2.1 Tiedon rakentuminen Viite-sovelluksessa
 --------------------------
 
-Viite-sovelluksessa tieosoiteverkko piirretään VVH:n tarjoaman Maanmittauslaitoksen keskilinja-aineiston päälle. Maanmittauslaitoksen keskilinja-aineisto muodostuu tielinkeistä. Tielinkki on tien, kadun, kevyen liikenteen väylän tai lauttayhteyden keskilinjageometrian pienin yksikkö. Tieosoiteverkko piirtyy geometrian päälle tieosoitesegmentteinä _lineaarisen referoinnin_ avulla. 
+Viite-sovelluksessa tieosoiteverkko piirretään VVH:n tarjoaman Maanmittauslaitoksen keskilinja-aineiston päälle. 
+Viite käyttää keskilinja-aineistosta ns. jäädytettyä versiota, joka päivitetään noin puolivuosittain. Maanmittauslaitoksen keskilinja-aineisto muodostuu tielinkeistä. Tielinkki on tien, kadun, kevyen liikenteen väylän tai lauttayhteyden keskilinjageometrian pienin yksikkö. Tieosoiteverkko piirtyy geometrian päälle tieosoitesegmentteinä _lineaarisen referoinnin_ avulla. 
 
 Tielinkki on Viite-sovelluksen lineaarinen viitekehys, jonka geometriaan sidotaan tieosoitesegmentit. Kukin tieosoitesegmentti tietää, mille tielinkille se kuuluu (tielinkin ID), sekä kohdan, josta se alkaa ja loppuu kyseisellä tielinkillä. Tieosoitesegmentit ovat siten tielinkin mittaisia tai niitä lyhyempiä tieosoitteen osuuksia. Käyttöliittymässä kuitenkin pienin valittavissa oleva osuus on tielinkin mittainen (ks. luvut 5.1 ja 7.1).
 
@@ -68,11 +71,14 @@ Kullakin tieosoitesegmentillä on lisäksi tiettyjä sille annettuja ominaisuust
 
 _Kuva 2.1: Tieosoitesegmenttejä (1) ja muita tielinkkejä (2) Viitteen karttaikkunassa._
 
-Tieosoitesegmentit piirretään Viite-sovelluksessa kartalle erilaisin värein (ks. luku 5). Muut tielinkit, jotka eivät kuulu tieosoiteverkkoon, piirretään kartalle harmaalla. Näitä ovat esimerkiksi tieosoitteettomat kuntien omistamat tiet, ajopolut tai ajotiet.
+Tieosoitesegmentit (eli tieosoitteistetut tielinkit, 1) piirretään Viite-sovelluksessa kartalle erilaisin värein (ks. luku 5). 
+Muut, tieosoiteverkkoon kuulumattomat tielinkit (2), piirretään kartalle harmaalla värillä tai mustaraitaisena katkoviivana. 
+Harmaalla piirretään esimerkiksi (tieosoitteettomat) kuntien omistamat tiet, ajopolut tai ajotiet. 
+Mustaraitaisilla katkoviivoilla piirretään rakenteilla olevat, mutta toistaiseksi tieosoitteistamattomat tiet, jotka ovat tulossa tieosoitteistettaviksi valmistumisensa aikoihin.
 
 Palautteet geometrian/tielinkkien virheistä voi laittaa Maanmittauslaitokselle, <maasto@maanmittauslaitos.fi>. Mukaan liitetään selvitys virheestä ja sen sijainnista (esim. kuvakaappaus).
 
-# 3. Automatiikka Viite-sovelluksessa
+3 Automatiikka Viite-sovelluksessa
 --------------------------
 Viite-sovelluksessa on muutamia automatiikan tekemiä yleistyksiä tai korjauksia. Automatiikka ei muuta mitään sellaisia tietoja, jotka muuttaisivat varsinaisesti tieosoitteita. Automatiikan tekemät muutokset liittyvät siihen, että tieosoiteverkkoa ylläpidetään keskilinjageometrian päällä, ja tuon keskilinjageometrian ylläpidosta vastaa Maanmittauslaitos. Tietyt automaattiset toimenpiteet helpottavat tieosoiteverkon ylläpitäjää varsinaisessa tieosoiteverkon hallinnassa.
 
@@ -81,13 +87,14 @@ __Huom! Automatiikka ei koskaan muuta tieosan mitattua pituutta. Arvot tieosien 
 3.1 Tieosoitesegmenttien yhdistely tielinkin mittaisiksi osuuksiksi
 --------------------------
 
-Kun käyttäjä valitsee kartalla kohteita kaksoisklikkaamalla (ks. luku 5.1), on pienin valittava yksikkö tielinkin mittainen osuus tieosoiteverkosta, koska tielinkki on pienin mahdollinen yksikkö Maanmittauslaitoksen ylläpitämällä linkkiverkolla.
+Käyttäjän valitessa kartalla kohteita kaksoisklikkaamalla (ks. luku 5.1), on pienin valittava yksikkö tielinkin mittainen osuus tieosoiteverkosta, koska tielinkki on pienin mahdollinen yksikkö Maanmittauslaitoksen ylläpitämällä linkkiverkolla.
 
 Tätä varten järjestelmä tekee automaattista yhdistelyä:
 
 - Ne kohteet, joiden tielinkin ID, tie, tieosa, ajorata ja alkupäivämäärä ovat samoja (yhtenevä tieosoitehistoria), on yhdistetty tietokannassa yhdeksi tielinkin mittaiseksi tieosoitesegmentiksi
 - Ne kohteet, joiden tielinkin ID, tie, tieosa, ajorata ovat samoja, mutta alkupäivämäärä ei ole sama (erilainen tieosoitehistoria), ovat tietokannassa edelleen erillisiä kohteita, mutta käyttöliittymässä ne ovat valittavissa vain tielinkin mittaisena osuutena. Tällä varmistetaan, että käyttöliittymä toimii käyttäjän kannalta loogisesti.  Tielinkin mittainen osuus on aina valittavissa, mutta tieosoitehistoria säilytetään tietokantatasolla.
 
+<!-- Kappale 3.2 kommentoitu pois; Viitteessä käytössä nyt puolivuosittain jäädytettävä rajapinta, ei jatkuvasti päivittyvää geometriaa.
 3.2 Tieosoitesegmenttien automaattinen korjaus jatkuvasti päivittyvällä linkkigeometrialla
 --------------------------
 
@@ -97,8 +104,9 @@ Automatiikka tekee korjaukset, kun
 
 1. __Tielinkki pitenee tai lyhenee alle metrin:__ Viite-sovellus lyhentää/pidentää tieosoitesegmenttiä automaattisesti muutoksen verran.
 2. __Maanmittauslaitos yhdistelee tielinkkejä, esimerkiksi poistamalla tonttiliittymiä maanteiden varsilta:__ Tieosoitesegmentit siirretään uudelle geometrialle automaattisesti Väyläverkon hallinnan (VVH) tarjoaman tielinkkien muutosrajapinnan avulla.
+-->
 
-# 4. Karttanäkymän toiminnot
+4 Karttanäkymän toiminnot
 --------------------------
 
 ![Karttanäkymän muokkaus](k3.jpg)
@@ -107,46 +115,48 @@ _Kuva 4.1: Karttanäkymä._
 
 #### Kartan liikuttaminen
 
-Karttaa liikutetaan raahaamalla pitämällä hiiren vasenta painiketta pohjassa ja liikuttamalla samalla hiirtä.
+Karttaa liikutetaan ns. raahaamalla, eli pitämällä hiiren vasenta painiketta pohjassa ja liikuttamalla samalla hiirtä.
 
 #### Hakukenttä
 
-Käyttöliittymässä on hakukenttä (1), jossa voi hakea koordinaateilla, tieosoitteella, katuosoitteella, MTKID:llä ja Linkin ID:llä. Haku suoritetaan kirjoittamalla hakuehto hakukenttään ja klikkaamalla Hae. Hakutulos tulee listaan hakukentän alle. Hakutuloslistassa ylimpänä on maantieteellisesti kartan nykyistä keskipistettä lähimpänä oleva kohde. Mikäli hakutuloksia on vain yksi, keskittyy kartta automaattisesti haettuun kohteeseen. Jos hakutuloksia on useampi kuin yksi, täytyy listalta valita tulos, johon kartta keskittyy. Tyhjennä tulokset -painike tyhjentää hakutuloslistan.
+Käyttöliittymässä on kartan keskitystä varten hakukenttä (1), jossa voi hakea kohteita koordinaateilla, tieosoitteella, katuosoitteella, MTKID:llä ja Linkin ID:llä. Haku suoritetaan kirjoittamalla hakuehto hakukenttään ja klikkaamalla Hae. Hakutulos tulee listaan hakukentän alle. Hakutuloslistassa ylimpänä on maantieteellisesti kartan nykyistä keskipistettä lähimpänä oleva kohde, tai katuosoitehaun tapauksessa tulokset ovat aakkosjärjestyksessä. Mikäli hakutuloksia on vain yksi, keskittyy kartta automaattisesti haettuun kohteeseen. Jos hakutuloksia on useampi kuin yksi, täytyy listalta valita tulos, johon kartan halutaan keskittyvän. Tyhjennä tulokset -painike tyhjentää hakutuloslistan.
 
-Koordinaateilla haku: Koordinaatit syötetään muodossa "pohjoinen (7 merkkiä), itä (6 merkkiä)". Koordinaatit tulee olla ETRS89-TM35FIN -koordinaattijärjestelmässä, esim. 6975061, 535628.
+Koordinaateilla haku: Koordinaatit syötetään muodossa "pohjoinen (7 merkkiä), itä (6 merkkiä)". Koordinaattien tulee olla ETRS89-TM35FIN -koordinaattijärjestelmässä (esim. 6975061, 535628).
 
 Tieosoitteella haku: Tieosoitteesta hakukenttään voi syöttää joko tienumeron (esim. 2), tienumero + tieosanumeroyhdistelmän (esim. 2 1) tai tienumero + tieosanumero + etäisyys –yhdistelmän (esim. 2 1 350). 
 
-Katuosoitteella haku: Katuosoitteesta hakukenttään voi syöttää koko osoitteen tai sen osan, esim. "Mannerheimintie”, ”Mannerheimintie, Helsinki” tai "Mannerheimintie 10, Helsinki".
+Katuosoitteella haku: Katuosoitteesta hakukenttään voi syöttää koko osoitteen tai sen osan (esim. "Mannerheimintie", "Mannerheimintie, Helsinki", "Mannerheimintie 10, Helsinki", tai myös "Mannerheimintie 10").
 
 Linkin ID:llä haku toimii myös selaimen osoitekentän kautta. Ks. tarkemmin 5.3.
 
 #### Taustakartat
 
-Taustakartaksi (2) voi valita vasemman alakulman painikkeista maastokartan, ortokuvat, taustakarttasarjan tai harmaasävykartan. Käytössä oleva harmaasävykartta ei tällä hetkellä ole kovin käyttökelpoinen.
+Taustakartaksi voi valita vasemman alakulman painikkeista (2) maastokartan, ortokuvat, taustakarttasarjan tai harmaasävykartan. Käytössä oleva harmaasävykartta ei tällä hetkellä ole kovin käyttökelpoinen.
 
 #### Näytettävät tiedot
 
-Käyttäjä voi halutessaan valita, näytetäänkö kartalla kiinteistörajat, tieosoitteettomat linkit, rakenteilla-linkit tai tieosoiteverkko symboleineen (3). Valinnat saa päälle ja päältä pois valintaruutuja klikkaamalla. Muut kuin Näytä kiinteistörajat -valinnat ovat automaattisesti päällä. Tieosoiteverkon symboleita ovat etäisyyslukemasymbolit ja suuntanuolet.
+Käyttäjä voi halutessaan valita, näytetäänkö kartalla kiinteistörajat, tieosoitteettomat linkit, rakenteilla-linkit tai tieosoiteverkko symboleineen (3). Valinnat saa päälle ja päältä pois valintaruutuja klikkaamalla toisistaan riippumatta. Muut kuin Näytä kiinteistörajat -valinnat ovat automaattisesti päällä. 
+Tieosoiteverkon symboleita ovat suuntanuolet ja tieosien päätepisteet (tai yleisemmin kalibrointipisteet).
 
 #### Mittakaavataso ja mittakaava
 
-Käytössä oleva mittakaava näkyy kartan oikeassa alakulmassa (4).Kartan mittakaavatasoa muutetaan joko hiiren rullalla, kaksoisklikkaamalla, Shift+piirto -toiminnolla (alue) tai mittakaavapainikkeista (5). Mittakaavapainikkeita käyttämällä kartan keskitys säilyy. Hiiren rullalla, kaksoisklikkaamalla tai Shift+piirto -toimintoa käyttäen (alue) kartan keskitys siirtyy kohdistimen keskikohtaan.
+Käytössä oleva mittakaava näkyy kartan oikeassa alakulmassa (4). Kartan mittakaavatasoa muutetaan joko hiiren rullalla, kaksoisklikkaamalla (zoom in), Shift+piirto -toiminnolla (alue) tai mittakaavapainikkeista (5). Mittakaavapainikkeita käyttämällä kartan keskitys säilyy. Hiiren rullalla tai kaksoisklikkaamalla kartan keskitys siirtyy hiiren kohdistimen keskikohtaan. Shift+piirto -toimintoa (alue) käyttäen kartta keskittyy valitun alueen keskipisteesen.
 
 #### Kohdistin
 
-Kohdistin (6) kertoo kartan keskipisteen. Kohdistimen koordinaatit näkyvät karttaikkunan oikeassa alakulmassa (7). Kun karttaa liikuttaa, keskipiste muuttuu ja koordinaatit päivittyvät. Oikean alakulman valinnan (9) avulla kohdistimen saa myös halutessaan piilotettua kartalta.
+Kohdistin (6) ilmaisee kartan keskipisteen. Kohdistimen koordinaatit näkyvät karttaikkunan oikeassa alakulmassa (7). Kun karttaa liikuttaa, keskipiste muuttuu ja koordinaatit päivittyvät. Oikean alakulman valinnan (9) avulla kohdistimen saa myös halutessaan piilotettua kartalta.
 
 #### Merkitse piste kartalla
 
 Merkitse-painike (8) merkitsee sinisen pisteen kartan keskipisteeseen. Merkki poistuu vain, kun merkitään uusi piste kartalta.
 
-# 5. Tieosoiteverkon katselu
+5 Tieosoiteverkon katselu
 --------------------------
 
-Geometrialtaan yleistetty tieosoiteverkko tulee näkyviin, kun zoomaa tasolle, jonka mittakaavajanassa on lukema 5 km. Tästä tasosta ja sitä lähempää piirretään kartalle valtatiet, kantatiet, seututiet, yhdystiet ja numeroidut kadut. Yleistämätön tieverkko piirtyy mittakaavajanan lukemalla 2 km. 100 metriä (100 metrin mittakaavajanoja on kaksi kappaletta) suuremmilla mittakaavatasoilla tulevat näkyviin kaikki tieverkon kohteet.
+Geometrialtaan yleistetty tieosoiteverkko (linkit piirretään pelkkien päätepisteiden perusteella) tulee näkyviin, kun zoomaa tasolle, jonka mittakaavajanassa on lukema 5 km. Tästä tasosta ja sitä lähempää piirretään kartalle valtatiet, kantatiet, seututiet, yhdystiet ja numeroidut kadut. Yleistämätön tieverkko piirtyy mittakaavajanan lukemalla 2 km. 100 metriä (100 metrin mittakaavajanoja on kaksi kappaletta) suuremmilla mittakaavatasoilla tulevat näkyviin kaikki tieverkon kohteet. Tieverkon latautuminen karttanäytölle voi kestää jonkin aikaa. 
 
-Tieosoiteverkko on värikoodattu tienumeroiden mukaan. Vasemman yläkulman selitteessä on kerrottu kunkin värikoodin tienumerot. Lisäksi kartalle piirtyvät etäisyyslukemasymbolit, kohdat, joissa vaihtuu tieosa tai ajoratakoodi. Tieverkon kasvusuunta näkyy kartalla pisaran mallisena nuolena.
+Tieosoiteverkko on värikoodattu tienumeroiden mukaan. Vasemman yläkulman selitteessä on kerrottu kutakin värikoodia vastaavat tienumerot. 
+Lisäksi kartalle merkitään tieosien alkupisteet. Tieverkon suunta näkyy kartalla pisaran mallisena nuolena. Nuolen kärki osoittaa tieosoitteen kasvusuuntaan.
 
 Kartalla näkyvä tieosoiteverkko on uusimman tieosoitteen mukainen verkko, jossa näkyvät tieosoitteiden viimeisimmät muutokset. Näiden muutosten alkupäivämäärä voi olla tulevaisuudessa, joten kartalla ei näy ns. tämän päivän tilanne.
 
@@ -158,25 +168,28 @@ _Kuva 5.1: Tieosoiteverkon piirtyminen kartalle, kun mittakaavajanassa on 2 km._
 
 _Kuva 5.2: Tieosoiteverkon piirtyminen kartalle, kun mittakaavajanassa on 100 m._
 
-Tieosoitteelliset kadut ja yksityistiet erottuvat kartalla muista tieosoitesegmenteistä siten, että niiden ympärillä on musta reunaviiva.
+Tieosoitteelliset kadut ja yksityistiet (hallinnollinen luokka kunta tai yksityinen) erottuvat kartalla muista tieosoitesegmenteistä siten, että niiden ympärillä on musta reunaviiva.
 
 ![Tieosoitteellinen katu](k16.jpg)
 
 _Kuva 5.3: Tieosoitteellinen katu, merkattuna mustalla reunaviivalla tienumeron värityksen lisäksi._
 
-Kun hiiren vie tieosoiteverkon päälle, tulee kartalle näkyviin infolaatikko, joka kertoo kyseisen tieosoitesegmentin tienumeron, tieosanumeron, ajoratakoodin sekä alku- ja loppuetäisyyden.
+Kun hiiren kohdistimen vie tieosoitteistetun tieosuuden päälle, tulee kartalle näkyviin infolaatikko, joka kertoo kyseisen tieosoitesegmentin tienumeron, tieosanumeron, ajoratakoodin, alku- ja loppuetäisyyden sekä hallinnollisen luokan.
 
 ![Tieosoitteen hoverointi](k35.jpg)
 
-_Kuva 5.4: Infolaatikko, kun hiiri on viety tieosoitesegmentin päälle._
+_Kuva 5.4: Infolaatikko, kun hiiren kohdistin on viety tieosoitesegmentin päälle._
 
 5.1 Kohteiden valinta
 --------------------------
-Kohteita voi valita kartalta klikkaamalla. Kertaklikkauksella sovellus valitsee kartalla näkyvästä tieosasta osuuden, jolla on sama tienumero, tieosanumero ja ajoratakoodi. Valittu tieosa korostuu kartalla (1), ja sen tiedot tulevat näkyviin karttaikkunan oikean reunan ominaisuustietonäkymään (2).
 
-![Tieosuuden valinta](k6.jpg)
+Kohteita voi valita kartalta klikkaamalla, tuplaklikkaamalla ja ctrl+klikkaamalla. 
 
-_Kuva 5.5: Tieosuuden valinta._
+Kertaklikkauksella sovellus valitsee klikatun tieosan, eli tielinkit joilla on sama tienumero ja tieosanumero. Valittu tieosa korostuu kartalla (1), ja sen tiedot tulevat näkyviin karttaikkunan oikean reunan ominaisuustietonäkymään (2).
+
+![Tieosan valinta](k6.jpg)
+
+_Kuva 5.5: Kokonaisen tieosan valinta._
 
 Kaksoisklikkaus valitsee yhden tielinkin mittaisen osuuden tieosoitteesta. Valittu osuus korostuu kartalla (3), ja sen tiedot tulevat näkyviin karttaikkunan oikean reunan ominaisuustietonäkymään (4).
 
@@ -184,38 +197,51 @@ Kaksoisklikkaus valitsee yhden tielinkin mittaisen osuuden tieosoitteesta. Valit
 
 _Kuva 5.6: Tielinkin mittaisen osuuden valinta._
 
-5.2 Tieosoitteen ominaisuustiedot
+Ctrl+klik eli monivalinta. Ctrl-nappula pohjassa linkkejä klikkailemalla voit valita vapaasti kaikenlaisia tielinkkejä samaan valintaan.
+Voit esim. poimia tieosoitteistettuja ja tieosoitteistamattomia linkkejä samaan valintaan approksimoidaksesi tulevia tiepituuksia. 
+Monivalituille linkeille ominaisuustiedoissa näytetään vain karkeamman tason tiedot.
+
+![Ctrl+klik; monivalinta, ääriesimerkki](k71.jpg)
+
+_Kuva 5.7: Tielinkkien monivalinta._
+
+5.2 Tieosoitteiden ominaisuustiedot
 --------------------------
 
-Tieosoitteilla on seuraavat ominaisuustiedot:
+Valituista tielinkeistä näytetään seuraavat ominaisuustiedot:
 
-|Ominaisuustieto|Kuvaus|Sovellus muodostaa|
-|---------------|------|----------------|
-|Muokattu viimeksi*|Muokkaajan käyttäjätunnus ja tiedon muokkaushetki.|X|
-|Linkkien lukumäärä|Niiden tielinkkien lukumäärä, joihin valinta  kohdistuu.|X|
-|Geometrian lähde|MML_jäädytetty, MML, Täydentävä tai Suravage.|X|
-|Tienumero|Tieosoiteverkon mukainen tienumero. Lähtöaineistona Tierekisterin tieosoitteet 1.1.2019.||
-|Tieosanumero|Tieosoiteverkon mukainen tieosanumero. Lähtöaineistona Tierekisterin tieosoitteet 1.1.2019.||
-|Ajorata|Tieosoiteverkon mukainen ajoratakoodi. Lähtöaineistona Tierekisterin tieosoitteet 1.1.2019.||
-|Alkuetäisyys**|Tieosoiteverkon etäisyyslukemien avulla laskettu alkuetäisyys. Etäisyyslukeman kohdalla alkuetäisyyden lähtöaineistona on Tierekisterin tieosoitteet 1.1.2019.|X|
-|Loppuetäisyys**|Tieosoiteverkon etäisyyslukemien avulla laskettu loppuetäisyys. Etäisyyslukeman kohdalla loppuetäisyyden lähtöaineistona on Tierekisterin tieosoitteet 1.1.2019.|X|
-|ELY|Väylän ELY-numero.|X|
-|Hallinnollinen luokka***|Saadaan Maanmittauslaitoksen hallinnollinen luokka -tiedoista. Jos valitulla tieosalla on useita hallinnollisia luokkia, ne kerrotaan ominaisuustietotaulussa pilkulla erotettuna.||
-|Jatkuvuus|Tieosoiteverkon mukainen jatkuvuustieto. Lähtöaineistona Tierekisterin tieosoitteet 1.1.2019.|X|
+|Ominaisuustieto   | Kuvaus|
+|------------------|-------|
+|Muokattu viimeksi*| Muokkaajan käyttäjätunnus ja tiedon muokkaushetki.|
+|Linkkien lukumäärä| Niiden tielinkkien lukumäärä, joihin valinta  kohdistuu.|
+|Geometrian lähde  | MML_jäädytetty, MML, Täydentävä tai Suravage.|
+|Kunta             | Geometrialinkin kuntatieto.|
+|Linkin ID         | Näytetään, jos valittuna on yksittäinen linkki.|
+|Geometrian pituus/Geometrioiden yhteenlaskettu pituus| Valittujen tielinkkien yhteispituus. Lasketaan kaikkien linkkien tiedoista.|
+|Tien nimi         | Viitteessä tielle annettu tien nimi, tai listaus valinnan tiennimistä.|
+|Tienumero         | Tieosoiteverkon mukainen tienumero, tai listaus valinnan tienumeroista. Lähtöaineistona Tierekisterin tieosoitteet (joulukuu 2021).|
+|Tieosanumero      | Tieosoiteverkon mukainen tieosanumero. Lähtöaineistona Tierekisterin tieosoitteet (joulukuu 2021).|
+|Ajorata           | Tieosoiteverkon mukainen ajoratakoodi, tai listaus valinnan ajoratakoodeista. Lähtöaineistona Tierekisterin tieosoitteet (joulukuu 2021).|
+|Alkuetäisyys**    | Tieosoiteverkon etäisyyslukemien avulla laskettu alkuetäisyys. Etäisyyslukeman kohdalla alkuetäisyyden lähtöaineistona on Tierekisterin tieosoitteet (joulukuu 2021).|
+|Loppuetäisyys**   | Tieosoiteverkon etäisyyslukemien avulla laskettu loppuetäisyys. Etäisyyslukeman kohdalla loppuetäisyyden lähtöaineistona on Tierekisterin tieosoitteet (joulukuu 2021).|
+|Yhteenlaskettu pituus   | Valinnan mukaisten tieosoitteistettujen tielinkkien tieosoitevälien yhteispituus.| 
+|ELY                     | Tien hallinnoinnista vastaava ELY, tai listaus valinnan ELYistä.|
+|Hallinnollinen luokka*3| Lähtöaineistona Maanmittauslaitoksen hallinnollinen luokka -tieto. Jos valituilla tielinkeillä on useita hallinnollisia luokkia, ne listataan pilkulla erotettuna.|
+|Jatkuvuus               | Tieosoiteverkon mukainen jatkuvuustieto, tai listaus valinnan jatkuvuuskoodeista. Lähtöaineistona Tierekisterin tieosoitteet (joulukuu 2021).|
 
 *) Muokattu viimeksi -tiedoissa vvh_modified tarkoittaa, että muutos on tullut Maanmittauslaitokselta joko geometriaan tai geometrian ominaisuustietoihin. Muokattu viimeksi -päivät ovat kaikki vähintään 29.10.2015, koska tuolloin on tehty Maanmittauslaitoksen geometrioista alkulataus VVH:n tietokantaan.
 
-**) Tieosoiteverkon etäisyyslukemat (tieosan alku- ja loppupisteet sekä ajoratakoodin vaihtuminen) määrittelevät mitatut alku- ja loppuetäisyydet. Etäisyyslukemien välillä alku- ja loppuetäisyydet lasketaan tieosoitesegmenttikohtaisesti Viite-sovelluksessa.
+**) Tieosoiteverkon kalibrointipisteet (tieosan alku- ja loppupisteet sekä ajoratakoodin vaihtuminen) määrittelevät mitatut alku- ja loppuetäisyydet. Kalibrointipisteiden välillä alku- ja loppuetäisyydet lasketaan tieosoitesegmenttikohtaisesti Viite-sovelluksessa.
 
-***) Viitteessä luovuttiin Tietyypistä ja se korvattiin Hallinnollisella luokalla 3/2021.
+*3) Viitteessä luovuttiin Tietyypistä ja se korvattiin Hallinnollisella luokalla 3/2021.
 Palautteet hallinnollisen luokan virheistä voi toimittaa Maanmittauslaitokselle osoitteeseen maasto@maanmittauslaitos.fi. Mukaan selvitys virheestä ja sen sijainnista (kuvakaappaus tms.).
 
 5.3 Kohdistaminen tieosoitteeseen tielinkin ID:n avulla
 --------------------------
 
-Kun kohdetta klikkaa kartalla, tulee selaimen osoiteriville näkyviin valitun kohteen tielinkin ID. Osoiterivillä olevan URL:n avulla voi myös kohdistaa käyttöliittymässä ko. tielinkkiin. URL:n voi lähettää sähköpostilla toiselle henkilölle, jolloin tämä pääsee käyttöliittymässä samaan paikkaan.
+Kun kohdetta klikkaa tai tuplaklikkaa kartalla, tulee selaimen osoiteriville näkyviin tielinkin ID. Tuplaklikattaessa ID on valitun linkin id, klikattaessa jonkun valitun tieosan linkin ID. Osoiterivillä olevan URL:n avulla voi myös kohdistaa käyttöliittymässä ko. tielinkkiin. URL:n voi lähettää toiselle henkilölle, jolloin tämä pääsee käyttöliittymässä samaan paikkaan.
 
-Esimerkiksi: https://extranet.vayla.fi/viite/#linkProperty/1204420 näkyy kuvassa osoiterivillä (5). 1204420 on tielinkin ID.
+Esimerkiksi: https://viite.vaylapilvi.fi/#linkProperty/1204420 näkyy kuvassa osoiterivillä (5). 1204420 on tielinkin ID.
 
 ![Kohdistaminen tielinkin ID:llä](k8.jpg)
 
