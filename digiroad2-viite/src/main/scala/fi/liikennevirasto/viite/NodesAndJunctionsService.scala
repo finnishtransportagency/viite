@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory
 import scala.annotation.tailrec
 import scala.util.control.NonFatal
 
-class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayPointDAO, linearLocationDAO: LinearLocationDAO, nodeDAO: NodeDAO, nodePointDAO: NodePointDAO, junctionDAO: JunctionDAO, junctionPointDAO: JunctionPointDAO, roadwayChangesDAO: RoadwayChangesDAO) {
+class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayPointDAO, linearLocationDAO: LinearLocationDAO, nodeDAO: NodeDAO, nodePointDAO: NodePointDAO, junctionDAO: JunctionDAO, junctionPointDAO: JunctionPointDAO, roadwayChangesDAO: RoadwayChangesDAO, projectReservedPartDAO: ProjectReservedPartDAO) {
 
   case class CompleteNode(node: Option[Node], nodePoints: Seq[NodePoint], junctions: Map[Junction, Seq[JunctionPoint]])
 
@@ -138,6 +138,23 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         calculateNodePointsForNode(nodeNumber, username)
       }
       publishNodes(Seq(nodeNumber), username)
+    }
+  }
+
+  /**
+    * Check if any of the junction points is on a reserved road part (VIITE-2518).
+    * @param junctionPointIds Ids of the junction points to be checked.
+    * @return True if any of the checked junction points belongs to a reserved road part. False else.
+    */
+
+  def areJunctionPointsOnReservedRoadPart(junctionPointIds: Seq[Long]): Boolean = {
+    withDynSession {
+      val junctionPoints = junctionPointDAO.fetchByIds(junctionPointIds)
+      val roadwayPoints = junctionPoints.map(jp => roadwayPointDAO.fetch(jp.roadwayPointId))
+      val roadwayNumbers = roadwayPoints.map(rwp => rwp.roadwayNumber).toSet
+      val roadways = roadwayDAO.fetchAllByRoadwayNumbers(roadwayNumbers)
+      val reservedRoads = roadways.map(roadway => projectReservedPartDAO.fetchReservedRoadPart(roadway.roadNumber, roadway.roadPartNumber))
+      !reservedRoads.forall(_.isEmpty)
     }
   }
 
