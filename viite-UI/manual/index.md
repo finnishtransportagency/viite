@@ -388,31 +388,31 @@ Projektitilan selite kuvaa linkkiverkkoon tehdyt toimenpiteet, kun taas katselut
 --------------------------
 #### Yleistä toimenpiteistä
 Uusi-toimenpidettä lukuunottamatta kaikkia muita toimenpiteitä varten käsiteltävä tieosa tai käsiteltävät tieosat täytyy ensin varata tieosoiteprojektiin (Ks. 6.1, kohta _Tieosien varaaminen projektiin_).
-Kaikki toimenpiteet tehdään toimenpidenäkymässä, jonne päästään _Jatka toimenpiteisiin_ -painikkeesta projektin luonti- tai muutosnäkymästä käsin.
-Muut toimenpiteet kuin Uusi: Projektiin varatut mutta vielä käsittelemättömät tieosat näkyvät kartalla keltaisina aihioina. Valitse kartalta aihio tai aihiot, joille kulloinkin haluat tehdä toimenpiteen. 
-Uusi-toimenpide: valitse kartalta tieosoitteistamaton tai rakenteilla oleva tieosuus, jonka haluat osoitteistaa.
+Kaikki toimenpiteet tehdään toimenpidenäkymässä, jonne päästään _Jatka toimenpiteisiin_ -painikkeesta projektin luonti- tai muokkausnäkymästä käsin.   
+Muut toimenpiteet kuin Uusi: Projektiin varatut mutta vielä käsittelemättömät tieosat näkyvät kartalla keltaisina aihioina. Valitse kartalta aihio tai aihiot, joille haluat tehdä toimenpiteen.   
+Uusi-toimenpide: valitse kartalta tieosoitteistamaton tai rakenteilla oleva tieosuus, jonka haluat osoitteistaa.   
+Valittuina tielinkit muuttuvat vihreiksi. Shift+kaksoisklikkaus-painalluksella voi lisätä yksittäisiä linkkejä valintaan tai poistaa yksittäisiä linkkejä valinnasta.   
 Oikeaan reunaan, toimenpidelomakkeelle, tulevat tiedot valituista linkeistä, sekä pudotusvalikko, josta kulloinkin tehtävissä olevat toimenpiteet voi valita.
 
 7.1.1 Lakkautus
 --------------------------
 
-Kun halutaan lakkauttaa joko tieosia, tieosa tai osa tieosasta, ko. osat pitää ensin varata projektiin. Varaaminen tehdään luvussa 6.1 esitetyllä tavalla syöttämällä projektitietojen lomakkeelle haluttu tienumero ja tieosa sekä painamalla Varaa-painiketta.
+Lakkautus-toimenpiteellä lopetetaan tielinkkien tieosoitteistuksen voimassaolo.   
+(Yleiset ohjeet; kuinka saada toimenpidevalikko näkyviin: ks. edeltä luku 7.1.) Toimenpidelomakkeen pudotusvalikosta valitaan Lakkautus. Tämän jälkeen muutos tallennetaan projektiin. 
+Lakkautetut linkit näkyvät tämän jälkeen kartalla mustina.
+Mikäli on lakkautettu vain osa tieosan linkeistä, tulee tieosan muut kuin lakkautetut linkit käsitellä joko Ennallaan- tai Siirto-toimenpiteillä tilanteesta riippuen. 
 
-Tämän jälkeen klikataan "Jatka toimenpiteisiin" -painiketta, jolla siirrytään toimenpidelomakkeelle tekemään tieosoitemuutosta. Toimenpidelomakkeella valitaan kartalta projektiin varattu tieosa, -osat tai tarvittavat linkit valitusta tieosasta. 
-Ne muuttuvat valittuina vihreiksi. (Shift+kaksoisklikkaus-painalluksella voi lisätä yksittäisiä linkkejä valintaan tai poistaa yksittäisiä linkkejä valinnasta.) 
-Toimenpidelomakkeelle tulee tiedot valituista linkeistä sekä pudotusvalikko, josta valitaan Lakkautus. Tämän jälkeen tallennetaan muutos projektiin. 
-Lakkautetut linkki näkyvät tämän jälkeen kartalla mustalla ja sen tiedot päivittyvät yhteenvetotaulukkoon, jonka voi avata sinisestä _Avaa projektin yhteenvetotaulukko_ -painikkeesta. 
-Yhteenvetotaulukon toiminta on kuvattu luvussa 7.2. Mikäli on lakkautettu vain osa tieosan linkeistä, tulee tieosan muut kuin lakkautetut linkit käsitellä joko Ennallaan- tai Siirto-toimenpiteillä tilanteesta riippuen. 
+ja niiden tiedot päivittyvät yhteenvetotaulukkoon, jonka voi avata sinisestä _Avaa projektin yhteenvetotaulukko_ -painikkeesta. 
+Yhteenvetotaulukon toiminta on kuvattu luvussa 7.2. 
 Kun tarvittavat muutokset projektissa on tehty, muutostiedot voi hyväksyä tieverkolle painamalla _Hyväksy tieosoitemuutokset_ -painiketta. (Yhteenvetotaulukon tulee olla tällöin avattuna.)
 
 7.1.2 Uusi
 --------------------------
-Uusi -toimenpiteellä määritetään uusi tieosoite tieosoitteettomille linkeille. 
-Tieosoitteettomia muun tieverkon linkkejä (piirtyvät kartalle harmaina) tai rakenteilla olevia linkkejä (näkyvät katkoviivoina) voi valita kerta- tai kaksoisklikkauksella, kuten muitakin tielinkkejä. Kaksoisklikkaus valitsee yhden tielinkin ja Ctrl+klikkauksella voi lisätä tai poistaa valintaan linkkejä yksi kerrallaan. Kertaklikkaus valitsee homogeenisen jakson, jossa käytetään VVH:n tielinkin tienumeroa ja tieosanumeroa. Tienumeron tai tieosanumeron puuttuessa valinnassa käytetään tienimeä.
+Uusi-toimenpiteellä määritetään uusi tieosoitteisto tieosoitteettomille tielinkeille.   
+Tieosoitteettomia muun tieverkon linkkejä (piirtyvät kartalle harmaina) tai rakenteilla olevia linkkejä (näkyvät katkoviivoina) voi toimenpidenäkymässä valita kerta- kaksois- tai ctrl+klik-klikkauksilla, kuten muitakin tielinkkejä. Kaksoisklikkaus valitsee yhden tielinkin ja Ctrl+klikkauksella voi lisätä tai poistaa valintaan linkkejä yksi kerrallaan. Kertaklikkaus valitsee homogeenisen jakson, jossa käytetään VVH:n tielinkin tienumeroa ja tieosanumeroa. Tienumeron tai tieosanumeron puuttuessa valinnassa käytetään tienimeä.
 
-Valitut tielinkit näkyvät kartalla vihreällä korostettuna. Kun valitaan Toimenpiteet-pudotusvalikosta Uusi (1), lomakkeelle avautuvat kentät uuden tieosoitteen tiedoille (2). Jos valitulla tieosuudella on jo olemassa VVH:ssa tienumero ja tieosanumero, ne esitäyttyvät kenttiin automaattisesti.
-
-Hallinnollista luokkaa voi muokata pudotusvalikosta (3). Tien nimi (4) on pakollinen tieto, kun tien numero on pienempi kuin 70000. Muutokset tallennetaan Tallenna-painikkeella (5). Ennen tallennusta muutokset voi perua Peruuta-painikkeesta. 
+(Yleiset ohjeet; kuinka saada toimenpidevalikko näkyviin: ks. edeltä luku 7.1.) Kun valitaan Toimenpiteet-pudotusvalikosta Uusi (1), lomakkeelle avautuvat kentät uuden tieosoitteen tiedoille (2). Jos valitulla tieosuudella on jo olemassa VVH:ssa tienumero ja tieosanumero, ne esitäyttyvät kenttiin automaattisesti.
+Linkkien Hallinnollista luokkaa voi muokata pudotusvalikosta (3). Tien nimi (4) on pakollinen tieto, kun tien numero on pienempi kuin 70000. Muutokset tallennetaan _Tallenna_-painikkeella (5). Ennen tallennusta muutokset voi perua _Peruuta_-painikkeesta. 
 
 ![Uusi tieosoite](k43.jpg)
 
