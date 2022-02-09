@@ -234,11 +234,7 @@
         var maxAddr = range.maxAddr;
 
         // at this point the input field is disabled because backend is checking if the junction points are on reserved road parts.
-        // charCodes:
-        // 48 - 57  = 0 - 9
-        // 8        = Backspace / Delete
-        // 9        = Tab
-        return '<input disabled="true" type="number" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode === 8 || event.keyCode === 9)"' +
+        return '<input disabled="true" type="number"' +
           ' class="form-control junction-point-address-input" id="junction-point-address-input-' +
           jp.id + '" junctionPointId="' + jp.id + '" maxlength="5" value="' + jp.addr + '" min="' + minAddr + '" max="' + maxAddr + '"/>';
       };
