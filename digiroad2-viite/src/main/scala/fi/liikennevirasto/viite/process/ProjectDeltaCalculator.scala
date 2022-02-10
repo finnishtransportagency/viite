@@ -3,6 +3,7 @@ package fi.liikennevirasto.viite.process
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.RightSide
 import fi.liikennevirasto.viite
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
 import fi.liikennevirasto.viite.dao.{ProjectLink, _}
 import org.joda.time.DateTime
 
@@ -107,7 +108,7 @@ object ProjectDeltaCalculator {
     val oppositePl1 = allNonTerminatedProjectLinks.filter( pl => pl.track != pl1.track && pl.track != Track.Combined && (pl.endAddrMValue == pl1.endAddrMValue || pl.originalEndAddrMValue == pl1.originalEndAddrMValue))
     val oppositePl2 = allNonTerminatedProjectLinks.filter( pl => pl.track != pl1.track && pl.track != Track.Combined && (pl.startAddrMValue == pl1.endAddrMValue || pl.originalStartAddrMValue == pl1.originalEndAddrMValue))
     val oppositeStatusChange = oppositePl1.nonEmpty && oppositePl2.nonEmpty && oppositePl1.last.status != oppositePl2.last.status
-    val hasCalibrationPoint = ((pl1.status != LinkStatus.New && pl1.hasCalibrationPointAtEnd) && pl1.hasCalibrationPointCreatedInProject) || (oppositePl1.nonEmpty && oppositePl1.head.hasCalibrationPointAtEnd)
+    val hasCalibrationPoint = ((pl1.status != LinkStatus.New && pl1.hasCalibrationPointAtEnd) && pl1.hasCalibrationPointCreatedInProject && pl1.endCalibrationPointType != CalibrationPointType.JunctionPointCP) || (oppositePl1.nonEmpty && oppositePl1.head.hasCalibrationPointAtEnd && oppositePl1.head.hasCalibrationPointCreatedInProject && oppositePl1.head.endCalibrationPointType != CalibrationPointType.JunctionPointCP)
     val trackNotUpdated = if (pl1.reversed && pl2.reversed && pl1.track != Track.Combined && pl2.track != Track.Combined) pl2.originalTrack != pl2.track else pl2.originalTrack == pl1.originalTrack && pl1.track == pl2.track
     val oppositeTrackNotUpdated = if (pl2.reversed) (oppositePl2.nonEmpty && oppositePl2.head.originalTrack != oppositePl2.head.track) || oppositePl1.isEmpty else (oppositePl2.nonEmpty && oppositePl2.head.originalTrack == oppositePl2.head.track) || oppositePl1.isEmpty
     val originalTrackContinuous = pl1.originalTrack == pl2.originalTrack
