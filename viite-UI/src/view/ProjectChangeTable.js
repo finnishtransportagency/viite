@@ -157,7 +157,8 @@
       // set change table state to open
       changeTableOpen = true;
       if (projectChangeData) {
-        $('.change-table-header').html($('<div class="font-resize">Validointi ok. Alla näet muutokset projektissa.</div>'));
+        var projectDate = new Date(projectChangeData.changeTable.changeDate).toLocaleDateString();
+        $('.change-table-header').html($('<div class="font-resize">Validointi ok. Alla näet muutokset projektissa.</div><div class="font-resize">Alkupäivämäärä: ' + projectDate + '</div>'));
         var currentProject = projectCollection.getCurrentProject();
         // disable recalculate button if changetable is open and set title attribute
         formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Etäisyyslukemia ei voida päivittää yhteenvetotaulukon ollessa auki");
