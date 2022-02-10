@@ -607,12 +607,18 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
 
   test("Partitioner should not separate links containing junction calibration points whose origin is ProjectLink") {
     runWithRollback {
-      val addresses          = (0 to 9).map(i => {
+      val addresses = (0 to 9).map(i => {
         createRoadAddress(i * 2, 2L)
       })
       val projectLinksWithCp = addresses.sortBy(_.startAddrMValue).map(a => {
         val projectLink = toProjectLink(project, LinkStatus.UnChanged)(a.copy(ely = 5))
-        if (a.id == 10L) (a.copy(roadwayNumber = 1), projectLink.copy(calibrationPointTypes = (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.JunctionPointCP), roadwayNumber = 1)) else if (a.id > 10L) (a.copy(roadwayNumber = 2), projectLink.copy(roadwayNumber = 2)) else (a.copy(roadwayNumber = 1), projectLink.copy(roadwayNumber = 1))
+        if (a.id == 10L)
+          (a.copy(roadwayNumber = 1), projectLink.copy(calibrationPointTypes = (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.JunctionPointCP), roadwayNumber = 1))
+        else
+          if (a.id > 10L)
+            (a.copy(roadwayNumber = 2), projectLink.copy(roadwayNumber = 2))
+        else
+            (a.copy(roadwayNumber = 1), projectLink.copy(roadwayNumber = 1))
       })
 
       val partitionCp = ProjectDeltaCalculator.partitionWithProjectLinks(projectLinksWithCp.map(_._2), Seq()).adjustedSections
