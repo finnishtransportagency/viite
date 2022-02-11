@@ -550,23 +550,23 @@ Tässä koostettuna tieosoiteprojektin tilat
 |Virhe tierekisterissä|Tierekisteri ei hyväksynyt projektia. Tierekisterin tarkempi virheilmoitus tulee näkyviin viemällä osoittimen "Virhe tierekisterissä"-tekstin päälle. Projektin voi avata uudelleen.|
 |Virhetilanne Viitteessä|Projekti on lähetty Tierekisteriin ja se on Tierekisterin hyväksymä, mutta projektin tiedot eivät piirry Viite-sovelluksessa.| 
 
-# 8. Tienimien ylläpito
+8 Tienimien ylläpito
 --------------------------
 
-Viitteessä teillä, joiden tienumero on suurempi kuin 70 000, tienimi on pakollinen tieto. Tienimi annetaan uutta tietä luotaessa projektilomakkeella.
+Viiteessä teillä, joiden tienumero on pienempi kuin 70 000, tienimi on pakollinen tieto. Tienimi annetaan toimenpidelomakkeella uutta tietä osoitteistettaessa.
 
-Jos annettu tienimi täytyy vaihtaa tai sitä pitää muokata esim. kirjoitusvirheen vuoksi, käytetään Tiennimen ylläpito -työkalua, joka avataan alkutilasta (karttakäyttöliittymän katselutilasta) Tieosoiteprojektit-painikkeen alta näytön oikeasta reunasta (kuva 6.1).
+Jos annettu tienimi täytyy vaihtaa tai sitä pitää muokata esim. kirjoitusvirheen vuoksi, käytetään _Tiennimen ylläpito_ -työkalua, joka avataan alkutilasta (karttakäyttöliittymän katselutilasta) Tieosoiteprojektit-painikkeen alta näytön oikeasta reunasta (kuva 6.1).
 
-Muokattavat tienimet haetaan tienumeron perusteella kirjoittamalla tien numero lomakkeen syöttökenttään (1) (kuva 8.1). Tiennimen ylläpito -ikkuna suljetaan klikkaamalla oikeasta yläkulmasta löytyvästä rastista (2). Lomakkeen alareunassa on huomautus (3), että tallennetut muutokset päivittyvät tierekisteriin tunnin sisällä.
+Muokattavat tienimet haetaan tienumeron perusteella kirjoittamalla tien numero lomakkeen syöttökenttään (1) (kuva 8.1). Tiennimen ylläpito -ikkuna suljetaan klikkaamalla oikeasta yläkulmasta löytyvästä rastista (2).
 
 ![Tienimen ylläpito](k53.JPG) 
 
-_Kuva 8.1: Tienimen ylläpito -työkalun lomakkeen etusivu._
+_Kuva 8.1: Tienimen ylläpito -työkalun lomake._
 
 8.1 Tien nimen muokkaaminen, kun tiellä on jo nimi
 --------------------------
 
-Kun tienumero on kirjoitettu syöttökenttään, painetaan Hae-painiketta, ja hakutulokset listautuvat hakukentän alapuolelle otsikkorivien alle (1). Listalla näkyvät tien aiemmat nimet alku- ja loppupäivämäärineen. Voimassa oleva nimi on listassa alimpana (2). Sitä voi muokata (syöttökenttä on valkoinen). Rivin lopussa on [+] –painike (3), jos haettu tie on voimassa oleva. Voimassa olevalla nimellä ei ole loppupäivämäärää (4). Hakukenttä ei tyhjene, mutta uuden haun voi tehdä kirjoittamalla uuden tienumeron hakukenttään ja painamalla jälleen Hae.
+Kun tienumero on kirjoitettu syöttökenttään, ja on painettu _Hae_-painiketta, hakutulokset listautuvat hakukentän alapuolelle otsikkorivien alle (1). Listalla näkyvät tien aiemmat nimet alku- ja loppupäivämäärineen. Voimassa oleva nimi on listassa alimpana (2). Sitä voi muokata (syöttökenttä on valkoinen). Rivin lopussa on [+] –painike (3), jos haettu tie on voimassa oleva. Voimassa olevalla nimellä ei ole loppupäivämäärää (4). Hakukenttä ei tyhjene, mutta uuden haun voi tehdä kirjoittamalla uuden tienumeron hakukenttään ja painamalla jälleen _Hae_.
 
 ![Listaus tienimistä ja uudelleenhaku](k54.JPG)
 
