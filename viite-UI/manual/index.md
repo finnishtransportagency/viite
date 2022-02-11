@@ -234,7 +234,7 @@ Valituista tielinkeistä näytetään seuraavat ominaisuustiedot:
 **) Tieosoiteverkon kalibrointipisteet (tieosan alku- ja loppupisteet sekä ajoratakoodin vaihtuminen) määrittelevät mitatut alku- ja loppuetäisyydet. Kalibrointipisteiden välillä alku- ja loppuetäisyydet lasketaan tieosoitesegmenttikohtaisesti Viite-sovelluksessa.
 
 *3) Viitteessä luovuttiin Tietyypistä ja se korvattiin Hallinnollisella luokalla 3/2021.
-Palautteet hallinnollisen luokan virheistä voi toimittaa Maanmittauslaitokselle osoitteeseen maasto@maanmittauslaitos.fi. Mukaan selvitys virheestä ja sen sijainnista (kuvakaappaus tms.).
+Palautteet hallinnollisen luokan virheistä voi toimittaa Maanmittauslaitokselle osoitteeseen maasto@maanmittauslaitos.fi lomakkeella https://vayla.sharefile.eu/d-sf43c30c2582a42cfac1744748dad608f (Hallinnollisten muutosten ilmoituspohja.xls). Mukaan selvitys virheestä ja sen sijainnista (kuvakaappaus tms.).
 
 5.3 Kohdistaminen tieosoitteeseen tielinkin ID:n avulla
 --------------------------
@@ -465,6 +465,8 @@ Tieosoite pysyy muuttumattomana myös silloin, jos vain hallinnollistyyppisiä t
 Toimenpidelomakkeen pudotusvalikosta valitaan Ennallaan, tehdään tarvittaessa halutut hallinnollisten tietojen muutokset, ja lopuksi tallennetaan _Tallenna_-painikkeesta.
 Ennallaan-toimenpiteellä käsitelty linkki näkyy toimenpidenäkymässä sinisenä.
 
+Huom. Jos muutat hallinnollista luokkaa, huomioi, että Digiroadin tiedot tarvitsevat projektin tieverkolle päivityksen jälkeen myös muutoksia.
+
 7.1.4 Siirto
 --------------------------
 Siirto-toimenpide tehdään tielinkeille uusien etäisyysarvojen (m-arvojen) laskemiseksi, tai tieosoitenumeroinnin (tienumero, tieosanumero, ajoratakoodi) muuttumisen vuoksi.   
@@ -474,6 +476,8 @@ Osalle tieosan linkeistä voidaan tehdä lakkautus, lisätä tielle uusia linkke
 
 Toimenpidelomakkeen pudotusvalikosta valitaan Siirto, tarvittaessa muutetaan tieosoitteistuksen tiedot, ja lopuksi siirtotoimenpide tallennetaan _Tallenna_-painikkeesta.
 Siirretyt linkit muuttuvat toimenpidenäkymässä punaisiksi. 
+
+Huom. Jos muutat hallinnollista luokkaa, huomioi, että Digiroadin tiedot tarvitsevat projektin tieverkolle päivityksen jälkeen myös muutoksia.
 
 7.1.5 Numerointi
 --------------------------
