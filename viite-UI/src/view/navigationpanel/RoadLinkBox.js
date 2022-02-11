@@ -130,9 +130,9 @@
         '<div class="legend-entry">' +
         '<div class="label">Käsittelemätön</div>' +
         '<div class="symbol linear operation-type-unhandeled"></div>' +
-        '<div class="label">Muu tieverkko, rakenteilla</div>' +
+        '<div class="label">Rakenteilla (kunta/yksityinen)</div>' +
         '<div class="symbol linear construction-type-0"></div>' +
-        '<div class="label">Maantie, rakenteilla</div>' +
+        '<div class="label">Rakenteilla (valtio)</div>' +
         '<div class="symbol linear construction-type-1"></div>' +
         '</div>';
     };
