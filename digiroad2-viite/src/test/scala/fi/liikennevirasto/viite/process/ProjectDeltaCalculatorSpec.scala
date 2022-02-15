@@ -389,15 +389,16 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
   }
 
 
-  test("Test ProjectDeltaCalculator.partition When executing a unchanged and a AdministrativeClass change operation on a single road part, then create a new road Then returns the correct From RoadSection -> To RoadSection mapping.") {
+  test("Test ProjectDeltaCalculator.partition When executing a unchanged and a AdministrativeClass change operation from single AdministrativeClass on a single road part, then create a new road Then returns the correct From RoadSection -> To RoadSection mapping.") {
     runWithRollback {
       val addresses = (0 to 9).map(i => {
         createRoadAddress(i * 12, 12L)
-      }).map(ra => {
-        if (ra.id > 50) ra else ra.copy(administrativeClass = AdministrativeClass.Municipality)
       })
+
       val unchanged = addresses.map(a => {
         (a, toProjectLink(project, LinkStatus.UnChanged)(a))
+      }).map(ra => {
+        if (ra._1.id > 50) ra else (ra._1, ra._2.copy(administrativeClass = AdministrativeClass.Municipality))
       })
 
       val newLinks  = Seq(ProjectLink(981, 5, 205, Track.Combined, Discontinuity.MinorDiscontinuity, 120, 130, 120, 130, None, None, createdBy = Option(project.createdBy), 981, 0.0, 12.1, TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), Seq(Point(0.0, 36.0), Point(0.0, 48.1)), project.id, LinkStatus.New, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, 12.1, -1L, -1L, 8, reversed = false, None, 748800L))
@@ -420,6 +421,39 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       newParts.foreach(to => {
         to.startMAddr should be(120)
         to.endMAddr should be(130)
+      })
+    }
+  }
+
+  test("Test ProjectDeltaCalculator.partition When executing a unchanged and a AdministrativeClass change operation to single AdministrativeClass on a single road part, then create a new road Then returns the correct From RoadSection -> To RoadSection mapping.") {
+    runWithRollback {
+      val addresses = (0 to 9).map(i => {
+        createRoadAddress(i * 12, 12L)
+      }).map(ra => {
+        if (ra.id > 50) ra else ra.copy(administrativeClass = AdministrativeClass.Municipality)
+      })
+
+      val unchanged = addresses.map(a => {
+        (a, toProjectLink(project, LinkStatus.UnChanged)(a))
+      })
+
+      val roadway205 = unchanged.flatMap(r => Seq(toRoadway(Seq(r._2))))
+      roadwayDAO.create(roadway205)
+
+      val links = unchanged.map(ra => {
+                  if (ra._1.id > 50) ra._2 else ra._2.copy(administrativeClass = AdministrativeClass.State)
+                })
+
+      val uncParts2 = ProjectDeltaCalculator.partitionWithProjectLinks(links, Seq())
+      val uncParts3 = uncParts2.adjustedSections.zip(uncParts2.originalSections)
+
+      uncParts3 should have size 2
+      uncParts3.foreach(x => {
+        val (to, fr) = x
+        (fr.startMAddr == 60 || fr.endMAddr == 60) should be(true)
+        (to.startMAddr == 60 || to.endMAddr == 60) should be(true)
+        if (fr.startMAddr == 0L) fr.administrativeClass should be(AdministrativeClass.Municipality) else fr.administrativeClass should be(AdministrativeClass.State)
+        if (to.startMAddr == 0L) to.administrativeClass should be(AdministrativeClass.State) else to.administrativeClass should be(AdministrativeClass.State)
       })
     }
   }

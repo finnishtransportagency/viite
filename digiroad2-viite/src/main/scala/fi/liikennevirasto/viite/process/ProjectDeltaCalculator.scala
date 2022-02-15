@@ -113,6 +113,7 @@ object ProjectDeltaCalculator {
     val oppositeTrackNotUpdated = if (pl2.reversed) (oppositePl2.nonEmpty && oppositePl2.head.originalTrack != oppositePl2.head.track) || oppositePl1.isEmpty else (oppositePl2.nonEmpty && oppositePl2.head.originalTrack == oppositePl2.head.track) || oppositePl1.isEmpty
     val originalTrackContinuous = pl1.originalTrack == pl2.originalTrack
     val administrativeClassesMatch = pl1.administrativeClass == pl2.administrativeClass
+    val originalAdministrativeClassContinuous = pl1.originalAdministrativeClass == pl2.originalAdministrativeClass
 
     val hasParallelLinkOnCalibrationPoint = hasCalibrationPoint && bothNew && matchContinuity && allNonTerminatedProjectLinks.exists(pl => {
       pl.roadNumber == pl1.roadNumber && pl.roadPartNumber == pl1.roadPartNumber && pl.status != LinkStatus.Terminated && pl.track != pl1.track && pl.track != Track.Combined && pl.endAddrMValue == pl1.endAddrMValue && pl.hasCalibrationPointAtEnd
@@ -124,7 +125,7 @@ object ProjectDeltaCalculator {
     val oppositeStatusNotChanged = if (oppositeOriginalAddressLinks.size == 2) oppositeOriginalAddressLinks.head.status == oppositeOriginalAddressLinks.last.status else true
 
     if (!oppositeStatusChange && (matchAddr && sameStatus && matchContinuity && administrativeClassesMatch && trackNotUpdated && originalTrackContinuous && oppositeTrackNotUpdated && !(hasCalibrationPoint || hasParallelLinkOnCalibrationPoint)) &&
-        administrativeClassesMatch && oppositeStatusNotChanged) {
+        administrativeClassesMatch && oppositeStatusNotChanged && originalAdministrativeClassContinuous) {
       Seq(
             pl1.copy(endAddrMValue = pl2.endAddrMValue, discontinuity = pl2.discontinuity,
               originalEndAddrMValue = pl2.originalEndAddrMValue,
