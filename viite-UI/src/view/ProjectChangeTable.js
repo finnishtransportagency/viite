@@ -156,7 +156,7 @@
       $('.change-table-dimensions').append($(htmlTable));
       // set change table state to open
       changeTableOpen = true;
-      if (projectChangeData) {
+      if (projectChangeData && !_.isUndefined(projectChangeData.changeTable)) {
         var projectDate = new Date(projectChangeData.changeTable.changeDate).toLocaleDateString();
         $('.change-table-header').html($('<div class="font-resize">Validointi ok. Alla näet muutokset projektissa.</div><div class="font-resize">Alkupäivämäärä: ' + projectDate + '</div>'));
         var currentProject = projectCollection.getCurrentProject();

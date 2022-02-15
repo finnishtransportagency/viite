@@ -1645,11 +1645,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       throw new IllegalArgumentException("Project not found")
     val project = projectOpt.get
     project.status match {
-
-      // For final ProjectState UpdatingToRoadNetwork we do nothing, but return "everything's fine" (...?)
-      case ProjectState.UpdatingToRoadNetwork => (true, None)
-
-      // For other than final states, proceed to recalculation
+      case ProjectState.Accepted | ProjectState.InUpdateQueue | ProjectState.UpdatingToRoadNetwork => (true, None)
       case _ => {
         roadwayChangesDAO.clearRoadChangeTable(projectId)
         roadwayChangesDAO.insertDeltaToRoadChangeTable(projectId, projectOpt)
