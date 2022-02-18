@@ -768,6 +768,69 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Test ProjectDeltaCalculator.partition When a two track roadpart is transferred to a single track" +
+                 "Then RoadwaySections should be formed correctly for Transfer and Terminated parts for either track of termination.") {
+    runWithRollback {
+      val addresses   = (0 to 9).map(i => {
+        createRoadAddress(i * 12, 12L)
+      })
+      val addressLinks       = addresses.map(a => {
+        (a, toProjectLink(project, LinkStatus.Transfer)(a).copy(roadwayId = 0, track = Track.RightSide))
+      })
+      val rightLinks = addressLinks.map(_._2).map(_.copy(track = Track.Combined))
+      val leftLinks  = addressLinks.map(_._2).map(pl => pl.copy(track = Track.LeftSide, status = LinkStatus.Terminated))
+      val links = rightLinks ++ leftLinks
+      val rightRoadway = toRoadway(rightLinks).copy(track = Track.RightSide, id = 1)
+      val leftRoadway  = toRoadway(leftLinks).copy(track = Track.LeftSide, id = 2)
+      roadwayDAO.create(Seq(rightRoadway, leftRoadway))
+
+      val partitions  = ProjectDeltaCalculator.partitionWithProjectLinks(links.filter(_.status != LinkStatus.Terminated), links)
+      val partitions2 = partitions.adjustedSections.zip(partitions.originalSections)
+
+      partitions2.size should be(1)
+      partitions2.foreach(p => {
+        val (to, fr) = p
+        fr.startMAddr should be(to.startMAddr)
+        fr.endMAddr should be(to.endMAddr)
+      })
+
+      val terminatedPartitions = ProjectDeltaCalculator.partitionWithProjectLinks(links.filter(_.status == LinkStatus.Terminated), links)
+      val terminatedPartitions2 = terminatedPartitions.adjustedSections.zip(partitions.originalSections)
+
+      terminatedPartitions2.size should be(1)
+    }
+
+    runWithRollback {
+      val addresses   = (0 to 9).map(i => {
+        createRoadAddress(i * 12, 12L)
+      })
+      val addressLinks       = addresses.map(a => {
+        (a, toProjectLink(project, LinkStatus.Transfer)(a).copy(roadwayId = 0, track = Track.LeftSide))
+      })
+      val rightLinks = addressLinks.map(_._2).map(_.copy(track = Track.Combined))
+      val leftLinks  = addressLinks.map(_._2).map(pl => pl.copy(track = Track.RightSide, status = LinkStatus.Terminated))
+      val links = rightLinks ++ leftLinks
+      val leftRoadway = toRoadway(rightLinks).copy(track = Track.LeftSide, id = 1)
+      val rightRoadway = toRoadway(leftLinks).copy(track = Track.RightSide, id = 2)
+      roadwayDAO.create(Seq(rightRoadway, leftRoadway))
+
+      val partitions  = ProjectDeltaCalculator.partitionWithProjectLinks(links.filter(_.status != LinkStatus.Terminated), links)
+      val partitions2 = partitions.adjustedSections.zip(partitions.originalSections)
+
+      partitions2.size should be(1)
+      partitions2.foreach(p => {
+        val (to, fr) = p
+        fr.startMAddr should be(to.startMAddr)
+        fr.endMAddr should be(to.endMAddr)
+      })
+
+      val terminatedPartitions = ProjectDeltaCalculator.partitionWithProjectLinks(links.filter(_.status == LinkStatus.Terminated), links)
+      val terminatedPartitions2 = terminatedPartitions.adjustedSections.zip(partitions.originalSections)
+
+      terminatedPartitions2.size should be(1)
+    }
+  }
+
   test("Test ProjectDeltaCalculator.partition " +
        "When transferring a part of an existing roadpart to as another roadpart with more than one roadway" +
        "Then continuity codes should be correct.") {

@@ -352,6 +352,12 @@ object ProjectDeltaCalculator {
     }).values.flatten.toSeq
   }
 
+  private def sortAndTakeTerminated(pls: Seq[ProjectLink]): Seq[ProjectLink] = {
+    if (pls.isEmpty) pls
+    else
+      Seq(pls.sortBy(_.originalStartAddrMValue).takeWhile {_.status == LinkStatus.Terminated}.last)
+  }
+
   def partitionWithProjectLinks(projectLinks: Seq[ProjectLink], allNonTerminatedProjectLinks: Seq[ProjectLink]): ChangeTableRows2 = {
     val startLinks = projectLinks.filter(pl => pl.startAddrMValue == 0).groupBy(pl => {
       (pl.roadNumber, pl.roadPartNumber)})
@@ -363,8 +369,7 @@ object ProjectDeltaCalculator {
       }).mapValues(pls => {
         if (pls.exists(pl => pl.status == LinkStatus.Terminated && pl.originalStartAddrMValue == 0)) {
         val (r, l) = pls.partition(_.track == Track.RightSide)
-        val rr     = r.sortBy(_.originalStartAddrMValue)
-        Seq(rr.takeWhile {_.status == LinkStatus.Terminated}.last, l.sortBy(_.originalStartAddrMValue).takeWhile {_.status == LinkStatus.Terminated}.last)
+        Seq(sortAndTakeTerminated(r),sortAndTakeTerminated(l)).flatten
       } else Seq()
       })
 
