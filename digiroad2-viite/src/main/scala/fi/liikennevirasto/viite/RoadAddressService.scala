@@ -275,6 +275,16 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     }
   }
 
+ /**
+   * @return Returns summary data for the road address information
+   *         of the whole road network.
+   */
+  def getAllRoadAddresses(): Seq[RoadwayNetworkSummaryRow] = {
+    withDynSession {
+      roadNetworkDAO.fetchRoadwayNetworkSummary
+    }
+  }
+
   /**
     * Gets all the existing road numbers at the current road network.
     *
