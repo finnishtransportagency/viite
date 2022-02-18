@@ -16,6 +16,7 @@ import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.util.{toProjectLink, toTransition}
 import org.joda.time.DateTime
+import org.scalatest.enablers.Definition.definitionOfOption
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -455,6 +456,205 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
         if (fr.startMAddr == 0L) fr.administrativeClass should be(AdministrativeClass.Municipality) else fr.administrativeClass should be(AdministrativeClass.State)
         if (to.startMAddr == 0L) to.administrativeClass should be(AdministrativeClass.State) else to.administrativeClass should be(AdministrativeClass.State)
       })
+    }
+  }
+
+  test("Test ProjectDeltaCalculator.partition When end part of a single roadpart is transferred as righside track and a new is created for leftside track" +
+                 "Then two track parts should have one section (and not splitted).") {
+    val (rwn1, rwn2, rwn3) = (1, 2, 3)
+    runWithRollback {
+      val addresses = (0 to 14).map(i => {
+        createRoadAddress(i * 100, 100)
+      })
+
+      val unchanged = addresses.map(a => {
+        (a, toProjectLink(project, LinkStatus.UnChanged)(a))
+      })
+
+      val roadway205 = Seq(toRoadway(unchanged.map(_._2)).copy(discontinuity = Discontinuity.Discontinuous))
+      roadwayDAO.create(roadway205)
+
+      val splitAddress = 800
+      var links        = unchanged.map(ra => {
+        if (ra._1.id == (splitAddress - 100)) ra._2.copy(roadwayNumber = rwn1, calibrationPointTypes = (NoCP, RoadAddressCP)) else if (ra._1.id < splitAddress) ra._2.copy(roadwayNumber = rwn1) else if (ra._1.id == splitAddress) ra._2.copy(roadwayNumber = rwn2, status = LinkStatus.Transfer, track = Track.RightSide, calibrationPointTypes = (RoadAddressCP, NoCP)) else ra._2.copy(roadwayNumber = rwn2, status = LinkStatus.Transfer, track = Track.RightSide)
+      }).map(pl => {
+        pl.copy(roadwayId = 0)
+      })
+
+      links = links.head.copy(calibrationPointTypes = (RoadAddressCP, NoCP)) +: links.tail.init :+ links.last.copy(discontinuity = Discontinuity.Discontinuous, calibrationPointTypes = (NoCP, RoadAddressCP))
+
+      val id       = links.maxBy(_.id).id + 10
+      var newLinks = (0 to 6).flatMap(i => {
+        Seq(ProjectLink(id + i, links.head.roadNumber, links.head.roadPartNumber, Track.LeftSide, Discontinuity.Continuous, splitAddress + i * 100, splitAddress + i * 100 + 100, 0, 0, None, None, createdBy = Option(project.createdBy), id + i, 0.0, 100, TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), Seq(Point(0.0, id + i), Point(0.0, (id + i) * 100)), links.head.projectId, LinkStatus.New, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, 100L, 0L, 0L, links.head.ely, reversed = false, None, 748800L, rwn3))
+      })
+
+      newLinks = newLinks.head.copy(calibrationPointTypes = (RoadAddressCP, NoCP)) +: newLinks.init.tail :+ newLinks.last.copy(discontinuity = Discontinuity.Discontinuous, calibrationPointTypes = (NoCP, RoadAddressCP))
+
+      val uncParts2 = ProjectDeltaCalculator.partitionWithProjectLinks(links ++ newLinks, links ++ newLinks)
+      val uncParts3 = uncParts2.adjustedSections.zip(uncParts2.originalSections)
+
+      uncParts3 should have size 3
+
+      val combined = uncParts3.filter(_._1.track == Track.Combined)
+      combined should have size 1
+
+      val transfered = uncParts3.filter(_._1.track == Track.RightSide)
+      transfered should have size 1
+
+      val newpart = uncParts3.filter(_._1.track == Track.LeftSide)
+      newpart should have size 1
+
+      val (toComb, frComb) = combined.head
+      (frComb.startMAddr == 0 && frComb.endMAddr == 800) should be(true)
+      (toComb.startMAddr == 0 && toComb.endMAddr == 800) should be(true)
+
+      val (toTrans, frTrans) = transfered.head
+      (frTrans.startMAddr == 800 && frTrans.endMAddr == 1500) should be(true)
+      (toTrans.startMAddr == 800 && toTrans.endMAddr == 1500) should be(true)
+
+      val (toNew, _) = newpart.head
+      (toNew.startMAddr == 800 && toNew.endMAddr == 1500) should be(true)
+    }
+  }
+
+  test("Test ProjectDeltaCalculator.partition When a single roadpart with minor discontinuity and two track part at the end is reversed" +
+                "Then two track part track and minor discontinuity should be reversed and address lengths should be unchanged.") {
+    runWithRollback {
+      val transfer = Seq(
+        (createRoadAddress(0, 1).copy(discontinuity = Continuous, id = 0),
+          createTransferProjectLink(0,1).copy(
+            startAddrMValue         = 1498,
+            endAddrMValue           = 1987,
+            roadwayId               = 0,
+            discontinuity           = EndOfRoad,
+            reversed                = true,
+            originalStartAddrMValue = 0,
+            originalEndAddrMValue   = 489
+          )
+        ),
+        (createRoadAddress(0,1).copy(discontinuity = MinorDiscontinuity, id = 1),
+          createTransferProjectLink(0,1).copy(
+            startAddrMValue         = 1098,
+            endAddrMValue           = 1498,
+            roadwayId               = 0,
+            discontinuity           = Continuous,
+            reversed                = true,
+            originalStartAddrMValue = 489,
+            originalEndAddrMValue   = 889
+          )
+        ),
+        (createRoadAddress(0,1).copy(discontinuity = Continuous, id = 2),
+          createTransferProjectLink(0,1).copy(
+            startAddrMValue         = 463,
+            endAddrMValue           = 1098,
+            roadwayId               = 1,
+            discontinuity           = MinorDiscontinuity,
+            reversed                = true,
+            originalStartAddrMValue = 889,
+            originalEndAddrMValue   = 1524
+          )
+        ),
+        (createRoadAddress(0,1).copy(discontinuity = EndOfRoad, id = 3,
+          track         = Track.LeftSide
+        ),
+          createTransferProjectLink(0,1).copy(
+            startAddrMValue         = 0,
+            endAddrMValue           = 463,
+            track                   = Track.LeftSide,
+            roadwayId               = 2,
+            reversed                = true,
+            originalStartAddrMValue = 1524,
+            originalEndAddrMValue   = 1987
+          )
+        ),
+        (createRoadAddress(0,1).copy(discontinuity = EndOfRoad, id = 4,
+          track         = Track.RightSide
+        ),
+          createTransferProjectLink(0,1).copy(
+            startAddrMValue         = 0,
+            endAddrMValue           = 463,
+            track                   = Track.RightSide,
+            roadwayId               = 3,
+            reversed                = true,
+            originalStartAddrMValue = 1524,
+            originalEndAddrMValue   = 1987
+          )
+        )
+      )
+
+      val createdRoadways205 = transfer.map(pl => toRoadway(Seq(pl._2)))
+      val combinedRoadwayPart = createdRoadways205.filter(_.track == Track.Combined)
+      val roadways = Seq(
+        combinedRoadwayPart
+          .find(_.id == 0)
+          .get
+          .copy(discontinuity   = Discontinuity.MinorDiscontinuity,
+            startAddrMValue = 0,
+            endAddrMValue   = 889
+          ),
+        combinedRoadwayPart
+          .find(_.id == 1)
+          .get
+          .copy(discontinuity = Discontinuity.Continuous, startAddrMValue = 889, endAddrMValue = 1524),
+        createdRoadways205
+          .find(_.track == Track.LeftSide)
+          .get
+          .copy(track       = Track.RightSide,
+            startAddrMValue = 1524,
+            endAddrMValue   = 1987,
+            discontinuity   = Discontinuity.EndOfRoad
+          ),
+        createdRoadways205
+          .find(_.track == Track.RightSide)
+          .get
+          .copy(track       = Track.LeftSide,
+            startAddrMValue = 1524,
+            endAddrMValue   = 1987,
+            discontinuity   = Discontinuity.EndOfRoad
+          )
+      ).map(_.copy(reversed = false))
+
+      roadwayDAO.create(roadways.map(_.copy(reversed = false)))
+
+      val links = transfer.map(_._2).map(_.copy(calibrationPointTypes = (RoadAddressCP,RoadAddressCP), originalCalibrationPointTypes = (RoadAddressCP,RoadAddressCP)))
+
+      val uncParts2 = ProjectDeltaCalculator.partitionWithProjectLinks(links,links)
+      val uncParts3 = uncParts2.adjustedSections.zip(uncParts2.originalSections)
+
+      uncParts3 should have size 4
+
+      val endOfRoadRight   = uncParts3.find(_._2.track == Track.RightSide)
+      endOfRoadRight shouldBe defined
+
+      val (p1to, p1fr) = endOfRoadRight.get
+      (p1fr.startMAddr == 1524 && p1fr.endMAddr == 1987 && p1fr.track == Track.RightSide) should be(true)
+      (p1to.startMAddr == 0 && p1to.endMAddr == 463 && p1to.track == Track.LeftSide) should be(true)
+      // Check address lenght has not changed.
+      p1fr.endMAddr - p1fr.startMAddr should be(p1to.endMAddr - p1to.startMAddr)
+
+      val endOfRoadLeft   = uncParts3.find(_._2.track == Track.LeftSide)
+      endOfRoadLeft shouldBe defined
+
+      val (p2to, p2fr) = endOfRoadLeft.get
+      (p2fr.startMAddr == 1524 && p2fr.endMAddr == 1987 && p2fr.track == Track.LeftSide) should be(true)
+      (p2to.startMAddr == 0 && p2to.endMAddr == 463 && p2to.track == Track.RightSide) should be(true)
+      p2fr.endMAddr - p2fr.startMAddr should be(p2to.endMAddr - p2to.startMAddr)
+
+      val combinedMiddle   = uncParts3.find(_._2.startMAddr == 889)
+      combinedMiddle shouldBe defined
+
+      val (p4to, p4fr) = combinedMiddle.get
+      (p4fr.startMAddr == 889 && p4fr.endMAddr == 1524 && p4fr.track == Track.Combined) should be(true)
+      (p4to.startMAddr == 463 && p4to.endMAddr == 1098 && p4to.track == Track.Combined) should be(true)
+      p4fr.endMAddr - p4fr.startMAddr should be(p4to.endMAddr - p4to.startMAddr)
+
+      val combinedStart   = uncParts3.find(_._2.startMAddr == 0)
+      combinedStart shouldBe defined
+
+      val (p3to, p3fr) = combinedStart.get
+      (p3fr.startMAddr == 0 && p3fr.endMAddr == 889 && p3fr.track == Track.Combined) should be(true)
+      (p3to.startMAddr == 1098 && p3to.endMAddr == 1987 && p3to.track == Track.Combined) should be(true)
+      p3fr.endMAddr - p3fr.startMAddr should be(p3to.endMAddr - p3to.startMAddr)
     }
   }
 

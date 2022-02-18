@@ -110,7 +110,8 @@ object ProjectDeltaCalculator {
     val oppositeStatusChange = oppositePl1.nonEmpty && oppositePl2.nonEmpty && oppositePl1.last.status != oppositePl2.last.status
     val hasCalibrationPoint = ((pl1.status != LinkStatus.New && pl1.hasCalibrationPointAtEnd) && pl1.hasCalibrationPointCreatedInProject && pl1.endCalibrationPointType != CalibrationPointType.JunctionPointCP) || (oppositePl1.nonEmpty && oppositePl1.head.hasCalibrationPointAtEnd && oppositePl1.head.hasCalibrationPointCreatedInProject && oppositePl1.head.endCalibrationPointType != CalibrationPointType.JunctionPointCP)
     val trackNotUpdated = if (pl1.reversed && pl2.reversed && pl1.track != Track.Combined && pl2.track != Track.Combined) pl2.originalTrack != pl2.track else pl2.originalTrack == pl1.originalTrack && pl1.track == pl2.track
-    val oppositeTrackNotUpdated = if (pl2.reversed) (oppositePl2.nonEmpty && oppositePl2.head.originalTrack != oppositePl2.head.track) || oppositePl1.isEmpty else (oppositePl2.nonEmpty && oppositePl2.head.originalTrack == oppositePl2.head.track) || oppositePl1.isEmpty
+    val oppositeTrackNotUpdated = if (pl2.reversed) (oppositePl2.nonEmpty && (oppositePl2.head.originalTrack != oppositePl2.head.track || oppositePl2.head.status == LinkStatus.New)) || oppositePl2.isEmpty else (oppositePl2.nonEmpty && (oppositePl2.head.originalTrack == oppositePl2.head.track || oppositePl2.head.status == LinkStatus.New)) || oppositePl1.isEmpty
+    val newLinks = Seq(pl1, pl2).forall(_.status == LinkStatus.New)
     val originalTrackContinuous = pl1.originalTrack == pl2.originalTrack
     val administrativeClassesMatch = pl1.administrativeClass == pl2.administrativeClass
     val originalAdministrativeClassContinuous = pl1.originalAdministrativeClass == pl2.originalAdministrativeClass
@@ -124,11 +125,15 @@ object ProjectDeltaCalculator {
 
     val oppositeStatusNotChanged = if (oppositeOriginalAddressLinks.size == 2) oppositeOriginalAddressLinks.head.status == oppositeOriginalAddressLinks.last.status else true
 
-    if (!oppositeStatusChange && (matchAddr && sameStatus && matchContinuity && administrativeClassesMatch && trackNotUpdated && originalTrackContinuous && oppositeTrackNotUpdated && !(hasCalibrationPoint || hasParallelLinkOnCalibrationPoint)) &&
+    if (!oppositeStatusChange && (matchAddr && sameStatus && matchContinuity && administrativeClassesMatch && trackNotUpdated && originalTrackContinuous && (newLinks || oppositeTrackNotUpdated) && !(hasCalibrationPoint || hasParallelLinkOnCalibrationPoint)) &&
         administrativeClassesMatch && oppositeStatusNotChanged && originalAdministrativeClassContinuous) {
+      val pl1OriginalAddressSet = if (pl1.reversed)
+        pl1.copy(originalStartAddrMValue = pl2.originalStartAddrMValue)
+      else
+        pl1.copy(originalEndAddrMValue = pl2.originalEndAddrMValue)
+
       Seq(
-            pl1.copy(endAddrMValue = pl2.endAddrMValue, discontinuity = pl2.discontinuity,
-              originalEndAddrMValue = pl2.originalEndAddrMValue,
+        pl1OriginalAddressSet.copy(endAddrMValue = pl2.endAddrMValue, discontinuity = pl2.discontinuity,
               calibrationPointTypes = (pl1.startCalibrationPointType, pl2.endCalibrationPointType),
               originalCalibrationPointTypes = (pl1.originalCalibrationPointTypes._1, pl2.originalCalibrationPointTypes._2),
               roadwayId = pl2.roadwayId
@@ -220,9 +225,9 @@ object ProjectDeltaCalculator {
     if (projectLinkSeq.isEmpty)
       result.reverse
     else if (result.isEmpty)
-      combineWithProjectLinks(projectLinkSeq.tail, Seq(projectLinkSeq.head), allNonTerminatedProjectLinks: Seq[ProjectLink])
+      combineWithProjectLinks(projectLinkSeq.tail, Seq(projectLinkSeq.head), allNonTerminatedProjectLinks)
     else
-      combineWithProjectLinks(projectLinkSeq.tail, combineProjectLinks(result.head, projectLinkSeq.head, allNonTerminatedProjectLinks: Seq[ProjectLink]) ++ result.tail, allNonTerminatedProjectLinks: Seq[ProjectLink])
+      combineWithProjectLinks(projectLinkSeq.tail, combineProjectLinks(result.head, projectLinkSeq.head, allNonTerminatedProjectLinks) ++ result.tail, allNonTerminatedProjectLinks)
   }
 
   private def combineTerminatedLinks(projectLinkSeq: Seq[ProjectLink], result: Seq[ProjectLink] = Seq(), allNonTerminatedProjectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
@@ -376,22 +381,13 @@ object ProjectDeltaCalculator {
         (pl.roadNumber, pl.roadPartNumber, pl.track, pl.reversed)
       })
 
-    def reverseOriginalAddresses(pls: Seq[ProjectLink]): Seq[ProjectLink] = {
-      pls.groupBy(_.status).mapValues(v => {
-        v.zip(v.reverse).map(pl => {
-          pl._1.copy(originalStartAddrMValue = pl._2.originalStartAddrMValue, originalEndAddrMValue = pl._2.originalEndAddrMValue, reversed = if (pl._1.status == LinkStatus.New) false else pl._1.reversed)
-        })
-      }).values.flatten.toSeq
-    }
     val allWithAveraged = if (allNonTerminatedProjectLinks.exists(pl => pl.status == LinkStatus.Terminated && pl.originalStartAddrMValue == 0))
       (averagedStarts ++ averagedTerminated ++ allNonTerminatedProjectLinks.filterNot(pl => averagedStarts.map(_.id).contains(pl.id) || averagedTerminated.map(_.id).contains(pl.id)))
     else allNonTerminatedProjectLinks
 
     val sectioned = grouped.mapValues((pls: Seq[ProjectLink]) => {
-      /* If reversed then reverse original addresses for combination logic. */
-      val vv = if (pls.exists(_.reversed)) reverseOriginalAddresses(pls) else pls
-      combineWithProjectLinks(vv.sortBy(_.startAddrMValue), Seq(), allWithAveraged.filter(pl => {
-        pl.roadNumber == vv.head.roadNumber && pl.roadPartNumber == vv.head.roadPartNumber
+      combineWithProjectLinks(pls.sortBy(_.startAddrMValue), Seq(), allWithAveraged.filter(pl => {
+        pl.roadNumber == pls.head.roadNumber && pl.roadPartNumber == pls.head.roadPartNumber
       }))
     }).values.flatten.map(pl => {
       RoadwaySection(pl.originalRoadNumber, pl.originalRoadPartNumber, pl.originalRoadPartNumber, pl.originalTrack, pl.originalStartAddrMValue, pl.originalEndAddrMValue, pl.originalDiscontinuity, pl.originalAdministrativeClass, pl.originalEly, pl.reversed, pl.roadwayNumber, Seq()) -> RoadwaySection(pl.roadNumber, pl.roadPartNumber, pl.roadPartNumber, pl.track, pl.startAddrMValue, pl.endAddrMValue, pl.discontinuity, pl.administrativeClass, pl.ely, pl.reversed, pl.roadwayNumber, Seq())
@@ -550,17 +546,21 @@ object ProjectDeltaCalculator {
                                        shorterTrackSeq        : Seq[(RoadwaySection, String)],
                                        adjustedShorterTrackSeq: Seq[(RoadwaySection, String)] = Seq.empty[(RoadwaySection, String)]
                                      ): Seq[(RoadwaySection, String)] = {
-    if (longerTrackSeq.isEmpty) adjustedShorterTrackSeq ++ shorterTrackSeq else {
+    if (longerTrackSeq.isEmpty || shorterTrackSeq.isEmpty) adjustedShorterTrackSeq ++ shorterTrackSeq else {
       if (longerTrackSeq.head._1.startMAddr == shorterTrackSeq.head._1.startMAddr && longerTrackSeq.head._1.endMAddr < shorterTrackSeq.head._1.endMAddr && shorterTrackSeq.head._2 == "terminated") {
-        val n = (shorterTrackSeq.head._1.copy(startMAddr = longerTrackSeq.head._1.endMAddr), "terminated")
-        matchTerminatedTracksOnRoadPart(longerTrackSeq.tail, n +: shorterTrackSeq.tail, adjustedShorterTrackSeq ++ Seq((shorterTrackSeq.head._1.copy(endMAddr = longerTrackSeq.head._1.endMAddr), "terminated")))
+          val n = (shorterTrackSeq.head._1.copy(startMAddr = longerTrackSeq.head._1.endMAddr), "terminated")
+          matchTerminatedTracksOnRoadPart(longerTrackSeq.tail, n +: shorterTrackSeq.tail, adjustedShorterTrackSeq ++ Seq((shorterTrackSeq.head._1.copy(endMAddr = longerTrackSeq.head._1.endMAddr), "terminated")))
       } else if (longerTrackSeq.head._1.startMAddr > shorterTrackSeq.head._1.startMAddr && longerTrackSeq.head._1.endMAddr == shorterTrackSeq.head._1.endMAddr && shorterTrackSeq.head._2 == "terminated") {
-        val n = (shorterTrackSeq.head._1.copy(endMAddr = longerTrackSeq.head._1.startMAddr), "terminated")
-        matchTerminatedTracksOnRoadPart(longerTrackSeq.tail, (shorterTrackSeq.head._1.copy(startMAddr = longerTrackSeq.head._1.startMAddr), shorterTrackSeq.head._2) +: shorterTrackSeq.tail, adjustedShorterTrackSeq ++ Seq(n))
+          val n = (shorterTrackSeq.head._1.copy(endMAddr = longerTrackSeq.head._1.startMAddr), "terminated")
+          matchTerminatedTracksOnRoadPart(longerTrackSeq.tail, (shorterTrackSeq.head._1.copy(startMAddr = longerTrackSeq.head._1.startMAddr), shorterTrackSeq.head._2) +: shorterTrackSeq.tail, adjustedShorterTrackSeq ++ Seq(n))
       } else if (longerTrackSeq.head._1.startMAddr == shorterTrackSeq.head._1.startMAddr && longerTrackSeq.head._1.endMAddr == shorterTrackSeq.head._1.endMAddr) {
-        matchTerminatedTracksOnRoadPart(longerTrackSeq.tail, shorterTrackSeq.tail, adjustedShorterTrackSeq ++ Seq(shorterTrackSeq.head))
-      } else if (longerTrackSeq.head._1.startMAddr > shorterTrackSeq.head._1.endMAddr) matchTerminatedTracksOnRoadPart(longerTrackSeq, shorterTrackSeq.tail, adjustedShorterTrackSeq ++ Seq(shorterTrackSeq.head)) else if (longerTrackSeq.head._1.startMAddr != shorterTrackSeq.head._1.startMAddr) matchTerminatedTracksOnRoadPart(longerTrackSeq.tail, shorterTrackSeq, adjustedShorterTrackSeq) else // (longerTrackSeq.head._1.startMAddr == shorterTrackSeq.head._1.startMAddr && longerTrackSeq.head._1.endMAddr > shorterTrackSeq.head._1.endMAddr || shorterTrackSeq.head._2 != "terminated"
-        matchTerminatedTracksOnRoadPart(longerTrackSeq.tail, shorterTrackSeq.tail, adjustedShorterTrackSeq ++ Seq(shorterTrackSeq.head))
+          matchTerminatedTracksOnRoadPart(longerTrackSeq.tail, shorterTrackSeq.tail, adjustedShorterTrackSeq ++ Seq(shorterTrackSeq.head))
+      } else if (longerTrackSeq.head._1.startMAddr > shorterTrackSeq.head._1.endMAddr)
+          matchTerminatedTracksOnRoadPart(longerTrackSeq, shorterTrackSeq.tail, adjustedShorterTrackSeq ++ Seq(shorterTrackSeq.head))
+        else if (longerTrackSeq.head._1.startMAddr != shorterTrackSeq.head._1.startMAddr)
+          matchTerminatedTracksOnRoadPart(longerTrackSeq.tail, shorterTrackSeq, adjustedShorterTrackSeq)
+        else
+          matchTerminatedTracksOnRoadPart(longerTrackSeq.tail, shorterTrackSeq.tail, adjustedShorterTrackSeq ++ Seq(shorterTrackSeq.head))
     }
   }
 }
