@@ -9,6 +9,7 @@ import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.{LeftSide, RightSide}
+import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, RoadAddressCP}
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, EndOfRoad, MinorDiscontinuity}
 import fi.liikennevirasto.viite.dao.LinkStatus.{Terminated, Transfer}
@@ -485,7 +486,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
 
       val id       = links.maxBy(_.id).id + 10
       var newLinks = (0 to 6).flatMap(i => {
-        Seq(ProjectLink(id + i, links.head.roadNumber, links.head.roadPartNumber, Track.LeftSide, Discontinuity.Continuous, splitAddress + i * 100, splitAddress + i * 100 + 100, 0, 0, None, None, createdBy = Option(project.createdBy), id + i, 0.0, 100, TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), Seq(Point(0.0, id + i), Point(0.0, (id + i) * 100)), links.head.projectId, LinkStatus.New, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, 100L, 0L, 0L, links.head.ely, reversed = false, None, 748800L, rwn3))
+        Seq(ProjectLink(id + i, links.head.roadNumber, links.head.roadPartNumber, Track.LeftSide, Discontinuity.Continuous, splitAddress + i * 100, splitAddress + i * 100 + 100, 0, 0, None, None, createdBy = Option(project.createdBy), id + i, 0.0, 100, TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), Seq(Point(0.0, id + i), Point(0.0, (id + i) * 100)), links.head.projectId, LinkStatus.New, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, 100L, NewIdValue, 0L, links.head.ely, reversed = false, None, 748800L, rwn3))
       })
 
       newLinks = newLinks.head.copy(calibrationPointTypes = (RoadAddressCP, NoCP)) +: newLinks.init.tail :+ newLinks.last.copy(discontinuity = Discontinuity.Discontinuous, calibrationPointTypes = (NoCP, RoadAddressCP))
@@ -655,6 +656,56 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       (p3fr.startMAddr == 0 && p3fr.endMAddr == 889 && p3fr.track == Track.Combined) should be(true)
       (p3to.startMAddr == 1098 && p3to.endMAddr == 1987 && p3to.track == Track.Combined) should be(true)
       p3fr.endMAddr - p3fr.startMAddr should be(p3to.endMAddr - p3to.startMAddr)
+    }
+  }
+
+  test("Test ProjectDeltaCalculator.partition When transfering two roadparts a small roadpart number to the greater roadpart number" +
+                "Then roadway changes should have two rows for each one for each part.") {
+    val startRoadPart  = 205
+    val endRoadPart    = 206
+    val addressMLength = 60
+
+    runWithRollback {
+      val addresses = (0 to 9).map(i => {
+        createRoadAddress(i * 12, 12L)
+      })
+      val addressLinks = addresses.filter(_.endAddrMValue <= addressMLength).map(a => {
+        (a, toProjectLink(project, LinkStatus.Transfer)(a.copy(roadPartNumber = endRoadPart)).copy(roadwayId = 1))
+      }) ++ addresses.filter(_.endAddrMValue > addressMLength).map(a => {
+        (a, toProjectLink(project, LinkStatus.Transfer)(a.copy(roadPartNumber = endRoadPart)).copy(roadwayId = 2))
+      })
+      var links = addressLinks.map(_._2)
+      val rw1 = Roadway(1, 1000, 5, startRoadPart, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, addressMLength, ely = 8, startDate = DateTime.now(), createdBy = "", roadName = None)
+      val rw2 = Roadway(2, 1001, 5, endRoadPart, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, addressMLength, ely = 8, startDate = DateTime.now(), createdBy = "", roadName = None)
+
+      roadwayDAO.create(Seq(rw1,rw2))
+
+      links = links.filter(_.originalEndAddrMValue <= addressMLength) ++ links.filter(_.originalEndAddrMValue > addressMLength).map(pl => {
+        pl.copy(originalStartAddrMValue = pl.originalStartAddrMValue - addressMLength, originalEndAddrMValue = pl.originalEndAddrMValue - addressMLength)
+      })
+
+      val partitions  = ProjectDeltaCalculator.partitionWithProjectLinks(links, links)
+      val partitions2 = partitions.adjustedSections.zip(partitions.originalSections)
+
+      partitions2 should have size 2
+      val part205 = partitions2.find(_._2.roadPartNumberStart == startRoadPart)
+      part205 shouldBe defined
+      val part206 = partitions2.find(_._2.roadPartNumberStart == endRoadPart)
+      part206 shouldBe defined
+
+      val (to205, fr205) = part205.get
+      fr205.startMAddr should be(to205.startMAddr)
+      fr205.endMAddr should be(to205.endMAddr)
+      fr205.roadPartNumberStart should be(startRoadPart)
+      to205.roadPartNumberStart should be(endRoadPart)
+
+      val (to206, fr206) = part206.get
+      fr206.startMAddr should be(0)
+      fr206.endMAddr should be(addressMLength)
+      to206.startMAddr should be(fr205.endMAddr)
+      to206.endMAddr should be(fr205.endMAddr + fr206.endMAddr)
+      fr206.roadPartNumberStart should be(endRoadPart)
+      to206.roadPartNumberStart should be(endRoadPart)
     }
   }
 

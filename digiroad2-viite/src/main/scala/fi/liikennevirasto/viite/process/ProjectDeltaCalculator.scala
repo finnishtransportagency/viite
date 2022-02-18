@@ -378,7 +378,7 @@ object ProjectDeltaCalculator {
       (pl.roadNumber, pl.roadPartNumber, pl.track, pl.reversed)
     }) else
       projectLinks.groupBy(pl => {
-        (pl.roadNumber, pl.roadPartNumber, pl.track, pl.reversed)
+        (pl.originalRoadNumber, pl.originalRoadPartNumber, pl.originalTrack, pl.reversed)
       })
 
     val allWithAveraged = if (allNonTerminatedProjectLinks.exists(pl => pl.status == LinkStatus.Terminated && pl.originalStartAddrMValue == 0))
