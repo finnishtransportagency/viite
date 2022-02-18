@@ -709,6 +709,42 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Test ProjectDeltaCalculator.partition When a roadpart with more than one roadway is transfered and reversed" +
+                "Then discontinuity should should be unchanged. ") {
+    val addressMLengthFirst  = 100
+    val addressMLengthSecond = 220
+    runWithRollback {
+      val addresses = (0 to 9).map(i => {
+        createRoadAddress(i * 32, 32)
+      })
+      val addressLinks = addresses.filter(_.endAddrMValue <= addressMLengthFirst).map(a => {
+        (a, toProjectLink(project, LinkStatus.Transfer)(a).copy(roadwayId = 1, reversed = true))
+      }) ++ addresses.filter(_.endAddrMValue > addressMLengthFirst).map(a => {
+        (a, toProjectLink(project, LinkStatus.Transfer)(a).copy(roadwayId = 2, reversed = true))
+      })
+
+      var links = addressLinks.map(_._2)
+      val rw1 = Roadway(1, 1000, 5, 205, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, addressMLengthFirst, ely = 8, startDate = DateTime.now(), createdBy = "", roadName = None)
+      val rw2 = Roadway(2, 1001, 5, 205, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, 0, addressMLengthFirst + addressMLengthSecond, ely = 8, startDate = DateTime.now(), createdBy = "", roadName = None)
+
+      roadwayDAO.create(Seq(rw1,rw2))
+
+      links = links.map(pl => {
+        pl.copy(startAddrMValue = addressMLengthSecond + addressMLengthFirst - pl.endAddrMValue, endAddrMValue =  addressMLengthSecond + addressMLengthFirst - pl.startAddrMValue)
+      })
+      links = links.head.copy(discontinuity = Discontinuity.EndOfRoad) +: links.tail
+
+      val partitions  = ProjectDeltaCalculator.partitionWithProjectLinks(links, links)
+      val partitions2 = partitions.adjustedSections.zip(partitions.originalSections)
+
+      partitions2 should have size 1
+
+      val (to, fr) = partitions2.head
+      fr.discontinuity should be(to.discontinuity)
+      to.discontinuity should be(rw2.discontinuity)
+    }
+  }
+
   test("Test ProjectDeltaCalculator.partition When executing a Unchanged operation but changing it's ELY value Then returns the correct From RoadSection -> To RoadSection mapping, ensuring the new ELY is in effect.") {
     runWithRollback {
       val addresses   = (0 to 9).map(i => {
