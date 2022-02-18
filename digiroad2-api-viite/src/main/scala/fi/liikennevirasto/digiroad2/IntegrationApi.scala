@@ -81,9 +81,11 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
   val getRoadNetworkSummary: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[List[Map[String, Any]]]("getRoadNetworkSummary")
       tags "Integration (Velho)"
-      summary "Returns current state (\"summary\") of the road network, requested a municipality at a time."
+      summary "Returns current state (\"summary\") of the road network addresses, containing all the latest changes " +
+      "to every part of any road found in Viite. Offered JSON contains data about: road number, road name, " +
+      "road part number, ely code, administrative class, track, start address, end address, and discontinuity."
   )
-  /** @return The JSON formatted whole road network address space currently valid in Viite. */
+  /** @return The JSON formatted whole road network address space of the latest versions of the network. */
   get("/summary", operation(getRoadNetworkSummary)) {
     contentType = formats("json")
 
@@ -99,6 +101,13 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
         }
     }
   }
+  /**
+    * Formats the given <i>roadNetworkSummary</i> sequence to a structured List[Map[....]], suitable for JSON printout.
+    *
+    * @version Initial version for /summary API 2022-02
+    * @param roadNetworkSummary list of <i>RoadwayNetworkSummaryRow</i>s containing all of the latest network roadway, and roadName info
+    * @return Structured list of roads (defined by their road_numbers) of the valid network addresses of the whole road network
+    */
   private def currentRoadNetworkSummaryToAPI(roadNetworkSummary: Seq[RoadwayNetworkSummaryRow]): List[Map[String, Any]] = {
     logger.info("Summary: fetchCurrentRoadNetworkSummary")
 
@@ -115,6 +124,15 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
       }
     }
   }
+  /**
+    * Formats the given <i>uniqueRoadnumberMap</i> map to a structured List[Map[....]], suitable for JSON printout.
+    * The rows are grouped primarily by roadPartNumbers, and secondarily by administrativeClasses.
+    *
+    * @version Initial version for sub functionality of /summary API, 2022-02
+    * @param uniqueRoadnumberMap list of <i>RoadwayNetworkSummaryRow</i>s belonging to a single road (defined by a road number)
+    * @return List of <i>road part + administrative group</i> defined items containing the valid network addresses of that
+    *         part of the road network.
+    */
   private def parseRoadpartsForSummary(uniqueRoadnumberMap: Map[Int, Seq[RoadwayNetworkSummaryRow]]): List[Map[String, Any]] = {
     val roadPARTnumberMap: Map[Int, Seq[RoadwayNetworkSummaryRow]] = uniqueRoadnumberMap
     roadPARTnumberMap.toList.sortBy(_._1).map { // foreach roadpartnumber, handle the sequence of rows
@@ -136,6 +154,16 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
     }
     .flatten // flat out the nested List[List[...]] ; road part, and administrative class changes are listed as a single list
   }
+  /**
+    * Formats the given <i>uniqueAdmClassWithinRoadPARTMap</i> to a structured List[Map[....]], suitable for JSON printout.
+    * The rows are ordered primarily by startAddresses, and secondarily by tracks.
+    *
+    * @version Initial version for sub functionality of /summary API, 2022-02
+    * @param uniqueAdmClassWithinRoadPARTMap list of <i>RoadwayNetworkSummaryRow</i>s belonging to a single administrative class
+    *                                        within a road part (defined by a road part number, and administrative class)
+    * @return List of <i>start addresses + track</i> defined items containing the valid network addresses of that
+    *         part of the road network.
+    */
   private def parseTracksForSummary(uniqueAdmClassWithinRoadPARTMap: Map[Int, Seq[RoadwayNetworkSummaryRow]]): List[Map[String, Int]] = {
     val addressMMap: Map[Int, Seq[RoadwayNetworkSummaryRow]] = uniqueAdmClassWithinRoadPARTMap
     addressMMap.toList.sortBy(_._1).map {

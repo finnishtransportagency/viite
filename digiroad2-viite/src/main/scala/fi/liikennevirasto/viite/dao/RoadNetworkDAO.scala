@@ -118,6 +118,10 @@ class RoadNetworkDAO {
     }
   }
 
+  /**
+    * Fetches the data required for /summary API result generation.
+    * @return The road address information, and road names of the whole latest road network
+    */
   def fetchRoadwayNetworkSummary: Seq[RoadwayNetworkSummaryRow] = {
     time(logger, "Get whole network summary") {
       val query = s"""
@@ -126,7 +130,7 @@ class RoadNetworkDAO {
                 r.TRACK, r.START_ADDR_M, r.END_ADDR_M, r.DISCONTINUITY
            FROM ROADWAY r
       LEFT JOIN ROAD_NAME n ON n.ROAD_NUMBER = r.ROAD_NUMBER
-          WHERE r.VALID_TO IS NULL AND r.END_DATE IS NULL
+          WHERE r.VALID_TO IS NULL AND r.END_DATE IS NULL    -- no debug rows, no history rows -> latest state
        ORDER BY r.ROAD_NUMBER, r.ROAD_PART_NUMBER, r.TRACK, r.START_ADDR_M
       ;
       """
@@ -134,6 +138,10 @@ class RoadNetworkDAO {
     }
   }
 
+  /**
+    * PositionResult iterator required by queryNA[RoadwayNetworkSummaryRow]
+    * @return Returns the next row from the RoadwayNetworkSummary query results as a RoadwayNetworkSummaryRow.
+    */
   private implicit val getRoadwayNetworkSummaryRow
   : GetResult[RoadwayNetworkSummaryRow] = new GetResult[RoadwayNetworkSummaryRow] {
     def apply(r: PositionedResult) = {
