@@ -80,11 +80,11 @@
       propertyBorder: propertyBorderLayer
     };
 
-    if (OAGGreyConfig) {
-      var parser = new ol.format.WMTSCapabilities();
-      var result = parser.read(OAGGreyConfig);
-      var config = {layer: 'liikennevirasto:PTP_Taustakartta_Harmaa', matrixSet: 'EPSG:3067_PTP_JHS180'};
-      var options = ol.source.WMTS.optionsFromCapabilities(result, config);
+    var parser = new ol.format.WMTSCapabilities();
+    var result = parser.read(OAGGreyConfig);
+    var config = {layer: 'liikennevirasto:PTP_Taustakartta_Harmaa', matrixSet: 'EPSG:3067_PTP_JHS180'};
+    var options = ol.source.WMTS.optionsFromCapabilities(result, config);
+    if (options) {
       options.urls = ['rasteripalvelu/wmts?'];
       var greyscaleLayer = new ol.layer.Tile({source: new ol.source.WMTS(options)});
       greyscaleLayer.set('name', 'greyScaleLayer');
