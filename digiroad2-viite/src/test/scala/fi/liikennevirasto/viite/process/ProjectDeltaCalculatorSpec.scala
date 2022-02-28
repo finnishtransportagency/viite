@@ -391,7 +391,8 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
   }
 
 
-  test("Test ProjectDeltaCalculator.partition When executing a unchanged and a AdministrativeClass change operation from single AdministrativeClass on a single road part, then create a new road Then returns the correct From RoadSection -> To RoadSection mapping.") {
+  test("Test ProjectDeltaCalculator.partition When executing an AdministrativeClass change from single AdministrativeClass to two AdministrativeClasses on a single road part with unchanged status and creating a new section at the end" +
+       "Then RoadSection -> To RoadSection mapping for Administrative class change and for new part should have correct pairwise (current and new address) sections.") {
     runWithRollback {
       val addresses = (0 to 9).map(i => {
         createRoadAddress(i * 12, 12L)
@@ -405,11 +406,11 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
 
       val newLinks  = Seq(ProjectLink(981, 5, 205, Track.Combined, Discontinuity.MinorDiscontinuity, 120, 130, 120, 130, None, None, createdBy = Option(project.createdBy), 981, 0.0, 12.1, TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), Seq(Point(0.0, 36.0), Point(0.0, 48.1)), project.id, LinkStatus.New, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, 12.1, -1L, -1L, 8, reversed = false, None, 748800L))
 
-      val uncParts2 = ProjectDeltaCalculator.partitionWithProjectLinks(unchanged.map(_._2), Seq())
-      val uncParts3 = uncParts2.adjustedSections.zip(uncParts2.originalSections)
+      val uncParts = ProjectDeltaCalculator.partitionWithProjectLinks(unchanged.map(_._2), Seq())
+      val roadwaySectionPairs = uncParts.adjustedSections.zip(uncParts.originalSections)
 
-      uncParts3 should have size 2
-      uncParts3.foreach(x => {
+      roadwaySectionPairs should have size 2
+      roadwaySectionPairs.foreach(x => {
         val (to, fr) = x
         (fr.startMAddr == 60 || fr.endMAddr == 60) should be(true)
         (to.startMAddr == 60 || to.endMAddr == 60) should be(true)
@@ -427,7 +428,8 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test ProjectDeltaCalculator.partition When executing a unchanged and a AdministrativeClass change operation to single AdministrativeClass on a single road part, then create a new road Then returns the correct From RoadSection -> To RoadSection mapping.") {
+  test("Test ProjectDeltaCalculator.partition When executing an AdministrativeClass change to a single AdministrativeClass from two AdministrativeClasses on a single road part with unchanged status and creating a new section at the end" +
+       "Then RoadSection -> To RoadSection mapping for Administrative class change and for new part should have correct pairwise (current and new address) sections.") {
     runWithRollback {
       val addresses = (0 to 9).map(i => {
         createRoadAddress(i * 12, 12L)
