@@ -181,9 +181,12 @@
         });
       });
 
-      [unaddressedUnderConstructionRoadLinkGroups, unaddressedUnknownRoadLinkGroups] = _.partition(fetchedUnaddressed, function (group) {
+      unaddressedRoadLinkGroups = _.partition(fetchedUnaddressed, function (group) {
         return groupDataConstructionTypeFilter(group, ConstructionType.UnderConstruction);
       });
+
+      unaddressedUnderConstructionRoadLinkGroups = unaddressedRoadLinkGroups[0];
+      unaddressedUnknownRoadLinkGroups = unaddressedRoadLinkGroups[1];
 
       var includeUnknowns = _.isUndefined(drawUnknowns) && !drawUnknowns;
       if (parseInt(zoom) <= zoomlevels.minZoomForEditMode && (includeUnknowns && !applicationModel.selectionTypeIs(LinkValues.SelectionType.Unknown))) {
