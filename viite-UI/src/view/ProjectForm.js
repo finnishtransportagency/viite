@@ -356,16 +356,13 @@
         applicationModel.addSpinner();
         currentProject.isDirty = false;
         jQuery('.modal-overlay').remove();
-        if (generalNext || saveAndNext) {
-          eventbus.trigger('roadAddressProject:openProject', currentProject);
-        }
+        eventbus.trigger('roadAddressProject:openProject', currentProject);
         rootElement.html(selectedProjectLinkTemplateDisabledButtons(currentProject));
-        var projectErrors = projectCollection.getProjectErrors();
-        // errorCode 8 means there are projectLinks in the project with status "NotHandled"
-        var highPriorityProjectErrors = projectErrors.filter((error) => error.errorCode === 8);
         if (generalNext || saveAndNext) { // if the project was opened, edited or project edit form closed without saving
           buttonsWhenOpenProject();
         } else if (reOpenCurrent) { // if project link form was closed without saving
+          var projectErrors = projectCollection.getProjectErrors();
+          var highPriorityProjectErrors = projectErrors.filter((error) => error.errorCode === 8);  // errorCode 8 means there are projectLinks in the project with status "NotHandled"
           buttonsWhenReOpenCurrent(projectErrors, highPriorityProjectErrors);
         }
         _.defer(function () {
