@@ -235,6 +235,7 @@ object Digiroad2Build extends Build {
     Digiroad2Name,
     file("."),
     settings = Defaults.defaultSettings
+      ++ assemblySettings
       ++ net.virtualvoid.sbt.graph.Plugin.graphSettings
       ++ ScalatraPlugin.scalatraWithJRebel ++ Seq(
       organization := Organization,
@@ -278,4 +279,14 @@ object Digiroad2Build extends Build {
       "io.gatling.highcharts" % "gatling-charts-highcharts" % "2.1.7" % "test",
       "io.gatling" % "gatling-test-framework" % "2.1.7" % "test"))
 
+  val assemblySettings: Seq[Def.Setting[_]] = sbtassembly.Plugin.assemblySettings ++ Seq(
+    mainClass in assembly := Some("fi.liikennevirasto.digiroad2.ProductionServer"),
+    test in assembly := {},
+    mergeStrategy in assembly <<= (mergeStrategy in assembly) { old =>
+    {
+      case x if x.endsWith("about.html") => MergeStrategy.discard
+      case x if x.endsWith("env.properties") => MergeStrategy.discard
+      case x => old(x)
+    } }
+  )
 }
