@@ -105,7 +105,7 @@ Resources:
             - Name: vkmApiKey
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/Viite/Prod/vkmApiKey'
             - Name: rasterServiceApiKey
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/Viite/Prod/rasterServiceApiKey
+              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/Viite/Prod/rasterServiceApiKey'
           MemoryReservation: 2048
           Image: !Sub '${RepositoryURL}/viite-prod:latest'
           Name: Viite-prod

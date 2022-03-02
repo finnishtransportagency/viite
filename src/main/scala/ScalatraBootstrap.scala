@@ -38,9 +38,13 @@ class RasterProxy extends ScalatraServlet {
 
   get("/wmts/maasto") {
     val uriwithparams = "/wmts/maasto?service=" + params.get("service").get +"&request=" + params.get("request").get
-    val get = new HttpGet(ViiteProperties.rasterServiceURL + uriwithparams)
-    get.setHeader("X-API-Key", ViiteProperties.rasterServiceApiKey)
-    val resp = client.execute(get)
+    val proxyGet = new HttpGet(ViiteProperties.rasterServiceURL + uriwithparams)
+    proxyGet.setHeader("X-API-Key", ViiteProperties.rasterServiceApiKey)
+    proxyGet.removeHeaders("X-Iam-Data")
+    proxyGet.removeHeaders("X-Iam-Accesstoken")
+    proxyGet.removeHeaders("X-Amzn-Trace-Id")
+    proxyGet.removeHeaders("X-Iam-Identity")
+    val resp = client.execute(proxyGet)
     contentType = resp.getEntity.getContentType.getValue
     val data = Source.fromInputStream(resp.getEntity.getContent)
     data.mkString
@@ -56,9 +60,13 @@ class WmtsProxy extends ScalatraServlet {
 
   get("/*") {
     val uri = request.getRequestURI
-    val get = new HttpGet(ViiteProperties.rasterServiceURL + uri)
-    get.setHeader("X-API-Key", ViiteProperties.rasterServiceApiKey)
-    val resp = client.execute(get)
+    val proxyGet = new HttpGet(ViiteProperties.rasterServiceURL + uri)
+    proxyGet.setHeader("X-API-Key", ViiteProperties.rasterServiceApiKey)
+    proxyGet.removeHeaders("X-Iam-Data")
+    proxyGet.removeHeaders("X-Iam-Accesstoken")
+    proxyGet.removeHeaders("X-Amzn-Trace-Id")
+    proxyGet.removeHeaders("X-Iam-Identity")
+    val resp = client.execute(proxyGet)
     contentType = resp.getEntity.getContentType.getValue
     val data = resp.getEntity.getContent
     val out = response.getOutputStream
