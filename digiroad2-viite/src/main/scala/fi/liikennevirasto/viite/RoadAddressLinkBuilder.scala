@@ -1,7 +1,6 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.{GeometryUtils, viite}
-import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.{GeometryUtils, DummyEventBus, DummySerializer}
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{Unknown => _, apply => _}
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, _}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient

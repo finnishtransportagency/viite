@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.service
 import java.io.{File, FilenameFilter, IOException}
 import java.util.concurrent.TimeUnit
 
-import fi.liikennevirasto.GeometryUtils
+import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
