@@ -3,7 +3,6 @@ package fi.liikennevirasto.viite.dao
 import java.sql.Timestamp
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.dao.Sequences
