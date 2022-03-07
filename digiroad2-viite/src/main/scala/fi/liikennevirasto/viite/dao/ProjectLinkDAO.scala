@@ -3,7 +3,7 @@ package fi.liikennevirasto.viite.dao
 import java.sql.Types
 import java.util.Date
 
-import fi.liikennevirasto.GeometryUtils
+import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.PolyLine

@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import java.text.SimpleDateFormat
 
-import fi.liikennevirasto.GeometryUtils
+import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.JWTAuthentication
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient

@@ -8,8 +8,7 @@ import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import org.joda.time.LocalDate
 import slick.driver.JdbcDriver.backend.Database
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
-import fi.liikennevirasto.GeometryUtils
-import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import org.postgis.PGgeometry
 import org.postgresql.util.PGobject
 

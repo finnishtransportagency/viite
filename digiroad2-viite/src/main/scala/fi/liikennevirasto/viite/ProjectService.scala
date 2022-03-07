@@ -3,8 +3,7 @@ package fi.liikennevirasto.viite
 import java.sql.SQLException
 import java.util.Date
 
-import fi.liikennevirasto.GeometryUtils
-import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, DigiroadEventBus}
 import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, TrafficDirection, _}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink

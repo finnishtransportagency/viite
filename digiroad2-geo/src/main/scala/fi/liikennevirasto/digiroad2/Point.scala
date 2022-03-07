@@ -1,7 +1,5 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.GeometryUtils
-
 case class Matrix(m: Seq[Seq[Double]]) {
   def *(that: Vector3d): Vector3d = {
 
