@@ -157,7 +157,7 @@
       // set change table state to open
       changeTableOpen = true;
       if (projectChangeData) {
-        var projectDate = new Date(projectChangeData.changeTable.changeDate).toLocaleDateString();
+        var projectDate = new Date(projectChangeData.changeTable.changeDate).toLocaleDateString('fi-FI');
         $('.change-table-header').html($('<div class="font-resize">Validointi ok. Alla näet muutokset projektissa.</div><div class="font-resize">Alkupäivämäärä: ' + projectDate + '</div>'));
         var currentProject = projectCollection.getCurrentProject();
         // disable recalculate button if changetable is open and set title attribute
