@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite.process.strategy
 
-import fi.liikennevirasto.GeometryUtils
+import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.util.Track.LeftSide

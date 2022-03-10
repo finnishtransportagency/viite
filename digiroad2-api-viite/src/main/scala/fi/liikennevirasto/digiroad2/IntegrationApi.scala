@@ -1,8 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
 import java.util.Locale
-
-import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
@@ -77,6 +75,122 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
     }
   }
 
+
+  val getRoadNetworkSummary: SwaggerSupportSyntax.OperationBuilder = (
+    apiOperation[List[Map[String, Any]]]("getRoadNetworkSummary")
+      tags "Integration (Velho)"
+      summary "Returns current state (\"summary\") of the road network addresses, containing all the latest changes " +
+      "to every part of any road found in Viite. Offered JSON contains data about: road number, road name, " +
+      "road part number, ely code, administrative class, track, start address, end address, and discontinuity."
+  )
+  /** @return The JSON formatted whole road network address space of the latest versions of the network. */
+  get("/summary", operation(getRoadNetworkSummary)) {
+    contentType = formats("json")
+
+    time(logger, s"Summary:  GET request for /summary") {
+
+        try {
+          val roadNetworkSummary: Seq[RoadwayNetworkSummaryRow] = roadAddressService.getAllRoadAddresses
+          currentRoadNetworkSummaryToAPI(roadNetworkSummary)
+        } catch {
+          case e if NonFatal(e) =>
+            logger.warn(e.getMessage, e)
+            BadRequest(e.getMessage)
+        }
+    }
+  }
+  /**
+    * Formats the given <i>roadNetworkSummary</i> sequence to a structured List[Map[....]], suitable for JSON printout.
+    *
+    * @version Initial version for /summary API 2022-02
+    * @param roadNetworkSummary list of <i>RoadwayNetworkSummaryRow</i>s containing all of the latest network roadway, and roadName info
+    * @return Structured list of roads (defined by their road_numbers) of the valid network addresses of the whole road network
+    */
+  private def currentRoadNetworkSummaryToAPI(roadNetworkSummary: Seq[RoadwayNetworkSummaryRow]): List[Map[String, Any]] = {
+    logger.info("Summary: fetchCurrentRoadNetworkSummary")
+
+    val roadnumberMap: Map[Int, Seq[RoadwayNetworkSummaryRow]] = roadNetworkSummary.groupBy(_.roadNumber)
+
+    roadnumberMap.toList.sortBy(_._1).map { // foreach roadnumber, handle the sequence of rows
+      case(key_RoadNumber,uniqueRoadnumberMap) => {
+        Map(
+          "roadnumber" -> key_RoadNumber,
+          "roadname" -> uniqueRoadnumberMap.head.roadName, // each row in the road number seq has the same roadName; take any (here: first)
+          "roadparts" ->
+            parseRoadpartsForSummary( uniqueRoadnumberMap.groupBy(_.roadPartNumber) )
+        )
+      }
+    }
+  }
+  /**
+    * Formats the given <i>uniqueRoadnumberMap</i> map to a structured List[Map[....]], suitable for JSON printout.
+    * The rows are grouped primarily by roadPartNumbers, and secondarily by administrativeClasses.
+    *
+    * @version Initial version for sub functionality of /summary API, 2022-02
+    * @param uniqueRoadnumberMap list of <i>RoadwayNetworkSummaryRow</i>s belonging to a single road (defined by a road number)
+    * @return List of <i>road part + administrative group</i> defined items containing the valid network addresses of that
+    *         part of the road network.
+    */
+  private def parseRoadpartsForSummary(uniqueRoadnumberMap: Map[Int, Seq[RoadwayNetworkSummaryRow]]): List[Map[String, Any]] = {
+    val roadPARTnumberMap: Map[Int, Seq[RoadwayNetworkSummaryRow]] = uniqueRoadnumberMap
+    roadPARTnumberMap.toList.sortBy(_._1).map { // foreach roadpartnumber, handle the sequence of rows
+      case(key_RoadPARTNumber,uniqueRoadPARTMap) => {
+
+        val admClassWithinRoadPARTMap: Map[Int, Seq[RoadwayNetworkSummaryRow]] = uniqueRoadPARTMap.groupBy(_.administrativeClass)
+        admClassWithinRoadPARTMap.toList.sortBy(_._1).map {
+          case(key_AdmClassWithinRoadPART,uniqueAdmClassWithinRoadPARTMap) => {
+            Map(
+              "roadpartnumber" -> key_RoadPARTNumber,
+              "ely" -> uniqueAdmClassWithinRoadPARTMap.head.elyCode, // each row in the road part seq has the same roadName; take any (here: first)
+              "administrative_class" -> uniqueAdmClassWithinRoadPARTMap.head.administrativeClass, //   -"-    seq has the same adm.class; take any (here: first)
+              "tracks" ->
+                parseTracksForSummary( uniqueAdmClassWithinRoadPARTMap.groupBy(_.startAddressM) )
+            )
+          }
+        }
+      }
+    }
+    .flatten // flat out the nested List[List[...]] ; road part, and administrative class changes are listed as a single list
+  }
+  /**
+    * Formats the given <i>uniqueAdmClassWithinRoadPARTMap</i> to a structured List[Map[....]], suitable for JSON printout.
+    * The rows are ordered primarily by startAddresses, and secondarily by tracks.
+    *
+    * @version Initial version for sub functionality of /summary API, 2022-02
+    * @param uniqueAdmClassWithinRoadPARTMap list of <i>RoadwayNetworkSummaryRow</i>s belonging to a single administrative class
+    *                                        within a road part (defined by a road part number, and administrative class)
+    * @return List of <i>start addresses + track</i> defined items containing the valid network addresses of that
+    *         part of the road network.
+    */
+  private def parseTracksForSummary(uniqueAdmClassWithinRoadPARTMap: Map[Int, Seq[RoadwayNetworkSummaryRow]]): List[Map[String, Int]] = {
+    val addressMMap: Map[Int, Seq[RoadwayNetworkSummaryRow]] = uniqueAdmClassWithinRoadPARTMap
+    addressMMap.toList.sortBy(_._1).map {
+      case(key_startAddrM,uniqueAddressMMap) => {
+        val trackMap: Map[Int, Seq[RoadwayNetworkSummaryRow]] = uniqueAddressMMap.groupBy(_.track)
+        trackMap.toList.sortBy(_._1).map {
+          case(key_TrackNumber,uniqueTrackMap)  => {
+           uniqueTrackMap.head.continuity match {
+             case 5 => { // Discontinuity not printed if Discontinuity.Continuous
+               Map(
+                 "track" -> key_TrackNumber,
+                 "startaddressM" -> key_startAddrM,
+                 "endaddressM" -> uniqueTrackMap.head.endAddressM
+               )
+             }
+             case _ => {
+               Map(
+                 "track" -> key_TrackNumber,
+                 "startaddressM" -> key_startAddrM,
+                 "endaddressM" -> uniqueTrackMap.head.endAddressM,
+                 "continuity" -> uniqueTrackMap.head.continuity
+               )
+             }
+           }
+         }
+       }
+      }
+    } .flatten  // flat out the nested List[List[...]]; track, and addressM changes are listed as a single list
+  }
 
   val getRoadNameChanges: SwaggerSupportSyntax.OperationBuilder =
     (apiOperation[List[Map[String, Any]]]("getRoadNameChanges")

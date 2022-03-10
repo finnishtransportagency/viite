@@ -1,7 +1,6 @@
 package fi.liikennevirasto.viite.util
 
-import fi.liikennevirasto.GeometryUtils
-import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.NewIdValue

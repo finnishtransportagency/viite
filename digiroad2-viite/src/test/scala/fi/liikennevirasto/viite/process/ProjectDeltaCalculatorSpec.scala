@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.GeometryUtils
+import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
@@ -9,6 +9,7 @@ import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.{LeftSide, RightSide}
+import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, RoadAddressCP}
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, EndOfRoad, MinorDiscontinuity}
 import fi.liikennevirasto.viite.dao.LinkStatus.{Terminated, Transfer}
@@ -16,6 +17,7 @@ import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.util.{toProjectLink, toTransition}
 import org.joda.time.DateTime
+import org.scalatest.enablers.Definition.definitionOfOption
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -389,24 +391,26 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
   }
 
 
-  test("Test ProjectDeltaCalculator.partition When executing a unchanged and a AdministrativeClass change operation on a single road part, then create a new road Then returns the correct From RoadSection -> To RoadSection mapping.") {
+  test("Test ProjectDeltaCalculator.partition When executing an AdministrativeClass change from single AdministrativeClass to two AdministrativeClasses on a single road part with unchanged status and creating a new section at the end" +
+       "Then RoadSection -> To RoadSection mapping for Administrative class change and for new part should have correct pairwise (current and new address) sections.") {
     runWithRollback {
       val addresses = (0 to 9).map(i => {
         createRoadAddress(i * 12, 12L)
-      }).map(ra => {
-        if (ra.id > 50) ra else ra.copy(administrativeClass = AdministrativeClass.Municipality)
       })
+
       val unchanged = addresses.map(a => {
         (a, toProjectLink(project, LinkStatus.UnChanged)(a))
+      }).map(ra => {
+        if (ra._1.id > 50) ra else (ra._1, ra._2.copy(administrativeClass = AdministrativeClass.Municipality))
       })
 
       val newLinks  = Seq(ProjectLink(981, 5, 205, Track.Combined, Discontinuity.MinorDiscontinuity, 120, 130, 120, 130, None, None, createdBy = Option(project.createdBy), 981, 0.0, 12.1, TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), Seq(Point(0.0, 36.0), Point(0.0, 48.1)), project.id, LinkStatus.New, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, 12.1, -1L, -1L, 8, reversed = false, None, 748800L))
 
-      val uncParts2 = ProjectDeltaCalculator.partitionWithProjectLinks(unchanged.map(_._2), Seq())
-      val uncParts3 = uncParts2.adjustedSections.zip(uncParts2.originalSections)
+      val uncParts = ProjectDeltaCalculator.partitionWithProjectLinks(unchanged.map(_._2), Seq())
+      val roadwaySectionPairs = uncParts.adjustedSections.zip(uncParts.originalSections)
 
-      uncParts3 should have size 2
-      uncParts3.foreach(x => {
+      roadwaySectionPairs should have size 2
+      roadwaySectionPairs.foreach(x => {
         val (to, fr) = x
         (fr.startMAddr == 60 || fr.endMAddr == 60) should be(true)
         (to.startMAddr == 60 || to.endMAddr == 60) should be(true)
@@ -421,6 +425,325 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
         to.startMAddr should be(120)
         to.endMAddr should be(130)
       })
+    }
+  }
+
+  test("Test ProjectDeltaCalculator.partition When executing an AdministrativeClass change to a single AdministrativeClass from two AdministrativeClasses on a single road part with unchanged status and creating a new section at the end" +
+       "Then RoadSection -> To RoadSection mapping for Administrative class change and for new part should have correct pairwise (current and new address) sections.") {
+    runWithRollback {
+      val addresses = (0 to 9).map(i => {
+        createRoadAddress(i * 12, 12L)
+      }).map(ra => {
+        if (ra.id > 50) ra else ra.copy(administrativeClass = AdministrativeClass.Municipality)
+      })
+
+      val unchanged = addresses.map(a => {
+        (a, toProjectLink(project, LinkStatus.UnChanged)(a))
+      })
+
+      val roadway205 = unchanged.flatMap(r => Seq(toRoadway(Seq(r._2))))
+      roadwayDAO.create(roadway205)
+
+      val links = unchanged.map(ra => {
+                  if (ra._1.id > 50) ra._2 else ra._2.copy(administrativeClass = AdministrativeClass.State)
+                })
+
+      val uncParts2 = ProjectDeltaCalculator.partitionWithProjectLinks(links, Seq())
+      val uncParts3 = uncParts2.adjustedSections.zip(uncParts2.originalSections)
+
+      uncParts3 should have size 2
+      uncParts3.foreach(x => {
+        val (to, fr) = x
+        (fr.startMAddr == 60 || fr.endMAddr == 60) should be(true)
+        (to.startMAddr == 60 || to.endMAddr == 60) should be(true)
+        if (fr.startMAddr == 0L) fr.administrativeClass should be(AdministrativeClass.Municipality) else fr.administrativeClass should be(AdministrativeClass.State)
+        if (to.startMAddr == 0L) to.administrativeClass should be(AdministrativeClass.State) else to.administrativeClass should be(AdministrativeClass.State)
+      })
+    }
+  }
+
+  test("Test ProjectDeltaCalculator.partition When end part of a single roadpart is transferred as righside track and a new is created for leftside track" +
+                 "Then two track parts should have one section (and not splitted).") {
+    val (rwn1, rwn2, rwn3) = (1, 2, 3)
+    runWithRollback {
+      val addresses = (0 to 14).map(i => {
+        createRoadAddress(i * 100, 100)
+      })
+
+      val unchanged = addresses.map(a => {
+        (a, toProjectLink(project, LinkStatus.UnChanged)(a))
+      })
+
+      val roadway205 = Seq(toRoadway(unchanged.map(_._2)).copy(discontinuity = Discontinuity.Discontinuous))
+      roadwayDAO.create(roadway205)
+
+      val splitAddress = 800
+      var links        = unchanged.map(ra => {
+        if (ra._1.id == (splitAddress - 100)) ra._2.copy(roadwayNumber = rwn1, calibrationPointTypes = (NoCP, RoadAddressCP)) else if (ra._1.id < splitAddress) ra._2.copy(roadwayNumber = rwn1) else if (ra._1.id == splitAddress) ra._2.copy(roadwayNumber = rwn2, status = LinkStatus.Transfer, track = Track.RightSide, calibrationPointTypes = (RoadAddressCP, NoCP)) else ra._2.copy(roadwayNumber = rwn2, status = LinkStatus.Transfer, track = Track.RightSide)
+      }).map(pl => {
+        pl.copy(roadwayId = 0)
+      })
+
+      links = links.head.copy(calibrationPointTypes = (RoadAddressCP, NoCP)) +: links.tail.init :+ links.last.copy(discontinuity = Discontinuity.Discontinuous, calibrationPointTypes = (NoCP, RoadAddressCP))
+
+      val id       = links.maxBy(_.id).id + 10
+      var newLinks = (0 to 6).flatMap(i => {
+        Seq(ProjectLink(id + i, links.head.roadNumber, links.head.roadPartNumber, Track.LeftSide, Discontinuity.Continuous, splitAddress + i * 100, splitAddress + i * 100 + 100, 0, 0, None, None, createdBy = Option(project.createdBy), id + i, 0.0, 100, TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), Seq(Point(0.0, id + i), Point(0.0, (id + i) * 100)), links.head.projectId, LinkStatus.New, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, 100L, NewIdValue, 0L, links.head.ely, reversed = false, None, 748800L, rwn3))
+      })
+
+      newLinks = newLinks.head.copy(calibrationPointTypes = (RoadAddressCP, NoCP)) +: newLinks.init.tail :+ newLinks.last.copy(discontinuity = Discontinuity.Discontinuous, calibrationPointTypes = (NoCP, RoadAddressCP))
+
+      val uncParts2 = ProjectDeltaCalculator.partitionWithProjectLinks(links ++ newLinks, links ++ newLinks)
+      val uncParts3 = uncParts2.adjustedSections.zip(uncParts2.originalSections)
+
+      uncParts3 should have size 3
+
+      val combined = uncParts3.filter(_._1.track == Track.Combined)
+      combined should have size 1
+
+      val transfered = uncParts3.filter(_._1.track == Track.RightSide)
+      transfered should have size 1
+
+      val newpart = uncParts3.filter(_._1.track == Track.LeftSide)
+      newpart should have size 1
+
+      val (toComb, frComb) = combined.head
+      (frComb.startMAddr == 0 && frComb.endMAddr == 800) should be(true)
+      (toComb.startMAddr == 0 && toComb.endMAddr == 800) should be(true)
+
+      val (toTrans, frTrans) = transfered.head
+      (frTrans.startMAddr == 800 && frTrans.endMAddr == 1500) should be(true)
+      (toTrans.startMAddr == 800 && toTrans.endMAddr == 1500) should be(true)
+
+      val (toNew, _) = newpart.head
+      (toNew.startMAddr == 800 && toNew.endMAddr == 1500) should be(true)
+    }
+  }
+
+  test("Test ProjectDeltaCalculator.partition When a single roadpart with minor discontinuity and two track part at the end is reversed" +
+                "Then two track part track and minor discontinuity should be reversed and address lengths should be unchanged.") {
+    runWithRollback {
+      val transfer = Seq(
+        (createRoadAddress(0, 1).copy(discontinuity = Continuous, id = 0),
+          createTransferProjectLink(0,1).copy(
+            startAddrMValue         = 1498,
+            endAddrMValue           = 1987,
+            roadwayId               = 0,
+            discontinuity           = EndOfRoad,
+            reversed                = true,
+            originalStartAddrMValue = 0,
+            originalEndAddrMValue   = 489
+          )
+        ),
+        (createRoadAddress(0,1).copy(discontinuity = MinorDiscontinuity, id = 1),
+          createTransferProjectLink(0,1).copy(
+            startAddrMValue         = 1098,
+            endAddrMValue           = 1498,
+            roadwayId               = 0,
+            discontinuity           = Continuous,
+            reversed                = true,
+            originalStartAddrMValue = 489,
+            originalEndAddrMValue   = 889
+          )
+        ),
+        (createRoadAddress(0,1).copy(discontinuity = Continuous, id = 2),
+          createTransferProjectLink(0,1).copy(
+            startAddrMValue         = 463,
+            endAddrMValue           = 1098,
+            roadwayId               = 1,
+            discontinuity           = MinorDiscontinuity,
+            reversed                = true,
+            originalStartAddrMValue = 889,
+            originalEndAddrMValue   = 1524
+          )
+        ),
+        (createRoadAddress(0,1).copy(discontinuity = EndOfRoad, id = 3,
+          track         = Track.LeftSide
+        ),
+          createTransferProjectLink(0,1).copy(
+            startAddrMValue         = 0,
+            endAddrMValue           = 463,
+            track                   = Track.LeftSide,
+            roadwayId               = 2,
+            reversed                = true,
+            originalStartAddrMValue = 1524,
+            originalEndAddrMValue   = 1987
+          )
+        ),
+        (createRoadAddress(0,1).copy(discontinuity = EndOfRoad, id = 4,
+          track         = Track.RightSide
+        ),
+          createTransferProjectLink(0,1).copy(
+            startAddrMValue         = 0,
+            endAddrMValue           = 463,
+            track                   = Track.RightSide,
+            roadwayId               = 3,
+            reversed                = true,
+            originalStartAddrMValue = 1524,
+            originalEndAddrMValue   = 1987
+          )
+        )
+      )
+
+      val createdRoadways205 = transfer.map(pl => toRoadway(Seq(pl._2)))
+      val combinedRoadwayPart = createdRoadways205.filter(_.track == Track.Combined)
+      val roadways = Seq(
+        combinedRoadwayPart
+          .find(_.id == 0)
+          .get
+          .copy(discontinuity   = Discontinuity.MinorDiscontinuity,
+            startAddrMValue = 0,
+            endAddrMValue   = 889
+          ),
+        combinedRoadwayPart
+          .find(_.id == 1)
+          .get
+          .copy(discontinuity = Discontinuity.Continuous, startAddrMValue = 889, endAddrMValue = 1524),
+        createdRoadways205
+          .find(_.track == Track.LeftSide)
+          .get
+          .copy(track       = Track.RightSide,
+            startAddrMValue = 1524,
+            endAddrMValue   = 1987,
+            discontinuity   = Discontinuity.EndOfRoad
+          ),
+        createdRoadways205
+          .find(_.track == Track.RightSide)
+          .get
+          .copy(track       = Track.LeftSide,
+            startAddrMValue = 1524,
+            endAddrMValue   = 1987,
+            discontinuity   = Discontinuity.EndOfRoad
+          )
+      ).map(_.copy(reversed = false))
+
+      roadwayDAO.create(roadways.map(_.copy(reversed = false)))
+
+      val links = transfer.map(_._2).map(_.copy(calibrationPointTypes = (RoadAddressCP,RoadAddressCP), originalCalibrationPointTypes = (RoadAddressCP,RoadAddressCP)))
+
+      val uncParts2 = ProjectDeltaCalculator.partitionWithProjectLinks(links,links)
+      val uncParts3 = uncParts2.adjustedSections.zip(uncParts2.originalSections)
+
+      uncParts3 should have size 4
+
+      val endOfRoadRight   = uncParts3.find(_._2.track == Track.RightSide)
+      endOfRoadRight shouldBe defined
+
+      val (p1to, p1fr) = endOfRoadRight.get
+      (p1fr.startMAddr == 1524 && p1fr.endMAddr == 1987 && p1fr.track == Track.RightSide) should be(true)
+      (p1to.startMAddr == 0 && p1to.endMAddr == 463 && p1to.track == Track.LeftSide) should be(true)
+      // Check address lenght has not changed.
+      p1fr.endMAddr - p1fr.startMAddr should be(p1to.endMAddr - p1to.startMAddr)
+
+      val endOfRoadLeft   = uncParts3.find(_._2.track == Track.LeftSide)
+      endOfRoadLeft shouldBe defined
+
+      val (p2to, p2fr) = endOfRoadLeft.get
+      (p2fr.startMAddr == 1524 && p2fr.endMAddr == 1987 && p2fr.track == Track.LeftSide) should be(true)
+      (p2to.startMAddr == 0 && p2to.endMAddr == 463 && p2to.track == Track.RightSide) should be(true)
+      p2fr.endMAddr - p2fr.startMAddr should be(p2to.endMAddr - p2to.startMAddr)
+
+      val combinedMiddle   = uncParts3.find(_._2.startMAddr == 889)
+      combinedMiddle shouldBe defined
+
+      val (p4to, p4fr) = combinedMiddle.get
+      (p4fr.startMAddr == 889 && p4fr.endMAddr == 1524 && p4fr.track == Track.Combined) should be(true)
+      (p4to.startMAddr == 463 && p4to.endMAddr == 1098 && p4to.track == Track.Combined) should be(true)
+      p4fr.endMAddr - p4fr.startMAddr should be(p4to.endMAddr - p4to.startMAddr)
+
+      val combinedStart   = uncParts3.find(_._2.startMAddr == 0)
+      combinedStart shouldBe defined
+
+      val (p3to, p3fr) = combinedStart.get
+      (p3fr.startMAddr == 0 && p3fr.endMAddr == 889 && p3fr.track == Track.Combined) should be(true)
+      (p3to.startMAddr == 1098 && p3to.endMAddr == 1987 && p3to.track == Track.Combined) should be(true)
+      p3fr.endMAddr - p3fr.startMAddr should be(p3to.endMAddr - p3to.startMAddr)
+    }
+  }
+
+  test("Test ProjectDeltaCalculator.partition When transfering two roadparts a small roadpart number to the greater roadpart number" +
+                "Then roadway changes should have two rows for each one for each part.") {
+    val startRoadPart  = 205
+    val endRoadPart    = 206
+    val addressMLength = 60
+
+    runWithRollback {
+      val addresses = (0 to 9).map(i => {
+        createRoadAddress(i * 12, 12L)
+      })
+      val addressLinks = addresses.filter(_.endAddrMValue <= addressMLength).map(a => {
+        (a, toProjectLink(project, LinkStatus.Transfer)(a.copy(roadPartNumber = endRoadPart)).copy(roadwayId = 1))
+      }) ++ addresses.filter(_.endAddrMValue > addressMLength).map(a => {
+        (a, toProjectLink(project, LinkStatus.Transfer)(a.copy(roadPartNumber = endRoadPart)).copy(roadwayId = 2))
+      })
+      var links = addressLinks.map(_._2)
+      val rw1 = Roadway(1, 1000, 5, startRoadPart, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, addressMLength, ely = 8, startDate = DateTime.now(), createdBy = "", roadName = None)
+      val rw2 = Roadway(2, 1001, 5, endRoadPart, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, addressMLength, ely = 8, startDate = DateTime.now(), createdBy = "", roadName = None)
+
+      roadwayDAO.create(Seq(rw1,rw2))
+
+      links = links.filter(_.originalEndAddrMValue <= addressMLength) ++ links.filter(_.originalEndAddrMValue > addressMLength).map(pl => {
+        pl.copy(originalStartAddrMValue = pl.originalStartAddrMValue - addressMLength, originalEndAddrMValue = pl.originalEndAddrMValue - addressMLength)
+      })
+
+      val partitions  = ProjectDeltaCalculator.partitionWithProjectLinks(links, links)
+      val partitions2 = partitions.adjustedSections.zip(partitions.originalSections)
+
+      partitions2 should have size 2
+      val part205 = partitions2.find(_._2.roadPartNumberStart == startRoadPart)
+      part205 shouldBe defined
+      val part206 = partitions2.find(_._2.roadPartNumberStart == endRoadPart)
+      part206 shouldBe defined
+
+      val (to205, fr205) = part205.get
+      fr205.startMAddr should be(to205.startMAddr)
+      fr205.endMAddr should be(to205.endMAddr)
+      fr205.roadPartNumberStart should be(startRoadPart)
+      to205.roadPartNumberStart should be(endRoadPart)
+
+      val (to206, fr206) = part206.get
+      fr206.startMAddr should be(0)
+      fr206.endMAddr should be(addressMLength)
+      to206.startMAddr should be(fr205.endMAddr)
+      to206.endMAddr should be(fr205.endMAddr + fr206.endMAddr)
+      fr206.roadPartNumberStart should be(endRoadPart)
+      to206.roadPartNumberStart should be(endRoadPart)
+    }
+  }
+
+  test("Test ProjectDeltaCalculator.partition When a roadpart with more than one roadway is transfered and reversed" +
+                "Then discontinuity should should be unchanged. ") {
+    val addressMLengthFirst  = 100
+    val addressMLengthSecond = 220
+    runWithRollback {
+      val addresses = (0 to 9).map(i => {
+        createRoadAddress(i * 32, 32)
+      })
+      val addressLinks = addresses.filter(_.endAddrMValue <= addressMLengthFirst).map(a => {
+        (a, toProjectLink(project, LinkStatus.Transfer)(a).copy(roadwayId = 1, reversed = true))
+      }) ++ addresses.filter(_.endAddrMValue > addressMLengthFirst).map(a => {
+        (a, toProjectLink(project, LinkStatus.Transfer)(a).copy(roadwayId = 2, reversed = true))
+      })
+
+      var links = addressLinks.map(_._2)
+      val rw1 = Roadway(1, 1000, 5, 205, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, addressMLengthFirst, ely = 8, startDate = DateTime.now(), createdBy = "", roadName = None)
+      val rw2 = Roadway(2, 1001, 5, 205, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, 0, addressMLengthFirst + addressMLengthSecond, ely = 8, startDate = DateTime.now(), createdBy = "", roadName = None)
+
+      roadwayDAO.create(Seq(rw1,rw2))
+
+      links = links.map(pl => {
+        pl.copy(startAddrMValue = addressMLengthSecond + addressMLengthFirst - pl.endAddrMValue, endAddrMValue =  addressMLengthSecond + addressMLengthFirst - pl.startAddrMValue)
+      })
+      links = links.head.copy(discontinuity = Discontinuity.EndOfRoad) +: links.tail
+
+      val partitions  = ProjectDeltaCalculator.partitionWithProjectLinks(links, links)
+      val partitions2 = partitions.adjustedSections.zip(partitions.originalSections)
+
+      partitions2 should have size 1
+
+      val (to, fr) = partitions2.head
+      fr.discontinuity should be(to.discontinuity)
+      to.discontinuity should be(rw2.discontinuity)
     }
   }
 
@@ -444,6 +767,69 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       fr.endMAddr should be(to.endMAddr)
       fr.ely should be(8)
       to.ely should be(5)
+    }
+  }
+
+  test("Test ProjectDeltaCalculator.partition When a two track roadpart is transferred to a single track" +
+                 "Then RoadwaySections should be formed correctly for Transfer and Terminated parts for either track of termination.") {
+    runWithRollback {
+      val addresses   = (0 to 9).map(i => {
+        createRoadAddress(i * 12, 12L)
+      })
+      val addressLinks       = addresses.map(a => {
+        (a, toProjectLink(project, LinkStatus.Transfer)(a).copy(roadwayId = 0, track = Track.RightSide))
+      })
+      val rightLinks = addressLinks.map(_._2).map(_.copy(track = Track.Combined))
+      val leftLinks  = addressLinks.map(_._2).map(pl => pl.copy(track = Track.LeftSide, status = LinkStatus.Terminated))
+      val links = rightLinks ++ leftLinks
+      val rightRoadway = toRoadway(rightLinks).copy(track = Track.RightSide, id = 1)
+      val leftRoadway  = toRoadway(leftLinks).copy(track = Track.LeftSide, id = 2)
+      roadwayDAO.create(Seq(rightRoadway, leftRoadway))
+
+      val partitions  = ProjectDeltaCalculator.partitionWithProjectLinks(links.filter(_.status != LinkStatus.Terminated), links)
+      val partitions2 = partitions.adjustedSections.zip(partitions.originalSections)
+
+      partitions2.size should be(1)
+      partitions2.foreach(p => {
+        val (to, fr) = p
+        fr.startMAddr should be(to.startMAddr)
+        fr.endMAddr should be(to.endMAddr)
+      })
+
+      val terminatedPartitions = ProjectDeltaCalculator.partitionWithProjectLinks(links.filter(_.status == LinkStatus.Terminated), links)
+      val terminatedPartitions2 = terminatedPartitions.adjustedSections.zip(partitions.originalSections)
+
+      terminatedPartitions2.size should be(1)
+    }
+
+    runWithRollback {
+      val addresses   = (0 to 9).map(i => {
+        createRoadAddress(i * 12, 12L)
+      })
+      val addressLinks       = addresses.map(a => {
+        (a, toProjectLink(project, LinkStatus.Transfer)(a).copy(roadwayId = 0, track = Track.LeftSide))
+      })
+      val rightLinks = addressLinks.map(_._2).map(_.copy(track = Track.Combined))
+      val leftLinks  = addressLinks.map(_._2).map(pl => pl.copy(track = Track.RightSide, status = LinkStatus.Terminated))
+      val links = rightLinks ++ leftLinks
+      val leftRoadway = toRoadway(rightLinks).copy(track = Track.LeftSide, id = 1)
+      val rightRoadway = toRoadway(leftLinks).copy(track = Track.RightSide, id = 2)
+      roadwayDAO.create(Seq(rightRoadway, leftRoadway))
+
+      val partitions  = ProjectDeltaCalculator.partitionWithProjectLinks(links.filter(_.status != LinkStatus.Terminated), links)
+      val partitions2 = partitions.adjustedSections.zip(partitions.originalSections)
+
+      partitions2.size should be(1)
+      partitions2.foreach(p => {
+        val (to, fr) = p
+        fr.startMAddr should be(to.startMAddr)
+        fr.endMAddr should be(to.endMAddr)
+      })
+
+      val terminatedPartitions = ProjectDeltaCalculator.partitionWithProjectLinks(links.filter(_.status == LinkStatus.Terminated), links)
+      val terminatedPartitions2 = terminatedPartitions.adjustedSections.zip(partitions.originalSections)
+
+      terminatedPartitions2.size should be(1)
     }
   }
 

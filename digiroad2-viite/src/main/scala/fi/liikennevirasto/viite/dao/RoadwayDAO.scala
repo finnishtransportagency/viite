@@ -1,7 +1,7 @@
 package fi.liikennevirasto.viite.dao
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.GeometryUtils
+import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
@@ -354,20 +354,46 @@ case class RoadAddress(id: Long, linearLocationId: Long, roadNumber: Long, roadP
 
   def reversed: Boolean = false
 
+    /** Return true, if the AddrMvalues of this roadAddress at least partially overlap the given range limits.
+    * @param rangeStartAddr Minimum startAddress of the road address range to be matched.
+    * @param rangeEndAddr   Maximum   endAddress of the road address range to be matched.
+    *
+    *  rs-re: range start - range end
+    *  sA-eA: startAddrMValue-endAddrMValue ot this roadAddress
+    *
+    *        range:      rs----------------re
+    *                sA--|-----eA          |                 => true (1)
+    *                    |           sA----|--eA             => true (2)
+    *                    |   sA--------eA  |                 => true (3)
+    */
   def isBetweenAddresses(rangeStartAddr: Long, rangeEndAddr: Long): Boolean = {
-    (startAddrMValue <= rangeStartAddr && endAddrMValue >= rangeStartAddr) ||
-      (startAddrMValue <= rangeEndAddr && endAddrMValue >= rangeEndAddr) ||
-      (rangeStartAddr < startAddrMValue && rangeEndAddr > endAddrMValue)
+    (startAddrMValue <= rangeStartAddr && rangeStartAddr <= endAddrMValue) || // (1) rangeStartAddr overlaps with Mvalues
+    (startAddrMValue <=   rangeEndAddr && rangeEndAddr   <= endAddrMValue) || // (2) rangeEndAddr overlaps with Mvalues
+    (startAddrMValue >  rangeStartAddr && rangeEndAddr   >  endAddrMValue)    // (3) MAddresses both within range
   }
 
+  /** Return true, if the Mvalues of this roadAddress at least partially overlap the given range limits.
+    * @param rangeStartMeasure Minimum Mvalue of the geometry mvalue range to be matched.
+    * @param rangeEndMeasure   Maximum Mvalue of the geometry mvalue range to be matched.
+    *
+    *  rs-re: rangeStart-rangeEnd
+    *  sM-eM: startMValue-endMValue ot this roadAddress
+    *
+    *        range:      rs----------------re
+    *                sM--|-----eM          |                 => true (1)
+    *                    |           sM----|--eM             => true (2)
+    *                    |   sM--------eM  |                 => true (3)
+    */
   def isBetweenMeasures(rangeStartMeasure: Double, rangeEndMeasure: Double): Boolean = {
-    (startMValue <= rangeStartMeasure && endAddrMValue >= rangeStartMeasure) ||
-      (startMValue <= rangeEndMeasure && endAddrMValue >= rangeEndMeasure) ||
-      (rangeStartMeasure < startMValue && rangeEndMeasure > endMValue)
+    (startMValue <= rangeStartMeasure && rangeStartMeasure <= endMValue) || // (1) rangeStartMeasure overlaps with Mvalues
+    (startMValue <=   rangeEndMeasure && rangeEndMeasure   <= endMValue) || // (2) rangeEndMeasure overlaps with Mvalues
+    (startMValue >  rangeStartMeasure && rangeEndMeasure   > endMValue)     // (3) MValues both within range
   }
 
+  /** Return true, if the given measure is between the Mvalues of this roadAddress.
+    * @param measure Value to be compared with the Mvalues of this roadAddress. */
   def isBetweenMeasures(measure: Double): Boolean = {
-    startMValue < measure && endMValue > measure
+    startMValue < measure && measure < endMValue
   }
 
   def addressBetween(a: Double, b: Double): (Long, Long) = {

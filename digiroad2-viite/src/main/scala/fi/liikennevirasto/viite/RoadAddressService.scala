@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.GeometryUtils
+import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset._
@@ -272,6 +272,16 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     roadAddresses.flatMap { ra =>
       val roadLink = roadLinks.find(rl => rl.linkId == ra.linkId)
       roadLink.map(rl => roadAddressLinkBuilder.build(rl, ra))
+    }
+  }
+
+ /**
+   * @return Returns summary data for the road address information
+   *         of the whole road network.
+   */
+  def getAllRoadAddresses(): Seq[RoadwayNetworkSummaryRow] = {
+    withDynSession {
+      roadNetworkDAO.fetchRoadwayNetworkSummary
     }
   }
 

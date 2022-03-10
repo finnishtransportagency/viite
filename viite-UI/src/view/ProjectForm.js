@@ -356,16 +356,13 @@
         applicationModel.addSpinner();
         currentProject.isDirty = false;
         jQuery('.modal-overlay').remove();
-        if (generalNext || saveAndNext) {
-          eventbus.trigger('roadAddressProject:openProject', currentProject);
-        }
+        eventbus.trigger('roadAddressProject:openProject', currentProject);
         rootElement.html(selectedProjectLinkTemplateDisabledButtons(currentProject));
-        var projectErrors = projectCollection.getProjectErrors();
-        // errorCode 8 means there are projectLinks in the project with status "NotHandled"
-        var highPriorityProjectErrors = projectErrors.filter((error) => error.errorCode === 8);
-        if (generalNext || saveAndNext) { // if the project was opened or project was edited and opened again
-          buttonsWhenOpenProject(projectErrors, highPriorityProjectErrors);
+        if (generalNext || saveAndNext) { // if the project was opened, edited or project edit form closed without saving
+          buttonsWhenOpenProject();
         } else if (reOpenCurrent) { // if project link form was closed without saving
+          var projectErrors = projectCollection.getProjectErrors();
+          var highPriorityProjectErrors = projectErrors.filter((error) => error.errorCode === 8);  // errorCode 8 means there are projectLinks in the project with status "NotHandled"
           buttonsWhenReOpenCurrent(projectErrors, highPriorityProjectErrors);
         }
         _.defer(function () {
@@ -375,16 +372,14 @@
       };
 
       /**
-       * Set attributes (disabled, title) of the recalculate and changes buttons when the project is opened
+       * Set attributes (disabled, title) of the recalculate and changes buttons when the project is opened.
+       * User needs to recalculate project when it's opened, so we enable recalculate button and disable changes button.
        * */
-      var buttonsWhenOpenProject = function (projectErrors, highPriorityProjectErrors) {
-        if (projectErrors.length === 0 && getRecalculatedAfterChangesFlag() === true) {
-          formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Etäisyyslukemat on päivitetty");
-          formCommon.setDisabledAndTitleAttributesById("changes-button", false, "");
-        } else if (highPriorityProjectErrors.length === 0 && getRecalculatedAfterChangesFlag() === true) {
-          formCommon.setDisabledAndTitleAttributesById("recalculate-button", false, "");
-          formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Projektin tulee läpäistä validoinnit");
-        }
+      var buttonsWhenOpenProject = function () {
+        formCommon.setDisabledAndTitleAttributesById("recalculate-button", false, "");
+        formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Päivitä etäisyyslukemat ensin");
+        formCommon.setInformationContent();
+        formCommon.setInformationContentText("Päivitä etäisyyslukemat jatkaaksesi projektia.");
       };
 
       /**
