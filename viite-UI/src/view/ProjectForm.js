@@ -352,19 +352,12 @@
         createOrSaveProject();
       };
 
-      var nextStage = function (reOpenCurrent = false, generalNext = false, saveAndNext = false) {
+      var nextStage = function () {
         applicationModel.addSpinner();
         currentProject.isDirty = false;
         jQuery('.modal-overlay').remove();
         eventbus.trigger('roadAddressProject:openProject', currentProject);
         rootElement.html(selectedProjectLinkTemplateDisabledButtons(currentProject));
-        if (generalNext || saveAndNext) { // if the project was opened, edited or project edit form closed without saving
-          buttonsWhenOpenProject();
-        } else if (reOpenCurrent) { // if project link form was closed without saving
-          var projectErrors = projectCollection.getProjectErrors();
-          var highPriorityProjectErrors = projectErrors.filter((error) => error.errorCode === 8);  // errorCode 8 means there are projectLinks in the project with status "NotHandled"
-          buttonsWhenReOpenCurrent(projectErrors, highPriorityProjectErrors);
-        }
         _.defer(function () {
           applicationModel.selectLayer('roadAddressProject');
           toggleAdditionalControls();
@@ -372,14 +365,26 @@
       };
 
       /**
+       * Only enable the changes button, because user can only inspect the project and the change table data
+       * */
+      var buttonsWhenInspectingUneditableProject = function () {
+        formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "");
+        formCommon.setDisabledAndTitleAttributesById("changes-button", false, "");
+      };
+
+      /**
        * Set attributes (disabled, title) of the recalculate and changes buttons when the project is opened.
        * User needs to recalculate project when it's opened, so we enable recalculate button and disable changes button.
        * */
       var buttonsWhenOpenProject = function () {
-        formCommon.setDisabledAndTitleAttributesById("recalculate-button", false, "");
-        formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Päivitä etäisyyslukemat ensin");
-        formCommon.setInformationContent();
-        formCommon.setInformationContentText("Päivitä etäisyyslukemat jatkaaksesi projektia.");
+        if (currentProject.statusCode === 10 || currentProject.statusCode === 11 || currentProject.statusCode === 12) {
+          buttonsWhenInspectingUneditableProject();
+        } else {
+          formCommon.setDisabledAndTitleAttributesById("recalculate-button", false, "");
+          formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Päivitä etäisyyslukemat ensin");
+          formCommon.setInformationContent();
+          formCommon.setInformationContentText("Päivitä etäisyyslukemat jatkaaksesi projektia.");
+        }
       };
 
       /**
@@ -569,7 +574,8 @@
         saveChanges();
         eventbus.once('roadAddress:projectSaved', function () {
           selectedProjectLinkProperty.setDirty(false);
-          nextStage(false, false, true);
+          nextStage();
+          buttonsWhenOpenProject();
         });
       };
 
@@ -586,7 +592,8 @@
             saveAndNext();
           }
         } else {
-          nextStage(false, true, false);
+          nextStage();
+          buttonsWhenOpenProject();
         }
         if (!isProjectEditable()) {
           $('.btn-pencil-edit').prop('disabled', true);
@@ -752,7 +759,14 @@
       var reOpenCurrent = function () {
         rootElement.empty();
         selectedProjectLinkProperty.setDirty(false);
-        nextStage(true, false, false);
+        nextStage();
+        if (currentProject.statusCode === 10 || currentProject.statusCode === 11 || currentProject.statusCode === 12) {
+          buttonsWhenInspectingUneditableProject();
+        } else {
+          var projectErrors = projectCollection.getProjectErrors();
+          var highPriorityProjectErrors = projectErrors.filter((error) => error.errorCode === 8);  // errorCode 8 means there are projectLinks in the project with status "NotHandled"
+          buttonsWhenReOpenCurrent(projectErrors, highPriorityProjectErrors);
+        }
         toggleAdditionalControls();
         eventbus.trigger('roadAddressProject:enableInteractions');
       };
