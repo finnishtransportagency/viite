@@ -36,3 +36,11 @@ Resources:
       Type: String
       Value: PlaceHolderValue
       Description: Viite access key for Viitekehysmuunnin's production API
+
+  RasterServiceApiKey:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Join ['/', ['/Viite', !Ref Environment, 'rasterServiceApiKey']]
+      Type: String
+      Value: PlaceHolderValue
+      Description: Viite access key for Rasteripalvelu-mml hosted in vaylapilvi

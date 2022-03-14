@@ -123,25 +123,20 @@ module.exports = function (grunt) {
           {
             context: '/rasteripalvelu',
             host: 'localhost',
-            port: '9180',
+            port: '8080',
             https: false,
             secure: false,
             changeOrigin: true,
-            xforward: false,
-            rewrite: {
-              '^/rasteripalvelu': '/viite/rasteripalvelu'
-            }
+            xforward: false
           },
           {
             context: '/wmts',
             host: 'localhost',
-            port: '9180',
+            port: '8080',
             https: false,
             secure: false,
-            xforward: false,
-            rewrite: {
-              '^/wmts': '/viite/wmts'
-            }
+            changeOrigin: true,
+            xforward: false
           },
           {
             context: '/maasto',
