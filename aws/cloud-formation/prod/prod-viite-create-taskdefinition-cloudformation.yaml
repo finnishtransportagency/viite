@@ -66,7 +66,7 @@ Resources:
             - Name: oagProxyURL
               Value: 'https://oag.vayla.fi'
             - Name: rasterServiceURL
-              Value: 'https://oag.vayla.fi/rasteripalvelu-mml'
+              Value: 'https://api.vaylapilvi.fi/rasteripalvelu-mml'
             - Name: vvhRestApiEndPoint
               Value: 'https://haproxy.vayla.fi:2027/vvhdata/'
             - Name: vvhRoadlink.frozen
@@ -104,6 +104,8 @@ Resources:
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/Viite/Prod/authentication.admin.basic.password'
             - Name: vkmApiKey
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/Viite/Prod/vkmApiKey'
+            - Name: rasterServiceApiKey
+              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/Viite/Prod/rasterServiceApiKey'
           MemoryReservation: 2048
           Image: !Sub '${RepositoryURL}/viite-prod:latest'
           Name: Viite-prod

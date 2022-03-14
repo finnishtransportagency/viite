@@ -45,6 +45,8 @@ aws ssm put-parameter --overwrite --name /Viite/QA/authentication.admin.basic.pa
 aws ssm put-parameter --overwrite --name /Viite/QA/rds.viite.db.password --type SecureString --value X
 
 aws ssm put-parameter --overwrite --name /Viite/QA/vkmApiKey --type SecureString --value X
+
+aws ssm put-parameter --overwrite --name /Viite/QA/rasterServiceApiKey --type SecureString --value X
 ```
 
 ### Luo task-definition
