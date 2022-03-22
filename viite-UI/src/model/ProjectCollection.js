@@ -234,30 +234,6 @@
       }
     };
 
-    this.removeProjectLinkSplit = function (project, selectedProjectLink) {
-      if (!_.isEmpty(project)) {
-        applicationModel.addSpinner();
-        var coordinates = applicationModel.getUserGeoLocation();
-        var data = {
-          projectId: project.id,
-          linkId: Math.abs(selectedProjectLink[0].linkId),
-          coordinates: coordinates
-        };
-        backend.removeProjectLinkSplit(data, function (response) {
-          if (response.success) {
-            dirtyProjectLinkIds = [];
-            eventbus.trigger('projectLink:revertedChanges');
-          } else if (response === INTERNAL_SERVER_ERROR_500 || response === BAD_REQUEST_400) {
-            eventbus.trigger('roadAddress:projectLinksUpdateFailed', response.status);
-            new ModalConfirm(response.message);
-            applicationModel.removeSpinner();
-          } else {
-            new ModalConfirm(response.message);
-            applicationModel.removeSpinner();
-          }
-        });
-      }
-    };
 
     var createOrUpdate = function (dataJson) {
       if ((!_.isEmpty(dataJson.linkIds) || !_.isEmpty(dataJson.ids)) && typeof dataJson.projectId !== 'undefined' && dataJson.projectId !== 0) {

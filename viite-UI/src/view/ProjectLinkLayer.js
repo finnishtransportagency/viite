@@ -280,32 +280,7 @@
       });
     };
 
-    var addCutLine = function (cutGeom) {
-      var points = _.map(cutGeom.geometry, function (point) {
-        return [point.x, point.y];
-      });
-      var cutFeature = new ol.Feature({
-        geometry: new ol.geom.LineString(points),
-        type: 'cut-line'
-      });
-      var style = new ol.style.Style({
-        stroke: new ol.style.Stroke({color: [20, 20, 255, 1], width: 9}),
-        zIndex: 11
-      });
-      cutFeature.setStyle(style);
-      removeFeaturesByType('cut-line');
-      addFeaturesToSelection([cutFeature]);
-    };
-
-    var removeFeaturesByType = function (match) {
-      _.each(selectSingleClick.getFeatures().getArray().concat(selectDoubleClick.getFeatures().getArray()), function (feature) {
-        if (feature && feature.getProperties().type === match) {
-          selectSingleClick.getFeatures().remove(feature);
-        }
-      });
-    };
-
-    me.eventListener.listenTo(eventbus, 'projectLink:clicked projectLink:split projectLink:errorClicked', function () {
+    me.eventListener.listenTo(eventbus, 'projectLink:clicked projectLink:errorClicked', function () {
       highlightFeatures();
     });
 
@@ -414,11 +389,6 @@
         selectedProjectLinkProperty.open(getSelectedId(selectedProjectLinkProperty.get()[0]), selectedProjectLinkProperty.isMultiLink());
       });
       projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), zoomlevels.getViewZoom(map) + 1, undefined, projectCollection.getPublishableStatus());
-    });
-
-    me.eventListener.listenTo(eventbus, 'split:splitCutLine', function (cutGeom) {
-      addCutLine(cutGeom);
-      applicationModel.removeSpinner();
     });
 
     me.eventListener.listenTo(eventbus, 'projectLink:revertedChanges', function (response) {

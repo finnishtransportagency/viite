@@ -271,18 +271,6 @@
       });
     });
 
-    this.getCutLine = _.throttle(function (data, success, error) {
-      $.ajax({
-        contentType: "application/json",
-        type: "POST",
-        url: "api/viite/project/getCutLine",
-        data: JSON.stringify(data),
-        dataType: "json",
-        success: success,
-        error: error
-      });
-    }, 1000);
-
     this.directionChangeNewRoadlink = _.throttle(function (data, success, failure) {
       $.ajax({
         contentType: "application/json",
@@ -362,18 +350,6 @@
       }, callback);
     };
 
-    this.removeProjectLinkSplit = function (data, success, errorCallback) {
-      $.ajax({
-        contentType: "application/json",
-        type: "DELETE",
-        url: "api/viite/project/split",
-        data: JSON.stringify(data),
-        dataType: "json",
-        success: success,
-        error: errorCallback
-      });
-    };
-
     this.reOpenProject = function (projectId, success, errorCallback) {
       $.ajax({
         type: "DELETE",
@@ -382,30 +358,6 @@
         error: errorCallback
       });
     };
-
-    this.getPreSplitedData = _.throttle(function (data, linkId, success, errorCallback) {
-      $.ajax({
-        contentType: "application/json",
-        type: "PUT",
-        url: "api/viite/project/presplit/" + linkId,
-        data: JSON.stringify(data),
-        dataType: "json",
-        success: success,
-        error: errorCallback
-      });
-    }, 1000);
-
-    this.saveProjectLinkSplit = _.throttle(function (data, linkId, success, errorCallback) {
-      $.ajax({
-        contentType: "application/json",
-        type: "PUT",
-        url: "api/viite/project/split/" + linkId,
-        data: JSON.stringify(data),
-        dataType: "json",
-        success: success,
-        error: errorCallback
-      });
-    }, 1000);
 
     this.getFloatingRoadAddresses = function () {
       return $.getJSON('api/viite/roadaddress/floatings/');
@@ -641,13 +593,6 @@
       return me;
     };
 
-    this.withPreSplitData = function (returnData) {
-      me.getPreSplitedData = function (data, linkId, callback) {
-        callback(returnData);
-        return returnData;
-      };
-      return me;
-    };
 
     this.getRoadAddressesByRoadNumber = createCallbackRequestor(function (roadNumber) {
       return {
