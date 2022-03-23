@@ -1,5 +1,5 @@
 (function (root) {
-  root.TileMapCollection = function (OAGGreyConfig) {
+  root.TileMapCollection = function () {
     var layerConfig = {
       // minResolution: ?,
       // maxResolution: ?,
