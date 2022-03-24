@@ -8,35 +8,28 @@
     var roadVector = new ol.source.Vector({
       loader: function (_extent, _resolution, _projection) {
         eventbus.once('roadLinks:fetched', function () {
-          var features = _.map(roadCollection.getAll(), function (roadLink) {
-            var points = _.map(roadLink.points, function (point) {
-              return [point.x, point.y];
-            });
-            var feature = new ol.Feature({
-              geometry: new ol.geom.LineString(points)
-            });
-            feature.linkData = roadLink;
-            return feature;
-          });
-          loadFeatures(features);
+          loadFeatures(getFeatures());
         });
         eventbus.once('roadLinks:fetched:wholeRoadPart', function () {
-          var features = _.map(roadCollection.getAll(), function (roadLink) {
-            var points = _.map(roadLink.points, function (point) {
-              return [point.x, point.y];
-            });
-            var feature = new ol.Feature({
-              geometry: new ol.geom.LineString(points)
-            });
-            feature.linkData = roadLink;
-            return feature;
-          });
-          loadFeatures(features);
+          loadFeatures(getFeatures());
           eventbus.trigger('roadCollection:wholeRoadPartFetched');
         });
       },
       strategy: ol.loadingstrategy.bbox
     });
+
+    var getFeatures = function () {
+      return _.map(roadCollection.getAll(), function (roadLink) {
+        var points = _.map(roadLink.points, function (point) {
+          return [point.x, point.y];
+        });
+        var feature = new ol.Feature({
+          geometry: new ol.geom.LineString(points)
+        });
+        feature.linkData = roadLink;
+        return feature;
+      });
+    };
 
     var roadLayer = new ol.layer.Vector({
       source: roadVector,
