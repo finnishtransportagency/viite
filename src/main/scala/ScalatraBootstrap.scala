@@ -1,7 +1,11 @@
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.authentication.SessionApi
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
+import org.apache.http.client.config.{CookieSpecs, RequestConfig}
+import org.apache.http.client.methods.HttpGet
+import org.apache.http.impl.client.HttpClientBuilder
 import org.scalatra._
+import scala.io.Source
 import javax.servlet.ServletContext
 import org.scalatra.swagger._
 
@@ -21,5 +25,56 @@ class ScalatraBootstrap extends LifeCycle {
       Digiroad2Context.roadAddressService, Digiroad2Context.projectService, Digiroad2Context.roadNetworkService,
       Digiroad2Context.roadNameService, Digiroad2Context.nodesAndJunctionsService, swagger = swagger), "/api/viite/*")
     context.mount(new ResourcesApp, "/api-docs")
+    context.mount(new RasterProxy, "/rasteripalvelu")
+    context.mount(new WmtsProxy, "/wmts")
+  }
+}
+
+class RasterProxy extends ScalatraServlet {
+
+  private val client = HttpClientBuilder.create()
+    .setDefaultRequestConfig(RequestConfig.custom()
+      .setCookieSpec(CookieSpecs.STANDARD).build()).build()
+
+  get("/wmts/maasto") {
+    val uriwithparams = "/wmts/maasto?service=" + params.get("service").get +"&request=" + params.get("request").get
+    val proxyGet = new HttpGet(ViiteProperties.rasterServiceURL + uriwithparams)
+    proxyGet.setHeader("X-API-Key", ViiteProperties.rasterServiceApiKey)
+    proxyGet.removeHeaders("X-Iam-Data")
+    proxyGet.removeHeaders("X-Iam-Accesstoken")
+    proxyGet.removeHeaders("X-Amzn-Trace-Id")
+    proxyGet.removeHeaders("X-Iam-Identity")
+    val resp = client.execute(proxyGet)
+    contentType = resp.getEntity.getContentType.getValue
+    val data = Source.fromInputStream(resp.getEntity.getContent)
+    data.mkString
+  }
+}
+
+class WmtsProxy extends ScalatraServlet {
+
+  private val client = HttpClientBuilder.create()
+    .setDefaultRequestConfig(RequestConfig.custom()
+    .setCookieSpec(CookieSpecs.STANDARD).build()).build()
+
+
+  get("/*") {
+    val uri = request.getRequestURI
+    val proxyGet = new HttpGet(ViiteProperties.rasterServiceURL + uri)
+    proxyGet.setHeader("X-API-Key", ViiteProperties.rasterServiceApiKey)
+    proxyGet.removeHeaders("X-Iam-Data")
+    proxyGet.removeHeaders("X-Iam-Accesstoken")
+    proxyGet.removeHeaders("X-Amzn-Trace-Id")
+    proxyGet.removeHeaders("X-Iam-Identity")
+    val resp = client.execute(proxyGet)
+    contentType = resp.getEntity.getContentType.getValue
+    val data = resp.getEntity.getContent
+    val out = response.getOutputStream
+    val bytes = new Array[Byte](4096)
+    Iterator
+      .continually(data.read(bytes))
+      .takeWhile(-1 !=)
+      .foreach(read => out.write(bytes,0,read))
+    out.close()
   }
 }

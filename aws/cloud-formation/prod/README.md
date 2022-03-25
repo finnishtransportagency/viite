@@ -45,6 +45,8 @@ aws ssm put-parameter --overwrite --name /Viite/Prod/authentication.admin.basic.
 aws ssm put-parameter --overwrite --name /Viite/Prod/rds.viite.db.password --type SecureString --value X
 
 aws ssm put-parameter --overwrite --name /Viite/Prod/vkmApiKey --type SecureString --value X
+
+aws ssm put-parameter --overwrite --name /Viite/Prod/rasterServiceApiKey --type SecureString --value X
 ```
 ### Luo ECR repository
 ```
