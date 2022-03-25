@@ -437,11 +437,12 @@
           projectCollection.saveCutProjectLinks(projectCollection.getTmpDirty(), objectDropdown_0.value, objectDropdown_1.value);
         } else {
             const endDistance = $('#endDistance') [0];
-            const changedValue = Number(endDistance.value);
+            var changedValue;
             var touchedEndDistance = false;
+            if (endDistance) changedValue = Number(endDistance.value);
             if (!isNaN(changedValue) && !isNaN(parseInt(endDistanceOriginalValue)) && changedValue !== endDistanceOriginalValue)
                 touchedEndDistance = true;
-          projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), objectDropdown_0.value, touchedEndDistance);
+            projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), objectDropdown_0.value, touchedEndDistance);
         }
         return true;
       };
