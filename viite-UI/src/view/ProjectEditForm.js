@@ -436,7 +436,12 @@
         } else if (objectDropdown_1) {
           projectCollection.saveCutProjectLinks(projectCollection.getTmpDirty(), objectDropdown_0.value, objectDropdown_1.value);
         } else {
-          projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), objectDropdown_0.value);
+            const endDistance = $('#endDistance') [0];
+            const changedValue = Number(endDistance.value);
+            var touchedEndDistance = false;
+            if (!isNaN(changedValue) && !isNaN(parseInt(endDistanceOriginalValue)) && changedValue !== endDistanceOriginalValue)
+                touchedEndDistance = true;
+          projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), objectDropdown_0.value, touchedEndDistance);
         }
         return true;
       };

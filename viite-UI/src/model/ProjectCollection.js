@@ -299,7 +299,7 @@
       }
     };
 
-    this.saveProjectLinks = function (changedLinks, statusCode) {
+    this.saveProjectLinks = function (changedLinks, statusCode, touchedEndDistance) {
       var validUserGivenAddrMValues = function (linkId, userEndAddr) {
         if (!_.isUndefined(userEndAddr) && userEndAddr !== null) {
           var roadPartIds = me.getMultiProjectLinks(linkId);
@@ -351,7 +351,7 @@
         return a || b;
       }).value();
       let userDefinedEndAddressM = null;
-      if (endDistance) userDefinedEndAddressM = (isNaN(Number(endDistance.value)) ? null : Number(endDistance.value));
+      if (endDistance && touchedEndDistance) userDefinedEndAddressM = (isNaN(Number(endDistance.value)) ? null : Number(endDistance.value));
       var dataJson = {
         ids: ids,
         linkIds: linkIds,
