@@ -1865,23 +1865,28 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           case t: InvalidAddressDataException => {
             logger.warn(s"InvalidAddressDataException while preserving the project $projectId" +
                          s" to the road network. ${t.getMessage}", t)
-            projectDAO.updateProjectStatus(projectId, ProjectState.ErrorInViite)
+            setProjectStatus(projectId, ProjectState.ErrorInViite)
           }
           case t: SQLException => {
             logger.error(s"SQL error while preserving the project $projectId" +
                          s" to the road network. ${t.getMessage}", t)
-            projectDAO.updateProjectStatus(projectId, ProjectState.ErrorInViite)
+            setProjectStatus(projectId, ProjectState.ErrorInViite)
           }
           // If we got an unexpected error, re-throw it, too.
           case t: Exception => {
             logger.error(s"Unexpected exception while preserving the project $projectId" +
                          s" to the road network. ${t.getMessage}", t)
-            projectDAO.updateProjectStatus(projectId, ProjectState.ErrorInViite)
+            setProjectStatus(projectId, ProjectState.ErrorInViite)
             throw t  // Rethrow the unexpected error.
           }
         }
       } // case Some
+    }
+  }
 
+  def setProjectStatus(projectId: Long, projectState: ProjectState): Unit = {
+    withDynSession {
+      projectDAO.updateProjectStatus(projectId, projectState)
     }
   }
 
