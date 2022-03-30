@@ -179,11 +179,13 @@ trait TrackCalculatorStrategy {
     def fixedMinimimumAddress = Math.max(Math.max(rightProjectLinks.last.startAddrMValue + 1, leftProjectLinks.last.startAddrMValue + 1), fixedAddress)
     def addressLengthRight = Math.max(0, rightProjectLinks.last.originalEndAddrMValue - rightProjectLinks.last.originalStartAddrMValue)
     def addressLengthLeft  = Math.max(0, leftProjectLinks.last.originalEndAddrMValue  -  leftProjectLinks.last.originalStartAddrMValue)
+
     val minimumEndAddress = (leftProjectLinks.exists(_.status == LinkStatus.New), rightProjectLinks.exists(_.status == LinkStatus.New)) match {
       case (true,true) => fixedMinimimumAddress
       case (true, false)  => rightProjectLinks.last.startAddrMValue + addressLengthRight
       case (false, true)  => leftProjectLinks.last.startAddrMValue + addressLengthLeft
-      case (false,false)  => fixedMinimimumAddress
+      case (false,false)  => Math.floor((startSectionAddress + leftProjectLinks.last.endAddrMValue - leftProjectLinks.head.startAddrMValue +
+                                         startSectionAddress + rightProjectLinks.last.endAddrMValue - rightProjectLinks.head.startAddrMValue) * 0.5).round
     }
 
     val (adjustedLeft, adjustedRight) = adjustTwoTracks(rightProjectLinks, leftProjectLinks, startSectionAddress, minimumEndAddress, calibrationPoints)
