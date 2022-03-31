@@ -131,21 +131,8 @@
         }
       }, 500);
 
-
-    this.getFloatingAdjacent = _.throttle(function (roadData, callback) {
-      return $.getJSON('api/viite/roadlinks/adjacent?roadData=' + JSON.stringify(roadData), function (data) {
-        return _.isFunction(callback) && callback(data);
-      });
-    }, 1000);
-
     this.getTargetAdjacent = _.throttle(function (roadData, callback) {
       return $.getJSON('api/viite/roadlinks/adjacent/target?roadData=' + JSON.stringify(roadData), function (data) {
-        return _.isFunction(callback) && callback(data);
-      });
-    }, 1000);
-
-    this.getAdjacentsFromMultipleSources = _.throttle(function (roadData, callback) {
-      return $.getJSON('api/viite/roadlinks/adjacent/multiSource?roadData=' + JSON.stringify(roadData), function (data) {
         return _.isFunction(callback) && callback(data);
       });
     }, 1000);
@@ -258,18 +245,6 @@
         error: error
       });
     }, 1000);
-
-    this.revertToFloating = _.throttle(function (data, linkId, success, failure) {
-      $.ajax({
-        contentType: "application/json",
-        type: "PUT",
-        url: "api/viite/roadlinks/roadaddress/tofloating/" + linkId,
-        data: JSON.stringify(data),
-        dataType: "json",
-        success: success,
-        error: failure
-      });
-    });
 
     this.getCutLine = _.throttle(function (data, success, error) {
       $.ajax({
@@ -406,10 +381,6 @@
         error: errorCallback
       });
     }, 1000);
-
-    this.getFloatingRoadAddresses = function () {
-      return $.getJSON('api/viite/roadaddress/floatings/');
-    };
 
     this.getRoadAddressErrors = function () {
       return $.getJSON('api/viite/roadaddress/errors/');
