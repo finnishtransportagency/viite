@@ -48,7 +48,6 @@ case class roadDataExtractor(chainLinkIds: Seq[Long] )
 
 case class RoadPartExtractor(roadNumber: Long, roadPartNumber: Long, ely: Long)
 
-case class CutLineExtractor(linkId: Long, splitedPoint: Point)
 
 case class NodePointExtractor(id: Long, beforeAfter: Int, roadwayPointId: Long, nodeNumber: Option[Long], `type`: Int = NodePointType.UnknownNodePointType.value,
                               startDate: Option[String], endDate: Option[String], validFrom: String, validTo: Option[String],
@@ -941,35 +940,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  //  private val splitSuravageLinkByLinkId: SwaggerSupportSyntax.OperationBuilder = (
-  //    apiOperation[Map[String, Any]]("splitSuravageLinkByLinkId")
-  //      .parameters(
-  //        pathParam[Long]("linkID").description("LinkId of a projectLink")
-  //      )
-  //      tags "ViiteAPI - Project - SuravageSplit"
-  //      summary "This effectively perform the split and save the results on the database."
-  //      notes ""
-  //    )
-  //
-  //  put("/project/split/:linkID", operation(splitSuravageLinkByLinkId)) {
-  //    val linkID = params.get("linkID")
-  //    time(logger, s"PUT request for /project/split/$linkID") {
-  //      val user = userProvider.getCurrentUser()
-  //      linkID.map(_.toLong) match {
-  //        case Some(link) =>
-  //          try {
-  //            val options = parsedBody.extract[SplitOptions]
-  //            val splitError = projectService.splitSuravageLink(options.trackCode.value, options.projectId, options.coordinates, link, user.username, options)
-  //            val projectErrors = projectService.validateProjectById(options.projectId).map(errorPartsToApi)
-  //            Map("success" -> splitError.isEmpty, "reason" -> splitError.orNull, "projectErrors" -> projectErrors)
-  //          } catch {
-  //            case e: IllegalStateException => Map("success" -> false, "errorMessage" -> e.getMessage)
-  //            case _: NumberFormatException => BadRequest("Missing mandatory data")
-  //          }
-  //        case _ => BadRequest("Missing Linkid from url")
-  //      }
-  //    }
-  //  }
 
   private val getRoadNamesByRoadNumberAndProjectId: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String, Any]]("getRoadNamesByRoadNumberAndProjectId")

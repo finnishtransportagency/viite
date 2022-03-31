@@ -131,8 +131,21 @@
         }
       }, 500);
 
+
+    this.getFloatingAdjacent = _.throttle(function (roadData, callback) {
+      return $.getJSON('api/viite/roadlinks/adjacent?roadData=' + JSON.stringify(roadData), function (data) {
+        return _.isFunction(callback) && callback(data);
+      });
+    }, 1000);
+
     this.getTargetAdjacent = _.throttle(function (roadData, callback) {
       return $.getJSON('api/viite/roadlinks/adjacent/target?roadData=' + JSON.stringify(roadData), function (data) {
+        return _.isFunction(callback) && callback(data);
+      });
+    }, 1000);
+
+    this.getAdjacentsFromMultipleSources = _.throttle(function (roadData, callback) {
+      return $.getJSON('api/viite/roadlinks/adjacent/multiSource?roadData=' + JSON.stringify(roadData), function (data) {
         return _.isFunction(callback) && callback(data);
       });
     }, 1000);
@@ -246,17 +259,17 @@
       });
     }, 1000);
 
-    this.getCutLine = _.throttle(function (data, success, error) {
+    this.revertToFloating = _.throttle(function (data, linkId, success, failure) {
       $.ajax({
         contentType: "application/json",
-        type: "POST",
-        url: "api/viite/project/getCutLine",
+        type: "PUT",
+        url: "api/viite/roadlinks/roadaddress/tofloating/" + linkId,
         data: JSON.stringify(data),
         dataType: "json",
         success: success,
-        error: error
+        error: failure
       });
-    }, 1000);
+    });
 
     this.directionChangeNewRoadlink = _.throttle(function (data, success, failure) {
       $.ajax({
@@ -337,18 +350,6 @@
       }, callback);
     };
 
-    this.removeProjectLinkSplit = function (data, success, errorCallback) {
-      $.ajax({
-        contentType: "application/json",
-        type: "DELETE",
-        url: "api/viite/project/split",
-        data: JSON.stringify(data),
-        dataType: "json",
-        success: success,
-        error: errorCallback
-      });
-    };
-
     this.reOpenProject = function (projectId, success, errorCallback) {
       $.ajax({
         type: "DELETE",
@@ -358,29 +359,9 @@
       });
     };
 
-    this.getPreSplitedData = _.throttle(function (data, linkId, success, errorCallback) {
-      $.ajax({
-        contentType: "application/json",
-        type: "PUT",
-        url: "api/viite/project/presplit/" + linkId,
-        data: JSON.stringify(data),
-        dataType: "json",
-        success: success,
-        error: errorCallback
-      });
-    }, 1000);
-
-    this.saveProjectLinkSplit = _.throttle(function (data, linkId, success, errorCallback) {
-      $.ajax({
-        contentType: "application/json",
-        type: "PUT",
-        url: "api/viite/project/split/" + linkId,
-        data: JSON.stringify(data),
-        dataType: "json",
-        success: success,
-        error: errorCallback
-      });
-    }, 1000);
+    this.getFloatingRoadAddresses = function () {
+      return $.getJSON('api/viite/roadaddress/floatings/');
+    };
 
     this.getRoadAddressErrors = function () {
       return $.getJSON('api/viite/roadaddress/errors/');
@@ -612,13 +593,6 @@
       return me;
     };
 
-    this.withPreSplitData = function (returnData) {
-      me.getPreSplitedData = function (data, linkId, callback) {
-        callback(returnData);
-        return returnData;
-      };
-      return me;
-    };
 
     this.getRoadAddressesByRoadNumber = createCallbackRequestor(function (roadNumber) {
       return {

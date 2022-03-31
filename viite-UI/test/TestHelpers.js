@@ -144,10 +144,6 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
       $('button.new').click();
     };
 
-    var clickCancelButton = function () {
-      $('.split-form button.cancelLink').click();
-    };
-
     var getLayerByName = function (map, name) {
       var layers = map.getLayers().getArray();
       return _.find(layers, function (layer) {
@@ -328,7 +324,6 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
       getFeaturesLinkData: getFeaturesLinkData,
       getFeatureByLinkId: getFeatureByLinkId,
       getLinkDataByLinkId: getLinkDataByLinkId,
-      selectSingleFeatureByInteraction: selectSingleFeatureByInteraction,
-      clickCancelButton: clickCancelButton
+      selectSingleFeatureByInteraction: selectSingleFeatureByInteraction
     };
   });

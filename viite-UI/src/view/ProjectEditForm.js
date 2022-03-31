@@ -33,16 +33,11 @@
     };
 
     var defineOptionModifiers = function (option, selection) {
-      var isSplitMode = selection.length === 2 && selection[0].linkId === selection[1].linkId && applicationModel.getSelectedTool() === 'Cut';
       var linkStatus = selection[0].status;
       var targetLinkStatus = _.find(LinkStatus, function (ls) {
         return ls.description === option || (option === '' && ls.value === 99);
       });
-      if (isSplitMode) {
-        console.log("NOT A SPLIT FORM!");
-        return false;
-      } else
-        return transitionModifiers(targetLinkStatus, linkStatus);
+      return transitionModifiers(targetLinkStatus, linkStatus);
     };
 
     var selectedProjectLinkTemplate = function (project, selected, errorMessage) {
