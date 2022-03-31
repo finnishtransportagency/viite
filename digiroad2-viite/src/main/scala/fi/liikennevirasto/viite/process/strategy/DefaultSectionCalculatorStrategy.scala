@@ -234,7 +234,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
    * @param pls Left or right side ProjectLinks with combined to check for continuity of addresses.
    */
   def validateAddresses(pls: Seq[ProjectLink]): Unit = {
-    if (pls.size > 1) {
+    if (pls.size > 1 && pls.head.originalStartAddrMValue == 0) {
       val it = pls.sliding(2)
       while (it.hasNext) {
         it.next() match {
