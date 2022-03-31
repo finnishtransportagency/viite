@@ -160,7 +160,6 @@
           lineCap: 'round'
         }
       }),
-      new StyleRule().where('floating').is(1).use({stroke: {color: '#F7FE2E', lineCap: 'round'}}),
       new StyleRule().where('roadLinkSource').is(LinkValues.LinkGeomSource.ComplementaryLinkInterface.value).and('roadClass').is(LinkValues.RoadClass.NoClass.value).use({
         stroke: {
           color: '#D3AFF6',

@@ -4,7 +4,6 @@
     var me = this;
 
     var indicatorVector = new ol.source.Vector({});
-    var floatingMarkerVector = new ol.source.Vector({});
     var anomalousMarkerVector = new ol.source.Vector({});
     var underConstructionMarkerVector = new ol.source.Vector({});
     var directionMarkerVector = new ol.source.Vector({});
@@ -35,12 +34,6 @@
       zIndex: RoadZIndex.IndicatorLayer.value
     });
     indicatorLayer.set('name', 'indicatorLayer');
-
-    var floatingMarkerLayer = new ol.layer.Vector({
-      source: floatingMarkerVector,
-      name: 'floatingMarkerLayer'
-    });
-    floatingMarkerLayer.set('name', 'floatingMarkerLayer');
 
     var anomalousMarkerLayer = new ol.layer.Vector({
       source: anomalousMarkerVector,
@@ -620,7 +613,7 @@
           selectedLink = (_.isArray(link)) ? link : [link];
         }
         var isUnknown = _.every(selectedLink, function (sl) {
-          return sl.anomaly !== Anomaly.None.value && sl.floating !== SelectionType.Floating.value;
+          return sl.anomaly !== Anomaly.None.value;
         });
         var roads = isUnknown ? geometryChangedLayer.getSource().getFeatures() : roadLayer.layer.getSource().getFeatures();
         var features = [];
@@ -645,59 +638,10 @@
         clearIndicators();
       });
 
-      eventListener.listenTo(eventbus, 'roadLinks:fetched', function (eventData, reselection, selectedIds) {
+      eventListener.listenTo(eventbus, 'roadLinks:fetched', function () {
         if (applicationModel.getSelectedLayer() === 'linkProperty') {
           redraw();
-          if (reselection && !applicationModel.selectionTypeIs(SelectionType.Unknown)) {
-            _.defer(function () {
-              var currentGreenFeatures = greenRoadLayer.getSource().getFeatures();
-              var floatingsIds = _.chain(selectedLinkProperty.getFeaturesToKeepFloatings()).map(function (feature) {
-                return feature.id;
-              }).uniq().value();
-              var floatingsLinkIds = _.chain(selectedLinkProperty.getFeaturesToKeepFloatings()).map(function (feature) {
-                return feature.linkId;
-              }).uniq().value();
-              var visibleFeatures = getVisibleFeatures(true, false, true);
-              var featuresToReSelect = function () {
-                if (floatingsIds.length === 0) {
-                  return _.filter(visibleFeatures, function (feature) {
-                    return _.includes(floatingsLinkIds, feature.linkData.linkId);
-                  });
-                } else {
-                  return _.filter(visibleFeatures, function (feature) {
-                    return _.includes(floatingsIds, feature.linkData.id);
-                  });
-                }
-              };
-              var filteredFeaturesToReselect = _.reject(featuresToReSelect(), function (feat) {
-                return _.some(currentGreenFeatures, function (green) {
-                  return green.linkData.id === feat.linkData.id;
-                });
-              });
-              if (filteredFeaturesToReselect.length !== 0) {
-                addFeaturesToSelection(filteredFeaturesToReselect);
-              }
-
-              var fetchedDataInSelection = _.map(_.filter(roadLayer.layer.getSource().getFeatures(), function (feature) {
-                return _.includes(_.uniq(selectedIds), feature.linkData.linkId);
-              }), function (feat) {
-                return feat.linkData;
-              });
-
-              var groups = _.flatten(eventData);
-              var fetchedLinksInSelection = _.filter(groups, function (group) {
-                return _.includes(_.map(fetchedDataInSelection, 'linkId'), group.getData().linkId);
-              });
-              if (fetchedLinksInSelection.length > 0) {
-                eventbus.trigger('linkProperties:deselectFeaturesSelected');
-                selectedLinkProperty.setCurrent(fetchedLinksInSelection);
-                if (applicationModel.getCurrentAction() !== applicationModel.actionCalculating)
-                  eventbus.trigger('linkProperties:selected', selectedLinkProperty.extractDataForDisplay(fetchedDataInSelection));
-              }
-            }, reselection);
-          }
         }
-
       });
       eventListener.listenTo(eventbus, 'underConstructionRoadLinks:fetched', function (underConstructionRoads) {
         var partitioned = _.partition(_.flatten(underConstructionRoads), function (feature) {

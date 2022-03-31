@@ -22173,7 +22173,6 @@
         "endMValue": 16.0,
         "sideCode": {},
         "calibrationPoints": {},
-        "floating": false,
         "geom": [],
         "projectId": 454604,
         "status": {}
@@ -22260,7 +22259,6 @@
         "endMValue": 16.0,
         "sideCode": {},
         "calibrationPoints": {},
-        "floating": false,
         "geom": [],
         "projectId": 454756,
         "status": {}

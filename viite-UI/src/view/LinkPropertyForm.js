@@ -346,26 +346,6 @@
         }
       });
 
-      eventbus.on('adjacents:startedFloatingTransfer', function () {
-        rootElement.find('.link-properties button.cancel').attr('disabled', false);
-        applicationModel.setActiveButtons(true);
-        eventbus.trigger('layer:enableButtons', false);
-      });
-
-      eventbus.on('linkProperties:transferFailed', function (errorCode) {
-        if (errorCode === 400) {
-          return new ModalConfirm("Valittujen lähdelinkkien geometriaa ei saatu sovitettua kohdegeometrialle. Ota yhteyttä järjestelmätukeen.");
-        } else if (errorCode === 401) {
-          return new ModalConfirm("Sinulla ei ole käyttöoikeutta muutoksen tekemiseen.");
-        } else if (errorCode === 412) {
-          return new ModalConfirm("Täyttämättömien vaatimusten takia siirtoa ei saatu tehtyä. Ota yhteyttä järjestelmätukeen.");
-        } else if (errorCode === 500) {
-          return new ModalConfirm("Siirto ei onnistunut taustajärjestelmässä tapahtuneen virheen takia, ota yhteyttä järjestelmätukeen.");
-        } else {
-          return new ModalConfirm("Siirto ei onnistunut taustajärjestelmässä tapahtuneen tuntemattoman virheen takia, ota yhteyttä järjestelmätukeen.");
-        }
-      });
-
       eventbus.on('roadAddressProject:selected', function () {
         $('.wrapper').remove();
       });
