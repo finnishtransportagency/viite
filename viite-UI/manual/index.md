@@ -613,7 +613,7 @@ Kirjoitusvirheiden karsimiseksi Viitteessä on päivämäärärajaus. Nimen alku
 
 Tieosoiteprojekteissa tehdyistä muutoksista Viite tunnistaa uudet tien tai tieosan alku- tai loppupisteet sekä hallinnollisen luokan vaihtumiskohdat. Näihin se luo solmukohta-aihiot. Tieosoitemuutoksista Viite tunnistaa myös uudet liittymät, joihin Viite luo liittymäaihiot liittymäkohtineen. 
 
-Viite tunnistaa myös tieosoitemuutoksien yhteydessä tarpeettomaksi jäävät solmut, solmukohdat ja liittymät, jotka se päättää ne autoamattisesti. 
+Viite tunnistaa myös tieosoitemuutoksien yhteydessä tarpeettomaksi jäävät solmut, solmukohdat ja liittymät, jotka se päättää automaattisesti. 
 
 Viite myös päivittää nykyisten solmujen solmukohtia ja nykyisten liittymien liittymäkohtia tieosoitemuutoksien mukaisesti.
 
@@ -727,7 +727,7 @@ _Kuva 9.5: Solmun solmukohdat._
 
 #### Solmun liittymien katselu ja liittymänumeron muokkaus
 
-Liittymistä näytetään liittymänumero, tienumero, ajorata, tieosa, etäisyyslukema ja ennen/jälkeen-arvo (7). Ennen/jälkeen-arvo kertoo, onko kyseistä riviä vastaava tielinkki tien kulkusuunnassa liittyää ennen vai sen jälkeen. Liittymät näytetään numerojärjestyksessä (8), liittymäkohdat allekkain tieosoitejärjestyksessä.
+Liittymistä näytetään liittymänumero, tienumero, ajorata, tieosa, etäisyyslukema ja ennen/jälkeen-arvo (7). Ennen/jälkeen-arvo kertoo, onko kyseistä riviä vastaava tielinkki tien kulkusuunnassa liittymää ennen vai sen jälkeen. Liittymät näytetään numerojärjestyksessä (8), liittymäkohdat allekkain tieosoitejärjestyksessä.
 
 Käyttäjä voi muokata liittymänumeroa kirjoittamalla uuden liittymänumeron vanhan numeron tilalle (9). Solmulla ei voi olla useita samalla numerolla olevia liittymiä. Viite estää tällaisen tallennuksen. Tallennus on estetty myös silloin, jos liittymänumero(ita) puuttuu.
 
