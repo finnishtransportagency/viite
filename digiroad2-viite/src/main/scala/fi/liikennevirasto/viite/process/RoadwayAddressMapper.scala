@@ -172,7 +172,7 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
 
     val groupedLinearLocations = linearLocations.groupBy(_.roadwayNumber)
     val roadwayLinearLocations = groupedLinearLocations.
-      getOrElse(roadway.roadwayNumber, throw new IllegalArgumentException("Any linear locations found that belongs to the given roadway address"))
+      getOrElse(roadway.roadwayNumber, throw new NoSuchElementException("No linear locations found that belongs to the given roadway address"))
 
     //If is a roadway address history should recalculate all the calibration points
     val roadAddresses = recursiveMapRoadAddresses(roadway, if (roadway.endDate.nonEmpty && roadway.terminated == NoTermination) recalculateHistoryCalibrationPoints(roadway, linearLocations) else roadwayLinearLocations)
