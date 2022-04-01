@@ -551,6 +551,8 @@ class RoadwayDAO extends BaseDAO {
     time(logger, "Fetch all current road addresses by roadway ids") {
       if (roadwayNumbers.isEmpty)
         Seq()
+      else if (roadwayNumbers.size > 1000)
+        massFetchWithRoadwayNumbers(roadwayNumbers, withHistory)
       else
         fetch(withRoadwayNumbers(roadwayNumbers, withHistory))
     }
@@ -816,17 +818,22 @@ class RoadwayDAO extends BaseDAO {
 
   private def withRoadwayNumbers(roadwayNumbers: Set[Long], withHistory: Boolean = false)(query: String): String = {
     val endDateFilter = if (withHistory) "" else "and a.end_date is null"
-    if (roadwayNumbers.size > 1000) {
-      MassQuery.withIds(roadwayNumbers) {
-        idTableName =>
+    s"""$query where a.valid_to is null $endDateFilter and a.ROADWAY_NUMBER in (${roadwayNumbers.mkString(",")})"""
+  }
+
+  private def massFetchWithRoadwayNumbers(roadwayNumbers: Set[Long], withHistory: Boolean = false): Seq[Roadway] = {
+    val endDateFilter = if (withHistory) "" else "and a.end_date is null"
+    MassQuery.withIds(roadwayNumbers) {
+      idTableName => {
+        val joinedQuery = (query: String) => {
           s"""
             $query
             join $idTableName i on i.id = a.ROADWAY_NUMBER
             where a.valid_to is null $endDateFilter
           """.stripMargin
+        }
+        fetch(joinedQuery)
       }
-    } else {
-      s"""$query where a.valid_to is null $endDateFilter and a.ROADWAY_NUMBER in (${roadwayNumbers.mkString(",")})"""
     }
   }
 
