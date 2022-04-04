@@ -8,14 +8,6 @@
         type: "marker"
       });
 
-      var boxStyleFloat = new ol.style.Style({
-        image: new ol.style.Icon({
-          src: 'images/link-properties/flag-floating-plus-stick.svg',
-          anchor: [0, 1]
-        }),
-        zIndex: 10
-      });
-
       var colorMap =
         {           //comment includes legend name
           1: '#db0e0e',         //Valtatie
@@ -61,9 +53,7 @@
         });
       };
 
-      if (roadlink.floating === LinkValues.SelectionType.Floating.value) {
-        box.setStyle(boxStyleFloat);
-      } else if (roadlink.linearLocationId === 0 && roadlink.roadClass === LinkValues.LinkGeomSource.Unknown.value) {
+      if (roadlink.linearLocationId === 0 && roadlink.roadClass === LinkValues.LinkGeomSource.Unknown.value) {
         return;
       } else {
         box.setStyle(boxStyleDirectional(roadlink));

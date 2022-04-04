@@ -35,7 +35,6 @@
 
   root.SelectionType = {
     All: {value: 0, description: "all"},
-    Floating: {value: 1, description: "floating"},
     Unknown: {value: 99, description: "unknown"}
   };
 
@@ -128,7 +127,6 @@
     UnknownRoadLinkType: {value: 0, description: "UnknownRoadLinkType"},
     NormalRoadLinkType: {value: 1, description: "NormalRoadLinkType"},
     ComplementaryRoadLinkType: {value: 3, description: "ComplementaryRoadLinkType"},
-    FloatingRoadLinkType: {value: -1, description: "FloatingRoadLinkType"},
     SuravageRoadLink: {value: 4, description: "SuravageRoadLink"}
   };
 

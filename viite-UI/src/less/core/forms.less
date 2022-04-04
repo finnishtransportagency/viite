@@ -262,7 +262,6 @@ input[type="checkbox"] {
 // a horizontal form layout.
 
 .form-control-static,
-.form-control-static-floating,
 .form-control-static-short {
   margin: 0; // Remove default margin from `p`
 }
@@ -522,8 +521,6 @@ form.node .control-label-small {
   }
 
   .control-label,
-  .control-label-floating,
-  .control-label-floating-list,
   .control-label-projects,
   .control-label-short {
     display: block;
@@ -553,7 +550,6 @@ form.node .control-label-small {
   .select,
   .form-control-static,
   .form-control-static-short,
-  .form-control-static-floating,
   .choice-group,
   .project-choice-group{
     float: left;
@@ -593,11 +589,6 @@ form.node .control-label-small {
     padding-top: (@line-height-modifier  + 1);
     padding-bottom: (@line-height-modifier + 1);
     line-height: @line-height-modifier * 3;
-  }
-  .form-control-static-floating {
-    padding-top: (@line-height-modifier  + 1);
-    line-height: @line-height-modifier * 3;
-    font-size: @font-size-xs;
   }
 
   .validation-text {
@@ -650,7 +641,6 @@ form.node .control-label-small {
 
   .form-control-static,
   .form-control-static-short,
-  .form-control-static-floating,
   .unit-of-measure {
     color: @input-color-dark;
   }

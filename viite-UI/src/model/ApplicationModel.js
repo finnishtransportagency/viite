@@ -20,7 +20,7 @@
     var selectionType = LinkValues.SelectionType.All;
     var sessionUsername = '';
     var sessionUserRoles = '';
-    var specialSelectionTypes = [LinkValues.SelectionType.Floating.value, LinkValues.SelectionType.Unknown.value];
+    var specialSelectionTypes = [LinkValues.SelectionType.Unknown.value];
 
 
     var getContinueButtons = function () {

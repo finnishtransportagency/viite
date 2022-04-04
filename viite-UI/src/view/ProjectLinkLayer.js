@@ -9,7 +9,6 @@
     var RoadZIndex = LinkValues.RoadZIndex;
     var LinkStatus = LinkValues.LinkStatus;
     var RoadClass = LinkValues.RoadClass;
-    var RoadLinkType = LinkValues.RoadLinkType;
     var ConstructionType = LinkValues.ConstructionType;
     var isNotEditingData = true;
     var isActiveLayer = false;
@@ -466,7 +465,7 @@
       if (zoomlevels.getViewZoom(map) > zoomlevels.minZoomForDirectionalMarkers) {
         var addMarkersToLayer = function (links, layer) {
           var directionMarkers = _.filter(links, function (projectLink) {
-            var acceptedLinks = projectLink.id !== 0 || (projectLink.id === 0 && (projectLink.anomaly === Anomaly.NoAddressGiven.value || projectLink.roadLinkType === RoadLinkType.FloatingRoadLinkType.value));
+            var acceptedLinks = projectLink.id !== 0 || (projectLink.id === 0 && projectLink.anomaly === Anomaly.NoAddressGiven.value);
             return acceptedLinks && projectLink.sideCode !== SideCode.Unknown.value && projectLink.endAddressM !== 0;
           });
           _.each(directionMarkers, function (directionLink) {

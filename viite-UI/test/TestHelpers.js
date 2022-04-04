@@ -8,9 +8,6 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
     var getRoadLayerName = function () {
       return 'roadLayer';
     };
-    var getFloatingMarkerLayerName = function () {
-      return 'floatingMarkerLayer';
-    };
     var getAnomalousMarkerLayerName = function () {
       return 'anomalousMarkerLayer';
     };
@@ -93,7 +90,7 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
         lat: latitude,
         zoom: zoomLevel || 10,
         deploy_date: ""
-      }).withFloatingAdjacents(data.floatingAdjacents).withGetTargetAdjacent(data.targetAdjacent).withGetTransferResult(data.transferResult).withRoadAddressProjectData(data.projectData).withRoadPartReserved(data.partReserved).withProjectLinks(data.projectLinks).withGetProjectsWithLinksById(data.projectsWithLinks).withRoadAddressProjects(data.projects).withGetRoadAddressByLinkId(data.roadLinkById).withGetProjectLinkByLinkId(data.roadLinkById).withCreateRoadAddressProject(data.createRoadAddressProject).withRoadAddressCreation();
+      }).withGetTargetAdjacent(data.targetAdjacent).withGetTransferResult(data.transferResult).withRoadAddressProjectData(data.projectData).withRoadPartReserved(data.partReserved).withProjectLinks(data.projectLinks).withGetProjectsWithLinksById(data.projectsWithLinks).withRoadAddressProjects(data.projects).withGetRoadAddressByLinkId(data.roadLinkById).withGetProjectLinkByLinkId(data.roadLinkById).withCreateRoadAddressProject(data.createRoadAddressProject).withRoadAddressCreation();
     };
 
     var clickVisibleEditModeButton = function () {
@@ -178,9 +175,7 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
       switch (projectDefinition) {
         case 'Project Two':
           return {
-            floatingAdjacents: selectTestData('floatingRoadAddress'),
             targetAdjacent: selectTestData('unknownRoadAddress'),
-            transferResult: selectTestData('transferFloating'),
             projectData: RoadAddressProjectTestData.generate(),
             partReserved: RoadAddressProjectTestData.generateRoadPartChecker(),
             projectLinks: RoadAddressProjectTestData.generateProjectLinks(),
@@ -192,7 +187,6 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
 
         case 'projectThree': //Suravage project
           return {
-            floatingAdjacents: {},
             targetAdjacent: {},
             transferResult: {},
             projectData: {},
@@ -211,12 +205,8 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
           return RoadAddressTestData.generateRoadAddressLinks();
         case 'roadAddressAfterSave':
           return RoadAddressTestData.generateRoadAddressDataAfterSave();
-        case 'floatingRoadAddress':
-          return RoadAddressTestData.generateFloatingAdjacentData();
         case 'unknownRoadAddress':
           return RoadAddressTestData.generateUnknownAdjacentData();
-        case 'transferFloating':
-          return RoadAddressTestData.generateTransferFloatingData();
         case 'roadLink':
           return RoadLinkTestData.generate();
         case 'normalLinkData':
@@ -287,7 +277,6 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
 
     return {
       getRoadLayerName: getRoadLayerName,
-      getFloatingMarkerLayerName: getFloatingMarkerLayerName,
       getAnomalousMarkerLayerName: getAnomalousMarkerLayerName,
       getCalibrationPointLayerName: getCalibrationPointLayerName,
       getGreenRoadLayerName: getGreenRoadLayerName,
