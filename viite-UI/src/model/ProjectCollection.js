@@ -445,30 +445,6 @@
       });
     };
 
-    this.changeNewProjectLinkCutDirection = function (projectId, selectedLinks) {
-      applicationModel.addSpinner();
-      var links = _.filter(selectedLinks, function (link) {
-        return link.status !== LinkStatus.Terminated.value;
-      });
-      var coordinates = applicationModel.getUserGeoLocation();
-      var dataJson = {
-        projectId: projectId,
-        roadNumber: selectedLinks[0].roadNumber,
-        roadPartNumber: selectedLinks[0].roadPartNumber,
-        links: links,
-        coordinates: coordinates
-      };
-      resetEditedDistance();
-      backend.directionChangeNewRoadlink(dataJson, function (successObject) {
-        if (successObject.success) {
-          eventbus.trigger('changeProjectDirection:clicked');
-        } else {
-          eventbus.trigger('roadAddress:changeDirectionFailed', successObject.errorMessage);
-          applicationModel.removeSpinner();
-        }
-      });
-    };
-
     this.publishProject = function () {
       backend.sendProjectChangesToViite(
         projectInfo.id,
