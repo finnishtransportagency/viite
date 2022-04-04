@@ -119,7 +119,6 @@
 
     selectSingleClick.on('select', function (event) {
       var ctrlPressed = (event.mapBrowserEvent) ? event.mapBrowserEvent.originalEvent.ctrlKey : false;
-      removeCutterMarkers();
       var rawSelection = (event.mapBrowserEvent) ? map.forEachFeatureAtPixel(event.mapBrowserEvent.pixel, function (feature) {
         return feature;
       }) : event.selected;
@@ -143,8 +142,6 @@
     });
 
     var showSingleClickChanges = function (ctrlPressed, selection) {
-      if (applicationModel.getSelectedTool() === 'Cut')
-        return;
       if (ctrlPressed && !_.isUndefined(selection) && !_.isUndefined(selectedProjectLinkProperty.get())) {
         if (canBeAddedToSelection(selection.linkData)) {
           var clickedIds = projectCollection.getMultiProjectLinks(getSelectedId(selection.linkData));
@@ -186,7 +183,7 @@
     selectDoubleClick.on('select', function (event) {
       var ctrlPressed = event.mapBrowserEvent.originalEvent.ctrlKey;
       var selection = _.find(event.selected, function (selectionTarget) {
-        return (applicationModel.getSelectedTool() !== 'Cut' && !_.isUndefined(selectionTarget.linkData) && (
+        return (!_.isUndefined(selectionTarget.linkData) && (
             projectLinkStatusIn(selectionTarget.linkData, possibleStatusForSelection) ||
             selectionTarget.linkData.anomaly === Anomaly.NoAddressGiven.value ||
             selectionTarget.linkData.roadClass === RoadClass.NoClass.value ||
@@ -286,7 +283,7 @@
     var zoomDoubleClickListener = function (event) {
       if (isActiveLayer) {
         _.defer(function () {
-          if (applicationModel.getSelectedTool() !== 'Cut' && !event.originalEvent.ctrlKey &&
+          if (!event.originalEvent.ctrlKey &&
             selectedProjectLinkProperty.get().length === 0 && zoomlevels.getViewZoom(map) <= 13) {
             map.getView().setZoom(zoomlevels.getViewZoom(map) + 1);
           }
@@ -352,16 +349,6 @@
       }
     };
 
-    var removeCutterMarkers = function () {
-      var featuresToRemove = [];
-      _.each(selectSingleClick.getFeatures().getArray(), function (feature) {
-        if (feature.getProperties().type === 'cutter')
-          featuresToRemove.push(feature);
-      });
-      _.each(featuresToRemove, function (ft) {
-        selectSingleClick.getFeatures().remove(ft);
-      });
-    };
 
     var projectLinkStatusIn = function (projectLink, possibleStatus) {
       if (!_.isUndefined(possibleStatus) && !_.isUndefined(projectLink))
@@ -370,9 +357,7 @@
     };
 
     var changeTool = function (tool) {
-      if (tool === 'Cut') {
-        selectSingleClick.setActive(false);
-      } else if (tool === 'Select') {
+      if (tool === 'Select') {
         selectSingleClick.setActive(true);
       }
     };
