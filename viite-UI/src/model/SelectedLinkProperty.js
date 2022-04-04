@@ -2,7 +2,6 @@
   root.SelectedLinkProperty = function (backend, roadCollection) {
     var current = [];
     var dirty = false;
-    var targets = [];
     var featuresToKeep = [];
     var anomalousMarkers = [];
     var Anomaly = LinkValues.Anomaly;
@@ -19,7 +18,6 @@
         eventbus.trigger('layer:enableButtons', true);
         eventbus.trigger('linkProperties:unselected');
         setCurrent([]);
-        targets = [];
         dirty = false;
         featuresToKeep = [];
         applicationModel.setActiveButtons(false);
@@ -171,10 +169,6 @@
       anomalousMarkers = markersToSet;
     };
 
-    var resetTargets = function () {
-      targets = [];
-      return targets;
-    };
 
     var setDirty = function (state) {
       dirty = state;
@@ -242,7 +236,6 @@
     };
 
     return {
-      resetTargets: resetTargets,
       getFeaturesToKeep: getFeaturesToKeep,
       addToFeaturesToKeep: addToFeaturesToKeep,
       clearFeaturesToKeep: clearFeaturesToKeep,
