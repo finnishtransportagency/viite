@@ -212,10 +212,10 @@ Valituista tielinkeistä näytetään seuraavat ominaisuustiedot:
 
 |Ominaisuustieto   | Kuvaus|
 |------------------|-------|
-|Muokattu viimeksi*| Muokkaajan käyttäjätunnus ja tiedon muokkaushetki.        |
-|Linkkien lukumäärä| Niiden tielinkkien lukumäärä, joihin valinta  kohdistuu.  |
-|Geometrian lähde  | Lähde, josta linkin geometriatieto on peräisin. MML_jäädytetty, MML, Täydentävä tai Suravage.  |
-|Kunta             | Geometrialinkkiin liittyvä kuntatieto.                    |
+|Muokattu viimeksi*| Muokkaajan käyttäjätunnus ja tiedon muokkaushetki.      |
+|Linkkien lukumäärä| Niiden tielinkkien lukumäärä, joihin valinta kohdistuu. |
+|Geometrian lähde  | Lähde, josta linkin geometriatieto on peräisin. MML_jäädytetty, MML, Täydentävä tai Suravage. |
+|Kunta             | Geometrialinkkiin liittyvä kuntatieto.                  |
 |Linkin ID         | Geometrialinkin yksilöivä id. Näytetään, jos valittuna on yksittäinen linkki. |
 |Geometrian pituus/Geometrioiden yhteenlaskettu pituus| Valittujen tielinkkien yhteispituus. Lasketaan kaikkien linkkien tiedoista.|
 |Tien nimi         | Viitteessä tielle annettu tien nimi, tai listaus valinnan tiennimistä.        |
