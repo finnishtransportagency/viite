@@ -454,7 +454,6 @@
     .transition(all .2s @easing-swift-out);
 
     .icon-add,
-    .icon-cut,
     .icon-select {
       position: absolute;
       top: 50%;
@@ -470,20 +469,11 @@
     }
   }
 
-  .cut:hover {
-    cursor: not-allowed;
-  }
-
-  .cut:active {
-    pointer-events: none;
-  }
-
   .active {
     border-color: @blue;
     background-color: @blue-lightest;
 
     .icon-add,
-    .icon-cut,
     .icon-select {
       .shape {
         fill: @blue-darker;

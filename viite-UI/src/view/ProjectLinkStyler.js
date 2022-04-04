@@ -277,9 +277,6 @@
       new StyleRule().where('status').is(terminatedStatus).and('connectedLinkId').isDefined().use({stroke: {color: '#C6C00F'}})
     ];
 
-    var cutterStyleRules = [
-      new StyleRule().where('type').is('cutter-crosshair').use({icon: {src: 'images/cursor-crosshair.svg'}})
-    ];
 
     var underConstructionStyle = new StyleRuleProvider({stroke: {opacity: 1}, zIndex: 2});
     underConstructionStyle.addRules(strokeWidthRules);
@@ -295,7 +292,6 @@
     var selectionLinkStyle = new StyleRuleProvider({stroke: {lineCap: 'round', color: '#00FF00'}});
     selectionLinkStyle.addRules(strokeWidthRules);
     selectionLinkStyle.addRules(selectionStyleRules);
-    selectionLinkStyle.addRules(cutterStyleRules);
 
     var getProjectBorderStyle = function () {
       return projectBorderStyle;
