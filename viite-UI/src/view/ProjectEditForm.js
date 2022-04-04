@@ -417,19 +417,13 @@
         }
 
         var statusDropdown_0 = $('#dropDown_0').val();
-        var statusDropdown_1 = $('#dropDown_1').val();
 
         var objectDropdown_0 = _.find(LinkStatus, function (obj) {
           return obj.description === statusDropdown_0;
         });
-        var objectDropdown_1 = _.find(LinkStatus, function (obj) {
-          return obj.description === statusDropdown_1;
-        });
 
         if (objectDropdown_0.value === LinkStatus.Revert.value) {
           projectCollection.revertChangesRoadlink(selectedProjectLink);
-        } else if (objectDropdown_1) {
-          projectCollection.saveCutProjectLinks(projectCollection.getTmpDirty(), objectDropdown_0.value, objectDropdown_1.value);
         } else {
           projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), objectDropdown_0.value);
         }
