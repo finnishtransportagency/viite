@@ -13,7 +13,6 @@
     var junctionTemplateVector = dblVector();
     var cachedMarker = null;
 
-    var SelectionType = LinkValues.SelectionType;
     var Anomaly = LinkValues.Anomaly;
     var SideCode = LinkValues.SideCode;
     var RoadZIndex = LinkValues.RoadZIndex;
@@ -600,7 +599,7 @@
         if (zoomlevels.getViewZoom(map) >= zoomlevels.minZoomForRoadNetwork) {
 
           var directionRoadMarker = _.filter(roadLinks, function (roadLink) {
-            return roadLink.floating !== SelectionType.Floating.value && roadLink.anomaly !== Anomaly.NoAddressGiven.value && roadLink.anomaly !== Anomaly.GeometryChanged.value && (roadLink.sideCode === SideCode.AgainstDigitizing.value || roadLink.sideCode === SideCode.TowardsDigitizing.value);
+            return roadLink.anomaly !== Anomaly.NoAddressGiven.value && roadLink.anomaly !== Anomaly.GeometryChanged.value && (roadLink.sideCode === SideCode.AgainstDigitizing.value || roadLink.sideCode === SideCode.TowardsDigitizing.value);
           });
           _.each(directionRoadMarker, function (directionLink) {
             cachedMarker.createMarker(directionLink, function (marker) {

@@ -131,30 +131,9 @@
         }
       }, 500);
 
-
-    this.getFloatingAdjacent = _.throttle(function (roadData, callback) {
-      return $.getJSON('api/viite/roadlinks/adjacent?roadData=' + JSON.stringify(roadData), function (data) {
-        return _.isFunction(callback) && callback(data);
-      });
-    }, 1000);
-
-    this.getTargetAdjacent = _.throttle(function (roadData, callback) {
-      return $.getJSON('api/viite/roadlinks/adjacent/target?roadData=' + JSON.stringify(roadData), function (data) {
-        return _.isFunction(callback) && callback(data);
-      });
-    }, 1000);
-
     this.getAdjacentsFromMultipleSources = _.throttle(function (roadData, callback) {
       return $.getJSON('api/viite/roadlinks/adjacent/multiSource?roadData=' + JSON.stringify(roadData), function (data) {
         return _.isFunction(callback) && callback(data);
-      });
-    }, 1000);
-
-    this.getTransferResult = _.throttle(function (dataTransfer, callback) {
-      return $.getJSON('api/viite/roadlinks/transferRoadLink?data=' + JSON.stringify(dataTransfer), function (data) {
-        return _.isFunction(callback) && callback(data);
-      }).fail(function (obj) {
-        eventbus.trigger('linkProperties:transferFailed', obj.status);
       });
     }, 1000);
 
@@ -259,18 +238,6 @@
       });
     }, 1000);
 
-    this.revertToFloating = _.throttle(function (data, linkId, success, failure) {
-      $.ajax({
-        contentType: "application/json",
-        type: "PUT",
-        url: "api/viite/roadlinks/roadaddress/tofloating/" + linkId,
-        data: JSON.stringify(data),
-        dataType: "json",
-        success: success,
-        error: failure
-      });
-    });
-
     this.directionChangeNewRoadlink = _.throttle(function (data, success, failure) {
       $.ajax({
         contentType: "application/json",
@@ -357,10 +324,6 @@
         success: success,
         error: errorCallback
       });
-    };
-
-    this.getFloatingRoadAddresses = function () {
-      return $.getJSON('api/viite/roadaddress/floatings/');
     };
 
     this.getRoadAddressErrors = function () {
@@ -499,19 +462,6 @@
     this.withStartupParameters = function (startupParameters) {
       me.getStartupParametersWithCallback = function (callback) {
         callback(startupParameters);
-      };
-      return me;
-    };
-
-    this.withFloatingAdjacents = function (selectedFloatingData, selectedUnknownData) {
-      me.getFloatingAdjacent = function (linkData, callback) {
-        if (linkData.linkId === 1718151 || linkData.linkId === 1718152) {
-          return callback(selectedFloatingData);
-        } else if (linkData.linkId === 500130202) {
-          return callback(selectedUnknownData);
-        } else {
-          return callback([]);
-        }
       };
       return me;
     };

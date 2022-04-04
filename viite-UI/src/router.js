@@ -27,7 +27,6 @@
         'linkProperty/mtkid/:mtkid': 'linkPropertyByMtk',
         'roadAddressProject/:projectId': 'roadAddressProject',
         'historyLayer/:date': 'historyLayer',
-        'work-list/floatingRoadAddress': 'floatingAddressesList',
         'work-list/roadAddressErrors': 'roadAddressErrorsList',
         'node/nodePointTemplate/:id': 'nodePointTemplate',
         'node/junctionTemplate/:id': 'junctionTemplate'
@@ -82,10 +81,6 @@
         $('#toggleEditMode').hide();
         $('#emptyFormDiv,#formProjectButton').hide();
         eventbus.trigger('linkProperty:fetchHistoryLinks', dateSeparated);
-      },
-
-      floatingAddressesList: function () {
-        eventbus.trigger('workList-floatings:select', 'linkProperty', backend.getFloatingRoadAddresses());
       },
 
       roadAddressErrorsList: function () {

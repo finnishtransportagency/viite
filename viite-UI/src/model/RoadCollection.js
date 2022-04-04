@@ -67,10 +67,8 @@
     var preMovedRoadAddresses = [];
     var date = [];
     var historicRoadLinks = [];
-    var floatingRoadLinks = [];
     var LinkStatus = LinkValues.LinkStatus;
     var LinkSource = LinkValues.LinkGeomSource;
-    var SelectionType = LinkValues.SelectionType;
     var ConstructionType = LinkValues.ConstructionType;
     var clickedLinearLocationId = 0;
     var selectedRoadLinkModels = [];
@@ -209,18 +207,14 @@
       }
 
       historicRoadLinks = _.filter(roadLinkGroups, function (group) {
-        return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface) && !groupLinkTypeFilter(group, SelectionType.Floating.value);
-      });
-
-      floatingRoadLinks = _.filter(roadLinkGroups, function (group) {
-        return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface) && groupLinkTypeFilter(group, SelectionType.Floating.value);
+        return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface);
       });
 
       var nonHistoryConstructionRoadLinkGroups = _.reject(roadLinkGroups, function (group) {
         return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface);
       });
 
-      setRoadLinkGroups(nonHistoryConstructionRoadLinkGroups.concat(floatingRoadLinks));
+      setRoadLinkGroups(nonHistoryConstructionRoadLinkGroups);
       eventbus.trigger('roadLinks:fetched', nonHistoryConstructionRoadLinkGroups, (!_.isUndefined(drawUnknowns) && drawUnknowns), selectedLinkIds);
       if (historicRoadLinks.length !== 0) {
         eventbus.trigger('linkProperty:fetchedHistoryLinks', historicRoadLinks);
@@ -259,18 +253,6 @@
         });
       } else {
         return group.getData().constructionType === dataConstructionType.value;
-      }
-    };
-
-    var groupLinkTypeFilter = function (group, dataSource) {
-      if (_.isArray(group)) {
-        return _.some(group, function (roadLink) {
-          if (roadLink)
-            return roadLink.getData().roadLinkType === dataSource.value;
-          else return false;
-        });
-      } else {
-        return group.getData().roadLinkType === dataSource.value;
       }
     };
 
