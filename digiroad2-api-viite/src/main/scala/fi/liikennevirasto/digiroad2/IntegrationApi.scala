@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2
 import java.util.Locale
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.RoadAddressLink
@@ -368,6 +369,15 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
         try {
           val since = DateTime.parse(sinceUnformatted)
           val linearLocations: Seq[LinearLocation] = fetchUpdatedLinearLocations(since)
+
+          val roadaddresses: Seq[RoadAddress] = PostGISDatabase.withDynTransaction {
+            roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations.filter(_.validTo.isEmpty))
+          }
+
+          val addrValuesMap: scala.collection.mutable.Map[Long,(Long, Long)] = scala.collection.mutable.Map()
+          roadaddresses.foreach(r => addrValuesMap += (r.linearLocationId -> (r.startAddrMValue, r.endAddrMValue)))
+          logger.info("linear locations size {}, roadaddresses size {}", linearLocations.size, roadaddresses.size)
+
           linearLocations.map(l => Map(
             "id" -> l.id,
             "roadwayNumber" -> l.roadwayNumber,
@@ -375,6 +385,8 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
             "orderNumber" -> l.orderNumber,
             "side" -> l.sideCode.value,
             "linkGeomSource" -> l.linkGeomSource.value,
+            "startAddrValue" -> addrValuesMap.getOrElse(l.id, (None, None))._1,
+            "endAddrValue" -> addrValuesMap.getOrElse(l.id, (None, None))._2,
             "startMValue" -> l.startMValue,
             "endMValue" -> l.endMValue,
             "startCalibrationPoint" -> l.startCalibrationPoint.addrM,
