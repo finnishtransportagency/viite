@@ -678,18 +678,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   /**
-    * Gets all the road addresses errors (excluding history)
-    *
-    * @param includesHistory - default value = false to exclude history values
-    * @return Returns all filtered road address errors
-    */
-  def getRoadAddressErrors(includesHistory: Boolean = false): List[AddressConsistencyValidator.AddressErrorDetails] = {
-    withDynSession {
-      roadwayDAO.fetchAllRoadAddressErrors(includesHistory)
-    }
-  }
-
-  /**
     * returns road addresses with link-id currently does not include terminated links which it cannot build roadaddress with out geometry
     *
     * @param linkId link-id

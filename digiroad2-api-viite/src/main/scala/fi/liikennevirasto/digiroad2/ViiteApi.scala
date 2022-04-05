@@ -227,29 +227,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  private val getRoadAddressErrors: SwaggerSupportSyntax.OperationBuilder = (
-    apiOperation[Map[Long, List[Map[String, Long]]]]("getRoadAddressErrors")
-      tags "ViiteAPI - RoadAddresses"
-      summary "Returns all the road addresses that are in a error state."
-      description "The error states are:" +
-      "OverlappingRoadAddresses \n" +
-      "InconsistentTopology \n" +
-      "InconsistentLrmHistory \n" +
-      "Inconsistent2TrackCalibrationPoints \n" +
-      "InconsistentContinuityCalibrationPoints \n" +
-      "MissingEdgeCalibrationPoints \n" +
-      "InconsistentAddressValues"
-    )
-
-  get("/roadaddress/errors/", operation(getRoadAddressErrors)) {
-    time(logger, "GET request for /roadAddress/errors") {
-      response.setHeader("Access-Control-Allow-Headers", "*")
-      roadAddressService.getRoadAddressErrors().groupBy(_.ely).map(
-        g => g._1 -> g._2.sortBy(ra => (ra.roadNumber, ra.roadPartNumber))
-          .map(roadAddressErrorsToApi))
-    }
-  }
-
   private val getRoadAddressLinkByLinkId: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String, Any]]("getRoadAddressLinkByLinkId")
       .parameters(
@@ -1308,17 +1285,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "linkType" -> roadAddressLink.linkType.value,
       "roadLinkSource" -> roadAddressLink.roadLinkSource.value,
       "roadName" -> roadAddressLink.roadName
-    )
-  }
-
-  def roadAddressErrorsToApi(addressError: AddressErrorDetails): Map[String, Long] = {
-    Map(
-      "id" -> addressError.linearLocationId,
-      "linkId" -> addressError.linkId,
-      "roadNumber" -> addressError.roadNumber,
-      "roadPartNumber" -> addressError.roadPartNumber,
-      "errorCode" -> addressError.addressError.value,
-      "ely" -> addressError.ely
     )
   }
 
