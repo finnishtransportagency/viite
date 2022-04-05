@@ -595,34 +595,6 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  // fetchAllRoadAddressErrors
-
-  test("Test fetchAllRoadAddressErrors When fetch excluding history Then return addresses with errors") {
-    runWithRollback {
-      val roadwayId = dao.getNextRoadwayId
-      dao.create(List(testRoadway1.copy(id = roadwayId), testRoadway2, testRoadway3))
-      val linearLocationId1 = linearLocationDAO.getNextLinearLocationId
-      linearLocationDAO.create(List(testLinearLocation1.copy(id = linearLocationId1)))
-      val roadNetworkDAO = new RoadNetworkDAO
-      roadNetworkDAO.addRoadNetworkError(roadwayId, linearLocationId1, AddressError.InconsistentLrmHistory, roadNetworkDAO.getLatestRoadNetworkVersionId)
-      val errors = dao.fetchAllRoadAddressErrors()
-      errors.size should be > 0
-    }
-  }
-
-  test("Test fetchAllRoadAddressErrors When fetch including history Then return addresses with errors") {
-    runWithRollback {
-      val roadwayId = dao.getNextRoadwayId
-      dao.create(List(testRoadway1.copy(id = roadwayId, endDate = Some(DateTime.parse("2009-12-31"))), testRoadway2, testRoadway3))
-      val linearLocationId1 = linearLocationDAO.getNextLinearLocationId
-      linearLocationDAO.create(List(testLinearLocation1.copy(id = linearLocationId1)))
-      val roadNetworkDAO = new RoadNetworkDAO
-      roadNetworkDAO.addRoadNetworkError(roadwayId, linearLocationId1, AddressError.InconsistentLrmHistory, roadNetworkDAO.getLatestRoadNetworkVersionId)
-      val errors = dao.fetchAllRoadAddressErrors(includesHistory = true)
-      errors.size should be > 0
-    }
-  }
-
   // create
 
   test("Test create When insert duplicate roadway Then give error") {

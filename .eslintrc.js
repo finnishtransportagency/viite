@@ -46,7 +46,6 @@ module.exports = {
         "ProjectChangeTable": "writable",
         "NavigationPanel": "writable",
         "SearchBox": "writable",
-        "WorkListView": "writable",
         "URLRouter": "writable",
         "TileMapCollection": "writable",
         "RoadLayer": "writable",
