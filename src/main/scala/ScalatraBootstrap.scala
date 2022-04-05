@@ -45,6 +45,7 @@ class RasterProxy extends ScalatraServlet {
     proxyGet.removeHeaders("X-Amzn-Trace-Id")
     proxyGet.removeHeaders("X-Iam-Identity")
     val resp = client.execute(proxyGet)
+    response.setStatus(resp.getStatusLine.getStatusCode)
     contentType = resp.getEntity.getContentType.getValue
     val data = Source.fromInputStream(resp.getEntity.getContent)
     data.mkString
@@ -67,6 +68,7 @@ class WmtsProxy extends ScalatraServlet {
     proxyGet.removeHeaders("X-Amzn-Trace-Id")
     proxyGet.removeHeaders("X-Iam-Identity")
     val resp = client.execute(proxyGet)
+    response.setStatus(resp.getStatusLine.getStatusCode)
     contentType = resp.getEntity.getContentType.getValue
     val data = resp.getEntity.getContent
     val out = response.getOutputStream
