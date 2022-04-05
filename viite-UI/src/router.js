@@ -27,7 +27,6 @@
         'linkProperty/mtkid/:mtkid': 'linkPropertyByMtk',
         'roadAddressProject/:projectId': 'roadAddressProject',
         'historyLayer/:date': 'historyLayer',
-        'work-list/roadAddressErrors': 'roadAddressErrorsList',
         'node/nodePointTemplate/:id': 'nodePointTemplate',
         'node/junctionTemplate/:id': 'junctionTemplate'
       },
@@ -81,10 +80,6 @@
         $('#toggleEditMode').hide();
         $('#emptyFormDiv,#formProjectButton').hide();
         eventbus.trigger('linkProperty:fetchHistoryLinks', dateSeparated);
-      },
-
-      roadAddressErrorsList: function () {
-        eventbus.trigger('workList-errors:select', 'linkProperty', backend.getRoadAddressErrors());
       },
 
       nodePointTemplate: function (nodePointTemplateId) {

@@ -326,10 +326,6 @@
       });
     };
 
-    this.getRoadAddressErrors = function () {
-      return $.getJSON('api/viite/roadaddress/errors/');
-    };
-
     function createCallbackRequestor(getParameters) {
       var requestor = latestResponseRequestor(getParameters);
       return function (parameter, callback) {

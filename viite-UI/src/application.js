@@ -42,8 +42,6 @@
       linkGroups
     );
 
-    WorkListView.initialize(backend);
-
 
     backend.getUserRoles();
     backend.getStartupParametersWithCallback(function (startupParameters) {
