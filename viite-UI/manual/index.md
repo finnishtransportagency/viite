@@ -222,7 +222,7 @@ Valituista tielinkeistä näytetään seuraavat ominaisuustiedot:
 |Tienumero         | Tieosoiteverkon mukainen tienumero, tai listaus valinnan tienumeroista.       |
 |Tieosanumero      | Tieosoiteverkon mukainen tieosanumero.                                        |
 |Ajorata           | Tieosoiteverkon mukainen ajoratakoodi, tai listaus valinnan ajoratakoodeista. |
-|Alkuetäisyys**    | Tieosoiteverkon etäisyyslukemien avulla laskettu linkin alkuetäisyys..        |
+|Alkuetäisyys**    | Tieosoiteverkon etäisyyslukemien avulla laskettu linkin alkuetäisyys.         |
 |Loppuetäisyys**   | Tieosoiteverkon etäisyyslukemien avulla laskettu linkin loppuetäisyys.        |
 |Yhteenlaskettu pituus   | Valinnan mukaisten tieosoitteistettujen tielinkkien tieosoitevälien yhteispituus. |
 |ELY                     | Tien hallinnoinnista vastaava ELY, tai listaus valinnan ELYistä.                  |
