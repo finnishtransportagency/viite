@@ -21,6 +21,7 @@ object MassQuery {
 
       LogUtils.time(logger, s"TEST LOG insert into TEMP_ID ${ids.size}") {
         try {
+          sqlu"TRUNCATE TABLE TEMP_ID".execute
           ids.foreach { id =>
             insertLinkIdPS.setLong(1, id)
             insertLinkIdPS.addBatch()
@@ -28,7 +29,6 @@ object MassQuery {
           logger.debug("added {} entries to temporary table", ids.size)
           insertLinkIdPS.executeBatch()
           val ret = f("temp_id")
-          sqlu"TRUNCATE TABLE TEMP_ID".execute
           ret
         } finally {
           insertLinkIdPS.close()
