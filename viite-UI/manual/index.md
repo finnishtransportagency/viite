@@ -212,34 +212,34 @@ Valituista tielinkeistä näytetään seuraavat ominaisuustiedot:
 
 |Ominaisuustieto   | Kuvaus|
 |------------------|-------|
-|Muokattu viimeksi*| Muokkaajan käyttäjätunnus ja tiedon muokkaushetki.|
-|Linkkien lukumäärä| Niiden tielinkkien lukumäärä, joihin valinta  kohdistuu.|
-|Geometrian lähde  | MML_jäädytetty, MML, Täydentävä tai Suravage.|
-|Kunta             | Geometrialinkin kuntatieto.|
-|Linkin ID         | Näytetään, jos valittuna on yksittäinen linkki.|
+|Muokattu viimeksi*| Muokkaajan käyttäjätunnus ja tiedon muokkaushetki.      |
+|Linkkien lukumäärä| Niiden tielinkkien lukumäärä, joihin valinta kohdistuu. |
+|Geometrian lähde  | Lähde, josta linkin geometriatieto on peräisin. MML_jäädytetty, MML, Täydentävä tai Suravage. |
+|Kunta             | Geometrialinkkiin liittyvä kuntatieto.                  |
+|Linkin ID         | Geometrialinkin yksilöivä id. Näytetään, jos valittuna on yksittäinen linkki. |
 |Geometrian pituus/Geometrioiden yhteenlaskettu pituus| Valittujen tielinkkien yhteispituus. Lasketaan kaikkien linkkien tiedoista.|
-|Tien nimi         | Viitteessä tielle annettu tien nimi, tai listaus valinnan tiennimistä.|
-|Tienumero         | Tieosoiteverkon mukainen tienumero, tai listaus valinnan tienumeroista. Lähtöaineistona Tierekisterin tieosoitteet (joulukuu 2021).|
-|Tieosanumero      | Tieosoiteverkon mukainen tieosanumero. Lähtöaineistona Tierekisterin tieosoitteet (joulukuu 2021).|
-|Ajorata           | Tieosoiteverkon mukainen ajoratakoodi, tai listaus valinnan ajoratakoodeista. Lähtöaineistona Tierekisterin tieosoitteet (joulukuu 2021).|
-|Alkuetäisyys**    | Tieosoiteverkon etäisyyslukemien avulla laskettu alkuetäisyys. Etäisyyslukeman kohdalla alkuetäisyyden lähtöaineistona on Tierekisterin tieosoitteet (joulukuu 2021).|
-|Loppuetäisyys**   | Tieosoiteverkon etäisyyslukemien avulla laskettu loppuetäisyys. Etäisyyslukeman kohdalla loppuetäisyyden lähtöaineistona on Tierekisterin tieosoitteet (joulukuu 2021).|
-|Yhteenlaskettu pituus   | Valinnan mukaisten tieosoitteistettujen tielinkkien tieosoitevälien yhteispituus.| 
-|ELY                     | Tien hallinnoinnista vastaava ELY, tai listaus valinnan ELYistä.|
-|Hallinnollinen luokka*3| Lähtöaineistona Maanmittauslaitoksen hallinnollinen luokka -tieto. Jos valituilla tielinkeillä on useita hallinnollisia luokkia, ne listataan pilkulla erotettuna.|
-|Jatkuvuus               | Tieosoiteverkon mukainen jatkuvuustieto, tai listaus valinnan jatkuvuuskoodeista. Lähtöaineistona Tierekisterin tieosoitteet (joulukuu 2021).|
+|Tien nimi         | Viitteessä tielle annettu tien nimi, tai listaus valinnan tiennimistä.        |
+|Tienumero         | Tieosoiteverkon mukainen tienumero, tai listaus valinnan tienumeroista.       |
+|Tieosanumero      | Tieosoiteverkon mukainen tieosanumero.                                        |
+|Ajorata           | Tieosoiteverkon mukainen ajoratakoodi, tai listaus valinnan ajoratakoodeista. |
+|Alkuetäisyys**    | Tieosoiteverkon etäisyyslukemien avulla laskettu linkin alkuetäisyys.         |
+|Loppuetäisyys**   | Tieosoiteverkon etäisyyslukemien avulla laskettu linkin loppuetäisyys.        |
+|Yhteenlaskettu pituus   | Valinnan mukaisten tieosoitteistettujen tielinkkien tieosoitevälien yhteispituus. |
+|ELY                     | Tien hallinnoinnista vastaava ELY, tai listaus valinnan ELYistä.                  |
+|Hallinnollinen luokka*3 | Tien ylläpidosta vastaava taho (Valtio/Kunta/Yksityinen). Linkin hallinnollinen luokka, tai listaus valinnan hallinnollisista luokista. Lähtöaineistona Maanmittauslaitoksen hallinnollinen luokka -tieto. |
+|Jatkuvuus               | Tieosoiteverkon mukainen jatkuvuustieto, tai listaus valinnan jatkuvuuskoodeista. |
 
 *) Muokattu viimeksi -tiedoissa vvh_modified tarkoittaa, että muutos on tullut Maanmittauslaitokselta joko geometriaan tai geometrian ominaisuustietoihin. Muokattu viimeksi -päivät ovat kaikki vähintään 29.10.2015, koska tuolloin on tehty Maanmittauslaitoksen geometrioista alkulataus VVH:n tietokantaan.
 
 **) Tieosoiteverkon kalibrointipisteet (tieosan alku- ja loppupisteet sekä ajoratakoodin vaihtuminen) määrittelevät mitatut alku- ja loppuetäisyydet. Kalibrointipisteiden välillä alku- ja loppuetäisyydet lasketaan tieosoitesegmenttikohtaisesti Viite-sovelluksessa.
 
 *3) Viitteessä luovuttiin Tietyypistä ja se korvattiin Hallinnollisella luokalla 3/2021.
-Palautteet hallinnollisen luokan virheistä voi toimittaa Maanmittauslaitokselle osoitteeseen maasto@maanmittauslaitos.fi. Mukaan selvitys virheestä ja sen sijainnista (kuvakaappaus tms.).
+Palautteet hallinnollisen luokan virheistä voi toimittaa Maanmittauslaitokselle osoitteeseen maasto@maanmittauslaitos.fi lomakkeella https://vayla.sharefile.eu/d-sf43c30c2582a42cfac1744748dad608f (Hallinnollisten muutosten ilmoituspohja.xls). Mukaan selvitys virheestä ja sen sijainnista (kuvakaappaus tms.).
 
 5.3 Kohdistaminen tieosoitteeseen tielinkin ID:n avulla
 --------------------------
 
-Kun kohdetta klikkaa tai tuplaklikkaa kartalla, tulee selaimen osoiteriville näkyviin tielinkin ID. Tuplaklikattaessa ID on valitun linkin id, klikattaessa jonkun valitun tieosan linkin ID. Osoiterivillä olevan URL:n avulla voi myös kohdistaa käyttöliittymässä ko. tielinkkiin. URL:n voi lähettää toiselle henkilölle, jolloin tämä pääsee käyttöliittymässä samaan paikkaan.
+Kun kohdetta klikkaa tai tuplaklikkaa kartalla, tulee selaimen osoiteriville näkyviin tielinkin ID. Tuplaklikattaessa ID on valitun linkin id, klikattaessa joku valitun tieosan linkkien ID:istä. Osoiterivillä olevan URL:n avulla voi myös kohdistaa käyttöliittymässä ko. tielinkkiin. URL:n voi lähettää toiselle henkilölle, jolloin tämä pääsee käyttöliittymässä samaan paikkaan.
 
 Esimerkiksi: https://viite.vaylapilvi.fi/#linkProperty/1204420 näkyy kuvassa osoiterivillä (5). 1204420 on tielinkin ID.
 
@@ -465,6 +465,8 @@ Tieosoite pysyy muuttumattomana myös silloin, jos vain hallinnollistyyppisiä t
 Toimenpidelomakkeen pudotusvalikosta valitaan Ennallaan, tehdään tarvittaessa halutut hallinnollisten tietojen muutokset, ja lopuksi tallennetaan _Tallenna_-painikkeesta.
 Ennallaan-toimenpiteellä käsitelty linkki näkyy toimenpidenäkymässä sinisenä.
 
+Huom. Jos muutat hallinnollista luokkaa, huomioi, että Digiroadin tiedot tarvitsevat projektin tieverkolle päivityksen jälkeen myös muutoksia.
+
 7.1.4 Siirto
 --------------------------
 Siirto-toimenpide tehdään tielinkeille uusien etäisyysarvojen (m-arvojen) laskemiseksi, tai tieosoitenumeroinnin (tienumero, tieosanumero, ajoratakoodi) muuttumisen vuoksi.   
@@ -474,6 +476,8 @@ Osalle tieosan linkeistä voidaan tehdä lakkautus, lisätä tielle uusia linkke
 
 Toimenpidelomakkeen pudotusvalikosta valitaan Siirto, tarvittaessa muutetaan tieosoitteistuksen tiedot, ja lopuksi siirtotoimenpide tallennetaan _Tallenna_-painikkeesta.
 Siirretyt linkit muuttuvat toimenpidenäkymässä punaisiksi. 
+
+Huom. Jos muutat hallinnollista luokkaa, huomioi, että Digiroadin tiedot tarvitsevat projektin tieverkolle päivityksen jälkeen myös muutoksia.
 
 7.1.5 Numerointi
 --------------------------
