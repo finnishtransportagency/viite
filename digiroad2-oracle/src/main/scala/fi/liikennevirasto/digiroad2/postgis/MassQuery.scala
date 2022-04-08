@@ -7,7 +7,7 @@ import slick.jdbc.StaticQuery.interpolation
 
 object MassQuery {
   val logger = LoggerFactory.getLogger(getClass)
-  def withIds[T](ids: Iterable[Long])(f: String => T): T = {
+  def withIds[T](ids: Iterable[Long])(function: String => T): T = {
     LogUtils.time(logger, s"TEST LOG MassQuery withIds ${ids.size}") {
       LogUtils.time(logger, "TEST LOG create TEMP_ID table") {
         sqlu"""
@@ -21,15 +21,16 @@ object MassQuery {
 
       LogUtils.time(logger, s"TEST LOG insert into TEMP_ID ${ids.size}") {
         try {
+          //Making sure that the table is empty if called multiple times within a transaction
+          //Emptied at the end of transaction as per TABLE definition above
+          sqlu"TRUNCATE TABLE TEMP_ID".execute
           ids.foreach { id =>
             insertLinkIdPS.setLong(1, id)
             insertLinkIdPS.addBatch()
           }
           logger.debug("added {} entries to temporary table", ids.size)
           insertLinkIdPS.executeBatch()
-          val ret = f("temp_id")
-          sqlu"TRUNCATE TABLE TEMP_ID".execute
-          ret
+          function("temp_id")
         } finally {
           insertLinkIdPS.close()
         }
