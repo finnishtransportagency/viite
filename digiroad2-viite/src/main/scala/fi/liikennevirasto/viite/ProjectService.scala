@@ -3,7 +3,6 @@ package fi.liikennevirasto.viite
 import java.sql.SQLException
 import java.util.Date
 
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, DigiroadEventBus}
 import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, TrafficDirection, _}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
@@ -13,6 +12,7 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReservedException, Track}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{JunctionPointCP, NoCP, UserDefinedCP}
 import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
 import fi.liikennevirasto.viite.dao.LinkStatus._
@@ -2159,9 +2159,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val linsToFuse = linearLocationsToInsert.groupBy(ll => (ll.roadwayNumber, ll.linkId)).values.filter(_.size > 1)
       val linsToFuseIds = linsToFuse.flatten.map(_.id).toSeq
       val fusedLinearLocations = linsToFuse.map(lls => {
-        val maxOrderNum = lls.map(_.orderNumber).max
+        val orderNumbers = lls.map(_.orderNumber)
+        val minOrderNum  = orderNumbers.min
+        val maxOrderNum  = orderNumbers.max
 
-        val firstLl =  lls.find(_.orderNumber == 1).get
+        val firstLl =  lls.find(_.orderNumber == minOrderNum).get
         val lastLl = lls.find(_.orderNumber == maxOrderNum).get
         val geometries = lls.sortBy(_.orderNumber).flatMap(_.geometry).distinct
         firstLl.copy(calibrationPoints = (lastLl.startCalibrationPoint, lastLl.endCalibrationPoint), geometry = geometries)
