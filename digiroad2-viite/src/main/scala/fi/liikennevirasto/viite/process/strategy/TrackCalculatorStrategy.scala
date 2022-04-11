@@ -184,8 +184,11 @@ trait TrackCalculatorStrategy {
       case (true,true) => fixedMinimimumAddress
       case (true, false)  => rightProjectLinks.last.startAddrMValue + addressLengthRight
       case (false, true)  => leftProjectLinks.last.startAddrMValue + addressLengthLeft
-      case (false,false)  => Math.floor((startSectionAddress + leftProjectLinks.last.endAddrMValue - leftProjectLinks.head.startAddrMValue +
-                                         startSectionAddress + rightProjectLinks.last.endAddrMValue - rightProjectLinks.head.startAddrMValue) * 0.5).round
+      case (false,false)  => {
+        val leftLength = startSectionAddress + leftProjectLinks.last.endAddrMValue - leftProjectLinks.head.startAddrMValue
+        val rightLength = startSectionAddress + rightProjectLinks.last.endAddrMValue - rightProjectLinks.head.startAddrMValue
+        averageOfAddressMValues(leftLength, rightLength, rightProjectLinks.head.reversed)
+      }
     }
 
     val (adjustedLeft, adjustedRight) = adjustTwoTracks(rightProjectLinks, leftProjectLinks, startSectionAddress, minimumEndAddress, calibrationPoints)

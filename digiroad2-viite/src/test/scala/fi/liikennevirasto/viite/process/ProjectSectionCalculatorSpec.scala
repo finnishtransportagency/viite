@@ -1871,8 +1871,8 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     | | #1562
   */
   test("Test assignMValues " +
-       "When a new link is added after unchanged as a left track and the opposite track transferred as right side track" +
-       "Then the new link at the middle changes left side length calculation and the end address should be correct such that existing lengths do not change. ") {
+       "When a new link is added after an unchanged link as a left track, and the opposite right side track is transferred from the original link" +
+       "Then the previously existing lengths of the links must not change, and the end address must remain the same, but the new left side at the middle must change by the length calculation, to comply with the transferred right side.") {
     runWithRollback {
       val project_id = 1
       val roadNumber = 6016
@@ -1898,6 +1898,12 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
         pl.startAddrMValue shouldBe (pl.originalStartAddrMValue)
         pl.endAddrMValue shouldBe (pl.originalEndAddrMValue)
       })
+
+      val newLink = output.filter(_.id == newLinkId)
+      newLink should have size 1
+      newLink.head.startAddrMValue should be (370)
+      newLink.head.endAddrMValue should be (513)
+
     }
   }
 }
