@@ -3194,11 +3194,11 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val roadways = roadwayDAO.fetchAllByRoadAndPart(roadNumber,roadPartNumber)
       val firstRw = roadways.find(r => r.startAddrMValue == 0 && r.track == Track.Combined)
       firstRw should be ('defined)
-      val secondRw = roadways.find(_.endAddrMValue == 785 && r.track == Track.LeftSide)
+      val secondRw = roadways.find(r => r.endAddrMValue == 785 && r.track == Track.RightSide)
       secondRw should be ('defined)
-      val thirdRw = roadways.find(r => r.startAddrMValue == 369 && r.endAddrMValue == 1035 && r.track == Track.RightSide)
+      val thirdRw = roadways.find(r => r.startAddrMValue == 369 && r.endAddrMValue == 1035 && r.track == Track.LeftSide)
       thirdRw should be ('defined)
-      val fourthRw = roadways.find(r => r.startAddrMValue == 785 && r.endAddrMValue == 1035 && r.track == Track.LeftSide)
+      val fourthRw = roadways.find(r => r.startAddrMValue == 785 && r.endAddrMValue == 1035 && r.track == Track.RightSide)
       fourthRw should be ('defined)
     }
   }
@@ -3255,13 +3255,13 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       projectLinkDAO.create(projecLinks)
       projectService.updateRoadwaysAndLinearLocationsWithProjectLinks(project_id)
       val roadways = roadwayDAO.fetchAllByRoadAndPart(roadNumber,roadPartNumber)
-      val firstRw = roadways.find(_.startAddrMValue == 0 && r.track == Track.Combined)
+      val firstRw = roadways.find(r => r.startAddrMValue == 0 && r.track == Track.Combined)
       firstRw should be ('defined)
-      val secondRw = roadways.find(_.endAddrMValue == 785 && r.track == Track.LeftSide)
+      val secondRw = roadways.find(r => r.endAddrMValue == 785 && r.track == Track.RightSide)
       secondRw should be ('defined)
-      val thirdRw = roadways.find(r => r.startAddrMValue == 369 && r.endAddrMValue == 1035 && r.track == Track.RightSide)
+      val thirdRw = roadways.find(r => r.startAddrMValue == 369 && r.endAddrMValue == 1035 && r.track == Track.LeftSide)
       thirdRw should be ('defined)
-      val fourthRw = roadways.find(r => r.startAddrMValue == 785 && r.endAddrMValue == 1035 && r.track == Track.LeftSide)
+      val fourthRw = roadways.find(r => r.startAddrMValue == 785 && r.endAddrMValue == 1035 && r.track == Track.RightSide)
       fourthRw should be ('defined)
     }
   }
