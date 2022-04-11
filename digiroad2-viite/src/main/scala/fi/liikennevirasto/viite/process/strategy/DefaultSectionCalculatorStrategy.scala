@@ -188,6 +188,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
   def validateCombinedLinksEqualAddresses(leftAdj: Seq[ProjectLink], rightAdj: Seq[ProjectLink]): Unit = {
     val leftCombinedLinks  = leftAdj.filter(_.track == Track.Combined)
     val rightCombinedLinks = rightAdj.filter(_.track == Track.Combined)
+    // Partition splitted and nonsplitted links. With splitted projectlinks id:s change and matching must be made by other values combined.
     val (allSplitted, nonSplitted) = (leftCombinedLinks ++ rightCombinedLinks).partition(_.isSplit)
     val groupedById        = nonSplitted.groupBy(pl => pl.id) ++ allSplitted.groupBy(pl => (pl.startAddrMValue, pl.endAddrMValue,pl.linkId))
 
