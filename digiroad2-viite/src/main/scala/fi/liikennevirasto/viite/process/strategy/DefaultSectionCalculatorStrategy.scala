@@ -241,7 +241,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
           case Seq(seq, next) => {
             if (seq.endAddrMValue != next.startAddrMValue) throw new RoadAddressException(s"Address not continuous: ${seq.endAddrMValue} ${next.startAddrMValue} linkids: ${seq.linkId} ${next.linkId}")
             if (!(seq.endAddrMValue > seq.startAddrMValue)) throw new RoadAddressException(s"Address length negative. linkid: ${seq.linkId}")
-            if (seq.status != LinkStatus.New) if (!((seq.endAddrMValue - seq.startAddrMValue) == (seq.originalEndAddrMValue - seq.originalStartAddrMValue))) throw new RoadAddressException(s"Length mismatch. New: ${seq.startAddrMValue} ${seq.endAddrMValue} original: ${seq.originalStartAddrMValue} ${seq.originalEndAddrMValue} linkid: ${seq.linkId}")
+            if (seq.status != LinkStatus.New && !((seq.endAddrMValue - seq.startAddrMValue) == (seq.originalEndAddrMValue - seq.originalStartAddrMValue))) throw new RoadAddressException(s"Length mismatch. New: ${seq.startAddrMValue} ${seq.endAddrMValue} original: ${seq.originalStartAddrMValue} ${seq.originalEndAddrMValue} linkid: ${seq.linkId}")
           }
         }
       }
