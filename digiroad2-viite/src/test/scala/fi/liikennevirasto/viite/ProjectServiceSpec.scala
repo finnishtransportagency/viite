@@ -3143,7 +3143,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   test("Test defaultSectionCalculatorStrategy.updateRoadwaysAndLinearLocationsWithProjectLinks() " +
        "When two track road with a new track 2 and partially new track 1 having new track at the end" +
-       "Then roadways should be formed correctly.") {
+       "Then formed roadways should be continuous.") {
     runWithRollback {
       val createdBy = Some("test")
       val user = createdBy.get
@@ -3152,6 +3152,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val roadName = None
       val project_id = Sequences.nextViiteProjectId
 
+      /* Check the project layout from the ticket 2699. */
       sqlu"""INSERT INTO PROJECT VALUES($project_id, 11, 'test project', $user, TIMESTAMP '2018-03-23 11:36:15.000000', '-', TIMESTAMP '2018-03-23 12:26:33.000000', NULL, TIMESTAMP '2018-03-23 00:00:00.000000', NULL, 0, 564987.0, 6769633.0, 12)""".execute
       sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (${Sequences.nextViitePrimaryKeySeqValue}, 46020, 1, $project_id, '-')""".execute
       sqlu"""INSERT INTO roadway (id, roadway_number, road_number, road_part_number, track, start_addr_m, end_addr_m, reversed, discontinuity, start_date, end_date, created_by, created_time, administrative_class, ely, terminated, valid_from, valid_to) VALUES(107964, 335560416, 46020, 1, 0, 0, 785, 0, 1, '2022-01-01', NULL, $user, '2022-02-17 09:48:15.355', 2, 3, 0, '2022-02-17 09:48:15.355', NULL)""".execute
@@ -3191,20 +3192,20 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       projectLinkDAO.create(projecLinks)
       projectService.updateRoadwaysAndLinearLocationsWithProjectLinks(project_id)
       val roadways = roadwayDAO.fetchAllByRoadAndPart(roadNumber,roadPartNumber)
-      val firstRw = roadways.find(_.startAddrMValue == 0)
+      val firstRw = roadways.find(r => r.startAddrMValue == 0 && r.track == Track.Combined)
       firstRw should be ('defined)
-      val secondRw = roadways.find(_.endAddrMValue == 785)
+      val secondRw = roadways.find(_.endAddrMValue == 785 && r.track == Track.LeftSide)
       secondRw should be ('defined)
-      val thirdRw = roadways.find(r => r.startAddrMValue == 369 && r.endAddrMValue == 1035)
+      val thirdRw = roadways.find(r => r.startAddrMValue == 369 && r.endAddrMValue == 1035 && r.track == Track.RightSide)
       thirdRw should be ('defined)
-      val fourthRw = roadways.find(r => r.startAddrMValue == 785 && r.endAddrMValue == 1035)
+      val fourthRw = roadways.find(r => r.startAddrMValue == 785 && r.endAddrMValue == 1035 && r.track == Track.LeftSide)
       fourthRw should be ('defined)
     }
   }
 
     test("Test defaultSectionCalculatorStrategy.updateRoadwaysAndLinearLocationsWithProjectLinks() " +
-       "When two track road with a new track 2 and partially new track 1 having new track in the middle" +
-       "Then roadways should be formed correctly.") {
+         "When two track road with a new track 2 and partially new track 1 having new track in the middle" +
+         "Then formed roadways should be continuous.") {
     runWithRollback {
       val createdBy = Some("test")
       val user = createdBy.get
@@ -3213,6 +3214,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val roadName = None
       val project_id = Sequences.nextViiteProjectId
 
+      /* Check the project layout from the ticket 2699. */
       sqlu"""INSERT INTO PROJECT VALUES($project_id, 11, 'test project', $user, TIMESTAMP '2018-03-23 11:36:15.000000', '-', TIMESTAMP '2018-03-23 12:26:33.000000', NULL, TIMESTAMP '2018-03-23 00:00:00.000000', NULL, 0, 564987.0, 6769633.0, 12)""".execute
       sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (${Sequences.nextViitePrimaryKeySeqValue}, 46020, 1, $project_id, '-')""".execute
       sqlu"""INSERT INTO roadway (id, roadway_number, road_number, road_part_number, track, start_addr_m, end_addr_m, reversed, discontinuity, start_date, end_date, created_by, created_time, administrative_class, ely, terminated, valid_from, valid_to) VALUES(107964, 335560416, 46020, 1, 0, 0, 369, 0, 4, '2022-01-01', NULL, $user, '2022-02-17 09:48:15.355', 2, 3, 0, '2022-02-17 09:48:15.355', NULL)""".execute
@@ -3253,13 +3255,13 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       projectLinkDAO.create(projecLinks)
       projectService.updateRoadwaysAndLinearLocationsWithProjectLinks(project_id)
       val roadways = roadwayDAO.fetchAllByRoadAndPart(roadNumber,roadPartNumber)
-      val firstRw = roadways.find(_.startAddrMValue == 0)
+      val firstRw = roadways.find(_.startAddrMValue == 0 && r.track == Track.Combined)
       firstRw should be ('defined)
-      val secondRw = roadways.find(_.endAddrMValue == 785)
+      val secondRw = roadways.find(_.endAddrMValue == 785 && r.track == Track.LeftSide)
       secondRw should be ('defined)
-      val thirdRw = roadways.find(r => r.startAddrMValue == 369 && r.endAddrMValue == 1035)
+      val thirdRw = roadways.find(r => r.startAddrMValue == 369 && r.endAddrMValue == 1035 && r.track == Track.RightSide)
       thirdRw should be ('defined)
-      val fourthRw = roadways.find(r => r.startAddrMValue == 785 && r.endAddrMValue == 1035)
+      val fourthRw = roadways.find(r => r.startAddrMValue == 785 && r.endAddrMValue == 1035 && r.track == Track.LeftSide)
       fourthRw should be ('defined)
     }
   }
