@@ -436,10 +436,10 @@
 
             if (endDistance)
                 changedValue = Number(endDistance.value);
-            return typeof changedValue === 'number'
-                && typeof endDistanceOriginalValue === 'number'
-                && changedValue !== endDistanceOriginalValue;
-        }
+            return typeof changedValue === 'number' &&
+                typeof endDistanceOriginalValue === 'number' &&
+                changedValue !== endDistanceOriginalValue;
+        };
 
       var cancelChanges = function () {
         projectCollection.revertLinkStatus();
