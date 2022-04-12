@@ -425,10 +425,21 @@
         if (objectDropdown_0.value === LinkStatus.Revert.value) {
           projectCollection.revertChangesRoadlink(selectedProjectLink);
         } else {
-          projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), objectDropdown_0.value);
+          projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), objectDropdown_0.value, isEndDistanceTouched());
         }
         return true;
       };
+
+        var isEndDistanceTouched = function () {
+            const endDistance = $('#endDistance') [0];
+            var changedValue;
+
+            if (endDistance)
+                changedValue = Number(endDistance.value);
+            return typeof changedValue === 'number'
+                && typeof endDistanceOriginalValue === 'number'
+                && changedValue !== endDistanceOriginalValue;
+        }
 
       var cancelChanges = function () {
         projectCollection.revertLinkStatus();
