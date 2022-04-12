@@ -1,15 +1,15 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.GeometryUtils
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.FrozenLinkInterface
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, asset}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point, asset}
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{JunctionPointCP, NoCP, RoadAddressCP}
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{JunctionPointCP, NoCP, RoadAddressCP, UserDefinedCP}
 import fi.liikennevirasto.viite.dao.Discontinuity._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
@@ -1860,4 +1860,50 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
+    /*
+     | #0
+     |
+     O
+     |
+     O
+    | | # New
+     |
+    | | #1562
+  */
+  test("Test assignMValues " +
+       "When a new link is added after an unchanged link as a left track, and the opposite right side track is transferred from the original link" +
+       "Then the previously existing lengths of the links must not change, and the end address must remain the same, but the new left side at the middle must change by the length calculation, to comply with the transferred right side.") {
+    runWithRollback {
+      val project_id = 1
+      val roadNumber = 6016
+      val roadPartNumber = 1
+      val newLinkId = 1005
+
+      val projectLinkSeq = Seq(
+        ProjectLink(1000, roadNumber, roadPartNumber, Track.Combined, Continuous, 0, 15, 0, 15, None, None, None, 11811190, 0.0, 15.178, SideCode.TowardsDigitizing, (RoadAddressCP, NoCP), (RoadAddressCP, NoCP), List(Point(0.0, 0.0), Point(15.178, 0.0)), project_id, LinkStatus.UnChanged, AdministrativeClass.Municipality, FrozenLinkInterface, 15.178, 108248, 491052, 9, false, None, 1627945220000L, 335584839),
+        ProjectLink(1001, roadNumber, roadPartNumber, Track.Combined, MinorDiscontinuity, 15, 201, 15, 201, None, None, None, 1215621, 0.0, 203.32, SideCode.TowardsDigitizing, (NoCP, RoadAddressCP), (NoCP, RoadAddressCP), List(Point(16.178, 0.0), Point(219.498, 0.0)), project_id, LinkStatus.UnChanged, AdministrativeClass.Municipality, FrozenLinkInterface, 203.32, 108245, 491108, 9, false, None, 1605135620000L, 335584844),
+        ProjectLink(1002, roadNumber, roadPartNumber, Track.Combined, Continuous, 201, 346, 201, 346, None, None, None, 1215618, 0.0, 146.927, SideCode.TowardsDigitizing, (RoadAddressCP, NoCP), (RoadAddressCP, NoCP), List(Point(219.498, 0.0), Point(365.425, 0.0)), project_id, LinkStatus.UnChanged, AdministrativeClass.Municipality, FrozenLinkInterface, 146.927, 108244, 491118, 9, false, None, 1605135620000L, 284576519),
+        ProjectLink(1003, roadNumber, roadPartNumber, Track.Combined, MinorDiscontinuity, 346, 370, 346, 370, None, None, None, 11892932, 0.0, 24.165, SideCode.TowardsDigitizing, (NoCP, RoadAddressCP), (NoCP, RoadAddressCP), List(Point(365.425, 0.0), Point(389.59, 0.0)), project_id, LinkStatus.UnChanged, AdministrativeClass.Municipality, FrozenLinkInterface, 24.165, 108226, 491117, 9, false, None, 1631228420000L, 306511489),
+        ProjectLink(1004, roadNumber, roadPartNumber, Track.RightSide, Continuous, 370, 513, 370, 513, None, None, None, 11892926, 0.0, 143.101, SideCode.TowardsDigitizing, (RoadAddressCP, UserDefinedCP), (RoadAddressCP, RoadAddressCP), List(Point(532.691, 0.0), Point(671.69, 0.0)), project_id, LinkStatus.Transfer, AdministrativeClass.Municipality, FrozenLinkInterface, 143.101, 108239, 491136, 9, false, None, 1605135620000L, 306511492),
+        ProjectLink(newLinkId, roadNumber, roadPartNumber, Track.LeftSide, Continuous, 370, 513, 0, 0, None, None, None, 11892924, 0.0, 138.999, SideCode.TowardsDigitizing, (RoadAddressCP, UserDefinedCP), (NoCP, NoCP), List(Point(532.691, 10.0), Point(671.69, 0.0)), project_id, LinkStatus.New, AdministrativeClass.Municipality, FrozenLinkInterface, 138.999, 0, 0, 9, false, None, 1631228420000L, 335718220),
+        ProjectLink(1006, roadNumber, roadPartNumber, Track.LeftSide, Continuous, 513, 1004, 513, 1004, None, None, None, 11105130, 0.0, 486.598, SideCode.TowardsDigitizing, (NoCP, RoadAddressCP), (RoadAddressCP, RoadAddressCP), List(Point(671.69, 0.0), Point(1663.558, 0.0)), project_id, LinkStatus.Transfer, AdministrativeClass.Municipality, FrozenLinkInterface, 486.598, 108259, 491114, 9, false, None, 1605135620000L, 148128088),
+        ProjectLink(1007, roadNumber, roadPartNumber, Track.RightSide, Continuous, 513, 1004, 513, 1004, None, None, None, 11105129, 0.0, 505.27, SideCode.TowardsDigitizing, (NoCP, RoadAddressCP), (RoadAddressCP, RoadAddressCP), List( Point(671.69, 0.0), Point(1158.288, 0.0), Point(1663.558, 0.0)), project_id, LinkStatus.Transfer, AdministrativeClass.Municipality, FrozenLinkInterface, 505.27, 108236, 491126, 9, false, None, 1605135620000L, 148124313),
+        ProjectLink(1008, roadNumber, roadPartNumber, Track.Combined, Continuous, 1004, 1466, 1004, 1466, None, None, None, 12432937, 0.0, 474.23, SideCode.TowardsDigitizing, (RoadAddressCP, RoadAddressCP), (RoadAddressCP, RoadAddressCP), List(Point(1663.558, 0.0), Point(2137.788, 0.0)), project_id, LinkStatus.Transfer, AdministrativeClass.Municipality, FrozenLinkInterface, 474.23, 108235, 491131, 9, false, None, 1635289229000L, 148121645),
+        ProjectLink(1009, roadNumber, roadPartNumber, Track.LeftSide, EndOfRoad, 1466, 1562, 1466, 1562, None, None, None, 1215166, 2.504, 59.638, SideCode.TowardsDigitizing, (RoadAddressCP, RoadAddressCP), (RoadAddressCP, RoadAddressCP), List(Point(2137.788, 0.0), Point(2197.426, 10.0)), project_id, LinkStatus.Transfer, AdministrativeClass.Municipality, FrozenLinkInterface, 59.638, 108250, 491116, 9, false, Some(1215166), 1605135620000L, 148127567),
+        ProjectLink(1010, roadNumber, roadPartNumber, Track.RightSide, EndOfRoad, 1466, 1562, 1466, 1562, None, None, None, 1215168, 0.0, 48.72, SideCode.TowardsDigitizing, (RoadAddressCP, RoadAddressCP), (RoadAddressCP, RoadAddressCP), List(Point(2197.426, 0.0), Point(2246.146, 0.0)), project_id, LinkStatus.Transfer, AdministrativeClass.Municipality, FrozenLinkInterface, 48.72, 108242, 491133, 9, false, None, 1605135620000L, 57360)
+      )
+
+      val output = ProjectSectionCalculator.assignMValues(projectLinkSeq).sortBy(_.startAddrMValue)
+      output.filterNot(_.id == newLinkId).foreach(pl => {
+        pl.startAddrMValue shouldBe (pl.originalStartAddrMValue)
+        pl.endAddrMValue shouldBe (pl.originalEndAddrMValue)
+      })
+
+      val newLink = output.filter(_.id == newLinkId)
+      newLink should have size 1
+      newLink.head.startAddrMValue should be (370)
+      newLink.head.endAddrMValue should be (513)
+
+    }
+  }
 }
