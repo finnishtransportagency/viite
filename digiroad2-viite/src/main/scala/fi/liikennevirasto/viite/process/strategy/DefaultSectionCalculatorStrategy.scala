@@ -236,14 +236,14 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
    * @param pls Left or right side ProjectLinks with combined to check for continuity of addresses.
    */
   def validateAddresses(pls: Seq[ProjectLink]): Unit = {
-    if (pls.size > 1) {
+    if (pls.size > 1 && pls.head.originalStartAddrMValue == 0) {
       val it = pls.sliding(2)
       while (it.hasNext) {
         it.next() match {
           case Seq(seq, next) => {
             if (seq.endAddrMValue != next.startAddrMValue) throw new RoadAddressException(s"Address not continuous: ${seq.endAddrMValue} ${next.startAddrMValue} linkids: ${seq.linkId} ${next.linkId}")
             if (!(seq.endAddrMValue > seq.startAddrMValue)) throw new RoadAddressException(s"Address length negative. linkid: ${seq.linkId}")
-            if (seq.status != LinkStatus.New) if (!((seq.endAddrMValue - seq.startAddrMValue) == (seq.originalEndAddrMValue - seq.originalStartAddrMValue))) throw new RoadAddressException(s"Length mismatch. New: ${seq.startAddrMValue} ${seq.endAddrMValue} original: ${seq.originalStartAddrMValue} ${seq.originalEndAddrMValue} linkid: ${seq.linkId}")
+            if (seq.status != LinkStatus.New && !((seq.endAddrMValue - seq.startAddrMValue) == (seq.originalEndAddrMValue - seq.originalStartAddrMValue))) throw new RoadAddressException(s"Length mismatch. New: ${seq.startAddrMValue} ${seq.endAddrMValue} original: ${seq.originalStartAddrMValue} ${seq.originalEndAddrMValue} linkid: ${seq.linkId}")
           }
         }
       }
