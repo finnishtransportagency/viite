@@ -1815,7 +1815,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     withDynTransaction { // to ensure uniquely retrieved projectId for each calling handler thread
       reserveStatus = {
         try {
-          val projectId = projectDAO.fetchSingleProjectIdWithInUpdateQueueStatus // may throw NoSuchElementException
+          val projectId = projectDAO.fetchSingleProjectIdWithInUpdateQueueStatus
           if (projectId.isDefined)
             projectDAO.updateProjectStatus(projectId.get, ProjectState.UpdatingToRoadNetwork)
           projectId
