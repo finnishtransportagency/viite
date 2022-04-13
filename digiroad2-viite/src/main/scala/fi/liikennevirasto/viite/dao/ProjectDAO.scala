@@ -154,7 +154,7 @@ class ProjectDAO {
 
   /** Returns an id of a single project waiting for being updated to the road network.
     * @throws NoSuchElementException (from DB query) in case there is no such project available */
-  def fetchSingleProjectIdWithInUpdateQueueStatus: Long = {
+  def fetchSingleProjectIdWithInUpdateQueueStatus: Option[Long] = {
     val query =
       s"""
          SELECT id
@@ -162,7 +162,7 @@ class ProjectDAO {
          WHERE state=${ProjectState.InUpdateQueue.value}
          LIMIT 1
        """
-    Q.queryNA[Long](query).first
+    Q.queryNA[Long](query).firstOption
   }
 
   /** @return projects, that are currently at either <i>InUpdateQueue</i>, or in <i>UpdatingToRoadNetwork</i> ProjectState */

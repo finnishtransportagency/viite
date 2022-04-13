@@ -1816,13 +1816,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       reserveStatus = {
         try {
           val projectId = projectDAO.fetchSingleProjectIdWithInUpdateQueueStatus // may throw NoSuchElementException
-          projectDAO.updateProjectStatus(projectId, ProjectState.UpdatingToRoadNetwork)
-          Some(projectId)
+          if (projectId.isDefined)
+            projectDAO.updateProjectStatus(projectId.get, ProjectState.UpdatingToRoadNetwork)
+          projectId
         } catch {
-          case t: NoSuchElementException => { // Expected exception when nothing to update.
-            logger.debug(s"No projects waiting to be preserved: ${t.getMessage}", t)
-            None
-          }
           case t: Exception => {
             logger.warn(s"Unexpected exception while reserving a project for preserving: ${t.getMessage}", t)
             throw t // Rethrow the unexpected error.
