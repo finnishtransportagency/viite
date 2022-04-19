@@ -414,6 +414,15 @@ class ProjectValidator {
       def notification = true
     }
 
+    // Viite-2714
+    case object NoReverse extends ValidationError {
+      def value = 99
+
+      def message: String = NoReverseErrorMessage
+
+      def notification = true
+    }
+
     def apply(intValue: Int): ValidationError = {
       values.find(_.value == intValue).get
     }
@@ -489,6 +498,7 @@ class ProjectValidator {
     // function to get any (normal priority) validation errors for the project links
     val normalPriorityValidations: Seq[(Project, Seq[ProjectLink]) => Seq[ValidationErrorDetails]] = Seq(
       // sequence of validator functions, in INCREASING priority order (as these get turned around in the next step)
+      checkNoReverseInProject,
       checkProjectElyCodes,
       checkProjectContinuity,
       checkForInvalidUnchangedLinks,
@@ -731,6 +741,15 @@ class ProjectValidator {
             ProjectCoordinates(point.x, point.y, 12)
           }, None))
       }.toSeq
+    } else {
+      Seq()
+    }
+  }
+
+  def checkNoReverseInProject(project: Project, allProjectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
+    val reversedProjectLinks = allProjectLinks.filter(pl => pl.reversed)
+    if (reversedProjectLinks.nonEmpty) {
+      Seq(error(project.id, ValidationErrorList.NoReverse)(reversedProjectLinks).get)
     } else {
       Seq()
     }

@@ -123,6 +123,9 @@ package object viite {
   val ErrorMissingStartingLink = "Missing start link in roadway."
   val InconsistentAddressValues = "Wrong address values between links."
 
+  // Viite-2714
+  val NoReverseErrorMessage = "Tieosoitteen kääntö ominaisuus on tilapäisesti poissa käytöstä. Tarkista että projektissa ei ole käännettyjä linkkejä."
+
   // Nodes and Junctions error messages
   val ReturnedTooManyNodesErrorMessage = "Hakusi palauttaa yli 50 kohdetta, rajaa hakua pienemmäksi."
   val NodeNotFoundErrorMessage = "Päivitettävää solmua ei löytynyt."
