@@ -8,9 +8,9 @@
 
   var name = function () {
     var environmentName = {
-      'extranet.vayla.fi': 'production', // PROD
-      'testiextranet.vayla.fi': 'integration', // QA
-      'devtest.vayla.fi': 'staging' // IT
+      'viite.vaylapilvi.fi': 'production', // PROD
+      'viitetest.testivaylapilvi.fi': 'integration', // QA
+      'viitedev.testivaylapilvi.fi': 'staging' // DEV
     };
 
     return environmentName[urlParts()[1]] || 'unknown';
@@ -21,7 +21,7 @@
     return _.head(urlWithoutResource) + '//' + _.tail(urlWithoutResource).join('/');
   };
 
-  // Environment name shown next to Digiroad logo
+  // Environment name shown next to the Viite logo
   var localizedName = function () {
     var localizedEnvironmentName = {
       integration: 'Integraatiotestiympäristö', // Hyväksymistestausympäristö
