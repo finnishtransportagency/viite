@@ -156,7 +156,7 @@
           ' <th class="node-junctions-table-header">TIE</th>' +
           ' <th class="node-junctions-table-header">AJR</th>' +
           ' <th class="node-junctions-table-header">OSA</th>' +
-          ' <th class="node-junctions-table-header">ET <i id="edit-junction-point-addresses" class="btn-pencil-edit fas fa-pencil-alt"></i></th>' +
+          ' <th class="node-junctions-table-header junction-address-header">ET</th>' +
           ' <th class="node-junctions-table-header">EJ</th>' +
           '</tr>';
       };
@@ -790,6 +790,9 @@
             currentJunctions: _.sortBy(currentNode.junctions, 'junctionNumber'),
             options: {checkbox: _.isUndefined(templates), junctionInputNumber: true}
           }));
+
+          // add the pen icon next to the address header so user can edit junction addresses
+          $('.junction-address-header').append('<i id="edit-junction-point-addresses" class="btn-pencil-edit fas fa-pencil-alt"></i>');
 
           $('.btn-edit-node-save').prop('disabled', formIsInvalid());
 
