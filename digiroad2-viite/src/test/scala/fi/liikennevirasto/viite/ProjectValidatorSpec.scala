@@ -1899,6 +1899,59 @@ Left|      |Right
     }
   }
 
+  test("Test checkProjectElyCodes When discontinuity is 3 (ELY change) on one track but not on the opposite track Then validator should return errors") {
+    runWithRollback {
+      val raId1 = Sequences.nextRoadwayId
+      val raId2 = Sequences.nextRoadwayId
+      val startDate = DateTime.now()
+      val linearLocationId1 = Sequences.nextLinearLocationId
+      val linearLocationId2 = Sequences.nextLinearLocationId
+
+      val roadway1 = Roadway(raId1, roadwayNumber1, 16320L, 2L, AdministrativeClass.State, Track.LeftSide, Discontinuity.Continuous, 0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None)
+      val roadway2 = Roadway(raId2, roadwayNumber1, 16320L, 2L, AdministrativeClass.State, Track.RightSide, Discontinuity.Continuous, 0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None)
+
+      val linearLocation1 = LinearLocation(linearLocationId1, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+        (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+        Seq(Point(0.0, 40.0), Point(0.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
+        roadwayNumber1, Some(startDate), None)
+
+      val linearLocation2 = LinearLocation(linearLocationId2, 1, 1001l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+        (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+        Seq(Point(0.0, 40.0), Point(0.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
+        roadwayNumber1, Some(startDate), None)
+
+      roadwayDAO.create(Seq(roadway1, roadway2))
+      linearLocationDAO.create(Seq(linearLocation1, linearLocation2))
+
+      val ra = Seq(
+        RoadAddress(12345, 1, 16320L, 2L, AdministrativeClass.State, Track.LeftSide, Discontinuity.Continuous, 0, 10, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), Seq(Point(0.0, 40.0), Point(0.0, 50.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None, None),
+        RoadAddress(12346, 1, 16320L, 2L, AdministrativeClass.State, Track.RightSide, Discontinuity.Continuous, 0, 10, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), Seq(Point(0.0, 40.0), Point(0.0, 50.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None, None)
+      )
+
+      val testRoad = {
+        (16320L, 1L, "name")
+      }
+      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.UnChanged, Seq(0L, 10L, 20L, 30L, 40L), changeTrack = true, Seq(testRoad), Discontinuity.Continuous)
+
+      val projectLinkToChange = projectLinks.maxBy(_.endAddrMValue)
+      val projectLinksRemoved = projectLinks.dropWhile(_.linkId == projectLinkToChange.linkId)
+      val changedProjectLink = projectLinkToChange.copy(discontinuity = Discontinuity.ChangingELYCode)
+      val combinedProjectLinks = projectLinksRemoved ++ Seq(changedProjectLink)
+
+
+      when(mockRoadAddressService.getValidRoadAddressParts(any[Long], any[DateTime])).thenReturn(Seq.empty[Long])
+      when(mockRoadAddressService.getRoadAddressesFiltered(any[Long], any[Long])).thenReturn(Seq.empty[RoadAddress])
+      when(mockRoadAddressService.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq.empty[LinearLocation])
+      when(mockRoadAddressService.getCurrentRoadAddresses(any[Seq[LinearLocation]])).thenReturn(ra)
+      when(mockRoadAddressService.getRoadAddressWithRoadAndPart(any[Long], any[Long], any[Boolean], any[Boolean], any[Boolean])).thenReturn(Seq.empty[RoadAddress])
+      when(mockRoadAddressService.getPreviousRoadAddressPart(any[Long], any[Long])).thenReturn(None)
+
+      val validationErrors = projectValidator.checkProjectElyCodes(project, combinedProjectLinks).distinct
+      validationErrors.size should be(1)
+      validationErrors.map(_.validationError).contains(projectValidator.ValidationErrorList.UnpairedElyCodeChange) should be(true)
+    }
+  }
+
   test("Test checkProjectElyCodes When discontinuity is anything BUT 3 and next road part ely is different Then validator should return errors") {
     runWithRollback {
       val raId = Sequences.nextRoadwayId
