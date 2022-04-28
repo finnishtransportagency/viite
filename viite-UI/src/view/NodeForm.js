@@ -180,7 +180,7 @@
       eventbus.on('junctionPoint:editableStatusFetched', function(response, jp) {
         var validationMessage = '';
         if (!response.isEditable) {
-          validationMessage = response.errorMessage;
+          validationMessage = response.validationMessage;
         }
         var inputField = $('#junction-point-address-input-' + jp.id);
         if(validationMessage.length === 0){

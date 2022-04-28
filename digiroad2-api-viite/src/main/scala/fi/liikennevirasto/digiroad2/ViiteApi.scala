@@ -915,7 +915,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       val isOnAdministrativeClassChangingSpot = nodesAndJunctionsService.areJunctionPointsOnAdministrativeClassChangingSpot(ids)
       val isOnReservedPart  = nodesAndJunctionsService.areJunctionPointsOnReservedRoadPart(ids)
       val isOnRoadwayChangingSpot = nodesAndJunctionsService.areJunctionPointsOnRoadwayChangingSpot(ids) // TODO remove this check when VIITE-2524 gets implemented
-      val isEditableAndErrorMessage = {
+      val isEditableAndValidationMessage = {
         if (isOnReservedPart)
           (false, "Liittymäkohta sijaitsee tieosalla joka on varattuna tieosoiteprojektiin, liittymäkohdan muokkaus ei ole juuri nyt mahdollista.")
         else if (isOnAdministrativeClassChangingSpot)
@@ -925,7 +925,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         else
           (true, "")
       }
-      Map("success" -> true, "isEditable" -> isEditableAndErrorMessage._1, "errorMessage" -> isEditableAndErrorMessage._2)
+      Map("isEditable" -> isEditableAndValidationMessage._1, "validationMessage" -> isEditableAndValidationMessage._2)
     }
   }
 
