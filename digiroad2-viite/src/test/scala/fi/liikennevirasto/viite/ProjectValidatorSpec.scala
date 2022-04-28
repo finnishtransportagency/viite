@@ -1899,17 +1899,13 @@ Left|      |Right
     }
   }
 
-  test("Test checkProjectElyCodes When discontinuity is 3 on one track but not on the other of a road part Then validator should return errors") {
+  test("Test checkProjectElyCodes When discontinuity is 3 (ELY change) on one track but not on the opposite track Then validator should return errors") {
     runWithRollback {
       val raId1 = Sequences.nextRoadwayId
       val raId2 = Sequences.nextRoadwayId
       val startDate = DateTime.now()
       val linearLocationId1 = Sequences.nextLinearLocationId
       val linearLocationId2 = Sequences.nextLinearLocationId
-      val ra = Seq(
-        RoadAddress(12345, 1, 16320L, 2L, AdministrativeClass.State, Track.LeftSide, Discontinuity.EndOfRoad, 0, 10, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000, 0, 10, AgainstDigitizing, DateTime.now().getMillis, (None, None), Seq(Point(0.0, 40.0), Point(0.0, 50.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None, None),
-        RoadAddress(12346, 1, 16320L, 2L, AdministrativeClass.State, Track.RightSide, Discontinuity.EndOfRoad, 0, 10, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000, 0, 10, AgainstDigitizing, DateTime.now().getMillis, (None, None), Seq(Point(0.0, 40.0), Point(0.0, 50.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None, None)
-      )
 
       val roadway1 = Roadway(raId1, roadwayNumber1, 16320L, 2L, AdministrativeClass.State, Track.LeftSide, Discontinuity.Continuous, 0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None)
       val roadway2 = Roadway(raId2, roadwayNumber1, 16320L, 2L, AdministrativeClass.State, Track.RightSide, Discontinuity.Continuous, 0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None)
@@ -1926,6 +1922,11 @@ Left|      |Right
 
       roadwayDAO.create(Seq(roadway1, roadway2))
       linearLocationDAO.create(Seq(linearLocation1, linearLocation2))
+
+      val ra = Seq(
+        RoadAddress(12345, 1, 16320L, 2L, AdministrativeClass.State, Track.LeftSide, Discontinuity.Continuous, 0, 10, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), Seq(Point(0.0, 40.0), Point(0.0, 50.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None, None),
+        RoadAddress(12346, 1, 16320L, 2L, AdministrativeClass.State, Track.RightSide, Discontinuity.Continuous, 0, 10, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), Seq(Point(0.0, 40.0), Point(0.0, 50.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None, None)
+      )
 
       val testRoad = {
         (16320L, 1L, "name")
@@ -1947,7 +1948,7 @@ Left|      |Right
 
       val validationErrors = projectValidator.checkProjectElyCodes(project, combinedProjectLinks).distinct
       validationErrors.size should be(1)
-      validationErrors.map(_.validationError).contains(projectValidator.ValidationErrorList.ElyCodeChangeButNotOnBothTracks) should be(true)
+      validationErrors.map(_.validationError).contains(projectValidator.ValidationErrorList.UnpairedElyCodeChange) should be(true)
     }
   }
 

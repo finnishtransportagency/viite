@@ -415,10 +415,10 @@ class ProjectValidator {
     }
 
     //VIITE-2722
-    case object ElyCodeChangeButNotOnBothTracks extends ValidationError {
+    case object UnpairedElyCodeChange extends ValidationError {
       def value = 32
 
-      def message: String = ElyCodeChangeButNotOnBothTracksMessage
+      def message: String = UnpairedElyCodeChangeMessage
 
       def notification = true
     }
@@ -859,10 +859,10 @@ class ProjectValidator {
         //Fetch original roadway data
         val workableProjectLinks = allProjectLinks.filterNot(pl => pl.status == LinkStatus.NotHandled || pl.status == LinkStatus.Terminated)
         val roadways = roadwayDAO.fetchAllByRoadwayNumbers(group._2.map(_.roadwayNumber).toSet)
-        val notLastLinkHasChangeOfEly = group._2.filter(p => p.discontinuity == Discontinuity.ChangingELYCode && p.endAddrMValue != group._2.maxBy(_.endAddrMValue).endAddrMValue)
+        val nonLastLinkHasChangeOfEly = group._2.filter(p => p.discontinuity == Discontinuity.ChangingELYCode && p.endAddrMValue != group._2.maxBy(_.endAddrMValue).endAddrMValue)
         val twoTrackLinksWithChangeOfEly = group._2.filter(p => p.discontinuity == Discontinuity.ChangingELYCode &&
           p.endAddrMValue == group._2.maxBy(_.endAddrMValue).endAddrMValue && p.track != Track.Combined)
-        val notBothTracksWithChangeOfEly = twoTrackLinksWithChangeOfEly.flatMap(p => group._2.filter(q => q.endAddrMValue == p.endAddrMValue &&
+        val tracksWithUnpairedChangeOfEly = twoTrackLinksWithChangeOfEly.flatMap(p => group._2.filter(q => q.endAddrMValue == p.endAddrMValue &&
           q.discontinuity != Discontinuity.ChangingELYCode))
         val originalElys = roadways.map(_.ely).distinct
         val projectLinkElys = group._2.map(_.ely).distinct
@@ -879,20 +879,20 @@ class ProjectValidator {
           }
           else Seq.empty
 
-          val changeElyCodeNotInFinish = if (notLastLinkHasChangeOfEly.nonEmpty) {
-            val coords = notLastLinkHasChangeOfEly.map(p => {
+          val changeElyCodeNotInFinish = if (nonLastLinkHasChangeOfEly.nonEmpty) {
+            val coords = nonLastLinkHasChangeOfEly.map(p => {
               val middlePoint = GeometryUtils.midPointGeometry(p.geometry)
               ProjectCoordinates(middlePoint.x, middlePoint.y, defaultZoomlevel)
             })
-            Seq(ValidationErrorDetails(project.id, ValidationErrorList.ElyCodeChangeButNotOnEnd, notLastLinkHasChangeOfEly.map(_.id), coords, Option.empty[String]))
+            Seq(ValidationErrorDetails(project.id, ValidationErrorList.ElyCodeChangeButNotOnEnd, nonLastLinkHasChangeOfEly.map(_.id), coords, Option.empty[String]))
           } else Seq.empty
 
-          val changeElyCodeNotInBothTracks = if (notBothTracksWithChangeOfEly.nonEmpty) {
-            val coords = notBothTracksWithChangeOfEly.map(p => {
+          val changeElyCodeNotInBothTracks = if (tracksWithUnpairedChangeOfEly.nonEmpty) {
+            val coords = tracksWithUnpairedChangeOfEly.map(p => {
               val middlePoint = GeometryUtils.midPointGeometry(p.geometry)
               ProjectCoordinates(middlePoint.x, middlePoint.y, defaultZoomlevel)
             })
-            Seq(ValidationErrorDetails(project.id, ValidationErrorList.ElyCodeChangeButNotOnBothTracks, notBothTracksWithChangeOfEly.map(_.id), coords, Option.empty[String]))
+            Seq(ValidationErrorDetails(project.id, ValidationErrorList.UnpairedElyCodeChange, tracksWithUnpairedChangeOfEly.map(_.id), coords, Option.empty[String]))
           } else Seq.empty
 
           multi ++ wrongStatusCode ++ changeElyCodeNotInFinish ++ changeElyCodeNotInBothTracks
