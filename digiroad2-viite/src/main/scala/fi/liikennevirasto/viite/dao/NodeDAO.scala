@@ -225,7 +225,6 @@ class NodeDAO extends BaseDAO {
       case _ => ""
     }
 
-    // TODO PostGIS conversion for getting the coordinates
     val query =
       s"""
         SELECT DISTINCT node.ID, node.NODE_NUMBER, ST_X(node.COORDINATES), ST_Y(node.COORDINATES), node.NAME, node.TYPE, node.START_DATE, node.END_DATE, node.VALID_FROM, node.VALID_TO,
@@ -236,14 +235,6 @@ class NodeDAO extends BaseDAO {
         JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
           WHERE node.VALID_TO IS NULL AND node.END_DATE IS NULL
           AND rw.ROAD_NUMBER = $road_number $road_condition
-          AND (np.BEFORE_AFTER = ${BeforeAfter.After.value} OR CASE WHEN EXISTS (
-            SELECT * FROM NODE_POINT np_c
-              JOIN ROADWAY_POINT rp_c ON np_c.ROADWAY_POINT_ID = rp_c.ID
-              JOIN ROADWAY rw_c ON rp_c.ROADWAY_NUMBER = rw_c.ROADWAY_NUMBER AND rw_c.VALID_TO IS NULL AND rw_c.END_DATE IS NULL
-                WHERE np_c.VALID_TO IS NULL AND np_c.NODE_NUMBER = node.NODE_NUMBER
-                AND rw_c.ROAD_NUMBER = rw.ROAD_NUMBER AND rw_c.ROAD_PART_NUMBER != rw.ROAD_PART_NUMBER) THEN 0
-            ELSE 1
-          END = 1)
         ORDER BY rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rp.ADDR_M
       """
 
