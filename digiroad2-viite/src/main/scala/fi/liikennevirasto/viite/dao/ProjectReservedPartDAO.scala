@@ -45,6 +45,7 @@ class ProjectReservedPartDAO {
     }
   }
 
+  /* No usage found */
   def removeFormedRoadPartAndChanges(projectId: Long, roadNumber: Long, roadPartNumber: Long): Unit = {
     time(logger, s"Remove formed road part $roadNumber / $roadPartNumber from project $projectId") {
       sqlu"""DELETE FROM ROADWAY_CHANGES_LINK WHERE PROJECT_ID = $projectId""".execute

@@ -244,6 +244,33 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Test orderProjectLinksTopologyByGeometry " +
+                 "When two track road connecto to one track with 90 deg angle from left to up" +
+                 "Then both tracks should have correct link order.") {
+    //                             |
+    //                             │5L
+    //                             │
+    //                      2L     │4L
+    //                             │
+    //                 |-----------┥
+    //                      1L     │3L
+    //                 |-----------┘
+
+    val projectLinks = List(
+      toDummyProjectLink(1L, Seq(Point(328667.277, 6819926.413), Point(328387.331, 6819997.255)), Track.RightSide).copy(sideCode = SideCode.AgainstDigitizing),
+      toDummyProjectLink(2L, Seq(Point(328667.496, 6819939.813), Point(328390.798, 6820012.032)), Track.LeftSide).copy(sideCode = SideCode.AgainstDigitizing),
+      toDummyProjectLink(3L, Seq(Point(328667.277, 6819926.413), Point(328667.496, 6819939.813)), Track.Combined).copy(sideCode = SideCode.TowardsDigitizing),
+      toDummyProjectLink(4L, Seq(Point(328667.496, 6819939.813), Point(328667.566, 6819950.224)), Track.Combined).copy(sideCode = SideCode.TowardsDigitizing),
+      toDummyProjectLink(5L, Seq(Point(328667.566, 6819950.224), Point(328668.4, 6820062.203)), Track.Combined).copy(sideCode = SideCode.TowardsDigitizing)
+    )
+    runWithRollback {
+      val (rightOrdered, leftOrdered) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(328387.331, 6819997.255), Point(328390.798, 6820012.032)), projectLinks)
+
+      rightOrdered.map(_.linkId) should be(List(1L, 3L, 4L, 5L))
+      leftOrdered.map(_.linkId) should be(List(2L, 3L, 4L, 5L))
+    }
+  }
+
   test("Test orderProjectLinksTopologyByGeometry When choosing the same track when there is 2 connected Then links with only one with same track code should be picked") {
     //                             -        -
     //                             |        |

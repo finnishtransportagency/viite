@@ -1,10 +1,10 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.GeometryUtils
+import fi.liikennevirasto.digiroad2.GeometryUtils.to2DGeometry
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.util.{MissingTrackException, RoadAddressException, Track}
-import fi.liikennevirasto.digiroad2.{Matrix, Point, Vector3d}
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Matrix, Point, Vector3d}
 import fi.liikennevirasto.viite.MaxDistanceForConnectedLinks
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, RoadAddressCP}
@@ -301,7 +301,7 @@ object TrackSectionOrder {
         val (nextPoint, nextLink): (Point, ProjectLink) = connected.size match {
           case 0 =>
             val subsetB = findOnceConnectedLinks(unprocessed)
-            if (subsetB.size > 0) {
+            if (subsetB.nonEmpty) {
               val (closestPoint, link) = subsetB.minBy(b => (currentPoint - b._1).length())
               (getOppositeEnd(link, closestPoint), link)
             }
@@ -310,19 +310,25 @@ object TrackSectionOrder {
             }
           case 1 =>
             (getOppositeEnd(connected.head, currentPoint), connected.head)
-          case 2 =>
-            val nextLinkSameTrack = pickSameTrack(ready.lastOption, connected)
+          case 2 => val nextLinkSameTrack = pickSameTrack(ready.lastOption, connected)
             if (nextLinkSameTrack.nonEmpty) {
               (getOppositeEnd(nextLinkSameTrack.get, currentPoint), nextLinkSameTrack.get)
             } else {
-              if (findOnceConnectedLinks(unprocessed).exists(b =>
-                (currentPoint - b._1).length() <= fi.liikennevirasto.viite.MaxJumpForSection)) {
-                val (nPoint, link) = findOnceConnectedLinks(unprocessed).filter(b =>
-                  (currentPoint - b._1).length() <= fi.liikennevirasto.viite.MaxJumpForSection)
-                  .minBy(b => (currentPoint - b._1).length())
+              if (findOnceConnectedLinks(unprocessed).exists(b => {
+                (currentPoint - b._1).length() <= fi.liikennevirasto.viite.MaxJumpForSection
+              })) {
+                val (nPoint, link) = findOnceConnectedLinks(unprocessed).filter(b => {
+                  (currentPoint - b._1).length() <= fi.liikennevirasto.viite.MaxJumpForSection
+                }).minBy(b => {
+                  (currentPoint - b._1).length()
+                })
                 (getOppositeEnd(link, nPoint), link)
               } else {
-                val l = if (ready.isEmpty) connected.head else pickRightMost(ready.last, connected)
+                val nextLinkTogo: Seq[ProjectLink] =
+                  if (connected.forall(_.sideCode != SideCode.Unknown))
+                    connected.filter(pl => to2DGeometry(pl.startingPoint) != to2DGeometry(currentPoint))
+                  else Seq()
+                val l = if (ready.isEmpty) connected.head else if (nextLinkTogo.nonEmpty) nextLinkTogo.head else pickRightMost(ready.last, connected)
                 (getOppositeEnd(l, currentPoint), l)
               }
             }
