@@ -222,14 +222,11 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       while (it.hasNext) {
         it.next() match {
           case Seq(first, next) => {
-            if (first.connectedLinkId.isDefined && first.connectedLinkId == next.connectedLinkId) if (!(first.reversed && next.reversed) && first.endMValue != next.startMValue) {
-              val falsePls = Iterable(first, next)
-              val msg      = "Discontinuity in splitted links endMValue and startMValue in project"
-              throwExceptionWithErrorInfo(falsePls, msg)
-            } else  if (first.reversed && next.reversed && first.startMValue != next.endMValue) {
-              val falsePls = Iterable(first, next)
-              val msg      = "Discontinuity in splitted links endMValue and startMValue in project"
-              throwExceptionWithErrorInfo(falsePls, msg)
+            if (first.connectedLinkId.isDefined && next.connectedLinkId.isDefined && first.connectedLinkId == next.connectedLinkId)
+              if (!(first.endMValue == next.startMValue || first.startMValue == next.endMValue)) {
+                val falsePls = Iterable(first, next)
+                val msg      = "Discontinuity in splitted links endMValue and startMValue in project"
+                throwExceptionWithErrorInfo(falsePls, msg)
             }
           }
         }
