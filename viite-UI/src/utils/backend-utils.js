@@ -274,9 +274,9 @@
       $.getJSON('api/viite/project/recalculateProject/' + id, callback);
     };
 
-    this.getJunctionPointReservedStatus = function (ids, jp) {
-      $.get('api/viite/junctions/getReservedStatusOfJunctionPoints?ids=' + ids, function (response) {
-        eventbus.trigger('junctionPoint:reservedStatusFetched', response, jp);
+    this.getJunctionPointEditableStatus = function (ids, jp) {
+      $.get('api/viite/junctions/getEditableStatusOfJunctionPoints?ids=' + ids, function (response) {
+        eventbus.trigger('junctionPoint:editableStatusFetched', response, jp);
       });
     };
 
