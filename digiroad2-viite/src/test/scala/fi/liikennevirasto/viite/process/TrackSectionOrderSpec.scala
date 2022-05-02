@@ -245,7 +245,7 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
   }
 
   test("Test orderProjectLinksTopologyByGeometry " +
-                 "When two track road connecto to one track with 90 deg angle from left to up" +
+                 "When two track road connects to one track with 90 deg angle from left to up" +
                  "Then both tracks should have correct link order.") {
     //                             |
     //                             │5L
@@ -255,16 +255,24 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     //                 |-----------┥
     //                      1L     │3L
     //                 |-----------┘
+    val connect1to3     = Point(328667.277, 6819926.413)
+    val connect2to3and4 = Point(328667.496, 6819939.813)
+
+    val startPointRight = Point(328387.331, 6819997.255)
+    val startPointLeft  = Point(328390.798, 6820012.032)
+
+    val connect4to5     = Point(328667.566, 6819950.224)
+    val endPoint        = Point(328668.4, 6820062.203)
 
     val projectLinks = List(
-      toDummyProjectLink(1L, Seq(Point(328667.277, 6819926.413), Point(328387.331, 6819997.255)), Track.RightSide).copy(sideCode = SideCode.AgainstDigitizing),
-      toDummyProjectLink(2L, Seq(Point(328667.496, 6819939.813), Point(328390.798, 6820012.032)), Track.LeftSide).copy(sideCode = SideCode.AgainstDigitizing),
-      toDummyProjectLink(3L, Seq(Point(328667.277, 6819926.413), Point(328667.496, 6819939.813)), Track.Combined).copy(sideCode = SideCode.TowardsDigitizing),
-      toDummyProjectLink(4L, Seq(Point(328667.496, 6819939.813), Point(328667.566, 6819950.224)), Track.Combined).copy(sideCode = SideCode.TowardsDigitizing),
-      toDummyProjectLink(5L, Seq(Point(328667.566, 6819950.224), Point(328668.4, 6820062.203)), Track.Combined).copy(sideCode = SideCode.TowardsDigitizing)
+      toDummyProjectLink(1L, Seq(connect1to3, startPointRight), Track.RightSide).copy(sideCode = SideCode.AgainstDigitizing),
+      toDummyProjectLink(2L, Seq(connect2to3and4, startPointLeft), Track.LeftSide).copy(sideCode = SideCode.AgainstDigitizing),
+      toDummyProjectLink(3L, Seq(connect1to3, connect2to3and4), Track.Combined).copy(sideCode = SideCode.TowardsDigitizing),
+      toDummyProjectLink(4L, Seq(connect2to3and4, connect4to5), Track.Combined).copy(sideCode = SideCode.TowardsDigitizing),
+      toDummyProjectLink(5L, Seq(connect4to5, endPoint), Track.Combined).copy(sideCode = SideCode.TowardsDigitizing)
     )
     runWithRollback {
-      val (rightOrdered, leftOrdered) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(328387.331, 6819997.255), Point(328390.798, 6820012.032)), projectLinks)
+      val (rightOrdered, leftOrdered) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((startPointRight, startPointLeft), projectLinks)
 
       rightOrdered.map(_.linkId) should be(List(1L, 3L, 4L, 5L))
       leftOrdered.map(_.linkId) should be(List(2L, 3L, 4L, 5L))
