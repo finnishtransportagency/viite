@@ -896,24 +896,36 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  private val getReservedStatusOfJunctionPoints: SwaggerSupportSyntax.OperationBuilder = (
-    apiOperation[Map[String, Any]]("getReservedStatusOfJunctionPoints")
+  private val getEditableStatusOfJunctionPoints: SwaggerSupportSyntax.OperationBuilder = (
+    apiOperation[Map[String, Any]]("getEditableStatusOfJunctionPoints")
       .parameters(
         queryParam[Long]("ids").description("Junction point id:s")
       )
       tags "ViiteAPI - NodesAndJunctions"
-      summary "Checks if the junction points are on a road part that is reserved to a road address project."
+      summary "Validates the junction points' editability."
     )
 
-  get("/junctions/getReservedStatusOfJunctionPoints", operation(getReservedStatusOfJunctionPoints)) {
+  get("/junctions/getEditableStatusOfJunctionPoints", operation(getEditableStatusOfJunctionPoints)) {
     response.setHeader("Access-Control-Allow-Headers", "*")
     val ids: Seq[Long] = params.get("ids") match {
       case Some(s) if s != "" => s.split("-").map(_.trim.toLong).toSeq
       case _ => Seq()
     }
-    time(logger, s"GET request for /junctions/getReservedStatusOfJunctionPoints/ (junctionPointIds: ${ids})") {
+    time(logger, s"GET request for /junctions/getEditableStatusOfJunctionPoints/ (junctionPointIds: ${ids})") {
+      val isOnAdministrativeClassChangingSpot = nodesAndJunctionsService.areJunctionPointsOnAdministrativeClassChangingSpot(ids)
       val isOnReservedPart  = nodesAndJunctionsService.areJunctionPointsOnReservedRoadPart(ids)
-      Map("success" -> true, "isOnReservedPart" -> isOnReservedPart)
+      val isOnRoadwayChangingSpot = nodesAndJunctionsService.areJunctionPointsOnRoadwayChangingSpot(ids) // TODO remove this check when VIITE-2524 gets implemented
+      val isEditableAndValidationMessage = {
+        if (isOnReservedPart)
+          (false, "Liittymäkohta sijaitsee tieosalla joka on varattuna tieosoiteprojektiin, liittymäkohdan etäisyyden muokkaus ei ole juuri nyt mahdollista.")
+        else if (isOnAdministrativeClassChangingSpot)
+          (false, "Liittymäkohta sijaitsee hallinnollisen luokan vaihtumiskohdassa, liittymäkohdan etäisyyden muokkaus ei ole sallittua.")
+        else if (isOnRoadwayChangingSpot) // TODO remove this when VIITE-2524 gets implemented
+          (false, "Tämän liittymäkohdan etäisyyden muokkaus ei ole mahdollista tien tietojen sisäisestä rakenteesta johtuen. Jos etäisyys on välttämätön muuttaa, ota yhteys Viitteen tukeen.")
+        else
+          (true, "")
+      }
+      Map("isEditable" -> isEditableAndValidationMessage._1, "validationMessage" -> isEditableAndValidationMessage._2)
     }
   }
 

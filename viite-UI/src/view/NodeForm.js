@@ -173,14 +173,14 @@
 
 
       /**
-       * If the junction point is on a reserved road part
+       * If the junction point has a validation error
        * set the title attribute to notify the user and keep the input field disabled.
        * Otherwise enable the input field.
        */
-      eventbus.on('junctionPoint:reservedStatusFetched', function(response, jp) {
+      eventbus.on('junctionPoint:editableStatusFetched', function(response, jp) {
         var validationMessage = '';
-        if (response.isOnReservedPart) {
-          validationMessage = 'Liittymäkohta sijaitsee tieosalla joka on varattuna tieosoiteprojektiin, liittymäkohdan muokkaus ei ole juuri nyt mahdollista';
+        if (!response.isEditable) {
+          validationMessage = response.validationMessage;
         }
         var inputField = $('#junction-point-address-input-' + jp.id);
         if(validationMessage.length === 0){
@@ -227,7 +227,7 @@
       };
 
       var junctionPointInputAddr = function (jp) {
-        backend.getJunctionPointReservedStatus(jp.id, jp);
+        backend.getJunctionPointEditableStatus(jp.id, jp);
 
         var range = getAllowedAddrEditRange(jp);
         var minAddr = range.minAddr;

@@ -158,11 +158,36 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
   }
 
-  private def handleJunctionPointUpdate(junctionId: Long, oldJunctionPoint: JunctionPoint, newJunctionPoint: JunctionPoint, username: String): JunctionPoint = {
-    // TODO Check that the address change is within acceptable boundaries:
-    // - Less than 10 meters from the address calculated at this point if there were no calibration point here
-    // - Within the address range of the neighbouring links
+  // TODO remove this function and its usages when VIITE-2524 gets implemented
+  def areJunctionPointsOnRoadwayChangingSpot(junctionPointIds: Seq[Long]): Boolean = {
+    withDynSession {
+      val junctionPoints = junctionPointDAO.fetchByIds(junctionPointIds)
+      val roadwayNumbers = junctionPoints.map(jp => jp.roadwayNumber).toSet
+      if (roadwayNumbers.size < 2)
+        false
+      else
+        true
+    }
+  }
 
+  def areJunctionPointsOnAdministrativeClassChangingSpot(junctionPointIds: Seq[Long]): Boolean = {
+    withDynSession {
+      val junctionPoints = junctionPointDAO.fetchByIds(junctionPointIds)
+      val roadwayNumbers = junctionPoints.map(jp => jp.roadwayNumber).toSet
+      if (roadwayNumbers.size < 2)
+        false
+      else {
+        val roadways = roadwayDAO.fetchAllByRoadwayNumbers(roadwayNumbers)
+        val adminClasses = roadways.map(rw => rw.administrativeClass).toSet
+        if (adminClasses.size > 1)
+          true
+        else
+          false
+      }
+    }
+  }
+
+  private def handleJunctionPointUpdate(junctionId: Long, oldJunctionPoint: JunctionPoint, newJunctionPoint: JunctionPoint, username: String): JunctionPoint = {
     // Update JunctionPoint and CalibrationPoint addresses by pointing them to another RoadwayPoint
     val roadwayPointId = getRoadwayPointId(newJunctionPoint.roadwayNumber, newJunctionPoint.addrM, username)
     CalibrationPointsUtils.updateCalibrationPointAddress(oldJunctionPoint.roadwayPointId, roadwayPointId, username)
