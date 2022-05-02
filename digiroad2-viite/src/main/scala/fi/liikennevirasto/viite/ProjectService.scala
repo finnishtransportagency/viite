@@ -1166,7 +1166,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @param recalculate    : Boolean - Will tell if we recalculate the whole project links or not
     */
   private def revertSortedLinks(projectId: Long, roadNumber: Long, roadPartNumber: Long, toRemove: Iterable[LinkToRevert],
-                                modified: Iterable[LinkToRevert], userName: String, recalculate: Boolean = true): Unit = {
+                                modified: Iterable[LinkToRevert], userName: String, recalculate: Boolean = false): Unit = {
     val modifiedLinkIds = modified.map(_.linkId).toSet
     projectLinkDAO.removeProjectLinksByLinkId(projectId, toRemove.map(_.linkId).toSet)
     val vvhRoadLinks = roadLinkService.getCurrentAndComplementaryRoadLinksFromVVH(modifiedLinkIds)
@@ -2138,10 +2138,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val roadwayChanges = roadwayChangesDAO.fetchRoadwayChanges(Set(projectID))
     val mappedRoadwayChanges = currentRoadways.values.map(r => RoadwayFiller.RwChanges(r, findHistoryRoadways(r.roadwayNumber), projectLinks.filter(_.roadwayId == r.id))).toList
 
-    logger.debug(s"Moving project links to project link history.")
-    projectLinkDAO.moveProjectLinksToHistory(projectID)
-
     try {
+      logger.debug(s"Moving project links to project link history.")
+      projectLinkDAO.moveProjectLinksToHistory(projectID)
+
       val new_generatedRoadways = RoadwayFiller.applyNewLinks(projectLinks.filter(_.status == LinkStatus.New))
       val generatedRoadways = RoadwayFiller.applyRoadwayChanges(mappedRoadwayChanges).flatten.filter(_._1.nonEmpty) ++ new_generatedRoadways
       val historyRoadwaysToKeep = generatedRoadways.flatMap(_._1).filter(_.id != NewIdValue).map(_.id)
