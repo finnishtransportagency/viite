@@ -122,10 +122,6 @@ case class Point(x: Double, y: Double, z: Double = 0.0) {
     Point(GeometryUtils.scaleToThreeDigits(x + that.x), GeometryUtils.scaleToThreeDigits(y + that.y), z + that.z)
   }
 
-  def ==(that: Vector3d): Boolean = {
-    x == that.x && y == that.y && z == that.z
-  }
-
   lazy val toVector: Vector3d = {
     this - Point(0.0, 0.0)
   }
