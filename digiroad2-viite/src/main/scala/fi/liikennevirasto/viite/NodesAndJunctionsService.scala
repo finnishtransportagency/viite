@@ -162,32 +162,27 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   def areJunctionPointsOnRoadwayChangingSpot(junctionPointIds: Seq[Long]): Boolean = {
     withDynSession {
       val junctionPoints = junctionPointDAO.fetchByIds(junctionPointIds)
-      val roadwayPoints = junctionPoints.map(jp => roadwayPointDAO.fetch(jp.roadwayPointId))
-      val roadwayNumbers = roadwayPoints.map(rwp => rwp.roadwayNumber).toSet
-      val roadways = roadwayDAO.fetchAllByRoadwayNumbers(roadwayNumbers)
-      if (roadways.size < 2) {
+      val roadwayNumbers = junctionPoints.map(jp => jp.roadwayNumber).toSet
+      if (roadwayNumbers.size < 2)
         false
-      } else {
+      else
         true
-      }
     }
   }
 
   def areJunctionPointsOnAdministrativeClassChangingSpot(junctionPointIds: Seq[Long]): Boolean = {
     withDynSession {
       val junctionPoints = junctionPointDAO.fetchByIds(junctionPointIds)
-      val roadwayPoints = junctionPoints.map(jp => roadwayPointDAO.fetch(jp.roadwayPointId))
-      val roadwayNumbers = roadwayPoints.map(rwp => rwp.roadwayNumber).toSet
-      val roadways = roadwayDAO.fetchAllByRoadwayNumbers(roadwayNumbers)
-      if (roadways.size < 2) {
+      val roadwayNumbers = junctionPoints.map(jp => jp.roadwayNumber).toSet
+      if (roadwayNumbers.size < 2)
         false
-      } else {
+      else {
+        val roadways = roadwayDAO.fetchAllByRoadwayNumbers(roadwayNumbers)
         val adminClasses = roadways.map(rw => rw.administrativeClass).toSet
-        if (adminClasses.size > 1) {
+        if (adminClasses.size > 1)
           true
-        } else {
+        else
           false
-        }
       }
     }
   }
