@@ -902,7 +902,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         queryParam[Long]("ids").description("Junction point id:s")
       )
       tags "ViiteAPI - NodesAndJunctions"
-      summary "Validates if the junction points are editable."
+      summary "Validates the junction points' editability."
     )
 
   get("/junctions/getEditableStatusOfJunctionPoints", operation(getEditableStatusOfJunctionPoints)) {
@@ -917,11 +917,11 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       val isOnRoadwayChangingSpot = nodesAndJunctionsService.areJunctionPointsOnRoadwayChangingSpot(ids) // TODO remove this check when VIITE-2524 gets implemented
       val isEditableAndValidationMessage = {
         if (isOnReservedPart)
-          (false, "Liittymäkohta sijaitsee tieosalla joka on varattuna tieosoiteprojektiin, liittymäkohdan muokkaus ei ole juuri nyt mahdollista.")
+          (false, "Liittymäkohta sijaitsee tieosalla joka on varattuna tieosoiteprojektiin, liittymäkohdan etäisyyden muokkaus ei ole juuri nyt mahdollista.")
         else if (isOnAdministrativeClassChangingSpot)
-          (false, "Liittymäkohta sijaitsee hallinnollisen luokan vaihtumiskohdassa, liittymäkohdan muokkaus ei ole sallittua.")
+          (false, "Liittymäkohta sijaitsee hallinnollisen luokan vaihtumiskohdassa, liittymäkohdan etäisyyden muokkaus ei ole sallittua.")
         else if (isOnRoadwayChangingSpot) // TODO remove this when VIITE-2524 gets implemented
-          (false, "Liittymäkohdan muokkaus ei ole sallittua.")
+          (false, "Tämän liittymäkohdan etäisyyden muokkaus ei ole mahdollista tien tietojen sisäisestä rakenteesta johtuen. Jos etäisyys on välttämätön muuttaa, ota yhteys Viitteen tukeen.")
         else
           (true, "")
       }
