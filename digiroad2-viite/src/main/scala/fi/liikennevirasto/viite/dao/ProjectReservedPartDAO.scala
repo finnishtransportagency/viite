@@ -45,21 +45,6 @@ class ProjectReservedPartDAO {
     }
   }
 
-  def removeFormedRoadPartAndChanges(projectId: Long, roadNumber: Long, roadPartNumber: Long): Unit = {
-    time(logger, s"Remove formed road part $roadNumber / $roadPartNumber from project $projectId") {
-      sqlu"""DELETE FROM ROADWAY_CHANGES_LINK WHERE PROJECT_ID = $projectId""".execute
-      sqlu"""DELETE FROM ROADWAY_CHANGES WHERE PROJECT_ID = $projectId""".execute
-      sqlu"""
-           DELETE FROM PROJECT_LINK WHERE PROJECT_ID = $projectId AND
-           (EXISTS (SELECT 1 FROM ROADWAY RA, LINEAR_LOCATION LC WHERE RA.ID = ROADWAY_ID AND
-           RA.ROAD_NUMBER = $roadNumber AND RA.ROAD_PART_NUMBER = $roadPartNumber))
-           OR (ROAD_NUMBER = $roadNumber AND ROAD_PART_NUMBER = $roadPartNumber
-           AND (STATUS = ${LinkStatus.New.value} OR STATUS = ${LinkStatus.Numbering.value}))
-           """.execute
-      sqlu"""DELETE FROM PROJECT_RESERVED_ROAD_PART WHERE project_id = ${projectId} and road_number = ${roadNumber} and road_part_number = ${roadPartNumber}""".execute
-    }
-  }
-
   def removeReservedRoadPart(projectId: Long, roadNumber: Long, roadPartNumber: Long): Unit = {
     time(logger, s"Remove ") {
       sqlu"""DELETE FROM ROADWAY_CHANGES_LINK WHERE PROJECT_ID = $projectId""".execute

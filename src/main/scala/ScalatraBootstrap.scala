@@ -1,14 +1,14 @@
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.authentication.SessionApi
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
+import javax.servlet.ServletContext
 import org.apache.http.client.config.{CookieSpecs, RequestConfig}
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.HttpClientBuilder
 import org.scalatra._
-import scala.io.Source
-import javax.servlet.ServletContext
-import org.scalatra.swagger._
 
+import scala.io.Source
+import scala.language.postfixOps
 
 class ScalatraBootstrap extends LifeCycle {
 
