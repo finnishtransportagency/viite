@@ -122,15 +122,27 @@ class RoadNetworkDAO {
     * Fetches the data required for /summary API result generation.
     * @return The road address information, and road names of the whole latest road network
     */
-  def fetchRoadwayNetworkSummary: Seq[RoadwayNetworkSummaryRow] = {
+  def fetchRoadwayNetworkSummary(date: Option[DateTime] = None): Seq[RoadwayNetworkSummaryRow] = {
     time(logger, "Get whole network summary") {
+      val (dateFilter, roadnameTable) = date match {
+        case Some(date) =>
+          val dateString = date.toString("yyyy-MM-dd")
+          val datefilter =  s"r.START_DATE <= to_date('$dateString', 'yyyy-MM-dd') " +
+          s"AND (r.END_DATE IS NULL OR to_date('$dateString', 'yyyy-MM-dd') <= r.END_DATE) "
+
+          val roadnamefilter = s"(SELECT * FROM ROAD_NAME rn WHERE rn.START_DATE <= to_date('$dateString', 'yyyy-MM-dd')" +
+            s"AND (rn.END_DATE IS NULL OR to_date('$dateString', 'yyyy-MM-dd') <= rn.END_DATE) and rn.VALID_TO IS NULL)"
+          (datefilter, roadnamefilter)
+        case None => ("r.END_DATE IS NULL", "(SELECT * FROM ROAD_NAME rn WHERE rn.END_DATE IS NULL)")
+      }
+
       val query = s"""
          SELECT r.ROAD_NUMBER, n.ROAD_NAME,
                 r.ROAD_PART_NUMBER, r.ELY, r.ADMINISTRATIVE_CLASS,
                 r.TRACK, r.START_ADDR_M, r.END_ADDR_M, r.DISCONTINUITY
            FROM ROADWAY r
-      LEFT JOIN ROAD_NAME n ON n.ROAD_NUMBER = r.ROAD_NUMBER
-          WHERE r.VALID_TO IS NULL AND r.END_DATE IS NULL    -- no debug rows, no history rows -> latest state
+      LEFT JOIN $roadnameTable n ON n.ROAD_NUMBER = r.ROAD_NUMBER
+          WHERE r.VALID_TO IS NULL AND $dateFilter    -- no debug rows, no history rows -> latest state
        ORDER BY r.ROAD_NUMBER, r.ROAD_PART_NUMBER, r.TRACK, r.START_ADDR_M
       ;
       """

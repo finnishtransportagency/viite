@@ -83,6 +83,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
       summary "Returns current state (\"summary\") of the road network addresses, containing all the latest changes " +
       "to every part of any road found in Viite. Offered JSON contains data about: road number, road name, " +
       "road part number, ely code, administrative class, track, start address, end address, and discontinuity."
+      parameter queryParam[String]("date").description("Date in format ISO8601. For example 2020-04-29T13:59:59").optional
   )
   /** @return The JSON formatted whole road network address space of the latest versions of the network. */
   get("/summary", operation(getRoadNetworkSummary)) {
@@ -91,9 +92,20 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
     time(logger, s"Summary:  GET request for /summary") {
 
         try {
-          val roadNetworkSummary: Seq[RoadwayNetworkSummaryRow] = roadAddressService.getAllRoadAddresses
+          val roadNetworkSummary = params.get("date") match {
+            case Some(date) =>
+              val parsedDate = DateTime.parse(date)
+              roadAddressService.getRoadwayNetworkSummary(Some(parsedDate))
+            case None =>
+              roadAddressService.getRoadwayNetworkSummary()
+
+          }
           currentRoadNetworkSummaryToAPI(roadNetworkSummary)
         } catch {
+          case _: IllegalArgumentException =>
+            val message = "The date parameter should be in the ISO8601 date and time format"
+            logger.warn(message)
+            BadRequest(message)
           case e if NonFatal(e) =>
             logger.warn(e.getMessage, e)
             BadRequest(e.getMessage)
