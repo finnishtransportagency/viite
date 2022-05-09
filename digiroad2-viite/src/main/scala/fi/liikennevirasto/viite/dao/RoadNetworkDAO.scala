@@ -124,16 +124,20 @@ class RoadNetworkDAO {
     */
   def fetchRoadwayNetworkSummary(date: Option[DateTime] = None): Seq[RoadwayNetworkSummaryRow] = {
     time(logger, "Get whole network summary") {
-      val (dateFilter, roadnameTable) = date match {
+      val dateFilter = date match {
         case Some(date) =>
           val dateString = date.toString("yyyy-MM-dd")
-          val datefilter =  s"r.START_DATE <= to_date('$dateString', 'yyyy-MM-dd') " +
+          s"r.START_DATE <= to_date('$dateString', 'yyyy-MM-dd') " +
           s"AND (r.END_DATE IS NULL OR to_date('$dateString', 'yyyy-MM-dd') <= r.END_DATE) "
+        case None => "r.END_DATE IS NULL"
+      }
 
-          val roadnamefilter = s"(SELECT * FROM ROAD_NAME rn WHERE rn.START_DATE <= to_date('$dateString', 'yyyy-MM-dd')" +
-            s"AND (rn.END_DATE IS NULL OR to_date('$dateString', 'yyyy-MM-dd') <= rn.END_DATE) and rn.VALID_TO IS NULL)"
-          (datefilter, roadnamefilter)
-        case None => ("r.END_DATE IS NULL", "(SELECT * FROM ROAD_NAME rn WHERE rn.END_DATE IS NULL)")
+      val roadnameTable = date match {
+        case Some(date) =>
+          val dateString = date.toString("yyyy-MM-dd")
+          s"(SELECT * FROM ROAD_NAME rn WHERE rn.START_DATE <= to_date('$dateString', 'yyyy-MM-dd')" +
+          s"AND (rn.END_DATE IS NULL OR to_date('$dateString', 'yyyy-MM-dd') <= rn.END_DATE) and rn.VALID_TO IS NULL)"
+        case None => "(SELECT * FROM ROAD_NAME rn WHERE rn.END_DATE IS NULL)"
       }
 
       val query = s"""
