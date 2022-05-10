@@ -275,13 +275,15 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     }
   }
 
- /**
+  /**
+   * @param  date OPTIONAL: Fetches summary data for the road address information
+   *         of the whole road network at a specific time.
    * @return Returns summary data for the road address information
    *         of the whole road network.
    */
-  def getAllRoadAddresses(): Seq[RoadwayNetworkSummaryRow] = {
+  def getRoadwayNetworkSummary(date: Option[DateTime] = None): Seq[RoadwayNetworkSummaryRow] = {
     withDynSession {
-      roadNetworkDAO.fetchRoadwayNetworkSummary
+      roadNetworkDAO.fetchRoadwayNetworkSummary(date)
     }
   }
 
