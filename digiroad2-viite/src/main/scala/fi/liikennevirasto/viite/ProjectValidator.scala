@@ -1268,20 +1268,23 @@ class ProjectValidator {
              * is disconnected from the start of the road part reserved to the project
              * This takes priority over other validations and is returned alone if a ValidationError is found.
              */
-            val notDiscontinuousCodeOnDisconnectedRoadAddress = validatePreviousRoadAddress(prevLeftRoadAddress)(ra =>
-              ra.discontinuity != Discontinuity.Discontinuous
-              && !ra.getLastPoint.connected(leftLinks.head.getFirstPoint)
+            def validateDiscontinuity(pl: Seq[ProjectLink])(ra: RoadAddress): Boolean = {
+              ra.discontinuity != Discontinuity.Discontinuous &&
+              !ra.getLastPoint.connected(pl.head.getFirstPoint)
+            }
+
+            val notDiscontinuousCodeOnDisconnectedRoadAddress = validatePreviousRoadAddress(prevLeftRoadAddress)(validateDiscontinuity(leftLinks)
+            )(ValidationErrorList.notDiscontinuousCodeOnDisconnectedRoadPartOutside) ++
+              validatePreviousRoadAddress(prevRightRoadAddress)(validateDiscontinuity(rightLinks)
             )(ValidationErrorList.notDiscontinuousCodeOnDisconnectedRoadPartOutside)
 
-
-
-            if (notDiscontinuousCodeOnDisconnectedRoadAddress.nonEmpty) return notDiscontinuousCodeOnDisconnectedRoadAddress
+            if (notDiscontinuousCodeOnDisconnectedRoadAddress.nonEmpty) return Seq(notDiscontinuousCodeOnDisconnectedRoadAddress.head)
 
             /**
              * Validates that there isn't an end of road discontinuity on a road address before the road part reserved
              * in the project.
              */
-            val endOfRoadOutsideOfProject = validatePreviousRoadAddress(ra =>
+            val endOfRoadOutsideOfProject = validatePreviousRoadAddress(prevLeftRoadAddress)(ra =>
               ra.discontinuity == Discontinuity.EndOfRoad
             )(ValidationErrorList.DoubleEndOfRoad)
 
@@ -1289,15 +1292,22 @@ class ProjectValidator {
              * Validates that the previous RoadAddress doesn't have a Discontinuous Discontinuity code, if the RoadAddress
              * is connected to the start of the road part reserved to the project
              */
-            val discontinuousCodeOnConnectedRoadAddress = validatePreviousRoadAddress(ra =>
-              ra.discontinuity == Discontinuity.Discontinuous
-                && (ra.getLastPoint.connected(leftLinks.head.getFirstPoint) || ra.getLastPoint.connected(rightLinks.head.getFirstPoint))
+            def validateContinuous(pl: Seq[ProjectLink])(ra: RoadAddress): Boolean = {
+              ra.discontinuity == Discontinuity.Discontinuous &&
+                ra.getLastPoint.connected(pl.head.getFirstPoint)
+            }
+            val discontinuousCodeOnConnectedRoadAddress = validatePreviousRoadAddress(prevLeftRoadAddress)(validateContinuous(leftLinks)
+            )(ValidationErrorList.DiscontinuousCodeOnConnectedRoadPartOutside) ++
+              validatePreviousRoadAddress(prevRightRoadAddress)(validateContinuous(rightLinks)
             )(ValidationErrorList.DiscontinuousCodeOnConnectedRoadPartOutside)
+
+            val discontinuousCodeOnConnectedRoadAddressError = if (discontinuousCodeOnConnectedRoadAddress.size > 1) Seq(discontinuousCodeOnConnectedRoadAddress.head)
+              else discontinuousCodeOnConnectedRoadAddress
 
             /**
              * Validates that the ELY has changed, if the previous RoadAddress has ElyCodeChange Discontinuity
              */
-            val elyCodeChangeButSameElyNumber = validatePreviousRoadAddress(ra =>
+            val elyCodeChangeButSameElyNumber = validatePreviousRoadAddress(prevLeftRoadAddress)(ra =>
               ra.discontinuity == Discontinuity.ChangingELYCode
                 && ra.ely == roadProjectLinks.head.ely
             )(ValidationErrorList.ElyDiscontinuityCodeBeforeProjectButNoElyChange)
@@ -1306,13 +1316,13 @@ class ProjectValidator {
              * Validates that the previous RoadAddress has either Discontinuous or ChangingElyCode Discontinuity code,
              * if the ELY number of previous RoadAddress and road part reserved in the project aren't equal.
              */
-            val wrongDiscontinuityWithElyChange = validatePreviousRoadAddress(ra =>
+            val wrongDiscontinuityWithElyChange = validatePreviousRoadAddress(prevLeftRoadAddress)(ra =>
               ra.ely != roadProjectLinks.head.ely
                 && (ra.discontinuity != Discontinuity.Discontinuous && ra.discontinuity != Discontinuity.ChangingELYCode)
             )(ValidationErrorList.WrongDiscontinuityBeforeProjectWithElyChangeInProject)
 
 
-            endOfRoadOutsideOfProject ++ discontinuousCodeOnConnectedRoadAddress ++
+            endOfRoadOutsideOfProject ++ discontinuousCodeOnConnectedRoadAddressError ++
               elyCodeChangeButSameElyNumber ++ wrongDiscontinuityWithElyChange
         }
         case None =>
