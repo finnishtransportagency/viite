@@ -1,15 +1,16 @@
 package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
-import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LinkGeomSource, SideCode}
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.FrozenLinkInterface
+import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, RoadAddressCP}
-import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao._
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{JunctionPointCP, NoCP, RoadAddressCP}
+import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.process.strategy.DefaultSectionCalculatorStrategy
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import org.joda.time.DateTime
@@ -388,6 +389,66 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       leftCalculated.minBy(_.startAddrMValue).startAddrMValue should be(rightCalculated.minBy(_.startAddrMValue).startAddrMValue)
       leftCalculated should have size 2
       rightCalculated should have size 2
+    }
+  }
+
+  test("Test defaultSectionCalculatorStrategy.assignMValues() " +
+                 "When a two track road has a # turn having minor discontinuity on right track " +
+                 "Then address calculation should be successfully. No changes to tracks or addresses are expected.") {
+    runWithRollback {
+      /* A simplified version of road 1 part 2 to address # turn challenge. */
+      val project_id = Sequences.nextViiteProjectId
+      val roadNumber = 1
+      val roadPartNumber = 2
+      val createdBy = "test"
+      val roadName = None
+
+      val geomRight1       = List(Point(384292.0, 6674530.0), Point(384270.0, 6674532.0), Point(382891.0, 6675103.0))
+      val geomRight1length = GeometryUtils.geometryLength(geomRight1)
+      val geomRight2       = List(Point(382737.0, 6675175.0), Point(382737.0, 6675213.0), Point(382569.0, 6675961.0))
+      val geomRight2length = GeometryUtils.geometryLength(geomRight2)
+      val geomLeft3       = List(Point(384288.0, 6674517.0), Point(384218.0, 6674520.0), Point(382778.0, 6675136.0))
+      val geomLeft3length = GeometryUtils.geometryLength(geomLeft3)
+      val geomLeft4       = List(Point(382714.0, 6675186.0), Point(382720.0, 6675247.0), Point(382581.0, 6675846.0))
+      val geomLeft4length = GeometryUtils.geometryLength(geomLeft4)
+
+      val projectLinks = Seq(
+        ProjectLink(1000,roadNumber,roadPartNumber,Track.RightSide,Discontinuity.Continuous,0,1550,0,1550,None,None,Some(createdBy),452570,0.0,geomRight1length,SideCode.TowardsDigitizing,(RoadAddressCP,JunctionPointCP),(RoadAddressCP,JunctionPointCP),geomRight1,project_id,LinkStatus.UnChanged,AdministrativeClass.Municipality,FrozenLinkInterface,geomRight1length,761,4558,1,false,None,1629932416000L,38259,roadName,None,None,None,None,None,None),
+        ProjectLink(1037,roadNumber,roadPartNumber,Track.RightSide,Discontinuity.Continuous,1550,1717,1550,1717,None,None,Some(createdBy),451986,0.0,170.075,SideCode.TowardsDigitizing,(NoCP,JunctionPointCP),(NoCP,JunctionPointCP),List(Point(382891.0,6675103.0,0.0), Point(382737.0,6675175.0,0.0)),project_id,LinkStatus.UnChanged,AdministrativeClass.Municipality,FrozenLinkInterface,170.075,761,4576,1,false,None,1629932416000L,38259,roadName,None,None,None,None,None,None),
+        ProjectLink(1040,roadNumber,roadPartNumber,Track.RightSide,Discontinuity.MinorDiscontinuity,1717,1742,1717,1742,None,None,Some(createdBy),452008,0.0,24.988,SideCode.TowardsDigitizing,(JunctionPointCP,RoadAddressCP),(JunctionPointCP,RoadAddressCP),List(Point(382737.0,6675175.0,0.0), Point(382714.0,6675186.0,0.0)),project_id,LinkStatus.UnChanged,AdministrativeClass.Municipality,FrozenLinkInterface,24.988,761,4577,1,false,None,1629932416000L,38259,roadName,None,None,None,None,None,None),
+        ProjectLink(1042,roadNumber,roadPartNumber,Track.RightSide,Discontinuity.Continuous,1742,1760,1742,1760,None,None,Some(createdBy),452012,0.0,19.26,SideCode.TowardsDigitizing,(RoadAddressCP,JunctionPointCP),(RoadAddressCP,JunctionPointCP),List(Point(382728.0,6675158.0,0.0), Point(382737.0,6675175.0,0.0)),project_id,LinkStatus.UnChanged,AdministrativeClass.Municipality,FrozenLinkInterface,19.26,80546,458872,1,false,None,1629932416000L,202219273,roadName,None,None,None,None,None,None),
+        ProjectLink(1044,roadNumber,roadPartNumber,Track.RightSide,Discontinuity.Continuous,1760,2547,1760,2547,None,None,Some(createdBy),452007,0.0,geomRight2length,SideCode.TowardsDigitizing,(JunctionPointCP,NoCP),(JunctionPointCP,NoCP),geomRight2,project_id,LinkStatus.UnChanged,AdministrativeClass.Municipality,FrozenLinkInterface,geomRight2length,80546,458873,1,false,None,1629932416000L,202219273,roadName,None,None,None,None,None,None),
+        ProjectLink(1060,roadNumber,roadPartNumber,Track.RightSide,Discontinuity.Continuous,2547,2570,2547,2570,None,None,Some(createdBy),450651,0.0,23.353,SideCode.TowardsDigitizing,(JunctionPointCP,RoadAddressCP),(JunctionPointCP,RoadAddressCP),List(Point(382569.0,6675961.0,0.0), Point(382555.0,6675978.0,0.0)),project_id,LinkStatus.UnChanged,AdministrativeClass.Municipality,FrozenLinkInterface,23.353,80546,458880,1,false,None,1629932416000L,202219273,roadName,None,None,None,None,None,None),
+
+        ProjectLink(1001,roadNumber,roadPartNumber,Track.LeftSide,Discontinuity.Continuous,0,1673,0,1673,None,None,Some(createdBy),452566,0.0,geomLeft3length,SideCode.TowardsDigitizing,(RoadAddressCP,NoCP),(RoadAddressCP,NoCP),geomLeft3,project_id,LinkStatus.UnChanged,AdministrativeClass.Municipality,FrozenLinkInterface,geomLeft3length ,715,4288,1,false,None,1629932416000L,38260,roadName,None,None,None,None,None,None),
+        ProjectLink(1038,roadNumber,roadPartNumber,Track.LeftSide,Discontinuity.Continuous,1673,1726,1673,1726,None,None,Some(createdBy),452005,0.0,54.292,SideCode.TowardsDigitizing,(NoCP,JunctionPointCP),(NoCP,JunctionPointCP),List(Point(382778.0,6675136.0,0.0), Point(382728.0,6675158.0,0.0)),project_id,LinkStatus.UnChanged,AdministrativeClass.Municipality,FrozenLinkInterface,54.292,715,4307,1,false,None,1629932416000L,38260,roadName,None,None,None,None,None,None),
+        ProjectLink(1039,roadNumber,roadPartNumber,Track.LeftSide,Discontinuity.Continuous,1726,1742,1726,1742,None,None,Some(createdBy),452014,0.0,16.468,SideCode.TowardsDigitizing,(JunctionPointCP,NoCP),(JunctionPointCP,NoCP),List(Point(382728.0,6675158.0,0.0), Point(382713.0,6675164.0,0.0)),project_id,LinkStatus.UnChanged,AdministrativeClass.Municipality,FrozenLinkInterface,16.468,715,4308,1,false,None,1629932416000L,38260,roadName,None,None,None,None,None,None),
+        ProjectLink(1041,roadNumber,roadPartNumber,Track.LeftSide,Discontinuity.Continuous,1742,1752,1742,1752,None,None,Some(createdBy),452014,16.468,26.761,SideCode.TowardsDigitizing,(NoCP,JunctionPointCP),(NoCP,JunctionPointCP),List(Point(382713.0,6675164.0,0.0), Point(382704.0,6675168.0,0.0)),project_id,LinkStatus.UnChanged,AdministrativeClass.Municipality,FrozenLinkInterface,10.293,80486,458576,1,false,None,1629932416000L,202219282,roadName,None,None,None,None,None,None),
+        ProjectLink(1043,roadNumber,roadPartNumber,Track.LeftSide,Discontinuity.Continuous,1752,1773,1752,1773,None,None,Some(createdBy),451992,0.0,21.002,SideCode.TowardsDigitizing,(JunctionPointCP,JunctionPointCP),(JunctionPointCP,JunctionPointCP),List(Point(382704.0,6675168.0,0.0), Point(382714.0,6675186.0,0.0)),project_id,LinkStatus.UnChanged,AdministrativeClass.Municipality,FrozenLinkInterface,21.002,80486,458577,1,false,None,1629932416000L,202219282,roadName,None,None,None,None,None,None),
+        ProjectLink(1045,roadNumber,roadPartNumber,Track.LeftSide,Discontinuity.Continuous,1773,2438,1773,2438,None,None,Some(createdBy),452002,0.0,geomLeft4length,SideCode.TowardsDigitizing,(JunctionPointCP,NoCP),(JunctionPointCP,NoCP),geomLeft4,project_id,LinkStatus.UnChanged,AdministrativeClass.Municipality,FrozenLinkInterface,geomLeft4length,80486,458578,1,false,None,1629932416000L,202219282,roadName,None,None,None,None,None,None),
+        ProjectLink(1059,roadNumber,roadPartNumber,Track.LeftSide,Discontinuity.Discontinuous,2438,2570,2438,2570,None,None,Some(createdBy),450646,0.0,134.664,SideCode.TowardsDigitizing,(JunctionPointCP,RoadAddressCP),(JunctionPointCP,RoadAddressCP),List(Point(382581.0,6675846.0,0.0), Point(382555.0,6675978.0,0.0)),project_id,LinkStatus.UnChanged,AdministrativeClass.Municipality,FrozenLinkInterface,134.664,80486,458586,1,false,None,1629932416000L,202219282,roadName,None,None,None,None,None,None)
+      )
+
+      val roadways = Seq(
+        Roadway(715,38260,1,2,AdministrativeClass.Municipality,Track.LeftSide,Discontinuity.Continuous,0,1742,reversed = false,DateTime.parse("2018-07-01T00:00:00.000+03:00"),None,createdBy,roadName,1,TerminationCode.NoTermination,DateTime.parse("2018-07-05T00:00:00.000+03:00"),None),
+        Roadway(761,38259,1,2,AdministrativeClass.Municipality,Track.RightSide,Discontinuity.MinorDiscontinuity,0,1742,reversed = false,DateTime.parse("2018-07-01T00:00:00.000+03:00"),None,createdBy,roadName,1,TerminationCode.NoTermination,DateTime.parse("2018-07-05T00:00:00.000+03:00"),None),
+        Roadway(80486,202219282,1,2,AdministrativeClass.Municipality,Track.LeftSide,Discontinuity.Discontinuous,1742,2570,reversed = false,DateTime.parse("2018-07-01T00:00:00.000+03:00"),None,createdBy,roadName,1,TerminationCode.NoTermination,DateTime.parse("2018-07-11T00:00:00.000+03:00"),None),
+        Roadway(80546,202219273,1,2,AdministrativeClass.Municipality,Track.RightSide,Discontinuity.Continuous,1742,2570,reversed = false,DateTime.parse("1989-01-01T00:00:00.000+02:00"),None,createdBy,roadName,1,TerminationCode.NoTermination,DateTime.parse("2018-07-04T00:00:00.000+03:00"),None)
+      )
+
+      roadwayDAO.create(roadways)
+
+      val calculated = defaultSectionCalculatorStrategy.assignMValues(Seq(), projectLinks, Seq.empty[UserDefinedCalibrationPoint])
+
+      calculated.foreach(pl => {
+        pl.originalTrack           should be(pl.track)
+        pl.originalStartAddrMValue should be(pl.startAddrMValue)
+        pl.originalEndAddrMValue   should be(pl.endAddrMValue)
+      })
+
+      calculated.filter(_.startAddrMValue == 0)    should have size 2
+      calculated.filter(_.endAddrMValue   == 2570) should have size 2
+
     }
   }
 

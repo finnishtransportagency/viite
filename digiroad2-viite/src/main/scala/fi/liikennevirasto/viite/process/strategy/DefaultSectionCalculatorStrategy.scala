@@ -1,18 +1,18 @@
 package fi.liikennevirasto.viite.process.strategy
 
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d}
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.dao.Sequences
-import fi.liikennevirasto.digiroad2.util.Track.LeftSide
 import fi.liikennevirasto.digiroad2.util.{MissingRoadwayNumberException, MissingTrackException, RoadAddressException, Track}
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d}
+import fi.liikennevirasto.digiroad2.util.Track.LeftSide
+import fi.liikennevirasto.viite.{NewIdValue, UnsuccessfulRecalculationMessage}
+import fi.liikennevirasto.viite.dao.{Discontinuity, _}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.UserDefinedCP
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
-import fi.liikennevirasto.viite.dao.{Discontinuity, _}
 import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.process.strategy.FirstRestSections.{getUpdatedContinuousRoadwaySections, lengthCompare}
 import fi.liikennevirasto.viite.util.TwoTrackRoadUtils
 import fi.liikennevirasto.viite.util.TwoTrackRoadUtils._
-import fi.liikennevirasto.viite.{NewIdValue, UnsuccessfulRecalculationMessage}
 import org.slf4j.LoggerFactory
 
 import scala.collection.immutable.ListMap
@@ -60,10 +60,10 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       } catch {
         case ex @ (_: MissingTrackException | _: MissingRoadwayNumberException) =>
           logger.warn(ex.getMessage)
-          projectLinks ++ oldLinks
+          throw ex
         case ex: InvalidAddressDataException =>
           logger.warn(s"Can't calculate road/road part ${part._1}/${part._2}: " + ex.getMessage)
-          projectLinks ++ oldLinks
+          throw ex
         case ex: NoSuchElementException =>
           logger.error("Delta calculation failed: " + ex.getMessage, ex)
           throw ex
@@ -625,7 +625,7 @@ object FirstRestSections {
   }
 
   def getUpdatedContinuousRoadwaySections(sect: FirstRestSections, oppositeSect: FirstRestSections, rightSideFirst: Boolean): Option[((Seq[ProjectLink], Seq[ProjectLink]), (Seq[ProjectLink], Seq[ProjectLink]))] = {
-    if (sect.rest.nonEmpty && oppositeSect.rest.nonEmpty && checkTheLastLinkInOppositeRange(sect.first, oppositeSect.first)) {
+    if (oppositeSect.rest.nonEmpty && checkTheLastLinkInOppositeRange(sect.first, oppositeSect.first)) {
       val equalRoadwaySections = getEqualRoadwaySections(sect, oppositeSect)
       if (rightSideFirst) {
         Some(equalRoadwaySections)
