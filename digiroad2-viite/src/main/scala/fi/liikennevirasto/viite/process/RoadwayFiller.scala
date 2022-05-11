@@ -5,8 +5,8 @@ import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.NewIdValue
-import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent}
 import fi.liikennevirasto.viite.dao._
+import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
@@ -45,9 +45,10 @@ object RoadwayFiller {
 
     def createRoadwaysWithLinearlocationsAndProjectLinks( currentRoadway: Roadway,
                                                           project       : Option[Project],
-                                                          projectLinkSeq: Seq[ProjectLink]
+                                                          projectLinkSeq: Seq[ProjectLink],
+                                                          historyRoadways: Seq[Roadway]
                                                         ): GeneratedRoadway = {
-      val generatedNewRoadways      = generateNewRoadwaysWithHistory2(projectLinkSeq, currentRoadway, project.get.startDate, projectLinkSeq.head.roadwayNumber)
+      val generatedNewRoadways     = generateNewRoadwaysWithHistory2(projectLinkSeq, currentRoadway, project.get.startDate, projectLinkSeq.head.roadwayNumber,historyRoadways)
       val (newRoadway, oldRoadway) = generatedNewRoadways.partition(_.endDate.isEmpty)
       val roadwaysWithLinearlocationsAndProjectLinkSeqs = newRoadway.map(nrw => {
         val projectLinksWithGivenAttributes = projectLinkSeq.map(pl => {
@@ -62,24 +63,25 @@ object RoadwayFiller {
     }
 
     rwChanges.map(changes => {
-      val currentRoadway                   = changes.currentRoadway
-      val historyRoadways                  = changes.historyRoadways
-      val projectLinksInRoadway            = changes.projectLinks
+      val currentRoadway                = changes.currentRoadway
+      val historyRoadways: Seq[Roadway] = changes.historyRoadways
+      val projectLinksInRoadway         = changes.projectLinks
       val (terminatedProjectLinks, others) = projectLinksInRoadway.partition(_.status == LinkStatus.Terminated)
       val elyChanged                       = if (others.nonEmpty) currentRoadway.ely != others.head.ely else false
       val addressChanged                   = if (others.nonEmpty) others.last.endAddrMValue != currentRoadway.endAddrMValue || (others.head.startAddrMValue) != currentRoadway.startAddrMValue else false
       val adminClassed                     = others.groupBy(pl => AdminClassRwn(pl.administrativeClass, pl.roadwayNumber))
       val project                          = projectDAO.fetchById(projectLinksInRoadway.head.projectId)
 
-      val roadways = adminClassed.map{ case (adminClassRoadwayNumber, projectLinkSeq) => {
-        if (roadwayHasChanges(currentRoadway, adminClassRoadwayNumber, projectLinkSeq) ||
-            elyChanged ||
-            addressChanged)
-          createRoadwaysWithLinearlocationsAndProjectLinks(currentRoadway, project, projectLinkSeq)
-        else if (projectLinkSeq.nonEmpty) {
+      val roadways = adminClassed.map { case (adminClassRoadwayNumber, projectLinkSeq) => {
+        if (roadwayHasChanges(currentRoadway, adminClassRoadwayNumber, projectLinkSeq) || elyChanged || addressChanged) {
+            createRoadwaysWithLinearlocationsAndProjectLinks(currentRoadway, project, projectLinkSeq, historyRoadways)
+        } else if (projectLinkSeq.nonEmpty) {
           val headPl                          = projectLinkSeq.head
           val lastPl                          = projectLinkSeq.last
-          val existingRoadway                 = Seq(Roadway(NewIdValue, headPl.roadwayNumber, headPl.roadNumber, headPl.roadPartNumber, headPl.administrativeClass, headPl.track, lastPl.discontinuity, headPl.startAddrMValue, lastPl.endAddrMValue, headPl.reversed, currentRoadway.startDate, None, createdBy = headPl.createdBy.get, currentRoadway.roadName, headPl.ely, NoTermination)) ++ historyRoadways.toList
+          val existingRoadway = Seq(Roadway(NewIdValue, headPl.roadwayNumber, headPl.roadNumber, headPl.roadPartNumber, headPl.administrativeClass, headPl.track, lastPl.discontinuity, headPl.startAddrMValue, lastPl.endAddrMValue, headPl.reversed, currentRoadway.startDate, None, createdBy = headPl.createdBy.get, currentRoadway.roadName, headPl.ely, NoTermination)) ++ historyRoadways.map { historyRoadway =>
+            historyRoadway.copy(id = NewIdValue, roadwayNumber = headPl.roadwayNumber, startAddrMValue = headPl.startAddrMValue, endAddrMValue = lastPl.endAddrMValue)
+          }
+
           val projectLinksWithGivenAttributes = projectLinkSeq.map(pl =>
             pl.copy(linearLocationId = Sequences.nextLinearLocationId, roadwayNumber = existingRoadway.head.roadwayNumber)
           )
@@ -87,7 +89,7 @@ object RoadwayFiller {
         } else GeneratedRoadway(Seq(), Seq(), Seq())
       }}.toSeq
 
-      val roadwaysWithLinearlocations = (roadways.flatMap(_.roadway), roadways.flatMap(_.linearLocations), roadways.flatMap(_.projectLinks))
+      val roadwaysWithLinearlocations = (roadways.flatMap(_.roadway).distinct, roadways.flatMap(_.linearLocations), roadways.flatMap(_.projectLinks))
       val historyRowsOfTerminatedRoadway = terminatedHistory(historyRoadways, currentRoadway, terminatedProjectLinks)
       val oldTerminatedRoadway = historyRowsOfTerminatedRoadway.find(_.terminated == TerminationCode.Termination)
 
@@ -98,13 +100,7 @@ object RoadwayFiller {
         (historyRowsOfTerminatedRoadway, roadwayAddressMapper.mapLinearLocations(oldTerminatedRoadway.get, terminatedProjectLinksWithGivenAttributes), terminatedProjectLinksWithGivenAttributes)
       } else (Seq(), Seq(), Seq())
 
-      val existingHistoryRoadways = if (projectLinksInRoadway.forall(pl => pl.status != LinkStatus.Terminated)) {
-        (historyRoadways.map(rw => rw.copy(id = NewIdValue, roadwayNumber = roadwaysWithLinearlocations._1.head.roadwayNumber)), Seq(), Seq())
-      } else {
-        (Seq(), Seq(), Seq())
-      }
-
-      Seq(roadwaysWithLinearlocations, createdTerminatedHistoryRoadways, existingHistoryRoadways)
+      Seq(roadwaysWithLinearlocations, createdTerminatedHistoryRoadways)
     })
   }
 
@@ -123,7 +119,8 @@ object RoadwayFiller {
   def generateNewRoadwaysWithHistory2(projectLinks    : Seq[ProjectLink],
                                       currentRoadway  : Roadway,
                                       projectStartDate: DateTime,
-                                      roadwayNumber   : Long
+                                      roadwayNumber   : Long,
+                                      historyRoadways: Seq[Roadway]
                                      ): Seq[Roadway] = {
     val headProjectLink  = projectLinks.head
     val lastProjectLink  = projectLinks.last
@@ -132,27 +129,8 @@ object RoadwayFiller {
     val newEndAddressM   = if (reversed) headProjectLink.originalEndAddrMValue else lastProjectLink.originalEndAddrMValue
     val oldAdministrativeClass = headProjectLink.originalAdministrativeClass
 
-    val historyRoadway   = Roadway(
-                            NewIdValue,
-                            roadwayNumber,
-                            currentRoadway.roadNumber,
-                            currentRoadway.roadPartNumber,
-                            oldAdministrativeClass,
-                            currentRoadway.track,
-                            lastProjectLink.originalDiscontinuity,
-                            newStartAddressM,
-                            newEndAddressM,
-                            reversed,
-                            currentRoadway.startDate,
-                            Some(projectStartDate.minusDays(1)),
-                            createdBy = currentRoadway.createdBy,
-                            currentRoadway.roadName,
-                            currentRoadway.ely,
-                            NoTermination,
-                            currentRoadway.validFrom,
-                            currentRoadway.validTo
-                          )
-    val newRoadway       = Roadway(
+//    val historyRoadway = Roadway(NewIdValue, roadwayNumber, currentRoadway.roadNumber, currentRoadway.roadPartNumber, oldAdministrativeClass, currentRoadway.track, lastProjectLink.originalDiscontinuity, newStartAddressM, newEndAddressM, reversed, currentRoadway.startDate, Some(projectStartDate.minusDays(1)), createdBy = currentRoadway.createdBy, currentRoadway.roadName, currentRoadway.ely, NoTermination, currentRoadway.validFrom, currentRoadway.validTo)
+    val newRoadway    : Roadway      = Roadway(
                             NewIdValue,
                             roadwayNumber,
                             headProjectLink.roadNumber,
@@ -162,7 +140,7 @@ object RoadwayFiller {
                             projectLinks.last.discontinuity,
                             projectLinks.head.startAddrMValue,
                             projectLinks.last.endAddrMValue,
-                            headProjectLink.reversed,
+                            false,
                             projectStartDate,
                             None,
                             createdBy = headProjectLink.createdBy.get,
@@ -170,7 +148,20 @@ object RoadwayFiller {
                             headProjectLink.ely,
                             NoTermination
                           )
-    Seq(historyRoadway, newRoadway)
+
+    val historyRoadway: Seq[Roadway] = {
+      if (reversed) {
+        currentRoadway.copy(id = NewIdValue, endDate = Some(projectStartDate.minusDays(1)), reversed = true) +: historyRoadways.map(hr => {
+          hr.copy(id = NewIdValue, reversed = !hr.reversed)
+        })
+      } else {
+        Seq(Roadway(NewIdValue, roadwayNumber, currentRoadway.roadNumber, currentRoadway.roadPartNumber, oldAdministrativeClass, currentRoadway.track, lastProjectLink.originalDiscontinuity, newStartAddressM, newEndAddressM, reversed, currentRoadway.startDate, Some(projectStartDate.minusDays(1)), createdBy = currentRoadway.createdBy, currentRoadway.roadName, currentRoadway.ely, NoTermination, currentRoadway.validFrom, currentRoadway.validTo)) ++ historyRoadways.map { historyRoadway =>
+          historyRoadway.copy(id = NewIdValue, roadwayNumber = newRoadway.roadwayNumber, startAddrMValue = newRoadway.startAddrMValue, endAddrMValue = newRoadway.endAddrMValue, createdBy = currentRoadway.createdBy, validFrom = newRoadway.validFrom)
+        }
+      }
+    }
+
+    newRoadway +: historyRoadway
   }
 
   private def terminatedHistory(

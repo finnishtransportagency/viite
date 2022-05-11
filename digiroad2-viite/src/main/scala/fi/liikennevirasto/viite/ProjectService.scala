@@ -3,23 +3,23 @@ package fi.liikennevirasto.viite
 import java.sql.SQLException
 import java.util.Date
 
-import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, TrafficDirection, _}
+import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReservedException, Track}
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.util.LogUtils.time
+import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectDAO, RoadwayDAO, _}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{JunctionPointCP, NoCP, UserDefinedCP}
 import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.ProjectState._
 import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Termination}
-import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectDAO, RoadwayDAO, _}
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink}
 import fi.liikennevirasto.viite.process.{InvalidAddressDataException, _}
 import fi.liikennevirasto.viite.util.SplitOptions
@@ -27,10 +27,9 @@ import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 
-import scala.collection.mutable.ListBuffer
+import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
 import scala.util.control.NonFatal
 
 // note, ChangeProject moved here from former ViiteTierekisteriClient at Tierekisteri removal (2021-09)
@@ -1995,78 +1994,18 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @throws re-throws explicitly ProjectValidationException, SQLException, Exception
     */
   def updateRoadwaysAndLinearLocationsWithProjectLinks(projectID: Long): Set[Long] = {
-    implicit def datetimeOrdering: Ordering[DateTime] = Ordering.fromLessThan(_ isAfter _)
     def handleRoadPrimaryTables(currentRoadways: Map[Long, Roadway], historyRoadways: Map[Long, Roadway], roadwaysToInsert: Iterable[Roadway], historyRoadwaysToKeep: Seq[Long], linearLocationsToInsert: Iterable[LinearLocation], project: Project): Seq[Long] = {
       logger.debug(s"Creating history rows based on operation")
       linearLocationDAO.expireByRoadwayNumbers((currentRoadways ++ historyRoadways).map(_._2.roadwayNumber).toSet)
       (currentRoadways ++ historyRoadways.filterNot(hist => historyRoadwaysToKeep.contains(hist._1))).map(roadway => expireHistoryRows(roadway._1))
+
       logger.debug(s"Inserting roadways (history + current)")
-
-      // If the project created completely new roadways due to splitting or some other reason we will modify roadwaysToInsert list and its roadways to have reversed values set correctly
-      // get reversed roadways from roadwaysToInsert
-      val reversedRoadwaysToInsert = roadwaysToInsert.filter(roadway => roadway.reversed && roadway.endDate.isEmpty)
-      // get roadwaynumbers from reversed roadways toSet (might be more than one)
-      val reversedRoadwayNumbers = reversedRoadwaysToInsert.map(roadway => roadway.roadwayNumber).toSet
-      // save not reversed roadways to a list (these roadways will remain the way they are)
-      val notReversedRoadwaysToInsert = roadwaysToInsert.filter(roadway => !reversedRoadwayNumbers.contains(roadway.roadwayNumber)).toList
-      // get reversed roadwayrows and their historyrows from roadwaysToInsert list with the roadwaynumbers
-      val reversedRoadwaysAndHistoryRows = roadwaysToInsert.filter(roadway => reversedRoadwayNumbers.contains(roadway.roadwayNumber)).toList
-      val roadwaysToCreate = {
-        // Use ListBuffer as a mutable list
-        val returnRoadways = new ListBuffer[Roadway]()
-        for (rwn <- reversedRoadwayNumbers) { // loop through reversed roadwaynumbers
-          // get roadways that have the same roadwayNumber as the current loop variable
-          val roadways = reversedRoadwaysAndHistoryRows.filter(roadway => roadway.roadwayNumber == rwn)
-          // save the current and newest history to a variable for later use
-          val currentAndNewestHistoryRow = roadways.sortBy(_.endDate).take(2)
-          // get rid of the current and newest history row because they are always reversed = 1 if a road is reversed
-          val historyRowsWithoutCurrentAndNewestHistory = roadways.sortBy(_.endDate).drop(2)
-          if (historyRowsWithoutCurrentAndNewestHistory.length < 1) { // check if there are history rows that need to have reversed value flipped
-            // add the current and newest history rows back to the list buffer
-            currentAndNewestHistoryRow.foreach(returnRoadways += _)
-          }
-          else { // if there is history rows that need reversed values to be flipped
-            val editedRoadways = historyRowsWithoutCurrentAndNewestHistory.map(row => // flip the reversed value in the history rows
-              if (row.reversed) {
-                row.copy(reversed = false)
-              }
-              else {
-                row.copy(reversed = true)
-              }
-            )
-            // add the current and newest history rows back to the list buffer
-            currentAndNewestHistoryRow.foreach(returnRoadways += _)
-            // add the edited history rows back to the list buffer
-            editedRoadways.foreach(returnRoadways += _)
-          }
-        }
-        // change the listbuffer to a immutable list
-        val returnRoadwaysList = returnRoadways.toList
-        // concatenate the untouched roadways and the modified roadways lists
-        returnRoadwaysList ++ notReversedRoadwaysToInsert
-      }
-
-      val roadwayIds = roadwayDAO.create(roadwaysToCreate.filter(roadway => roadway.endDate.isEmpty || !roadway.startDate.isAfter(roadway.endDate.get)).map(_.copy(createdBy = project.createdBy)))
+      val roadwayIds = roadwayDAO.create(roadwaysToInsert.filter(roadway =>
+                                                                  roadway.endDate.isEmpty || !roadway.startDate.isAfter(roadway.endDate.get)
+                                                                ).map(_.copy(createdBy = project.createdBy))
+                                        )
       logger.debug(s"Inserting linear locations")
       linearLocationDAO.create(linearLocationsToInsert, createdBy = project.createdBy)
-      // If the project didnt create new roadway numbers we will flip the existing history rows after Viite has created the new "current" roadway and newest history row of the previous "current" roadway
-      for(rwn <- reversedRoadwayNumbers) { // loop trough reversed roadway numbers
-        // get roadways that have the same roadwayNumber as the current loop variable
-        val roadways = reversedRoadwaysAndHistoryRows.filter(roadway => roadway.roadwayNumber == rwn)
-        // get rid of the current and newest history row because they already have reversed = 1 if a road is reversed
-        val historyRowsWithoutCurrentAndNewestHistory = roadways.sortBy(_.endDate).drop(2)
-        // If the project didnt create new roadway numbers, we will flip the existing history rows
-        if (historyRowsWithoutCurrentAndNewestHistory.length < 1) {
-          // fetch all roadwayrows with the current loop variable that are reversed + their history rows
-          val roadwayRows = roadwayDAO.fetchAllByRoadwayNumbers(reversedRoadwayNumbers.filter(roadwayNumber => roadwayNumber == rwn), true).toList
-          //get rid of current row and newest history row as they are already reversed = 1
-          val roadwayRowsWithoutCurrentAndNewestHistoryRow = roadwayRows.sortBy(_.endDate).drop(2)
-          // get ids of the history rows that need to be flipped
-          val roadwayRowIds = roadwayRowsWithoutCurrentAndNewestHistoryRow.map(roadwayRow => roadwayRow.id).toSet
-          //Flip the reversed tags (0->1 or 1->0) of the history rows with given ids
-          roadwayDAO.updateReversedTagsInHistoryRows(roadwayRowIds)
-        }
-      }
       roadwayIds
     }
 
