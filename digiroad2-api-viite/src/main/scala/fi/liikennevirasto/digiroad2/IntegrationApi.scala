@@ -146,7 +146,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
     */
   private def parseRoadpartsForSummary(uniqueRoadnumberMap: Map[Int, Seq[RoadwayNetworkSummaryRow]]): List[Map[String, Any]] = {
     val roadPARTnumberMap: Map[Int, Seq[RoadwayNetworkSummaryRow]] = uniqueRoadnumberMap
-    roadPARTnumberMap.toList.sortBy(_._1).map { // foreach roadpartnumber, handle the sequence of rows
+    roadPARTnumberMap.toList.sortBy(_._1).flatMap { // foreach roadpartnumber, handle the sequence of rows
       case(key_RoadPARTNumber,uniqueRoadPARTMap) => {
 
         val admClassWithinRoadPARTMap: Map[Int, Seq[RoadwayNetworkSummaryRow]] = uniqueRoadPARTMap.groupBy(_.administrativeClass)
@@ -157,52 +157,80 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
               "ely" -> uniqueAdmClassWithinRoadPARTMap.head.elyCode, // each row in the road part seq has the same roadName; take any (here: first)
               "administrative_class" -> uniqueAdmClassWithinRoadPARTMap.head.administrativeClass, //   -"-    seq has the same adm.class; take any (here: first)
               "tracks" ->
-                parseTracksForSummary( uniqueAdmClassWithinRoadPARTMap.groupBy(_.startAddressM) )
+                parseTracksForSummary( uniqueAdmClassWithinRoadPARTMap )
             )
           }
         }
       }
     }
-    .flatten // flat out the nested List[List[...]] ; road part, and administrative class changes are listed as a single list
   }
   /**
     * Formats the given <i>uniqueAdmClassWithinRoadPARTMap</i> to a structured List[Map[....]], suitable for JSON printout.
     * The rows are ordered primarily by startAddresses, and secondarily by tracks.
     *
-    * @version Initial version for sub functionality of /summary API, 2022-02
+    * @version Updated version with functionality to combine continuous roadways by track for /summary API, 2022-05
     * @param uniqueAdmClassWithinRoadPARTMap list of <i>RoadwayNetworkSummaryRow</i>s belonging to a single administrative class
     *                                        within a road part (defined by a road part number, and administrative class)
     * @return List of <i>start addresses + track</i> defined items containing the valid network addresses of that
     *         part of the road network.
     */
-  private def parseTracksForSummary(uniqueAdmClassWithinRoadPARTMap: Map[Int, Seq[RoadwayNetworkSummaryRow]]): List[Map[String, Int]] = {
-    val addressMMap: Map[Int, Seq[RoadwayNetworkSummaryRow]] = uniqueAdmClassWithinRoadPARTMap
-    addressMMap.toList.sortBy(_._1).map {
-      case(key_startAddrM,uniqueAddressMMap) => {
-        val trackMap: Map[Int, Seq[RoadwayNetworkSummaryRow]] = uniqueAddressMMap.groupBy(_.track)
-        trackMap.toList.sortBy(_._1).map {
-          case(key_TrackNumber,uniqueTrackMap)  => {
-           uniqueTrackMap.head.continuity match {
-             case 5 => { // Discontinuity not printed if Discontinuity.Continuous
-               Map(
-                 "track" -> key_TrackNumber,
-                 "startaddressM" -> key_startAddrM,
-                 "endaddressM" -> uniqueTrackMap.head.endAddressM
-               )
-             }
-             case _ => {
-               Map(
-                 "track" -> key_TrackNumber,
-                 "startaddressM" -> key_startAddrM,
-                 "endaddressM" -> uniqueTrackMap.head.endAddressM,
-                 "continuity" -> uniqueTrackMap.head.continuity
-               )
-             }
-           }
-         }
-       }
+  private def parseTracksForSummary(uniqueAdmClassWithinRoadPARTMap:Seq[RoadwayNetworkSummaryRow]): List[Map[String, Int]] = {
+    val addressMMap: Seq[RoadwayNetworkSummaryRow] = uniqueAdmClassWithinRoadPARTMap
+    case class InProgress(start: Option[Int], end: Option[Int])
+
+    addressMMap.sortBy(_.startAddressM).groupBy(_.track).flatMap {
+      case(track, roadwaysWithTrack) => {
+        val combinedRoadways = roadwaysWithTrack.foldLeft((Seq[Map[String, Int]](), InProgress(None, None)))((acc, roadwayTrack) => {
+          val (alreadyCombined, inProgress) = acc
+
+          val (endAddrM, append) = inProgress.end match {
+            case Some(end) => {
+              if (end == roadwayTrack.startAddressM) (roadwayTrack.endAddressM, Seq()) //roadwayTrack can be combined with inProgress
+              else (roadwayTrack.endAddressM, Seq(Map(
+                "track" -> track,
+                "startaddressM" -> inProgress.start.get,
+                "endaddressM" -> end
+              ))) //There's a break in the inProgress track, add from inProgress to alreadyCombined and proceed with roadwayTrack values
+            }
+            //inProgress is empty
+            case None => (roadwayTrack.endAddressM, Seq())
+          }
+
+          //If inProgress was added to append, use roadwayTrack's values
+          val startAddrM = if (append.nonEmpty) roadwayTrack.startAddressM
+          else {
+            inProgress.start match {
+              case None => roadwayTrack.startAddressM
+              case Some(start) => start
+            }
+          }
+
+          roadwayTrack.continuity match {
+            case 5 => //Continuous
+              (alreadyCombined ++ append, InProgress(Some(startAddrM), Some(endAddrM)))
+            case _ => //Discontinuity, add to alreadyCombined and reset inProgress
+              ((alreadyCombined ++ append) :+ Map(
+                "track" -> track,
+                "startaddressM" -> startAddrM,
+                "endaddressM" -> endAddrM,
+                "continuity" -> roadwayTrack.continuity
+              ), InProgress(None, None))
+          }
+        })
+        
+        //Make sure that inProgress is empty after the foldLeft. If not, add it to alreadyCombined and return.
+        val (alreadyCombined, inProgress) = combinedRoadways
+        inProgress.start match {
+          case Some(start) =>
+            alreadyCombined :+ Map(
+              "track" -> track,
+              "startaddressM" -> start,
+              "endaddressM" -> inProgress.end.get
+            )
+          case None => alreadyCombined
+        }
       }
-    } .flatten  // flat out the nested List[List[...]]; track, and addressM changes are listed as a single list
+    }.toList.sortBy(_.get("track")).sortBy(_.get("startaddressM"))
   }
 
   val getRoadNameChanges: SwaggerSupportSyntax.OperationBuilder =
