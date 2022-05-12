@@ -857,18 +857,19 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   def handleRoadwayPointsUpdate(roadwayChanges: List[ProjectRoadwayChange], projectLinkChanges: Seq[ProjectRoadLinkChange], username: String = "-"): Unit = {
-    def handleDualRoadwayPoint(oldRoadwayPointId: Long, point: ProjectRoadLinkChange): Unit = {
+    def handleDualRoadwayPoint(oldRoadwayPointId: Long, projectRoadLinkChangeAfter: ProjectRoadLinkChange): Unit = {
       // get new address for roadway point, new beforeAfter value for node point and junction point and new startOrEnd for calibration point
-      val (newAddr, beforeAfter, startOrEnd) = if (point.reversed) {
-        (point.newEndAddr, BeforeAfter.Before, CalibrationPointLocation.EndOfLink)
-      } else {
-        (point.newStartAddr, BeforeAfter.After, CalibrationPointLocation.StartOfLink)
+      val (newAddr, beforeAfter, startOrEnd) = {
+        if (projectRoadLinkChangeAfter.reversed)
+          (projectRoadLinkChangeAfter.newEndAddr, BeforeAfter.Before, CalibrationPointLocation.EndOfLink)
+        else
+          (projectRoadLinkChangeAfter.newStartAddr, BeforeAfter.After, CalibrationPointLocation.StartOfLink)
       }
 
-      val existingRoadwayPoint = roadwayPointDAO.fetch(point.newRoadwayNumber, newAddr)
+      val existingRoadwayPoint = roadwayPointDAO.fetch(projectRoadLinkChangeAfter.newRoadwayNumber, newAddr)
       if (existingRoadwayPoint.isEmpty) {
-        logger.info(s"Handled dual roadway point for roadway number: ${point.newRoadwayNumber}, address: $newAddr:")
-        val newRoadwayPointId = roadwayPointDAO.create(point.newRoadwayNumber, newAddr, username)
+        logger.info(s"Handled dual roadway point for roadway number: ${projectRoadLinkChangeAfter.newRoadwayNumber}, address: $newAddr:")
+        val newRoadwayPointId = roadwayPointDAO.create(projectRoadLinkChangeAfter.newRoadwayNumber, newAddr, username)
 
         val nodePoint = nodePointDAO.fetchByRoadwayPointId(oldRoadwayPointId).filter(_.beforeAfter == BeforeAfter.After)
         logger.info(s"Update node point (${nodePoint.map(_.id)}) for after roadway point id: $oldRoadwayPointId to $newRoadwayPointId, beforeAfter: $beforeAfter")
@@ -888,14 +889,13 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     }
 
     def getNewRoadwayNumberInPoint(roadwayPoint: RoadwayPoint): Option[Long] = {
-      projectLinkChanges.filter(mrw => roadwayPoint.roadwayNumber == mrw.originalRoadwayNumber
-        && roadwayPoint.addrMValue >= mrw.originalStartAddr && roadwayPoint.addrMValue <= mrw.originalEndAddr) match {
+      projectLinkChanges.filter(plc => roadwayPoint.roadwayNumber == plc.originalRoadwayNumber && roadwayPoint.addrMValue >= plc.originalStartAddr && roadwayPoint.addrMValue <= plc.originalEndAddr) match {
         case linkChanges: Seq[ProjectRoadLinkChange] if linkChanges.size == 2 && linkChanges.map(_.newRoadwayNumber).distinct.size > 1 =>
-          val sortedLinkChanges = linkChanges.sortBy(_.originalStartAddr)
-          val beforePoint = sortedLinkChanges.head
-          val afterPoint: ProjectRoadLinkChange = sortedLinkChanges.last
-          handleDualRoadwayPoint(roadwayPoint.id, afterPoint)
-          Some(beforePoint.newRoadwayNumber)
+          val sortedProjectLinkChanges = linkChanges.sortBy(_.originalStartAddr)
+          val projectLinkChangeBefore = sortedProjectLinkChanges.head
+          val projectLinkChangeAfter: ProjectRoadLinkChange = sortedProjectLinkChanges.last
+          handleDualRoadwayPoint(roadwayPoint.id, projectLinkChangeAfter)
+          Some(projectLinkChangeBefore.newRoadwayNumber)
         case linkChanges if linkChanges.nonEmpty => Some(linkChanges.head.newRoadwayNumber)
         case linkChanges if linkChanges.isEmpty => None
       }
@@ -938,10 +938,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
         }
 
         val roadwayPoints = roadwayNumbers.flatMap { rwn =>
-          val roadwayNumberInPoint = projectLinkChanges.filter(mrw => mrw.newRoadwayNumber == rwn
-            && mrw.originalStartAddr >= source.startAddressM.get && mrw.originalEndAddr <= source.endAddressM.get)
-          if (roadwayNumberInPoint.nonEmpty) {
-            roadwayPointDAO.fetchByRoadwayNumberAndAddresses(roadwayNumberInPoint.head.originalRoadwayNumber, source.startAddressM.get, source.endAddressM.get)
+          val filteredProjectLinkChanges = projectLinkChanges.filter(plc => plc.newRoadwayNumber == rwn
+            && plc.originalStartAddr >= source.startAddressM.get && plc.originalEndAddr <= source.endAddressM.get)
+          if (filteredProjectLinkChanges.nonEmpty) {
+            roadwayPointDAO.fetchByRoadwayNumberAndAddresses(filteredProjectLinkChanges.head.originalRoadwayNumber, source.startAddressM.get, source.endAddressM.get)
           } else {
             Seq()
           }
@@ -951,7 +951,22 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
           if (change.changeType == Transfer || change.changeType == Unchanged) {
             if (!change.reversed) {
               val rwPoints: Seq[RoadwayPoint] = roadwayPoints.flatMap { rwp =>
-                val newAddrM = target.startAddressM.get + (rwp.addrMValue - source.startAddressM.get)
+
+                val dualRoadwayPointNewAddrM = projectLinkChanges.filter(plc => rwp.roadwayNumber == plc.originalRoadwayNumber && rwp.addrMValue >= plc.originalStartAddr && rwp.addrMValue <= plc.originalEndAddr) match {
+                  case linkChanges: Seq[ProjectRoadLinkChange] if linkChanges.size == 2 && linkChanges.map(_.newRoadwayNumber).distinct.size > 1 =>
+                    val sortedProjectLinkChanges = linkChanges.sortBy(_.originalStartAddr)
+                    val projectRoadLinkChangeBefore = sortedProjectLinkChanges.head
+                    Some(projectRoadLinkChangeBefore.newEndAddr)
+                  case _ => None
+                }
+
+                val newAddrM = {
+                  if (dualRoadwayPointNewAddrM.isDefined)
+                    dualRoadwayPointNewAddrM.get
+                  else
+                    target.startAddressM.get + (rwp.addrMValue - source.startAddressM.get)
+                }
+
                 updateRoadwayPoint(rwp, newAddrM)
               }
               list ++ rwPoints
