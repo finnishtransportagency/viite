@@ -176,59 +176,23 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
     */
   private def parseTracksForSummary(uniqueAdmClassWithinRoadPARTMap:Seq[RoadwayNetworkSummaryRow]): List[Map[String, Int]] = {
     val addressMMap: Seq[RoadwayNetworkSummaryRow] = uniqueAdmClassWithinRoadPARTMap
-    case class InProgress(start: Option[Int], end: Option[Int])
 
     addressMMap.sortBy(_.startAddressM).groupBy(_.track).flatMap {
       case(track, roadwaysWithTrack) => {
-        val combinedRoadways = roadwaysWithTrack.foldLeft((Seq[Map[String, Int]](), InProgress(None, None)))((acc, roadwayTrack) => {
-          val (alreadyCombined, inProgress) = acc
-
-          val (endAddrM, append) = inProgress.end match {
-            case Some(end) => {
-              if (end == roadwayTrack.startAddressM) (roadwayTrack.endAddressM, Seq()) //roadwayTrack can be combined with inProgress
-              else (roadwayTrack.endAddressM, Seq(Map(
-                "track" -> track,
-                "startaddressM" -> inProgress.start.get,
-                "endaddressM" -> end
-              ))) //There's a break in the inProgress track, add from inProgress to alreadyCombined and proceed with roadwayTrack values
+        roadwaysWithTrack.foldLeft(Seq[Map[String, Int]]())((combinedRoadways, roadwayTrack) => {
+          if (combinedRoadways.isEmpty || combinedRoadways.last.contains("continuity") || combinedRoadways.last("endaddressM") != roadwayTrack.startAddressM) {
+            roadwayTrack.continuity match {
+              case 5 => combinedRoadways :+ Map("track" -> track, "startaddressM" -> roadwayTrack.startAddressM, "endaddressM" -> roadwayTrack.endAddressM) //continuous
+              case _ => combinedRoadways :+ Map("track" -> track, "startaddressM" -> roadwayTrack.startAddressM, "endaddressM" -> roadwayTrack.endAddressM, "continuity" -> roadwayTrack.continuity)
             }
-            //inProgress is empty
-            case None => (roadwayTrack.endAddressM, Seq())
-          }
-
-          //If inProgress was added to append, use roadwayTrack's values
-          val startAddrM = if (append.nonEmpty) roadwayTrack.startAddressM
-          else {
-            inProgress.start match {
-              case None => roadwayTrack.startAddressM
-              case Some(start) => start
+          } else {
+            val last = combinedRoadways.last
+            roadwayTrack.continuity match {
+              case 5 => combinedRoadways.dropRight (1) :+ Map("track" -> track, "startaddressM" -> last ("startaddressM"), "endaddressM" -> roadwayTrack.endAddressM) //continuous
+              case _ => combinedRoadways.dropRight (1) :+ Map("track" -> track, "startaddressM" -> last ("startaddressM"), "endaddressM" -> roadwayTrack.endAddressM, "continuity" -> roadwayTrack.continuity)
             }
-          }
-
-          roadwayTrack.continuity match {
-            case 5 => //Continuous
-              (alreadyCombined ++ append, InProgress(Some(startAddrM), Some(endAddrM)))
-            case _ => //Discontinuity, add to alreadyCombined and reset inProgress
-              ((alreadyCombined ++ append) :+ Map(
-                "track" -> track,
-                "startaddressM" -> startAddrM,
-                "endaddressM" -> endAddrM,
-                "continuity" -> roadwayTrack.continuity
-              ), InProgress(None, None))
           }
         })
-        
-        //Make sure that inProgress is empty after the foldLeft. If not, add it to alreadyCombined and return.
-        val (alreadyCombined, inProgress) = combinedRoadways
-        inProgress.start match {
-          case Some(start) =>
-            alreadyCombined :+ Map(
-              "track" -> track,
-              "startaddressM" -> start,
-              "endaddressM" -> inProgress.end.get
-            )
-          case None => alreadyCombined
-        }
       }
     }.toList.sortBy(_.get("track")).sortBy(_.get("startaddressM"))
   }
