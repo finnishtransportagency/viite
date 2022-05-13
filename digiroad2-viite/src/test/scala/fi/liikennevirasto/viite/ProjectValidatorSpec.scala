@@ -1,20 +1,19 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.GeometryUtils
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point, Vector3d}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.asset.AdministrativeClass.State
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.FrozenLinkInterface
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, Vector3d}
+import fi.liikennevirasto.viite.dao.{Discontinuity, LinearLocationDAO, ProjectReservedPart, _}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, EndOfRoad, MinorDiscontinuity}
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
-import fi.liikennevirasto.viite.dao.{Discontinuity, LinearLocationDAO, ProjectReservedPart, _}
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
@@ -22,8 +21,8 @@ import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.mockito.stubbing.OngoingStubbing
-import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.mockito.MockitoSugar
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -1643,6 +1642,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
   }
 
   test("Test validateProject When it is connected after any other action Then it should return has not handled links error") {
+    import org.scalatest.enablers.Definition.definitionOfOption
     runWithRollback {
 
       val raId = Sequences.nextRoadwayId
@@ -1688,7 +1688,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val validationErrors = projectValidator.validateProject(project, projectLinkDAO.fetchProjectLinks(project.id))
 
       validationErrors.size should not be 0
-      validationErrors.foreach(e => e.validationError.value should be(projectValidator.ValidationErrorList.HasNotHandledLinks.value))
+      validationErrors.find(e => e.validationError.value == projectValidator.ValidationErrorList.HasNotHandledLinks.value) shouldBe defined
     }
   }
 
