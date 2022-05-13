@@ -1,19 +1,18 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.GeometryUtils
-import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
+import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle}
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.util.{Track, ViiteProperties}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
-import fi.liikennevirasto.digiroad2.util.{Track, ViiteProperties}
-import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, Point}
-import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao.{Discontinuity, _}
+import fi.liikennevirasto.viite.dao.LinkStatus._
+import fi.liikennevirasto.viite.process.{RoadwayAddressMapper, TrackSectionOrder}
 import fi.liikennevirasto.viite.process.TrackSectionOrder.findChainEndpoints
 import fi.liikennevirasto.viite.process.strategy.DefaultSectionCalculatorStrategy
-import fi.liikennevirasto.viite.process.{RoadwayAddressMapper, TrackSectionOrder}
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 
@@ -491,7 +490,8 @@ class ProjectValidator {
     // function to get any (high priority) validation errors for the project links
     val highPriorityValidations: Seq[(Project, Seq[ProjectLink]) => Seq[ValidationErrorDetails]] = Seq(
       // sequence of validator functions, in INCREASING priority order (as these get turned around in the next step)
-      checkForNotHandledLinks // "Käsittelemätön" is returned as highest priority
+      checkForNotHandledLinks, // "Käsittelemätön" is returned as highest priority
+      checkProjectContinuity // Check project continuities before calculation to prevent problems caused by wrong discontinuity.
     )
 
     // list all the (high priority) validation errors found within the project links, in reversed order
