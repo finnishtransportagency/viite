@@ -1,23 +1,23 @@
 package fi.liikennevirasto.viite.process
 
+import fi.liikennevirasto.digiroad2.{asset, DigiroadEventBus, GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.FrozenLinkInterface
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point, asset}
+import fi.liikennevirasto.digiroad2.util.{MissingTrackException, Track}
 import fi.liikennevirasto.viite._
+import fi.liikennevirasto.viite.dao.{LinkStatus, _}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{JunctionPointCP, NoCP, RoadAddressCP, UserDefinedCP}
 import fi.liikennevirasto.viite.dao.Discontinuity._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
-import fi.liikennevirasto.viite.dao.{LinkStatus, _}
 import fi.liikennevirasto.viite.util._
 import org.joda.time.DateTime
-import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.mockito.MockitoSugar
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -331,7 +331,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val projectLink0 = toProjectLink(rap, LinkStatus.New)(RoadAddress(0L, 0, 5, 1, AdministrativeClass.Unknown, Track.RightSide, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0L, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), Seq(Point(20.0, 10.0), Point(28, 15)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
       val projectLink1 = toProjectLink(rap, LinkStatus.New)(RoadAddress(1L, 0, 5, 1, AdministrativeClass.Unknown, Track.RightSide, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 1L, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), Seq(Point(28.0, 15.0), Point(38, 15)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
 
-      ProjectSectionCalculator.assignMValues(Seq(projectLink0, projectLink1))
+      a [MissingTrackException] should be thrownBy ProjectSectionCalculator.assignMValues(Seq(projectLink0, projectLink1))
     }
   }
 
@@ -1200,12 +1200,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val projectLink12 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad12, 0, 5, 1, AdministrativeClass.Unknown, Track.RightSide, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), idRoad12, 0.0, 10.0, SideCode.Unknown, 0, (None, None), Seq(Point(10.0, 20.0), Point(10.0, 30.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
 
       val listRight = List(projectLink1, projectLink3, projectLink6, projectLink8, projectLink10, projectLink12)
-
-      ProjectSectionCalculator.assignMValues(listRight).toList
-
       val listLeft = List(projectLink0, projectLink2, projectLink4,projectLink5, projectLink7, projectLink9, projectLink11)
-
-      ProjectSectionCalculator.assignMValues(listLeft).toList
 
       val list = ProjectSectionCalculator.assignMValues(listRight ::: listLeft)
       val (left, right) = list.partition(_.track == Track.LeftSide)
@@ -1254,14 +1249,8 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val projectLink10 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad10, 0, 5, 1, AdministrativeClass.Unknown, Track.LeftSide, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), idRoad10, 0.0, 10.0, SideCode.Unknown, 0, (None, None), Seq(Point(40.0, 30.0), Point(30.0, 40.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
       val projectLink11 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad11, 0, 5, 1, AdministrativeClass.Unknown, Track.RightSide, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), idRoad11, 0.0, 10.0, SideCode.Unknown, 0, (None, None), Seq(Point(55.0, 35.0), Point(40.0, 50.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
 
-      val listRight = List(projectLink1, projectLink3, projectLink5, projectLink7,
-        projectLink9, projectLink11)
-
-      ProjectSectionCalculator.assignMValues(listRight).toList
-
+      val listRight = List(projectLink1, projectLink3, projectLink5, projectLink7, projectLink9, projectLink11)
       val listLeft = List(projectLink0, projectLink2, projectLink4, projectLink6, projectLink8, projectLink10)
-
-      ProjectSectionCalculator.assignMValues(listLeft).toList
 
       val list = ProjectSectionCalculator.assignMValues(listRight ::: listLeft)
       val (left, right) = list.partition(_.track == Track.LeftSide)
