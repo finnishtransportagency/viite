@@ -2,38 +2,38 @@ package fi.liikennevirasto.viite
 
 import java.sql.BatchUpdateException
 
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.AdministrativeClass.State
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{FrozenLinkInterface, NormalLinkInterface}
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
-import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.{PolyLine, RoadLink}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide, switch}
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.util.Track.{switch, Combined, LeftSide, RightSide}
 import fi.liikennevirasto.viite.Dummies._
+import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectRoadwayChange, RoadwayDAO, _}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, RoadAddressCP, UserDefinedCP}
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous, EndOfRoad}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.ProjectState.{Incomplete, UpdatingToRoadNetwork}
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
-import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectRoadwayChange, RoadwayDAO, _}
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLinkLike}
-import fi.liikennevirasto.viite.process.strategy.DefaultSectionCalculatorStrategy
 import fi.liikennevirasto.viite.process.{ProjectSectionCalculator, RoadwayAddressMapper}
+import fi.liikennevirasto.viite.process.strategy.DefaultSectionCalculatorStrategy
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{when, _}
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.Answer
-import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
+import org.scalatest.mock.MockitoSugar
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -1403,9 +1403,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val extendedLink = links.filter(_.linkId == linkidToIncrement).head
       val linksBefore = links.filter(_.endAddrMValue >= extendedLink.endAddrMValue).sortBy(_.endAddrMValue)
       val linksAfter = linksAfterGivenAddrMValue.filter(_.endAddrMValue >= extendedLink.endAddrMValue).sortBy(_.endAddrMValue)
-//      linksBefore.zip(linksAfter).foreach { case (st, en) =>
-//        liesInBetween(en.endAddrMValue, (st.endAddrMValue + valueToIncrement - coeff, st.endAddrMValue + valueToIncrement + coeff))
-//      }
 
       projectService.changeDirection(project.id, 9999L, 1L, Seq(LinkToRevert(pl1.id, pl1.linkId, pl1.status.value, pl1.geometry)), ProjectCoordinates(0, 0, 0), "TestUserTwo")
       val linksAfterFirstReverse = ProjectSectionCalculator.assignMValues(links_).sortBy(_.endAddrMValue)
@@ -1865,6 +1862,151 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       //createHistoryRows method expires the history rows for the roadway
       roadwayDAO.fetchAllByRoadwayNumbers(Set(roadway.roadwayNumber), withHistory = true).isEmpty should be (true)
 
+    }
+  }
+
+  test("Test expireHistoryRows " +
+       "When link is transfered and reversed " +
+       "Then set end date to old roadway and set reverse flag relative to the current roadway.") {
+    runWithRollback {
+      // Create roadway
+      val linkId          = 10000
+      val oldEndAddress   = 100
+      val roadwayNumber   = Sequences.nextRoadwayNumber
+      val currentRoadway         = Roadway(Sequences.nextRoadwayId, roadwayNumber, 9999, 1, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, oldEndAddress, reversed = false, DateTime.now().minusYears(10), None, "test", Some("Test Road"), 1, TerminationCode.NoTermination, DateTime.now().minusYears(10), None)
+      val history_roadway = Seq(
+                                Roadway(Sequences.nextRoadwayId, roadwayNumber, 9999, 1, AdministrativeClass.Municipality, Track.Combined, Discontinuity.Continuous, 0, oldEndAddress, reversed = false, DateTime.now().minusYears(15), Some(DateTime.now().minusYears(10)), "test", Some("Test Road"), 1, TerminationCode.NoTermination, DateTime.now().minusYears(15), None),
+                                Roadway(Sequences.nextRoadwayId, roadwayNumber, 9999, 1, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, oldEndAddress, reversed = true, DateTime.now().minusYears(20), Some(DateTime.now().minusYears(15)), "test", Some("Test Road"), 1, TerminationCode.NoTermination, DateTime.now().minusYears(20), None)
+                               )
+      roadwayDAO.create(Seq(currentRoadway) ++ history_roadway)
+
+      // Create project
+      val rap = Project(0L, ProjectState.UpdatingToRoadNetwork, "TestProject", "TestUser", DateTime.parse("1901-01-01"),
+        "TestUser", currentRoadway.startDate.plusYears(1), DateTime.now(), "Some additional info",
+        Seq(), Seq(), None)
+      val project = projectService.createRoadLinkProject(rap)
+      val projectId = project.id
+      projectReservedPartDAO.reserveRoadPart(projectId, currentRoadway.roadNumber, currentRoadway.roadPartNumber, "TestUser")
+
+      val linearLocation = dummyLinearLocation(currentRoadway.roadwayNumber, 0, linkId, 0.0, currentRoadway.endAddrMValue)
+      val projectLink = ProjectLink(Sequences.nextProjectLinkId, currentRoadway.roadNumber, currentRoadway.roadPartNumber, currentRoadway.track, Discontinuity.EndOfRoad, currentRoadway.startAddrMValue, currentRoadway.endAddrMValue, currentRoadway.startAddrMValue, currentRoadway.endAddrMValue, Some(DateTime.now().plusMonths(1)), None, Some("test"), linkId, 0.0, currentRoadway.endAddrMValue, SideCode.TowardsDigitizing, (RoadAddressCP, RoadAddressCP), (NoCP, NoCP), Seq(Point(0.0, 0.0), Point(0.0, currentRoadway.endAddrMValue)), projectId, LinkStatus.Transfer, currentRoadway.administrativeClass, LinkGeomSource.NormalLinkInterface, currentRoadway.endAddrMValue, currentRoadway.id, linearLocation.id, currentRoadway.ely, reversed = true, None, DateTime.now().minusMonths(10).getMillis, currentRoadway.roadwayNumber, currentRoadway.roadName, None, None, None, None, None, None)
+
+      linearLocationDAO.create(Seq(linearLocation))
+      projectLinkDAO.create(Seq(projectLink))
+
+      // Check before change
+      roadwayDAO.fetchAllByRoadwayId(Seq(currentRoadway.id)).head.validTo should be(None)
+
+      when(mockNodesAndJunctionsService.expireObsoleteNodesAndJunctions(any[Seq[ProjectLink]], any[Option[DateTime]], any[String])).thenReturn(Seq())
+
+      projectService.updateRoadwaysAndLinearLocationsWithProjectLinks(projectId)
+
+      // Current roadway was is expired
+      roadwayDAO.fetchAllByRoadwayId(Seq(currentRoadway.id)).isEmpty should be(true)
+
+      val AllByRoadAndPart = roadwayDAO.fetchAllByRoadAndPart(currentRoadway.roadNumber, currentRoadway.roadPartNumber, withHistory = true)
+      AllByRoadAndPart should have size 4
+
+      val (historyRows, newCurrent) = AllByRoadAndPart.partition(_.endDate.isDefined)
+      newCurrent should have size 1
+      historyRows should have size 3
+
+      newCurrent.foreach(_.endAddrMValue should be(currentRoadway.endAddrMValue))
+      historyRows.foreach(_.endAddrMValue should be(currentRoadway.endAddrMValue))
+
+      newCurrent.foreach(_.reversed should be(false))
+      val (reversedHistory, notReversedHistory): (Seq[Roadway], Seq[Roadway]) = historyRows.partition(_.reversed)
+
+      reversedHistory should have size 2
+      notReversedHistory should have size 1
+
+      notReversedHistory.head.startDate.getYear should be(2002)
+
+      val (municipalityHistory, stateHistory) = reversedHistory.partition(_.administrativeClass == AdministrativeClass.Municipality)
+      municipalityHistory should have size 1
+      municipalityHistory.head.startDate.getYear should be(2007)
+      stateHistory.head.startDate.getYear should be(2012)
+    }
+  }
+
+  test("Test expireHistoryRows " +
+       "When an unchanged roadway with histories has administrative class change in the middle " +
+       "Then current roadway and histories are expired and three new current roadways are created with the same length history rows.") {
+    runWithRollback {
+      /* The case "Administrative class change in the Middle of the Roadway" in https://extranet.vayla.fi/wiki/display/VIITE/Roadway+Number
+      *  with history rows. */
+      val linkId          = 10000
+      val oldEndAddress   = 300
+      val roadwayNumber   = Sequences.nextRoadwayNumber
+      val currentRoadway  = Roadway(Sequences.nextRoadwayId, roadwayNumber, 9999, 1, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, oldEndAddress, reversed = false, DateTime.now().minusYears(10).withTime(0, 0, 0, 0), None, "test", Some("Test Road"), 1, TerminationCode.NoTermination, DateTime.now().minusYears(10), None)
+      val history_roadway = Seq(
+        Roadway(Sequences.nextRoadwayId, roadwayNumber, 9999, 1, AdministrativeClass.Municipality, Track.Combined, Discontinuity.Continuous, 0, oldEndAddress, reversed = false, DateTime.now().minusYears(15).withTime(0, 0, 0, 0), Some(DateTime.now().minusYears(10).withTime(0, 0, 0, 0)), "test", Some("Test Road"), 1, TerminationCode.NoTermination, DateTime.now().minusYears(15), None),
+        Roadway(Sequences.nextRoadwayId, roadwayNumber, 9999, 1, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, oldEndAddress, reversed = false, DateTime.now().minusYears(20).withTime(0, 0, 0, 0), Some(DateTime.now().minusYears(15).withTime(0, 0, 0, 0)), "test", Some("Test Road"), 1, TerminationCode.NoTermination, DateTime.now().minusYears(20), None)
+      )
+      roadwayDAO.create(Seq(currentRoadway) ++ history_roadway)
+
+      // Create project link
+      val rap = Project(0L, ProjectState.UpdatingToRoadNetwork, "TestProject", "TestUser", DateTime.parse("1901-01-01"),
+        "TestUser", currentRoadway.startDate.plusYears(1), DateTime.now(), "Some additional info",
+        Seq(), Seq(), None)
+      val project = projectService.createRoadLinkProject(rap)
+      val projectId = project.id
+
+      val linearLocation = Seq(
+        dummyLinearLocation(currentRoadway.roadwayNumber, 0, linkId,   0.0, currentRoadway.endAddrMValue).copy(id = linkId),
+        dummyLinearLocation(currentRoadway.roadwayNumber, 0, linkId+1, 0.0, currentRoadway.endAddrMValue).copy(id = linkId+1),
+        dummyLinearLocation(currentRoadway.roadwayNumber, 0, linkId+2, 0.0, currentRoadway.endAddrMValue).copy(id = linkId+2)
+      )
+
+      val projectLinks = Seq(
+        ProjectLink(Sequences.nextProjectLinkId, currentRoadway.roadNumber, currentRoadway.roadPartNumber, currentRoadway.track, Discontinuity.Continuous,   0, 100,   0, 100, Some(DateTime.now().plusMonths(1)), None, Some("test"), linkId, 0.0, 100, SideCode.TowardsDigitizing, (RoadAddressCP, RoadAddressCP), (NoCP, NoCP), Seq(Point(0.0, 0.0), Point(0.0, currentRoadway.endAddrMValue)), projectId, LinkStatus.Transfer, currentRoadway.administrativeClass, LinkGeomSource.NormalLinkInterface, 100, currentRoadway.id, linearLocation(0).id, currentRoadway.ely, reversed = false, None, DateTime.now().minusMonths(10).getMillis, currentRoadway.roadwayNumber+1, currentRoadway.roadName, None, None, None, None, None, None),
+        ProjectLink(Sequences.nextProjectLinkId, currentRoadway.roadNumber, currentRoadway.roadPartNumber, currentRoadway.track, Discontinuity.Continuous, 100, 200, 100, 200, Some(DateTime.now().plusMonths(1)), None, Some("test"), linkId+1, 0.0, 100, SideCode.TowardsDigitizing, (RoadAddressCP, RoadAddressCP), (NoCP, NoCP), Seq(Point(0.0, 0.0), Point(0.0, currentRoadway.endAddrMValue)), projectId, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, 100, currentRoadway.id, linearLocation(1).id, currentRoadway.ely, reversed = false, None, DateTime.now().minusMonths(10).getMillis, currentRoadway.roadwayNumber+2, currentRoadway.roadName, None, None, None, None, None, None),
+        ProjectLink(Sequences.nextProjectLinkId, currentRoadway.roadNumber, currentRoadway.roadPartNumber, currentRoadway.track, Discontinuity.Continuous, 200, 300, 200, 300, Some(DateTime.now().plusMonths(1)), None, Some("test"), linkId+2, 0.0, 100, SideCode.TowardsDigitizing, (RoadAddressCP, RoadAddressCP), (NoCP, NoCP), Seq(Point(0.0, 0.0), Point(0.0, currentRoadway.endAddrMValue)), projectId, LinkStatus.Transfer, currentRoadway.administrativeClass, LinkGeomSource.NormalLinkInterface, 100, currentRoadway.id, linearLocation(2).id, currentRoadway.ely, reversed = false, None, DateTime.now().minusMonths(10).getMillis, currentRoadway.roadwayNumber+3, currentRoadway.roadName, None, None, None, None, None, None)
+      )
+
+      linearLocationDAO.create(linearLocation)
+      projectReservedPartDAO.reserveRoadPart(projectId, currentRoadway.roadNumber, currentRoadway.roadPartNumber, "TestUser")
+
+      projectLinkDAO.create(projectLinks)
+
+      // Check before change
+      roadwayDAO.fetchAllByRoadwayId(Seq(currentRoadway.id) ++ history_roadway.map(_.id)) foreach {_.validTo should be(None)}
+
+      when(mockNodesAndJunctionsService.expireObsoleteNodesAndJunctions(any[Seq[ProjectLink]], any[Option[DateTime]], any[String])).thenReturn(Seq())
+
+      projectService.updateRoadwaysAndLinearLocationsWithProjectLinks(projectId)
+
+      // Current roadway and history rows are expired.
+      roadwayDAO.fetchAllByRoadwayId(Seq(currentRoadway.id) ++ history_roadway.map(_.id)).toArray shouldBe empty
+
+      val AllByRoadAndPart = roadwayDAO.fetchAllByRoadAndPart(currentRoadway.roadNumber, currentRoadway.roadPartNumber, withHistory = true)
+      (Seq(currentRoadway) ++ history_roadway).foreach(println)
+
+      val (historyRows, newCurrent) = AllByRoadAndPart.partition(_.endDate.isDefined)
+
+      newCurrent should have size 3
+      historyRows should have size 7
+
+      // Check newly created current addresses
+      newCurrent.filter(hr => hr.startAddrMValue ==   0 && hr.endAddrMValue == 100) should have size 1
+      newCurrent.filter(hr => hr.startAddrMValue == 100 && hr.endAddrMValue == 200) should have size 1
+      newCurrent.filter(hr => hr.startAddrMValue == 200 && hr.endAddrMValue == 300) should have size 1
+
+      // The same validFrom date for all
+      AllByRoadAndPart.map(_.validFrom).distinct should have size 1
+
+      val historiesByAddrM = historyRows.groupBy(_.startAddrMValue)
+
+      // Check dates
+      historiesByAddrM.values.foreach(hrs => {
+        hrs.filter(hr => hr.startDate == history_roadway.head.startDate && hr.endDate == history_roadway.head.endDate) should have size 1
+        hrs.filter(hr => hr.startDate == history_roadway.last.startDate && hr.endDate == history_roadway.last.endDate) should have size 1
+      })
+
+      // Check history addresses
+      historyRows.filter(hr => hr.startAddrMValue ==   0 && hr.endAddrMValue == 100) should have size 2
+      historyRows.filter(hr => hr.startAddrMValue == 100 && hr.endAddrMValue == 200) should have size 3
+      historyRows.filter(hr => hr.startAddrMValue == 200 && hr.endAddrMValue == 300) should have size 2
     }
   }
 
