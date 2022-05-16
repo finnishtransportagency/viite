@@ -201,6 +201,7 @@
         case LinkStatus.Transfer.value:
           dropdown_0_new.prop('disabled', true);
           $("#dropDown_0 option[value=" + LinkStatus.Transfer.description + "]").attr('selected', 'selected').change();
+          rootElement.find('.changeDirectionDiv').prop("hidden", true); // TODO remove this line when Velho integration can handle road reversing
           break;
         case LinkStatus.Numbering.value:
           $("#dropDown_0 option[value=" + LinkStatus.Numbering.description + "]").attr('selected', 'selected').change();

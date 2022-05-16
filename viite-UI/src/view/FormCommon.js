@@ -214,7 +214,7 @@
       const reversedInGroup = _.uniq(_.map(selected, 'reversed'));
       const isPartialReversed = reversedInGroup.length > 1;
       return '<div hidden class="' + prefix + 'form-group changeDirectionDiv" style="margin-top:15px">' +
-        '<button disabled title="Tieosoitteen kääntö ominaisuus on tilapäisesti poissa käytöstä" id="changeDirectionButton" class="' + prefix + 'form-group changeDirection btn btn-primary">Käännä tieosan kasvusuunta</button>' +
+        '<button id="changeDirectionButton" class="' + prefix + 'form-group changeDirection btn btn-primary">Käännä tieosan kasvusuunta</button>' +
         directionChangedInfo(selected, isPartialReversed) +
         '</div>';
     };
