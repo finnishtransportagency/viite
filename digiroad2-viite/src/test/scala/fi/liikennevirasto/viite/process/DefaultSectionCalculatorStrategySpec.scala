@@ -393,24 +393,40 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
   }
 
   test("Test defaultSectionCalculatorStrategy.assignMValues() " +
-                 "When a two track road has a # turn having minor discontinuity on right track " +
+                 "When a two track road has a 90 degree turn (i.e. 'hashtag turn' #) having minor discontinuity on right track " +
                  "Then address calculation should be successfully. No changes to tracks or addresses are expected.") {
     runWithRollback {
-      /* A simplified version of road 1 part 2 to address # turn challenge. */
-      val project_id = Sequences.nextViiteProjectId
-      val roadNumber = 1
+      // A simplified version of road 1 part 2 to address # turn challenge.
+      /*
+       ^      ^
+       | L    |R4
+       |      |       R1
+       |<- - -|<- - - -
+       ^  R2  ^
+       |L     |R3     L
+       |<- - -|<- - - -
+           L
+
+         Note:
+         R*: Right track
+         R2: Minor discontinuity on Right track
+         L: Continuous Left track
+      */
+
+      val project_id     = Sequences.nextViiteProjectId
+      val roadNumber     = 1
       val roadPartNumber = 2
-      val createdBy = "test"
-      val roadName = None
+      val createdBy      = "test"
+      val roadName       = None
 
       val geomRight1       = List(Point(384292.0, 6674530.0), Point(384270.0, 6674532.0), Point(382891.0, 6675103.0))
       val geomRight1length = GeometryUtils.geometryLength(geomRight1)
       val geomRight2       = List(Point(382737.0, 6675175.0), Point(382737.0, 6675213.0), Point(382569.0, 6675961.0))
       val geomRight2length = GeometryUtils.geometryLength(geomRight2)
-      val geomLeft3       = List(Point(384288.0, 6674517.0), Point(384218.0, 6674520.0), Point(382778.0, 6675136.0))
-      val geomLeft3length = GeometryUtils.geometryLength(geomLeft3)
-      val geomLeft4       = List(Point(382714.0, 6675186.0), Point(382720.0, 6675247.0), Point(382581.0, 6675846.0))
-      val geomLeft4length = GeometryUtils.geometryLength(geomLeft4)
+      val geomLeft3        = List(Point(384288.0, 6674517.0), Point(384218.0, 6674520.0), Point(382778.0, 6675136.0))
+      val geomLeft3length  = GeometryUtils.geometryLength(geomLeft3)
+      val geomLeft4        = List(Point(382714.0, 6675186.0), Point(382720.0, 6675247.0), Point(382581.0, 6675846.0))
+      val geomLeft4length  = GeometryUtils.geometryLength(geomLeft4)
 
       val projectLinks = Seq(
         ProjectLink(1000,roadNumber,roadPartNumber,Track.RightSide,Discontinuity.Continuous,0,1550,0,1550,None,None,Some(createdBy),452570,0.0,geomRight1length,SideCode.TowardsDigitizing,(RoadAddressCP,JunctionPointCP),(RoadAddressCP,JunctionPointCP),geomRight1,project_id,LinkStatus.UnChanged,AdministrativeClass.Municipality,FrozenLinkInterface,geomRight1length,761,4558,1,false,None,1629932416000L,38259,roadName,None,None,None,None,None,None),
