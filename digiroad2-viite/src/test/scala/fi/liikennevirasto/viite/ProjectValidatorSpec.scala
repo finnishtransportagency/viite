@@ -2314,7 +2314,7 @@ Left|      |Right
 
       val errors = projectValidator.checkRoadContinuityCodes(project, editedProjectLinks)
       errors should have size 1
-      errors.head.validationError.value should be(projectValidator.ValidationErrorList.notDiscontinuousCodeOnDisconnectedRoadPartOutside.value)
+      errors.head.validationError.value should be(projectValidator.ValidationErrorList.NotDiscontinuousCodeOnDisconnectedRoadPartOutside.value)
     }
   }
 
@@ -2353,7 +2353,7 @@ Left|      |Right
 
       val errors = projectValidator.checkRoadContinuityCodes(project, editedProjectLinks)
       errors should have size 1
-      errors.head.validationError.value should be(projectValidator.ValidationErrorList.notDiscontinuousCodeOnDisconnectedRoadPartOutside.value)
+      errors.head.validationError.value should be(projectValidator.ValidationErrorList.NotDiscontinuousCodeOnDisconnectedRoadPartOutside.value)
     }
   }
 

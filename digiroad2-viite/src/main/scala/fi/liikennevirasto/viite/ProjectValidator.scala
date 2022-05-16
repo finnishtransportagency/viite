@@ -133,7 +133,7 @@ class ProjectValidator {
     val values = Set(MinorDiscontinuityFound, DiscontinuousFound, InsufficientTrackCoverage, DiscontinuousAddressScheme,
       SharedLinkIdsExist, NoContinuityCodesAtEnd, UnsuccessfulRecalculation, MissingEndOfRoad, HasNotHandledLinks, ConnectedDiscontinuousLink,
       IncompatibleDiscontinuityCodes, EndOfRoadNotOnLastPart, ElyCodeChangeDetected, DiscontinuityOnRamp, DiscontinuityInsideRoadPart,
-      DiscontinuousCodeOnConnectedRoadPartOutside, notDiscontinuousCodeOnDisconnectedRoadPartOutside, ElyDiscontinuityCodeBeforeProjectButNoElyChange,
+      DiscontinuousCodeOnConnectedRoadPartOutside, NotDiscontinuousCodeOnDisconnectedRoadPartOutside, ElyDiscontinuityCodeBeforeProjectButNoElyChange,
       WrongDiscontinuityBeforeProjectWithElyChangeInProject,
       ErrorInValidationOfUnchangedLinks, RoadNotEndingInElyBorder, RoadContinuesInAnotherEly,
       MultipleElyInPart, IncorrectLinkStatusOnElyCodeChange,
@@ -434,7 +434,7 @@ class ProjectValidator {
       def notification = false
     }
 
-    case object notDiscontinuousCodeOnDisconnectedRoadPartOutside extends ValidationError {
+    case object NotDiscontinuousCodeOnDisconnectedRoadPartOutside extends ValidationError {
       def value = 34
 
       def message: String = NotDiscontinuousCodeOnDisconnectedRoadPartOutsideMessage
@@ -1242,7 +1242,6 @@ class ProjectValidator {
             Seq()
           else {
             val previousRoadwayRoadAddresses = roadAddressService.getRoadAddressWithRoadAndPart(road, previousRoadPartNumber, fetchOnlyEnd = true)
-            //val lastRoadAddress = Seq(previousRoadwayRoadAddresses.maxBy(_.endAddrMValue))
             val prevLeftRoadAddress = Seq(previousRoadwayRoadAddresses.filter(_.track != Track.RightSide).maxBy(_.endAddrMValue))
             val prevRightRoadAddress = Seq(previousRoadwayRoadAddresses.filter(_.track != Track.LeftSide).maxBy(_.endAddrMValue))
             val (leftLinks, rightLinks) = (roadProjectLinks.filter(_.track != Track.RightSide), roadProjectLinks.filter(_.track != Track.LeftSide))
@@ -1274,11 +1273,10 @@ class ProjectValidator {
             }
 
             val notDiscontinuousCodeOnDisconnectedRoadAddress = validatePreviousRoadAddress(prevLeftRoadAddress)(validateDiscontinuity(leftLinks)
-            )(ValidationErrorList.notDiscontinuousCodeOnDisconnectedRoadPartOutside) ++
+            )(ValidationErrorList.NotDiscontinuousCodeOnDisconnectedRoadPartOutside) ++
               validatePreviousRoadAddress(prevRightRoadAddress)(validateDiscontinuity(rightLinks)
-            )(ValidationErrorList.notDiscontinuousCodeOnDisconnectedRoadPartOutside)
+            )(ValidationErrorList.NotDiscontinuousCodeOnDisconnectedRoadPartOutside)
 
-            if (notDiscontinuousCodeOnDisconnectedRoadAddress.nonEmpty) return Seq(notDiscontinuousCodeOnDisconnectedRoadAddress.head)
 
             /**
              * Validates that there isn't an end of road discontinuity on a road address before the road part reserved
@@ -1301,8 +1299,6 @@ class ProjectValidator {
               validatePreviousRoadAddress(prevRightRoadAddress)(validateContinuous(rightLinks)
             )(ValidationErrorList.DiscontinuousCodeOnConnectedRoadPartOutside)
 
-            val discontinuousCodeOnConnectedRoadAddressError = if (discontinuousCodeOnConnectedRoadAddress.size > 1) Seq(discontinuousCodeOnConnectedRoadAddress.head)
-              else discontinuousCodeOnConnectedRoadAddress
 
             /**
              * Validates that the ELY has changed, if the previous RoadAddress has ElyCodeChange Discontinuity
@@ -1322,8 +1318,10 @@ class ProjectValidator {
             )(ValidationErrorList.WrongDiscontinuityBeforeProjectWithElyChangeInProject)
 
 
-            endOfRoadOutsideOfProject ++ discontinuousCodeOnConnectedRoadAddressError ++
+            val errors = notDiscontinuousCodeOnDisconnectedRoadAddress ++
+              endOfRoadOutsideOfProject ++ discontinuousCodeOnConnectedRoadAddress ++
               elyCodeChangeButSameElyNumber ++ wrongDiscontinuityWithElyChange
+            if (errors.nonEmpty) errors.take(1) else Seq()
         }
         case None =>
           Seq()
