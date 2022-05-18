@@ -850,6 +850,234 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     }
   }
 
+  test("Test handleRoadwayPoints When dual roadway point is no longer dual roadway point then addrM's and roadway number in that roadway point should change correctly and new roadway point should be created NEW + TRANSFER + TRANSFER") {
+    runWithRollback {
+      /*
+
+          BEFORE PROJECT                                     AFTER PROJECT
+    <---R3-----O*------R1-----                         <---R3-----O<-----R1--------------R1-------
+               |                                                  |
+               | R1                                               | R2
+               |                                                  |
+               |                                                  |
+               v                                                  v
+        * Note
+          * 0*: Dual roadway point and Node
+          * 0: Node
+          * R1: Road 1 reserved to project (road number 19510)
+          * R2: Road 2 new road number (road number 19527)
+          * R3: Road 3 outside of project
+       */
+
+      val projectId = Sequences.nextViiteProjectId
+      val projectName = "dualRoadwayPoint"
+      val ely = 14
+      val user = "silari"
+      val date = DateTime.parse("2022-05-09")
+      val originalRoadwayNumber1 = Sequences.nextRoadwayNumber
+      val newRoadwayId1 = Sequences.nextRoadwayId
+      val newRoadwayId2 = Sequences.nextRoadwayId
+      val newRoadwayId3 = Sequences.nextRoadwayId
+      val newRoadwayNumber1 = Sequences.nextRoadwayNumber
+      val newRoadwayNumber2 = Sequences.nextRoadwayNumber
+      val newRoadwayNumber3 = Sequences.nextRoadwayNumber
+      val llId = Sequences.nextLinearLocationId
+
+      // create roadway points (before project situation)
+      val rwpId1 = roadwayPointDAO.create(originalRoadwayNumber1, 0, "rw1originalFirst")
+      val rwpIdDual = roadwayPointDAO.create(originalRoadwayNumber1, 10, "dualRWP") // THIS IS THE DUAL ROADWAY POINT
+      val rwpId3 = roadwayPointDAO.create(originalRoadwayNumber1, 20, "rw1originalLast")
+
+      // create roadways (after projects changes situation)
+      val newRoadwaysFor19510 = Seq(
+        Roadway(Sequences.nextRoadwayId, newRoadwayNumber1, 19510, 1, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, 5, false, DateTime.now(), None, "silari", Some("testRoadName"), 14, TerminationCode.NoTermination, DateTime.now(), None),
+        Roadway(Sequences.nextRoadwayId, newRoadwayNumber2, 19510, 1, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, 5, 15, false, DateTime.now(), None, "silari", Some("testRoadName"), 14, TerminationCode.NoTermination, DateTime.now(), None)
+      )
+
+      val newRoadwaysFor19527 = Seq(
+        Roadway(Sequences.nextRoadwayId, newRoadwayNumber3, 19527, 1, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, 0, 10, false, DateTime.now(), None, "silari", Some("testRoadName"), 14, TerminationCode.NoTermination, DateTime.now(), None)
+      )
+
+      val newRoadways = newRoadwaysFor19510.union(newRoadwaysFor19527)
+      roadwayDAO.create(newRoadways)
+
+      // create project link changes that will be handed to the handleRoadwayPointsUpdate function
+      val projectLinkChanges = Seq(
+        ProjectRoadLinkChange(Sequences.nextProjectLinkId, newRoadwayId1,llId, llId, 0, 0, 19510, 1, 0, 0, 0, 5, LinkStatus.New, false, newRoadwayNumber1, newRoadwayNumber1),
+        ProjectRoadLinkChange(Sequences.nextProjectLinkId, newRoadwayId2,llId + 1, llId +1, 19510, 1, 19510, 1, 0, 10, 5, 15, LinkStatus.Transfer, false, originalRoadwayNumber1, newRoadwayNumber2),
+        ProjectRoadLinkChange(Sequences.nextProjectLinkId, newRoadwayId3,llId + 2, llId + 2, 19510, 1, 19527, 1, 10, 20, 0, 10, LinkStatus.Transfer, false, originalRoadwayNumber1, newRoadwayNumber3)
+      )
+
+      // create roadway changes that will be handed to the handleRoadwayPointsUpdate function
+      val roadwayChanges = List(
+        ProjectRoadwayChange(
+          projectId, Some(projectName), ely, user, DateTime.now(),
+          RoadwayChangeInfo(
+            AddressChangeType.New,
+            RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14L)),
+            RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(0), Some(5), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14)),
+            Discontinuity.Continuous, AdministrativeClass.State, false, 4481L, 14),
+          date, Some(1049600)),
+        ProjectRoadwayChange(
+          projectId, Some(projectName), ely, user, DateTime.now(),
+          RoadwayChangeInfo(
+            AddressChangeType.Transfer,
+            RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(0), Some(10), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14)),
+            RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(5), Some(15), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
+            Discontinuity.EndOfRoad, AdministrativeClass.State, false, 4481L, 14),
+          date, Some(1049600)),
+        ProjectRoadwayChange(
+          projectId, Some(projectName), ely, user, DateTime.now(),
+          RoadwayChangeInfo(
+            AddressChangeType.Transfer,
+            RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(10), Some(20), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
+            RoadwayChangeSection(Some(19527), Some(0), Some(1), Some(1), Some(0), Some(10), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
+            Discontinuity.EndOfRoad, AdministrativeClass.State, false, 4481L, 14),
+          date, Some(1049600))
+      )
+
+      when(mockRoadwayDAO.fetchAllBySectionAndTracks(19510, 1, Set(Track.Combined))).thenReturn(newRoadwaysFor19510)
+      when(mockRoadwayDAO.fetchAllBySectionAndTracks(19527, 1, Set(Track.Combined))).thenReturn(newRoadwaysFor19527)
+
+      // this is the function that's being tested
+      roadAddressService.handleRoadwayPointsUpdate(roadwayChanges, projectLinkChanges, "user")
+
+      val rwPointsOnNewRoadwayNumber2 = roadwayPointDAO.fetchByRoadwayNumber(newRoadwayNumber2)
+      val rwPointsOnNewRoadwayNumber3 = roadwayPointDAO.fetchByRoadwayNumber(newRoadwayNumber3)
+
+      rwPointsOnNewRoadwayNumber2.size should be (2)
+      val oldDualRwp = rwPointsOnNewRoadwayNumber2.find(rwp => rwp.id == rwpIdDual)
+      val oldFirstRwp = rwPointsOnNewRoadwayNumber2.find(rwp => rwp.id == rwpId1)
+      // check that the addrM's are correct
+      oldDualRwp.get.addrMValue should be (15)
+      oldFirstRwp.get.addrMValue should be (5)
+
+
+      rwPointsOnNewRoadwayNumber3.size should be (2)
+      val (oldLastRwp, newRwp) = rwPointsOnNewRoadwayNumber3.partition(rwp => rwp.id == rwpId3)
+      // check that the addrM's are correct
+      newRwp.head.addrMValue should be (0)
+      oldLastRwp.head.addrMValue should be (10)
+
+    }
+  }
+
+  test("Test handleRoadwayPoints When dual roadway point is no longer dual roadway point then addrM's and roadway number in that roadway point should change correctly and new roadway point should be created UNCHANGED + TRANSFER") {
+    runWithRollback {
+      /*
+
+               ^    BEFORE PROJECT              AFTER PROJECT     ^
+               |                                                  |
+               |R2                                                | R2
+               |                                                  |
+               ^                                                  |
+               | R1                                               |
+    <---R3-----O*------R1-----                         <---R3-----O<-----R1-----
+
+        * Note
+          * 0*: Dual roadway point and Node
+          * 0: Node
+          * R1: Road 1 reserved to project (road number 19510)
+          * R2: Road 2 reserved to project (road number 19527)
+          * R3: Road 3 outside of project
+       */
+
+      val projectId = Sequences.nextViiteProjectId
+      val projectName = "dualRoadwayPoint"
+      val ely = 14
+      val user = "silari"
+      val date = DateTime.parse("2022-05-09")
+      val originalRoadwayNumber0 = Sequences.nextRoadwayNumber
+      val originalRoadwayNumber1 = Sequences.nextRoadwayNumber
+      val originalRoadwayNumber2 = Sequences.nextRoadwayNumber
+      val originalRoadwayId0 = Sequences.nextRoadwayId
+      val originalRoadwayId1 = Sequences.nextRoadwayId
+      val originalRoadwayId2 = Sequences.nextRoadwayId
+      val newRoadwayNumber1 = Sequences.nextRoadwayNumber
+      val newRoadwayNumber2 = Sequences.nextRoadwayNumber
+      val llId = Sequences.nextLinearLocationId
+
+      // create roadway points (before project situation)
+      roadwayPointDAO.create(originalRoadwayNumber0, 0, "rw1originalStart")
+      roadwayPointDAO.create(originalRoadwayNumber1, 10, "dualRWP") // THIS IS THE DUAL ROADWAY POINT
+      roadwayPointDAO.create(originalRoadwayNumber1, 13, "rw1originalLast")
+      roadwayPointDAO.create(originalRoadwayNumber2, 0, "rw2originalStart")
+      roadwayPointDAO.create(originalRoadwayNumber2, 10, "rw2originalEnd")
+
+      // create new roadways (after projects changes situation)
+      val newRoadwaysFor19510 = Seq(
+        Roadway(Sequences.nextRoadwayId, originalRoadwayNumber0, 19510, 1, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, 5, false, DateTime.now(), None, "silari", Some("testRoadName"), 14, TerminationCode.NoTermination, DateTime.now(), None),
+        Roadway(Sequences.nextRoadwayId, newRoadwayNumber1, 19510, 1, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, 5, 10, false, DateTime.now(), None, "silari", Some("testRoadName"), 14, TerminationCode.NoTermination, DateTime.now(), None)
+      )
+
+      val newRoadwaysFor19527 = Seq(
+        Roadway(Sequences.nextRoadwayId, newRoadwayNumber2, 19527, 1, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, 3, false, DateTime.now(), None, "silari", Some("testRoadName"), 14, TerminationCode.NoTermination, DateTime.now(), None),
+        Roadway(Sequences.nextRoadwayId, originalRoadwayNumber2, 19527, 1, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, 3, 13, false, DateTime.now(), None, "silari", Some("testRoadName2"), 14, TerminationCode.NoTermination, DateTime.now(), None)
+      )
+
+      val newRoadways = newRoadwaysFor19510.union(newRoadwaysFor19527)
+      roadwayDAO.create(newRoadways)
+
+      // create project link changes that will be handed to the handleRoadwayPointsUpdate function
+      val projectLinkChanges = Seq(
+        ProjectRoadLinkChange(Sequences.nextProjectLinkId, originalRoadwayId0,llId, llId, 19510, 1, 19510, 1, 0, 5, 0, 5, LinkStatus.UnChanged, false, originalRoadwayNumber0, originalRoadwayNumber0),
+        ProjectRoadLinkChange(Sequences.nextProjectLinkId, originalRoadwayId1,llId + 1, llId +1, 19510, 1, 19510, 1, 5, 10, 5, 10, LinkStatus.UnChanged, false, originalRoadwayNumber1, newRoadwayNumber1),
+        ProjectRoadLinkChange(Sequences.nextProjectLinkId, originalRoadwayId1,llId + 2, llId + 2, 19510, 1, 19527, 1, 10, 13, 0, 3, LinkStatus.Transfer, false, originalRoadwayNumber1, newRoadwayNumber2),
+        ProjectRoadLinkChange(Sequences.nextProjectLinkId, originalRoadwayId2,llId + 3, llId + 3, 19510, 1, 19510, 1, 0, 10, 3, 13, LinkStatus.Transfer, false, originalRoadwayNumber2, originalRoadwayNumber2)
+      )
+
+      // create roadway changes that will be handed to the handleRoadwayPointsUpdate function
+      val roadwayChanges = List(
+        ProjectRoadwayChange(
+          projectId, Some(projectName), ely, user, DateTime.now(),
+          RoadwayChangeInfo(
+            AddressChangeType.Unchanged,
+            RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(0), Some(5), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14)),
+            RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(0), Some(5), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14)),
+            Discontinuity.EndOfRoad, AdministrativeClass.State, false, 4481L, 14),
+          date, Some(1049600)),
+        ProjectRoadwayChange(
+          projectId, Some(projectName), ely, user, DateTime.now(),
+          RoadwayChangeInfo(
+            AddressChangeType.Unchanged,
+            RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(5), Some(10), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14)),
+            RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(5), Some(10), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
+            Discontinuity.EndOfRoad, AdministrativeClass.State, false, 4481L, 14),
+          date, Some(1049600)),
+        ProjectRoadwayChange(
+          projectId, Some(projectName), ely, user, DateTime.now(),
+          RoadwayChangeInfo(
+            AddressChangeType.Transfer,
+            RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(10), Some(13), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
+            RoadwayChangeSection(Some(19527), Some(0), Some(1), Some(1), Some(0), Some(3), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14)),
+            Discontinuity.Continuous, AdministrativeClass.State, false, 4481L, 14),
+          date, Some(1049600)),
+        ProjectRoadwayChange(
+          projectId, Some(projectName), ely, user, DateTime.now(),
+          RoadwayChangeInfo(
+            AddressChangeType.Transfer,
+            RoadwayChangeSection(Some(19527), Some(0), Some(1), Some(1), Some(0), Some(10), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
+            RoadwayChangeSection(Some(19527), Some(0), Some(1), Some(1), Some(3), Some(13), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
+            Discontinuity.EndOfRoad, AdministrativeClass.State, false, 4481L, 14),
+          date, Some(1049600))
+      )
+
+      when(mockRoadwayDAO.fetchAllBySectionAndTracks(19510, 1, Set(Track.Combined))).thenReturn(newRoadwaysFor19510)
+      when(mockRoadwayDAO.fetchAllBySectionAndTracks(19527, 1, Set(Track.Combined))).thenReturn(newRoadwaysFor19527)
+
+      // this is the function that's being tested
+      roadAddressService.handleRoadwayPointsUpdate(roadwayChanges, projectLinkChanges, "user")
+
+      val dualRwp = roadwayPointDAO.fetchByRoadwayNumber(newRoadwayNumber1)
+      dualRwp.size should be (1)
+      dualRwp.head.addrMValue should be (10)
+
+      val rwPointsOnNewRoadwayNumber2 = roadwayPointDAO.fetchByRoadwayNumber(newRoadwayNumber2)
+      rwPointsOnNewRoadwayNumber2.size should be (2)
+      rwPointsOnNewRoadwayNumber2.head.addrMValue should be (0)
+    }
+  }
+
   test("Test handleRoadwayPoints When dual roadway point is handled") {
     runWithRollback {
       val geom1 = Seq(Point(0.0, 0.0), Point(5.0, 0.0))
