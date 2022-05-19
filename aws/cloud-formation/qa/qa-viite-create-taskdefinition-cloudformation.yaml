@@ -68,7 +68,9 @@ Resources:
             - Name: rasterServiceURL
               Value: 'https://api.vaylapilvi.fi/rasteripalvelu-mml'
             - Name: vvhRestApiEndPoint
-              Value: 'https://haproxy.vayla.fi:2027/vvhdata/'
+              Value: 'https://testiapi.vayla.fi/vvhdata/'
+            - Name: vvhRestApiUsername
+              Value: svc_vvh_viite
             - Name: vvhRoadlink.frozen
               Value: 'true'
             - Name: vkmUrl
@@ -106,6 +108,8 @@ Resources:
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/Viite/QA/vkmApiKey'
             - Name: rasterServiceApiKey
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/Viite/QA/rasterServiceApiKey'
+            - Name: vvhRestApiPassword
+              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/Viite/QA/vvhRestApiPassword'
           MemoryReservation: 2048
           Image: !Sub '${RepositoryURL}/viite-qa:latest'
           Name: viite-test
