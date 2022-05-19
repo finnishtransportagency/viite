@@ -3,13 +3,14 @@ package fi.liikennevirasto.digiroad2.client.vvh
 import java.io.IOException
 import java.net.URLEncoder
 import java.util
-
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.{Unknown => _, _}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import org.apache.http.NameValuePair
+import fi.liikennevirasto.digiroad2.util.ViiteProperties
+import org.apache.commons.codec.binary.Base64
+import org.apache.http.{HttpHeaders, NameValuePair}
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet, HttpPost}
 import org.apache.http.impl.client.HttpClientBuilder
@@ -365,11 +366,16 @@ trait VVHClientOperations {
     var success = true /// For do-while check. Set to false when exception.
     var result : Either[VVHError, List[Map[String, Any]]] = Left(VVHError(Map(("Dummy start value", "nothing here")), url))
 
+    val auth: String = ViiteProperties.vvhRestApiUsername + ":" + ViiteProperties.vvhRestApiPassword
+    val encodedAuth: String = Base64.encodeBase64String(auth.getBytes)
+
     do {
       trycounter += 1
       success = true
       result = time(logger, s"Fetch VVH features, (try $trycounter)") {
         val request = new HttpGet(url)
+        request.addHeader(HttpHeaders.AUTHORIZATION, "Basic " + encodedAuth)
+
         val client = HttpClientBuilder.create().build()
         var response: CloseableHttpResponse = null
 

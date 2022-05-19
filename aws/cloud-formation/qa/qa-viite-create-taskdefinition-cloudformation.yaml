@@ -68,7 +68,7 @@ Resources:
             - Name: rasterServiceURL
               Value: 'https://api.vaylapilvi.fi/rasteripalvelu-mml'
             - Name: vvhRestApiEndPoint
-              Value: 'https://haproxy.vayla.fi:2027/vvhdata/'
+              Value: 'https://testiapi.vayla.fi/vvhdata/'
             - Name: vvhRoadlink.frozen
               Value: 'true'
             - Name: vkmUrl
