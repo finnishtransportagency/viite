@@ -69,6 +69,8 @@ Resources:
               Value: 'https://api.vaylapilvi.fi/rasteripalvelu-mml'
             - Name: vvhRestApiEndPoint
               Value: 'https://api.vayla.fi/vvhdata/'
+            - Name: vvhRestApiUsername
+              Value: svc_vvh_viite
             - Name: vvhRoadlink.frozen
               Value: 'true'
             - Name: vkmUrl

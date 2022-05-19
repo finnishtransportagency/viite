@@ -44,3 +44,11 @@ Resources:
       Type: String
       Value: PlaceHolderValue
       Description: Viite access key for Rasteripalvelu-mml hosted in vaylapilvi
+
+  VVHRestApiPassword:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Join ['/', ['/Viite', !Ref Environment, 'vvhRestApiPassword']]
+      Type: String
+      Value: PlaceHolderValue
+      Description: !Join [' ', ['VVH rest API password for Viite ', !Ref Environment]]
