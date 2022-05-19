@@ -96,7 +96,7 @@ export AWS_PROFILE=centralized_service_admin
 
 ### Parameter Storen päivitys
 ```
-aws cloudformation create-stack \
+aws cloudformation update-stack \
 --stack-name [esim. viite-prod-parameter-store-entries] \
 --template-body file://aws/cloud-formation/viite-parameter-store-cloudformation.yaml \
 --parameters ParameterKey=Environment,ParameterValue=Prod 
