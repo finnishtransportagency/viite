@@ -93,11 +93,21 @@ setx AWS_PROFILE centralized_service_admin
 export AWS_DEFAULT_REGION=eu-west-1
 export AWS_PROFILE=centralized_service_admin
 ```
+
+### Parameter Storen päivitys
+```
+aws cloudformation create-stack \
+--stack-name [esim. viite-prod-parameter-store-entries] \
+--template-body file://aws/cloud-formation/viite-parameter-store-cloudformation.yaml \
+--parameters ParameterKey=Environment,ParameterValue=Prod 
+```
+
 ### Task definitionin päivitys
 Luo uusi task definition versio
 ```
 aws cloudformation update-stack \
 --stack-name [esim. viite-prod-taskdefinition] \
+--capabilities CAPABILITY_NAMED_IAM \
 --template-body file://aws/cloud-formation/prod/prod-viite-create-taskdefinition-cloudformation.yaml \
 --parameters ParameterKey=RepositoryURL,ParameterValue=[URL repositoryyn jossa kontti sijaitsee esim. 012345678910.dkr.ecr.eu-west-1.amazonaws.com]
 ```
