@@ -108,6 +108,8 @@ Resources:
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/Viite/QA/vkmApiKey'
             - Name: rasterServiceApiKey
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/Viite/QA/rasterServiceApiKey'
+            - Name: vvhRestApiPassword
+              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/Viite/QA/vvhRestApiPassword'
           MemoryReservation: 2048
           Image: !Sub '${RepositoryURL}/viite-qa:latest'
           Name: viite-test
