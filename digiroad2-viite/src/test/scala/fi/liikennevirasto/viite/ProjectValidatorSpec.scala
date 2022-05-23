@@ -1640,16 +1640,90 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       validationErrors3.foreach(e => e.validationError.value should be(projectValidator.ValidationErrorList.ErrorInValidationOfUnchangedLinks.value))
     }
   }
-   test("Test checkForInvalidUnchangedLinks When middle of road part is changed to another road number then there cant be unchanged after the transfer") {
+
+  test("Test checkForInvalidUnchangedLinks When project link with status New is added to the start of the road part then there cant be links with status Unchanged after that") {
     /*
-    BEFORE
+    BEFORE PROJECT
+                                19999
+                 |-------------------------------------------->
+
+    AFTER OPERATIONS
+      19999               19999                  19999
+        New             Unchanged              Unchanged
+    |------------>--------------------->---------------------->
+                        ^Must produce validation error^
+    */
+    runWithRollback {
+      val startDate = DateTime.now()
+      val linearLocationId = Sequences.nextLinearLocationId
+      val projectId = Sequences.nextViiteProjectId
+      val geometryNew = Seq(Point(10.0, 30.0), Point(10.0, 40.0))
+      val geometryUnchanged1 = Seq(Point(10.0, 40.0), Point(10.0, 50.0))
+      val geometryUnchanged2 = Seq(Point(10.0, 50.0), Point(10.0, 60.0))
+      val roadwayId = Sequences.nextRoadwayId
+
+      val roadway = Seq(
+        Roadway(roadwayId, roadwayNumber1, 19999L, 1L, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, 0L, 20L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None)
+      )
+      roadwayDAO.create(roadway)
+
+      //create linear locations
+      val linearLocations = Seq(
+        LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          geometryNew, LinkGeomSource.ComplementaryLinkInterface,
+          roadwayNumber1, Some(startDate), None),
+
+        LinearLocation(linearLocationId + 1, 2, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          geometryUnchanged1, LinkGeomSource.ComplementaryLinkInterface,
+          roadwayNumber1, Some(startDate), None),
+
+        LinearLocation(linearLocationId + 2, 3, 3000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          geometryUnchanged2, LinkGeomSource.ComplementaryLinkInterface,
+          roadwayNumber1, Some(startDate), None)
+      )
+
+      linearLocationDAO.create(linearLocations)
+
+      //create project and reserve road parts
+      val project = Project(projectId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(), "", Seq(), Seq(), None, None)
+      projectDAO.create(project)
+      projectReservedPartDAO.reserveRoadPart(projectId, 19999L, 1L, "u")
+
+      // create project links
+      projectLinkDAO.create(
+        Seq(
+          util.projectLink(0L, 10L, Combined, projectId, LinkStatus.New, linearLocationId = linearLocationId, discontinuity = Discontinuity.Continuous, linkId = 1000, roadwayId = roadwayId).copy(geometry = geometryNew, originalStartAddrMValue = 0, originalEndAddrMValue = 0),
+          util.projectLink(10L, 20L, Combined, projectId, LinkStatus.UnChanged, linearLocationId = linearLocationId + 1 ,discontinuity = Discontinuity.Continuous, linkId = 2000, roadwayId = roadwayId).copy(geometry = geometryUnchanged1, originalStartAddrMValue = 0, originalEndAddrMValue = 10),
+          util.projectLink(20L, 30L, Combined, projectId, LinkStatus.UnChanged, linearLocationId = linearLocationId + 2 ,discontinuity = Discontinuity.EndOfRoad, linkId = 3000, roadwayId = roadwayId).copy(geometry = geometryUnchanged2, originalStartAddrMValue = 10, originalEndAddrMValue = 20)
+        )
+      )
+
+      // fetch project links
+      val projectLinks = projectLinkDAO.fetchProjectLinks(projectId)
+
+      mockEmptyRoadAddressServiceCalls()
+
+      // call the function that will be tested
+      val validationErrors = projectValidator.checkForInvalidUnchangedLinks(project, projectLinks)
+      validationErrors.size shouldNot be(0)
+      validationErrors.foreach(e => e.validationError.value should be(projectValidator.ValidationErrorList.ErrorInValidationOfUnchangedLinks.value))
+    }
+  }
+
+   test("Test checkForInvalidUnchangedLinks When middle of road part is changed to another road number then there cant be Unchanged link after the Transferred link") {
+    /*
+    BEFORE PROJECT
                     19999
     -------------------------------------------->
 
-    AFTER
+    AFTER OPERATIONS
     19999             20000           19999
     Unchanged         Transfer        Unchanged
     ------------>---------------->-------------->
+                                          ^Must produce validation error
     */
     runWithRollback {
       val startDate = DateTime.now()

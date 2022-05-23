@@ -586,6 +586,11 @@ class ProjectValidator {
 //    }
 //  }
 
+
+  /** The Unchanged status is allowed only for the links whose address information does not change within the project.
+    * Any operation, other than Unchanged ("Ennallaan"), applied to the link, changes or may change the addresses of the links following the operation.
+    * Thus, the links following the first other operation must not be allowed to have "Unchanged" status, but is returned with a validation error.
+    */
   def checkForInvalidUnchangedLinks(project: Project, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
     // group project links by roadNumber and roadPart number
     val groupedByRoadNumberAndPart = projectLinks.groupBy(pl => (pl.originalRoadNumber, pl.originalRoadPartNumber))
