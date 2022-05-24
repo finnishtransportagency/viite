@@ -4,6 +4,7 @@ import org.eclipse.jetty.jmx.MBeanContainer
 import org.eclipse.jetty.server.handler.ContextHandlerCollection
 import org.eclipse.jetty.server.{Handler, Server}
 import org.eclipse.jetty.webapp.WebAppContext
+import org.eclipse.jetty.servlet.{DefaultServlet, ServletHolder}
 
 import java.lang.management.ManagementFactory
 
@@ -30,6 +31,12 @@ trait DigiroadServer {
     appContext.setContextPath(viiteContextPath)
     appContext.setParentLoaderPriority(true)
     appContext.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false")
+    // Disable browser cache
+    val defaultServlet = new DefaultServlet
+    val holder = new ServletHolder(defaultServlet)
+    holder.setInitParameter("cacheControl", "no-store, no-cache")
+    appContext.addServlet(holder, "/index.html")
+
     appContext.getMimeTypes.addMimeMapping("ttf", "application/x-font-ttf")
     appContext.getMimeTypes.addMimeMapping("woff", "application/x-font-woff")
     appContext.getMimeTypes.addMimeMapping("eot", "application/vnd.ms-fontobject")
