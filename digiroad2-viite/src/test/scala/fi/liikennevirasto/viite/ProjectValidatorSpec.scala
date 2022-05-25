@@ -12,7 +12,8 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
 import fi.liikennevirasto.viite.dao.{Discontinuity, LinearLocationDAO, ProjectReservedPart, _}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
-import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, EndOfRoad, MinorDiscontinuity}
+import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous, EndOfRoad, MinorDiscontinuity}
+import fi.liikennevirasto.viite.dao.LinkStatus.{Transfer, UnChanged}
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
@@ -288,6 +289,172 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val errors = projectValidator.checkRoadContinuityCodes(project, brokenContinuity).distinct
       errors should have size 1
       errors.head.validationError should be(projectValidator.ValidationErrorList.MinorDiscontinuityFound)
+    }
+  }
+
+  test("Test checkRoadContinuityCodes" +
+                 "When there exists not calculated new links " +
+                 "Then checkContinuityBetweenLinksOnParts should throw errors when discontinuities are set on continuous links and vice versa.") {
+    /*    UnChanged-UnChanged-New-Transfer-New */
+    runWithRollback {
+      val (project, generatedProjectLinks) = util.setUpProjectWithLinks(LinkStatus.UnChanged, Seq(0L, 10L, 20L, 30L, 40L, 50L))
+      val firstGenerated      = generatedProjectLinks.filter(_.endAddrMValue <= 20)
+      val middleLinkGenerated = generatedProjectLinks.find(_.endAddrMValue == 30).get
+      val lastLinksGenerated  = generatedProjectLinks.filter(_.endAddrMValue > 30)
+
+      val newMiddleLink          = Seq(middleLinkGenerated.copy(status = LinkStatus.New, startAddrMValue = 0, endAddrMValue = 0))
+      val lastLinks              = Seq(lastLinksGenerated.head.copy(status = LinkStatus.Transfer, startAddrMValue = 0, endAddrMValue = 10), lastLinksGenerated.last.copy(status = LinkStatus.New, startAddrMValue = 0, endAddrMValue = 0, discontinuity = Discontinuity.EndOfRoad))
+      val continuousProjectLinks = firstGenerated ++ newMiddleLink ++ lastLinks
+
+      mockEmptyRoadAddressServiceCalls()
+
+      // Test should not produce errors when all links are continuos.
+      val errors = projectValidator.checkRoadContinuityCodes(project, continuousProjectLinks)
+      errors.filter(_.validationError == projectValidator.ValidationErrorList.ConnectedDiscontinuousLink) should have size 0
+
+      val firstLinksDiscontinuity         = Seq(firstGenerated.head, firstGenerated.last.copy(discontinuity = Discontinuity.Discontinuous))
+      val newLinkMinorDiscontinuity       = Seq(newMiddleLink.head.copy(discontinuity = Discontinuity.MinorDiscontinuity))
+      val lastLinksMinorDiscontinuity     = Seq(lastLinks.head.copy(discontinuity = Discontinuity.MinorDiscontinuity), lastLinks.last)
+      val projectLinksWithDiscontinuities = firstLinksDiscontinuity ++ newLinkMinorDiscontinuity ++ lastLinksMinorDiscontinuity
+
+      // Test should produce errors when all links are continuos but have discontinuous code set.
+      val errors2 = projectValidator.checkRoadContinuityCodes(project, projectLinksWithDiscontinuities)
+
+      // Each discontinuity should produce an error.
+      val connectedErrors = errors2.filter(_.validationError == projectValidator.ValidationErrorList.ConnectedDiscontinuousLink)
+      connectedErrors should have size 1
+      val discontinuities = Seq(Discontinuity.MinorDiscontinuity.value, Discontinuity.Discontinuous.value)
+      val affectedIds = connectedErrors.head.affectedIds.distinct
+      affectedIds should have size projectLinksWithDiscontinuities.count(pl => discontinuities.contains(pl.discontinuity.value))
+      projectLinksWithDiscontinuities.filter(pl => discontinuities.contains(pl.discontinuity.value)).map(_.id).foreach(id =>
+        affectedIds should contain (id)
+      )
+    }
+  }
+
+  test("Test checkRoadContinuityCodes" +
+                 "When there exists not calculated new links " +
+                 "Then checkDiscontinuityInsideRoadPart should throw errors for Discontinuities in the middle of road part.") {
+    /*    UnChanged-UnChanged-New-Transfer-New */
+    case class TestLinkValues(startAddr: Long, endAddr: Long, discontinuity: Discontinuity, status: LinkStatus)
+    runWithRollback {
+      val (project, generatedProjectLinks) = util.setUpProjectWithLinks(LinkStatus.UnChanged, Seq(0L, 10L, 20L, 30L, 40L, 50L))
+      val projectLinksWithDiscontinuities =
+        Seq(
+            TestLinkValues( startAddr =  0, endAddr = 10, discontinuity = Continuous,    status = UnChanged),
+            TestLinkValues( startAddr = 10, endAddr = 20, discontinuity = Continuous,    status = UnChanged),
+            TestLinkValues( startAddr =  0, endAddr =  0, discontinuity = Discontinuous, status = LinkStatus.New),
+            TestLinkValues( startAddr =  0, endAddr = 10, discontinuity = Discontinuous, status = Transfer),
+            TestLinkValues( startAddr =  0, endAddr =  0, discontinuity = EndOfRoad,     status = LinkStatus.New)
+          ).zip(generatedProjectLinks)
+           .map{case (testLinkValues, projectLink) => projectLink.copy(startAddrMValue = testLinkValues.startAddr, endAddrMValue = testLinkValues.endAddr, discontinuity = testLinkValues.discontinuity, status = testLinkValues.status)}
+
+      mockEmptyRoadAddressServiceCalls()
+
+      val errors = projectValidator.checkRoadContinuityCodes(project, projectLinksWithDiscontinuities)
+      // Each Discontinuity should produce an error.
+      val connectedErrors = errors.filter(_.validationError == projectValidator.ValidationErrorList.DiscontinuityInsideRoadPart)
+      connectedErrors should have size 1
+      val affectedIds = connectedErrors.head.affectedIds.distinct
+      affectedIds should have size projectLinksWithDiscontinuities.count(_.discontinuity == Discontinuity.Discontinuous)
+      projectLinksWithDiscontinuities.filter(_.discontinuity == Discontinuous).map(_.id).foreach(id =>
+      affectedIds should contain (id))
+    }
+  }
+
+  test("Test checkRoadContinuityCodes" +
+                 "When there exists not calculated new links " +
+                 "Then checkEndOfRoadBetweenLinksOnPart should throw error for EndOfRoad in the middle of road part.") {
+    /*    UnChanged-UnChanged-New-Transfer-New */
+    case class TestLinkValues(startAddr: Long, endAddr: Long, discontinuity: Discontinuity, status: LinkStatus)
+    runWithRollback {
+      val (project, generatedProjectLinks) = util.setUpProjectWithLinks(LinkStatus.UnChanged, Seq(0L, 10L, 20L, 30L, 40L, 50L))
+      val projectLinksWithDiscontinuities =
+        Seq(
+          TestLinkValues( startAddr =  0, endAddr = 10, discontinuity = Continuous, status = UnChanged),
+          TestLinkValues( startAddr = 10, endAddr = 20, discontinuity = Continuous, status = UnChanged),
+          TestLinkValues( startAddr =  0, endAddr =  0, discontinuity = EndOfRoad,  status = LinkStatus.New),
+          TestLinkValues( startAddr =  0, endAddr = 10, discontinuity = Continuous, status = Transfer),
+          TestLinkValues( startAddr =  0, endAddr =  0, discontinuity = EndOfRoad,  status = LinkStatus.New)
+        ).zip(generatedProjectLinks)
+         .map{case (testLinkValues, projectLink) => projectLink.copy(startAddrMValue = testLinkValues.startAddr, endAddrMValue = testLinkValues.endAddr, discontinuity = testLinkValues.discontinuity, status = testLinkValues.status)}
+
+      mockEmptyRoadAddressServiceCalls()
+
+      val errors = projectValidator.checkRoadContinuityCodes(project, projectLinksWithDiscontinuities)
+      // Each Discontinuity should produce an error.
+      val connectedErrors = errors.filter(_.validationError == projectValidator.ValidationErrorList.EndOfRoadMiddleOfPart)
+      connectedErrors should have size 1
+
+      val affectedIds = connectedErrors.head.affectedIds.distinct
+      affectedIds should have size 1
+      affectedIds should contain (projectLinksWithDiscontinuities.find(_.discontinuity == EndOfRoad).get.id)
+    }
+  }
+
+  test("Test checkRoadContinuityCodes" +
+                 "When there exists not calculated new links " +
+                 "Then checkEndOfRoadOnLastPart should throw error when missing EndOfRoad on last part.") {
+    /*    UnChanged-UnChanged-New-Transfer-New */
+    case class TestLinkValues(startAddr: Long, endAddr: Long, discontinuity: Discontinuity, status: LinkStatus)
+    runWithRollback {
+      val (project, generatedProjectLinks) = util.setUpProjectWithLinks(LinkStatus.UnChanged, Seq(0L, 10L, 20L, 30L, 40L, 50L))
+      val projectLinksWithDiscontinuities =
+        Seq(
+          TestLinkValues( startAddr =  0, endAddr = 10, discontinuity = Continuous, status = UnChanged),
+          TestLinkValues( startAddr = 10, endAddr = 20, discontinuity = Continuous, status = UnChanged),
+          TestLinkValues( startAddr =  0, endAddr =  0, discontinuity = Continuous, status = LinkStatus.New),
+          TestLinkValues( startAddr =  0, endAddr = 10, discontinuity = Continuous, status = Transfer),
+          TestLinkValues( startAddr =  0, endAddr =  0, discontinuity = Continuous, status = LinkStatus.New)
+        ).zip(generatedProjectLinks)
+         .map{case (testLinkValues, projectLink) => projectLink.copy(startAddrMValue = testLinkValues.startAddr, endAddrMValue = testLinkValues.endAddr, discontinuity = testLinkValues.discontinuity, status = testLinkValues.status)}
+
+      mockEmptyRoadAddressServiceCalls()
+
+      val errors = projectValidator.checkRoadContinuityCodes(project, projectLinksWithDiscontinuities)
+      // Each Discontinuity should produce an error.
+      val connectedErrors = errors.filter(_.validationError == projectValidator.ValidationErrorList.MissingEndOfRoad)
+      connectedErrors should have size 1
+
+      val affectedIds = connectedErrors.head.affectedIds.distinct
+      affectedIds should have size 1
+      affectedIds should contain (projectLinksWithDiscontinuities.last.id)
+    }
+  }
+
+    test("Test checkRoadContinuityCodes" +
+                   "When there exists not calculated new links " +
+                   "Then checkEndOfRoadOnLastPart should throw error for EndOfRoad when not the last part.") {
+    /*    UnChanged-UnChanged-New-Transfer-New */
+    case class TestLinkValues(startAddr: Long, endAddr: Long, discontinuity: Discontinuity, status: LinkStatus)
+    runWithRollback {
+      val (project, generatedProjectLinks) = util.setUpProjectWithLinks(LinkStatus.UnChanged, Seq(0L, 10L, 20L, 30L, 40L, 50L))
+      val projectLinksWithDiscontinuities =
+        Seq(
+          TestLinkValues( startAddr =  0, endAddr = 10, discontinuity = Continuous, status = UnChanged),
+          TestLinkValues( startAddr = 10, endAddr = 20, discontinuity = Continuous, status = UnChanged),
+          TestLinkValues( startAddr =  0, endAddr =  0, discontinuity = Continuous, status = LinkStatus.New),
+          TestLinkValues( startAddr =  0, endAddr = 10, discontinuity = Continuous, status = Transfer),
+          TestLinkValues( startAddr =  0, endAddr =  0, discontinuity = EndOfRoad,  status = LinkStatus.New)
+        ).zip(generatedProjectLinks)
+         .map{case (testLinkValues, projectLink) => projectLink.copy(startAddrMValue = testLinkValues.startAddr, endAddrMValue = testLinkValues.endAddr, discontinuity = testLinkValues.discontinuity, status = testLinkValues.status)}
+
+      when(mockRoadAddressService.getValidRoadAddressParts(any[Long], any[DateTime])).thenReturn(Seq(2L,3L))
+      when(mockRoadAddressService.getRoadAddressesFiltered(any[Long], any[Long])).thenReturn(Seq.empty[RoadAddress])
+      when(mockRoadAddressService.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq.empty[LinearLocation])
+      when(mockRoadAddressService.getCurrentRoadAddresses(any[Seq[LinearLocation]])).thenReturn(Seq.empty[RoadAddress])
+      when(mockRoadAddressService.getRoadAddressWithRoadAndPart(any[Long], any[Long], any[Boolean], any[Boolean], any[Boolean])).thenReturn(Seq.empty[RoadAddress])
+      when(mockRoadAddressService.getRoadAddressLinksByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq.empty[RoadAddressLink])
+      when(mockRoadAddressService.getPreviousRoadAddressPart(any[Long], any[Long])).thenReturn(None)
+
+      val errors = projectValidator.checkRoadContinuityCodes(project, projectLinksWithDiscontinuities)
+      // Each Discontinuity should produce an error.
+      val connectedErrors = errors.filter(_.validationError == projectValidator.ValidationErrorList.EndOfRoadNotOnLastPart)
+      connectedErrors should have size 1
+
+      val affectedIds = connectedErrors.head.affectedIds.distinct
+      affectedIds should have size 1
+      affectedIds should contain (projectLinksWithDiscontinuities.find(_.discontinuity == EndOfRoad).get.id)
     }
   }
 

@@ -11,7 +11,7 @@ import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
 import fi.liikennevirasto.viite.dao.{Discontinuity, _}
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.process.{RoadwayAddressMapper, TrackSectionOrder}
-import fi.liikennevirasto.viite.process.TrackSectionOrder.findChainEndpoints
+import fi.liikennevirasto.viite.process.TrackSectionOrder.{findChainEndpoints, recursiveFindNearestProjectLinks, ProjectLinkChain}
 import fi.liikennevirasto.viite.process.strategy.DefaultSectionCalculatorStrategy
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
@@ -960,12 +960,26 @@ class ProjectValidator {
         trackIntervals.flatMap {
           interval => {
             if (interval.size > 1) {
-              interval.sortBy(_.startAddrMValue).sliding(2).flatMap {
-                case Seq(curr, next) =>
-                  if (Track.isTrackContinuous(curr.track, next.track) && checkConnected(curr, Option(next)) && (curr.discontinuity == Discontinuity.MinorDiscontinuity || curr.discontinuity == Discontinuity.Discontinuous))
-                    Some(curr)
-                  else
-                    None
+              if (interval.exists(_.isNotCalculated)) {
+                val onceConnectedLinks = TrackSectionOrder.findOnceConnectedLinks(interval)
+                if (onceConnectedLinks.size == 2) {
+                  val firstEnd = onceConnectedLinks.head
+                  val secondEnd = firstEnd._2.getEndPoints match {
+                    case (p1, p2) => if (p1 == firstEnd._1) p2 else p1
+                  }
+                  val projectLinkChain = recursiveFindNearestProjectLinks(ProjectLinkChain(Seq(firstEnd._2), firstEnd._1, secondEnd), interval.filterNot(_.id == firstEnd._2.id))
+                  projectLinkChain.sortedProjectLinks.sliding(2).flatMap { case Seq(curr, next) =>
+                    if (Track.isTrackContinuous(curr.track, next.track) && (curr.connected(next.startingPoint) || curr.connected(next.endPoint)) && (curr.discontinuity != Discontinuity.Continuous)) Some(curr) else None
+                  }
+                } else None
+              } else {
+                      interval.sortBy(_.startAddrMValue).sliding(2).flatMap {
+                        case Seq(curr, next) =>
+                          if (Track.isTrackContinuous(curr.track, next.track) && checkConnected(curr, Option(next)) && (curr.discontinuity == Discontinuity.MinorDiscontinuity || curr.discontinuity == Discontinuity.Discontinuous))
+                            Some(curr)
+                          else
+                            None
+                      }
               }
             } else None
           }
@@ -1070,11 +1084,19 @@ class ProjectValidator {
     }
 
     def checkDiscontinuityInsideRoadPart: Seq[ValidationErrorDetails] = {
-      val discontinuousErrors = error(project.id, ValidationErrorList.DiscontinuityInsideRoadPart)(roadProjectLinks.filter { pl =>
-        val nextLink = roadProjectLinks.find(pl2 => pl2.startAddrMValue == pl.endAddrMValue)
-        (nextLink.nonEmpty && pl.discontinuity == Discontinuity.Discontinuous)
-      })
-      discontinuousErrors.toSeq
+      if (roadProjectLinks.size > 1) {
+        val onceConnectedLinks = TrackSectionOrder.findOnceConnectedLinks(roadProjectLinks)
+      if (onceConnectedLinks.size == 2) {
+        val onceConnectedPoints = onceConnectedLinks.head._2.getEndPoints.productIterator.map(_.asInstanceOf[Point])
+        val nextPoint = onceConnectedPoints.filterNot(p => p == onceConnectedLinks.head._1).next()
+        val geomOrdered = recursiveFindNearestProjectLinks(ProjectLinkChain(Seq(onceConnectedLinks.head._2), onceConnectedLinks.head._1, nextPoint), roadProjectLinks.filterNot(_.id == onceConnectedLinks.head._2.id)).sortedProjectLinks
+        val discontinuousErrors = error(project.id, ValidationErrorList.DiscontinuityInsideRoadPart)(geomOrdered.sliding(2).flatMap { case Seq(curr, _) => if (curr.discontinuity == Discontinuity.Discontinuous) Some(curr) else None
+        }.toSeq)
+        discontinuousErrors.toSeq
+      } else
+        error(project.id, ValidationErrorList.DiscontinuityInsideRoadPart)(Seq()).toSeq
+      } else
+        error(project.id, ValidationErrorList.DiscontinuityInsideRoadPart)(Seq()).toSeq
     }
 
     /**
@@ -1096,6 +1118,11 @@ class ProjectValidator {
                 val endPointLinks = findChainEndpoints(nonTerminated)
                 val endLink       = endPointLinks.find(_._2.discontinuity == Discontinuity.EndOfRoad).getOrElse(endPointLinks.last)
                 endLink._2
+              } else if (nonTerminated.exists(_.isNotCalculated)) {
+                val onceConnectedLinks = TrackSectionOrder.findOnceConnectedLinks(nonTerminated).values.toSeq
+                val newLinks = onceConnectedLinks.filter(_.isNotCalculated)
+                if (newLinks.nonEmpty) newLinks.head
+                else nonTerminated.maxBy(_.endAddrMValue)
               } else {nonTerminated.maxBy(_.endAddrMValue)}
 
               val (road, part) = (last.roadNumber, last.roadPartNumber)
@@ -1217,9 +1244,15 @@ class ProjectValidator {
     def checkEndOfRoadBetweenLinksOnPart: Seq[ValidationErrorDetails] = {
       val endOfRoadErrors = roadProjectLinks.groupBy(_.roadPartNumber).flatMap {
         roadPart =>
-          val addresses = roadPart._2.sortBy(_.startAddrMValue)
-          val maxEndAddr = addresses.last.endAddrMValue
-          error(project.id, ValidationErrorList.EndOfRoadMiddleOfPart)(addresses.filterNot(_.endAddrMValue == maxEndAddr).filter(_.discontinuity == Discontinuity.EndOfRoad))
+          if (roadPart._2.exists(_.isNotCalculated)) {
+            val onceConnectedNewLinks = TrackSectionOrder.findOnceConnectedLinks(roadPart._2).values.toSeq
+            val middleLinks = roadPart._2 diff onceConnectedNewLinks
+            error(project.id, ValidationErrorList.EndOfRoadMiddleOfPart)(middleLinks.filter(_.discontinuity == Discontinuity.EndOfRoad))
+          } else {
+            val addresses  = roadPart._2.sortBy(_.startAddrMValue)
+            val maxEndAddr = addresses.last.endAddrMValue
+            error(project.id, ValidationErrorList.EndOfRoadMiddleOfPart)(addresses.filterNot(_.endAddrMValue == maxEndAddr).filter(_.discontinuity == Discontinuity.EndOfRoad))
+          }
       }.toSeq
       endOfRoadErrors.distinct
     }
