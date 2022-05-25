@@ -570,20 +570,33 @@ class ProjectValidator {
   }
 
   def checkForInvalidUnchangedLinks(project: Project, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
-    val invalidUnchangedLinks: Seq[ProjectLink] = projectLinks.groupBy(s => (s.roadNumber, s.roadPartNumber)).flatMap { g =>
-      val (unchanged, others) = g._2.partition(_.status == UnChanged)
-      //foreach number and part and foreach UnChanged found in that group, we will check if there is some link in some other different action, that is connected by geometry and addressM values to the UnChanged link starting point
-      unchanged.groupBy(_.track) // Check per track
-        .flatMap(upl => upl._2
-          .filter(u => others.filterNot(opl => opl.status == LinkStatus.NotHandled || opl.track != upl._1)
-            .exists(o => u.startAddrMValue >= o.startAddrMValue)))
+    val unChangedErrorPls: Seq[ProjectLink] = projectLinks.groupBy(s => (s.roadNumber, s.roadPartNumber)).flatMap { g =>
+      val trackIntervals: Seq[Seq[ProjectLink]] = Seq(g._2.filter(_.track != RightSide), g._2.filter(_.track != LeftSide))
+      trackIntervals.flatMap {
+        interval => {
+          if (interval.size > 1) {
+            if (interval.exists(_.isNotCalculated)) {
+              val onceConnectedLinks = TrackSectionOrder.findOnceConnectedLinks(interval)
+              if (onceConnectedLinks.size == 2) {
+                val firstEnd = onceConnectedLinks.head
+                val secondEnd = firstEnd._2.getEndPoints match {
+                  case (p1, p2) => if (p1 == firstEnd._1) p2 else p1
+                }
+                val projectLinkChain = recursiveFindNearestProjectLinks(ProjectLinkChain(Seq(firstEnd._2), firstEnd._1, secondEnd), interval.filterNot(_.id == firstEnd._2.id))
+                val numOfUnChanged   = projectLinkChain.sortedProjectLinks.count(_.status == LinkStatus.UnChanged)
+                val unChangedChain   = projectLinkChain.sortedProjectLinks.takeWhile(_.status == LinkStatus.UnChanged)
+                if (numOfUnChanged != unChangedChain.size) projectLinkChain.sortedProjectLinks.find(_.status == LinkStatus.UnChanged) else None
+              } else None
+            } else {
+              val (unchanged, others) = interval.partition(_.status == UnChanged)
+              //foreach number and part and foreach UnChanged found in that group, we will check if there is some link in some other different action, that is connected by geometry and addressM values to the UnChanged link starting point
+              unchanged.find(u => others.filterNot(opl => opl.status == LinkStatus.NotHandled).exists(o => u.startAddrMValue >= o.startAddrMValue))
+            }
+          } else None
+        }
+      }
     }.toSeq
-
-    if (invalidUnchangedLinks.nonEmpty) {
-      Seq(error(project.id, ValidationErrorList.ErrorInValidationOfUnchangedLinks)(invalidUnchangedLinks).get)
-    } else {
-      Seq()
-    }
+    error(project.id, ValidationErrorList.ErrorInValidationOfUnchangedLinks)(unChangedErrorPls).toSeq
   }
 
   def isSameTrack(previous: ProjectLink, currentLink: ProjectLink): Boolean = {
