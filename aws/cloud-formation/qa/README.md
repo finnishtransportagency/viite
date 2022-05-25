@@ -47,6 +47,8 @@ aws ssm put-parameter --overwrite --name /Viite/QA/rds.viite.db.password --type 
 aws ssm put-parameter --overwrite --name /Viite/QA/vkmApiKey --type SecureString --value X
 
 aws ssm put-parameter --overwrite --name /Viite/QA/rasterServiceApiKey --type SecureString --value X
+
+aws ssm put-parameter --overwrite --name /Viite/QA/vvhRestApiPassword --type SecureString --value X
 ```
 
 ### Luo task-definition
@@ -92,11 +94,21 @@ setx AWS_PROFILE vaylaapp
 export AWS_DEFAULT_REGION=eu-west-1
 export AWS_PROFILE= vaylaapp
 ```
+
+### Parameter storen päivitys
+```
+aws cloudformation update-stack \
+--stack-name [esim. viite-qa-parameter-store-entries] \
+--template-body file://aws/cloud-formation/viite-parameter-store-cloudformation.yaml \
+--parameters ParameterKey=Environment,ParameterValue=QA 
+```
+
 ### Task definitionin päivitys
 Luo uusi task definition versio
 ```
 aws cloudformation update-stack \
 --stack-name [esim. viite-qa-taskdefinition] \
+--capabilities CAPABILITY_NAMED_IAM \
 --template-body file://aws/cloud-formation/qa/qa-viite-create-taskdefinition-cloudformation.yaml \
 --parameters ParameterKey=RepositoryURL,ParameterValue=[URL repositoryyn jossa kontti sijaitsee esim. 012345678910.dkr.ecr.eu-west-1.amazonaws.com]
 ```
