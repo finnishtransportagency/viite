@@ -460,33 +460,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
     test("Test checkForInvalidUnchangedLinks" +
                    "When there exists not calculated new link " +
-                   "Then checkForInvalidUnchangedLinks should not throw ErrorInValidationOfUnchangedLinks errors.") {
-    /*    UnChanged-UnChanged-UnChanged-UnChanged-New */
-    case class TestLinkValues(startAddr: Long, endAddr: Long, discontinuity: Discontinuity, status: LinkStatus)
-    runWithRollback {
-      val (project, generatedProjectLinks) = util.setUpProjectWithLinks(LinkStatus.UnChanged, Seq(0L, 10L, 20L, 30L, 40L, 50L))
-      val projectLinksWithDiscontinuities =
-        Seq(
-          TestLinkValues( startAddr =  0, endAddr = 10, discontinuity = Continuous, status = UnChanged),
-          TestLinkValues( startAddr = 10, endAddr = 20, discontinuity = Continuous, status = UnChanged),
-          TestLinkValues( startAddr = 20, endAddr = 30, discontinuity = Continuous, status = UnChanged),
-          TestLinkValues( startAddr = 30, endAddr = 40, discontinuity = Continuous, status = UnChanged),
-          TestLinkValues( startAddr =  0, endAddr =  0, discontinuity = Continuous, status = LinkStatus.New)
-        ).zip(generatedProjectLinks)
-         .map{case (testLinkValues, projectLink) => projectLink.copy(startAddrMValue = testLinkValues.startAddr, endAddrMValue = testLinkValues.endAddr, discontinuity = testLinkValues.discontinuity, status = testLinkValues.status)}
-
-      mockEmptyRoadAddressServiceCalls()
-
-      val errors = projectValidator.checkForInvalidUnchangedLinks(project, projectLinksWithDiscontinuities)
-      // Each Discontinuity should produce an error.
-      val connectedErrors = errors.filter(_.validationError == projectValidator.ValidationErrorList.ErrorInValidationOfUnchangedLinks)
-      connectedErrors should have size 0
-    }
-  }
-
-    test("Test checkForInvalidUnchangedLinks" +
-                   "When there exists not calculated new link " +
-                   "Then checkForInvalidUnchangedLinks should new link at start should throw ErrorInValidationOfUnchangedLinks.") {
+                   "Then checkRoadContinuityCodes with new link at start should not throw EndOfRoadNotOnLastPart.") {
     /* New-UnChanged-UnChanged-UnChanged-UnChanged */
     case class TestLinkValues(startAddr: Long, endAddr: Long, discontinuity: Discontinuity, status: LinkStatus)
     runWithRollback {
@@ -497,20 +471,15 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
           TestLinkValues( startAddr =  0, endAddr = 10, discontinuity = Continuous, status = UnChanged),
           TestLinkValues( startAddr = 10, endAddr = 20, discontinuity = Continuous, status = UnChanged),
           TestLinkValues( startAddr = 20, endAddr = 30, discontinuity = Continuous, status = UnChanged),
-          TestLinkValues( startAddr = 30, endAddr = 40, discontinuity = Continuous, status = UnChanged)
+          TestLinkValues( startAddr = 30, endAddr = 40, discontinuity = EndOfRoad, status = UnChanged)
         ).zip(generatedProjectLinks)
          .map{case (testLinkValues, projectLink) => projectLink.copy(startAddrMValue = testLinkValues.startAddr, endAddrMValue = testLinkValues.endAddr, discontinuity = testLinkValues.discontinuity, status = testLinkValues.status)}
 
       mockEmptyRoadAddressServiceCalls()
 
-      val errors = projectValidator.checkForInvalidUnchangedLinks(project, projectLinksWithDiscontinuities)
-      // Each Discontinuity should produce an error.
-      val connectedErrors = errors.filter(_.validationError == projectValidator.ValidationErrorList.ErrorInValidationOfUnchangedLinks)
-      connectedErrors should have size 1
-
-      val affectedIds = connectedErrors.head.affectedIds.distinct
-      affectedIds should have size 1
-      affectedIds should contain (projectLinksWithDiscontinuities.find(_.status == UnChanged).get.id)
+      val errors = projectValidator.checkRoadContinuityCodes(project, projectLinksWithDiscontinuities)
+      val connectedErrors = errors.filter(_.validationError == projectValidator.ValidationErrorList.EndOfRoadNotOnLastPart)
+      connectedErrors should have size 0
     }
   }
 

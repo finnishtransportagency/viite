@@ -995,7 +995,7 @@ class ProjectValidator {
         trackIntervals.flatMap {
           interval => {
             if (interval.size > 1) {
-              if (interval.exists(_.isNotCalculated)) {
+              if (interval.exists(_.isNotCalculated)) { // Can not .sortBy(_.startAddrMValue. Would pile 0:s.
                 val onceConnectedLinks = TrackSectionOrder.findOnceConnectedLinks(interval)
                 if (onceConnectedLinks.size == 2) {
                   val firstEnd = onceConnectedLinks.head
@@ -1120,18 +1120,18 @@ class ProjectValidator {
 
     def checkDiscontinuityInsideRoadPart: Seq[ValidationErrorDetails] = {
       if (roadProjectLinks.size > 1) {
-        val onceConnectedLinks = TrackSectionOrder.findOnceConnectedLinks(roadProjectLinks)
-      if (onceConnectedLinks.size == 2) {
-        val onceConnectedPoints = onceConnectedLinks.head._2.getEndPoints.productIterator.map(_.asInstanceOf[Point])
-        val nextPoint = onceConnectedPoints.filterNot(p => p == onceConnectedLinks.head._1).next()
-        val geomOrdered = recursiveFindNearestProjectLinks(ProjectLinkChain(Seq(onceConnectedLinks.head._2), onceConnectedLinks.head._1, nextPoint), roadProjectLinks.filterNot(_.id == onceConnectedLinks.head._2.id)).sortedProjectLinks
-        val discontinuousErrors = error(project.id, ValidationErrorList.DiscontinuityInsideRoadPart)(geomOrdered.sliding(2).flatMap { case Seq(curr, _) => if (curr.discontinuity == Discontinuity.Discontinuous) Some(curr) else None
-        }.toSeq)
-        discontinuousErrors.toSeq
+          val onceConnectedLinks = TrackSectionOrder.findOnceConnectedLinks(roadProjectLinks)
+          if (onceConnectedLinks.size == 2) {
+            val onceConnectedPoints = onceConnectedLinks.head._2.getEndPoints.productIterator.map(_.asInstanceOf[Point])
+            val nextPoint = onceConnectedPoints.filterNot(p => p == onceConnectedLinks.head._1).next()
+            val geomOrdered = recursiveFindNearestProjectLinks(ProjectLinkChain(Seq(onceConnectedLinks.head._2), onceConnectedLinks.head._1, nextPoint), roadProjectLinks.filterNot(_.id == onceConnectedLinks.head._2.id)).sortedProjectLinks
+            val discontinuousErrors = error(project.id, ValidationErrorList.DiscontinuityInsideRoadPart)(geomOrdered.sliding(2).flatMap { case Seq(curr, _) => if (curr.discontinuity == Discontinuity.Discontinuous) Some(curr) else None
+            }.toSeq)
+            discontinuousErrors.toSeq
+          } else
+             error(project.id, ValidationErrorList.DiscontinuityInsideRoadPart)(Seq()).toSeq
       } else
-        error(project.id, ValidationErrorList.DiscontinuityInsideRoadPart)(Seq()).toSeq
-      } else
-        error(project.id, ValidationErrorList.DiscontinuityInsideRoadPart)(Seq()).toSeq
+         error(project.id, ValidationErrorList.DiscontinuityInsideRoadPart)(Seq()).toSeq
     }
 
     /**
@@ -1154,10 +1154,10 @@ class ProjectValidator {
                 val endLink       = endPointLinks.find(_._2.discontinuity == Discontinuity.EndOfRoad).getOrElse(endPointLinks.last)
                 endLink._2
               } else if (nonTerminated.exists(_.isNotCalculated)) {
-                val onceConnectedLinks = TrackSectionOrder.findOnceConnectedLinks(nonTerminated).values.toSeq
-                val newLinks = onceConnectedLinks.filter(_.isNotCalculated)
-                if (newLinks.nonEmpty) newLinks.head
-                else nonTerminated.maxBy(_.endAddrMValue)
+                val onceConnectedLinks = TrackSectionOrder.findOnceConnectedLinks(nonTerminated)
+                val onceConnectedPoints = onceConnectedLinks.head._2.getEndPoints.productIterator.map(_.asInstanceOf[Point])
+                val nextPoint = onceConnectedPoints.filterNot(p => p == onceConnectedLinks.head._1).next()
+                recursiveFindNearestProjectLinks(ProjectLinkChain(Seq(onceConnectedLinks.head._2), onceConnectedLinks.head._1, nextPoint), roadProjectLinks.filterNot(_.id == onceConnectedLinks.head._2.id)).sortedProjectLinks.last
               } else {nonTerminated.maxBy(_.endAddrMValue)}
 
               val (road, part) = (last.roadNumber, last.roadPartNumber)
