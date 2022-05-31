@@ -1641,7 +1641,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test checkForInvalidUnchangedLinks When project link with status New is added to the start of the road part then there cant be links with status Unchanged after that") {
+  test("Test checkForInvalidUnchangedLinks When project link with status New is added to the start of the road part then links with status Unchanged are forbidden after the New link") {
     /*
     BEFORE PROJECT
                                 19999
@@ -1708,8 +1708,11 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       // call the function that will be tested
       val validationErrors = projectValidator.checkForInvalidUnchangedLinks(project, projectLinks)
-      validationErrors.size shouldNot be(0)
-      validationErrors.foreach(e => e.validationError.value should be(projectValidator.ValidationErrorList.ErrorInValidationOfUnchangedLinks.value))
+      validationErrors.size should be(1)
+      validationErrors.head.validationError.value should be(projectValidator.ValidationErrorList.ErrorInValidationOfUnchangedLinks.value)
+      val lastTwoProjectLinkIds = projectLinks.tail.map(pl => pl.id).toList
+      val affectedIds = validationErrors.head.affectedIds
+      affectedIds should contain theSameElementsInOrderAs lastTwoProjectLinkIds
     }
   }
 
@@ -1781,8 +1784,13 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       // call the function that will be tested
       val validationErrors = projectValidator.checkForInvalidUnchangedLinks(project, projectLinks)
-      validationErrors.size shouldNot be(0)
-      validationErrors.foreach(e => e.validationError.value should be(projectValidator.ValidationErrorList.ErrorInValidationOfUnchangedLinks.value))
+
+      validationErrors.size should be(1)
+      validationErrors.head.validationError.value should be(projectValidator.ValidationErrorList.ErrorInValidationOfUnchangedLinks.value)
+      val affectedIds = validationErrors.head.affectedIds
+      val invalidUnchangedPlId = projectLinks.tail.head.id
+      affectedIds.size should be (1)
+      affectedIds.head shouldEqual invalidUnchangedPlId
     }
   }
 
