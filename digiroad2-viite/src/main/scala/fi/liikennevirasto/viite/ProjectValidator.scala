@@ -569,15 +569,50 @@ class ProjectValidator {
     )
   }
 
+//  def checkForInvalidUnchangedLinks(project: Project, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
+//    val invalidUnchangedLinks: Seq[ProjectLink] = projectLinks.groupBy(s => (s.roadNumber, s.roadPartNumber)).flatMap { g =>
+//      val (unchanged, others) = g._2.partition(_.status == UnChanged)
+//      //foreach number and part and foreach UnChanged found in that group, we will check if there is some link in some other different action, that is connected by geometry and addressM values to the UnChanged link starting point
+//      unchanged.groupBy(_.track) // Check per track
+//        .flatMap(upl => upl._2
+//          .filter(u => others.filterNot(opl => opl.status == LinkStatus.NotHandled || opl.track != upl._1)
+//            .exists(o => u.startAddrMValue >= o.startAddrMValue)))
+//    }.toSeq
+//
+//    if (invalidUnchangedLinks.nonEmpty) {
+//      Seq(error(project.id, ValidationErrorList.ErrorInValidationOfUnchangedLinks)(invalidUnchangedLinks).get)
+//    } else {
+//      Seq()
+//    }
+//  }
+
+
+  /** The Unchanged status is allowed only for the links whose address information does not change within the project.
+    * Any operation, other than Unchanged ("Ennallaan"), applied to the link, changes or may change the addresses of the links following the operation.
+    * Thus, the links following the first other operation must not be allowed to have "Unchanged" status, but is returned with a validation error.
+    */
   def checkForInvalidUnchangedLinks(project: Project, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
-    val invalidUnchangedLinks: Seq[ProjectLink] = projectLinks.groupBy(s => (s.roadNumber, s.roadPartNumber)).flatMap { g =>
-      val (unchanged, others) = g._2.partition(_.status == UnChanged)
-      //foreach number and part and foreach UnChanged found in that group, we will check if there is some link in some other different action, that is connected by geometry and addressM values to the UnChanged link starting point
-      unchanged.groupBy(_.track) // Check per track
-        .flatMap(upl => upl._2
-          .filter(u => others.filterNot(opl => opl.status == LinkStatus.NotHandled || opl.track != upl._1)
-            .exists(o => u.startAddrMValue >= o.startAddrMValue)))
-    }.toSeq
+    // group project links by roadNumber and roadPart number
+    val groupedByRoadNumberAndPart = projectLinks.groupBy(pl => (pl.originalRoadNumber, pl.originalRoadPartNumber))
+    val invalidUnchangedLinks = {
+      groupedByRoadNumberAndPart.flatMap { group =>
+        // sort groups' project links by original startAddrMValue
+        val sortedProjectLinks = group._2.sortWith(_.originalStartAddrMValue < _.originalStartAddrMValue)
+        // from the sorted project link list, find the first link that has a status of other than Unchanged
+        val firstOtherStatus = sortedProjectLinks.find(pl => pl.status != UnChanged)
+        if (firstOtherStatus.nonEmpty) {
+          val limitAddrMValue = {
+            if (firstOtherStatus.get.status == LinkStatus.New)
+              firstOtherStatus.get.startAddrMValue // for New links we take the normal startAddrMValue
+            else
+              firstOtherStatus.get.originalStartAddrMValue // for anything else we take the originalStartAddrMValue
+          }
+          // from the sorted project link list, find all Unchanged links that start after or at the same value as the limitAddrMValue -> these are the invalid Unchanged links
+          sortedProjectLinks.filter(pl => pl.status == LinkStatus.UnChanged && pl.originalStartAddrMValue >= limitAddrMValue)
+        } else
+          None
+      }.toSeq
+    }
 
     if (invalidUnchangedLinks.nonEmpty) {
       Seq(error(project.id, ValidationErrorList.ErrorInValidationOfUnchangedLinks)(invalidUnchangedLinks).get)
