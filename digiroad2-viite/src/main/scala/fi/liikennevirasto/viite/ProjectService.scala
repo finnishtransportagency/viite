@@ -339,6 +339,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       filterNot(_._2.isEmpty).foreach {
       case ((roadNumber, roadPartNumber), value) =>
         val (startDate, endDate) = value.map(v => (v._6, v._7)).get
+        // TODO remove this when VIITE-2772 is fixed
+        if (startDate.nonEmpty && startDate.get.isEqual(date))
+          return Option(s"Tieosalla TIE $roadNumber OSA $roadPartNumber alkupäivämäärä " +
+          s"${startDate.get.toString("dd.MM.yyyy")} on sama kuin tieosoiteprojektin alkupäivämäärä " +
+          s"${date.toString("dd.MM.yyyy")}. Tieosoite projektin korjaus -ominaisuus on tilapäisesti poissa käytöstä. Ota yhteys Viite tukeen.")
         if (startDate.nonEmpty && startDate.get.isAfter(date))
           return Option(s"Tieosalla TIE $roadNumber OSA $roadPartNumber alkupäivämäärä " +
             s"${startDate.get.toString("dd.MM.yyyy")} on myöhempi kuin tieosoiteprojektin alkupäivämäärä " +

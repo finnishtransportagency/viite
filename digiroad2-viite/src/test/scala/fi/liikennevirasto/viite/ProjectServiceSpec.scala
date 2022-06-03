@@ -3028,7 +3028,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       linearLocationDAO.create(linearLocations)
 
       val rap = Project(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(),
-        "TestUser", DateTime.now(), DateTime.now(), "Some additional info",
+        "TestUser", DateTime.now().plusDays(5), DateTime.now(), "Some additional info",
         Seq(), Seq(), None)
       val project = projectService.createRoadLinkProject(rap)
       val project_id = project.id
