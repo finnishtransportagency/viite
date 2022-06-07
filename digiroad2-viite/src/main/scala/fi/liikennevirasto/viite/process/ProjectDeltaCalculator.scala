@@ -3,8 +3,8 @@ package fi.liikennevirasto.viite.process
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.RightSide
 import fi.liikennevirasto.viite
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
 import fi.liikennevirasto.viite.dao.{ProjectLink, _}
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
 import org.joda.time.DateTime
 
 /**
@@ -377,13 +377,11 @@ object ProjectDeltaCalculator {
     val averagedStarts = if (projectLinks.forall(_.status == LinkStatus.Terminated)) createAverageValuesForTransferedStarts(terminatedForAveraging) else createAverageValuesForTransferedStarts(startLinks)
     val averagedTerminated = createAverageValuesForTransferedStarts(terminatedForAveraging)
 
+    def groupToSections(pl: ProjectLink): (Long, Long, Track, Boolean) = (pl.originalRoadNumber, pl.originalRoadPartNumber, pl.originalTrack, pl.reversed)
     val grouped = if (allNonTerminatedProjectLinks.exists(pl => pl.status == LinkStatus.Terminated && pl.originalStartAddrMValue == 0))
-      (averagedStarts ++ projectLinks.filterNot(pl => averagedStarts.map(_.id).contains(pl.id))).groupBy(pl => {
-      (pl.roadNumber, pl.roadPartNumber, pl.track, pl.reversed)
-    }) else
-      projectLinks.groupBy(pl => {
-        (pl.originalRoadNumber, pl.originalRoadPartNumber, pl.originalTrack, pl.reversed)
-      })
+      (averagedStarts ++ projectLinks.filterNot(pl => averagedStarts.map(_.id).contains(pl.id))).groupBy(groupToSections)
+    else
+      projectLinks.groupBy(groupToSections)
 
     val allWithAveraged = if (allNonTerminatedProjectLinks.exists(pl => pl.status == LinkStatus.Terminated && pl.originalStartAddrMValue == 0))
       (averagedStarts ++ averagedTerminated ++ allNonTerminatedProjectLinks.filterNot(pl => averagedStarts.map(_.id).contains(pl.id) || averagedTerminated.map(_.id).contains(pl.id)))
