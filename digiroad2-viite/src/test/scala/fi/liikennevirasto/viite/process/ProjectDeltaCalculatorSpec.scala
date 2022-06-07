@@ -327,7 +327,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
   }
 
   test("Test ProjectDeltaCalculator.partition " +
-       "When a project has a new road with two track section in the middle" +
+       "When a project has a new road with two track section in the middle " +
        "Then returns the correct From RoadSection -> To RoadSection mapping.") {
    /*
           /
