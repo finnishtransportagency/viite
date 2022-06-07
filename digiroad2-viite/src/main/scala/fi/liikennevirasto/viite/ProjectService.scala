@@ -2100,14 +2100,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val linsToFuse = linearLocationsToInsert.groupBy(ll => (ll.roadwayNumber, ll.linkId)).values.filter(_.size > 1)
       val linsToFuseIds = linsToFuse.flatten.map(_.id).toSeq
       val fusedLinearLocations = linsToFuse.map(lls => {
-        val orderNumbers = lls.map(_.orderNumber)
-        val minOrderNum  = orderNumbers.min
-        val maxOrderNum  = orderNumbers.max
-
-        val firstLl =  lls.find(_.orderNumber == minOrderNum).get
-        val lastLl = lls.find(_.orderNumber == maxOrderNum).get
-        val geometries = lls.sortBy(_.orderNumber).flatMap(_.geometry).distinct
-        firstLl.copy(calibrationPoints = (lastLl.startCalibrationPoint, lastLl.endCalibrationPoint), geometry = geometries)
+        val firstLl =  lls.minBy(_.startMValue)
+        val lastLl = lls.maxBy(_.endMValue)
+        val geometries = lls.flatMap(_.geometry).distinct
+        firstLl.copy(calibrationPoints = (firstLl.startCalibrationPoint, lastLl.endCalibrationPoint), geometry = geometries, startMValue = firstLl.startMValue, endMValue = lastLl.endMValue)
       })
       linearLocationsToInsert = linearLocationsToInsert.filterNot(ll => linsToFuseIds.contains(ll.id)) ++ fusedLinearLocations
 
