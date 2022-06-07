@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LinkGeomSource}
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{FrozenLinkInterface, NormalLinkInterface}
 import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
