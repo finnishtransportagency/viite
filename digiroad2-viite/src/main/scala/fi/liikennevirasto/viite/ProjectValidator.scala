@@ -1272,14 +1272,14 @@ class ProjectValidator {
       val (road, part): (Long, Long) = (roadProjectLinks.head.roadNumber, roadProjectLinks.head.roadPartNumber)
       roadAddressService.getPreviousRoadAddressPart(road, part) match {
         case Some(previousRoadPartNumber) =>
-          //Skip this validation if previousRoadPartNumber is reserved in the project
-          if (allProjectLinks.exists(pl => pl.roadPartNumber == previousRoadPartNumber))
+          val (leftLinks, rightLinks) = (roadProjectLinks.filter(_.track != Track.RightSide), roadProjectLinks.filter(_.track != Track.LeftSide))
+          //Skip this validation if previousRoadPartNumber is reserved in the project or either track (or combined track) has no project links assigned to it.
+          if (allProjectLinks.exists(pl => pl.roadPartNumber == previousRoadPartNumber) || leftLinks.isEmpty || rightLinks.isEmpty)
             Seq()
           else {
             val previousRoadwayRoadAddresses = roadAddressService.getRoadAddressWithRoadAndPart(road, previousRoadPartNumber, fetchOnlyEnd = true)
             val prevLeftRoadAddress = Seq(previousRoadwayRoadAddresses.filter(_.track != Track.RightSide).maxBy(_.endAddrMValue))
             val prevRightRoadAddress = Seq(previousRoadwayRoadAddresses.filter(_.track != Track.LeftSide).maxBy(_.endAddrMValue))
-            val (leftLinks, rightLinks) = (roadProjectLinks.filter(_.track != Track.RightSide), roadProjectLinks.filter(_.track != Track.LeftSide))
 
             /**
              * Runs the provided validation function against the RoadAddress before the start of the road part
@@ -1307,10 +1307,34 @@ class ProjectValidator {
               !ra.getLastPoint.connected(pl.head.getFirstPoint)
             }
 
-            val notDiscontinuousCodeOnDisconnectedRoadAddress = validatePreviousRoadAddress(prevLeftRoadAddress)(validateDiscontinuity(leftLinks)
+            val notDiscontinuousCodeOnDisconnectedRoadAddressErrors = validatePreviousRoadAddress(prevLeftRoadAddress)(validateDiscontinuity(leftLinks)
             )(ValidationErrorList.NotDiscontinuousCodeOnDisconnectedRoadPartOutside) ++
               validatePreviousRoadAddress(prevRightRoadAddress)(validateDiscontinuity(rightLinks)
             )(ValidationErrorList.NotDiscontinuousCodeOnDisconnectedRoadPartOutside)
+
+            /**
+             * VIITE-2780 If the roadpart outside of project (prevLeftRoadAddress/prevRightRoadaddress) doesn't have 2 tracks but the projectLink does,
+             * give validation error only if both tracks have invalid continuity.
+             *      (4)
+             * (1) |--->-------->-------
+             *     ^     (2)
+             *     |
+             * (3) |--->-------->-------
+             *     ^
+             *     |
+             *     |
+             * (1) End of the last roadpart that is not reserved for the project
+             * (2) The two-track roadpart reserved for the project
+             * (3) The right track of the roadpart would be validated as an error, as the previous roadpart is continuous,
+             *     but the start point of the right track is not connected to the end point of the previous roadpart.
+             *
+             *     Because (4) does not give a validation error in this case, the continuity of the roadpart is valid
+             *     and the validation error from (3) can be discarded.
+             */
+            val notDiscontinuousCodeOnDisconnectedRoadAddress = if (prevLeftRoadAddress.head.track == Track.Combined && leftLinks.head.track == Track.LeftSide
+            && notDiscontinuousCodeOnDisconnectedRoadAddressErrors.length != 2)
+              Seq()
+            else notDiscontinuousCodeOnDisconnectedRoadAddressErrors
 
 
             /**
