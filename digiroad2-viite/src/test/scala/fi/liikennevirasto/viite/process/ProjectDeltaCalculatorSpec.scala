@@ -1,24 +1,23 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.GeometryUtils
-import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
-import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LinkGeomSource}
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{FrozenLinkInterface, NormalLinkInterface}
+import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.{LeftSide, RightSide}
 import fi.liikennevirasto.viite.NewIdValue
+import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, RoadAddressCP}
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, EndOfRoad, MinorDiscontinuity}
 import fi.liikennevirasto.viite.dao.LinkStatus.{Terminated, Transfer}
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
-import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.util.{toProjectLink, toTransition}
 import org.joda.time.DateTime
-import org.scalatest.enablers.Definition.definitionOfOption
 import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.enablers.Definition.definitionOfOption
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
@@ -326,6 +325,52 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       }).foreach(_ should be((0L, 205L)))
     }
   }
+
+  test("Test ProjectDeltaCalculator.partition " +
+       "When a project has a new road with two track section in the middle " +
+       "Then returns the correct From RoadSection -> To RoadSection mapping.") {
+   /*
+          /
+      T0 /
+        / \
+         \ \ T1
+       T2 \ /
+           /T0
+          /
+   */
+    runWithRollback {
+      val roadNumber = 46005
+      val roadPartNumber = 1
+      val createdBy = "Test"
+      val roadName = None
+      val projectId = Sequences.nextViiteProjectId
+
+      val allProjectLinks = Seq(
+        ProjectLink(1000,roadNumber,roadPartNumber,Track.Combined,Discontinuity.Continuous,0,107,0,0,None,None,Some(createdBy),1633342,0.0,106.991,TowardsDigitizing,(RoadAddressCP,NoCP),(NoCP,NoCP),List(Point(388414.0,7291967.0,0.0), Point(388498.0,7292033.0,0.0)),projectId,LinkStatus.New,AdministrativeClass.Municipality,FrozenLinkInterface,106.991,0,0,14,reversed = false,None,1614640323000L,335718924,roadName,None,None,None,None,None,None),
+        ProjectLink(1001,roadNumber,roadPartNumber,Track.Combined,Discontinuity.Continuous,107,125,0,0,None,None,Some(createdBy),1633252,0.0,17.781,TowardsDigitizing,(NoCP,RoadAddressCP),(NoCP,NoCP),List(Point(388498.0,7292033.0,0.0), Point(388512.0,7292044.0,0.0)),projectId,LinkStatus.New,AdministrativeClass.Municipality,FrozenLinkInterface,17.781,0,0,14,reversed = false,None,1614640323000L,335718924,roadName,None,None,None,None,None,None),
+        ProjectLink(1003,roadNumber,roadPartNumber,Track.RightSide,Discontinuity.MinorDiscontinuity,125,241,0,0,None,None,Some(createdBy),1633247,0.0,116.085,TowardsDigitizing,(RoadAddressCP,RoadAddressCP),(NoCP,NoCP),List(Point(388512.0,7292044.0,0.0), Point(388437.0,7292133.0,0.0)),projectId,LinkStatus.New,AdministrativeClass.Municipality,FrozenLinkInterface,116.085,0,0,14,reversed = false,None,1614640323000L,335718927,roadName,None,None,None,None,None,None),
+        ProjectLink(1002,roadNumber,roadPartNumber,Track.LeftSide,Discontinuity.Continuous,125,241,0,0,None,None,Some(createdBy),1633251,0.0,115.928,TowardsDigitizing,(RoadAddressCP,RoadAddressCP),(NoCP,NoCP),List(Point(388498.0,7292033.0,0.0), Point(388424.0,7292123.0,0.0)),projectId,LinkStatus.New,AdministrativeClass.Municipality,FrozenLinkInterface,115.928,0,0,14,reversed = false,None,1614640323000L,335718928,roadName,None,None,None,None,None,None),
+        ProjectLink(1004,roadNumber,roadPartNumber,Track.Combined,Discontinuity.Continuous,241,258,0,0,None,None,Some(createdBy),1633250,0.0,17.089,TowardsDigitizing,(RoadAddressCP,NoCP),(NoCP,NoCP),List(Point(388424.0,7292123.0,0.0), Point(388437.0,7292133.0,0.0)),projectId,LinkStatus.New,AdministrativeClass.Municipality,FrozenLinkInterface,17.089,0,0,14,reversed = false,None,1614640323000L,335718931,roadName,None,None,None,None,None,None),
+        ProjectLink(1005,roadNumber,roadPartNumber,Track.Combined,Discontinuity.EndOfRoad,258,367,0,0,None,None,Some(createdBy),1633249,0.0,108.756,TowardsDigitizing,(NoCP,RoadAddressCP),(NoCP,NoCP),List(Point(388437.0,7292133.0,0.0), Point(388522.0,7292202.0,0.0)),projectId,LinkStatus.New,AdministrativeClass.Municipality,FrozenLinkInterface,108.756,0,0,14,reversed = false,None,1614640323000L,335718931,roadName,None,None,None,None,None,None)
+      )
+
+      val transferred       = ProjectDeltaCalculator.partitionWithProjectLinks(allProjectLinks.filter(_.status != LinkStatus.Terminated), allProjectLinks)
+      val transferredPaired = transferred.adjustedSections.zip(transferred.originalSections)
+
+      transferredPaired should have size 4
+      val createdTargets = transferredPaired.asInstanceOf[List[(RoadwaySection, RoadwaySection)]].sortBy(rs => (rs._1.startMAddr, rs._1.track.value))
+      val validTargets = Seq(
+        (  0L, 125L, Track.Combined,  Continuous),
+        (125L, 241L, Track.RightSide, MinorDiscontinuity),
+        (125L, 241L, Track.LeftSide,  Continuous),
+        (241L, 367L, Track.Combined,  EndOfRoad))
+
+      createdTargets.map(x => {
+        (x._1.startMAddr, x._1.endMAddr, x._1.track,x._1.discontinuity)
+      }).zip(validTargets).foreach(p => p._1 should be(p._2))
+    }
+  }
+
 
   // Needs a change? 1. Matching of track addresses should be done during address calculation. 2. Terminations call different overload of partition() that is used in
   // projectdeltacalculator.
