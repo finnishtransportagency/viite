@@ -358,7 +358,7 @@ object ProjectDeltaCalculator {
       Seq(pls.sortBy(_.originalStartAddrMValue).takeWhile {_.status == LinkStatus.Terminated}.last)
   }
 
-  def partitionWithProjectLinks(projectLinksWithoutTerminated: Seq[ProjectLink], allProjectLinks: Seq[ProjectLink]): ChangeTableRows2 = {
+  def generateChangeTableRowsFromProjectLinks(projectLinksWithoutTerminated: Seq[ProjectLink], allProjectLinks: Seq[ProjectLink]): ChangeTableRows2 = {
     val startLinks = projectLinksWithoutTerminated.filter(pl => pl.startAddrMValue == 0).groupBy(pl => {
       (pl.roadNumber, pl.roadPartNumber)})
     val terminatedForAveraging =
