@@ -14,6 +14,7 @@ import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{Ju
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, EndOfRoad, MinorDiscontinuity}
 import fi.liikennevirasto.viite.dao.LinkStatus.{Terminated, Transfer}
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
+import fi.liikennevirasto.viite.process.ProjectDeltaCalculator.createTwoTrackOldAddressRoadParts
 import fi.liikennevirasto.viite.util.{toProjectLink, toTransition}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
@@ -296,17 +297,9 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
 
       val terminated = ProjectDeltaCalculator.partitionWithProjectLinks(allProjectLinks.filter(_.status == LinkStatus.Terminated), allProjectLinks)
 
-      val twoTrackOldAddressRoadParts = (transferredPaired.map(roadwaySection => {
-        (roadwaySection._2, "other")
-      }).toSeq ++ terminated.adjustedSections.map(roadwaySection => {
-        (roadwaySection, "terminated")
-      }).toSeq).filterNot(_._1.track == Track.Combined).sortBy(_._1.startMAddr).groupBy(p => {
-        (p._1.roadNumber, p._1.roadPartNumberStart)
-      }).map(p => {
-        p._1 -> p._2.groupBy(_._1.track).values
-      })
+      val twoTrackOldAddressRoadParts = createTwoTrackOldAddressRoadParts(Seq(), transferredPaired, terminated)
 
-      val old_road_two_track_parts = ProjectDeltaCalculator.calc_parts(twoTrackOldAddressRoadParts)
+      val old_road_two_track_parts = ProjectDeltaCalculator.matchTerminatedRoadwaySections(twoTrackOldAddressRoadParts)
 
       val twoTrackAdjustedTerminated = old_road_two_track_parts.flatMap(_._1) ++ old_road_two_track_parts.flatMap(_._2)
       val combinedTerminatedTrack = terminated.adjustedSections.filter(_.track == Track.Combined)
@@ -437,26 +430,19 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
 
       val terminated = ProjectDeltaCalculator.partitionWithProjectLinks(allProjectLinks.filter(_.status == LinkStatus.Terminated), allProjectLinks)
 
-      val twoTrackOldAddressRoadParts = (transferredPaired.map(roadwaySection => {
-        (roadwaySection._2, "other")
-      }).toSeq ++ terminated.adjustedSections.map(roadwaySection => {
-        (roadwaySection, "terminated")
-      }).toSeq).filterNot(_._1.track == Track.Combined).sortBy(_._1.startMAddr).groupBy(p => {
-        (p._1.roadNumber, p._1.roadPartNumberStart)
-      }).map(p => {
-        p._1 -> p._2.groupBy(_._1.track).values
-      })
+      val twoTrackOldAddressRoadParts = createTwoTrackOldAddressRoadParts(Seq(), transferredPaired, terminated)
 
-      val old_road_two_track_parts = ProjectDeltaCalculator.calc_parts(twoTrackOldAddressRoadParts)
+      val old_road_two_track_parts = ProjectDeltaCalculator.matchTerminatedRoadwaySections(twoTrackOldAddressRoadParts)
 
       val twoTrackAdjustedTerminated = old_road_two_track_parts.flatMap(_._1) ++ old_road_two_track_parts.flatMap(_._2)
       val combinedTerminatedTrack = terminated.adjustedSections.filter(_.track == Track.Combined)
 
       val adjustedTerminated = combinedTerminatedTrack ++ twoTrackAdjustedTerminated
 
-      transferredPaired should have size 2
+      transferredPaired  should have size 2
       adjustedTerminated should have size 1
 
+      transferredPaired.filter(_._1.startMAddr == 0) should have size 1
       transferredPaired.map(x => {
         (x._1.startMAddr, x._2.startMAddr, x._1.endMAddr, x._2.endMAddr, x._1.discontinuity, x._2.discontinuity)
       }).foreach(_ should (be((0L, 0L, 4403L, 4403L, Continuous, EndOfRoad)) or be((4403L, 762L, 8469L, 4828L, Continuous, Continuous))))

@@ -6,14 +6,14 @@ import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, ParallelLink}
-import fi.liikennevirasto.viite.process.ProjectDeltaCalculator.projectLinkDAO
 import fi.liikennevirasto.viite.process.{ProjectDeltaCalculator, RoadwaySection}
+import fi.liikennevirasto.viite.process.ProjectDeltaCalculator.{createTwoTrackOldAddressRoadParts, projectLinkDAO}
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
+import slick.jdbc.StaticQuery.interpolation
 
 
 sealed trait AddressChangeType {
@@ -367,17 +367,8 @@ class RoadwayChangesDAO {
 
           val terminated = ProjectDeltaCalculator.partitionWithProjectLinks(allProjectLinks.filter(_.status == LinkStatus.Terminated), allProjectLinks)
 
-          val twoTrackOldAddressRoadParts = ((unChanged_roadway_sections ++ transferred_roadway_sections).map(roadwaySection => {
-            (roadwaySection._2, "other")
-          }).toSeq ++ terminated.adjustedSections.map(roadwaySection => {
-            (roadwaySection, "terminated")
-          }).toSeq).filterNot(_._1.track == Track.Combined).sortBy(_._1.startMAddr).groupBy(p => {
-            (p._1.roadNumber, p._1.roadPartNumberStart)
-          }).map(p => {
-            p._1 -> p._2.groupBy(_._1.track).values
-          })
-
-          val old_road_two_track_parts = ProjectDeltaCalculator.calc_parts(twoTrackOldAddressRoadParts)
+          val twoTrackOldAddressRoadParts = createTwoTrackOldAddressRoadParts(unChanged_roadway_sections,transferred_roadway_sections, terminated)
+          val old_road_two_track_parts = ProjectDeltaCalculator.matchTerminatedRoadwaySections(twoTrackOldAddressRoadParts)
 
           val twoTrackAdjustedTerminated = old_road_two_track_parts.flatMap(_._1) ++ old_road_two_track_parts.flatMap(_._2)
           val combinedTerminatedTrack = terminated.adjustedSections.filter(_.track == Track.Combined)
