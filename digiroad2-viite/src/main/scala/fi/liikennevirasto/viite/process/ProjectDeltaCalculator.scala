@@ -358,6 +358,12 @@ object ProjectDeltaCalculator {
       Seq(pls.sortBy(_.originalStartAddrMValue).takeWhile {_.status == LinkStatus.Terminated}.last)
   }
 
+  /** Create change table rows
+   *
+   * @param projectLinks    ProjectLinks to process for change table rows
+   * @param allProjectLinks All ProjectLinks in project for additional information
+   * @return Changetable rows
+   */
   def generateChangeTableRowsFromProjectLinks(projectLinks: Seq[ProjectLink], allProjectLinks: Seq[ProjectLink]): ChangeTableRows2 = {
     val startLinks = projectLinks.filter(pl => pl.startAddrMValue == 0).groupBy(pl => {
       (pl.roadNumber, pl.roadPartNumber)})
