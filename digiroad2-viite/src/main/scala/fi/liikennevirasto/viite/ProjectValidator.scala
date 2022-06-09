@@ -525,8 +525,7 @@ class ProjectValidator {
     // function to get any (high priority) validation errors for the project links
     val highPriorityValidations: Seq[(Project, Seq[ProjectLink]) => Seq[ValidationErrorDetails]] = Seq(
       // sequence of validator functions, in INCREASING priority order (as these get turned around in the next step)
-      checkForNotHandledLinks, // "Käsittelemätön" is returned as highest priority
-      checkProjectContinuity // Check project continuities before calculation to prevent problems caused by wrong discontinuity.
+      checkForNotHandledLinks // "Käsittelemätön" is returned as highest priority
     )
 
     // list all the (high priority) validation errors found within the project links, in reversed order
