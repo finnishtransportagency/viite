@@ -96,7 +96,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       val roadway206 = toRoadway(addresses2.map(toTransition(project, LinkStatus.Transfer)).map(_._2))
       roadwayDAO.create(Seq(roadway205, roadway206))
 
-      val partitions = ProjectDeltaCalculator.partitionWithProjectLinks(projectLinks.map(_._2), projectLinks.map(_._2))
+      val partitions = ProjectDeltaCalculator.generateChangeTableRowsFromProjectLinks(projectLinks.map(_._2), projectLinks.map(_._2))
       val partitions2 = partitions.adjustedSections.zip(partitions.originalSections)
 
       partitions2 should have size 3
@@ -158,7 +158,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
 
       roadwayDAO.create(Seq(roadway0, roadway1, roadway2))
 
-      val partitions = ProjectDeltaCalculator.partitionWithProjectLinks(projectLinks, projectLinks)
+      val partitions = ProjectDeltaCalculator.generateChangeTableRowsFromProjectLinks(projectLinks, projectLinks)
       val sectionPairs = partitions.adjustedSections.zip(partitions.originalSections)
 
       sectionPairs should have size 3
@@ -216,7 +216,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
 
       roadwayDAO.create(Seq(roadway0, roadway1, roadway2))
 
-      val partitions = ProjectDeltaCalculator.partitionWithProjectLinks(projectLinks, projectLinks)
+      val partitions = ProjectDeltaCalculator.generateChangeTableRowsFromProjectLinks(projectLinks, projectLinks)
       val sectionPairs = partitions.adjustedSections.zip(partitions.originalSections)
 
       sectionPairs should have size 3
@@ -247,7 +247,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
 
       val roadway205 = toRoadway(numberingLinks.map(_._2).map(_.copy(roadNumber = 5, roadPartNumber = 205)))
       roadwayDAO.create(Seq(roadway205))
-      val unchangedParts2 = ProjectDeltaCalculator.partitionWithProjectLinks(numberingLinks.map(_._2), numberingLinks.map(_._2))
+      val unchangedParts2 = ProjectDeltaCalculator.generateChangeTableRowsFromProjectLinks(numberingLinks.map(_._2), numberingLinks.map(_._2))
       val unchangedParts3 = unchangedParts2.adjustedSections.zip(unchangedParts2.originalSections)
 
       unchangedParts3 should have size 1
@@ -292,24 +292,15 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
         ProjectLink(plId,1999,1,LeftSide,EndOfRoad, 640,795,840,1000,None,None,Some("test_user"),1286442,40.0,200.0,TowardsDigitizing,(NoCP,RoadAddressCP),(NoCP,NoCP),List(Point(5.0,840.0,0.0), Point(5.0,1000.0,0.0)),1227332,Transfer,AdministrativeClass.State,NormalLinkInterface,160.0,1316838,0,8,false,Some(1286442),0,1000000001,None,None,None,None,None,None,None)
       )
 
-      val transferred = ProjectDeltaCalculator.partitionWithProjectLinks(allProjectLinks.filter(_.status != LinkStatus.Terminated), allProjectLinks)
+      val transferred = ProjectDeltaCalculator.generateChangeTableRowsFromProjectLinks(allProjectLinks.filter(_.status != LinkStatus.Terminated), allProjectLinks)
       val transferredPaired = transferred.adjustedSections.zip(transferred.originalSections)
 
-      val terminated = ProjectDeltaCalculator.partitionWithProjectLinks(allProjectLinks.filter(_.status == LinkStatus.Terminated), allProjectLinks)
+      val terminated = ProjectDeltaCalculator.generateChangeTableRowsFromProjectLinks(allProjectLinks.filter(_.status == LinkStatus.Terminated), allProjectLinks)
 
-      val twoTrackOldAddressRoadParts = (transferredPaired.map(roadwaySection => {
-        (roadwaySection._2, "other")
-      }).toSeq ++ terminated.adjustedSections.map(roadwaySection => {
-        (roadwaySection, "terminated")
-      }).toSeq).filterNot(_._1.track == Track.Combined).sortBy(_._1.startMAddr).groupBy(p => {
-        (p._1.roadNumber, p._1.roadPartNumberStart)
-      }).map(p => {
-        p._1 -> p._2.groupBy(_._1.track).values
-      })
+      val twoTrackOldAddressRoadParts = createTwoTrackOldAddressRoadParts(Seq(),transferredPaired,terminated)
+      val oldRoadTwoTrackParts = ProjectDeltaCalculator.matchTerminatedRoadwaySections(twoTrackOldAddressRoadParts)
 
-      val old_road_two_track_parts = ProjectDeltaCalculator.calc_parts(twoTrackOldAddressRoadParts)
-
-      val twoTrackAdjustedTerminated = old_road_two_track_parts.flatMap(_._1) ++ old_road_two_track_parts.flatMap(_._2)
+      val twoTrackAdjustedTerminated = oldRoadTwoTrackParts.flatMap(_._1) ++ oldRoadTwoTrackParts.flatMap(_._2)
       val combinedTerminatedTrack = terminated.adjustedSections.filter(_.track == Track.Combined)
 
       val adjustedTerminated = combinedTerminatedTrack ++ twoTrackAdjustedTerminated
@@ -489,7 +480,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
         ProjectLink(1005,roadNumber,roadPartNumber,Track.Combined,Discontinuity.EndOfRoad,258,367,0,0,None,None,Some(createdBy),1633249,0.0,108.756,TowardsDigitizing,(NoCP,RoadAddressCP),(NoCP,NoCP),List(Point(388437.0,7292133.0,0.0), Point(388522.0,7292202.0,0.0)),projectId,LinkStatus.New,AdministrativeClass.Municipality,FrozenLinkInterface,108.756,0,0,14,reversed = false,None,1614640323000L,335718931,roadName,None,None,None,None,None,None)
       )
 
-      val transferred       = ProjectDeltaCalculator.partitionWithProjectLinks(allProjectLinks.filter(_.status != LinkStatus.Terminated), allProjectLinks)
+      val transferred       = ProjectDeltaCalculator.generateChangeTableRowsFromProjectLinks(allProjectLinks.filter(_.status != LinkStatus.Terminated), allProjectLinks)
       val transferredPaired = transferred.adjustedSections.zip(transferred.originalSections)
 
       transferredPaired should have size 4
@@ -551,14 +542,14 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       val terminations = Seq(toProjectLink(project, LinkStatus.Terminated)(addresses.last), toProjectLink(project, LinkStatus.Terminated)(addresses2.last))
       val unchanged    = (addresses.init ++ addresses2.init).map(toTransition(project, LinkStatus.UnChanged))
 
-      val termPart2 = ProjectDeltaCalculator.partitionWithProjectLinks(terminations, Seq()).adjustedSections
+      val termPart2 = ProjectDeltaCalculator.generateChangeTableRowsFromProjectLinks(terminations, Seq()).adjustedSections
 
       termPart2 should have size 2
       termPart2.foreach(x => {
         x.endMAddr should be(120L)
       })
 
-      val unchangedParts2 = ProjectDeltaCalculator.partitionWithProjectLinks(unchanged.map(_._2), unchanged.map(_._2))
+      val unchangedParts2 = ProjectDeltaCalculator.generateChangeTableRowsFromProjectLinks(unchanged.map(_._2), unchanged.map(_._2))
       val unchangedParts3 = unchangedParts2.adjustedSections.zip(unchangedParts2.originalSections)
 
       unchangedParts3 should have size 2
@@ -586,7 +577,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
 
       val newLinks  = Seq(ProjectLink(981, 5, 205, Track.Combined, Discontinuity.MinorDiscontinuity, 120, 130, 120, 130, None, None, createdBy = Option(project.createdBy), 981, 0.0, 12.1, TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), Seq(Point(0.0, 36.0), Point(0.0, 48.1)), project.id, LinkStatus.New, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, 12.1, -1L, -1L, 8, reversed = false, None, 748800L))
 
-      val uncParts = ProjectDeltaCalculator.partitionWithProjectLinks(unchanged.map(_._2), Seq())
+      val uncParts = ProjectDeltaCalculator.generateChangeTableRowsFromProjectLinks(unchanged.map(_._2), Seq())
       val roadwaySectionPairs = uncParts.adjustedSections.zip(uncParts.originalSections)
 
       roadwaySectionPairs should have size 2
@@ -628,7 +619,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
                   if (ra._1.id > 50) ra._2 else ra._2.copy(administrativeClass = AdministrativeClass.State)
                 })
 
-      val uncParts2 = ProjectDeltaCalculator.partitionWithProjectLinks(links, Seq())
+      val uncParts2 = ProjectDeltaCalculator.generateChangeTableRowsFromProjectLinks(links, Seq())
       val uncParts3 = uncParts2.adjustedSections.zip(uncParts2.originalSections)
 
       uncParts3 should have size 2
@@ -673,7 +664,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
 
       newLinks = newLinks.head.copy(calibrationPointTypes = (RoadAddressCP, NoCP)) +: newLinks.init.tail :+ newLinks.last.copy(discontinuity = Discontinuity.Discontinuous, calibrationPointTypes = (NoCP, RoadAddressCP))
 
-      val uncParts2 = ProjectDeltaCalculator.partitionWithProjectLinks(links ++ newLinks, links ++ newLinks)
+      val uncParts2 = ProjectDeltaCalculator.generateChangeTableRowsFromProjectLinks(links ++ newLinks, links ++ newLinks)
       val uncParts3 = uncParts2.adjustedSections.zip(uncParts2.originalSections)
 
       uncParts3 should have size 3
@@ -801,7 +792,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
 
       val links = transfer.map(_._2).map(_.copy(calibrationPointTypes = (RoadAddressCP,RoadAddressCP), originalCalibrationPointTypes = (RoadAddressCP,RoadAddressCP)))
 
-      val uncParts2 = ProjectDeltaCalculator.partitionWithProjectLinks(links,links)
+      val uncParts2 = ProjectDeltaCalculator.generateChangeTableRowsFromProjectLinks(links,links)
       val uncParts3 = uncParts2.adjustedSections.zip(uncParts2.originalSections)
 
       uncParts3 should have size 4
@@ -866,7 +857,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
         pl.copy(originalStartAddrMValue = pl.originalStartAddrMValue - addressMLength, originalEndAddrMValue = pl.originalEndAddrMValue - addressMLength)
       })
 
-      val partitions  = ProjectDeltaCalculator.partitionWithProjectLinks(links, links)
+      val partitions  = ProjectDeltaCalculator.generateChangeTableRowsFromProjectLinks(links, links)
       val partitions2 = partitions.adjustedSections.zip(partitions.originalSections)
 
       partitions2 should have size 2
@@ -916,7 +907,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       })
       links = links.head.copy(discontinuity = Discontinuity.EndOfRoad) +: links.tail
 
-      val partitions  = ProjectDeltaCalculator.partitionWithProjectLinks(links, links)
+      val partitions  = ProjectDeltaCalculator.generateChangeTableRowsFromProjectLinks(links, links)
       val partitions2 = partitions.adjustedSections.zip(partitions.originalSections)
 
       partitions2 should have size 1
@@ -938,7 +929,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       val roadway205 = toRoadway(links.map(_._2).map(_.copy(ely = 8)))
       roadwayDAO.create(Seq(roadway205))
 
-      val partitions  = ProjectDeltaCalculator.partitionWithProjectLinks(links.map(_._2), links.map(_._2))
+      val partitions  = ProjectDeltaCalculator.generateChangeTableRowsFromProjectLinks(links.map(_._2), links.map(_._2))
       val partitions2 = partitions.adjustedSections.zip(partitions.originalSections)
 
       partitions2.size should be(1)
@@ -966,7 +957,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       val leftRoadway  = toRoadway(leftLinks).copy(track = Track.LeftSide, id = 2)
       roadwayDAO.create(Seq(rightRoadway, leftRoadway))
 
-      val partitions  = ProjectDeltaCalculator.partitionWithProjectLinks(links.filter(_.status != LinkStatus.Terminated), links)
+      val partitions  = ProjectDeltaCalculator.generateChangeTableRowsFromProjectLinks(links.filter(_.status != LinkStatus.Terminated), links)
       val partitions2 = partitions.adjustedSections.zip(partitions.originalSections)
 
       partitions2.size should be(1)
@@ -976,7 +967,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
         fr.endMAddr should be(to.endMAddr)
       })
 
-      val terminatedPartitions = ProjectDeltaCalculator.partitionWithProjectLinks(links.filter(_.status == LinkStatus.Terminated), links)
+      val terminatedPartitions = ProjectDeltaCalculator.generateChangeTableRowsFromProjectLinks(links.filter(_.status == LinkStatus.Terminated), links)
       val terminatedPartitions2 = terminatedPartitions.adjustedSections.zip(partitions.originalSections)
 
       terminatedPartitions2.size should be(1)
@@ -996,7 +987,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       val rightRoadway = toRoadway(leftLinks).copy(track = Track.RightSide, id = 2)
       roadwayDAO.create(Seq(rightRoadway, leftRoadway))
 
-      val partitions  = ProjectDeltaCalculator.partitionWithProjectLinks(links.filter(_.status != LinkStatus.Terminated), links)
+      val partitions  = ProjectDeltaCalculator.generateChangeTableRowsFromProjectLinks(links.filter(_.status != LinkStatus.Terminated), links)
       val partitions2 = partitions.adjustedSections.zip(partitions.originalSections)
 
       partitions2.size should be(1)
@@ -1006,7 +997,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
         fr.endMAddr should be(to.endMAddr)
       })
 
-      val terminatedPartitions = ProjectDeltaCalculator.partitionWithProjectLinks(links.filter(_.status == LinkStatus.Terminated), links)
+      val terminatedPartitions = ProjectDeltaCalculator.generateChangeTableRowsFromProjectLinks(links.filter(_.status == LinkStatus.Terminated), links)
       val terminatedPartitions2 = terminatedPartitions.adjustedSections.zip(partitions.originalSections)
 
       terminatedPartitions2.size should be(1)
@@ -1052,7 +1043,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       })
 
       val road206Links      = addressedRoad206Links.init :+ addressedRoad206Links.last.copy(discontinuity = newDiscontinuity)
-      val partitions  = ProjectDeltaCalculator.partitionWithProjectLinks(linksForRoad205 ++ road206Links, linksForRoad205)
+      val partitions  = ProjectDeltaCalculator.generateChangeTableRowsFromProjectLinks(linksForRoad205 ++ road206Links, linksForRoad205)
       val pairedPartitions = partitions.adjustedSections.zip(partitions.originalSections)
 
       pairedPartitions.size should be(2)
@@ -1097,7 +1088,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       val roadway205 = toRoadway(links.map(_._2))
       roadwayDAO.create(Seq(roadway205))
 
-      val partitions  = ProjectDeltaCalculator.partitionWithProjectLinks(links.map(_._2), links.map(_._2))
+      val partitions  = ProjectDeltaCalculator.generateChangeTableRowsFromProjectLinks(links.map(_._2), links.map(_._2))
       val partitions2 = partitions.adjustedSections.zip(partitions.originalSections)
 
       partitions2.size should be(2)
@@ -1158,7 +1149,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
         if (a.id == 10L) (a.copy(roadwayNumber = 1), projectLink.copy(calibrationPointTypes = (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.UserDefinedCP), roadwayNumber = 1)) else if (a.id > 10L) (a.copy(roadwayNumber = 2), projectLink.copy(roadwayNumber = 2)) else (a.copy(roadwayNumber = 1), projectLink.copy(roadwayNumber = 1))
       })
 
-      val partitionCp = ProjectDeltaCalculator.partitionWithProjectLinks(projectLinksWithCp.map(_._2), Seq()).adjustedSections
+      val partitionCp = ProjectDeltaCalculator.generateChangeTableRowsFromProjectLinks(projectLinksWithCp.map(_._2), Seq()).adjustedSections
       partitionCp.size should be(2)
       val firstSection  = partitionCp.head
       val secondSection = partitionCp.last
@@ -1186,7 +1177,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
             (a.copy(roadwayNumber = 1), projectLink.copy(roadwayNumber = 1))
       })
 
-      val partitionCp = ProjectDeltaCalculator.partitionWithProjectLinks(projectLinksWithCp.map(_._2), Seq()).adjustedSections
+      val partitionCp = ProjectDeltaCalculator.generateChangeTableRowsFromProjectLinks(projectLinksWithCp.map(_._2), Seq()).adjustedSections
       partitionCp.size should be(1)
       val firstSection  = partitionCp.head
 
@@ -1226,7 +1217,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       val roadway206 = toRoadway(Seq(transferLinks.head.copy(startAddrMValue = 0, endAddrMValue = addresses.last.endAddrMValue, roadPartNumber = 206))).copy(id = 3)
       roadwayDAO.create(Seq(roadway205, roadway206))
 
-      val partitioned      = ProjectDeltaCalculator.partitionWithProjectLinks((reversedTrans :+ newLink )++ transferLinks206, Seq())
+      val partitioned      = ProjectDeltaCalculator.generateChangeTableRowsFromProjectLinks((reversedTrans :+ newLink )++ transferLinks206, Seq())
       val adjustedSections = partitioned.adjustedSections
       adjustedSections.size should be(3)
 
