@@ -1273,7 +1273,7 @@ class ProjectValidator {
         case Some(previousRoadPartNumber) =>
           val (leftLinks, rightLinks) = (roadProjectLinks.filter(_.track != Track.RightSide), roadProjectLinks.filter(_.track != Track.LeftSide))
           //Skip this validation if previousRoadPartNumber is reserved in the project or either track (or combined track) has no project links assigned to it.
-          if (allProjectLinks.exists(pl => pl.roadPartNumber == previousRoadPartNumber) || leftLinks.isEmpty || rightLinks.isEmpty)
+          if (allProjectLinks.exists(pl => pl.roadPartNumber == previousRoadPartNumber || pl.originalRoadPartNumber == previousRoadPartNumber) || leftLinks.isEmpty || rightLinks.isEmpty)
             Seq()
           else {
             val previousRoadwayRoadAddresses = roadAddressService.getRoadAddressWithRoadAndPart(road, previousRoadPartNumber, fetchOnlyEnd = true)
