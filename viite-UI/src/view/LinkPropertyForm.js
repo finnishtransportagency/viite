@@ -63,22 +63,22 @@
           decodedLinkProperties = decodedLinkProperties + ', <br> ' + rt + ' ' + decodeAttributes(attrId, rt);
         }
       });
-      var field = constructField(attrId, decodedLinkProperties);
-      return field;
+      return constructField(attrId, decodedLinkProperties);
     };
 
     var textDynamicField = function (labelText, linkProperty) {
       var uniqLinkProperties = _.uniq(_.map(selectedLinkProperty.get(), linkProperty));
       var linkProperties = "";
       _.each(uniqLinkProperties, function(rt) {
-        if (linkProperties.length === 0) {
-          linkProperties = rt;
-        } else {
-          linkProperties = linkProperties + ', <br> ' + rt;
+        if (rt !== undefined) {
+          if (linkProperties.length === 0) {
+            linkProperties = rt;
+          } else {
+            linkProperties = linkProperties + ', <br> ' + rt;
+          }
         }
       });
-      var field = constructField(labelText, linkProperties);
-      return field;
+      return constructField(labelText, linkProperties);
     };
 
     var lengthDynamicField = function () {
@@ -89,8 +89,7 @@
         var linkLength = link.endAddressM - link.startAddressM;
         length += linkLength;
       });
-      var field = constructField(labelText, length);
-      return field;
+      return constructField(labelText, length);
     };
 
     var constructField = function (labelText, data) {
@@ -119,11 +118,10 @@
     };
 
     var staticField = function (labelText, dataField) {
-      var field = '<div class="form-group" style="margin-bottom: 0;">' +
+      return '<div class="form-group" style="margin-bottom: 0;">' +
           '<label class="control-label-short">' + labelText + '</label>' +
           '<p class="form-control-static-short">' + dataField + " " + decodeAttributes(labelText, dataField) + '</p>' +
           '</div>';
-      return field;
     };
 
     var title = function () {
@@ -139,13 +137,12 @@
     };
 
     var isOnlyOneRoadAndPartNumberSelected = function () {
-      var isOneRoadAndPart = isOnlyOneRoadNumberSelected() && isOnlyOneRoadPartNumberSelected();
-      return isOneRoadAndPart;
+      return isOnlyOneRoadNumberSelected() && isOnlyOneRoadPartNumberSelected();
     };
 
     var template = function (firstSelectedLinkProperty, linkProperties) {
       var mtkId = selectedLinkProperty.count() === 1 ? '; MTKID: ' + linkProperties.mmlId : '';
-      var roadNames = selectedLinkProperty.count() === 1 ? staticField('TIEN NIMI', firstSelectedLinkProperty.roadName) : textDynamicField('TIEN NIMI', 'roadName');
+      var roadNames = selectedLinkProperty.count() === 1 ? staticField('TIEN NIMI', "roadName" in firstSelectedLinkProperty ? firstSelectedLinkProperty.roadName : '') : textDynamicField('TIEN NIMI', 'roadName');
       var roadNumbers = selectedLinkProperty.count() === 1 ? staticField('TIENUMERO', firstSelectedLinkProperty.roadNumber) : textDynamicField('TIENUMERO', 'roadNumber');
       var roadPartNumbers = isOnlyOneRoadNumberSelected() ? dynamicField('TIEOSANUMERO', 'roadPartNumber') : constructField('TIEOSANUMERO', '');
       var tracks = isOnlyOneRoadAndPartNumberSelected() ? dynamicField('AJORATA', 'trackCode') : constructField('AJORATA', '');
