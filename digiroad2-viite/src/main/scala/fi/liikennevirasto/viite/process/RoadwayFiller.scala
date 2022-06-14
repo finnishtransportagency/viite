@@ -33,6 +33,14 @@ object RoadwayFiller {
       adminClassRoadwayNumber.administrativeClass != currentRoadway.administrativeClass
     }
 
+    def roadNumberChanged(currentRoadway: Roadway, pls: Seq[ProjectLink]): Boolean = {
+      pls.exists(pl => pl.roadNumber != currentRoadway.roadNumber)
+    }
+
+    def roadPartNumberChanged(currentRoadway: Roadway, pls: Seq[ProjectLink]): Boolean = {
+      pls.exists(pl => pl.roadNumber == currentRoadway.roadNumber && pl.roadPartNumber != currentRoadway.roadPartNumber)
+    }
+
     def roadwayHasChanges(currentRoadway: Roadway,
                           adminClassRoadwayNumber: AdminClassRwn,
                           projectLinkSeq         : Seq[ProjectLink]
@@ -40,7 +48,9 @@ object RoadwayFiller {
                                         trackChanged(projectLinkSeq, currentRoadway) ||
                                         discontinuityChanged(projectLinkSeq) ||
                                         adminClassChanged(currentRoadway, adminClassRoadwayNumber) ||
-                                        projectLinkSeq.exists(pl => pl.reversed)
+                                        projectLinkSeq.exists(pl => pl.reversed) ||
+                                        roadNumberChanged(currentRoadway, projectLinkSeq) ||
+                                        roadPartNumberChanged(currentRoadway, projectLinkSeq)
     }
 
     def createRoadwaysWithLinearlocationsAndProjectLinks( currentRoadway: Roadway,
