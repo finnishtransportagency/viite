@@ -171,7 +171,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       projectDAO.create(project)
 
       val projectLinks = Seq(
-        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 100L, 500L, Some(DateTime.now()), status = LinkStatus.Transfer, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber).copy(originalStartAddrMValue = roadway.startAddrMValue, originalEndAddrMValue = roadway.endAddrMValue)
+        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 100L, 500L, Some(DateTime.now()), status = LinkStatus.Numbering, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber).copy(originalStartAddrMValue = roadway.startAddrMValue, originalEndAddrMValue = roadway.endAddrMValue)
       )
 
       val roadwayChanges = Seq(RoadwayFiller.RwChanges(roadway, Seq.empty[Roadway], projectLinks))
@@ -212,7 +212,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       projectDAO.create(project)
 
       val projectLinks = Seq(
-        dummyProjectLink(1L, 2L, Track.Combined, Discontinuity.Continuous, 0L, 400L, Some(DateTime.now()), status = LinkStatus.Transfer, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber).copy(originalStartAddrMValue = roadway.startAddrMValue, originalEndAddrMValue = roadway.endAddrMValue)
+        dummyProjectLink(1L, 2L, Track.Combined, Discontinuity.Continuous, 0L, 400L, Some(DateTime.now()), status = LinkStatus.Numbering, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber).copy(originalStartAddrMValue = roadway.startAddrMValue, originalEndAddrMValue = roadway.endAddrMValue)
       )
 
       val roadwayChanges = Seq(RoadwayFiller.RwChanges(roadway, Seq.empty[Roadway], projectLinks))
@@ -274,11 +274,13 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       newRoadways.head.roadwayNumber should be(roadwayNumber)
       newRoadways.head.roadwayNumber should be(historyRoadways.head.roadwayNumber)
+      newRoadways.head.ely should be(10)
 
       projectLinks.map(pl => (pl.startAddrMValue, pl.endAddrMValue)) should be(newRoadways.map(r => (r.startAddrMValue, r.endAddrMValue)))
 
       historyRoadways.head.startAddrMValue     should be(roadway.startAddrMValue)
       historyRoadways.head.endAddrMValue       should be(roadway.endAddrMValue)
+      historyRoadways.head.ely                 should be(8)
     }
   }
 
