@@ -164,7 +164,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
                  "Then old roadway is expired and a new is created with new address and old roadway number.") {
     runWithRollback{
       val roadwayNumber = 1L
-      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 400L, DateTime.now(), None).copy(ely = 8)
+      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 400L, DateTime.now().minusDays(2), None).copy(ely = 8)
       roadwayDAO.create(Seq(roadway))
 
       val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(), Seq(ProjectReservedPart(0L, 1L, 1L, None, None, None, None, None, None, None)), Seq(), None)
@@ -205,7 +205,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
     "Then history row is created and a new row is created with new address and old roadway number.") {
     runWithRollback{
       val roadwayNumber = 1L
-      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 400L, DateTime.now(), None).copy(ely = 8)
+      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 400L, DateTime.now().minusDays(2), None).copy(ely = 8)
       roadwayDAO.create(Seq(roadway))
 
       val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(), Seq(ProjectReservedPart(0L, 1L, 1L, None, None, None, None, None, None, None)), Seq(), None)
@@ -213,6 +213,47 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       val projectLinks = Seq(
         dummyProjectLink(1L, 2L, Track.Combined, Discontinuity.Continuous, 0L, 400L, Some(DateTime.now()), status = LinkStatus.Transfer, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber).copy(originalStartAddrMValue = roadway.startAddrMValue, originalEndAddrMValue = roadway.endAddrMValue)
+      )
+
+      val roadwayChanges = Seq(RoadwayFiller.RwChanges(roadway, Seq.empty[Roadway], projectLinks))
+      val result         = RoadwayFiller.applyRoadwayChanges(roadwayChanges).flatten.filter(_._1.nonEmpty)
+
+      result should have size 1
+
+      // Check old roadway is expired and a new is created .
+      val resultHead = result.head
+      resultHead._1 should have size 2
+      resultHead._2 should have size 1
+      resultHead._3 should have size 1
+
+      val historyRoadways = resultHead._1.filter(r => r.endDate.nonEmpty && r.validTo.isEmpty)
+      historyRoadways should have size 1
+      val newRoadways = resultHead._1.filter(r => r.endDate.isEmpty && r.validTo.isEmpty).sortBy(_.startAddrMValue)
+      newRoadways should have size 1
+
+      newRoadways.head.roadwayNumber should be(roadwayNumber)
+      newRoadways.head.roadwayNumber should be(historyRoadways.head.roadwayNumber)
+
+      projectLinks.map(pl => (pl.startAddrMValue, pl.endAddrMValue)) should be(newRoadways.map(r => (r.startAddrMValue, r.endAddrMValue)))
+
+      historyRoadways.head.startAddrMValue     should be(roadway.startAddrMValue)
+      historyRoadways.head.endAddrMValue       should be(roadway.endAddrMValue)
+    }
+  }
+
+  test("Test RoadwayFiller.applyRoadwayChanges() #Confluence: Transfering the Roadway. " +
+    "When transfering a single roadway to a different ELY" +
+    "Then history row is created and a new row is created with new address and old roadway number.") {
+    runWithRollback{
+      val roadwayNumber = 1L
+      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 400L, DateTime.now().minusDays(2), None).copy(ely = 8)
+      roadwayDAO.create(Seq(roadway))
+
+      val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(), Seq(ProjectReservedPart(0L, 1L, 1L, None, None, None, None, None, None, None)), Seq(), None)
+      projectDAO.create(project)
+
+      val projectLinks = Seq(
+        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 400L, Some(DateTime.now()), status = LinkStatus.Transfer, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber).copy(originalStartAddrMValue = roadway.startAddrMValue, originalEndAddrMValue = roadway.endAddrMValue, ely = 10)
       )
 
       val roadwayChanges = Seq(RoadwayFiller.RwChanges(roadway, Seq.empty[Roadway], projectLinks))
