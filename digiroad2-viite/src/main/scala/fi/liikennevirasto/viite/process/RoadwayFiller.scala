@@ -22,8 +22,8 @@ object RoadwayFiller {
     val roadwayNumbersCombined = pls.groupBy(_.roadwayNumber).toList
     //Luodaan "nollasta alkava" representaatio osoitelukemille jokaiselle roadwayNumberille, Seq[(roadwayNumber, (StartAddrM, EndAddrM))]
     val deltaAddrMValues = roadwayNumbersCombined.map {
-      case (rwn, pls) => (currentRoadway.roadwayNumber,AddrMValues(pls.minBy(_.startAddrMValue).startAddrMValue-currentRoadway.startAddrMValue,
-        pls.maxBy(_.endAddrMValue).endAddrMValue-currentRoadway.startAddrMValue))
+      case (rwn, pls) => (currentRoadway.roadwayNumber,AddrMValues(pls.minBy(_.originalStartAddrMValue).startAddrMValue-currentRoadway.startAddrMValue,
+        pls.maxBy(_.originalEndAddrMValue).endAddrMValue-currentRoadway.startAddrMValue))
     }
     historyRows.map(hr => {
       val deltaAddr = deltaAddrMValues.find(_._1 == hr.roadwayNumber).get._2
