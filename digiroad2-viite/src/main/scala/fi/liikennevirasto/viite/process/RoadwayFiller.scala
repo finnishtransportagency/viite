@@ -16,10 +16,25 @@ object RoadwayFiller {
   val projectDAO = new ProjectDAO
   val logger = LoggerFactory.getLogger(getClass)
 
+
+  /**
+   * This function adjusts the historyRows to have appropriate AddrMValues based on the Project Links that are used to create a new Roadway.
+   * @param projectLinks The ProjectLinks that make up a new roadway
+   *                       70------100
+   *                               100------150
+   * @param currentRoadway The roadway that the ProjectLinks are originally from
+   *    4         0-------------------------150
+   * @param historyRows History Rows from the Roadway table for the currentRoadway
+   *    3         0-------------------------150
+   *    2         0-------------------------150
+   *    1         230-----------------------380
+   * @return historyRows that have adjusted AddrMValues based on the ProjectLinks
+   *    3                  70---------------150
+   *    2                  70---------------150
+   *    1                  300--------------380
+   */
   def updateAddrMValuesOfHistoryRows(projectLinks: Seq[ProjectLink], currentRoadway: Roadway, historyRows: Seq[Roadway]):Seq[Roadway] = {
 
-    //Luodaan "nollasta alkava" representaatio osoitelukemille jokaiselle roadwayNumberille, Seq[(roadwayNumber, (StartAddrM, EndAddrM))]
-    //currentRoadwayn osuus, joka kattaa projectLinks -listan sisältävän välin
     val minAddrM = projectLinks.minBy(_.originalStartAddrMValue).originalStartAddrMValue - currentRoadway.startAddrMValue
     val maxAddrM = projectLinks.maxBy(_.originalEndAddrMValue).originalEndAddrMValue - currentRoadway.startAddrMValue
 
