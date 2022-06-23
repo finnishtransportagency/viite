@@ -744,6 +744,28 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Test RoadwayFiller.applyRoadwayChanges()" +
     "When a single roadway (that has two history history rows) is split in to two roadways" +
     "Then the history roadways should also be split to those two new roadways, and new history roadway should also be created for both of the split roadways") {
+
+    /**
+      * BEFORE PROJECT
+      *
+      *                   RoadwayNumber 99
+      *     0 |--------------RoadPart 3----------------> 175  Current Roadway
+      *
+      *     0 |--------------RoadPart 2----------------> 175  Newest History Roadway
+      *   370 |--------------RoadPart 1----------------> 545  Oldest History Roadway
+      *
+      *   AFTER PROJECT
+      *
+      *         RoadwayNumber 1         RoadwayNumber 2
+      *     0 |------RP3----> 120     0 |-------RP4-----> 55  Current Roadways (rw 99 is split in two)
+      *
+      *     0 |----- RP3----> 120   120 |-------RP3-----> 175 After project created history rows
+      *     0 |------RP2----> 120   120 |-------RP2-----> 175 Second oldest history rows
+      *   370 |------RP1----> 490   490 |-------RP1-----> 545 Oldest history rows
+      *
+      *
+      * */
+
     runWithRollback{
       val roadwayNumber = 99L
       val newRoadwayNumber1 = 1L
