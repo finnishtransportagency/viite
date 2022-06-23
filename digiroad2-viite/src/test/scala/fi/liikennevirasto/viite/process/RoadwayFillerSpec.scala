@@ -641,6 +641,21 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Test RoadwayFiller.applyRoadwayChanges()" +
     "When a single roadway (without history) is split to two roadways" +
     "Then both split roadways will get a history row of their own") {
+
+    /**
+      * BEFORE PROJECT
+      *                                     Roadway Number 99
+      *  0 |-------------------------------------RoadPart 1-----------------------------------------> 545   Current Roadway
+      *
+      * AFTER PROJECT
+      *
+      *                 Roadway Number 1                                    Roadway Number 2
+      *  0 |----------------RoadPart 1------------------> 370    0 |---------RoadPart 2-------------> 175   New current roadways
+      *
+      *  0 |----------------RoadPart 1------------------> 370  370 |---------RoadPart 1-------------> 545   After project created history roadways
+      *
+      * */
+
     runWithRollback{
       val roadwayNumber = 99L
       val newRoadwayNumber1 = 1L
@@ -701,6 +716,24 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Test RoadwayFiller.applyRoadwayChanges()" +
     "When a single roadway (that has history) is transferred to another road part" +
     "Then new roadway and history roadways should form with correct address M values and road part numbers") {
+
+    /**
+      * BEFORE PROJECT
+      *
+      *                   RoadwayNumber 99
+      *     0 |--------------RoadPart 2----------------> 175  Current Roadway
+      *
+      *   370 |--------------RoadPart 1----------------> 545  History Roadway
+      *
+      * AFTER PROJECT
+      *
+      *                   RoadwayNumber 99
+      *     0 |--------------RoadPart 3----------------> 175  New current roadway
+      *
+      *     0 |--------------RoadPart 2----------------> 175  After project created history row
+      *   370 |--------------RoadPart 1----------------> 545  Oldest history row
+      * */
+
     runWithRollback{
       val roadwayNumber = 99L
 
