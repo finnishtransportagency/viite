@@ -660,7 +660,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       val roadwayNumber = 99L
       val newRoadwayNumber1 = 1L
       val newRoadwayNumber2 = 2L
-      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 545L, DateTime.now().minusDays(2), None).copy(ely = 8)
+      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 545L, DateTime.now().minusDays(2), None).copy(ely = 10)
       roadwayDAO.create(Seq(roadway))
 
       val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(), Seq(ProjectReservedPart(0L, 1L, 1L, None, None, None, None, None, None, None)), Seq(), None)
@@ -737,8 +737,8 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
     runWithRollback{
       val roadwayNumber = 99L
 
-      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadNumber = 1L, roadPartNumber = 2L, startAddrM = 0L, endAddrM = 175L, DateTime.now().minusDays(5), None).copy(ely = 8)
-      val historyRoadway = dummyRoadway(roadwayNumber = roadwayNumber, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 370L, endAddrM = 545L, DateTime.now().minusDays(10), Some(DateTime.now().minusDays(3)), 1L).copy(ely = 8)
+      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadNumber = 1L, roadPartNumber = 2L, startAddrM = 0L, endAddrM = 175L, DateTime.now().minusDays(5), None).copy(ely = 10)
+      val historyRoadway = dummyRoadway(roadwayNumber = roadwayNumber, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 370L, endAddrM = 545L, DateTime.now().minusDays(10), Some(DateTime.now().minusDays(3)), 1L).copy(ely = 10)
       roadwayDAO.create(Seq(roadway, historyRoadway))
 
       val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(), Seq(ProjectReservedPart(0L, 1L, 2L, None, None, None, None, None, None, None)), Seq(), None)
@@ -804,10 +804,10 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       val newRoadwayNumber1 = 1L
       val newRoadwayNumber2 = 2L
 
-      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadNumber = 1L, roadPartNumber = 3L, startAddrM = 0L, endAddrM = 175L, DateTime.now().minusDays(5), None, 1L).copy(ely = 8)
+      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadNumber = 1L, roadPartNumber = 3L, startAddrM = 0L, endAddrM = 175L, DateTime.now().minusDays(5), None, 1L).copy(ely = 10)
       val historyRoadways = Seq(
-        dummyRoadway(roadwayNumber = roadwayNumber, roadNumber = 1L, roadPartNumber = 2L, startAddrM = 0L, endAddrM = 175L, DateTime.now().minusDays(10), Some(DateTime.now().minusDays(5)), 2L).copy(ely = 8),
-        dummyRoadway(roadwayNumber = roadwayNumber, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 370L, endAddrM = 545L, DateTime.now().minusDays(20), Some(DateTime.now().minusDays(11)), 3L).copy(ely = 8)
+        dummyRoadway(roadwayNumber = roadwayNumber, roadNumber = 1L, roadPartNumber = 2L, startAddrM = 0L, endAddrM = 175L, DateTime.now().minusDays(10), Some(DateTime.now().minusDays(5)), 2L).copy(ely = 10),
+        dummyRoadway(roadwayNumber = roadwayNumber, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 370L, endAddrM = 545L, DateTime.now().minusDays(20), Some(DateTime.now().minusDays(11)), 3L).copy(ely = 10)
       )
 
       roadwayDAO.create(Seq(roadway) ++ historyRoadways)
