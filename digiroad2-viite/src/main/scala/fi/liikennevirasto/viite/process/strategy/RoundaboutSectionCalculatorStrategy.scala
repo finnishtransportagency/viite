@@ -16,7 +16,7 @@ class RoundaboutSectionCalculatorStrategy extends RoadAddressSectionCalculatorSt
   }
 
   override def assignMValues(newProjectLinks: Seq[ProjectLink], oldProjectLinks: Seq[ProjectLink], userCalibrationPoints: Seq[UserDefinedCalibrationPoint]): Seq[ProjectLink] = {
-    val startingLink                                                = oldProjectLinks.sortBy(_.startAddrMValue).headOption.orElse(
+    val startingLink = oldProjectLinks.sortBy(_.startAddrMValue).headOption.orElse(
       newProjectLinks.find(pl => pl.endAddrMValue != 0 && pl.startAddrMValue == 0)).orElse(
       newProjectLinks.headOption).toSeq
     val rest = (newProjectLinks ++ oldProjectLinks).filterNot(startingLink.contains)
