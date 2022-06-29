@@ -83,9 +83,9 @@
                     infoContent.innerHTML += '<div class="popup-line-div">' + '<div>' + 'MunicipalityCode:&nbsp;' + '</div>' + '<div>' + roadData.municipalityCode + '</div>' + '</div>';
                 }
                 infoContent.innerHTML +=
-                '<div class="popup-line-div">' + '<div>' + 'Roadway&nbsp;id:&nbsp;' + '</div>' + '<div>' + roadData.roadwayId + '</div>' + '</div>' +
                 '<div class="popup-line-div">' + '<div>' + 'LinearLocation&nbsp;id:&nbsp' + '</div>' + '<div>' + roadData.linearLocationId + '</div>' + '</div>' +
                 '<div class="popup-line-div">' + '<div>' + 'Link&nbsp;id:&nbsp;' + '</div>' + '<div>' + roadData.linkId + '</div>' + '</div>' +
+                '<div class="popup-line-div">' + '<div>' + 'Roadway&nbsp;id:&nbsp;' + '</div>' + '<div>' + roadData.roadwayId + '</div>' + '</div>' +
                 '<div class="popup-line-div">' + '<div>' + 'RoadwayNumber:&nbsp;' + '</div>' + '<div>' + roadData.roadwayNumber  + '</div>' + '</div>';
             }
           }
