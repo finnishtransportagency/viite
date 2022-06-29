@@ -1,9 +1,11 @@
 package fi.liikennevirasto.viite.process.strategy
 
+import fi.liikennevirasto.digiroad2.dao.Sequences
+import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectLink}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, RoadAddressCP}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
-import fi.liikennevirasto.viite.dao.{ProjectLink}
 import fi.liikennevirasto.viite.process.{ProjectSectionMValueCalculator, TrackSectionOrder}
+import fi.liikennevirasto.viite.NewIdValue
 
 class RoundaboutSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrategy {
 
@@ -19,8 +21,14 @@ class RoundaboutSectionCalculatorStrategy extends RoadAddressSectionCalculatorSt
       newProjectLinks.headOption).toSeq
     val rest = (newProjectLinks ++ oldProjectLinks).filterNot(startingLink.contains)
     val mValued = TrackSectionOrder.mValueRoundabout(startingLink ++ rest)
+    val (newLinksWithoutRoadwayNumber, newLinkswithRoadwayNumber) = mValued.partition(npl => npl.status == LinkStatus.New && (npl.roadwayNumber == NewIdValue || npl.roadwayNumber == 0))
+    val mValuedWithRwns = if (newLinksWithoutRoadwayNumber.nonEmpty) {
+      val newRoadwayNumber = Sequences.nextRoadwayNumber
+      (newLinksWithoutRoadwayNumber.map(_.copy(roadwayNumber = newRoadwayNumber)) ++ newLinkswithRoadwayNumber).sortBy(_.startAddrMValue)
+    } else mValued
+
     if (userCalibrationPoints.nonEmpty) {
-      val withCalibration = mValued.map(pl =>
+      val withCalibration = mValuedWithRwns.map(pl =>
         userCalibrationPoints.filter(_.projectLinkId == pl.id) match {
           case s if s.size == 2 =>
             val (st, en) = (s.minBy(_.addressMValue), s.maxBy(_.addressMValue))
@@ -44,7 +52,7 @@ class RoundaboutSectionCalculatorStrategy extends RoadAddressSectionCalculatorSt
       val calMap = userCalibrationPoints.map(c => c.projectLinkId -> c).toMap
       ProjectSectionMValueCalculator.assignLinkValues(withCalibration, calMap, None, None, coEff)
     } else {
-      mValued
+      mValuedWithRwns
     }
   }
 }
