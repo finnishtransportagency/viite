@@ -64,10 +64,12 @@
       });
       var coordinate;
       //Ignore if target feature is marker
-      if (!_.isUndefined(featureAtPixel) && !_.isUndefined(featureAtPixel.linkData)) {
+      const popupBox = document.getElementById('popup-content').getBoundingClientRect();
+      if (!(event.originalEvent.clientX < popupBox.right && event.originalEvent.clientX > popupBox.x && event.originalEvent.clientY > popupBox.top && event.originalEvent.clientY < popupBox.bottom))
+      if (!_.isUndefined(featureAtPixel) && featureAtPixel.linkData) {
         var roadData = featureAtPixel.linkData;
         if (infoContent !== null) {
-          if (roadData !== null && (roadData.roadNumber !== 0 && roadData.roadPartNumber !== 0)) {
+          if ((roadData.roadNumber !== 0 && roadData.roadPartNumber !== 0)) {
             coordinate = map.getEventCoordinate(event.originalEvent);
             infoContent.innerHTML =
                 '<div class="popup-line-div">' + '<div>' + 'Tienumero:&nbsp;' + '</div>' + '<div class="selectable">' + roadData.roadNumber + '</div>' + '</div>' +
@@ -83,10 +85,10 @@
                     infoContent.innerHTML += '<div class="popup-line-div">' + '<div>' + 'MunicipalityCode:&nbsp;' + '</div>' + '<div class="selectable">' + roadData.municipalityCode + '</div>' + '</div>';
                 }
                 infoContent.innerHTML +=
-                '<div class="popup-line-div">' + '<div>' + 'Link&nbsp;id:&nbsp;' + '</div>' + '<div class="selectable">' + roadData.linkId + '</div>' + '</div>' +
-                '<div class="popup-line-div">' + '<div>' + 'LinearLocation&nbsp;id:&nbsp' + '</div>' + '<div class="selectable">' + roadData.linearLocationId + '</div>' + '</div>' +
-                '<div class="popup-line-div">' + '<div>' + 'Roadway&nbsp;id:&nbsp;' + '</div>' + '<div class="selectable">' + roadData.roadwayId + '</div>' + '</div>' +
-                '<div class="popup-line-div">' + '<div>' + 'RoadwayNumber:&nbsp;' + '</div>' + '<div class="selectable">' + roadData.roadwayNumber  + '</div>' + '</div>';
+                    '<div class="popup-line-div">' + '<div>' + 'Link&nbsp;id:&nbsp;' + '</div>' + '<div class="selectable">' + roadData.linkId + '</div>' + '</div>' +
+                    '<div class="popup-line-div">' + '<div>' + 'LinearLocation&nbsp;id:&nbsp' + '</div>' + '<div class="selectable">' + roadData.linearLocationId + '</div>' + '</div>' +
+                    '<div class="popup-line-div">' + '<div>' + 'Roadway&nbsp;id:&nbsp;' + '</div>' + '<div class="selectable">' + roadData.roadwayId + '</div>' + '</div>' +
+                    '<div class="popup-line-div">' + '<div>' + 'RoadwayNumber:&nbsp;' + '</div>' + '<div class="selectable">' + roadData.roadwayNumber  + '</div>' + '</div>';
             }
           }
         }
