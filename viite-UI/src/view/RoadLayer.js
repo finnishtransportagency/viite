@@ -75,6 +75,16 @@
               'AET:&nbsp;' + roadData.startAddressM + '<br>' +
               'LET:&nbsp;' + roadData.endAddressM + '<br>' +
               'Hall. luokka:&nbsp;' + displayAdministrativeClass(roadData.administrativeClassId) + '<br>';
+            var ctrlPressed = event.originalEvent.ctrlKey;
+            if (ctrlPressed) {
+                infoContent.innerHTML +=
+                '<hr>' +
+                'MunicipalityCode:&nbsp;' + roadData.municipalityCode + '<br>' +
+                'Roadway id:&nbsp;' + roadData.roadwayId + '<br>' +
+                'LinearLocation id:&nbsp;' + roadData.linearLocationId + '<br>' +
+                'Link id:&nbsp;' + roadData.linkId + '<br>' +
+                'RoadwayNumber:&nbsp;' + roadData.roadwayNumber + '<br>';
+            }
           }
         }
       }
