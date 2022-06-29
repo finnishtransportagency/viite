@@ -69,21 +69,24 @@
         if (infoContent !== null) {
           if (roadData !== null && (roadData.roadNumber !== 0 && roadData.roadPartNumber !== 0)) {
             coordinate = map.getEventCoordinate(event.originalEvent);
-            infoContent.innerHTML = 'Tienumero:&nbsp;' + roadData.roadNumber + '<br>' +
-              'Tieosanumero:&nbsp;' + roadData.roadPartNumber + '<br>' +
-              'Ajorata:&nbsp;' + roadData.trackCode + '<br>' +
-              'AET:&nbsp;' + roadData.startAddressM + '<br>' +
-              'LET:&nbsp;' + roadData.endAddressM + '<br>' +
-              'Hall. luokka:&nbsp;' + displayAdministrativeClass(roadData.administrativeClassId) + '<br>';
-            var ctrlPressed = event.originalEvent.ctrlKey;
-            if (ctrlPressed) {
+            infoContent.innerHTML =
+                '<div class="popup-line-div">' + '<div>' + 'Tienumero:&nbsp;' + '</div>' + '<div>' + roadData.roadNumber + '</div>' + '</div>' +
+                '<div class="popup-line-div">' + '<div>' + 'Tieosanumero:&nbsp;' + '</div>' + '<div>' + roadData.roadPartNumber + '</div>' + '</div>' +
+                '<div class="popup-line-div">' + '<div>' + 'Ajorata:&nbsp;' + '</div>' + '<div>' + roadData.trackCode + '</div>' + '</div>' +
+                '<div class="popup-line-div">' + '<div>' + 'AET:&nbsp;' + '</div>' + '<div>' + roadData.startAddressM + '</div>' + '</div>' +
+                '<div class="popup-line-div">' + '<div>' + 'LET:&nbsp;' + '</div>' + '<div>' + roadData.endAddressM + '</div>' + '</div>' +
+                '<div class="popup-line-div">' + '<div>' + 'Hall. luokka:&nbsp;' + '</div>' + '<div>' + displayAdministrativeClass(roadData.administrativeClassId) + '</div>' + '</div>';
+            var altShiftPressed = event.originalEvent.shiftKey && event.originalEvent.altKey;
+            if (altShiftPressed) {
+                infoContent.innerHTML += '<hr>';
+                if (!_.isUndefined(roadData.municipalityCode)) {
+                    infoContent.innerHTML += '<div class="popup-line-div">' + '<div>' + 'MunicipalityCode:&nbsp;' + '</div>' + '<div>' + roadData.municipalityCode + '</div>' + '</div>';
+                }
                 infoContent.innerHTML +=
-                '<hr>' +
-                'MunicipalityCode:&nbsp;' + roadData.municipalityCode + '<br>' +
-                'Roadway id:&nbsp;' + roadData.roadwayId + '<br>' +
-                'LinearLocation id:&nbsp;' + roadData.linearLocationId + '<br>' +
-                'Link id:&nbsp;' + roadData.linkId + '<br>' +
-                'RoadwayNumber:&nbsp;' + roadData.roadwayNumber + '<br>';
+                '<div class="popup-line-div">' + '<div>' + 'Roadway&nbsp;id:&nbsp;' + '</div>' + '<div>' + roadData.roadwayId + '</div>' + '</div>' +
+                '<div class="popup-line-div">' + '<div>' + 'LinearLocation&nbsp;id:&nbsp' + '</div>' + '<div>' + roadData.linearLocationId + '</div>' + '</div>' +
+                '<div class="popup-line-div">' + '<div>' + 'Link&nbsp;id:&nbsp;' + '</div>' + '<div>' + roadData.linkId + '</div>' + '</div>' +
+                '<div class="popup-line-div">' + '<div>' + 'RoadwayNumber:&nbsp;' + '</div>' + '<div>' + roadData.roadwayNumber  + '</div>' + '</div>';
             }
           }
         }
