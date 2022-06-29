@@ -91,7 +91,7 @@
           }
         }
       }
-      if (!(event.originalEvent.getModifierState("CapsLock")))
+      if (!(event.originalEvent.altKey))
         overlay.setPosition(coordinate);
     };
 
