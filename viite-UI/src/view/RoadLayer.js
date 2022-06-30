@@ -63,9 +63,9 @@
         return feature;
       });
       var coordinate;
-      //Ignore if target feature is marker
       const popupBox = document.getElementById('popup-content').getBoundingClientRect();
       if (!(event.originalEvent.clientX < popupBox.right && event.originalEvent.clientX > popupBox.x && event.originalEvent.clientY > popupBox.top && event.originalEvent.clientY < popupBox.bottom))
+      //Ignore if target feature is marker
       if (!_.isUndefined(featureAtPixel) && featureAtPixel.linkData) {
         var roadData = featureAtPixel.linkData;
         if (infoContent !== null) {
@@ -93,6 +93,7 @@
           }
         }
       }
+       // Keep info box open with altkey.
       if (!(event.originalEvent.altKey))
         overlay.setPosition(coordinate);
     };

@@ -197,13 +197,13 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
           }.asInstanceOf[HashMap.HashTrieMap[String, Option[Any]]].toList.map(t => {
             t._1 -> (if (t._2.isDefined) t._2.get else t._2)
           })
-                                           val sss  = if (ss.find(_._1 == "startAddressM").get._2.toString.isEmpty) ss.map(t => {
-                                             (t._1, "")
-                                           }) else ss
-                                           val ssss = sss.map(t => {
-                                             if (t._1 == "endRoadPartNumber" && t._2.toString.nonEmpty) ("length", sss.find(_._1 == "endAddressM").get._2.asInstanceOf[Long] - sss.find(_._1 == "startAddressM").get._2.asInstanceOf[Long]) else t
-                                           })
-                                           val s    = List(ssss.head, ssss(6), ssss(5), ssss(2), ssss(8), ssss(3), ssss(7), ssss(1), ssss(4))
+             val sss  = if (ss.find(_._1 == "startAddressM").get._2.toString.isEmpty) ss.map(t => {
+               (t._1, "")
+             }) else ss
+             val ssss = sss.map(t => {
+               if (t._1 == "endRoadPartNumber" && t._2.toString.nonEmpty) ("length", sss.find(_._1 == "endAddressM").get._2.asInstanceOf[Long] - sss.find(_._1 == "startAddressM").get._2.asInstanceOf[Long]) else t
+             })
+             val s    = List(ssss.head, ssss(6), ssss(5), ssss(2), ssss(8), ssss(3), ssss(7), ssss(1), ssss(4))
 
             val tt   = (Map[String, Any]() /: info1.target.getClass.getDeclaredFields) { (b, B) => {
               B.setAccessible(true)
