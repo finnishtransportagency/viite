@@ -72,7 +72,7 @@ Resources:
             - Name: vvhRestApiUsername
               Value: svc_vvh_viite
             - Name: vvhRoadlink.frozen
-              Value: 'false'
+              Value: 'true'
             - Name: vkmUrl
               Value: 'https://api.vaylapilvi.fi'
             - Name: http.proxySet
