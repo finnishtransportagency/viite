@@ -4,9 +4,9 @@ import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.NewIdValue
+import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{JunctionPointCP, NoCP, UserDefinedCP}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
-import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.{RoadwayAddressMapper, TrackSectionOrder}
 import org.slf4j.LoggerFactory
 
@@ -282,6 +282,10 @@ object TwoTrackRoadUtils {
         )
 
         if (hasOtherSideLink.nonEmpty) {
+          val mins = hasOtherSideLink.zipWithIndex.map(pl => (Math.abs(pl._1.endAddrMValue - last.endAddrMValue), pl._2))
+          val indexOfMin = mins.minBy(_._1)._2
+          val otherSideLink = hasOtherSideLink(indexOfMin)
+
           val startCP = last.startCalibrationPointType match {
             case JunctionPointCP => JunctionPointCP
             case UserDefinedCP   => UserDefinedCP
@@ -291,18 +295,15 @@ object TwoTrackRoadUtils {
             case JunctionPointCP => JunctionPointCP
             case _               => UserDefinedCP
           }
-          val otherSideLinkStartCP = last.startCalibrationPointType match {
+          val otherSideLinkStartCP = otherSideLink.startCalibrationPointType match {
             case JunctionPointCP => JunctionPointCP
             case UserDefinedCP   => UserDefinedCP
             case _               => NoCP
           }
-          val otherSideLinkEndCP = last.endCalibrationPointType match {
+          val otherSideLinkEndCP = otherSideLink.endCalibrationPointType match {
             case JunctionPointCP => JunctionPointCP
             case _               => UserDefinedCP
           }
-          val mins = hasOtherSideLink.zipWithIndex.map(pl => (Math.abs(pl._1.endAddrMValue - last.endAddrMValue), pl._2))
-          val indexOfMin = mins.minBy(_._1)._2
-          val otherSideLink = hasOtherSideLink(indexOfMin)
 
           if (otherSideLink.endAddrMValue != last.endAddrMValue) {
             val endPoints = TrackSectionOrder.findChainEndpoints(
