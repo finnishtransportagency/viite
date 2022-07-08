@@ -12,8 +12,10 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
 import fi.liikennevirasto.viite.dao._
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous}
+import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.{ProjectSectionCalculator, RoadwayAddressMapper}
@@ -550,6 +552,16 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val projectLinksFromDB = projectLinkDAO.fetchProjectLinks(project.id)
       val afterAssign: Seq[ProjectLink] = ProjectSectionCalculator.assignMValues(projectLinksFromDB)
       afterAssign.forall(pl => pl.roadwayNumber != 0 && pl.roadwayNumber != NewIdValue)
+
+      // Test if RoadAddressCPs are assigned.
+      afterAssign.minBy(_.startAddrMValue).startCalibrationPointType should be(CalibrationPointType.RoadAddressCP)
+      afterAssign.maxBy(_.endAddrMValue).endCalibrationPointType     should be(CalibrationPointType.RoadAddressCP)
+
+      // Test if user defined end address is assigned.
+      val userAddress = 1000
+      val calibrationPoint = UserDefinedCalibrationPoint(NewIdValue, afterAssign.maxBy(_.endAddrMValue).id, project.id, userAddress - afterAssign.maxBy(_.endAddrMValue).startMValue, userAddress)
+      val afterAssignWithUserAddress  = ProjectSectionCalculator.assignMValues(projectLinksFromDB, Seq(calibrationPoint))
+      afterAssignWithUserAddress.maxBy(_.endAddrMValue).endAddrMValue should be(userAddress)
     }
   }
 

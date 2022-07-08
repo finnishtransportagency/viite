@@ -523,13 +523,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                 onceConnected._1.connected(el._1) || onceConnected._1.connected(el._2)
               })
             }).values.toList
-            if (endLinkOfNewLinks.distinct.size == 1) {
-              newLinks.filterNot(_.equals(endLinkOfNewLinks.head)) :+ endLinkOfNewLinks.head.copy(discontinuity = discontinuity)
-            } else if (endLinkOfNewLinks.distinct.size == 2) {
-              val endLink = endLinkOfNewLinks.filterNot(_.linkId == firstLinkId).head
-              newLinks.filterNot(_.equals(endLink)) :+ endLink.copy(discontinuity = discontinuity)
-            } else {
-              throw new RoadAddressException(AddNewLinksFailed)
+            endLinkOfNewLinks.distinct.size match {
+              case 0 => Seq(newLinks.head.copy(discontinuity = discontinuity)) // TODO: Add test case for this.
+              case 1 => newLinks.filterNot(_.equals(endLinkOfNewLinks.head)) :+ endLinkOfNewLinks.head.copy(discontinuity = discontinuity)
+              case 2 => { val endLink = endLinkOfNewLinks.filterNot(_.linkId == firstLinkId).head
+                          newLinks.filterNot(_.equals(endLink)) :+ endLink.copy(discontinuity = discontinuity)
+                        }
+              case _ => throw new RoadAddressException(AddNewLinksFailed)
             }
           } else newLinks
         }
