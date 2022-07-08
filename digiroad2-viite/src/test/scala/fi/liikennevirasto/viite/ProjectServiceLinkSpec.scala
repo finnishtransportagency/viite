@@ -553,7 +553,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val afterAssign: Seq[ProjectLink] = ProjectSectionCalculator.assignMValues(projectLinksFromDB)
       afterAssign.forall(pl => pl.roadwayNumber != 0 && pl.roadwayNumber != NewIdValue)
 
-      // Test if RoadAddressCP are assigned.
+      // Test if RoadAddressCPs are assigned.
       afterAssign.minBy(_.startAddrMValue).startCalibrationPointType should be(CalibrationPointType.RoadAddressCP)
       afterAssign.maxBy(_.endAddrMValue).endCalibrationPointType     should be(CalibrationPointType.RoadAddressCP)
 
