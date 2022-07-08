@@ -616,11 +616,11 @@ case class FirstRestSections(first:Seq[ProjectLink], rest: Seq[ProjectLink])
 object FirstRestSections {
   def checkTheLastLinkInOppositeRange(sect: Seq[ProjectLink], oppositeSect: Seq[ProjectLink]): Boolean = {
     (sect.size > 1) && {
-      val endLengthDifference    = Math.abs(sect.last.endAddrMValue - oppositeSect.last.endAddrMValue)
-      val secondLengthDifference = Math.abs(sect(sect.size - 2).endAddrMValue - oppositeSect.last.endAddrMValue)
+      val lastLengthDifference       = Math.abs(sect.last.endAddrMValue - oppositeSect.last.endAddrMValue)
+      val secondLastLengthDifference = Math.abs(sect(sect.size - 2).endAddrMValue - oppositeSect.last.endAddrMValue)
       ((sect.last.discontinuity != Continuous) || (oppositeSect.last.discontinuity != Continuous)) &&
-      endLengthDifference > secondLengthDifference &&
-      secondLengthDifference != 0
+      lastLengthDifference > secondLastLengthDifference &&
+      secondLastLengthDifference != 0 // Equal case should be found by lengthCompare().
     }
   }
 
