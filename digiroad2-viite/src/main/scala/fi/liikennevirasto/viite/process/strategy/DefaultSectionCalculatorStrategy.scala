@@ -5,12 +5,14 @@ import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.util.{MissingRoadwayNumberException, MissingTrackException, RoadAddressException, Track}
 import fi.liikennevirasto.digiroad2.util.Track.LeftSide
-import fi.liikennevirasto.viite.{NewIdValue, UnsuccessfulRecalculationMessage}
+import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao.{Discontinuity, _}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.UserDefinedCP
+import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.process.strategy.FirstRestSections.{getUpdatedContinuousRoadwaySections, lengthCompare}
+import fi.liikennevirasto.viite.process.ProjectSectionCalculator.throwExceptionWithErrorInfo
 import fi.liikennevirasto.viite.util.TwoTrackRoadUtils
 import fi.liikennevirasto.viite.util.TwoTrackRoadUtils._
 import org.slf4j.LoggerFactory
@@ -148,37 +150,6 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     val assignedContinuousSection =
       assignRoadwayNumbersInContinuousSection(continuousProjectLinksWithDiscontinuity, givenRoadwayNumber)
     (assignedContinuousSection, seq.drop(continuousProjectLinksWithDiscontinuity.size))
-  }
-
-  /***
-   * Fetch project name by project id for logging purpose.
-   * @param projectId
-   * @return Project name for the projectId.
-   */
-  def getProjectNameForLogger(projectId: Long): String = {
-    val projectDAO: ProjectDAO = new ProjectDAO
-    val project                = projectDAO.fetchById(projectId)
-    project match {
-      case Some(p) => p.name
-      case None => ""
-    }
-  }
-
-  /***
-   * Helper function for logging throwing an exception.
-   * Used by calculation helper functions.
-   * @param errorLinks ProjectLinks causing the error.
-   * @param msg Error message for debug console.
-   */
-  def throwExceptionWithErrorInfo(errorLinks: Iterable[ProjectLink], msg: String): Nothing = {
-    val projectId   = errorLinks.head.projectId
-    val projectName = getProjectNameForLogger(projectId)
-    logger.error(
-      s"""$msg
-         |$projectName $projectId
-         | Error links:
-         | $errorLinks""".stripMargin)
-    throw new RoadAddressException(UnsuccessfulRecalculationMessage)
   }
 
   /***
@@ -613,10 +584,15 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
  */
 case class FirstRestSections(first:Seq[ProjectLink], rest: Seq[ProjectLink])
 object FirstRestSections {
-  def checkTheLastLinkInOppositeRange(sect: Seq[ProjectLink], oppositeSect: Seq[ProjectLink]): Boolean =
-    sect.size > 1 &&
-    ((sect.last.discontinuity != Discontinuity.Continuous) || (oppositeSect.last.discontinuity != Discontinuity.Continuous)) &&
-    Math.abs(sect.last.endAddrMValue - oppositeSect.last.endAddrMValue) > Math.abs(sect(sect.size - 2).endAddrMValue - oppositeSect.last.endAddrMValue)
+  def checkTheLastLinkInOppositeRange(sect: Seq[ProjectLink], oppositeSect: Seq[ProjectLink]): Boolean = {
+    (sect.size > 1) && {
+      val endLengthDifference    = Math.abs(sect.last.endAddrMValue - oppositeSect.last.endAddrMValue)
+      val secondLengthDifference = Math.abs(sect(sect.size - 2).endAddrMValue - oppositeSect.last.endAddrMValue)
+      ((sect.last.discontinuity != Continuous) || (oppositeSect.last.discontinuity != Continuous)) &&
+      endLengthDifference > secondLengthDifference &&
+      secondLengthDifference != 0
+    }
+  }
 
   def getEqualRoadwaySections(sect: FirstRestSections, oppositeSect: FirstRestSections): ((Seq[ProjectLink], Seq[ProjectLink]), (Seq[ProjectLink], Seq[ProjectLink])) = {
     val newFirstSection = sect.first.takeWhile(_.endAddrMValue <= oppositeSect.first.last.endAddrMValue)
