@@ -471,6 +471,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
   test("Test defaultSectionCalculatorStrategy.assignMValues() " +
        "When combined + two track road having roundabout added on two track part with termination " +
        "Then address calculation should be successfully.") {
+    // VIITE-2814
     runWithRollback {
       val roadNumber = 3821
       val roadPartNumber = 2
