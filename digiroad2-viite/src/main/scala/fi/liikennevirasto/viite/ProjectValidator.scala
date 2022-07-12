@@ -626,25 +626,29 @@ class ProjectValidator {
     * Thus, the links following the first other operation must not be allowed to have "Unchanged" status, but is returned with a validation error.
     */
   def checkForInvalidUnchangedLinks(project: Project, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
+    def findInvalidUnchangedLinks(pls: Seq[ProjectLink]): Seq[ProjectLink] = {
+      // sort groups' project links by original startAddrMValue
+      val sortedProjectLinks = pls.sortWith(_.originalStartAddrMValue < _.originalStartAddrMValue)
+      // from the sorted project link list, find the first link that has a status of other than Unchanged
+      val firstOtherStatus = sortedProjectLinks.find(pl => pl.status != UnChanged)
+      if (firstOtherStatus.nonEmpty) {
+        val limitAddrMValue = {
+          if (firstOtherStatus.get.status == LinkStatus.New)
+            firstOtherStatus.get.startAddrMValue // for New links we take the normal startAddrMValue
+          else
+            firstOtherStatus.get.originalStartAddrMValue // for anything else we take the originalStartAddrMValue
+        }
+        // from the sorted project link list, find all Unchanged links that start after or at the same value as the limitAddrMValue -> these are the invalid Unchanged links
+        sortedProjectLinks.filter(pl => pl.status == LinkStatus.UnChanged && pl.originalStartAddrMValue >= limitAddrMValue)
+      } else
+        Seq()
+    }
     // group project links by roadNumber and roadPart number
     val groupedByRoadNumberAndPart = projectLinks.groupBy(pl => (pl.originalRoadNumber, pl.originalRoadPartNumber))
     val invalidUnchangedLinks = {
       groupedByRoadNumberAndPart.flatMap { group =>
-        // sort groups' project links by original startAddrMValue
-        val sortedProjectLinks = group._2.sortWith(_.originalStartAddrMValue < _.originalStartAddrMValue)
-        // from the sorted project link list, find the first link that has a status of other than Unchanged
-        val firstOtherStatus = sortedProjectLinks.find(pl => pl.status != UnChanged)
-        if (firstOtherStatus.nonEmpty) {
-          val limitAddrMValue = {
-            if (firstOtherStatus.get.status == LinkStatus.New)
-              firstOtherStatus.get.startAddrMValue // for New links we take the normal startAddrMValue
-            else
-              firstOtherStatus.get.originalStartAddrMValue // for anything else we take the originalStartAddrMValue
-          }
-          // from the sorted project link list, find all Unchanged links that start after or at the same value as the limitAddrMValue -> these are the invalid Unchanged links
-          sortedProjectLinks.filter(pl => pl.status == LinkStatus.UnChanged && pl.originalStartAddrMValue >= limitAddrMValue)
-        } else
-          None
+        (findInvalidUnchangedLinks(group._2.filter(_.track != Track.LeftSide)) ++
+          findInvalidUnchangedLinks(group._2.filter(_.track != Track.RightSide))).toSet
       }.toSeq
     }
 
