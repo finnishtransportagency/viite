@@ -480,15 +480,6 @@
             setFormDirty();
         });
 
-      rootElement.on('change', '#tie', function () {
-        const tie = $('#tie');
-        if (tie.val() > 20000 && tie.val() < 40000) {
-           $('#osa').val(1);
-           $('#trackCodeDropdown').val("0");
-           $('#discontinuityDropdown').val("1");
-       }
-      });
-
       rootElement.on('click', '.project-form button.update', function () {
         eventbus.trigger('roadAddressProject:toggleEditingRoad', true);
         saveChanges();
