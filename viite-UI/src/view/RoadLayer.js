@@ -66,11 +66,11 @@
       const popupBox = document.getElementById('popup-content').getBoundingClientRect();
       // Prevent update when cursor is in the box
         if (!(event.originalEvent.clientX < popupBox.right &&
-              event.originalEvent.clientX > popupBox.x &&
+              event.originalEvent.clientX > popupBox.left &&
               event.originalEvent.clientY > popupBox.top &&
               event.originalEvent.clientY < popupBox.bottom))
       //Ignore if target feature is marker
-      if (!_.isUndefined(featureAtPixel) && featureAtPixel.linkData) {
+      if (!_.isNil(featureAtPixel) && featureAtPixel.linkData) {
         const roadData = featureAtPixel.linkData;
         if (infoContent !== null) {
           if ((roadData.roadNumber !== 0 && roadData.roadPartNumber !== 0)) {
