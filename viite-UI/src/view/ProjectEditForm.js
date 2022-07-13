@@ -220,7 +220,7 @@
       if (selectedLinks.length === 1 && selectedLinks[0].calibrationCode === CalibrationCode.AtBoth.value) {
         $('#beginDistance').val(selectedLinks[0].startAddressM);
         if (isProjectEditable()) {
-          $('#endDistance').prop("readonly", false).val(selectedLinks[0].endAddressM);
+            $('#endDistance').prop("readonly", false).val(selectedLinks[0].endAddressM);
         } else {
           $('#endDistance').val(selectedLinks[0].endAddressM);
         }
@@ -425,8 +425,11 @@
 
         if (objectDropdown_0.value === LinkStatus.Revert.value) {
           projectCollection.revertChangesRoadlink(selectedProjectLink);
-        } else {
-          projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), objectDropdown_0.value, isEndDistanceTouched());
+        }
+        else {
+          projectCollection.saveProjectLinks(
+              _.isEmpty(projectCollection.getTmpDirty()) ? selectedProjectLink : projectCollection.getTmpDirty() // Case Terminated: getTmpDirty() is empty.
+              , objectDropdown_0.value, _.isEmpty(projectCollection.getTmpDirty()) ? false : isEndDistanceTouched());
         }
         return true;
       };
@@ -437,9 +440,15 @@
 
             if (endDistance)
                 changedValue = Number(endDistance.value);
-            return typeof changedValue === 'number' &&
-                typeof endDistanceOriginalValue === 'number' &&
-                changedValue !== endDistanceOriginalValue;
+
+            const orderedByStartM = _.sortBy(selectedProjectLink, function (l) {
+                return -l.startAddressM;
+            });
+
+            // EndDistance is correct and changed.
+            return !isNaN(changedValue) &&
+                    typeof changedValue === 'number' &&
+                    changedValue !== orderedByStartM[0].endAddressM;
         };
 
       var cancelChanges = function () {
@@ -467,9 +476,9 @@
         setFormDirty();
       });
 
-      rootElement.on('change', '.form-select-control', function () {
-        setFormDirty();
-      });
+        rootElement.on('change', '.form-select-control', function () {
+            setFormDirty();
+        });
 
       rootElement.on('click', '.project-form button.update', function () {
         eventbus.trigger('roadAddressProject:toggleEditingRoad', true);
