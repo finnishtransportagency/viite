@@ -1,12 +1,11 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.GeometryUtils
-import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.{GeometryUtils, _}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.AdministrativeClass.State
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.FrozenLinkInterface
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
-import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
@@ -23,8 +22,8 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, when}
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.Answer
-import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
+import org.scalatest.mockito.MockitoSugar
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
@@ -181,14 +180,14 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
         f.setAccessible(true)
         var x = f.get(c)
         x = x match {
-          case option: Option[AnyRef] if option.isDefined => f.get(c).asInstanceOf[Option[AnyRef]].get
+          case Some => f.get(c).asInstanceOf[Option[AnyRef]].get
           case _ => x
         }
-        val z = if (x.isInstanceOf[RoadwayChangeInfo]) {
-          val ss   = (Map[String, Any]() /: x.asInstanceOf[RoadwayChangeInfo].source.getClass.getDeclaredFields) { (b, B) => {
+        val z = x match {
+          case info1: RoadwayChangeInfo => val ss   = (Map[String, Any]() /: info1.source.getClass.getDeclaredFields) { (b, B) => {
             B.setAccessible(true)
             if (header.size < 11) header = header ++ B.getName
-            val value    = B.get(x.asInstanceOf[RoadwayChangeInfo].source)
+            val value    = B.get(info1.source)
             val colValue = value match {
               case None => Some("")
               case _ => value
@@ -198,42 +197,40 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
           }.asInstanceOf[HashMap.HashTrieMap[String, Option[Any]]].toList.map(t => {
             t._1 -> (if (t._2.isDefined) t._2.get else t._2)
           })
-          val sss  = if (ss.find(_._1 == "startAddressM").get._2.toString.isEmpty) ss.map(t => {
-            (t._1, "")
-          }) else ss
-          val ssss = sss.map(t => {
-            if (t._1 == "endRoadPartNumber" && t._2.toString.nonEmpty) ("length", sss.find(_._1 == "endAddressM").get._2.asInstanceOf[Long] - sss.find(_._1 == "startAddressM").get._2.asInstanceOf[Long]) else t
-          })
-          val s    = List(ssss.head, ssss(6), ssss(5), ssss(2), ssss(8), ssss(3), ssss(7), ssss(1), ssss(4))
+             val sss  = if (ss.find(_._1 == "startAddressM").get._2.toString.isEmpty) ss.map(t => {
+               (t._1, "")
+             }) else ss
+             val ssss = sss.map(t => {
+               if (t._1 == "endRoadPartNumber" && t._2.toString.nonEmpty) ("length", sss.find(_._1 == "endAddressM").get._2.asInstanceOf[Long] - sss.find(_._1 == "startAddressM").get._2.asInstanceOf[Long]) else t
+             })
+             val s    = List(ssss.head, ssss(6), ssss(5), ssss(2), ssss(8), ssss(3), ssss(7), ssss(1), ssss(4))
 
-          val tt   = (Map[String, Any]() /: x.asInstanceOf[RoadwayChangeInfo].target.getClass.getDeclaredFields) { (b, B) => {
-            B.setAccessible(true)
-            val value    = B.get(x.asInstanceOf[RoadwayChangeInfo].target)
-            val colValue = value match {
-              case None => Some("")
-              case _ => value
+            val tt   = (Map[String, Any]() /: info1.target.getClass.getDeclaredFields) { (b, B) => {
+              B.setAccessible(true)
+              val value    = B.get(info1.target)
+              val colValue = value match {
+                case None => Some("")
+                case _ => value
+              }
+              b + (B.getName -> colValue)
             }
-            b + (B.getName -> colValue)
-          }
-          }.asInstanceOf[HashMap.HashTrieMap[String, Option[Any]]].toList.map(t => {
-            t._1 -> (if (t._2.isDefined) t._2.get else t._2)
-          })
-          val ttt  = if (tt.find(_._1 == "startAddressM").get._2.toString.isEmpty) tt.map(t => {
-            (t._1, "")
-          }) else tt
-          val tttt = ttt.map(t => {
-            if (t._1 == "endRoadPartNumber" && t._2.toString.nonEmpty)
-              ("length", ttt.find(_._1 == "endAddressM").get._2.asInstanceOf[Long] - ttt.find(_._1 == "startAddressM").get._2.asInstanceOf[Long])
-            else
-              t
-          })
-          val t    = List(tttt.head, tttt(6), tttt(5), tttt(2), tttt(8), tttt(3), tttt(7), tttt(1), tttt(4))
+            }.asInstanceOf[HashMap.HashTrieMap[String, Option[Any]]].toList.map(t => {
+              t._1 -> (if (t._2.isDefined) t._2.get else t._2)
+            })
+            val ttt  = if (tt.find(_._1 == "startAddressM").get._2.toString.isEmpty) tt.map(t => {
+              (t._1, "")
+            }) else tt
+            val tttt = ttt.map(t => {
+              if (t._1 == "endRoadPartNumber" && t._2.toString.nonEmpty) ("length", ttt.find(_._1 == "endAddressM").get._2.asInstanceOf[Long] - ttt.find(_._1 == "startAddressM").get._2.asInstanceOf[Long]) else t
+            })
+            val t    = List(tttt.head, tttt(6), tttt(5), tttt(2), tttt(8), tttt(3), tttt(7), tttt(1), tttt(4))
 
-          val T: Map[String, Any] = Map("changeType" -> x.asInstanceOf[RoadwayChangeInfo].changeType)
-          val R: Map[String, Any] = Map("reversed" -> x.asInstanceOf[RoadwayChangeInfo].reversed)
+            val T: Map[String, Any] = Map("changeType" -> info1.changeType)
+            val R: Map[String, Any] = Map("reversed" -> info1.reversed)
 
-          List(T.toList ++ s ++ R.toList, Map("" -> "").toList ++ t ++ Map("" -> "").toList)
-        } else List()
+            List(T.toList ++ s ++ R.toList, Map("" -> "").toList ++ t ++ Map("" -> "").toList)
+          case _ => List()
+        }
         if (z.isEmpty) a else z
       }
       fields.map(_.map(_._2.toString))
@@ -244,8 +241,7 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
         f.setAccessible(true)
         var x = f.get(c)
         x = x match {
-          case option: Option[String] if option.isDefined =>
-            f.get(c).asInstanceOf[Option[String]].get
+          case Some => f.get(c).asInstanceOf[Option[String]].get
           case _ => x
         }
         val z = x match {
