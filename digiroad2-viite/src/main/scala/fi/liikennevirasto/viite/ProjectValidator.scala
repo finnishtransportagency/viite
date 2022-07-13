@@ -1133,7 +1133,8 @@ class ProjectValidator {
       val discontinuousErrors = if (isRampValidation) {
         error(project.id, ValidationErrorList.DiscontinuityOnRamp)(roadProjectLinks.filter { pl =>
           // Check that pl has no discontinuity unless on last link and after it the possible project link is connected
-          val nextLink = roadProjectLinks.find(pl2 => pl2.startAddrMValue == pl.endAddrMValue)
+          val nextLink = roadProjectLinks.find(pl2 => pl2.startAddrMValue == pl.endAddrMValue &&
+            (pl.track == Combined || pl2.track == Combined || pl.track == pl2.track ))
           (nextLink.nonEmpty && pl.discontinuity != Discontinuity.Continuous) ||
             nextLink.exists(pl2 => !pl.connected(pl2))
         })

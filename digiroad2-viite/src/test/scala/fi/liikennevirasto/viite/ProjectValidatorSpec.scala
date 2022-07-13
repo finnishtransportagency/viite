@@ -1458,6 +1458,91 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Test checkRoadContinuityCodes When Ramp has a MinorDiscontinuity code but no minor discontinuity Then should exist DiscontinuityOnRamp error") {
+    runWithRollback {
+      val project = util.setUpProjectWithRampLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L))
+      val projectLinks = projectLinkDAO.fetchProjectLinks(project.id)
+      val modifiedProjectLinks = projectLinks.head.copy(discontinuity = Discontinuity.MinorDiscontinuity) +: projectLinks.tail
+      mockEmptyRoadAddressServiceCalls()
+      val errors = projectValidator.checkRoadContinuityCodes(project, modifiedProjectLinks, isRampValidation = true)
+      errors.size should be > 0
+      errors.map(_.validationError.value) should contain(projectValidator.ValidationErrorList.DiscontinuityOnRamp.value)
+    }
+  }
+
+  test("Test checkRoadContinuityCodes When Ramp has disconnected geometry Then should exist DiscontinuityOnRamp error") {
+    runWithRollback {
+      val project = util.setUpProjectWithRampLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L))
+      val projectLinks = projectLinkDAO.fetchProjectLinks(project.id)
+      val modifiedProjectLinks = projectLinks.head.copy(geometry = List(Point(0.0,0.0),Point(5.0,5.0))) +: projectLinks.tail
+      mockEmptyRoadAddressServiceCalls()
+      val errors = projectValidator.checkRoadContinuityCodes(project, modifiedProjectLinks, isRampValidation = true)
+      errors.size should be > 0
+      errors.map(_.validationError.value) should contain(projectValidator.ValidationErrorList.DiscontinuityOnRamp.value)
+    }
+  }
+
+  //VIITE-2816
+  test("Test checkRoadContinuityCodes When Ramp has two tracks with identical start and end address values then should be no errors") {
+    runWithRollback {
+      val project = util.setUpProjectWithRampLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L))
+      val projectLinks = projectLinkDAO.fetchProjectLinks(project.id)
+      val modifiedProjectLinks = projectLinks.map(pl => pl.copy(track = Track.RightSide, geometry = List(Point(0.0,0.0+pl.startAddrMValue),Point(0.0,0.0+pl.endAddrMValue)))) ++
+        projectLinks.map(pl => pl.copy(track = Track.LeftSide, geometry = List(Point(5.0,0.0+pl.startAddrMValue),Point(5.0,0.0+pl.endAddrMValue))))
+
+      mockEmptyRoadAddressServiceCalls()
+      val errors = projectValidator.checkRoadContinuityCodes(project, modifiedProjectLinks, isRampValidation = true)
+      errors should have size 0
+    }
+  }
+
+  test("Test checkRoadContinuityCodes When Ramp has both Combined and Two-track sections that are connected then should not exist any error") {
+    runWithRollback {
+      val project = util.setUpProjectWithRampLinks(LinkStatus.New, Seq(0L, 10L, 20L))
+      val projectLinks = projectLinkDAO.fetchProjectLinks(project.id)
+      val modifiedProjectLinks = Seq(projectLinks.head,
+        projectLinks.last.copy(geometry=List(Point(0.0,10.0), Point(5.0,15.0)), track=Track.RightSide),
+        projectLinks.last.copy(geometry=List(Point(0.0,10.0), Point(7.5, 12.5)), track=Track.LeftSide))
+
+      mockEmptyRoadAddressServiceCalls()
+      val errors = projectValidator.checkRoadContinuityCodes(project, modifiedProjectLinks, isRampValidation = true).distinct
+      errors should have size 0
+    }
+  }
+
+  test("Test checkRoadContinuityCodes When Ramp has both Two-Track and Combined sections that are connected then should not exist any error") {
+    runWithRollback {
+      val project = util.setUpProjectWithRampLinks(LinkStatus.New, Seq(0L, 10L, 20L))
+      val projectLinks = projectLinkDAO.fetchProjectLinks(project.id)
+      val modifiedProjectLinks = Seq(
+        projectLinks.head.copy(geometry=List(Point(7.5,0.0), Point(0.0, 10.0)), track=Track.RightSide),
+        projectLinks.head.copy(geometry=List(Point(2.5,0.0), Point(0.0, 10.0)), track=Track.LeftSide),
+        projectLinks.last
+      )
+
+      mockEmptyRoadAddressServiceCalls()
+      val errors = projectValidator.checkRoadContinuityCodes(project, modifiedProjectLinks, isRampValidation = true).distinct
+      errors should have size 0
+    }
+  }
+
+  test("Test checkRoadContinuityCodes When Ramp has both Two-track and Combined sections that are NOT connected then should exist DiscontinuityOnRamp error") {
+    runWithRollback {
+      val project = util.setUpProjectWithRampLinks(LinkStatus.New, Seq(0L, 10L, 20L))
+      val projectLinks = projectLinkDAO.fetchProjectLinks(project.id)
+      val modifiedProjectLinks = Seq(
+        projectLinks.head.copy(geometry=List(Point(7.5,0.0), Point(0.0, 8.5)), track=Track.RightSide),
+        projectLinks.head.copy(geometry=List(Point(2.5,0.0), Point(0.0, 10.0)), track=Track.LeftSide),
+        projectLinks.last
+      )
+
+      mockEmptyRoadAddressServiceCalls()
+      val errors = projectValidator.checkRoadContinuityCodes(project, modifiedProjectLinks, isRampValidation = true).distinct
+      errors.size should be > 0
+      errors.map(_.validationError.value) should contain(projectValidator.ValidationErrorList.DiscontinuityOnRamp.value)
+    }
+  }
+
   test("Test checkRoadContinuityCodes When Ramp last lisk is discontinuous and there is disconnected road part after then should not exist any error") {
     runWithRollback {
       val project = util.setUpProjectWithRampLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L))
