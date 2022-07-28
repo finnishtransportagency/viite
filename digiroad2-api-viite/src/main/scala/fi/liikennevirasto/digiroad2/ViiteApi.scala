@@ -544,15 +544,24 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  private val getAllRoadAddressProjects: SwaggerSupportSyntax.OperationBuilder = (
+  private val getRoadAddressProjects: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Seq[Map[String, Any]]]("getAllRoadAddressProjects")
+      .parameters(
+        pathParam[Boolean]("onlyActive").description("Boolean value (true/false) whether you only want the active projects (=projects that are not accepted on the road network or deleted)")
+      )
       tags "ViiteAPI - Project"
-      summary "Returns all the necessary information on all available projects to be shown on the project selection window."
+      summary "Returns all the necessary information on all or only the active projects to be shown on the project selection window."
     )
 
-  get("/roadlinks/roadaddress/project/all", operation(getAllRoadAddressProjects)) {
-    time(logger, "GET request for /roadlinks/roadaddress/project/all") {
-      val (deletedProjs, currentProjs) = projectService.getAllProjects.map(p => {
+  get("/roadlinks/roadaddress/project/all/:onlyActive", operation(getRoadAddressProjects)) {
+    time(logger, "GET request for /roadlinks/roadaddress/project/all/:onlyActive") {
+      val onlyActive = params("onlyActive").toBoolean
+      val projects = if (onlyActive) {
+        projectService.getActiveProjects
+      } else {
+        projectService.getAllProjects
+      }
+      val (deletedProjs, currentProjs) = projects.map(p => {
         p.id -> (p, projectService.getProjectEly(p.id))
       }).partition(_._2._2.isEmpty)
       deletedProjs.map(p => roadAddressProjectToApi(p._2._1, p._2._2)) ++ currentProjs.sortBy(e => e._2._2.min).map(p => roadAddressProjectToApi(p._2._1, p._2._2))

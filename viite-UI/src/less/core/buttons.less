@@ -581,3 +581,16 @@
 	float: right !important;
 	cursor: pointer;        /* make the cursor like hovering over an <a> element */
 }
+
+.btn-spin {
+	animation: spin-animation 0.5s infinite;
+}
+
+@keyframes spin-animation {
+	0% {
+		transform: rotate(0deg);
+	}
+	100% {
+		transform: rotate(359deg);
+	}
+}

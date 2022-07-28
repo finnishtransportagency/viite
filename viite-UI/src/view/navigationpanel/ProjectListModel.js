@@ -123,7 +123,11 @@
     }
 
     function fetchProjects() {
-      projectCollection.getProjects();
+      projectCollection.getProjects(onlyActive());
+    }
+
+    function onlyActive() {
+      return !$('#OldAcceptedProjectsVisibleCheckbox')[0].checked
     }
 
     var filterByUser = function () {
@@ -165,6 +169,7 @@
         });
         createProjectList(projectArray);
         userFilterVisibility();
+        $('#sync').removeClass("btn-spin"); // stop the sync button from spinning
       });
 
       var createProjectList = function (projects) {
@@ -314,6 +319,7 @@
       });
 
       projectList.on('click', '#sync', function () {
+        $('#sync').addClass("btn-spin"); // make the sync button spin
         fetchProjects();
       });
     }
