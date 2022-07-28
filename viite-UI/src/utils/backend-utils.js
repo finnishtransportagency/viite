@@ -250,8 +250,8 @@
       });
     }, 1000);
 
-    this.getRoadAddressProjects = _.throttle(function (callback) {
-      return $.getJSON('api/viite/roadlinks/roadaddress/project/all', function (data) {
+    this.getRoadAddressProjects = _.throttle(function (onlyActive, callback) {
+      return $.getJSON('api/viite/roadlinks/roadaddress/project/all/' + onlyActive, function (data) {
         return _.isFunction(callback) && callback(data);
       });
     }, 1000);
