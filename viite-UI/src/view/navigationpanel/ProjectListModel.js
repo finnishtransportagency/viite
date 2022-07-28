@@ -127,7 +127,7 @@
     }
 
     function onlyActive() {
-      return !$('#OldAcceptedProjectsVisibleCheckbox')[0].checked
+      return !$('#OldAcceptedProjectsVisibleCheckbox')[0].checked;
     }
 
     var filterByUser = function () {
