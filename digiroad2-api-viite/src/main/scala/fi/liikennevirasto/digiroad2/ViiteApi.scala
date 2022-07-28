@@ -547,7 +547,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   private val getRoadAddressProjects: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Seq[Map[String, Any]]]("getAllRoadAddressProjects")
       .parameters(
-        pathParam[Boolean]("onlyActive").description("Boolean value (true/false) weather you want only the active projects (=projects that are not accepted on the road network or deleted)")
+        pathParam[Boolean]("onlyActive").description("Boolean value (true/false) whether you only want the active projects (=projects that are not accepted on the road network or deleted)")
       )
       tags "ViiteAPI - Project"
       summary "Returns all the necessary information on all or only the active projects to be shown on the project selection window."
