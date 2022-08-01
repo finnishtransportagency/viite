@@ -2108,7 +2108,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val fusedLinearLocations = linsToFuse.map(lls => {
         val firstLl =  lls.minBy(_.startMValue)
         val lastLl = lls.maxBy(_.endMValue)
-        val geometries = lls.flatMap(_.geometry).distinct
+        val geometries =
+          if (lls.head.sideCode == SideCode.TowardsDigitizing)
+            lls.sortBy(_.startMValue).flatMap(_.geometry).distinct
+          else
+            lls.sortBy(ll => -ll.startMValue).flatMap(_.geometry).distinct
         firstLl.copy(calibrationPoints = (firstLl.startCalibrationPoint, lastLl.endCalibrationPoint), geometry = geometries, startMValue = firstLl.startMValue, endMValue = lastLl.endMValue)
       })
       linearLocationsToInsert = linearLocationsToInsert.filterNot(ll => linsToFuseIds.contains(ll.id)) ++ fusedLinearLocations

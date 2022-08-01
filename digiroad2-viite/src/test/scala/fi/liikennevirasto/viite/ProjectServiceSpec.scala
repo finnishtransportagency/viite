@@ -2010,6 +2010,54 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
+  test("Test updateRoadwaysAndLinearLocationsWithProjectLinks " +
+       "When ProjectLinks have a split " +
+       "Then split should be merged and geometry points in the same order as before the split.") {
+    runWithRollback {
+
+      val roadNumber     = 19511
+      val roadPartNumber = 1
+      val createdBy      = "UnitTest"
+      val roadName       = None
+      val projectId      = Sequences.nextViiteProjectId
+      val linkIdToTest   = 12179260
+
+      val projectLinks = Seq(
+        ProjectLink(1025,roadNumber,roadPartNumber,Track.RightSide,Discontinuity.Continuous,3689,3699,3825,3835,None,None,Some(createdBy),linkIdToTest,0.0,10.117,SideCode.TowardsDigitizing,(NoCP,NoCP),(NoCP,JunctionPointCP),List(Point(393383.0,7288225.0,0.0), Point(393376.0,7288232.0,0.0)),projectId,LinkStatus.Transfer,AdministrativeClass.State,FrozenLinkInterface,10.117,57052,393536,14,reversed = false,Some(linkIdToTest),1615244419000L,13659596,roadName,None,None,None,None,None,None),
+        ProjectLink(1028,roadNumber,roadPartNumber,Track.RightSide,Discontinuity.Continuous,3699,3719,3835,3855,None,None,Some(createdBy),linkIdToTest,10.117,30.351,SideCode.TowardsDigitizing,(NoCP,RoadAddressCP),(NoCP,JunctionPointCP),List(Point(393376.0,7288232.0,0.0), Point(393372.0,7288235.0,0.0), Point(393361.0,7288245.0,0.0)),projectId,LinkStatus.Transfer,AdministrativeClass.State,FrozenLinkInterface,20.234,57052,393536,14,reversed = false,Some(linkIdToTest),1615244419000L,13659596,roadName,None,None,None,None,None,None)
+      )
+
+      val roadways = Seq(
+        Roadway(57052,13659596,19511,1,AdministrativeClass.State,Track.RightSide,Discontinuity.Continuous,3659,3855,reversed = false,DateTime.parse("2016-03-01T00:00:00.000+02:00"),None,createdBy,roadName,14,TerminationCode.NoTermination,DateTime.parse("2016-03-30T00:00:00.000+03:00"),None)
+      )
+
+      val linearLocations = Seq(
+        LinearLocation(393536,2.0,linkIdToTest,0.0,30.351,SideCode.TowardsDigitizing,1615244419000L,(CalibrationPointReference(None,None),CalibrationPointReference(Some(3855),Some(JunctionPointCP))),List(Point(393383.0,7288225.0,0.0), Point(393361.0,7288245.0,0.0)),FrozenLinkInterface,13659596,Some(DateTime.parse("2016-03-30T00:00:00.000+03:00")),None)
+      )
+
+      // Create project
+      val rap = Project(projectId, ProjectState.UpdatingToRoadNetwork, "TestProject", createdBy, DateTime.parse("1901-01-01"),
+        createdBy, DateTime.parse("1971-01-01"), DateTime.now(), "Some additional info", Seq(), Seq(), None)
+      val project = projectDAO.create(rap)
+      projectReservedPartDAO.reserveRoadPart(projectId, roadNumber, roadPartNumber, "UnitTest")
+
+      roadwayDAO.create(roadways)
+      linearLocationDAO.create(linearLocations)
+      projectLinkDAO.create(projectLinks)
+
+      when(mockNodesAndJunctionsService.expireObsoleteNodesAndJunctions(any[Seq[ProjectLink]], any[Option[DateTime]], any[String])).thenReturn(Seq())
+
+      projectService.updateRoadwaysAndLinearLocationsWithProjectLinks(projectId)
+
+      val linearLocationsTotest = linearLocationDAO.fetchByLinkId(Set(linkIdToTest))
+
+      // Geometries should be in address order after projectlink split is merged.
+      linearLocationsTotest should have size 1
+      linearLocationsTotest.head.getFirstPoint shouldBe linearLocations.head.getFirstPoint
+      linearLocationsTotest.head.getLastPoint  shouldBe linearLocations.head.getLastPoint
+    }
+  }
+
   test("Test expireHistoryRows When expiring one roadway by id Then it should be expired by validTo date") {
     runWithRollback {
 
