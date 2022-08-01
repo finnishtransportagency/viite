@@ -173,18 +173,7 @@
       });
 
       var createProjectList = function (projects) {
-        var unfinishedProjects = _.filter(projects, function (proj) {
-          if (proj.statusCode === projectStatus.Accepted.value) {
-            var hoursInDay = 24;
-            var millisecondsToHours = 1000 * 60 * 60;
-            //check whether the show all projects checkbox is checked or the project has been saved to Road Network less than two days ago
-            return $('#OldAcceptedProjectsVisibleCheckbox')[0].checked ||
-                (new Date() - new Date(proj.dateModified.split('.').reverse().join('-'))) / millisecondsToHours < hoursInDay * 2;
-          }
-          return _.includes(statusToDisplay, proj.statusCode);
-        });
-
-        var sortedProjects = unfinishedProjects.sort(function (a, b) {
+        var sortedProjects = projects.sort(function (a, b) {
           var cmp = headers[orderBy.id].sortFunc(a, b);
           return (cmp === 0) ? a.name.localeCompare(b.name, 'fi') : cmp;
         });
