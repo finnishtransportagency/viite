@@ -115,7 +115,7 @@ class ProjectDAO {
 
   def fetchAllActiveProjects(): Seq[Project] = {
     time(logger, s"Fetch all active projects ") {
-      simpleFetch(query => s"""$query WHERE state=${ProjectState.InUpdateQueue.value} OR state=${ProjectState.UpdatingToRoadNetwork.value} OR state=${ProjectState.ErrorInViite.value} OR state=${ProjectState.Incomplete.value} order by name, id """)
+      simpleFetch(query => s"""$query WHERE state=${ProjectState.InUpdateQueue.value} OR state=${ProjectState.UpdatingToRoadNetwork.value} OR state=${ProjectState.ErrorInViite.value} OR state=${ProjectState.Incomplete.value} OR (state=${ProjectState.Accepted.value} and modified_date > now() - INTERVAL '2 DAY') order by name, id """)
     }
   }
 
