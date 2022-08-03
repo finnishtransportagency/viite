@@ -76,23 +76,23 @@
           if ((roadData.roadNumber !== 0 && roadData.roadPartNumber !== 0)) {
             coordinate = map.getEventCoordinate(event.originalEvent);
             infoContent.innerHTML =
-                '<div class="popup-line-div">' + '<div>' + 'Tienumero:&nbsp;'    + '</div>' + '<div class="selectable">' + roadData.roadNumber     + '</div>' + '</div>' +
-                '<div class="popup-line-div">' + '<div>' + 'Tieosanumero:&nbsp;' + '</div>' + '<div class="selectable">' + roadData.roadPartNumber + '</div>' + '</div>' +
-                '<div class="popup-line-div">' + '<div>' + 'Ajorata:&nbsp;'      + '</div>' + '<div class="selectable">' + roadData.trackCode      + '</div>' + '</div>' +
-                '<div class="popup-line-div">' + '<div>' + 'AET:&nbsp;'          + '</div>' + '<div class="selectable">' + roadData.startAddressM  + '</div>' + '</div>' +
-                '<div class="popup-line-div">' + '<div>' + 'LET:&nbsp;'          + '</div>' + '<div class="selectable">' + roadData.endAddressM    + '</div>' + '</div>' +
-                '<div class="popup-line-div">' + '<div>' + 'Hall. luokka:&nbsp;' + '</div>' + '<div class="selectable">' + displayAdministrativeClass(roadData.administrativeClassId) + '</div>' + '</div>';
+                '<div class="popup-line-div"><div>Tienumero:&nbsp;</div><div class="selectable">' + roadData.roadNumber + '</div></div>' +
+                '<div class="popup-line-div"><div>Tieosanumero:&nbsp;</div><div class="selectable">' + roadData.roadPartNumber + '</div></div>' +
+                '<div class="popup-line-div"><div>Ajorata:&nbsp;</div><div class="selectable">' + roadData.trackCode + '</div></div>' +
+                '<div class="popup-line-div"><div>AET:&nbsp;</div><div class="selectable">' + roadData.startAddressM + '</div></div>' +
+                '<div class="popup-line-div"><div>LET:&nbsp;</div><div class="selectable">' + roadData.endAddressM + '</div></div>' +
+                '<div class="popup-line-div"><div>Hall. luokka:&nbsp;</div><div class="selectable">' + displayAdministrativeClass(roadData.administrativeClassId) + '</div></div>';
             const altShiftPressed = event.originalEvent.shiftKey && event.originalEvent.altKey;
             if (altShiftPressed) {
                 infoContent.innerHTML += '<hr>';
                 if (!_.isUndefined(roadData.municipalityCode)) {
-                    infoContent.innerHTML += '<div class="popup-line-div">' + '<div>' + 'MunicipalityCode:&nbsp;' + '</div>' + '<div class="selectable">' + roadData.municipalityCode + '</div>' + '</div>';
+                    infoContent.innerHTML += '<div class="popup-line-div"><div>MunicipalityCode:&nbsp;</div><div class="selectable">' + roadData.municipalityCode + '</div></div>';
                 }
                 infoContent.innerHTML +=
-                    '<div class="popup-line-div">' + '<div>' + 'Link&nbsp;id:&nbsp;'           + '</div>' + '<div class="selectable">' + roadData.linkId           + '</div>' + '</div>' +
-                    '<div class="popup-line-div">' + '<div>' + 'LinearLocation&nbsp;id:&nbsp;' + '</div>' + '<div class="selectable">' + roadData.linearLocationId + '</div>' + '</div>' +
-                    '<div class="popup-line-div">' + '<div>' + 'Roadway&nbsp;id:&nbsp;'        + '</div>' + '<div class="selectable">' + roadData.roadwayId        + '</div>' + '</div>' +
-                    '<div class="popup-line-div">' + '<div>' + 'RoadwayNumber:&nbsp;'          + '</div>' + '<div class="selectable">' + roadData.roadwayNumber    + '</div>' + '</div>';
+                    '<div class="popup-line-div"><div>Link&nbsp;id:&nbsp;</div><div class="selectable">' + roadData.linkId  + '</div></div>' +
+                    '<div class="popup-line-div"><div>LinearLocation&nbsp;id:&nbsp;</div><div class="selectable">' + roadData.linearLocationId + '</div></div>' +
+                    '<div class="popup-line-div"><div>Roadway&nbsp;id:&nbsp;</div><div class="selectable">' + roadData.roadwayId + '</div></div>' +
+                    '<div class="popup-line-div"><div>RoadwayNumber:&nbsp;</div><div class="selectable">' + roadData.roadwayNumber + '</div></div>';
             }
           }
         }

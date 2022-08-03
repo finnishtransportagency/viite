@@ -435,7 +435,7 @@
       };
 
         var isEndDistanceTouched = function () {
-            const endDistance = $('#endDistance') [0];
+            const endDistance = $('#endDistance')[0];
             var changedValue;
 
             if (endDistance)
