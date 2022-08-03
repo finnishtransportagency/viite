@@ -106,14 +106,21 @@
       }
 
       var labelText = 'ALKUPÄIVÄMÄÄRÄ';
+      var dates = [];
       var selectedLinks = selectedLinkProperty.get();
-      var dates = selectedLinks.map((link) => {
-        var dateParts = link.startDate.split(".");
-        return new Date(dateParts[2], (dateParts[1] - 1), dateParts[0]);
+      selectedLinks.forEach((link) => {
+        if (link.startDate.length > 0) {
+          var dateParts = link.startDate.split(".");
+          dates.push(new Date(dateParts[2], (dateParts[1] - 1), dateParts[0]));
+        }
       });
-      var latestDate = new Date(Math.max.apply(null, dates));
-      var formattedLatestDate = formatDate(latestDate);
-      return constructField(labelText, formattedLatestDate);
+      if (dates.length === 0) {
+        return constructField(labelText, '');
+      } else {
+        var latestDate = new Date(Math.max.apply(null, dates));
+        var formattedLatestDate = formatDate(latestDate);
+        return constructField(labelText, formattedLatestDate);
+      }
     };
 
     var constructField = function (labelText, data) {
