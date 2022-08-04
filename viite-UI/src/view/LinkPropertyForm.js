@@ -92,6 +92,37 @@
       return constructField(labelText, length);
     };
 
+    var dateDynamicField = function () {
+      function padTo2Digits(num) {
+        return num.toString().padStart(2, '0');
+      }
+
+      function formatDate(date) {
+        return [
+          padTo2Digits(date.getDate()),
+          padTo2Digits(date.getMonth() + 1),
+          date.getFullYear()
+        ].join('.');
+      }
+
+      var labelText = 'ALKUPÄIVÄMÄÄRÄ';
+      var dates = [];
+      var selectedLinks = selectedLinkProperty.get();
+      selectedLinks.forEach((link) => {
+        if (link.startDate.length > 0) {
+          var dateParts = link.startDate.split(".");
+          dates.push(new Date(dateParts[2], (dateParts[1] - 1), dateParts[0]));
+        }
+      });
+      if (dates.length === 0) {
+        return constructField(labelText, '');
+      } else {
+        var latestDate = new Date(Math.max.apply(null, dates));
+        var formattedLatestDate = formatDate(latestDate);
+        return constructField(labelText, formattedLatestDate);
+      }
+    };
+
     var constructField = function (labelText, data) {
       return '<div class="form-group">' +
           '<label class="control-label">' + labelText + '</label>' +
@@ -152,6 +183,7 @@
       var elys = selectedLinkProperty.count() === 1 ? staticField('ELY', firstSelectedLinkProperty.elyCode) : dynamicField('ELY', 'elyCode');
       var administrativeClasses = selectedLinkProperty.count() === 1 ? staticField('HALLINNOLLINEN LUOKKA', firstSelectedLinkProperty.administrativeClassId) : dynamicField('HALLINNOLLINEN LUOKKA', 'administrativeClassId');
       var discontinuities = isOnlyOneRoadAndPartNumberSelected() ? dynamicField('JATKUVUUS', 'discontinuity') : constructField('JATKUVUUS', '');
+      var startDate = isOnlyOneRoadAndPartNumberSelected() ? dateDynamicField() : constructField('ALKUPÄIVÄMÄÄRÄ', '');
       return _.template('' +
         '<header>' +
         title() +
@@ -182,6 +214,7 @@
         elys +
         administrativeClasses +
         discontinuities +
+        startDate +
         '</div>' +
         '</div>' +
         '<footer></footer>');
@@ -286,6 +319,7 @@
         rootElement.empty();
         if (!_.isEmpty(selectedLinkProperty.get()) || !_.isEmpty(props)) {
 
+          props.startDate = props.startDate || '';
           props.modifiedBy = props.modifiedBy || '-';
           props.modifiedAt = props.modifiedAt || '';
           props.roadNameFi = props.roadNameFi || '';
