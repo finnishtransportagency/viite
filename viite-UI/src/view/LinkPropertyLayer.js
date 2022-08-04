@@ -200,7 +200,7 @@
      * The event holds the selected features in the events.selected and the deselected in event.deselected.
      */
     selectDoubleClick.on('select', function (event) {
-      var visibleFeatures = getVisibleFeatures(true, true, true, false, false, true, true, true, true);
+      var visibleFeatures = getVisibleFeatures(true, true, true, true, true, true, true);
       selectSingleClick.getFeatures().clear();
       var ctrlPressed = (event.mapBrowserEvent) ? event.mapBrowserEvent.originalEvent.ctrlKey : false;
 
@@ -280,7 +280,7 @@
      */
     selectSingleClick.on('select', function (event) {
       var ctrlPressed = (event.mapBrowserEvent) ? event.mapBrowserEvent.originalEvent.ctrlKey : false;
-      var visibleFeatures = getVisibleFeatures(true, true, true, true, true, true, true, true, true);
+      var visibleFeatures = getVisibleFeatures(true, true, true, true, true, true, true);
       selectDoubleClick.getFeatures().clear();
 
       var selectedF = getSelectedF(ctrlPressed, event);
@@ -423,7 +423,7 @@
       addFeaturesToSelection(features);
     });
 
-    var getVisibleFeatures = function (withRoads, withAnomalyMarkers, withGreenRoads, withPickRoads, withDirectionalMarkers, withunderConstructionRoads, withGeometryChanged, withVisibleUnAddressedRoads) {
+    var getVisibleFeatures = function (withRoads, withAnomalyMarkers, withGreenRoads, withDirectionalMarkers, withunderConstructionRoads, withGeometryChanged, withVisibleUnAddressedRoads) {
       var extent = map.getView().calculateExtent(map.getSize());
       var visibleRoads = withRoads ? roadLayer.layer.getSource().getFeaturesInExtent(extent) : [];
       var visibleAnomalyMarkers = withAnomalyMarkers ? anomalousMarkerLayer.getSource().getFeaturesInExtent(extent) : [];
