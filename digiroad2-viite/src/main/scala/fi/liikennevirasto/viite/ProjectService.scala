@@ -526,12 +526,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             }).values.toList
             endLinkOfNewLinks.distinct.size match {
               case 0 => Seq(newLinks.head.copy(discontinuity = discontinuity)) // TODO: Add test case for this.
-              case 1 => { if (TrackSectionOrder.hasTripleConnectionPoint(newLinks)) {
-                val lastProjectLink = newLinks.filterNot(_.linkId == firstLinkId).last
-                newLinks.filterNot(_.linkId == lastProjectLink.linkId) :+ lastProjectLink.copy(discontinuity = discontinuity)
-              }  else
-                newLinks.filterNot(_.equals(endLinkOfNewLinks.head)) :+ endLinkOfNewLinks.head.copy(discontinuity = discontinuity)
-              }
+              case 1 => {
+                          if (TrackSectionOrder.hasTripleConnectionPoint(newLinks)) {
+                            val lastProjectLink = newLinks.filterNot(_.linkId == firstLinkId).last
+                            newLinks.filterNot(_.linkId == lastProjectLink.linkId) :+ lastProjectLink.copy(discontinuity = discontinuity)
+                          }
+                          else
+                            newLinks.filterNot(_.equals(endLinkOfNewLinks.head)) :+ endLinkOfNewLinks.head.copy(discontinuity = discontinuity)
+                        }
               case 2 => { val endLink = endLinkOfNewLinks.filterNot(_.linkId == firstLinkId).head
                           newLinks.filterNot(_.equals(endLink)) :+ endLink.copy(discontinuity = discontinuity)
                         }
