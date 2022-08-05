@@ -14,7 +14,7 @@ import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
-import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous}
+import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous, EndOfRoad}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLinkLike}
@@ -329,6 +329,111 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       projectService.addNewLinksToProject(Seq(projectLink2), id, "U", p2.linkId, true, Discontinuous)
       val linksAfter = projectLinkDAO.fetchProjectLinks(id)
       linksAfter.size should be(2)
+    }
+  }
+
+  test("Test projectService.addNewLinksToProject() When adding three new consecutive links having a loop end " +
+       "Then discontinuity should be set correctly to the loop end and calculation should success.") {
+    val geom1 = Seq(Point(284024.822, 6773956.109, 82.93799999999464), Point( 284024.375, 6773961.664, 82.86800000000221), Point( 284014.196, 6773982.02, 82.65099999999802), Point( 283993.275, 6774000.115, 81.71899999999732), Point( 283964.862, 6774025.098, 81.29499999999825), Point( 283939.701, 6774047.204, 81.16300000000047), Point( 283914.039, 6774069.058, 81.19999999999709), Point( 283888.126, 6774087.896, 81.46300000000338), Point( 283861.718, 6774098.434, 81.778999999995), Point( 283839.086, 6774102.188, 81.85000000000582), Point( 283811.258, 6774102.078, 82.30199999999604))
+    val geom2 = Seq(Point(283945.677, 6773839.793, 82.4890000000014), Point( 283952.215, 6773850.343, 82.58999999999651), Point( 283959.347, 6773861.01, 82.68300000000454), Point( 283981.966, 6773888.718, 82.84399999999732), Point( 284007.411, 6773918.688, 83.58800000000338), Point( 284021.548, 6773940.175, 83.22999999999593), Point( 284024.822, 6773956.109, 82.93799999999464))
+    val geom3 = Seq(Point(283945.677, 6773839.793, 82.4890000000014), Point( 283941.368, 6773838.689, 82.38300000000163), Point( 283933.836, 6773837, 82.24000000000524), Point( 283925.983, 6773834.495, 82.18799999999464), Point( 283920.768, 6773828.944, 82.22900000000664), Point( 283921.384, 6773821.824, 82.28399999999965), Point( 283930.303, 6773813.467, 82.2100000000064), Point( 283938.025, 6773811.022, 82.2100000000064), Point( 283946.367, 6773813.728, 82.20799999999872), Point( 283950.47, 6773818.263, 82.29499999999825), Point( 283949.432, 6773827.206, 82.44700000000012), Point( 283947.648, 6773835.308, 82.46199999999953), Point( 283945.677, 6773839.793, 82.4890000000014))
+    val discontinuity = EndOfRoad
+
+    runWithRollback {
+      val idr1 = roadwayDAO.getNextRoadwayId
+      val idr2 = roadwayDAO.getNextRoadwayId
+      val idr3 = roadwayDAO.getNextRoadwayId
+      val projectId = Sequences.nextViiteProjectId
+      val rap = Project(projectId, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], Seq(), None)
+      projectDAO.create(rap)
+
+      val projectLink1 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idr1, 0, 12345, 1, AdministrativeClass.Unknown, Track.Combined, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 4224569L, 0.0, 272.266, SideCode.Unknown, 0, (None, None), geom1, LinkGeomSource.NormalLinkInterface, 5, NoTermination, 0))
+      val projectLink2 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idr2, 0, 12345, 1, AdministrativeClass.Unknown, Track.Combined, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 4224590L, 0.0, 142.313, SideCode.Unknown, 0, (None, None), geom2, LinkGeomSource.NormalLinkInterface, 5, NoTermination, 0))
+      val projectLink3 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idr3, 0, 12345, 1, AdministrativeClass.Unknown, Track.Combined, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 12531914L, 0.0, 92.579, SideCode.Unknown, 0, (None, None), geom3, LinkGeomSource.NormalLinkInterface, 5, NoTermination, 0))
+
+      projectService.addNewLinksToProject(Seq(projectLink1, projectLink2, projectLink3), projectId, "U", projectLink1.linkId, true, discontinuity)
+
+      // Check projectLinks are created into database
+      val links = projectLinkDAO.fetchProjectLinks(projectId)
+      links.size should be(3)
+
+      // Check the last link has given discontinuity set
+      val (lastLink, others) = links.partition(_.linkId == projectLink3.linkId)
+      lastLink should have size 1
+      lastLink.head.discontinuity should be(discontinuity)
+      others.forall(_.discontinuity == Continuous) should be (true)
+
+      // Check calculation succeeds with expected order and values
+      val calculated = ProjectSectionCalculator.assignMValues(links)
+      val calculatedPl1 = calculated.find(_.linkId == 4224569)
+      val calculatedPl2 = calculated.find(_.linkId == 4224590)
+      val calculatedPl3 = calculated.find(_.linkId == 12531914)
+
+      calculatedPl1 should be ('defined)
+      calculatedPl1.get.startAddrMValue should be(0)
+      calculatedPl1.get.endAddrMValue   should be(272)
+      calculatedPl1.get.discontinuity   should be (Continuous)
+      calculatedPl2 should be ('defined)
+      calculatedPl2.get.startAddrMValue should be(272)
+      calculatedPl2.get.endAddrMValue   should be(414)
+      calculatedPl2.get.discontinuity   should be (Continuous)
+      calculatedPl3 should be ('defined)
+      calculatedPl3.get.startAddrMValue should be(414)
+      calculatedPl3.get.endAddrMValue   should be(507)
+      calculatedPl3.get.discontinuity   should be (discontinuity)
+    }
+  }
+
+  test("Test projectService.addNewLinksToProject() When adding three new consecutive links having a loop link start " +
+       "Then discontinuity should be set correctly to the loop end and calculation should success.") {
+    // Reversed case of previous set up
+    val geom1 = Seq(Point(284024.822, 6773956.109, 82.93799999999464), Point( 284024.375, 6773961.664, 82.86800000000221), Point( 284014.196, 6773982.02, 82.65099999999802), Point( 283993.275, 6774000.115, 81.71899999999732), Point( 283964.862, 6774025.098, 81.29499999999825), Point( 283939.701, 6774047.204, 81.16300000000047), Point( 283914.039, 6774069.058, 81.19999999999709), Point( 283888.126, 6774087.896, 81.46300000000338), Point( 283861.718, 6774098.434, 81.778999999995), Point( 283839.086, 6774102.188, 81.85000000000582), Point( 283811.258, 6774102.078, 82.30199999999604))
+    val geom2 = Seq(Point(283945.677, 6773839.793, 82.4890000000014), Point( 283952.215, 6773850.343, 82.58999999999651), Point( 283959.347, 6773861.01, 82.68300000000454), Point( 283981.966, 6773888.718, 82.84399999999732), Point( 284007.411, 6773918.688, 83.58800000000338), Point( 284021.548, 6773940.175, 83.22999999999593), Point( 284024.822, 6773956.109, 82.93799999999464))
+    val geom3 = Seq(Point(283945.677, 6773839.793, 82.4890000000014), Point( 283941.368, 6773838.689, 82.38300000000163), Point( 283933.836, 6773837, 82.24000000000524), Point( 283925.983, 6773834.495, 82.18799999999464), Point( 283920.768, 6773828.944, 82.22900000000664), Point( 283921.384, 6773821.824, 82.28399999999965), Point( 283930.303, 6773813.467, 82.2100000000064), Point( 283938.025, 6773811.022, 82.2100000000064), Point( 283946.367, 6773813.728, 82.20799999999872), Point( 283950.47, 6773818.263, 82.29499999999825), Point( 283949.432, 6773827.206, 82.44700000000012), Point( 283947.648, 6773835.308, 82.46199999999953), Point( 283945.677, 6773839.793, 82.4890000000014))
+    val discontinuity = EndOfRoad
+
+    runWithRollback {
+      val idr1 = roadwayDAO.getNextRoadwayId
+      val idr2 = roadwayDAO.getNextRoadwayId
+      val idr3 = roadwayDAO.getNextRoadwayId
+      val projectId = Sequences.nextViiteProjectId
+      val rap = Project(projectId, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], Seq(), None)
+      projectDAO.create(rap)
+
+      val projectLink1 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idr1, 0, 12345, 1, AdministrativeClass.Unknown, Track.Combined, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 4224569L, 0.0, 272.266, SideCode.Unknown, 0, (None, None), geom1, LinkGeomSource.NormalLinkInterface, 5, NoTermination, 0))
+      val projectLink2 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idr2, 0, 12345, 1, AdministrativeClass.Unknown, Track.Combined, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 4224590L, 0.0, 142.313, SideCode.Unknown, 0, (None, None), geom2, LinkGeomSource.NormalLinkInterface, 5, NoTermination, 0))
+      val projectLink3 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idr3, 0, 12345, 1, AdministrativeClass.Unknown, Track.Combined, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 12531914L, 0.0, 92.579, SideCode.Unknown, 0, (None, None), geom3, LinkGeomSource.NormalLinkInterface, 5, NoTermination, 0))
+
+      projectService.addNewLinksToProject(Seq(projectLink3, projectLink2, projectLink1), projectId, "U", projectLink3.linkId, true, discontinuity)
+
+      // Check projectLinks are created into database
+      val links = projectLinkDAO.fetchProjectLinks(projectId)
+      links.size should be(3)
+
+      // Check the last link has given discontinuity set
+      val (lastLink, others) = links.partition(_.linkId == projectLink1.linkId)
+      lastLink should have size 1
+      lastLink.head.discontinuity should be(discontinuity)
+      others.forall(_.discontinuity == Continuous) should be (true)
+
+      // Check calculation succeeds with expected order and values
+      val calculated = ProjectSectionCalculator.assignMValues(links)
+      val calculatedPl1 = calculated.find(_.linkId == 12531914)
+      val calculatedPl2 = calculated.find(_.linkId == 4224590)
+      val calculatedPl3 = calculated.find(_.linkId == 4224569)
+
+      calculatedPl1 should be ('defined)
+      calculatedPl1.get.startAddrMValue should be(0)
+      calculatedPl1.get.endAddrMValue   should be(93)
+      calculatedPl1.get.discontinuity   should be (Continuous)
+      calculatedPl2 should be ('defined)
+      calculatedPl2.get.startAddrMValue should be(93)
+      calculatedPl2.get.endAddrMValue   should be(235)
+      calculatedPl2.get.discontinuity   should be (Continuous)
+      calculatedPl3 should be ('defined)
+      calculatedPl3.get.startAddrMValue should be(235)
+      calculatedPl3.get.endAddrMValue   should be(507)
+      calculatedPl3.get.discontinuity   should be (discontinuity)
     }
   }
 
