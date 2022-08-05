@@ -500,8 +500,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                 pl.copy(discontinuity = Discontinuity.Continuous))
           } else {
             val existingLinks = projectLinkDAO.fetchByProjectRoadPart(newRoadNumber, newRoadPartNumber, projectId)
-            fillRampGrowthDirection(newLinks.map(_.linkId).toSet, newRoadNumber, newRoadPartNumber, newLinks,
+            val pls = fillRampGrowthDirection(newLinks.map(_.linkId).toSet, newRoadNumber, newRoadPartNumber, newLinks,
               firstLinkId, existingLinks)
+            pls.init :+ pls.last.copy(discontinuity = discontinuity)
           }
         } else {
           /* Set discontinuity to the last new link if not continuous.
@@ -525,7 +526,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             }).values.toList
             endLinkOfNewLinks.distinct.size match {
               case 0 => Seq(newLinks.head.copy(discontinuity = discontinuity)) // TODO: Add test case for this.
-              case 1 => newLinks.filterNot(_.equals(endLinkOfNewLinks.head)) :+ endLinkOfNewLinks.head.copy(discontinuity = discontinuity)
+              case 1 => {
+                          if (TrackSectionOrder.hasTripleConnectionPoint(newLinks)) {
+                            val lastProjectLink = newLinks.filterNot(_.linkId == firstLinkId).last
+                            newLinks.filterNot(_.linkId == lastProjectLink.linkId) :+ lastProjectLink.copy(discontinuity = discontinuity)
+                          }
+                          else
+                            newLinks.filterNot(_.equals(endLinkOfNewLinks.head)) :+ endLinkOfNewLinks.head.copy(discontinuity = discontinuity)
+                        }
               case 2 => { val endLink = endLinkOfNewLinks.filterNot(_.linkId == firstLinkId).head
                           newLinks.filterNot(_.equals(endLink)) :+ endLink.copy(discontinuity = discontinuity)
                         }
