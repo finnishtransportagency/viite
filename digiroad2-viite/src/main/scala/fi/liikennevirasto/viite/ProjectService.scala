@@ -500,8 +500,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                 pl.copy(discontinuity = Discontinuity.Continuous))
           } else {
             val existingLinks = projectLinkDAO.fetchByProjectRoadPart(newRoadNumber, newRoadPartNumber, projectId)
-            fillRampGrowthDirection(newLinks.map(_.linkId).toSet, newRoadNumber, newRoadPartNumber, newLinks,
+            val pls = fillRampGrowthDirection(newLinks.map(_.linkId).toSet, newRoadNumber, newRoadPartNumber, newLinks,
               firstLinkId, existingLinks)
+            pls.init :+ pls.last.copy(discontinuity = discontinuity)
           }
         } else {
           /* Set discontinuity to the last new link if not continuous.
@@ -523,13 +524,20 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                 onceConnected._1.connected(el._1) || onceConnected._1.connected(el._2)
               })
             }).values.toList
-            if (endLinkOfNewLinks.distinct.size == 1) {
-              newLinks.filterNot(_.equals(endLinkOfNewLinks.head)) :+ endLinkOfNewLinks.head.copy(discontinuity = discontinuity)
-            } else if (endLinkOfNewLinks.distinct.size == 2) {
-              val endLink = endLinkOfNewLinks.filterNot(_.linkId == firstLinkId).head
-              newLinks.filterNot(_.equals(endLink)) :+ endLink.copy(discontinuity = discontinuity)
-            } else {
-              throw new RoadAddressException(AddNewLinksFailed)
+            endLinkOfNewLinks.distinct.size match {
+              case 0 => Seq(newLinks.head.copy(discontinuity = discontinuity)) // TODO: Add test case for this.
+              case 1 => {
+                          if (TrackSectionOrder.hasTripleConnectionPoint(newLinks)) {
+                            val lastProjectLink = newLinks.filterNot(_.linkId == firstLinkId).last
+                            newLinks.filterNot(_.linkId == lastProjectLink.linkId) :+ lastProjectLink.copy(discontinuity = discontinuity)
+                          }
+                          else
+                            newLinks.filterNot(_.equals(endLinkOfNewLinks.head)) :+ endLinkOfNewLinks.head.copy(discontinuity = discontinuity)
+                        }
+              case 2 => { val endLink = endLinkOfNewLinks.filterNot(_.linkId == firstLinkId).head
+                          newLinks.filterNot(_.equals(endLink)) :+ endLink.copy(discontinuity = discontinuity)
+                        }
+              case _ => throw new RoadAddressException(AddNewLinksFailed)
             }
           } else newLinks
         }
@@ -807,6 +815,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def getAllProjects: Seq[Project] = {
     withDynSession {
       projectDAO.fetchAll()
+    }
+  }
+
+  def getActiveProjects: Seq[Project] = {
+    withDynSession {
+      projectDAO.fetchAllActiveProjects()
     }
   }
 
@@ -2100,14 +2114,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val linsToFuse = linearLocationsToInsert.groupBy(ll => (ll.roadwayNumber, ll.linkId)).values.filter(_.size > 1)
       val linsToFuseIds = linsToFuse.flatten.map(_.id).toSeq
       val fusedLinearLocations = linsToFuse.map(lls => {
-        val orderNumbers = lls.map(_.orderNumber)
-        val minOrderNum  = orderNumbers.min
-        val maxOrderNum  = orderNumbers.max
-
-        val firstLl =  lls.find(_.orderNumber == minOrderNum).get
-        val lastLl = lls.find(_.orderNumber == maxOrderNum).get
-        val geometries = lls.sortBy(_.orderNumber).flatMap(_.geometry).distinct
-        firstLl.copy(calibrationPoints = (lastLl.startCalibrationPoint, lastLl.endCalibrationPoint), geometry = geometries)
+        val firstLl =  lls.minBy(_.startMValue)
+        val lastLl = lls.maxBy(_.endMValue)
+        val geometries =
+          if (lls.head.sideCode == SideCode.TowardsDigitizing)
+            lls.sortBy(_.startMValue).flatMap(_.geometry).distinct
+          else
+            lls.sortBy(ll => -ll.startMValue).flatMap(_.geometry).distinct
+        firstLl.copy(calibrationPoints = (firstLl.startCalibrationPoint, lastLl.endCalibrationPoint), geometry = geometries, startMValue = firstLl.startMValue, endMValue = lastLl.endMValue)
       })
       linearLocationsToInsert = linearLocationsToInsert.filterNot(ll => linsToFuseIds.contains(ll.id)) ++ fusedLinearLocations
 

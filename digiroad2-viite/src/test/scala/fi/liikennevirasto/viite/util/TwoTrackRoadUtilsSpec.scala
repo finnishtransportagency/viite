@@ -1,15 +1,14 @@
 package fi.liikennevirasto.viite.util
 
-import fi.liikennevirasto.digiroad2.GeometryUtils
-import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.{GeometryUtils, _}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
-import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao._
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType._
+import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
@@ -132,20 +131,59 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
       track1.last.startAddrMValue shouldBe 100
       track1.last.endAddrMValue   shouldBe 200
 
-      track1.head.calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.UserDefinedCP)
-      track1.last.calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.NoCP)
+      track1.head.calibrationPointTypes shouldBe (NoCP, UserDefinedCP)
+      track1.last.calibrationPointTypes shouldBe (NoCP, NoCP)
 
       track2.head.startAddrMValue shouldBe 0
       track2.head.endAddrMValue   shouldBe 100
       track2.last.startAddrMValue shouldBe 100
       track2.last.endAddrMValue   shouldBe 200
 
-      track2.head.calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.UserDefinedCP)
-      track2.last.calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.NoCP)
+      track2.head.calibrationPointTypes shouldBe (NoCP, UserDefinedCP)
+      track2.last.calibrationPointTypes shouldBe (NoCP, NoCP)
 
     }
   }
 
+  test("Test splitPlsAtStatusChange() When there is status change at the same distance other side having junction calibrationPoint Then should return unmodified pls with two udcps.") {
+    runWithRollback {
+      val geomTrack1_1 = Seq(Point(0.0, 0.0), Point(100.0, 0.0))
+      val geomTrack1_2 = Seq(Point(100.0, 0.0), Point(200.0, 0.0))
+      val geomTrack2_1 = Seq(Point(0.0, 10.0), Point(100.0, 10.0))
+      val geomTrack2_2 = Seq(Point(100.0, 10.0), Point(200.0, 10.0))
+
+      val testTrack1 = TestTrack(Seq(LinkStatus.UnChanged, LinkStatus.Transfer), Track.apply(1), Seq(geomTrack1_1, geomTrack1_2))
+      val testTrack2 = TestTrack(Seq(LinkStatus.UnChanged, LinkStatus.Transfer), Track.apply(2), Seq(geomTrack2_1, geomTrack2_2))
+
+      var (rightProjectLinks, leftProjectLinks) = setUpProjectWithLinks(testTrack1, testTrack2).partition(_.track == Track.RightSide)
+      rightProjectLinks = Seq(rightProjectLinks.head.copy(calibrationPointTypes = (NoCP,JunctionPointCP)),
+                              rightProjectLinks.last.copy(calibrationPointTypes = (JunctionPointCP,NoCP)))
+
+      val (track1, track2, udcp) = TwoTrackRoadUtils.splitPlsAtStatusChange(rightProjectLinks, leftProjectLinks)
+
+      track1 should have size 2
+      track2 should have size 2
+      udcp   should have size 2
+
+      track1.head.startAddrMValue shouldBe 0
+      track1.head.endAddrMValue   shouldBe 100
+      track1.last.startAddrMValue shouldBe 100
+      track1.last.endAddrMValue   shouldBe 200
+
+      track1.head.calibrationPointTypes shouldBe (NoCP, JunctionPointCP)
+      track1.last.calibrationPointTypes shouldBe (JunctionPointCP, NoCP)
+
+      track2.head.startAddrMValue shouldBe 0
+      track2.head.endAddrMValue   shouldBe 100
+      track2.last.startAddrMValue shouldBe 100
+      track2.last.endAddrMValue   shouldBe 200
+
+      track2.head.calibrationPointTypes shouldBe (NoCP, UserDefinedCP)
+      track2.last.calibrationPointTypes shouldBe (NoCP, NoCP)
+
+    }
+  }
+  
   test("Test splitPlsAtStatusChange() When other track has two parts with different status Then returns opposite track splitted at status change distance with udcp.") {
     runWithRollback {
       val geomTrack1_1 = Seq(Point(0.0, 0.0), Point(100.0, 0.0))
@@ -170,8 +208,8 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
       track1.head.geometry shouldBe geomTrack1_1
       track1.last.geometry shouldBe geomTrack1_2
 
-      track1.head.calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.UserDefinedCP)
-      track1.last.calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.NoCP)
+      track1.head.calibrationPointTypes shouldBe (NoCP, UserDefinedCP)
+      track1.last.calibrationPointTypes shouldBe (NoCP, NoCP)
 
       track2.head.startAddrMValue shouldBe 0
       track2.head.endAddrMValue   shouldBe 100
@@ -181,8 +219,8 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
       track2.head.geometry shouldBe Seq(Point(0.0, 10.0), Point(100.0, 10.0))
       track2.last.geometry shouldBe Seq(Point(100.0, 10.0), Point(200.0, 10.0))
 
-      track2.head.calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.UserDefinedCP)
-      track2.last.calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.NoCP)
+      track2.head.calibrationPointTypes shouldBe (NoCP, UserDefinedCP)
+      track2.last.calibrationPointTypes shouldBe (NoCP, NoCP)
     }
   }
 
@@ -214,9 +252,9 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
       track1(1).geometry shouldBe Seq(Point(100.0, 0.0), Point(200.0, 0.0))
       track1(2).geometry shouldBe Seq(Point(200.0, 0.0), Point(300.0, 0.0))
 
-      track1(0).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.UserDefinedCP)
-      track1(1).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.UserDefinedCP)
-      track1(2).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.NoCP)
+      track1(0).calibrationPointTypes shouldBe (NoCP, UserDefinedCP)
+      track1(1).calibrationPointTypes shouldBe (NoCP, UserDefinedCP)
+      track1(2).calibrationPointTypes shouldBe (NoCP, NoCP)
 
       track2(0).startAddrMValue shouldBe 0
       track2(0).endAddrMValue   shouldBe 100
@@ -229,9 +267,9 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
       track2(1).geometry shouldBe Seq(Point(100.0, 10.0), Point(200.0, 10.0))
       track2(2).geometry shouldBe Seq(Point(200.0, 10.0), Point(300.0, 10.0))
 
-      track2(0).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.UserDefinedCP)
-      track2(1).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.UserDefinedCP)
-      track2(2).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.NoCP)
+      track2(0).calibrationPointTypes shouldBe (NoCP, UserDefinedCP)
+      track2(1).calibrationPointTypes shouldBe (NoCP, UserDefinedCP)
+      track2(2).calibrationPointTypes shouldBe (NoCP, NoCP)
     }
   }
 
@@ -264,9 +302,9 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
       track1(1).geometry shouldBe Seq(Point(100.0, 0.0), Point(200.0, 0.0))
       track1(2).geometry shouldBe Seq(Point(200.0, 0.0), Point(300.0, 0.0))
 
-      track1(0).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.UserDefinedCP)
-      track1(1).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.UserDefinedCP)
-      track1(2).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.NoCP)
+      track1(0).calibrationPointTypes shouldBe (NoCP, UserDefinedCP)
+      track1(1).calibrationPointTypes shouldBe (NoCP, UserDefinedCP)
+      track1(2).calibrationPointTypes shouldBe (NoCP, NoCP)
 
       track2(0).startAddrMValue shouldBe 0
       track2(0).endAddrMValue   shouldBe 100
@@ -282,10 +320,10 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
       track2(2).geometry shouldBe Seq(Point(150.0, 10.0), Point(200.0, 10.0))
       track2(3).geometry shouldBe Seq(Point(200.0, 10.0), Point(300.0, 10.0))
 
-      track2(0).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.UserDefinedCP)
-      track2(1).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.NoCP)
-      track2(2).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.UserDefinedCP)
-      track2(3).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.NoCP)
+      track2(0).calibrationPointTypes shouldBe (NoCP, UserDefinedCP)
+      track2(1).calibrationPointTypes shouldBe (NoCP, NoCP)
+      track2(2).calibrationPointTypes shouldBe (NoCP, UserDefinedCP)
+      track2(3).calibrationPointTypes shouldBe (NoCP, NoCP)
     }
   }
 
@@ -318,9 +356,9 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
       track1(1).geometry shouldBe Seq(Point(100.0, 0.0), Point(200.0, 0.0))
       track1(2).geometry shouldBe Seq(Point(200.0, 0.0), Point(300.0, 0.0))
 
-      track1(0).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.UserDefinedCP)
-      track1(1).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.UserDefinedCP)
-      track1(2).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.NoCP)
+      track1(0).calibrationPointTypes shouldBe (NoCP, UserDefinedCP)
+      track1(1).calibrationPointTypes shouldBe (NoCP, UserDefinedCP)
+      track1(2).calibrationPointTypes shouldBe (NoCP, NoCP)
 
       track2(0).startAddrMValue shouldBe 0
       track2(0).endAddrMValue   shouldBe 100
@@ -336,10 +374,10 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
       track2(2).geometry shouldBe Seq(Point(150.0, 10.0), Point(200.0, 10.0))
       track2(3).geometry shouldBe Seq(Point(200.0, 10.0), Point(300.0, 10.0))
 
-      track2(0).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.UserDefinedCP)
-      track2(1).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.NoCP)
-      track2(2).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.UserDefinedCP)
-      track2(3).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.NoCP)
+      track2(0).calibrationPointTypes shouldBe (NoCP, UserDefinedCP)
+      track2(1).calibrationPointTypes shouldBe (NoCP, NoCP)
+      track2(2).calibrationPointTypes shouldBe (NoCP, UserDefinedCP)
+      track2(3).calibrationPointTypes shouldBe (NoCP, NoCP)
     }
   }
 
@@ -387,10 +425,10 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
       track1(2).geometry shouldBe Seq(Point(150.0, 0.0), Point(200.0, 0.0))
       track1(3).geometry shouldBe Seq(Point(200.0, 0.0), Point(300.0, 0.0))
 
-      track1(0).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.UserDefinedCP)
-      track1(1).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.UserDefinedCP)
-      track1(2).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.UserDefinedCP)
-      track1(3).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.NoCP)
+      track1(0).calibrationPointTypes shouldBe (NoCP, UserDefinedCP)
+      track1(1).calibrationPointTypes shouldBe (NoCP, UserDefinedCP)
+      track1(2).calibrationPointTypes shouldBe (NoCP, UserDefinedCP)
+      track1(3).calibrationPointTypes shouldBe (NoCP, NoCP)
 
       track2(0).startAddrMValue shouldBe 0
       track2(0).endAddrMValue   shouldBe 100
@@ -406,10 +444,10 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
       track2(2).geometry shouldBe Seq(Point(150.0, 10.0), Point(200.0, 10.0))
       track2(3).geometry shouldBe Seq(Point(200.0, 10.0), Point(300.0, 10.0))
 
-      track2(0).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.UserDefinedCP)
-      track2(1).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.UserDefinedCP)
-      track2(2).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.UserDefinedCP)
-      track2(3).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.NoCP)
+      track2(0).calibrationPointTypes shouldBe (NoCP, UserDefinedCP)
+      track2(1).calibrationPointTypes shouldBe (NoCP, UserDefinedCP)
+      track2(2).calibrationPointTypes shouldBe (NoCP, UserDefinedCP)
+      track2(3).calibrationPointTypes shouldBe (NoCP, NoCP)
     }
   }
 
@@ -446,9 +484,9 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
       track1(1).geometry shouldBe Seq(Point(200.0, 0.0), Point(100.0, 0.0))
       track1(2).geometry shouldBe Seq(Point(200.0, 0.0), Point(300.0, 0.0))
 
-      track1(0).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.UserDefinedCP)
-      track1(1).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.UserDefinedCP)
-      track1(2).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.NoCP)
+      track1(0).calibrationPointTypes shouldBe (NoCP, UserDefinedCP)
+      track1(1).calibrationPointTypes shouldBe (NoCP, UserDefinedCP)
+      track1(2).calibrationPointTypes shouldBe (NoCP, NoCP)
 
       track2(0).startAddrMValue shouldBe 0
       track2(0).endAddrMValue   shouldBe 100
@@ -464,10 +502,10 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
       track2(2).geometry shouldBe Seq(Point(150.0, 10.0), Point(200.0, 10.0))
       track2(3).geometry shouldBe Seq(Point(200.0, 10.0), Point(300.0, 10.0))
 
-      track2(0).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.UserDefinedCP)
-      track2(1).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.NoCP)
-      track2(2).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.UserDefinedCP)
-      track2(3).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.NoCP)
+      track2(0).calibrationPointTypes shouldBe (NoCP, UserDefinedCP)
+      track2(1).calibrationPointTypes shouldBe (NoCP, NoCP)
+      track2(2).calibrationPointTypes shouldBe (NoCP, UserDefinedCP)
+      track2(3).calibrationPointTypes shouldBe (NoCP, NoCP)
     }
   }
 

@@ -17,7 +17,7 @@ Resources:
             Effect: Allow
             Principal:
               AWS:
-              - arn:aws:iam::783354560127:role/aws-reserved/sso.amazonaws.com/eu-west-1/AWSReservedSSO_ViiteAdmin_f51abaddc31bf9ac
+              - arn:aws:iam::783354560127:role/aws-reserved/sso.amazonaws.com/eu-west-1/AWSReservedSSO_ViiteAdmin_ff171369f9c2782f
               - arn:aws:iam::783354560127:role/codebuild-ViiteProd
             Action:
               - ecr:BatchCheckLayerAvailability

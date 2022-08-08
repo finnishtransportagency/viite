@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.util.Track.LeftSide
 import fi.liikennevirasto.viite.{NewIdValue, UnsuccessfulRecalculationMessage}
 import fi.liikennevirasto.viite.dao.{Discontinuity, _}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.UserDefinedCP
+import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.process.strategy.FirstRestSections.{getUpdatedContinuousRoadwaySections, lengthCompare}
@@ -613,10 +614,15 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
  */
 case class FirstRestSections(first:Seq[ProjectLink], rest: Seq[ProjectLink])
 object FirstRestSections {
-  def checkTheLastLinkInOppositeRange(sect: Seq[ProjectLink], oppositeSect: Seq[ProjectLink]): Boolean =
-    sect.size > 1 &&
-    ((sect.last.discontinuity != Discontinuity.Continuous) || (oppositeSect.last.discontinuity != Discontinuity.Continuous)) &&
-    Math.abs(sect.last.endAddrMValue - oppositeSect.last.endAddrMValue) > Math.abs(sect(sect.size - 2).endAddrMValue - oppositeSect.last.endAddrMValue)
+  def checkTheLastLinkInOppositeRange(sect: Seq[ProjectLink], oppositeSect: Seq[ProjectLink]): Boolean = {
+    (sect.size > 1) && {
+      val lastLengthDifference       = Math.abs(sect.last.endAddrMValue - oppositeSect.last.endAddrMValue)
+      val secondLastLengthDifference = Math.abs(sect(sect.size - 2).endAddrMValue - oppositeSect.last.endAddrMValue)
+      ((sect.last.discontinuity != Continuous) || (oppositeSect.last.discontinuity != Continuous)) &&
+      lastLengthDifference > secondLastLengthDifference &&
+      secondLastLengthDifference != 0 // Equal case should be found by lengthCompare().
+    }
+  }
 
   def getEqualRoadwaySections(sect: FirstRestSections, oppositeSect: FirstRestSections): ((Seq[ProjectLink], Seq[ProjectLink]), (Seq[ProjectLink], Seq[ProjectLink])) = {
     val newFirstSection = sect.first.takeWhile(_.endAddrMValue <= oppositeSect.first.last.endAddrMValue)

@@ -544,15 +544,24 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  private val getAllRoadAddressProjects: SwaggerSupportSyntax.OperationBuilder = (
+  private val getRoadAddressProjects: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Seq[Map[String, Any]]]("getAllRoadAddressProjects")
+      .parameters(
+        pathParam[Boolean]("onlyActive").description("Boolean value (true/false) whether you only want the active projects (active status = UpdatingToRoadNetwork, InUpdateQueue, ErrorInViite, Incomplete OR (Accepted in the last 48 hours))")
+      )
       tags "ViiteAPI - Project"
-      summary "Returns all the necessary information on all available projects to be shown on the project selection window."
+      summary "Returns all the necessary information on all or only the active projects to be shown on the project selection window."
     )
 
-  get("/roadlinks/roadaddress/project/all", operation(getAllRoadAddressProjects)) {
-    time(logger, "GET request for /roadlinks/roadaddress/project/all") {
-      val (deletedProjs, currentProjs) = projectService.getAllProjects.map(p => {
+  get("/roadlinks/roadaddress/project/all/:onlyActive", operation(getRoadAddressProjects)) {
+    time(logger, "GET request for /roadlinks/roadaddress/project/all/:onlyActive") {
+      val onlyActive = params("onlyActive").toBoolean
+      val projects = if (onlyActive) {
+        projectService.getActiveProjects
+      } else {
+        projectService.getAllProjects
+      }
+      val (deletedProjs, currentProjs) = projects.map(p => {
         p.id -> (p, projectService.getProjectEly(p.id))
       }).partition(_._2._2.isEmpty)
       deletedProjs.map(p => roadAddressProjectToApi(p._2._1, p._2._2)) ++ currentProjs.sortBy(e => e._2._2.min).map(p => roadAddressProjectToApi(p._2._1, p._2._2))
@@ -1460,8 +1469,42 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
 
   def projectAddressLinkToApi(projectAddressLink: ProjectAddressLink, roadNames: Seq[RoadName] = Seq()): Map[String, Any] = {
-    roadAddressLinkLikeToApi(projectAddressLink) ++
-      (Map(
+    (Map(
+        "success" -> true,
+        "roadwayId" -> projectAddressLink.roadwayId,
+        "roadwayNumber" -> projectAddressLink.roadwayNumber,
+        "linearLocationId" -> projectAddressLink.linearLocationId,
+        "linkId" -> projectAddressLink.linkId,
+        "mmlId" -> projectAddressLink.attributes.get("MTKID"),
+        "points" -> projectAddressLink.geometry,
+        "calibrationCode" -> CalibrationCode.getFromAddressLinkLike(projectAddressLink).value,
+        "calibrationPoints" -> Seq(calibrationPointToApi(projectAddressLink.geometry, projectAddressLink.startCalibrationPoint),
+          calibrationPointToApi(projectAddressLink.geometry, projectAddressLink.endCalibrationPoint)),
+        "administrativeClassMML" -> projectAddressLink.administrativeClassMML.toString,
+        "roadClass" -> RoadClass.get(projectAddressLink.roadNumber.toInt),
+        "administrativeClassId" -> projectAddressLink.administrativeClass.value,
+        "modifiedAt" -> projectAddressLink.modifiedAt,
+        "modifiedBy" -> projectAddressLink.modifiedBy,
+        "municipalityCode" -> projectAddressLink.attributes.get("MUNICIPALITYCODE"),
+        "municipalityName" -> projectAddressLink.municipalityName,
+        "roadNameFi" -> projectAddressLink.attributes.get("ROADNAME_FI"),
+        "roadNameSe" -> projectAddressLink.attributes.get("ROADNAME_SE"),
+        "roadNameSm" -> projectAddressLink.attributes.get("ROADNAME_SM"),
+        "roadNumber" -> projectAddressLink.roadNumber,
+        "roadPartNumber" -> projectAddressLink.roadPartNumber,
+        "elyCode" -> projectAddressLink.elyCode,
+        "trackCode" -> projectAddressLink.trackCode,
+        "startAddressM" -> projectAddressLink.startAddressM,
+        "endAddressM" -> projectAddressLink.endAddressM,
+        "discontinuity" -> projectAddressLink.discontinuity,
+        "anomaly" -> projectAddressLink.anomaly.value,
+        "constructionType" -> projectAddressLink.constructionType.value,
+        "startMValue" -> projectAddressLink.startMValue,
+        "endMValue" -> projectAddressLink.endMValue,
+        "sideCode" -> projectAddressLink.sideCode.value,
+        "linkType" -> projectAddressLink.linkType.value,
+        "roadLinkSource" -> projectAddressLink.roadLinkSource.value,
+        "roadName" -> projectAddressLink.roadName,
         "id" -> projectAddressLink.id,
         "status" -> projectAddressLink.status.value,
         "reversed" -> projectAddressLink.reversed,

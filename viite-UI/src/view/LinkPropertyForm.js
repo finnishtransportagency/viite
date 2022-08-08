@@ -63,22 +63,22 @@
           decodedLinkProperties = decodedLinkProperties + ', <br> ' + rt + ' ' + decodeAttributes(attrId, rt);
         }
       });
-      var field = constructField(attrId, decodedLinkProperties);
-      return field;
+      return constructField(attrId, decodedLinkProperties);
     };
 
     var textDynamicField = function (labelText, linkProperty) {
       var uniqLinkProperties = _.uniq(_.map(selectedLinkProperty.get(), linkProperty));
       var linkProperties = "";
       _.each(uniqLinkProperties, function(rt) {
-        if (linkProperties.length === 0) {
-          linkProperties = rt;
-        } else {
-          linkProperties = linkProperties + ', <br> ' + rt;
+        if (rt !== undefined) {
+          if (linkProperties.length === 0) {
+            linkProperties = rt;
+          } else {
+            linkProperties = linkProperties + ', <br> ' + rt;
+          }
         }
       });
-      var field = constructField(labelText, linkProperties);
-      return field;
+      return constructField(labelText, linkProperties);
     };
 
     var lengthDynamicField = function () {
@@ -89,8 +89,38 @@
         var linkLength = link.endAddressM - link.startAddressM;
         length += linkLength;
       });
-      var field = constructField(labelText, length);
-      return field;
+      return constructField(labelText, length);
+    };
+
+    var dateDynamicField = function () {
+      function padTo2Digits(num) {
+        return num.toString().padStart(2, '0');
+      }
+
+      function formatDate(date) {
+        return [
+          padTo2Digits(date.getDate()),
+          padTo2Digits(date.getMonth() + 1),
+          date.getFullYear()
+        ].join('.');
+      }
+
+      var labelText = 'ALKUPÄIVÄMÄÄRÄ';
+      var dates = [];
+      var selectedLinks = selectedLinkProperty.get();
+      selectedLinks.forEach((link) => {
+        if (link.startDate.length > 0) {
+          var dateParts = link.startDate.split(".");
+          dates.push(new Date(dateParts[2], (dateParts[1] - 1), dateParts[0]));
+        }
+      });
+      if (dates.length === 0) {
+        return constructField(labelText, '');
+      } else {
+        var latestDate = new Date(Math.max.apply(null, dates));
+        var formattedLatestDate = formatDate(latestDate);
+        return constructField(labelText, formattedLatestDate);
+      }
     };
 
     var constructField = function (labelText, data) {
@@ -119,11 +149,10 @@
     };
 
     var staticField = function (labelText, dataField) {
-      var field = '<div class="form-group" style="margin-bottom: 0;">' +
+      return '<div class="form-group" style="margin-bottom: 0;">' +
           '<label class="control-label-short">' + labelText + '</label>' +
           '<p class="form-control-static-short">' + dataField + " " + decodeAttributes(labelText, dataField) + '</p>' +
           '</div>';
-      return field;
     };
 
     var title = function () {
@@ -139,13 +168,12 @@
     };
 
     var isOnlyOneRoadAndPartNumberSelected = function () {
-      var isOneRoadAndPart = isOnlyOneRoadNumberSelected() && isOnlyOneRoadPartNumberSelected();
-      return isOneRoadAndPart;
+      return isOnlyOneRoadNumberSelected() && isOnlyOneRoadPartNumberSelected();
     };
 
     var template = function (firstSelectedLinkProperty, linkProperties) {
       var mtkId = selectedLinkProperty.count() === 1 ? '; MTKID: ' + linkProperties.mmlId : '';
-      var roadNames = selectedLinkProperty.count() === 1 ? staticField('TIEN NIMI', firstSelectedLinkProperty.roadName) : textDynamicField('TIEN NIMI', 'roadName');
+      var roadNames = selectedLinkProperty.count() === 1 ? staticField('TIEN NIMI', "roadName" in firstSelectedLinkProperty ? firstSelectedLinkProperty.roadName : '') : textDynamicField('TIEN NIMI', 'roadName');
       var roadNumbers = selectedLinkProperty.count() === 1 ? staticField('TIENUMERO', firstSelectedLinkProperty.roadNumber) : textDynamicField('TIENUMERO', 'roadNumber');
       var roadPartNumbers = isOnlyOneRoadNumberSelected() ? dynamicField('TIEOSANUMERO', 'roadPartNumber') : constructField('TIEOSANUMERO', '');
       var tracks = isOnlyOneRoadAndPartNumberSelected() ? dynamicField('AJORATA', 'trackCode') : constructField('AJORATA', '');
@@ -155,6 +183,7 @@
       var elys = selectedLinkProperty.count() === 1 ? staticField('ELY', firstSelectedLinkProperty.elyCode) : dynamicField('ELY', 'elyCode');
       var administrativeClasses = selectedLinkProperty.count() === 1 ? staticField('HALLINNOLLINEN LUOKKA', firstSelectedLinkProperty.administrativeClassId) : dynamicField('HALLINNOLLINEN LUOKKA', 'administrativeClassId');
       var discontinuities = isOnlyOneRoadAndPartNumberSelected() ? dynamicField('JATKUVUUS', 'discontinuity') : constructField('JATKUVUUS', '');
+      var startDate = isOnlyOneRoadAndPartNumberSelected() ? dateDynamicField() : constructField('ALKUPÄIVÄMÄÄRÄ', '');
       return _.template('' +
         '<header>' +
         title() +
@@ -185,6 +214,7 @@
         elys +
         administrativeClasses +
         discontinuities +
+        startDate +
         '</div>' +
         '</div>' +
         '<footer></footer>');
@@ -289,6 +319,7 @@
         rootElement.empty();
         if (!_.isEmpty(selectedLinkProperty.get()) || !_.isEmpty(props)) {
 
+          props.startDate = props.startDate || '';
           props.modifiedBy = props.modifiedBy || '-';
           props.modifiedAt = props.modifiedAt || '';
           props.roadNameFi = props.roadNameFi || '';

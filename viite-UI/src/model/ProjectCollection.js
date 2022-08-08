@@ -92,8 +92,8 @@
       });
     };
 
-    this.getProjects = function () {
-      return backend.getRoadAddressProjects(function (projects) {
+    this.getProjects = function (onlyActive) {
+      return backend.getRoadAddressProjects(onlyActive, function (projects) {
         roadAddressProjects = projects;
         eventbus.trigger('roadAddressProjects:fetched', projects);
       });
