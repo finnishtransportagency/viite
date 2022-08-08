@@ -26,6 +26,8 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
 
   val dateFormat = "dd.MM.yyyy"
 
+  val apiId = "integration-api"
+
   protected val applicationDescription = "The integration API "
 
   protected implicit val jsonFormats: Formats = DefaultFormats
@@ -40,8 +42,8 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
       parameter queryParam[String]("situationDate").description("Date in format ISO8601. For example 2020-04-29T13:59:59").optional)
 
   get("/road_address", operation(getRoadAddressesByMunicipality)) {
-    time(logger, "GET request for /road_address") {
-      contentType = formats("json")
+    contentType = formats("json")
+    ApiUtils.avoidRestrictions(apiId, request, params) { params =>
       params.get("municipality").map { municipality =>
         try {
           val municipalityCode = municipality.toInt

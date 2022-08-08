@@ -63,22 +63,43 @@
         return feature;
       });
       var coordinate;
+      const popupBox = document.getElementById('popup-content').getBoundingClientRect();
+      // Prevent update when cursor is in the box
+        if (!(event.originalEvent.clientX < popupBox.right &&
+              event.originalEvent.clientX > popupBox.left &&
+              event.originalEvent.clientY > popupBox.top &&
+              event.originalEvent.clientY < popupBox.bottom))
       //Ignore if target feature is marker
-      if (!_.isUndefined(featureAtPixel) && !_.isUndefined(featureAtPixel.linkData)) {
-        var roadData = featureAtPixel.linkData;
+      if (!_.isNil(featureAtPixel) && featureAtPixel.linkData) {
+        const roadData = featureAtPixel.linkData;
         if (infoContent !== null) {
-          if (roadData !== null && (roadData.roadNumber !== 0 && roadData.roadPartNumber !== 0)) {
+          if ((roadData.roadNumber !== 0 && roadData.roadPartNumber !== 0)) {
             coordinate = map.getEventCoordinate(event.originalEvent);
-            infoContent.innerHTML = 'Tienumero:&nbsp;' + roadData.roadNumber + '<br>' +
-              'Tieosanumero:&nbsp;' + roadData.roadPartNumber + '<br>' +
-              'Ajorata:&nbsp;' + roadData.trackCode + '<br>' +
-              'AET:&nbsp;' + roadData.startAddressM + '<br>' +
-              'LET:&nbsp;' + roadData.endAddressM + '<br>' +
-              'Hall. luokka:&nbsp;' + displayAdministrativeClass(roadData.administrativeClassId) + '<br>';
+            infoContent.innerHTML =
+                '<div class="popup-line-div"><div>Tienumero:&nbsp;</div><div class="selectable">'    + roadData.roadNumber + '</div></div>' +
+                '<div class="popup-line-div"><div>Tieosanumero:&nbsp;</div><div class="selectable">' + roadData.roadPartNumber + '</div></div>' +
+                '<div class="popup-line-div"><div>Ajorata:&nbsp;</div><div class="selectable">'      + roadData.trackCode + '</div></div>' +
+                '<div class="popup-line-div"><div>AET:&nbsp;</div><div class="selectable">'          + roadData.startAddressM + '</div></div>' +
+                '<div class="popup-line-div"><div>LET:&nbsp;</div><div class="selectable">'          + roadData.endAddressM + '</div></div>' +
+                '<div class="popup-line-div"><div>Hall. luokka:&nbsp;</div><div class="selectable">' + displayAdministrativeClass(roadData.administrativeClassId) + '</div></div>';
+            const altShiftPressed = event.originalEvent.shiftKey && event.originalEvent.altKey;
+            if (altShiftPressed) {
+                infoContent.innerHTML += '<hr>';
+                if (!_.isUndefined(roadData.municipalityCode)) {
+                    infoContent.innerHTML += '<div class="popup-line-div"><div>MunicipalityCode:&nbsp;</div><div class="selectable">' + roadData.municipalityCode + '</div></div>';
+                }
+                infoContent.innerHTML +=
+                    '<div class="popup-line-div"><div>Link&nbsp;id:&nbsp;</div><div class="selectable">'           + roadData.linkId  + '</div></div>' +
+                    '<div class="popup-line-div"><div>LinearLocation&nbsp;id:&nbsp;</div><div class="selectable">' + roadData.linearLocationId + '</div></div>' +
+                    '<div class="popup-line-div"><div>Roadway&nbsp;id:&nbsp;</div><div class="selectable">'        + roadData.roadwayId + '</div></div>' +
+                    '<div class="popup-line-div"><div>RoadwayNumber:&nbsp;</div><div class="selectable">'          + roadData.roadwayNumber + '</div></div>';
+            }
           }
         }
       }
-      overlay.setPosition(coordinate);
+       // Keep info box open with altkey
+      if (!(event.originalEvent.altKey))
+        overlay.setPosition(coordinate);
     };
 
     var displayAdministrativeClass = function (administrativeClassCode) {

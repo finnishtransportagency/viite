@@ -525,8 +525,7 @@ class ProjectValidator {
     // function to get any (high priority) validation errors for the project links
     val highPriorityValidations: Seq[(Project, Seq[ProjectLink]) => Seq[ValidationErrorDetails]] = Seq(
       // sequence of validator functions, in INCREASING priority order (as these get turned around in the next step)
-      checkForNotHandledLinks, // "Käsittelemätön" is returned as highest priority
-      checkProjectContinuity // Check project continuities before calculation to prevent problems caused by wrong discontinuity.
+      checkForNotHandledLinks // "Käsittelemätön" is returned as highest priority
     )
 
     // list all the (high priority) validation errors found within the project links, in reversed order
@@ -627,25 +626,29 @@ class ProjectValidator {
     * Thus, the links following the first other operation must not be allowed to have "Unchanged" status, but is returned with a validation error.
     */
   def checkForInvalidUnchangedLinks(project: Project, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
+    def findInvalidUnchangedLinks(pls: Seq[ProjectLink]): Seq[ProjectLink] = {
+      // sort groups' project links by original startAddrMValue
+      val sortedProjectLinks = pls.sortWith(_.originalStartAddrMValue < _.originalStartAddrMValue)
+      // from the sorted project link list, find the first link that has a status of other than Unchanged
+      val firstOtherStatus = sortedProjectLinks.find(pl => pl.status != UnChanged)
+      if (firstOtherStatus.nonEmpty) {
+        val limitAddrMValue = {
+          if (firstOtherStatus.get.status == LinkStatus.New)
+            firstOtherStatus.get.startAddrMValue // for New links we take the normal startAddrMValue
+          else
+            firstOtherStatus.get.originalStartAddrMValue // for anything else we take the originalStartAddrMValue
+        }
+        // from the sorted project link list, find all Unchanged links that start after or at the same value as the limitAddrMValue -> these are the invalid Unchanged links
+        sortedProjectLinks.filter(pl => pl.status == LinkStatus.UnChanged && pl.originalStartAddrMValue >= limitAddrMValue)
+      } else
+        Seq()
+    }
     // group project links by roadNumber and roadPart number
     val groupedByRoadNumberAndPart = projectLinks.groupBy(pl => (pl.originalRoadNumber, pl.originalRoadPartNumber))
     val invalidUnchangedLinks = {
       groupedByRoadNumberAndPart.flatMap { group =>
-        // sort groups' project links by original startAddrMValue
-        val sortedProjectLinks = group._2.sortWith(_.originalStartAddrMValue < _.originalStartAddrMValue)
-        // from the sorted project link list, find the first link that has a status of other than Unchanged
-        val firstOtherStatus = sortedProjectLinks.find(pl => pl.status != UnChanged)
-        if (firstOtherStatus.nonEmpty) {
-          val limitAddrMValue = {
-            if (firstOtherStatus.get.status == LinkStatus.New)
-              firstOtherStatus.get.startAddrMValue // for New links we take the normal startAddrMValue
-            else
-              firstOtherStatus.get.originalStartAddrMValue // for anything else we take the originalStartAddrMValue
-          }
-          // from the sorted project link list, find all Unchanged links that start after or at the same value as the limitAddrMValue -> these are the invalid Unchanged links
-          sortedProjectLinks.filter(pl => pl.status == LinkStatus.UnChanged && pl.originalStartAddrMValue >= limitAddrMValue)
-        } else
-          None
+        (findInvalidUnchangedLinks(group._2.filter(_.track != Track.LeftSide)) ++
+          findInvalidUnchangedLinks(group._2.filter(_.track != Track.RightSide))).toSet
       }.toSeq
     }
 
@@ -1130,7 +1133,8 @@ class ProjectValidator {
       val discontinuousErrors = if (isRampValidation) {
         error(project.id, ValidationErrorList.DiscontinuityOnRamp)(roadProjectLinks.filter { pl =>
           // Check that pl has no discontinuity unless on last link and after it the possible project link is connected
-          val nextLink = roadProjectLinks.find(pl2 => pl2.startAddrMValue == pl.endAddrMValue)
+          val nextLink = roadProjectLinks.find(pl2 => pl2.startAddrMValue == pl.endAddrMValue &&
+            (pl.track == Combined || pl2.track == Combined || pl.track == pl2.track ))
           (nextLink.nonEmpty && pl.discontinuity != Discontinuity.Continuous) ||
             nextLink.exists(pl2 => !pl.connected(pl2))
         })
@@ -1272,14 +1276,14 @@ class ProjectValidator {
       val (road, part): (Long, Long) = (roadProjectLinks.head.roadNumber, roadProjectLinks.head.roadPartNumber)
       roadAddressService.getPreviousRoadAddressPart(road, part) match {
         case Some(previousRoadPartNumber) =>
-          //Skip this validation if previousRoadPartNumber is reserved in the project
-          if (allProjectLinks.exists(pl => pl.roadPartNumber == previousRoadPartNumber))
+          val (leftLinks, rightLinks) = (roadProjectLinks.filter(_.track != Track.RightSide), roadProjectLinks.filter(_.track != Track.LeftSide))
+          //Skip this validation if previousRoadPartNumber is reserved in the project or either track (or combined track) has no project links assigned to it.
+          if (allProjectLinks.exists(pl => pl.roadPartNumber == previousRoadPartNumber || pl.originalRoadPartNumber == previousRoadPartNumber) || leftLinks.isEmpty || rightLinks.isEmpty)
             Seq()
           else {
             val previousRoadwayRoadAddresses = roadAddressService.getRoadAddressWithRoadAndPart(road, previousRoadPartNumber, fetchOnlyEnd = true)
             val prevLeftRoadAddress = Seq(previousRoadwayRoadAddresses.filter(_.track != Track.RightSide).maxBy(_.endAddrMValue))
             val prevRightRoadAddress = Seq(previousRoadwayRoadAddresses.filter(_.track != Track.LeftSide).maxBy(_.endAddrMValue))
-            val (leftLinks, rightLinks) = (roadProjectLinks.filter(_.track != Track.RightSide), roadProjectLinks.filter(_.track != Track.LeftSide))
 
             /**
              * Runs the provided validation function against the RoadAddress before the start of the road part
@@ -1307,10 +1311,34 @@ class ProjectValidator {
               !ra.getLastPoint.connected(pl.head.getFirstPoint)
             }
 
-            val notDiscontinuousCodeOnDisconnectedRoadAddress = validatePreviousRoadAddress(prevLeftRoadAddress)(validateDiscontinuity(leftLinks)
+            val notDiscontinuousCodeOnDisconnectedRoadAddressErrors = validatePreviousRoadAddress(prevLeftRoadAddress)(validateDiscontinuity(leftLinks)
             )(ValidationErrorList.NotDiscontinuousCodeOnDisconnectedRoadPartOutside) ++
               validatePreviousRoadAddress(prevRightRoadAddress)(validateDiscontinuity(rightLinks)
             )(ValidationErrorList.NotDiscontinuousCodeOnDisconnectedRoadPartOutside)
+
+            /**
+             * VIITE-2780 If the roadpart outside of project (prevLeftRoadAddress/prevRightRoadaddress) doesn't have 2 tracks but the projectLink does,
+             * give validation error only if both tracks have invalid continuity.
+             *      (4)
+             * (1) |--->-------->-------
+             *     ^     (2)
+             *     |
+             * (3) |--->-------->-------
+             *     ^
+             *     |
+             *     |
+             * (1) End of the last roadpart that is not reserved for the project
+             * (2) The two-track roadpart reserved for the project
+             * (3) The right track of the roadpart would be validated as an error, as the previous roadpart is continuous,
+             *     but the start point of the right track is not connected to the end point of the previous roadpart.
+             *
+             *     Because (4) does not give a validation error in this case, the continuity of the roadpart is valid
+             *     and the validation error from (3) can be discarded.
+             */
+            val notDiscontinuousCodeOnDisconnectedRoadAddress = if (prevLeftRoadAddress.head.track == Track.Combined && leftLinks.head.track == Track.LeftSide
+            && notDiscontinuousCodeOnDisconnectedRoadAddressErrors.length != 2)
+              Seq()
+            else notDiscontinuousCodeOnDisconnectedRoadAddressErrors
 
 
             /**

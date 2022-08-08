@@ -1,9 +1,11 @@
 package fi.liikennevirasto.viite.process.strategy
 
+import fi.liikennevirasto.digiroad2.dao.Sequences
+import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectLink}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, RoadAddressCP}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
-import fi.liikennevirasto.viite.dao.{ProjectLink}
 import fi.liikennevirasto.viite.process.{ProjectSectionMValueCalculator, TrackSectionOrder}
+import fi.liikennevirasto.viite.NewIdValue
 
 class RoundaboutSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrategy {
 
@@ -19,20 +21,31 @@ class RoundaboutSectionCalculatorStrategy extends RoadAddressSectionCalculatorSt
       newProjectLinks.headOption).toSeq
     val rest = (newProjectLinks ++ oldProjectLinks).filterNot(startingLink.contains)
     val mValued = TrackSectionOrder.mValueRoundabout(startingLink ++ rest)
+    val (newLinksWithoutRoadwayNumber, newLinkswithRoadwayNumber) = mValued.partition(npl => npl.status == LinkStatus.New && (npl.roadwayNumber == NewIdValue || npl.roadwayNumber == 0))
+    var mValuedWithRwns = if (newLinksWithoutRoadwayNumber.nonEmpty) {
+      val newRoadwayNumber = Sequences.nextRoadwayNumber
+      (newLinksWithoutRoadwayNumber.map(_.copy(roadwayNumber = newRoadwayNumber)) ++ newLinkswithRoadwayNumber).sortBy(_.startAddrMValue)
+    } else mValued
+
+    val startPl = mValuedWithRwns.minBy(_.startAddrMValue)
+    val endPl   = mValuedWithRwns.maxBy(_.endAddrMValue)
+
+    mValuedWithRwns = startPl.copy(calibrationPointTypes = (RoadAddressCP, startPl.endCalibrationPointType)) +: mValuedWithRwns.filterNot(pl => Seq(startPl.id,endPl.id).contains(pl.id)) :+ endPl.copy(calibrationPointTypes = (endPl.startCalibrationPointType,RoadAddressCP))
+
     if (userCalibrationPoints.nonEmpty) {
-      val withCalibration = mValued.map(pl =>
+      val withCalibration = mValuedWithRwns.map(pl =>
         userCalibrationPoints.filter(_.projectLinkId == pl.id) match {
           case s if s.size == 2 =>
             val (st, en) = (s.minBy(_.addressMValue), s.maxBy(_.addressMValue))
-            val startCPType = if (pl.originalStartCalibrationPointType == NoCP) RoadAddressCP else pl.startCalibrationPointType
+            val startCPType = pl.startCalibrationPointType
             val endCPType = if (pl.originalEndCalibrationPointType == NoCP) RoadAddressCP else pl.endCalibrationPointType
             pl.copy(startAddrMValue = st.addressMValue, endAddrMValue = en.addressMValue, calibrationPointTypes = (startCPType, endCPType))
           case s if s.size == 1 && s.head.segmentMValue == 0.0 =>
-            val startCPType = if (pl.originalStartCalibrationPointType == NoCP) RoadAddressCP else pl.startCalibrationPointType
+            val startCPType =  pl.startCalibrationPointType
             val endCPType = if (pl.originalEndCalibrationPointType == NoCP) RoadAddressCP else pl.endCalibrationPointType
             pl.copy(startAddrMValue = s.head.addressMValue, calibrationPointTypes = (startCPType, endCPType))
           case s if s.size == 1 && s.head.segmentMValue != 0.0 =>
-            val startCPType = if (pl.originalStartCalibrationPointType == NoCP) RoadAddressCP else pl.startCalibrationPointType
+            val startCPType = pl.startCalibrationPointType
             val endCPType = if (pl.originalEndCalibrationPointType == NoCP) RoadAddressCP else pl.endCalibrationPointType
             pl.copy(endAddrMValue = s.head.addressMValue, calibrationPointTypes = (startCPType, endCPType))
           case _ =>
@@ -44,7 +57,7 @@ class RoundaboutSectionCalculatorStrategy extends RoadAddressSectionCalculatorSt
       val calMap = userCalibrationPoints.map(c => c.projectLinkId -> c).toMap
       ProjectSectionMValueCalculator.assignLinkValues(withCalibration, calMap, None, None, coEff)
     } else {
-      mValued
+      mValuedWithRwns
     }
   }
 }
