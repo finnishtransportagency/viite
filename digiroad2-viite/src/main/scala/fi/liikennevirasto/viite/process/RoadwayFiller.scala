@@ -191,10 +191,20 @@ object RoadwayFiller {
         currentRoadway.copy(id = NewIdValue, endDate = Some(projectStartDate.minusDays(1)), reversed = true) +: historyRoadways.map(hr => {
           hr.copy(id = NewIdValue, reversed = !hr.reversed)
         })
-      } else {
-        Seq(Roadway(NewIdValue, roadwayNumber, currentRoadway.roadNumber, currentRoadway.roadPartNumber, oldAdministrativeClass, currentRoadway.track, lastProjectLink.originalDiscontinuity, newStartAddressM, newEndAddressM, reversed, currentRoadway.startDate, Some(projectStartDate.minusDays(1)), createdBy = currentRoadway.createdBy, currentRoadway.roadName, currentRoadway.ely, NoTermination, currentRoadway.validFrom, currentRoadway.validTo)) ++ updateAddrMValuesOfHistoryRows(projectLinks, currentRoadway, historyRoadways).map { historyRoadway =>
-          historyRoadway.copy(id = NewIdValue, roadwayNumber = newRoadway.roadwayNumber, createdBy = currentRoadway.createdBy, validFrom = newRoadway.validFrom)
-        }
+      }
+      else if (headProjectLink.roadNumber == currentRoadway.roadNumber && headProjectLink.roadPartNumber == currentRoadway.roadPartNumber && headProjectLink.track == currentRoadway.track
+                && projectLinks.head.startAddrMValue == newStartAddressM && projectLinks.last.endAddrMValue == newEndAddressM && !reversed && projectLinks.last.discontinuity == lastProjectLink.originalDiscontinuity
+                && headProjectLink.administrativeClass == oldAdministrativeClass && headProjectLink.ely == currentRoadway.ely) {
+                  // if there is no need for new history row then return empty Seq() and add existing history to it
+                  Seq() ++ updateAddrMValuesOfHistoryRows(projectLinks, currentRoadway, historyRoadways).map { historyRoadway =>
+                    historyRoadway.copy(id = NewIdValue, roadwayNumber = newRoadway.roadwayNumber, createdBy = currentRoadway.createdBy, validFrom = newRoadway.validFrom)
+                  }
+      }
+      else {
+          // create new history row and add existing history to it
+          Seq(Roadway(NewIdValue, roadwayNumber, currentRoadway.roadNumber, currentRoadway.roadPartNumber, oldAdministrativeClass, currentRoadway.track, lastProjectLink.originalDiscontinuity, newStartAddressM, newEndAddressM, reversed, currentRoadway.startDate, Some(projectStartDate.minusDays(1)), createdBy = currentRoadway.createdBy, currentRoadway.roadName, currentRoadway.ely, NoTermination, currentRoadway.validFrom, currentRoadway.validTo)) ++ updateAddrMValuesOfHistoryRows(projectLinks, currentRoadway, historyRoadways).map { historyRoadway =>
+            historyRoadway.copy(id = NewIdValue, roadwayNumber = newRoadway.roadwayNumber, createdBy = currentRoadway.createdBy, validFrom = newRoadway.validFrom)
+          }
       }
     }
 
