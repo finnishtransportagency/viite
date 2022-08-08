@@ -639,8 +639,8 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
   test("Test RoadwayFiller.applyRoadwayChanges()" +
-    "When a single roadway (without history) is split to two roadways" +
-    "Then both split roadways will get a history row of their own") {
+    "When a single roadway (without history) is split to two roadways, but the first roadway has no changes" +
+    "Then only the roadway with the changes will get a history row") {
 
     /**
       * BEFORE PROJECT
@@ -652,7 +652,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       *                 Roadway Number 1                                    Roadway Number 2
       *  0 |----------------RoadPart 1------------------> 370    0 |---------RoadPart 2-------------> 175   New current roadways
       *
-      *  0 |----------------RoadPart 1------------------> 370  370 |---------RoadPart 1-------------> 545   After project created history roadways
+      *                                                        370 |---------RoadPart 1-------------> 545   After project created history roadway
       *
       * */
 
@@ -685,7 +685,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       val splitRoadways1 = resultRoadways.filter(rw => rw.roadwayNumber == newRoadwayNumber1)
       val splitRoadways2 = resultRoadways.filter(rw => rw.roadwayNumber == newRoadwayNumber2)
 
-      splitRoadways1 should have size 2
+      splitRoadways1 should have size 1
       splitRoadways2 should have size 2
 
       val (newSplitRoadway1, historyRoadway1) = splitRoadways1.partition(rw => rw.endDate.isEmpty && rw.validTo.isEmpty)
@@ -696,10 +696,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       newSplitRoadway1.head.endAddrMValue should be (370)
       newSplitRoadway1.head.roadPartNumber should be (1)
 
-      historyRoadway1 should have size 1
-      historyRoadway1.head.startAddrMValue should be (0)
-      historyRoadway1.head.endAddrMValue should be (370)
-      historyRoadway1.head.roadPartNumber should be (1)
+      historyRoadway1 should have size 0
 
       newSplitRoadway2 should have size 1
       newSplitRoadway2.head.startAddrMValue should be (0)
@@ -776,7 +773,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   test("Test RoadwayFiller.applyRoadwayChanges()" +
     "When a single roadway (that has two history history rows) is split in to two roadways" +
-    "Then the history roadways should also be split to those two new roadways, and new history roadway should also be created for both of the split roadways") {
+    "Then the history roadways should also be split to those two new roadways, and new history roadway should be created for the roadway that had changes in the project") {
 
     /**
       * BEFORE PROJECT
@@ -792,8 +789,8 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       *         RoadwayNumber 1         RoadwayNumber 2
       *     0 |------RP3----> 120     0 |-------RP4-----> 55  Current Roadways (rw 99 is split in two)
       *
-      *     0 |----- RP3----> 120   120 |-------RP3-----> 175 After project created history rows
-      *     0 |------RP2----> 120   120 |-------RP2-----> 175 Second oldest history rows
+      *                             120 |-------RP3-----> 175 After project created new history row for Rw2
+      *     0 |------RP2----> 120   120 |-------RP2-----> 175 Rw1 newest history row and Rw2 second oldest history row
       *   370 |------RP1----> 490   490 |-------RP1-----> 545 Oldest history rows
       *
       *
@@ -828,24 +825,20 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       val resultRoadways = result.head._1
 
       val (roadwaysForRoadPart3, roadwaysForRoadPart4) = resultRoadways.partition(rw => rw.roadwayNumber == 1)
-      roadwaysForRoadPart3 should have size 4
+      roadwaysForRoadPart3 should have size 3
       roadwaysForRoadPart4 should have size 4
 
       val (roadPart3newRoadway, roadPart3HistoryRows) = roadwaysForRoadPart3.partition(rw => rw.endDate.isEmpty && rw.validTo.isEmpty)
       roadPart3newRoadway should have size 1
-      roadPart3HistoryRows should have size 3
+      roadPart3HistoryRows should have size 2
 
       roadPart3newRoadway.head.roadPartNumber should be (3)
       roadPart3newRoadway.head.startAddrMValue should be (0)
       roadPart3newRoadway.head.endAddrMValue should be (120)
 
-      roadPart3HistoryRows.head.roadPartNumber should be (3)
+      roadPart3HistoryRows.head.roadPartNumber should be (2)
       roadPart3HistoryRows.head.startAddrMValue should be (0)
       roadPart3HistoryRows.head.endAddrMValue should be (120)
-
-      roadPart3HistoryRows.tail.head.roadPartNumber should be (2)
-      roadPart3HistoryRows.tail.head.startAddrMValue should be (0)
-      roadPart3HistoryRows.tail.head.endAddrMValue should be (120)
 
       roadPart3HistoryRows.last.roadPartNumber should be (1)
       roadPart3HistoryRows.last.startAddrMValue should be (370)
