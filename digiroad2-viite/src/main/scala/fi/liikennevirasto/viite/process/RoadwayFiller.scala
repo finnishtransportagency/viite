@@ -165,18 +165,26 @@ object RoadwayFiller {
     val newStartAddressM = if (reversed) lastProjectLink.originalStartAddrMValue else headProjectLink.originalStartAddrMValue
     val newEndAddressM   = if (reversed) headProjectLink.originalEndAddrMValue else lastProjectLink.originalEndAddrMValue
     val oldAdministrativeClass = headProjectLink.originalAdministrativeClass
+    val noChanges        =  headProjectLink.roadNumber == currentRoadway.roadNumber &&
+                            headProjectLink.roadPartNumber == currentRoadway.roadPartNumber &&
+                            headProjectLink.track == currentRoadway.track &&
+                            headProjectLink.startAddrMValue == newStartAddressM &&
+                            lastProjectLink.endAddrMValue == newEndAddressM &&
+                            !reversed &&
+                            lastProjectLink.discontinuity == lastProjectLink.originalDiscontinuity &&
+                            headProjectLink.administrativeClass == oldAdministrativeClass &&
+                            headProjectLink.ely == currentRoadway.ely
 
-//    val historyRoadway = Roadway(NewIdValue, roadwayNumber, currentRoadway.roadNumber, currentRoadway.roadPartNumber, oldAdministrativeClass, currentRoadway.track, lastProjectLink.originalDiscontinuity, newStartAddressM, newEndAddressM, reversed, currentRoadway.startDate, Some(projectStartDate.minusDays(1)), createdBy = currentRoadway.createdBy, currentRoadway.roadName, currentRoadway.ely, NoTermination, currentRoadway.validFrom, currentRoadway.validTo)
-    val newRoadway    : Roadway      = Roadway(
+    val newRoadway: Roadway = Roadway(
                             NewIdValue,
                             roadwayNumber,
                             headProjectLink.roadNumber,
                             headProjectLink.roadPartNumber,
                             headProjectLink.administrativeClass,
                             headProjectLink.track,
-                            projectLinks.last.discontinuity,
-                            projectLinks.head.startAddrMValue,
-                            projectLinks.last.endAddrMValue,
+                            lastProjectLink.discontinuity,
+                            headProjectLink.startAddrMValue,
+                            lastProjectLink.endAddrMValue,
                             false,
                             projectStartDate,
                             None,
@@ -191,7 +199,15 @@ object RoadwayFiller {
         currentRoadway.copy(id = NewIdValue, endDate = Some(projectStartDate.minusDays(1)), reversed = true) +: historyRoadways.map(hr => {
           hr.copy(id = NewIdValue, reversed = !hr.reversed)
         })
-      } else {
+      }
+      else if (noChanges) {
+        // if there is no need for new history row then return empty Seq() and add existing history to it
+        Seq() ++ updateAddrMValuesOfHistoryRows(projectLinks, currentRoadway, historyRoadways).map { historyRoadway =>
+          historyRoadway.copy(id = NewIdValue, roadwayNumber = newRoadway.roadwayNumber, createdBy = currentRoadway.createdBy, validFrom = newRoadway.validFrom)
+        }
+      }
+      else {
+        // create new history row and add existing history to it
         Seq(Roadway(NewIdValue, roadwayNumber, currentRoadway.roadNumber, currentRoadway.roadPartNumber, oldAdministrativeClass, currentRoadway.track, lastProjectLink.originalDiscontinuity, newStartAddressM, newEndAddressM, reversed, currentRoadway.startDate, Some(projectStartDate.minusDays(1)), createdBy = currentRoadway.createdBy, currentRoadway.roadName, currentRoadway.ely, NoTermination, currentRoadway.validFrom, currentRoadway.validTo)) ++ updateAddrMValuesOfHistoryRows(projectLinks, currentRoadway, historyRoadways).map { historyRoadway =>
           historyRoadway.copy(id = NewIdValue, roadwayNumber = newRoadway.roadwayNumber, createdBy = currentRoadway.createdBy, validFrom = newRoadway.validFrom)
         }
