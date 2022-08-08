@@ -165,6 +165,15 @@ object RoadwayFiller {
     val newStartAddressM = if (reversed) lastProjectLink.originalStartAddrMValue else headProjectLink.originalStartAddrMValue
     val newEndAddressM   = if (reversed) headProjectLink.originalEndAddrMValue else lastProjectLink.originalEndAddrMValue
     val oldAdministrativeClass = headProjectLink.originalAdministrativeClass
+    val noChanges        =  headProjectLink.roadNumber == currentRoadway.roadNumber &&
+                            headProjectLink.roadPartNumber == currentRoadway.roadPartNumber &&
+                            headProjectLink.track == currentRoadway.track &&
+                            headProjectLink.startAddrMValue == newStartAddressM &&
+                            lastProjectLink.endAddrMValue == newEndAddressM &&
+                            !reversed &&
+                            lastProjectLink.discontinuity == lastProjectLink.originalDiscontinuity &&
+                            headProjectLink.administrativeClass == oldAdministrativeClass &&
+                            headProjectLink.ely == currentRoadway.ely
 
     val newRoadway    : Roadway      = Roadway(
                             NewIdValue,
@@ -191,9 +200,7 @@ object RoadwayFiller {
           hr.copy(id = NewIdValue, reversed = !hr.reversed)
         })
       }
-      else if (headProjectLink.roadNumber == currentRoadway.roadNumber && headProjectLink.roadPartNumber == currentRoadway.roadPartNumber && headProjectLink.track == currentRoadway.track
-                && headProjectLink.startAddrMValue == newStartAddressM && lastProjectLink.endAddrMValue == newEndAddressM && !reversed && lastProjectLink.discontinuity == lastProjectLink.originalDiscontinuity
-                && headProjectLink.administrativeClass == oldAdministrativeClass && headProjectLink.ely == currentRoadway.ely) {
+      else if (noChanges) {
                   // if there is no need for new history row then return empty Seq() and add existing history to it
                   Seq() ++ updateAddrMValuesOfHistoryRows(projectLinks, currentRoadway, historyRoadways).map { historyRoadway =>
                     historyRoadway.copy(id = NewIdValue, roadwayNumber = newRoadway.roadwayNumber, createdBy = currentRoadway.createdBy, validFrom = newRoadway.validFrom)
