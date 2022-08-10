@@ -421,7 +421,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       * @param roadsFrom        roads starting in the current road address r
       */
     def createJunctionAndJunctionPointIfNeeded(target: BaseRoadAddress, existingJunctionId: Option[Long] = None, pos: BeforeAfter, addr: Long,
-                                               roadsTo: Seq[BaseRoadAddress] = Seq.empty[BaseRoadAddress], roadsFrom: Seq[BaseRoadAddress] = Seq.empty[BaseRoadAddress]): Option[(Long, Long, CalibrationPointLocation)] = {
+                                               roadsTo: Seq[BaseRoadAddress] = Seq.empty[BaseRoadAddress], roadsFrom: Seq[BaseRoadAddress] = Seq.empty[BaseRoadAddress]): Option[(Long, String, CalibrationPointLocation)] = {
       val roadwayPointId = getRoadwayPointId(target.roadwayNumber, addr, username)
       val existingJunctionPoint = junctionPointDAO.fetchByRoadwayPoint(target.roadwayNumber, addr, pos)
 
@@ -490,7 +490,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
           }
         }
       }
-      val junctionCalibrationPoints: Set[(Long, Long, CalibrationPointLocation)] = nonTerminatedLinks.flatMap { projectLink =>
+      val junctionCalibrationPoints: Set[(Long, String, CalibrationPointLocation)] = nonTerminatedLinks.flatMap { projectLink =>
         val roadNumberLimits = Seq((RoadClass.forJunctions.start, RoadClass.forJunctions.end))
 
         // Reversed flag to determine if projectLink has been reversed in project
@@ -622,7 +622,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
           })
 
         // handle junction points for each project links
-        val startCp: Option[(Long, Long, CalibrationPointLocation)] = if ((roadsToHead ++ roadsFromHead).nonEmpty) {
+        val startCp: Option[(Long, String, CalibrationPointLocation)] = if ((roadsToHead ++ roadsFromHead).nonEmpty) {
           createJunctionAndJunctionPointIfNeeded(projectLink, pos = BeforeAfter.After, addr = projectLink.startAddrMValue,
             roadsTo = {
               if(reversed){
@@ -639,7 +639,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
           })
         } else { None }
 
-        val endCp: Option[(Long, Long, CalibrationPointLocation)] = if ((roadsToTail ++ roadsFromTail).nonEmpty) {
+        val endCp: Option[(Long, String, CalibrationPointLocation)] = if ((roadsToTail ++ roadsFromTail).nonEmpty) {
           createJunctionAndJunctionPointIfNeeded(projectLink, pos = BeforeAfter.Before, addr = projectLink.endAddrMValue,
             roadsTo = {
               if(reversed) {

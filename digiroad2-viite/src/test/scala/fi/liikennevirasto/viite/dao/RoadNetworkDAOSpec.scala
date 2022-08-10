@@ -85,17 +85,15 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
 
   // addRoadNetworkError
 
-  private def addLinearLocationAndRoadNetworkError(roadwayId: Long, linearLocationId: Long, linkId: Long, addressError: AddressError) = {
+  private def addLinearLocationAndRoadNetworkError(roadwayId: Long, linearLocationId: Long, linkId: String, addressError: AddressError): Unit = {
     val linearLocationDAO = new LinearLocationDAO
     val roadnetworkDAO = new RoadNetworkDAO
-    val linearLocation = LinearLocation(linearLocationId, 1, linkId, 0.0, 100.0, SideCode.TowardsDigitizing, 10000000000l,
-      (CalibrationPointReference(Some(0l)), CalibrationPointReference.None), Seq(Point(0.0, 0.0), Point(0.0, 100.0)), LinkGeomSource.NormalLinkInterface,
-      roadwayId)
+    val linearLocation = LinearLocation(linearLocationId, 1, linkId, 0.0, 100.0, SideCode.TowardsDigitizing, 10000000000l, (CalibrationPointReference(Some(0l)), CalibrationPointReference.None), Seq(Point(0.0, 0.0), Point(0.0, 100.0)), LinkGeomSource.NormalLinkInterface, roadwayId)
     linearLocationDAO.create(List(linearLocation))
     dao.addRoadNetworkError(roadwayId, linearLocationId, addressError, roadnetworkDAO.getLatestRoadNetworkVersionId)
   }
 
-  private def expireAndAddRoadNetworkError(roadwayId: Long, linearLocationId: Long, linkId: Long, addressError: AddressError) = {
+  private def expireAndAddRoadNetworkError(roadwayId: Long, linearLocationId: Long, linkId: String, addressError: AddressError): Unit = {
     dao.expireRoadNetwork
     dao.createPublishedRoadNetwork()
     roadwayDAO.create(List(testRoadway1.copy(id = roadwayId)))
@@ -106,7 +104,7 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       val roadwayId = Sequences.nextRoadwayId
       val linearLocationId = Sequences.nextLinearLocationId
-      val linkId = 1000l
+      val linkId = 1000l.toString
       val addressError = AddressError.InconsistentTopology
       expireAndAddRoadNetworkError(roadwayId, linearLocationId, linkId, addressError)
       val errors = dao.getRoadNetworkErrors(roadwayId, addressError)
@@ -123,7 +121,7 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
   test("Test removeNetworkErrors When one error Then should be removed") {
     runWithRollback {
       val error = AddressError.InconsistentTopology
-      expireAndAddRoadNetworkError(Sequences.nextRoadwayId, Sequences.nextLinearLocationId, 1000l, error)
+      expireAndAddRoadNetworkError(Sequences.nextRoadwayId, Sequences.nextLinearLocationId, 1000l.toString, error)
       val errors = dao.getRoadNetworkErrors(error)
       errors.size should be(1)
       dao.removeNetworkErrors
@@ -143,7 +141,7 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
 
   test("Test hasRoadNetworkErrors When there are errors Then should return true") {
     runWithRollback {
-      expireAndAddRoadNetworkError(Sequences.nextRoadwayId, Sequences.nextLinearLocationId, 1000l, AddressError.InconsistentTopology)
+      expireAndAddRoadNetworkError(Sequences.nextRoadwayId, Sequences.nextLinearLocationId, 1000l.toString, AddressError.InconsistentTopology)
       dao.hasRoadNetworkErrors should be(true)
     }
   }
@@ -196,7 +194,7 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       val roadwayId = Sequences.nextRoadwayId
       val linearLocationId = Sequences.nextLinearLocationId
-      val linkId = 1000l
+      val linkId = 1000l.toString
       val addressError = AddressError.InconsistentTopology
       expireAndAddRoadNetworkError(roadwayId, linearLocationId, linkId, addressError)
       val errors = dao.getRoadNetworkErrors(-9999l, addressError)
@@ -208,7 +206,7 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       val roadwayId = Sequences.nextRoadwayId
       val linearLocationId = Sequences.nextLinearLocationId
-      val linkId = 1000l
+      val linkId = 1000l.toString
       val addressError = AddressError.InconsistentTopology
       expireAndAddRoadNetworkError(roadwayId, linearLocationId, linkId, addressError)
       val errors = dao.getRoadNetworkErrors(roadwayId, AddressError.InconsistentLrmHistory)
@@ -220,7 +218,7 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       val roadwayId = Sequences.nextRoadwayId
       val linearLocationId = Sequences.nextLinearLocationId
-      val linkId = 1000l
+      val linkId = 1000l.toString
       val addressError = AddressError.InconsistentTopology
       expireAndAddRoadNetworkError(roadwayId, linearLocationId, linkId, addressError)
       val errors = dao.getRoadNetworkErrors(roadwayId, addressError)
@@ -239,8 +237,8 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
       val roadwayId = Sequences.nextRoadwayId
       val linearLocationId1 = Sequences.nextLinearLocationId
       val linearLocationId2 = Sequences.nextLinearLocationId
-      val linkId1 = 1000l
-      val linkId2 = 2000l
+      val linkId1 = 1000l.toString
+      val linkId2 = 2000l.toString
       val addressError = AddressError.InconsistentTopology
       expireAndAddRoadNetworkError(roadwayId, linearLocationId1, linkId1, addressError)
       addLinearLocationAndRoadNetworkError(roadwayId, linearLocationId2, linkId2, addressError)

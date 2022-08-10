@@ -3,7 +3,7 @@ package fi.liikennevirasto.viite
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle}
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.client.vvh.{KgvRoadLink, KgvRoadLinkClient}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{Track, ViiteProperties}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
@@ -21,7 +21,7 @@ import scala.collection.immutable.ListMap
 class ProjectValidator {
 
   val logger = LoggerFactory.getLogger(getClass)
-  lazy val vvhClient: VVHClient = new VVHClient(ViiteProperties.vvhRestApiEndPoint)
+  lazy val vvhClient: KgvRoadLink = new KgvRoadLink
   val eventBus = new DummyEventBus
   val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer, ViiteProperties.vvhRoadlinkFrozen)
   val roadwayDAO = new RoadwayDAO

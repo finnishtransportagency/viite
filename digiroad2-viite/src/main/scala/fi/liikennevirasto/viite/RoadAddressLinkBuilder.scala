@@ -1,9 +1,9 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.{GeometryUtils, DummyEventBus, DummySerializer}
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{Unknown => _, apply => _}
+import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils}
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{apply => _, Unknown => _}
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, _}
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.client.vvh.{KgvRoadLink}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{Track, ViiteProperties}
@@ -14,7 +14,7 @@ import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 
 class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLocationDAO, projectLinkDAO: ProjectLinkDAO) extends AddressLinkBuilder {
 
-  val vvhClient = new VVHClient(ViiteProperties.vvhRestApiEndPoint)
+  val vvhClient = new KgvRoadLink
   val eventBus = new DummyEventBus
   val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer, ViiteProperties.vvhRoadlinkFrozen)
   val roadAddressService = new RoadAddressService(linkService, roadwayDAO, linearLocationDAO, new RoadNetworkDAO,new RoadwayPointDAO, new NodePointDAO, new JunctionPointDAO, new RoadwayAddressMapper(roadwayDAO, linearLocationDAO), eventBus, ViiteProperties.vvhRoadlinkFrozen) {

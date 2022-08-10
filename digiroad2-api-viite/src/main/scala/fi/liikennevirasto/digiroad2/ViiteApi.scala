@@ -5,7 +5,7 @@ import java.text.SimpleDateFormat
 import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.JWTAuthentication
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.client.vvh.KgvRoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
@@ -42,7 +42,7 @@ case class ProjectRoadAddressInfo(projectId: Long, roadNumber: Long, roadPartNum
 case class RoadAddressProjectExtractor(id: Long, projectEly: Option[Long], status: Long, name: String, startDate: String,
                                        additionalInfo: String, reservedPartList: List[RoadPartExtractor], formedPartList: List[RoadPartExtractor], resolution: Int)
 
-case class RoadAddressProjectLinksExtractor(ids: Set[Long], linkIds: Seq[Long], linkStatus: Int, projectId: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Int, discontinuity: Int, roadEly: Long, roadLinkSource: Int, administrativeClass: Int, userDefinedEndAddressM: Option[Int], coordinates: ProjectCoordinates, roadName: Option[String], reversed: Option[Boolean])
+case class RoadAddressProjectLinksExtractor(ids: Set[Long], linkIds: Seq[String], linkStatus: Int, projectId: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Int, discontinuity: Int, roadEly: Long, roadLinkSource: Int, administrativeClass: Int, userDefinedEndAddressM: Option[Int], coordinates: ProjectCoordinates, roadName: Option[String], reversed: Option[Boolean])
 
 case class roadDataExtractor(chainLinkIds: Seq[Long] )
 
@@ -66,16 +66,7 @@ case class NodeExtractor(id: Long = NewIdValue, nodeNumber: Long = NewIdValue, c
                          createdTime: Option[String], editor: Option[String] = None, publishedTime: Option[DateTime] = None, registrationDate: Option[String] = None,
                          junctions: List[JunctionExtractor], nodePoints: List[NodePointExtractor])
 
-class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
-               val roadAddressService: RoadAddressService,
-               val projectService: ProjectService,
-               val roadNetworkService: RoadNetworkService,
-               val roadNameService: RoadNameService,
-               val nodesAndJunctionsService: NodesAndJunctionsService,
-               val userProvider: UserProvider = Digiroad2Context.userProvider,
-               val deploy_date: String = Digiroad2Context.deploy_date,
-               implicit val swagger: Swagger
-              )
+class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink, val roadAddressService: RoadAddressService, val projectService: ProjectService, val roadNetworkService: RoadNetworkService, val roadNameService: RoadNameService, val nodesAndJunctionsService: NodesAndJunctionsService, val userProvider: UserProvider = Digiroad2Context.userProvider, val deploy_date: String = Digiroad2Context.deploy_date, implicit val swagger: Swagger)
   extends ScalatraServlet
     with JacksonJsonSupport
     with CorsSupport
@@ -237,7 +228,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     )
 
   get("/roadaddress/linkid/:linkId", operation(getRoadAddressLinkByLinkId)) {
-    val linkId = params("linkId").toLong
+    val linkId = params("linkId").toString
     time(logger, s"GET request for /roadAddress/linkid/$linkId") {
       //TODO This process can be improved
       roadAddressService.getRoadAddressLink(linkId)
@@ -257,7 +248,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     )
 
   get("/roadlinks/project/prefillfromvvh", operation(fetchPreFillFromVVH)) {
-    val linkId = params("linkId").toLong
+    val linkId = params("linkId").toString
     val currentProjectId = params("currentProjectId").toLong
     time(logger, s"GET request for /roadlinks/project/prefillfromvvh (linkId: $linkId, projectId: $currentProjectId)") {
       projectService.fetchPreFillFromVVH(linkId, currentProjectId) match {
@@ -278,7 +269,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     )
 
   get("/roadlinks/midpoint/:linkId", operation(getMidPointByLinkId)) {
-    val linkId = params("linkId").toLong
+    val linkId = params("linkId").toString
     time(logger, s"GET request for /roadlinks/midpoint/$linkId") {
       roadLinkService.getMidPointByLinkId(linkId)
     }
@@ -735,10 +726,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         if (links.roadPartNumber == 0)
           throw RoadAndPartNumberException("Virheellinen tieosanumero")
         if (projectService.validateLinkTrack(links.trackCode)) {
-          projectService.updateProjectLinks(links.projectId, links.ids, links.linkIds, LinkStatus.apply(links.linkStatus),
-            user.username, links.roadNumber, links.roadPartNumber, links.trackCode, links.userDefinedEndAddressM,
-            links.administrativeClass, links.discontinuity, Some(links.roadEly), links.reversed.getOrElse(false), roadName = links.roadName,
-            Some(links.coordinates)) match {
+          projectService.updateProjectLinks(links.projectId, links.ids, links.linkIds, LinkStatus.apply(links.linkStatus), user.username, links.roadNumber, links.roadPartNumber, links.trackCode, links.userDefinedEndAddressM, links.administrativeClass, links.discontinuity, Some(links.roadEly), links.reversed.getOrElse(false), roadName = links.roadName, Some(links.coordinates)) match {
             case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
             case None =>
               val projectErrors = projectService.validateProjectByIdHighPriorityOnly(links.projectId).map(errorPartsToApi)
@@ -1757,9 +1745,7 @@ object ProjectConverter {
   }
 
   def toReservedRoadPart(rp: RoadPartExtractor): ProjectReservedPart = {
-    ProjectReservedPart(0L, rp.roadNumber, rp.roadPartNumber,
-      None, None, Some(rp.ely),
-      None, None, None, None)
+    ProjectReservedPart(0L, rp.roadNumber, rp.roadPartNumber, None, None, Some(rp.ely), None, None, None, None)
   }
 }
 

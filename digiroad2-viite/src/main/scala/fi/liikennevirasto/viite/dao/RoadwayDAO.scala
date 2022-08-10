@@ -155,7 +155,10 @@ object CalibrationCode {
 
 }
 
-case class CalibrationPoint(linkId: Long, segmentMValue: Double, addressMValue: Long, typeCode: CalibrationPointType = CalibrationPointType.UnknownCP) extends BaseCalibrationPoint
+case class CalibrationPoint(linkId: String, segmentMValue: Double, addressMValue: Long, typeCode: CalibrationPointType = CalibrationPointType.UnknownCP) extends BaseCalibrationPoint {
+  def this(linkId: Long, segmentMValue: Double, addressMValue: Long, typeCode: CalibrationPointType) =
+   this(linkId.toString, segmentMValue, addressMValue, typeCode)
+}
 
 sealed trait TerminationCode {
   def value: Int
@@ -208,7 +211,7 @@ trait BaseRoadAddress {
 
   def createdBy: Option[String]
 
-  def linkId: Long
+  def linkId: String
 
   def startMValue: Double
 
@@ -333,7 +336,9 @@ trait BaseRoadAddress {
 
 //TODO the start date and the created by should not be optional on the road address case class
 // Note: Geometry on road address is not directed: it isn't guaranteed to have a direction of digitization or road addressing
-case class RoadAddress(id: Long, linearLocationId: Long, roadNumber: Long, roadPartNumber: Long, administrativeClass: AdministrativeClass, track: Track, discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None, endDate: Option[DateTime] = None, createdBy: Option[String] = None, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode, adjustedTimestamp: Long, calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), geometry: Seq[Point], linkGeomSource: LinkGeomSource, ely: Long, terminated: TerminationCode = NoTermination, roadwayNumber: Long, validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None, roadName: Option[String] = None) extends BaseRoadAddress {
+case class RoadAddress(id: Long, linearLocationId: Long, roadNumber: Long, roadPartNumber: Long, administrativeClass: AdministrativeClass, track: Track, discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None, endDate: Option[DateTime] = None, createdBy: Option[String] = None, linkId: String, startMValue: Double, endMValue: Double, sideCode: SideCode, adjustedTimestamp: Long, calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), geometry: Seq[Point], linkGeomSource: LinkGeomSource, ely: Long, terminated: TerminationCode = NoTermination, roadwayNumber: Long, validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None, roadName: Option[String] = None) extends BaseRoadAddress {
+  def this(id: Long, linearLocationId: Long, roadNumber: Long, roadPartNumber: Long, administrativeClass: AdministrativeClass, track: Track, discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime], endDate: Option[DateTime], createdBy: Option[String], linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode, adjustedTimestamp: Long, calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]), geometry: Seq[Point], linkGeomSource: LinkGeomSource, ely: Long, terminated: TerminationCode, roadwayNumber: Long, validFrom: Option[DateTime], validTo: Option[DateTime], roadName: Option[String]) =
+   this(id, linearLocationId, roadNumber, roadPartNumber, administrativeClass, track, discontinuity, startAddrMValue, endAddrMValue, startDate, endDate, createdBy, linkId.toString, startMValue, endMValue, sideCode, adjustedTimestamp, calibrationPoints, geometry, linkGeomSource, ely, terminated, roadwayNumber, validFrom, validTo, roadName)
 
   override lazy val startCalibrationPoint: Option[CalibrationPoint] = calibrationPoints._1
   override lazy val endCalibrationPoint: Option[CalibrationPoint] = calibrationPoints._2
@@ -669,14 +674,14 @@ class RoadwayDAO extends BaseDAO {
 
   private def withRoadNumbersInValidDate(roadNumbers: Set[Long])(query: String): String = {
     if (roadNumbers.size > 1000) {
-      MassQuery.withIds(roadNumbers) {
+      MassQuery.withIds(roadNumbers)({
         idTableName =>
           s"""
             $query
             join $idTableName i on i.id = a.ROAD_NUMBER
             where a.valid_to is null AND (a.end_date is null or a.end_date >= current_date) order by a.road_number, a.road_part_number, a.start_date
           """.stripMargin
-      }
+      })
     } else {
       s"""$query where a.valid_to is null AND (a.end_date is null or a.end_date >= current_date) AND a.road_number in (${roadNumbers.mkString(",")}) order by a.road_number, a.road_part_number, a.start_date"""
     }
@@ -751,14 +756,14 @@ class RoadwayDAO extends BaseDAO {
     }
 
     if (roadwayNumbers.size > 1000) {
-      MassQuery.withIds(roadwayNumbers) {
+      MassQuery.withIds(roadwayNumbers)({
         idTableName =>
           s"""
             $query
             join $idTableName i on i.id = a.ROADWAY_NUMBER
             where a.valid_to is null and ${dateFilter(table = "a")}
           """.stripMargin
-      }
+      })
     }
     else
       s"""$query where a.valid_to is null and ${dateFilter(table = "a")} and a.roadway_number in (${roadwayNumbers.mkString(",")})"""
@@ -800,7 +805,7 @@ class RoadwayDAO extends BaseDAO {
 
   private def massFetchWithRoadwayNumbers(roadwayNumbers: Set[Long], withHistory: Boolean = false): Seq[Roadway] = {
     val endDateFilter = if (withHistory) "" else "and a.end_date is null"
-    MassQuery.withIds(roadwayNumbers) {
+    MassQuery.withIds(roadwayNumbers)({
       idTableName => {
         val joinedQuery = (query: String) => {
           s"""
@@ -811,7 +816,7 @@ class RoadwayDAO extends BaseDAO {
         }
         fetch(joinedQuery)
       }
-    }
+    })
   }
 
   private def betweenRoadNumbers(roadNumbers: (Int, Int))(query: String): String = {
@@ -1029,7 +1034,7 @@ class RoadwayDAO extends BaseDAO {
   }
 
   // TODO Instead of returning Option[(Long, Long, ...)] return Option[RoadPartInfo]
-  def getRoadPartInfo(roadNumber: Long, roadPart: Long): Option[(Long, Long, Long, Long, Long, Option[DateTime], Option[DateTime])] = {
+  def getRoadPartInfo(roadNumber: Long, roadPart: Long): Option[(Long, String, Long, Long, Long, Option[DateTime], Option[DateTime])] = {
     val query =
       s"""SELECT r.id, l.link_id, r.end_addr_M, r.discontinuity, r.ely,
             (Select Max(ra.start_date) from ROADWAY ra Where r.ROAD_PART_NUMBER = ra.ROAD_PART_NUMBER and r.ROAD_NUMBER = ra.ROAD_NUMBER) as start_date,
@@ -1041,6 +1046,6 @@ class RoadwayDAO extends BaseDAO {
               on r.START_ADDR_M=ra.maxstartaddrm
           WHERE r.road_number=$roadNumber AND r.road_part_number=$roadPart AND
             r.valid_to is null AND r.end_date is null AND r.TRACK in (0,1)"""
-    Q.queryNA[(Long, Long, Long, Long, Long, Option[DateTime], Option[DateTime])](query).firstOption
+    Q.queryNA[(Long, String, Long, Long, Long, Option[DateTime], Option[DateTime])](query).firstOption
   }
 }

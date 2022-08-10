@@ -61,7 +61,7 @@ class ProjectDAO {
          """.execute
   }
 
-  def fetchAllIdsByLinkId(linkId: Long): Seq[Long] =
+  def fetchAllIdsByLinkId(linkId: String): Seq[Long] =
     time(logger, """Get projects with given link id""") {
     val query =
       s"""SELECT P.ID

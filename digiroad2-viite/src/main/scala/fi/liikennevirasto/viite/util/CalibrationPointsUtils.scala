@@ -13,19 +13,17 @@ object CalibrationPointsUtils {
 
   private val logger = LoggerFactory.getLogger(getClass)
 
-  def toCalibrationPoints(startCalibrationPoint: CalibrationPointType, endCalibrationPoint: CalibrationPointType,
-                          linkId: Long, startMValue: Double, endMValue: Double, startAddrMValue: Long,
-                          endAddrMValue: Long, sideCode: SideCode):
+  def toCalibrationPoints(startCalibrationPoint: CalibrationPointType, endCalibrationPoint: CalibrationPointType, linkId: String, startMValue: Double, endMValue: Double, startAddrMValue: Long, endAddrMValue: Long, sideCode: SideCode):
   (Option[CalibrationPoint], Option[CalibrationPoint]) = {
     (sideCode: SideCode) match {
       case BothDirections => (None, None) // Invalid choice
       case TowardsDigitizing => (
-        if ((startCalibrationPoint: CalibrationPointType) != CalibrationPointType.NoCP) Some(CalibrationPoint(linkId: Long, 0.0, startAddrMValue: Long, startCalibrationPoint: CalibrationPointType)) else None,
-        if ((endCalibrationPoint: CalibrationPointType) != CalibrationPointType.NoCP) Some(CalibrationPoint(linkId: Long, (endMValue: Double) - (startMValue: Double), endAddrMValue: Long, endCalibrationPoint: CalibrationPointType)) else None
+        if ((startCalibrationPoint: CalibrationPointType) != CalibrationPointType.NoCP) Some(CalibrationPoint(linkId: String, 0.0, startAddrMValue: Long, startCalibrationPoint: CalibrationPointType)) else None,
+        if ((endCalibrationPoint: CalibrationPointType) != CalibrationPointType.NoCP) Some(CalibrationPoint(linkId: String, (endMValue: Double) - (startMValue: Double), endAddrMValue: Long, endCalibrationPoint: CalibrationPointType)) else None
       )
       case AgainstDigitizing => (
-        if ((startCalibrationPoint: CalibrationPointType) != CalibrationPointType.NoCP) Some(CalibrationPoint(linkId: Long, (endMValue: Double) - (startMValue: Double), startAddrMValue: Long, startCalibrationPoint: CalibrationPointType)) else None,
-        if ((endCalibrationPoint: CalibrationPointType) != CalibrationPointType.NoCP) Some(CalibrationPoint(linkId: Long, 0.0, endAddrMValue: Long, endCalibrationPoint: CalibrationPointType)) else None
+        if ((startCalibrationPoint: CalibrationPointType) != CalibrationPointType.NoCP) Some(CalibrationPoint(linkId: String, (endMValue: Double) - (startMValue: Double), startAddrMValue: Long, startCalibrationPoint: CalibrationPointType)) else None,
+        if ((endCalibrationPoint: CalibrationPointType) != CalibrationPointType.NoCP) Some(CalibrationPoint(linkId: String, 0.0, endAddrMValue: Long, endCalibrationPoint: CalibrationPointType)) else None
       )
       case Unknown => (None, None) // Invalid choice
     }
@@ -85,8 +83,7 @@ object CalibrationPointsUtils {
     }
   }
 
-  def createCalibrationPointIfNeeded(rwPoint: Long, linkId: Long, calibrationPointLocation: CalibrationPointLocation,
-                                     calibrationPointType: CalibrationPointType, username: String): Unit = {
+  def createCalibrationPointIfNeeded(rwPoint: Long, linkId: String, calibrationPointLocation: CalibrationPointLocation, calibrationPointType: CalibrationPointType, username: String): Unit = {
     val existing = CalibrationPointDAO.fetch(linkId, calibrationPointLocation.value)
 
     // The existing correct kind of calibration point has the same roadwayPointId and the same or a higher type.
