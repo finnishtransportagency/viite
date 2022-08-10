@@ -3,7 +3,8 @@ package fi.liikennevirasto.digiroad2
 import java.util.concurrent.TimeUnit
 
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
+import fi.liikennevirasto.digiroad2.client.vvh.{KgvCollection, KgvRoadLinkClient, KgvRoadLink}
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.UserProvider
@@ -100,8 +101,9 @@ object Digiroad2Context {
     Class.forName(ViiteProperties.eventBus).newInstance().asInstanceOf[DigiroadEventBus]
   }
 
-  lazy val vvhClient: VVHClient = {
-    new VVHClient(ViiteProperties.vvhRestApiEndPoint)
+  lazy val vvhClient: KgvRoadLink = {
+    new KgvRoadLink()
+    //VVHClient(ViiteProperties.vvhRestApiEndPoint)
   }
 
   lazy val roadLinkService: RoadLinkService = {

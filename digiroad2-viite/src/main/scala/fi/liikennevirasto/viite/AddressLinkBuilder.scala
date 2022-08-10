@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 //import fi.liikennevirasto.viite.AdministrativeClass._
 import fi.liikennevirasto.digiroad2.asset._
@@ -39,7 +39,7 @@ trait AddressLinkBuilder {
       MunicipalityDAO.getMunicipalityNames
     }
 
-  def getLinkType(roadLink: VVHRoadlink): LinkType ={  //similar logic used in roadLinkService
+  def getLinkType(roadLink: RoadLinkFetched): LinkType ={  //similar logic used in roadLinkService
     roadLink.featureClass match {
       case FeatureClass.TractorRoad => TractorRoad
       case FeatureClass.DrivePath => SingleCarriageway

@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.DigiroadEventBus
 import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
-import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHComplementaryClient, VVHRoadLinkClient}
+import fi.liikennevirasto.digiroad2.client.vvh.{KgvRoadLink, KgvRoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
@@ -34,9 +34,9 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
   val mockRoadAddressService: RoadAddressService = MockitoSugar.mock[RoadAddressService]
   val mockNodesAndJunctionsService = MockitoSugar.mock[NodesAndJunctionsService]
   val mockEventBus: DigiroadEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val mockVVHClient: VVHClient = MockitoSugar.mock[VVHClient]
-  val mockVVHRoadLinkClient: VVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
-  val mockVVHComplementaryClient: VVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
+  val mockVVHClient: KgvRoadLink = MockitoSugar.mock[KgvRoadLink]
+  val mockVVHRoadLinkClient: KgvRoadLinkClient[RoadLinkFetched] = MockitoSugar.mock[KgvRoadLinkClient[RoadLinkFetched]]
+//  val mockVVHComplementaryClient: VVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
   val projectValidator = new ProjectValidator
   val projectDAO = new ProjectDAO
   val projectLinkDAO = new ProjectLinkDAO
@@ -77,7 +77,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       )
 
       val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(),
-                                  Seq(ProjectReservedPart(0L, 1L, 1L,  None, None,  None, None,  None, None, None)),
+                                  Seq(ProjectReservedPart(0L, 1L, 1L, None, None, None, None, None, None, None)),
                                   Seq(), None)
       projectDAO.create(project)
 
@@ -549,7 +549,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       )
 
       val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(),
-                                  Seq(ProjectReservedPart(0L, 1L, 1L,  None, None,  None, None,  None, None, None)),
+                                  Seq(ProjectReservedPart(0L, 1L, 1L, None, None, None, None, None, None, None)),
                                   Seq(), None)
       projectDAO.create(project)
 
@@ -577,7 +577,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       )
 
       val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(),
-                                  Seq(ProjectReservedPart(0L, 1L, 1L,  None, None,  None, None,  None, None, None)),
+                                  Seq(ProjectReservedPart(0L, 1L, 1L, None, None, None, None, None, None, None)),
                                   Seq(), None)
       projectDAO.create(project)
 
@@ -605,7 +605,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       )
 
       val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(),
-                                  Seq(ProjectReservedPart(0L, 1L, 1L,  None, None,  None, None,  None, None, None)),
+                                  Seq(ProjectReservedPart(0L, 1L, 1L, None, None, None, None, None, None, None)),
                                   Seq(), None)
       projectDAO.create(project)
 
@@ -909,13 +909,13 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       )
 
       val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(),
-                                  Seq(ProjectReservedPart(0L, 9999L, 1L,  None, None,  None, None,  None, None, None),
-                                      ProjectReservedPart(0L, 9999L, 2L,  None, None,  None, None,  None, None, None)),
+                                  Seq(ProjectReservedPart(0L, 9999L, 1L, None, None, None, None, None, None, None),
+                                      ProjectReservedPart(0L, 9999L, 2L, None, None, None, None, None, None, None)),
                                   Seq(), None)
       projectDAO.create(project)
 
       val projectLinks = Seq(
-        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 100L, Some(DateTime.now()), status = LinkStatus.UnChanged, administrativeClass = AdministrativeClass.apply(1),roadwayNumber = 10),
+        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 100L, Some(DateTime.now()), status = LinkStatus.UnChanged, administrativeClass = AdministrativeClass.apply(1), roadwayNumber = 10),
         dummyProjectLink(1L, 2L, Track.Combined, Discontinuity.Continuous, 0L, 300L, Some(DateTime.now()), status = LinkStatus.Transfer, administrativeClass = AdministrativeClass.apply(1), roadwayNumber = 20),
         dummyProjectLink(1L, 2L, Track.Combined, Discontinuity.Continuous, 300L, 1000L, Some(DateTime.now()), status = LinkStatus.Transfer, administrativeClass = AdministrativeClass.apply(1), roadwayNumber = 30)
       )

@@ -7,7 +7,7 @@ import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, SideCode}
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.client.vvh.KgvRoadLink
 import fi.liikennevirasto.digiroad2.dao.SequenceResetterDAO
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -19,6 +19,8 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.util.DataImporter.Conversion
 import org.joda.time.{DateTime, _}
 import org.slf4j.LoggerFactory
+import slick.driver
+import slick.driver.JdbcDriver
 import slick.driver.JdbcDriver.backend.Database
 import slick.jdbc.StaticQuery.interpolation
 
@@ -53,7 +55,7 @@ class DataImporter {
 
   def withDynTransaction(f: => Unit): Unit = PostGISDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
-  def withLinkIdChunks(f: (Long, Long) => Unit): Unit = {
+  def withLinkIdChunks(f: (String, String) => Unit): Unit = {
     val chunks = withDynSession{ fetchChunkLinkIds()}
     chunks.par.foreach { p => f(p._1, p._2) }
   }
@@ -112,7 +114,7 @@ class DataImporter {
 
   def importRoadAddresses(importTableName: Option[String]): Unit = {
     println(s"\nCommencing road address import from conversion at time: ${DateTime.now()}")
-    val vvhClient = new VVHClient(ViiteProperties.vvhRestApiEndPoint)
+    val vvhClient = new KgvRoadLink
     importTableName match {
       case None => // shouldn't get here because args size test
         throw new Exception("****** Import failed! Conversion table name required as a second input ******")
@@ -127,8 +129,7 @@ class DataImporter {
     }
   }
 
-  def importRoadAddressData(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
-                            importOptions: ImportOptions): Unit = {
+  def importRoadAddressData(conversionDatabase: JdbcDriver.backend.DatabaseDef, vvhClient: KgvRoadLink, importOptions: ImportOptions): Unit = {
 
     println(s"\nimportRoadAddressData    started at time:  ${DateTime.now()}")
     withDynTransaction {
@@ -298,7 +299,7 @@ class DataImporter {
 
   def updateLinearLocationGeometry(): Unit = {
     println(s"\nUpdating road address table geometries at time: ${DateTime.now()}")
-    val vvhClient = new VVHClient(ViiteProperties.vvhRestApiEndPoint)
+    val vvhClient = new KgvRoadLink
     updateLinearLocationGeometry(vvhClient, geometryFrozen)
     println(s"Road addresses geometry update complete at time: ${DateTime.now()}")
     println()
@@ -324,7 +325,7 @@ class DataImporter {
     }
   }
 
-  protected def getRoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient, importOptions: ImportOptions) = {
+  protected def getRoadAddressImporter(conversionDatabase: driver.JdbcDriver.backend.DatabaseDef, vvhClient: KgvRoadLink, importOptions: ImportOptions): RoadAddressImporter = {
     new RoadAddressImporter(conversionDatabase, vvhClient, importOptions)
   }
 
@@ -359,8 +360,8 @@ class DataImporter {
     Seq(roadAddressA, roadAddressB)
   }
 
-  private def generateChunks(linkIds: Seq[Long], chunkNumber: Long): Seq[(Long, Long)] = {
-    val (chunks, _) = linkIds.foldLeft((Seq[Long](0), 0)) {
+  private def generateChunks(linkIds: Seq[String], chunkNumber: Long): Seq[(String, String)] = {
+    val (chunks, _) = linkIds.foldLeft((Seq[String](""), 0)) {
       case ((fchunks, index), linkId) =>
         if (index > 0 && index % chunkNumber == 0) {
           (fchunks ++ Seq(linkId), index + 1)
@@ -377,13 +378,13 @@ class DataImporter {
     result.zip(result.tail)
   }
 
-  protected def fetchChunkLinkIds(): Seq[(Long, Long)] = {
-    val linkIds = sql"""select distinct link_id from linear_location where link_id is not null order by link_id""".as[Long].list
+  protected def fetchChunkLinkIds(): Seq[(String, String)] = {
+    val linkIds = sql"""select distinct link_id from linear_location where link_id is not null order by link_id""".as[String].list
     generateChunks(linkIds, 25000l)
   }
 
 
-  private def updateLinearLocationGeometry(vvhClient: VVHClient, geometryFrozen: Boolean): Unit = {
+  private def updateLinearLocationGeometry(vvhClient: KgvRoadLink, geometryFrozen: Boolean): Unit = {
     val eventBus = new DummyEventBus
     val linearLocationDAO = new LinearLocationDAO
     val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer, geometryFrozen)
@@ -392,7 +393,7 @@ class DataImporter {
     withLinkIdChunks {
       case (min, max) =>
         withDynTransaction {
-          val linkIds = linearLocationDAO.fetchLinkIdsInChunk(min, max).toSet
+          val linkIds = linearLocationDAO.fetchLinkIdsInChunk(min, max).toSet // TODO: Refactor for new linkId
           val roadLinksFromVVH = linkService.getCurrentAndComplementaryRoadLinksFromVVH(linkIds)
           val unGroupedTopology = linearLocationDAO.fetchByLinkId(roadLinksFromVVH.map(_.linkId).toSet)
           val topologyLocation = unGroupedTopology.groupBy(_.linkId)
