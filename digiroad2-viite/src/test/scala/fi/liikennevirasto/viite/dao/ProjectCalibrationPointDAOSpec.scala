@@ -113,7 +113,7 @@ class ProjectCalibrationPointDAOSpec extends FunSuite with Matchers {
 
   test("Test removeAllCalibrationPointsFromProject & removeAllCalibrationPointsFromRoad When removing all calibrations points by project or road Then it should be deleted with success") {
     runWithRollback {
-      when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
+      when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[String]])).thenReturn(Seq())
       addTestProjects()
       addProjectRoads()
       val id = ProjectCalibrationPointDAO.createCalibrationPoint(1, 1, 0.0, 15)

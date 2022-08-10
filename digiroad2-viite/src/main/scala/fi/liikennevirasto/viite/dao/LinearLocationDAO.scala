@@ -24,7 +24,7 @@ trait BaseLinearLocation {
 
   def orderNumber: Double
 
-  def linkId: Long
+  def linkId: String
 
   def startMValue: Double
 
@@ -115,10 +115,9 @@ object CalibrationPointReference {
 // Notes:
 //  - Geometry on linear location is not directed: it isn't guaranteed to have a direction of digitization or road addressing
 //  - Order number is a Double in LinearLocation case class and Long on the database because when there is for example divided change type we need to add more linear locations
-case class LinearLocation(id: Long, orderNumber: Double, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
-                          adjustedTimestamp: Long, calibrationPoints: (CalibrationPointReference, CalibrationPointReference) = (CalibrationPointReference.None, CalibrationPointReference.None),
-                          geometry: Seq[Point], linkGeomSource: LinkGeomSource,
-                          roadwayNumber: Long, validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None) extends BaseLinearLocation {
+case class LinearLocation(id: Long, orderNumber: Double, linkId: String, startMValue: Double, endMValue: Double, sideCode: SideCode, adjustedTimestamp: Long, calibrationPoints: (CalibrationPointReference, CalibrationPointReference) = (CalibrationPointReference.None, CalibrationPointReference.None), geometry: Seq[Point], linkGeomSource: LinkGeomSource, roadwayNumber: Long, validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None) extends BaseLinearLocation {
+  def this(id: Long, orderNumber: Double, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode, adjustedTimestamp: Long, calibrationPoints: (CalibrationPointReference, CalibrationPointReference), geometry: Seq[Point], linkGeomSource: LinkGeomSource, roadwayNumber: Long, validFrom: Option[DateTime], validTo: Option[DateTime]) =
+   this(id, orderNumber, linkId.toString, startMValue, endMValue, sideCode, adjustedTimestamp, calibrationPoints, geometry, linkGeomSource, roadwayNumber, validFrom, validTo)
 
   def copyWithGeometry(newGeometry: Seq[Point]): LinearLocation = {
     this.copy(geometry = newGeometry)
@@ -188,7 +187,7 @@ class LinearLocationDAO {
         ps.setLong(1, location.id)
         ps.setLong(2, roadwayNumber)
         ps.setLong(3, location.orderNumber.toLong)
-        ps.setLong(4, location.linkId)
+        ps.setString(4, location.linkId)
         ps.setDouble(5, location.startMValue)
         ps.setDouble(6, location.endMValue)
         ps.setInt(7, location.sideCode.value)
@@ -210,7 +209,7 @@ class LinearLocationDAO {
       val id = r.nextLong()
       val roadwayNumber = r.nextLong()
       val orderNumber = r.nextLong()
-      val linkId = r.nextLong()
+      val linkId = r.nextString()
       val startMeasure = r.nextDouble()
       val endMeasure = r.nextDouble()
       val sideCode = r.nextInt()
@@ -231,18 +230,16 @@ class LinearLocationDAO {
 
       val calEndTypeOption: Option[CalibrationPointType] = if (calEndType.isDefined) Some(CalibrationPointType.apply(calEndType.get)) else None
 
-      LinearLocation(id, orderNumber, linkId, startMeasure, endMeasure, SideCode.apply(sideCode), adjustedTimestamp,
-        (CalibrationPointReference(calStartAddrM, calStartTypeOption),
-          CalibrationPointReference(calEndAddrM, calEndTypeOption)),
-        Seq(Point(x1, y1), Point(x2, y2)), LinkGeomSource.apply(linkSource), roadwayNumber, validFrom, validTo)
+      LinearLocation(id, orderNumber, linkId, startMeasure, endMeasure, SideCode.apply(sideCode), adjustedTimestamp, (CalibrationPointReference(calStartAddrM, calStartTypeOption),
+          CalibrationPointReference(calEndAddrM, calEndTypeOption)), Seq(Point(x1, y1), Point(x2, y2)), LinkGeomSource.apply(linkSource), roadwayNumber, validFrom, validTo)
     }
   }
 
-  def fetchLinkIdsInChunk(min: Long, max: Long): List[Long] = {
+  def fetchLinkIdsInChunk(min: String, max: String): List[String] = { //TODO: Refactor for new linkId
     sql"""
       select distinct(loc.link_id)
       from linear_location loc where loc.link_id between $min and $max order by loc.link_id asc
-    """.as[Long].list
+    """.as[String].list
   }
 
   private def queryList(query: String): List[LinearLocation] = {
@@ -290,7 +287,7 @@ class LinearLocationDAO {
 
   def fetchByIdMassQuery(ids: Iterable[Long], rejectInvalids: Boolean = true): List[LinearLocation] = {
     time(logger, "Fetch linear locations by id - mass query") {
-      MassQuery.withIds(ids) {
+      MassQuery.withIds(ids)({
         idTableName =>
 
           val validToFilter = if (rejectInvalids)
@@ -305,7 +302,7 @@ class LinearLocationDAO {
               $validToFilter
             """
           queryList(query)
-      }
+      })
     }
   }
 
@@ -313,7 +310,7 @@ class LinearLocationDAO {
     fetchByIdMassQuery(ids, rejectInvalids)
   }
 
-  def fetchByLinkId(linkIds: Set[Long], filterIds: Set[Long] = Set()): List[LinearLocation] = {
+  def fetchByLinkId(linkIds: Set[String], filterIds: Set[Long] = Set()): List[LinearLocation] = {
     time(logger, "Fetch linear locations by link id") {
       if (linkIds.isEmpty) {
         return List()
@@ -335,9 +332,9 @@ class LinearLocationDAO {
     }
   }
 
-  def fetchByLinkIdMassQuery(linkIds: Set[Long]): List[LinearLocation] = {
+  def fetchByLinkIdMassQuery(linkIds: Set[String]): List[LinearLocation] = {
     time(logger, "Fetch linear locations by link id - mass query") {
-      MassQuery.withIds(linkIds) {
+      MassQuery.withIds(linkIds)({
         idTableName =>
           val query =
             s"""
@@ -346,7 +343,7 @@ class LinearLocationDAO {
               where loc.valid_to is null
             """
           queryList(query)
-      }
+      })
     }
   }
 
@@ -371,7 +368,7 @@ class LinearLocationDAO {
     * @param linkIds The given road link identifiers
     * @return Returns all the filtered linear locations
     */
-  def fetchRoadwayByLinkId(linkIds: Set[Long]): List[LinearLocation] = {
+  def fetchRoadwayByLinkId(linkIds: Set[String]): List[LinearLocation] = {
     time(logger, "Fetch all linear locations of a roadway by link id") {
       if (linkIds.isEmpty) {
         return List()
@@ -390,9 +387,9 @@ class LinearLocationDAO {
     }
   }
 
-  def fetchRoadwayByLinkIdMassQuery(linkIds: Set[Long]): List[LinearLocation] = {
+  def fetchRoadwayByLinkIdMassQuery(linkIds: Set[String]): List[LinearLocation] = {
     time(logger, "Fetch all linear locations of a roadway by link id - mass query") {
-      MassQuery.withIds(linkIds) {
+      MassQuery.withIds(linkIds)({
         idTableName =>
           val query =
             s"""
@@ -403,7 +400,7 @@ class LinearLocationDAO {
                 where valid_to is null)
             """
           queryList(query)
-      }
+      })
     }
   }
 
@@ -448,7 +445,7 @@ class LinearLocationDAO {
       Q.updateNA(query).first
   }
 
-  def expireByLinkId(linkIds: Set[Long]): Int = {
+  def expireByLinkId(linkIds: Set[String]): Int = {
     val query =
       s"""
         Update LINEAR_LOCATION Set valid_to = current_timestamp Where valid_to IS NULL and link_id in (${linkIds.mkString(",")})
@@ -493,11 +490,11 @@ class LinearLocationDAO {
     } else {
       (startM, endM) match {
         case (Some(s), Some(e)) =>
-          create(Seq(expired.copy(id = NewIdValue, linkId = adjustment.linkId, geometry = geometry, startMValue = s, endMValue = e)), createdBy)
+          create(Seq(expired.copy(id = NewIdValue, linkId = adjustment.linkId, startMValue = s, endMValue = e, geometry = geometry)), createdBy)
         case (_, Some(e)) =>
-          create(Seq(expired.copy(id = NewIdValue, linkId = adjustment.linkId, geometry = geometry, endMValue = e)), createdBy)
+          create(Seq(expired.copy(id = NewIdValue, linkId = adjustment.linkId, endMValue = e, geometry = geometry)), createdBy)
         case (Some(s), _) =>
-          create(Seq(expired.copy(id = NewIdValue, linkId = adjustment.linkId, geometry = geometry, startMValue = s)), createdBy)
+          create(Seq(expired.copy(id = NewIdValue, linkId = adjustment.linkId, startMValue = s, geometry = geometry)), createdBy)
         case _ =>
       }
     }
@@ -533,7 +530,7 @@ class LinearLocationDAO {
         expired.sideCode
       }
 
-      create(Seq(expired.copy(id = NewIdValue, geometry = geometry, sideCode = sideCode)), createdBy)
+      create(Seq(expired.copy(id = NewIdValue, sideCode = sideCode, geometry = geometry)), createdBy)
     }
   }
 
@@ -550,7 +547,7 @@ class LinearLocationDAO {
     }
   }
 
-  def withLinkIdAndMeasure(linkId: Long, startM: Option[Double], endM: Option[Double])(query: String): String = {
+  def withLinkIdAndMeasure(linkId: String, startM: Option[Double], endM: Option[Double])(query: String): String = {
     val startFilter = startM match {
       case Some(s) => s" AND loc.start_measure <= $s"
       case None => ""
@@ -636,14 +633,14 @@ class LinearLocationDAO {
       Seq()
     } else {
       val query = if (roadwayNumbers.size > 1000) {
-        MassQuery.withIds(roadwayNumbers) {
+        MassQuery.withIds(roadwayNumbers)({
           idTableName =>
             s"""
               $selectFromLinearLocation
               join $idTableName i on i.id = loc.ROADWAY_NUMBER
               where loc.valid_to is null
             """.stripMargin
-        }
+        })
       } else {
         s"""
             $selectFromLinearLocation

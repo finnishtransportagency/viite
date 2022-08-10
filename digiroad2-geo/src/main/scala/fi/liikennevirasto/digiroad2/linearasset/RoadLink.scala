@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
 
 trait RoadLinkLike extends PolyLine{
-  def linkId: Long
+  def linkId(): String
   def municipalityCode: Int
   def length: Double
   def administrativeClass: AdministrativeClass
@@ -16,7 +16,7 @@ trait RoadLinkLike extends PolyLine{
   def vvhTimeStamp: Long
 }
 
-case class RoadLink(linkId: Long, geometry: Seq[Point],
+case class RoadLink(linkId: String, geometry: Seq[Point],
                     length: Double, administrativeClass: AdministrativeClass,
                     functionalClass: Int, trafficDirection: TrafficDirection,
                     linkType: LinkType, modifiedAt: Option[String], modifiedBy: Option[String],

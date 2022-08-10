@@ -13,7 +13,7 @@ object ProjectCalibrationPointDAO {
   }
 
   trait BaseCalibrationPoint extends CalibrationPointMValues {
-    def linkId: Long
+    def linkId(): String
   }
 
   case class UserDefinedCalibrationPoint(id: Long, projectLinkId: Long, projectId: Long, segmentMValue: Double, addressMValue: Long) extends CalibrationPointMValues

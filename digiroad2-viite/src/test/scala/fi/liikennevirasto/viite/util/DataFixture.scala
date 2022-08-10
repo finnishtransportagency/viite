@@ -5,7 +5,7 @@ import java.util.Properties
 import com.googlecode.flyway.core.Flyway
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.client.vvh.{KgvRoadLink}
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.ds
@@ -24,8 +24,8 @@ import scala.language.postfixOps
 object DataFixture {
 
   val dataImporter = new DataImporter
-  lazy val vvhClient: VVHClient = {
-    new VVHClient(ViiteProperties.vvhRestApiEndPoint)
+  lazy val vvhClient: KgvRoadLink = {
+    new KgvRoadLink
   }
 
   private lazy val geometryFrozen: Boolean = ViiteProperties.vvhRoadlinkFrozen
@@ -79,7 +79,7 @@ object DataFixture {
 
   def checkRoadNetwork(): Unit = {
     println(s"\nstart checking road network at time: ${DateTime.now()}")
-    val vvhClient = new VVHClient(ViiteProperties.vvhRestApiEndPoint)
+    val vvhClient = new KgvRoadLink
     val username = ViiteProperties.bonecpUsername
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer, geometryFrozen)
     PostGISDatabase.withDynTransaction {

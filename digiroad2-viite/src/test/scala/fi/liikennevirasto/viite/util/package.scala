@@ -119,9 +119,9 @@ package object util {
 
     val projectId = Sequences.nextViiteProjectId
 
-    def createRoadAddresses(roadNumber: Long, roadPartNumber: Long, track: Long, start: Long, end: Long): (Long, Long) = {
+    def createRoadAddresses(roadNumber: Long, roadPartNumber: Long, track: Long, start: Long, end: Long): (Long, String) = {
       val roadwayId = Sequences.nextRoadwayId
-      val nextLinkId = Sequences.nextViitePrimaryKeySeqValue
+      val nextLinkId = Sequences.nextViitePrimaryKeySeqValue.toString
       val linearLocationId = Sequences.nextLinearLocationId
       val endMeasure = end - start
       sqlu"""INSERT INTO ROADWAY VALUES ($roadwayId, 1000000000, $roadNumber, $roadPartNumber, $track, $start, $end, 0, ${discontinuity.value},
@@ -140,7 +140,7 @@ package object util {
     def withTrack(t: Track, roadNumber: Long, roadPartNumber: Long): Seq[ProjectLink] = {
       addrM.init.zip(addrM.tail).map {
         case (st, en) =>
-          val (roadwayId, linkId) = if (withRoadAddress) createRoadAddresses(roadNumber, roadPartNumber, t.value, st, en) else (0L, 0L)
+          val (roadwayId, linkId) = if (withRoadAddress) createRoadAddresses(roadNumber, roadPartNumber, t.value, st, en) else (0L, 0L.toString)
           projectLink(st, en, t, projectId, linkStatus, roadNumber, roadPartNumber, discontinuity, ely, linkId, roadwayId)
       }
     }
@@ -179,8 +179,7 @@ package object util {
     project
   }
 
-  def projectLink(startAddrM: Long, endAddrM: Long, track: Track, projectId: Long, status: LinkStatus = LinkStatus.NotHandled,
-                  roadNumber: Long = 19999L, roadPartNumber: Long = 1L, discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, linkId: Long = 0L, roadwayId: Long = 0L, linearLocationId: Long = 0L) = {
+  def projectLink(startAddrM: Long, endAddrM: Long, track: Track, projectId: Long, status: LinkStatus = LinkStatus.NotHandled, roadNumber: Long = 19999L, roadPartNumber: Long = 1L, discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, linkId: String = "0", roadwayId: Long = 0L, linearLocationId: Long = 0L): ProjectLink = {
     ProjectLink(NewIdValue, roadNumber, roadPartNumber, track, discontinuity, startAddrM, endAddrM, startAddrM, endAddrM, None, None, Some("User"), linkId, 0.0, (endAddrM - startAddrM).toDouble, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), Seq(Point(0.0, startAddrM), Point(0.0, endAddrM)), projectId, status, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, (endAddrM - startAddrM).toDouble, roadwayId, linearLocationId, ely, reversed = false, None, 0L)
   }
 
@@ -201,11 +200,7 @@ package object util {
   }
 
   def toProjectAddressLink(ral: RoadAddressLinkLike): ProjectAddressLink = {
-    ProjectAddressLink(ral.id, ral.linkId, ral.geometry, ral.length, ral.administrativeClassMML, ral.linkType,
-      ral.constructionType, ral.roadLinkSource, ral.administrativeClass, ral.VVHRoadName, ral.roadName, ral.municipalityCode, ral.municipalityName, ral.modifiedAt, ral.modifiedBy,
-      ral.attributes, ral.roadNumber, ral.roadPartNumber, ral.trackCode, ral.elyCode, ral.discontinuity,
-      ral.startAddressM, ral.endAddressM, ral.startMValue, ral.endMValue, ral.sideCode, ral.startCalibrationPoint, ral.endCalibrationPoint,
-      ral.anomaly, LinkStatus.Unknown, ral.id, ral.linearLocationId)
+    ProjectAddressLink(ral.id, ral.linkId, ral.geometry, ral.length, ral.administrativeClassMML, ral.linkType, ral.constructionType, ral.roadLinkSource, ral.administrativeClass, ral.VVHRoadName, ral.roadName, ral.municipalityCode, ral.municipalityName, ral.modifiedAt, ral.modifiedBy, ral.attributes, ral.roadNumber, ral.roadPartNumber, ral.trackCode, ral.elyCode, ral.discontinuity, ral.startAddressM, ral.endAddressM, ral.startMValue, ral.endMValue, ral.sideCode, ral.startCalibrationPoint, ral.endCalibrationPoint, ral.anomaly, LinkStatus.Unknown, ral.id, ral.linearLocationId)
   }
 
   def backToProjectLink(project: Project)(rl: ProjectAddressLink): ProjectLink = {
