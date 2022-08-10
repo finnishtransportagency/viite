@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.Planned
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, MinorDiscontinuity}

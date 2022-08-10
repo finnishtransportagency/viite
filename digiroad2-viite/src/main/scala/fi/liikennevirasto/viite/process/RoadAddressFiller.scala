@@ -15,7 +15,7 @@ object RoadAddressFiller {
   val logger: Logger = LoggerFactory.getLogger(getClass)
   val roadAddressLinkBuilder = new RoadAddressLinkBuilder(new RoadwayDAO, new LinearLocationDAO, new ProjectLinkDAO)
 
-  case class LinearLocationAdjustment(linearLocationId: Long, linkId: Long, startMeasure: Option[Double], endMeasure: Option[Double], geometry: Seq[Point])
+  case class LinearLocationAdjustment(linearLocationId: Long, linkId: String, startMeasure: Option[Double], endMeasure: Option[Double], geometry: Seq[Point])
 
   case class ChangeSet(
                       droppedSegmentIds: Set[Long],
@@ -58,7 +58,7 @@ object RoadAddressFiller {
     }, geom))
   }
 
-  def fillProjectTopology(roadLinks: Seq[RoadLinkLike], roadAddressMap: Map[Long, Seq[ProjectAddressLink]]): Seq[ProjectAddressLink] = {
+  def fillProjectTopology(roadLinks: Seq[RoadLinkLike], roadAddressMap: Map[String, Seq[ProjectAddressLink]]): Seq[ProjectAddressLink] = {
     val fillOperations: Seq[(RoadLinkLike, Seq[ProjectAddressLink]) => Seq[ProjectAddressLink]] = Seq(
       extendToGeometry
     )

@@ -8,7 +8,7 @@ import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.GeometryUtils
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.client.vvh.{HistoryRoadLink, KgvRoadLink, KgvRoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
@@ -22,14 +22,13 @@ import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._
 
 
-case class ConversionAddress(roadNumber: Long, roadPartNumber: Long, trackCode: Long, discontinuity: Long, startAddressM: Long, endAddressM: Long, startM: Double, endM: Double, startDate: Option[DateTime], endDate: Option[DateTime], validFrom: Option[DateTime], expirationDate: Option[DateTime], ely: Long, administrativeClass: Long, terminated: Long, linkId: Long, userId: String, x1: Option[Double], y1: Option[Double], x2: Option[Double], y2: Option[Double], roadwayNumber: Long, sideCode: SideCode, calibrationCode: CalibrationCode = CalibrationCode.No, directionFlag: Long = 0)
+case class ConversionAddress(roadNumber: Long, roadPartNumber: Long, trackCode: Long, discontinuity: Long, startAddressM: Long, endAddressM: Long, startM: Double, endM: Double, startDate: Option[DateTime], endDate: Option[DateTime], validFrom: Option[DateTime], expirationDate: Option[DateTime], ely: Long, administrativeClass: Long, terminated: Long, linkId: String, userId: String, x1: Option[Double], y1: Option[Double], x2: Option[Double], y2: Option[Double], roadwayNumber: Long, sideCode: SideCode, calibrationCode: CalibrationCode = CalibrationCode.No, directionFlag: Long = 0)
 
-class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient, importOptions: ImportOptions) {
+class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: KgvRoadLink, importOptions: ImportOptions) {
 
   case class IncomingRoadway(roadwayNumber: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Long, startAddrM: Long, endAddrM: Long, reversed: Long, startDate: Option[DateTime], endDate: Option[DateTime], createdBy: String, administrativeClass: Long, ely: Long, validFrom: Option[DateTime], validTo: Option[DateTime], discontinuity: Long, terminated: Long)
 
-  case class IncomingLinearLocation(roadwayNumber: Long, orderNumber: Long, linkId: Long, startMeasure: Double, endMeasure: Double, sideCode: SideCode, linkGeomSource: LinkGeomSource, createdBy: String, x1: Option[Double], y1: Option[Double],
-                                    x2: Option[Double], y2: Option[Double], validFrom: Option[DateTime], validTo: Option[DateTime])
+  case class IncomingLinearLocation(roadwayNumber: Long, orderNumber: Long, linkId: String, startMeasure: Double, endMeasure: Double, sideCode: SideCode, linkGeomSource: LinkGeomSource, createdBy: String, x1: Option[Double], y1: Option[Double], x2: Option[Double], y2: Option[Double], validFrom: Option[DateTime], validTo: Option[DateTime])
 
   val dateFormatter = ISODateTimeFormat.basicDate()
 
@@ -105,7 +104,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
   private def insertLinearLocation(linearLocationStatement: PreparedStatement, linearLocation: IncomingLinearLocation): Unit = {
     linearLocationStatement.setLong(1, linearLocation.roadwayNumber)
     linearLocationStatement.setLong(2, linearLocation.orderNumber)
-    linearLocationStatement.setLong(3, linearLocation.linkId)
+    linearLocationStatement.setString(3, linearLocation.linkId)
     linearLocationStatement.setDouble(4, linearLocation.startMeasure)
     linearLocationStatement.setDouble(5, linearLocation.endMeasure)
     linearLocationStatement.setLong(6, linearLocation.sideCode.value)
@@ -142,22 +141,22 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
 
   private def insertCalibrationPoint(calibrationPointStatement: PreparedStatement, calibrationPoint: CalibrationPoint): Unit = {
     calibrationPointStatement.setLong(1, calibrationPoint.roadwayPointId)
-    calibrationPointStatement.setLong(2, calibrationPoint.linkId)
+    calibrationPointStatement.setString(2, calibrationPoint.linkId)
     calibrationPointStatement.setLong(3, calibrationPoint.startOrEnd.value)
     calibrationPointStatement.setLong(4, calibrationPoint.typeCode.value)
     calibrationPointStatement.setString(5, calibrationPoint.createdBy)
     calibrationPointStatement.addBatch()
   }
 
-  private def fetchRoadLinksFromVVH(linkIds: Set[Long]): Map[Long, RoadLinkLike] = {
+  private def fetchRoadLinksFromVVH(linkIds: Set[String]): Map[String, RoadLinkLike] = {
     val vvhRoadLinkClient = if (importOptions.useFrozenLinkService) vvhClient.frozenTimeRoadLinkData else vvhClient.roadLinkData
     linkIds.grouped(4000).flatMap(group =>
       vvhRoadLinkClient.fetchByLinkIds(group) ++ vvhClient.complementaryData.fetchByLinkIds(group)
     ).toSeq.groupBy(_.linkId).mapValues(_.head)
   }
 
-  private def fetchHistoryRoadLinksFromVVH(linkIds: Set[Long]): Map[Long, RoadLinkLike] =
-    vvhClient.historyData.fetchVVHRoadLinkByLinkIds(linkIds).groupBy(_.linkId).mapValues(_.maxBy(_.endDate))
+  private def fetchHistoryRoadLinksFromVVH(linkIds: Set[String]): Map[String, HistoryRoadLink] =
+    vvhClient.historyData.fetchVVHRoadlinks[HistoryRoadLink](linkIds).groupBy(_.linkId).mapValues(_.maxBy(_.endDate))
 
 
   private def adjustLinearLocation(linearLocation: IncomingLinearLocation, coefficient: Double): IncomingLinearLocation = {
@@ -266,7 +265,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     val mappedRoadLinks = fetchRoadLinksFromVVH(linkIds)
     print(s"${DateTime.now()} - ")
     println("Read %d road links from vvh".format(mappedRoadLinks.size))
-    val mappedHistoryRoadLinks = fetchHistoryRoadLinksFromVVH(linkIds.filterNot(linkId => mappedRoadLinks.get(linkId).isDefined))
+    val mappedHistoryRoadLinks = fetchHistoryRoadLinksFromVVH(linkIds.filterNot(linkId => mappedRoadLinks.contains(linkId)))
     print(s"${DateTime.now()} - ")
     println("Read %d road links history from vvh".format(mappedHistoryRoadLinks.size))
 
@@ -369,7 +368,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     links.foreach {
       link =>
         if (LinkDAO.fetch(link.linkId).isEmpty) {
-          statement.setLong(1, link.linkId)
+          statement.setString(1, link.linkId)
           statement.setLong(2, link.linkSource.value)
           statement.setLong(3, link.vvhTimeStamp)
           statement.addBatch()
@@ -414,12 +413,10 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
             if (existingCalibrationPoint.isDefined)
               Some((existingRoadwayPoint.get, existingCalibrationPoint.get))
             else
-              Some((existingRoadwayPoint.get, CalibrationPoint(NewIdValue, x.id, convertedAddress.linkId, x.roadwayNumber,
-                x.addrMValue, CalibrationPointLocation.StartOfLink, CalibrationPointType.RoadAddressCP, createdBy = "import")))
+              Some((existingRoadwayPoint.get, CalibrationPoint(NewIdValue, x.id, convertedAddress.linkId, x.roadwayNumber, x.addrMValue, CalibrationPointLocation.StartOfLink, CalibrationPointType.RoadAddressCP, createdBy = "import")))
           case _ =>
             Some(RoadwayPoint(NewIdValue, convertedAddress.roadwayNumber, convertedAddress.startAddressM, "import"),
-              CalibrationPoint(NewIdValue, NewIdValue, convertedAddress.linkId, convertedAddress.roadwayNumber,
-                convertedAddress.startAddressM, CalibrationPointLocation.StartOfLink, CalibrationPointType.RoadAddressCP, createdBy = "import"))
+              CalibrationPoint(NewIdValue, NewIdValue, convertedAddress.linkId, convertedAddress.roadwayNumber, convertedAddress.startAddressM, CalibrationPointLocation.StartOfLink, CalibrationPointType.RoadAddressCP, createdBy = "import"))
         }
       case _ => None
     }
@@ -460,7 +457,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
       val expirationDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val ely = r.nextLong()
       val administrativeClass = r.nextLong()
-      val linkId = r.nextLong()
+      val linkId = r.nextString()
       val userId = r.nextString
       val x1 = r.nextDouble()
       val y1 = r.nextDouble()

@@ -41,7 +41,7 @@ class SearchApi(roadAddressService: RoadAddressService,
       )
 
   get("/road_address/?", operation(getRoadAddress)) {
-    val linkId = params.getOrElse("linkId", halt(BadRequest("Missing mandatory field linkId"))).toLong
+    val linkId = params.getOrElse("linkId", halt(BadRequest("Missing mandatory field linkId"))).toString
     val startMeasure = params.get("startMeasure").map(_.toDouble)
     val endMeasure = params.get("endMeasure").map(_.toDouble)
 
@@ -155,7 +155,7 @@ class SearchApi(roadAddressService: RoadAddressService,
 
   post("/road_address/?", operation(getRoadAddressByLinkIds)) {
     time(logger, s"POST request for /road_address/?") {
-      val linkIds = parsedBody.extract[Set[Long]]
+      val linkIds = parsedBody.extract[Set[String]]
       roadAddressService.getRoadAddressByLinkIds(linkIds).map(roadAddressMapper)
     }
   }

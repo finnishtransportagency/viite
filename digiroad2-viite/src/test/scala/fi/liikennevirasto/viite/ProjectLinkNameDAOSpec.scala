@@ -1,7 +1,7 @@
 package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2.DigiroadEventBus
-import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHComplementaryClient, VVHRoadLinkClient}
+import fi.liikennevirasto.digiroad2.client.vvh.{KgvRoadLink, KgvRoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.viite.dao._
@@ -23,9 +23,9 @@ class ProjectLinkNameDAOSpec extends FunSuite with Matchers with BeforeAndAfter 
   val mockRoadAddressService: RoadAddressService = MockitoSugar.mock[RoadAddressService]
   val mockNodesAndJunctionsService: NodesAndJunctionsService = MockitoSugar.mock[NodesAndJunctionsService]
   val mockEventBus: DigiroadEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val mockVVHClient: VVHClient = MockitoSugar.mock[VVHClient]
-  val mockVVHRoadLinkClient: VVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
-  val mockVVHComplementaryClient: VVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
+  val mockVVHClient: KgvRoadLink = MockitoSugar.mock[KgvRoadLink]
+  val mockVVHRoadLinkClient: KgvRoadLinkClient[RoadLinkFetched] = MockitoSugar.mock[KgvRoadLinkClient[RoadLinkFetched]]
+//  val mockVVHComplementaryClient: VVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
   val projectValidator = new ProjectValidator
   val projectDAO = new ProjectDAO
   val projectLinkDAO = new ProjectLinkDAO
