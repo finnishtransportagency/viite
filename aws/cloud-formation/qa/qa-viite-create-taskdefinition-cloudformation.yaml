@@ -97,6 +97,8 @@ Resources:
               Value: admin
             - Name: env
               Value: QA
+            - Name: kgvEndPoint
+              Value: !Ref kgvEndPoint
           Secrets:
             - Name: bonecp.password
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/Viite/QA/rds.viite.db.password'
@@ -110,6 +112,8 @@ Resources:
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/Viite/QA/rasterServiceApiKey'
             - Name: vvhRestApiPassword
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/Viite/QA/vvhRestApiPassword'
+            - Name: kgvApiKey
+              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/Viite/QA/kgvApiKey'
           MemoryReservation: 2048
           Image: !Sub '${RepositoryURL}/viite-qa:latest'
           Name: viite-test

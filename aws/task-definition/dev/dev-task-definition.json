@@ -40,7 +40,8 @@
                 { "name": "conversion.bonecp.jdbcUrl", "value": "jdbc:postgresql://vd1bbyq5el8tjd2.c8dj2qlvf50d.eu-west-1.rds.amazonaws.com:5432/drkonv" },
                 { "name": "conversion.bonecp.username", "value": "drkonv" },
                 { "name": "authentication.admin.basic.username", "value": "admin" },
-                { "name": "env", "value": "Dev" }
+                { "name": "env", "value": "Dev" },
+                { "name": "kgvEndPoint", "value": "https://api.vaylapilvi.fi/paikkatiedot/ogc/features/collections/" }
             ],
             "mountPoints": [],
             "secrets": [
@@ -67,6 +68,10 @@
                 {
                     "name": "vvhRestApiPassword",
                     "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/dev/vvhRestApiPassword"
+                },
+                {
+                  "name": "kgvApiKey",
+                  "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/dev/kgvApiKey"
                 }
             ],
             "memoryReservation": 2048,
