@@ -42,7 +42,7 @@ object RoadwayFiller {
     val maxAddrM = plMaxAddrM - currentRoadway.startAddrMValue
 
     historyRows.map(hr => {
-      if (hr.endAddrMValue-hr.startAddrMValue != maxAddrM - minAddrM && plMaxAddrM != currentRoadway.endAddrMValue) {
+      if (plMaxAddrM != currentRoadway.endAddrMValue) {
         //The roadway has been split and we're handling history rows that aren't at the end of the roadway so the discontinuity has to be Continuous
         hr.copy(startAddrMValue = hr.startAddrMValue + minAddrM, endAddrMValue = hr.startAddrMValue + maxAddrM, discontinuity = Discontinuity.Continuous)
       } else {
