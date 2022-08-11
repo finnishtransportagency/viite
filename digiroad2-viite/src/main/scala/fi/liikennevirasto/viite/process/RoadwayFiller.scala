@@ -35,11 +35,19 @@ object RoadwayFiller {
    */
   def updateAddrMValuesOfHistoryRows(projectLinks: Seq[ProjectLink], currentRoadway: Roadway, historyRows: Seq[Roadway]):Seq[Roadway] = {
 
-    val minAddrM = projectLinks.minBy(_.originalStartAddrMValue).originalStartAddrMValue - currentRoadway.startAddrMValue
-    val maxAddrM = projectLinks.maxBy(_.originalEndAddrMValue).originalEndAddrMValue - currentRoadway.startAddrMValue
+    val plMinAddrM = projectLinks.minBy(_.originalStartAddrMValue).originalStartAddrMValue
+    val plMaxAddrM = projectLinks.maxBy(_.originalEndAddrMValue).originalEndAddrMValue
+
+    val minAddrM = plMinAddrM - currentRoadway.startAddrMValue
+    val maxAddrM = plMaxAddrM - currentRoadway.startAddrMValue
 
     historyRows.map(hr => {
-      hr.copy(startAddrMValue = hr.startAddrMValue + minAddrM, endAddrMValue = hr.startAddrMValue + maxAddrM)
+      if (hr.endAddrMValue-hr.startAddrMValue != maxAddrM - minAddrM && plMaxAddrM != currentRoadway.endAddrMValue) {
+        //The roadway has been split and we're handling history rows that aren't at the end of the roadway so the discontinuity has to be Continuous
+        hr.copy(startAddrMValue = hr.startAddrMValue + minAddrM, endAddrMValue = hr.startAddrMValue + maxAddrM, discontinuity = Discontinuity.Continuous)
+      } else {
+        hr.copy(startAddrMValue = hr.startAddrMValue + minAddrM, endAddrMValue = hr.startAddrMValue + maxAddrM)
+      }
     })
   }
 
@@ -236,7 +244,7 @@ object RoadwayFiller {
           val newStartAddressM = historyRoadway.startAddrMValue + roadway.startAddrMValue - currentRoadway.startAddrMValue
           val newEndAddressM   = newStartAddressM + roadway.endAddrMValue - roadway.startAddrMValue
           if (historyRoadway.endAddrMValue - historyRoadway.startAddrMValue != roadway.endAddrMValue - roadway.startAddrMValue) {
-            Roadway(NewIdValue, roadway.roadwayNumber, historyRoadway.roadNumber, historyRoadway.roadPartNumber, historyRoadway.administrativeClass, historyRoadway.track, historyRoadway.discontinuity, newStartAddressM, newEndAddressM, historyRoadway.reversed, historyRoadway.startDate, historyRoadway.endDate, historyRoadway.createdBy, historyRoadway.roadName, historyRoadway.ely, Subsequent)
+            Roadway(NewIdValue, roadway.roadwayNumber, historyRoadway.roadNumber, historyRoadway.roadPartNumber, historyRoadway.administrativeClass, historyRoadway.track, roadway.discontinuity, newStartAddressM, newEndAddressM, historyRoadway.reversed, historyRoadway.startDate, historyRoadway.endDate, historyRoadway.createdBy, historyRoadway.roadName, historyRoadway.ely, Subsequent)
           } else {
             historyRoadway.copy(id = NewIdValue, terminated = Subsequent)
           }
