@@ -727,7 +727,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
      *        RoadwayNumber 100              RoadwayNumber 101
      *     0 |-----MUNICIPALITY------> 120                          New current roadway
      *                                     |---STATE---------> 175  Roadway that stays unchanged
-     *
+     *        Discontinuity.Continuous     Discontinuity.EndOfRoad
      *     0 |-----STATE-------------> 120                          After project created history row
      *   370 |-----STATE-------------> 490 |---STATE---------> 545  Oldest history row
      * */
@@ -847,7 +847,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("Test RoadwayFiller.applyRoadwayChanges()" +
-    "When the end of a roadway (that has history) is transferred to the start of another road address" +
+    "When the end of a roadway that gets split (and that has history) is transferred to the start of another road address" +
     "Then the history roadways should be split correctly and have correct continuity and address M values") {
 
     /**
@@ -948,6 +948,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
      *                                       RoadwayNumber 100
      *                                   0 |---RoadPart 2----> 55  New current roadway
      *            RoadwayNumber 101
+     *        Discontinuity.Continuous     Discontinuity.EndOfRoad
      *     0 |-----TERMINATED--------> 120 |---RoadPart 2----> 175  After project created history row
      *   370 |-----TERMINATED--------> 490 |---RoadPart 1----> 545  Oldest history row
      * */
