@@ -71,8 +71,8 @@ class ViitePropertiesFromEnv extends ViiteProperties {
   val vvhRestApiUsername: String = scala.util.Properties.envOrElse("vvhRestApiUsername", null)
   val vvhRestApiPassword: String = scala.util.Properties.envOrElse("vvhRestApiPassword", null)
   val vvhRoadlinkFrozen: Boolean = scala.util.Properties.envOrElse("vvhRoadlink.frozen", "false").toBoolean
-  val kgvEndpoint: String = scala.util.Properties.envOrElse("kgv.endpoint", null)
-  val kgvApiKey: String = scala.util.Properties.envOrElse("kgv.apikey", null)
+  val kgvEndpoint: String = scala.util.Properties.envOrElse("kgvEndpoint", null)
+  val kgvApiKey: String = scala.util.Properties.envOrElse("kgvApiKey", null)
   val vkmUrl: String = scala.util.Properties.envOrElse("vkmUrl", null)
   val vkmApiKey: String = scala.util.Properties.envOrElse("vkmApiKey", null)
   val httpProxySet: Boolean = scala.util.Properties.envOrElse("http.proxySet", "false").toBoolean
@@ -157,8 +157,8 @@ class ViitePropertiesFromFile extends ViiteProperties {
   override val vvhRestApiUsername: String = scala.util.Properties.envOrElse("vvhRestApiUsername", envProps.getProperty("vvhRestApiUsername"))
   override val vvhRestApiPassword: String = scala.util.Properties.envOrElse("vvhRestApiPassword", envProps.getProperty("vvhRestApiPassword"))
   override val vvhRoadlinkFrozen: Boolean = envProps.getProperty("vvhRoadlink.frozen", "false").toBoolean
-  override val kgvEndpoint: String = envProps.getProperty("kgv.endpoint", null)
-  override val kgvApiKey: String = scala.util.Properties.envOrElse("kgv.apikey", envProps.getProperty("kgv.apikey"))
+  override val kgvEndpoint: String = envProps.getProperty("kgvEndpoint", null)
+  override val kgvApiKey: String = scala.util.Properties.envOrElse("kgvApiKey", envProps.getProperty("kgvApiKey"))
   override val vkmUrl: String = scala.util.Properties.envOrElse("vkmUrl", envProps.getProperty("vkmUrl"))
   override val vkmApiKey: String = scala.util.Properties.envOrElse("vkmApiKey", envProps.getProperty("vkmApiKey"))
   override val httpProxySet: Boolean = envProps.getProperty("http.proxySet", "false").toBoolean
