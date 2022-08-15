@@ -316,9 +316,9 @@ class LinearLocationDAO {
         return List()
       }
       if (linkIds.size > 1000 || filterIds.size > 1000) {
-        return fetchByLinkIdMassQuery(linkIds).filterNot(ra => filterIds.contains(ra.id))
+        return fetchByLinkIdMassQuery(linkIds.map(lid => "'" + lid + "'")).filterNot(ra => filterIds.contains(ra.id))
       }
-      val linkIdsString = linkIds.mkString(", ")
+      val linkIdsString = linkIds.map(lid => "'" + lid + "'").mkString(", ")
       val idFilter = if (filterIds.nonEmpty)
         s"AND loc.id not in ${filterIds.mkString("(", ", ", ")")}"
       else
@@ -374,9 +374,9 @@ class LinearLocationDAO {
         return List()
       }
       if (linkIds.size > 1000) {
-        return fetchRoadwayByLinkIdMassQuery(linkIds)
+        return fetchRoadwayByLinkIdMassQuery(linkIds.map(l => "'" + l + "'"))
       }
-      val linkIdsString = linkIds.mkString(", ")
+      val linkIdsString = linkIds.map(l => "'" + l + "'").mkString(", ")
       val query =
         s"""
           $selectFromLinearLocation
@@ -448,7 +448,7 @@ class LinearLocationDAO {
   def expireByLinkId(linkIds: Set[String]): Int = {
     val query =
       s"""
-        Update LINEAR_LOCATION Set valid_to = current_timestamp Where valid_to IS NULL and link_id in (${linkIds.mkString(",")})
+        Update LINEAR_LOCATION Set valid_to = current_timestamp Where valid_to IS NULL and link_id in (${linkIds.map(l => "'" + l + "'").mkString(",")})
       """
     if (linkIds.isEmpty)
       0
@@ -557,7 +557,7 @@ class LinearLocationDAO {
       case None => ""
     }
 
-    query + s" WHERE loc.link_id = $linkId $startFilter $endFilter" + withValidityCheck
+    query + s" WHERE loc.link_id = '$linkId' $startFilter $endFilter" + withValidityCheck
   }
 
   def withRoadwayNumbers(fromRoadwayNumber: Long, toRoadwayNumber: Long)(query: String): String = {

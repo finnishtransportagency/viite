@@ -67,7 +67,7 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     }
     runWithRollback {
       val (ordered, _) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(100, 110), Point(100, 110)), list)
-      ordered.map(_.linkId) should be(Seq(0L, 1L, 2L, 3L))
+      ordered.map(_.linkId) should be(Seq(0L, 1L, 2L, 3L).map(_.toString))
     }
   }
 
@@ -184,7 +184,7 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     runWithRollback {
       val (ordered, _) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(10, 10), Point(10, 10)), projectLinks)
 
-      ordered.map(_.linkId) should be(List(0L, 1L, 2L))
+      ordered.map(_.linkId) should be(List(0L, 1L, 2L).map(_.toString))
     }
   }
 
@@ -216,8 +216,8 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     runWithRollback {
       val (rightOrdered, leftOrdered) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(4, 1), Point(2, 1)), projectLinks)
 
-      rightOrdered.map(_.linkId) should be(List(6L, 4L, 7L, 5L))
-      leftOrdered.map(_.linkId) should be(List(1L, 2L, 3L))
+      rightOrdered.map(_.linkId) should be(List(6L, 4L, 7L, 5L).map(_.toString))
+      leftOrdered.map(_.linkId) should be(List(1L, 2L, 3L).map(_.toString))
     }
   }
 
@@ -239,8 +239,8 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     runWithRollback {
       val (rightOrdered, leftOrdered) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(3, 1), Point(1, 1)), projectLinks)
 
-      rightOrdered.map(_.linkId) should be(List(2L, 3L, 4L))
-      leftOrdered.map(_.linkId) should be(List(1L, 3L, 4L))
+      rightOrdered.map(_.linkId) should be(List(2L, 3L, 4L).map(_.toString))
+      leftOrdered.map(_.linkId) should be(List(1L, 3L, 4L).map(_.toString))
     }
   }
 
@@ -274,8 +274,8 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     runWithRollback {
       val (rightOrdered, leftOrdered) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((startPointRight, startPointLeft), projectLinks)
 
-      rightOrdered.map(_.linkId) should be(List(1L, 3L, 4L, 5L))
-      leftOrdered.map(_.linkId) should be(List(2L, 3L, 4L, 5L))
+      rightOrdered.map(_.linkId) should be(List(1L, 3L, 4L, 5L).map(_.toString))
+      leftOrdered.map(_.linkId) should be(List(2L, 3L, 4L, 5L).map(_.toString))
     }
   }
 
@@ -297,8 +297,8 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     runWithRollback {
       val (rightOrdered, leftOrdered) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(1, 1), Point(1, 1)), projectLinks)
 
-      rightOrdered.map(_.linkId) should be(List(1L, 2L, 4L))
-      leftOrdered.map(_.linkId) should be(List(1L, 2L, 3L))
+      rightOrdered.map(_.linkId) should be(List(1L, 2L, 4L).map(_.toString))
+      leftOrdered.map(_.linkId) should be(List(1L, 2L, 3L).map(_.toString))
     }
   }
 

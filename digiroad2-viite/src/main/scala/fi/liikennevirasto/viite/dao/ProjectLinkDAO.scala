@@ -322,7 +322,7 @@ class ProjectLinkDAO {
   }
 
   implicit val getProjectLinksChangeRow: GetResult[ProjectRoadLinkChange] = new GetResult[ProjectRoadLinkChange] {
-    def apply(r: PositionedResult) = {
+    def apply(r: PositionedResult): ProjectRoadLinkChange = {
       val projectLinkId = r.nextLong()
       val roadwayId = r.nextLong()
       val originalLinearLocationId = r.nextLong()
@@ -344,11 +344,11 @@ class ProjectLinkDAO {
     }
   }
 
-  private def listQuery(query: String) = {
+  private def listQuery(query: String): Seq[ProjectLink] = {
     Q.queryNA[ProjectLink](query).iterator.toSeq
   }
 
-  private def changesListQuery(query: String) = {
+  private def changesListQuery(query: String): Seq[ProjectRoadLinkChange] = {
     Q.queryNA[ProjectRoadLinkChange](query).iterator.toSeq
   }
 
@@ -578,7 +578,7 @@ class ProjectLinkDAO {
       } else {
         val query =
           s"""$projectLinkQueryBase
-                where project_link.connected_link_id in (${connectedIds.mkString(",")}) order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
+                where project_link.connected_link_id in (${connectedIds.map(cid => "'" + cid + "'").mkString(",")}) order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
         listQuery(query)
       }
     }
@@ -588,7 +588,7 @@ class ProjectLinkDAO {
     time(logger, "Get project links by link id and project id") {
       val query =
         s"""$projectLinkQueryBase
-                where PROJECT_LINK.link_id = $linkId order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
+                where PROJECT_LINK.link_id = '$linkId' order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
       listQuery(query)
     }
   }
@@ -618,7 +618,7 @@ class ProjectLinkDAO {
       List()
     } else {
       val idsFilter = if (projectLinkIds.nonEmpty) s"AND PROJECT_LINK.ID IN (${projectLinkIds.mkString(",")})" else ""
-      val linkIdsFilter = if (linkIds.nonEmpty) s"AND PROJECT_LINK.LINK_ID IN (${linkIds.mkString(",")})" else ""
+      val linkIdsFilter = if (linkIds.nonEmpty) s"AND PROJECT_LINK.LINK_ID IN (${linkIds.map(l => ''' + l + ''').mkString(",")})" else ""
       val query =
         s"""$projectLinkQueryBase
                 where PROJECT_LINK.PROJECT_ID = $projectId $idsFilter $linkIdsFilter
@@ -631,7 +631,7 @@ class ProjectLinkDAO {
     if (linkIds.isEmpty) {
       List()
     } else {
-      val linkIdsFilter =  s" PROJECT_LINK.LINK_ID IN (${linkIds.mkString(",")})"
+      val linkIdsFilter =  s" PROJECT_LINK.LINK_ID IN (${linkIds.map(l => ''' + l + ''').mkString(",")})"
       val query =
         s"""$projectLinkQueryBase
                 where $linkIdsFilter
@@ -888,7 +888,7 @@ class ProjectLinkDAO {
     val linkIdFilter = if (linkIds.isEmpty) {
       ""
     } else {
-      s"AND LINK_ID IN (${linkIds.mkString(",")})"
+      s"AND LINK_ID IN (${linkIds.map(l => ''' + l + ''').mkString(",")})"
     }
     val query =
       s"""SELECT pl.id FROM PROJECT_LINK pl WHERE
@@ -942,12 +942,12 @@ class ProjectLinkDAO {
   def fetchSplitLinks(projectId: Long, linkId: String): Seq[ProjectLink] = {
     val query =
       s"""$projectLinkQueryBase
-                where PROJECT_LINK.PROJECT_ID = $projectId AND (PROJECT_LINK.LINK_ID = $linkId OR PROJECT_LINK.CONNECTED_LINK_ID = $linkId)"""
+                where PROJECT_LINK.PROJECT_ID = $projectId AND (PROJECT_LINK.LINK_ID = '$linkId' OR PROJECT_LINK.CONNECTED_LINK_ID = '$linkId')"""
     listQuery(query)
   }
 
   implicit val getDiscontinuity: GetResult[Option[Discontinuity]] = new GetResult[Option[Discontinuity]] {
-    def apply(r: PositionedResult) = {
+    def apply(r: PositionedResult): Option[Discontinuity] = {
       r.nextLongOption().map(l => Discontinuity.apply(l))
     }
   }
