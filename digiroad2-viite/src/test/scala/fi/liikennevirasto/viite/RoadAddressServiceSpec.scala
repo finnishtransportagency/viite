@@ -175,7 +175,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     val roadAddressLinks = roadAddressService.getRoadAddressLinksByBoundingBox(BoundingRectangle(Point(0.0, 0.0), Point(0.0, 20.0)), Seq())
 
     roadAddressLinks.size should be (3)
-    roadAddressLinks.map(_.linkId).distinct should contain allOf (123L,124L)
+    roadAddressLinks.map(_.linkId).distinct should contain allOf ("123","124")
   }
 
   test("Test getRoadAddressesWithLinearGeometry When municipality has road addresses on top of suravage and complementary road links Then should not return floatings") {
@@ -332,7 +332,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     val result = roadAddressService.getRoadAddressWithLinkIdAndMeasure(linkId = 123L.toString, Some(0.0), Some(9.999))
 
     result.size should be (1)
-    result.head.linkId should be (123L)
+    result.head.linkId should be (123L.toString)
     result.head.startMValue should be (0.0)
     result.head.endMValue should be (10.0)
   }
@@ -357,7 +357,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     result.size should be (2)
     val linkIds = result.map(_.linkId).distinct
     linkIds.size should be (1)
-    linkIds.head should be (123L)
+    linkIds.head should be (123L.toString)
   }
 
   test("Test getRoadAddressWithLinkIdAndMeasure When only link id and start measure is given Then return all road addresses in link id and with start measure greater or equal than $startM") {
@@ -378,7 +378,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     val result = roadAddressService.getRoadAddressWithLinkIdAndMeasure(linkId = 123L.toString, Some(10.0), None)
 
     result.size should be (1)
-    result.head.linkId should be (123L)
+    result.head.linkId should be (123L.toString)
     result.head.startMValue should be (10.0)
     result.head.endMValue should be (20.0)
   }
@@ -401,7 +401,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     val result = roadAddressService.getRoadAddressWithLinkIdAndMeasure(linkId = 123L.toString, None, Some(10.0))
 
     result.size should be (1)
-    result.head.linkId should be (123L)
+    result.head.linkId should be (123L.toString)
     result.head.startMValue should be (0.0)
     result.head.endMValue should be (10.0)
   }
@@ -447,7 +447,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
     result.size should be (2)
     result.map(_.linkId).distinct.size should be (1)
-    result.map(_.linkId).distinct should be (List(123L))
+    result.map(_.linkId).distinct should be (List(123L.toString))
     result.head.startMValue should be (0.0)
     result.head.endMValue should be (10.0)
     result.last.startMValue should be (10.0)
@@ -486,46 +486,45 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     // Test search by street name
     var result = roadAddressService.getSearchResults(Option("nuolirinne"))
     result.size should be(1)
-    result(0).contains("street") should be(true)
+    result.head.contains("street") should be(true)
 
     // Test search by road number
     result = roadAddressService.getSearchResults(Option("1"))
-    result.size should be(3)
-    result(2).get("road").get(0).asInstanceOf[RoadAddress].roadNumber should be(1)
+    result.size should be(2)
+    result(1)("road").head.asInstanceOf[RoadAddress].roadNumber should be(1)
 
     // Test search by linkId
     when(mockRoadLinkService.getMidPointByLinkId(any[String])).thenReturn(Option(point))
-    result = roadAddressService.getSearchResults(Option("1"))
-    result.size should be(3)
-    result(0).get("linkId").get(0).asInstanceOf[Some[Point]].x should be(point)
-    result(2).get("road").get(0).asInstanceOf[RoadAddress].roadNumber should be(1)
+    result = roadAddressService.getSearchResults(Option("00121516-ca15-4254-8251-cf5092b6ddca:1"))
+    result.size should be(1)
+    result.head("linkId").head.asInstanceOf[Some[Point]].x should be(point)
     reset(mockRoadLinkService)
 
     // Test search by mtkId
     when(mockRoadLinkService.getRoadLinkMiddlePointByMtkId(any[Long])).thenReturn(Option(point))
     result = roadAddressService.getSearchResults(Option("1"))
-    result.size should be(3)
-    result(1).get("mtkId").get(0).asInstanceOf[Some[Point]].x should be(point)
-    result(2).get("road").get(0).asInstanceOf[RoadAddress].roadNumber should be(1)
+    result.size should be(2)
+    result.head("mtkId").head.asInstanceOf[Some[Point]].x should be(point)
+    result(1)("road").head.asInstanceOf[RoadAddress].roadNumber should be(1)
 
     // Test search by road number, road part number
     result = roadAddressService.getSearchResults(Option("1 1"))
     result.size should be(1)
-    result(0).get("road").get(0).asInstanceOf[RoadAddress].roadNumber should be(1)
+    result.head("road").head.asInstanceOf[RoadAddress].roadNumber should be(1)
 
     // Test search by road number, road part number and M number TowardsDigitizing
     when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[String]])).thenReturn(towardsDigitizingRoadLink)
     result = roadAddressService.getSearchResults(Option("1 1 1"))
     result.size should be(1)
-    result(0).contains("roadM") should be(true)
-    result(0).get("roadM").get(0).asInstanceOf[Some[Point]].x should be(Point(0.0, 11, 0.0))
+    result.head.contains("roadM") should be(true)
+    result.head("roadM").head.asInstanceOf[Some[Point]].x should be(Point(0.0, 11, 0.0))
 
     // Test search by road number, road part number and M number AgainstDigitizing
     when(mockLinearLocationDAO.fetchByRoadways(any[Set[Long]])).thenReturn(againstDigitizingLinearLocation)
     result = roadAddressService.getSearchResults(Option("1 1 9"))
     result.size should be(1)
-    result(0).contains("roadM") should be(true)
-    result(0).get("roadM").get(0).asInstanceOf[Some[Point]].x should be(Point(0.0, 11, 0.0))
+    result.head.contains("roadM") should be(true)
+    result.head("roadM").head.asInstanceOf[Some[Point]].x should be(Point(0.0, 11, 0.0))
 
   }
 
@@ -543,12 +542,12 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
     val adjustedLinearLocations = roadAddressService.sortRoadWayWithNewRoads(linearLocations.groupBy(_.roadwayNumber), newLinearLocations)
     adjustedLinearLocations(1L).size should be (linearLocations.size + newLinearLocations.size)
-    adjustedLinearLocations(1L).find(_.linkId == 123L).get.orderNumber should be (1)
-    adjustedLinearLocations(1L).find(_.linkId == 124L).get.orderNumber should be (2)
-    adjustedLinearLocations(1L).find(_.linkId == 1267L).get.orderNumber should be (3)
-    adjustedLinearLocations(1L).find(_.linkId == 125L).get.orderNumber should be (4)
-    adjustedLinearLocations(1L).find(_.linkId == 1268L).get.orderNumber should be (5)
-    adjustedLinearLocations(1L).find(_.linkId == 126L).get.orderNumber should be (6)
+    adjustedLinearLocations(1L).find(_.linkId == 123L.toString).get.orderNumber should be (1)
+    adjustedLinearLocations(1L).find(_.linkId == 124L.toString).get.orderNumber should be (2)
+    adjustedLinearLocations(1L).find(_.linkId == 1267L.toString).get.orderNumber should be (3)
+    adjustedLinearLocations(1L).find(_.linkId == 125L.toString).get.orderNumber should be (4)
+    adjustedLinearLocations(1L).find(_.linkId == 1268L.toString).get.orderNumber should be (5)
+    adjustedLinearLocations(1L).find(_.linkId == 126L.toString).get.orderNumber should be (6)
   }
 
   test("Test sortRoadWayWithNewRoads When there are no linear locations to create Then should return empty list") {

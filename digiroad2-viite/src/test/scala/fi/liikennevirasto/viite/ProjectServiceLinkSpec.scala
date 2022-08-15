@@ -365,9 +365,9 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
 
       // Check calculation succeeds with expected order and values
       val calculated = ProjectSectionCalculator.assignMValues(links)
-      val calculatedPl1 = calculated.find(_.linkId == 4224569)
-      val calculatedPl2 = calculated.find(_.linkId == 4224590)
-      val calculatedPl3 = calculated.find(_.linkId == 12531914)
+      val calculatedPl1 = calculated.find(_.linkId == 4224569.toString)
+      val calculatedPl2 = calculated.find(_.linkId == 4224590.toString)
+      val calculatedPl3 = calculated.find(_.linkId == 12531914.toString)
 
       calculatedPl1 should be ('defined)
       calculatedPl1.get.startAddrMValue should be(0)
@@ -418,9 +418,9 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
 
       // Check calculation succeeds with expected order and values
       val calculated = ProjectSectionCalculator.assignMValues(links)
-      val calculatedPl1 = calculated.find(_.linkId == 12531914)
-      val calculatedPl2 = calculated.find(_.linkId == 4224590)
-      val calculatedPl3 = calculated.find(_.linkId == 4224569)
+      val calculatedPl1 = calculated.find(_.linkId == 12531914.toString)
+      val calculatedPl2 = calculated.find(_.linkId == 4224590.toString)
+      val calculatedPl3 = calculated.find(_.linkId == 4224569.toString)
 
       calculatedPl1 should be ('defined)
       calculatedPl1.get.startAddrMValue should be(0)
@@ -630,12 +630,12 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
         projectLinkDAO.fetchProjectLinks(project.id).groupBy(_.linkId).map {
           pl => pl._1 -> ProjectAddressLinkBuilder.build(pl._2.head)
         }.values.toSeq
-      val start = links.find(_.linkId == 123L)
+      val start = links.find(_.linkId == 123L.toString)
       start.isEmpty should be(false)
       start.get.sideCode should be(AgainstDigitizing)
       start.get.startAddressM should be(0L)
       start.get.endAddressM should be(9L)
-      val end = links.find(_.linkId == 122L)
+      val end = links.find(_.linkId == 122L.toString)
       end.isEmpty should be(false)
       end.get.sideCode should be(TowardsDigitizing)
       end.get.startAddressM should be(19L)

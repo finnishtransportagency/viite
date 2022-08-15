@@ -1833,7 +1833,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val linkId          = 10000.toString
       val oldEndAddress   = 100
       val roadwayNumber   = Sequences.nextRoadwayNumber
-      val currentRoadway         = Roadway(Sequences.nextRoadwayId, roadwayNumber, 9999, 1, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, oldEndAddress, reversed = false, DateTime.now().minusYears(10), None, "test", Some("Test Road"), 1, TerminationCode.NoTermination, DateTime.now().minusYears(10), None)
+      val currentRoadway  = Roadway(Sequences.nextRoadwayId, roadwayNumber, 9999, 1, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, oldEndAddress, reversed = false, DateTime.now().minusYears(10), None, "test", Some("Test Road"), 1, TerminationCode.NoTermination, DateTime.now().minusYears(10), None)
       val history_roadway = Seq(
                                 Roadway(Sequences.nextRoadwayId, roadwayNumber, 9999, 1, AdministrativeClass.Municipality, Track.Combined, Discontinuity.Continuous, 0, oldEndAddress, reversed = false, DateTime.now().minusYears(15), Some(DateTime.now().minusYears(10)), "test", Some("Test Road"), 1, TerminationCode.NoTermination, DateTime.now().minusYears(15), None),
                                 Roadway(Sequences.nextRoadwayId, roadwayNumber, 9999, 1, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, oldEndAddress, reversed = true, DateTime.now().minusYears(20), Some(DateTime.now().minusYears(15)), "test", Some("Test Road"), 1, TerminationCode.NoTermination, DateTime.now().minusYears(20), None)
@@ -2336,14 +2336,14 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       updatedProjectLinks.exists { x => x.status == LinkStatus.UnChanged } should be(true)
       updatedProjectLinks.exists { x => x.status == LinkStatus.Terminated } should be(true)
       val calculatedProjectLinks = ProjectSectionCalculator.assignMValues(updatedProjectLinks)
-      calculatedProjectLinks.filter(pl => pl.linkId == 5168579).head.calibrationPoints should be((None, Some(CalibrationPoint(5168579.toString, 15.173, 4681, RoadAddressCP))))
+      calculatedProjectLinks.filter(pl => pl.linkId == 5168579.toString).head.calibrationPoints should be((None, Some(CalibrationPoint(5168579.toString, 15.173, 4681, RoadAddressCP))))
 
       projectService.updateProjectLinks(savedProject.id, Set(), Seq(5168579.toString), LinkStatus.Terminated, "-", 0, 0, 0, Option.empty[Int])
       val updatedProjectLinks_ = projectLinkDAO.fetchProjectLinks(savedProject.id).toList
       val updatedProjectLinks2 = ProjectSectionCalculator.assignMValues(updatedProjectLinks_)
       val sortedRoad206AfterTermination = updatedProjectLinks2.filter(_.roadPartNumber == 206).sortBy(_.startAddrMValue)
       val updatedProjectLinks2_ = projectLinkDAO.fetchProjectLinks(savedProject.id).toList
-      updatedProjectLinks2_.filter(pl => pl.linkId == 5168579).head.calibrationPoints should be((None, None))
+      updatedProjectLinks2_.filter(pl => pl.linkId == 5168579.toString).head.calibrationPoints should be((None, None))
       val lastValid = sortedRoad206AfterTermination.filter(_.status != LinkStatus.Terminated).last
       sortedRoad206AfterTermination.filter(_.status != LinkStatus.Terminated).last.calibrationPoints should be((None, Some(CalibrationPoint(lastValid.linkId, lastValid.endMValue, lastValid.endAddrMValue, RoadAddressCP))))
       updatedProjectLinks2.filter(pl => pl.roadPartNumber == 205).exists { x => x.status == LinkStatus.Terminated } should be(false)
@@ -2447,7 +2447,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         toMockAnswer(projectLinks, roadLink)
       )
       projectService.updateProjectLinks(savedProject.id, Set(), Seq(5168510.toString), LinkStatus.Terminated, "-", 5, 207, 0, Option.empty[Int])
-      projectService.updateProjectLinks(savedProject.id, Set(), linkIds207.filterNot(_ == 5168510L).toSeq, LinkStatus.Transfer, "-", 5, 207, 0, Option.empty[Int])
+      projectService.updateProjectLinks(savedProject.id, Set(), linkIds207.filterNot(_ == 5168510L.toString).toSeq, LinkStatus.Transfer, "-", 5, 207, 0, Option.empty[Int])
       projectService.allLinksHandled(savedProject.id) should be(true)
       projectService.updateProjectLinks(savedProject.id, Set(), Seq(6460794.toString), LinkStatus.Transfer, "-", 5, 207, 0, Option.empty[Int], discontinuity = Discontinuous.value)
 
@@ -3104,9 +3104,9 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       val afterAllProjectLinksCreation = projectLinkDAO.fetchProjectLinks(project.id).sortBy(_.startAddrMValue)
 
-      afterAllProjectLinksCreation.filter(_.linkId == 12345L).head.discontinuity should be (Discontinuity.EndOfRoad)
-      afterAllProjectLinksCreation.filter(_.linkId == 12346L).head.discontinuity should be (Discontinuity.Continuous)
-      afterAllProjectLinksCreation.filter(_.linkId == 12347L).head.discontinuity should be (Discontinuity.MinorDiscontinuity)
+      afterAllProjectLinksCreation.filter(_.linkId == 12345L.toString).head.discontinuity should be (Discontinuity.EndOfRoad)
+      afterAllProjectLinksCreation.filter(_.linkId == 12346L.toString).head.discontinuity should be (Discontinuity.Continuous)
+      afterAllProjectLinksCreation.filter(_.linkId == 12347L.toString).head.discontinuity should be (Discontinuity.MinorDiscontinuity)
     }
   }
 
