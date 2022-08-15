@@ -86,7 +86,7 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
       val roadAddressLink = roadAddressLinkBuilder.build(roadAddress)
       roadAddressLink.length should be (22.808)
       roadAddressLink.linearLocationId should be (1234)
-      roadAddressLink.linkId should be (12345L)
+      roadAddressLink.linkId should be (12345L.toString)
       roadAddressLink.sideCode should be (TowardsDigitizing)
     }
   }
@@ -100,7 +100,7 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
       val roadAddressLink = roadAddressLinkBuilder.build(roadlink, roadAddress)
       roadAddressLink.length should be (9.8)
       roadAddressLink.linearLocationId should be (1234)
-      roadAddressLink.linkId should be (1L)
+      roadAddressLink.linkId should be (1L.toString)
       roadAddressLink.administrativeClassMML should be (AdministrativeClass.Municipality)
       roadAddressLink.sideCode should be (TowardsDigitizing)
 //      roadAddressLink.roadType should be (AdministrativeClass.MunicipalityStreetRoad)

@@ -190,14 +190,14 @@ object CalibrationPointDAO {
       FROM CALIBRATION_POINT CP
       JOIN ROADWAY_POINT RP
       ON RP.ID = CP.ROADWAY_POINT_ID
-      WHERE CP.link_id in (${linkIds.mkString(", ")}) AND CP.VALID_TO IS NULL
+      WHERE CP.link_id in (${linkIds.map(lid => "'" + lid + "'").mkString(", ")}) AND CP.VALID_TO IS NULL
       """
       queryList(query)
     }
   }
 
   def fetch(calibrationPointsLinkIds: Seq[String], startOrEnd: Long): Seq[CalibrationPoint] = {
-    val whereClause = calibrationPointsLinkIds.map(p => s" (link_id = $p and start_end = $startOrEnd)").mkString(" where ", " or ", "")
+    val whereClause = calibrationPointsLinkIds.map(p => s" (link_id = ''' + $p + ''' and start_end = $startOrEnd)").mkString(" where ", " or ", "")
     val query = s"""
      SELECT CP.ID, ROADWAY_POINT_ID, LINK_ID, ROADWAY_NUMBER, RP.ADDR_M, START_END, TYPE, VALID_FROM, VALID_TO, CP.CREATED_BY, CP.CREATED_TIME
      FROM CALIBRATION_POINT CP

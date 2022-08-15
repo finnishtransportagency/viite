@@ -67,7 +67,7 @@ class ProjectDAO {
       s"""SELECT P.ID
              FROM PROJECT P
             JOIN PROJECT_LINK PL ON P.ID=PL.PROJECT_ID
-            WHERE P.STATE = ${ProjectState.Incomplete.value} AND PL.LINK_ID=$linkId"""
+            WHERE P.STATE = ${ProjectState.Incomplete.value} AND PL.LINK_ID='$linkId'"""
     Q.queryNA[Long](query).list
   }
 

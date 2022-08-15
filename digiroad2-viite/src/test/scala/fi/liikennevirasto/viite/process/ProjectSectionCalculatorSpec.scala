@@ -469,15 +469,15 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
   test("Test assignMValues When track sections are combined to start from the same position Then tracks should still be different") {
     runWithRollback {
       // Left track = 85.308 meters
-      val idRoad0 = 0L //   C>
-      val idRoad1 = 1L //   L>
-      val idRoad2 = 2L //   R>
+      val idRoad0 = 0L.toString //   C>
+      val idRoad1 = 1L.toString //   L>
+      val idRoad2 = 2L.toString //   R>
       val roadwayId = Sequences.nextRoadwayId
       val roadwayNumber = Sequences.nextRoadwayNumber
       val linearLocationId = Sequences.nextLinearLocationId
-      val projectLink0 = toProjectLink(rap, LinkStatus.UnChanged)(RoadAddress(idRoad0, 0, 5, 1, AdministrativeClass.Unknown, Track.Combined, Continuous, 0L, 8L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), idRoad0.toString, 0.0, 8.0, SideCode.TowardsDigitizing, 0, (Some(CalibrationPoint(0L.toString, 0.0, 0L)), None), Seq(Point(20.0, 10.0), Point(28, 10)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)).copy(projectId = rap.id, roadwayId = roadwayId, linearLocationId = linearLocationId, roadwayNumber = roadwayNumber)
-      val projectLink1 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad1, 0, 5, 1, AdministrativeClass.Unknown, Track.LeftSide, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), idRoad1.toString, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), Seq(Point(28, 10), Point(28, 19)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)).copy(projectId = rap.id)
-      val projectLink2 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad2, 0, 5, 1, AdministrativeClass.Unknown, Track.RightSide, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), idRoad2.toString, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), Seq(Point(28, 1), Point(28, 10)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)).copy(projectId = rap.id)
+      val projectLink0 = toProjectLink(rap, LinkStatus.UnChanged)(RoadAddress(idRoad0.toLong, 0, 5, 1, AdministrativeClass.Unknown, Track.Combined, Continuous, 0L, 8L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), idRoad0, 0.0, 8.0, SideCode.TowardsDigitizing, 0, (Some(CalibrationPoint(0L.toString, 0.0, 0L)), None), Seq(Point(20.0, 10.0), Point(28, 10)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)).copy(projectId = rap.id, roadwayId = roadwayId, linearLocationId = linearLocationId, roadwayNumber = roadwayNumber)
+      val projectLink1 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad1.toLong, 0, 5, 1, AdministrativeClass.Unknown, Track.LeftSide, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), idRoad1, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), Seq(Point(28, 10), Point(28, 19)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)).copy(projectId = rap.id)
+      val projectLink2 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad2.toLong, 0, 5, 1, AdministrativeClass.Unknown, Track.RightSide, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), idRoad2, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), Seq(Point(28, 1), Point(28, 10)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)).copy(projectId = rap.id)
 
       val (linearCombined, rwComb): (LinearLocation, Roadway) = Seq(projectLink0).map(toRoadwayAndLinearLocation).head
       val rwCombWithId = rwComb.copy(id = roadwayId, ely = 8L)
@@ -1051,11 +1051,11 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
         Some(list1 ++ Seq(projectLink7, projectLink8, projectLink9, projectLink10, projectLink11)))
 
       val ordered = ProjectSectionCalculator.assignMValues(list1)
-      ordered.minBy(_.startAddrMValue).id should be(idRoad0) // TODO "6 was not equal to 0"
+      ordered.minBy(_.startAddrMValue).id.toString should be(idRoad0) // TODO "6 was not equal to 0"
 
       val list2 = ordered.toList ::: List(projectLink7, projectLink8, projectLink9, projectLink10, projectLink11)
       val ordered2 = ProjectSectionCalculator.assignMValues(list2)
-      ordered2.maxBy(_.endAddrMValue).id should be(idRoad11)
+      ordered2.maxBy(_.endAddrMValue).id.toString should be(idRoad11)
     }
   }
 
@@ -1131,11 +1131,11 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
         Some(list1 ++ Seq(projectLink7, projectLink8, projectLink9, projectLink10, projectLink11)))
 
       val ordered = ProjectSectionCalculator.assignMValues(list1)
-      ordered.minBy(_.startAddrMValue).id should be(idRoad0) // TODO "6 was not equal to 0"
+      ordered.minBy(_.startAddrMValue).id.toString should be(idRoad0) // TODO "6 was not equal to 0"
 
       val list2 = ordered.toList ::: List(projectLink7, projectLink8, projectLink9, projectLink10, projectLink11)
       val ordered2 = ProjectSectionCalculator.assignMValues(list2)
-      ordered2.maxBy(_.endAddrMValue).id should be(idRoad11)
+      ordered2.maxBy(_.endAddrMValue).id.toString should be(idRoad11)
     }
   }
 

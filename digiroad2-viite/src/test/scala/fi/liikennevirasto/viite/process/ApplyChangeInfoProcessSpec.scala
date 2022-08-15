@@ -120,21 +120,21 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
 
     linearLocationOne.startMValue should be (0.0)
     linearLocationOne.endMValue should be (10.0)
-    linearLocationOne.linkId should be (126L)
+    linearLocationOne.linkId should be (126L.toString)
     linearLocationOne.sideCode should be (SideCode.TowardsDigitizing)
 
     val linearLocationTwo = newLinearLocations(1)
 
     linearLocationTwo.startMValue should be (10.0)
     linearLocationTwo.endMValue should be (12.0)
-    linearLocationTwo.linkId should be (126L)
+    linearLocationTwo.linkId should be (126L.toString)
     linearLocationTwo.sideCode should be (SideCode.TowardsDigitizing)
 
     val linearLocationThree = newLinearLocations(2)
 
     linearLocationThree.startMValue should be (0.0)
     linearLocationThree.endMValue should be (8.0)
-    linearLocationThree.linkId should be (127L)
+    linearLocationThree.linkId should be (127L.toString)
     linearLocationThree.sideCode should be (SideCode.TowardsDigitizing)
 
     every (newLinearLocations.map(_.orderNumber).toList) should (be >= 1.0 and be < 3.0)
@@ -174,21 +174,21 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
 
     linearLocationOne.startMValue should be (0.0)
     linearLocationOne.endMValue should be (8.0)
-    linearLocationOne.linkId should be (126L)
+    linearLocationOne.linkId should be (126L.toString)
     linearLocationOne.sideCode should be (SideCode.TowardsDigitizing)
 
     val linearLocationTwo = newLinearLocations(1)
 
     linearLocationTwo.startMValue should be (0.0)
     linearLocationTwo.endMValue should be (2.0)
-    linearLocationTwo.linkId should be (127L)
+    linearLocationTwo.linkId should be (127L.toString)
     linearLocationTwo.sideCode should be (SideCode.TowardsDigitizing)
 
     val linearLocationThree = newLinearLocations(2)
 
     linearLocationThree.startMValue should be (2.0)
     linearLocationThree.endMValue should be (12.0)
-    linearLocationThree.linkId should be (127L)
+    linearLocationThree.linkId should be (127L.toString)
     linearLocationThree.sideCode should be (SideCode.TowardsDigitizing)
 
     every (newLinearLocations.map(_.orderNumber).toList) should (be >= 1.0 and be < 3.0)
@@ -227,14 +227,14 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
 
     linearLocationOne.startMValue should be (0.0)
     linearLocationOne.endMValue should be (10.0)
-    linearLocationOne.linkId should be (127L)
+    linearLocationOne.linkId should be (127L.toString)
     linearLocationOne.sideCode should be (SideCode.TowardsDigitizing)
 
     val linearLocationTwo = newLinearLocations(1)
 
     linearLocationTwo.startMValue should be (10.0)
     linearLocationTwo.endMValue should be (20.0)
-    linearLocationTwo.linkId should be (127L)
+    linearLocationTwo.linkId should be (127L.toString)
     linearLocationTwo.sideCode should be (SideCode.TowardsDigitizing)
 
     every (newLinearLocations.map(_.orderNumber).toList) should (be >= 1.0 and be < 5.0)

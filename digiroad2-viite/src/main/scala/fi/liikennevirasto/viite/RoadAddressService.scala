@@ -383,7 +383,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     val linkIds = linkIdRegex.findFirstIn(searchString)
 
     if (linkIds.nonEmpty)
-      Map(("linkId", Seq()))
+      Map(("linkId", Seq(-1L)))
     else {
       val numRegex = """(\d+)""".r
       val nums = numRegex.findAllIn(searchString).map(_.toLong).toSeq
