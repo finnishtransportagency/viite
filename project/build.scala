@@ -25,6 +25,7 @@ object Digiroad2Build extends Build {
   val LogbackClassicVersion = "1.2.3"
   val JettyVersion = "9.2.15.v20160210"
   val TestOutputOptions = Tests.Argument(TestFrameworks.ScalaTest, "-oNCXELOPQRMI") // List only problems, and their summaries. Set suitable logback level to get the effect.
+  val AwsSdkVersion = "2.17.148"
 
   // Get build id to check if executing in aws environment.
   val awsBuildId: String = scala.util.Properties.envOrElse("CODEBUILD_BUILD_ID", null)
@@ -153,7 +154,9 @@ object Digiroad2Build extends Build {
         "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
         "org.apache.httpcomponents" % "httpclient" % HttpClientVersion,
         "org.scalatra" %% "scalatra-swagger"  % ScalatraVersion,
-        "com.github.nscala-time" %% "nscala-time" % "2.22.0"
+        "com.github.nscala-time" %% "nscala-time" % "2.22.0",
+        "software.amazon.awssdk" % "s3" % AwsSdkVersion,
+        "software.amazon.awssdk" % "sso" % AwsSdkVersion
       ),
       unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf"
     )

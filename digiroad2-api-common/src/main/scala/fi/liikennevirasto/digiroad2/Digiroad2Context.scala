@@ -12,7 +12,7 @@ import fi.liikennevirasto.viite.dao.{LinearLocationDAO, _}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.ChangeSet
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.liikennevirasto.viite.util.{DataImporter, JsonSerializer}
-import fi.liikennevirasto.viite.{NodesAndJunctionsService, ProjectService, RoadAddressService, RoadCheckOptions, RoadNameService, RoadNetworkService}
+import fi.liikennevirasto.viite.{AwsService, NodesAndJunctionsService, ProjectService, RoadAddressService, RoadCheckOptions, RoadNameService, RoadNetworkService}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.concurrent.duration.FiniteDuration
@@ -168,6 +168,10 @@ object Digiroad2Context {
 
   lazy val useFrozenLinkInterface: Boolean = {
     ViiteProperties.vvhRoadlinkFrozen
+  }
+
+  lazy val awsService: AwsService = {
+    new AwsService()
   }
 
   val env = ViiteProperties.env
