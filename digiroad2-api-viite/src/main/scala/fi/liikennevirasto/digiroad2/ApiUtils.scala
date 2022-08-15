@@ -38,8 +38,7 @@ object ApiUtils {
     if (!ViiteProperties.awsConnectionEnabled) return f(params)
 
     val queryString = if (request.getQueryString != null) s"?${request.getQueryString}" else ""
-    val fullPath = request.getPathInfo + queryString
-    val path = fullPath.substring(fullPath.lastIndexOf("/") + 1)
+    val path = "/viite" + request.getRequestURI + queryString
     val workId = getWorkId(requestId, params, responseType)
     val objectExists = s3Service.isS3ObjectAvailable(s3BucketName, workId, 2, Some(objectModifiedWithinHours))
 
