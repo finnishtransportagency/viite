@@ -4,6 +4,14 @@ Parameters:
   RepositoryURL:
     Type: String
     Description: URL to repository, where the container is, e.g. 012345678910.dkr.ecr.eu-west-1.amazonaws.com
+  ECSTaskRoleName:
+    Type: String
+    Default: prod-viite-ecs-task-role
+    Description: Name of ECS task definition task role
+  ApiS3BucketName:
+    Type: String
+    Default: prod-vayla-viite-api-store-bucket
+    Description: Name of s3 bucket for apis
 Resources:
   # This is a role which is used by the ECS tasks themselves.
   ECSTaskExecutionRoleForViite:
@@ -39,6 +47,7 @@ Resources:
     Type: AWS::ECS::TaskDefinition
     Properties:
       ExecutionRoleArn: !GetAtt ECSTaskExecutionRoleForViite.Arn
+      TaskRoleArn: !Sub 'arn:aws:iam::${AWS::AccountId}:role/${ECSTaskRoleName}'
       ContainerDefinitions:
         -
           LogConfiguration:
@@ -97,6 +106,8 @@ Resources:
               Value: admin
             - Name: env
               Value: Prod
+            - Name: apiS3BucketName
+              Value: !Sub '${ApiS3BucketName}'
           Secrets:
             - Name: bonecp.password
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/Viite/Prod/rds.viite.db.password'
