@@ -383,6 +383,11 @@ class DataImporter {
     generateChunks(linkIds, 25000l)
   }
 
+  protected def fetchGroupedLinkIds: Seq[Set[String]] = {
+    val linkIds = sql"""select distinct link_id from linear_location where link_id is not null order by link_id""".as[String].list
+    linkIds.toSet.grouped(25000).asInstanceOf[Seq[Set[String]]]
+  }
+
 
   private def updateLinearLocationGeometry(vvhClient: KgvRoadLink, geometryFrozen: Boolean): Unit = {
     val eventBus = new DummyEventBus
@@ -390,10 +395,10 @@ class DataImporter {
     val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer, geometryFrozen)
     var changed = 0
     var skipped = 0 /// For log information about update-skipped linear locations, skip due to sameness to the old data
-    withLinkIdChunks {
-      case (min, max) =>
+    val linkIds = withDynSession{ fetchGroupedLinkIds }
+    linkIds.par.foreach {
+      case linkIds =>
         withDynTransaction {
-          val linkIds = linearLocationDAO.fetchLinkIdsInChunk(min, max).toSet // TODO: Refactor for new linkId
           val roadLinksFromVVH = linkService.getCurrentAndComplementaryRoadLinksFromVVH(linkIds)
           val unGroupedTopology = linearLocationDAO.fetchByLinkId(roadLinksFromVVH.map(_.linkId).toSet)
           val topologyLocation = unGroupedTopology.groupBy(_.linkId)
