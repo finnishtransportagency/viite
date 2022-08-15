@@ -317,14 +317,16 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     val params = parsedInput.head._2
     var searchResult: Seq[Any] = null
     searchType match {
+      case "linkId" => {
+        val searchResultPoint = roadLinkService.getMidPointByLinkId(params.head.toString)
+        collectResult("linkId", Seq(searchResultPoint))
+      }
       case "road" => params.size match {
         case 1 =>
-          // The params with type long can be LINKID, MTKID or roadNumber
-          var searchResultPoint = roadLinkService.getMidPointByLinkId(params.head.toString) //TODO: Refactor for new linkId
-          var partialResultSeq = collectResult("linkId", Seq(searchResultPoint))
-          searchResultPoint = roadLinkService.getRoadLinkMiddlePointByMtkId(params.head)
-          partialResultSeq = collectResult("mtkId", Seq(searchResultPoint), partialResultSeq)
-          searchResult = getFirstOrEmpty(getRoadAddressWithRoadNumberAddress(params.head).sortBy(address => (address.roadPartNumber, address.startAddrMValue)))
+          // The params with type long can be MTKID or roadNumber
+          val searchResultPoint = roadLinkService.getRoadLinkMiddlePointByMtkId(params.head)
+          val partialResultSeq = collectResult("mtkId", Seq(searchResultPoint))
+          val searchResult = getFirstOrEmpty(getRoadAddressWithRoadNumberAddress(params.head).sortBy(address => (address.roadPartNumber, address.startAddrMValue)))
           collectResult("road", searchResult, partialResultSeq)
         case 2 => collectResult("road", getFirstOrEmpty(getRoadAddressWithRoadNumberParts(params.head, Set(params(1)), Set(Track.Combined, Track.LeftSide, Track.RightSide)).sortBy(address => (address.roadPartNumber, address.startAddrMValue))))
         case 3 | 4 =>
@@ -377,13 +379,21 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 
   def locationInputParser(searchStringOption: Option[String]): Map[String, Seq[Long]] = {
     val searchString = searchStringOption.getOrElse("")
-    val numRegex = """(\d+)""".r
-    val nums = numRegex.findAllIn(searchString).map(_.toLong).toSeq
-    val letterRegex = """([A-Za-zÀ-ÿ])""".r
-    val letters = letterRegex.findFirstIn(searchString)
+    val linkIdRegex = """(\w+-\w+-\w+-\w+-\w+:\d+)""".r
+    val linkIds = linkIdRegex.findFirstIn(searchString)
 
-    val searchType = if (letters.isEmpty) "road" else "street"
-    Map((searchType, nums))
+    if (linkIds.nonEmpty)
+      Map(("linkId", Seq()))
+    else {
+      val numRegex = """(\d+)""".r
+      val nums = numRegex.findAllIn(searchString).map(_.toLong).toSeq
+      val letterRegex = """([A-Za-zÀ-ÿ])""".r
+      val letters = letterRegex.findFirstIn(searchString)
+      if (letters.isEmpty)
+        Map(("road", nums))
+      else
+        Map(("street", nums))
+    }
   }
 
   /**
