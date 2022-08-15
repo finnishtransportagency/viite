@@ -49,7 +49,7 @@ object MassQuery {
       LogUtils.time(logger, "TEST LOG create TEMP_ID table") {
         sqlu"""
       CREATE TEMPORARY TABLE IF NOT EXISTS TEMP_ID (
-        ID BIGINT NOT NULL,
+        ID VARCHAR NOT NULL,
 	      CONSTRAINT TEMP_ID_PK PRIMARY KEY (ID)
       ) ON COMMIT DELETE ROWS
             """.execute

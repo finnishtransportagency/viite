@@ -25,7 +25,7 @@ object LinkDAO {
   }
 
   def fetch(id: String): Option[Link] = {
-    val sql = s"""SELECT * FROM LINK where id = $id"""
+    val sql = s"""SELECT * FROM LINK where id = '$id'"""
     Q.queryNA[Link](sql).firstOption
   }
 

@@ -849,7 +849,7 @@ class RoadwayDAO extends BaseDAO {
   }
 
   private implicit val getRoadAddress: GetResult[Roadway] = new GetResult[Roadway] {
-    def apply(r: PositionedResult) = {
+    def apply(r: PositionedResult): Roadway = {
 
       val id = r.nextLong()
       val roadwayNumber = r.nextLong()

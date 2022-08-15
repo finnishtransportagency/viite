@@ -111,7 +111,7 @@ class RoadAddressFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
     adjustedMValue.geometry should have size 2
     adjustedMValue.geometry should be(Seq(Point(0.0, 30), Point(0.0, 40)))
     adjustedMValue.linearLocationId should be(4L)
-    adjustedMValue.linkId should be(125L)
+    adjustedMValue.linkId should be(125L.toString)
     adjustedMValue.startMeasure should be(None)
     adjustedMValue.endMeasure should be(Some(10.0))
   }
@@ -146,7 +146,7 @@ class RoadAddressFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
     adjustedMValue.geometry should have size 2
     adjustedMValue.geometry should be(Seq(Point(0.0, 30), Point(0.0, 40)))
     adjustedMValue.linearLocationId should be(4L)
-    adjustedMValue.linkId should be(125L)
+    adjustedMValue.linkId should be(125L.toString)
     adjustedMValue.startMeasure should be(None)
     adjustedMValue.endMeasure should be(Some(10.0))
   }
