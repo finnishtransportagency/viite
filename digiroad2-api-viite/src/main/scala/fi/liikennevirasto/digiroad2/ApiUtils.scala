@@ -53,16 +53,22 @@ object ApiUtils {
     }
 
     val objectExists = s3Service.isS3ObjectAvailable(s3Bucket, workId, 2, Some(objectTTLSeconds))
+    logger.info(s"objectExists: ${objectExists}")
 
     (params.get("retry"), objectExists) match {
       case (_, true) =>
+        logger.info(s"case _ , true")
         val preSignedUrl = s3Service.getPreSignedUrl(s3Bucket, workId)
+        logger.info(s"redirecting to Url, presignedUrl: ${preSignedUrl}, queryId: ${queryId}")
         redirectToUrl(preSignedUrl, queryId)
 
       case (None, false) =>
+        logger.info(s"case none, false")
+        logger.info(s"new query")
         newQuery(workId, queryId, path, f, params, responseType)
 
       case (Some(retry: String), false) =>
+        logger.info(s"case some, false")
         val currentRetry = retry.toInt
         if (currentRetry <= MAX_RETRIES)
           redirectBasedOnS3ObjectExistence(workId, queryId, path, currentRetry)
@@ -165,8 +171,10 @@ object ApiUtils {
     val s3ObjectAvailable = objectAvailableInS3(workId, TimeUnit.SECONDS.toMillis(MAX_WAIT_TIME_SECONDS))
     if (s3ObjectAvailable) {
       val preSignedUrl = s3Service.getPreSignedUrl(s3Bucket, workId)
+      logger.info(s"s3 is available, redirecting to presigned url.. (${preSignedUrl})")
       redirectToUrl(preSignedUrl, queryId)
     } else {
+      logger.info(s"s3 doesnt exist, redirecting to same url with incremented retry param")
       redirectToUrl(path, queryId, Some(currentRetry + 1))
     }
   }
