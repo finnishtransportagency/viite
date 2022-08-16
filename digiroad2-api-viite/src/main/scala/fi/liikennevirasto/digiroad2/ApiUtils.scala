@@ -100,12 +100,15 @@ object ApiUtils {
       }
     } catch {
       case _: TimeoutException =>
+        logger.info(s"TimeOutException.. saving results to s3")
         Future { // Complete query and save results to s3 in future
           val finished = Await.result(ret, Duration.Inf)
           val responseBody = formatResponse(finished,  responseType)
           s3Service.saveFileToS3(s3Bucket, workId, responseBody, responseType)
         }
         redirectToUrl(path, queryId, Some(1))
+      case error: Exception =>
+        logger.error(s"${error.getMessage},${error}")
     }
   }
 
@@ -123,12 +126,17 @@ object ApiUtils {
   }
 
   def redirectToUrl(path: String, queryId: String, nextRetry: Option[Int] = None): ActionResult = {
+    logger.info(s"path: ${path}")
+    logger.info(s"nextRetry: ${nextRetry}")
     nextRetry match {
       case Some(retryValue) if retryValue == 1 =>
         val paramSeparator = if (path.contains("?")) "&" else "?"
-        Found.apply(path + paramSeparator + s"queryId=$queryId&retry=$retryValue")
+        val newpath = path + paramSeparator + s"queryId=$queryId&retry=$retryValue"
+        logger.info(s"newpath: ${newpath}")
+        Found.apply(newpath)
       case Some(retryValue) if retryValue > 1 =>
         val newPath = path.replaceAll("""retry=\d+""", s"retry=$retryValue")
+        logger.info(s"newPath: ${newPath}")
         Found.apply(newPath)
       case _ =>
         logger.info(s"API LOG $queryId: Completed the query at ${DateTime.now}")
