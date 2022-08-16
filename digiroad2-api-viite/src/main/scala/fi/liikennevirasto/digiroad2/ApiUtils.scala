@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit
 import javax.servlet.http.HttpServletRequest
 import org.json4s.DefaultFormats
 import org.json4s.native.Json
-import org.scalatra.{ActionResult, BadRequest, Found, Params}
+import org.scalatra.{ActionResult, BadRequest, Found, InternalServerError, Params}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.annotation.tailrec
@@ -42,7 +42,7 @@ object ApiUtils {
     if (!ViiteProperties.awsConnectionEnabled) return f(params)
 
     val queryString = if (request.getQueryString != null) s"?${request.getQueryString}" else ""
-    val path = request.getRequestURI + queryString
+    val path = "/viite" + request.getRequestURI + queryString
     val workId = getWorkId(requestId, params, responseType) // Used to name s3 objects
     val queryId = params.get("queryId") match {             // Used to identify requests in logs
       case Some(id) => id
@@ -53,22 +53,16 @@ object ApiUtils {
     }
 
     val objectExists = s3Service.isS3ObjectAvailable(s3Bucket, workId, 2, Some(objectTTLSeconds))
-    logger.info(s"objectExists: ${objectExists}")
 
     (params.get("retry"), objectExists) match {
       case (_, true) =>
-        logger.info(s"case _ , true")
         val preSignedUrl = s3Service.getPreSignedUrl(s3Bucket, workId)
-        logger.info(s"redirecting to Url, presignedUrl: ${preSignedUrl}, queryId: ${queryId}")
         redirectToUrl(preSignedUrl, queryId)
 
       case (None, false) =>
-        logger.info(s"case none, false")
-        logger.info(s"new query")
         newQuery(workId, queryId, path, f, params, responseType)
 
       case (Some(retry: String), false) =>
-        logger.info(s"case some, false")
         val currentRetry = retry.toInt
         if (currentRetry <= MAX_RETRIES)
           redirectBasedOnS3ObjectExistence(workId, queryId, path, currentRetry)
@@ -106,15 +100,12 @@ object ApiUtils {
       }
     } catch {
       case _: TimeoutException =>
-        logger.info(s"TimeOutException.. saving results to s3")
         Future { // Complete query and save results to s3 in future
           val finished = Await.result(ret, Duration.Inf)
           val responseBody = formatResponse(finished,  responseType)
           s3Service.saveFileToS3(s3Bucket, workId, responseBody, responseType)
         }
         redirectToUrl(path, queryId, Some(1))
-      case error: Exception =>
-        logger.error(s"${error.getMessage},${error}")
     }
   }
 
@@ -132,27 +123,22 @@ object ApiUtils {
   }
 
   def redirectToUrl(path: String, queryId: String, nextRetry: Option[Int] = None): ActionResult = {
-    logger.info(s"path: ${path}")
-    logger.info(s"nextRetry: ${nextRetry}")
-    nextRetry match {
-      case Some(retryValue) if retryValue == 1 =>
-        val paramSeparator = if (path.contains("?")) "&" else "?"
-        val newpath = path + paramSeparator + s"queryId=$queryId&retry=$retryValue"
-        logger.info(s"newpath: ${newpath}")
-        val res = Found.apply(newpath)
-        logger.info(s"result ${res}")
-        res
-      case Some(retryValue) if retryValue > 1 =>
-        val newPath = path.replaceAll("""retry=\d+""", s"retry=$retryValue")
-        logger.info(s"newPath: ${newPath}")
-        val res = Found.apply(newPath)
-        logger.info(s"result ${res}")
-        res
-      case _ =>
-        logger.info(s"API LOG $queryId: Completed the query at ${DateTime.now}")
-        val res = Found.apply(path)
-        logger.info(s"result ${res}")
-        res
+    try {
+      nextRetry match {
+        case Some(retryValue) if retryValue == 1 =>
+          val paramSeparator = if (path.contains("?")) "&" else "?"
+          Found.apply(path + paramSeparator + s"queryId=$queryId&retry=$retryValue")
+        case Some(retryValue) if retryValue > 1 =>
+          val newPath = path.replaceAll("""retry=\d+""", s"retry=$retryValue")
+          Found.apply(newPath)
+        case _ =>
+          logger.info(s"API LOG $queryId: Completed the query at ${DateTime.now}")
+          Found.apply(path)
+      }
+    } catch {
+      case e: Exception =>
+        logger.error(s"${e.getMessage} ${e}")
+        InternalServerError(e)
     }
   }
 
@@ -177,10 +163,8 @@ object ApiUtils {
     val s3ObjectAvailable = objectAvailableInS3(workId, TimeUnit.SECONDS.toMillis(MAX_WAIT_TIME_SECONDS))
     if (s3ObjectAvailable) {
       val preSignedUrl = s3Service.getPreSignedUrl(s3Bucket, workId)
-      logger.info(s"s3 is available, redirecting to presigned url.. (${preSignedUrl})")
       redirectToUrl(preSignedUrl, queryId)
     } else {
-      logger.info(s"s3 doesnt exist, redirecting to same url with incremented retry param")
       redirectToUrl(path, queryId, Some(currentRetry + 1))
     }
   }
