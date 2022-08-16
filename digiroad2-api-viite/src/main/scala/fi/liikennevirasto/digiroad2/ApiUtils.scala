@@ -42,7 +42,7 @@ object ApiUtils {
     if (!ViiteProperties.awsConnectionEnabled) return f(params)
 
     val queryString = if (request.getQueryString != null) s"?${request.getQueryString}" else ""
-    val path = "/viite" + request.getRequestURI + queryString
+    val path = request.getRequestURI + queryString
     val workId = getWorkId(requestId, params, responseType) // Used to name s3 objects
     val queryId = params.get("queryId") match {             // Used to identify requests in logs
       case Some(id) => id
