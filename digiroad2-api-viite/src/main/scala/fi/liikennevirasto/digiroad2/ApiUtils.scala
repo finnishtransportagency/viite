@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit
 import javax.servlet.http.HttpServletRequest
 import org.json4s.DefaultFormats
 import org.json4s.native.Json
-import org.scalatra.{ActionResult, BadRequest, Found, InternalServerError, Params}
+import org.scalatra.{ActionResult, BadRequest, Found, Params}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.annotation.tailrec
@@ -123,22 +123,16 @@ object ApiUtils {
   }
 
   def redirectToUrl(path: String, queryId: String, nextRetry: Option[Int] = None): ActionResult = {
-    try {
-      nextRetry match {
-        case Some(retryValue) if retryValue == 1 =>
-          val paramSeparator = if (path.contains("?")) "&" else "?"
-          Found.apply(path + paramSeparator + s"queryId=$queryId&retry=$retryValue")
-        case Some(retryValue) if retryValue > 1 =>
-          val newPath = path.replaceAll("""retry=\d+""", s"retry=$retryValue")
-          Found.apply(newPath)
-        case _ =>
-          logger.info(s"API LOG $queryId: Completed the query at ${DateTime.now}")
-          Found.apply(path)
-      }
-    } catch {
-      case e: Exception =>
-        logger.error(s"${e.getMessage} ${e}")
-        InternalServerError(e)
+    nextRetry match {
+      case Some(retryValue) if retryValue == 1 =>
+        val paramSeparator = if (path.contains("?")) "&" else "?"
+        Found.apply(path + paramSeparator + s"queryId=$queryId&retry=$retryValue")
+      case Some(retryValue) if retryValue > 1 =>
+        val newPath = path.replaceAll("""retry=\d+""", s"retry=$retryValue")
+        Found.apply(newPath)
+      case _ =>
+        logger.info(s"API LOG $queryId: Completed the query at ${DateTime.now}")
+        Found.apply(path)
     }
   }
 
