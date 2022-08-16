@@ -139,14 +139,20 @@ object ApiUtils {
         val paramSeparator = if (path.contains("?")) "&" else "?"
         val newpath = path + paramSeparator + s"queryId=$queryId&retry=$retryValue"
         logger.info(s"newpath: ${newpath}")
-        Found.apply(newpath)
+        val res = Found.apply(newpath)
+        logger.info(s"result ${res}")
+        res
       case Some(retryValue) if retryValue > 1 =>
         val newPath = path.replaceAll("""retry=\d+""", s"retry=$retryValue")
         logger.info(s"newPath: ${newPath}")
-        Found.apply(newPath)
+        val res = Found.apply(newPath)
+        logger.info(s"result ${res}")
+        res
       case _ =>
         logger.info(s"API LOG $queryId: Completed the query at ${DateTime.now}")
-        Found.apply(path)
+        val res = Found.apply(path)
+        logger.info(s"result ${res}")
+        res
     }
   }
 
