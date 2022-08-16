@@ -41,7 +41,8 @@
                 { "name": "conversion.bonecp.username", "value": "drkonv" },
                 { "name": "authentication.admin.basic.username", "value": "admin" },
                 { "name": "env", "value": "Dev" },
-                { "name": "apiS3BucketName", "value":  "dev-vaylavirasto-viite-api-store-bucket"}
+                { "name": "apiS3BucketName", "value":  "dev-vaylavirasto-viite-api-store-bucket"},
+                { "name":  "apiS3ObjectTTLSeconds", "value":  "300"}
             ],
             "mountPoints": [],
             "secrets": [
