@@ -49,16 +49,16 @@ class AwsService {
       preSignedGetRequest.url().toString
     }
 
-    def isS3ObjectAvailable(s3BucketName: String, workId: String, waitTimeMillis: Long,
-                            modifiedWithinHours: Option[Int] = None): Boolean = {
+    def isS3ObjectAvailable(s3Bucket: String, workId: String, waitTimeMillis: Long,
+                            modifiedWithinSeconds: Option[Int] = None): Boolean = {
       try {
         val waiter = s3.waiter()
         val waitRequest = HeadObjectRequest.builder()
-          .bucket(s3BucketName)
+          .bucket(s3Bucket)
           .key(workId)
         val waitRequestBuilt =
-          if (modifiedWithinHours.nonEmpty)
-            waitRequest.ifModifiedSince(Instant.now().minus(modifiedWithinHours.get, ChronoUnit.HOURS)).build()
+          if (modifiedWithinSeconds.nonEmpty)
+            waitRequest.ifModifiedSince(Instant.now().minus(modifiedWithinSeconds.get, ChronoUnit.SECONDS)).build()
           else waitRequest.build()
         val waiterOverrides = WaiterOverrideConfiguration.builder()
           .waitTimeout(java.time.Duration.ofMillis(waitTimeMillis))

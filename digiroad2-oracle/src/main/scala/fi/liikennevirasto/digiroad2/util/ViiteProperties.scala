@@ -36,6 +36,7 @@ trait ViiteProperties {
   val env: String
   val apiS3BucketName: String
   val awsConnectionEnabled: Boolean
+  val apiS3ObjectTTLSeconds: String
 
   val bonecpProperties: Properties
   val conversionBonecpProperties: Properties
@@ -86,6 +87,7 @@ class ViitePropertiesFromEnv extends ViiteProperties {
   val env: String = scala.util.Properties.envOrElse("env", "Unknown")
   val apiS3BucketName: String = scala.util.Properties.envOrElse("apiS3BucketName", null)
   val awsConnectionEnabled: Boolean = scala.util.Properties.envOrElse("awsConnectionEnabled", "true").toBoolean
+  val apiS3ObjectTTLSeconds: String = scala.util.Properties.envOrElse("apiS3ObjectTTLSeconds", null)
 
   lazy val bonecpProperties: Properties = {
     val props = new Properties()
@@ -169,6 +171,7 @@ class ViitePropertiesFromFile extends ViiteProperties {
   override val env: String = envProps.getProperty("env")
   override val apiS3BucketName: String = scala.util.Properties.envOrElse("apiS3BucketName", envProps.getProperty("apiS3BucketName"))
   override val awsConnectionEnabled: Boolean = envProps.getProperty("awsConnectionEnabled", "true").toBoolean
+  override val apiS3ObjectTTLSeconds: String = scala.util.Properties.envOrElse("apiS3ObjectTTLSeconds", envProps.getProperty("apiS3ObjectTTLSeconds"))
 
   override lazy val bonecpProperties: Properties = {
     val props = new Properties()
@@ -251,6 +254,7 @@ object ViiteProperties {
   lazy val conversionBonecpProperties: Properties = properties.conversionBonecpProperties
   lazy val apiS3BucketName: String = properties.apiS3BucketName
   lazy val awsConnectionEnabled: Boolean = properties.awsConnectionEnabled
+  lazy val apiS3ObjectTTLSeconds: String = properties.apiS3ObjectTTLSeconds
 
   def getAuthenticationBasicUsername(baseAuth: String = ""): String = properties.getAuthenticationBasicUsername(baseAuth)
   def getAuthenticationBasicPassword(baseAuth: String = ""): String = properties.getAuthenticationBasicPassword(baseAuth)
