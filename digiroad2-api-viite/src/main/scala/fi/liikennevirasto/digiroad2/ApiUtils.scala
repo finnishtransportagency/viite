@@ -132,7 +132,6 @@ object ApiUtils {
         Found.apply(newPath)
       case _ =>
         logger.info(s"API LOG $queryId: Completed the query at ${DateTime.now}")
-        logger.error(s"preSignedUrl: ${path}")
         Found.apply(path)
     }
   }
