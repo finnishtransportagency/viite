@@ -42,40 +42,38 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
       parameter queryParam[String]("situationDate").description("Date in format ISO8601. For example 2020-04-29T13:59:59").optional)
 
   get("/road_address", operation(getRoadAddressesByMunicipality)) {
-    time(logger, "GET request for /road_address") {
-      contentType = formats("json")
-      ApiUtils.avoidRestrictions(apiId, request, params) { params =>
-        params.get("municipality").map { municipality =>
+    contentType = formats("json")
+    ApiUtils.avoidRestrictions(apiId, request, params) { params =>
+      params.get("municipality").map { municipality =>
+        try {
+          val municipalityCode = municipality.toInt
+          val searchDate = parseIsoDate(params.get("situationDate"))
           try {
-            val municipalityCode = municipality.toInt
-            val searchDate = parseIsoDate(params.get("situationDate"))
-            try {
-              val knownAddressLinks = roadAddressService.getAllByMunicipality(municipalityCode, searchDate)
-                .filter(ral => ral.roadNumber > 0)
-              roadAddressLinksToApi(knownAddressLinks)
-            } catch {
-              case e: Exception =>
-                val message = s"Failed to get road addresses for municipality $municipalityCode"
-                logger.error(message, e)
-                BadRequest(message)
-            }
+            val knownAddressLinks = roadAddressService.getAllByMunicipality(municipalityCode, searchDate)
+              .filter(ral => ral.roadNumber > 0)
+            roadAddressLinksToApi(knownAddressLinks)
           } catch {
-            case nfe: NumberFormatException =>
-              val message = s"Incorrectly formatted municipality code: " + nfe.getMessage
-              logger.error(message)
-              BadRequest(message)
-            case iae: IllegalArgumentException =>
-              val message = s"Incorrectly formatted date: " + iae.getMessage
-              logger.error(message)
-              BadRequest(message)
             case e: Exception =>
-              val message = s"Invalid municipality code: $municipality"
-              logger.error(message)
+              val message = s"Failed to get road addresses for municipality $municipalityCode"
+              logger.error(message, e)
               BadRequest(message)
           }
-        } getOrElse {
-          BadRequest("Missing mandatory 'municipality' parameter")
+        } catch {
+          case nfe: NumberFormatException =>
+            val message = s"Incorrectly formatted municipality code: " + nfe.getMessage
+            logger.error(message)
+            BadRequest(message)
+          case iae: IllegalArgumentException =>
+            val message = s"Incorrectly formatted date: " + iae.getMessage
+            logger.error(message)
+            BadRequest(message)
+          case e: Exception =>
+            val message = s"Invalid municipality code: $municipality"
+            logger.error(message)
+            BadRequest(message)
         }
+      } getOrElse {
+        BadRequest("Missing mandatory 'municipality' parameter")
       }
     }
   }
