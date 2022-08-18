@@ -83,7 +83,7 @@ object ApiUtils {
   def newQuery[T](workId: String, queryId: String, path: String, f: Params => T, params: Params, responseType: String): Any = {
     val ret = Future { f(params) }
     try {
-      val response = Await.result(ret, Duration.apply(MAX_WAIT_TIME_SECONDS, TimeUnit.SECONDS))
+      val response = Await.result(ret, Duration.apply(15L, TimeUnit.SECONDS))
       response match {
         case _: ActionResult => response
         case _ =>
