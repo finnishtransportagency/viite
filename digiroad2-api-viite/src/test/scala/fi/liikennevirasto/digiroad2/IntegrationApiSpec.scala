@@ -48,7 +48,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
       "muokattu_viimeksi" -> "",
       "geometryWKT" -> "LINESTRING ZM (0.000 0.000 0.000 0.000, 1.000 0.000 0.500 1.000, 4.000 4.000 1.500 6.000)",
       "id" -> 63298,
-      "link_id" -> 5171208,
+      "link_id" -> "5171208",
       "link_source" -> 1,
       "road_number" -> 5,
       "road_part_number" -> 205,
@@ -62,7 +62,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
       "discontinuity" -> 0,
       "start_date" -> "2015-01-01",
       "end_date" -> "2015-12-31",
-      "calibration_points" -> Map("start" -> Some(Map("link_id" -> 120, "address_m_value" -> 2, "segment_m_value" -> 1.0)), "end" -> None)
+      "calibration_points" -> Map("start" -> Some(Map("link_id" -> "120", "address_m_value" -> 2, "segment_m_value" -> 1.0)), "end" -> None)
     )))
   }
 
@@ -131,7 +131,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     get("/roadnames/changes?since=9999-01-01") {
       status should equal(200)
       response.getHeader("Content-Type").toLowerCase should equal("application/json;charset=utf-8")
-      response.body.toString should equal("[]")
+      response.body should equal("[]")
     }
   }
 
