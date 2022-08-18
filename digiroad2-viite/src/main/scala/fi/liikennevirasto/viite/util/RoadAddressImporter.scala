@@ -156,7 +156,8 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: KgvRoadLin
   }
 
   private def fetchHistoryRoadLinksFromVVH(linkIds: Set[String]): Map[String, HistoryRoadLink] =
-    vvhClient.historyData.fetchVVHRoadlinks[HistoryRoadLink](linkIds).groupBy(_.linkId).mapValues(_.maxBy(_.endDate))
+    Map[String, HistoryRoadLink]()
+  //    vvhClient.historyData.fetchVVHRoadlinks[HistoryRoadLink](linkIds).groupBy(_.linkId).mapValues(_.maxBy(_.endDate))
 
 
   private def adjustLinearLocation(linearLocation: IncomingLinearLocation, coefficient: Double): IncomingLinearLocation = {

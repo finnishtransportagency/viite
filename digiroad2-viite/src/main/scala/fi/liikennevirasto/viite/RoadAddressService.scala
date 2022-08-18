@@ -769,7 +769,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
                           everything: Boolean = false, publicRoads: Boolean = false): Seq[RoadAddressLink] = {
 
     val boundingBoxResult = BoundingBoxResult(
-      roadLinkService.getChangeInfoFromVVHF(boundingRectangle, Set()),
+      Future(Seq[ChangeInfo]()),
+//      roadLinkService.getChangeInfoFromVVHF(boundingRectangle, Set()),
       //Should fetch all the administrative classes
       Future(fetchLinearLocationsByBoundingBox(boundingRectangle)),
       Future(roadLinkService.getRoadLinksFromVVH(boundingRectangle, roadNumberLimits, Set(), everything, publicRoads)),

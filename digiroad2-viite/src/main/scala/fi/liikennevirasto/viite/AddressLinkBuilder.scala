@@ -9,12 +9,12 @@ import org.joda.time.{DateTime, DateTimeZone}
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 
 trait AddressLinkBuilder {
-  val RoadNumber = "ROADNUMBER"
-  val RoadPartNumber = "ROADPARTNUMBER"
-  val TrackCode = "TRACKCODE"
-  val MunicipalityCode = "MUNICIPALITYCODE"
-  val FinnishRoadName = "ROADNAME_FI"
-  val SwedishRoadName = "ROADNAME_SE"
+  val RoadNumber = "roadnumber"
+  val RoadPartNumber = "roadpartnumber"
+//  val TrackCode = "TRACKCODE"
+  val MunicipalityCode = "municipalitycode"
+  val FinnishRoadName = "roadnamefin"
+  val SwedishRoadName = "roadnameswe"
   val ComplementarySubType = 3
   val formatter: DateTimeFormatter = DateTimeFormat.forPattern("dd.MM.yyyy")
 
