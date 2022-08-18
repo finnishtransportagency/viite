@@ -180,38 +180,39 @@ class RoadLinkService(val vvhClient: KgvRoadLink, val eventbus: DigiroadEventBus
   }
 
   def getRoadLinksHistoryFromVVH(roadAddressesLinkIds: Set[String]): Seq[HistoryRoadLink] = {
-    if (roadAddressesLinkIds.nonEmpty) {
-      val historyData = Await.result(vvhClient.historyData.fetchRoadLinkFetchedByLinkIdsF(roadAddressesLinkIds), atMost = Duration.Inf)
-      val groupedData = historyData.groupBy(_.linkId)
-      groupedData.mapValues(_.maxBy(_.endDate)).values.toSeq
-    } else
+//    if (roadAddressesLinkIds.nonEmpty) {
+//      val historyData = Await.result(vvhClient.historyData.fetchRoadLinkFetchedByLinkIdsF(roadAddressesLinkIds), atMost = Duration.Inf)
+//      val groupedData = historyData.groupBy(_.linkId)
+//      groupedData.mapValues(_.maxBy(_.endDate)).values.toSeq
+//    } else
       Nil
   }
 
   def getCurrentAndHistoryRoadLinksFromVVH(linkIds: Set[String]): (Seq[RoadLink], Seq[HistoryRoadLink]) = {
     val fut = for {
-      f1Result <- vvhClient.historyData.fetchRoadLinkFetchedByLinkIdsF(linkIds)
+//      f1Result <- vvhClient.historyData.fetchRoadLinkFetchedByLinkIdsF(linkIds)
       f2Result <- if (useFrozenLinkInterface) vvhClient.frozenTimeRoadLinkData.fetchByLinkIdsF(linkIds) else {
         vvhClient.roadLinkData.fetchByLinkIdsF(linkIds)
       }
       f3Result <- vvhClient.complementaryData.fetchByLinkIdsF(linkIds)
-    } yield (f1Result, f2Result, f3Result)
+    } yield (f2Result, f3Result)
 
-    val (historyData, currentData, complementaryData) = Await.result(fut, Duration.Inf)
-    val uniqueHistoryData = historyData.groupBy(_.linkId).mapValues(_.maxBy(_.endDate)).values.toSeq
+    val (currentData, complementaryData) = Await.result(fut, Duration.Inf)
+    val uniqueHistoryData = Seq[HistoryRoadLink]() //historyData.groupBy(_.linkId).mapValues(_.maxBy(_.endDate)).values.toSeq
 
     (enrichRoadLinksFromVVH(currentData ++ complementaryData), uniqueHistoryData)
   }
 
   def getAllRoadLinksFromVVH(linkIds: Set[String]): (Seq[RoadLink], Seq[HistoryRoadLink]) = {
     val fut = for {
-      f1Result <- vvhClient.historyData.fetchRoadLinkFetchedByLinkIdsF(linkIds)
+//      f1Result <- vvhClient.historyData.fetchRoadLinkFetchedByLinkIdsF(linkIds)
       f2Result <- vvhClient.roadLinkData.fetchByLinkIdsF(linkIds)
       f3Result <- vvhClient.complementaryData.fetchByLinkIdsF(linkIds)
-    } yield (f1Result, f2Result, f3Result)
+    } yield (f2Result, f3Result) //yield (f1Result, f2Result, f3Result)
 
-    val (historyData, currentData, complementaryData) = Await.result(fut, Duration.Inf)
-    val uniqueHistoryData = historyData.groupBy(_.linkId).mapValues(_.maxBy(_.endDate)).values.toSeq
+//    val (historyData, currentData, complementaryData) = Await.result(fut, Duration.Inf)
+    val (currentData, complementaryData) = Await.result(fut, Duration.Inf)
+    val uniqueHistoryData = Seq[HistoryRoadLink]() //historyData.groupBy(_.linkId).mapValues(_.maxBy(_.endDate)).values.toSeq
 
     (enrichRoadLinksFromVVH(currentData ++ complementaryData), uniqueHistoryData)
   }

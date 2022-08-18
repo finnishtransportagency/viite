@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.client.vvh
 import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.util.{LogUtils, ViiteProperties}
+import fi.liikennevirasto.digiroad2.util.{ViiteProperties, LogUtils, Parallel}
 import org.apache.http.HttpStatus
 import org.apache.http.client.config.{CookieSpecs, RequestConfig}
 import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet, HttpRequestBase}
@@ -47,8 +47,8 @@ object KgvCollection {
 
 object FilterOgc extends Filter {
 
-  val singleFilter= (field:String,value:String) => s"${field}='${value}'"
-  val singleAddQuotation= (value:String) => s"'${value}'"
+  val singleFilter      : (String, String) => String = (field:String, value:String) => s"${field}='${value}'"
+  val singleAddQuotation: String => String           = (value:String) => s"'${value}'"
 
   override def withFilter[T](attributeName: String, ids: Set[T]): String = {
     if (ids.nonEmpty)
@@ -120,6 +120,11 @@ object FilterOgc extends Filter {
     if (linkIds.nonEmpty) withFilter("id",linkIds)
     else ""
   }
+
+//  override def withOldkmtkidFilter(linkIds: Set[String]): String = {
+//    if (linkIds.nonEmpty) withFilter("oldkmtkid",linkIds)
+//    else ""
+//  }
 
   override def withFinNameFilter(roadNameSource: String)(roadNames: Set[String]): String = {
     if (roadNames.nonEmpty) withFilter(roadNameSource,roadNames)
@@ -197,32 +202,32 @@ object Extractor {
           0
       }
     }
-
-    Map(
-      "ROADNUMBER"            -> numberConversion("roadnumber"),
-      "ROADPARTNUMBER"        -> numberConversion("roadpartnumber"),
-      "MUNICIPALITYCODE"      -> numberConversion("municipalitycode"),
-      "SURFACETYPE"           -> numberConversion("surfacetype"),
-
-      "MTKID"                 -> numberConversion("sourceid"),
-      "MTKCLASS"              -> numberConversion("roadclass"),
-      "HORIZONTALACCURACY"    -> anyToDouble(attributesMap("xyaccuracy")),
-      "VERTICALACCURACY"      -> anyToDouble(attributesMap("zaccuracy")),
-      "VERTICALLEVEL"         -> numberConversion("surfacerelation"),
-      "CONSTRUCTIONTYPE"      -> numberConversion("lifecyclestatus"),
-      "ROADNAME_FI"           -> attributesMap("roadnamefin"),
-      "ROADNAME_SE"           -> attributesMap("roadnameswe"),
-
-      "FROM_RIGHT"            -> numberConversion("addressfromright"),
-      "TO_RIGHT"              -> numberConversion("addresstoright"),
-      "FROM_LEFT"             -> numberConversion("addressfromleft"),
-      "TO_LEFT"               -> numberConversion("addresstoleft"),
-
-      "MTKHEREFLIP"           -> attributesMap("geometryflip"),
-      "CREATED_DATE"          -> starttime,
-      "LAST_EDITED_DATE"      -> lastEditedDate,
-      "VALIDFROM"             -> validFromDate
-    )
+    attributesMap.filterKeys { x =>
+      Set(
+        "roadnumber",
+        "roadpartnumber",
+        "municipalitycode",
+        "surfacetype",
+        "kmtkid",
+        "roadclass",
+        "xyaccuracy",
+        "zaccuracy",
+        "surfacerelation",
+        "lifecyclestatus",
+        "roadnamefin",
+        "roadnameswe",
+        "addressfromright",
+        "addresstoright",
+        "addressfromleft",
+        "addresstoleft",
+        "geometryflip",
+        "starttime",
+        "versionstarttime",
+        "sourcemodificationtime"
+      ).contains(x)
+    }.filter { case (_, value) =>
+      value != null
+    }
   }
 
   /**
@@ -297,6 +302,8 @@ trait KgvOperation extends LinkOperationsAbstract{
   private val WARNING_LEVEL: Int = 10
   // This is way to bypass AWS API gateway 10MB limitation, tune it if item size increase or degrease
   private val BATCH_SIZE: Int = 4999
+  // Limit size of url query, Too big query string result error 414
+  private val BATCH_SIZE_FOR_SELECT_IN_QUERY: Int = 150
 
   override protected implicit val jsonFormats = DefaultFormats.preservingEmptyValues
 
@@ -378,7 +385,7 @@ trait KgvOperation extends LinkOperationsAbstract{
           }
           Left(resort)
         } else {
-          Right(LinkOperationError(response.getStatusLine.getReasonPhrase, response.getStatusLine.getStatusCode.toString))
+          Right(LinkOperationError(response.getStatusLine.getReasonPhrase, response.getStatusLine.getStatusCode.toString,url))
         }
       }
       catch {
@@ -392,12 +399,12 @@ trait KgvOperation extends LinkOperationsAbstract{
     }
   }
 
-  def paginationRequest(base:String,limit:Int,startIndex:Int = 0,firstRequest:Boolean = true ): (String,Int) = {
+  private def paginationRequest(base:String,limit:Int,startIndex:Int = 0,firstRequest:Boolean = true ): (String,Int) = {
     if (firstRequest) (s"${base}&limit=${limit}&startIndex=${startIndex}",limit)
     else (s"${base}&limit=${limit}&startIndex=${startIndex}",startIndex+limit)
   }
 
-  def queryWithPaginationThreaded(baseUrl: String = ""): Seq[LinkType] = {
+  private def queryWithPaginationThreaded(baseUrl: String = ""): Seq[LinkType] = {
     val pageAllReadyFetched: mutable.HashSet[String] = new mutable.HashSet()
 
     @tailrec
@@ -498,7 +505,7 @@ trait KgvOperation extends LinkOperationsAbstract{
   }
 
   override protected def queryByPolygons(polygon: Polygon): Seq[LinkType] = {
-    if(polygon.getCoordinates.size == 0)
+    if(polygon.getCoordinates.length == 0)
       return Seq[LinkType]()
     val filterString  = s"filter=${(s"INTERSECTS(geometry,${encode(polygon.toString)}")})"
     val queryString = s"?${filterString}&filter-lang=${cqlLang}&crs=${crs}"
@@ -509,7 +516,7 @@ trait KgvOperation extends LinkOperationsAbstract{
   }
 
   override protected def queryLinksIdByPolygons(polygon: Polygon): Seq[String] = {
-    if(polygon.getCoordinates.size == 0)
+    if(polygon.getCoordinates.length == 0)
       return Seq[String]()
     val filterString  = s"filter=${(s"INTERSECTS(geometry,${encode(polygon.toString)}")})"
     val queryString = s"?${filterString}&filter-lang=${cqlLang}&crs=${crs}"
@@ -519,16 +526,22 @@ trait KgvOperation extends LinkOperationsAbstract{
     }
   }
 
-  protected def queryByLinkId[LinkType](linkId: String): Seq[LinkType] = {
-    fetchFeatures(s"${restApiEndPoint}/${serviceName}/items/${linkId}") match {
-      case Left(features) =>features.get.features.map(feature=>
-        Extractor.extractFeature(feature,feature.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
-      case Right(error) => throw new ClientException(error.toString)
+  override protected def queryByIds[LinkType](idSet: Set[String],filter: Set[String] => String): Seq[LinkType] = {
+    new Parallel().operation(idSet.grouped(BATCH_SIZE_FOR_SELECT_IN_QUERY).toList.par,2){
+      _.flatMap(ids=>queryByFilter(Some(filter(ids)))).toList
     }
+//    fetchFeatures(s"${restApiEndPoint}/${serviceName}/items/${linkId}") match {
+//      case Left(features) =>features.get.features.map(feature=>
+//        Extractor.extractFeature(feature,feature.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
+//      case Right(error) => throw new ClientException(error.toString)
+//    }
   }
 
   override protected def queryByLinkIds[LinkType](linkIds: Set[String], filter: Option[String] = None): Seq[LinkType] = {
-    linkIds.grouped(BATCH_SIZE).toList.par.flatMap(ids=>queryByLinkIdsUsingFilter(ids,filter)).toList
+//    linkIds.grouped(BATCH_SIZE).toList.par.flatMap(ids=>queryByLinkIdsUsingFilter(ids,filter)).toList
+    new Parallel().operation( linkIds.grouped(BATCH_SIZE_FOR_SELECT_IN_QUERY).toList.par,2){
+      _.flatMap(ids=>queryByLinkIdsUsingFilter(ids,filter)).toList
+    }
   }
 
   protected def queryByLinkIdsUsingFilter[LinkType](linkIds: Set[String],filter: Option[String]): Seq[LinkType] = {

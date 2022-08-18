@@ -1,4 +1,4 @@
--- Change linkId type from BigInt to VarChar for KGV ids.
+-- Change linkId type from BigInt to VarChar for KGV ids - VIITE-2783.
 ALTER TABLE CALIBRATION_POINT DROP constraint cp_link_fk;
 ALTER TABLE LINEAR_LOCATION DROP constraint LINEAR_LOCATION_LINK_FK;
 
