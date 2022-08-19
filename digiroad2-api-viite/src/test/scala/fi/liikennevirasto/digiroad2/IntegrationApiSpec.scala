@@ -17,6 +17,8 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Tag}
 import org.scalatra.test.scalatest.ScalatraSuite
 
+import scala.collection.JavaConversions.enumerationAsScalaIterator
+
 
 class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter {
   protected implicit val jsonFormats: Formats = DefaultFormats
@@ -130,7 +132,8 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     when(mockRoadNameService.getUpdatedRoadNames(any[DateTime], any[Option[DateTime]])).thenReturn(Right(Seq()))
     get("/roadnames/changes?since=9999-01-01") {
       status should equal(200)
-      response.getHeader("Content-Type").toLowerCase should equal("application/json;charset=utf-8")
+      // Different Jetty-versions have variation in Content-Type
+      response.getHeader("Content-Type").toLowerCase should (equal("application/json;charset=utf-8") or equal("application/json; charset=utf-8"))
       response.body should equal("[]")
     }
   }
@@ -198,7 +201,8 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     when(mockRoadNameService.getUpdatedRoadNames(any[DateTime], any[Option[DateTime]])).thenReturn(Right(Seq()))
     get("/roadnames/changes?since=9999-01-01&until=9999-01-01") {
       status should equal(200)
-      response.getHeader("Content-Type").toLowerCase should equal("application/json;charset=utf-8")
+      // Different Jetty-versions have variation in Content-Type
+      response.getHeader("Content-Type").toLowerCase should (equal("application/json;charset=utf-8") or equal("application/json; charset=utf-8"))
       response.body should equal("[]")
     }
   }
