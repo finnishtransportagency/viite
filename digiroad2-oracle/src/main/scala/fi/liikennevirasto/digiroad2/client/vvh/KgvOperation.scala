@@ -62,11 +62,11 @@ object FilterOgc extends Filter {
 
   override def withRoadNumbersFilter(roadNumbers: Seq[(Int, Int)], includeAllPublicRoads: Boolean, filter: String = ""): String = {
         if (roadNumbers.isEmpty)
-          return s""""where":"($filter)","""
+          return s"""$filter"""
         if (includeAllPublicRoads)
-          return withRoadNumbersFilter(roadNumbers, includeAllPublicRoads = false, "ADMINCLASS = 1")
+          return withRoadNumbersFilter(roadNumbers, includeAllPublicRoads = false, "adminclass = 1")
         val limit = roadNumbers.head
-        val filterAdd = s"""(ROADNUMBER >= ${limit._1} and ROADNUMBER <= ${limit._2})"""
+        val filterAdd = s"""(roadnumber >= ${limit._1} and roadnumber <= ${limit._2})"""
         if (filter == "")
           withRoadNumbersFilter(roadNumbers.tail, includeAllPublicRoads, filterAdd)
         else

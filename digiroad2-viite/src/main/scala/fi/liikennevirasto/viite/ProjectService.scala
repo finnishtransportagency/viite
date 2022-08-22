@@ -886,6 +886,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def getProjectLinksWithoutSuravage(roadAddressService: RoadAddressService, projectId: Long, boundingRectangle: BoundingRectangle,
                                      roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int], everything: Boolean = false,
                                      publicRoads: Boolean = false): Seq[ProjectAddressLink] = {
+    // TODO: Check roadNumberLimit need for KGV.
     val fetch = fetchBoundingBoxF(boundingRectangle, projectId, roadNumberLimits, municipalities, everything, publicRoads)
     fetchProjectRoadLinks(projectId, boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads, fetch)
   }
