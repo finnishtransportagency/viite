@@ -124,7 +124,7 @@ class RoadLinkService(val vvhClient: KgvRoadLink, val eventbus: DigiroadEventBus
   private def getRoadLinksAndChangesFromVVH(bounds: BoundingRectangle, roadNumbers: Seq[(Int, Int)],
                                             municipalities: Set[Int] = Set(), everything: Boolean,
                                             publicRoads: Boolean): (Seq[RoadLink], Seq[ChangeInfo]) = {
-    val (changes, links) = Await.result(vvhClient.roadLinkChangeInfo.fetchByBoundsAndMunicipalitiesF(bounds, municipalities)
+    val (changes, links) = Await.result(Future(Seq()) //vvhClient.roadLinkChangeInfo.fetchByBoundsAndMunicipalitiesF(bounds, municipalities) VIITE-2789
       .zip(if (everything) {
         vvhClient.roadLinkData.fetchByBoundsAndMunicipalitiesF(bounds, municipalities)
       } else {
@@ -144,7 +144,7 @@ class RoadLinkService(val vvhClient: KgvRoadLink, val eventbus: DigiroadEventBus
   private def getRoadLinksWithComplementaryAndChangesFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): (Seq[RoadLink], Seq[ChangeInfo]) = {
     val fut = for {
       f1Result <- vvhClient.complementaryData.fetchWalkwaysByBoundsAndMunicipalitiesF(bounds, municipalities)
-      f2Result <- vvhClient.roadLinkChangeInfo.fetchByBoundsAndMunicipalitiesF(bounds, municipalities)
+      f2Result <- Future(Seq()) //vvhClient.roadLinkChangeInfo.fetchByBoundsAndMunicipalitiesF(bounds, municipalities) VIITE-2789
       f3Result <- if (useFrozenLinkInterface)
                   vvhClient.frozenTimeRoadLinkData.fetchByBoundsAndMunicipalitiesF(bounds, municipalities)
                 else
@@ -157,7 +157,7 @@ class RoadLinkService(val vvhClient: KgvRoadLink, val eventbus: DigiroadEventBus
   def reloadRoadLinksWithComplementaryAndChangesFromVVH(municipalities: Int): (Seq[RoadLink], Seq[ChangeInfo], Seq[RoadLink]) = {
     val fut = for {
       f1Result <- vvhClient.complementaryData.fetchComplementaryByMunicipalitiesF(municipalities)
-      f2Result <- vvhClient.roadLinkChangeInfo.fetchByMunicipalityF(municipalities)
+      f2Result <- Future(Seq()) //vvhClient.roadLinkChangeInfo.fetchByMunicipalityF(municipalities) VIITE-2789
       f3Result <- if (useFrozenLinkInterface)
                     vvhClient.frozenTimeRoadLinkData.fetchByMunicipalityF(municipalities)
                   else
@@ -269,11 +269,11 @@ class RoadLinkService(val vvhClient: KgvRoadLink, val eventbus: DigiroadEventBus
   }
 
   def getChangeInfoFromVVHF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[ChangeInfo]] = {
-    vvhClient.roadLinkChangeInfo.fetchByBoundsAndMunicipalitiesF(bounds, municipalities)
+    Future(Seq()) //vvhClient.roadLinkChangeInfo.fetchByBoundsAndMunicipalitiesF(bounds, municipalities) VIITE-2789
   }
 
   def getChangeInfoFromVVHF(linkIds: Set[String]): Future[Seq[ChangeInfo]] = {
-    vvhClient.roadLinkChangeInfo.fetchByLinkIdsF(linkIds)
+    Future(Seq()) //vvhClient.roadLinkChangeInfo.fetchByLinkIdsF(linkIds) VIITE-2789
   }
 
   /**
