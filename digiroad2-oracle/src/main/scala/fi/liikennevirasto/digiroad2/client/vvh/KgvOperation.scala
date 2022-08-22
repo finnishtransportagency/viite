@@ -356,7 +356,7 @@ trait KgvOperation extends LinkOperationsAbstract{
         val statusCode = response.getStatusLine.getStatusCode
         if (statusCode == HttpStatus.SC_OK) {
           val feature = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]]
-          val resort = feature("type").toString match {
+          val result = feature("type").toString match {
             case "Feature" =>
               if (roadLinkStatusFilter(feature)){
                 Some(FeatureCollection(
@@ -383,7 +383,7 @@ trait KgvOperation extends LinkOperationsAbstract{
               ))
             case _ => None
           }
-          Left(resort)
+          Left(result)
         } else {
           Right(LinkOperationError(response.getStatusLine.getReasonPhrase, response.getStatusLine.getStatusCode.toString,url))
         }
@@ -411,15 +411,15 @@ trait KgvOperation extends LinkOperationsAbstract{
     def paginateAtomic(finalResponse: Set[FeatureCollection] = Set(), baseUrl: String = "", limit: Int, position: Int,counter:Int =0): Set[FeatureCollection] = {
       val (url, newPosition) = paginationRequest(baseUrl, limit, firstRequest = false, startIndex = position)
       if (!pageAllReadyFetched.contains(url)) {
-        val resort = fetchFeatures(url) match {
+        val result = fetchFeatures(url) match {
           case Left(features) => features
           case Right(error) => throw new ClientException(error.toString)
         }
         pageAllReadyFetched.add(url)
-        resort match {
+        result match {
           case Some(feature) if feature.numberReturned == 0 => finalResponse
           case Some(feature) if feature.numberReturned != 0 =>
-            if ( counter == WARNING_LEVEL) logger.warn(s"Getting the resort is taking very long time, URL was : $url")
+            if ( counter == WARNING_LEVEL) logger.warn(s"Getting the result is taking very long time, URL was : $url")
             if(feature.nextPageLink.nonEmpty) {
               paginateAtomic(finalResponse ++ Set(feature), baseUrl, limit, newPosition, counter+1)
             }else {
