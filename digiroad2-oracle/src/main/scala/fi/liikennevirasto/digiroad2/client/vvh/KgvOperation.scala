@@ -333,8 +333,6 @@ trait KgvOperation extends LinkOperationsAbstract{
   }
 
   protected def fetchFeatures(url: String): Either[Option[FeatureCollection], LinkOperationError] = {
-    //VIITE-2783
-    if (serviceName == KgvCollection.Changes.value) Right(LinkOperationError("RoadLinkChangeInfo client is disabled and will be replaced by Tiekamu", ""))
     val request = new HttpGet(url)
     addHeaders(request)
 
