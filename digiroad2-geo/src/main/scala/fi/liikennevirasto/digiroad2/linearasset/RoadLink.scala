@@ -26,7 +26,7 @@ case class RoadLink(linkId: String, geometry: Seq[Point],
                     attributes: Map[String, Any] = Map(), constructionType: ConstructionType = ConstructionType.InUse,
                     linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface) extends RoadLinkLike {
 
-  def municipalityCode: Int = attributes.getOrElse("municipalitycode", attributes.get("MUNICIPALITYCODE")).asInstanceOf[Option[BigInt]].map(_.intValue).get
+  def municipalityCode: Int = Try(attributes.getOrElse("municipalitycode", attributes.get("MUNICIPALITYCODE")).asInstanceOf[String].toInt).getOrElse(throw new NoSuchElementException(s"Missing municipalityCode."))
   def roadNumber: Option[String] = attributes.getOrElse("roadnumber", attributes.get("ROADNUMBER")).asInstanceOf[Option[String]] //attributes.getOrElse[Option[String]]("roadnumber", attributes.get("ROADNUMBER").map(_.toString))
   /*  vvhTimeStamp could be as follows. Long format for old vvh Long-type linkId compatibility.
    new DateTime(attributes.getOrElse("versionstarttime", attributes.getOrElse("starttime", BigInt(0))).asInstanceOf[String]).getMillis */
