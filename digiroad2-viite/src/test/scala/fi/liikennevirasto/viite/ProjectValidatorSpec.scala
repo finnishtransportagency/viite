@@ -149,7 +149,6 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       linearLocationDAO.create(ll)
       roadwayDAO.create(rw)
       val roadways = newLinks.map(p => (p.roadNumber, p.roadPartNumber)).distinct.flatMap(p => roadwayDAO.fetchAllByRoadAndPart(p._1, p._2))
-      println(roadways)
       newLinks.map(nl => {
         val roadway = roadways.find(r => r.roadNumber == nl.roadNumber && r.roadPartNumber == nl.roadPartNumber && r.startAddrMValue == nl.startAddrMValue && r.endAddrMValue == nl.endAddrMValue)
         if (roadway.nonEmpty) {
@@ -495,7 +494,6 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       when(mockRoadAddressService.getValidRoadAddressParts(any[Long], any[DateTime])).thenReturn(Seq.empty[Long])
       when(mockRoadAddressService.getPreviousRoadAddressPart(roadNumber, roadPartNumber)).thenReturn(None)
       val validationErrors = projectValidator.checkRoadContinuityCodes(project, projectLinks).distinct
-      println(validationErrors)
       validationErrors should have size 1
     }
   }
