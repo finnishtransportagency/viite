@@ -1940,8 +1940,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       roadwayDAO.fetchAllByRoadwayId(Seq(currentRoadway.id) ++ history_roadway.map(_.id)).toArray shouldBe empty
 
       val AllByRoadAndPart = roadwayDAO.fetchAllByRoadAndPart(currentRoadway.roadNumber, currentRoadway.roadPartNumber, withHistory = true)
-      (Seq(currentRoadway) ++ history_roadway).foreach(println)
-
       val (historyRows, newCurrent) = AllByRoadAndPart.partition(_.endDate.isDefined)
 
       newCurrent should have size 3
@@ -3661,7 +3659,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       linearLocationDAO.create(ll)
       roadwayDAO.create(rw)
       val roadways = newLinks.map(p => (p.roadNumber, p.roadPartNumber)).distinct.flatMap(p => roadwayDAO.fetchAllByRoadAndPart(p._1, p._2))
-      println(roadways)
       newLinks.map(nl => {
         val roadway = roadways.find(r => r.roadNumber == nl.roadNumber && r.roadPartNumber == nl.roadPartNumber && r.startAddrMValue == nl.startAddrMValue && r.endAddrMValue == nl.endAddrMValue)
         if (roadway.nonEmpty) {
