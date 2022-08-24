@@ -37,20 +37,6 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test lockLinearLocationWriting When creating new linear locations in same transaction Then successfully create linear locations") {
-    runWithRollback {
-      linearLocationDAO.lockLinearLocationWriting
-      linearLocationDAO.create(Seq(testLinearLocation))
-      /* This would result in wait
-      runWithRollback {
-        intercept[BatchUpdateException] {
-          linearLocationDAO.create(Seq(testLinearLocation))
-        }
-      }
-      */
-    }
-  }
-
   test("Test create When creating new linear location Then read it succesfully from the database") {
     runWithRollback {
       val id = linearLocationDAO.getNextLinearLocationId
