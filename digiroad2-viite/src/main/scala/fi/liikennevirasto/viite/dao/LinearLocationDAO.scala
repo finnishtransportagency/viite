@@ -200,10 +200,6 @@ class LinearLocationDAO {
     createLinearLocations.map(_.id).toSeq
   }
 
-  def lockLinearLocationWriting: Unit = {
-    sqlu"""LOCK TABLE linear_location IN SHARE MODE""".execute
-  }
-
   implicit val getLinearLocation: GetResult[LinearLocation] = new GetResult[LinearLocation] {
     def apply(r: PositionedResult): LinearLocation = {
       val id = r.nextLong()
