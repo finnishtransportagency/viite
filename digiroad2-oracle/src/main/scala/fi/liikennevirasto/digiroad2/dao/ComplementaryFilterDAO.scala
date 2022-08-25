@@ -5,9 +5,9 @@ import slick.jdbc.{StaticQuery => Q}
 
 class ComplementaryFilterDAO {
 
-  def fetchAll(): Seq[Long] = {
+  def fetchAll(): Seq[String] = {
     val sql = s"""SELECT * FROM COMPLEMENTARY_FILTER"""
-    Q.queryNA[Long](sql).list
+    Q.queryNA[String](sql).list
   }
 
 }
