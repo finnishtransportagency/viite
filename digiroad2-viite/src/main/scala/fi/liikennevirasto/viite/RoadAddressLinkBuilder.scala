@@ -30,7 +30,6 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
     val VVHRoadName = getVVHRoadName(roadLink.attributes)
     val roadName = roadAddress.roadName
     val municipalityCode = roadLink.attributes.getOrElse(MunicipalityCode, "0").asInstanceOf[String].toInt
-    // Try().getOrElse(throw new NumberFormatException(s"Failed to convert value: ${value.toString}")
     val municipalityName = municipalityNamesMapping.getOrElse(municipalityCode, "")
     val administrativeClass = roadAddress.administrativeClass match {
       case AdministrativeClass.Unknown => roadLink.administrativeClass
@@ -61,7 +60,10 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
     val roadLinkRoadNumber = roadLink.attributes.get(RoadNumber).map(toIntNumber).getOrElse(0)
     val roadLinkRoadPartNumber = roadLink.attributes.get(RoadPartNumber).map(toIntNumber).getOrElse(0)
     val VVHRoadName = getVVHRoadName(roadLink.attributes)
-    val municipalityCode = roadLink.attributes.getOrElse(MunicipalityCode, 0).asInstanceOf[String].toInt
+    val municipalityCode = roadLink.attributes.getOrElse(MunicipalityCode, 0) match { // TODO: Simplify this after vvh not used anymore.
+      case m:String => m.asInstanceOf[String].toInt
+      case m:Int => m.asInstanceOf[Int].intValue()
+    }
     val municipalityName = municipalityNamesMapping.getOrElse(municipalityCode, "")
     val administrativeClass = unaddressedRoadLink.administrativeClass match {
       case AdministrativeClass.Unknown => roadLink.administrativeClass
@@ -76,7 +78,10 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
     val roadLinkRoadNumber = roadLink.attributes.get(RoadNumber).map(toIntNumber).getOrElse(0)
     val roadLinkRoadPartNumber = roadLink.attributes.get(RoadPartNumber).map(toIntNumber).getOrElse(0)
     val VVHRoadName = getVVHRoadName(roadLink.attributes)
-    val municipalityCode = roadLink.attributes.getOrElse(MunicipalityCode, 0).asInstanceOf[String].toInt
+    val municipalityCode = roadLink.attributes.getOrElse(MunicipalityCode, 0) match { // TODO: Simplify this after vvh not used anymore.
+      case m:String => m.asInstanceOf[String].toInt
+      case m:Int => m.asInstanceOf[Int].intValue()
+    }
     val municipalityName = municipalityNamesMapping.getOrElse(municipalityCode, "")
     val administrativeClass = unaddressedRoadLink.administrativeClass match {
       case AdministrativeClass.Unknown => roadLink.administrativeClass
