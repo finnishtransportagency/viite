@@ -6,19 +6,19 @@ import java.util.ArrayList
 import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.util.LogUtils
 import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, ConstructionType, LinkGeomSource, TrafficDirection}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.Filter.withMtkClassFilter
-import fi.liikennevirasto.digiroad2.client.vvh.{ClientException, FeatureClass, Filter, LinkOperationError, RoadLinkClient, RoadLinkFetched, VVHAuthPropertyReader}
 import org.apache.http.NameValuePair
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.{HttpGet, HttpPost}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.http.message.BasicNameValuePair
 import org.joda.time.DateTime
-import org.json4s.jackson.JsonMethods.parse
 import org.json4s.{DefaultFormats, Formats, StreamInput}
+import org.json4s.jackson.JsonMethods.parse
 import org.json4s.jackson.Serialization
 import org.slf4j.LoggerFactory
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -61,7 +61,7 @@ trait VVHClientOperations {
   type LinkType
   type Content
 
-  protected def mapFields(content: Map[String, Any], url: String): Either[List[Map[String, Any]], LinkOperationError]
+  protected def mapFields(content: Map[String, Any], url: String): Either[LinkOperationError, List[Map[String, Any]]]
   protected def defaultOutFields(): String
   protected def extractFeature(feature: Map[String, Any]): LinkType
 
@@ -121,7 +121,7 @@ trait VVHClientOperations {
     URLEncoder.encode(layerDefinitionWithoutEncoding(filter, customFieldSelection), "UTF-8")
   }
 
-  protected def fetchVVHFeatures(url: String): Either[List[Map[String, Any]], LinkOperationError] = {
+  protected def fetchVVHFeatures(url: String): Either[LinkOperationError, List[Map[String, Any]]] = {
     val fetchVVHStartTime = System.currentTimeMillis()
     val request = new HttpGet(url)
     val client = HttpClientBuilder.create().build()
@@ -142,7 +142,7 @@ trait VVHClientOperations {
     }
   }
 
-  protected def fetchVVHFeatures(url: String, formparams: ArrayList[NameValuePair]): Either[List[Map[String, Any]], LinkOperationError] = {
+  protected def fetchVVHFeatures(url: String, formparams: ArrayList[NameValuePair]): Either[LinkOperationError, List[Map[String, Any]]] = {
     val fetchVVHStartTime = System.currentTimeMillis()
     val request = new HttpPost(url)
     request.setEntity(new UrlEncodedFormEntity(formparams, "utf-8"))
@@ -220,9 +220,9 @@ trait VVHClientOperations {
    *
    * @param offsetHours Number of hours since midnight to return current day as a VVH timestamp (UNIX time in ms)
    */
-  def createVVHTimeStamp(offsetHours: Int = 5): Long = {
-    RoadLinkClient.createVVHTimeStamp(offsetHours)
-  }
+//  def createVVHTimeStamp(offsetHours: Int = 5): Long = {
+//    RoadLinkClient.createVVHTimeStamp(offsetHours)
+//  }
 
   /**
    * Returns VVH road links by municipality.
@@ -232,8 +232,8 @@ trait VVHClientOperations {
     val url = serviceUrl(definition, queryParameters())
 
     fetchVVHFeatures(url) match {
-      case Left(features) => features.map(extractFeature)
-      case Right(error) => throw new ClientException(error.toString)
+      case Right(features) => features.map(extractFeature)
+      case Left(error) => throw new ClientException(error.toString)
     }
   }
 
@@ -246,8 +246,8 @@ trait VVHClientOperations {
     val url = serviceUrl(bounds, definition, queryParameters())
 
     fetchVVHFeatures(url) match {
-      case Left(features) => features.map(extractFeature)
-      case Right(error) => throw new ClientException(error.toString)
+      case Right(features) => features.map(extractFeature)
+      case Left(error) => throw new ClientException(error.toString)
     }
   }
 
@@ -266,8 +266,8 @@ trait VVHClientOperations {
     val url = serviceUrl(polygon, definition, queryParameters())
 
     fetchVVHFeatures(url) match {
-      case Left(features) => features.map(extractFeature)
-      case Right(error) => throw new ClientException(error.toString)
+      case Right(features) => features.map(extractFeature)
+      case Left(error) => throw new ClientException(error.toString)
     }
   }
 }
@@ -290,11 +290,11 @@ class OldVVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperatio
     "MTKID,LINKID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,SURFACETYPE,END_DATE,STARTNODE,ENDNODE,GEOMETRYLENGTH"
   }
 
-  protected override def mapFields(content: Map[String, Any], url: String): Either[List[Map[String, Any]], LinkOperationError] = {
+  protected override def mapFields(content: Map[String, Any], url: String): Either[LinkOperationError, List[Map[String, Any]]] = {
     val optionalLayers = content.get("layers").map(_.asInstanceOf[List[Map[String, Any]]])
     val optionalFeatureLayer = optionalLayers.flatMap { layers => layers.find { layer => layer.contains("features") } }
     val optionalFeatures = optionalFeatureLayer.flatMap { featureLayer => featureLayer.get("features").map(_.asInstanceOf[List[Map[String, Any]]]) }
-    optionalFeatures.map(Left(_)).getOrElse(Right(LinkOperationError(url+" : "+content.toString(), "")))
+    optionalFeatures.map(Right(_)).getOrElse(Left(LinkOperationError(url+" : "+content.toString(), "")))
   }
 
   /**
@@ -327,8 +327,8 @@ class OldVVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperatio
     nvps.add(new BasicNameValuePair("f", "pjson"))
 
     fetchVVHFeatures(serviceUrl, nvps) match {
-      case Left(features) => features.map(extractLinkIdFromVVHFeature)
-      case Right(error) => throw new ClientException(error.toString)
+      case Right(features) => features.map(extractLinkIdFromVVHFeature)
+      case Left(error) => throw new ClientException(error.toString)
     }
   }
 
@@ -347,12 +347,12 @@ class OldVVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperatio
       val url = serviceUrl(definition, queryParameters(fetchGeometry))
 
       fetchVVHFeatures(url) match {
-        case Left(features) => features.map { feature =>
+        case Right(features) => features.map { feature =>
           val attributes = extractFeatureAttributes(feature)
           val geometry = if (fetchGeometry) extractFeatureGeometry(feature) else Nil
           resultTransition(attributes, geometry)
         }
-        case Right(error) => throw new ClientException(error.toString)
+        case Left(error) => throw new ClientException(error.toString)
       }
     }.toList
   }
@@ -372,12 +372,12 @@ class OldVVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperatio
       val url = serviceUrl(definition, queryParameters(fetchGeometry))
 
       fetchVVHFeatures(url) match {
-        case Left(features) => features.map { feature =>
+        case Right(features) => features.map { feature =>
           val attributes = extractFeatureAttributes(feature)
           val geometry = if (fetchGeometry) extractFeatureGeometry(feature) else Nil
           resultTransition(attributes, geometry)
         }
-        case Right(error) => throw new ClientException(error.toString)
+        case Left(error) => throw new ClientException(error.toString)
       }
     }.toList
   }
@@ -510,8 +510,8 @@ class OldVVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperatio
     val url = serviceUrl(definition, queryParameters())
 
     fetchVVHFeatures(url) match {
-      case Left(features) => features.map(extractFeature)
-      case Right(error) => throw new ClientException(error.toString)
+      case Right(features) => features.map(extractFeature)
+      case Left(error) => throw new ClientException(error.toString)
     }
   }
 
@@ -810,8 +810,8 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends OldVVHRoadLinkC
 
   protected def fetchFeaturesAndLog(url: String): Seq[LinkType] = {
     fetchVVHFeatures(url) match {
-      case Left(features) => features.map(extractVVHFeature)
-      case Right(error) =>
+      case Right(features) => features.map(extractVVHFeature)
+      case Left(error) =>
         logger.error("VVH error: " + error)
         throw new ClientException(error.toString)
     }
@@ -860,7 +860,7 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends OldVVHRoadLinkC
   def fetchWalkwaysByMunicipalitiesF(municipality: Int): Future[Seq[RoadLinkFetched]] =
     Future(queryByMunicipality(municipality, Some(Filter.withMtkClassFilter(Set(12314)))))
   case class LinkOperationErrorComplementary(content: Map[String, Any], url: String)
-  def updateVVHFeatures(complementaryFeatures: Map[String, Any]): Either[List[Map[String, Any]], LinkOperationErrorComplementary] = {
+  def updateVVHFeatures(complementaryFeatures: Map[String, Any]): Either[LinkOperationErrorComplementary, List[Map[String, Any]]] = {
     val url = vvhRestApiEndPoint + serviceName + "/FeatureServer/0/updateFeatures"
     val request = new HttpPost(url)
     request.setEntity(new UrlEncodedFormEntity(createFormParams(complementaryFeatures), "utf-8"))
@@ -871,25 +871,25 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends OldVVHRoadLinkC
     val response = client.execute(request)
     try {
       val content: Map[String, Seq[Map[String, Any]]] = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Seq[Map[String, Any]]]]
-      content.get("updateResults").getOrElse(None) match {
+      content.getOrElse("updateResults", None) match {
         case None =>
           content.get("error").head.asInstanceOf[Map[String, Any]].getOrElse("details", None) match {
-            case None => Right(LinkOperationErrorComplementary(Map("error" -> "Error Without Details "), url))
-            case value => Right(LinkOperationErrorComplementary(Map("error details" -> value), url))
+            case None => Left(LinkOperationErrorComplementary(Map("error" -> "Error Without Details "), url))
+            case value => Left(LinkOperationErrorComplementary(Map("error details" -> value), url))
           }
         case _ =>
-          content.get("updateResults").get.map(_.getOrElse("success", None)).head match {
-            case None => Right(LinkOperationErrorComplementary(Map("error" -> "Update status not available in JSON Response"), url))
-            case true => Left(List(content))
+          content("updateResults").map(_.getOrElse("success", None)).head match {
+            case None => Left(LinkOperationErrorComplementary(Map("error" -> "Update status not available in JSON Response"), url))
+            case true => Right(List(content))
             case false =>
-              content.get("updateResults").get.map(_.getOrElse("error", None)).head.asInstanceOf[Map[String, Any]].getOrElse("description", None) match {
-                case None => Right(LinkOperationErrorComplementary(Map("error" -> "Error Without Information"), url))
-                case value => Right(LinkOperationErrorComplementary(Map("error" -> value), url))
+              content("updateResults").map(_.getOrElse("error", None)).head.asInstanceOf[Map[String, Any]].getOrElse("description", None) match {
+                case None => Left(LinkOperationErrorComplementary(Map("error" -> "Error Without Information"), url))
+                case value => Left(LinkOperationErrorComplementary(Map("error" -> value), url))
               }
           }
       }
     } catch {
-      case e: Exception => Right(LinkOperationErrorComplementary(Map("error" -> e.getMessage), url))
+      case e: Exception => Left(LinkOperationErrorComplementary(Map("error" -> e.getMessage), url))
     } finally {
       response.close()
     }

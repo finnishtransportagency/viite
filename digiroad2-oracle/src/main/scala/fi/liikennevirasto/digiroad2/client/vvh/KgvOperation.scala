@@ -1,27 +1,27 @@
 package fi.liikennevirasto.digiroad2.client.vvh
 
+import java.math.BigInteger
+import java.net.URLEncoder
+
 import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.util.{ViiteProperties, LogUtils, Parallel}
+import fi.liikennevirasto.digiroad2.client.vvh.Filter.{combineFiltersWithAnd, withMunicipalityFilter, withRoadNumbersFilter}
+import fi.liikennevirasto.digiroad2.util.{LogUtils, Parallel, ViiteProperties}
 import org.apache.http.HttpStatus
 import org.apache.http.client.config.{CookieSpecs, RequestConfig}
 import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet, HttpRequestBase}
 import org.apache.http.impl.client.HttpClients
 import org.joda.time.DateTime
-import org.json4s.jackson.JsonMethods.parse
 import org.json4s.{DefaultFormats, StreamInput}
+import org.json4s.jackson.JsonMethods.parse
 import org.slf4j.LoggerFactory
-import java.math.BigInteger
-import java.net.URLEncoder
-
-import fi.liikennevirasto.digiroad2.client.vvh.Filter.{withRoadNumbersFilter, combineFiltersWithAnd, withMunicipalityFilter}
 
 import scala.annotation.tailrec
 import scala.collection.mutable
+import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
 import scala.util.Try
 
 sealed case class Link(title:String,`type`: String,rel:String,href:String)
@@ -72,12 +72,11 @@ object FilterOgc extends Filter {
         else
           withRoadNumbersFilter(roadNumbers.tail, includeAllPublicRoads, s"""$filter OR $filterAdd""")
       }
-
   /**
-   *
-   * @param polygon to be converted to string
-   * @return string compatible with VVH polygon query
-   */
+     *
+     * @param polygon to be converted to string
+     * @return string compatible with VVH polygon query
+     */
   override def stringifyPolygonGeometry(polygon: Polygon): String = {
     var stringPolygonList: String = ""
     var polygonString: String = "{rings:[["
@@ -135,7 +134,7 @@ object FilterOgc extends Filter {
     if (ids.nonEmpty) withFilter("roadclass",ids)
     else ""
   }
-  def withContructionFilter(values: Set[Int]): String = {
+  def withLifecycleStatusFilter(values: Set[Int]): String = {
     if (values.nonEmpty) withFilter("lifecyclestatus",values)
     else ""
   }
@@ -193,15 +192,6 @@ object Extractor {
   }
 
   private def extractAttributes(attributesMap: Map[String, Any],validFromDate:BigInt,lastEditedDate:BigInt,starttime:BigInt): Map[String, Any] = {
-    def numberConversion(field:String): BigInt = {
-      try {
-        toBigInt(attributesMap(field).toString.toInt)
-      } catch {
-        case _: Exception =>
-          logger.warn(s"Failed to retrieve value ${field}: ${attributesMap(field)}")
-          0
-      }
-    }
     attributesMap.filterKeys { x =>
       Set(
         "roadnumber",
@@ -334,12 +324,12 @@ trait KgvOperation extends LinkOperationsAbstract{
    * Planned - 3
    */
   protected def roadLinkStatusFilter(feature: Map[String, Any]): Boolean = {
-    val attributes = feature("properties").asInstanceOf[Map[String, Any]]
-    val linkStatus = Extractor.extractConstructionType(attributes)
-    linkStatus == ConstructionType.InUse || linkStatus == ConstructionType.Planned || linkStatus == ConstructionType.UnderConstruction
+    val attributes       = feature("properties").asInstanceOf[Map[String, Any]]
+    val constructionType = Extractor.extractConstructionType(attributes)
+    constructionType == ConstructionType.InUse || constructionType == ConstructionType.Planned || constructionType == ConstructionType.UnderConstruction
   }
 
-  protected def fetchFeatures(url: String): Either[Option[FeatureCollection], LinkOperationError] = {
+  protected def fetchFeatures(url: String): Either[LinkOperationError, Option[FeatureCollection]] = {
     val request = new HttpGet(url)
     addHeaders(request)
 
@@ -383,13 +373,13 @@ trait KgvOperation extends LinkOperationsAbstract{
               ))
             case _ => None
           }
-          Left(result)
+          Right(result)
         } else {
-          Right(LinkOperationError(response.getStatusLine.getReasonPhrase, response.getStatusLine.getStatusCode.toString,url))
+          Left(LinkOperationError(response.getStatusLine.getReasonPhrase, response.getStatusLine.getStatusCode.toString,url))
         }
       }
       catch {
-        case e: Exception => Right(LinkOperationError(e.toString, ""))
+        case e: Exception => Left(LinkOperationError(e.toString, ""))
       }
       finally {
         if (response != null) {
@@ -399,7 +389,7 @@ trait KgvOperation extends LinkOperationsAbstract{
     }
   }
 
-  private def paginationRequest(base:String,limit:Int,startIndex:Int = 0,firstRequest:Boolean = true ): (String,Int) = {
+  private def paginationRequest(base:String, limit:Int, startIndex:Int = 0, firstRequest:Boolean = true ): (String, Int) = {
     if (firstRequest) (s"${base}&limit=${limit}&startIndex=${startIndex}",limit)
     else (s"${base}&limit=${limit}&startIndex=${startIndex}",startIndex+limit)
   }
@@ -409,11 +399,11 @@ trait KgvOperation extends LinkOperationsAbstract{
 
     @tailrec
     def paginateAtomic(finalResponse: Set[FeatureCollection] = Set(), baseUrl: String = "", limit: Int, position: Int,counter:Int =0): Set[FeatureCollection] = {
-      val (url, newPosition) = paginationRequest(baseUrl, limit, firstRequest = false, startIndex = position)
+      val (url, newPosition) = paginationRequest(baseUrl, limit, startIndex = position, firstRequest = false)
       if (!pageAllReadyFetched.contains(url)) {
         val result = fetchFeatures(url) match {
-          case Left(features) => features
-          case Right(error) => throw new ClientException(error.toString)
+          case Right(features) => features
+          case Left(error) => throw new ClientException(error.toString)
         }
         pageAllReadyFetched.add(url)
         result match {
@@ -478,8 +468,8 @@ trait KgvOperation extends LinkOperationsAbstract{
     val queryString = s"?${filterString}&filter-lang=${cqlLang}&crs=${crs}"
 
     fetchFeatures(s"${restApiEndPoint}/${serviceName}/items/${queryString}") match {
-      case Left(features) =>features.get.features.map(t=>Extractor.extractFeature(t,t.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
-      case Right(error) => throw new ClientException(error.toString)
+      case Right(features) =>features.get.features.map(t=>Extractor.extractFeature(t,t.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
+      case Left(error) => throw new ClientException(error.toString)
     }
   }
 
@@ -493,9 +483,9 @@ trait KgvOperation extends LinkOperationsAbstract{
     }
     fetchFeatures(s"$restApiEndPoint/${serviceName}/items?bbox=$bbox&filter-lang=$cqlLang&bbox-crs=$bboxCrsType&crs=$crs&$filterString")
     match {
-      case Left(features) =>features.get.features.map(feature=>
+      case Right(features) =>features.get.features.map(feature=>
         Extractor.extractFeature(feature,feature.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
-      case Right(error) => throw new ClientException(error.toString)
+      case Left(error) => throw new ClientException(error.toString)
     }
   }
 
@@ -510,8 +500,8 @@ trait KgvOperation extends LinkOperationsAbstract{
     val filterString  = s"filter=${(s"INTERSECTS(geometry,${encode(polygon.toString)}")})"
     val queryString = s"?${filterString}&filter-lang=${cqlLang}&crs=${crs}"
     fetchFeatures(s"${restApiEndPoint}/${serviceName}/items/${queryString}") match {
-      case Left(features) =>features.get.features.map(t=>Extractor.extractFeature(t,t.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
-      case Right(error) => throw new ClientException(error.toString)
+      case Right(features) =>features.get.features.map(t=>Extractor.extractFeature(t,t.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
+      case Left(error) => throw new ClientException(error.toString)
     }
   }
 
@@ -521,8 +511,8 @@ trait KgvOperation extends LinkOperationsAbstract{
     val filterString  = s"filter=${(s"INTERSECTS(geometry,${encode(polygon.toString)}")})"
     val queryString = s"?${filterString}&filter-lang=${cqlLang}&crs=${crs}"
     fetchFeatures(s"${restApiEndPoint}/${serviceName}/items/${queryString}") match {
-      case Left(features) =>features.get.features.map(_.properties.get("id").asInstanceOf[String])
-      case Right(error) => throw new ClientException(error.toString)
+      case Right(features) =>features.get.features.map(_.properties.get("id").asInstanceOf[String])
+      case Left(error) => throw new ClientException(error.toString)
     }
   }
 
@@ -554,9 +544,9 @@ trait KgvOperation extends LinkOperationsAbstract{
     if(!pagination){
       fetchFeatures(url)
       match {
-        case Left(features) =>features.get.features.map(feature=>
+        case Right(features) =>features.get.features.map(feature=>
           Extractor.extractFeature(feature,feature.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
-        case Right(error) => throw new ClientException(error.toString)
+        case Left(error) => throw new ClientException(error.toString)
       }
     }else {
       queryWithPaginationThreaded(url).asInstanceOf[Seq[LinkType]]
