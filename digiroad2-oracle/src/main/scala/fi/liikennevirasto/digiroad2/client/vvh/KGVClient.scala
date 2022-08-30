@@ -362,20 +362,21 @@ object Filter extends Filter {
   }
 }
 
-object RoadLinkClient {
-  /**
-   * Create a pseudo VVH time stamp when an asset is created or updated and is on the current road geometry.
-   * This prevents change info from being applied to the recently created asset. Resolution is one day.
-   * @param offsetHours Offset to the timestamp. Defaults to 5 which reflects to VVH offset for batch runs.
-   * @return VVH timestamp for current date
-   */
-  def createVVHTimeStamp(offsetHours: Int = 5): Long = {
-    val oneHourInMs = 60 * 60 * 1000L
-    val utcTime = DateTime.now().minusHours(offsetHours).getMillis
-    val curr = utcTime + DateTimeZone.getDefault.getOffset(utcTime)
-    curr - (curr % (24L*oneHourInMs))
-  }
-}
+// TODO: move to for tests
+//object RoadLinkClient {
+//  /**
+//   * Create a pseudo VVH time stamp when an asset is created or updated and is on the current road geometry.
+//   * This prevents change info from being applied to the recently created asset. Resolution is one day.
+//   * @param offsetHours Offset to the timestamp. Defaults to 5 which reflects to VVH offset for batch runs.
+//   * @return VVH timestamp for current date
+//   */
+//  def createVVHTimeStamp(offsetHours: Int = 5): Long = {
+//    val oneHourInMs = 60 * 60 * 1000L
+//    val utcTime = DateTime.now().minusHours(offsetHours).getMillis
+//    val curr = utcTime + DateTimeZone.getDefault.getOffset(utcTime)
+//    curr - (curr % (24L*oneHourInMs))
+//  }
+//}
 
 //class RoadLinkClient(vvhRestApiEndPoint: String) {
 //  lazy val roadLinkData: OldVVHRoadLinkClient = new OldVVHRoadLinkClient(vvhRestApiEndPoint)
@@ -454,7 +455,7 @@ class KgvRoadLink {
 
     lazy val roadLinkData: KgvRoadLinkClient[RoadLinkFetched] = new KgvRoadLinkClient[RoadLinkFetched](Some(KgvCollection.UnFrozen), Some(LinkGeomSource.NormalLinkInterface))
     lazy val frozenTimeRoadLinkData: KgvRoadLinkClient[RoadLinkFetched] = new KgvRoadLinkClient[RoadLinkFetched](Some(KgvCollection.Frozen), Some(LinkGeomSource.FrozenLinkInterface))
-    lazy val roadLinkChangeInfo: KgvRoadLinkClient[ChangeInfo] = new KgvRoadLinkClient[ChangeInfo](Some(KgvCollection.Changes), Some(LinkGeomSource.change))
+    lazy val roadLinkChangeInfo: KgvRoadLinkClient[ChangeInfo] = new KgvRoadLinkClient[ChangeInfo](Some(KgvCollection.Changes), Some(LinkGeomSource.Change))
     //lazy val linkCorrespondenceTable: KgvRoadLinkClient[RoadLinkFetched] = new KgvRoadLinkClient[RoadLinkFetched]Some(KgvCollection.LinkCorrespondenceTable), Some(LinkGeomSource.linkCorrespondenceTable))
 //    lazy val historyData: KgvRoadLinkClient[HistoryRoadLink] = new KgvRoadLinkClient[HistoryRoadLink](Some(KgvCollection.LinkVersions), Some(LinkGeomSource.roadLinksVersions))
     //lazy val complementaryData: KgvRoadLinkClient[RoadLinkFetched] = new KgvRoadLinkClient[RoadLinkFetched](Some(KgvCollection.UnFrozen), Some(LinkGeomSource.ComplementaryLinkInterface))
@@ -469,7 +470,7 @@ class KgvRoadLinkClient[T](collection: Option[KgvCollection] = None, linkGeomSou
   override protected val linkGeomSource: LinkGeomSource = linkGeomSourceValue.getOrElse(throw new ClientException("LinkGeomSource is not defined") )
   val filter:Filter = FilterOgc
 
-  def createVVHTimeStamp(offsetHours: Int = 5): Long =  RoadLinkClient.createVVHTimeStamp(offsetHours)
+//  def createVVHTimeStamp(offsetHours: Int = 5): Long =  RoadLinkClient.createVVHTimeStamp(offsetHours)
 
 //    protected def layerDefinition(filter: String, customFieldSelection: Option[String] = None): String = {
 //      URLEncoder.encode(layerDefinitionWithoutEncoding(filter, customFieldSelection), "UTF-8")
@@ -504,9 +505,9 @@ class KgvRoadLinkClient[T](collection: Option[KgvCollection] = None, linkGeomSou
 //    }
 
   //TODO: CHECK NEED
-      def fetchRoadLinkFetchedByLinkIdsF(linkIds: Set[String] = Set()): Future[Seq[HistoryRoadLink]] = {
-        Future(Seq.empty[HistoryRoadLink])
-      }
+//      def fetchRoadLinkFetchedByLinkIdsF(linkIds: Set[String] = Set()): Future[Seq[HistoryRoadLink]] = {
+//        Future(Seq.empty[HistoryRoadLink])
+//      }
 
 
     /**

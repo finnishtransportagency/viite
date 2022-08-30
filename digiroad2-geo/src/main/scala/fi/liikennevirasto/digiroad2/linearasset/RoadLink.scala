@@ -31,9 +31,8 @@ case class RoadLink(linkId: String, geometry: Seq[Point],
     case m:BigInt => m.asInstanceOf[BigInt].intValue()
     case m:Some[Any] => m.get.toString.toInt
   }
-  def roadNumber: Option[String] = attributes.getOrElse("roadnumber", attributes.get("ROADNUMBER")).asInstanceOf[Option[String]] //attributes.getOrElse[Option[String]]("roadnumber", attributes.get("ROADNUMBER").map(_.toString))
-  /*  vvhTimeStamp could be as follows. Long format for old vvh Long-type linkId compatibility.
-   new DateTime(attributes.getOrElse("versionstarttime", attributes.getOrElse("starttime", BigInt(0))).asInstanceOf[String]).getMillis */
+  def roadNumber: Option[String] = attributes.getOrElse("roadnumber", attributes.get("ROADNUMBER")).asInstanceOf[Option[String]]
+  /* vvhTimeStamp Long format for old vvh Long-type linkId compatibility. */ // TODO: Simplify this after vvh not used anymore.
   val vvhTimeStamp: Long = Try(new DateTime(attributes.getOrElse("versionstarttime", attributes.get("starttime")).asInstanceOf[String]).getMillis)
                               .getOrElse(attributes.getOrElse("LAST_EDITED_DATE", attributes.getOrElse("CREATED_DATE", BigInt(0))).asInstanceOf[BigInt].toLong)
 }

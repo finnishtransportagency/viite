@@ -207,7 +207,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def fetchPreFillFromVVH(linkId: String, projectId: Long): Either[String, PreFillInfo] = {
-    parsePreFillData(roadLinkService.getRoadLinkFetcheds(Set(linkId)), projectId = projectId)
+    parsePreFillData(roadLinkService.getRoadLinks(Set(linkId)), projectId = projectId)
   }
 
   def parsePreFillData(vvhRoadLinks: Seq[RoadLinkFetched], projectId: Long = -1000): Either[String, PreFillInfo] = {
@@ -563,7 +563,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       // Connected to existing geometry -> let the track section calculation take it's natural course
       newLinks.map(_.copy(sideCode = SideCode.Unknown))
     } else {
-      val roadLinks = roadLinkService.getRoadLinkFetcheds(linkIds) //fetchVVHRoadLinksAndComplementaryFromVVH(linkIds)
+      val roadLinks = roadLinkService.getRoadLinks(linkIds) //fetchVVHRoadLinksAndComplementaryFromVVH(linkIds)
       //Set the sideCode as defined by the trafficDirection
       val sideCode = roadLinks.map(rl => rl.linkId -> (rl.trafficDirection match {
         case TrafficDirection.AgainstDigitizing => SideCode.AgainstDigitizing
@@ -824,7 +824,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def updateProjectLinkGeometry(projectId: Long, username: String, onlyNotHandled: Boolean = false): Unit = {
     withDynTransaction {
       val projectLinks = projectLinkDAO.fetchProjectLinks(projectId, if (onlyNotHandled) Some(LinkStatus.NotHandled) else None)
-      val roadLinks = roadLinkService.getRoadLinkFetcheds(projectLinks.filter(x => x.linkGeomSource == LinkGeomSource.NormalLinkInterface
+      val roadLinks = roadLinkService.getRoadLinks(projectLinks.filter(x => x.linkGeomSource == LinkGeomSource.NormalLinkInterface
         || x.linkGeomSource == LinkGeomSource.FrozenLinkInterface || x.linkGeomSource == LinkGeomSource.ComplementaryLinkInterface).map(x => x.linkId).toSet)
       val vvhLinks = roadLinks
       val geometryMap = vvhLinks.map(l => l.linkId -> (l.geometry, l.vvhTimeStamp)).toMap
