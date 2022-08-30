@@ -379,7 +379,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 
   def locationInputParser(searchStringOption: Option[String]): Map[String, Seq[Long]] = {
     val searchString = searchStringOption.getOrElse("")
-    val linkIdRegex = """(\w+-\w+-\w+-\w+-\w+:\d+)""".r
+    val linkIdRegex = """(\w+-\w+-\w+-\w+-\w+:\d+)""".r // Link UUID
     val linkIds = linkIdRegex.findFirstIn(searchString)
 
     if (linkIds.nonEmpty)

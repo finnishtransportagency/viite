@@ -11,7 +11,6 @@ import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 trait AddressLinkBuilder {
   val RoadNumber = "roadnumber"
   val RoadPartNumber = "roadpartnumber"
-//  val TrackCode = "TRACKCODE"
   val MunicipalityCode = "municipalitycode"
   val FinnishRoadName = "roadnamefin"
   val SwedishRoadName = "roadnameswe"

@@ -97,17 +97,17 @@ class RoadLinkService(val vvhClient: KgvRoadLink, val eventbus: DigiroadEventBus
   def getRoadLinkByLinkIdFromVVH(linkId: String): Option[RoadLink] = getRoadLinksByLinkIdsFromVVH(Set(linkId)).headOption
 
   def getRoadLinksByLinkIdsFromVVH(linkIds: Set[String]): Seq[RoadLink] = {
-    val RoadLinkFetcheds = getRoadLinkFetcheds(linkIds)
+    val RoadLinkFetcheds = getRoadLinks(linkIds)
     enrichRoadLinksFromVVH(RoadLinkFetcheds)
   }
 
   /**
-    * This method returns VVH road links by link ids.
+    * This method returns road links by link ids.
     *
     * @param linkIds
     * @return RoadLinkFetcheds
     */
-  def getRoadLinkFetcheds(linkIds: Set[String]): Seq[RoadLinkFetched] = {
+  def getRoadLinks(linkIds: Set[String]): Seq[RoadLinkFetched] = {
     if (linkIds.nonEmpty) {
       if (useFrozenLinkInterface) {
         fetchVVHFrozenRoadLinksAndComplementaryFromVVH(linkIds)
