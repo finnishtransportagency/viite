@@ -146,7 +146,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
   private def toRoadLink(ral: RoadAddressLinkLike): RoadLink = {
     RoadLink(ral.linkId, ral.geometry, ral.length, ral.administrativeClass, 1, extractTrafficDirection(ral.sideCode, Track.apply(ral.trackCode.toInt)), ral.linkType, ral.modifiedAt, ral.modifiedBy, Map(
         "MUNICIPALITYCODE" -> BigInt(749), "VERTICALLEVEL" -> BigInt(1), "SURFACETYPE" -> BigInt(1),
-        "ROADNUMBER" -> BigInt(ral.roadNumber), "ROADPARTNUMBER" -> BigInt(ral.roadPartNumber)), ral.constructionType, ral.roadLinkSource)
+        "ROADNUMBER" -> BigInt(ral.roadNumber), "ROADPARTNUMBER" -> BigInt(ral.roadPartNumber)), ral.lifecycleStatus, ral.roadLinkSource)
   }
 
   private def addressToRoadLink(ral: RoadAddress): RoadLink = {
