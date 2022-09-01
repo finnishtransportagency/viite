@@ -1,7 +1,7 @@
 package fi.liikennevirasto.viite.model
 
 import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
+import fi.liikennevirasto.digiroad2.asset.LifecycleStatus.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{ComplementaryLinkInterface, NormalLinkInterface}
 import fi.liikennevirasto.digiroad2.asset._
 // Used in debugging when needed.
@@ -52,14 +52,14 @@ class RoadAddressLinkPartitionerSpec extends FunSuite with Matchers {
     val roadNumber = partitionedRoadLinks.head.head.roadNumber
     val trackCode = partitionedRoadLinks.head.head.trackCode
     val segmentId = partitionedRoadLinks.head.head.id
-    val constructionType = partitionedRoadLinks.head.head.constructionType.value
+    val constructionType = partitionedRoadLinks.head.head.constructionType
     val roadwayNumber = partitionedRoadLinks.head.head.roadwayNumber
 
     segmentId should not be None
     roadNumber should be(5)
     roadPartNumber should be(205)
     trackCode should be(1)
-    constructionType should be(0)
+    constructionType should be(InUse)
     roadwayNumber should be(123)
 
   }

@@ -15,10 +15,10 @@ object LogUtils {
       val duration = System.currentTimeMillis() - begin
       val urlString = if ( url.isDefined) {s"URL: ${url.get}"}else ""
       if (noFilter) {
-        logger.info(s"$operationName completed in $duration ms and in second ${duration / 1000}, ${urlString}")
+        logger.debug(s"$operationName completed in $duration ms and in second ${duration / 1000}, ${urlString}")
       } else {
         if (duration >= timeLoggingThresholdInMs) {
-          logger.info(s"$operationName completed in $duration ms and in second ${duration / 1000}, ${urlString}")
+          logger.debug(s"$operationName completed in $duration ms and in second ${duration / 1000}, ${urlString}")
         }
       }
       result

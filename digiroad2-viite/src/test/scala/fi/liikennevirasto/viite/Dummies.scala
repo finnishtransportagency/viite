@@ -1,7 +1,7 @@
 package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.asset.ConstructionType.UnknownConstructionType
+import fi.liikennevirasto.digiroad2.asset.LifecycleStatus.UnknownLifecycleStatus
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.HistoryLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, FeatureClass, HistoryRoadLink}
@@ -59,11 +59,11 @@ object Dummies {
 
   def dummyVvhHistoryRoadLink(linkId: String, yCoordinates: Seq[Double]): HistoryRoadLink = {
     val municipalityCode = 0
-    HistoryRoadLink(linkId, municipalityCode, yCoordinates.map(y => Point(0.0, y)), AdministrativeClass.Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.DrivePath, 0L, 0L, Map(), UnknownConstructionType, HistoryLinkInterface, yCoordinates.sum)
+    HistoryRoadLink(linkId, municipalityCode, yCoordinates.map(y => Point(0.0, y)), AdministrativeClass.Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.DrivePath, 0L, 0L, Map(), UnknownLifecycleStatus, HistoryLinkInterface, yCoordinates.sum)
   }
 
   def dummyRoadLink(linkId: String, yCoordinates: Seq[Double], linkGeomSource: LinkGeomSource): RoadLink = {
-    RoadLink(linkId, yCoordinates.map(y => Point(0.0, y)), yCoordinates.sum, AdministrativeClass.Municipality, 0, TrafficDirection.TowardsDigitizing, UnknownLinkType, None, None, Map(), UnknownConstructionType, linkGeomSource)
+    RoadLink(linkId, yCoordinates.map(y => Point(0.0, y)), yCoordinates.sum, AdministrativeClass.Municipality, 0, TrafficDirection.TowardsDigitizing, UnknownLinkType, None, None, Map(), UnknownLifecycleStatus, linkGeomSource)
   }
 
   def dummyChangeInfo(changeType: ChangeType, oldId: String, newId: String, oldStartMeasure: Double, oldEndMeasure: Double, newStartMeasure: Double, newEndMeasure: Double, vvhTimeStamp: Long): ChangeInfo = {

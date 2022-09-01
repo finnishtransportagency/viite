@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.asset.ConstructionType.UnknownConstructionType
+import fi.liikennevirasto.digiroad2.asset.LifecycleStatus.UnknownLifecycleStatus
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset._
@@ -94,11 +94,9 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   }
 
     private def toRoadLink(ral: ProjectLink): RoadLink = {
-      RoadLink(ral.linkId, ral.geometry, ral.geometryLength, AdministrativeClass.State, 1,
-        extractTrafficDirection(ral.sideCode, ral.track), Motorway, None, None, Map(
+      RoadLink(ral.linkId, ral.geometry, ral.geometryLength, AdministrativeClass.State, 1, extractTrafficDirection(ral.sideCode, ral.track), Motorway, None, None, Map(
           "MUNICIPALITYCODE" -> BigInt(749), "VERTICALLEVEL" -> BigInt(1), "SURFACETYPE" -> BigInt(1),
-          "ROADNUMBER" -> BigInt(ral.roadNumber), "ROADPARTNUMBER" -> BigInt(ral.roadPartNumber)),
-        ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
+          "ROADNUMBER" -> BigInt(ral.roadNumber), "ROADPARTNUMBER" -> BigInt(ral.roadPartNumber)), LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface)
     }
 
   test("Test getRoadAddressLinksByLinkId When called by any bounding box and any road number limits Then should return road addresses on normal and history road links") {
@@ -479,7 +477,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     when(mockLinearLocationDAO.fetchByRoadAddress(any[Long],any[Long],any[Long], any[Option[Long]])).thenReturn(towardsDigitizingLinearLocation)
 
     val towardsDigitizingRoadLink = Seq(
-      RoadLink(linkId, Seq(Point(0.0, 10.0), Point(0.0, 15.0)), 10.0, AdministrativeClass.Municipality, 0, TrafficDirection.TowardsDigitizing, UnknownLinkType, None, None, attributes = Map("MUNICIPALITYCODE" -> BigInt(235)), UnknownConstructionType, NormalLinkInterface)
+      RoadLink(linkId, Seq(Point(0.0, 10.0), Point(0.0, 15.0)), 10.0, AdministrativeClass.Municipality, 0, TrafficDirection.TowardsDigitizing, UnknownLinkType, None, None, attributes = Map("MUNICIPALITYCODE" -> BigInt(235)), UnknownLifecycleStatus, NormalLinkInterface)
     )
 
 
