@@ -38,10 +38,10 @@ object DummyCollection {
   case object Dummy extends KgvCollection { def value = "" }
 }
 object KgvCollection {
-  case object Frozen extends KgvCollection { def value = "keskilinjavarasto:frozenlinks" }
-  case object Changes extends KgvCollection { def value = "keskilinjavarasto:change" }
-  case object UnFrozen extends KgvCollection { def value = "keskilinjavarasto:road_links" }
-  case object LinkVersions extends KgvCollection { def value = "keskilinjavarasto:road_links_versions" }
+  case object Frozen                  extends KgvCollection { def value = "keskilinjavarasto:frozenlinks" }
+  case object Changes                 extends KgvCollection { def value = "keskilinjavarasto:change" }
+  case object UnFrozen                extends KgvCollection { def value = "keskilinjavarasto:road_links" }
+  case object LinkVersions            extends KgvCollection { def value = "keskilinjavarasto:road_links_versions" }
   case object LinkCorrespondenceTable extends KgvCollection { def value = "keskilinjavarasto:frozenlinks_vastintaulu" }
 }
 
@@ -96,10 +96,6 @@ object FilterOgc extends Filter {
     if (municipalities.size == 1) singleFilter("municipalitycode",municipalities.head.toString)
     else withFilter("municipalitycode",municipalities)
   }
-  override def withRoadNameFilter[T](attributeName: String, names: Set[T]): String = {
-    if (names.nonEmpty) withFilter(attributeName,names)
-    else ""
-  }
 
   override def combineFiltersWithAnd(filter1: String, filter2: String): String = {
     (filter1.isEmpty, filter2.isEmpty) match {
@@ -111,22 +107,13 @@ object FilterOgc extends Filter {
   }
 
   override def combineFiltersWithAnd(filter1: String, filter2: Option[String]): String =   {
-    combineFiltersWithAnd(filter2.getOrElse(""), filter1)
+    val lifeCycleStatusFilter = s"lifecyclestatus IN (${LifecycleStatus.filteredLinkStatus.map(_.value).mkString(",")})"
+    combineFiltersWithAnd(lifeCycleStatusFilter, combineFiltersWithAnd(filter2.getOrElse(""), filter1))
   }
 
   // Query filters methods
   override def withLinkIdFilter[T](linkIds: Set[T]): String = {
     if (linkIds.nonEmpty) withFilter("id",linkIds)
-    else ""
-  }
-
-//  override def withOldkmtkidFilter(linkIds: Set[String]): String = {
-//    if (linkIds.nonEmpty) withFilter("oldkmtkid",linkIds)
-//    else ""
-//  }
-
-  override def withFinNameFilter(roadNameSource: String)(roadNames: Set[String]): String = {
-    if (roadNames.nonEmpty) withFilter(roadNameSource,roadNames)
     else ""
   }
 
@@ -153,11 +140,17 @@ object Extractor {
   lazy val logger = LoggerFactory.getLogger(getClass)
   private val featureClassCodeToFeatureClass: Map[Int, FeatureClass] = Map(
     12316 -> FeatureClass.TractorRoad,
+    12317 -> FeatureClass.TractorRoad,
+    12318 -> FeatureClass.ShoulderRoad,
     12141 -> FeatureClass.DrivePath,
     12314 -> FeatureClass.CycleOrPedestrianPath,
     12312 -> FeatureClass.WinterRoads,
     12153 -> FeatureClass.SpecialTransportWithoutGate,
     12154 -> FeatureClass.SpecialTransportWithGate,
+    12111 -> FeatureClass.CarRoad_Ia,
+    12112 -> FeatureClass.CarRoad_Ib,
+    12121 -> FeatureClass.CarRoad_IIa,
+    12122 -> FeatureClass.CarRoad_IIb,
     12131 -> FeatureClass.CarRoad_IIIa,
     12132 -> FeatureClass.CarRoad_IIIb
   )
@@ -175,12 +168,12 @@ object Extractor {
     else AdministrativeClass.Unknown
   }
 
-  def extractConstructionType(attributes: Map[String, Any]): ConstructionType = {
+  def extractConstructionType(attributes: Map[String, Any]): LifecycleStatus = {
     if (attributes("lifecyclestatus").asInstanceOf[String] != null)
       Option(attributes("lifecyclestatus").asInstanceOf[String].toInt)
-        .map(ConstructionType.apply)
-        .getOrElse(ConstructionType.InUse)
-    else ConstructionType.InUse
+        .map(LifecycleStatus.apply)
+        .getOrElse(LifecycleStatus.InUse)
+    else LifecycleStatus.InUse
   }
 
   private  def extractTrafficDirection(attributes: Map[String, Any]): TrafficDirection = {
@@ -197,7 +190,6 @@ object Extractor {
         "roadnumber",
         "roadpartnumber",
         "municipalitycode",
-        "surfacetype",
         "kmtkid",
         "roadclass",
         "xyaccuracy",
@@ -206,10 +198,6 @@ object Extractor {
         "lifecyclestatus",
         "roadnamefin",
         "roadnameswe",
-        "addressfromright",
-        "addresstoright",
-        "addressfromleft",
-        "addresstoleft",
         "geometryflip",
         "starttime",
         "versionstarttime",
@@ -323,11 +311,6 @@ trait KgvOperation extends LinkOperationsAbstract{
    * Under Construction - 1
    * Planned - 3
    */
-  protected def roadLinkStatusFilter(feature: Map[String, Any]): Boolean = {
-    val attributes       = feature("properties").asInstanceOf[Map[String, Any]]
-    val constructionType = Extractor.extractConstructionType(attributes)
-    constructionType == ConstructionType.InUse || constructionType == ConstructionType.Planned || constructionType == ConstructionType.UnderConstruction
-  }
 
   protected def fetchFeatures(url: String): Either[LinkOperationError, Option[FeatureCollection]] = {
     val request = new HttpGet(url)
@@ -348,12 +331,10 @@ trait KgvOperation extends LinkOperationsAbstract{
           val feature = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]]
           val result = feature("type").toString match {
             case "Feature" =>
-              if (roadLinkStatusFilter(feature)){
                 Some(FeatureCollection(
                   `type` = "FeatureCollection",
                   features = List(convertToFeature(feature)),
                   crs = Try(Some(feature("crs").asInstanceOf[Map[String, Any]])).getOrElse(None)))
-              } else None
             case "FeatureCollection" =>
               val links = feature("links").asInstanceOf[List[Map[String, Any]]].map(link=>
                 Link(link("title").asInstanceOf[String], link("type").asInstanceOf[String],
@@ -362,8 +343,7 @@ trait KgvOperation extends LinkOperationsAbstract{
 
               val nextLink = Try(links.find(_.title=="Next page").get.href).getOrElse("")
               val previousLink = Try(links.find(_.title=="Previous page").get.href).getOrElse("")
-              val features = feature("features").asInstanceOf[List[Map[String, Any]]] .filter(roadLinkStatusFilter)
-                                                .map(convertToFeature)
+              val features = feature("features").asInstanceOf[List[Map[String, Any]]].map(convertToFeature)
               Some(FeatureCollection(
                 `type` = "FeatureCollection",
                 features = features,
@@ -434,26 +414,6 @@ trait KgvOperation extends LinkOperationsAbstract{
       Extractor.extractFeature(feature,feature.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])).toList
   }
 
-//    protected def serviceUrl(definition: String, parameters: String): String = {
-//      serviceUrl +
-//        s"?layerDefs=$definition&" + parameters
-//    }
-//
-//    protected def layerDefinitionWithoutEncoding(filter: String, customFieldSelection: Option[String] = None): String = {
-//      val definitionStart = "[{"
-//      val layerSelection = """"layerId":0,"""
-//      val fieldSelection = customFieldSelection match {
-//        case Some(fs) => s""""outFields":"""" + fs + """,CONSTRUCTIONTYPE""""
-//        case _ => s""""outFields":"""" + defaultOutFields + """""""
-//      }
-//      val definitionEnd = "}]"
-//      definitionStart + layerSelection + filter + fieldSelection + definitionEnd
-//    }
-//
-//    protected def layerDefinition(filter: String, customFieldSelection: Option[String] = None): String = {
-//      URLEncoder.encode(layerDefinitionWithoutEncoding(filter, customFieldSelection), "UTF-8")
-//    }
-
   /**
    * Returns VVH road links by municipality.
    * Used by VVHClient.fetchByMunicipalityAndRoadNumbersF(municipality, roadNumbers) and
@@ -461,9 +421,6 @@ trait KgvOperation extends LinkOperationsAbstract{
    */
   override protected def queryByRoadNumbersAndMunicipality(municipality: Int, roadNumbers: Seq[(Int, Int)]): Seq[LinkType] = {
     val roadNumberFilters = withRoadNumbersFilter(roadNumbers, includeAllPublicRoads = true)
-//    val definition = layerDefinition(combineFiltersWithAnd(withMunicipalityFilter(Set(municipality)), roadNumberFilters))
-//    val url = serviceUrl(definition, queryParameters())
-//    fetchFeaturesAndLog(url)
     val filterString  = s"filter=${combineFiltersWithAnd(withMunicipalityFilter(Set(municipality)), roadNumberFilters)})"
     val queryString = s"?${filterString}&filter-lang=${cqlLang}&crs=${crs}"
 
@@ -517,20 +474,18 @@ trait KgvOperation extends LinkOperationsAbstract{
   }
 
   override protected def queryByIds[LinkType](idSet: Set[String],filter: Set[String] => String): Seq[LinkType] = {
-    new Parallel().operation(idSet.grouped(BATCH_SIZE_FOR_SELECT_IN_QUERY).toList.par,2){
-      _.flatMap(ids=>queryByFilter(Some(filter(ids)))).toList
+    new Parallel().operation(idSet.grouped(BATCH_SIZE_FOR_SELECT_IN_QUERY).toList.par, 4) {
+      _.flatMap(ids => {
+        queryByFilter(Some(filter(ids)))
+      }).toList
     }
-//    fetchFeatures(s"${restApiEndPoint}/${serviceName}/items/${linkId}") match {
-//      case Left(features) =>features.get.features.map(feature=>
-//        Extractor.extractFeature(feature,feature.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
-//      case Right(error) => throw new ClientException(error.toString)
-//    }
   }
 
   override protected def queryByLinkIds[LinkType](linkIds: Set[String], filter: Option[String] = None): Seq[LinkType] = {
-//    linkIds.grouped(BATCH_SIZE).toList.par.flatMap(ids=>queryByLinkIdsUsingFilter(ids,filter)).toList
-    new Parallel().operation( linkIds.grouped(BATCH_SIZE_FOR_SELECT_IN_QUERY).toList.par,2){
-      _.flatMap(ids=>queryByLinkIdsUsingFilter(ids,filter)).toList
+    new Parallel().operation(linkIds.grouped(BATCH_SIZE_FOR_SELECT_IN_QUERY).toList.par, 4) {
+      _.flatMap(ids => {
+        queryByLinkIdsUsingFilter(ids, filter)
+      }).toList
     }
   }
 

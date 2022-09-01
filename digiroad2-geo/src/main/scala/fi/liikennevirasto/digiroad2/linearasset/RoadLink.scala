@@ -15,16 +15,11 @@ trait RoadLinkLike extends PolyLine{
   def roadNumber: Option[String]
   def linkSource: LinkGeomSource
   def attributes: Map[String, Any]
-  def constructionType: ConstructionType
+  def lifecycleStatus(): LifecycleStatus
   def vvhTimeStamp: Long
 }
 
-case class RoadLink(linkId: String, geometry: Seq[Point],
-                    length: Double, administrativeClass: AdministrativeClass,
-                    functionalClass: Int, trafficDirection: TrafficDirection,
-                    linkType: LinkType, modifiedAt: Option[String], modifiedBy: Option[String],
-                    attributes: Map[String, Any] = Map(), constructionType: ConstructionType = ConstructionType.InUse,
-                    linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface) extends RoadLinkLike {
+case class RoadLink(linkId: String, geometry: Seq[Point], length: Double, administrativeClass: AdministrativeClass, functionalClass: Int, trafficDirection: TrafficDirection, linkType: LinkType, modifiedAt: Option[String], modifiedBy: Option[String], attributes: Map[String, Any] = Map(), lifecycleStatus: LifecycleStatus = LifecycleStatus.InUse, linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface) extends RoadLinkLike {
 
   def municipalityCode: Int = attributes.getOrElse("municipalitycode", attributes.get("MUNICIPALITYCODE")) match { // TODO: Simplify this after vvh not used anymore.
     case m:String => m.asInstanceOf[String].toInt

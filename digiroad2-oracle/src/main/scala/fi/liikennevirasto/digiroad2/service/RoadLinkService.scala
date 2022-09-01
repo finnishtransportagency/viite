@@ -306,14 +306,7 @@ class RoadLinkService(val vvhClient: KgvRoadLink, val eventbus: DigiroadEventBus
     */
   private def getRoadLinkDataByLinkIds(RoadLinkFetcheds: Seq[RoadLinkFetched]): Seq[RoadLink] = {
     RoadLinkFetcheds.map { link =>
-      RoadLink(link.linkId, link.geometry,
-        GeometryUtils.geometryLength(link.geometry),
-        link.administrativeClass,
-        99,
-        link.trafficDirection,
-        UnknownLinkType,
-        link.modifiedAt.map(DateTimePropertyFormat.print),
-        None, link.attributes, link.constructionType, link.linkSource)
+      RoadLink(link.linkId, link.geometry, GeometryUtils.geometryLength(link.geometry), link.administrativeClass, 99, link.trafficDirection, UnknownLinkType, link.modifiedAt.map(DateTimePropertyFormat.print), None, link.attributes, link.lifecycleStatus, link.linkSource)
     }
   }
 

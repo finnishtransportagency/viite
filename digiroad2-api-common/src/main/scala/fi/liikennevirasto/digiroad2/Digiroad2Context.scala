@@ -101,13 +101,10 @@ object Digiroad2Context {
     Class.forName(ViiteProperties.eventBus).newInstance().asInstanceOf[DigiroadEventBus]
   }
 
-  lazy val vvhClient: KgvRoadLink = {
-    new KgvRoadLink()
-    //VVHClient(ViiteProperties.vvhRestApiEndPoint)
-  }
+  lazy val kgvRoadLinkClient: KgvRoadLink = new KgvRoadLink()
 
   lazy val roadLinkService: RoadLinkService = {
-    new RoadLinkService(vvhClient, eventbus, new JsonSerializer, useFrozenLinkInterface)
+    new RoadLinkService(kgvRoadLinkClient, eventbus, new JsonSerializer, useFrozenLinkInterface)
   }
 
   lazy val roadwayDAO: RoadwayDAO = {
