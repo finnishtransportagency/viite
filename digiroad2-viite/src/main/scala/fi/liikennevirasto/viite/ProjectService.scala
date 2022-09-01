@@ -1372,10 +1372,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         toReset.map(_.linkId).contains(link.linkId)
       })
       filteredAddresses.foreach(ra => {
-        projectLinkDAO.updateProjectLinkValues(projectId, ra.copy(ely = toReset.find(pl => {
-          pl.roadwayId == ra.id
-        }).get.ely),
-          updateGeom = false)
+        val pls = toReset.filter(pl => pl.roadwayId == ra.id)
+        pls.foreach(pl => projectLinkDAO.updateProjectLinkValues(projectId, ra.copy(ely = pl.ely),
+          updateGeom = false, plId = Some(pl.id)))
       })
     }
 
