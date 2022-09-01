@@ -52,14 +52,14 @@ class RoadAddressLinkPartitionerSpec extends FunSuite with Matchers {
     val roadNumber = partitionedRoadLinks.head.head.roadNumber
     val trackCode = partitionedRoadLinks.head.head.trackCode
     val segmentId = partitionedRoadLinks.head.head.id
-    val constructionType = partitionedRoadLinks.head.head.constructionType
+    val lifecycleStatus = partitionedRoadLinks.head.head.lifecycleStatus
     val roadwayNumber = partitionedRoadLinks.head.head.roadwayNumber
 
     segmentId should not be None
     roadNumber should be(5)
     roadPartNumber should be(205)
     trackCode should be(1)
-    constructionType should be(InUse)
+    lifecycleStatus should be(InUse)
     roadwayNumber should be(123)
 
   }

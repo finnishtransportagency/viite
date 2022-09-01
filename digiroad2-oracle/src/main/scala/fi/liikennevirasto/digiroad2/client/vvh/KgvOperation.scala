@@ -168,7 +168,7 @@ object Extractor {
     else AdministrativeClass.Unknown
   }
 
-  def extractConstructionType(attributes: Map[String, Any]): LifecycleStatus = {
+  def extractLifecycleStatus(attributes : Map[String, Any]): LifecycleStatus = {
     if (attributes("lifecyclestatus").asInstanceOf[String] != null)
       Option(attributes("lifecyclestatus").asInstanceOf[String].toInt)
         .map(LifecycleStatus.apply)
@@ -263,7 +263,7 @@ object Extractor {
       extractTrafficDirection(attributes), roadClass, extractModifiedAt(attributes),
       extractAttributes(attributes,validFromDate.get,lastEditedDate.get,startTime.get)
       ++ linkGeometryForApi ++ linkGeometryWKTForApi
-      , extractConstructionType(attributes), linkGeomSource, geometryLength)
+      , extractLifecycleStatus(attributes), linkGeomSource, geometryLength)
   }
 }
 

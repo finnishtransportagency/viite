@@ -264,11 +264,11 @@ class RoadLinkDeserializer extends VVHSerializer {
       JInt(BigInt(geomSource.value))
   }))
 
-  case object ConstructionTypeSerializer extends CustomSerializer[LifecycleStatus](format => ( {
+  case object LifecycleStatusSerializer extends CustomSerializer[LifecycleStatus](format => ( {
     case JInt(typeInt) => LifecycleStatus(typeInt.toInt)
   }, {
-    case constructionType: LifecycleStatus =>
-      JInt(BigInt(constructionType.value))
+    case lifecycleStatus: LifecycleStatus =>
+      JInt(BigInt(lifecycleStatus.value))
   }))
 
   case object FeatureClassSerializer extends CustomSerializer[FeatureClass](format => ( {
@@ -279,7 +279,7 @@ class RoadLinkDeserializer extends VVHSerializer {
   }))
 
   protected implicit val jsonFormats: Formats = DefaultFormats + SideCodeSerializer + TrafficDirectionSerializer +
-    LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + LinkGeomSourceSerializer + ConstructionTypeSerializer +
+    LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + LinkGeomSourceSerializer + LifecycleStatusSerializer +
     FeatureClassSerializer
 
   def readCachedHistoryLinks(file: File): Seq[HistoryRoadLink] = {

@@ -60,18 +60,16 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
   val junctionDAO_db: JunctionDAO = {
     new JunctionDAO
   }
-  val nodesAndJunctionsService_db : NodesAndJunctionsService = {
+  val nodesAndJunctionsService_db: NodesAndJunctionsService = {
     new NodesAndJunctionsService(roadwayDAO, roadwayPointDAO, linearLocationDAO, nodeDAO, nodePointDAO, junctionDAO_db, junctionPointDAO, roadwayChangesDAO, projectReservedPartDAO)
   }
-  val vvhClient_db: KgvRoadLink = {
-    new KgvRoadLink(ViiteProperties.vvhRestApiEndPoint)
-  }
+  val kgvClient_db: KgvRoadLink = new KgvRoadLink
 
   val eventbus_db: DigiroadEventBus = {
     Class.forName(ViiteProperties.eventBus).newInstance().asInstanceOf[DigiroadEventBus]
   }
   val roadLinkService_db: RoadLinkService = {
-    new RoadLinkService(vvhClient_db, eventbus_db, new JsonSerializer, true)
+    new RoadLinkService(kgvClient_db, eventbus_db, new JsonSerializer, true)
   }
   val roadAddressService_db: RoadAddressService = new RoadAddressService(mockRoadLinkService, roadwayDAO, linearLocationDAO,
     roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, roadwayAddressMapper, eventbus_db, true)
@@ -137,7 +135,7 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
   private def toRoadLink(ral: RoadAddressLinkLike): RoadLink = {
     RoadLink(ral.linkId, ral.geometry, ral.length, ral.administrativeClass, 1, extractTrafficDirection(ral.sideCode, Track.apply(ral.trackCode.toInt)), ral.linkType, ral.modifiedAt, ral.modifiedBy, Map(
         "MUNICIPALITYCODE" -> BigInt(749), "VERTICALLEVEL" -> BigInt(1), "SURFACETYPE" -> BigInt(1),
-        "ROADNUMBER" -> BigInt(ral.roadNumber), "ROADPARTNUMBER" -> BigInt(ral.roadPartNumber)), ral.constructionType, ral.roadLinkSource)
+        "ROADNUMBER" -> BigInt(ral.roadNumber), "ROADPARTNUMBER" -> BigInt(ral.roadPartNumber)), ral.lifecycleStatus, ral.roadLinkSource)
   }
 
   /* update errors*/
