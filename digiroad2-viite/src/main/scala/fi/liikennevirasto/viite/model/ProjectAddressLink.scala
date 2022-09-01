@@ -13,7 +13,7 @@ trait ProjectAddressLinkLike extends RoadAddressLinkLike {
   def length: Double
   def administrativeClassMML: AdministrativeClass
   def linkType: LinkType
-  def constructionType: LifecycleStatus
+  def lifecycleStatus: LifecycleStatus
   def roadLinkSource: LinkGeomSource
   def administrativeClass: AdministrativeClass
 
@@ -45,7 +45,7 @@ trait ProjectAddressLinkLike extends RoadAddressLinkLike {
   def roadwayNumber: Long
 }
 
-case class ProjectAddressLink(id: Long, linkId: String, geometry: Seq[Point], length: Double, administrativeClassMML: AdministrativeClass, linkType: LinkType, constructionType: LifecycleStatus, roadLinkSource: LinkGeomSource, administrativeClass: AdministrativeClass, VVHRoadName: Option[String], roadName: Option[String], municipalityCode: BigInt, municipalityName: String, modifiedAt: Option[String], modifiedBy: Option[String], attributes: Map[String, Any] = Map(), roadNumber: Long, roadPartNumber: Long, trackCode: Long, elyCode: Long, discontinuity: Long, startAddressM: Long, endAddressM: Long, startMValue: Double, endMValue: Double, sideCode: SideCode, startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint], anomaly: Anomaly = Anomaly.None, status: LinkStatus, roadwayId: Long, linearLocationId: Long, reversed: Boolean = false, connectedLinkId: Option[String] = None, originalGeometry: Option[Seq[Point]] = None, roadwayNumber: Long = 0) extends ProjectAddressLinkLike {
+case class ProjectAddressLink(id: Long, linkId: String, geometry: Seq[Point], length: Double, administrativeClassMML: AdministrativeClass, linkType: LinkType, lifecycleStatus: LifecycleStatus, roadLinkSource: LinkGeomSource, administrativeClass: AdministrativeClass, VVHRoadName: Option[String], roadName: Option[String], municipalityCode: BigInt, municipalityName: String, modifiedAt: Option[String], modifiedBy: Option[String], attributes: Map[String, Any] = Map(), roadNumber: Long, roadPartNumber: Long, trackCode: Long, elyCode: Long, discontinuity: Long, startAddressM: Long, endAddressM: Long, startMValue: Double, endMValue: Double, sideCode: SideCode, startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint], anomaly: Anomaly = Anomaly.None, status: LinkStatus, roadwayId: Long, linearLocationId: Long, reversed: Boolean = false, connectedLinkId: Option[String] = None, originalGeometry: Option[Seq[Point]] = None, roadwayNumber: Long = 0) extends ProjectAddressLinkLike {
   override def partitioningName: String = {
     if (roadNumber > 0)
       s"$roadNumber/$roadPartNumber/$trackCode"
@@ -54,7 +54,7 @@ case class ProjectAddressLink(id: Long, linkId: String, geometry: Seq[Point], le
   }
 
   override def isSplit: Boolean = {
-    connectedLinkId.nonEmpty || connectedLinkId.contains(0L)
+    connectedLinkId.nonEmpty || connectedLinkId.contains(0L.toString)
   }
 
   val vvhTimeStamp: Long = attributes.getOrElse("LAST_EDITED_DATE", attributes.getOrElse("CREATED_DATE", BigInt(0))).asInstanceOf[BigInt].longValue()

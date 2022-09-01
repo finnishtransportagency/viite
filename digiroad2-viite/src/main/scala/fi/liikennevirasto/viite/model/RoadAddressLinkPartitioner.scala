@@ -10,7 +10,7 @@ object RoadAddressLinkPartitioner extends GraphPartitioner {
   */
   def groupByHomogeneousSection[T <: RoadAddressLinkLike](links: Seq[T]): Seq[Seq[T]] = {
     val linkGroups = links.groupBy { link => (
-      link.anomaly.equals(Anomaly.NoAddressGiven), link.constructionType.equals(LifecycleStatus.UnderConstruction), link.roadNumber, link.roadPartNumber,
+      link.anomaly.equals(Anomaly.NoAddressGiven), link.lifecycleStatus.equals(LifecycleStatus.UnderConstruction), link.roadNumber, link.roadPartNumber,
       link.roadLinkSource.equals(LinkGeomSource.ComplementaryLinkInterface)
       )
     }
