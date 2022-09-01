@@ -4,10 +4,11 @@ import java.net.URLEncoder
 import java.util.ArrayList
 
 import com.vividsolutions.jts.geom.Polygon
-import fi.liikennevirasto.digiroad2.util.LogUtils
+import fi.liikennevirasto.digiroad2.util.{LogUtils, ViiteProperties}
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.Filter.withMtkClassFilter
+import org.apache.commons.codec.binary.Base64
 import org.apache.http.NameValuePair
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.{HttpGet, HttpPost}
@@ -22,32 +23,25 @@ import org.slf4j.LoggerFactory
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-//
-//
-//import java.io.IOException
-//import java.net.URLEncoder
-//import java.util
-//
-//import fi.liikennevirasto.digiroad2.Point
-//import fi.liikennevirasto.digiroad2.asset._
-//import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.{Unknown => _, _}
-//import fi.liikennevirasto.digiroad2.linearasset.{PolyLine, RoadLinkLike}
-//import fi.liikennevirasto.digiroad2.util.LogUtils.time
-//import fi.liikennevirasto.digiroad2.util.ViiteProperties
-//import org.apache.commons.codec.binary.Base64
-//import org.apache.http.{HttpHeaders, NameValuePair}
-//import org.apache.http.client.entity.UrlEncodedFormEntity
-//import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet, HttpPost}
-//import org.apache.http.impl.client.HttpClientBuilder
-//import org.apache.http.message.BasicNameValuePair
-//import org.joda.time.format.DateTimeFormat
-//import org.joda.time.{DateTime, DateTimeZone}
-//import org.json4s._
-//import org.json4s.jackson.JsonMethods._
-//import org.json4s.jackson.Serialization
-//import org.slf4j.{Logger, LoggerFactory}
-//
-//import scala.concurrent.Future
+class VVHAuthPropertyReader {
+  private def getUsername: String = {
+    val loadedKeyString = ViiteProperties.vvhRestApiUsername
+    if (loadedKeyString == null)
+      throw new IllegalArgumentException("Missing OAG username")
+    loadedKeyString
+  }
+
+  private def getPassword: String = {
+    val loadedKeyString = ViiteProperties.vvhRestApiPassword
+    if (loadedKeyString == null)
+      throw new IllegalArgumentException("Missing OAG Password")
+    loadedKeyString
+  }
+
+  def getAuthInBase64: String = {
+    Base64.encodeBase64String((getUsername + ":" + getPassword).getBytes)
+  }
+}
 
 trait VVHClientOperations {
 
@@ -279,7 +273,7 @@ trait VVHClientOperations {
 class OldVVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
 
   type LinkType = RoadLinkFetched
-  type Content =Map[String, Any]
+  type Content  = Map[String, Any]
 
   protected override val restApiEndPoint = vvhRestApiEndPoint
   protected override val serviceName = "Roadlink_data"
@@ -306,7 +300,7 @@ class OldVVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperatio
   protected def roadLinkStatusFilter(feature: Map[String, Any]): Boolean = {
     val attributes = feature("attributes").asInstanceOf[Map[String, Any]]
     val linkStatus = extractAttributes(attributes).getOrElse("CONSTRUCTIONTYPE", BigInt(0)).asInstanceOf[BigInt]
-    linkStatus == ConstructionType.InUse.value || linkStatus == ConstructionType.Planned.value || linkStatus == ConstructionType.UnderConstruction.value
+    linkStatus == LifecycleStatus.InUse.value || linkStatus == LifecycleStatus.Planned.value || linkStatus == LifecycleStatus.UnderConstruction.value
   }
 
   protected def queryLinksIdByPolygons(polygon: Polygon): Seq[String] = {
@@ -423,11 +417,11 @@ class OldVVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperatio
       .getOrElse(AdministrativeClass.Unknown)
   }
 
-  protected def extractConstructionType(attributes: Map[String, Any]): ConstructionType = {
+  protected def extractConstructionType(attributes: Map[String, Any]): LifecycleStatus = {
     Option(attributes("CONSTRUCTIONTYPE").asInstanceOf[BigInt])
       .map(_.toInt)
-      .map(ConstructionType.apply)
-      .getOrElse(ConstructionType.InUse)
+      .map(LifecycleStatus.apply)
+      .getOrElse(LifecycleStatus.InUse)
   }
 
   protected def extractLinkGeomSource(attributes: Map[String, Any]): LinkGeomSource = {
@@ -542,10 +536,6 @@ class OldVVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperatio
     Future(fetchByLinkIds(linkIds))
   }
 
-  def fetchByRoadNamesF(roadNamePublicIds: String, roadNameSource: Set[String]): Future[Seq[RoadLinkFetched]] = {
-    Future(fetchByRoadNames(roadNamePublicIds, roadNameSource))
-  }
-
   /**
    * Returns VVH road link by mml id.
    * Used by RoadLinkService.getRoadLinkMiddlePointByMmlId
@@ -599,13 +589,6 @@ class OldVVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperatio
     Future(queryLinksIdByPolygons(polygon))
   }
 
-  /**
-   * Returns VVH road links by finnish names.
-   * Used by VVHClient.fetchByLinkId,
-   */
-  def fetchByRoadNames(roadNamePublicId: String, roadNames: Set[String]): Seq[RoadLinkFetched] = {
-    queryByNames(roadNames, None, true, extractRoadLinkFeature, Filter.withFinNameFilter(roadNamePublicId))
-  }
 
   /**
    * Returns VVH road links.
