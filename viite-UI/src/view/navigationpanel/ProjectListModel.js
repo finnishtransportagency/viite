@@ -277,8 +277,7 @@
       });
 
       $('#OldAcceptedProjectsVisibleCheckbox').change(function () {
-        createProjectList(projectArray);
-        filterByUser();
+        fetchProjects();
       });
 
       projectList.on('click', 'button.cancel', function () {
