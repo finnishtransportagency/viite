@@ -1,5 +1,5 @@
 (function (root) {
-  root.LinkPropertyForm = function (selectedLinkProperty, roadNamingTool, projectListModel) {
+  root.LinkPropertyForm = function (selectedLinkProperty, roadNamingTool, projectListModel, roadAddressBrowser) {
     var selectionType = LinkValues.SelectionType;
     var decodedAttributes = [
       {
@@ -276,6 +276,7 @@
         '<button id="formProjectButton" class="action-mode-btn btn btn-block btn-primary">Tieosoiteprojektit</button>' +
         '<button id="formNameToolButton" class="open-tool-mode-btn btn btn-block btn-primary" style="margin-top: 5px;">Tiennimen ylläpito</button>' +
         '<button id="formNodesAndJunctionsButton" class="open-tool-mode-btn btn btn-block btn-primary" style="margin-top: 5px;">Solmut ja liittymät</button>' +
+        '<button id="formRoadAddressBrowserButton" class="open-tool-mode-btn btn btn-block btn-primary" style="margin-top: 5px;">Tieosoitteiden katselu</button>' +
         '</div>';
       rootElement.append(emptyFormDiv);
       $('[id=formProjectButton]').click(function () {
@@ -292,6 +293,10 @@
       });
       $('[id=formNodesAndJunctionsButton]').click(function () {
         eventbus.trigger('nodesAndJunctions:open');
+        return false;
+      });
+      $('[id=formRoadAddressBrowserButton]').click(function () {
+        roadAddressBrowser.toggle();
         return false;
       });
     };
