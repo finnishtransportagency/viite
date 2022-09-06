@@ -378,17 +378,15 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
       val minRoadPartNumber = params.get("minRoadPartNumber").map(_.toLong)
       val maxRoadPartNumber = params.get("maxRoadPartNumber").map(_.toLong)
 
-      val raSeqForBrowser = roadAddressService.getRoadAddressesForBrowser(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
+      val roadsForRoadAddressBrowser = roadAddressService.getRoadsForRoadAddressBrowser(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
 
-      Map("success" -> true, "roads" -> raSeqForBrowser.map(roadAddressBrowserRowsToApi))
+      Map("success" -> true, "roads" -> roadsForRoadAddressBrowser.map(roadAddressBrowserRoadsToApi))
     } catch {
       case e: Throwable => {
         logger.error(s"Error fetching roads ${e}")
         Map("success" -> false, "error" -> "Tieosoitteiden haku epäonnistui, ota yhteys Viite tukeen")
       }
-
     }
-
   }
 
   private val getNodesForRoadAddressBrowser: SwaggerSupportSyntax.OperationBuilder = (
@@ -1520,7 +1518,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
     )
   }
 
-  def roadAddressBrowserRowsToApi(road: RoadAddressForBrowser): Map[String, Any] = {
+  def roadAddressBrowserRoadsToApi(road: RoadForRoadAddressBrowser): Map[String, Any] = {
     Map(
       "ely" -> road.ely,
       "roadNumber" -> road.roadNumber,
@@ -1529,7 +1527,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
       "startAddrM" -> road.startAddressM,
       "endAddrM" -> road.endAddrM,
       "lengthAddrM" -> road.roadAddressLengthM,
-      "startDate" -> new SimpleDateFormat("dd-MM-yyyy").format(road.startDate.toDate)
+      "startDate" -> new SimpleDateFormat("dd.MM.yyyy").format(road.startDate.toDate)
     )
   }
 

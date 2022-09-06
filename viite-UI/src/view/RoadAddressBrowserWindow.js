@@ -19,7 +19,7 @@
             '</form>'
         );
 
-        function showResults() {
+        function showResultsForRoads() {
             var results = roadAddressCollection.getRoads();
             var table =$('<table class="road-address-browser-window-results-table"></table>');
             table.append(
@@ -103,7 +103,7 @@
 
         eventbus.on('roadAddressBrowser:roadsFetched', function () {
             applicationModel.removeSpinner();
-            showResults();
+            showResultsForRoads();
         });
 
         eventbus.on('roadAddressBrowser:nodesFetched', function () {

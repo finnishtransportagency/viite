@@ -6,7 +6,6 @@
 
         this.fetchRoads = function(params) {
             backend.getRoads(params, function (result) {
-                applicationModel.addSpinner();
                 if (result.success) {
                     me.setRoads(result.roads);
                     eventbus.trigger('roadAddressBrowser:roadsFetched');
