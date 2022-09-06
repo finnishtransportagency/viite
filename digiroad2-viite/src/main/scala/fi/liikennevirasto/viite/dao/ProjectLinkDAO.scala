@@ -743,12 +743,16 @@ class ProjectLinkDAO {
     * @param roadAddress: RoadAddress - The road address information
     * @param updateGeom: Boolean - controls whether we update or not the geometry of the project links
     */
-  def updateProjectLinkValues(projectId: Long, roadAddress: RoadAddress, updateGeom : Boolean = true): Unit = {
+  def updateProjectLinkValues(projectId: Long, roadAddress: RoadAddress, updateGeom : Boolean = true, plId: Option[Long] = None): Unit = {
 
     time(logger, "Update project link values") {
       val lineString: String = PostGISDatabase.createJGeometry(roadAddress.geometry)
       val geometryQuery = s"ST_GeomFromText('${lineString}', 3067)"
       val updateGeometry = if (updateGeom) s", GEOMETRY = $geometryQuery" else s""
+      val idFilter = plId match {
+        case Some(id) => s"AND ID = $id"
+        case None => s""
+      }
 
       val updateProjectLink = s"""
         UPDATE PROJECT_LINK SET ROAD_NUMBER = ${roadAddress.roadNumber},
@@ -759,10 +763,9 @@ class ProjectLinkDAO {
           END_CALIBRATION_POINT = ${roadAddress.endCalibrationPointType.value},
           ORIG_START_CALIBRATION_POINT = ${roadAddress.startCalibrationPointType.value},
           ORIG_END_CALIBRATION_POINT = ${roadAddress.endCalibrationPointType.value},
-          CONNECTED_LINK_ID = null, REVERSED = 0,
           SIDE = ${roadAddress.sideCode.value}, ELY = ${roadAddress.ely},
           start_measure = ${roadAddress.startMValue}, end_measure = ${roadAddress.endMValue} $updateGeometry
-        WHERE LINEAR_LOCATION_ID = ${roadAddress.linearLocationId} AND PROJECT_ID = $projectId
+        WHERE LINEAR_LOCATION_ID = ${roadAddress.linearLocationId} AND PROJECT_ID = $projectId $idFilter
       """
       Q.updateNA(updateProjectLink).execute
     }
