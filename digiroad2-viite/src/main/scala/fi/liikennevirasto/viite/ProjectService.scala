@@ -1322,11 +1322,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       } else Seq.empty
       /*
       replaceable -> New link part should replace New existing part if:
-        1. Action is LinkStatus.New
+        1. Action is LinkStatus.New, LinkStatus.Transfer or LinkStatus.Numbering
         2. New road or part is different from existing one
         3. All New links in existing part are in selected links for New part
        */
-      val replaceable = (linkStatus == New || linkStatus == Transfer) && (reservedPart.roadNumber != newRoadNumber || reservedPart.roadPartNumber != newRoadPartNumber) && newSavedLinks.nonEmpty && newSavedLinks.map(_.id).toSet.subsetOf(ids)
+      val replaceable = (linkStatus == New || linkStatus == Transfer || linkStatus == Numbering) && (reservedPart.roadNumber != newRoadNumber || reservedPart.roadPartNumber != newRoadPartNumber) && newSavedLinks.nonEmpty && newSavedLinks.map(_.id).toSet.subsetOf(ids)
       (replaceable, reservedPart.roadNumber, reservedPart.roadPartNumber)
     }
 
@@ -1425,11 +1425,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               if (roadPartLinks.exists(rpl => rpl.status == UnChanged || rpl.status == Transfer || rpl.status == New || rpl.status == Terminated)) {
                 throw new ProjectValidationException(ErrorOtherActionWithNumbering)
               }
-              checkAndMakeReservation(projectId, newRoadNumber, newRoadPartNumber, LinkStatus.Numbering, toUpdateLinks)
+              val (reservationNotNeeded, oldRoad, oldPart) = checkAndMakeReservation(projectId, newRoadNumber, newRoadPartNumber, LinkStatus.Numbering, toUpdateLinks)
 
               projectLinkDAO.updateProjectLinkNumbering(projectId, toUpdateLinks.head.roadNumber, toUpdateLinks.head.roadPartNumber,
                 linkStatus, newRoadNumber, newRoadPartNumber, userName, ely.getOrElse(toUpdateLinks.head.ely))
               projectLinkDAO.updateProjectLinkAdministrativeClassDiscontinuity(Set(toUpdateLinks.maxBy(_.endAddrMValue).id), linkStatus, userName, administrativeClass, Some(discontinuity))
+              //numbering cases should remove the reserved part after the project link table update operation
+              if (reservationNotNeeded) {
+                projectReservedPartDAO.removeReservedRoadPart(projectId, oldRoad.get, oldPart.get)
+              }
               val nameError = roadName.flatMap(setProjectRoadName(projectId, newRoadNumber, _)).toList.headOption
               if (nameError.nonEmpty)
                 return nameError
@@ -1438,7 +1442,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             }
 
           case LinkStatus.Transfer =>
-            val (replaceable, road, part) = checkAndMakeReservation(projectId, newRoadNumber, newRoadPartNumber, LinkStatus.Transfer, toUpdateLinks)
+            val (reservationNotNeeded, oldRoad, oldPart) = checkAndMakeReservation(projectId, newRoadNumber, newRoadPartNumber, LinkStatus.Transfer, toUpdateLinks)
             val updated = toUpdateLinks.map(l => {
               val startCP = l.startCalibrationPointType match {
                 case JunctionPointCP => JunctionPointCP
@@ -1455,9 +1459,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             val originalAddresses = roadAddressService.getRoadAddressesByRoadwayIds(updated.map(_.roadwayId))
             projectLinkDAO.updateProjectLinks(updated, userName, originalAddresses)
             projectLinkDAO.updateProjectLinkAdministrativeClassDiscontinuity(Set(updated.maxBy(_.endAddrMValue).id), linkStatus, userName, administrativeClass, Some(discontinuity))
-            //transfer cases should remove the part after the project link table update operation
-            if (replaceable) {
-              projectReservedPartDAO.removeReservedRoadPart(projectId, road.get, part.get)
+            //transfer cases should remove the reserved part after the project link table update operation
+            if (reservationNotNeeded) {
+              projectReservedPartDAO.removeReservedRoadPart(projectId, oldRoad.get, oldPart.get)
             }
             val nameError = roadName.flatMap(setProjectRoadName(projectId, newRoadNumber, _)).toList.headOption
             if (nameError.nonEmpty)
