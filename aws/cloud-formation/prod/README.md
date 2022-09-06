@@ -125,8 +125,8 @@ Ota juuri luotu task definition versio käyttöön. \
 Huom.: [:VERSION] -kohdan pois jättäminen ottaa käyttöön viimeisimmän task definition version ("latest") 
 ```
 aws ecs update-service \
---cluster Prod-Viite-ECS-Cluster-Private \
---service Prod-Viite-ECS-Service-Private \
+--cluster Prod-Viite-prod-ECS-Cluster-Private \
+--service Prod-Viite-prod-ECS-Service-Private \
 --task-definition Prod-Viite[:VERSION] \
 --force-new-deployment
 ```
@@ -144,8 +144,8 @@ aws cloudformation update-stack \
 Kehitystiimi puskee uuden kontin ECR repositorioon jonka jälkeen service päivitetään komennolla:
 ```
 aws ecs update-service \
---cluster Prod-Viite-ECS-Cluster-Private \
---service Prod-Viite-ECS-Service-Private \
+--cluster Prod-Viite-prod-ECS-Cluster-Private \
+--service Prod-Viite-prod-ECS-Service-Private \
 --task-definition Prod-Viite[:VERSION] \
 --force-new-deployment
 ```
