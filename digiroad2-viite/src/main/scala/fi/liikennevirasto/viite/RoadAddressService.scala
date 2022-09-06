@@ -642,9 +642,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     roadwayAddressMapper.getRoadAddressesByRoadway(roadways)
   }
 
-  def getRoadAddressesForBrowser(startDate: String, ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[RoadAddressForBrowser] = {
+  def getRoadsForRoadAddressBrowser(startDate: String, ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[RoadForRoadAddressBrowser] = {
     withDynSession {
-      roadwayDAO.fetchRoadAddressesForBrowser(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
+      roadwayDAO.fetchRoadsForRoadAddressBrowser(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
     }
   }
 
