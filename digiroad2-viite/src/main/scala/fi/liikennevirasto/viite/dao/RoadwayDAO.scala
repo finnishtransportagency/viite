@@ -943,13 +943,23 @@ class RoadwayDAO extends BaseDAO {
     }
   }
 
+  /**
+   * Fetches all road_part_numbers for roadNumber that aren't reserved in another project where
+   * each ProjectLink with road_part_number would have status=LinkStatus.Terminated
+   * In use because of the considerable delay between accepting road address changes and changes being transferred to TR.
+   * Said delay is no longer present in AWS.
+   * TODO: Refactor this function as it's no longer needed.
+   * @param roadNumber
+   * @param startDate
+   * @return
+   */
   def getValidRoadParts(roadNumber: Long, startDate: DateTime): List[Long] = {
     sql"""
        select distinct ra.road_part_number
               from ROADWAY ra
               where road_number = $roadNumber AND valid_to IS NULL AND START_DATE <= $startDate
               AND END_DATE IS NULL
-              AND ra.road_part_number NOT IN (select distinct pl.road_part_number from project_link pl where (select count(distinct pl2.status) from project_link pl2 where pl2.road_part_number = ra.road_part_number and pl2.road_number = ra.road_number)
+              AND ra.road_part_number NOT IN (select distinct pl.road_part_number from project_link pl where (select count(distinct pl2.status) from project_link pl2 where pl2.road_part_number = ra.road_part_number and pl2.road_number = ra.road_number and pl.road_number = pl2.road_number)
                = 1 and pl.status = 5)
       """.as[Long].list
   }
