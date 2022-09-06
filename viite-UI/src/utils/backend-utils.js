@@ -13,6 +13,12 @@
       });
     }, 1000);
 
+    this.getNodes = _.throttle(function (params, callback) {
+      return $.get('api/viite/roadaddressbrowser/nodes', params, function (data) {
+        return _.isFunction(callback) && callback(data);
+      });
+    }, 1000);
+
     this.getRoadLinks = createCallbackRequestor(function (params) {
       var zoom = params.zoom;
       var boundingBox = params.boundingBox;

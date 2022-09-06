@@ -49,6 +49,36 @@
             roadAddrBrowserWindow.append(table);
         }
 
+        function showResultsForNodes() {
+            var results = roadAddressCollection.getNodes();
+            var table =$('<table class="road-address-browser-window-results-table"></table>');
+            table.append(
+                '<tr>' +
+                    '<th>Ely</th>' +
+                    '<th>Tie</th>' +
+                    '<th>Osa</th>' +
+                    '<th>Et</th>' +
+                    '<th>Alkupäivämäärä</th>' +
+                    '<th>Tyyppi</th>' +
+                    '<th>Nimi</th>' +
+                    '<th>Solmunumero</th>' +
+                '</tr>'
+            );
+            results.forEach((resRow) => table.append(
+                '<tr>' +
+                    '<td>' + resRow.ely + '</td>' +
+                    '<td>' + resRow.roadNumber + '</td>' +
+                    '<td>' + resRow.roadPartNumber + '</td>' +
+                    '<td>' + resRow.addrM + '</td>' +
+                    '<td>' + resRow.startDate + '</td>' +
+                    '<td>' + resRow.nodeType + '</td>' +
+                    '<td>' + resRow.nodeName + '</td>' +
+                    '<td>' + resRow.nodeNumber + '</td>' +
+                '</tr>'
+            ));
+            roadAddrBrowserWindow.append(table);
+        }
+
 
         function toggle() {
             $('.container').append('<div class="modal-overlay confirm-modal"><div class="modal-dialog"></div></div>');
@@ -74,6 +104,11 @@
         eventbus.on('roadAddressBrowser:roadsFetched', function () {
             applicationModel.removeSpinner();
             showResults();
+        });
+
+        eventbus.on('roadAddressBrowser:nodesFetched', function () {
+           applicationModel.removeSpinner();
+           showResultsForNodes();
         });
 
 
@@ -116,8 +151,8 @@
                             applicationModel.addSpinner();
                             break;
                         case "Nodes":
-                            new ModalConfirm("Tämä toiminnallisuus ei ole vielä valmis");
-                            //TODO roadAddressCollection.fetchNodes()
+                            roadAddressCollection.fetchNodes(params);
+                            applicationModel.addSpinner();
                             break;
                         case "Junctions":
                             new ModalConfirm("Tämä toiminnallisuus ei ole vielä valmis");
