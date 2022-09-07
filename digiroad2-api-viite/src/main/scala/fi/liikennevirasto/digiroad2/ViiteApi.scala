@@ -451,6 +451,37 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
     }
   }
 
+  private val getRoadNamesForRoadAddressBrowser: SwaggerSupportSyntax.OperationBuilder = (
+    apiOperation[Map[String,Any]]("getRoadNamesForRoadAddressBrowser").parameters(
+      queryParam[String]("startDate").description("Situation date (dd-MM-yyyy)"),
+      queryParam[Long]("ely").description("Ely number of a road address").optional,
+      queryParam[Long]("roadNumber").description("Road Number of a road address").optional,
+      queryParam[Long]("minRoadPartNumber").description("Road Part Number of a road address").optional,
+      queryParam[Long]("maxRoadPartNumber").description("Road Part Number of a road address").optional
+    )
+      tags "ViiteAPI - Road Address Browser"
+      summary "Returns all road names that fill the search criteria"
+    )
+
+  get("/roadaddressbrowser/roadnames", operation(getRoadNamesForRoadAddressBrowser)) {
+    try {
+      val startDate = params.get("startDate").get
+      val ely = params.get("ely").map(_.toLong)
+      val roadNumber = params.get("roadNumber").map(_.toLong)
+      val minRoadPartNumber = params.get("minRoadPartNumber").map(_.toLong)
+      val maxRoadPartNumber = params.get("maxRoadPartNumber").map(_.toLong)
+
+      val roadNamesForRoadAddressBrowser = roadNameService.getRoadNamesForRoadAddressBrowser(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
+
+      Map("success" -> true, "roadNames" -> roadNamesForRoadAddressBrowser.map(roadAddressBrowserRoadNamesToApi))
+    } catch {
+      case e: Throwable => {
+        logger.error(s"Error fetching road names ${e}")
+        Map("success" -> false, "error" -> "Tiennimien haku epäonnistui, ota yhteys Viite tukeen")
+      }
+    }
+  }
+
   private val getProjectAddressLinksByLinkIds: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String,Any]]("getProjectAddressLinksByLinkIds")
       .parameters(
@@ -1588,6 +1619,14 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
       "roadPartNumber" -> junction.roadPartNumber,
       "addrM" -> junction.addrM,
       "beforeAfter" -> junction.beforeAfter
+    )
+  }
+
+  def roadAddressBrowserRoadNamesToApi(roadName :RoadNameForRoadAddressBrowser): Map[String, Any] = {
+    Map(
+      "ely" -> roadName.ely,
+      "roadNumber" -> roadName.roadNumber,
+      "roadName" -> roadName.roadName
     )
   }
 
