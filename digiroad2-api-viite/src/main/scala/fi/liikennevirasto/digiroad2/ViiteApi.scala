@@ -363,11 +363,11 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
       queryParam[String]("startDate").description("Situation date (dd-MM-yyyy)"),
       queryParam[Long]("ely").description("Ely number of a road address").optional,
       queryParam[Long]("roadNumber").description("Road Number of a road address").optional,
-      queryParam[Long]("minRoadPartNumber").description("Road Part Number of a road address").optional,
-      queryParam[Long]("maxRoadPartNumber").description("Road Part Number of a road address").optional
+      queryParam[Long]("minRoadPartNumber").description("Min Road Part Number of a road address").optional,
+      queryParam[Long]("maxRoadPartNumber").description("Max Road Part Number of a road address").optional
     )
       tags "ViiteAPI - Road Address Browser"
-      summary "Returns all roads that fill the search criteria"
+      summary "Returns the roads that fill the search criteria"
   )
 
   get("/roadaddressbrowser/roads", operation(getRoadsForRoadAddressBrowser)) {
@@ -394,11 +394,11 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
       queryParam[String]("startDate").description("Situation date (dd-MM-yyyy)"),
       queryParam[Long]("ely").description("Ely number of a road address").optional,
       queryParam[Long]("roadNumber").description("Road Number of a road address").optional,
-      queryParam[Long]("minRoadPartNumber").description("Road Part Number of a road address").optional,
-      queryParam[Long]("maxRoadPartNumber").description("Road Part Number of a road address").optional
+      queryParam[Long]("minRoadPartNumber").description("Min Road Part Number of a road address").optional,
+      queryParam[Long]("maxRoadPartNumber").description("Max Road Part Number of a road address").optional
     )
       tags "ViiteAPI - Road Address Browser"
-      summary "Returns all nodes that fill the search criteria"
+      summary "Returns the nodes that fill the search criteria"
     )
 
   get("/roadaddressbrowser/nodes", operation(getNodesForRoadAddressBrowser)) {
@@ -425,11 +425,11 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
       queryParam[String]("startDate").description("Situation date (dd-MM-yyyy)"),
       queryParam[Long]("ely").description("Ely number of a road address").optional,
       queryParam[Long]("roadNumber").description("Road Number of a road address").optional,
-      queryParam[Long]("minRoadPartNumber").description("Road Part Number of a road address").optional,
-      queryParam[Long]("maxRoadPartNumber").description("Road Part Number of a road address").optional
+      queryParam[Long]("minRoadPartNumber").description("Min Road Part Number of a road address").optional,
+      queryParam[Long]("maxRoadPartNumber").description("Max Road Part Number of a road address").optional
     )
       tags "ViiteAPI - Road Address Browser"
-      summary "Returns all junctions that fill the search criteria"
+      summary "Returns the junctions that fill the search criteria"
     )
 
   get("/roadaddressbrowser/junctions", operation(getJunctionsForRoadAddressBrowser)) {
@@ -456,11 +456,11 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
       queryParam[String]("startDate").description("Situation date (dd-MM-yyyy)"),
       queryParam[Long]("ely").description("Ely number of a road address").optional,
       queryParam[Long]("roadNumber").description("Road Number of a road address").optional,
-      queryParam[Long]("minRoadPartNumber").description("Road Part Number of a road address").optional,
-      queryParam[Long]("maxRoadPartNumber").description("Road Part Number of a road address").optional
+      queryParam[Long]("minRoadPartNumber").description("Min Road Part Number of a road address").optional,
+      queryParam[Long]("maxRoadPartNumber").description("Max Road Part Number of a road address").optional
     )
       tags "ViiteAPI - Road Address Browser"
-      summary "Returns all road names that fill the search criteria"
+      summary "Returns the road names that fill the search criteria"
     )
 
   get("/roadaddressbrowser/roadnames", operation(getRoadNamesForRoadAddressBrowser)) {

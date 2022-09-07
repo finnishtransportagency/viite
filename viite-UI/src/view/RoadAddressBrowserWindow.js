@@ -6,11 +6,11 @@
         roadAddrBrowserWindow.append('<div class="content">Tieosoitteiden katselu</div>');
         roadAddrBrowserWindow.append('' +
             '<form id="roadAddressBrowser" class="road-address-browser-form">' +
-                '<div class="input-container"><label class="control-label-small">Tilanne Pvm</label> <input type="date" id="roadAddrStartDate" value="' + getCurrentDate() + '" style="width: 100px"/></div>' +
-                '<div class="input-container"><label class="control-label-small" >Ely</label><input type="number" min="0" id="roadAddrInputEly" /></div>' +
-                '<div class="input-container"><label class="control-label-small" >Tie</label><input type="number" min="0" id="roadAddrInputRoad" /></div>' +
-                '<div class="input-container"><label class="control-label-small">Aosa</label><input type="number" min="0" id="roadAddrInputStartPart"/></div>' +
-                '<div class="input-container"><label class="control-label-small">Losa</label><input type="number" min="0" id="roadAddrInputEndPart"/></div>' +
+                '<div class="input-container"><label class="control-label-small">Tilanne Pvm</label> <input type="date" id="roadAddrStartDate" value="' + getCurrentDate() + '" style="width: 100px" required/></div>' +
+                '<div class="input-container"><label class="control-label-small" >Ely</label><input type="number" min="1" max="14" id="roadAddrInputEly" /></div>' +
+                '<div class="input-container"><label class="control-label-small" >Tie</label><input type="number" min="1" max="99999" id="roadAddrInputRoad" /></div>' +
+                '<div class="input-container"><label class="control-label-small">Aosa</label><input type="number" min="1" max="999" id="roadAddrInputStartPart"/></div>' +
+                '<div class="input-container"><label class="control-label-small">Losa</label><input type="number" min="1" max="999" id="roadAddrInputEndPart"/></div>' +
                 '<div class="input-container"><input type="radio" name="roadAddrBrowserForm" value="Roads" checked="checked"><label>Tieosat</label></div>' +
                 '<div class="input-container"><input type="radio" name="roadAddrBrowserForm" value="Nodes"><label>Solmut</label></div>' +
                 '<div class="input-container"><input type="radio" name="roadAddrBrowserForm" value="Junctions"><label>Liittymät</label></div>' +
@@ -195,11 +195,23 @@
                 var maxRoadPartNumber   = document.getElementById('roadAddrInputEndPart');
                 var checkedValue        = $("input:radio[name ='roadAddrBrowserForm']:checked").val();
 
+                //reset ely input field's custom validity
+                ely.setCustomValidity("");
+
+
+                function validateUserInput() {
+                    return roadAddrStartDate.reportValidity() &&
+                        ely.reportValidity() &&
+                        roadNumber.reportValidity() &&
+                        minRoadPartNumber.reportValidity() &&
+                        maxRoadPartNumber.reportValidity();
+                }
+
                 if (ely.value === "" && roadNumber.value === "") {
                     e.preventDefault();
                     ely.setCustomValidity("Ely tai Tie on pakollinen tieto");
                     ely.reportValidity();
-                } else {
+                } else if (validateUserInput()){
                     var params = {
                         startDate: roadAddrStartDate.value
                     };
