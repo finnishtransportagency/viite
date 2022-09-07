@@ -79,6 +79,45 @@
             roadAddrBrowserWindow.append(table);
         }
 
+        function showResultsForJunctions() {
+            var results = roadAddressCollection.getJunctions();
+            console.log(results);
+            var table =$('<table class="road-address-browser-window-results-table"></table>');
+            table.append(
+                '<tr>' +
+                    '<th>Solmu-numero</th>' +
+                    '<th>P-Koord</th>' +
+                    '<th>I-Koord</th>' +
+                    '<th>Nimi</th>' +
+                    '<th>Solmu-tyyppi</th>' +
+                    '<th>Alkupvm</th>' +
+                    '<th>Liittymä-nro</th>' +
+                    '<th>Tie</th>' +
+                    '<th>Ajr</th>' +
+                    '<th>Osa</th>' +
+                    '<th>Et</th>' +
+                    '<th>EJ</th>' +
+                '</tr>'
+            );
+            results.forEach((resRow) => table.append(
+                '<tr>' +
+                    '<td>' + resRow.nodeNumber + '</td>' +
+                    '<td>' + resRow.nodeCoordinates.y + '</td>' +
+                    '<td>' + resRow.nodeCoordinates.x + '</td>' +
+                    '<td>' + resRow.nodeName + '</td>' +
+                    '<td>' + resRow.nodeType + '</td>' +
+                    '<td>' + resRow.startDate + '</td>' +
+                    '<td>' + resRow.junctionNumber + '</td>' +
+                    '<td>' + resRow.roadNumber + '</td>' +
+                    '<td>' + resRow.track + '</td>' +
+                    '<td>' + resRow.roadPartNumber + '</td>' +
+                    '<td>' + resRow.addrM + '</td>' +
+                    '<td>' + resRow.beforeAfter + '</td>' +
+                '</tr>'
+            ));
+            roadAddrBrowserWindow.append(table);
+        }
+
 
         function toggle() {
             $('.container').append('<div class="modal-overlay confirm-modal"><div class="modal-dialog"></div></div>');
@@ -111,6 +150,10 @@
            showResultsForNodes();
         });
 
+        eventbus.on('roadAddressBrowser:junctionsFetched', function () {
+            applicationModel.removeSpinner();
+            showResultsForJunctions();
+        });
 
         function bindEvents() {
 
@@ -155,8 +198,8 @@
                             applicationModel.addSpinner();
                             break;
                         case "Junctions":
-                            new ModalConfirm("Tämä toiminnallisuus ei ole vielä valmis");
-                            //TODO roadAddressCollection.fetchJunctions()
+                            roadAddressCollection.fetchJunctions(params);
+                            applicationModel.addSpinner();
                             break;
                         case "RoadNames":
                             new ModalConfirm("Tämä toiminnallisuus ei ole vielä valmis");

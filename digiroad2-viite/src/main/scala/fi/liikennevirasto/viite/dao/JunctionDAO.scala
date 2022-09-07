@@ -20,6 +20,8 @@ case class JunctionInfo(id: Long, junctionNumber: Option[Long], startDate: DateT
 
 case class JunctionTemplate(id: Long, startDate: DateTime, roadNumber: Long, roadPartNumber: Long, track: Track, addrM: Long, elyCode: Long, coords: Point = Point(0.0, 0.0))
 
+case class JunctionForRoadAddressBrowser(nodeNumber: Long, nodeCoordinates: Point, nodeName: Option[String], nodeType: NodeType, startDate: DateTime, junctionNumber: Option[Long], roadNumber: Long, track: Long, roadPartNumber: Long, addrM: Long, beforeAfter: Long)
+
 class JunctionDAO extends BaseDAO {
 
   val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
@@ -62,6 +64,25 @@ class JunctionDAO extends BaseDAO {
       val nodeName = r.nextString()
 
       JunctionInfo(id, junctionNumber, startDate, nodeNumber, nodeName)
+    }
+  }
+
+  implicit val getJunctionForRoadAddressBrowser: GetResult[JunctionForRoadAddressBrowser] = new GetResult[JunctionForRoadAddressBrowser] {
+    def apply(r: PositionedResult): JunctionForRoadAddressBrowser = {
+      val nodeNumber = r.nextLong()
+      val coordX = r.nextLong()
+      val coordY = r.nextLong()
+      val nodeName = r.nextStringOption()
+      val nodeType = NodeType.apply(r.nextInt())
+      val startDate = new DateTime(r.nextDate())
+      val junctionNumber = r.nextLongOption()
+      val roadNumber = r.nextLong()
+      val trackCode = r.nextInt()
+      val roadPartNumber = r.nextLong()
+      val addrM = r.nextLong()
+      val beforeAfter = r.nextLong()
+
+      JunctionForRoadAddressBrowser(nodeNumber, Point(coordX, coordY), nodeName, nodeType, startDate, junctionNumber, roadNumber, trackCode, roadPartNumber, addrM, beforeAfter)
     }
   }
 
@@ -240,6 +261,56 @@ class JunctionDAO extends BaseDAO {
         """
       queryListTemplate(query)
     }
+  }
+
+  def fetchJunctionsForRoadAddressBrowser(startDate: String, ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[JunctionForRoadAddressBrowser] = {
+    def withOptionalParameters(startDate: String, ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long])(query: String): String = {
+      val dateCondition = "AND rw.start_date <='" + startDate + "'"
+
+      val elyCondition = {
+        if (ely.nonEmpty)
+          s" AND rw.ely = ${ely.get}"
+        else
+          ""
+      }
+
+      val roadNumberCondition = {
+        if (roadNumber.nonEmpty)
+          s" AND rw.road_number = ${roadNumber.get}"
+        else
+          ""
+      }
+
+      val roadPartCondition = {
+        val parts = (minRoadPartNumber, maxRoadPartNumber)
+        parts match {
+          case (Some(minPart), Some(maxPart)) => s"AND rw.road_part_number BETWEEN $minPart AND $maxPart"
+          case (None, Some(maxPart)) => s"AND rw.road_part_number = $maxPart"
+          case (Some(minPart), None) => s"AND rw.road_part_number = $minPart"
+          case _ => ""
+        }
+      }
+
+      s"""$query $dateCondition $elyCondition $roadNumberCondition $roadPartCondition
+        ORDER BY rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rp.ADDR_M""".stripMargin
+    }
+
+    def fetchJunctions(queryFilter: String => String): Seq[JunctionForRoadAddressBrowser] = {
+      val query =
+        """
+        SELECT DISTINCT node.node_number, ST_X(node.COORDINATES), ST_Y(node.COORDINATES), node.name, node.type,
+        j.start_date, j.junction_number, rw.road_number, rw.track, rw.road_part_number, rp.addr_m, jp.before_after
+		    FROM JUNCTION j
+       	JOIN NODE node ON node.node_number = j.node_number AND node.end_date IS NULL AND node.valid_to IS NULL
+       	JOIN JUNCTION_POINT jp ON j.id = jp.junction_id  AND jp.valid_to IS NULL
+        JOIN ROADWAY_POINT rp ON jp.roadway_point_id  = rp.ID
+        JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
+        WHERE j.valid_to is NULL AND j.end_date IS NULL
+        """
+      val filteredQuery = queryFilter(query)
+      Q.queryNA[JunctionForRoadAddressBrowser](filteredQuery).iterator.toSeq
+    }
+    fetchJunctions(withOptionalParameters(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber))
   }
 
   def create(junctions: Iterable[Junction]): Seq[Long] = {
