@@ -3,6 +3,7 @@
         var roads = [];
         var nodes = [];
         var junctions = [];
+        var roadNames = [];
         var me = this;
 
         this.fetchRoads = function(params) {
@@ -35,6 +36,16 @@
             });
         };
 
+        this.fetchRoadNames = function(params) {
+            backend.getRoadNames(params, function (result) {
+                if (result.success) {
+                    me.setRoadNames(result.roadNames);
+                    eventbus.trigger('roadAddressBrowser:roadNamesFetched');
+                } else
+                    new ModalConfirm(result.error);
+            });
+        };
+
         this.getRoads = function() {
             return roads;
         };
@@ -57,6 +68,14 @@
 
         this.getJunctions = function() {
           return junctions;
+        };
+
+        this.getRoadNames = function() {
+          return roadNames;
+        };
+
+        this.setRoadNames = function(data) {
+          roadNames = data;
         };
     };
 }(this));

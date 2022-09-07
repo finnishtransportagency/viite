@@ -81,7 +81,6 @@
 
         function showResultsForJunctions() {
             var results = roadAddressCollection.getJunctions();
-            console.log(results);
             var table =$('<table class="road-address-browser-window-results-table"></table>');
             table.append(
                 '<tr>' +
@@ -113,6 +112,26 @@
                     '<td>' + resRow.roadPartNumber + '</td>' +
                     '<td>' + resRow.addrM + '</td>' +
                     '<td>' + resRow.beforeAfter + '</td>' +
+                '</tr>'
+            ));
+            roadAddrBrowserWindow.append(table);
+        }
+
+        function showResultsForRoadNames() {
+            var results = roadAddressCollection.getRoadNames();
+            var table =$('<table class="road-address-browser-window-results-table"></table>');
+            table.append(
+                '<tr>' +
+                    '<th>Ely</th>' +
+                    '<th>Tie</th>' +
+                    '<th>Nimi</th>' +
+                '</tr>'
+            );
+            results.forEach((resRow) => table.append(
+                '<tr>' +
+                    '<td>' + resRow.ely + '</td>' +
+                    '<td>' + resRow.roadNumber + '</td>' +
+                    '<td>' + resRow.roadName + '</td>' +
                 '</tr>'
             ));
             roadAddrBrowserWindow.append(table);
@@ -153,6 +172,11 @@
         eventbus.on('roadAddressBrowser:junctionsFetched', function () {
             applicationModel.removeSpinner();
             showResultsForJunctions();
+        });
+
+        eventbus.on('roadAddressBrowser:roadNamesFetched', function () {
+            applicationModel.removeSpinner();
+            showResultsForRoadNames();
         });
 
         function bindEvents() {
@@ -202,8 +226,8 @@
                             applicationModel.addSpinner();
                             break;
                         case "RoadNames":
-                            new ModalConfirm("Tämä toiminnallisuus ei ole vielä valmis");
-                            //TODO roadAddressCollection.fetchRoadNames()
+                            roadAddressCollection.fetchRoadNames(params);
+                            applicationModel.addSpinner();
                             break;
                         default:
                     }

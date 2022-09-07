@@ -25,6 +25,12 @@
       });
     }, 1000);
 
+    this.getRoadNames = _.throttle(function (params, callback) {
+      return $.get('api/viite/roadaddressbrowser/roadnames', params, function (data) {
+        return _.isFunction(callback) && callback(data);
+      });
+    }, 1000);
+
     this.getRoadLinks = createCallbackRequestor(function (params) {
       var zoom = params.zoom;
       var boundingBox = params.boundingBox;
