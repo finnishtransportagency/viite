@@ -25,7 +25,7 @@ object ApiUtils {
     if (ViiteProperties.apiS3ObjectTTLSeconds != null) ViiteProperties.apiS3ObjectTTLSeconds.toInt
     else 300
 
-  val MAX_WAIT_TIME_SECONDS: Int = 20
+  val MAX_WAIT_TIME_SECONDS: Int = 25
   val MAX_RESPONSE_SIZE_BYTES: Long = 1024 * 1024 * 10 // 10Mb in bytes
   val MAX_RETRIES: Int = 540 // 3 hours / 20sec per retry
 
@@ -40,7 +40,6 @@ object ApiUtils {
   def avoidRestrictions[T](requestId: String, request: HttpServletRequest, params: Params,
                            responseType: String = "json")(f: Params => T): Any = {
     if (!ViiteProperties.awsConnectionEnabled) return f(params)
-
     val queryString = if (request.getQueryString != null) s"?${request.getQueryString}" else ""
     val path = "/viite" + request.getRequestURI + queryString
     val workId = getWorkId(requestId, params, responseType) // Used to name s3 objects
@@ -52,7 +51,12 @@ object ApiUtils {
         id
     }
 
+    val startTimestamp = DateTime.now()
     val objectExists = s3Service.isS3ObjectAvailable(s3Bucket, workId, 2, Some(objectTTLSeconds))
+
+    val afterS3CheckTimestamp = DateTime.now()
+    val timeout = MAX_WAIT_TIME_SECONDS*1000 - (afterS3CheckTimestamp.getMillis - startTimestamp.getMillis)
+
 
     (params.get("retry"), objectExists) match {
       case (_, true) =>
@@ -60,7 +64,7 @@ object ApiUtils {
         redirectToUrl(preSignedUrl, queryId)
 
       case (None, false) =>
-        newQuery(workId, queryId, path, f, params, responseType)
+        newQuery(workId, queryId, path, f, params, responseType, timeout)
 
       case (Some(retry: String), false) =>
         val currentRetry = retry.toInt
@@ -80,10 +84,10 @@ object ApiUtils {
     s"${identifiers.mkString("_")}.$contentType"
   }
 
-  def newQuery[T](workId: String, queryId: String, path: String, f: Params => T, params: Params, responseType: String): Any = {
+  def newQuery[T](workId: String, queryId: String, path: String, f: Params => T, params: Params, responseType: String, timeout: Long): Any = {
     val ret = Future { f(params) }
     try {
-      val response = Await.result(ret, Duration.apply(15L, TimeUnit.SECONDS))
+      val response = Await.result(ret, Duration.apply(timeout, TimeUnit.MILLISECONDS))
       response match {
         case _: ActionResult => response
         case _ =>
