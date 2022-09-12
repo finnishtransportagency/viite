@@ -49,6 +49,8 @@ aws ssm put-parameter --overwrite --name /Viite/QA/vkmApiKey --type SecureString
 aws ssm put-parameter --overwrite --name /Viite/QA/rasterServiceApiKey --type SecureString --value X
 
 aws ssm put-parameter --overwrite --name /Viite/QA/vvhRestApiPassword --type SecureString --value X
+
+aws ssm put-parameter --overwrite --name /Viite/QA/kgvApiKey --type SecureString --value X
 ```
 
 ### Luo S3 sekä task definition task role
