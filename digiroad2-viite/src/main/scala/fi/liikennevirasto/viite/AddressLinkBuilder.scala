@@ -73,8 +73,8 @@ trait AddressLinkBuilder {
     }
   }
 
-   def extractModifiedAtVVH(attributes: Map[String, Any]): Option[String] = {
-    def toLong(anyValue: Option[Any]): Option[Long] = {
+  protected def extractModifiedAtVVH(attributes: Map[String, Any]): Option[String] = {
+    def toLong(anyValue: Option[Any]) = {
       anyValue.map(_.asInstanceOf[BigInt].toLong)
     }
     def compareDateMillisOptions(a: Option[Long], b: Option[Long]): Option[Long] = {
