@@ -74,7 +74,7 @@
                 },
                 {
                   "name": "kgvApiKey",
-                  "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/dev/kgvApiKey"
+                  "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/kgvApiKey"
                 }
             ],
             "memoryReservation": 2048,
