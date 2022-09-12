@@ -26,7 +26,7 @@ object ApiUtils {
     else 300
 
   val MAX_WAIT_TIME_SECONDS: Int = 20
-  val MAX_RESPONSE_SIZE_BYTES: Long = 1024 * 1024 * 10 // 10Mb in bytes
+  val MAX_RESPONSE_SIZE_BYTES: Long = 1024 * 1024 * 10 // 10MiB in bytes
   val MAX_RETRIES: Int = 540 // 3 hours / 20sec per retry
 
   /**
@@ -34,7 +34,8 @@ object ApiUtils {
     * API Gateway timeouts if response is not received in 30 sec
     *  -> Return redirect to same url with retry param if query is not finished within maxWaitTime
     *  -> Save response to S3 when its ready (access with pre-signed url)
-    * API Gateway maximum response body size is 10 Mb
+    * API Gateway maximum response body size is 10 MiB
+    *  -> Estimate the maximum amount of elements in the response body that fit the 10MiB limit (estimatedMaxSize)
     *  -> Save bigger responses to S3 (access with pre-signed url)
     */
   def avoidRestrictions[T](requestId: String, request: HttpServletRequest, params: Params,
