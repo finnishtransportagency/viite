@@ -138,7 +138,7 @@ object FilterOgc extends Filter {
 
 object Extractor {
   lazy val logger = LoggerFactory.getLogger(getClass)
-  private val featureClassCodeToFeatureClass: Map[Int, FeatureClass] = Map(
+  val featureClassCodeToFeatureClass: Map[Int, FeatureClass] = Map(
     12316 -> FeatureClass.TractorRoad,
     12317 -> FeatureClass.TractorRoad,
     12318 -> FeatureClass.ShoulderRoad,
