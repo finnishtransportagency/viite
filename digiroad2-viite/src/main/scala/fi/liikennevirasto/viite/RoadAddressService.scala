@@ -1,28 +1,27 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.GeometryUtils
-import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
+import fi.liikennevirasto.digiroad2.{GeometryUtils, _}
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.viite.dao.{RoadwayPointDAO, _}
 import fi.liikennevirasto.viite.dao.AddressChangeType.{ReNumeration, Termination, Transfer, Unchanged}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{CalibrationPointLocation, CalibrationPointType}
-import fi.liikennevirasto.viite.dao.{RoadwayPointDAO, _}
 import fi.liikennevirasto.viite.model.RoadAddressLink
-import fi.liikennevirasto.viite.process.RoadAddressFiller.ChangeSet
 import fi.liikennevirasto.viite.process._
+import fi.liikennevirasto.viite.process.RoadAddressFiller.ChangeSet
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
+import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
 import scala.util.control.NonFatal
 
 class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLocationDAO,
@@ -767,16 +766,20 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 
   def getRoadAddressLinks(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)],
                           everything: Boolean = false, publicRoads: Boolean = false): Seq[RoadAddressLink] = {
-
-    val boundingBoxResult = BoundingBoxResult(
-      Future(Seq[ChangeInfo]()),
-//      roadLinkService.getChangeInfoFromVVHF(boundingRectangle, Set()),
-      //Should fetch all the administrative classes
-      Future(fetchLinearLocationsByBoundingBox(boundingRectangle)),
-      Future(roadLinkService.getRoadLinksFromVVH(boundingRectangle, roadNumberLimits, Set(), everything, publicRoads)),
-      Future(roadLinkService.getComplementaryRoadLinksFromVVH(boundingRectangle, Set()))
-    )
-    getRoadAddressLinks(boundingBoxResult)
+    try {
+      val boundingBoxResult = BoundingBoxResult(
+        Future(Seq[ChangeInfo]()),
+        Future(fetchLinearLocationsByBoundingBox(boundingRectangle)),
+        Future(roadLinkService.getRoadLinksFromVVH(boundingRectangle, roadNumberLimits, Set(), everything, publicRoads)),
+        Future(roadLinkService.getComplementaryRoadLinksFromVVH(boundingRectangle, Set()))
+      )
+      getRoadAddressLinks(boundingBoxResult)
+    } catch {
+      case e: Throwable => {
+        logger.info(s"$e ")
+        Seq[RoadAddressLink]()
+      }
+    }
   }
 
 

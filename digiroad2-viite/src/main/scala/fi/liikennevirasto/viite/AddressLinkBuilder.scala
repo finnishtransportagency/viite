@@ -1,5 +1,4 @@
 package fi.liikennevirasto.viite
-import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 //import fi.liikennevirasto.viite.AdministrativeClass._
@@ -74,8 +73,8 @@ trait AddressLinkBuilder {
     }
   }
 
-  protected def extractModifiedAtVVH(attributes: Map[String, Any]): Option[String] = {
-    def toLong(anyValue: Option[Any]) = {
+   def extractModifiedAtVVH(attributes: Map[String, Any]): Option[String] = {
+    def toLong(anyValue: Option[Any]): Option[Long] = {
       anyValue.map(_.asInstanceOf[BigInt].toLong)
     }
     def compareDateMillisOptions(a: Option[Long], b: Option[Long]): Option[Long] = {

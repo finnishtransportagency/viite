@@ -5,15 +5,13 @@ import javax.sql.DataSource
 import org.joda.time.format.{ISODateTimeFormat, PeriodFormat}
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.GeometryUtils
+import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, SideCode}
 import fi.liikennevirasto.digiroad2.client.vvh.KgvRoadLink
 import fi.liikennevirasto.digiroad2.dao.SequenceResetterDAO
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.ViiteProperties
-import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, Point}
-import fi.liikennevirasto.digiroad2.util.SqlScriptRunner
+import fi.liikennevirasto.digiroad2.util.{SqlScriptRunner, ViiteProperties}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.util.DataImporter.Conversion
@@ -55,10 +53,6 @@ class DataImporter {
 
   def withDynTransaction(f: => Unit): Unit = PostGISDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
-  def withLinkIdChunks(f: (String, String) => Unit): Unit = {
-    val chunks = withDynSession{ fetchChunkLinkIds()}
-    chunks.par.foreach { p => f(p._1, p._2) }
-  }
 
   def time[A](f: => A) = {
     val s = System.nanoTime
@@ -305,11 +299,11 @@ class DataImporter {
     println()
   }
 
-  def enableRoadwayTriggers = {
+  def enableRoadwayTriggers(): Unit = {
     sqlu"""ALTER TABLE ROADWAY ENABLE TRIGGER USER""".execute
   }
 
-  def disableRoadwayTriggers = {
+  def disableRoadwayTriggers(): Unit = {
     sqlu"""ALTER TABLE ROADWAY DISABLE TRIGGER USER""".execute
   }
 
@@ -360,28 +354,6 @@ class DataImporter {
     Seq(roadAddressA, roadAddressB)
   }
 
-  private def generateChunks(linkIds: Seq[String], chunkNumber: Long): Seq[(String, String)] = {
-    val (chunks, _) = linkIds.foldLeft((Seq[String](""), 0)) {
-      case ((fchunks, index), linkId) =>
-        if (index > 0 && index % chunkNumber == 0) {
-          (fchunks ++ Seq(linkId), index + 1)
-        } else {
-          (fchunks, index + 1)
-        }
-    }
-    val result = if (chunks.last == linkIds.last) {
-      chunks
-    } else {
-      chunks ++ Seq(linkIds.last)
-    }
-
-    result.zip(result.tail)
-  }
-
-  protected def fetchChunkLinkIds(): Seq[(String, String)] = {
-    val linkIds = sql"""select distinct link_id from linear_location where link_id is not null order by link_id""".as[String].list
-    generateChunks(linkIds, 25000l)
-  }
 
   protected def fetchGroupedLinkIds: Seq[Set[String]] = {
     val linkIds = sql"""select distinct link_id from linear_location where link_id is not null order by link_id""".as[String].list

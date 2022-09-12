@@ -4,6 +4,7 @@ import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeType._
+import fi.liikennevirasto.digiroad2.dao.ComplementaryDataDAO
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
 import org.joda.time.format.DateTimeFormat
@@ -383,7 +384,7 @@ class KgvRoadLink {
     lazy val roadLinkData: KgvRoadLinkClient[RoadLinkFetched] = new KgvRoadLinkClient[RoadLinkFetched](Some(KgvCollection.UnFrozen), Some(LinkGeomSource.NormalLinkInterface))
     lazy val frozenTimeRoadLinkData: KgvRoadLinkClient[RoadLinkFetched] = new KgvRoadLinkClient[RoadLinkFetched](Some(KgvCollection.Frozen), Some(LinkGeomSource.FrozenLinkInterface))
     lazy val roadLinkChangeInfo: KgvRoadLinkClient[ChangeInfo] = new KgvRoadLinkClient[ChangeInfo](Some(KgvCollection.Changes), Some(LinkGeomSource.Change))
-    lazy val complementaryData: VVHComplementaryClient = new VVHComplementaryClient(ViiteProperties.vvhRestApiEndPoint)
+    lazy val complementaryData: ComplementaryDataDAO = new ComplementaryDataDAO
 }
 
 class KgvRoadLinkClient[T](collection: Option[KgvCollection] = None, linkGeomSourceValue:Option[LinkGeomSource] = None) extends KgvOperation {
