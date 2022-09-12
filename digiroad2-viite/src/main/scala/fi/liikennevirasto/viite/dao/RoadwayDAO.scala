@@ -1095,18 +1095,31 @@ class RoadwayDAO extends BaseDAO {
         }
       }
 
-      s"""$query where valid_to is null  AND end_date is null
-        $dateCondition $elyCondition $roadNumberCondition $roadPartCondition
-        group by  r.ely, r.road_number , r.track , r.road_part_number , r.start_date
-        order by road_number, road_part_number, startAddrM, track""".stripMargin
+      /** Use two subqueries: mins and maxs
+        * mins: Select roadways that don't have another roadway BEFORE it (r2.end_addr_m = r.start_addr_m...). Then set row numbers for these roadways.
+        * maxs: Select roadways that don't have another roadway AFTER it (r2.start_addr_m = r.end_addr_m...). Then set row numbers for these roadways as well
+        * Now we have two ROW NUMBERED lists: mins and maxs. Mins has the homogenous section's startAddrM's and maxs has the endAddrM's.
+        * Joining these lists by the row numbers will give us one list that tells us the startAddrM and endAddrM of the homogenous section.
+        * */
+
+      s"""$query FROM (SELECT ely, road_number, road_part_number, start_addr_m, start_date, track, ROW_NUMBER() OVER (ORDER BY road_number, road_part_number, start_addr_m, track) AS numb
+                        FROM roadway r
+                        WHERE NOT EXISTS
+                          (SELECT 1 FROM roadway r2 WHERE r2.end_addr_m = r.start_addr_m AND r2.road_number = r.road_number AND r2.road_part_number=r.road_part_number AND r2.track = r.track AND r2.start_date = r.start_date AND r2.valid_to IS NULL AND r2.end_date IS NULL)
+                        AND r.valid_to IS NULL AND r.end_date IS NULL $dateCondition $elyCondition $roadNumberCondition $roadPartCondition) mins
+                   JOIN (SELECT ely, road_number, road_part_number, end_addr_m, start_date, track, ROW_NUMBER() OVER (ORDER BY road_number, road_part_number, end_addr_m, track) AS numb
+                              FROM roadway r
+                              WHERE NOT EXISTS
+                                (SELECT 1 FROM roadway r2 WHERE r2.start_addr_m = r.end_addr_m AND r2.road_number = r.road_number AND r2.road_part_number=r.road_part_number AND r2.track=r.track AND r2.start_date = r.start_date AND r2.valid_to IS NULL AND r2.end_date IS NULL)
+                              AND r.valid_to IS NULL and r.end_date IS NULL $dateCondition $elyCondition $roadNumberCondition $roadPartCondition) maxs ON mins.numb = maxs.numb
+                  ORDER BY mins.road_number, mins.road_part_number, mins.start_addr_m""".stripMargin
     }
 
     def fetchRoads(queryFilter: String => String): Seq[RoadForRoadAddressBrowser] = {
       val query =
         """
-      select r.ely, r.road_number, r.track, r.road_part_number,
-      min(start_addr_m) as startAddrM, max(end_addr_m), max(end_addr_m) - min(start_addr_m), r.start_date
-      FROM ROADWAY r
+      SELECT mins.ely, mins.road_number, mins.track, mins.road_part_number, mins.start_addr_m,
+       maxs.end_addr_m, maxs.end_addr_m - mins.start_addr_m AS length, mins.start_date
       """
       val filteredQuery = queryFilter(query)
       Q.queryNA[RoadForRoadAddressBrowser](filteredQuery).iterator.toSeq
