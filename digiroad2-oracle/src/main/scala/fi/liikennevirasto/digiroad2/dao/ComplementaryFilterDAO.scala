@@ -25,7 +25,7 @@ class ComplementaryFilterDAO {
 
 }
 
-class ComplementaryDataDAO {
+class ComplementaryLinkDAO {
   protected def logger = LoggerFactory.getLogger(getClass)
   val formatter: DateTimeFormatter = ISODateTimeFormat.dateOptionalTimeParser()
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
@@ -84,7 +84,7 @@ class ComplementaryDataDAO {
         "zaccuracy"       -> r.nextDoubleOption()
       )
       val length = r.nextDouble()
-      attributes ++= Map(
+      Map(
         "addressfromleft"  -> r.nextIntOption(),
         "addresstoleft"    -> r.nextIntOption(),
         "addressfromright" -> r.nextIntOption(),
@@ -127,7 +127,7 @@ class ComplementaryDataDAO {
   }
 
   /**
-     * Returns VVH road links by municipality.
+     * Returns RoadLinks by municipality.
      */
   def queryByMunicipality(municipality: Int, filter: Option[String] = None): Seq[RoadLinkFetched] = {
     val filterString = filter.getOrElse("")
@@ -140,11 +140,6 @@ class ComplementaryDataDAO {
   def fetchComplementaryByMunicipalitiesF(municipality: Int): Future[Seq[RoadLinkFetched]] =
     Future(queryByMunicipality(municipality))
 
-  /**
-   * Returns VVH road links by municipality.
-   * Used by VVHClient.fetchByMunicipalityAndRoadNumbersF(municipality, roadNumbers) and
-   * RoadLinkService.getViiteRoadLinksFromVVH(municipality, roadNumbers).
-   */
   def queryByRoadNumbersAndMunicipality(municipality: Int, roadNumbers: Seq[(Int, Int)]): Seq[RoadLinkFetched] = {
     val roadNumberFilters = withRoadNumbersFilter(roadNumbers, includeAllPublicRoads = true)
     time(logger, "Fetch complementary data by road numbers and municipality") {
@@ -153,16 +148,15 @@ class ComplementaryDataDAO {
     }
   }
   /**
-   * Returns a sequence of VVH Road Links. Uses Scala Future for concurrent operations.
-   * Used by RoadLinkService.getViiteCurrentAndComplementaryRoadLinksFromVVH(municipality, roadNumbers).
-   */
+    * Returns a sequence of RoadLinks. Uses Scala Future for concurrent operations.
+    */
   def fetchByMunicipalityAndRoadNumbersF(municipality: Int, roadNumbers: Seq[(Int, Int)]): Future[Seq[RoadLinkFetched]] = {
     Future(queryByRoadNumbersAndMunicipality(municipality, roadNumbers))
   }
 
   /**
-  * Returns VVH road links in bounding box area. Municipalities are optional.
-  */
+    * Returns road links in bounding box area. Municipalities are optional.
+    */
   def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int], filter: Option[String]): Seq[RoadLinkFetched] = {
     val geometry = s"geometry && ST_MakeEnvelope(${bounds.leftBottom.x},${bounds.leftBottom.y},${bounds.rightTop.x},${bounds.rightTop.y},3067)"
     val municipalityFilter = if (municipalities.nonEmpty) Some(s" AND municipalitycode IN (${municipalities.mkString(",")})") else ""
@@ -172,10 +166,8 @@ class ComplementaryDataDAO {
     }
   }
   /**
-     * Returns VVH road links. Uses Scala Future for concurrent operations.
-     * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities),
-     * RoadLinkService.getViiteRoadLinksAndChangesFromVVH(bounds, roadNumbers, municipalities, everything, publicRoads).
-     */
+    * Returns road links. Uses Scala Future for concurrent operations.
+    */
   def fetchByBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[RoadLinkFetched]] = {
     Future(queryByMunicipalitiesAndBounds(bounds, municipalities, None))
   }

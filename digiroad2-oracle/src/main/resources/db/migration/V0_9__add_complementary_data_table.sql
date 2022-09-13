@@ -1,5 +1,5 @@
 -- Add complementary data table to local data base - VIITE-2845.
-CREATE TABLE public.complementary_data (
+CREATE TABLE public.complementary_link_table (
                                            id varchar NULL,
                                            datasource int4 NULL,
                                            adminclass int4 NULL,
@@ -30,5 +30,5 @@ CREATE TABLE public.complementary_data (
                                            geometry public.geometry NULL,
                                            ajorata int4 NULL
 );
-CREATE INDEX complementary_data_geometry_i ON public.complementary_data USING gist (geometry);
-CREATE INDEX complementary_data_link_id_i ON public.complementary_data USING btree (id);
+CREATE INDEX complementary_data_geometry_i ON public.complementary_link_table USING gist (geometry);
+CREATE INDEX complementary_data_link_id_i ON public.complementary_link_table USING btree (id);
