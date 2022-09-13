@@ -117,7 +117,7 @@ class ComplementaryLinkDAO {
 
   def fetchByLinkIds(linkIds: Set[String]): List[RoadLinkFetched] = {
     time(logger, "Fetch complementary data by linkIds") {
-      val sql = s"""SELECT * FROM complementary_data WHERE id IN (${linkIds.map(lid => "'" + lid + "'").mkString(", ")})"""
+      val sql = s"""SELECT * FROM complementary_link_table WHERE id IN (${linkIds.map(lid => "'" + lid + "'").mkString(", ")})"""
       withDynTransaction(Q.queryNA[RoadLinkFetched](sql).list)
     }
   }
@@ -132,7 +132,7 @@ class ComplementaryLinkDAO {
   def queryByMunicipality(municipality: Int, filter: Option[String] = None): Seq[RoadLinkFetched] = {
     val filterString = filter.getOrElse("")
     time(logger, s"Fetch complementary data by municipality (and ${filter})") {
-      val sql = s"""SELECT * FROM complementary_data WHERE municipalitycode = $municipality AND """ + filterString
+      val sql = s"""SELECT * FROM complementary_link_table WHERE municipalitycode = $municipality AND """ + filterString
       withDynTransaction(Q.queryNA[RoadLinkFetched](sql).list)
     }
   }
@@ -143,7 +143,7 @@ class ComplementaryLinkDAO {
   def queryByRoadNumbersAndMunicipality(municipality: Int, roadNumbers: Seq[(Int, Int)]): Seq[RoadLinkFetched] = {
     val roadNumberFilters = withRoadNumbersFilter(roadNumbers, includeAllPublicRoads = true)
     time(logger, "Fetch complementary data by road numbers and municipality") {
-      val sql = s"""SELECT * FROM complementary_data WHERE municipalitycode = $municipality AND """ + roadNumberFilters
+      val sql = s"""SELECT * FROM complementary_link_table WHERE municipalitycode = $municipality AND """ + roadNumberFilters
       withDynTransaction(Q.queryNA[RoadLinkFetched](sql).list)
     }
   }
@@ -161,7 +161,7 @@ class ComplementaryLinkDAO {
     val geometry = s"geometry && ST_MakeEnvelope(${bounds.leftBottom.x},${bounds.leftBottom.y},${bounds.rightTop.x},${bounds.rightTop.y},3067)"
     val municipalityFilter = if (municipalities.nonEmpty) Some(s" AND municipalitycode IN (${municipalities.mkString(",")})") else ""
     time(logger, "Fetch complementary data by road numbers and municipality") {
-      val sql = s"SELECT * FROM complementary_data WHERE $geometry " + municipalityFilter + filter.getOrElse("")
+      val sql = s"SELECT * FROM complementary_link_table WHERE $geometry " + municipalityFilter + filter.getOrElse("")
       withDynTransaction(Q.queryNA[RoadLinkFetched](sql.trim).list)
     }
   }
