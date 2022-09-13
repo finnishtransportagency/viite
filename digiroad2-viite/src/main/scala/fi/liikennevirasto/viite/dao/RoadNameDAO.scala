@@ -241,9 +241,9 @@ object RoadNameDAO {
     roadNamesPS.close()
   }
 
-  def fetchRoadNamesForRoadAddressBrowser(startDate: String, ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]) = {
-    def withOptionalParameters(startDate: String, ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long])(query: String): String = {
-      val dateCondition = "AND rw.start_date <='" + startDate + "'"
+  def fetchRoadNamesForRoadAddressBrowser(startDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]) = {
+    def withOptionalParameters(startDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long])(query: String): String = {
+      val dateCondition = "AND rw.start_date <='" + startDate.get + "'"
 
       val elyCondition = {
         if (ely.nonEmpty)
@@ -263,8 +263,8 @@ object RoadNameDAO {
         val parts = (minRoadPartNumber, maxRoadPartNumber)
         parts match {
           case (Some(minPart), Some(maxPart)) => s"AND rw.road_part_number BETWEEN $minPart AND $maxPart"
-          case (None, Some(maxPart)) => s"AND rw.road_part_number = $maxPart"
-          case (Some(minPart), None) => s"AND rw.road_part_number = $minPart"
+          case (None, Some(maxPart)) => s"AND rw.road_part_number <= $maxPart"
+          case (Some(minPart), None) => s"AND rw.road_part_number >= $minPart"
           case _ => ""
         }
       }

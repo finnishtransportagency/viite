@@ -193,7 +193,7 @@
                 var roadNumber          = document.getElementById('roadAddrInputRoad');
                 var minRoadPartNumber   = document.getElementById('roadAddrInputStartPart');
                 var maxRoadPartNumber   = document.getElementById('roadAddrInputEndPart');
-                var checkedValue        = $("input:radio[name ='roadAddrBrowserForm']:checked").val();
+                var targetValue        = $("input:radio[name ='roadAddrBrowserForm']:checked").val();
 
                 //reset ely input field's custom validity
                 ely.setCustomValidity("");
@@ -213,7 +213,8 @@
                     ely.reportValidity();
                 } else if (validateUserInput()){
                     var params = {
-                        startDate: roadAddrStartDate.value
+                        startDate: roadAddrStartDate.value,
+                        target: targetValue
                     };
                     if (ely.value)
                         params.ely = ely.value;
@@ -224,25 +225,7 @@
                     if (maxRoadPartNumber.value)
                         params.maxRoadPartNumber = maxRoadPartNumber.value;
 
-                    switch (checkedValue) {
-                        case "Roads":
-                            roadAddressCollection.fetchRoads(params);
-                            applicationModel.addSpinner();
-                            break;
-                        case "Nodes":
-                            roadAddressCollection.fetchNodes(params);
-                            applicationModel.addSpinner();
-                            break;
-                        case "Junctions":
-                            roadAddressCollection.fetchJunctions(params);
-                            applicationModel.addSpinner();
-                            break;
-                        case "RoadNames":
-                            roadAddressCollection.fetchRoadNames(params);
-                            applicationModel.addSpinner();
-                            break;
-                        default:
-                    }
+                    roadAddressCollection.fetchByTargetValue(params);
                 }
                 return false; // cancel form submission
             });

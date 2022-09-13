@@ -1066,10 +1066,10 @@ class RoadwayDAO extends BaseDAO {
     Q.queryNA[(Long, String, Long, Long, Long, Option[DateTime], Option[DateTime])](query).firstOption
   }
 
-  def fetchRoadsForRoadAddressBrowser(startDate: String, ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[RoadForRoadAddressBrowser] = {
-    def withOptionalParameters(startDate: String, ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long])(query: String): String  = {
+  def fetchRoadsForRoadAddressBrowser(startDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[RoadForRoadAddressBrowser] = {
+    def withOptionalParameters(startDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long])(query: String): String  = {
 
-      val dateCondition = "AND start_date <='" + startDate + "'"
+      val dateCondition = "AND start_date <='" + startDate.get + "'"
 
       val elyCondition = {
         if (ely.nonEmpty)
@@ -1089,8 +1089,8 @@ class RoadwayDAO extends BaseDAO {
         val parts = (minRoadPartNumber, maxRoadPartNumber)
         parts match {
           case (Some(minPart), Some(maxPart)) => s"AND road_part_number BETWEEN $minPart AND $maxPart"
-          case (None, Some(maxPart)) => s"AND road_part_number = $maxPart"
-          case (Some(minPart), None) => s"AND road_part_number = $minPart"
+          case (None, Some(maxPart)) => s"AND road_part_number <= $maxPart"
+          case (Some(minPart), None) => s"AND road_part_number >= $minPart"
           case _ => ""
         }
       }
