@@ -1095,32 +1095,88 @@ class RoadwayDAO extends BaseDAO {
         }
       }
 
-      /** Use two subqueries: mins and maxs
-        * mins: Select roadways that don't have another roadway BEFORE it (r2.end_addr_m = r.start_addr_m...). Then set row numbers for these roadways.
-        * maxs: Select roadways that don't have another roadway AFTER it (r2.start_addr_m = r.end_addr_m...). Then set row numbers for these roadways as well
-        * Now we have two ROW NUMBERED lists: mins and maxs. Mins has the homogenous section's startAddrM's and maxs has the endAddrM's.
-        * Joining these lists by the row numbers will give us one list that tells us the startAddrM and endAddrM of the homogenous section.
+      /** Form homogenous sections by road number, road part number, track, start date and ely
+        *
+        * Use three CTE's (Common Table Expression)
+        * 1. roadways: Select roadways from roadway table with the optional parameters
+        * 2. roadwayswithstartaddr: Select roadways from the roadways CTE that don't have another roadway BEFORE it (r2.end_addr_m = r.start_addr_m...). Then set row numbers for these roadways.
+        * 3. roadwayswithendaddr: Select roadways from the roadways CTE that don't have another roadway AFTER it (r2.start_addr_m = r.end_addr_m...). Then set row numbers for these roadways as well
+        * Now we have two ROW NUMBERED CTE's: roadwayswithstartaddr and roadwayswithendaddr.
+        * roadwayswithstartaddr has the homogenous section's startAddrM's and roadwayswithendaddr has the endAddrM's.
+        * Joining these CTE's by the row numbers will give us one list that tells us the startAddrM and endAddrM of the homogenous section.
         * */
 
-      s"""$query FROM (SELECT ely, road_number, road_part_number, start_addr_m, start_date, track, ROW_NUMBER() OVER (ORDER BY road_number, road_part_number, start_addr_m, track) AS numb
-                        FROM roadway r
-                        WHERE NOT EXISTS
-                          (SELECT 1 FROM roadway r2 WHERE r2.end_addr_m = r.start_addr_m AND r2.road_number = r.road_number AND r2.road_part_number=r.road_part_number AND r2.track = r.track AND r2.start_date = r.start_date AND r2.valid_to IS NULL AND r2.end_date IS NULL)
-                        AND r.valid_to IS NULL AND r.end_date IS NULL $dateCondition $elyCondition $roadNumberCondition $roadPartCondition) mins
-                   JOIN (SELECT ely, road_number, road_part_number, end_addr_m, start_date, track, ROW_NUMBER() OVER (ORDER BY road_number, road_part_number, end_addr_m, track) AS numb
-                              FROM roadway r
-                              WHERE NOT EXISTS
-                                (SELECT 1 FROM roadway r2 WHERE r2.start_addr_m = r.end_addr_m AND r2.road_number = r.road_number AND r2.road_part_number=r.road_part_number AND r2.track=r.track AND r2.start_date = r.start_date AND r2.valid_to IS NULL AND r2.end_date IS NULL)
-                              AND r.valid_to IS NULL and r.end_date IS NULL $dateCondition $elyCondition $roadNumberCondition $roadPartCondition) maxs ON mins.numb = maxs.numb
-                  ORDER BY mins.road_number, mins.road_part_number, mins.start_addr_m""".stripMargin
+      s"""WITH roadways
+         |     AS (SELECT *
+         |         FROM   roadway r
+         |         WHERE  r.valid_to IS NULL AND r.end_date IS NULL
+         |         $dateCondition
+         |         $elyCondition
+         |         $roadNumberCondition
+         |         $roadPartCondition
+         |         ),
+         |         $query""".stripMargin
     }
 
     def fetchRoads(queryFilter: String => String): Seq[RoadForRoadAddressBrowser] = {
       val query =
-        """
-      SELECT mins.ely, mins.road_number, mins.track, mins.road_part_number, mins.start_addr_m,
-       maxs.end_addr_m, maxs.end_addr_m - mins.start_addr_m AS length, mins.start_date
-      """
+        """     roadwayswithstartaddr
+          |     AS (SELECT ely,
+          |                road_number,
+          |                road_part_number,
+          |                start_addr_m,
+          |                start_date,
+          |                track,
+          |                Row_number()
+          |                  OVER (
+          |                    ORDER BY road_number, road_part_number, track, start_addr_m)
+          |                AS
+          |                numb
+          |         FROM   roadways r
+          |         WHERE  NOT EXISTS (SELECT 1
+          |                            FROM   roadways r2
+          |                            WHERE  r2.start_date = r.start_date
+          |                                   AND r2.end_addr_m = r.start_addr_m
+          |                                   AND r2.road_number = r.road_number
+          |                                   AND r2.road_part_number = r.road_part_number
+          |                                   AND r2.track = r.track
+          |                                   AND r2.ely = r.ely)),
+          |     roadwayswithendaddr
+          |     AS (SELECT ely,
+          |                road_number,
+          |                road_part_number,
+          |                end_addr_m,
+          |                start_date,
+          |                track,
+          |                Row_number()
+          |                  OVER (
+          |                    ORDER BY road_number, road_part_number, track, end_addr_m)
+          |                AS
+          |                numb
+          |         FROM   roadways r
+          |         WHERE  NOT EXISTS (SELECT 1
+          |                            FROM   roadways r2
+          |                            WHERE  r2.start_date = r.start_date
+          |                                   AND r2.start_addr_m = r.end_addr_m
+          |                                   AND r2.road_number = r.road_number
+          |                                   AND r2.road_part_number = r.road_part_number
+          |                                   AND r2.track = r.track
+          |                                   AND r2.ely = r.ely))
+          |SELECT s.ely,
+          |       s.road_number,
+          |       s.track,
+          |       s.road_part_number,
+          |       s.start_addr_m,
+          |       e.end_addr_m,
+          |       e.end_addr_m - s.start_addr_m AS length,
+          |       s.start_date
+          |FROM   roadwayswithstartaddr s
+          |       JOIN roadwayswithendaddr e
+          |         ON s.numb = e.numb
+          |ORDER  BY s.road_number,
+          |          s.road_part_number,
+          |          s.start_addr_m,
+          |          s.track; """.stripMargin
       val filteredQuery = queryFilter(query)
       Q.queryNA[RoadForRoadAddressBrowser](filteredQuery).iterator.toSeq
     }
