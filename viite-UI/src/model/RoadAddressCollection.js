@@ -6,41 +6,29 @@
         var roadNames = [];
         var me = this;
 
-        this.fetchRoads = function(params) {
-            backend.getRoads(params, function (result) {
+        this.fetchByTargetValue = function(params) {
+            applicationModel.addSpinner();
+            backend.getDataForRoadAddressBrowser(params, function(result) {
                 if (result.success) {
-                    me.setRoads(result.roads);
-                    eventbus.trigger('roadAddressBrowser:roadsFetched');
-                } else
-                    new ModalConfirm(result.error);
-            });
-        };
-
-        this.fetchNodes = function(params) {
-            backend.getNodes(params, function (result) {
-                if (result.success) {
-                    me.setNodes(result.nodes);
-                    eventbus.trigger('roadAddressBrowser:nodesFetched');
-                } else
-                    new ModalConfirm(result.error);
-            });
-        };
-
-        this.fetchJunctions = function(params) {
-            backend.getJunctions(params, function (result) {
-                if (result.success) {
-                    me.setJunctions(result.junctions);
-                    eventbus.trigger('roadAddressBrowser:junctionsFetched');
-                } else
-                    new ModalConfirm(result.error);
-            });
-        };
-
-        this.fetchRoadNames = function(params) {
-            backend.getRoadNames(params, function (result) {
-                if (result.success) {
-                    me.setRoadNames(result.roadNames);
-                    eventbus.trigger('roadAddressBrowser:roadNamesFetched');
+                    switch (params.target) {
+                        case "Roads":
+                            me.setRoads(result.roads);
+                            eventbus.trigger('roadAddressBrowser:roadsFetched');
+                            break;
+                        case "Nodes":
+                            me.setNodes(result.nodes);
+                            eventbus.trigger('roadAddressBrowser:nodesFetched');
+                            break;
+                        case "Junctions":
+                            me.setJunctions(result.junctions);
+                            eventbus.trigger('roadAddressBrowser:junctionsFetched');
+                            break;
+                        case "RoadNames":
+                            me.setRoadNames(result.roadNames);
+                            eventbus.trigger('roadAddressBrowser:roadNamesFetched');
+                            break;
+                        default:
+                    }
                 } else
                     new ModalConfirm(result.error);
             });

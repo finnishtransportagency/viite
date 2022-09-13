@@ -7,26 +7,8 @@
     var gettingRoadLinks;
     moment.locale('fi');
 
-    this.getRoads = _.throttle(function (params, callback) {
-      return $.get('api/viite/roadaddressbrowser/roads', params, function (data) {
-        return _.isFunction(callback) && callback(data);
-      });
-    }, 1000);
-
-    this.getNodes = _.throttle(function (params, callback) {
-      return $.get('api/viite/roadaddressbrowser/nodes', params, function (data) {
-        return _.isFunction(callback) && callback(data);
-      });
-    }, 1000);
-
-    this.getJunctions = _.throttle(function (params, callback) {
-      return $.get('api/viite/roadaddressbrowser/junctions', params, function (data) {
-        return _.isFunction(callback) && callback(data);
-      });
-    }, 1000);
-
-    this.getRoadNames = _.throttle(function (params, callback) {
-      return $.get('api/viite/roadaddressbrowser/roadnames', params, function (data) {
+    this.getDataForRoadAddressBrowser = _.throttle(function (params, callback) {
+      return $.get('api/viite/roadaddressbrowser', params, function (data) {
         return _.isFunction(callback) && callback(data);
       });
     }, 1000);
