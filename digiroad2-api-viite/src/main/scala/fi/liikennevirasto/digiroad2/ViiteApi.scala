@@ -372,62 +372,63 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
     )
 
   get("/roadaddressbrowser", operation(getDataForRoadAddressBrowser)) {
-
-    def validateInputs(startDate: Option[String], target: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]):Boolean = {
-      def parseDate(dateString: Option[String]): Option[DateTime] = {
-        val formatter = DateTimeFormat.forPattern("yyyy-MM-dd")
-        try {
-          if (dateString.isDefined) {
-            Some(formatter.parseDateTime(dateString.get))
-          } else
-            None
-        } catch {
-          case _: IllegalArgumentException => None
+    time(logger, s"GET request for /roadaddressbrowser") {
+      def validateInputs(startDate: Option[String], target: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Boolean = {
+        def parseDate(dateString: Option[String]): Option[DateTime] = {
+          val formatter = DateTimeFormat.forPattern("yyyy-MM-dd")
+          try {
+            if (dateString.isDefined) {
+              Some(formatter.parseDateTime(dateString.get))
+            } else
+              None
+          } catch {
+            case _: IllegalArgumentException => None
+          }
         }
+
+        val mandatoryInputsDefinedAndValid = parseDate(startDate).isDefined && target.isDefined && ((ely.isDefined && ely.get > 0L && ely.get <= 14L) || (roadNumber.isDefined && roadNumber.get > 0L && roadNumber.get <= 99999L))
+        val optionalRoadPartInputsValid = (minRoadPartNumber, maxRoadPartNumber) match {
+          case (Some(minPart), Some(maxPart)) => minPart >= 1 && minPart <= 999 && maxPart >= 1 && maxPart <= 999 && minPart <= maxPart
+          case (Some(minPart), None) => minPart >= 1 && minPart <= 999
+          case (None, Some(maxPart)) => maxPart >= 1 && maxPart <= 999
+          case (None, None) => true
+        }
+
+        mandatoryInputsDefinedAndValid && optionalRoadPartInputsValid
       }
 
-      val mandatoryInputsDefinedAndValid = parseDate(startDate).isDefined && target.isDefined && ((ely.isDefined && ely.get > 0L && ely.get <= 14L) || (roadNumber.isDefined && roadNumber.get > 0L && roadNumber.get <= 99999L))
-      val optionalRoadPartInputsValid = (minRoadPartNumber,maxRoadPartNumber) match {
-        case (Some(minPart),Some(maxPart)) => minPart >= 1 && minPart <= 999 && maxPart >= 1 && maxPart <= 999 && minPart <= maxPart
-        case (Some(minPart), None) => minPart >= 1 && minPart <= 999
-        case (None, Some(maxPart)) => maxPart >= 1 && maxPart <= 999
-        case (None,None) => true
-      }
+      val startDate = params.get("startDate")
+      val target = params.get("target")
+      val ely = params.get("ely").map(_.toLong)
+      val roadNumber = params.get("roadNumber").map(_.toLong)
+      val minRoadPartNumber = params.get("minRoadPartNumber").map(_.toLong)
+      val maxRoadPartNumber = params.get("maxRoadPartNumber").map(_.toLong)
 
-      mandatoryInputsDefinedAndValid && optionalRoadPartInputsValid
-    }
+      try {
+        if (validateInputs(startDate, target, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)) {
+          target match {
+            case Some("Roads") =>
+              val roadsForRoadAddressBrowser = roadAddressService.getRoadsForRoadAddressBrowser(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
+              Map("success" -> true, "roads" -> roadsForRoadAddressBrowser.map(roadAddressBrowserRoadsToApi))
+            case Some("Nodes") =>
+              val nodesForRoadAddressBrowser = nodesAndJunctionsService.getNodesForRoadAddressBrowser(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
+              Map("success" -> true, "nodes" -> nodesForRoadAddressBrowser.map(roadAddressBrowserNodesToApi))
+            case Some("Junctions") =>
+              val junctionsForRoadAddressBrowser = nodesAndJunctionsService.getJunctionsForRoadAddressBrowser(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
+              Map("success" -> true, "junctions" -> junctionsForRoadAddressBrowser.map(roadAddressBrowserJunctionsToApi))
+            case Some("RoadNames") =>
+              val roadNamesForRoadAddressBrowser = roadNameService.getRoadNamesForRoadAddressBrowser(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
+              Map("success" -> true, "roadNames" -> roadNamesForRoadAddressBrowser.map(roadAddressBrowserRoadNamesToApi))
+            case _ => Map("success" -> false, "error" -> "Tieosoitteiden haku epäonnistui, haun kohdearvo puuttuu tai on väärin syötetty")
+          }
+        } else
+          Map("success" -> false, "error" -> "Tieosotteiden haku epäonnistui, tarkista syöttämäsi tiedot")
 
-    val startDate = params.get("startDate")
-    val target = params.get("target")
-    val ely = params.get("ely").map(_.toLong)
-    val roadNumber = params.get("roadNumber").map(_.toLong)
-    val minRoadPartNumber = params.get("minRoadPartNumber").map(_.toLong)
-    val maxRoadPartNumber = params.get("maxRoadPartNumber").map(_.toLong)
-
-    try {
-      if (validateInputs(startDate, target, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)) {
-        target match {
-          case Some("Roads") =>
-            val roadsForRoadAddressBrowser = roadAddressService.getRoadsForRoadAddressBrowser(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
-            Map("success" -> true, "roads" -> roadsForRoadAddressBrowser.map(roadAddressBrowserRoadsToApi))
-          case Some("Nodes") =>
-            val nodesForRoadAddressBrowser = nodesAndJunctionsService.getNodesForRoadAddressBrowser(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
-            Map("success" -> true, "nodes" -> nodesForRoadAddressBrowser.map(roadAddressBrowserNodesToApi))
-          case Some("Junctions") =>
-            val junctionsForRoadAddressBrowser = nodesAndJunctionsService.getJunctionsForRoadAddressBrowser(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
-            Map("success" -> true, "junctions" -> junctionsForRoadAddressBrowser.map(roadAddressBrowserJunctionsToApi))
-          case Some("RoadNames") =>
-            val roadNamesForRoadAddressBrowser = roadNameService.getRoadNamesForRoadAddressBrowser(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
-            Map("success" -> true, "roadNames" -> roadNamesForRoadAddressBrowser.map(roadAddressBrowserRoadNamesToApi))
-          case _ => Map("success" -> false, "error" -> "Tieosoitteiden haku epäonnistui, haun kohdearvo puuttuu tai on väärin syötetty")
+      } catch {
+        case e: Throwable => {
+          logger.error(s"Error fetching data for road address browser ${e}")
+          Map("success" -> false, "error" -> "Tieosoitteiden haku epäonnistui, ota yhteys Viite tukeen")
         }
-      } else
-        Map("success" -> false, "error" -> "Tieosotteiden haku epäonnistui, tarkista syöttämäsi tiedot")
-
-    } catch {
-      case e: Throwable => {
-        logger.error(s"Error fetching data for road address browser ${e}")
-        Map("success" -> false, "error" -> "Tieosoitteiden haku epäonnistui, ota yhteys Viite tukeen")
       }
     }
   }
