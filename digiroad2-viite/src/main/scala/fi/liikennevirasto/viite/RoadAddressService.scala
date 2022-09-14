@@ -776,7 +776,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
       getRoadAddressLinks(boundingBoxResult)
     } catch {
       case e: Throwable => {
-        logger.info(s"$e ")
+        logger.error(s"$e ")
         Seq[RoadAddressLink]()
       }
     }

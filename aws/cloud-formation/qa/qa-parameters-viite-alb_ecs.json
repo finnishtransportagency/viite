@@ -37,7 +37,7 @@
   },
   {
     "ParameterKey": "kgvEndPoint",
-    "ParameterValue": "https://api.vaylapilvi.fi/paikkatiedot/ogc/features/collections/"
+    "ParameterValue": "https://api.vaylapilvi.fi/paikkatiedot/ogc/features/collections"
   }
 ]
 

@@ -11,6 +11,7 @@ import fi.liikennevirasto.digiroad2.util.{LogUtils, Parallel, ViiteProperties}
 import org.apache.http.HttpStatus
 import org.apache.http.client.config.{CookieSpecs, RequestConfig}
 import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet, HttpRequestBase}
+import org.apache.http.client.ClientProtocolException
 import org.apache.http.impl.client.HttpClients
 import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, StreamInput}
@@ -359,6 +360,10 @@ trait KgvOperation extends LinkOperationsAbstract{
         }
       }
       catch {
+        case e: ClientProtocolException => {
+          e.printStackTrace()
+          Left(LinkOperationError(e.toString + s"\nURL: $url", ""))
+        }
         case e: Exception => Left(LinkOperationError(e.toString, ""))
       }
       finally {
