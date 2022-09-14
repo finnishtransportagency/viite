@@ -114,7 +114,7 @@ Resources:
               Value: !Sub '${ApiS3BucketName}'
             - Name: apiS3ObjectTTLSeconds
               Value: !Sub '${ApiS3ObjectTTLSeconds}'
-            - Name: kgvEndPoint
+            - Name: kgvEndpoint
               Value: !Ref kgvEndPoint
           Secrets:
             - Name: bonecp.password
