@@ -1,24 +1,22 @@
 package fi.liikennevirasto.digiroad2.service
 
-import java.io.{File, FilenameFilter, IOException}
 import java.util.concurrent.TimeUnit
 
-import fi.liikennevirasto.digiroad2.GeometryUtils
-import fi.liikennevirasto.digiroad2.asset.Asset._
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
-import fi.liikennevirasto.digiroad2.dao.ComplementaryFilterDAO
+import fi.liikennevirasto.digiroad2.dao.ComplementaryLinkFilterDAO
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.util.{VVHSerializer, ViiteProperties}
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
+import fi.liikennevirasto.digiroad2.util.VVHSerializer
 import org.joda.time.DateTime
 import org.slf4j.{Logger, LoggerFactory}
 import slick.jdbc.{GetResult, PositionedResult}
 
+import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
 
 case class IncompleteLink(linkId: Long, municipalityCode: Int, administrativeClass: AdministrativeClass)
 case class RoadLinkChangeSet(adjustedRoadLinks: Seq[RoadLink], incompleteLinks: Seq[IncompleteLink])
@@ -36,7 +34,7 @@ case class ChangedRoadLinkFetched(link: RoadLink, value: String, createdAt: Opti
 class RoadLinkService(val vvhClient: KgvRoadLink, val eventbus: DigiroadEventBus, val vvhSerializer: VVHSerializer, val useFrozenLinkInterface: Boolean) {
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
-  val complementaryFilterDAO = new ComplementaryFilterDAO
+  val complementaryFilterDAO = new ComplementaryLinkFilterDAO
 
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
