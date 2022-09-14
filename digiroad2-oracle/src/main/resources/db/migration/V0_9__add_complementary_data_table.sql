@@ -1,4 +1,5 @@
 -- Add complementary data table to local data base - VIITE-2845.
+-- Structure resemble RoadLink table from KGV (Keskilinjavarasto).
 CREATE TABLE public.complementary_link_table (
                                            id varchar NULL,
                                            datasource int4 NULL,

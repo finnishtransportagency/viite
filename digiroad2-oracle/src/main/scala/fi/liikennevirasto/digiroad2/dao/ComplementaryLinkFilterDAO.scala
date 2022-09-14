@@ -16,7 +16,7 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class ComplementaryFilterDAO {
+class ComplementaryLinkFilterDAO {
 
   def fetchAll(): Seq[String] = {
     val sql = s"""SELECT * FROM COMPLEMENTARY_FILTER"""
