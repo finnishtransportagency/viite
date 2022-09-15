@@ -89,7 +89,8 @@ module.exports = {
         "geometrycalculator": "writable",
         "validitydirections": "writable",
         "interact": "writable",
-        "events": "writable"
+        "events": "writable",
+        "XLSX": "readonly"
     },
     "parserOptions": {
         "ecmaVersion": 2019,
