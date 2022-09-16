@@ -84,7 +84,9 @@ object ApiUtils {
   def newQuery[T](workId: String, queryId: String, path: String, f: Params => T, params: Params, responseType: String, estimatedMaxSize: Int): Any = {
     val ret = Future { f(params) }
     try {
+      logger.info(s"API LOG $queryId: Beginning to fetch items at ${DateTime.now}")
       val response = Await.result(ret, Duration.apply(MAX_WAIT_TIME_SECONDS, TimeUnit.SECONDS))
+      logger.info(s"API LOG $queryId: Finished fetching items at ${DateTime.now}")
       response match {
         case _: ActionResult => response
         case _ =>
@@ -109,9 +111,12 @@ object ApiUtils {
   }
 
   def responseSizeUnderEstimatedMaxSize(content: Any, estimatedMaxSize: Int): Boolean = {
+    logger.info(s"API LOG comparing the size of the response at ${DateTime.now}")
     content match {
       case (response: Seq[_]) =>
-        response.asInstanceOf[Seq[Map[String, Any]]].size <= estimatedMaxSize
+        val bool = response.asInstanceOf[Seq[Map[String, Any]]].size <= estimatedMaxSize
+        logger.info(s"API LOG finished comparing size of the response at ${DateTime.now}")
+        bool
       case (response: Set[_]) =>
         response.asInstanceOf[Set[Map[String, Any]]].size <= estimatedMaxSize
       case (response: Map[_, _]) =>
