@@ -26,7 +26,7 @@ object ApiUtils {
     else 300
 
   val MAX_WAIT_TIME_SECONDS: Int = 20
-  val MAX_RESPONSE_SIZE_BYTES: Long = 1024 * 1024 * 10 // 10Mb in bytes
+  val MAX_RESPONSE_SIZE_BYTES: Long = 1024 * 1024 * 10 // 10MiB in bytes
   val MAX_RETRIES: Int = 540 // 3 hours / 20sec per retry
 
   /**
@@ -34,13 +34,13 @@ object ApiUtils {
     * API Gateway timeouts if response is not received in 30 sec
     *  -> Return redirect to same url with retry param if query is not finished within maxWaitTime
     *  -> Save response to S3 when its ready (access with pre-signed url)
-    * API Gateway maximum response body size is 10 Mb
+    * API Gateway maximum response body size is 10 MiB
+    *  -> Estimate the maximum amount of elements in the response body that fit the 10MiB limit (estimatedMaxSize)
     *  -> Save bigger responses to S3 (access with pre-signed url)
     */
   def avoidRestrictions[T](requestId: String, request: HttpServletRequest, params: Params,
-                           responseType: String = "json")(f: Params => T): Any = {
+                           responseType: String = "json", estimatedMaxSize: Int)(f: Params => T): Any = {
     if (!ViiteProperties.awsConnectionEnabled) return f(params)
-
     val queryString = if (request.getQueryString != null) s"?${request.getQueryString}" else ""
     val path = "/viite" + request.getRequestURI + queryString
     val workId = getWorkId(requestId, params, responseType) // Used to name s3 objects
@@ -60,7 +60,8 @@ object ApiUtils {
         redirectToUrl(preSignedUrl, queryId)
 
       case (None, false) =>
-        newQuery(workId, queryId, path, f, params, responseType)
+        logger.info(s"API LOG $queryId: Creating a new request at ${DateTime.now}")
+        newQuery(workId, queryId, path, f, params, responseType, estimatedMaxSize)
 
       case (Some(retry: String), false) =>
         val currentRetry = retry.toInt
@@ -80,21 +81,19 @@ object ApiUtils {
     s"${identifiers.mkString("_")}.$contentType"
   }
 
-  def newQuery[T](workId: String, queryId: String, path: String, f: Params => T, params: Params, responseType: String): Any = {
+  def newQuery[T](workId: String, queryId: String, path: String, f: Params => T, params: Params, responseType: String, estimatedMaxSize: Int): Any = {
     val ret = Future { f(params) }
     try {
-      val response = Await.result(ret, Duration.apply(15L, TimeUnit.SECONDS))
+      val response = Await.result(ret, Duration.apply(MAX_WAIT_TIME_SECONDS, TimeUnit.SECONDS))
       response match {
         case _: ActionResult => response
         case _ =>
-          val responseString = formatResponse(response, responseType)
-          val responseSize = responseString.getBytes("utf-8").length
-          if (responseSize < MAX_RESPONSE_SIZE_BYTES) {
+          if (responseSizeUnderEstimatedMaxSize(response, estimatedMaxSize)) {
             logger.info(s"API LOG $queryId: Completed the query at ${DateTime.now} without any redirects.")
             response
           }
           else {
-            Future { s3Service.saveFileToS3(s3Bucket, workId, responseString, responseType) }
+            Future { s3Service.saveFileToS3(s3Bucket, workId, formatResponse(response, responseType), responseType) }
             redirectToUrl(path, queryId, Some(1))
           }
       }
@@ -106,6 +105,19 @@ object ApiUtils {
           s3Service.saveFileToS3(s3Bucket, workId, responseBody, responseType)
         }
         redirectToUrl(path, queryId, Some(1))
+    }
+  }
+
+  def responseSizeUnderEstimatedMaxSize(content: Any, estimatedMaxSize: Int): Boolean = {
+    content match {
+      case (response: Seq[_]) =>
+        response.asInstanceOf[Seq[Map[String, Any]]].size <= estimatedMaxSize
+      case (response: Set[_]) =>
+        response.asInstanceOf[Set[Map[String, Any]]].size <= estimatedMaxSize
+      case (response: Map[_, _]) =>
+        response.asInstanceOf[Map[String, Any]].size <= estimatedMaxSize
+      case _ =>
+        throw new NotImplementedError("Unrecognized response format")
     }
   }
 
