@@ -43,8 +43,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
 
   get("/road_address", operation(getRoadAddressesByMunicipality)) {
     contentType = formats("json")
-    //estimatedMaxSize set at 12500 as a generous estimate, should only be ~7MB
-    ApiUtils.avoidRestrictions(apiId, request, params, estimatedMaxSize=12500) { params =>
+    ApiUtils.avoidRestrictions(apiId, request, params) { params =>
       params.get("municipality").map { municipality =>
         try {
           val municipalityCode = municipality.toInt
