@@ -7,6 +7,7 @@ import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.Filter.{combineFiltersWithAnd, withMunicipalityFilter, withRoadNumbersFilter}
+import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.util.{LogUtils, Parallel, ViiteProperties}
 import org.apache.http.HttpStatus
 import org.apache.http.client.config.{CookieSpecs, RequestConfig}
@@ -57,8 +58,8 @@ object FilterOgc extends Filter {
     else ""
   }
 
-  override def withMmlIdFilter(mmlIds: Set[Long]): String = {
-        withFilter("MTKID", mmlIds)
+  override def withSourceIdFilter(sourceIds: Set[Long]): String = {
+        withFilter("sourceid", sourceIds)
   }
 
   override def withRoadNumbersFilter(roadNumbers: Seq[(Int, Int)], includeAllPublicRoads: Boolean, filter: String = ""): String = {
@@ -191,6 +192,7 @@ object Extractor {
         "roadnumber",
         "roadpartnumber",
         "municipalitycode",
+        "sourceid",
         "kmtkid",
         "roadclass",
         "xyaccuracy",
@@ -236,7 +238,7 @@ object Extractor {
     lastEditedDate.orElse(validFromDate).map(modifiedTime => new DateTime(modifiedTime))
   }
 
-  def extractFeature(feature: Feature, path: List[List[Double]], linkGeomSource: LinkGeomSource): RoadLinkFetched = {
+  def extractFeature(feature: Feature, path: List[List[Double]], linkGeomSource: LinkGeomSource): RoadLink = {
     val attributes = feature.properties
 
     val validFromDate = Option(BigInteger.valueOf(new DateTime(attributes("sourcemodificationtime").asInstanceOf[String]).getMillis))
@@ -250,21 +252,31 @@ object Extractor {
     val linkGeometryWKTForApi = Map("geometryWKT" -> (s"LINESTRING ZM (${path.map(point => anyToDouble(point(0)).get + " " + anyToDouble(point(1)).get + " " + anyToDouble(point(2)).get + " " + anyToDouble(point(3)).get).mkString(", ")})"))
 
     val linkId = attributes("id").asInstanceOf[String]
-    val municipalityCode = Try(attributes.getOrElse("municipalitycode", attributes("MUNICIPALITYCODE")).asInstanceOf[String].toInt).getOrElse(throw new NoSuchElementException(s"Missing mandatory municipalityCode. Check data for linkId: $linkId from $linkGeomSource."))
+//    val municipalityCode = Try(attributes.getOrElse("municipalitycode", attributes("MUNICIPALITYCODE")).asInstanceOf[String].toInt).getOrElse(throw new NoSuchElementException(s"Missing mandatory municipalityCode. Check data for linkId: $linkId from $linkGeomSource."))
 
     val geometryLength: Double = anyToDouble(attributes("horizontallength")).getOrElse(0.0)
 
     val roadClassCode = attributes("roadclass").asInstanceOf[String].toInt
 
-    val roadClass = featureClassCodeToFeatureClass.getOrElse(roadClassCode, FeatureClass.AllOthers)
+//    val roadClass = featureClassCodeToFeatureClass.getOrElse(roadClassCode, FeatureClass.AllOthers)
 
-    RoadLinkFetched(linkId, municipalityCode,
-      linkGeometry,
-      extractAdministrativeClass(attributes),
-      extractTrafficDirection(attributes), roadClass, extractModifiedAt(attributes),
-      extractAttributes(attributes,validFromDate.get,lastEditedDate.get,startTime.get)
-      ++ linkGeometryForApi ++ linkGeometryWKTForApi
-      , extractLifecycleStatus(attributes), linkGeomSource, geometryLength)
+    RoadLink(linkId, linkGeometry, geometryLength, extractAdministrativeClass(attributes),
+      -1 // FunctionalClass pois
+    , extractTrafficDirection(attributes), //TrafficDirection pois?
+      UnknownLinkType, // Linktype pois
+      extractModifiedAt(attributes).map(_.toString),
+      None // ModifiedBy pois
+      , extractAttributes(attributes,validFromDate.get,lastEditedDate.get,startTime.get)
+      ++ linkGeometryForApi ++ linkGeometryWKTForApi,
+      extractLifecycleStatus(attributes), linkGeomSource)
+
+//    RoadLinkFetched(linkId, municipalityCode,
+//      linkGeometry,
+//      extractAdministrativeClass(attributes),
+//      extractTrafficDirection(attributes), roadClass, extractModifiedAt(attributes),
+//      extractAttributes(attributes,validFromDate.get,lastEditedDate.get,startTime.get)
+//      ++ linkGeometryForApi ++ linkGeometryWKTForApi
+//      , extractLifecycleStatus(attributes), linkGeomSource, geometryLength)
   }
 }
 

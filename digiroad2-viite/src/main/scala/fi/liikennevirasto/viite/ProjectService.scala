@@ -6,7 +6,6 @@ import java.util.Date
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, TrafficDirection, _}
 import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
-import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkFetched
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
@@ -210,7 +209,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     parsePreFillData(roadLinkService.getRoadLinks(Set(linkId)), projectId = projectId)
   }
 
-  def parsePreFillData(vvhRoadLinks: Seq[RoadLinkFetched], projectId: Long = -1000): Either[String, PreFillInfo] = {
+  def parsePreFillData(vvhRoadLinks: Seq[RoadLink], projectId: Long = -1000): Either[String, PreFillInfo] = {
     withDynSession {
       if (vvhRoadLinks.isEmpty) {
         Left("Link could not be found in VVH")
@@ -1096,9 +1095,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     ProjectBoundingBoxResult(
       Future(withDynSession(projectLinkDAO.fetchProjectLinks(projectId))),
       Future(roadLinkService.getRoadLinksFromVVH(boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads)),
-      Future(
         if (everything) roadLinkService.getComplementaryRoadLinksFromVVH(boundingRectangle, municipalities)
-        else Seq())
+        else Future(Seq())
     )
   }
 

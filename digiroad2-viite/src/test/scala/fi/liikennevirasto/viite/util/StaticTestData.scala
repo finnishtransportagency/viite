@@ -2,14 +2,14 @@ package fi.liikennevirasto.viite.util
 
 import java.io.{File, FileReader}
 
+import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike, ValidityPeriodDayOfWeek}
 import fi.liikennevirasto.digiroad2.util.VVHSerializer
-import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.client.vvh._
+import org.json4s.{CustomSerializer, DefaultFormats, Formats}
 import org.json4s.JsonAST.{JInt, JString}
 import org.json4s.jackson.Serialization.read
-import org.json4s.{CustomSerializer, DefaultFormats, Formats}
 
 import scala.util.parsing.json.JSON
 
@@ -36,8 +36,8 @@ object StaticTestData {
       template match {
         case x: RoadLink => val rl = x.asInstanceOf[RoadLink]
           geomMap.map{ case (linkId, geom) => rl.copy(linkId = linkId, geometry = geom)}
-        case x: RoadLinkFetched => val rl = x.asInstanceOf[RoadLinkFetched]
-          geomMap.map{ case (linkId, geom) => rl.copy(linkId = linkId, geometry = geom)}
+//        case x: RoadLink => val rl = x.asInstanceOf[RoadLink]
+//          geomMap.map{ case (linkId, geom) => rl.copy(linkId = linkId, geometry = geom)}
       }
     links.asInstanceOf[Seq[T]]
   }

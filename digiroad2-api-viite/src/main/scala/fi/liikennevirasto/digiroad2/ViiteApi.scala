@@ -2,16 +2,14 @@ package fi.liikennevirasto.digiroad2
 
 import java.text.SimpleDateFormat
 
-import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.JWTAuthentication
 import fi.liikennevirasto.digiroad2.client.vvh.KgvRoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
-import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReservedException, Track}
-import fi.liikennevirasto.viite.AddressConsistencyValidator.AddressErrorDetails
+import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model._
@@ -19,13 +17,13 @@ import fi.liikennevirasto.viite.util.DigiroadSerializers
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.json4s._
+import org.scalatra.{NotFound, _}
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.swagger.{Swagger, _}
-import org.scalatra.{NotFound, _}
 import org.slf4j.{Logger, LoggerFactory}
 
-import scala.util.parsing.json.JSON._
 import scala.util.{Left, Right}
+import scala.util.parsing.json.JSON._
 
 /**
   * Created by venholat on 25.8.2016.
@@ -287,7 +285,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
   get("/roadlinks/mtkid/:mtkId", operation(getRoadLinkMiddlePointByMtkId)) {
     val mtkId = params("mtkId").toLong
     time(logger, s"GET request for /roadlinks/mtkid/$mtkId") {
-      roadLinkService.getRoadLinkMiddlePointByMtkId(mtkId)
+      roadLinkService.getRoadLinkMiddlePointBySourceId(mtkId)
     }
   }
 
@@ -1264,7 +1262,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
       "roadwayNumber" -> roadAddressLink.roadwayNumber,
       "linearLocationId" -> roadAddressLink.linearLocationId,
       "linkId" -> roadAddressLink.linkId,
-      "mmlId" -> roadAddressLink.attributes.get("MTKID"),
+      "mmlId" -> roadAddressLink.attributes.get("sourceid"),
       "points" -> roadAddressLink.geometry,
       "calibrationCode" -> CalibrationCode.getFromAddressLinkLike(roadAddressLink).value,
       "calibrationPoints" -> Seq(calibrationPointToApi(roadAddressLink.geometry, roadAddressLink.startCalibrationPoint),
@@ -1274,10 +1272,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
       "administrativeClassId" -> roadAddressLink.administrativeClass.value,
       "modifiedAt" -> roadAddressLink.modifiedAt,
       "modifiedBy" -> roadAddressLink.modifiedBy,
-      "municipalityCode" -> roadAddressLink.attributes.get("MUNICIPALITYCODE"),
+      "municipalityCode" -> roadAddressLink.attributes.get("municipalitycode"),
       "municipalityName" -> roadAddressLink.municipalityName,
-      "roadNameFi" -> roadAddressLink.attributes.get("ROADNAME_FI"),
-      "roadNameSe" -> roadAddressLink.attributes.get("ROADNAME_SE"),
+      "roadNameFi" -> roadAddressLink.attributes.get("roadnamefin"),
+      "roadNameSe" -> roadAddressLink.attributes.get("roadnameswe"),
       "roadNameSm" -> roadAddressLink.attributes.get("ROADNAME_SM"),
       "roadNumber" -> roadAddressLink.roadNumber,
       "roadPartNumber" -> roadAddressLink.roadPartNumber,

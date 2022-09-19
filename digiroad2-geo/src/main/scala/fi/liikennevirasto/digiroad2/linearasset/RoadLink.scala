@@ -17,6 +17,7 @@ trait RoadLinkLike extends PolyLine {
   def attributes:          Map[String, Any]
   def lifecycleStatus:     LifecycleStatus
   def vvhTimeStamp:        Long
+  def modifiedAt:          Option[String]
 }
 
 case class RoadLink(linkId:              String,
@@ -26,7 +27,7 @@ case class RoadLink(linkId:              String,
                     functionalClass:     Int,
                     trafficDirection:    TrafficDirection,
                     linkType:            LinkType,
-                    modifiedAt:          Option[String],
+                    modifiedAt:          Option[String] = None,
                     modifiedBy:          Option[String],
                     attributes:          Map[String, Any] = Map(),
                     lifecycleStatus:     LifecycleStatus  = LifecycleStatus.InUse,
