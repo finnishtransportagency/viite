@@ -39,7 +39,7 @@ object ApiUtils {
     *  -> Save bigger responses to S3 (access with pre-signed url)
     */
   def avoidRestrictions[T](requestId: String, request: HttpServletRequest, params: Params,
-                           responseType: String = "json", estimatedMaxSize: Int)(f: Params => T): Any = {
+                           responseType: String = "json")(f: Params => T): Any = {
     if (!ViiteProperties.awsConnectionEnabled) return f(params)
     val queryString = if (request.getQueryString != null) s"?${request.getQueryString}" else ""
     val path = "/viite" + request.getRequestURI + queryString
@@ -60,8 +60,7 @@ object ApiUtils {
         redirectToUrl(preSignedUrl, queryId)
 
       case (None, false) =>
-        logger.info(s"API LOG $queryId: Creating a new request at ${DateTime.now}")
-        newQuery(workId, queryId, path, f, params, responseType, estimatedMaxSize)
+        newQuery(workId, queryId, path, f, params, responseType)
 
       case (Some(retry: String), false) =>
         val currentRetry = retry.toInt
@@ -81,49 +80,14 @@ object ApiUtils {
     s"${identifiers.mkString("_")}.$contentType"
   }
 
-  def newQuery[T](workId: String, queryId: String, path: String, f: Params => T, params: Params, responseType: String, estimatedMaxSize: Int): Any = {
+  def newQuery[T](workId: String, queryId: String, path: String, f: Params => T, params: Params, responseType: String): Any = {
     val ret = Future { f(params) }
-    try {
-      logger.info(s"API LOG $queryId: Beginning to fetch items at ${DateTime.now}")
-      val response = Await.result(ret, Duration.apply(MAX_WAIT_TIME_SECONDS, TimeUnit.SECONDS))
-      logger.info(s"API LOG $queryId: Finished fetching items at ${DateTime.now}")
-      response match {
-        case _: ActionResult => response
-        case _ =>
-          if (responseSizeUnderEstimatedMaxSize(response, estimatedMaxSize)) {
-            logger.info(s"API LOG $queryId: Completed the query at ${DateTime.now} without any redirects.")
-            response
-          }
-          else {
-            Future { s3Service.saveFileToS3(s3Bucket, workId, formatResponse(response, responseType), responseType) }
-            redirectToUrl(path, queryId, Some(1))
-          }
-      }
-    } catch {
-      case _: TimeoutException =>
-        Future { // Complete query and save results to s3 in future
-          val finished = Await.result(ret, Duration.Inf)
-          val responseBody = formatResponse(finished,  responseType)
-          s3Service.saveFileToS3(s3Bucket, workId, responseBody, responseType)
-        }
-        redirectToUrl(path, queryId, Some(1))
+    Future { // Complete query and save results to s3 in future
+      val finished = Await.result(ret, Duration.Inf)
+      val responseBody = formatResponse(finished,  responseType)
+      s3Service.saveFileToS3(s3Bucket, workId, responseBody, responseType)
     }
-  }
-
-  def responseSizeUnderEstimatedMaxSize(content: Any, estimatedMaxSize: Int): Boolean = {
-    logger.info(s"API LOG comparing the size of the response at ${DateTime.now}")
-    content match {
-      case (response: Seq[_]) =>
-        val bool = response.asInstanceOf[Seq[Map[String, Any]]].size <= estimatedMaxSize
-        logger.info(s"API LOG finished comparing size of the response at ${DateTime.now}")
-        bool
-      case (response: Set[_]) =>
-        response.asInstanceOf[Set[Map[String, Any]]].size <= estimatedMaxSize
-      case (response: Map[_, _]) =>
-        response.asInstanceOf[Map[String, Any]].size <= estimatedMaxSize
-      case _ =>
-        throw new NotImplementedError("Unrecognized response format")
-    }
+    redirectToUrl(path, queryId, Some(1))
   }
 
   def formatResponse(content: Any, responseType: String): String = {
