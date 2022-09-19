@@ -1,10 +1,10 @@
 package fi.liikennevirasto.digiroad2.dao
 
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.{Extractor, FeatureClass, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.client.vvh.Filter.withRoadNumbersFilter
+import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import org.joda.time.DateTime
@@ -16,14 +16,14 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class ComplementaryLinkFilterDAO {
-
-  def fetchAll(): Seq[String] = {
-    val sql = s"""SELECT * FROM COMPLEMENTARY_FILTER"""
-    Q.queryNA[String](sql).list
-  }
-
-}
+//class ComplementaryLinkFilterDAO {
+//
+//  def fetchAll(): Seq[String] = {
+//    val sql = s"""SELECT * FROM COMPLEMENTARY_FILTER"""
+//    Q.queryNA[String](sql).list
+//  }
+//
+//}
 
 class ComplementaryLinkDAO {
   protected def logger = LoggerFactory.getLogger(getClass)
@@ -52,8 +52,8 @@ class ComplementaryLinkDAO {
     compareDateMillisOptions(lastEditedDate, geometryEditedDate).orElse(createdDate).map(modifiedTime => new DateTime(modifiedTime))
   }
 
-  private implicit val getRoadlink: GetResult[RoadLinkFetched] = new GetResult[RoadLinkFetched] {
-    def apply(r: PositionedResult): RoadLinkFetched = {
+  private implicit val getRoadlink: GetResult[RoadLink] = new GetResult[RoadLink] {
+    def apply(r: PositionedResult): RoadLink = {
 
       var attributes = Map[String, Any]()
       val linkId = r.nextString()
@@ -62,10 +62,11 @@ class ComplementaryLinkDAO {
       val municipalityCode = r.nextInt()
       attributes += "municipalitycode" -> municipalityCode
       attributes += "featureclass " -> r.nextIntOption() // vvh MTKGROUP
-      val featureClass = r.nextIntOption() match { // vvh MTKCLASS
-        case Some(roadclass) => Extractor.featureClassCodeToFeatureClass(roadclass)
-        case None            => FeatureClass.AllOthers
-      }
+      r.nextIntOption() // vvh MTKCLASS
+      //      val featureClass = r.nextIntOption() match { // vvh MTKCLASS
+//        case Some(roadclass) => Extractor.featureClassCodeToFeatureClass(roadclass)
+//        case None            => FeatureClass.AllOthers
+//      }
       attributes ++= Map(
         "roadnamefin"    -> r.nextStringOption(),
         "roadnameswe"    -> r.nextStringOption(),
@@ -93,8 +94,8 @@ class ComplementaryLinkDAO {
       val modifiedAt = extractModifiedAt(Map(
         "starttime"              -> r.nextDateOption.map(d => formatter.parseDateTime(d.toString)),
         "versionstarttime"       -> r.nextDateOption.map(d => formatter.parseDateTime(d.toString)),
-        "sourcemodificationtime" -> r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
-      ))
+        "sourcemodificationtime" -> r.nextDateOption.map(d => formatter.parseDateTime(d.toString)
+      ))).map(_.toString())
 
       val geom = PGgeometry.geomFromString(r.nextString())
       var geometry: Seq[Point] = Seq()
@@ -105,78 +106,88 @@ class ComplementaryLinkDAO {
 
       val linkSource = LinkGeomSource.ComplementaryLinkInterface
 
-      RoadLinkFetched(linkId, municipalityCode, geometry, administrativeClass,
-         trafficDirection, featureClass , modifiedAt, attributes,
-        lifecycleStatus, linkSource, length)
+//      RoadLink(linkId, municipalityCode, geometry, administrativeClass,
+//         trafficDirection, featureClass , modifiedAt, attributes,
+//        lifecycleStatus, linkSource, length)
+//
+      RoadLink(linkId, geometry, length, administrativeClass,
+        -1 // FunctionalClass pois
+        , TrafficDirection.UnknownDirection, //TrafficDirection pois?
+        UnknownLinkType, // RoadLink pois
+        modifiedAt,
+        None
+        , attributes,
+        lifecycleStatus, linkSource)
+
     }
   }
 
-  def fetchByLinkId(linkId: String): Option[RoadLinkFetched] = {
+  def fetchByLinkId(linkId: String): Option[RoadLink] = {
     fetchByLinkIds(Set(linkId)).headOption
   }
 
-  def fetchByLinkIds(linkIds: Set[String]): List[RoadLinkFetched] = {
+  def fetchByLinkIds(linkIds: Set[String]): List[RoadLink] = {
     time(logger, "Fetch complementary data by linkIds") {
       val sql = s"""SELECT * FROM complementary_link_table WHERE id IN (${linkIds.map(lid => "'" + lid + "'").mkString(", ")})"""
-      withDynTransaction(Q.queryNA[RoadLinkFetched](sql).list)
+      withDynTransaction(Q.queryNA[RoadLink](sql).list)
     }
   }
 
-  def fetchByLinkIdsF(linkIds: Set[String]): Future[Seq[RoadLinkFetched]] = {
+  def fetchByLinkIdsF(linkIds: Set[String]): Future[Seq[RoadLink]] = {
     Future(fetchByLinkIds(linkIds))
   }
 
   /**
      * Returns RoadLinks by municipality.
      */
-  def queryByMunicipality(municipality: Int, filter: Option[String] = None): Seq[RoadLinkFetched] = {
-    val filterString = filter.getOrElse("")
+  def queryByMunicipality(municipality: Int, filter: Option[String] = None): Seq[RoadLink] = {
+    val filterString = if (filter.isDefined) " AND" + filter.get.replaceFirst("(?i)AND", "") else ""
     time(logger, s"Fetch complementary data by municipality (and ${filter})") {
-      val sql = s"""SELECT * FROM complementary_link_table WHERE municipalitycode = $municipality AND """ + filterString
-      withDynTransaction(Q.queryNA[RoadLinkFetched](sql).list)
+      val sql = s"""SELECT * FROM complementary_link_table WHERE municipalitycode = $municipality""" + filterString
+      withDynTransaction(Q.queryNA[RoadLink](sql).list)
     }
   }
 
-  def fetchComplementaryByMunicipalitiesF(municipality: Int): Future[Seq[RoadLinkFetched]] =
+  def fetchComplementaryByMunicipalitiesF(municipality: Int): Future[Seq[RoadLink]] =
     Future(queryByMunicipality(municipality))
 
-  def queryByRoadNumbersAndMunicipality(municipality: Int, roadNumbers: Seq[(Int, Int)]): Seq[RoadLinkFetched] = {
+  def queryByRoadNumbersAndMunicipality(municipality: Int, roadNumbers: Seq[(Int, Int)]): Seq[RoadLink] = {
     val roadNumberFilters = withRoadNumbersFilter(roadNumbers, includeAllPublicRoads = true)
     time(logger, "Fetch complementary data by road numbers and municipality") {
       val sql = s"""SELECT * FROM complementary_link_table WHERE municipalitycode = $municipality AND """ + roadNumberFilters
-      withDynTransaction(Q.queryNA[RoadLinkFetched](sql).list)
+      withDynTransaction(Q.queryNA[RoadLink](sql).list)
     }
   }
   /**
     * Returns a sequence of RoadLinks. Uses Scala Future for concurrent operations.
     */
-  def fetchByMunicipalityAndRoadNumbersF(municipality: Int, roadNumbers: Seq[(Int, Int)]): Future[Seq[RoadLinkFetched]] = {
+  def fetchByMunicipalityAndRoadNumbersF(municipality: Int, roadNumbers: Seq[(Int, Int)]): Future[Seq[RoadLink]] = {
     Future(queryByRoadNumbersAndMunicipality(municipality, roadNumbers))
   }
 
   /**
     * Returns road links in bounding box area. Municipalities are optional.
     */
-  def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int], filter: Option[String]): Seq[RoadLinkFetched] = {
+  def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int], filter: Option[String]): Seq[RoadLink] = {
     val geometry = s"geometry && ST_MakeEnvelope(${bounds.leftBottom.x},${bounds.leftBottom.y},${bounds.rightTop.x},${bounds.rightTop.y},3067)"
     val municipalityFilter = if (municipalities.nonEmpty) Some(s" AND municipalitycode IN (${municipalities.mkString(",")})") else ""
     time(logger, "Fetch complementary data by road numbers and municipality") {
       val sql = s"SELECT * FROM complementary_link_table WHERE $geometry " + municipalityFilter + filter.getOrElse("")
-      withDynTransaction(Q.queryNA[RoadLinkFetched](sql.trim).list)
+      withDynTransaction(Q.queryNA[RoadLink](sql.trim).list)
     }
   }
   /**
     * Returns road links. Uses Scala Future for concurrent operations.
     */
-  def fetchByBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[RoadLinkFetched]] = {
+  def fetchByBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[RoadLink]] = {
     Future(queryByMunicipalitiesAndBounds(bounds, municipalities, None))
   }
 
-  def fetchWalkwaysByBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[RoadLinkFetched]] = {
+  def fetchWalkwaysByBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[RoadLink]] = {
     Future(queryByMunicipalitiesAndBounds(bounds, municipalities, Some(" AND roadclass = 12314")))
   }
 
-  def fetchByMunicipalityF(municipality: Int): Future[Seq[RoadLinkFetched]] = {
+  def fetchByMunicipalityF(municipality: Int): Future[Seq[RoadLink]] = {
     Future(queryByMunicipality(municipality))
   }
 

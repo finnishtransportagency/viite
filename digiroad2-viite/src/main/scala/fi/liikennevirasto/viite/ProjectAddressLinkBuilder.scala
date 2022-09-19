@@ -1,11 +1,10 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.{GeometryUtils,Point}
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLinkLike}
-import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 
 object ProjectAddressLinkBuilder extends AddressLinkBuilder {
 
@@ -84,7 +83,7 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
     val municipalityName = municipalityNamesMapping.getOrElse(municipalityCode, "")
 
     //TODO: Remove old VVH ROADNAME_FI and ROADNAME_SE when not needed any more.
-    ProjectAddressLink(id, linkId, geom, length, roadLink.administrativeClass, linkType, roadLink.lifecycleStatus, roadLink.linkSource, administrativeClass, Some(roadLink.attributes.getOrElse(FinnishRoadName, roadLink.attributes.getOrElse("ROADNAME_FI", roadLink.attributes.getOrElse(SwedishRoadName, roadLink.attributes.getOrElse("ROADNAME_SE", "none")))).toString), roadName, municipalityCode, municipalityName, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"), roadLink.attributes, roadNumber, roadPartNumber, trackCode, ely, discontinuity.value, startAddrMValue, endAddrMValue, startMValue, endMValue, sideCode, startCalibrationPoint, endCalibrationPoint, anomaly, status, roadwayId, linearLocationId, reversed, connectedLinkId, originalGeometry)
+    ProjectAddressLink(id, linkId, geom, length, roadLink.administrativeClass, linkType, roadLink.lifecycleStatus, roadLink.linkSource, administrativeClass, Some(roadLink.attributes.getOrElse(FinnishRoadName, roadLink.attributes.getOrElse("ROADNAME_FI", roadLink.attributes.getOrElse(SwedishRoadName, roadLink.attributes.getOrElse("ROADNAME_SE", "none")))).toString), roadName, municipalityCode, municipalityName, extractModifiedAt(roadLink.attributes), Some("kgv_modified"), roadLink.attributes, roadNumber, roadPartNumber, trackCode, ely, discontinuity.value, startAddrMValue, endAddrMValue, startMValue, endMValue, sideCode, startCalibrationPoint, endCalibrationPoint, anomaly, status, roadwayId, linearLocationId, reversed, connectedLinkId, originalGeometry)
   }
 
   private def combineGeometries(split1: ProjectLink, split2: ProjectLink): Option[Seq[Point]] = {

@@ -45,7 +45,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   val mockNodesAndJunctionsService: NodesAndJunctionsService = MockitoSugar.mock[NodesAndJunctionsService]
   val mockEventBus: DigiroadEventBus = MockitoSugar.mock[DigiroadEventBus]
   val mockVVHClient: KgvRoadLink = MockitoSugar.mock[KgvRoadLink]
-  val mockVVHRoadLinkClient: KgvRoadLinkClient[RoadLinkFetched] = MockitoSugar.mock[KgvRoadLinkClient[RoadLinkFetched]]
+  val mockVVHRoadLinkClient: KgvRoadLinkClient[RoadLink] = MockitoSugar.mock[KgvRoadLinkClient[RoadLink]]
 //  val mockVVHComplementaryClient: VVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
   val projectValidator = new ProjectValidator
   val projectDAO = new ProjectDAO
@@ -910,13 +910,13 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("Test projectService.parsePreFillData When supplied a empty sequence of VVHRoadLinks Then return a error message.") {
-    projectService.parsePreFillData(Seq.empty[RoadLinkFetched]) should be(Left("Link could not be found in VVH"))
+    projectService.parsePreFillData(Seq.empty[RoadLink]) should be(Left("Link could not be found in VVH"))
   }
 
   test("Test projectService.parsePreFillData When supplied a sequence of one valid RoadLinkFetched Then return the correct pre-fill data for that link.") {
     runWithRollback {
       val attributes1 = Map("ROADNUMBER" -> BigInt(100), "ROADPARTNUMBER" -> BigInt(100))
-      val newRoadLink1 = RoadLinkFetched(1.toString, 2, List(Point(0.0, 0.0), Point(20.0, 0.0)), AdministrativeClass.apply(1), TrafficDirection.BothDirections, FeatureClass.DrivePath, None, attributes1)
+      val newRoadLink1 = RoadLink(1.toString, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20, AdministrativeClass.apply(1), -1, TrafficDirection.BothDirections, UnknownLinkType, None, None, attributes1)
       projectService.parsePreFillData(Seq(newRoadLink1)) should be(Right(PreFillInfo(100, 100, "", RoadNameSource.UnknownSource)))
     }
   }
@@ -925,7 +925,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     runWithRollback {
       sqlu"""INSERT INTO ROAD_NAME VALUES (nextval('ROAD_NAME_SEQ'), 100, 'road name test', TIMESTAMP '2018-03-23 12:26:36.000000', null, TIMESTAMP '2018-03-23 12:26:36.000000', null, 'test user', TIMESTAMP '2018-03-23 12:26:36.000000')""".execute
       val attributes1 = Map("ROADNUMBER" -> BigInt(100), "ROADPARTNUMBER" -> BigInt(100))
-      val newRoadLink1 = RoadLinkFetched(1.toString, 2, List(Point(0.0, 0.0), Point(20.0, 0.0)), AdministrativeClass.apply(1), TrafficDirection.BothDirections, FeatureClass.DrivePath, None, attributes1)
+      val newRoadLink1 = RoadLink(1.toString, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20, AdministrativeClass.apply(1), -1, TrafficDirection.BothDirections, UnknownLinkType, None, None, attributes1)
       projectService.parsePreFillData(Seq(newRoadLink1)) should be(Right(PreFillInfo(100, 100, "road name test", RoadNameSource.RoadAddressSource)))
     }
   }
@@ -945,7 +945,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sqlu""" Insert into project_link_name values (nextval('viite_general_seq'), ${project.id}, 100, 'TestRoadName_Project_Link')""".execute
 
       val attributes1 = Map("ROADNUMBER" -> BigInt(100), "ROADPARTNUMBER" -> BigInt(100))
-      val newRoadLink1 = RoadLinkFetched(1.toString, 2, List(Point(0.0, 0.0), Point(20.0, 0.0)), AdministrativeClass.apply(1), TrafficDirection.BothDirections, FeatureClass.DrivePath, None, attributes1)
+      val newRoadLink1 = RoadLink(1.toString, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20, AdministrativeClass.apply(1), -1, TrafficDirection.BothDirections, UnknownLinkType, None, None, attributes1)
       projectService.parsePreFillData(Seq(newRoadLink1), project.id) should be(Right(PreFillInfo(100, 100, "TestRoadName_Project_Link", RoadNameSource.ProjectLinkSource)))
     }
   }
@@ -966,14 +966,14 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sqlu""" Insert into project_link_name values (nextval('viite_general_seq'), ${project.id}, 100, 'TestRoadName_Project_Link')""".execute
 
       val attributes1 = Map("ROADNUMBER" -> BigInt(100), "ROADPARTNUMBER" -> BigInt(100))
-      val newRoadLink1 = RoadLinkFetched(1.toString, 2, List(Point(0.0, 0.0), Point(20.0, 0.0)), AdministrativeClass.apply(1), TrafficDirection.BothDirections, FeatureClass.DrivePath, None, attributes1)
+      val newRoadLink1 = RoadLink(1.toString, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20, AdministrativeClass.apply(1), -1, TrafficDirection.BothDirections, UnknownLinkType, None, None, attributes1)
       projectService.parsePreFillData(Seq(newRoadLink1), project.id) should be(Right(PreFillInfo(100, 100, "road name test", RoadNameSource.RoadAddressSource)))
     }
   }
 
   test("Test projectService.parsePreFillData When supplied a sequence of one incomplete RoadLinkFetched Then return an error message indicating that the information is incomplete.") {
     val attributes1 = Map("ROADNUMBER" -> BigInt(2))
-    val newRoadLink1 = RoadLinkFetched(1.toString, 2, List(Point(0.0, 0.0), Point(20.0, 0.0)), AdministrativeClass.apply(1), TrafficDirection.BothDirections, FeatureClass.DrivePath, None, attributes1)
+    val newRoadLink1 = RoadLink(1.toString, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20, AdministrativeClass.apply(1), -1, TrafficDirection.BothDirections, UnknownLinkType, None, None, attributes1)
     projectService.parsePreFillData(Seq(newRoadLink1)) should be(Left("Link does not contain valid prefill info"))
   }
 

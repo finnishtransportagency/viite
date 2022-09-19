@@ -1,27 +1,27 @@
 package fi.liikennevirasto.viite
 
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.LifecycleStatus.UnknownLifecycleStatus
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
-import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import fi.liikennevirasto.viite.Dummies._
-import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao.{ProjectReservedPartDAO, _}
+import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import org.joda.time.DateTime
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
-import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.mockito.MockitoSugar
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
@@ -499,7 +499,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     reset(mockRoadLinkService)
 
     // Test search by mtkId
-    when(mockRoadLinkService.getRoadLinkMiddlePointByMtkId(any[Long])).thenReturn(Option(point))
+    when(mockRoadLinkService.getRoadLinkMiddlePointBySourceId(any[Long])).thenReturn(Option(point))
     result = roadAddressService.getSearchResults(Option("1"))
     result.size should be(2)
     result.head("mtkId").head.asInstanceOf[Some[Point]].x should be(point)
@@ -626,7 +626,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
 
     when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(99999)).thenReturn(roadLinks)
-    when(mockRoadLinkService.getComplementaryRoadLinksFromVVH(99999)).thenReturn(Seq())
+//    when(mockRoadLinkService.getComplementaryRoadLinksFromVVH(99999)).thenReturn(Seq())
     val roadAddresses = roadAddressService.getAllByMunicipality(99999)
     roadAddresses.size should be (4)
   }

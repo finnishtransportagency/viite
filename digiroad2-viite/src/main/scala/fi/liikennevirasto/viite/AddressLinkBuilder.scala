@@ -1,10 +1,10 @@
 package fi.liikennevirasto.viite
-import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, RoadLinkFetched}
+//import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
+import org.joda.time.format.ISODateTimeFormat
 //import fi.liikennevirasto.viite.AdministrativeClass._
-import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.viite.dao._
-import org.joda.time.{DateTime, DateTimeZone}
+import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 
 trait AddressLinkBuilder {
@@ -15,6 +15,7 @@ trait AddressLinkBuilder {
   val SwedishRoadName = "roadnameswe"
   val ComplementarySubType = 3
   val formatter: DateTimeFormatter = DateTimeFormat.forPattern("dd.MM.yyyy")
+  val dateTimeFormatter: DateTimeFormatter = ISODateTimeFormat.dateOptionalTimeParser()
 
   lazy val municipalityMapping: Map[Long, Long] = if (PostGISDatabase.isWithinSession)
     MunicipalityDAO.getMunicipalityMapping
@@ -37,14 +38,14 @@ trait AddressLinkBuilder {
       MunicipalityDAO.getMunicipalityNames
     }
 
-  def getLinkType(roadLink: RoadLinkFetched): LinkType ={  //similar logic used in roadLinkService
-    roadLink.featureClass match {
-      case FeatureClass.TractorRoad => TractorRoad
-      case FeatureClass.DrivePath => SingleCarriageway
-      case FeatureClass.CycleOrPedestrianPath => CycleOrPedestrianPath
-      case _=> UnknownLinkType
-    }
-  }
+//  def getLinkType(roadLink: RoadLinkFetched): LinkType ={  //similar logic used in roadLinkService
+//    roadLink.featureClass match {
+//      case FeatureClass.TractorRoad => TractorRoad
+//      case FeatureClass.DrivePath => SingleCarriageway
+//      case FeatureClass.CycleOrPedestrianPath => CycleOrPedestrianPath
+//      case _=> UnknownLinkType
+//    }
+//  }
 
   protected def toIntNumber(value: Any): Int = {
     try {
@@ -73,9 +74,10 @@ trait AddressLinkBuilder {
     }
   }
 
-  protected def extractModifiedAtVVH(attributes: Map[String, Any]): Option[String] = {
-    def toLong(anyValue: Option[Any]) = {
-      anyValue.map(_.asInstanceOf[BigInt].toLong)
+  // TODO: Duplicate of ComplementaryLinkDAO
+  def extractModifiedAt(attributes: Map[String, Any]): Option[String] = {
+    def toLong(anyValue: Option[Any]): Option[Long] = {
+      anyValue.map(v => dateTimeFormatter.parseDateTime(v.toString).getMillis)
     }
     def compareDateMillisOptions(a: Option[Long], b: Option[Long]): Option[Long] = {
       (a, b) match {
@@ -89,15 +91,38 @@ trait AddressLinkBuilder {
         case (None, None) => None
       }
     }
-    val toIso8601 = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss")
-    val createdDate = toLong(attributes.get("CREATED_DATE"))
-    val lastEditedDate = toLong(attributes.get("LAST_EDITED_DATE"))
-    val geometryEditedDate = toLong(attributes.get("GEOMETRY_EDITED_DATE"))
-    val endDate = toLong(attributes.get("END_DATE"))
-    val latestDate = compareDateMillisOptions(lastEditedDate, geometryEditedDate)
-    val withHistoryLatestDate = compareDateMillisOptions(latestDate, endDate)
-    val timezone = DateTimeZone.forOffsetHours(0)
-    val latestDateString = withHistoryLatestDate.orElse(createdDate).map(modifiedTime => new DateTime(modifiedTime, timezone)).map(toIso8601.print(_))
-    latestDateString
+
+    val createdDate = toLong(attributes.get("starttime"))
+    val lastEditedDate = toLong(attributes.get("versionstarttime"))
+    val geometryEditedDate = toLong(attributes.get("sourcemodificationtime"))
+    compareDateMillisOptions(lastEditedDate, geometryEditedDate).orElse(createdDate).map(modifiedTime => new DateTime(modifiedTime).toString)
   }
+
+//  protected def extractModifiedAtVVH(attributes: Map[String, Any]): Option[String] = {
+//    def toLong(anyValue: Option[Any]) = {
+//      anyValue.map(_.asInstanceOf[BigInt].toLong)
+//    }
+//    def compareDateMillisOptions(a: Option[Long], b: Option[Long]): Option[Long] = {
+//      (a, b) match {
+//        case (Some(firstModifiedAt), Some(secondModifiedAt)) =>
+//          if (firstModifiedAt > secondModifiedAt)
+//            Some(firstModifiedAt)
+//          else
+//            Some(secondModifiedAt)
+//        case (Some(firstModifiedAt), None) => Some(firstModifiedAt)
+//        case (None, Some(secondModifiedAt)) => Some(secondModifiedAt)
+//        case (None, None) => None
+//      }
+//    }
+//    val toIso8601 = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss")
+//    val createdDate = toLong(attributes.get("CREATED_DATE"))
+//    val lastEditedDate = toLong(attributes.get("LAST_EDITED_DATE"))
+//    val geometryEditedDate = toLong(attributes.get("GEOMETRY_EDITED_DATE"))
+//    val endDate = toLong(attributes.get("END_DATE"))
+//    val latestDate = compareDateMillisOptions(lastEditedDate, geometryEditedDate)
+//    val withHistoryLatestDate = compareDateMillisOptions(latestDate, endDate)
+//    val timezone = DateTimeZone.forOffsetHours(0)
+//    val latestDateString = withHistoryLatestDate.orElse(createdDate).map(modifiedTime => new DateTime(modifiedTime, timezone)).map(toIso8601.print(_))
+//    latestDateString
+//  }
 }
