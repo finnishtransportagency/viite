@@ -1537,7 +1537,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
       "roadNumber" -> road.roadNumber,
       "track" -> road.track,
       "roadPartNumber" -> road.roadPartNumber,
-      "startAddrM" -> road.startAddressM,
+      "startAddrM" -> road.startAddrM,
       "endAddrM" -> road.endAddrM,
       "lengthAddrM" -> road.roadAddressLengthM,
       "startDate" -> new SimpleDateFormat("dd.MM.yyyy").format(road.startDate.toDate)
