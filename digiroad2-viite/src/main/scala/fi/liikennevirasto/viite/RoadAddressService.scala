@@ -323,7 +323,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
       case "road" => params.size match {
         case 1 =>
           // The params with type long can be MTKID or roadNumber
-          val searchResultPoint = roadLinkService.getRoadLinkMiddlePointByMtkId(params.head)
+          val searchResultPoint = roadLinkService.getRoadLinkMiddlePointBySourceId(params.head)
           val partialResultSeq = collectResult("mtkId", Seq(searchResultPoint))
           val searchResult = getFirstOrEmpty(getRoadAddressWithRoadNumberAddress(params.head).sortBy(address => (address.roadPartNumber, address.startAddrMValue)))
           collectResult("road", searchResult, partialResultSeq)
@@ -777,7 +777,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
         Future(Seq[ChangeInfo]()),
         Future(fetchLinearLocationsByBoundingBox(boundingRectangle)),
         Future(roadLinkService.getRoadLinksFromVVH(boundingRectangle, roadNumberLimits, Set(), everything, publicRoads)),
-        Future(roadLinkService.getComplementaryRoadLinksFromVVH(boundingRectangle, Set()))
+        roadLinkService.getComplementaryRoadLinksFromVVH(boundingRectangle, Set())
       )
       getRoadAddressLinks(boundingBoxResult)
     } catch {

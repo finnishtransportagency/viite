@@ -3,7 +3,8 @@ package fi.liikennevirasto.digiroad2.client
 import com.vividsolutions.jts.geom.GeometryFactory
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
-import fi.liikennevirasto.digiroad2.client.vvh.{HistoryRoadLink, KgvRoadLink, RoadLinkFetched}
+import fi.liikennevirasto.digiroad2.client.vvh.KgvRoadLink
+import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
 import org.geotools.geometry.jts.GeometryBuilder
 import org.scalatest.{FunSuite, Matchers}
@@ -47,7 +48,7 @@ class VVHClientSpec extends FunSuite with Matchers {
       val vvhClient = new KgvRoadLink
       val result = vvhClient.frozenTimeRoadLinkData.fetchByBounds(BoundingRectangle(Point(445000, 7000000), Point(446000, 7005244)))
       result.size should be > 1
-      result.head.getClass.getTypeName should be (classOf[RoadLinkFetched].getCanonicalName)
+      result.head.getClass.getTypeName should be (classOf[RoadLink].getCanonicalName)
     }
   }
 

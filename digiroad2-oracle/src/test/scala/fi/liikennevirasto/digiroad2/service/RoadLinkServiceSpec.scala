@@ -1,21 +1,14 @@
 package fi.liikennevirasto.digiroad2.service
 
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, DummySerializer}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.VVHSerializer
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, DummySerializer, Point}
 import org.mockito.Mockito._
-import org.mockito.ArgumentMatchers._
-import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.StaticQuery.interpolation
-
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future, Promise}
+import org.scalatest.mockito.MockitoSugar
 
 class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
@@ -34,10 +27,10 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Test getRoadLinksFromVVHByMunicipality() When supplying a specific municipality Id Then return the correct return of a ViiteRoadLink of that Municipality") {
     val municipalityId = 235
     val linkId = 2l.toString
-    val roadLink = RoadLinkFetched(linkId, municipalityId, Nil, AdministrativeClass.Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
+    val roadLink = RoadLink(linkId, Nil, 0, AdministrativeClass.Municipality, 1, TrafficDirection.TowardsDigitizing, UnknownLinkType, None, None, attributes = Map("MUNICIPALITYCODE" -> BigInt(municipalityId)), LifecycleStatus.UnknownLifecycleStatus)
 
     val mockVVHClient = MockitoSugar.mock[KgvRoadLink]
-    val mockVVHRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient[RoadLinkFetched]]
+    val mockVVHRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient[RoadLink]]
     val service = new TestService(mockVVHClient)
 
     PostGISDatabase.withDynTransaction {
