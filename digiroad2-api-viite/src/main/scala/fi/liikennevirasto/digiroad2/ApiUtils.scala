@@ -12,8 +12,7 @@ import org.scalatra.{ActionResult, BadRequest, Found, Params}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.annotation.tailrec
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future, TimeoutException}
+import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Random
 
@@ -26,17 +25,13 @@ object ApiUtils {
     else 300
 
   val MAX_WAIT_TIME_SECONDS: Int = 20
-  val MAX_RESPONSE_SIZE_BYTES: Long = 1024 * 1024 * 10 // 10MiB in bytes
   val MAX_RETRIES: Int = 540 // 3 hours / 20sec per retry
 
   /**
     * Avoid API Gateway restrictions
     * API Gateway timeouts if response is not received in 30 sec
-    *  -> Return redirect to same url with retry param if query is not finished within maxWaitTime
+    *  -> Return redirect to same url with retry param
     *  -> Save response to S3 when its ready (access with pre-signed url)
-    * API Gateway maximum response body size is 10 MiB
-    *  -> Estimate the maximum amount of elements in the response body that fit the 10MiB limit (estimatedMaxSize)
-    *  -> Save bigger responses to S3 (access with pre-signed url)
     */
   def avoidRestrictions[T](requestId: String, request: HttpServletRequest, params: Params,
                            responseType: String = "json")(f: Params => T): Any = {
@@ -81,9 +76,8 @@ object ApiUtils {
   }
 
   def newQuery[T](workId: String, queryId: String, path: String, f: Params => T, params: Params, responseType: String): Any = {
-    val ret = Future { f(params) }
     Future { // Complete query and save results to s3 in future
-      val finished = Await.result(ret, Duration.Inf)
+      val finished = f(params)
       val responseBody = formatResponse(finished,  responseType)
       s3Service.saveFileToS3(s3Bucket, workId, responseBody, responseType)
     }
