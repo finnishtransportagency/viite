@@ -101,14 +101,7 @@ class ComplementaryLinkDAO {
 //         trafficDirection, featureClass , modifiedAt, attributes,
 //        lifecycleStatus, linkSource, length)
 //
-      RoadLink(linkId, geometry, length, administrativeClass,
-        -1 // FunctionalClass pois
-        , TrafficDirection.UnknownDirection, //TrafficDirection pois?
-        UnknownLinkType, // RoadLink pois
-        modifiedAt,
-        None
-        , attributes,
-        lifecycleStatus, linkSource)
+      RoadLink(linkId, geometry, length, administrativeClass, -1, TrafficDirection.UnknownDirection, modifiedAt, None, attributes, lifecycleStatus, linkSource)
 
     }
   }

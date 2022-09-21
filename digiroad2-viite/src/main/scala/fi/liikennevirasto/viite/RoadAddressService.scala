@@ -648,10 +648,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
       val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadwayAddresses)
 
       val roadLinks = roadLinkService.getRoadLinksAndComplementary(roadAddresses.map(_.linkId).toSet)
-      val roadLinksWithoutWalkways = roadLinks.filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
+// TODO: fix this
+      //      val roadLinksWithoutWalkways = roadLinks.filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
 
       roadAddresses.flatMap { roadAddress =>
-        roadLinksWithoutWalkways.find(_.linkId == roadAddress.linkId).map { roadLink =>
+        roadLinks.find(_.linkId == roadAddress.linkId).map { roadLink =>
           ChangedRoadAddress(
             roadAddress = roadAddress.copyWithGeometry(GeometryUtils.truncateGeometry3D(roadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)),
             link = roadLink
