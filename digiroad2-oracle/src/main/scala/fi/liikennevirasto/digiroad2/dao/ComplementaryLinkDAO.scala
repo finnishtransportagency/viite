@@ -16,15 +16,6 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-//class ComplementaryLinkFilterDAO {
-//
-//  def fetchAll(): Seq[String] = {
-//    val sql = s"""SELECT * FROM COMPLEMENTARY_FILTER"""
-//    Q.queryNA[String](sql).list
-//  }
-//
-//}
-
 class ComplementaryLinkDAO {
   protected def logger = LoggerFactory.getLogger(getClass)
   val formatter: DateTimeFormatter = ISODateTimeFormat.dateOptionalTimeParser()
@@ -78,7 +69,7 @@ class ComplementaryLinkDAO {
         "surfacetype"    -> r.nextIntOption()
       )
       val lifecycleStatus = LifecycleStatus(r.nextInt())
-      val trafficDirection = TrafficDirection(r.nextIntOption().getOrElse(TrafficDirection.UnknownDirection.value))
+      r.nextIntOption() //TrafficDirection(r.nextIntOption().getOrElse(TrafficDirection.UnknownDirection.value))
       attributes ++= Map(
         "surfacerelation" -> r.nextIntOption(),
         "xyaccuracy"      -> r.nextDoubleOption(),

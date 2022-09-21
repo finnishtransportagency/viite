@@ -37,7 +37,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockVVHRoadLinkClient.fetchByMunicipality(municipalityId)).thenReturn(Seq(roadLink))
 
-      val roadLinks = service.getRoadLinksFromVVHByMunicipality(municipalityId)
+      val roadLinks = service.getRoadLinksByMunicipality(municipalityId)
 
       roadLinks.nonEmpty should be (true)
       roadLinks.head.isInstanceOf[RoadLink] should be (true)
