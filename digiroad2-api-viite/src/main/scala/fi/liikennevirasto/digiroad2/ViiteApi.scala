@@ -1351,7 +1351,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
       "municipalityName" -> roadAddressLink.municipalityName,
       "roadNameFi" -> roadAddressLink.attributes.get("roadnamefin"),
       "roadNameSe" -> roadAddressLink.attributes.get("roadnameswe"),
-      "roadNameSm" -> roadAddressLink.attributes.get("ROADNAME_SM"),
       "roadNumber" -> roadAddressLink.roadNumber,
       "roadPartNumber" -> roadAddressLink.roadPartNumber,
       "elyCode" -> roadAddressLink.elyCode,
@@ -1364,7 +1363,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
       "startMValue" -> roadAddressLink.startMValue,
       "endMValue" -> roadAddressLink.endMValue,
       "sideCode" -> roadAddressLink.sideCode.value,
-      "linkType" -> roadAddressLink.linkType.value,
+//      "linkType" -> roadAddressLink.linkType.value,
       "roadLinkSource" -> roadAddressLink.roadLinkSource.value,
       "roadName" -> roadAddressLink.roadName
     )
@@ -1611,7 +1610,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
         "municipalityName" -> projectAddressLink.municipalityName,
         "roadNameFi" -> projectAddressLink.attributes.get("ROADNAME_FI"),
         "roadNameSe" -> projectAddressLink.attributes.get("ROADNAME_SE"),
-        "roadNameSm" -> projectAddressLink.attributes.get("ROADNAME_SM"),
         "roadNumber" -> projectAddressLink.roadNumber,
         "roadPartNumber" -> projectAddressLink.roadPartNumber,
         "elyCode" -> projectAddressLink.elyCode,
@@ -1624,7 +1622,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
         "startMValue" -> projectAddressLink.startMValue,
         "endMValue" -> projectAddressLink.endMValue,
         "sideCode" -> projectAddressLink.sideCode.value,
-        "linkType" -> projectAddressLink.linkType.value,
+//        "linkType" -> projectAddressLink.linkType.value,
         "roadLinkSource" -> projectAddressLink.roadLinkSource.value,
         "roadName" -> projectAddressLink.roadName,
         "id" -> projectAddressLink.id,
@@ -1809,8 +1807,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
     if (links.nonEmpty)
       Some(links.tail.foldLeft(links.head) {
         case (a: RoadAddressLink, b) =>
-          a.copy(startAddressM = Math.min(a.startAddressM, b.startAddressM), endAddressM = Math.max(a.endAddressM, b.endAddressM),
-            startMValue = Math.min(a.startMValue, b.endMValue)).asInstanceOf[T]
+          a.copy(startAddressM = Math.min(a.startAddressM, b.startAddressM), endAddressM = Math.max(a.endAddressM, b.endAddressM), startMValue = Math.min(a.startMValue, b.endMValue)).asInstanceOf[T]
         case (a: ProjectAddressLink, b) =>
           a.copy(startAddressM = Math.min(a.startAddressM, b.startAddressM), endAddressM = Math.max(a.endAddressM, b.endAddressM), startMValue = Math.min(a.startMValue, b.endMValue)).asInstanceOf[T]
       })

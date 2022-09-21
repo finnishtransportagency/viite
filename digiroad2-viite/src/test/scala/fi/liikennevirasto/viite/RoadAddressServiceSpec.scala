@@ -94,7 +94,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   }
 
     private def toRoadLink(ral: ProjectLink): RoadLink = {
-      RoadLink(ral.linkId, ral.geometry, ral.geometryLength, AdministrativeClass.State, 1, extractTrafficDirection(ral.sideCode, ral.track), Motorway, None, None, Map(
+      RoadLink(ral.linkId, ral.geometry, ral.geometryLength, AdministrativeClass.State, 1, extractTrafficDirection(ral.sideCode, ral.track), None, None, Map(
           "MUNICIPALITYCODE" -> BigInt(749), "VERTICALLEVEL" -> BigInt(1), "SURFACETYPE" -> BigInt(1),
           "ROADNUMBER" -> BigInt(ral.roadNumber), "ROADPARTNUMBER" -> BigInt(ral.roadPartNumber)), LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface)
     }
@@ -477,7 +477,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     when(mockLinearLocationDAO.fetchByRoadAddress(any[Long],any[Long],any[Long], any[Option[Long]])).thenReturn(towardsDigitizingLinearLocation)
 
     val towardsDigitizingRoadLink = Seq(
-      RoadLink(linkId, Seq(Point(0.0, 10.0), Point(0.0, 15.0)), 10.0, AdministrativeClass.Municipality, 0, TrafficDirection.TowardsDigitizing, UnknownLinkType, None, None, attributes = Map("MUNICIPALITYCODE" -> BigInt(235)), UnknownLifecycleStatus, NormalLinkInterface)
+      RoadLink(linkId, Seq(Point(0.0, 10.0), Point(0.0, 15.0)), 10.0, AdministrativeClass.Municipality, 0, TrafficDirection.TowardsDigitizing, None, None, attributes = Map("MUNICIPALITYCODE" -> BigInt(235)), UnknownLifecycleStatus, NormalLinkInterface)
     )
 
 
@@ -611,10 +611,10 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     )
 
     val roadLinks = (Seq(
-      RoadLink(123L.toString, newGeom0010, 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, Map("MUNICIPALITYCODE" -> BigInt.apply(99999), "MTKCLASS" -> BigInt.apply(12316))),
-      RoadLink(123L.toString, newGeom1020, 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, Map("MUNICIPALITYCODE" -> BigInt.apply(99999), "MTKCLASS" -> BigInt.apply(12141))),
-      RoadLink(124L.toString, newGeom3040, 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, Map("MUNICIPALITYCODE" -> BigInt.apply(99999), "MTKCLASS" -> BigInt.apply(12314))),
-      RoadLink(125L.toString, newGeom4050, 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, Map("MUNICIPALITYCODE" -> BigInt.apply(99999), "MTKCLASS" -> BigInt.apply(12312)))
+      RoadLink(123L.toString, newGeom0010, 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, None, None, Map("MUNICIPALITYCODE" -> BigInt.apply(99999), "MTKCLASS" -> BigInt.apply(12316))),
+      RoadLink(123L.toString, newGeom1020, 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, None, None, Map("MUNICIPALITYCODE" -> BigInt.apply(99999), "MTKCLASS" -> BigInt.apply(12141))),
+      RoadLink(124L.toString, newGeom3040, 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, None, None, Map("MUNICIPALITYCODE" -> BigInt.apply(99999), "MTKCLASS" -> BigInt.apply(12314))),
+      RoadLink(125L.toString, newGeom4050, 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, None, None, Map("MUNICIPALITYCODE" -> BigInt.apply(99999), "MTKCLASS" -> BigInt.apply(12312)))
     ), Seq.empty[ChangeInfo])
 
     val roadways = Seq(
