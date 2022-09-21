@@ -732,7 +732,7 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
         links = links2._1.values.flatten.toList ++ links2._2.map(p => p._2.head.copy(geometry = p._2.flatMap(_.geometry).distinct, length = p._2.map(_.length).sum))
 
         when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[String]])).thenReturn(Seq())
-        when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[String]])).thenAnswer(new Answer[Seq[RoadLink]] {
+        when(mockRoadLinkService.getRoadLinksByLinkIds(any[Set[String]])).thenAnswer(new Answer[Seq[RoadLink]] {
           override def answer(i: InvocationOnMock): Seq[RoadLink] = {
             (links ++ newLinks).filter(l => {
               i.getArgument[Seq[String]](0).toList.contains(l.linkId)

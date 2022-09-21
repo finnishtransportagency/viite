@@ -128,13 +128,13 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     //Road Link service mocks
     when(mockRoadLinkService.getChangeInfoFromVVHF(any[Set[String]])).thenReturn(Future(Seq.empty))
     when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[String]])).thenReturn(vvhHistoryRoadLinks)
-    when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[String]])).thenReturn(roadLinks)
+    when(mockRoadLinkService.getRoadLinksByLinkIds(any[Set[String]])).thenReturn(roadLinks)
 
     val result = roadAddressService.getRoadAddressLinksByBoundingBox(BoundingRectangle(Point(0.0, 0.0), Point(0.0, 20.0)), Seq())
 
     verify(mockRoadLinkService, times(1)).getChangeInfoFromVVHF(Set(123L.toString, 124L.toString, 125L.toString))
     verify(mockRoadLinkService, times(1)).getRoadLinksHistoryFromVVH(Set(123L.toString, 124L.toString, 125L.toString))
-    verify(mockRoadLinkService, times(1)).getRoadLinksByLinkIdsFromVVH(Set(123L.toString, 124L.toString, 125L.toString))
+    verify(mockRoadLinkService, times(1)).getRoadLinksByLinkIds(Set(123L.toString, 124L.toString, 125L.toString))
 
     result.size should be (3)
   }
@@ -168,7 +168,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     //Road Link service mocks
     when(mockRoadLinkService.getChangeInfoFromVVHF(any[Set[String]])).thenReturn(Future(Seq.empty))
     when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[String]])).thenReturn(vvhHistoryRoadLinks)
-    when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[String]])).thenReturn(roadLinks)
+    when(mockRoadLinkService.getRoadLinksByLinkIds(any[Set[String]])).thenReturn(roadLinks)
 
     val roadAddressLinks = roadAddressService.getRoadAddressLinksByBoundingBox(BoundingRectangle(Point(0.0, 0.0), Point(0.0, 20.0)), Seq())
 
@@ -511,7 +511,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     result.head("road").head.asInstanceOf[RoadAddress].roadNumber should be(1)
 
     // Test search by road number, road part number and M number TowardsDigitizing
-    when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[String]])).thenReturn(towardsDigitizingRoadLink)
+    when(mockRoadLinkService.getRoadLinksByLinkIds(any[Set[String]])).thenReturn(towardsDigitizingRoadLink)
     result = roadAddressService.getSearchResults(Option("1 1 1"))
     result.size should be(1)
     result.head.contains("roadM") should be(true)
@@ -660,7 +660,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
       when(mockRoadwayDAO.fetchAllByRoadwayId(any[Seq[Long]])).thenReturn(Seq(rw1WithId, rw2WithId))
       when(mockLinearLocationDAO.fetchByRoadways(any[Set[Long]])).thenReturn(Seq(lc1, lc2WithId))
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[String]])).thenReturn(pls.map(toRoadLink))
+      when(mockRoadLinkService.getRoadLinksByLinkIds(any[Set[String]])).thenReturn(pls.map(toRoadLink))
 
       projectDAO.create(rap)
 
@@ -768,7 +768,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
       when(mockRoadwayDAO.fetchAllByRoadwayId(any[Seq[Long]])).thenReturn(Seq(rw1WithId, rw2WithId))
       when(mockLinearLocationDAO.fetchByRoadways(any[Set[Long]])).thenReturn(Seq(lc1, lc2WithId))
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[String]])).thenReturn(pls.map(toRoadLink))
+      when(mockRoadLinkService.getRoadLinksByLinkIds(any[Set[String]])).thenReturn(pls.map(toRoadLink))
 
       projectDAO.create(rap)
 
@@ -1103,7 +1103,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
       when(mockRoadwayDAO.fetchAllByRoadwayId(any[Seq[Long]])).thenReturn(Seq(rw1WithId, rw2WithId))
       when(mockLinearLocationDAO.fetchByRoadways(any[Set[Long]])).thenReturn(Seq(lc1WithId, lc2WithId))
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[String]])).thenReturn(pls.map(toRoadLink))
+      when(mockRoadLinkService.getRoadLinksByLinkIds(any[Set[String]])).thenReturn(pls.map(toRoadLink))
 
       projectDAO.create(rap)
 
