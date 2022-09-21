@@ -20,7 +20,7 @@ case class JunctionInfo(id: Long, junctionNumber: Option[Long], startDate: DateT
 
 case class JunctionTemplate(id: Long, startDate: DateTime, roadNumber: Long, roadPartNumber: Long, track: Track, addrM: Long, elyCode: Long, coords: Point = Point(0.0, 0.0))
 
-case class JunctionForRoadAddressBrowser(nodeNumber: Long, nodeCoordinates: Point, nodeName: Option[String], nodeType: NodeType, startDate: DateTime, junctionNumber: Option[Long], roadNumber: Long, track: Long, roadPartNumber: Long, addrM: Long, beforeAfter: Long)
+case class JunctionForRoadAddressBrowser(nodeNumber: Long, nodeCoordinates: Point, nodeName: Option[String], nodeType: NodeType, startDate: DateTime, junctionNumber: Option[Long], roadNumber: Long, track: Long, roadPartNumber: Long, addrM: Long, beforeAfter: Seq[Long])
 
 class JunctionDAO extends BaseDAO {
 
@@ -68,6 +68,13 @@ class JunctionDAO extends BaseDAO {
   }
 
   implicit val getJunctionForRoadAddressBrowser: GetResult[JunctionForRoadAddressBrowser] = new GetResult[JunctionForRoadAddressBrowser] {
+    def parseBeforeAfterValue(beforeAfterToParse: String): Seq[Long] = {
+      // remove square brackets and spaces from the string i.e "[1, 2]" -> "1,2"
+      val beforeAfterParsed = beforeAfterToParse.replaceAll("[\\[\\]\\s]","")
+      // split the string in to array and convert each character in the array to Long i.e "1,2" -> Seq(1,2)
+      beforeAfterParsed.split(",").map(_.toLong).toSeq
+    }
+
     def apply(r: PositionedResult): JunctionForRoadAddressBrowser = {
       val nodeNumber = r.nextLong()
       val coordX = r.nextLong()
@@ -80,7 +87,7 @@ class JunctionDAO extends BaseDAO {
       val trackCode = r.nextInt()
       val roadPartNumber = r.nextLong()
       val addrM = r.nextLong()
-      val beforeAfter = r.nextLong()
+      val beforeAfter = parseBeforeAfterValue(r.rs.getString("beforeafter"))
 
       JunctionForRoadAddressBrowser(nodeNumber, Point(coordX, coordY), nodeName, nodeType, startDate, junctionNumber, roadNumber, trackCode, roadPartNumber, addrM, beforeAfter)
     }
@@ -292,14 +299,15 @@ class JunctionDAO extends BaseDAO {
       }
 
       s"""$query $dateCondition $elyCondition $roadNumberCondition $roadPartCondition
+        GROUP BY node.node_number, xcoord , ycoord, node.name, node.TYPE, j.start_date, j.junction_number, rw.road_number, rw.track, rw.road_part_number, rp.addr_m
         ORDER BY rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rp.ADDR_M""".stripMargin
     }
 
     def fetchJunctions(queryFilter: String => String): Seq[JunctionForRoadAddressBrowser] = {
       val query =
         """
-        SELECT DISTINCT node.node_number, ST_X(node.COORDINATES), ST_Y(node.COORDINATES), node.name, node.type,
-        j.start_date, j.junction_number, rw.road_number, rw.track, rw.road_part_number, rp.addr_m, jp.before_after
+        SELECT node.node_number, ST_X(node.COORDINATES) AS xcoord, ST_Y(node.COORDINATES) AS ycoord, node.name, node.type,
+        j.start_date, j.junction_number, rw.road_number, rw.track, rw.road_part_number, rp.addr_m, json_agg(jp.before_after) as beforeafter
 		    FROM JUNCTION j
        	JOIN NODE node ON node.node_number = j.node_number AND node.end_date IS NULL AND node.valid_to IS NULL
        	JOIN JUNCTION_POINT jp ON j.id = jp.junction_id  AND jp.valid_to IS NULL

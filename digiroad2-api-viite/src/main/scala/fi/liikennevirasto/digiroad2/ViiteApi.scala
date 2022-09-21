@@ -1558,6 +1558,17 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
   }
 
   def roadAddressBrowserJunctionsToApi(junction :JunctionForRoadAddressBrowser): Map[String, Any] = {
+    def getBeforeAfterStringValue(): String = {
+      if (junction.beforeAfter.contains(1) && junction.beforeAfter.contains(2))
+        "EJ"
+      else if (junction.beforeAfter.contains(1))
+        "E"
+      else if (junction.beforeAfter.contains(2))
+        "J"
+      else
+        ""
+    }
+
     Map(
       "nodeNumber" -> junction.nodeNumber,
       "nodeCoordinates" -> junction.nodeCoordinates,
@@ -1569,7 +1580,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
       "track" -> junction.track,
       "roadPartNumber" -> junction.roadPartNumber,
       "addrM" -> junction.addrM,
-      "beforeAfter" -> junction.beforeAfter
+      "beforeAfter" -> getBeforeAfterStringValue()
     )
   }
 
