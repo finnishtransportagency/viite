@@ -371,7 +371,7 @@ class DataImporter {
     linkIds.par.foreach {
       case linkIds =>
         withDynTransaction {
-          val roadLinksFromVVH = linkService.getCurrentAndComplementaryRoadLinksFromVVH(linkIds)
+          val roadLinksFromVVH = linkService.getCurrentAndComplementaryRoadLinks(linkIds)
           val unGroupedTopology = linearLocationDAO.fetchByLinkId(roadLinksFromVVH.map(_.linkId).toSet)
           val topologyLocation = unGroupedTopology.groupBy(_.linkId)
           roadLinksFromVVH.foreach(roadLink => {

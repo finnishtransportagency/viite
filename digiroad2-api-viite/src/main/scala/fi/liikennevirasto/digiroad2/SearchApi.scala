@@ -7,9 +7,9 @@ import fi.liikennevirasto.viite.util.DigiroadSerializers
 import fi.liikennevirasto.viite.RoadAddressService
 import fi.liikennevirasto.viite.dao.RoadAddress
 import org.json4s.Formats
+import org.scalatra.{BadRequest, ScalatraServlet}
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.swagger.{Swagger, _}
-import org.scalatra.{BadRequest, HttpMethod, Post, ScalatraServlet}
 import org.slf4j.{Logger, LoggerFactory}
 
 
@@ -147,7 +147,7 @@ class SearchApi(roadAddressService: RoadAddressService,
   private val getRoadAddressByLinkIds: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[List[Map[String, Any]]]("getRoadAddressByLinkIds")
       .parameters(
-        bodyParam[Set[Long]]("linkIds").description("List of LinkIds\r\n")
+        bodyParam[Set[String]]("linkIds").description("List of LinkIds\r\n")
       )
       tags "SearchAPI (oth)"
       summary "Gets all the road addresses on top of given road links."

@@ -209,14 +209,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     parsePreFillData(roadLinkService.getRoadLinks(Set(linkId)), projectId = projectId)
   }
 
-  def parsePreFillData(vvhRoadLinks: Seq[RoadLink], projectId: Long = -1000): Either[String, PreFillInfo] = {
+  def parsePreFillData(roadLinks: Seq[RoadLink], projectId: Long = -1000): Either[String, PreFillInfo] = {
     withDynSession {
-      if (vvhRoadLinks.isEmpty) {
-        Left("Link could not be found in VVH")
+      if (roadLinks.isEmpty) {
+        Left("Link could not be found in KGV")
       }
       else {
-        val vvhLink = vvhRoadLinks.head
-        (vvhLink.attributes.get("ROADNUMBER"), vvhLink.attributes.get("ROADPARTNUMBER")) match {
+        val vvhLink = roadLinks.head
+        (vvhLink.attributes.get("roadnumber"), vvhLink.attributes.get("roadpartnumber")) match {
           case (Some(roadNumber: BigInt), Some(roadPartNumber: BigInt)) =>
             val preFilledRoadName =
               RoadNameDAO.getLatestRoadName(roadNumber.toLong) match {
@@ -405,7 +405,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       writableWithValidTrack(projectId, track.value) match {
         case None =>
           val linkId = linkIds.head
-          val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIds.toSet).map(l => l.linkId -> l).toMap
+          val roadLinks = roadLinkService.getRoadLinksByLinkIds(linkIds.toSet).map(l => l.linkId -> l).toMap
           if (roadLinks.keySet != linkIds.toSet)
             return Map("success" -> false,
               "errorMessage" -> (linkIds.toSet -- roadLinks.keySet).mkString(ErrorRoadLinkNotFound + " puuttuvat id:t ", ", ", ""))
@@ -689,8 +689,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             if (complementary.nonEmpty) {
               logger.debug(s"Adding ${complementary.size} complementary links in project.")
             }
-            val regularMapping = roadLinkService.getRoadLinksByLinkIdsFromVVH(regular.map(_.linkId).toSet).map(rm => rm.linkId -> rm).toMap
-            val complementaryMapping = roadLinkService.getRoadLinksByLinkIdsFromVVH(complementary.map(_.linkId).toSet).map(rm => rm.linkId -> rm).toMap
+            val regularMapping = roadLinkService.getRoadLinksByLinkIds(regular.map(_.linkId).toSet).map(rm => rm.linkId -> rm).toMap
+            val complementaryMapping = roadLinkService.getRoadLinksByLinkIds(complementary.map(_.linkId).toSet).map(rm => rm.linkId -> rm).toMap
             val fullMapping = regularMapping ++ complementaryMapping
             val addresses = roadways.flatMap(r =>
               roadwayAddressMapper.mapRoadAddresses(r, (regular ++ complementary).groupBy(_.roadwayNumber).getOrElse(r.roadwayNumber, {
@@ -1094,8 +1094,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                         everything: Boolean = false, publicRoads: Boolean = false): ProjectBoundingBoxResult = {
     ProjectBoundingBoxResult(
       Future(withDynSession(projectLinkDAO.fetchProjectLinks(projectId))),
-      Future(roadLinkService.getRoadLinksFromVVH(boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads)),
-        if (everything) roadLinkService.getComplementaryRoadLinksFromVVH(boundingRectangle, municipalities)
+      Future(roadLinkService.getRoadLinks(boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads)),
+        if (everything) roadLinkService.getComplementaryRoadLinks(boundingRectangle, municipalities)
         else Future(Seq())
     )
   }
@@ -1183,7 +1183,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                                 modified: Iterable[LinkToRevert], userName: String, recalculate: Boolean = false): Unit = {
     val modifiedLinkIds = modified.map(_.linkId).toSet
     projectLinkDAO.removeProjectLinksByLinkId(projectId, toRemove.map(_.linkId).toSet)
-    val vvhRoadLinks = roadLinkService.getCurrentAndComplementaryRoadLinksFromVVH(modifiedLinkIds)
+    val vvhRoadLinks = roadLinkService.getCurrentAndComplementaryRoadLinks(modifiedLinkIds)
     val roadAddresses = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocationDAO.fetchRoadwayByLinkId(modifiedLinkIds))
     roadAddresses.foreach(ra =>
       modified.find(mod => mod.linkId == ra.linkId) match {
