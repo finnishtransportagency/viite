@@ -27,7 +27,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Test getRoadLinksFromVVHByMunicipality() When supplying a specific municipality Id Then return the correct return of a ViiteRoadLink of that Municipality") {
     val municipalityId = 235
     val linkId = 2l.toString
-    val roadLink = RoadLink(linkId, Nil, 0, AdministrativeClass.Municipality, 1, TrafficDirection.TowardsDigitizing, UnknownLinkType, None, None, attributes = Map("MUNICIPALITYCODE" -> BigInt(municipalityId)), LifecycleStatus.UnknownLifecycleStatus)
+    val roadLink = RoadLink(linkId, Nil, 0, AdministrativeClass.Municipality, 1, TrafficDirection.TowardsDigitizing, None, None, attributes = Map("MUNICIPALITYCODE" -> BigInt(municipalityId)), LifecycleStatus.UnknownLifecycleStatus)
 
     val mockVVHClient = MockitoSugar.mock[KgvRoadLink]
     val mockVVHRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient[RoadLink]]

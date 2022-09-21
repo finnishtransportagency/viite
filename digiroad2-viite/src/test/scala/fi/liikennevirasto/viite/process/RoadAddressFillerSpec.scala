@@ -1,25 +1,12 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.asset.LifecycleStatus.{InUse, UnknownLifecycleStatus}
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
-import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.dao.Sequences
-import fi.liikennevirasto.digiroad2.linearasset.{PolyLine, RoadLink}
-import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
-import fi.liikennevirasto.viite._
+import fi.liikennevirasto.digiroad2.asset.LifecycleStatus.UnknownLifecycleStatus
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
+import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLinkLike}
-import org.mockito.Mockito._
-import org.mockito.invocation.InvocationOnMock
-import org.mockito.stubbing.Answer
-import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
-import slick.driver.JdbcDriver.backend.Database
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
 
 class RoadAddressFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
@@ -32,7 +19,7 @@ class RoadAddressFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   private def dummyRoadLink(linkId: String, yCoordinates: Seq[Double], linkGeomSource: LinkGeomSource): RoadLink = {
-    RoadLink(linkId, yCoordinates.map(y => Point(0.0, y)), yCoordinates.sum - yCoordinates.head, AdministrativeClass.Municipality, 0, TrafficDirection.TowardsDigitizing, UnknownLinkType, None, None, Map(), UnknownLifecycleStatus, linkGeomSource)
+    RoadLink(linkId, yCoordinates.map(y => Point(0.0, y)), yCoordinates.sum - yCoordinates.head, AdministrativeClass.Municipality, 0, TrafficDirection.TowardsDigitizing, None, None, Map(), UnknownLifecycleStatus, linkGeomSource)
   }
 
   test("Test adjustToTopology When there is any exists a linear location to be adjusted Then should not have any change set") {

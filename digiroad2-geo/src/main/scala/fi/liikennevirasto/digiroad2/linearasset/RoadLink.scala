@@ -20,19 +20,7 @@ trait RoadLinkLike extends PolyLine {
   def modifiedAt:          Option[String]
 }
 
-case class RoadLink(linkId:              String,
-                    geometry:            Seq[Point],
-                    length:              Double,
-                    administrativeClass: AdministrativeClass,
-                    functionalClass:     Int,
-                    trafficDirection:    TrafficDirection,
-                    linkType:            LinkType,
-                    modifiedAt:          Option[String] = None,
-                    modifiedBy:          Option[String],
-                    attributes:          Map[String, Any] = Map(),
-                    lifecycleStatus:     LifecycleStatus  = LifecycleStatus.InUse,
-                    linkSource:          LinkGeomSource   = LinkGeomSource.NormalLinkInterface
-                   )
+case class RoadLink(linkId: String, geometry: Seq[Point], length: Double, administrativeClass: AdministrativeClass, functionalClass: Int, trafficDirection: TrafficDirection, modifiedAt: Option[String] = None, modifiedBy: Option[String], attributes: Map[String, Any] = Map(), lifecycleStatus: LifecycleStatus = LifecycleStatus.InUse, linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface)
     extends RoadLinkLike {
 
   /* vvhTimeStamp Long format for old vvh Long-type linkId compatibility. */

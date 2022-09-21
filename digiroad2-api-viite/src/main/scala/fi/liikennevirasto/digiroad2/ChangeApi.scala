@@ -1,15 +1,15 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset.{SideCode, TrafficDirection}
-import fi.liikennevirasto.viite.{ChangedRoadAddress, NodesAndJunctionsService, RoadAddressService}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
+import fi.liikennevirasto.viite.{ChangedRoadAddress, NodesAndJunctionsService, RoadAddressService}
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.{BadRequest, ScalatraServlet}
 import org.scalatra.json.JacksonJsonSupport
-import org.slf4j.{Logger, LoggerFactory}
 import org.scalatra.swagger._
+import org.slf4j.{Logger, LoggerFactory}
 
 
 class ChangeApi(roadAddressService: RoadAddressService, nodesAndJunctionsService: NodesAndJunctionsService, implicit val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupport with SwaggerSupport  {
@@ -77,7 +77,7 @@ class ChangeApi(roadAddressService: RoadAddressService, nodesAndJunctionsService
                   ),
                   "properties" -> Map(
                     "functionalClass" -> link.functionalClass,
-                    "type" -> link.linkType.value,
+//                    "type" -> link.linkType.value,
                     "length" -> link.length
                   )
                 ),
