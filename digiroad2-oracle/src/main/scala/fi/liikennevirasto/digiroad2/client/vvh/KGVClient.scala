@@ -57,9 +57,7 @@ case class ChangeInfo(oldId: Option[String], newId: Option[String], mmlId: Long,
 case class HistoryRoadLink(linkId: String, municipalityCode: Int, geometry: Seq[Point], administrativeClass: AdministrativeClass,
                            trafficDirection: TrafficDirection, featureClass: FeatureClass, createdDate:BigInt, endDate: BigInt, attributes: Map[String, Any] = Map(),
                            lifecycleStatus : LifecycleStatus = LifecycleStatus.InUse, linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, length: Double = 0.0, modifiedAt: Option[String] = None) extends RoadLinkLike {
-  val vvhTimeStamp: Long = attributes.getOrElse("LAST_EDITED_DATE", createdDate).asInstanceOf[BigInt].longValue()
-
-  def roadNumber: Option[String] = attributes.get("ROADNUMBER").map(_.toString)
+  val roadLinkTimeStamp: Long = attributes.getOrElse("LAST_EDITED_DATE", createdDate).asInstanceOf[BigInt].longValue()
 }
 
 /**
@@ -262,17 +260,17 @@ object Filter extends Filter {
   }
 
   override def withRoadNumbersFilter(roadNumbers: Seq[(Int, Int)], includeAllPublicRoads: Boolean, filter: String = ""): String = {
-      if (roadNumbers.isEmpty)
-        return s"""$filter""""
-      if (includeAllPublicRoads)
-        return withRoadNumbersFilter(roadNumbers, includeAllPublicRoads = false, "adminclass = 1")
-      val limit = roadNumbers.head
-      val filterAdd = s"""(roadnumber >= ${limit._1} and roadnumber <= ${limit._2})"""
-      if (filter == "")
-        withRoadNumbersFilter(roadNumbers.tail, includeAllPublicRoads, filterAdd)
-      else
-        withRoadNumbersFilter(roadNumbers.tail, includeAllPublicRoads, s"""$filter OR $filterAdd""")
-    }
+    if (roadNumbers.isEmpty)
+      return s"""$filter""""
+    if (includeAllPublicRoads)
+      return withRoadNumbersFilter(roadNumbers, includeAllPublicRoads = false, "adminclass = 1")
+    val limit = roadNumbers.head
+    val filterAdd = s"""(roadnumber >= ${limit._1} and roadnumber <= ${limit._2})"""
+    if (filter == "")
+      withRoadNumbersFilter(roadNumbers.tail, includeAllPublicRoads, filterAdd)
+    else
+      withRoadNumbersFilter(roadNumbers.tail, includeAllPublicRoads, s"""$filter OR $filterAdd""")
+  }
 
   override def combineFiltersWithAnd(filter1: String, filter2: Option[String]): String = {
     val lifeCycleStatusFilter = s"lifecyclestatus IN (${LifecycleStatus.filteredLinkStatus.map(_.value).mkString(",")})"
@@ -381,10 +379,10 @@ trait LinkOperationsAbstract {
 }
 
 class KgvRoadLink {
-    lazy val roadLinkData: KgvRoadLinkClient[RoadLink] = new KgvRoadLinkClient[RoadLink](Some(KgvCollection.UnFrozen), Some(LinkGeomSource.NormalLinkInterface))
-    lazy val frozenTimeRoadLinkData: KgvRoadLinkClient[RoadLink] = new KgvRoadLinkClient[RoadLink](Some(KgvCollection.Frozen), Some(LinkGeomSource.FrozenLinkInterface))
-    lazy val roadLinkChangeInfo: KgvRoadLinkClient[ChangeInfo] = new KgvRoadLinkClient[ChangeInfo](Some(KgvCollection.Changes), Some(LinkGeomSource.Change))
-    lazy val complementaryData: ComplementaryLinkDAO           = new ComplementaryLinkDAO
+  lazy val roadLinkData: KgvRoadLinkClient[RoadLink] = new KgvRoadLinkClient[RoadLink](Some(KgvCollection.UnFrozen), Some(LinkGeomSource.NormalLinkInterface))
+  lazy val frozenTimeRoadLinkData: KgvRoadLinkClient[RoadLink] = new KgvRoadLinkClient[RoadLink](Some(KgvCollection.Frozen), Some(LinkGeomSource.FrozenLinkInterface))
+  lazy val roadLinkChangeInfo: KgvRoadLinkClient[ChangeInfo] = new KgvRoadLinkClient[ChangeInfo](Some(KgvCollection.Changes), Some(LinkGeomSource.Change))
+  lazy val complementaryData: ComplementaryLinkDAO           = new ComplementaryLinkDAO
 }
 
 class KgvRoadLinkClient[T](collection: Option[KgvCollection] = None, linkGeomSourceValue:Option[LinkGeomSource] = None) extends KgvOperation {
