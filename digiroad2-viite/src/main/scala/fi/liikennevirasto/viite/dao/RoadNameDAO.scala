@@ -14,6 +14,7 @@ import slick.jdbc.StaticQuery.interpolation
 case class RoadName(id: Long, roadNumber: Long, roadName: String, startDate: Option[DateTime], endDate: Option[DateTime] = None,
                     validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None, createdBy: String)
 
+case class RoadNameForRoadAddressBrowser(ely: Long, roadNumber: Long, roadName: String)
 
 object RoadNameDAO {
   private val logger = LoggerFactory.getLogger(getClass)
@@ -31,6 +32,16 @@ object RoadNameDAO {
       val createdBy = r.nextString()
 
       RoadName(roadNameId, roadNumber, roadName, startDate, endDate, validFrom, validTo, createdBy)
+    }
+  }
+
+  implicit val getRoadNameForRoadAddressBrowser = new GetResult[RoadNameForRoadAddressBrowser] {
+    def apply(r: PositionedResult) = {
+      val ely = r.nextLong()
+      val roadNumber = r.nextLong()
+      val roadName = r.nextString()
+
+      RoadNameForRoadAddressBrowser(ely, roadNumber, roadName)
     }
   }
 
@@ -228,5 +239,51 @@ object RoadNameDAO {
     roadNamesPS.addBatch()
     roadNamesPS.executeBatch()
     roadNamesPS.close()
+  }
+
+  def fetchRoadNamesForRoadAddressBrowser(startDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]) = {
+    def withOptionalParameters(startDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long])(query: String): String = {
+      val dateCondition = "AND rw.start_date <='" + startDate.get + "'"
+
+      val elyCondition = {
+        if (ely.nonEmpty)
+          s" AND rw.ely = ${ely.get}"
+        else
+          ""
+      }
+
+      val roadNumberCondition = {
+        if (roadNumber.nonEmpty)
+          s" AND rw.road_number = ${roadNumber.get}"
+        else
+          ""
+      }
+
+      val roadPartCondition = {
+        val parts = (minRoadPartNumber, maxRoadPartNumber)
+        parts match {
+          case (Some(minPart), Some(maxPart)) => s"AND rw.road_part_number BETWEEN $minPart AND $maxPart"
+          case (None, Some(maxPart)) => s"AND rw.road_part_number <= $maxPart"
+          case (Some(minPart), None) => s"AND rw.road_part_number >= $minPart"
+          case _ => ""
+        }
+      }
+
+      s"""$query WHERE rn.end_date IS null
+        $dateCondition $elyCondition $roadNumberCondition $roadPartCondition
+        ORDER BY rw.ely, rw.road_number """.stripMargin
+    }
+
+    def fetchRoadNames(queryFilter: String => String): Seq[RoadNameForRoadAddressBrowser] = {
+      val query =
+        """
+      SELECT DISTINCT rw.ely, rw.road_number, rn.road_name
+        FROM road_name rn
+        JOIN ROADWAY rw ON rw.road_number = rn.road_number AND rw.end_date IS NULL AND rw.valid_to IS NULL
+      """
+      val filteredQuery = queryFilter(query)
+      Q.queryNA[RoadNameForRoadAddressBrowser](filteredQuery).iterator.toSeq
+    }
+    fetchRoadNames(withOptionalParameters(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber))
   }
 }

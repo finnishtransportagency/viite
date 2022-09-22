@@ -33,6 +33,7 @@ module.exports = {
         "RoadCollection": "writable",
         "ProjectCollection": "writable",
         "RoadNameCollection": "writable",
+        "RoadAddressCollection": "writable",
         "SelectedLinkProperty": "writable",
         "SelectedProjectLink": "writable",
         "LinkPropertiesModel": "writable",
@@ -53,6 +54,7 @@ module.exports = {
         "LinkPropertyLayer": "writable",
         "NodeLayer": "writable",
         "RoadNamingToolWindow": "writable",
+        "RoadAddressBrowserWindow": "writable",
         "LinkPropertyForm": "writable",
         "NodeSearchForm": "writable",
         "NodeForm": "writable",
@@ -87,7 +89,8 @@ module.exports = {
         "geometrycalculator": "writable",
         "validitydirections": "writable",
         "interact": "writable",
-        "events": "writable"
+        "events": "writable",
+        "XLSX": "readonly"
     },
     "parserOptions": {
         "ecmaVersion": 2019,
