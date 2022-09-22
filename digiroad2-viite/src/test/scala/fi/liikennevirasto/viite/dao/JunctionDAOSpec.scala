@@ -98,7 +98,18 @@ class JunctionDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test fetchJunctionsForRoadAddressBrowser then return junctions based on the query") {
+  test("Test When fetching junctions for road address browser then return junctions based on the query") {
+
+    /**
+      *
+      *           RW1                   RW2
+      * |-----------------X---->--------------->
+      * 0                250  300             500   ADDRESS M
+      *
+      *  X = Junction
+      *
+      * */
+
     runWithRollback {
       val roadNumber = 76
       val roadPartNumber = 1
@@ -157,7 +168,7 @@ class JunctionDAOSpec extends FunSuite with Matchers {
       val resultForQuery1 = dao.fetchJunctionsForRoadAddressBrowser(Some("2022-01-01"), None, Some(roadNumber), None, None)
       resultForQuery1.size should be (1)
       resultForQuery1.head shouldBe a [JunctionForRoadAddressBrowser]
-      resultForQuery1.head.beforeAfter should (contain (1) and contain (2) and have length 2)
+      resultForQuery1.head.beforeAfter should (contain (1) and contain (2) and have length 2) // 1 = Before, 2 = After
 
       val resultForQuery2 = dao.fetchJunctionsForRoadAddressBrowser(Some("1992-01-01"), None, Some(roadNumber), None, None)
       resultForQuery2.size should be (0)
