@@ -12,8 +12,7 @@ import org.scalatra.{ActionResult, BadRequest, Found, Params}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.annotation.tailrec
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future, TimeoutException}
+import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Random
 
@@ -26,21 +25,17 @@ object ApiUtils {
     else 300
 
   val MAX_WAIT_TIME_SECONDS: Int = 20
-  val MAX_RESPONSE_SIZE_BYTES: Long = 1024 * 1024 * 10 // 10Mb in bytes
   val MAX_RETRIES: Int = 540 // 3 hours / 20sec per retry
 
   /**
     * Avoid API Gateway restrictions
     * API Gateway timeouts if response is not received in 30 sec
-    *  -> Return redirect to same url with retry param if query is not finished within maxWaitTime
+    *  -> Return redirect to same url with retry param
     *  -> Save response to S3 when its ready (access with pre-signed url)
-    * API Gateway maximum response body size is 10 Mb
-    *  -> Save bigger responses to S3 (access with pre-signed url)
     */
   def avoidRestrictions[T](requestId: String, request: HttpServletRequest, params: Params,
                            responseType: String = "json")(f: Params => T): Any = {
     if (!ViiteProperties.awsConnectionEnabled) return f(params)
-
     val queryString = if (request.getQueryString != null) s"?${request.getQueryString}" else ""
     val path = "/viite" + request.getRequestURI + queryString
     val workId = getWorkId(requestId, params, responseType) // Used to name s3 objects
@@ -81,32 +76,12 @@ object ApiUtils {
   }
 
   def newQuery[T](workId: String, queryId: String, path: String, f: Params => T, params: Params, responseType: String): Any = {
-    val ret = Future { f(params) }
-    try {
-      val response = Await.result(ret, Duration.apply(15L, TimeUnit.SECONDS))
-      response match {
-        case _: ActionResult => response
-        case _ =>
-          val responseString = formatResponse(response, responseType)
-          val responseSize = responseString.getBytes("utf-8").length
-          if (responseSize < MAX_RESPONSE_SIZE_BYTES) {
-            logger.info(s"API LOG $queryId: Completed the query at ${DateTime.now} without any redirects.")
-            response
-          }
-          else {
-            Future { s3Service.saveFileToS3(s3Bucket, workId, responseString, responseType) }
-            redirectToUrl(path, queryId, Some(1))
-          }
-      }
-    } catch {
-      case _: TimeoutException =>
-        Future { // Complete query and save results to s3 in future
-          val finished = Await.result(ret, Duration.Inf)
-          val responseBody = formatResponse(finished,  responseType)
-          s3Service.saveFileToS3(s3Bucket, workId, responseBody, responseType)
-        }
-        redirectToUrl(path, queryId, Some(1))
+    Future { // Complete query and save results to s3 in future
+      val finished = f(params)
+      val responseBody = formatResponse(finished,  responseType)
+      s3Service.saveFileToS3(s3Bucket, workId, responseBody, responseType)
     }
+    redirectToUrl(path, queryId, Some(1))
   }
 
   def formatResponse(content: Any, responseType: String): String = {
