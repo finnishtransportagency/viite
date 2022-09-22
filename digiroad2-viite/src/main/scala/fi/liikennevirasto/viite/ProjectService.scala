@@ -1324,9 +1324,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       replaceable -> New link part should replace New existing part if:
         1. Action is LinkStatus.New, LinkStatus.Transfer or LinkStatus.Numbering
         2. New road or part is different from existing one
-        3. All New links in existing part are in selected links for New part
+        3. All New links in existing part are in selected links for New part OR action is LinkStatus.Numbering
+        (Numbering changes all links that are on the same part regardless of how many of the links are actually selected)
        */
-      val replaceable = (linkStatus == New || linkStatus == Transfer || linkStatus == Numbering) && (reservedPart.roadNumber != newRoadNumber || reservedPart.roadPartNumber != newRoadPartNumber) && newSavedLinks.nonEmpty && newSavedLinks.map(_.id).toSet.subsetOf(ids)
+      val replaceable = (linkStatus == New || linkStatus == Transfer || linkStatus == Numbering) && (reservedPart.roadNumber != newRoadNumber || reservedPart.roadPartNumber != newRoadPartNumber) && newSavedLinks.nonEmpty && (newSavedLinks.map(_.id).toSet.subsetOf(ids) || linkStatus == LinkStatus.Numbering)
       (replaceable, reservedPart.roadNumber, reservedPart.roadPartNumber)
     }
 
