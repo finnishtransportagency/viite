@@ -252,16 +252,15 @@ object Extractor {
     val linkGeometryWKTForApi = Map("geometryWKT" -> (s"LINESTRING ZM (${path.map(point => anyToDouble(point(0)).get + " " + anyToDouble(point(1)).get + " " + anyToDouble(point(2)).get + " " + anyToDouble(point(3)).get).mkString(", ")})"))
 
     val linkId = attributes("id").asInstanceOf[String]
-//    val municipalityCode = Try(attributes.getOrElse("municipalitycode", attributes("MUNICIPALITYCODE")).asInstanceOf[String].toInt).getOrElse(throw new NoSuchElementException(s"Missing mandatory municipalityCode. Check data for linkId: $linkId from $linkGeomSource."))
+    val municipalityCode = Try(attributes("municipalitycode").asInstanceOf[String].toInt).getOrElse(throw new NoSuchElementException(s"Missing mandatory municipalityCode. Check data for linkId: $linkId from $linkGeomSource."))
 
     val geometryLength: Double = anyToDouble(attributes("horizontallength")).getOrElse(0.0)
 
     val roadClassCode = attributes("roadclass").asInstanceOf[String].toInt
-
 //    val roadClass = featureClassCodeToFeatureClass.getOrElse(roadClassCode, FeatureClass.AllOthers)
 
-    RoadLink(linkId, linkGeometry, geometryLength, extractAdministrativeClass(attributes), -1, extractTrafficDirection(attributes), extractModifiedAt(attributes).map(_.toString), None, extractAttributes(attributes,validFromDate.get,lastEditedDate.get,startTime.get)
-      ++ linkGeometryForApi ++ linkGeometryWKTForApi, extractLifecycleStatus(attributes), linkGeomSource)
+    val modifiedBy = "KGV"
+    RoadLink(linkId, linkGeometry, geometryLength, extractAdministrativeClass(attributes), extractTrafficDirection(attributes), extractModifiedAt(attributes).map(_.toString), Some(modifiedBy), extractAttributes(attributes, validFromDate.get, lastEditedDate.get, startTime.get) ++ linkGeometryForApi ++ linkGeometryWKTForApi, extractLifecycleStatus(attributes), linkGeomSource, municipalityCode)
 
 //    RoadLinkFetched(linkId, municipalityCode,
 //      linkGeometry,

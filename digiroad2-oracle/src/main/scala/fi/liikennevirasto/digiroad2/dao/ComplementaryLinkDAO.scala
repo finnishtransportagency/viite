@@ -51,37 +51,17 @@ class ComplementaryLinkDAO {
       attributes += "datasource" -> r.nextIntOption()
       val administrativeClass = AdministrativeClass(r.nextInt())
       val municipalityCode = r.nextInt()
-      attributes += "municipalitycode" -> municipalityCode
-      attributes += "featureclass " -> r.nextIntOption() // vvh MTKGROUP
-      r.nextIntOption() // vvh MTKCLASS
-      //      val featureClass = r.nextIntOption() match { // vvh MTKCLASS
-//        case Some(roadclass) => Extractor.featureClassCodeToFeatureClass(roadclass)
-//        case None            => FeatureClass.AllOthers
-//      }
-      attributes ++= Map(
-        "roadnamefin"    -> r.nextStringOption(),
-        "roadnameswe"    -> r.nextStringOption(),
-        "roadnamesme"    -> r.nextStringOption(),
-        "roadnamesmn"    -> r.nextStringOption(),
-        "roadnamesms"    -> r.nextStringOption(),
-        "roadnumber"     -> r.nextIntOption(),
-        "roadpartnumber" -> r.nextIntOption(),
-        "surfacetype"    -> r.nextIntOption()
-      )
+      r.skip //nextIntOption() // vvh MTKCLASS
       val lifecycleStatus = LifecycleStatus(r.nextInt())
-      r.nextIntOption() //TrafficDirection(r.nextIntOption().getOrElse(TrafficDirection.UnknownDirection.value))
-      attributes ++= Map(
-        "surfacerelation" -> r.nextIntOption(),
-        "xyaccuracy"      -> r.nextDoubleOption(),
-        "zaccuracy"       -> r.nextDoubleOption()
-      )
+      r.skip //TrafficDirection
+      r.skip // surfacerelation
+      r.skip // xyaccuracy
+      r.skip // zaccuracy
       val length = r.nextDouble()
-      Map(
-        "addressfromleft"  -> r.nextIntOption(),
-        "addresstoleft"    -> r.nextIntOption(),
-        "addressfromright" -> r.nextIntOption(),
-        "addresstoright"   -> r.nextIntOption()
-      )
+      r.skip // addressfromleft
+      r.skip // addresstoleft
+      r.skip // addressfromright
+      r.skip // addresstoright
       val modifiedAt = extractModifiedAt(Map(
         "starttime"              -> r.nextDateOption.map(d => formatter.parseDateTime(d.toString)),
         "versionstarttime"       -> r.nextDateOption.map(d => formatter.parseDateTime(d.toString)),
@@ -94,15 +74,9 @@ class ComplementaryLinkDAO {
         val point = geom.getPoint(i - 1)
         geometry = geometry :+ Point(point.x, point.y, point.z)
       }
-
       val linkSource = LinkGeomSource.ComplementaryLinkInterface
 
-//      RoadLink(linkId, municipalityCode, geometry, administrativeClass,
-//         trafficDirection, featureClass , modifiedAt, attributes,
-//        lifecycleStatus, linkSource, length)
-//
-      RoadLink(linkId, geometry, length, administrativeClass, -1, TrafficDirection.UnknownDirection, modifiedAt, None, attributes, lifecycleStatus, linkSource)
-
+      RoadLink(linkId, geometry, length, administrativeClass, TrafficDirection.UnknownDirection, modifiedAt, None, attributes, lifecycleStatus, linkSource, municipalityCode)
     }
   }
 

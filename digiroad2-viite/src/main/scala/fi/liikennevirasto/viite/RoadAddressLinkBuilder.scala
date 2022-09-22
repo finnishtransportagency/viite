@@ -28,7 +28,7 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
     val length = GeometryUtils.geometryLength(geom)
     val VVHRoadName = getVVHRoadName(roadLink.attributes)
     val roadName = roadAddress.roadName
-    val municipalityCode = roadLink.attributes.getOrElse(MunicipalityCode, "0").asInstanceOf[String].toInt
+    val municipalityCode = roadLink.municipalityCode
     val municipalityName = municipalityNamesMapping.getOrElse(municipalityCode, "")
     val administrativeClass = roadAddress.administrativeClass match {
       case AdministrativeClass.Unknown => roadLink.administrativeClass
