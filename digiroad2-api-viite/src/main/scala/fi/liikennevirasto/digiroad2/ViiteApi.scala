@@ -358,6 +358,81 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
     }
   }
 
+  private val getDataForRoadAddressBrowser: SwaggerSupportSyntax.OperationBuilder = (
+    apiOperation[Map[String,Any]]("getDataForRoadAddressBrowser").parameters(
+      queryParam[String]("startDate").description("Situation date (yyyy-MM-dd)"),
+      queryParam[String]("target").description("What data to fetch (Roads, Nodes, Junctions, RoadNames)"),
+      queryParam[Long]("ely").description("Ely number of a road address").optional,
+      queryParam[Long]("roadNumber").description("Road Number of a road address").optional,
+      queryParam[Long]("minRoadPartNumber").description("Min Road Part Number of a road address").optional,
+      queryParam[Long]("maxRoadPartNumber").description("Max Road Part Number of a road address").optional
+    )
+      tags "ViiteAPI - Road Address Browser"
+      summary "Returns data for road address browser based on the search criteria"
+    )
+
+  get("/roadaddressbrowser", operation(getDataForRoadAddressBrowser)) {
+    time(logger, s"GET request for /roadaddressbrowser") {
+      def validateInputs(startDate: Option[String], target: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Boolean = {
+        def parseDate(dateString: Option[String]): Option[DateTime] = {
+          val formatter = DateTimeFormat.forPattern("yyyy-MM-dd")
+          try {
+            if (dateString.isDefined) {
+              Some(formatter.parseDateTime(dateString.get))
+            } else
+              None
+          } catch {
+            case _: IllegalArgumentException => None
+          }
+        }
+
+        val mandatoryInputsDefinedAndValid = parseDate(startDate).isDefined && target.isDefined && ((ely.isDefined && ely.get > 0L && ely.get <= 14L) || (roadNumber.isDefined && roadNumber.get > 0L && roadNumber.get <= 99999L))
+        val optionalRoadPartInputsValid = (minRoadPartNumber, maxRoadPartNumber) match {
+          case (Some(minPart), Some(maxPart)) => minPart >= 1 && minPart <= 999 && maxPart >= 1 && maxPart <= 999 && minPart <= maxPart
+          case (Some(minPart), None) => minPart >= 1 && minPart <= 999
+          case (None, Some(maxPart)) => maxPart >= 1 && maxPart <= 999
+          case (None, None) => true
+        }
+
+        mandatoryInputsDefinedAndValid && optionalRoadPartInputsValid
+      }
+
+      val startDate = params.get("startDate")
+      val target = params.get("target")
+      val ely = params.get("ely").map(_.toLong)
+      val roadNumber = params.get("roadNumber").map(_.toLong)
+      val minRoadPartNumber = params.get("minRoadPartNumber").map(_.toLong)
+      val maxRoadPartNumber = params.get("maxRoadPartNumber").map(_.toLong)
+
+      try {
+        if (validateInputs(startDate, target, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)) {
+          target match {
+            case Some("Roads") =>
+              val roadsForRoadAddressBrowser = roadAddressService.getRoadsForRoadAddressBrowser(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
+              Map("success" -> true, "roads" -> roadsForRoadAddressBrowser.map(roadAddressBrowserRoadsToApi))
+            case Some("Nodes") =>
+              val nodesForRoadAddressBrowser = nodesAndJunctionsService.getNodesForRoadAddressBrowser(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
+              Map("success" -> true, "nodes" -> nodesForRoadAddressBrowser.map(roadAddressBrowserNodesToApi))
+            case Some("Junctions") =>
+              val junctionsForRoadAddressBrowser = nodesAndJunctionsService.getJunctionsForRoadAddressBrowser(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
+              Map("success" -> true, "junctions" -> junctionsForRoadAddressBrowser.map(roadAddressBrowserJunctionsToApi))
+            case Some("RoadNames") =>
+              val roadNamesForRoadAddressBrowser = roadNameService.getRoadNamesForRoadAddressBrowser(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
+              Map("success" -> true, "roadNames" -> roadNamesForRoadAddressBrowser.map(roadAddressBrowserRoadNamesToApi))
+            case _ => Map("success" -> false, "error" -> "Tieosoitteiden haku epäonnistui, haun kohdearvo puuttuu tai on väärin syötetty")
+          }
+        } else
+          Map("success" -> false, "error" -> "Tieosotteiden haku epäonnistui, tarkista syöttämäsi tiedot")
+
+      } catch {
+        case e: Throwable => {
+          logger.error(s"Error fetching data for road address browser ${e}")
+          Map("success" -> false, "error" -> "Tieosoitteiden haku epäonnistui, ota yhteys Viite tukeen")
+        }
+      }
+    }
+  }
+
   private val getProjectAddressLinksByLinkIds: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String,Any]]("getProjectAddressLinksByLinkIds")
       .parameters(
@@ -1453,6 +1528,67 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
       "name" -> roadName.roadName,
       "startDate" -> formatDateTimeToString(roadName.startDate),
       "endDate" -> formatDateTimeToString(roadName.endDate)
+    )
+  }
+
+  def roadAddressBrowserRoadsToApi(road: RoadForRoadAddressBrowser): Map[String, Any] = {
+    Map(
+      "ely" -> road.ely,
+      "roadNumber" -> road.roadNumber,
+      "track" -> road.track,
+      "roadPartNumber" -> road.roadPartNumber,
+      "startAddrM" -> road.startAddrM,
+      "endAddrM" -> road.endAddrM,
+      "lengthAddrM" -> road.roadAddressLengthM,
+      "startDate" -> new SimpleDateFormat("dd.MM.yyyy").format(road.startDate.toDate)
+    )
+  }
+
+  def roadAddressBrowserNodesToApi(node: NodeForRoadAddressBrowser): Map[String, Any] = {
+    Map(
+      "ely" -> node.ely,
+      "roadNumber" -> node.roadNumber,
+      "roadPartNumber" -> node.roadPartNumber,
+      "addrM" -> node.addrM,
+      "startDate" -> new SimpleDateFormat("dd.MM.yyyy").format(node.startDate.toDate),
+      "nodeType" -> node.nodeType.displayValue,
+      "nodeName" -> node.name,
+      "nodeNumber" -> node.nodeNumber
+    )
+  }
+
+  def roadAddressBrowserJunctionsToApi(junction :JunctionForRoadAddressBrowser): Map[String, Any] = {
+    def getBeforeAfterStringValue(): String = {
+      if (junction.beforeAfter.contains(1) && junction.beforeAfter.contains(2))
+        "EJ"
+      else if (junction.beforeAfter.contains(1))
+        "E"
+      else if (junction.beforeAfter.contains(2))
+        "J"
+      else
+        ""
+    }
+
+    Map(
+      "nodeNumber" -> junction.nodeNumber,
+      "nodeCoordinates" -> junction.nodeCoordinates,
+      "nodeName" -> junction.nodeName,
+      "nodeType" -> junction.nodeType.displayValue,
+      "startDate" -> new SimpleDateFormat("dd.MM.yyyy").format(junction.startDate.toDate),
+      "junctionNumber" -> junction.junctionNumber,
+      "roadNumber" -> junction.roadNumber,
+      "track" -> junction.track,
+      "roadPartNumber" -> junction.roadPartNumber,
+      "addrM" -> junction.addrM,
+      "beforeAfter" -> getBeforeAfterStringValue()
+    )
+  }
+
+  def roadAddressBrowserRoadNamesToApi(roadName :RoadNameForRoadAddressBrowser): Map[String, Any] = {
+    Map(
+      "ely" -> roadName.ely,
+      "roadNumber" -> roadName.roadNumber,
+      "roadName" -> roadName.roadName
     )
   }
 
