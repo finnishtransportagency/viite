@@ -76,7 +76,7 @@ class ChangeApi(roadAddressService: RoadAddressService, nodesAndJunctionsService
                     "coordinates" -> link.geometry.map(p => Seq(p.x, p.y, p.z))
                   ),
                   "properties" -> Map(
-                    "functionalClass" -> link.functionalClass,
+//                    "functionalClass" -> link.functionalClass,
 //                    "type" -> link.linkType.value,
                     "length" -> link.length
                   )

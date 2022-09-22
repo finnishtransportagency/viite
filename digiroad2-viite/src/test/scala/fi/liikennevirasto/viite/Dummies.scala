@@ -61,7 +61,7 @@ object Dummies {
   }
 
   def dummyRoadLink(linkId: String, yCoordinates: Seq[Double], linkGeomSource: LinkGeomSource): RoadLink = {
-    RoadLink(linkId, yCoordinates.map(y => Point(0.0, y)), yCoordinates.sum, AdministrativeClass.Municipality, 0, TrafficDirection.TowardsDigitizing, None, None, Map(), UnknownLifecycleStatus, linkGeomSource)
+    RoadLink(linkId, yCoordinates.map(y => Point(0.0, y)), yCoordinates.sum, AdministrativeClass.Municipality, TrafficDirection.TowardsDigitizing, None, None, Map(), UnknownLifecycleStatus, linkGeomSource, 0)
   }
 
   def dummyChangeInfo(changeType: ChangeType, oldId: String, newId: String, oldStartMeasure: Double, oldEndMeasure: Double, newStartMeasure: Double, newEndMeasure: Double, vvhTimeStamp: Long): ChangeInfo = {

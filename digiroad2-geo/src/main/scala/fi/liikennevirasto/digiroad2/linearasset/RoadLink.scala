@@ -20,20 +20,20 @@ trait RoadLinkLike extends PolyLine {
   def modifiedAt:          Option[String]
 }
 
-case class RoadLink(linkId: String, geometry: Seq[Point], length: Double, administrativeClass: AdministrativeClass, functionalClass: Int, trafficDirection: TrafficDirection, modifiedAt: Option[String] = None, modifiedBy: Option[String], attributes: Map[String, Any] = Map(), lifecycleStatus: LifecycleStatus = LifecycleStatus.InUse, linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface)
+case class RoadLink(linkId: String, geometry: Seq[Point], length: Double, administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection, modifiedAt: Option[String] = None, modifiedBy: Option[String], attributes: Map[String, Any] = Map(), lifecycleStatus: LifecycleStatus = LifecycleStatus.InUse, linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, municipalityCode: Int)
     extends RoadLinkLike {
 
   /* vvhTimeStamp Long format for old vvh Long-type linkId compatibility. */
   /* TODO: Simplify this
     * after vvh not used anymore. */ val vvhTimeStamp: Long = Try(new DateTime(attributes.getOrElse("versionstarttime", attributes.get("starttime")).asInstanceOf[String]).getMillis).getOrElse(attributes.getOrElse("LAST_EDITED_DATE", attributes.getOrElse("CREATED_DATE", BigInt(0))).asInstanceOf[BigInt].toLong)
 
-  def municipalityCode: Int = attributes.getOrElse("municipalitycode", attributes.get("MUNICIPALITYCODE")) match {
-    /* TODO:
-          * Simplify this after vvh not used anymore. */ case m: Int => m
-    case m: String => m.asInstanceOf[String].toInt
-    case m: BigInt => m.asInstanceOf[BigInt].intValue()
-    case m: Some[Any] => m.get.toString.toInt
-  }
+//  def municipalityCode: Int = attributes.getOrElse("municipalitycode", attributes.get("MUNICIPALITYCODE")) match {
+//    /* TODO:
+//          * Simplify this after vvh not used anymore. */ case m: Int => m
+//    case m: String => m.asInstanceOf[String].toInt
+//    case m: BigInt => m.asInstanceOf[BigInt].intValue()
+//    case m: Some[Any] => m.get.toString.toInt
+//  }
 
   def roadNumber: Option[String] = attributes.getOrElse("roadnumber", attributes.get("ROADNUMBER")).asInstanceOf[Option[String]]
 }
