@@ -10,8 +10,6 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
 
   def build(pl: ProjectLink, splitPart: Option[ProjectLink] = None): ProjectAddressLink = {
 
-    val linkType = UnknownLinkType
-
     val originalGeometry =
       if (pl.isSplit)
         if (splitPart.nonEmpty)

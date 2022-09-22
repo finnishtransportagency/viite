@@ -14,8 +14,8 @@ class JsonSerializerTest extends FunSuite with Matchers {
   val serializer = new fi.liikennevirasto.viite.util.JsonSerializer
   test("testWriteReadCachedGeometry") {
     val f = File.createTempFile("test", ".cache")
-    val roadLinks = Seq(RoadLink(1L.toString, Seq(Point(0.0, 1.0),Point(0.1, 2.0)), 1.1, AdministrativeClass.State, 5, TrafficDirection.BothDirections, Option("yesterday"), modifiedBy = Option("someone"), Map()),
-      RoadLink(2L.toString, Seq(Point(2.0, 1.0),Point(0.1, 2.0)), 1.1, AdministrativeClass.State, 5, TrafficDirection.BothDirections, Option("yesterday"), modifiedBy = Option("someone"), Map()))
+    val roadLinks = Seq(RoadLink(1L.toString, Seq(Point(0.0, 1.0),Point(0.1, 2.0)), 1.1, AdministrativeClass.State, TrafficDirection.BothDirections, Option("yesterday"), modifiedBy = Option("someone"), Map(), municipalityCode = 257),
+      RoadLink(2L.toString, Seq(Point(2.0, 1.0),Point(0.1, 2.0)), 1.1, AdministrativeClass.State, TrafficDirection.BothDirections, Option("yesterday"), modifiedBy = Option("someone"), Map(), municipalityCode = 257))
     serializer.writeCache(f, roadLinks) should be (true)
     val result = serializer.readCachedGeometry(f)
     result.last should be (roadLinks.last)
@@ -24,15 +24,15 @@ class JsonSerializerTest extends FunSuite with Matchers {
   // Takes some time to run, run manually if needed.
   ignore("testWriteHugeCachedGeometry") {
     val f = File.createTempFile("test", ".cache")
-    val roadLink = RoadLink(1.toString, Seq(Point(0.0, 1.0),Point(0.1, 2.0)), 1.1, AdministrativeClass.State, 5, TrafficDirection.BothDirections, None, modifiedBy = Option("someone"), Map("TO_RIGHT"->104,"versionstarttime"->new DateTime(1476468913000L).toString,"FROM_LEFT"->103,"MTKHEREFLIP"->1,"MTKID"->362888804,
+    val roadLink = RoadLink(1.toString, Seq(Point(0.0, 1.0),Point(0.1, 2.0)), 1.1, AdministrativeClass.State, TrafficDirection.BothDirections, None, modifiedBy = Option("someone"), Map("TO_RIGHT"->104,"versionstarttime"->new DateTime(1476468913000L).toString,"FROM_LEFT"->103,"MTKHEREFLIP"->1,"MTKID"->362888804,
         "ROADNAME_FI"->"Evitskogintie","VERTICALACCURACY"->201,"sourcemodificationtime"-> new DateTime(1379548800000L).toString,"CONSTRUCTIONTYPE"->0,
         "SURFACETYPE"->2,"MTKCLASS"->12122,"ROADPARTNUMBER"->4,"TO_LEFT"->103,
         "geometryWKT"->("LINESTRING ZM (358594.785 6678940.735 57.788000000000466 0, 358599.713 6678945.133 57.78100000000268 6.605100000000675" +
           "358594.785 6678940.735 57.788000000000466 0, 358599.713 6678945.133 57.78100000000268 6.605100000000675" +
           "358594.785 6678940.735 57.788000000000466 0, 358599.713 6678945.133 57.78100000000268 6.605100000000675)"),
         "VERTICALLEVEL"->0,"ROADNAME_SE"->"Evitskogsvägen","MUNICIPALITYCODE"->257,"FROM_RIGHT"->104,
-        "starttime"->new DateTime(1446132842000L).toString,"GEOMETRY_EDITED_DATE"->1476468913000L,"HORIZONTALACCURACY"->3000,"ROADNUMBER"->1130))
-    val hugeList = List.range(1, 500000).map(i => roadLink.copy(linkId = i.toString))
+        "starttime"->new DateTime(1446132842000L).toString,"GEOMETRY_EDITED_DATE"->1476468913000L,"HORIZONTALACCURACY"->3000,"ROADNUMBER"->1130), municipalityCode = 257)
+    val hugeList = List.range(1, 500000).map(i => roadLink.copy(linkId = i.toString, municipalityCode = 257))
     serializer.writeCache(f, hugeList) should be (true)
     f.length() > 1048576 should be (true)
   }
