@@ -33,18 +33,9 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
     else
       roadLink.geometry
     val length = GeometryUtils.geometryLength(geom)
-    val roadNumber = projectLink.roadNumber match {
-      case 0 => roadLink.attributes.getOrElse("ROADNUMBER", projectLink.roadNumber).asInstanceOf[Number].longValue()
-      case _ => projectLink.roadNumber
-    }
-    val roadPartNumber = projectLink.roadPartNumber match {
-      case 0 => roadLink.attributes.getOrElse("ROADPARTNUMBER", projectLink.roadPartNumber).asInstanceOf[Number].longValue()
-      case _ => projectLink.roadPartNumber
-    }
-    val trackCode = projectLink.track.value match {
-//      case 99 => roadLink.attributes.getOrElse(TrackCode, projectLink.track.value).asInstanceOf[Number].intValue()
-      case _ => projectLink.track.value
-    }
+    val roadNumber = projectLink.roadNumber
+    val roadPartNumber = projectLink.roadPartNumber
+    val trackCode = projectLink.track.value
 
     val roadName = projectLink.roadName.getOrElse("")
     val municipalityCode = roadLink.municipalityCode
@@ -75,8 +66,7 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
 
     val municipalityName = municipalityNamesMapping.getOrElse(municipalityCode, "")
 
-    //TODO: Remove old VVH ROADNAME_FI and ROADNAME_SE when not needed any more.
-    ProjectAddressLink(id, linkId, geom, length, roadLink.administrativeClass, roadLink.lifecycleStatus, roadLink.linkSource, administrativeClass, Some(roadLink.attributes.getOrElse(FinnishRoadName, roadLink.attributes.getOrElse("ROADNAME_FI", roadLink.attributes.getOrElse(SwedishRoadName, roadLink.attributes.getOrElse("ROADNAME_SE", "none")))).toString), roadName, municipalityCode, municipalityName, extractModifiedAt(roadLink.attributes), Some("kgv_modified"), roadLink.attributes, roadNumber, roadPartNumber, trackCode, ely, discontinuity.value, startAddrMValue, endAddrMValue, startMValue, endMValue, sideCode, startCalibrationPoint, endCalibrationPoint, anomaly, status, roadwayId, linearLocationId, reversed, connectedLinkId, originalGeometry)
+    ProjectAddressLink(id, linkId, geom, length, roadLink.administrativeClass, roadLink.lifecycleStatus, roadLink.linkSource, administrativeClass, None, roadName, municipalityCode, municipalityName, roadLink.modifiedAt, Some("kgv_modified"), Map(), roadNumber, roadPartNumber, trackCode, ely, discontinuity.value, startAddrMValue, endAddrMValue, startMValue, endMValue, sideCode, startCalibrationPoint, endCalibrationPoint, anomaly, status, roadwayId, linearLocationId, reversed, connectedLinkId, originalGeometry)
   }
 
   private def combineGeometries(split1: ProjectLink, split2: ProjectLink): Option[Seq[Point]] = {

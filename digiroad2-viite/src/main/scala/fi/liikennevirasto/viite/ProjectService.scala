@@ -30,6 +30,7 @@ import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.util.control.NonFatal
+import scala.util.Try
 
 // note, ChangeProject moved here from former ViiteTierekisteriClient at Tierekisteri removal (2021-09)
 case class ChangeProject(id:Long,
@@ -205,19 +206,18 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def fetchPreFillFromVVH(linkId: String, projectId: Long): Either[String, PreFillInfo] = {
-    parsePreFillData(roadLinkService.getRoadLinks(Set(linkId)), projectId = projectId)
+  def fetchPreFillData(linkId   : String, projectId: Long): Either[String, PreFillInfo] = {
+    parsePreFillData(projectLinkDAO.getProjectLinksByLinkId(linkId).filter(_.projectId == projectId), projectId = projectId)
   }
 
-  def parsePreFillData(roadLinks: Seq[RoadLink], projectId: Long = -1000): Either[String, PreFillInfo] = {
+  def parsePreFillData(projectLinks: Seq[ProjectLink], projectId: Long = -1000): Either[String, PreFillInfo] = {
     withDynSession {
-      if (roadLinks.isEmpty) {
-        Left("Link could not be found in KGV")
+      if (projectLinks.isEmpty) {
+        Left(s"Link could not be found from project: $projectId")
       }
       else {
-        val vvhLink = roadLinks.head
-        (vvhLink.attributes.get("roadnumber"), vvhLink.attributes.get("roadpartnumber")) match {
-          case (Some(roadNumber: BigInt), Some(roadPartNumber: BigInt)) =>
+        (projectLinks.head.roadNumber, projectLinks.head.roadPartNumber) match {
+          case (roadNumber: Long, roadPartNumber: Long) =>
             val preFilledRoadName =
               RoadNameDAO.getLatestRoadName(roadNumber.toLong) match {
                 case Some(roadName) => PreFillInfo(roadNumber, roadPartNumber, roadName.roadName, RoadNameSource.RoadAddressSource)
@@ -1743,7 +1743,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   private def newProjectLink(rl: RoadLinkLike, project: Project, roadNumber: Long, roadPartNumber: Long, trackCode: Track, discontinuity: Discontinuity, administrativeClass: AdministrativeClass, ely: Long, roadName: String = "") = {
-    ProjectLink(NewIdValue, roadNumber, roadPartNumber, trackCode, discontinuity, 0L, 0L, 0L, 0L, Some(project.startDate), None, Some(project.modifiedBy), rl.linkId, 0.0, rl.length, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), rl.geometry, project.id, LinkStatus.New, administrativeClass, rl.linkSource, rl.length, 0L, 0L, ely, false, None, rl.roadLinkTimeStamp, roadName = Some(roadName))
+
+    val roadLinkTimestamp: Long = Try(rl.roadLinkTimeStamp).getOrElse(0)
+    ProjectLink(NewIdValue, roadNumber, roadPartNumber, trackCode, discontinuity, 0L, 0L, 0L, 0L, Some(project.startDate), None, Some(project.modifiedBy), rl.linkId, 0.0, rl.length, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), rl.geometry, project.id, LinkStatus.New, administrativeClass, rl.linkSource, rl.length, 0L, 0L, ely, false, None, roadLinkTimestamp, roadName = Some(roadName))
   }
 
   private def newProjectLink(rl: RoadLinkLike, project: Project, splitOptions: SplitOptions): ProjectLink = {
