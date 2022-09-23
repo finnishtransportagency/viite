@@ -19,7 +19,7 @@ class RoadAddressFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   private def dummyRoadLink(linkId: String, yCoordinates: Seq[Double], linkGeomSource: LinkGeomSource): RoadLink = {
-    RoadLink(linkId, yCoordinates.map(y => Point(0.0, y)), yCoordinates.sum - yCoordinates.head, AdministrativeClass.Municipality, TrafficDirection.TowardsDigitizing, None, None, UnknownLifecycleStatus, linkGeomSource, 257)
+    RoadLink(linkId, yCoordinates.map(y => Point(0.0, y)), yCoordinates.sum - yCoordinates.head, AdministrativeClass.Municipality, TrafficDirection.TowardsDigitizing, None, None, UnknownLifecycleStatus, linkGeomSource, 257, "")
   }
 
   test("Test adjustToTopology When there is any exists a linear location to be adjusted Then should not have any change set") {

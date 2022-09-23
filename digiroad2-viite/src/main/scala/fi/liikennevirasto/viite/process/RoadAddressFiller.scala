@@ -31,7 +31,7 @@ object RoadAddressFiller {
     val restSegments = sorted.tail
     val allowedDiff = ((linkLength - MaxAllowedMValueError) - lastSegment.endMValue) <= MaxDistanceDiffAllowed
     val adjustments = if ((lastSegment.endMValue < linkLength - MaxAllowedMValueError) && allowedDiff) {
-      restSegments ++ Seq(lastSegment.copy(endMValue = linkLength))
+      restSegments ++ Seq(lastSegment.copy(endMValue = linkLength, sourceId = ""))
     } else {
       segments
     }

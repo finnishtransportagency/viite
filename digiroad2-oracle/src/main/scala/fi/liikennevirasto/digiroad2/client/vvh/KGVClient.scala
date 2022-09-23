@@ -56,7 +56,7 @@ case class ChangeInfo(oldId: Option[String], newId: Option[String], mmlId: Long,
 
 case class HistoryRoadLink(linkId: String, municipalityCode: Int, geometry: Seq[Point], administrativeClass: AdministrativeClass,
                            trafficDirection: TrafficDirection, featureClass: FeatureClass, createdDate:BigInt, endDate: BigInt, attributes: Map[String, Any] = Map(),
-                           lifecycleStatus : LifecycleStatus = LifecycleStatus.InUse, linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, length: Double = 0.0, modifiedAt: Option[String] = None) extends RoadLinkLike {
+                           lifecycleStatus : LifecycleStatus = LifecycleStatus.InUse, linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, length: Double = 0.0, modifiedAt: Option[String] = None, sourceId: String = "") extends RoadLinkLike {
   val roadLinkTimeStamp: Long = attributes.getOrElse("LAST_EDITED_DATE", createdDate).asInstanceOf[BigInt].longValue()
 }
 
