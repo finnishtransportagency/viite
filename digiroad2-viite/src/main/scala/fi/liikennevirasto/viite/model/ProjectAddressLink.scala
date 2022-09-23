@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, _}
 import fi.liikennevirasto.viite.dao.{CalibrationPoint, LinkStatus}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
+import org.joda.time.DateTime
 
 trait ProjectAddressLinkLike extends RoadAddressLinkLike {
   def id: Long
@@ -20,7 +21,6 @@ trait ProjectAddressLinkLike extends RoadAddressLinkLike {
   def municipalityName: String
   def modifiedAt: Option[String]
   def modifiedBy: Option[String]
-  def attributes: Map[String, Any]
   def roadNumber: Long
   def roadPartNumber: Long
   def trackCode: Long
@@ -43,7 +43,7 @@ trait ProjectAddressLinkLike extends RoadAddressLinkLike {
   def roadwayNumber: Long
 }
 
-case class ProjectAddressLink(id: Long, linkId: String, geometry: Seq[Point], length: Double, administrativeClassMML: AdministrativeClass, lifecycleStatus: LifecycleStatus, roadLinkSource: LinkGeomSource, administrativeClass: AdministrativeClass, VVHRoadName: Option[String], roadName: Option[String], municipalityCode: BigInt, municipalityName: String, modifiedAt: Option[String], modifiedBy: Option[String], attributes: Map[String, Any] = Map(), roadNumber: Long, roadPartNumber: Long, trackCode: Long, elyCode: Long, discontinuity: Long, startAddressM: Long, endAddressM: Long, startMValue: Double, endMValue: Double, sideCode: SideCode, startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint], anomaly: Anomaly = Anomaly.None, status: LinkStatus, roadwayId: Long, linearLocationId: Long, reversed: Boolean = false, connectedLinkId: Option[String] = None, originalGeometry: Option[Seq[Point]] = None, roadwayNumber: Long = 0) extends ProjectAddressLinkLike {
+case class ProjectAddressLink(id: Long, linkId: String, geometry: Seq[Point], length: Double, administrativeClassMML: AdministrativeClass, lifecycleStatus: LifecycleStatus, roadLinkSource: LinkGeomSource, administrativeClass: AdministrativeClass, VVHRoadName: Option[String], roadName: Option[String], municipalityCode: BigInt, municipalityName: String, modifiedAt: Option[String], modifiedBy: Option[String], roadNumber: Long, roadPartNumber: Long, trackCode: Long, elyCode: Long, discontinuity: Long, startAddressM: Long, endAddressM: Long, startMValue: Double, endMValue: Double, sideCode: SideCode, startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint], anomaly: Anomaly = Anomaly.None, status: LinkStatus, roadwayId: Long, linearLocationId: Long, reversed: Boolean = false, connectedLinkId: Option[String] = None, originalGeometry: Option[Seq[Point]] = None, roadwayNumber: Long = 0, sourceId: String) extends ProjectAddressLinkLike {
   override def partitioningName: String = {
     if (roadNumber > 0)
       s"$roadNumber/$roadPartNumber/$trackCode"
@@ -55,7 +55,7 @@ case class ProjectAddressLink(id: Long, linkId: String, geometry: Seq[Point], le
     connectedLinkId.nonEmpty || connectedLinkId.contains(0L.toString)
   }
 
-  val vvhTimeStamp: Long = attributes.getOrElse("LAST_EDITED_DATE", attributes.getOrElse("CREATED_DATE", BigInt(0))).asInstanceOf[BigInt].longValue()
+  def roadLinkTimeStamp: Long = new DateTime(modifiedAt.getOrElse(throw new RuntimeException("Roadlink timestamp no available because ModifiedAt was not defined.") )).getMillis
 
   def startCalibrationPointType: CalibrationPointType = {
     if (startCalibrationPoint.isDefined) startCalibrationPoint.get.typeCode

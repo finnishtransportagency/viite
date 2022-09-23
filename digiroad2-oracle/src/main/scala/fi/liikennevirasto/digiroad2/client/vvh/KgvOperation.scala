@@ -1,6 +1,5 @@
 package fi.liikennevirasto.digiroad2.client.vvh
 
-import java.math.BigInteger
 import java.net.URLEncoder
 
 import com.vividsolutions.jts.geom.Polygon
@@ -240,35 +239,16 @@ object Extractor {
 
   def extractFeature(feature: Feature, path: List[List[Double]], linkGeomSource: LinkGeomSource): RoadLink = {
     val attributes = feature.properties
-
-    val validFromDate = Option(BigInteger.valueOf(new DateTime(attributes("sourcemodificationtime").asInstanceOf[String]).getMillis))
-    val lastEditedDate = Option(BigInteger.valueOf(new DateTime(attributes("versionstarttime").asInstanceOf[String]).getMillis))
-    val startTime = Option(BigInteger.valueOf(new DateTime(attributes("starttime").asInstanceOf[String]).getMillis))
-
     val linkGeometry: Seq[Point] = path.map(point => {
       Point(anyToDouble(point(0)).get, anyToDouble(point(1)).get, anyToDouble(point(2)).get)
     })
-    val linkGeometryForApi = Map("points" -> path.map(point => Map("x" -> anyToDouble(point(0)).get, "y" -> anyToDouble(point(1)).get, "z" -> anyToDouble(point(2)).get, "m" -> anyToDouble(point(3)).get)))
-    val linkGeometryWKTForApi = Map("geometryWKT" -> (s"LINESTRING ZM (${path.map(point => anyToDouble(point(0)).get + " " + anyToDouble(point(1)).get + " " + anyToDouble(point(2)).get + " " + anyToDouble(point(3)).get).mkString(", ")})"))
-
+    val sourceid = attributes("sourceid").asInstanceOf[String]
     val linkId = attributes("id").asInstanceOf[String]
     val municipalityCode = Try(attributes("municipalitycode").asInstanceOf[String].toInt).getOrElse(throw new NoSuchElementException(s"Missing mandatory municipalityCode. Check data for linkId: $linkId from $linkGeomSource."))
-
     val geometryLength: Double = anyToDouble(attributes("horizontallength")).getOrElse(0.0)
-
-    val roadClassCode = attributes("roadclass").asInstanceOf[String].toInt
-//    val roadClass = featureClassCodeToFeatureClass.getOrElse(roadClassCode, FeatureClass.AllOthers)
-
     val modifiedBy = "KGV"
-    RoadLink(linkId, linkGeometry, geometryLength, extractAdministrativeClass(attributes), extractTrafficDirection(attributes), extractModifiedAt(attributes).map(_.toString), Some(modifiedBy), extractLifecycleStatus(attributes), linkGeomSource, municipalityCode)
 
-//    RoadLinkFetched(linkId, municipalityCode,
-//      linkGeometry,
-//      extractAdministrativeClass(attributes),
-//      extractTrafficDirection(attributes), roadClass, extractModifiedAt(attributes),
-//      extractAttributes(attributes,validFromDate.get,lastEditedDate.get,startTime.get)
-//      ++ linkGeometryForApi ++ linkGeometryWKTForApi
-//      , extractLifecycleStatus(attributes), linkGeomSource, geometryLength)
+    RoadLink(linkId, linkGeometry, geometryLength, extractAdministrativeClass(attributes), extractTrafficDirection(attributes), extractModifiedAt(attributes).map(_.toString), Some(modifiedBy), extractLifecycleStatus(attributes), linkGeomSource, municipalityCode, sourceid)
   }
 }
 

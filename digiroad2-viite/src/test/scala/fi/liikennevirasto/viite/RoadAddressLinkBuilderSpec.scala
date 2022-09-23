@@ -92,7 +92,7 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
     runWithRollback {
       val roadAddress = RoadAddress(1, 1234, 5, 999, AdministrativeClass.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 12345L.toString, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), Seq(Point(0.0, 0.0), Point(2.0, 9.8), Point(2.0, 9.8), Point(10.0, 19.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
       val attributes1 = Map("starttime"-> (new DateTime(1446132842000L)), "versionstarttime"-> (new DateTime(1476468913000L)), "sourcemodificationtime"-> (new DateTime(1379548800000L)) )
-      val roadlink = RoadLink(linkId = 1L.toString, List(Point(0.0, 0.0), Point(120.0, 0.0)), 120.0, AdministrativeClass.Municipality, TrafficDirection.BothDirections, None, None, municipalityCode = 0)
+      val roadlink = RoadLink(linkId = 1L.toString, List(Point(0.0, 0.0), Point(120.0, 0.0)), 120.0, AdministrativeClass.Municipality, TrafficDirection.BothDirections, None, None, municipalityCode = 0, sourceId = "")
 
       val roadAddressLink = roadAddressLinkBuilder.build(roadlink, roadAddress)
       roadAddressLink.length should be (9.8)
@@ -113,8 +113,8 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
       )
 
     val roadLinks = Seq(
-      RoadLink(1717380.toString, List(Point(358594.785, 6678940.735, 57.788000000000466), Point(358599.713, 6678945.133, 57.78100000000268)), 6.605118318435748, AdministrativeClass.State, BothDirections, Some("14.10.2016 21:15:13"), Some("vvh_modified"), InUse, NormalLinkInterface, 257),
-      RoadLink(1717374.toString, List(Point(358599.713, 6678945.133, 57.78100000000268), Point(358601.644, 6678946.448, 57.771999999997206), Point(358621.812, 6678964.766, 57.41000000000349), Point(358630.04, 6678971.657, 57.10099999999511), Point(358638.064, 6678977.863, 56.78599999999278), Point(358647.408, 6678984.55, 56.31399999999849)), 61.948020518025565, AdministrativeClass.State, BothDirections, Some("14.10.2016 21:15:13"), Some("vvh_modified"), InUse, NormalLinkInterface, 0)
+      RoadLink(1717380.toString, List(Point(358594.785, 6678940.735, 57.788000000000466), Point(358599.713, 6678945.133, 57.78100000000268)), 6.605118318435748, AdministrativeClass.State, BothDirections, Some("14.10.2016 21:15:13"), Some("vvh_modified"), InUse, NormalLinkInterface, 257, ""),
+      RoadLink(1717374.toString, List(Point(358599.713, 6678945.133, 57.78100000000268), Point(358601.644, 6678946.448, 57.771999999997206), Point(358621.812, 6678964.766, 57.41000000000349), Point(358630.04, 6678971.657, 57.10099999999511), Point(358638.064, 6678977.863, 56.78599999999278), Point(358647.408, 6678984.55, 56.31399999999849)), 61.948020518025565, AdministrativeClass.State, BothDirections, Some("14.10.2016 21:15:13"), Some("vvh_modified"), InUse, NormalLinkInterface, 0, "")
     )
     val projectRoadLinks = roadLinks.map {
       rl =>

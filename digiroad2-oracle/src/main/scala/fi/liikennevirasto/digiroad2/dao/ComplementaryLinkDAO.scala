@@ -76,7 +76,7 @@ class ComplementaryLinkDAO {
       }
       val linkSource = LinkGeomSource.ComplementaryLinkInterface
 
-      RoadLink(linkId, geometry, length, administrativeClass, TrafficDirection.UnknownDirection, modifiedAt, None, lifecycleStatus, linkSource, municipalityCode)
+      RoadLink(linkId, geometry, length, administrativeClass, TrafficDirection.UnknownDirection, modifiedAt, None, lifecycleStatus, linkSource, municipalityCode, "")
     }
   }
 

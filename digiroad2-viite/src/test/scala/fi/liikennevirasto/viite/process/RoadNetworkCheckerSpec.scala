@@ -23,18 +23,18 @@ class RoadNetworkCheckerSpec extends FunSuite with Matchers {
       RoadAddress(1L, 1L, 12L, 1, AdministrativeClass.Unknown, Track.RightSide, Discontinuity.Continuous, 5L, 60L, None, None, None, 123.toString, 0.0, 54.948, SideCode.TowardsDigitizing, 0L, (None, None), GeometryUtils.truncateGeometry2D(geometry, 0.0, 54.948), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
       RoadAddress(2L, 1L, 12L, 1, AdministrativeClass.Unknown, Track.RightSide, Discontinuity.Continuous, 60L, 75L, None, None, None, 123.toString, 54.948, 69.844, SideCode.TowardsDigitizing, 0L, (None, None), GeometryUtils.truncateGeometry2D(geometry, 54.948, 69.844), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
     )
-    val link = RoadLink(12L.toString, geometry, 69.844, AdministrativeClass.State, TrafficDirection.TowardsDigitizing, None, None, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, 257)
+    val link = RoadLink(12L.toString, geometry, 69.844, AdministrativeClass.State, TrafficDirection.TowardsDigitizing, None, None, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, 257, "")
     networkChecker.isGeometryChange(link, roadAddressSeq) should be(false)
 
-    val truncatedGeomLink = link.copy(geometry = GeometryUtils.truncateGeometry2D(geometry, 1.01, 69.844), length = 68.834)
+    val truncatedGeomLink = link.copy(geometry = GeometryUtils.truncateGeometry2D(geometry, 1.01, 69.844), length = 68.834, sourceId = "")
 
     networkChecker.isGeometryChange(truncatedGeomLink, roadAddressSeq) should be(true)
 
-    val additionalGeomLink = link.copy(geometry = geometry ++ Seq(Point(60.0, 10.854)), length = 70.854)
+    val additionalGeomLink = link.copy(geometry = geometry ++ Seq(Point(60.0, 10.854)), length = 70.854, sourceId = "")
 
     networkChecker.isGeometryChange(additionalGeomLink, roadAddressSeq) should be(true)
 
-    val subtractedGeom = link.copy(geometry = Seq(Point(0.0, 0.0), Point(59.5, -1.1), Point(59.5, 9.844)), length = 70.454)
+    val subtractedGeom = link.copy(geometry = Seq(Point(0.0, 0.0), Point(59.5, -1.1), Point(59.5, 9.844)), length = 70.454, sourceId = "")
 
     networkChecker.isGeometryChange(subtractedGeom, roadAddressSeq) should be(true)
   }
@@ -46,11 +46,11 @@ class RoadNetworkCheckerSpec extends FunSuite with Matchers {
       RoadAddress(1L, 1L, 12L, 1, AdministrativeClass.Unknown, Track.RightSide, Discontinuity.Continuous, 5L, 60L, None, None, None, 123.toString, 0.0, 54.948, SideCode.TowardsDigitizing, 0L, (None, None), GeometryUtils.truncateGeometry2D(geometry, 0.0, 54.948), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
       RoadAddress(2L, 1L, 12L, 1, AdministrativeClass.Unknown, Track.RightSide, Discontinuity.Continuous, 60L, 75L, None, None, None, 123.toString, 54.948, 69.844, SideCode.TowardsDigitizing, 0L, (None, None), GeometryUtils.truncateGeometry2D(geometry, 54.948, 69.844), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
     )
-    val link = RoadLink(12L.toString, geometry, 69.844, AdministrativeClass.State, TrafficDirection.TowardsDigitizing, None, None, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, 257)
+    val link = RoadLink(12L.toString, geometry, 69.844, AdministrativeClass.State, TrafficDirection.TowardsDigitizing, None, None, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, 257, "")
     networkChecker.isGeometryChange(link, roadAddressSeq) should be(false)
 
-    networkChecker.isGeometryChange(link.copy(geometry = GeometryUtils.truncateGeometry2D(geometry, 0.99, 69.844), length = 68.944), roadAddressSeq) should be(false)
-    networkChecker.isGeometryChange(link.copy(geometry = geometry ++ Seq(Point(60.0, 10.834)), length = 70.834), roadAddressSeq) should be(false)
+    networkChecker.isGeometryChange(link.copy(geometry = GeometryUtils.truncateGeometry2D(geometry, 0.99, 69.844), length = 68.944, sourceId = ""), roadAddressSeq) should be(false)
+    networkChecker.isGeometryChange(link.copy(geometry = geometry ++ Seq(Point(60.0, 10.834)), length = 70.834, sourceId = ""), roadAddressSeq) should be(false)
   }
 
   test("Automatic Merged road addresses that also overlap with the road link should not trigger a floating check") {
@@ -61,7 +61,7 @@ class RoadNetworkCheckerSpec extends FunSuite with Matchers {
     //TODO road address now have the linear location check this value here
     val roadAddressSeq = Seq(RoadAddress(411362, 1L, 12819, 2, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 10, 92, Some(DateTime.parse("2015-08-25T00:00:00.000+03:00")), None, Some("Automatic_merged"), 5515411.toString, 0.0, 69.87700000000001, SideCode.TowardsDigitizing, 1476392565000L, (None, None), roadLinkGeometry, LinkGeomSource.NormalLinkInterface, 4, TerminationCode.NoTermination, 0))
 
-    val link = RoadLink(6474047L.toString, roadLinkGeometry, 69.87700000000001, AdministrativeClass.State, TrafficDirection.TowardsDigitizing, None, None, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, 257)
+    val link = RoadLink(6474047L.toString, roadLinkGeometry, 69.87700000000001, AdministrativeClass.State, TrafficDirection.TowardsDigitizing, None, None, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, 257, "")
 
     networkChecker.isGeometryChange(link, roadAddressSeq) should be(false)
   }
