@@ -260,7 +260,7 @@ object Extractor {
 //    val roadClass = featureClassCodeToFeatureClass.getOrElse(roadClassCode, FeatureClass.AllOthers)
 
     val modifiedBy = "KGV"
-    RoadLink(linkId, linkGeometry, geometryLength, extractAdministrativeClass(attributes), extractTrafficDirection(attributes), extractModifiedAt(attributes).map(_.toString), Some(modifiedBy), extractAttributes(attributes, validFromDate.get, lastEditedDate.get, startTime.get) ++ linkGeometryForApi ++ linkGeometryWKTForApi, extractLifecycleStatus(attributes), linkGeomSource, municipalityCode)
+    RoadLink(linkId, linkGeometry, geometryLength, extractAdministrativeClass(attributes), extractTrafficDirection(attributes), extractModifiedAt(attributes).map(_.toString), Some(modifiedBy), extractLifecycleStatus(attributes), linkGeomSource, municipalityCode)
 
 //    RoadLinkFetched(linkId, municipalityCode,
 //      linkGeometry,
