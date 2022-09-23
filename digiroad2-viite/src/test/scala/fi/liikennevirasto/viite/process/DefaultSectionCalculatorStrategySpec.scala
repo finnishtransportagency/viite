@@ -34,7 +34,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
 
   def setUpSideCodeDeterminationTestData(): Seq[ProjectLink] = {
     //1st four cases, lines parallel to the axis
-    // | Case
+    // | CaseulatorStrategy.assignMValues() When a two track road has a new link on the other trackThen roadway address len
     val geom1 = Seq(Point(10.0, 10.0), Point(10.0, 20.0))
     // | Case
     val geom2 = Seq(Point(10.0, 0.0), Point(10.0, 10.0))

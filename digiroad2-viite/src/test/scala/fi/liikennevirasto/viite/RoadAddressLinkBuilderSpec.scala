@@ -92,7 +92,7 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
     runWithRollback {
       val roadAddress = RoadAddress(1, 1234, 5, 999, AdministrativeClass.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 12345L.toString, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), Seq(Point(0.0, 0.0), Point(2.0, 9.8), Point(2.0, 9.8), Point(10.0, 19.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
       val attributes1 = Map("starttime"-> (new DateTime(1446132842000L)), "versionstarttime"-> (new DateTime(1476468913000L)), "sourcemodificationtime"-> (new DateTime(1379548800000L)) )
-      val roadlink = RoadLink(linkId = 1L.toString, List(Point(0.0, 0.0), Point(120.0, 0.0)), 120.0, AdministrativeClass.Municipality, TrafficDirection.BothDirections, None, None, attributes1, municipalityCode = 0)
+      val roadlink = RoadLink(linkId = 1L.toString, List(Point(0.0, 0.0), Point(120.0, 0.0)), 120.0, AdministrativeClass.Municipality, TrafficDirection.BothDirections, None, None, municipalityCode = 0)
 
       val roadAddressLink = roadAddressLinkBuilder.build(roadlink, roadAddress)
       roadAddressLink.length should be (9.8)
@@ -113,8 +113,8 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
       )
 
     val roadLinks = Seq(
-      RoadLink(1717380.toString, List(Point(358594.785, 6678940.735, 57.788000000000466), Point(358599.713, 6678945.133, 57.78100000000268)), 6.605118318435748, AdministrativeClass.State, BothDirections, Some("14.10.2016 21:15:13"), Some("vvh_modified"), Map("TO_RIGHT" -> 104, "versionstarttime" -> (new DateTime(1476468913000L)), "FROM_LEFT" -> 103, "MTKHEREFLIP" -> 1, "MTKID" -> 362888804, "ROADNAME_FI" -> "Evitskogintie", "VERTICALACCURACY" -> 201, "sourcemodificationtime" -> (new DateTime(1379548800000L)), "LIFECYCLESTATUS" -> 3, "SURFACETYPE" -> 2, "MTKCLASS" -> 12122, "ROADPARTNUMBER" -> 4, "points" -> List(Map("x" -> 358594.785, "y" -> 6678940.735, "z" -> 57.788000000000466, "m" -> 0), Map("x" -> 358599.713, "y" -> 6678945.133, "z" -> 57.78100000000268, "m" -> 6.605100000000675)), "TO_LEFT" -> 103, "geometryWKT" -> "LINESTRING ZM (358594.785 6678940.735 57.788000000000466 0, 358599.713 6678945.133 57.78100000000268 6.605100000000675)", "VERTICALLEVEL" -> 0, "ROADNAME_SE" -> "Evitskogsvägen", "MUNICIPALITYCODE" -> BigInt(257), "FROM_RIGHT" -> 104, "starttime" -> (new DateTime(1446132842000L)), "GEOMETRY_EDITED_DATE" -> BigInt("1476468913000"), "HORIZONTALACCURACY" -> 3000, "ROADNUMBER" -> 1130), InUse, NormalLinkInterface, 257),
-      RoadLink(1717374.toString, List(Point(358599.713, 6678945.133, 57.78100000000268), Point(358601.644, 6678946.448, 57.771999999997206), Point(358621.812, 6678964.766, 57.41000000000349), Point(358630.04, 6678971.657, 57.10099999999511), Point(358638.064, 6678977.863, 56.78599999999278), Point(358647.408, 6678984.55, 56.31399999999849)), 61.948020518025565, AdministrativeClass.State, BothDirections, Some("14.10.2016 21:15:13"), Some("vvh_modified"), Map("TO_RIGHT" -> 98, "versionstarttime" -> (new DateTime(1476468913000L)), "FROM_LEFT" -> 101, "MTKHEREFLIP" -> 1, "MTKID" -> 362888798, "VERTICALACCURACY" -> 201, "sourcemodificationtime" -> (new DateTime(1379548800000L)), "LIFECYCLESTATUS" -> 3, "SURFACETYPE" -> 2, "MTKCLASS" -> 12122, "points" -> List(Map("x" -> 358599.713, "y" -> 6678945.133, "z" -> 57.78100000000268, "m" -> 0), Map("x" -> 358601.644, "y" -> 6678946.448, "z" -> 57.771999999997206, "m" -> 2.336200000005192), Map("x" -> 358621.812, "y" -> 6678964.766, "z" -> 57.41000000000349, "m" -> 29.581399999995483), Map("x" -> 358630.04, "y" -> 6678971.657, "z" -> 57.10099999999511, "m" -> 40.31380000000354), Map("x" -> 358638.064, "y" -> 6678977.863, "z" -> 56.78599999999278, "m" -> 50.45780000000377), Map("x" -> 358647.408, "y" -> 6678984.55, "z" -> 56.31399999999849, "m" -> 61.94800000000396)), "TO_LEFT" -> 97, "geometryWKT" -> "LINESTRING ZM (358599.713 6678945.133 57.78100000000268 0, 358601.644 6678946.448 57.771999999997206 2.336200000005192, 358621.812 6678964.766 57.41000000000349 29.581399999995483, 358630.04 6678971.657 57.10099999999511 40.31380000000354, 358638.064 6678977.863 56.78599999999278 50.45780000000377, 358647.408 6678984.55 56.31399999999849 61.94800000000396)", "VERTICALLEVEL" -> 0, "ROADNAME_SE" -> "Evitskogsvägen", "MUNICIPALITYCODE" -> BigInt(0), "FROM_RIGHT" -> 102, "starttime" -> (new DateTime(1446132842000L)), "GEOMETRY_EDITED_DATE" -> BigInt("1476468913000"), "HORIZONTALACCURACY" -> 3000, "ROADNUMBER" -> 1130), InUse, NormalLinkInterface, 0)
+      RoadLink(1717380.toString, List(Point(358594.785, 6678940.735, 57.788000000000466), Point(358599.713, 6678945.133, 57.78100000000268)), 6.605118318435748, AdministrativeClass.State, BothDirections, Some("14.10.2016 21:15:13"), Some("vvh_modified"), InUse, NormalLinkInterface, 257),
+      RoadLink(1717374.toString, List(Point(358599.713, 6678945.133, 57.78100000000268), Point(358601.644, 6678946.448, 57.771999999997206), Point(358621.812, 6678964.766, 57.41000000000349), Point(358630.04, 6678971.657, 57.10099999999511), Point(358638.064, 6678977.863, 56.78599999999278), Point(358647.408, 6678984.55, 56.31399999999849)), 61.948020518025565, AdministrativeClass.State, BothDirections, Some("14.10.2016 21:15:13"), Some("vvh_modified"), InUse, NormalLinkInterface, 0)
     )
     val projectRoadLinks = roadLinks.map {
       rl =>
@@ -125,16 +125,14 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
     val pal1 = projectRoadLinks.head._2
     val pal2 = projectRoadLinks.tail.head._2
 
-    pal1.roadNumber should be(1130)
-    pal1.roadPartNumber should be(4)
+    pal1.roadNumber should be(0)
+    pal1.roadPartNumber should be(0)
     pal1.trackCode should be(99)
-    pal1.VVHRoadName.get should be("Evitskogintie")
     pal1.municipalityCode should be(BigInt(257))
 
     pal2.roadNumber should be(1130)
     pal2.roadPartNumber should be(0)
     pal2.trackCode should be(0)
-    pal2.VVHRoadName.get should be("Evitskogsvägen")
     pal2.municipalityCode should be(BigInt(0))
   }
 }
