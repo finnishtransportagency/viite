@@ -35,7 +35,7 @@ object StaticTestData {
     val links =
       template match {
         case x: RoadLink => val rl = x.asInstanceOf[RoadLink]
-          geomMap.map{ case (linkId, geom) => rl.copy(linkId = linkId, geometry = geom, municipalityCode = 257)}
+          geomMap.map{ case (linkId, geom) => rl.copy(linkId = linkId, geometry = geom, municipalityCode = 257, sourceId = "")}
       }
     links.asInstanceOf[Seq[T]]
   }

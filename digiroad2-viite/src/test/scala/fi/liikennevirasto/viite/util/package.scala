@@ -1,10 +1,10 @@
 package fi.liikennevirasto.viite
 
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
 import fi.liikennevirasto.viite.dao.Discontinuity.EndOfRoad
@@ -199,11 +199,11 @@ package object util {
   }
 
   def toProjectAddressLink(ral: RoadAddressLinkLike): ProjectAddressLink = {
-    ProjectAddressLink(ral.id, ral.linkId, ral.geometry, ral.length, ral.administrativeClassMML, ral.lifecycleStatus, ral.roadLinkSource, ral.administrativeClass, ral.VVHRoadName, ral.roadName, ral.municipalityCode, ral.municipalityName, ral.modifiedAt, ral.modifiedBy, ral.attributes, ral.roadNumber, ral.roadPartNumber, ral.trackCode, ral.elyCode, ral.discontinuity, ral.startAddressM, ral.endAddressM, ral.startMValue, ral.endMValue, ral.sideCode, ral.startCalibrationPoint, ral.endCalibrationPoint, ral.anomaly, LinkStatus.Unknown, ral.id, ral.linearLocationId)
+    ProjectAddressLink(ral.id, ral.linkId, ral.geometry, ral.length, ral.administrativeClassMML, ral.lifecycleStatus, ral.roadLinkSource, ral.administrativeClass, ral.VVHRoadName, ral.roadName, ral.municipalityCode, ral.municipalityName, ral.modifiedAt, ral.modifiedBy, ral.roadNumber, ral.roadPartNumber, ral.trackCode, ral.elyCode, ral.discontinuity, ral.startAddressM, ral.endAddressM, ral.startMValue, ral.endMValue, ral.sideCode, ral.startCalibrationPoint, ral.endCalibrationPoint, ral.anomaly, LinkStatus.Unknown, ral.id, ral.linearLocationId, sourceId = ral.sourceId)
   }
 
   def backToProjectLink(project: Project)(rl: ProjectAddressLink): ProjectLink = {
-    ProjectLink(rl.id, rl.roadNumber, rl.roadPartNumber, Track.apply(rl.trackCode.toInt), Discontinuity.apply(rl.discontinuity), rl.startAddressM, rl.endAddressM, rl.startAddressM, rl.endAddressM, None, None, rl.modifiedBy, rl.linkId, rl.startMValue, rl.endMValue, rl.sideCode, (rl.startCalibrationPointType, rl.endCalibrationPointType), (rl.startCalibrationPointType, rl.endCalibrationPointType), rl.geometry, project.id, LinkStatus.NotHandled, AdministrativeClass.State, rl.roadLinkSource, GeometryUtils.geometryLength(rl.geometry), if (rl.status == LinkStatus.New) 0 else rl.id, if (rl.status == LinkStatus.New) 0 else rl.linearLocationId, rl.elyCode, reversed = false, None, rl.vvhTimeStamp)
+    ProjectLink(rl.id, rl.roadNumber, rl.roadPartNumber, Track.apply(rl.trackCode.toInt), Discontinuity.apply(rl.discontinuity), rl.startAddressM, rl.endAddressM, rl.startAddressM, rl.endAddressM, None, None, rl.modifiedBy, rl.linkId, rl.startMValue, rl.endMValue, rl.sideCode, (rl.startCalibrationPointType, rl.endCalibrationPointType), (rl.startCalibrationPointType, rl.endCalibrationPointType), rl.geometry, project.id, LinkStatus.NotHandled, AdministrativeClass.State, rl.roadLinkSource, GeometryUtils.geometryLength(rl.geometry), if (rl.status == LinkStatus.New) 0 else rl.id, if (rl.status == LinkStatus.New) 0 else rl.linearLocationId, rl.elyCode, reversed = false, None, rl.roadLinkTimeStamp)
   }
 
 }
