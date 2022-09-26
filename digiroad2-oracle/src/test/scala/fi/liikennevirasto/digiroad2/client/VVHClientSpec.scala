@@ -46,7 +46,7 @@ class VVHClientSpec extends FunSuite with Matchers {
     val frozenApiEnabled = ViiteProperties.vvhRoadlinkFrozen
     if (frozenApiEnabled) {
       val vvhClient = new KgvRoadLink
-      val result = vvhClient.frozenTimeRoadLinkData.fetchByBounds(BoundingRectangle(Point(445000, 7000000), Point(446000, 7005244)))
+      val result = vvhClient.frozenTimeRoadLinkData.queryByMunicipalitiesAndBounds(BoundingRectangle(Point(445000, 7000000), Point(446000, 7005244)), Set[Int]())
       result.size should be > 1
       result.head.getClass.getTypeName should be (classOf[RoadLink].getCanonicalName)
     }

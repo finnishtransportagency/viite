@@ -921,7 +921,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         DateTime.now().plusMonths(2), DateTime.now(), "", Seq(), Seq(), None, None)
 
       val projectLinks = roadwayAddressMapper.getRoadAddressesByRoadway(roadwayDAO.fetchAllByRoadAndPart(road, roadPart)).map(toProjectLink(roadAddressProject))
-      sqlu"""ALTER TABLE project_link DISABLE TRIGGER ALL""".execute
+      projectReservedPartDAO.reserveRoadPart(testProjectId, road, roadPart, user)
       projectLinkDAO.create(projectLinks)
       projectService.fetchPreFillData(projectLinks.head.linkId, roadAddressProject.id) should be(Right(PreFillInfo(road, roadPart, "", RoadNameSource.UnknownSource)))
     }
@@ -938,7 +938,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         DateTime.now().plusMonths(2), DateTime.now(), "", Seq(), Seq(), None, None)
 
       sqlu"""INSERT INTO ROAD_NAME VALUES (nextval('ROAD_NAME_SEQ'), $road, 'road name test', TIMESTAMP '2018-03-23 12:26:36.000000', null, TIMESTAMP '2018-03-23 12:26:36.000000', null, 'test user', TIMESTAMP '2018-03-23 12:26:36.000000')""".execute
-      sqlu"""ALTER TABLE project_link DISABLE TRIGGER ALL""".execute
+      projectReservedPartDAO.reserveRoadPart(testProjectId, road, roadPart, user)
       val projectLinks = roadwayAddressMapper.getRoadAddressesByRoadway(roadwayDAO.fetchAllByRoadAndPart(road, roadPart)).map(toProjectLink(roadAddressProject))
       projectLinkDAO.create(projectLinks)
       projectService.fetchPreFillData(projectLinks.head.linkId, roadAddressProject.id) should be(Right(PreFillInfo(road, roadPart, "road name test", RoadNameSource.RoadAddressSource)))
@@ -956,7 +956,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         DateTime.now().plusMonths(2), DateTime.now(), "", Seq(), Seq(), None, None)
 
       sqlu""" Insert into project_link_name values (nextval('viite_general_seq'), ${roadAddressProject.id}, $road, 'TestRoadName_Project_Link')""".execute
-      sqlu"""ALTER TABLE project_link DISABLE TRIGGER ALL""".execute
+      projectReservedPartDAO.reserveRoadPart(testProjectId, road, roadPart, user)
       val projectLinks = roadwayAddressMapper.getRoadAddressesByRoadway(roadwayDAO.fetchAllByRoadAndPart(road, roadPart)).map(toProjectLink(roadAddressProject))
       projectLinkDAO.create(projectLinks)
       projectService.fetchPreFillData(projectLinks.head.linkId, roadAddressProject.id) should be(Right(PreFillInfo(road, roadPart, "TestRoadName_Project_Link", RoadNameSource.ProjectLinkSource)))
@@ -977,7 +977,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       sqlu"""INSERT INTO ROAD_NAME VALUES (nextval('ROAD_NAME_SEQ'), $road, 'road name test', TIMESTAMP '2018-03-23 12:26:36.000000', null, TIMESTAMP '2018-03-23 12:26:36.000000', null, 'test user', TIMESTAMP '2018-03-23 12:26:36.000000')""".execute
       sqlu""" Insert into project_link_name values (nextval('viite_general_seq'), ${roadAddressProject.id}, $road, 'TestRoadName_Project_Link')""".execute
-      sqlu"""ALTER TABLE project_link DISABLE TRIGGER ALL""".execute
+      projectReservedPartDAO.reserveRoadPart(testProjectId, road, roadPart, user)
 
       val projectLinks = roadwayAddressMapper.getRoadAddressesByRoadway(roadwayDAO.fetchAllByRoadAndPart(road, 10)).map(toProjectLink(roadAddressProject))
       projectLinkDAO.create(projectLinks)
