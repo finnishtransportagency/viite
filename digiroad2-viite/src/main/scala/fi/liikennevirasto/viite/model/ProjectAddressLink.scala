@@ -55,7 +55,7 @@ case class ProjectAddressLink(id: Long, linkId: String, geometry: Seq[Point], le
     connectedLinkId.nonEmpty || connectedLinkId.contains(0L.toString)
   }
 
-  def roadLinkTimeStamp: Long = new DateTime(modifiedAt.getOrElse(throw new RuntimeException("Roadlink timestamp no available because ModifiedAt was not defined.") )).getMillis
+  def roadLinkTimeStamp: Long = new DateTime(modifiedAt.getOrElse(throw new RuntimeException("Roadlink timestamp not available because ModifiedAt was not defined.") )).getMillis
 
   def startCalibrationPointType: CalibrationPointType = {
     if (startCalibrationPoint.isDefined) startCalibrationPoint.get.typeCode
