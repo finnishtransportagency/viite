@@ -2,21 +2,16 @@ package fi.liikennevirasto.digiroad2.client.vvh
 
 import java.net.URLEncoder
 
-import com.vividsolutions.jts.geom.Polygon
-import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.Filter.{combineFiltersWithAnd, withMunicipalityFilter, withRoadNumbersFilter}
-import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.client.vvh.FilterOgc.{combineFiltersWithAnd, withMunicipalityFilter, withRoadNumbersFilter}
 import fi.liikennevirasto.digiroad2.util.{LogUtils, Parallel, ViiteProperties}
 import org.apache.http.HttpStatus
 import org.apache.http.client.config.{CookieSpecs, RequestConfig}
 import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet, HttpRequestBase}
 import org.apache.http.client.ClientProtocolException
 import org.apache.http.impl.client.HttpClients
-import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, StreamInput}
 import org.json4s.jackson.JsonMethods.parse
-import org.slf4j.LoggerFactory
 
 import scala.annotation.tailrec
 import scala.collection.mutable
@@ -46,211 +41,6 @@ object KgvCollection {
   case object LinkCorrespondenceTable extends KgvCollection { def value = "keskilinjavarasto:frozenlinks_vastintaulu" }
 }
 
-object FilterOgc extends Filter {
-
-  val singleFilter      : (String, String) => String = (field:String, value:String) => s"${field}='${value}'"
-  val singleAddQuotation: String => String           = (value:String) => s"'${value}'"
-
-  override def withFilter[T](attributeName: String, ids: Set[T]): String = {
-    if (ids.nonEmpty)
-      s"${attributeName.toLowerCase} IN (${ids.map(t=>singleAddQuotation(t.toString)).mkString(",")})"
-    else ""
-  }
-
-  override def withSourceIdFilter(sourceIds: Set[Long]): String = {
-        withFilter("sourceid", sourceIds)
-  }
-
-  override def withRoadNumbersFilter(roadNumbers: Seq[(Int, Int)], includeAllPublicRoads: Boolean, filter: String = ""): String = {
-        if (roadNumbers.isEmpty)
-          return s"""$filter"""
-        if (includeAllPublicRoads)
-          return withRoadNumbersFilter(roadNumbers, includeAllPublicRoads = false, "adminclass = 1")
-        val limit = roadNumbers.head
-        val filterAdd = s"""(roadnumber >= ${limit._1} and roadnumber <= ${limit._2})"""
-        if (filter == "")
-          withRoadNumbersFilter(roadNumbers.tail, includeAllPublicRoads, filterAdd)
-        else
-          withRoadNumbersFilter(roadNumbers.tail, includeAllPublicRoads, s"""$filter OR $filterAdd""")
-      }
-  /**
-     *
-     * @param polygon to be converted to string
-     * @return string compatible with VVH polygon query
-     */
-  override def stringifyPolygonGeometry(polygon: Polygon): String = {
-    var stringPolygonList: String = ""
-    var polygonString: String = "{rings:[["
-    polygon.getCoordinates
-    if (polygon.getCoordinates.length > 0) {
-      for (point <- polygon.getCoordinates.dropRight(1)) {
-        // drop removes duplicates
-        polygonString += "[" + point.x + "," + point.y + "],"
-      }
-      polygonString = polygonString.dropRight(1) + "]]}"
-      stringPolygonList += polygonString
-    }
-    stringPolygonList
-  }
-
-  override def withMunicipalityFilter(municipalities: Set[Int]): String = {
-    if (municipalities.size == 1) singleFilter("municipalitycode",municipalities.head.toString)
-    else withFilter("municipalitycode",municipalities)
-  }
-
-  override def combineFiltersWithAnd(filter1: String, filter2: String): String = {
-    (filter1.isEmpty, filter2.isEmpty) match {
-      case (true,true) => ""
-      case (true,false) => filter2
-      case (false,true) => filter1
-      case (false,false) => s"$filter1 AND $filter2"
-    }
-  }
-
-  override def combineFiltersWithAnd(filter1: String, filter2: Option[String]): String =   {
-    val lifeCycleStatusFilter = s"lifecyclestatus IN (${LifecycleStatus.filteredLinkStatus.map(_.value).mkString(",")})"
-    combineFiltersWithAnd(lifeCycleStatusFilter, combineFiltersWithAnd(filter2.getOrElse(""), filter1))
-  }
-
-  // Query filters methods
-  override def withLinkIdFilter[T](linkIds: Set[T]): String = {
-    if (linkIds.nonEmpty) withFilter("id",linkIds)
-    else ""
-  }
-
-  override def withMtkClassFilter(ids: Set[Long]): String = {
-    if (ids.nonEmpty) withFilter("roadclass",ids)
-    else ""
-  }
-  def withLifecycleStatusFilter(values: Set[Int]): String = {
-    if (values.nonEmpty) withFilter("lifecyclestatus",values)
-    else ""
-  }
-
-  override def withLastEditedDateFilter(lowerDate: DateTime, higherDate: DateTime): String = {
-    withDateLimitFilter("versionstarttime",lowerDate, higherDate)
-  }
-
-  override def withDateLimitFilter(attributeName: String, lowerDate: DateTime, higherDate: DateTime): String = {
-    s"$attributeName >= $lowerDate and $attributeName <= $higherDate"
-  }
-
-}
-
-object Extractor {
-  lazy val logger = LoggerFactory.getLogger(getClass)
-  val featureClassCodeToFeatureClass: Map[Int, FeatureClass] = Map(
-    12316 -> FeatureClass.TractorRoad,
-    12317 -> FeatureClass.TractorRoad,
-    12318 -> FeatureClass.ShoulderRoad,
-    12141 -> FeatureClass.DrivePath,
-    12314 -> FeatureClass.CycleOrPedestrianPath,
-    12312 -> FeatureClass.WinterRoads,
-    12153 -> FeatureClass.SpecialTransportWithoutGate,
-    12154 -> FeatureClass.SpecialTransportWithGate,
-    12111 -> FeatureClass.CarRoad_Ia,
-    12112 -> FeatureClass.CarRoad_Ib,
-    12121 -> FeatureClass.CarRoad_IIa,
-    12122 -> FeatureClass.CarRoad_IIb,
-    12131 -> FeatureClass.CarRoad_IIIa,
-    12132 -> FeatureClass.CarRoad_IIIb
-  )
-
-  private val trafficDirectionToTrafficDirection: Map[Int, TrafficDirection] = Map(
-    0 -> TrafficDirection.BothDirections,
-    1 -> TrafficDirection.TowardsDigitizing,
-    2 -> TrafficDirection.AgainstDigitizing)
-
-  private  def extractAdministrativeClass(attributes: Map[String, Any]): AdministrativeClass = {
-    if (attributes("adminclass").asInstanceOf[String] != null)
-      Option(attributes("adminclass").asInstanceOf[String].toInt)
-        .map(AdministrativeClass.apply)
-        .getOrElse(AdministrativeClass.Unknown)
-    else AdministrativeClass.Unknown
-  }
-
-  def extractLifecycleStatus(attributes : Map[String, Any]): LifecycleStatus = {
-    if (attributes("lifecyclestatus").asInstanceOf[String] != null)
-      Option(attributes("lifecyclestatus").asInstanceOf[String].toInt)
-        .map(LifecycleStatus.apply)
-        .getOrElse(LifecycleStatus.InUse)
-    else LifecycleStatus.InUse
-  }
-
-  private  def extractTrafficDirection(attributes: Map[String, Any]): TrafficDirection = {
-    if (attributes("directiontype").asInstanceOf[String] != null)
-      Option(attributes("directiontype").asInstanceOf[String].toInt)
-        .map(trafficDirectionToTrafficDirection.getOrElse(_, TrafficDirection.UnknownDirection))
-        .getOrElse(TrafficDirection.UnknownDirection)
-    else TrafficDirection.UnknownDirection
-  }
-
-  private def extractAttributes(attributesMap: Map[String, Any],validFromDate:BigInt,lastEditedDate:BigInt,starttime:BigInt): Map[String, Any] = {
-    attributesMap.filterKeys { x =>
-      Set(
-        "roadnumber",
-        "roadpartnumber",
-        "municipalitycode",
-        "sourceid",
-        "kmtkid",
-        "roadclass",
-        "xyaccuracy",
-        "zaccuracy",
-        "surfacerelation",
-        "lifecyclestatus",
-        "roadnamefin",
-        "roadnameswe",
-        "geometryflip",
-        "starttime",
-        "versionstarttime",
-        "sourcemodificationtime"
-      ).contains(x)
-    }.filter { case (_, value) =>
-      value != null
-    }
-  }
-
-  /**
-   * Extract double value from data. Used for change info start and end measures.
-   */
-  private def anyToDouble(value: Any): Option[Double] = {
-    value match {
-      case null => None
-      case _ => {
-        val doubleValue = Try(value.toString.toDouble).getOrElse(throw new NumberFormatException(s"Failed to convert value: ${value.toString}") )
-        Some(doubleValue)
-      }
-    }
-  }
-
-  def toBigInt(value: Int): BigInt = {
-    Try(BigInt(value)).getOrElse(throw new NumberFormatException(s"Failed to convert value: ${value.toString}"))
-  }
-
-  private def extractModifiedAt(attributes: Map[String, Any]): Option[DateTime] = {
-    val validFromDate = Option(new DateTime(attributes("sourcemodificationtime").asInstanceOf[String]).getMillis)
-    var lastEditedDate : Option[Long] = Option(0)
-    if(attributes.contains("versionstarttime")){
-      lastEditedDate = Option(new DateTime(attributes("versionstarttime").asInstanceOf[String]).getMillis)
-    }
-
-    lastEditedDate.orElse(validFromDate).map(modifiedTime => new DateTime(modifiedTime))
-  }
-
-  def extractFeature(feature: Feature, path: List[List[Double]], linkGeomSource: LinkGeomSource): RoadLink = {
-    val attributes = feature.properties
-    val linkGeometry: Seq[Point] = path.map(point => {
-      Point(anyToDouble(point(0)).get, anyToDouble(point(1)).get, anyToDouble(point(2)).get)
-    })
-    val sourceid = attributes("sourceid").asInstanceOf[String]
-    val linkId = attributes("id").asInstanceOf[String]
-    val municipalityCode = Try(attributes("municipalitycode").asInstanceOf[String].toInt).getOrElse(throw new NoSuchElementException(s"Missing mandatory municipalityCode. Check data for linkId: $linkId from $linkGeomSource."))
-    val geometryLength: Double = anyToDouble(attributes("horizontallength")).getOrElse(0.0)
-    val modifiedBy = "KGV"
-
-    RoadLink(linkId, linkGeometry, geometryLength, extractAdministrativeClass(attributes), extractTrafficDirection(attributes), extractModifiedAt(attributes).map(_.toString), Some(modifiedBy), extractLifecycleStatus(attributes), linkGeomSource, municipalityCode, sourceid)
-  }
-}
 
 trait KgvOperation extends LinkOperationsAbstract{
   type LinkType
@@ -290,18 +80,11 @@ trait KgvOperation extends LinkOperationsAbstract{
     request.addHeader("accept","application/geo+json")
   }
 
-  /**
-   * Constructions Types Allows to return
-   * In Use - 0
-   * Under Construction - 1
-   * Planned - 3
-   */
-
   protected def fetchFeatures(url: String): Either[LinkOperationError, Option[FeatureCollection]] = {
     val request = new HttpGet(url)
     addHeaders(request)
 
-    val client =  HttpClients.custom()
+    val client = HttpClients.custom()
                              .setDefaultRequestConfig( RequestConfig.custom()
                                                                     .setCookieSpec(CookieSpecs.STANDARD)
                                                                     .build())
@@ -325,7 +108,6 @@ trait KgvOperation extends LinkOperationsAbstract{
                 Link(link("title").asInstanceOf[String], link("type").asInstanceOf[String],
                   link("rel").asInstanceOf[String], link("href").asInstanceOf[String])
               )
-
               val nextLink = Try(links.find(_.title=="Next page").get.href).getOrElse("")
               val previousLink = Try(links.find(_.title=="Previous page").get.href).getOrElse("")
               val features = feature("features").asInstanceOf[List[Map[String, Any]]].map(convertToFeature)
@@ -391,11 +173,9 @@ trait KgvOperation extends LinkOperationsAbstract{
       }
     }
 
-    val limit = BATCH_SIZE
-
-    val fut1 = Future(paginateAtomic(baseUrl = baseUrl, limit = limit, position = 0))
-    val fut2 = Future(paginateAtomic(baseUrl = baseUrl, limit = limit, position = limit * 2))
-    val fut3 = Future(paginateAtomic(baseUrl = baseUrl, limit = limit, position = limit * 3))
+    val fut1 = Future(paginateAtomic(baseUrl = baseUrl, limit = BATCH_SIZE, position = 0))
+    val fut2 = Future(paginateAtomic(baseUrl = baseUrl, limit = BATCH_SIZE, position = BATCH_SIZE * 2))
+    val fut3 = Future(paginateAtomic(baseUrl = baseUrl, limit = BATCH_SIZE, position = BATCH_SIZE * 3))
     val items1 = Await.result(fut1, atMost = Duration.Inf)
     val items2 = Await.result(fut2, atMost = Duration.Inf)
     val items3 = Await.result(fut3, atMost = Duration.Inf)
@@ -440,36 +220,6 @@ trait KgvOperation extends LinkOperationsAbstract{
     queryWithPaginationThreaded(s"${restApiEndPoint}/${serviceName}/items?${filterString}&filter-lang=${cqlLang}&crs=${crs}")
   }
 
-  override protected def queryByPolygons(polygon: Polygon): Seq[LinkType] = {
-    if(polygon.getCoordinates.length == 0)
-      return Seq[LinkType]()
-    val filterString  = s"filter=${(s"INTERSECTS(geometry,${encode(polygon.toString)}")})"
-    val queryString = s"?${filterString}&filter-lang=${cqlLang}&crs=${crs}"
-    fetchFeatures(s"${restApiEndPoint}/${serviceName}/items/${queryString}") match {
-      case Right(features) =>features.get.features.map(t=>Extractor.extractFeature(t,t.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
-      case Left(error) => throw new ClientException(error.toString)
-    }
-  }
-
-  override protected def queryLinksIdByPolygons(polygon: Polygon): Seq[String] = {
-    if(polygon.getCoordinates.length == 0)
-      return Seq[String]()
-    val filterString  = s"filter=${(s"INTERSECTS(geometry,${encode(polygon.toString)}")})"
-    val queryString = s"?${filterString}&filter-lang=${cqlLang}&crs=${crs}"
-    fetchFeatures(s"${restApiEndPoint}/${serviceName}/items/${queryString}") match {
-      case Right(features) =>features.get.features.map(_.properties.get("id").asInstanceOf[String])
-      case Left(error) => throw new ClientException(error.toString)
-    }
-  }
-
-  override protected def queryByIds[LinkType](idSet: Set[String],filter: Set[String] => String): Seq[LinkType] = {
-    new Parallel().operation(idSet.grouped(BATCH_SIZE_FOR_SELECT_IN_QUERY).toList.par, 4) {
-      _.flatMap(ids => {
-        queryByFilter(Some(filter(ids)))
-      }).toList
-    }
-  }
-
   override protected def queryByLinkIds[LinkType](linkIds: Set[String], filter: Option[String] = None): Seq[LinkType] = {
     new Parallel().operation(linkIds.grouped(BATCH_SIZE_FOR_SELECT_IN_QUERY).toList.par, 4) {
       _.flatMap(ids => {
@@ -497,19 +247,7 @@ trait KgvOperation extends LinkOperationsAbstract{
     }
   }
 
-  protected def queryByDatetimeAndFilter[LinkType](lowerDate: DateTime, higherDate: DateTime,filter:Option[String]=None): Seq[LinkType] = {
-    val filterString  = if (filter.nonEmpty) s"&filter=${encode(filter.get)}" else ""
-    queryWithPaginationThreaded(s"${restApiEndPoint}/${serviceName}" +
-                                s"/items?datetime=${encode(lowerDate.toString)}/${encode(higherDate.toString)}&filter-lang=${cqlLang}&crs=${crs}${filterString}").asInstanceOf[Seq[LinkType]]
-  }
-
-  protected def queryByLastEditedDate[LinkType](lowerDate: DateTime, higherDate: DateTime): Seq[LinkType] = {
-    val filterString  = s"&filter=${encode(FilterOgc.withLastEditedDateFilter(lowerDate,higherDate))}"
-    queryWithPaginationThreaded(s"${restApiEndPoint}/${serviceName}" +
-                                s"/items?filter-lang=${cqlLang}&crs=${crs}${filterString}").asInstanceOf[Seq[LinkType]]
-  }
-
-  override protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[LinkType] = {
+  override def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[LinkType] = {
     queryByMunicipalitiesAndBounds(bounds, municipalities, None)
   }
 
