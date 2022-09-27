@@ -26,16 +26,18 @@
             const results = roadAddressCollection.getRoads();
             const table = $('<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table"></table>');
             table.append(
-                '<tr>' +
-                    '<th>Ely</th>' +
-                    '<th>Tie</th>' +
-                    '<th>Ajr</th>' +
-                    '<th>Osa</th>' +
-                    '<th>Aet</th>' +
-                    '<th>Let</th>' +
-                    '<th>Pituus</th>' +
-                    '<th>Alkupäivämäärä</th>' +
-                '</tr>'
+                '<thead>' +
+                    '<tr>' +
+                        '<th>Ely</th>' +
+                        '<th>Tie</th>' +
+                        '<th>Ajr</th>' +
+                        '<th>Osa</th>' +
+                        '<th>Aet</th>' +
+                        '<th>Let</th>' +
+                        '<th>Pituus</th>' +
+                        '<th>Alkupäivämäärä</th>' +
+                    '</tr>' +
+                '</thead>'
             );
             results.forEach((resRow) => table.append(
                 '<tr>' +
@@ -56,16 +58,18 @@
             const results = roadAddressCollection.getNodes();
             const table = $('<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table"></table>');
             table.append(
-                '<tr>' +
-                    '<th>Ely</th>' +
-                    '<th>Tie</th>' +
-                    '<th>Osa</th>' +
-                    '<th>Et</th>' +
-                    '<th>Alkupäivämäärä</th>' +
-                    '<th>Tyyppi</th>' +
-                    '<th>Nimi</th>' +
-                    '<th>Solmunumero</th>' +
-                '</tr>'
+                '<thead>' +
+                    '<tr>' +
+                        '<th>Ely</th>' +
+                        '<th>Tie</th>' +
+                        '<th>Osa</th>' +
+                        '<th>Et</th>' +
+                        '<th>Alkupäivämäärä</th>' +
+                        '<th>Tyyppi</th>' +
+                        '<th>Nimi</th>' +
+                        '<th>Solmunumero</th>' +
+                    '</tr>' +
+                '</thead>'
             );
             results.forEach((resRow) => table.append(
                 '<tr>' +
@@ -86,20 +90,22 @@
             const results = roadAddressCollection.getJunctions();
             const table = $('<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table"></table>');
             table.append(
-                '<tr>' +
-                    '<th>Solmu-numero</th>' +
-                    '<th>P-Koord</th>' +
-                    '<th>I-Koord</th>' +
-                    '<th>Nimi</th>' +
-                    '<th>Solmu-tyyppi</th>' +
-                    '<th>Alkupvm</th>' +
-                    '<th>Liittymä-nro</th>' +
-                    '<th>Tie</th>' +
-                    '<th>Ajr</th>' +
-                    '<th>Osa</th>' +
-                    '<th>Et</th>' +
-                    '<th>EJ</th>' +
-                '</tr>'
+                '<thead>' +
+                    '<tr>' +
+                        '<th>Solmu-numero</th>' +
+                        '<th>P-Koord</th>' +
+                        '<th>I-Koord</th>' +
+                        '<th>Nimi</th>' +
+                        '<th>Solmu-tyyppi</th>' +
+                        '<th>Alkupvm</th>' +
+                        '<th>Liittymä-nro</th>' +
+                        '<th>Tie</th>' +
+                        '<th>Ajr</th>' +
+                        '<th>Osa</th>' +
+                        '<th>Et</th>' +
+                        '<th>EJ</th>' +
+                    '</tr>' +
+                '</thead>'
             );
             results.forEach((resRow) => table.append(
                 '<tr>' +
@@ -124,11 +130,13 @@
             const results = roadAddressCollection.getRoadNames();
             const table = $('<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table"></table>');
             table.append(
-                '<tr>' +
-                    '<th>Ely</th>' +
-                    '<th>Tie</th>' +
-                    '<th>Nimi</th>' +
-                '</tr>'
+                '<thead>' +
+                    '<tr>' +
+                        '<th>Ely</th>' +
+                        '<th>Tie</th>' +
+                        '<th>Nimi</th>' +
+                    '</tr>' +
+                '</thead>'
             );
             results.forEach((resRow) => table.append(
                 '<tr>' +
