@@ -1,8 +1,7 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.client.vvh.ChangeType._
-import fi.liikennevirasto.digiroad2.client.vvh.ChangeInfo
+import fi.liikennevirasto.digiroad2.client.kgv.ChangeInfo
+import fi.liikennevirasto.digiroad2.client.kgv.ChangeType._
 import org.slf4j.LoggerFactory
 
 

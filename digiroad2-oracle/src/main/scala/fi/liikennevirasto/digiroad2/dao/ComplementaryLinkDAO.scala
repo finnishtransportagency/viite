@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.dao
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.client.vvh.FilterOgc.withRoadNumbersFilter
+import fi.liikennevirasto.digiroad2.client.kgv.FilterOgc.withRoadNumbersFilter
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}

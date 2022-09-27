@@ -17,8 +17,19 @@ trait RoadLinkLike extends PolyLine {
   def sourceId:            String
 }
 
-case class RoadLink(linkId: String, geometry: Seq[Point], length: Double, administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection, modifiedAt: Option[String] = None, modifiedBy: Option[String], lifecycleStatus: LifecycleStatus = LifecycleStatus.InUse, linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, municipalityCode: Int, sourceId: String)
-  extends RoadLinkLike {
+case class RoadLink(
+                     linkId             : String,
+                     geometry           : Seq[Point],
+                     length             : Double,
+                     administrativeClass: AdministrativeClass,
+                     trafficDirection   : TrafficDirection,
+                     modifiedAt         : Option[String] = None,
+                     modifiedBy         : Option[String],
+                     lifecycleStatus    : LifecycleStatus = LifecycleStatus.InUse,
+                     linkSource         : LinkGeomSource = LinkGeomSource.NormalLinkInterface,
+                     municipalityCode   : Int,
+                     sourceId           : String
+                   ) extends RoadLinkLike {
 
-  def roadLinkTimeStamp: Long = new DateTime(modifiedAt.getOrElse(throw new RuntimeException("Roadlink timestamp not available because ModifiedAt was not defined.") )).getMillis
+  def roadLinkTimeStamp: Long = new DateTime(modifiedAt.getOrElse(throw new RuntimeException("Roadlink timestamp not available because ModifiedAt was not defined."))).getMillis
 }

@@ -1,4 +1,4 @@
-package fi.liikennevirasto.digiroad2.client.vvh
+package fi.liikennevirasto.digiroad2.client.kgv
 
 import fi.liikennevirasto.digiroad2.asset._
 import org.joda.time.DateTime
@@ -32,8 +32,7 @@ trait Filter {
 
 object FilterOgc extends Filter {
 
-  val singleFilter:       (String, String) => String = (field: String, value: String) =>
-    s"${field}='${value}'"
+  val singleFilter:       (String, String) => String = (field: String, value: String) => s"${field}='${value}'"
   val singleAddQuotation: String => String           = (value: String) => s"'${value}'"
 
   override def withSourceIdFilter(sourceIds: Set[Long]): String =
@@ -54,7 +53,7 @@ object FilterOgc extends Filter {
       return withRoadNumbersFilter(roadNumbers, includeAllPublicRoads = false, "adminclass = 1")
     val limit     = roadNumbers.head
     val filterAdd = s"""(roadnumber >= ${limit._1} and roadnumber <= ${limit._2})"""
-    if (filter == "")
+    if ("".equals(filter))
       withRoadNumbersFilter(roadNumbers.tail, includeAllPublicRoads, filterAdd)
     else
       withRoadNumbersFilter(roadNumbers.tail, includeAllPublicRoads, s"""$filter OR $filterAdd""")
@@ -100,5 +99,4 @@ object FilterOgc extends Filter {
                                    higherDate:    DateTime
                                   ): String =
     s"$attributeName >= $lowerDate and $attributeName <= $higherDate"
-
 }

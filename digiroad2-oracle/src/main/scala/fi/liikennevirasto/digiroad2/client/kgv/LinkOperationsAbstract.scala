@@ -1,4 +1,4 @@
-package fi.liikennevirasto.digiroad2.client.vvh
+package fi.liikennevirasto.digiroad2.client.kgv
 
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource}
 import org.json4s.{DefaultFormats, Formats}

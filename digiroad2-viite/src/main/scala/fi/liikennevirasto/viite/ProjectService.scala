@@ -90,7 +90,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   private val logger = LoggerFactory.getLogger(getClass)
   val projectValidator = new ProjectValidator
   val allowedSideCodes = List(SideCode.TowardsDigitizing, SideCode.AgainstDigitizing)
-  val roadAddressLinkBuilder = new RoadAddressLinkBuilder(roadwayDAO, linearLocationDAO, projectLinkDAO)
+  val roadAddressLinkBuilder = new RoadAddressLinkBuilder(roadwayDAO, linearLocationDAO)
 
   val roadNetworkDAO = new RoadNetworkDAO
 
@@ -371,7 +371,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  private def sortRamps(seq: Seq[ProjectLink], linkIds: Seq[String]) = {
+  private def sortRamps(seq: Seq[ProjectLink], linkIds: Seq[String]): Seq[ProjectLink] = {
     if (seq.headOption.exists(isRamp))
       seq.find(l => linkIds.headOption.contains(l.linkId)).toSeq ++ seq.filter(_.linkId != linkIds.headOption.getOrElse(0L))
     else
@@ -454,7 +454,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         }
       })
     })
-    isConnectedLinks && junctionId == None
+    isConnectedLinks && junctionId.isEmpty
   }
 
   def addNewLinksToProject(newLinks: Seq[ProjectLink], projectId: Long, user: String, firstLinkId: String, newTransaction: Boolean = true, discontinuity: Discontinuity): Option[String] = {
@@ -1551,12 +1551,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def recalculateProjectLinks(projectId: Long, userName: String, roadParts: Set[(Long, Long)] = Set(), newTrack: Option[Track] = None, newDiscontinuity: Option[Discontinuity] = None, completelyNewLinkIds: Seq[Long] = Seq()): Unit = {
-    /* Terminate unhandled links left behind. */
-    //    val notHandled = projectLinks.filter(_.status == LinkStatus.NotHandled)
-    //    if (notHandled.nonEmpty) {
-    //      projectLinkDAO.updateProjectLinksStatus(notHandled.map(_.id).toSet, LinkStatus.Terminated, userName)
-    //      projectLinks = projectLinkDAO.fetchProjectLinks(projectId)
-    //    }
 
     logger.info(s"Recalculating project $projectId, parts ${roadParts.map(p => {
       s"${p._1}/${p._2}"

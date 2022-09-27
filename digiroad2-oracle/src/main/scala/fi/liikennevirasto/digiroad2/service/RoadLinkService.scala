@@ -4,10 +4,10 @@ import java.util.concurrent.TimeUnit
 
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh._
+import fi.liikennevirasto.digiroad2.client.kgv._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.util.VVHSerializer
+import fi.liikennevirasto.digiroad2.util.KGVSerializer
 import org.joda.time.DateTime
 import org.slf4j.{Logger, LoggerFactory}
 import slick.jdbc.{GetResult, PositionedResult}
@@ -29,7 +29,7 @@ case class ChangedRoadLinkFetched(link: RoadLink, value: String, createdAt: Opti
   * @param vvhSerializer
   * @param useFrozenLinkInterface
   */
-class RoadLinkService(val kgvClient: KgvRoadLink, val eventbus: DigiroadEventBus, val vvhSerializer: VVHSerializer, val useFrozenLinkInterface: Boolean) {
+class RoadLinkService(val kgvClient: KgvRoadLink, val eventbus: DigiroadEventBus, val vvhSerializer: KGVSerializer, val useFrozenLinkInterface: Boolean) {
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
@@ -193,7 +193,7 @@ class RoadLinkService(val kgvClient: KgvRoadLink, val eventbus: DigiroadEventBus
     val fut = for {
       f2Result <- kgvClient.roadLinkData.fetchByLinkIdsF(linkIds)
       f3Result <- kgvClient.complementaryData.fetchByLinkIdsF(linkIds)
-    } yield (f2Result, f3Result) //yield (f1Result, f2Result, f3Result)
+    } yield (f2Result, f3Result)
 
     val (currentData, complementaryData) = Await.result(fut, Duration.Inf)
     val uniqueHistoryData = Seq[HistoryRoadLink]()

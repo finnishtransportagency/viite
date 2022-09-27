@@ -1,6 +1,6 @@
-package fi.liikennevirasto.digiroad2.client.vvh
+package fi.liikennevirasto.digiroad2.client.kgv
 
-import fi.liikennevirasto.digiroad2.client.vvh.ChangeType._
+import fi.liikennevirasto.digiroad2.client.kgv.ChangeType._
 
 
 case class ChangeInfo(oldId: Option[String], newId: Option[String], mmlId: Long, changeType: ChangeType, oldStartMeasure: Option[Double], oldEndMeasure: Option[Double], newStartMeasure: Option[Double], newEndMeasure: Option[Double], vvhTimeStamp: Long = 0L) {
