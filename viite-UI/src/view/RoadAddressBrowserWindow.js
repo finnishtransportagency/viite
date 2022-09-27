@@ -185,7 +185,8 @@
         function exportDataAsExcelFile() {
             const timeInSeconds = new Date().getTime();
             const fileName = "Tieosoitteet_" + timeInSeconds.toString() + ".xlsx";
-            const wb = XLSX.utils.table_to_book(document.getElementById("roadAddressBrowserTable"));
+            const options = {raw: true};
+            const wb = XLSX.utils.table_to_book(document.getElementById("roadAddressBrowserTable"), options);
             /* Export to file (start a download) */
             XLSX.writeFile(wb, fileName);
         }
