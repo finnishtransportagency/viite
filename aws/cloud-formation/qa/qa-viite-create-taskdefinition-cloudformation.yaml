@@ -80,11 +80,7 @@ Resources:
               Value: 'https://oag.vayla.fi'
             - Name: rasterServiceURL
               Value: 'https://api.vaylapilvi.fi/rasteripalvelu-mml'
-            - Name: vvhRestApiEndPoint
-              Value: 'https://api.vayla.fi/vvhdata/'
-            - Name: vvhRestApiUsername
-              Value: svc_vvh_viite
-            - Name: vvhRoadlink.frozen
+            - Name: kgvRoadlink.frozen
               Value: 'true'
             - Name: vkmUrl
               Value: 'https://api.vaylapilvi.fi'
