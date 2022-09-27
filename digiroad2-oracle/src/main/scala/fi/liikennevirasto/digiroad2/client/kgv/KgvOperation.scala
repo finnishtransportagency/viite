@@ -5,6 +5,7 @@ import java.net.URLEncoder
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.kgv.FilterOgc.{combineFiltersWithAnd, withLinkIdFilter, withMunicipalityFilter, withRoadNumbersFilter}
 import fi.liikennevirasto.digiroad2.util.{LogUtils, Parallel, ViiteProperties}
+import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import org.apache.http.HttpStatus
 import org.apache.http.client.config.{CookieSpecs, RequestConfig}
 import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet, HttpRequestBase}
@@ -173,20 +174,24 @@ trait KgvOperation extends LinkOperationsAbstract{
       }
     }
 
-    val fut1 = Future(paginateAtomic(baseUrl = baseUrl, limit = BATCH_SIZE, position = 0))
-    val fut2 = Future(paginateAtomic(baseUrl = baseUrl, limit = BATCH_SIZE, position = BATCH_SIZE * 2))
-    val fut3 = Future(paginateAtomic(baseUrl = baseUrl, limit = BATCH_SIZE, position = BATCH_SIZE * 3))
-    val items1 = Await.result(fut1, atMost = Duration.Inf)
-    val items2 = Await.result(fut2, atMost = Duration.Inf)
-    val items3 = Await.result(fut3, atMost = Duration.Inf)
-    (items1 ++ items2 ++ items3).flatMap(_.features.par.map(feature=>
-      Extractor.extractFeature(feature,feature.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])).toList
+    val resultF = for { fut1 <- Future(paginateAtomic(baseUrl = baseUrl, limit = BATCH_SIZE, position = 0))
+                        fut2 <- Future(paginateAtomic(baseUrl = baseUrl, limit = BATCH_SIZE, position = BATCH_SIZE * 2))
+                        fut3 <- Future(paginateAtomic(baseUrl = baseUrl, limit = BATCH_SIZE, position = BATCH_SIZE * 3))
+                      } yield (fut1, fut2, fut3)
+
+    //  (Set[FeatureCollection], Set[FeatureCollection], Set[FeatureCollection])
+    val items:(Set[FeatureCollection], Set[FeatureCollection], Set[FeatureCollection]) =
+      time(logger, "Fetch KGV bounding box data") {
+        Await.result(resultF, Duration.Inf)
+      }
+    (items._1 ++ items._2 ++ items._3).flatMap(_.features.par.map(feature=>
+      Extractor.extractFeature(feature, linkGeomSource).asInstanceOf[LinkType])).toList
   }
 
   /**
-   * Returns VVH road links by municipality.
-   * Used by VVHClient.fetchByMunicipalityAndRoadNumbersF(municipality, roadNumbers) and
-   * RoadLinkService.getViiteRoadLinksFromVVH(municipality, roadNumbers).
+   * Returns road links by municipality.
+   * Used by fetchByMunicipalityAndRoadNumbersF(municipality, roadNumbers) and
+   * RoadLinkService.getViiteRoadLinks(municipality, roadNumbers).
    */
   override protected def queryByRoadNumbersAndMunicipality(municipality: Int, roadNumbers: Seq[(Int, Int)]): Seq[LinkType] = {
     val roadNumberFilters = withRoadNumbersFilter(roadNumbers, includeAllPublicRoads = true)
@@ -194,7 +199,7 @@ trait KgvOperation extends LinkOperationsAbstract{
     val queryString = s"?${filterString}&filter-lang=${cqlLang}&crs=${crs}"
 
     fetchFeatures(s"${restApiEndPoint}/${serviceName}/items/${queryString}") match {
-      case Right(features) =>features.get.features.map(t=>Extractor.extractFeature(t,t.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
+      case Right(features) => features.get.features.map(t => Extractor.extractFeature(t, linkGeomSource).asInstanceOf[LinkType])
       case Left(error) => throw new ClientException(error.toString)
     }
   }
@@ -210,7 +215,7 @@ trait KgvOperation extends LinkOperationsAbstract{
     fetchFeatures(s"$restApiEndPoint/${serviceName}/items?bbox=$bbox&filter-lang=$cqlLang&bbox-crs=$bboxCrsType&crs=$crs&$filterString")
     match {
       case Right(features) =>features.get.features.map(feature=>
-        Extractor.extractFeature(feature,feature.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
+        Extractor.extractFeature(feature, linkGeomSource).asInstanceOf[LinkType])
       case Left(error) => throw new ClientException(error.toString)
     }
   }
@@ -239,7 +244,7 @@ trait KgvOperation extends LinkOperationsAbstract{
       fetchFeatures(url)
       match {
         case Right(features) => features.get.features.map(feature=>
-          Extractor.extractFeature(feature,feature.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
+          Extractor.extractFeature(feature, linkGeomSource).asInstanceOf[LinkType])
         case Left(error) => throw new ClientException(error.toString)
       }
     }else {

@@ -74,31 +74,6 @@ object Extractor {
     else TrafficDirection.UnknownDirection
   }
 
-  private def extractAttributes(attributesMap: Map[String, Any],validFromDate:BigInt,lastEditedDate:BigInt,starttime:BigInt): Map[String, Any] = {
-    attributesMap.filterKeys { x =>
-      Set(
-        "roadnumber",
-        "roadpartnumber",
-        "municipalitycode",
-        "sourceid",
-        "kmtkid",
-        "roadclass",
-        "xyaccuracy",
-        "zaccuracy",
-        "surfacerelation",
-        "lifecyclestatus",
-        "roadnamefin",
-        "roadnameswe",
-        "geometryflip",
-        "starttime",
-        "versionstarttime",
-        "sourcemodificationtime"
-      ).contains(x)
-    }.filter { case (_, value) =>
-      value != null
-    }
-  }
-
   /**
    * Extract double value from data. Used for change info start and end measures.
    */
@@ -126,9 +101,9 @@ object Extractor {
     lastEditedDate.orElse(validFromDate).map(modifiedTime => new DateTime(modifiedTime))
   }
 
-  def extractFeature(feature: Feature, path: List[List[Double]], linkGeomSource: LinkGeomSource): RoadLink = {
+  def extractFeature(feature: Feature, linkGeomSource: LinkGeomSource): RoadLink = {
     val attributes = feature.properties
-    val linkGeometry: Seq[Point] = path.map(point => {
+    val linkGeometry: Seq[Point] = feature.geometry.coordinates.map(point => {
       Point(anyToDouble(point(0)).get, anyToDouble(point(1)).get, anyToDouble(point(2)).get)
     })
     val sourceid = attributes("sourceid").asInstanceOf[String]
@@ -137,6 +112,17 @@ object Extractor {
     val geometryLength: Double = anyToDouble(attributes("horizontallength")).getOrElse(0.0)
     val modifiedBy = "KGV"
 
-    RoadLink(linkId, linkGeometry, geometryLength, extractAdministrativeClass(attributes), extractTrafficDirection(attributes), extractModifiedAt(attributes).map(_.toString), Some(modifiedBy), extractLifecycleStatus(attributes), linkGeomSource, municipalityCode, sourceid)
+    RoadLink(
+              linkId,
+              linkGeometry,
+              geometryLength,
+              extractAdministrativeClass(attributes),
+              extractTrafficDirection(attributes),
+              extractModifiedAt(attributes).map(_.toString),
+              Some(modifiedBy),
+              extractLifecycleStatus(attributes),
+              linkGeomSource,
+              municipalityCode,
+              sourceid)
   }
 }
