@@ -74,11 +74,6 @@ class ChangeApi(roadAddressService: RoadAddressService, nodesAndJunctionsService
                   "geometry" -> Map(
                     "type" -> "LineString",
                     "coordinates" -> link.geometry.map(p => Seq(p.x, p.y, p.z))
-                  ),
-                  "properties" -> Map(
-//                    "functionalClass" -> link.functionalClass,
-//                    "type" -> link.linkType.value,
-                    "length" -> link.length
                   )
                 ),
                 "sideCode" -> (link.trafficDirection match {

@@ -24,10 +24,18 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.util.control.NonFatal
 
-class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLocationDAO,
-                         roadNetworkDAO: RoadNetworkDAO, roadwayPointDAO: RoadwayPointDAO, nodePointDAO: NodePointDAO,
-                         junctionPointDAO: JunctionPointDAO, roadwayAddressMapper: RoadwayAddressMapper,
-                         eventbus: DigiroadEventBus, frozenVVH: Boolean) {
+class RoadAddressService(
+                          roadLinkService     : RoadLinkService,
+                          roadwayDAO          : RoadwayDAO,
+                          linearLocationDAO   : LinearLocationDAO,
+                          roadNetworkDAO      : RoadNetworkDAO,
+                          roadwayPointDAO     : RoadwayPointDAO,
+                          nodePointDAO        : NodePointDAO,
+                          junctionPointDAO    : JunctionPointDAO,
+                          roadwayAddressMapper: RoadwayAddressMapper,
+                          eventbus            : DigiroadEventBus,
+                          frozenKGV           : Boolean
+                        ) {
 
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
@@ -48,7 +56,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 
   val defaultStreetNumber = 1
 
-  private def fetchLinearLocationsByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)] = Seq()) = {
+  private def fetchLinearLocationsByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)] = Seq()): (Seq[LinearLocation], Seq[HistoryRoadLink]) = {
     val linearLocations = withDynSession {
       time(logger, "Fetch addresses") {
         linearLocationDAO.fetchLinearLocationByBoundingBox(boundingRectangle, roadNumberLimits)
@@ -118,16 +126,16 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
         linearLocationsAndHistoryRoadLinksF <- boundingBoxResult.roadAddressResultF
       } yield (changeInfoF, roadLinksF, complementaryRoadLinksF, linearLocationsAndHistoryRoadLinksF)
 
-    val (changeInfos, roadLinks, complementaryRoadLinks, (linearLocations, historyRoadLinks)) =
-      time(logger, "Fetch VVH bounding box data") {
+    val (_, roadLinks, complementaryRoadLinks, (linearLocations, _)) =
+      time(logger, "Fetch KGV bounding box data") {
         Await.result(boundingBoxResultF, Duration.Inf)
       }
 
     val allRoadLinks = roadLinks ++ complementaryRoadLinks
 
     //removed apply changes before adjusting topology since in future NLS will give perfect geometry and supposedly, we will not need any changes
-    val (adjustedLinearLocations, changeSet) = if (frozenVVH) (linearLocations, Seq()) else RoadAddressFiller.adjustToTopology(allRoadLinks, linearLocations)
-    if (!frozenVVH)
+    val (adjustedLinearLocations, changeSet) = if (frozenKGV) (linearLocations, Seq()) else RoadAddressFiller.adjustToTopology(allRoadLinks, linearLocations)
+    if (!frozenKGV)
       eventbus.publish("roadAddress:persistChangeSet", changeSet)
 
     val roadAddresses = withDynSession {
@@ -213,7 +221,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   /**
-    * Gets all the road addresses in the given bounding box, without VVH geometry. Also floating road addresses are filtered out.
+    * Gets all the road addresses in the given bounding box, without KGV geometry. Also floating road addresses are filtered out.
     * Indicated to high zoom levels. If the road number limits are given it will also filter all road addresses by those limits.
     *
     * @param boundingRectangle The bounding box
@@ -254,8 +262,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
         linearLocationDAO.fetchRoadwayByLinkId(roadLinks.map(_.linkId).toSet)
       }
     }
-    val (adjustedLinearLocations, changeSet) = if (frozenVVH) (linearLocations, Seq()) else RoadAddressFiller.adjustToTopology(roadLinks, linearLocations)
-    if (!frozenVVH) {
+    val (adjustedLinearLocations, changeSet) = if (frozenKGV) (linearLocations, Seq()) else RoadAddressFiller.adjustToTopology(roadLinks, linearLocations)
+    if (!frozenKGV) {
       //TODO we should think to update both servers with cache at the same time, and before the apply change batch that way we will not need to do any kind of changes here
       eventbus.publish("roadAddress:persistChangeSet", changeSet)
     }

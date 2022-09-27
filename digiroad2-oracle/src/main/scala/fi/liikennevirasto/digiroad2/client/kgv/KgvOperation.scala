@@ -21,9 +21,15 @@ import scala.concurrent.duration.Duration
 import scala.util.Try
 
 sealed case class Link(title:String,`type`: String,rel:String,href:String)
-sealed case class FeatureCollection(`type`: String, features: List[Feature],
-                                    crs: Option[Map[String, Any]] = None, numberReturned:Int=0,
-                                    nextPageLink:String="",previousPageLink:String="")
+
+sealed case class FeatureCollection(
+                                     `type`          : String = "FeatureCollection",
+                                     features        : List[Feature],
+                                     crs             : String = "EPSG%3A3067", // Defined in url
+                                     numberReturned  : Int    = 0,
+                                     nextPageLink    : String = "",
+                                     previousPageLink: String = ""
+                                   )
 sealed case class Feature(`type`: String, geometry: Geometry, properties: Map[String, Any])
 sealed case class Geometry(`type`: String, coordinates: List[List[Double]])
 
@@ -97,9 +103,8 @@ trait KgvOperation extends LinkOperationsAbstract{
           val result = feature("type").toString match {
             case "Feature" =>
                 Some(FeatureCollection(
-                  `type` = "FeatureCollection",
-                  features = List(convertToFeature(feature)),
-                  crs = Try(Some(feature("crs").asInstanceOf[Map[String, Any]])).getOrElse(None)))
+                  features = List(convertToFeature(feature))
+                  ))
             case "FeatureCollection" =>
               val links = feature("links").asInstanceOf[List[Map[String, Any]]].map(link=>
                 Link(link("title").asInstanceOf[String], link("type").asInstanceOf[String],
@@ -109,11 +114,10 @@ trait KgvOperation extends LinkOperationsAbstract{
               val previousLink = Try(links.find(_.title=="Previous page").get.href).getOrElse("")
               val features = feature("features").asInstanceOf[List[Map[String, Any]]].map(convertToFeature)
               Some(FeatureCollection(
-                `type` = "FeatureCollection",
                 features = features,
-                crs = Try(Some(feature("crs").asInstanceOf[Map[String, Any]])).getOrElse(None),
                 numberReturned = feature("numberReturned").asInstanceOf[BigInt].toInt,
-                nextLink,previousLink
+                nextPageLink = nextLink,
+                previousPageLink = previousLink
               ))
             case _ => None
           }

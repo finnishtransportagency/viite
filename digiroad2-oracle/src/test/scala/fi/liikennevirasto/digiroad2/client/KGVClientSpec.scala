@@ -43,7 +43,7 @@ class KGVClientSpec extends FunSuite with Matchers {
     */
 
   test("Test fetchByBounds When giving some bounding box Then should return some data") {
-    val frozenApiEnabled = ViiteProperties.vvhRoadlinkFrozen
+    val frozenApiEnabled = ViiteProperties.kgvRoadlinkFrozen
     if (frozenApiEnabled) {
       val kgvClient = new KgvRoadLink
       val result = kgvClient.frozenTimeRoadLinkData.queryByMunicipalitiesAndBounds(BoundingRectangle(Point(445000, 7000000), Point(446000, 7005244)), Set[Int]())

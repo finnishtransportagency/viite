@@ -28,7 +28,7 @@ object DataFixture {
     new KgvRoadLink
   }
 
-  private lazy val geometryFrozen: Boolean = ViiteProperties.vvhRoadlinkFrozen
+  private lazy val geometryFrozen: Boolean = ViiteProperties.kgvRoadlinkFrozen
 
   val eventBus = new DummyEventBus
   val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer, geometryFrozen)
@@ -38,9 +38,7 @@ object DataFixture {
   val roadwayPointDAO = new RoadwayPointDAO
   val nodePointDAO = new NodePointDAO
   val junctionPointDAO = new JunctionPointDAO
-  val roadAddressService = new RoadAddressService(linkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO,
-    roadwayPointDAO, nodePointDAO, junctionPointDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO),
-    eventBus, ViiteProperties.vvhRoadlinkFrozen)
+  val roadAddressService = new RoadAddressService(linkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), eventBus, ViiteProperties.kgvRoadlinkFrozen)
 
   lazy val continuityChecker = new ContinuityChecker(new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer, geometryFrozen))
 

@@ -58,14 +58,13 @@ object Digiroad2Context {
   val roadNetworkChecker: ActorRef = system.actorOf(Props(classOf[RoadNetworkChecker], roadNetworkService), name = "roadNetworkChecker")
   eventbus.subscribe(roadNetworkChecker, "roadAddress:RoadNetworkChecker")
 
-  lazy val roadAddressService: RoadAddressService = new RoadAddressService(roadLinkService, roadwayDAO, linearLocationDAO,
-    roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, roadwayAddressMapper, eventbus, ViiteProperties.vvhRoadlinkFrozen)
+  lazy val roadAddressService: RoadAddressService = new RoadAddressService(roadLinkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, roadwayAddressMapper, eventbus, ViiteProperties.kgvRoadlinkFrozen)
 
   lazy val projectService: ProjectService = {
     new ProjectService(roadAddressService, roadLinkService, nodesAndJunctionsService, roadwayDAO,
       roadwayPointDAO, linearLocationDAO, projectDAO, projectLinkDAO,
       nodeDAO, nodePointDAO, junctionPointDAO, projectReservedPartDAO, roadwayChangesDAO,
-      roadwayAddressMapper, eventbus, ViiteProperties.vvhRoadlinkFrozen)
+      roadwayAddressMapper, eventbus, ViiteProperties.kgvRoadlinkFrozen)
   }
 
   lazy val roadNetworkService: RoadNetworkService = {
@@ -165,7 +164,7 @@ object Digiroad2Context {
   }
 
   lazy val useFrozenLinkInterface: Boolean = {
-    ViiteProperties.vvhRoadlinkFrozen
+    ViiteProperties.kgvRoadlinkFrozen
   }
 
   lazy val awsService: AwsService = {

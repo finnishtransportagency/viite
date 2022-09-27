@@ -17,8 +17,8 @@ trait ViiteProperties {
   val vvhRestApiEndPoint: String
   val vvhRestApiUsername: String
   val vvhRestApiPassword: String
-  val vvhRoadlinkFrozen: Boolean
-  val kgvEndpoint: String
+  val kgvRoadlinkFrozen : Boolean
+  val kgvEndpoint       : String
   val kgvApiKey: String
   val vkmUrl: String
   val vkmApiKey: String
@@ -69,9 +69,9 @@ class ViitePropertiesFromEnv extends ViiteProperties {
   val rasterServiceApiKey: String = scala.util.Properties.envOrElse("rasterServiceApiKey", null)
   val vvhRestApiEndPoint: String = scala.util.Properties.envOrElse("vvhRestApiEndPoint", null)
   val vvhRestApiUsername: String = scala.util.Properties.envOrElse("vvhRestApiUsername", null)
-  val vvhRestApiPassword: String = scala.util.Properties.envOrElse("vvhRestApiPassword", null)
-  val vvhRoadlinkFrozen: Boolean = scala.util.Properties.envOrElse("vvhRoadlink.frozen", "false").toBoolean
-  val kgvEndpoint: String = scala.util.Properties.envOrElse("kgvEndpoint", null)
+  val vvhRestApiPassword: String  = scala.util.Properties.envOrElse("vvhRestApiPassword", null)
+  val kgvRoadlinkFrozen : Boolean = scala.util.Properties.envOrElse("kgvRoadlink.frozen", "false").toBoolean
+  val kgvEndpoint       : String  = scala.util.Properties.envOrElse("kgvEndpoint", null)
   val kgvApiKey: String = scala.util.Properties.envOrElse("kgvApiKey", null)
   val vkmUrl: String = scala.util.Properties.envOrElse("vkmUrl", null)
   val vkmApiKey: String = scala.util.Properties.envOrElse("vkmApiKey", null)
@@ -155,9 +155,9 @@ class ViitePropertiesFromFile extends ViiteProperties {
   override val rasterServiceApiKey: String = scala.util.Properties.envOrElse("rasterServiceApiKey", envProps.getProperty("rasterServiceApiKey"))
   override val vvhRestApiEndPoint: String = scala.util.Properties.envOrElse("vvhRestApiEndPoint", envProps.getProperty("vvhRestApiEndPoint"))
   override val vvhRestApiUsername: String = scala.util.Properties.envOrElse("vvhRestApiUsername", envProps.getProperty("vvhRestApiUsername"))
-  override val vvhRestApiPassword: String = scala.util.Properties.envOrElse("vvhRestApiPassword", envProps.getProperty("vvhRestApiPassword"))
-  override val vvhRoadlinkFrozen: Boolean = envProps.getProperty("vvhRoadlink.frozen", "false").toBoolean
-  override val kgvEndpoint: String = envProps.getProperty("kgvEndpoint", null)
+  override val vvhRestApiPassword: String  = scala.util.Properties.envOrElse("vvhRestApiPassword", envProps.getProperty("vvhRestApiPassword"))
+  override val kgvRoadlinkFrozen : Boolean = envProps.getProperty("kgvRoadlink.frozen", "false").toBoolean
+  override val kgvEndpoint       : String  = envProps.getProperty("kgvEndpoint", null)
   override val kgvApiKey: String = scala.util.Properties.envOrElse("kgvApiKey", envProps.getProperty("kgvApiKey"))
   override val vkmUrl: String = scala.util.Properties.envOrElse("vkmUrl", envProps.getProperty("vkmUrl"))
   override val vkmApiKey: String = scala.util.Properties.envOrElse("vkmApiKey", envProps.getProperty("vkmApiKey"))
@@ -238,9 +238,9 @@ object ViiteProperties {
   lazy val rasterServiceApiKey: String = properties.rasterServiceApiKey
   lazy val vvhRestApiEndPoint: String = properties.vvhRestApiEndPoint
   lazy val vvhRestApiUsername: String = properties.vvhRestApiUsername
-  lazy val vvhRestApiPassword: String = properties.vvhRestApiPassword
-  lazy val vvhRoadlinkFrozen: Boolean = properties.vvhRoadlinkFrozen
-  lazy val kgvApiKey: String = properties.kgvApiKey
+  lazy val vvhRestApiPassword: String  = properties.vvhRestApiPassword
+  lazy val kgvRoadlinkFrozen : Boolean = properties.kgvRoadlinkFrozen
+  lazy val kgvApiKey: String  = properties.kgvApiKey
   lazy val kgvEndpoint: String = properties.kgvEndpoint
   lazy val vkmUrl: String = properties.vkmUrl
   lazy val vkmApiKey: String = properties.vkmApiKey
