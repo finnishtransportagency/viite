@@ -13,7 +13,7 @@ import org.slf4j.{Logger, LoggerFactory}
 object RoadAddressFiller {
 
   val logger: Logger = LoggerFactory.getLogger(getClass)
-  val roadAddressLinkBuilder = new RoadAddressLinkBuilder(new RoadwayDAO, new LinearLocationDAO, new ProjectLinkDAO)
+  val roadAddressLinkBuilder = new RoadAddressLinkBuilder(new RoadwayDAO, new LinearLocationDAO)
 
   case class LinearLocationAdjustment(linearLocationId: Long, linkId: String, startMeasure: Option[Double], endMeasure: Option[Double], geometry: Seq[Point])
 

@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.asset.AdministrativeClass.State
 import fi.liikennevirasto.digiroad2.asset.LifecycleStatus.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.FrozenLinkInterface
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
-import fi.liikennevirasto.digiroad2.client.vvh.KgvRoadLink
+import fi.liikennevirasto.digiroad2.client.kgv.KgvRoadLink
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase

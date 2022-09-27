@@ -2,12 +2,12 @@ package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.SideCode
-import fi.liikennevirasto.digiroad2.client.vvh.ChangeType._
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
+import fi.liikennevirasto.digiroad2.client.kgv.{ChangeInfo, ChangeType}
+import fi.liikennevirasto.digiroad2.client.kgv.ChangeType._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
+import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.{CalibrationPointReference, LinearLocation}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.ChangeSet
-import fi.liikennevirasto.viite._
 import org.slf4j.LoggerFactory
 
 object ApplyChangeInfoProcess {

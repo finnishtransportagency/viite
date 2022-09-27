@@ -4,9 +4,9 @@ import java.io.{File, FileReader}
 
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh._
+import fi.liikennevirasto.digiroad2.client.kgv._
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike, ValidityPeriodDayOfWeek}
-import fi.liikennevirasto.digiroad2.util.VVHSerializer
+import fi.liikennevirasto.digiroad2.util.KGVSerializer
 import org.json4s.{CustomSerializer, DefaultFormats, Formats}
 import org.json4s.JsonAST.{JInt, JString}
 import org.json4s.jackson.Serialization.read
@@ -223,7 +223,7 @@ object StaticTestData {
   private val geometryMap: Map[String, List[Point]] = points.map(v => v._1.toString -> toGeom(JSON.parseFull(v._2))) //points.mapValues(v => toGeom(JSON.parseFull(v)))
 }
 
-class RoadLinkDeserializer extends VVHSerializer {
+class RoadLinkDeserializer extends KGVSerializer {
   case object SideCodeSerializer extends CustomSerializer[SideCode](format => ( {
     null
   }, {

@@ -2,23 +2,23 @@ package fi.liikennevirasto.digiroad2.service
 
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, DummySerializer}
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh._
+import fi.liikennevirasto.digiroad2.client.kgv._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.util.VVHSerializer
+import fi.liikennevirasto.digiroad2.util.KGVSerializer
 import org.mockito.Mockito._
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import org.scalatest.mockito.MockitoSugar
 
 class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
-  class TestService(vvhClient: KgvRoadLink, eventBus: DigiroadEventBus = new DummyEventBus, vvhSerializer: VVHSerializer = new DummySerializer)
+  class TestService(vvhClient: KgvRoadLink, eventBus: DigiroadEventBus = new DummyEventBus, vvhSerializer: KGVSerializer = new DummySerializer)
     extends RoadLinkService(vvhClient, eventBus, vvhSerializer, false) {
     override def withDynTransaction[T](f: => T): T = f
     override def withDynSession[T](f: => T): T = f
   }
 
-  class RoadLinkTestService(vvhClient: KgvRoadLink, eventBus: DigiroadEventBus = new DummyEventBus, vvhSerializer: VVHSerializer = new DummySerializer)
+  class RoadLinkTestService(vvhClient: KgvRoadLink, eventBus: DigiroadEventBus = new DummyEventBus, vvhSerializer: KGVSerializer = new DummySerializer)
     extends RoadLinkService(vvhClient, eventBus, vvhSerializer, false) {
     override def withDynTransaction[T](f: => T): T = f
     override def withDynSession[T](f: => T): T = f

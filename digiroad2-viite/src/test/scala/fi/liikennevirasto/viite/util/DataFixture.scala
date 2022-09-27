@@ -5,7 +5,7 @@ import java.util.Properties
 import com.googlecode.flyway.core.Flyway
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.client.vvh.{KgvRoadLink}
+import fi.liikennevirasto.digiroad2.client.kgv.KgvRoadLink
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.ds
