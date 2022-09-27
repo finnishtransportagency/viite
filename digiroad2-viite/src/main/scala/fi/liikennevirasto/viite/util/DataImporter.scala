@@ -47,7 +47,7 @@ object DataImporter {
 class DataImporter {
   val logger = LoggerFactory.getLogger(getClass)
 
-  private lazy val geometryFrozen: Boolean = ViiteProperties.vvhRoadlinkFrozen
+  private lazy val geometryFrozen: Boolean = ViiteProperties.kgvRoadlinkFrozen
 
   val Modifier = "dr1conversion"
 
