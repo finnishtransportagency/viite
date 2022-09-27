@@ -155,7 +155,7 @@
 
             } else {
                 // hide the results and notify user to download result table as excel file
-                roadAddrBrowserWindow.append($('<p id="tableTooBigNotification"><b>Tulostaulu liian suuri, lataa tiedostot excel taulukkona</b></p>'));
+                roadAddrBrowserWindow.append($('<p id="tableTooBigNotification"><b>Tulostaulu liian suuri, lataa tulokset excel taulukkona</b></p>'));
                 roadAddrBrowserWindow.append(table.hide());
             }
         }
