@@ -7,7 +7,7 @@ import org.joda.time.format.ISODateTimeFormat
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.GeometryUtils
-import fi.liikennevirasto.digiroad2.client.vvh.{HistoryRoadLink, KgvRoadLink}
+import fi.liikennevirasto.digiroad2.client.kgv.{HistoryRoadLink, KgvRoadLink}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.viite._

@@ -1,4 +1,4 @@
-package fi.liikennevirasto.digiroad2.client.vvh
+package fi.liikennevirasto.digiroad2.client.kgv
 
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LifecycleStatus, LinkGeomSource, TrafficDirection}
 import fi.liikennevirasto.digiroad2.Point

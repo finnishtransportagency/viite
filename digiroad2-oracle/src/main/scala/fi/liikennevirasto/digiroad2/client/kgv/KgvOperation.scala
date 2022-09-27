@@ -1,9 +1,9 @@
-package fi.liikennevirasto.digiroad2.client.vvh
+package fi.liikennevirasto.digiroad2.client.kgv
 
 import java.net.URLEncoder
 
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.FilterOgc.{combineFiltersWithAnd, withMunicipalityFilter, withRoadNumbersFilter}
+import fi.liikennevirasto.digiroad2.client.kgv.FilterOgc.{combineFiltersWithAnd, withLinkIdFilter, withMunicipalityFilter, withRoadNumbersFilter}
 import fi.liikennevirasto.digiroad2.util.{LogUtils, Parallel, ViiteProperties}
 import org.apache.http.HttpStatus
 import org.apache.http.client.config.{CookieSpecs, RequestConfig}
@@ -30,9 +30,7 @@ sealed case class Geometry(`type`: String, coordinates: List[List[Double]])
 trait KgvCollection {
   def value :String
 }
-object DummyCollection {
-  case object Dummy extends KgvCollection { def value = "" }
-}
+
 object KgvCollection {
   case object Frozen                  extends KgvCollection { def value = "keskilinjavarasto:frozenlinks" }
   case object Changes                 extends KgvCollection { def value = "keskilinjavarasto:change" }
@@ -41,22 +39,21 @@ object KgvCollection {
   case object LinkCorrespondenceTable extends KgvCollection { def value = "keskilinjavarasto:frozenlinks_vastintaulu" }
 }
 
-
 trait KgvOperation extends LinkOperationsAbstract{
   type LinkType
   type Content = FeatureCollection
 
   protected val linkGeomSource: LinkGeomSource
-  protected def serviceName: String
-
-  private val cqlLang = "cql-text"
-  private val bboxCrsType = "EPSG%3A3067"
-  private val crs = "EPSG%3A3067"
-  private val WARNING_LEVEL: Int = 10
+  private val cqlLang                             = "cql-text"
+  private val bboxCrsType                         = "EPSG%3A3067"
+  private val crs                                 = "EPSG%3A3067"
+  private val WARNING_LEVEL                 : Int = 10
   // This is way to bypass AWS API gateway 10MB limitation, tune it if item size increase or degrease
-  private val BATCH_SIZE: Int = 4999
+  private val BATCH_SIZE                    : Int = 4999
   // Limit size of url query, Too big query string result error 414
   private val BATCH_SIZE_FOR_SELECT_IN_QUERY: Int = 150
+
+  protected def serviceName: String
 
   override protected implicit val jsonFormats = DefaultFormats.preservingEmptyValues
 
@@ -140,9 +137,8 @@ trait KgvOperation extends LinkOperationsAbstract{
     }
   }
 
-  private def paginationRequest(base:String, limit:Int, startIndex:Int = 0, firstRequest:Boolean = true ): (String, Int) = {
-    if (firstRequest) (s"${base}&limit=${limit}&startIndex=${startIndex}",limit)
-    else (s"${base}&limit=${limit}&startIndex=${startIndex}",startIndex+limit)
+  private def paginationRequest(base: String, limit: Int, startIndex: Int = 0): (String, Int) = {
+    (s"${base}&limit=${limit}&startIndex=${startIndex}", startIndex+limit)
   }
 
   private def queryWithPaginationThreaded(baseUrl: String = ""): Seq[LinkType] = {
@@ -150,7 +146,7 @@ trait KgvOperation extends LinkOperationsAbstract{
 
     @tailrec
     def paginateAtomic(finalResponse: Set[FeatureCollection] = Set(), baseUrl: String = "", limit: Int, position: Int,counter:Int =0): Set[FeatureCollection] = {
-      val (url, newPosition) = paginationRequest(baseUrl, limit, startIndex = position, firstRequest = false)
+      val (url, newPosition) = paginationRequest(baseUrl, limit, startIndex = position)
       if (!pageAllReadyFetched.contains(url)) {
         val result = fetchFeatures(url) match {
           case Right(features) => features
@@ -203,7 +199,7 @@ trait KgvOperation extends LinkOperationsAbstract{
                                                         filter: Option[String]): Seq[LinkType] = {
     val bbox = s"${bounds.leftBottom.x},${bounds.leftBottom.y},${bounds.rightTop.x},${bounds.rightTop.y}"
     val filterString  = if (municipalities.nonEmpty || filter.isDefined){
-      s"filter=${encode(FilterOgc.combineFiltersWithAnd(FilterOgc.withMunicipalityFilter(municipalities), filter))}"
+      s"filter=${encode(combineFiltersWithAnd(withMunicipalityFilter(municipalities), filter))}"
     }else {
       ""
     }
@@ -216,7 +212,7 @@ trait KgvOperation extends LinkOperationsAbstract{
   }
 
   override protected def queryByMunicipality(municipality: Int, filter: Option[String] = None): Seq[LinkType] = {
-    val filterString  = s"filter=${encode(FilterOgc.combineFiltersWithAnd(FilterOgc.withMunicipalityFilter(Set(municipality)), filter))}"
+    val filterString  = s"filter=${encode(combineFiltersWithAnd(withMunicipalityFilter(Set(municipality)), filter))}"
     queryWithPaginationThreaded(s"${restApiEndPoint}/${serviceName}/items?${filterString}&filter-lang=${cqlLang}&crs=${crs}")
   }
 
@@ -229,7 +225,7 @@ trait KgvOperation extends LinkOperationsAbstract{
   }
 
   protected def queryByLinkIdsUsingFilter[LinkType](linkIds: Set[String],filter: Option[String]): Seq[LinkType] = {
-    queryByFilter(Some(FilterOgc.combineFiltersWithAnd(FilterOgc.withLinkIdFilter(linkIds), filter)))
+    queryByFilter(Some(combineFiltersWithAnd(withLinkIdFilter(linkIds), filter)))
   }
 
   protected def queryByFilter[LinkType](filter:Option[String],pagination:Boolean = false): Seq[LinkType] = {
@@ -238,7 +234,7 @@ trait KgvOperation extends LinkOperationsAbstract{
     if(!pagination){
       fetchFeatures(url)
       match {
-        case Right(features) =>features.get.features.map(feature=>
+        case Right(features) => features.get.features.map(feature=>
           Extractor.extractFeature(feature,feature.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
         case Left(error) => throw new ClientException(error.toString)
       }

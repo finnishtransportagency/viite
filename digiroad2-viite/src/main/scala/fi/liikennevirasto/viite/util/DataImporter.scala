@@ -7,7 +7,7 @@ import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, SideCode}
-import fi.liikennevirasto.digiroad2.client.vvh.KgvRoadLink
+import fi.liikennevirasto.digiroad2.client.kgv.KgvRoadLink
 import fi.liikennevirasto.digiroad2.dao.SequenceResetterDAO
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService

@@ -3,7 +3,7 @@ package fi.liikennevirasto.viite
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils}
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LinkGeomSource, _}
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{apply => _, Unknown => _}
-import fi.liikennevirasto.digiroad2.client.vvh.KgvRoadLink
+import fi.liikennevirasto.digiroad2.client.kgv.KgvRoadLink
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{Track, ViiteProperties}
@@ -11,11 +11,11 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 
-class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLocationDAO, projectLinkDAO: ProjectLinkDAO) extends AddressLinkBuilder {
+class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLocationDAO) extends AddressLinkBuilder {
 
-  val vvhClient = new KgvRoadLink
-  val eventBus = new DummyEventBus
-  val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer, ViiteProperties.vvhRoadlinkFrozen)
+  val kgvClient          = new KgvRoadLink
+  val eventBus           = new DummyEventBus
+  val linkService        = new RoadLinkService(kgvClient, eventBus, new DummySerializer, ViiteProperties.vvhRoadlinkFrozen)
   val roadAddressService = new RoadAddressService(linkService, roadwayDAO, linearLocationDAO, new RoadNetworkDAO,new RoadwayPointDAO, new NodePointDAO, new JunctionPointDAO, new RoadwayAddressMapper(roadwayDAO, linearLocationDAO), eventBus, ViiteProperties.vvhRoadlinkFrozen) {
     override def withDynSession[T](f: => T): T = f
     override def withDynTransaction[T](f: => T): T = f
@@ -48,8 +48,6 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
   def build(roadLink: RoadLinkLike, unaddressedRoadLink: UnaddressedRoadLink): RoadAddressLink = {
     roadLink match {
       case rl: RoadLink => buildRoadLink(rl, unaddressedRoadLink)
-      case rl: RoadLinkLike => throw new NotImplementedError("buildRoadLinkLike used?")
-//      case rl: RoadLinkLike => buildRoadLinkLike(rl, unaddressedRoadLink)
     }
   }
 
@@ -64,24 +62,6 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
     }
     RoadAddressLink(0, 0, roadLink.linkId, geom, length, roadLink.administrativeClass, roadLink.lifecycleStatus, roadLink.linkSource, administrativeClass, None, None, municipalityCode, municipalityName, roadLink.modifiedAt, Some("kgv_modified"), 0, 0, Track.Unknown.value, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), Discontinuity.Continuous.value, 0, 0, "", "", 0.0, length, SideCode.Unknown, None, None, unaddressedRoadLink.anomaly, newGeometry = Some(roadLink.geometry), sourceId = roadLink.sourceId)
   }
-
-//  private def buildRoadLinkLike(roadLink: RoadLinkLike, unaddressedRoadLink: UnaddressedRoadLink): RoadAddressLink = {
-//    val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry, unaddressedRoadLink.startMValue.getOrElse(0.0), unaddressedRoadLink.endMValue.getOrElse(roadLink.length))
-//    val length = GeometryUtils.geometryLength(geom)
-//    val roadLinkRoadNumber = roadLink.attributes.get(RoadNumber).map(toIntNumber).getOrElse(0)
-//    val roadLinkRoadPartNumber = roadLink.attributes.get(RoadPartNumber).map(toIntNumber).getOrElse(0)
-//    val VVHRoadName = getVVHRoadName(roadLink.attributes)
-//    val municipalityCode = roadLink.attributes.getOrElse(MunicipalityCode, 0) match { // TODO: Simplify this after vvh not used anymore.
-//      case m:String => m.asInstanceOf[String].toInt
-//      case m:Int => m.asInstanceOf[Int].intValue()
-//    }
-//    val municipalityName = municipalityNamesMapping.getOrElse(municipalityCode, "")
-//    val administrativeClass = unaddressedRoadLink.administrativeClass match {
-//      case AdministrativeClass.Unknown => roadLink.administrativeClass
-//      case _ => unaddressedRoadLink.administrativeClass
-//    }
-//    RoadAddressLink(0, 0, roadLink.linkId, geom, length, roadLink.administrativeClass, UnknownLinkType, roadLink.lifecycleStatus, roadLink.linkSource, administrativeClass, VVHRoadName, Some(""), municipalityCode, municipalityName, extractModifiedAt(roadLink.attributes), Some("kgv_modified"), roadLink.attributes, unaddressedRoadLink.roadNumber.getOrElse(roadLinkRoadNumber), unaddressedRoadLink.roadPartNumber.getOrElse(roadLinkRoadPartNumber), Track.Unknown.value, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), Discontinuity.Continuous.value, 0, 0, "", "", 0.0, length, SideCode.Unknown, None, None, unaddressedRoadLink.anomaly, newGeometry = Some(roadLink.geometry))
-//  }
 }
 
 // TIETYYPPI (1= yleinen tie, 2 = lauttaväylä yleisellä tiellä, 3 = kunnan katuosuus, 4 = yleisen tien työmaa, 5 = yksityistie, 9 = omistaja selvittämättä)

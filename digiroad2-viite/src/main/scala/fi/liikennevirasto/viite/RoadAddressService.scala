@@ -3,7 +3,7 @@ package fi.liikennevirasto.viite
 import fi.liikennevirasto.digiroad2.{GeometryUtils, _}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
-import fi.liikennevirasto.digiroad2.client.vvh._
+import fi.liikennevirasto.digiroad2.client.kgv._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -35,7 +35,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 
   private val logger = LoggerFactory.getLogger(getClass)
 
-  private def roadAddressLinkBuilder = new RoadAddressLinkBuilder(roadwayDAO, linearLocationDAO, new ProjectLinkDAO)
+  private def roadAddressLinkBuilder = new RoadAddressLinkBuilder(roadwayDAO, linearLocationDAO)
 
   val viiteVkmClient = new ViiteVkmClient
   class VkmException(response: String) extends RuntimeException(response)

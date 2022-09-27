@@ -3,8 +3,8 @@ package fi.liikennevirasto.viite.dao
 import java.sql.Timestamp
 
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
-import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
+import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.postgis.{MassQuery, PostGISDatabase}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
@@ -16,8 +16,8 @@ import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
+import slick.jdbc.StaticQuery.interpolation
 
 trait BaseLinearLocation {
   def id: Long
@@ -702,7 +702,7 @@ class LinearLocationDAO {
 
     val limit = roadNumbers.head
     val filterAdd = s"""($alias.road_number >= ${limit._1} and $alias.road_number <= ${limit._2})"""
-    if (filter == "")
+    if ("".equals(filter))
       withRoadNumbersFilter(roadNumbers.tail, alias, filterAdd)
     else
       withRoadNumbersFilter(roadNumbers.tail, alias,s"""$filter OR $filterAdd""")

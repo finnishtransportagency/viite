@@ -1,17 +1,12 @@
 package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
-import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
-import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
-import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
+import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.client.kgv.ChangeType
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.process.strategy.DefaultSectionCalculatorStrategy
-import org.scalatest.{FunSuite, Matchers}
 import fi.liikennevirasto.viite.Dummies._
 import fi.liikennevirasto.viite.process.RoadAddressFiller.ChangeSet
+import org.scalatest.{FunSuite, Matchers}
 
 class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
 

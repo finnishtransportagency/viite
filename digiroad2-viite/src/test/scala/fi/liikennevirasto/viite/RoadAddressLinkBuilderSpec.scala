@@ -73,8 +73,8 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
     override def withDynTransaction[T](f: => T): T = f
   }
 
-  val mockRoadAddressLinkBuilder = new RoadAddressLinkBuilder(mockRoadwayDAO, mockLinearLocationDAO, mockProjectLinkDAO)
-  val roadAddressLinkBuilder = new RoadAddressLinkBuilder(new RoadwayDAO, new LinearLocationDAO, new ProjectLinkDAO)
+  val mockRoadAddressLinkBuilder = new RoadAddressLinkBuilder(mockRoadwayDAO, mockLinearLocationDAO)
+  val roadAddressLinkBuilder = new RoadAddressLinkBuilder(new RoadwayDAO, new LinearLocationDAO)
 
   test("Test RoadAddressLinkBuilder.build for roadAddress input") {
     runWithRollback {

@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.LifecycleStatus.UnknownLifecycleStatus
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.HistoryLinkInterface
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, FeatureClass, HistoryRoadLink}
+import fi.liikennevirasto.digiroad2.client.kgv.{ChangeInfo, ChangeType, FeatureClass, HistoryRoadLink}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao._
