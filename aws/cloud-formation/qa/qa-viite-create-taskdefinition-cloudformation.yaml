@@ -72,8 +72,6 @@ Resources:
               Value: fi.liikennevirasto.digiroad2.dao.PostGISMunicipalityProvider
             - Name: eventBus
               Value: fi.liikennevirasto.digiroad2.DigiroadEventBus
-            - Name: vvhServiceHost
-              Value: haproxy.vayla.fi
             - Name: oagProxyServer
               Value: oag.vayla.fi
             - Name: oagProxyURL

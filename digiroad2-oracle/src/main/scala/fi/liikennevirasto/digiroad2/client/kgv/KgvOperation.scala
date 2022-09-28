@@ -179,8 +179,7 @@ trait KgvOperation extends LinkOperationsAbstract{
                         fut3 <- Future(paginateAtomic(baseUrl = baseUrl, limit = BATCH_SIZE, position = BATCH_SIZE * 3))
                       } yield (fut1, fut2, fut3)
 
-    //  (Set[FeatureCollection], Set[FeatureCollection], Set[FeatureCollection])
-    val items:(Set[FeatureCollection], Set[FeatureCollection], Set[FeatureCollection]) =
+    val items: (Set[FeatureCollection], Set[FeatureCollection], Set[FeatureCollection]) =
       time(logger, "Fetch KGV bounding box data") {
         Await.result(resultF, Duration.Inf)
       }

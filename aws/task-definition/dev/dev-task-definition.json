@@ -22,7 +22,6 @@
                 { "name": "userProvider", "value": "fi.liikennevirasto.digiroad2.dao.PostGISUserProvider" },
                 { "name": "municipalityProvider", "value": "fi.liikennevirasto.digiroad2.dao.PostGISMunicipalityProvider" },
                 { "name": "eventBus", "value": "fi.liikennevirasto.digiroad2.DigiroadEventBus" },
-                { "name": "vvhServiceHost", "value": "haproxy.vayla.fi" },
                 { "name": "oagProxyServer", "value": "oag.vayla.fi" },
                 { "name": "oagProxyURL", "value": "https://oag.vayla.fi" },
                 { "name": "rasterServiceURL", "value": "https://api.vaylapilvi.fi/rasteripalvelu-mml" },
@@ -65,10 +64,6 @@
                 {
                     "name": "rasterServiceApiKey",
                     "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/allEnvs/rasterServiceApiKey"
-                },
-                {
-                    "name": "vvhRestApiPassword",
-                    "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/dev/vvhRestApiPassword"
                 },
                 {
                   "name": "kgvApiKey",

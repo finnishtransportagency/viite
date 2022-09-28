@@ -270,26 +270,26 @@
       new StyleRule().where('roadClass').is(97).use({stroke: {color: '#1E1E1E', lineCap: 'round'}}),
       new StyleRule().where('roadClass').is(98).use({stroke: {color: '#FAFAFA', lineCap: 'round'}}),
       new StyleRule().where('gapTransfering').is(true).use({stroke: {color: '#00FF00', lineCap: 'round'}}),
-      new StyleRule().where('roadClass').is(LinkValues.RoadClass.NoClass.value).and('roadLinkSource').isNot(LinkValues.LinkGeomSource.SuravageLinkInterface.value).and('constructionType').isNot(LinkValues.ConstructionType.UnderConstruction.value).use({
+      new StyleRule().where('roadClass').is(LinkValues.RoadClass.NoClass.value).and('roadLinkSource').isNot(LinkValues.LinkGeomSource.SuravageLinkInterface.value).and('lifecycleStatus').isNot(LinkValues.lifecycleStatus.UnderConstruction.value).use({
         stroke: {
           color: '#A4A4A2',
           lineCap: 'round'
         }
       }),
-      new StyleRule().where('roadClass').is(LinkValues.RoadClass.NoClass.value).and('roadLinkSource').isNot(LinkValues.LinkGeomSource.SuravageLinkInterface.value).and('constructionType').is(LinkValues.ConstructionType.UnderConstruction.value).use({
+      new StyleRule().where('roadClass').is(LinkValues.RoadClass.NoClass.value).and('roadLinkSource').isNot(LinkValues.LinkGeomSource.SuravageLinkInterface.value).and('lifecycleStatus').is(LinkValues.lifecycleStatus.UnderConstruction.value).use({
         stroke: {
           color: '#000',
           lineCap: 'butt',
           lineDash: [10, 10]
         }
       }),
-      new StyleRule().where('roadClass').is(LinkValues.RoadClass.NoClass.value).and('anomaly').is(LinkValues.Anomaly.NoAddressGiven.value).and('constructionType').isNot(LinkValues.ConstructionType.UnderConstruction.value).use({
+      new StyleRule().where('roadClass').is(LinkValues.RoadClass.NoClass.value).and('anomaly').is(LinkValues.Anomaly.NoAddressGiven.value).and('lifecycleStatus').isNot(LinkValues.lifecycleStatus.UnderConstruction.value).use({
         stroke: {
           color: '#646461',
           lineCap: 'round'
         }
       }),
-      new StyleRule().where('roadClass').is(LinkValues.RoadClass.NoClass.value).and('anomaly').is(LinkValues.Anomaly.NoAddressGiven.value).and('constructionType').is(LinkValues.ConstructionType.UnderConstruction.value).use({
+      new StyleRule().where('roadClass').is(LinkValues.RoadClass.NoClass.value).and('anomaly').is(LinkValues.Anomaly.NoAddressGiven.value).and('lifecycleStatus').is(LinkValues.lifecycleStatus.UnderConstruction.value).use({
         stroke: {
           color: '#ff9900',
           lineCap: 'butt',

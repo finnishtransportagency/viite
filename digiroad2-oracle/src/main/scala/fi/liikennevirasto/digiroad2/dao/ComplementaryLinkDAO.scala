@@ -25,7 +25,7 @@ class ComplementaryLinkDAO {
 
   protected def logger = LoggerFactory.getLogger(getClass)
   val formatter: DateTimeFormatter = ISODateTimeFormat.dateOptionalTimeParser()
-  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
+  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransactionNewOrExisting(f)
 
   def extractModifiedAt(attributes: Map[String, Option[DateTime]]): Option[DateTime] = {
     def toLong(anyValue: Option[Any]): Option[Long] = {

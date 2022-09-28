@@ -1,9 +1,7 @@
 package fi.liikennevirasto.viite.model
 
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
-import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.linearasset.GraphPartitioner
-import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.dao.LinkStatus
 
 object ProjectLinkPartitioner extends GraphPartitioner {
@@ -11,7 +9,7 @@ object ProjectLinkPartitioner extends GraphPartitioner {
   def partition[T <: ProjectAddressLinkLike](projectLinks: Seq[T]): Seq[Seq[T]] = {
     val (outside, inProject) = projectLinks.partition(_.status == LinkStatus.Unknown)
     val inProjectGroups = inProject.groupBy(l => (l.status, l.roadNumber, l.roadPartNumber, l.trackCode, l.administrativeClass, l.elyCode))
-    val (outsideWithRoadName, outsideWithoutRoadName) = outside.partition(link => link.VVHRoadName.get != "none" && link.VVHRoadName.get != "" && link.VVHRoadName.get != " " || (link.roadNumber != 0 && link.roadPartNumber != 0))
+    val (outsideWithRoadName, outsideWithoutRoadName) = outside.partition(link => link.roadNumber != 0 && link.roadPartNumber != 0)
     val groupedUnnamedRoads = groupRoadsWithoutName(Seq(), Seq(), outsideWithoutRoadName, outsideWithoutRoadName)
     val outsideGroup = outsideWithRoadName.groupBy(link => (link.roadLinkSource, link.partitioningName))
     val clusters = for (linkGroup <- inProjectGroups.values.toSeq ++ outsideGroup.values.toSeq;
