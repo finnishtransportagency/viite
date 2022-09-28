@@ -891,3 +891,68 @@ Tallenna-painike aktivoituu, kun kaikki pakolliset tiedot on annettu. Tallennuks
 --------------------------
 
 Siirrettävä solmu valitaan _Solmun valinta_ -työkalulla. Käyttäjä vetää solmun haluamaansa paikkaan hiirellä. Solmua voi kerralla siirtää enintään 200 metriä. Solmun saa siirrettyä yli 200 metrin päähän tekemällä sille useamman siirron. Solmun koordinaatit näkyvät formilla, josta sijainnin voi tarkistaa solmua siirrettäessä. Kun solmu on halutulla paikalla, käyttäjä tallentaa tiedot _Tallenna_-painikkeesta.  
+
+
+10 Tieosoitteiden katselu -työkalu
+--------------------------
+
+Tieosoitteiden katselu -työkalu avataan klikkaamalla karttanäkymän oikeassa reunassa sijaitsevaa Tieosoitteiden katselu -painiketta.
+
+![Tieosoitteiden katselu -työkalun avaus](k73.png)
+
+_Kuva 10: Tieosoitteiden katselu -työkalun avaus_
+
+10.1 Tieosoitteiden haku
+--------------------------
+
+![Tieosoitteiden hakuehdot](k74.png)
+
+_Kuva 10.2: Tieosoitteiden hakuehdot_
+
+#### Hakuehdot
+(1) Tilanne Pvm: Tien alkupäivämäärä jolla haettava kohde sijaitsee
+(2) Ely: Ely numero jolla haettava kohde sijaitsee
+(3) Tie: Tien numero jolla haettava kohde sijaitsee
+(4) Aosa: Pienin tieosa jolla haettava kohde sijatsee
+(5) Losa: Suurin tieosa jolla haettava kohde sijatsee
+
+####  Haettava kohde
+(6) Tieosat: Hakee tieosoitteet hakuehdoilla
+(7) Solmut: Hakee solmut hakuehdoilla
+(8) Liittymät: Hakee liittymät hakuehdoilla
+(9) Tiennimet: Hakee tiennimet hakuehdoilla
+
+
+Syötettävistä hakuehdoista Tilanne pvm sekä Ely TAI Tienumero on pakollinen tieto. 
+
+Huom! Haku saattaa kestää useita kymmeniä sekunteja haettaessa pelkästään tilanne päivämäärällä ja elyllä (Viite hakee valitut kohteet koko elyn alueelta)
+
+Viite palauttaa hakuehtojen perusteella listan kohteita sekä näiden ominaisuustiedot. 
+
+Hakutulokset on mahdollista ladata excel taulukkona klikkaamalla "Lataa excelinä" -painiketta
+
+Jos hakutulos on liian suuri (>100 riviä) tarjoaa Viite pelkän excel lataus mahdollisuuden.
+
+10.1 Esimerkkejä eri ominaisuustietojen hakutuloksista:
+--------------------------
+
+
+![Tieosat -hakutulos](k75.png)
+
+_Kuva 10.3: Tieosat -hakutulos_
+
+![Solmut -hakutulos](k76.png)
+
+_Kuva 10.4: Solmut -hakutulos_
+
+![Liittymät -hakutulos](k77.png)
+
+_Kuva 10.5: Liittymät -hakutulos_
+
+![Tiennimet -hakutulos](k78.png)
+
+_Kuva 10.6: Tiennimet -hakutulos_
+
+![Excel -hakutulos](k79.png)
+
+_Kuva 10.7: Viite tarjoaa pelkän excel tiedoston lataus mahdollisuuden mikäli hakutulos on liian suuri_
