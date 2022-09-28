@@ -26,11 +26,11 @@
     Unknown: {value: 99, descriptionFI: "Tuntematon", description: "Unknown"}
   };
 
-  root.ConstructionType = {
-    InUse: {value: 0, description: "InUse"},
-    UnderConstruction: {value: 1, description: "UnderConstruction"},
-    Planned: {value: 3, description: "Planned"},
-    UnknownConstructionType: {value: 99, description: "UnknownConstructionType"}
+  root.lifecycleStatus = {
+      Planned: {value: 1, description: "Planned"},
+      UnderConstruction: {value: 2, description: "UnderConstruction"},
+      InUse: {value: 3, description: "InUse"},
+      UnknownConstructionType: {value: 99, description: "UnknownConstructionType"}
   };
 
   root.SelectionType = {

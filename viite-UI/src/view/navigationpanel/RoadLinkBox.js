@@ -81,10 +81,10 @@
       return segments + '<div class="middle symbol linear rainbow-asset-2"></div><div class="middle symbol linear rainbow-asset-1 "></div> <div class="edge-right symbol linear linear-asset-1"></div></div>';
     };
 
-    var constructionTypeLegendEntries = _.map(constructionTypes, function (constructionType) {
+    var constructionTypeLegendEntries = _.map(constructionTypes, function (lifecycleStatus) {
       return '<div class="legend-entry">' +
-        '<div class="label">' + constructionType[1] + '</div>' +
-        '<div class="symbol linear construction-type-' + constructionType[0] + '"></div>' +
+        '<div class="label">' + lifecycleStatus[1] + '</div>' +
+        '<div class="symbol linear construction-type-' + lifecycleStatus[0] + '"></div>' +
         '</div>';
     }).join('');
 
