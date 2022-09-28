@@ -9,7 +9,7 @@
     var RoadZIndex = LinkValues.RoadZIndex;
     var LinkStatus = LinkValues.LinkStatus;
     var RoadClass = LinkValues.RoadClass;
-    var ConstructionType = LinkValues.ConstructionType;
+    var lifecycleStatus = LinkValues.lifecycleStatus;
     var isNotEditingData = true;
     var isActiveLayer = false;
 
@@ -107,7 +107,7 @@
       style: function (feature) {
         if (feature.linkData) {
           if (projectLinkStatusIn(feature.linkData, possibleStatusForSelection) || feature.linkData.roadClass === RoadClass.NoClass.value ||
-            feature.linkData.constructionType === ConstructionType.UnderConstruction.value) {
+            feature.linkData.lifecycleStatus === lifecycleStatus.UnderConstruction.value) {
             return projectLinkStyler.getSelectionLinkStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)});
           }
         }
@@ -171,7 +171,7 @@
       condition: ol.events.condition.doubleClick,
       style: function (feature) {
         if (projectLinkStatusIn(feature.linkData, possibleStatusForSelection) || feature.linkData.roadClass === RoadClass.NoClass.value ||
-          feature.linkData.constructionType === ConstructionType.UnderConstruction.value) {
+          feature.linkData.lifecycleStatus === lifecycleStatus.UnderConstruction.value) {
           return projectLinkStyler.getSelectionLinkStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)});
         }
         return null;
@@ -187,7 +187,7 @@
             projectLinkStatusIn(selectionTarget.linkData, possibleStatusForSelection) ||
             selectionTarget.linkData.anomaly === Anomaly.NoAddressGiven.value ||
             selectionTarget.linkData.roadClass === RoadClass.NoClass.value ||
-            (selectionTarget.linkData.constructionType === ConstructionType.UnderConstruction.value && selectionTarget.linkData.anomaly === Anomaly.NoAddressGiven.value))
+            (selectionTarget.linkData.lifecycleStatus === lifecycleStatus.UnderConstruction.value && selectionTarget.linkData.anomaly === Anomaly.NoAddressGiven.value))
         );
       });
       if (isNotEditingData) {
@@ -394,7 +394,7 @@
         return projectRoad.roadNumber === 0;
       });
       var underConstructionAndUnknownProjectRoads = _.partition(unaddressedProjectRoads[0], function (projectRoad) {
-        return projectRoad.constructionType === ConstructionType.UnderConstruction.value;
+        return projectRoad.lifecycleStatus === lifecycleStatus.UnderConstruction.value;
       });
 
       var unknownProjectRoads = underConstructionAndUnknownProjectRoads[1];
