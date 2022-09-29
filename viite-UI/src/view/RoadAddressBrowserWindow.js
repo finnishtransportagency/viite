@@ -4,6 +4,11 @@
         const MAX_ROWS_TO_DISPLAY = 100;
 
         const roadAddrBrowserWindow = $('<div id="road-address-browser-window" class="form-horizontal road-address-browser-window"></div>').hide();
+        roadAddrBrowserWindow.append('<a href="manual/index.html#!index.md#10_Tieosoitteiden_katselu_-ty%C3%B6kalu" target="_blank">' +
+                                        '<button class="btn-manual" title="Avaa käyttöohje">' +
+                                            '<i class="fas fa-question"></i>' +
+                                        '</button>' +
+                                    '</a>');
         roadAddrBrowserWindow.append('<button class="close btn-close" id="closeRoadAddrBrowserWindow">x</button>');
         roadAddrBrowserWindow.append('<div class="content road-address-browser-header">Tieosoitteiden katselu</div>');
         roadAddrBrowserWindow.append('' +
