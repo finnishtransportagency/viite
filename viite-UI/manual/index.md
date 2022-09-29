@@ -910,28 +910,29 @@ _Kuva 10: Tieosoitteiden katselu -työkalun avaus_
 _Kuva 10.2: Tieosoitteiden hakuehdot_
 
 #### Hakuehdot
-(1) Tilanne Pvm: Tien alkupäivämäärä jolla haettava kohde sijaitsee
-(2) Ely: Ely numero jolla haettava kohde sijaitsee
-(3) Tie: Tien numero jolla haettava kohde sijaitsee
-(4) Aosa: Pienin tieosa jolla haettava kohde sijatsee
-(5) Losa: Suurin tieosa jolla haettava kohde sijatsee
+
+Syötettävistä hakuehdoista Tilanne pvm sekä Ely TAI Tie on pakollinen tieto.
+
+(1) Tilanne pvm: Karsitaan tilanne pvm -kenttää uudemmat tiedot pois hakutuloksista
+(2) Ely: Haetaan vain annetun ELYn kohteita
+(3) Tie: Rajataan haku annetun tienumeron mukaisiin kohteisiin
+(4) Aosa: Pienin tieosanumero jolta haettavia kohteita haetaan
+(5) Losa: Suurin tieosanumero jolta haettavia kohteita haetaan
 
 ####  Haettava kohde
-(6) Tieosat: Hakee tieosoitteet hakuehdoilla
-(7) Solmut: Hakee solmut hakuehdoilla
-(8) Liittymät: Hakee liittymät hakuehdoilla
-(9) Tiennimet: Hakee tiennimet hakuehdoilla
+(6) Tieosat: Hakee annettujen hakuehtojen mukaiset tieosat
+(7) Solmut: Hakee annettujen hakuehtojen mukaiset solmut
+(8) Liittymät: Hakee annettujen hakuehtojen mukaiset liittymät
+(9) Tiennimet: Hakee annettujen hakuehtojen mukaiset tiennimet
 
 
-Syötettävistä hakuehdoista Tilanne pvm sekä Ely TAI Tienumero on pakollinen tieto. 
-
-Huom! Haku saattaa kestää useita kymmeniä sekunteja haettaessa pelkästään tilanne päivämäärällä ja elyllä (Viite hakee valitut kohteet koko elyn alueelta)
+Huom! Haku saattaa kestää useita kymmeniä sekunteja haettaessa pelkästään tilannepäivämäärällä ja elyllä (Viite hakee valitut kohteet koko elyn alueelta)
 
 Viite palauttaa hakuehtojen perusteella listan kohteita sekä näiden ominaisuustiedot. 
 
 Hakutulokset on mahdollista ladata excel taulukkona klikkaamalla "Lataa excelinä" -painiketta
 
-Jos hakutulos on liian suuri (>100 riviä) tarjoaa Viite pelkän excel lataus mahdollisuuden.
+Jos hakutulos on liian suuri (>100 riviä) tarjoaa Viite pelkän Excel-latausmahdollisuuden.
 
 10.1 Esimerkkejä eri ominaisuustietojen hakutuloksista:
 --------------------------
