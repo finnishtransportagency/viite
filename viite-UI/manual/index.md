@@ -938,22 +938,22 @@ Jos hakutulos on liian suuri (>100 riviä) tarjoaa Viite pelkän Excel-latausmah
 --------------------------
 
 
-![Tieosat -hakutulos](k75.png)
+![Tieosat -hakutulos](k75.PNG)
 
 _Kuva 10.3: Tieosat -hakutulos_
 
-![Solmut -hakutulos](k76.png)
+![Solmut -hakutulos](k76.PNG)
 
 _Kuva 10.4: Solmut -hakutulos_
 
-![Liittymät -hakutulos](k77.png)
+![Liittymät -hakutulos](k77.PNG)
 
 _Kuva 10.5: Liittymät -hakutulos_
 
-![Tiennimet -hakutulos](k78.png)
+![Tiennimet -hakutulos](k78.PNG)
 
 _Kuva 10.6: Tiennimet -hakutulos_
 
-![Excel -hakutulos](k79.png)
+![Excel -hakutulos](k79.PNG)
 
 _Kuva 10.7: Viite tarjoaa pelkän Excel-tiedoston latausmahdollisuuden mikäli hakutulos on liian suuri_
