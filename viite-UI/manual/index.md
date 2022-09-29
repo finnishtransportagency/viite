@@ -913,16 +913,16 @@ _Kuva 10.2: Tieosoitteiden hakuehdot_
 
 Syötettävistä hakuehdoista Tilanne pvm sekä Ely TAI Tie on pakollinen tieto.
 
-(1) Tilanne pvm: Karsitaan tilanne pvm -kenttää uudemmat tiedot pois hakutuloksista
-(2) Ely: Haetaan vain annetun ELYn kohteita
-(3) Tie: Rajataan haku annetun tienumeron mukaisiin kohteisiin
-(4) Aosa: Pienin tieosanumero jolta haettavia kohteita haetaan
+(1) Tilanne pvm: Karsitaan tilanne pvm -kenttää uudemmat tiedot pois hakutuloksista\
+(2) Ely: Haetaan vain annetun ELYn kohteita\
+(3) Tie: Rajataan haku annetun tienumeron mukaisiin kohteisiin\
+(4) Aosa: Pienin tieosanumero jolta haettavia kohteita haetaan\
 (5) Losa: Suurin tieosanumero jolta haettavia kohteita haetaan
 
 ####  Haettava kohde
-(6) Tieosat: Hakee annettujen hakuehtojen mukaiset tieosat
-(7) Solmut: Hakee annettujen hakuehtojen mukaiset solmut
-(8) Liittymät: Hakee annettujen hakuehtojen mukaiset liittymät
+(6) Tieosat: Hakee annettujen hakuehtojen mukaiset tieosat\
+(7) Solmut: Hakee annettujen hakuehtojen mukaiset solmut\
+(8) Liittymät: Hakee annettujen hakuehtojen mukaiset liittymät\
 (9) Tiennimet: Hakee annettujen hakuehtojen mukaiset tiennimet
 
 
@@ -956,4 +956,4 @@ _Kuva 10.6: Tiennimet -hakutulos_
 
 ![Excel -hakutulos](k79.png)
 
-_Kuva 10.7: Viite tarjoaa pelkän excel tiedoston lataus mahdollisuuden mikäli hakutulos on liian suuri_
+_Kuva 10.7: Viite tarjoaa pelkän Excel-tiedoston latausmahdollisuuden mikäli hakutulos on liian suuri_
