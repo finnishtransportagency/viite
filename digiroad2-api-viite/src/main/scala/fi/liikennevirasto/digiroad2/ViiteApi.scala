@@ -235,7 +235,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
     }
   }
 
-  private val fetchPreFillFromVVH: SwaggerSupportSyntax.OperationBuilder = (
+  private val fetchPreFill: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String, Any]]("fetchPreFillFromVVH")
       .parameters(
         queryParam[Long]("linkId").description("LinkId of a road address"),
@@ -245,10 +245,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
       summary "Fetch prefill information from VVH like roadNumber, roadPartNumber, roadName, roadNameSource"
     )
 
-  get("/roadlinks/project/prefillfromvvh", operation(fetchPreFillFromVVH)) {
+  get("/roadlinks/project/prefill", operation(fetchPreFill)) {
     val linkId = params("linkId")
     val currentProjectId = params("currentProjectId").toLong
-    time(logger, s"GET request for /roadlinks/project/prefillfromvvh (linkId: $linkId, projectId: $currentProjectId)") {
+    time(logger, s"GET request for /roadlinks/project/prefill (linkId: $linkId, projectId: $currentProjectId)") {
       projectService.fetchPreFillData(linkId, currentProjectId) match {
         case Right(preFillInfo) =>
           Map("success" -> true, "roadNumber" -> preFillInfo.RoadNumber, "roadPartNumber" -> preFillInfo.RoadPart, "roadName" -> preFillInfo.roadName, "roadNameSource" -> preFillInfo.roadNameSource.value)

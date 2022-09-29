@@ -206,12 +206,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def fetchPreFillData(linkId   : String, projectId: Long): Either[String, PreFillInfo] = {
-    parsePreFillData(projectLinkDAO.getProjectLinksByLinkId(linkId).filter(_.projectId == projectId), projectId = projectId)
+  def fetchPreFillData(linkId: String, projectId: Long): Either[String, PreFillInfo] = {
+    withDynSession {
+      parsePreFillData(projectLinkDAO.getProjectLinksByLinkId(linkId).filter(_.projectId == projectId), projectId = projectId)
+    }
   }
 
   def parsePreFillData(projectLinks: Seq[ProjectLink], projectId: Long = -1000): Either[String, PreFillInfo] = {
-    withDynSession {
       if (projectLinks.isEmpty) {
         Left(s"Link could not be found from project: $projectId")
       }
@@ -230,7 +231,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           case _ => Left("Link does not contain valid prefill info")
         }
       }
-    }
   }
 
   def checkRoadPartsReservable(roadNumber: Long, startPart: Long, endPart: Long, projectId: Long): Either[String, (Seq[ProjectReservedPart], Seq[ProjectReservedPart])] = {
