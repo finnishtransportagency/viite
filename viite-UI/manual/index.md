@@ -930,7 +930,7 @@ Huom! Haku saattaa kestää useita kymmeniä sekunteja haettaessa pelkästään 
 
 Viite palauttaa hakuehtojen perusteella listan kohteita sekä näiden ominaisuustiedot. 
 
-Hakutulokset on mahdollista ladata excel taulukkona klikkaamalla "Lataa excelinä" -painiketta
+Hakutulokset on mahdollista ladata Excel-taulukkona klikkaamalla "Lataa Excelinä" -painiketta
 
 Jos hakutulos on liian suuri (>100 riviä) tarjoaa Viite pelkän Excel-latausmahdollisuuden.
 
