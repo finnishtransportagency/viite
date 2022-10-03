@@ -384,7 +384,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
           }
         }
 
-        val mandatoryInputsDefinedAndValid = parseDate(startDate).isDefined && target.isDefined && ((ely.isDefined && ely.get > 0L && ely.get <= 14L) || (roadNumber.isDefined && roadNumber.get > 0L && roadNumber.get <= 99999L))
+        val mandatoryInputsDefinedAndValid = parseDate(startDate).isDefined && target.isDefined && ((ely.isDefined && ely.get > 0L && ely.get <= 14L) || (roadNumber.isDefined && roadNumber.get > 0L && roadNumber.get <= 99999L)) || target.get == "RoadNames"
         val optionalRoadPartInputsValid = (minRoadPartNumber, maxRoadPartNumber) match {
           case (Some(minPart), Some(maxPart)) => minPart >= 1 && minPart <= 999 && maxPart >= 1 && maxPart <= 999 && minPart <= maxPart
           case (Some(minPart), None) => minPart >= 1 && minPart <= 999

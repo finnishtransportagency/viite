@@ -13,19 +13,19 @@
                     switch (params.target) {
                         case "Roads":
                             me.setRoads(result.roads);
-                            eventbus.trigger('roadAddressBrowser:roadsFetched');
+                            eventbus.trigger('roadAddressBrowser:roadsFetched', params);
                             break;
                         case "Nodes":
                             me.setNodes(result.nodes);
-                            eventbus.trigger('roadAddressBrowser:nodesFetched');
+                            eventbus.trigger('roadAddressBrowser:nodesFetched', params);
                             break;
                         case "Junctions":
                             me.setJunctions(result.junctions);
-                            eventbus.trigger('roadAddressBrowser:junctionsFetched');
+                            eventbus.trigger('roadAddressBrowser:junctionsFetched', params);
                             break;
                         case "RoadNames":
                             me.setRoadNames(result.roadNames);
-                            eventbus.trigger('roadAddressBrowser:roadNamesFetched');
+                            eventbus.trigger('roadAddressBrowser:roadNamesFetched', params);
                             break;
                         default:
                     }
