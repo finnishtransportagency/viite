@@ -213,7 +213,7 @@
             return day + '.' + month + '.' + year;
         }
 
-        // converts date object to string "yyyy/mm/dd"
+        // converts date object to string "yyyy-mm-dd"
         function parseDateToString(date) {
             const dayInNumber = date.getDate();
             const day = dayInNumber < 10 ? '0' + dayInNumber.toString() : dayInNumber.toString();
@@ -296,7 +296,7 @@
                 return params;
             }
 
-            //reset ely and roadAddrStartDate input field's custom validity
+            //reset ely and roadAddrStartDate input fields' custom validity
             ely.setCustomValidity("");
             roadAddrStartDate.setCustomValidity("");
 
