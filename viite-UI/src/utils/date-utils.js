@@ -75,7 +75,7 @@
   };
 
   dateUtils.addSingleDatePicker = function (fromElement) {
-    dateUtils.addFinnishDatePicker(fromElement);
+    return dateUtils.addFinnishDatePicker(fromElement);
   };
 
   dateUtils.addSingleDatePickerWithMinDate = function (fromElement, minDate) {
