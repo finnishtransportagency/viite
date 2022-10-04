@@ -1,5 +1,5 @@
 (function (root) {
-    root.RoadAddressBrowserWindow = function (roadAddressCollection) {
+    root.RoadAddressBrowserWindow = function (backend) {
 
         const MAX_ROWS_TO_DISPLAY = 100;
         const MAX_YEAR_PARAM = 2100;
@@ -47,8 +47,7 @@
             '</form>'
         );
 
-        function showResultsForRoads() {
-            const results = roadAddressCollection.getRoads();
+        function showResultsForRoads(results) {
             const table = $('<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table"></table>');
             table.append(
                 '<thead>' +
@@ -79,8 +78,7 @@
             showData(results, table);
         }
 
-        function showResultsForNodes() {
-            const results = roadAddressCollection.getNodes();
+        function showResultsForNodes(results) {
             const table = $('<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table"></table>');
             table.append(
                 '<thead>' +
@@ -111,8 +109,7 @@
             showData(results, table);
         }
 
-        function showResultsForJunctions() {
-            const results = roadAddressCollection.getJunctions();
+        function showResultsForJunctions(results) {
             const table = $('<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table"></table>');
             table.append(
                 '<thead>' +
@@ -151,8 +148,7 @@
             showData(results, table);
         }
 
-        function showResultsForRoadNames() {
-            const results = roadAddressCollection.getRoadNames();
+        function showResultsForRoadNames(results) {
             const table = $('<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table"></table>');
             table.append(
                 '<thead>' +
@@ -244,7 +240,7 @@
             XLSX.writeFile(wb, fileName);
         }
 
-        function getData(event) {
+        function getData() {
             const roadAddrStartDate   = document.getElementById('roadAddrStartDate');
             const ely                 = document.getElementById('roadAddrInputEly');
             const roadNumber          = document.getElementById('roadAddrInputRoad');
@@ -266,17 +262,15 @@
             function validateDate(date) {
                 if (date instanceof Date && !isNaN(date)) {
                     if(date.getFullYear() > MAX_YEAR_PARAM || date.getFullYear() < MIN_YEAR_PARAM)
-                        roadAddrStartDate.setCustomValidity("Vuosiluvun tulee olla väliltä 1800 - 2100");
+                        roadAddrStartDate.setCustomValidity("Vuosiluvun tulee olla väliltä" + MIN_YEAR_PARAM + " - " + MAX_YEAR_PARAM);
                 }
                 else
                     roadAddrStartDate.setCustomValidity("Päivämäärän tulee olla muodossa pp.kk.yyyy");
             }
 
             function validateElyAndRoadNumber (elyElement, roadNumberElement) {
-                if (elyElement.value === "" && roadNumberElement.value === "") {
-                    event.preventDefault();
+                if (elyElement.value === "" && roadNumberElement.value === "")
                     elyElement.setCustomValidity("Ely tai Tie on pakollinen tieto");
-                }
             }
 
             function willPassValidations() {
@@ -306,60 +300,47 @@
             ely.setCustomValidity("");
             roadAddrStartDate.setCustomValidity("");
 
-
             switch (targetValue) {
                 case "Roads":
-                    if (willPassValidations())
-                        roadAddressCollection.fetchByTargetValue(createParams());
-                    else
-                        event.preventDefault();
-                    break;
                 case "Nodes":
-                    if (willPassValidations())
-                        roadAddressCollection.fetchByTargetValue(createParams());
-                    else
-                        event.preventDefault();
-                    break;
                 case "Junctions":
                     if (willPassValidations())
-                        roadAddressCollection.fetchByTargetValue(createParams());
-                    else
-                        event.preventDefault();
+                        fetchByTargetValue(createParams());
                     break;
                 case "RoadNames":
                     validateDate(roadAddrStartDateObject);
                     if (reportValidations())
-                        roadAddressCollection.fetchByTargetValue(createParams());
-                    else
-                        event.preventDefault();
+                        fetchByTargetValue(createParams());
                     break;
                 default:
             }
         }
 
-        eventbus.on('roadAddressBrowser:roadsFetched', function (params) {
-            me.setSearchParams(params);
-            applicationModel.removeSpinner();
-            showResultsForRoads();
-        });
-
-        eventbus.on('roadAddressBrowser:nodesFetched', function (params) {
-            me.setSearchParams(params);
-            applicationModel.removeSpinner();
-            showResultsForNodes();
-        });
-
-        eventbus.on('roadAddressBrowser:junctionsFetched', function (params) {
-            me.setSearchParams(params);
-            applicationModel.removeSpinner();
-            showResultsForJunctions();
-        });
-
-        eventbus.on('roadAddressBrowser:roadNamesFetched', function (params) {
-            me.setSearchParams(params);
-            applicationModel.removeSpinner();
-            showResultsForRoadNames();
-        });
+        function fetchByTargetValue(params) {
+            applicationModel.addSpinner();
+            backend.getDataForRoadAddressBrowser(params, function(result) {
+                if (result.success) {
+                    applicationModel.removeSpinner();
+                    me.setSearchParams(params);
+                    switch (params.target) {
+                        case "Roads":
+                            showResultsForRoads(result.roads);
+                            break;
+                        case "Nodes":
+                            showResultsForNodes(result.nodes);
+                            break;
+                        case "Junctions":
+                            showResultsForJunctions(result.junctions);
+                            break;
+                        case "RoadNames":
+                            showResultsForRoadNames(result.roadNames);
+                            break;
+                        default:
+                    }
+                } else
+                    new ModalConfirm(result.error);
+            });
+        }
 
         function bindEvents() {
 
@@ -389,11 +370,11 @@
                 hide();
             });
 
-            roadAddrBrowserWindow.on('click', '.btn-fetch-road-addresses', function (e) {
+            roadAddrBrowserWindow.on('click', '.btn-fetch-road-addresses', function () {
                 $('.road-address-browser-window-results-table').remove(); // empty the result table
                 $('#exportAsExcelFile').prop("disabled", true); //disable excel download button
                 $('#tableNotification').remove(); // remove notification if present
-                getData(e);
+                getData();
                 return false; // cancel form submission
             });
         }
