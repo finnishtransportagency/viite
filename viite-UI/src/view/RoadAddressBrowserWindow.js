@@ -174,14 +174,19 @@
         }
 
         function showData(results, table) {
-            $('#exportAsExcelFile').prop("disabled", false);
-            if (results.length <= MAX_ROWS_TO_DISPLAY) {
-                roadAddrBrowserWindow.append(table);
-
-            } else {
-                // hide the results and notify user to download result table as excel file
-                roadAddrBrowserWindow.append($('<p id="tableTooBigNotification"><b>Tulostaulu liian suuri, lataa tulokset excel taulukkona</b></p>'));
+            if (results.length === 0) {
+                roadAddrBrowserWindow.append($('<p id="tableNotification"><b>Hakuehdoilla ei löytynyt yhtäkään osumaa</b></p>'));
                 roadAddrBrowserWindow.append(table.hide());
+            }
+            else if (results.length <= MAX_ROWS_TO_DISPLAY) {
+                roadAddrBrowserWindow.append(table);
+                $('#exportAsExcelFile').prop("disabled", false); // enable Excel download button
+            }
+            else {
+                // hide the results and notify user to download result table as excel file
+                roadAddrBrowserWindow.append($('<p id="tableNotification"><b>Tulostaulu liian suuri, lataa tulokset excel taulukkona</b></p>'));
+                roadAddrBrowserWindow.append(table.hide());
+                $('#exportAsExcelFile').prop("disabled", false); // enable Excel download button
             }
         }
 
@@ -387,7 +392,7 @@
             roadAddrBrowserWindow.on('click', '.btn-fetch-road-addresses', function (e) {
                 $('.road-address-browser-window-results-table').remove(); // empty the result table
                 $('#exportAsExcelFile').prop("disabled", true); //disable excel download button
-                $('#tableTooBigNotification').remove(); // remove notification if present
+                $('#tableNotification').remove(); // remove notification if present
                 getData(e);
                 return false; // cancel form submission
             });
