@@ -33,7 +33,6 @@ module.exports = {
         "RoadCollection": "writable",
         "ProjectCollection": "writable",
         "RoadNameCollection": "writable",
-        "RoadAddressCollection": "writable",
         "SelectedLinkProperty": "writable",
         "SelectedProjectLink": "writable",
         "LinkPropertiesModel": "writable",

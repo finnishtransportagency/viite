@@ -5,7 +5,6 @@
     var roadCollection = new RoadCollection(backend);
     var projectCollection = new ProjectCollection(backend);
     var roadNameCollection = new RoadNameCollection(backend);
-    var roadAddressCollection = new RoadAddressCollection(backend);
     var selectedLinkProperty = new SelectedLinkProperty(backend, roadCollection);
     var selectedProjectLinkProperty = new SelectedProjectLink(projectCollection);
     var linkPropertiesModel = new LinkPropertiesModel();
@@ -46,13 +45,13 @@
 
     backend.getUserRoles();
     backend.getStartupParametersWithCallback(function (startupParameters) {
-      startApplication(backend, models, tileMaps, startupParameters, projectChangeTable, roadNameCollection, projectListModel, roadAddressCollection);
+      startApplication(backend, models, tileMaps, startupParameters, projectChangeTable, roadNameCollection, projectListModel);
     });
   };
 
-  var startApplication = function (backend, models, withTileMaps, startupParameters, projectChangeTable, roadNameCollection, projectListModel, roadAddressCollection) {
+  var startApplication = function (backend, models, withTileMaps, startupParameters, projectChangeTable, roadNameCollection, projectListModel) {
     setupProjections();
-    var map = setupMap(backend, models, withTileMaps, startupParameters, projectChangeTable, roadNameCollection, projectListModel, roadAddressCollection);
+    var map = setupMap(backend, models, withTileMaps, startupParameters, projectChangeTable, roadNameCollection, projectListModel);
     new URLRouter(map, backend, models);
     eventbus.trigger('application:initialized');
   };
@@ -103,7 +102,7 @@
     return map;
   };
 
-  var setupMap = function (backend, models, withTileMaps, startupParameters, projectChangeTable, roadNameCollection, projectListModel, roadAddressCollection) {
+  var setupMap = function (backend, models, withTileMaps, startupParameters, projectChangeTable, roadNameCollection, projectListModel) {
     var tileMaps = new TileMapCollection();
 
     var map = createOpenLayersMap(startupParameters, tileMaps.layers);
@@ -113,7 +112,7 @@
     var linkPropertyLayer = new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel);
     var nodeLayer = new NodeLayer(map, roadLayer, models.selectedNodesAndJunctions, models.nodeCollection, models.roadCollection, models.linkPropertiesModel, applicationModel);
     var roadNamingTool = new RoadNamingToolWindow(roadNameCollection);
-    var roadAddressBrowser = new RoadAddressBrowserWindow(roadAddressCollection);
+    var roadAddressBrowser = new RoadAddressBrowserWindow(backend);
 
     new LinkPropertyForm(models.selectedLinkProperty, roadNamingTool, projectListModel, roadAddressBrowser);
 
