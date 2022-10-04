@@ -233,7 +233,7 @@
             const params = me.getSearchParams();
             const fileNameString = "Viite_" + params.target + "_" + params.startDate + "_" + params.ely + "_" + params.roadNumber + "_" + params.minRoadPartNumber + "_" + params.maxRoadPartNumber + ".xlsx";
             const fileName = fileNameString.replaceAll("undefined", "-");
-            const options = {raw: true};
+            const options = {dateNF: 'dd"."mm"."yyyy'};
             const wb = XLSX.utils.table_to_book(document.getElementById("roadAddressBrowserTable"), options);
             /* Export to file (start a download) */
             XLSX.writeFile(wb, fileName);
