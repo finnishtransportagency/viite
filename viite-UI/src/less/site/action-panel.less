@@ -656,6 +656,7 @@
   thead {
     position: sticky;
     top: 0;
+    background-color: #babbb9;
   }
 
   td, th {
@@ -664,7 +665,9 @@
     padding: 8px;
   }
 
-  tr:nth-child(odd) {
-    background-color: #babbb9;
+  tbody {
+    tr:nth-child(even) {
+      background-color: #babbb9;
+    }
   }
 }
