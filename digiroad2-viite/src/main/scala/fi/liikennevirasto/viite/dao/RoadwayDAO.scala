@@ -434,7 +434,7 @@ case class RoadAddress(id: Long, linearLocationId: Long, roadNumber: Long, roadP
 
 case class Roadway(id: Long, roadwayNumber: Long, roadNumber: Long, roadPartNumber: Long, administrativeClass: AdministrativeClass, track: Track, discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, reversed: Boolean = false, startDate: DateTime, endDate: Option[DateTime] = None, createdBy: String, roadName: Option[String], ely: Long, terminated: TerminationCode = NoTermination, validFrom: DateTime = DateTime.now(), validTo: Option[DateTime] = None)
 
-case class RoadForRoadAddressBrowser(ely: Long, roadNumber: Long, track: Long, roadPartNumber: Long, startAddrM: Long, endAddrM: Long, roadAddressLengthM: Long, startDate: DateTime)
+case class TrackForRoadAddressBrowser(ely: Long, roadNumber: Long, track: Long, roadPartNumber: Long, startAddrM: Long, endAddrM: Long, roadAddressLengthM: Long, administrativeClass: Long, startDate: DateTime)
 
 class BaseDAO {
   protected def logger = LoggerFactory.getLogger(getClass)
@@ -875,7 +875,7 @@ class RoadwayDAO extends BaseDAO {
     }
   }
 
-  private implicit val getRoadForRoadAddressBrowser: GetResult[RoadForRoadAddressBrowser] = new GetResult[RoadForRoadAddressBrowser] {
+  private implicit val getTrackForRoadAddressBrowser: GetResult[TrackForRoadAddressBrowser] = new GetResult[TrackForRoadAddressBrowser] {
     def apply(r: PositionedResult) = {
 
       val ely = r.nextLong()
@@ -885,9 +885,10 @@ class RoadwayDAO extends BaseDAO {
       val startAddrMValue = r.nextLong()
       val endAddrMValue = r.nextLong()
       val lengthAddrM = r.nextLong()
+      val administrativeClass = r.nextLong()
       val startDate = formatter.parseDateTime(r.nextDate.toString)
 
-      RoadForRoadAddressBrowser(ely, roadNumber, trackCode, roadPartNumber, startAddrMValue, endAddrMValue, lengthAddrM, startDate)
+      TrackForRoadAddressBrowser(ely, roadNumber, trackCode, roadPartNumber, startAddrMValue, endAddrMValue, lengthAddrM, administrativeClass, startDate)
     }
   }
 
@@ -1066,7 +1067,7 @@ class RoadwayDAO extends BaseDAO {
     Q.queryNA[(Long, String, Long, Long, Long, Option[DateTime], Option[DateTime])](query).firstOption
   }
 
-  def fetchRoadsForRoadAddressBrowser(startDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[RoadForRoadAddressBrowser] = {
+  def fetchTracksForRoadAddressBrowser(startDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[TrackForRoadAddressBrowser] = {
     def withOptionalParameters(startDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long])(query: String): String  = {
 
       val dateCondition = "AND start_date <='" + startDate.get + "'"
@@ -1118,7 +1119,7 @@ class RoadwayDAO extends BaseDAO {
          |         $query""".stripMargin
     }
 
-    def fetchRoads(queryFilter: String => String): Seq[RoadForRoadAddressBrowser] = {
+    def fetchTrackSections(queryFilter: String => String): Seq[TrackForRoadAddressBrowser] = {
       val query =
         """     roadwayswithstartaddr
           |     AS (SELECT ely,
@@ -1127,6 +1128,7 @@ class RoadwayDAO extends BaseDAO {
           |                start_addr_m,
           |                start_date,
           |                track,
+          |                administrative_class,
           |                Row_number()
           |                  OVER (
           |                    ORDER BY road_number, road_part_number, track, start_addr_m)
@@ -1140,7 +1142,8 @@ class RoadwayDAO extends BaseDAO {
           |                                   AND r2.road_number = r.road_number
           |                                   AND r2.road_part_number = r.road_part_number
           |                                   AND r2.track = r.track
-          |                                   AND r2.ely = r.ely)),
+          |                                   AND r2.ely = r.ely
+          |                                   AND r2.administrative_class = r.administrative_class)),
           |     roadwayswithendaddr
           |     AS (SELECT ely,
           |                road_number,
@@ -1148,6 +1151,7 @@ class RoadwayDAO extends BaseDAO {
           |                end_addr_m,
           |                start_date,
           |                track,
+          |                administrative_class,
           |                Row_number()
           |                  OVER (
           |                    ORDER BY road_number, road_part_number, track, end_addr_m)
@@ -1161,7 +1165,8 @@ class RoadwayDAO extends BaseDAO {
           |                                   AND r2.road_number = r.road_number
           |                                   AND r2.road_part_number = r.road_part_number
           |                                   AND r2.track = r.track
-          |                                   AND r2.ely = r.ely))
+          |                                   AND r2.ely = r.ely
+          |                                   AND r2.administrative_class = r.administrative_class))
           |SELECT s.ely,
           |       s.road_number,
           |       s.track,
@@ -1169,6 +1174,7 @@ class RoadwayDAO extends BaseDAO {
           |       s.start_addr_m,
           |       e.end_addr_m,
           |       e.end_addr_m - s.start_addr_m AS length,
+          |       s.administrative_class,
           |       s.start_date
           |FROM   roadwayswithstartaddr s
           |       JOIN roadwayswithendaddr e
@@ -1178,10 +1184,10 @@ class RoadwayDAO extends BaseDAO {
           |          s.start_addr_m,
           |          s.track; """.stripMargin
       val filteredQuery = queryFilter(query)
-      Q.queryNA[RoadForRoadAddressBrowser](filteredQuery).iterator.toSeq
+      Q.queryNA[TrackForRoadAddressBrowser](filteredQuery).iterator.toSeq
     }
 
-    fetchRoads(withOptionalParameters(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber))
+    fetchTrackSections(withOptionalParameters(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber))
   }
 
 

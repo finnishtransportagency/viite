@@ -38,7 +38,7 @@
                 '<div class="input-container"><label class="control-label-small">Tie</label><input type="number" min="1" max="99999" id="roadAddrInputRoad" /></div>' +
                 '<div class="input-container"><label class="control-label-small">Aosa</label><input type="number" min="1" max="999" id="roadAddrInputStartPart"/></div>' +
                 '<div class="input-container"><label class="control-label-small">Losa</label><input type="number" min="1" max="999" id="roadAddrInputEndPart"/></div>' +
-                '<div class="input-container"><label>Tieosat</label><input type="radio" name="roadAddrBrowserForm" value="Roads" checked="checked"></div>' +
+                '<div class="input-container"><label>Ajoradat</label><input type="radio" name="roadAddrBrowserForm" value="Tracks" checked="checked"></div>' +
                 '<div class="input-container"><label>Solmut</label><input type="radio" name="roadAddrBrowserForm" value="Nodes"></div>' +
                 '<div class="input-container"><label>Liittymät</label><input type="radio" name="roadAddrBrowserForm" value="Junctions"></div>' +
                 '<div class="input-container"><label>Tiennimet</label><input type="radio" name="roadAddrBrowserForm" value="RoadNames"></div>' +
@@ -47,7 +47,7 @@
             '</form>'
         );
 
-        function showResultsForRoads(results) {
+        function showResultsForTracks(results) {
             const arr = [];
             let arrPointer = -1;
             arr[++arrPointer] = `<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table">
@@ -60,6 +60,7 @@
                                             <th>Aet</th>
                                             <th>Let</th>
                                             <th>Pituus</th>
+                                            <th>Hallinnollinen luokka</th>
                                             <th>Alkupäivämäärä</th>
                                         </tr>
                                     </thead>
@@ -73,6 +74,7 @@
                                             <td>${results[i].startAddrM}</td>
                                             <td>${results[i].endAddrM}</td>
                                             <td>${results[i].lengthAddrM}</td>
+                                            <td>${results[i].administrativeClass}</td>
                                             <td>${results[i].startDate}</td>
                                         </tr>`;
             }
@@ -321,7 +323,7 @@
             roadAddrStartDate.setCustomValidity("");
 
             switch (targetValue) {
-                case "Roads":
+                case "Tracks":
                 case "Nodes":
                 case "Junctions":
                     if (willPassValidations())
@@ -343,8 +345,8 @@
                     applicationModel.removeSpinner();
                     me.setSearchParams(params);
                     switch (params.target) {
-                        case "Roads":
-                            showResultsForRoads(result.roads);
+                        case "Tracks":
+                            showResultsForTracks(result.tracks);
                             break;
                         case "Nodes":
                             showResultsForNodes(result.nodes);

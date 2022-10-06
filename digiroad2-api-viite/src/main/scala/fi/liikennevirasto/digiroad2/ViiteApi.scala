@@ -359,7 +359,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
   private val getDataForRoadAddressBrowser: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String,Any]]("getDataForRoadAddressBrowser").parameters(
       queryParam[String]("startDate").description("Situation date (yyyy-MM-dd)"),
-      queryParam[String]("target").description("What data to fetch (Roads, Nodes, Junctions, RoadNames)"),
+      queryParam[String]("target").description("What data to fetch (Tracks, Nodes, Junctions, RoadNames)"),
       queryParam[Long]("ely").description("Ely number of a road address").optional,
       queryParam[Long]("roadNumber").description("Road Number of a road address").optional,
       queryParam[Long]("minRoadPartNumber").description("Min Road Part Number of a road address").optional,
@@ -409,9 +409,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
       try {
         if (validateInputs(startDate, target, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)) {
           target match {
-            case Some("Roads") =>
-              val roadsForRoadAddressBrowser = roadAddressService.getRoadsForRoadAddressBrowser(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
-              Map("success" -> true, "roads" -> roadsForRoadAddressBrowser.map(roadAddressBrowserRoadsToApi))
+            case Some("Tracks") =>
+              val roadsForRoadAddressBrowser = roadAddressService.getTracksForRoadAddressBrowser(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
+              Map("success" -> true, "tracks" -> roadsForRoadAddressBrowser.map(roadAddressBrowserTracksToApi))
             case Some("Nodes") =>
               val nodesForRoadAddressBrowser = nodesAndJunctionsService.getNodesForRoadAddressBrowser(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
               Map("success" -> true, "nodes" -> nodesForRoadAddressBrowser.map(roadAddressBrowserNodesToApi))
@@ -1531,16 +1531,25 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
     )
   }
 
-  def roadAddressBrowserRoadsToApi(road: RoadForRoadAddressBrowser): Map[String, Any] = {
+  def roadAddressBrowserTracksToApi(track: TrackForRoadAddressBrowser): Map[String, Any] = {
+    def getAdministrativeClassStringValue(): String = {
+      track.administrativeClass match {
+        case 1 => "Valtio"
+        case 2 => "Kunta"
+        case 3 => "Yksityinen"
+        case _ => "Tuntematon"
+      }
+    }
     Map(
-      "ely" -> road.ely,
-      "roadNumber" -> road.roadNumber,
-      "track" -> road.track,
-      "roadPartNumber" -> road.roadPartNumber,
-      "startAddrM" -> road.startAddrM,
-      "endAddrM" -> road.endAddrM,
-      "lengthAddrM" -> road.roadAddressLengthM,
-      "startDate" -> new SimpleDateFormat("dd.MM.yyyy").format(road.startDate.toDate)
+      "ely" -> track.ely,
+      "roadNumber" -> track.roadNumber,
+      "track" -> track.track,
+      "roadPartNumber" -> track.roadPartNumber,
+      "startAddrM" -> track.startAddrM,
+      "endAddrM" -> track.endAddrM,
+      "lengthAddrM" -> track.roadAddressLengthM,
+      "administrativeClass" -> getAdministrativeClassStringValue(),
+      "startDate" -> new SimpleDateFormat("dd.MM.yyyy").format(track.startDate.toDate)
     )
   }
 
