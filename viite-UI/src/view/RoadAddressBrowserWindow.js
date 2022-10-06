@@ -50,34 +50,34 @@
         function showResultsForRoads(results) {
             const arr = [];
             let arrPointer = -1;
-            arr[++arrPointer] = '<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table">';
-            arr[++arrPointer] =     '<thead>';
-            arr[++arrPointer] =         '<tr>';
-            arr[++arrPointer] =             '<th>Ely</th>';
-            arr[++arrPointer] =             '<th>Tie</th>';
-            arr[++arrPointer] =             '<th>Ajr</th>';
-            arr[++arrPointer] =             '<th>Osa</th>';
-            arr[++arrPointer] =             '<th>Aet</th>';
-            arr[++arrPointer] =             '<th>Let</th>';
-            arr[++arrPointer] =             '<th>Pituus</th>';
-            arr[++arrPointer] =             '<th>Alkupäivämäärä</th>';
-            arr[++arrPointer] =         '</tr>';
-            arr[++arrPointer] =     '</thead>';
-            arr[++arrPointer] =     '<tbody>';
+            arr[++arrPointer] = `<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Ely</th>
+                                            <th>Tie</th>
+                                            <th>Ajr</th>
+                                            <th>Osa</th>
+                                            <th>Aet</th>
+                                            <th>Let</th>
+                                            <th>Pituus</th>
+                                            <th>Alkupäivämäärä</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>`;
             for (let i = 0, len = results.length; i < len; i++) {
-                arr[++arrPointer] =     '<tr>';
-                arr[++arrPointer] =         '<td>' + results[i].ely + '</td>';
-                arr[++arrPointer] =         '<td>' + results[i].roadNumber + '</td>';
-                arr[++arrPointer] =         '<td>' + results[i].track + '</td>';
-                arr[++arrPointer] =         '<td>' + results[i].roadPartNumber + '</td>';
-                arr[++arrPointer] =         '<td>' + results[i].startAddrM + '</td>';
-                arr[++arrPointer] =         '<td>' + results[i].endAddrM + '</td>';
-                arr[++arrPointer] =         '<td>' + results[i].lengthAddrM + '</td>';
-                arr[++arrPointer] =         '<td>' + results[i].startDate + '</td>';
-                arr[++arrPointer] =     '</tr>';
+                arr[++arrPointer] =`    <tr>
+                                            <td>${results[i].ely}</td>
+                                            <td>${results[i].roadNumber}</td>
+                                            <td>${results[i].track}</td>
+                                            <td>${results[i].roadPartNumber}</td>
+                                            <td>${results[i].startAddrM}</td>
+                                            <td>${results[i].endAddrM}</td>
+                                            <td>${results[i].lengthAddrM}</td>
+                                            <td>${results[i].startDate}</td>
+                                        </tr>`;
             }
-            arr[++arrPointer] =     '</tbody>';
-            arr[++arrPointer] = '</table>';
+            arr[++arrPointer] =`    </tbody>
+                            </table>`;
             const table = $(arr.join('')); // join the array to one large string and create jquery element from said string
             showData(results, table);
         }
@@ -85,35 +85,35 @@
         function showResultsForNodes(results) {
             const arr = [];
             let arrPointer = -1;
-            arr[++arrPointer] = '<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table">';
-            arr[++arrPointer] =     '<thead>';
-            arr[++arrPointer] =         '<tr>';
-            arr[++arrPointer] =             '<th>Ely</th>';
-            arr[++arrPointer] =             '<th>Tie</th>';
-            arr[++arrPointer] =             '<th>Osa</th>';
-            arr[++arrPointer] =             '<th>Et</th>';
-            arr[++arrPointer] =             '<th>Alkupäivämäärä</th>';
-            arr[++arrPointer] =             '<th>Tyyppi</th>';
-            arr[++arrPointer] =             '<th>Nimi</th>';
-            arr[++arrPointer] =             '<th>Solmunumero</th>';
-            arr[++arrPointer] =         '</tr>';
-            arr[++arrPointer] =     '</thead>';
-            arr[++arrPointer] =     '<tbody>';
+            arr[++arrPointer] =`<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Ely</th>
+                                            <th>Tie</th>
+                                            <th>Osa</th>
+                                            <th>Et</th>
+                                            <th>Alkupäivämäärä</th>
+                                            <th>Tyyppi</th>
+                                            <th>Nimi</th>
+                                            <th>Solmunumero</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>`;
 
             for (let i = 0, len = results.length; i < len; i++) {
-                arr[++arrPointer] =     '<tr>';
-                arr[++arrPointer] =         '<td>' + results[i].ely + '</td>';
-                arr[++arrPointer] =         '<td>' + results[i].roadNumber + '</td>';
-                arr[++arrPointer] =         '<td>' + results[i].roadPartNumber + '</td>';
-                arr[++arrPointer] =         '<td>' + results[i].addrM + '</td>';
-                arr[++arrPointer] =         '<td>' + results[i].startDate + '</td>';
-                arr[++arrPointer] =         '<td>' + results[i].nodeType + '</td>';
-                arr[++arrPointer] =         '<td>' + results[i].nodeName + '</td>';
-                arr[++arrPointer] =         '<td>' + results[i].nodeNumber + '</td>';
-                arr[++arrPointer] =     '</tr>';
+                arr[++arrPointer] =`    <tr>
+                                            <td>${results[i].ely}</td>
+                                            <td>${results[i].roadNumber}</td>
+                                            <td>${results[i].roadPartNumber}</td>
+                                            <td>${results[i].addrM}</td>
+                                            <td>${results[i].startDate}</td>
+                                            <td>${results[i].nodeType}</td>
+                                            <td>${results[i].nodeName}</td>
+                                            <td>${results[i].nodeNumber}</td>
+                                        </tr>`;
             }
-            arr[++arrPointer] =     '</tbody>';
-            arr[++arrPointer] = '</table>';
+            arr[++arrPointer] =     `</tbody>
+                                </table>`;
             const table = $(arr.join('')); // join the array to one large string and create jquery element from said string
             showData(results, table);
         }
@@ -121,69 +121,70 @@
         function showResultsForJunctions(results) {
             const arr = [];
             let arrPointer = -1;
-            arr[++arrPointer] = '<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table">';
-            arr[++arrPointer] =     '<thead>';
-            arr[++arrPointer] =         '<tr>';
-            arr[++arrPointer] =             '<th>Solmu-numero</th>';
-            arr[++arrPointer] =             '<th>P-Koord</th>';
-            arr[++arrPointer] =             '<th>I-Koord</th>';
-            arr[++arrPointer] =             '<th>Nimi</th>';
-            arr[++arrPointer] =             '<th>Solmu-tyyppi</th>';
-            arr[++arrPointer] =             '<th>Alkupvm</th>';
-            arr[++arrPointer] =             '<th>Liittymä-nro</th>';
-            arr[++arrPointer] =             '<th>Tie</th>';
-            arr[++arrPointer] =             '<th>Ajr</th>';
-            arr[++arrPointer] =             '<th>Osa</th>';
-            arr[++arrPointer] =             '<th>Et</th>';
-            arr[++arrPointer] =             '<th>EJ</th>';
-            arr[++arrPointer] =         '</tr>';
-            arr[++arrPointer] =     '</thead>';
-            arr[++arrPointer] =     '<tbody>';
+            arr[++arrPointer] =`<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Solmu-numero</th>
+                                            <th>P-Koord</th>
+                                            <th>I-Koord</th>
+                                            <th>Nimi</th>
+                                            <th>Solmu-tyyppi</th>
+                                            <th>Alkupvm</th>
+                                            <th>Liittymä-nro</th>
+                                            <th>Tie</th>
+                                            <th>Ajr</th>
+                                            <th>Osa</th>
+                                            <th>Et</th>
+                                            <th>EJ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>`;
 
             for (let i = 0, len = results.length; i < len; i++) {
-                arr[++arrPointer] =     '<tr>';
-                arr[++arrPointer] =         '<td>' + results[i].nodeNumber + '</td>';
-                arr[++arrPointer] =         '<td>' + results[i].nodeCoordinates.y + '</td>';
-                arr[++arrPointer] =         '<td>' + results[i].nodeCoordinates.x + '</td>';
-                arr[++arrPointer] =         '<td>' + results[i].nodeName + '</td>';
-                arr[++arrPointer] =         '<td>' + results[i].nodeType + '</td>';
-                arr[++arrPointer] =         '<td>' + results[i].startDate + '</td>';
-                arr[++arrPointer] =         '<td>' + results[i].junctionNumber + '</td>';
-                arr[++arrPointer] =         '<td>' + results[i].roadNumber + '</td>';
-                arr[++arrPointer] =         '<td>' + results[i].track + '</td>';
-                arr[++arrPointer] =         '<td>' + results[i].roadPartNumber + '</td>';
-                arr[++arrPointer] =         '<td>' + results[i].addrM + '</td>';
-                arr[++arrPointer] =         '<td>' + results[i].beforeAfter + '</td>';
-                arr[++arrPointer] =     '</tr>';
+                arr[++arrPointer] =`    <tr>
+                                            <td>${results[i].nodeNumber}</td>
+                                            <td>${results[i].nodeCoordinates.y}</td>
+                                            <td>${results[i].nodeCoordinates.x}</td>
+                                            <td>${results[i].nodeName}</td>
+                                            <td>${results[i].nodeType}</td>
+                                            <td>${results[i].startDate}</td>
+                                            <td>${results[i].junctionNumber}</td>
+                                            <td>${results[i].roadNumber}</td>
+                                            <td>${results[i].track}</td>
+                                            <td>${results[i].roadPartNumber}</td>
+                                            <td>${results[i].addrM}</td>
+                                            <td>${results[i].beforeAfter}</td>
+                                        </tr>`;
             }
-            arr[++arrPointer] =     '</tbody>';
-            arr[++arrPointer] = '</table>';
+            arr[++arrPointer] =`    </tbody>
+                                </table>`;
             const table = $(arr.join('')); // join the array to one large string and create jquery element from said string
             showData(results, table);
         }
 
+
         function showResultsForRoadNames(results) {
             const arr = [];
             let arrPointer = -1;
-            arr[++arrPointer] = '<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table">';
-            arr[++arrPointer] =     '<thead>';
-            arr[++arrPointer] =         '<tr>';
-            arr[++arrPointer] =             '<th>Ely</th>';
-            arr[++arrPointer] =             '<th>Tie</th>';
-            arr[++arrPointer] =             '<th>Nimi</th>';
-            arr[++arrPointer] =         '</tr>';
-            arr[++arrPointer] =     '</thead>';
-            arr[++arrPointer] =     '<tbody>';
+            arr[++arrPointer] = `<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Ely</th>
+                                            <th>Tie</th>
+                                            <th>Nimi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>`;
 
             for (let i = 0, len = results.length; i < len; i++) {
-                arr[++arrPointer] =     '<tr>';
-                arr[++arrPointer] =         '<td>' + results[i].ely + '</td>';
-                arr[++arrPointer] =         '<td>' + results[i].roadNumber + '</td>';
-                arr[++arrPointer] =         '<td>' + results[i].roadName + '</td>';
-                arr[++arrPointer] =     '</tr>';
+                arr[++arrPointer] = `   <tr>
+                                            <td>${results[i].ely}</td>
+                                            <td>${results[i].roadNumber}</td>
+                                            <td>${results[i].roadName}</td>
+                                        </tr>`;
             }
-            arr[++arrPointer] =     '</tbody>';
-            arr[++arrPointer] = '</table>';
+            arr[++arrPointer] =`    </tbody>
+                                </table>`;
             const table = $(arr.join('')); // join the array to one large string and create jquery element from said string
             showData(results, table);
         }
