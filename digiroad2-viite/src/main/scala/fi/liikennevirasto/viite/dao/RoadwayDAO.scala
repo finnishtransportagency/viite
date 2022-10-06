@@ -436,6 +436,8 @@ case class Roadway(id: Long, roadwayNumber: Long, roadNumber: Long, roadPartNumb
 
 case class TrackForRoadAddressBrowser(ely: Long, roadNumber: Long, track: Long, roadPartNumber: Long, startAddrM: Long, endAddrM: Long, roadAddressLengthM: Long, administrativeClass: Long, startDate: DateTime)
 
+case class RoadPartForRoadAddressBrowser(ely: Long, roadNumber: Long, roadPartNumber: Long, startAddrM: Long, endAddrM: Long, roadAddressLengthM: Long, startDate: DateTime)
+
 class BaseDAO {
   protected def logger = LoggerFactory.getLogger(getClass)
 
@@ -892,6 +894,21 @@ class RoadwayDAO extends BaseDAO {
     }
   }
 
+  private implicit val getRoadPartForRoadAddressBrowser: GetResult[RoadPartForRoadAddressBrowser] = new GetResult[RoadPartForRoadAddressBrowser] {
+    def apply(r: PositionedResult) = {
+
+      val ely = r.nextLong()
+      val roadNumber = r.nextLong()
+      val roadPartNumber = r.nextLong()
+      val startAddrMValue = r.nextLong()
+      val endAddrMValue = r.nextLong()
+      val lengthAddrM = r.nextLong()
+      val startDate = formatter.parseDateTime(r.nextDate.toString)
+
+      RoadPartForRoadAddressBrowser(ely, roadNumber, roadPartNumber, startAddrMValue, endAddrMValue, lengthAddrM, startDate)
+    }
+  }
+
   /**
     * Full SQL query to return, if existing, a road part number that is < than the supplied current one.
     *
@@ -1189,6 +1206,69 @@ class RoadwayDAO extends BaseDAO {
 
     fetchTrackSections(withOptionalParameters(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber))
   }
+
+  def fetchRoadPartsForRoadAddressBrowser(startDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[RoadPartForRoadAddressBrowser] = {
+    def withOptionalParameters(startDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long])(query: String): String  = {
+
+      val dateCondition = "AND start_date <='" + startDate.get + "'"
+
+      val elyCondition = {
+        if (ely.nonEmpty)
+          s" AND ely = ${ely.get}"
+        else
+          ""
+      }
+
+      val roadNumberCondition = {
+        if (roadNumber.nonEmpty)
+          s" AND road_number = ${roadNumber.get}"
+        else
+          ""
+      }
+
+      val roadPartCondition = {
+        val parts = (minRoadPartNumber, maxRoadPartNumber)
+        parts match {
+          case (Some(minPart), Some(maxPart)) => s"AND road_part_number BETWEEN $minPart AND $maxPart"
+          case (None, Some(maxPart)) => s"AND road_part_number <= $maxPart"
+          case (Some(minPart), None) => s"AND road_part_number >= $minPart"
+          case _ => ""
+        }
+      }
+
+
+      s"""      $query
+      |         $dateCondition
+      |         $elyCondition
+      |         $roadNumberCondition
+      |         $roadPartCondition
+      |GROUP  BY ely,
+      |          road_number,
+      |          road_part_number
+      |ORDER  BY r.road_number,
+      |          r.road_part_number """.stripMargin
+    }
+
+    def fetchRoadParts(queryFilter: String => String): Seq[RoadPartForRoadAddressBrowser] = {
+      val query =
+        """SELECT ely,
+          |       road_number,
+          |       road_part_number,
+          |       Min(start_addr_m) AS startAddr,
+          |       Max(end_addr_m)   AS endAddr,
+          |       Max(end_addr_m)   AS "length",
+          |       Max(start_date)
+          |FROM   roadway r
+          |WHERE  r.end_date IS NULL
+          |       AND r.valid_to IS NULL
+          |""".stripMargin
+      val filteredQuery = queryFilter(query)
+      Q.queryNA[RoadPartForRoadAddressBrowser](filteredQuery).iterator.toSeq
+    }
+    fetchRoadParts(withOptionalParameters(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber))
+  }
+
+
 
 
 }

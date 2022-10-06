@@ -656,6 +656,12 @@ class RoadAddressService(
     }
   }
 
+  def getRoadPartsForRoadAddressBrowser(startDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[RoadPartForRoadAddressBrowser] = {
+    withDynSession {
+      roadwayDAO.fetchRoadPartsForRoadAddressBrowser(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
+    }
+  }
+
   def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedRoadAddress] = {
     withDynSession {
       val roadwayAddresses = roadwayDAO.fetchAllByDateRange(sinceDate, untilDate)

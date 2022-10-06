@@ -359,7 +359,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
   private val getDataForRoadAddressBrowser: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String,Any]]("getDataForRoadAddressBrowser").parameters(
       queryParam[String]("startDate").description("Situation date (yyyy-MM-dd)"),
-      queryParam[String]("target").description("What data to fetch (Tracks, Nodes, Junctions, RoadNames)"),
+      queryParam[String]("target").description("What data to fetch (Tracks, RoadParts, Nodes, Junctions, RoadNames)"),
       queryParam[Long]("ely").description("Ely number of a road address").optional,
       queryParam[Long]("roadNumber").description("Road Number of a road address").optional,
       queryParam[Long]("minRoadPartNumber").description("Min Road Part Number of a road address").optional,
@@ -412,6 +412,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
             case Some("Tracks") =>
               val tracksForRoadAddressBrowser = roadAddressService.getTracksForRoadAddressBrowser(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
               Map("success" -> true, "tracks" -> tracksForRoadAddressBrowser.map(roadAddressBrowserTracksToApi))
+            case Some("RoadParts") =>
+              val roadPartsForRoadAddressBrowser = roadAddressService.getRoadPartsForRoadAddressBrowser(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
+              Map("success" -> true, "roadParts" -> roadPartsForRoadAddressBrowser.map(roadAddressBrowserRoadPartsToApi))
             case Some("Nodes") =>
               val nodesForRoadAddressBrowser = nodesAndJunctionsService.getNodesForRoadAddressBrowser(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
               Map("success" -> true, "nodes" -> nodesForRoadAddressBrowser.map(roadAddressBrowserNodesToApi))
@@ -1549,6 +1552,18 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
       "endAddrM" -> track.endAddrM,
       "lengthAddrM" -> track.roadAddressLengthM,
       "administrativeClass" -> getAdministrativeClassStringValue(),
+      "startDate" -> new SimpleDateFormat("dd.MM.yyyy").format(track.startDate.toDate)
+    )
+  }
+
+  def roadAddressBrowserRoadPartsToApi(track: RoadPartForRoadAddressBrowser): Map[String, Any] = {
+    Map(
+      "ely" -> track.ely,
+      "roadNumber" -> track.roadNumber,
+      "roadPartNumber" -> track.roadPartNumber,
+      "startAddrM" -> track.startAddrM,
+      "endAddrM" -> track.endAddrM,
+      "lengthAddrM" -> track.roadAddressLengthM,
       "startDate" -> new SimpleDateFormat("dd.MM.yyyy").format(track.startDate.toDate)
     )
   }
