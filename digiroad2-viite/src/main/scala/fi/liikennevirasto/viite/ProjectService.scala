@@ -288,9 +288,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def getRoadLinkDate(): String = {
     withDynSession {
       val timeInMillis = LinkDAO.fetchMaxAdjustedTimestamp()
-      val retValue =
-        """{ "result":" """ + new DateTime(timeInMillis).toString("dd.MM.yyyy HH:mm:ss") + """"}"""
-      retValue
+      """{ "result":" """ + new DateTime(timeInMillis).toString("dd.MM.yyyy HH:mm:ss") + """"}"""
     }
   }
 

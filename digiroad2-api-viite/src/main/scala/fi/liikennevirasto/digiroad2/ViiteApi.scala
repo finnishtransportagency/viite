@@ -260,14 +260,14 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
   private val getMidPointByLinkId: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String, Any]]("getMidPointByLinkId")
       .parameters(
-        pathParam[Long]("linkId").description("LinkId of a road address")
+        pathParam[String]("linkId").description("LinkId of a road address")
       )
       tags "ViiteAPI - RoadAddresses"
       summary "getMidPointByLinkId"
     )
 
   get("/roadlinks/midpoint/:linkId", operation(getMidPointByLinkId)) {
-    val linkId = params("linkId").toString
+    val linkId: String = params("linkId")
     time(logger, s"GET request for /roadlinks/midpoint/$linkId") {
       roadLinkService.getMidPointByLinkId(linkId)
     }
@@ -283,7 +283,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
     )
 
   get("/roadlinks/mtkid/:mtkId", operation(getRoadLinkMiddlePointByMtkId)) {
-    val mtkId = params("mtkId").toLong
+    val mtkId: Long = params("mtkId").toLong
     time(logger, s"GET request for /roadlinks/mtkid/$mtkId") {
       roadLinkService.getRoadLinkMiddlePointBySourceId(mtkId)
     }
@@ -1011,7 +1011,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
         pathParam[Long]("projectID").description("Id of a project")
       )
       tags "ViiteAPI - RoadAddresses"
-      summary "Returns all the road names that are related to a certain project (referenced by the projectID) and within a certain roadNumber."
+      summary "Returns a road name that is related to within a certain roadNumber or a certain project (referenced by the projectID)."
     )
 
   get("/roadlinks/roadname/:roadNumber/:projectID", operation(getRoadNamesByRoadNumberAndProjectId)) {
