@@ -29,8 +29,8 @@ class ViiteApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter{
   protected implicit val jsonFormats: Formats = DigiroadSerializers.jsonFormats
 
   val useFrozenLinkInterface = true
-  val mockRoadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockKgvRoadLinkClient: KgvRoadLink = MockitoSugar.mock[KgvRoadLink]
+  val mockRoadLinkService   : RoadLinkService             = MockitoSugar.mock[RoadLinkService]
+  val mockKgvRoadLink       : KgvRoadLink                 = MockitoSugar.mock[KgvRoadLink]
   val frozenTimeRoadLinkData: KgvRoadLinkClient[RoadLink] = MockitoSugar.mock[KgvRoadLinkClient[RoadLink]]
   val complementaryData: ComplementaryLinkDAO = MockitoSugar.mock[ComplementaryLinkDAO]
 
@@ -43,8 +43,8 @@ class ViiteApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter{
 
   val preFilledRoadName = PreFillInfo(1, 2, "roadName", RoadNameSource.RoadAddressSource)
   when(mockProjectService.fetchPreFillData("6117675", 7081807)).thenReturn(Right(preFilledRoadName))
-  when(mockKgvRoadLinkClient.frozenTimeRoadLinkData).thenReturn(frozenTimeRoadLinkData)
-  when(mockKgvRoadLinkClient.complementaryData).thenReturn(complementaryData)
+  when(mockKgvRoadLink.frozenTimeRoadLinkData).thenReturn(frozenTimeRoadLinkData)
+  when(mockKgvRoadLink.complementaryData).thenReturn(complementaryData)
 
   val testRoadLink = RoadLink("6117675", Seq(Point(6975409, 527825, 85.90899999999965), Point(6975409, 528516)), 691.186, State, TrafficDirection.AgainstDigitizing, Some("25.06.2015 03:00:00"), Some("vvh_modified"), InUse, FrozenLinkInterface, 749, "")
   val mockRoadLink = RoadLink("3236208", Seq(Point(506770.557, 6824285.205), Point(507110.817, 6824195.643)), 368.357, State, TrafficDirection.TowardsDigitizing, Some("25.06.2015 03:00:00"), Some("vvh_modified"), InUse, FrozenLinkInterface, 749, "")
@@ -63,7 +63,7 @@ class ViiteApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter{
 
   when(mockViiteVkmClient.get(any[String], any[Map[String, String]])).thenReturn(Left("""{"type":"FeatureCollection","features":[{"type":"Feature","geometry":{"type":"Point","coordinates":[]},"properties":{"x":510780.954,"kuntakoodi":75,"katunumero":1,"y":6714920.766500175,"kuntanimi_se":"Fredrikshamn","elynimi":"Kaakkois-Suomi","hallinnollinen_luokka":2,"katunimi":"Mannerheimintie","maakuntanimi_se":"Kymmenedalen","kuntanimi":"Hamina","vertikaalisuhde":0,"maakuntakoodi":8,"maakuntanimi":"Kymenlaakso","z":13.2705}},{"type":"Feature","geometry":{"type":"Point","coordinates":[]},"properties":{"x":275178.084005079,"kuntakoodi":78,"katunimi_se":"Mannerheimvägen","katunumero":1,"y":6639111.276944768,"kuntanimi_se":"Hangö","elynimi":"Uusimaa","hallinnollinen_luokka":2,"katunimi":"Mannerheimintie","maakuntanimi_se":"Nyland","kuntanimi":"Hanko","vertikaalisuhde":0,"maakuntakoodi":1,"maakuntanimi":"Uusimaa","z":3.817}},{"type":"Feature","geometry":{"type":"Point","coordinates":[]},"properties":{"x":385782.6517814581,"kuntakoodi":91,"tie":1,"vaylan_luonne":11,"katunimi_se":"Mannerheimvägen","ajorata":1,"katunumero":1,"y":6671898.5914367875,"kuntanimi_se":"Helsingfors","ualuenimi":"Kunta hoitaa","elynimi":"Uusimaa","hallinnollinen_luokka":2,"ely":1,"katunimi":"Mannerheimintie","maakuntanimi_se":"Nyland","kuntanimi":"Helsinki","vertikaalisuhde":0,"maakuntakoodi":1,"maakuntanimi":"Uusimaa","etaisyys":184,"osa":1,"ualue":400,"z":7.155061610986975}},{"type":"Feature","geometry":{"type":"Point","coordinates":[]},"properties":{"x":254370.55402264866,"kuntakoodi":214,"katunumero":1,"y":6855368.466820078,"kuntanimi_se":"Kankaanpää","elynimi":"Varsinais-Suomi","hallinnollinen_luokka":3,"katunimi":"Mannerheimintie","maakuntanimi_se":"Satakunta","kuntanimi":"Kankaanpää","vertikaalisuhde":0,"maakuntakoodi":4,"maakuntanimi":"Satakunta","z":92.123}},{"type":"Feature","geometry":{"type":"Point","coordinates":[]},"properties":{"x":436038.62699999765,"kuntakoodi":398,"katunumero":1,"y":6754094.406000189,"kuntanimi_se":"Lahtis","elynimi":"Uusimaa","hallinnollinen_luokka":3,"katunimi":"Mannerheimintie","maakuntanimi_se":"Päijät-Häme","kuntanimi":"Lahti","vertikaalisuhde":0,"maakuntakoodi":7,"maakuntanimi":"Päijät-Häme","z":92.253}},{"type":"Feature","geometry":{"type":"Point","coordinates":[]},"properties":{"x":525223.594,"kuntakoodi":441,"katunumero":1,"y":6749626.399000189,"kuntanimi_se":"Luumäki","elynimi":"Kaakkois-Suomi","hallinnollinen_luokka":3,"katunimi":"Mannerheimintie","maakuntanimi_se":"Södra Karelen","kuntanimi":"Luumäki","vertikaalisuhde":0,"maakuntakoodi":9,"maakuntanimi":"Etelä-Karjala","z":85.718}},{"type":"Feature","geometry":{"type":"Point","coordinates":[]},"properties":{"x":514494.7815168431,"kuntakoodi":491,"tie":45758,"vaylan_luonne":4,"ajorata":0,"katunumero":1,"y":6839008.613566632,"kuntanimi_se":"S:t Michel","ualuenimi":"Kunta hoitaa","elynimi":"Pohjois-Savo","hallinnollinen_luokka":2,"ely":8,"katunimi":"Mannerheimintie","maakuntanimi_se":"Södra Savolax","kuntanimi":"Mikkeli","vertikaalisuhde":0,"maakuntakoodi":10,"maakuntanimi":"Etelä-Savo","etaisyys":205,"osa":1,"ualue":400,"z":79.94520259865256}},{"type":"Feature","geometry":{"type":"Point","coordinates":[]},"properties":{"x":291508.1730952337,"kuntakoodi":581,"katunumero":1,"y":6880609.717048872,"kuntanimi_se":"Parkano","elynimi":"Pirkanmaa","hallinnollinen_luokka":2,"katunimi":"Mannerheimintie","maakuntanimi_se":"Birkaland","kuntanimi":"Parkano","vertikaalisuhde":0,"maakuntakoodi":6,"maakuntanimi":"Pirkanmaa","z":129.3610862799476}},{"type":"Feature","geometry":{"type":"Point","coordinates":[]},"properties":{"x":293877.4860021637,"kuntakoodi":710,"katunimi_se":"Mannerheimvägen","katunumero":1,"y":6649035.775971972,"kuntanimi_se":"Raseborg","elynimi":"Uusimaa","hallinnollinen_luokka":3,"katunimi":"Mannerheimintie","maakuntanimi_se":"Nyland","kuntanimi":"Raasepori","vertikaalisuhde":0,"maakuntakoodi":1,"maakuntanimi":"Uusimaa","z":20.732}},{"type":"Feature","geometry":{"type":"Point","coordinates":[]},"properties":{"x":230847.9620801189,"kuntakoodi":905,"katunimi_se":"Mannerheimsvägen","katunumero":1,"y":7007581.801467923,"kuntanimi_se":"Vasa","elynimi":"Etelä-Pohjanmaa","hallinnollinen_luokka":2,"katunimi":"Mannerheimintie","maakuntanimi_se":"Österbotten","kuntanimi":"Vaasa","vertikaalisuhde":0,"maakuntakoodi":15,"maakuntanimi":"Pohjanmaa","z":13.009}}]}"""))
 
-  val roadLinkService: RoadLinkService = new RoadLinkService(mockKgvRoadLinkClient, eventbus, new JsonSerializer, useFrozenLinkInterface)
+  val roadLinkService: RoadLinkService = new RoadLinkService(mockKgvRoadLink, eventbus, new JsonSerializer, useFrozenLinkInterface)
   val roadAddressService: RoadAddressService = new RoadAddressService(roadLinkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, roadwayAddressMapper, eventbus, useFrozenLinkInterface){
     override val viiteVkmClient = mockViiteVkmClient
   }
@@ -73,7 +73,7 @@ class ViiteApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter{
     nodeDAO, nodePointDAO, junctionPointDAO, projectReservedPartDAO, roadwayChangesDAO,
     roadwayAddressMapper, eventbus, useFrozenLinkInterface)
 
-  private val viiteApi = new ViiteApi(roadLinkService, mockKgvRoadLinkClient, roadAddressService, projectService, mockRoadNetworkService, roadNameService, mockNodesAndJunctionsService, swagger = new ViiteSwagger)
+  private val viiteApi = new ViiteApi(roadLinkService, mockKgvRoadLink, roadAddressService, projectService, mockRoadNetworkService, roadNameService, mockNodesAndJunctionsService, swagger = new ViiteSwagger)
 
   addServlet(viiteApi, "/*")
 
