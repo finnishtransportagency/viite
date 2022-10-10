@@ -444,7 +444,8 @@ SELECT
       INNER JOIN ROADWAYS R
         ON ((R.ROAD_NUMBER = RC.NEW_ROAD_NUMBER
              AND R.ROAD_PART_NUMBER = RC.NEW_ROAD_PART_NUMBER) OR
-            (R.ROAD_NUMBER = RC.OLD_ROAD_NUMBER
+            (RC.CHANGE_TYPE = 5 --Terminated changes only have the old road address
+             AND R.ROAD_NUMBER = RC.OLD_ROAD_NUMBER
              AND R.ROAD_PART_NUMBER = RC.OLD_ROAD_PART_NUMBER)
             )
       INNER JOIN PROJECT P
