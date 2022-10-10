@@ -984,7 +984,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test When fetching road addresses for road address browser then form homogenous sections from roadways based on road number, road part number, track, start date and ely") {
+  test("Test When fetching track sections for road address browser then form homogenous sections from roadways based on road number, road part number, track, start date, administrative class and ely") {
     /**
       *         |   | 2-tracks
       *         \  /
@@ -1039,6 +1039,63 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
       startAddrMs should be (Seq(0, 1545, 1701, 1815, 2022, 2333, 5061))
       val endAddrMs = result.map(row => row.endAddrM).distinct
       endAddrMs should be (Seq(1545, 1701, 1815, 2022, 2333, 5061, 5239))
+
+    }
+  }
+
+  test("Test When fetching road parts for road address browser then form road part sections from roadways (i.e. one row for one road part)") {
+    /**
+      *         |   | 2-tracks
+      *         \  /
+      *          \/
+      *          |
+      *          |    1-track
+      *         /\
+      *        | |    2-tracks
+      *        \/
+      *        |
+      *        |      1-track
+      *       /\
+      *      /  \
+      *     |   |     2-tracks
+      */
+
+
+
+    runWithRollback {
+      val roadNumber = 76
+      val roadPartNumber = 1
+      val date = "2022-01-01"
+
+      val roadways = Seq(
+        Roadway(dao.getNextRoadwayId,	Sequences.nextRoadwayNumber, roadNumber, roadPartNumber, AdministrativeClass.State, Track.LeftSide, Discontinuity.Continuous, 0, 190, reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
+        Roadway(dao.getNextRoadwayId,	Sequences.nextRoadwayNumber, roadNumber, roadPartNumber, AdministrativeClass.State, Track.RightSide, Discontinuity.Continuous, 0, 190, reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
+        Roadway(dao.getNextRoadwayId,	Sequences.nextRoadwayNumber, roadNumber, roadPartNumber, AdministrativeClass.State, Track.LeftSide, Discontinuity.Continuous, 190, 1260, reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
+        Roadway(dao.getNextRoadwayId,	Sequences.nextRoadwayNumber, roadNumber, roadPartNumber, AdministrativeClass.State, Track.RightSide, Discontinuity.Continuous, 190, 1260, reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
+        Roadway(dao.getNextRoadwayId,	Sequences.nextRoadwayNumber, roadNumber, roadPartNumber, AdministrativeClass.State, Track.LeftSide, Discontinuity.Continuous, 1260, 1545, reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
+        Roadway(dao.getNextRoadwayId,	Sequences.nextRoadwayNumber, roadNumber, roadPartNumber, AdministrativeClass.State, Track.RightSide, Discontinuity.Continuous, 1260, 1545, reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
+        Roadway(dao.getNextRoadwayId,	Sequences.nextRoadwayNumber, roadNumber, roadPartNumber, AdministrativeClass.State, Track.RightSide, Discontinuity.Continuous, 1545, 1701, reversed = false, DateTime.parse("2017-01-01"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
+        Roadway(dao.getNextRoadwayId,	Sequences.nextRoadwayNumber, roadNumber, roadPartNumber, AdministrativeClass.State, Track.LeftSide, Discontinuity.Continuous, 1545, 1701, reversed = false, DateTime.parse("2017-01-01"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
+        Roadway(dao.getNextRoadwayId,	Sequences.nextRoadwayNumber, roadNumber, roadPartNumber, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 1701, 1815, reversed = false, DateTime.parse("2017-01-01"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
+        Roadway(dao.getNextRoadwayId,	Sequences.nextRoadwayNumber, roadNumber, roadPartNumber, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 1815, 2022, reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
+        Roadway(dao.getNextRoadwayId,	Sequences.nextRoadwayNumber, roadNumber, roadPartNumber, AdministrativeClass.State, Track.RightSide, Discontinuity.Continuous, 2022, 2333, reversed = false, DateTime.parse("2017-12-15"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
+        Roadway(dao.getNextRoadwayId,	Sequences.nextRoadwayNumber, roadNumber, roadPartNumber, AdministrativeClass.State, Track.LeftSide, Discontinuity.Continuous, 2022, 2333, reversed = false, DateTime.parse("2017-12-15"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
+        Roadway(dao.getNextRoadwayId,	Sequences.nextRoadwayNumber, roadNumber, roadPartNumber, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 2333, 2990, reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
+        Roadway(dao.getNextRoadwayId,	Sequences.nextRoadwayNumber, roadNumber, roadPartNumber, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 2990, 5061, reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
+        Roadway(dao.getNextRoadwayId,	Sequences.nextRoadwayNumber, roadNumber, roadPartNumber, AdministrativeClass.State, Track.RightSide, Discontinuity.Continuous, 5061, 5239, reversed = false, DateTime.parse("2017-12-01"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
+        Roadway(dao.getNextRoadwayId,	Sequences.nextRoadwayNumber, roadNumber, roadPartNumber, AdministrativeClass.State, Track.LeftSide, Discontinuity.Continuous, 5061, 5239, reversed = false, DateTime.parse("2017-12-01"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination)
+      )
+
+      dao.create(roadways)
+
+      val result = dao.fetchRoadPartsForRoadAddressBrowser(Some(date), None, Some(roadNumber), Some(roadPartNumber), Some(roadPartNumber))
+      result.size should be (1)                               // one road part should always return one result row
+      val startAddrM = result.head.startAddrM
+      startAddrM should be (0)                                // max endAddrM - min startAddrM
+      val endAddrM = result.head.endAddrM
+      endAddrM should be (5239)                               // max endAddrM
+      val startDate = result.head.startDate
+      startDate should be (DateTime.parse("2017-12-15")) // latest date of all of the roadways on the road part
 
     }
   }
