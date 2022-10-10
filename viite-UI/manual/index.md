@@ -920,40 +920,44 @@ Syötettävistä hakuehdoista Tilanne pvm sekä Ely TAI Tie on pakollinen tieto.
 (5) Losa: Suurin tieosanumero jolta haettavia kohteita haetaan
 
 ####  Haettava kohde
-(6) Tieosat: Hakee annettujen hakuehtojen mukaiset tieosat   
-(7) Solmut: Hakee annettujen hakuehtojen mukaiset solmut   
-(8) Liittymät: Hakee annettujen hakuehtojen mukaiset liittymät   
-(9) Tiennimet: Hakee annettujen hakuehtojen mukaiset tiennimet
+(6) Ajoradat: Hakee annettujen hakuehtojen mukaiset ajoradat  
+(7) Tieosat: Hakee annettujen hakuehtojen mukaiset tieosat   
+(8) Solmut: Hakee annettujen hakuehtojen mukaiset solmut   
+(9) Liittymät: Hakee annettujen hakuehtojen mukaiset liittymät   
+(10) Tiennimet: Hakee annettujen hakuehtojen mukaiset tiennimet
 
 
-Huom! Haku saattaa kestää useita kymmeniä sekunteja haettaessa pelkästään tilannepäivämäärällä ja elyllä (Viite hakee valitut kohteet koko elyn alueelta)
+Huom! Haku saattaa kestää useita sekunteja haettaessa pelkästään tilannepäivämäärällä ja elyllä (Viite hakee valitut kohteet koko elyn alueelta)
 
 Viite palauttaa hakuehtojen perusteella listan kohteita sekä näiden ominaisuustiedot. 
 
-Hakutulokset on mahdollista ladata Excel-taulukkona klikkaamalla "Lataa Excelinä" -painiketta
+Hakutulokset on mahdollista ladata Excel-taulukkona klikkaamalla "Lataa Excelinä" -painiketta.
 
 Jos hakutulos on liian suuri (>100 riviä) tarjoaa Viite pelkän Excel-latausmahdollisuuden.
 
 10.1 Esimerkkejä eri ominaisuustietojen hakutuloksista:
 --------------------------
 
+![Ajoradat -hakutulos](k80.PNG)
+
+_Kuva 10.3: Ajoradat -hakutulos_
 
 ![Tieosat -hakutulos](k75.PNG)
 
-_Kuva 10.3: Tieosat -hakutulos_
+_Kuva 10.4: Tieosat -hakutulos_
 
 ![Solmut -hakutulos](k76.PNG)
 
-_Kuva 10.4: Solmut -hakutulos_
+_Kuva 10.5: Solmut -hakutulos_
 
 ![Liittymät -hakutulos](k77.PNG)
 
-_Kuva 10.5: Liittymät -hakutulos_
+_Kuva 10.6: Liittymät -hakutulos_
 
 ![Tiennimet -hakutulos](k78.PNG)
 
-_Kuva 10.6: Tiennimet -hakutulos_
+_Kuva 10.7: Tiennimet -hakutulos_
 
 ![Excel -hakutulos](k79.PNG)
 
-_Kuva 10.7: Viite tarjoaa pelkän Excel-tiedoston latausmahdollisuuden mikäli hakutulos on liian suuri_
+_Kuva 10.8: Viite tarjoaa pelkän Excel-tiedoston latausmahdollisuuden mikäli hakutulos on liian suuri_
