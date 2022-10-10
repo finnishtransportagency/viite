@@ -1256,7 +1256,7 @@ class RoadwayDAO extends BaseDAO {
           |       road_part_number,
           |       Min(start_addr_m) AS startAddr,
           |       Max(end_addr_m)   AS endAddr,
-          |       Max(end_addr_m)   AS "length",
+          |       Max(end_addr_m) - Min(start_addr_m) AS "length",
           |       Max(start_date)
           |FROM   roadway r
           |WHERE  r.end_date IS NULL
