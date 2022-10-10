@@ -222,8 +222,8 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
       val pr = projectDAO.create(rap)
       val pr2 = projectDAO.fetchById(projId1)
       val changeType = 2
-      sqlu""" insert into ROADWAY_CHANGES(project_id,change_type,old_road_number,old_road_part_number,old_TRACK,old_start_addr_m,old_end_addr_m,old_discontinuity,new_discontinuity,OLD_ADMINISTRATIVE_CLASS,NEW_ADMINISTRATIVE_CLASS,old_ely,new_ely, ROADWAY_CHANGE_ID,new_road_number,new_road_part_number)
-                                   Values($projId1,$changeType,$roadNumber1,$roadPartNumber1,1,0,10.5,1,1,1,1,8,8,1,$roadNumber1,$roadPartNumber1) """.execute
+      sqlu""" insert into ROADWAY_CHANGES(project_id,change_type,old_discontinuity,new_discontinuity,OLD_ADMINISTRATIVE_CLASS,NEW_ADMINISTRATIVE_CLASS,old_ely,new_ely, ROADWAY_CHANGE_ID,new_road_number,new_road_part_number,new_start_addr_m,new_end_addr_m)
+                                   Values($projId1,$changeType,1,1,1,1,8,8,1,$roadNumber1,$roadPartNumber1,0,10.5) """.execute
       val rwcs = dao.fetchRoadwayChanges(Set(projId1))
       val startValidFromDate = DateTime.parse("2120-01-01")
       val endValidFromDate =  DateTime.parse("2120-01-03")
@@ -233,7 +233,7 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
       roadwayChangesInfo(0).change_type should be(changeType)
 
       sqlu""" insert into ROADWAY_CHANGES(project_id,change_type,old_road_number,old_road_part_number,old_TRACK,old_start_addr_m,old_end_addr_m,old_discontinuity,new_discontinuity,OLD_ADMINISTRATIVE_CLASS,NEW_ADMINISTRATIVE_CLASS,old_ely,new_ely, ROADWAY_CHANGE_ID)
-                                   Values($projId1,3,$roadNumber1,$roadPartNumber1,1,0,10.5,1,1,1,1,8,8,1) """.execute
+                                   Values($projId1,5,$roadNumber1,$roadPartNumber1,1,0,10.5,1,1,1,1,8,8,2) """.execute
       roadwayChangesInfo = dao.fetchRoadwayChangesInfo(startValidFromDate, Option(endValidFromDate))
       roadwayChangesInfo.size should be(2)
     }
