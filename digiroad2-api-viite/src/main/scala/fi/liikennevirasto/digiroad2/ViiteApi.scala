@@ -1556,15 +1556,15 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
     )
   }
 
-  def roadAddressBrowserRoadPartsToApi(track: RoadPartForRoadAddressBrowser): Map[String, Any] = {
+  def roadAddressBrowserRoadPartsToApi(roadPart: RoadPartForRoadAddressBrowser): Map[String, Any] = {
     Map(
-      "ely" -> track.ely,
-      "roadNumber" -> track.roadNumber,
-      "roadPartNumber" -> track.roadPartNumber,
-      "startAddrM" -> track.startAddrM,
-      "endAddrM" -> track.endAddrM,
-      "lengthAddrM" -> track.roadAddressLengthM,
-      "startDate" -> new SimpleDateFormat("dd.MM.yyyy").format(track.startDate.toDate)
+      "ely" -> roadPart.ely,
+      "roadNumber" -> roadPart.roadNumber,
+      "roadPartNumber" -> roadPart.roadPartNumber,
+      "startAddrM" -> roadPart.startAddrM,
+      "endAddrM" -> roadPart.endAddrM,
+      "lengthAddrM" -> roadPart.roadAddressLengthM,
+      "startDate" -> new SimpleDateFormat("dd.MM.yyyy").format(roadPart.startDate.toDate)
     )
   }
 
