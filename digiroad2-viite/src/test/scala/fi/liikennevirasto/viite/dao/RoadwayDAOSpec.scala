@@ -1029,7 +1029,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
 
       dao.create(roadways)
 
-      val result = dao.fetchRoadsForRoadAddressBrowser(Some(date), None, Some(roadNumber), Some(roadPartNumber), Some(roadPartNumber))
+      val result = dao.fetchTracksForRoadAddressBrowser(Some(date), None, Some(roadNumber), Some(roadPartNumber), Some(roadPartNumber))
 
       result.size should be (11)
       val (combinedTrack, twoTrack) = result.partition(row => row.track == 0)

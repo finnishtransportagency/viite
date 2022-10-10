@@ -38,7 +38,8 @@
                 '<div class="input-container"><label class="control-label-small">Tie</label><input type="number" min="1" max="99999" id="roadAddrInputRoad" /></div>' +
                 '<div class="input-container"><label class="control-label-small">Aosa</label><input type="number" min="1" max="999" id="roadAddrInputStartPart"/></div>' +
                 '<div class="input-container"><label class="control-label-small">Losa</label><input type="number" min="1" max="999" id="roadAddrInputEndPart"/></div>' +
-                '<div class="input-container"><label>Tieosat</label><input type="radio" name="roadAddrBrowserForm" value="Roads" checked="checked"></div>' +
+                '<div class="input-container"><label>Ajoradat</label><input type="radio" name="roadAddrBrowserForm" value="Tracks" checked="checked"></div>' +
+                '<div class="input-container"><label>Tieosat</label><input type="radio" name="roadAddrBrowserForm" value="RoadParts"></div>' +
                 '<div class="input-container"><label>Solmut</label><input type="radio" name="roadAddrBrowserForm" value="Nodes"></div>' +
                 '<div class="input-container"><label>Liittymät</label><input type="radio" name="roadAddrBrowserForm" value="Junctions"></div>' +
                 '<div class="input-container"><label>Tiennimet</label><input type="radio" name="roadAddrBrowserForm" value="RoadNames"></div>' +
@@ -47,7 +48,7 @@
             '</form>'
         );
 
-        function showResultsForRoads(results) {
+        function showResultsForTracks(results) {
             const arr = [];
             let arrPointer = -1;
             arr[++arrPointer] = `<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table">
@@ -60,7 +61,8 @@
                                             <th>Aet</th>
                                             <th>Let</th>
                                             <th>Pituus</th>
-                                            <th>Alkupäivämäärä</th>
+                                            <th>Hall. luokka</th>
+                                            <th>Alkupvm</th>
                                         </tr>
                                     </thead>
                                     <tbody>`;
@@ -69,6 +71,40 @@
                                             <td>${results[i].ely}</td>
                                             <td>${results[i].roadNumber}</td>
                                             <td>${results[i].track}</td>
+                                            <td>${results[i].roadPartNumber}</td>
+                                            <td>${results[i].startAddrM}</td>
+                                            <td>${results[i].endAddrM}</td>
+                                            <td>${results[i].lengthAddrM}</td>
+                                            <td>${results[i].administrativeClass}</td>
+                                            <td>${results[i].startDate}</td>
+                                        </tr>`;
+            }
+            arr[++arrPointer] =`    </tbody>
+                            </table>`;
+            const table = $(arr.join('')); // join the array to one large string and create jquery element from said string
+            showData(results, table);
+        }
+
+        function showResultsForRoadParts(results) {
+            const arr = [];
+            let arrPointer = -1;
+            arr[++arrPointer] = `<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Ely</th>
+                                            <th>Tie</th>
+                                            <th>Osa</th>
+                                            <th>Aet</th>
+                                            <th>Let</th>
+                                            <th>Pituus</th>
+                                            <th>Alkupvm</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>`;
+            for (let i = 0, len = results.length; i < len; i++) {
+                arr[++arrPointer] =`    <tr>
+                                            <td>${results[i].ely}</td>
+                                            <td>${results[i].roadNumber}</td>
                                             <td>${results[i].roadPartNumber}</td>
                                             <td>${results[i].startAddrM}</td>
                                             <td>${results[i].endAddrM}</td>
@@ -92,7 +128,7 @@
                                             <th>Tie</th>
                                             <th>Osa</th>
                                             <th>Et</th>
-                                            <th>Alkupäivämäärä</th>
+                                            <th>Alkupvm</th>
                                             <th>Tyyppi</th>
                                             <th>Nimi</th>
                                             <th>Solmunumero</th>
@@ -161,7 +197,6 @@
             const table = $(arr.join('')); // join the array to one large string and create jquery element from said string
             showData(results, table);
         }
-
 
         function showResultsForRoadNames(results) {
             const arr = [];
@@ -321,7 +356,8 @@
             roadAddrStartDate.setCustomValidity("");
 
             switch (targetValue) {
-                case "Roads":
+                case "Tracks":
+                case "RoadParts":
                 case "Nodes":
                 case "Junctions":
                     if (willPassValidations())
@@ -343,8 +379,11 @@
                     applicationModel.removeSpinner();
                     me.setSearchParams(params);
                     switch (params.target) {
-                        case "Roads":
-                            showResultsForRoads(result.roads);
+                        case "Tracks":
+                            showResultsForTracks(result.tracks);
+                            break;
+                        case "RoadParts":
+                            showResultsForRoadParts(result.roadParts);
                             break;
                         case "Nodes":
                             showResultsForNodes(result.nodes);
