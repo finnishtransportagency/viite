@@ -256,7 +256,7 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
    *
    * roadway1:
    * start_addr_m 100 -> start_addr_m 0
-   * end_addr_m 200 -> start_addr_m 100
+   * end_addr_m 200 -> end_addr_m 100
    */
   test("When roadway is partially transferred to another roadaddress" +
     "Then roadway_change changes API returns only one row for each roadway_change_id in roadway_changes") {
