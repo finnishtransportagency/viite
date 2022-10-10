@@ -61,8 +61,8 @@
                                             <th>Aet</th>
                                             <th>Let</th>
                                             <th>Pituus</th>
-                                            <th>Hallinnollinen luokka</th>
-                                            <th>Alkupäivämäärä</th>
+                                            <th>Hall. luokka</th>
+                                            <th>Alkupvm</th>
                                         </tr>
                                     </thead>
                                     <tbody>`;
@@ -97,7 +97,7 @@
                                             <th>Aet</th>
                                             <th>Let</th>
                                             <th>Pituus</th>
-                                            <th>Alkupäivämäärä</th>
+                                            <th>Alkupvm</th>
                                         </tr>
                                     </thead>
                                     <tbody>`;
@@ -128,7 +128,7 @@
                                             <th>Tie</th>
                                             <th>Osa</th>
                                             <th>Et</th>
-                                            <th>Alkupäivämäärä</th>
+                                            <th>Alkupvm</th>
                                             <th>Tyyppi</th>
                                             <th>Nimi</th>
                                             <th>Solmunumero</th>
