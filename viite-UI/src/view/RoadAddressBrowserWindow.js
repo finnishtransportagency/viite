@@ -2,8 +2,8 @@
     root.RoadAddressBrowserWindow = function (backend) {
 
         const MAX_ROWS_TO_DISPLAY = 100;
-        const MAX_YEAR_PARAM = 2100;
-        const MIN_YEAR_PARAM = 1800;
+        const MAX_YEAR_PARAM = 2050;
+        const MIN_YEAR_PARAM = 1900;
         const MAX_LENGTH_FOR_ROAD_NUMBER = 5;
         const MAX_LENGTH_FOR_ROAD_PART_NUMBER = 3;
         let searchParams = {};
