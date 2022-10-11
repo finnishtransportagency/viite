@@ -911,7 +911,8 @@ _Kuva 10.2: Tieosoitteiden hakuehdot_
 
 #### Hakuehdot
 
-Syötettävistä hakuehdoista Tilanne pvm sekä Ely TAI Tie on pakollinen tieto.
+Ajoratoja, tieosia, solmuja sekä liitymiä haettaessa pakollisia hakuehtoja ovat Tilannepvm sekä Ely TAI Tie.   
+Tiennimiä on mahdollista hakea koko tieverkolta. (Haku pelkällä tilannepäivämäärällä)
 
 (1) Tilanne pvm: Karsitaan tilanne pvm -kenttää uudemmat tiedot pois hakutuloksista   
 (2) Ely: Haetaan vain annetun ELYn kohteita   
