@@ -202,7 +202,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val newRoadAddressProject = 0
     if (roadAddressProject.id == newRoadAddressProject) return None
     withDynTransaction {
-      return fetchProjectById(roadAddressProject.id)
+      fetchProjectById(roadAddressProject.id)
     }
   }
 
@@ -310,8 +310,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     projectDAO.fetchProjectStatus(projectId) match {
       case Some(projectState) =>
         if (projectState == ProjectState.Incomplete || projectState == ProjectState.ErrorInViite)
-          return None
-        Some("Projektin tila ei ole keskeneräinen") //project state is not incomplete
+          None
+        else
+          Some("Projektin tila ei ole keskeneräinen") //project state is not incomplete
       case None => Some("Projektia ei löytynyt") //project could not be found
     }
   }

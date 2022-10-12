@@ -1011,7 +1011,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
         pathParam[Long]("projectID").description("Id of a project")
       )
       tags "ViiteAPI - RoadAddresses"
-      summary "Returns a road name that is related to within a certain roadNumber or a certain project (referenced by the projectID)."
+      summary "Returns a road name that is related to a certain roadNumber or a certain project (referenced by the projectID)."
     )
 
   get("/roadlinks/roadname/:roadNumber/:projectID", operation(getRoadNamesByRoadNumberAndProjectId)) {

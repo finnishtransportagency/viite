@@ -12,7 +12,7 @@ import fi.liikennevirasto.digiroad2.dao.ComplementaryLinkDAO
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.viite.{NodesAndJunctionsService, PreFillInfo, ProjectService, RoadAddressService, RoadNameService, RoadNameSource, RoadNetworkService, ViiteVkmClient}
 import fi.liikennevirasto.viite.dao.ProjectLinkDAO
-import fi.liikennevirasto.viite.util.{DigiroadSerializers, JsonSerializer}
+import fi.liikennevirasto.viite.util.{runWithRollback, DigiroadSerializers, JsonSerializer}
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization.read
@@ -25,19 +25,19 @@ import org.scalatra.test.scalatest.ScalatraSuite
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class ViiteApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter{
+class ViiteApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter {
   protected implicit val jsonFormats: Formats = DigiroadSerializers.jsonFormats
 
   val useFrozenLinkInterface = true
   val mockRoadLinkService   : RoadLinkService             = MockitoSugar.mock[RoadLinkService]
   val mockKgvRoadLink       : KgvRoadLink                 = MockitoSugar.mock[KgvRoadLink]
   val frozenTimeRoadLinkData: KgvRoadLinkClient[RoadLink] = MockitoSugar.mock[KgvRoadLinkClient[RoadLink]]
-  val complementaryData: ComplementaryLinkDAO = MockitoSugar.mock[ComplementaryLinkDAO]
+  val complementaryData     : ComplementaryLinkDAO        = MockitoSugar.mock[ComplementaryLinkDAO]
 
-  val mockProjectService: ProjectService = MockitoSugar.mock[ProjectService]
-  val mockRoadNetworkService: RoadNetworkService = MockitoSugar.mock[RoadNetworkService]
+  val mockProjectService          : ProjectService           = MockitoSugar.mock[ProjectService]
+  val mockRoadNetworkService      : RoadNetworkService       = MockitoSugar.mock[RoadNetworkService]
   val mockNodesAndJunctionsService: NodesAndJunctionsService = MockitoSugar.mock[NodesAndJunctionsService]
-  val roadNameService             : RoadNameService          = new RoadNameService
+  val roadNameService             : RoadNameService          = new RoadNameService { override def withDynTransaction[T](f: => T): T = runWithRollback(f) }
 
   val mockViiteVkmClient: ViiteVkmClient = MockitoSugar.mock[ViiteVkmClient]
 
@@ -46,8 +46,8 @@ class ViiteApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter{
   when(mockKgvRoadLink.frozenTimeRoadLinkData).thenReturn(frozenTimeRoadLinkData)
   when(mockKgvRoadLink.complementaryData).thenReturn(complementaryData)
 
-  val testRoadLink = RoadLink("6117675", Seq(Point(6975409, 527825, 85.90899999999965), Point(6975409, 528516)), 691.186, State, TrafficDirection.AgainstDigitizing, Some("25.06.2015 03:00:00"), Some("vvh_modified"), InUse, FrozenLinkInterface, 749, "")
-  val mockRoadLink = RoadLink("3236208", Seq(Point(506770.557, 6824285.205), Point(507110.817, 6824195.643)), 368.357, State, TrafficDirection.TowardsDigitizing, Some("25.06.2015 03:00:00"), Some("vvh_modified"), InUse, FrozenLinkInterface, 749, "")
+  val testRoadLink  = RoadLink("6117675", Seq(Point(6975409, 527825, 85.90899999999965), Point(6975409, 528516)), 691.186, State, TrafficDirection.AgainstDigitizing, Some("25.06.2015 03:00:00"), Some("vvh_modified"), InUse, FrozenLinkInterface, 749, "")
+  val mockRoadLink  = RoadLink("3236208", Seq(Point(506770.557, 6824285.205), Point(507110.817, 6824195.643)), 368.357, State, TrafficDirection.TowardsDigitizing, Some("25.06.2015 03:00:00"), Some("vvh_modified"), InUse, FrozenLinkInterface, 749, "")
   val mockRoadLink2 = RoadLink("f4745622-bfed-4ebd-aa32-aadeefe6289e:1", Seq(Point(534583.06,6994860.59,96.545),Point(534622.935,6994867.342,96.677),Point(534648.202,6994871.385,96.554),Point(534670.801,6994874.999,96.471),Point(534680.071,6994876.473,96.493),Point(534681.014,6994876.676,96.505),Point(534702.96,6994880.636,96.925),Point(534734.215,6994886.084,97.63),Point(534756.75,6994890.217,98.151)), 691.186, State, TrafficDirection.AgainstDigitizing, Some("25.06.2015 03:00:00"), Some("vvh_modified"), InUse, FrozenLinkInterface, 749, "")
 
   when(frozenTimeRoadLinkData.fetchByLinkId("6117675")).thenReturn(Some(testRoadLink))
@@ -71,9 +71,11 @@ class ViiteApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter{
   val projectService: ProjectService = new ProjectService(roadAddressService, mockRoadLinkService, mockNodesAndJunctionsService, roadwayDAO,
     roadwayPointDAO, linearLocationDAO, projectDAO, new ProjectLinkDAO,
     nodeDAO, nodePointDAO, junctionPointDAO, projectReservedPartDAO, roadwayChangesDAO,
-    roadwayAddressMapper, eventbus, useFrozenLinkInterface)
+    roadwayAddressMapper, eventbus, useFrozenLinkInterface) {
+    override def withDynTransaction[T](f: => T): T = runWithRollback(f)
+  }
 
-  private val viiteApi = new ViiteApi(roadLinkService, mockKgvRoadLink, roadAddressService, projectService, mockRoadNetworkService, roadNameService, mockNodesAndJunctionsService, swagger = new ViiteSwagger)
+    private val viiteApi = new ViiteApi(roadLinkService, mockKgvRoadLink, roadAddressService, projectService, mockRoadNetworkService, roadNameService, mockNodesAndJunctionsService, swagger = new ViiteSwagger)
 
   addServlet(viiteApi, "/*")
 
@@ -213,6 +215,39 @@ class ViiteApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter{
       changeInfo("changeTable")("name") should be ("ProjectOne")
     }
   }
+
+  test("Test PUT /roadnames/:roadNumber") {
+    put("/roadnames/5", body = """[{"name":"Test name for road 5","roadNumber":5,"id":1000000,"startDate":"31.12.1988"}]""") {
+      status should equal(200)
+      val response = parse(StringInput(body)).values.asInstanceOf[Map[String, Any]]
+      response should have size 1
+      response("success").toString should be ("true")
+    }
+  }
+
+  test("Test PUT /roadlinks/roadaddress/project") {
+    put("/roadlinks/roadaddress/project",
+      body = """{"id":7081807,"status":1,"name":"ProjectOne to test","startDate":"11.10.2022","additionalInfo":"","reservedPartList":[],"formedPartList":[{"discontinuity":"Tien loppu","ely":1,"roadLength":3214,"roadNumber":77997,"roadPartId":0,"roadPartNumber":1,"startingLinkId":"6117675"}],"resolution":8}"""
+    ) {
+      status should equal(200)
+      val response = parse(StringInput(body)).values.asInstanceOf[Map[String, Any]]
+      response should have size 5
+      response("success").toString should be ("true")
+    }
+  }
+
+//TODO: this test library does not allow BODY in delete operation. Update or refactor needed.
+
+//  test("Test DELETE /roadlinks/roadaddress/project") {
+//    delete("/roadlinks/roadaddress/project",
+//       body = "7081807"
+//    ) {
+//      status should equal(200)
+//      val response = parse(StringInput(body)).values.asInstanceOf[Map[String, Any]]
+//      response should have size 1
+//      response("success").toString should be ("true")
+//    }
+//  }
 
   test("Test json.extract[RoadAddressProjectExtractor] When sending a list of 1 road part link coded in a JSON format Then return the decoded Road Address Project list with 1 element.") {
     val str = "{\"id\":0,\"status\":1,\"name\":\"erwgerg\",\"startDate\":\"22.4.2017\",\"additionalInfo\":\"\",\"projectEly\":5,\"reservedPartList\":[{\"roadPartNumber\":205,\"roadNumber\":5,\"ely\":5,\"roadLength\":6730,\"roadPartId\":30,\"discontinuity\":\"Jatkuva\"}],\"resolution\":8}"
