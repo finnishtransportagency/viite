@@ -378,11 +378,11 @@ object ProjectDeltaCalculator {
     val averagedTerminated = createAverageValuesForTransferedStarts(terminatedForAveraging)
 
     def groupToSections(pl: ProjectLink): (Long, Long, Track, Boolean) = (pl.originalRoadNumber, pl.originalRoadPartNumber, pl.originalTrack, pl.reversed)
-    val grouped = if (allProjectLinks.exists(pl => pl.status == LinkStatus.Terminated && pl.originalStartAddrMValue == 0))
-      (averagedStarts ++ projectLinks.filterNot(pl => averagedStarts.map(_.id).contains(pl.id))).groupBy(groupToSections)
-
-    else
-      projectLinks.groupBy(groupToSections)
+    val grouped =
+      if (allProjectLinks.exists(pl => pl.status == LinkStatus.Terminated && pl.originalStartAddrMValue == 0))
+        (averagedStarts ++ projectLinks.filterNot(pl => averagedStarts.map(_.id).contains(pl.id))).sortBy(pl => (pl.originalRoadPartNumber, pl.originalStartAddrMValue)).groupBy(groupToSections)
+      else
+        projectLinks.sortBy(pl => (pl.roadPartNumber, pl.startAddrMValue)).groupBy(groupToSections)
 
     val allWithAveraged = if (allProjectLinks.exists(pl => pl.status == LinkStatus.Terminated && pl.originalStartAddrMValue == 0))
       (averagedStarts ++ averagedTerminated ++ allProjectLinks.filterNot(pl => averagedStarts.map(_.id).contains(pl.id) || averagedTerminated.map(_.id).contains(pl.id)))
@@ -390,7 +390,7 @@ object ProjectDeltaCalculator {
 
     val sectioned = grouped.mapValues((pls: Seq[ProjectLink]) => {
 
-      combineWithProjectLinks(pls.sortBy(_.startAddrMValue), Seq(), allWithAveraged.filter(pl => {
+      combineWithProjectLinks(pls, Seq(), allWithAveraged.filter(pl => {
         pl.roadNumber == pls.head.roadNumber && pl.roadPartNumber == pls.head.roadPartNumber
       }))
     }).values.flatten.map(pl => {
