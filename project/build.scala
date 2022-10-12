@@ -1,9 +1,9 @@
 import io.gatling.sbt.GatlingPlugin
 import org.scalatra.sbt._
-import sbt.Keys.{unmanagedResourceDirectories, _}
 import sbt.{Def, _}
-import sbtassembly.Plugin.AssemblyKeys._
+import sbt.Keys.{unmanagedResourceDirectories, _}
 import sbtassembly.Plugin.{MergeStrategy, PathList}
+import sbtassembly.Plugin.AssemblyKeys._
 
 object Digiroad2Build extends Build {
   val Organization = "fi.liikennevirasto"
@@ -232,7 +232,7 @@ object Digiroad2Build extends Build {
       ),
       unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf"
     )
-  ) dependsOn(geoJar, postgisJar, viiteJar, commonApiJar % "compile->compile;test->test")
+  ) dependsOn(geoJar, postgisJar, viiteJar % "test->test", commonApiJar % "compile->compile;test->test")
 
   lazy val warProject = Project (
     Digiroad2Name,
