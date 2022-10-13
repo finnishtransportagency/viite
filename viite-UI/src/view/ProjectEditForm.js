@@ -339,7 +339,6 @@
 
       eventbus.on('roadAddress:projectLinksUpdated', function (response) {
         //eventbus.trigger('projectChangeTable:refresh');
-        //   eventbus.trigger('roadAddressProject:projectLinkSaved', response.id, response.publishable);
         projectCollection.setTmpDirty([]);
         projectCollection.setDirty([]);
         selectedProjectLinkProperty.setCurrent([]);
