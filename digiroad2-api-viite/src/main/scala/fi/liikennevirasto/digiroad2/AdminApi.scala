@@ -215,7 +215,11 @@ class AdminApi(val dataImporter: DataImporter, implicit val swagger: Swagger) ex
   get("/flyway_migrate") {
     time(logger, "GET request for /flyway_migrate") {
       try {
-        DatabaseMigration.migrate
+        val outOfOrder = params.get("out_of_order") match {
+          case Some(outOfOrderParam) => outOfOrderParam.equalsIgnoreCase("true")
+          case _ => false
+        }
+        DatabaseMigration.migrate(outOfOrder)
         logger.info("Flyway migrate successful.")
         Ok("Flyway migrate successful.\n")
       } catch {
