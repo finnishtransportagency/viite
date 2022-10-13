@@ -352,6 +352,10 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
         ProjectLink(1023,roadNumber_0,roadPartNumber_2,Track.Combined,Discontinuity.EndOfRoad,837,847,2687,2697,None,None,Some(createdBy),"82266d99-0873-4ad2-bef3-f9692f76cdaa:1",0.0,9.608,TowardsDigitizing,(JunctionPointCP,RoadAddressCP),(JunctionPointCP,RoadAddressCP),List(Point(532882.0,6994354.0,0.0), Point(532891.0,6994357.0,0.0)),projectId,LinkStatus.Transfer,AdministrativeClass.Municipality,FrozenLinkInterface,9.608,78131,451780,8,reversed = false,None,1601593214000L,1007313,roadName,None,None,None,None,None,None)
       )
 
+      roadwayDAO.create(
+        Seq(Roadway(78131,186094356,45656,1,AdministrativeClass.Municipality,Track.Combined,Discontinuity.EndOfRoad,0,2697,reversed = false,DateTime.parse("2017-07-02T00:00:00.000+03:00"),None,createdBy,roadName,8,TerminationCode.NoTermination,DateTime.parse("2017-10-16T00:00:00.000+03:00"),None))
+      )
+
       val transferred = ProjectDeltaCalculator.generateChangeTableRowsFromProjectLinks(projectLinks.filter(_.status != LinkStatus.Terminated), projectLinks)
       val transferredPaired = transferred.adjustedSections.zip(transferred.originalSections)
 
