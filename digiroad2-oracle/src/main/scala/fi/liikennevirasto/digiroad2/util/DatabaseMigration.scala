@@ -6,13 +6,14 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase._
 object DatabaseMigration {
 
   def main(args: Array[String]): Unit = {
-    migrate
+    migrate()
   }
 
-  def migrate: Unit = {
+  def migrate(outOfOrder: Boolean = false): Unit = {
     val flyway = new Flyway()
     flyway.setDataSource(ds)
     flyway.setLocations("db.migration")
+    flyway.setOutOfOrder(outOfOrder)
     flyway.migrate()
   }
 
