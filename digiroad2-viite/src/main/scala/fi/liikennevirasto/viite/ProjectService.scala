@@ -1877,7 +1877,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               preserveProjectToDB(projectId)
             }
             // Got through without Exceptions -> the project was successfully preserved
-            projectDAO.updateProjectStatus(projectId, ProjectState.Accepted)
+            projectDAO.changeProjectStatusToAccepted(projectId)
           }
         } catch {
           // In case of any error, set project status to ProjectState.ErrorInViite
