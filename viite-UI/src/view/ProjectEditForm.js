@@ -295,9 +295,16 @@
           removeNumberingFromDropdown();
         }
         disableFormInputs();
-        var selectedDiscontinuity = _.maxBy(selectedProjectLink, function (projectLink) {
-          return projectLink.endAddressM;
-        }).discontinuity;
+        const projectLinkMaxByEndAddressM = _.maxBy(selectedProjectLink, function (projectLink) {
+              return projectLink.endAddressM;
+          });
+        var selectedDiscontinuity;
+        if (projectLinkMaxByEndAddressM.endAddressM === 0) {
+            selectedDiscontinuity = _.minBy(selectedProjectLink, function (projectLink) {
+                return projectLink.discontinuity;
+            }).discontinuity;
+        } else
+            selectedDiscontinuity = projectLinkMaxByEndAddressM.discontinuity;
         $('#discontinuityDropdown').val(selectedDiscontinuity.toString());
       }
 
@@ -332,6 +339,7 @@
 
       eventbus.on('roadAddress:projectLinksUpdated', function (response) {
         //eventbus.trigger('projectChangeTable:refresh');
+        //   eventbus.trigger('roadAddressProject:projectLinkSaved', response.id, response.publishable);
         projectCollection.setTmpDirty([]);
         projectCollection.setDirty([]);
         selectedProjectLinkProperty.setCurrent([]);
