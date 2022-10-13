@@ -404,8 +404,8 @@ class RoadwayChangesDAO {
 
   // This query should return changes in roadway_change table
   // Query should return information also about terminated roads
-  def fetchRoadwayChangesInfo(startAcceptedDate: DateTime, endAcceptedDate: Option[DateTime]): Seq[RoadwayChangesInfo] = {
-    val untilString = if (endAcceptedDate.nonEmpty) s"AND P.ACCEPTED_DATE <= to_timestamp('${new Timestamp(endAcceptedDate.get.getMillis)}', 'YYYY-MM-DD HH24:MI:SS.FF')" else s""
+  def fetchRoadwayChangesInfo(sinceAcceptedDate: DateTime, untilAcceptedDate: Option[DateTime]): Seq[RoadwayChangesInfo] = {
+    val untilString = if (untilAcceptedDate.nonEmpty) s"AND P.ACCEPTED_DATE <= to_timestamp('${new Timestamp(untilAcceptedDate.get.getMillis)}', 'YYYY-MM-DD HH24:MI:SS.FF')" else s""
     val query =
       s"""
 SELECT
@@ -434,7 +434,7 @@ SELECT
       INNER JOIN PROJECT P
         ON P.ID = RC.PROJECT_ID
     WHERE P.STATE=${ProjectState.Accepted.value}
-        AND P.ACCEPTED_DATE >= to_timestamp('${new Timestamp(startAcceptedDate.getMillis)}', 'YYYY-MM-DD HH24:MI:SS.FF')
+        AND P.ACCEPTED_DATE >= to_timestamp('${new Timestamp(sinceAcceptedDate.getMillis)}', 'YYYY-MM-DD HH24:MI:SS.FF')
         $untilString
         ORDER BY P.ACCEPTED_DATE, RC.ROADWAY_CHANGE_ID
      """
