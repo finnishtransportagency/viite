@@ -76,7 +76,7 @@ case class ChangeTableRows(adjustedSections: Iterable[((RoadwaySection, RoadwayS
 case class ChangeTableRows2(adjustedSections: Iterable[RoadwaySection], originalSections: Iterable[RoadwaySection])
 case class ChangeTableRows3(terminatedSections: Iterable[RoadwaySection])
 
-case class RoadwayChangesInfo(roadwayChangeId: Long, startDate: DateTime, validFrom: DateTime, change_type: Long, reversed: Long,
+case class RoadwayChangesInfo(roadwayChangeId: Long, startDate: DateTime, acceptedDate: DateTime, change_type: Long, reversed: Long,
                               old_road_number: Long, old_road_part_number: Long, old_TRACK: Long, old_start_addr_m: Long, old_end_addr_m: Long, old_discontinuity: Long, old_administrative_class: Long, old_ely: Long,
                               new_road_number: Long, new_road_part_number: Long, new_TRACK: Long, new_start_addr_m: Long, new_end_addr_m: Long, new_discontinuity: Long, new_administrative_class: Long, new_ely: Long)
 
@@ -404,24 +404,14 @@ class RoadwayChangesDAO {
 
   // This query should return changes in roadway_change table
   // Query should return information also about terminated roads
-  def fetchRoadwayChangesInfo(startValidFromDate: DateTime, endValidFromDate: Option[DateTime]): Seq[RoadwayChangesInfo] = {
-    val untilString = if (endValidFromDate.nonEmpty) s"AND R.VALID_FROM <= to_timestamp('${new Timestamp(endValidFromDate.get.getMillis)}', 'YYYY-MM-DD HH24:MI:SS.FF')" else s""
+  def fetchRoadwayChangesInfo(startAcceptedDate: DateTime, endAcceptedDate: Option[DateTime]): Seq[RoadwayChangesInfo] = {
+    val untilString = if (endAcceptedDate.nonEmpty) s"AND P.ACCEPTED_DATE <= to_timestamp('${new Timestamp(endAcceptedDate.get.getMillis)}', 'YYYY-MM-DD HH24:MI:SS.FF')" else s""
     val query =
       s"""
-WITH ROADWAYS AS (
-SELECT R.ROAD_NUMBER ,R.ROAD_PART_NUMBER ,
-NULLIF(MAX(COALESCE(END_DATE, TO_DATE('9999', 'yyyy'))),TO_DATE('9999', 'yyyy')) AS END_DATE,
-MAX(VALID_FROM) AS VALID_FROM
-   FROM ROADWAY R
-        WHERE R.VALID_FROM >= to_timestamp('${new Timestamp(startValidFromDate.getMillis)}', 'YYYY-MM-DD HH24:MI:SS.FF')
-        $untilString
-        AND R.VALID_TO IS NULL
-        GROUP BY R.ROAD_NUMBER ,R.ROAD_PART_NUMBER
-)
 SELECT
       RC.ROADWAY_CHANGE_ID
     , P.START_DATE
-    , R.VALID_FROM
+    , P.ACCEPTED_DATE
     , RC.change_type
     , RC.reversed
     , RC.old_road_number
@@ -441,16 +431,12 @@ SELECT
     , RC.new_administrative_class
     , RC.new_ely
     FROM ROADWAY_CHANGES RC
-      INNER JOIN ROADWAYS R
-        ON ((R.ROAD_NUMBER = RC.NEW_ROAD_NUMBER
-             AND R.ROAD_PART_NUMBER = RC.NEW_ROAD_PART_NUMBER) OR
-            (RC.CHANGE_TYPE = 5 --Terminated changes only have the old road address
-             AND R.ROAD_NUMBER = RC.OLD_ROAD_NUMBER
-             AND R.ROAD_PART_NUMBER = RC.OLD_ROAD_PART_NUMBER)
-            )
       INNER JOIN PROJECT P
         ON P.ID = RC.PROJECT_ID
-        ORDER BY R.VALID_FROM, RC.ROADWAY_CHANGE_ID
+    WHERE P.STATE=${ProjectState.Accepted.value}
+        AND P.ACCEPTED_DATE >= to_timestamp('${new Timestamp(startAcceptedDate.getMillis)}', 'YYYY-MM-DD HH24:MI:SS.FF')
+        $untilString
+        ORDER BY P.ACCEPTED_DATE, RC.ROADWAY_CHANGE_ID
      """
 
     Q.queryNA[RoadwayChangesInfo](query).iterator.toSeq
@@ -461,7 +447,7 @@ SELECT
 
       val roadwayChangeId = r.nextLong()
       val startDate = new DateTime(r.nextTimestamp())
-      val validFrom = new DateTime(r.nextTimestamp())
+      val acceptedDate = new DateTime(r.nextTimestamp())
       val change_type = r.nextLong()
       val reversed = r.nextLong()
       val old_road_number = r.nextLong()
@@ -481,7 +467,7 @@ SELECT
       val new_administrative_class = r.nextLong()
       val new_ely = r.nextLong()
 
-      RoadwayChangesInfo(roadwayChangeId, startDate, validFrom, change_type, reversed,
+      RoadwayChangesInfo(roadwayChangeId, startDate, acceptedDate, change_type, reversed,
         old_road_number, old_road_part_number, old_TRACK, old_start_addr_m, old_end_addr_m, old_discontinuity, old_administrative_class, old_ely,
         new_road_number, new_road_part_number, new_TRACK, new_start_addr_m, new_end_addr_m, new_discontinuity, new_administrative_class, new_ely)
     }
