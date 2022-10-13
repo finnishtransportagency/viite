@@ -15,6 +15,8 @@ import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 
+import java.sql.Timestamp
+
 class RoadwayChangesDAOSpec extends FunSuite with Matchers {
 
   def runWithRollback(f: => Unit): Unit = {
@@ -218,8 +220,10 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
       sqlu""" update ROADWAY R SET VALID_FROM = TIMESTAMP '2120-01-02 12:26:36.000000' WHERE ID =  $rwId """.execute
       val rws = roadwayDAO.fetchAllByRoadwayId(rw)
       val projId1 = Sequences.nextViiteProjectId
-      val rap =  dummyProject(projId1, ProjectState.Incomplete, List(), None)
+      val rap =  dummyProject(projId1, ProjectState.Accepted, List(), None)
       val pr = projectDAO.create(rap)
+
+      sqlu"""update project set accepted_date= TIMESTAMP '2120-01-02 12:26:36.000000' where id=$projId1""".execute
       val pr2 = projectDAO.fetchById(projId1)
       val changeType = 2
       sqlu""" insert into ROADWAY_CHANGES(project_id,change_type,old_discontinuity,new_discontinuity,OLD_ADMINISTRATIVE_CLASS,NEW_ADMINISTRATIVE_CLASS,old_ely,new_ely, ROADWAY_CHANGE_ID,new_road_number,new_road_part_number,new_start_addr_m,new_end_addr_m)
@@ -279,6 +283,8 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
       val projId = Sequences.nextViiteProjectId
       val proj = dummyProject(projId, ProjectState.Accepted, List(), None)
       projectDAO.create(proj)
+
+      sqlu"""update project set accepted_date=${new Timestamp(DateTime.now().getMillis())} where id=$projId""".execute
 
       val changeType = 3 //transfer
       sqlu"""insert into ROADWAY_CHANGES(project_id,change_type,old_road_number,old_road_part_number,old_track,old_start_addr_m,old_end_addr_m,new_road_number,new_road_part_number,new_track,new_start_addr_m,new_end_addr_m,old_discontinuity,new_discontinuity,old_administrative_class,new_administrative_class,old_ely,new_ely, roadway_change_id)
