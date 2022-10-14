@@ -326,7 +326,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
           Map(
             "muutostunniste" -> roadwayChangesInfo.roadwayChangeId,
             "voimaantulopaiva" -> formatDateTimeToIsoString(Option(roadwayChangesInfo.startDate)),
-            "laatimisaika" -> formatDateTimeToIsoString(Option(roadwayChangesInfo.validFrom)),
+            "projektin_hyvaksymispaiva" -> formatDateTimeToIsoString(Option(roadwayChangesInfo.acceptedDate)),
             "muutostyyppi" -> roadwayChangesInfo.change_type,
             "kaannetty" -> roadwayChangesInfo.reversed,
             "lahde" ->
