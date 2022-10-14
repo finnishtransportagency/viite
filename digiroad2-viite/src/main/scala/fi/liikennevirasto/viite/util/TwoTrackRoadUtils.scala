@@ -552,6 +552,7 @@ object TwoTrackRoadUtils {
         val hasOtherSideLink = roadPartLinks.filter(pl =>
           pl.originalTrack          != Track.Combined &&
           pl.status                 != LinkStatus.NotHandled &&
+          pl.status                 != LinkStatus.New &&
           pl.originalStartAddrMValue < splitAddress &&
           pl.originalEndAddrMValue  > splitAddress
         )
