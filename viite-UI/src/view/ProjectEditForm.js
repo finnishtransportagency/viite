@@ -298,6 +298,7 @@
         const projectLinkMaxByEndAddressM = _.maxBy(selectedProjectLink, function (projectLink) {
               return projectLink.endAddressM;
           });
+          // If there are non-calculated new links, display the lowest value of discontinuity in selection (i.e. the most significant).
         var selectedDiscontinuity;
         if (projectLinkMaxByEndAddressM.endAddressM === 0) {
             selectedDiscontinuity = _.minBy(selectedProjectLink, function (projectLink) {
