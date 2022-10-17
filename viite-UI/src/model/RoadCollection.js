@@ -69,7 +69,7 @@
     var historicRoadLinks = [];
     var LinkStatus = LinkValues.LinkStatus;
     var LinkSource = LinkValues.LinkGeomSource;
-    var ConstructionType = LinkValues.ConstructionType;
+    var lifecycleStatus = LinkValues.lifecycleStatus;
     var clickedLinearLocationId = 0;
     var selectedRoadLinkModels = [];
 
@@ -180,7 +180,7 @@
       });
 
       unaddressedRoadLinkGroups = _.partition(fetchedUnaddressed, function (group) {
-        return groupDataConstructionTypeFilter(group, ConstructionType.UnderConstruction);
+        return groupDataConstructionTypeFilter(group, lifecycleStatus.UnderConstruction);
       });
 
       unaddressedUnderConstructionRoadLinkGroups = unaddressedRoadLinkGroups[0];
@@ -248,11 +248,11 @@
       if (_.isArray(group)) {
         return _.some(group, function (roadLink) {
           if (roadLink)
-            return roadLink.getData().constructionType === dataConstructionType.value;
+            return roadLink.getData().lifecycleStatus === dataConstructionType.value;
           else return false;
         });
       } else {
-        return group.getData().constructionType === dataConstructionType.value;
+        return group.getData().lifecycleStatus === dataConstructionType.value;
       }
     };
 

@@ -7,9 +7,9 @@ import fi.liikennevirasto.viite.util.DigiroadSerializers
 import fi.liikennevirasto.viite.RoadAddressService
 import fi.liikennevirasto.viite.dao.RoadAddress
 import org.json4s.Formats
+import org.scalatra.{BadRequest, ScalatraServlet}
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.swagger.{Swagger, _}
-import org.scalatra.{BadRequest, HttpMethod, Post, ScalatraServlet}
 import org.slf4j.{Logger, LoggerFactory}
 
 
@@ -41,7 +41,7 @@ class SearchApi(roadAddressService: RoadAddressService,
       )
 
   get("/road_address/?", operation(getRoadAddress)) {
-    val linkId = params.getOrElse("linkId", halt(BadRequest("Missing mandatory field linkId"))).toLong
+    val linkId = params.getOrElse("linkId", halt(BadRequest("Missing mandatory field linkId"))).toString
     val startMeasure = params.get("startMeasure").map(_.toDouble)
     val endMeasure = params.get("endMeasure").map(_.toDouble)
 
@@ -147,7 +147,7 @@ class SearchApi(roadAddressService: RoadAddressService,
   private val getRoadAddressByLinkIds: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[List[Map[String, Any]]]("getRoadAddressByLinkIds")
       .parameters(
-        bodyParam[Set[Long]]("linkIds").description("List of LinkIds\r\n")
+        bodyParam[Set[String]]("linkIds").description("List of LinkIds\r\n")
       )
       tags "SearchAPI (oth)"
       summary "Gets all the road addresses on top of given road links."
@@ -155,7 +155,7 @@ class SearchApi(roadAddressService: RoadAddressService,
 
   post("/road_address/?", operation(getRoadAddressByLinkIds)) {
     time(logger, s"POST request for /road_address/?") {
-      val linkIds = parsedBody.extract[Set[Long]]
+      val linkIds = parsedBody.extract[Set[String]]
       roadAddressService.getRoadAddressByLinkIds(linkIds).map(roadAddressMapper)
     }
   }

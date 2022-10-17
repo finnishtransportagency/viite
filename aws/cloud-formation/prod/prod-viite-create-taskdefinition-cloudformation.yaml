@@ -72,19 +72,13 @@ Resources:
               Value: fi.liikennevirasto.digiroad2.dao.PostGISMunicipalityProvider
             - Name: eventBus
               Value: fi.liikennevirasto.digiroad2.DigiroadEventBus
-            - Name: vvhServiceHost
-              Value: haproxy.vayla.fi
             - Name: oagProxyServer
               Value: oag.vayla.fi
             - Name: oagProxyURL
               Value: 'https://oag.vayla.fi'
             - Name: rasterServiceURL
               Value: 'https://api.vaylapilvi.fi/rasteripalvelu-mml'
-            - Name: vvhRestApiEndPoint
-              Value: 'https://api.vayla.fi/vvhdata/'
-            - Name: vvhRestApiUsername
-              Value: svc_vvh_viite
-            - Name: vvhRoadlink.frozen
+            - Name: kgvRoadlink.frozen
               Value: 'true'
             - Name: vkmUrl
               Value: 'https://api.vaylapilvi.fi'
@@ -114,6 +108,8 @@ Resources:
               Value: !Sub '${ApiS3BucketName}'
             - Name: apiS3ObjectTTLSeconds
               Value: !Sub '${ApiS3ObjectTTLSeconds}'
+            - Name: kgvEndpoint
+              Value: 'https://api.vaylapilvi.fi/paikkatiedot/ogc/features/collections'
           Secrets:
             - Name: bonecp.password
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/Viite/Prod/rds.viite.db.password'
@@ -127,6 +123,8 @@ Resources:
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/Viite/Prod/rasterServiceApiKey'
             - Name: vvhRestApiPassword
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/Viite/Prod/vvhRestApiPassword'
+            - Name: kgvApiKey
+              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/Viite/Prod/kgvApiKey'
           MemoryReservation: 2048
           Image: !Sub '${RepositoryURL}/viite-prod:latest'
           Name: Viite-prod

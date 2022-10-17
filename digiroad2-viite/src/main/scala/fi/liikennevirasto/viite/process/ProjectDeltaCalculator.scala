@@ -133,10 +133,7 @@ object ProjectDeltaCalculator {
         pl1.copy(originalEndAddrMValue = pl2.originalEndAddrMValue, roadwayId = pl2.roadwayId)
 
       Seq(
-        pl1OriginalAddressSet.copy(endAddrMValue = pl2.endAddrMValue, discontinuity = pl2.discontinuity,
-              calibrationPointTypes = (pl1.startCalibrationPointType, pl2.endCalibrationPointType),
-              originalCalibrationPointTypes = (pl1.originalCalibrationPointTypes._1, pl2.originalCalibrationPointTypes._2)
-            )
+        pl1OriginalAddressSet.copy(discontinuity = pl2.discontinuity, endAddrMValue = pl2.endAddrMValue, calibrationPointTypes = (pl1.startCalibrationPointType, pl2.endCalibrationPointType), originalCalibrationPointTypes = (pl1.originalCalibrationPointTypes._1, pl2.originalCalibrationPointTypes._2))
           )
     }
     else {
@@ -160,11 +157,8 @@ object ProjectDeltaCalculator {
     if (matchAddr && matchContinuity && !hasCalibrationPoint &&
         ra1.administrativeClass == ra2.administrativeClass && pl1.administrativeClass == pl2.administrativeClass && pl1.reversed == pl2.reversed) {
       Seq((
-            ra1.asInstanceOf[RoadAddress].copy(endAddrMValue = ra2.endAddrMValue, discontinuity = ra2.discontinuity).asInstanceOf[R],
-            pl1.copy(endAddrMValue = pl2.endAddrMValue, discontinuity = pl2.discontinuity,
-              calibrationPointTypes = (pl1.startCalibrationPointType, pl2.asInstanceOf[ProjectLink].endCalibrationPointType),
-              originalCalibrationPointTypes = (pl1.originalCalibrationPointTypes._1, pl2.asInstanceOf[ProjectLink].originalCalibrationPointTypes._2)
-            ).asInstanceOf[P]
+            ra1.asInstanceOf[RoadAddress].copy(discontinuity = ra2.discontinuity, endAddrMValue = ra2.endAddrMValue).asInstanceOf[R],
+            pl1.copy(discontinuity = pl2.discontinuity, endAddrMValue = pl2.endAddrMValue, calibrationPointTypes = (pl1.startCalibrationPointType, pl2.asInstanceOf[ProjectLink].endCalibrationPointType), originalCalibrationPointTypes = (pl1.originalCalibrationPointTypes._1, pl2.asInstanceOf[ProjectLink].originalCalibrationPointTypes._2)).asInstanceOf[P]
           ))
     }
     else {
@@ -206,7 +200,7 @@ object ProjectDeltaCalculator {
             Seq(r1.copy(discontinuity = r2.discontinuity, endAddrMValue = r2.endAddrMValue, calibrationPointTypes = r2.calibrationPointTypes))
         case LinkStatus.New =>
           if (hasUdcp ||( !hasParallelLinkOnCalibrationPoint && !hasCalibrationPoint) && r1.discontinuity.value != Discontinuity.ParallelLink.value ) { // && !r1.isSplit
-            Seq(r1.copy(endAddrMValue = r2.endAddrMValue, discontinuity = r2.discontinuity, calibrationPointTypes = r2.calibrationPointTypes, connectedLinkId = r2.connectedLinkId))
+            Seq(r1.copy(discontinuity = r2.discontinuity, endAddrMValue = r2.endAddrMValue, calibrationPointTypes = r2.calibrationPointTypes, connectedLinkId = r2.connectedLinkId))
           } else if (!hasCalibrationPoint && r1.discontinuity.value == Discontinuity.ParallelLink.value) {
             Seq(r2, r1)
           } else {
@@ -340,7 +334,7 @@ object ProjectDeltaCalculator {
     starts.mapValues(pls => {
       if (pls.size == 2 && pls.forall(_.track != Track.Combined) && (pls.head.status == LinkStatus.Terminated && pls.last.status == LinkStatus.Terminated)) {
         val avg = Math.round(pls.map(_.originalEndAddrMValue).sum * 0.5)
-        pls.map(_.copy(originalEndAddrMValue = avg, endAddrMValue = avg))
+        pls.map(_.copy(endAddrMValue = avg, originalEndAddrMValue = avg))
       }
       else
         if (pls.size == 2 && pls.forall(_.track != Track.Combined) && (pls.head.originalStartAddrMValue != 0 || pls.last.originalStartAddrMValue != 0L)) {
@@ -384,11 +378,11 @@ object ProjectDeltaCalculator {
     val averagedTerminated = createAverageValuesForTransferedStarts(terminatedForAveraging)
 
     def groupToSections(pl: ProjectLink): (Long, Long, Track, Boolean) = (pl.originalRoadNumber, pl.originalRoadPartNumber, pl.originalTrack, pl.reversed)
-    val grouped = if (allProjectLinks.exists(pl => pl.status == LinkStatus.Terminated && pl.originalStartAddrMValue == 0))
-      (averagedStarts ++ projectLinks.filterNot(pl => averagedStarts.map(_.id).contains(pl.id))).groupBy(groupToSections)
-
-    else
-      projectLinks.groupBy(groupToSections)
+    val grouped =
+      if (allProjectLinks.exists(pl => pl.status == LinkStatus.Terminated && pl.originalStartAddrMValue == 0))
+        (averagedStarts ++ projectLinks.filterNot(pl => averagedStarts.map(_.id).contains(pl.id))).sortBy(pl => (pl.originalRoadPartNumber, pl.originalStartAddrMValue)).groupBy(groupToSections)
+      else
+        projectLinks.sortBy(pl => (pl.roadPartNumber, pl.startAddrMValue)).groupBy(groupToSections)
 
     val allWithAveraged = if (allProjectLinks.exists(pl => pl.status == LinkStatus.Terminated && pl.originalStartAddrMValue == 0))
       (averagedStarts ++ averagedTerminated ++ allProjectLinks.filterNot(pl => averagedStarts.map(_.id).contains(pl.id) || averagedTerminated.map(_.id).contains(pl.id)))
@@ -396,7 +390,7 @@ object ProjectDeltaCalculator {
 
     val sectioned = grouped.mapValues((pls: Seq[ProjectLink]) => {
 
-      combineWithProjectLinks(pls.sortBy(_.startAddrMValue), Seq(), allWithAveraged.filter(pl => {
+      combineWithProjectLinks(pls, Seq(), allWithAveraged.filter(pl => {
         pl.roadNumber == pls.head.roadNumber && pl.roadPartNumber == pls.head.roadPartNumber
       }))
     }).values.flatten.map(pl => {

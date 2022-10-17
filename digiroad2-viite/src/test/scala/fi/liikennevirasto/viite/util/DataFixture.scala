@@ -5,7 +5,7 @@ import java.util.Properties
 import com.googlecode.flyway.core.Flyway
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.client.kgv.KgvRoadLink
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.ds
@@ -24,11 +24,11 @@ import scala.language.postfixOps
 object DataFixture {
 
   val dataImporter = new DataImporter
-  lazy val vvhClient: VVHClient = {
-    new VVHClient(ViiteProperties.vvhRestApiEndPoint)
+  lazy val vvhClient: KgvRoadLink = {
+    new KgvRoadLink
   }
 
-  private lazy val geometryFrozen: Boolean = ViiteProperties.vvhRoadlinkFrozen
+  private lazy val geometryFrozen: Boolean = ViiteProperties.kgvRoadlinkFrozen
 
   val eventBus = new DummyEventBus
   val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer, geometryFrozen)
@@ -38,9 +38,7 @@ object DataFixture {
   val roadwayPointDAO = new RoadwayPointDAO
   val nodePointDAO = new NodePointDAO
   val junctionPointDAO = new JunctionPointDAO
-  val roadAddressService = new RoadAddressService(linkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO,
-    roadwayPointDAO, nodePointDAO, junctionPointDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO),
-    eventBus, ViiteProperties.vvhRoadlinkFrozen)
+  val roadAddressService = new RoadAddressService(linkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), eventBus, ViiteProperties.kgvRoadlinkFrozen)
 
   lazy val continuityChecker = new ContinuityChecker(new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer, geometryFrozen))
 
@@ -79,7 +77,7 @@ object DataFixture {
 
   def checkRoadNetwork(): Unit = {
     println(s"\nstart checking road network at time: ${DateTime.now()}")
-    val vvhClient = new VVHClient(ViiteProperties.vvhRestApiEndPoint)
+    val vvhClient = new KgvRoadLink
     val username = ViiteProperties.bonecpUsername
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer, geometryFrozen)
     PostGISDatabase.withDynTransaction {

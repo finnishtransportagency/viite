@@ -155,7 +155,10 @@ object CalibrationCode {
 
 }
 
-case class CalibrationPoint(linkId: Long, segmentMValue: Double, addressMValue: Long, typeCode: CalibrationPointType = CalibrationPointType.UnknownCP) extends BaseCalibrationPoint
+case class CalibrationPoint(linkId: String, segmentMValue: Double, addressMValue: Long, typeCode: CalibrationPointType = CalibrationPointType.UnknownCP) extends BaseCalibrationPoint {
+  def this(linkId: Long, segmentMValue: Double, addressMValue: Long, typeCode: CalibrationPointType) =
+   this(linkId.toString, segmentMValue, addressMValue, typeCode)
+}
 
 sealed trait TerminationCode {
   def value: Int
@@ -208,7 +211,7 @@ trait BaseRoadAddress {
 
   def createdBy: Option[String]
 
-  def linkId: Long
+  def linkId: String
 
   def startMValue: Double
 
@@ -333,7 +336,9 @@ trait BaseRoadAddress {
 
 //TODO the start date and the created by should not be optional on the road address case class
 // Note: Geometry on road address is not directed: it isn't guaranteed to have a direction of digitization or road addressing
-case class RoadAddress(id: Long, linearLocationId: Long, roadNumber: Long, roadPartNumber: Long, administrativeClass: AdministrativeClass, track: Track, discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None, endDate: Option[DateTime] = None, createdBy: Option[String] = None, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode, adjustedTimestamp: Long, calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), geometry: Seq[Point], linkGeomSource: LinkGeomSource, ely: Long, terminated: TerminationCode = NoTermination, roadwayNumber: Long, validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None, roadName: Option[String] = None) extends BaseRoadAddress {
+case class RoadAddress(id: Long, linearLocationId: Long, roadNumber: Long, roadPartNumber: Long, administrativeClass: AdministrativeClass, track: Track, discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None, endDate: Option[DateTime] = None, createdBy: Option[String] = None, linkId: String, startMValue: Double, endMValue: Double, sideCode: SideCode, adjustedTimestamp: Long, calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), geometry: Seq[Point], linkGeomSource: LinkGeomSource, ely: Long, terminated: TerminationCode = NoTermination, roadwayNumber: Long, validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None, roadName: Option[String] = None) extends BaseRoadAddress {
+  def this(id: Long, linearLocationId: Long, roadNumber: Long, roadPartNumber: Long, administrativeClass: AdministrativeClass, track: Track, discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime], endDate: Option[DateTime], createdBy: Option[String], linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode, adjustedTimestamp: Long, calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]), geometry: Seq[Point], linkGeomSource: LinkGeomSource, ely: Long, terminated: TerminationCode, roadwayNumber: Long, validFrom: Option[DateTime], validTo: Option[DateTime], roadName: Option[String]) =
+   this(id, linearLocationId, roadNumber, roadPartNumber, administrativeClass, track, discontinuity, startAddrMValue, endAddrMValue, startDate, endDate, createdBy, linkId.toString, startMValue, endMValue, sideCode, adjustedTimestamp, calibrationPoints, geometry, linkGeomSource, ely, terminated, roadwayNumber, validFrom, validTo, roadName)
 
   override lazy val startCalibrationPoint: Option[CalibrationPoint] = calibrationPoints._1
   override lazy val endCalibrationPoint: Option[CalibrationPoint] = calibrationPoints._2
@@ -429,6 +434,9 @@ case class RoadAddress(id: Long, linearLocationId: Long, roadNumber: Long, roadP
 
 case class Roadway(id: Long, roadwayNumber: Long, roadNumber: Long, roadPartNumber: Long, administrativeClass: AdministrativeClass, track: Track, discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, reversed: Boolean = false, startDate: DateTime, endDate: Option[DateTime] = None, createdBy: String, roadName: Option[String], ely: Long, terminated: TerminationCode = NoTermination, validFrom: DateTime = DateTime.now(), validTo: Option[DateTime] = None)
 
+case class TrackForRoadAddressBrowser(ely: Long, roadNumber: Long, track: Long, roadPartNumber: Long, startAddrM: Long, endAddrM: Long, roadAddressLengthM: Long, administrativeClass: Long, startDate: DateTime)
+
+case class RoadPartForRoadAddressBrowser(ely: Long, roadNumber: Long, roadPartNumber: Long, startAddrM: Long, endAddrM: Long, roadAddressLengthM: Long, startDate: DateTime)
 
 class BaseDAO {
   protected def logger = LoggerFactory.getLogger(getClass)
@@ -669,14 +677,14 @@ class RoadwayDAO extends BaseDAO {
 
   private def withRoadNumbersInValidDate(roadNumbers: Set[Long])(query: String): String = {
     if (roadNumbers.size > 1000) {
-      MassQuery.withIds(roadNumbers) {
+      MassQuery.withIds(roadNumbers)({
         idTableName =>
           s"""
             $query
             join $idTableName i on i.id = a.ROAD_NUMBER
             where a.valid_to is null AND (a.end_date is null or a.end_date >= current_date) order by a.road_number, a.road_part_number, a.start_date
           """.stripMargin
-      }
+      })
     } else {
       s"""$query where a.valid_to is null AND (a.end_date is null or a.end_date >= current_date) AND a.road_number in (${roadNumbers.mkString(",")}) order by a.road_number, a.road_part_number, a.start_date"""
     }
@@ -751,14 +759,14 @@ class RoadwayDAO extends BaseDAO {
     }
 
     if (roadwayNumbers.size > 1000) {
-      MassQuery.withIds(roadwayNumbers) {
+      MassQuery.withIds(roadwayNumbers)({
         idTableName =>
           s"""
             $query
             join $idTableName i on i.id = a.ROADWAY_NUMBER
             where a.valid_to is null and ${dateFilter(table = "a")}
           """.stripMargin
-      }
+      })
     }
     else
       s"""$query where a.valid_to is null and ${dateFilter(table = "a")} and a.roadway_number in (${roadwayNumbers.mkString(",")})"""
@@ -800,7 +808,7 @@ class RoadwayDAO extends BaseDAO {
 
   private def massFetchWithRoadwayNumbers(roadwayNumbers: Set[Long], withHistory: Boolean = false): Seq[Roadway] = {
     val endDateFilter = if (withHistory) "" else "and a.end_date is null"
-    MassQuery.withIds(roadwayNumbers) {
+    MassQuery.withIds(roadwayNumbers)({
       idTableName => {
         val joinedQuery = (query: String) => {
           s"""
@@ -811,7 +819,7 @@ class RoadwayDAO extends BaseDAO {
         }
         fetch(joinedQuery)
       }
-    }
+    })
   }
 
   private def betweenRoadNumbers(roadNumbers: (Int, Int))(query: String): String = {
@@ -844,7 +852,7 @@ class RoadwayDAO extends BaseDAO {
   }
 
   private implicit val getRoadAddress: GetResult[Roadway] = new GetResult[Roadway] {
-    def apply(r: PositionedResult) = {
+    def apply(r: PositionedResult): Roadway = {
 
       val id = r.nextLong()
       val roadwayNumber = r.nextLong()
@@ -866,6 +874,38 @@ class RoadwayDAO extends BaseDAO {
       val roadName = r.nextStringOption()
 
       Roadway(id, roadwayNumber, roadNumber, roadPartNumber, administrativeClass, Track.apply(trackCode), Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, reverted, startDate, endDate, createdBy, roadName, ely, terminated, validFrom, validTo)
+    }
+  }
+
+  private implicit val getTrackForRoadAddressBrowser: GetResult[TrackForRoadAddressBrowser] = new GetResult[TrackForRoadAddressBrowser] {
+    def apply(r: PositionedResult) = {
+
+      val ely = r.nextLong()
+      val roadNumber = r.nextLong()
+      val trackCode = r.nextInt()
+      val roadPartNumber = r.nextLong()
+      val startAddrMValue = r.nextLong()
+      val endAddrMValue = r.nextLong()
+      val lengthAddrM = r.nextLong()
+      val administrativeClass = r.nextLong()
+      val startDate = formatter.parseDateTime(r.nextDate.toString)
+
+      TrackForRoadAddressBrowser(ely, roadNumber, trackCode, roadPartNumber, startAddrMValue, endAddrMValue, lengthAddrM, administrativeClass, startDate)
+    }
+  }
+
+  private implicit val getRoadPartForRoadAddressBrowser: GetResult[RoadPartForRoadAddressBrowser] = new GetResult[RoadPartForRoadAddressBrowser] {
+    def apply(r: PositionedResult) = {
+
+      val ely = r.nextLong()
+      val roadNumber = r.nextLong()
+      val roadPartNumber = r.nextLong()
+      val startAddrMValue = r.nextLong()
+      val endAddrMValue = r.nextLong()
+      val lengthAddrM = r.nextLong()
+      val startDate = formatter.parseDateTime(r.nextDate.toString)
+
+      RoadPartForRoadAddressBrowser(ely, roadNumber, roadPartNumber, startAddrMValue, endAddrMValue, lengthAddrM, startDate)
     }
   }
 
@@ -1029,7 +1069,7 @@ class RoadwayDAO extends BaseDAO {
   }
 
   // TODO Instead of returning Option[(Long, Long, ...)] return Option[RoadPartInfo]
-  def getRoadPartInfo(roadNumber: Long, roadPart: Long): Option[(Long, Long, Long, Long, Long, Option[DateTime], Option[DateTime])] = {
+  def getRoadPartInfo(roadNumber: Long, roadPart: Long): Option[(Long, String, Long, Long, Long, Option[DateTime], Option[DateTime])] = {
     val query =
       s"""SELECT r.id, l.link_id, r.end_addr_M, r.discontinuity, r.ely,
             (Select Max(ra.start_date) from ROADWAY ra Where r.ROAD_PART_NUMBER = ra.ROAD_PART_NUMBER and r.ROAD_NUMBER = ra.ROAD_NUMBER) as start_date,
@@ -1041,6 +1081,194 @@ class RoadwayDAO extends BaseDAO {
               on r.START_ADDR_M=ra.maxstartaddrm
           WHERE r.road_number=$roadNumber AND r.road_part_number=$roadPart AND
             r.valid_to is null AND r.end_date is null AND r.TRACK in (0,1)"""
-    Q.queryNA[(Long, Long, Long, Long, Long, Option[DateTime], Option[DateTime])](query).firstOption
+    Q.queryNA[(Long, String, Long, Long, Long, Option[DateTime], Option[DateTime])](query).firstOption
   }
+
+  def fetchTracksForRoadAddressBrowser(startDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[TrackForRoadAddressBrowser] = {
+    def withOptionalParameters(startDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long])(query: String): String  = {
+
+      val dateCondition = "AND start_date <='" + startDate.get + "'"
+
+      val elyCondition = {
+        if (ely.nonEmpty)
+          s" AND ely = ${ely.get}"
+        else
+          ""
+      }
+
+      val roadNumberCondition = {
+        if (roadNumber.nonEmpty)
+          s" AND road_number = ${roadNumber.get}"
+        else
+          ""
+      }
+
+      val roadPartCondition = {
+        val parts = (minRoadPartNumber, maxRoadPartNumber)
+        parts match {
+          case (Some(minPart), Some(maxPart)) => s"AND road_part_number BETWEEN $minPart AND $maxPart"
+          case (None, Some(maxPart)) => s"AND road_part_number <= $maxPart"
+          case (Some(minPart), None) => s"AND road_part_number >= $minPart"
+          case _ => ""
+        }
+      }
+
+      /** Form homogenous sections by road number, road part number, track, start date and ely
+        *
+        * Use three CTE's (Common Table Expression)
+        * 1. roadways: Select roadways from roadway table with the optional parameters
+        * 2. roadwayswithstartaddr: Select roadways from the roadways CTE that don't have another roadway BEFORE it (r2.end_addr_m = r.start_addr_m...). Then set row numbers for these roadways.
+        * 3. roadwayswithendaddr: Select roadways from the roadways CTE that don't have another roadway AFTER it (r2.start_addr_m = r.end_addr_m...). Then set row numbers for these roadways as well
+        * Now we have two ROW NUMBERED CTE's: roadwayswithstartaddr and roadwayswithendaddr.
+        * roadwayswithstartaddr has the homogenous section's startAddrM's and roadwayswithendaddr has the endAddrM's.
+        * Joining these CTE's by the row numbers will give us one list that tells us the startAddrM and endAddrM of the homogenous section.
+        * */
+
+      s"""WITH roadways
+         |     AS (SELECT *
+         |         FROM   roadway r
+         |         WHERE  r.valid_to IS NULL AND r.end_date IS NULL
+         |         $dateCondition
+         |         $elyCondition
+         |         $roadNumberCondition
+         |         $roadPartCondition
+         |         ),
+         |         $query""".stripMargin
+    }
+
+    def fetchTrackSections(queryFilter: String => String): Seq[TrackForRoadAddressBrowser] = {
+      val query =
+        """     roadwayswithstartaddr
+          |     AS (SELECT ely,
+          |                road_number,
+          |                road_part_number,
+          |                start_addr_m,
+          |                start_date,
+          |                track,
+          |                administrative_class,
+          |                Row_number()
+          |                  OVER (
+          |                    ORDER BY road_number, road_part_number, track, start_addr_m)
+          |                AS
+          |                numb
+          |         FROM   roadways r
+          |         WHERE  NOT EXISTS (SELECT 1
+          |                            FROM   roadways r2
+          |                            WHERE  r2.start_date = r.start_date
+          |                                   AND r2.end_addr_m = r.start_addr_m
+          |                                   AND r2.road_number = r.road_number
+          |                                   AND r2.road_part_number = r.road_part_number
+          |                                   AND r2.track = r.track
+          |                                   AND r2.ely = r.ely
+          |                                   AND r2.administrative_class = r.administrative_class)),
+          |     roadwayswithendaddr
+          |     AS (SELECT ely,
+          |                road_number,
+          |                road_part_number,
+          |                end_addr_m,
+          |                start_date,
+          |                track,
+          |                administrative_class,
+          |                Row_number()
+          |                  OVER (
+          |                    ORDER BY road_number, road_part_number, track, end_addr_m)
+          |                AS
+          |                numb
+          |         FROM   roadways r
+          |         WHERE  NOT EXISTS (SELECT 1
+          |                            FROM   roadways r2
+          |                            WHERE  r2.start_date = r.start_date
+          |                                   AND r2.start_addr_m = r.end_addr_m
+          |                                   AND r2.road_number = r.road_number
+          |                                   AND r2.road_part_number = r.road_part_number
+          |                                   AND r2.track = r.track
+          |                                   AND r2.ely = r.ely
+          |                                   AND r2.administrative_class = r.administrative_class))
+          |SELECT s.ely,
+          |       s.road_number,
+          |       s.track,
+          |       s.road_part_number,
+          |       s.start_addr_m,
+          |       e.end_addr_m,
+          |       e.end_addr_m - s.start_addr_m AS length,
+          |       s.administrative_class,
+          |       s.start_date
+          |FROM   roadwayswithstartaddr s
+          |       JOIN roadwayswithendaddr e
+          |         ON s.numb = e.numb
+          |ORDER  BY s.road_number,
+          |          s.road_part_number,
+          |          s.start_addr_m,
+          |          s.track; """.stripMargin
+      val filteredQuery = queryFilter(query)
+      Q.queryNA[TrackForRoadAddressBrowser](filteredQuery).iterator.toSeq
+    }
+
+    fetchTrackSections(withOptionalParameters(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber))
+  }
+
+  def fetchRoadPartsForRoadAddressBrowser(startDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[RoadPartForRoadAddressBrowser] = {
+    def withOptionalParameters(startDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long])(query: String): String  = {
+
+      val dateCondition = "AND start_date <='" + startDate.get + "'"
+
+      val elyCondition = {
+        if (ely.nonEmpty)
+          s" AND ely = ${ely.get}"
+        else
+          ""
+      }
+
+      val roadNumberCondition = {
+        if (roadNumber.nonEmpty)
+          s" AND road_number = ${roadNumber.get}"
+        else
+          ""
+      }
+
+      val roadPartCondition = {
+        val parts = (minRoadPartNumber, maxRoadPartNumber)
+        parts match {
+          case (Some(minPart), Some(maxPart)) => s"AND road_part_number BETWEEN $minPart AND $maxPart"
+          case (None, Some(maxPart)) => s"AND road_part_number <= $maxPart"
+          case (Some(minPart), None) => s"AND road_part_number >= $minPart"
+          case _ => ""
+        }
+      }
+
+
+      s"""      $query
+      |         $dateCondition
+      |         $elyCondition
+      |         $roadNumberCondition
+      |         $roadPartCondition
+      |GROUP  BY ely,
+      |          road_number,
+      |          road_part_number
+      |ORDER  BY r.road_number,
+      |          r.road_part_number """.stripMargin
+    }
+
+    def fetchRoadParts(queryFilter: String => String): Seq[RoadPartForRoadAddressBrowser] = {
+      val query =
+        """SELECT ely,
+          |       road_number,
+          |       road_part_number,
+          |       Min(start_addr_m) AS startAddr,
+          |       Max(end_addr_m)   AS endAddr,
+          |       Max(end_addr_m) - Min(start_addr_m) AS "length",
+          |       Max(start_date)
+          |FROM   roadway r
+          |WHERE  r.end_date IS NULL
+          |       AND r.valid_to IS NULL
+          |""".stripMargin
+      val filteredQuery = queryFilter(query)
+      Q.queryNA[RoadPartForRoadAddressBrowser](filteredQuery).iterator.toSeq
+    }
+    fetchRoadParts(withOptionalParameters(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber))
+  }
+
+
+
+
 }

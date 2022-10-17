@@ -54,7 +54,7 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
                      roadPartNumber  : Long = 1L,
                      discontinuity   : Discontinuity = Discontinuity.Continuous,
                      ely             : Long = 8L,
-                     linkId          : Long = 0L,
+                     linkId          : String = 0L.toString,
                      geom            : Seq[Point],
                      roadwayId       : Long = 0L,
                      linearLocationId: Long = 0L,
@@ -67,7 +67,7 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
       testTrack.status.zipWithIndex.map { case (status, index) => {
         val (st, en) = (testTrack.geom(index).minBy(_.x).x.toLong, testTrack.geom(index).maxBy(_.x).x.toLong)
 
-        projectLink(st, en, testTrack.track, id, status, roadNumber, roadPartNumber, discontinuity, ely, geom = testTrack.geom(index), linkId = index, roadwayId = roadwayId,
+        projectLink(st, en, testTrack.track, id, status, roadNumber, roadPartNumber, discontinuity, ely, geom = testTrack.geom(index), linkId = index.toString, roadwayId = roadwayId,
           startDate =
             startDate)
       }
@@ -96,9 +96,9 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
     val geomTrack1_2 = Seq(Point(100.0, 0.0), Point(200.0, 0.0))
     val geomTrack2   = Seq(Point(0.0, 10.0),  Point(200.0, 10.0))
 
-    val projectLinkTrack1_1 = ProjectLink(1001L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 100L, 0L, 100L, None, None, None, 1L, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), geomTrack1_1, 0L, LinkStatus.UnChanged, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTrack1_1), 0L, 0, 0, reversed = false, None, 86400L)
-    val projectLinkTrack1_2 = ProjectLink(1002L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 100L, 200L, 100L, 200L, None, None, None, 2L, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), geomTrack1_2, 0L, LinkStatus.UnChanged, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTrack1_2), 0L, 0, 0, reversed = false, None, 86400L)
-    val projectLinkTrack2 = ProjectLink(1003L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 200L, 0L, 200L, None, None, None, 3L, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), geomTrack2, 0L, LinkStatus.UnChanged, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTrack2), 0L, 0, 0, reversed = false, None, 86400L)
+    val projectLinkTrack1_1 = ProjectLink(1001L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 100L, 0L, 100L, None, None, None, 1L.toString, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), geomTrack1_1, 0L, LinkStatus.UnChanged, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTrack1_1), 0L, 0, 0, reversed = false, None, 86400L)
+    val projectLinkTrack1_2 = ProjectLink(1002L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 100L, 200L, 100L, 200L, None, None, None, 2L.toString, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), geomTrack1_2, 0L, LinkStatus.UnChanged, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTrack1_2), 0L, 0, 0, reversed = false, None, 86400L)
+    val projectLinkTrack2   = ProjectLink(1003L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 200L, 0L, 200L, None, None, None, 3L.toString, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), geomTrack2, 0L, LinkStatus.UnChanged, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTrack2), 0L, 0, 0, reversed = false, None, 86400L)
 
     val (track1, track2, udcp) = TwoTrackRoadUtils.splitPlsAtStatusChange(Seq(projectLinkTrack1_1, projectLinkTrack1_2), Seq(projectLinkTrack2))
     track1 should have size 2
@@ -509,4 +509,16 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Test findAndCreateSplitsAtOriginalAddress() When split address is in address range of a new link Then originalAddress splitting should have no effect.") {
+    val geomTrack1_1 = Seq(Point(0.0, 0.0),   Point(100.0, 0.0))
+    val geomTrack1_2 = Seq(Point(100.0, 0.0), Point(200.0, 0.0))
+
+    val projectLinkTrack1_1 = ProjectLink(1001L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 100L, 0L, 100L, None, None, None, 1L.toString, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), geomTrack1_1, 0L, LinkStatus.New, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTrack1_1), 0L, 0, 0, reversed = false, None, 86400L)
+    val projectLinkTrack1_2 = ProjectLink(1002L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 100L, 200L, 100L, 200L, None, None, None, 2L.toString, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), geomTrack1_2, 0L, LinkStatus.New, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTrack1_2), 0L, 0, 0, reversed = false, None, 86400L)
+
+    val newLinks = runWithRollback {
+      TwoTrackRoadUtils.findAndCreateSplitsAtOriginalAddress(99, Seq(projectLinkTrack1_1, projectLinkTrack1_2))
+    }
+    newLinks should not be 'defined
+  }
 }

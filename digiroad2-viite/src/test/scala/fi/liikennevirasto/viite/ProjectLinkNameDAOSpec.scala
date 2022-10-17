@@ -1,16 +1,15 @@
 package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2.DigiroadEventBus
-import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHComplementaryClient, VVHRoadLinkClient}
+import fi.liikennevirasto.digiroad2.client.kgv.{KgvRoadLink, KgvRoadLinkClient}
+import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import org.joda.time.DateTime
-import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.when
-import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
+import org.scalatest.mock.MockitoSugar
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -23,9 +22,9 @@ class ProjectLinkNameDAOSpec extends FunSuite with Matchers with BeforeAndAfter 
   val mockRoadAddressService: RoadAddressService = MockitoSugar.mock[RoadAddressService]
   val mockNodesAndJunctionsService: NodesAndJunctionsService = MockitoSugar.mock[NodesAndJunctionsService]
   val mockEventBus: DigiroadEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val mockVVHClient: VVHClient = MockitoSugar.mock[VVHClient]
-  val mockVVHRoadLinkClient: VVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
-  val mockVVHComplementaryClient: VVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
+  val mockVVHClient: KgvRoadLink = MockitoSugar.mock[KgvRoadLink]
+  val mockVVHRoadLinkClient: KgvRoadLinkClient[RoadLink] = MockitoSugar.mock[KgvRoadLinkClient[RoadLink]]
+//  val mockVVHComplementaryClient: VVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
   val projectValidator = new ProjectValidator
   val projectDAO = new ProjectDAO
   val projectLinkDAO = new ProjectLinkDAO
@@ -45,9 +44,7 @@ class ProjectLinkNameDAOSpec extends FunSuite with Matchers with BeforeAndAfter 
   val mockLinearLocationDAO = MockitoSugar.mock[LinearLocationDAO]
   val mockRoadwayChangesDAO = MockitoSugar.mock[RoadwayChangesDAO]
 
-  val roadAddressServiceRealRoadwayAddressMapper = new RoadAddressService(mockRoadLinkService, roadwayDAO,
-    linearLocationDAO, roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, roadwayAddressMapper,
-    mockEventBus, frozenVVH = false) {
+  val roadAddressServiceRealRoadwayAddressMapper = new RoadAddressService(mockRoadLinkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, roadwayAddressMapper, mockEventBus, frozenKGV = false) {
 
     override def withDynSession[T](f: => T): T = f
 

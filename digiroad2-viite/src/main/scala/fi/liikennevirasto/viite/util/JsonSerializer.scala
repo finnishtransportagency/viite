@@ -1,25 +1,24 @@
 package fi.liikennevirasto.viite.util
 
 import java.io.{File, FileReader, FileWriter}
-import java.nio.file.Paths
 import java.nio.file.Files.copy
+import java.nio.file.Paths
 
 import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.asset.{LinkType, TrafficDirection, _}
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LinkType, TrafficDirection, _}
+import fi.liikennevirasto.digiroad2.client.kgv.{ChangeInfo, ChangeType}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ValidityPeriodDayOfWeek}
-import fi.liikennevirasto.digiroad2.util.{Track, VVHSerializer}
-import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
+import fi.liikennevirasto.digiroad2.util.{KGVSerializer, Track}
 import fi.liikennevirasto.viite.dao.{Discontinuity, LinkStatus}
+import org.json4s._
 import org.json4s.JsonAST.{JDouble, JInt, JObject, JString}
 import org.json4s.jackson.Serialization.{read, write}
-import org.json4s._
 import org.slf4j.LoggerFactory
 
-class JsonSerializer extends VVHSerializer {
+class JsonSerializer extends KGVSerializer {
   val logger = LoggerFactory.getLogger(getClass)
   protected implicit val jsonFormats: Formats = DefaultFormats + SideCodeSerializer + TrafficDirectionSerializer +
-    LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + LinkGeomSourceSerializer + ConstructionTypeSerializer +
+    LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + LinkGeomSourceSerializer + LifecycleStatusSerializer +
     DiscontinuitySerializer + TrackSerializer + PointSerializer + ChangeTypeSerializer
 
   override def readCachedGeometry(file: File): Seq[RoadLink] = {
@@ -78,7 +77,7 @@ class JsonSerializer extends VVHSerializer {
 }
 object DigiroadSerializers {
   val jsonFormats: Formats = DefaultFormats + SideCodeSerializer + TrafficDirectionSerializer +
-    LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + LinkGeomSourceSerializer + ConstructionTypeSerializer +
+    LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + LinkGeomSourceSerializer + LifecycleStatusSerializer +
     DiscontinuitySerializer + TrackSerializer + PointSerializer + LinkStatusSerializer + ChangeTypeSerializer
 }
 
@@ -126,11 +125,11 @@ case object LinkGeomSourceSerializer extends CustomSerializer[LinkGeomSource](fo
     JInt(BigInt(geomSource.value))
 }))
 
-case object ConstructionTypeSerializer extends CustomSerializer[ConstructionType](format => ( {
-  case JInt(typeInt) => ConstructionType(typeInt.toInt)
+case object LifecycleStatusSerializer extends CustomSerializer[LifecycleStatus](format => ( {
+  case JInt(typeInt) => LifecycleStatus(typeInt.toInt)
 }, {
-  case constructionType: ConstructionType =>
-    JInt(BigInt(constructionType.value))
+  case lifecycleStatus: LifecycleStatus =>
+    JInt(BigInt(lifecycleStatus.value))
 }))
 
 case object DiscontinuitySerializer extends CustomSerializer[Discontinuity](format => ( {

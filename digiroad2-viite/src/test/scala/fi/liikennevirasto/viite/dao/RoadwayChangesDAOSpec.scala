@@ -70,14 +70,14 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       addprojects()
       val project1 = projectDAO.fetchById(1).get
-      val reservedParts = Seq(ProjectReservedPart(0, 1, 1, Some(0), Some(Discontinuity.Continuous), Some(8L), None, None, None, Some(12345L)))
+      val reservedParts = Seq(ProjectReservedPart(0, 1, 1, Some(0), Some(Discontinuity.Continuous), Some(8L), None, None, None, Some(12345L.toString)))
       new RoadwayChangesDAO().insertDeltaToRoadChangeTable(1, Some(project1.copy(reservedParts = reservedParts)))
       sql"""Select Project_Id From ROADWAY_CHANGES Where Project_Id In (1)""".as[Long].firstOption.getOrElse(0) should be(1)
     }
   }
 
   test("Test RoadwayChangesDAO().insertDeltaToRoadChangeTable() When inserting the results of the delta calculation for a project, the inserted ely code should be the roadway ely instead of project ely") {
-    val newProjectLink = ProjectLink(1, 1, 1, Track.Unknown, Discontinuity.Continuous, 0, 0, 0, 0, None, None, None, 0, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), List(), 1, LinkStatus.New, AdministrativeClass.Unknown, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 5, reversed = false, None, 748800L)
+    val newProjectLink = ProjectLink(1, 1, 1, Track.Unknown, Discontinuity.Continuous, 0, 0, 0, 0, None, None, None, 0.toString, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), List(), 1, LinkStatus.New, AdministrativeClass.Unknown, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 5, reversed = false, None, 748800L)
     runWithRollback {
       addprojects()
       val project1 = projectDAO.fetchById(1).get
@@ -87,7 +87,7 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
         RoadAddress(12345, projectLink1.linearLocationId, projectLink1.roadNumber, projectLink1.roadPartNumber, projectLink1.administrativeClass, projectLink1.track, projectLink1.discontinuity, projectLink1.startAddrMValue, projectLink1.endAddrMValue, projectLink1.startDate, projectLink1.endDate, projectLink1.createdBy, projectLink1.linkId, projectLink1.startMValue, projectLink1.endMValue, projectLink1.sideCode, DateTime.now().getMillis, projectLink1.calibrationPoints, projectLink1.geometry, projectLink1.linkGeomSource, 8, NoTermination, projectLink1.roadwayNumber, None, None, None)
       )
       projectLinkDAO.updateProjectLinks(Seq(newProjectLink), project1.createdBy, ra)
-      val reservedParts = Seq(ProjectReservedPart(0, 1, 1, Some(0), Some(Discontinuity.Continuous), Some(8L), None, None, None, Some(12345L)))
+      val reservedParts = Seq(ProjectReservedPart(0, 1, 1, Some(0), Some(Discontinuity.Continuous), Some(8L), None, None, None, Some(12345L.toString)))
       val dao = new RoadwayChangesDAO()
       dao.insertDeltaToRoadChangeTable(1, Some(project1.copy(reservedParts = reservedParts)))
       val changes = dao.fetchRoadwayChanges(Set(1))
@@ -105,15 +105,15 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
 
     runWithRollback {
       val (rw1, rw2, rw3, rw4, rw5) = (Sequences.nextRoadwayId, Sequences.nextRoadwayId, Sequences.nextRoadwayId, Sequences.nextRoadwayId, Sequences.nextRoadwayId)
-      val projectLink1              = ProjectLink(1, targetRoadNumber, roadPartNumber, Track.LeftSide, Discontinuity.Continuous, 15, 20, 0, 5, None, None, Some("test"), 0, 0.0, 0.0, SideCode.Unknown, (JunctionPointCP, RoadAddressCP), (JunctionPointCP, JunctionPointCP), List(), projId1, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, 0.0, rw1, 0, 5, reversed = true, None, 748800L, 1111)
-      val projectLink2              = ProjectLink(2, targetRoadNumber, roadPartNumber, Track.RightSide, Discontinuity.Continuous, 15, 20, 0, 5, None, None, Some("test"), 0, 0.0, 0.0, SideCode.Unknown, (JunctionPointCP, JunctionPointCP), (JunctionPointCP, JunctionPointCP), List(), projId1, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, 0.0, rw2, 0, 5, reversed = true, None, 748800L, 1112)
-      val projectLink3              = ProjectLink(3, targetRoadNumber, roadPartNumber, Track.LeftSide, Discontinuity.Continuous, 10, 15, 5, 10, None, None, Some("test"), 0, 0.0, 0.0, SideCode.Unknown, (RoadAddressCP, JunctionPointCP), (JunctionPointCP, NoCP), List(), projId1, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, 0.0, rw1, 0, 5, reversed = true, None, 748800L, 1111)
-      val projectLink4              = ProjectLink(4, targetRoadNumber, roadPartNumber, Track.RightSide, Discontinuity.Continuous, 10, 15, 5, 10, None, None, Some("test"), 0, 0.0, 0.0, SideCode.Unknown, (RoadAddressCP, JunctionPointCP), (JunctionPointCP, NoCP), List(), projId1, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, 0.0, rw2, 0, 5, reversed = true, None, 748800L, 1112)
-      val projectLink5              = ProjectLink(5, targetRoadNumber, roadPartNumber, Track.Combined, Discontinuity.Continuous, 0, 10, 10, 20, None, None, Some("test"), 0, 0.0, 0.0, SideCode.Unknown, (RoadAddressCP, RoadAddressCP), (NoCP, RoadAddressCP), List(), projId1, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, 0.0, rw3, 0, 5, reversed = true, None, 748800L, 1113)
+      val projectLink1              = ProjectLink(1, targetRoadNumber, roadPartNumber, Track.LeftSide, Discontinuity.Continuous, 15, 20, 0, 5, None, None, Some("test"), 0.toString, 0.0, 0.0, SideCode.Unknown, (JunctionPointCP, RoadAddressCP), (JunctionPointCP, JunctionPointCP), List(), projId1, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, 0.0, rw1, 0, 5, reversed = true, None, 748800L, 1111)
+      val projectLink2              = ProjectLink(2, targetRoadNumber, roadPartNumber, Track.RightSide, Discontinuity.Continuous, 15, 20, 0, 5, None, None, Some("test"), 0.toString, 0.0, 0.0, SideCode.Unknown, (JunctionPointCP, JunctionPointCP), (JunctionPointCP, JunctionPointCP), List(), projId1, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, 0.0, rw2, 0, 5, reversed = true, None, 748800L, 1112)
+      val projectLink3              = ProjectLink(3, targetRoadNumber, roadPartNumber, Track.LeftSide, Discontinuity.Continuous, 10, 15, 5, 10, None, None, Some("test"), 0.toString, 0.0, 0.0, SideCode.Unknown, (RoadAddressCP, JunctionPointCP), (JunctionPointCP, NoCP), List(), projId1, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, 0.0, rw1, 0, 5, reversed = true, None, 748800L, 1111)
+      val projectLink4              = ProjectLink(4, targetRoadNumber, roadPartNumber, Track.RightSide, Discontinuity.Continuous, 10, 15, 5, 10, None, None, Some("test"), 0.toString, 0.0, 0.0, SideCode.Unknown, (RoadAddressCP, JunctionPointCP), (JunctionPointCP, NoCP), List(), projId1, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, 0.0, rw2, 0, 5, reversed = true, None, 748800L, 1112)
+      val projectLink5              = ProjectLink(5, targetRoadNumber, roadPartNumber, Track.Combined, Discontinuity.Continuous, 0, 10, 10, 20, None, None, Some("test"), 0.toString, 0.0, 0.0, SideCode.Unknown, (RoadAddressCP, RoadAddressCP), (NoCP, RoadAddressCP), List(), projId1, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, 0.0, rw3, 0, 5, reversed = true, None, 748800L, 1113)
 
-      val projectLink6 = ProjectLink(6, targetRoadNumber, roadPartNumber, Track.LeftSide, Discontinuity.Continuous, 20, 25, 10, 15, None, None, Some("test"), 0, 0.0, 0.0, SideCode.Unknown, (RoadAddressCP, JunctionPointCP), (JunctionPointCP, JunctionPointCP), List(), projId1, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, 0.0, rw4, 0, 5, reversed = false, None, 748800L, 2221)
-      val projectLink7 = ProjectLink(7, targetRoadNumber, roadPartNumber, Track.RightSide, Discontinuity.Discontinuous, 20, 60, 10, 50, None, None, Some("test"), 0, 0.0, 0.0, SideCode.Unknown, (JunctionPointCP, RoadAddressCP), (JunctionPointCP, JunctionPointCP), List(), projId1, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, 0.0, rw5, 0, 5, reversed = false, None, 748800L, 2222)
-      val projectLink8 = ProjectLink(8, targetRoadNumber, roadPartNumber, Track.LeftSide, Discontinuity.Discontinuous, 25, 60, 15, 50, None, None, Some("test"), 0, 0.0, 0.0, SideCode.Unknown, (JunctionPointCP, RoadAddressCP), (JunctionPointCP, JunctionPointCP), List(), projId1, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, 0.0, rw4, 0, 5, reversed = false, None, 748800L, 2221)
+      val projectLink6 = ProjectLink(6, targetRoadNumber, roadPartNumber, Track.LeftSide, Discontinuity.Continuous, 20, 25, 10, 15, None, None, Some("test"), 0.toString, 0.0, 0.0, SideCode.Unknown, (RoadAddressCP, JunctionPointCP), (JunctionPointCP, JunctionPointCP), List(), projId1, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, 0.0, rw4, 0, 5, reversed = false, None, 748800L, 2221)
+      val projectLink7 = ProjectLink(7, targetRoadNumber, roadPartNumber, Track.RightSide, Discontinuity.Discontinuous, 20, 60, 10, 50, None, None, Some("test"), 0.toString, 0.0, 0.0, SideCode.Unknown, (JunctionPointCP, RoadAddressCP), (JunctionPointCP, JunctionPointCP), List(), projId1, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, 0.0, rw5, 0, 5, reversed = false, None, 748800L, 2222)
+      val projectLink8 = ProjectLink(8, targetRoadNumber, roadPartNumber, Track.LeftSide, Discontinuity.Discontinuous, 25, 60, 15, 50, None, None, Some("test"), 0.toString, 0.0, 0.0, SideCode.Unknown, (JunctionPointCP, RoadAddressCP), (JunctionPointCP, JunctionPointCP), List(), projId1, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, 0.0, rw4, 0, 5, reversed = false, None, 748800L, 2221)
 
       val project = dummyProject(projId1, ProjectState.Incomplete, List(ProjectReservedPart(1, 1, 1), ProjectReservedPart(1, 2, 1)), None)
       projectDAO.create(project)
@@ -167,10 +167,10 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
 
   test("Test RoadwayChangesDAO().insertDeltaToRoadChangeTable() When administrative class changes in the middle of an existing road.") {
     val projId1      = 1
-    val projectLink1 = ProjectLink(1, 1, 1, Track.Combined, Discontinuity.Continuous, 0, 10, 0, 10, None, None, Some("test"), 0, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), List(), projId1, LinkStatus.UnChanged, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 5, reversed = false, None, 748800L, 1111)
-    val projectLink2 = ProjectLink(2, 1, 1, Track.Combined, Discontinuity.Continuous, 10, 20, 10, 20, None, None, Some("test"), 0, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), List(), projId1, LinkStatus.UnChanged, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 5, reversed = false, None, 748800L, 1111)
-    val projectLink3 = ProjectLink(3, 1, 1, Track.Combined, Discontinuity.Continuous, 20, 30, 20, 30, None, None, Some("test"), 0, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), List(), projId1, LinkStatus.UnChanged, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 5, reversed = false, None, 748800L, 1111)
-    val projectLink4 = ProjectLink(4, 1, 1, Track.Combined, Discontinuity.Discontinuous, 30, 40, 30, 40, None, None, Some("test"), 0, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), List(), projId1, LinkStatus.UnChanged, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 5, reversed = false, None, 748800L, 1111)
+    val projectLink1 = ProjectLink(1, 1, 1, Track.Combined, Discontinuity.Continuous, 0, 10, 0, 10, None, None, Some("test"), 0.toString, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), List(), projId1, LinkStatus.UnChanged, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 5, reversed = false, None, 748800L, 1111)
+    val projectLink2 = ProjectLink(2, 1, 1, Track.Combined, Discontinuity.Continuous, 10, 20, 10, 20, None, None, Some("test"), 0.toString, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), List(), projId1, LinkStatus.UnChanged, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 5, reversed = false, None, 748800L, 1111)
+    val projectLink3 = ProjectLink(3, 1, 1, Track.Combined, Discontinuity.Continuous, 20, 30, 20, 30, None, None, Some("test"), 0.toString, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), List(), projId1, LinkStatus.UnChanged, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 5, reversed = false, None, 748800L, 1111)
+    val projectLink4 = ProjectLink(4, 1, 1, Track.Combined, Discontinuity.Discontinuous, 30, 40, 30, 40, None, None, Some("test"), 0.toString, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), List(), projId1, LinkStatus.UnChanged, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 5, reversed = false, None, 748800L, 1111)
     runWithRollback {
       val rap = dummyProject(projId1, ProjectState.Incomplete, List(ProjectReservedPart(1, 1, 1)), None)
       projectDAO.create(rap)
@@ -180,7 +180,7 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
       val roadwayDAO = new RoadwayDAO
       roadwayDAO.create(rw)
       projectLinkDAO.create(Seq(projectLink1, projectLink2, projectLink3, projectLink4))
-      val reservedParts     = Seq(ProjectReservedPart(0, 1, 1, Some(0), Some(Discontinuity.Discontinuous), Some(8L), None, None, None, Some(12345L)))
+      val reservedParts     = Seq(ProjectReservedPart(0, 1, 1, Some(0), Some(Discontinuity.Discontinuous), Some(8L), None, None, None, Some(12345L.toString)))
       val roadwayChangesDAO = new RoadwayChangesDAO()
       roadwayChangesDAO.insertDeltaToRoadChangeTable(1, Some(project1.copy(reservedParts = reservedParts)))
       val changes = roadwayChangesDAO.fetchRoadwayChanges(Set(1))
