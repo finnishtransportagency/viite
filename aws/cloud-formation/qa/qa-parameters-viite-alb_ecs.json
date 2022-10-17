@@ -34,10 +34,6 @@
   {
     "ParameterKey": "ApiGatewayUrl",
     "ParameterValue": "qaapi.testivaylapilvi.fi"
-  },
-  {
-    "ParameterKey": "kgvEndPoint",
-    "ParameterValue": "https://api.vaylapilvi.fi/paikkatiedot/ogc/features/collections"
   }
 ]
 
