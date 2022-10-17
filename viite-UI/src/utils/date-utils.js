@@ -75,7 +75,7 @@
   };
 
   dateUtils.addSingleDatePicker = function (fromElement) {
-    dateUtils.addFinnishDatePicker(fromElement);
+    return dateUtils.addFinnishDatePicker(fromElement);
   };
 
   dateUtils.addSingleDatePickerWithMinDate = function (fromElement, minDate) {
@@ -95,7 +95,7 @@
       field: jqueryElement.get(0),
       format: FINNISH_DATE_FORMAT,
       firstDay: 1,
-      yearRange: [1950, 2050],
+      yearRange: [1900, 2050],
       onDraw: onDraw,
       onSelect: onSelect,
       i18n: FINNISH_PIKADAY_I18N

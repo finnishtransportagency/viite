@@ -51,8 +51,8 @@ class ProjectDAOSpec extends FunSuite with Matchers {
   private val roadwayNumber1 = 1000l
   private val roadwayNumber2 = 2000l
 
-  private val linkId1 = 1000l
-  private val linkId2 = 2000l
+  private val linkId1 = 1000l.toString
+  private val linkId2 = 2000l.toString
 
   private val linearLocationId = 0
 
@@ -67,10 +67,7 @@ class ProjectDAOSpec extends FunSuite with Matchers {
     )
   }
 
-  def dummyProjectLink(id: Long, projectId: Long, linkId: Long, roadwayId: Long = 0, roadwayNumber: Long = roadwayNumber1, roadNumber: Long = roadNumber1,
-                       roadPartNumber: Long = roadPartNumber1, startAddrMValue: Long, endAddrMValue: Long, startMValue: Double, endMValue: Double,
-                       endDate: Option[DateTime] = None, calibrationPointTypes: (CalibrationPointType, CalibrationPointType), geometry: Seq[Point] = Seq(),
-                       status: LinkStatus, administrativeClass: AdministrativeClass, reversed: Boolean): ProjectLink =
+  def dummyProjectLink(id: Long, projectId: Long, linkId: String, roadwayId: Long = 0, roadwayNumber: Long = roadwayNumber1, roadNumber: Long = roadNumber1, roadPartNumber: Long = roadPartNumber1, startAddrMValue: Long, endAddrMValue: Long, startMValue: Double, endMValue: Double, endDate: Option[DateTime] = None, calibrationPointTypes: (CalibrationPointType, CalibrationPointType), geometry: Seq[Point] = Seq(), status: LinkStatus, administrativeClass: AdministrativeClass, reversed: Boolean): ProjectLink =
     ProjectLink(id, roadNumber, roadPartNumber, Track.Combined, Discontinuity.Continuous, startAddrMValue, endAddrMValue, startAddrMValue, endAddrMValue,
       Some(DateTime.parse("1901-01-01")), endDate, Some("testUser"), linkId, startMValue, endMValue, TowardsDigitizing,
       calibrationPointTypes, (NoCP, NoCP), geometry, projectId, status, administrativeClass, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geometry),
@@ -97,10 +94,8 @@ class ProjectDAOSpec extends FunSuite with Matchers {
       val projectLinkId1 = Sequences.nextProjectLinkId
       val projectLinkId2 = Sequences.nextProjectLinkId
       val projectLinks = Seq(
-        dummyProjectLink(projectLinkId1, projId1, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0,
-          None, (NoCP, NoCP), Seq(), LinkStatus.Transfer, AdministrativeClass.State, reversed = true),
-        dummyProjectLink(projectLinkId2, projId2, linkId2, roadwayIds.last, roadwayNumber1, roadNumber2, roadPartNumber1, 0, 100, 0.0, 100.0,
-          None, (NoCP, NoCP), Seq(), LinkStatus.Transfer, AdministrativeClass.State, reversed = true)
+        dummyProjectLink(projectLinkId1, projId1, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (NoCP, NoCP), Seq(), LinkStatus.Transfer, AdministrativeClass.State, reversed = true),
+        dummyProjectLink(projectLinkId2, projId2, linkId2, roadwayIds.last, roadwayNumber1, roadNumber2, roadPartNumber1, 0, 100, 0.0, 100.0, None, (NoCP, NoCP), Seq(), LinkStatus.Transfer, AdministrativeClass.State, reversed = true)
       )
       projectLinkDAO.create(projectLinks)
       val waitingCountNow1 = projectDAO.fetchAllIdsByLinkId(linkId1).length
@@ -258,8 +253,7 @@ class ProjectDAOSpec extends FunSuite with Matchers {
   test("Test fetchProjectIdsWithToBePreservedStatus " +
     "When project is accepted, but yet waiting to be preserved, or at preserving to Viite DB, " +
     "Then fetchProjectIdsWithToBePreservedStatus should be increased") {
-    val reservedPart = ProjectReservedPart(5: Long, 203: Long, 203: Long, Some(6L), Some(Discontinuity.apply("jatkuva")),
-                                           Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
+    val reservedPart = ProjectReservedPart(5: Long, 203: Long, 203: Long, Some(6L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
     runWithRollback {
       val startWaitingCount = projectDAO.fetchProjectIdsWithToBePreservedStatus.length
 

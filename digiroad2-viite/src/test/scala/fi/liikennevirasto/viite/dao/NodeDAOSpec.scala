@@ -190,4 +190,75 @@ class NodeDAOSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Test fetchNodesForRoadAddressBrowser then return nodes based on the query") {
+    runWithRollback {
+      val roadNumber = 76
+      val roadPartNumber = 1
+      val junctionAddrM = 250
+      val endAddrM = 500
+      // create nodes
+      val nodeNumber1 = Sequences.nextNodeNumber
+      val nodeNumber2 = Sequences.nextNodeNumber
+      dao.create(
+        Seq(
+          Node(Sequences.nextNodeId, nodeNumber1, Point(100, 100) ,Some("TestNode"), NodeType.NormalIntersection, DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, "test", Some(DateTime.parse("2019-01-01")), None, Some(DateTime.parse("2019-01-01")), DateTime.parse("2019-01-01")),
+          Node(Sequences.nextNodeId, nodeNumber2, Point(100, 200) ,Some("TestNode"), NodeType.EndOfRoad, DateTime.parse("2021-01-01"), None, DateTime.parse("2021-01-01"), None, "test", Some(DateTime.parse("2021-01-01")), None, Some(DateTime.parse("2021-01-01")), DateTime.parse("2021-01-01"))
+        )
+      )
+      // create roadways
+      val roadwayNumber1 = Sequences.nextRoadwayNumber
+      val roadwayNumber2 = Sequences.nextRoadwayNumber
+      roadwayDAO.create(
+        Seq(
+          Roadway(roadwayDAO.getNextRoadwayId, roadwayNumber1, roadNumber, roadPartNumber, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, 0, 300, reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
+          Roadway(roadwayDAO.getNextRoadwayId, roadwayNumber2, roadNumber, roadPartNumber, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, 300, 500, reversed = false, DateTime.parse("2021-01-01"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination)
+
+        )
+      )
+      // create roadway points
+      val rwpId = roadwayPointDAO.create(
+        RoadwayPoint(Sequences.nextRoadwayPointId, roadwayNumber1, junctionAddrM, "test", Some(DateTime.parse("1992-10-08")), None, None)
+      )
+      val rwpId2 = roadwayPointDAO.create(
+        RoadwayPoint(Sequences.nextRoadwayPointId, roadwayNumber2, endAddrM, "test", Some(DateTime.parse("2021-01-01")), None, None)
+      )
+      // create nodepoints
+      nodePointDAO.create(
+        Seq(
+          NodePoint(Sequences.nextNodePointId, BeforeAfter.Before, rwpId, Some(nodeNumber1), NodePointType.RoadNodePoint, Some(DateTime.parse("1992-10-08")), None, DateTime.parse("1992-10-08"), None, "test", Some(DateTime.parse("1992-10-08")), roadwayNumber1, junctionAddrM, roadNumber, roadPartNumber, Track.Combined, 1, Point(100, 100)),
+          NodePoint(Sequences.nextNodePointId, BeforeAfter.Before, rwpId2, Some(nodeNumber2), NodePointType.RoadNodePoint, Some(DateTime.parse("2021-01-01")), None, DateTime.parse("2021-01-01"), None, "test", Some(DateTime.parse("2021-01-01")), roadwayNumber2, endAddrM, roadNumber, roadPartNumber, Track.Combined, 1, Point(100, 200))
+
+        )
+      )
+      // create junction
+      val junctionId = Sequences.nextJunctionId
+      junctionDAO.create(
+        Seq(
+          Junction(junctionId, Some(1), Some(nodeNumber1), DateTime.parse("1992-10-08"), None, DateTime.parse("1992-10-08"), None, "test", Some(DateTime.parse("1992-10-08")), None)
+        )
+      )
+
+      // create junction point
+      junctionPointDAO.create(
+        Seq(
+          JunctionPoint(Sequences.nextJunctionPointId, BeforeAfter.Before, rwpId, junctionId, Some(DateTime.parse("1992-10-08")), None, DateTime.parse("1992-10-08"), None, "test", Some(DateTime.parse("1992-10-08")), roadwayNumber1, junctionAddrM, roadNumber, roadPartNumber, Track.Combined, Discontinuity.Continuous, Point(100,100)),
+          JunctionPoint(Sequences.nextJunctionPointId, BeforeAfter.After, rwpId, junctionId, Some(DateTime.parse("1992-10-08")), None, DateTime.parse("1992-10-08"), None, "test", Some(DateTime.parse("1992-10-08")), roadwayNumber1, junctionAddrM, roadNumber, roadPartNumber, Track.Combined, Discontinuity.Continuous, Point(100,100))
+        )
+      )
+
+      // fetch
+      val resultForQuery1 = dao.fetchNodesForRoadAddressBrowser(Some("2022-01-01"), None, Some(roadNumber), None, None)
+      resultForQuery1.size should be (2)
+      resultForQuery1.head shouldBe a [NodeForRoadAddressBrowser]
+
+      val resultForQuery2 = dao.fetchNodesForRoadAddressBrowser(Some("1992-01-01"), None, Some(roadNumber), None, None)
+      resultForQuery2.size should be (0)
+
+      val resultForQuery3 = dao.fetchNodesForRoadAddressBrowser(Some("2020-12-12"), None, Some(roadNumber), None, None)
+      resultForQuery3.size should be (1)
+
+
+    }
+  }
+
 }

@@ -8,10 +8,19 @@ sealed trait LinkGeomSource{
   def value: Int
 }
 
-//LINKIN LÄHDE (1 = tielinkkien rajapinta, 2 = täydentävien linkkien rajapinta, 3 = suunnitelmalinkkien rajapinta, 4 = jäädytettyjen linkkien rajapinta, 5 = historialinkkien rajapinta)
+/**
+* LINKIN LÄHDE:
+*  1 = tielinkkien rajapinta,
+*  2 = täydentävien linkkien rajapinta,
+*  4 = jäädytettyjen linkkien rajapinta,
+*  5 = VVH-historialinkkien rajapinta,
+*  6 = KGV-versiorajapinta,
+*  7 = VVH-linkId vastintaulun,
+*  8 = Muutosrajapinta
+*/
 
 object LinkGeomSource{
-  val values = Set(NormalLinkInterface, ComplementaryLinkInterface, FrozenLinkInterface, HistoryLinkInterface)
+  val values = Set(NormalLinkInterface, ComplementaryLinkInterface, FrozenLinkInterface, HistoryLinkInterface, RoadLinksVersions, LinkCorrespondenceTable, Change, Unknown)
 
   def apply(intValue: Int): LinkGeomSource = values.find(_.value == intValue).getOrElse(Unknown)
 
@@ -19,28 +28,31 @@ object LinkGeomSource{
   case object ComplementaryLinkInterface extends LinkGeomSource {def value = 2;}
   case object FrozenLinkInterface extends LinkGeomSource {def value = 4;}
   case object HistoryLinkInterface extends LinkGeomSource {def value = 5;}
+  case object RoadLinksVersions extends LinkGeomSource {def value = 6;}
+  case object LinkCorrespondenceTable extends LinkGeomSource {def value = 7;}
+  case object Change extends LinkGeomSource {def value = 8;}
   case object Unknown extends LinkGeomSource { def value = 99 }
 }
 
-sealed trait ConstructionType {
+sealed trait LifecycleStatus {
   def value: Int
 }
 
-object ConstructionType{
-  val values = Set[ConstructionType](InUse, UnderConstruction, Planned, UnknownConstructionType)
+object LifecycleStatus{
+  val values = Set[LifecycleStatus](Planned, UnderConstruction, InUse, UnknownLifecycleStatus)
 
-  val filteredLinkStatus = Set[ConstructionType](InUse, UnderConstruction, Planned, TemporarilyNotInUse, ExpiringSoon)
+  val filteredLinkStatus = Set[LifecycleStatus](UnderConstruction, InUse)
 
-  def apply(intValue: Int): ConstructionType = {
+  def apply(intValue: Int): LifecycleStatus = {
     values.find(_.value == intValue).getOrElse(InUse)
   }
 
-  case object InUse extends ConstructionType { def value = 0 }
-  case object UnderConstruction extends ConstructionType { def value = 1 }
-  case object Planned extends ConstructionType { def value = 3 }
-  case object TemporarilyNotInUse extends ConstructionType { def value = 4 }
-  case object ExpiringSoon extends ConstructionType { def value = 5 }
-  case object UnknownConstructionType extends ConstructionType { def value = 99 }
+  case object Planned extends LifecycleStatus { def value = 1 }
+  case object UnderConstruction extends LifecycleStatus { def value = 2 }
+  case object InUse extends LifecycleStatus { def value = 3 }
+  case object TemporarilyNotInUse extends LifecycleStatus { def value = 4 }
+  case object ExpiringSoon extends LifecycleStatus { def value = 5 }
+  case object UnknownLifecycleStatus extends LifecycleStatus { def value = 99 }
 }
 
 sealed trait LinkType

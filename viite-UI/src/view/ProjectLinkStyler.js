@@ -166,7 +166,7 @@
           lineCap: 'round'
         }
       }),
-      new StyleRule().where('constructionType').is(LinkValues.ConstructionType.UnderConstruction.value).and('roadClass').is(LinkValues.RoadClass.NoClass.value).use({
+      new StyleRule().where('lifecycleStatus').is(LinkValues.lifecycleStatus.UnderConstruction.value).and('roadClass').is(LinkValues.RoadClass.NoClass.value).use({
         stroke: {
           color: '#000',
           lineCap: 'butt',
@@ -183,19 +183,19 @@
     ];
 
     var underConstructionRules = [
-      new StyleRule().where('constructionType').isNot(LinkValues.ConstructionType.UnderConstruction.value).or('constructionType').is(LinkValues.ConstructionType.UnderConstruction.value).use({
+      new StyleRule().where('lifecycleStatus').isNot(LinkValues.lifecycleStatus.UnderConstruction.value).or('lifecycleStatus').is(LinkValues.lifecycleStatus.UnderConstruction.value).use({
         stroke: {
           color: '#fff',
           lineCap: 'round'
         }
       }),
-      new StyleRule().where('roadClass').is(LinkValues.RoadClass.NoClass.value).and('anomaly').is(LinkValues.Anomaly.None.value).and('constructionType').is(LinkValues.ConstructionType.UnderConstruction.value).use({
+      new StyleRule().where('roadClass').is(LinkValues.RoadClass.NoClass.value).and('anomaly').is(LinkValues.Anomaly.None.value).and('lifecycleStatus').is(LinkValues.lifecycleStatus.UnderConstruction.value).use({
         stroke: {
           color: 'rgba(238, 238, 235, 0.75)',
           lineCap: 'round'
         }
       }),
-      new StyleRule().where('roadClass').is(LinkValues.RoadClass.NoClass.value).and('anomaly').is(LinkValues.Anomaly.NoAddressGiven.value).and('constructionType').is(LinkValues.ConstructionType.UnderConstruction.value).use({
+      new StyleRule().where('roadClass').is(LinkValues.RoadClass.NoClass.value).and('anomaly').is(LinkValues.Anomaly.NoAddressGiven.value).and('lifecycleStatus').is(LinkValues.lifecycleStatus.UnderConstruction.value).use({
         stroke: {
           color: '#ff9900',
           lineCap: 'round'
@@ -246,7 +246,7 @@
           opacity: 1
         }
       }),
-      new StyleRule().where('status').is(unknownStatus).and('anomaly').is(LinkValues.Anomaly.NoAddressGiven.value).and('constructionType').isNot(LinkValues.ConstructionType.UnderConstruction.value).use({
+      new StyleRule().where('status').is(unknownStatus).and('anomaly').is(LinkValues.Anomaly.NoAddressGiven.value).and('lifecycleStatus').isNot(LinkValues.lifecycleStatus.UnderConstruction.value).use({
         stroke: {
           color: '#646461',
           lineCap: 'round',

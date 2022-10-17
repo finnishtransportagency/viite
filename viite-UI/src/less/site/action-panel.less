@@ -631,3 +631,43 @@
     margin-right: 20px;
   }
 }
+
+.road-address-browser-window {
+  overflow-y: auto;
+  background-color: #e3e3e1;
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  margin-top: -250px;
+  margin-left: -450px;
+  min-width: 810px;
+  height: 500px;
+
+  p {
+    margin: 10px;
+  }
+}
+
+.road-address-browser-window-results-table {
+  border-collapse: collapse;
+  width: 100%;
+  border: 3px solid #e3e3e1;
+
+  thead {
+    position: sticky;
+    top: 0;
+    background-color: #babbb9;
+  }
+
+  td, th {
+    border: 1px solid #e3e3e1;
+    text-align: left;
+    padding: 8px;
+  }
+
+  tbody {
+    tr:nth-child(even) {
+      background-color: #babbb9;
+    }
+  }
+}

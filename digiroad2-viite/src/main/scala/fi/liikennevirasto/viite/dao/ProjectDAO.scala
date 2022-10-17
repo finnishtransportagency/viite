@@ -61,13 +61,13 @@ class ProjectDAO {
          """.execute
   }
 
-  def fetchAllIdsByLinkId(linkId: Long): Seq[Long] =
+  def fetchAllIdsByLinkId(linkId: String): Seq[Long] =
     time(logger, """Get projects with given link id""") {
     val query =
       s"""SELECT P.ID
              FROM PROJECT P
             JOIN PROJECT_LINK PL ON P.ID=PL.PROJECT_ID
-            WHERE P.STATE = ${ProjectState.Incomplete.value} AND PL.LINK_ID=$linkId"""
+            WHERE P.STATE = ${ProjectState.Incomplete.value} AND PL.LINK_ID='$linkId'"""
     Q.queryNA[Long](query).list
   }
 

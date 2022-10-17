@@ -43,8 +43,7 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
             val (stCp, enCp) = (linearLocation.startCalibrationPoint, linearLocation.endCalibrationPoint)
             linearLocation.copy(calibrationPoints = (
               stCp.copy(addrM = stCp.addrM.map(calculateAddressHistoryCalibrationPoint(currentRoadwayAddress, historyRoadwayAddress))),
-              enCp.copy(addrM = enCp.addrM.map(calculateAddressHistoryCalibrationPoint(currentRoadwayAddress, historyRoadwayAddress))))
-            )
+              enCp.copy(addrM = enCp.addrM.map(calculateAddressHistoryCalibrationPoint(currentRoadwayAddress, historyRoadwayAddress)))))
         }
     }
   }

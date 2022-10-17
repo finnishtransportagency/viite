@@ -112,8 +112,9 @@
     var linkPropertyLayer = new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel);
     var nodeLayer = new NodeLayer(map, roadLayer, models.selectedNodesAndJunctions, models.nodeCollection, models.roadCollection, models.linkPropertiesModel, applicationModel);
     var roadNamingTool = new RoadNamingToolWindow(roadNameCollection);
+    var roadAddressBrowser = new RoadAddressBrowserWindow(backend);
 
-    new LinkPropertyForm(models.selectedLinkProperty, roadNamingTool, projectListModel);
+    new LinkPropertyForm(models.selectedLinkProperty, roadNamingTool, projectListModel, roadAddressBrowser);
 
     new NodeSearchForm(new InstructionsPopup(jQuery('.digiroad2')), map, models.nodeCollection, backend);
     new NodeForm(models.selectedNodesAndJunctions, models.roadCollection, backend);

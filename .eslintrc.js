@@ -53,6 +53,7 @@ module.exports = {
         "LinkPropertyLayer": "writable",
         "NodeLayer": "writable",
         "RoadNamingToolWindow": "writable",
+        "RoadAddressBrowserWindow": "writable",
         "LinkPropertyForm": "writable",
         "NodeSearchForm": "writable",
         "NodeForm": "writable",
@@ -87,7 +88,8 @@ module.exports = {
         "geometrycalculator": "writable",
         "validitydirections": "writable",
         "interact": "writable",
-        "events": "writable"
+        "events": "writable",
+        "XLSX": "readonly"
     },
     "parserOptions": {
         "ecmaVersion": 2019,

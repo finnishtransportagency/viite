@@ -3,16 +3,16 @@ package fi.liikennevirasto.digiroad2
 import java.util.concurrent.TimeUnit
 
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.client.kgv.KgvRoadLink
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
+import fi.liikennevirasto.viite.{AwsService, NodesAndJunctionsService, ProjectService, RoadAddressService, RoadCheckOptions, RoadNameService, RoadNetworkService}
 import fi.liikennevirasto.viite.dao.{LinearLocationDAO, _}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.ChangeSet
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.liikennevirasto.viite.util.{DataImporter, JsonSerializer}
-import fi.liikennevirasto.viite.{AwsService, NodesAndJunctionsService, ProjectService, RoadAddressService, RoadCheckOptions, RoadNameService, RoadNetworkService}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.concurrent.duration.FiniteDuration
@@ -58,14 +58,13 @@ object Digiroad2Context {
   val roadNetworkChecker: ActorRef = system.actorOf(Props(classOf[RoadNetworkChecker], roadNetworkService), name = "roadNetworkChecker")
   eventbus.subscribe(roadNetworkChecker, "roadAddress:RoadNetworkChecker")
 
-  lazy val roadAddressService: RoadAddressService = new RoadAddressService(roadLinkService, roadwayDAO, linearLocationDAO,
-    roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, roadwayAddressMapper, eventbus, ViiteProperties.vvhRoadlinkFrozen)
+  lazy val roadAddressService: RoadAddressService = new RoadAddressService(roadLinkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, roadwayAddressMapper, eventbus, ViiteProperties.kgvRoadlinkFrozen)
 
   lazy val projectService: ProjectService = {
     new ProjectService(roadAddressService, roadLinkService, nodesAndJunctionsService, roadwayDAO,
       roadwayPointDAO, linearLocationDAO, projectDAO, projectLinkDAO,
       nodeDAO, nodePointDAO, junctionPointDAO, projectReservedPartDAO, roadwayChangesDAO,
-      roadwayAddressMapper, eventbus, ViiteProperties.vvhRoadlinkFrozen)
+      roadwayAddressMapper, eventbus, ViiteProperties.kgvRoadlinkFrozen)
   }
 
   lazy val roadNetworkService: RoadNetworkService = {
@@ -100,12 +99,10 @@ object Digiroad2Context {
     Class.forName(ViiteProperties.eventBus).newInstance().asInstanceOf[DigiroadEventBus]
   }
 
-  lazy val vvhClient: VVHClient = {
-    new VVHClient(ViiteProperties.vvhRestApiEndPoint)
-  }
+  lazy val kgvRoadLinkClient: KgvRoadLink = new KgvRoadLink()
 
   lazy val roadLinkService: RoadLinkService = {
-    new RoadLinkService(vvhClient, eventbus, new JsonSerializer, useFrozenLinkInterface)
+    new RoadLinkService(kgvRoadLinkClient, eventbus, new JsonSerializer, useFrozenLinkInterface)
   }
 
   lazy val roadwayDAO: RoadwayDAO = {
@@ -167,7 +164,7 @@ object Digiroad2Context {
   }
 
   lazy val useFrozenLinkInterface: Boolean = {
-    ViiteProperties.vvhRoadlinkFrozen
+    ViiteProperties.kgvRoadlinkFrozen
   }
 
   lazy val awsService: AwsService = {
