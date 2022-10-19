@@ -54,6 +54,7 @@ module.exports = {
         "NodeLayer": "writable",
         "RoadNamingToolWindow": "writable",
         "RoadAddressBrowserWindow": "writable",
+        "RoadAddressChangesBrowserWindow": "writable",
         "LinkPropertyForm": "writable",
         "NodeSearchForm": "writable",
         "NodeForm": "writable",

@@ -17,7 +17,7 @@
                                         '</button>' +
                                     '</a>');
         roadAddrBrowserWindow.append('<button class="close btn-close" id="closeRoadAddrBrowserWindow">x</button>');
-        roadAddrBrowserWindow.append('<div class="content road-address-browser-header">Tieosoitteiden katselu</div>');
+        roadAddrBrowserWindow.append('<div class="road-address-browser-modal-header">Tieosoitteiden katselu</div>');
         roadAddrBrowserWindow.append('' +
             '<form id="roadAddressBrowser" class="road-address-browser-form">' +
                 '<div class="input-container"><label class="control-label-small">Tilannepvm</label> <input type="text" id="roadAddrStartDate" value="' + getCurrentDate() + '" style="width: 100px" required/></div>' +
@@ -35,7 +35,7 @@
                         '<option value="14">14 (LAP)</option>' +
                     '</select>' +
                 '</div>' +
-                '<div class="input-container"><label class="control-label-small">Tie</label><input type="number" min="1" max="99999" id="roadAddrInputRoad" /></div>' +
+                '<div class="input-container"><label class="control-label-small">Tie</label><input class="road-address-browser-road-input" type="number" min="1" max="99999" id="roadAddrInputRoad" /></div>' +
                 '<div class="input-container"><label class="control-label-small">Aosa</label><input type="number" min="1" max="999" id="roadAddrInputStartPart"/></div>' +
                 '<div class="input-container"><label class="control-label-small">Losa</label><input type="number" min="1" max="999" id="roadAddrInputEndPart"/></div>' +
                 '<div class="input-container"><label>Ajoradat</label><input type="radio" name="roadAddrBrowserForm" value="Tracks" checked="checked"></div>' +
@@ -243,8 +243,8 @@
 
 
         function toggle() {
-            $('.container').append('<div class="modal-overlay confirm-modal"><div class="modal-dialog"></div></div>');
-            $('.modal-dialog').append(roadAddrBrowserWindow.toggle());
+            $('.container').append('<div class="road-address-browser-modal-overlay confirm-modal"><div class="road-address-browser-modal-window"></div></div>');
+            $('.road-address-browser-modal-window').append(roadAddrBrowserWindow.toggle());
             addDatePicker();
             bindEvents();
         }
@@ -280,8 +280,8 @@
 
 
         function hide() {
-            $('.modal-dialog').append(roadAddrBrowserWindow.toggle());
-            $('.modal-overlay').remove();
+            $('.road-address-browser-modal-window').append(roadAddrBrowserWindow.toggle());
+            $('.road-address-browser-modal-overlay').remove();
             destroyDatePicker();
         }
 
