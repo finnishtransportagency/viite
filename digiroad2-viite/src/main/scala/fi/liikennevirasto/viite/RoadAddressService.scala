@@ -325,7 +325,7 @@ class RoadAddressService(
     var searchResult: Seq[Any] = null
     searchType match {
       case "linkId" => {
-        val searchResultPoint = roadLinkService.getMidPointByLinkId(params.head.toString)
+        val searchResultPoint = roadLinkService.getMidPointByLinkId(searchString.get)
         collectResult("linkId", Seq(searchResultPoint))
       }
       case "road" => params.size match {
