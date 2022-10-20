@@ -330,7 +330,7 @@ class RoadAddressService(
       }
       case "road" => params.size match {
         case 1 =>
-          // The params with type long can be MTKID, complementary VVH_id or roadNumber
+          // The params with type long can be MTKID, complementary link id or roadNumber
           val searchResultPoint = roadLinkService.getRoadLinkMiddlePointBySourceId(params.head)
           val partialResultSeq = if (searchResultPoint.nonEmpty)
             collectResult("mtkId", Seq(searchResultPoint))
