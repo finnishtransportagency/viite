@@ -479,6 +479,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
 
     // Test search by street name
+    when(mockRoadLinkService.getRoadLinkMiddlePointBySourceId(any[Long])).thenReturn(None)
     var result = roadAddressService.getSearchResults(Option("nuolirinne"))
     result.size should be(1)
     result.head.contains("street") should be(true)
