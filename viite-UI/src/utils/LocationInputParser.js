@@ -9,10 +9,10 @@
     var matchedCoordinates = input.match(coordinateRegex);
     if (matchedCoordinates) {
       return parseCoordinates(matchedCoordinates);
-    } else if (input.match(wildLetterRegex)) {
-      return {type: 'street', search: input};
     } else if (input.match(roadNumberRegex) || input.match(linkIdRegex)) {
       return {type: 'road', search: input};
+    } else if (input.match(wildLetterRegex)) {
+      return {type: 'street', search: input};
     } else {
       return {type: 'invalid'};
     }
