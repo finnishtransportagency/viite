@@ -137,4 +137,13 @@
     });
     return _.pick(newest, ['modifiedAt', 'modifiedBy']);
   };
+
+  dateUtils.isValidDate = function (date) {
+    return date instanceof Date && !isNaN(date)
+  };
+
+  dateUtils.isDateInYearRange = function (date, minYear, maxYear) {
+    return date.getFullYear() > minYear && date.getFullYear() < maxYear
+  };
+
 }(window.dateutil = window.dateutil || {}));
