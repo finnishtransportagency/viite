@@ -87,12 +87,6 @@ class RoadLinkService(val kgvClient: KgvRoadLink, val eventbus: DigiroadEventBus
     }
   }
 
-  def getRoadLinkMiddlePointByComplementaryLinkId(complementaryLinkId: Long): Option[Point] = {
-    kgvClient.complementaryData.fetchByLinkId(complementaryLinkId.toString).flatMap { RoadLink =>
-      Option(GeometryUtils.midPointGeometry(RoadLink.geometry))
-    }
-  }
-
   def getRoadLinkByLinkId(linkId: String): Option[RoadLink] = getRoadLinksByLinkIds(Set(linkId)).headOption
 
   def getRoadLinksByLinkIds(linkIds: Set[String]): Seq[RoadLink] = {
