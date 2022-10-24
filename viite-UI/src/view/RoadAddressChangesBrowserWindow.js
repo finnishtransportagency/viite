@@ -224,9 +224,9 @@
             }
 
             function validateDate(date) {
-                if (date instanceof Date && !isNaN(date)) {
-                    if(date.getFullYear() > MAX_YEAR_PARAM || date.getFullYear() < MIN_YEAR_PARAM)
-                        roadAddrChangesStartDate.setCustomValidity("Vuosiluvun tulee olla väliltä" + MIN_YEAR_PARAM + " - " + MAX_YEAR_PARAM);
+                if (dateutil.isValidDate(date)) {
+                    if(!dateutil.isDateInYearRange(date, MIN_YEAR_PARAM, MAX_YEAR_PARAM))
+                        roadAddrChangesStartDate.setCustomValidity("Vuosiluvun tulee olla väliltä " + MIN_YEAR_PARAM + " - " + MAX_YEAR_PARAM);
                 }
                 else
                     roadAddrChangesStartDate.setCustomValidity("Päivämäärän tulee olla muodossa pp.kk.yyyy");
