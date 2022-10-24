@@ -1,13 +1,21 @@
 (function (root) {
   root.LinkStatus = {
-    NotHandled: {value: 0, description: "NotHandled", transitionFrom: [0]},
-    Unchanged: {value: 1, description: "Unchanged", transitionFrom: [0, 1, 3, 5]},
-    New: {value: 2, description: "New", transitionFrom: [99, 2]},
-    Transfer: {value: 3, description: "Transfer", transitionFrom: [0, 1, 3, 5]},
-    Numbering: {value: 4, description: "Numbering", transitionFrom: [0, 1, 3, 4, 5]},
-    Terminated: {value: 5, description: "Terminated", transitionFrom: [0, 1, 3, 5]},
-    Revert: {value: 6, description: "Revert", transitionFrom: [1, 2, 3, 4, 5, 6]},
+    NotHandled: {value: 0, description: "NotHandled", transitionFrom: [0], displayText: "Käsittelemätön"},
+    Unchanged: {value: 1, description: "Unchanged", transitionFrom: [0, 1, 3, 5], displayText: "Ennallaan"},
+    New: {value: 2, description: "New", transitionFrom: [99, 2], displayText: "Uusi"},
+    Transfer: {value: 3, description: "Transfer", transitionFrom: [0, 1, 3, 5], displayText: "Siirto"},
+    Numbering: {value: 4, description: "Numbering", transitionFrom: [0, 1, 3, 4, 5], displayText: "Numerointi"},
+    Terminated: {value: 5, description: "Terminated", transitionFrom: [0, 1, 3, 5], displayText: "Lakkautus"},
+    Revert: {value: 6, description: "Revert", transitionFrom: [1, 2, 3, 4, 5, 6], displayText: "Palautus aihioksi tai tieosoitteettomaksi"},
     Undefined: {value: 99, description: "?", transitionFrom: []}
+  };
+
+  root.ChangeType = {
+    Unchanged: {value: 1, description: "Unchanged", displayText: "Ennallaan"},
+    New: {value: 2, description: "New", displayText: "Uusi"},
+    Transfer: {value: 3, description: "Transfer", displayText: "Siirto"},
+    Numbering: {value: 4, description: "Numbering", displayText: "Numerointi"},
+    Terminated: {value: 5, description: "Terminated", displayText: "Lakkautus"}
   };
 
   root.Anomaly = {
@@ -110,11 +118,11 @@
   };
 
   root.AdministrativeClass = {
-    Empty: {value: 0, description: "", displayText: "--"},
-    PublicRoad: {value: 1, description: "Yleinen tie", displayText: "1 Valtio"},
-    MunicipalityStreetRoad: {value: 2, description: "Kunnan katuosuus", displayText: "2 Kunta"},
-    PrivateRoad: {value: 3, description: "Yksityistie", displayText: "3 Yksityinen"},
-    Unknown: {value: 99, description: "Ei määritelty", displayText: "--"}
+    Empty: {value: 0, description: "", displayText: "--", textValue: ""},
+    PublicRoad: {value: 1, description: "Yleinen tie", displayText: "1 Valtio", textValue: "Valtio"},
+    MunicipalityStreetRoad: {value: 2, description: "Kunnan katuosuus", displayText: "2 Kunta", textValue: "Kunta"},
+    PrivateRoad: {value: 3, description: "Yksityistie", displayText: "3 Yksityinen", textValue: "Yksityinen"},
+    Unknown: {value: 99, description: "Ei määritelty", displayText: "--", textValue: ""}
   };
 
   root.AdministrativeClassShort = {
@@ -194,6 +202,11 @@
     RoadNodePoint: {value: 1, description: "Tien solmukohta"},
     CalculatedNodePoint: {value: 2, description: "Laskettu solmukohta"},
     UnknownNodePointType: {value: 99, description: "Ei määritelty"}
+  };
+
+  root.BeforeAfter = {
+    Before: {value: 1, description: "Ennen", displayLetter: "E"},
+    After: {value: 2, description: "Jälkeen", displayLetter: "J"}
   };
 
   root.Tool = {

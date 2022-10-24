@@ -1,14 +1,6 @@
 (function (root) {
   root.ProjectChangeTable = function (projectChangeInfoModel, projectCollection) {
 
-    var changeTypes = [
-      'Käsittelemättä',
-      'Ennallaan',
-      'Uusi',
-      'Siirto',
-      'Numerointi',
-      'Lakkautettu'
-    ];
     // change table is not open in the beginning of the project
     var changeTableOpen = false;
     var LinkStatus = LinkValues.LinkStatus;
@@ -102,8 +94,11 @@
       }
     }
 
-    function getChangeType(type) {
-      return changeTypes[type];
+    function getChangeType(changeTypeValue) {
+      const changeType = _.find(LinkValues.ChangeType, function (obj) {
+        return obj.value === changeTypeValue;
+      });
+      return changeType.displayText;
     }
 
     function getChanges() {

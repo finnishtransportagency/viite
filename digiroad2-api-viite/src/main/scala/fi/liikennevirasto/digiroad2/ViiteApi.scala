@@ -1622,37 +1622,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
     )
   }
 
-  def getAdministrativeClassStringValue(administrativeClass: Long): String = {
-    administrativeClass match {
-      case 1 => "Valtio"
-      case 2 => "Kunta"
-      case 3 => "Yksityinen"
-      case _ => "Tuntematon"
-    }
-  }
-
-  def getBeforeAfterStringValue(beforeAfter: Seq[Long]): String = {
-    if (beforeAfter.contains(1) && beforeAfter.contains(2))
-      "EJ"
-    else if (beforeAfter.contains(1))
-      "E"
-    else if (beforeAfter.contains(2))
-      "J"
-    else
-      ""
-  }
-
-  def getChangeTypeStringValue(changeType: Long) = {
-    changeType match {
-      case 1 => "Ennallaan"
-      case 2 => "Uusi"
-      case 3 => "Siirto"
-      case 4 => "Numerointi"
-      case 5 => "Lakkautus"
-      case _ => "Tuntematon"
-    }
-  }
-
   def roadAddressBrowserTracksToApi(track: TrackForRoadAddressBrowser): Map[String, Any] = {
     Map(
       "ely" -> track.ely,
@@ -1662,7 +1631,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
       "startAddrM" -> track.startAddrM,
       "endAddrM" -> track.endAddrM,
       "lengthAddrM" -> track.roadAddressLengthM,
-      "administrativeClass" -> getAdministrativeClassStringValue(track.administrativeClass),
+      "administrativeClass" -> track.administrativeClass,
       "startDate" -> new SimpleDateFormat("dd.MM.yyyy").format(track.startDate.toDate)
     )
   }
@@ -1704,7 +1673,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
       "track" -> junction.track,
       "roadPartNumber" -> junction.roadPartNumber,
       "addrM" -> junction.addrM,
-      "beforeAfter" -> getBeforeAfterStringValue(junction.beforeAfter)
+      "beforeAfter" -> junction.beforeAfter
     )
   }
 
@@ -1719,7 +1688,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
   def roadAddressChangeInfoToApi(changeInfo: ChangeInfoForRoadAddressChangesBrowser): Map[String, Any] = {
     Map(
       "startDate" -> new SimpleDateFormat("dd.MM.yyyy").format(changeInfo.startDate.toDate),
-      "changeType" -> getChangeTypeStringValue(changeInfo.changeType),
+      "changeType" -> changeInfo.changeType,
       "reversed" -> changeInfo.reversed,
       "roadName" -> changeInfo.roadName,
       "projectName" -> changeInfo.projectName,
@@ -1731,11 +1700,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
       "oldStartAddrM" -> changeInfo.oldStartAddrM.getOrElse(""),
       "oldEndAddrM" -> changeInfo.oldEndAddrM.getOrElse(""),
       "oldLength" -> changeInfo.oldLength.getOrElse(""),
-      "oldAdministrativeClass" -> {
-        if (changeInfo.oldAdministrativeClass.isDefined)
-          getAdministrativeClassStringValue(changeInfo.oldAdministrativeClass.get)
-        else ""
-      },
+      "oldAdministrativeClass" -> changeInfo.oldAdministrativeClass,
       "newEly" -> changeInfo.newEly,
       "newRoadNumber" -> changeInfo.newRoadNumber,
       "newTrack" -> changeInfo.newTrack,
@@ -1743,7 +1708,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
       "newStartAddrM" -> changeInfo.newStartAddrM,
       "newEndAddrM" -> changeInfo.newEndAddrM,
       "newLength" -> changeInfo.newLength,
-      "newAdministrativeClass" -> getAdministrativeClassStringValue(changeInfo.newAdministrativeClass)
+      "newAdministrativeClass" -> changeInfo.newAdministrativeClass
     )
   }
 

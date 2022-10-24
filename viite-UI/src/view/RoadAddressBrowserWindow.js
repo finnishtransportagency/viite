@@ -75,7 +75,7 @@
                                             <td>${results[i].startAddrM}</td>
                                             <td>${results[i].endAddrM}</td>
                                             <td>${results[i].lengthAddrM}</td>
-                                            <td>${results[i].administrativeClass}</td>
+                                            <td>${getAdministrativeClassDisplayText(results[i].administrativeClass)}</td>
                                             <td>${results[i].startDate}</td>
                                         </tr>`;
             }
@@ -189,7 +189,7 @@
                                             <td>${results[i].track}</td>
                                             <td>${results[i].roadPartNumber}</td>
                                             <td>${results[i].addrM}</td>
-                                            <td>${results[i].beforeAfter}</td>
+                                            <td>${getBeforeAfterDisplayText(results[i].beforeAfter)}</td>
                                         </tr>`;
             }
             arr[++arrPointer] =`    </tbody>
@@ -283,6 +283,24 @@
             $('.road-address-browser-modal-window').append(roadAddrBrowserWindow.toggle());
             $('.road-address-browser-modal-overlay').remove();
             destroyDatePicker();
+        }
+
+        function getAdministrativeClassDisplayText(administrativeClassValue) {
+            const administrativeClass = _.find(LinkValues.AdministrativeClass, function (obj) {
+                return obj.value === administrativeClassValue;
+            });
+            return administrativeClass.textValue;
+        }
+
+        function getBeforeAfterDisplayText(beforeAfterValues) {
+            let letterString = "";
+            beforeAfterValues.forEach((value) => {
+                const beforeAfter = _.find(LinkValues.BeforeAfter, function (obj) {
+                    return obj.value === value;
+                });
+                letterString += beforeAfter.displayLetter;
+            });
+            return letterString.split('').sort().join(''); // sort letter string so that 'JE' becomes 'EJ'
         }
 
         function exportDataAsExcelFile() {

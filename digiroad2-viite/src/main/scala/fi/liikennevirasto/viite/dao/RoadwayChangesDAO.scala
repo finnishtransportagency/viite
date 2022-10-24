@@ -81,7 +81,7 @@ case class RoadwayChangesInfo(roadwayChangeId: Long, startDate: DateTime, accept
                               new_road_number: Long, new_road_part_number: Long, new_TRACK: Long, new_start_addr_m: Long, new_end_addr_m: Long, new_discontinuity: Long, new_administrative_class: Long, new_ely: Long)
 
 case class ChangeInfoForRoadAddressChangesBrowser(startDate: DateTime, changeType: Long, reversed: Long, roadName: String, projectName: String, projectAcceptedDate: DateTime,
-                                                  oldEly: Long, oldRoadNumber: Option[Long], oldTrack: Option[Long], oldRoadPartNumber: Option[Long], oldStartAddrM: Option[Long], oldEndAddrM: Option[Long], oldLength: Option[Long], oldAdministrativeClass: Option[Long],
+                                                  oldEly: Long, oldRoadNumber: Option[Long], oldTrack: Option[Long], oldRoadPartNumber: Option[Long], oldStartAddrM: Option[Long], oldEndAddrM: Option[Long], oldLength: Option[Long], oldAdministrativeClass: Long,
                                                   newEly: Long, newRoadNumber: Long, newTrack: Long, newRoadPartNumber: Long, newStartAddrM: Long, newEndAddrM: Long, newLength: Long, newAdministrativeClass: Long)
 
 
@@ -494,7 +494,7 @@ SELECT
       val oldStartAddrM = r.nextLongOption()
       val oldEndAddrM = r.nextLongOption()
       val oldLength = r.nextLongOption()
-      val oldAdministrativeClass = r.nextLongOption()
+      val oldAdministrativeClass = r.nextLong()
       val newEly = r.nextLong()
       val newRoadNumber = r.nextLong()
       val newTrack = r.nextLong()
