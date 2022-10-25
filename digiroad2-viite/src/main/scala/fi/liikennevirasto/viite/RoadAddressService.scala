@@ -662,7 +662,9 @@ class RoadAddressService(
     }
   }
 
-  def getChangeInfosForRoadAddressChangesBrowser(startDate: Option[String], endDate: Option[String], dateTarget: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[ChangeInfoForRoadAddressChangesBrowser] = {
+  def getChangeInfosForRoadAddressChangesBrowser(startDate: Option[String], endDate: Option[String], dateTarget: Option[String],
+                                                 ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long],
+                                                 maxRoadPartNumber: Option[Long]): Seq[ChangeInfoForRoadAddressChangesBrowser] = {
     withDynSession {
       roadwayChangesDAO.fetchChangeInfosForRoadAddressChangesBrowser(startDate, endDate, dateTarget, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
     }
