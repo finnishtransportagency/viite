@@ -662,7 +662,11 @@
             eventbus.trigger('roadAddressProject:setRecalculatedAfterChangesFlag', true);
           }
           // if something went wrong during recalculation or validation, show error to user
-          else {
+          else if (response.hasOwnProperty('validationErrors') && !_.isEmpty(response.validationErrors)) {
+              // set project errors that were returned by the backend validations
+              projectCollection.setProjectErrors(response.validationErrors);
+              eventbus.trigger('roadAddressProject:writeProjectErrors');
+          } else {
             new ModalConfirm(response.errorMessage);
             applicationModel.removeSpinner();
           }

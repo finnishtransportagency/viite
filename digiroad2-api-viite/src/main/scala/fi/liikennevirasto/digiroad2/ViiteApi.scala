@@ -517,7 +517,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
           "reservedInfo" -> projectSaved.reservedParts.map(projectReservedPartToApi),
           "formedInfo" -> projectSaved.formedParts.map(projectFormedPartToApi(Some(projectSaved.id))),
           "success" -> true,
-          "projectErrors" -> projectService.validateProjectById(project.id).map(errorPartsToApi))
+          "projectErrors" -> projectService.validateProjectById(project.id).map(projectService.projectValidator.errorPartsToApi))
       } catch {
         case _: IllegalStateException       => Map("success" -> false, "errorMessage" -> "Projekti ei ole enää muokattavissa")
         case _: IllegalArgumentException    => NotFound(s"Project id ${project.id} not found")
@@ -603,7 +603,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
           case Some(errorMessage) =>
             Map("success" -> false, "errorMessage" -> errorMessage)
           case None =>
-            Map("success" -> true, "projectErrors" -> projectService.validateProjectById(roadInfo.projectId).map(errorPartsToApi))
+            Map("success" -> true, "projectErrors" -> projectService.validateProjectById(roadInfo.projectId).map(projectService.projectValidator.errorPartsToApi))
         }
       } catch {
         case e: IllegalStateException => Map("success" -> false, "errorMessage" -> e.getMessage)
@@ -661,7 +661,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
             val publishable = errorParts.isEmpty
             val latestPublishedNetwork = roadNetworkService.getLatestPublishedNetworkDate
             Map("project" -> projectMap, "linkId" -> project.reservedParts.find(_.startingLinkId.nonEmpty).flatMap(_.startingLinkId),
-              "reservedInfo" -> reservedparts, "formedInfo" -> formedparts, "publishable" -> publishable, "projectErrors" -> errorParts.map(errorPartsToApi),
+              "reservedInfo" -> reservedparts, "formedInfo" -> formedparts, "publishable" -> publishable, "projectErrors" -> errorParts.map(projectService.projectValidator.errorPartsToApi),
               "publishedNetworkDate" -> formatDateTimeToString(latestPublishedNetwork))
           case _ => halt(NotFound("Project not found"))
         }
@@ -723,7 +723,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
           val user = userProvider.getCurrentUser().username
           projectService.revertLinks(linksToRevert.projectId, linksToRevert.roadNumber, linksToRevert.roadPartNumber, linksToRevert.links, linksToRevert.coordinates, user) match {
             case None =>
-              val projectErrors = projectService.validateProjectByIdHighPriorityOnly(linksToRevert.projectId).map(errorPartsToApi)
+              val projectErrors = projectService.validateProjectByIdHighPriorityOnly(linksToRevert.projectId).map(projectService.projectValidator.errorPartsToApi)
               val project = projectService.getSingleProjectById(linksToRevert.projectId).get
               Map("success" -> true,
                 "publishable" -> projectErrors.isEmpty,
@@ -733,7 +733,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
           }
         }
       } catch {
-        case e: IllegalStateException => Map("success" -> false, "errorMessage" -> "Projekti ei ole enää muokattavissa")
+        case _: IllegalStateException => Map("success" -> false, "errorMessage" -> "Projekti ei ole enää muokattavissa")
         case e: MappingException =>
           logger.warn("Exception treating road links", e)
           BadRequest("Missing mandatory ProjectLink parameter")
@@ -767,9 +767,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
         val response = projectService.createProjectLinks(links.linkIds, links.projectId, links.roadNumber, links.roadPartNumber, Track.apply(links.trackCode), Discontinuity.apply(links.discontinuity), AdministrativeClass.apply(links.administrativeClass), LinkGeomSource.apply(links.roadLinkSource), links.roadEly, user.username, links.roadName.getOrElse(halt(BadRequest("Road name is mandatory"))), Some(links.coordinates))
         response.get("success") match {
           case Some(true) =>
-            val projectErrors = response.getOrElse("projectErrors", Seq).asInstanceOf[Seq[projectService.projectValidator.ValidationErrorDetails]].map(errorPartsToApi)
+            val projectErrors = response.getOrElse("projectErrors", Seq).asInstanceOf[Seq[projectService.projectValidator.ValidationErrorDetails]].map(projectService.projectValidator.errorPartsToApi)
             Map("success" -> true,
-              "publishable" -> response.get("projectErrors").isEmpty,
+              "publishable" -> !response.contains("projectErrors"),
               "projectErrors" -> projectErrors)
           case _ => response
         }
@@ -809,7 +809,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
           projectService.updateProjectLinks(links.projectId, links.ids, links.linkIds, LinkStatus.apply(links.linkStatus), user.username, links.roadNumber, links.roadPartNumber, links.trackCode, links.userDefinedEndAddressM, links.administrativeClass, links.discontinuity, Some(links.roadEly), links.reversed.getOrElse(false), roadName = links.roadName, Some(links.coordinates)) match {
             case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
             case None =>
-              val projectErrors = projectService.validateProjectByIdHighPriorityOnly(links.projectId).map(errorPartsToApi)
+              val projectErrors = projectService.validateProjectByIdHighPriorityOnly(links.projectId).map(projectService.projectValidator.errorPartsToApi)
               val project = projectService.getSingleProjectById(links.projectId).get
               Map("success" -> true, "id" -> links.projectId,
                 "publishable" -> projectErrors.isEmpty,
@@ -956,7 +956,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
           val project = projectService.fetchProjectById(projectId).get
           projectService.recalculateProjectLinks(projectId, project.modifiedBy)
         }
-        val validationErrors = projectService.validateProjectById(projectId).map(errorPartsToApi)
+        val validationErrors = projectService.validateProjectById(projectId).map(projectService.projectValidator.errorPartsToApi)
         // return validation errors
         Map("success" -> true, "validationErrors" -> validationErrors)
       } catch {
@@ -964,10 +964,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
           logger.info("Road address Exception: " + ex.getMessage)
           Map("success" -> false, "errorMessage" -> ex.getMessage)
         case ex: ProjectValidationException =>
-          Some(ex.getMessage)
-          Map("success" -> false, "errorMessage" -> ex.getMessage)
+          Map("success" -> false, "errorMessage" -> ex.getMessage, "validationErrors" -> ex.getValidationErrors)
         case ex: Exception =>
-          Some(ex.getMessage)
           Map("success" -> false, "errorMessage" -> ex.getMessage)
       }
     }
@@ -1325,16 +1323,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
   private[this] def constructBoundingRectangle(bbox: String) = {
     val BBOXList = bbox.split(",").map(_.toDouble)
     BoundingRectangle(Point(BBOXList(0), BBOXList(1)), Point(BBOXList(2), BBOXList(3)))
-  }
-
-  private def mapValidationIssues(issue: projectService.projectValidator.ValidationErrorDetails): Map[String, Any] = {
-    Map(
-      "id" -> issue.projectId,
-      "validationError" -> issue.validationError.value,
-      "affectedIds" -> issue.affectedIds.toArray,
-      "coordinates" -> issue.coordinates,
-      "optionalInformation" -> issue.optionalInformation.getOrElse("")
-    )
   }
 
   private def roadAddressLinkLikeToApi(roadAddressLink: RoadAddressLinkLike): Map[String, Any] = {
@@ -1737,16 +1725,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
           case _ => projectService.getRoadAddressesFromFormedRoadPart(formedRoadPart.roadNumber, formedRoadPart.roadPartNumber, projectId.get)
         }
       }
-    )
-  }
-
-  def errorPartsToApi(errorParts: projectService.projectValidator.ValidationErrorDetails): Map[String, Any] = {
-    Map("ids" -> errorParts.affectedIds,
-      "errorCode" -> errorParts.validationError.value,
-      "errorMessage" -> errorParts.validationError.message,
-      "info" -> errorParts.optionalInformation,
-      "coordinates" -> errorParts.coordinates,
-      "priority" -> errorParts.validationError.priority
     )
   }
 
