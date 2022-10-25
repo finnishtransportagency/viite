@@ -12,7 +12,6 @@ import fi.liikennevirasto.viite.dao.{Discontinuity, _}
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.process.{RoadwayAddressMapper, TrackSectionOrder}
 import fi.liikennevirasto.viite.process.TrackSectionOrder.findChainEndpoints
-import fi.liikennevirasto.viite.process.strategy.DefaultSectionCalculatorStrategy
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 
@@ -40,7 +39,6 @@ class ProjectValidator {
   val projectLinkDAO = new ProjectLinkDAO
   val projectReservedPartDAO = new ProjectReservedPartDAO
   val projectDAO = new ProjectDAO
-  val defaultSectionCalculatorStrategy = new DefaultSectionCalculatorStrategy
   val defaultZoomlevel = 12
 
   def checkReservedExistence(currentProject: Project, newRoadNumber: Long, newRoadPart: Long, linkStatus: LinkStatus, projectLinks: Seq[ProjectLink]): Unit = {
@@ -1205,7 +1203,7 @@ class ProjectValidator {
       *
       * @return
       */
-    def checkDiscontinuityOnLastLinkPart() = {
+    def checkDiscontinuityOnLastLinkPart(): Seq[ValidationErrorDetails] = {
       val discontinuityErrors = roadProjectLinks.groupBy(_.roadNumber).flatMap { g =>
         val validRoadParts = roadAddressService.getValidRoadAddressParts(g._1.toInt, project.startDate)
         val trackIntervals = Seq(g._2.filter(_.track != RightSide), g._2.filter(_.track != LeftSide))
@@ -1524,10 +1522,21 @@ class ProjectValidator {
     }
     formattedMessageObject
   }
+
+  def errorPartsToApi(errorParts: ValidationErrorDetails): Map[String, Any] = {
+    Map("ids" -> errorParts.affectedIds,
+      "errorCode" -> errorParts.validationError.value,
+      "errorMessage" -> errorParts.validationError.message,
+      "info" -> errorParts.optionalInformation,
+      "coordinates" -> errorParts.coordinates,
+      "priority" -> errorParts.validationError.priority
+    )
+  }
 }
 
-class ProjectValidationException(s: String) extends RuntimeException {
+class ProjectValidationException(s: String, validationErrors: Seq[Map[String, Any]] = Seq()) extends RuntimeException {
   override def getMessage: String = s
+  def getValidationErrors: Seq[Map[String, Any]] = validationErrors
 }
 
 class NameExistsException(s: String) extends RuntimeException {
