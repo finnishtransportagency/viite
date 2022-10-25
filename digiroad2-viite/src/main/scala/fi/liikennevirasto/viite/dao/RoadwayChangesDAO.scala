@@ -80,9 +80,16 @@ case class RoadwayChangesInfo(roadwayChangeId: Long, startDate: DateTime, accept
                               old_road_number: Long, old_road_part_number: Long, old_TRACK: Long, old_start_addr_m: Long, old_end_addr_m: Long, old_discontinuity: Long, old_administrative_class: Long, old_ely: Long,
                               new_road_number: Long, new_road_part_number: Long, new_TRACK: Long, new_start_addr_m: Long, new_end_addr_m: Long, new_discontinuity: Long, new_administrative_class: Long, new_ely: Long)
 
-case class ChangeInfoForRoadAddressChangesBrowser(startDate: DateTime, changeType: Long, reversed: Long, roadName: String, projectName: String, projectAcceptedDate: DateTime,
-                                                  oldEly: Long, oldRoadNumber: Option[Long], oldTrack: Option[Long], oldRoadPartNumber: Option[Long], oldStartAddrM: Option[Long], oldEndAddrM: Option[Long], oldLength: Option[Long], oldAdministrativeClass: Long,
-                                                  newEly: Long, newRoadNumber: Long, newTrack: Long, newRoadPartNumber: Long, newStartAddrM: Long, newEndAddrM: Long, newLength: Long, newAdministrativeClass: Long)
+case class OldRoadAddress(ely: Long, roadNumber: Option[Long], track: Option[Long], roadPartNumber: Option[Long],
+                          startAddrM: Option[Long], endAddrM: Option[Long], length: Option[Long], administrativeClass: Long)
+
+case class NewRoadAddress(ely: Long, roadNumber: Long, track: Long, roadPartNumber: Long, startAddrM: Long,
+                          endAddrM: Long, length: Long, administrativeClass: Long)
+
+case class ChangeInfoForRoadAddressChangesBrowser(startDate: DateTime, changeType: Long, reversed: Long, roadName: String, projectName: String,
+                                                  projectAcceptedDate: DateTime,oldRoadAddress: OldRoadAddress, newRoadAddress: NewRoadAddress)
+
+
 
 
 class RoadwayChangesDAO {
@@ -504,9 +511,10 @@ SELECT
       val newLength = r.nextLong()
       val newAdministrativeClass = r.nextLong()
 
-      ChangeInfoForRoadAddressChangesBrowser(startDate, changeType, reversed, roadName, projectName: String, projectAcceptedDate,
-        oldEly, oldRoadNumber, oldTrack, oldRoadPartNumber, oldStartAddrM, oldEndAddrM, oldLength, oldAdministrativeClass,
-        newEly, newRoadNumber, newTrack, newRoadPartNumber, newStartAddrM, newEndAddrM, newLength, newAdministrativeClass)
+      val oldRoadAddress = OldRoadAddress(oldEly, oldRoadNumber, oldTrack, oldRoadPartNumber, oldStartAddrM, oldEndAddrM, oldLength, oldAdministrativeClass)
+      val newRoadAddress = NewRoadAddress(newEly, newRoadNumber, newTrack, newRoadPartNumber, newStartAddrM, newEndAddrM, newLength, newAdministrativeClass)
+
+      ChangeInfoForRoadAddressChangesBrowser(startDate, changeType, reversed, roadName, projectName: String, projectAcceptedDate, oldRoadAddress, newRoadAddress)
     }
   }
 
