@@ -259,7 +259,7 @@
                 hide();
             });
 
-            roadAddressChangesBrowserWindow.on('click', '.btn-fetch-road-address-changes', function () {
+            roadAddressChangesBrowserWindow.on('click', '#fetchRoadAddressChanges', function () {
                 $('.road-address-browser-window-results-table').remove(); // empty the result table
                 $('#exportAsExcelFile').prop("disabled", true); //disable excel download button
                 $('#tableNotification').remove(); // remove notification if present

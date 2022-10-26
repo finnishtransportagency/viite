@@ -17,7 +17,7 @@
                     '<div style="display: flex; flex-direction: row"><input type="radio" name="roadAddrChangesBrowserForm" value="ProjectAcceptedDate" checked="checked"><label style="margin-left: 5px; margin-top: 2.5px">Projektin hyväksymispvm</label></div>' +
                     '<div style="display: flex; flex-direction: row"><input type="radio" name="roadAddrChangesBrowserForm" value="RoadAddressStartDate"><label style="margin-left: 5px; margin-top: 2.5px">Muutoksen voimaantulopvm</label></div>' +
                 '</div>' +
-                '<button class="btn btn-primary btn-fetch-road-address-changes"> Hae </button>' +
+                createSearchButton("fetchRoadAddressChanges") +
                 createExcelDownloadButton() +
                 '</form>';
         }
@@ -37,7 +37,7 @@
             '<div class="input-container"><label>Solmut</label><input type="radio" name="roadAddrBrowserForm" value="Nodes"></div>' +
             '<div class="input-container"><label>Liittymät</label><input type="radio" name="roadAddrBrowserForm" value="Junctions"></div>' +
             '<div class="input-container"><label>Tiennimet</label><input type="radio" name="roadAddrBrowserForm" value="RoadNames"></div>' +
-            '<button class="btn btn-primary btn-fetch-road-addresses"> Hae </button>' +
+            createSearchButton("fetchRoadAddresses") +
             createExcelDownloadButton() +
             '</form>';
         }
@@ -62,6 +62,10 @@
 
         function createExcelDownloadButton() {
             return '<button id="exportAsExcelFile" class="download-excel btn" disabled>Lataa Excelinä <i class="fas fa-file-excel"></i></button>';
+        }
+
+        function createSearchButton(id) {
+            return '<button class="btn btn-primary" id="' + id + '"> Hae </button>';
         }
 
         return {
