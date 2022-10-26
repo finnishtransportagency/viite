@@ -169,15 +169,15 @@
   root.BlackUnderlineAdministrativeClasses = [root.AdministrativeClass.MunicipalityStreetRoad.value, root.AdministrativeClass.PrivateRoad.value];
 
   root.ElyCodes = {
-    ELY_U: {value: 1, name: "Uusimaa"},
-    ELY_T: {value: 2, name: "Varsinais-Suomi"},
-    ELY_KAS: {value: 3, name: "Kaakkois-Suomi"},
-    ELY_H: {value: 4, name: "Pirkanmaa"},
-    ELY_SK: {value: 8, name: "Pohjois-Savo"},
-    ELY_KES: {value: 9, name: "Keski-Suomi"},
-    ELY_V: {value: 10, name: "Etelä-Pohjanmaa"},
-    ELY_O: {value: 12, name: "Pohjois-Pohjanmaa"},
-    ELY_L: {value: 14, name: "Lappi"}
+    ELY_U: {value: 1, name: "Uusimaa", shortName: "UUD"},
+    ELY_T: {value: 2, name: "Varsinais-Suomi", shortName: "VAR"},
+    ELY_KAS: {value: 3, name: "Kaakkois-Suomi", shortName: "KAS"},
+    ELY_H: {value: 4, name: "Pirkanmaa", shortName: "PIR"},
+    ELY_SK: {value: 8, name: "Pohjois-Savo", shortName: "POS"},
+    ELY_KES: {value: 9, name: "Keski-Suomi", shortName: "KES"},
+    ELY_V: {value: 10, name: "Etelä-Pohjanmaa", shortName: "EPO"},
+    ELY_O: {value: 12, name: "Pohjois-Pohjanmaa", shortName: "POP"},
+    ELY_L: {value: 14, name: "Lappi", shortName: "LAP"}
   };
 
   root.NodeType = {

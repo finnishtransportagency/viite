@@ -1,5 +1,5 @@
 (function (root) {
-    root.RoadAddressBrowserWindow = function (backend) {
+    root.RoadAddressBrowserWindow = function (backend, roadAddressBrowserForm) {
 
         const MAX_ROWS_TO_DISPLAY = 100;
         const MAX_YEAR_PARAM = 2050;
@@ -18,35 +18,7 @@
                                     '</a>');
         roadAddrBrowserWindow.append('<button class="close btn-close" id="closeRoadAddrBrowserWindow">x</button>');
         roadAddrBrowserWindow.append('<div class="road-address-browser-modal-header">Tieosoitteiden katselu</div>');
-        roadAddrBrowserWindow.append('' +
-            '<form id="roadAddressBrowser" class="road-address-browser-form">' +
-                '<div class="input-container"><label class="control-label-small">Tilannepvm</label> <input type="text" id="roadAddrStartDate" value="' + getCurrentDate() + '" style="width: 100px" required/></div>' +
-                '<div class="input-container"><label class="control-label-small">Ely</label>' +
-                    '<select name id="roadAddrInputEly" /> ' +
-                        '<option value="">--</option>' +
-                        '<option value="1">1 (UUD)</option>' +
-                        '<option value="2">2 (VAR)</option>' +
-                        '<option value="3">3 (KAS)</option>' +
-                        '<option value="4">4 (PIR)</option>' +
-                        '<option value="8">8 (POS)</option>' +
-                        '<option value="9">9 (KES)</option>' +
-                        '<option value="10">10 (EPO)</option>' +
-                        '<option value="12">12 (POP)</option>' +
-                        '<option value="14">14 (LAP)</option>' +
-                    '</select>' +
-                '</div>' +
-                '<div class="input-container"><label class="control-label-small">Tie</label><input class="road-address-browser-road-input" type="number" min="1" max="99999" id="roadAddrInputRoad" /></div>' +
-                '<div class="input-container"><label class="control-label-small">Aosa</label><input type="number" min="1" max="999" id="roadAddrInputStartPart"/></div>' +
-                '<div class="input-container"><label class="control-label-small">Losa</label><input type="number" min="1" max="999" id="roadAddrInputEndPart"/></div>' +
-                '<div class="input-container"><label>Ajoradat</label><input type="radio" name="roadAddrBrowserForm" value="Tracks" checked="checked"></div>' +
-                '<div class="input-container"><label>Tieosat</label><input type="radio" name="roadAddrBrowserForm" value="RoadParts"></div>' +
-                '<div class="input-container"><label>Solmut</label><input type="radio" name="roadAddrBrowserForm" value="Nodes"></div>' +
-                '<div class="input-container"><label>Liittymät</label><input type="radio" name="roadAddrBrowserForm" value="Junctions"></div>' +
-                '<div class="input-container"><label>Tiennimet</label><input type="radio" name="roadAddrBrowserForm" value="RoadNames"></div>' +
-                '<button class="btn btn-primary btn-fetch-road-addresses"> Hae </button>' +
-                '<button id="exportAsExcelFile" class="download-excel btn" disabled>Lataa Excelinä <i class="fas fa-file-excel"></i></button>' +
-            '</form>'
-        );
+        roadAddrBrowserWindow.append(roadAddressBrowserForm.getRoadAddressBrowserForm());
 
         function showResultsForTracks(results) {
             const arr = [];
@@ -256,16 +228,6 @@
 
         function destroyDatePicker() {
             datePicker.destroy();
-        }
-
-        function getCurrentDate() {
-            const today = new Date();
-            const dayInNumber = today.getDate();
-            const day = dayInNumber < 10 ? '0' + dayInNumber.toString() : dayInNumber.toString();
-            const monthInNumber = today.getMonth() + 1;
-            const month = monthInNumber < 10 ? '0' + monthInNumber.toString() : monthInNumber.toString();
-            const year = today.getFullYear().toString();
-            return day + '.' + month + '.' + year;
         }
 
         // converts date object to string "yyyy-mm-dd"

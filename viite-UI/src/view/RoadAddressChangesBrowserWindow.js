@@ -1,13 +1,12 @@
 (function (root) {
-    root.RoadAddressChangesBrowserWindow = function (backend) {
+    root.RoadAddressChangesBrowserWindow = function (backend, roadAddressBrowserForm) {
         const MAX_ROWS_TO_DISPLAY = 100;
         const MAX_YEAR_PARAM = 2050;
         const MIN_YEAR_PARAM = 1900;
         const MAX_LENGTH_FOR_ROAD_NUMBER = 5;
         const MAX_LENGTH_FOR_ROAD_PART_NUMBER = 3;
         let searchParams = {};
-        let datePickerStartDate = '';
-        let datePickerEndDate = '';
+        let datePickers = [];
         const me = this;
 
         const roadAddressChangesBrowserWindow = $('<div class="form-horizontal road-address-changes-browser-window"></div>').hide();
@@ -18,36 +17,7 @@
             '</a>');
         roadAddressChangesBrowserWindow.append('<button class="close btn-close">x</button>');
         roadAddressChangesBrowserWindow.append('<div class="road-address-browser-modal-header">Tieosoitemuutosten katselu</div>');
-        roadAddressChangesBrowserWindow.append('' +
-            '<form id="roadAddressChangesBrowser" class="road-address-browser-form">' +
-            '<div class="input-container"><label class="control-label-small">Alkupvm</label> <input type="text" class="road-address-browser-date-input" id="roadAddrChangesStartDate" value="' + getCurrentDate() + '" required/></div>' +
-            '<div class="input-container"><label class="control-label-small">Loppupvm</label> <input type="text" class="road-address-browser-date-input" id="roadAddrChangesEndDate" value="" /></div>' +
-            '<div class="input-container">' +
-                '<label class="control-label-small">Ely</label>' +
-                '<select name id="roadAddrChangesInputEly" /> ' +
-                    '<option value="">--</option>' +
-                    '<option value="1">1 (UUD)</option>' +
-                    '<option value="2">2 (VAR)</option>' +
-                    '<option value="3">3 (KAS)</option>' +
-                    '<option value="4">4 (PIR)</option>' +
-                    '<option value="8">8 (POS)</option>' +
-                    '<option value="9">9 (KES)</option>' +
-                    '<option value="10">10 (EPO)</option>' +
-                    '<option value="12">12 (POP)</option>' +
-                    '<option value="14">14 (LAP)</option>' +
-                '</select>' +
-            '</div>' +
-            '<div class="input-container"><label class="control-label-small">Tie</label><input class="road-address-browser-road-input" type="number" min="1" max="99999" id="roadAddrChangesInputRoad" /></div>' +
-            '<div class="input-container"><label class="control-label-small">Aosa</label><input type="number" min="1" max="999" id="roadAddrChangesInputStartPart"/></div>' +
-            '<div class="input-container"><label class="control-label-small">Losa</label><input type="number" min="1" max="999" id="roadAddrChangesInputEndPart"/></div>' +
-            '<div style="display: flex; flex-direction: column; padding: 5px; white-space: nowrap">' +
-                '<div style="display: flex; flex-direction: row"><input type="radio" name="roadAddrChangesBrowserForm" value="ProjectAcceptedDate" checked="checked"><label style="margin-left: 5px; margin-top: 2.5px">Projektin hyväksymispvm</label></div>' +
-                '<div style="display: flex; flex-direction: row"><input type="radio" name="roadAddrChangesBrowserForm" value="RoadAddressStartDate"><label style="margin-left: 5px; margin-top: 2.5px">Muutoksen voimaantulopvm</label></div>' +
-            '</div>' +
-            '<button class="btn btn-primary btn-fetch-road-address-changes"> Hae </button>' +
-            '<button id="exportAsExcelFile" class="download-excel btn" disabled>Lataa Excelinä <i class="fas fa-file-excel"></i></button>' +
-            '</form>'
-        );
+        roadAddressChangesBrowserWindow.append(roadAddressBrowserForm.getRoadRoadAddressChangesBrowserForm());
 
         function showResults(results) {
             const arr = [];
@@ -151,36 +121,28 @@
         function toggle() {
             $('.container').append('<div class="road-address-browser-modal-overlay confirm-modal"><div class="road-address-browser-modal-window"></div></div>');
             $('.road-address-browser-modal-window').append(roadAddressChangesBrowserWindow.toggle());
-            addDatePicker();
+            addDatePicker("roadAddrChangesStartDate");
+            addDatePicker("roadAddrChangesEndDate");
             bindEvents();
         }
 
         function hide() {
             $('.road-address-browser-modal-window').append(roadAddressChangesBrowserWindow.toggle());
             $('.road-address-browser-modal-overlay').remove();
-            destroyDatePicker();
+            destroyDatePickers();
         }
 
-        function addDatePicker() {
-            const startDateInput = $('#roadAddrChangesStartDate');
-            datePickerStartDate = dateutil.addSingleDatePicker(startDateInput);
-            const endDateInput = $('#roadAddrChangesEndDate');
-            datePickerEndDate = dateutil.addSingleDatePicker(endDateInput);
+        function addDatePicker(inputFieldId) {
+            const inputField = $('#' + inputFieldId);
+            const datePicker = dateutil.addSingleDatePicker(inputField);
+            datePickers.push(datePicker);
         }
 
-        function destroyDatePicker() {
-            datePickerStartDate.destroy();
-            datePickerEndDate.destroy();
-        }
-
-        function getCurrentDate() {
-            const today = new Date();
-            const dayInNumber = today.getDate();
-            const day = dayInNumber < 10 ? '0' + dayInNumber.toString() : dayInNumber.toString();
-            const monthInNumber = today.getMonth() + 1;
-            const month = monthInNumber < 10 ? '0' + monthInNumber.toString() : monthInNumber.toString();
-            const year = today.getFullYear().toString();
-            return day + '.' + month + '.' + year;
+        function destroyDatePickers() {
+            datePickers.forEach((datePicker) => {
+                datePicker.destroy();
+            });
+            datePickers = [];
         }
 
         function exportDataAsExcelFile() {
