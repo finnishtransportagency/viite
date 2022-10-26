@@ -230,17 +230,6 @@
             datePicker.destroy();
         }
 
-        // converts date object to string "yyyy-mm-dd"
-        function parseDateToString(date) {
-            const dayInNumber = date.getDate();
-            const day = dayInNumber < 10 ? '0' + dayInNumber.toString() : dayInNumber.toString();
-            const monthInNumber = date.getMonth() + 1;
-            const month = monthInNumber < 10 ? '0' + monthInNumber.toString() : monthInNumber.toString();
-            const year = date.getFullYear().toString();
-            return year + '-' + month + '-' + day;
-        }
-
-
         function hide() {
             $('.road-address-browser-modal-window').append(roadAddrBrowserWindow.toggle());
             $('.road-address-browser-modal-overlay').remove();
@@ -315,7 +304,7 @@
             }
 
             function createParams() {
-                const parsedDateString = parseDateToString(roadAddrStartDateObject);
+                const parsedDateString = dateutil.parseDateToString(roadAddrStartDateObject);
                 const params = {
                     startDate: parsedDateString,
                     target: targetValue

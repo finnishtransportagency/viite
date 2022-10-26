@@ -3,7 +3,7 @@
 
         function getRoadAddressChangesBrowserForm() {
             return '<form class="road-address-browser-form" id="roadAddressChangesBrowser">' +
-                '<div class="input-container"><label class="control-label-small">Alkupvm</label> <input type="text" class="road-address-browser-date-input" id="roadAddrChangesStartDate" value="' + getCurrentDate() + '" required/></div>' +
+                '<div class="input-container"><label class="control-label-small">Alkupvm</label> <input type="text" class="road-address-browser-date-input" id="roadAddrChangesStartDate" value="' + dateutil.getCurrentDateString() + '" required/></div>' +
                 '<div class="input-container"><label class="control-label-small">Loppupvm</label> <input type="text" class="road-address-browser-date-input" id="roadAddrChangesEndDate" value="" /></div>' +
                 '<div class="input-container">' +
                 '<label class="control-label-small">Ely</label>' +
@@ -24,7 +24,7 @@
 
         function getRoadAddressBrowserForm() {
             return '<form id="roadAddressBrowser" class="road-address-browser-form">' +
-            '<div class="input-container"><label class="control-label-small">Tilannepvm</label> <input type="text" id="roadAddrStartDate" value="' + getCurrentDate() + '" style="width: 100px" required/></div>' +
+            '<div class="input-container"><label class="control-label-small">Tilannepvm</label> <input type="text" id="roadAddrStartDate" value="' + dateutil.getCurrentDateString() + '" style="width: 100px" required/></div>' +
             '<div class="input-container"><label class="control-label-small">Ely</label>' +
             '<select name id="roadAddrInputEly" /> ' +
                 createElyDropDownOptions() +
@@ -62,16 +62,6 @@
 
         function createExcelDownloadButton() {
             return '<button id="exportAsExcelFile" class="download-excel btn" disabled>Lataa Excelinä <i class="fas fa-file-excel"></i></button>';
-        }
-
-        function getCurrentDate() {
-            const today = new Date();
-            const dayInNumber = today.getDate();
-            const day = dayInNumber < 10 ? '0' + dayInNumber.toString() : dayInNumber.toString();
-            const monthInNumber = today.getMonth() + 1;
-            const month = monthInNumber < 10 ? '0' + monthInNumber.toString() : monthInNumber.toString();
-            const year = today.getFullYear().toString();
-            return day + '.' + month + '.' + year;
         }
 
         return {
