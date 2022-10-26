@@ -398,7 +398,7 @@
                 hide();
             });
 
-            roadAddrBrowserWindow.on('click', '.btn-fetch-road-addresses', function () {
+            roadAddrBrowserWindow.on('click', '#fetchRoadAddresses', function () {
                 $('.road-address-browser-window-results-table').remove(); // empty the result table
                 $('#exportAsExcelFile').prop("disabled", true); //disable excel download button
                 $('#tableNotification').remove(); // remove notification if present
