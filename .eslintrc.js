@@ -53,6 +53,7 @@ module.exports = {
         "LinkPropertyLayer": "writable",
         "NodeLayer": "writable",
         "RoadNamingToolWindow": "writable",
+        "RoadAddressBrowserForm": "writable",
         "RoadAddressBrowserWindow": "writable",
         "RoadAddressChangesBrowserWindow": "writable",
         "LinkPropertyForm": "writable",

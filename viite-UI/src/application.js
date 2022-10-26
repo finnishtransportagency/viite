@@ -112,8 +112,9 @@
     var linkPropertyLayer = new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel);
     var nodeLayer = new NodeLayer(map, roadLayer, models.selectedNodesAndJunctions, models.nodeCollection, models.roadCollection, models.linkPropertiesModel, applicationModel);
     var roadNamingTool = new RoadNamingToolWindow(roadNameCollection);
-    var roadAddressBrowser = new RoadAddressBrowserWindow(backend);
-    var roadAddressChangesBrowser = new RoadAddressChangesBrowserWindow(backend);
+    var roadAddressBrowserForm = new RoadAddressBrowserForm();
+    var roadAddressBrowser = new RoadAddressBrowserWindow(backend, roadAddressBrowserForm);
+    var roadAddressChangesBrowser = new RoadAddressChangesBrowserWindow(backend, roadAddressBrowserForm);
 
     new LinkPropertyForm(models.selectedLinkProperty, roadNamingTool, projectListModel, roadAddressBrowser, roadAddressChangesBrowser);
 
