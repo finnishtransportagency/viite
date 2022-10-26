@@ -121,8 +121,6 @@ Resources:
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/Viite/Prod/vkmApiKey'
             - Name: rasterServiceApiKey
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/Viite/Prod/rasterServiceApiKey'
-            - Name: vvhRestApiPassword
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/Viite/Prod/vvhRestApiPassword'
             - Name: kgvApiKey
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/Viite/Prod/kgvApiKey'
           MemoryReservation: 2048
