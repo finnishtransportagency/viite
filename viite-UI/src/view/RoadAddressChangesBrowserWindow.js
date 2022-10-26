@@ -155,16 +155,6 @@
             XLSX.writeFile(wb, fileName);
         }
 
-        // converts date object to string "yyyy-mm-dd"
-        function parseDateToString(date) {
-            const dayInNumber = date.getDate();
-            const day = dayInNumber < 10 ? '0' + dayInNumber.toString() : dayInNumber.toString();
-            const monthInNumber = date.getMonth() + 1;
-            const month = monthInNumber < 10 ? '0' + monthInNumber.toString() : monthInNumber.toString();
-            const year = date.getFullYear().toString();
-            return year + '-' + month + '-' + day;
-        }
-
         function getData() {
             const roadAddrChangesStartDate      = document.getElementById('roadAddrChangesStartDate');
             const roadAddrChangesEndDate        = document.getElementById('roadAddrChangesEndDate');
@@ -202,13 +192,13 @@
             }
 
             function createParams() {
-                const parsedDateString = parseDateToString(roadAddrStartDateObject);
+                const parsedDateString = dateutil.parseDateToString(roadAddrStartDateObject);
                 const params = {
                     startDate: parsedDateString,
                     dateTarget: dateTarget
                 };
                 if (roadAddrChangesEndDate.value)
-                    params.endDate = parseDateToString(moment(roadAddrChangesEndDate.value, "DD-MM-YYYY").toDate());
+                    params.endDate = dateutil.parseDateToString(moment(roadAddrChangesEndDate.value, "DD-MM-YYYY").toDate());
                 if (ely.value)
                     params.ely = ely.value;
                 if (roadNumber.value)
