@@ -1,10 +1,5 @@
 (function (root) {
     root.RoadAddressChangesBrowserWindow = function (backend, roadAddressBrowserForm) {
-        const MAX_ROWS_TO_DISPLAY = 100;
-        const MAX_YEAR_PARAM = 2050;
-        const MIN_YEAR_PARAM = 1900;
-        const MAX_LENGTH_FOR_ROAD_NUMBER = 5;
-        const MAX_LENGTH_FOR_ROAD_PART_NUMBER = 3;
         let searchParams = {};
         let datePickers = [];
         const me = this;
@@ -106,7 +101,7 @@
                 roadAddressChangesBrowserWindow.append($('<p id="tableNotification"><b>Hakuehdoilla ei löytynyt yhtäkään osumaa</b></p>'));
                 roadAddressChangesBrowserWindow.append(table.hide());
             }
-            else if (results.length <= MAX_ROWS_TO_DISPLAY) {
+            else if (results.length <= ViiteConstants.MAX_ROWS_TO_DISPLAY) {
                 roadAddressChangesBrowserWindow.append(table);
                 $('#exportAsExcelFile').prop("disabled", false); // enable Excel download button
             }
@@ -177,8 +172,8 @@
 
             function validateDate(date) {
                 if (dateutil.isValidDate(date)) {
-                    if(!dateutil.isDateInYearRange(date, MIN_YEAR_PARAM, MAX_YEAR_PARAM))
-                        roadAddrChangesStartDate.setCustomValidity("Vuosiluvun tulee olla väliltä " + MIN_YEAR_PARAM + " - " + MAX_YEAR_PARAM);
+                    if(!dateutil.isDateInYearRange(date, ViiteConstants.MIN_YEAR_INPUT, ViiteConstants.MAX_YEAR_INPUT))
+                        roadAddrChangesStartDate.setCustomValidity("Vuosiluvun tulee olla väliltä " + ViiteConstants.MIN_YEAR_INPUT + " - " + ViiteConstants.MAX_YEAR_INPUT);
                 }
                 else
                     roadAddrChangesStartDate.setCustomValidity("Päivämäärän tulee olla muodossa pp.kk.yyyy");
@@ -233,20 +228,20 @@
         function bindEvents() {
 
             document.getElementById('roadAddrChangesInputRoad').oninput = function () {
-                if (this.value.length > MAX_LENGTH_FOR_ROAD_NUMBER) {
-                    this.value = this.value.slice(0,MAX_LENGTH_FOR_ROAD_NUMBER);
+                if (this.value.length > ViiteConstants.MAX_LENGTH_FOR_ROAD_NUMBER) {
+                    this.value = this.value.slice(0, ViiteConstants.MAX_LENGTH_FOR_ROAD_NUMBER);
                 }
             };
 
             document.getElementById('roadAddrChangesInputStartPart').oninput = function () {
-                if (this.value.length > MAX_LENGTH_FOR_ROAD_PART_NUMBER) {
-                    this.value = this.value.slice(0,MAX_LENGTH_FOR_ROAD_PART_NUMBER);
+                if (this.value.length > ViiteConstants.MAX_LENGTH_FOR_ROAD_PART_NUMBER) {
+                    this.value = this.value.slice(0, ViiteConstants.MAX_LENGTH_FOR_ROAD_PART_NUMBER);
                 }
             };
 
             document.getElementById('roadAddrChangesInputEndPart').oninput = function () {
-                if (this.value.length > MAX_LENGTH_FOR_ROAD_PART_NUMBER) {
-                    this.value = this.value.slice(0,MAX_LENGTH_FOR_ROAD_PART_NUMBER);
+                if (this.value.length > ViiteConstants.MAX_LENGTH_FOR_ROAD_PART_NUMBER) {
+                    this.value = this.value.slice(0, ViiteConstants.MAX_LENGTH_FOR_ROAD_PART_NUMBER);
                 }
             };
 
