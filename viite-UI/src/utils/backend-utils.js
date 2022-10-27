@@ -280,6 +280,16 @@
       $.getJSON('api/viite/project/recalculateProject/' + id, callback);
     };
 
+    this.validateUnchangedInProject = _.throttle(function (id, success) {
+        $.ajax({
+            cache: false,
+            contentType: "application/json",
+            type: "GET",
+            url: "api/viite/project/validateUnchanged/" + id,
+            success: success
+        });
+    }, 1000);
+
     this.getJunctionPointEditableStatus = function (ids, jp) {
       $.get('api/viite/junctions/getEditableStatusOfJunctionPoints?ids=' + ids, function (response) {
         eventbus.trigger('junctionPoint:editableStatusFetched', response, jp);
