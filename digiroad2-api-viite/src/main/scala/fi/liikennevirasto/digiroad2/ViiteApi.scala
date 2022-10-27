@@ -10,6 +10,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReservedException, Track}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
+import fi.liikennevirasto.digiroad2.Digiroad2Context.projectLinkDAO
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model._
@@ -1056,6 +1057,31 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
         case ex: Exception =>
           Map("success" -> false, "errorMessage" -> ex.getMessage)
       }
+    }
+  }
+
+  private val validateUnchanged: SwaggerSupportSyntax.OperationBuilder =(
+    apiOperation[Map[String, Any]]("validateUnchanged")
+      .parameters(
+        pathParam[Long]("projectId").description("Id of a project")
+      )
+    tags "ViiteAPI - Project"
+    summary "Given a valid projectId, this will run InvalidUnchangedLinks validation to the project in question."
+    )
+
+
+  get("/project/validateUnchanged/:projectId", operation(validateUnchanged)) {
+    val projectId = params("projectId").toLong
+    time(logger, s"GET request for /project/validateUnchanged/$projectId") {
+     val validationErrors =
+        withDynTransaction {
+          val project = projectService.fetchProjectById(projectId).get
+          projectService.projectValidator.checkForInvalidUnchangedLinks(project, projectLinkDAO.fetchProjectLinks(projectId)).map(projectService.projectValidator.errorPartsToApi)
+        }
+    if (validationErrors.nonEmpty)
+      Map("success" -> false, "validationErrors" -> validationErrors)
+    else
+      Map("success" -> true, "validationErrors" -> validationErrors)
     }
   }
 
