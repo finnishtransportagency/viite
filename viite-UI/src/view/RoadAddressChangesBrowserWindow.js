@@ -59,8 +59,8 @@
                                             <td>${results[i].oldRoadPartNumber}</td>
                                             <td>${results[i].oldEndAddrM}</td>
                                             <td>${results[i].oldLength}</td>
-                                            <td>${getAdministrativeClassDisplayText(results[i].oldAdministrativeClass)}</td>
-                                            <td>${getChangeTypeDisplayText(results[i].changeType)}</td>
+                                            <td>${EnumerationUtils.getAdministrativeClassTextValue(results[i].oldAdministrativeClass)}</td>
+                                            <td>${EnumerationUtils.getChangeTypeDisplayText(results[i].changeType)}</td>
                                             <td>${results[i].newEly}</td>
                                             <td>${results[i].newRoadNumber}</td>
                                             <td>${results[i].newTrack}</td>
@@ -69,7 +69,7 @@
                                             <td>${results[i].newRoadPartNumber}</td>
                                             <td>${results[i].newEndAddrM}</td>
                                             <td>${results[i].newLength}</td>
-                                            <td>${getAdministrativeClassDisplayText(results[i].newAdministrativeClass)}</td>
+                                            <td>${EnumerationUtils.getAdministrativeClassTextValue(results[i].newAdministrativeClass)}</td>
                                             <td>${results[i].reversed}</td>
                                             <td>${results[i].roadName}</td>
                                             <td>${results[i].projectName}</td>
@@ -80,20 +80,6 @@
                                 </table>`;
             const table = $(arr.join('')); // join the array to one large string and create jquery element from said string
             showData(results, table);
-        }
-
-        function getAdministrativeClassDisplayText(administrativeClassValue) {
-            const administrativeClass = _.find(ViiteEnumerations.AdministrativeClass, function (obj) {
-                return obj.value === administrativeClassValue;
-            });
-            return administrativeClass.textValue;
-        }
-
-        function getChangeTypeDisplayText(changeTypeValue) {
-            const changeType = _.find(ViiteEnumerations.ChangeType, function (obj) {
-                return obj.value === changeTypeValue;
-            });
-            return changeType.displayText;
         }
 
         function showData(results, table) {
