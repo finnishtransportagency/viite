@@ -14,7 +14,11 @@
         roadAddressChangesBrowserWindow.append('<div class="road-address-browser-modal-header">Tieosoitemuutosten katselu</div>');
         roadAddressChangesBrowserWindow.append(roadAddressBrowserForm.getRoadRoadAddressChangesBrowserForm());
 
-        function showResults(results) {
+        /**
+         *      This function is performance critical.
+         *      If edited be sure to measure table creation time with largest possible dataset!
+         * */
+        function createResultTable(results) {
             const arr = [];
             let arrPointer = -1;
             arr[++arrPointer] = `<table id="roadAddressChangesBrowserTable" class="road-address-browser-window-results-table">
@@ -78,8 +82,7 @@
             }
             arr[++arrPointer] =`    </tbody>
                                 </table>`;
-            const table = $(arr.join('')); // join the array to one large string and create jquery element from said string
-            showData(results, table);
+            return $(arr.join('')); // join the array to one large string and create jquery element from said string
         }
 
         function showData(results, table) {
@@ -205,7 +208,7 @@
                 if (result.success) {
                     applicationModel.removeSpinner();
                     me.setSearchParams(params);
-                    showResults(result.changeInfos);
+                    showData(result.changeInfos, createResultTable(result.changeInfos));
                 } else
                     new ModalConfirm(result.error);
             });

@@ -14,7 +14,12 @@
         roadAddrBrowserWindow.append('<div class="road-address-browser-modal-header">Tieosoitteiden katselu</div>');
         roadAddrBrowserWindow.append(roadAddressBrowserForm.getRoadAddressBrowserForm());
 
-        function showResultsForTracks(results) {
+
+        /**
+         *      This function is performance critical.
+         *      If edited be sure to measure table creation time with largest possible dataset!
+         * */
+        function createResultTableForTracks(results) {
             const arr = [];
             let arrPointer = -1;
             arr[++arrPointer] = `<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table">
@@ -47,11 +52,14 @@
             }
             arr[++arrPointer] =`    </tbody>
                             </table>`;
-            const table = $(arr.join('')); // join the array to one large string and create jquery element from said string
-            showData(results, table);
+            return $(arr.join('')); // join the array to one large string and create jquery element from said string
         }
 
-        function showResultsForRoadParts(results) {
+        /**
+         *      This function is performance critical.
+         *      If edited be sure to measure table creation time with largest possible dataset!
+         * */
+        function createResultTableForRoadParts(results) {
             const arr = [];
             let arrPointer = -1;
             arr[++arrPointer] = `<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table">
@@ -80,11 +88,14 @@
             }
             arr[++arrPointer] =`    </tbody>
                             </table>`;
-            const table = $(arr.join('')); // join the array to one large string and create jquery element from said string
-            showData(results, table);
+            return $(arr.join('')); // join the array to one large string and create jquery element from said string
         }
 
-        function showResultsForNodes(results) {
+        /**
+         *      This function is performance critical.
+         *      If edited be sure to measure table creation time with largest possible dataset!
+         * */
+        function createResultTableForNodes(results) {
             const arr = [];
             let arrPointer = -1;
             arr[++arrPointer] =`<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table">
@@ -116,11 +127,14 @@
             }
             arr[++arrPointer] =     `</tbody>
                                 </table>`;
-            const table = $(arr.join('')); // join the array to one large string and create jquery element from said string
-            showData(results, table);
+            return $(arr.join('')); // join the array to one large string and create jquery element from said string
         }
 
-        function showResultsForJunctions(results) {
+        /**
+         *      This function is performance critical.
+         *      If edited be sure to measure table creation time with largest possible dataset!
+         * */
+        function createResultTableForJunctions(results) {
             const arr = [];
             let arrPointer = -1;
             arr[++arrPointer] =`<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table">
@@ -160,11 +174,14 @@
             }
             arr[++arrPointer] =`    </tbody>
                                 </table>`;
-            const table = $(arr.join('')); // join the array to one large string and create jquery element from said string
-            showData(results, table);
+            return $(arr.join('')); // join the array to one large string and create jquery element from said string
         }
 
-        function showResultsForRoadNames(results) {
+        /**
+         *      This function is performance critical.
+         *      If edited be sure to measure table creation time with largest possible dataset!
+         * */
+        function createResultTableForRoadNames(results) {
             const arr = [];
             let arrPointer = -1;
             arr[++arrPointer] = `<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table">
@@ -186,8 +203,7 @@
             }
             arr[++arrPointer] =`    </tbody>
                                 </table>`;
-            const table = $(arr.join('')); // join the array to one large string and create jquery element from said string
-            showData(results, table);
+            return $(arr.join('')); // join the array to one large string and create jquery element from said string
         }
 
         function showData(results, table) {
@@ -325,19 +341,19 @@
                     me.setSearchParams(params);
                     switch (params.target) {
                         case "Tracks":
-                            showResultsForTracks(result.tracks);
+                            showData(result.tracks, createResultTableForTracks(result.tracks));
                             break;
                         case "RoadParts":
-                            showResultsForRoadParts(result.roadParts);
+                            showData(result.roadParts, createResultTableForRoadParts(result.roadParts));
                             break;
                         case "Nodes":
-                            showResultsForNodes(result.nodes);
+                            showData(result.nodes, createResultTableForNodes(result.nodes));
                             break;
                         case "Junctions":
-                            showResultsForJunctions(result.junctions);
+                            showData(result.junctions, createResultTableForJunctions(result.junctions));
                             break;
                         case "RoadNames":
-                            showResultsForRoadNames(result.roadNames);
+                            showData(result.roadNames, createResultTableForRoadNames(result.roadNames));
                             break;
                         default:
                     }
