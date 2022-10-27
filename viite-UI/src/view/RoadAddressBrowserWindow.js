@@ -18,7 +18,7 @@
         /**
          *      This function is performance critical.
          *      If edited be sure to measure table creation time with largest possible dataset!
-         * */
+         */
         function createResultTableForTracks(results) {
             const arr = [];
             let arrPointer = -1;
@@ -58,7 +58,7 @@
         /**
          *      This function is performance critical.
          *      If edited be sure to measure table creation time with largest possible dataset!
-         * */
+         */
         function createResultTableForRoadParts(results) {
             const arr = [];
             let arrPointer = -1;
@@ -94,7 +94,7 @@
         /**
          *      This function is performance critical.
          *      If edited be sure to measure table creation time with largest possible dataset!
-         * */
+         */
         function createResultTableForNodes(results) {
             const arr = [];
             let arrPointer = -1;
@@ -133,7 +133,7 @@
         /**
          *      This function is performance critical.
          *      If edited be sure to measure table creation time with largest possible dataset!
-         * */
+         */
         function createResultTableForJunctions(results) {
             const arr = [];
             let arrPointer = -1;
@@ -180,7 +180,7 @@
         /**
          *      This function is performance critical.
          *      If edited be sure to measure table creation time with largest possible dataset!
-         * */
+         */
         function createResultTableForRoadNames(results) {
             const arr = [];
             let arrPointer = -1;

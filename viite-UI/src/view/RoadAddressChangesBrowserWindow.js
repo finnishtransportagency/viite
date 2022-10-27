@@ -17,7 +17,7 @@
         /**
          *      This function is performance critical.
          *      If edited be sure to measure table creation time with largest possible dataset!
-         * */
+         */
         function createResultTable(results) {
             const arr = [];
             let arrPointer = -1;
