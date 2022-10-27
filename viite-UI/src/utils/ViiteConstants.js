@@ -11,6 +11,7 @@
     /** Max length for road part number for example: 111, 123 or 999 */
     root.MAX_LENGTH_FOR_ROAD_PART_NUMBER = 3;
 
+    /** Max distance that nodes can be moved (meters) */
     root.MAX_ALLOWED_DISTANCE_FOR_NODES_TO_BE_MOVED = 200;
 }(window.ViiteConstants = window.ViiteConstants || {}));
 
