@@ -1,15 +1,15 @@
 (function (root) {
   root.ProjectEditForm = function (map, projectCollection, selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend) {
-    var LinkStatus = LinkValues.LinkStatus;
-    var CalibrationCode = LinkValues.CalibrationCode;
-    var editableStatus = [LinkValues.ProjectStatus.Incomplete.value, LinkValues.ProjectStatus.Unknown.value];
-    var ValidElys = _.map(LinkValues.ElyCodes, function (ely) {
+    var LinkStatus = ViiteEnumerations.LinkStatus;
+    var CalibrationCode = ViiteEnumerations.CalibrationCode;
+    var editableStatus = [ViiteEnumerations.ProjectStatus.Incomplete.value, ViiteEnumerations.ProjectStatus.Unknown.value];
+    var ValidElys = _.map(ViiteEnumerations.ElyCodes, function (ely) {
       return ely;
     });
     var selectedProjectLink = false;
     var editedNameByUser = false;
-    var LinkSources = LinkValues.LinkGeomSource;
-    var ProjectStatus = LinkValues.ProjectStatus;
+    var LinkSources = ViiteEnumerations.LinkGeomSource;
+    var ProjectStatus = ViiteEnumerations.ProjectStatus;
     var formCommon = new FormCommon('');
 
     var endDistanceOriginalValue = '--';
@@ -704,9 +704,9 @@
       rootElement.on('click', '.projectErrorButton', function (event) {
         var error = projectCollection.getProjectErrors()[event.currentTarget.id];
         var roadPartErrors = [
-          LinkValues.ProjectError.TerminationContinuity.value,
-          LinkValues.ProjectError.DoubleEndOfRoad.value,
-          LinkValues.ProjectError.RoadNotReserved.value
+          ViiteEnumerations.ProjectError.TerminationContinuity.value,
+          ViiteEnumerations.ProjectError.DoubleEndOfRoad.value,
+          ViiteEnumerations.ProjectError.RoadNotReserved.value
         ];
         if (_.includes(roadPartErrors, error.errorCode)) {
           var attributeElement = $('#feature-attributes');

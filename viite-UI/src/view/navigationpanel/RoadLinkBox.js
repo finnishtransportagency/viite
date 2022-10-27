@@ -1,6 +1,6 @@
 (function (root) {
   root.RoadLinkBox = function (selectedProjectLinkProperty) {
-    var LinkStatus = LinkValues.LinkStatus;
+    var LinkStatus = ViiteEnumerations.LinkStatus;
     var className = 'road-link';
     var title = 'Selite';
     var selectToolIcon = '<img src="images/select-tool.svg"/>';
@@ -219,7 +219,7 @@
     };
 
     var nodeToolSelection = new ToolSelection([
-      new Tool(LinkValues.Tool.Select.value, selectToolIcon, LinkValues.Tool.Select.description)
+      new Tool(ViiteEnumerations.Tool.Select.value, selectToolIcon, ViiteEnumerations.Tool.Select.description)
     ]);
 
     var templateAttributes = {

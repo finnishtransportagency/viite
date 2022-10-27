@@ -88,14 +88,14 @@
         }
 
         function getAdministrativeClassDisplayText(administrativeClassValue) {
-            const administrativeClass = _.find(LinkValues.AdministrativeClass, function (obj) {
+            const administrativeClass = _.find(ViiteEnumerations.AdministrativeClass, function (obj) {
                 return obj.value === administrativeClassValue;
             });
             return administrativeClass.textValue;
         }
 
         function getChangeTypeDisplayText(changeTypeValue) {
-            const changeType = _.find(LinkValues.ChangeType, function (obj) {
+            const changeType = _.find(ViiteEnumerations.ChangeType, function (obj) {
                 return obj.value === changeTypeValue;
             });
             return changeType.displayText;

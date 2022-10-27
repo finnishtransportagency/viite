@@ -13,9 +13,9 @@
     var junctionTemplateVector = dblVector();
     var cachedMarker = null;
 
-    var Anomaly = LinkValues.Anomaly;
-    var SideCode = LinkValues.SideCode;
-    var RoadZIndex = LinkValues.RoadZIndex;
+    var Anomaly = ViiteEnumerations.Anomaly;
+    var SideCode = ViiteEnumerations.SideCode;
+    var RoadZIndex = ViiteEnumerations.RoadZIndex;
 
     var indicatorLayer = new ol.layer.Vector({
       source: indicatorVector,
@@ -144,19 +144,19 @@
       });
 
       switch (applicationModel.getSelectedTool()) {
-        case LinkValues.Tool.Unknown.value:
+        case ViiteEnumerations.Tool.Unknown.value:
           if (!_.isUndefined(selectedJunctionTemplate) && _.has(selectedJunctionTemplate, 'junctionTemplate')) {
             selectJunctionTemplate(selectedJunctionTemplate.junctionTemplate);
           } else if (!_.isUndefined(selectedNodePointTemplate) && _.has(selectedNodePointTemplate, 'nodePointTemplate')) {
             selectNodePointTemplate(selectedNodePointTemplate.nodePointTemplate);
           }
           break;
-        case LinkValues.Tool.Select.value:
+        case ViiteEnumerations.Tool.Select.value:
           if (!_.isUndefined(selectedNode) && !_.isUndefined(selectedNode.node)) {
             selectNode(selectedNode.node);
           }
           break;
-        case LinkValues.Tool.Attach.value:
+        case ViiteEnumerations.Tool.Attach.value:
           if (!_.isUndefined(selectedNode) && !_.isUndefined(selectedNode.node)) {
             attachNode(selectedNode.node, selectedNodesAndJunctions.getCurrentTemplates());
           }
@@ -195,7 +195,7 @@
         x: parseInt(evt.coordinate[0]),
         y: parseInt(evt.coordinate[1])
       };
-      if (GeometryUtils.distanceBetweenPoints(selectedNodesAndJunctions.getStartingCoordinates(), coordinates) < LinkValues.MaxAllowedDistanceForNodesToBeMoved) {
+      if (GeometryUtils.distanceBetweenPoints(selectedNodesAndJunctions.getStartingCoordinates(), coordinates) < ViiteEnumerations.MaxAllowedDistanceForNodesToBeMoved) {
         eventbus.trigger('node:displayCoordinates', {
           x: parseInt(evt.coordinate[0]),
           y: parseInt(evt.coordinate[1])
@@ -208,7 +208,7 @@
         x: parseInt(evt.coordinate[0]),
         y: parseInt(evt.coordinate[1])
       };
-      if (GeometryUtils.distanceBetweenPoints(selectedNodesAndJunctions.getStartingCoordinates(), coordinates) < LinkValues.MaxAllowedDistanceForNodesToBeMoved) {
+      if (GeometryUtils.distanceBetweenPoints(selectedNodesAndJunctions.getStartingCoordinates(), coordinates) < ViiteEnumerations.MaxAllowedDistanceForNodesToBeMoved) {
         selectedNodesAndJunctions.setCoordinates(coordinates);
       } else {
         var startingCoordinates = selectedNodesAndJunctions.getStartingCoordinates();
@@ -273,7 +273,7 @@
       clearHighlights();
       selectedNodesAndJunctions.openNode(node, templates);
       highlightNode(selectedNodesAndJunctions.getCurrentNode());
-      applicationModel.setSelectedTool(LinkValues.Tool.Select.value);
+      applicationModel.setSelectedTool(ViiteEnumerations.Tool.Select.value);
     };
 
     var selectNodePointTemplate = function (nodePointTemplate) {
@@ -377,20 +377,20 @@
     });
 
     me.eventListener.listenTo(eventbus, 'tool:changed', function (tool) {
-      toggleSelectInteractions(!applicationModel.isSelectedTool(LinkValues.Tool.Add.value));
+      toggleSelectInteractions(!applicationModel.isSelectedTool(ViiteEnumerations.Tool.Add.value));
       switch (tool) {
-        case LinkValues.Tool.Unknown.value:
+        case ViiteEnumerations.Tool.Unknown.value:
           me.eventListener.stopListening(eventbus, 'map:clicked', createNewNodeMarker);
           setProperty([nodeMarkerLayer], 'selectable', false);
           setProperty([nodePointTemplateLayer, junctionTemplateLayer], 'selectable', true);
           break;
-        case LinkValues.Tool.Select.value:
-        case LinkValues.Tool.Attach.value:
+        case ViiteEnumerations.Tool.Select.value:
+        case ViiteEnumerations.Tool.Attach.value:
           me.eventListener.stopListening(eventbus, 'map:clicked', createNewNodeMarker);
           setProperty([nodeMarkerLayer], 'selectable', true);
           setProperty([nodePointTemplateLayer, junctionTemplateLayer], 'selectable', false);
           break;
-        case LinkValues.Tool.Add.value:
+        case ViiteEnumerations.Tool.Add.value:
           me.eventListener.listenToOnce(eventbus, 'map:clicked', createNewNodeMarker);
           setProperty([nodeMarkerLayer, nodePointTemplateLayer, junctionTemplateLayer], 'selectable', false);
           break;
@@ -402,7 +402,7 @@
     var createNewNodeMarker = function (coords) {
       var node = {
         coordinates: {x: parseInt(coords.x), y: parseInt(coords.y)},
-        type: LinkValues.NodeType.UnknownNodeType.value,
+        type: ViiteEnumerations.NodeType.UnknownNodeType.value,
         nodePoints: [],
         junctions: []
       };
