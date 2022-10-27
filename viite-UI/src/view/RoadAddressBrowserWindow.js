@@ -237,7 +237,7 @@
         }
 
         function getAdministrativeClassDisplayText(administrativeClassValue) {
-            const administrativeClass = _.find(LinkValues.AdministrativeClass, function (obj) {
+            const administrativeClass = _.find(ViiteEnumerations.AdministrativeClass, function (obj) {
                 return obj.value === administrativeClassValue;
             });
             return administrativeClass.textValue;
@@ -246,7 +246,7 @@
         function getBeforeAfterDisplayText(beforeAfterValues) {
             let letterString = "";
             beforeAfterValues.forEach((value) => {
-                const beforeAfter = _.find(LinkValues.BeforeAfter, function (obj) {
+                const beforeAfter = _.find(ViiteEnumerations.BeforeAfter, function (obj) {
                     return obj.value === value;
                 });
                 letterString += beforeAfter.displayLetter;

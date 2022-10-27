@@ -44,9 +44,9 @@
 
         function createElyDropDownOptions() {
             let html = '<option value="">--</option>';
-            for (const ely in LinkValues.ElyCodes) {
-                if (Object.prototype.hasOwnProperty.call(LinkValues.ElyCodes, ely))
-                    html += '<option value="' + LinkValues.ElyCodes[ely].value + '">' + LinkValues.ElyCodes[ely].value + '(' + LinkValues.ElyCodes[ely].shortName + ')</option>';
+            for (const ely in ViiteEnumerations.ElyCodes) {
+                if (Object.prototype.hasOwnProperty.call(ViiteEnumerations.ElyCodes, ely))
+                    html += '<option value="' + ViiteEnumerations.ElyCodes[ely].value + '">' + ViiteEnumerations.ElyCodes[ely].value + '(' + ViiteEnumerations.ElyCodes[ely].shortName + ')</option>';
             }
             return html;
         }

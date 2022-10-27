@@ -22,7 +22,7 @@ module.exports = {
         "ModalConfirm": "writable",
         "mochaPhantomJS": "writable",
         "Application": "writable",
-        "LinkValues": "writable",
+        "ViiteEnumerations": "writable",
         "FormCommon": "writable",
         "Backend": "writable",
         "moment": "writable",

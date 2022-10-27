@@ -1,6 +1,6 @@
 (function (root) {
   root.LinkPropertyForm = function (selectedLinkProperty, roadNamingTool, projectListModel, roadAddressBrowser, roadAddressChangesBrowser) {
-    var selectionType = LinkValues.SelectionType;
+    var selectionType = ViiteEnumerations.SelectionType;
     var decodedAttributes = [
       {
         id: 'AJORATA',
