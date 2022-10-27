@@ -195,7 +195,7 @@
         x: parseInt(evt.coordinate[0]),
         y: parseInt(evt.coordinate[1])
       };
-      if (GeometryUtils.distanceBetweenPoints(selectedNodesAndJunctions.getStartingCoordinates(), coordinates) < ViiteEnumerations.MaxAllowedDistanceForNodesToBeMoved) {
+      if (GeometryUtils.distanceBetweenPoints(selectedNodesAndJunctions.getStartingCoordinates(), coordinates) < ViiteConstants.MAX_ALLOWED_DISTANCE_FOR_NODES_TO_BE_MOVED) {
         eventbus.trigger('node:displayCoordinates', {
           x: parseInt(evt.coordinate[0]),
           y: parseInt(evt.coordinate[1])
@@ -208,7 +208,7 @@
         x: parseInt(evt.coordinate[0]),
         y: parseInt(evt.coordinate[1])
       };
-      if (GeometryUtils.distanceBetweenPoints(selectedNodesAndJunctions.getStartingCoordinates(), coordinates) < ViiteEnumerations.MaxAllowedDistanceForNodesToBeMoved) {
+      if (GeometryUtils.distanceBetweenPoints(selectedNodesAndJunctions.getStartingCoordinates(), coordinates) < ViiteConstants.MAX_ALLOWED_DISTANCE_FOR_NODES_TO_BE_MOVED) {
         selectedNodesAndJunctions.setCoordinates(coordinates);
       } else {
         var startingCoordinates = selectedNodesAndJunctions.getStartingCoordinates();

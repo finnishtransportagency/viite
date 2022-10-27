@@ -226,7 +226,5 @@
     ParallelLink: {value: 6, description: "Parallel Link"}
 
   };
-
-  root.MaxAllowedDistanceForNodesToBeMoved = 200;
 }(window.ViiteEnumerations = window.ViiteEnumerations || {}));
 
