@@ -562,7 +562,10 @@ SELECT
         }
       }
 
-      s""" $query WHERE $startDateCondition $endDateCondition $elyCondition $roadNumberCondition $roadPartCondition """.stripMargin
+      s"""$query
+         |WHERE $startDateCondition $endDateCondition $elyCondition $roadNumberCondition $roadPartCondition
+         |ORDER BY p.id, new_road_number, new_road_part_number, new_start_addr_m, new_track
+         |""".stripMargin
     }
 
     def fetchChangeInfos(queryFilter: String => String): Seq[ChangeInfoForRoadAddressChangesBrowser] = {
