@@ -121,7 +121,7 @@
     };
 
     var elyNameLabel = function (elyCode) {
-      var elyInfo = _.find(LinkValues.ElyCodes, function (obj) {
+      var elyInfo = _.find(ViiteEnumerations.ElyCodes, function (obj) {
         return obj.value === elyCode;
       });
       return '</br><label class="control-label" style="color:#c09853;">' + elyInfo.name + ' ELY (' + elyInfo.value + ')</label></br>';

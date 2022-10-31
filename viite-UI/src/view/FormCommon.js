@@ -1,9 +1,9 @@
 (function (root) {
   root.FormCommon = function (prefix) {
-    const Track = LinkValues.Track;
-    const RoadNameSource = LinkValues.RoadNameSource;
-    const editableStatus = LinkValues.ProjectStatus.Incomplete.value;
-    const AdministrativeClass = LinkValues.AdministrativeClass;
+    const Track = ViiteEnumerations.Track;
+    const RoadNameSource = ViiteEnumerations.RoadNameSource;
+    const editableStatus = ViiteEnumerations.ProjectStatus.Incomplete.value;
+    const AdministrativeClass = ViiteEnumerations.AdministrativeClass;
 
     const title = function (titleName) {
       const fixedTitle = titleName || "Uusi tieosoiteprojekti";
@@ -115,7 +115,7 @@
     };
 
     const administrativeClassLabel = function (administrativeClass) {
-      const administrativeClassInfo = _.find(LinkValues.AdministrativeClass, function (obj) {
+      const administrativeClassInfo = _.find(ViiteEnumerations.AdministrativeClass, function (obj) {
         return obj.value === administrativeClass;
       });
       return administrativeClassInfo.displayText;
@@ -196,7 +196,7 @@
     };
 
     const directionChangedInfo = function (selected, isPartialReversed) {
-      if (selected[0].status === LinkValues.LinkStatus.New.value) return '';
+      if (selected[0].status === ViiteEnumerations.LinkStatus.New.value) return '';
       if (isPartialReversed) {
         return '<label class="form-group">Osittain käännetty</label>';
       } else if (selected[0].reversed) {

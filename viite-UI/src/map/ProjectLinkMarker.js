@@ -33,7 +33,7 @@
         };
 
       var directionMarkerColor = function (roadLinka) {
-        if (roadLinka.status === LinkValues.LinkStatus.New.value) {
+        if (roadLinka.status === ViiteEnumerations.LinkStatus.New.value) {
           return '#ff55dd';
         } else if (roadLinka.roadClass in colorMap) {
           return colorMap[roadLinka.roadClass];
@@ -54,7 +54,7 @@
         var directionMarker = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 258.4 387.6" width="36px"  height="22px"> <g transform="translate(-350.8,-86.2)"> <path d="M 609.2,344.6 C 609.2,215.4 480,86.2 480,86.2 c 0,0 -129.2,129.2 -129.2,258.4 0,81.8 68.9,129.2 129.2,129.2 60.3,0 129.2,-47.3 129.2,-129.2 z M 480,441.5 c -53.8,0 -96.9,-43.1 -96.9,-96.9 0,-53.8 43.1,-96.9 96.9,-96.9 53.8,0 96.9,43.1 96.9,96.9 0,53.8 -43.1,96.9 -96.9,96.9 z" fill="' + markerColor + '"/><path d="M 582.7,341.9 C 582.7,234.9 480,128 480,128 c 0,0 -102.7,106.9 -102.7,213.9 0,67.7 54.8,106.9 102.7,106.9 47.9,0 102.7,-39.2 102.7,-106.9 z" fill="rgba(255,255,255,1)"/> 	<path    d="m 556.4,345.6 c 0,-40.9 -34.5,-75.4 -75.4,-75.4 -40.9,0 -75.4,34.5 -75.4,75.4 0,40.9 34.5,75.4 75.4,75.4 40.9,0 75.4,-34.5 75.4,-75.4 z " fill="' + markerColor + '"/> </g></svg>';
         return new ol.style.Style({
           image: new ol.style.Icon({
-            rotation: rl.sideCode === LinkValues.SideCode.AgainstDigitizing.value ? ((middlePoint.angleFromNorth * Math.PI) / 180) + Math.PI : middlePoint.angleFromNorth * Math.PI / 180,
+            rotation: rl.sideCode === ViiteEnumerations.SideCode.AgainstDigitizing.value ? ((middlePoint.angleFromNorth * Math.PI) / 180) + Math.PI : middlePoint.angleFromNorth * Math.PI / 180,
             src: 'data:image/svg+xml;utf8,' + directionMarker
           }),
           zIndex: 10
@@ -62,7 +62,7 @@
       };
       if (roadLink.roadLinkType === -1) {
         box.setStyle(boxStyleFloat);
-      } else if (roadLink.id === 0 && roadLink.roadLinkType === LinkValues.RoadLinkType.UnknownRoadLinkType.value) {
+      } else if (roadLink.id === 0 && roadLink.roadLinkType === ViiteEnumerations.RoadLinkType.UnknownRoadLinkType.value) {
         return;
       } else {
         box.setStyle(boxStyleDirectional(roadLink));
