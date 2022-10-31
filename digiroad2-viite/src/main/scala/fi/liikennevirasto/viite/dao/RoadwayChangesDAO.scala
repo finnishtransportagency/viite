@@ -562,7 +562,10 @@ SELECT
         }
       }
 
-      s""" $query WHERE $startDateCondition $endDateCondition $elyCondition $roadNumberCondition $roadPartCondition """.stripMargin
+      s"""$query
+         |WHERE $startDateCondition $endDateCondition $elyCondition $roadNumberCondition $roadPartCondition
+         |ORDER BY p.id, new_road_number, new_road_part_number, new_start_addr_m, new_track
+         |""".stripMargin
     }
 
     def fetchChangeInfos(queryFilter: String => String): Seq[ChangeInfoForRoadAddressChangesBrowser] = {
@@ -590,7 +593,7 @@ SELECT
                    |	new_end_addr_m - new_start_addr_m,
                    |	new_administrative_class
                    |FROM roadway_changes rc
-                   |JOIN road_name rn ON rc.new_road_number = rn.road_number
+                   |JOIN road_name rn ON rc.new_road_number = rn.road_number AND rn.end_date IS NULL AND rn.valid_to IS NULL
                    |JOIN project p ON rc.project_id = p.id""".stripMargin
       val filteredQuery = queryFilter(query)
       Q.queryNA[ChangeInfoForRoadAddressChangesBrowser](filteredQuery).iterator.toSeq
