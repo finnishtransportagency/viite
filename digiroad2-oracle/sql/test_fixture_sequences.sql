@@ -66,7 +66,7 @@ drop sequence ROADWAY_NUMBER_SEQ;
 create sequence ROADWAY_NUMBER_SEQ
   minvalue 1
   no maxvalue
-  start with 1000000
+  start with 1010000
   increment by 1
   cache 100
   cycle;
