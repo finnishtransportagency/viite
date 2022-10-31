@@ -1,7 +1,7 @@
 (function (root) {
   root.NodeForm = function (selectedNodesAndJunctions, roadCollection, backend) {
     var formCommon = new FormCommon('node-');
-    var NodeType = LinkValues.NodeType;
+    var NodeType = ViiteEnumerations.NodeType;
 
     var NODE_POINTS_TITLE = 'Solmukohdat';
     var JUNCTIONS_TITLE = 'Liittymät';
@@ -39,8 +39,8 @@
 
     var addNodeTypeDropdown = function (labelText, id, nodeType) {
       var addNodeTypeOptions = function (selected) {
-        var nodeTypes = _.filter(LinkValues.NodeType, function (nodeTypeFiltered) {
-          return nodeTypeFiltered !== LinkValues.NodeType.UnknownNodeType;
+        var nodeTypes = _.filter(ViiteEnumerations.NodeType, function (nodeTypeFiltered) {
+          return nodeTypeFiltered !== ViiteEnumerations.NodeType.UnknownNodeType;
         });
 
         return _.map(nodeTypes, function (nodeTypeMapped) {
@@ -51,7 +51,7 @@
       };
 
       var unknownNodeType = "";
-      if (nodeType === LinkValues.NodeType.UnknownNodeType) {
+      if (nodeType === ViiteEnumerations.NodeType.UnknownNodeType) {
         unknownNodeType = '<option value="' + nodeType.value + '" selected disabled hidden>' +
           nodeType.value + ' ' + nodeType.description + '</option>';
       }
@@ -406,11 +406,11 @@
       };
 
       var detachNodePointBox = function (nodePoint) {
-        var nodePointType = _.find(LinkValues.NodePointType, function (nodePointTypeFound) {
+        var nodePointType = _.find(ViiteEnumerations.NodePointType, function (nodePointTypeFound) {
           return nodePointTypeFound.value === nodePoint.type;
         });
         var isDetachable = 'title="' + nodePointType.description + '"'; // added for testing purposes, needs to be confirm if this title is a good idea for production env.
-        if (_.isEqual(nodePointType, LinkValues.NodePointType.CalculatedNodePoint)) {
+        if (_.isEqual(nodePointType, ViiteEnumerations.NodePointType.CalculatedNodePoint)) {
           isDetachable += ' disabled hidden';
         }
         return '<td><input ' + isDetachable + ' type="checkbox" name="detach-node-point-' + nodePoint.id + '" value="' + nodePoint.id + '" id="detach-node-point-' + nodePoint.id + '"></td>';
@@ -534,7 +534,7 @@
       });
 
       return $('#nodeName').val() === "" ||
-        $('#nodeTypeDropdown').val() === LinkValues.NodeType.UnknownNodeType.value.toString() ||
+        $('#nodeTypeDropdown').val() === ViiteEnumerations.NodeType.UnknownNodeType.value.toString() ||
         $('#nodeStartDate').val() === "" ||
         !selectedNodesAndJunctions.validateJunctionNumbers() ||
         !selectedNodesAndJunctions.isDirty() ||
@@ -597,7 +597,7 @@
         return {
           junction: junction,
           nodePoints: _.filter(nodePoints, function (nodePoint) {
-            return nodePoint.type === LinkValues.NodePointType.RoadNodePoint.value || nodePoint.type === LinkValues.NodePointType.UnknownNodePointType.value;
+            return nodePoint.type === ViiteEnumerations.NodePointType.RoadNodePoint.value || nodePoint.type === ViiteEnumerations.NodePointType.UnknownNodePointType.value;
           })
         };
       };
@@ -620,7 +620,7 @@
           return {
             nodePoints: _.filter(nodePoints, function (nodePoint) {
               return _.isEqual(nodePoint.coordinates, targetNodePoint.coordinates) &&
-                (nodePoint.type === LinkValues.NodePointType.RoadNodePoint.value || nodePoint.type === LinkValues.NodePointType.UnknownNodePointType.value);
+                (nodePoint.type === ViiteEnumerations.NodePointType.RoadNodePoint.value || nodePoint.type === ViiteEnumerations.NodePointType.UnknownNodePointType.value);
             })
           };
         }
@@ -730,11 +730,11 @@
       });
 
       rootElement.on('click', '#attachToMapNode', function () {
-        applicationModel.setSelectedTool(LinkValues.Tool.Attach.value);
+        applicationModel.setSelectedTool(ViiteEnumerations.Tool.Attach.value);
       });
 
       rootElement.on('click', '#attachToNewNode', function () {
-        applicationModel.setSelectedTool(LinkValues.Tool.Add.value);
+        applicationModel.setSelectedTool(ViiteEnumerations.Tool.Add.value);
       });
 
       rootElement.on('click', '.btn-edit-templates-cancel', function () {

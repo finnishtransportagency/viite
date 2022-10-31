@@ -1,5 +1,6 @@
 (function (root) {
   root.RoadLinkBox = function (selectedProjectLinkProperty) {
+    var LinkStatus = ViiteEnumerations.LinkStatus;
     var className = 'road-link';
     var title = 'Selite';
     var selectToolIcon = '<img src="images/select-tool.svg"/>';
@@ -108,27 +109,27 @@
 
     var roadProjectOperations = function () {
       return '<div class="legend-entry">' +
-        '<div class="label">Ennallaan</div>' +
+        '<div class="label">' + LinkStatus.Unchanged.displayText + '</div>' +
         '<div class="symbol linear operation-type-unchanged"></div>' +
         '</div>' +
         '<div class="legend-entry">' +
-        '<div class="label">Uusi</div>' +
+        '<div class="label">' + LinkStatus.New.displayText + '</div>' +
         '<div class="symbol linear operation-type-new"></div>' +
         '</div>' +
         '<div class="legend-entry">' +
-        '<div class="label">Siirto</div>' +
+        '<div class="label">' + LinkStatus.Transfer.displayText + '</div>' +
         '<div class="symbol linear operation-type-transfer"></div>' +
         '</div>' +
         '<div class="legend-entry">' +
-        '<div class="label">Lakkautus</div>' +
+        '<div class="label">' + LinkStatus.Terminated.displayText + '</div>' +
         '<div class="symbol linear operation-type-terminated"></div>' +
         '</div>' +
         '<div class="legend-entry">' +
-        '<div class="label">Numerointi</div>' +
+        '<div class="label">' + LinkStatus.Numbering.displayText + '</div>' +
         '<div class="symbol linear operation-type-renumbered"></div>' +
         '</div>' +
         '<div class="legend-entry">' +
-        '<div class="label">Käsittelemätön</div>' +
+        '<div class="label">' + LinkStatus.NotHandled.displayText + '</div>' +
         '<div class="symbol linear operation-type-unhandeled"></div>' +
         '<div class="label">Rakenteilla (kunta/yksityinen)</div>' +
         '<div class="symbol linear construction-type-0"></div>' +
@@ -218,7 +219,7 @@
     };
 
     var nodeToolSelection = new ToolSelection([
-      new Tool(LinkValues.Tool.Select.value, selectToolIcon, LinkValues.Tool.Select.description)
+      new Tool(ViiteEnumerations.Tool.Select.value, selectToolIcon, ViiteEnumerations.Tool.Select.description)
     ]);
 
     var templateAttributes = {

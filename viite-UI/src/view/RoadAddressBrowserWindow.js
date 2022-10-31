@@ -1,11 +1,5 @@
 (function (root) {
-    root.RoadAddressBrowserWindow = function (backend) {
-
-        const MAX_ROWS_TO_DISPLAY = 100;
-        const MAX_YEAR_PARAM = 2050;
-        const MIN_YEAR_PARAM = 1900;
-        const MAX_LENGTH_FOR_ROAD_NUMBER = 5;
-        const MAX_LENGTH_FOR_ROAD_PART_NUMBER = 3;
+    root.RoadAddressBrowserWindow = function (backend, roadAddressBrowserForm) {
         let searchParams = {};
         let datePicker = '';
         const me = this;
@@ -17,38 +11,15 @@
                                         '</button>' +
                                     '</a>');
         roadAddrBrowserWindow.append('<button class="close btn-close" id="closeRoadAddrBrowserWindow">x</button>');
-        roadAddrBrowserWindow.append('<div class="content road-address-browser-header">Tieosoitteiden katselu</div>');
-        roadAddrBrowserWindow.append('' +
-            '<form id="roadAddressBrowser" class="road-address-browser-form">' +
-                '<div class="input-container"><label class="control-label-small">Tilannepvm</label> <input type="text" id="roadAddrStartDate" value="' + getCurrentDate() + '" style="width: 100px" required/></div>' +
-                '<div class="input-container"><label class="control-label-small">Ely</label>' +
-                    '<select name id="roadAddrInputEly" /> ' +
-                        '<option value="">--</option>' +
-                        '<option value="1">1 (UUD)</option>' +
-                        '<option value="2">2 (VAR)</option>' +
-                        '<option value="3">3 (KAS)</option>' +
-                        '<option value="4">4 (PIR)</option>' +
-                        '<option value="8">8 (POS)</option>' +
-                        '<option value="9">9 (KES)</option>' +
-                        '<option value="10">10 (EPO)</option>' +
-                        '<option value="12">12 (POP)</option>' +
-                        '<option value="14">14 (LAP)</option>' +
-                    '</select>' +
-                '</div>' +
-                '<div class="input-container"><label class="control-label-small">Tie</label><input type="number" min="1" max="99999" id="roadAddrInputRoad" /></div>' +
-                '<div class="input-container"><label class="control-label-small">Aosa</label><input type="number" min="1" max="999" id="roadAddrInputStartPart"/></div>' +
-                '<div class="input-container"><label class="control-label-small">Losa</label><input type="number" min="1" max="999" id="roadAddrInputEndPart"/></div>' +
-                '<div class="input-container"><label>Ajoradat</label><input type="radio" name="roadAddrBrowserForm" value="Tracks" checked="checked"></div>' +
-                '<div class="input-container"><label>Tieosat</label><input type="radio" name="roadAddrBrowserForm" value="RoadParts"></div>' +
-                '<div class="input-container"><label>Solmut</label><input type="radio" name="roadAddrBrowserForm" value="Nodes"></div>' +
-                '<div class="input-container"><label>Liittymät</label><input type="radio" name="roadAddrBrowserForm" value="Junctions"></div>' +
-                '<div class="input-container"><label>Tiennimet</label><input type="radio" name="roadAddrBrowserForm" value="RoadNames"></div>' +
-                '<button class="btn btn-primary btn-fetch-road-addresses"> Hae </button>' +
-                '<button id="exportAsExcelFile" class="download-excel btn" disabled>Lataa Excelinä <i class="fas fa-file-excel"></i></button>' +
-            '</form>'
-        );
+        roadAddrBrowserWindow.append('<div class="road-address-browser-modal-header">Tieosoitteiden katselu</div>');
+        roadAddrBrowserWindow.append(roadAddressBrowserForm.getRoadAddressBrowserForm());
 
-        function showResultsForTracks(results) {
+
+        /**
+         *      This function is performance critical. Pointers in use for reasonable processing time.
+         *      If edited be sure to measure table creation time with the largest possible dataset!
+         */
+        function createResultTableForTracks(results) {
             const arr = [];
             let arrPointer = -1;
             arr[++arrPointer] = `<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table">
@@ -75,17 +46,20 @@
                                             <td>${results[i].startAddrM}</td>
                                             <td>${results[i].endAddrM}</td>
                                             <td>${results[i].lengthAddrM}</td>
-                                            <td>${results[i].administrativeClass}</td>
+                                            <td>${EnumerationUtils.getAdministrativeClassTextValue(results[i].administrativeClass)}</td>
                                             <td>${results[i].startDate}</td>
                                         </tr>`;
             }
             arr[++arrPointer] =`    </tbody>
                             </table>`;
-            const table = $(arr.join('')); // join the array to one large string and create jquery element from said string
-            showData(results, table);
+            return $(arr.join('')); // join the array to one large string and create jquery element from said string
         }
 
-        function showResultsForRoadParts(results) {
+        /**
+         *      This function is performance critical. Pointers in use for reasonable processing time.
+         *      If edited be sure to measure table creation time with the largest possible dataset!
+         */
+        function createResultTableForRoadParts(results) {
             const arr = [];
             let arrPointer = -1;
             arr[++arrPointer] = `<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table">
@@ -114,11 +88,14 @@
             }
             arr[++arrPointer] =`    </tbody>
                             </table>`;
-            const table = $(arr.join('')); // join the array to one large string and create jquery element from said string
-            showData(results, table);
+            return $(arr.join('')); // join the array to one large string and create jquery element from said string
         }
 
-        function showResultsForNodes(results) {
+        /**
+         *      This function is performance critical. Pointers in use for reasonable processing time.
+         *      If edited be sure to measure table creation time with the largest possible dataset!
+         */
+        function createResultTableForNodes(results) {
             const arr = [];
             let arrPointer = -1;
             arr[++arrPointer] =`<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table">
@@ -150,11 +127,14 @@
             }
             arr[++arrPointer] =     `</tbody>
                                 </table>`;
-            const table = $(arr.join('')); // join the array to one large string and create jquery element from said string
-            showData(results, table);
+            return $(arr.join('')); // join the array to one large string and create jquery element from said string
         }
 
-        function showResultsForJunctions(results) {
+        /**
+         *      This function is performance critical. Pointers in use for reasonable processing time.
+         *      If edited be sure to measure table creation time with the largest possible dataset!
+         */
+        function createResultTableForJunctions(results) {
             const arr = [];
             let arrPointer = -1;
             arr[++arrPointer] =`<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table">
@@ -189,16 +169,19 @@
                                             <td>${results[i].track}</td>
                                             <td>${results[i].roadPartNumber}</td>
                                             <td>${results[i].addrM}</td>
-                                            <td>${results[i].beforeAfter}</td>
+                                            <td>${EnumerationUtils.getBeforeAfterDisplayText(results[i].beforeAfter)}</td>
                                         </tr>`;
             }
             arr[++arrPointer] =`    </tbody>
                                 </table>`;
-            const table = $(arr.join('')); // join the array to one large string and create jquery element from said string
-            showData(results, table);
+            return $(arr.join('')); // join the array to one large string and create jquery element from said string
         }
 
-        function showResultsForRoadNames(results) {
+        /**
+         *      This function is performance critical. Pointers in use for reasonable processing time.
+         *      If edited be sure to measure table creation time with the largest possible dataset!
+         */
+        function createResultTableForRoadNames(results) {
             const arr = [];
             let arrPointer = -1;
             arr[++arrPointer] = `<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table">
@@ -220,8 +203,7 @@
             }
             arr[++arrPointer] =`    </tbody>
                                 </table>`;
-            const table = $(arr.join('')); // join the array to one large string and create jquery element from said string
-            showData(results, table);
+            return $(arr.join('')); // join the array to one large string and create jquery element from said string
         }
 
         function showData(results, table) {
@@ -229,7 +211,7 @@
                 roadAddrBrowserWindow.append($('<p id="tableNotification"><b>Hakuehdoilla ei löytynyt yhtäkään osumaa</b></p>'));
                 roadAddrBrowserWindow.append(table.hide());
             }
-            else if (results.length <= MAX_ROWS_TO_DISPLAY) {
+            else if (results.length <= ViiteConstants.MAX_ROWS_TO_DISPLAY) {
                 roadAddrBrowserWindow.append(table);
                 $('#exportAsExcelFile').prop("disabled", false); // enable Excel download button
             }
@@ -243,8 +225,8 @@
 
 
         function toggle() {
-            $('.container').append('<div class="modal-overlay confirm-modal"><div class="modal-dialog"></div></div>');
-            $('.modal-dialog').append(roadAddrBrowserWindow.toggle());
+            $('.container').append('<div class="road-address-browser-modal-overlay confirm-modal"><div class="road-address-browser-modal-window"></div></div>');
+            $('.road-address-browser-modal-window').append(roadAddrBrowserWindow.toggle());
             addDatePicker();
             bindEvents();
         }
@@ -258,30 +240,9 @@
             datePicker.destroy();
         }
 
-        function getCurrentDate() {
-            const today = new Date();
-            const dayInNumber = today.getDate();
-            const day = dayInNumber < 10 ? '0' + dayInNumber.toString() : dayInNumber.toString();
-            const monthInNumber = today.getMonth() + 1;
-            const month = monthInNumber < 10 ? '0' + monthInNumber.toString() : monthInNumber.toString();
-            const year = today.getFullYear().toString();
-            return day + '.' + month + '.' + year;
-        }
-
-        // converts date object to string "yyyy-mm-dd"
-        function parseDateToString(date) {
-            const dayInNumber = date.getDate();
-            const day = dayInNumber < 10 ? '0' + dayInNumber.toString() : dayInNumber.toString();
-            const monthInNumber = date.getMonth() + 1;
-            const month = monthInNumber < 10 ? '0' + monthInNumber.toString() : monthInNumber.toString();
-            const year = date.getFullYear().toString();
-            return year + '-' + month + '-' + day;
-        }
-
-
         function hide() {
-            $('.modal-dialog').append(roadAddrBrowserWindow.toggle());
-            $('.modal-overlay').remove();
+            $('.road-address-browser-modal-window').append(roadAddrBrowserWindow.toggle());
+            $('.road-address-browser-modal-overlay').remove();
             destroyDatePicker();
         }
 
@@ -315,9 +276,9 @@
             }
 
             function validateDate(date) {
-                if (date instanceof Date && !isNaN(date)) {
-                    if(date.getFullYear() > MAX_YEAR_PARAM || date.getFullYear() < MIN_YEAR_PARAM)
-                        roadAddrStartDate.setCustomValidity("Vuosiluvun tulee olla väliltä" + MIN_YEAR_PARAM + " - " + MAX_YEAR_PARAM);
+                if (dateutil.isValidDate(date)) {
+                    if(!dateutil.isDateInYearRange(date, ViiteConstants.MIN_YEAR_INPUT, ViiteConstants.MAX_YEAR_INPUT))
+                        roadAddrStartDate.setCustomValidity("Vuosiluvun tulee olla väliltä" + ViiteConstants.MIN_YEAR_INPUT + " - " + ViiteConstants.MAX_YEAR_INPUT);
                 }
                 else
                     roadAddrStartDate.setCustomValidity("Päivämäärän tulee olla muodossa pp.kk.yyyy");
@@ -335,7 +296,7 @@
             }
 
             function createParams() {
-                const parsedDateString = parseDateToString(roadAddrStartDateObject);
+                const parsedDateString = dateutil.parseDateToString(roadAddrStartDateObject);
                 const params = {
                     startDate: parsedDateString,
                     target: targetValue
@@ -380,19 +341,19 @@
                     me.setSearchParams(params);
                     switch (params.target) {
                         case "Tracks":
-                            showResultsForTracks(result.tracks);
+                            showData(result.tracks, createResultTableForTracks(result.tracks));
                             break;
                         case "RoadParts":
-                            showResultsForRoadParts(result.roadParts);
+                            showData(result.roadParts, createResultTableForRoadParts(result.roadParts));
                             break;
                         case "Nodes":
-                            showResultsForNodes(result.nodes);
+                            showData(result.nodes, createResultTableForNodes(result.nodes));
                             break;
                         case "Junctions":
-                            showResultsForJunctions(result.junctions);
+                            showData(result.junctions, createResultTableForJunctions(result.junctions));
                             break;
                         case "RoadNames":
-                            showResultsForRoadNames(result.roadNames);
+                            showData(result.roadNames, createResultTableForRoadNames(result.roadNames));
                             break;
                         default:
                     }
@@ -404,20 +365,20 @@
         function bindEvents() {
 
             document.getElementById('roadAddrInputRoad').oninput = function () {
-                if (this.value.length > MAX_LENGTH_FOR_ROAD_NUMBER) {
-                    this.value = this.value.slice(0,MAX_LENGTH_FOR_ROAD_NUMBER);
+                if (this.value.length > ViiteConstants.MAX_LENGTH_FOR_ROAD_NUMBER) {
+                    this.value = this.value.slice(0, ViiteConstants.MAX_LENGTH_FOR_ROAD_NUMBER);
                 }
             };
 
             document.getElementById('roadAddrInputStartPart').oninput = function () {
-                if (this.value.length > MAX_LENGTH_FOR_ROAD_PART_NUMBER) {
-                    this.value = this.value.slice(0,MAX_LENGTH_FOR_ROAD_PART_NUMBER);
+                if (this.value.length > ViiteConstants.MAX_LENGTH_FOR_ROAD_PART_NUMBER) {
+                    this.value = this.value.slice(0, ViiteConstants.MAX_LENGTH_FOR_ROAD_PART_NUMBER);
                 }
             };
 
             document.getElementById('roadAddrInputEndPart').oninput = function () {
-                if (this.value.length > MAX_LENGTH_FOR_ROAD_PART_NUMBER) {
-                    this.value = this.value.slice(0,MAX_LENGTH_FOR_ROAD_PART_NUMBER);
+                if (this.value.length > ViiteConstants.MAX_LENGTH_FOR_ROAD_PART_NUMBER) {
+                    this.value = this.value.slice(0, ViiteConstants.MAX_LENGTH_FOR_ROAD_PART_NUMBER);
                 }
             };
 
@@ -429,7 +390,7 @@
                 hide();
             });
 
-            roadAddrBrowserWindow.on('click', '.btn-fetch-road-addresses', function () {
+            roadAddrBrowserWindow.on('click', '#fetchRoadAddresses', function () {
                 $('.road-address-browser-window-results-table').remove(); // empty the result table
                 $('#exportAsExcelFile').prop("disabled", true); //disable excel download button
                 $('#tableNotification').remove(); // remove notification if present

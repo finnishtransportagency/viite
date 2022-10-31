@@ -438,6 +438,94 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
     }
   }
 
+  private val getDataForRoadAddressChangesBrowser: SwaggerSupportSyntax.OperationBuilder = (
+    apiOperation[Map[String,Any]]("getDataForRoadAddressChangesBrowser").parameters(
+      queryParam[String]("startDate").description("Start date (yyyy-MM-dd)"),
+      queryParam[String]("endDate").description("End date (yyyy-MM-dd)"),
+      queryParam[String]("dateTarget").description("What start and end dates are used for"),
+      queryParam[Long]("ely").description("Ely number of a road address").optional,
+      queryParam[Long]("roadNumber").description("Road Number of a road address").optional,
+      queryParam[Long]("minRoadPartNumber").description("Min Road Part Number of a road address").optional,
+      queryParam[Long]("maxRoadPartNumber").description("Max Road Part Number of a road address").optional
+    )
+      tags "ViiteAPI - Road Address Changes Browser"
+      summary "Returns change info for road address changes browser based on the search criteria"
+    )
+
+  get("/roadaddresschangesbrowser", operation(getDataForRoadAddressChangesBrowser)) {
+    time(logger, s"GET request for /roadaddresschangesbrowser") {
+      def validateInputs(startDate: Option[String], endDate: Option[String], dateTarget: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Boolean = {
+        def parseDate(dateString: Option[String]): Option[DateTime] = {
+          val formatter = DateTimeFormat.forPattern("yyyy-MM-dd")
+          try {
+            if (dateString.isDefined) {
+              Some(formatter.parseDateTime(dateString.get))
+            } else
+              None
+          } catch {
+            case _: IllegalArgumentException => None
+          }
+        }
+
+        def roadPartInputsValid(minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]) = {
+          (minRoadPartNumber, maxRoadPartNumber) match {
+            case (Some(minPart), Some(maxPart)) => minPart >= 1 && minPart <= 999 && maxPart >= 1 && maxPart <= 999 && minPart <= maxPart
+            case (Some(minPart), None) => minPart >= 1 && minPart <= 999
+            case (None, Some(maxPart)) => maxPart >= 1 && maxPart <= 999
+            case (None, None) => true
+          }
+        }
+
+        val mandatoryInputsDefinedAndValid = parseDate(startDate).isDefined &&  dateTarget.isDefined
+        val optionalInputsValid: Boolean =  {
+          val endDateValid = {
+            if (endDate.isDefined)
+              parseDate(endDate).isDefined
+            else
+              true
+          }
+          val elyValid = {
+            if (ely.isDefined)
+              ely.get > 0L && ely.get <= 14L
+            else
+              true
+          }
+          val roadNumberValid = {
+            if (roadNumber.isDefined)
+              roadNumber.get > 0L && roadNumber.get <= 99999L
+            else
+              true
+          }
+          endDateValid && elyValid && roadNumberValid && roadPartInputsValid(minRoadPartNumber, maxRoadPartNumber)
+        }
+
+        mandatoryInputsDefinedAndValid && optionalInputsValid
+      }
+
+      val startDate = params.get("startDate")
+      val endDate = params.get("endDate")
+      val dateTarget = params.get("dateTarget")
+      val ely = params.get("ely").map(_.toLong)
+      val roadNumber = params.get("roadNumber").map(_.toLong)
+      val minRoadPartNumber = params.get("minRoadPartNumber").map(_.toLong)
+      val maxRoadPartNumber = params.get("maxRoadPartNumber").map(_.toLong)
+
+      try {
+        if (validateInputs(startDate, endDate, dateTarget, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)) {
+          val changeInfosForRoadAddressChangesBrowser = roadAddressService.getChangeInfosForRoadAddressChangesBrowser(startDate, endDate, dateTarget, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
+          Map("success" -> true, "changeInfos" -> changeInfosForRoadAddressChangesBrowser.map(roadAddressChangeInfoToApi))
+        } else
+          Map("success" -> false, "error" -> "Tieosoitemuutosten haku epäonnistui, tarkista syöttämäsi tiedot")
+
+      } catch {
+        case e: Throwable => {
+          logger.error(s"Error fetching data for road address changes browser ${e}")
+          Map("success" -> false, "error" -> "Tieosoitemuutosten haku epäonnistui, ota yhteys Viite tukeen")
+        }
+      }
+    }
+  }
+
   private val getProjectAddressLinksByLinkIds: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String,Any]]("getProjectAddressLinksByLinkIds")
       .parameters(
@@ -1535,14 +1623,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
   }
 
   def roadAddressBrowserTracksToApi(track: TrackForRoadAddressBrowser): Map[String, Any] = {
-    def getAdministrativeClassStringValue(): String = {
-      track.administrativeClass match {
-        case 1 => "Valtio"
-        case 2 => "Kunta"
-        case 3 => "Yksityinen"
-        case _ => "Tuntematon"
-      }
-    }
     Map(
       "ely" -> track.ely,
       "roadNumber" -> track.roadNumber,
@@ -1551,7 +1631,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
       "startAddrM" -> track.startAddrM,
       "endAddrM" -> track.endAddrM,
       "lengthAddrM" -> track.roadAddressLengthM,
-      "administrativeClass" -> getAdministrativeClassStringValue(),
+      "administrativeClass" -> track.administrativeClass,
       "startDate" -> new SimpleDateFormat("dd.MM.yyyy").format(track.startDate.toDate)
     )
   }
@@ -1582,17 +1662,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
   }
 
   def roadAddressBrowserJunctionsToApi(junction :JunctionForRoadAddressBrowser): Map[String, Any] = {
-    def getBeforeAfterStringValue(): String = {
-      if (junction.beforeAfter.contains(1) && junction.beforeAfter.contains(2))
-        "EJ"
-      else if (junction.beforeAfter.contains(1))
-        "E"
-      else if (junction.beforeAfter.contains(2))
-        "J"
-      else
-        ""
-    }
-
     Map(
       "nodeNumber" -> junction.nodeNumber,
       "nodeCoordinates" -> junction.nodeCoordinates,
@@ -1604,7 +1673,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
       "track" -> junction.track,
       "roadPartNumber" -> junction.roadPartNumber,
       "addrM" -> junction.addrM,
-      "beforeAfter" -> getBeforeAfterStringValue()
+      "beforeAfter" -> junction.beforeAfter
     )
   }
 
@@ -1613,6 +1682,33 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
       "ely" -> roadName.ely,
       "roadNumber" -> roadName.roadNumber,
       "roadName" -> roadName.roadName
+    )
+  }
+
+  def roadAddressChangeInfoToApi(changeInfo: ChangeInfoForRoadAddressChangesBrowser): Map[String, Any] = {
+    Map(
+      "startDate" -> new SimpleDateFormat("dd.MM.yyyy").format(changeInfo.startDate.toDate),
+      "changeType" -> changeInfo.changeType,
+      "reversed" -> changeInfo.reversed,
+      "roadName" -> changeInfo.roadName,
+      "projectName" -> changeInfo.projectName,
+      "projectAcceptedDate" -> new SimpleDateFormat("dd.MM.yyyy").format(changeInfo.projectAcceptedDate.toDate),
+      "oldEly" -> changeInfo.oldRoadAddress.ely,
+      "oldRoadNumber" -> changeInfo.oldRoadAddress.roadNumber.getOrElse(""),
+      "oldTrack" -> changeInfo.oldRoadAddress.track.getOrElse(""),
+      "oldRoadPartNumber" -> changeInfo.oldRoadAddress.roadPartNumber.getOrElse(""),
+      "oldStartAddrM" -> changeInfo.oldRoadAddress.startAddrM.getOrElse(""),
+      "oldEndAddrM" -> changeInfo.oldRoadAddress.endAddrM.getOrElse(""),
+      "oldLength" -> changeInfo.oldRoadAddress.length.getOrElse(""),
+      "oldAdministrativeClass" -> changeInfo.oldRoadAddress.administrativeClass,
+      "newEly" -> changeInfo.newRoadAddress.ely,
+      "newRoadNumber" -> changeInfo.newRoadAddress.roadNumber,
+      "newTrack" -> changeInfo.newRoadAddress.track,
+      "newRoadPartNumber" -> changeInfo.newRoadAddress.roadPartNumber,
+      "newStartAddrM" -> changeInfo.newRoadAddress.startAddrM,
+      "newEndAddrM" -> changeInfo.newRoadAddress.endAddrM,
+      "newLength" -> changeInfo.newRoadAddress.length,
+      "newAdministrativeClass" -> changeInfo.newRoadAddress.administrativeClass
     )
   }
 

@@ -13,9 +13,9 @@
     var dirtyProjectLinkIds = [];
     var dirtyProjectLinks = [];
     var publishableProject = false;
-    var LinkStatus = LinkValues.LinkStatus;
-    var ProjectStatus = LinkValues.ProjectStatus;
-    var Track = LinkValues.Track;
+    var LinkStatus = ViiteEnumerations.LinkStatus;
+    var ProjectStatus = ViiteEnumerations.ProjectStatus;
+    var Track = ViiteEnumerations.Track;
     var BAD_REQUEST_400 = 400;
     var PRECONDITION_FAILED_412 = 412;
     var INTERNAL_SERVER_ERROR_500 = 500;
