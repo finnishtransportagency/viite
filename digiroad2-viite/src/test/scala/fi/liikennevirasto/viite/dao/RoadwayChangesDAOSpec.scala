@@ -325,46 +325,46 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
       val dao = new RoadwayChangesDAO()
 
       sqlu"""insert into ROADWAY_CHANGES(project_id,change_type,old_road_number,old_road_part_number,old_track,old_start_addr_m,old_end_addr_m,
-                            new_road_number,new_road_part_number,new_track,new_start_addr_m,new_end_addr_m,old_discontinuity,new_discontinuity,
-                            old_administrative_class,new_administrative_class,old_ely,new_ely, roadway_change_id)
+                                            new_road_number,new_road_part_number,new_track,new_start_addr_m,new_end_addr_m,old_discontinuity,new_discontinuity,
+                                            old_administrative_class,new_administrative_class,old_ely,new_ely, roadway_change_id)
                                   values($projectId,$changeTypeUnchanged,$roadNumber,$roadPartNumber,$trackCombined,0,607,$roadNumber,$roadPartNumber,
                                          $trackCombined,0,607,$discontinuity,$discontinuity,$adminClass,$adminClass,$ely,$ely,$roadwayChangeId)
           """.execute
 
       sqlu"""insert into ROADWAY_CHANGES(project_id,change_type,old_road_number,old_road_part_number,old_track,old_start_addr_m,old_end_addr_m,
-                            new_road_number,new_road_part_number,new_track,new_start_addr_m,new_end_addr_m,old_discontinuity,new_discontinuity,
-                            old_administrative_class,new_administrative_class,old_ely,new_ely, roadway_change_id)
+                                            new_road_number,new_road_part_number,new_track,new_start_addr_m,new_end_addr_m,old_discontinuity,new_discontinuity,
+                                            old_administrative_class,new_administrative_class,old_ely,new_ely, roadway_change_id)
                                   values($projectId,$changeTypeTransfer,$roadNumber,$roadPartNumber,$trackCombined,607,909,$roadNumber,$roadPartNumber,
                                          $trackRight,607,909,$discontinuity,$discontinuity,$adminClass,$adminClass,$ely,$ely,$roadwayChangeId + 1)
           """.execute
 
-      sqlu""" insert into ROADWAY_CHANGES(project_id,change_type,old_discontinuity,new_discontinuity,OLD_ADMINISTRATIVE_CLASS,NEW_ADMINISTRATIVE_CLASS,
-                             old_ely,new_ely, ROADWAY_CHANGE_ID,new_road_number,new_road_part_number,new_start_addr_m,new_end_addr_m, new_track)
-                                   Values($projectId,$changeTypeNew,$discontinuity,$discontinuity,$adminClass,$adminClass,$ely,$ely,
-                                          $roadwayChangeId + 2,$roadNumber,$roadPartNumber,607,909, $trackLeft) """.execute
+      sqlu""" insert into ROADWAY_CHANGES(project_id,change_type,new_road_number,new_road_part_number,old_discontinuity,new_discontinuity,
+                                            old_administrative_class,new_administrative_class,old_ely,new_ely,new_start_addr_m,new_end_addr_m, new_track,roadway_change_id)
+                                   Values($projectId,$changeTypeNew,$roadNumber,$roadPartNumber,$discontinuity,$discontinuity,$adminClass,
+                                          $adminClass,$ely,$ely,607,909, $trackLeft, $roadwayChangeId + 2)
+          """.execute
 
       sqlu"""insert into ROADWAY_CHANGES(project_id,change_type,old_road_number,old_road_part_number,old_track,old_start_addr_m,old_end_addr_m,
-                            new_road_number,new_road_part_number,new_track,new_start_addr_m,new_end_addr_m, old_discontinuity,new_discontinuity,
-                            old_administrative_class,new_administrative_class,old_ely,new_ely, roadway_change_id)
+                                            new_road_number,new_road_part_number,new_track,new_start_addr_m,new_end_addr_m, old_discontinuity,new_discontinuity,
+                                            old_administrative_class,new_administrative_class,old_ely,new_ely, roadway_change_id)
                                   values($projectId,$changeTypeTransfer,$roadNumber,$roadPartNumber,$trackCombined,909,7862,$roadNumber,$roadPartNumber,
                                          $trackCombined,909,7862,$discontinuity,$discontinuity,$adminClass,$adminClass,$ely,$ely,$roadwayChangeId + 3)
           """.execute
 
-      sqlu"""insert into ROAD_NAME(id, road_number, road_name, start_date, valid_from, created_by, created_time)
-                                  values($roadNameId, $roadNumber, 'Turku-Oulu', '1996-01-01',TIMESTAMP '2006-01-17 12:26:36.000000',
-                                         'test', TIMESTAMP '2006-01-01 12:26:36.000000')
-          """.execute
+      // create current road name and history road name for road number 8
+      RoadNameDAO.create(
+        Seq(
+          RoadName(roadNameId, roadNumber, "Turku-Oulu", Some(DateTime.parse("1996-01-01")),None,Some(DateTime.parse("2006-01-17")),None,"test"),
+          RoadName(roadNameId + 1, roadNumber, "TURKU-PORI-KOKKOLA-OULU", Some(DateTime.parse("1989-01-01")),Some(DateTime.parse("1996-01-01")),Some(DateTime.parse("2006-01-17")),None,"test")
+        )
+      )
 
-      // road name history for road number 8
-      sqlu"""insert into ROAD_NAME(id, road_number, road_name, start_date, end_date, valid_from, created_by, created_time)
-                                  values($roadNameId + 1, $roadNumber, 'TURKU-PORI-KOKKOLA-OULU', '1989-01-01', '1996-01-01',
-                                         TIMESTAMP '2006-01-17 12:26:36.000000', 'test', TIMESTAMP '2006-01-01 12:26:36.000000')
-          """.execute
+      projectDAO.create(
+        Project(projectId, ProjectState.Accepted, "EPO: 8/219","test", DateTime.parse("2022-07-07"),"test",DateTime.parse("2022-07-01"),
+                  DateTime.parse("2022-07-07"),"",Seq(),Seq(),None,None)
+      )
 
-      sqlu"""insert into PROJECT(id, state, name, created_by, created_date, modified_by, modified_date, add_info, start_date, status_info, coord_x, coord_y, zoom, accepted_date)
-                                  values($projectId, 12, 'EPO: 8/219', 'test', TIMESTAMP '2022-07-07 12:26:36.000000', 'test', TIMESTAMP '2022-07-07 12:26:36.000000',
-                                         'unit test project', '2022-07-01', '', 211542.377, 6920574.432, 9, TIMESTAMP '2022-07-07 12:26:36.000000')
-          """.execute
+      sqlu"""update project set accepted_date= TIMESTAMP '2022-07-07 12:26:36.000000' where id=$projectId""".execute
 
       val startDate = "2022-07-05"
       val startDate2 = "2022-06-30"
@@ -379,7 +379,7 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
       result2 should have size(0) // no results because the start date parameter is after the project start date (i.e. road address start date)
 
       val result3 = dao.fetchChangeInfosForRoadAddressChangesBrowser(Some(startDate2), None, Some(dateTargetRoadAddress), None, Some(roadNumber), None, None)
-      result3 should have size(4) // now the start date parameter is before the project start date (i.e. road address start date) so result should have the roadway changes
+      result3 should have size(4) // now the start date parameter is before the project start date (i.e. road address start date) so the result should contain the roadway changes
       result3.head shouldBe a [ChangeInfoForRoadAddressChangesBrowser]
 
       val roadNames = result3.map(res => res.roadName).distinct
