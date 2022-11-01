@@ -56,23 +56,6 @@
       [1, 'Rakenteilla (valtio)']
     ];
 
-    var nodes = [
-      [1, 'Normaali tasoliittymä'],
-      [3, 'Kiertoliittymä'],
-      [4, 'Y-liittymä'],
-      [5, 'Eritasoliittymä'],
-      [7, 'Hallinnollinen raja'],
-      [8, 'ELY-raja'],
-      [10, 'Moniajoratainen liittymä'],
-      [12, 'Liityntätie'],
-      [13, 'Tien alku/loppu'],
-      [14, 'Silta'],
-      [15, 'Huoltoaukko'],
-      [16, 'Yksityistie- tai katuliittymä'],
-      [17, 'Porrastettu liittymä'],
-      [18, 'Lautta']
-    ];
-
     var buildMultiColoredSegments = function () {
       var segments = '<div class = "rainbow-container"><div class="edge-left symbol linear linear-asset-1"></div>';
       for (var i = 1; i <= 6; i++) {
@@ -100,12 +83,17 @@
       return defaultLegendEntry + '</div>';
     }).join('');
 
-    var nodesLegendEntries = _.map(nodes, function (node) {
-      return '<div class="legend-entry" style="min-width: 100%;display: inline-flex;justify-content: left;align-items: center;">' +
-        '<img src="images/node-sprite.svg#' + node[0] + '" style="margin-right: 5px"/>' +
-        '<div class="label">' + node[0] + " " + node[1] + '</div>' +
-        '</div>';
-    }).join('');
+    function createNodeLegendEntries() {
+      let html = '';
+      for (const node in ViiteEnumerations.NodeType) {
+        if (Object.prototype.hasOwnProperty.call(ViiteEnumerations.NodeType, node) && ViiteEnumerations.NodeType[node].value !== 99)
+          html += '<div class="legend-entry" style="min-width: 100%;display: inline-flex;justify-content: left;align-items: center;">' +
+              '<img src="images/node-sprite.svg#' + ViiteEnumerations.NodeType[node].value + '" style="margin-right: 5px"/>' +
+              '<div class="label">' + ViiteEnumerations.NodeType[node].value + " " + ViiteEnumerations.NodeType[node].description + '</div>' +
+              '</div>';
+      }
+      return html;
+    }
 
     var roadProjectOperations = function () {
       return '<div class="legend-entry">' +
@@ -272,7 +260,7 @@
         nodeToolSelection.hide();
       } else if (applicationModel.getSelectedLayer() === "node") {
         container.empty();
-        roadClassLegend.append(nodesLegendEntries);
+        roadClassLegend.append(createNodeLegendEntries());
         roadClassLegend.append(junctionPicture);
         roadClassLegend.append(junctionTemplatePicture);
         roadClassLegend.append(nodeTemplatePicture);
