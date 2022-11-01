@@ -303,7 +303,7 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test When fetching road address change infos for road address browser then return change infos based on the parameters given") {
+  test("When fetching road address change infos for road address browser then return change infos based on the parameters given") {
     runWithRollback {
       val roadNameId = Sequences.nextRoadNameId
       val projectId = Sequences.nextViiteProjectId
