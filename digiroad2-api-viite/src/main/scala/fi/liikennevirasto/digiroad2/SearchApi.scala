@@ -45,7 +45,7 @@ class SearchApi(roadAddressService: RoadAddressService,
     val startMeasure = params.get("startMeasure").map(_.toDouble)
     val endMeasure = params.get("endMeasure").map(_.toDouble)
 
-    time(logger, s"GET request for /road_address/? (linkId: $linkId, startMeasure: $startMeasure, endMeasure: $endMeasure)") {
+    time(logger, s"GET request for /road_address/?", params=Some(params)) {
       roadAddressService.getRoadAddressWithLinkIdAndMeasure(linkId, startMeasure, endMeasure).map(roadAddressMapper)
     }
   }
@@ -154,7 +154,7 @@ class SearchApi(roadAddressService: RoadAddressService,
     )
 
   post("/road_address/?", operation(getRoadAddressByLinkIds)) {
-    time(logger, s"POST request for /road_address/?") {
+    time(logger, s"POST request for /road_address/?", params=Some(Map("requestBody" -> request.body))) {
       val linkIds = parsedBody.extract[Set[String]]
       roadAddressService.getRoadAddressByLinkIds(linkIds).map(roadAddressMapper)
     }
@@ -171,7 +171,7 @@ class SearchApi(roadAddressService: RoadAddressService,
     )
 
   post("/road_address/:road/?", operation(getRoadAddressWithRoadNumberParts)) {
-    time(logger, s"POST request for /road_address/:road/?"){
+    time(logger, s"POST request for /road_address/:road/?", params=Some(params + ("requestBody" -> request.body))){
       val roadNumber = params("road").toLong
       val roadParts = (parsedBody \ "roadParts").extract[Seq[Long]]
       val tracks = (parsedBody \ "tracks").extract[Seq[Int]]
