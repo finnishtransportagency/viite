@@ -120,10 +120,8 @@
         '<div class="legend-entry">' +
         '<div class="label">' + LinkStatus.NotHandled.displayText + '</div>' +
         '<div class="symbol linear operation-type-unhandeled"></div>' +
-        '<div class="label">Rakenteilla (kunta/yksityinen)</div>' +
-        '<div class="symbol linear construction-type-0"></div>' +
-        '<div class="label">Rakenteilla (valtio)</div>' +
-        '<div class="symbol linear construction-type-1"></div>' +
+        '</div>' +
+        createLifecycleStatusLegendEntries() +
         '</div>';
     };
 
