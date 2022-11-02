@@ -87,7 +87,7 @@
     function createNodeLegendEntries() {
       let html = '';
       for (const node in ViiteEnumerations.NodeType) {
-        if (Object.prototype.hasOwnProperty.call(ViiteEnumerations.NodeType, node) && ViiteEnumerations.NodeType[node].value !== 99)
+        if (Object.prototype.hasOwnProperty.call(ViiteEnumerations.NodeType, node) && ViiteEnumerations.NodeType[node] !== ViiteEnumerations.NodeType.UnknownNodeType)
           html += '<div class="legend-entry" style="min-width: 100%;display: inline-flex;justify-content: left;align-items: center;">' +
               '<img src="images/node-sprite.svg#' + ViiteEnumerations.NodeType[node].value + '" style="margin-right: 5px"/>' +
               '<div class="label">' + ViiteEnumerations.NodeType[node].value + " " + ViiteEnumerations.NodeType[node].description + '</div>' +
