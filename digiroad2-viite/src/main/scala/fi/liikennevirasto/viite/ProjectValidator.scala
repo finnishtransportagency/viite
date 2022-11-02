@@ -791,19 +791,19 @@ class ProjectValidator {
     */
   def checkRemovedEndOfRoadParts(project: Project, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
     projectLinks.filter(pl => pl.status == Terminated && pl.discontinuity == Discontinuity.EndOfRoad).flatMap { rrp =>
-      roadAddressService.getPreviousRoadAddressPart(rrp.roadNumber, rrp.roadPartNumber) match {
-        case Some(previousRoadPartNumber) =>
-          roadAddressService.getRoadAddressWithRoadAndPart(rrp.roadNumber, previousRoadPartNumber).reverse
-            .find(ra => !projectLinks.exists(link => link.linearLocationId == ra.linearLocationId || link.status != Terminated)) match {
-            case Some(actualProjectLinkForPreviousEnd) =>
-              return Seq(ValidationErrorDetails(project.id, alterMessage(ValidationErrorList.TerminationContinuity, currentRoadAndPart = Some(Seq((actualProjectLinkForPreviousEnd.roadNumber, actualProjectLinkForPreviousEnd.roadPartNumber)))),
-                Seq(actualProjectLinkForPreviousEnd.id),
-                Seq(ProjectCoordinates(actualProjectLinkForPreviousEnd.geometry.head.x, actualProjectLinkForPreviousEnd.geometry.head.y, defaultZoomlevel)), Some("")))
-            case None => Seq()
-          }
-        case None => Seq()
+      val roadPartsInProject = projectLinks.filter(_.roadNumber == rrp.roadNumber).map(_.roadPartNumber)
+      val validRoadParts = roadAddressService.getValidRoadAddressParts(rrp.roadNumber, project.startDate)
+      if (!validRoadParts.forall(p => roadPartsInProject.contains(p))) {
+        val lastRoadAddress = roadAddressService.getRoadAddressWithRoadAndPart(rrp.roadNumber, validRoadParts.filter(p => !roadPartsInProject.contains(p)).max, fetchOnlyEnd = true)
+        if (lastRoadAddress.head.discontinuity != Discontinuity.EndOfRoad)
+          Seq(ValidationErrorDetails(project.id, alterMessage(ValidationErrorList.TerminationContinuity, currentRoadAndPart = Some(Seq((rrp.roadNumber, lastRoadAddress.head.roadPartNumber)))), Seq(lastRoadAddress.head.id),
+            Seq(ProjectCoordinates(lastRoadAddress.head.geometry.head.x, lastRoadAddress.head.geometry.head.y, defaultZoomlevel)), Some("")))
+        else
+          Seq()
       }
-    }
+      else
+        Seq()
+    }.distinct
   }
 
   def checkActionsInRoadsNotInProject(project: Project, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
