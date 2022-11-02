@@ -51,11 +51,6 @@
       [99, 'Osoitteeton (valtio)']
     ];
 
-    var lifecycleStatusUINames = [
-      [0, 'Rakenteilla (kunta/yksityinen)'],
-      [1, 'Rakenteilla (valtio)']
-    ];
-
     var buildMultiColoredSegments = function () {
       var segments = '<div class = "rainbow-container"><div class="edge-left symbol linear linear-asset-1"></div>';
       for (var i = 1; i <= 6; i++) {
@@ -65,12 +60,18 @@
       return segments + '<div class="middle symbol linear rainbow-asset-2"></div><div class="middle symbol linear rainbow-asset-1 "></div> <div class="edge-right symbol linear linear-asset-1"></div></div>';
     };
 
-    var lifecycleStatusLegendEntries = _.map(lifecycleStatusUINames, function (lifecycleStatus) {
-      return '<div class="legend-entry">' +
-        '<div class="label">' + lifecycleStatus[1] + '</div>' +
-        '<div class="symbol linear construction-type-' + lifecycleStatus[0] + '"></div>' +
-        '</div>';
-    }).join('');
+    function createLifecycleStatusLegendEntries ()  {
+      let html = '';
+      for (const status in ViiteEnumerations.LifeCycleStatus) {
+        if (Object.prototype.hasOwnProperty.call(ViiteEnumerations.LifeCycleStatus, status)) {
+          html += '<div class="legend-entry">' +
+                    '<div class="label">' + ViiteEnumerations.LifeCycleStatus[status].description + '</div>' +
+                    '<div class="symbol linear construction-type-' + ViiteEnumerations.LifeCycleStatus[status].value + '"></div>' +
+                  '</div>';
+        }
+      }
+      return html;
+    }
 
     var roadClassLegendEntries = _.map(roadClasses, function (roadClass) {
       var defaultLegendEntry =
@@ -127,7 +128,7 @@
     };
 
     roadClassLegend.append(roadClassLegendEntries);
-    roadClassLegend.append(lifecycleStatusLegendEntries);
+    roadClassLegend.append(createLifecycleStatusLegendEntries());
     roadClassLegend.append(calibrationPointPicture);
 
     var Tool = function (toolName, icon, description) {
@@ -269,7 +270,7 @@
       } else {
         container.empty();
         roadClassLegend.append(roadClassLegendEntries);
-        roadClassLegend.append(lifecycleStatusLegendEntries);
+        roadClassLegend.append(createLifecycleStatusLegendEntries());
         roadClassLegend.append(calibrationPointPicture);
         nodeToolSelection.hide();
       }
