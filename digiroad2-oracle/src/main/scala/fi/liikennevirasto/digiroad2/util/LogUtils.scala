@@ -23,7 +23,11 @@ object LogUtils {
       result
     } catch {
       case e: Exception =>
-        logger.error(s"$operationName failed. $paramString")
+        val errorString = e.getStackTrace.find(st => st.getClassName.startsWith("fi.liikennevirasto")) match {
+          case Some(lineFound) => s"at $lineFound"
+          case _ => s""
+        }
+        logger.error(s"$operationName failed. $paramString ${e.getClass.getName}: ${e.getMessage} $errorString")
         throw e
     }
   }
