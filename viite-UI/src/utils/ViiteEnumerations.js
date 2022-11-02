@@ -61,6 +61,11 @@
     NoClass: {value: 99, description: "NoClass"}
   };
 
+  root.LifeCycleStatus = {
+    UnderConstructionPrivate: {value: 0, description: "Rakenteilla (kunta/yksityinen)"},
+    UnderConstructionState: {value: 1, description: "Rakenteilla (valtio)"}
+  };
+
   root.TrafficDirection = {
     BothDirections: {value: 2, description: "Molempiin suuntiin"},
     AgainstDigitizing: {value: 3, description: "Digitointisuuntaa vastaan"},
