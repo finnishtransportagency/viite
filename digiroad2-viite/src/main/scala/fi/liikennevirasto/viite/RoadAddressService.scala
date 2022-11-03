@@ -595,13 +595,13 @@ class RoadAddressService(
   }
 
   /**
-    * Gets all the previous road address part in the given road number and road part number
+    * Gets the previous road address part in the given road number and road part number
     *
     * @param roadNumber The road number
     * @param roadPart   The road part number
-    * @return Returns previous parts in road number, if they exist
+    * @return Returns previous part in road number, if it exists
     */
-  def getPreviousRoadAddressPart(roadNumber: Long, roadPart: Long): Option[Long] = {
+  def getPreviousRoadPartNumber(roadNumber: Long, roadPart: Long): Option[Long] = {
     withDynSession {
       roadwayDAO.fetchPreviousRoadPartNumber(roadNumber, roadPart)
     }
