@@ -977,8 +977,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
       .parameters(
         pathParam[Long]("projectId").description("Id of a project")
       )
-    tags "ViiteAPI - Project"
-    summary "Given a valid projectId, this will run InvalidUnchangedLinks validation to the project in question."
+      tags "ViiteAPI - Project"
+      summary "Given a valid projectId, this will run InvalidUnchangedLinks validation to the project in question."
     )
 
 
