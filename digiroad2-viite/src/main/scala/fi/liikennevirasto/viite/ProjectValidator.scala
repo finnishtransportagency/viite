@@ -1272,7 +1272,7 @@ class ProjectValidator {
      */
     def validateTheEndOfPreviousRoadPart: Seq[ValidationErrorDetails] = {
       val (road, part): (Long, Long) = (roadProjectLinks.head.roadNumber, roadProjectLinks.head.roadPartNumber)
-      roadAddressService.getPreviousRoadAddressPart(road, part) match {
+      roadAddressService.getPreviousRoadPartNumber(road, part) match {
         case Some(previousRoadPartNumber) =>
           val (leftLinks, rightLinks) = (roadProjectLinks.filter(_.track != Track.RightSide), roadProjectLinks.filter(_.track != Track.LeftSide))
           //Skip this validation if previousRoadPartNumber is reserved in the project or either track (or combined track) has no project links assigned to it.
