@@ -791,18 +791,18 @@ class ProjectValidator {
     */
   def checkRemovedEndOfRoadParts(project: Project, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
     projectLinks.filter(pl => pl.status == Terminated && pl.discontinuity == Discontinuity.EndOfRoad).flatMap { rrp =>
-      val roadPartsInProject = projectLinks.filter(_.roadNumber == rrp.roadNumber).map(_.roadPartNumber)
+      val roadPartsInProject = projectLinks.filter(_.roadNumber == rrp.roadNumber).flatMap(pl => Seq(pl.roadPartNumber,pl.originalRoadPartNumber)).distinct
       val validRoadParts = roadAddressService.getValidRoadAddressParts(rrp.roadNumber, project.startDate)
-      if (!validRoadParts.forall(p => roadPartsInProject.contains(p))) {
-        val lastRoadAddress = roadAddressService.getRoadAddressWithRoadAndPart(rrp.roadNumber, validRoadParts.filter(p => !roadPartsInProject.contains(p)).max, fetchOnlyEnd = true)
-        if (lastRoadAddress.head.discontinuity != Discontinuity.EndOfRoad)
-          Seq(ValidationErrorDetails(project.id, alterMessage(ValidationErrorList.TerminationContinuity, currentRoadAndPart = Some(Seq((rrp.roadNumber, lastRoadAddress.head.roadPartNumber)))), Seq(lastRoadAddress.head.id),
-            Seq(ProjectCoordinates(lastRoadAddress.head.geometry.head.x, lastRoadAddress.head.geometry.head.y, defaultZoomlevel)), Some("")))
-        else
-          Seq()
+      validRoadParts.filter(roadPart => !roadPartsInProject.contains(roadPart)) match {
+        case Seq() => Seq()
+        case roadParts =>
+          val lastRoadAddress = roadAddressService.getRoadAddressWithRoadAndPart(rrp.roadNumber, roadParts.max).maxBy(_.endAddrMValue)
+          if (lastRoadAddress.discontinuity != Discontinuity.EndOfRoad)
+            Seq(ValidationErrorDetails(project.id, alterMessage(ValidationErrorList.TerminationContinuity, currentRoadAndPart = Some(Seq((rrp.roadNumber, lastRoadAddress.roadPartNumber)))), Seq(lastRoadAddress.id),
+              Seq(ProjectCoordinates(lastRoadAddress.geometry.head.x, lastRoadAddress.geometry.head.y, defaultZoomlevel)), Some("")))
+          else
+            Seq()
       }
-      else
-        Seq()
     }.distinct
   }
 
