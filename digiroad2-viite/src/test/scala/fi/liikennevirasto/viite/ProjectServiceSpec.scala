@@ -44,8 +44,8 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   val mockRoadAddressService: RoadAddressService = MockitoSugar.mock[RoadAddressService]
   val mockNodesAndJunctionsService: NodesAndJunctionsService = MockitoSugar.mock[NodesAndJunctionsService]
   val mockEventBus: DigiroadEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val mockVVHClient: KgvRoadLink = MockitoSugar.mock[KgvRoadLink]
-  val mockVVHRoadLinkClient: KgvRoadLinkClient[RoadLink] = MockitoSugar.mock[KgvRoadLinkClient[RoadLink]]
+  val mockKGVClient: KgvRoadLink = MockitoSugar.mock[KgvRoadLink]
+  val mockKGVRoadLinkClient: KgvRoadLinkClient[RoadLink] = MockitoSugar.mock[KgvRoadLinkClient[RoadLink]]
   val projectValidator = new ProjectValidator
   val projectDAO = new ProjectDAO
   val projectLinkDAO = new ProjectLinkDAO

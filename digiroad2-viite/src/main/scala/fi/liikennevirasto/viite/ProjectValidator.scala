@@ -21,9 +21,9 @@ import scala.collection.immutable.ListMap
 class ProjectValidator {
 
   val logger = LoggerFactory.getLogger(getClass)
-  lazy val vvhClient: KgvRoadLink = new KgvRoadLink
+  lazy val KGVClient: KgvRoadLink = new KgvRoadLink
   val eventBus = new DummyEventBus
-  val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer, ViiteProperties.kgvRoadlinkFrozen)
+  val linkService = new RoadLinkService(KGVClient, eventBus, new DummySerializer, ViiteProperties.kgvRoadlinkFrozen)
   val roadwayDAO = new RoadwayDAO
   val linearLocationDAO = new LinearLocationDAO
   val roadNetworkDAO: RoadNetworkDAO = new RoadNetworkDAO
