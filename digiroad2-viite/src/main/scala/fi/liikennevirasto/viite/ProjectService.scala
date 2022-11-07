@@ -2,7 +2,6 @@ package fi.liikennevirasto.viite
 
 import java.sql.SQLException
 import java.util.Date
-
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, TrafficDirection, _}
 import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
@@ -401,7 +400,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def createProjectLinks(linkIds: Seq[String], projectId: Long, roadNumber: Long, roadPartNumber: Long, track: Track, discontinuity: Discontinuity, administrativeClass: AdministrativeClass, roadLinkSource: LinkGeomSource, roadEly: Long, user: String, roadName: String, coordinates: Option[ProjectCoordinates] = None): Map[String, Any] = {
-    withDynSession {
+    withDynTransaction {
       writableWithValidTrack(projectId, track.value) match {
         case None =>
           val linkId = linkIds.head
@@ -428,7 +427,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                 Map("success" -> false, "errorMessage" -> errorMessage)
               }
               case None => {
-                Map("success" -> true, "projectErrors" -> validateProjectByIdHighPriorityOnly(projectId, newSession = false))
+                Map("success" -> true, "projectErrors" -> validateProjectAfterAddingLinks(projectId, roadNumber, roadPartNumber, discontinuity, newSession = false))
               }
             }
           }
@@ -469,7 +468,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   /**
     * Used when adding road address that do not have a previous address
     */
-  private def addNewLinksToProjectInTX(newLinks: Seq[ProjectLink], projectId: Long, user: String, firstLinkId: String, discontinuity: Discontinuity) = {
+  private def addNewLinksToProjectInTX(newLinks: Seq[ProjectLink], projectId: Long, user: String, firstLinkId: String, discontinuity: Discontinuity): Option[String] = {
     val newRoadNumber = newLinks.head.roadNumber
     val newRoadPartNumber = newLinks.head.roadPartNumber
     val linkStatus = newLinks.head.status
@@ -534,7 +533,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               case 2 => { val endLink = endLinkOfNewLinks.filterNot(_.linkId == firstLinkId).head
                 newLinks.filterNot(_.equals(endLink)) :+ endLink.copy(discontinuity = discontinuity)
               }
-              case _ => throw new RoadAddressException(AddNewLinksFailed)
+              case _ => newLinks
             }
           } else newLinks
         }
@@ -2209,6 +2208,17 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
     else {
       projectValidator.validateProject(fetchProjectById(projectId).get, projectLinkDAO.fetchProjectLinks(projectId))
+    }
+  }
+
+  def validateProjectAfterAddingLinks(projectId: Long, roadNumber: Long, roadPartNumber: Long, discontinuity: Discontinuity, newSession: Boolean = true): Seq[projectValidator.ValidationErrorDetails] = {
+    if (newSession) {
+      withDynSession {
+        validateProjectByIdHighPriorityOnly(projectId, false) ++ projectValidator.validateDiscontinuityAdded(projectId, roadNumber, roadPartNumber, discontinuity)
+      }
+    }
+    else {
+      validateProjectByIdHighPriorityOnly(projectId, false) ++ projectValidator.validateDiscontinuityAdded(projectId, roadNumber, roadPartNumber, discontinuity)
     }
   }
 

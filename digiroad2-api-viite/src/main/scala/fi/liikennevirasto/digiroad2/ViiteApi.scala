@@ -781,7 +781,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
           BadRequest("Missing mandatory ProjectLink parameter")
         case e: Exception =>
           logger.error(e.toString, e)
-          InternalServerError(e.toString)
+          Map("success" -> false, "errorMessage" -> e.toString)
       }
     }
   }
