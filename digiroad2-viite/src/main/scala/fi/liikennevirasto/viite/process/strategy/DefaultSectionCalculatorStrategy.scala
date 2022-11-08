@@ -584,23 +584,30 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
             val leftStartPoint = TrackSectionOrder.findChainEndpoints(oppositeTrackLinks).find(link => link._2.startAddrMValue == 0 && link._2.endAddrMValue != 0)
             chainEndPoints.minBy(p => p._2.geometry.head.distance2DTo(leftStartPoint.get._1))
           } else if (remainLinks.nonEmpty && oppositeTrackLinks.nonEmpty && remainLinks.forall(_.endAddrMValue == 0) && oppositeTrackLinks.forall(_.endAddrMValue == 0)) {
-            val candidateRightStartPoint = chainEndPoints.minBy(p => direction.dot(p._1.toVector - midPoint))
-            val candidateRightOppositeEnd = getOppositeEnd(candidateRightStartPoint._2, candidateRightStartPoint._1)
-            val candidateLeftStartPoint = TrackSectionOrder.findChainEndpoints(oppositeTrackLinks).minBy(_._1.distance2DTo(candidateRightStartPoint._1))
-            val candidateLeftOppositeEnd = getOppositeEnd(candidateLeftStartPoint._2, candidateLeftStartPoint._1)
-            val startingPointsVector = Vector3d(candidateRightOppositeEnd.x - candidateLeftOppositeEnd.x, candidateRightOppositeEnd.y - candidateLeftOppositeEnd.y, candidateRightOppositeEnd.z - candidateLeftOppositeEnd.z)
-            val angle =
-              if (startingPointsVector == Vector3d(0.0, 0.0, 0.0)) {
-                val startingPointVector = Vector3d(candidateRightStartPoint._1.x - candidateLeftStartPoint._1.x, candidateRightStartPoint._1.y - candidateLeftStartPoint._1.y, candidateRightStartPoint._1.z - candidateLeftStartPoint._1.z)
-                startingPointVector.angleXYWithNegativeValues(direction)
-              } else {
-                startingPointsVector.angleXYWithNegativeValues(direction)
+              val notEndOfRoad = Map(chainEndPoints.maxBy(_._2.discontinuity.value))
+              if (notEndOfRoad.size == 1)
+                notEndOfRoad.head
+              else {
+                  val candidateRightStartPoint  = chainEndPoints.minBy(p => {
+                    direction.dot(p._1.toVector - midPoint)
+                  })
+                  val candidateRightOppositeEnd = getOppositeEnd(candidateRightStartPoint._2, candidateRightStartPoint._1)
+                  val candidateLeftStartPoint = TrackSectionOrder.findChainEndpoints(oppositeTrackLinks).minBy(_._1.distance2DTo(candidateRightStartPoint._1))
+                  val candidateLeftOppositeEnd = getOppositeEnd(candidateLeftStartPoint._2, candidateLeftStartPoint._1)
+                  val startingPointsVector = Vector3d(candidateRightOppositeEnd.x - candidateLeftOppositeEnd.x, candidateRightOppositeEnd.y - candidateLeftOppositeEnd.y, candidateRightOppositeEnd.z - candidateLeftOppositeEnd.z)
+                  val angle =
+                    if (startingPointsVector == Vector3d(0.0, 0.0, 0.0)) {
+                      val startingPointVector = Vector3d(candidateRightStartPoint._1.x - candidateLeftStartPoint._1.x, candidateRightStartPoint._1.y - candidateLeftStartPoint._1.y, candidateRightStartPoint._1.z - candidateLeftStartPoint._1.z)
+                      startingPointVector.angleXYWithNegativeValues(direction)
+                    } else {
+                      startingPointsVector.angleXYWithNegativeValues(direction)
+                    }
+                  if (angle > 0) {
+                    chainEndPoints.filterNot(_._1.equals(candidateRightStartPoint._1)).head
+                  } else {
+                    candidateRightStartPoint
+                  }
               }
-            if (angle > 0) {
-              chainEndPoints.filterNot(_._1.equals(candidateRightStartPoint._1)).head
-            } else {
-              candidateRightStartPoint
-            }
           } else {
             val startPoint1 = chainEndPoints.minBy(p => direction.dot(p._1.toVector - midPoint))
             val startPoint2 = chainEndPoints.maxBy(p => direction.dot(p._1.toVector - midPoint))
