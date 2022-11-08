@@ -770,7 +770,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
             val projectErrors = response.getOrElse("projectErrors", Seq).asInstanceOf[Seq[projectService.projectValidator.ValidationErrorDetails]].map(errorPartsToApi)
             Map("success" -> true,
               "publishable" -> response.get("projectErrors").isEmpty,
-              "projectErrors" -> projectErrors)
+              "projectErrors" -> projectErrors,
+              "errorMessage" -> response.get("errorMessage"))
           case _ => response
         }
       } catch {
