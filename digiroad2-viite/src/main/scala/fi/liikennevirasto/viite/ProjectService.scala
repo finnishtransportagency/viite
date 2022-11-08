@@ -427,7 +427,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                 Map("success" -> false, "errorMessage" -> errorMessage)
               }
               case None => {
-                Map("success" -> true, "projectErrors" -> validateProjectAfterAddingLinks(projectId, roadNumber, roadPartNumber, discontinuity, newSession = false))
+                val projectLinks = projectLinkDAO.fetchProjectLinksByProjectRoadPart(roadNumber, roadPartNumber, projectId)
+                val errorAddingDiscontinuity = if (!projectLinks.exists(_.discontinuity == discontinuity)) Some(UndeterminedLastNewLinkNoDiscontinuitySet) else None
+                Map("success" -> true, "projectErrors" -> validateProjectByIdHighPriorityOnly(projectId, newSession = false), "errorMessage" -> errorAddingDiscontinuity)
               }
             }
           }
@@ -2208,17 +2210,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
     else {
       projectValidator.validateProject(fetchProjectById(projectId).get, projectLinkDAO.fetchProjectLinks(projectId))
-    }
-  }
-
-  def validateProjectAfterAddingLinks(projectId: Long, roadNumber: Long, roadPartNumber: Long, discontinuity: Discontinuity, newSession: Boolean = true): Seq[projectValidator.ValidationErrorDetails] = {
-    if (newSession) {
-      withDynSession {
-        validateProjectByIdHighPriorityOnly(projectId, false) ++ projectValidator.validateDiscontinuityAdded(projectId, roadNumber, roadPartNumber, discontinuity)
-      }
-    }
-    else {
-      validateProjectByIdHighPriorityOnly(projectId, false) ++ projectValidator.validateDiscontinuityAdded(projectId, roadNumber, roadPartNumber, discontinuity)
     }
   }
 

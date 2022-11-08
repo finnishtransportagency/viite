@@ -134,8 +134,7 @@ class ProjectValidator {
       WrongDiscontinuityBeforeProjectWithElyChangeInProject,
       ErrorInValidationOfUnchangedLinks, RoadNotEndingInElyBorder, RoadContinuesInAnotherEly,
       MultipleElyInPart, IncorrectLinkStatusOnElyCodeChange,
-      ElyCodeChangeButNoRoadPartChange, ElyCodeChangeButNoElyChange, ElyCodeChangeButNotOnEnd, ElyCodeDiscontinuityChangeButNoElyChange, RoadNotReserved, DistinctAdministrativeClassesBetweenTracks,
-      DiscontinuityNotAddedToNewLink)
+      ElyCodeChangeButNoRoadPartChange, ElyCodeChangeButNoElyChange, ElyCodeChangeButNotOnEnd, ElyCodeDiscontinuityChangeButNoElyChange, RoadNotReserved, DistinctAdministrativeClassesBetweenTracks)
 
     // Viite-942
     case object MissingEndOfRoad extends ValidationError {
@@ -456,14 +455,6 @@ class ProjectValidator {
       def notification = false
     }
 
-    case object DiscontinuityNotAddedToNewLink extends ValidationError {
-      def value = 37
-
-      def message: String = DiscontinuityNotAddedToNewLinkMessage
-
-      def notification = false
-    }
-
     // Viite-2714
     case object NoReverse extends ValidationError {
       def value = 99
@@ -562,15 +553,6 @@ class ProjectValidator {
       validation(project, projectLinks) ++ errors
     }
     errors.distinct   // return distinct normal priority validation errors
-  }
-
-  def validateDiscontinuityAdded(projectId: Long, roadNumber: Long, roadPartNumber: Long, discontinuity: Discontinuity) : Seq[ValidationErrorDetails] = {
-    val projectLinks = projectLinkDAO.fetchProjectLinksByProjectRoadPart(roadNumber, roadPartNumber, projectId)
-    val projectLinksOnRoadPart = projectLinks.filter(pl => pl.roadNumber == roadNumber && pl.roadPartNumber == roadPartNumber)
-    if (!projectLinksOnRoadPart.exists(_.discontinuity == discontinuity))
-      error(projectId, ValidationErrorList.DiscontinuityNotAddedToNewLink)(projectLinksOnRoadPart).toSeq
-    else
-      Seq()
   }
 
   def error(id: Long, validationError: ValidationError, info: String = "N/A")(pl: Seq[ProjectLink]): Option[ValidationErrorDetails] = {
