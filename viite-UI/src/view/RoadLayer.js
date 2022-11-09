@@ -105,14 +105,14 @@
     var displayAdministrativeClass = function (administrativeClassCode) {
       var administrativeClass;
       switch (administrativeClassCode) {
-        case LinkValues.AdministrativeClassShort.PublicRoad.value:
-          administrativeClass = LinkValues.AdministrativeClassShort.PublicRoad.description;
+        case ViiteEnumerations.AdministrativeClassShort.PublicRoad.value:
+          administrativeClass = ViiteEnumerations.AdministrativeClassShort.PublicRoad.description;
           break;
-        case LinkValues.AdministrativeClassShort.MunicipalityStreetRoad.value:
-          administrativeClass = LinkValues.AdministrativeClassShort.MunicipalityStreetRoad.description;
+        case ViiteEnumerations.AdministrativeClassShort.MunicipalityStreetRoad.value:
+          administrativeClass = ViiteEnumerations.AdministrativeClassShort.MunicipalityStreetRoad.description;
           break;
-        case LinkValues.AdministrativeClassShort.PrivateRoad.value:
-          administrativeClass = LinkValues.AdministrativeClassShort.PrivateRoad.description;
+        case ViiteEnumerations.AdministrativeClassShort.PrivateRoad.value:
+          administrativeClass = ViiteEnumerations.AdministrativeClassShort.PrivateRoad.description;
           break;
         default:
           break;
@@ -143,10 +143,10 @@
     };
 
     var displayNodeType = function (nodeTypeCode) {
-      var nodeType = _.find(LinkValues.NodeType, function (type) {
+      var nodeType = _.find(ViiteEnumerations.NodeType, function (type) {
         return type.value === nodeTypeCode;
       });
-      return _.isUndefined(nodeType) ? LinkValues.NodeType.UnknownNodeType.description : nodeType.description;
+      return _.isUndefined(nodeType) ? ViiteEnumerations.NodeType.UnknownNodeType.description : nodeType.description;
     };
 
     var displayJunctionInfo = function (event, pixel) {

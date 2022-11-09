@@ -67,9 +67,9 @@
     var preMovedRoadAddresses = [];
     var date = [];
     var historicRoadLinks = [];
-    var LinkStatus = LinkValues.LinkStatus;
-    var LinkSource = LinkValues.LinkGeomSource;
-    var lifecycleStatus = LinkValues.lifecycleStatus;
+    var LinkStatus = ViiteEnumerations.LinkStatus;
+    var LinkSource = ViiteEnumerations.LinkGeomSource;
+    var lifecycleStatus = ViiteEnumerations.lifecycleStatus;
     var clickedLinearLocationId = 0;
     var selectedRoadLinkModels = [];
 
@@ -187,7 +187,7 @@
       unaddressedUnknownRoadLinkGroups = unaddressedRoadLinkGroups[1];
 
       var includeUnknowns = _.isUndefined(drawUnknowns) && !drawUnknowns;
-      if (parseInt(zoom) <= zoomlevels.minZoomForEditMode && (includeUnknowns && !applicationModel.selectionTypeIs(LinkValues.SelectionType.Unknown))) {
+      if (parseInt(zoom) <= zoomlevels.minZoomForEditMode && (includeUnknowns && !applicationModel.selectionTypeIs(ViiteEnumerations.SelectionType.Unknown))) {
         // only the fetched road links that have an address
         setRoadLinkGroups(fetchedWithAddresses);
       } else {

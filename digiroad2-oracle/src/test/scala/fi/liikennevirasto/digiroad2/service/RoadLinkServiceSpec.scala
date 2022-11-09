@@ -12,14 +12,14 @@ import org.scalatest.mockito.MockitoSugar
 
 class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
-  class TestService(vvhClient: KgvRoadLink, eventBus: DigiroadEventBus = new DummyEventBus, vvhSerializer: KGVSerializer = new DummySerializer)
-    extends RoadLinkService(vvhClient, eventBus, vvhSerializer, false) {
+  class TestService(KGVClient: KgvRoadLink, eventBus: DigiroadEventBus = new DummyEventBus, vvhSerializer: KGVSerializer = new DummySerializer)
+    extends RoadLinkService(KGVClient, eventBus, vvhSerializer, false) {
     override def withDynTransaction[T](f: => T): T = f
     override def withDynSession[T](f: => T): T = f
   }
 
-  class RoadLinkTestService(vvhClient: KgvRoadLink, eventBus: DigiroadEventBus = new DummyEventBus, vvhSerializer: KGVSerializer = new DummySerializer)
-    extends RoadLinkService(vvhClient, eventBus, vvhSerializer, false) {
+  class RoadLinkTestService(KGVClient: KgvRoadLink, eventBus: DigiroadEventBus = new DummyEventBus, vvhSerializer: KGVSerializer = new DummySerializer)
+    extends RoadLinkService(KGVClient, eventBus, vvhSerializer, false) {
     override def withDynTransaction[T](f: => T): T = f
     override def withDynSession[T](f: => T): T = f
   }
@@ -29,13 +29,13 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val linkId = 2l.toString
     val roadLink = RoadLink(linkId, Nil, 0, AdministrativeClass.Municipality, TrafficDirection.TowardsDigitizing, None, None, LifecycleStatus.UnknownLifecycleStatus, municipalityCode = municipalityId, sourceId = "")
 
-    val mockVVHClient = MockitoSugar.mock[KgvRoadLink]
-    val mockVVHRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient[RoadLink]]
-    val service = new TestService(mockVVHClient)
+    val mockKGVClient = MockitoSugar.mock[KgvRoadLink]
+    val mockKGVRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient[RoadLink]]
+    val service = new TestService(mockKGVClient)
 
     PostGISDatabase.withDynTransaction {
-      when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-      when(mockVVHRoadLinkClient.fetchByMunicipality(municipalityId)).thenReturn(Seq(roadLink))
+      when(mockKGVClient.roadLinkData).thenReturn(mockKGVRoadLinkClient)
+      when(mockKGVRoadLinkClient.fetchByMunicipality(municipalityId)).thenReturn(Seq(roadLink))
 
       val roadLinks = service.getRoadLinksByMunicipality(municipalityId)
 

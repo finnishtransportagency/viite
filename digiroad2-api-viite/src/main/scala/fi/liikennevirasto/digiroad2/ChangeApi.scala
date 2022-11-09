@@ -38,7 +38,7 @@ class ChangeApi(roadAddressService: RoadAddressService, nodesAndJunctionsService
     val since = DateTime.parse(params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter"))))
     val until = DateTime.parse(params.get("until").getOrElse(halt(BadRequest("Missing mandatory 'until' parameter"))))
 
-    time(logger, s"GET request for /road_numbers (since: $since, until: $until)") {
+    time(logger, s"GET request for /road_numbers", params=Some(params)) {
       roadNumberToGeoJson(since, roadAddressService.getChanged(since, until))
     }
   }
