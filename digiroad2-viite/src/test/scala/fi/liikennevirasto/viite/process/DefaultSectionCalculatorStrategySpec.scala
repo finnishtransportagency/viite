@@ -141,7 +141,6 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       projectLinksWithAssignedValues.forall(!_.isNotCalculated) should be(true)
       projectLinksWithAssignedValues.forall(_.sideCode == SideCode.AgainstDigitizing) should be(true)
       projectLinksWithAssignedValues.sortBy(_.id).zip(newProjectLinks.sortBy(_.id)).forall { case (pl1, pl2) => {pl1.discontinuity == pl2.discontinuity && pl1.track == pl2.track}} should be(true)
-
     }
       // EndOfRoad reversed
     runWithRollback {

@@ -580,12 +580,13 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
             }
           }
         } else {
-          if (remainLinks.forall(_.endAddrMValue == 0) && oppositeTrackLinks.nonEmpty && oppositeTrackLinks.exists(_.endAddrMValue != 0)) {
+          if (remainLinks.forall(_.isNotCalculated) && oppositeTrackLinks.nonEmpty && oppositeTrackLinks.exists(_.endAddrMValue != 0)) {
             val leftStartPoint = TrackSectionOrder.findChainEndpoints(oppositeTrackLinks).find(link => link._2.startAddrMValue == 0 && link._2.endAddrMValue != 0)
             chainEndPoints.minBy(p => p._2.geometry.head.distance2DTo(leftStartPoint.get._1))
-          } else if (remainLinks.nonEmpty && oppositeTrackLinks.nonEmpty && remainLinks.forall(_.endAddrMValue == 0) && oppositeTrackLinks.forall(_.endAddrMValue == 0)) {
+          } else if (remainLinks.nonEmpty && oppositeTrackLinks.nonEmpty && remainLinks.forall(_.isNotCalculated) && oppositeTrackLinks.forall(_.isNotCalculated)) {
               val notEndOfRoad = Map(chainEndPoints.maxBy(_._2.discontinuity.value))
-              if (notEndOfRoad.size == 1)
+            // Get opposite end from roadpart by Discontinuity code if ending Discontinuity is defined
+            if (notEndOfRoad.size == 1 && chainEndPoints.exists(_._2.discontinuity.value < Discontinuity.MinorDiscontinuity.value))
                 notEndOfRoad.head
               else {
                   val candidateRightStartPoint  = chainEndPoints.minBy(p => {
