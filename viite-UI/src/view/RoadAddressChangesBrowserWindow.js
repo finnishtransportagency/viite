@@ -5,7 +5,7 @@
         const me = this;
 
         const roadAddressChangesBrowserWindow = $('<div class="form-horizontal road-address-changes-browser-window"></div>').hide();
-        roadAddressChangesBrowserWindow.append('<a href="" target="_blank">' + // TODO add link to manual, once manual is done
+        roadAddressChangesBrowserWindow.append('<a href="manual/index.html#!index.md#11_Tieosoitemuutosten_katselu_-ty%C3%B6kalu" target="_blank">' +
             '<button class="btn-manual" title="Avaa käyttöohje">' +
             '<i class="fas fa-question"></i>' +
             '</button>' +
