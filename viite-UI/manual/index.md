@@ -991,9 +991,9 @@ Hakuehdoista alkupäivämäärä on pakollinen tieto
 (5) Aosa: Pienin tieosanumero jolta haettavia tieosoitemuutoksia haetaan   
 (6) Losa: Suurin tieosanumero jolta haettavia tieosoitemuutoksia haetaan
 
-####  Alku- ja loppupäivämäärän kohde
-(7) Projektin hyväksymispvm: Alku- ja loppupvm kentät koskevat projetkin hyväksymispäivämäärää   
-(8) Muutoksen voimaantulopvm: Alku- ja loppupvm kentät koskevat tieosoitemuutoksen voimaantulopäivämäärää
+####  Alku- ja loppupäivämäärien kohde
+(7) Projektin hyväksymispvm: Alku- ja loppupvm -kentät rajaavat hakutuloksia projektin hyväksymispäivämäärän perusteella   
+(8) Muutoksen voimaantulopvm: Alku- ja loppupvm -kentät rajaavat hakutuloksia tieosoitemuutoksen voimaantulopäivämäärän perusteella    
 
 Huom! Haku saattaa kestää useita sekunteja haettaessa pelkästään alkupäivämäärällä (Viite hakee kaikki tieosoitemuutokset annetun alkupäivämäärän jälkeiseltä ajalta)
 
@@ -1008,14 +1008,14 @@ Jos hakutulos on liian suuri (>100 riviä) tarjoaa Viite pelkän Excel-latausmah
 
 ![Tieosoitemuutos_hakutulos](k84.PNG)
 
-_Kuva 11.2: Hakutulos haettaessa tieosoitemuutoksia jotka ovat syntyneet projektissa jonka hyväksymispäivämäärä on myöhempi kuin 1.4.2022 ja uusi tienumero on 8_
+_Kuva 11.2: Hakutulos haettaessa tieosoitemuutoksia jotka ovat syntyneet projektissa jonka hyväksymispäivämäärä on myöhempi kuin 1.4.2022 ja projektimuutoksen jälkeinen tienumero on 8_
 
 ![Tieosoitemuutos_hakutulos eri päivämääräkohteella](k85.PNG)
 
-_Kuva 11.3: Hakutulos haettaessa tieosoitemuutoksia joiden voimaantulopäivämäärä on myöhempi kuin 1.4.2022 ja uusi tienumero on 8_
+_Kuva 11.3: Hakutulos haettaessa tieosoitemuutoksia joiden voimaantulopäivämäärä on myöhempi kuin 1.4.2022 ja projektimuutoksen jälkeinen tienumero on 8_
 
 
-Ylläolevista kuvista voi huomata että samoilla parametreilla voi saada aikaiseksi eri hakutuloksia vaihtamalla päivämäärä kenttien kohdetta
+Ylläolevista kuvista voi huomata, että samoilla parametreilla voi saada aikaiseksi eri hakutuloksia vaihtamalla päivämääräkenttien kohdetta
 
 
 ![Excel -hakutulos](k86.png)
