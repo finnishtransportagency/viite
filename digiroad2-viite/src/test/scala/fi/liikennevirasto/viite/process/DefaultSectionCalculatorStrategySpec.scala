@@ -240,6 +240,56 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
         mx.head.endAddrMValue - mx.head.startAddrMValue should be(mx.head.originalEndAddrMValue - mx.head.originalStartAddrMValue)
       }
     }
+  test("Test defaultSectionCalculatorStrategy.assignMValues() and findStartingPoints When there is MinorDiscontinuity + Continuous + EndOfRoad from east to west intention " +
+       "Then return the same project links, but now with correct MValues and directions") {
+    runWithRollback {
+      val roadNumber     = 46001
+      val roadPartNumber = 1
+      val createdBy      = "Test"
+      val roadName       = None
+      val projectId      = Sequences.nextViiteProjectId
+
+      val newProjectLinks = Seq(
+        ProjectLink(1000, roadNumber, roadPartNumber, Track.Combined, Discontinuity.Continuous, 0, 0, 0, 0, None, None, Some(createdBy), "5f60a893-52d8-4de1-938b-2e4a04accc8c:1", 0.0, 147.232, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), List(Point(388281.0, 7292495.0, 0.0), Point(388396.0, 7292587.0, 0.0)), projectId, LinkStatus.New, AdministrativeClass.Municipality, FrozenLinkInterface, 147.232, 0, 0, 14, reversed = false, None, 1652179948783L, 0, roadName, None, None, None, None, None, None),
+        ProjectLink(1001, roadNumber, roadPartNumber, Track.Combined, Discontinuity.EndOfRoad, 0, 0, 0, 0, None, None, Some(createdBy), "49bd02c4-697f-4e88-a7b9-59a33549eeec:1", 0.0, 108.62, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), List(Point(388196.0, 7292427.0, 0.0), Point(388281.0, 7292495.0, 0.0)), projectId, LinkStatus.New, AdministrativeClass.Municipality, FrozenLinkInterface, 108.62, 0, 0, 14, reversed = false, None, 1652179948783L, 0, roadName, None, None, None, None, None, None),
+        ProjectLink(1002, roadNumber, roadPartNumber, Track.Combined, Discontinuity.MinorDiscontinuity, 0, 0, 0, 0, None, None, Some(createdBy), "a87b5257-72cd-4d48-9fff-54e81782cb64:1", 0.0, 105.259, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), List(Point(388412.0, 7292601.0, 0.0), Point(388494.0, 7292667.0, 0.0)), projectId, LinkStatus.New, AdministrativeClass.Municipality, FrozenLinkInterface, 105.259, 0, 0, 14, reversed = false, None, 1652179948783L, 0, roadName, None, None, None, None, None, None)
+      )
+      val startingPointsForCalculations = defaultSectionCalculatorStrategy.findStartingPoints(newProjectLinks, Seq.empty[ProjectLink], Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
+      val startPoint = newProjectLinks.find(_.discontinuity == Discontinuity.MinorDiscontinuity).get.geometry.last
+      startingPointsForCalculations should be((startPoint, startPoint))
+
+      val projectLinksWithAssignedValues = defaultSectionCalculatorStrategy.assignMValues(newProjectLinks, Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
+      // All Should have addresses
+      projectLinksWithAssignedValues.forall(!_.isNotCalculated) should be(true)
+      projectLinksWithAssignedValues.forall(_.sideCode == SideCode.AgainstDigitizing) should be(true)
+      val intendedOrder = Seq(newProjectLinks.last, newProjectLinks.head, newProjectLinks(1))
+      projectLinksWithAssignedValues.sortBy(_.endAddrMValue).zip(intendedOrder).forall { case (pl1, pl2) => {pl1.id == pl2.id}} should be(true)
+    }
+    // An opposite direction case
+    runWithRollback {
+      val roadNumber     = 46001
+      val roadPartNumber = 1
+      val createdBy      = "Test"
+      val roadName       = None
+      val projectId      = Sequences.nextViiteProjectId
+
+      val newProjectLinks = Seq(
+        ProjectLink(1000,roadNumber,roadPartNumber,Track.Combined,Discontinuity.Continuous,0,0,0,0,None,None,Some(createdBy),"49bd02c4-697f-4e88-a7b9-59a33549eeec:1",0.0,108.62,SideCode.Unknown,(NoCP,NoCP),(NoCP,NoCP),List(Point(388196.0,7292427.0,0.0), Point(388281.0,7292495.0,0.0)),projectId,LinkStatus.New,AdministrativeClass.Municipality,FrozenLinkInterface,108.62,0,0,14,reversed = false,None,1652179948783L,0,roadName,None,None,None,None,None,None),
+        ProjectLink(1001,roadNumber,roadPartNumber,Track.Combined,Discontinuity.EndOfRoad,0,0,0,0,None,None,Some(createdBy),"5f60a893-52d8-4de1-938b-2e4a04accc8c:1",0.0,147.232,SideCode.Unknown,(NoCP,NoCP),(NoCP,NoCP),List(Point(388281.0,7292495.0,0.0), Point(388396.0,7292587.0,0.0)),projectId,LinkStatus.New,AdministrativeClass.Municipality,FrozenLinkInterface,147.232,0,0,14,reversed = false,None,1652179948783L,0,roadName,None,None,None,None,None,None),
+        ProjectLink(1002,roadNumber,roadPartNumber,Track.Combined,Discontinuity.MinorDiscontinuity,0,0,0,0,None,None,Some(createdBy),"c502334c-b2df-43d4-b5fd-e6ec384e5c9c:1",0.0,101.59,SideCode.Unknown,(NoCP,NoCP),(NoCP,NoCP),List(Point(388102.0,7292352.0,0.0), Point(388181.0,7292415.0,0.0)),projectId,LinkStatus.New,AdministrativeClass.Municipality,FrozenLinkInterface,101.59,0,0,14,reversed = false,None,1652179948783L,0,roadName,None,None,None,None,None,None)
+      )
+      val startingPointsForCalculations = defaultSectionCalculatorStrategy.findStartingPoints(newProjectLinks, Seq.empty[ProjectLink], Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
+      val startPoint = newProjectLinks.find(_.discontinuity == Discontinuity.MinorDiscontinuity).get.geometry.head
+      startingPointsForCalculations should be((startPoint, startPoint))
+
+      val projectLinksWithAssignedValues = defaultSectionCalculatorStrategy.assignMValues(newProjectLinks, Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
+      // All Should have addresses
+      projectLinksWithAssignedValues.forall(!_.isNotCalculated) should be(true)
+      projectLinksWithAssignedValues.forall(_.sideCode == SideCode.TowardsDigitizing) should be(true)
+      val intendedOrder = Seq(newProjectLinks.last, newProjectLinks.head, newProjectLinks(1))
+      projectLinksWithAssignedValues.sortBy(_.endAddrMValue).zip(intendedOrder).forall { case (pl1, pl2) => {pl1.id == pl2.id}} should be(true)
+    }
+  }
 
   test("Test defaultSectionCalculatorStrategy.assignMValues() and findStartingPoints When using 4 geometries that end up in a point " +
     "Then return the same project links, but now with correct MValues and directions") {
