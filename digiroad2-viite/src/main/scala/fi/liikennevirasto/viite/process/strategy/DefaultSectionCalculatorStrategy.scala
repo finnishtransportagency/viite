@@ -248,11 +248,11 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       val it = pls.sliding(2)
       while (it.hasNext) {
         it.next() match {
-          case Seq(seq, next) => {
-            if (seq.endAddrMValue != next.startAddrMValue) throw new RoadAddressException(s"Address not continuous: ${seq.endAddrMValue} ${next.startAddrMValue} linkids: ${seq.linkId} ${next.linkId}")
-            if (!(seq.endAddrMValue > seq.startAddrMValue)) throw new RoadAddressException(s"Address length negative. linkid: ${seq.linkId}")
-
-            if (seq.status != LinkStatus.New && !(Math.abs((seq.endAddrMValue - seq.startAddrMValue) - (seq.originalEndAddrMValue - seq.originalStartAddrMValue)) < maxDiffForChange)) throw new RoadAddressException(s"Length mismatch. New: ${seq.startAddrMValue} ${seq.endAddrMValue} original: ${seq.originalStartAddrMValue} ${seq.originalEndAddrMValue} linkid: ${seq.linkId}")
+          case Seq(curr, next) => {
+            if (curr.endAddrMValue != next.startAddrMValue) throw new RoadAddressException(s"Address not continuous: ${curr.endAddrMValue} ${next.startAddrMValue} linkids: ${curr.linkId} ${next.linkId}")
+            if (!(curr.endAddrMValue > curr.startAddrMValue)) throw new RoadAddressException(s"Address length negative. linkid: ${curr.linkId}")
+            if (curr.status != LinkStatus.New && (curr.originalTrack == curr.track || curr.track == Track.Combined) && !(Math.abs((curr.endAddrMValue - curr.startAddrMValue) - (curr.originalEndAddrMValue - curr.originalStartAddrMValue)) < maxDiffForChange))
+              throw new RoadAddressException(s"Length mismatch. New: ${curr.startAddrMValue} ${curr.endAddrMValue} original: ${curr.originalStartAddrMValue} ${curr.originalEndAddrMValue} linkid: ${curr.linkId}")
           }
         }
       }
