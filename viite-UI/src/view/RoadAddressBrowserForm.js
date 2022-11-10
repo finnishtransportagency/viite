@@ -21,8 +21,10 @@
                 '</div>' +
                 createRoadNumberInputField("roadAddrChangesInputRoad") +
                 createRoadPartNumberInputFields("roadAddrChangesInputStartPart", "roadAddrChangesInputEndPart") +
-                createSearchButton("fetchRoadAddressChanges") +
-                createExcelDownloadButton() +
+                '<div class="road-address-browser-form-button-wrapper">' +
+                    createSearchButton("fetchRoadAddressChanges") +
+                    createExcelDownloadButton() +
+                '</div>' +
                 '</form>';
         }
 
@@ -46,8 +48,10 @@
                     '<option value="RoadNames">Tiennimet</option>' +
                 '</select>' +
             '</div>' +
-            createSearchButton("fetchRoadAddresses") +
-            createExcelDownloadButton() +
+            '<div class="road-address-browser-form-button-wrapper">' +
+                createSearchButton("fetchRoadAddresses") +
+                createExcelDownloadButton() +
+            '</div>' +
             '</form>';
         }
 

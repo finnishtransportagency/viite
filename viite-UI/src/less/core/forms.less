@@ -730,7 +730,7 @@ form.roadAddressProject .junction-label-projects.header {
 .road-address-browser-form {
   display: flex;
   flex-direction: row;
-  align-items: center;
+  align-items: stretch;
 
   .control-label-small {
     margin: 2.5px 15px;
@@ -761,6 +761,12 @@ form.roadAddressProject .junction-label-projects.header {
     width: 20px;
     height: 20px;
   }
+
+  .road-address-browser-form-button-wrapper {
+    padding: 5px;
+    display: flex;
+    align-items: self-end;
+  }
 }
 
 .input-container {
@@ -771,7 +777,7 @@ form.roadAddressProject .junction-label-projects.header {
 }
 
 .download-excel {
-  margin: 5px;
+  margin-left: 5px;
   border-color: #175935;
   box-shadow: inset 0 1px 0 rgb(204 227 249 / 33%), 0px 1px 1px 0px rgb(23 23 23 / 25%);
   background-color: #0F783F;
