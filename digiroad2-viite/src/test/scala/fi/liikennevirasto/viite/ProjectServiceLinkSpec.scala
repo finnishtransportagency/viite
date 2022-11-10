@@ -397,6 +397,27 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
     }
   }
 
+  test("Test projectService.addNewLinksToProject() " +
+                 "When adding a nonexistent roadlinks to project having minor discontinuities " +
+                 "Then when querying should return all fours links entered with discontinuity set to last link.") {
+    runWithRollback {
+      val (idr1,idr2,idr3,idr4) = (roadwayDAO.getNextRoadwayId, roadwayDAO.getNextRoadwayId, roadwayDAO.getNextRoadwayId, roadwayDAO.getNextRoadwayId)
+      val id = Sequences.nextViiteProjectId
+      val discontinuity = Discontinuity.Discontinuous
+      val rap = Project(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], Seq(), None)
+      val projectLink1 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idr1, 1, 12345, 1, AdministrativeClass.Private, Track.Combined, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), "c502334c-b2df-43d4-b5fd-e6ec384e5c9c:1", 0.0, 101.590, SideCode.Unknown, 0, (None, None), Seq(Point(388102.086,7292352.045,5.38),Point(388181.32,7292415.626,9.949)), LinkGeomSource.NormalLinkInterface, 5, NoTermination, 0))
+      val projectLink2 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idr2, 1, 12345, 1, AdministrativeClass.Private, Track.Combined, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), "49bd02c4-697f-4e88-a7b9-59a33549eeec:1", 0.0, 108.620, SideCode.Unknown, 0, (None, None), Seq(Point(388196.49,7292427.8,10.256), Point(388281.207,7292495.78,5.848)), LinkGeomSource.NormalLinkInterface, 5, NoTermination, 0))
+      val projectLink3 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idr3, 1, 12345, 1, AdministrativeClass.Private, Track.Combined, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), "5f60a893-52d8-4de1-938b-2e4a04accc8c:1", 0.0, 147.232, SideCode.Unknown, 0, (None, None), Seq(Point(388281.207,7292495.78,5.848), Point(388396.039,7292587.926,7.322)), LinkGeomSource.NormalLinkInterface, 5, NoTermination, 0))
+      val projectLink4 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idr4, 1, 12345, 1, AdministrativeClass.Private, Track.Combined, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), "a87b5257-72cd-4d48-9fff-54e81782cb64:1", 0.0, 105.259, SideCode.Unknown, 0, (None, None), Seq(Point(388412.663,7292601.266,8.252), Point(388494.758,7292667.143,11.648)), LinkGeomSource.NormalLinkInterface, 5, NoTermination, 0))
+      projectDAO.create(rap)
+      mockForProject(id, Seq(projectLink1, projectLink2, projectLink3, projectLink4))
+      projectService.addNewLinksToProject(Seq(projectLink1, projectLink2, projectLink3, projectLink4), id, "U", projectLink1.linkId, newTransaction = true, discontinuity)
+      val links = projectLinkDAO.fetchProjectLinks(id)
+      links.size should be(4)
+      links.find(_.linkId == projectLink4.linkId).get.discontinuity should be(discontinuity)
+    }
+  }
+
   test("Test projectService.changeDirection() When issuing said command to a newly created project link in a newly created project Then check if the side code changed correctly.") {
     def prettyPrint(links: List[ProjectLink]) = {
 
