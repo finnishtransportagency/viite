@@ -3,20 +3,24 @@
 
         function getRoadAddressChangesBrowserForm() {
             return '<form class="road-address-browser-form" id="roadAddressChangesBrowser">' +
-                '<div class="input-container"><label class="control-label-small">Alkupvm</label> <input type="text" class="road-address-browser-date-input" id="roadAddrChangesStartDate" value="' + dateutil.getCurrentDateString() + '" required/></div>' +
-                '<div class="input-container"><label class="control-label-small">Loppupvm</label> <input type="text" class="road-address-browser-date-input" id="roadAddrChangesEndDate" value="" /></div>' +
                 '<div class="input-container">' +
-                '<label class="control-label-small">Ely</label>' +
+                    '<label class="control-label-small">Rajausperuste</label>' +
+                    '<select id="dateTarget">' +
+                        '<option value="ProjectAcceptedDate">Projektin hyväksymispvm</option>' +
+                        '<option value="RoadAddressStartDate">Muutoksen voimaantulopvm</option>' +
+                    '</select>' +
+                '</div>' +
+                '<div class="input-container"><label class="control-label-small">Alkupvm</label> <input type="text" class="road-address-browser-date-input" id="roadAddrChangesStartDate"required/></div>' +
+                '<div class="input-container"> <b style="margin-top: 20px"> - </b></div>' +
+                '<div class="input-container"><label class="control-label-small">Loppupvm</label> <input type="text" class="road-address-browser-date-input" id="roadAddrChangesEndDate" /></div>' +
+                '<div class="input-container">' +
+                    '<label class="control-label-small">Ely</label>' +
                     '<select name id="roadAddrChangesInputEly" /> ' +
                         createElyDropDownOptions() +
                     '</select>' +
                 '</div>' +
                 createRoadNumberInputField("roadAddrChangesInputRoad") +
                 createRoadPartNumberInputFields("roadAddrChangesInputStartPart", "roadAddrChangesInputEndPart") +
-                '<div style="display: flex; flex-direction: column; padding: 5px; white-space: nowrap">' +
-                    '<div style="display: flex; flex-direction: row"><input type="radio" name="roadAddrChangesBrowserForm" value="ProjectAcceptedDate" checked="checked"><label style="margin-left: 5px; margin-top: 2.5px">Projektin hyväksymispvm</label></div>' +
-                    '<div style="display: flex; flex-direction: row"><input type="radio" name="roadAddrChangesBrowserForm" value="RoadAddressStartDate"><label style="margin-left: 5px; margin-top: 2.5px">Muutoksen voimaantulopvm</label></div>' +
-                '</div>' +
                 createSearchButton("fetchRoadAddressChanges") +
                 createExcelDownloadButton() +
                 '</form>';
@@ -32,11 +36,16 @@
             '</div>' +
             createRoadNumberInputField("roadAddrInputRoad") +
             createRoadPartNumberInputFields("roadAddrInputStartPart", "roadAddrInputEndPart") +
-            '<div class="input-container"><label>Ajoradat</label><input type="radio" name="roadAddrBrowserForm" value="Tracks" checked="checked"></div>' +
-            '<div class="input-container"><label>Tieosat</label><input type="radio" name="roadAddrBrowserForm" value="RoadParts"></div>' +
-            '<div class="input-container"><label>Solmut</label><input type="radio" name="roadAddrBrowserForm" value="Nodes"></div>' +
-            '<div class="input-container"><label>Liittymät</label><input type="radio" name="roadAddrBrowserForm" value="Junctions"></div>' +
-            '<div class="input-container"><label>Tiennimet</label><input type="radio" name="roadAddrBrowserForm" value="RoadNames"></div>' +
+            '<div class="input-container">' +
+                '<label class="control-label-small">Hakukohde</label>' +
+                '<select id="targetValue">' +
+                    '<option value="Tracks">Ajoradat</option>' +
+                    '<option value="RoadParts">Tieosat</option>' +
+                    '<option value="Nodes">Solmut</option>' +
+                    '<option value="Junctions">Liittymät</option>' +
+                    '<option value="RoadNames">Tiennimet</option>' +
+                '</select>' +
+            '</div>' +
             createSearchButton("fetchRoadAddresses") +
             createExcelDownloadButton() +
             '</form>';
