@@ -859,7 +859,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
             val projectErrors = response.getOrElse("projectErrors", Seq).asInstanceOf[Seq[projectService.projectValidator.ValidationErrorDetails]].map(projectService.projectValidator.errorPartsToApi)
             Map("success" -> true,
               "publishable" -> !response.contains("projectErrors"),
-              "projectErrors" -> projectErrors)
+              "projectErrors" -> projectErrors,
+              "errorMessage" -> response.get("errorMessage"))
           case _ => response
         }
       } catch {
@@ -870,7 +871,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
           BadRequest("Missing mandatory ProjectLink parameter")
         case e: Exception =>
           logger.error(e.toString, e)
-          InternalServerError(e.toString)
+          Map("success" -> false, "errorMessage" -> e.toString)
       }
     }
   }

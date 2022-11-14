@@ -257,7 +257,10 @@
                 me.setFormedParts(successObject.formedInfo);
                 eventbus.trigger('projectLink:projectLinksCreateSuccess');
                 eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
-                  validateUnchangedInProject(dataJson.projectId);
+                if (successObject.errorMessage) {
+                  new ModalConfirm(successObject.errorMessage);
+                }
+                validateUnchangedInProject(dataJson.projectId);
               } else {
                 new ModalConfirm(successObject.errorMessage);
                 applicationModel.removeSpinner();
