@@ -5,13 +5,18 @@
         const me = this;
 
         const roadAddressChangesBrowserWindow = $('<div class="form-horizontal road-address-changes-browser-window"></div>').hide();
-        roadAddressChangesBrowserWindow.append('<a href="manual/index.html#!index.md#11_Tieosoitemuutosten_katselu_-ty%C3%B6kalu" target="_blank">' +
-            '<button class="btn-manual" title="Avaa käyttöohje">' +
-            '<i class="fas fa-question"></i>' +
-            '</button>' +
-            '</a>');
-        roadAddressChangesBrowserWindow.append('<button class="close btn-close">x</button>');
-        roadAddressChangesBrowserWindow.append('<div class="road-address-browser-modal-header">Tieosoitemuutosten katselu</div>');
+        const roadAddressChangesBrowserHeader = $(
+            '<div class="road-address-browser-modal-header">' +
+                '<p>Tieosoitemuutosten katselu</p>' +
+                '<a href="manual/index.html#!index.md#11_Tieosoitemuutosten_katselu_-ty%C3%B6kalu" target="_blank">' +
+                    '<button class="btn-manual" title="Avaa käyttöohje">' +
+                        '<i class="fas fa-question"></i>' +
+                    '</button>' +
+                '</a>' +
+                '<button class="close btn-close-road-address-browser">x</button>' +
+            '</div>'
+        );
+        roadAddressChangesBrowserWindow.append(roadAddressChangesBrowserHeader);
         roadAddressChangesBrowserWindow.append(roadAddressBrowserForm.getRoadRoadAddressChangesBrowserForm());
 
         /**
@@ -146,7 +151,7 @@
             const roadNumber                    = document.getElementById('roadAddrChangesInputRoad');
             const minRoadPartNumber             = document.getElementById('roadAddrChangesInputStartPart');
             const maxRoadPartNumber             = document.getElementById('roadAddrChangesInputEndPart');
-            const dateTarget                   = $("input:radio[name ='roadAddrChangesBrowserForm']:checked").val();
+            const dateTarget                    = document.getElementById('dateTarget');
 
             // convert date input text to date object
             const roadAddrStartDateObject  = moment(roadAddrChangesStartDate.value, "DD-MM-YYYY").toDate();
@@ -179,7 +184,7 @@
                 const parsedDateString = dateutil.parseDateToString(roadAddrStartDateObject);
                 const params = {
                     startDate: parsedDateString,
-                    dateTarget: dateTarget
+                    dateTarget: dateTarget.value
                 };
                 if (roadAddrChangesEndDate.value)
                     params.endDate = dateutil.parseDateToString(moment(roadAddrChangesEndDate.value, "DD-MM-YYYY").toDate());

@@ -160,6 +160,9 @@
 }
 
 .road-address-browser-modal-overlay{
+  display: flex;
+  justify-content: center;
+  align-items: center;
   position: absolute;
   left: 0px;
   top: 0px;
@@ -169,22 +172,27 @@
   background: rgba(23, 23, 23, 0.6);
 
   .road-address-browser-modal-window {
-    position: fixed;
     left: 50%;
     top: 50%;
     width: fit-content;
     border-radius: @border-radius-base;
     background-color: @gray-lighter;
     box-shadow: 0px 2px 1px 0px rgba(red(@gray-darkest), green(@gray-darkest), blue(@gray-darkest), .25);
-    transform: translate(-50%, -50%);
   }
 
   .road-address-browser-modal-header {
-    padding: @line-height-modifier * 2;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
     border-bottom: 1px solid @gray-darkest;
     border-top-left-radius: @border-radius-base;
     border-top-right-radius: @border-radius-base;
     color: #fff;
     background-color: @gray-darker-2;
+
+    p {
+      flex-grow: 10;
+    }
   }
 }
