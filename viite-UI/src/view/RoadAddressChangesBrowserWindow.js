@@ -8,7 +8,7 @@
         const roadAddressChangesBrowserHeader = $(
             '<div class="road-address-browser-modal-header">' +
                 '<p>Tieosoitemuutosten katselu</p>' +
-                '<a href="" target="_blank">' + // TODO add link to manual, once manual is done
+                '<a href="manual/index.html#!index.md#11_Tieosoitemuutosten_katselu_-ty%C3%B6kalu" target="_blank">' +
                     '<button class="btn-manual" title="Avaa käyttöohje">' +
                         '<i class="fas fa-question"></i>' +
                     '</button>' +
