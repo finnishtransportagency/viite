@@ -915,17 +915,16 @@ Ajoratoja, tieosia, solmuja sekä liitymiä haettaessa pakollisia hakuehtoja ova
 Tiennimiä on mahdollista hakea koko tieverkolta. (Haku pelkällä tilannepäivämäärällä)
 
 (1) Tilanne pvm: Karsitaan tilanne pvm -kenttää uudemmat tiedot pois hakutuloksista   
-(2) Ely: Haetaan vain annetun ELYn kohteita   
+(2) Ely: Haetaan vain valitun ELYn kohteita   
 (3) Tie: Rajataan haku annetun tienumeron mukaisiin kohteisiin   
 (4) Aosa: Pienin tieosanumero jolta haettavia kohteita haetaan   
-(5) Losa: Suurin tieosanumero jolta haettavia kohteita haetaan
-
-####  Haettava kohde
-(6) Ajoradat: Hakee annettujen hakuehtojen mukaiset ajoradat  
-(7) Tieosat: Hakee annettujen hakuehtojen mukaiset tieosat   
-(8) Solmut: Hakee annettujen hakuehtojen mukaiset solmut   
-(9) Liittymät: Hakee annettujen hakuehtojen mukaiset liittymät   
-(10) Tiennimet: Hakee annettujen hakuehtojen mukaiset tiennimet
+(5) Losa: Suurin tieosanumero jolta haettavia kohteita haetaan   
+(6) Haku kohde:
+ - Ajoradat: Hakee annettujen hakuehtojen mukaiset ajoradat  
+ - Tieosat: Hakee annettujen hakuehtojen mukaiset tieosat   
+ - Solmut: Hakee annettujen hakuehtojen mukaiset solmut   
+ - Liittymät: Hakee annettujen hakuehtojen mukaiset liittymät   
+ - Tiennimet: Hakee annettujen hakuehtojen mukaiset tiennimet
 
 
 Huom! Haku saattaa kestää useita sekunteja haettaessa pelkästään tilannepäivämäärällä ja elyllä (Viite hakee valitut kohteet koko elyn alueelta)
