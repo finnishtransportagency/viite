@@ -107,6 +107,7 @@ package object viite {
   val ErrorMaxRoadNumberDemandingRoadNameMessage = s"Tien nimi on pakollinen tieto lukuunottamatta kevyen liikenteen väyliä."
   val MaxDistanceBetweenTracksWarningMessage = "Tarkista, että toimenpide vaihtuu samassa kohdassa."
   val AddNewLinksFailed = s"Linkkien lisääminen projektiin epäonnistui Viitteen sisäisen virheen vuoksi. Ota yhteyttä ylläpitoon."
+  val UndeterminedLastNewLinkDiscontinuityNotApplied = s"Linkkejä lisätessä ei voitu päätellä viimeistä linkkiä, jolle antaa käyttäjän syöttämä jatkuvuuskoodi. Tarkista jatkuvuuskoodit."
 
   //ELY-code error messages
   val MultipleElysInPartMessage = s"Samalla tieosalla eri elynumeroita. Tieosan tulee vaihtua ELY-rajalla. Korjaa tieosa- tai elynumeroa."
