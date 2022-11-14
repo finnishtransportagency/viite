@@ -984,16 +984,16 @@ _Kuva 11.1: Tieosoitemuutosten hakuehdot_
 
 Hakuehdoista alkupäivämäärä on pakollinen tieto
 
-(1) Alkupvm: Karsitaan alkupvm -kenttää vanhemmat tieosoitemuutokset pois hakutuloksista
-(2) Loppupvm: Karsitaan loppupvm -kenttää uudemmat tieosoitemuutokset pois hakutuloksista
-(3) Ely: Haetaan vain annetun ELYn tieosoitemuutoksia   
-(4) Tie: Rajataan haku annetun tienumeron mukaisiin tieosoitemuutoksiin  
-(5) Aosa: Pienin tieosanumero jolta haettavia tieosoitemuutoksia haetaan   
-(6) Losa: Suurin tieosanumero jolta haettavia tieosoitemuutoksia haetaan
+(1) Rajausperuste:    
+  - Projektin hyväksymispvm: Alku- ja loppupvm -kentät rajaavat hakutuloksia projektin hyväksymispäivämäärän perusteella    
+  - Muutoksen voimaantulopvm: Alku- ja loppupvm -kentät rajaavat hakutuloksia tieosoitemuutoksen voimaantulopäivämäärän perusteella   
 
-####  Alku- ja loppupäivämäärien kohde
-(7) Projektin hyväksymispvm: Alku- ja loppupvm -kentät rajaavat hakutuloksia projektin hyväksymispäivämäärän perusteella   
-(8) Muutoksen voimaantulopvm: Alku- ja loppupvm -kentät rajaavat hakutuloksia tieosoitemuutoksen voimaantulopäivämäärän perusteella    
+(2) Alkupvm: Karsitaan alkupvm -kenttää vanhemmat tieosoitemuutokset pois hakutuloksista   
+(3) Loppupvm: Karsitaan loppupvm -kenttää uudemmat tieosoitemuutokset pois hakutuloksista   
+(4) Ely: Haetaan vain annetun ELYn tieosoitemuutoksia   
+(5) Tie: Rajataan haku annetun tienumeron mukaisiin tieosoitemuutoksiin  
+(6) Aosa: Pienin tieosanumero jolta haettavia tieosoitemuutoksia haetaan   
+(7) Losa: Suurin tieosanumero jolta haettavia tieosoitemuutoksia haetaan
 
 Huom! Haku saattaa kestää useita sekunteja haettaessa pelkästään alkupäivämäärällä (Viite hakee kaikki tieosoitemuutokset annetun alkupäivämäärän jälkeiseltä ajalta)
 

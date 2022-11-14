@@ -11,7 +11,7 @@
                     '</select>' +
                 '</div>' +
                 '<div class="input-container"><label class="control-label-small">Alkupvm</label> <input type="text" class="road-address-browser-date-input" id="roadAddrChangesStartDate"required/></div>' +
-                '<div class="input-container"> <b style="margin-top: 20px"> - </b></div>' +
+                '<div class="input-container"> <b style="margin-top: 25px"> - </b></div>' +
                 '<div class="input-container"><label class="control-label-small">Loppupvm</label> <input type="text" class="road-address-browser-date-input" id="roadAddrChangesEndDate" /></div>' +
                 '<div class="input-container">' +
                     '<label class="control-label-small">Ely</label>' +
