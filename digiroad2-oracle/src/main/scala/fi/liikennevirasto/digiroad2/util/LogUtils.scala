@@ -9,24 +9,25 @@ object LogUtils {
 
   /** Logs the time it took function <i>f</i> to complete, when ever it took more than {@link timeLoggingThresholdInMs}.
     * In case <i>f</i> fails, log line is printed as an error, otherwise as debug level line. */
-  def time[R](logger: Logger, operationName: String, noFilter: Boolean = false, url :Option[String] = None)(f: => R): R = {
+  def time[R](logger: Logger, operationName: String, noFilter: Boolean = false, url :Option[String] = None, params: Option[Map[String, String]] = None)(f: => R): R = {
     val begin = System.currentTimeMillis()
+    val paramString = if (params.nonEmpty) s"params = {${params.get.map(a => s"${a._1}: ${a._2}").mkString(", ")}}" else s""
     try {
-      logger.info(s"$operationName started at ${DateTime.now()} ")
+      logger.info(s"$operationName started at ${DateTime.now()}")
       val result    = f
       val duration  = System.currentTimeMillis() - begin
       val urlString = if (url.isDefined) {s"URL: ${url.get}"} else ""
-      if (noFilter) {
-        logger.info(s"$operationName completed in $duration ms and in second ${duration / 1000}, ${urlString}")
-      } else {
-        if (duration >= timeLoggingThresholdInMs) {
-          logger.info(s"$operationName completed in $duration ms and in second ${duration / 1000}, ${urlString}")
-        }
+      if (noFilter || duration >= timeLoggingThresholdInMs) {
+        logger.info(s"$operationName completed in ${duration / 1000}s ${duration%1000}ms. $urlString $paramString")
       }
       result
     } catch {
       case e: Exception =>
-        logger.error(s"$operationName failed.")
+        val errorString = e.getStackTrace.find(st => st.getClassName.startsWith("fi.liikennevirasto")) match {
+          case Some(lineFound) => s"at $lineFound"
+          case _ => s""
+        }
+        logger.error(s"$operationName failed. $paramString ${e.getClass.getName}: ${e.getMessage} $errorString")
         throw e
     }
   }
