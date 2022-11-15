@@ -919,7 +919,7 @@ Tiennimiä on mahdollista hakea koko tieverkolta. (Haku pelkällä tilannepäiv�
 (3) Tie: Rajataan haku annetun tienumeron mukaisiin kohteisiin   
 (4) Aosa: Pienin tieosanumero jolta haettavia kohteita haetaan   
 (5) Losa: Suurin tieosanumero jolta haettavia kohteita haetaan   
-(6) Haku kohde:
+(6) Hakukohde:
  - Ajoradat: Hakee annettujen hakuehtojen mukaiset ajoradat  
  - Tieosat: Hakee annettujen hakuehtojen mukaiset tieosat   
  - Solmut: Hakee annettujen hakuehtojen mukaiset solmut   
