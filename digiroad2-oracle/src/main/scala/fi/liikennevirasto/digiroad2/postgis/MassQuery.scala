@@ -46,28 +46,28 @@ object MassQuery {
 
   def withIds[T](ids: StringList)(function: String => T): T = {
     LogUtils.time(logger, s"TEST LOG MassQuery withIds ${ids.list.size}") {
-      LogUtils.time(logger, "TEST LOG create TEMP_ID table") {
+      LogUtils.time(logger, "TEST LOG create TEMP_UUID table") {
         sqlu"""
-      CREATE TEMPORARY TABLE IF NOT EXISTS TEMP_ID (
+      CREATE TEMPORARY TABLE IF NOT EXISTS TEMP_UUID (
         ID VARCHAR NOT NULL,
-	      CONSTRAINT TEMP_ID_PK PRIMARY KEY (ID)
+	      CONSTRAINT TEMP_UUID_PK PRIMARY KEY (ID)
       ) ON COMMIT DELETE ROWS
             """.execute
       }
-      val insertLinkIdPS = dynamicSession.prepareStatement("insert into temp_id (id) values (?)")
+      val insertLinkIdPS = dynamicSession.prepareStatement("insert into temp_uuid (id) values (?)")
 
-      LogUtils.time(logger, s"TEST LOG insert into TEMP_ID ${ids.list.size}") {
+      LogUtils.time(logger, s"TEST LOG insert into TEMP_UUID ${ids.list.size}") {
         try {
           //Making sure that the table is empty if called multiple times within a transaction
           //Emptied at the end of transaction as per TABLE definition above
-          sqlu"TRUNCATE TABLE TEMP_ID".execute
+          sqlu"TRUNCATE TABLE TEMP_UUID".execute
           ids.list.foreach { id =>
             insertLinkIdPS.setString(1, id)
             insertLinkIdPS.addBatch()
           }
           logger.debug("added {} entries to temporary table", ids.list.size)
           insertLinkIdPS.executeBatch()
-          function("temp_id")
+          function("temp_uuid")
         } finally {
           insertLinkIdPS.close()
         }
