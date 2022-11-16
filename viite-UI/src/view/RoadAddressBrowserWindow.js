@@ -255,7 +255,14 @@
             const params = me.getSearchParams();
             const fileNameString = "Viite_" + params.target + "_" + params.startDate + "_" + params.ely + "_" + params.roadNumber + "_" + params.minRoadPartNumber + "_" + params.maxRoadPartNumber + ".xlsx";
             const fileName = fileNameString.replaceAll("undefined", "-");
-            const options = {dateNF: 'dd"."mm"."yyyy'};
+            const options = {
+                cellDates: true,
+                dateNF: 'mm"."dd"."yyyy' // sheetJS reads the tables' date cells in M/D/YYYY format even though they are in DD.MM.YYYY (Finnish) format
+                // To get the right format to the Excel file the DD and MM fields need to be in reversed order
+                // example:
+                // table cell value 01.06.2022 is read by sheetJS as 1/6/2022 i.e. M = 1, D = 6
+                // so when we want to construct the finnish date format DD.MM.YYYY we need to put them in reversed order MM.DD.YYYY
+            };
             const wb = XLSX.utils.table_to_book(document.getElementById("roadAddressBrowserTable"), options);
             /* Export to file (start a download) */
             XLSX.writeFile(wb, fileName);
