@@ -8,12 +8,12 @@ import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.util.DataImporter
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.HttpClientBuilder
-import org.json4s.{DefaultFormats, Formats}
-import org.scalatra.auth.strategy.BasicAuthSupport
+import org.json4s.{DefaultFormats, Formats, StringInput}
+import org.scalatra._
 import org.scalatra.auth.{ScentryConfig, ScentrySupport}
+import org.scalatra.auth.strategy.BasicAuthSupport
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
-import org.scalatra._
 import org.slf4j.{Logger, LoggerFactory}
 
 trait AdminAuthenticationSupport extends ScentrySupport[BasicAuthUser] with BasicAuthSupport[BasicAuthUser] {
@@ -145,6 +145,7 @@ class AdminApi(val dataImporter: DataImporter, implicit val swagger: Swagger) ex
 
   get("/test_get_request") {
     val urlParam = params.get("url")
+    val headersParam = params.get("headers")
     time(logger, "GET request for /test_get_request") {
       try {
         if (urlParam.isEmpty) {
@@ -154,6 +155,10 @@ class AdminApi(val dataImporter: DataImporter, implicit val swagger: Swagger) ex
           val url = urlParam.get
           logger.info(s"Testing connection to url: $url")
           val request = new HttpGet(url)
+          if (headersParam.isDefined) {
+            val headers = parse(StringInput(URLDecoder.decode(headersParam.get))).values.asInstanceOf[Map[String, String]]
+            headers.foreach { case (name, value) => request.addHeader(name, value) }
+          }
           val client = HttpClientBuilder.create().build
           val response = client.execute(request)
           val statusCode = response.getStatusLine.getStatusCode
@@ -215,7 +220,11 @@ class AdminApi(val dataImporter: DataImporter, implicit val swagger: Swagger) ex
   get("/flyway_migrate") {
     time(logger, "GET request for /flyway_migrate") {
       try {
-        DatabaseMigration.migrate
+        val outOfOrder = params.get("out_of_order") match {
+          case Some(outOfOrderParam) => outOfOrderParam.equalsIgnoreCase("true")
+          case _ => false
+        }
+        DatabaseMigration.migrate(outOfOrder)
         logger.info("Flyway migrate successful.")
         Ok("Flyway migrate successful.\n")
       } catch {

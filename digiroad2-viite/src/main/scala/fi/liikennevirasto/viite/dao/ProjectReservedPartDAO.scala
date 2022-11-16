@@ -9,10 +9,7 @@ import slick.jdbc.{StaticQuery => Q}
 
 //TODO naming SQL conventions
 
-case class ProjectReservedPart(id: Long, roadNumber: Long, roadPartNumber: Long, addressLength: Option[Long] = None,
-                               discontinuity: Option[Discontinuity] = None, ely: Option[Long] = None,
-                               newLength: Option[Long] = None, newDiscontinuity: Option[Discontinuity] = None,
-                               newEly: Option[Long] = None, startingLinkId: Option[Long] = None) {
+case class ProjectReservedPart(id: Long, roadNumber: Long, roadPartNumber: Long, addressLength: Option[Long] = None, discontinuity: Option[Discontinuity] = None, ely: Option[Long] = None, newLength: Option[Long] = None, newDiscontinuity: Option[Discontinuity] = None, newEly: Option[Long] = None, startingLinkId: Option[String] = None) {
   def holds(baseRoadAddress: BaseRoadAddress): Boolean = {
     roadNumber == baseRoadAddress.roadNumber && roadPartNumber == baseRoadAddress.roadPartNumber
   }
@@ -77,7 +74,7 @@ class ProjectReservedPartDAO {
            	GROUP BY (ROAD_NUMBER, ROAD_PART_NUMBER, ELY)
            ) PLH ORDER BY PLH.ROAD_NUMBER, PLH.ROAD_PART_NUMBER
         """
-      Q.queryNA[(Long, Long, Option[Long], Option[Long], Option[Long], Option[Long])](sql).list.map {
+      Q.queryNA[(Long, Long, Option[Long], Option[Long], Option[Long], Option[String])](sql).list.map {
         case (roadNumber, roadPartNumber, length, ely, discontinuityOpt, startingLinkId) =>
           val discontinuity = discontinuityOpt.map(Discontinuity.apply)
           ProjectReservedPart(noReservedPartId, roadNumber, roadPartNumber, length, discontinuity, ely, length, discontinuity, ely, startingLinkId)
@@ -90,8 +87,7 @@ class ProjectReservedPartDAO {
       val sql = s"""SELECT rp.id, rp.road_number, rp.road_part_number FROM PROJECT_RESERVED_ROAD_PART rp WHERE rp.project_id = $projectId"""
       Q.queryNA[(Long, Long, Long)](sql).list.map {
         case (id, road, part) =>
-          ProjectReservedPart(id, road, part, None, None, None, None,
-            None, None, None)
+          ProjectReservedPart(id, road, part, None, None, None, None, None, None, None)
       }
     }
   }
@@ -152,10 +148,9 @@ class ProjectReservedPartDAO {
                 GROUP BY rp.id, rp.project_id, rp.road_number, rp.road_part_number
             ) gr"""
        */
-      Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[Long])](sql).list.map {
+      Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[String])](sql).list.map {
         case (id, road, part, length, ely, discontinuity, startingLinkId) =>
-          ProjectReservedPart(id, road, part, length, discontinuity.map(Discontinuity.apply), ely, None,
-            None, None, startingLinkId)
+          ProjectReservedPart(id, road, part, length, discontinuity.map(Discontinuity.apply), ely, None, None, None, startingLinkId)
       }
     }
   }
@@ -222,10 +217,9 @@ class ProjectReservedPartDAO {
               GROUP BY rp.id, rp.project_id, rp.road_number, rp.road_part_number
               ) gr"""
        */
-      Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[Long])](sql).list.map {
+      Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[String])](sql).list.map {
         case (id, road, part, newLength, newEly, newDiscontinuity, startingLinkId) =>
-          ProjectReservedPart(id, road, part, None, None, None, newLength,
-            newDiscontinuity.map(Discontinuity.apply), newEly, startingLinkId)
+          ProjectReservedPart(id, road, part, None, None, None, newLength, newDiscontinuity.map(Discontinuity.apply), newEly, startingLinkId)
       }
     }
   }
@@ -254,10 +248,9 @@ class ProjectReservedPartDAO {
             lc.id NOT IN (select pl2.linear_location_id from project_link pl2 WHERE pl2.road_number = rw.road_number AND pl2.road_part_number = rw.road_part_number)
             AND $filter AND pl.status = ${LinkStatus.NotHandled.value}
             GROUP BY rp.id, pl.project_id, rw.road_number, rw.road_part_number) gr ORDER BY gr.road_number, gr.road_part_number"""
-      Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[Long])](sql).list.map {
+      Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[String])](sql).list.map {
         case (id, road, part, newLength, newEly, newDiscontinuity, startingLinkId) =>
-          ProjectReservedPart(id, road, part, None, None, None, newLength,
-            newDiscontinuity.map(Discontinuity.apply), newEly, startingLinkId)
+          ProjectReservedPart(id, road, part, None, None, None, newLength, newDiscontinuity.map(Discontinuity.apply), newEly, startingLinkId)
       }
     }
   }
@@ -305,10 +298,9 @@ class ProjectReservedPartDAO {
             OR (pl.STATUS != ${LinkStatus.Terminated.value}
             AND pl.TRACK IN (${Track.Combined.value}, ${Track.RightSide.value})))
           GROUP BY rp.ID, rp.PROJECT_ID, rp.ROAD_NUMBER, rp.ROAD_PART_NUMBER) gr"""
-      Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[Long])](sql).firstOption.map {
+      Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[String])](sql).firstOption.map {
         case (id, road, part, length, ely, discontinuity, linkId) =>
-          ProjectReservedPart(id, road, part, length, discontinuity.map(Discontinuity.apply), ely, None,
-            None, None, linkId)
+          ProjectReservedPart(id, road, part, length, discontinuity.map(Discontinuity.apply), ely, None, None, None, linkId)
       }
     }
   }
@@ -359,10 +351,9 @@ class ProjectReservedPartDAO {
             AND EXISTS (SELECT id FROM project_link WHERE status != ${LinkStatus.NotHandled.value} AND project_id = rp.project_id AND ROAD_NUMBER = rp.ROAD_NUMBER
             AND ROAD_PART_NUMBER = rp.ROAD_PART_NUMBER)
           GROUP BY rp.ID, rp.PROJECT_ID, rp.ROAD_NUMBER, rp.ROAD_PART_NUMBER) gr"""
-      Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[Long])](sql).firstOption.map {
+      Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[String])](sql).firstOption.map {
         case (id, road, part, newLength, newEly, newDiscontinuity, linkId) =>
-          ProjectReservedPart(id, road, part, None, None, None, newLength,
-            newDiscontinuity.map(Discontinuity.apply), newEly, linkId)
+          ProjectReservedPart(id, road, part, None, None, None, newLength, newDiscontinuity.map(Discontinuity.apply), newEly, linkId)
       }
     }
   }

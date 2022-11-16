@@ -1,14 +1,12 @@
 package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
-import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, SideCode}
 import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
-import fi.liikennevirasto.digiroad2.util.{MissingRoadwayNumberException, MissingTrackException, RoadAddressException, Track}
-import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
-import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
+import fi.liikennevirasto.digiroad2.util.{MissingRoadwayNumberException, MissingTrackException, Track}
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.process.strategy.{RoadAddressSectionCalculatorContext, TrackCalculatorContext}
-import fi.liikennevirasto.viite.NewIdValue
+import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
+import fi.liikennevirasto.viite.process.strategy.RoadAddressSectionCalculatorContext
 import org.slf4j.LoggerFactory
 
 object ProjectSectionCalculator {
@@ -81,25 +79,6 @@ object ProjectSectionCalculator {
     def fromProjectLinks(s: Seq[ProjectLink]): TrackSection = {
       val pl = s.head
       TrackSection(pl.roadNumber, pl.roadPartNumber, pl.roadAddressTrack.getOrElse(Track.Unknown), s.map(_.geometryLength).sum, s)
-    }
-
-    def groupIntoSections(seq: Seq[ProjectLink]): Seq[TrackSection] = {
-      if (seq.isEmpty)
-        throw new InvalidAddressDataException("Missing track")
-      val changePoints = seq.zip(seq.tail).filter{ case (pl1, pl2) => pl1.roadAddressTrack.getOrElse(Track.Unknown) != pl2.roadAddressTrack.getOrElse(Track.Unknown)}
-      seq.foldLeft(Seq(Seq[ProjectLink]())) { case (tracks, pl) =>
-        if (changePoints.exists(_._2 == pl)) {
-          Seq(Seq(pl)) ++ tracks
-        } else {
-          Seq(tracks.head ++ Seq(pl)) ++ tracks.tail
-        }
-      }.reverse.map(fromProjectLinks)
-    }
-
-    def getContinuousTrack(seq: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
-      val track = seq.headOption.map(_.roadAddressTrack.getOrElse(Track.Unknown)).getOrElse(Track.Unknown)
-      val status = seq.headOption.map(_.status).getOrElse(LinkStatus.Unknown)
-      seq.span(pl => pl.roadAddressTrack.getOrElse(Track.Unknown) == track && (if(status.equals(LinkStatus.Terminated)) pl.status == status else !pl.status.equals(LinkStatus.Terminated)))
     }
 
     val left = projectLinks.filter(pl => pl.roadAddressTrack.getOrElse(pl.track) != Track.RightSide).sortBy(_.roadAddressStartAddrM)

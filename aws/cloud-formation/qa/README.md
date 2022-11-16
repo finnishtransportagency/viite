@@ -49,6 +49,18 @@ aws ssm put-parameter --overwrite --name /Viite/QA/vkmApiKey --type SecureString
 aws ssm put-parameter --overwrite --name /Viite/QA/rasterServiceApiKey --type SecureString --value X
 
 aws ssm put-parameter --overwrite --name /Viite/QA/vvhRestApiPassword --type SecureString --value X
+
+aws ssm put-parameter --overwrite --name /Viite/QA/kgvApiKey --type SecureString --value X
+```
+
+### Luo S3 sekä task definition task role
+
+```
+aws cloudformation create-stack \
+--stack-name [esim. viite-qa-api-s3] \
+--capabilities CAPABILITY_NAMED_IAM \
+--template-body file://aws/cloud-formation/viite-api-s3.yaml \
+--parameters file://aws/cloud-formation/qa/qa-api-s3-parameter.json
 ```
 
 ### Luo task-definition

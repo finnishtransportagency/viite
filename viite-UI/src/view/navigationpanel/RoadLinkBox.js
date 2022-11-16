@@ -1,5 +1,6 @@
 (function (root) {
   root.RoadLinkBox = function (selectedProjectLinkProperty) {
+    var LinkStatus = ViiteEnumerations.LinkStatus;
     var className = 'road-link';
     var title = 'Selite';
     var selectToolIcon = '<img src="images/select-tool.svg"/>';
@@ -50,28 +51,6 @@
       [99, 'Osoitteeton (valtio)']
     ];
 
-    var constructionTypes = [
-      [0, 'Rakenteilla (kunta/yksityinen)'],
-      [1, 'Rakenteilla (valtio)']
-    ];
-
-    var nodes = [
-      [1, 'Normaali tasoliittymä'],
-      [3, 'Kiertoliittymä'],
-      [4, 'Y-liittymä'],
-      [5, 'Eritasoliittymä'],
-      [7, 'Hallinnollinen raja'],
-      [8, 'ELY-raja'],
-      [10, 'Moniajoratainen liittymä'],
-      [12, 'Liityntätie'],
-      [13, 'Tien alku/loppu'],
-      [14, 'Silta'],
-      [15, 'Huoltoaukko'],
-      [16, 'Yksityistie- tai katuliittymä'],
-      [17, 'Porrastettu liittymä'],
-      [18, 'Lautta']
-    ];
-
     var buildMultiColoredSegments = function () {
       var segments = '<div class = "rainbow-container"><div class="edge-left symbol linear linear-asset-1"></div>';
       for (var i = 1; i <= 6; i++) {
@@ -81,12 +60,18 @@
       return segments + '<div class="middle symbol linear rainbow-asset-2"></div><div class="middle symbol linear rainbow-asset-1 "></div> <div class="edge-right symbol linear linear-asset-1"></div></div>';
     };
 
-    var constructionTypeLegendEntries = _.map(constructionTypes, function (constructionType) {
-      return '<div class="legend-entry">' +
-        '<div class="label">' + constructionType[1] + '</div>' +
-        '<div class="symbol linear construction-type-' + constructionType[0] + '"></div>' +
-        '</div>';
-    }).join('');
+    function createLifecycleStatusLegendEntries ()  {
+      let html = '';
+      for (const status in ViiteEnumerations.LifeCycleStatus) {
+        if (Object.prototype.hasOwnProperty.call(ViiteEnumerations.LifeCycleStatus, status)) {
+          html += '<div class="legend-entry">' +
+                    '<div class="label">' + ViiteEnumerations.LifeCycleStatus[status].description + '</div>' +
+                    '<div class="symbol linear construction-type-' + ViiteEnumerations.LifeCycleStatus[status].value + '"></div>' +
+                  '</div>';
+        }
+      }
+      return html;
+    }
 
     var roadClassLegendEntries = _.map(roadClasses, function (roadClass) {
       var defaultLegendEntry =
@@ -99,46 +84,49 @@
       return defaultLegendEntry + '</div>';
     }).join('');
 
-    var nodesLegendEntries = _.map(nodes, function (node) {
-      return '<div class="legend-entry" style="min-width: 100%;display: inline-flex;justify-content: left;align-items: center;">' +
-        '<img src="images/node-sprite.svg#' + node[0] + '" style="margin-right: 5px"/>' +
-        '<div class="label">' + node[0] + " " + node[1] + '</div>' +
-        '</div>';
-    }).join('');
+    function createNodeLegendEntries() {
+      let html = '';
+      for (const node in ViiteEnumerations.NodeType) {
+        if (Object.prototype.hasOwnProperty.call(ViiteEnumerations.NodeType, node) && ViiteEnumerations.NodeType[node] !== ViiteEnumerations.NodeType.UnknownNodeType)
+          html += '<div class="legend-entry" style="min-width: 100%;display: inline-flex;justify-content: left;align-items: center;">' +
+              '<img src="images/node-sprite.svg#' + ViiteEnumerations.NodeType[node].value + '" style="margin-right: 5px"/>' +
+              '<div class="label">' + ViiteEnumerations.NodeType[node].value + " " + ViiteEnumerations.NodeType[node].description + '</div>' +
+              '</div>';
+      }
+      return html;
+    }
 
     var roadProjectOperations = function () {
       return '<div class="legend-entry">' +
-        '<div class="label">Ennallaan</div>' +
+        '<div class="label">' + LinkStatus.Unchanged.displayText + '</div>' +
         '<div class="symbol linear operation-type-unchanged"></div>' +
         '</div>' +
         '<div class="legend-entry">' +
-        '<div class="label">Uusi</div>' +
+        '<div class="label">' + LinkStatus.New.displayText + '</div>' +
         '<div class="symbol linear operation-type-new"></div>' +
         '</div>' +
         '<div class="legend-entry">' +
-        '<div class="label">Siirto</div>' +
+        '<div class="label">' + LinkStatus.Transfer.displayText + '</div>' +
         '<div class="symbol linear operation-type-transfer"></div>' +
         '</div>' +
         '<div class="legend-entry">' +
-        '<div class="label">Lakkautus</div>' +
+        '<div class="label">' + LinkStatus.Terminated.displayText + '</div>' +
         '<div class="symbol linear operation-type-terminated"></div>' +
         '</div>' +
         '<div class="legend-entry">' +
-        '<div class="label">Numerointi</div>' +
+        '<div class="label">' + LinkStatus.Numbering.displayText + '</div>' +
         '<div class="symbol linear operation-type-renumbered"></div>' +
         '</div>' +
         '<div class="legend-entry">' +
-        '<div class="label">Käsittelemätön</div>' +
+        '<div class="label">' + LinkStatus.NotHandled.displayText + '</div>' +
         '<div class="symbol linear operation-type-unhandeled"></div>' +
-        '<div class="label">Rakenteilla (kunta/yksityinen)</div>' +
-        '<div class="symbol linear construction-type-0"></div>' +
-        '<div class="label">Rakenteilla (valtio)</div>' +
-        '<div class="symbol linear construction-type-1"></div>' +
+        '</div>' +
+        createLifecycleStatusLegendEntries() +
         '</div>';
     };
 
     roadClassLegend.append(roadClassLegendEntries);
-    roadClassLegend.append(constructionTypeLegendEntries);
+    roadClassLegend.append(createLifecycleStatusLegendEntries());
     roadClassLegend.append(calibrationPointPicture);
 
     var Tool = function (toolName, icon, description) {
@@ -218,7 +206,7 @@
     };
 
     var nodeToolSelection = new ToolSelection([
-      new Tool(LinkValues.Tool.Select.value, selectToolIcon, LinkValues.Tool.Select.description)
+      new Tool(ViiteEnumerations.Tool.Select.value, selectToolIcon, ViiteEnumerations.Tool.Select.description)
     ]);
 
     var templateAttributes = {
@@ -271,7 +259,7 @@
         nodeToolSelection.hide();
       } else if (applicationModel.getSelectedLayer() === "node") {
         container.empty();
-        roadClassLegend.append(nodesLegendEntries);
+        roadClassLegend.append(createNodeLegendEntries());
         roadClassLegend.append(junctionPicture);
         roadClassLegend.append(junctionTemplatePicture);
         roadClassLegend.append(nodeTemplatePicture);
@@ -280,7 +268,7 @@
       } else {
         container.empty();
         roadClassLegend.append(roadClassLegendEntries);
-        roadClassLegend.append(constructionTypeLegendEntries);
+        roadClassLegend.append(createLifecycleStatusLegendEntries());
         roadClassLegend.append(calibrationPointPicture);
         nodeToolSelection.hide();
       }

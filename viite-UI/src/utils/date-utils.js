@@ -75,7 +75,7 @@
   };
 
   dateUtils.addSingleDatePicker = function (fromElement) {
-    dateUtils.addFinnishDatePicker(fromElement);
+    return dateUtils.addFinnishDatePicker(fromElement);
   };
 
   dateUtils.addSingleDatePickerWithMinDate = function (fromElement, minDate) {
@@ -95,7 +95,7 @@
       field: jqueryElement.get(0),
       format: FINNISH_DATE_FORMAT,
       firstDay: 1,
-      yearRange: [1950, 2050],
+      yearRange: [1900, 2050],
       onDraw: onDraw,
       onSelect: onSelect,
       i18n: FINNISH_PIKADAY_I18N
@@ -137,4 +137,34 @@
     });
     return _.pick(newest, ['modifiedAt', 'modifiedBy']);
   };
+
+  dateUtils.isValidDate = function (date) {
+    return date instanceof Date && !isNaN(date);
+  };
+
+  dateUtils.isDateInYearRange = function (date, minYear, maxYear) {
+    return date.getFullYear() > minYear && date.getFullYear() < maxYear;
+  };
+
+  /** Converts date object to string "yyyy-mm-dd" */
+  dateUtils.parseDateToString = function (date) {
+    const dayInNumber = date.getDate();
+    const day = dayInNumber < 10 ? '0' + dayInNumber.toString() : dayInNumber.toString();
+    const monthInNumber = date.getMonth() + 1;
+    const month = monthInNumber < 10 ? '0' + monthInNumber.toString() : monthInNumber.toString();
+    const year = date.getFullYear().toString();
+    return year + '-' + month + '-' + day;
+  };
+
+  /** Creates a string ("dd.mm.yyyy") from current date */
+  dateUtils.getCurrentDateString = function () {
+    const today = new Date();
+    const dayInNumber = today.getDate();
+    const day = dayInNumber < 10 ? '0' + dayInNumber.toString() : dayInNumber.toString();
+    const monthInNumber = today.getMonth() + 1;
+    const month = monthInNumber < 10 ? '0' + monthInNumber.toString() : monthInNumber.toString();
+    const year = today.getFullYear().toString();
+    return day + '.' + month + '.' + year;
+  };
+
 }(window.dateutil = window.dateutil || {}));

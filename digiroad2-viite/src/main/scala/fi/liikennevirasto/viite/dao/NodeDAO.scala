@@ -150,6 +150,8 @@ case class Node(id: Long, nodeNumber: Long, coordinates: Point, name: Option[Str
 
 case class RoadAttributes(roadNumber: Long, roadPartNumber: Long, addrMValue: Long)
 
+case class NodeForRoadAddressBrowser(ely: Long, roadNumber: Long, roadPartNumber: Long, addrM: Long, startDate: DateTime, nodeType: NodeType, name: Option[String], nodeNumber: Long)
+
 class NodeDAO extends BaseDAO {
 
   val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
@@ -174,6 +176,21 @@ class NodeDAO extends BaseDAO {
       val registrationDate = new DateTime(r.nextTimestamp())
 
       Node(id, nodeNumber, Point(coordX, coordY), name, nodeType, startDate, endDate, validFrom, validTo, createdBy, createdTime, editor, publishedTime, registrationDate)
+    }
+  }
+
+  implicit val getNodeForRoadAddressBrowser: GetResult[NodeForRoadAddressBrowser] = new GetResult[NodeForRoadAddressBrowser] {
+    def apply(r: PositionedResult): NodeForRoadAddressBrowser = {
+      val ely = r.nextLong()
+      val roadNumber = r.nextLong()
+      val roadPartNumber = r.nextLong()
+      val addrM = r.nextLong()
+      val startDate = new DateTime(r.nextDate())
+      val nodeType = NodeType.apply(r.nextInt())
+      val name = r.nextStringOption()
+      val nodeNumber =r.nextLong()
+
+      NodeForRoadAddressBrowser(ely, roadNumber, roadPartNumber, addrM, startDate, nodeType, name, nodeNumber)
     }
   }
 
@@ -216,6 +233,55 @@ class NodeDAO extends BaseDAO {
       order by created_time desc, end_date desc
       """.as[Long].firstOption
   }
+
+  def fetchNodesForRoadAddressBrowser(startDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[NodeForRoadAddressBrowser] = {
+    def withOptionalParameters(startDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long])(query: String): String = {
+      val dateCondition = "AND rw.start_date <='" + startDate.get + "'"
+
+      val elyCondition = {
+        if (ely.nonEmpty)
+          s" AND rw.ely = ${ely.get}"
+        else
+          ""
+      }
+
+      val roadNumberCondition = {
+        if (roadNumber.nonEmpty)
+          s" AND rw.road_number = ${roadNumber.get}"
+        else
+          ""
+      }
+
+      val roadPartCondition = {
+        val parts = (minRoadPartNumber, maxRoadPartNumber)
+        parts match {
+          case (Some(minPart), Some(maxPart)) => s"AND rw.road_part_number BETWEEN $minPart AND $maxPart"
+          case (None, Some(maxPart)) => s"AND rw.road_part_number <= $maxPart"
+          case (Some(minPart), None) => s"AND rw.road_part_number >= $minPart"
+          case _ => ""
+        }
+      }
+
+      s"""$query WHERE node.VALID_TO IS NULL AND node.END_DATE IS NULL
+        $dateCondition $elyCondition $roadNumberCondition $roadPartCondition
+        ORDER BY rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rp.ADDR_M""".stripMargin
+    }
+
+    def fetchNodes(queryFilter: String => String): Seq[NodeForRoadAddressBrowser] = {
+      val query =
+        """
+      SELECT DISTINCT rw.ely, rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rp.ADDR_M, node.START_DATE, node.type, node.NAME, node.NODE_NUMBER
+		  FROM NODE node
+      JOIN NODE_POINT np ON node.NODE_NUMBER = np.NODE_NUMBER AND np.VALID_TO IS NULL
+      JOIN ROADWAY_POINT rp ON np.ROADWAY_POINT_ID = rp.ID
+      JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS null
+      """
+      val filteredQuery = queryFilter(query)
+      Q.queryNA[NodeForRoadAddressBrowser](filteredQuery).iterator.toSeq
+    }
+    fetchNodes(withOptionalParameters(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber))
+  }
+
 
   def fetchByRoadAttributes(road_number: Long, minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[(Node, RoadAttributes)] = {
     val road_condition = (minRoadPartNumber.isDefined, maxRoadPartNumber.isDefined) match {

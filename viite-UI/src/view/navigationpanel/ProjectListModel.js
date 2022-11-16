@@ -1,6 +1,6 @@
 (function (root) {
   root.ProjectListModel = function (projectCollection) {
-    var projectStatus = LinkValues.ProjectStatus;
+    var projectStatus = ViiteEnumerations.ProjectStatus;
     var projectArray = [];
     var headers = {
       "sortName": {
@@ -277,8 +277,7 @@
       });
 
       $('#OldAcceptedProjectsVisibleCheckbox').change(function () {
-        createProjectList(projectArray);
-        filterByUser();
+        fetchProjects();
       });
 
       projectList.on('click', 'button.cancel', function () {

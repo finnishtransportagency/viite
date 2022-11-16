@@ -67,9 +67,9 @@
     var preMovedRoadAddresses = [];
     var date = [];
     var historicRoadLinks = [];
-    var LinkStatus = LinkValues.LinkStatus;
-    var LinkSource = LinkValues.LinkGeomSource;
-    var ConstructionType = LinkValues.ConstructionType;
+    var LinkStatus = ViiteEnumerations.LinkStatus;
+    var LinkSource = ViiteEnumerations.LinkGeomSource;
+    var lifecycleStatus = ViiteEnumerations.lifecycleStatus;
     var clickedLinearLocationId = 0;
     var selectedRoadLinkModels = [];
 
@@ -180,14 +180,14 @@
       });
 
       unaddressedRoadLinkGroups = _.partition(fetchedUnaddressed, function (group) {
-        return groupDataConstructionTypeFilter(group, ConstructionType.UnderConstruction);
+        return groupDataConstructionTypeFilter(group, lifecycleStatus.UnderConstruction);
       });
 
       unaddressedUnderConstructionRoadLinkGroups = unaddressedRoadLinkGroups[0];
       unaddressedUnknownRoadLinkGroups = unaddressedRoadLinkGroups[1];
 
       var includeUnknowns = _.isUndefined(drawUnknowns) && !drawUnknowns;
-      if (parseInt(zoom) <= zoomlevels.minZoomForEditMode && (includeUnknowns && !applicationModel.selectionTypeIs(LinkValues.SelectionType.Unknown))) {
+      if (parseInt(zoom) <= zoomlevels.minZoomForEditMode && (includeUnknowns && !applicationModel.selectionTypeIs(ViiteEnumerations.SelectionType.Unknown))) {
         // only the fetched road links that have an address
         setRoadLinkGroups(fetchedWithAddresses);
       } else {
@@ -248,11 +248,11 @@
       if (_.isArray(group)) {
         return _.some(group, function (roadLink) {
           if (roadLink)
-            return roadLink.getData().constructionType === dataConstructionType.value;
+            return roadLink.getData().lifecycleStatus === dataConstructionType.value;
           else return false;
         });
       } else {
-        return group.getData().constructionType === dataConstructionType.value;
+        return group.getData().lifecycleStatus === dataConstructionType.value;
       }
     };
 
