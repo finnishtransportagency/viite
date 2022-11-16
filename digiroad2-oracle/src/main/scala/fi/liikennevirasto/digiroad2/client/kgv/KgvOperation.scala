@@ -1,10 +1,11 @@
 package fi.liikennevirasto.digiroad2.client.kgv
 
+import java.io.IOException
 import java.net.URLEncoder
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.kgv.FilterOgc.{combineFiltersWithAnd, withLinkIdFilter, withMunicipalityFilter, withRoadNumbersFilter}
-import fi.liikennevirasto.digiroad2.util.{LogUtils, Parallel, ViiteProperties}
+import fi.liikennevirasto.digiroad2.util.{Parallel, ViiteProperties}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import org.apache.http.HttpStatus
 import org.apache.http.client.config.{CookieSpecs, RequestConfig}
@@ -85,17 +86,21 @@ trait KgvOperation extends LinkOperationsAbstract{
   }
 
   protected def fetchFeatures(url: String): Either[LinkOperationError, Option[FeatureCollection]] = {
+    val MaxTries                                                      = 10
+    var trycounter                                                    = 0 /// For do-while check. Up to MaxTries.
+    var success                                                       = true /// For do-while check. Set to false when exception.
+    var result: Either[LinkOperationError, Option[FeatureCollection]] = Left(LinkOperationError("Dummy start value", "nothing here", url))
+
+    do {
+      trycounter += 1
+      success = true
+      result = time(logger, s"Fetch roadLink features, (try $trycounter)", url = Some(url)) {
+
     val request = new HttpGet(url)
     addHeaders(request)
 
-    val client = HttpClients.custom()
-                             .setDefaultRequestConfig( RequestConfig.custom()
-                                                                    .setCookieSpec(CookieSpecs.STANDARD)
-                                                                    .build())
-                             .build()
-
     var response: CloseableHttpResponse = null
-    LogUtils.time(logger, s"fetch roadLink features",url = Some(url)) {
+        val client                          = HttpClients.custom().setDefaultRequestConfig(RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build()).build()
       try {
         response = client.execute(request)
         val statusCode = response.getStatusLine.getStatusCode
@@ -106,11 +111,9 @@ trait KgvOperation extends LinkOperationsAbstract{
                 Some(FeatureCollection(
                   features = List(convertToFeature(feature))
                   ))
-            case "FeatureCollection" =>
-              val links = feature("links").asInstanceOf[List[Map[String, Any]]].map(link=>
-                Link(link("title").asInstanceOf[String], link("type").asInstanceOf[String],
-                  link("rel").asInstanceOf[String], link("href").asInstanceOf[String])
-              )
+              case "FeatureCollection" => val links        = feature("links").asInstanceOf[List[Map[String, Any]]].map(link => {
+                Link(link("title").asInstanceOf[String], link("type").asInstanceOf[String], link("rel").asInstanceOf[String], link("href").asInstanceOf[String])
+              })
               val nextLink = Try(links.find(_.title=="Next page").get.href).getOrElse("")
               val previousLink = Try(links.find(_.title=="Previous page").get.href).getOrElse("")
               val features = feature("features").asInstanceOf[List[Map[String, Any]]].map(convertToFeature)
@@ -126,20 +129,37 @@ trait KgvOperation extends LinkOperationsAbstract{
         } else {
           Left(LinkOperationError(response.getStatusLine.getReasonPhrase, response.getStatusLine.getStatusCode.toString,url))
         }
+        } catch {
+          case e: IOException => {
+            success = false
+            if (trycounter < MaxTries) {
+              logger.warn(s"fetching $url failed, try $trycounter. IO Exception during KGV fetch. Exception: $e")
+              Left(LinkOperationError(s"KGV FETCH failure, try $trycounter. IO Exception during KGV fetch. Trying again.", url))
+            } else // basically, if(trycounter == MaxTries)
+              Left(LinkOperationError("KGV FETCH failure, tried ten (10) times, giving up. IO Exception during KGV fetch. Check connection to KGV", url))
       }
-      catch {
         case e: ClientProtocolException => {
+            success = false
           e.printStackTrace()
           Left(LinkOperationError(e.toString + s"\nURL: $url", ""))
         }
-        case e: Exception => Left(LinkOperationError(e.toString, ""))
+          case e: Exception => {
+            success = false
+            logger.warn(s"fetching $url failed, try $trycounter. Exception during KGV fetch. Exception: $e")
+            Left(LinkOperationError(e.toString, ""))
       }
-      finally {
+        } finally {
         if (response != null) {
           response.close()
         }
       }
     }
+      result match {
+        case Left(_) => time(logger, s"entering round ${trycounter + 1}", true, None){}
+        case Right(_) => Unit
+      }
+    } while (trycounter < MaxTries && !success)
+    result
   }
 
   private def paginationRequest(base: String, limit: Int, startIndex: Int = 0): (String, Int) = {
