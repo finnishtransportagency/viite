@@ -175,6 +175,8 @@ object RoadwayFiller {
                             headProjectLink.administrativeClass == oldAdministrativeClass &&
                             headProjectLink.ely == currentRoadway.ely
 
+    val newRoadwayStartDate = if (noChanges) currentRoadway.startDate else projectStartDate
+
     val newRoadway: Roadway = Roadway(
                             NewIdValue,
                             roadwayNumber,
@@ -186,7 +188,7 @@ object RoadwayFiller {
                             headProjectLink.startAddrMValue,
                             lastProjectLink.endAddrMValue,
                             false,
-                            projectStartDate,
+                            newRoadwayStartDate,
                             None,
                             createdBy = headProjectLink.createdBy.get,
                             currentRoadway.roadName,
