@@ -55,13 +55,16 @@ object CalibrationPointDAO {
     case object Unknown extends CalibrationPointLocation {def value = 99}
   }
 
-  case class CalibrationPoint(id: Long, roadwayPointId: Long, linkId: Long, roadwayNumber: Long, addrM: Long, startOrEnd: CalibrationPointLocation, typeCode: CalibrationPointType, validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None, createdBy: String, createdTime: Option[DateTime] = None)
+  case class CalibrationPoint(id: Long, roadwayPointId: Long, linkId: String, roadwayNumber: Long, addrM: Long, startOrEnd: CalibrationPointLocation, typeCode: CalibrationPointType, validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None, createdBy: String, createdTime: Option[DateTime] = None) {
+   def this(id: Long, roadwayPointId: Long, linkId: Long, roadwayNumber: Long, addrM: Long, startOrEnd: CalibrationPointLocation, typeCode: CalibrationPointType, validFrom: Option[DateTime], validTo: Option[DateTime], createdBy: String, createdTime: Option[DateTime]) =
+    this(id, roadwayPointId, linkId.toString, roadwayNumber, addrM, startOrEnd, typeCode, validFrom, validTo, createdBy, createdTime)
+   }
 
   implicit val getRoadwayPointRow = new GetResult[CalibrationPoint] {
-    def apply(r: PositionedResult) = {
+    def apply(r: PositionedResult): CalibrationPoint = {
       val calibrationPointId = r.nextLong()
       val roadwayPointId = r.nextLong()
-      val linkId = r.nextLong()
+      val linkId = r.nextString()
       val roadwayNumber = r.nextLong()
       val addrMValue = r.nextLong()
       val startOrEnd = CalibrationPointLocation.apply(r.nextInt())
@@ -92,7 +95,7 @@ object CalibrationPointDAO {
       calibrationPoint =>
         ps.setLong(1, calibrationPoint.id)
         ps.setLong(2, calibrationPoint.roadwayPointId)
-        ps.setLong(3, calibrationPoint.linkId)
+        ps.setString(3, calibrationPoint.linkId)
         ps.setInt(4, calibrationPoint.startOrEnd.value)
         ps.setInt(5, calibrationPoint.typeCode.value)
         ps.setString(6, calibrationPoint.createdBy)
@@ -103,7 +106,7 @@ object CalibrationPointDAO {
     createCalibrationPoints.map(_.id).toSeq
   }
 
-  def create(roadwayPointId: Long, linkId: Long, startOrEnd: CalibrationPointLocation, calType: CalibrationPointType, createdBy: String) = {
+  def create(roadwayPointId: Long, linkId: String, startOrEnd: CalibrationPointLocation, calType: CalibrationPointType, createdBy: String): Unit = {
     sqlu"""
       Insert Into CALIBRATION_POINT (ID, ROADWAY_POINT_ID, LINK_ID, START_END, TYPE, CREATED_BY) VALUES
       (${Sequences.nextCalibrationPointId}, $roadwayPointId, $linkId, ${startOrEnd.value}, ${calType.value}, $createdBy)
@@ -120,7 +123,7 @@ object CalibrationPointDAO {
      """.as[CalibrationPoint].first
   }
 
-  def fetch(linkId: Long, startOrEnd: Long): Option[CalibrationPoint] = {
+  def fetch(linkId: String, startOrEnd: Long): Option[CalibrationPoint] = {
     sql"""
          SELECT CP.ID, ROADWAY_POINT_ID, LINK_ID, ROADWAY_NUMBER, RP.ADDR_M, START_END, TYPE, VALID_FROM, VALID_TO, CP.CREATED_BY, CP.CREATED_TIME
          FROM CALIBRATION_POINT CP
@@ -177,7 +180,7 @@ object CalibrationPointDAO {
      """.as[Long].list.toSet
   }
 
-  def fetchByLinkId(linkIds: Iterable[Long]): Seq[CalibrationPoint] = {
+  def fetchByLinkId(linkIds: Iterable[String]): Seq[CalibrationPoint] = {
     if (linkIds.isEmpty) {
       Seq()
     } else {
@@ -187,14 +190,14 @@ object CalibrationPointDAO {
       FROM CALIBRATION_POINT CP
       JOIN ROADWAY_POINT RP
       ON RP.ID = CP.ROADWAY_POINT_ID
-      WHERE CP.link_id in (${linkIds.mkString(", ")}) AND CP.VALID_TO IS NULL
+      WHERE CP.link_id in (${linkIds.map(lid => "'" + lid + "'").mkString(", ")}) AND CP.VALID_TO IS NULL
       """
       queryList(query)
     }
   }
 
-  def fetch(calibrationPointsLinkIds: Seq[Long], startOrEnd: Long): Seq[CalibrationPoint] = {
-    val whereClause = calibrationPointsLinkIds.map(p => s" (link_id = $p and start_end = $startOrEnd)").mkString(" where ", " or ", "")
+  def fetch(calibrationPointsLinkIds: Seq[String], startOrEnd: Long): Seq[CalibrationPoint] = {
+    val whereClause = calibrationPointsLinkIds.map(p => s" (link_id = ''' + $p + ''' and start_end = $startOrEnd)").mkString(" where ", " or ", "")
     val query = s"""
      SELECT CP.ID, ROADWAY_POINT_ID, LINK_ID, ROADWAY_NUMBER, RP.ADDR_M, START_END, TYPE, VALID_FROM, VALID_TO, CP.CREATED_BY, CP.CREATED_TIME
      FROM CALIBRATION_POINT CP

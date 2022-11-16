@@ -1,30 +1,25 @@
 package fi.liikennevirasto.viite.model
 
-import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.PolyLine
 import fi.liikennevirasto.digiroad2.{Point, Vector3d}
-import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, _}
+import fi.liikennevirasto.digiroad2.linearasset.PolyLine
 import fi.liikennevirasto.viite.dao.CalibrationPoint
 
 trait RoadAddressLinkLike extends PolyLine {
   def id: Long
   def linearLocationId: Long
-  def linkId: Long
+  def linkId: String
   def length: Double
   def administrativeClassMML: AdministrativeClass
-  def linkType: LinkType
-  def constructionType: ConstructionType
+  def lifecycleStatus: LifecycleStatus
   def roadLinkSource: LinkGeomSource
   def administrativeClass: AdministrativeClass
-
-  def VVHRoadName: Option[String]
 
   def roadName: Option[String]
   def municipalityCode: BigInt
   def municipalityName: String
   def modifiedAt: Option[String]
   def modifiedBy: Option[String]
-  def attributes: Map[String, Any]
   def roadNumber: Long
   def roadPartNumber: Long
   def trackCode: Long
@@ -39,9 +34,10 @@ trait RoadAddressLinkLike extends PolyLine {
   def endCalibrationPoint: Option[CalibrationPoint]
   def anomaly: Anomaly
   def roadwayNumber: Long
+  def sourceId: String
 }
 
-case class RoadAddressLink(id: Long, linearLocationId: Long, linkId: Long, geometry: Seq[Point], length: Double, administrativeClassMML: AdministrativeClass, linkType: LinkType, constructionType: ConstructionType, roadLinkSource: LinkGeomSource, administrativeClass: AdministrativeClass, VVHRoadName: Option[String], roadName: Option[String], municipalityCode: BigInt, municipalityName: String, modifiedAt: Option[String], modifiedBy: Option[String], attributes: Map[String, Any] = Map(), roadNumber: Long, roadPartNumber: Long, trackCode: Long, elyCode: Long, discontinuity: Long, startAddressM: Long, endAddressM: Long, startDate: String, endDate: String, startMValue: Double, endMValue: Double, sideCode: SideCode, startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint], anomaly: Anomaly = Anomaly.None, roadwayNumber: Long = 0, newGeometry: Option[Seq[Point]] = None) extends RoadAddressLinkLike {
+case class RoadAddressLink(id: Long, linearLocationId: Long, linkId: String, geometry: Seq[Point], length: Double, administrativeClassMML: AdministrativeClass, lifecycleStatus: LifecycleStatus, roadLinkSource: LinkGeomSource, administrativeClass: AdministrativeClass, roadName: Option[String], municipalityCode: BigInt, municipalityName: String, modifiedAt: Option[String], modifiedBy: Option[String], roadNumber: Long, roadPartNumber: Long, trackCode: Long, elyCode: Long, discontinuity: Long, startAddressM: Long, endAddressM: Long, startDate: String, endDate: String, startMValue: Double, endMValue: Double, sideCode: SideCode, startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint], anomaly: Anomaly = Anomaly.None, roadwayNumber: Long = 0, newGeometry: Option[Seq[Point]] = None, sourceId: String) extends RoadAddressLinkLike {
 
   lazy val startingPoint: Point = if(sideCode == SideCode.TowardsDigitizing)
       geometry.head

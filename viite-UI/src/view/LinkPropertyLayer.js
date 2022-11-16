@@ -17,11 +17,11 @@
     var reservedRoadVector = new ol.source.Vector({});
     var historicRoadsVector = new ol.source.Vector({});
 
-    var SelectionType = LinkValues.SelectionType;
-    var Anomaly = LinkValues.Anomaly;
-    var ConstructionType = LinkValues.ConstructionType;
-    var SideCode = LinkValues.SideCode;
-    var RoadZIndex = LinkValues.RoadZIndex;
+    var SelectionType = ViiteEnumerations.SelectionType;
+    var Anomaly = ViiteEnumerations.Anomaly;
+    var lifecycleStatus = ViiteEnumerations.lifecycleStatus;
+    var SideCode = ViiteEnumerations.SideCode;
+    var RoadZIndex = ViiteEnumerations.RoadZIndex;
 
     var isActiveLayer = false;
     var cachedMarker = null;
@@ -536,7 +536,7 @@
           newLinkData.roadLinkSource = 99;
           newLinkData.sideCode = 99;
           newLinkData.linkType = 99;
-          newLinkData.constructionType = 0;
+          newLinkData.lifecycleStatus = 0;
           newLinkData.roadLinkType = 0;
           newLinkData.id = 0;
           newLinkData.startAddressM = "";
@@ -645,7 +645,7 @@
       });
       eventListener.listenTo(eventbus, 'underConstructionRoadLinks:fetched', function (underConstructionRoads) {
         var partitioned = _.partition(_.flatten(underConstructionRoads), function (feature) {
-          return feature.getData().constructionType === ConstructionType.UnderConstruction.value && feature.getData().roadNumber === 0;
+          return feature.getData().lifecycleStatus === lifecycleStatus.UnderConstruction.value && feature.getData().roadNumber === 0;
         });
         var ol3underConstructionRoads =
           _.map(partitioned[0], function (road) {

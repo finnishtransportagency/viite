@@ -22,7 +22,9 @@ module.exports = {
         "ModalConfirm": "writable",
         "mochaPhantomJS": "writable",
         "Application": "writable",
-        "LinkValues": "writable",
+        "ViiteEnumerations": "writable",
+        "EnumerationUtils": "writable",
+        "ViiteConstants": "writable",
         "FormCommon": "writable",
         "Backend": "writable",
         "moment": "writable",
@@ -53,6 +55,9 @@ module.exports = {
         "LinkPropertyLayer": "writable",
         "NodeLayer": "writable",
         "RoadNamingToolWindow": "writable",
+        "RoadAddressBrowserForm": "writable",
+        "RoadAddressBrowserWindow": "writable",
+        "RoadAddressChangesBrowserWindow": "writable",
         "LinkPropertyForm": "writable",
         "NodeSearchForm": "writable",
         "NodeForm": "writable",
@@ -87,7 +92,8 @@ module.exports = {
         "geometrycalculator": "writable",
         "validitydirections": "writable",
         "interact": "writable",
-        "events": "writable"
+        "events": "writable",
+        "XLSX": "readonly"
     },
     "parserOptions": {
         "ecmaVersion": 2019,

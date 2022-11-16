@@ -22,13 +22,10 @@
                 { "name": "userProvider", "value": "fi.liikennevirasto.digiroad2.dao.PostGISUserProvider" },
                 { "name": "municipalityProvider", "value": "fi.liikennevirasto.digiroad2.dao.PostGISMunicipalityProvider" },
                 { "name": "eventBus", "value": "fi.liikennevirasto.digiroad2.DigiroadEventBus" },
-                { "name": "vvhServiceHost", "value": "haproxy.vayla.fi" },
                 { "name": "oagProxyServer", "value": "oag.vayla.fi" },
                 { "name": "oagProxyURL", "value": "https://oag.vayla.fi" },
                 { "name": "rasterServiceURL", "value": "https://api.vaylapilvi.fi/rasteripalvelu-mml" },
-                { "name": "vvhRestApiEndPoint", "value": "https://api.vayla.fi/vvhdata/" },
-                { "name": "vvhRestApiUsername", "value": "svc_vvh_viite" },
-                { "name": "vvhRoadlink.frozen", "value": "true" },
+                { "name": "kgvRoadlink.frozen", "value": "true" },
                 { "name": "vkmUrl", "value": "https://api.vaylapilvi.fi" },
                 { "name": "http.proxySet", "value": "false" },
                 { "name": "http.proxyHost", "value": "127.0.0.1" },
@@ -40,7 +37,11 @@
                 { "name": "conversion.bonecp.jdbcUrl", "value": "jdbc:postgresql://vd1bbyq5el8tjd2.c8dj2qlvf50d.eu-west-1.rds.amazonaws.com:5432/drkonv" },
                 { "name": "conversion.bonecp.username", "value": "drkonv" },
                 { "name": "authentication.admin.basic.username", "value": "admin" },
-                { "name": "env", "value": "Dev" }
+                { "name": "env", "value": "Dev" },
+                { "name": "apiS3BucketName", "value":  "dev-vaylavirasto-viite-api-store-bucket"},
+                { "name": "apiS3ObjectTTLSeconds", "value":  "300"},
+                { "name": "env", "value": "Dev" },
+                { "name": "kgvEndpoint", "value": "https://api.vaylapilvi.fi/paikkatiedot/ogc/features/collections" }
             ],
             "mountPoints": [],
             "secrets": [
@@ -65,8 +66,8 @@
                     "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/allEnvs/rasterServiceApiKey"
                 },
                 {
-                    "name": "vvhRestApiPassword",
-                    "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/dev/vvhRestApiPassword"
+                  "name": "kgvApiKey",
+                  "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/kgvApiKey"
                 }
             ],
             "memoryReservation": 2048,

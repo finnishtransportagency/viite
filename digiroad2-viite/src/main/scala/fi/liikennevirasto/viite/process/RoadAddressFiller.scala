@@ -4,18 +4,18 @@ import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
+import fi.liikennevirasto.viite.{RoadAddressLinkBuilder, _}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLink}
-import fi.liikennevirasto.viite.{RoadAddressLinkBuilder, _}
 import org.slf4j.{Logger, LoggerFactory}
 
 
 object RoadAddressFiller {
 
   val logger: Logger = LoggerFactory.getLogger(getClass)
-  val roadAddressLinkBuilder = new RoadAddressLinkBuilder(new RoadwayDAO, new LinearLocationDAO, new ProjectLinkDAO)
+  val roadAddressLinkBuilder = new RoadAddressLinkBuilder(new RoadwayDAO, new LinearLocationDAO)
 
-  case class LinearLocationAdjustment(linearLocationId: Long, linkId: Long, startMeasure: Option[Double], endMeasure: Option[Double], geometry: Seq[Point])
+  case class LinearLocationAdjustment(linearLocationId: Long, linkId: String, startMeasure: Option[Double], endMeasure: Option[Double], geometry: Seq[Point])
 
   case class ChangeSet(
                       droppedSegmentIds: Set[Long],
@@ -31,7 +31,7 @@ object RoadAddressFiller {
     val restSegments = sorted.tail
     val allowedDiff = ((linkLength - MaxAllowedMValueError) - lastSegment.endMValue) <= MaxDistanceDiffAllowed
     val adjustments = if ((lastSegment.endMValue < linkLength - MaxAllowedMValueError) && allowedDiff) {
-      restSegments ++ Seq(lastSegment.copy(endMValue = linkLength))
+      restSegments ++ Seq(lastSegment.copy(endMValue = linkLength, sourceId = ""))
     } else {
       segments
     }
@@ -46,10 +46,10 @@ object RoadAddressFiller {
   }
 
   private def isPublicRoad(roadLink: RoadLinkLike) = {
-    roadLink.administrativeClass == AdministrativeClass.State || roadLink.attributes.get("ROADNUMBER").exists(_.toString.toInt > 0)
+    roadLink.administrativeClass == AdministrativeClass.State
   }
 
-  private def generateUnknownLink(roadLink: RoadLinkLike) = {
+  private def generateUnknownLink(roadLink: RoadLinkLike): Seq[UnaddressedRoadLink] = {
     val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry, 0.0, roadLink.length)
     Seq(UnaddressedRoadLink(roadLink.linkId, None, None, AdministrativeClass.Unknown, None, None, Some(0.0), Some(roadLink.length), if (isPublicRoad(roadLink)) {
       Anomaly.NoAddressGiven
@@ -58,7 +58,7 @@ object RoadAddressFiller {
     }, geom))
   }
 
-  def fillProjectTopology(roadLinks: Seq[RoadLinkLike], roadAddressMap: Map[Long, Seq[ProjectAddressLink]]): Seq[ProjectAddressLink] = {
+  def fillProjectTopology(roadLinks: Seq[RoadLinkLike], roadAddressMap: Map[String, Seq[ProjectAddressLink]]): Seq[ProjectAddressLink] = {
     val fillOperations: Seq[(RoadLinkLike, Seq[ProjectAddressLink]) => Seq[ProjectAddressLink]] = Seq(
       extendToGeometry
     )

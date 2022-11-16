@@ -1,6 +1,6 @@
 (function (root) {
-  root.LinkPropertyForm = function (selectedLinkProperty, roadNamingTool, projectListModel) {
-    var selectionType = LinkValues.SelectionType;
+  root.LinkPropertyForm = function (selectedLinkProperty, roadNamingTool, projectListModel, roadAddressBrowser, roadAddressChangesBrowser) {
+    var selectionType = ViiteEnumerations.SelectionType;
     var decodedAttributes = [
       {
         id: 'AJORATA',
@@ -276,6 +276,8 @@
         '<button id="formProjectButton" class="action-mode-btn btn btn-block btn-primary">Tieosoiteprojektit</button>' +
         '<button id="formNameToolButton" class="open-tool-mode-btn btn btn-block btn-primary" style="margin-top: 5px;">Tiennimen ylläpito</button>' +
         '<button id="formNodesAndJunctionsButton" class="open-tool-mode-btn btn btn-block btn-primary" style="margin-top: 5px;">Solmut ja liittymät</button>' +
+        '<button id="formRoadAddressBrowserButton" class="open-tool-mode-btn btn btn-block btn-primary" style="margin-top: 5px;">Tieosoitteiden katselu</button>' +
+        '<button id="formRoadAddressChangesBrowserButton" class="open-tool-mode-btn btn btn-block btn-primary" style="margin-top: 5px;">Tieosoitemuutosten katselu</button>' +
         '</div>';
       rootElement.append(emptyFormDiv);
       $('[id=formProjectButton]').click(function () {
@@ -292,6 +294,14 @@
       });
       $('[id=formNodesAndJunctionsButton]').click(function () {
         eventbus.trigger('nodesAndJunctions:open');
+        return false;
+      });
+      $('[id=formRoadAddressBrowserButton]').click(function () {
+        roadAddressBrowser.toggle();
+        return false;
+      });
+      $('[id=formRoadAddressChangesBrowserButton]').click(function () {
+        roadAddressChangesBrowser.toggle();
         return false;
       });
     };

@@ -7,6 +7,10 @@ define(['chai', 'LocationInputParser'], function (chai, LocationInputParser) {
       expect(LocationInputParser.parse('123,345')).to.deep.equal({type: 'coordinate', lat: 123, lon: 345});
     });
 
+    it('parses linkId', function () {
+      expect(LocationInputParser.parse('9aafa85f-0afe-4cc2-9b63-f57090ec6bca:1').type).to.equal('road');
+    });
+
     it('parses street addresses', function () {
       expect(LocationInputParser.parse('Salorankatu, Salo')).to.deep.equal({
         type: 'street',

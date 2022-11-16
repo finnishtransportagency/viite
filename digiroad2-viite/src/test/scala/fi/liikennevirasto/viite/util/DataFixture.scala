@@ -5,7 +5,7 @@ import java.util.Properties
 import com.googlecode.flyway.core.Flyway
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.client.kgv.KgvRoadLink
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.ds
@@ -24,25 +24,23 @@ import scala.language.postfixOps
 object DataFixture {
 
   val dataImporter = new DataImporter
-  lazy val vvhClient: VVHClient = {
-    new VVHClient(ViiteProperties.vvhRestApiEndPoint)
+  lazy val KGVClient: KgvRoadLink = {
+    new KgvRoadLink
   }
 
-  private lazy val geometryFrozen: Boolean = ViiteProperties.vvhRoadlinkFrozen
+  private lazy val geometryFrozen: Boolean = ViiteProperties.kgvRoadlinkFrozen
 
   val eventBus = new DummyEventBus
-  val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer, geometryFrozen)
+  val linkService = new RoadLinkService(KGVClient, eventBus, new DummySerializer, geometryFrozen)
   val roadAddressDAO = new RoadwayDAO
   val linearLocationDAO = new LinearLocationDAO
   val roadNetworkDAO: RoadNetworkDAO = new RoadNetworkDAO
   val roadwayPointDAO = new RoadwayPointDAO
   val nodePointDAO = new NodePointDAO
   val junctionPointDAO = new JunctionPointDAO
-  val roadAddressService = new RoadAddressService(linkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO,
-    roadwayPointDAO, nodePointDAO, junctionPointDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO),
-    eventBus, ViiteProperties.vvhRoadlinkFrozen)
+  val roadAddressService = new RoadAddressService(linkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), eventBus, ViiteProperties.kgvRoadlinkFrozen)
 
-  lazy val continuityChecker = new ContinuityChecker(new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer, geometryFrozen))
+  lazy val continuityChecker = new ContinuityChecker(new RoadLinkService(KGVClient, new DummyEventBus, new DummySerializer, geometryFrozen))
 
   private lazy val numberThreads: Int = 6
 
@@ -79,9 +77,9 @@ object DataFixture {
 
   def checkRoadNetwork(): Unit = {
     println(s"\nstart checking road network at time: ${DateTime.now()}")
-    val vvhClient = new VVHClient(ViiteProperties.vvhRestApiEndPoint)
+    val KGVClient = new KgvRoadLink
     val username = ViiteProperties.bonecpUsername
-    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer, geometryFrozen)
+    val roadLinkService = new RoadLinkService(KGVClient, new DummyEventBus, new DummySerializer, geometryFrozen)
     PostGISDatabase.withDynTransaction {
       val checker = new RoadNetworkChecker(roadLinkService)
       checker.checkRoadNetwork(username)
@@ -153,7 +151,7 @@ object DataFixture {
 
   def applyChangeInformationToRoadAddressLinks(numThreads: Int): Unit = {
 
-    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new JsonSerializer, geometryFrozen)
+    val roadLinkService = new RoadLinkService(KGVClient, new DummyEventBus, new JsonSerializer, geometryFrozen)
     val linearLocationDAO = new LinearLocationDAO
 
     val linearLocations =

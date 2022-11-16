@@ -2,19 +2,19 @@ package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.SideCode
-import fi.liikennevirasto.digiroad2.client.vvh.ChangeType._
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
+import fi.liikennevirasto.digiroad2.client.kgv.{ChangeInfo, ChangeType}
+import fi.liikennevirasto.digiroad2.client.kgv.ChangeType._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
+import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.{CalibrationPointReference, LinearLocation}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.ChangeSet
-import fi.liikennevirasto.viite._
 import org.slf4j.LoggerFactory
 
 object ApplyChangeInfoProcess {
 
   private val logger = LoggerFactory.getLogger(getClass)
 
-  private case class Projection(oldLinkId: Long, newLinkId: Long, oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, vvhTimeStamp: Long, orderIncrement: Int = 0) {
+  private case class Projection(oldLinkId: String, newLinkId: String, oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, vvhTimeStamp: Long, orderIncrement: Int = 0) {
     /**
       * Check if the given measure is equal the old start measure with {MaxAllowedMValueError} error margin allowed
       *
@@ -80,7 +80,7 @@ object ApplyChangeInfoProcess {
     (Math.min(maxNewMeasure, Math.max(0.0, newStartMeasure)), Math.max(0.0, Math.min(maxNewMeasure, newEndMeasure)), linearLocation.sideCode)
   }
 
-  private def validateLinearLocation(originalLinearLocation: LinearLocation, adjustedLinearLocations: Seq[LinearLocation], mappedRoadLinks: Map[Long, RoadLinkLike]): Boolean = {
+  private def validateLinearLocation(originalLinearLocation: LinearLocation, adjustedLinearLocations: Seq[LinearLocation], mappedRoadLinks: Map[String, RoadLinkLike]) = {
 
     def checkChangedLength(originalLinearLocation: LinearLocation, adjustedLinearLocations: Seq[LinearLocation]): Boolean = {
       val oldLength = originalLinearLocation.endMValue - originalLinearLocation.startMValue
@@ -89,7 +89,7 @@ object ApplyChangeInfoProcess {
       Math.abs(oldLength - newLength) < MaxAdjustmentRange
     }
 
-    def checkExistingRoadLink(mappedRoadLinks: Map[Long, RoadLinkLike])(originalLinearLocation: LinearLocation, adjustedLinearLocations: Seq[LinearLocation]): Boolean = {
+    def checkExistingRoadLink(mappedRoadLinks: Map[String, RoadLinkLike])(originalLinearLocation: LinearLocation, adjustedLinearLocations: Seq[LinearLocation]): Boolean = {
       adjustedLinearLocations.forall(linearLocation => mappedRoadLinks.contains(linearLocation.linkId))
     }
 
@@ -101,7 +101,7 @@ object ApplyChangeInfoProcess {
     filterOperations.forall(operation => operation(originalLinearLocation, adjustedLinearLocations))
   }
 
-  private def projectLinearLocation(linearLocation: LinearLocation, projections: Seq[Projection], changeSet: ChangeSet, mappedRoadLinks: Map[Long, RoadLinkLike]): (Seq[LinearLocation], ChangeSet) = {
+  private def projectLinearLocation(linearLocation: LinearLocation, projections: Seq[Projection], changeSet: ChangeSet, mappedRoadLinks: Map[String, RoadLinkLike]): (Seq[LinearLocation], ChangeSet) = {
 
     val applicableProjections = projections.filter(_.vvhTimeStamp > linearLocation.adjustedTimestamp).filter(_.intercepts(linearLocation))
 
@@ -131,7 +131,7 @@ object ApplyChangeInfoProcess {
     }
   }
 
-  private def projectLinearLocation(linearLocation: LinearLocation, projection: Projection, mappedRoadLinks: Map[Long, RoadLinkLike]): LinearLocation = {
+  private def projectLinearLocation(linearLocation: LinearLocation, projection: Projection, mappedRoadLinks: Map[String, RoadLinkLike]) = {
 
     def decimalPlaces(number: Double, d: Int = 10): Int = {
       if ((number * d).toLong % 10 == 0) d else decimalPlaces(number, d * 10)
@@ -163,13 +163,10 @@ object ApplyChangeInfoProcess {
       roadLink => GeometryUtils.truncateGeometry2D(roadLink.geometry, newStartMeasure, newEndMeasure)
     ).getOrElse(linearLocation.geometry)
 
-    linearLocation.copy(
-      id = newId, linkId = projection.newLinkId, startMValue = newStartMeasure, endMValue = newEndMeasure, sideCode = newSideCode, geometry = geometry, adjustedTimestamp = projection.vvhTimeStamp,
-      calibrationPoints = (newStartCalibrationPoint, newEndCalibrationPoint), orderNumber = linearLocation.orderNumber + (projection.orderIncrement.toDouble / decimalPlaces(linearLocation.orderNumber))
-    )
+    linearLocation.copy(id = newId, orderNumber = linearLocation.orderNumber + (projection.orderIncrement.toDouble / decimalPlaces(linearLocation.orderNumber)), linkId = projection.newLinkId, startMValue = newStartMeasure, endMValue = newEndMeasure, sideCode = newSideCode, adjustedTimestamp = projection.vvhTimeStamp, calibrationPoints = (newStartCalibrationPoint, newEndCalibrationPoint), geometry = geometry)
   }
 
-  private def filterOutOlderChanges(locations: Map[Long, Seq[LinearLocation]])(change: ChangeInfo): Boolean = {
+  private def filterOutOlderChanges(locations: Map[String, Seq[LinearLocation]])(change: ChangeInfo): Boolean = {
     //TODO check how to act when we have one totally newId (does not exist in current linear location) from changeInfo that doesnt have oldId associated
     val changeLocations = locations.getOrElse(change.oldId.getOrElse(change.newId.get), Seq())
     if (changeLocations.isEmpty) {
@@ -261,7 +258,7 @@ object ApplyChangeInfoProcess {
     )
   }
 
-  private def applyChanges(linearLocations: Seq[LinearLocation], changes: Seq[ChangeInfo], changeSet: ChangeSet, mappedRoadLinks: Map[Long, RoadLinkLike]): (Seq[LinearLocation], ChangeSet) = {
+  private def applyChanges(linearLocations: Seq[LinearLocation], changes: Seq[ChangeInfo], changeSet: ChangeSet, mappedRoadLinks: Map[String, RoadLinkLike]) = {
 
     //If contains some unsupported change type there is no need to apply any change
     //because the linear locations will be set as floating

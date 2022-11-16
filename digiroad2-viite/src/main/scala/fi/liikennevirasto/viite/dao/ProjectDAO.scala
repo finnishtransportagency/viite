@@ -61,13 +61,13 @@ class ProjectDAO {
          """.execute
   }
 
-  def fetchAllIdsByLinkId(linkId: Long): Seq[Long] =
+  def fetchAllIdsByLinkId(linkId: String): Seq[Long] =
     time(logger, """Get projects with given link id""") {
     val query =
       s"""SELECT P.ID
              FROM PROJECT P
             JOIN PROJECT_LINK PL ON P.ID=PL.PROJECT_ID
-            WHERE P.STATE = ${ProjectState.Incomplete.value} AND PL.LINK_ID=$linkId"""
+            WHERE P.STATE = ${ProjectState.Incomplete.value} AND PL.LINK_ID='$linkId'"""
     Q.queryNA[Long](query).list
   }
 
@@ -158,6 +158,10 @@ class ProjectDAO {
     sqlu""" update project set state=${state.value} WHERE id=$projectID""".execute
   }
 
+  def changeProjectStatusToAccepted(projectID: Long){
+    sqlu""" update project set state=${ProjectState.Accepted.value}, accepted_date=current_timestamp WHERE id=$projectID""".execute
+  }
+
   /** Returns an id of a single project waiting for being updated to the road network. */
   def fetchSingleProjectIdWithInUpdateQueueStatus: Option[Long] = {
     val query =
@@ -193,6 +197,7 @@ class ProjectDAO {
     projects.isEmpty || projects.contains(projectId)
   }
 
+  //TODO: Add accepted date if we want to display it in the user interface
   private def fetch(queryFilter: String => String): Seq[Project] = {
     val query =
       s"""SELECT id, state, name, created_by, created_date, start_date, modified_by, COALESCE(modified_date, created_date),

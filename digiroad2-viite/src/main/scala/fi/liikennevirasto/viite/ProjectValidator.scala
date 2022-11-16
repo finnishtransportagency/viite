@@ -3,7 +3,7 @@ package fi.liikennevirasto.viite
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle}
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.client.kgv.KgvRoadLink
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{Track, ViiteProperties}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
@@ -12,7 +12,6 @@ import fi.liikennevirasto.viite.dao.{Discontinuity, _}
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.process.{RoadwayAddressMapper, TrackSectionOrder}
 import fi.liikennevirasto.viite.process.TrackSectionOrder.findChainEndpoints
-import fi.liikennevirasto.viite.process.strategy.DefaultSectionCalculatorStrategy
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 
@@ -21,18 +20,16 @@ import scala.collection.immutable.ListMap
 class ProjectValidator {
 
   val logger = LoggerFactory.getLogger(getClass)
-  lazy val vvhClient: VVHClient = new VVHClient(ViiteProperties.vvhRestApiEndPoint)
+  lazy val KGVClient: KgvRoadLink = new KgvRoadLink
   val eventBus = new DummyEventBus
-  val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer, ViiteProperties.vvhRoadlinkFrozen)
+  val linkService = new RoadLinkService(KGVClient, eventBus, new DummySerializer, ViiteProperties.kgvRoadlinkFrozen)
   val roadwayDAO = new RoadwayDAO
   val linearLocationDAO = new LinearLocationDAO
   val roadNetworkDAO: RoadNetworkDAO = new RoadNetworkDAO
   val roadwayPointDAO = new RoadwayPointDAO
   val nodePointDAO = new NodePointDAO
   val junctionPointDAO = new JunctionPointDAO
-  val roadAddressService = new RoadAddressService(linkService, roadwayDAO, linearLocationDAO, roadNetworkDAO,
-    roadwayPointDAO, nodePointDAO, junctionPointDAO, new RoadwayAddressMapper(roadwayDAO, linearLocationDAO), eventBus,
-    ViiteProperties.vvhRoadlinkFrozen) {
+  val roadAddressService = new RoadAddressService(linkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, new RoadwayAddressMapper(roadwayDAO, linearLocationDAO), eventBus, ViiteProperties.kgvRoadlinkFrozen) {
 
     override def withDynSession[T](f: => T): T = f
 
@@ -42,7 +39,6 @@ class ProjectValidator {
   val projectLinkDAO = new ProjectLinkDAO
   val projectReservedPartDAO = new ProjectReservedPartDAO
   val projectDAO = new ProjectDAO
-  val defaultSectionCalculatorStrategy = new DefaultSectionCalculatorStrategy
   val defaultZoomlevel = 12
 
   def checkReservedExistence(currentProject: Project, newRoadNumber: Long, newRoadPart: Long, linkStatus: LinkStatus, projectLinks: Seq[ProjectLink]): Unit = {
@@ -793,19 +789,19 @@ class ProjectValidator {
     */
   def checkRemovedEndOfRoadParts(project: Project, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
     projectLinks.filter(pl => pl.status == Terminated && pl.discontinuity == Discontinuity.EndOfRoad).flatMap { rrp =>
-      roadAddressService.getPreviousRoadAddressPart(rrp.roadNumber, rrp.roadPartNumber) match {
-        case Some(previousRoadPartNumber) =>
-          roadAddressService.getRoadAddressWithRoadAndPart(rrp.roadNumber, previousRoadPartNumber).reverse
-            .find(ra => !projectLinks.exists(link => link.linearLocationId == ra.linearLocationId || link.status != Terminated)) match {
-            case Some(actualProjectLinkForPreviousEnd) =>
-              return Seq(ValidationErrorDetails(project.id, alterMessage(ValidationErrorList.TerminationContinuity, currentRoadAndPart = Some(Seq((actualProjectLinkForPreviousEnd.roadNumber, actualProjectLinkForPreviousEnd.roadPartNumber)))),
-                Seq(actualProjectLinkForPreviousEnd.id),
-                Seq(ProjectCoordinates(actualProjectLinkForPreviousEnd.geometry.head.x, actualProjectLinkForPreviousEnd.geometry.head.y, defaultZoomlevel)), Some("")))
-            case None => Seq()
-          }
-        case None => Seq()
+      val roadPartsInProject = projectLinks.filter(_.roadNumber == rrp.roadNumber).flatMap(pl => Seq(pl.roadPartNumber,pl.originalRoadPartNumber)).distinct
+      val validRoadParts = roadAddressService.getValidRoadAddressParts(rrp.roadNumber, project.startDate)
+      validRoadParts.filter(roadPart => !roadPartsInProject.contains(roadPart)) match {
+        case Seq() => Seq()
+        case roadParts =>
+          val lastRoadAddress = roadAddressService.getRoadAddressWithRoadAndPart(rrp.roadNumber, roadParts.max).maxBy(_.endAddrMValue)
+          if (lastRoadAddress.discontinuity != Discontinuity.EndOfRoad)
+            Seq(ValidationErrorDetails(project.id, alterMessage(ValidationErrorList.TerminationContinuity, currentRoadAndPart = Some(Seq((rrp.roadNumber, lastRoadAddress.roadPartNumber)))), Seq(lastRoadAddress.id),
+              Seq(ProjectCoordinates(lastRoadAddress.geometry.head.x, lastRoadAddress.geometry.head.y, defaultZoomlevel)), Some("")))
+          else
+            Seq()
       }
-    }
+    }.distinct
   }
 
   def checkActionsInRoadsNotInProject(project: Project, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
@@ -1085,7 +1081,7 @@ class ProjectValidator {
                   None
                 else {
                   val endPointLinks     = findChainEndpoints(onceConnectedNewLinks.values.toSeq)
-                  val middleLinks       = (onceConnectedNewLinks.toSet diff endPointLinks.toSet).toMap
+                  val middleLinks       = onceConnectedNewLinks.filter((p: (Point, ProjectLink)) => !endPointLinks.exists(p2 => GeometryUtils.areAdjacent(p2._1,GeometryUtils.to2DGeometry(p._1))))
                   val lastLink          = endPointLinks.find(p => p._2.discontinuity != Discontinuity.Continuous).getOrElse(onceConnectedNewLinks.maxBy(_._2.id))
                   val dists             = middleLinks.map(l => l._1.distance2DTo(lastLink._1) -> l._2)
                   val discontinuousLink = dists.maxBy(_._1)._2
@@ -1207,7 +1203,7 @@ class ProjectValidator {
       *
       * @return
       */
-    def checkDiscontinuityOnLastLinkPart() = {
+    def checkDiscontinuityOnLastLinkPart(): Seq[ValidationErrorDetails] = {
       val discontinuityErrors = roadProjectLinks.groupBy(_.roadNumber).flatMap { g =>
         val validRoadParts = roadAddressService.getValidRoadAddressParts(g._1.toInt, project.startDate)
         val trackIntervals = Seq(g._2.filter(_.track != RightSide), g._2.filter(_.track != LeftSide))
@@ -1274,7 +1270,7 @@ class ProjectValidator {
      */
     def validateTheEndOfPreviousRoadPart: Seq[ValidationErrorDetails] = {
       val (road, part): (Long, Long) = (roadProjectLinks.head.roadNumber, roadProjectLinks.head.roadPartNumber)
-      roadAddressService.getPreviousRoadAddressPart(road, part) match {
+      roadAddressService.getPreviousRoadPartNumber(road, part) match {
         case Some(previousRoadPartNumber) =>
           val (leftLinks, rightLinks) = (roadProjectLinks.filter(_.track != Track.RightSide), roadProjectLinks.filter(_.track != Track.LeftSide))
           //Skip this validation if previousRoadPartNumber is reserved in the project or either track (or combined track) has no project links assigned to it.
@@ -1526,10 +1522,21 @@ class ProjectValidator {
     }
     formattedMessageObject
   }
+
+  def errorPartsToApi(errorParts: ValidationErrorDetails): Map[String, Any] = {
+    Map("ids" -> errorParts.affectedIds,
+      "errorCode" -> errorParts.validationError.value,
+      "errorMessage" -> errorParts.validationError.message,
+      "info" -> errorParts.optionalInformation,
+      "coordinates" -> errorParts.coordinates,
+      "priority" -> errorParts.validationError.priority
+    )
+  }
 }
 
-class ProjectValidationException(s: String) extends RuntimeException {
+class ProjectValidationException(s: String, validationErrors: Seq[Map[String, Any]] = Seq()) extends RuntimeException {
   override def getMessage: String = s
+  def getValidationErrors: Seq[Map[String, Any]] = validationErrors
 }
 
 class NameExistsException(s: String) extends RuntimeException {

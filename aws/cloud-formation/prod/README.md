@@ -49,6 +49,8 @@ aws ssm put-parameter --overwrite --name /Viite/Prod/vkmApiKey --type SecureStri
 aws ssm put-parameter --overwrite --name /Viite/Prod/rasterServiceApiKey --type SecureString --value X
 
 aws ssm put-parameter --overwrite --name /Viite/Prod/vvhRestApiPassword --type SecureString --value X
+
+aws ssm put-parameter --overwrite --name /Viite/Prod/kgvApiKey --type SecureString --value X
 ```
 ### Luo ECR repository
 ```
@@ -56,6 +58,16 @@ aws cloudformation create-stack \
 --stack-name [esim. viite-prod-ecr-repository] \
 --template-body file://aws/cloud-formation/viite-create-ecr-repository.yaml \
 --parameters ParameterKey=Environment,ParameterValue=prod
+```
+
+### Luo S3 sekä task definition task role
+
+```
+aws cloudformation create-stack \
+--stack-name [esim. viite-prod-api-s3] \
+--capabilities CAPABILITY_NAMED_IAM \
+--template-body file://aws/cloud-formation/viite-api-s3.yaml \
+--parameters file://aws/cloud-formation/prod/prod-api-s3-parameter.json
 ```
 
 ### Luo task-definition
@@ -115,8 +127,8 @@ Ota juuri luotu task definition versio käyttöön. \
 Huom.: [:VERSION] -kohdan pois jättäminen ottaa käyttöön viimeisimmän task definition version ("latest") 
 ```
 aws ecs update-service \
---cluster Prod-Viite-ECS-Cluster-Private \
---service Prod-Viite-ECS-Service-Private \
+--cluster Prod-Viite-prod-ECS-Cluster-Private \
+--service Prod-Viite-prod-ECS-Service-Private \
 --task-definition Prod-Viite[:VERSION] \
 --force-new-deployment
 ```
@@ -134,8 +146,8 @@ aws cloudformation update-stack \
 Kehitystiimi puskee uuden kontin ECR repositorioon jonka jälkeen service päivitetään komennolla:
 ```
 aws ecs update-service \
---cluster Prod-Viite-ECS-Cluster-Private \
---service Prod-Viite-ECS-Service-Private \
+--cluster Prod-Viite-prod-ECS-Cluster-Private \
+--service Prod-Viite-prod-ECS-Service-Private \
 --task-definition Prod-Viite[:VERSION] \
 --force-new-deployment
 ```

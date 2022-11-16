@@ -45,10 +45,10 @@ Resources:
       Value: PlaceHolderValue
       Description: Viite access key for Rasteripalvelu-mml hosted in vaylapilvi
 
-  VVHRestApiPassword:
+  kgvApiKey:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: !Join ['/', ['/Viite', !Ref Environment, 'vvhRestApiPassword']]
+      Name: !Join ['/', ['/Viite', !Ref Environment, 'kgvApiKey']]
       Type: String
       Value: PlaceHolderValue
-      Description: !Join [' ', ['VVH rest API password for Viite ', !Ref Environment]]
+      Description: !Join [' ', ['Kgv rest API password for Viite ', !Ref Environment]]

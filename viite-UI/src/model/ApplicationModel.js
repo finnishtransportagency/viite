@@ -4,7 +4,7 @@
       level: undefined
     };
     var selectedLayer;
-    var selectedTool = LinkValues.Tool.Unknown.value;
+    var selectedTool = ViiteEnumerations.Tool.Unknown.value;
     var centerLonLat;
     var minDirtyZoomLevel = zoomlevels.minZoomForRoadLinks;
     var minEditModeZoomLevel = zoomlevels.minZoomForEditMode;
@@ -17,10 +17,10 @@
     var actionCalculating = 0;
     var actionCalculated = 1;
     var currentAction;
-    var selectionType = LinkValues.SelectionType.All;
+    var selectionType = ViiteEnumerations.SelectionType.All;
     var sessionUsername = '';
     var sessionUserRoles = '';
-    var specialSelectionTypes = [LinkValues.SelectionType.Unknown.value];
+    var specialSelectionTypes = [ViiteEnumerations.SelectionType.Unknown.value];
 
 
     var getContinueButtons = function () {
@@ -46,7 +46,7 @@
       if (readOnly !== newState) {
         readOnly = newState;
         setActiveButtons(false);
-        setSelectedTool(LinkValues.Tool.Default.value);
+        setSelectedTool(ViiteEnumerations.Tool.Default.value);
         eventbus.trigger('application:readOnly', newState);
       }
     };
@@ -104,13 +104,13 @@
     }
 
     function isSelectedTool(tool) {
-      var alias = _.has(LinkValues.Tool[selectedTool], 'alias') ? LinkValues.Tool[selectedTool].alias : [];
+      var alias = _.has(ViiteEnumerations.Tool[selectedTool], 'alias') ? ViiteEnumerations.Tool[selectedTool].alias : [];
       return tool === selectedTool || _.includes(alias, tool);
     }
 
     function setSelectedTool(tool) {
       if (isSelectedTool(tool)) {
-        selectedTool = LinkValues.Tool.Unknown.value;
+        selectedTool = ViiteEnumerations.Tool.Unknown.value;
         eventbus.trigger('tool:clear');
       } else {
         selectedTool = tool;
@@ -193,7 +193,7 @@
         minDirtyZoomLevel = level;
       },
       selectLayer: function (layer, toggleStart, noSave) {
-        var tool = layer === 'node' ? LinkValues.Tool.Unknown.value : LinkValues.Tool.Default.value;
+        var tool = layer === 'node' ? ViiteEnumerations.Tool.Unknown.value : ViiteEnumerations.Tool.Default.value;
         setSelectedTool(tool);
         if (layer !== selectedLayer) {
           var previouslySelectedLayer = selectedLayer;

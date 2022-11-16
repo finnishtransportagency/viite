@@ -17,7 +17,9 @@ trait ViiteProperties {
   val vvhRestApiEndPoint: String
   val vvhRestApiUsername: String
   val vvhRestApiPassword: String
-  val vvhRoadlinkFrozen: Boolean
+  val kgvRoadlinkFrozen : Boolean
+  val kgvEndpoint       : String
+  val kgvApiKey: String
   val vkmUrl: String
   val vkmApiKey: String
   val httpProxySet: Boolean
@@ -34,6 +36,9 @@ trait ViiteProperties {
   val conversionBonecpPassword: String
   val latestDeploy: String
   val env: String
+  val apiS3BucketName: String
+  val awsConnectionEnabled: Boolean
+  val apiS3ObjectTTLSeconds: String
 
   val bonecpProperties: Properties
   val conversionBonecpProperties: Properties
@@ -64,8 +69,10 @@ class ViitePropertiesFromEnv extends ViiteProperties {
   val rasterServiceApiKey: String = scala.util.Properties.envOrElse("rasterServiceApiKey", null)
   val vvhRestApiEndPoint: String = scala.util.Properties.envOrElse("vvhRestApiEndPoint", null)
   val vvhRestApiUsername: String = scala.util.Properties.envOrElse("vvhRestApiUsername", null)
-  val vvhRestApiPassword: String = scala.util.Properties.envOrElse("vvhRestApiPassword", null)
-  val vvhRoadlinkFrozen: Boolean = scala.util.Properties.envOrElse("vvhRoadlink.frozen", "false").toBoolean
+  val vvhRestApiPassword: String  = scala.util.Properties.envOrElse("vvhRestApiPassword", null)
+  val kgvRoadlinkFrozen : Boolean = scala.util.Properties.envOrElse("kgvRoadlink.frozen", "false").toBoolean
+  val kgvEndpoint       : String  = scala.util.Properties.envOrElse("kgvEndpoint", null)
+  val kgvApiKey: String = scala.util.Properties.envOrElse("kgvApiKey", null)
   val vkmUrl: String = scala.util.Properties.envOrElse("vkmUrl", null)
   val vkmApiKey: String = scala.util.Properties.envOrElse("vkmApiKey", null)
   val httpProxySet: Boolean = scala.util.Properties.envOrElse("http.proxySet", "false").toBoolean
@@ -82,6 +89,9 @@ class ViitePropertiesFromEnv extends ViiteProperties {
   val conversionBonecpPassword: String = scala.util.Properties.envOrElse("conversion.bonecp.password", null)
   val latestDeploy: String = revisionProperties.getProperty("latestDeploy", "-")
   val env: String = scala.util.Properties.envOrElse("env", "Unknown")
+  val apiS3BucketName: String = scala.util.Properties.envOrElse("apiS3BucketName", null)
+  val awsConnectionEnabled: Boolean = scala.util.Properties.envOrElse("awsConnectionEnabled", "true").toBoolean
+  val apiS3ObjectTTLSeconds: String = scala.util.Properties.envOrElse("apiS3ObjectTTLSeconds", null)
 
   lazy val bonecpProperties: Properties = {
     val props = new Properties()
@@ -145,8 +155,10 @@ class ViitePropertiesFromFile extends ViiteProperties {
   override val rasterServiceApiKey: String = scala.util.Properties.envOrElse("rasterServiceApiKey", envProps.getProperty("rasterServiceApiKey"))
   override val vvhRestApiEndPoint: String = scala.util.Properties.envOrElse("vvhRestApiEndPoint", envProps.getProperty("vvhRestApiEndPoint"))
   override val vvhRestApiUsername: String = scala.util.Properties.envOrElse("vvhRestApiUsername", envProps.getProperty("vvhRestApiUsername"))
-  override val vvhRestApiPassword: String = scala.util.Properties.envOrElse("vvhRestApiPassword", envProps.getProperty("vvhRestApiPassword"))
-  override val vvhRoadlinkFrozen: Boolean = envProps.getProperty("vvhRoadlink.frozen", "false").toBoolean
+  override val vvhRestApiPassword: String  = scala.util.Properties.envOrElse("vvhRestApiPassword", envProps.getProperty("vvhRestApiPassword"))
+  override val kgvRoadlinkFrozen : Boolean = envProps.getProperty("kgvRoadlink.frozen", "false").toBoolean
+  override val kgvEndpoint       : String  = envProps.getProperty("kgvEndpoint", null)
+  override val kgvApiKey: String = scala.util.Properties.envOrElse("kgvApiKey", envProps.getProperty("kgvApiKey"))
   override val vkmUrl: String = scala.util.Properties.envOrElse("vkmUrl", envProps.getProperty("vkmUrl"))
   override val vkmApiKey: String = scala.util.Properties.envOrElse("vkmApiKey", envProps.getProperty("vkmApiKey"))
   override val httpProxySet: Boolean = envProps.getProperty("http.proxySet", "false").toBoolean
@@ -163,6 +175,9 @@ class ViitePropertiesFromFile extends ViiteProperties {
   override val conversionBonecpPassword: String = scala.util.Properties.envOrElse("conversionBonecpPassword", envProps.getProperty("conversion.bonecp.password"))
   override val latestDeploy: String = revisionProperties.getProperty("latestDeploy", "-")
   override val env: String = envProps.getProperty("env")
+  override val apiS3BucketName: String = scala.util.Properties.envOrElse("apiS3BucketName", envProps.getProperty("apiS3BucketName"))
+  override val awsConnectionEnabled: Boolean = envProps.getProperty("awsConnectionEnabled", "true").toBoolean
+  override val apiS3ObjectTTLSeconds: String = scala.util.Properties.envOrElse("apiS3ObjectTTLSeconds", envProps.getProperty("apiS3ObjectTTLSeconds"))
 
   override lazy val bonecpProperties: Properties = {
     val props = new Properties()
@@ -223,8 +238,10 @@ object ViiteProperties {
   lazy val rasterServiceApiKey: String = properties.rasterServiceApiKey
   lazy val vvhRestApiEndPoint: String = properties.vvhRestApiEndPoint
   lazy val vvhRestApiUsername: String = properties.vvhRestApiUsername
-  lazy val vvhRestApiPassword: String = properties.vvhRestApiPassword
-  lazy val vvhRoadlinkFrozen: Boolean = properties.vvhRoadlinkFrozen
+  lazy val vvhRestApiPassword: String  = properties.vvhRestApiPassword
+  lazy val kgvRoadlinkFrozen : Boolean = properties.kgvRoadlinkFrozen
+  lazy val kgvApiKey: String  = properties.kgvApiKey
+  lazy val kgvEndpoint: String = properties.kgvEndpoint
   lazy val vkmUrl: String = properties.vkmUrl
   lazy val vkmApiKey: String = properties.vkmApiKey
   lazy val httpProxySet: Boolean = properties.httpProxySet
@@ -243,6 +260,9 @@ object ViiteProperties {
   lazy val env: String = properties.env
   lazy val bonecpProperties: Properties = properties.bonecpProperties
   lazy val conversionBonecpProperties: Properties = properties.conversionBonecpProperties
+  lazy val apiS3BucketName: String = properties.apiS3BucketName
+  lazy val awsConnectionEnabled: Boolean = properties.awsConnectionEnabled
+  lazy val apiS3ObjectTTLSeconds: String = properties.apiS3ObjectTTLSeconds
 
   def getAuthenticationBasicUsername(baseAuth: String = ""): String = properties.getAuthenticationBasicUsername(baseAuth)
   def getAuthenticationBasicPassword(baseAuth: String = ""): String = properties.getAuthenticationBasicPassword(baseAuth)
