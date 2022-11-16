@@ -1087,7 +1087,7 @@ class RoadwayDAO extends BaseDAO {
   def fetchTracksForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[TrackForRoadAddressBrowser] = {
     def withOptionalParameters(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long])(query: String): String  = {
 
-      val dateCondition = "AND start_date <='" + situationDate.get + "'"
+      val dateCondition = "AND start_date <='" + situationDate.get + "' AND (end_date > '" + situationDate.get + "' OR end_date IS NULL)"
 
       val elyCondition = {
         if (ely.nonEmpty)
@@ -1127,7 +1127,7 @@ class RoadwayDAO extends BaseDAO {
       s"""WITH roadways
          |     AS (SELECT *
          |         FROM   roadway r
-         |         WHERE  r.valid_to IS NULL AND r.end_date IS NULL
+         |         WHERE  r.valid_to IS NULL
          |         $dateCondition
          |         $elyCondition
          |         $roadNumberCondition
