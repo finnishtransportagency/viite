@@ -1084,10 +1084,10 @@ class RoadwayDAO extends BaseDAO {
     Q.queryNA[(Long, String, Long, Long, Long, Option[DateTime], Option[DateTime])](query).firstOption
   }
 
-  def fetchTracksForRoadAddressBrowser(startDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[TrackForRoadAddressBrowser] = {
-    def withOptionalParameters(startDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long])(query: String): String  = {
+  def fetchTracksForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[TrackForRoadAddressBrowser] = {
+    def withOptionalParameters(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long])(query: String): String  = {
 
-      val dateCondition = "AND start_date <='" + startDate.get + "'"
+      val dateCondition = "AND start_date <='" + situationDate.get + "'"
 
       val elyCondition = {
         if (ely.nonEmpty)
@@ -1204,13 +1204,13 @@ class RoadwayDAO extends BaseDAO {
       Q.queryNA[TrackForRoadAddressBrowser](filteredQuery).iterator.toSeq
     }
 
-    fetchTrackSections(withOptionalParameters(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber))
+    fetchTrackSections(withOptionalParameters(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber))
   }
 
-  def fetchRoadPartsForRoadAddressBrowser(startDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[RoadPartForRoadAddressBrowser] = {
-    def withOptionalParameters(startDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long])(query: String): String  = {
+  def fetchRoadPartsForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[RoadPartForRoadAddressBrowser] = {
+    def withOptionalParameters(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long])(query: String): String  = {
 
-      val dateCondition = "AND start_date <='" + startDate.get + "'"
+      val dateCondition = "AND start_date <='" + situationDate.get + "' AND (end_date > '" + situationDate.get + "' OR end_date IS NULL)"
 
       val elyCondition = {
         if (ely.nonEmpty)
@@ -1259,13 +1259,12 @@ class RoadwayDAO extends BaseDAO {
           |       Max(end_addr_m) - Min(start_addr_m) AS "length",
           |       Max(start_date)
           |FROM   roadway r
-          |WHERE  r.end_date IS NULL
-          |       AND r.valid_to IS NULL
+          |WHERE  r.valid_to IS NULL
           |""".stripMargin
       val filteredQuery = queryFilter(query)
       Q.queryNA[RoadPartForRoadAddressBrowser](filteredQuery).iterator.toSeq
     }
-    fetchRoadParts(withOptionalParameters(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber))
+    fetchRoadParts(withOptionalParameters(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber))
   }
 
 

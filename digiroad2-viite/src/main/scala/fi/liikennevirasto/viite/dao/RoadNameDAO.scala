@@ -241,9 +241,9 @@ object RoadNameDAO {
     roadNamesPS.close()
   }
 
-  def fetchRoadNamesForRoadAddressBrowser(startDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]) = {
-    def withOptionalParameters(startDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long])(query: String): String = {
-      val dateCondition = "AND rw.start_date <='" + startDate.get + "'"
+  def fetchRoadNamesForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]) = {
+    def withOptionalParameters(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long])(query: String): String = {
+      val dateCondition = "AND rw.start_date <='" + situationDate.get + "'"
 
       val elyCondition = {
         if (ely.nonEmpty)
@@ -284,6 +284,6 @@ object RoadNameDAO {
       val filteredQuery = queryFilter(query)
       Q.queryNA[RoadNameForRoadAddressBrowser](filteredQuery).iterator.toSeq
     }
-    fetchRoadNames(withOptionalParameters(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber))
+    fetchRoadNames(withOptionalParameters(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber))
   }
 }
