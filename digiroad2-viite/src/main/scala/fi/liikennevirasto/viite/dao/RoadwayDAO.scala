@@ -1087,7 +1087,7 @@ class RoadwayDAO extends BaseDAO {
   def fetchTracksForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[TrackForRoadAddressBrowser] = {
     def withOptionalParameters(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long])(query: String): String  = {
 
-      val dateCondition = "AND start_date <='" + situationDate.get + "' AND (end_date > '" + situationDate.get + "' OR end_date IS NULL)"
+      val dateCondition = "AND start_date <='" + situationDate.get + "' AND (end_date >= '" + situationDate.get + "' OR end_date IS NULL)"
 
       val elyCondition = {
         if (ely.nonEmpty)
@@ -1210,7 +1210,7 @@ class RoadwayDAO extends BaseDAO {
   def fetchRoadPartsForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[RoadPartForRoadAddressBrowser] = {
     def withOptionalParameters(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long])(query: String): String  = {
 
-      val dateCondition = "AND start_date <='" + situationDate.get + "' AND (end_date > '" + situationDate.get + "' OR end_date IS NULL)"
+      val dateCondition = "AND start_date <='" + situationDate.get + "' AND (end_date >= '" + situationDate.get + "' OR end_date IS NULL)"
 
       val elyCondition = {
         if (ely.nonEmpty)
