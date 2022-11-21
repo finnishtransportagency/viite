@@ -236,20 +236,18 @@ class NodeDAO extends BaseDAO {
 
   def fetchNodesForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[NodeForRoadAddressBrowser] = {
     def withOptionalParameters(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long])(query: String): String = {
-      val rwDateCondition = "AND rw.START_DATE <='" + situationDate.get + "' AND (rw.END_DATE > '" + situationDate.get + "' OR rw.END_DATE IS NULL)"
-
-      val nodeDateCondition = "AND node.START_DATE <='" + situationDate.get + "' AND (node.END_DATE > '" + situationDate.get + "' OR node.END_DATE IS NULL)"
+      val dateCondition = "AND rw.start_date <='" + situationDate.get + "'"
 
       val elyCondition = {
         if (ely.nonEmpty)
-          s" AND rw.ELY = ${ely.get}"
+          s" AND rw.ely = ${ely.get}"
         else
           ""
       }
 
       val roadNumberCondition = {
         if (roadNumber.nonEmpty)
-          s" AND rw.ROAD_NUMBER = ${roadNumber.get}"
+          s" AND rw.road_number = ${roadNumber.get}"
         else
           ""
       }
@@ -257,33 +255,26 @@ class NodeDAO extends BaseDAO {
       val roadPartCondition = {
         val parts = (minRoadPartNumber, maxRoadPartNumber)
         parts match {
-          case (Some(minPart), Some(maxPart)) => s"AND rw.ROAD_PART_NUMBER BETWEEN $minPart AND $maxPart"
-          case (None, Some(maxPart)) => s"AND rw.ROAD_PART_NUMBER <= $maxPart"
-          case (Some(minPart), None) => s"AND rw.ROAD_PART_NUMBER >= $minPart"
+          case (Some(minPart), Some(maxPart)) => s"AND rw.road_part_number BETWEEN $minPart AND $maxPart"
+          case (None, Some(maxPart)) => s"AND rw.road_part_number <= $maxPart"
+          case (Some(minPart), None) => s"AND rw.road_part_number >= $minPart"
           case _ => ""
         }
       }
 
-      s"""WITH roadways
-         |     AS (SELECT *
-         |         FROM ROADWAY rw
-         |         WHERE rw.VALID_TO IS NULL
-         |         $rwDateCondition
-         |         $elyCondition
-         |         $roadNumberCondition
-         |         $roadPartCondition)
-         |$query WHERE node.VALID_TO IS NULL $nodeDateCondition
-         | ORDER BY r.ROAD_NUMBER, r.ROAD_PART_NUMBER, rp.ADDR_M""".stripMargin
+      s"""$query WHERE node.VALID_TO IS NULL AND node.END_DATE IS NULL
+        $dateCondition $elyCondition $roadNumberCondition $roadPartCondition
+        ORDER BY rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rp.ADDR_M""".stripMargin
     }
 
     def fetchNodes(queryFilter: String => String): Seq[NodeForRoadAddressBrowser] = {
       val query =
         """
-      SELECT DISTINCT r.ELY, r.ROAD_NUMBER, r.ROAD_PART_NUMBER, rp.ADDR_M, node.START_DATE, node.TYPE, node.NAME, node.NODE_NUMBER
+      SELECT DISTINCT rw.ely, rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rp.ADDR_M, node.START_DATE, node.type, node.NAME, node.NODE_NUMBER
 		  FROM NODE node
-      JOIN NODE_POINT np ON node.NODE_NUMBER = np.NODE_NUMBER
+      JOIN NODE_POINT np ON node.NODE_NUMBER = np.NODE_NUMBER AND np.VALID_TO IS NULL
       JOIN ROADWAY_POINT rp ON np.ROADWAY_POINT_ID = rp.ID
-      JOIN roadways r ON rp.ROADWAY_NUMBER = r.ROADWAY_NUMBER AND r.VALID_TO IS NULL
+      JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS null
       """
       val filteredQuery = queryFilter(query)
       Q.queryNA[NodeForRoadAddressBrowser](filteredQuery).iterator.toSeq
