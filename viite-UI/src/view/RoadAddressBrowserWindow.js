@@ -387,6 +387,30 @@
                 }
             };
 
+            /**
+             * Nodes and Junctions can only be browsed on the current road network (no history info available)
+             * so situation date input field is disabled when Nodes or Junctions are selected as target value
+             */
+            document.getElementById('targetValue').onchange = function () {
+                const targetValue = document.getElementById('targetValue').value;
+                const situationDate = document.getElementById('roadAddrSituationDate');
+                switch (targetValue) {
+                    case "Tracks":
+                    case "RoadParts":
+                    case "RoadNames":
+                        situationDate.disabled = false;
+                        situationDate.tite = "";
+                        break;
+                    case "Nodes":
+                    case "Junctions":
+                        situationDate.value = dateutil.getCurrentDateString();
+                        situationDate.disabled = true;
+                        situationDate.title = "Solmuja ja liittymiä voi tarkastella vain nykyisellä tieverkolla";
+                        break;
+                    default:
+                }
+            };
+
             roadAddrBrowserWindow.on('click', '#exportAsExcelFile', function () {
                 exportDataAsExcelFile();
                 return false; // cancel form submission
