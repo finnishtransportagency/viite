@@ -771,8 +771,10 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("Test RoadwayFiller.applyRoadwayChanges()" +
-    "When a single roadway (that has two history history rows) is split in to two roadways" +
-    "Then the history roadways should also be split to those two new roadways, and new history roadway should be created for the roadway that had changes in the project") {
+    "When a single roadway (that has two history rows) is split in to two roadways" +
+    "Then the history roadways should also be split to those two new roadways," +
+    "and new history roadway should be created for the roadway that had changes in the project." +
+    "The history should be chronologically continuous on both roadways until termination") {
 
     /**
       * BEFORE PROJECT
@@ -792,7 +794,8 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       *     0 |------RP2----> 120   120 |-------RP2-----> 175 Rw1 newest history row and Rw2 second oldest history row
       *   370 |------RP1----> 490   490 |-------RP1-----> 545 Oldest history rows
       *
-      *
+      *    For each non-terminated Roadway rw1 with an endDate, there exists a Roadway rw2 with the same roadwayNumber such that
+      *    rw2's startDate is the day after rw1's endDate
       * */
 
     runWithRollback{
@@ -802,7 +805,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadNumber = 1L, roadPartNumber = 3L, startAddrM = 0L, endAddrM = 175L, DateTime.now().minusDays(5), None, 1L).copy(ely = 10)
       val historyRoadways = Seq(
-        dummyRoadway(roadwayNumber = roadwayNumber, roadNumber = 1L, roadPartNumber = 2L, startAddrM = 0L, endAddrM = 175L, DateTime.now().minusDays(10), Some(DateTime.now().minusDays(5)), 2L).copy(ely = 10),
+        dummyRoadway(roadwayNumber = roadwayNumber, roadNumber = 1L, roadPartNumber = 2L, startAddrM = 0L, endAddrM = 175L, DateTime.now().minusDays(10), Some(DateTime.now().minusDays(6)), 2L).copy(ely = 10),
         dummyRoadway(roadwayNumber = roadwayNumber, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 370L, endAddrM = 545L, DateTime.now().minusDays(20), Some(DateTime.now().minusDays(11)), 3L).copy(ely = 10)
       )
 
@@ -862,6 +865,18 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       roadPart4HistoryRows.last.roadPartNumber should be (1)
       roadPart4HistoryRows.last.startAddrMValue should be (490)
       roadPart4HistoryRows.last.endAddrMValue should be (545)
+
+
+      //Check that there are no gaps in either roadway's history
+      val pairedRoadwaysForRoadPart3 = roadwaysForRoadPart3.sortBy(_.startDate.getMillis).init.zip(roadwaysForRoadPart3.sortBy(_.startDate.getMillis).tail)
+      pairedRoadwaysForRoadPart3.foreach{
+        case (rw1, rw2) => rw1.endDate.get.plusDays(1).toLocalDate should equal (rw2.startDate.toLocalDate)
+      }
+
+      val pairedRoadwaysForRoadPart4 = roadwaysForRoadPart4.sortBy(_.startDate.getMillis).init.zip(roadwaysForRoadPart4.sortBy(_.startDate.getMillis).tail)
+      pairedRoadwaysForRoadPart4.foreach{
+        case (rw1, rw2) => rw1.endDate.get.plusDays(1).toLocalDate should equal (rw2.startDate.toLocalDate)
+      }
     }
   }
 
