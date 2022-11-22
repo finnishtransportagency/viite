@@ -243,7 +243,7 @@ object RoadNameDAO {
 
   def fetchRoadNamesForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]) = {
     def withOptionalParameters(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long])(query: String): String = {
-      val rwDateCondition = "AND rw.START_DATE <='" + situationDate.get + "' AND (rw.END_DATE > '" + situationDate.get + "' OR rw.END_DATE IS NULL)"
+      val rwDateCondition = "AND rw.START_DATE <='" + situationDate.get + "' AND (rw.END_DATE >= '" + situationDate.get + "' OR rw.END_DATE IS NULL)"
 
       /**
         * if the situationDate == RoadNameHistoryRow.startDate AND situationDate == RoadNameCurrentRow.endDate then RoadNameCurrentRow is picked
@@ -279,7 +279,7 @@ object RoadNameDAO {
       }
 
       s"""$query
-          JOIN ROADWAY rw ON rw.road_number = rn.road_number $rwDateCondition
+          JOIN ROADWAY rw ON rw.road_number = rn.road_number AND rw.valid_to IS NULL $rwDateCondition
           WHERE rn.valid_to IS NULL
           $roadNameDateCondition $elyCondition $roadNumberCondition $roadPartCondition
           ORDER BY rw.ely, rw.road_number """.stripMargin
