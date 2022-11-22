@@ -96,40 +96,46 @@ trait KgvOperation extends LinkOperationsAbstract{
       success = true
       result = time(logger, s"Fetch roadLink features, (try $trycounter)", url = Some(url)) {
 
-    val request = new HttpGet(url)
-    addHeaders(request)
+      val request = new HttpGet(url)
+      addHeaders(request)
 
-    var response: CloseableHttpResponse = null
-        val client                          = HttpClients.custom().setDefaultRequestConfig(RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build()).build()
-      try {
-        response = client.execute(request)
-        val statusCode = response.getStatusLine.getStatusCode
-        if (statusCode == HttpStatus.SC_OK) {
-          val feature = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]]
-          val result = feature("type").toString match {
-            case "Feature" =>
-                Some(FeatureCollection(
-                  features = List(convertToFeature(feature))
-                  ))
-              case "FeatureCollection" => val links        = feature("links").asInstanceOf[List[Map[String, Any]]].map(link => {
-                Link(link("title").asInstanceOf[String], link("type").asInstanceOf[String], link("rel").asInstanceOf[String], link("href").asInstanceOf[String])
-              })
-              val nextLink = Try(links.find(_.title=="Next page").get.href).getOrElse("")
-              val previousLink = Try(links.find(_.title=="Previous page").get.href).getOrElse("")
-              val features = feature("features").asInstanceOf[List[Map[String, Any]]].map(convertToFeature)
-              Some(FeatureCollection(
-                features = features,
-                numberReturned = feature("numberReturned").asInstanceOf[BigInt].toInt,
-                nextPageLink = nextLink,
-                previousPageLink = previousLink
-              ))
-            case _ => None
-          }
-          Right(result)
-        } else {
-          Left(LinkOperationError(response.getStatusLine.getReasonPhrase, response.getStatusLine.getStatusCode.toString,url))
-        }
-        } catch {
+      var response: CloseableHttpResponse = null
+          val client = HttpClients.custom()
+                                  .setDefaultRequestConfig(
+                                    RequestConfig.custom()
+                                                 .setCookieSpec(CookieSpecs.STANDARD)
+                                                 .build())
+                                  .build()
+          try {
+            response = client.execute(request)
+            val statusCode = response.getStatusLine.getStatusCode
+            if (statusCode == HttpStatus.SC_OK) {
+              val feature = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]]
+              Right(
+                feature("type").toString match {
+                  case "Feature" => Some(FeatureCollection(features = List(convertToFeature(feature))))
+                  case "FeatureCollection" => {
+                    val links        = feature("links").asInstanceOf[List[Map[String, Any]]].map(link =>
+                      Link(link("title").asInstanceOf[String], link("type").asInstanceOf[String], link("rel").asInstanceOf[String], link("href").asInstanceOf[String]))
+                    val nextLink     = Try(links.find(_.title == "Next page").get.href).getOrElse("")
+                    val previousLink = Try(links.find(_.title == "Previous page").get.href).getOrElse("")
+                    val features     = feature("features").asInstanceOf[List[Map[String, Any]]].map(convertToFeature)
+                    Some(
+                      FeatureCollection(
+                        features = features,
+                        numberReturned = feature("numberReturned").asInstanceOf[BigInt].toInt,
+                        nextPageLink = nextLink,
+                        previousPageLink = previousLink
+                      )
+                    )
+                  }
+                  case _ => None
+                }
+              )
+            } else {
+              Left(LinkOperationError(response.getStatusLine.getReasonPhrase, response.getStatusLine.getStatusCode.toString, url))
+            }
+          } catch {
           case e: IOException => {
             success = false
             if (trycounter < MaxTries) {
@@ -137,23 +143,23 @@ trait KgvOperation extends LinkOperationsAbstract{
               Left(LinkOperationError(s"KGV FETCH failure, try $trycounter. IO Exception during KGV fetch. Trying again.", url))
             } else // basically, if(trycounter == MaxTries)
               Left(LinkOperationError("KGV FETCH failure, tried ten (10) times, giving up. IO Exception during KGV fetch. Check connection to KGV", url))
-      }
-        case e: ClientProtocolException => {
+          }
+          case e: ClientProtocolException => {
             success = false
-          e.printStackTrace()
-          Left(LinkOperationError(e.toString + s"\nURL: $url", ""))
-        }
+            e.printStackTrace()
+            Left(LinkOperationError(e.toString + s"\nURL: $url", ""))
+          }
           case e: Exception => {
             success = false
             logger.warn(s"fetching $url failed, try $trycounter. Exception during KGV fetch. Exception: $e")
             Left(LinkOperationError(e.toString, ""))
-      }
+          }
         } finally {
-        if (response != null) {
-          response.close()
+          if (response != null) {
+            response.close()
+          }
         }
       }
-    }
       result match {
         case Left(_) => time(logger, s"entering round ${trycounter + 1}", true, None){}
         case Right(_) => Unit
