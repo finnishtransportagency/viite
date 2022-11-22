@@ -112,7 +112,6 @@ class RoadNameDAOSpec extends FunSuite with Matchers {
       res.head shouldBe a [RoadNameForRoadAddressBrowser]
       res.head.ely should be (9)
       res.head.roadName should be ("newName")
-      println(res)
 
       // result for history situation date
       val res2 = RoadNameDAO.fetchRoadNamesForRoadAddressBrowser(Some(situationDateDayBeforeChanges), None, Some(roadNumber), None, None)
@@ -120,7 +119,6 @@ class RoadNameDAOSpec extends FunSuite with Matchers {
       res2.head shouldBe a [RoadNameForRoadAddressBrowser]
       res2.head.ely should be (1)
       res2.head.roadName should be ("oldName")
-      println(res2)
     }
   }
 }
