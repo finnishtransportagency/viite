@@ -245,6 +245,13 @@ object RoadNameDAO {
     def withOptionalParameters(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long])(query: String): String = {
       val rwDateCondition = "AND rw.START_DATE <='" + situationDate.get + "' AND (rw.END_DATE > '" + situationDate.get + "' OR rw.END_DATE IS NULL)"
 
+      /**
+        * if the situationDate == RoadNameHistoryRow.startDate AND situationDate == RoadNameCurrentRow.endDate then RoadNameCurrentRow is picked
+        * example:
+        * situationDate = 15.11.2022
+        * historyRow  RoadName(name: "old road name", startDate: 1.12.2015, endDate: 15.11.2022)
+        * currentRow  RoadName(name: "new road name", startDate: 15.11.2022, endDate: NULL) <- currentRow is picked
+        */
       val roadNameDateCondition = "AND rn.START_DATE <='" + situationDate.get + "' AND (rn.END_DATE > '" + situationDate.get + "' OR rn.END_DATE IS NULL)"
 
       val elyCondition = {

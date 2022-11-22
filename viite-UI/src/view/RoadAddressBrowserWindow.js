@@ -388,8 +388,8 @@
             };
 
             /**
-             * Nodes and Junctions can only be browsed on the current road network (no history info available)
-             * so situation date input field is disabled when Nodes or Junctions are selected as target value
+             * Situation date input field is disabled when Nodes or Junctions are selected as the target value
+             * This is because Nodes and Junctions can only be browsed on the current road network (complete history info not available)
              */
             document.getElementById('targetValue').onchange = function () {
                 const targetValue = document.getElementById('targetValue').value;
