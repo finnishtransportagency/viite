@@ -1101,7 +1101,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     }
   }
   
-  test("Test When fetching road part history for road address browser then return history information for the road part") {
+  test("Test When fetching road part history or track history for road address browser then return history information") {
     runWithRollback {
       val roadNumber = 76
       val roadPartNumber = 1
@@ -1122,16 +1122,28 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
       dao.create(roadways)
 
       // situation date after changes
-      val result = dao.fetchRoadPartsForRoadAddressBrowser(Some(afterChangesSituationDate), None, Some(roadNumber), Some(roadPartNumber), Some(roadPartNumber))
-      result.size should be (1)
-      result.head shouldBe a [RoadPartForRoadAddressBrowser]
-      result.head.endAddrM should be (2200)
+      val resultForRoadParts = dao.fetchRoadPartsForRoadAddressBrowser(Some(afterChangesSituationDate), None, Some(roadNumber), Some(roadPartNumber), Some(roadPartNumber))
+      resultForRoadParts.size should be (1)
+      resultForRoadParts.head shouldBe a [RoadPartForRoadAddressBrowser]
+      resultForRoadParts.head.endAddrM should be (2200)
 
       // situation date before changes
-      val result2 = dao.fetchRoadPartsForRoadAddressBrowser(Some(historyChangesSituationDate), None, Some(roadNumber), Some(roadPartNumber), Some(roadPartNumber))
-      result2.size should be (1)
-      result2.head shouldBe a [RoadPartForRoadAddressBrowser]
-      result2.head.endAddrM should be (2080)
+      val historyResultForRoadPart = dao.fetchRoadPartsForRoadAddressBrowser(Some(historyChangesSituationDate), None, Some(roadNumber), Some(roadPartNumber), Some(roadPartNumber))
+      historyResultForRoadPart.size should be (1)
+      historyResultForRoadPart.head shouldBe a [RoadPartForRoadAddressBrowser]
+      historyResultForRoadPart.head.endAddrM should be (2080)
+
+      // situation date after changes
+      val resultForTrack = dao.fetchTracksForRoadAddressBrowser(Some(afterChangesSituationDate), None, Some(roadNumber), Some(roadPartNumber), Some(roadPartNumber))
+      resultForTrack.size should be (1)
+      resultForTrack.head shouldBe a [TrackForRoadAddressBrowser]
+      resultForTrack.head.endAddrM should be (2200)
+
+      // situation date before changes
+      val historyResultTrack = dao.fetchTracksForRoadAddressBrowser(Some(historyChangesSituationDate), None, Some(roadNumber), Some(roadPartNumber), Some(roadPartNumber))
+      historyResultTrack.size should be (1)
+      historyResultTrack.head shouldBe a [TrackForRoadAddressBrowser]
+      historyResultTrack.head.endAddrM should be (2080)
     }
   }
 
