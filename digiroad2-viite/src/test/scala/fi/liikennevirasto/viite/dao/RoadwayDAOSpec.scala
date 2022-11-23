@@ -1138,7 +1138,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
 
       // situation date after changes
       val resultForRoadParts = dao.fetchRoadPartsForRoadAddressBrowser(Some(afterChangesSituationDate), None, Some(roadNumber), Some(roadPartNumber), Some(roadPartNumber))
-      resultForRoadParts.size should be (1)
+      resultForRoadParts.size should be (1) // a single line per (the whole) road part
       resultForRoadParts.head shouldBe a [RoadPartForRoadAddressBrowser]
       resultForRoadParts.head.endAddrM should be (2200)
 
