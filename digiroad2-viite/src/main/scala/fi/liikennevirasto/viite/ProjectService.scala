@@ -543,7 +543,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                 val closestEndPointToFirstLink = Seq(minDistanceToOtherEndpoints(firstLinkGeometry.head), minDistanceToOtherEndpoints(firstLinkGeometry.last)).minBy(_._2)._1
                 // Startpoint as one of first link end points further a way from closest(next link) link end point
                 val startPoint                = Seq((firstLinkGeometry.head, firstLinkGeometry.head.distance2DTo(closestEndPointToFirstLink)), (firstLinkGeometry.last, firstLinkGeometry.last.distance2DTo(closestEndPointToFirstLink))).maxBy(_._2)._1
-                val lastLinkInSection         = TrackSectionOrder.orderProjectLinksTopologyByGeometry((startPoint, startPoint), newLinks)._1.last
+                val lastLinkInSection         = Seq(TrackSectionOrder.orderProjectLinksTopologyByGeometry((startPoint, startPoint), newLinks)).flatMap(pl => pl._1 ++ pl._2).distinct.last
                 // Set discontinuity to the last link
                 newLinks.filterNot(_.linkId == lastLinkInSection.linkId) :+ lastLinkInSection.copy(discontinuity = discontinuity)
               }
