@@ -791,17 +791,25 @@ class ProjectValidator {
     */
   def checkRemovedEndOfRoadParts(project: Project, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
     projectLinks.filter(pl => pl.status == Terminated && pl.discontinuity == Discontinuity.EndOfRoad).flatMap { rrp =>
-      val roadPartsInProject = projectLinks.filter(_.roadNumber == rrp.roadNumber).flatMap(pl => Seq(pl.roadPartNumber,pl.originalRoadPartNumber)).distinct
+
+      val projectLinksWithRoadNumber = projectLinks.filter(_.roadNumber == rrp.roadNumber)
+      val roadPartNumbers = projectLinksWithRoadNumber.flatMap(pl => Seq(pl.roadPartNumber,pl.originalRoadPartNumber)).distinct
       val validRoadParts = roadAddressService.getValidRoadAddressParts(rrp.roadNumber, project.startDate)
-      validRoadParts.filter(roadPart => !roadPartsInProject.contains(roadPart)) match {
+
+      validRoadParts.filter(roadPart => !roadPartNumbers.contains(roadPart)) match {
         case Seq() => Seq()
         case roadParts =>
-          val lastRoadAddress = roadAddressService.getRoadAddressWithRoadAndPart(rrp.roadNumber, roadParts.max).maxBy(_.endAddrMValue)
-          if (lastRoadAddress.discontinuity != Discontinuity.EndOfRoad)
-            Seq(ValidationErrorDetails(project.id, alterMessage(ValidationErrorList.TerminationContinuity, currentRoadAndPart = Some(Seq((rrp.roadNumber, lastRoadAddress.roadPartNumber)))), Seq(lastRoadAddress.id),
-              Seq(ProjectCoordinates(lastRoadAddress.geometry.head.x, lastRoadAddress.geometry.head.y, defaultZoomlevel)), Some("")))
-          else
-            Seq()
+          projectLinksWithRoadNumber.filter(pl => pl.status != Terminated && pl.roadPartNumber >= roadParts.max) match {
+            case Seq() =>
+              val lastRoadAddress = roadAddressService.getRoadAddressWithRoadAndPart(rrp.roadNumber, roadParts.max).maxBy(_.endAddrMValue)
+              if (lastRoadAddress.discontinuity != Discontinuity.EndOfRoad)
+                Seq(ValidationErrorDetails(project.id, alterMessage(ValidationErrorList.TerminationContinuity, currentRoadAndPart = Some(Seq((rrp.roadNumber, lastRoadAddress.roadPartNumber)))), Seq(lastRoadAddress.id),
+                  Seq(ProjectCoordinates(lastRoadAddress.geometry.head.x, lastRoadAddress.geometry.head.y, defaultZoomlevel)), Some("")))
+              else
+                Seq()
+            //The last non-terminated road part is reserved in the project
+            case _ => Seq()
+          }
       }
     }.distinct
   }
