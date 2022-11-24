@@ -221,8 +221,8 @@
                 $('#exportAsExcelFile').prop("disabled", false); // enable Excel download button
             }
             else {
-                // hide the results and notify user to download result table as Excel file
-                roadAddrBrowserWindow.append($('<p id="tableNotification"><b>Tulostaulu liian suuri, lataa tulokset Excel taulukkona</b></p>'));
+                // hide the results, and notify the user to download the result table as an Excel file
+                roadAddrBrowserWindow.append($('<p id="tableNotification"><b>Tulostaulu liian suuri, lataa tulokset Excel-taulukkona</b></p>'));
                 roadAddrBrowserWindow.append(table.hide());
                 $('#exportAsExcelFile').prop("disabled", false); // enable Excel download button
             }
@@ -382,7 +382,7 @@
 
         function bindEvents() {
 
-            // if any of the input fields change
+            // if any of the input fields change (the input fields are child elements of this wrapper/parent element)
             document.getElementById('roadAddressBrowser').onchange = function () {
                 clearResultsAndDisableExcelButton();
             };

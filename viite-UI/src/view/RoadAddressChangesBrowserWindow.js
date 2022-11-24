@@ -234,7 +234,7 @@
 
         function bindEvents() {
 
-            // if any of the inputs fields change
+            // if any of the input fields change (the input fields are child elements of this wrapper/parent element)
             document.getElementById('roadAddressChangesBrowser').onchange = function () {
                 clearResultsAndDisableExcelButton();
             };
