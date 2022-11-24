@@ -237,7 +237,7 @@
         }
 
         function addDatePicker() {
-            const dateInput = $('#roadAddrStartDate');
+            const dateInput = $('#roadAddrSituationDate');
             datePicker = dateutil.addSingleDatePicker(dateInput);
         }
 
@@ -253,7 +253,7 @@
 
         function exportDataAsExcelFile() {
             const params = me.getSearchParams();
-            const fileNameString = "Viite_" + params.target + "_" + params.startDate + "_" + params.ely + "_" + params.roadNumber + "_" + params.minRoadPartNumber + "_" + params.maxRoadPartNumber + ".xlsx";
+            const fileNameString = "Viite_" + params.target + "_" + params.situationDate + "_" + params.ely + "_" + params.roadNumber + "_" + params.minRoadPartNumber + "_" + params.maxRoadPartNumber + ".xlsx";
             const fileName = fileNameString.replaceAll("undefined", "-");
             const options = {
                 cellDates: true,
@@ -269,7 +269,7 @@
         }
 
         function getData() {
-            const roadAddrStartDate   = document.getElementById('roadAddrStartDate');
+            const roadAddrSituationDate   = document.getElementById('roadAddrSituationDate');
             const ely                 = document.getElementById('roadAddrInputEly');
             const roadNumber          = document.getElementById('roadAddrInputRoad');
             const minRoadPartNumber   = document.getElementById('roadAddrInputStartPart');
@@ -277,10 +277,10 @@
             const targetValue         = document.getElementById('targetValue');
 
             // convert date input text to date object
-            const roadAddrStartDateObject  = moment(roadAddrStartDate.value, "DD-MM-YYYY").toDate();
+            const roadAddrSituationDateObject  = moment(roadAddrSituationDate.value, "DD-MM-YYYY").toDate();
 
             function reportValidations() {
-                return roadAddrStartDate.reportValidity() &&
+                return roadAddrSituationDate.reportValidity() &&
                     ely.reportValidity() &&
                     roadNumber.reportValidity() &&
                     minRoadPartNumber.reportValidity() &&
@@ -290,10 +290,10 @@
             function validateDate(date) {
                 if (dateutil.isValidDate(date)) {
                     if(!dateutil.isDateInYearRange(date, ViiteConstants.MIN_YEAR_INPUT, ViiteConstants.MAX_YEAR_INPUT))
-                        roadAddrStartDate.setCustomValidity("Vuosiluvun tulee olla väliltä" + ViiteConstants.MIN_YEAR_INPUT + " - " + ViiteConstants.MAX_YEAR_INPUT);
+                        roadAddrSituationDate.setCustomValidity("Vuosiluvun tulee olla väliltä" + ViiteConstants.MIN_YEAR_INPUT + " - " + ViiteConstants.MAX_YEAR_INPUT);
                 }
                 else
-                    roadAddrStartDate.setCustomValidity("Päivämäärän tulee olla muodossa pp.kk.yyyy");
+                    roadAddrSituationDate.setCustomValidity("Päivämäärän tulee olla muodossa pp.kk.yyyy");
             }
 
             function validateElyAndRoadNumber (elyElement, roadNumberElement) {
@@ -302,15 +302,15 @@
             }
 
             function willPassValidations() {
-                validateDate(roadAddrStartDateObject);
+                validateDate(roadAddrSituationDateObject);
                 validateElyAndRoadNumber(ely, roadNumber);
                 return reportValidations();
             }
 
             function createParams() {
-                const parsedDateString = dateutil.parseDateToString(roadAddrStartDateObject);
+                const parsedDateString = dateutil.parseDateToString(roadAddrSituationDateObject);
                 const params = {
-                    startDate: parsedDateString,
+                    situationDate: parsedDateString,
                     target: targetValue.value
                 };
                 if (ely.value)
@@ -324,9 +324,9 @@
                 return params;
             }
 
-            //reset ely and roadAddrStartDate input fields' custom validity
+            //reset ely and roadAddrSituationDate input fields' custom validity
             ely.setCustomValidity("");
-            roadAddrStartDate.setCustomValidity("");
+            roadAddrSituationDate.setCustomValidity("");
 
             switch (targetValue.value) {
                 case "Tracks":
@@ -337,7 +337,7 @@
                         fetchByTargetValue(createParams());
                     break;
                 case "RoadNames":
-                    validateDate(roadAddrStartDateObject);
+                    validateDate(roadAddrSituationDateObject);
                     if (reportValidations())
                         fetchByTargetValue(createParams());
                     break;
@@ -391,6 +391,30 @@
             document.getElementById('roadAddrInputEndPart').oninput = function () {
                 if (this.value.length > ViiteConstants.MAX_LENGTH_FOR_ROAD_PART_NUMBER) {
                     this.value = this.value.slice(0, ViiteConstants.MAX_LENGTH_FOR_ROAD_PART_NUMBER);
+                }
+            };
+
+            /**
+             * Situation date input field is disabled when Nodes or Junctions are selected as the target value
+             * This is because Nodes and Junctions can only be browsed on the current road network (complete history info not available)
+             */
+            document.getElementById('targetValue').onchange = function () {
+                const targetValue = document.getElementById('targetValue').value;
+                const situationDate = document.getElementById('roadAddrSituationDate');
+                switch (targetValue) {
+                    case "Tracks":
+                    case "RoadParts":
+                    case "RoadNames":
+                        situationDate.disabled = false;
+                        situationDate.tite = "";
+                        break;
+                    case "Nodes":
+                    case "Junctions":
+                        situationDate.value = dateutil.getCurrentDateString();
+                        situationDate.disabled = true;
+                        situationDate.title = "Solmuja ja liittymiä voi tarkastella vain nykyisellä tieverkolla";
+                        break;
+                    default:
                 }
             };
 
