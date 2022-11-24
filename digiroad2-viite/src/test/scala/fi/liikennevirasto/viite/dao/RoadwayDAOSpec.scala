@@ -1100,5 +1100,66 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
 
     }
   }
+  
+  test("Test When fetching road part history or track history for road address browser then return history information") {
+    runWithRollback {
+      val roadNumber = 76
+      val roadPartNumber = 1
+      val roadwayNumber = Sequences.nextRoadwayNumber
+      val roadwayNumber2 = Sequences.nextRoadwayNumber
+      val rwHistoryRowStartDate = "1992-10-08"
+      val rwHistoryRowEndDate = "2022-11-14"
+      val rwCurrentRowStartDate = "2022-11-15"
+      val afterChangesSituationDate = "2022-11-15"
+      val historyChangesSituationDate = "2022-11-14"
+
+      /**
+        *                   Before changes
+        *
+        *          roadway1 history
+        * -------------------------------->
+        * 0                             2080
+        *
+        *                   After changes
+        *
+        *          roadway1                       roadway2
+        * -------------------------------->----------------------->
+        * 0                             2080                    2200
+        * */
+
+      // history road part that is 2080 meters long
+      val roadway1HistoryRow = Roadway(dao.getNextRoadwayId,	roadwayNumber, roadNumber, roadPartNumber, AdministrativeClass.State, Track.Combined, Discontinuity.Discontinuous, 0, 2080, reversed = false, DateTime.parse(rwHistoryRowStartDate), Some(DateTime.parse(rwHistoryRowEndDate)), "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination)
+
+      // current road part that is 2200 meters long
+      val roadway1 = Roadway(dao.getNextRoadwayId,	roadwayNumber, roadNumber, roadPartNumber, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, 2080, reversed = false, DateTime.parse(rwCurrentRowStartDate), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination)
+      val roadway2 = Roadway(dao.getNextRoadwayId,	roadwayNumber2, roadNumber, roadPartNumber, AdministrativeClass.State, Track.Combined, Discontinuity.Discontinuous, 2080, 2200, reversed = false, DateTime.parse(rwCurrentRowStartDate), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination)
+
+      dao.create(Seq(roadway1HistoryRow,roadway1,roadway2))
+
+      // situation date after changes
+      val resultForRoadParts = dao.fetchRoadPartsForRoadAddressBrowser(Some(afterChangesSituationDate), None, Some(roadNumber), Some(roadPartNumber), Some(roadPartNumber))
+      resultForRoadParts.size should be (1) // a single line per (the whole) road part
+      resultForRoadParts.head shouldBe a [RoadPartForRoadAddressBrowser]
+      resultForRoadParts.head.endAddrM should be (2200)
+
+      // situation date before changes
+      val historyResultForRoadPart = dao.fetchRoadPartsForRoadAddressBrowser(Some(historyChangesSituationDate), None, Some(roadNumber), Some(roadPartNumber), Some(roadPartNumber))
+      historyResultForRoadPart.size should be (1)
+      historyResultForRoadPart.head shouldBe a [RoadPartForRoadAddressBrowser]
+      historyResultForRoadPart.head.endAddrM should be (2080)
+
+      // situation date after changes
+      val resultForTrack = dao.fetchTracksForRoadAddressBrowser(Some(afterChangesSituationDate), None, Some(roadNumber), Some(roadPartNumber), Some(roadPartNumber))
+      resultForTrack.size should be (1)
+      resultForTrack.head shouldBe a [TrackForRoadAddressBrowser]
+      resultForTrack.head.endAddrM should be (2200)
+
+      // situation date before changes
+      val historyResultTrack = dao.fetchTracksForRoadAddressBrowser(Some(historyChangesSituationDate), None, Some(roadNumber), Some(roadPartNumber), Some(roadPartNumber))
+      historyResultTrack.size should be (1)
+      historyResultTrack.head shouldBe a [TrackForRoadAddressBrowser]
+      historyResultTrack.head.endAddrM should be (2080)
+    }
+  }
 
 }

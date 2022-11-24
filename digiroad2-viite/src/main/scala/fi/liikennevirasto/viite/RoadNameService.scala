@@ -32,9 +32,9 @@ class RoadNameService() {
     }
   }
 
-  def getRoadNamesForRoadAddressBrowser(startDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]) = {
+  def getRoadNamesForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]) = {
     withDynSession {
-      RoadNameDAO.fetchRoadNamesForRoadAddressBrowser(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
+      RoadNameDAO.fetchRoadNamesForRoadAddressBrowser(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
     }
   }
 
