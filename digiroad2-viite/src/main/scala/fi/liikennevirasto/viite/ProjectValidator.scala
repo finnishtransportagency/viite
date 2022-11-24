@@ -797,6 +797,7 @@ class ProjectValidator {
       val validRoadParts = roadAddressService.getValidRoadAddressParts(terminatedEndOfRoad.roadNumber, project.startDate)
 
       validRoadParts.filter(roadPart => !roadPartNumbers.contains(roadPart)) match {
+        //All road parts for the road number are reserved in the project
         case Seq() => Seq()
         case roadParts =>
           projectLinksWithRoadNumber.filter(pl => pl.status != Terminated && pl.roadPartNumber >= roadParts.max) match {
