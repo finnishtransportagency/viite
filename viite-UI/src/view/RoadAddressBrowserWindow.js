@@ -221,8 +221,8 @@
                 $('#exportAsExcelFile').prop("disabled", false); // enable Excel download button
             }
             else {
-                // hide the results and notify user to download result table as excel file
-                roadAddrBrowserWindow.append($('<p id="tableNotification"><b>Tulostaulu liian suuri, lataa tulokset excel taulukkona</b></p>'));
+                // hide the results and notify user to download result table as Excel file
+                roadAddrBrowserWindow.append($('<p id="tableNotification"><b>Tulostaulu liian suuri, lataa tulokset Excel taulukkona</b></p>'));
                 roadAddrBrowserWindow.append(table.hide());
                 $('#exportAsExcelFile').prop("disabled", false); // enable Excel download button
             }
@@ -374,7 +374,18 @@
             });
         }
 
+        function clearResultsAndDisableExcelButton() {
+            $('.road-address-browser-window-results-table').remove(); // empty the result table
+            $('#exportAsExcelFile').prop("disabled", true); //disable Excel download button
+            $('#tableNotification').remove(); // remove notification if present
+        }
+
         function bindEvents() {
+
+            // if any of the input fields change
+            document.getElementById('roadAddressBrowser').onchange = function () {
+                clearResultsAndDisableExcelButton();
+            };
 
             document.getElementById('roadAddrInputRoad').oninput = function () {
                 if (this.value.length > ViiteConstants.MAX_LENGTH_FOR_ROAD_NUMBER) {
@@ -427,9 +438,7 @@
             });
 
             roadAddrBrowserWindow.on('click', '#fetchRoadAddresses', function () {
-                $('.road-address-browser-window-results-table').remove(); // empty the result table
-                $('#exportAsExcelFile').prop("disabled", true); //disable excel download button
-                $('#tableNotification').remove(); // remove notification if present
+                clearResultsAndDisableExcelButton();
                 getData();
                 return false; // cancel form submission
             });

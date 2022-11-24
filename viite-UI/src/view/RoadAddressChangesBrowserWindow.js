@@ -226,7 +226,18 @@
             });
         }
 
+        function clearResultsAndDisableExcelButton() {
+            $('.road-address-browser-window-results-table').remove(); // empty the result table
+            $('#exportAsExcelFile').prop("disabled", true); //disable Excel download button
+            $('#tableNotification').remove(); // remove notification if present
+        }
+
         function bindEvents() {
+
+            // if any of the inputs fields change
+            document.getElementById('roadAddressChangesBrowser').onchange = function () {
+                clearResultsAndDisableExcelButton();
+            };
 
             document.getElementById('roadAddrChangesInputRoad').oninput = function () {
                 if (this.value.length > ViiteConstants.MAX_LENGTH_FOR_ROAD_NUMBER) {
@@ -256,9 +267,7 @@
             });
 
             roadAddressChangesBrowserWindow.on('click', '#fetchRoadAddressChanges', function () {
-                $('.road-address-browser-window-results-table').remove(); // empty the result table
-                $('#exportAsExcelFile').prop("disabled", true); //disable excel download button
-                $('#tableNotification').remove(); // remove notification if present
+                clearResultsAndDisableExcelButton();
                 getData();
                 return false; // cancel form submission
             });
