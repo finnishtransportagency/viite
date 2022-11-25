@@ -62,10 +62,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
   val nodesAndJunctionsService = new NodesAndJunctionsService(mockRoadwayDAO, roadwayPointDAO, mockLinearLocationDAO, nodeDAO, nodePointDAO, junctionDAO, junctionPointDAO, roadwayChangesDAO, projectReservedPartDAO)
 
-  val projectService = new ProjectService(roadAddressService, mockRoadLinkService, nodesAndJunctionsService, roadwayDAO,
-    roadwayPointDAO, linearLocationDAO, projectDAO, projectLinkDAO,
-    nodeDAO, nodePointDAO, junctionPointDAO, projectReservedPartDAO, roadwayChangesDAO,
-    roadwayAddressMapper, mockEventBus) {
+  val projectService = new ProjectService(roadAddressService, mockRoadLinkService, nodesAndJunctionsService, roadwayDAO, roadwayPointDAO, linearLocationDAO, projectDAO, projectLinkDAO, nodeDAO, nodePointDAO, junctionPointDAO, projectReservedPartDAO, roadwayChangesDAO, roadwayAddressMapper, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
     override def withDynTransaction[T](f: => T): T = f
   }
@@ -105,8 +102,8 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     )
 
     val vvhHistoryRoadLinks = Seq(
-      dummyVvhHistoryRoadLink(linkId = 123L.toString, Seq(0.0, 10.0, 20.0)),
-      dummyVvhHistoryRoadLink(linkId = 125L.toString, Seq(0.0, 10.0))
+      dummyHistoryRoadLink(linkId = 123L.toString, Seq(0.0, 10.0, 20.0)),
+      dummyHistoryRoadLink(linkId = 125L.toString, Seq(0.0, 10.0))
     )
 
     val roadways = Seq(
@@ -149,8 +146,8 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     )
 
     val vvhHistoryRoadLinks = Seq(
-      dummyVvhHistoryRoadLink(linkId = 123L.toString, Seq(0.0, 10.0, 20.0)),
-      dummyVvhHistoryRoadLink(linkId = 125L.toString, Seq(0.0, 10.0))
+      dummyHistoryRoadLink(linkId = 123L.toString, Seq(0.0, 10.0, 20.0)),
+      dummyHistoryRoadLink(linkId = 125L.toString, Seq(0.0, 10.0))
     )
 
     val roadLinks = Seq(

@@ -73,10 +73,7 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
   }
   val roadAddressService_db: RoadAddressService = new RoadAddressService(mockRoadLinkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, roadwayAddressMapper, eventbus_db, true)
 
-  val projectService_db: ProjectService = new ProjectService(roadAddressService_db, mockRoadLinkService, nodesAndJunctionsService_db, roadwayDAO,
-    roadwayPointDAO, linearLocationDAO, projectDAO, projectLinkDAO,
-    nodeDAO, nodePointDAO, junctionPointDAO, projectReservedPartDAO, roadwayChangesDAO,
-    roadwayAddressMapper, eventbus_db, frozenTimeVVHAPIServiceEnabled = true){
+  val projectService_db: ProjectService = new ProjectService(roadAddressService_db, mockRoadLinkService, nodesAndJunctionsService_db, roadwayDAO, roadwayPointDAO, linearLocationDAO, projectDAO, projectLinkDAO, nodeDAO, nodePointDAO, junctionPointDAO, projectReservedPartDAO, roadwayChangesDAO, roadwayAddressMapper, eventbus_db, frozenTimeAPIServiceEnabled = true){
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f

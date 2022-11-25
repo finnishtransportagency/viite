@@ -33,25 +33,22 @@ class KgvRoadLinkClient[T](collection: Option[KgvCollection] = None, linkGeomSou
   val filter:Filter = FilterOgc
 
   /**
-    * Returns a sequence of VVH Road Links. Uses Scala Future for concurrent operations.
-    * Used by RoadLinkService.getViiteCurrentAndComplementaryRoadLinksFromVVH(municipality, roadNumbers).
+    * Returns a sequence of Road Links. Uses Scala Future for concurrent operations.
+    * Used by RoadLinkService.getCurrentAndComplementaryRoadLinksByMunicipality
     */
   def fetchByMunicipalityAndRoadNumbersF(municipality: Int, roadNumbers: Seq[(Int, Int)]): Future[Seq[LinkType]] = {
     Future(queryByRoadNumbersAndMunicipality(municipality, roadNumbers))
   }
 
   /**
-    * Returns VVH road links. Uses Scala Future for concurrent operations.
-    * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities),
-    * RoadLinkService.getViiteRoadLinksAndChangesFromVVH(bounds, roadNumbers, municipalities, everything, publicRoads).
+    * Returns road links. Uses Scala Future for concurrent operations.
     */
   def fetchByBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[LinkType]] = {
     Future(queryByMunicipalitiesAndBounds(bounds, municipalities))
   }
 
   /**
-    * Returns VVH road links. Uses Scala Future for concurrent operations.
-    * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities).
+    * Returns road links. Uses Scala Future for concurrent operations.
     */
   def fetchByRoadNumbersBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipalities: Set[Int], roadNumbers: Seq[(Int, Int)],
                                                  includeAllPublicRoads: Boolean = false): Future[Seq[LinkType]] = {
@@ -59,8 +56,7 @@ class KgvRoadLinkClient[T](collection: Option[KgvCollection] = None, linkGeomSou
   }
 
   /**
-    * Returns VVH road links in bounding box area. Municipalities are optional.
-    * Used by VVHClient.fetchByRoadNumbersBoundsAndMunicipalitiesF.
+    * Returns road links in bounding box area. Municipalities are optional.
     */
   protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, roadNumbers: Seq[(Int, Int)], municipalities: Set[Int] = Set(), includeAllPublicRoads: Boolean = false): Seq[LinkType] = {
     val roadNumberFilters = if (roadNumbers.nonEmpty || includeAllPublicRoads)

@@ -61,10 +61,7 @@ object Digiroad2Context {
   lazy val roadAddressService: RoadAddressService = new RoadAddressService(roadLinkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, roadwayAddressMapper, eventbus, ViiteProperties.kgvRoadlinkFrozen)
 
   lazy val projectService: ProjectService = {
-    new ProjectService(roadAddressService, roadLinkService, nodesAndJunctionsService, roadwayDAO,
-      roadwayPointDAO, linearLocationDAO, projectDAO, projectLinkDAO,
-      nodeDAO, nodePointDAO, junctionPointDAO, projectReservedPartDAO, roadwayChangesDAO,
-      roadwayAddressMapper, eventbus, ViiteProperties.kgvRoadlinkFrozen)
+    new ProjectService(roadAddressService, roadLinkService, nodesAndJunctionsService, roadwayDAO, roadwayPointDAO, linearLocationDAO, projectDAO, projectLinkDAO, nodeDAO, nodePointDAO, junctionPointDAO, projectReservedPartDAO, roadwayChangesDAO, roadwayAddressMapper, eventbus, ViiteProperties.kgvRoadlinkFrozen)
   }
 
   lazy val roadNetworkService: RoadNetworkService = {
