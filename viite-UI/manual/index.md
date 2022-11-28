@@ -914,7 +914,9 @@ _Kuva 10.2: Tieosoitteiden hakuehdot_
 Ajoratoja, tieosia, solmuja sekä liitymiä haettaessa pakollisia hakuehtoja ovat Tilannepvm sekä Ely TAI Tie.   
 Tiennimiä on mahdollista hakea koko tieverkolta. (Haku pelkällä tilannepäivämäärällä)
 
-(1) Tilanne pvm: Karsitaan tilanne pvm -kenttää uudemmat tiedot pois hakutuloksista   
+(1) Tilanne-pvm: Päiväys, jonka tilanteesta tiedot haetaan.   
+Ajoradoista, tieosista sekä tiennimistä on mahdollista hakea myös menneisyyden tilannetiedot (tätä päivää aiempi tilanne-pvm).   
+Solmuja ja liittymiä voi hakea vain nykyiseltä tieverkolta (tämän päivän päiväys).   
 (2) Ely: Haetaan vain valitun ELYn kohteita   
 (3) Tie: Rajataan haku annetun tienumeron mukaisiin kohteisiin   
 (4) Aosa: Pienin tieosanumero jolta haettavia kohteita haetaan   
