@@ -62,7 +62,7 @@ class RoadLinkService(val kgvClient: KgvRoadLink, val eventbus: DigiroadEventBus
     else Seq.empty[RoadLink]
   }
 
-  private def fetchFrozenAndComplementaryRoadLinks(linkIds: Set[String]) = {
+  private def fetchFrozenAndComplementaryRoadLinks(linkIds: Set[String]): Seq[RoadLink] = {
     if (linkIds.nonEmpty) kgvClient.frozenTimeRoadLinkData.fetchByLinkIds(linkIds) ++ kgvClient.complementaryData.fetchByLinkIds(linkIds)
     else Seq.empty[RoadLink]
   }
