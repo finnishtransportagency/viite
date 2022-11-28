@@ -85,17 +85,49 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
     override def withDynTransaction[T](f: => T): T = f
   }
-  val projectService: ProjectService = new ProjectService(roadAddressServiceRealRoadwayAddressMapper, mockRoadLinkService, mockNodesAndJunctionsService, roadwayDAO, roadwayPointDAO, linearLocationDAO, projectDAO, projectLinkDAO, nodeDAO, nodePointDAO, junctionPointDAO, projectReservedPartDAO, roadwayChangesDAO, roadwayAddressMapper, mockEventBus) {
-    override def withDynSession[T](f: => T): T = f
+  val projectService: ProjectService =
+    new ProjectService(
+                        roadAddressServiceRealRoadwayAddressMapper,
+                        mockRoadLinkService,
+                        mockNodesAndJunctionsService,
+                        roadwayDAO,
+                        roadwayPointDAO,
+                        linearLocationDAO,
+                        projectDAO,
+                        projectLinkDAO,
+                        nodeDAO,
+                        nodePointDAO,
+                        junctionPointDAO,
+                        projectReservedPartDAO,
+                        roadwayChangesDAO,
+                        roadwayAddressMapper,
+                        mockEventBus
+                        ) {
+                            override def withDynSession[T](f: => T): T = f
+                            override def withDynTransaction[T](f: => T): T = f
+                          }
 
-    override def withDynTransaction[T](f: => T): T = f
-  }
-
-  val projectServiceWithRoadAddressMock: ProjectService = new ProjectService(mockRoadAddressService, mockRoadLinkService, mockNodesAndJunctionsService, roadwayDAO, roadwayPointDAO, linearLocationDAO, projectDAO, projectLinkDAO, nodeDAO, nodePointDAO, junctionPointDAO, projectReservedPartDAO, roadwayChangesDAO, roadwayAddressMapper, mockEventBus) {
-    override def withDynSession[T](f: => T): T = f
-
-    override def withDynTransaction[T](f: => T): T = f
-  }
+  val projectServiceWithRoadAddressMock: ProjectService =
+    new ProjectService(
+                        mockRoadAddressService,
+                        mockRoadLinkService,
+                        mockNodesAndJunctionsService,
+                        roadwayDAO,
+                        roadwayPointDAO,
+                        linearLocationDAO,
+                        projectDAO,
+                        projectLinkDAO,
+                        nodeDAO,
+                        nodePointDAO,
+                        junctionPointDAO,
+                        projectReservedPartDAO,
+                        roadwayChangesDAO,
+                        roadwayAddressMapper,
+                        mockEventBus
+                        ) {
+                            override def withDynSession[T](f: => T): T = f
+                            override def withDynTransaction[T](f: => T): T = f
+                          }
 
   after {
     reset(mockRoadLinkService)

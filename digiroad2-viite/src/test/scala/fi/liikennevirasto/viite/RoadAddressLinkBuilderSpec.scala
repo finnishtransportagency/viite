@@ -56,18 +56,45 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
   val junctionPointDAO = new JunctionPointDAO
   val roadwayChangesDAO = new RoadwayChangesDAO
   val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
-  val roadAddressService = new RoadAddressService(mockRoadLinkService, mockRoadwayDAO, mockLinearLocationDAO, mockRoadNetworkDAO, mockRoadwayPointDAO, mockNodePointDAO, mockJunctionPointDAO, mockRoadwayAddressMapper, mockEventBus, frozenKGV = false) {
 
-    override def withDynSession[T](f: => T): T = f
+  val roadAddressService: RoadAddressService =
+    new RoadAddressService(
+                            mockRoadLinkService,
+                            mockRoadwayDAO,
+                            mockLinearLocationDAO,
+                            mockRoadNetworkDAO,
+                            mockRoadwayPointDAO,
+                            mockNodePointDAO,
+                            mockJunctionPointDAO,
+                            mockRoadwayAddressMapper,
+                            mockEventBus,
+                            frozenKGV = false
+                            ) {
+                                override def withDynSession[T](f: => T): T = f
+                                override def withDynTransaction[T](f: => T): T = f
+                              }
 
-    override def withDynTransaction[T](f: => T): T = f
-  }
-
-  val projectService = new ProjectService(roadAddressService, mockRoadLinkService, mockNodesAndJunctionsService, roadwayDAO, roadwayPointDAO, linearLocationDAO, projectDAO, projectLinkDAO, nodeDAO, nodePointDAO, junctionPointDAO, projectReservedPartDAO, roadwayChangesDAO, roadwayAddressMapper, mockEventBus) {
-    override def withDynSession[T](f: => T): T = f
-
-    override def withDynTransaction[T](f: => T): T = f
-  }
+  val projectService: ProjectService =
+    new ProjectService(
+                        roadAddressService,
+                        mockRoadLinkService,
+                        mockNodesAndJunctionsService,
+                        roadwayDAO,
+                        roadwayPointDAO,
+                        linearLocationDAO,
+                        projectDAO,
+                        projectLinkDAO,
+                        nodeDAO,
+                        nodePointDAO,
+                        junctionPointDAO,
+                        projectReservedPartDAO,
+                        roadwayChangesDAO,
+                        roadwayAddressMapper,
+                        mockEventBus
+                        ) {
+                            override def withDynSession[T](f: => T): T = f
+                            override def withDynTransaction[T](f: => T): T = f
+                          }
 
   val mockRoadAddressLinkBuilder = new RoadAddressLinkBuilder(mockRoadwayDAO, mockLinearLocationDAO)
   val roadAddressLinkBuilder = new RoadAddressLinkBuilder(new RoadwayDAO, new LinearLocationDAO)
