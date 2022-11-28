@@ -48,6 +48,7 @@ aws ssm put-parameter --overwrite --name /Viite/Prod/vkmApiKey --type SecureStri
 
 aws ssm put-parameter --overwrite --name /Viite/Prod/rasterServiceApiKey --type SecureString --value X
 
+aws ssm put-parameter --overwrite --name /Viite/Prod/kgvApiKey --type SecureString --value X
 ```
 ### Luo ECR repository
 ```
