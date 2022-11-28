@@ -1399,12 +1399,12 @@ class ProjectValidator {
 
     def checkOriginalRoadPartAfterTransfer: Seq[ValidationErrorDetails] = {
       if (roadProjectLinks.forall(pl => pl.status == Transfer || pl.status == Numbering)) {
-        //Take all the original roadparts of the roadProjectLinks and filter out the ones that still have ProjectLinks associated with them
-        val tempthing = roadProjectLinks.map(pl => (pl.originalRoadNumber, pl.originalRoadPartNumber)).distinct
-        val tempthingtoo = tempthing.filter {
+        //Take all the original road parts of the roadProjectLinks and filter out the ones that still have ProjectLinks associated with them
+        val originalRoadAndRoadParts = roadProjectLinks.map(pl => (pl.originalRoadNumber, pl.originalRoadPartNumber)).distinct
+        val replacedRoadParts = originalRoadAndRoadParts.filter {
           case (origRoadNumber, origRoadPartNumber) => !allProjectLinks.exists(pl => pl.roadNumber == origRoadNumber && pl.roadPartNumber == origRoadPartNumber)
         }
-        tempthingtoo.flatMap {
+        replacedRoadParts.flatMap {
           case (origRoadNumber, origRoadPartNumber) => {
             roadAddressService.getPreviousRoadAddressPart(origRoadNumber, origRoadPartNumber) match {
               case Some(previousRoadPartNumber) =>
