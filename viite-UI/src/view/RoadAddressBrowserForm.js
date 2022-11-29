@@ -30,7 +30,7 @@
 
         function getRoadAddressBrowserForm() {
             return '<form id="roadAddressBrowser" class="road-address-browser-form">' +
-            '<div class="input-container"><label class="control-label-small">Tilannepvm</label> <input type="text" id="roadAddrStartDate" value="' + dateutil.getCurrentDateString() + '" style="width: 100px" required/></div>' +
+            '<div class="input-container"><label class="control-label-small">Tilannepvm</label> <input type="text" id="roadAddrSituationDate" value="' + dateutil.getCurrentDateString() + '" style="width: 100px" required/></div>' +
             '<div class="input-container"><label class="control-label-small">Ely</label>' +
             '<select name id="roadAddrInputEly" /> ' +
                 createElyDropDownOptions() +
