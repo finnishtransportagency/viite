@@ -249,14 +249,14 @@ package object viite {
     "|    projectId   |        Long        |                                     Id of the project                                     |                                               |\n" +
     "|   roadNumber   |        Long        |                                  Project Link road number                                 |                                               |\n" +
     "| roadPartNumber |        Long        |                               Project Link road part number                               |                                               |\n" +
-    "|      links     | List[LinkToRevert] | List of the following fields (id: Long, linkId: Long, status: Long, geometry: Seq[Point]) |                                               |\n" +
+    "|      links     | List[LinkToRevert] |List of the following fields (id: Long, linkId: String, status: Long, geometry: Seq[Point])|                                               |\n" +
     "|   coordinates  | ProjectCoordinates |                      Composed of a (x: Double, y: Double, zoom: Int)                      | Their default values are (390000, 6900000, 2) |"
 
   val roadAddressProjectLinksExtractorStructure = "" +
     "|       Field Name       |     Field Type     |                                     Description                                     | Notes |\n" +
     "|:----------------------:|:------------------:|:-----------------------------------------------------------------------------------:|:-----:|\n" +
     "|           ids          |      Set[Long]     |                              Id's of the project links                              |       |\n" +
-    "|         linkIds        |      Seq[Long]     |                            LinkId's of the project links                            |       |\n" +
+    "|         linkIds        |      Seq[String]   |                            LinkId's of the project links                            |       |\n" +
     "|       linkStatus       |         Int        |                       Current link status of the project links                      |       |\n" +
     "|        projectId       |        Long        |                                  Id of the project                                  |       |\n" +
     "|       roadNumber       |        Long        |                         Road Number of All the project links                        |       |\n" +

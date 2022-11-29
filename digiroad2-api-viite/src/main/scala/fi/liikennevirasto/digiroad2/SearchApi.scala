@@ -32,7 +32,7 @@ class SearchApi(roadAddressService: RoadAddressService,
   private val getRoadAddress: SwaggerSupportSyntax.OperationBuilder =
     (apiOperation[List[Map[String, Any]]]("getRoadAddress")
       .parameters(
-        queryParam[Long]("linkId").description("LinkId of a road address"),
+        queryParam[String]("linkId").description("LinkId of a road address"),
         queryParam[Double]("startMeasure").description("startMeasure of a road address").optional,
         queryParam[Double]("endMeasure").description("endMeasure of a road address").optional
       )

@@ -220,14 +220,14 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
   private val getRoadAddressLinkByLinkId: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String, Any]]("getRoadAddressLinkByLinkId")
       .parameters(
-        pathParam[Long]("linkId").description("LinkId of a road address")
+        pathParam[String]("linkId").description("LinkId of a road address")
       )
       tags "ViiteAPI - RoadAddresses"
       summary "Returns the RoadAddressLink object of the given linkId"
     )
 
   get("/roadaddress/linkid/:linkId", operation(getRoadAddressLinkByLinkId)) {
-    val linkId = params("linkId").toString
+    val linkId = params("linkId")
     time(logger, s"GET request for /roadAddress/linkid/$linkId") {
       //TODO This process can be improved
       roadAddressService.getRoadAddressLink(linkId)
@@ -239,7 +239,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
   private val fetchPreFill: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String, Any]]("fetchPreFillFromVVH")
       .parameters(
-        queryParam[Long]("linkId").description("LinkId of a road address"),
+        queryParam[String]("linkId").description("LinkId of a road address"),
         queryParam[Long]("currentProjectId").description("currentProjectId")
       )
       tags "ViiteAPI - Project"
@@ -261,14 +261,14 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
   private val getMidPointByLinkId: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String, Any]]("getMidPointByLinkId")
       .parameters(
-        pathParam[Long]("linkId").description("LinkId of a road address")
+        pathParam[String]("linkId").description("LinkId of a road address")
       )
       tags "ViiteAPI - RoadAddresses"
       summary "getMidPointByLinkId"
     )
 
   get("/roadlinks/midpoint/:linkId", operation(getMidPointByLinkId)) {
-    val linkId = params("linkId").toString
+    val linkId = params("linkId")
     time(logger, s"GET request for /roadlinks/midpoint/$linkId") {
       roadLinkService.getMidPointByLinkId(linkId)
     }
@@ -530,14 +530,14 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
   private val getProjectAddressLinksByLinkIds: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String,Any]]("getProjectAddressLinksByLinkIds")
       .parameters(
-        pathParam[Long]("linkId").description("LinkId of a road address")
+        pathParam[String]("linkId").description("LinkId of a road address")
       )
       tags "ViiteAPI - Project"
       summary "Returns a sequence of all ProjectAddressLinks that share the same LinkId."
     )
 
   get("/project/roadaddress/linkid/:linkId", operation(getProjectAddressLinksByLinkIds)) {
-    val linkId = params("linkId").toLong
+    val linkId = params("linkId")
     time(logger, s"GET request for /project/roadAddress/linkid/$linkId") {
       val projectLinks = projectService.getProjectAddressLinksByLinkIds(Set(linkId))
       foldSegments(projectLinks)
@@ -1990,8 +1990,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
   case class RoadAndPartNumberException(private val message: String = "", private val cause: Throwable = None.orNull) extends Exception(message, cause)
 
 }
-
-case class ProjectFormLine(startingLinkId: Long, projectId: Long, roadNumber: Long, roadPartNumber: Long, roadLength: Long, ely: Long, discontinuity: String, isDirty: Boolean = false)
 
 object ProjectConverter {
   def toRoadAddressProject(project: RoadAddressProjectExtractor, user: User): Project = {
