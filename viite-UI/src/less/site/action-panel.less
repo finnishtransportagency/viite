@@ -632,14 +632,9 @@
   }
 }
 
-.road-address-browser-window {
+.road-address-changes-browser-window{
   overflow-y: auto;
   background-color: #e3e3e1;
-  position: fixed;
-  left: 50%;
-  top: 50%;
-  margin-top: -250px;
-  margin-left: -450px;
   min-width: 810px;
   height: 500px;
 
@@ -648,7 +643,24 @@
   }
 }
 
+.road-address-browser-window {
+  overflow-y: auto;
+  background-color: #e3e3e1;
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  margin-top: -250px;
+  margin-left: -450px;
+  min-width: fit-content;
+  height: 500px;
+
+  p {
+    margin: 10px;
+  }
+}
+
 .road-address-browser-window-results-table {
+  font-size: 12px;
   border-collapse: collapse;
   width: 100%;
   border: 3px solid #e3e3e1;

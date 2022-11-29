@@ -44,8 +44,8 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   val mockRoadAddressService: RoadAddressService = MockitoSugar.mock[RoadAddressService]
   val mockNodesAndJunctionsService: NodesAndJunctionsService = MockitoSugar.mock[NodesAndJunctionsService]
   val mockEventBus: DigiroadEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val mockVVHClient: KgvRoadLink = MockitoSugar.mock[KgvRoadLink]
-  val mockVVHRoadLinkClient: KgvRoadLinkClient[RoadLink] = MockitoSugar.mock[KgvRoadLinkClient[RoadLink]]
+  val mockKGVClient: KgvRoadLink = MockitoSugar.mock[KgvRoadLink]
+  val mockKGVRoadLinkClient: KgvRoadLinkClient[RoadLink] = MockitoSugar.mock[KgvRoadLinkClient[RoadLink]]
   val projectValidator = new ProjectValidator
   val projectDAO = new ProjectDAO
   val projectLinkDAO = new ProjectLinkDAO
@@ -1828,7 +1828,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val projectId = project.id
       projectReservedPartDAO.reserveRoadPart(projectId, currentRoadway.roadNumber, currentRoadway.roadPartNumber, "TestUser")
 
-      val linearLocation = dummyLinearLocation(currentRoadway.roadwayNumber, 0, linkId, 0.0, currentRoadway.endAddrMValue)
+      val linearLocation = dummyLinearLocation(Sequences.nextLinearLocationId, currentRoadway.roadwayNumber, 0, linkId, 0.0, currentRoadway.endAddrMValue,0L)
       val projectLink = ProjectLink(Sequences.nextProjectLinkId, currentRoadway.roadNumber, currentRoadway.roadPartNumber, currentRoadway.track, Discontinuity.EndOfRoad, currentRoadway.startAddrMValue, currentRoadway.endAddrMValue, currentRoadway.startAddrMValue, currentRoadway.endAddrMValue, Some(DateTime.now().plusMonths(1)), None, Some("test"), linkId, 0.0, currentRoadway.endAddrMValue, SideCode.TowardsDigitizing, (RoadAddressCP, RoadAddressCP), (NoCP, NoCP), Seq(Point(0.0, 0.0), Point(0.0, currentRoadway.endAddrMValue)), projectId, LinkStatus.Transfer, currentRoadway.administrativeClass, LinkGeomSource.NormalLinkInterface, currentRoadway.endAddrMValue, currentRoadway.id, linearLocation.id, currentRoadway.ely, reversed = true, None, DateTime.now().minusMonths(10).getMillis, currentRoadway.roadwayNumber, currentRoadway.roadName, None, None, None, None, None, None)
 
       linearLocationDAO.create(Seq(linearLocation))
@@ -2953,10 +2953,10 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val project = projectService.createRoadLinkProject(rap)
       when(mockRoadLinkService.getRoadLinksByLinkIds(any[Set[String]])).thenReturn(Seq(pl1, pl2, pl3, pl4, pl5, pl6, pl7).map(toRoadLink))
 
-      projectService.createProjectLinks(Seq(12345L, 12346L, 12347L, 12348L, 12349L, 12350L, 12351L).map(_.toString), project.id, roadNumber = 9999, roadPartNumber = 1, track = Track.RightSide, discontinuity = Discontinuity.Continuous, administrativeClass = AdministrativeClass.State, roadLinkSource = LinkGeomSource.NormalLinkInterface, roadEly = 8L, user = "test", roadName = "road name")
+      projectService.createProjectLinks(Seq(12345L, 12346L, 12347L, 12348L, 12349L, 12350L, 12351L).map(_.toString), project.id, roadNumber = 9999, roadPartNumber = 1, track = Track.RightSide, userGivenDiscontinuity = Discontinuity.Continuous, administrativeClass = AdministrativeClass.State, roadLinkSource = LinkGeomSource.NormalLinkInterface, roadEly = 8L, user = "test", roadName = "road name")
 
       when(mockRoadLinkService.getRoadLinksByLinkIds(Set(12352L, 12353L, 12354L).map(_.toString))).thenReturn(Seq(pl8, pl9, pl10).map(toRoadLink))
-      projectService.createProjectLinks(Seq(12352L, 12353L, 12354L).map(_.toString), project.id, roadNumber = 9999, roadPartNumber = 1, track = Track.LeftSide, discontinuity = Discontinuity.Continuous, administrativeClass = AdministrativeClass.State, roadLinkSource = LinkGeomSource.NormalLinkInterface, roadEly = 8L, user = "test", roadName = "road name")
+      projectService.createProjectLinks(Seq(12352L, 12353L, 12354L).map(_.toString), project.id, roadNumber = 9999, roadPartNumber = 1, track = Track.LeftSide, userGivenDiscontinuity = Discontinuity.Continuous, administrativeClass = AdministrativeClass.State, roadLinkSource = LinkGeomSource.NormalLinkInterface, roadEly = 8L, user = "test", roadName = "road name")
       when(mockRoadLinkService.getRoadLinksByLinkIds(Set(12355L, 12356L, 12357L).map(_.toString))).thenReturn(Seq(pl11, pl12, pl13).map(toRoadLink))
       projectService.createProjectLinks(Seq(12355L, 12356L, 12357L).map(_.toString), project.id, 9999, 1, Track.LeftSide, Discontinuity.Continuous, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, 8L, "test", "road name")
 

@@ -17,11 +17,11 @@
     var reservedRoadVector = new ol.source.Vector({});
     var historicRoadsVector = new ol.source.Vector({});
 
-    var SelectionType = LinkValues.SelectionType;
-    var Anomaly = LinkValues.Anomaly;
-    var lifecycleStatus = LinkValues.lifecycleStatus;
-    var SideCode = LinkValues.SideCode;
-    var RoadZIndex = LinkValues.RoadZIndex;
+    var SelectionType = ViiteEnumerations.SelectionType;
+    var Anomaly = ViiteEnumerations.Anomaly;
+    var lifecycleStatus = ViiteEnumerations.lifecycleStatus;
+    var SideCode = ViiteEnumerations.SideCode;
+    var RoadZIndex = ViiteEnumerations.RoadZIndex;
 
     var isActiveLayer = false;
     var cachedMarker = null;

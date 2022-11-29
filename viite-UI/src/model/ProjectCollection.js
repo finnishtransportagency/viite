@@ -13,9 +13,9 @@
     var dirtyProjectLinkIds = [];
     var dirtyProjectLinks = [];
     var publishableProject = false;
-    var LinkStatus = LinkValues.LinkStatus;
-    var ProjectStatus = LinkValues.ProjectStatus;
-    var Track = LinkValues.Track;
+    var LinkStatus = ViiteEnumerations.LinkStatus;
+    var ProjectStatus = ViiteEnumerations.ProjectStatus;
+    var Track = ViiteEnumerations.Track;
     var BAD_REQUEST_400 = 400;
     var PRECONDITION_FAILED_412 = 412;
     var INTERNAL_SERVER_ERROR_500 = 500;
@@ -234,6 +234,14 @@
       }
     };
 
+    var validateUnchangedInProject = function (projectId) {
+        backend.validateUnchangedInProject(projectId, function (response) {
+            if (response.hasOwnProperty('validationErrors') && !_.isEmpty(response.validationErrors)) {
+                me.setProjectErrors(response.validationErrors);
+                eventbus.trigger('roadAddressProject:writeProjectErrors');
+            }
+        });
+    };
 
     var createOrUpdate = function (dataJson) {
       if ((!_.isEmpty(dataJson.linkIds) || !_.isEmpty(dataJson.ids)) && typeof dataJson.projectId !== 'undefined' && dataJson.projectId !== 0) {
@@ -249,6 +257,10 @@
                 me.setFormedParts(successObject.formedInfo);
                 eventbus.trigger('projectLink:projectLinksCreateSuccess');
                 eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
+                if (successObject.errorMessage) {
+                  new ModalConfirm(successObject.errorMessage);
+                }
+                validateUnchangedInProject(dataJson.projectId);
               } else {
                 new ModalConfirm(successObject.errorMessage);
                 applicationModel.removeSpinner();
@@ -261,6 +273,7 @@
                 me.setProjectErrors(successObject.projectErrors);
                 me.setFormedParts(successObject.formedInfo);
                 eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
+                validateUnchangedInProject(dataJson.projectId);
               } else {
                 new ModalConfirm(successObject.errorMessage);
                 applicationModel.removeSpinner();

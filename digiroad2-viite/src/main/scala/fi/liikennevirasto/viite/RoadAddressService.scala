@@ -595,13 +595,13 @@ class RoadAddressService(
   }
 
   /**
-    * Gets all the previous road address part in the given road number and road part number
+    * Gets the previous road address part in the given road number and road part number
     *
     * @param roadNumber The road number
     * @param roadPart   The road part number
-    * @return Returns previous parts in road number, if they exist
+    * @return Returns previous part in road number, if it exists
     */
-  def getPreviousRoadAddressPart(roadNumber: Long, roadPart: Long): Option[Long] = {
+  def getPreviousRoadPartNumber(roadNumber: Long, roadPart: Long): Option[Long] = {
     withDynSession {
       roadwayDAO.fetchPreviousRoadPartNumber(roadNumber, roadPart)
     }
@@ -659,6 +659,14 @@ class RoadAddressService(
   def getRoadPartsForRoadAddressBrowser(startDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[RoadPartForRoadAddressBrowser] = {
     withDynSession {
       roadwayDAO.fetchRoadPartsForRoadAddressBrowser(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
+    }
+  }
+
+  def getChangeInfosForRoadAddressChangesBrowser(startDate: Option[String], endDate: Option[String], dateTarget: Option[String],
+                                                 ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long],
+                                                 maxRoadPartNumber: Option[Long]): Seq[ChangeInfoForRoadAddressChangesBrowser] = {
+    withDynSession {
+      roadwayChangesDAO.fetchChangeInfosForRoadAddressChangesBrowser(startDate, endDate, dateTarget, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
     }
   }
 
