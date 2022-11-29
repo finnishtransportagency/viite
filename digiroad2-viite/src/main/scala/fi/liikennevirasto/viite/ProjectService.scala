@@ -2,6 +2,7 @@ package fi.liikennevirasto.viite
 
 import java.sql.SQLException
 import java.util.Date
+
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, TrafficDirection, _}
 import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
@@ -535,7 +536,17 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               case 2 => { val endLink = endLinkOfNewLinks.filterNot(_.linkId == firstLinkId).head
                 newLinks.filterNot(_.equals(endLink)) :+ endLink.copy(discontinuity = discontinuity)
               }
-              case _ => newLinks
+              case _ => { // Case when new link selection has discontinuities in geometry
+                val firstLinkGeometry = newLinks.find(_.linkId == firstLinkId).get.geometry
+                val otherEndPoints    = onceConnectedNewLinks.filterNot(_._2.linkId == firstLinkId).keys
+                def minDistanceToOtherEndpoints(p: Point) = otherEndPoints.map(p => (p,p.distance2DTo(p))).minBy(_._2)
+                val closestEndPointToFirstLink = Seq(minDistanceToOtherEndpoints(firstLinkGeometry.head), minDistanceToOtherEndpoints(firstLinkGeometry.last)).minBy(_._2)._1
+                // Startpoint as one of first link end points further a way from closest(next link) link end point
+                val startPoint                = Seq((firstLinkGeometry.head, firstLinkGeometry.head.distance2DTo(closestEndPointToFirstLink)), (firstLinkGeometry.last, firstLinkGeometry.last.distance2DTo(closestEndPointToFirstLink))).maxBy(_._2)._1
+                val lastLinkInSection         = Seq(TrackSectionOrder.orderProjectLinksTopologyByGeometry((startPoint, startPoint), newLinks)).flatMap(pl => pl._1 ++ pl._2).distinct.last
+                // Set discontinuity to the last link
+                newLinks.filterNot(_.linkId == lastLinkInSection.linkId) :+ lastLinkInSection.copy(discontinuity = discontinuity)
+              }
             }
           } else newLinks
         }
