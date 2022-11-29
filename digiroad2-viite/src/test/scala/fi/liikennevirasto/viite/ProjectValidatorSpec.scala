@@ -3021,8 +3021,6 @@ Left|      |Right
         RoadAddress(12345, linearLocationId, roadNumber, roadPartNumber = 2L, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, 0L, 30L, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000.toString, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), Seq(Point(0.0, 20.0), Point(0.0, 50.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber2, Some(DateTime.parse("1901-01-01")), None, None)
       )
 
-      roadwayDAO.create(Seq(roadway, roadwayToBeTransferred))
-
       val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.Numbering, Seq(10L, 20L, 30L), roads = Seq((newRoadNumber, 1L, "Test road")), discontinuity = Discontinuity.Continuous)
       val changedProjectLinks = projectLinks.map(pl =>
         pl.copy(roadwayId=ra2Id)
