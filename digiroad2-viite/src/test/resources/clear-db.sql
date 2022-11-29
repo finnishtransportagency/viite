@@ -7,6 +7,7 @@
   from pg_sequences
   where schemaname = 'public';
 */
+drop table if exists complementary_link_table cascade;
 drop table if exists complementary_filter cascade;
 drop table if exists export_lock cascade;
 drop table if exists municipality cascade;

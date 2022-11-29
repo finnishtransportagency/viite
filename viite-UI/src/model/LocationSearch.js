@@ -30,7 +30,7 @@
      * @returns {*}
      */
     function roadLocationAPIResultParser(roadData, addressMValue) {
-      const sideCodes = LinkValues.SideCode;
+      const sideCodes = ViiteEnumerations.SideCode;
       const constructTitle = function (address) {
         const titleParts = [_.get(address, 'roadNumber'), _.get(address, 'roadPartNumber')];
         return _.some(titleParts, _.isUndefined) ? '' : 'Tieosa, ' + titleParts.join(' ');

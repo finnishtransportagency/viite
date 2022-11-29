@@ -13,6 +13,12 @@
       });
     }, 1000);
 
+    this.getDataForRoadAddressChangesBrowser = _.throttle(function (params, callback) {
+      return $.get('api/viite/roadaddresschangesbrowser', params, function (data) {
+        return _.isFunction(callback) && callback(data);
+      });
+    }, 1000);
+
     this.getRoadLinks = createCallbackRequestor(function (params) {
       var zoom = params.zoom;
       var boundingBox = params.boundingBox;
@@ -279,6 +285,16 @@
     this.recalculateAndValidateProject = function (id, callback) {
       $.getJSON('api/viite/project/recalculateProject/' + id, callback);
     };
+
+    this.validateUnchangedInProject = _.throttle(function (id, success) {
+        $.ajax({
+            cache: false,
+            contentType: "application/json",
+            type: "GET",
+            url: "api/viite/project/validateUnchanged/" + id,
+            success: success
+        });
+    }, 1000);
 
     this.getJunctionPointEditableStatus = function (ids, jp) {
       $.get('api/viite/junctions/getEditableStatusOfJunctionPoints?ids=' + ids, function (response) {
