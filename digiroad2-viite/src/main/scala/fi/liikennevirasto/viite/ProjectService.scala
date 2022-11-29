@@ -236,7 +236,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def checkRoadPartsReservable(roadNumber: Long, startPart: Long, endPart: Long, projectId: Long): Either[String, (Seq[ProjectReservedPart], Seq[ProjectReservedPart])] = {
     (startPart to endPart).foreach { part =>
       projectReservedPartDAO.fetchProjectReservedPart(roadNumber, part) match {
-        case Some(name) => return Left(s"Tie $roadNumber osa $part ei ole vapaana projektin alkupäivämääränä. Tieosoite on jo varattuna projektissa: $name.")
+        case Some((id,name)) => if (id != projectId) return Left(s"Tie $roadNumber osa $part ei ole vapaana projektin alkupäivämääränä. Tieosoite on jo varattuna projektissa: $name.")
         case _ =>
       }
       val projectsWithCommonJunctions = projectReservedPartDAO.fetchProjectReservedJunctions(roadNumber, part, projectId)

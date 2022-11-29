@@ -1,25 +1,21 @@
 package fi.liikennevirasto.viite.dao
 
-import java.sql.SQLIntegrityConstraintViolationException
-
-import fi.liikennevirasto.digiroad2.GeometryUtils
-import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import fi.liikennevirasto.viite.Dummies.dummyLinearLocation
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
-import fi.liikennevirasto.viite.{NewIdValue}
-import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
+import fi.liikennevirasto.viite.NewIdValue
 import org.joda.time.DateTime
 import org.postgresql.util.PSQLException
-import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.mock.MockitoSugar
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -280,7 +276,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
   test("Test roadPartReservedByProject When removeReservedRoadPart is done in that same road part Then should not be returning that removed part") {
     runWithRollback {
       val roadwayIds = roadwayDAO.create(dummyRoadways)
-      val linearLocationIds = linearLocationDAO.create(dummyLinearLocations)
+      linearLocationDAO.create(dummyLinearLocations)
 
       val id = Sequences.nextViiteProjectId
       val projectLinkId = Sequences.nextProjectLinkId
@@ -291,7 +287,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
       )
       projectLinkDAO.create(projectLinks)
       val project = projectReservedPartDAO.fetchProjectReservedPart(roadNumber1, roadPartNumber1)
-      project should be(Some("TestProject"))
+      project should be(Some(id, "TestProject"))
       val reserved = projectReservedPartDAO.fetchReservedRoadPart(roadNumber1, roadPartNumber1)
       reserved.nonEmpty should be(true)
       projectReservedPartDAO.fetchReservedRoadParts(id) should have size 1
@@ -346,7 +342,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
       )
       projectLinkDAO.create(projectLinks)
       val project = projectReservedPartDAO.fetchProjectReservedPart(roadNumber1, roadPartNumber1)
-      project should be(Some("'Test Project"))
+      project should be(Some(id, "'Test Project"))
     }
   }
 
