@@ -132,7 +132,7 @@ class ProjectValidator {
       WrongDiscontinuityBeforeProjectWithElyChangeInProject,
       ErrorInValidationOfUnchangedLinks, RoadNotEndingInElyBorder, RoadContinuesInAnotherEly,
       MultipleElyInPart, IncorrectLinkStatusOnElyCodeChange,
-      ElyCodeChangeButNoRoadPartChange, ElyCodeChangeButNoElyChange, ElyCodeChangeButNotOnEnd, ElyCodeDiscontinuityChangeButNoElyChange, RoadNotReserved, DistinctAdministrativeClassesBetweenTracks)
+      ElyCodeChangeButNoRoadPartChange, ElyCodeChangeButNoElyChange, ElyCodeChangeButNotOnEnd, ElyCodeDiscontinuityChangeButNoElyChange, RoadNotReserved, DistinctAdministrativeClassesBetweenTracks, WrongDiscontinuityOutsideOfProject)
 
     // Viite-942
     case object MissingEndOfRoad extends ValidationError {
@@ -449,6 +449,14 @@ class ProjectValidator {
       def value = 36
 
       def message: String = WrongDiscontinuityBeforeProjectWithElyChangeInProjectMessage
+
+      def notification = false
+    }
+
+    case object WrongDiscontinuityOutsideOfProject extends ValidationError {
+      def value = 37
+
+      def message: String = WrongDiscontinuityOutsideOfProjectMessage
 
       def notification = false
     }
@@ -1283,7 +1291,7 @@ class ProjectValidator {
         case Some(previousRoadPartNumber) =>
           val (leftLinks, rightLinks) = (roadProjectLinks.filter(_.track != Track.RightSide), roadProjectLinks.filter(_.track != Track.LeftSide))
           //Skip this validation if previousRoadPartNumber is reserved in the project or either track (or combined track) has no project links assigned to it.
-          if (allProjectLinks.exists(pl => pl.roadPartNumber == previousRoadPartNumber || pl.originalRoadPartNumber == previousRoadPartNumber) || leftLinks.isEmpty || rightLinks.isEmpty)
+          if (allProjectLinks.exists(pl => pl.roadNumber == road && (pl.roadPartNumber == previousRoadPartNumber || pl.originalRoadPartNumber == previousRoadPartNumber)) || leftLinks.isEmpty || rightLinks.isEmpty)
             Seq()
           else {
             val previousRoadwayRoadAddresses = roadAddressService.getRoadAddressWithRoadAndPart(road, previousRoadPartNumber, fetchOnlyEnd = true)
@@ -1396,6 +1404,42 @@ class ProjectValidator {
       }
     }
 
+    def checkOriginalRoadPartAfterTransfer: Seq[ValidationErrorDetails] = {
+      if (roadProjectLinks.forall(pl => pl.status == Transfer || pl.status == Numbering)) {
+        //Take all the original road parts of the roadProjectLinks and filter out the ones that still have ProjectLinks associated with them
+        val originalRoadAndRoadParts = roadProjectLinks.map(pl => (pl.originalRoadNumber, pl.originalRoadPartNumber)).distinct
+        val replacedRoadParts = originalRoadAndRoadParts.filter {
+          case (origRoadNumber, origRoadPartNumber) => !allProjectLinks.exists(pl => pl.roadNumber == origRoadNumber && pl.roadPartNumber == origRoadPartNumber)
+        }
+        replacedRoadParts.flatMap {
+          case (origRoadNumber, origRoadPartNumber) => {
+            roadAddressService.getPreviousRoadAddressPart(origRoadNumber, origRoadPartNumber) match {
+              case Some(previousRoadPartNumber) =>
+                //If the previous road part has been reserved in the project, don't give validation error
+                if (allProjectLinks.exists(pl => pl.originalRoadNumber == origRoadNumber && pl.originalRoadPartNumber == previousRoadPartNumber))
+                  Seq()
+                else {
+                  val previousRoadPart = roadAddressService.getRoadAddressWithRoadAndPart(origRoadNumber, previousRoadPartNumber)
+                  val lastLink = previousRoadPart.maxBy(_.endAddrMValue)
+                  val roadParts = roadAddressService.getValidRoadAddressParts(origRoadNumber, project.startDate)
+                  //If the road number has road parts greater than the original road part AND the previous road part is already Discontinuous, don't give validation error
+                  if (roadParts.exists(_ > origRoadPartNumber) && lastLink.discontinuity == Discontinuity.Discontinuous) {
+                    Seq()
+                  } else
+                    outsideOfProjectError(
+                      project.id,
+                      alterMessage(ValidationErrorList.WrongDiscontinuityOutsideOfProject, currentRoadAndPart = Some(Seq((origRoadNumber, previousRoadPartNumber))))
+                    )(previousRoadPart).toSeq
+                }
+              case None => Seq()
+            }
+          }
+        }
+      } else {
+        Seq()
+      }
+    }
+
     def checkEndOfRoadBetweenLinksOnPart: Seq[ValidationErrorDetails] = {
       val endOfRoadErrors = roadProjectLinks.groupBy(_.roadPartNumber).flatMap {
         roadPart =>
@@ -1461,7 +1505,8 @@ class ProjectValidator {
       checkDiscontinuityOnLastLinkPart,
       validateTheEndOfPreviousRoadPart,
       checkEndOfRoadBetweenLinksOnPart,
-      checkDiscontinuityOnParallelLinks
+      checkDiscontinuityOnParallelLinks,
+      checkOriginalRoadPartAfterTransfer
     )
 
     val continuityErrors: Seq[ValidationErrorDetails] = continuityValidations.foldLeft(Seq.empty[ValidationErrorDetails]) { case (errors, validation) =>

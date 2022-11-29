@@ -97,6 +97,7 @@ package object viite {
   val NotDiscontinuousCodeOnDisconnectedRoadPartOutsideMessage = s"""Tekemäsi tieosoitemuutoksen vuoksi projektia edeltävän tieosan päähän muodostuu epäjatkuvuus. Tarkasta ja muuta tieosan %s jatkuvuuskoodi."""
   val ElyDiscontinuityCodeBeforeProjectButNoElyChangeMessage = s"""Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuolisen tieosan jatkuvuuskoodia "${ChangingELYCode.description}" (${ChangingELYCode.value}) tulee muuttaa. Tarkasta ja muuta tieosoitteen %s jatkuvuuskoodi."""
   val WrongDiscontinuityBeforeProjectWithElyChangeInProjectMessage = "Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuolisen tieosan ja projektin välillä vaihtuu ELY. Tarkasta ja muuta tieosan %s jatkuvuuskoodi."
+  val WrongDiscontinuityOutsideOfProjectMessage = s"""Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuolisen tieosan %s jatkuvuuskoodi tulee muuttaa."""
   val EndOfRoadMiddleOfPartMessage = s"""Tieosan keskellä olevalla linkillä on jatkuvuuskoodi "${EndOfRoad.description}" (${EndOfRoad.value})."""
   val RoadNotAvailableMessage = s"Tieosaa ei ole varattu projektiin tai se on varattuna toisessa projektissa."
   val RoadReservedOtherProjectMessage = s"Tie %d osa %d on jo varattuna projektissa %s, tarkista tiedot."

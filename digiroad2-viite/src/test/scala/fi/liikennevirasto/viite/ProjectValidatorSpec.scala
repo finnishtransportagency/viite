@@ -2992,4 +2992,103 @@ Left|      |Right
     }
   }
 
+  test("Test checkOriginalRoadPartAfterTransfer When a road part with EndOfRoad discontinuity is numbered to another road number where the original road number has another road part" +
+       "Then should return WrongDiscontinuityOutsideOfProject error") {
+    runWithRollback {
+      val raId = Sequences.nextRoadwayId
+      val ra2Id = Sequences.nextRoadwayId
+      val linearLocationId = Sequences.nextLinearLocationId
+      val roadNumber = 20001L
+      val newRoadNumber = 20002L
+
+      val roadway = Roadway(raId, roadwayNumber1, roadNumber, roadPartNumber = 1L, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous,
+        0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, DateTime.parse("1901-01-01"), None)
+
+      val roadwayToBeTransferred = Roadway(ra2Id, roadwayNumber2, roadNumber, roadPartNumber = 2L, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad,
+        0L, 30L, reversed = false, DateTime.now().minusDays(5), None, "test_user", None, 8, NoTermination, DateTime.parse("1901-01-01"), None)
+
+      roadwayDAO.create(Seq(roadway, roadwayToBeTransferred))
+
+      val ra = Seq(
+        RoadAddress(12345, linearLocationId, roadNumber, roadPartNumber = 1L, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000.toString, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), Seq(Point(0.0, 10.0), Point(0.0, 20.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None, None),
+        RoadAddress(12345, linearLocationId, roadNumber, roadPartNumber = 2L, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, 0L, 30L, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000.toString, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), Seq(Point(0.0, 20.0), Point(0.0, 50.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber2, Some(DateTime.parse("1901-01-01")), None, None)
+      )
+
+      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.Numbering, Seq(10L, 20L, 30L), roads = Seq((newRoadNumber, 1L, "Test road")), discontinuity = Discontinuity.Continuous)
+      val changedProjectLinks = projectLinks.map(pl =>
+        pl.copy(roadwayId=ra2Id)
+      )
+      val addedEndOfRoad = changedProjectLinks.init :+ changedProjectLinks.last.copy(discontinuity=Discontinuity.EndOfRoad)
+
+      when(mockRoadAddressService.getValidRoadAddressParts(roadNumber, project.startDate)).thenReturn(Seq(1L, 2L))
+      when(mockRoadAddressService.getValidRoadAddressParts(newRoadNumber, project.startDate)).thenReturn(Seq())
+      when(mockRoadAddressService.getPreviousRoadAddressPart(roadNumber, roadPart = 2L)).thenReturn(Some(1L))
+      when(mockRoadAddressService.getPreviousRoadAddressPart(newRoadNumber, roadPart = 1L)).thenReturn(None)
+      when(mockRoadAddressService.getRoadAddressWithRoadAndPart(roadNumber, part = 2L)).thenReturn(ra.tail)
+      when(mockRoadAddressService.getRoadAddressWithRoadAndPart(roadNumber, part = 1L)).thenReturn(ra.init)
+
+      val errors = projectValidator.validateProject(project, addedEndOfRoad)
+      errors should have size 1
+      errors.head.validationError.value should equal (37)
+    }
+  }
+
+
+  test("Test checkOriginalRoadPartAfterTransfer When a road part with Discontinuous discontinuity is numbered to another road number where the original road number has a discontinuous previous road part" +
+    "Then should not return WrongDiscontinuityOutsideOfProject error") {
+    /**
+     * Before project:
+     *                                            Reserved for project
+     *  Roadnumber 20001L
+     *  RoadPart 1 Discontinuous                  RoadPart 2 Discontinuous           RoadPart 3 EndOfRoad
+     * |---------------------->                   |------------------>              |---------------------->
+     *
+     * After Project:
+     *  Roadnumber 20001L                         Roadnumber 20002L                  Roadnumber 20001L
+     *  RoadPart 1 Discontinuous                  RoadPart 2 EndOfRoad               RoadPart 3 EndOfRoad
+     * |---------------------->                   |------------------>              |---------------------->
+     *
+     */
+    runWithRollback {
+      val raId = Sequences.nextRoadwayId
+      val ra2Id = Sequences.nextRoadwayId
+      val ra3Id = Sequences.nextRoadwayId
+      val linearLocationId = Sequences.nextLinearLocationId
+      val roadNumber = 20001L
+      val newRoadNumber = 20002L
+
+      val roadways = Seq(Roadway(raId, roadwayNumber1, roadNumber, roadPartNumber = 1L, AdministrativeClass.State, Track.Combined, Discontinuity.Discontinuous,
+        0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, DateTime.parse("1901-01-01"), None),
+        Roadway(ra3Id, roadwayNumber3, roadNumber,  roadPartNumber =  3L, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad,
+          0L, 20L, reversed = false, DateTime.now().minusDays(5), None, "test_user", None, 8, NoTermination, DateTime.parse("1901-01-01"), None))
+
+      val roadwayToBeTransferred = Roadway(ra2Id, roadwayNumber2, roadNumber,  roadPartNumber =  2L, AdministrativeClass.State, Track.Combined, Discontinuity.Discontinuous,
+        0L, 30L, reversed = false, DateTime.now().minusDays(5), None, "test_user", None, 8, NoTermination, DateTime.parse("1901-01-01"), None)
+
+      roadwayDAO.create(roadways :+ roadwayToBeTransferred)
+
+      val ra = Seq(
+        RoadAddress(12345, linearLocationId, roadNumber,  roadPartNumber =  1L, AdministrativeClass.State, Track.Combined, Discontinuity.Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000.toString, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), Seq(Point(0.0, 10.0), Point(0.0, 20.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None, None),
+        RoadAddress(12345, linearLocationId, roadNumber,  roadPartNumber =  2L, AdministrativeClass.State, Track.Combined, Discontinuity.Discontinuous, 0L, 30L, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000.toString, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), Seq(Point(10.0, 20.0), Point(10.0, 50.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber2, Some(DateTime.parse("1901-01-01")), None, None),
+        RoadAddress(12345, linearLocationId, roadNumber,  roadPartNumber =  3L, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, 0L, 20L, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000.toString, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), Seq(Point(20.0, 20.0), Point(20.0, 40.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber3, Some(DateTime.parse("1901-01-01")), None, None)
+      )
+
+      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.Numbering, Seq(10L, 20L, 30L), roads = Seq((newRoadNumber, 1L, "Test road")), discontinuity = Discontinuity.Continuous)
+      val changedProjectLinks = projectLinks.map(pl =>
+        pl.copy(roadwayId=ra2Id)
+      )
+      val addedEndOfRoad = changedProjectLinks.init :+ changedProjectLinks.last.copy(discontinuity=Discontinuity.EndOfRoad)
+
+      when(mockRoadAddressService.getValidRoadAddressParts(roadNumber, project.startDate)).thenReturn(Seq(1L, 2L, 3L))
+      when(mockRoadAddressService.getValidRoadAddressParts(newRoadNumber, project.startDate)).thenReturn(Seq())
+      when(mockRoadAddressService.getPreviousRoadAddressPart(roadNumber, roadPart = 2L)).thenReturn(Some(1L))
+      when(mockRoadAddressService.getPreviousRoadAddressPart(newRoadNumber, roadPart = 1L)).thenReturn(None)
+      when(mockRoadAddressService.getRoadAddressWithRoadAndPart(roadNumber, part = 2L)).thenReturn(Seq(ra.tail.head))
+      when(mockRoadAddressService.getRoadAddressWithRoadAndPart(roadNumber, part = 1L)).thenReturn(Seq(ra.init.head))
+
+      val errors = projectValidator.validateProject(project, addedEndOfRoad)
+      errors should have size 0
+    }
+  }
+
 }
