@@ -233,6 +233,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       }
   }
 
+  /* Return if road parts are reservable.
+  *  If road part is not reserved ProjectReservedPart
+  *  If road part is already reserved return error message
+  *  If road part is already reserved for the projectId return ProjectReservedPart
+  * */
   def checkRoadPartsReservable(roadNumber: Long, startPart: Long, endPart: Long, projectId: Long): Either[String, (Seq[ProjectReservedPart], Seq[ProjectReservedPart])] = {
     (startPart to endPart).foreach { part =>
       projectReservedPartDAO.fetchProjectReservedPart(roadNumber, part) match {
