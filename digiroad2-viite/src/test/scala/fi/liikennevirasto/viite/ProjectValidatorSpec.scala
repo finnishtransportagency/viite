@@ -3022,8 +3022,8 @@ Left|      |Right
 
       when(mockRoadAddressService.getValidRoadAddressParts(roadNumber, project.startDate)).thenReturn(Seq(1L, 2L))
       when(mockRoadAddressService.getValidRoadAddressParts(newRoadNumber, project.startDate)).thenReturn(Seq())
-      when(mockRoadAddressService.getPreviousRoadAddressPart(roadNumber, roadPart = 2L)).thenReturn(Some(1L))
-      when(mockRoadAddressService.getPreviousRoadAddressPart(newRoadNumber, roadPart = 1L)).thenReturn(None)
+      when(mockRoadAddressService.getPreviousRoadPartNumber(roadNumber, roadPart = 2L)).thenReturn(Some(1L))
+      when(mockRoadAddressService.getPreviousRoadPartNumber(newRoadNumber, roadPart = 1L)).thenReturn(None)
       when(mockRoadAddressService.getRoadAddressWithRoadAndPart(roadNumber, part = 2L)).thenReturn(ra.tail)
       when(mockRoadAddressService.getRoadAddressWithRoadAndPart(roadNumber, part = 1L)).thenReturn(ra.init)
 
@@ -3081,8 +3081,8 @@ Left|      |Right
 
       when(mockRoadAddressService.getValidRoadAddressParts(roadNumber, project.startDate)).thenReturn(Seq(1L, 2L, 3L))
       when(mockRoadAddressService.getValidRoadAddressParts(newRoadNumber, project.startDate)).thenReturn(Seq())
-      when(mockRoadAddressService.getPreviousRoadAddressPart(roadNumber, roadPart = 2L)).thenReturn(Some(1L))
-      when(mockRoadAddressService.getPreviousRoadAddressPart(newRoadNumber, roadPart = 1L)).thenReturn(None)
+      when(mockRoadAddressService.getPreviousRoadPartNumber(roadNumber, roadPart = 2L)).thenReturn(Some(1L))
+      when(mockRoadAddressService.getPreviousRoadPartNumber(newRoadNumber, roadPart = 1L)).thenReturn(None)
       when(mockRoadAddressService.getRoadAddressWithRoadAndPart(roadNumber, part = 2L)).thenReturn(Seq(ra.tail.head))
       when(mockRoadAddressService.getRoadAddressWithRoadAndPart(roadNumber, part = 1L)).thenReturn(Seq(ra.init.head))
 
