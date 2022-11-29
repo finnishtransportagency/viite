@@ -1404,7 +1404,7 @@ class ProjectValidator {
         }
         replacedRoadParts.flatMap {
           case (origRoadNumber, origRoadPartNumber) => {
-            roadAddressService.getPreviousRoadAddressPart(origRoadNumber, origRoadPartNumber) match {
+            roadAddressService.getPreviousRoadPartNumber(origRoadNumber, origRoadPartNumber) match {
               case Some(previousRoadPartNumber) =>
                 //If the previous road part has been reserved in the project, don't give validation error
                 if (allProjectLinks.exists(pl => pl.originalRoadNumber == origRoadNumber && pl.originalRoadPartNumber == previousRoadPartNumber))
