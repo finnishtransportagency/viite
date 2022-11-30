@@ -1,18 +1,10 @@
 (function (root) {
   root.ProjectChangeTable = function (projectChangeInfoModel, projectCollection) {
 
-    var changeTypes = [
-      'Käsittelemättä',
-      'Ennallaan',
-      'Uusi',
-      'Siirto',
-      'Numerointi',
-      'Lakkautettu'
-    ];
     // change table is not open in the beginning of the project
     var changeTableOpen = false;
-    var LinkStatus = LinkValues.LinkStatus;
-    var ProjectStatus = LinkValues.ProjectStatus;
+    var LinkStatus = ViiteEnumerations.LinkStatus;
+    var ProjectStatus = ViiteEnumerations.ProjectStatus;
     var windowMaximized = false;
     var formCommon = new FormCommon('');
 
@@ -102,8 +94,11 @@
       }
     }
 
-    function getChangeType(type) {
-      return changeTypes[type];
+    function getChangeType(changeTypeValue) {
+      const changeType = _.find(ViiteEnumerations.ChangeType, function (obj) {
+        return obj.value === changeTypeValue;
+      });
+      return changeType.displayText;
     }
 
     function getChanges() {
@@ -328,8 +323,8 @@
     }
 
     function replaceParallelLink(currentDiscontinuity) {
-      if (currentDiscontinuity === LinkValues.Discontinuity.ParallelLink.value)
-        return LinkValues.Discontinuity.Continuous.value;
+      if (currentDiscontinuity === ViiteEnumerations.Discontinuity.ParallelLink.value)
+        return ViiteEnumerations.Discontinuity.Continuous.value;
       else
         return currentDiscontinuity;
     }

@@ -241,9 +241,18 @@ object RoadNameDAO {
     roadNamesPS.close()
   }
 
-  def fetchRoadNamesForRoadAddressBrowser(startDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]) = {
-    def withOptionalParameters(startDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long])(query: String): String = {
-      val dateCondition = "AND rw.start_date <='" + startDate.get + "'"
+  def fetchRoadNamesForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]) = {
+    def withOptionalParameters(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long])(query: String): String = {
+      val rwDateCondition = "AND rw.START_DATE <='" + situationDate.get + "' AND (rw.END_DATE >= '" + situationDate.get + "' OR rw.END_DATE IS NULL)"
+
+      /**
+        * if the situationDate == RoadNameHistoryRow.startDate AND situationDate == RoadNameCurrentRow.endDate then RoadNameCurrentRow is picked
+        * example:
+        * situationDate = 15.11.2022
+        * historyRow  RoadName(name: "old road name", startDate: 1.12.2015, endDate: 15.11.2022)
+        * currentRow  RoadName(name: "new road name", startDate: 15.11.2022, endDate: NULL) <- currentRow is picked
+        */
+      val roadNameDateCondition = "AND rn.START_DATE <='" + situationDate.get + "' AND (rn.END_DATE > '" + situationDate.get + "' OR rn.END_DATE IS NULL)"
 
       val elyCondition = {
         if (ely.nonEmpty)
@@ -269,9 +278,11 @@ object RoadNameDAO {
         }
       }
 
-      s"""$query WHERE rn.end_date IS null
-        $dateCondition $elyCondition $roadNumberCondition $roadPartCondition
-        ORDER BY rw.ely, rw.road_number """.stripMargin
+      s"""$query
+          JOIN ROADWAY rw ON rw.road_number = rn.road_number AND rw.valid_to IS NULL $rwDateCondition
+          WHERE rn.valid_to IS NULL
+          $roadNameDateCondition $elyCondition $roadNumberCondition $roadPartCondition
+          ORDER BY rw.ely, rw.road_number """.stripMargin
     }
 
     def fetchRoadNames(queryFilter: String => String): Seq[RoadNameForRoadAddressBrowser] = {
@@ -279,11 +290,10 @@ object RoadNameDAO {
         """
       SELECT DISTINCT rw.ely, rw.road_number, rn.road_name
         FROM road_name rn
-        JOIN ROADWAY rw ON rw.road_number = rn.road_number AND rw.end_date IS NULL AND rw.valid_to IS NULL
       """
       val filteredQuery = queryFilter(query)
       Q.queryNA[RoadNameForRoadAddressBrowser](filteredQuery).iterator.toSeq
     }
-    fetchRoadNames(withOptionalParameters(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber))
+    fetchRoadNames(withOptionalParameters(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber))
   }
 }

@@ -4,12 +4,12 @@
     Layer.call(this, map);
     var me = this;
 
-    var Anomaly = LinkValues.Anomaly;
-    var SideCode = LinkValues.SideCode;
-    var RoadZIndex = LinkValues.RoadZIndex;
-    var LinkStatus = LinkValues.LinkStatus;
-    var RoadClass = LinkValues.RoadClass;
-    var lifecycleStatus = LinkValues.lifecycleStatus;
+    var Anomaly = ViiteEnumerations.Anomaly;
+    var SideCode = ViiteEnumerations.SideCode;
+    var RoadZIndex = ViiteEnumerations.RoadZIndex;
+    var LinkStatus = ViiteEnumerations.LinkStatus;
+    var RoadClass = ViiteEnumerations.RoadClass;
+    var lifecycleStatus = ViiteEnumerations.lifecycleStatus;
     var isNotEditingData = true;
     var isActiveLayer = false;
 

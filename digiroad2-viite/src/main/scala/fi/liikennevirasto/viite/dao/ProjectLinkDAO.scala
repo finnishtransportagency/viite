@@ -627,7 +627,7 @@ class ProjectLinkDAO {
     }
   }
 
-  def fetchProjectLinksByLinkId(linkIds: Seq[Long]): Seq[ProjectLink] = {
+  def fetchProjectLinksByLinkId(linkIds: Seq[String]): Seq[ProjectLink] = {
     if (linkIds.isEmpty) {
       List()
     } else {
