@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.util.{MissingRoadwayNumberException, MissingTrackException, RoadAddressException, Track}
 import fi.liikennevirasto.digiroad2.util.Track.LeftSide
-import fi.liikennevirasto.viite.{NewIdValue, UnsuccessfulRecalculationMessage}
+import fi.liikennevirasto.viite.{NewIdValue, ProjectValidationException, ProjectValidator, UnsuccessfulRecalculationMessage}
 import fi.liikennevirasto.viite.dao.{Discontinuity, _}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.UserDefinedCP
 import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
@@ -24,9 +24,12 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
 
   override val name: String = "Normal Section"
 
+  val projectValidator = new ProjectValidator
+  val projectDAO = new ProjectDAO
   val projectLinkDAO = new ProjectLinkDAO
   val roadwayDAO = new RoadwayDAO
   val linearLocationDAO = new LinearLocationDAO
+  // TODO: Check this need
   val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLocationDAO)
 
   override def assignMValues(newProjectLinks: Seq[ProjectLink], oldProjectLinks: Seq[ProjectLink], userCalibrationPoints: Seq[UserDefinedCalibrationPoint]): Seq[ProjectLink] = {
@@ -245,15 +248,29 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       val it = pls.sliding(2)
       while (it.hasNext) {
         it.next() match {
-          case Seq(seq, next) => {
-            if (seq.endAddrMValue != next.startAddrMValue) throw new RoadAddressException(s"Address not continuous: ${seq.endAddrMValue} ${next.startAddrMValue} linkids: ${seq.linkId} ${next.linkId}")
-            if (!(seq.endAddrMValue > seq.startAddrMValue)) throw new RoadAddressException(s"Address length negative. linkid: ${seq.linkId}")
-
-            if (seq.status != LinkStatus.New && !(Math.abs((seq.endAddrMValue - seq.startAddrMValue) - (seq.originalEndAddrMValue - seq.originalStartAddrMValue)) < maxDiffForChange)) throw new RoadAddressException(s"Length mismatch. New: ${seq.startAddrMValue} ${seq.endAddrMValue} original: ${seq.originalStartAddrMValue} ${seq.originalEndAddrMValue} linkid: ${seq.linkId}")
+          case Seq(curr, next) => {
+            if (curr.endAddrMValue != next.startAddrMValue) throw new RoadAddressException(s"Address not continuous: ${curr.endAddrMValue} ${next.startAddrMValue} linkids: ${curr.linkId} ${next.linkId}")
+            if (!(curr.endAddrMValue > curr.startAddrMValue)) throw new RoadAddressException(s"Address length negative. linkid: ${curr.linkId}")
+            if (curr.status != LinkStatus.New && (curr.originalTrack == curr.track || curr.track == Track.Combined) && !(Math.abs((curr.endAddrMValue - curr.startAddrMValue) - (curr.originalEndAddrMValue - curr.originalStartAddrMValue)) < maxDiffForChange))
+              throw new RoadAddressException(s"Length mismatch. New: ${curr.startAddrMValue} ${curr.endAddrMValue} original: ${curr.originalStartAddrMValue} ${curr.originalEndAddrMValue} linkid: ${curr.linkId}")
           }
         }
       }
     }
+  }
+
+  /**
+    * Check validation errors for ProjectLinks.
+    * Used here in case of calculation error to check if user has entered incompatible values.
+    *
+    * @param projectlinks ProjectLinks from calculation
+    * @return sequence of ValidationErrorDetails if any
+    */
+  def checkForValidationErrors(projectlinks: Seq[ProjectLink]): Seq[projectValidator.ValidationErrorDetails] = {
+    val validationErrors = projectValidator.projectLinksNormalPriorityValidation(projectDAO.fetchById(projectlinks.head.projectId).get, projectlinks)
+    if (validationErrors.nonEmpty)
+      validationErrors
+    else Seq()
   }
 
   private def calculateSectionAddressValues(sections: Seq[CombinedSection],
@@ -264,7 +281,11 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         (Seq(), Seq())
       } else {
         if (rightLinks.isEmpty || leftLinks.isEmpty) {
-          throw new MissingTrackException(s"Missing track, R: ${rightLinks.size}, L: ${leftLinks.size}")
+          val validationErrors = checkForValidationErrors(rightLinks ++ leftLinks)
+          if (validationErrors.nonEmpty)
+            throw new ProjectValidationException(s"Validation errors", validationErrors.map(projectValidator.errorPartsToApi))
+          else
+            throw new MissingTrackException(s"Missing track, R: ${rightLinks.size}, L: ${leftLinks.size}")
         }
 
         val ((firstRight, restRight), (firstLeft, restLeft)): ((Seq[ProjectLink], Seq[ProjectLink]), (Seq[ProjectLink], Seq[ProjectLink])) = {
@@ -281,9 +302,13 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
           }
         }
 
-        if (firstRight.isEmpty || firstLeft.isEmpty)
-          throw new RoadAddressException(s"Mismatching tracks, R ${firstRight.size}, L ${firstLeft.size}")
-
+        if (firstRight.isEmpty || firstLeft.isEmpty) {
+          val validationErrors = checkForValidationErrors(rightLinks ++ leftLinks)
+          if (validationErrors.nonEmpty)
+            throw new ProjectValidationException(s"Validation errors", validationErrors.map(projectValidator.errorPartsToApi))
+          else
+            throw new RoadAddressException(s"Mismatching tracks, R ${firstRight.size}, L ${firstLeft.size}")
+        }
         val strategy: TrackCalculatorStrategy = TrackCalculatorContext.getStrategy(firstLeft, firstRight)
         logger.info(s"${strategy.name} strategy")
         val trackCalcResult                       = strategy.assignTrackMValues(previousStart, firstLeft, firstRight, userDefinedCalibrationPoint)

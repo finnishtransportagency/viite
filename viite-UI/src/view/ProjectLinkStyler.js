@@ -1,7 +1,7 @@
 (function (root) {
   root.ProjectLinkStyler = function () {
 
-    var LinkStatus = LinkValues.LinkStatus;
+    var LinkStatus = ViiteEnumerations.LinkStatus;
     var notHandledStatus = LinkStatus.NotHandled.value;
     var unchangedStatus = LinkStatus.Unchanged.value;
     var newRoadAddressStatus = LinkStatus.New.value;
@@ -51,15 +51,15 @@
       new StyleRule().where('zoomLevel').is(13).use({stroke: {width: 9}}),
       new StyleRule().where('zoomLevel').is(14).use({stroke: {width: 10}}),
       new StyleRule().where('zoomLevel').is(15).use({stroke: {width: 12}}),
-      new StyleRule().where('zoomLevel').isIn([5, 6]).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 3}}),
-      new StyleRule().where('zoomLevel').isIn([7, 8]).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 4}}),
-      new StyleRule().where('zoomLevel').is(9).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 5}}),
-      new StyleRule().where('zoomLevel').is(10).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 6}}),
-      new StyleRule().where('zoomLevel').is(11).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 7}}),
-      new StyleRule().where('zoomLevel').is(12).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 8}}),
-      new StyleRule().where('zoomLevel').is(13).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 11}}),
-      new StyleRule().where('zoomLevel').is(14).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 13}}),
-      new StyleRule().where('zoomLevel').is(15).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 15}}),
+      new StyleRule().where('zoomLevel').isIn([5, 6]).and('administrativeClassId').isIn(ViiteEnumerations.BlackUnderlineAdministrativeClasses).use({stroke: {width: 3}}),
+      new StyleRule().where('zoomLevel').isIn([7, 8]).and('administrativeClassId').isIn(ViiteEnumerations.BlackUnderlineAdministrativeClasses).use({stroke: {width: 4}}),
+      new StyleRule().where('zoomLevel').is(9).and('administrativeClassId').isIn(ViiteEnumerations.BlackUnderlineAdministrativeClasses).use({stroke: {width: 5}}),
+      new StyleRule().where('zoomLevel').is(10).and('administrativeClassId').isIn(ViiteEnumerations.BlackUnderlineAdministrativeClasses).use({stroke: {width: 6}}),
+      new StyleRule().where('zoomLevel').is(11).and('administrativeClassId').isIn(ViiteEnumerations.BlackUnderlineAdministrativeClasses).use({stroke: {width: 7}}),
+      new StyleRule().where('zoomLevel').is(12).and('administrativeClassId').isIn(ViiteEnumerations.BlackUnderlineAdministrativeClasses).use({stroke: {width: 8}}),
+      new StyleRule().where('zoomLevel').is(13).and('administrativeClassId').isIn(ViiteEnumerations.BlackUnderlineAdministrativeClasses).use({stroke: {width: 11}}),
+      new StyleRule().where('zoomLevel').is(14).and('administrativeClassId').isIn(ViiteEnumerations.BlackUnderlineAdministrativeClasses).use({stroke: {width: 13}}),
+      new StyleRule().where('zoomLevel').is(15).and('administrativeClassId').isIn(ViiteEnumerations.BlackUnderlineAdministrativeClasses).use({stroke: {width: 15}}),
       new StyleRule().where('zoomLevel').isIn([5, 6]).and('roadClass').isIn([7, 8, 9, 10, 12]).use({stroke: {width: 1}}),
       new StyleRule().where('zoomLevel').isIn([7, 8, 9]).and('roadClass').isIn([7, 8, 9, 10, 12]).use({stroke: {width: 2}}),
       new StyleRule().where('zoomLevel').is(10).and('roadClass').isIn([7, 8, 9, 10, 12]).use({stroke: {width: 3}}),
@@ -78,67 +78,67 @@
     ];
 
     var strokeRules = [
-      new StyleRule().where('roadClass').is(LinkValues.RoadClass.HighwayClass.value).use({
+      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.HighwayClass.value).use({
         stroke: {
           color: '#FF0000',
           lineCap: 'round'
         }
       }),
-      new StyleRule().where('roadClass').is(LinkValues.RoadClass.MainRoadClass.value).use({
+      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.MainRoadClass.value).use({
         stroke: {
           color: '#FF6600',
           lineCap: 'round'
         }
       }),
-      new StyleRule().where('roadClass').is(LinkValues.RoadClass.RegionalClass.value).use({
+      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.RegionalClass.value).use({
         stroke: {
           color: '#FF9933',
           lineCap: 'round'
         }
       }),
-      new StyleRule().where('roadClass').is(LinkValues.RoadClass.ConnectingClass.value).use({
+      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.ConnectingClass.value).use({
         stroke: {
           color: '#0011BB',
           lineCap: 'round'
         }
       }),
-      new StyleRule().where('roadClass').is(LinkValues.RoadClass.MinorConnectingClass.value).use({
+      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.MinorConnectingClass.value).use({
         stroke: {
           color: '#33CCCC',
           lineCap: 'round'
         }
       }),
-      new StyleRule().where('roadClass').is(LinkValues.RoadClass.StreetClass.value).use({
+      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.StreetClass.value).use({
         stroke: {
           color: '#E01DD9',
           lineCap: 'round'
         }
       }),
-      new StyleRule().where('roadClass').is(LinkValues.RoadClass.RampsAndRoundAboutsClass.value).use({
+      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.RampsAndRoundAboutsClass.value).use({
         stroke: {
           color: '#00CCDD',
           lineCap: 'round'
         }
       }),
-      new StyleRule().where('roadClass').is(LinkValues.RoadClass.PedestrianAndBicyclesClass.value).use({
+      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.PedestrianAndBicyclesClass.value).use({
         stroke: {
           color: '#FC6DA0',
           lineCap: 'round'
         }
       }),
-      new StyleRule().where('roadClass').is(LinkValues.RoadClass.PrivateRoadClass.value).use({
+      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.PrivateRoadClass.value).use({
         stroke: {
           color: '#FF55DD',
           lineCap: 'round'
         }
       }),
-      new StyleRule().where('roadClass').is(LinkValues.RoadClass.WinterRoadsClass.value).use({
+      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.WinterRoadsClass.value).use({
         stroke: {
           color: '#FF55DD',
           lineCap: 'round'
         }
       }),
-      new StyleRule().where('roadClass').is(LinkValues.RoadClass.PathsClass.value).use({
+      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.PathsClass.value).use({
         stroke: {
           color: '#FF55DD',
           lineCap: 'round'
@@ -148,25 +148,25 @@
       new StyleRule().where('roadClass').is(97).use({stroke: {color: '#1E1E1E', lineCap: 'round'}}),
       new StyleRule().where('roadClass').is(98).use({stroke: {color: '#FAFAFA', lineCap: 'round'}}),
       new StyleRule().where('gapTransfering').is(true).use({stroke: {color: '#00FF00', lineCap: 'round'}}),
-      new StyleRule().where('roadClass').is(LinkValues.RoadClass.NoClass.value).and('roadLinkSource').isNot(LinkValues.LinkGeomSource.ComplementaryLinkInterface.value).use({
+      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).and('roadLinkSource').isNot(ViiteEnumerations.LinkGeomSource.ComplementaryLinkInterface.value).use({
         stroke: {
           color: '#A4A4A2',
           lineCap: 'round'
         }
       }),
-      new StyleRule().where('roadClass').is(LinkValues.RoadClass.NoClass.value).and('anomaly').is(LinkValues.Anomaly.NoAddressGiven.value).use({
+      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).and('anomaly').is(ViiteEnumerations.Anomaly.NoAddressGiven.value).use({
         stroke: {
           color: '#1E1E1E',
           lineCap: 'round'
         }
       }),
-      new StyleRule().where('roadLinkSource').is(LinkValues.LinkGeomSource.ComplementaryLinkInterface.value).and('roadClass').is(LinkValues.RoadClass.NoClass.value).use({
+      new StyleRule().where('roadLinkSource').is(ViiteEnumerations.LinkGeomSource.ComplementaryLinkInterface.value).and('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).use({
         stroke: {
           color: '#D3AFF6',
           lineCap: 'round'
         }
       }),
-      new StyleRule().where('lifecycleStatus').is(LinkValues.lifecycleStatus.UnderConstruction.value).and('roadClass').is(LinkValues.RoadClass.NoClass.value).use({
+      new StyleRule().where('lifecycleStatus').is(ViiteEnumerations.lifecycleStatus.UnderConstruction.value).and('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).use({
         stroke: {
           color: '#000',
           lineCap: 'butt',
@@ -174,7 +174,7 @@
           opacity: 1
         }
       }),
-      new StyleRule().where('roadLinkSource').is(LinkValues.LinkGeomSource.ComplementaryLinkInterface.value).and('status').is(unknownStatus).use({
+      new StyleRule().where('roadLinkSource').is(ViiteEnumerations.LinkGeomSource.ComplementaryLinkInterface.value).and('status').is(unknownStatus).use({
         stroke: {
           color: '#D3AFF6',
           opacity: 1
@@ -183,19 +183,19 @@
     ];
 
     var underConstructionRules = [
-      new StyleRule().where('lifecycleStatus').isNot(LinkValues.lifecycleStatus.UnderConstruction.value).or('lifecycleStatus').is(LinkValues.lifecycleStatus.UnderConstruction.value).use({
+      new StyleRule().where('lifecycleStatus').isNot(ViiteEnumerations.lifecycleStatus.UnderConstruction.value).or('lifecycleStatus').is(ViiteEnumerations.lifecycleStatus.UnderConstruction.value).use({
         stroke: {
           color: '#fff',
           lineCap: 'round'
         }
       }),
-      new StyleRule().where('roadClass').is(LinkValues.RoadClass.NoClass.value).and('anomaly').is(LinkValues.Anomaly.None.value).and('lifecycleStatus').is(LinkValues.lifecycleStatus.UnderConstruction.value).use({
+      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).and('anomaly').is(ViiteEnumerations.Anomaly.None.value).and('lifecycleStatus').is(ViiteEnumerations.lifecycleStatus.UnderConstruction.value).use({
         stroke: {
           color: 'rgba(238, 238, 235, 0.75)',
           lineCap: 'round'
         }
       }),
-      new StyleRule().where('roadClass').is(LinkValues.RoadClass.NoClass.value).and('anomaly').is(LinkValues.Anomaly.NoAddressGiven.value).and('lifecycleStatus').is(LinkValues.lifecycleStatus.UnderConstruction.value).use({
+      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).and('anomaly').is(ViiteEnumerations.Anomaly.NoAddressGiven.value).and('lifecycleStatus').is(ViiteEnumerations.lifecycleStatus.UnderConstruction.value).use({
         stroke: {
           color: '#ff9900',
           lineCap: 'round'
@@ -246,7 +246,7 @@
           opacity: 1
         }
       }),
-      new StyleRule().where('status').is(unknownStatus).and('anomaly').is(LinkValues.Anomaly.NoAddressGiven.value).and('lifecycleStatus').isNot(LinkValues.lifecycleStatus.UnderConstruction.value).use({
+      new StyleRule().where('status').is(unknownStatus).and('anomaly').is(ViiteEnumerations.Anomaly.NoAddressGiven.value).and('lifecycleStatus').isNot(ViiteEnumerations.lifecycleStatus.UnderConstruction.value).use({
         stroke: {
           color: '#646461',
           lineCap: 'round',
@@ -256,20 +256,20 @@
     ];
 
     var borderRules = [
-      new StyleRule().where('zoomLevel').isIn([5, 6]).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 7}}),
-      new StyleRule().where('zoomLevel').isIn([7, 8]).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 8}}),
-      new StyleRule().where('zoomLevel').is(9).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 9}}),
-      new StyleRule().where('zoomLevel').is(10).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 10}}),
-      new StyleRule().where('zoomLevel').is(11).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 11}}),
-      new StyleRule().where('zoomLevel').is(12).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 12}}),
-      new StyleRule().where('zoomLevel').is(13).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 15}}),
-      new StyleRule().where('zoomLevel').is(14).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 17}}),
-      new StyleRule().where('zoomLevel').is(15).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 19}})
+      new StyleRule().where('zoomLevel').isIn([5, 6]).and('administrativeClassId').isIn(ViiteEnumerations.BlackUnderlineAdministrativeClasses).use({stroke: {width: 7}}),
+      new StyleRule().where('zoomLevel').isIn([7, 8]).and('administrativeClassId').isIn(ViiteEnumerations.BlackUnderlineAdministrativeClasses).use({stroke: {width: 8}}),
+      new StyleRule().where('zoomLevel').is(9).and('administrativeClassId').isIn(ViiteEnumerations.BlackUnderlineAdministrativeClasses).use({stroke: {width: 9}}),
+      new StyleRule().where('zoomLevel').is(10).and('administrativeClassId').isIn(ViiteEnumerations.BlackUnderlineAdministrativeClasses).use({stroke: {width: 10}}),
+      new StyleRule().where('zoomLevel').is(11).and('administrativeClassId').isIn(ViiteEnumerations.BlackUnderlineAdministrativeClasses).use({stroke: {width: 11}}),
+      new StyleRule().where('zoomLevel').is(12).and('administrativeClassId').isIn(ViiteEnumerations.BlackUnderlineAdministrativeClasses).use({stroke: {width: 12}}),
+      new StyleRule().where('zoomLevel').is(13).and('administrativeClassId').isIn(ViiteEnumerations.BlackUnderlineAdministrativeClasses).use({stroke: {width: 15}}),
+      new StyleRule().where('zoomLevel').is(14).and('administrativeClassId').isIn(ViiteEnumerations.BlackUnderlineAdministrativeClasses).use({stroke: {width: 17}}),
+      new StyleRule().where('zoomLevel').is(15).and('administrativeClassId').isIn(ViiteEnumerations.BlackUnderlineAdministrativeClasses).use({stroke: {width: 19}})
     ];
 
     var projectBorderStyle = new StyleRuleProvider({
       stroke: {lineCap: 'round', color: 'rgba(0, 0, 0, 0.5)'},
-      zIndex: LinkValues.RoadZIndex.VectorLayer.value
+      zIndex: ViiteEnumerations.RoadZIndex.VectorLayer.value
     });
     projectBorderStyle.addRules(borderRules);
 

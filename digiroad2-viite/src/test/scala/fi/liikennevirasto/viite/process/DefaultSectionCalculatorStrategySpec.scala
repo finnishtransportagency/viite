@@ -13,6 +13,7 @@ import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{Ju
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.process.strategy.DefaultSectionCalculatorStrategy
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
+import fi.liikennevirasto.viite.ProjectValidationException
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
@@ -93,6 +94,68 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
         p.createdBy.getOrElse("-"), p.roadName, p.ely, TerminationCode.NoTermination, DateTime.now(), None))
   }
 
+    test("Test defaultSectionCalculatorStrategy.assignMValues() " +
+         "When an existitng road is transferred as a two track part to middle of another road " +
+         "Then calculation should succeed with length change in the middle cause by averaging.") {
+      /*             ____ 22618
+                    /    \
+              |-----|----|-----| 110
+      */
+      runWithRollback {
+        val roadNumber          = 110
+        val roadPartNumber      = 22
+        val createdBy           = "Test"
+        val roadName            = None
+        val projectId           = Sequences.nextViiteProjectId
+        val tranferredRoad      = 22618
+        val transferredRoadPart = 995
+        val linearLocationId    = Sequences.nextLinearLocationId
+        val roadwayId           = Sequences.nextRoadwayId
+
+        val projectLinks = Seq(
+          ProjectLink(Sequences.nextProjectLinkId,roadNumber,roadPartNumber,Track.RightSide,Discontinuity.Continuous,0,136,0,136,None,None,Some(createdBy),"ad920f09-0ed4-4eb2-86da-5ae8d8f10ec0:1",0.0,135.756,SideCode.AgainstDigitizing,(NoCP,NoCP),(RoadAddressCP,RoadAddressCP),List(Point(308364.0,6698821.0,0.0), Point(308365.0,6698832.0,0.0), Point(308480.0,6698861.0,0.0)),projectId,LinkStatus.Transfer,AdministrativeClass.State,FrozenLinkInterface,124.109,roadwayId+3,linearLocationId,2,false,None,1590620411000L,332392368L, roadName, None, None, None, None,None,None),
+          ProjectLink(Sequences.nextProjectLinkId,roadNumber,roadPartNumber,Track.Combined,Discontinuity.Continuous,0,907,0,907,None,None,Some(createdBy),"f324e593-1bbc-4d3c-8729-1adc527354bf:1",0.0,905.016,SideCode.AgainstDigitizing,(RoadAddressCP,JunctionPointCP),(RoadAddressCP,JunctionPointCP),List(Point(308480.0,6698861.0,0.0), Point(308685.0,6698911.0,0.0), Point(309040.0,6698965.0,0.0), Point(309371.0,6699012.0,0.0)),projectId,LinkStatus.UnChanged,AdministrativeClass.State,FrozenLinkInterface,334.521,roadwayId,linearLocationId+1,2,false,None,1590620411000L,7484795L,roadName,None,None,None,None,None,None),
+          ProjectLink(Sequences.nextProjectLinkId,roadNumber,roadPartNumber,Track.LeftSide,Discontinuity.Continuous,907,1030,907,1030,None,None,Some(createdBy),"e168f5ec-0fe5-4520-8d8d-76d33a6972b9:1",0.0,122.719,SideCode.AgainstDigitizing,(JunctionPointCP,JunctionPointCP),(JunctionPointCP,JunctionPointCP),List(Point(308364.0,6698821.0,0.0), Point(308480.0,6698861.0,0.0)),projectId,LinkStatus.Transfer,AdministrativeClass.State,FrozenLinkInterface,122.719,roadwayId+1,linearLocationId+2,2,false,None,1590620411000L,7484796L,roadName,None,None,None,None,None,None),
+          ProjectLink(Sequences.nextProjectLinkId,roadNumber,roadPartNumber,Track.Combined,Discontinuity.Continuous,1030,12995,1030,12995,None,None,Some(createdBy),"86f1e841-366d-423e-84a3-cf7703a656ae:1",0.0,11942.217999999999,SideCode.AgainstDigitizing,(JunctionPointCP,NoCP),(JunctionPointCP,RoadAddressCP),List(Point(296779.0,6698725.0,0.0), Point(308364.0,6698821.0,0.0)),projectId,LinkStatus.Transfer,AdministrativeClass.State,FrozenLinkInterface,318.95,roadwayId+2,linearLocationId+3,2,false,None,1590620411000L,7484797L,roadName,None,None,None,None,None,None)
+        )
+
+        val roadways = Seq(
+          Roadway(roadwayId,7484795,roadNumber,roadPartNumber,AdministrativeClass.State,Track.Combined,Discontinuity.Continuous,0,907,false,DateTime.parse("2008-11-15T00:00:00.000+02:00"),None,"import",roadName,2,TerminationCode.NoTermination,DateTime.parse("2017-05-08T00:00:00.000+03:00"),None),
+          Roadway(roadwayId+1,7484795,roadNumber,roadPartNumber,AdministrativeClass.State,Track.Combined,Discontinuity.Continuous,907,1030,false,DateTime.parse("2008-11-15T00:00:00.000+02:00"),None,"import",roadName,2,TerminationCode.NoTermination,DateTime.parse("2017-05-08T00:00:00.000+03:00"),None),
+          Roadway(roadwayId+2,7484795,roadNumber,roadPartNumber,AdministrativeClass.State,Track.Combined,Discontinuity.Continuous,1030,12995,false,DateTime.parse("2008-11-15T00:00:00.000+02:00"),None,"import",roadName,2,TerminationCode.NoTermination,DateTime.parse("2017-05-08T00:00:00.000+03:00"),None),
+          Roadway(roadwayId+3,332392368L,tranferredRoad,transferredRoadPart,AdministrativeClass.State,Track.Combined,Discontinuity.Continuous,0,136,false,DateTime.parse("2021-09-01T00:00:00.000+03:00"),None,"import",roadName,2,TerminationCode.NoTermination,DateTime.parse("2021-10-06T00:00:00.000+03:00"),None)
+        )
+
+        val linearLocations = Seq(
+          LinearLocation(linearLocationId,1.0,"ad920f09-0ed4-4eb2-86da-5ae8d8f10ec0:1",0.0,135.756,SideCode.AgainstDigitizing,1590620411000L,(CalibrationPointReference(Some(0),Some(RoadAddressCP)),CalibrationPointReference(Some(136),Some(RoadAddressCP))),List(Point(308364.0,6698821.0,0.0), Point(308480.0,6698861.0,0.0)),FrozenLinkInterface,332392368L,Some(DateTime.parse("2021-10-06T00:00:00.000+03:00")),None),
+          LinearLocation(linearLocationId+1,1.0,"f324e593-1bbc-4d3c-8729-1adc527354bf:1",0.0,905.016,SideCode.AgainstDigitizing,1590620411000L,(CalibrationPointReference(Some(0),Some(RoadAddressCP)),CalibrationPointReference(Some(907),Some(JunctionPointCP))),List(Point(308480.0,6698861.0,0.0), Point(309371.0,6699012.0,0.0)),FrozenLinkInterface,7484795L,Some(DateTime.parse("2017-05-08T00:00:00.000+03:00")),None),
+          LinearLocation(linearLocationId+2,1.0,"e168f5ec-0fe5-4520-8d8d-76d33a6972b9:1",0.0,122.719,SideCode.AgainstDigitizing,1590620411000L,(CalibrationPointReference(Some(907),Some(JunctionPointCP)),CalibrationPointReference(Some(1030),Some(JunctionPointCP))),List(Point(308364.0,6698821.0,0.0), Point(308480.0,6698861.0,0.0)),FrozenLinkInterface,7484796L,Some(DateTime.parse("2017-05-08T00:00:00.000+03:00")),None),
+          LinearLocation(linearLocationId+3,1.0,"86f1e841-366d-423e-84a3-cf7703a656ae:1",0.0,11942.218,SideCode.AgainstDigitizing,1590620411000L,(CalibrationPointReference(Some(1030),Some(JunctionPointCP)),CalibrationPointReference(Some(12995),Some(RoadAddressCP))),List(Point(296779.0,6698725.0,0.0), Point(308364.0,6698821.0,0.0)),FrozenLinkInterface,7484797L,Some(DateTime.parse("2017-05-08T00:00:00.000+03:00")),None)
+        )
+
+        projectDAO.create(Project(projectId, ProjectState.Incomplete, "f", createdBy, DateTime.now(), "", DateTime.now(), DateTime.now(),"", Seq(), Seq(), None, None))
+        projectReservedPartDAO.reserveRoadPart(projectId, roadNumber, roadPartNumber, createdBy)
+        projectReservedPartDAO.reserveRoadPart(projectId, tranferredRoad, transferredRoadPart, createdBy)
+        roadwayDAO.create(roadways)
+        linearLocationDAO.create(linearLocations)
+        projectLinkDAO.create(projectLinks)
+
+        val projectLinksWithAssignedValues = defaultSectionCalculatorStrategy.assignMValues(projectLinks, Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
+
+        val fl = projectLinksWithAssignedValues.filter(_.startAddrMValue == 0)
+        fl should have size 1
+        fl.head.endAddrMValue should be(roadways.find(_.startAddrMValue == 0).get.endAddrMValue)
+
+        val mdl = projectLinksWithAssignedValues.filter(_.startAddrMValue == fl.head.endAddrMValue)
+        mdl should have size 2
+        mdl.head.endAddrMValue should be (mdl.last.endAddrMValue)
+
+        val mx = projectLinksWithAssignedValues.filter(_.startAddrMValue == mdl.head.endAddrMValue)
+        mx should have size 1
+        mx.head.endAddrMValue - mx.head.startAddrMValue should be(mx.head.originalEndAddrMValue - mx.head.originalStartAddrMValue)
+      }
+    }
+
   test("Test defaultSectionCalculatorStrategy.assignMValues() and findStartingPoints When using 4 geometries that end up in a point " +
     "Then return the same project links, but now with correct MValues and directions") {
     runWithRollback {
@@ -154,7 +217,9 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test defaultSectionCalculatorStrategy.assignMValues() When using 2 tracks with huge discontinuity and not proper administrative class sections Then they will fail if the sections cannot be adjusted for two tracks due to their huge discontinuity") {
+  test("Test defaultSectionCalculatorStrategy.assignMValues() " +
+       "When using 2 tracks with not proper administrative class sections " +
+       "Then will fail because the sections cannot be adjusted for two tracks.") {
     runWithRollback {
       val geomLeft1 = Seq(Point(0.0, 0.0), Point(0.0, 30.0))
       val geomLeft2 = Seq(Point(0.0, 30.0), Point(0.0, 60.0))
@@ -173,8 +238,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       val geomRight2 = Seq(Point(5.0, 5.0), Point(5.0, 62.0))
 
       val projectLinkRight1 = ProjectLink(projectLinkId + 2, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 5L, 0L, 5L, None, None, Some("user"), 12347L.toString, 0.0, 5.0, SideCode.Unknown, (RoadAddressCP, NoCP), (NoCP, NoCP), geomRight1, projId, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight1), roadwayId, linearLocationId, 0, reversed = false, None, 86400L, roadwayNumber = 12346L)
-
-      val projectLinkRight2 = ProjectLink(projectLinkId + 3, 9999L, 1L, Track.apply(1), Discontinuity.Discontinuous, 5L, 62L, 5L, 62L, None, None, Some("user"), 12348L.toString, 0.0, 57.0, SideCode.Unknown, (NoCP, RoadAddressCP), (NoCP, NoCP), geomRight2, projId, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight2), roadwayId + 1, linearLocationId + 1, 0, reversed = false, None, 86400L, roadwayNumber = 12347L)
+      val projectLinkRight2 = ProjectLink(projectLinkId + 3, 9999L, 1L, Track.apply(1), Discontinuity.Discontinuous, 5L, 62L, 5L, 62L, None, None, Some("user"), 12348L.toString, 0.0, 57.0, SideCode.Unknown, (NoCP, RoadAddressCP), (NoCP, NoCP), geomRight2, projId, LinkStatus.Transfer, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight2), roadwayId + 1, linearLocationId + 1, 0, reversed = false, None, 86400L, roadwayNumber = 12347L)
 
       val leftSideProjectLinks = Seq(projectLinkLeft1, projectLinkLeft2)
       val rightSideProjectLinks = Seq(projectLinkRight1, projectLinkRight2)
@@ -182,8 +246,9 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       val (linearLocation2, roadway2) = Seq(projectLinkRight2).map(toRoadwayAndLinearLocation).head
 
       buildTestDataForProject(Some(project), Some(Seq(roadway1, roadway2)), Some(Seq(linearLocation1, linearLocation2)), Some(leftSideProjectLinks ++ rightSideProjectLinks))
-
-      defaultSectionCalculatorStrategy.assignMValues(leftSideProjectLinks, rightSideProjectLinks, Seq.empty[UserDefinedCalibrationPoint])
+      intercept[ProjectValidationException] {
+        defaultSectionCalculatorStrategy.assignMValues(leftSideProjectLinks, rightSideProjectLinks, Seq.empty[UserDefinedCalibrationPoint])
+      }
     }
   }
 
