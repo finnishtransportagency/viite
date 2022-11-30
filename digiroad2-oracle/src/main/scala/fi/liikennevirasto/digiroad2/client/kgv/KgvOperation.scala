@@ -92,14 +92,18 @@ trait KgvOperation extends LinkOperationsAbstract{
     var result: Either[LinkOperationError, Option[FeatureCollection]] = Left(LinkOperationError("Dummy start value", "nothing here", url))
 
     do {
+      // Retry delay
+      Thread.sleep(500 * trycounter)
+
       trycounter += 1
       success = true
+      
       result = time(logger, s"Fetch roadLink features, (try $trycounter)", url = Some(url)) {
 
-      val request = new HttpGet(url)
-      addHeaders(request)
+          val request = new HttpGet(url)
+          addHeaders(request)
 
-      var response: CloseableHttpResponse = null
+          var response: CloseableHttpResponse = null
           val client = HttpClients.custom()
                                   .setDefaultRequestConfig(
                                     RequestConfig.custom()
@@ -136,29 +140,29 @@ trait KgvOperation extends LinkOperationsAbstract{
               Left(LinkOperationError(response.getStatusLine.getReasonPhrase, response.getStatusLine.getStatusCode.toString, url))
             }
           } catch {
-          case e: IOException => {
-            success = false
-            if (trycounter < MaxTries) {
-              logger.warn(s"fetching $url failed, try $trycounter. IO Exception during KGV fetch. Exception: $e")
-              Left(LinkOperationError(s"KGV FETCH failure, try $trycounter. IO Exception during KGV fetch. Trying again.", url))
-            } else // basically, if(trycounter == MaxTries)
-              Left(LinkOperationError("KGV FETCH failure, tried ten (10) times, giving up. IO Exception during KGV fetch. Check connection to KGV", url))
+            case e: ClientProtocolException => {
+              success = false
+              logger.error(e.getStackTrace().mkString(";")) // log to one line with ";" sepator
+              Left(LinkOperationError(e.toString + s"\nURL: $url", ""))
+            }
+            case e: IOException => {
+              success = false
+              if (trycounter < MaxTries) {
+                logger.warn(s"fetching $url failed, try $trycounter. IO Exception during KGV fetch. Exception: $e")
+                Left(LinkOperationError(s"KGV FETCH failure, try $trycounter. IO Exception during KGV fetch. Trying again.", url))
+              } else // basically, if(trycounter == MaxTries)
+                Left(LinkOperationError("KGV FETCH failure, tried ten (10) times, giving up. IO Exception during KGV fetch. Check connection to KGV", url))
+            }
+            case e: Exception => {
+              success = false
+              logger.warn(s"fetching $url failed, try $trycounter. Exception during KGV fetch. Exception: $e")
+              Left(LinkOperationError(e.toString, ""))
+            }
+          } finally {
+            if (response != null) {
+              response.close()
+            }
           }
-          case e: ClientProtocolException => {
-            success = false
-            logger.error(e.getStackTrace().toString)
-            Left(LinkOperationError(e.toString + s"\nURL: $url", ""))
-          }
-          case e: Exception => {
-            success = false
-            logger.warn(s"fetching $url failed, try $trycounter. Exception during KGV fetch. Exception: $e")
-            Left(LinkOperationError(e.toString, ""))
-          }
-        } finally {
-          if (response != null) {
-            response.close()
-          }
-        }
       }
       result match {
         case Left(_) => time(logger, s"entering round ${trycounter + 1}", true, None){}
