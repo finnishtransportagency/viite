@@ -146,7 +146,7 @@ trait KgvOperation extends LinkOperationsAbstract{
           }
           case e: ClientProtocolException => {
             success = false
-            e.printStackTrace()
+            logger.error(e.getStackTrace().toString)
             Left(LinkOperationError(e.toString + s"\nURL: $url", ""))
           }
           case e: Exception => {
