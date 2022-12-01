@@ -387,4 +387,54 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
       roadNames.head should equal("Turku-Oulu")
     }
   }
+
+  test("When fetching type termination road address change info for road address browser then return the termination change info") {
+    runWithRollback {
+      val roadNameId = Sequences.nextRoadNameId
+      val projectId = Sequences.nextViiteProjectId
+      val roadwayChangeId = 10L
+      val changeTypeTerminated = 5L
+      val roadNumber = 8L
+      val roadPartNumber = 219L
+      val ely = 10L
+      val adminClass = 1
+      val discontinuity = 1L
+      val trackCombined = 0L
+      val projectStartDate = DateTime.parse("2022-07-01")
+      val terminatedRoadNameEndDate = DateTime.parse("2022-06-30") // one day earlier than the termination day of the road
+
+      sqlu"""insert into ROADWAY_CHANGES(project_id,change_type,old_road_number,old_road_part_number,old_track,old_start_addr_m,old_end_addr_m,
+                                            old_discontinuity,old_administrative_class,old_ely,new_discontinuity,new_ely,new_administrative_class,roadway_change_id)
+                                  values($projectId,$changeTypeTerminated,$roadNumber,$roadPartNumber,$trackCombined,0,1000,
+                                         $discontinuity,$adminClass,$ely,$discontinuity,$ely,$adminClass,$roadwayChangeId)
+          """.execute
+
+      // create terminated road name and history road name for road number 8
+      RoadNameDAO.create(
+        Seq(
+          RoadName(roadNameId, roadNumber, "Turku-Oulu", Some(DateTime.parse("1996-01-01")),Some(terminatedRoadNameEndDate),Some(DateTime.parse("2006-01-17")),None,"test"),
+          RoadName(roadNameId + 1, roadNumber, "TURKU-PORI-KOKKOLA-OULU", Some(DateTime.parse("1989-01-01")),Some(DateTime.parse("1996-01-01")),Some(DateTime.parse("2006-01-17")),None,"test")
+        )
+      )
+
+      projectDAO.create(
+        Project(projectId, ProjectState.Accepted, "EPO: 8/219","test", DateTime.parse("2022-07-07"),"test",projectStartDate,
+          DateTime.parse("2022-07-07"),"",Seq(),Seq(),None,None)
+      )
+
+      sqlu"""update project set accepted_date= TIMESTAMP '2022-07-07 12:26:36.000000' where id=$projectId""".execute
+
+      val dao = new RoadwayChangesDAO()
+      val startDateInput = "2022-06-06"
+      val dateTargetRoadAddressStartDate = "RoadAddressStartDate" // road address changes that have startDate > startDateInput
+
+      val result = dao.fetchChangeInfosForRoadAddressChangesBrowser(Some(startDateInput), None, Some(dateTargetRoadAddressStartDate), None, Some(roadNumber), None, None)
+      result should have size (1) // should have the termination change info in one row
+      result.head shouldBe a [ChangeInfoForRoadAddressChangesBrowser]
+
+      val roadNames = result.map(res => res.roadName).distinct
+      roadNames.size should be(1) // the history road name should not be returned for the change info, only the road name that the road had before it was terminated
+      roadNames.head should equal("Turku-Oulu")
+    }
+  }
 }
