@@ -436,6 +436,34 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
+  test("Test checkRoadPartsReservable When road part is already reserved to the current project Then should return reserved info.") {
+    val roadNumber    = 19438
+    val roadStartPart = 1
+    val roadEndPart   = 2
+    val roadwayNumber = 8000
+    val testUser      = "tester"
+    val roadLink      = RoadLink(123456L.toString, Seq(Point(535605.272, 6982204.22, 85.90899999999965), Point(536605.272, 6982204.22, 85.90899999999965)), 540.3960283713503, State, TrafficDirection.AgainstDigitizing, Some("25.06.2015 03:00:00"), Some("modified"), InUse, NormalLinkInterface, 749, "")
+    when(mockRoadLinkService.getRoadLinksByLinkIds(any[Set[String]])).thenReturn(Seq(roadLink))
+    runWithRollback {
+      roadwayDAO.create(
+                        Seq(Roadway(Sequences.nextRoadwayId, roadwayNumber, roadNumber, roadStartPart, AdministrativeClass.Unknown, Track.Combined, Discontinuous, 0L, 1000L, reversed = false, DateTime.parse("1901-01-01"), None, testUser, Some("test road"), 8L),
+                            Roadway(Sequences.nextRoadwayId, roadwayNumber, roadNumber, roadEndPart, AdministrativeClass.Unknown, Track.Combined, Discontinuous, 0L, 1000L, reversed = false, DateTime.parse("1901-01-01"), None, testUser, Some("Test road 2"), 8L))
+                       )
+      linearLocationDAO.create(
+                               Seq(LinearLocation(0L, 1, 123456.toString, 0, 1000L, SideCode.TowardsDigitizing, 123456, (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(535605.272, 6982204.22, 85.90899999999965)), LinkGeomSource.NormalLinkInterface, roadwayNumber))
+                              )
+
+      val reservedPart1 = ProjectReservedPart(Sequences.nextViitePrimaryKeySeqValue, roadNumber, roadStartPart, None, None, None)
+      val reservedPart2 = ProjectReservedPart(Sequences.nextViitePrimaryKeySeqValue, roadNumber, roadEndPart, None, None, None)
+
+      val roadAddressProject = Project(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1963-01-01"), DateTime.now(), "Some additional info", Seq(reservedPart1, reservedPart2), Seq(), None)
+      val project            = projectService.createRoadLinkProject(roadAddressProject)
+      val projectId          = project.id
+
+      projectService.checkRoadPartsReservable(roadNumber, roadStartPart, roadEndPart, projectId) should be ('right)
+    }
+  }
+
   test("Test getRoadAddressAllProjects When project is created Then return project") {
     var count = 0
     runWithRollback {
