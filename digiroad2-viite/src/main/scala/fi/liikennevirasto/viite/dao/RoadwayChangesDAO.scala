@@ -596,8 +596,8 @@ SELECT
                    |JOIN project p ON rc.project_id = p.id
                    |JOIN road_name rn ON (rc.new_road_number = rn.road_number OR  rc.old_road_number = rn.road_number)
                    |  AND rn.valid_to IS NULL
-                   |	AND rn.start_date <= p.start_date
-                   |	AND (rn.end_date IS NULL OR rn.end_date = (p.start_date - INTERVAL '1 DAY'))
+                   |  AND rn.start_date <= p.start_date
+                   |  AND (rn.end_date IS NULL OR rn.end_date = (p.start_date - INTERVAL '1 DAY'))
                    """.stripMargin
       val filteredQuery = queryFilter(query)
       Q.queryNA[ChangeInfoForRoadAddressChangesBrowser](filteredQuery).iterator.toSeq
