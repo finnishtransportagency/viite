@@ -498,6 +498,13 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       val link = oldLinks.find(_.id == calibrationPoint.projectLinkId).orElse(newLinks.find(_.id == calibrationPoint.projectLinkId))
       link.flatMap(pl => GeometryUtils.calculatePointFromLinearReference(pl.geometry, calibrationPoint.segmentMValue).map(p => (p, pl)))
     }
+    // Get opposite end from roadpart by Discontinuity code if ending Discontinuity is defined
+    def getStartPointByDiscontinuity(chainEndPoints: Map[Point, ProjectLink]): Option[(Point, ProjectLink)] = {
+      val notEndOfRoad = Map(chainEndPoints.maxBy((_: (Point, ProjectLink))._2.discontinuity.value))
+      if (notEndOfRoad.size == 1 && chainEndPoints.exists(_._2.discontinuity.value < Discontinuity.MinorDiscontinuity.value))
+        Some(notEndOfRoad.head)
+      else None
+    }
 
     // Pick the one with calibration point set to zero: or any old link with lowest address: or new links by direction
     calibrationPoints.find(_.addressMValue == 0).flatMap(calibrationPointToPoint).getOrElse(
@@ -580,39 +587,45 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
             }
           }
         } else {
-          if (remainLinks.forall(_.endAddrMValue == 0) && oppositeTrackLinks.nonEmpty && oppositeTrackLinks.exists(_.endAddrMValue != 0)) {
+          if (remainLinks.forall(_.isNotCalculated) && oppositeTrackLinks.nonEmpty && oppositeTrackLinks.exists(_.endAddrMValue != 0)) {
             val leftStartPoint = TrackSectionOrder.findChainEndpoints(oppositeTrackLinks).find(link => link._2.startAddrMValue == 0 && link._2.endAddrMValue != 0)
             chainEndPoints.minBy(p => p._2.geometry.head.distance2DTo(leftStartPoint.get._1))
-          } else if (remainLinks.nonEmpty && oppositeTrackLinks.nonEmpty && remainLinks.forall(_.endAddrMValue == 0) && oppositeTrackLinks.forall(_.endAddrMValue == 0)) {
-            val candidateRightStartPoint = chainEndPoints.minBy(p => direction.dot(p._1.toVector - midPoint))
-            val candidateRightOppositeEnd = getOppositeEnd(candidateRightStartPoint._2, candidateRightStartPoint._1)
-            val candidateLeftStartPoint = TrackSectionOrder.findChainEndpoints(oppositeTrackLinks).minBy(_._1.distance2DTo(candidateRightStartPoint._1))
-            val candidateLeftOppositeEnd = getOppositeEnd(candidateLeftStartPoint._2, candidateLeftStartPoint._1)
-            val startingPointsVector = Vector3d(candidateRightOppositeEnd.x - candidateLeftOppositeEnd.x, candidateRightOppositeEnd.y - candidateLeftOppositeEnd.y, candidateRightOppositeEnd.z - candidateLeftOppositeEnd.z)
-            val angle =
-              if (startingPointsVector == Vector3d(0.0, 0.0, 0.0)) {
-                val startingPointVector = Vector3d(candidateRightStartPoint._1.x - candidateLeftStartPoint._1.x, candidateRightStartPoint._1.y - candidateLeftStartPoint._1.y, candidateRightStartPoint._1.z - candidateLeftStartPoint._1.z)
-                startingPointVector.angleXYWithNegativeValues(direction)
-              } else {
-                startingPointsVector.angleXYWithNegativeValues(direction)
+          } else if (remainLinks.nonEmpty && oppositeTrackLinks.nonEmpty && remainLinks.forall(_.isNotCalculated) && oppositeTrackLinks.forall(_.isNotCalculated)) {
+                getStartPointByDiscontinuity(chainEndPoints).getOrElse {
+                  val candidateRightStartPoint  = chainEndPoints.minBy(p => {
+                    direction.dot(p._1.toVector - midPoint)
+                  })
+                  val candidateRightOppositeEnd = getOppositeEnd(candidateRightStartPoint._2, candidateRightStartPoint._1)
+                  val candidateLeftStartPoint = TrackSectionOrder.findChainEndpoints(oppositeTrackLinks).minBy(_._1.distance2DTo(candidateRightStartPoint._1))
+                  val candidateLeftOppositeEnd = getOppositeEnd(candidateLeftStartPoint._2, candidateLeftStartPoint._1)
+                  val startingPointsVector = Vector3d(candidateRightOppositeEnd.x - candidateLeftOppositeEnd.x, candidateRightOppositeEnd.y - candidateLeftOppositeEnd.y, candidateRightOppositeEnd.z - candidateLeftOppositeEnd.z)
+                  val angle =
+                    if (startingPointsVector == Vector3d(0.0, 0.0, 0.0)) {
+                      val startingPointVector = Vector3d(candidateRightStartPoint._1.x - candidateLeftStartPoint._1.x, candidateRightStartPoint._1.y - candidateLeftStartPoint._1.y, candidateRightStartPoint._1.z - candidateLeftStartPoint._1.z)
+                      startingPointVector.angleXYWithNegativeValues(direction)
+                    } else {
+                      startingPointsVector.angleXYWithNegativeValues(direction)
+                    }
+                  if (angle > 0) {
+                    chainEndPoints.filterNot(_._1.equals(candidateRightStartPoint._1)).head
+                  } else {
+                    candidateRightStartPoint
+                  }
               }
-            if (angle > 0) {
-              chainEndPoints.filterNot(_._1.equals(candidateRightStartPoint._1)).head
-            } else {
-              candidateRightStartPoint
-            }
           } else {
-            val startPoint1 = chainEndPoints.minBy(p => direction.dot(p._1.toVector - midPoint))
-            val startPoint2 = chainEndPoints.maxBy(p => direction.dot(p._1.toVector - midPoint))
-            val connectingPoint = otherRoadPartLinks.find(l => GeometryUtils.areAdjacent(l.getLastPoint, startPoint1._1) || GeometryUtils.areAdjacent(l.getFirstPoint, startPoint2._1))
-            val continuousLink = chainEndPoints.filter(_._2.discontinuity == Discontinuity.Continuous)
-            if (continuousLink.nonEmpty) {
-              continuousLink.head
-            } else {
-              if (otherRoadPartLinks.isEmpty || connectingPoint.nonEmpty) {
-                startPoint1
+            getStartPointByDiscontinuity(chainEndPoints).getOrElse {
+              val startPoint1 = chainEndPoints.minBy(p => direction.dot(p._1.toVector - midPoint))
+              val startPoint2 = chainEndPoints.maxBy(p => direction.dot(p._1.toVector - midPoint))
+              val connectingPoint = otherRoadPartLinks.find(l => GeometryUtils.areAdjacent(l.getLastPoint, startPoint1._1) || GeometryUtils.areAdjacent(l.getFirstPoint, startPoint2._1))
+              val continuousLink = chainEndPoints.filter(_._2.discontinuity == Discontinuity.Continuous)
+              if (continuousLink.nonEmpty) {
+                continuousLink.head
               } else {
-                startPoint2
+                if (otherRoadPartLinks.isEmpty || connectingPoint.nonEmpty) {
+                  startPoint1
+                } else {
+                  startPoint2
+                }
               }
             }
           }
