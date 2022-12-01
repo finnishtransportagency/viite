@@ -338,7 +338,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                  filterNot(_._2.isEmpty).foreach {
       case ((roadNumber, roadPartNumber), value) =>
         val (startDate, endDate) = value.map(v => (v._6, v._7)).get
-        // TODO remove this when VIITE-2772 is fixed
+        // TODO remove this when other systems (esp. Velho) can process multiple changes on the road part with the same startDate
         if (startDate.nonEmpty && startDate.get.isEqual(date))
           return Option(s"Tieosalla TIE $roadNumber OSA $roadPartNumber alkupäivämäärä " +
                         s"${startDate.get.toString("dd.MM.yyyy")} on sama kuin tieosoiteprojektin alkupäivämäärä " +
