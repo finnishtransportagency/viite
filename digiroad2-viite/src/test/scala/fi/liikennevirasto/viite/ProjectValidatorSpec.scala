@@ -1944,14 +1944,14 @@ Left|      |Right
      /* |-> UnChanged-UnChanged-UnChanged-UnChanged-UnChanged-New-UnChanged-UnChanged-UnChanged-UnChanged-UnChanged */
    runWithRollback {
      mockEmptyRoadAddressServiceCalls()
-     val delta = 50
+     val newLinkStartAddress = 50
      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.UnChanged, Seq(0L, 10L, 20L, 30L, 40L), withRoadAddress = false)
      val projectLinksAfterNewLink = projectLinks.map(pl => pl.copy(
-       startAddrMValue = pl.startAddrMValue + delta,
-       endAddrMValue = pl.endAddrMValue + delta,
-       originalStartAddrMValue = pl.startAddrMValue + delta,
-       originalEndAddrMValue = pl.endAddrMValue + delta,
-       geometry = Seq(Point(pl.startingPoint.x, pl.startingPoint.y + delta), Point(pl.endPoint.x, pl.endPoint.y + delta))
+       startAddrMValue = pl.startAddrMValue + newLinkStartAddress,
+       endAddrMValue = pl.endAddrMValue + newLinkStartAddress,
+       originalStartAddrMValue = pl.startAddrMValue + newLinkStartAddress,
+       originalEndAddrMValue = pl.endAddrMValue + newLinkStartAddress,
+       geometry = Seq(Point(pl.startingPoint.x, pl.startingPoint.y + newLinkStartAddress), Point(pl.endPoint.x, pl.endPoint.y + newLinkStartAddress))
        )
                                                      )
      val newPl = projectLinks.head.copy(id = projectLinks.head.id-1, status = LinkStatus.New, startAddrMValue = 0, endAddrMValue = 0, originalStartAddrMValue = 0, originalEndAddrMValue = 0, geometry = Seq(Point(0,40),Point(0,50)))
