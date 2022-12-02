@@ -633,7 +633,7 @@ class ProjectValidator {
     def findInvalidUnchangedLinks(pls: Seq[ProjectLink]): Seq[ProjectLink] = {
       var errorLinkList: Seq[ProjectLink]  = Seq()
         val unChangedPls = pls.filter(_.status == UnChanged)
-        val newPls       = pls.filter(_.status == New)
+        val newPls       = pls.filter(_.isNotCalculated)
           // Check any new links behind UnChanged and filter them as invalid
         errorLinkList ++= unChangedPls.flatMap(ucpl => newPls.map(newpl => (ucpl.startingPoint.connected(newpl.startingPoint) || ucpl.startingPoint.connected(newpl.endPoint), newpl))).filter(_._1 == true).map(_._2)
 
