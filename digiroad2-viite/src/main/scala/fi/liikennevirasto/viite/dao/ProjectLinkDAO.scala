@@ -3,14 +3,13 @@ package fi.liikennevirasto.viite.dao
 import java.sql.Types
 import java.util.Date
 
-import fi.liikennevirasto.digiroad2.GeometryUtils
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d}
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.PolyLine
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.{Point, Vector3d}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
@@ -20,8 +19,8 @@ import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
+import slick.jdbc.StaticQuery.interpolation
 
 
 //TODO naming SQL conventions
@@ -57,6 +56,7 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
   val isSplit: Boolean = connectedLinkId.nonEmpty || connectedLinkId.contains(0L)
 
   lazy val isNotCalculated: Boolean = endAddrMValue == 0L
+  lazy val isCalculated: Boolean = !isNotCalculated
 
   lazy val roadway = roadwayDAO.fetchAllByRoadwayId(Seq(roadwayId)).headOption
 
