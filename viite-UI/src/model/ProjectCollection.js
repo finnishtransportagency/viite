@@ -260,7 +260,8 @@
                 if (successObject.errorMessage) {
                   new ModalConfirm(successObject.errorMessage);
                 }
-                validateUnchangedInProject(dataJson.projectId);
+                if (!successObject.projectErrors)
+                  validateUnchangedInProject(dataJson.projectId);
               } else {
                 new ModalConfirm(successObject.errorMessage);
                 applicationModel.removeSpinner();
@@ -273,7 +274,8 @@
                 me.setProjectErrors(successObject.projectErrors);
                 me.setFormedParts(successObject.formedInfo);
                 eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
-                validateUnchangedInProject(dataJson.projectId);
+                if (!successObject.projectErrors)
+                  validateUnchangedInProject(dataJson.projectId);
               } else {
                 new ModalConfirm(successObject.errorMessage);
                 applicationModel.removeSpinner();
