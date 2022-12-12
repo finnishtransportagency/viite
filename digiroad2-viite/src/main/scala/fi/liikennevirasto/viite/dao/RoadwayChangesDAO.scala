@@ -557,7 +557,7 @@ SELECT
         parts match {
           case (Some(minPart), Some(maxPart)) => s"AND (rc.new_road_part_number BETWEEN $minPart AND $maxPart OR rc.old_road_part_number BETWEEN $minPart AND $maxPart)"
           case (None, Some(maxPart)) => s"AND (rc.new_road_part_number <= $maxPart OR rc.old_road_part_number <= $maxPart)"
-          case (Some(minPart), None) => s"AND (rc.new_road_part_number >= $minPart OR rc.old_road_part_number <= $minPart)"
+          case (Some(minPart), None) => s"AND (rc.new_road_part_number >= $minPart OR rc.old_road_part_number >= $minPart)"
           case _ => ""
         }
       }

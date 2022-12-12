@@ -388,7 +388,7 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("When fetching type termination road address change info for road address browser then return the termination change info") {
+  test("When fetching road address change info for a terminated road (-> type of change: termination) for the road address browser then return the change info of the terminated layer") {
     runWithRollback {
       val roadNameId = Sequences.nextRoadNameId
       val projectId = Sequences.nextViiteProjectId
@@ -412,8 +412,8 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
       // create terminated road name and history road name for road number 8
       RoadNameDAO.create(
         Seq(
-          RoadName(roadNameId, roadNumber, "Turku-Oulu", Some(DateTime.parse("1996-01-01")),Some(terminatedRoadNameEndDate),Some(DateTime.parse("2006-01-17")),None,"test"),
-          RoadName(roadNameId + 1, roadNumber, "TURKU-PORI-KOKKOLA-OULU", Some(DateTime.parse("1989-01-01")),Some(DateTime.parse("1996-01-01")),Some(DateTime.parse("2006-01-17")),None,"test")
+          RoadName(roadNameId, roadNumber, "TURKU-PORI-KOKKOLA-OULU", Some(DateTime.parse("1989-01-01")),Some(DateTime.parse("1996-01-01")),Some(DateTime.parse("2006-01-17")),None,"test"),
+          RoadName(roadNameId + 1, roadNumber, "Turku-Oulu", Some(DateTime.parse("1996-01-01")),Some(terminatedRoadNameEndDate),Some(DateTime.parse("2006-01-17")),None,"test")
         )
       )
 
