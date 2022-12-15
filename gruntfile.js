@@ -130,19 +130,19 @@ module.exports = function (grunt) {
             xforward: false
           },
           {
-              context:'/wmts/maasto',
-              host: 'api.vaylapilvi.fi',
-              port: '443',
-              https: true,
-              changeOrigin: false,
-              xforward: true,
-              headers: {
-                  "X-API-Key": process.env.rasterServiceApiKey,
-                  host: 'api.vaylapilvi.fi'
-              },
-              rewrite: {
-                  '/wmts/maasto':'/rasteripalvelu-mml/wmts/maasto'
-              }
+            context:'/wmts/maasto',
+            host: 'api.vaylapilvi.fi',
+            port: '443',
+            https: true,
+            changeOrigin: false,
+            xforward: true,
+            headers: {
+                "X-API-Key": process.env.rasterServiceApiKey,
+                host: 'api.vaylapilvi.fi'
+            },
+            rewrite: {
+                '/wmts/maasto':'/rasteripalvelu-mml/wmts/maasto'
+            }
           },
           {
             context: '/test/components',
