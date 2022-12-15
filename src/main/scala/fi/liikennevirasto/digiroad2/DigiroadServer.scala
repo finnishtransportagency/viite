@@ -43,8 +43,7 @@ trait DigiroadServer {
     val holder = new ServletHolder(defaultServlet)
     holder.setInitParameter("cacheControl", "no-store, no-cache")
     appContext.addServlet(holder, "/index.html")
-
-    appContext.addServlet(classOf[WMTSProxyServlet], "/wmts/maasto/*")
+    appContext.addServlet(new ServletHolder(new WMTSProxyServlet), "/wmts/maasto/*")
     appContext.getMimeTypes.addMimeMapping("ttf", "application/x-font-ttf")
     appContext.getMimeTypes.addMimeMapping("woff", "application/x-font-woff")
     appContext.getMimeTypes.addMimeMapping("eot", "application/vnd.ms-fontobject")
