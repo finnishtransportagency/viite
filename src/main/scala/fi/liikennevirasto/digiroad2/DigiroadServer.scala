@@ -8,7 +8,7 @@ import org.eclipse.jetty.client.api.Request
 import org.eclipse.jetty.client.HttpClient
 import org.eclipse.jetty.jmx.MBeanContainer
 import org.eclipse.jetty.proxy.ProxyServlet
-import org.eclipse.jetty.server.{Handler, Server}
+import org.eclipse.jetty.server._
 import org.eclipse.jetty.server.handler.ContextHandlerCollection
 import org.eclipse.jetty.servlet.{DefaultServlet, ServletHolder}
 import org.eclipse.jetty.util.ssl.SslContextFactory
@@ -53,6 +53,7 @@ trait DigiroadServer {
   }
 
   class WMTSProxyServlet extends ProxyServlet {
+
     private val logger = LoggerFactory.getLogger(getClass)
 
     override def newHttpClient(): HttpClient = {
