@@ -460,7 +460,12 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val project            = projectService.createRoadLinkProject(roadAddressProject)
       val projectId          = project.id
 
-      projectService.checkRoadPartsReservable(roadNumber, roadStartPart, roadEndPart, projectId) should be ('right)
+      val reservedAndFormed: Either[String, (Seq[ProjectReservedPart], Seq[ProjectReservedPart])] =
+        projectService.checkRoadPartsReservable(roadNumber, roadStartPart, roadEndPart, projectId)
+
+      reservedAndFormed should be ('right)
+      reservedAndFormed.right.get._1 should have size 2 // ProjectReservedParts
+      reservedAndFormed.right.get._1.map(_.roadPartNumber) should contain allOf (roadStartPart,roadEndPart)
     }
   }
 
