@@ -75,10 +75,11 @@ package object viite {
   val ErrorWithNewAction = "Uusi-toimenpidettä ei voi tallentaa, koska se koskettaa toisen projektin käytössä olevaa tielinkkiä."
   //VIITE-453 Not implemented yet (2)
   val SharedLinkIdsExistMessage = "Linkillä on voimassa oleva tieosoite tämän projektin alkupäivämäärällä."
-  val UnsuccessfulRecalculationMessage = "Etäisyysarvojen laskenta epäonnistui."
-  val ContinuosAddressCapErrorMessage = UnsuccessfulRecalculationMessage + " Tieosoiteet ei muodostu jatkuvaksi."
-  val NegativeLengthErrorMessage = UnsuccessfulRecalculationMessage + " Linkille %s muodostuu negatiivinen pituus."
-  val LengthMismatchErrorMessage = UnsuccessfulRecalculationMessage + " Linkin %s uusi pituus poikkeaa vanhasta."
+  val ContactViiteSupportMessage = "\nOta yhteys Viite tukeen."
+  val UnsuccessfulRecalculationMessage = "Etäisyysarvojen laskenta epäonnistui." + ContactViiteSupportMessage
+  val ContinuousAddressCapErrorMessage = UnsuccessfulRecalculationMessage + " Tieosoitteet eivät muodostu jatkuvaksi." + ContactViiteSupportMessage
+  val NegativeLengthErrorMessage       = UnsuccessfulRecalculationMessage + " Linkille %s muodostuu negatiivinen pituus." + ContactViiteSupportMessage
+  val LengthMismatchErrorMessage       = UnsuccessfulRecalculationMessage + " Linkin %s uusi pituus eroaa yli sallitun rajan (%d) vanhaan pituuteen verrattuna." + ContactViiteSupportMessage
 
   val NoContinuityCodesAtEndMessage = "Tieosan lopusta puuttuu jatkuvuuskoodi."
   val ConnectedDiscontinuousMessage = "Jatkuva tielinkki on merkitty epäjatkuvaksi, korjaa jatkuu-koodi."
