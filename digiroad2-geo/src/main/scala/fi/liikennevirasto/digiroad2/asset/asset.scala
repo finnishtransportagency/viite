@@ -13,7 +13,7 @@ sealed trait LinkGeomSource{
 *  1 = tielinkkien rajapinta,
 *  2 = täydentävien linkkien rajapinta,
 *  4 = jäädytettyjen linkkien rajapinta,
-*  5 = VVH-historialinkkien rajapinta,
+*  5 = KGV-historialinkkien rajapinta,
 *  6 = KGV-versiorajapinta,
 *  7 = VVH-linkId vastintaulun,
 *  8 = Muutosrajapinta

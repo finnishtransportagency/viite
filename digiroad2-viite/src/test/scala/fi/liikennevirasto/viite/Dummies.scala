@@ -55,7 +55,7 @@ object Dummies {
     Project(0L ,status, "Dummy project", "Viite unittests", createdDate, "Viite unittests", startDate, dateModified, "This project is a dummy project used in unittests and it should be used with runWithRollback to prevent it from saving to the database during test runs",reservedParts, formedParts, statusInfo, None)
   }
 
-  def dummyVvhHistoryRoadLink(linkId: String, yCoordinates: Seq[Double]): HistoryRoadLink = {
+  def dummyHistoryRoadLink(linkId: String, yCoordinates: Seq[Double]): HistoryRoadLink = {
     val municipalityCode = 0
     HistoryRoadLink(linkId, municipalityCode, yCoordinates.map(y => Point(0.0, y)), AdministrativeClass.Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.DrivePath, 0L, 0L, Map(), UnknownLifecycleStatus, HistoryLinkInterface, yCoordinates.sum)
   }

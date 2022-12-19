@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.Point
 
 trait RoadAddressMapper {
 
-  case class LinearLocationMapping(sourceLinkId: String, targetLinkId: String, sourceId: Long, sourceStartM: Double, sourceEndM: Double, targetStartM: Double, targetEndM: Double, sourceGeom: Seq[Point], targetGeom: Seq[Point], vvhTimeStamp: Option[Long] = None) {
+  case class LinearLocationMapping(sourceLinkId: String, targetLinkId: String, sourceId: Long, sourceStartM: Double, sourceEndM: Double, targetStartM: Double, targetEndM: Double, sourceGeom: Seq[Point], targetGeom: Seq[Point], timeStamp: Option[Long] = None) {
     override def toString: String = {
       s"$sourceLinkId -> $targetLinkId: $sourceStartM-$sourceEndM -> $targetStartM-$targetEndM, $sourceGeom -> $targetGeom"
     }

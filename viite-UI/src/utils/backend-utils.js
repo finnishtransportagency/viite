@@ -111,7 +111,7 @@
       });
     }, 1000);
 
-    this.getNonOverridenVVHValuesForLink = _.throttle(function (linkId, currentProjectId, callback) {
+    this.getPrefillValuesForLink = _.throttle(function (linkId, currentProjectId, callback) {
       return $.getJSON('api/viite/roadlinks/project/prefill?linkId=' + linkId + '&currentProjectId=' + currentProjectId, function (data) {
         return _.isFunction(callback) && callback(data);
       });
