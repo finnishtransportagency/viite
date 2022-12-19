@@ -24,7 +24,6 @@ class ProjectLinkNameDAOSpec extends FunSuite with Matchers with BeforeAndAfter 
   val mockEventBus: DigiroadEventBus = MockitoSugar.mock[DigiroadEventBus]
   val mockKGVClient: KgvRoadLink = MockitoSugar.mock[KgvRoadLink]
   val mockKGVRoadLinkClient: KgvRoadLinkClient[RoadLink] = MockitoSugar.mock[KgvRoadLinkClient[RoadLink]]
-//  val mockVVHComplementaryClient: VVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
   val projectValidator = new ProjectValidator
   val projectDAO = new ProjectDAO
   val projectLinkDAO = new ProjectLinkDAO
@@ -44,14 +43,37 @@ class ProjectLinkNameDAOSpec extends FunSuite with Matchers with BeforeAndAfter 
   val mockLinearLocationDAO = MockitoSugar.mock[LinearLocationDAO]
   val mockRoadwayChangesDAO = MockitoSugar.mock[RoadwayChangesDAO]
 
-  val roadAddressServiceRealRoadwayAddressMapper = new RoadAddressService(mockRoadLinkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, roadwayAddressMapper, mockEventBus, frozenKGV = false) {
+  val roadAddressServiceRealRoadwayAddressMapper = new RoadAddressService(mockRoadLinkService,
+                                                                          roadwayDAO,
+                                                                          linearLocationDAO,
+                                                                          roadNetworkDAO,
+                                                                          roadwayPointDAO,
+                                                                          nodePointDAO,
+                                                                          junctionPointDAO,
+                                                                          roadwayAddressMapper,
+                                                                          mockEventBus,
+                                                                          frozenKGV = false) {
 
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f
   }
 
-  val projectService = new ProjectService(roadAddressServiceRealRoadwayAddressMapper, mockRoadLinkService, mockNodesAndJunctionsService, roadwayDAO, roadwayPointDAO, linearLocationDAO, projectDAO, projectLinkDAO, nodeDAO, nodePointDAO, junctionPointDAO, projectReservedPartDAO, roadwayChangesDAO, roadwayAddressMapper, mockEventBus) {
+  val projectService = new ProjectService(roadAddressServiceRealRoadwayAddressMapper,
+                                          mockRoadLinkService,
+                                          mockNodesAndJunctionsService,
+                                          roadwayDAO,
+                                          roadwayPointDAO,
+                                          linearLocationDAO,
+                                          projectDAO,
+                                          projectLinkDAO,
+                                          nodeDAO,
+                                          nodePointDAO,
+                                          junctionPointDAO,
+                                          projectReservedPartDAO,
+                                          roadwayChangesDAO,
+                                          roadwayAddressMapper,
+                                          mockEventBus) {
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f

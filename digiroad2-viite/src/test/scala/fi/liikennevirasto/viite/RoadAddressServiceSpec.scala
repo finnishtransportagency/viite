@@ -12,7 +12,7 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.Dummies._
-import fi.liikennevirasto.viite.dao.{ProjectReservedPartDAO, _}
+import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
@@ -53,17 +53,49 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   val linearLocationDAO = new LinearLocationDAO
   val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
   val mockViiteVkmClient: ViiteVkmClient = MockitoSugar.mock[ViiteVkmClient]
-  val roadAddressService: RoadAddressService = new RoadAddressService(mockRoadLinkService, mockRoadwayDAO, mockLinearLocationDAO, mockRoadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, roadwayAddressMappper, mockEventBus, frozenKGV = false) {
+  val roadAddressService: RoadAddressService = new RoadAddressService(mockRoadLinkService,
+                                                                      mockRoadwayDAO,
+                                                                      mockLinearLocationDAO,
+                                                                      mockRoadNetworkDAO,
+                                                                      roadwayPointDAO,
+                                                                      nodePointDAO,
+                                                                      junctionPointDAO,
+                                                                      roadwayAddressMappper,
+                                                                      mockEventBus,
+                                                                      frozenKGV = false) {
 
     override def withDynSession[T](f: => T): T = f
     override def withDynTransaction[T](f: => T): T = f
     override val viiteVkmClient = mockViiteVkmClient
   }
 
-  val nodesAndJunctionsService = new NodesAndJunctionsService(mockRoadwayDAO, roadwayPointDAO, mockLinearLocationDAO, nodeDAO, nodePointDAO, junctionDAO, junctionPointDAO, roadwayChangesDAO, projectReservedPartDAO)
+  val nodesAndJunctionsService = new NodesAndJunctionsService(mockRoadwayDAO,
+                                                              roadwayPointDAO,
+                                                              mockLinearLocationDAO,
+                                                              nodeDAO,
+                                                              nodePointDAO,
+                                                              junctionDAO,
+                                                              junctionPointDAO,
+                                                              roadwayChangesDAO,
+                                                              projectReservedPartDAO)
 
-  val projectService = new ProjectService(roadAddressService, mockRoadLinkService, nodesAndJunctionsService, roadwayDAO, roadwayPointDAO, linearLocationDAO, projectDAO, projectLinkDAO, nodeDAO, nodePointDAO, junctionPointDAO, projectReservedPartDAO, roadwayChangesDAO, roadwayAddressMapper, mockEventBus) {
+  val projectService = new ProjectService(roadAddressService,
+                                          mockRoadLinkService,
+                                          nodesAndJunctionsService,
+                                          roadwayDAO,
+                                          roadwayPointDAO,
+                                          linearLocationDAO,
+                                          projectDAO,
+                                          projectLinkDAO,
+                                          nodeDAO,
+                                          nodePointDAO,
+                                          junctionPointDAO,
+                                          projectReservedPartDAO,
+                                          roadwayChangesDAO,
+                                          roadwayAddressMapper,
+                                          mockEventBus) {
     override def withDynSession[T](f: => T): T = f
+
     override def withDynTransaction[T](f: => T): T = f
   }
   def runWithRollback[T](f: => T): T = {
