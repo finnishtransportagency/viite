@@ -5,8 +5,9 @@ import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.util.{MissingRoadwayNumberException, MissingTrackException, RoadAddressException, Track}
 import fi.liikennevirasto.digiroad2.util.Track.LeftSide
-import fi.liikennevirasto.viite.{NewIdValue, ProjectValidationException, ProjectValidator, UnsuccessfulRecalculationMessage}
-import fi.liikennevirasto.viite.dao.{Discontinuity, _}
+import fi.liikennevirasto.viite.{ContinuousAddressCapErrorMessage, LengthMismatchErrorMessage, NegativeLengthErrorMessage, NewIdValue, ProjectValidationException, ProjectValidator, UnsuccessfulRecalculationMessage}
+
+import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.UserDefinedCP
 import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
@@ -249,10 +250,18 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       while (it.hasNext) {
         it.next() match {
           case Seq(curr, next) => {
-            if (curr.endAddrMValue != next.startAddrMValue) throw new RoadAddressException(s"Address not continuous: ${curr.endAddrMValue} ${next.startAddrMValue} linkids: ${curr.linkId} ${next.linkId}")
-            if (!(curr.endAddrMValue > curr.startAddrMValue)) throw new RoadAddressException(s"Address length negative. linkid: ${curr.linkId}")
-            if (curr.status != LinkStatus.New && (curr.originalTrack == curr.track || curr.track == Track.Combined) && !(Math.abs((curr.endAddrMValue - curr.startAddrMValue) - (curr.originalEndAddrMValue - curr.originalStartAddrMValue)) < maxDiffForChange))
-              throw new RoadAddressException(s"Length mismatch. New: ${curr.startAddrMValue} ${curr.endAddrMValue} original: ${curr.originalStartAddrMValue} ${curr.originalEndAddrMValue} linkid: ${curr.linkId}")
+            if (curr.endAddrMValue != next.startAddrMValue) {
+              logger.error(s"Address not continuous: ${curr.endAddrMValue} ${next.startAddrMValue} linkIds: ${curr.linkId} ${next.linkId}")
+              throw new RoadAddressException(ContinuousAddressCapErrorMessage)
+            }
+            if (!(curr.endAddrMValue > curr.startAddrMValue)) {
+              logger.error(s"Address length negative. linkId: ${curr.linkId}")
+              throw new RoadAddressException(NegativeLengthErrorMessage.format(curr.linkId))
+            }
+            if (curr.status != LinkStatus.New && (curr.originalTrack == curr.track || curr.track == Track.Combined) && !(Math.abs((curr.endAddrMValue - curr.startAddrMValue) - (curr.originalEndAddrMValue - curr.originalStartAddrMValue)) < maxDiffForChange)) {
+              logger.error(s"Length mismatch. New: ${curr.startAddrMValue} ${curr.endAddrMValue} original: ${curr.originalStartAddrMValue} ${curr.originalEndAddrMValue} linkId: ${curr.linkId}")
+              throw new RoadAddressException(LengthMismatchErrorMessage.format(curr.linkId, maxDiffForChange-1))
+            }
           }
         }
       }
