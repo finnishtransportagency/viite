@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{Track, ViiteProperties}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
-import fi.liikennevirasto.viite.dao.{Discontinuity, _}
+import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.process.{RoadwayAddressMapper, TrackSectionOrder}
 import fi.liikennevirasto.viite.process.TrackSectionOrder.findChainEndpoints
@@ -950,9 +950,17 @@ class ProjectValidator {
         //Fetch original roadway data
         val workableProjectLinks = allProjectLinks.filterNot(pl => pl.status == LinkStatus.NotHandled || pl.status == LinkStatus.Terminated)
         val roadways = roadwayDAO.fetchAllByRoadwayNumbers(group._2.map(_.roadwayNumber).toSet)
-        val nonLastLinkHasChangeOfEly = if (group._2.exists(_.isNotCalculated)) findNonLastLinkHasChangeOfEly(group._2) else group._2.filter(p => p.discontinuity == Discontinuity.ChangingELYCode && p.endAddrMValue != group._2.maxBy(_.endAddrMValue).endAddrMValue)
-        val twoTrackLinksWithChangeOfEly = group._2.filter(p => p.isCalculated && p.discontinuity == Discontinuity.ChangingELYCode &&
-          p.endAddrMValue == group._2.maxBy(_.endAddrMValue).endAddrMValue && p.track != Track.Combined)
+        val nonLastLinkHasChangeOfEly = if (group._2.exists(_.isNotCalculated))
+                                          findNonLastLinkHasChangeOfEly(group._2)
+                                        else
+                                          group._2.filter(p => p.discontinuity == Discontinuity.ChangingELYCode &&
+                                                               p.endAddrMValue != group._2.maxBy(_.endAddrMValue).endAddrMValue)
+
+        val twoTrackLinksWithChangeOfEly = group._2.filter(p => p.isCalculated &&
+                                                                p.discontinuity == Discontinuity.ChangingELYCode &&
+                                                                p.endAddrMValue == group._2.maxBy(_.endAddrMValue).endAddrMValue &&
+                                                                p.track != Track.Combined)
+
         val tracksWithUnpairedChangeOfEly = twoTrackLinksWithChangeOfEly.flatMap(p => group._2.filter(q => q.endAddrMValue == p.endAddrMValue &&
           q.discontinuity != Discontinuity.ChangingELYCode)).distinct
         val originalElys = roadways.map(_.ely).distinct
