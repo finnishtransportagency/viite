@@ -237,13 +237,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
   }
 
   private val fetchPreFill: SwaggerSupportSyntax.OperationBuilder = (
-    apiOperation[Map[String, Any]]("fetchPreFillFromVVH")
+    apiOperation[Map[String, Any]]("fetchPreFillData")
       .parameters(
         queryParam[String]("linkId").description("LinkId of a road address"),
         queryParam[Long]("currentProjectId").description("currentProjectId")
       )
       tags "ViiteAPI - Project"
-      summary "Fetch prefill information from VVH like roadNumber, roadPartNumber, roadName, roadNameSource"
+      summary "Fetch prefill information like roadNumber, roadPartNumber, roadName, roadNameSource"
     )
 
   get("/roadlinks/project/prefill", operation(fetchPreFill)) {
