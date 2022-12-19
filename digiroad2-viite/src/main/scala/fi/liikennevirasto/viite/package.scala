@@ -2,8 +2,8 @@ package fi.liikennevirasto
 
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.SideCode
-import fi.liikennevirasto.viite.dao.Discontinuity.{ChangingELYCode, Continuous, Discontinuous, EndOfRoad}
 import fi.liikennevirasto.viite.dao.{BaseRoadAddress, LinkStatus}
+import fi.liikennevirasto.viite.dao.Discontinuity.{ChangingELYCode, Discontinuous, EndOfRoad}
 import fi.liikennevirasto.viite.model.RoadAddressLinkLike
 
 package object viite {
@@ -75,7 +75,11 @@ package object viite {
   val ErrorWithNewAction = "Uusi-toimenpidettä ei voi tallentaa, koska se koskettaa toisen projektin käytössä olevaa tielinkkiä."
   //VIITE-453 Not implemented yet (2)
   val SharedLinkIdsExistMessage = "Linkillä on voimassa oleva tieosoite tämän projektin alkupäivämäärällä."
-  val UnsuccessfulRecalculationMessage = "Etäisyysarvojen laskenta epäonnistui."
+  val ContactViiteSupportMessage = "Ota yhteys Viite tukeen."
+  val UnsuccessfulRecalculationMessage = "Etäisyysarvojen laskenta epäonnistui. " + ContactViiteSupportMessage
+  val ContinuousAddressCapErrorMessage = UnsuccessfulRecalculationMessage + "\nTieosoitteet eivät muodostu jatkuvaksi."
+  val NegativeLengthErrorMessage       = UnsuccessfulRecalculationMessage + "\nLinkille %s muodostuu negatiivinen pituus."
+  val LengthMismatchErrorMessage       = UnsuccessfulRecalculationMessage + "\nLinkin %s uusi pituus eroaa yli sallitun rajan (%d) vanhaan pituuteen verrattuna."
 
   val NoContinuityCodesAtEndMessage = "Tieosan lopusta puuttuu jatkuvuuskoodi."
   val ConnectedDiscontinuousMessage = "Jatkuva tielinkki on merkitty epäjatkuvaksi, korjaa jatkuu-koodi."
