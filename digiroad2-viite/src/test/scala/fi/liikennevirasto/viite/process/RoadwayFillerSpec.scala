@@ -710,6 +710,308 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("Test RoadwayFiller.applyRoadwayChanges()" +
+    "When a single roadway (that has history) has a partial administrative class change at the start" +
+    "Then new roadways and history roadways should have correct discontinuity") {
+
+    /**
+     * BEFORE PROJECT
+     *
+     *            RoadwayNumber 99 State AdminClass
+     *     0 |--------------RoadPart 2----------------> 175  Current Roadway
+     *
+     *   370 |--------------RoadPart 1----------------> 545  History Roadway
+     *
+     * AFTER PROJECT
+     *
+     *        RoadwayNumber 100              RoadwayNumber 101
+     *     0 |-----MUNICIPALITY------> 120                          New current roadway
+     *                                     |---STATE---------> 175  Roadway that stays unchanged
+     *        Discontinuity.Continuous     Discontinuity.EndOfRoad
+     *     0 |-----STATE-------------> 120                          After project created history row
+     *   370 |-----STATE-------------> 490 |---STATE---------> 545  Oldest history row
+     * */
+
+    runWithRollback {
+      val roadwayNumber = 99L
+
+      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadNumber = 1L, roadPartNumber = 2L, startAddrM = 0L, endAddrM = 175L, DateTime.now().minusDays(5), None).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad)
+      val historyRoadway = dummyRoadway(roadwayNumber = roadwayNumber, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 370L, endAddrM = 545L, DateTime.now().minusDays(10), Some(DateTime.now().minusDays(3)), 1L).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad)
+      roadwayDAO.create(Seq(roadway, historyRoadway))
+
+      val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(), Seq(ProjectReservedPart(0L, 1L, 2L, None, None, None, None, None, None, None)), Seq(), None)
+      projectDAO.create(project)
+
+      val projectLinks = Seq(
+        dummyProjectLink(1L, 2L, Track.Combined, Discontinuity.Continuous, 0L, 120L, Some(DateTime.now()), status = LinkStatus.UnChanged, administrativeClass = AdministrativeClass.Municipality, roadwayNumber = roadwayNumber + 1).copy(originalStartAddrMValue = 0L, originalEndAddrMValue = 120L, ely = 10),
+        dummyProjectLink(1L, 2L, Track.Combined, Discontinuity.Continuous, 120L, 142L, Some(DateTime.now()), status = LinkStatus.UnChanged, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber + 2).copy(originalStartAddrMValue = 120L, originalEndAddrMValue = 142, ely = 10),
+        dummyProjectLink(1L, 2L, Track.Combined, Discontinuity.EndOfRoad, 142L, 175L, Some(DateTime.now()), status = LinkStatus.UnChanged, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber + 2).copy(originalStartAddrMValue = 142L, originalEndAddrMValue = 175L, ely = 10)
+      )
+
+      val roadwayChanges = Seq(RoadwayFiller.RwChanges(roadway, Seq(historyRoadway), projectLinks))
+      val result = RoadwayFiller.applyRoadwayChanges(roadwayChanges).flatten.filter(_._1.nonEmpty)
+
+      result should have size 1
+
+      val (roadpartWithAdmChange, roadpartWithNoChange) = result.head._1.partition(rw => rw.roadwayNumber==100)
+
+      val (newAdmChange, historyAdmChange) = roadpartWithAdmChange.partition(rw => rw.endDate.isEmpty && rw.validTo.isEmpty)
+
+      newAdmChange should have size 1
+      newAdmChange.head.discontinuity should be (Discontinuity.Continuous)
+
+      historyAdmChange should have size 2
+      historyAdmChange.head.discontinuity should be (Discontinuity.Continuous)
+      historyAdmChange.last.discontinuity should be (Discontinuity.Continuous)
+
+      val (newNoChange, historyNoChange) = roadpartWithNoChange.partition(rw => rw.endDate.isEmpty && rw.validTo.isEmpty)
+
+      newNoChange should have size 1
+      newNoChange.head.discontinuity should be (Discontinuity.EndOfRoad)
+
+      historyNoChange should have size 1
+      historyNoChange.head.discontinuity should be (Discontinuity.EndOfRoad)
+    }
+  }
+
+  test("Test RoadwayFiller.applyRoadwayChanges()" +
+    "When a roadway (that has history) is transferred to the start of another road address" +
+    "Then the history roadways should have correct continuity and address M values") {
+
+    /**
+     * BEFORE PROJECT
+     *
+     *                   RoadwayNumber 99                      RoadwayNumber 100
+     *      0 |-----RoadNumber 55 Part 1--------> 120  0 |---RoadNumber 56 Part 1----> 55  Current Roadway
+     *
+     *   370 |------RoadNumber 55 Part 1--------> 490  0 |---RoadNumber 56 Part 1----> 55  History Roadway
+     *
+     * AFTER PROJECT
+     *
+     *                   RoadwayNumber 99                      RoadwayNumber 100
+     *             Discontinuity.Continuous
+     *     0 |-----RoadNumber 56 Part 1---------> 120 120 |---RoadNumber 56 Part 1----> 175  New current roadway
+     *             Discontinuity.EndOfRoad
+     *     0 |------RoadNumber 55 Part 1--------> 120   0 |---RoadNumber 56 Part 1----> 55  After project created history row
+     *   370 |------RoadNumber 55 Part 1--------> 490   0 |---RoadNumber 56 Part 1----> 55  Oldest history row
+     * */
+
+    runWithRollback {
+      val roadwayNumber1 = 99L
+      val roadwayNumber2 = 100L
+
+      val roadway1 = dummyRoadway(roadwayNumber = roadwayNumber1, roadNumber = 55L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 120L, DateTime.now().minusDays(5), None).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad)
+      val historyRoadway1 = dummyRoadway(roadwayNumber = roadwayNumber1, roadNumber = 55L, roadPartNumber = 1L, startAddrM = 370L, endAddrM = 490L, DateTime.now().minusDays(10), Some(DateTime.now().minusDays(3)), 1L).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad)
+      val roadway2 = dummyRoadway(roadwayNumber = roadwayNumber2, roadNumber = 56L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 55L, DateTime.now().minusDays(5), None).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad, id = 52)
+      val historyRoadway2 = dummyRoadway(roadwayNumber = roadwayNumber2, roadNumber = 56L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 55L, DateTime.now().minusDays(10), Some(DateTime.now().minusDays(3)), 1L).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad, id = 53)
+      roadwayDAO.create(Seq(roadway1, historyRoadway1, roadway2, historyRoadway2))
+
+      val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(), Seq(ProjectReservedPart(0L, 55L, 1L, None, None, None, None, None, None, None), ProjectReservedPart(0L, 56L, 1L, None, None, None, None, None, None, None)), Seq(), None)
+      projectDAO.create(project)
+
+      val transferLink = Seq(dummyProjectLink(56L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 120L, Some(DateTime.now()), endDate = Some(DateTime.now()), status = LinkStatus.Transfer, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber1).copy(originalStartAddrMValue = 0L, originalEndAddrMValue = 120L, ely = 10))
+      val projectLinks = Seq(
+        dummyProjectLink(56L, 1L, Track.Combined, Discontinuity.Continuous, 120L, 142L, Some(DateTime.now()), status = LinkStatus.Transfer, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber2).copy(originalStartAddrMValue = 0L, originalEndAddrMValue = 22L, ely = 10),
+        dummyProjectLink(56L, 1L, Track.Combined, Discontinuity.EndOfRoad, 142L, 175L, Some(DateTime.now()), status = LinkStatus.Transfer, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber2).copy(originalStartAddrMValue = 22L, originalEndAddrMValue = 55L, ely = 10)
+      )
+
+      val roadwayChanges = Seq(RoadwayFiller.RwChanges(roadway1, Seq(historyRoadway1), transferLink),
+        RoadwayFiller.RwChanges(roadway2, Seq(historyRoadway2), projectLinks))
+      val result = RoadwayFiller.applyRoadwayChanges(roadwayChanges).flatten.filter(_._1.nonEmpty)
+
+      result should have size 2
+
+      val roadway99 = result.head._1
+
+      val (newRoadway99, historyRoadway99) = roadway99.partition(rw => rw.endDate.isEmpty && rw.validTo.isEmpty)
+
+      newRoadway99 should have size 1
+      newRoadway99.head.roadNumber should be (56)
+      newRoadway99.head.roadPartNumber should be (1)
+      newRoadway99.head.discontinuity should be (Discontinuity.Continuous)
+      newRoadway99.head.startAddrMValue should be (0)
+      newRoadway99.head.endAddrMValue should be (120)
+
+      historyRoadway99.head.roadNumber should be (55)
+      historyRoadway99.head.roadPartNumber should be (1)
+      historyRoadway99.head.discontinuity should be (Discontinuity.EndOfRoad)
+      historyRoadway99.head.startAddrMValue should be (0)
+      historyRoadway99.head.endAddrMValue should be (120)
+
+      historyRoadway99.last.roadNumber should be (55)
+      historyRoadway99.last.roadPartNumber should be (1)
+      historyRoadway99.last.discontinuity should be (Discontinuity.EndOfRoad)
+      historyRoadway99.last.startAddrMValue should be (370)
+      historyRoadway99.last.endAddrMValue should be (490)
+    }
+  }
+
+  test("Test RoadwayFiller.applyRoadwayChanges()" +
+    "When the end of a roadway that gets split (and that has history) is transferred to the start of another road address" +
+    "Then the history roadways should be split correctly and have correct continuity and address M values") {
+
+    /**
+     * BEFORE PROJECT
+     *
+     *                RoadwayNumber 99                      RoadwayNumber 100
+     *   0 |------RoadNumber 55 Part 1--------> 142  0 |---RoadNumber 56 Part 1----> 33  Current Roadway
+     *
+     * 370 |------RoadNumber 55 Part 1--------> 512  0 |---RoadNumber 56 Part 1----> 33  History Roadway
+     *
+     * AFTER PROJECT
+     *
+     *              RoadwayNumber 101                    RWN 102                 RoadwayNumber 100
+     *           Discontinuity.EndOfRoad               Continuous
+     *   0 |------RoadNumber 56 Part 1--------> 120   0 |----> 22  22 |---RoadNumber 56 Part 1----> 55  New current roadway
+     *           Discontinuity.Continuous                 EOR
+     *   0 |------RoadNumber 55 Part 1--------> 120 120 |----> 142  0 |---RoadNumber 56 Part 1----> 55  After project created history row
+     * 370 |------RoadNumber 55 Part 1--------> 490 490 |----> 512  0 |---RoadNumber 56 Part 1----> 55  Oldest history row
+     * */
+
+    runWithRollback {
+      val roadwayNumber1 = 99L
+      val roadwayNumber2 = 100L
+
+      val roadway1 = dummyRoadway(roadwayNumber = roadwayNumber1, roadNumber = 55L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 142L, DateTime.now().minusDays(5), None).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad, id=50)
+      val historyRoadway1 = dummyRoadway(roadwayNumber = roadwayNumber1, roadNumber = 55L, roadPartNumber = 1L, startAddrM = 370L, endAddrM = 512L, DateTime.now().minusDays(10), Some(DateTime.now().minusDays(3)), 1L).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad, id=51)
+      val roadway2 = dummyRoadway(roadwayNumber = roadwayNumber2, roadNumber = 56L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 33L, DateTime.now().minusDays(5), None).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad, id = 52)
+      val historyRoadway2 = dummyRoadway(roadwayNumber = roadwayNumber2, roadNumber = 56L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 33L, DateTime.now().minusDays(10), Some(DateTime.now().minusDays(3)), 1L).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad, id = 53)
+      roadwayDAO.create(Seq(roadway1, historyRoadway1, roadway2, historyRoadway2))
+
+      val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(), Seq(ProjectReservedPart(0L, 55L, 1L, None, None, None, None, None, None, None), ProjectReservedPart(0L, 56L, 1L, None, None, None, None, None, None, None)), Seq(), None)
+      projectDAO.create(project)
+
+      val transferRoadway = Seq(
+        dummyProjectLink(55L, 1L, Track.Combined, Discontinuity.EndOfRoad, 0L, 120L, Some(DateTime.now()), endDate = Some(DateTime.now()), status = LinkStatus.Transfer, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber1+2).copy(originalStartAddrMValue = 0L, originalEndAddrMValue = 120L, ely = 10, roadwayId=50),
+        dummyProjectLink(56L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 22L, Some(DateTime.now()), status = LinkStatus.Transfer, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber1+3).copy(originalStartAddrMValue = 120L, originalEndAddrMValue = 142L, ely = 10, roadwayId=50)
+      )
+      val projectLinks = Seq(
+        dummyProjectLink(56L, 1L, Track.Combined, Discontinuity.EndOfRoad, 22L, 55L, Some(DateTime.now()), status = LinkStatus.Transfer, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber2).copy(originalStartAddrMValue = 0L, originalEndAddrMValue = 33L, ely = 10, roadwayId=52)
+      )
+
+      val roadwayChanges = Seq(RoadwayFiller.RwChanges(roadway1, Seq(historyRoadway1), transferRoadway),
+        RoadwayFiller.RwChanges(roadway2, Seq(historyRoadway2), projectLinks))
+      val result = RoadwayFiller.applyRoadwayChanges(roadwayChanges).flatten.filter(_._1.nonEmpty)
+
+      result should have size 2
+
+      val (roadway101, roadway102) = result.head._1.partition(rw => rw.roadwayNumber == 101)
+      val (newRoadway101, historyRoadway101) = roadway101.partition(rw => rw.endDate.isEmpty && rw.validTo.isEmpty)
+
+      newRoadway101 should have size 1
+      newRoadway101.head.discontinuity should be (Discontinuity.EndOfRoad)
+      newRoadway101.head.endAddrMValue should be (120L)
+
+      historyRoadway101 should have size 2
+      historyRoadway101.head.discontinuity should be (Discontinuity.Continuous)
+      historyRoadway101.last.discontinuity should be (Discontinuity.Continuous)
+
+      val (newRoadway102, historyRoadway102) = roadway102.partition(rw => rw.endDate.isEmpty && rw.validTo.isEmpty)
+
+      newRoadway102 should have size 1
+      newRoadway102.head.discontinuity should be (Discontinuity.Continuous)
+      newRoadway102.head.endAddrMValue should be (22L)
+
+      historyRoadway102 should have size 2
+      historyRoadway102.head.discontinuity should be (Discontinuity.EndOfRoad)
+      historyRoadway102.head.endAddrMValue should be (142L)
+      historyRoadway102.last.discontinuity should be (Discontinuity.EndOfRoad)
+      historyRoadway102.last.endAddrMValue should be (512L)
+
+      val roadway103 = result.last._1
+      val (newRoadway103, historyRoadway103) = roadway103.partition(rw => rw.endDate.isEmpty && rw.validTo.isEmpty)
+
+      newRoadway103 should have size 1
+      newRoadway103.head.discontinuity should be (Discontinuity.EndOfRoad)
+      newRoadway103.head.endAddrMValue should be (55L)
+
+      historyRoadway103 should have size 2
+      historyRoadway103.head.discontinuity should be (Discontinuity.EndOfRoad)
+      historyRoadway103.last.discontinuity should be (Discontinuity.EndOfRoad)
+    }
+  }
+
+  test("Test RoadwayFiller.applyRoadwayChanges()" +
+    "When a single roadway (that has history) has a partial termination at the start" +
+    "Then new roadway and history roadways should have correct continuity and address M values") {
+
+    /**
+     * BEFORE PROJECT
+     *
+     *                   RoadwayNumber 99
+     *     0 |--------------RoadPart 2----------------> 175  Current Roadway
+     *
+     *   370 |--------------RoadPart 1----------------> 545  History Roadway
+     *
+     * AFTER PROJECT
+     *
+     *                                       RoadwayNumber 100
+     *                                   0 |---RoadPart 2----> 55  New current roadway
+     *            RoadwayNumber 101
+     *        Discontinuity.Continuous     Discontinuity.EndOfRoad
+     *     0 |-----TERMINATED--------> 120 |---RoadPart 2----> 175  After project created history row
+     *   370 |-----TERMINATED--------> 490 |---RoadPart 1----> 545  Oldest history row
+     * */
+
+    runWithRollback {
+      val roadwayNumber = 99L
+
+      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadNumber = 1L, roadPartNumber = 2L, startAddrM = 0L, endAddrM = 175L, DateTime.now().minusDays(5), None).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad)
+      val historyRoadway = dummyRoadway(roadwayNumber = roadwayNumber, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 370L, endAddrM = 545L, DateTime.now().minusDays(10), Some(DateTime.now().minusDays(3)), 1L).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad)
+      roadwayDAO.create(Seq(roadway, historyRoadway))
+
+      val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(), Seq(ProjectReservedPart(0L, 1L, 2L, None, None, None, None, None, None, None)), Seq(), None)
+      projectDAO.create(project)
+
+      val projectLinks = Seq(
+        dummyProjectLink(1L, 2L, Track.Combined, Discontinuity.Continuous, 0L, 120L, Some(DateTime.now()), endDate = Some(DateTime.now()), status = LinkStatus.Terminated, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber+1).copy(originalStartAddrMValue = 0L, originalEndAddrMValue = 120L, ely = 10),
+        dummyProjectLink(1L, 2L, Track.Combined, Discontinuity.Continuous, 0L, 22L, Some(DateTime.now()), status = LinkStatus.Transfer, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber+2).copy(originalStartAddrMValue = 120L, originalEndAddrMValue = 142, ely = 10),
+        dummyProjectLink(1L, 2L, Track.Combined, Discontinuity.EndOfRoad, 22L, 55L, Some(DateTime.now()), status = LinkStatus.Transfer, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber+2).copy(originalStartAddrMValue = 142L, originalEndAddrMValue = 175L, ely = 10)
+      )
+
+      val roadwayChanges = Seq(RoadwayFiller.RwChanges(roadway, Seq(historyRoadway), projectLinks))
+      val result = RoadwayFiller.applyRoadwayChanges(roadwayChanges).flatten.filter(_._1.nonEmpty)
+
+      result should have size 2
+
+      val resultRoadways = result.head._1
+      val (newRoadway, historyRoadways) = resultRoadways.partition(rw => rw.endDate.isEmpty && rw.validTo.isEmpty)
+      newRoadway should have size 1
+      newRoadway.head.roadPartNumber should be(2)
+      newRoadway.head.startAddrMValue should be(0)
+      newRoadway.head.endAddrMValue should be(55)
+
+      historyRoadways should have size 2
+      val newestHistoryRoadway = historyRoadways.head
+      val oldestHistoryRoadway = historyRoadways.tail.head
+      newestHistoryRoadway.discontinuity should be (Discontinuity.EndOfRoad)
+      newestHistoryRoadway.roadPartNumber should be (2)
+      newestHistoryRoadway.startAddrMValue should be (120)
+      newestHistoryRoadway.endAddrMValue should be (175)
+      oldestHistoryRoadway.discontinuity should be (Discontinuity.EndOfRoad)
+      oldestHistoryRoadway.roadPartNumber should be (1)
+      oldestHistoryRoadway.startAddrMValue should be (490)
+      oldestHistoryRoadway.endAddrMValue should be (545)
+
+      val terminatedRoadways = result.last._1
+      val (newTerminatedRoadway, historyTerminated) = terminatedRoadways.partition(rw => rw.endDate.isEmpty && rw.validTo.isEmpty)
+      newTerminatedRoadway should have size 0
+      historyTerminated should have size 2
+
+      val newestTerminatedRoadway = historyTerminated.head
+      val oldestTerminatedRoadway = historyTerminated.last
+      newestTerminatedRoadway.discontinuity should be (Discontinuity.Continuous)
+      newestTerminatedRoadway.roadPartNumber should be (2)
+      newestTerminatedRoadway.startAddrMValue should be (0)
+      newestTerminatedRoadway.endAddrMValue should be (120)
+      oldestTerminatedRoadway.discontinuity should be (Discontinuity.Continuous)
+      oldestTerminatedRoadway.roadPartNumber should be (1)
+      oldestTerminatedRoadway.startAddrMValue should be (370)
+      oldestTerminatedRoadway.endAddrMValue should be (490)
+
+    }
+  }
+
+  test("Test RoadwayFiller.applyRoadwayChanges()" +
     "When a single roadway (that has history) is transferred to another road part" +
     "Then new roadway and history roadways should form with correct address M values and road part numbers") {
 
