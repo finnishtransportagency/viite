@@ -88,7 +88,7 @@
         publishableProject = isPublishable;
 
         eventbus.trigger('roadAddressProject:fetched');
-        eventbus.trigger('roadAddressProject:writeProjectErrors');
+        applicationModel.removeSpinner();
       });
     };
 
