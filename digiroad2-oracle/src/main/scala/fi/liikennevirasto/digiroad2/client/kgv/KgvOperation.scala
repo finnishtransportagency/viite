@@ -1,8 +1,5 @@
 package fi.liikennevirasto.digiroad2.client.kgv
 
-import java.io.IOException
-import java.net.URLEncoder
-
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.kgv.FilterOgc.{combineFiltersWithAnd, withLinkIdFilter, withMunicipalityFilter, withRoadNumbersFilter}
 import fi.liikennevirasto.digiroad2.util.{Parallel, ViiteProperties}
@@ -15,6 +12,8 @@ import org.apache.http.impl.client.HttpClients
 import org.json4s.{DefaultFormats, StreamInput}
 import org.json4s.jackson.JsonMethods.parse
 
+import java.io.IOException
+import java.net.URLEncoder
 import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.concurrent.{Await, Future}
@@ -86,7 +85,7 @@ trait KgvOperation extends LinkOperationsAbstract{
   }
 
   protected def fetchFeatures(url: String): Either[LinkOperationError, Option[FeatureCollection]] = {
-    val MaxTries                                                      = 10
+    val MaxTries                                                      = 5
     var trycounter                                                    = 0 /// For do-while check. Up to MaxTries.
     var success                                                       = true /// For do-while check. Set to false when exception.
     var result: Either[LinkOperationError, Option[FeatureCollection]] = Left(LinkOperationError("Dummy start value", "nothing here", url))
