@@ -1042,11 +1042,19 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
     val projectId = params("projectId").toLong
     time(logger, s"GET request for /project/recalculateProject/$projectId") {
       try {
-        withDynTransaction {
+        val invalidUnchangedLinkErrors = withDynTransaction {
           val project = projectService.fetchProjectById(projectId).get
-          projectService.recalculateProjectLinks(projectId, project.modifiedBy)
+          val invalidUnchangedLinkErrors = projectService.projectValidator.checkForInvalidUnchangedLinks(project, projectLinkDAO.fetchProjectLinks(projectId))
+          if (invalidUnchangedLinkErrors.isEmpty) {
+            projectService.recalculateProjectLinks(projectId, project.modifiedBy)
+          }
+          invalidUnchangedLinkErrors
         }
-        val validationErrors = projectService.validateProjectById(projectId).map(projectService.projectValidator.errorPartsToApi)
+        val validationErrors = if (invalidUnchangedLinkErrors.nonEmpty)
+          invalidUnchangedLinkErrors.map(projectService.projectValidator.errorPartsToApi)
+        else
+          projectService.validateProjectById(projectId).map(projectService.projectValidator.errorPartsToApi)
+
         // return validation errors
         Map("success" -> true, "validationErrors" -> validationErrors)
       } catch {
@@ -1058,31 +1066,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
         case ex: Exception =>
           Map("success" -> false, "errorMessage" -> ex.getMessage)
       }
-    }
-  }
-
-  private val validateUnchanged: SwaggerSupportSyntax.OperationBuilder =(
-    apiOperation[Map[String, Any]]("validateUnchanged")
-      .parameters(
-        pathParam[Long]("projectId").description("Id of a project")
-      )
-      tags "ViiteAPI - Project"
-      summary "Given a valid projectId, this will run InvalidUnchangedLinks validation to the project in question."
-    )
-
-
-  get("/project/validateUnchanged/:projectId", operation(validateUnchanged)) {
-    val projectId = params("projectId").toLong
-    time(logger, s"GET request for /project/validateUnchanged/$projectId") {
-     val validationErrors =
-        withDynTransaction {
-          val project = projectService.fetchProjectById(projectId).get
-          projectService.projectValidator.checkForInvalidUnchangedLinks(project, projectLinkDAO.fetchProjectLinks(projectId)).map(projectService.projectValidator.errorPartsToApi)
-        }
-    if (validationErrors.nonEmpty)
-      Map("success" -> false, "validationErrors" -> validationErrors)
-    else
-      Map("success" -> true, "validationErrors" -> validationErrors)
     }
   }
 
