@@ -5,7 +5,7 @@ import java.io.{File, FileReader}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.kgv._
-import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike, ValidityPeriodDayOfWeek}
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.util.KGVSerializer
 import org.json4s.{CustomSerializer, DefaultFormats, Formats}
 import org.json4s.JsonAST.{JInt, JString}
@@ -236,12 +236,6 @@ class RoadLinkDeserializer extends KGVSerializer {
     case t: TrafficDirection => JString(t.toString)
   }))
 
-  case object DayofWeekSerializer extends CustomSerializer[ValidityPeriodDayOfWeek](format => ( {
-    case JString(dayOfWeek) => ValidityPeriodDayOfWeek(dayOfWeek)
-  }, {
-    case d: ValidityPeriodDayOfWeek => JString(d.toString)
-  }))
-
   case object LinkTypeSerializer extends CustomSerializer[LinkType](format => ( {
     case JInt(linkType) => LinkType(linkType.toInt)
   }, {
@@ -277,7 +271,7 @@ class RoadLinkDeserializer extends KGVSerializer {
   }))
 
   protected implicit val jsonFormats: Formats = DefaultFormats + SideCodeSerializer + TrafficDirectionSerializer +
-    LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + LinkGeomSourceSerializer + LifecycleStatusSerializer +
+    LinkTypeSerializer + AdministrativeClassSerializer + LinkGeomSourceSerializer + LifecycleStatusSerializer +
     FeatureClassSerializer
 
   def readCachedHistoryLinks(file: File): Seq[HistoryRoadLink] = {
