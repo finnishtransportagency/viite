@@ -54,7 +54,7 @@ class style():
 region = vars(args)['region']
 
 # output format: The AWS CLI output format that will be configured in the
-# saml profile (affects subsequent CLI calls)
+# SAML profile (affects subsequent CLI calls)
 outputformat = vars(args)['output']
 
 # Duration of the IAM account credentials
