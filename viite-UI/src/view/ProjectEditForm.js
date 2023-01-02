@@ -652,6 +652,8 @@
         var currentProject = projectCollection.getCurrentProject();
         // add spinner
         applicationModel.addSpinner();
+
+        $('.validation-warning').remove();
         // fire backend call to recalculate and validate the current project with the project id
         backend.recalculateAndValidateProject(currentProject.project.id, function (response) {
           // if recalculation and validation did not throw exceptions in the backend
@@ -661,6 +663,7 @@
                   new GenericConfirmPopup(response.validationErrors[0].errorMessage, {
                       type: "alert"
                   });
+                  $('.form,.form-horizontal,.form-dark').append('<label class="validation-warning">' + response.validationErrors[0].errorMessage + '<br>' + "LinkId: " + response.validationErrors[0].info + '</label>');
                   response.validationErrors = response.validationErrors.filter(error => error.errorCode !== 38)
               }
             // set project errors that were returned by the backend validations
