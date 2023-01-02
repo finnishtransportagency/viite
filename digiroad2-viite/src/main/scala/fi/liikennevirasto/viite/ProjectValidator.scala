@@ -471,11 +471,11 @@ class ProjectValidator {
       def notification = true
     }
 
-    // Viite-2714
+    // Viite-1576
     case object TrackGeometryLengthDeviation extends ValidationError {
       def value = 38
 
-      def message: String = "Geom length difference."
+      def message: String = geomLengthDifferenceBetweenTracks
 
       def notification = false
     }
@@ -489,7 +489,7 @@ class ProjectValidator {
                                     affectedIds: Seq[Long], coordinates: Seq[ProjectCoordinates],
                                     optionalInformation: Option[String])
 
-  def findElyChangesOnAdjacentRoads(projectLink: ProjectLink, allProjectLinks: Seq[ProjectLink]) = {
+  def findElyChangesOnAdjacentRoads(projectLink: ProjectLink, allProjectLinks: Seq[ProjectLink]): Boolean = {
     val dim = 2
     val points = GeometryUtils.geometryEndpoints(projectLink.geometry)
     val roadAddresses = roadAddressService.getRoadAddressLinksByBoundingBox(BoundingRectangle(points._2.copy(x = points._2.x + dim, y = points._2.y + dim), points._2.copy(x = points._2.x - dim, y = points._2.y - dim)), Seq.empty)
@@ -497,7 +497,7 @@ class ProjectValidator {
     nextElyCodes.nonEmpty && !nextElyCodes.forall(_ == projectLink.ely)
   }
 
-  def findElyChangesOnNextProjectLinks(projectLink: ProjectLink, allProjectLinks: Seq[ProjectLink]) = {
+  def findElyChangesOnNextProjectLinks(projectLink: ProjectLink, allProjectLinks: Seq[ProjectLink]): Boolean = {
     val nextProjectLinks = allProjectLinks.filter(pl => pl.roadNumber == projectLink.roadNumber && pl.roadPartNumber > projectLink.roadPartNumber)
     val nextPartStart =
       if (nextProjectLinks.nonEmpty)
