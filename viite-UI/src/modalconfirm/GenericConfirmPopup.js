@@ -29,7 +29,7 @@ window.GenericConfirmPopup = function (message, options) {
     '</div>';
 
   var alertDiv =
-    '<div class="modal-overlay confirm-modal">' +
+    '<div class="modal-overlay confirm-modal" id="genericConfirmationDialog">' +
     '<div class="modal-dialog">' +
     '<div class="content">' +
     message +
