@@ -137,6 +137,7 @@ package object viite {
   // Viite-2714
   val NoReverseErrorMessage = "Tieosoitteen kääntö ominaisuus on tilapäisesti poissa käytöstä. Tarkista että projektissa ei ole käännettyjä linkkejä."
 
+  val geomLengthDifferenceBetweenTracks = "Ajoratojen geometriapituuksissa yli 20% poikkeama."
   // Nodes and Junctions error messages
   val ReturnedTooManyNodesErrorMessage = "Hakusi palauttaa yli 50 kohdetta, rajaa hakua pienemmäksi."
   val NodeNotFoundErrorMessage = "Päivitettävää solmua ei löytynyt."

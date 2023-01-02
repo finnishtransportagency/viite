@@ -175,9 +175,9 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
         val roadway = roadways.find(r => r.roadNumber == nl.roadNumber && r.roadPartNumber == nl.roadPartNumber && r.startAddrMValue == nl.startAddrMValue && r.endAddrMValue == nl.endAddrMValue)
         if (roadway.nonEmpty) {
           nl.copy(roadwayId = roadway.get.id, roadwayNumber = roadway.get.roadwayNumber)
-        } else nl
-      }
-      )
+        }
+        else nl
+      })
     } else {
       newLinks
     }
@@ -1927,11 +1927,25 @@ Left|      |Right
   }
 
   test("Test checkTrackCodePairing When two track projects links have length difference > 20% Then there should be validation error.") {
+    // > 20% case
     runWithRollback {
       val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L), changeTrack = true)
       val extraLength             = 10L
       val inconsistentLinks       = projectLinks.map {l =>
         if (l.endAddrMValue == 40L && l.track == Track.RightSide) l.copy(geometryLength = l.geometryLength + extraLength, geometry = Seq(l.getFirstPoint, l.getLastPoint.copy(y = l.getLastPoint.y + extraLength))) else l
+      }
+
+      mockEmptyRoadAddressServiceCalls()
+      val validationErrors = projectValidator.checkTrackCodePairing(project, inconsistentLinks).distinct
+      validationErrors.size should be(1)
+    }
+
+    // > 50m case
+    runWithRollback {
+      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 100L, 200L, 300L, 400L), changeTrack = true)
+      val extraLength             = 60L
+      val inconsistentLinks       = projectLinks.map {l =>
+        if (l.endAddrMValue == 400L && l.track == Track.RightSide) l.copy(geometryLength = l.geometryLength + extraLength, geometry = Seq(l.getFirstPoint, l.getLastPoint.copy(y = l.getLastPoint.y + extraLength))) else l
       }
 
       mockEmptyRoadAddressServiceCalls()

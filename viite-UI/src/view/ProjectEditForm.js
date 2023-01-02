@@ -656,12 +656,13 @@
         backend.recalculateAndValidateProject(currentProject.project.id, function (response) {
           // if recalculation and validation did not throw exceptions in the backend
           if (response.success) {
-
               if (response.validationErrors.filter(error => error.errorCode === 38).length > 0) {
-                  instructionsPopup.show(response.validationErrors.filter(error => error.errorCode === 38)[0].errorMessage, 3000);
+                      // "Ajoratojen geometriapituuksissa yli 20% poikkeama."
+                  new GenericConfirmPopup(response.validationErrors[0].errorMessage, {
+                      type: "alert"
+                  });
                   response.validationErrors = response.validationErrors.filter(error => error.errorCode !== 38)
               }
-
             // set project errors that were returned by the backend validations
             projectCollection.setProjectErrors(response.validationErrors);
             if (Object.keys(response.validationErrors).length === 0) {
