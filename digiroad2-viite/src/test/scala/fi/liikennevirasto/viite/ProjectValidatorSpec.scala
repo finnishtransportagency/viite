@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point, Vector3d}
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, LinkGeomSource, SideCode}
-import fi.liikennevirasto.digiroad2.asset.AdministrativeClass.State
+import fi.liikennevirasto.digiroad2.asset.AdministrativeClass.{Municipality, State}
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.FrozenLinkInterface
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.dao.Sequences
@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
-import fi.liikennevirasto.viite.dao.{Discontinuity, LinearLocationDAO, ProjectReservedPart, _}
+import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, EndOfRoad, MinorDiscontinuity}
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
@@ -3202,4 +3202,17 @@ Left|      |Right
     }
   }
 
+  test("Test checkSingleAdminClassOnLink When ") {
+    runWithRollback {
+      val project                            = setUpProjectWithLinks(LinkStatus.Transfer, Seq(0L, 10L, 20L, 30L, 40L), discontinuity = Discontinuity.Continuous, lastLinkDiscontinuity = Discontinuity.EndOfRoad)
+      val projectLinks                       = projectLinkDAO.fetchProjectLinks(project.id)
+      val sameLinkIds                        = projectLinks.take(2).map(_.copy(linkId = projectLinks.head.linkId))
+      val withSameLinkAndDifferentAdminClass = Seq(sameLinkIds.head.copy(administrativeClass = Municipality), sameLinkIds.last) ++ projectLinks.drop(2)
+
+      mockEmptyRoadAddressServiceCalls()
+      val errors = projectValidator.checkSingleAdminClassOnLink(project, withSameLinkAndDifferentAdminClass)
+      errors should have size 1
+      errors.head.validationError.value should equal (projectValidator.ValidationErrorList.SingleAdminClassOnLink.value)
+    }
+  }
 }
