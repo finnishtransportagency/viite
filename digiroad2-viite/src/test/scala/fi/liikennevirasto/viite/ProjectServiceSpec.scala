@@ -1922,12 +1922,12 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       reversedHistory should have size 2
       notReversedHistory should have size 1
 
-      notReversedHistory.head.startDate.getYear should be(2002)
+      notReversedHistory.head.startDate.getYear should be(DateTime.now().minusYears(20).getYear)
 
       val (municipalityHistory, stateHistory) = reversedHistory.partition(_.administrativeClass == AdministrativeClass.Municipality)
       municipalityHistory should have size 1
-      municipalityHistory.head.startDate.getYear should be(2007)
-      stateHistory.head.startDate.getYear should be(2012)
+      municipalityHistory.head.startDate.getYear should be(DateTime.now().minusYears(15).getYear)
+      stateHistory.head.startDate.getYear should be(DateTime.now().minusYears(10).getYear)
     }
   }
 
