@@ -3,7 +3,6 @@
     var current = [];
     var dirty = false;
     var featuresToKeep = [];
-    var anomalousMarkers = [];
     var LinkSource = ViiteEnumerations.LinkGeomSource;
     var SelectionType = ViiteEnumerations.SelectionType;
 
@@ -160,15 +159,6 @@
       return dirty;
     };
 
-    var getAnomalousMarkers = function () {
-      return anomalousMarkers;
-    };
-
-    var setAnomalousMarkers = function (markersToSet) {
-      anomalousMarkers = markersToSet;
-    };
-
-
     var setDirty = function (state) {
       dirty = state;
     };
@@ -238,8 +228,6 @@
       isDirty: isDirty,
       setDirty: setDirty,
       cancel: cancel,
-      getAnomalousMarkers: getAnomalousMarkers,
-      setAnomalousMarkers: setAnomalousMarkers,
       get: get,
       count: count,
       filterFeaturesAfterSimulation: filterFeaturesAfterSimulation,
