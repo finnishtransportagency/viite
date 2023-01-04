@@ -13,7 +13,6 @@
     var junctionTemplateVector = dblVector();
     var cachedMarker = null;
 
-    var Anomaly = ViiteEnumerations.Anomaly;
     var SideCode = ViiteEnumerations.SideCode;
     var RoadZIndex = ViiteEnumerations.RoadZIndex;
 
@@ -599,7 +598,7 @@
         if (zoomlevels.getViewZoom(map) >= zoomlevels.minZoomForRoadNetwork) {
 
           var directionRoadMarker = _.filter(roadLinks, function (roadLink) {
-            return roadLink.anomaly !== Anomaly.NoAddressGiven.value && roadLink.anomaly !== Anomaly.GeometryChanged.value && (roadLink.sideCode === SideCode.AgainstDigitizing.value || roadLink.sideCode === SideCode.TowardsDigitizing.value);
+            return (roadLink.sideCode === SideCode.AgainstDigitizing.value || roadLink.sideCode === SideCode.TowardsDigitizing.value);
           });
           _.each(directionRoadMarker, function (directionLink) {
             cachedMarker.createMarker(directionLink, function (marker) {
