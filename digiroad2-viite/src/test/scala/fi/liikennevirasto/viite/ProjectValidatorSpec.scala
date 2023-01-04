@@ -3202,7 +3202,7 @@ Left|      |Right
     }
   }
 
-  test("Test checkSingleAdminClassOnLink When ") {
+  test("Test checkSingleAdminClassOnLink When one linkId has two different AdminClasses Then return SingleAdminClassOnLink error.") {
     runWithRollback {
       val project                            = setUpProjectWithLinks(LinkStatus.Transfer, Seq(0L, 10L, 20L, 30L, 40L), discontinuity = Discontinuity.Continuous, lastLinkDiscontinuity = Discontinuity.EndOfRoad)
       val projectLinks                       = projectLinkDAO.fetchProjectLinks(project.id)
