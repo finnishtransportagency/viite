@@ -154,7 +154,7 @@
           lineCap: 'round'
         }
       }),
-      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).and('anomaly').is(ViiteEnumerations.Anomaly.NoAddressGiven.value).use({
+      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).and('startAddressM').is(0).and('endAddressM').is(0).and('administrativeClassId').is(ViiteEnumerations.AdministrativeClass.PublicRoad.value).use({
         stroke: {
           color: '#1E1E1E',
           lineCap: 'round'
@@ -189,13 +189,13 @@
           lineCap: 'round'
         }
       }),
-      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).and('anomaly').is(ViiteEnumerations.Anomaly.None.value).and('lifecycleStatus').is(ViiteEnumerations.lifecycleStatus.UnderConstruction.value).use({
+      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).and('lifecycleStatus').is(ViiteEnumerations.lifecycleStatus.UnderConstruction.value).use({
         stroke: {
           color: 'rgba(238, 238, 235, 0.75)',
           lineCap: 'round'
         }
       }),
-      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).and('anomaly').is(ViiteEnumerations.Anomaly.NoAddressGiven.value).and('lifecycleStatus').is(ViiteEnumerations.lifecycleStatus.UnderConstruction.value).use({
+      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).and('startAddressM').is(0).and('endAddressM').is(0).and('administrativeClassId').is(ViiteEnumerations.AdministrativeClass.PublicRoad.value).and('lifecycleStatus').is(ViiteEnumerations.lifecycleStatus.UnderConstruction.value).use({
         stroke: {
           color: '#ff9900',
           lineCap: 'round'
@@ -246,7 +246,7 @@
           opacity: 1
         }
       }),
-      new StyleRule().where('status').is(unknownStatus).and('anomaly').is(ViiteEnumerations.Anomaly.NoAddressGiven.value).and('lifecycleStatus').isNot(ViiteEnumerations.lifecycleStatus.UnderConstruction.value).use({
+      new StyleRule().where('status').is(unknownStatus).and('startAddressM').is(0).and('endAddressM').is(0).and('administrativeClassId').is(ViiteEnumerations.AdministrativeClass.PublicRoad.value).and('lifecycleStatus').isNot(ViiteEnumerations.lifecycleStatus.UnderConstruction.value).use({
         stroke: {
           color: '#646461',
           lineCap: 'round',
