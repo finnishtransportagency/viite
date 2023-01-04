@@ -4,7 +4,6 @@
     var dirty = false;
     var featuresToKeep = [];
     var anomalousMarkers = [];
-    var Anomaly = ViiteEnumerations.Anomaly;
     var LinkSource = ViiteEnumerations.LinkGeomSource;
     var SelectionType = ViiteEnumerations.SelectionType;
 
@@ -140,7 +139,7 @@
           if (s.linearLocationId !== ViiteEnumerations.UnknownRoadId && s.linearLocationId !== ViiteEnumerations.NewRoadId) {
             return s.linearLocationId === vf.linkData.linearLocationId && s.mmlId === vf.linkData.mmlId;
           } else {
-            return s.linkId === vf.linkData.linkId && s.mmlId === vf.linkData.mmlId && s.floating === vf.linkData.floating && s.anomaly === vf.linkData.anomaly;
+            return s.linkId === vf.linkData.linkId && s.mmlId === vf.linkData.mmlId && s.floating === vf.linkData.floating;
           }
         }));
       });
@@ -192,12 +191,6 @@
       });
     };
 
-    var getFeaturesToKeepUnknown = function () {
-      return _.filter(getFeaturesToKeep(), function (fk) {
-        return fk.anomaly === Anomaly.NoAddressGiven.value;
-      });
-    };
-
     var count = function () {
       return current.length;
     };
@@ -230,7 +223,7 @@
     };
 
     var linkIdsToExclude = function () {
-      return _.chain(getFeaturesToKeepUnknown().concat(getFeaturesToKeep()).concat(roadCollection.getUnaddressedRoadLinkGroups())).map(function (feature) {
+      return _.chain(getFeaturesToKeep().concat(roadCollection.getUnaddressedRoadLinkGroups())).map(function (feature) {
         return feature.linkId;
       }).uniq().value();
     };
@@ -249,7 +242,6 @@
       setAnomalousMarkers: setAnomalousMarkers,
       get: get,
       count: count,
-      getFeaturesToKeepUnknown: getFeaturesToKeepUnknown,
       filterFeaturesAfterSimulation: filterFeaturesAfterSimulation,
       linkIdsToExclude: linkIdsToExclude,
       extractDataForDisplay: extractDataForDisplay,
