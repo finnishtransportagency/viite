@@ -145,7 +145,7 @@ class RoadAddressLinkPartitionerSpec extends FunSuite with Matchers {
     unaddressedSections.size should be (1)
   }
 
-  test("Test partition When adding modified connected anomalous to existing roadAddressLinks Then should return same previous size, 4, of partitioned groups") {
+  test("Test partition When adding unaddressed link that is connected to one of the two unaddressed link chains Then should return same previous size, 4, of partitioned groups") {
     val add = makeRoadAddressLink(0, 1, 0, 0, 1.0, 11.0)
     val mod = add.copy(geometry = Seq(Point(10.0,21.0), Point(11.0,21.0)), sourceId = "")
     val partitioned = RoadAddressLinkPartitioner.groupByHomogeneousSection(roadAddressLinks ++ Seq(mod))
