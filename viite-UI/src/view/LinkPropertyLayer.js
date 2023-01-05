@@ -34,13 +34,6 @@
     });
     indicatorLayer.set('name', 'indicatorLayer');
 
-    var anomalousMarkerLayer = new ol.layer.Vector({
-      source: anomalousMarkerVector,
-      name: 'anomalousMarkerLayer',
-      zIndex: RoadZIndex.IndicatorLayer.value
-    });
-    anomalousMarkerLayer.set('name', 'anomalousMarkerLayer');
-
     var directionMarkerLayer = new ol.layer.Vector({
       source: directionMarkerVector,
       name: 'directionMarkerLayer',
@@ -141,12 +134,11 @@
     historicRoadsLayer.set('name', 'historicRoadsLayer');
 
 
-    var layers = [roadLayer.layer, anomalousMarkerLayer, directionMarkerLayer, underConstructionMarkerLayer, geometryChangedLayer, calibrationPointLayer,
+    var layers = [roadLayer.layer, directionMarkerLayer, underConstructionMarkerLayer, geometryChangedLayer, calibrationPointLayer,
       indicatorLayer, greenRoadLayer, pickRoadsLayer, simulatedRoadsLayer, underConstructionRoadLayer, unAddressedRoadLayer, reservedRoadLayer, historicRoadsLayer];
 
     var setGeneralOpacity = function (opacity) {
       roadLayer.layer.setOpacity(opacity);
-      anomalousMarkerLayer.setOpacity(opacity);
       directionMarkerLayer.setOpacity(opacity);
       underConstructionMarkerLayer.setOpacity(opacity);
       underConstructionRoadLayer.setOpacity(opacity);
@@ -247,7 +239,7 @@
       //Multi is the one en charge of defining if we select just the feature we clicked or all the overlapping
       multi: true,
       //This will limit the interaction to the specific layer, in this case the layer where the roadAddressLinks are drawn
-      layers: [roadLayer.layer, anomalousMarkerLayer, greenRoadLayer, pickRoadsLayer, geometryChangedLayer,
+      layers: [roadLayer.layer, greenRoadLayer, pickRoadsLayer, geometryChangedLayer,
         underConstructionRoadLayer, unAddressedRoadLayer, historicRoadsLayer],
       //Limit this interaction to the singleClick
       condition: ol.events.condition.singleClick,
@@ -490,7 +482,7 @@
           return sl.linkId;
         }), rl.linkId);
       });
-      me.clearLayers([anomalousMarkerLayer, geometryChangedLayer, underConstructionRoadLayer, unAddressedRoadLayer, directionMarkerLayer, underConstructionMarkerLayer, calibrationPointLayer]);
+      me.clearLayers([geometryChangedLayer, underConstructionRoadLayer, unAddressedRoadLayer, directionMarkerLayer, underConstructionMarkerLayer, calibrationPointLayer]);
 
       if (zoomlevels.getViewZoom(map) >= zoomlevels.minZoomForRoadNetwork) {
 
@@ -655,7 +647,7 @@
       });
       eventListener.listenTo(eventbus, 'linkProperty:visibilityChanged', function () {
         //Exclude underConstruction layers from toggle
-        me.toggleLayersVisibility([roadLayer.layer, anomalousMarkerLayer, directionMarkerLayer, geometryChangedLayer, calibrationPointLayer,
+        me.toggleLayersVisibility([roadLayer.layer, directionMarkerLayer, geometryChangedLayer, calibrationPointLayer,
           indicatorLayer, greenRoadLayer, pickRoadsLayer, simulatedRoadsLayer, reservedRoadLayer, historicRoadsLayer], applicationModel.getRoadVisibility());
       });
       eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', redraw);
@@ -750,7 +742,6 @@
       }
       if (applicationModel.selectionTypeIs(SelectionType.Unknown)) {
         setGeneralOpacity(0.2);
-        anomalousMarkerLayer.setOpacity(1);
       }
     });
 

@@ -8,9 +8,6 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
     var getRoadLayerName = function () {
       return 'roadLayer';
     };
-    var getAnomalousMarkerLayerName = function () {
-      return 'anomalousMarkerLayer';
-    };
     var getCalibrationPointLayerName = function () {
       return 'calibrationPointLayer';
     };
@@ -277,7 +274,6 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
 
     return {
       getRoadLayerName: getRoadLayerName,
-      getAnomalousMarkerLayerName: getAnomalousMarkerLayerName,
       getCalibrationPointLayerName: getCalibrationPointLayerName,
       getGreenRoadLayerName: getGreenRoadLayerName,
       getPickRoadsLayerName: getPickRoadsLayerName,
