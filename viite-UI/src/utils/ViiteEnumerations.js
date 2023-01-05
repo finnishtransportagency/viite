@@ -103,7 +103,7 @@
 
   root.RoadZIndex = {
     VectorLayer: {value: 1},
-    AnomalousMarkerLayer: {value: 2},
+    RoadLinkStyleZIndex: {value: 2},
     CalibrationPointLayer: {value: 3},
     UnderConstructionLayer: {value: 4},
     GeometryChangedLayer: {value: 5},

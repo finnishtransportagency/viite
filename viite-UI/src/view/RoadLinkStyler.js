@@ -363,7 +363,7 @@
     ];
 
     // Medium z-index for all roads
-    var roadLinkStyle = new StyleRuleProvider({zIndex: ViiteEnumerations.RoadZIndex.AnomalousMarkerLayer.value});
+    var roadLinkStyle = new StyleRuleProvider({zIndex: ViiteEnumerations.RoadZIndex.RoadLinkStyleZIndex.value});
     roadLinkStyle.addRules(strokeRules);
     roadLinkStyle.addRules(strokeWidthRules);
     roadLinkStyle.addRules(strokeAdministrativeClassRules);
