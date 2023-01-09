@@ -50,11 +50,6 @@ class ViiteVkmClient {
     val url = builder.build.toString
     val request = new HttpGet(url)
 
-    if (builder.getHost == "localhost") {
-      // allow ssh port forward for developing
-      request.setHeader("Host", ViiteProperties.oagProxyServer)
-    }
-
     request.addHeader("X-API-Key", ViiteProperties.vkmApiKey)
 
     val response = client.execute(request)
@@ -79,13 +74,8 @@ class ViiteVkmClient {
       nameValuePairs.add(new BasicNameValuePair(key, value))
     }
     post.setEntity(new UrlEncodedFormEntity(nameValuePairs, "UTF-8"))
-
     post.setHeader("Content-type", "application/x-www-form-urlencoded")
-    val url = new URL(getRestEndPoint)
-    if (url.getHost == "localhost") {
-      // allow ssh port forward for developing
-      post.setHeader("Host", ViiteProperties.oagProxyServer)
-    }
+
     var response: CloseableHttpResponse = null
     try {
       response = client.execute(post)

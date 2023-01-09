@@ -77,11 +77,24 @@ case class PreFillInfo(RoadNumber: BigInt, RoadPart: BigInt, roadName: String, r
 
 case class LinkToRevert(id: Long, linkId: String, status: Long, geometry: Seq[Point])
 
-class ProjectService(roadAddressService: RoadAddressService, roadLinkService: RoadLinkService, nodesAndJunctionsService: NodesAndJunctionsService, roadwayDAO: RoadwayDAO,
-                     roadwayPointDAO: RoadwayPointDAO, linearLocationDAO: LinearLocationDAO, projectDAO: ProjectDAO, projectLinkDAO: ProjectLinkDAO,
-                     nodeDAO: NodeDAO, nodePointDAO: NodePointDAO, junctionPointDAO: JunctionPointDAO, projectReservedPartDAO: ProjectReservedPartDAO, roadwayChangesDAO: RoadwayChangesDAO,
-                     roadwayAddressMapper: RoadwayAddressMapper,
-                     eventbus: DigiroadEventBus, frozenTimeVVHAPIServiceEnabled: Boolean = false) {
+class ProjectService(
+                      roadAddressService         : RoadAddressService,
+                      roadLinkService            : RoadLinkService,
+                      nodesAndJunctionsService   : NodesAndJunctionsService,
+                      roadwayDAO                 : RoadwayDAO,
+                      roadwayPointDAO            : RoadwayPointDAO,
+                      linearLocationDAO          : LinearLocationDAO,
+                      projectDAO                 : ProjectDAO,
+                      projectLinkDAO             : ProjectLinkDAO,
+                      nodeDAO                    : NodeDAO,
+                      nodePointDAO               : NodePointDAO,
+                      junctionPointDAO           : JunctionPointDAO,
+                      projectReservedPartDAO     : ProjectReservedPartDAO,
+                      roadwayChangesDAO          : RoadwayChangesDAO,
+                      roadwayAddressMapper       : RoadwayAddressMapper,
+                      eventbus                   : DigiroadEventBus,
+                      frozenTimeAPIServiceEnabled: Boolean = false
+                    ) {
 
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
@@ -233,10 +246,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       }
   }
 
+  /* Return if road parts are reservable.
+  *  If road part is not reserved ProjectReservedPart
+  *  If road part is already reserved return error message
+  *  If road part is already reserved for the projectId return ProjectReservedPart
+  * */
   def checkRoadPartsReservable(roadNumber: Long, startPart: Long, endPart: Long, projectId: Long): Either[String, (Seq[ProjectReservedPart], Seq[ProjectReservedPart])] = {
     (startPart to endPart).foreach { part =>
       projectReservedPartDAO.fetchProjectReservedPart(roadNumber, part) match {
-        case Some(name) => return Left(s"Tie $roadNumber osa $part ei ole vapaana projektin alkupäivämääränä. Tieosoite on jo varattuna projektissa: $name.")
+        case Some((id,name)) => if (id != projectId) return Left(s"Tie $roadNumber osa $part ei ole vapaana projektin alkupäivämääränä. Tieosoite on jo varattuna projektissa: $name.")
         case _ =>
       }
       val projectsWithCommonJunctions = projectReservedPartDAO.fetchProjectReservedJunctions(roadNumber, part, projectId)
@@ -695,7 +713,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           case Some(error) => throw new RoadPartReservedException(error)
           case _ =>
             val roadwaysByLinkSource = linearLocationDAO.fetchByRoadways(roadways.map(_.roadwayNumber).toSet).groupBy(_.linkGeomSource)
-            val regularLinkSource = if (frozenTimeVVHAPIServiceEnabled) LinkGeomSource.FrozenLinkInterface else LinkGeomSource.NormalLinkInterface
+            val regularLinkSource = if (frozenTimeAPIServiceEnabled) LinkGeomSource.FrozenLinkInterface else LinkGeomSource.NormalLinkInterface
             val regular = if (roadwaysByLinkSource.contains(regularLinkSource)) roadwaysByLinkSource(regularLinkSource) else Seq()
             val complementary = if (roadwaysByLinkSource.contains(LinkGeomSource.ComplementaryLinkInterface)) roadwaysByLinkSource(LinkGeomSource.ComplementaryLinkInterface) else Seq()
             if (complementary.nonEmpty) {

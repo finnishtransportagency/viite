@@ -88,67 +88,64 @@ object ProjectSectionCalculator {
     } else {
       val leftTerminated = left.filter(_.status == LinkStatus.Terminated)
       val rightTerminated = right.filter(_.status == LinkStatus.Terminated)
+      val nonTerminatedSortedByStartAddr: Seq[ProjectLink] = projectLinks.filterNot(_.status == LinkStatus.Terminated).sortBy(_.startAddrMValue)
 
       /* Set terminated link heads to new calculated values. */
       val leftReassignedStart: Seq[ProjectLink] = leftTerminated.map(leftTerminatedpl => {
-        val startingPointLink = projectLinks.filterNot(_.status == LinkStatus.Terminated).sortBy(_.startAddrMValue).find(pl => {
+        val startingPointLink = nonTerminatedSortedByStartAddr.find(pl => {
           pl.id != leftTerminatedpl.id && (pl.startingPoint.connected(leftTerminatedpl.startingPoint))
         })
         if (startingPointLink.isDefined) leftTerminatedpl.copy(startAddrMValue = startingPointLink.get.startAddrMValue)
         else {
-          val endingPointLink = projectLinks.filterNot(_.status == LinkStatus.Terminated).sortBy(_.startAddrMValue).find(pl => {
+          val endingPointLink = nonTerminatedSortedByStartAddr.find(pl => {
             pl.id != leftTerminatedpl.id && (pl.endPoint.connected(leftTerminatedpl.startingPoint))
           })
           if (endingPointLink.isDefined) leftTerminatedpl.copy(startAddrMValue = endingPointLink.get.endAddrMValue)
           else leftTerminatedpl
         }
-      }
-      )
+      })
 
       val leftReassignedEnd: Seq[ProjectLink] = leftReassignedStart.map(leftTerminatedpl => {
-        val startingPointLink = projectLinks.filterNot(_.status == LinkStatus.Terminated).sortBy(_.startAddrMValue).find(pl =>
+        val startingPointLink = nonTerminatedSortedByStartAddr.find(pl =>
           (pl.id != leftTerminatedpl.id && ( pl.startingPoint.connected(leftTerminatedpl.endPoint))
         ))
         if (startingPointLink.isDefined) leftTerminatedpl.copy(endAddrMValue = startingPointLink.get.startAddrMValue)
         else {
-          val endPointLink = projectLinks.filterNot(_.status == LinkStatus.Terminated).sortBy(_.startAddrMValue).find(pl =>
+          val endPointLink = nonTerminatedSortedByStartAddr.find(pl =>
             pl.id != leftTerminatedpl.id && (pl.endPoint.connected(leftTerminatedpl.endPoint))
           )
           if (endPointLink.isDefined) leftTerminatedpl.copy(endAddrMValue = endPointLink.get.endAddrMValue)
           else leftTerminatedpl
         }
-      }
-      )
+      })
 
       val rightReassignedStart: Seq[ProjectLink] = rightTerminated.map(rightTerminatedpl => {
-        val startingPointLink = projectLinks.filterNot(_.status == LinkStatus.Terminated).sortBy(_.startAddrMValue).find(pl =>
+        val startingPointLink = nonTerminatedSortedByStartAddr.find(pl =>
           pl.id != rightTerminatedpl.id && (pl.startingPoint.connected(rightTerminatedpl.startingPoint))
         )
         if (startingPointLink.isDefined) rightTerminatedpl.copy(startAddrMValue = startingPointLink.get.startAddrMValue)
         else {
-          val endingPointLink = projectLinks.filterNot(_.status == LinkStatus.Terminated).sortBy(_.startAddrMValue).find(pl =>
+          val endingPointLink = nonTerminatedSortedByStartAddr.find(pl =>
             pl.id != rightTerminatedpl.id && (pl.endPoint.connected(rightTerminatedpl.startingPoint))
           )
           if (endingPointLink.isDefined) rightTerminatedpl.copy(startAddrMValue = endingPointLink.get.endAddrMValue)
           else rightTerminatedpl
         }
-      }
-      )
+      })
 
       val rightReassignedEnd: Seq[ProjectLink] = rightReassignedStart.map(rightTerminatedpl => {
-        val startingPointLink = projectLinks.filterNot(_.status == LinkStatus.Terminated).sortBy(_.startAddrMValue).find(pl => {
+        val startingPointLink = nonTerminatedSortedByStartAddr.find(pl => {
           pl.id != rightTerminatedpl.id && (pl.startingPoint.connected(rightTerminatedpl.endPoint))
         })
         if (startingPointLink.isDefined) rightTerminatedpl.copy(endAddrMValue = startingPointLink.get.startAddrMValue)
         else {
-          val endPointLink = projectLinks.filterNot(_.status == LinkStatus.Terminated).sortBy(_.startAddrMValue).find(pl => {
+          val endPointLink = nonTerminatedSortedByStartAddr.find(pl => {
             pl.id != rightTerminatedpl.id && (pl.endPoint.connected(rightTerminatedpl.endPoint))
           })
           if (endPointLink.isDefined) rightTerminatedpl.copy(endAddrMValue = endPointLink.get.endAddrMValue)
           else rightTerminatedpl
         }
-      }
-      )
+      })
 
       def retval: Seq[ProjectLink] = {
         if (rightReassignedEnd == leftReassignedEnd)
