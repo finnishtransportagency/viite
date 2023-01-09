@@ -220,8 +220,7 @@
     Discontinuous: {value: 2, description: "Epäjatkuva"},
     ChangingELYCode: {value: 3, description: "ELY:n raja"},
     MinorDiscontinuity: {value: 4, description: "Lievä epäjatkuvuus"},
-    Continuous: {value: 5, description: "Jatkuva"},
-    ParallelLink: {value: 6, description: "Parallel Link"}
+    Continuous: {value: 5, description: "Jatkuva"}
 
   };
 }(window.ViiteEnumerations = window.ViiteEnumerations || {}));
