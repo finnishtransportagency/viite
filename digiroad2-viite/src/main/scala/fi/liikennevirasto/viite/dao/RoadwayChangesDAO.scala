@@ -5,7 +5,6 @@ import java.sql.{PreparedStatement, Timestamp}
 import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, ParallelLink}
 import fi.liikennevirasto.viite.process.{ProjectDeltaCalculator, RoadwaySection}
 import fi.liikennevirasto.viite.process.ProjectDeltaCalculator.{createTwoTrackOldAddressRoadParts, projectLinkDAO}
 import org.joda.time.DateTime
@@ -162,18 +161,13 @@ class RoadwayChangesDAO {
     val source = toRoadwayChangeSource(row)
     val target = toRoadwayChangeRecipient(row)
     RoadwayChangeInfo(AddressChangeType.apply(row.changeType), source, target,
-      replaceParallelLink(Discontinuity.apply(row.targetDiscontinuity.getOrElse(Discontinuity.Continuous.value))),
+      Discontinuity.apply(row.targetDiscontinuity.getOrElse(Discontinuity.Continuous.value)),
       AdministrativeClass.apply(row.targetAdministrativeClass.getOrElse(AdministrativeClass("Unknown").value)),
       row.reversed,
       row.orderInTable,
       target.ely.getOrElse(source.ely.get))
   }
 
-  private def replaceParallelLink(currentDiscontinuity: Discontinuity): Discontinuity = {
-    if (currentDiscontinuity == ParallelLink)
-      Continuous
-    else currentDiscontinuity
-  }
   // TODO: cleanup after modification dates and modified by are populated correctly
   private def getUserAndModDate(row: ChangeRow): (String, DateTime) = {
     val user = if (row.modifiedDate.isEmpty) {
