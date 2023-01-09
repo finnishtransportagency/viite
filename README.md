@@ -94,6 +94,10 @@ Running the backend from the command line in the development mode:
 When developing locally, backend reads the properties from the
 `conf/env.properties` file. 
 
+Environment parameter can be set from Intellij SBT Configuration Environment Variable 
+or edit run configuration and set environment variable
+
+
 Building and Running the Frontend
 ==================================
 Building the frontend:
@@ -113,6 +117,8 @@ Running the frontend server from Idea:
 - run the "Grunt Server" task
 
 Running the frontend server from the command line:
+- Set rasterServiceApiKey to environment variables
+
 ```
 grunt server
 ```

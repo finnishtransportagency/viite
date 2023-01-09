@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.{RoadAddressLinkBuilder, _}
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLink}
+import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink}
 import org.slf4j.{Logger, LoggerFactory}
 
 
@@ -36,26 +36,6 @@ object RoadAddressFiller {
       segments
     }
     adjustments
-  }
-
-  def generateUnknownRoadAddressesForRoadLink(roadLink: RoadLinkLike, adjustedSegments: Seq[RoadAddressLink]): Seq[UnaddressedRoadLink] = {
-    if (adjustedSegments.isEmpty)
-      generateUnknownLink(roadLink)
-    else
-      Seq()
-  }
-
-  private def isPublicRoad(roadLink: RoadLinkLike) = {
-    roadLink.administrativeClass == AdministrativeClass.State
-  }
-
-  private def generateUnknownLink(roadLink: RoadLinkLike): Seq[UnaddressedRoadLink] = {
-    val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry, 0.0, roadLink.length)
-    Seq(UnaddressedRoadLink(roadLink.linkId, None, None, AdministrativeClass.Unknown, None, None, Some(0.0), Some(roadLink.length), if (isPublicRoad(roadLink)) {
-      Anomaly.NoAddressGiven
-    } else {
-      Anomaly.None
-    }, geom))
   }
 
   def fillProjectTopology(roadLinks: Seq[RoadLinkLike], roadAddressMap: Map[String, Seq[ProjectAddressLink]]): Seq[ProjectAddressLink] = {
@@ -126,7 +106,7 @@ object RoadAddressFiller {
   /**
     * Drops all the linear locations with length less than ${MinAllowedRoadAddressLength}
     *
-    * @param roadLink  The vvh road link
+    * @param roadLink  The road link
     * @param segments  The linear location on the given road link
     * @param changeSet The resume of changes applied on all the adjust operations
     * @return
@@ -182,13 +162,8 @@ object RoadAddressFiller {
   private def generateUnaddressedSegments(roadLink: RoadLinkLike, roadAddresses: Seq[RoadAddress]): Seq[RoadAddressLink] = {
     //TODO check if its needed to create unaddressed road link for part after VIITE-1536
     if (roadAddresses.isEmpty) {
-      val anomaly = if (isPublicRoad(roadLink)) {
-        Anomaly.NoAddressGiven
-      } else {
-        Anomaly.None
-      }
       val unaddressedRoadLink =
-        UnaddressedRoadLink(roadLink.linkId, None, None, AdministrativeClass.Unknown, None, None, Some(0.0), Some(roadLink.length), anomaly,
+        UnaddressedRoadLink(roadLink.linkId, None, None, AdministrativeClass.Unknown, None, None, Some(0.0), Some(roadLink.length),
           GeometryUtils.truncateGeometry3D(roadLink.geometry, 0.0, roadLink.length))
 
       Seq(roadAddressLinkBuilder.build(roadLink, unaddressedRoadLink))

@@ -59,22 +59,44 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     override def withDynTransaction[T](f: => T): T = f
   }
 
-  val nodesAndJunctionsService = new NodesAndJunctionsService(mockRoadwayDAO, roadwayPointDAO, mockLinearLocationDAO, nodeDAO, nodePointDAO, junctionDAO, junctionPointDAO, roadwayChangesDAO, projectReservedPartDAO) {
-    override def withDynSession[T](f: => T): T = f
+  val nodesAndJunctionsService: NodesAndJunctionsService =
+    new NodesAndJunctionsService(
+                                  mockRoadwayDAO,
+                                  roadwayPointDAO,
+                                  mockLinearLocationDAO,
+                                  nodeDAO,
+                                  nodePointDAO,
+                                  junctionDAO,
+                                  junctionPointDAO,
+                                  roadwayChangesDAO,
+                                  projectReservedPartDAO
+                                  ) {
+                                      override def withDynSession[T](f: => T): T = f
+                                      override def withDynTransaction[T](f: => T): T = f
+                                      override def withDynTransactionNewOrExisting[T](f: => T): T = f
+                                    }
 
-    override def withDynTransaction[T](f: => T): T = f
-
-    override def withDynTransactionNewOrExisting[T](f: => T): T = f
-  }
-
-  val projectService: ProjectService = new ProjectService(roadAddressService, mockRoadLinkService, nodesAndJunctionsService, roadwayDAO,
-    roadwayPointDAO, linearLocationDAO, projectDAO, projectLinkDAO,
-    nodeDAO, nodePointDAO, junctionPointDAO, projectReservedPartDAO, roadwayChangesDAO,
-    roadwayAddressMapper, mockEventBus) {
-    override def withDynSession[T](f: => T): T = f
-
-    override def withDynTransaction[T](f: => T): T = f
-  }
+  val projectService: ProjectService =
+    new ProjectService(
+                        roadAddressService,
+                        mockRoadLinkService,
+                        nodesAndJunctionsService,
+                        roadwayDAO,
+                        roadwayPointDAO,
+                        linearLocationDAO,
+                        projectDAO,
+                        projectLinkDAO,
+                        nodeDAO,
+                        nodePointDAO,
+                        junctionPointDAO,
+                        projectReservedPartDAO,
+                        roadwayChangesDAO,
+                        roadwayAddressMapper,
+                        mockEventBus
+                        ) {
+                            override def withDynSession[T](f: => T): T = f
+                            override def withDynTransaction[T](f: => T): T = f
+                          }
 
   def runWithRollback(f: => Unit): Unit = {
     Database.forDataSource(PostGISDatabase.ds).withDynTransaction {

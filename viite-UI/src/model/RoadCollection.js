@@ -63,8 +63,6 @@
     var roadLinkGroups = [];
     var unaddressedUnderConstructionRoadLinkGroups = [];
     var unaddressedRoadLinkGroups = [];
-    var tmpRoadLinkGroups = [];
-    var preMovedRoadAddresses = [];
     var date = [];
     var historicRoadLinks = [];
     var LinkStatus = ViiteEnumerations.LinkStatus;
@@ -278,25 +276,6 @@
       });
     };
 
-    this.getTmpRoadLinkGroups = function () {
-      return tmpRoadLinkGroups;
-    };
-
-    this.getTmpByLinkId = function (ids) {
-      var segments = _.filter(tmpRoadLinkGroups, function (road) {
-        return road.getData().linkId === ids;
-      });
-      return segments;
-    };
-
-    this.getTmpById = function (ids) {
-      return _.map(ids, function (id) {
-        return _.find(tmpRoadLinkGroups, function (road) {
-          return road.getData().id === id;
-        });
-      });
-    };
-
     this.get = function (ids) {
       return _.map(ids, function (id) {
         return _.find(roadLinks(), function (road) {
@@ -355,14 +334,6 @@
       });
     };
 
-    this.addTmpRoadLinkGroups = function (tmp) {
-      if (tmpRoadLinkGroups.filter(function (roadTmp) {
-        return roadTmp.getData().linkId === tmp.linkId;
-      }).length === 0) {
-        tmpRoadLinkGroups.push(new RoadLinkModel(tmp));
-      }
-    };
-
     var setRoadLinkGroups = function (groups) {
       roadLinkGroups = groups;
     };
@@ -373,14 +344,6 @@
 
     this.reset = function () {
       roadLinkGroups = [];
-    };
-
-    this.addPreMovedRoadAddresses = function (ra) {
-      preMovedRoadAddresses.push(ra);
-    };
-
-    this.resetPreMovedRoadAddresses = function () {
-      preMovedRoadAddresses = [];
     };
 
     this.findReservedProjectLinks = function (boundingBox, zoomLevel, projectId) {
@@ -404,12 +367,6 @@
           return feature;
         });
         eventbus.trigger('linkProperties:highlightReservedRoads', notHandledFeatures);
-      });
-    };
-
-    this.toRoadLinkModel = function (roadDataArray) {
-      return _.map(roadDataArray, function (rda) {
-        return new RoadLinkModel(rda);
       });
     };
   };

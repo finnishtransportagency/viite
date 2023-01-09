@@ -540,14 +540,14 @@ SELECT
 
       val elyCondition = {
         if (ely.nonEmpty)
-          s" AND rc.new_ely = ${ely.get}"
+          s" AND (rc.new_ely = ${ely.get} OR rc.old_ely = ${ely.get})"
         else
           ""
       }
 
       val roadNumberCondition = {
         if (roadNumber.nonEmpty)
-          s" AND rc.new_road_number = ${roadNumber.get}"
+          s" AND (rc.new_road_number = ${roadNumber.get} OR rc.old_road_number = ${roadNumber.get})"
         else
           ""
       }
@@ -555,9 +555,9 @@ SELECT
       val roadPartCondition = {
         val parts = (minRoadPartNumber, maxRoadPartNumber)
         parts match {
-          case (Some(minPart), Some(maxPart)) => s"AND rc.new_road_part_number BETWEEN $minPart AND $maxPart"
-          case (None, Some(maxPart)) => s"AND rc.new_road_part_number <= $maxPart"
-          case (Some(minPart), None) => s"AND rc.new_road_part_number >= $minPart"
+          case (Some(minPart), Some(maxPart)) => s"AND (rc.new_road_part_number BETWEEN $minPart AND $maxPart OR rc.old_road_part_number BETWEEN $minPart AND $maxPart)"
+          case (None, Some(maxPart)) => s"AND (rc.new_road_part_number <= $maxPart OR rc.old_road_part_number <= $maxPart)"
+          case (Some(minPart), None) => s"AND (rc.new_road_part_number >= $minPart OR rc.old_road_part_number >= $minPart)"
           case _ => ""
         }
       }
@@ -593,8 +593,14 @@ SELECT
                    |	new_end_addr_m - new_start_addr_m,
                    |	new_administrative_class
                    |FROM roadway_changes rc
-                   |JOIN road_name rn ON rc.new_road_number = rn.road_number AND rn.end_date IS NULL AND rn.valid_to IS NULL
-                   |JOIN project p ON rc.project_id = p.id""".stripMargin
+                   |JOIN project p ON rc.project_id = p.id
+                   |-- Get the valid road name for the road that was modified in the project
+                   |JOIN road_name rn ON (rc.new_road_number = rn.road_number OR  rc.old_road_number = rn.road_number)
+                   |  AND rn.valid_to IS NULL
+                   |  AND rn.start_date <= p.start_date
+                   |  -- End date should be null or the same as the roads' end date (if the whole road was terminated in this project)
+                   |  AND (rn.end_date IS NULL OR rn.end_date = (p.start_date - INTERVAL '1 DAY'))
+                   """.stripMargin
       val filteredQuery = queryFilter(query)
       Q.queryNA[ChangeInfoForRoadAddressChangesBrowser](filteredQuery).iterator.toSeq
     }
