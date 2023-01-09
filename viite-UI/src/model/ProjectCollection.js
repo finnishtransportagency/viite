@@ -234,15 +234,6 @@
       }
     };
 
-    var validateUnchangedInProject = function (projectId) {
-        backend.validateUnchangedInProject(projectId, function (response) {
-            if (response.hasOwnProperty('validationErrors') && !_.isEmpty(response.validationErrors)) {
-                me.setProjectErrors(response.validationErrors);
-                eventbus.trigger('roadAddressProject:writeProjectErrors');
-            }
-        });
-    };
-
     var createOrUpdate = function (dataJson) {
       if ((!_.isEmpty(dataJson.linkIds) || !_.isEmpty(dataJson.ids)) && typeof dataJson.projectId !== 'undefined' && dataJson.projectId !== 0) {
         if (dataJson.roadNumber !== 0 && dataJson.roadPartNumber !== 0) {
@@ -260,7 +251,6 @@
                 if (successObject.errorMessage) {
                   new ModalConfirm(successObject.errorMessage);
                 }
-                validateUnchangedInProject(dataJson.projectId);
               } else {
                 new ModalConfirm(successObject.errorMessage);
                 applicationModel.removeSpinner();
@@ -273,7 +263,6 @@
                 me.setProjectErrors(successObject.projectErrors);
                 me.setFormedParts(successObject.formedInfo);
                 eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
-                validateUnchangedInProject(dataJson.projectId);
               } else {
                 new ModalConfirm(successObject.errorMessage);
                 applicationModel.removeSpinner();
