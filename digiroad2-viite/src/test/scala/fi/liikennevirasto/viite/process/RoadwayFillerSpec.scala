@@ -51,21 +51,45 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
   val roadwayChangesDAO = new RoadwayChangesDAO
   val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
   val mockRoadwayAddressMapper: RoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
-  val roadAddressService: RoadAddressService = new RoadAddressService(mockRoadLinkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, mockRoadwayAddressMapper, mockEventBus, frozenKGV = false) {
 
-    override def withDynSession[T](f: => T): T = f
+  val roadAddressService: RoadAddressService =
+    new RoadAddressService(
+                            mockRoadLinkService,
+                            roadwayDAO,
+                            linearLocationDAO,
+                            roadNetworkDAO,
+                            roadwayPointDAO,
+                            nodePointDAO,
+                            junctionPointDAO,
+                            mockRoadwayAddressMapper,
+                            mockEventBus,
+                            frozenKGV = false
+                            ) {
+                                override def withDynSession[T](f: => T): T = f
+                                override def withDynTransaction[T](f: => T): T = f
+                              }
 
-    override def withDynTransaction[T](f: => T): T = f
-  }
-
-  val projectService: ProjectService = new ProjectService(roadAddressService, mockRoadLinkService, mockNodesAndJunctionsService, roadwayDAO,
-    roadwayPointDAO, linearLocationDAO, projectDAO, projectLinkDAO,
-    nodeDAO, nodePointDAO, junctionPointDAO, projectReservedPartDAO, roadwayChangesDAO,
-    roadwayAddressMapper, mockEventBus) {
-    override def withDynSession[T](f: => T): T = f
-
-    override def withDynTransaction[T](f: => T): T = f
-  }
+  val projectService: ProjectService =
+    new ProjectService(
+                        roadAddressService,
+                        mockRoadLinkService,
+                        mockNodesAndJunctionsService,
+                        roadwayDAO,
+                        roadwayPointDAO,
+                        linearLocationDAO,
+                        projectDAO,
+                        projectLinkDAO,
+                        nodeDAO,
+                        nodePointDAO,
+                        junctionPointDAO,
+                        projectReservedPartDAO,
+                        roadwayChangesDAO,
+                        roadwayAddressMapper,
+                        mockEventBus
+                        ) {
+                        override def withDynSession[T](f: => T): T = f
+                        override def withDynTransaction[T](f: => T): T = f
+                      }
 
   test("Test RoadwayFiller.applyRoadwayChanges() #Confluence: Change in the Middle of the Roadway. " +
                 "When dealing with unchanged addresses with a new administrative class in the middle of them " +

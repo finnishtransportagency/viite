@@ -171,7 +171,7 @@ object DataFixture {
         val municipalities: ParSet[Long] = municipalityEly.keySet.par
         println("Total municipalities keys for ely " + ely + " -> " + municipalities.size)
 
-        //For each municipality get all VVH Roadlinks
+        //For each municipality get all Roadlinks
         municipalities.tasksupport = new ForkJoinTaskSupport(new scala.concurrent.forkjoin.ForkJoinPool(numThreads))
         municipalities.foreach { municipality =>
           println("Start processing municipality %d".format(municipality))

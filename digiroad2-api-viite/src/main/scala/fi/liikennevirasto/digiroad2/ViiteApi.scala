@@ -237,13 +237,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
   }
 
   private val fetchPreFill: SwaggerSupportSyntax.OperationBuilder = (
-    apiOperation[Map[String, Any]]("fetchPreFillFromVVH")
+    apiOperation[Map[String, Any]]("fetchPreFillData")
       .parameters(
         queryParam[String]("linkId").description("LinkId of a road address"),
         queryParam[Long]("currentProjectId").description("currentProjectId")
       )
       tags "ViiteAPI - Project"
-      summary "Fetch prefill information from VVH like roadNumber, roadPartNumber, roadName, roadNameSource"
+      summary "Fetch prefill information like roadNumber, roadPartNumber, roadName, roadNameSource"
     )
 
   get("/roadlinks/project/prefill", operation(fetchPreFill)) {
@@ -1042,11 +1042,19 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
     val projectId = params("projectId").toLong
     time(logger, s"GET request for /project/recalculateProject/$projectId") {
       try {
-        withDynTransaction {
+        val invalidUnchangedLinkErrors = withDynTransaction {
           val project = projectService.fetchProjectById(projectId).get
-          projectService.recalculateProjectLinks(projectId, project.modifiedBy)
+          val invalidUnchangedLinkErrors = projectService.projectValidator.checkForInvalidUnchangedLinks(project, projectLinkDAO.fetchProjectLinks(projectId))
+          if (invalidUnchangedLinkErrors.isEmpty) {
+            projectService.recalculateProjectLinks(projectId, project.modifiedBy)
+          }
+          invalidUnchangedLinkErrors
         }
-        val validationErrors = projectService.validateProjectById(projectId).map(projectService.projectValidator.errorPartsToApi)
+        val validationErrors = if (invalidUnchangedLinkErrors.nonEmpty)
+          invalidUnchangedLinkErrors.map(projectService.projectValidator.errorPartsToApi)
+        else
+          projectService.validateProjectById(projectId).map(projectService.projectValidator.errorPartsToApi)
+
         // return validation errors
         Map("success" -> true, "validationErrors" -> validationErrors)
       } catch {
@@ -1058,31 +1066,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
         case ex: Exception =>
           Map("success" -> false, "errorMessage" -> ex.getMessage)
       }
-    }
-  }
-
-  private val validateUnchanged: SwaggerSupportSyntax.OperationBuilder =(
-    apiOperation[Map[String, Any]]("validateUnchanged")
-      .parameters(
-        pathParam[Long]("projectId").description("Id of a project")
-      )
-      tags "ViiteAPI - Project"
-      summary "Given a valid projectId, this will run InvalidUnchangedLinks validation to the project in question."
-    )
-
-
-  get("/project/validateUnchanged/:projectId", operation(validateUnchanged)) {
-    val projectId = params("projectId").toLong
-    time(logger, s"GET request for /project/validateUnchanged/$projectId") {
-     val validationErrors =
-        withDynTransaction {
-          val project = projectService.fetchProjectById(projectId).get
-          projectService.projectValidator.checkForInvalidUnchangedLinks(project, projectLinkDAO.fetchProjectLinks(projectId)).map(projectService.projectValidator.errorPartsToApi)
-        }
-    if (validationErrors.nonEmpty)
-      Map("success" -> false, "validationErrors" -> validationErrors)
-    else
-      Map("success" -> true, "validationErrors" -> validationErrors)
     }
   }
 
@@ -1468,7 +1451,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       "startAddressM" -> roadAddressLink.startAddressM,
       "endAddressM" -> roadAddressLink.endAddressM,
       "discontinuity" -> roadAddressLink.discontinuity,
-      "anomaly" -> roadAddressLink.anomaly.value,
       "lifecycleStatus" -> roadAddressLink.lifecycleStatus.value,
       "startMValue" -> roadAddressLink.startMValue,
       "endMValue" -> roadAddressLink.endMValue,
@@ -1755,7 +1737,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
         "startAddressM" -> projectAddressLink.startAddressM,
         "endAddressM" -> projectAddressLink.endAddressM,
         "discontinuity" -> projectAddressLink.discontinuity,
-        "anomaly" -> projectAddressLink.anomaly.value,
         "lifecycleStatus" -> projectAddressLink.lifecycleStatus.value,
         "startMValue" -> projectAddressLink.startMValue,
         "endMValue" -> projectAddressLink.endMValue,

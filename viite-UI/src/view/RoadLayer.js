@@ -89,6 +89,7 @@
                     infoContent.innerHTML += '<div class="popup-line-div"><div>MunicipalityCode:&nbsp;</div><div class="selectable">' + roadData.municipalityCode + '</div></div>';
                 }
                 infoContent.innerHTML +=
+                    '<div class="popup-line-div"><div>Ely:&nbsp;</div><div class="selectable">'                    + roadData.elyCode + '</div></div>' +
                     '<div class="popup-line-div"><div>Link&nbsp;id:&nbsp;</div><div class="selectable">'           + roadData.linkId  + '</div></div>' +
                     '<div class="popup-line-div"><div>LinearLocation&nbsp;id:&nbsp;</div><div class="selectable">' + roadData.linearLocationId + '</div></div>' +
                     '<div class="popup-line-div"><div>Roadway&nbsp;id:&nbsp;</div><div class="selectable">'        + roadData.roadwayId + '</div></div>' +

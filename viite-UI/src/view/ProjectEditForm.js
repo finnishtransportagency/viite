@@ -662,8 +662,10 @@
               // if no validation errors are present, show changes button and remove title
               formCommon.setDisabledAndTitleAttributesById("changes-button", false, "");
             }
-            // fetch the recalculated project links and redraw map (this also writes the validation errors on the screen and removes the spinner)
+            // fetch the recalculated project links and redraw map
             projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), zoomlevels.getViewZoom(map) + 1, currentProject.project.id, projectCollection.getPublishableStatus());
+            // write the validation errors on the screen and remove the spinner
+            eventbus.trigger('roadAddressProject:writeProjectErrors');
             // disable recalculate button after recalculation is done
             formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Etäisyyslukemat on päivitetty");
             // project was recalculated, set recalculated flag to true

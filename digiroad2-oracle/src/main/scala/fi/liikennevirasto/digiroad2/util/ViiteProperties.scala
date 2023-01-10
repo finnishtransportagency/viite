@@ -8,23 +8,13 @@ trait ViiteProperties {
   val userProvider: String
   val municipalityProvider: String
   val eventBus: String
-  val useVVHGeometry: String
-  val vvhServiceHost: String
-  val oagProxyServer: String
-  val oagProxyURL: String
   val rasterServiceURL: String
   val rasterServiceApiKey: String
-  val vvhRestApiEndPoint: String
-  val vvhRestApiUsername: String
-  val vvhRestApiPassword: String
   val kgvRoadlinkFrozen : Boolean
   val kgvEndpoint       : String
   val kgvApiKey: String
   val vkmUrl: String
   val vkmApiKey: String
-  val httpProxySet: Boolean
-  val httpProxyHost: String
-  val httpNonProxyHosts: String
   val importOnlyCurrent: Boolean
   val authenticationTestMode: Boolean
   val authenticationTestUser: String
@@ -61,15 +51,8 @@ class ViitePropertiesFromEnv extends ViiteProperties {
   val userProvider: String = scala.util.Properties.envOrElse("userProvider", null)
   val municipalityProvider: String = scala.util.Properties.envOrElse("municipalityProvider", null)
   val eventBus: String = scala.util.Properties.envOrElse("eventBus", null)
-  val useVVHGeometry: String = scala.util.Properties.envOrElse("useVVHGeometry", null)
-  val vvhServiceHost: String = scala.util.Properties.envOrElse("vvhServiceHost", null)
-  val oagProxyServer: String = scala.util.Properties.envOrElse("oagProxyServer", null)
-  val oagProxyURL: String = scala.util.Properties.envOrElse("oagProxyURL", null)
   val rasterServiceURL: String = scala.util.Properties.envOrElse("rasterServiceURL", null)
   val rasterServiceApiKey: String = scala.util.Properties.envOrElse("rasterServiceApiKey", null)
-  val vvhRestApiEndPoint: String = scala.util.Properties.envOrElse("vvhRestApiEndPoint", null)
-  val vvhRestApiUsername: String = scala.util.Properties.envOrElse("vvhRestApiUsername", null)
-  val vvhRestApiPassword: String  = scala.util.Properties.envOrElse("vvhRestApiPassword", null)
   val kgvRoadlinkFrozen : Boolean = scala.util.Properties.envOrElse("kgvRoadlink.frozen", "false").toBoolean
   val kgvEndpoint       : String  = scala.util.Properties.envOrElse("kgvEndpoint", null)
   val kgvApiKey: String = scala.util.Properties.envOrElse("kgvApiKey", null)
@@ -147,23 +130,13 @@ class ViitePropertiesFromFile extends ViiteProperties {
   override val userProvider: String = envProps.getProperty("userProvider")
   override val municipalityProvider: String = envProps.getProperty("municipalityProvider")
   override val eventBus: String = envProps.getProperty("eventBus")
-  override val useVVHGeometry: String = envProps.getProperty("useVVHGeometry")
-  override val vvhServiceHost: String = scala.util.Properties.envOrElse("vvhServiceHost", envProps.getProperty("vvhServiceHost"))
-  override val oagProxyServer: String = scala.util.Properties.envOrElse("oagProxyServer", envProps.getProperty("oagProxyServer"))
-  override val oagProxyURL:  String = scala.util.Properties.envOrElse("oagProxyURL", envProps.getProperty("oagProxyURL"))
   override val rasterServiceURL: String = scala.util.Properties.envOrElse("rasterServiceURL", envProps.getProperty("rasterServiceURL"))
   override val rasterServiceApiKey: String = scala.util.Properties.envOrElse("rasterServiceApiKey", envProps.getProperty("rasterServiceApiKey"))
-  override val vvhRestApiEndPoint: String = scala.util.Properties.envOrElse("vvhRestApiEndPoint", envProps.getProperty("vvhRestApiEndPoint"))
-  override val vvhRestApiUsername: String = scala.util.Properties.envOrElse("vvhRestApiUsername", envProps.getProperty("vvhRestApiUsername"))
-  override val vvhRestApiPassword: String  = scala.util.Properties.envOrElse("vvhRestApiPassword", envProps.getProperty("vvhRestApiPassword"))
   override val kgvRoadlinkFrozen : Boolean = envProps.getProperty("kgvRoadlink.frozen", "false").toBoolean
   override val kgvEndpoint       : String  = envProps.getProperty("kgvEndpoint", null)
   override val kgvApiKey: String = scala.util.Properties.envOrElse("kgvApiKey", envProps.getProperty("kgvApiKey"))
   override val vkmUrl: String = scala.util.Properties.envOrElse("vkmUrl", envProps.getProperty("vkmUrl"))
   override val vkmApiKey: String = scala.util.Properties.envOrElse("vkmApiKey", envProps.getProperty("vkmApiKey"))
-  override val httpProxySet: Boolean = envProps.getProperty("http.proxySet", "false").toBoolean
-  override val httpProxyHost: String = envProps.getProperty("http.proxyHost")
-  override val httpNonProxyHosts: String = envProps.getProperty("http.nonProxyHosts", "")
   override val importOnlyCurrent: Boolean = envProps.getProperty("importOnlyCurrent", "false").toBoolean
   override val authenticationTestMode: Boolean = envProps.getProperty("authenticationTestMode", "false").toBoolean
   override val authenticationTestUser: String = envProps.getProperty("authenticationTestUser")
@@ -230,23 +203,13 @@ object ViiteProperties {
   lazy val userProvider: String = properties.userProvider
   lazy val municipalityProvider: String = properties.municipalityProvider
   lazy val eventBus: String = properties.eventBus
-  lazy val useVVHGeometry: String = properties.useVVHGeometry
-  lazy val vvhServiceHost: String = properties.vvhServiceHost
-  lazy val oagProxyServer: String = properties.oagProxyServer
-  lazy val oagProxyURL: String = properties.oagProxyURL
   lazy val rasterServiceURL: String = properties.rasterServiceURL
   lazy val rasterServiceApiKey: String = properties.rasterServiceApiKey
-  lazy val vvhRestApiEndPoint: String = properties.vvhRestApiEndPoint
-  lazy val vvhRestApiUsername: String = properties.vvhRestApiUsername
-  lazy val vvhRestApiPassword: String  = properties.vvhRestApiPassword
   lazy val kgvRoadlinkFrozen : Boolean = properties.kgvRoadlinkFrozen
   lazy val kgvApiKey: String  = properties.kgvApiKey
   lazy val kgvEndpoint: String = properties.kgvEndpoint
   lazy val vkmUrl: String = properties.vkmUrl
   lazy val vkmApiKey: String = properties.vkmApiKey
-  lazy val httpProxySet: Boolean = properties.httpProxySet
-  lazy val httpProxyHost: String = properties.httpProxyHost
-  lazy val httpNonProxyHosts: String = properties.httpNonProxyHosts
   lazy val importOnlyCurrent: Boolean = properties.importOnlyCurrent
   lazy val authenticationTestMode: Boolean = properties.authenticationTestMode
   lazy val authenticationTestUser: String = properties.authenticationTestUser
