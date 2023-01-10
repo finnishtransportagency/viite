@@ -61,14 +61,27 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
     override val roadAddressService = mockRoadAddressService
   }
 
-  val projectService: ProjectService = new ProjectService(mockRoadAddressService, mockRoadLinkService, mockNodesAndJunctionsService, roadwayDAO,
-    roadwayPointDAO, linearLocationDAO, projectDAO, projectLinkDAO,
-    nodeDAO, nodePointDAO, junctionPointDAO, projectReservedPartDAO, roadwayChangesDAO,
-    roadwayAddressMapper, mockEventBus) {
-    override def withDynSession[T](f: => T): T = f
-
-    override def withDynTransaction[T](f: => T): T = f
-  }
+  val projectService: ProjectService =
+    new ProjectService(
+                        mockRoadAddressService,
+                        mockRoadLinkService,
+                        mockNodesAndJunctionsService,
+                        roadwayDAO,
+                        roadwayPointDAO,
+                        linearLocationDAO,
+                        projectDAO,
+                        projectLinkDAO,
+                        nodeDAO,
+                        nodePointDAO,
+                        junctionPointDAO,
+                        projectReservedPartDAO,
+                        roadwayChangesDAO,
+                        roadwayAddressMapper,
+                        mockEventBus
+                        ) {
+                            override def withDynSession[T](f: => T): T = f
+                            override def withDynTransaction[T](f: => T): T = f
+                          }
 
   private val roadwayNumber1 = 1000000000l
   private val roadwayNumber2 = 2000000000l
@@ -84,6 +97,10 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
   def toProjectLink(project: Project)(roadAddress: RoadAddress): ProjectLink = {
     ProjectLink(roadAddress.id, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track, roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate, roadAddress.endDate, createdBy = Option(project.createdBy), roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue, roadAddress.sideCode, roadAddress.calibrationPointTypes, (NoCP, NoCP), roadAddress.geometry, project.id, LinkStatus.NotHandled, AdministrativeClass.State, roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.id, roadAddress.linearLocationId, roadAddress.ely, reversed = false, None, roadAddress.adjustedTimestamp)
+  }
+
+  def toNewUnCalculated(pl: ProjectLink): ProjectLink = {
+    pl.copy(status = LinkStatus.New, startAddrMValue = 0, endAddrMValue = 0, originalStartAddrMValue = 0, originalEndAddrMValue = 0)
   }
 
   def toRoadwayAndLinearLocation(p: ProjectLink): (LinearLocation, Roadway) = {
@@ -968,6 +985,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       when(mockRoadAddressService.getRoadAddressesFiltered(any[Long], any[Long])).thenReturn(Seq.empty[RoadAddress])
       when(mockRoadAddressService.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq.empty[LinearLocation])
       when(mockRoadAddressService.getCurrentRoadAddresses(any[Seq[LinearLocation]])).thenReturn(Seq.empty[RoadAddress])
+      when(mockRoadAddressService.getPreviousRoadPartNumber(19999L, 1L)).thenReturn(None)
+      when(mockRoadAddressService.getPreviousRoadPartNumber(19999L, 2L)).thenReturn(Some(1L))
 
       val error1 = projectValidator.validateProject(updProject, currentProjectLinks).distinct
       error1 should have size 1
@@ -1928,6 +1947,7 @@ Left|      |Right
     }
   }
 
+
   test("Test checkForInvalidUnchangedLinks When there is a new link is before unchanged Then ProjectValidator should show ErrorInValidationOfUnchangedLinks") {
       /* |-> New-UnChanged-UnChanged-UnChanged-UnChanged-UnChanged */
     runWithRollback {
@@ -1969,6 +1989,98 @@ Left|      |Right
       val newPl = projectLinks.head.copy(id = projectLinks.last.id+1, status = LinkStatus.New, startAddrMValue = 0, endAddrMValue = 0, originalStartAddrMValue = 0, originalEndAddrMValue = 0, geometry = Seq(Point(0,40),Point(0,50)))
       val validationErrors = projectValidator.checkForInvalidUnchangedLinks(project, projectLinks ++ Seq(newPl)).distinct
       validationErrors should have size 0
+    }
+  }
+
+  test("Test checkProjectElyCodes When un-calculated new links have ely change but no road part change " +
+                "Then validator should return ElyCodeChangeButNotOnEnd error.") {
+    runWithRollback {
+      mockEmptyRoadAddressServiceCalls()
+      val testRoad = (16320L, 1L, "name")
+      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L), changeTrack = true, Seq(testRoad), Discontinuity.Continuous)
+      // New projectLinks with 0 address and ely-change at middle link
+      val newLinks = (projectLinks.filter(_.endAddrMValue < 30) ++
+      projectLinks.filter(_.endAddrMValue == 30).map(_.copy(discontinuity = Discontinuity.ChangingELYCode)) ++
+      projectLinks.filter(_.endAddrMValue > 30).map(_.copy(discontinuity = Discontinuity.EndOfRoad))).map(toNewUnCalculated)
+
+      val validationErrors = projectValidator.checkProjectElyCodes(project, newLinks).distinct
+      validationErrors.size should be(1)
+      validationErrors.map(_.validationError).contains(projectValidator.ValidationErrorList.ElyCodeChangeButNotOnEnd)
+    }
+  }
+
+  test("Test checkProjectElyCodes When un-calculated new links have ely change but no ChangingELYCode discontinuity is set " +
+                "Then validator should return ElyCodeChangeDetected error.") {
+    runWithRollback {
+      mockEmptyRoadAddressServiceCalls()
+      val mockRoadwayDAO = MockitoSugar.mock[RoadwayDAO]
+      val projectValidator = new ProjectValidator { override val roadwayDAO = mockRoadwayDAO }
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(Seq.empty[Roadway])
+
+      val testRoad = (16320L, 1L, "name")
+      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L), changeTrack = true, Seq(testRoad), Discontinuity.Continuous, ely = 8L)
+      // New projectLinks with 0 address and ely-change at middle link
+      val newLinks = (projectLinks.filter(_.endAddrMValue <= 30) ++
+      projectLinks.filter(_.endAddrMValue > 30).map(_.copy(roadPartNumber = 2L, ely = 9L, discontinuity = Discontinuity.EndOfRoad))).map(toNewUnCalculated)
+
+      val validationErrors = projectValidator.checkProjectElyCodes(project, newLinks).distinct
+      validationErrors.size should be(1)
+      validationErrors.map(_.validationError.value) should contain(projectValidator.ValidationErrorList.ElyCodeChangeDetected.value)
+    }
+  }
+
+  test("Test checkProjectElyCodes When un-calculated new links and existing roadway with next road and part numbering with different ely-code but no ChangingELYCode discontinuity is set " +
+                "Then validator should return ElyCodeChangeDetected error.") {
+    runWithRollback {
+      mockEmptyRoadAddressServiceCalls()
+      val mockRoadwayDAO = MockitoSugar.mock[RoadwayDAO]
+      val mockLinearLocationDAO = MockitoSugar.mock[LinearLocationDAO]
+      val projectValidator = new ProjectValidator {
+        override val roadwayDAO = mockRoadwayDAO
+        override val linearLocationDAO = mockLinearLocationDAO
+      }
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(Seq.empty[Roadway])
+
+      val testRoad = (16320L, 1L, "name")
+      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L), changeTrack = true, Seq(testRoad), Discontinuity.Continuous, ely = 8L)
+      // New projectLinks with 0 address and ely-change at middle link
+      val newLinks = projectLinks.filter(_.endAddrMValue <= 30).map(toNewUnCalculated)
+
+      val (linearLocations, roadways) = projectLinks.filter(_.endAddrMValue > 30).map(_.copy(roadPartNumber = 2L, ely = 9L, discontinuity = Discontinuity.EndOfRoad)).map(pl => toRoadwayAndLinearLocation(pl)).unzip
+      when(mockRoadwayDAO.fetchAllByRoadAndPart(any[Long], any[Long], any[Boolean], any[Boolean])).thenReturn(roadways)
+      when(mockLinearLocationDAO.fetchByRoadways(any[Set[Long]])).thenReturn(linearLocations)
+
+      val validationErrors = projectValidator.checkProjectElyCodes(project, newLinks).distinct
+      validationErrors.size should be(1)
+      validationErrors.map(_.validationError.value) should contain(projectValidator.ValidationErrorList.ElyCodeChangeDetected.value)
+    }
+  }
+
+  test("Test checkProjectElyCodes When un-calculated new links have ely change at end of road part and road part change with ely change for rest " +
+                "Then validator should not return errors ") {
+    /*
+         New part 1,ely 8 |New part 2,ely 9
+         |---->|--->|---->|---> Track 1
+         |---->|--->|---->|---> Track 2
+                      ElyChange
+                            EndOfRoad
+    */
+    runWithRollback {
+      mockEmptyRoadAddressServiceCalls()
+      val mockRoadwayDAO = MockitoSugar.mock[RoadwayDAO]
+      val projectValidator = new ProjectValidator { override val roadwayDAO = mockRoadwayDAO }
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(Seq.empty[Roadway])
+      when(mockRoadwayDAO.fetchAllByRoadAndPart(any[Long], any[Long], any[Boolean], any[Boolean])).thenReturn(Seq.empty[Roadway])
+
+      val testRoad = (16320L, 1L, "name")
+      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L), changeTrack = true, Seq(testRoad), Discontinuity.Continuous,ely = 8L)
+      // New projectLinks with 0 address and ely-change at middle link
+      val newLinks = (projectLinks.filter(_.endAddrMValue < 30) ++
+      projectLinks.filter(_.endAddrMValue == 30).map(_.copy(discontinuity = Discontinuity.ChangingELYCode)) ++
+      projectLinks.filter(_.endAddrMValue > 30).map(_.copy(roadPartNumber = 2L, ely = 9L, discontinuity = Discontinuity.EndOfRoad))).map(toNewUnCalculated)
+
+      val validationErrors = projectValidator.checkProjectElyCodes(project, newLinks).distinct
+      validationErrors.size should be(0)
     }
   }
 

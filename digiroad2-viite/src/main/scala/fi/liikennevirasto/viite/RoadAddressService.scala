@@ -409,8 +409,8 @@ class RoadAddressService(
     * @param road      The road number
     * @param roadPart  The roadPart
     * @param addressM  The addressM that is in between the returned RoadAddress
-    * @return Returns RoadAddressLink in track 0 or 1 which contains dynamically calculated startAddressM and endAddressM
-    *         and includes detailed geometry in that link fetched dynamically from VVH
+    * @return Returns RoadAddressLink in track 0 or 1 or given track which contains dynamically calculated startAddressM and endAddressM
+    *         and includes detailed geometry in that link fetched dynamically from KGV
     */
   def getRoadAddressLink(road: Long, roadPart: Long, addressM: Long, track: Option[Long] = None): Option[RoadAddressLink] = {
     val linearLocations = withDynSession {

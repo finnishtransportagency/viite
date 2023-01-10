@@ -111,7 +111,7 @@
       });
     }, 1000);
 
-    this.getNonOverridenVVHValuesForLink = _.throttle(function (linkId, currentProjectId, callback) {
+    this.getPrefillValuesForLink = _.throttle(function (linkId, currentProjectId, callback) {
       return $.getJSON('api/viite/roadlinks/project/prefill?linkId=' + linkId + '&currentProjectId=' + currentProjectId, function (data) {
         return _.isFunction(callback) && callback(data);
       });
@@ -285,16 +285,6 @@
     this.recalculateAndValidateProject = function (id, callback) {
       $.getJSON('api/viite/project/recalculateProject/' + id, callback);
     };
-
-    this.validateUnchangedInProject = _.throttle(function (id, success) {
-        $.ajax({
-            cache: false,
-            contentType: "application/json",
-            type: "GET",
-            url: "api/viite/project/validateUnchanged/" + id,
-            success: success
-        });
-    }, 1000);
 
     this.getJunctionPointEditableStatus = function (ids, jp) {
       $.get('api/viite/junctions/getEditableStatusOfJunctionPoints?ids=' + ids, function (response) {

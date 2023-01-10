@@ -2,11 +2,11 @@ package fi.liikennevirasto.viite.process.strategy
 
 import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.util.{MissingTrackException, RoadAddressException}
+import fi.liikennevirasto.viite.{NewIdValue, UnsuccessfulRecalculationMessage}
+import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous, MinorDiscontinuity, ParallelLink}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
-import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.{ProjectSectionMValueCalculator, TrackAddressingFactors}
-import fi.liikennevirasto.viite.{NewIdValue, UnsuccessfulRecalculationMessage}
 import org.slf4j.LoggerFactory
 
 
@@ -156,7 +156,7 @@ trait TrackCalculatorStrategy {
                      s"projectlink.id: ${projectLinks.last.id} " +
                      s"startAddrMValue: ${projectLinks.last.startAddrMValue} " +
                      s"endAddressMValue: ${endAddressMValue}")
-        throw new RoadAddressException(UnsuccessfulRecalculationMessage)
+        throw new RoadAddressException(UnsuccessfulRecalculationMessage + s"\nLinkin ${projectLinks.last.linkId} pituudeksi tulee ${endAddressMValue - projectLinks.last.startAddrMValue}")
       }
       projectLinks.init :+ projectLinks.last.copy(endAddrMValue = endAddressMValue)
     }

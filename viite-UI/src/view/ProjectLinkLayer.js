@@ -4,7 +4,6 @@
     Layer.call(this, map);
     var me = this;
 
-    var Anomaly = ViiteEnumerations.Anomaly;
     var SideCode = ViiteEnumerations.SideCode;
     var RoadZIndex = ViiteEnumerations.RoadZIndex;
     var LinkStatus = ViiteEnumerations.LinkStatus;
@@ -185,9 +184,8 @@
       var selection = _.find(event.selected, function (selectionTarget) {
         return (!_.isUndefined(selectionTarget.linkData) && (
             projectLinkStatusIn(selectionTarget.linkData, possibleStatusForSelection) ||
-            selectionTarget.linkData.anomaly === Anomaly.NoAddressGiven.value ||
             selectionTarget.linkData.roadClass === RoadClass.NoClass.value ||
-            (selectionTarget.linkData.lifecycleStatus === lifecycleStatus.UnderConstruction.value && selectionTarget.linkData.anomaly === Anomaly.NoAddressGiven.value))
+            selectionTarget.linkData.lifecycleStatus === lifecycleStatus.UnderConstruction.value)
         );
       });
       if (isNotEditingData) {
@@ -450,7 +448,7 @@
       if (zoomlevels.getViewZoom(map) > zoomlevels.minZoomForDirectionalMarkers) {
         var addMarkersToLayer = function (links, layer) {
           var directionMarkers = _.filter(links, function (projectLink) {
-            var acceptedLinks = projectLink.id !== 0 || (projectLink.id === 0 && projectLink.anomaly === Anomaly.NoAddressGiven.value);
+            var acceptedLinks = projectLink.id !== 0;
             return acceptedLinks && projectLink.sideCode !== SideCode.Unknown.value && projectLink.endAddressM !== 0;
           });
           _.each(directionMarkers, function (directionLink) {

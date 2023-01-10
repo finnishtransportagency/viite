@@ -98,7 +98,7 @@
     const replaceAddressInfo = function (backend, selectedProjectLink, currentProjectId) {
       const roadNameField = $('#roadName');
       if (selectedProjectLink[0].roadNumber === 0 && selectedProjectLink[0].roadPartNumber === 0 && selectedProjectLink[0].trackCode === 99) {
-        backend.getNonOverridenVVHValuesForLink(selectedProjectLink[0].linkId, currentProjectId, function (response) {
+        backend.getPrefillValuesForLink(selectedProjectLink[0].linkId, currentProjectId, function (response) {
           if (response.success) {
             $('#tie').val(response.roadNumber);
             $('#osa').val(response.roadPartNumber);

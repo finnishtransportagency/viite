@@ -18,13 +18,6 @@
     Terminated: {value: 5, description: "Terminated", displayText: "Lakkautus"}
   };
 
-  root.Anomaly = {
-    None: {value: 0, description: "None"},
-    NoAddressGiven: {value: 1, description: "NoAddressGiven"},
-    GeometryChanged: {value: 2, description: "GeometryChanged"},
-    Illogical: {value: 3, description: "Illogical"}
-  };
-
   root.LinkGeomSource = {
     NormalLinkInterface: {value: 1, descriptionFI: "MML", description: "NormalLinkInterface"},
     ComplementaryLinkInterface: {value: 2, descriptionFI: "Täydentävä", description: "ComplementaryLinkInterface"},
@@ -110,7 +103,7 @@
 
   root.RoadZIndex = {
     VectorLayer: {value: 1},
-    AnomalousMarkerLayer: {value: 2},
+    RoadLinkStyleZIndex: {value: 2},
     CalibrationPointLayer: {value: 3},
     UnderConstructionLayer: {value: 4},
     GeometryChangedLayer: {value: 5},

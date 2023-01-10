@@ -77,11 +77,24 @@ case class PreFillInfo(RoadNumber: BigInt, RoadPart: BigInt, roadName: String, r
 
 case class LinkToRevert(id: Long, linkId: String, status: Long, geometry: Seq[Point])
 
-class ProjectService(roadAddressService: RoadAddressService, roadLinkService: RoadLinkService, nodesAndJunctionsService: NodesAndJunctionsService, roadwayDAO: RoadwayDAO,
-                     roadwayPointDAO: RoadwayPointDAO, linearLocationDAO: LinearLocationDAO, projectDAO: ProjectDAO, projectLinkDAO: ProjectLinkDAO,
-                     nodeDAO: NodeDAO, nodePointDAO: NodePointDAO, junctionPointDAO: JunctionPointDAO, projectReservedPartDAO: ProjectReservedPartDAO, roadwayChangesDAO: RoadwayChangesDAO,
-                     roadwayAddressMapper: RoadwayAddressMapper,
-                     eventbus: DigiroadEventBus, frozenTimeVVHAPIServiceEnabled: Boolean = false) {
+class ProjectService(
+                      roadAddressService         : RoadAddressService,
+                      roadLinkService            : RoadLinkService,
+                      nodesAndJunctionsService   : NodesAndJunctionsService,
+                      roadwayDAO                 : RoadwayDAO,
+                      roadwayPointDAO            : RoadwayPointDAO,
+                      linearLocationDAO          : LinearLocationDAO,
+                      projectDAO                 : ProjectDAO,
+                      projectLinkDAO             : ProjectLinkDAO,
+                      nodeDAO                    : NodeDAO,
+                      nodePointDAO               : NodePointDAO,
+                      junctionPointDAO           : JunctionPointDAO,
+                      projectReservedPartDAO     : ProjectReservedPartDAO,
+                      roadwayChangesDAO          : RoadwayChangesDAO,
+                      roadwayAddressMapper       : RoadwayAddressMapper,
+                      eventbus                   : DigiroadEventBus,
+                      frozenTimeAPIServiceEnabled: Boolean = false
+                    ) {
 
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
@@ -700,7 +713,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           case Some(error) => throw new RoadPartReservedException(error)
           case _ =>
             val roadwaysByLinkSource = linearLocationDAO.fetchByRoadways(roadways.map(_.roadwayNumber).toSet).groupBy(_.linkGeomSource)
-            val regularLinkSource = if (frozenTimeVVHAPIServiceEnabled) LinkGeomSource.FrozenLinkInterface else LinkGeomSource.NormalLinkInterface
+            val regularLinkSource = if (frozenTimeAPIServiceEnabled) LinkGeomSource.FrozenLinkInterface else LinkGeomSource.NormalLinkInterface
             val regular = if (roadwaysByLinkSource.contains(regularLinkSource)) roadwaysByLinkSource(regularLinkSource) else Seq()
             val complementary = if (roadwaysByLinkSource.contains(LinkGeomSource.ComplementaryLinkInterface)) roadwaysByLinkSource(LinkGeomSource.ComplementaryLinkInterface) else Seq()
             if (complementary.nonEmpty) {
