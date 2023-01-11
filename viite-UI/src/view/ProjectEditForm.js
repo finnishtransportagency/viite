@@ -658,13 +658,15 @@
         backend.recalculateAndValidateProject(currentProject.project.id, function (response) {
           // if recalculation and validation did not throw exceptions in the backend
           if (response.success) {
-              if (response.validationErrors.filter(error => error.errorCode === 38).length > 0) {
+              let trackGeometryLengthDeviationErrorCode = 38;
+              if (response.validationErrors.filter(error => error.errorCode === trackGeometryLengthDeviationErrorCode).length > 0) {
+                  let trackGeometryLengthDeviationError = response.validationErrors.filter(error => error.errorCode === trackGeometryLengthDeviationErrorCode)[0];
                       // "Ajoratojen geometriapituuksissa yli 20% poikkeama."
-                  new GenericConfirmPopup(response.validationErrors[0].errorMessage, {
+                  new GenericConfirmPopup(trackGeometryLengthDeviationError.errorMessage, {
                       type: "alert"
                   });
-                  $('.form,.form-horizontal,.form-dark').append('<label class="validation-warning">' + response.validationErrors[0].errorMessage + '<br>' + "LinkId: " + response.validationErrors[0].info + '</label>');
-                  response.validationErrors = response.validationErrors.filter(error => error.errorCode !== 38)
+                  $('.form,.form-horizontal,.form-dark').append('<label class="validation-warning">' +trackGeometryLengthDeviationError.errorMessage + '<br>' + "LinkId: " + trackGeometryLengthDeviationError.info + '</label>');
+                  response.validationErrors = response.validationErrors.filter(error => error.errorCode !== trackGeometryLengthDeviationErrorCode)
               }
             // set project errors that were returned by the backend validations
             projectCollection.setProjectErrors(response.validationErrors);
