@@ -797,11 +797,21 @@ class ProjectValidator {
         }
 
         def geomLengthDiff: Double = Math.abs(leftGeomLength - rightGeomLength)
-        def exceptionalLengthDifference: Boolean = geomLengthDiff > 50 || geomLengthDiff / leftGeomLength > 0.2 || geomLengthDiff / rightGeomLength > 0.2
+        def exceptionalLengthDifference: Boolean = {
+          val BIG_TRACK_LENGTH_DIFFERENCE__TRESHOLD_IN_METERS = 50
+          val BIG_TRACK_LENGTH_DIFFERENCE__TRESHOLD_IN_PERCENT = 0.2
 
-        recursiveCheckTwoTrackGeometryLength(roadPartLinks.filterNot(l =>
-          (sortedTrackInterval1 ++ sortedTrackInterval2).exists(lt => lt.id == l.id)),
-           errorLinks ++ (if (exceptionalLengthDifference) sortedTrackInterval1 ++ sortedTrackInterval2 else Seq())
+          geomLengthDiff > BIG_TRACK_LENGTH_DIFFERENCE__TRESHOLD_IN_METERS ||
+          geomLengthDiff / leftGeomLength > BIG_TRACK_LENGTH_DIFFERENCE__TRESHOLD_IN_PERCENT ||
+          geomLengthDiff / rightGeomLength > BIG_TRACK_LENGTH_DIFFERENCE__TRESHOLD_IN_PERCENT
+        }
+
+        val trackIntervalRemovedRoadPartLinks = roadPartLinks.filterNot(l => (sortedTrackInterval1 ++ sortedTrackInterval2).exists(lt => lt.id == l.id))
+        val exceptionalLengthLinks = if (exceptionalLengthDifference) sortedTrackInterval1 ++ sortedTrackInterval2 else Seq()
+
+        recursiveCheckTwoTrackGeometryLength(
+          trackIntervalRemovedRoadPartLinks,
+          errorLinks ++ exceptionalLengthLinks
         )
       }
     }
