@@ -1583,10 +1583,12 @@ class ProjectValidator {
   }
 
 
-  private def alterMessage(validationError: ValidationError, elyBorderData: Option[Seq[Long]] = Option.empty[Seq[Long]],
+  private def alterMessage(validationError: ValidationError,
+                           elyBorderData: Option[Seq[Long]] = Option.empty[Seq[Long]],
                            currentRoadAndPart: Option[Seq[(Long, Long)]] = Option.empty[Seq[(Long, Long)]],
                            nextRoadAndPart: Option[Seq[(Long, Long)]] = Option.empty[Seq[(Long, Long)]],
-                           discontinuity: Option[Seq[Discontinuity]] = Option.empty[Seq[Discontinuity]], projectDate: Option[String] = Option.empty[String]) = {
+                           discontinuity: Option[Seq[Discontinuity]] = Option.empty[Seq[Discontinuity]],
+                           projectDate: Option[String] = Option.empty[String]) = {
     val formattedMessage =
       if (projectDate.nonEmpty && currentRoadAndPart.nonEmpty) {
         val unzippedRoadAndPart = currentRoadAndPart.get.unzip
@@ -1601,7 +1603,7 @@ class ProjectValidator {
         validationError.message.format(if (elyBorderData.nonEmpty) {
           elyBorderData.get.toSet.mkString(", ")
         } else if (currentRoadAndPart.nonEmpty) {
-          Seq(currentRoadAndPart.get.head._2.toString,currentRoadAndPart.get.head._2.toString,currentRoadAndPart.get.head._2.toString)
+          currentRoadAndPart.get.toSet.mkString(", ")
         } else if (discontinuity.nonEmpty) {
           discontinuity.get.groupBy(_.value).map(_._2.head.toString).mkString(", ")
         }
