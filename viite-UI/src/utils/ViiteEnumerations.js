@@ -108,7 +108,6 @@
     UnderConstructionLayer: {value: 4},
     GeometryChangedLayer: {value: 5},
     ReservedRoadLayer: {value: 6},
-    HistoricRoadLayer: {value: 7},
     DirectionMarkerLayer: {value: 8},
     GreenLayer: {value: 10},
     unAddressedRoadsLayer: {value: 11},
