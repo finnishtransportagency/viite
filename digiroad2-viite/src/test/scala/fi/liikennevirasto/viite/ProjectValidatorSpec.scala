@@ -1947,6 +1947,51 @@ Left|      |Right
     }
   }
 
+
+  test("Test checkForInvalidUnchangedLinks When there is a new link is before unchanged Then ProjectValidator should show ErrorInValidationOfUnchangedLinks") {
+      /* |-> New-UnChanged-UnChanged-UnChanged-UnChanged-UnChanged */
+    runWithRollback {
+      mockEmptyRoadAddressServiceCalls()
+      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.UnChanged, Seq(0L, 10L, 20L, 30L, 40L), withRoadAddress = false)
+      val newPl = projectLinks.head.copy(status = LinkStatus.New, startAddrMValue = 0, endAddrMValue = 0, originalStartAddrMValue = 0, originalEndAddrMValue = 0, geometry = Seq(Point(0,-10),Point(0,0)))
+      val validationErrors = projectValidator.checkForInvalidUnchangedLinks(project, newPl +: projectLinks).distinct
+      validationErrors.size shouldNot be(0)
+      validationErrors.foreach(e => e.validationError.value should be(projectValidator.ValidationErrorList.ErrorInValidationOfUnchangedLinks.value))
+    }
+  }
+
+  test("Test checkForInvalidUnchangedLinks When there is a new link in middle of unchanged links Then ProjectValidator should show ErrorInValidationOfUnchangedLinks") {
+     /* |-> UnChanged-UnChanged-UnChanged-UnChanged-UnChanged-New-UnChanged-UnChanged-UnChanged-UnChanged-UnChanged */
+   runWithRollback {
+     mockEmptyRoadAddressServiceCalls()
+     val newLinkStartAddress = 50
+     val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.UnChanged, Seq(0L, 10L, 20L, 30L, 40L), withRoadAddress = false)
+     val projectLinksAfterNewLink = projectLinks.map(pl => pl.copy(
+       startAddrMValue = pl.startAddrMValue + newLinkStartAddress,
+       endAddrMValue = pl.endAddrMValue + newLinkStartAddress,
+       originalStartAddrMValue = pl.startAddrMValue + newLinkStartAddress,
+       originalEndAddrMValue = pl.endAddrMValue + newLinkStartAddress,
+       geometry = Seq(Point(pl.startingPoint.x, pl.startingPoint.y + newLinkStartAddress), Point(pl.endPoint.x, pl.endPoint.y + newLinkStartAddress))
+       )
+                                                     )
+     val newPl = projectLinks.head.copy(id = projectLinks.head.id-1, status = LinkStatus.New, startAddrMValue = 0, endAddrMValue = 0, originalStartAddrMValue = 0, originalEndAddrMValue = 0, geometry = Seq(Point(0,40),Point(0,50)))
+     val validationErrors = projectValidator.checkForInvalidUnchangedLinks(project, projectLinks ++ Seq(newPl) ++ projectLinksAfterNewLink).distinct
+     validationErrors.size shouldNot be(0)
+     validationErrors.foreach(e => e.validationError.value should be(projectValidator.ValidationErrorList.ErrorInValidationOfUnchangedLinks.value))
+   }
+  }
+
+  test("Test checkForInvalidUnchangedLinks When there is a new link is after unchanged links Then ProjectValidator shouldn't show ErrorInValidationOfUnchangedLinks") {
+      /* |-> UnChanged-UnChanged-UnChanged-UnChanged-UnChanged-New */
+    runWithRollback {
+      mockEmptyRoadAddressServiceCalls()
+      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.UnChanged, Seq(0L, 10L, 20L, 30L, 40L), withRoadAddress = false)
+      val newPl = projectLinks.head.copy(id = projectLinks.last.id+1, status = LinkStatus.New, startAddrMValue = 0, endAddrMValue = 0, originalStartAddrMValue = 0, originalEndAddrMValue = 0, geometry = Seq(Point(0,40),Point(0,50)))
+      val validationErrors = projectValidator.checkForInvalidUnchangedLinks(project, projectLinks ++ Seq(newPl)).distinct
+      validationErrors should have size 0
+    }
+  }
+
   test("Test checkProjectElyCodes When un-calculated new links have ely change but no road part change " +
                 "Then validator should return ElyCodeChangeButNotOnEnd error.") {
     runWithRollback {

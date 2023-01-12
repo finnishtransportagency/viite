@@ -180,7 +180,7 @@
           lineCap: 'round'
         }
       }),
-      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).and('anomaly').is(1).use({
+      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).and('startAddressM').is(0).and('endAddressM').is(0).and('administrativeClassId').is(ViiteEnumerations.AdministrativeClass.PublicRoad.value).use({
         stroke: {
           color: '#646461',
           lineCap: 'round'
@@ -283,13 +283,13 @@
           lineDash: [10, 10]
         }
       }),
-      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).and('anomaly').is(ViiteEnumerations.Anomaly.NoAddressGiven.value).and('lifecycleStatus').isNot(ViiteEnumerations.lifecycleStatus.UnderConstruction.value).use({
+      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).and('startAddressM').is(0).and('endAddressM').is(0).and('administrativeClassId').is(ViiteEnumerations.AdministrativeClass.PublicRoad.value).and('lifecycleStatus').isNot(ViiteEnumerations.lifecycleStatus.UnderConstruction.value).use({
         stroke: {
           color: '#646461',
           lineCap: 'round'
         }
       }),
-      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).and('anomaly').is(ViiteEnumerations.Anomaly.NoAddressGiven.value).and('lifecycleStatus').is(ViiteEnumerations.lifecycleStatus.UnderConstruction.value).use({
+      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).and('startAddressM').is(0).and('endAddressM').is(0).and('administrativeClassId').is(ViiteEnumerations.AdministrativeClass.PublicRoad.value).and('lifecycleStatus').is(ViiteEnumerations.lifecycleStatus.UnderConstruction.value).use({
         stroke: {
           color: '#ff9900',
           lineCap: 'butt',
@@ -363,7 +363,7 @@
     ];
 
     // Medium z-index for all roads
-    var roadLinkStyle = new StyleRuleProvider({zIndex: ViiteEnumerations.RoadZIndex.AnomalousMarkerLayer.value});
+    var roadLinkStyle = new StyleRuleProvider({zIndex: ViiteEnumerations.RoadZIndex.RoadLinkStyleZIndex.value});
     roadLinkStyle.addRules(strokeRules);
     roadLinkStyle.addRules(strokeWidthRules);
     roadLinkStyle.addRules(strokeAdministrativeClassRules);

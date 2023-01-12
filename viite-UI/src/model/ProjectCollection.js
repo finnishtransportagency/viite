@@ -107,7 +107,7 @@
           id: result.project.id,
           publishable: result.publishable
         };
-        me.setProjectErrors(result.projectErrors);
+        me.setAndWriteProjectErrorsToUser(result.projectErrors);
         me.setReservedParts(result.reservedInfo);
         me.setFormedParts(result.formedInfo);
         publishableProject = result.publishable;
@@ -191,7 +191,7 @@
             publishable: false
           };
           currentProject = result;
-          me.setProjectErrors(result.projectErrors);
+          me.setAndWriteProjectErrorsToUser(result.projectErrors);
           me.setReservedParts(result.reservedInfo);
           me.setFormedParts(result.formedInfo);
           eventbus.trigger('roadAddress:projectSaved', result);
@@ -220,7 +220,7 @@
           if (response.success) {
             dirtyProjectLinkIds = [];
             publishableProject = response.publishable;
-            me.setProjectErrors(response.projectErrors);
+            me.setAndWriteProjectErrorsToUser(response.projectErrors);
             me.setFormedParts(response.formedInfo);
             eventbus.trigger('projectLink:revertedChanges', response);
           } else {
@@ -234,15 +234,6 @@
       }
     };
 
-    var validateUnchangedInProject = function (projectId) {
-        backend.validateUnchangedInProject(projectId, function (response) {
-            if (response.hasOwnProperty('validationErrors') && !_.isEmpty(response.validationErrors)) {
-                me.setProjectErrors(response.validationErrors);
-                eventbus.trigger('roadAddressProject:writeProjectErrors');
-            }
-        });
-    };
-
     var createOrUpdate = function (dataJson) {
       if ((!_.isEmpty(dataJson.linkIds) || !_.isEmpty(dataJson.ids)) && typeof dataJson.projectId !== 'undefined' && dataJson.projectId !== 0) {
         if (dataJson.roadNumber !== 0 && dataJson.roadPartNumber !== 0) {
@@ -253,14 +244,13 @@
             backend.createProjectLinks(dataJson, function (successObject) {
               if (successObject.success) {
                 publishableProject = successObject.publishable;
-                me.setProjectErrors(successObject.projectErrors);
+                me.setAndWriteProjectErrorsToUser(successObject.projectErrors);
                 me.setFormedParts(successObject.formedInfo);
                 eventbus.trigger('projectLink:projectLinksCreateSuccess');
                 eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
                 if (successObject.errorMessage) {
                   new ModalConfirm(successObject.errorMessage);
                 }
-                validateUnchangedInProject(dataJson.projectId);
               } else {
                 new ModalConfirm(successObject.errorMessage);
                 applicationModel.removeSpinner();
@@ -270,10 +260,9 @@
             backend.updateProjectLinks(dataJson, function (successObject) {
               if (successObject.success) {
                 publishableProject = successObject.publishable;
-                me.setProjectErrors(successObject.projectErrors);
+                me.setAndWriteProjectErrorsToUser(successObject.projectErrors);
                 me.setFormedParts(successObject.formedInfo);
                 eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
-                validateUnchangedInProject(dataJson.projectId);
               } else {
                 new ModalConfirm(successObject.errorMessage);
                 applicationModel.removeSpinner();
@@ -448,7 +437,7 @@
       resetEditedDistance();
       backend.directionChangeNewRoadlink(dataJson, function (successObject) {
         if (successObject.success) {
-          me.setProjectErrors(successObject.projectErrors);
+          me.setAndWriteProjectErrorsToUser(successObject.projectErrors);
           eventbus.trigger('changeProjectDirection:clicked');
         } else {
           eventbus.trigger('roadAddress:changeDirectionFailed', successObject.errorMessage);
@@ -554,6 +543,11 @@
 
     this.setFormedParts = function (list) {
       formedParts = list;
+    };
+
+    this.setAndWriteProjectErrorsToUser = function (errors) {
+      me.setProjectErrors(errors);
+      eventbus.trigger('roadAddressProject:writeProjectErrors');
     };
 
     this.setProjectErrors = function (errors) {
