@@ -474,7 +474,7 @@
       eventbus.on('roadAddress:openProject', function (result) {
         currentProject = result.project;
         currentPublishedNetworkDate = result.publishedNetworkDate;
-        projectCollection.setProjectErrors(result.projectErrors);
+        projectCollection.setAndWriteProjectErrorsToUser(result.projectErrors);
         currentProject.isDirty = false;
         projectCollection.clearRoadAddressProjects();
         disableAutoComplete();

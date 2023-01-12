@@ -354,6 +354,8 @@
           formCommon.setDisabledAndTitleAttributesById("recalculate-button", false, "");
           formCommon.setInformationContent();
           formCommon.setInformationContentText("Päivitä etäisyyslukemat jatkaaksesi projektia.");
+        } else {
+          projectCollection.setAndWriteProjectErrorsToUser(projectErrors);
         }
         formCommon.toggleAdditionalControls();
         // changes made to project links, set recalculated flag to false
@@ -658,6 +660,7 @@
         backend.recalculateAndValidateProject(currentProject.project.id, function (response) {
           // if recalculation and validation did not throw exceptions in the backend
           if (response.success) {
+
               let trackGeometryLengthDeviationErrorCode = 38;
               if (response.validationErrors.filter(error => error.errorCode === trackGeometryLengthDeviationErrorCode).length > 0) {
                   let trackGeometryLengthDeviationError = response.validationErrors.filter(error => error.errorCode === trackGeometryLengthDeviationErrorCode)[0];
@@ -668,16 +671,16 @@
                   $('.form,.form-horizontal,.form-dark').append('<label class="validation-warning">' +trackGeometryLengthDeviationError.errorMessage + '<br>' + "LinkId: " + trackGeometryLengthDeviationError.info + '</label>');
                   response.validationErrors = response.validationErrors.filter(error => error.errorCode !== trackGeometryLengthDeviationErrorCode)
               }
-            // set project errors that were returned by the backend validations
-            projectCollection.setProjectErrors(response.validationErrors);
+
+            // set project errors that were returned by the backend validations and write them to user (removes the spinner also)
+            projectCollection.setAndWriteProjectErrorsToUser(response.validationErrors);
+
             if (Object.keys(response.validationErrors).length === 0) {
               // if no validation errors are present, show changes button and remove title
               formCommon.setDisabledAndTitleAttributesById("changes-button", false, "");
             }
             // fetch the recalculated project links and redraw map
             projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), zoomlevels.getViewZoom(map) + 1, currentProject.project.id, projectCollection.getPublishableStatus());
-            // write the validation errors on the screen and remove the spinner
-            eventbus.trigger('roadAddressProject:writeProjectErrors');
             // disable recalculate button after recalculation is done
             formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Etäisyyslukemat on päivitetty");
             // project was recalculated, set recalculated flag to true
@@ -685,9 +688,8 @@
           }
           // if something went wrong during recalculation or validation, show error to user
           else if (response.hasOwnProperty('validationErrors') && !_.isEmpty(response.validationErrors)) {
-              // set project errors that were returned by the backend validations
-              projectCollection.setProjectErrors(response.validationErrors);
-              eventbus.trigger('roadAddressProject:writeProjectErrors');
+              // set project errors that were returned by the backend validations and write them to user (removes the spinner also)
+              projectCollection.setAndWriteProjectErrorsToUser(response.validationErrors);
           } else {
             new ModalConfirm(response.errorMessage);
             applicationModel.removeSpinner();
