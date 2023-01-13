@@ -3210,9 +3210,9 @@ Left|      |Right
       val withSameLinkAndDifferentAdminClass = Seq(sameLinkIds.head.copy(administrativeClass = Municipality), sameLinkIds.last) ++ projectLinks.drop(2)
 
       mockEmptyRoadAddressServiceCalls()
-      val errors = projectValidator.checkSingleAdminClassOnLink(project, withSameLinkAndDifferentAdminClass)
+      val errors = projectValidator.checkUniformAdminClassOnLink(project, withSameLinkAndDifferentAdminClass)
       errors should have size 1
-      errors.head.validationError.value should equal (projectValidator.ValidationErrorList.SingleAdminClassOnLink.value)
+      errors.head.validationError.value should equal (projectValidator.ValidationErrorList.UniformAdminClassOnLink.value)
     }
   }
 }
