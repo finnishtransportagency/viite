@@ -7,7 +7,6 @@
     var underConstructionMarkerVector = new ol.source.Vector({});
     var directionMarkerVector = new ol.source.Vector({});
     var calibrationPointVector = new ol.source.Vector({});
-    var pickRoadsLayerVector = new ol.source.Vector({});
     var underConstructionRoadLayerVector = new ol.source.Vector({});
     var unAddressedRoadLayerVector = new ol.source.Vector({});
     var reservedRoadVector = new ol.source.Vector({});
@@ -58,17 +57,6 @@
     });
     reservedRoadLayer.set('name', 'reservedRoadLayer');
 
-    var pickRoadsLayer = new ol.layer.Vector({
-      source: pickRoadsLayerVector,
-      name: 'pickRoadsLayer',
-      style: function (feature) {
-        return [roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)}),
-          roadLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)})];
-      }
-    });
-    pickRoadsLayer.set('name', 'pickRoadsLayer');
-
-
     var underConstructionRoadLayer = new ol.layer.Vector({
       source: underConstructionRoadLayerVector,
       name: 'underConstructionRoadLayer',
@@ -91,7 +79,7 @@
 
 
     var layers = [roadLayer.layer, directionMarkerLayer, underConstructionMarkerLayer, calibrationPointLayer,
-      indicatorLayer, pickRoadsLayer, underConstructionRoadLayer, unAddressedRoadLayer, reservedRoadLayer];
+      indicatorLayer, underConstructionRoadLayer, unAddressedRoadLayer, reservedRoadLayer];
 
     var setGeneralOpacity = function (opacity) {
       roadLayer.layer.setOpacity(opacity);
@@ -193,7 +181,7 @@
       //Multi is the one en charge of defining if we select just the feature we clicked or all the overlapping
       multi: true,
       //This will limit the interaction to the specific layer, in this case the layer where the roadAddressLinks are drawn
-      layers: [roadLayer.layer, pickRoadsLayer, underConstructionRoadLayer, unAddressedRoadLayer],
+      layers: [roadLayer.layer, underConstructionRoadLayer, unAddressedRoadLayer],
       //Limit this interaction to the singleClick
       condition: ol.events.condition.singleClick,
       filter: function (feature) {
@@ -367,12 +355,12 @@
       addFeaturesToSelection(features);
     });
 
-    var getVisibleFeatures = function (withRoads, withGreenRoads, withDirectionalMarkers, withunderConstructionRoads, withVisibleUnAddressedRoads) {
+    var getVisibleFeatures = function (withRoads, withDirectionalMarkers, withUnderConstructionRoads, withVisibleUnAddressedRoads) {
       var extent = map.getView().calculateExtent(map.getSize());
       var visibleRoads = withRoads ? roadLayer.layer.getSource().getFeaturesInExtent(extent) : [];
       var visibleDirectionalMarkers = withDirectionalMarkers ? directionMarkerLayer.getSource().getFeaturesInExtent(extent) : [];
       var visibleUnderConstructionMarkers = withDirectionalMarkers ? underConstructionMarkerLayer.getSource().getFeaturesInExtent(extent) : [];
-      var visibleUnderConstructionRoads = withunderConstructionRoads ? underConstructionRoadLayer.getSource().getFeaturesInExtent(extent) : [];
+      var visibleUnderConstructionRoads = withUnderConstructionRoads ? underConstructionRoadLayer.getSource().getFeaturesInExtent(extent) : [];
       var visibleUnAddressedRoads = withVisibleUnAddressedRoads ? unAddressedRoadLayer.getSource().getFeaturesInExtent(extent) : [];
       return visibleRoads.concat(visibleDirectionalMarkers).concat(visibleUnderConstructionMarkers).concat(visibleUnderConstructionRoads).concat(visibleUnAddressedRoads);
     };
@@ -595,7 +583,7 @@
       eventListener.listenTo(eventbus, 'linkProperty:visibilityChanged', function () {
         //Exclude underConstruction layers from toggle
         me.toggleLayersVisibility([roadLayer.layer, directionMarkerLayer, calibrationPointLayer,
-          indicatorLayer, pickRoadsLayer, reservedRoadLayer], applicationModel.getRoadVisibility());
+          indicatorLayer, reservedRoadLayer], applicationModel.getRoadVisibility());
       });
       eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', redraw);
 
