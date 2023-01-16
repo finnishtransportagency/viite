@@ -22,18 +22,9 @@
     this.getRoadLinks = createCallbackRequestor(function (params) {
       var zoom = params.zoom;
       var boundingBox = params.boundingBox;
-      var withHistory = params.withHistory;
-      var day = params.day;
-      var month = params.month;
-      var year = params.year;
-      if (withHistory)
-        return {
-          url: 'api/viite/roadaddress?zoom=' + zoom + '&bbox=' + boundingBox + '&dd=' + day + '&mm=' + month + '&yyyy=' + year
-        };
-      else
-        return {
-          url: 'api/viite/roadaddress?zoom=' + zoom + '&bbox=' + boundingBox
-        };
+      return {
+        url: 'api/viite/roadaddress?zoom=' + zoom + '&bbox=' + boundingBox
+      };
     });
 
     this.getRoadLinksOfWholeRoadPart = createCallbackRequestor(function (params) {
