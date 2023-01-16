@@ -37,8 +37,7 @@ require.config({
     'GeometryUtils': {exports: 'GeometryUtils'},
     'RoadAddressTestData': {exports: 'RoadAddressTestData'},
     'RoadLinkTestData': {exports: 'RoadLinkTestData'},
-    'UserRolesTestData': {exports: 'UserRolesTestData'},
-    'validitydirections': {exports: 'validitydirections'}
+    'UserRolesTestData': {exports: 'UserRolesTestData'}
   },
   waitSeconds: 10
 });
