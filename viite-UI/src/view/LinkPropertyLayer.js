@@ -7,10 +7,7 @@
     var underConstructionMarkerVector = new ol.source.Vector({});
     var directionMarkerVector = new ol.source.Vector({});
     var calibrationPointVector = new ol.source.Vector({});
-    var greenRoadLayerVector = new ol.source.Vector({});
     var pickRoadsLayerVector = new ol.source.Vector({});
-    var simulationVector = new ol.source.Vector({});
-    var geometryChangedVector = new ol.source.Vector({});
     var underConstructionRoadLayerVector = new ol.source.Vector({});
     var unAddressedRoadLayerVector = new ol.source.Vector({});
     var reservedRoadVector = new ol.source.Vector({});
@@ -46,17 +43,6 @@
     });
     underConstructionMarkerLayer.set('name', 'underConstructionMarkerLayer');
 
-    var geometryChangedLayer = new ol.layer.Vector({
-      source: geometryChangedVector,
-      name: 'geometryChangedLayer',
-      style: function (feature) {
-        return [roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)}),
-          roadLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)})];
-      },
-      zIndex: RoadZIndex.GeometryChangedLayer.value
-    });
-    geometryChangedLayer.set('name', 'geometryChangedLayer');
-
     var calibrationPointLayer = new ol.layer.Vector({
       source: calibrationPointVector,
       name: 'calibrationPointLayer',
@@ -64,12 +50,6 @@
     });
     calibrationPointLayer.set('name', 'calibrationPointLayer');
 
-    var greenRoadLayer = new ol.layer.Vector({
-      source: greenRoadLayerVector,
-      name: 'greenRoadLayer',
-      zIndex: RoadZIndex.GreenLayer.value
-    });
-    greenRoadLayer.set('name', 'greenRoadLayer');
 
     var reservedRoadLayer = new ol.layer.Vector({
       source: reservedRoadVector,
@@ -87,16 +67,6 @@
       }
     });
     pickRoadsLayer.set('name', 'pickRoadsLayer');
-
-    var simulatedRoadsLayer = new ol.layer.Vector({
-      source: simulationVector,
-      name: 'simulatedRoadsLayer',
-      style: function (feature) {
-        return [roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)}),
-          roadLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)})];
-      }
-    });
-    simulatedRoadsLayer.set('name', 'simulatedRoadsLayer');
 
 
     var underConstructionRoadLayer = new ol.layer.Vector({
@@ -120,8 +90,8 @@
     unAddressedRoadLayer.set('name', 'unAddressedRoadLayer');
 
 
-    var layers = [roadLayer.layer, directionMarkerLayer, underConstructionMarkerLayer, geometryChangedLayer, calibrationPointLayer,
-      indicatorLayer, greenRoadLayer, pickRoadsLayer, simulatedRoadsLayer, underConstructionRoadLayer, unAddressedRoadLayer, reservedRoadLayer];
+    var layers = [roadLayer.layer, directionMarkerLayer, underConstructionMarkerLayer, calibrationPointLayer,
+      indicatorLayer, pickRoadsLayer, underConstructionRoadLayer, unAddressedRoadLayer, reservedRoadLayer];
 
     var setGeneralOpacity = function (opacity) {
       roadLayer.layer.setOpacity(opacity);
@@ -129,7 +99,6 @@
       underConstructionMarkerLayer.setOpacity(opacity);
       underConstructionRoadLayer.setOpacity(opacity);
       unAddressedRoadLayer.setOpacity(opacity);
-      geometryChangedLayer.setOpacity(opacity);
     };
 
     /**
@@ -144,7 +113,7 @@
       //Multi is the one en charge of defining if we select just the feature we clicked or all the overlapping
       //multi: true,
       //This will limit the interaction to the specific layer, in this case the layer where the roadAddressLinks are drawn
-      layer: [roadLayer.layer, geometryChangedLayer, underConstructionRoadLayer, unAddressedRoadLayer],
+      layer: [roadLayer.layer, underConstructionRoadLayer, unAddressedRoadLayer],
       //Limit this interaction to the doubleClick
       condition: ol.events.condition.doubleClick,
       //The new/temporary layer needs to have a style function as well, we define it here.
@@ -224,8 +193,7 @@
       //Multi is the one en charge of defining if we select just the feature we clicked or all the overlapping
       multi: true,
       //This will limit the interaction to the specific layer, in this case the layer where the roadAddressLinks are drawn
-      layers: [roadLayer.layer, greenRoadLayer, pickRoadsLayer, geometryChangedLayer,
-        underConstructionRoadLayer, unAddressedRoadLayer],
+      layers: [roadLayer.layer, pickRoadsLayer, underConstructionRoadLayer, unAddressedRoadLayer],
       //Limit this interaction to the singleClick
       condition: ol.events.condition.singleClick,
       filter: function (feature) {
@@ -399,27 +367,23 @@
       addFeaturesToSelection(features);
     });
 
-    var getVisibleFeatures = function (withRoads, withGreenRoads, withDirectionalMarkers, withunderConstructionRoads, withGeometryChanged, withVisibleUnAddressedRoads) {
+    var getVisibleFeatures = function (withRoads, withGreenRoads, withDirectionalMarkers, withunderConstructionRoads, withVisibleUnAddressedRoads) {
       var extent = map.getView().calculateExtent(map.getSize());
       var visibleRoads = withRoads ? roadLayer.layer.getSource().getFeaturesInExtent(extent) : [];
-      var visibleGreenRoadLayer = withGreenRoads ? greenRoadLayer.getSource().getFeaturesInExtent(extent) : [];
       var visibleDirectionalMarkers = withDirectionalMarkers ? directionMarkerLayer.getSource().getFeaturesInExtent(extent) : [];
       var visibleUnderConstructionMarkers = withDirectionalMarkers ? underConstructionMarkerLayer.getSource().getFeaturesInExtent(extent) : [];
       var visibleUnderConstructionRoads = withunderConstructionRoads ? underConstructionRoadLayer.getSource().getFeaturesInExtent(extent) : [];
       var visibleUnAddressedRoads = withVisibleUnAddressedRoads ? unAddressedRoadLayer.getSource().getFeaturesInExtent(extent) : [];
-      var visibleGeometryChanged = withGeometryChanged ? geometryChangedLayer.getSource().getFeaturesInExtent(extent) : [];
-      return visibleRoads.concat(visibleGreenRoadLayer).concat(visibleDirectionalMarkers).concat(visibleUnderConstructionMarkers).concat(visibleUnderConstructionRoads).concat(visibleUnAddressedRoads).concat(visibleGeometryChanged);
+      return visibleRoads.concat(visibleDirectionalMarkers).concat(visibleUnderConstructionMarkers).concat(visibleUnderConstructionRoads).concat(visibleUnAddressedRoads);
     };
 
     var getAllFeatures = function () {
       var roads = roadLayer.layer.getSource().getFeatures();
-      var greenRoadLayerFeatures = greenRoadLayer.getSource().getFeatures();
       var directionalMarkers = directionMarkerLayer.getSource().getFeatures();
       var underConstructionMarkers = underConstructionMarkerLayer.getSource().getFeatures();
       var underConstructionRoads = underConstructionRoadLayer.getSource().getFeatures();
       var unAddressedRoads = unAddressedRoadLayer.getSource().getFeatures();
-      var geometryChanged = geometryChangedLayer.getSource().getFeatures();
-      return roads.concat(greenRoadLayerFeatures).concat(directionalMarkers).concat(underConstructionMarkers).concat(underConstructionRoads).concat(unAddressedRoads).concat(geometryChanged);
+      return roads.concat(directionalMarkers).concat(underConstructionMarkers).concat(underConstructionRoads).concat(unAddressedRoads);
     };
 
     /**
@@ -447,7 +411,6 @@
 
     var unselectRoadLink = function () {
       indicatorLayer.getSource().clear();
-      greenRoadLayer.getSource().clear();
       _.map(roadLayer.layer.getSource().getFeatures(), function (feature) {
         if (feature.linkData.gapTransfering) {
           feature.linkData.gapTransfering = false;
@@ -467,7 +430,7 @@
           return sl.linkId;
         }), rl.linkId);
       });
-      me.clearLayers([geometryChangedLayer, underConstructionRoadLayer, unAddressedRoadLayer, directionMarkerLayer, underConstructionMarkerLayer, calibrationPointLayer]);
+      me.clearLayers([underConstructionRoadLayer, unAddressedRoadLayer, directionMarkerLayer, underConstructionMarkerLayer, calibrationPointLayer]);
 
       if (zoomlevels.getViewZoom(map) >= zoomlevels.minZoomForRoadNetwork) {
 
@@ -526,7 +489,6 @@
     var concludeLinkPropertyEdit = function (eventListener) {
       addSelectInteractions();
       eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
-      geometryChangedLayer.setVisible(false);
       setGeneralOpacity(1);
       if (selectDoubleClick.getFeatures().getLength() !== 0) {
         selectDoubleClick.getFeatures().clear();
@@ -632,11 +594,10 @@
       });
       eventListener.listenTo(eventbus, 'linkProperty:visibilityChanged', function () {
         //Exclude underConstruction layers from toggle
-        me.toggleLayersVisibility([roadLayer.layer, directionMarkerLayer, geometryChangedLayer, calibrationPointLayer,
-          indicatorLayer, greenRoadLayer, pickRoadsLayer, simulatedRoadsLayer, reservedRoadLayer], applicationModel.getRoadVisibility());
+        me.toggleLayersVisibility([roadLayer.layer, directionMarkerLayer, calibrationPointLayer,
+          indicatorLayer, pickRoadsLayer, reservedRoadLayer], applicationModel.getRoadVisibility());
       });
       eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', redraw);
-      eventListener.listenTo(eventbus, 'linkProperties:updateFailed', cancelSelection);
 
       eventListener.listenTo(eventbus, 'linkProperties:clearIndicators', function () {
         clearIndicators();
@@ -651,14 +612,6 @@
       };
 
       eventListener.listenTo(eventListener, 'map:clearLayers', me.clearLayers);
-    };
-
-    var cancelSelection = function () {
-      if (!applicationModel.isActiveButtons()) {
-        selectedLinkProperty.cancel();
-        selectedLinkProperty.close();
-        unselectRoadLink();
-      }
     };
 
 
@@ -679,11 +632,6 @@
       }
     });
 
-    me.eventListener.listenTo(eventbus, 'linkProperties:deselectFeaturesSelected', function () {
-      clearHighlights();
-      geometryChangedLayer.setVisible(true);
-    });
-
     me.eventListener.listenTo(eventbus, 'linkProperty:fetch', function () {
       map.getView().setZoom(Math.round(zoomlevels.getViewZoom(map)));
       roadCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), zoomlevels.getViewZoom(map) + 1);
@@ -700,9 +648,6 @@
     me.eventListener.listenTo(eventbus, 'linkProperties:unselected', function () {
       clearHighlights();
       setGeneralOpacity(1);
-      if (greenRoadLayer.getSource().getFeatures().length !== 0) {
-        unselectRoadLink();
-      }
       if (indicatorLayer.getSource().getFeatures().length !== 0) {
         indicatorLayer.getSource().clear();
       }
