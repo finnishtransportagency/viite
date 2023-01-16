@@ -9,7 +9,7 @@ object GeometryUtils {
   /** If links are more than <i>MaxDistanceForConnectedLinks</i> apart, they are considered to being disconnected. */
   val MaxDistanceForConnectedLinks = 0.1
 
-  /** @return the first, and last the point of the given <i>geometry</i> as a tuple. */
+  /** @return the first, and the last point of the given <i>geometry</i> as a tuple. */
   def geometryEndpoints(geometry: Seq[Point]): (Point, Point) = {
     val firstPoint: Point = geometry.head
     val lastPoint: Point = geometry.last
@@ -21,7 +21,7 @@ object GeometryUtils {
     Seq(geometry.head, geometry.last)
   }
 
-  /** @return True/False, whether the <i>measure</i> lays within the <i>interval</i>. */
+  /** @return True/False, whether the <i>measure</i> lies within the <i>interval</i>. */
   private def liesInBetween(measure: Double, interval: (Double, Double)): Boolean = {
     measure >= interval._1 && measure <= interval._2
   }

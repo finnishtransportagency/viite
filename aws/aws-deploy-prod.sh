@@ -10,7 +10,7 @@ aws ecr get-login-password --profile vaylaapp --region eu-west-1 | docker login 
 aws ecr get-login-password --profile vaylaapp --region eu-west-1 | docker login --username AWS --password-stdin 434599271542.dkr.ecr.eu-west-1.amazonaws.com
 echo "Pull QA image"
 docker pull 783354560127.dkr.ecr.eu-west-1.amazonaws.com/viite-qa:latest
-echo "Tagging QA image as also Prod image"
+echo "Tagging QA image as also the Prod image"
 docker tag 783354560127.dkr.ecr.eu-west-1.amazonaws.com/viite-qa:latest 434599271542.dkr.ecr.eu-west-1.amazonaws.com/viite-prod:latest
 echo "Push the tagged image to Prod ECR repository"
 docker push 434599271542.dkr.ecr.eu-west-1.amazonaws.com/viite-prod:latest
