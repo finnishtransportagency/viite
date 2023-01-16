@@ -4,7 +4,6 @@
     var me = this;
 
     var indicatorVector = new ol.source.Vector({});
-    var anomalousMarkerVector = new ol.source.Vector({});
     var underConstructionMarkerVector = new ol.source.Vector({});
     var directionMarkerVector = new ol.source.Vector({});
     var calibrationPointVector = new ol.source.Vector({});
@@ -15,7 +14,6 @@
     var underConstructionRoadLayerVector = new ol.source.Vector({});
     var unAddressedRoadLayerVector = new ol.source.Vector({});
     var reservedRoadVector = new ol.source.Vector({});
-    var historicRoadsVector = new ol.source.Vector({});
 
     var SelectionType = ViiteEnumerations.SelectionType;
     var lifecycleStatus = ViiteEnumerations.lifecycleStatus;
@@ -122,20 +120,8 @@
     unAddressedRoadLayer.set('name', 'unAddressedRoadLayer');
 
 
-    var historicRoadsLayer = new ol.layer.Vector({
-      source: historicRoadsVector,
-      name: 'historicRoadsLayer',
-      style: function (feature) {
-        return [roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)}),
-          roadLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)})];
-      },
-      zIndex: RoadZIndex.HistoricRoadLayer.value
-    });
-    historicRoadsLayer.set('name', 'historicRoadsLayer');
-
-
     var layers = [roadLayer.layer, directionMarkerLayer, underConstructionMarkerLayer, geometryChangedLayer, calibrationPointLayer,
-      indicatorLayer, greenRoadLayer, pickRoadsLayer, simulatedRoadsLayer, underConstructionRoadLayer, unAddressedRoadLayer, reservedRoadLayer, historicRoadsLayer];
+      indicatorLayer, greenRoadLayer, pickRoadsLayer, simulatedRoadsLayer, underConstructionRoadLayer, unAddressedRoadLayer, reservedRoadLayer];
 
     var setGeneralOpacity = function (opacity) {
       roadLayer.layer.setOpacity(opacity);
@@ -143,7 +129,6 @@
       underConstructionMarkerLayer.setOpacity(opacity);
       underConstructionRoadLayer.setOpacity(opacity);
       unAddressedRoadLayer.setOpacity(opacity);
-      historicRoadsLayer.setOpacity(opacity);
       geometryChangedLayer.setOpacity(opacity);
     };
 
@@ -159,7 +144,7 @@
       //Multi is the one en charge of defining if we select just the feature we clicked or all the overlapping
       //multi: true,
       //This will limit the interaction to the specific layer, in this case the layer where the roadAddressLinks are drawn
-      layer: [roadLayer.layer, geometryChangedLayer, underConstructionRoadLayer, unAddressedRoadLayer, historicRoadsLayer],
+      layer: [roadLayer.layer, geometryChangedLayer, underConstructionRoadLayer, unAddressedRoadLayer],
       //Limit this interaction to the doubleClick
       condition: ol.events.condition.doubleClick,
       //The new/temporary layer needs to have a style function as well, we define it here.
@@ -240,7 +225,7 @@
       multi: true,
       //This will limit the interaction to the specific layer, in this case the layer where the roadAddressLinks are drawn
       layers: [roadLayer.layer, greenRoadLayer, pickRoadsLayer, geometryChangedLayer,
-        underConstructionRoadLayer, unAddressedRoadLayer, historicRoadsLayer],
+        underConstructionRoadLayer, unAddressedRoadLayer],
       //Limit this interaction to the singleClick
       condition: ol.events.condition.singleClick,
       filter: function (feature) {
@@ -648,7 +633,7 @@
       eventListener.listenTo(eventbus, 'linkProperty:visibilityChanged', function () {
         //Exclude underConstruction layers from toggle
         me.toggleLayersVisibility([roadLayer.layer, directionMarkerLayer, geometryChangedLayer, calibrationPointLayer,
-          indicatorLayer, greenRoadLayer, pickRoadsLayer, simulatedRoadsLayer, reservedRoadLayer, historicRoadsLayer], applicationModel.getRoadVisibility());
+          indicatorLayer, greenRoadLayer, pickRoadsLayer, simulatedRoadsLayer, reservedRoadLayer], applicationModel.getRoadVisibility());
       });
       eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', redraw);
       eventListener.listenTo(eventbus, 'linkProperties:updateFailed', cancelSelection);
@@ -710,25 +695,6 @@
 
     me.eventListener.listenTo(eventbus, 'linkProperties:deactivateInteractions', function () {
       toggleSelectInteractions(false, true);
-    });
-
-    me.eventListener.listenTo(eventbus, 'linkProperty:fetchedHistoryLinks', function (historyLinkData) {
-      var points = _.map(historyLinkData.geometry, function (point) {
-        return [point.x, point.y];
-      });
-      var historyFeatures = _.map(historyLinkData, function (link) {
-        var feature = new ol.Feature({
-          geometry: new ol.geom.LineString(points)
-        });
-        feature.linkData = link;
-        return feature;
-      });
-      historicRoadsLayer.getSource().addFeatures(historyFeatures);
-    });
-
-    me.eventListener.listenTo(eventbus, 'linkProperty:fetchHistoryLinks', function (date) {
-      roadCollection.setDate(date);
-      roadCollection.fetch(map.getView().calculateExtent(map.getSize()), zoomlevels.getViewZoom(map));
     });
 
     me.eventListener.listenTo(eventbus, 'linkProperties:unselected', function () {
