@@ -22,7 +22,7 @@ object GeometryUtils {
   }
 
   /** @return True/False, whether the <i>measure</i> lays within the <i>interval</i>. */
-  private def laysInBetween(measure: Double, interval: (Double, Double)): Boolean = {
+  private def liesInBetween(measure: Double, interval: (Double, Double)): Boolean = {
     measure >= interval._1 && measure <= interval._2
   }
 
@@ -34,7 +34,7 @@ object GeometryUtils {
     def measureOnSegment(measure: Double, segment: (Point, Point), accumulatedLength: Double): Boolean = {
       val (firstPoint, secondPoint) = segment
       val interval = (accumulatedLength, firstPoint.distance2DTo(secondPoint) + accumulatedLength)
-      laysInBetween(measure, interval)
+      liesInBetween(measure, interval)
     }
 
     def newPointOnSegment(measureOnSegment: Double, segment: (Point, Point)): Point = {
@@ -69,10 +69,10 @@ object GeometryUtils {
     intervals.flatMap {
       case (start, end) if spanEnd <= start => List((start, end))
       case (start, end) if spanStart >= end => List((start, end))
-      case (start, end) if !laysInBetween(spanStart, (start, end)) && laysInBetween(spanEnd, (start, end)) => List((spanEnd, end))
-      case (start, end) if !laysInBetween(spanEnd, (start, end)) && laysInBetween(spanStart, (start, end)) => List((start, spanStart))
-      case (start, end) if !laysInBetween(spanStart, (start, end)) && !laysInBetween(spanEnd, (start, end)) => List()
-      case (start, end) if laysInBetween(spanStart, (start, end)) && laysInBetween(spanEnd, (start, end)) => List((start, spanStart), (spanEnd, end))
+      case (start, end) if !liesInBetween(spanStart, (start, end)) && liesInBetween(spanEnd, (start, end)) => List((spanEnd, end))
+      case (start, end) if !liesInBetween(spanEnd, (start, end)) && liesInBetween(spanStart, (start, end)) => List((start, spanStart))
+      case (start, end) if !liesInBetween(spanStart, (start, end)) && !liesInBetween(spanEnd, (start, end)) => List()
+      case (start, end) if liesInBetween(spanStart, (start, end)) && liesInBetween(spanEnd, (start, end)) => List((start, spanStart), (spanEnd, end))
       case x => List(x)
     }
   }
@@ -80,7 +80,7 @@ object GeometryUtils {
   def createSplit(splitMeasure: Double, segment: (Double, Double)): ((Double, Double), (Double, Double)) = {
     def splitLength(split: (Double, Double)) = split._2 - split._1
 
-    if (!laysInBetween(splitMeasure, segment)) throw new IllegalArgumentException
+    if (!liesInBetween(splitMeasure, segment)) throw new IllegalArgumentException
     val (startMeasureOfSegment, endMeasureOfSegment) = segment
     val firstSplit = (startMeasureOfSegment, splitMeasure)
     val secondSplit = (splitMeasure, endMeasureOfSegment)
@@ -454,7 +454,7 @@ object GeometryUtils {
     geom.map(p => p.minus(moveVector))
   }*/
 
-  /**
+  /* *
     * Measure summed distance between two geometries: head-to-head + tail-to-head vs. head-to-tail + tail-to-head
     * The measurement is taken after the geometries are reduced to the origin point.
     * @param geom1 Geometry 1
