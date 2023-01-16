@@ -1746,7 +1746,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
         "id" -> projectAddressLink.id,
         "status" -> projectAddressLink.status.value,
         "reversed" -> projectAddressLink.reversed,
-        "roadNameBlocked" -> (if (projectAddressLink.roadNumber != 0 && projectAddressLink.roadName.nonEmpty) roadNames.exists(_.roadNumber == projectAddressLink.roadNumber) else false)
+        "roadNameBlocked" -> (if (projectAddressLink.roadNumber != 0 && projectAddressLink.roadName.nonEmpty) roadNames.exists(_.roadNumber == projectAddressLink.roadNumber) else false),
+        "roadAddressRoadNumber" -> projectAddressLink.roadAddressRoadNumber,
+        "roadAddressRoadPart" -> projectAddressLink.roadAddressRoadPart
       )
         ++
         (if (projectAddressLink.isSplit)

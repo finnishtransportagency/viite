@@ -290,16 +290,14 @@
         checkInputs();
         changeDropDownValue(selectedProjectLink[0].status);
         /* Disable numbering if the road part has any other status set. */
-        projectCollection.getProjectLinks().then(function (pls) {
-            if (selectedProjectLink[0].status !== LinkStatus.Numbering.value &&
-                _.filter(pls, function (pl) {
-                    return pl.roadAddressRoadNumber === selectedProjectLink[0].roadNumber &&
-                       pl.roadAddressRoadPart   === selectedProjectLink[0].roadPartNumber &&
-                       (pl.status !== LinkStatus.NotHandled.value && pl.status !== LinkStatus.Numbering.value);
-                }).length !== 0) {
-                    removeNumberingFromDropdown();
-            }
-        });
+        if (selectedProjectLink[0].status !== LinkStatus.Numbering.value &&
+            _.filter(projectCollection.getAll(), function (pl) {
+                return pl.roadAddressRoadNumber === selectedProjectLink[0].roadNumber &&
+                    pl.roadAddressRoadPart === selectedProjectLink[0].roadPartNumber &&
+                    (pl.status !== LinkStatus.NotHandled.value && pl.status !== LinkStatus.Numbering.value);
+            }).length !== 0) {
+              removeNumberingFromDropdown();
+        };
         disableFormInputs();
         const projectLinkMaxByEndAddressM = _.maxBy(selectedProjectLink, function (projectLink) {
               return projectLink.endAddressM;
