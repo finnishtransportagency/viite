@@ -3,7 +3,6 @@
     Layer.call(this, map);
     var me = this;
 
-    var indicatorVector = new ol.source.Vector({});
     var underConstructionMarkerVector = new ol.source.Vector({});
     var directionMarkerVector = new ol.source.Vector({});
     var calibrationPointVector = new ol.source.Vector({});
@@ -20,13 +19,6 @@
     var cachedMarker = null;
 
     var roadLinkStyler = new RoadLinkStyler();
-
-    var indicatorLayer = new ol.layer.Vector({
-      source: indicatorVector,
-      name: 'indicatorLayer',
-      zIndex: RoadZIndex.IndicatorLayer.value
-    });
-    indicatorLayer.set('name', 'indicatorLayer');
 
     var directionMarkerLayer = new ol.layer.Vector({
       source: directionMarkerVector,
@@ -79,7 +71,7 @@
 
 
     var layers = [roadLayer.layer, directionMarkerLayer, underConstructionMarkerLayer, calibrationPointLayer,
-      indicatorLayer, underConstructionRoadLayer, unAddressedRoadLayer, reservedRoadLayer];
+      underConstructionRoadLayer, unAddressedRoadLayer, reservedRoadLayer];
 
     var setGeneralOpacity = function (opacity) {
       roadLayer.layer.setOpacity(opacity);
@@ -398,7 +390,6 @@
     addSelectInteractions();
 
     var unselectRoadLink = function () {
-      indicatorLayer.getSource().clear();
       _.map(roadLayer.layer.getSource().getFeatures(), function (feature) {
         if (feature.linkData.gapTransfering) {
           feature.linkData.gapTransfering = false;
@@ -514,7 +505,6 @@
         if (features) {
           addFeaturesToSelection(features);
         }
-        clearIndicators();
       });
 
       eventListener.listenTo(eventbus, 'roadLinks:fetched', function () {
@@ -582,22 +572,13 @@
       });
       eventListener.listenTo(eventbus, 'linkProperty:visibilityChanged', function () {
         //Exclude underConstruction layers from toggle
-        me.toggleLayersVisibility([roadLayer.layer, directionMarkerLayer, calibrationPointLayer,
-          indicatorLayer, reservedRoadLayer], applicationModel.getRoadVisibility());
+        me.toggleLayersVisibility([roadLayer.layer, directionMarkerLayer, calibrationPointLayer, reservedRoadLayer], applicationModel.getRoadVisibility());
       });
       eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', redraw);
-
-      eventListener.listenTo(eventbus, 'linkProperties:clearIndicators', function () {
-        clearIndicators();
-      });
 
       eventListener.listenTo(eventbus, 'roadLinks:refreshView', function () {
         me.refreshView();
       });
-
-      var clearIndicators = function () {
-        indicatorLayer.getSource().clear();
-      };
 
       eventListener.listenTo(eventListener, 'map:clearLayers', me.clearLayers);
     };
@@ -636,9 +617,6 @@
     me.eventListener.listenTo(eventbus, 'linkProperties:unselected', function () {
       clearHighlights();
       setGeneralOpacity(1);
-      if (indicatorLayer.getSource().getFeatures().length !== 0) {
-        indicatorLayer.getSource().clear();
-      }
       if (applicationModel.selectionTypeIs(SelectionType.Unknown)) {
         setGeneralOpacity(0.2);
       }

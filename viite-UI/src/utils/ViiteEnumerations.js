@@ -108,8 +108,7 @@
     UnderConstructionLayer: {value: 4},
     ReservedRoadLayer: {value: 6},
     DirectionMarkerLayer: {value: 8},
-    unAddressedRoadsLayer: {value: 11},
-    IndicatorLayer: {value: 99}
+    unAddressedRoadsLayer: {value: 11}
   };
 
   root.AdministrativeClass = {

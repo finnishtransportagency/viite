@@ -56,10 +56,6 @@
     eventbus.trigger('application:initialized');
   };
 
-  var indicatorOverlay = function () {
-    jQuery('.container').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
-  };
-
   $(document).ajaxError(function (event, jqxhr, settings, thrownError) {
     if (jqxhr.getAllResponseHeaders()) {
       applicationModel.removeSpinner();
@@ -193,10 +189,6 @@
   };
 
   var bindEvents = function () {
-
-    eventbus.on('linkProperties:saving', function () {
-      indicatorOverlay();
-    });
 
     eventbus.on('linkProperties:available', function () {
       jQuery('.spinner-overlay').remove();
