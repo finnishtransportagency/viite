@@ -37,13 +37,17 @@ case class Vector3d(x: Double, y: Double, z: Double) {
     RotationRight * this
   }
 
+  /** Dot product. */
   def dot(that: Vector3d): Double = {
     (x * that.x) + (y * that.y) + (z * that.z)
   }
 
+  /** Dot product (alias of [[Vector3d.dot]]) */
   def ⋅(that: Vector3d): Double = {
     dot(that)
   }
+
+  /** @return this vector normalized, i.e. scaled to be of length 1. */
   def normalize(): Vector3d = {
     if (length() != 0) {
       scale(1 / length())
@@ -96,16 +100,20 @@ case class Vector3d(x: Double, y: Double, z: Double) {
 }
 
 case class Point(x: Double, y: Double, z: Double = 0.0) {
+
+  /** Distance of this Point and <i>point</i> in the (x,y) plane.*/
   def distance2DTo(point: Point): Double =
     Math.sqrt(Math.pow(point.x - x, 2) + Math.pow(point.y - y, 2))
 
   def distance3DTo(point: Point): Double =
     Math.sqrt(Math.pow(point.x - x, 2) + Math.pow(point.y - y, 2) + Math.pow(point.z - z, 2))
 
+  /** @return this Point moved by the negative amount of coordinate values of <i>other</i> Point. */
   def minus(other: Point): Point = {
     Point (this.x - other.x, this.y - other.y, this.z - other.z)
   }
 
+  /** @return Vector3d whose coordinates are defined by substracting <i>that</i> Point's coordinates from this Point's coordinates.*/
   def -(that: Point): Vector3d = {
     Vector3d(x - that.x, y - that.y, z - that.z)
   }
@@ -126,7 +134,9 @@ case class Point(x: Double, y: Double, z: Double = 0.0) {
     this - Point(0.0, 0.0)
   }
 
+  /** @return Whether this Point and <i>point</i> are interpreted of being connected. The points are  interpreted
+   *          of being connected, if they are less than [[GeometryUtils.MaxDistanceForConnectedLinks]] apart from each other. */
   def connected(point: Point): Boolean = {
-    GeometryUtils.areAdjacent(Point(x, y, z), point, GeometryUtils.MaxDistanceForConnectedLinks)
+    GeometryUtils.areAdjacent(this, point, GeometryUtils.MaxDistanceForConnectedLinks)
   }
 }
