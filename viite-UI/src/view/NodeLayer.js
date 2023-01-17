@@ -1,5 +1,5 @@
 (function (root) {
-  root.NodeLayer = function (map, roadLayer, selectedNodesAndJunctions, nodeCollection, roadCollection, linkPropertiesModel, applicationModel) {
+  root.NodeLayer = function (map, roadLayer, selectedNodesAndJunctions, nodeCollection, roadCollection, applicationModel) {
     Layer.call(this, map);
     var me = this;
     var directionMarkerVector = new ol.source.Vector({});

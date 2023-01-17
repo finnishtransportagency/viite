@@ -1,5 +1,5 @@
 (function (root) {
-  root.LinkPropertyLayer = function (map, roadLayer, selectedLinkProperty, roadCollection, linkPropertiesModel, applicationModel) {
+  root.LinkPropertyLayer = function (map, roadLayer, selectedLinkProperty, roadCollection, applicationModel) {
     Layer.call(this, map);
     var me = this;
 
@@ -574,7 +574,6 @@
         //Exclude underConstruction layers from toggle
         me.toggleLayersVisibility([roadLayer.layer, directionMarkerLayer, calibrationPointLayer, reservedRoadLayer], applicationModel.getRoadVisibility());
       });
-      eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', redraw);
 
       eventListener.listenTo(eventbus, 'roadLinks:refreshView', function () {
         me.refreshView();
