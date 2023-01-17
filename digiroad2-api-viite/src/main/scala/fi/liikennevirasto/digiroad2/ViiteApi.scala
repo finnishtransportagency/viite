@@ -10,6 +10,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReservedException, Track}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
+import fi.liikennevirasto.digiroad2.Digiroad2Context.projectLinkDAO
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model._
@@ -64,7 +65,7 @@ case class NodeExtractor(id: Long = NewIdValue, nodeNumber: Long = NewIdValue, c
                          createdTime: Option[String], editor: Option[String] = None, publishedTime: Option[DateTime] = None, registrationDate: Option[String] = None,
                          junctions: List[JunctionExtractor], nodePoints: List[NodePointExtractor])
 
-class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink, val roadAddressService: RoadAddressService, val projectService: ProjectService, val roadNetworkService: RoadNetworkService, val roadNameService: RoadNameService, val nodesAndJunctionsService: NodesAndJunctionsService, val userProvider: UserProvider = Digiroad2Context.userProvider, val deploy_date: String = Digiroad2Context.deploy_date, implicit val swagger: Swagger)
+class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink, val roadAddressService: RoadAddressService, val projectService: ProjectService, val roadNetworkService: RoadNetworkService, val roadNameService: RoadNameService, val nodesAndJunctionsService: NodesAndJunctionsService, val userProvider: UserProvider = Digiroad2Context.userProvider, val deploy_date: String = Digiroad2Context.deploy_date, implicit val swagger: Swagger)
   extends ScalatraServlet
     with JacksonJsonSupport
     with CorsSupport
@@ -219,14 +220,14 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
   private val getRoadAddressLinkByLinkId: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String, Any]]("getRoadAddressLinkByLinkId")
       .parameters(
-        pathParam[Long]("linkId").description("LinkId of a road address")
+        pathParam[String]("linkId").description("LinkId of a road address")
       )
       tags "ViiteAPI - RoadAddresses"
       summary "Returns the RoadAddressLink object of the given linkId"
     )
 
   get("/roadaddress/linkid/:linkId", operation(getRoadAddressLinkByLinkId)) {
-    val linkId = params("linkId").toString
+    val linkId = params("linkId")
     time(logger, s"GET request for /roadAddress/linkid/$linkId") {
       //TODO This process can be improved
       roadAddressService.getRoadAddressLink(linkId)
@@ -236,13 +237,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
   }
 
   private val fetchPreFill: SwaggerSupportSyntax.OperationBuilder = (
-    apiOperation[Map[String, Any]]("fetchPreFillFromVVH")
+    apiOperation[Map[String, Any]]("fetchPreFillData")
       .parameters(
-        queryParam[Long]("linkId").description("LinkId of a road address"),
+        queryParam[String]("linkId").description("LinkId of a road address"),
         queryParam[Long]("currentProjectId").description("currentProjectId")
       )
       tags "ViiteAPI - Project"
-      summary "Fetch prefill information from VVH like roadNumber, roadPartNumber, roadName, roadNameSource"
+      summary "Fetch prefill information like roadNumber, roadPartNumber, roadName, roadNameSource"
     )
 
   get("/roadlinks/project/prefill", operation(fetchPreFill)) {
@@ -260,14 +261,14 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
   private val getMidPointByLinkId: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String, Any]]("getMidPointByLinkId")
       .parameters(
-        pathParam[Long]("linkId").description("LinkId of a road address")
+        pathParam[String]("linkId").description("LinkId of a road address")
       )
       tags "ViiteAPI - RoadAddresses"
       summary "getMidPointByLinkId"
     )
 
   get("/roadlinks/midpoint/:linkId", operation(getMidPointByLinkId)) {
-    val linkId = params("linkId").toString
+    val linkId = params("linkId")
     time(logger, s"GET request for /roadlinks/midpoint/$linkId") {
       roadLinkService.getMidPointByLinkId(linkId)
     }
@@ -358,7 +359,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
 
   private val getDataForRoadAddressBrowser: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String,Any]]("getDataForRoadAddressBrowser").parameters(
-      queryParam[String]("startDate").description("Situation date (yyyy-MM-dd)"),
+      queryParam[String]("situationDate").description("Situation date (yyyy-MM-dd)"),
       queryParam[String]("target").description("What data to fetch (Tracks, RoadParts, Nodes, Junctions, RoadNames)"),
       queryParam[Long]("ely").description("Ely number of a road address").optional,
       queryParam[Long]("roadNumber").description("Road Number of a road address").optional,
@@ -371,7 +372,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
 
   get("/roadaddressbrowser", operation(getDataForRoadAddressBrowser)) {
     time(logger, s"GET request for /roadaddressbrowser", params=Some(params)) {
-      def validateInputs(startDate: Option[String], target: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Boolean = {
+      def validateInputs(situationDate: Option[String], target: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Boolean = {
         def parseDate(dateString: Option[String]): Option[DateTime] = {
           val formatter = DateTimeFormat.forPattern("yyyy-MM-dd")
           try {
@@ -385,7 +386,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
         }
 
         val mandatoryInputsDefinedAndValid =
-          parseDate(startDate).isDefined && // startDate is mandatory for all targets
+          parseDate(situationDate).isDefined && // situationDate is mandatory for all targets
           target.isDefined && // target is always mandatory
             ((ely.isDefined && ely.get > 0L && ely.get <= 14L) || (roadNumber.isDefined && roadNumber.get > 0L && roadNumber.get <= 99999L)) || //either ely OR road number is required
             target.get == "RoadNames" //  unless target is RoadNames
@@ -399,7 +400,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
         mandatoryInputsDefinedAndValid && optionalRoadPartInputsValid
       }
 
-      val startDate = params.get("startDate")
+      val situationDate = params.get("situationDate")
       val target = params.get("target")
       val ely = params.get("ely").map(_.toLong)
       val roadNumber = params.get("roadNumber").map(_.toLong)
@@ -407,22 +408,22 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
       val maxRoadPartNumber = params.get("maxRoadPartNumber").map(_.toLong)
 
       try {
-        if (validateInputs(startDate, target, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)) {
+        if (validateInputs(situationDate, target, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)) {
           target match {
             case Some("Tracks") =>
-              val tracksForRoadAddressBrowser = roadAddressService.getTracksForRoadAddressBrowser(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
+              val tracksForRoadAddressBrowser = roadAddressService.getTracksForRoadAddressBrowser(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
               Map("success" -> true, "tracks" -> tracksForRoadAddressBrowser.map(roadAddressBrowserTracksToApi))
             case Some("RoadParts") =>
-              val roadPartsForRoadAddressBrowser = roadAddressService.getRoadPartsForRoadAddressBrowser(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
+              val roadPartsForRoadAddressBrowser = roadAddressService.getRoadPartsForRoadAddressBrowser(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
               Map("success" -> true, "roadParts" -> roadPartsForRoadAddressBrowser.map(roadAddressBrowserRoadPartsToApi))
             case Some("Nodes") =>
-              val nodesForRoadAddressBrowser = nodesAndJunctionsService.getNodesForRoadAddressBrowser(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
+              val nodesForRoadAddressBrowser = nodesAndJunctionsService.getNodesForRoadAddressBrowser(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
               Map("success" -> true, "nodes" -> nodesForRoadAddressBrowser.map(roadAddressBrowserNodesToApi))
             case Some("Junctions") =>
-              val junctionsForRoadAddressBrowser = nodesAndJunctionsService.getJunctionsForRoadAddressBrowser(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
+              val junctionsForRoadAddressBrowser = nodesAndJunctionsService.getJunctionsForRoadAddressBrowser(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
               Map("success" -> true, "junctions" -> junctionsForRoadAddressBrowser.map(roadAddressBrowserJunctionsToApi))
             case Some("RoadNames") =>
-              val roadNamesForRoadAddressBrowser = roadNameService.getRoadNamesForRoadAddressBrowser(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
+              val roadNamesForRoadAddressBrowser = roadNameService.getRoadNamesForRoadAddressBrowser(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
               Map("success" -> true, "roadNames" -> roadNamesForRoadAddressBrowser.map(roadAddressBrowserRoadNamesToApi))
             case _ => Map("success" -> false, "error" -> "Tieosoitteiden haku epäonnistui, haun kohdearvo puuttuu tai on väärin syötetty")
           }
@@ -438,17 +439,105 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
     }
   }
 
+  private val getDataForRoadAddressChangesBrowser: SwaggerSupportSyntax.OperationBuilder = (
+    apiOperation[Map[String,Any]]("getDataForRoadAddressChangesBrowser").parameters(
+      queryParam[String]("startDate").description("Start date (yyyy-MM-dd)"),
+      queryParam[String]("endDate").description("End date (yyyy-MM-dd)"),
+      queryParam[String]("dateTarget").description("What start and end dates are used for"),
+      queryParam[Long]("ely").description("Ely number of a road address").optional,
+      queryParam[Long]("roadNumber").description("Road Number of a road address").optional,
+      queryParam[Long]("minRoadPartNumber").description("Min Road Part Number of a road address").optional,
+      queryParam[Long]("maxRoadPartNumber").description("Max Road Part Number of a road address").optional
+    )
+      tags "ViiteAPI - Road Address Changes Browser"
+      summary "Returns change info for road address changes browser based on the search criteria"
+    )
+
+  get("/roadaddresschangesbrowser", operation(getDataForRoadAddressChangesBrowser)) {
+    time(logger, s"GET request for /roadaddresschangesbrowser") {
+      def validateInputs(startDate: Option[String], endDate: Option[String], dateTarget: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Boolean = {
+        def parseDate(dateString: Option[String]): Option[DateTime] = {
+          val formatter = DateTimeFormat.forPattern("yyyy-MM-dd")
+          try {
+            if (dateString.isDefined) {
+              Some(formatter.parseDateTime(dateString.get))
+            } else
+              None
+          } catch {
+            case _: IllegalArgumentException => None
+          }
+        }
+
+        def roadPartInputsValid(minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]) = {
+          (minRoadPartNumber, maxRoadPartNumber) match {
+            case (Some(minPart), Some(maxPart)) => minPart >= 1 && minPart <= 999 && maxPart >= 1 && maxPart <= 999 && minPart <= maxPart
+            case (Some(minPart), None) => minPart >= 1 && minPart <= 999
+            case (None, Some(maxPart)) => maxPart >= 1 && maxPart <= 999
+            case (None, None) => true
+          }
+        }
+
+        val mandatoryInputsDefinedAndValid = parseDate(startDate).isDefined &&  dateTarget.isDefined
+        val optionalInputsValid: Boolean =  {
+          val endDateValid = {
+            if (endDate.isDefined)
+              parseDate(endDate).isDefined
+            else
+              true
+          }
+          val elyValid = {
+            if (ely.isDefined)
+              ely.get > 0L && ely.get <= 14L
+            else
+              true
+          }
+          val roadNumberValid = {
+            if (roadNumber.isDefined)
+              roadNumber.get > 0L && roadNumber.get <= 99999L
+            else
+              true
+          }
+          endDateValid && elyValid && roadNumberValid && roadPartInputsValid(minRoadPartNumber, maxRoadPartNumber)
+        }
+
+        mandatoryInputsDefinedAndValid && optionalInputsValid
+      }
+
+      val startDate = params.get("startDate")
+      val endDate = params.get("endDate")
+      val dateTarget = params.get("dateTarget")
+      val ely = params.get("ely").map(_.toLong)
+      val roadNumber = params.get("roadNumber").map(_.toLong)
+      val minRoadPartNumber = params.get("minRoadPartNumber").map(_.toLong)
+      val maxRoadPartNumber = params.get("maxRoadPartNumber").map(_.toLong)
+
+      try {
+        if (validateInputs(startDate, endDate, dateTarget, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)) {
+          val changeInfosForRoadAddressChangesBrowser = roadAddressService.getChangeInfosForRoadAddressChangesBrowser(startDate, endDate, dateTarget, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
+          Map("success" -> true, "changeInfos" -> changeInfosForRoadAddressChangesBrowser.map(roadAddressChangeInfoToApi))
+        } else
+          Map("success" -> false, "error" -> "Tieosoitemuutosten haku epäonnistui, tarkista syöttämäsi tiedot")
+
+      } catch {
+        case e: Throwable => {
+          logger.error(s"Error fetching data for road address changes browser ${e}")
+          Map("success" -> false, "error" -> "Tieosoitemuutosten haku epäonnistui, ota yhteys Viite tukeen")
+        }
+      }
+    }
+  }
+
   private val getProjectAddressLinksByLinkIds: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String,Any]]("getProjectAddressLinksByLinkIds")
       .parameters(
-        pathParam[Long]("linkId").description("LinkId of a road address")
+        pathParam[String]("linkId").description("LinkId of a road address")
       )
       tags "ViiteAPI - Project"
       summary "Returns a sequence of all ProjectAddressLinks that share the same LinkId."
     )
 
   get("/project/roadaddress/linkid/:linkId", operation(getProjectAddressLinksByLinkIds)) {
-    val linkId = params("linkId").toLong
+    val linkId = params("linkId")
     time(logger, s"GET request for /project/roadAddress/linkid/$linkId") {
       val projectLinks = projectService.getProjectAddressLinksByLinkIds(Set(linkId))
       foldSegments(projectLinks)
@@ -517,7 +606,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
           "reservedInfo" -> projectSaved.reservedParts.map(projectReservedPartToApi),
           "formedInfo" -> projectSaved.formedParts.map(projectFormedPartToApi(Some(projectSaved.id))),
           "success" -> true,
-          "projectErrors" -> projectService.validateProjectById(project.id).map(errorPartsToApi))
+          "projectErrors" -> projectService.validateProjectById(project.id).map(projectService.projectValidator.errorPartsToApi))
       } catch {
         case _: IllegalStateException       => Map("success" -> false, "errorMessage" -> "Projekti ei ole enää muokattavissa")
         case _: IllegalArgumentException    => NotFound(s"Project id ${project.id} not found")
@@ -603,7 +692,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
           case Some(errorMessage) =>
             Map("success" -> false, "errorMessage" -> errorMessage)
           case None =>
-            Map("success" -> true, "projectErrors" -> projectService.validateProjectById(roadInfo.projectId).map(errorPartsToApi))
+            Map("success" -> true, "projectErrors" -> projectService.validateProjectById(roadInfo.projectId).map(projectService.projectValidator.errorPartsToApi))
         }
       } catch {
         case e: IllegalStateException => Map("success" -> false, "errorMessage" -> e.getMessage)
@@ -661,7 +750,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
             val publishable = errorParts.isEmpty
             val latestPublishedNetwork = roadNetworkService.getLatestPublishedNetworkDate
             Map("project" -> projectMap, "linkId" -> project.reservedParts.find(_.startingLinkId.nonEmpty).flatMap(_.startingLinkId),
-              "reservedInfo" -> reservedparts, "formedInfo" -> formedparts, "publishable" -> publishable, "projectErrors" -> errorParts.map(errorPartsToApi),
+              "reservedInfo" -> reservedparts, "formedInfo" -> formedparts, "publishable" -> publishable, "projectErrors" -> errorParts.map(projectService.projectValidator.errorPartsToApi),
               "publishedNetworkDate" -> formatDateTimeToString(latestPublishedNetwork))
           case _ => halt(NotFound("Project not found"))
         }
@@ -723,7 +812,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
           val user = userProvider.getCurrentUser().username
           projectService.revertLinks(linksToRevert.projectId, linksToRevert.roadNumber, linksToRevert.roadPartNumber, linksToRevert.links, linksToRevert.coordinates, user) match {
             case None =>
-              val projectErrors = projectService.validateProjectByIdHighPriorityOnly(linksToRevert.projectId).map(errorPartsToApi)
+              val projectErrors = projectService.validateProjectByIdHighPriorityOnly(linksToRevert.projectId).map(projectService.projectValidator.errorPartsToApi)
               val project = projectService.getSingleProjectById(linksToRevert.projectId).get
               Map("success" -> true,
                 "publishable" -> projectErrors.isEmpty,
@@ -733,7 +822,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
           }
         }
       } catch {
-        case e: IllegalStateException => Map("success" -> false, "errorMessage" -> "Projekti ei ole enää muokattavissa")
+        case _: IllegalStateException => Map("success" -> false, "errorMessage" -> "Projekti ei ole enää muokattavissa")
         case e: MappingException =>
           logger.warn("Exception treating road links", e)
           BadRequest("Missing mandatory ProjectLink parameter")
@@ -767,10 +856,11 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
         val response = projectService.createProjectLinks(links.linkIds, links.projectId, links.roadNumber, links.roadPartNumber, Track.apply(links.trackCode), Discontinuity.apply(links.discontinuity), AdministrativeClass.apply(links.administrativeClass), LinkGeomSource.apply(links.roadLinkSource), links.roadEly, user.username, links.roadName.getOrElse(halt(BadRequest("Road name is mandatory"))), Some(links.coordinates))
         response.get("success") match {
           case Some(true) =>
-            val projectErrors = response.getOrElse("projectErrors", Seq).asInstanceOf[Seq[projectService.projectValidator.ValidationErrorDetails]].map(errorPartsToApi)
+            val projectErrors = response.getOrElse("projectErrors", Seq).asInstanceOf[Seq[projectService.projectValidator.ValidationErrorDetails]].map(projectService.projectValidator.errorPartsToApi)
             Map("success" -> true,
-              "publishable" -> response.get("projectErrors").isEmpty,
-              "projectErrors" -> projectErrors)
+              "publishable" -> !response.contains("projectErrors"),
+              "projectErrors" -> projectErrors,
+              "errorMessage" -> response.get("errorMessage"))
           case _ => response
         }
       } catch {
@@ -781,7 +871,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
           BadRequest("Missing mandatory ProjectLink parameter")
         case e: Exception =>
           logger.error(e.toString, e)
-          InternalServerError(e.toString)
+          Map("success" -> false, "errorMessage" -> e.toString)
       }
     }
   }
@@ -809,7 +899,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
           projectService.updateProjectLinks(links.projectId, links.ids, links.linkIds, LinkStatus.apply(links.linkStatus), user.username, links.roadNumber, links.roadPartNumber, links.trackCode, links.userDefinedEndAddressM, links.administrativeClass, links.discontinuity, Some(links.roadEly), links.reversed.getOrElse(false), roadName = links.roadName, Some(links.coordinates)) match {
             case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
             case None =>
-              val projectErrors = projectService.validateProjectByIdHighPriorityOnly(links.projectId).map(errorPartsToApi)
+              val projectErrors = projectService.validateProjectByIdHighPriorityOnly(links.projectId).map(projectService.projectValidator.errorPartsToApi)
               val project = projectService.getSingleProjectById(links.projectId).get
               Map("success" -> true, "id" -> links.projectId,
                 "publishable" -> projectErrors.isEmpty,
@@ -952,11 +1042,19 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
     val projectId = params("projectId").toLong
     time(logger, s"GET request for /project/recalculateProject/$projectId") {
       try {
-        withDynTransaction {
+        val invalidUnchangedLinkErrors = withDynTransaction {
           val project = projectService.fetchProjectById(projectId).get
-          projectService.recalculateProjectLinks(projectId, project.modifiedBy)
+          val invalidUnchangedLinkErrors = projectService.projectValidator.checkForInvalidUnchangedLinks(project, projectLinkDAO.fetchProjectLinks(projectId))
+          if (invalidUnchangedLinkErrors.isEmpty) {
+            projectService.recalculateProjectLinks(projectId, project.modifiedBy)
+          }
+          invalidUnchangedLinkErrors
         }
-        val validationErrors = projectService.validateProjectById(projectId).map(errorPartsToApi)
+        val validationErrors = if (invalidUnchangedLinkErrors.nonEmpty)
+          invalidUnchangedLinkErrors.map(projectService.projectValidator.errorPartsToApi)
+        else
+          projectService.validateProjectById(projectId).map(projectService.projectValidator.errorPartsToApi)
+
         // return validation errors
         Map("success" -> true, "validationErrors" -> validationErrors)
       } catch {
@@ -964,10 +1062,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
           logger.info("Road address Exception: " + ex.getMessage)
           Map("success" -> false, "errorMessage" -> ex.getMessage)
         case ex: ProjectValidationException =>
-          Some(ex.getMessage)
-          Map("success" -> false, "errorMessage" -> ex.getMessage)
+          Map("success" -> false, "errorMessage" -> ex.getMessage, "validationErrors" -> ex.getValidationErrors)
         case ex: Exception =>
-          Some(ex.getMessage)
           Map("success" -> false, "errorMessage" -> ex.getMessage)
       }
     }
@@ -1327,16 +1423,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
     BoundingRectangle(Point(BBOXList(0), BBOXList(1)), Point(BBOXList(2), BBOXList(3)))
   }
 
-  private def mapValidationIssues(issue: projectService.projectValidator.ValidationErrorDetails): Map[String, Any] = {
-    Map(
-      "id" -> issue.projectId,
-      "validationError" -> issue.validationError.value,
-      "affectedIds" -> issue.affectedIds.toArray,
-      "coordinates" -> issue.coordinates,
-      "optionalInformation" -> issue.optionalInformation.getOrElse("")
-    )
-  }
-
   private def roadAddressLinkLikeToApi(roadAddressLink: RoadAddressLinkLike): Map[String, Any] = {
     Map(
       "success" -> true,
@@ -1365,7 +1451,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
       "startAddressM" -> roadAddressLink.startAddressM,
       "endAddressM" -> roadAddressLink.endAddressM,
       "discontinuity" -> roadAddressLink.discontinuity,
-      "anomaly" -> roadAddressLink.anomaly.value,
       "lifecycleStatus" -> roadAddressLink.lifecycleStatus.value,
       "startMValue" -> roadAddressLink.startMValue,
       "endMValue" -> roadAddressLink.endMValue,
@@ -1535,14 +1620,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
   }
 
   def roadAddressBrowserTracksToApi(track: TrackForRoadAddressBrowser): Map[String, Any] = {
-    def getAdministrativeClassStringValue(): String = {
-      track.administrativeClass match {
-        case 1 => "Valtio"
-        case 2 => "Kunta"
-        case 3 => "Yksityinen"
-        case _ => "Tuntematon"
-      }
-    }
     Map(
       "ely" -> track.ely,
       "roadNumber" -> track.roadNumber,
@@ -1551,7 +1628,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
       "startAddrM" -> track.startAddrM,
       "endAddrM" -> track.endAddrM,
       "lengthAddrM" -> track.roadAddressLengthM,
-      "administrativeClass" -> getAdministrativeClassStringValue(),
+      "administrativeClass" -> track.administrativeClass,
       "startDate" -> new SimpleDateFormat("dd.MM.yyyy").format(track.startDate.toDate)
     )
   }
@@ -1582,17 +1659,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
   }
 
   def roadAddressBrowserJunctionsToApi(junction :JunctionForRoadAddressBrowser): Map[String, Any] = {
-    def getBeforeAfterStringValue(): String = {
-      if (junction.beforeAfter.contains(1) && junction.beforeAfter.contains(2))
-        "EJ"
-      else if (junction.beforeAfter.contains(1))
-        "E"
-      else if (junction.beforeAfter.contains(2))
-        "J"
-      else
-        ""
-    }
-
     Map(
       "nodeNumber" -> junction.nodeNumber,
       "nodeCoordinates" -> junction.nodeCoordinates,
@@ -1604,7 +1670,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
       "track" -> junction.track,
       "roadPartNumber" -> junction.roadPartNumber,
       "addrM" -> junction.addrM,
-      "beforeAfter" -> getBeforeAfterStringValue()
+      "beforeAfter" -> junction.beforeAfter
     )
   }
 
@@ -1613,6 +1679,33 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
       "ely" -> roadName.ely,
       "roadNumber" -> roadName.roadNumber,
       "roadName" -> roadName.roadName
+    )
+  }
+
+  def roadAddressChangeInfoToApi(changeInfo: ChangeInfoForRoadAddressChangesBrowser): Map[String, Any] = {
+    Map(
+      "startDate" -> new SimpleDateFormat("dd.MM.yyyy").format(changeInfo.startDate.toDate),
+      "changeType" -> changeInfo.changeType,
+      "reversed" -> changeInfo.reversed,
+      "roadName" -> changeInfo.roadName,
+      "projectName" -> changeInfo.projectName,
+      "projectAcceptedDate" -> new SimpleDateFormat("dd.MM.yyyy").format(changeInfo.projectAcceptedDate.toDate),
+      "oldEly" -> changeInfo.oldRoadAddress.ely,
+      "oldRoadNumber" -> changeInfo.oldRoadAddress.roadNumber.getOrElse(""),
+      "oldTrack" -> changeInfo.oldRoadAddress.track.getOrElse(""),
+      "oldRoadPartNumber" -> changeInfo.oldRoadAddress.roadPartNumber.getOrElse(""),
+      "oldStartAddrM" -> changeInfo.oldRoadAddress.startAddrM.getOrElse(""),
+      "oldEndAddrM" -> changeInfo.oldRoadAddress.endAddrM.getOrElse(""),
+      "oldLength" -> changeInfo.oldRoadAddress.length.getOrElse(""),
+      "oldAdministrativeClass" -> changeInfo.oldRoadAddress.administrativeClass,
+      "newEly" -> changeInfo.newRoadAddress.ely,
+      "newRoadNumber" -> changeInfo.newRoadAddress.roadNumber,
+      "newTrack" -> changeInfo.newRoadAddress.track,
+      "newRoadPartNumber" -> changeInfo.newRoadAddress.roadPartNumber,
+      "newStartAddrM" -> changeInfo.newRoadAddress.startAddrM,
+      "newEndAddrM" -> changeInfo.newRoadAddress.endAddrM,
+      "newLength" -> changeInfo.newRoadAddress.length,
+      "newAdministrativeClass" -> changeInfo.newRoadAddress.administrativeClass
     )
   }
 
@@ -1644,7 +1737,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
         "startAddressM" -> projectAddressLink.startAddressM,
         "endAddressM" -> projectAddressLink.endAddressM,
         "discontinuity" -> projectAddressLink.discontinuity,
-        "anomaly" -> projectAddressLink.anomaly.value,
         "lifecycleStatus" -> projectAddressLink.lifecycleStatus.value,
         "startMValue" -> projectAddressLink.startMValue,
         "endMValue" -> projectAddressLink.endMValue,
@@ -1737,16 +1829,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
           case _ => projectService.getRoadAddressesFromFormedRoadPart(formedRoadPart.roadNumber, formedRoadPart.roadPartNumber, projectId.get)
         }
       }
-    )
-  }
-
-  def errorPartsToApi(errorParts: projectService.projectValidator.ValidationErrorDetails): Map[String, Any] = {
-    Map("ids" -> errorParts.affectedIds,
-      "errorCode" -> errorParts.validationError.value,
-      "errorMessage" -> errorParts.validationError.message,
-      "info" -> errorParts.optionalInformation,
-      "coordinates" -> errorParts.coordinates,
-      "priority" -> errorParts.validationError.priority
     )
   }
 
@@ -1889,8 +1971,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: KgvRoadLink,
   case class RoadAndPartNumberException(private val message: String = "", private val cause: Throwable = None.orNull) extends Exception(message, cause)
 
 }
-
-case class ProjectFormLine(startingLinkId: Long, projectId: Long, roadNumber: Long, roadPartNumber: Long, roadLength: Long, ely: Long, discontinuity: String, isDirty: Boolean = false)
 
 object ProjectConverter {
   def toRoadAddressProject(project: RoadAddressProjectExtractor, user: User): Project = {

@@ -22,7 +22,7 @@ import slick.jdbc.StaticQuery.interpolation
 
 case class ConversionAddress(roadNumber: Long, roadPartNumber: Long, trackCode: Long, discontinuity: Long, startAddressM: Long, endAddressM: Long, startM: Double, endM: Double, startDate: Option[DateTime], endDate: Option[DateTime], validFrom: Option[DateTime], expirationDate: Option[DateTime], ely: Long, administrativeClass: Long, terminated: Long, linkId: String, userId: String, x1: Option[Double], y1: Option[Double], x2: Option[Double], y2: Option[Double], roadwayNumber: Long, sideCode: SideCode, calibrationCode: CalibrationCode = CalibrationCode.No, directionFlag: Long = 0)
 
-class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: KgvRoadLink, importOptions: ImportOptions) {
+class RoadAddressImporter(conversionDatabase: DatabaseDef, KGVClient: KgvRoadLink, importOptions: ImportOptions) {
 
   case class IncomingRoadway(roadwayNumber: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Long, startAddrM: Long, endAddrM: Long, reversed: Long, startDate: Option[DateTime], endDate: Option[DateTime], createdBy: String, administrativeClass: Long, ely: Long, validFrom: Option[DateTime], validTo: Option[DateTime], discontinuity: Long, terminated: Long)
 
@@ -147,9 +147,9 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: KgvRoadLin
   }
 
   private def fetchRoadLinksFromVVH(linkIds: Set[String]): Map[String, RoadLinkLike] = {
-    val vvhRoadLinkClient = if (importOptions.useFrozenLinkService) vvhClient.frozenTimeRoadLinkData else vvhClient.roadLinkData
+    val KGVRoadLinkClient = if (importOptions.useFrozenLinkService) KGVClient.frozenTimeRoadLinkData else KGVClient.roadLinkData
     linkIds.grouped(4000).flatMap(group =>
-      vvhRoadLinkClient.fetchByLinkIds(group) ++ vvhClient.complementaryData.fetchByLinkIds(group)
+      KGVRoadLinkClient.fetchByLinkIds(group) ++ KGVClient.complementaryData.fetchByLinkIds(group)
     ).toSeq.groupBy(_.linkId).mapValues(_.head)
   }
 

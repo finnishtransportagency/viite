@@ -3,10 +3,8 @@
     var current = [];
     var dirty = false;
     var featuresToKeep = [];
-    var anomalousMarkers = [];
-    var Anomaly = LinkValues.Anomaly;
-    var LinkSource = LinkValues.LinkGeomSource;
-    var SelectionType = LinkValues.SelectionType;
+    var LinkSource = ViiteEnumerations.LinkGeomSource;
+    var SelectionType = ViiteEnumerations.SelectionType;
 
 
     var close = function () {
@@ -30,7 +28,7 @@
     };
 
     var canOpenByLinearLocationId = function (linearLocationId) {
-      return !_.isUndefined(linearLocationId) && linearLocationId > LinkValues.UnknownRoadId;
+      return !_.isUndefined(linearLocationId) && linearLocationId > ViiteEnumerations.UnknownRoadId;
     };
 
     var extractDataForDisplay = function (selectedData) {
@@ -137,10 +135,10 @@
     var processOlFeatures = function (visibleFeatures) {
       var selectedFeatures = _.filter(visibleFeatures, function (vf) {
         return (_.some(get().concat(featuresToKeep), function (s) {
-          if (s.linearLocationId !== LinkValues.UnknownRoadId && s.linearLocationId !== LinkValues.NewRoadId) {
+          if (s.linearLocationId !== ViiteEnumerations.UnknownRoadId && s.linearLocationId !== ViiteEnumerations.NewRoadId) {
             return s.linearLocationId === vf.linkData.linearLocationId && s.mmlId === vf.linkData.mmlId;
           } else {
-            return s.linkId === vf.linkData.linkId && s.mmlId === vf.linkData.mmlId && s.floating === vf.linkData.floating && s.anomaly === vf.linkData.anomaly;
+            return s.linkId === vf.linkData.linkId && s.mmlId === vf.linkData.mmlId && s.floating === vf.linkData.floating;
           }
         }));
       });
@@ -161,15 +159,6 @@
       return dirty;
     };
 
-    var getAnomalousMarkers = function () {
-      return anomalousMarkers;
-    };
-
-    var setAnomalousMarkers = function (markersToSet) {
-      anomalousMarkers = markersToSet;
-    };
-
-
     var setDirty = function (state) {
       dirty = state;
     };
@@ -189,12 +178,6 @@
     var get = function () {
       return _.map(current, function (roadLink) {
         return roadLink.getData();
-      });
-    };
-
-    var getFeaturesToKeepUnknown = function () {
-      return _.filter(getFeaturesToKeep(), function (fk) {
-        return fk.anomaly === Anomaly.NoAddressGiven.value;
       });
     };
 
@@ -230,7 +213,7 @@
     };
 
     var linkIdsToExclude = function () {
-      return _.chain(getFeaturesToKeepUnknown().concat(getFeaturesToKeep()).concat(roadCollection.getUnaddressedRoadLinkGroups())).map(function (feature) {
+      return _.chain(getFeaturesToKeep().concat(roadCollection.getUnaddressedRoadLinkGroups())).map(function (feature) {
         return feature.linkId;
       }).uniq().value();
     };
@@ -245,11 +228,8 @@
       isDirty: isDirty,
       setDirty: setDirty,
       cancel: cancel,
-      getAnomalousMarkers: getAnomalousMarkers,
-      setAnomalousMarkers: setAnomalousMarkers,
       get: get,
       count: count,
-      getFeaturesToKeepUnknown: getFeaturesToKeepUnknown,
       filterFeaturesAfterSimulation: filterFeaturesAfterSimulation,
       linkIdsToExclude: linkIdsToExclude,
       extractDataForDisplay: extractDataForDisplay,

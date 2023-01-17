@@ -2,8 +2,8 @@ package fi.liikennevirasto
 
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.SideCode
-import fi.liikennevirasto.viite.dao.Discontinuity.{ChangingELYCode, Continuous, Discontinuous, EndOfRoad}
 import fi.liikennevirasto.viite.dao.{BaseRoadAddress, LinkStatus}
+import fi.liikennevirasto.viite.dao.Discontinuity.{ChangingELYCode, Discontinuous, EndOfRoad}
 import fi.liikennevirasto.viite.model.RoadAddressLinkLike
 
 package object viite {
@@ -75,7 +75,11 @@ package object viite {
   val ErrorWithNewAction = "Uusi-toimenpidettä ei voi tallentaa, koska se koskettaa toisen projektin käytössä olevaa tielinkkiä."
   //VIITE-453 Not implemented yet (2)
   val SharedLinkIdsExistMessage = "Linkillä on voimassa oleva tieosoite tämän projektin alkupäivämäärällä."
-  val UnsuccessfulRecalculationMessage = "Etäisyysarvojen laskenta epäonnistui."
+  val ContactViiteSupportMessage = "Ota yhteys Viite tukeen."
+  val UnsuccessfulRecalculationMessage = "Etäisyysarvojen laskenta epäonnistui. " + ContactViiteSupportMessage
+  val ContinuousAddressCapErrorMessage = UnsuccessfulRecalculationMessage + "\nTieosoitteet eivät muodostu jatkuvaksi."
+  val NegativeLengthErrorMessage       = UnsuccessfulRecalculationMessage + "\nLinkille %s muodostuu negatiivinen pituus."
+  val LengthMismatchErrorMessage       = UnsuccessfulRecalculationMessage + "\nLinkin %s uusi pituus eroaa yli sallitun rajan (%d) vanhaan pituuteen verrattuna."
 
   val NoContinuityCodesAtEndMessage = "Tieosan lopusta puuttuu jatkuvuuskoodi."
   val ConnectedDiscontinuousMessage = "Jatkuva tielinkki on merkitty epäjatkuvaksi, korjaa jatkuu-koodi."
@@ -97,6 +101,7 @@ package object viite {
   val NotDiscontinuousCodeOnDisconnectedRoadPartOutsideMessage = s"""Tekemäsi tieosoitemuutoksen vuoksi projektia edeltävän tieosan päähän muodostuu epäjatkuvuus. Tarkasta ja muuta tieosan %s jatkuvuuskoodi."""
   val ElyDiscontinuityCodeBeforeProjectButNoElyChangeMessage = s"""Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuolisen tieosan jatkuvuuskoodia "${ChangingELYCode.description}" (${ChangingELYCode.value}) tulee muuttaa. Tarkasta ja muuta tieosoitteen %s jatkuvuuskoodi."""
   val WrongDiscontinuityBeforeProjectWithElyChangeInProjectMessage = "Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuolisen tieosan ja projektin välillä vaihtuu ELY. Tarkasta ja muuta tieosan %s jatkuvuuskoodi."
+  val WrongDiscontinuityOutsideOfProjectMessage = s"""Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuolisen tieosan %s jatkuvuuskoodi tulee muuttaa."""
   val EndOfRoadMiddleOfPartMessage = s"""Tieosan keskellä olevalla linkillä on jatkuvuuskoodi "${EndOfRoad.description}" (${EndOfRoad.value})."""
   val RoadNotAvailableMessage = s"Tieosaa ei ole varattu projektiin tai se on varattuna toisessa projektissa."
   val RoadReservedOtherProjectMessage = s"Tie %d osa %d on jo varattuna projektissa %s, tarkista tiedot."
@@ -107,6 +112,7 @@ package object viite {
   val ErrorMaxRoadNumberDemandingRoadNameMessage = s"Tien nimi on pakollinen tieto lukuunottamatta kevyen liikenteen väyliä."
   val MaxDistanceBetweenTracksWarningMessage = "Tarkista, että toimenpide vaihtuu samassa kohdassa."
   val AddNewLinksFailed = s"Linkkien lisääminen projektiin epäonnistui Viitteen sisäisen virheen vuoksi. Ota yhteyttä ylläpitoon."
+  val UndeterminedLastNewLinkDiscontinuityNotApplied = s"Linkkejä lisätessä ei voitu päätellä viimeistä linkkiä, jolle antaa käyttäjän syöttämä jatkuvuuskoodi. Tarkista jatkuvuuskoodit."
 
   //ELY-code error messages
   val MultipleElysInPartMessage = s"Samalla tieosalla eri elynumeroita. Tieosan tulee vaihtua ELY-rajalla. Korjaa tieosa- tai elynumeroa."
@@ -247,14 +253,14 @@ package object viite {
     "|    projectId   |        Long        |                                     Id of the project                                     |                                               |\n" +
     "|   roadNumber   |        Long        |                                  Project Link road number                                 |                                               |\n" +
     "| roadPartNumber |        Long        |                               Project Link road part number                               |                                               |\n" +
-    "|      links     | List[LinkToRevert] | List of the following fields (id: Long, linkId: Long, status: Long, geometry: Seq[Point]) |                                               |\n" +
+    "|      links     | List[LinkToRevert] |List of the following fields (id: Long, linkId: String, status: Long, geometry: Seq[Point])|                                               |\n" +
     "|   coordinates  | ProjectCoordinates |                      Composed of a (x: Double, y: Double, zoom: Int)                      | Their default values are (390000, 6900000, 2) |"
 
   val roadAddressProjectLinksExtractorStructure = "" +
     "|       Field Name       |     Field Type     |                                     Description                                     | Notes |\n" +
     "|:----------------------:|:------------------:|:-----------------------------------------------------------------------------------:|:-----:|\n" +
     "|           ids          |      Set[Long]     |                              Id's of the project links                              |       |\n" +
-    "|         linkIds        |      Seq[Long]     |                            LinkId's of the project links                            |       |\n" +
+    "|         linkIds        |      Seq[String]   |                            LinkId's of the project links                            |       |\n" +
     "|       linkStatus       |         Int        |                       Current link status of the project links                      |       |\n" +
     "|        projectId       |        Long        |                                  Id of the project                                  |       |\n" +
     "|       roadNumber       |        Long        |                         Road Number of All the project links                        |       |\n" +

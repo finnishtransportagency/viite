@@ -730,12 +730,20 @@ form.roadAddressProject .junction-label-projects.header {
 .road-address-browser-form {
   display: flex;
   flex-direction: row;
-  align-items: center;
+  align-items: stretch;
 
   .control-label-small {
     margin: 2.5px 15px;
     text-align: center;
     white-space: nowrap;
+  }
+
+  .road-address-browser-date-input {
+    width: 100px;
+  }
+
+  .road-address-browser-road-input {
+    width: 70px;
   }
 
   input {
@@ -744,13 +752,19 @@ form.roadAddressProject .junction-label-projects.header {
   }
 
   select {
-    width: 75px;
     height: 25px;
+    min-width: fit-content;
   }
 
   input[type="radio"] {
     width: 20px;
     height: 20px;
+  }
+
+  .road-address-browser-form-button-wrapper {
+    padding: 5px;
+    display: flex;
+    align-items: self-end;
   }
 }
 
@@ -762,12 +776,8 @@ form.roadAddressProject .junction-label-projects.header {
 }
 
 .download-excel {
-  margin: 5px;
+  margin-left: 5px;
   border-color: #175935;
   box-shadow: inset 0 1px 0 rgb(204 227 249 / 33%), 0px 1px 1px 0px rgb(23 23 23 / 25%);
   background-color: #0F783F;
-}
-
-#roadAddrInputRoad {
-  width: 70px;
 }

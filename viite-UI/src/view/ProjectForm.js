@@ -4,7 +4,7 @@
     var currentProject = false;
     var currentPublishedNetworkDate;
     var formCommon = new FormCommon('');
-    var ProjectStatus = LinkValues.ProjectStatus;
+    var ProjectStatus = ViiteEnumerations.ProjectStatus;
     var editableStatus = [ProjectStatus.Incomplete.value, ProjectStatus.Unknown.value];
 
     // flag to keep track if the project links have been recalculated after the changes made to the project links
@@ -474,7 +474,7 @@
       eventbus.on('roadAddress:openProject', function (result) {
         currentProject = result.project;
         currentPublishedNetworkDate = result.publishedNetworkDate;
-        projectCollection.setProjectErrors(result.projectErrors);
+        projectCollection.setAndWriteProjectErrorsToUser(result.projectErrors);
         currentProject.isDirty = false;
         projectCollection.clearRoadAddressProjects();
         disableAutoComplete();
@@ -540,7 +540,7 @@
       });
 
       rootElement.on('click', '#editProjectSpan', currentProject, function () {
-        applicationModel.setSelectedTool(LinkValues.Tool.Default.value);
+        applicationModel.setSelectedTool(ViiteEnumerations.Tool.Default.value);
         applicationModel.addSpinner();
         eventbus.trigger('projectChangeTable:hide');
         projectCollection.getProjectsWithLinksById(currentProject.id).then(function (result) {

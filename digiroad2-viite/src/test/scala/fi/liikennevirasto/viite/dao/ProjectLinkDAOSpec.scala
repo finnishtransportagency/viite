@@ -1,23 +1,21 @@
 package fi.liikennevirasto.viite.dao
 
-import fi.liikennevirasto.digiroad2.GeometryUtils
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point, Vector3d}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
-import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.LeftSide
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, Vector3d}
 import fi.liikennevirasto.viite.Dummies.dummyLinearLocation
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, RoadAddressCP}
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
-import fi.liikennevirasto.viite.{NewIdValue}
-import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
+import fi.liikennevirasto.viite.NewIdValue
 import org.joda.time.DateTime
-import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.mock.MockitoSugar
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
@@ -548,8 +546,8 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
         dummyProjectLink(projectLinkId2, id, linkId2, roadwayIds.last, roadwayNumber1, roadNumber1, roadPartNumber2, 0, 100, 0.0, 100.0, None, (None, None), Seq(), LinkStatus.Transfer, AdministrativeClass.State, reversed = false, linearLocationIds.last)
       )
       projectLinkDAO.create(projectLinks)
-      projectReservedPartDAO.fetchProjectReservedPart(roadNumber1, roadPartNumber1) should be(Some("TestProject"))
-      projectReservedPartDAO.fetchProjectReservedPart(roadNumber1, roadPartNumber2) should be(Some("TestProject"))
+      projectReservedPartDAO.fetchProjectReservedPart(roadNumber1, roadPartNumber1) should be(Some(rap.id, "TestProject"))
+      projectReservedPartDAO.fetchProjectReservedPart(roadNumber1, roadPartNumber2) should be(Some(rap.id, "TestProject"))
       val reserved203 = projectLinkDAO.fetchByProjectRoadParts(Set((roadNumber1, roadPartNumber1)), id)
       reserved203.nonEmpty should be(true)
       val reserved205 = projectLinkDAO.fetchByProjectRoadParts(Set((roadNumber1, roadPartNumber2)), id)
