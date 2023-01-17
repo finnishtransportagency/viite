@@ -409,8 +409,8 @@ class RoadAddressService(
     * @param road      The road number
     * @param roadPart  The roadPart
     * @param addressM  The addressM that is in between the returned RoadAddress
-    * @return Returns RoadAddressLink in track 0 or 1 which contains dynamically calculated startAddressM and endAddressM
-    *         and includes detailed geometry in that link fetched dynamically from VVH
+    * @return Returns RoadAddressLink in track 0 or 1 or given track which contains dynamically calculated startAddressM and endAddressM
+    *         and includes detailed geometry in that link fetched dynamically from KGV
     */
   def getRoadAddressLink(road: Long, roadPart: Long, addressM: Long, track: Option[Long] = None): Option[RoadAddressLink] = {
     val linearLocations = withDynSession {
@@ -595,13 +595,13 @@ class RoadAddressService(
   }
 
   /**
-    * Gets all the previous road address part in the given road number and road part number
+    * Gets the previous road address part in the given road number and road part number
     *
     * @param roadNumber The road number
     * @param roadPart   The road part number
-    * @return Returns previous parts in road number, if they exist
+    * @return Returns previous part in road number, if it exists
     */
-  def getPreviousRoadAddressPart(roadNumber: Long, roadPart: Long): Option[Long] = {
+  def getPreviousRoadPartNumber(roadNumber: Long, roadPart: Long): Option[Long] = {
     withDynSession {
       roadwayDAO.fetchPreviousRoadPartNumber(roadNumber, roadPart)
     }
@@ -650,15 +650,23 @@ class RoadAddressService(
     roadwayAddressMapper.getRoadAddressesByRoadway(roadways)
   }
 
-  def getTracksForRoadAddressBrowser(startDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[TrackForRoadAddressBrowser] = {
+  def getTracksForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[TrackForRoadAddressBrowser] = {
     withDynSession {
-      roadwayDAO.fetchTracksForRoadAddressBrowser(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
+      roadwayDAO.fetchTracksForRoadAddressBrowser(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
     }
   }
 
-  def getRoadPartsForRoadAddressBrowser(startDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[RoadPartForRoadAddressBrowser] = {
+  def getRoadPartsForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[RoadPartForRoadAddressBrowser] = {
     withDynSession {
-      roadwayDAO.fetchRoadPartsForRoadAddressBrowser(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
+      roadwayDAO.fetchRoadPartsForRoadAddressBrowser(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
+    }
+  }
+
+  def getChangeInfosForRoadAddressChangesBrowser(startDate: Option[String], endDate: Option[String], dateTarget: Option[String],
+                                                 ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long],
+                                                 maxRoadPartNumber: Option[Long]): Seq[ChangeInfoForRoadAddressChangesBrowser] = {
+    withDynSession {
+      roadwayChangesDAO.fetchChangeInfosForRoadAddressChangesBrowser(startDate, endDate, dateTarget, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
     }
   }
 

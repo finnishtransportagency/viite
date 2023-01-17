@@ -3,9 +3,9 @@ package fi.liikennevirasto.digiroad2.client.kgv
 import fi.liikennevirasto.digiroad2.client.kgv.ChangeType._
 
 
-case class ChangeInfo(oldId: Option[String], newId: Option[String], mmlId: Long, changeType: ChangeType, oldStartMeasure: Option[Double], oldEndMeasure: Option[Double], newStartMeasure: Option[Double], newEndMeasure: Option[Double], vvhTimeStamp: Long = 0L) {
-  def affects(id: String, assetVvhTimeStamp: Long): Boolean = {
-    isOldId(id) && assetVvhTimeStamp < vvhTimeStamp
+case class ChangeInfo(oldId: Option[String], newId: Option[String], mmlId: Long, changeType: ChangeType, oldStartMeasure: Option[Double], oldEndMeasure: Option[Double], newStartMeasure: Option[Double], newEndMeasure: Option[Double], timeStamp: Long = 0L) {
+  def affects(id: String, assetTimeStamp: Long): Boolean = {
+    isOldId(id) && assetTimeStamp < timeStamp
   }
 
   def isOldId(id: String): Boolean = {

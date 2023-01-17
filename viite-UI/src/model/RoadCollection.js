@@ -63,13 +63,11 @@
     var roadLinkGroups = [];
     var unaddressedUnderConstructionRoadLinkGroups = [];
     var unaddressedRoadLinkGroups = [];
-    var tmpRoadLinkGroups = [];
-    var preMovedRoadAddresses = [];
     var date = [];
     var historicRoadLinks = [];
-    var LinkStatus = LinkValues.LinkStatus;
-    var LinkSource = LinkValues.LinkGeomSource;
-    var lifecycleStatus = LinkValues.lifecycleStatus;
+    var LinkStatus = ViiteEnumerations.LinkStatus;
+    var LinkSource = ViiteEnumerations.LinkGeomSource;
+    var lifecycleStatus = ViiteEnumerations.lifecycleStatus;
     var clickedLinearLocationId = 0;
     var selectedRoadLinkModels = [];
 
@@ -187,7 +185,7 @@
       unaddressedUnknownRoadLinkGroups = unaddressedRoadLinkGroups[1];
 
       var includeUnknowns = _.isUndefined(drawUnknowns) && !drawUnknowns;
-      if (parseInt(zoom) <= zoomlevels.minZoomForEditMode && (includeUnknowns && !applicationModel.selectionTypeIs(LinkValues.SelectionType.Unknown))) {
+      if (parseInt(zoom) <= zoomlevels.minZoomForEditMode && (includeUnknowns && !applicationModel.selectionTypeIs(ViiteEnumerations.SelectionType.Unknown))) {
         // only the fetched road links that have an address
         setRoadLinkGroups(fetchedWithAddresses);
       } else {
@@ -278,25 +276,6 @@
       });
     };
 
-    this.getTmpRoadLinkGroups = function () {
-      return tmpRoadLinkGroups;
-    };
-
-    this.getTmpByLinkId = function (ids) {
-      var segments = _.filter(tmpRoadLinkGroups, function (road) {
-        return road.getData().linkId === ids;
-      });
-      return segments;
-    };
-
-    this.getTmpById = function (ids) {
-      return _.map(ids, function (id) {
-        return _.find(tmpRoadLinkGroups, function (road) {
-          return road.getData().id === id;
-        });
-      });
-    };
-
     this.get = function (ids) {
       return _.map(ids, function (id) {
         return _.find(roadLinks(), function (road) {
@@ -355,14 +334,6 @@
       });
     };
 
-    this.addTmpRoadLinkGroups = function (tmp) {
-      if (tmpRoadLinkGroups.filter(function (roadTmp) {
-        return roadTmp.getData().linkId === tmp.linkId;
-      }).length === 0) {
-        tmpRoadLinkGroups.push(new RoadLinkModel(tmp));
-      }
-    };
-
     var setRoadLinkGroups = function (groups) {
       roadLinkGroups = groups;
     };
@@ -373,14 +344,6 @@
 
     this.reset = function () {
       roadLinkGroups = [];
-    };
-
-    this.addPreMovedRoadAddresses = function (ra) {
-      preMovedRoadAddresses.push(ra);
-    };
-
-    this.resetPreMovedRoadAddresses = function () {
-      preMovedRoadAddresses = [];
     };
 
     this.findReservedProjectLinks = function (boundingBox, zoomLevel, projectId) {
@@ -404,12 +367,6 @@
           return feature;
         });
         eventbus.trigger('linkProperties:highlightReservedRoads', notHandledFeatures);
-      });
-    };
-
-    this.toRoadLinkModel = function (roadDataArray) {
-      return _.map(roadDataArray, function (rda) {
-        return new RoadLinkModel(rda);
       });
     };
   };
