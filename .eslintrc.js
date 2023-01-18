@@ -37,7 +37,6 @@ module.exports = {
         "RoadNameCollection": "writable",
         "SelectedLinkProperty": "writable",
         "SelectedProjectLink": "writable",
-        "LinkPropertiesModel": "writable",
         "InstructionsPopup": "writable",
         "ProjectChangeInfoModel": "writable",
         "ApplicationModel": "writable",

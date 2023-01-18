@@ -11,15 +11,6 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
     var getCalibrationPointLayerName = function () {
       return 'calibrationPointLayer';
     };
-    var getGreenRoadLayerName = function () {
-      return 'greenRoadLayer';
-    };
-    var getPickRoadsLayerName = function () {
-      return 'pickRoadsLayer';
-    };
-    var getSimulatedRoadsLayerName = function () {
-      return 'simulatedRoadsLayer';
-    };
     var getRoadAddressProjectLayerName = function () {
       return 'roadAddressProject';
     };
@@ -275,10 +266,7 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
     return {
       getRoadLayerName: getRoadLayerName,
       getCalibrationPointLayerName: getCalibrationPointLayerName,
-      getGreenRoadLayerName: getGreenRoadLayerName,
-      getPickRoadsLayerName: getPickRoadsLayerName,
       getRoadAddressProjectLayerName: getRoadAddressProjectLayerName,
-      getSimulatedRoadsLayerName: getSimulatedRoadsLayerName,
       getSingleClickNameLinkPropertyLayer: getSingleClickNameLinkPropertyLayer,
       getDoubleClickNameLinkPropertyLayer: getDoubleClickNameLinkPropertyLayer,
       getSingleClickNameProjectLinkLayer: getSingleClickNameProjectLinkLayer,

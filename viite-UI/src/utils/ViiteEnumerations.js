@@ -106,12 +106,9 @@
     RoadLinkStyleZIndex: {value: 2},
     CalibrationPointLayer: {value: 3},
     UnderConstructionLayer: {value: 4},
-    GeometryChangedLayer: {value: 5},
     ReservedRoadLayer: {value: 6},
     DirectionMarkerLayer: {value: 8},
-    GreenLayer: {value: 10},
-    unAddressedRoadsLayer: {value: 11},
-    IndicatorLayer: {value: 99}
+    unAddressedRoadsLayer: {value: 11}
   };
 
   root.AdministrativeClass = {
