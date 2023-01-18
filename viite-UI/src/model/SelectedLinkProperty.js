@@ -171,7 +171,6 @@
       if (!_.isUndefined(_.head(current))) {
         var originalData = _.head(current).getData();
         eventbus.trigger('linkProperties:cancelled', _.cloneDeep(originalData));
-        eventbus.trigger('roadLinks:clearIndicators');
       }
     };
 
