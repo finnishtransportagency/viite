@@ -357,7 +357,7 @@ class DataImporter {
 
   protected def fetchGroupedLinkIds: Seq[Set[String]] = {
     val linkIds = sql"""select distinct link_id from linear_location where link_id is not null order by link_id""".as[String].list
-    linkIds.toSet.grouped(25000).asInstanceOf[Seq[Set[String]]]
+    linkIds.toSet.grouped(25000).asInstanceOf[Iterator[Set[String]]].toSeq
   }
 
 
