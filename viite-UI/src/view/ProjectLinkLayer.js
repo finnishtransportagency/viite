@@ -233,7 +233,7 @@
       return selectionData.roadNumber === currentlySelectedSample.roadNumber &&
         selectionData.roadPartNumber === currentlySelectedSample.roadPartNumber &&
         selectionData.trackCode === currentlySelectedSample.trackCode &&
-        selectionData.administrativeClassId === currentlySelectedSample.administrativeClassId &&
+        (selectionData.administrativeClassId === currentlySelectedSample.administrativeClassId || selectionData.roadNumber === 0) && // unaddressed road can be added to selection even if their administrative class don't match
         selectionData.elyCode === currentlySelectedSample.elyCode;
     };
 
