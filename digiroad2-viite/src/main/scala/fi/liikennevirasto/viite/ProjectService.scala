@@ -221,7 +221,11 @@ class ProjectService(
 
   def fetchPreFillData(linkId: String, projectId: Long): Either[String, PreFillInfo] = {
     withDynSession {
+    val preFillFromProject =
       parsePreFillData(projectLinkDAO.getProjectLinksByLinkId(linkId).filter(_.projectId == projectId), projectId = projectId)
+    if (preFillFromProject.isRight)
+      preFillFromProject
+    else parsePreFillData(linkId: String, projectId: Long)
     }
   }
 
@@ -230,27 +234,42 @@ class ProjectService(
         Left(s"Link could not be found from project: $projectId")
       }
       else {
-        (projectLinks.head.roadNumber, projectLinks.head.roadPartNumber) match {
-          case (roadNumber: Long, roadPartNumber: Long) =>
-            val preFilledRoadName =
-              RoadNameDAO.getLatestRoadName(roadNumber.toLong) match {
-                case Some(roadName) => PreFillInfo(roadNumber, roadPartNumber, roadName.roadName, RoadNameSource.RoadAddressSource)
-                case _ => ProjectLinkNameDAO.get(roadNumber.toLong, projectId) match {
-                  case Some(projectLinkName) => PreFillInfo(roadNumber, roadPartNumber, projectLinkName.roadName, RoadNameSource.ProjectLinkSource)
-                  case _ => PreFillInfo(roadNumber, roadPartNumber, "", RoadNameSource.UnknownSource)
-                }
-              }
-            Right(preFilledRoadName)
-          case _ => Left("Link does not contain valid prefill info")
-        }
+        preFillRoadName(projectLinks.head.roadNumber, projectLinks.head.roadPartNumber, projectLinks.head.ely, projectId)
       }
   }
 
+  def parsePreFillData(linkId   : String,
+                       projectId: Long
+                      ): Either[String, PreFillInfo] = {
+    roadLinkService.getUnderConstructionLinksById(Set(linkId)) match {
+      case List((roadNumber, roadPartNumber, municipalitycode)) => preFillRoadName(roadNumber, roadPartNumber,roadAddressLinkBuilder.municipalityMapping(municipalitycode), projectId)
+      case _ => Left(s"Link could not be found from project: $projectId")
+    }
+  }
+
+  private def preFillRoadName(roadNumber    : Long,
+                              roadPartNumber: Long,
+                              ely           : Long,
+                              projectId     : Long
+                             ): Either[String, PreFillInfo] = {
+    (roadNumber, roadPartNumber) match {
+      case (roadNumber: Long, roadPartNumber: Long) => val preFilledRoadName = RoadNameDAO.getLatestRoadName(roadNumber.toLong) match {
+        case Some(roadName) => PreFillInfo(roadNumber, roadPartNumber, roadName.roadName, RoadNameSource.RoadAddressSource)
+        case _ => ProjectLinkNameDAO.get(roadNumber.toLong, projectId) match {
+          case Some(projectLinkName) => PreFillInfo(roadNumber, roadPartNumber, projectLinkName.roadName, RoadNameSource.ProjectLinkSource)
+          case _ => PreFillInfo(roadNumber, roadPartNumber, "", RoadNameSource.UnknownSource)
+        }
+      }
+        Right(preFilledRoadName)
+      case _ => Left("Link does not contain valid prefill info")
+    }
+  }
+
   /* Return if road parts are reservable.
-  *  If road part is not reserved ProjectReservedPart
-  *  If road part is already reserved return error message
-  *  If road part is already reserved for the projectId return ProjectReservedPart
-  * */
+    *  If road part is not reserved ProjectReservedPart
+    *  If road part is already reserved return error message
+    *  If road part is already reserved for the projectId return ProjectReservedPart
+    * */
   def checkRoadPartsReservable(roadNumber: Long, startPart: Long, endPart: Long, projectId: Long): Either[String, (Seq[ProjectReservedPart], Seq[ProjectReservedPart])] = {
     (startPart to endPart).foreach { part =>
       projectReservedPartDAO.fetchProjectReservedPart(roadNumber, part) match {

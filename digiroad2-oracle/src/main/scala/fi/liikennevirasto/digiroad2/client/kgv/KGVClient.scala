@@ -2,10 +2,12 @@ package fi.liikennevirasto.digiroad2.client.kgv
 
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.kgv.FilterOgc.withLifecycleStatusFilter
 import fi.liikennevirasto.digiroad2.dao.ComplementaryLinkDAO
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
 
+import scala.collection.immutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -79,6 +81,9 @@ class KgvRoadLinkClient[T](collection: Option[KgvCollection] = None, linkGeomSou
   def fetchByLinkIds(linkIds: Set[String]): Seq[LinkType] = {
     queryByLinkIds[LinkType](linkIds)
   }
+
+  def fetchUnderConstructionLinksById(linkIds: Set[String]): List[(Long, Long, Int)] =
+    test(linkIds, withLifecycleStatusFilter(Set(LifecycleStatus.UnderConstruction.value)))
 
   def fetchByLinkIdsF(linkIds: Set[String]): Future[Seq[T]] = Future(fetchByLinkIds(linkIds))
 
