@@ -28,6 +28,7 @@ object FeatureClass {
 
 object Extractor {
   lazy val logger = LoggerFactory.getLogger(getClass)
+  val UnknownMunicipality = -1
   val featureClassCodeToFeatureClass: Map[Int, FeatureClass] = Map(
     12316 -> FeatureClass.TractorRoad,
     12317 -> FeatureClass.TractorRoad,
@@ -108,7 +109,10 @@ object Extractor {
     })
     val sourceid = attributes("sourceid").asInstanceOf[String]
     val linkId = attributes("id").asInstanceOf[String]
-    val municipalityCode = Try(attributes("municipalitycode").asInstanceOf[String].toInt).getOrElse(throw new NoSuchElementException(s"Missing mandatory municipalityCode. Check data for linkId: $linkId from $linkGeomSource."))
+    val municipalityCode = Try(attributes("municipalitycode").asInstanceOf[String].toInt).getOrElse({
+      logger.warn(s"No municipality code for linkId: $linkId from $linkGeomSource.")
+      UnknownMunicipality
+    })
     val geometryLength: Double = anyToDouble(attributes("horizontallength")).getOrElse(0.0)
     val modifiedBy = "KGV"
 
