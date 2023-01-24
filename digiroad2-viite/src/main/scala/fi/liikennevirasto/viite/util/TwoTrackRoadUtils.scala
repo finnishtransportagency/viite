@@ -546,7 +546,7 @@ object TwoTrackRoadUtils {
                               pl.copy(id                      = newPlId, startAddrMValue         = splittedEndAddrMValue, originalStartAddrMValue = address, startMValue             = splitMeasure, endMValue               = pl.endMValue, calibrationPointTypes   = calsForSecondPart, geometry                = new_geometry, status                  = pl.status, geometryLength          = pl.geometryLength - (splitMeasure - pl.startMValue), connectedLinkId         = Some(pl.linkId))
                             )
 
-      (newProjectLinks._1, newProjectLinks._2.copy(id = newPlId))
+      (newProjectLinks._1, newProjectLinks._2)
     }
 
         val hasOtherSideLink = roadPartLinks.filter(pl =>
@@ -561,7 +561,7 @@ object TwoTrackRoadUtils {
           val otherSideLink = hasOtherSideLink.head
             val endPoints = TrackSectionOrder.findChainEndpoints(
               roadPartLinks.filter(pl =>
-                pl.originalEndAddrMValue <= otherSideLink.originalEndAddrMValue && pl.originalTrack == otherSideLink.originalTrack
+                pl.originalEndAddrMValue <= otherSideLink.originalEndAddrMValue && pl.originalEndAddrMValue != 0 && pl.originalTrack == otherSideLink.originalTrack
               )
             )
             val (plPart1, plPart2) =
