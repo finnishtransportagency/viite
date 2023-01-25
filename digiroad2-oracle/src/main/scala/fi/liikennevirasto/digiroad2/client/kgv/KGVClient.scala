@@ -83,7 +83,7 @@ class KgvRoadLinkClient[T](collection: Option[KgvCollection] = None, linkGeomSou
   }
 
   def fetchUnderConstructionLinksById(linkIds: Set[String]): List[(Long, Long, Int)] =
-    test(linkIds, withLifecycleStatusFilter(Set(LifecycleStatus.UnderConstruction.value)))
+    queryRoadAndPartWithFilter(linkIds, withLifecycleStatusFilter(Set(LifecycleStatus.UnderConstruction.value)))
 
   def fetchByLinkIdsF(linkIds: Set[String]): Future[Seq[T]] = Future(fetchByLinkIds(linkIds))
 
