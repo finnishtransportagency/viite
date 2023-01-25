@@ -1,6 +1,5 @@
 package fi.liikennevirasto.digiroad2.client.kgv
 
-import fi.liikennevirasto.digiroad2.asset._
 import org.joda.time.DateTime
 
 trait Filter {
@@ -64,11 +63,7 @@ object FilterOgc extends Filter {
     else withFilter("municipalitycode", municipalities)
 
   override def combineFiltersWithAnd(filter1: String, filter2: Option[String]): String = {
-    val lifeCycleStatusFilter =
-      s"lifecyclestatus IN (${LifecycleStatus.filteredLinkStatus.map(_.value).mkString(",")})"
-    combineFiltersWithAnd(lifeCycleStatusFilter,
-                          combineFiltersWithAnd(filter2.getOrElse(""), filter1)
-                         )
+    combineFiltersWithAnd(filter2.getOrElse(""), filter1)
   }
 
   override def combineFiltersWithAnd(filter1: String, filter2: String): String =
