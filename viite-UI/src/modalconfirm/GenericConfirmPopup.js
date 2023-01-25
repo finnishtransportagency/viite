@@ -29,9 +29,9 @@ window.GenericConfirmPopup = function (message, options) {
     '</div>';
 
   var alertDiv =
-    '<div class="modal-overlay confirm-modal">' +
+    '<div class="modal-overlay confirm-modal" id="genericConfirmationDialog">' +
     '<div class="modal-dialog">' +
-    '<div class="content">' +
+    '<div class="content" style="max-height: 500px; overflow-y: scroll">' +
     message +
     '</div>' +
     '<div class="actions">' +
