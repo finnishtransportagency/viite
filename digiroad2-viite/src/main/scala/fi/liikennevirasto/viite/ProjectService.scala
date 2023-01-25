@@ -73,7 +73,12 @@ object RoadNameSource {
 
 }
 
-case class PreFillInfo(RoadNumber: BigInt, RoadPart: BigInt, roadName: String, roadNameSource: RoadNameSource)
+case class PreFillInfo(RoadNumber    : BigInt,
+                       RoadPart      : BigInt,
+                       roadName      : String,
+                       roadNameSource: RoadNameSource,
+                       ely           : Long
+                      )
 
 case class LinkToRevert(id: Long, linkId: String, status: Long, geometry: Seq[Point])
 
@@ -242,7 +247,7 @@ class ProjectService(
                        projectId: Long
                       ): Either[String, PreFillInfo] = {
     roadLinkService.getUnderConstructionLinksById(Set(linkId)) match {
-      case List((roadNumber, roadPartNumber, municipalitycode)) => preFillRoadName(roadNumber, roadPartNumber,roadAddressLinkBuilder.municipalityMapping(municipalitycode), projectId)
+      case List((roadNumber, roadPartNumber, municipalitycode)) => preFillRoadName(roadNumber, roadPartNumber, Try(roadAddressLinkBuilder.municipalityMapping(municipalitycode)).getOrElse(-1), projectId)
       case _ => Left(s"Link could not be found from project: $projectId")
     }
   }
@@ -254,10 +259,10 @@ class ProjectService(
                              ): Either[String, PreFillInfo] = {
     (roadNumber, roadPartNumber) match {
       case (roadNumber: Long, roadPartNumber: Long) => val preFilledRoadName = RoadNameDAO.getLatestRoadName(roadNumber.toLong) match {
-        case Some(roadName) => PreFillInfo(roadNumber, roadPartNumber, roadName.roadName, RoadNameSource.RoadAddressSource)
+        case Some(roadName) => PreFillInfo(roadNumber, roadPartNumber, roadName.roadName, RoadNameSource.RoadAddressSource, ely)
         case _ => ProjectLinkNameDAO.get(roadNumber.toLong, projectId) match {
-          case Some(projectLinkName) => PreFillInfo(roadNumber, roadPartNumber, projectLinkName.roadName, RoadNameSource.ProjectLinkSource)
-          case _ => PreFillInfo(roadNumber, roadPartNumber, "", RoadNameSource.UnknownSource)
+          case Some(projectLinkName) => PreFillInfo(roadNumber, roadPartNumber, projectLinkName.roadName, RoadNameSource.ProjectLinkSource, ely)
+          case _ => PreFillInfo(roadNumber, roadPartNumber, "", RoadNameSource.UnknownSource, ely)
         }
       }
         Right(preFilledRoadName)

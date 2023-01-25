@@ -982,7 +982,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val projectLinks = roadwayAddressMapper.getRoadAddressesByRoadway(roadwayDAO.fetchAllByRoadAndPart(road, roadPart)).map(toProjectLink(roadAddressProject))
       projectReservedPartDAO.reserveRoadPart(testProjectId, road, roadPart, user)
       projectLinkDAO.create(projectLinks)
-      projectService.fetchPreFillData(projectLinks.head.linkId, roadAddressProject.id) should be(Right(PreFillInfo(road, roadPart, "", RoadNameSource.UnknownSource)))
+      projectService.fetchPreFillData(projectLinks.head.linkId, roadAddressProject.id) should be(Right(PreFillInfo(road, roadPart, "", RoadNameSource.UnknownSource, -1)))
     }
   }
 
@@ -1000,7 +1000,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       projectReservedPartDAO.reserveRoadPart(testProjectId, road, roadPart, user)
       val projectLinks = roadwayAddressMapper.getRoadAddressesByRoadway(roadwayDAO.fetchAllByRoadAndPart(road, roadPart)).map(toProjectLink(roadAddressProject))
       projectLinkDAO.create(projectLinks)
-      projectService.fetchPreFillData(projectLinks.head.linkId, roadAddressProject.id) should be(Right(PreFillInfo(road, roadPart, "road name test", RoadNameSource.RoadAddressSource)))
+      projectService.fetchPreFillData(projectLinks.head.linkId, roadAddressProject.id) should be(Right(PreFillInfo(road, roadPart, "road name test", RoadNameSource.RoadAddressSource, -1)))
     }
   }
 
@@ -1018,7 +1018,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       projectReservedPartDAO.reserveRoadPart(testProjectId, road, roadPart, user)
       val projectLinks = roadwayAddressMapper.getRoadAddressesByRoadway(roadwayDAO.fetchAllByRoadAndPart(road, roadPart)).map(toProjectLink(roadAddressProject))
       projectLinkDAO.create(projectLinks)
-      projectService.fetchPreFillData(projectLinks.head.linkId, roadAddressProject.id) should be(Right(PreFillInfo(road, roadPart, "TestRoadName_Project_Link", RoadNameSource.ProjectLinkSource)))
+      projectService.fetchPreFillData(projectLinks.head.linkId, roadAddressProject.id) should be(Right(PreFillInfo(road, roadPart, "TestRoadName_Project_Link", RoadNameSource.ProjectLinkSource, -1)))
     }
   }
 
@@ -1040,7 +1040,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       val projectLinks = roadwayAddressMapper.getRoadAddressesByRoadway(roadwayDAO.fetchAllByRoadAndPart(road, 10)).map(toProjectLink(roadAddressProject))
       projectLinkDAO.create(projectLinks)
-      projectService.fetchPreFillData(projectLinks.head.linkId, roadAddressProject.id) should be(Right(PreFillInfo(road, 10, "road name test", RoadNameSource.RoadAddressSource)))
+      projectService.fetchPreFillData(projectLinks.head.linkId, roadAddressProject.id) should be(Right(PreFillInfo(road, 10, "road name test", RoadNameSource.RoadAddressSource, -1)))
     }
   }
 
