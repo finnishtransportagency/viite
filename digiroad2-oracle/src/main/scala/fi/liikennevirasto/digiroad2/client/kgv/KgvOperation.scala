@@ -15,7 +15,7 @@ import org.json4s.jackson.JsonMethods.parse
 import java.io.IOException
 import java.net.URLEncoder
 import scala.annotation.tailrec
-import scala.collection.{immutable, mutable}
+import scala.collection.mutable
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
@@ -269,7 +269,7 @@ trait KgvOperation extends LinkOperationsAbstract{
     val filterString = s"&filter=${encode(combineFiltersWithAnd(withLinkIdFilter(linkIds), filter))}"
     val url          = s"${restApiEndPoint}/${serviceName}/items?filter-lang=${cqlLang}&crs=${crs}${filterString}"
     fetchFeatures(url) match {
-      case Right(features) => features.get.features.map(feature => Extractor.extracRoadNumberAndPartFeature(feature))
+      case Right(features) => features.get.features.map(feature => Extractor.extractRoadNumberAndPartFeature(feature))
       case Left(error) => throw new ClientException(error.toString)
     }
   }
