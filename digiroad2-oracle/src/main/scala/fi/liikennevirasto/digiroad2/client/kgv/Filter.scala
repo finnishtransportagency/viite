@@ -82,6 +82,7 @@ object FilterOgc extends Filter {
   override def withMtkClassFilter(ids: Set[Long]): String =
     if (ids.nonEmpty) withFilter("roadclass", ids)
     else ""
+
   def withLifecycleStatusFilter(values: Set[Int]): String =
     if (values.nonEmpty) withFilter("lifecyclestatus", values)
     else ""
