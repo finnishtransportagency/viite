@@ -717,8 +717,10 @@
       // show project errors' link id list in a popup window
       rootElement.on('click', '.linkIdList', function (event) {
         const error = projectCollection.getProjectErrors()[event.currentTarget.id];
-        if (error.linkIds.length > 0)
-          GenericConfirmPopup(error.linkIds, {type: "alert"});
+        if (error.linkIds.length > 0) {
+          const linkIdsText = error.linkIds.join(', ');
+          GenericConfirmPopup(linkIdsText, {type: "alert"});
+        }
       });
 
       rootElement.on('click', '.projectErrorButton', function (event) {
