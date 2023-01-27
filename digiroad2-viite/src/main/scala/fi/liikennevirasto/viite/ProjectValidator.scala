@@ -551,7 +551,8 @@ class ProjectValidator {
       checkForInvalidUnchangedLinks,
       checkTrackCodePairing,
       checkRemovedEndOfRoadParts,
-      checkActionsInRoadsNotInProject
+      checkActionsInRoadsNotInProject,
+      checkDiscontinuityOnPreviousRoadPart
     )
 
     // lists all the (normal priority) validation errors found within the project links
@@ -846,6 +847,57 @@ class ProjectValidator {
       Seq()
     }
   }
+
+  /**
+   * Validations for the discontinuity code of the road part that precedes a reserved road part.
+   * TODO: Move other previous road part validations under this method
+   */
+  def checkDiscontinuityOnPreviousRoadPart(project: Project, allProjectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
+
+    def getPreviousAndNextRoadParts(roadNumber: Long, roadPartNumber: Long): (Option[Long], Option[Long]) = {
+      val validRoadPartsAtProjectStartDate = roadAddressService.getValidRoadAddressParts(roadNumber, project.startDate)
+      val previousRoadPart = validRoadPartsAtProjectStartDate.filter(_ < roadPartNumber).reduceOption(Ordering.Long.max)
+      val nextRoadPart = validRoadPartsAtProjectStartDate.filter(_ > roadPartNumber).reduceOption(Ordering.Long.min)
+      (previousRoadPart, nextRoadPart)
+    }
+
+
+    val discontinuityCausedByTermination: Seq[ValidationErrorDetails] = {
+
+      val groupedRoadParts = allProjectLinks.groupBy(pl => (pl.roadNumber, pl.roadPartNumber))
+      val terminatedRoadParts = groupedRoadParts.filter(pls => pls._2.forall(_.status == LinkStatus.Terminated))
+
+      val errors = terminatedRoadParts.flatMap(trp => {
+        val (roadNumber, roadPartNumber) = trp._1
+
+        getPreviousAndNextRoadParts(roadNumber, roadPartNumber) match {
+          //If both previous and next road parts exist and neither is reserved in the project, validate that the previous discontinuity code is correct
+          case (Some(prevrp), Some(nextrp))
+          if !allProjectLinks.exists(pl => pl.originalRoadNumber == roadNumber && (pl.originalRoadPartNumber == prevrp || pl.originalRoadPartNumber == nextrp)) =>
+
+            val previousRoadAddress = roadAddressService.getRoadAddressWithRoadAndPart(roadNumber, prevrp, fetchOnlyEnd = true)
+            val nextRoadAddress = roadAddressService.getRoadAddressWithRoadAndPart(roadNumber, nextrp)
+            val connected: Boolean = previousRoadAddress.last.connected(nextRoadAddress.minBy(_.startAddrMValue))
+
+            if (connected && previousRoadAddress.last.discontinuity == Discontinuity.Discontinuous) {
+              outsideOfProjectError(previousRoadAddress.last.id,
+                alterMessage(ValidationErrorList.DiscontinuousCodeOnConnectedRoadPartOutside,
+                  currentRoadAndPart = Some(Seq((roadNumber, prevrp)))))(previousRoadAddress).toSeq
+            } else if (!connected && previousRoadAddress.last.discontinuity == Discontinuity.Continuous) {
+              outsideOfProjectError(previousRoadAddress.last.id,
+                alterMessage(ValidationErrorList.NotDiscontinuousCodeOnDisconnectedRoadPartOutside,
+                  currentRoadAndPart = Some(Seq((roadNumber, prevrp)))))(previousRoadAddress).toSeq
+            } else {
+              Seq()
+            }
+          case _ => Seq()
+        }
+      })
+      errors.toSeq
+    }
+    discontinuityCausedByTermination
+  }
+
 
   def checkNoReverseInProject(project: Project, allProjectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
     val reversedProjectLinks = allProjectLinks.filter(pl => pl.reversed)
