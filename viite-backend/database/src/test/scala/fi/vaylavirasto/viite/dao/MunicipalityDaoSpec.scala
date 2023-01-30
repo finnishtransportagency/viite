@@ -9,9 +9,9 @@ import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
   */
 class MunicipalityDaoSpec extends FunSuite with Matchers{
 
-  test("Test getMunicipalityMapping When getting all municipalities Then should return some"){
+  test("Test getDigiroadMunicipalityMapping When getting all municipalities Then should return some"){
     runWithRollback{
-      val municipalityMap = MunicipalityDAO.getMunicipalityMapping
+      val municipalityMap = MunicipalityDAO.getDigiroadMunicipalityMapping
       municipalityMap.isEmpty should be(false)
       municipalityMap.keySet.forall(_ > 0) should be(true)
       municipalityMap.values.forall(_ >= 0) should be(true)
@@ -30,7 +30,7 @@ class MunicipalityDaoSpec extends FunSuite with Matchers{
 
   test("Test if the road maintainer is correct for a ElyNro value When checking if road maintainer contains mapped municipalities Then it should be true") {
     runWithRollback{
-      val municipalityMap = MunicipalityDAO.getMunicipalityMapping
+      val municipalityMap = MunicipalityDAO.getDigiroadMunicipalityMapping
       municipalityMap.isEmpty should be(false)
       val (selectedMunicipalityId, selectedElyNro) = municipalityMap.head
       val municipalityRoadMaintainerMap = MunicipalityDAO.getMunicipalityRoadMaintainers

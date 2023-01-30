@@ -8,7 +8,7 @@ import slick.jdbc.StaticQuery.interpolation
   * Created by venholat on 27.10.2016.
   */
 object MunicipalityDAO {
-  def getMunicipalityMapping = {
+  def getDigiroadMunicipalityMapping = {
     Q.queryNA[(Long, Long)]("""SELECT id, ely_nro FROM MUNICIPALITY ORDER BY ely_nro ASC""").list.map(x => x._1 -> x._2).toMap
   }
 
