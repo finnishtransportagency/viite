@@ -12,6 +12,7 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReservedException, Track}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
+import fi.liikennevirasto.viite.ProjectAddressLinkBuilder.municipalityRoadMaintainerMapping
 import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectDAO, RoadwayDAO, _}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{JunctionPointCP, NoCP, UserDefinedCP}
 import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
@@ -247,7 +248,7 @@ class ProjectService(
                        projectId: Long
                       ): Either[String, PreFillInfo] = {
     roadLinkService.getUnderConstructionLinksById(Set(linkId)) match {
-      case List((roadNumber, roadPartNumber, municipalitycode)) => preFillRoadName(roadNumber, roadPartNumber, Try(roadAddressLinkBuilder.municipalityMapping(municipalitycode)).getOrElse(-1), projectId)
+      case List((roadNumber, roadPartNumber, municipalityCode)) => preFillRoadName(roadNumber, roadPartNumber, Try(municipalityRoadMaintainerMapping(municipalityCode)).getOrElse(-1), projectId)
       case _ => Left(s"Link could not be found from project: $projectId")
     }
   }
