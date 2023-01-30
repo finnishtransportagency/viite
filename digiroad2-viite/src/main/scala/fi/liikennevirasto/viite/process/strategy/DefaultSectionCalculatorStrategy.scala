@@ -258,8 +258,12 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
               throw new RoadAddressException(NegativeLengthErrorMessage.format(curr.linkId))
             }
             if (curr.status != LinkStatus.New && (curr.originalTrack == curr.track || curr.track == Track.Combined) && !(Math.abs((curr.endAddrMValue - curr.startAddrMValue) - (curr.originalEndAddrMValue - curr.originalStartAddrMValue)) < maxDiffForChange)) {
-              logger.warn(s"Length mismatch. Project id ${curr.projectId} ${projectDAO.fetchById(projectId = curr.projectId).get.name} New: ${curr.startAddrMValue} ${curr.endAddrMValue} original: ${curr.originalStartAddrMValue} ${curr.originalEndAddrMValue} linkId: ${curr.linkId} " +
-                s"length change ${(curr.endAddrMValue - curr.startAddrMValue) - (curr.originalEndAddrMValue - curr.originalStartAddrMValue)}")
+              logger.warn(s"Length mismatch. " +
+                          s"Project id ${curr.projectId} ${projectDAO.fetchById(projectId = curr.projectId).get.name} " +
+                          s"New: ${curr.startAddrMValue} ${curr.endAddrMValue} " +
+                          s"original: ${curr.originalStartAddrMValue} ${curr.originalEndAddrMValue} " +
+                          s"linkId: ${curr.linkId} " +
+                          s"length change ${(curr.endAddrMValue - curr.startAddrMValue) - (curr.originalEndAddrMValue - curr.originalStartAddrMValue)}")
             }
           }
         }
