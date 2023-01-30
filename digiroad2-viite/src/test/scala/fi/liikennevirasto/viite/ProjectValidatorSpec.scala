@@ -2437,7 +2437,9 @@ Left|      |Right
       val linearLocationId = Sequences.nextLinearLocationId
 
       val ra = Seq(
-        RoadAddress(12345, linearLocationId, 20000L, 1L, AdministrativeClass.State, Track.Combined, Discontinuity.Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000.toString, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), Seq(Point(0.0, 40.0), Point(0.0, 50.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None, None)
+        RoadAddress(12345, linearLocationId, 20000L, 1L, AdministrativeClass.State, Track.Combined, Discontinuity.Discontinuous, 0L, 10L,
+          Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000.toString, 0, 10, TowardsDigitizing, DateTime.now().getMillis,
+          (None, None), Seq(Point(0.0, 40.0), Point(0.0, 50.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None, None)
       )
 
       val roadway = Roadway(raId, roadwayNumber1, 20000L, 1L, AdministrativeClass.State, Track.Combined, Discontinuity.Discontinuous,
@@ -2463,6 +2465,74 @@ Left|      |Right
       errors.head.validationError.value should be(projectValidator.ValidationErrorList.DiscontinuousCodeOnConnectedRoadPartOutside.value)
     }
   }
+
+  test("Test checkDiscontinuityOnPreviousRoadPart When a road part is terminated from between two road parts causing a discontinuity on that road number Then should be a validation error") {
+    runWithRollback {
+      val ra1Id = Sequences.nextRoadwayId
+      val ra3Id = Sequences.nextRoadwayId
+      val linearLocation1Id = Sequences.nextLinearLocationId
+      val linearLocation3Id = Sequences.nextLinearLocationId
+
+      val ra = Seq(
+        RoadAddress(ra1Id, linearLocation1Id, 20000L, 1L, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous,
+          0L, 10L, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000.toString, 0, 10, TowardsDigitizing, DateTime.now().getMillis,
+          (None, None), Seq(Point(0.0, 40.0), Point(0.0, 50.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None, None),
+        RoadAddress(ra3Id, linearLocation3Id, 20000L, 3L, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad,
+          0L, 10L, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000.toString, 0, 10, TowardsDigitizing, DateTime.now().getMillis,
+          (None, None), Seq(Point(0.0, 60.0), Point(0.0, 70.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber3, Some(DateTime.parse("1901-01-01")), None, None)
+      )
+
+      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.Terminated, Seq(0L, 10L), roads= Seq((20000L, 2L, "Test road")), discontinuity = Discontinuity.Continuous)
+      val geometryProjectLinks = projectLinks.map(pl => pl.copy(geometry=Seq(Point(0.0, 50.0+pl.startMValue), Point(0.0, 50.0+pl.endMValue))))
+
+      when(mockRoadAddressService.getValidRoadAddressParts(any[Long], any[DateTime])).thenReturn(Seq(1L, 2L, 3L))
+      when(mockRoadAddressService.getRoadAddressWithRoadAndPart(20000L, 1L, fetchOnlyEnd = true)).thenReturn(ra.init)
+      when(mockRoadAddressService.getRoadAddressWithRoadAndPart(20000L, 3L)).thenReturn(ra.tail)
+
+      val errors = projectValidator.checkDiscontinuityOnPreviousRoadPart(project, geometryProjectLinks)
+      errors should have size 1
+      errors.head.validationError.value should be(projectValidator.ValidationErrorList.NotDiscontinuousCodeOnDisconnectedRoadPartOutside.value)
+    }
+  }
+
+  /**
+   * Test case:
+   *                        /
+   *                       / RP3
+   *                      /
+   *            RP1      /      RP2 (terminated)
+   *          ---------->      -------->
+   *         Discontinuous
+   */
+  test("Test checkDiscontinuityOnPreviousRoadPart When a road part that is disconnected from the previous road part is terminated and the next road part is connected to the previous road part Then should be a validation error") {
+    runWithRollback {
+      val ra1Id = Sequences.nextRoadwayId
+      val ra3Id = Sequences.nextRoadwayId
+      val linearLocation1Id = Sequences.nextLinearLocationId
+      val linearLocation3Id = Sequences.nextLinearLocationId
+
+      val ra = Seq(
+        RoadAddress(ra1Id, linearLocation1Id, 20000L, 1L, AdministrativeClass.State, Track.Combined, Discontinuity.Discontinuous,
+          0L, 10L, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000.toString, 0, 10, TowardsDigitizing, DateTime.now().getMillis,
+          (None, None), Seq(Point(0.0, 40.0), Point(0.0, 50.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None, None),
+        RoadAddress(ra3Id, linearLocation3Id, 20000L, 3L, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad,
+          0L, 10L, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000.toString, 0, 10, TowardsDigitizing, DateTime.now().getMillis,
+          (None, None), Seq(Point(0.0, 50.0), Point(10.0, 50.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber3, Some(DateTime.parse("1901-01-01")), None, None)
+      )
+
+      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.Terminated, Seq(0L, 10L), roads= Seq((20000L, 2L, "Test road")), discontinuity = Discontinuity.Discontinuous)
+      val geometryProjectLinks = projectLinks.map(pl => pl.copy(geometry=Seq(Point(0.0, 60.0+pl.startMValue), Point(0.0, 60.0+pl.endMValue))))
+
+      when(mockRoadAddressService.getValidRoadAddressParts(any[Long], any[DateTime])).thenReturn(Seq(1L, 2L, 3L))
+      when(mockRoadAddressService.getRoadAddressWithRoadAndPart(20000L, 1L, fetchOnlyEnd = true)).thenReturn(ra.init)
+      when(mockRoadAddressService.getRoadAddressWithRoadAndPart(20000L, 3L)).thenReturn(ra.tail)
+
+      val errors = projectValidator.checkDiscontinuityOnPreviousRoadPart(project, geometryProjectLinks)
+      errors should have size 1
+      errors.head.validationError.value should be(projectValidator.ValidationErrorList.DiscontinuousCodeOnConnectedRoadPartOutside.value)
+    }
+  }
+
 
   test("Test checkRoadContinuityCodes When there is a continuous code on a disconnected previous road part outside of project Then should be a validation error") {
     runWithRollback {
