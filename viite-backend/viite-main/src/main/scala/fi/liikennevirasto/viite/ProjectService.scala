@@ -229,7 +229,13 @@ class ProjectService(
 
   def parsePreFillData(linkId: String, projectId: Long): Either[String, PreFillInfo] = {
     roadLinkService.getUnderConstructionLinksById(Set(linkId)) match {
-      case List((roadNumber, roadPartNumber, municipalityCode)) => preFillRoadName(roadNumber, roadPartNumber, Try(municipalityRoadMaintainerMapping(municipalityCode)).getOrElse(-1), projectId)
+      case List((roadNumber, roadPartNumber, municipalitycode)) =>
+        preFillRoadName(
+          roadNumber,
+          roadPartNumber,
+          Try(municipalityRoadMaintainerMapping(municipalitycode)).getOrElse(-1),
+          projectId
+        )
       case _ => Left(s"Link could not be found from project: $projectId")
     }
   }
