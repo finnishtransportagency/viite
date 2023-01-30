@@ -259,7 +259,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
             }
             if (curr.status != LinkStatus.New && (curr.originalTrack == curr.track || curr.track == Track.Combined) && !(Math.abs((curr.endAddrMValue - curr.startAddrMValue) - (curr.originalEndAddrMValue - curr.originalStartAddrMValue)) < maxDiffForChange)) {
               logger.warn(s"Length mismatch. Project id ${curr.projectId} ${projectDAO.fetchById(projectId = curr.projectId).get.name} New: ${curr.startAddrMValue} ${curr.endAddrMValue} original: ${curr.originalStartAddrMValue} ${curr.originalEndAddrMValue} linkId: ${curr.linkId} " +
-                s"length changne ${(curr.endAddrMValue - curr.startAddrMValue) - (curr.originalEndAddrMValue - curr.originalStartAddrMValue)}")
+                s"length change ${(curr.endAddrMValue - curr.startAddrMValue) - (curr.originalEndAddrMValue - curr.originalStartAddrMValue)}")
             }
           }
         }
