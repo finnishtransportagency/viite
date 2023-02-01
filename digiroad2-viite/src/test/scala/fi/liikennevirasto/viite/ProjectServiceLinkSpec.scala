@@ -231,10 +231,10 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
     runWithRollback {
       val countCurrentProjects = projectService.getAllProjects
       val id = 0
-      val addresses = List(ProjectReservedPart(Sequences.nextViitePrimaryKeySeqValue: Long, 5: Long, 206: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
+      val addresses = List(ProjectReservedPart(Sequences.nextViitePrimaryKeySeqValue: Long, 13687: Long, 1: Long, Some(5534), Some(Discontinuity.apply("jatkuva")), Some(4L), newLength = None, newDiscontinuity = None, newEly = None))
       val roadAddressProject = Project(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("2017-01-01"), DateTime.now(), "Some additional info", Seq(), Seq(), None)
       val saved = projectService.createRoadLinkProject(roadAddressProject)
-      mockForProject(saved.id, roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocationDAO.fetchByRoadways(roadwayDAO.fetchAllBySection(5, 206).map(_.roadwayNumber).toSet)).map(toProjectLink(saved)))
+      mockForProject(saved.id, roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocationDAO.fetchByRoadways(roadwayDAO.fetchAllBySection(13687, 1).map(_.roadwayNumber).toSet)).map(toProjectLink(saved)))
       projectService.saveProject(saved.copy(reservedParts = addresses))
       val countAfterInsertProjects = projectService.getAllProjects
       count = countCurrentProjects.size + 1
