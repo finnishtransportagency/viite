@@ -562,9 +562,6 @@
       var errors = _.each(projectErrors, function (error) {
         var errorIds = error.ids;
         error.linkIds = [];
-        if (error.errorCode === 8) {
-          error.linkIds = error.ids;
-        }
         _.each(projectLinks(), function (pl) {
           if (_.includes(errorIds, pl.getData().id)) {
             error.linkIds.push(pl.getData().linkId);
