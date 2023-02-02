@@ -86,7 +86,7 @@ case class OldRoadAddress(ely: Long, roadNumber: Option[Long], track: Option[Lon
 case class NewRoadAddress(ely: Long, roadNumber: Long, track: Long, roadPartNumber: Long, startAddrM: Long,
                           endAddrM: Long, length: Long, administrativeClass: Long)
 
-case class ChangeInfoForRoadAddressChangesBrowser(startDate: DateTime, changeType: Long, reversed: Long, roadName: String, projectName: String,
+case class ChangeInfoForRoadAddressChangesBrowser(startDate: DateTime, changeType: Long, reversed: Long, roadName: Option[String], projectName: String,
                                                   projectAcceptedDate: DateTime,oldRoadAddress: OldRoadAddress, newRoadAddress: NewRoadAddress)
 
 
@@ -491,7 +491,7 @@ SELECT
       val startDate = new DateTime(r.nextTimestamp())
       val changeType = r.nextLong()
       val reversed = r.nextLong()
-      val roadName = r.nextString()
+      val roadName = r.nextStringOption()
       val projectName = r.nextString()
       val projectAcceptedDate = new DateTime(r.nextTimestamp())
       val oldEly = r.nextLong()
@@ -595,7 +595,7 @@ SELECT
                    |FROM roadway_changes rc
                    |JOIN project p ON rc.project_id = p.id
                    |-- Get the valid road name for the road that was modified in the project
-                   |JOIN road_name rn ON (rc.new_road_number = rn.road_number OR  rc.old_road_number = rn.road_number)
+                   |LEFT JOIN road_name rn ON (rc.new_road_number = rn.road_number OR  rc.old_road_number = rn.road_number)
                    |  AND rn.valid_to IS NULL
                    |  AND rn.start_date <= p.start_date
                    |  -- End date should be null or the same as the roads' end date (if the whole road was terminated in this project)
