@@ -102,6 +102,13 @@
       return field;
     };
 
+      var staticFieldProjectListElement = function (projName) {
+          const lbl1 = document.createElement("label");
+          lbl1.classList.add("control-label-projects-list");
+          lbl1.appendChild(document.createTextNode(projName));
+          return lbl1;
+      };
+
     var pollProjects = null;
 
     function show() {
@@ -163,21 +170,19 @@
     function bindEvents() {
 
       eventbus.on('roadAddressProjects:fetched', function (projects) {
-        projectArray = _.filter(projects, function (proj) {
-          return proj.statusCode !== projectStatus.Deleted.value; //filter deleted projects out
-        });
+        projectArray = projects;
         createProjectList(projectArray);
         userFilterVisibility();
         $('#sync').removeClass("btn-spin"); // stop the sync button from spinning
       });
 
       var createProjectList = function (projects) {
-        var sortedProjects = projects.sort(function (a, b) {
-          var cmp = headers[orderBy.id].sortFunc(a, b);
-          return (cmp === 0) ? a.name.localeCompare(b.name, 'fi') : cmp;
-        });
-        if (orderBy.reversed)
-          sortedProjects.reverse();
+          var sortedProjects = projects.sort(function (a, b) {
+              var cmp = headers[orderBy.id].sortFunc(a, b);
+              return (cmp === 0) ? a.name.localeCompare(b.name, 'fi') : cmp;
+          });
+          if (orderBy.reversed)
+              sortedProjects.reverse();
 
         var triggerOpening = function (event, button) {
           $('#OldAcceptedProjectsVisibleCheckbox').prop('checked', false);
@@ -191,52 +196,114 @@
           }
         };
 
-        var html = '<table style="table-layout: fixed; width: 100%;">';
-        // eslint-disable-next-line no-negated-condition
-        if (!_.isEmpty(sortedProjects)) {
-          var uniqueId = 0;
-          _.each(sortedProjects, function (proj) {
-            var info = (proj.statusInfo) ? proj.statusInfo : 'Ei lisätietoja';
-            html += '<tr id="' + uniqueId + '" class="project-item">' +
-              '<td class="innerName" style="width: 270px;">' + staticFieldProjectName(proj.name) + '</td>' +
-              '<td style="width: 60px; word-break: break-word" title="' + info + '">' + staticFieldProjectList(proj.elys) + '</td>' +
-              '<td class="innerCreatedBy" style="width: 120px;" title="' + info + '">' + staticFieldProjectList(proj.createdBy) + '</td>' +
-              '<td style="width: 120px;" title="' + info + '">' + staticFieldProjectList(proj.createdDate) + '</td>' +
-              '<td style="width: 100px;" title="' + info + '">' + staticFieldProjectList(proj.statusDescription) + '</td>';
-            switch (proj.statusCode) {
-              case projectStatus.ErrorInViite.value:
-                html += '<td id="innerOpenProjectButton"><button class="project-open btn btn-new-error" style="alignment: right; margin-bottom: 6px; margin-left: 25px" id="reopen-project-' + proj.id + '" value="' + proj.id + '" data-projectStatus="'+ proj.statusCode + '">Avaa uudelleen</button></td>' +
-                  '</tr>';
-                break;
-              default:
-                html += '<td id="innerOpenProjectButton"><button class="project-open btn btn-new" style="alignment: right; margin-bottom: 6px; margin-left: 50px" id="open-project-' + proj.id + '" value="' + proj.id + '" data-projectStatus="' + proj.statusCode + '">Avaa</button></td>' +
-                  '</tr>';
-            }
-            uniqueId += 1;
-          });
-          html += '</table>';
-          $('#project-list').html(html);
-          $('[id*="open-project"]').click(function (event) {
-            var button = $(this);
-            if (parseInt(button.attr("data-projectStatus")) === projectStatus.InUpdateQueue.value ||
-                parseInt(button.attr("data-projectStatus")) === projectStatus.UpdatingToRoadNetwork.value) {
-              new GenericConfirmPopup("Projektin muokkaaminen ei ole mahdollista, koska sitä päivitetään tieverkolle. Haluatko avata sen?", {
-                successCallback: function () {
+          const tableElement = document.createElement("table");
+          tableElement.style.tableLayout = "fixed";
+          tableElement.style.width = "100%";
+
+          function createTableRows(prjs, disp) {
+              for (let uniqueId = 0; uniqueId < prjs.length; uniqueId++) {
+                  const proj = prjs[uniqueId];
+                  const info = (proj.statusInfo) ? proj.statusInfo : 'Ei lisätietoja';
+
+                  const trElement = document.createElement("tr");
+                  trElement.classList.add("project-item");
+                  if (disp)
+                    trElement.style.display = "None";
+                  trElement.id = uniqueId.toString();
+
+                  const tdElement1 = document.createElement("td");
+                  tdElement1.classList.add("innerName");
+                  tdElement1.style.width = "270px";
+                  tdElement1.appendChild(staticFieldProjectListElement(proj.name));
+
+                  const tdElement2 = document.createElement("td");
+                  tdElement2.style.width = "60px";
+                  tdElement2.style.wordBreak = "break-word";
+                  tdElement2.setAttribute("title", info);
+                  tdElement2.appendChild(staticFieldProjectListElement(proj.elys));
+
+                  const tdElement3 = document.createElement("td");
+                  tdElement3.classList.add("innerCreatedBy");
+                  tdElement3.style.width = "120";
+                  tdElement3.setAttribute("title", info);
+                  tdElement3.appendChild(staticFieldProjectListElement(proj.createdBy));
+
+                  const tdElement4 = document.createElement("td");
+                  tdElement4.style.width = "120";
+                  tdElement4.setAttribute("title", info);
+                  tdElement4.appendChild(staticFieldProjectListElement(proj.createdDate));
+
+
+                  const tdElement5 = document.createElement("td");
+                  tdElement5.style.width = "120";
+                  tdElement5.setAttribute("title", info);
+                  tdElement5.appendChild(staticFieldProjectListElement(proj.statusDescription));
+
+                  const tdElement6 = document.createElement("td");
+                  tdElement6.id = "innerOpenProjectButton";
+
+                  const element6Button = document.createElement("button");
+                  element6Button.value = proj.id
+                  element6Button.classList.add("project-open");
+                  element6Button.classList.add("btn");
+                  element6Button.style.alignment = "right";
+                  element6Button.style.marginBottom = "6px";
+                  element6Button.setAttribute("data-projectStatus", proj.statusCode);
+                  switch (proj.statusCode) {
+                      case projectStatus.ErrorInViite.value:
+                          element6Button.innerText = "Avaa uudelleen";
+                          element6Button.classList.add("btn-new-error");
+                          element6Button.style.marginLeft = "25px";
+                          element6Button.id = "reopen-project" + proj.id;
+                          break;
+                      default:
+                          element6Button.innerText = "Avaa";
+                          element6Button.classList.add("btn-new");
+                          element6Button.style.marginLeft = "50px";
+                          element6Button.id = "open-project" + proj.id;
+                  }
+                  tdElement6.appendChild(element6Button)
+                  trElement.append(tdElement1, tdElement2, tdElement3, tdElement4, tdElement5, tdElement6);
+                  tableElement.appendChild(trElement)
+
+              };
+
+              const el = $('#project-list > table');
+              if (el.length === 1)
+                  el.replaceWith(tableElement);
+              else
+                  $('#project-list').append(tableElement);
+
+              return Promise.resolve();
+          }
+
+          // Split for long lists.
+          let firstN =  10;
+          createTableRows(_.take(sortedProjects, firstN), false).then(
+              () => {
+                  createTableRows(_.drop(sortedProjects, firstN), true);
+              });
+
+          $(document).ready(function() {
+              $(".project-item").show();
+              $('[id*="open-project"]').click(function (event) {
+                var button = $(this);
+                if (parseInt(button.attr("data-projectStatus")) === projectStatus.InUpdateQueue.value ||
+                    parseInt(button.attr("data-projectStatus")) === projectStatus.UpdatingToRoadNetwork.value) {
+                  new GenericConfirmPopup("Projektin muokkaaminen ei ole mahdollista, koska sitä päivitetään tieverkolle. Haluatko avata sen?", {
+                    successCallback: function () {
+                      clearInterval(pollProjects);
+                      triggerOpening(event, button);
+                    },
+                    closeCallback: function () {
+                    }
+                  });
+                } else {
                   clearInterval(pollProjects);
                   triggerOpening(event, button);
-                },
-                closeCallback: function () {
                 }
               });
-            } else {
-              clearInterval(pollProjects);
-              triggerOpening(event, button);
-            }
           });
-        } else {
-          html += '</table>';
-          $('#project-list').html(html);
-        }
       };
 
       $('#filterUser').click(function () {

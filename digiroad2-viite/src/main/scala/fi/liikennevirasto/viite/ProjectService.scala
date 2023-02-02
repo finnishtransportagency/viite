@@ -1,10 +1,7 @@
 package fi.liikennevirasto.viite
 
-import java.sql.SQLException
-import java.util.Date
-
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, TrafficDirection, _}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
@@ -13,7 +10,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReservedException, Track}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.ProjectAddressLinkBuilder.municipalityRoadMaintainerMapping
-import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectDAO, RoadwayDAO, _}
+import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{JunctionPointCP, NoCP, UserDefinedCP}
 import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
 import fi.liikennevirasto.viite.dao.LinkStatus._
@@ -21,12 +18,14 @@ import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibr
 import fi.liikennevirasto.viite.dao.ProjectState._
 import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Termination}
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink}
-import fi.liikennevirasto.viite.process.{InvalidAddressDataException, _}
+import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.util.SplitOptions
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 
+import java.sql.SQLException
+import java.util.Date
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
@@ -830,7 +829,7 @@ class ProjectService(
   def deleteProject(projectId: Long): Boolean = {
     withDynTransaction {
       val project = fetchProjectById(projectId)
-      val canBeDeleted = projectId != 0 && project.isDefined && project.get.status == ProjectState.Incomplete
+      val canBeDeleted = projectId != 0 && project.isDefined && project.get.projectState == ProjectState.Incomplete
       if (canBeDeleted) {
         val links = projectLinkDAO.fetchProjectLinks(projectId)
         projectLinkDAO.removeProjectLinksByProject(projectId)
@@ -863,13 +862,13 @@ class ProjectService(
     }
   }
 
-  def getAllProjects: Seq[Project] = {
+  def getAllProjects: List[Map[String, Any]] = {
     withDynSession {
       projectDAO.fetchAll()
     }
   }
 
-  def getActiveProjects: Seq[Project] = {
+  def getActiveProjects: List[Map[String, Any]] = {
     withDynSession {
       projectDAO.fetchAllActiveProjects()
     }
@@ -1350,7 +1349,23 @@ class ProjectService(
     * @param userName   Username of the user that does this change
     * @return true, if the delta calculation is successful and change table has been updated.
     */
-  def updateProjectLinks(projectId: Long, ids: Set[Long], linkIds: Seq[String], linkStatus: LinkStatus, userName: String, newRoadNumber: Long, newRoadPartNumber: Long, newTrackCode: Int, userDefinedEndAddressM: Option[Int], administrativeClass: Long = AdministrativeClass.State.value, discontinuity: Int = Discontinuity.Continuous.value, ely: Option[Long] = None, reversed: Boolean = false, roadName: Option[String] = None, coordinates: Option[ProjectCoordinates] = None): Option[String] = {
+  def updateProjectLinks(projectId             : Long,
+                         ids                   : Set[Long],
+                         linkIds               : Seq[String],
+                         linkStatus            : LinkStatus,
+                         userName              : String,
+                         newRoadNumber         : Long,
+                         newRoadPartNumber     : Long,
+                         newTrackCode          : Int,
+                         userDefinedEndAddressM: Option[Int],
+                         administrativeClass   : Long                       = AdministrativeClass.State.value,
+                         discontinuity         : Int                        = Discontinuity.Continuous.value,
+                         ely                   : Option[Long]               = None,
+                         reversed              : Boolean                    = false,
+                         roadName              : Option[String]             = None,
+                         coordinates           : Option[ProjectCoordinates] = None
+                        ): Option[String] = {
+
     def isCompletelyNewPart(toUpdateLinks: Seq[ProjectLink]): (Boolean, Long, Long) = {
       val reservedPart = projectReservedPartDAO.fetchReservedRoadPart(toUpdateLinks.head.roadNumber, toUpdateLinks.head.roadPartNumber).get
       val newSavedLinks = if (roadwayDAO.fetchAllByRoadAndPart(reservedPart.roadNumber, reservedPart.roadPartNumber).isEmpty) {
@@ -1413,6 +1428,14 @@ class ProjectService(
         pls.foreach(pl => projectLinkDAO.updateProjectLinkValues(projectId, ra.copy(ely = pl.ely),
           updateGeom = false, plId = Some(pl.id)))
       })
+    }
+
+    /* Update elycodes into project table */
+    def updateProjectElyCodes(): Unit = {
+      val elysForProject = projectLinkDAO.fetchProjectLinkElys(projectId)
+      val updatedCount   = projectDAO.updateProjectElys(projectId, elysForProject)
+      if (updatedCount != 1)
+        logger.warn(s"Ely-codes for project: $projectId were not updated.")
     }
 
     try {
@@ -1528,6 +1551,8 @@ class ProjectService(
           case _ =>
             throw new ProjectValidationException(s"Virheellinen operaatio $linkStatus")
         }
+
+        updateProjectElyCodes()
 
         if (coordinates.isDefined) {
           saveProjectCoordinates(projectId, coordinates.get)
@@ -1682,7 +1707,7 @@ class ProjectService(
     if (projectOpt.isEmpty)
       throw new IllegalArgumentException("Project not found")
     val project = projectOpt.get
-    project.status match {
+    project.projectState match {
       case ProjectState.Accepted | ProjectState.InUpdateQueue | ProjectState.UpdatingToRoadNetwork => (true, None)
       case _ => {
         roadwayChangesDAO.clearRoadChangeTable(projectId)
