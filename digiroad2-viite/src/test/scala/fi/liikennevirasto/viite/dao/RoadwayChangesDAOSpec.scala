@@ -384,7 +384,7 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
 
       val roadNames = result3.map(res => res.roadName).distinct
       roadNames.size should be(1) // the history road name should not be returned for the change info, only the current road name
-      roadNames.head should equal("Turku-Oulu")
+      roadNames.head should equal(Some("Turku-Oulu"))
     }
   }
 
@@ -434,7 +434,7 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
 
       val roadNames = result.map(res => res.roadName).distinct
       roadNames.size should be(1) // the history road name should not be returned for the change info, only the road name that the road had before it was terminated
-      roadNames.head should equal("Turku-Oulu")
+      roadNames.head should equal(Some("Turku-Oulu"))
     }
   }
 }
