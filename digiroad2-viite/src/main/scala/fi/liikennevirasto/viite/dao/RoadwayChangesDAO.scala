@@ -594,12 +594,13 @@ SELECT
                    |	new_administrative_class
                    |FROM roadway_changes rc
                    |JOIN project p ON rc.project_id = p.id
-                   |-- Get the valid road name for the road that was modified in the project
-                   |LEFT JOIN road_name rn ON (rc.new_road_number = rn.road_number OR  rc.old_road_number = rn.road_number)
+                   |-- Get the valid road name for the road that was modified in the project, prioritizing the new road number
+                   |LEFT JOIN road_name rn ON rn.road_number = coalesce(rc.new_road_number, rc.old_road_number)
                    |  AND rn.valid_to IS NULL
                    |  AND rn.start_date <= p.start_date
-                   |  -- End date should be null or the same as the roads' end date (if the whole road was terminated in this project)
-                   |  AND (rn.end_date IS NULL OR rn.end_date = (p.start_date - INTERVAL '1 DAY'))
+                   |  -- End date should be null if the change is not a termination (5).
+                   |  -- If the road is terminated, the end date is the same as the end date of the road  (if the whole road was terminated in this project) or null if the start date of the road name start date is earlier than the start date of the project
+                   |  AND ((rc.change_type != 5 and rn.end_date IS null) OR (rc.change_type = 5 and (rn.end_date = (p.start_date - INTERVAL '1 DAY') or (rn.end_date is null and rn.start_date < p.start_date))))
                    """.stripMargin
       val filteredQuery = queryFilter(query)
       Q.queryNA[ChangeInfoForRoadAddressChangesBrowser](filteredQuery).iterator.toSeq
