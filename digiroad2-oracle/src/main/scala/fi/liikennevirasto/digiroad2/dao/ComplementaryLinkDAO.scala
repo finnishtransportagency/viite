@@ -51,10 +51,11 @@ class ComplementaryLinkDAO {
 
   private implicit val getRoadlink: GetResult[RoadLink] = new GetResult[RoadLink] {
     def apply(r: PositionedResult): RoadLink = {
-
+      val UnknownMunicipality = -1
       val linkId = r.nextString()
       val administrativeClass = AdministrativeClass(r.nextInt())
-      val municipalityCode = r.nextInt()
+      val municipalityCodeOption = r.nextIntOption()
+      val municipalityCode = if (municipalityCodeOption.isEmpty) UnknownMunicipality else municipalityCodeOption.get
       val lifecycleStatus = LifecycleStatus(r.nextInt())
       val length = r.nextDouble()
       val modifiedAt = extractModifiedAt(Map(
