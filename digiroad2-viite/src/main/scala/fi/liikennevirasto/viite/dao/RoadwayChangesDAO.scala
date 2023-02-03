@@ -595,7 +595,7 @@ SELECT
                    |FROM roadway_changes rc
                    |JOIN project p ON rc.project_id = p.id
                    |-- Get the valid road name for the road that was modified in the project, prioritizing the new road number
-                   |LEFT JOIN road_name rn ON (rc.new_road_number = rn.road_number OR  (rc.new_road_number is null and rc.old_road_number = rn.road_number))
+                   |LEFT JOIN road_name rn ON rn.road_number = coalesce(rc.new_road_number, rc.old_road_number)
                    |  AND rn.valid_to IS NULL
                    |  AND rn.start_date <= p.start_date
                    |  -- End date should be null if the change is not a termination (5).
