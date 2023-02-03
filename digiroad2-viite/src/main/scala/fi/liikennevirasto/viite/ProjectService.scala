@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory
 
 import java.sql.SQLException
 import java.util.Date
+import scala.collection.immutable
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
@@ -1956,6 +1957,16 @@ class ProjectService(
   def getProjectState(projectId: Long): Option[ProjectState] = {
     withDynTransaction {
       projectDAO.fetchProjectStatus(projectId)
+    }
+  }
+ /**
+  * Fetch project states for project ids.
+  * @param projectIDs to query.
+  * Returns project ids with state code.
+  */
+  def getProjectStates(projectIds: Set[Int]): Seq[(Int, Int)] = {
+    withDynTransaction {
+      projectDAO.fetchProjectStates(projectIds)
     }
   }
 

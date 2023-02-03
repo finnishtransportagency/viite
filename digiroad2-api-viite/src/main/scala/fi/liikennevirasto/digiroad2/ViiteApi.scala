@@ -723,6 +723,22 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
     }
   }
 
+  private val getRoadAddressProjectStates: SwaggerSupportSyntax.OperationBuilder = (
+    apiOperation[Seq[(Int, Int)]]("getRoadAddressProjectStates")
+      .parameters(
+        pathParam[Set[Int]]("projectIDs").description("List of project ids to fetch states for.")
+      )
+      tags "ViiteAPI - Project states"
+      summary "Returns state codes for the requested project ids."
+    )
+
+  get("/roadlinks/roadaddress/project/states/:projectIDs", operation(getRoadAddressProjectStates)) {
+    time(logger, "GET request for /roadlinks/roadaddress/project/all/:projectIDs") {
+      val projectIDs: Set[Int] = multiParams.getOrElse("projectIDs", Seq()).map(_.toInt).toSet
+      projectService.getProjectStates(projectIDs)
+    }
+  }
+
   private val getSingleProjectById: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String, Any]]("getSingleProjectById")
       .parameters(

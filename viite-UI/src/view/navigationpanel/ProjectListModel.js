@@ -12,7 +12,9 @@
       "sortELY": {
         toStr: "ELY", width: "50",
         sortFunc: function (a, b) {
-          return a.ely - b.ely;
+            console.log(a.elys);
+            console.log(b.elys);
+          return a.elys[0] - ((b.elys.length > 0) ? b.elys[0] : -1);
         }
       },
       "sortUser": {
@@ -86,22 +88,6 @@
       '<i id="sync" class="btn-icon btn-refresh fa fa-sync-alt" title="Päivitä lista"></i>' +
       '</div>');
 
-    var staticFieldProjectName = function (dataField) {
-      var field;
-      field = '<div>' +
-        '<label class="control-label-projects-list" style="width: 300px">' + dataField + '</label>' +
-        '</div>';
-      return field;
-    };
-
-    var staticFieldProjectList = function (dataField) {
-      var field;
-      field = '<div>' +
-        '<label class="control-label-projects-list">' + dataField + '</label>' +
-        '</div>';
-      return field;
-    };
-
       var staticFieldProjectListElement = function (projName) {
           const lbl1 = document.createElement("label");
           lbl1.classList.add("control-label-projects-list");
@@ -117,8 +103,8 @@
       eventbus.trigger("roadAddressProject:deactivateAllSelections");
       bindEvents();
       fetchProjects();
-      // start polling projects evey 60 seconds
-      pollProjects = setInterval(fetchProjects, 60 * 1000);
+      // start polling projects evey 20 seconds
+      pollProjects = setInterval(fetchProjectStates, 20 * 1000);
     }
 
     function hide() {
@@ -130,6 +116,10 @@
 
     function fetchProjects() {
       projectCollection.getProjects(onlyActive());
+    }
+
+    function fetchProjectStates() {
+      projectCollection.getProjectStates(_.map(projectArray, "id"));
     }
 
     function onlyActive() {
@@ -176,25 +166,36 @@
         $('#sync').removeClass("btn-spin"); // stop the sync button from spinning
       });
 
-      var createProjectList = function (projects) {
-          var sortedProjects = projects.sort(function (a, b) {
-              var cmp = headers[orderBy.id].sortFunc(a, b);
-              return (cmp === 0) ? a.name.localeCompare(b.name, 'fi') : cmp;
-          });
-          if (orderBy.reversed)
-              sortedProjects.reverse();
+        eventbus.on('roadAddressProjectStates:fetched', function (idsAndStates) {
+            projectArray = _.map(projectArray, (project) => {
+                const statusCode = idsAndStates.find(idState => idState._1 === project.id)._2;
+                project.statusCode = statusCode;
+                project.statusDescription = Object.values(ViiteEnumerations.ProjectStatus).find(enumState => enumState.value === statusCode).description;
+                return project;
+            })
+            createProjectList(projectArray);
+            userFilterVisibility();
+            $('#sync').removeClass("btn-spin"); // stop the sync button from spinning
+        });
+
 
         var triggerOpening = function (event, button) {
-          $('#OldAcceptedProjectsVisibleCheckbox').prop('checked', false);
-          if (button.length > 0 && button[0].className === "project-open btn btn-new-error") {
-            projectCollection.reOpenProjectById(parseInt(event.currentTarget.value));
-            eventbus.once("roadAddressProject:reOpenedProject", function (_successData) {
-              openProjectSteps(event);
-            });
-          } else {
-            openProjectSteps(event);
-          }
+            $('#OldAcceptedProjectsVisibleCheckbox').prop('checked', false);
+            if (button.length > 0 && button[0].className === "project-open btn btn-new-error") {
+                projectCollection.reOpenProjectById(parseInt(event.currentTarget.value));
+                eventbus.once("roadAddressProject:reOpenedProject", function (_successData) {
+                    openProjectSteps(event);
+                });
+            } else {
+                openProjectSteps(event);
+            }
         };
+
+      var createProjectList = function (projects) {
+          var sortedProjects = projects.sort(function (a, b) {
+              var cmp = (orderBy.reversed) ? headers[orderBy.id].sortFunc(b, a) : headers[orderBy.id].sortFunc(a, b);
+              return (cmp === 0) ? a.name.localeCompare(b.name, 'fi') : cmp;
+          });
 
           const tableElement = document.createElement("table");
           tableElement.style.tableLayout = "fixed";

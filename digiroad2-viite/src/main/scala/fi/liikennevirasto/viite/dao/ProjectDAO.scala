@@ -127,7 +127,7 @@ class ProjectDAO {
 
   def fetchAllActiveProjects(): List[Map[String, Any]] = {
     time(logger, s"Fetch all active projects ") {
-      simpleFetch(query => s"""$query WHERE state!= ${ProjectState.Deleted.value} and modified_date > now() - INTERVAL '2 DAY' order by name, id, elys """)
+      simpleFetch(query => s"""$query WHERE state=${ProjectState.InUpdateQueue.value} OR state=${ProjectState.UpdatingToRoadNetwork.value} OR state=${ProjectState.ErrorInViite.value} OR state=${ProjectState.Incomplete.value} OR (state=${ProjectState.Accepted.value} and modified_date > now() - INTERVAL '2 DAY') order by name, id, elys """)
     }
   }
 
@@ -141,6 +141,15 @@ class ProjectDAO {
       case Some(statenumber) => Some(ProjectState.apply(statenumber))
       case None => None
     }
+  }
+
+  def fetchProjectStates(projectID: Set[Int]): List[(Int,Int)] = {
+    val query =
+      s""" SELECT id,state
+            FROM project
+            WHERE id in (${projectID.mkString(",")})
+       """
+    Q.queryNA[(Int,Int)](query).list
   }
 
   @deprecated ("Tierekisteri connection has been removed from Viite. TRId to be removed, too.")
