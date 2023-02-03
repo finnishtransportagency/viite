@@ -63,8 +63,6 @@
     var roadLinkGroups = [];
     var unaddressedUnderConstructionRoadLinkGroups = [];
     var unaddressedRoadLinkGroups = [];
-    var date = [];
-    var historicRoadLinks = [];
     var LinkStatus = ViiteEnumerations.LinkStatus;
     var LinkSource = ViiteEnumerations.LinkGeomSource;
     var lifecycleStatus = ViiteEnumerations.lifecycleStatus;
@@ -103,23 +101,10 @@
       roadLinkGroups[indexOfGroupToBeUpdated] = fetchedGroupThatWasClicked;
     };
 
-    this.getDate = function () {
-      return date;
-    };
-
-    this.setDate = function (newDate) {
-      date = newDate;
-    };
-
     this.fetch = function (boundingBox, zoom) {
-      var withHistory = date.length !== 0;
-      var day = withHistory ? date[0] : -1;
-      var month = withHistory ? date[1] : -1;
-      var year = withHistory ? date[2] : -1;
       currentZoom = zoom;
       backend.getRoadLinks({
-        boundingBox: boundingBox, zoom: zoom,
-        withHistory: withHistory, day: day, month: month, year: year
+        boundingBox: boundingBox, zoom: zoom
       }, function (fetchedRoadLinks) {
         currentAllRoadLinks = fetchedRoadLinks;
         fetchProcess(fetchedRoadLinks, zoom);
@@ -204,19 +189,12 @@
         setRoadLinkGroups(roadLinkGroups.concat(nonFetchedLinksInSelection));
       }
 
-      historicRoadLinks = _.filter(roadLinkGroups, function (group) {
-        return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface);
-      });
-
       var nonHistoryConstructionRoadLinkGroups = _.reject(roadLinkGroups, function (group) {
         return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface);
       });
 
       setRoadLinkGroups(nonHistoryConstructionRoadLinkGroups);
       eventbus.trigger('roadLinks:fetched', nonHistoryConstructionRoadLinkGroups, (!_.isUndefined(drawUnknowns) && drawUnknowns), selectedLinkIds);
-      if (historicRoadLinks.length !== 0) {
-        eventbus.trigger('linkProperty:fetchedHistoryLinks', historicRoadLinks);
-      }
       if (unaddressedUnderConstructionRoadLinkGroups.length !== 0)
         eventbus.trigger('underConstructionRoadLinks:fetched', unaddressedUnderConstructionRoadLinkGroups);
       if (unaddressedUnknownRoadLinkGroups.length !== 0)
