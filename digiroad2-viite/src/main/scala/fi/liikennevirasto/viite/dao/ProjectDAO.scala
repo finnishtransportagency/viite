@@ -126,8 +126,8 @@ class ProjectDAO {
   }
 
   def fetchAllActiveProjects(): List[Map[String, Any]] = {
-    time(logger, s"Fetch all active Q projects ") {
-      simpleFetch(query => s"""$query WHERE state=${ProjectState.InUpdateQueue.value} OR state=${ProjectState.UpdatingToRoadNetwork.value} OR state=${ProjectState.ErrorInViite.value} OR state=${ProjectState.Incomplete.value} OR (state=${ProjectState.Accepted.value} and modified_date > now() - INTERVAL '2 DAY') order by name, id, elys """)
+    time(logger, s"Fetch all active projects ") {
+      simpleFetch(query => s"""$query WHERE state!= ${ProjectState.Deleted.value} and modified_date > now() - INTERVAL '2 DAY' order by name, id, elys """)
     }
   }
 
@@ -222,21 +222,6 @@ class ProjectDAO {
         Project(id, projectState, name, createdBy, createdDate, modifiedBy, start_date, modifiedDate, addInfo, Seq(), Seq(), statusInfo, Some(ProjectCoordinates(coordX, coordY, zoom)), Set())
     }
   }
-
-//  private def simpleFetch(queryFilter: String => String): Seq[Project] = {
-//    val query =
-//      s"""SELECT id, state, name, created_by, created_date, start_date, modified_by, COALESCE(modified_date, created_date),
-//           add_info, status_info, coord_x, coord_y, zoom
-//           FROM project"""
-//
-//    Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String, Option[String], Double, Double, Int)](queryFilter(query)).list.map {
-//      case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo, statusInfo, coordX, coordY, zoom) =>
-//
-//        val projectState = ProjectState.apply(state)
-//
-//        Project(id, projectState, name, createdBy, createdDate, modifiedBy, start_date, modifiedDate, addInfo, Seq(), Seq(), statusInfo, Some(ProjectCoordinates(coordX, coordY, zoom)), Set())
-//    }
-//  }
 
   implicit val getProjectMap: GetResult[Map[String, Any]] = new GetResult[Map[String, Any]] {
     def apply(r: PositionedResult): Map[String, Any] = {
