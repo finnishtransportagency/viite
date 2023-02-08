@@ -254,6 +254,7 @@ class ProjectDAO {
         "coordX" -> r.nextDouble(),
         "coordY" -> r.nextDouble(),
         "zoomLevel" -> r.nextInt(),
+        // Elys list from db to Set()
         "elys" -> r.nextObjectOption().map(_.asInstanceOf[PgArray].getArray.asInstanceOf[Array[Integer]].toSet.asInstanceOf[Set[Int]]).getOrElse(Set())
       )
     }
