@@ -260,7 +260,8 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
             }
             if (curr.status != LinkStatus.New && (curr.originalTrack == curr.track || curr.track == Track.Combined) && !(Math.abs((curr.endAddrMValue - curr.startAddrMValue) - (curr.originalEndAddrMValue - curr.originalStartAddrMValue)) < maxDiffForChange)) {
               logger.error(s"Length mismatch. New: ${curr.startAddrMValue} ${curr.endAddrMValue} original: ${curr.originalStartAddrMValue} ${curr.originalEndAddrMValue} linkId: ${curr.linkId}")
-              throw new RoadAddressException(LengthMismatchErrorMessage.format(curr.linkId, maxDiffForChange-1))
+              throw new RoadAddressException(LengthMismatchErrorMessage.format(curr.linkId, maxDiffForChange - 1))
+            }
             /* VIITE-2957
             Replacing the above if-statement with the one commented out below enables a user to bypass the RoadAddressException.
             This may be needed in certain cases.
