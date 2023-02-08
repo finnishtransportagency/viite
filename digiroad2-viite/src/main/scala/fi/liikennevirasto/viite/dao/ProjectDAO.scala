@@ -119,15 +119,15 @@ class ProjectDAO {
     }
   }
 
-  def fetchAll(): List[Map[String, Any]] = {
+  def fetchAllWithoutDeletedFilter(): List[Map[String, Any]] = {
     time(logger, s"Fetch all projects ") {
-      simpleFetch(query => s"""$query WHERE state != ${ProjectState.Deleted.value} order by name, id, elys""")
+      fetchProjects(query => s"""$query WHERE state != ${ProjectState.Deleted.value} order by name, id, elys""")
     }
   }
 
   def fetchAllActiveProjects(): List[Map[String, Any]] = {
     time(logger, s"Fetch all active projects ") {
-      simpleFetch(query => s"""$query WHERE state=${ProjectState.InUpdateQueue.value} OR state=${ProjectState.UpdatingToRoadNetwork.value} OR state=${ProjectState.ErrorInViite.value} OR state=${ProjectState.Incomplete.value} OR (state=${ProjectState.Accepted.value} and modified_date > now() - INTERVAL '2 DAY') order by name, id, elys """)
+      fetchProjects(query => s"""$query WHERE state=${ProjectState.InUpdateQueue.value} OR state=${ProjectState.UpdatingToRoadNetwork.value} OR state=${ProjectState.ErrorInViite.value} OR state=${ProjectState.Incomplete.value} OR (state=${ProjectState.Accepted.value} and modified_date > now() - INTERVAL '2 DAY') order by name, id, elys """)
     }
   }
 
@@ -228,7 +228,8 @@ class ProjectDAO {
     Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String, Option[String], Double, Double, Int)](queryFilter(query)).list.map {
       case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo, statusInfo, coordX, coordY, zoom) =>
         val projectState = ProjectState.apply(state)
-        Project(id, projectState, name, createdBy, createdDate, modifiedBy, start_date, modifiedDate, addInfo, Seq(), Seq(), statusInfo, Some(ProjectCoordinates(coordX, coordY, zoom)), Set())
+        Project(id, projectState, name, createdBy, createdDate, modifiedBy, start_date, modifiedDate,
+          addInfo, Seq(), Seq(), statusInfo, Some(ProjectCoordinates(coordX, coordY, zoom)), Set())
     }
   }
 
@@ -257,17 +258,11 @@ class ProjectDAO {
       )
     }
   }
-  private def simpleFetch(queryFilter: String => String): List[Map[String, Any]] = {
+  private def fetchProjects(queryFilter: String => String): List[Map[String, Any]] = {
     val query =
       s"""SELECT state,id,"name",created_by,created_date,modified_by,COALESCE(modified_date, created_date),add_info,start_date,status_info,coord_x,coord_y,zoom,elys FROM project"""
     Q.queryNA[Map[String, Any]](queryFilter(query)).list
   }
-
-def updateAllProjectElys(nullsOnly: Boolean): Int = {
-  val withNullElys = if (nullsOnly) s" where elys is null" else ""
-  val query = s"""UPDATE project p set elys = (select array_agg(distinct(pl.ely)) from project_link pl where pl.project_id = p.id $withNullElys)"""
-  Q.updateNA(query).first
-}
 
   def updateProjectElys(projectId: Long, elys : Seq[Long]): Int = {
     time(logger, s"Update elys for project $projectId.") {

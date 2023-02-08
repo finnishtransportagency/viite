@@ -865,7 +865,7 @@ class ProjectService(
 
   def getAllProjects: List[Map[String, Any]] = {
     withDynSession {
-      projectDAO.fetchAll()
+      projectDAO.fetchAllWithoutDeletedFilter()
     }
   }
 

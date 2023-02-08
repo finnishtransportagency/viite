@@ -12,8 +12,6 @@
       "sortELY": {
         toStr: "ELY", width: "50",
         sortFunc: function (a, b) {
-            console.log(a.elys);
-            console.log(b.elys);
           return a.elys[0] - ((b.elys.length > 0) ? b.elys[0] : -1);
         }
       },
@@ -88,11 +86,11 @@
       '<i id="sync" class="btn-icon btn-refresh fa fa-sync-alt" title="Päivitä lista"></i>' +
       '</div>');
 
-      var staticFieldProjectListElement = function (projName) {
-          const lbl1 = document.createElement("label");
-          lbl1.classList.add("control-label-projects-list");
-          lbl1.appendChild(document.createTextNode(projName));
-          return lbl1;
+      var staticFieldProjectListElement = function (projectName) {
+          const label = document.createElement("label");
+          label.classList.add("control-label-projects-list");
+          label.appendChild(document.createTextNode(projectName));
+          return label;
       };
 
     var pollProjects = null;
@@ -103,8 +101,8 @@
       eventbus.trigger("roadAddressProject:deactivateAllSelections");
       bindEvents();
       fetchProjects();
-      // start polling projects evey 20 seconds
-      pollProjects = setInterval(fetchProjectStates, 20 * 1000);
+      // start polling projects evey 10 seconds
+      pollProjects = setInterval(fetchProjectStates, 10 * 1000);
     }
 
     function hide() {

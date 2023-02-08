@@ -732,6 +732,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       summary "Returns state codes for the requested project ids."
     )
 
+  /** Gets the project information for the project list only for the given projects (projectIDs</>). */
   get("/roadlinks/roadaddress/project/states/:projectIDs", operation(getRoadAddressProjectStates)) {
     time(logger, "GET request for /roadlinks/roadaddress/project/states/:projectIDs") {
       val projectIDs: Set[Int] = params("projectIDs").split(",").map(_.toInt).toSet
