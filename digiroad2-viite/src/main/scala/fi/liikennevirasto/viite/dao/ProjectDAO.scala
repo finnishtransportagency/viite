@@ -50,7 +50,7 @@ case class Project(id            : Long,
                    formedParts   : Seq[ProjectReservedPart],
                    statusInfo    : Option[String],
                    coordinates   : Option[ProjectCoordinates] = Some(ProjectCoordinates()),
-                   elys          : Set[Int]
+                   elys          : Set[Int] = Set()
                   ) {
   def isReserved(roadNumber: Long, roadPartNumber: Long): Boolean = {
     reservedParts.exists(p => p.roadNumber == roadNumber && p.roadPartNumber == roadPartNumber)
