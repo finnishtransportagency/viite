@@ -16,6 +16,10 @@ class ChangeApi(roadAddressService: RoadAddressService, nodesAndJunctionsService
   val logger: Logger = LoggerFactory.getLogger(getClass)
   val DateTimePropertyFormat: DateTimeFormatter = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss")
 
+  val XApiKeyDescription =
+    "You need an API key to use Viite APIs. " +
+    "Get your API key from the responsible system owner (järjestelmävastaava)."
+
   protected implicit val jsonFormats: Formats = DefaultFormats
   protected val applicationDescription = "The user interface API "
 
@@ -31,6 +35,7 @@ class ChangeApi(roadAddressService: RoadAddressService, nodesAndJunctionsService
       )
       tags "ChangeAPI (TN-ITS)"
       summary "This will return all the changes found on the road addresses that are between the period defined by the \"since\" and  \"until\" parameters."
+      parameter headerParam[String]("X-API-Key").description(XApiKeyDescription)
   )
 
   get("/road_numbers", operation(roadNumberToGeoJson)) {

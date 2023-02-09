@@ -19,6 +19,9 @@ class SearchApi(roadAddressService: RoadAddressService,
     with JacksonJsonSupport
     with SwaggerSupport {
   protected val applicationDescription = "The Search API "
+  protected val XApiKeyDescription =
+    "You need an API key to use Viite APIs. " +
+    "Get your API key from the responsible system owner (järjestelmävastaava)."
 
   val logger: Logger = LoggerFactory.getLogger(getClass)
   protected implicit val jsonFormats: Formats = DigiroadSerializers.jsonFormats
@@ -32,6 +35,7 @@ class SearchApi(roadAddressService: RoadAddressService,
   private val getRoadAddress: SwaggerSupportSyntax.OperationBuilder =
     (apiOperation[List[Map[String, Any]]]("getRoadAddress")
       .parameters(
+        headerParam[String]("X-API-Key").description(XApiKeyDescription),
         queryParam[String]("linkId").description("LinkId of a road address"),
         queryParam[Double]("startMeasure").description("startMeasure of a road address").optional,
         queryParam[Double]("endMeasure").description("endMeasure of a road address").optional
@@ -54,6 +58,7 @@ class SearchApi(roadAddressService: RoadAddressService,
     (apiOperation[Seq[Long]]("getRoadNumbers")
       tags "SearchAPI (oth)"
       summary "Gets all the existing road numbers at the current road network."
+      parameter headerParam[String]("X-API-Key").description(XApiKeyDescription)
       )
 
   get("/road_numbers?", operation(getRoadNumbers)) {
@@ -65,6 +70,7 @@ class SearchApi(roadAddressService: RoadAddressService,
   private val getRoadAddressWithRoadNumber: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[List[Map[String, Any]]]("getRoadAddressWithRoadNumber")
       .parameters(
+        headerParam[String]("X-API-Key").description(XApiKeyDescription),
         pathParam[Long]("road").description("Road Number of a road address"),
         queryParam[Long]("tracks").description("Track Number (0,1,2) tracks=1&tracks=2 returns both left and right track").optional
       )
@@ -83,6 +89,7 @@ class SearchApi(roadAddressService: RoadAddressService,
   private val getRoadAddressesFiltered: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[List[Map[String, Any]]]("getRoadAddressesFiltered")
       .parameters(
+        headerParam[String]("X-API-Key").description(XApiKeyDescription),
         pathParam[Long]("road").description("Road Number of a road address"),
         pathParam[Long]("roadPart").description("Road Part Number of a road address")
       )
@@ -101,6 +108,7 @@ class SearchApi(roadAddressService: RoadAddressService,
   private val getRoadAddressesFiltered2: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[List[Map[String, Any]]]("getRoadAddressesFiltered2")
       .parameters(
+        headerParam[String]("X-API-Key").description(XApiKeyDescription),
         pathParam[Long]("road").description("Road Number of a road address"),
         pathParam[Long]("roadPart").description("Road Part Number of a road address"),
         pathParam[Long]("address").description("Road Measure of a road address"),
@@ -124,6 +132,7 @@ class SearchApi(roadAddressService: RoadAddressService,
   private val getRoadAddressesFiltered3: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[List[Map[String, Any]]]("getRoadAddressesFiltered3")
       .parameters(
+        headerParam[String]("X-API-Key").description(XApiKeyDescription),
         pathParam[Long]("road").description("Road Number of a road address"),
         pathParam[Long]("roadPart").description("Road Part Number of a road address"),
         pathParam[Long]("startAddress").description("Road start measure of a road address"),
@@ -147,6 +156,7 @@ class SearchApi(roadAddressService: RoadAddressService,
   private val getRoadAddressByLinkIds: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[List[Map[String, Any]]]("getRoadAddressByLinkIds")
       .parameters(
+        headerParam[String]("X-API-Key").description(XApiKeyDescription),
         bodyParam[Set[String]]("linkIds").description("List of LinkIds\r\n")
       )
       tags "SearchAPI (oth)"
@@ -163,6 +173,7 @@ class SearchApi(roadAddressService: RoadAddressService,
   private val getRoadAddressWithRoadNumberParts: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[List[Map[String, Any]]]("getRoadAddressWithRoadNumberParts")
       .parameters(
+        headerParam[String]("X-API-Key").description(XApiKeyDescription),
         pathParam[Long]("road").description("Road Number of a road address"),
         bodyParam[Any]("getLists").description("List of roadParts and List of tracks\r\n")
       )

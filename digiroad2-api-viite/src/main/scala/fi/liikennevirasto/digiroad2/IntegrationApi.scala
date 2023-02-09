@@ -28,6 +28,9 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
 
   val apiId = "integration-api"
 
+  val XApiKeyDescription =
+    "You need an API key to use Viite APIs. " +
+    "Get your API key from the responsible system owner (järjestelmävastaava)."
   protected val applicationDescription = "The integration API "
 
   protected implicit val jsonFormats: Formats = DefaultFormats
@@ -41,6 +44,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
       parameter queryParam[Int]("municipality").description("The municipality identifier")
       parameter queryParam[String]("situationDate").description("Date in format ISO8601. For example 2020-04-29T13:59:59").optional)
 
+      parameter headerParam[String]("X-API-Key").description(XApiKeyDescription)
   get("/road_address", operation(getRoadAddressesByMunicipality)) {
     contentType = formats("json")
     ApiUtils.avoidRestrictions(apiId, request, params) { params =>
@@ -86,6 +90,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
       "to every part of any road found in Viite. Offered JSON contains data about: road number, road name, " +
       "road part number, ely code, administrative class, track, start address, end address, and discontinuity."
       parameter queryParam[String]("date").description("Date in format ISO8601. For example 2020-04-29T13:59:59").optional
+      parameter headerParam[String]("X-API-Key").description(XApiKeyDescription)
   )
   /** @return The JSON formatted whole road network address space of the latest versions of the network. */
   get("/summary", operation(getRoadNetworkSummary)) {
@@ -205,6 +210,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
       summary "Returns all the changes to road names between given dates."
       parameter queryParam[String]("since").description(" Date in format ISO8601. For example 2020-04-29T13:59:59")
       parameter queryParam[String]("until").description("Date in format ISO8601").optional)
+      parameter headerParam[String]("X-API-Key").description(XApiKeyDescription)
 
   get("/roadnames/changes", operation(getRoadNameChanges)) {
     contentType = formats("json")
@@ -237,6 +243,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
       tags "Integration (kalpa, Digiroad, Viitekehysmuunnin, ...)"
       summary "Returns all the changes to roadways after the given date (including the given date)."
       parameter queryParam[String]("since").description("Date in format ISO8601. For example 2020-04-29T13:59:59"))
+      parameter headerParam[String]("X-API-Key").description(XApiKeyDescription)
 
   get("/roadway/changes", operation(getRoadwayChanges)) {
     contentType = formats("json")
@@ -298,6 +305,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
       tags "Integration (kalpa, Digiroad, Velho, Viitekehysmuunnin, ...)"
       summary "Returns the Roadway_change changes after the <i>since</> timestamp.\n" +
       "2021-10: Change within the return value: 'muutospaiva' -> 'voimaantulopaiva'."
+      parameter headerParam[String]("X-API-Key").description(XApiKeyDescription)
       )
 
   get("/roadway_changes/changes", operation(getRoadwayChangesChanges)) {
@@ -362,6 +370,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
       tags "Integration (kalpa, Digiroad, Viitekehysmuunnin, ...)"
       summary "Returns all the changes to roadways after the given date (including the given date)."
       parameter queryParam[String]("since").description("Date in format ISO8601. For example 2020-04-29T13:59:59"))
+      parameter headerParam[String]("X-API-Key").description(XApiKeyDescription)
 
   get("/linear_location/changes", operation(getLinearLocationChanges)) {
     contentType = formats("json")
@@ -422,6 +431,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
       )
       tags "Integration (kalpa, Digiroad, Viitekehysmuunnin, ...)"
       summary "This will return all the changes found on the nodes that are published between the period defined by the \"since\" and  \"until\" parameters."
+      parameter headerParam[String]("X-API-Key").description(XApiKeyDescription)
     )
 
   get(transformers = "/nodes_junctions/changes", operation(nodesToGeoJson)) {
