@@ -1,6 +1,5 @@
 (function (root) {
   root.ProjectListModel = function (projectCollection) {
-    let projectListingSplitIndex =  10; // Split for full project listing (Visible height).
     var projectStatus = ViiteEnumerations.ProjectStatus;
     var projectArray = [];
     var headers = {
@@ -13,7 +12,7 @@
       "sortELY": {
         toStr: "ELY", width: "50",
         sortFunc: function (a, b) {
-          return a.elys[0] - ((b.elys.length > 0) ? b.elys[0] : -1);
+          return a.ely - b.ely;
         }
       },
       "sortUser": {
@@ -87,11 +86,20 @@
       '<i id="sync" class="btn-icon btn-refresh fa fa-sync-alt" title="Päivitä lista"></i>' +
       '</div>');
 
-      var staticFieldProjectListElement = function (projectName) {
-          const label = document.createElement("label");
-          label.classList.add("control-label-projects-list");
-          label.appendChild(document.createTextNode(projectName));
-          return label;
+    var staticFieldProjectName = function (dataField) {
+      var field;
+      field = '<div>' +
+        '<label class="control-label-projects-list" style="width: 300px">' + dataField + '</label>' +
+        '</div>';
+      return field;
+    };
+
+    var staticFieldProjectList = function (dataField) {
+      var field;
+      field = '<div>' +
+        '<label class="control-label-projects-list">' + dataField + '</label>' +
+        '</div>';
+      return field;
       };
 
     var pollProjects = null;
@@ -102,8 +110,8 @@
       eventbus.trigger("roadAddressProject:deactivateAllSelections");
       bindEvents();
       fetchProjects();
-      // start polling projects evey 10 seconds
-      pollProjects = setInterval(fetchProjectStates, 10 * 1000);
+      // start polling projects evey 60 seconds
+      pollProjects = setInterval(fetchProjectStates, 60 * 1000);
     }
 
     function hide() {
@@ -159,24 +167,33 @@
     function bindEvents() {
 
       eventbus.on('roadAddressProjects:fetched', function (projects) {
-        projectArray = projects;
+        projectArray = _.filter(projects, function (proj) {
+          return proj.statusCode !== projectStatus.Deleted.value; //filter deleted projects out
+        });
         createProjectList(projectArray);
         userFilterVisibility();
         $('#sync').removeClass("btn-spin"); // stop the sync button from spinning
       });
 
-        eventbus.on('roadAddressProjectStates:fetched', function (idsAndStates) {
-            projectArray = _.map(projectArray, (project) => {
-                const statusCode = idsAndStates.find(idState => idState._1 === project.id)._2;
-                project.statusCode = statusCode;
-                project.statusDescription = Object.values(ViiteEnumerations.ProjectStatus).find(enumState => enumState.value === statusCode).description;
-                return project;
-            })
-            createProjectList(projectArray);
-            userFilterVisibility();
-            $('#sync').removeClass("btn-spin"); // stop the sync button from spinning
-        });
+      eventbus.on('roadAddressProjectStates:fetched', function (idsAndStates) {
+        projectArray = _.map(projectArray, (project) => {
+          const statusCode = idsAndStates.find(idState => idState._1 === project.id)._2;
+          project.statusCode = statusCode;
+          project.statusDescription = Object.values(ViiteEnumerations.ProjectStatus).find(enumState => enumState.value === statusCode).description;
+          return project;
+        })
+        createProjectList(projectArray);
+        userFilterVisibility();
+        $('#sync').removeClass("btn-spin"); // stop the sync button from spinning
+      });
 
+      var createProjectList = function (projects) {
+        var sortedProjects = projects.sort(function (a, b) {
+          var cmp = headers[orderBy.id].sortFunc(a, b);
+          return (cmp === 0) ? a.name.localeCompare(b.name, 'fi') : cmp;
+        });
+        if (orderBy.reversed)
+          sortedProjects.reverse();
 
         var triggerOpening = function (event, button) {
             $('#OldAcceptedProjectsVisibleCheckbox').prop('checked', false);
@@ -190,102 +207,33 @@
             }
         };
 
-      var createProjectList = function (projects) {
-          const sortedProjects = projects.sort(function (a, b) {
-              const cmp = (orderBy.reversed) ? headers[orderBy.id].sortFunc(b, a) : headers[orderBy.id].sortFunc(a, b);
-              return (cmp === 0) ? a.name.localeCompare(b.name, 'fi') : cmp;
-          });
-
-          const tableElement = document.createElement("table");
-          tableElement.style.tableLayout = "fixed";
-          tableElement.style.width = "100%";
-
-          function createTableRows(prjs, disp) {
-              for (let uniqueId = 0; uniqueId < prjs.length; uniqueId++) {
-                  const proj = prjs[uniqueId];
-                  const info = (proj.statusInfo) ? proj.statusInfo : 'Ei lisätietoja';
-
-                  const trElement = document.createElement("tr");
-                  trElement.classList.add("project-item");
-                  if (disp)
-                    trElement.style.display = "None";
-                  trElement.id = uniqueId.toString();
-
-                  const tdElement1 = document.createElement("td");
-                  tdElement1.classList.add("innerName");
-                  tdElement1.style.width = "270px";
-                  tdElement1.appendChild(staticFieldProjectListElement(proj.name));
-
-                  const tdElement2 = document.createElement("td");
-                  tdElement2.style.width = "60px";
-                  tdElement2.style.wordBreak = "break-word";
-                  tdElement2.setAttribute("title", info);
-                  tdElement2.appendChild(staticFieldProjectListElement(proj.elys));
-
-                  const tdElement3 = document.createElement("td");
-                  tdElement3.classList.add("innerCreatedBy");
-                  tdElement3.style.width = "120";
-                  tdElement3.setAttribute("title", info);
-                  tdElement3.appendChild(staticFieldProjectListElement(proj.createdBy));
-
-                  const tdElement4 = document.createElement("td");
-                  tdElement4.style.width = "120";
-                  tdElement4.setAttribute("title", info);
-                  tdElement4.appendChild(staticFieldProjectListElement(proj.createdDate));
-
-
-                  const tdElement5 = document.createElement("td");
-                  tdElement5.style.width = "120";
-                  tdElement5.setAttribute("title", info);
-                  tdElement5.appendChild(staticFieldProjectListElement(proj.statusDescription));
-
-                  const tdElement6 = document.createElement("td");
-                  tdElement6.id = "innerOpenProjectButton";
-
-                  const element6Button = document.createElement("button");
-                  element6Button.value = proj.id
-                  element6Button.classList.add("project-open");
-                  element6Button.classList.add("btn");
-                  element6Button.style.alignment = "right";
-                  element6Button.style.marginBottom = "6px";
-                  element6Button.setAttribute("data-projectStatus", proj.statusCode);
+        var html = '<table style="table-layout: fixed; width: 100%;">';
+        // eslint-disable-next-line no-negated-condition
+        if (!_.isEmpty(sortedProjects)) {
+          var uniqueId = 0;
+          _.each(sortedProjects, function (proj) {
+            var info = (proj.statusInfo) ? proj.statusInfo : 'Ei lisätietoja';
+            html += '<tr id="' + uniqueId + '" class="project-item">' +
+              '<td class="innerName" style="width: 270px;">' + staticFieldProjectName(proj.name) + '</td>' +
+              '<td style="width: 60px; word-break: break-word" title="' + info + '">' + staticFieldProjectList(proj.elys) + '</td>' +
+              '<td class="innerCreatedBy" style="width: 120px;" title="' + info + '">' + staticFieldProjectList(proj.createdBy) + '</td>' +
+              '<td style="width: 120px;" title="' + info + '">' + staticFieldProjectList(proj.createdDate) + '</td>' +
+              '<td style="width: 100px;" title="' + info + '">' + staticFieldProjectList(proj.statusDescription) + '</td>';
                   switch (proj.statusCode) {
                       case projectStatus.ErrorInViite.value:
-                          element6Button.innerText = "Avaa uudelleen";
-                          element6Button.classList.add("btn-new-error");
-                          element6Button.style.marginLeft = "25px";
-                          element6Button.id = "reopen-project" + proj.id;
+                html += '<td id="innerOpenProjectButton"><button class="project-open btn btn-new-error" style="alignment: right; margin-bottom: 6px; margin-left: 25px" id="reopen-project-' + proj.id + '" value="' + proj.id + '" data-projectStatus="'+ proj.statusCode + '">Avaa uudelleen</button></td>' +
+                  '</tr>';
                           break;
                       default:
-                          element6Button.innerText = "Avaa";
-                          element6Button.classList.add("btn-new");
-                          element6Button.style.marginLeft = "50px";
-                          element6Button.id = "open-project" + proj.id;
+                html += '<td id="innerOpenProjectButton"><button class="project-open btn btn-new" style="alignment: right; margin-bottom: 6px; margin-left: 50px" id="open-project-' + proj.id + '" value="' + proj.id + '" data-projectStatus="' + proj.statusCode + '">Avaa</button></td>' +
+                  '</tr>';
                   }
-                  tdElement6.appendChild(element6Button)
-                  trElement.append(tdElement1, tdElement2, tdElement3, tdElement4, tdElement5, tdElement6);
-                  tableElement.appendChild(trElement)
-
-              };
-
-              const el = $('#project-list > table');
-              if (el.length === 1)
-                  el.replaceWith(tableElement);
-              else
-                  $('#project-list').append(tableElement);
-
-              return Promise.resolve();
-          }
-
-          createTableRows(_.take(sortedProjects, projectListingSplitIndex), false).then(
-              () => {
-                  createTableRows(_.drop(sortedProjects, projectListingSplitIndex), true);
+            uniqueId += 1;
               });
-
-          $(document).ready(function() {
-              $(".project-item").show();
+          html += '</table>';
+          $('#project-list').html(html);
               $('[id*="open-project"]').click(function (event) {
-                const button = $(this);
+            var button = $(this);
                 if (parseInt(button.attr("data-projectStatus")) === projectStatus.InUpdateQueue.value ||
                     parseInt(button.attr("data-projectStatus")) === projectStatus.UpdatingToRoadNetwork.value) {
                   new GenericConfirmPopup("Projektin muokkaaminen ei ole mahdollista, koska sitä päivitetään tieverkolle. Haluatko avata sen?", {
@@ -301,7 +249,10 @@
                   triggerOpening(event, button);
                 }
               });
-          });
+        } else {
+          html += '</table>';
+          $('#project-list').html(html);
+        }
       };
 
       $('#filterUser').click(function () {
