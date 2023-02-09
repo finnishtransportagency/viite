@@ -1,5 +1,6 @@
 (function (root) {
   root.ProjectListModel = function (projectCollection) {
+    let projectListingSplitIndex =  10; // Split for full project listing (Visible height).
     var projectStatus = ViiteEnumerations.ProjectStatus;
     var projectArray = [];
     var headers = {
@@ -190,8 +191,8 @@
         };
 
       var createProjectList = function (projects) {
-          var sortedProjects = projects.sort(function (a, b) {
-              var cmp = (orderBy.reversed) ? headers[orderBy.id].sortFunc(b, a) : headers[orderBy.id].sortFunc(a, b);
+          const sortedProjects = projects.sort(function (a, b) {
+              const cmp = (orderBy.reversed) ? headers[orderBy.id].sortFunc(b, a) : headers[orderBy.id].sortFunc(a, b);
               return (cmp === 0) ? a.name.localeCompare(b.name, 'fi') : cmp;
           });
 
@@ -276,17 +277,15 @@
               return Promise.resolve();
           }
 
-          // Split for long lists.
-          let firstN =  10;
-          createTableRows(_.take(sortedProjects, firstN), false).then(
+          createTableRows(_.take(sortedProjects, projectListingSplitIndex), false).then(
               () => {
-                  createTableRows(_.drop(sortedProjects, firstN), true);
+                  createTableRows(_.drop(sortedProjects, projectListingSplitIndex), true);
               });
 
           $(document).ready(function() {
               $(".project-item").show();
               $('[id*="open-project"]').click(function (event) {
-                var button = $(this);
+                const button = $(this);
                 if (parseInt(button.attr("data-projectStatus")) === projectStatus.InUpdateQueue.value ||
                     parseInt(button.attr("data-projectStatus")) === projectStatus.UpdatingToRoadNetwork.value) {
                   new GenericConfirmPopup("Projektin muokkaaminen ei ole mahdollista, koska sitä päivitetään tieverkolle. Haluatko avata sen?", {
