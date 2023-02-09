@@ -240,28 +240,26 @@ class ProjectService(
         Left(s"Link could not be found from project: $projectId")
       }
       else {
-        preFillRoadName(projectLinks.head.roadNumber, projectLinks.head.roadPartNumber, projectLinks.head.ely, projectId)
+        preFillRoadName(Some(projectLinks.head.roadNumber), Some(projectLinks.head.roadPartNumber), projectLinks.head.ely, projectId)
       }
   }
 
-  def parsePreFillData(linkId   : String,
-                       projectId: Long
-                      ): Either[String, PreFillInfo] = {
+  def parsePreFillData(linkId: String, projectId: Long): Either[String, PreFillInfo] = {
     roadLinkService.getUnderConstructionLinksById(Set(linkId)) match {
       case List((roadNumber, roadPartNumber, municipalityCode)) => preFillRoadName(roadNumber, roadPartNumber, Try(municipalityRoadMaintainerMapping(municipalityCode)).getOrElse(-1), projectId)
       case _ => Left(s"Link could not be found from project: $projectId")
     }
   }
 
-  private def preFillRoadName(roadNumber    : Long,
-                              roadPartNumber: Long,
+  private def preFillRoadName(roadNumber    : Option[Long],
+                              roadPartNumber: Option[Long],
                               ely           : Long,
                               projectId     : Long
                              ): Either[String, PreFillInfo] = {
     (roadNumber, roadPartNumber) match {
-      case (roadNumber: Long, roadPartNumber: Long) => val preFilledRoadName = RoadNameDAO.getLatestRoadName(roadNumber.toLong) match {
+      case (Some(roadNumber: Long), Some(roadPartNumber: Long)) => val preFilledRoadName = RoadNameDAO.getLatestRoadName(roadNumber) match {
         case Some(roadName) => PreFillInfo(roadNumber, roadPartNumber, roadName.roadName, RoadNameSource.RoadAddressSource, ely)
-        case _ => ProjectLinkNameDAO.get(roadNumber.toLong, projectId) match {
+        case _ => ProjectLinkNameDAO.get(roadNumber, projectId) match {
           case Some(projectLinkName) => PreFillInfo(roadNumber, roadPartNumber, projectLinkName.roadName, RoadNameSource.ProjectLinkSource, ely)
           case _ => PreFillInfo(roadNumber, roadPartNumber, "", RoadNameSource.UnknownSource, ely)
         }

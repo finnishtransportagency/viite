@@ -265,7 +265,7 @@ trait KgvOperation extends LinkOperationsAbstract{
     queryByFilter(Some(combineFiltersWithAnd(withLinkIdFilter(linkIds), filter)))
   }
 
-  protected def queryRoadAndPartWithFilter(linkIds: Set[String], filter: String): List[(Long, Long, Int)] = {
+  protected def queryRoadAndPartWithFilter(linkIds: Set[String], filter: String): List[(Option[Long], Option[Long], Int)] = {
     val filterString = s"&filter=${encode(combineFiltersWithAnd(withLinkIdFilter(linkIds), filter))}"
     val url          = s"${restApiEndPoint}/${serviceName}/items?filter-lang=${cqlLang}&crs=${crs}${filterString}"
     fetchFeatures(url) match {
