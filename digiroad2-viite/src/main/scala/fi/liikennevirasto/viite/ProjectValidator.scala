@@ -599,8 +599,8 @@ class ProjectValidator {
     val notHandled = projectLinks.filter(_.status == LinkStatus.NotHandled)
     notHandled.groupBy(link => (link.roadNumber, link.roadPartNumber)).foldLeft(Seq.empty[ValidationErrorDetails])((errorDetails, road) =>
       errorDetails :+ ValidationErrorDetails(project.id, ValidationErrorList.HasNotHandledLinks,
-        Seq(road._2.size), road._2.map { l =>
-          val point = GeometryUtils.midPointGeometry(l.geometry)
+        road._2.map(pl => pl.id), road._2.map { pl =>
+          val point = GeometryUtils.midPointGeometry(pl.geometry)
           ProjectCoordinates(point.x, point.y, 12)
         },
         Some(HasNotHandledLinksMessage.format(road._2.size, road._1._1, road._1._2)))
