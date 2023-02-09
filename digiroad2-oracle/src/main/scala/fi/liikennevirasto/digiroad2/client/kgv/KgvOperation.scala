@@ -97,7 +97,7 @@ trait KgvOperation extends LinkOperationsAbstract{
       trycounter += 1
       success = true
 
-      result = time(logger, s"Fetch roadLink features, (try $trycounter)", url = Some(url)) {
+      result = time(logger, s"Fetch roadLink features, (try $trycounter)", url = None) {
 
           val request = new HttpGet(url)
           addHeaders(request)
