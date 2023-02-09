@@ -1317,9 +1317,12 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
         roadAddressService.getRoadAddressLinks(boundingRectangle, roadNumberLimits = Seq((1, 19999)))
       }
     }
+
     time(logger, operationName = "Partition road links") {
-      val partitionedRoadLinks = RoadAddressLinkPartitioner.groupByHomogeneousSection(viiteRoadLinks)
-      (partitionedRoadLinks.map{_.map(roadAddressLinkToApi)}, viiteRoadLinks)
+      (viiteRoadLinks.groupBy {link =>
+        (link.lifecycleStatus.equals(LifecycleStatus.UnderConstruction), link.roadNumber, link.roadPartNumber, link
+          .roadLinkSource.equals(LinkGeomSource.ComplementaryLinkInterface))
+      }.values.par.map(_.map(roadAddressLinkToApi)).toList.toSeq, viiteRoadLinks)
     }
   }
 
@@ -1350,20 +1353,21 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
 
   private def getProjectLinks(projectId: Long, zoomLevel: Int)(bbox: String): Seq[Seq[Map[String, Any]]] = {
     val boundingRectangle = constructBoundingRectangle(bbox)
-    val startTime = System.currentTimeMillis()
-    val viiteRoadLinks = zoomLevel match {
-      case DrawMainRoadPartsOnly =>
-        Seq()
-      case DrawRoadPartsOnly =>
-        Seq()
-      case DrawLinearPublicRoads => projectService.getProjectLinksLinear(roadAddressService, projectId, boundingRectangle, Seq((1, 19999), (40000, 49999)), Set())
-      case DrawPublicRoads => projectService.getProjectLinksWithoutSuravage(roadAddressService, projectId, boundingRectangle, Seq((1, 19999), (40000, 49999)), Set())
-      case DrawAllRoads => projectService.getProjectLinksWithoutSuravage(roadAddressService, projectId, boundingRectangle, Seq(), Set(), everything = true)
-      case _ => projectService.getProjectLinksWithoutSuravage(roadAddressService, projectId, boundingRectangle, Seq((1, 19999)), Set())
+    val viiteRoadLinks =
+      time(logger, s"Fetching data for id=$projectId project service (zoom level $zoomLevel)") {
+        zoomLevel match {
+          case DrawMainRoadPartsOnly =>
+            Seq()
+          case DrawRoadPartsOnly =>
+            Seq()
+          case DrawLinearPublicRoads => projectService.getProjectLinksLinear(roadAddressService, projectId, boundingRectangle, Seq((1, 19999), (40000, 49999)), Set())
+          case DrawPublicRoads => projectService.getProjectLinksWithoutSuravage(roadAddressService, projectId, boundingRectangle, Seq((1, 19999), (40000, 49999)), Set())
+          case DrawAllRoads => projectService.getProjectLinksWithoutSuravage(roadAddressService, projectId, boundingRectangle, Seq(), Set(), everything = true)
+          case _ => projectService.getProjectLinksWithoutSuravage(roadAddressService, projectId, boundingRectangle, Seq((1, 19999)), Set())
+        }
     }
-    logger.info(s"End fetching data for id=$projectId project service (zoom level $zoomLevel) in ${(System.currentTimeMillis() - startTime) * 0.001}s")
 
-    val partitionedRoadLinks = ProjectLinkPartitioner.partition(viiteRoadLinks.filter(_.length >= MinAllowedRoadAddressLength))
+    val partitionedRoadLinks = viiteRoadLinks.groupBy(l => (l.status, l.roadNumber, l.roadPartNumber, l.trackCode, l.administrativeClass, l.elyCode)).values.toSeq
     val validRoadNumbers = partitionedRoadLinks.flatten.map(_.roadNumber).filter(value => value > 0).distinct
     if (validRoadNumbers.nonEmpty) {
       val roadNames = roadNameService.getCurrentRoadNames(validRoadNumbers)
