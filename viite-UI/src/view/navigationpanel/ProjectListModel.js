@@ -196,15 +196,15 @@
           sortedProjects.reverse();
 
         var triggerOpening = function (event, button) {
-            $('#OldAcceptedProjectsVisibleCheckbox').prop('checked', false);
-            if (button.length > 0 && button[0].className === "project-open btn btn-new-error") {
-                projectCollection.reOpenProjectById(parseInt(event.currentTarget.value));
-                eventbus.once("roadAddressProject:reOpenedProject", function (_successData) {
-                    openProjectSteps(event);
-                });
-            } else {
-                openProjectSteps(event);
-            }
+          $('#OldAcceptedProjectsVisibleCheckbox').prop('checked', false);
+          if (button.length > 0 && button[0].className === "project-open btn btn-new-error") {
+            projectCollection.reOpenProjectById(parseInt(event.currentTarget.value));
+            eventbus.once("roadAddressProject:reOpenedProject", function (_successData) {
+              openProjectSteps(event);
+            });
+          } else {
+            openProjectSteps(event);
+          }
         };
 
         var html = '<table style="table-layout: fixed; width: 100%;">';
@@ -232,7 +232,7 @@
           });
           html += '</table>';
           $('#project-list').html(html);
-              $('[id*="open-project"]').click(function (event) {
+          $('[id*="open-project"]').click(function (event) {
             var button = $(this);
             if (parseInt(button.attr("data-projectStatus")) === projectStatus.InUpdateQueue.value ||
                 parseInt(button.attr("data-projectStatus")) === projectStatus.UpdatingToRoadNetwork.value) {
@@ -246,9 +246,9 @@
               });
             } else {
               clearInterval(pollProjects);
-                  triggerOpening(event, button);
-                }
-              });
+              triggerOpening(event, button);
+            }
+          });
         } else {
           html += '</table>';
           $('#project-list').html(html);
