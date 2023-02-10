@@ -40,8 +40,7 @@ class SearchApi(roadAddressService: RoadAddressService,
         queryParam[Double]("startMeasure").description("startMeasure of a road address").optional,
         queryParam[Double]("endMeasure").description("endMeasure of a road address").optional
       )
-      tags "SearchAPI (oth)"
-      )
+      tags "SearchAPI (Digiroad)"
       summary "Returns all the road addresses for the given single link. Return values are listed as linear locations. Linear locations can optionally be restricted by the link's measure values."
       description "Returns the road addresses of the given link, listed as linear locations." +
                   "Linear locations may be restricted by giving <i>startMeasure</i>, and/or <i>endMeasure</i>. " +
@@ -60,7 +59,7 @@ class SearchApi(roadAddressService: RoadAddressService,
 
   private val getRoadNumbers: SwaggerSupportSyntax.OperationBuilder =
     (apiOperation[Seq[Long]]("getRoadNumbers")
-      tags "SearchAPI (oth)"
+      tags "SearchAPI (Digiroad)"
       summary "Returns all the existing road numbers at the current Viite road network."
       description "Returns List of all the existing road numbers at the current Viite road network." +
               "The Viite current network may contain roadway number changes that will be in effect only in the future."
@@ -80,7 +79,7 @@ class SearchApi(roadAddressService: RoadAddressService,
         pathParam[Long]("road").description("Road Number of a road address"),
         queryParam[Long]("tracks").description("Track Number (0,1,2) tracks=1&tracks=2 returns both left and right track").optional
       )
-      tags "SearchAPI (oth)"
+      tags "SearchAPI (Digiroad)"
       summary "Returns the road addresses within the given road number, returned as linear location sized parts.\n" +
               "If track parameter given, the results are filtered to those tracks."
     )
@@ -100,7 +99,7 @@ class SearchApi(roadAddressService: RoadAddressService,
         pathParam[Long]("road").description("Road Number of a road address"),
         pathParam[Long]("roadPart").description("Road Part Number of a road address")
       )
-      tags "SearchAPI (oth)"
+      tags "SearchAPI (Digiroad)"
       summary "Returns all the road addresses within the given road part, returned as linear location sized parts."
       description "Returns all the road addresses within the given road part (defined by road and road part numbers), " +
                   "returned as linear location sized parts."
@@ -123,7 +122,7 @@ class SearchApi(roadAddressService: RoadAddressService,
         pathParam[Long]("address").description("Road Measure of a road address"),
         pathParam[Long]("track").description("Road Track of a road address. Optional")
       )
-      tags "SearchAPI (oth)"
+      tags "SearchAPI (Digiroad)"
       summary "Returns the road addresses within the given road part, returned as linear location sized parts.\n" +
               "Minimum address value must be given, and the results are filterable by track."
       description "Returns the road addresses within the given road number, road part number, and bigger than address value, " +
@@ -150,7 +149,7 @@ class SearchApi(roadAddressService: RoadAddressService,
         pathParam[Long]("startAddress").description("Road start measure of a road address"),
         pathParam[Long]("endAddress").description("Road end measure of a road address")
       )
-      tags "SearchAPI (oth)"
+      tags "SearchAPI (Digiroad)"
       summary "Returns the road addresses within the given road number, road part number, and between given address values," +
       "returned as linear location sized parts."
     )
@@ -172,7 +171,7 @@ class SearchApi(roadAddressService: RoadAddressService,
         headerParam[String]("X-API-Key").description(XApiKeyDescription),
         bodyParam[Set[String]]("linkIds").description("List of LinkIds\r\n")
       )
-      tags "SearchAPI (oth)"
+      tags "SearchAPI (Digiroad)"
       summary "Returns all the road addresses for the given links. Return values are listed as linear locations."
     )
 
@@ -190,7 +189,7 @@ class SearchApi(roadAddressService: RoadAddressService,
         pathParam[Long]("road").description("Road Number of a road address"),
         bodyParam[Any]("getLists").description("List of roadParts and List of tracks\r\n")
       )
-      tags "SearchAPI (oth)"
+      tags "SearchAPI (Digiroad)"
       summary "Returns the road addresses within the given road number, returned as linear location sized parts.\n" +
               "If road parts, and/or tracks are given, the results are filtered to those road parts, and/or track numbers."
     )
