@@ -219,17 +219,17 @@
               '<td class="innerCreatedBy" style="width: 120px;" title="' + info + '">' + staticFieldProjectList(proj.createdBy) + '</td>' +
               '<td style="width: 120px;" title="' + info + '">' + staticFieldProjectList(proj.createdDate) + '</td>' +
               '<td style="width: 100px;" title="' + info + '">' + staticFieldProjectList(proj.statusDescription) + '</td>';
-                  switch (proj.statusCode) {
-                      case projectStatus.ErrorInViite.value:
+            switch (proj.statusCode) {
+              case projectStatus.ErrorInViite.value:
                 html += '<td id="innerOpenProjectButton"><button class="project-open btn btn-new-error" style="alignment: right; margin-bottom: 6px; margin-left: 25px" id="reopen-project-' + proj.id + '" value="' + proj.id + '" data-projectStatus="'+ proj.statusCode + '">Avaa uudelleen</button></td>' +
                   '</tr>';
-                          break;
-                      default:
+                break;
+              default:
                 html += '<td id="innerOpenProjectButton"><button class="project-open btn btn-new" style="alignment: right; margin-bottom: 6px; margin-left: 50px" id="open-project-' + proj.id + '" value="' + proj.id + '" data-projectStatus="' + proj.statusCode + '">Avaa</button></td>' +
                   '</tr>';
-                  }
+            }
             uniqueId += 1;
-              });
+          });
           html += '</table>';
           $('#project-list').html(html);
               $('[id*="open-project"]').click(function (event) {
