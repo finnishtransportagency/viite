@@ -18,10 +18,18 @@ class SearchApi(roadAddressService: RoadAddressService,
   extends ScalatraServlet
     with JacksonJsonSupport
     with SwaggerSupport {
+
   protected val applicationDescription = "The Search API "
   protected val XApiKeyDescription =
-    "You need an API key to use Viite APIs. " +
+    "You need an API key to use Viite APIs.\n" +
     "Get your API key from the responsible system owner (järjestelmävastaava)."
+  protected val roadNumberDescription = "Road Number of a road address. 1-99999."
+  protected val roadPartNumberDescription = "Road Part Number of a road address. 1-999."
+  protected val trackNumberFilterDescription =
+    "Track Number (0, 1, or 2).\n" +
+    "0: single track parts returned.\n" +
+    "1: tracks in the direction of the growing address are returned.\n" +
+    "2: tracks in the opposite direction as the road address grows, are returned."
 
   val logger: Logger = LoggerFactory.getLogger(getClass)
   protected implicit val jsonFormats: Formats = DigiroadSerializers.jsonFormats
@@ -36,9 +44,9 @@ class SearchApi(roadAddressService: RoadAddressService,
     (apiOperation[List[Map[String, Any]]]("getRoadAddress")
       .parameters(
         headerParam[String]("X-API-Key").description(XApiKeyDescription),
-        queryParam[String]("linkId").description("LinkId of a road address"),
-        queryParam[Double]("startMeasure").description("startMeasure of a road address").optional,
-        queryParam[Double]("endMeasure").description("endMeasure of a road address").optional
+        queryParam[String]("linkId").required.description("(KGV) LinkId for the link whose addresses are be returned"),
+        queryParam[Double]("startMeasure").optional.description("(Optional) Linear locations, whose endMeasure is before this <i>startMeasure</i>, are not returned."),
+        queryParam[Double]("endMeasure").optional.description("(Optional) Linear locations, whose startMeasure is after this <i>endMeasure</i>, are not returned.")
       )
       tags "SearchAPI (Digiroad)"
       summary "Returns all the road addresses for the given single link. Return values are listed as linear locations. Linear locations can optionally be restricted by the link's measure values."
@@ -63,7 +71,7 @@ class SearchApi(roadAddressService: RoadAddressService,
       summary "Returns all the existing road numbers at the current Viite road network."
       description "Returns List of all the existing road numbers at the current Viite road network." +
               "The Viite current network may contain roadway number changes that will be in effect only in the future."
-      parameter headerParam[String]("X-API-Key").description(XApiKeyDescription)
+      parameter headerParam[String]("X-API-Key").required.description(XApiKeyDescription)
     )
 
   get("/road_numbers?", operation(getRoadNumbers)) {
@@ -75,9 +83,9 @@ class SearchApi(roadAddressService: RoadAddressService,
   private val getRoadAddressWithRoadNumber: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[List[Map[String, Any]]]("getRoadAddressWithRoadNumber")
       .parameters(
-        headerParam[String]("X-API-Key").description(XApiKeyDescription),
-        pathParam[Long]("road").description("Road Number of a road address"),
-        queryParam[Long]("tracks").description("Track Number (0,1,2) tracks=1&tracks=2 returns both left and right track").optional
+        headerParam[String]("X-API-Key").required.description(XApiKeyDescription),
+        pathParam[Long]("road").required.description(roadNumberDescription),
+        queryParam[Long]("tracks").optional.description("(Optional) " + trackNumberFilterDescription + "\nIf omitted, any track is returned.")
       )
       tags "SearchAPI (Digiroad)"
       summary "Returns the road addresses within the given road number, returned as linear location sized parts.\n" +
@@ -96,8 +104,8 @@ class SearchApi(roadAddressService: RoadAddressService,
     apiOperation[List[Map[String, Any]]]("getRoadAddressesFiltered")
       .parameters(
         headerParam[String]("X-API-Key").description(XApiKeyDescription),
-        pathParam[Long]("road").description("Road Number of a road address"),
-        pathParam[Long]("roadPart").description("Road Part Number of a road address")
+        pathParam[Long]("road").required.description(roadNumberDescription),
+        pathParam[Long]("roadPart").required.description(roadPartNumberDescription)
       )
       tags "SearchAPI (Digiroad)"
       summary "Returns all the road addresses within the given road part, returned as linear location sized parts."
@@ -116,11 +124,12 @@ class SearchApi(roadAddressService: RoadAddressService,
   private val getRoadAddressesFiltered2: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[List[Map[String, Any]]]("getRoadAddressesFiltered2")
       .parameters(
-        headerParam[String]("X-API-Key").description(XApiKeyDescription),
-        pathParam[Long]("road").description("Road Number of a road address"),
-        pathParam[Long]("roadPart").description("Road Part Number of a road address"),
-        pathParam[Long]("address").description("Road Measure of a road address"),
-        pathParam[Long]("track").description("Road Track of a road address. Optional")
+        headerParam[String]("X-API-Key").required.description(XApiKeyDescription),
+        pathParam[Long]("road").required.description(roadNumberDescription),
+        pathParam[Long]("roadPart").required.description(roadPartNumberDescription),
+        pathParam[Long]("address").required.description("Road Measure, the metric address value, of a road address"),
+        pathParam[Long]("track").optional.description("(Optional) " + trackNumberFilterDescription +
+                                                    "\nIf omitted, any track is returned.")
       )
       tags "SearchAPI (Digiroad)"
       summary "Returns the road addresses within the given road part, returned as linear location sized parts.\n" +
@@ -143,11 +152,15 @@ class SearchApi(roadAddressService: RoadAddressService,
   private val getRoadAddressesFiltered3: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[List[Map[String, Any]]]("getRoadAddressesFiltered3")
       .parameters(
-        headerParam[String]("X-API-Key").description(XApiKeyDescription),
-        pathParam[Long]("road").description("Road Number of a road address"),
-        pathParam[Long]("roadPart").description("Road Part Number of a road address"),
-        pathParam[Long]("startAddress").description("Road start measure of a road address"),
-        pathParam[Long]("endAddress").description("Road end measure of a road address")
+        headerParam[String]("X-API-Key").required.description(XApiKeyDescription),
+        pathParam[Long]("road").required.description(roadNumberDescription),
+        pathParam[Long]("roadPart").required.description(roadPartNumberDescription),
+        pathParam[Long]("startAddress").required
+          .description("Road start measure of a road address. >=0.\n" +
+                       "Filters away the linear locations not hitting the range."),
+        pathParam[Long]("endAddress").required
+          .description("Road end measure of a road address. Should be given an address from the road part (not outside of it).\n" +
+                       "Filters away the linear locations not hitting the range.")
       )
       tags "SearchAPI (Digiroad)"
       summary "Returns the road addresses within the given road number, road part number, and between given address values," +
@@ -168,8 +181,10 @@ class SearchApi(roadAddressService: RoadAddressService,
   private val getRoadAddressByLinkIds: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[List[Map[String, Any]]]("getRoadAddressByLinkIds")
       .parameters(
-        headerParam[String]("X-API-Key").description(XApiKeyDescription),
-        bodyParam[Set[String]]("linkIds").description("List of LinkIds\r\n")
+        headerParam[String]("X-API-Key").required.description(XApiKeyDescription),
+        bodyParam[Set[String]]("linkIds").required
+          .description("List of LinkIds. Only the list, no name for the parameter, or other decorations.\n" +
+                       "e.g. \"[36be5dec-0496-4292-b260-884664467174:1,6ad00ce3-92ef-4952-91ae-dcb1bf45caf8:1]\"\n")
       )
       tags "SearchAPI (Digiroad)"
       summary "Returns all the road addresses for the given links. Return values are listed as linear locations."
@@ -182,12 +197,19 @@ class SearchApi(roadAddressService: RoadAddressService,
     }
   }
 
+
+
   private val getRoadAddressWithRoadNumberParts: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[List[Map[String, Any]]]("getRoadAddressWithRoadNumberParts")
       .parameters(
         headerParam[String]("X-API-Key").description(XApiKeyDescription),
-        pathParam[Long]("road").description("Road Number of a road address"),
-        bodyParam[Any]("getLists").description("List of roadParts and List of tracks\r\n")
+        pathParam[Long]("road").required.description(roadNumberDescription),
+        bodyParam[Seq[Long]]("roadParts").required
+          .description("List of roadParts for filtering the results. E.g. '\"roadParts\":[113,115]'. " +
+                       "A road part number space is 1-999. If omitted, an empty list is returned. "),
+        bodyParam[Seq[Int]]("tracks").required
+          .description("List of track numbers for filtering the results. E.g. '\"tracks\":[1]'.\n" +
+                       trackNumberFilterDescription + "\nIf omitted, an empty list is returned.")
       )
       tags "SearchAPI (Digiroad)"
       summary "Returns the road addresses within the given road number, returned as linear location sized parts.\n" +
