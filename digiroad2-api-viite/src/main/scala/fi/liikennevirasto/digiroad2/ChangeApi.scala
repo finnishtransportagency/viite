@@ -34,7 +34,7 @@ class ChangeApi(roadAddressService: RoadAddressService, nodesAndJunctionsService
         queryParam[String]("until").description("End date of the road addresses changes. Date in format ISO8601")
       )
       tags "ChangeAPI (TN-ITS)"
-      summary "This will return all the changes found on the road addresses that are between the period defined by the \"since\" and  \"until\" parameters."
+      summary "Returns all the changes made to the road addresses within the given time interval, in the TN-ITS-accepted format."
       parameter headerParam[String]("X-API-Key").description(XApiKeyDescription)
   )
 

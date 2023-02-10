@@ -41,8 +41,12 @@ class SearchApi(roadAddressService: RoadAddressService,
         queryParam[Double]("endMeasure").description("endMeasure of a road address").optional
       )
       tags "SearchAPI (oth)"
-      summary "Gets all the road addresses in between the given linear location."
       )
+      summary "Returns all the road addresses for the given single link. Return values are listed as linear locations. Linear locations can optionally be restricted by the link's measure values."
+      description "Returns the road addresses of the given link, listed as linear locations." +
+                  "Linear locations may be restricted by giving <i>startMeasure</i>, and/or <i>endMeasure</i>. " +
+                  "A linear location must belong to the measure interval at least in one point, to be included in the returned results."
+    )
 
   get("/road_address/?", operation(getRoadAddress)) {
     val linkId = params.getOrElse("linkId", halt(BadRequest("Missing mandatory field linkId"))).toString
@@ -57,9 +61,11 @@ class SearchApi(roadAddressService: RoadAddressService,
   private val getRoadNumbers: SwaggerSupportSyntax.OperationBuilder =
     (apiOperation[Seq[Long]]("getRoadNumbers")
       tags "SearchAPI (oth)"
-      summary "Gets all the existing road numbers at the current road network."
+      summary "Returns all the existing road numbers at the current Viite road network."
+      description "Returns List of all the existing road numbers at the current Viite road network." +
+              "The Viite current network may contain roadway number changes that will be in effect only in the future."
       parameter headerParam[String]("X-API-Key").description(XApiKeyDescription)
-      )
+    )
 
   get("/road_numbers?", operation(getRoadNumbers)) {
     time(logger, "GET request for /road_numbers?") {
@@ -75,7 +81,8 @@ class SearchApi(roadAddressService: RoadAddressService,
         queryParam[Long]("tracks").description("Track Number (0,1,2) tracks=1&tracks=2 returns both left and right track").optional
       )
       tags "SearchAPI (oth)"
-      summary "Gets all the road addresses in the same road number and track codes."
+      summary "Returns the road addresses within the given road number, returned as linear location sized parts.\n" +
+              "If track parameter given, the results are filtered to those tracks."
     )
 
   get("/road_address/:road/?", operation(getRoadAddressWithRoadNumber)) {
@@ -94,7 +101,9 @@ class SearchApi(roadAddressService: RoadAddressService,
         pathParam[Long]("roadPart").description("Road Part Number of a road address")
       )
       tags "SearchAPI (oth)"
-      summary "Gets all the road address in the given road number and road part"
+      summary "Returns all the road addresses within the given road part, returned as linear location sized parts."
+      description "Returns all the road addresses within the given road part (defined by road and road part numbers), " +
+                  "returned as linear location sized parts."
     )
 
   get("/road_address/:road/:roadPart/?", operation(getRoadAddressesFiltered)) {
@@ -115,7 +124,10 @@ class SearchApi(roadAddressService: RoadAddressService,
         pathParam[Long]("track").description("Road Track of a road address. Optional")
       )
       tags "SearchAPI (oth)"
-      summary "Gets all the road addresses in the same road number, road part number with start address less than the given address measure. If trackOption parameter is given it will also filter by track code."
+      summary "Returns the road addresses within the given road part, returned as linear location sized parts.\n" +
+              "Minimum address value must be given, and the results are filterable by track."
+      description "Returns the road addresses within the given road number, road part number, and bigger than address value, " +
+                  "returned as linear location sized parts. Also filterable by track."
     )
 
   get("/road_address/:road/:roadPart/:address/?", operation(getRoadAddressesFiltered2)) {
@@ -139,7 +151,8 @@ class SearchApi(roadAddressService: RoadAddressService,
         pathParam[Long]("endAddress").description("Road end measure of a road address")
       )
       tags "SearchAPI (oth)"
-      summary "Gets all the road addresses in given road number, road part number and between given address measures. The road address measures should be in [startAddrM, endAddrM]"
+      summary "Returns the road addresses within the given road number, road part number, and between given address values," +
+      "returned as linear location sized parts."
     )
 
   get("/road_address/:road/:roadPart/:startAddress/:endAddress/?", operation(getRoadAddressesFiltered3)) {
@@ -160,7 +173,7 @@ class SearchApi(roadAddressService: RoadAddressService,
         bodyParam[Set[String]]("linkIds").description("List of LinkIds\r\n")
       )
       tags "SearchAPI (oth)"
-      summary "Gets all the road addresses on top of given road links."
+      summary "Returns all the road addresses for the given links. Return values are listed as linear locations."
     )
 
   post("/road_address/?", operation(getRoadAddressByLinkIds)) {
@@ -178,7 +191,8 @@ class SearchApi(roadAddressService: RoadAddressService,
         bodyParam[Any]("getLists").description("List of roadParts and List of tracks\r\n")
       )
       tags "SearchAPI (oth)"
-      summary "Gets all the road addresses in the same road number, road parts and track codes. If the road part number sequence or track codes sequence is empty."
+      summary "Returns the road addresses within the given road number, returned as linear location sized parts.\n" +
+              "If road parts, and/or tracks are given, the results are filtered to those road parts, and/or track numbers."
     )
 
   post("/road_address/:road/?", operation(getRoadAddressWithRoadNumberParts)) {
