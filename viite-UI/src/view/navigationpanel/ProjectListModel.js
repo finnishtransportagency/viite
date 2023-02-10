@@ -234,18 +234,18 @@
           $('#project-list').html(html);
               $('[id*="open-project"]').click(function (event) {
             var button = $(this);
-                if (parseInt(button.attr("data-projectStatus")) === projectStatus.InUpdateQueue.value ||
-                    parseInt(button.attr("data-projectStatus")) === projectStatus.UpdatingToRoadNetwork.value) {
-                  new GenericConfirmPopup("Projektin muokkaaminen ei ole mahdollista, koska sitä päivitetään tieverkolle. Haluatko avata sen?", {
-                    successCallback: function () {
-                      clearInterval(pollProjects);
-                      triggerOpening(event, button);
-                    },
-                    closeCallback: function () {
-                    }
-                  });
-                } else {
+            if (parseInt(button.attr("data-projectStatus")) === projectStatus.InUpdateQueue.value ||
+                parseInt(button.attr("data-projectStatus")) === projectStatus.UpdatingToRoadNetwork.value) {
+              new GenericConfirmPopup("Projektin muokkaaminen ei ole mahdollista, koska sitä päivitetään tieverkolle. Haluatko avata sen?", {
+                successCallback: function () {
                   clearInterval(pollProjects);
+                  triggerOpening(event, button);
+                },
+                closeCallback: function () {
+                }
+              });
+            } else {
+              clearInterval(pollProjects);
                   triggerOpening(event, button);
                 }
               });
