@@ -551,7 +551,6 @@ class ProjectValidator {
       checkProjectContinuity,
       checkForInvalidUnchangedLinks,
       checkTrackCodePairing,
-      checkRemovedEndOfRoadParts,
       checkActionsInRoadsNotInProject
     )
 
