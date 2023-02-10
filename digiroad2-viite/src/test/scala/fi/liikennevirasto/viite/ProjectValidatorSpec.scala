@@ -753,9 +753,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test checkRemovedEndOfRoadParts When Checking end of road with first part being continuous and not terminated in project with multiple parts Then should not return any error") {
-    //Now this validation returns 0 errors, because the previous road part is also reserved on the same project, and the error should not be TerminationContinuity, but MissingEndOfRoad
-    //and that is not checked on checkRemovedEndOfRoadParts method
+  test("Test validateProject When Checking end of road with first part being continuous and not terminated in project with multiple parts Then should not return TerminationContinuity error (value 18)") {
+    //Returns 1 error, because the previous road part is also reserved on the same project, and the error should not be TerminationContinuity, but MissingEndOfRoad
     runWithRollback {
       val raId = Sequences.nextRoadwayId
       val startDate = DateTime.now()
@@ -795,8 +794,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       mockEmptyRoadAddressServiceCalls()
 
-      val errors = projectValidator.checkRemovedEndOfRoadParts(updProject, currentProjectLinks).distinct
-      errors should have size 0
+      val errors = projectValidator.validateProject(updProject, currentProjectLinks).distinct
+      errors.filter(_.validationError.value == 18) should have size 0
     }
   }
 
@@ -834,16 +833,18 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       projectLinkDAO.create(Seq(util.projectLink(0L, 10L, Combined, id, LinkStatus.UnChanged, 19999L, 1L, discontinuity = Discontinuity.Continuous, 8, 12345.toString, raId, linearLocationId).copy(geometry = roadAddresses.head.geometry),
         util.projectLink(0L, 10L, Combined, id, LinkStatus.Terminated, 19999L, 2L, discontinuity = Discontinuity.EndOfRoad, 8, 12346.toString, raId + 1, linearLocationId + 1).copy(geometry = roadAddresses.last.geometry)))
 
-      when(mockRoadAddressService.getRoadAddressWithRoadAndPart(19999L, 1L, false, false, false)).thenReturn(Seq.empty[RoadAddress])
-      when(mockRoadAddressService.getRoadAddressWithRoadAndPart(19999L, 2L,false, false, false)).thenReturn(Seq.empty[RoadAddress])
+      when(mockRoadAddressService.getValidRoadAddressParts(19999L, project.startDate)).thenReturn(Seq(1L))
+      when(mockRoadAddressService.getRoadAddressWithRoadAndPart(19999L, 1L, false, false, false)).thenReturn(roadAddresses.init)
+      when(mockRoadAddressService.getRoadAddressWithRoadAndPart(19999L, 1L, false, true, false)).thenReturn(roadAddresses.init)
+      when(mockRoadAddressService.getRoadAddressWithRoadAndPart(19999L, 2L,false, false, false)).thenReturn(roadAddresses.tail)
 
       val updProject = projectService.fetchProjectById(project.id).get
       val currentProjectLinks = projectLinkDAO.fetchProjectLinks(updProject.id)
 
       mockEmptyRoadAddressServiceCalls()
 
-      val errors = projectValidator.checkRemovedEndOfRoadParts(updProject, currentProjectLinks).distinct
-      errors should have size 0
+      val errors = projectValidator.validateProject(updProject, currentProjectLinks).distinct
+      errors.filter(_.validationError.value == 18) should have size 0
     }
   }
 
@@ -926,6 +927,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       projectReservedPartDAO.reserveRoadPart(id, 19999L, 2L, "u")
       projectLinkDAO.create(Seq(util.projectLink(0L, 10L, Combined, id, LinkStatus.Terminated, 19999L, 2L, discontinuity = Discontinuity.EndOfRoad, 8, 12346.toString, raId + 1, linearLocationId + 1).copy(geometry = roadAddresses.last.geometry)))
       when(mockRoadAddressService.getRoadAddressWithRoadAndPart(19999L, 1L, false, false, false)).thenReturn(Seq(roadAddresses.head))
+      when(mockRoadAddressService.getRoadAddressWithRoadAndPart(19999L, 1L, false, true, false)).thenReturn(Seq(roadAddresses.head))
       when(mockRoadAddressService.getRoadAddressWithRoadAndPart(19999L, 2L,false, false, false)).thenReturn(Seq(roadAddresses.last))
 
       val updProject = projectService.fetchProjectById(project.id).get
@@ -977,6 +979,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       projectLinkDAO.create(Seq(util.projectLink(0L, 10L, Combined, project.id, LinkStatus.Terminated, roadAddresses.last.roadNumber, roadAddresses.last.roadPartNumber, discontinuity = Discontinuity.EndOfRoad).copy(roadwayId = ra.last.id)))
       val currentProjectLinks = projectLinkDAO.fetchProjectLinks(project.id)
       when(mockRoadAddressService.getRoadAddressWithRoadAndPart(19999L, 1L, false, false, false)).thenReturn(Seq(roadAddresses.head))
+      when(mockRoadAddressService.getRoadAddressWithRoadAndPart(19999L, 1L, false, true, false)).thenReturn(Seq(roadAddresses.head))
       when(mockRoadAddressService.getRoadAddressWithRoadAndPart(19999L, 2L,false, false, false)).thenReturn(Seq(roadAddresses.last))
 
       val updProject = projectService.fetchProjectById(project.id).get
@@ -3255,7 +3258,7 @@ Left|      |Right
 
       val errors = projectValidator.validateProject(project, addedEndOfRoad)
       errors should have size 1
-      errors.head.validationError.value should equal (37)
+      errors.head.validationError.value should equal (18)
     }
   }
 
