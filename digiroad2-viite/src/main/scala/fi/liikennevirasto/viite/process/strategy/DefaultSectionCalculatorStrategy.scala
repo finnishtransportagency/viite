@@ -5,8 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.util.{MissingRoadwayNumberException, MissingTrackException, RoadAddressException, Track}
 import fi.liikennevirasto.digiroad2.util.Track.LeftSide
-import fi.liikennevirasto.viite.{ContinuousAddressCapErrorMessage, LengthMismatchErrorMessage, NegativeLengthErrorMessage, NewIdValue, ProjectValidationException, ProjectValidator, UnsuccessfulRecalculationMessage}
-
+import fi.liikennevirasto.viite.{AddressGeometryContinuityErrorMessage, ContinuousAddressCapErrorMessage, LengthMismatchErrorMessage, NegativeLengthErrorMessage, NewIdValue, ProjectValidationException, ProjectValidator, UnsuccessfulRecalculationMessage}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.UserDefinedCP
 import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
@@ -287,6 +286,25 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     }
   }
 
+  /** TODO
+   * Checks continuity of addresses and geometry.
+   * @param pls Left or right side ProjectLinks with combined to check for continuity.
+   */
+  def validateAddressesWithGeometry(pls: Seq[ProjectLink]): Unit = {
+    val it = pls.sliding(2)
+    while (it.hasNext) {
+      it.next() match {
+        case Seq(curr, next) => {
+          if (curr.discontinuity == Discontinuity.Continuous && !curr.connected(next)) {
+            logger.error(s"Address geometry mismatch. linkIds: ${curr.linkId} ${next.linkId}")
+            throw new RoadAddressException(AddressGeometryContinuityErrorMessage.format(curr.linkId))
+          }
+        }
+        case _ =>
+      }
+    }
+  }
+
   /**
     * Check validation errors for ProjectLinks.
     * Used here in case of calculation error to check if user has entered incompatible values.
@@ -410,6 +428,9 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     validateAddresses(adjustedLeft.sortBy(_.startAddrMValue))
     validateAddresses(adjustedRight.sortBy(_.startAddrMValue))
     validateCombinedLinksEqualAddresses(adjustedLeft, adjustedRight)
+
+    validateAddressesWithGeometry(adjustedLeft.sortBy(_.startAddrMValue))
+    validateAddressesWithGeometry(adjustedRight.sortBy(_.startAddrMValue))
 
     val (right, left) = TrackSectionOrder.setCalibrationPoints(adjustedRight, adjustedLeft, userDefinedCalibrationPoint ++ splitCreatedCpsFromRightSide ++ splitCreatedCpsFromLeftSide)
     TrackSectionOrder.createCombinedSections(right, left)

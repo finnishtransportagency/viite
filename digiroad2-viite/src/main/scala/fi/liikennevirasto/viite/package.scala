@@ -80,6 +80,7 @@ package object viite {
   val ContinuousAddressCapErrorMessage = UnsuccessfulRecalculationMessage + "\nTieosoitteet eivät muodostu jatkuvaksi."
   val NegativeLengthErrorMessage       = UnsuccessfulRecalculationMessage + "\nLinkille %s muodostuu negatiivinen pituus."
   val LengthMismatchErrorMessage       = UnsuccessfulRecalculationMessage + "\nLinkin %s uusi pituus eroaa yli sallitun rajan (%d) vanhaan pituuteen verrattuna."
+  val AddressGeometryContinuityErrorMessage = UnsuccessfulRecalculationMessage + "\nTieosoitteen geometria ei ole jatkuva linkki id:llä: %s."
 
   val NoContinuityCodesAtEndMessage = "Tieosan lopusta puuttuu jatkuvuuskoodi."
   val ConnectedDiscontinuousMessage = "Jatkuva tielinkki on merkitty epäjatkuvaksi, korjaa jatkuu-koodi."
