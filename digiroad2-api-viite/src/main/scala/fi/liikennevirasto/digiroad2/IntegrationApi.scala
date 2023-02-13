@@ -97,7 +97,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
   val getRoadNetworkSummary: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[List[Map[String, Any]]]("getRoadNetworkSummary")
       tags "Integration (Velho)"
-      summary "Returns the whole road network address listing (\"summary\")."
+      summary "Returns the whole road network address listing (\"summary\") for current, or historical road network."
       description "Returns the current state of the whole road network address space that contains all the latest changes " +
               "to every part of any road found in Viite (also those addresses that will be valid not until in the future).\n" +
               "The returned JSON contains data about: road number, road name, " +

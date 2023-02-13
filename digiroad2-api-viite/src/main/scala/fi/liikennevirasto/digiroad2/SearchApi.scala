@@ -169,7 +169,7 @@ class SearchApi(roadAddressService: RoadAddressService,
       )
       tags "SearchAPI (Digiroad)"
       summary "Returns the road addresses within the given road number, road part number, and between given address values," +
-      "returned as linear location sized parts."
+              "returned as linear location sized parts."
     )
 
   // TODO: "?" in the end is useless; does not take query params
