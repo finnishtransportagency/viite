@@ -55,6 +55,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
         .description("(Optional) The road address information is returned from this exact moment (instead of the newest data).\n" + dateParamDescription)
     )
 
+  /** TODO better name e.g. "road_addresses_of_municipality" */
   get("/road_address", operation(getRoadAddressesByMunicipality)) {
     contentType = formats("json")
     ApiUtils.avoidRestrictions(apiId, request, params) { params =>

@@ -55,6 +55,7 @@ class SearchApi(roadAddressService: RoadAddressService,
                   "A linear location must belong to the measure interval at least in one point, to be included in the returned results."
     )
 
+  // TODO: "?" in the end is useless; does not take query params
   get("/road_address/?", operation(getRoadAddress)) {
     val linkId = params.getOrElse("linkId", halt(BadRequest("Missing mandatory field linkId"))).toString
     val startMeasure = params.get("startMeasure").map(_.toDouble)
@@ -74,11 +75,14 @@ class SearchApi(roadAddressService: RoadAddressService,
       parameter headerParam[String]("X-API-Key").required.description(XApiKeyDescription)
     )
 
+  // TODO: "?" in the end is useless; does not take query params
   get("/road_numbers?", operation(getRoadNumbers)) {
     time(logger, "GET request for /road_numbers?") {
       roadAddressService.getRoadNumbers
     }
   }
+
+
 
   private val getRoadAddressWithRoadNumber: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[List[Map[String, Any]]]("getRoadAddressWithRoadNumber")
@@ -113,6 +117,7 @@ class SearchApi(roadAddressService: RoadAddressService,
                   "returned as linear location sized parts."
     )
 
+  // TODO: "?" in the end is useless; does not take query params
   get("/road_address/:road/:roadPart/?", operation(getRoadAddressesFiltered)) {
     val roadNumber = params("road").toLong
     val roadPart = params("roadPart").toLong
@@ -167,6 +172,7 @@ class SearchApi(roadAddressService: RoadAddressService,
       "returned as linear location sized parts."
     )
 
+  // TODO: "?" in the end is useless; does not take query params
   get("/road_address/:road/:roadPart/:startAddress/:endAddress/?", operation(getRoadAddressesFiltered3)) {
     val roadNumber = params("road").toLong
     val roadPart = params("roadPart").toLong
@@ -190,6 +196,7 @@ class SearchApi(roadAddressService: RoadAddressService,
       summary "Returns all the road addresses for the given links. Return values are listed as linear locations."
     )
 
+  // TODO: "?" in the end is useless; does not take query params
   post("/road_address/?", operation(getRoadAddressByLinkIds)) {
     time(logger, s"POST request for /road_address/?", params=Some(Map("requestBody" -> request.body))) {
       val linkIds = parsedBody.extract[Set[String]]
@@ -216,6 +223,7 @@ class SearchApi(roadAddressService: RoadAddressService,
               "If road parts, and/or tracks are given, the results are filtered to those road parts, and/or track numbers."
     )
 
+  // TODO: "?" in the end is useless; does not take query params
   post("/road_address/:road/?", operation(getRoadAddressWithRoadNumberParts)) {
     time(logger, s"POST request for /road_address/:road/?", params=Some(params + ("requestBody" -> request.body))){
       val roadNumber = params("road").toLong
