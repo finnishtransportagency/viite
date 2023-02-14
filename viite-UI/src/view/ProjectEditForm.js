@@ -654,12 +654,27 @@
         var currentProject = projectCollection.getCurrentProject();
         // add spinner
         applicationModel.addSpinner();
+
+        $('.validation-warning').remove();
         // fire backend call to recalculate and validate the current project with the project id
         backend.recalculateAndValidateProject(currentProject.project.id, function (response) {
           // if recalculation and validation did not throw exceptions in the backend
           if (response.success) {
+
+              let trackGeometryLengthDeviationErrorCode = 38;
+              if (response.validationErrors.filter(error => error.errorCode === trackGeometryLengthDeviationErrorCode).length > 0) {
+                  let trackGeometryLengthDeviationError = response.validationErrors.filter(error => error.errorCode === trackGeometryLengthDeviationErrorCode)[0];
+                      // "Ajoratojen geometriapituuksissa yli 20% poikkeama."
+                  new GenericConfirmPopup(trackGeometryLengthDeviationError.errorMessage, {
+                      type: "alert"
+                  });
+                  $('.form,.form-horizontal,.form-dark').append('<label class="validation-warning">' +trackGeometryLengthDeviationError.errorMessage + '<br>' + "LinkId: " + trackGeometryLengthDeviationError.info + '</label>');
+                  response.validationErrors = response.validationErrors.filter(error => error.errorCode !== trackGeometryLengthDeviationErrorCode)
+              }
+
             // set project errors that were returned by the backend validations and write them to user (removes the spinner also)
             projectCollection.setAndWriteProjectErrorsToUser(response.validationErrors);
+
             if (Object.keys(response.validationErrors).length === 0) {
               // if no validation errors are present, show changes button and remove title
               formCommon.setDisabledAndTitleAttributesById("changes-button", false, "");

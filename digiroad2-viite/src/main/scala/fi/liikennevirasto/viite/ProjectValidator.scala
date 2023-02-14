@@ -132,7 +132,8 @@ class ProjectValidator {
       WrongDiscontinuityBeforeProjectWithElyChangeInProject,
       ErrorInValidationOfUnchangedLinks, RoadNotEndingInElyBorder, RoadContinuesInAnotherEly,
       MultipleElyInPart, IncorrectLinkStatusOnElyCodeChange,
-      ElyCodeChangeButNoRoadPartChange, ElyCodeChangeButNoElyChange, ElyCodeChangeButNotOnEnd, ElyCodeDiscontinuityChangeButNoElyChange, RoadNotReserved, DistinctAdministrativeClassesBetweenTracks, WrongDiscontinuityOutsideOfProject)
+      ElyCodeChangeButNoRoadPartChange, ElyCodeChangeButNoElyChange, ElyCodeChangeButNotOnEnd, ElyCodeDiscontinuityChangeButNoElyChange, RoadNotReserved, DistinctAdministrativeClassesBetweenTracks, WrongDiscontinuityOutsideOfProject,
+      TrackGeometryLengthDeviation)
 
     // Viite-942
     case object MissingEndOfRoad extends ValidationError {
@@ -470,6 +471,15 @@ class ProjectValidator {
       def notification = true
     }
 
+    // Viite-1576
+    case object TrackGeometryLengthDeviation extends ValidationError {
+      def value = 38
+
+      def message: String = geomLengthDifferenceBetweenTracks
+
+      def notification = false
+    }
+
     def apply(intValue: Int): ValidationError = {
       values.find(_.value == intValue).get
     }
@@ -479,7 +489,7 @@ class ProjectValidator {
                                     affectedIds: Seq[Long], coordinates: Seq[ProjectCoordinates],
                                     optionalInformation: Option[String])
 
-  def findElyChangesOnAdjacentRoads(projectLink: ProjectLink, allProjectLinks: Seq[ProjectLink]) = {
+  def findElyChangesOnAdjacentRoads(projectLink: ProjectLink, allProjectLinks: Seq[ProjectLink]): Boolean = {
     val dim = 2
     val points = GeometryUtils.geometryEndpoints(projectLink.geometry)
     val roadAddresses = roadAddressService.getRoadAddressLinksByBoundingBox(BoundingRectangle(points._2.copy(x = points._2.x + dim, y = points._2.y + dim), points._2.copy(x = points._2.x - dim, y = points._2.y - dim)), Seq.empty)
@@ -487,7 +497,7 @@ class ProjectValidator {
     nextElyCodes.nonEmpty && !nextElyCodes.forall(_ == projectLink.ely)
   }
 
-  def findElyChangesOnNextProjectLinks(projectLink: ProjectLink, allProjectLinks: Seq[ProjectLink]) = {
+  def findElyChangesOnNextProjectLinks(projectLink: ProjectLink, allProjectLinks: Seq[ProjectLink]): Boolean = {
     val nextProjectLinks = allProjectLinks.filter(pl => pl.roadNumber == projectLink.roadNumber && pl.roadPartNumber > projectLink.roadPartNumber)
     val nextPartStart =
       if (nextProjectLinks.nonEmpty)
@@ -777,6 +787,41 @@ class ProjectValidator {
       error(project.id, ValidationErrorList.DistinctAdministrativeClassesBetweenTracks)(errorLinks)
     }
 
+    def recursiveCheckTwoTrackGeometryLength(roadPartLinks: Seq[ProjectLink],
+                                             errorLinks   : Seq[ProjectLink] = Seq()
+                                            ): Option[ValidationErrorDetails] = {
+      if (roadPartLinks.isEmpty) {
+        error(project.id, ValidationErrorList.TrackGeometryLengthDeviation, errorLinks.head.linkId)(errorLinks)
+      } else {
+        val sortedRoadPartLinks  = roadPartLinks.sortBy(pl => (pl.track.value, pl.startAddrMValue))
+        val sortedTrackInterval1 = getTrackInterval(sortedRoadPartLinks, Track.LeftSide)
+        val sortedTrackInterval2 = getTrackInterval(sortedRoadPartLinks, Track.RightSide)
+
+        val (leftGeomLength, rightGeomLength) = sortedTrackInterval1.zip(sortedTrackInterval2).foldLeft((0.0,0.0)) {
+          case ((leftLength, rightLength), (left, right)) =>
+            (leftLength + left.geometryLength, rightLength + right.geometryLength)
+        }
+
+        def geomLengthDiff: Double = Math.abs(leftGeomLength - rightGeomLength)
+        def exceptionalLengthDifference: Boolean = {
+          val BIG_TRACK_LENGTH_DIFFERENCE__TRESHOLD_IN_METERS = 50
+          val BIG_TRACK_LENGTH_DIFFERENCE__TRESHOLD_IN_PERCENT = 0.2
+
+          geomLengthDiff > BIG_TRACK_LENGTH_DIFFERENCE__TRESHOLD_IN_METERS ||
+          geomLengthDiff / leftGeomLength > BIG_TRACK_LENGTH_DIFFERENCE__TRESHOLD_IN_PERCENT ||
+          geomLengthDiff / rightGeomLength > BIG_TRACK_LENGTH_DIFFERENCE__TRESHOLD_IN_PERCENT
+        }
+
+        val trackIntervalRemovedRoadPartLinks = roadPartLinks.filterNot(l => (sortedTrackInterval1 ++ sortedTrackInterval2).exists(lt => lt.id == l.id))
+        val exceptionalLengthLinks = if (exceptionalLengthDifference) sortedTrackInterval1 ++ sortedTrackInterval2 else Seq()
+
+        recursiveCheckTwoTrackGeometryLength(
+          trackIntervalRemovedRoadPartLinks,
+          errorLinks ++ exceptionalLengthLinks
+        )
+      }
+    }
+
     val groupedLinks = notCombinedLinks.filterNot(_.status == LinkStatus.Terminated).groupBy(pl => (pl.roadNumber, pl.roadPartNumber))
     groupedLinks.map(roadPart => {
       val trackCoverageErrors = recursiveCheckTrackChange(roadPart._2) match {
@@ -784,11 +829,19 @@ class ProjectValidator {
         case _ => Seq()
       }
 
+      val trackGeomLengthErrors = if (trackCoverageErrors.isEmpty)
+        recursiveCheckTwoTrackGeometryLength(roadPart._2) match {
+          case Some(errors) => Seq(errors)
+          case _ => Seq()
+        }
+        else Seq()
+
       val administrativeClassPairingErrors = checkTrackAdministrativeClass(roadPart._2) match {
         case Some(errors) => Seq(errors)
         case _ => Seq()
       }
-      trackCoverageErrors ++ administrativeClassPairingErrors
+
+      trackCoverageErrors ++ trackGeomLengthErrors ++ administrativeClassPairingErrors
     }).headOption.getOrElse(Seq())
   }
 
