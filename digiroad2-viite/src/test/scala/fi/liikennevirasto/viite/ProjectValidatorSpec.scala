@@ -2247,6 +2247,34 @@ Left|      |Right
     }
   }
 
+  test("Test checkTrackCodePairing When two track projects links have length difference > 20% Then there should be validation error.") {
+    // > 20% case
+    runWithRollback {
+      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L), changeTrack = true)
+      val extraLength             = 10L
+      val inconsistentLinks       = projectLinks.map {l =>
+        if (l.endAddrMValue == 40L && l.track == Track.RightSide) l.copy(geometryLength = l.geometryLength + extraLength, geometry = Seq(l.getFirstPoint, l.getLastPoint.copy(y = l.getLastPoint.y + extraLength))) else l
+      }
+
+      mockEmptyRoadAddressServiceCalls()
+      val validationErrors = projectValidator.checkTrackCodePairing(project, inconsistentLinks).distinct
+      validationErrors.size should be(1)
+    }
+
+    // > 50m case
+    runWithRollback {
+      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 100L, 200L, 300L, 400L), changeTrack = true)
+      val extraLength             = 60L
+      val inconsistentLinks       = projectLinks.map {l =>
+        if (l.endAddrMValue == 400L && l.track == Track.RightSide) l.copy(geometryLength = l.geometryLength + extraLength, geometry = Seq(l.getFirstPoint, l.getLastPoint.copy(y = l.getLastPoint.y + extraLength))) else l
+      }
+
+      mockEmptyRoadAddressServiceCalls()
+      val validationErrors = projectValidator.checkTrackCodePairing(project, inconsistentLinks).distinct
+      validationErrors.size should be(1)
+    }
+  }
+
   test("Test checkDiscontinuityInsideRoadParts When there are no Discontinuity.Discontinuous codes inside a road part Then should not be any error") {
     runWithRollback {
       val project = setUpProjectWithLinks(LinkStatus.Transfer, Seq(0L, 10L, 20L), discontinuity = Discontinuity.Continuous, lastLinkDiscontinuity = Discontinuity.EndOfRoad)
