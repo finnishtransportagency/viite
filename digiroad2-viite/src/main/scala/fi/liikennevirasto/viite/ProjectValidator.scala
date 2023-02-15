@@ -791,7 +791,7 @@ class ProjectValidator {
                                              errorLinks   : Seq[ProjectLink] = Seq()
                                             ): Option[ValidationErrorDetails] = {
       if (roadPartLinks.isEmpty) {
-        error(project.id, ValidationErrorList.TrackGeometryLengthDeviation, errorLinks.head.linkId)(errorLinks)
+        error(project.id, ValidationErrorList.TrackGeometryLengthDeviation)(errorLinks)
       } else {
         val sortedRoadPartLinks  = roadPartLinks.sortBy(pl => (pl.track.value, pl.startAddrMValue))
         val sortedTrackInterval1 = getTrackInterval(sortedRoadPartLinks, Track.LeftSide)
