@@ -730,6 +730,7 @@ class RoadwayDAO extends BaseDAO {
     query + s" WHERE a.road_number = $road " + s"$roadPartFilter $trackFilter $mValueFilter and a.end_date is null and a.valid_to is null "
   }
 
+  @deprecated ("TODO refactor or remove. Table published_roadway is no longer in use, and is empty.")
   private def withRoadwayNumbersAndRoadNetwork(roadwayNumbers: Set[Long], roadNetworkId: Long, searchDate: Option[DateTime])(query: String): String = {
     val queryDate = if (searchDate.isDefined) s"to_date('${searchDate.get.toString("yyyy-MM-dd")}', 'YYYY-MM-DD') " else "CURRENT_DATE"
 
@@ -739,12 +740,14 @@ class RoadwayDAO extends BaseDAO {
         s"""in (${group.mkString(",")})"""
       }).mkString("", " or a.roadway_number ", "")
 
+      /** todo ("Table published_roadway is no longer in use, and is empty.")*/
       s"""$query
          join published_roadway net on net.ROADWAY_ID = a.id
          where net.network_id = $roadNetworkId and a.valid_to is null and (a.roadway_number $groupedRoadwayNumbers)
             and a.start_date <= $queryDate and (a.end_date is null or a.end_date >= $queryDate)"""
     }
     else
+      /** todo ("Table published_roadway is no longer in use, and is empty.")*/
       s"""$query
          join published_roadway net on net.ROADWAY_ID = a.id
          where net.network_id = $roadNetworkId and a.valid_to is null and a.roadway_number in (${roadwayNumbers.mkString(",")})
