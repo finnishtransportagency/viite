@@ -911,49 +911,115 @@ _Kuva 10.2: Tieosoitteiden hakuehdot_
 
 #### Hakuehdot
 
-Syötettävistä hakuehdoista Tilanne pvm sekä Ely TAI Tie on pakollinen tieto.
+Ajoratoja, tieosia, solmuja sekä liitymiä haettaessa pakollisia hakuehtoja ovat Tilannepvm sekä Ely TAI Tie.   
+Tiennimiä on mahdollista hakea koko tieverkolta. (Haku pelkällä tilannepäivämäärällä)
 
-(1) Tilanne pvm: Karsitaan tilanne pvm -kenttää uudemmat tiedot pois hakutuloksista   
-(2) Ely: Haetaan vain annetun ELYn kohteita   
+(1) Tilanne-pvm: Päiväys, jonka tilanteesta tiedot haetaan.   
+Ajoradoista, tieosista sekä tiennimistä on mahdollista hakea myös menneisyyden tilannetiedot (tätä päivää aiempi tilanne-pvm).   
+Solmuja ja liittymiä voi hakea vain nykyiseltä tieverkolta (tämän päivän päiväys).   
+(2) Ely: Haetaan vain valitun ELYn kohteita   
 (3) Tie: Rajataan haku annetun tienumeron mukaisiin kohteisiin   
 (4) Aosa: Pienin tieosanumero jolta haettavia kohteita haetaan   
-(5) Losa: Suurin tieosanumero jolta haettavia kohteita haetaan
+(5) Losa: Suurin tieosanumero jolta haettavia kohteita haetaan   
+(6) Hakukohde:
+ - Ajoradat: Hakee annettujen hakuehtojen mukaiset ajoradat  
+ - Tieosat: Hakee annettujen hakuehtojen mukaiset tieosat   
+ - Solmut: Hakee annettujen hakuehtojen mukaiset solmut   
+ - Liittymät: Hakee annettujen hakuehtojen mukaiset liittymät   
+ - Tiennimet: Hakee annettujen hakuehtojen mukaiset tiennimet
 
-####  Haettava kohde
-(6) Tieosat: Hakee annettujen hakuehtojen mukaiset tieosat   
-(7) Solmut: Hakee annettujen hakuehtojen mukaiset solmut   
-(8) Liittymät: Hakee annettujen hakuehtojen mukaiset liittymät   
-(9) Tiennimet: Hakee annettujen hakuehtojen mukaiset tiennimet
 
-
-Huom! Haku saattaa kestää useita kymmeniä sekunteja haettaessa pelkästään tilannepäivämäärällä ja elyllä (Viite hakee valitut kohteet koko elyn alueelta)
+Huom! Haku saattaa kestää useita sekunteja haettaessa pelkästään tilannepäivämäärällä ja elyllä (Viite hakee valitut kohteet koko elyn alueelta)
 
 Viite palauttaa hakuehtojen perusteella listan kohteita sekä näiden ominaisuustiedot. 
 
-Hakutulokset on mahdollista ladata Excel-taulukkona klikkaamalla "Lataa Excelinä" -painiketta
+Hakutulokset on mahdollista ladata Excel-taulukkona klikkaamalla "Lataa Excelinä" -painiketta.
 
 Jos hakutulos on liian suuri (>100 riviä) tarjoaa Viite pelkän Excel-latausmahdollisuuden.
 
 10.1 Esimerkkejä eri ominaisuustietojen hakutuloksista:
 --------------------------
 
+![Ajoradat -hakutulos](k80.PNG)
+
+_Kuva 10.3: Ajoradat -hakutulos_
 
 ![Tieosat -hakutulos](k75.PNG)
 
-_Kuva 10.3: Tieosat -hakutulos_
+_Kuva 10.4: Tieosat -hakutulos_
 
 ![Solmut -hakutulos](k76.PNG)
 
-_Kuva 10.4: Solmut -hakutulos_
+_Kuva 10.5: Solmut -hakutulos_
 
 ![Liittymät -hakutulos](k77.PNG)
 
-_Kuva 10.5: Liittymät -hakutulos_
+_Kuva 10.6: Liittymät -hakutulos_
 
 ![Tiennimet -hakutulos](k78.PNG)
 
-_Kuva 10.6: Tiennimet -hakutulos_
+_Kuva 10.7: Tiennimet -hakutulos_
 
 ![Excel -hakutulos](k79.PNG)
 
-_Kuva 10.7: Viite tarjoaa pelkän Excel-tiedoston latausmahdollisuuden mikäli hakutulos on liian suuri_
+_Kuva 10.8: Viite tarjoaa pelkän Excel-tiedoston latausmahdollisuuden mikäli hakutulos on liian suuri_
+
+
+11 Tieosoitemuutosten katselu -työkalu
+--------------------------
+
+Tieosoitemuutosten katselu -työkalu avataan klikkaamalla karttanäkymän oikeassa reunassa sijaitsevaa Tieosoitemuutosten katselu -painiketta.
+
+![Tieosoitemuutosten katselu -työkalun avaus](k81.png)
+
+_Kuva 11: Tieosoitemuutosten katselu -työkalun avaus_
+
+11.1 Tieosoitemuutosten haku
+--------------------------
+
+![Tieosoitemuutosten hakuehdot](k82.png)
+
+_Kuva 11.1: Tieosoitemuutosten hakuehdot_
+
+#### Hakuehdot
+
+Hakuehdoista alkupäivämäärä on pakollinen tieto
+
+(1) Rajausperuste:    
+  - Projektin hyväksymispvm: Alku- ja loppupvm -kentät rajaavat hakutuloksia projektin hyväksymispäivämäärän perusteella    
+  - Muutoksen voimaantulopvm: Alku- ja loppupvm -kentät rajaavat hakutuloksia tieosoitemuutoksen voimaantulopäivämäärän perusteella   
+
+(2) Alkupvm: Karsitaan alkupvm -kenttää vanhemmat tieosoitemuutokset pois hakutuloksista   
+(3) Loppupvm: Karsitaan loppupvm -kenttää uudemmat tieosoitemuutokset pois hakutuloksista   
+(4) Ely: Haetaan vain annetun ELYn tieosoitemuutoksia   
+(5) Tie: Rajataan haku annetun tienumeron mukaisiin tieosoitemuutoksiin  
+(6) Aosa: Pienin tieosanumero jolta haettavia tieosoitemuutoksia haetaan   
+(7) Losa: Suurin tieosanumero jolta haettavia tieosoitemuutoksia haetaan
+
+Huom! Haku saattaa kestää useita sekunteja haettaessa pelkästään alkupäivämäärällä (Viite hakee kaikki tieosoitemuutokset annetun alkupäivämäärän jälkeiseltä ajalta)
+
+Viite palauttaa hakuehtojen perusteella listan tieosoitemuutoksia.
+
+Hakutulokset on mahdollista ladata Excel-taulukkona klikkaamalla "Lataa Excelinä" -painiketta.
+
+Jos hakutulos on liian suuri (>100 riviä) tarjoaa Viite pelkän Excel-latausmahdollisuuden.
+
+11.2 Esimerkkejä tieosoitemuutosten hakutuloksista:
+--------------------------
+
+![Tieosoitemuutos_hakutulos](k84.PNG)
+
+_Kuva 11.2: Hakutulos haettaessa tieosoitemuutoksia jotka ovat syntyneet projektissa jonka hyväksymispäivämäärä on myöhempi kuin 1.4.2022 ja projektimuutoksen jälkeinen tienumero on 8_
+
+![Tieosoitemuutos_hakutulos eri päivämääräkohteella](k85.PNG)
+
+_Kuva 11.3: Hakutulos haettaessa tieosoitemuutoksia joiden voimaantulopäivämäärä on myöhempi kuin 1.4.2022 ja projektimuutoksen jälkeinen tienumero on 8_
+
+
+Ylläolevista kuvista voi huomata, että samoilla parametreilla voi saada aikaiseksi eri hakutuloksia vaihtamalla päivämääräkenttien kohdetta
+
+
+![Excel -hakutulos](k86.png)
+
+_Kuva 11.4: Viite tarjoaa pelkän Excel-tiedoston latausmahdollisuuden mikäli hakutulos on liian suuri_
+

@@ -1,8 +1,7 @@
 (function (root) {
-  root.NodeLayer = function (map, roadLayer, selectedNodesAndJunctions, nodeCollection, roadCollection, linkPropertiesModel, applicationModel) {
+  root.NodeLayer = function (map, roadLayer, selectedNodesAndJunctions, nodeCollection, roadCollection, applicationModel) {
     Layer.call(this, map);
     var me = this;
-    var indicatorVector = new ol.source.Vector({});
     var directionMarkerVector = new ol.source.Vector({});
     var dblVector = function () {
       return {selected: new ol.source.Vector({}), unselected: new ol.source.Vector({})};
@@ -13,16 +12,8 @@
     var junctionTemplateVector = dblVector();
     var cachedMarker = null;
 
-    var Anomaly = LinkValues.Anomaly;
-    var SideCode = LinkValues.SideCode;
-    var RoadZIndex = LinkValues.RoadZIndex;
-
-    var indicatorLayer = new ol.layer.Vector({
-      source: indicatorVector,
-      name: 'indicatorLayer',
-      zIndex: RoadZIndex.IndicatorLayer.value
-    });
-    indicatorLayer.set('name', 'indicatorLayer');
+    var SideCode = ViiteEnumerations.SideCode;
+    var RoadZIndex = ViiteEnumerations.RoadZIndex;
 
     var directionMarkerLayer = new ol.layer.Vector({
       source: directionMarkerVector,
@@ -85,7 +76,6 @@
 
     var setGeneralOpacity = function (opacity) {
       roadLayer.layer.setOpacity(opacity);
-      indicatorLayer.setOpacity(opacity);
       directionMarkerLayer.setOpacity(opacity);
       nodeMarkerLayer.setOpacity(opacity);
       nodeMarkerSelectedLayer.setOpacity(opacity);
@@ -144,19 +134,19 @@
       });
 
       switch (applicationModel.getSelectedTool()) {
-        case LinkValues.Tool.Unknown.value:
+        case ViiteEnumerations.Tool.Unknown.value:
           if (!_.isUndefined(selectedJunctionTemplate) && _.has(selectedJunctionTemplate, 'junctionTemplate')) {
             selectJunctionTemplate(selectedJunctionTemplate.junctionTemplate);
           } else if (!_.isUndefined(selectedNodePointTemplate) && _.has(selectedNodePointTemplate, 'nodePointTemplate')) {
             selectNodePointTemplate(selectedNodePointTemplate.nodePointTemplate);
           }
           break;
-        case LinkValues.Tool.Select.value:
+        case ViiteEnumerations.Tool.Select.value:
           if (!_.isUndefined(selectedNode) && !_.isUndefined(selectedNode.node)) {
             selectNode(selectedNode.node);
           }
           break;
-        case LinkValues.Tool.Attach.value:
+        case ViiteEnumerations.Tool.Attach.value:
           if (!_.isUndefined(selectedNode) && !_.isUndefined(selectedNode.node)) {
             attachNode(selectedNode.node, selectedNodesAndJunctions.getCurrentTemplates());
           }
@@ -195,7 +185,7 @@
         x: parseInt(evt.coordinate[0]),
         y: parseInt(evt.coordinate[1])
       };
-      if (GeometryUtils.distanceBetweenPoints(selectedNodesAndJunctions.getStartingCoordinates(), coordinates) < LinkValues.MaxAllowedDistanceForNodesToBeMoved) {
+      if (GeometryUtils.distanceBetweenPoints(selectedNodesAndJunctions.getStartingCoordinates(), coordinates) < ViiteConstants.MAX_ALLOWED_DISTANCE_FOR_NODES_TO_BE_MOVED) {
         eventbus.trigger('node:displayCoordinates', {
           x: parseInt(evt.coordinate[0]),
           y: parseInt(evt.coordinate[1])
@@ -208,7 +198,7 @@
         x: parseInt(evt.coordinate[0]),
         y: parseInt(evt.coordinate[1])
       };
-      if (GeometryUtils.distanceBetweenPoints(selectedNodesAndJunctions.getStartingCoordinates(), coordinates) < LinkValues.MaxAllowedDistanceForNodesToBeMoved) {
+      if (GeometryUtils.distanceBetweenPoints(selectedNodesAndJunctions.getStartingCoordinates(), coordinates) < ViiteConstants.MAX_ALLOWED_DISTANCE_FOR_NODES_TO_BE_MOVED) {
         selectedNodesAndJunctions.setCoordinates(coordinates);
       } else {
         var startingCoordinates = selectedNodesAndJunctions.getStartingCoordinates();
@@ -273,7 +263,7 @@
       clearHighlights();
       selectedNodesAndJunctions.openNode(node, templates);
       highlightNode(selectedNodesAndJunctions.getCurrentNode());
-      applicationModel.setSelectedTool(LinkValues.Tool.Select.value);
+      applicationModel.setSelectedTool(ViiteEnumerations.Tool.Select.value);
     };
 
     var selectNodePointTemplate = function (nodePointTemplate) {
@@ -377,20 +367,20 @@
     });
 
     me.eventListener.listenTo(eventbus, 'tool:changed', function (tool) {
-      toggleSelectInteractions(!applicationModel.isSelectedTool(LinkValues.Tool.Add.value));
+      toggleSelectInteractions(!applicationModel.isSelectedTool(ViiteEnumerations.Tool.Add.value));
       switch (tool) {
-        case LinkValues.Tool.Unknown.value:
+        case ViiteEnumerations.Tool.Unknown.value:
           me.eventListener.stopListening(eventbus, 'map:clicked', createNewNodeMarker);
           setProperty([nodeMarkerLayer], 'selectable', false);
           setProperty([nodePointTemplateLayer, junctionTemplateLayer], 'selectable', true);
           break;
-        case LinkValues.Tool.Select.value:
-        case LinkValues.Tool.Attach.value:
+        case ViiteEnumerations.Tool.Select.value:
+        case ViiteEnumerations.Tool.Attach.value:
           me.eventListener.stopListening(eventbus, 'map:clicked', createNewNodeMarker);
           setProperty([nodeMarkerLayer], 'selectable', true);
           setProperty([nodePointTemplateLayer, junctionTemplateLayer], 'selectable', false);
           break;
-        case LinkValues.Tool.Add.value:
+        case ViiteEnumerations.Tool.Add.value:
           me.eventListener.listenToOnce(eventbus, 'map:clicked', createNewNodeMarker);
           setProperty([nodeMarkerLayer, nodePointTemplateLayer, junctionTemplateLayer], 'selectable', false);
           break;
@@ -402,7 +392,7 @@
     var createNewNodeMarker = function (coords) {
       var node = {
         coordinates: {x: parseInt(coords.x), y: parseInt(coords.y)},
-        type: LinkValues.NodeType.UnknownNodeType.value,
+        type: ViiteEnumerations.NodeType.UnknownNodeType.value,
         nodePoints: [],
         junctions: []
       };
@@ -599,7 +589,7 @@
         if (zoomlevels.getViewZoom(map) >= zoomlevels.minZoomForRoadNetwork) {
 
           var directionRoadMarker = _.filter(roadLinks, function (roadLink) {
-            return roadLink.anomaly !== Anomaly.NoAddressGiven.value && roadLink.anomaly !== Anomaly.GeometryChanged.value && (roadLink.sideCode === SideCode.AgainstDigitizing.value || roadLink.sideCode === SideCode.TowardsDigitizing.value);
+            return (roadLink.sideCode === SideCode.AgainstDigitizing.value || roadLink.sideCode === SideCode.TowardsDigitizing.value);
           });
           _.each(directionRoadMarker, function (directionLink) {
             cachedMarker.createMarker(directionLink, function (marker) {

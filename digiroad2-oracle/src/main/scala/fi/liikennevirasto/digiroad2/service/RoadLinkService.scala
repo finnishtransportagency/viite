@@ -22,14 +22,14 @@ case class ChangedRoadLinkFetched(link: RoadLink, value: String, createdAt: Opti
 
 //TODO delete all the references to frozen interface
 /**
-  * This class performs operations related to road links. It uses VVHClient to get data from VVH Rest API.
+  * This class performs operations related to road links. It uses KGVClient to get data from KGV Rest API.
   *
-  * @param vvhClient
+  * @param kgvClient
   * @param eventbus
-  * @param vvhSerializer
+  * @param kgvSerializer
   * @param useFrozenLinkInterface
   */
-class RoadLinkService(val kgvClient: KgvRoadLink, val eventbus: DigiroadEventBus, val vvhSerializer: KGVSerializer, val useFrozenLinkInterface: Boolean) {
+class RoadLinkService(val kgvClient: KgvRoadLink, val eventbus: DigiroadEventBus, val kgvSerializer: KGVSerializer, val useFrozenLinkInterface: Boolean) {
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
@@ -91,6 +91,15 @@ class RoadLinkService(val kgvClient: KgvRoadLink, val eventbus: DigiroadEventBus
 
   def getRoadLinksByLinkIds(linkIds: Set[String]): Seq[RoadLink] = {
     getRoadLinks(linkIds)
+  }
+  def getUnderConstructionLinksById(linkIds: Set[String]): List[(Option[Long], Option[Long], Int)] = {
+    if (linkIds.nonEmpty) {
+      if (useFrozenLinkInterface) {
+        kgvClient.frozenTimeRoadLinkData.fetchUnderConstructionLinksById(linkIds)
+      } else {
+        kgvClient.roadLinkData.fetchUnderConstructionLinksById(linkIds)
+      }
+    } else List()
   }
 
   /**

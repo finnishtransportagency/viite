@@ -7,11 +7,11 @@ set -e
 
 echo "Logging in to AWS ECR with Docker"
 aws ecr get-login-password --profile vaylaapp --region eu-west-1 | docker login --username AWS --password-stdin 783354560127.dkr.ecr.eu-west-1.amazonaws.com
-echo " Pull dev-test image"
+echo "Pull dev image"
 docker pull 783354560127.dkr.ecr.eu-west-1.amazonaws.com/viite:latest
-echo "Tagging image"
+echo "Tagging dev image as also QA image"
 docker tag 783354560127.dkr.ecr.eu-west-1.amazonaws.com/viite:latest 783354560127.dkr.ecr.eu-west-1.amazonaws.com/viite-qa:latest
-echo "Pushing image"
+echo "Push the just tagged QA image to dev/QA repository"
 docker push 783354560127.dkr.ecr.eu-west-1.amazonaws.com/viite-qa:latest
 
 echo "Updating service"

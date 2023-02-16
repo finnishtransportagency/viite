@@ -7,7 +7,6 @@
     var roadNameCollection = new RoadNameCollection(backend);
     var selectedLinkProperty = new SelectedLinkProperty(backend, roadCollection);
     var selectedProjectLinkProperty = new SelectedProjectLink(projectCollection);
-    var linkPropertiesModel = new LinkPropertiesModel();
     var instructionsPopup = new InstructionsPopup(jQuery('.digiroad2'));
     var projectChangeInfoModel = new ProjectChangeInfoModel(backend);
     window.applicationModel = new ApplicationModel([selectedLinkProperty]);
@@ -20,7 +19,6 @@
       roadCollection: roadCollection,
       projectCollection: projectCollection,
       selectedLinkProperty: selectedLinkProperty,
-      linkPropertiesModel: linkPropertiesModel,
       selectedProjectLinkProperty: selectedProjectLinkProperty,
       nodeCollection: nodeCollection,
       selectedNodesAndJunctions: selectedNodesAndJunctions
@@ -54,10 +52,6 @@
     var map = setupMap(backend, models, withTileMaps, startupParameters, projectChangeTable, roadNameCollection, projectListModel);
     new URLRouter(map, backend, models);
     eventbus.trigger('application:initialized');
-  };
-
-  var indicatorOverlay = function () {
-    jQuery('.container').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
   };
 
   $(document).ajaxError(function (event, jqxhr, settings, thrownError) {
@@ -109,12 +103,14 @@
 
     var roadLayer = new RoadLayer(map, models.roadCollection, models.selectedLinkProperty, models.nodeCollection);
     var projectLinkLayer = new ProjectLinkLayer(map, models.projectCollection, models.selectedProjectLinkProperty);
-    var linkPropertyLayer = new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel);
-    var nodeLayer = new NodeLayer(map, roadLayer, models.selectedNodesAndJunctions, models.nodeCollection, models.roadCollection, models.linkPropertiesModel, applicationModel);
+    var linkPropertyLayer = new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, applicationModel);
+    var nodeLayer = new NodeLayer(map, roadLayer, models.selectedNodesAndJunctions, models.nodeCollection, models.roadCollection, applicationModel);
     var roadNamingTool = new RoadNamingToolWindow(roadNameCollection);
-    var roadAddressBrowser = new RoadAddressBrowserWindow(backend);
+    var roadAddressBrowserForm = new RoadAddressBrowserForm();
+    var roadAddressBrowser = new RoadAddressBrowserWindow(backend, roadAddressBrowserForm);
+    var roadAddressChangesBrowser = new RoadAddressChangesBrowserWindow(backend, roadAddressBrowserForm);
 
-    new LinkPropertyForm(models.selectedLinkProperty, roadNamingTool, projectListModel, roadAddressBrowser);
+    new LinkPropertyForm(models.selectedLinkProperty, roadNamingTool, projectListModel, roadAddressBrowser, roadAddressChangesBrowser);
 
     new NodeSearchForm(new InstructionsPopup(jQuery('.digiroad2')), map, models.nodeCollection, backend);
     new NodeForm(models.selectedNodesAndJunctions, models.roadCollection, backend);
@@ -191,10 +187,6 @@
   };
 
   var bindEvents = function () {
-
-    eventbus.on('linkProperties:saving', function () {
-      indicatorOverlay();
-    });
 
     eventbus.on('linkProperties:available', function () {
       jQuery('.spinner-overlay').remove();

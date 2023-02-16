@@ -1,15 +1,15 @@
 (function (root) {
   root.ProjectEditForm = function (map, projectCollection, selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend) {
-    var LinkStatus = LinkValues.LinkStatus;
-    var CalibrationCode = LinkValues.CalibrationCode;
-    var editableStatus = [LinkValues.ProjectStatus.Incomplete.value, LinkValues.ProjectStatus.Unknown.value];
-    var ValidElys = _.map(LinkValues.ElyCodes, function (ely) {
+    var LinkStatus = ViiteEnumerations.LinkStatus;
+    var CalibrationCode = ViiteEnumerations.CalibrationCode;
+    var editableStatus = [ViiteEnumerations.ProjectStatus.Incomplete.value, ViiteEnumerations.ProjectStatus.Unknown.value];
+    var ValidElys = _.map(ViiteEnumerations.ElyCodes, function (ely) {
       return ely;
     });
     var selectedProjectLink = false;
     var editedNameByUser = false;
-    var LinkSources = LinkValues.LinkGeomSource;
-    var ProjectStatus = LinkValues.ProjectStatus;
+    var LinkSources = ViiteEnumerations.LinkGeomSource;
+    var ProjectStatus = ViiteEnumerations.ProjectStatus;
     var formCommon = new FormCommon('');
 
     var endDistanceOriginalValue = '--';
@@ -114,12 +114,12 @@
         '<div class="input-unit-combination">' +
         '<select class="action-select" id="dropDown_0" size="1">' +
         '<option id="drop_0_" ' + defineOptionModifiers(defaultOption, selected) + '>Valitse</option>' +
-        '<option id="drop_0_' + LinkStatus.Unchanged.description + '" value=' + LinkStatus.Unchanged.description + ' ' + defineOptionModifiers(LinkStatus.Unchanged.description, selected) + '>Ennallaan</option>' +
-        '<option id="drop_0_' + LinkStatus.Transfer.description + '" value=' + LinkStatus.Transfer.description + ' ' + defineOptionModifiers(LinkStatus.Transfer.description, selected) + '>Siirto</option>' +
-        '<option id="drop_0_' + LinkStatus.New.description + '" value=' + LinkStatus.New.description + ' ' + defineOptionModifiers(LinkStatus.New.description, selected) + '>Uusi</option>' +
-        '<option id="drop_0_' + LinkStatus.Terminated.description + '" value=' + LinkStatus.Terminated.description + ' ' + defineOptionModifiers(LinkStatus.Terminated.description, selected) + '>Lakkautus</option>' +
-        '<option id="drop_0_' + LinkStatus.Numbering.description + '" value=' + LinkStatus.Numbering.description + ' ' + defineOptionModifiers(LinkStatus.Numbering.description, selected) + '>Numerointi</option>' +
-        '<option id="drop_0_' + LinkStatus.Revert.description + '" value=' + LinkStatus.Revert.description + ' ' + defineOptionModifiers(LinkStatus.Revert.description, selected) + '>Palautus aihioksi tai tieosoitteettomaksi</option>' +
+        '<option id="drop_0_' + LinkStatus.Unchanged.description + '" value=' + LinkStatus.Unchanged.description + ' ' + defineOptionModifiers(LinkStatus.Unchanged.description, selected) + '>' + LinkStatus.Unchanged.displayText + '</option>' +
+        '<option id="drop_0_' + LinkStatus.Transfer.description + '" value=' + LinkStatus.Transfer.description + ' ' + defineOptionModifiers(LinkStatus.Transfer.description, selected) + '>' + LinkStatus.Transfer.displayText + '</option>' +
+        '<option id="drop_0_' + LinkStatus.New.description + '" value=' + LinkStatus.New.description + ' ' + defineOptionModifiers(LinkStatus.New.description, selected) + '>' + LinkStatus.New.displayText + '</option>' +
+        '<option id="drop_0_' + LinkStatus.Terminated.description + '" value=' + LinkStatus.Terminated.description + ' ' + defineOptionModifiers(LinkStatus.Terminated.description, selected) + '>' + LinkStatus.Terminated.displayText + '</option>' +
+        '<option id="drop_0_' + LinkStatus.Numbering.description + '" value=' + LinkStatus.Numbering.description + ' ' + defineOptionModifiers(LinkStatus.Numbering.description, selected) + '>' + LinkStatus.Numbering.displayText + '</option>' +
+        '<option id="drop_0_' + LinkStatus.Revert.description + '" value=' + LinkStatus.Revert.description + ' ' + defineOptionModifiers(LinkStatus.Revert.description, selected) + '>' + LinkStatus.Revert.displayText +'</option>' +
         '</select>' +
         '</div>' +
         formCommon.newRoadAddressInfo(project, selected, selectedProjectLink, road) +
@@ -295,9 +295,17 @@
           removeNumberingFromDropdown();
         }
         disableFormInputs();
-        var selectedDiscontinuity = _.maxBy(selectedProjectLink, function (projectLink) {
-          return projectLink.endAddressM;
-        }).discontinuity;
+        const projectLinkMaxByEndAddressM = _.maxBy(selectedProjectLink, function (projectLink) {
+              return projectLink.endAddressM;
+          });
+          // If there are non-calculated new links, display the lowest value of discontinuity in selection (i.e. the most significant).
+        var selectedDiscontinuity;
+        if (projectLinkMaxByEndAddressM.endAddressM === 0) {
+            selectedDiscontinuity = _.minBy(selectedProjectLink, function (projectLink) {
+                return projectLink.discontinuity;
+            }).discontinuity;
+        } else
+            selectedDiscontinuity = projectLinkMaxByEndAddressM.discontinuity;
         $('#discontinuityDropdown').val(selectedDiscontinuity.toString());
       }
 
@@ -346,6 +354,8 @@
           formCommon.setDisabledAndTitleAttributesById("recalculate-button", false, "");
           formCommon.setInformationContent();
           formCommon.setInformationContentText("Päivitä etäisyyslukemat jatkaaksesi projektia.");
+        } else {
+          projectCollection.setAndWriteProjectErrorsToUser(projectErrors);
         }
         formCommon.toggleAdditionalControls();
         // changes made to project links, set recalculated flag to false
@@ -644,17 +654,32 @@
         var currentProject = projectCollection.getCurrentProject();
         // add spinner
         applicationModel.addSpinner();
+
+        $('.validation-warning').remove();
         // fire backend call to recalculate and validate the current project with the project id
         backend.recalculateAndValidateProject(currentProject.project.id, function (response) {
           // if recalculation and validation did not throw exceptions in the backend
           if (response.success) {
-            // set project errors that were returned by the backend validations
-            projectCollection.setProjectErrors(response.validationErrors);
+
+              const trackGeometryLengthDeviationErrorCode = 38;
+              if (response.validationErrors.filter((error) => error.errorCode === trackGeometryLengthDeviationErrorCode).length > 0) {
+                  const trackGeometryLengthDeviationError = response.validationErrors.filter((error) => error.errorCode === trackGeometryLengthDeviationErrorCode)[0];
+                      // "Ajoratojen geometriapituuksissa yli 20% poikkeama."
+                  new GenericConfirmPopup(trackGeometryLengthDeviationError.errorMessage, {
+                      type: "alert"
+                  });
+                  $('.form,.form-horizontal,.form-dark').append('<label class="validation-warning">' +trackGeometryLengthDeviationError.errorMessage + "<br> LinkId: " + trackGeometryLengthDeviationError.info + '</label>');
+                  response.validationErrors = response.validationErrors.filter((error) => error.errorCode !== trackGeometryLengthDeviationErrorCode);
+              }
+
+            // set project errors that were returned by the backend validations and write them to user (removes the spinner also)
+            projectCollection.setAndWriteProjectErrorsToUser(response.validationErrors);
+
             if (Object.keys(response.validationErrors).length === 0) {
               // if no validation errors are present, show changes button and remove title
               formCommon.setDisabledAndTitleAttributesById("changes-button", false, "");
             }
-            // fetch the recalculated project links and redraw map (this also writes the validation errors on the screen and removes the spinner)
+            // fetch the recalculated project links and redraw map
             projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), zoomlevels.getViewZoom(map) + 1, currentProject.project.id, projectCollection.getPublishableStatus());
             // disable recalculate button after recalculation is done
             formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Etäisyyslukemat on päivitetty");
@@ -662,7 +687,10 @@
             eventbus.trigger('roadAddressProject:setRecalculatedAfterChangesFlag', true);
           }
           // if something went wrong during recalculation or validation, show error to user
-          else {
+          else if (response.prototype.hasOwnProperty('validationErrors') && !_.isEmpty(response.validationErrors)) {
+              // set project errors that were returned by the backend validations and write them to user (removes the spinner also)
+              projectCollection.setAndWriteProjectErrorsToUser(response.validationErrors);
+          } else {
             new ModalConfirm(response.errorMessage);
             applicationModel.removeSpinner();
           }
@@ -701,12 +729,21 @@
         editedNameByUser = $('#roadName').val !== '';
       });
 
+      // show project errors' link id list in a popup window
+      rootElement.on('click', '.linkIdList', function (event) {
+        const error = projectCollection.getProjectErrors()[event.currentTarget.id];
+        if (error.linkIds.length > 0) {
+          const linkIdsText = error.linkIds.join(', ');
+          GenericConfirmPopup(linkIdsText, {type: "alert"});
+        }
+      });
+
       rootElement.on('click', '.projectErrorButton', function (event) {
         var error = projectCollection.getProjectErrors()[event.currentTarget.id];
         var roadPartErrors = [
-          LinkValues.ProjectError.TerminationContinuity.value,
-          LinkValues.ProjectError.DoubleEndOfRoad.value,
-          LinkValues.ProjectError.RoadNotReserved.value
+          ViiteEnumerations.ProjectError.TerminationContinuity.value,
+          ViiteEnumerations.ProjectError.DoubleEndOfRoad.value,
+          ViiteEnumerations.ProjectError.RoadNotReserved.value
         ];
         if (_.includes(roadPartErrors, error.errorCode)) {
           var attributeElement = $('#feature-attributes');

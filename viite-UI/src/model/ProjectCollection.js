@@ -13,9 +13,9 @@
     var dirtyProjectLinkIds = [];
     var dirtyProjectLinks = [];
     var publishableProject = false;
-    var LinkStatus = LinkValues.LinkStatus;
-    var ProjectStatus = LinkValues.ProjectStatus;
-    var Track = LinkValues.Track;
+    var LinkStatus = ViiteEnumerations.LinkStatus;
+    var ProjectStatus = ViiteEnumerations.ProjectStatus;
+    var Track = ViiteEnumerations.Track;
     var BAD_REQUEST_400 = 400;
     var PRECONDITION_FAILED_412 = 412;
     var INTERNAL_SERVER_ERROR_500 = 500;
@@ -88,7 +88,7 @@
         publishableProject = isPublishable;
 
         eventbus.trigger('roadAddressProject:fetched');
-        eventbus.trigger('roadAddressProject:writeProjectErrors');
+        applicationModel.removeSpinner();
       });
     };
 
@@ -107,7 +107,7 @@
           id: result.project.id,
           publishable: result.publishable
         };
-        me.setProjectErrors(result.projectErrors);
+        me.setAndWriteProjectErrorsToUser(result.projectErrors);
         me.setReservedParts(result.reservedInfo);
         me.setFormedParts(result.formedInfo);
         publishableProject = result.publishable;
@@ -191,7 +191,7 @@
             publishable: false
           };
           currentProject = result;
-          me.setProjectErrors(result.projectErrors);
+          me.setAndWriteProjectErrorsToUser(result.projectErrors);
           me.setReservedParts(result.reservedInfo);
           me.setFormedParts(result.formedInfo);
           eventbus.trigger('roadAddress:projectSaved', result);
@@ -220,7 +220,7 @@
           if (response.success) {
             dirtyProjectLinkIds = [];
             publishableProject = response.publishable;
-            me.setProjectErrors(response.projectErrors);
+            me.setAndWriteProjectErrorsToUser(response.projectErrors);
             me.setFormedParts(response.formedInfo);
             eventbus.trigger('projectLink:revertedChanges', response);
           } else {
@@ -234,7 +234,6 @@
       }
     };
 
-
     var createOrUpdate = function (dataJson) {
       if ((!_.isEmpty(dataJson.linkIds) || !_.isEmpty(dataJson.ids)) && typeof dataJson.projectId !== 'undefined' && dataJson.projectId !== 0) {
         if (dataJson.roadNumber !== 0 && dataJson.roadPartNumber !== 0) {
@@ -245,10 +244,13 @@
             backend.createProjectLinks(dataJson, function (successObject) {
               if (successObject.success) {
                 publishableProject = successObject.publishable;
-                me.setProjectErrors(successObject.projectErrors);
+                me.setAndWriteProjectErrorsToUser(successObject.projectErrors);
                 me.setFormedParts(successObject.formedInfo);
                 eventbus.trigger('projectLink:projectLinksCreateSuccess');
                 eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
+                if (successObject.errorMessage) {
+                  new ModalConfirm(successObject.errorMessage);
+                }
               } else {
                 new ModalConfirm(successObject.errorMessage);
                 applicationModel.removeSpinner();
@@ -258,7 +260,7 @@
             backend.updateProjectLinks(dataJson, function (successObject) {
               if (successObject.success) {
                 publishableProject = successObject.publishable;
-                me.setProjectErrors(successObject.projectErrors);
+                me.setAndWriteProjectErrorsToUser(successObject.projectErrors);
                 me.setFormedParts(successObject.formedInfo);
                 eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
               } else {
@@ -363,7 +365,6 @@
           },
           closeCallback: function () {
             applicationModel.removeSpinner();
-            eventbus.trigger('roadAddress:projectLinksUpdated');
           }
         });
       } else {
@@ -436,7 +437,7 @@
       resetEditedDistance();
       backend.directionChangeNewRoadlink(dataJson, function (successObject) {
         if (successObject.success) {
-          me.setProjectErrors(successObject.projectErrors);
+          me.setAndWriteProjectErrorsToUser(successObject.projectErrors);
           eventbus.trigger('changeProjectDirection:clicked');
         } else {
           eventbus.trigger('roadAddress:changeDirectionFailed', successObject.errorMessage);
@@ -544,6 +545,11 @@
       formedParts = list;
     };
 
+    this.setAndWriteProjectErrorsToUser = function (errors) {
+      me.setProjectErrors(errors);
+      eventbus.trigger('roadAddressProject:writeProjectErrors');
+    };
+
     this.setProjectErrors = function (errors) {
       projectErrors = errors;
     };
@@ -556,9 +562,6 @@
       var errors = _.each(projectErrors, function (error) {
         var errorIds = error.ids;
         error.linkIds = [];
-        if (error.errorCode === 8) {
-          error.linkIds = error.ids;
-        }
         _.each(projectLinks(), function (pl) {
           if (_.includes(errorIds, pl.getData().id)) {
             error.linkIds.push(pl.getData().linkId);

@@ -51,10 +51,11 @@ class ComplementaryLinkDAO {
 
   private implicit val getRoadlink: GetResult[RoadLink] = new GetResult[RoadLink] {
     def apply(r: PositionedResult): RoadLink = {
-
+      val UnknownMunicipality = -1
       val linkId = r.nextString()
       val administrativeClass = AdministrativeClass(r.nextInt())
-      val municipalityCode = r.nextInt()
+      val municipalityCodeOption = r.nextIntOption()
+      val municipalityCode = if (municipalityCodeOption.isEmpty) UnknownMunicipality else municipalityCodeOption.get
       val lifecycleStatus = LifecycleStatus(r.nextInt())
       val length = r.nextDouble()
       val modifiedAt = extractModifiedAt(Map(
@@ -78,10 +79,14 @@ class ComplementaryLinkDAO {
   }
 
   def fetchByLinkIds(linkIds: Set[String]): List[RoadLink] = {
-    time(logger, "Fetch complementary data by linkIds") {
-      val sql = s"""$selectFromComplementaryLink WHERE id IN (${linkIds.map(lid => "'" + lid + "'").mkString(", ")})"""
-      withDynTransaction(Q.queryNA[RoadLink](sql).list)
-    }
+    if (linkIds.nonEmpty) {
+      time(logger, "Fetch complementary data by linkIds") {
+        val sql = s"""$selectFromComplementaryLink WHERE id IN (${linkIds.map(lid => {
+          "'" + lid + "'"
+        }).mkString(", ")})"""
+        withDynTransaction(Q.queryNA[RoadLink](sql).list)
+      }
+    } else List()
   }
 
   def fetchByLinkIdsF(linkIds: Set[String]): Future[Seq[RoadLink]] = {

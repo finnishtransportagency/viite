@@ -4,20 +4,24 @@ import fi.liikennevirasto.digiroad2.linearasset.PolyLine
 
 object GeometryUtils {
 
-  // Default value of minimum distance where locations are considered to be same
+  /** Default value of minimum distance where locations are considered to be same */
   final private val DefaultEpsilon = 0.01
+  /** If links are more than <i>MaxDistanceForConnectedLinks</i> apart, they are considered to being disconnected. */
   val MaxDistanceForConnectedLinks = 0.1
 
+  /** @return the first, and the last point of the given <i>geometry</i> as a tuple. */
   def geometryEndpoints(geometry: Seq[Point]): (Point, Point) = {
     val firstPoint: Point = geometry.head
     val lastPoint: Point = geometry.last
     (firstPoint, lastPoint)
   }
 
+  /** @return the first, and the last point of the given <i>geometry</i> as a sequence. */
   def geometrySeqEndPoints(geometry: Seq[Point]): Seq[Point] = {
     Seq(geometry.head, geometry.last)
   }
 
+  /** @return True/False, whether the <i>measure</i> lies within the <i>interval</i>. */
   private def liesInBetween(measure: Double, interval: (Double, Double)): Boolean = {
     measure >= interval._1 && measure <= interval._2
   }
@@ -108,6 +112,8 @@ object GeometryUtils {
     }
   }
 
+  /** TODO
+   * <i>geometry</i> with less than two points is seen as being of length 0.0. */
   def geometryLength(geometry: Seq[Point]): Double = {
     case class AlgorithmState(previousPoint: Point, length: Double)
     if (geometry.size < 2) { 0.0 }
@@ -119,10 +125,12 @@ object GeometryUtils {
     }
   }
 
+  /** Returns a point that resembles the given <i>p</i>, but with z = 0.0.  */
   def to2DGeometry(p: Point): Point = {
     p.copy(z = 0.0)
   }
 
+  /** Returns a geometry that resembles the given <i>geom</i>, but with all z's as 0.0.  */
   def to2DGeometry(geom: Seq[Point]): Seq[Point] = {
     geom.map(p => p.copy(z = 0.0))
   }
@@ -181,10 +189,14 @@ object GeometryUtils {
       withinTolerance(GeometryUtils.geometryEndpoints(geometry1), GeometryUtils.geometryEndpoints(geometry2), maxDistanceDiffAllowed))
   }
 
+  /** @return True, if 2D distance of <i>point1</i>, and <i>point2</i> is smaller than <i>[[GeometryUtils.DefaultEpsilon]]</i>.
+   *          False else. */
   def areAdjacent(point1: Point, point2: Point): Boolean = {
     areAdjacent(point1, point2, DefaultEpsilon)
   }
 
+  /** @return True, if 2D distance of <i>point1</i>, and <i>point2</i> is smaller than <i>epsilon</i>.
+   *          False else. */
   def areAdjacent(point1: Point, point2: Point, epsilon: Double): Boolean = {
     point1.distance2DTo(point2) < epsilon
   }
@@ -422,34 +434,39 @@ object GeometryUtils {
     overlapAmount(firstPoint, lastPoint) >= 0.95
   }
 
-  case class Projection(oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, vvhTimeStamp: Long)
+  case class Projection(oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, timeStamp: Long)
 
+  /** @return The <i>value</i> as a three decimal version.
+   *          Uses normal mathematical rounding: <.5 truncates, >=.5 is rounded up. */
   def scaleToThreeDigits(value: Double): Double = {
     BigDecimal(value).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
   }
 
-  def moveGeomToOrigin(geom: Seq[Point]): Seq[Point] = {
+/** Moves <i>geom</i> to origin so, that*/
+  /*def moveGeomToOrigin(geom: Seq[Point]): Seq[Point] = {
     moveGeomToPoint(geom, Point(0.0, 0.0))
-  }
+  }*/
 
-  def moveGeomToPoint(geom: Seq[Point], referencePoint: Point): Seq[Point] = {
-    val sourcePoint = geom.minBy(p => p.distance2DTo(referencePoint))
-    geom.map(p => p.minus(sourcePoint))
-  }
+  /** Moves <i>geom</i> ALWAYS TO ORIGIN! FAULTY ALGORITHM! */
+  /*def moveGeomToPoint(geom: Seq[Point], referencePoint: Point): Seq[Point] = {
+    val closestPoint: Point = geom.minBy(p => p.distance2DTo(referencePoint))
+    val moveVector: Vector3d = referencePoint-closestPoint
+    geom.map(p => p.minus(moveVector))
+  }*/
 
-  /**
+  /* *
     * Measure summed distance between two geometries: head-to-head + tail-to-head vs. head-to-tail + tail-to-head
     * The measurement is taken after the geometries are reduced to the origin point.
     * @param geom1 Geometry 1
     * @param geom2 Goemetry 2
     * @return h2h distance, h2t distance sums
     */
-  def distancesBetweenEndPointsInOrigin(geom1: Seq[Point], geom2: Seq[Point]): (Double, Double) = {
+  /*def distancesBetweenEndPointsInOrigin(geom1: Seq[Point], geom2: Seq[Point]): (Double, Double) = {
     val movedGeom1 = GeometryUtils.moveGeomToOrigin(geom1)
     val movedGeom2 = GeometryUtils.moveGeomToOrigin(geom2)
     (movedGeom1.head.distance2DTo(movedGeom2.head) + movedGeom1.last.distance2DTo(movedGeom2.last),
       movedGeom1.last.distance2DTo(movedGeom2.head) + movedGeom1.head.distance2DTo(movedGeom2.last))
-  }
+  }*/
 
   /**
     * Check if geometry is towards digitisation.

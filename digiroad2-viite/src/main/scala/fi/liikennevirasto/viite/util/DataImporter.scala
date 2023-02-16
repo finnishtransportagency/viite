@@ -108,7 +108,7 @@ class DataImporter {
 
   def importRoadAddresses(importTableName: Option[String]): Unit = {
     println(s"\nCommencing road address import from conversion at time: ${DateTime.now()}")
-    val vvhClient = new KgvRoadLink
+    val KGVClient = new KgvRoadLink
     importTableName match {
       case None => // shouldn't get here because args size test
         throw new Exception("****** Import failed! Conversion table name required as a second input ******")
@@ -118,12 +118,12 @@ class DataImporter {
           useFrozenLinkService = geometryFrozen,
           tableName,
           onlyCurrentRoads = ViiteProperties.importOnlyCurrent)
-        importRoadAddressData(Conversion.database(), vvhClient, importOptions)
+        importRoadAddressData(Conversion.database(), KGVClient, importOptions)
         println(s"Road address import complete at time: ${DateTime.now()}")
     }
   }
 
-  def importRoadAddressData(conversionDatabase: JdbcDriver.backend.DatabaseDef, vvhClient: KgvRoadLink, importOptions: ImportOptions): Unit = {
+  def importRoadAddressData(conversionDatabase: JdbcDriver.backend.DatabaseDef, KGVClient: KgvRoadLink, importOptions: ImportOptions): Unit = {
 
     println(s"\nimportRoadAddressData    started at time:  ${DateTime.now()}")
     withDynTransaction {
@@ -152,10 +152,15 @@ class DataImporter {
       sqlu"""DELETE FROM ROADWAY_CHANGES WHERE project_id NOT IN (SELECT id FROM PROJECT)""".execute
       println(s"  Deleting ROAD_NETWORK_ERRORs            started at time: ${DateTime.now()}")
       sqlu"""DELETE FROM ROAD_NETWORK_ERROR""".execute
+
+      /* todo ("Table published_roadwayis no longer in use, and is empty.") */
       println(s"  Deleting PUBLISHED_ROADWAYs           started at time: ${DateTime.now()}")
       sqlu"""DELETE FROM PUBLISHED_ROADWAY""".execute
+
+      /* todo ("Table published_road_network is no longer in use, and is empty.") */
       println(s"  Deleting PUBLISHED_ROAD_NETWORKs    started at time: ${DateTime.now()}")
       sqlu"""DELETE FROM PUBLISHED_ROAD_NETWORK""".execute
+
       println(s"  Deleting LINEAR_LOCATIONs         started at time: ${DateTime.now()}")
       sqlu"""DELETE FROM LINEAR_LOCATION""".execute
       println(s"  Deleting CALIBRATION_POINTs     started at time: ${DateTime.now()}")
@@ -178,7 +183,7 @@ class DataImporter {
       resetRoadAddressSequences()
 
       println(s"${DateTime.now()} - Old address data removed")
-      val roadAddressImporter = getRoadAddressImporter(conversionDatabase, vvhClient, importOptions)
+      val roadAddressImporter = getRoadAddressImporter(conversionDatabase, KGVClient, importOptions)
       roadAddressImporter.importRoadAddress()
 
       println(s"\n${DateTime.now()} - Updating terminated roadways information")
@@ -239,7 +244,10 @@ class DataImporter {
     sequenceResetter.resetSequenceToNumber("PROJECT_LINK_NAME_SEQ", 1)
     sequenceResetter.resetSequenceToNumber("ROADWAY_CHANGE_LINK", 1)
     sequenceResetter.resetSequenceToNumber("ROAD_NETWORK_ERROR_SEQ", 1)
+
+    //@deprecated ("Table published_road_network is no longer in use, and is empty.")
     sequenceResetter.resetSequenceToNumber("PUBLISHED_ROAD_NETWORK_SEQ", 1)
+
     sequenceResetter.resetSequenceToNumber("LINEAR_LOCATION_SEQ", 1)
     sequenceResetter.resetSequenceToNumber("CALIBRATION_POINT_SEQ", 1)
     sequenceResetter.resetSequenceToNumber("ROADWAY_POINT_SEQ", 1)
@@ -293,8 +301,8 @@ class DataImporter {
 
   def updateLinearLocationGeometry(): Unit = {
     println(s"\nUpdating road address table geometries at time: ${DateTime.now()}")
-    val vvhClient = new KgvRoadLink
-    updateLinearLocationGeometry(vvhClient, geometryFrozen)
+    val KGVClient = new KgvRoadLink
+    updateLinearLocationGeometry(KGVClient, geometryFrozen)
     println(s"Road addresses geometry update complete at time: ${DateTime.now()}")
     println()
   }
@@ -319,8 +327,8 @@ class DataImporter {
     }
   }
 
-  protected def getRoadAddressImporter(conversionDatabase: driver.JdbcDriver.backend.DatabaseDef, vvhClient: KgvRoadLink, importOptions: ImportOptions): RoadAddressImporter = {
-    new RoadAddressImporter(conversionDatabase, vvhClient, importOptions)
+  protected def getRoadAddressImporter(conversionDatabase: driver.JdbcDriver.backend.DatabaseDef, KGVClient: KgvRoadLink, importOptions: ImportOptions): RoadAddressImporter = {
+    new RoadAddressImporter(conversionDatabase, KGVClient, importOptions)
   }
 
   protected def getNodeImporter(conversionDatabase: DatabaseDef) : NodeImporter = {
@@ -357,24 +365,24 @@ class DataImporter {
 
   protected def fetchGroupedLinkIds: Seq[Set[String]] = {
     val linkIds = sql"""select distinct link_id from linear_location where link_id is not null order by link_id""".as[String].list
-    linkIds.toSet.grouped(25000).asInstanceOf[Seq[Set[String]]]
+    linkIds.toSet.grouped(25000).asInstanceOf[Iterator[Set[String]]].toSeq
   }
 
 
-  private def updateLinearLocationGeometry(vvhClient: KgvRoadLink, geometryFrozen: Boolean): Unit = {
+  private def updateLinearLocationGeometry(KGVClient: KgvRoadLink, geometryFrozen: Boolean): Unit = {
     val eventBus = new DummyEventBus
     val linearLocationDAO = new LinearLocationDAO
-    val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer, geometryFrozen)
+    val linkService = new RoadLinkService(KGVClient, eventBus, new DummySerializer, geometryFrozen)
     var changed = 0
     var skipped = 0 /// For log information about update-skipped linear locations, skip due to sameness to the old data
     val linkIds = withDynSession{ fetchGroupedLinkIds }
     linkIds.par.foreach {
       case linkIds =>
         withDynTransaction {
-          val roadLinksFromVVH = linkService.getCurrentAndComplementaryRoadLinks(linkIds)
-          val unGroupedTopology = linearLocationDAO.fetchByLinkId(roadLinksFromVVH.map(_.linkId).toSet)
+          val roadLinksFromKGV = linkService.getCurrentAndComplementaryRoadLinks(linkIds)
+          val unGroupedTopology = linearLocationDAO.fetchByLinkId(roadLinksFromKGV.map(_.linkId).toSet)
           val topologyLocation = unGroupedTopology.groupBy(_.linkId)
-          roadLinksFromVVH.foreach(roadLink => {
+          roadLinksFromKGV.foreach(roadLink => {
             val segmentsOnViiteDatabase = topologyLocation.getOrElse(roadLink.linkId, Set())
             segmentsOnViiteDatabase.foreach(segment => {
               val newGeom = GeometryUtils.truncateGeometry3D(roadLink.geometry, segment.startMValue, segment.endMValue)

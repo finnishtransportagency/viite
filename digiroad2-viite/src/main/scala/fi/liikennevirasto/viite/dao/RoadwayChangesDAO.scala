@@ -76,9 +76,21 @@ case class ChangeTableRows(adjustedSections: Iterable[((RoadwaySection, RoadwayS
 case class ChangeTableRows2(adjustedSections: Iterable[RoadwaySection], originalSections: Iterable[RoadwaySection])
 case class ChangeTableRows3(terminatedSections: Iterable[RoadwaySection])
 
-case class RoadwayChangesInfo(roadwayChangeId: Long, startDate: DateTime, validFrom: DateTime, change_type: Long, reversed: Long,
+case class RoadwayChangesInfo(roadwayChangeId: Long, startDate: DateTime, acceptedDate: DateTime, change_type: Long, reversed: Long,
                               old_road_number: Long, old_road_part_number: Long, old_TRACK: Long, old_start_addr_m: Long, old_end_addr_m: Long, old_discontinuity: Long, old_administrative_class: Long, old_ely: Long,
                               new_road_number: Long, new_road_part_number: Long, new_TRACK: Long, new_start_addr_m: Long, new_end_addr_m: Long, new_discontinuity: Long, new_administrative_class: Long, new_ely: Long)
+
+case class OldRoadAddress(ely: Long, roadNumber: Option[Long], track: Option[Long], roadPartNumber: Option[Long],
+                          startAddrM: Option[Long], endAddrM: Option[Long], length: Option[Long], administrativeClass: Long)
+
+case class NewRoadAddress(ely: Long, roadNumber: Long, track: Long, roadPartNumber: Long, startAddrM: Long,
+                          endAddrM: Long, length: Long, administrativeClass: Long)
+
+case class ChangeInfoForRoadAddressChangesBrowser(startDate: DateTime, changeType: Long, reversed: Long, roadName: Option[String], projectName: String,
+                                                  projectAcceptedDate: DateTime,oldRoadAddress: OldRoadAddress, newRoadAddress: NewRoadAddress)
+
+
+
 
 class RoadwayChangesDAO {
   val formatter: DateTimeFormatter = ISODateTimeFormat.dateOptionalTimeParser()
@@ -404,24 +416,14 @@ class RoadwayChangesDAO {
 
   // This query should return changes in roadway_change table
   // Query should return information also about terminated roads
-  def fetchRoadwayChangesInfo(startValidFromDate: DateTime, endValidFromDate: Option[DateTime]): Seq[RoadwayChangesInfo] = {
-    val untilString = if (endValidFromDate.nonEmpty) s"AND R.VALID_FROM <= to_timestamp('${new Timestamp(endValidFromDate.get.getMillis)}', 'YYYY-MM-DD HH24:MI:SS.FF')" else s""
+  def fetchRoadwayChangesInfo(sinceAcceptedDate: DateTime, untilAcceptedDate: Option[DateTime]): Seq[RoadwayChangesInfo] = {
+    val untilString = if (untilAcceptedDate.nonEmpty) s"AND P.ACCEPTED_DATE <= to_timestamp('${new Timestamp(untilAcceptedDate.get.getMillis)}', 'YYYY-MM-DD HH24:MI:SS.FF')" else s""
     val query =
       s"""
-WITH ROADWAYS AS (
-SELECT R.ROAD_NUMBER ,R.ROAD_PART_NUMBER ,
-NULLIF(MAX(COALESCE(END_DATE, TO_DATE('9999', 'yyyy'))),TO_DATE('9999', 'yyyy')) AS END_DATE,
-MAX(VALID_FROM) AS VALID_FROM
-   FROM ROADWAY R
-        WHERE R.VALID_FROM >= to_timestamp('${new Timestamp(startValidFromDate.getMillis)}', 'YYYY-MM-DD HH24:MI:SS.FF')
-        $untilString
-        AND R.VALID_TO IS NULL
-        GROUP BY R.ROAD_NUMBER ,R.ROAD_PART_NUMBER
-)
 SELECT
       RC.ROADWAY_CHANGE_ID
     , P.START_DATE
-    , R.VALID_FROM
+    , P.ACCEPTED_DATE
     , RC.change_type
     , RC.reversed
     , RC.old_road_number
@@ -441,15 +443,12 @@ SELECT
     , RC.new_administrative_class
     , RC.new_ely
     FROM ROADWAY_CHANGES RC
-      INNER JOIN ROADWAYS R
-        ON ((R.ROAD_NUMBER = RC.NEW_ROAD_NUMBER
-             AND R.ROAD_PART_NUMBER = RC.NEW_ROAD_PART_NUMBER) OR
-            (R.ROAD_NUMBER = RC.OLD_ROAD_NUMBER
-             AND R.ROAD_PART_NUMBER = RC.OLD_ROAD_PART_NUMBER)
-            )
       INNER JOIN PROJECT P
         ON P.ID = RC.PROJECT_ID
-        ORDER BY R.VALID_FROM, RC.ROADWAY_CHANGE_ID
+    WHERE P.STATE=${ProjectState.Accepted.value}
+        AND P.ACCEPTED_DATE >= to_timestamp('${new Timestamp(sinceAcceptedDate.getMillis)}', 'YYYY-MM-DD HH24:MI:SS.FF')
+        $untilString
+        ORDER BY P.ACCEPTED_DATE, RC.ROADWAY_CHANGE_ID
      """
 
     Q.queryNA[RoadwayChangesInfo](query).iterator.toSeq
@@ -460,7 +459,7 @@ SELECT
 
       val roadwayChangeId = r.nextLong()
       val startDate = new DateTime(r.nextTimestamp())
-      val validFrom = new DateTime(r.nextTimestamp())
+      val acceptedDate = new DateTime(r.nextTimestamp())
       val change_type = r.nextLong()
       val reversed = r.nextLong()
       val old_road_number = r.nextLong()
@@ -480,10 +479,134 @@ SELECT
       val new_administrative_class = r.nextLong()
       val new_ely = r.nextLong()
 
-      RoadwayChangesInfo(roadwayChangeId, startDate, validFrom, change_type, reversed,
+      RoadwayChangesInfo(roadwayChangeId, startDate, acceptedDate, change_type, reversed,
         old_road_number, old_road_part_number, old_TRACK, old_start_addr_m, old_end_addr_m, old_discontinuity, old_administrative_class, old_ely,
         new_road_number, new_road_part_number, new_TRACK, new_start_addr_m, new_end_addr_m, new_discontinuity, new_administrative_class, new_ely)
     }
+  }
+
+  private implicit val getChangeInfoForRoadAddressChangesBrowser: GetResult[ChangeInfoForRoadAddressChangesBrowser] = new GetResult[ChangeInfoForRoadAddressChangesBrowser] {
+    def apply(r: PositionedResult): ChangeInfoForRoadAddressChangesBrowser = {
+
+      val startDate = new DateTime(r.nextTimestamp())
+      val changeType = r.nextLong()
+      val reversed = r.nextLong()
+      val roadName = r.nextStringOption()
+      val projectName = r.nextString()
+      val projectAcceptedDate = new DateTime(r.nextTimestamp())
+      val oldEly = r.nextLong()
+      val oldRoadNumber = r.nextLongOption()
+      val oldTrack = r.nextLongOption()
+      val oldRoadPartNumber = r.nextLongOption()
+      val oldStartAddrM = r.nextLongOption()
+      val oldEndAddrM = r.nextLongOption()
+      val oldLength = r.nextLongOption()
+      val oldAdministrativeClass = r.nextLong()
+      val newEly = r.nextLong()
+      val newRoadNumber = r.nextLong()
+      val newTrack = r.nextLong()
+      val newRoadPartNumber = r.nextLong()
+      val newStartAddrM = r.nextLong()
+      val newEndAddrM = r.nextLong()
+      val newLength = r.nextLong()
+      val newAdministrativeClass = r.nextLong()
+
+      val oldRoadAddress = OldRoadAddress(oldEly, oldRoadNumber, oldTrack, oldRoadPartNumber, oldStartAddrM, oldEndAddrM, oldLength, oldAdministrativeClass)
+      val newRoadAddress = NewRoadAddress(newEly, newRoadNumber, newTrack, newRoadPartNumber, newStartAddrM, newEndAddrM, newLength, newAdministrativeClass)
+
+      ChangeInfoForRoadAddressChangesBrowser(startDate, changeType, reversed, roadName, projectName: String, projectAcceptedDate, oldRoadAddress, newRoadAddress)
+    }
+  }
+
+  def fetchChangeInfosForRoadAddressChangesBrowser(startDate: Option[String], endDate: Option[String], dateTarget: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[ChangeInfoForRoadAddressChangesBrowser] = {
+    def withOptionalParameters(startDate: Option[String], endDate: Option[String], dateTarget: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long])(query: String): String  = {
+      val targetDate = {
+        if (dateTarget.isDefined) {
+          if (dateTarget.get == "ProjectAcceptedDate")
+            "p.accepted_date"
+          else if (dateTarget.get == "RoadAddressStartDate")
+            "p.start_date"
+        }
+      }
+
+      val startDateCondition = targetDate + " >='" + startDate.get + "'"
+
+      val endDateCondition = {
+        if (endDate.nonEmpty)
+          "AND " + targetDate + " <='" + endDate.get + "'"
+        else
+          ""
+      }
+
+      val elyCondition = {
+        if (ely.nonEmpty)
+          s" AND (rc.new_ely = ${ely.get} OR rc.old_ely = ${ely.get})"
+        else
+          ""
+      }
+
+      val roadNumberCondition = {
+        if (roadNumber.nonEmpty)
+          s" AND (rc.new_road_number = ${roadNumber.get} OR rc.old_road_number = ${roadNumber.get})"
+        else
+          ""
+      }
+
+      val roadPartCondition = {
+        val parts = (minRoadPartNumber, maxRoadPartNumber)
+        parts match {
+          case (Some(minPart), Some(maxPart)) => s"AND (rc.new_road_part_number BETWEEN $minPart AND $maxPart OR rc.old_road_part_number BETWEEN $minPart AND $maxPart)"
+          case (None, Some(maxPart)) => s"AND (rc.new_road_part_number <= $maxPart OR rc.old_road_part_number <= $maxPart)"
+          case (Some(minPart), None) => s"AND (rc.new_road_part_number >= $minPart OR rc.old_road_part_number >= $minPart)"
+          case _ => ""
+        }
+      }
+
+      s"""$query
+         |WHERE $startDateCondition $endDateCondition $elyCondition $roadNumberCondition $roadPartCondition
+         |ORDER BY p.id, new_road_number, new_road_part_number, new_start_addr_m, new_track
+         |""".stripMargin
+    }
+
+    def fetchChangeInfos(queryFilter: String => String): Seq[ChangeInfoForRoadAddressChangesBrowser] = {
+      val query ="""SELECT
+                   |	p.start_date,
+                   |	change_type,
+                   |	reversed,
+                   |	rn.road_name,
+                   |	p.name,
+                   |	p.accepted_date,
+                   |	old_ely,
+                   |	old_road_number,
+                   |	old_track,
+                   |	old_road_part_number,
+                   |	old_start_addr_m,
+                   |	old_end_addr_m,
+                   |	old_end_addr_m - old_start_addr_m,
+                   |	old_administrative_class,
+                   |	new_ely,
+                   |	new_road_number,
+                   |	new_track,
+                   |	new_road_part_number,
+                   |	new_start_addr_m,
+                   |	new_end_addr_m,
+                   |	new_end_addr_m - new_start_addr_m,
+                   |	new_administrative_class
+                   |FROM roadway_changes rc
+                   |JOIN project p ON rc.project_id = p.id
+                   |-- Get the valid road name for the road that was modified in the project, prioritizing the new road number
+                   |LEFT JOIN road_name rn ON rn.road_number = coalesce(rc.new_road_number, rc.old_road_number)
+                   |  AND rn.valid_to IS NULL
+                   |  AND rn.start_date <= p.start_date
+                   |  -- End date should be null if the change is not a termination (5).
+                   |  -- If the road is terminated, the end date is the same as the end date of the road  (if the whole road was terminated in this project) or null if the start date of the road name start date is earlier than the start date of the project
+                   |  AND ((rc.change_type != 5 and rn.end_date IS null) OR (rc.change_type = 5 and (rn.end_date = (p.start_date - INTERVAL '1 DAY') or (rn.end_date is null and rn.start_date < p.start_date))))
+                   """.stripMargin
+      val filteredQuery = queryFilter(query)
+      Q.queryNA[ChangeInfoForRoadAddressChangesBrowser](filteredQuery).iterator.toSeq
+    }
+
+    fetchChangeInfos(withOptionalParameters(startDate, endDate, dateTarget, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber))
   }
 
 }

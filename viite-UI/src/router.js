@@ -26,7 +26,6 @@
         'linkProperty/mml/:mmlId': 'linkPropertyByMml',
         'linkProperty/mtkid/:mtkid': 'linkPropertyByMtk',
         'roadAddressProject/:projectId': 'roadAddressProject',
-        'historyLayer/:date': 'historyLayer',
         'node/nodePointTemplate/:id': 'nodePointTemplate',
         'node/junctionTemplate/:id': 'junctionTemplate'
       },
@@ -69,17 +68,6 @@
         eventbus.trigger('underConstructionProjectRoads:toggleVisibility', false);
         var parsedProjectId = parseInt(projectId);
         eventbus.trigger('roadAddressProject:startProject', parsedProjectId, true);
-      },
-
-      historyLayer: function (date) {
-        applicationModel.selectLayer('linkProperty');
-        var dateSeparated = date.split('-');
-        eventbus.trigger('underConstructionProjectRoads:toggleVisibility', false);
-        eventbus.trigger('underConstructionRoads:toggleVisibility', false);
-        $('.underconstruction-visible-wrapper').hide();
-        $('#toggleEditMode').hide();
-        $('#emptyFormDiv,#formProjectButton').hide();
-        eventbus.trigger('linkProperty:fetchHistoryLinks', dateSeparated);
       },
 
       nodePointTemplate: function (nodePointTemplateId) {

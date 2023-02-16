@@ -312,7 +312,7 @@ class LinearLocationDAO {
         return List()
       }
       if (linkIds.size > 1000 || filterIds.size > 1000) {
-        return fetchByLinkIdMassQuery(linkIds.map(lid => "'" + lid + "'")).filterNot(ra => filterIds.contains(ra.id))
+        return fetchByLinkIdMassQuery(linkIds).filterNot(ra => filterIds.contains(ra.id))
       }
       val linkIdsString = linkIds.map(lid => "'" + lid + "'").mkString(", ")
       val idFilter = if (filterIds.nonEmpty)
@@ -370,7 +370,7 @@ class LinearLocationDAO {
         return List()
       }
       if (linkIds.size > 1000) {
-        return fetchRoadwayByLinkIdMassQuery(linkIds.map(l => "'" + l + "'"))
+        return fetchRoadwayByLinkIdMassQuery(linkIds)
       }
       val linkIdsString = linkIds.map(l => "'" + l + "'").mkString(", ")
       val query =

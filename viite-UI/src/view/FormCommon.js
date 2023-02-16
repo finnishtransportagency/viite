@@ -1,9 +1,9 @@
 (function (root) {
   root.FormCommon = function (prefix) {
-    const Track = LinkValues.Track;
-    const RoadNameSource = LinkValues.RoadNameSource;
-    const editableStatus = LinkValues.ProjectStatus.Incomplete.value;
-    const AdministrativeClass = LinkValues.AdministrativeClass;
+    const Track = ViiteEnumerations.Track;
+    const RoadNameSource = ViiteEnumerations.RoadNameSource;
+    const editableStatus = ViiteEnumerations.ProjectStatus.Incomplete.value;
+    const AdministrativeClass = ViiteEnumerations.AdministrativeClass;
 
     const title = function (titleName) {
       const fixedTitle = titleName || "Uusi tieosoiteprojekti";
@@ -98,10 +98,11 @@
     const replaceAddressInfo = function (backend, selectedProjectLink, currentProjectId) {
       const roadNameField = $('#roadName');
       if (selectedProjectLink[0].roadNumber === 0 && selectedProjectLink[0].roadPartNumber === 0 && selectedProjectLink[0].trackCode === 99) {
-        backend.getNonOverridenVVHValuesForLink(selectedProjectLink[0].linkId, currentProjectId, function (response) {
+        backend.getPrefillValuesForLink(selectedProjectLink[0].linkId, currentProjectId, function (response) {
           if (response.success) {
             $('#tie').val(response.roadNumber);
             $('#osa').val(response.roadPartNumber);
+            $('#ely').val(response.ely);
             if (response.roadName !== '') {
               roadNameField.val(response.roadName);
               roadNameField.prop('disabled', response.roadNameSource === RoadNameSource.RoadAddressSource.value);
@@ -115,7 +116,7 @@
     };
 
     const administrativeClassLabel = function (administrativeClass) {
-      const administrativeClassInfo = _.find(LinkValues.AdministrativeClass, function (obj) {
+      const administrativeClassInfo = _.find(ViiteEnumerations.AdministrativeClass, function (obj) {
         return obj.value === administrativeClass;
       });
       return administrativeClassInfo.displayText;
@@ -196,7 +197,7 @@
     };
 
     const directionChangedInfo = function (selected, isPartialReversed) {
-      if (selected[0].status === LinkValues.LinkStatus.New.value) return '';
+      if (selected[0].status === ViiteEnumerations.LinkStatus.New.value) return '';
       if (isPartialReversed) {
         return '<label class="form-group">Osittain käännetty</label>';
       } else if (selected[0].reversed) {
@@ -344,6 +345,7 @@
 
     const getProjectErrors = function (projectErrors, links, projectCollection) {
       let buttonIndex = 0;
+      let errorIndex = 0;
       let errorLines = '';
       projectCollection.clearCoordinates();
       projectErrors.sort(function (a, b) {
@@ -358,13 +360,23 @@
           buttonIndex++;
         }
         errorLines += '<div class="form-project-errors-list' + (error.priority === 1 ? ' warning' : '') + '">' +
-          addSmallLabelTopped('LINKIDS: ') + ' ' + addSmallLabelWrapped(error.linkIds) + '</br>' +
           addSmallLabel('VIRHE: ') + ' ' + addSmallLabelLowercase((error.errorMessage ? error.errorMessage : 'N/A')) + '</br>' +
           addSmallLabel('INFO: ') + ' ' + addSmallLabelLowercase((error.info ? error.info : 'N/A')) + '</br>' +
-          (button.html ? button.html : '') + '</br> <hr class="horizontal-line"/>' +
-          '</div>';
+          (button.html ? button.html : '') +
+          addLinkIdListButton(errorIndex, error.linkIds) +
+          '</br> <hr class="horizontal-line"/>' +
+        '</div>';
+        errorIndex++;
       });
+
       return errorLines;
+    };
+
+    const addLinkIdListButton = function (errorIndex, linkIds) {
+      if (linkIds.length > 0)
+        return '<button id= "' + errorIndex + '" class="btn btn-primary linkIdList">Linkkien id:t</button>';
+      else
+        return '';
     };
 
     return {

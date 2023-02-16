@@ -270,9 +270,9 @@ class JunctionDAO extends BaseDAO {
     }
   }
 
-  def fetchJunctionsForRoadAddressBrowser(startDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[JunctionForRoadAddressBrowser] = {
-    def withOptionalParameters(startDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long])(query: String): String = {
-      val dateCondition = "AND rw.start_date <='" + startDate.get + "'"
+  def fetchJunctionsForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[JunctionForRoadAddressBrowser] = {
+    def withOptionalParameters(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long])(query: String): String = {
+      val dateCondition = "AND rw.start_date <='" + situationDate.get + "'"
 
       val elyCondition = {
         if (ely.nonEmpty)
@@ -318,7 +318,7 @@ class JunctionDAO extends BaseDAO {
       val filteredQuery = queryFilter(query)
       Q.queryNA[JunctionForRoadAddressBrowser](filteredQuery).iterator.toSeq
     }
-    fetchJunctions(withOptionalParameters(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber))
+    fetchJunctions(withOptionalParameters(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber))
   }
 
   def create(junctions: Iterable[Junction]): Seq[Long] = {

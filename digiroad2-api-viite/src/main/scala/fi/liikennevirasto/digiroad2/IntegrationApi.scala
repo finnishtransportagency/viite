@@ -91,7 +91,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
   get("/summary", operation(getRoadNetworkSummary)) {
     contentType = formats("json")
 
-    time(logger, s"Summary:  GET request for /summary") {
+    time(logger, s"Summary:  GET request for /summary", params=Some(params)) {
 
         try {
           val roadNetworkSummary = params.get("date") match {
@@ -210,7 +210,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
     contentType = formats("json")
     val sinceUnformatted = params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter")))
     val untilUnformatted = params.get("until")
-    time(logger, s"GET request for /roadnames/changes (since: $sinceUnformatted; until: $untilUnformatted)") {
+    time(logger, s"GET request for /roadnames/changes", params=Some(params)) {
       if (sinceUnformatted == "") {
         val message = "Since parameter is empty"
         logger.warn(message)
@@ -241,7 +241,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
   get("/roadway/changes", operation(getRoadwayChanges)) {
     contentType = formats("json")
     val sinceUnformatted = params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter")))
-    time(logger, s"GET request for /roadway/changes (since: $sinceUnformatted)") {
+    time(logger, s"GET request for /roadway/changes", params=Some(params)) {
       if (sinceUnformatted == "") {
         val message = "Since parameter is empty"
         logger.warn(message)
@@ -305,7 +305,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
     try {
       val since = parseIsoDate(params.get("since"))
       val until = parseIsoDate(params.get("until"))
-      time(logger, s"GET request for /roadway_changes/changes (since: $since, until: $until)") {
+      time(logger, s"GET request for /roadway_changes/changes", params=Some(params)) {
         roadwayChangesToApi(roadAddressService.fetchUpdatedRoadwayChanges(since.get, until))
       }
     } catch {
@@ -326,7 +326,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
           Map(
             "muutostunniste" -> roadwayChangesInfo.roadwayChangeId,
             "voimaantulopaiva" -> formatDateTimeToIsoString(Option(roadwayChangesInfo.startDate)),
-            "laatimisaika" -> formatDateTimeToIsoString(Option(roadwayChangesInfo.validFrom)),
+            "projektin_hyvaksymispaiva" -> formatDateTimeToIsoString(Option(roadwayChangesInfo.acceptedDate)),
             "muutostyyppi" -> roadwayChangesInfo.change_type,
             "kaannetty" -> roadwayChangesInfo.reversed,
             "lahde" ->
@@ -366,7 +366,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
   get("/linear_location/changes", operation(getLinearLocationChanges)) {
     contentType = formats("json")
     val sinceUnformatted = params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter")))
-    time(logger, s"GET request for /linear_location/changes (since: $sinceUnformatted)") {
+    time(logger, s"GET request for /linear_location/changes", params=Some(params)) {
       if (sinceUnformatted == "") {
         val message = "Since parameter is empty"
         logger.warn(message)
@@ -428,7 +428,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
     contentType = formats("json")
     val since = DateTime.parse(params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter"))))
     val untilUnformatted = params.get("until")
-    time(logger, s"GET request for /nodesAndJunctions (since: $since, until: $untilUnformatted)") {
+    time(logger, s"GET request for /nodesAndJunctions", params=Some(params)) {
       untilUnformatted match {
         case Some(u) => nodesAndJunctionsService.getNodesWithTimeInterval(since, Some(DateTime.parse(u))).map(node => nodeToApi(node))
         case _ => nodesAndJunctionsService.getNodesWithTimeInterval(since, None).map(node => nodeToApi(node))

@@ -35,7 +35,7 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
   val mockProjectService: ProjectService = MockitoSugar.mock[ProjectService]
   val mockRoadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockDefaultSectionCalculatorStrategy: DefaultSectionCalculatorStrategy = MockitoSugar.mock[DefaultSectionCalculatorStrategy]
-  val mockVVHClient: KgvRoadLink = MockitoSugar.mock[KgvRoadLink]
+  val mockKGVClient: KgvRoadLink = MockitoSugar.mock[KgvRoadLink]
   val mockRoadAddressService: RoadAddressService = MockitoSugar.mock[RoadAddressService]
   val mockRoadwayAddressMapper: RoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
   val mockNodesAndJunctionsService: NodesAndJunctionsService = MockitoSugar.mock[NodesAndJunctionsService]
@@ -73,14 +73,28 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
   }
   val roadAddressService_db: RoadAddressService = new RoadAddressService(mockRoadLinkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, roadwayAddressMapper, eventbus_db, true)
 
-  val projectService_db: ProjectService = new ProjectService(roadAddressService_db, mockRoadLinkService, nodesAndJunctionsService_db, roadwayDAO,
-    roadwayPointDAO, linearLocationDAO, projectDAO, projectLinkDAO,
-    nodeDAO, nodePointDAO, junctionPointDAO, projectReservedPartDAO, roadwayChangesDAO,
-    roadwayAddressMapper, eventbus_db, frozenTimeVVHAPIServiceEnabled = true){
-    override def withDynSession[T](f: => T): T = f
-
-    override def withDynTransaction[T](f: => T): T = f
-  }
+  val projectService_db: ProjectService =
+    new ProjectService(
+                        roadAddressService_db,
+                        mockRoadLinkService,
+                        nodesAndJunctionsService_db,
+                        roadwayDAO,
+                        roadwayPointDAO,
+                        linearLocationDAO,
+                        projectDAO,
+                        projectLinkDAO,
+                        nodeDAO,
+                        nodePointDAO,
+                        junctionPointDAO,
+                        projectReservedPartDAO,
+                        roadwayChangesDAO,
+                        roadwayAddressMapper,
+                        eventbus_db,
+                        frozenTimeAPIServiceEnabled = true
+                        ) {
+                            override def withDynSession[T](f: => T): T = f
+                            override def withDynTransaction[T](f: => T): T = f
+                          }
 
   /* ---db */
 

@@ -101,7 +101,7 @@
     var typeHasChanged = function (nodeType) {
       if (current.node.nodeNumber) {
         return nodeCollection.getNodeByNodeNumber(current.node.nodeNumber).type !== nodeType;
-      } else return LinkValues.NodeType.UnknownNodeType.value !== nodeType;
+      } else return ViiteEnumerations.NodeType.UnknownNodeType.value !== nodeType;
     };
 
     var getInitialStartDate = function () {
@@ -256,7 +256,7 @@
 
     var isObsoleteNode = function () {
       return _.isEmpty(current.node.junctions) && _.isEmpty(_.filter(current.node.nodePoints, function (np) {
-        return np.type !== LinkValues.NodePointType.CalculatedNodePoint.value;
+        return np.type !== ViiteEnumerations.NodePointType.CalculatedNodePoint.value;
       }));
     };
 

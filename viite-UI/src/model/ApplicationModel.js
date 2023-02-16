@@ -1,116 +1,100 @@
 (function (root) {
   root.ApplicationModel = function (models) {
-    var zoom = {
+    const zoom = {
       level: undefined
     };
-    var selectedLayer;
-    var selectedTool = LinkValues.Tool.Unknown.value;
-    var centerLonLat;
-    var minDirtyZoomLevel = zoomlevels.minZoomForRoadLinks;
-    var minEditModeZoomLevel = zoomlevels.minZoomForEditMode;
-    var readOnly = true;
-    var activeButtons = false;
-    var continueButton = false;
-    var openProject = false;
-    var projectButton = false;
-    var projectFeature;
-    var actionCalculating = 0;
-    var actionCalculated = 1;
-    var currentAction;
-    var selectionType = LinkValues.SelectionType.All;
-    var sessionUsername = '';
-    var sessionUserRoles = '';
-    var specialSelectionTypes = [LinkValues.SelectionType.Unknown.value];
+    const specialSelectionTypes = [ViiteEnumerations.SelectionType.Unknown.value];
+    const minEditModeZoomLevel = zoomlevels.minZoomForEditMode;
 
+    let selectedLayer;
+    let selectedTool = ViiteEnumerations.Tool.Unknown.value;
+    let centerLonLat;
+    let minDirtyZoomLevel = zoomlevels.minZoomForRoadLinks;
+    let readOnly = true;
+    let activeButtons = false;
+    let openProject = false;
+    let projectButton = false;
+    let projectFeature;
+    let currentAction;
+    let selectionType = ViiteEnumerations.SelectionType.All;
+    let sessionUsername = '';
+    let sessionUserRoles = '';
 
-    var getContinueButtons = function () {
-      return continueButton;
-    };
-
-    var getSelectionType = function () {
+    const getSelectionType = function () {
       return selectionType;
     };
 
-    var setSelectionType = function (type) {
+    const setSelectionType = function (type) {
       selectionType = type;
     };
 
-    var selectionTypeIs = function (type) {
+    const selectionTypeIs = function (type) {
       if (!_.isUndefined(selectionType.value) || !_.isUndefined(type.value))
         return selectionType.value === type.value;
       else
         return false;
     };
 
-    var setReadOnly = function (newState) {
+    const setReadOnly = function (newState) {
       if (readOnly !== newState) {
         readOnly = newState;
         setActiveButtons(false);
-        setSelectedTool(LinkValues.Tool.Default.value);
+        setSelectedTool(ViiteEnumerations.Tool.Default.value);
         eventbus.trigger('application:readOnly', newState);
       }
     };
 
-    var setActiveButtons = function (newState) {
+    const setActiveButtons = function (newState) {
       if (activeButtons !== newState) {
         activeButtons = newState;
         eventbus.trigger('application:activeButtons', newState);
       }
     };
 
-    var setProjectFeature = function (featureLinkID) {
+    const setProjectFeature = function (featureLinkID) {
       projectFeature = featureLinkID;
     };
 
-    var setProjectButton = function (newState) {
+    const setProjectButton = function (newState) {
       if (projectButton !== newState) {
         projectButton = newState;
       }
     };
 
-    var setOpenProject = function (newState) {
+    const setOpenProject = function (newState) {
       if (openProject !== newState) {
         openProject = newState;
       }
     };
 
-    var setContinueButton = function (newState) {
-      if (continueButton !== newState) {
-        continueButton = newState;
-        eventbus.trigger('application:pickActive', newState);
-      }
-    };
-
-    var administrativeClassShown = true;
-
-    var isDirty = function () {
+    const isDirty = function () {
       return _.some(models, function (model) {
         return model.isDirty();
       });
     };
 
-    var setZoomLevel = function (level) {
+    const setZoomLevel = function (level) {
       zoom.level = Math.round(level);
     };
 
-    var getZoomLevel = function () {
+    const getZoomLevel = function () {
       return zoom.level;
     };
 
-    var roadsVisibility = true;
+    let roadsVisibility = true;
 
     function toggleRoadVisibility() {
       roadsVisibility = !roadsVisibility;
     }
 
     function isSelectedTool(tool) {
-      var alias = _.has(LinkValues.Tool[selectedTool], 'alias') ? LinkValues.Tool[selectedTool].alias : [];
+      const alias = _.has(ViiteEnumerations.Tool[selectedTool], 'alias') ? ViiteEnumerations.Tool[selectedTool].alias : [];
       return tool === selectedTool || _.includes(alias, tool);
     }
 
     function setSelectedTool(tool) {
       if (isSelectedTool(tool)) {
-        selectedTool = LinkValues.Tool.Unknown.value;
+        selectedTool = ViiteEnumerations.Tool.Unknown.value;
         eventbus.trigger('tool:clear');
       } else {
         selectedTool = tool;
@@ -118,11 +102,11 @@
       eventbus.trigger('tool:changed', selectedTool);
     }
 
-    var getCurrentAction = function () {
+    const getCurrentAction = function () {
       return currentAction;
     };
 
-    var getUserGeoLocation = function () {
+    const getUserGeoLocation = function () {
       return {
         x: centerLonLat[0],
         y: centerLonLat[1],
@@ -130,11 +114,11 @@
       };
     };
 
-    var setCurrentAction = function (action) {
+    const setCurrentAction = function (action) {
       currentAction = action;
     };
 
-    var resetCurrentAction = function () {
+    const resetCurrentAction = function () {
       currentAction = null;
     };
 
@@ -142,7 +126,87 @@
       return spinnerEvent ? spinnerEvent : 'default-spinner';
     }
 
-    var addSpinner = function (spinnerEvent) {
+    const canZoomOutEditMode = function () {
+      return (zoom.level > minEditModeZoomLevel && !readOnly && activeButtons) || (!readOnly && !activeButtons) || (readOnly);
+    };
+
+    const canZoomOut = function () {
+      return !(isDirty() && (zoom.level <= minDirtyZoomLevel));
+    };
+
+    const isProjectOpen = function () {
+      return openProject;
+    };
+
+    const isProjectButton = function () {
+      return projectButton;
+    };
+
+    const isActiveButtons = function () {
+      return activeButtons;
+    };
+
+    const getSelectedTool = function () {
+      return selectedTool;
+    };
+
+    const getRoadVisibility = function () {
+      return roadsVisibility;
+    };
+
+    const setMinDirtyZoomLevel = function (level) {
+      minDirtyZoomLevel = level;
+    };
+
+    const getSelectedLayer = function () {
+      return selectedLayer;
+    };
+
+    const getProjectFeature = function () {
+      return projectFeature;
+    };
+
+    const isReadOnly = function () {
+      return readOnly;
+    };
+
+    const getCurrentLocation = function () {
+      return centerLonLat;
+    };
+
+    const getSessionUsername = function () {
+      return sessionUsername;
+    };
+
+    const selectLayer = function (layer, toggleStart, noSave) {
+      const tool = layer === 'node' ? ViiteEnumerations.Tool.Unknown.value : ViiteEnumerations.Tool.Default.value;
+      setSelectedTool(tool);
+      if (layer !== selectedLayer) {
+        const previouslySelectedLayer = selectedLayer;
+        selectedLayer = layer;
+        eventbus.trigger('layer:selected', layer, previouslySelectedLayer, toggleStart);
+      } else if (layer === 'linkProperty' && toggleStart) {
+        eventbus.trigger('roadLayer:toggleProjectSelectionInForm', layer, noSave);
+      }
+      const underConstructionVisibleCheckbox = $('#underConstructionVisibleCheckbox')[0];
+      if (layer !== selectedLayer || toggleStart) {
+        if (underConstructionVisibleCheckbox) {
+          $('#underConstructionVisibleCheckbox')[0].checked = true;
+          $('#underConstructionVisibleCheckbox')[0].disabled = false;
+        }
+        eventbus.trigger('underConstructionProjectRoads:toggleVisibility', true);
+      }
+      const unAddressedRoadsVisibleCheckbox = $('#unAddressedRoadsVisibleCheckbox')[0];
+      if (layer !== selectedLayer || toggleStart) {
+        if (unAddressedRoadsVisibleCheckbox) {
+          $('#unAddressedRoadsVisibleCheckbox')[0].checked = true;
+          $('#unAddressedRoadsVisibleCheckbox')[0].disabled = false;
+        }
+        eventbus.trigger('unAddressedRoadsProjectRoads:toggleVisibility', true);
+      }
+    };
+
+    const addSpinner = function (spinnerEvent) {
       jQuery('.container').append(
         $('<div></div>').addClass("spinner-overlay").addClass(spinnerClassName(spinnerEvent)).addClass("modal-overlay").append(
           $('<div></div>').addClass("spinner")
@@ -150,7 +214,7 @@
       );
     };
 
-    var removeSpinner = function (spinnerEvent) {
+    const removeSpinner = function (spinnerEvent) {
       jQuery('.spinner-overlay.' + spinnerClassName(spinnerEvent)).remove();
     };
 
@@ -159,124 +223,56 @@
       sessionUserRoles = userData.roles;
     });
 
+    const refreshMap = function (zoomLevel, bbox, center) {
+      const hasZoomLevelChanged = zoomLevel.level !== zoomLevel;
+      setZoomLevel(zoomLevel);
+      centerLonLat = center;
+      eventbus.trigger('map:refresh', {
+        selectedLayer: selectedLayer,
+        zoom: getZoomLevel(),
+        bbox: bbox,
+        center: center,
+        hasZoomLevelChanged: hasZoomLevelChanged
+      });
+    };
+
     return {
       getCurrentAction: getCurrentAction,
       setCurrentAction: setCurrentAction,
       resetCurrentAction: resetCurrentAction,
-      actionCalculating: actionCalculating,
-      actionCalculated: actionCalculated,
-      refreshMap: function (zoomLevel, bbox, center) {
-        var hasZoomLevelChanged = zoomLevel.level !== zoomLevel;
-        setZoomLevel(zoomLevel);
-        centerLonLat = center;
-        eventbus.trigger('map:refresh', {
-          selectedLayer: selectedLayer,
-          zoom: getZoomLevel(),
-          bbox: bbox,
-          center: center,
-          hasZoomLevelChanged: hasZoomLevelChanged
-        });
-      },
+      refreshMap: refreshMap,
       getUserGeoLocation: getUserGeoLocation,
       setSelectedTool: setSelectedTool,
-      getSelectedTool: function () {
-        return selectedTool;
-      },
+      getSelectedTool: getSelectedTool,
       isSelectedTool: isSelectedTool,
       zoom: zoom,
       setZoomLevel: setZoomLevel,
-      getRoadVisibility: function () {
-        return roadsVisibility;
-      },
+      getRoadVisibility: getRoadVisibility,
       toggleRoadVisibility: toggleRoadVisibility,
-      setMinDirtyZoomLevel: function (level) {
-        minDirtyZoomLevel = level;
-      },
-      selectLayer: function (layer, toggleStart, noSave) {
-        var tool = layer === 'node' ? LinkValues.Tool.Unknown.value : LinkValues.Tool.Default.value;
-        setSelectedTool(tool);
-        if (layer !== selectedLayer) {
-          var previouslySelectedLayer = selectedLayer;
-          selectedLayer = layer;
-          eventbus.trigger('layer:selected', layer, previouslySelectedLayer, toggleStart);
-        } else if (layer === 'linkProperty' && toggleStart) {
-          eventbus.trigger('roadLayer:toggleProjectSelectionInForm', layer, noSave);
-        }
-        var underConstructionVisibleCheckbox = $('#underConstructionVisibleCheckbox')[0];
-        if (layer !== selectedLayer || toggleStart) {
-          if (underConstructionVisibleCheckbox) {
-            $('#underConstructionVisibleCheckbox')[0].checked = true;
-            $('#underConstructionVisibleCheckbox')[0].disabled = false;
-          }
-          eventbus.trigger('underConstructionProjectRoads:toggleVisibility', true);
-        }
-        var unAddressedRoadsVisibleCheckbox = $('#unAddressedRoadsVisibleCheckbox')[0];
-        if (layer !== selectedLayer || toggleStart) {
-          if (unAddressedRoadsVisibleCheckbox) {
-            $('#unAddressedRoadsVisibleCheckbox')[0].checked = true;
-            $('#unAddressedRoadsVisibleCheckbox')[0].disabled = false;
-          }
-          eventbus.trigger('unAddressedRoadsProjectRoads:toggleVisibility', true);
-        }
-      },
-      getSelectedLayer: function () {
-        return selectedLayer;
-      },
+      setMinDirtyZoomLevel: setMinDirtyZoomLevel,
+      selectLayer: selectLayer,
+      getSelectedLayer: getSelectedLayer,
       setReadOnly: setReadOnly,
       setActiveButtons: setActiveButtons,
       setProjectButton: setProjectButton,
       setProjectFeature: setProjectFeature,
-      setContinueButton: setContinueButton,
-      getContinueButtons: getContinueButtons,
       setOpenProject: setOpenProject,
-      getProjectFeature: function () {
-        return projectFeature;
-      },
+      getProjectFeature: getProjectFeature,
       addSpinner: addSpinner,
       removeSpinner: removeSpinner,
-      isReadOnly: function () {
-        return readOnly;
-      },
-      isActiveButtons: function () {
-        return activeButtons;
-      },
-      isProjectButton: function () {
-        return projectButton;
-      },
-      isContinueButton: function () {
-        return continueButton;
-      },
-      isProjectOpen: function () {
-        return openProject;
-      },
-      isDirty: function () {
-        return isDirty();
-      },
-      canZoomOut: function () {
-        return !(isDirty() && (zoom.level <= minDirtyZoomLevel));
-      },
-      canZoomOutEditMode: function () {
-        return (zoom.level > minEditModeZoomLevel && !readOnly && activeButtons) || (!readOnly && !activeButtons) || (readOnly);
-      },
+      isReadOnly: isReadOnly,
+      isActiveButtons: isActiveButtons,
+      isProjectButton: isProjectButton,
+      isProjectOpen: isProjectOpen,
+      isDirty: isDirty,
+      canZoomOut: canZoomOut,
+      canZoomOutEditMode: canZoomOutEditMode,
       assetDragDelay: 100,
-      setAdministrativeClassShown: function (bool) {
-        if (administrativeClassShown !== bool) {
-          administrativeClassShown = bool;
-          eventbus.trigger('administrative-class:selected', administrativeClassShown);
-        }
-      },
-      getCurrentLocation: function () {
-        return centerLonLat;
-      },
+      getCurrentLocation: getCurrentLocation,
       setSelectionType: setSelectionType,
       getSelectionType: getSelectionType,
       selectionTypeIs: selectionTypeIs,
-      getSessionUsername: function () {
-        return sessionUsername;
-      },
-      getSessionUserRoles: function () {
-        return sessionUserRoles;
-      },
+      getSessionUsername: getSessionUsername,
       specialSelectionTypes: specialSelectionTypes
     };
   };

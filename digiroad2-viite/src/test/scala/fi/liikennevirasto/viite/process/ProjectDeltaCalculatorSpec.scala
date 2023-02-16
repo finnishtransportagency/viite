@@ -264,7 +264,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
   }
 
   test("Test ProjectDeltaCalculator.partition " +
-       "When a two track road is terminated from first links and rest is tranferred" +
+       "When a two track road is terminated from first links and rest is tranferred " +
        "Then returns the correct From RoadSection -> To RoadSection mapping.") {
     runWithRollback {
       def plId: Long = Sequences.nextProjectLinkId
@@ -310,6 +310,69 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       adjustedTerminated.map(x => {
         (x.startMAddr, x.endMAddr)
       }).foreach(_ should be((0L, 205L)))
+    }
+  }
+
+  test("Test ProjectDeltaCalculator.partition " +
+       "When a road is tranferred from one part to three parts " +
+       "Then returns the correct From RoadSection -> To RoadSection mapping.") {
+    runWithRollback {
+      val roadNumber_0     = 45656
+      val roadPartNumber_0 = 1
+      val roadPartNumber_1 = 2
+      val roadPartNumber_2 = 3
+      val createdBy        = "Test"
+      val roadName         = None
+      val projectId        = Sequences.nextViiteProjectId
+
+      val projectLinks = Seq(
+        ProjectLink(1000,roadNumber_0,roadPartNumber_0,Track.Combined,Discontinuity.Continuous,0,130,0,130,None,None,Some(createdBy),"58bade8f-2e00-4d07-b7fd-498af3ab0766:1",0.0,129.785,TowardsDigitizing,(RoadAddressCP,NoCP),(RoadAddressCP,NoCP),List(Point(530330.0,6994195.0,0.0), Point(530450.0,6994211.0,0.0)),projectId,LinkStatus.UnChanged,AdministrativeClass.Municipality,FrozenLinkInterface,129.785,78131,451757,8,reversed = false,None,1533690422000L,1007310,roadName,None,None,None,None,None,None),
+        ProjectLink(1001,roadNumber_0,roadPartNumber_0,Track.Combined,Discontinuity.Continuous,130,308,130,308,None,None,Some(createdBy),"cfa8c28f-b2b8-496d-a0da-ef6425bc6c5a:1",0.0,178.189,AgainstDigitizing,(NoCP,NoCP),(NoCP,NoCP),List(Point(530628.0,6994202.0,0.0), Point(530450.0,6994211.0,0.0)),projectId,LinkStatus.UnChanged,AdministrativeClass.Municipality,FrozenLinkInterface,178.189,78131,451758,8,reversed = false,None,1533690422000L,1007310,roadName,None,None,None,None,None,None),
+        ProjectLink(1002,roadNumber_0,roadPartNumber_0,Track.Combined,Discontinuity.Continuous,308,455,308,455,None,None,Some(createdBy),"5a44a863-23da-44f1-a911-71f7edc79b12:1",0.0,147.409,TowardsDigitizing,(NoCP,NoCP),(NoCP,NoCP),List(Point(530628.0,6994202.0,0.0), Point(530775.0,6994214.0,0.0)),projectId,LinkStatus.UnChanged,AdministrativeClass.Municipality,FrozenLinkInterface,147.409,78131,451759,8,reversed = false,None,1533690422000L,1007310,roadName,None,None,None,None,None,None),
+        ProjectLink(1003,roadNumber_0,roadPartNumber_0,Track.Combined,Discontinuity.Continuous,455,580,455,580,None,None,Some(createdBy),"ad2a1e65-83f5-4d17-8d57-327037fe193f:1",0.0,124.913,TowardsDigitizing,(NoCP,NoCP),(NoCP,NoCP),List(Point(530775.0,6994214.0,0.0), Point(530899.0,6994229.0,0.0)),projectId,LinkStatus.UnChanged,AdministrativeClass.Municipality,FrozenLinkInterface,124.913,78131,451760,8,reversed = false,None,1533690422000L,1007310,roadName,None,None,None,None,None,None),
+        ProjectLink(1004,roadNumber_0,roadPartNumber_0,Track.Combined,Discontinuity.Continuous,580,626,580,626,None,None,Some(createdBy),"5a2aa8f0-ae50-49dd-8064-7304f374f4b8:1",0.0,45.572,TowardsDigitizing,(NoCP,NoCP),(NoCP,NoCP),List(Point(530899.0,6994229.0,0.0), Point(530944.0,6994234.0,0.0)),projectId,LinkStatus.UnChanged,AdministrativeClass.Municipality,FrozenLinkInterface,45.572,78131,451761,8,reversed = false,None,1533690422000L,1007310,roadName,None,None,None,None,None,None),
+        ProjectLink(1005,roadNumber_0,roadPartNumber_0,Track.Combined,Discontinuity.Continuous,626,822,626,822,None,None,Some(createdBy),"ccd4746c-22f3-4b2d-88b7-59ac196c1c41:1",0.0,196.623,TowardsDigitizing,(NoCP,NoCP),(NoCP,NoCP),List(Point(530944.0,6994234.0,0.0), Point(531140.0,6994257.0,0.0)),projectId,LinkStatus.UnChanged,AdministrativeClass.Municipality,FrozenLinkInterface,196.623,78131,451762,8,reversed = false,None,1533690422000L,1007310,roadName,None,None,None,None,None,None),
+        ProjectLink(1006,roadNumber_0,roadPartNumber_0,Track.Combined,Discontinuity.Continuous,822,842,822,842,None,None,Some(createdBy),"3e94fbb0-5ed7-4ea0-a65d-81fe38c224ce:1",0.0,19.882,TowardsDigitizing,(NoCP,NoCP),(NoCP,NoCP),List(Point(531140.0,6994257.0,0.0), Point(531159.0,6994259.0,0.0)),projectId,LinkStatus.UnChanged,AdministrativeClass.Municipality,FrozenLinkInterface,19.882,78131,451763,8,reversed = false,None,1533690422000L,1007310,roadName,None,None,None,None,None,None),
+        ProjectLink(1007,roadNumber_0,roadPartNumber_0,Track.Combined,Discontinuity.Continuous,842,1301,842,1301,None,None,Some(createdBy),"edcb8d73-011c-458e-ac31-2e08b8f6b782:1",0.0,459.099,AgainstDigitizing,(NoCP,RoadAddressCP),(NoCP,NoCP),List(Point(531595.0,6994181.0,0.0), Point(531159.0,6994259.0,0.0)),projectId,LinkStatus.UnChanged,AdministrativeClass.Municipality,FrozenLinkInterface,459.099,78131,451764,8,reversed = false,None,1533690422000L,1007310,roadName,None,None,None,None,None,None),
+        ProjectLink(1008,roadNumber_0,roadPartNumber_1,Track.Combined,Discontinuity.Continuous,0,105,1301,1406,None,None,Some(createdBy),"92166e3f-e24b-4d6a-a6ce-f27e8b4a176f:1",0.0,105.1,AgainstDigitizing,(RoadAddressCP,NoCP),(NoCP,NoCP),List(Point(531686.0,6994129.0,0.0), Point(531595.0,6994181.0,0.0)),projectId,LinkStatus.Transfer,AdministrativeClass.Municipality,FrozenLinkInterface,105.1,78131,451765,8,reversed = false,None,1533690422000L,1007307,roadName,None,None,None,None,None,None),
+        ProjectLink(1009,roadNumber_0,roadPartNumber_1,Track.Combined,Discontinuity.Continuous,105,122,1406,1423,None,None,Some(createdBy),"eb6e6798-91b7-4f55-99bb-a965884e84c0:1",0.0,16.673,AgainstDigitizing,(NoCP,NoCP),(NoCP,NoCP),List(Point(531701.0,6994122.0,0.0), Point(531686.0,6994129.0,0.0)),projectId,LinkStatus.Transfer,AdministrativeClass.Municipality,FrozenLinkInterface,16.673,78131,451766,8,reversed = false,None,1533690422000L,1007307,roadName,None,None,None,None,None,None),
+        ProjectLink(1010,roadNumber_0,roadPartNumber_1,Track.Combined,Discontinuity.Continuous,122,151,1423,1452,None,None,Some(createdBy),"c0bae5f9-e6e6-44c8-a26e-36a1b87a44ca:1",0.0,29.506,AgainstDigitizing,(NoCP,NoCP),(NoCP,NoCP),List(Point(531728.0,6994110.0,0.0), Point(531701.0,6994122.0,0.0)),projectId,LinkStatus.Transfer,AdministrativeClass.Municipality,FrozenLinkInterface,29.506,78131,451767,8,reversed = false,None,1533690422000L,1007307,roadName,None,None,None,None,None,None),
+        ProjectLink(1011,roadNumber_0,roadPartNumber_1,Track.Combined,Discontinuity.Continuous,151,404,1452,1705,None,None,Some(createdBy),"f2ac4096-e161-448a-8370-121f335127d6:1",0.0,252.264,AgainstDigitizing,(NoCP,NoCP),(NoCP,NoCP),List(Point(531974.0,6994056.0,0.0), Point(531728.0,6994110.0,0.0)),projectId,LinkStatus.Transfer,AdministrativeClass.Municipality,FrozenLinkInterface,252.264,78131,451768,8,reversed = false,None,1533690422000L,1007307,roadName,None,None,None,None,None,None),
+        ProjectLink(1012,roadNumber_0,roadPartNumber_1,Track.Combined,Discontinuity.Continuous,404,549,1705,1850,None,None,Some(createdBy),"78bbb4f8-96cb-46bc-af0f-0f4a6225f55a:1",0.0,145.065,AgainstDigitizing,(NoCP,RoadAddressCP),(NoCP,NoCP),List(Point(532117.0,6994031.0,0.0), Point(531974.0,6994056.0,0.0)),projectId,LinkStatus.Transfer,AdministrativeClass.Municipality,FrozenLinkInterface,145.065,78131,451769,8,reversed = false,None,1542150013000L,1007307,roadName,None,None,None,None,None,None),
+        ProjectLink(1013,roadNumber_0,roadPartNumber_2,Track.Combined,Discontinuity.Continuous,0,116,1850,1966,None,None,Some(createdBy),"c1c61b08-d87f-4fce-9ec5-8fe0f501ba8e:1",0.0,116.729,TowardsDigitizing,(RoadAddressCP,NoCP),(NoCP,NoCP),List(Point(532117.0,6994031.0,0.0), Point(532233.0,6994043.0,0.0)),projectId,LinkStatus.Transfer,AdministrativeClass.Municipality,FrozenLinkInterface,116.729,78131,451770,8,reversed = false,None,1533690422000L,1007313,roadName,None,None,None,None,None,None),
+        ProjectLink(1014,roadNumber_0,roadPartNumber_2,Track.Combined,Discontinuity.Continuous,116,125,1966,1975,None,None,Some(createdBy),"faca7503-9830-432c-813c-19d9aee133af:1",0.0,8.831,TowardsDigitizing,(NoCP,NoCP),(NoCP,NoCP),List(Point(532233.0,6994043.0,0.0), Point(532241.0,6994046.0,0.0)),projectId,LinkStatus.Transfer,AdministrativeClass.Municipality,FrozenLinkInterface,8.831,78131,451771,8,reversed = false,None,1533690422000L,1007313,roadName,None,None,None,None,None,None),
+        ProjectLink(1015,roadNumber_0,roadPartNumber_2,Track.Combined,Discontinuity.Continuous,125,209,1975,2059,None,None,Some(createdBy),"d700b925-26b0-4377-8c42-aad10e4d8f84:1",0.0,84.332,TowardsDigitizing,(NoCP,NoCP),(NoCP,NoCP),List(Point(532241.0,6994046.0,0.0), Point(532318.0,6994080.0,0.0)),projectId,LinkStatus.Transfer,AdministrativeClass.Municipality,FrozenLinkInterface,84.332,78131,451772,8,reversed = false,None,1562367619000L,1007313,roadName,None,None,None,None,None,None),
+        ProjectLink(1016,roadNumber_0,roadPartNumber_2,Track.Combined,Discontinuity.Continuous,209,455,2059,2305,None,None,Some(createdBy),"90aae922-31af-4c6d-a523-d46dfffd5b0f:1",0.0,245.251,TowardsDigitizing,(NoCP,NoCP),(NoCP,NoCP),List(Point(532318.0,6994080.0,0.0), Point(532534.0,6994195.0,0.0)),projectId,LinkStatus.Transfer,AdministrativeClass.Municipality,FrozenLinkInterface,245.251,78131,451773,8,reversed = false,None,1533690422000L,1007313,roadName,None,None,None,None,None,None),
+        ProjectLink(1017,roadNumber_0,roadPartNumber_2,Track.Combined,Discontinuity.Continuous,455,528,2305,2378,None,None,Some(createdBy),"896bb469-c47c-4f6e-a3ea-c7334f1acd1b:1",0.0,73.091,TowardsDigitizing,(NoCP,NoCP),(NoCP,NoCP),List(Point(532534.0,6994195.0,0.0), Point(532602.0,6994222.0,0.0)),projectId,LinkStatus.Transfer,AdministrativeClass.Municipality,FrozenLinkInterface,73.091,78131,451774,8,reversed = false,None,1634684427000L,1007313,roadName,None,None,None,None,None,None),
+        ProjectLink(1018,roadNumber_0,roadPartNumber_2,Track.Combined,Discontinuity.Continuous,528,593,2378,2443,None,None,Some(createdBy),"f4997be7-b40d-4df0-ba12-fb99d35c3466:1",0.0,64.906,TowardsDigitizing,(NoCP,NoCP),(NoCP,NoCP),List(Point(532602.0,6994222.0,0.0), Point(532662.0,6994247.0,0.0)),projectId,LinkStatus.Transfer,AdministrativeClass.Municipality,FrozenLinkInterface,64.906,78131,451775,8,reversed = false,None,1634684427000L,1007313,roadName,None,None,None,None,None,None),
+        ProjectLink(1019,roadNumber_0,roadPartNumber_2,Track.Combined,Discontinuity.Continuous,593,713,2443,2563,None,None,Some(createdBy),"03972022-d838-4e08-ab24-8a8694292900:1",0.0,120.023,TowardsDigitizing,(NoCP,NoCP),(NoCP,NoCP),List(Point(532662.0,6994247.0,0.0), Point(532770.0,6994300.0,0.0)),projectId,LinkStatus.Transfer,AdministrativeClass.Municipality,FrozenLinkInterface,120.023,78131,451776,8,reversed = false,None,1601593214000L,1007313,roadName,None,None,None,None,None,None),
+        ProjectLink(1020,roadNumber_0,roadPartNumber_2,Track.Combined,Discontinuity.Continuous,713,729,2563,2579,None,None,Some(createdBy),"a9cfb629-ca86-45ed-bfae-3a360a5babbf:1",0.0,16.633,TowardsDigitizing,(NoCP,NoCP),(NoCP,NoCP),List(Point(532770.0,6994300.0,0.0), Point(532785.0,6994307.0,0.0)),projectId,LinkStatus.Transfer,AdministrativeClass.Municipality,FrozenLinkInterface,16.633,78131,451777,8,reversed = false,None,1601593214000L,1007313,roadName,None,None,None,None,None,None),
+        ProjectLink(1021,roadNumber_0,roadPartNumber_2,Track.Combined,Discontinuity.Continuous,729,810,2579,2660,None,None,Some(createdBy),"eebd13fe-b974-4d1a-9760-f1a8f2be89d7:1",0.0,80.706,TowardsDigitizing,(NoCP,NoCP),(NoCP,NoCP),List(Point(532785.0,6994307.0,0.0), Point(532857.0,6994343.0,0.0)),projectId,LinkStatus.Transfer,AdministrativeClass.Municipality,FrozenLinkInterface,80.706,78131,451778,8,reversed = false,None,1601593214000L,1007313,roadName,None,None,None,None,None,None),
+        ProjectLink(1022,roadNumber_0,roadPartNumber_2,Track.Combined,Discontinuity.Continuous,810,837,2660,2687,None,None,Some(createdBy),"4b93254c-6f1e-485a-b6c0-6715f196013c:1",0.0,27.149,TowardsDigitizing,(NoCP,JunctionPointCP),(NoCP,JunctionPointCP),List(Point(532857.0,6994343.0,0.0), Point(532882.0,6994354.0,0.0)),projectId,LinkStatus.Transfer,AdministrativeClass.Municipality,FrozenLinkInterface,27.149,78131,451779,8,reversed = false,None,1601593214000L,1007313,roadName,None,None,None,None,None,None),
+        ProjectLink(1023,roadNumber_0,roadPartNumber_2,Track.Combined,Discontinuity.EndOfRoad,837,847,2687,2697,None,None,Some(createdBy),"82266d99-0873-4ad2-bef3-f9692f76cdaa:1",0.0,9.608,TowardsDigitizing,(JunctionPointCP,RoadAddressCP),(JunctionPointCP,RoadAddressCP),List(Point(532882.0,6994354.0,0.0), Point(532891.0,6994357.0,0.0)),projectId,LinkStatus.Transfer,AdministrativeClass.Municipality,FrozenLinkInterface,9.608,78131,451780,8,reversed = false,None,1601593214000L,1007313,roadName,None,None,None,None,None,None)
+      )
+
+      roadwayDAO.create(
+        Seq(Roadway(78131,186094356,45656,1,AdministrativeClass.Municipality,Track.Combined,Discontinuity.EndOfRoad,0,2697,reversed = false,DateTime.parse("2017-07-02T00:00:00.000+03:00"),None,createdBy,roadName,8,TerminationCode.NoTermination,DateTime.parse("2017-10-16T00:00:00.000+03:00"),None))
+      )
+
+      val transferred = ProjectDeltaCalculator.generateChangeTableRowsFromProjectLinks(projectLinks.filter(_.status != LinkStatus.Terminated), projectLinks)
+      val transferredPaired = transferred.adjustedSections.zip(transferred.originalSections)
+
+      transferredPaired should have size 3
+
+      transferredPaired.filter(_._1.roadPartNumberStart == roadPartNumber_0).map(x => {
+        (x._1.startMAddr, x._2.startMAddr, x._1.endMAddr, x._2.endMAddr)
+      }).foreach(_ should be((0L, 0L, 1301L, 1301L)))
+
+      transferredPaired.filter(_._1.roadPartNumberStart == roadPartNumber_1).map(x => {
+        (x._1.startMAddr, x._2.startMAddr, x._1.endMAddr, x._2.endMAddr)
+      }).foreach(_ should be((0L, 1301L, 549L, 1850L)))
+
+      transferredPaired.filter(_._1.roadPartNumberStart == roadPartNumber_2).map(x => {
+        (x._1.startMAddr, x._2.startMAddr, x._1.endMAddr, x._2.endMAddr)
+      }).foreach(_ should be((0L, 1850L, 847L, 2697L)))
+
     }
   }
 
@@ -833,8 +896,9 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test ProjectDeltaCalculator.partition When a roadpart with more than one roadway is transfered and reversed" +
-                "Then discontinuity should should be unchanged. ") {
+  test("Test ProjectDeltaCalculator.partition " +
+        "When a roadpart with more than one roadway is transfered and reversed " +
+        "Then discontinuity should be unchanged.") {
     val addressMLengthFirst  = 100
     val addressMLengthSecond = 220
     runWithRollback {
@@ -1137,7 +1201,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test partitioner When a roadpart is combined to another with a new link having other part reversed" +
+  test("Test partitioner When a roadpart is combined to another with a new link having other part reversed " +
                  "Then Changetable should have a tranfer row reversed and a new row not reversed " +
                  "and AET and LET values correctly.") {
     runWithRollback {

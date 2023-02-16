@@ -130,21 +130,34 @@ module.exports = function (grunt) {
             xforward: false
           },
           {
-            context: '/wmts',
-            host: 'localhost',
-            port: '8080',
-            https: false,
-            secure: false,
-            changeOrigin: true,
-            xforward: false
+            context:'/wmts/maasto',
+            host: 'api.vaylapilvi.fi',
+            port: '443',
+            https: true,
+            changeOrigin: false,
+            xforward: true,
+            headers: {
+                "X-API-Key": process.env.rasterServiceApiKey,
+                host: 'api.vaylapilvi.fi'
+            },
+            rewrite: {
+                '/wmts/maasto':'/rasteripalvelu-mml/wmts/maasto'
+            }
           },
           {
-            context: '/maasto',
-            host: 'karttamoottori.maanmittauslaitos.fi',
-            https: false,
-            changeOrigin: true,
-            xforward: false,
-            headers: {referer: 'http://www.paikkatietoikkuna.fi/web/fi/kartta'}
+            context:'/wmts/kiinteisto',
+            host: 'api.vaylapilvi.fi',
+            port: '443',
+            https: true,
+            changeOrigin: false,
+            xforward: true,
+            headers: {
+              "X-API-Key": process.env.rasterServiceApiKey,
+              host: 'api.vaylapilvi.fi'
+            },
+            rewrite: {
+              '/wmts/kiinteisto':'/rasteripalvelu-mml/wmts/kiinteisto'
+            }
           },
           {
             context: '/test/components',

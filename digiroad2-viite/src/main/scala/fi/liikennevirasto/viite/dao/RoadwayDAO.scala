@@ -434,7 +434,9 @@ case class RoadAddress(id: Long, linearLocationId: Long, roadNumber: Long, roadP
 
 case class Roadway(id: Long, roadwayNumber: Long, roadNumber: Long, roadPartNumber: Long, administrativeClass: AdministrativeClass, track: Track, discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, reversed: Boolean = false, startDate: DateTime, endDate: Option[DateTime] = None, createdBy: String, roadName: Option[String], ely: Long, terminated: TerminationCode = NoTermination, validFrom: DateTime = DateTime.now(), validTo: Option[DateTime] = None)
 
-case class RoadForRoadAddressBrowser(ely: Long, roadNumber: Long, track: Long, roadPartNumber: Long, startAddrM: Long, endAddrM: Long, roadAddressLengthM: Long, startDate: DateTime)
+case class TrackForRoadAddressBrowser(ely: Long, roadNumber: Long, track: Long, roadPartNumber: Long, startAddrM: Long, endAddrM: Long, roadAddressLengthM: Long, administrativeClass: Long, startDate: DateTime)
+
+case class RoadPartForRoadAddressBrowser(ely: Long, roadNumber: Long, roadPartNumber: Long, startAddrM: Long, endAddrM: Long, roadAddressLengthM: Long, startDate: DateTime)
 
 class BaseDAO {
   protected def logger = LoggerFactory.getLogger(getClass)
@@ -728,6 +730,7 @@ class RoadwayDAO extends BaseDAO {
     query + s" WHERE a.road_number = $road " + s"$roadPartFilter $trackFilter $mValueFilter and a.end_date is null and a.valid_to is null "
   }
 
+  @deprecated ("TODO refactor or remove. Table published_roadway is no longer in use, and is empty.")
   private def withRoadwayNumbersAndRoadNetwork(roadwayNumbers: Set[Long], roadNetworkId: Long, searchDate: Option[DateTime])(query: String): String = {
     val queryDate = if (searchDate.isDefined) s"to_date('${searchDate.get.toString("yyyy-MM-dd")}', 'YYYY-MM-DD') " else "CURRENT_DATE"
 
@@ -737,12 +740,14 @@ class RoadwayDAO extends BaseDAO {
         s"""in (${group.mkString(",")})"""
       }).mkString("", " or a.roadway_number ", "")
 
+      /** todo ("Table published_roadway is no longer in use, and is empty.")*/
       s"""$query
          join published_roadway net on net.ROADWAY_ID = a.id
          where net.network_id = $roadNetworkId and a.valid_to is null and (a.roadway_number $groupedRoadwayNumbers)
             and a.start_date <= $queryDate and (a.end_date is null or a.end_date >= $queryDate)"""
     }
     else
+      /** todo ("Table published_roadway is no longer in use, and is empty.")*/
       s"""$query
          join published_roadway net on net.ROADWAY_ID = a.id
          where net.network_id = $roadNetworkId and a.valid_to is null and a.roadway_number in (${roadwayNumbers.mkString(",")})
@@ -875,7 +880,7 @@ class RoadwayDAO extends BaseDAO {
     }
   }
 
-  private implicit val getRoadForRoadAddressBrowser: GetResult[RoadForRoadAddressBrowser] = new GetResult[RoadForRoadAddressBrowser] {
+  private implicit val getTrackForRoadAddressBrowser: GetResult[TrackForRoadAddressBrowser] = new GetResult[TrackForRoadAddressBrowser] {
     def apply(r: PositionedResult) = {
 
       val ely = r.nextLong()
@@ -885,9 +890,25 @@ class RoadwayDAO extends BaseDAO {
       val startAddrMValue = r.nextLong()
       val endAddrMValue = r.nextLong()
       val lengthAddrM = r.nextLong()
+      val administrativeClass = r.nextLong()
       val startDate = formatter.parseDateTime(r.nextDate.toString)
 
-      RoadForRoadAddressBrowser(ely, roadNumber, trackCode, roadPartNumber, startAddrMValue, endAddrMValue, lengthAddrM, startDate)
+      TrackForRoadAddressBrowser(ely, roadNumber, trackCode, roadPartNumber, startAddrMValue, endAddrMValue, lengthAddrM, administrativeClass, startDate)
+    }
+  }
+
+  private implicit val getRoadPartForRoadAddressBrowser: GetResult[RoadPartForRoadAddressBrowser] = new GetResult[RoadPartForRoadAddressBrowser] {
+    def apply(r: PositionedResult) = {
+
+      val ely = r.nextLong()
+      val roadNumber = r.nextLong()
+      val roadPartNumber = r.nextLong()
+      val startAddrMValue = r.nextLong()
+      val endAddrMValue = r.nextLong()
+      val lengthAddrM = r.nextLong()
+      val startDate = formatter.parseDateTime(r.nextDate.toString)
+
+      RoadPartForRoadAddressBrowser(ely, roadNumber, roadPartNumber, startAddrMValue, endAddrMValue, lengthAddrM, startDate)
     }
   }
 
@@ -1066,10 +1087,10 @@ class RoadwayDAO extends BaseDAO {
     Q.queryNA[(Long, String, Long, Long, Long, Option[DateTime], Option[DateTime])](query).firstOption
   }
 
-  def fetchRoadsForRoadAddressBrowser(startDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[RoadForRoadAddressBrowser] = {
-    def withOptionalParameters(startDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long])(query: String): String  = {
+  def fetchTracksForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[TrackForRoadAddressBrowser] = {
+    def withOptionalParameters(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long])(query: String): String  = {
 
-      val dateCondition = "AND start_date <='" + startDate.get + "'"
+      val dateCondition = "AND start_date <='" + situationDate.get + "' AND (end_date >= '" + situationDate.get + "' OR end_date IS NULL)"
 
       val elyCondition = {
         if (ely.nonEmpty)
@@ -1109,7 +1130,7 @@ class RoadwayDAO extends BaseDAO {
       s"""WITH roadways
          |     AS (SELECT *
          |         FROM   roadway r
-         |         WHERE  r.valid_to IS NULL AND r.end_date IS NULL
+         |         WHERE  r.valid_to IS NULL
          |         $dateCondition
          |         $elyCondition
          |         $roadNumberCondition
@@ -1118,7 +1139,7 @@ class RoadwayDAO extends BaseDAO {
          |         $query""".stripMargin
     }
 
-    def fetchRoads(queryFilter: String => String): Seq[RoadForRoadAddressBrowser] = {
+    def fetchTrackSections(queryFilter: String => String): Seq[TrackForRoadAddressBrowser] = {
       val query =
         """     roadwayswithstartaddr
           |     AS (SELECT ely,
@@ -1127,6 +1148,7 @@ class RoadwayDAO extends BaseDAO {
           |                start_addr_m,
           |                start_date,
           |                track,
+          |                administrative_class,
           |                Row_number()
           |                  OVER (
           |                    ORDER BY road_number, road_part_number, track, start_addr_m)
@@ -1140,7 +1162,8 @@ class RoadwayDAO extends BaseDAO {
           |                                   AND r2.road_number = r.road_number
           |                                   AND r2.road_part_number = r.road_part_number
           |                                   AND r2.track = r.track
-          |                                   AND r2.ely = r.ely)),
+          |                                   AND r2.ely = r.ely
+          |                                   AND r2.administrative_class = r.administrative_class)),
           |     roadwayswithendaddr
           |     AS (SELECT ely,
           |                road_number,
@@ -1148,6 +1171,7 @@ class RoadwayDAO extends BaseDAO {
           |                end_addr_m,
           |                start_date,
           |                track,
+          |                administrative_class,
           |                Row_number()
           |                  OVER (
           |                    ORDER BY road_number, road_part_number, track, end_addr_m)
@@ -1161,7 +1185,8 @@ class RoadwayDAO extends BaseDAO {
           |                                   AND r2.road_number = r.road_number
           |                                   AND r2.road_part_number = r.road_part_number
           |                                   AND r2.track = r.track
-          |                                   AND r2.ely = r.ely))
+          |                                   AND r2.ely = r.ely
+          |                                   AND r2.administrative_class = r.administrative_class))
           |SELECT s.ely,
           |       s.road_number,
           |       s.track,
@@ -1169,6 +1194,7 @@ class RoadwayDAO extends BaseDAO {
           |       s.start_addr_m,
           |       e.end_addr_m,
           |       e.end_addr_m - s.start_addr_m AS length,
+          |       s.administrative_class,
           |       s.start_date
           |FROM   roadwayswithstartaddr s
           |       JOIN roadwayswithendaddr e
@@ -1178,11 +1204,73 @@ class RoadwayDAO extends BaseDAO {
           |          s.start_addr_m,
           |          s.track; """.stripMargin
       val filteredQuery = queryFilter(query)
-      Q.queryNA[RoadForRoadAddressBrowser](filteredQuery).iterator.toSeq
+      Q.queryNA[TrackForRoadAddressBrowser](filteredQuery).iterator.toSeq
     }
 
-    fetchRoads(withOptionalParameters(startDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber))
+    fetchTrackSections(withOptionalParameters(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber))
   }
+
+  def fetchRoadPartsForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[RoadPartForRoadAddressBrowser] = {
+    def withOptionalParameters(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long])(query: String): String  = {
+
+      val dateCondition = "AND start_date <='" + situationDate.get + "' AND (end_date >= '" + situationDate.get + "' OR end_date IS NULL)"
+
+      val elyCondition = {
+        if (ely.nonEmpty)
+          s" AND ely = ${ely.get}"
+        else
+          ""
+      }
+
+      val roadNumberCondition = {
+        if (roadNumber.nonEmpty)
+          s" AND road_number = ${roadNumber.get}"
+        else
+          ""
+      }
+
+      val roadPartCondition = {
+        val parts = (minRoadPartNumber, maxRoadPartNumber)
+        parts match {
+          case (Some(minPart), Some(maxPart)) => s"AND road_part_number BETWEEN $minPart AND $maxPart"
+          case (None, Some(maxPart)) => s"AND road_part_number <= $maxPart"
+          case (Some(minPart), None) => s"AND road_part_number >= $minPart"
+          case _ => ""
+        }
+      }
+
+
+      s"""      $query
+      |         $dateCondition
+      |         $elyCondition
+      |         $roadNumberCondition
+      |         $roadPartCondition
+      |GROUP  BY ely,
+      |          road_number,
+      |          road_part_number
+      |ORDER  BY r.road_number,
+      |          r.road_part_number """.stripMargin
+    }
+
+    def fetchRoadParts(queryFilter: String => String): Seq[RoadPartForRoadAddressBrowser] = {
+      val query =
+        """SELECT ely,
+          |       road_number,
+          |       road_part_number,
+          |       Min(start_addr_m) AS startAddr,
+          |       Max(end_addr_m)   AS endAddr,
+          |       Max(end_addr_m) - Min(start_addr_m) AS "length",
+          |       Max(start_date)
+          |FROM   roadway r
+          |WHERE  r.valid_to IS NULL
+          |""".stripMargin
+      val filteredQuery = queryFilter(query)
+      Q.queryNA[RoadPartForRoadAddressBrowser](filteredQuery).iterator.toSeq
+    }
+    fetchRoadParts(withOptionalParameters(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber))
+  }
+
+
 
 
 }

@@ -4,8 +4,8 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite._
 import org.slf4j.{Logger, LoggerFactory}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{StaticQuery => Q}
+import slick.jdbc.StaticQuery.interpolation
 
 //TODO naming SQL conventions
 
@@ -371,7 +371,7 @@ class ProjectReservedPartDAO {
     }
   }
 
-  def fetchProjectReservedPart(roadNumber: Long, roadPart: Long, projectId: Long = 0, withProjectId: Option[Boolean] = None): Option[String] = {
+  def fetchProjectReservedPart(roadNumber: Long, roadPart: Long, projectId: Long = 0, withProjectId: Option[Boolean] = None): Option[(Long, String)] = {
     time(logger, "Road part reserved by other project") {
       val filter = (withProjectId, projectId != 0) match {
         case (_, false) => ""
@@ -381,7 +381,7 @@ class ProjectReservedPartDAO {
 
       val query =
         s"""
-        SELECT prj.NAME FROM PROJECT prj
+        SELECT prj.ID, prj.NAME FROM PROJECT prj
         JOIN PROJECT_RESERVED_ROAD_PART res ON res.PROJECT_ID = prj.ID
         WHERE res.road_number = $roadNumber AND res.road_part_number = $roadPart
           AND prj.ID IN (
@@ -395,7 +395,7 @@ class ProjectReservedPartDAO {
           )
         $filter
         """
-      Q.queryNA[String](query).firstOption
+      Q.queryNA[(Long, String)](query).firstOption
     }
   }
 

@@ -41,20 +41,45 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
   val linearLocationDAO = new LinearLocationDAO
   val roadNetworkDAO = new RoadNetworkDAO
   val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
-  val roadAddressService: RoadAddressService = new RoadAddressService(mockRoadLinkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, mockRoadwayAddressMapper, mockEventBus, frozenKGV = false) {
 
-    override def withDynSession[T](f: => T): T = f
+  val roadAddressService: RoadAddressService =
+    new RoadAddressService(
+                            mockRoadLinkService,
+                            roadwayDAO,
+                            linearLocationDAO,
+                            roadNetworkDAO,
+                            roadwayPointDAO,
+                            nodePointDAO,
+                            junctionPointDAO,
+                            mockRoadwayAddressMapper,
+                            mockEventBus,
+                            frozenKGV = false
+                            ) {
+                                override def withDynSession[T](f: => T): T = f
+                                override def withDynTransaction[T](f: => T): T = f
+                              }
 
-    override def withDynTransaction[T](f: => T): T = f
-  }
-  val projectService: ProjectService = new ProjectService(roadAddressService, mockRoadLinkService, mockNodesAndJunctionsService, roadwayDAO,
-    roadwayPointDAO, linearLocationDAO, projectDAO, projectLinkDAO,
-    nodeDAO, nodePointDAO, junctionPointDAO, projectReservedPartDAO, roadwayChangesDAO,
-    roadwayAddressMapper, mockEventBus) {
-    override def withDynSession[T](f: => T): T = f
-
-    override def withDynTransaction[T](f: => T): T = f
-  }
+  val projectService: ProjectService =
+    new ProjectService(
+                        roadAddressService,
+                        mockRoadLinkService,
+                        mockNodesAndJunctionsService,
+                        roadwayDAO,
+                        roadwayPointDAO,
+                        linearLocationDAO,
+                        projectDAO,
+                        projectLinkDAO,
+                        nodeDAO,
+                        nodePointDAO,
+                        junctionPointDAO,
+                        projectReservedPartDAO,
+                        roadwayChangesDAO,
+                        roadwayAddressMapper,
+                        mockEventBus
+                        ) {
+                            override def withDynSession[T](f: => T): T = f
+                            override def withDynTransaction[T](f: => T): T = f
+                          }
 
   def runWithRollback[T](f: => T): T = {
     Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
@@ -661,16 +686,16 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val idRoad4 = 4L.toString //   R>
       val idRoad5 = 5L.toString //   R>
       val projectLink0 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad0.toLong, 0, 5, 1, AdministrativeClass.Unknown, Track.LeftSide, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad0, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), Seq(Point(20.0, 10.0), Point(28, 15)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
-      val projectLink1 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad1.toLong, 0, 5, 1, AdministrativeClass.Unknown, Track.LeftSide, Discontinuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad1, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), Seq(Point(28, 15), Point(41, 18)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+      val projectLink1 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad1.toLong, 0, 5, 1, AdministrativeClass.Unknown, Track.LeftSide, MinorDiscontinuity, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad1, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), Seq(Point(28, 15), Point(41, 18)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
       val projectLink2 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad2.toLong, 0, 5, 1, AdministrativeClass.Unknown, Track.LeftSide, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad2, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), Seq(Point(42, 19), Point(75, 29.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
-      val projectLink3 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad3.toLong, 0, 5, 1, AdministrativeClass.Unknown, Track.LeftSide, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad3, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), Seq(Point(103.0, 15.0),Point(75, 29.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
-      val projectLink4 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad4.toLong, 0, 5, 1, AdministrativeClass.Unknown, Track.RightSide, Discontinuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad4, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), Seq(Point(20.0, 10.0), Point(42, 11)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+      val projectLink3 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad3.toLong, 0, 5, 1, AdministrativeClass.Unknown, Track.LeftSide, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad3, 0.0, 0.0, SideCode.AgainstDigitizing, 0, (None, None), Seq(Point(103.0, 15.0),Point(75, 29.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+      val projectLink4 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad4.toLong, 0, 5, 1, AdministrativeClass.Unknown, Track.RightSide, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad4, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), Seq(Point(20.0, 10.0), Point(42, 11)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
       val projectLink5 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad5.toLong, 0, 5, 1, AdministrativeClass.Unknown, Track.RightSide, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad5, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), Seq(Point(42, 11), Point(103, 15)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
       val list = List(projectLink0, projectLink1, projectLink2, projectLink3, projectLink4, projectLink5)
       val ordered = ProjectSectionCalculator.assignMValues(list)
       // check left and right track - should have 4 calibration points: start, end, discontinuity and next one after discontinuity
       (ordered.filter(_.track == Track.LeftSide).flatMap(_.calibrationPoints._1) ++ ordered.filter(_.track == Track.LeftSide).flatMap(_.calibrationPoints._2)) should have size 4
-      (ordered.filter(_.track == Track.RightSide).flatMap(_.calibrationPoints._1) ++ ordered.filter(_.track == Track.RightSide).flatMap(_.calibrationPoints._2)) should have size 4
+      (ordered.filter(_.track == Track.RightSide).flatMap(_.calibrationPoints._1) ++ ordered.filter(_.track == Track.RightSide).flatMap(_.calibrationPoints._2)) should have size 2
     }
   }
 

@@ -1,6 +1,6 @@
 (function (root) {
   root.ProjectListModel = function (projectCollection) {
-    var projectStatus = LinkValues.ProjectStatus;
+    var projectStatus = ViiteEnumerations.ProjectStatus;
     var projectArray = [];
     var headers = {
       "sortName": {

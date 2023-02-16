@@ -5,8 +5,9 @@ import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.util.{MissingRoadwayNumberException, MissingTrackException, RoadAddressException, Track}
 import fi.liikennevirasto.digiroad2.util.Track.LeftSide
-import fi.liikennevirasto.viite.{NewIdValue, UnsuccessfulRecalculationMessage}
-import fi.liikennevirasto.viite.dao.{Discontinuity, _}
+import fi.liikennevirasto.viite.{ContinuousAddressCapErrorMessage, LengthMismatchErrorMessage, NegativeLengthErrorMessage, NewIdValue, ProjectValidationException, ProjectValidator, UnsuccessfulRecalculationMessage}
+
+import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.UserDefinedCP
 import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
@@ -24,9 +25,12 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
 
   override val name: String = "Normal Section"
 
+  val projectValidator = new ProjectValidator
+  val projectDAO = new ProjectDAO
   val projectLinkDAO = new ProjectLinkDAO
   val roadwayDAO = new RoadwayDAO
   val linearLocationDAO = new LinearLocationDAO
+  // TODO: Check this need
   val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLocationDAO)
 
   override def assignMValues(newProjectLinks: Seq[ProjectLink], oldProjectLinks: Seq[ProjectLink], userCalibrationPoints: Seq[UserDefinedCalibrationPoint]): Seq[ProjectLink] = {
@@ -245,15 +249,56 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       val it = pls.sliding(2)
       while (it.hasNext) {
         it.next() match {
-          case Seq(seq, next) => {
-            if (seq.endAddrMValue != next.startAddrMValue) throw new RoadAddressException(s"Address not continuous: ${seq.endAddrMValue} ${next.startAddrMValue} linkids: ${seq.linkId} ${next.linkId}")
-            if (!(seq.endAddrMValue > seq.startAddrMValue)) throw new RoadAddressException(s"Address length negative. linkid: ${seq.linkId}")
-
-            if (seq.status != LinkStatus.New && !(Math.abs((seq.endAddrMValue - seq.startAddrMValue) - (seq.originalEndAddrMValue - seq.originalStartAddrMValue)) < maxDiffForChange)) throw new RoadAddressException(s"Length mismatch. New: ${seq.startAddrMValue} ${seq.endAddrMValue} original: ${seq.originalStartAddrMValue} ${seq.originalEndAddrMValue} linkid: ${seq.linkId}")
+          case Seq(curr, next) => {
+            if (curr.endAddrMValue != next.startAddrMValue) {
+              logger.error(s"Address not continuous: ${curr.endAddrMValue} ${next.startAddrMValue} linkIds: ${curr.linkId} ${next.linkId}")
+              throw new RoadAddressException(ContinuousAddressCapErrorMessage)
+            }
+            if (!(curr.endAddrMValue > curr.startAddrMValue)) {
+              logger.error(s"Address length negative. linkId: ${curr.linkId}")
+              throw new RoadAddressException(NegativeLengthErrorMessage.format(curr.linkId))
+            }
+            if (curr.status != LinkStatus.New && (curr.originalTrack == curr.track || curr.track == Track.Combined) && !(Math.abs((curr.endAddrMValue - curr.startAddrMValue) - (curr.originalEndAddrMValue - curr.originalStartAddrMValue)) < maxDiffForChange)) {
+              logger.error(s"Length mismatch. New: ${curr.startAddrMValue} ${curr.endAddrMValue} original: ${curr.originalStartAddrMValue} ${curr.originalEndAddrMValue} linkId: ${curr.linkId}")
+              throw new RoadAddressException(LengthMismatchErrorMessage.format(curr.linkId, maxDiffForChange - 1))
+            }
+            /* VIITE-2957
+            Replacing the above if-statement with the one commented out below enables a user to bypass the RoadAddressException.
+            This may be needed in certain cases.
+            Example:
+              An administrative class change is done on a two-track road section where the original startAddrMValue of ProjectLinks on adjacent
+              tracks differ by more than 2. As the administrative class must be unambiguous at any given road address, the startAddrMValue
+              has to be adjusted to be equal on both of the tracks at the point of the administrative class change. This would cause a change
+              in length that was greater than 1 on one of the tracks.
+            if (curr.status != LinkStatus.New && (curr.originalTrack == curr.track ||
+              curr.track == Track.Combined) &&
+              !(Math.abs((curr.endAddrMValue - curr.startAddrMValue) - (curr.originalEndAddrMValue - curr.originalStartAddrMValue)) < maxDiffForChange)) {
+              logger.warn(s"Length mismatch. " +
+                s"Project id: ${curr.projectId} ${projectDAO.fetchById(projectId = curr.projectId).get.name} " +
+                s"New: ${curr.startAddrMValue} ${curr.endAddrMValue} " +
+                s"original: ${curr.originalStartAddrMValue} ${curr.originalEndAddrMValue} " +
+                s"linkId: ${curr.linkId} " +
+                s"length change ${(curr.endAddrMValue - curr.startAddrMValue) - (curr.originalEndAddrMValue - curr.originalStartAddrMValue)}")
+            }
+            */
           }
         }
       }
     }
+  }
+
+  /**
+    * Check validation errors for ProjectLinks.
+    * Used here in case of calculation error to check if user has entered incompatible values.
+    *
+    * @param projectlinks ProjectLinks from calculation
+    * @return sequence of ValidationErrorDetails if any
+    */
+  def checkForValidationErrors(projectlinks: Seq[ProjectLink]): Seq[projectValidator.ValidationErrorDetails] = {
+    val validationErrors = projectValidator.projectLinksNormalPriorityValidation(projectDAO.fetchById(projectlinks.head.projectId).get, projectlinks)
+    if (validationErrors.nonEmpty)
+      validationErrors
+    else Seq()
   }
 
   private def calculateSectionAddressValues(sections: Seq[CombinedSection],
@@ -264,7 +309,11 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         (Seq(), Seq())
       } else {
         if (rightLinks.isEmpty || leftLinks.isEmpty) {
-          throw new MissingTrackException(s"Missing track, R: ${rightLinks.size}, L: ${leftLinks.size}")
+          val validationErrors = checkForValidationErrors(rightLinks ++ leftLinks)
+          if (validationErrors.nonEmpty)
+            throw new ProjectValidationException(s"Validation errors", validationErrors.map(projectValidator.errorPartsToApi))
+          else
+            throw new MissingTrackException(s"Missing track, R: ${rightLinks.size}, L: ${leftLinks.size}")
         }
 
         val ((firstRight, restRight), (firstLeft, restLeft)): ((Seq[ProjectLink], Seq[ProjectLink]), (Seq[ProjectLink], Seq[ProjectLink])) = {
@@ -281,9 +330,13 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
           }
         }
 
-        if (firstRight.isEmpty || firstLeft.isEmpty)
-          throw new RoadAddressException(s"Mismatching tracks, R ${firstRight.size}, L ${firstLeft.size}")
-
+        if (firstRight.isEmpty || firstLeft.isEmpty) {
+          val validationErrors = checkForValidationErrors(rightLinks ++ leftLinks)
+          if (validationErrors.nonEmpty)
+            throw new ProjectValidationException(s"Validation errors", validationErrors.map(projectValidator.errorPartsToApi))
+          else
+            throw new RoadAddressException(s"Mismatching tracks, R ${firstRight.size}, L ${firstLeft.size}")
+        }
         val strategy: TrackCalculatorStrategy = TrackCalculatorContext.getStrategy(firstLeft, firstRight)
         logger.info(s"${strategy.name} strategy")
         val trackCalcResult                       = strategy.assignTrackMValues(previousStart, firstLeft, firstRight, userDefinedCalibrationPoint)
@@ -473,6 +526,13 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       val link = oldLinks.find(_.id == calibrationPoint.projectLinkId).orElse(newLinks.find(_.id == calibrationPoint.projectLinkId))
       link.flatMap(pl => GeometryUtils.calculatePointFromLinearReference(pl.geometry, calibrationPoint.segmentMValue).map(p => (p, pl)))
     }
+    // Get opposite end from roadpart by Discontinuity code if ending Discontinuity is defined
+    def getStartPointByDiscontinuity(chainEndPoints: Map[Point, ProjectLink]): Option[(Point, ProjectLink)] = {
+      val notEndOfRoad = Map(chainEndPoints.maxBy((_: (Point, ProjectLink))._2.discontinuity.value))
+      if (notEndOfRoad.size == 1 && chainEndPoints.exists(_._2.discontinuity.value < Discontinuity.MinorDiscontinuity.value))
+        Some(notEndOfRoad.head)
+      else None
+    }
 
     // Pick the one with calibration point set to zero: or any old link with lowest address: or new links by direction
     calibrationPoints.find(_.addressMValue == 0).flatMap(calibrationPointToPoint).getOrElse(
@@ -555,39 +615,45 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
             }
           }
         } else {
-          if (remainLinks.forall(_.endAddrMValue == 0) && oppositeTrackLinks.nonEmpty && oppositeTrackLinks.exists(_.endAddrMValue != 0)) {
+          if (remainLinks.forall(_.isNotCalculated) && oppositeTrackLinks.nonEmpty && oppositeTrackLinks.exists(_.endAddrMValue != 0)) {
             val leftStartPoint = TrackSectionOrder.findChainEndpoints(oppositeTrackLinks).find(link => link._2.startAddrMValue == 0 && link._2.endAddrMValue != 0)
             chainEndPoints.minBy(p => p._2.geometry.head.distance2DTo(leftStartPoint.get._1))
-          } else if (remainLinks.nonEmpty && oppositeTrackLinks.nonEmpty && remainLinks.forall(_.endAddrMValue == 0) && oppositeTrackLinks.forall(_.endAddrMValue == 0)) {
-            val candidateRightStartPoint = chainEndPoints.minBy(p => direction.dot(p._1.toVector - midPoint))
-            val candidateRightOppositeEnd = getOppositeEnd(candidateRightStartPoint._2, candidateRightStartPoint._1)
-            val candidateLeftStartPoint = TrackSectionOrder.findChainEndpoints(oppositeTrackLinks).minBy(_._1.distance2DTo(candidateRightStartPoint._1))
-            val candidateLeftOppositeEnd = getOppositeEnd(candidateLeftStartPoint._2, candidateLeftStartPoint._1)
-            val startingPointsVector = Vector3d(candidateRightOppositeEnd.x - candidateLeftOppositeEnd.x, candidateRightOppositeEnd.y - candidateLeftOppositeEnd.y, candidateRightOppositeEnd.z - candidateLeftOppositeEnd.z)
-            val angle =
-              if (startingPointsVector == Vector3d(0.0, 0.0, 0.0)) {
-                val startingPointVector = Vector3d(candidateRightStartPoint._1.x - candidateLeftStartPoint._1.x, candidateRightStartPoint._1.y - candidateLeftStartPoint._1.y, candidateRightStartPoint._1.z - candidateLeftStartPoint._1.z)
-                startingPointVector.angleXYWithNegativeValues(direction)
-              } else {
-                startingPointsVector.angleXYWithNegativeValues(direction)
+          } else if (remainLinks.nonEmpty && oppositeTrackLinks.nonEmpty && remainLinks.forall(_.isNotCalculated) && oppositeTrackLinks.forall(_.isNotCalculated)) {
+                getStartPointByDiscontinuity(chainEndPoints).getOrElse {
+                  val candidateRightStartPoint  = chainEndPoints.minBy(p => {
+                    direction.dot(p._1.toVector - midPoint)
+                  })
+                  val candidateRightOppositeEnd = getOppositeEnd(candidateRightStartPoint._2, candidateRightStartPoint._1)
+                  val candidateLeftStartPoint = TrackSectionOrder.findChainEndpoints(oppositeTrackLinks).minBy(_._1.distance2DTo(candidateRightStartPoint._1))
+                  val candidateLeftOppositeEnd = getOppositeEnd(candidateLeftStartPoint._2, candidateLeftStartPoint._1)
+                  val startingPointsVector = Vector3d(candidateRightOppositeEnd.x - candidateLeftOppositeEnd.x, candidateRightOppositeEnd.y - candidateLeftOppositeEnd.y, candidateRightOppositeEnd.z - candidateLeftOppositeEnd.z)
+                  val angle =
+                    if (startingPointsVector == Vector3d(0.0, 0.0, 0.0)) {
+                      val startingPointVector = Vector3d(candidateRightStartPoint._1.x - candidateLeftStartPoint._1.x, candidateRightStartPoint._1.y - candidateLeftStartPoint._1.y, candidateRightStartPoint._1.z - candidateLeftStartPoint._1.z)
+                      startingPointVector.angleXYWithNegativeValues(direction)
+                    } else {
+                      startingPointsVector.angleXYWithNegativeValues(direction)
+                    }
+                  if (angle > 0) {
+                    chainEndPoints.filterNot(_._1.equals(candidateRightStartPoint._1)).head
+                  } else {
+                    candidateRightStartPoint
+                  }
               }
-            if (angle > 0) {
-              chainEndPoints.filterNot(_._1.equals(candidateRightStartPoint._1)).head
-            } else {
-              candidateRightStartPoint
-            }
           } else {
-            val startPoint1 = chainEndPoints.minBy(p => direction.dot(p._1.toVector - midPoint))
-            val startPoint2 = chainEndPoints.maxBy(p => direction.dot(p._1.toVector - midPoint))
-            val connectingPoint = otherRoadPartLinks.find(l => GeometryUtils.areAdjacent(l.getLastPoint, startPoint1._1) || GeometryUtils.areAdjacent(l.getFirstPoint, startPoint2._1))
-            val continuousLink = chainEndPoints.filter(_._2.discontinuity == Discontinuity.Continuous)
-            if (continuousLink.nonEmpty) {
-              continuousLink.head
-            } else {
-              if (otherRoadPartLinks.isEmpty || connectingPoint.nonEmpty) {
-                startPoint1
+            getStartPointByDiscontinuity(chainEndPoints).getOrElse {
+              val startPoint1 = chainEndPoints.minBy(p => direction.dot(p._1.toVector - midPoint))
+              val startPoint2 = chainEndPoints.maxBy(p => direction.dot(p._1.toVector - midPoint))
+              val connectingPoint = otherRoadPartLinks.find(l => GeometryUtils.areAdjacent(l.getLastPoint, startPoint1._1) || GeometryUtils.areAdjacent(l.getFirstPoint, startPoint2._1))
+              val continuousLink = chainEndPoints.filter(_._2.discontinuity == Discontinuity.Continuous)
+              if (continuousLink.nonEmpty) {
+                continuousLink.head
               } else {
-                startPoint2
+                if (otherRoadPartLinks.isEmpty || connectingPoint.nonEmpty) {
+                  startPoint1
+                } else {
+                  startPoint2
+                }
               }
             }
           }

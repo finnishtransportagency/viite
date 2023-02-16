@@ -109,7 +109,7 @@ Resources:
             - Name: apiS3ObjectTTLSeconds
               Value: !Sub '${ApiS3ObjectTTLSeconds}'
             - Name: kgvEndpoint
-              Value: !Ref kgvEndPoint
+              Value: 'https://api.vaylapilvi.fi/paikkatiedot/ogc/features/collections'
           Secrets:
             - Name: bonecp.password
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/Viite/Prod/rds.viite.db.password'
@@ -121,8 +121,6 @@ Resources:
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/Viite/Prod/vkmApiKey'
             - Name: rasterServiceApiKey
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/Viite/Prod/rasterServiceApiKey'
-            - Name: vvhRestApiPassword
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/Viite/Prod/vvhRestApiPassword'
             - Name: kgvApiKey
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/Viite/Prod/kgvApiKey'
           MemoryReservation: 2048

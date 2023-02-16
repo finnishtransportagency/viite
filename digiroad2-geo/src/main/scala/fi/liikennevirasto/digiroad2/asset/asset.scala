@@ -13,7 +13,7 @@ sealed trait LinkGeomSource{
 *  1 = tielinkkien rajapinta,
 *  2 = täydentävien linkkien rajapinta,
 *  4 = jäädytettyjen linkkien rajapinta,
-*  5 = VVH-historialinkkien rajapinta,
+*  5 = KGV-historialinkkien rajapinta,
 *  6 = KGV-versiorajapinta,
 *  7 = VVH-linkId vastintaulun,
 *  8 = Muutosrajapinta
@@ -39,9 +39,7 @@ sealed trait LifecycleStatus {
 }
 
 object LifecycleStatus{
-  val values = Set[LifecycleStatus](Planned, UnderConstruction, InUse, UnknownLifecycleStatus)
-
-  val filteredLinkStatus = Set[LifecycleStatus](UnderConstruction, InUse)
+  val values = Set[LifecycleStatus](Planned, UnderConstruction, InUse, TemporarilyNotInUse, ExpiringSoon, UnknownLifecycleStatus)
 
   def apply(intValue: Int): LifecycleStatus = {
     values.find(_.value == intValue).getOrElse(InUse)
