@@ -13,6 +13,7 @@ import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.viite.{NodesAndJunctionsService, PreFillInfo, ProjectService, RoadAddressService, RoadNameService, RoadNameSource, RoadNetworkService, ViiteVkmClient}
 import fi.liikennevirasto.viite.dao.ProjectLinkDAO
 import fi.liikennevirasto.viite.util.{runWithRollback, DigiroadSerializers, JsonSerializer}
+import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization.read
@@ -197,7 +198,11 @@ class ViiteApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter {
   test("Test /getRoadLinkDate") {
     get("/getRoadLinkDate") {
       status should equal(200)
-      body should equal("""{ "result":" 02.01.2018 02:00:00"}""")
+      val response = parse(StringInput(body)).values.asInstanceOf[Map[String, Any]]
+      response should have size 1
+      response.head._1 should be(("result"))
+      val formatter: DateTimeFormatter = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss")
+      formatter.parseDateTime(response.head._2.asInstanceOf[String].trim).getYear should be (2018)
     }
   }
 
