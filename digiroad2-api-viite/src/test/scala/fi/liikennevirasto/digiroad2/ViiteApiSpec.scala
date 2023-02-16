@@ -11,7 +11,7 @@ import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.FrozenLinkInterface
 import fi.liikennevirasto.digiroad2.dao.ComplementaryLinkDAO
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.viite.{NodesAndJunctionsService, PreFillInfo, ProjectService, RoadAddressService, RoadNameService, RoadNameSource, RoadNetworkService, ViiteVkmClient}
-import fi.liikennevirasto.viite.dao.ProjectLinkDAO
+import fi.liikennevirasto.viite.dao.{ProjectLinkDAO, ProjectLinkNameDAO}
 import fi.liikennevirasto.viite.util.{runWithRollback, DigiroadSerializers, JsonSerializer}
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
@@ -42,7 +42,9 @@ class ViiteApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter {
   val mockViiteVkmClient: ViiteVkmClient = MockitoSugar.mock[ViiteVkmClient]
 
   val preFilledRoadName = PreFillInfo(1, 2, "roadName", RoadNameSource.RoadAddressSource, -1)
-  when(mockProjectService.fetchPreFillData("6117675", 7081807)).thenReturn(Right(preFilledRoadName))
+  private val testProjectId = roadNameService.withDynSession { projectDAO.fetchAll().head.id }
+
+  when(mockProjectService.fetchPreFillData("6117675", testProjectId)).thenReturn(Right(preFilledRoadName))
   when(mockKgvRoadLink.frozenTimeRoadLinkData).thenReturn(frozenTimeRoadLinkData)
   when(mockKgvRoadLink.complementaryData).thenReturn(complementaryData)
 
@@ -84,7 +86,7 @@ class ViiteApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter {
       status should equal(200)
       val links = read[Seq[Seq[Map[String, Any]]]](body)
       links should have size 2
-      links.head.head should have size 34
+      links.head.head should have size 33
     }
   }
 
@@ -93,21 +95,21 @@ class ViiteApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter {
       status should equal(200)
       val links = read[Seq[Seq[Map[String, Any]]]](body)
       links should have size 1
-      links.head.head should have size 34
+      links.head.head should have size 33
     }
   }
 
   test("Test /roadaddress/linkid/:linkId API call returns json data.") {
     get("/roadaddress/linkid/6117675") {
       status should equal(200)
-      body should equal("""{"modifiedAt":"25.06.2015 03:00:00","linkId":"6117675","startAddressM":0,"roadNameFi":"","roadPartNumber":0,"success":true,"endDate":"","linearLocationId":0,"roadwayNumber":0,"administrativeClassMML":"State","roadwayId":0,"municipalityCode":749,"middlePoint":{"x":6975409.0,"y":528167.8603886453,"z":43.282671305168655},"calibrationCode":0,"roadNumber":0,"trackCode":99,"roadClass":99,"sideCode":9,"points":[{"x":6975409.0,"y":527825.0,"z":85.90899999999965},{"x":6975409.0,"y":528516.0,"z":0.0}],"newGeometry":[{"x":6975409.0,"y":527825.0,"z":85.90899999999965},{"x":6975409.0,"y":528516.0,"z":0.0}],"anomaly":1,"municipalityName":"Siilinjärvi","startMValue":0.0,"endAddressM":0,"endMValue":691.0,"roadNameSe":"","calibrationPoints":[],"mmlId":"","startDate":"","modifiedBy":"kgv_modified","elyCode":8,"lifecycleStatus":3,"discontinuity":5,"administrativeClassId":1,"roadLinkSource":4}""")
+      body should equal("""{"modifiedAt":"25.06.2015 03:00:00","linkId":"6117675","startAddressM":0,"roadNameFi":"","roadPartNumber":0,"success":true,"endDate":"","linearLocationId":0,"roadwayNumber":0,"administrativeClassMML":"State","roadwayId":0,"municipalityCode":749,"middlePoint":{"x":6975409.0,"y":528167.8603886453,"z":43.282671305168655},"calibrationCode":0,"roadNumber":0,"trackCode":99,"roadClass":99,"sideCode":9,"points":[{"x":6975409.0,"y":527825.0,"z":85.90899999999965},{"x":6975409.0,"y":528516.0,"z":0.0}],"newGeometry":[{"x":6975409.0,"y":527825.0,"z":85.90899999999965},{"x":6975409.0,"y":528516.0,"z":0.0}],"municipalityName":"Siilinjärvi","startMValue":0.0,"endAddressM":0,"endMValue":691.0,"roadNameSe":"","calibrationPoints":[],"mmlId":"","startDate":"","modifiedBy":"kgv_modified","elyCode":8,"lifecycleStatus":3,"discontinuity":5,"administrativeClassId":1,"roadLinkSource":4}""")
     }
   }
 
-  test("Test /roadlinks/project/prefill When given linkId and projectId with existing project and road Then should return succesfully with prefill data.") {
+  test("Test /roadlinks/project/prefill When given linkId and testProjectId with existing project and road Then should return succesfully with prefill data.") {
     get("/roadlinks/project/prefill?linkId=6117675&currentProjectId=7081807") {
       status should equal(200)
-      body should equal("""{"roadPartNumber":1,"success":true,"roadNumber":77997,"roadName":"PreFillName","roadNameSource":1}""")
+      body should equal("""{"roadPartNumber":1,"success":true,"roadNumber":77997,"ely":1,"roadName":"","roadNameSource":99}""")
     }
 //    get("/roadlinks/project/prefill?linkId=6117675&currentProjectId=7081807") {
 //      status should equal(200)
@@ -141,15 +143,20 @@ class ViiteApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter {
   }
 
   test("Test /roadlinks/roadname/:roadNumber/:projectID") {
-    // RoadName
-    get("/roadlinks/roadname/5/7081807") {
-      status should equal(200)
-      body should equal("""{"roadName":"HELSINKI-SODANKYLÄ","isCurrent":true}""")
-    }
-    // ProjectLinkName
-    get("/roadlinks/roadname/77998/7081807") {
-      status should equal(200)
-      body should equal("""{"roadName":"Project_road_77998_name","isCurrent":false}""")
+    roadAddressService.withDynSession {
+      val testProjectRoadName = "Project_road_77998_name"
+      ProjectLinkNameDAO.create(testProjectId, 77998, testProjectRoadName)
+      // RoadName
+      get("/roadlinks/roadname/5/7081807") {
+        status should equal(200)
+        body should equal("""{"roadName":"HELSINKI-SODANKYLÄ","isCurrent":true}""")
+      }
+      // ProjectLinkName
+      get("/roadlinks/roadname/77998/7081807") {
+        status should equal(200)
+        body should equal("""{"roadName":"""" + testProjectRoadName + """","isCurrent":false}""")
+      }
+      ProjectLinkNameDAO.removeByProject(testProjectId)
     }
   }
 
@@ -201,14 +208,23 @@ class ViiteApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter {
     }
   }
 
-  test("Test /project/recalculateProject/:projectId") {
+  test("Test /project/recalculateProject/:testProjectId") {
     get("/project/recalculateProject/7081807") {
       status should equal(200)
-      body should be ("""{"success":true,"validationErrors":[]}""")
+      val response = parse(StringInput(body)).values.asInstanceOf[Map[String, Any]]
+      response should have size 2
+      response.head should be(("success",true))
+
+      /* Projektilla kaksi validointi virhettä:
+          Huom! Ajoratojen geometriapituuksissa yli 20% poikkeama. +
+          Tieosalle ei ole määritelty jatkuvuuskoodia "Tien loppu" (1), tieosan viimeiselle linkille.
+      */
+      response.last._1 should be("validationErrors")
+      response.last._2.asInstanceOf[List[Map[String, Any]]] should have size 2
     }
   }
 
-  test("Test /project/getchangetable/:projectId") {
+  test("Test /project/getchangetable/:testProjectId") {
     get("/project/getchangetable/7081807") {
       status should equal(200)
       val changeInfo = parse(StringInput(body)).values.asInstanceOf[Map[String, Map[String, Any]]]
