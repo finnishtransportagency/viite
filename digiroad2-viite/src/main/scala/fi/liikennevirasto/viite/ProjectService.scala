@@ -221,7 +221,7 @@ class ProjectService(
     val newRoadAddressProject = 0
     if (roadAddressProject.id == newRoadAddressProject) return None
     withDynTransaction {
-      return fetchProjectById(roadAddressProject.id)
+      fetchProjectById(roadAddressProject.id)
     }
   }
 
@@ -329,9 +329,7 @@ class ProjectService(
   def getRoadLinkDate(): String = {
     withDynSession {
       val timeInMillis = LinkDAO.fetchMaxAdjustedTimestamp()
-      val retValue =
-        """{ "result":" """ + new DateTime(timeInMillis).toString("dd.MM.yyyy HH:mm:ss") + """"}"""
-      retValue
+      """{ "result":" """ + new DateTime(timeInMillis).toString("dd.MM.yyyy HH:mm:ss") + """"}"""
     }
   }
 
@@ -353,8 +351,9 @@ class ProjectService(
     projectDAO.fetchProjectStatus(projectId) match {
       case Some(projectState) =>
         if (projectState == ProjectState.Incomplete || projectState == ProjectState.ErrorInViite)
-          return None
-        Some("Projektin tila ei ole keskeneräinen") //project state is not incomplete
+          None
+        else
+          Some("Projektin tila ei ole keskeneräinen") //project state is not incomplete
       case None => Some("Projektia ei löytynyt") //project could not be found
     }
   }
