@@ -386,14 +386,14 @@ class RoadAddressService(
 
   def locationInputParser(searchStringOption: Option[String]): Map[String, Seq[Long]] = {
     val searchString = searchStringOption.getOrElse("")
-    val linkIdRegex = """(\w+-\w+-\w+-\w+-\w+:\d+)""".r // Link UUID
-    val linkIds = linkIdRegex.findFirstIn(searchString)
+    val linkIdRegex  = """(\w+-\w+-\w+-\w+-\w+:\d+)""".r // Link UUID
+    val linkIds      = linkIdRegex.findFirstIn(searchString)
 
     if (linkIds.nonEmpty)
       Map(("linkId", Seq(-1L)))
     else {
       val numRegex = """(\d+)""".r
-      val nums = numRegex.findAllIn(searchString).map(_.toLong).toSeq
+      val nums     = numRegex.findAllIn(searchString).map(_.toLong).toSeq
       val letterRegex = """([A-Za-zÀ-ÿ])""".r
       val letters = letterRegex.findFirstIn(searchString)
       if (letters.isEmpty)
