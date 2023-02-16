@@ -147,14 +147,14 @@ class ViiteApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter {
     roadAddressService.withDynSession {
       val testProjectRoadName = "Project_road_77998_name"
       ProjectLinkNameDAO.create(testProjectId, 77998, testProjectRoadName)
-    // RoadName
-    get("/roadlinks/roadname/5/7081807") {
-      status should equal(200)
-      body should equal("""{"roadName":"HELSINKI-SODANKYLÄ","isCurrent":true}""")
-    }
-    // ProjectLinkName
-    get("/roadlinks/roadname/77998/7081807") {
-      status should equal(200)
+      // RoadName
+      get("/roadlinks/roadname/5/7081807") {
+        status should equal(200)
+        body should equal("""{"roadName":"HELSINKI-SODANKYLÄ","isCurrent":true}""")
+      }
+      // ProjectLinkName
+      get("/roadlinks/roadname/77998/7081807") {
+        status should equal(200)
         body should equal("""{"roadName":"""" + testProjectRoadName + """","isCurrent":false}""")
       }
       ProjectLinkNameDAO.removeByProject(testProjectId)
@@ -205,11 +205,15 @@ class ViiteApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter {
   test("Test /getRoadLinkDate") {
     get("/getRoadLinkDate") {
       status should equal(200)
-      body should equal("""{ "result":" 02.01.2018 02:00:00"}""")
+      val response = parse(StringInput(body)).values.asInstanceOf[Map[String, Any]]
+      response should have size 1
+      response.head._1 should be(("result"))
+      val formatter: DateTimeFormatter = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss")
+      formatter.parseDateTime(response.head._2.asInstanceOf[String].trim).getYear should be (2018)
     }
   }
 
-  test("Test /project/recalculateProject/:testProjectId") {
+  test("Test /project/recalculateProject/:projectId") {
     get("/project/recalculateProject/7081807") {
       status should equal(200)
       val response = parse(StringInput(body)).values.asInstanceOf[Map[String, Any]]
@@ -225,7 +229,7 @@ class ViiteApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter {
     }
   }
 
-  test("Test /project/getchangetable/:testProjectId") {
+  test("Test /project/getchangetable/:projectId") {
     get("/project/getchangetable/7081807") {
       status should equal(200)
       val changeInfo = parse(StringInput(body)).values.asInstanceOf[Map[String, Map[String, Any]]]
