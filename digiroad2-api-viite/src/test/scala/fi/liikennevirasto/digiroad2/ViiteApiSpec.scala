@@ -147,14 +147,14 @@ class ViiteApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter {
     roadAddressService.withDynSession {
       val testProjectRoadName = "Project_road_77998_name"
       ProjectLinkNameDAO.create(testProjectId, 77998, testProjectRoadName)
-    // RoadName
-    get("/roadlinks/roadname/5/7081807") {
-      status should equal(200)
-      body should equal("""{"roadName":"HELSINKI-SODANKYLÄ","isCurrent":true}""")
-    }
-    // ProjectLinkName
-    get("/roadlinks/roadname/77998/7081807") {
-      status should equal(200)
+      // RoadName
+      get("/roadlinks/roadname/5/7081807") {
+        status should equal(200)
+        body should equal("""{"roadName":"HELSINKI-SODANKYLÄ","isCurrent":true}""")
+      }
+      // ProjectLinkName
+      get("/roadlinks/roadname/77998/7081807") {
+        status should equal(200)
         body should equal("""{"roadName":"""" + testProjectRoadName + """","isCurrent":false}""")
       }
       ProjectLinkNameDAO.removeByProject(testProjectId)
