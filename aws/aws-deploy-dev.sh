@@ -5,7 +5,7 @@
 #
 set -e
 echo "Building Docker image"
-./aws-build-image.sh
+./aws/aws-build-image.sh
 echo "Logging in to AWS ECR with Docker"
 aws ecr get-login-password --profile vaylaapp --region eu-west-1 | docker login --username AWS --password-stdin 783354560127.dkr.ecr.eu-west-1.amazonaws.com
 echo "Tagging image"
