@@ -32,7 +32,7 @@ sealed trait Discontinuity {
 }
 
 object Discontinuity {
-  val values = Set(EndOfRoad, Discontinuous, ChangingELYCode, MinorDiscontinuity, Continuous, ParallelLink)
+  val values = Set(EndOfRoad, Discontinuous, ChangingELYCode, MinorDiscontinuity, Continuous)
 
   def apply(intValue: Int): Discontinuity = {
     values.find(_.value == intValue).getOrElse(Continuous)
@@ -75,19 +75,6 @@ object Discontinuity {
 
     def description = "Jatkuva"
   }
-
-  case object ParallelLink extends Discontinuity {
-    def value = 6
-
-    def description = "Parallel Link"
-  }
-
-  def replaceParallelLink(currentDiscontinuity: Discontinuity): Discontinuity = {
-    if (currentDiscontinuity == ParallelLink)
-      Continuous
-    else currentDiscontinuity
-  }
-
 }
 
 sealed trait CalibrationCode {
