@@ -43,7 +43,7 @@ class ViiteApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter {
   val mockViiteVkmClient: ViiteVkmClient = MockitoSugar.mock[ViiteVkmClient]
 
   val preFilledRoadName = PreFillInfo(1, 2, "roadName", RoadNameSource.RoadAddressSource, -1)
-  private val testProjectId = roadNameService.withDynSession { projectDAO.fetchAll().head.id }
+  private val testProjectId = roadNameService.withDynSession { projectDAO.fetchAllWithoutDeletedFilter().head("id").toString.toLong }
 
   when(mockProjectService.fetchPreFillData("6117675", testProjectId)).thenReturn(Right(preFilledRoadName))
   when(mockKgvRoadLink.frozenTimeRoadLinkData).thenReturn(frozenTimeRoadLinkData)
