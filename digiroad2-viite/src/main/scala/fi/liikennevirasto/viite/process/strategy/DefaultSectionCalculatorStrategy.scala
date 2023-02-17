@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.util.{MissingRoadwayNumberException, MissingTrackException, RoadAddressException, Track}
 import fi.liikennevirasto.digiroad2.util.Track.LeftSide
-import fi.liikennevirasto.viite.{AddressGeometryContinuityErrorMessage, ContinuousAddressCapErrorMessage, LengthMismatchErrorMessage, NegativeLengthErrorMessage, NewIdValue, ProjectValidationException, ProjectValidator, UnsuccessfulRecalculationMessage}
+import fi.liikennevirasto.viite.{ContinuousAddressCapErrorMessage, LengthMismatchErrorMessage, NegativeLengthErrorMessage, NewIdValue, ProjectValidationException, ProjectValidator, UnsuccessfulRecalculationMessage}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.UserDefinedCP
 import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
@@ -297,7 +297,6 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         case Seq(curr, next) => {
           if (curr.discontinuity == Discontinuity.Continuous && !curr.connected(next)) {
             logger.error(s"Address geometry mismatch. linkIds: ${curr.linkId} ${next.linkId}")
-            throw new RoadAddressException(AddressGeometryContinuityErrorMessage.format(curr.linkId))
           }
         }
         case _ =>
