@@ -99,6 +99,15 @@
       });
     };
 
+    this.getProjectStates = function (projectIDs) {
+      if (projectIDs.length > 0)
+        return backend.getRoadAddressProjectStates(projectIDs, function (projects) {
+          eventbus.trigger('roadAddressProjectStates:fetched', projects);
+        });
+      else
+        return null;
+    };
+
     this.getProjectsWithLinksById = function (projectId) {
       return backend.getProjectsWithLinksById(projectId, function (result) {
         roadAddressProjects = result.project;

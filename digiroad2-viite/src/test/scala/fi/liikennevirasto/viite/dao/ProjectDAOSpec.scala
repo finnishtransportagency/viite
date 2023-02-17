@@ -231,11 +231,11 @@ class ProjectDAOSpec extends FunSuite with Matchers {
 
   test("Test getRoadAddressProjects When adding one new project Then outcome size of projects should be bigger than before") {
     runWithRollback {
-      val projectListSize = projectDAO.fetchAll().length
+      val projectListSize = projectDAO.fetchAllWithoutDeletedFilter().length
       val id = Sequences.nextViiteProjectId
       val rap = dummyProject(id, ProjectState.Incomplete, List.empty[ProjectReservedPart], None)
       projectDAO.create(rap)
-      val projectList = projectDAO.fetchAll()
+      val projectList = projectDAO.fetchAllWithoutDeletedFilter()
       projectList.length - projectListSize should be(1)
     }
   }

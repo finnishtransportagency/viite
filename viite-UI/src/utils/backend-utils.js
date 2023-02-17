@@ -247,6 +247,12 @@
       });
     }, 1000);
 
+    this.getRoadAddressProjectStates = _.throttle(function (projectIDs, callback) {
+            return $.getJSON('api/viite/roadlinks/roadaddress/project/states/' + projectIDs, function (data) {
+                return _.isFunction(callback) && callback(data);
+            });
+    }, 1000);
+
     this.getProjectsWithLinksById = _.throttle(function (id, callback) {
       if (loadingProject) {
         loadingProject.abort();

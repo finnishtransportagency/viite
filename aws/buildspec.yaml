@@ -24,9 +24,11 @@ phases:
       - aws s3 cp "s3://fi-viite-dev/geotools-19/gt-metadata-19.0.jar" ./digiroad2-geo/lib
       - aws s3 cp "s3://fi-viite-dev/geotools-19/gt-opengis-19.0.jar" ./digiroad2-geo/lib
       - aws s3 cp "s3://fi-viite-dev/geotools-19/jgridshift-1.0.jar" ./digiroad2-geo/lib
+      - timedatectl set-timezone Europe/Helsinki
   build:
     commands:
       - grunt test
+      - sbt ${1} ${2} "project digiroad2-viite" "test:run-main fi.liikennevirasto.viite.util.DataFixture flyway_migrate"
       - sbt test
       - grunt deploy
       - sbt clean
