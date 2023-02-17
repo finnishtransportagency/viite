@@ -297,7 +297,7 @@
                     (pl.status !== LinkStatus.NotHandled.value && pl.status !== LinkStatus.Numbering.value);
             }).length !== 0) {
               removeNumberingFromDropdown();
-        };
+        }
         disableFormInputs();
         const projectLinkMaxByEndAddressM = _.maxBy(selectedProjectLink, function (projectLink) {
               return projectLink.endAddressM;
