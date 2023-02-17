@@ -24,7 +24,7 @@ phases:
       - aws s3 cp "s3://fi-viite-dev/geotools-19/gt-metadata-19.0.jar" ./digiroad2-geo/lib
       - aws s3 cp "s3://fi-viite-dev/geotools-19/gt-opengis-19.0.jar" ./digiroad2-geo/lib
       - aws s3 cp "s3://fi-viite-dev/geotools-19/jgridshift-1.0.jar" ./digiroad2-geo/lib
-      - timedatectl set-timezone Europe/Helsinki
+      - rm -rf /etc/localtime && ln -s /usr/share/zoneinfo/Europe/Helsinki /etc/localtime
   build:
     commands:
       - grunt test
