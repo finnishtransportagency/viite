@@ -133,7 +133,7 @@ class ProjectValidator {
       ErrorInValidationOfUnchangedLinks, RoadNotEndingInElyBorder, RoadContinuesInAnotherEly,
       MultipleElyInPart, IncorrectLinkStatusOnElyCodeChange,
       ElyCodeChangeButNoRoadPartChange, ElyCodeChangeButNoElyChange, ElyCodeChangeButNotOnEnd, ElyCodeDiscontinuityChangeButNoElyChange, RoadNotReserved, DistinctAdministrativeClassesBetweenTracks, WrongDiscontinuityOutsideOfProject,
-      TrackGeometryLengthDeviation)
+      TrackGeometryLengthDeviation, UniformAdminClassOnLink)
 
     // Viite-942
     case object MissingEndOfRoad extends ValidationError {
@@ -463,7 +463,15 @@ class ProjectValidator {
 
       def notification = false
     }
+    
+    case object UniformAdminClassOnLink extends ValidationError {
+      def value = 39
 
+      def message: String = UniformAdminClassOnLinkMessage
+
+      def notification = true
+    }
+    
     def apply(intValue: Int): ValidationError = {
       values.find(_.value == intValue).get
     }
@@ -540,6 +548,7 @@ class ProjectValidator {
     val normalPriorityValidations: Seq[(Project, Seq[ProjectLink]) => Seq[ValidationErrorDetails]] = Seq(
       // sequence of validator functions, in INCREASING priority order (as these get turned around in the next step)
       checkNoReverseInProject,
+      checkUniformAdminClassOnLink,
       checkProjectElyCodes,
       checkProjectContinuity,
       checkForInvalidUnchangedLinks,
@@ -891,6 +900,15 @@ class ProjectValidator {
     } else {
       Seq()
     }
+  }
+  def checkUniformAdminClassOnLink(project: Project, allProjectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
+    val groupedProjectLinksByLinkId = allProjectLinks.groupBy(_.linkId).filter(_._2.size > 1)
+    groupedProjectLinksByLinkId.mapValues(pls =>
+      if (pls.forall(_.administrativeClass == pls.head.administrativeClass))
+        Seq()
+      else
+        Seq(error(project.id, ValidationErrorList.UniformAdminClassOnLink)(pls).get)
+    ).values.flatten.toSeq
   }
 
   def checkProjectElyCodes(project: Project, allProjectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
