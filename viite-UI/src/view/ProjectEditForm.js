@@ -289,11 +289,15 @@
       function updateForm() {
         checkInputs();
         changeDropDownValue(selectedProjectLink[0].status);
-        if (selectedProjectLink[0].status !== LinkStatus.Numbering.value && _.filter(projectCollection.getFormedParts(), function (formedLink) {
-          return formedLink.roadNumber === selectedProjectLink[0].roadNumber && formedLink.roadPartNumber === selectedProjectLink[0].roadPartNumber;
-        }).length !== 0) {
-          removeNumberingFromDropdown();
-        }
+        /* Disable numbering if the road part has any other status set. */
+        if (selectedProjectLink[0].status !== LinkStatus.Numbering.value &&
+            _.filter(projectCollection.getAll(), function (pl) {
+                return pl.roadAddressRoadNumber === selectedProjectLink[0].roadNumber &&
+                    pl.roadAddressRoadPart === selectedProjectLink[0].roadPartNumber &&
+                    (pl.status !== LinkStatus.NotHandled.value && pl.status !== LinkStatus.Numbering.value);
+            }).length !== 0) {
+              removeNumberingFromDropdown();
+        };
         disableFormInputs();
         const projectLinkMaxByEndAddressM = _.maxBy(selectedProjectLink, function (projectLink) {
               return projectLink.endAddressM;
