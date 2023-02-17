@@ -22,18 +22,9 @@
     this.getRoadLinks = createCallbackRequestor(function (params) {
       var zoom = params.zoom;
       var boundingBox = params.boundingBox;
-      var withHistory = params.withHistory;
-      var day = params.day;
-      var month = params.month;
-      var year = params.year;
-      if (withHistory)
-        return {
-          url: 'api/viite/roadaddress?zoom=' + zoom + '&bbox=' + boundingBox + '&dd=' + day + '&mm=' + month + '&yyyy=' + year
-        };
-      else
-        return {
-          url: 'api/viite/roadaddress?zoom=' + zoom + '&bbox=' + boundingBox
-        };
+      return {
+        url: 'api/viite/roadaddress?zoom=' + zoom + '&bbox=' + boundingBox
+      };
     });
 
     this.getRoadLinksOfWholeRoadPart = createCallbackRequestor(function (params) {
@@ -105,12 +96,6 @@
       });
     }, 1000);
 
-    this.getRoadAddressById = _.throttle(function (id, callback) {
-      return $.getJSON('api/viite/roadaddress/' + id, function (data) {
-        return _.isFunction(callback) && callback(data);
-      });
-    }, 1000);
-
     this.getPrefillValuesForLink = _.throttle(function (linkId, currentProjectId, callback) {
       return $.getJSON('api/viite/roadlinks/project/prefill?linkId=' + linkId + '&currentProjectId=' + currentProjectId, function (data) {
         return _.isFunction(callback) && callback(data);
@@ -142,12 +127,6 @@
           return null;
         }
       }, 500);
-
-    this.getAdjacentsFromMultipleSources = _.throttle(function (roadData, callback) {
-      return $.getJSON('api/viite/roadlinks/adjacent/multiSource?roadData=' + JSON.stringify(roadData), function (data) {
-        return _.isFunction(callback) && callback(data);
-      });
-    }, 1000);
 
     this.createRoadAddress = _.throttle(function (data, errorCallback) {
       $.ajax({
@@ -268,6 +247,12 @@
       });
     }, 1000);
 
+    this.getRoadAddressProjectStates = _.throttle(function (projectIDs, callback) {
+            return $.getJSON('api/viite/roadlinks/roadaddress/project/states/' + projectIDs, function (data) {
+                return _.isFunction(callback) && callback(data);
+            });
+    }, 1000);
+
     this.getProjectsWithLinksById = _.throttle(function (id, callback) {
       if (loadingProject) {
         loadingProject.abort();
@@ -285,16 +270,6 @@
     this.recalculateAndValidateProject = function (id, callback) {
       $.getJSON('api/viite/project/recalculateProject/' + id, callback);
     };
-
-    this.validateUnchangedInProject = _.throttle(function (id, success) {
-        $.ajax({
-            cache: false,
-            contentType: "application/json",
-            type: "GET",
-            url: "api/viite/project/validateUnchanged/" + id,
-            success: success
-        });
-    }, 1000);
 
     this.getJunctionPointEditableStatus = function (ids, jp) {
       $.get('api/viite/junctions/getEditableStatusOfJunctionPoints?ids=' + ids, function (response) {
@@ -329,14 +304,6 @@
       return $.get("api/viite/roadlinks/search", {search: searchString}).then(function (x) {
         return x;
       });
-    };
-
-    this.getCoordinatesFromRoadAddress = function (roadNumber, roadPartNumber, distance, callback) {
-      return $.get('api/viite/roadlinks/roadaddress', {
-        road: roadNumber,
-        part: roadPartNumber,
-        addrMValue: distance
-      }, callback);
     };
 
     this.reOpenProject = function (projectId, success, errorCallback) {

@@ -102,6 +102,7 @@
           if (response.success) {
             $('#tie').val(response.roadNumber);
             $('#osa').val(response.roadPartNumber);
+            $('#ely').val(response.ely);
             if (response.roadName !== '') {
               roadNameField.val(response.roadName);
               roadNameField.prop('disabled', response.roadNameSource === RoadNameSource.RoadAddressSource.value);
@@ -344,6 +345,7 @@
 
     const getProjectErrors = function (projectErrors, links, projectCollection) {
       let buttonIndex = 0;
+      let errorIndex = 0;
       let errorLines = '';
       projectCollection.clearCoordinates();
       projectErrors.sort(function (a, b) {
@@ -358,13 +360,23 @@
           buttonIndex++;
         }
         errorLines += '<div class="form-project-errors-list' + (error.priority === 1 ? ' warning' : '') + '">' +
-          addSmallLabelTopped('LINKIDS: ') + ' ' + addSmallLabelWrapped(error.linkIds) + '</br>' +
           addSmallLabel('VIRHE: ') + ' ' + addSmallLabelLowercase((error.errorMessage ? error.errorMessage : 'N/A')) + '</br>' +
           addSmallLabel('INFO: ') + ' ' + addSmallLabelLowercase((error.info ? error.info : 'N/A')) + '</br>' +
-          (button.html ? button.html : '') + '</br> <hr class="horizontal-line"/>' +
-          '</div>';
+          (button.html ? button.html : '') +
+          addLinkIdListButton(errorIndex, error.linkIds) +
+          '</br> <hr class="horizontal-line"/>' +
+        '</div>';
+        errorIndex++;
       });
+
       return errorLines;
+    };
+
+    const addLinkIdListButton = function (errorIndex, linkIds) {
+      if (linkIds.length > 0)
+        return '<button id= "' + errorIndex + '" class="btn btn-primary linkIdList">Linkkien id:t</button>';
+      else
+        return '';
     };
 
     return {

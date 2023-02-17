@@ -145,6 +145,21 @@ module.exports = function (grunt) {
             }
           },
           {
+            context:'/wmts/kiinteisto',
+            host: 'api.vaylapilvi.fi',
+            port: '443',
+            https: true,
+            changeOrigin: false,
+            xforward: true,
+            headers: {
+              "X-API-Key": process.env.rasterServiceApiKey,
+              host: 'api.vaylapilvi.fi'
+            },
+            rewrite: {
+              '/wmts/kiinteisto':'/rasteripalvelu-mml/wmts/kiinteisto'
+            }
+          },
+          {
             context: '/test/components',
             host: 'localhost',
             port: '9003',

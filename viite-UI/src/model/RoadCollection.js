@@ -63,10 +63,6 @@
     var roadLinkGroups = [];
     var unaddressedUnderConstructionRoadLinkGroups = [];
     var unaddressedRoadLinkGroups = [];
-    var tmpRoadLinkGroups = [];
-    var preMovedRoadAddresses = [];
-    var date = [];
-    var historicRoadLinks = [];
     var LinkStatus = ViiteEnumerations.LinkStatus;
     var LinkSource = ViiteEnumerations.LinkGeomSource;
     var lifecycleStatus = ViiteEnumerations.lifecycleStatus;
@@ -105,23 +101,10 @@
       roadLinkGroups[indexOfGroupToBeUpdated] = fetchedGroupThatWasClicked;
     };
 
-    this.getDate = function () {
-      return date;
-    };
-
-    this.setDate = function (newDate) {
-      date = newDate;
-    };
-
     this.fetch = function (boundingBox, zoom) {
-      var withHistory = date.length !== 0;
-      var day = withHistory ? date[0] : -1;
-      var month = withHistory ? date[1] : -1;
-      var year = withHistory ? date[2] : -1;
       currentZoom = zoom;
       backend.getRoadLinks({
-        boundingBox: boundingBox, zoom: zoom,
-        withHistory: withHistory, day: day, month: month, year: year
+        boundingBox: boundingBox, zoom: zoom
       }, function (fetchedRoadLinks) {
         currentAllRoadLinks = fetchedRoadLinks;
         fetchProcess(fetchedRoadLinks, zoom);
@@ -206,19 +189,12 @@
         setRoadLinkGroups(roadLinkGroups.concat(nonFetchedLinksInSelection));
       }
 
-      historicRoadLinks = _.filter(roadLinkGroups, function (group) {
-        return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface);
-      });
-
       var nonHistoryConstructionRoadLinkGroups = _.reject(roadLinkGroups, function (group) {
         return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface);
       });
 
       setRoadLinkGroups(nonHistoryConstructionRoadLinkGroups);
       eventbus.trigger('roadLinks:fetched', nonHistoryConstructionRoadLinkGroups, (!_.isUndefined(drawUnknowns) && drawUnknowns), selectedLinkIds);
-      if (historicRoadLinks.length !== 0) {
-        eventbus.trigger('linkProperty:fetchedHistoryLinks', historicRoadLinks);
-      }
       if (unaddressedUnderConstructionRoadLinkGroups.length !== 0)
         eventbus.trigger('underConstructionRoadLinks:fetched', unaddressedUnderConstructionRoadLinkGroups);
       if (unaddressedUnknownRoadLinkGroups.length !== 0)
@@ -275,25 +251,6 @@
     this.getUnderConstructionLinks = function () {
       return _.map(_.flatten(unaddressedUnderConstructionRoadLinkGroups), function (roadLink) {
         return roadLink.getData();
-      });
-    };
-
-    this.getTmpRoadLinkGroups = function () {
-      return tmpRoadLinkGroups;
-    };
-
-    this.getTmpByLinkId = function (ids) {
-      var segments = _.filter(tmpRoadLinkGroups, function (road) {
-        return road.getData().linkId === ids;
-      });
-      return segments;
-    };
-
-    this.getTmpById = function (ids) {
-      return _.map(ids, function (id) {
-        return _.find(tmpRoadLinkGroups, function (road) {
-          return road.getData().id === id;
-        });
       });
     };
 
@@ -355,14 +312,6 @@
       });
     };
 
-    this.addTmpRoadLinkGroups = function (tmp) {
-      if (tmpRoadLinkGroups.filter(function (roadTmp) {
-        return roadTmp.getData().linkId === tmp.linkId;
-      }).length === 0) {
-        tmpRoadLinkGroups.push(new RoadLinkModel(tmp));
-      }
-    };
-
     var setRoadLinkGroups = function (groups) {
       roadLinkGroups = groups;
     };
@@ -373,14 +322,6 @@
 
     this.reset = function () {
       roadLinkGroups = [];
-    };
-
-    this.addPreMovedRoadAddresses = function (ra) {
-      preMovedRoadAddresses.push(ra);
-    };
-
-    this.resetPreMovedRoadAddresses = function () {
-      preMovedRoadAddresses = [];
     };
 
     this.findReservedProjectLinks = function (boundingBox, zoomLevel, projectId) {
@@ -404,12 +345,6 @@
           return feature;
         });
         eventbus.trigger('linkProperties:highlightReservedRoads', notHandledFeatures);
-      });
-    };
-
-    this.toRoadLinkModel = function (roadDataArray) {
-      return _.map(roadDataArray, function (rda) {
-        return new RoadLinkModel(rda);
       });
     };
   };

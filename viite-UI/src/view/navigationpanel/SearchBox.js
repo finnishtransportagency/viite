@@ -11,12 +11,6 @@
     var clearButton = $('<button id="clearSearch" class="btn btn-secondary btn-block">Tyhjenn&auml; tulokset</button>');
     var clearSection = $('<div class="panel-section"></div>').append(clearButton).hide();
 
-    var setDateValue = function (date) {
-      $('#dayBox').val(date[0]);
-      $('#monthBox').val(date[1]);
-      $('#yearBox').val(date[2]);
-    };
-
     var bindEvents = function () {
       var populateSearchResults = function (results) {
         var resultItems = _.chain(results).sortBy('distance').sortBy('title').sortBy(function (item) {
@@ -64,26 +58,6 @@
       clearButton.on('click', function () {
         resultsSection.hide();
         clearSection.hide();
-      });
-
-      eventbus.on('linkProperty:fetchHistoryLinks', function (date) {
-        var dateBox = $('<div id="dateBox" style="margin-left: 10px" class="panel-group search-box"> ' +
-          '<input id="dayBox" type="text" style="width: 40px" class="location input-sm" placeholder="DD" value="' + date[0] + '"/>' +
-          '<input id="monthBox" type="text" style="width: 40px" class="location input-sm" placeholder="MM" value="' + date[1] + '"/>' +
-          '<input id="yearBox" type="text" style="width: 65px" class="location input-sm" placeholder="YYYY" value="' + date[2] + '"/>');
-
-        if ($('#searchBox').has('#dateBox').length === 0) {
-          $('#searchBox').append(dateBox);
-
-          $('#dayBox, #monthBox, #yearBox').on('change', function (_eventData) {
-            var day = $('#dayBox').val();
-            var month = $('#monthBox').val();
-            var year = $('#yearBox').val();
-            var newDate = [day, month, year];
-            setDateValue(newDate);
-            eventbus.trigger('linkProperty:fetchHistoryLinks', newDate);
-          });
-        }
       });
     };
 

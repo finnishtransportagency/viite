@@ -44,6 +44,7 @@ trait DigiroadServer {
     holder.setInitParameter("cacheControl", "no-store, no-cache")
     appContext.addServlet(holder, "/index.html")
     appContext.addServlet(new ServletHolder(new WMTSProxyServlet), "/wmts/maasto/*")
+    appContext.addServlet(new ServletHolder(new WMTSProxyServlet), "/wmts/kiinteisto/*")
     appContext.getMimeTypes.addMimeMapping("ttf", "application/x-font-ttf")
     appContext.getMimeTypes.addMimeMapping("woff", "application/x-font-woff")
     appContext.getMimeTypes.addMimeMapping("eot", "application/vnd.ms-fontobject")

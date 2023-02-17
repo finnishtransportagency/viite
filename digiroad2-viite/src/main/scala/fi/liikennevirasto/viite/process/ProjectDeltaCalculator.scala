@@ -199,10 +199,8 @@ object ProjectDeltaCalculator {
           else
             Seq(r1.copy(discontinuity = r2.discontinuity, endAddrMValue = r2.endAddrMValue, calibrationPointTypes = r2.calibrationPointTypes))
         case LinkStatus.New =>
-          if (hasUdcp ||( !hasParallelLinkOnCalibrationPoint && !hasCalibrationPoint) && r1.discontinuity.value != Discontinuity.ParallelLink.value ) { // && !r1.isSplit
+          if (hasUdcp ||( !hasParallelLinkOnCalibrationPoint && !hasCalibrationPoint)) { // && !r1.isSplit
             Seq(r1.copy(discontinuity = r2.discontinuity, endAddrMValue = r2.endAddrMValue, calibrationPointTypes = r2.calibrationPointTypes, connectedLinkId = r2.connectedLinkId))
-          } else if (!hasCalibrationPoint && r1.discontinuity.value == Discontinuity.ParallelLink.value) {
-            Seq(r2, r1)
           } else {
             Seq(r2, r1)
           }

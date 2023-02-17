@@ -1,7 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
 import java.util.concurrent.TimeUnit
-
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import fi.liikennevirasto.digiroad2.client.kgv.KgvRoadLink
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
@@ -14,6 +13,9 @@ import fi.liikennevirasto.viite.process.RoadAddressFiller.ChangeSet
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.liikennevirasto.viite.util.{DataImporter, JsonSerializer}
 import org.slf4j.{Logger, LoggerFactory}
+import fi.liikennevirasto.digiroad2.util.DatabaseMigration
+import fi.liikennevirasto.digiroad2.util.LogUtils.time
+import org.scalatra.{InternalServerError, Ok}
 
 import scala.concurrent.duration.FiniteDuration
 import scala.util.control.NonFatal
@@ -49,6 +51,25 @@ object Digiroad2Context {
       case  NonFatal(ex) =>
         logger.error("Exception at preserving a project :" + ex.getMessage)
         System.err.println("Exception at preserving a project: " + ex.getMessage)
+    }
+  }
+
+  /* Run flyway migrate once after start in non-local envs  */
+  system.scheduler.scheduleOnce(FiniteDuration(10, TimeUnit.SECONDS)) {
+    if (ViiteProperties.env.trim.toLowerCase != "local") {
+      time(logger, "Scheduled once flyway_migrate") {
+        try {
+          val outOfOrder = true
+          DatabaseMigration.migrate(outOfOrder)
+          logger.info("Flyway migrate successful.")
+          Ok("Flyway migrate successful.\n")
+        } catch {
+          case e: Exception => {
+            logger.error("Flyway migrate failed.", e)
+            InternalServerError(s"Flyway migrate failed: ${e.getMessage}")
+          }
+        }
+      }
     }
   }
 

@@ -14,13 +14,6 @@ trait AddressLinkBuilder {
   val formatter: DateTimeFormatter = DateTimeFormat.forPattern("dd.MM.yyyy")
   val dateTimeFormatter: DateTimeFormatter = ISODateTimeFormat.dateOptionalTimeParser()
 
-  lazy val municipalityMapping: Map[Long, Long] = if (PostGISDatabase.isWithinSession)
-    MunicipalityDAO.getMunicipalityMapping
-  else
-    PostGISDatabase.withDynSession {
-      MunicipalityDAO.getMunicipalityMapping
-    }
-
   lazy val municipalityRoadMaintainerMapping: Map[Long, Long] = if (PostGISDatabase.isWithinSession)
     MunicipalityDAO.getMunicipalityRoadMaintainers
   else

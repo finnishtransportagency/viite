@@ -1,8 +1,7 @@
 (function (root) {
-  root.NodeLayer = function (map, roadLayer, selectedNodesAndJunctions, nodeCollection, roadCollection, linkPropertiesModel, applicationModel) {
+  root.NodeLayer = function (map, roadLayer, selectedNodesAndJunctions, nodeCollection, roadCollection, applicationModel) {
     Layer.call(this, map);
     var me = this;
-    var indicatorVector = new ol.source.Vector({});
     var directionMarkerVector = new ol.source.Vector({});
     var dblVector = function () {
       return {selected: new ol.source.Vector({}), unselected: new ol.source.Vector({})};
@@ -13,16 +12,8 @@
     var junctionTemplateVector = dblVector();
     var cachedMarker = null;
 
-    var Anomaly = ViiteEnumerations.Anomaly;
     var SideCode = ViiteEnumerations.SideCode;
     var RoadZIndex = ViiteEnumerations.RoadZIndex;
-
-    var indicatorLayer = new ol.layer.Vector({
-      source: indicatorVector,
-      name: 'indicatorLayer',
-      zIndex: RoadZIndex.IndicatorLayer.value
-    });
-    indicatorLayer.set('name', 'indicatorLayer');
 
     var directionMarkerLayer = new ol.layer.Vector({
       source: directionMarkerVector,
@@ -85,7 +76,6 @@
 
     var setGeneralOpacity = function (opacity) {
       roadLayer.layer.setOpacity(opacity);
-      indicatorLayer.setOpacity(opacity);
       directionMarkerLayer.setOpacity(opacity);
       nodeMarkerLayer.setOpacity(opacity);
       nodeMarkerSelectedLayer.setOpacity(opacity);
@@ -599,7 +589,7 @@
         if (zoomlevels.getViewZoom(map) >= zoomlevels.minZoomForRoadNetwork) {
 
           var directionRoadMarker = _.filter(roadLinks, function (roadLink) {
-            return roadLink.anomaly !== Anomaly.NoAddressGiven.value && roadLink.anomaly !== Anomaly.GeometryChanged.value && (roadLink.sideCode === SideCode.AgainstDigitizing.value || roadLink.sideCode === SideCode.TowardsDigitizing.value);
+            return (roadLink.sideCode === SideCode.AgainstDigitizing.value || roadLink.sideCode === SideCode.TowardsDigitizing.value);
           });
           _.each(directionRoadMarker, function (directionLink) {
             cachedMarker.createMarker(directionLink, function (marker) {

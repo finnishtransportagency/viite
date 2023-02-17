@@ -18,13 +18,6 @@
     Terminated: {value: 5, description: "Terminated", displayText: "Lakkautus"}
   };
 
-  root.Anomaly = {
-    None: {value: 0, description: "None"},
-    NoAddressGiven: {value: 1, description: "NoAddressGiven"},
-    GeometryChanged: {value: 2, description: "GeometryChanged"},
-    Illogical: {value: 3, description: "Illogical"}
-  };
-
   root.LinkGeomSource = {
     NormalLinkInterface: {value: 1, descriptionFI: "MML", description: "NormalLinkInterface"},
     ComplementaryLinkInterface: {value: 2, descriptionFI: "Täydentävä", description: "ComplementaryLinkInterface"},
@@ -110,16 +103,12 @@
 
   root.RoadZIndex = {
     VectorLayer: {value: 1},
-    AnomalousMarkerLayer: {value: 2},
+    RoadLinkStyleZIndex: {value: 2},
     CalibrationPointLayer: {value: 3},
     UnderConstructionLayer: {value: 4},
-    GeometryChangedLayer: {value: 5},
     ReservedRoadLayer: {value: 6},
-    HistoricRoadLayer: {value: 7},
     DirectionMarkerLayer: {value: 8},
-    GreenLayer: {value: 10},
-    unAddressedRoadsLayer: {value: 11},
-    IndicatorLayer: {value: 99}
+    unAddressedRoadsLayer: {value: 11}
   };
 
   root.AdministrativeClass = {
@@ -227,8 +216,7 @@
     Discontinuous: {value: 2, description: "Epäjatkuva"},
     ChangingELYCode: {value: 3, description: "ELY:n raja"},
     MinorDiscontinuity: {value: 4, description: "Lievä epäjatkuvuus"},
-    Continuous: {value: 5, description: "Jatkuva"},
-    ParallelLink: {value: 6, description: "Parallel Link"}
+    Continuous: {value: 5, description: "Jatkuva"}
 
   };
 }(window.ViiteEnumerations = window.ViiteEnumerations || {}));

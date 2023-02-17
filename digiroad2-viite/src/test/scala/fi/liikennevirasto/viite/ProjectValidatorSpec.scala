@@ -1947,6 +1947,51 @@ Left|      |Right
     }
   }
 
+
+  test("Test checkForInvalidUnchangedLinks When there is a new link is before unchanged Then ProjectValidator should show ErrorInValidationOfUnchangedLinks") {
+      /* |-> New-UnChanged-UnChanged-UnChanged-UnChanged-UnChanged */
+    runWithRollback {
+      mockEmptyRoadAddressServiceCalls()
+      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.UnChanged, Seq(0L, 10L, 20L, 30L, 40L), withRoadAddress = false)
+      val newPl = projectLinks.head.copy(status = LinkStatus.New, startAddrMValue = 0, endAddrMValue = 0, originalStartAddrMValue = 0, originalEndAddrMValue = 0, geometry = Seq(Point(0,-10),Point(0,0)))
+      val validationErrors = projectValidator.checkForInvalidUnchangedLinks(project, newPl +: projectLinks).distinct
+      validationErrors.size shouldNot be(0)
+      validationErrors.foreach(e => e.validationError.value should be(projectValidator.ValidationErrorList.ErrorInValidationOfUnchangedLinks.value))
+    }
+  }
+
+  test("Test checkForInvalidUnchangedLinks When there is a new link in middle of unchanged links Then ProjectValidator should show ErrorInValidationOfUnchangedLinks") {
+     /* |-> UnChanged-UnChanged-UnChanged-UnChanged-UnChanged-New-UnChanged-UnChanged-UnChanged-UnChanged-UnChanged */
+   runWithRollback {
+     mockEmptyRoadAddressServiceCalls()
+     val newLinkStartAddress = 50
+     val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.UnChanged, Seq(0L, 10L, 20L, 30L, 40L), withRoadAddress = false)
+     val projectLinksAfterNewLink = projectLinks.map(pl => pl.copy(
+       startAddrMValue = pl.startAddrMValue + newLinkStartAddress,
+       endAddrMValue = pl.endAddrMValue + newLinkStartAddress,
+       originalStartAddrMValue = pl.startAddrMValue + newLinkStartAddress,
+       originalEndAddrMValue = pl.endAddrMValue + newLinkStartAddress,
+       geometry = Seq(Point(pl.startingPoint.x, pl.startingPoint.y + newLinkStartAddress), Point(pl.endPoint.x, pl.endPoint.y + newLinkStartAddress))
+       )
+                                                     )
+     val newPl = projectLinks.head.copy(id = projectLinks.head.id-1, status = LinkStatus.New, startAddrMValue = 0, endAddrMValue = 0, originalStartAddrMValue = 0, originalEndAddrMValue = 0, geometry = Seq(Point(0,40),Point(0,50)))
+     val validationErrors = projectValidator.checkForInvalidUnchangedLinks(project, projectLinks ++ Seq(newPl) ++ projectLinksAfterNewLink).distinct
+     validationErrors.size shouldNot be(0)
+     validationErrors.foreach(e => e.validationError.value should be(projectValidator.ValidationErrorList.ErrorInValidationOfUnchangedLinks.value))
+   }
+  }
+
+  test("Test checkForInvalidUnchangedLinks When there is a new link is after unchanged links Then ProjectValidator shouldn't show ErrorInValidationOfUnchangedLinks") {
+      /* |-> UnChanged-UnChanged-UnChanged-UnChanged-UnChanged-New */
+    runWithRollback {
+      mockEmptyRoadAddressServiceCalls()
+      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.UnChanged, Seq(0L, 10L, 20L, 30L, 40L), withRoadAddress = false)
+      val newPl = projectLinks.head.copy(id = projectLinks.last.id+1, status = LinkStatus.New, startAddrMValue = 0, endAddrMValue = 0, originalStartAddrMValue = 0, originalEndAddrMValue = 0, geometry = Seq(Point(0,40),Point(0,50)))
+      val validationErrors = projectValidator.checkForInvalidUnchangedLinks(project, projectLinks ++ Seq(newPl)).distinct
+      validationErrors should have size 0
+    }
+  }
+
   test("Test checkProjectElyCodes When un-calculated new links have ely change but no road part change " +
                 "Then validator should return ElyCodeChangeButNotOnEnd error.") {
     runWithRollback {
@@ -2199,6 +2244,34 @@ Left|      |Right
       mockEmptyRoadAddressServiceCalls()
       val validationErrors = projectValidator.checkTrackCodePairing(project, projectLinks).distinct
       validationErrors.size should be(0)
+    }
+  }
+
+  test("Test checkTrackCodePairing When two track projects links have length difference > 20% Then there should be validation error.") {
+    // > 20% case
+    runWithRollback {
+      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L), changeTrack = true)
+      val extraLength             = 10L
+      val inconsistentLinks       = projectLinks.map {l =>
+        if (l.endAddrMValue == 40L && l.track == Track.RightSide) l.copy(geometryLength = l.geometryLength + extraLength, geometry = Seq(l.getFirstPoint, l.getLastPoint.copy(y = l.getLastPoint.y + extraLength))) else l
+      }
+
+      mockEmptyRoadAddressServiceCalls()
+      val validationErrors = projectValidator.checkTrackCodePairing(project, inconsistentLinks).distinct
+      validationErrors.size should be(1)
+    }
+
+    // > 50m case
+    runWithRollback {
+      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 100L, 200L, 300L, 400L), changeTrack = true)
+      val extraLength             = 60L
+      val inconsistentLinks       = projectLinks.map {l =>
+        if (l.endAddrMValue == 400L && l.track == Track.RightSide) l.copy(geometryLength = l.geometryLength + extraLength, geometry = Seq(l.getFirstPoint, l.getLastPoint.copy(y = l.getLastPoint.y + extraLength))) else l
+      }
+
+      mockEmptyRoadAddressServiceCalls()
+      val validationErrors = projectValidator.checkTrackCodePairing(project, inconsistentLinks).distinct
+      validationErrors.size should be(1)
     }
   }
 
@@ -2743,7 +2816,8 @@ Left|      |Right
     }
   }
 
-  test("Test checkRoadContinuityCodes for incorrect discontinuity on parallel links of a minor discontinuity") {
+  test("Test checkRoadContinuityCodes When there is a minor discontinuity on only one track of a two track section" +
+    "Then should not return validation error") {
     runWithRollback {
 
       val project = Project(Sequences.nextViiteProjectId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),"", Seq(), Seq(), None, None)
@@ -2755,12 +2829,7 @@ Left|      |Right
         RoadAddress(12345, linearLocationId, 19999L, 1L, AdministrativeClass.State, Track.LeftSide, Discontinuity.MinorDiscontinuity, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Some("User"), linkId, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), Seq(Point(5.0, 0.0), Point(5.0, 10.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None, None),
         RoadAddress(12346, linearLocationId + 1, 19999L, 1L, AdministrativeClass.State, Track.LeftSide, Discontinuity.EndOfRoad, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Some("User"), linkId, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), Seq(Point(10.0, 0.0), Point(5.0, 0.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber2, Some(DateTime.parse("1901-01-01")), None, None),
         RoadAddress(12347, linearLocationId + 2, 19999L, 1L, AdministrativeClass.State, Track.RightSide, Discontinuity.Continuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Some("User"), linkId, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), Seq(Point(10.0, 0.0), Point(10.0, 10.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber3, Some(DateTime.parse("1901-01-01")), None, None),
-        RoadAddress(12348, linearLocationId + 3, 19999L, 1L, AdministrativeClass.State, Track.RightSide, Discontinuity.EndOfRoad, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Some("User"), linkId, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), Seq(Point(10.0, 10.0), Point(5.0, 10.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber4, Some(DateTime.parse("1901-01-01")), None, None),
-
-        RoadAddress(12349, linearLocationId + 4, 9999L, 2L, AdministrativeClass.State, Track.LeftSide, Discontinuity.MinorDiscontinuity, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Some("User"), linkId, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), Seq(Point(25.0, 10.0), Point(15.0, 10.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None, None),
-        RoadAddress(12350, linearLocationId + 5, 9999L, 2L, AdministrativeClass.State, Track.LeftSide, Discontinuity.EndOfRoad, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Some("User"), linkId, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), Seq(Point(10.0, 15.0), Point(10.0, 25.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber2, Some(DateTime.parse("1901-01-01")), None, None),
-        RoadAddress(12351, linearLocationId + 6, 9999L, 2L, AdministrativeClass.State, Track.RightSide, Discontinuity.ParallelLink, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Some("User"), linkId, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), Seq(Point(25.0, 15.0), Point(15.0, 15.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber3, Some(DateTime.parse("1901-01-01")), None, None),
-        RoadAddress(12352, linearLocationId + 7, 9999L, 2L, AdministrativeClass.State, Track.RightSide, Discontinuity.EndOfRoad, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Some("User"), linkId, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), Seq(Point(15.0, 15.0), Point(15.0, 25.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber4, Some(DateTime.parse("1901-01-01")), None, None)
+        RoadAddress(12348, linearLocationId + 3, 19999L, 1L, AdministrativeClass.State, Track.RightSide, Discontinuity.EndOfRoad, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Some("User"), linkId, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), Seq(Point(10.0, 10.0), Point(5.0, 10.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber4, Some(DateTime.parse("1901-01-01")), None, None)
       )
 
       val projectLinks = ra.map { toProjectLink(project)(_) }
@@ -2774,40 +2843,6 @@ Left|      |Right
 
       val errors = projectValidator.checkRoadContinuityCodes(project, projectLinks)
       errors should have size 0
-      //errors.head.validationError.value should be(projectValidator.ValidationErrorList.DiscontinuityOnParallelLinks.value)
-    }
-  }
-
-  test("Test checkRoadContinuityCodes for incorrect parallel link in a continuous place") {
-    runWithRollback {
-
-      val project = Project(Sequences.nextViiteProjectId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),"", Seq(), Seq(), None, None)
-      projectDAO.create(project)
-
-      val ra = Seq(
-        RoadAddress(12345, linearLocationId, 19999L, 1L, AdministrativeClass.State, Track.LeftSide, Discontinuity.ParallelLink, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000.toString, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), Seq(Point(5.0, 0.0), Point(5.0, 10.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None, None),
-        RoadAddress(12346, linearLocationId + 1, 19999L, 1L, AdministrativeClass.State, Track.LeftSide, Discontinuity.EndOfRoad, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000.toString, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), Seq(Point(5.0, 10.0), Point(5.0, 15.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber2, Some(DateTime.parse("1901-01-01")), None, None),
-        RoadAddress(12347, linearLocationId + 2, 19999L, 1L, AdministrativeClass.State, Track.RightSide, Discontinuity.Continuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000.toString, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), Seq(Point(10.0, 0.0), Point(10.0, 10.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber3, Some(DateTime.parse("1901-01-01")), None, None),
-        RoadAddress(12348, linearLocationId + 3, 19999L, 1L, AdministrativeClass.State, Track.RightSide, Discontinuity.EndOfRoad, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000.toString, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), Seq(Point(10.0, 10.0), Point(5.0, 10.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber4, Some(DateTime.parse("1901-01-01")), None, None),
-
-        RoadAddress(12349, linearLocationId + 4, 9999L, 2L, AdministrativeClass.State, Track.LeftSide, Discontinuity.MinorDiscontinuity, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000.toString, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), Seq(Point(25.0, 10.0), Point(15.0, 10.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None, None),
-        RoadAddress(12350, linearLocationId + 5, 9999L, 2L, AdministrativeClass.State, Track.LeftSide, Discontinuity.EndOfRoad, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000.toString, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), Seq(Point(10.0, 15.0), Point(10.0, 25.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber2, Some(DateTime.parse("1901-01-01")), None, None),
-        RoadAddress(12351, linearLocationId + 6, 9999L, 2L, AdministrativeClass.State, Track.RightSide, Discontinuity.ParallelLink, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000.toString, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), Seq(Point(25.0, 15.0), Point(15.0, 15.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber3, Some(DateTime.parse("1901-01-01")), None, None),
-        RoadAddress(12352, linearLocationId + 7, 9999L, 2L, AdministrativeClass.State, Track.RightSide, Discontinuity.EndOfRoad, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000.toString, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), Seq(Point(15.0, 15.0), Point(15.0, 25.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber4, Some(DateTime.parse("1901-01-01")), None, None)
-      )
-
-      val projectLinks = ra.map { toProjectLink(project)(_) }
-
-      when(mockRoadAddressService.getValidRoadAddressParts(any[Long], any[DateTime])).thenReturn(Seq.empty[Long])
-      when(mockRoadAddressService.getRoadAddressesFiltered(any[Long], any[Long])).thenReturn(Seq.empty[RoadAddress])
-      when(mockRoadAddressService.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq.empty[LinearLocation])
-      when(mockRoadAddressService.getCurrentRoadAddresses(any[Seq[LinearLocation]])).thenReturn(Seq.empty[RoadAddress])
-      when(mockRoadAddressService.getRoadAddressWithRoadAndPart(any[Long], any[Long], any[Boolean], any[Boolean], any[Boolean])).thenReturn(Seq(ra.head))
-      when(mockRoadAddressService.getPreviousRoadPartNumber(any[Long], any[Long])).thenReturn(None)
-
-      val errors = projectValidator.checkRoadContinuityCodes(project, projectLinks)
-      errors should have size 1
-      errors.head.validationError.value should be(projectValidator.ValidationErrorList.WrongParallelLinks.value)
     }
   }
 

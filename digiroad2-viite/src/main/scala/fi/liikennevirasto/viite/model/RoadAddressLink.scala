@@ -32,12 +32,11 @@ trait RoadAddressLinkLike extends PolyLine {
   def sideCode: SideCode
   def startCalibrationPoint: Option[CalibrationPoint]
   def endCalibrationPoint: Option[CalibrationPoint]
-  def anomaly: Anomaly
   def roadwayNumber: Long
   def sourceId: String
 }
 
-case class RoadAddressLink(id: Long, linearLocationId: Long, linkId: String, geometry: Seq[Point], length: Double, administrativeClassMML: AdministrativeClass, lifecycleStatus: LifecycleStatus, roadLinkSource: LinkGeomSource, administrativeClass: AdministrativeClass, roadName: Option[String], municipalityCode: BigInt, municipalityName: String, modifiedAt: Option[String], modifiedBy: Option[String], roadNumber: Long, roadPartNumber: Long, trackCode: Long, elyCode: Long, discontinuity: Long, startAddressM: Long, endAddressM: Long, startDate: String, endDate: String, startMValue: Double, endMValue: Double, sideCode: SideCode, startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint], anomaly: Anomaly = Anomaly.None, roadwayNumber: Long = 0, newGeometry: Option[Seq[Point]] = None, sourceId: String) extends RoadAddressLinkLike {
+case class RoadAddressLink(id: Long, linearLocationId: Long, linkId: String, geometry: Seq[Point], length: Double, administrativeClassMML: AdministrativeClass, lifecycleStatus: LifecycleStatus, roadLinkSource: LinkGeomSource, administrativeClass: AdministrativeClass, roadName: Option[String], municipalityCode: BigInt, municipalityName: String, modifiedAt: Option[String], modifiedBy: Option[String], roadNumber: Long, roadPartNumber: Long, trackCode: Long, elyCode: Long, discontinuity: Long, startAddressM: Long, endAddressM: Long, startDate: String, endDate: String, startMValue: Double, endMValue: Double, sideCode: SideCode, startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint],  roadwayNumber: Long = 0, newGeometry: Option[Seq[Point]] = None, sourceId: String) extends RoadAddressLinkLike {
 
   lazy val startingPoint: Point = if(sideCode == SideCode.TowardsDigitizing)
       geometry.head
@@ -59,22 +58,4 @@ case class RoadAddressLink(id: Long, linearLocationId: Long, linkId: String, geo
       (startingPoint, endPoint)
     }
   }
-}
-
-sealed trait Anomaly {
-  def value: Int
-}
-
-object Anomaly {
-  val values = Set(None, NoAddressGiven, GeometryChanged, Illogical)
-
-  def apply(intValue: Int): Anomaly = {
-    values.find(_.value == intValue).getOrElse(None)
-  }
-
-  case object None extends Anomaly { def value = 0 }
-  case object NoAddressGiven extends Anomaly { def value = 1 }
-  case object GeometryChanged extends Anomaly { def value = 2 }
-  case object Illogical extends Anomaly { def value = 3 }
-
 }

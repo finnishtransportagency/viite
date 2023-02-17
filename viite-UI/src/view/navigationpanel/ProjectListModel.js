@@ -100,7 +100,7 @@
         '<label class="control-label-projects-list">' + dataField + '</label>' +
         '</div>';
       return field;
-    };
+      };
 
     var pollProjects = null;
 
@@ -111,7 +111,7 @@
       bindEvents();
       fetchProjects();
       // start polling projects evey 60 seconds
-      pollProjects = setInterval(fetchProjects, 60 * 1000);
+      pollProjects = setInterval(fetchProjectStates, 60 * 1000);
     }
 
     function hide() {
@@ -123,6 +123,10 @@
 
     function fetchProjects() {
       projectCollection.getProjects(onlyActive());
+    }
+
+    function fetchProjectStates() {
+      projectCollection.getProjectStates(_.map(projectArray, "id"));
     }
 
     function onlyActive() {
@@ -165,6 +169,18 @@
       eventbus.on('roadAddressProjects:fetched', function (projects) {
         projectArray = _.filter(projects, function (proj) {
           return proj.statusCode !== projectStatus.Deleted.value; //filter deleted projects out
+        });
+        createProjectList(projectArray);
+        userFilterVisibility();
+        $('#sync').removeClass("btn-spin"); // stop the sync button from spinning
+      });
+
+      eventbus.on('roadAddressProjectStates:fetched', function (idsAndStates) {
+        projectArray = _.map(projectArray, (project) => {
+          const statusCode = idsAndStates.find((idState) => idState._1 === project.id)._2;
+          project.statusCode = statusCode;
+          project.statusDescription = Object.values(ViiteEnumerations.ProjectStatus).find((enumState) => enumState.value === statusCode).description;
+          return project;
         });
         createProjectList(projectArray);
         userFilterVisibility();

@@ -92,6 +92,15 @@ class RoadLinkService(val kgvClient: KgvRoadLink, val eventbus: DigiroadEventBus
   def getRoadLinksByLinkIds(linkIds: Set[String]): Seq[RoadLink] = {
     getRoadLinks(linkIds)
   }
+  def getUnderConstructionLinksById(linkIds: Set[String]): List[(Option[Long], Option[Long], Int)] = {
+    if (linkIds.nonEmpty) {
+      if (useFrozenLinkInterface) {
+        kgvClient.frozenTimeRoadLinkData.fetchUnderConstructionLinksById(linkIds)
+      } else {
+        kgvClient.roadLinkData.fetchUnderConstructionLinksById(linkIds)
+      }
+    } else List()
+  }
 
   /**
     * This method returns road links by link ids.

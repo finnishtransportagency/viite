@@ -260,8 +260,27 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
             }
             if (curr.status != LinkStatus.New && (curr.originalTrack == curr.track || curr.track == Track.Combined) && !(Math.abs((curr.endAddrMValue - curr.startAddrMValue) - (curr.originalEndAddrMValue - curr.originalStartAddrMValue)) < maxDiffForChange)) {
               logger.error(s"Length mismatch. New: ${curr.startAddrMValue} ${curr.endAddrMValue} original: ${curr.originalStartAddrMValue} ${curr.originalEndAddrMValue} linkId: ${curr.linkId}")
-              throw new RoadAddressException(LengthMismatchErrorMessage.format(curr.linkId, maxDiffForChange-1))
+              throw new RoadAddressException(LengthMismatchErrorMessage.format(curr.linkId, maxDiffForChange - 1))
             }
+            /* VIITE-2957
+            Replacing the above if-statement with the one commented out below enables a user to bypass the RoadAddressException.
+            This may be needed in certain cases.
+            Example:
+              An administrative class change is done on a two-track road section where the original startAddrMValue of ProjectLinks on adjacent
+              tracks differ by more than 2. As the administrative class must be unambiguous at any given road address, the startAddrMValue
+              has to be adjusted to be equal on both of the tracks at the point of the administrative class change. This would cause a change
+              in length that was greater than 1 on one of the tracks.
+            if (curr.status != LinkStatus.New && (curr.originalTrack == curr.track ||
+              curr.track == Track.Combined) &&
+              !(Math.abs((curr.endAddrMValue - curr.startAddrMValue) - (curr.originalEndAddrMValue - curr.originalStartAddrMValue)) < maxDiffForChange)) {
+              logger.warn(s"Length mismatch. " +
+                s"Project id: ${curr.projectId} ${projectDAO.fetchById(projectId = curr.projectId).get.name} " +
+                s"New: ${curr.startAddrMValue} ${curr.endAddrMValue} " +
+                s"original: ${curr.originalStartAddrMValue} ${curr.originalEndAddrMValue} " +
+                s"linkId: ${curr.linkId} " +
+                s"length change ${(curr.endAddrMValue - curr.startAddrMValue) - (curr.originalEndAddrMValue - curr.originalStartAddrMValue)}")
+            }
+            */
           }
         }
       }
