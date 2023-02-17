@@ -177,11 +177,11 @@
 
       eventbus.on('roadAddressProjectStates:fetched', function (idsAndStates) {
         projectArray = _.map(projectArray, (project) => {
-          const statusCode = idsAndStates.find(idState => idState._1 === project.id)._2;
+          const statusCode = idsAndStates.find((idState) => idState._1 === project.id)._2;
           project.statusCode = statusCode;
-          project.statusDescription = Object.values(ViiteEnumerations.ProjectStatus).find(enumState => enumState.value === statusCode).description;
+          project.statusDescription = Object.values(ViiteEnumerations.ProjectStatus).find((enumState) => enumState.value === statusCode).description;
           return project;
-        })
+        });
         createProjectList(projectArray);
         userFilterVisibility();
         $('#sync').removeClass("btn-spin"); // stop the sync button from spinning
