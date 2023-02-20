@@ -1,0 +1,1 @@
+UPDATE road_name rn SET end_date = end_date - INTERVAL '1 DAY' WHERE EXISTS (SELECT 4 FROM road_name rn2 WHERE rn.road_number=rn2.road_number AND rn.end_date = rn2.start_date AND rn2.valid_to IS NULL) AND rn.start_date != rn.end_date AND rn.valid_to IS NULL;
