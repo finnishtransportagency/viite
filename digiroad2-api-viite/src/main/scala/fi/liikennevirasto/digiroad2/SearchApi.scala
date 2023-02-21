@@ -55,7 +55,6 @@ class SearchApi(roadAddressService: RoadAddressService,
                   "A linear location must belong to the measure interval at least in one point, to be included in the returned results."
     )
 
-  // TODO: "?" in the end is useless; does not take query params
   get("/road_address/?", operation(getRoadAddress)) {
     val linkId = params.getOrElse("linkId", halt(BadRequest("Missing mandatory field linkId"))).toString
     val startMeasure = params.get("startMeasure").map(_.toDouble)
@@ -143,6 +142,7 @@ class SearchApi(roadAddressService: RoadAddressService,
                   "returned as linear location sized parts. Also filterable by track."
     )
 
+  // TODO: "?" in the end is useless; does not take query params
   get("/road_address/:road/:roadPart/:address/?", operation(getRoadAddressesFiltered2)) {
     val roadNumber = params("road").toLong
     val roadPart = params("roadPart").toLong
