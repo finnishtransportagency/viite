@@ -18,7 +18,7 @@ class ChangeApi(roadAddressService: RoadAddressService, nodesAndJunctionsService
 
   val XApiKeyDescription =
     "You need an API key to use Viite APIs.\n" +
-    "Get your API key from the responsible system owner (järjestelmävastaava)."
+    "Get your API key from the technical system owner (järjestelmävastaava)."
   val dateParamDescription =
     "Date in the ISO8601 date and time format, for example: <i>2020-02-20T01:23:45</i>"
 

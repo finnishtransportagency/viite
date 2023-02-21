@@ -22,7 +22,7 @@ class SearchApi(roadAddressService: RoadAddressService,
   protected val applicationDescription = "The Search API "
   protected val XApiKeyDescription =
     "You need an API key to use Viite APIs.\n" +
-    "Get your API key from the responsible system owner (järjestelmävastaava)."
+    "Get your API key from the technical system owner (järjestelmävastaava)."
   protected val roadNumberDescription = "Road Number of a road address. 1-99999."
   protected val roadPartNumberDescription = "Road Part Number of a road address. 1-999."
   protected val trackNumberFilterDescription =
