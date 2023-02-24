@@ -790,10 +790,8 @@ class ProjectValidator {
         val sortedTrackInterval1 = getTrackInterval(sortedRoadPartLinks, Track.LeftSide)
         val sortedTrackInterval2 = getTrackInterval(sortedRoadPartLinks, Track.RightSide)
 
-        val (leftGeomLength, rightGeomLength) = sortedTrackInterval1.zip(sortedTrackInterval2).foldLeft((0.0,0.0)) {
-          case ((leftLength, rightLength), (left, right)) =>
-            (leftLength + left.geometryLength, rightLength + right.geometryLength)
-        }
+        val leftGeomLength = sortedTrackInterval1.map(_.geometryLength).sum
+        val rightGeomLength = sortedTrackInterval2.map(_.geometryLength).sum
 
         def geomLengthDiff: Double = Math.abs(leftGeomLength - rightGeomLength)
         def exceptionalLengthDifference: Boolean = {
