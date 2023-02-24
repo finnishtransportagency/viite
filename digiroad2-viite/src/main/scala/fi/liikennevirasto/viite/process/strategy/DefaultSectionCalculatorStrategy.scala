@@ -36,10 +36,12 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
 
     val groupedProjectLinks = newProjectLinks.groupBy(record => (record.roadNumber, record.roadPartNumber))
     val groupedOldLinks = oldProjectLinks.groupBy(record => (record.roadNumber, record.roadPartNumber))
+    //get both new and old projectlinks mapped to the same roadnumber+roadpartnumber tuple
     val group = (groupedProjectLinks.keySet ++ groupedOldLinks.keySet).map(k =>
       k -> (groupedProjectLinks.getOrElse(k, Seq()), groupedOldLinks.getOrElse(k, Seq())))
     group.flatMap { case (part, (projectLinks, oldLinks)) =>
       try {
+        //select all the links with the same roadnumber but not the same roadpartnumber?
         val oldRoadLinks = if (projectLinks.nonEmpty) {
           projectLinkDAO.fetchByProjectRoad(part._1, projectLinks.head.projectId).filterNot(l => l.roadPartNumber == part._2)
         } else {
@@ -449,6 +451,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     val (rightStartPoint, pl) = findStartingPoint(newLinks.filter(_.track != Track.LeftSide), oldLinks.filter(_.track != Track.LeftSide), otherRoadPartLinks, calibrationPoints, (newLinks ++ oldLinks).filter(_.track == LeftSide))
 
     if ((oldLinks ++ newLinks).exists(l => GeometryUtils.areAdjacent(l.geometry, rightStartPoint) && l.track == Track.Combined)) {
+      //The right track starting point is actually from a combined track
       (rightStartPoint, rightStartPoint)
     } else {
       // Get left track non-connected points and find the closest to right track starting point
@@ -505,17 +508,22 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
             chainEndPoints.minBy(p => p._1.distance2DTo(rightStartPoint.get._1))._1
           } else if (leftLinks.forall(_.endAddrMValue == 0) && rightLinks.forall(_.endAddrMValue == 0)) {
             val candidateEndPoint = chainEndPoints.minBy(p => p._1.distance2DTo(rightStartPoint))._1
+            //---------------------------------------------------------
+            // Assuming findChainEndpoints behaves as intended, all this is unnecessary fluff
             val rightSideEndPoint = Seq(pl.getEndPoints._1, pl.getEndPoints._2).filterNot(_ == rightStartPoint)
             val direction = Seq(pl).map(p => p.getEndPoints._2 - p.getEndPoints._1).fold(Vector3d(0, 0, 0)) { case (v1, v2) => v1 + v2 }.normalize2D()
             val candidateLeftStartPoint = TrackSectionOrder.findChainEndpoints(leftLinks).minBy(_._1.distance2DTo(rightStartPoint))
             val candidateLeftOppositeEnd = getOppositeEnd(candidateLeftStartPoint._2, candidateLeftStartPoint._1)
             val startingPointsVector = Vector3d(candidateLeftOppositeEnd.x - candidateLeftStartPoint._1.x, candidateLeftOppositeEnd.y - candidateLeftStartPoint._1.y, candidateLeftOppositeEnd.z - candidateLeftStartPoint._1.z)
             val angle = startingPointsVector.angleXYWithNegativeValues(direction)
+            //The logic for this in my opinion works only for situations where both tracks have only one projectlink.
             if (candidateEndPoint.distance2DTo(rightStartPoint) > candidateEndPoint.distance2DTo(rightSideEndPoint.head) && angle > 0) {
               chainEndPoints.filterNot(_._1 == candidateEndPoint).head._1
             } else {
               candidateEndPoint
             }
+            //--------------END OF FLUFF-------------------------------
+            candidateEndPoint //Force candidateEndPoint to be returned
           } else {
             val startPoint1 = chainEndPoints.minBy(p => p._1.distance2DTo(rightStartPoint))._1
             val startPoint2 = chainEndPoints.maxBy(p => p._1.distance2DTo(rightStartPoint))._1
