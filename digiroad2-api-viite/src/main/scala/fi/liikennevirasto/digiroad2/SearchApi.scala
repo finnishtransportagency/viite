@@ -59,9 +59,15 @@ class SearchApi(roadAddressService: RoadAddressService,
     val linkId = params.getOrElse("linkId", halt(BadRequest("Missing mandatory field linkId"))).toString
     val startMeasure = params.get("startMeasure").map(_.toDouble)
     val endMeasure = params.get("endMeasure").map(_.toDouble)
+    val requestString = s"GET request for ${request.getRequestURI}?${request.getQueryString} (${getRoadAddress.operationId})"
+    time(logger, requestString, params=Some(params)) {
+      try {
+        roadAddressService.getRoadAddressWithLinkIdAndMeasure(linkId, startMeasure, endMeasure).map(roadAddressMapper)
+      }
+      catch {
+        case throwable: Throwable => haltWith500IfUnexpectedError(requestString, throwable)
+      }
 
-    time(logger, s"GET request for /road_address/?", params=Some(params)) {
-      roadAddressService.getRoadAddressWithLinkIdAndMeasure(linkId, startMeasure, endMeasure).map(roadAddressMapper)
     }
   }
 
@@ -70,14 +76,21 @@ class SearchApi(roadAddressService: RoadAddressService,
       tags "SearchAPI (Digiroad)"
       summary "Returns all the existing road numbers at the current Viite road network."
       description "Returns List of all the existing road numbers at the current Viite road network." +
-              "The Viite current network may contain roadway number changes that will be in effect only in the future."
+              "The Viite current network may contain roadway number changes that will be in effect only in the future.\n"+
+              "<br />2023-02-23 The list is now sorted. Better exception handling, and more explicit help for the caller."
       parameter headerParam[String]("X-API-Key").required.description(XApiKeyDescription)
     )
 
   // TODO: "?" in the end is useless; does not take query params
   get("/road_numbers?", operation(getRoadNumbers)) {
-    time(logger, "GET request for /road_numbers?") {
-      roadAddressService.getRoadNumbers
+    val requestString = s"GET request for ${request.getRequestURI}  (${getRoadNumbers.operationId})"
+    time(logger, requestString) {
+      try {
+        roadAddressService.getRoadNumbers.toList.sorted
+      }
+      catch {
+        case throwable: Throwable => haltWith500IfUnexpectedError(requestString, throwable)
+      }
     }
   }
 
@@ -97,9 +110,16 @@ class SearchApi(roadAddressService: RoadAddressService,
 
   get("/road_address/:road/?", operation(getRoadAddressWithRoadNumber)) {
     val roadNumber = params("road").toLong
-    time(logger, s"GET request for /road_address/$roadNumber/?") {
+    val requestString = s"GET request for ${request.getRequestURI}?${request.getQueryString} (${getRoadAddressWithRoadNumber.operationId})"
+    time(logger, requestString) {
       val trackCodes = multiParams.getOrElse("tracks", Seq()).map(_.toInt)
-      roadAddressService.getRoadAddressWithRoadNumber(roadNumber, Track.applyAll(trackCodes)).map(roadAddressMapper)
+      try {
+        roadAddressService.getRoadAddressWithRoadNumber(roadNumber, Track.applyAll(trackCodes)).map(roadAddressMapper)
+      }
+      catch {
+        case throwable: Throwable => haltWith500IfUnexpectedError(requestString, throwable)
+      }
+
     }
   }
 
@@ -120,8 +140,16 @@ class SearchApi(roadAddressService: RoadAddressService,
   get("/road_address/:road/:roadPart/?", operation(getRoadAddressesFiltered)) {
     val roadNumber = params("road").toLong
     val roadPart = params("roadPart").toLong
-    time(logger, s"GET request for /road_address/$roadNumber/$roadPart/?") {
-      roadAddressService.getRoadAddressesFiltered(roadNumber, roadPart).map(roadAddressMapper)
+    val requestString = s"GET request for ${request.getRequestURI} (${getRoadAddressesFiltered.operationId})"
+    time(logger, requestString) {
+
+      try {
+        roadAddressService.getRoadAddressesFiltered(roadNumber, roadPart).map(roadAddressMapper)
+      }
+      catch {
+        case throwable: Throwable => haltWith500IfUnexpectedError(requestString, throwable)
+      }
+
     }
   }
 
@@ -141,16 +169,21 @@ class SearchApi(roadAddressService: RoadAddressService,
       description "Returns the road addresses within the given road number, road part number, and bigger than address value, " +
                   "returned as linear location sized parts. Also filterable by track."
     )
-
-  // TODO: "?" in the end is useless; does not take query params
   get("/road_address/:road/:roadPart/:address/?", operation(getRoadAddressesFiltered2)) {
     val roadNumber = params("road").toLong
     val roadPart = params("roadPart").toLong
     val address = params("address").toLong
     val track = params.get("track").map(_.toInt)
+    val requestString = s"GET request for ${request.getRequestURI}?${request.getQueryString} (${getRoadAddressesFiltered2.operationId})"
+    time(logger, requestString) {
 
-    time(logger, s"GET request for /road_address/$roadNumber/$roadPart/$address/? (track: $track)") {
-      roadAddressService.getRoadAddress(roadNumber, roadPart, address, Track.applyOption(track)).map(roadAddressMapper)
+      try {
+        roadAddressService.getRoadAddress(roadNumber, roadPart, address, Track.applyOption(track)).map(roadAddressMapper)
+      }
+      catch {
+       case throwable: Throwable => haltWith500IfUnexpectedError(requestString, throwable)
+      }
+
     }
   }
 
@@ -178,9 +211,17 @@ class SearchApi(roadAddressService: RoadAddressService,
     val roadPart = params("roadPart").toLong
     val startAddress = params("startAddress").toLong
     val endAddress = params("endAddress").toLong
+    val requestString = s"GET request for ${request.getRequestURI} (${getRoadAddressesFiltered3.operationId})"
+    time(logger, requestString) {
 
-    time(logger, s"GET request for /road_address/$roadNumber/$roadPart/$startAddress/$endAddress/?") {
-      roadAddressService.getRoadAddressesFiltered(roadNumber, roadPart, startAddress, endAddress).map(roadAddressMapper)
+      // Run the query
+      try {
+        roadAddressService.getRoadAddressesFiltered(roadNumber, roadPart, startAddress, endAddress).map(roadAddressMapper)
+      }
+      catch {
+        case throwable: Throwable => haltWith500IfUnexpectedError(requestString, throwable)
+      }
+
     }
   }
 
@@ -198,9 +239,15 @@ class SearchApi(roadAddressService: RoadAddressService,
 
   // TODO: "?" in the end is useless; does not take query params
   post("/road_address/?", operation(getRoadAddressByLinkIds)) {
-    time(logger, s"POST request for /road_address/?", params=Some(Map("requestBody" -> request.body))) {
+    val requestString = s"GET request for ${request.getRequestURI} (${getRoadAddressByLinkIds.operationId})"
+    time(logger, requestString, params=Some(Map("requestBody" -> request.body))) {
       val linkIds = parsedBody.extract[Set[String]]
-      roadAddressService.getRoadAddressByLinkIds(linkIds).map(roadAddressMapper)
+      try {
+        roadAddressService.getRoadAddressByLinkIds(linkIds).map(roadAddressMapper)
+      }
+      catch {
+        case throwable: Throwable => haltWith500IfUnexpectedError(requestString, throwable)
+      }
     }
   }
 
@@ -225,12 +272,29 @@ class SearchApi(roadAddressService: RoadAddressService,
 
   // TODO: "?" in the end is useless; does not take query params
   post("/road_address/:road/?", operation(getRoadAddressWithRoadNumberParts)) {
-    time(logger, s"POST request for /road_address/:road/?", params=Some(params + ("requestBody" -> request.body))){
+    val requestString = s"POST request for ${request.getRequestURI} (${getRoadAddressWithRoadNumberParts.operationId})"
+    time(logger, requestString, params=Some(params + ("requestBody" -> request.body))) {
       val roadNumber = params("road").toLong
       val roadParts = (parsedBody \ "roadParts").extract[Seq[Long]]
       val tracks = (parsedBody \ "tracks").extract[Seq[Int]]
-      roadAddressService.getRoadAddressWithRoadNumberParts(roadNumber, roadParts.toSet, Track.applyAll(tracks)).map(roadAddressMapper)
+
+        try {
+         roadAddressService.getRoadAddressWithRoadNumberParts(roadNumber, roadParts.toSet, Track.applyAll(tracks)).map(roadAddressMapper)
+        }
+        catch {
+          case throwable: Throwable =>
+            haltWith500IfUnexpectedError(requestString, throwable)
+        }
     }
+  }
+
+  private def haltWith500IfUnexpectedError(whatWasCalledWhenError: String, throwable: Throwable) = {
+    var now = DateTime.now()
+    logger.info(s"An unexpected error in '$whatWasCalledWhenError ($now)': $throwable")
+    halt(InternalServerError(
+      s"You hit an unexpected error. Contact system administrator, or Viite development team.\n" +
+      s"Tell them to look for '$whatWasCalledWhenError ($now)'"
+    ))
   }
 
   private def roadAddressMapper(roadAddress : RoadAddress) = {
