@@ -389,16 +389,6 @@
     //We add the defined interactions to the map.
     addSelectInteractions();
 
-    var unselectRoadLink = function () {
-      _.map(roadLayer.layer.getSource().getFeatures(), function (feature) {
-        if (feature.linkData.gapTransfering) {
-          feature.linkData.gapTransfering = false;
-          var unknownRoadStyle = roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)});
-          feature.setStyle(unknownRoadStyle);
-        }
-      });
-    };
-
     var redraw = function () {
       cachedMarker = new LinkPropertyMarker(selectedLinkProperty);
       removeSelectInteractions();
@@ -683,7 +673,6 @@
     };
 
     var hideLayer = function () {
-      unselectRoadLink();
       me.clearLayers(layers);
     };
 
