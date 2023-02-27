@@ -16,6 +16,12 @@ class ChangeApi(roadAddressService: RoadAddressService, nodesAndJunctionsService
   val logger: Logger = LoggerFactory.getLogger(getClass)
   val DateTimePropertyFormat: DateTimeFormatter = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss")
 
+  val XApiKeyDescription =
+    "You need an API key to use Viite APIs.\n" +
+    "Get your API key from the technical system owner (järjestelmävastaava)."
+  val dateParamDescription =
+    "Date in the ISO8601 date and time format, for example: <i>2020-02-20T01:23:45</i>"
+
   protected implicit val jsonFormats: Formats = DefaultFormats
   protected val applicationDescription = "The user interface API "
 
@@ -26,11 +32,12 @@ class ChangeApi(roadAddressService: RoadAddressService, nodesAndJunctionsService
   val roadNumberToGeoJson: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String, Any]]("roadNumberToGeoJson")
       .parameters(
-        queryParam[String]("since").description("Start date of the road addresses changes. Date in format ISO8601. For example 2020-04-29T13:59:59"),
-        queryParam[String]("until").description("End date of the road addresses changes. Date in format ISO8601")
+        queryParam[String]("since").required.description("The earliest moment for the road address changes to be returned.\n" + dateParamDescription),
+        queryParam[String]("until").required.description("The latest moment for the road address changes to be returned.\n" + dateParamDescription)
       )
       tags "ChangeAPI (TN-ITS)"
-      summary "This will return all the changes found on the road addresses that are between the period defined by the \"since\" and  \"until\" parameters."
+      summary "Returns all the changes made to the road addresses within the given time interval, in the TN-ITS-accepted format."
+      parameter headerParam[String]("X-API-Key").description(XApiKeyDescription)
   )
 
   get("/road_numbers", operation(roadNumberToGeoJson)) {

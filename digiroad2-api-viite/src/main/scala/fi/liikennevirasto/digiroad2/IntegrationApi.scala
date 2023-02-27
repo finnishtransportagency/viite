@@ -28,6 +28,12 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
 
   val apiId = "integration-api"
 
+  val XApiKeyDescription =
+    "You need an API key to use Viite APIs.\n" +
+    "Get your API key from the technical system owner (järjestelmävastaava)."
+  val dateParamDescription =
+    "Date in the ISO8601 date and time format, for example: <i>2020-02-20T01:23:45</i>"
+
   protected val applicationDescription = "The integration API "
 
   protected implicit val jsonFormats: Formats = DefaultFormats
@@ -37,10 +43,19 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
   val getRoadAddressesByMunicipality: SwaggerSupportSyntax.OperationBuilder =
     (apiOperation[List[Map[String, Any]]]("getRoadAddressesByMunicipality")
       tags "Integration (kalpa, Digiroad, Viitekehysmuunnin, ...)"
-      summary "Shows all the road address non floating for a given municipalities."
-      parameter queryParam[Int]("municipality").description("The municipality identifier")
-      parameter queryParam[String]("situationDate").description("Date in format ISO8601. For example 2020-04-29T13:59:59").optional)
+      summary "Returns all the road addresses of the municipality stated as the municipality parameter.\n"
+      description "Returns all the road addresses of the queried <i>municipality</i>.\n" +
+              "Returns the newest information possible (may contain partially future addresses) by default if <i>situationDate</i> is omitted, " +
+              "or the road address network valid at <i>situationDate</i>, when <i>situationDate</i> is given.\n" +
+              "Uses HTTP redirects for the heavier queries, to address some timeout issues."
+      parameter headerParam[String]("X-API-Key").required.description(XApiKeyDescription)
+      parameter queryParam[Int]("municipality").required
+        .description("The municipality identifier.\nFor the list, see https://www2.tilastokeskus.fi/fi/luokitukset/kunta/.")
+      parameter queryParam[String]("situationDate").optional
+        .description("(Optional) The road address information is returned from this exact moment (instead of the newest data).\n" + dateParamDescription)
+    )
 
+  /** TODO better name e.g. "road_addresses_of_municipality" */
   get("/road_address", operation(getRoadAddressesByMunicipality)) {
     contentType = formats("json")
     ApiUtils.avoidRestrictions(apiId, request, params) { params =>
@@ -82,10 +97,15 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
   val getRoadNetworkSummary: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[List[Map[String, Any]]]("getRoadNetworkSummary")
       tags "Integration (Velho)"
-      summary "Returns current state (\"summary\") of the road network addresses, containing all the latest changes " +
-      "to every part of any road found in Viite. Offered JSON contains data about: road number, road name, " +
-      "road part number, ely code, administrative class, track, start address, end address, and discontinuity."
-      parameter queryParam[String]("date").description("Date in format ISO8601. For example 2020-04-29T13:59:59").optional
+      summary "Returns the whole road network address listing (\"summary\") for current, or historical road network."
+      description "Returns the current state of the whole road network address space that contains all the latest changes " +
+              "to every part of any road found in Viite (also those addresses that will be valid not until in the future).\n" +
+              "The returned JSON contains data about: road number, road name, " +
+              "road part number, ely code, administrative class, track, start address, end address, and discontinuity.\n" +
+              "Or, with the optional <i>date</i> parameter, a historical summary state can be requested."
+      parameter headerParam[String]("X-API-Key").required.description(XApiKeyDescription)
+      parameter queryParam[String]("date").optional
+        .description("(Optional) Date for the summary info, if the summary data for a history date is required.\n" + dateParamDescription)
   )
   /** @return The JSON formatted whole road network address space of the latest versions of the network. */
   get("/summary", operation(getRoadNetworkSummary)) {
@@ -202,9 +222,12 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
   val getRoadNameChanges: SwaggerSupportSyntax.OperationBuilder =
     (apiOperation[List[Map[String, Any]]]("getRoadNameChanges")
       tags "Integration (kalpa, Digiroad, Viitekehysmuunnin, ...)"
-      summary "Returns all the changes to road names between given dates."
-      parameter queryParam[String]("since").description(" Date in format ISO8601. For example 2020-04-29T13:59:59")
-      parameter queryParam[String]("until").description("Date in format ISO8601").optional)
+      summary "Returns all the road name changes made after given time (or within the given time interval)."
+      description "Returns all the road name changes made between <i>since</i> and <i>until</i>."
+      parameter headerParam[String]("X-API-Key").required.description(XApiKeyDescription)
+      parameter queryParam[String]("since").required.description("The earliest date-time of a change to be listed. \n" + dateParamDescription)
+      parameter queryParam[String]("until").optional.description("(Optional) The latest date-time of a change to be listed. \n" + dateParamDescription)
+    )
 
   get("/roadnames/changes", operation(getRoadNameChanges)) {
     contentType = formats("json")
@@ -235,8 +258,11 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
   val getRoadwayChanges: SwaggerSupportSyntax.OperationBuilder =
     (apiOperation[List[Map[String, Any]]]("getRoadwayChanges")
       tags "Integration (kalpa, Digiroad, Viitekehysmuunnin, ...)"
-      summary "Returns all the changes to roadways after the given date (including the given date)."
-      parameter queryParam[String]("since").description("Date in format ISO8601. For example 2020-04-29T13:59:59"))
+      summary "Returns all the changes made to the roadways after and including the given date."
+      parameter headerParam[String]("X-API-Key").required.description(XApiKeyDescription)
+      parameter queryParam[String]("since").required
+        .description("Restricts the listed changes to those made at or after this moment.\n" + dateParamDescription)
+    )
 
   get("/roadway/changes", operation(getRoadwayChanges)) {
     contentType = formats("json")
@@ -287,18 +313,18 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
   val getRoadwayChangesChanges: SwaggerSupportSyntax.OperationBuilder =
     (apiOperation[List[Map[String, Any]]]("getRoadwayChangesChanges")
       .parameters(
-        queryParam[String]("since")
-          .description("Restricts the returned changes to the ones that have been saved to Viite at this timestamp or later. \n" +
-            "Date in the ISO8601 date and time format, for example: <i>2020-04-29T13:59:59</i>"),
-        queryParam[String]("until")
-          .description("(Optional) Restricts the returned changes to the ones that have been saved to Viite at this timestamp or earlier. \n" +
-            "Date in the ISO8601 date and time format.")
-          .optional
+        queryParam[String]("since").required
+          .description("Restricts the returned changes to the ones saved to Viite at this timestamp or later. \n" + dateParamDescription),
+        queryParam[String]("until").optional
+          .description("(Optional) Restricts the returned changes to the ones saved to Viite at this timestamp or earlier. \n" + dateParamDescription)
       )
       tags "Integration (kalpa, Digiroad, Velho, Viitekehysmuunnin, ...)"
-      summary "Returns the Roadway_change changes after the <i>since</> timestamp.\n" +
-      "2021-10: Change within the return value: 'muutospaiva' -> 'voimaantulopaiva'."
-      )
+      summary "Returns the Roadway_change changes after the given since parameter."
+      description "Returns the Roadway_change changes after <i>since</i>.\n" +
+                  "Changes can be restricted to those made before <i>until</i>.\n" +
+                  "2021-10: Change within the return value structure: 'muutospaiva' -> 'voimaantulopaiva'."
+      parameter headerParam[String]("X-API-Key").required.description(XApiKeyDescription)
+    )
 
   get("/roadway_changes/changes", operation(getRoadwayChangesChanges)) {
     contentType = formats("json")
@@ -360,8 +386,10 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
   val getLinearLocationChanges: SwaggerSupportSyntax.OperationBuilder =
     (apiOperation[List[Map[String, Any]]]("getLinearLocationChanges")
       tags "Integration (kalpa, Digiroad, Viitekehysmuunnin, ...)"
-      summary "Returns all the changes to roadways after the given date (including the given date)."
-      parameter queryParam[String]("since").description("Date in format ISO8601. For example 2020-04-29T13:59:59"))
+      summary "Returns the changes of the linear locations dated after (and including) the given date."
+      parameter headerParam[String]("X-API-Key").required.description(XApiKeyDescription)
+      parameter queryParam [String]("since").required
+        .description("The earliest moment, from where the linear location changes are listed.\n" + dateParamDescription))
 
   get("/linear_location/changes", operation(getLinearLocationChanges)) {
     contentType = formats("json")
@@ -417,11 +445,14 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
   val nodesToGeoJson: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[List[Map[String, Any]]]("nodesToGeoJson")
       .parameters(
-        queryParam[String]("since").description("Start date of nodes. Date in format ISO8601. For example 2020-04-29T13:59:59"),
-        queryParam[String]("until").description("End date of the nodes. Date in format ISO8601").optional
+        queryParam[String]("since").required.description("Restrict the returned nodes to the ones changed at or after this moment.\n" + dateParamDescription),
+        queryParam[String]("until").optional.description("Restrict the returned nodes to the ones changed at or before this moment.\n"+ dateParamDescription)
       )
       tags "Integration (kalpa, Digiroad, Viitekehysmuunnin, ...)"
-      summary "This will return all the changes found on the nodes that are published between the period defined by the \"since\" and  \"until\" parameters."
+      summary "Returns the nodes changed after the given moment. May be restricted to an interval, too."
+      description "Returns the nodes changed after or at <i>since</i> (and before or at <i>until</i>, if given).\n" +
+                  "The results contain the whole node info, containing the node, related junctions', and node point info."
+      parameter headerParam[String]("X-API-Key").description(XApiKeyDescription)
     )
 
   get(transformers = "/nodes_junctions/changes", operation(nodesToGeoJson)) {
