@@ -13,7 +13,6 @@
     var SelectionType = ViiteEnumerations.SelectionType;
     var lifecycleStatus = ViiteEnumerations.lifecycleStatus;
     var SideCode = ViiteEnumerations.SideCode;
-    var RoadZIndex = ViiteEnumerations.RoadZIndex;
 
     var isActiveLayer = false;
     var cachedMarker = null;
@@ -23,21 +22,21 @@
     var directionMarkerLayer = new ol.layer.Vector({
       source: directionMarkerVector,
       name: 'directionMarkerLayer',
-      zIndex: RoadZIndex.DirectionMarkerLayer.value
+      zIndex: ViiteEnumerations.ViewModeZIndex.DirectionMarker.value
     });
     directionMarkerLayer.set('name', 'directionMarkerLayer');
 
     var underConstructionMarkerLayer = new ol.layer.Vector({
       source: underConstructionMarkerVector,
       name: 'underConstructionMarkerLayer',
-      zIndex: RoadZIndex.DirectionMarkerLayer.value
+      zIndex: ViiteEnumerations.ViewModeZIndex.DirectionMarker.value
     });
     underConstructionMarkerLayer.set('name', 'underConstructionMarkerLayer');
 
     var calibrationPointLayer = new ol.layer.Vector({
       source: calibrationPointVector,
       name: 'calibrationPointLayer',
-      zIndex: RoadZIndex.CalibrationPointLayer.value
+      zIndex: ViiteEnumerations.ViewModeZIndex.CalibrationPoint.value
     });
     calibrationPointLayer.set('name', 'calibrationPointLayer');
 
@@ -45,7 +44,7 @@
     var reservedRoadLayer = new ol.layer.Vector({
       source: reservedRoadVector,
       name: 'reservedRoadLayer',
-      zIndex: RoadZIndex.ReservedRoadLayer.value
+      zIndex: ViiteEnumerations.ViewModeZIndex.ReservedRoad.value
     });
     reservedRoadLayer.set('name', 'reservedRoadLayer');
 
@@ -53,8 +52,7 @@
       source: underConstructionRoadLayerVector,
       name: 'underConstructionRoadLayer',
       style: function (feature) {
-        return [roadLinkStyler.getBorderStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)}), roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)}),
-          roadLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)})];
+        return roadLinkStyler.getUnderConstructionStyles(feature.linkData, map);
       }
     });
     underConstructionRoadLayer.set('name', 'underConstructionRoadLayer');
@@ -63,15 +61,18 @@
       source: unAddressedRoadLayerVector,
       name: 'unAddressedRoadLayer',
       style: function (feature) {
-        return [roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)}),
-          roadLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)})];
+        return roadLinkStyler.getUnAddressedStyles(feature.linkData, map);
       }
     });
     unAddressedRoadLayer.set('name', 'unAddressedRoadLayer');
 
 
-    var layers = [roadLayer.layer, directionMarkerLayer, underConstructionMarkerLayer, calibrationPointLayer,
-      underConstructionRoadLayer, unAddressedRoadLayer, reservedRoadLayer];
+    /**
+     * The order of these layers in this array affects the order these layers are presented on the map.
+     * i.e. the first one is the bottom most layer drawn and the last one is the top most layer drawn
+     * */
+    var layers = [unAddressedRoadLayer, roadLayer.layer, directionMarkerLayer, underConstructionMarkerLayer, calibrationPointLayer,
+      underConstructionRoadLayer, reservedRoadLayer];
 
     var setGeneralOpacity = function (opacity) {
       roadLayer.layer.setOpacity(opacity);
@@ -98,9 +99,7 @@
       condition: ol.events.condition.doubleClick,
       //The new/temporary layer needs to have a style function as well, we define it here.
       style: function (feature) {
-        return [roadLinkStyler.getBorderStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)}),
-          roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)}),
-          roadLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)})];
+        return roadLinkStyler.getRoadLinkStyles(feature.linkData, map);
       }
     });
 
@@ -185,9 +184,18 @@
         }
       },
       style: function (feature) {
-        return [roadLinkStyler.getBorderStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)}),
-          roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)}),
-          roadLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)})];
+        // for normal road links
+        if (feature.linkData.roadClass !== ViiteEnumerations.RoadClass.NoClass.value) {
+          return roadLinkStyler.getRoadLinkStyles(feature.linkData, map);
+        }
+        // for unaddressed road links
+        else if (feature.linkData.roadClass === ViiteEnumerations.RoadClass.NoClass.value && feature.linkData.lifecycleStatus !== ViiteEnumerations.lifecycleStatus.UnderConstruction.value) {
+          return roadLinkStyler.getUnAddressedStyles(feature.linkData, map);
+        }
+        // for under construction road links
+        else {
+          return roadLinkStyler.getUnderConstructionStyles(feature.linkData, map);
+        }
       }
     });
     selectSingleClick.set('name', 'selectSingleClickInteractionLPL');
@@ -582,7 +590,7 @@
 
     me.eventListener.listenTo(eventbus, 'linkProperties:highlightReservedRoads', function (reservedOLFeatures) {
       var styledFeatures = _.map(reservedOLFeatures, function (feature) {
-        feature.setStyle(roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)}));
+        feature.setStyle(roadLinkStyler.getRoadLinkStyles(feature.linkData, map));
         return feature;
       });
       if (applicationModel.getSelectedLayer() === "linkProperty") { //check if user is still in reservation form
