@@ -49,7 +49,7 @@
             rotation: rl.sideCode === ViiteEnumerations.SideCode.AgainstDigitizing.value ? ((middlePoint.angleFromNorth * Math.PI) / 180) + Math.PI : middlePoint.angleFromNorth * Math.PI / 180,
             src: 'data:image/svg+xml;utf8,' + directionMarker
           }),
-          zIndex: 10
+          zIndex: ViiteEnumerations.ViewModeZIndex.DirectionMarker.value
         });
       };
 
