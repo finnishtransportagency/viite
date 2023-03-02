@@ -707,6 +707,7 @@
         checkInputs();
         setFormDirty();
         if (event.target.id === "tie" && (dropdown_0.val() === 'New' || dropdown_0.val() === 'Transfer' || dropdown_0.val() === 'Numbering')) {
+          rootElement.find('.project-form button.update').prop("disabled", true);
           backend.getRoadName($(this).val(), projectCollection.getCurrentProject().project.id, function (data) {
             if (data.roadName) {
               editedNameByUser = false;
@@ -716,7 +717,6 @@
               } else {
                 roadNameField.prop('disabled', false);
               }
-              checkInputs();
             } else {
               if (roadNameField.prop('disabled') || !editedNameByUser) {
                 $('#roadName').val('').change();
@@ -724,6 +724,7 @@
               }
               roadNameField.prop('disabled', false);
             }
+            checkInputs();
           });
         }
       });
