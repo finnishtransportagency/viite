@@ -6,10 +6,13 @@ import fi.liikennevirasto.viite.{ChangedRoadAddress, NodesAndJunctionsService, R
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.json4s.{DefaultFormats, Formats}
-import org.scalatra.{BadRequest, ScalatraServlet}
+import org.postgresql.util.PSQLException
+import org.scalatra.{BadRequest, InternalServerError, ScalatraServlet}
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.swagger._
 import org.slf4j.{Logger, LoggerFactory}
+
+import scala.util.control.NonFatal
 
 
 class ChangeApi(roadAddressService: RoadAddressService, nodesAndJunctionsService: NodesAndJunctionsService, implicit val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupport with SwaggerSupport  {
@@ -20,7 +23,7 @@ class ChangeApi(roadAddressService: RoadAddressService, nodesAndJunctionsService
     "You need an API key to use Viite APIs.\n" +
     "Get your API key from the technical system owner (järjestelmävastaava)."
   val dateParamDescription =
-    "Date in the ISO8601 date and time format, for example: <i>2020-02-20T01:23:45</i>"
+    "Date in the ISO8601 date and time format, YYYY-MM[-DD[THH[:mm[:ss]]]], for example: <i>2020-02-20T01:23:45</i>"
 
   protected implicit val jsonFormats: Formats = DefaultFormats
   protected val applicationDescription = "The user interface API "
@@ -42,12 +45,48 @@ class ChangeApi(roadAddressService: RoadAddressService, nodesAndJunctionsService
 
   get("/road_numbers", operation(roadNumberToGeoJson)) {
     contentType = formats("json")
-    val since = DateTime.parse(params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter"))))
-    val until = DateTime.parse(params.get("until").getOrElse(halt(BadRequest("Missing mandatory 'until' parameter"))))
 
-    time(logger, s"GET request for /road_numbers", params=Some(params)) {
-      roadNumberToGeoJson(since, roadAddressService.getChanged(since, until))
+    val sinceUnformatted = params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter")))
+    val untilUnformatted = params.get("until").getOrElse(halt(BadRequest("Missing mandatory 'until' parameter")))
+    try {
+      val since = DateTime.parse(sinceUnformatted)
+      val until = DateTime.parse(untilUnformatted)
+      if (since.compareTo(until) > 0) {
+        logger.warn(s"'since' cannot be later than 'until'. ${request.getRequestURI}?${request.getQueryString}")
+        BadRequest(s"'since' cannot be later than 'until'. (${request.getQueryString})")
+      }
+      else {
+        time(logger, s"GET request for /road_numbers", params = Some(params)) {
+          roadNumberToGeoJson(since, roadAddressService.getChanged(since, until))
+        }
+      }
+    } catch {
+      case iae: IllegalArgumentException =>
+        val message = s"Invalid 'since', or/and 'until' parameters. Got ${request.getQueryString} \n" +
+          s" ${iae.getMessage}\n $dateParamDescription"
+        logger.warn(message)
+        BadRequest(message)
+      case nsee: NoSuchElementException =>
+        val message = s"The data asked for has gap(s), result set generation unsuccessful for interval ${request.getQueryString}."
+        logger.warn(s"message\n + ${nsee.getMessage}")
+        BadRequest(message)
+      case psqle: PSQLException =>
+        val message = s"Date out of bounds, check the given dates: ${request.getQueryString}."
+        logger.warn(s"message\n + ${psqle.getMessage}")
+        BadRequest(message)
+      case nf if NonFatal(nf) =>
+        val requestString = s"GET request for ${request.getRequestURI}?${request.getQueryString} (${roadNumberToGeoJson.operationId})"
+        haltWith500IfUnexpectedError(requestString, nf)
     }
+  }
+
+  private def haltWith500IfUnexpectedError(whatWasCalledWhenError: String, throwable: Throwable) = {
+    var now = DateTime.now()
+    logger.info(s"An unexpected error in '$whatWasCalledWhenError ($now)': $throwable")
+    halt(InternalServerError(
+      s"You hit an unexpected error. Contact system administrator, or Viite development team.\n" +
+        s"Tell them to look for '$whatWasCalledWhenError ($now)'"
+    ))
   }
 
   private def extractChangeType(since: DateTime, expired: Boolean, createdDateTime: Option[DateTime]) = {
