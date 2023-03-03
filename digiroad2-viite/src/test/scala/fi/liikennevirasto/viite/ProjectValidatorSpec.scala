@@ -999,7 +999,9 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       projectLinkDAO.create(Seq(util.projectLink(0L, 10L, Combined, project.id, LinkStatus.UnChanged).copy(roadNumber = roadAddresses.head.roadNumber, roadPartNumber = roadAddresses.head.roadPartNumber, roadwayId = ra.head.id)))
       val currentProjectLinks2 = projectLinkDAO.fetchProjectLinks(project.id)
 
-      val error2 = projectValidator.validateProject(updProject, currentProjectLinks2).distinct
+      val updProject2 = projectService.fetchProjectById(project.id).get
+
+      val error2 = projectValidator.validateProject(updProject2, currentProjectLinks2).distinct
       error2 should have size 1
       error2.head.validationError.value should be(projectValidator.ValidationErrorList.MissingEndOfRoad.value)
 
@@ -1007,7 +1009,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       projectLinkDAO.updateProjectLinks(updatedProjectLinks, "U", roadAddresses)
       val afterProjectLinks = projectLinkDAO.fetchProjectLinks(project.id)
 
-      val errors3 = projectValidator.validateProject(updProject, afterProjectLinks).distinct
+      val errors3 = projectValidator.validateProject(updProject2, afterProjectLinks).distinct
       errors3 should have size 0
     }
   }
