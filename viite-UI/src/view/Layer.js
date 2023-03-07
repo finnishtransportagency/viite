@@ -21,6 +21,15 @@
       });
     };
 
+    this.removeFeaturesFromLayers = function (layers) {
+      _.each(layers, function (layer) {
+        const features = layer.getSource().getFeatures();
+        features.forEach((feature) => {
+          layer.getSource().removeFeature(feature);
+        });
+      });
+    };
+
     this.isStarted = function () {
       return me.eventListener.running;
     };
