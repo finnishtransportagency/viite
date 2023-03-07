@@ -52,8 +52,7 @@ class ChangeApi(roadAddressService: RoadAddressService, nodesAndJunctionsService
       val since = DateTime.parse(sinceUnformatted)
       val until = DateTime.parse(untilUnformatted)
       if (since.compareTo(until) > 0) {
-        logger.warn(s"'since' cannot be later than 'until'. ${request.getRequestURI}?${request.getQueryString}")
-        BadRequest(s"'since' cannot be later than 'until'. (${request.getQueryString})")
+        BadRequestWithLoggerWarn(s"'since' cannot be later than 'until'. ${request.getQueryString}", s"(${request.getRequestURI})")
       }
       else {
         time(logger, s"GET request for /road_numbers", params = Some(params)) {
@@ -62,18 +61,14 @@ class ChangeApi(roadAddressService: RoadAddressService, nodesAndJunctionsService
       }
     } catch {
       case iae: IllegalArgumentException =>
-        val message = s"Invalid 'since', or/and 'until' parameters. Got ${request.getQueryString} \n" +
-          s" ${iae.getMessage}\n $dateParamDescription"
-        logger.warn(message)
-        BadRequest(message)
+        BadRequestWithLoggerWarn(s"Invalid 'since', or/and 'until' parameters. Got ${request.getQueryString} \n" +
+          s" ${iae.getMessage}\n $dateParamDescription","")
       case nsee: NoSuchElementException =>
-        val message = s"The data asked for has gap(s), result set generation unsuccessful for interval ${request.getQueryString}."
-        logger.warn(s"message\n + ${nsee.getMessage}")
-        BadRequest(message)
+        BadRequestWithLoggerWarn(s"The data asked for has gap(s), result set generation unsuccessful for interval ${request.getQueryString}.",
+          s"${nsee.getMessage}")
+
       case psqle: PSQLException =>
-        val message = s"Date out of bounds, check the given dates: ${request.getQueryString}."
-        logger.warn(s"message\n + ${psqle.getMessage}")
-        BadRequest(message)
+        BadRequestWithLoggerWarn(s"Date out of bounds, check the given dates: ${request.getQueryString}.", s"${psqle.getMessage}")
       case nf if NonFatal(nf) =>
         val requestString = s"GET request for ${request.getRequestURI}?${request.getQueryString} (${roadNumberToGeoJson.operationId})"
         haltWith500IfUnexpectedError(requestString, nf)
@@ -85,8 +80,13 @@ class ChangeApi(roadAddressService: RoadAddressService, nodesAndJunctionsService
     logger.info(s"An unexpected error in '$whatWasCalledWhenError ($now)': $throwable")
     halt(InternalServerError(
       s"You hit an unexpected error. Contact system administrator, or Viite development team.\n" +
-        s"Tell them to look for '$whatWasCalledWhenError ($now)'"
+      s"Tell them to look for '$whatWasCalledWhenError ($now)'"
     ))
+  }
+
+  def BadRequestWithLoggerWarn(messageFor400: String, extraForLogger: String) = {
+    logger.warn(messageFor400 + "  " + extraForLogger)
+    BadRequest(messageFor400)
   }
 
   private def extractChangeType(since: DateTime, expired: Boolean, createdDateTime: Option[DateTime]) = {
