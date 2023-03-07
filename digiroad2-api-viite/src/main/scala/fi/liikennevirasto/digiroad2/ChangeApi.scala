@@ -77,7 +77,7 @@ class ChangeApi(roadAddressService: RoadAddressService, nodesAndJunctionsService
 
   private def haltWith500IfUnexpectedError(whatWasCalledWhenError: String, throwable: Throwable) = {
     var now = DateTime.now()
-    logger.info(s"An unexpected error in '$whatWasCalledWhenError ($now)': $throwable")
+    logger.error(s"An unexpected error in '$whatWasCalledWhenError ($now)': $throwable")
     halt(InternalServerError(
       s"You hit an unexpected error. Contact system administrator, or Viite development team.\n" +
       s"Tell them to look for '$whatWasCalledWhenError ($now)'"
