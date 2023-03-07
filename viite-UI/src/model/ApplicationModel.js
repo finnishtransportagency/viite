@@ -202,7 +202,6 @@
           $('#unAddressedRoadsVisibleCheckbox')[0].checked = true;
           $('#unAddressedRoadsVisibleCheckbox')[0].disabled = false;
         }
-        eventbus.trigger('unAddressedRoadsProjectRoads:toggleVisibility', true);
       }
     };
 
