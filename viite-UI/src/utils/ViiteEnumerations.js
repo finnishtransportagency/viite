@@ -129,6 +129,22 @@
     DirectionMarker: {value: 150}
   };
 
+  root.ProjectModeZIndex = {
+    NotInProjectRoadLinks: {border: 10, stroke: 11, fill: 12},
+    TerminatedProjectLinks: {border: 20, stroke: 21, fill: 22},
+    UnAddressedOther: {border: 30, stroke: 31, fill: 32},
+    UnAddressedState: {border: 40, stroke: 41, fill: 42},
+    UnAddressedUnderConstructionOther: {border: 50, stroke: 51, fill: 52},
+    UnAddressedUnderConstructionState: {border: 60, stroke: 61, fill: 62},
+    TransferredProjectLinks: {border: 70, stroke: 71, fill: 72},
+    UnchangedProjectLinks: {border: 70, stroke: 71, fill: 72},
+    NumberingProjectLinks: {border: 70, stroke: 71, fill: 72},
+    NewProjectLinks: {border: 70, stroke: 71, fill: 72},
+    NotHandledProjectLinks: {border: 80, stroke: 81, fill: 82},
+    CalibrationPoint: {value: 90},
+    DirectionMarker: {value: 100}
+  };
+
   root.AdministrativeClass = {
     Empty: {value: 0, description: "", displayText: "--", textValue: ""},
     PublicRoad: {value: 1, description: "Yleinen tie", displayText: "1 Valtio", textValue: "Valtio"},

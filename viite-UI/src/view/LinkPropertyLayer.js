@@ -74,6 +74,10 @@
     var layers = [unAddressedRoadLayer, roadLayer.layer, directionMarkerLayer, underConstructionMarkerLayer, calibrationPointLayer,
       underConstructionRoadLayer, reservedRoadLayer];
 
+    me.eventListener.listenTo(eventbus,'layers:removeViewModeFeaturesFromTheLayers', function() {
+      me.removeFeaturesFromLayers(layers);
+    });
+
     var setGeneralOpacity = function (opacity) {
       roadLayer.layer.setOpacity(opacity);
       directionMarkerLayer.setOpacity(opacity);
