@@ -71,11 +71,11 @@ class ChangeApi(roadAddressService: RoadAddressService, nodesAndJunctionsService
         BadRequestWithLoggerWarn(s"Date out of bounds, check the given dates: ${request.getQueryString}.", s"${psqle.getMessage}")
       case nf if NonFatal(nf) =>
         val requestString = s"GET request for ${request.getRequestURI}?${request.getQueryString} (${roadNumberToGeoJson.operationId})"
-        haltWith500IfUnexpectedError(requestString, nf)
+        haltWithHTTP500WithLoggerError(requestString, nf)
     }
   }
 
-  private def haltWith500IfUnexpectedError(whatWasCalledWhenError: String, throwable: Throwable) = {
+  private def haltWithHTTP500WithLoggerError(whatWasCalledWhenError: String, throwable: Throwable) = {
     var now = DateTime.now()
     logger.error(s"An unexpected error in '$whatWasCalledWhenError ($now)': $throwable")
     halt(InternalServerError(
