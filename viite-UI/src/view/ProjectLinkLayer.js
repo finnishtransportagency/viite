@@ -91,6 +91,10 @@
 
     var layers = [notReservedInProjectLayer, terminatedProjectLinkLayer, unAddressedRoadsProjectLayer, underConstructionRoadProjectLayer, projectLinkLayer, notHandledProjectLinksLayer, calibrationPointLayer, directionMarkerLayer, underConstructionProjectDirectionMarkerLayer];
 
+    me.eventListener.listenTo(eventbus,'layers:removeProjectModeFeaturesFromTheLayers', function() {
+      me.removeFeaturesFromLayers(layers);
+    });
+
     var getSelectedId = function (selected) {
       if (!_.isUndefined(selected.id) && selected.id > 0) {
         return selected.id;
