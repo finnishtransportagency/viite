@@ -271,12 +271,12 @@
       });
       addFeaturesToSelection(featuresToHighlight);
 
-      var result = _.filter(directionMarkerLayer.getSource().getFeatures(), function (item) {
-        return _.find(featuresToHighlight, {linkId: item.id});
+      var directionMarkersForFeatures = _.filter(directionMarkerLayer.getSource().getFeatures(), function (directionMarker) {
+        return _.find(featuresToHighlight, (feature) => feature.linkData.linkId === directionMarker.id);
       });
 
-      _.each(result, function (featureMarker) {
-        selectSingleClick.getFeatures().push(featureMarker);
+      _.each(directionMarkersForFeatures, function (directionMarker) {
+        selectSingleClick.getFeatures().push(directionMarker);
       });
     };
 

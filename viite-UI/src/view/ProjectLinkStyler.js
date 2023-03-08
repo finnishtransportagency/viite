@@ -393,7 +393,13 @@
     };
 
     var getSelectionLinkStyle = function (linkData, map) {
-      var selectionLinkStyle = new StyleRuleProvider({stroke: {lineCap: 'round', color: '#00FF00'}, zIndex: 999});
+      var selectionLinkStyle = new StyleRuleProvider({
+        stroke: {
+          lineCap: 'round',
+          color: '#00FF00'
+        },
+        zIndex: ViiteEnumerations.ProjectModeZIndex.SelectedProjectLink.value
+      });
       selectionLinkStyle.addRules(strokeWidthRules);
       selectionLinkStyle.addRules(fillWidthRules);
       return [selectionLinkStyle.getStyle(linkData,{zoomLevel: zoomlevels.getViewZoom(map)})];

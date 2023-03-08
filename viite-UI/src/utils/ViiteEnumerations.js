@@ -142,7 +142,8 @@
     NewProjectLinks: {border: 70, stroke: 71, fill: 72},
     NotHandledProjectLinks: {border: 80, stroke: 81, fill: 82},
     CalibrationPoint: {value: 90},
-    DirectionMarker: {value: 100}
+    SelectedProjectLink: {value: 100},
+    DirectionMarker: {value: 110}
   };
 
   root.AdministrativeClass = {
