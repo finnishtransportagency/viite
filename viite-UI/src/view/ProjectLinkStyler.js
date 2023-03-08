@@ -197,7 +197,7 @@
     const strokeRulesForUnderConstruction = [
       new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).and('lifecycleStatus').is(ViiteEnumerations.lifecycleStatus.UnderConstruction.value).and('administrativeClassId').isNot(ViiteEnumerations.AdministrativeClass.PublicRoad.value).use({
         stroke: {
-          color: 'rgba(238, 238, 235, 0.75)',
+          color: '#B7B7B5',
           lineCap: 'round'
         },
         zIndex: ViiteEnumerations.ProjectModeZIndex.UnAddressedUnderConstructionOther.stroke
