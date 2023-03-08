@@ -45,16 +45,17 @@
     ];
 
     const strokeWidthRulesForUnAddressed = [
-      new StyleRule().where('zoomLevel').is(5).and('roadClass').is(99).use({stroke: {width: 1}}),
-      new StyleRule().where('zoomLevel').is(6).and('roadClass').is(99).use({stroke: {width: 2}}),
-      new StyleRule().where('zoomLevel').is(7).and('roadClass').is(99).use({stroke: {width: 3}}),
-      new StyleRule().where('zoomLevel').is(8).and('roadClass').is(99).use({stroke: {width: 4}}),
-      new StyleRule().where('zoomLevel').is(9).and('roadClass').is(99).use({stroke: {width: 5}}),
-      new StyleRule().where('zoomLevel').isIn([10, 11]).and('roadClass').is(99).use({stroke: {width: 6}}),
-      new StyleRule().where('zoomLevel').is(12).and('roadClass').is(99).use({stroke: {width: 7}}),
-      new StyleRule().where('zoomLevel').is(13).and('roadClass').is(99).use({stroke: {width: 10}}),
-      new StyleRule().where('zoomLevel').is(14).and('roadClass').is(99).use({stroke: {width: 12}}),
-      new StyleRule().where('zoomLevel').is(15).and('roadClass').is(99).use({stroke: {width: 13}})
+      new StyleRule().where('zoomLevel').is(5).and('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).use({stroke: {width: 1}}),
+      new StyleRule().where('zoomLevel').is(6).and('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).use({stroke: {width: 1}}),
+      new StyleRule().where('zoomLevel').is(7).and('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).use({stroke: {width: 1}}),
+      new StyleRule().where('zoomLevel').is(8).and('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).use({stroke: {width: 1}}),
+      new StyleRule().where('zoomLevel').is(9).and('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).use({stroke: {width: 2}}),
+      new StyleRule().where('zoomLevel').is(10).and('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).use({stroke: {width: 3}}),
+      new StyleRule().where('zoomLevel').is(11).and('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).use({stroke: {width: 3}}),
+      new StyleRule().where('zoomLevel').is(12).and('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).use({stroke: {width: 5}}),
+      new StyleRule().where('zoomLevel').is(13).and('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).use({stroke: {width: 8}}),
+      new StyleRule().where('zoomLevel').is(14).and('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).use({stroke: {width: 10}}),
+      new StyleRule().where('zoomLevel').is(15).and('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).use({stroke: {width: 11}})
     ];
 
     var fillWidthRules = [
