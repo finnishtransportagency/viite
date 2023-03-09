@@ -3,7 +3,6 @@
     Layer.call(this, map);
     var me = this;
 
-    var underConstructionMarkerVector = new ol.source.Vector({});
     var directionMarkerVector = new ol.source.Vector({});
     var calibrationPointVector = new ol.source.Vector({});
     var underConstructionRoadLayerVector = new ol.source.Vector({});
@@ -25,13 +24,6 @@
       zIndex: ViiteEnumerations.ViewModeZIndex.DirectionMarker.value
     });
     directionMarkerLayer.set('name', 'directionMarkerLayer');
-
-    var underConstructionMarkerLayer = new ol.layer.Vector({
-      source: underConstructionMarkerVector,
-      name: 'underConstructionMarkerLayer',
-      zIndex: ViiteEnumerations.ViewModeZIndex.DirectionMarker.value
-    });
-    underConstructionMarkerLayer.set('name', 'underConstructionMarkerLayer');
 
     var calibrationPointLayer = new ol.layer.Vector({
       source: calibrationPointVector,
@@ -71,7 +63,7 @@
      * The order of these layers in this array affects the order these layers are presented on the map.
      * i.e. the first one is the bottom most layer drawn and the last one is the top most layer drawn
      * */
-    var layers = [unAddressedRoadLayer, roadLayer.layer, directionMarkerLayer, underConstructionMarkerLayer, calibrationPointLayer,
+    var layers = [unAddressedRoadLayer, roadLayer.layer, directionMarkerLayer, calibrationPointLayer,
       underConstructionRoadLayer, reservedRoadLayer];
 
     me.eventListener.listenTo(eventbus,'layers:removeViewModeFeaturesFromTheLayers', function() {
@@ -81,7 +73,6 @@
     var setGeneralOpacity = function (opacity) {
       roadLayer.layer.setOpacity(opacity);
       directionMarkerLayer.setOpacity(opacity);
-      underConstructionMarkerLayer.setOpacity(opacity);
       underConstructionRoadLayer.setOpacity(opacity);
       unAddressedRoadLayer.setOpacity(opacity);
     };
@@ -363,19 +354,17 @@
       var extent = map.getView().calculateExtent(map.getSize());
       var visibleRoads = withRoads ? roadLayer.layer.getSource().getFeaturesInExtent(extent) : [];
       var visibleDirectionalMarkers = withDirectionalMarkers ? directionMarkerLayer.getSource().getFeaturesInExtent(extent) : [];
-      var visibleUnderConstructionMarkers = withDirectionalMarkers ? underConstructionMarkerLayer.getSource().getFeaturesInExtent(extent) : [];
       var visibleUnderConstructionRoads = withUnderConstructionRoads ? underConstructionRoadLayer.getSource().getFeaturesInExtent(extent) : [];
       var visibleUnAddressedRoads = withVisibleUnAddressedRoads ? unAddressedRoadLayer.getSource().getFeaturesInExtent(extent) : [];
-      return visibleRoads.concat(visibleDirectionalMarkers).concat(visibleUnderConstructionMarkers).concat(visibleUnderConstructionRoads).concat(visibleUnAddressedRoads);
+      return visibleRoads.concat(visibleDirectionalMarkers).concat(visibleUnderConstructionRoads).concat(visibleUnAddressedRoads);
     };
 
     var getAllFeatures = function () {
       var roads = roadLayer.layer.getSource().getFeatures();
       var directionalMarkers = directionMarkerLayer.getSource().getFeatures();
-      var underConstructionMarkers = underConstructionMarkerLayer.getSource().getFeatures();
       var underConstructionRoads = underConstructionRoadLayer.getSource().getFeatures();
       var unAddressedRoads = unAddressedRoadLayer.getSource().getFeatures();
-      return roads.concat(directionalMarkers).concat(underConstructionMarkers).concat(underConstructionRoads).concat(unAddressedRoads);
+      return roads.concat(directionalMarkers).concat(underConstructionRoads).concat(unAddressedRoads);
     };
 
     /**
@@ -411,7 +400,7 @@
           return sl.linkId;
         }), rl.linkId);
       });
-      me.clearLayers([underConstructionRoadLayer, unAddressedRoadLayer, directionMarkerLayer, underConstructionMarkerLayer, calibrationPointLayer]);
+      me.clearLayers([underConstructionRoadLayer, unAddressedRoadLayer, directionMarkerLayer, calibrationPointLayer]);
 
       if (zoomlevels.getViewZoom(map) >= zoomlevels.minZoomForRoadNetwork) {
 
@@ -423,12 +412,6 @@
           _.each(directionRoadMarker, function (directionLink) {
             cachedMarker.createMarker(directionLink, function (marker) {
               directionMarkerLayer.getSource().addFeature(marker);
-            });
-          });
-
-          _.each(underConstructionLinks, function (directionLink) {
-            cachedMarker.createMarker(directionLink, function (marker) {
-              underConstructionMarkerLayer.getSource().addFeature(marker);
             });
           });
         }
@@ -570,7 +553,6 @@
       });
       eventListener.listenTo(eventbus, 'underConstructionRoads:toggleVisibility', function (visibility) {
         underConstructionRoadLayer.setVisible(visibility);
-        underConstructionMarkerLayer.setVisible(visibility);
       });
       eventListener.listenTo(eventbus, 'linkProperty:visibilityChanged', function () {
         //Exclude underConstruction layers from toggle

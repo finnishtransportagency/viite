@@ -53,7 +53,8 @@
         });
       };
 
-      if (roadlink.linearLocationId === 0 && roadlink.roadClass === ViiteEnumerations.LinkGeomSource.Unknown.value) {
+      // unaddressed and under construction links don't need direction markers
+      if (roadlink.linearLocationId === 0 && roadlink.roadClass === ViiteEnumerations.RoadClass.NoClass.value) {
         return;
       } else {
         box.setStyle(boxStyleDirectional(roadlink));
