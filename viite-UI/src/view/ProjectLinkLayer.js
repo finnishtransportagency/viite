@@ -276,7 +276,7 @@
       addFeaturesToSelection(featuresToHighlight);
 
       var directionMarkersForFeatures = _.filter(directionMarkerLayer.getSource().getFeatures(), function (directionMarker) {
-        return _.find(featuresToHighlight, (feature) => feature.linkData.linkId === directionMarker.id);
+        return _.find(featuresToHighlight, (feature) => feature.linkData.linkId === directionMarker.linkData.linkId);
       });
 
       _.each(directionMarkersForFeatures, function (directionMarker) {
