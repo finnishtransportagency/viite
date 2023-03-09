@@ -406,6 +406,9 @@
       projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), zoomlevels.getViewZoom(map) + 1, undefined, projectCollection.getPublishableStatus());
     });
 
+    /**
+     * This function is responsible for adding features to the correct layers that they belong to.
+     * */
     me.redraw = function () {
       var addLinkFeaturesToLayer = function (links, destinationLayer) {
         _.map(links, function (link) {

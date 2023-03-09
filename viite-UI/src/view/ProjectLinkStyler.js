@@ -1,6 +1,15 @@
 (function (root) {
   root.ProjectLinkStyler = function () {
 
+    /**
+     * ProjectLinkStyler is a styler for road links in project mode. It is used for setting the color, borders and dashes of the road link based on the link data.
+     * Each road link may have up to three different styles that are stacked on top of each other.
+     * The three styles are:
+     * Border: Links with Road number and Administrative class Municipality or Private. zIndex: lowest
+     * Stroke: This is the "base color" for the link, for example this determines the base color for under construction links (road links that have "dashes"). zIndex: middle
+     * Fill: This is the main color for the road link. zIndex: highest
+     */
+
     var LinkStatus = ViiteEnumerations.LinkStatus;
     var notHandledStatus = LinkStatus.NotHandled.value;
     var unchangedStatus = LinkStatus.Unchanged.value;
