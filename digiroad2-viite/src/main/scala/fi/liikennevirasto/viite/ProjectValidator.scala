@@ -678,7 +678,7 @@ class ProjectValidator {
 
   def getTrackInterval(links: Seq[ProjectLink], track: Track): Seq[ProjectLink] = {
     links.foldLeft(Seq.empty[ProjectLink]) { (linkSameTrack, current) => {
-      if (current.track == track && (linkSameTrack.isEmpty || (isSameTrack(linkSameTrack.last, current) && linkSameTrack.last.endAddrMValue == current.startAddrMValue))) {
+      if (current.track == track && (linkSameTrack.isEmpty || isSameTrack(linkSameTrack.last, current))) {
         linkSameTrack :+ current
       } else {
         linkSameTrack
