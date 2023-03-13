@@ -678,7 +678,7 @@ class ProjectValidator {
 
   def getTrackInterval(links: Seq[ProjectLink], track: Track): Seq[ProjectLink] = {
     links.foldLeft(Seq.empty[ProjectLink]) { (linkSameTrack, current) => {
-      if (current.track == track && (linkSameTrack.isEmpty || isSameTrack(linkSameTrack.last, current))) {
+      if (current.track == track && (linkSameTrack.isEmpty || (isSameTrack(linkSameTrack.last, current) && linkSameTrack.last.endAddrMValue == current.startAddrMValue))) {
         linkSameTrack :+ current
       } else {
         linkSameTrack
@@ -694,7 +694,7 @@ class ProjectValidator {
       if (trackInterval.head.track != Combined) {
         val minTrackLink = trackInterval.minBy(_.startAddrMValue)
         val maxTrackLink = trackInterval.maxBy(_.endAddrMValue)
-        val notCombinedLinksInRoadPart = notCombinedLinks.filter(l => l.roadNumber == minTrackLink.roadNumber && l.roadPartNumber == minTrackLink.roadPartNumber)
+        val notCombinedLinksInRoadPart = notCombinedLinks.filter(l => l.roadNumber == minTrackLink.roadNumber && l.roadPartNumber == minTrackLink.roadPartNumber && l.status != LinkStatus.Terminated)
         if (!notCombinedLinksInRoadPart.exists(l => l.startAddrMValue == minTrackLink.startAddrMValue && l.track != minTrackLink.track)) {
           Some(minTrackLink)
         }
@@ -743,7 +743,7 @@ class ProjectValidator {
       groupInterval.groupBy(_._1).flatMap{ interval =>
         val leftrRightTracks = interval._2.flatMap(_._2)
         val validTrackInterval = leftrRightTracks.filterNot(r => r.status == Terminated || r.track == Track.Combined)
-        if (validTrackInterval.nonEmpty) {
+        if (validTrackInterval.nonEmpty && validTrackInterval.exists(_.track == Track.RightSide) && validTrackInterval.exists(_.track == Track.LeftSide)) {
           checkMinMaxTrackAdministrativeClasses(validTrackInterval) match {
             case Some(links) => links
             case _ => Seq.empty[ProjectLink]
@@ -790,19 +790,17 @@ class ProjectValidator {
         val sortedTrackInterval1 = getTrackInterval(sortedRoadPartLinks, Track.LeftSide)
         val sortedTrackInterval2 = getTrackInterval(sortedRoadPartLinks, Track.RightSide)
 
-        val (leftGeomLength, rightGeomLength) = sortedTrackInterval1.zip(sortedTrackInterval2).foldLeft((0.0,0.0)) {
-          case ((leftLength, rightLength), (left, right)) =>
-            (leftLength + left.geometryLength, rightLength + right.geometryLength)
-        }
+        val leftGeomLength = sortedTrackInterval1.map(_.geometryLength).sum
+        val rightGeomLength = sortedTrackInterval2.map(_.geometryLength).sum
 
         def geomLengthDiff: Double = Math.abs(leftGeomLength - rightGeomLength)
         def exceptionalLengthDifference: Boolean = {
-          val BIG_TRACK_LENGTH_DIFFERENCE__TRESHOLD_IN_METERS = 50
-          val BIG_TRACK_LENGTH_DIFFERENCE__TRESHOLD_IN_PERCENT = 0.2
+          val BIG_TRACK_LENGTH_DIFFERENCE__THRESHOLD_IN_METERS = 50
+          val BIG_TRACK_LENGTH_DIFFERENCE__THRESHOLD_IN_PERCENT = 0.2
 
-          geomLengthDiff > BIG_TRACK_LENGTH_DIFFERENCE__TRESHOLD_IN_METERS ||
-          geomLengthDiff / leftGeomLength > BIG_TRACK_LENGTH_DIFFERENCE__TRESHOLD_IN_PERCENT ||
-          geomLengthDiff / rightGeomLength > BIG_TRACK_LENGTH_DIFFERENCE__TRESHOLD_IN_PERCENT
+          geomLengthDiff > BIG_TRACK_LENGTH_DIFFERENCE__THRESHOLD_IN_METERS ||
+          geomLengthDiff / leftGeomLength > BIG_TRACK_LENGTH_DIFFERENCE__THRESHOLD_IN_PERCENT ||
+          geomLengthDiff / rightGeomLength > BIG_TRACK_LENGTH_DIFFERENCE__THRESHOLD_IN_PERCENT
         }
 
         val trackIntervalRemovedRoadPartLinks = roadPartLinks.filterNot(l => (sortedTrackInterval1 ++ sortedTrackInterval2).exists(lt => lt.id == l.id))
@@ -816,7 +814,7 @@ class ProjectValidator {
     }
 
     val groupedLinks = notCombinedLinks.filterNot(_.status == LinkStatus.Terminated).groupBy(pl => (pl.roadNumber, pl.roadPartNumber))
-    groupedLinks.map(roadPart => {
+    groupedLinks.flatMap(roadPart => {
       val trackCoverageErrors = recursiveCheckTrackChange(roadPart._2) match {
         case Some(errors) => Seq(errors)
         case _ => Seq()
@@ -835,7 +833,7 @@ class ProjectValidator {
       }
 
       trackCoverageErrors ++ trackGeomLengthErrors ++ administrativeClassPairingErrors
-    }).headOption.getOrElse(Seq())
+    }).toSeq
   }
 
   /**
