@@ -164,8 +164,9 @@
           break;
         case "startDate":
           if (parseInt(roadId) === newId) {
-            $('.form-control[data-roadId=' + originalRoadId + '][data-fieldName=endDate]').val(fieldValue);
-            roadNameCollection.setEndDate(originalRoadId, fieldValue);
+            const endDateForPreviousRoadName = moment(fieldValue, defaultDateFormat).subtract(1, 'days').format(defaultDateFormat);
+            $('.form-control[data-roadId=' + originalRoadId + '][data-fieldName=endDate]').val(endDateForPreviousRoadName);
+            roadNameCollection.setEndDate(originalRoadId, endDateForPreviousRoadName);
           }
 
           if (isValidDate(fieldValue, originalStartDate))
