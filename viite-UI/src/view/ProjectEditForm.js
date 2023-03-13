@@ -691,7 +691,7 @@
             eventbus.trigger('roadAddressProject:setRecalculatedAfterChangesFlag', true);
           }
           // if something went wrong during recalculation or validation, show error to user
-          else if (response.prototype.hasOwnProperty('validationErrors') && !_.isEmpty(response.validationErrors)) {
+          else if ('validationErrors' in response && !_.isEmpty(response.validationErrors)) {
               // set project errors that were returned by the backend validations and write them to user (removes the spinner also)
               projectCollection.setAndWriteProjectErrorsToUser(response.validationErrors);
           } else {
