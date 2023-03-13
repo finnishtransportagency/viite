@@ -49,11 +49,12 @@
             rotation: rl.sideCode === ViiteEnumerations.SideCode.AgainstDigitizing.value ? ((middlePoint.angleFromNorth * Math.PI) / 180) + Math.PI : middlePoint.angleFromNorth * Math.PI / 180,
             src: 'data:image/svg+xml;utf8,' + directionMarker
           }),
-          zIndex: 10
+          zIndex: ViiteEnumerations.ViewModeZIndex.DirectionMarker.value
         });
       };
 
-      if (roadlink.linearLocationId === 0 && roadlink.roadClass === ViiteEnumerations.LinkGeomSource.Unknown.value) {
+      // unaddressed and under construction links don't need direction markers
+      if (roadlink.linearLocationId === 0 && roadlink.roadClass === ViiteEnumerations.RoadClass.NoClass.value) {
         return;
       } else {
         box.setStyle(boxStyleDirectional(roadlink));
