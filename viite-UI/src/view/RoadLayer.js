@@ -33,14 +33,13 @@
 
     var roadLayer = new ol.layer.Vector({
       source: roadVector,
-      style: vectorLayerStyle
+      style: roadLinkStyle
     });
     roadLayer.setVisible(true);
     roadLayer.set('name', 'roadLayer');
 
-    function vectorLayerStyle(feature) {
-      return [roadLinkStyler.getBorderStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)}), roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)}),
-        roadLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)})];
+    function roadLinkStyle(feature) {
+      return roadLinkStyler.getRoadLinkStyles(feature.linkData, map);
     }
 
     var loadFeatures = function (features) {

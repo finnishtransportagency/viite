@@ -3,18 +3,6 @@
     var me = this;
     this.eventListener = _.extend({running: false}, eventbus);
 
-    var mapOverLinkMiddlePoints = function (links, transformation) {
-      return _.map(links, function (link) {
-        var geometry = (_.isUndefined(link.newGeometry) ? link.points : link.newGeometry);
-        var points = _.map(geometry, function (point) {
-          return [point.x, point.y];
-        });
-        var lineString = new ol.geom.LineString(points);
-        var middlePoint = GeometryUtils.calculateMidpointOfLineString(lineString);
-        return transformation(link, middlePoint);
-      });
-    };
-
     this.addLayers = function (layers) {
       _.each(layers, function (layer) {
         map.addLayer(layer);
@@ -30,6 +18,15 @@
     this.clearLayers = function (layers) {
       _.each(layers, function (layer) {
         layer.getSource().clear();
+      });
+    };
+
+    this.removeFeaturesFromLayers = function (layers) {
+      _.each(layers, function (layer) {
+        const features = layer.getSource().getFeatures();
+        features.forEach((feature) => {
+          layer.getSource().removeFeature(feature);
+        });
       });
     };
 
@@ -77,7 +74,5 @@
       });
       return calibrationPointsWithValue;
     };
-
-    this.mapOverLinkMiddlePoints = mapOverLinkMiddlePoints;
   };
 }(this));

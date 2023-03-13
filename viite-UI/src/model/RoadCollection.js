@@ -330,10 +330,15 @@
         zoom: zoomLevel,
         projectId: projectId
       }, function (fetchedLinks) {
-        var notHandledLinks = _.chain(fetchedLinks).flatten().filter(function (link) {
-          return link.status === LinkStatus.NotHandled.value;
+        var projectLinks = _.chain(fetchedLinks).flatten().filter(function (link) {
+          return link.status === LinkStatus.NotHandled.value
+              || link.status === LinkStatus.New.value
+              || link.status === LinkStatus.Terminated.value
+              || link.status === LinkStatus.Unchanged.value
+              || link.status === LinkStatus.Numbering.value
+              || link.status === LinkStatus.Transfer.value;
         }).uniq().value();
-        var notHandledFeatures = _.map(notHandledLinks, function (road) {
+        var projectLinkFeatures = _.map(projectLinks, function (road) {
           var points = _.map(road.points, function (point) {
             return [point.x, point.y];
           });
@@ -344,7 +349,7 @@
           feature.projectId = projectId;
           return feature;
         });
-        eventbus.trigger('linkProperties:highlightReservedRoads', notHandledFeatures);
+        eventbus.trigger('linkProperties:highlightReservedRoads', projectLinkFeatures);
       });
     };
   };

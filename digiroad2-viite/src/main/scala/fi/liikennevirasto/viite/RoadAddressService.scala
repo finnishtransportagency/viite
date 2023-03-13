@@ -1072,7 +1072,7 @@ sealed trait RoadClass {
 
 object RoadClass {
   val values: Set[RoadClass] = Set(HighwayClass, MainRoadClass, RegionalClass, ConnectingClass, MinorConnectingClass, StreetClass,
-    RampsAndRoundaboutsClass, PedestrianAndBicyclesClassA, PedestrianAndBicyclesClassB, WinterRoadsClass, PathsClass, ConstructionSiteTemporaryClass,
+    RampsAndRoundaboutsClass, PedestrianAndBicyclesClassA, PedestrianAndBicyclesClassB, WinterRoadsClass, PathsClass,
     PrivateRoadClass, NoClass)
 
   val forNodes: Set[Int] = Set(HighwayClass, MainRoadClass, RegionalClass, ConnectingClass, MinorConnectingClass,
@@ -1149,12 +1149,6 @@ object RoadClass {
     def value = 10
 
     def roads: Range.Inclusive = 62001 to 62999
-  }
-
-  case object ConstructionSiteTemporaryClass extends RoadClass {
-    def value = 11
-
-    def roads: Range.Inclusive = 9900 to 9999
   }
 
   case object PrivateRoadClass extends RoadClass {
