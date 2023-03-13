@@ -63,8 +63,7 @@
      * The order of these layers in this array affects the order these layers are presented on the map.
      * i.e. the first one is the bottom most layer drawn and the last one is the top most layer drawn
      * */
-    var layers = [unAddressedRoadLayer, roadLayer.layer, directionMarkerLayer, calibrationPointLayer,
-      underConstructionRoadLayer, reservedRoadLayer];
+    var layers = [unAddressedRoadLayer, underConstructionRoadLayer, roadLayer.layer, directionMarkerLayer, calibrationPointLayer, reservedRoadLayer];
 
     me.eventListener.listenTo(eventbus,'layers:removeViewModeFeaturesFromTheLayers', function() {
       me.removeFeaturesFromLayers(layers);
