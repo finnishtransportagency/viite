@@ -128,9 +128,14 @@ object ProjectDeltaCalculator {
     if (!oppositeStatusChange && (matchAddr && sameStatus && matchContinuity && administrativeClassesMatch && trackNotUpdated && originalTrackContinuous &&
       (newLinks || oppositeTrackNotUpdated) && !(hasCalibrationPoint || hasParallelLinkOnCalibrationPoint)) &&
         administrativeClassesMatch && oppositeStatusNotChanged && originalAdministrativeClassContinuous) {
-      val pl1OriginalAddressSet =
-        pl1.copy(originalEndAddrMValue = Math.max(pl1.originalEndAddrMValue, pl2.originalEndAddrMValue),
-          originalStartAddrMValue = Math.min(pl1.originalStartAddrMValue, pl2.originalStartAddrMValue), roadwayId = pl2.roadwayId)
+      val pl1OriginalAddressSet = {
+        if (pl1.reversed)
+          pl1.copy(originalEndAddrMValue = Math.max(pl1.originalEndAddrMValue, pl2.originalEndAddrMValue),
+            originalStartAddrMValue = Math.min(pl1.originalStartAddrMValue, pl2.originalStartAddrMValue), roadwayId = pl1.roadwayId)
+        else
+          pl1.copy(originalEndAddrMValue = Math.max(pl1.originalEndAddrMValue, pl2.originalEndAddrMValue),
+            originalStartAddrMValue = Math.min(pl1.originalStartAddrMValue, pl2.originalStartAddrMValue), roadwayId = pl2.roadwayId)
+      }
 
       Seq(
         pl1OriginalAddressSet.copy(discontinuity = pl2.discontinuity, endAddrMValue = pl2.endAddrMValue,
