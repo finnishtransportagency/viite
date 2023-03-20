@@ -5,48 +5,16 @@
     var me = this;
     var roadLinkStyler = new RoadLinkStyler();
 
-    var roadVector = new ol.source.Vector({
-      loader: function (_extent, _resolution, _projection) {
-        eventbus.once('roadLinks:fetched', function () {
-          loadFeatures(getFeatures());
-        });
-        eventbus.once('roadLinks:fetched:wholeRoadPart', function () {
-          loadFeatures(getFeatures());
-          eventbus.trigger('roadCollection:wholeRoadPartFetched');
-        });
-      },
-      strategy: ol.loadingstrategy.bbox
-    });
-
-    var getFeatures = function () {
-      return _.map(roadCollection.getAll(), function (roadLink) {
-        var points = _.map(roadLink.points, function (point) {
-          return [point.x, point.y];
-        });
-        var feature = new ol.Feature({
-          geometry: new ol.geom.LineString(points)
-        });
-        feature.linkData = roadLink;
-        return feature;
-      });
-    };
+    var roadVector = new ol.source.Vector({});
 
     var roadLayer = new ol.layer.Vector({
       source: roadVector,
-      style: roadLinkStyle
+      style: function (feature) {
+        return roadLinkStyler.getRoadLinkStyles(feature.linkData, map);
+      }
     });
     roadLayer.setVisible(true);
     roadLayer.set('name', 'roadLayer');
-
-    function roadLinkStyle(feature) {
-      return roadLinkStyler.getRoadLinkStyles(feature.linkData, map);
-    }
-
-    var loadFeatures = function (features) {
-      roadVector.clear(true);
-      roadVector.addFeatures(selectedLinkProperty.filterFeaturesAfterSimulation(features));
-    };
-
 
     var infoContainer = document.getElementById('popup');
     var infoContent = document.getElementById('popup-content');
