@@ -111,11 +111,11 @@
       });
     };
 
-    this.fetchWholeRoadPart = function (roadNumber, roadPart) {
+    this.fetchWholeRoadPart = function (roadNumber, roadPart, selection) {
       backend.getRoadLinksOfWholeRoadPart({
         roadNumber: roadNumber, roadPartNumber: roadPart
       }, function (fetchedRoadLinks) {
-        updateGroupToContainWholeRoadPart(fetchedRoadLinks);
+        updateGroupToContainWholeRoadPart(fetchedRoadLinks, selection);
       });
     };
 
@@ -128,12 +128,7 @@
       });
     };
 
-    eventbus.on("linkProperties:drawUnknowns", function () {
-      fetchProcess(currentAllRoadLinks, currentZoom, true);
-    });
-
-    var updateGroupToContainWholeRoadPart = function (fetchedRoadLinks) {
-
+    var updateGroupToContainWholeRoadPart = function (fetchedRoadLinks, selection) {
       var fetchedRoadLinkModels = _.map(fetchedRoadLinks, function (roadLinkGroup) {
         return _.map(roadLinkGroup, function (roadLink) {
           return new RoadLinkModel(roadLink);
@@ -142,15 +137,11 @@
 
       // update the roadlink group (that was clicked) with the newly fetched road links (containing whole road part instead of just the visible part of the road part)
       updateGroup(clickedLinearLocationId, fetchedRoadLinkModels);
-
-      eventbus.trigger('roadLinks:fetched:wholeRoadPart');
+      eventbus.trigger('roadCollection:wholeRoadPartFetched', selection);
     };
 
 
-    var fetchProcess = function (fetchedRoadLinks, zoom, drawUnknowns) {
-      var selectedLinkIds = _.map(getSelectedRoadLinkModels(), function (roadLink) {
-        return roadLink.getId();
-      });
+    var fetchProcess = function (fetchedRoadLinks, zoom) {
       var fetchedRoadLinkModels = _.map(fetchedRoadLinks, function (roadLinkGroup) {
         return _.map(roadLinkGroup, function (roadLink) {
           return new RoadLinkModel(roadLink);
@@ -169,8 +160,7 @@
       unaddressedUnderConstructionRoadLinkGroups = unaddressedRoadLinkGroups[0];
       unaddressedUnknownRoadLinkGroups = unaddressedRoadLinkGroups[1];
 
-      var includeUnknowns = _.isUndefined(drawUnknowns) && !drawUnknowns;
-      if (parseInt(zoom) <= zoomlevels.minZoomForEditMode && (includeUnknowns && !applicationModel.selectionTypeIs(ViiteEnumerations.SelectionType.Unknown))) {
+      if (parseInt(zoom) <= zoomlevels.minZoomForEditMode) {
         // only the fetched road links that have an address
         setRoadLinkGroups(fetchedWithAddresses);
       } else {
@@ -194,17 +184,10 @@
       });
 
       setRoadLinkGroups(nonHistoryConstructionRoadLinkGroups);
-      eventbus.trigger('roadLinks:fetched', nonHistoryConstructionRoadLinkGroups, (!_.isUndefined(drawUnknowns) && drawUnknowns), selectedLinkIds);
-      if (unaddressedUnderConstructionRoadLinkGroups.length !== 0)
-        eventbus.trigger('underConstructionRoadLinks:fetched', unaddressedUnderConstructionRoadLinkGroups);
-      if (unaddressedUnknownRoadLinkGroups.length !== 0)
-        eventbus.trigger('unAddressedRoadLinks:fetched', unaddressedUnknownRoadLinkGroups);
+      eventbus.trigger('roadLinks:fetched');
       if (applicationModel.isProjectButton()) {
         eventbus.trigger('linkProperties:highlightSelectedProject', applicationModel.getProjectFeature());
         applicationModel.setProjectButton(false);
-      }
-      if (!_.isUndefined(drawUnknowns) && drawUnknowns) {
-        eventbus.trigger('linkProperties:unknownsTreated');
       }
     };
 

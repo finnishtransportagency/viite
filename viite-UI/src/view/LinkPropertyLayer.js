@@ -8,10 +8,9 @@
     var underConstructionRoadLayerVector = new ol.source.Vector({});
     var unAddressedRoadLayerVector = new ol.source.Vector({});
     var reservedRoadVector = new ol.source.Vector({});
+    var selectedRoadVector = new ol.source.Vector({});
 
     var SelectionType = ViiteEnumerations.SelectionType;
-    var lifecycleStatus = ViiteEnumerations.lifecycleStatus;
-    var SideCode = ViiteEnumerations.SideCode;
 
     var isActiveLayer = false;
     var cachedMarker = null;
@@ -58,12 +57,19 @@
     });
     unAddressedRoadLayer.set('name', 'unAddressedRoadLayer');
 
+    var selectedRoadLayer = new ol.layer.Vector({
+      source: selectedRoadVector,
+      name: 'selectedRoadLayer',
+      style: function (feature) {
+        return getStyleForSelection(feature);
+      }
+    });
 
     /**
      * The order of these layers in this array affects the order these layers are presented on the map.
      * i.e. the first one is the bottom most layer drawn and the last one is the top most layer drawn
      * */
-    var layers = [unAddressedRoadLayer, underConstructionRoadLayer, roadLayer.layer, directionMarkerLayer, calibrationPointLayer, reservedRoadLayer];
+    var layers = [unAddressedRoadLayer, underConstructionRoadLayer, roadLayer.layer, reservedRoadLayer, selectedRoadLayer, directionMarkerLayer, calibrationPointLayer];
 
     me.eventListener.listenTo(eventbus,'layers:removeViewModeFeaturesFromTheLayers', function() {
       me.removeFeaturesFromLayers(layers);
@@ -74,6 +80,21 @@
       directionMarkerLayer.setOpacity(opacity);
       underConstructionRoadLayer.setOpacity(opacity);
       unAddressedRoadLayer.setOpacity(opacity);
+    };
+
+    const getStyleForSelection = function (feature) {
+      // for normal road links
+      if (feature.linkData.roadClass !== ViiteEnumerations.RoadClass.NoClass.value) {
+        return roadLinkStyler.getRoadLinkStyles(feature.linkData, map);
+      }
+      // for unaddressed road links
+      else if (feature.linkData.roadClass === ViiteEnumerations.RoadClass.NoClass.value && feature.linkData.lifecycleStatus !== ViiteEnumerations.lifecycleStatus.UnderConstruction.value) {
+        return roadLinkStyler.getUnAddressedStyles(feature.linkData, map);
+      }
+      // for under construction road links
+      else {
+        return roadLinkStyler.getUnderConstructionStyles(feature.linkData, map);
+      }
     };
 
     /**
@@ -140,9 +161,9 @@
           }
         }
       }
+      redraw();
     });
     selectDoubleClick.set('name', 'selectDoubleClickInteractionLPL');
-
 
     var zoomDoubleClickListener = function (_event) {
       if (isActiveLayer)
@@ -169,14 +190,6 @@
       layers: [roadLayer.layer, underConstructionRoadLayer, unAddressedRoadLayer],
       //Limit this interaction to the singleClick
       condition: ol.events.condition.singleClick,
-      filter: function (feature) {
-        var currentSelectionType = applicationModel.getSelectionType().value;
-        if (currentSelectionType === SelectionType.Unknown.value) {
-          return feature.linkData.roadLinkType === RoadLinkType.UnknownRoadLinkType.value;
-        } else {
-          return currentSelectionType === SelectionType.All.value;
-        }
-      },
       style: function (feature) {
         // for normal road links
         if (feature.linkData.roadClass !== ViiteEnumerations.RoadClass.NoClass.value) {
@@ -226,14 +239,7 @@
             // set the clicked linear location id so we know what road link group to update after fetching road links in backend
             roadCollection.setClickedLinearLocationId(selection.linearLocationId);
             // gets all the road links from backend and starts a cycle that updates road link group in RoadCollection.js
-            roadCollection.fetchWholeRoadPart(selection.roadNumber, selection.roadPartNumber);
-
-            // listens to the event when the road link group is updated (with whole roadpart) and then continues the process normally with the updated road link groups
-            eventbus.listenTo(eventbus,'roadCollection:wholeRoadPartFetched', function () {
-              applicationModel.removeSpinner();
-              var features = getAllFeatures();
-              selectedLinkProperty.open(selection, true, features);
-            });
+            roadCollection.fetchWholeRoadPart(selection.roadNumber, selection.roadPartNumber, selection);
           }
           // opens only the visible parts of the roads (bounding box view)
           selectedLinkProperty.open(selection, true, visibleFeatures);
@@ -241,6 +247,13 @@
       } else { // if selectedF was undefined we want to deselect all selected links
         selectedLinkProperty.close();
       }
+    });
+
+    // listens to the event when the road link group is updated (with whole road part) and then continues the process normally with the updated road link groups
+    eventbus.listenTo(eventbus,'roadCollection:wholeRoadPartFetched', function (selection) {
+      applicationModel.removeSpinner();
+      var features = getAllFeatures();
+      selectedLinkProperty.open(selection, true, features);
     });
 
     map.on('click', function (event) {
@@ -367,11 +380,12 @@
     };
 
     /**
-     * This will add all the following interactions from the map:
+     * This will add all the following interactions to the map:
      * -selectDoubleClick
      * -selectSingleClick
      */
     var addSelectInteractions = function () {
+      removeSelectInteractions();
       map.addInteraction(selectDoubleClick);
       map.addInteraction(selectSingleClick);
     };
@@ -390,25 +404,54 @@
     addSelectInteractions();
 
     var redraw = function () {
+      var addLinkFeaturesToLayer = function (links, destinationLayer) {
+        _.map(links, function (link) {
+          var points = _.map(link.points, function (point) {
+            return [point.x, point.y];
+          });
+          var feature = new ol.Feature({
+            geometry: new ol.geom.LineString(points)
+          });
+          feature.linkData = link;
+          destinationLayer.getSource().addFeatures([feature]);
+        });
+      };
+
       cachedMarker = new LinkPropertyMarker(selectedLinkProperty);
       removeSelectInteractions();
+      me.clearLayers([underConstructionRoadLayer, unAddressedRoadLayer, directionMarkerLayer, calibrationPointLayer, selectedRoadLayer]);
+
       var allRoadLinks = roadCollection.getAll();
-      var underConstructionLinks = roadCollection.getUnderConstructionLinks();
+      const [roadLinksWithoutRoadNumber, roadLinksWithRoadNumber] = _.partition(allRoadLinks, function (roadLink) {
+        return roadLink.roadNumber === 0;
+      });
+      const [underConstruction, unAddressed] = _.partition(roadLinksWithoutRoadNumber, function (roadLink) {
+        return roadLink.lifecycleStatus === ViiteEnumerations.lifecycleStatus.UnderConstruction.value;
+      });
+
+      const selectedLinks = selectedLinkProperty.get();
+
+      //add roadlinks to correct layer
+      addLinkFeaturesToLayer(roadLinksWithRoadNumber, roadLayer.layer);
+
+      // add under construction links to correct layer
+      addLinkFeaturesToLayer(underConstruction, underConstructionRoadLayer);
+
+      // add unAddressed links to correct layer
+      addLinkFeaturesToLayer(unAddressed, unAddressedRoadLayer);
+
+      // add seleacted links to correct layer
+      addLinkFeaturesToLayer(selectedLinks, selectedRoadLayer);
+
       var roadLinks = _.reject(allRoadLinks, function (rl) {
-        return _.includes(_.map(underConstructionLinks, function (sl) {
+        return _.includes(_.map(underConstruction, function (sl) {
           return sl.linkId;
         }), rl.linkId);
       });
-      me.clearLayers([underConstructionRoadLayer, unAddressedRoadLayer, directionMarkerLayer, calibrationPointLayer]);
 
       if (zoomlevels.getViewZoom(map) >= zoomlevels.minZoomForRoadNetwork) {
-
-        var directionRoadMarker = _.filter(roadLinks, function (roadlink) {
-          return roadlink.sideCode === SideCode.AgainstDigitizing.value || roadlink.sideCode === SideCode.TowardsDigitizing.value;
-        });
-
         if (zoomlevels.getViewZoom(map) > zoomlevels.minZoomForDirectionalMarkers) {
-          _.each(directionRoadMarker, function (directionLink) {
+          _.each(roadLinksWithRoadNumber, function (directionLink) {
             cachedMarker.createMarker(directionLink, function (marker) {
               directionMarkerLayer.getSource().addFeature(marker);
             });
@@ -458,6 +501,12 @@
       }
     };
 
+    eventbus.listenTo(eventbus, 'linkProperties:selected linkProperties:unselected roadLinks:fetched', function() {
+      if (applicationModel.getSelectedLayer() === 'linkProperty') {
+        redraw();
+      }
+    });
+
     this.layerStarted = function (eventListener) {
       var linkPropertyChangeHandler = _.partial(handleLinkPropertyChanged, eventListener);
       var linkPropertyEditConclusion = _.partial(concludeLinkPropertyEdit, eventListener);
@@ -489,63 +538,6 @@
         if (features) {
           addFeaturesToSelection(features);
         }
-      });
-
-      eventListener.listenTo(eventbus, 'roadLinks:fetched', function () {
-        if (applicationModel.getSelectedLayer() === 'linkProperty') {
-          redraw();
-        }
-      });
-      eventListener.listenTo(eventbus, 'underConstructionRoadLinks:fetched', function (underConstructionRoads) {
-        var partitioned = _.partition(_.flatten(underConstructionRoads), function (feature) {
-          return feature.getData().lifecycleStatus === lifecycleStatus.UnderConstruction.value && feature.getData().roadNumber === 0;
-        });
-        var ol3underConstructionRoads =
-          _.map(partitioned[0], function (road) {
-            var roadData = road.getData();
-            var points = _.map(roadData.points, function (point) {
-              return [point.x, point.y];
-            });
-            var feature = new ol.Feature({
-              geometry: new ol.geom.LineString(points)
-            });
-            feature.linkData = roadData;
-            return feature;
-          });
-        underConstructionRoadLayer.getSource().clear();
-        underConstructionRoadLayer.getSource().addFeatures(ol3underConstructionRoads);
-
-        var ol3noInfoRoads =
-          _.map(partitioned[1], function (road) {
-            var roadData = road.getData();
-            var points = _.map(roadData.points, function (point) {
-              return [point.x, point.y];
-            });
-            var feature = new ol.Feature({
-              geometry: new ol.geom.LineString(points)
-            });
-            feature.linkData = roadData;
-            return feature;
-          });
-        roadLayer.layer.getSource().addFeatures(ol3noInfoRoads);
-      });
-
-      eventListener.listenTo(eventbus, 'unAddressedRoadLinks:fetched', function (unAddressedRoads) {
-
-        var ol3noInfoRoads =
-          _.map(_.flatten(unAddressedRoads), function (road) {
-            var roadData = road.getData();
-            var points = _.map(roadData.points, function (point) {
-              return [point.x, point.y];
-            });
-            var feature = new ol.Feature({
-              geometry: new ol.geom.LineString(points)
-            });
-            feature.linkData = roadData;
-            return feature;
-          });
-        unAddressedRoadLayer.getSource().clear();
-        unAddressedRoadLayer.getSource().addFeatures(ol3noInfoRoads);
       });
       eventListener.listenTo(eventbus, 'unAddressedRoads:toggleVisibility', function (visibility) {
         unAddressedRoadLayer.setVisible(visibility);
