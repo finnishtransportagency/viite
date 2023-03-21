@@ -574,37 +574,6 @@
       }
     });
 
-    var redraw = function () {
-      if (applicationModel.getSelectedLayer() === 'node') {
-
-        cachedMarker = new LinkPropertyMarker();
-        var underConstructionLinks = roadCollection.getUnderConstructionLinks();
-        var roadLinks = _.reject(roadCollection.getAll(), function (rl) {
-          return _.includes(_.map(underConstructionLinks, function (sl) {
-            return sl.linkId;
-          }), rl.linkId);
-        });
-        me.clearLayers(layers);
-
-        if (zoomlevels.getViewZoom(map) >= zoomlevels.minZoomForRoadNetwork) {
-
-          var directionRoadMarker = _.filter(roadLinks, function (roadLink) {
-            return (roadLink.sideCode === SideCode.AgainstDigitizing.value || roadLink.sideCode === SideCode.TowardsDigitizing.value);
-          });
-          _.each(directionRoadMarker, function (directionLink) {
-            cachedMarker.createMarker(directionLink, function (marker) {
-              if (zoomlevels.getViewZoom(map) > zoomlevels.minZoomForDirectionalMarkers)
-                directionMarkerLayer.getSource().addFeature(marker);
-            });
-          });
-        }
-
-        if (applicationModel.getCurrentAction() === -1) {
-          applicationModel.removeSpinner();
-        }
-      }
-    };
-
     this.refreshView = function () {
       //Generalize the zoom levels as the resolutions and zoom levels differ between map tile sources
       roadCollection.reset();
@@ -615,7 +584,10 @@
     this.layerStarted = function (eventListener) {
       eventListener.listenTo(eventbus, 'roadLinks:fetched', function () {
         if (applicationModel.getSelectedLayer() === 'node') {
-          redraw();
+          me.clearLayers(layers);
+          if (applicationModel.getCurrentAction() === -1) {
+            applicationModel.removeSpinner();
+          }
         }
       });
 
