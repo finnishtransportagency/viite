@@ -56,11 +56,44 @@ class SearchApi(roadAddressService: RoadAddressService,
                   "Also now, if given start measure > end measure, an error msg is returned, instead of a \"two-part\" return list "
     )
   get("/road_address/?", operation(getRoadAddress)) {
-    val linkId = params.getOrElse("linkId", halt(BadRequest("Missing mandatory field linkId"))).toString
-    val startMeasure = params.get("startMeasure").map(_.toDouble)
-    val endMeasure = params.get("endMeasure").map(_.toDouble)
     val requestString = s"GET request for ${request.getRequestURI}?${request.getQueryString} (${getRoadAddress.operationId})"
     time(logger, requestString, params=Some(params)) {
+
+      val linkId = params.getOrElse("linkId", halt(BadRequest("Missing mandatory query parameter 'linkId'"))).toString //TODO MAKE OTHER REQUIRED PARAMS LIKE THIS!
+
+      try { // Check that the formats of the parameters are ok
+        val startMeasureOption = params.get("startMeasure")
+        if (startMeasureOption.isDefined) startMeasureOption.map(_.toDouble) else None
+        val endMeasureOption = params.get("endMeasure")
+        if (endMeasureOption.isDefined) endMeasureOption.map(_.toDouble) else None
+      }
+      catch {
+        case ve: ViiteException =>
+          logger.info(s"A malformed parameter in the query string: ${ve.getMessage}")
+          halt(BadRequest(s"Check the parameters. ${ve.getMessage}"))
+        case e: Exception =>
+          val paramsDescr = s"?${request.getQueryString}"
+          logger.info(s"A malformed parameter in the query string: $paramsDescr. $e")
+          halt(BadRequest(
+            s"At least one malformed parameter: 'startMeasure' or 'endMeasure'. Now got $paramsDescr.\n" +
+            s"Double expected, 0.0 or greater, and startMeasure < endMeasure."
+          ))
+      }
+
+      val startMeasure = params.get("startMeasure").map(_.toDouble)
+      val endMeasure = params.get("endMeasure").map(_.toDouble)
+
+      haltWith400IfInvalidLinkIds(Set(linkId))
+
+      //start measure should not be <0, but... Naaah, don't wanna do this now. This is ugly.
+      //val sm = params.getOrElse("startMeasure", 0).toString.toDouble
+      //val em = params.getOrElse("endMeasure", Long.MaxValue).toString.toDouble
+      //haltWith400IfInvalidAddress(sm.toLong, em.toLong) // The same rules go for link measures, than go for road address measures. But make the precision to be 1cm (with *100) instead of one meter, as Long cuts the decimals away
+      (startMeasure, endMeasure) match {
+        case(Some(sm), Some(em)) => haltWith400IfInvalidMeasure(sm, em) // check them against each other; size order
+        case _ => None
+      }
+
       try {
         roadAddressService.getRoadAddressWithLinkIdAndMeasure(linkId, startMeasure, endMeasure).map(roadAddressMapper)
       }
@@ -244,9 +277,24 @@ class SearchApi(roadAddressService: RoadAddressService,
     )
   // TODO: "?" in the end is useless; does not take query params
   post("/road_address/?", operation(getRoadAddressByLinkIds)) {
-    val requestString = s"GET request for ${request.getRequestURI} (${getRoadAddressByLinkIds.operationId})"
+    val requestString = s"POST request for ${request.getRequestURI} (${getRoadAddressByLinkIds.operationId})"
     time(logger, requestString, params=Some(Map("requestBody" -> request.body))) {
-      val linkIds = parsedBody.extract[Set[String]]
+
+      val linkIds = try { // Check that the formats of the parameters are ok
+        parsedBody.extract[Set[String]]
+      } catch {
+        case e: Exception =>
+          logger.info(s"A malformed list of link ids in the body: ${request.body}. $e")
+          halt(BadRequest(
+            s"Malformed list of link ids in the body. Got '${request.body}'.\n" +
+            s"The MML KGV style link ids expected in a list. '[link-id-1:n2,link-id-2:n2]'"
+          ))
+      }
+
+      // Check the numeric validity of the parameters
+      if(linkIds.isEmpty) // parsing to strings failed, or no links given
+        halt(BadRequest(s"List of proper MML KGV link ids expected in the body, as a 'linkIds' list. body: '${request.body}'"))
+      haltWith400IfInvalidLinkIds(linkIds)
       try {
         roadAddressService.getRoadAddressByLinkIds(linkIds).map(roadAddressMapper)
       }
@@ -324,6 +372,32 @@ class SearchApi(roadAddressService: RoadAddressService,
     else
       roadParts
   }
+
+  private def linkIdsAreValid(linkIds: Set[String]) = {
+    val linkIdRegex = """(^\w+-\w+-\w+-\w+-\w+:\d+$)""".r // Link UUID // in fact, hexa instead of \w
+
+    // val allValid =
+    linkIds.forall(linkIdRegex.findFirstIn(_).nonEmpty) // TODO "linkIdRegex.matches(_)" available from scala 2.13 and upward
+
+   // logger.info(s"All the link id's are valid? ${allValid} (${linkIds}).")
+   // allValid
+  }
+
+  private def haltWith400IfInvalidLinkIds(linkIds: Set[String]): Unit = {
+    if (!linkIdsAreValid(linkIds)) {
+      logger.info(s"[At least] a single malformed linkId: $linkIds")
+      halt(BadRequest(s"[At least] a single malformed linkId. MML KGV link ids expected. Now got: ${linkIds.toList}"))
+    }
+  }
+
+  private def haltWith400IfInvalidMeasure(startMeasure: Double, endMeasure: Double): Unit = {
+    val measuresAreValid = startMeasure >= 0 && endMeasure > 0 && startMeasure < endMeasure
+    if (!measuresAreValid) {
+      logger.info(s"Invalid measure value, or mutual order: $startMeasure or $endMeasure")
+      halt(BadRequest(s"Invalid value(s) in measure(s). A measure must be >=0, and start < end. Now got: ($startMeasure, $endMeasure)"))
+    }
+  }
+
   /** Fetches, and returns a validated long valued parameter if available in query parameter [[queryParameterName]],
    * or throws a [[ViiteException]], it there is a missing or faulty value.
    *
