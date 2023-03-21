@@ -457,9 +457,8 @@
             });
           });
         }
-
-        //Removed the need to check if the buttons are active in order to draw calibration points.
-        if (zoomlevels.getViewZoom(map) >= zoomlevels.minZoomLevelForCalibrationPoints) {
+        // Draw calibration points in view mode only
+        if (zoomlevels.getViewZoom(map) >= zoomlevels.minZoomLevelForCalibrationPoints && applicationModel.getSelectedLayer() === 'linkProperty') {
           var actualPoints = me.drawCalibrationMarkers(calibrationPointLayer.source, roadLinks);
           _.each(actualPoints, function (actualPoint) {
             var calMarker = new CalibrationPoint(actualPoint);
@@ -502,7 +501,7 @@
     };
 
     eventbus.listenTo(eventbus, 'linkProperties:selected linkProperties:unselected roadLinks:fetched', function() {
-      if (applicationModel.getSelectedLayer() === 'linkProperty') {
+      if (applicationModel.getSelectedLayer() === 'linkProperty' || applicationModel.getSelectedLayer() === 'node') {
         redraw();
       }
     });
