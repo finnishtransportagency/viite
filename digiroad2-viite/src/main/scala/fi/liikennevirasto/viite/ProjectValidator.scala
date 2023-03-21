@@ -694,11 +694,11 @@ class ProjectValidator {
       if (trackInterval.head.track != Combined) {
         val minTrackLink = trackInterval.minBy(_.startAddrMValue)
         val maxTrackLink = trackInterval.maxBy(_.endAddrMValue)
-        val notCombinedLinksInRoadPart = notCombinedLinks.filter(l => l.roadNumber == minTrackLink.roadNumber && l.roadPartNumber == minTrackLink.roadPartNumber && l.status != LinkStatus.Terminated)
-        if (!notCombinedLinksInRoadPart.exists(l => l.startAddrMValue == minTrackLink.startAddrMValue && l.track != minTrackLink.track)) {
+        val notCombinedNonTerminatedLinksInRoadPart = notCombinedLinks.filter(l => l.roadNumber == minTrackLink.roadNumber && l.roadPartNumber == minTrackLink.roadPartNumber && l.status != LinkStatus.Terminated)
+        if (!notCombinedNonTerminatedLinksInRoadPart.exists(l => l.startAddrMValue == minTrackLink.startAddrMValue && l.track != minTrackLink.track)) {
           Some(minTrackLink)
         }
-        else if (!notCombinedLinksInRoadPart.exists(l => l.endAddrMValue == maxTrackLink.endAddrMValue && l.track != maxTrackLink.track)) {
+        else if (!notCombinedNonTerminatedLinksInRoadPart.exists(l => l.endAddrMValue == maxTrackLink.endAddrMValue && l.track != maxTrackLink.track)) {
           Some(maxTrackLink)
         } else None
       } else None
@@ -743,7 +743,8 @@ class ProjectValidator {
       groupInterval.groupBy(_._1).flatMap{ interval =>
         val leftrRightTracks = interval._2.flatMap(_._2)
         val validTrackInterval = leftrRightTracks.filterNot(r => r.status == Terminated || r.track == Track.Combined)
-        if (validTrackInterval.nonEmpty && validTrackInterval.exists(_.track == Track.RightSide) && validTrackInterval.exists(_.track == Track.LeftSide)) {
+        val intervalHasBothTracks = validTrackInterval.exists(_.track == Track.RightSide) && validTrackInterval.exists(_.track == Track.LeftSide)
+        if (intervalHasBothTracks) {
           checkMinMaxTrackAdministrativeClasses(validTrackInterval) match {
             case Some(links) => links
             case _ => Seq.empty[ProjectLink]
