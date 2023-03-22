@@ -57,6 +57,11 @@
     });
     unAddressedRoadLayer.set('name', 'unAddressedRoadLayer');
 
+    /**
+     * When a road link is selected it will be added to this layer.
+     * This layer will be drawn on top of all the other road link layers and the other layers will have dimmed opacity.
+     * This will "highlight" the selected road link.
+     * */
     var selectedRoadLayer = new ol.layer.Vector({
       source: selectedRoadVector,
       name: 'selectedRoadLayer',
@@ -77,7 +82,6 @@
 
     var setGeneralOpacity = function (opacity) {
       roadLayer.layer.setOpacity(opacity);
-      directionMarkerLayer.setOpacity(opacity);
       underConstructionRoadLayer.setOpacity(opacity);
       unAddressedRoadLayer.setOpacity(opacity);
     };
