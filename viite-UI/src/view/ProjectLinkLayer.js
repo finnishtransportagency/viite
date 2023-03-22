@@ -16,7 +16,6 @@
     var calibrationPointVector = new ol.source.Vector({});
     var underConstructionRoadVector = new ol.source.Vector({});
     var directionMarkerVector = new ol.source.Vector({});
-    var underConstructionProjectDirectionMarkerVector = new ol.source.Vector({});
     var unAddressedRoadsRoadVector = new ol.source.Vector({});
     var projectLinkVector = new ol.source.Vector({});
     var notReservedInProjectVector = new ol.source.Vector({});
@@ -274,14 +273,6 @@
         }
       });
       addFeaturesToSelection(featuresToHighlight);
-
-      var directionMarkersForFeatures = _.filter(directionMarkerLayer.getSource().getFeatures(), function (directionMarker) {
-        return _.find(featuresToHighlight, (feature) => feature.linkData.linkId === directionMarker.linkData.linkId);
-      });
-
-      _.each(directionMarkersForFeatures, function (directionMarker) {
-        selectSingleClick.getFeatures().push(directionMarker);
-      });
     };
 
     /**
@@ -488,7 +479,6 @@
             });
           });
         };
-        addMarkersToLayer(underConstruction, underConstructionProjectDirectionMarkerLayer);
         addMarkersToLayer(linksWithRoadNumber, directionMarkerLayer);
       }
 
@@ -584,7 +574,6 @@
 
     me.eventListener.listenTo(eventbus, 'underConstructionProjectRoads:toggleVisibility', function (visibility) {
       underConstructionRoadProjectLayer.setVisible(visibility);
-      underConstructionProjectDirectionMarkerLayer.setVisible(visibility);
     });
     me.eventListener.listenTo(eventbus, 'unAddressedProjectRoads:toggleVisibility', function (visibility) {
       unAddressedRoadsProjectLayer.setVisible(visibility);
