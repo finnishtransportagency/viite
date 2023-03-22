@@ -4,14 +4,13 @@
     var me = this;
 
     var directionMarkerVector = new ol.source.Vector({});
+    var selectedDirectionMarkerVector = new ol.source.Vector({});
     var calibrationPointVector = new ol.source.Vector({});
     var underConstructionRoadLayerVector = new ol.source.Vector({});
     var unAddressedRoadLayerVector = new ol.source.Vector({});
     var reservedRoadVector = new ol.source.Vector({});
     var selectedRoadVector = new ol.source.Vector({});
-
     var SelectionType = ViiteEnumerations.SelectionType;
-
     var isActiveLayer = false;
     var cachedMarker = null;
 
@@ -71,10 +70,21 @@
     });
 
     /**
+     * A selected road link has its own "selected" direction marker
+     * (the other direction markers have dimmed opacity if they aren't selected)
+     * */
+    var selectedDirectionMarkerLayer = new ol.layer.Vector({
+      source: selectedDirectionMarkerVector,
+      name: 'selectedDirectionMarkerLayer',
+      zIndex: ViiteEnumerations.ViewModeZIndex.DirectionMarker.value
+    });
+    selectedDirectionMarkerLayer.set('name', 'selectedDirectionMarkerLayer');
+
+    /**
      * The order of these layers in this array affects the order these layers are presented on the map.
      * i.e. the first one is the bottom most layer drawn and the last one is the top most layer drawn
      * */
-    var layers = [unAddressedRoadLayer, underConstructionRoadLayer, roadLayer.layer, reservedRoadLayer, selectedRoadLayer, directionMarkerLayer, calibrationPointLayer];
+    var layers = [unAddressedRoadLayer, underConstructionRoadLayer, roadLayer.layer, reservedRoadLayer, selectedRoadLayer, directionMarkerLayer, selectedDirectionMarkerLayer, calibrationPointLayer];
 
     me.eventListener.listenTo(eventbus,'layers:removeViewModeFeaturesFromTheLayers', function() {
       me.removeFeaturesFromLayers(layers);
@@ -82,6 +92,7 @@
 
     var setGeneralOpacity = function (opacity) {
       roadLayer.layer.setOpacity(opacity);
+      directionMarkerLayer.setOpacity(opacity);
       underConstructionRoadLayer.setOpacity(opacity);
       unAddressedRoadLayer.setOpacity(opacity);
     };
@@ -423,7 +434,7 @@
 
       cachedMarker = new LinkPropertyMarker(selectedLinkProperty);
       removeSelectInteractions();
-      me.clearLayers([roadLayer.layer, underConstructionRoadLayer, unAddressedRoadLayer, directionMarkerLayer, calibrationPointLayer, selectedRoadLayer]);
+      me.clearLayers([roadLayer.layer, underConstructionRoadLayer, unAddressedRoadLayer, directionMarkerLayer, selectedDirectionMarkerLayer, calibrationPointLayer, selectedRoadLayer]);
 
       var allRoadLinks = roadCollection.getAll();
       const [roadLinksWithoutRoadNumber, roadLinksWithRoadNumber] = _.partition(allRoadLinks, function (roadLink) {
@@ -458,6 +469,13 @@
           _.each(roadLinksWithRoadNumber, function (directionLink) {
             cachedMarker.createMarker(directionLink, function (marker) {
               directionMarkerLayer.getSource().addFeature(marker);
+            });
+          });
+
+          // add direction markers for selected links
+          _.each(selectedLinks, function (directionLink) {
+            cachedMarker.createMarker(directionLink, function (marker) {
+              selectedDirectionMarkerLayer.getSource().addFeature(marker);
             });
           });
         }
