@@ -82,13 +82,7 @@
       zIndex: ViiteEnumerations.ProjectModeZIndex.DirectionMarker.value
     });
 
-    var underConstructionProjectDirectionMarkerLayer = new ol.layer.Vector({
-      source: underConstructionProjectDirectionMarkerVector,
-      name: 'underConstructionProjectDirectionMarkerLayer',
-      zIndex: ViiteEnumerations.ProjectModeZIndex.DirectionMarker.value
-    });
-
-    var layers = [notReservedInProjectLayer, terminatedProjectLinkLayer, unAddressedRoadsProjectLayer, underConstructionRoadProjectLayer, projectLinkLayer, notHandledProjectLinksLayer, calibrationPointLayer, directionMarkerLayer, underConstructionProjectDirectionMarkerLayer];
+    var layers = [notReservedInProjectLayer, terminatedProjectLinkLayer, unAddressedRoadsProjectLayer, underConstructionRoadProjectLayer, projectLinkLayer, notHandledProjectLinksLayer, calibrationPointLayer, directionMarkerLayer];
 
     me.eventListener.listenTo(eventbus,'layers:removeProjectModeFeaturesFromTheLayers', function() {
       me.removeFeaturesFromLayers(layers);
@@ -320,6 +314,7 @@
      */
 
     var addSelectInteractions = function () {
+      removeSelectInteractions();
       map.addInteraction(selectDoubleClick);
       map.addInteraction(selectSingleClick);
     };
@@ -415,6 +410,7 @@
       };
 
       me.clearLayers(layers);
+      removeSelectInteractions();
       var cachedMarker = new ProjectLinkMarker(selectedProjectLinkProperty);
 
       var [linksWithNoRoadNumber, linksWithRoadNumber] = _.partition(projectCollection.getAll(), function (projectRoad) {
@@ -496,6 +492,8 @@
       notReservedInProjectLayer.changed();
       notHandledProjectLinksLayer.changed();
       projectLinkLayer.changed();
+
+      addSelectInteractions();
     };
 
     me.eventListener.listenTo(eventbus, 'tool:changed', changeTool);
