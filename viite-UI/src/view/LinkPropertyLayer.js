@@ -419,7 +419,7 @@
 
       cachedMarker = new LinkPropertyMarker(selectedLinkProperty);
       removeSelectInteractions();
-      me.clearLayers([underConstructionRoadLayer, unAddressedRoadLayer, directionMarkerLayer, calibrationPointLayer, selectedRoadLayer]);
+      me.clearLayers([roadLayer.layer, underConstructionRoadLayer, unAddressedRoadLayer, directionMarkerLayer, calibrationPointLayer, selectedRoadLayer]);
 
       var allRoadLinks = roadCollection.getAll();
       const [roadLinksWithoutRoadNumber, roadLinksWithRoadNumber] = _.partition(allRoadLinks, function (roadLink) {
@@ -431,7 +431,7 @@
 
       const selectedLinks = selectedLinkProperty.get();
 
-      //add roadlinks to correct layer
+      // add road links to correct layer
       addLinkFeaturesToLayer(roadLinksWithRoadNumber, roadLayer.layer);
 
       // add under construction links to correct layer
@@ -440,7 +440,7 @@
       // add unAddressed links to correct layer
       addLinkFeaturesToLayer(unAddressed, unAddressedRoadLayer);
 
-      // add seleacted links to correct layer
+      // add selected links to correct layer
       addLinkFeaturesToLayer(selectedLinks, selectedRoadLayer);
 
       var roadLinks = _.reject(allRoadLinks, function (rl) {
