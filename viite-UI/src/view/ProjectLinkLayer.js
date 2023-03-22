@@ -452,17 +452,6 @@
       // add rest of the project links (transfer, new, numbering, unchanged) to correct layer
       addLinkFeaturesToLayer(restOfProjectLinks, projectLinkLayer);
 
-      var removeSelectFeatures = function (select) {
-        var selectFeatures = select.getFeatures();
-        _.each(selectFeatures.getArray(), function (feature) {
-          if (!_.isUndefined(feature))
-            if (feature.getProperties().type && feature.getProperties().type === "marker")
-              selectFeatures.remove(feature);
-        });
-      };
-      removeSelectFeatures(selectSingleClick);
-      removeSelectFeatures(selectDoubleClick);
-
       if (zoomlevels.getViewZoom(map) > zoomlevels.minZoomForDirectionalMarkers) {
         var addMarkersToLayer = function (links, layer) {
           var directionMarkers = _.filter(links, function (projectLink) {
@@ -527,6 +516,9 @@
 
     me.eventListener.listenTo(eventbus, 'roadAddress:projectLinksEdited', function () {
       me.redraw();
+      _.defer(function () {
+        highlightFeatures();
+      });
     });
 
     me.eventListener.listenTo(eventbus, 'roadAddressProject:projectLinkSaved', function (projectId, isPublishable) {
