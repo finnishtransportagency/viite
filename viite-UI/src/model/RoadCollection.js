@@ -58,10 +58,7 @@
 
   root.RoadCollection = function (backend) {
     var currentAllRoadLinks = [];
-    var unaddressedUnknownRoadLinkGroups = [];
-    var currentZoom = -1;
     var roadLinkGroups = [];
-    var unaddressedUnderConstructionRoadLinkGroups = [];
     var unaddressedRoadLinkGroups = [];
     var LinkStatus = ViiteEnumerations.LinkStatus;
     var LinkSource = ViiteEnumerations.LinkGeomSource;
@@ -102,7 +99,6 @@
     };
 
     this.fetch = function (boundingBox, zoom) {
-      currentZoom = zoom;
       backend.getRoadLinks({
         boundingBox: boundingBox, zoom: zoom
       }, function (fetchedRoadLinks) {
@@ -120,7 +116,6 @@
     };
 
     this.fetchWithNodes = function (boundingBox, zoom, callback) {
-      currentZoom = zoom;
       backend.getNodesAndJunctions({boundingBox: boundingBox, zoom: zoom}, function (fetchedNodesAndJunctions) {
         currentAllRoadLinks = fetchedNodesAndJunctions.fetchedRoadLinks;
         fetchProcess(currentAllRoadLinks, zoom);
@@ -156,9 +151,6 @@
       unaddressedRoadLinkGroups = _.partition(fetchedUnaddressed, function (group) {
         return groupDataConstructionTypeFilter(group, lifecycleStatus.UnderConstruction);
       });
-
-      unaddressedUnderConstructionRoadLinkGroups = unaddressedRoadLinkGroups[0];
-      unaddressedUnknownRoadLinkGroups = unaddressedRoadLinkGroups[1];
 
       if (parseInt(zoom) <= zoomlevels.minZoomForEditMode) {
         // only the fetched road links that have an address
@@ -227,12 +219,6 @@
 
     this.getUnaddressedRoadLinkGroups = function () {
       return _.map(_.flatten(_.flatten(unaddressedRoadLinkGroups)), function (roadLink) {
-        return roadLink.getData();
-      });
-    };
-
-    this.getUnderConstructionLinks = function () {
-      return _.map(_.flatten(unaddressedUnderConstructionRoadLinkGroups), function (roadLink) {
         return roadLink.getData();
       });
     };
@@ -314,12 +300,12 @@
         projectId: projectId
       }, function (fetchedLinks) {
         var projectLinks = _.chain(fetchedLinks).flatten().filter(function (link) {
-          return link.status === LinkStatus.NotHandled.value
-              || link.status === LinkStatus.New.value
-              || link.status === LinkStatus.Terminated.value
-              || link.status === LinkStatus.Unchanged.value
-              || link.status === LinkStatus.Numbering.value
-              || link.status === LinkStatus.Transfer.value;
+          return link.status === LinkStatus.NotHandled.value ||
+              link.status === LinkStatus.New.value ||
+              link.status === LinkStatus.Terminated.value ||
+              link.status === LinkStatus.Unchanged.value ||
+              link.status === LinkStatus.Numbering.value ||
+              link.status === LinkStatus.Transfer.value;
         }).uniq().value();
         var projectLinkFeatures = _.map(projectLinks, function (road) {
           var points = _.map(road.points, function (point) {

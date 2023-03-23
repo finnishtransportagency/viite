@@ -143,15 +143,6 @@
       return '<label class="control-label-small" style="text-transform: none">' + label + '</label>';
     };
 
-
-    const addSmallLabelTopped = function (label) {
-      return '<label class="control-label-small" style="vertical-align: top;">' + label + '</label>';
-    };
-
-    const addSmallLabelWrapped = function (label) {
-      return '<label class="control-label-small" style="word-wrap: break-word;max-width: 250px">' + label + '</label>';
-    };
-
     const addSmallInputNumber = function (id, value, isDisabled, maxLength) {
       //Validate only number characters on "onkeypress" including TAB and backspace
       const disabled = isDisabled ? ' readonly="readonly" ' : '';
