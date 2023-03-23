@@ -52,7 +52,7 @@ class SearchApi(roadAddressService: RoadAddressService,
       description "Returns the road addresses of the given link, listed as linear locations." +
                   "<br />The returned Linear locations may be restricted by giving <i>startMeasure</i>, and/or <i>endMeasure</i>." +
                   "<br />A linear location must belong to the measure interval at least in one point, to be included in the returned results." +
-                  "<br />2023-03 Better exception handling, and more explicit help for the caller. " +
+                  "<br />2023-03 Better exception handling, and more explicit feedback for the caller. " +
                   "Also now, if given start measure > end measure, an error msg is returned, instead of a \"two-part\" return list "
     )
   get("/road_address/?", operation(getRoadAddress)) {
@@ -110,7 +110,7 @@ class SearchApi(roadAddressService: RoadAddressService,
       summary "Returns all the existing road numbers at the current Viite road network."
       description "Returns List of all the existing road numbers at the current Viite road network." +
               "The Viite current network may contain roadway number changes that will be in effect only in the future.\n"+
-              "<br />2023-02-23 The list is now sorted. Better exception handling, and more explicit help for the caller."
+              "<br />2023-02-23 The list is now sorted. Better exception handling, and more explicit feedback for the caller."
       parameter headerParam[String]("X-API-Key").required.description(XApiKeyDescription)
     )
   // TODO: "?" in the end is useless; does not take query params
@@ -135,13 +135,12 @@ class SearchApi(roadAddressService: RoadAddressService,
         pathParam[Long]("road").required.description(roadNumberDescription),
         queryParam[Long]("tracks").optional.description("(Optional) " + trackNumberFilterDescription + "\n" +
           "You may request multiple tracks at a time, by adding several tracks (e.g. ?tracks=1&tracks=2)\n" +
-          "If omitted, any track is returned.\n" +
-          "Also, any invalid 'tracks' entry is omitted. So with invalid only 'tracks' parameters you get unfiltered tracks.")
+          "If omitted, any track is returned.")
       )
       tags "SearchAPI (Digiroad)"
       summary "Returns the road addresses within the given road number, returned as linear location sized parts.\n" +
               "If track parameter(s) given, the results are filtered to those tracks."
-      description "2023-03 Better exception handling, and more explicit help for the caller."
+      description "2023-03 Better exception handling, and more explicit feedback for the caller."
     )
   get("/road_address/:road/?", operation(getRoadAddressWithRoadNumber)) {
     val requestString = s"GET request for ${request.getRequestURI}?${request.getQueryString} (${getRoadAddressWithRoadNumber.operationId})"
@@ -170,7 +169,7 @@ class SearchApi(roadAddressService: RoadAddressService,
       summary "Returns all the road addresses within the given road part, returned as linear location sized parts."
       description "Returns all the road addresses within the given road part (defined by road and road part numbers), " +
                   "returned as linear location sized parts." +
-                  "<br />2023-03 Better exception handling, and more explicit help for the caller."
+                  "<br />2023-03 Better exception handling, and more explicit feedback for the caller."
     )
   // TODO: "?" in the end is useless; does not take query params
   get("/road_address/:road/:roadPart/?", operation(getRoadAddressesFiltered)) {
@@ -205,7 +204,7 @@ class SearchApi(roadAddressService: RoadAddressService,
               "Minimum address value must be given, and the results are filterable by track."
       description "Returns the road addresses within the given road number, road part number, and bigger than address value, " +
                   "returned as linear location sized parts. Also filterable by track." +
-                  "<br />2023-03 Better exception handling, and more explicit help for the caller."
+                  "<br />2023-03 Better exception handling, and more explicit feedback for the caller."
     )
   get("/road_address/:road/:roadPart/:address/?", operation(getRoadAddressesFiltered2)) {
     val requestString = s"GET request for ${request.getRequestURI}?${request.getQueryString} (${getRoadAddressesFiltered2.operationId})"
@@ -241,7 +240,7 @@ class SearchApi(roadAddressService: RoadAddressService,
       tags "SearchAPI (Digiroad)"
       summary "Returns the road addresses within the given road number, road part number, and between given address values," +
               "returned as linear location sized parts."
-      description "2023-03 Better exception handling, and more explicit help for the caller."
+      description "2023-03 Better exception handling, and more explicit feedback for the caller."
     )
   // TODO: "?" in the end is useless; does not take query params
   get("/road_address/:road/:roadPart/:startAddress/:endAddress/?", operation(getRoadAddressesFiltered3)) {
@@ -273,7 +272,7 @@ class SearchApi(roadAddressService: RoadAddressService,
       )
       tags "SearchAPI (Digiroad)"
       summary "Returns all the road addresses for the given links. Return values are listed as linear locations."
-      description "2023-03 Better exception handling, and more explicit help for the caller."
+      description "2023-03 Better exception handling, and more explicit feedback for the caller."
     )
   // TODO: "?" in the end is useless; does not take query params
   post("/road_address/?", operation(getRoadAddressByLinkIds)) {
@@ -320,7 +319,7 @@ class SearchApi(roadAddressService: RoadAddressService,
       tags "SearchAPI (Digiroad)"
       summary "Returns the road addresses within the given road number, returned as linear location sized parts.\n" +
               "If road parts, and/or tracks are given, the results are filtered to those road parts, and/or track numbers."
-      description "2023-03 Better exception handling, and more explicit help for the caller."
+      description "2023-03 Better exception handling, and more explicit feedback for the caller."
     )
   // TODO: "?" in the end is useless; does not take query params
   post("/road_address/:road/?", operation(getRoadAddressWithRoadNumberParts)) {
