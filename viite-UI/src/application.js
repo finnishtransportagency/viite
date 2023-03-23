@@ -77,6 +77,7 @@
     });
 
     var shiftDragZoom = new ol.interaction.DragZoom({
+      className: "dragZoom",
       duration: 1500,
       condition: function (mapBrowserEvent) {
         var originalEvent = mapBrowserEvent.originalEvent;
