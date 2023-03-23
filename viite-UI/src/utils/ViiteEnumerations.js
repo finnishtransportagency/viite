@@ -124,9 +124,9 @@
     RegionalRoad: {border: 100, stroke: 101, fill: 102},
     MainRoad: {border: 110, stroke: 111, fill: 112},
     Highway: {border: 120, stroke: 121, fill: 122},
-    CalibrationPoint: {value: 130},
-    ReservedRoad: {value: 140},
-    DirectionMarker: {value: 150}
+    ReservedRoad: {value: 130},
+    DirectionMarker: {value: 140},
+    CalibrationPoint: {value: 150},
   };
 
   root.ProjectModeZIndex = {
