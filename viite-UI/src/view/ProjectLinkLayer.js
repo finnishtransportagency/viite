@@ -413,76 +413,78 @@
       removeSelectInteractions();
       var cachedMarker = new ProjectLinkMarker(selectedProjectLinkProperty);
 
-      var [linksWithNoRoadNumber, linksWithRoadNumber] = _.partition(projectCollection.getAll(), function (projectRoad) {
-        return projectRoad.roadNumber === 0;
-      });
-
-      var [underConstruction, unAddressed] = _.partition(linksWithNoRoadNumber, function (projectRoad) {
-        return projectRoad.lifecycleStatus === lifecycleStatus.UnderConstruction.value;
-      });
-
-      // get the links that are not in the project
-      var [outsideOfProjectLinks, inProjectWithRoadNumberLinks] = _.partition(linksWithRoadNumber, function (link) {
-        return link.status === LinkStatus.Undefined.value;
-      });
-
-      var [notHandledLinks, othersInProject] = _.partition(inProjectWithRoadNumberLinks, function (link){
-        return link.status === LinkStatus.NotHandled.value;
-      });
-
-      var [terminatedLinks, restOfProjectLinks] = _.partition(othersInProject, function (link) {
-        return link.status === LinkStatus.Terminated.value;
-      });
-
-      // add under construction roads to correct layer
-      addLinkFeaturesToLayer(underConstruction, underConstructionRoadProjectLayer);
-
-      // add unaddressed roads to correct layer
-      addLinkFeaturesToLayer(unAddressed, unAddressedRoadsProjectLayer);
-
-      // add links that are not in the project to correct layer
-      addLinkFeaturesToLayer(outsideOfProjectLinks, notReservedInProjectLayer);
-
-      // add not handled project links to correct layer
-      addLinkFeaturesToLayer(notHandledLinks, notHandledProjectLinksLayer);
-
-      // add terminated project links to correct layer
-      addLinkFeaturesToLayer(terminatedLinks, terminatedProjectLinkLayer);
-
-      // add rest of the project links (transfer, new, numbering, unchanged) to correct layer
-      addLinkFeaturesToLayer(restOfProjectLinks, projectLinkLayer);
-
-      if (zoomlevels.getViewZoom(map) > zoomlevels.minZoomForDirectionalMarkers) {
-        var addMarkersToLayer = function (links, layer) {
-          var directionMarkers = _.filter(links, function (projectLink) {
-            var acceptedLinks = projectLink.id !== 0;
-            return acceptedLinks && projectLink.sideCode !== SideCode.Unknown.value && projectLink.endAddressM !== 0;
-          });
-          _.each(directionMarkers, function (directionLink) {
-            cachedMarker.createProjectMarker(directionLink, function (marker) {
-              layer.getSource().addFeature(marker);
-            });
-          });
-        };
-        addMarkersToLayer(linksWithRoadNumber, directionMarkerLayer);
-      }
-
-      if (zoomlevels.getViewZoom(map) >= zoomlevels.minZoomLevelForCalibrationPoints) {
-        var actualCalibrationPoints = me.drawProjectCalibrationMarkers(calibrationPointLayer.source, linksWithRoadNumber.concat(underConstruction));
-        _.each(actualCalibrationPoints, function (actualPoint) {
-          var calMarker = new CalibrationPoint(actualPoint);
-          calibrationPointLayer.getSource().addFeature(calMarker.getMarker(true));
+      if (applicationModel.getSelectedLayer() === 'roadAddressProject') {
+        var [linksWithNoRoadNumber, linksWithRoadNumber] = _.partition(projectCollection.getAll(), function (projectRoad) {
+          return projectRoad.roadNumber === 0;
         });
+
+        var [underConstruction, unAddressed] = _.partition(linksWithNoRoadNumber, function (projectRoad) {
+          return projectRoad.lifecycleStatus === lifecycleStatus.UnderConstruction.value;
+        });
+
+        // get the links that are not in the project
+        var [outsideOfProjectLinks, inProjectWithRoadNumberLinks] = _.partition(linksWithRoadNumber, function (link) {
+          return link.status === LinkStatus.Undefined.value;
+        });
+
+        var [notHandledLinks, othersInProject] = _.partition(inProjectWithRoadNumberLinks, function (link){
+          return link.status === LinkStatus.NotHandled.value;
+        });
+
+        var [terminatedLinks, restOfProjectLinks] = _.partition(othersInProject, function (link) {
+          return link.status === LinkStatus.Terminated.value;
+        });
+
+        // add under construction roads to correct layer
+        addLinkFeaturesToLayer(underConstruction, underConstructionRoadProjectLayer);
+
+        // add unaddressed roads to correct layer
+        addLinkFeaturesToLayer(unAddressed, unAddressedRoadsProjectLayer);
+
+        // add links that are not in the project to correct layer
+        addLinkFeaturesToLayer(outsideOfProjectLinks, notReservedInProjectLayer);
+
+        // add not handled project links to correct layer
+        addLinkFeaturesToLayer(notHandledLinks, notHandledProjectLinksLayer);
+
+        // add terminated project links to correct layer
+        addLinkFeaturesToLayer(terminatedLinks, terminatedProjectLinkLayer);
+
+        // add rest of the project links (transfer, new, numbering, unchanged) to correct layer
+        addLinkFeaturesToLayer(restOfProjectLinks, projectLinkLayer);
+
+        if (zoomlevels.getViewZoom(map) > zoomlevels.minZoomForDirectionalMarkers) {
+          var addMarkersToLayer = function (links, layer) {
+            var directionMarkers = _.filter(links, function (projectLink) {
+              var acceptedLinks = projectLink.id !== 0;
+              return acceptedLinks && projectLink.sideCode !== SideCode.Unknown.value && projectLink.endAddressM !== 0;
+            });
+            _.each(directionMarkers, function (directionLink) {
+              cachedMarker.createProjectMarker(directionLink, function (marker) {
+                layer.getSource().addFeature(marker);
+              });
+            });
+          };
+          addMarkersToLayer(linksWithRoadNumber, directionMarkerLayer);
+        }
+
+        if (zoomlevels.getViewZoom(map) >= zoomlevels.minZoomLevelForCalibrationPoints) {
+          var actualCalibrationPoints = me.drawProjectCalibrationMarkers(calibrationPointLayer.source, linksWithRoadNumber.concat(underConstruction));
+          _.each(actualCalibrationPoints, function (actualPoint) {
+            var calMarker = new CalibrationPoint(actualPoint);
+            calibrationPointLayer.getSource().addFeature(calMarker.getMarker(true));
+          });
+        }
+
+        unAddressedRoadsProjectLayer.changed();
+        terminatedProjectLinkLayer.changed();
+        underConstructionRoadProjectLayer.changed();
+        notReservedInProjectLayer.changed();
+        notHandledProjectLinksLayer.changed();
+        projectLinkLayer.changed();
+
+        addSelectInteractions();
       }
-
-      unAddressedRoadsProjectLayer.changed();
-      terminatedProjectLinkLayer.changed();
-      underConstructionRoadProjectLayer.changed();
-      notReservedInProjectLayer.changed();
-      notHandledProjectLinksLayer.changed();
-      projectLinkLayer.changed();
-
-      addSelectInteractions();
     };
 
     me.eventListener.listenTo(eventbus, 'tool:changed', changeTool);
