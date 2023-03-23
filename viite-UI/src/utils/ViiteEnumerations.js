@@ -126,7 +126,7 @@
     Highway: {border: 120, stroke: 121, fill: 122},
     ReservedRoad: {value: 130},
     DirectionMarker: {value: 140},
-    CalibrationPoint: {value: 150},
+    CalibrationPoint: {value: 150}
   };
 
   root.ProjectModeZIndex = {
