@@ -1,7 +1,6 @@
 /* eslint-disable new-cap */
 (function (root) {
   root.Backend = function () {
-    var me = this;
     var loadingProject;
     // var finnishDatePattern = /(\d{2})\.(\d{2})\.(\d{4})/;
     var gettingRoadLinks;

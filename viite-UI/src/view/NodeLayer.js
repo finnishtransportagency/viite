@@ -10,9 +10,6 @@
     var junctionMarkerVector = dblVector();
     var nodePointTemplateVector = dblVector();
     var junctionTemplateVector = dblVector();
-    var cachedMarker = null;
-
-    var SideCode = ViiteEnumerations.SideCode;
     var RoadZIndex = ViiteEnumerations.RoadZIndex;
 
     var directionMarkerLayer = new ol.layer.Vector({
