@@ -425,6 +425,8 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
   }
 
   /** Validates that the given query parameter <i>dateParameterName</i> contains a valid DateTime string.
+   *  More than a hundred years in the future is considered as an invalid date, too (for preventing Date overflow possibility, but a Date
+   *  very much in the future does not make sense anyway).
    *  Assumes that the parameter is defined, and throws an exception, if there is no such <i>dateParameterName</i> query parameter available.
    *  An empty value also causes an exception.
    *
