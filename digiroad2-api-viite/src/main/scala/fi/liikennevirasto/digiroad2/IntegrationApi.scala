@@ -11,13 +11,13 @@ import fi.liikennevirasto.viite.{RoadAddressService, RoadNameService}
 import org.joda.time.format.ISODateTimeFormat
 import org.joda.time.{DateTime, DateTimeZone}
 import org.json4s.{DefaultFormats, Formats}
+import org.postgresql.util.PSQLException
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport, SwaggerSupportSyntax}
-import org.scalatra.BadRequest
+import org.scalatra.{BadRequest, InternalServerError, ScalatraServlet}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.util.control.NonFatal
-import org.scalatra.ScalatraServlet
 
 class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameService: RoadNameService, implicit val swagger: Swagger) extends ScalatraServlet
   with JacksonJsonSupport with SwaggerSupport {
@@ -31,8 +31,8 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
   val XApiKeyDescription =
     "You need an API key to use Viite APIs.\n" +
     "Get your API key from the technical system owner (järjestelmävastaava)."
-  val dateParamDescription =
-    "Date in the ISO8601 date and time format, for example: <i>2020-02-20T01:23:45</i>"
+  val ISOdateTimeDescription =
+    "Date in ISO8601 dateTime format, 'YYYY[-MM[-DD]][THH[:mm[:ss[.sss]]][Z]]' (e.g. 2025-10-23, or 2025-01-23T12:34:56.789Z)"
 
   protected val applicationDescription = "The integration API "
 
@@ -52,43 +52,32 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
       parameter queryParam[Int]("municipality").required
         .description("The municipality identifier.\nFor the list, see https://www2.tilastokeskus.fi/fi/luokitukset/kunta/.")
       parameter queryParam[String]("situationDate").optional
-        .description("(Optional) The road address information is returned from this exact moment (instead of the newest data).\n" + dateParamDescription)
+        .description("(Optional) The road address information is returned from this exact moment (instead of the newest data).\n" + ISOdateTimeDescription)
     )
 
   /** TODO better name e.g. "road_addresses_of_municipality" */
   get("/road_address", operation(getRoadAddressesByMunicipality)) {
     contentType = formats("json")
     ApiUtils.avoidRestrictions(apiId, request, params) { params =>
-      params.get("municipality").map { municipality =>
-        try {
-          val municipalityCode = municipality.toInt
-          val searchDate = parseIsoDate(params.get("situationDate"))
-          try {
-            val knownAddressLinks = roadAddressService.getAllByMunicipality(municipalityCode, searchDate)
-              .filter(ral => ral.roadNumber > 0)
-            roadAddressLinksToApi(knownAddressLinks)
-          } catch {
-            case e: Exception =>
-              val message = s"Failed to get road addresses for municipality $municipalityCode"
-              logger.error(message, e)
-              BadRequest(message)
-          }
-        } catch {
-          case nfe: NumberFormatException =>
-            val message = s"Incorrectly formatted municipality code: " + nfe.getMessage
-            logger.error(message)
-            BadRequest(message)
-          case iae: IllegalArgumentException =>
-            val message = s"Incorrectly formatted date: " + iae.getMessage
-            logger.error(message)
-            BadRequest(message)
-          case e: Exception =>
-            val message = s"Invalid municipality code: $municipality"
-            logger.error(message)
-            BadRequest(message)
-        }
-      } getOrElse {
-        BadRequest("Missing mandatory 'municipality' parameter")
+
+      val municipality = params.get("municipality").getOrElse(halt(BadRequest("Missing mandatory 'municipality' parameter")))
+
+      //val searchDate = parseIsoDate(params.get("situationDate"))
+      try {
+        val municipalityCode = municipality.toInt // may throw java.lang.NumberFormatException
+        val searchDate = dateParameterOptionGetValidOrThrow("situationDate")
+        val knownAddressLinks = roadAddressService.getAllByMunicipality(municipalityCode, searchDate)
+          .filter(ral => ral.roadNumber > 0)
+        roadAddressLinksToApi(knownAddressLinks)
+      }
+      catch {
+        case nfe: NumberFormatException =>
+          BadRequestWithLoggerWarn(s"Incorrectly formatted municipality code: '${municipality}'", nfe.getMessage)
+      // TODO Leaving as comment for now... but... This is unexpected generic exception; rather point to telling to the dev team -> handleCommonIntegrationAPIExceptions? -> Remove from here
+      //case e: Exception =>
+      //  BadRequestWithLoggerWarn(s"Failed to get road addresses for municipality $municipalityCode", e.getMessage)
+        case t: Throwable =>
+          handleCommonIntegrationAPIExceptions(t, getRoadAddressesByMunicipality.operationId)
       }
     }
   }
@@ -105,7 +94,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
               "Or, with the optional <i>date</i> parameter, a historical summary state can be requested."
       parameter headerParam[String]("X-API-Key").required.description(XApiKeyDescription)
       parameter queryParam[String]("date").optional
-        .description("(Optional) Date for the summary info, if the summary data for a history date is required.\n" + dateParamDescription)
+        .description("(Optional) Date for the summary info, if the summary data for a history date is required.\n" + ISOdateTimeDescription)
   )
   /** @return The JSON formatted whole road network address space of the latest versions of the network. */
   get("/summary", operation(getRoadNetworkSummary)) {
@@ -113,25 +102,16 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
 
     time(logger, s"Summary:  GET request for /summary", params=Some(params)) {
 
-        try {
-          val roadNetworkSummary = params.get("date") match {
-            case Some(date) =>
-              val parsedDate = DateTime.parse(date)
-              roadAddressService.getRoadwayNetworkSummary(Some(parsedDate))
-            case None =>
-              roadAddressService.getRoadwayNetworkSummary()
-
-          }
-          currentRoadNetworkSummaryToAPI(roadNetworkSummary)
-        } catch {
-          case _: IllegalArgumentException =>
-            val message = "The date parameter should be in the ISO8601 date and time format"
-            logger.warn(message)
-            BadRequest(message)
-          case e if NonFatal(e) =>
-            logger.warn(e.getMessage, e)
-            BadRequest(e.getMessage)
+      try {
+        val dateOption = dateParameterOptionGetValidOrThrow("date")
+        val roadNetworkSummary = {
+          roadAddressService.getRoadwayNetworkSummary(dateOption)
         }
+        currentRoadNetworkSummaryToAPI(roadNetworkSummary)
+      } catch {
+        case t: Throwable =>
+          handleCommonIntegrationAPIExceptions(t, getRoadNetworkSummary.operationId)
+      }
     }
   }
   /**
@@ -225,33 +205,25 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
       summary "Returns all the road name changes made after given time (or within the given time interval)."
       description "Returns all the road name changes made between <i>since</i> and <i>until</i>."
       parameter headerParam[String]("X-API-Key").required.description(XApiKeyDescription)
-      parameter queryParam[String]("since").required.description("The earliest date-time of a change to be listed. \n" + dateParamDescription)
-      parameter queryParam[String]("until").optional.description("(Optional) The latest date-time of a change to be listed. \n" + dateParamDescription)
+      parameter queryParam[String]("since").required.description("The earliest date-time of a change to be listed. \n" + ISOdateTimeDescription)
+      parameter queryParam[String]("until").optional.description("(Optional) The latest date-time of a change to be listed. \n" + ISOdateTimeDescription)
     )
 
   get("/roadnames/changes", operation(getRoadNameChanges)) {
     contentType = formats("json")
-    val sinceUnformatted = params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter")))
-    val untilUnformatted = params.get("until")
-    time(logger, s"GET request for /roadnames/changes", params=Some(params)) {
-      if (sinceUnformatted == "") {
-        val message = "Since parameter is empty"
-        logger.warn(message)
-        BadRequest(message)
-      } else {
-        try {
-          val since = DateTime.parse(sinceUnformatted)
-          fetchUpdatedRoadNames(since, untilUnformatted)
-        } catch {
-          case _: IllegalArgumentException =>
-            val message = "The since / until parameters should be in the ISO8601 date and time format"
-            logger.warn(message)
-            BadRequest(message)
-          case e if NonFatal(e) =>
-            logger.warn(e.getMessage, e)
-            BadRequest(e.getMessage)
-        }
+
+    try {
+      val since: DateTime = dateParameterGetValidOrThrow("since")
+      val untilOption: Option[DateTime] = dateParameterOptionGetValidOrThrow("until")
+      if(untilOption.isDefined) {
+        datesInCorrectOrderOrThrow(since, untilOption.get)
       }
+      time(logger, s"GET request for /roadnames/changes", params = Some(params)) {
+        fetchUpdatedRoadNames(since, untilOption)
+      }
+    } catch {
+      case t: Throwable =>
+        handleCommonIntegrationAPIExceptions(t, getRoadNameChanges.operationId)
     }
   }
 
@@ -261,51 +233,40 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
       summary "Returns all the changes made to the roadways after and including the given date."
       parameter headerParam[String]("X-API-Key").required.description(XApiKeyDescription)
       parameter queryParam[String]("since").required
-        .description("Restricts the listed changes to those made at or after this moment.\n" + dateParamDescription)
+        .description("Restricts the listed changes to those made at or after this moment.\n" + ISOdateTimeDescription)
     )
 
   get("/roadway/changes", operation(getRoadwayChanges)) {
     contentType = formats("json")
-    val sinceUnformatted = params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter")))
+
     time(logger, s"GET request for /roadway/changes", params=Some(params)) {
-      if (sinceUnformatted == "") {
-        val message = "Since parameter is empty"
-        logger.warn(message)
-        BadRequest(message)
-      } else {
-        try {
-          val since = DateTime.parse(sinceUnformatted)
-          val roadways : Seq[Roadway] = fetchUpdatedRoadways(since)
-          roadways.map(r => Map(
-            "id" -> r.id,
-            "roadwayNumber" -> r.roadwayNumber,
-            "roadNumber" -> r.roadNumber,
-            "roadPartNumber" -> r.roadPartNumber,
-            "track" -> r.track.value,
-            "startAddrMValue" -> r.startAddrMValue,
-            "endAddrMValue" -> r.endAddrMValue,
-            "discontinuity" -> r.discontinuity.value,
-            "ely" -> r.ely,
-            "roadType" -> r.administrativeClass.asRoadTypeValue,
-            "administrativeClass" -> r.administrativeClass.value,
-            "terminated" -> r.terminated.value,
-            "reversed" -> r.reversed,
-            "roadName" -> r.roadName,
-            "startDate" -> formatDate(r.startDate),
-            "endDate" -> formatDate(r.endDate),
-            "validFrom" -> formatDate(r.validFrom),
-            "validTo" -> formatDate(r.validTo),
-            "createdBy" -> r.createdBy
-          ))
-        } catch {
-          case _: IllegalArgumentException =>
-            val message = "The since parameter should be in the ISO8601 date and time format"
-            logger.warn(message)
-            BadRequest(message)
-          case e if NonFatal(e) =>
-            logger.warn(e.getMessage, e)
-            BadRequest(e.getMessage)
-        }
+      try {
+        val since: DateTime = dateParameterGetValidOrThrow("since")
+        val roadways : Seq[Roadway] = fetchUpdatedRoadways(since)
+        roadways.map(r => Map(
+          "id" -> r.id,
+          "roadwayNumber" -> r.roadwayNumber,
+          "roadNumber" -> r.roadNumber,
+          "roadPartNumber" -> r.roadPartNumber,
+          "track" -> r.track.value,
+          "startAddrMValue" -> r.startAddrMValue,
+          "endAddrMValue" -> r.endAddrMValue,
+          "discontinuity" -> r.discontinuity.value,
+          "ely" -> r.ely,
+          "roadType" -> r.administrativeClass.asRoadTypeValue,
+          "administrativeClass" -> r.administrativeClass.value,
+          "terminated" -> r.terminated.value,
+          "reversed" -> r.reversed,
+          "roadName" -> r.roadName,
+          "startDate" -> formatDate(r.startDate),
+          "endDate" -> formatDate(r.endDate),
+          "validFrom" -> formatDate(r.validFrom),
+          "validTo" -> formatDate(r.validTo),
+          "createdBy" -> r.createdBy
+        ))
+      } catch {
+        case t: Throwable =>
+          handleCommonIntegrationAPIExceptions(t,getRoadwayChanges.operationId)
       }
     }
   }
@@ -314,9 +275,9 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
     (apiOperation[List[Map[String, Any]]]("getRoadwayChangesChanges")
       .parameters(
         queryParam[String]("since").required
-          .description("Restricts the returned changes to the ones saved to Viite at this timestamp or later. \n" + dateParamDescription),
+          .description("Restricts the returned changes to the ones saved to Viite at this timestamp or later. \n" + ISOdateTimeDescription),
         queryParam[String]("until").optional
-          .description("(Optional) Restricts the returned changes to the ones saved to Viite at this timestamp or earlier. \n" + dateParamDescription)
+          .description("(Optional) Restricts the returned changes to the ones saved to Viite at this timestamp or earlier. \n" + ISOdateTimeDescription)
       )
       tags "Integration (kalpa, Digiroad, Velho, Viitekehysmuunnin, ...)"
       summary "Returns the Roadway_change changes after the given since parameter."
@@ -328,20 +289,20 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
 
   get("/roadway_changes/changes", operation(getRoadwayChangesChanges)) {
     contentType = formats("json")
+
     try {
-      val since = parseIsoDate(params.get("since"))
-      val until = parseIsoDate(params.get("until"))
+      val since: DateTime = dateParameterGetValidOrThrow("since")
+      val untilOption: Option[DateTime] = dateParameterOptionGetValidOrThrow("until")
+      if (untilOption.isDefined) {
+        datesInCorrectOrderOrThrow(since, untilOption.get)
+      }
+
       time(logger, s"GET request for /roadway_changes/changes", params=Some(params)) {
-        roadwayChangesToApi(roadAddressService.fetchUpdatedRoadwayChanges(since.get, until))
+        roadwayChangesToApi(roadAddressService.fetchUpdatedRoadwayChanges(since, untilOption))
       }
     } catch {
-      case error: IllegalArgumentException =>
-        val message = "The since / until parameters should be in the ISO8601 date and time format. " + error.getMessage
-        logger.warn(message,error)
-        BadRequest(message)
-      case error: Exception  =>
-        logger.error(error.getMessage,error)
-        BadRequest(error.getMessage)
+      case t: Throwable =>
+        handleCommonIntegrationAPIExceptions(t, getRoadwayChangesChanges.operationId)
     }
   }
 
@@ -389,19 +350,14 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
       summary "Returns the changes of the linear locations dated after (and including) the given date."
       parameter headerParam[String]("X-API-Key").required.description(XApiKeyDescription)
       parameter queryParam [String]("since").required
-        .description("The earliest moment, from where the linear location changes are listed.\n" + dateParamDescription))
+        .description("The earliest moment, from where the linear location changes are listed.\n" + ISOdateTimeDescription))
 
   get("/linear_location/changes", operation(getLinearLocationChanges)) {
     contentType = formats("json")
-    val sinceUnformatted = params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter")))
+
     time(logger, s"GET request for /linear_location/changes", params=Some(params)) {
-      if (sinceUnformatted == "") {
-        val message = "Since parameter is empty"
-        logger.warn(message)
-        BadRequest(message)
-      } else {
         try {
-          val since = DateTime.parse(sinceUnformatted)
+          val since = dateParameterGetValidOrThrow("since")
           val linearLocations: Seq[LinearLocation] = fetchUpdatedLinearLocations(since)
 
           val roadaddresses: Seq[RoadAddress] = PostGISDatabase.withDynTransaction {
@@ -429,15 +385,9 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
             "validTo" -> formatDate(l.validTo),
             "adjustedTimestamp" -> l.adjustedTimestamp
           ))
-        } catch {
-          case _: IllegalArgumentException =>
-            val message = "The since parameter should be in the ISO8601 date and time format"
-            logger.warn(message)
-            BadRequest(message)
-          case e if NonFatal(e) =>
-            logger.warn(e.getMessage, e)
-            BadRequest(e.getMessage)
-        }
+      } catch {
+        case t: Throwable =>
+          handleCommonIntegrationAPIExceptions(t, getLinearLocationChanges.operationId)
       }
     }
   }
@@ -445,8 +395,8 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
   val nodesToGeoJson: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[List[Map[String, Any]]]("nodesToGeoJson")
       .parameters(
-        queryParam[String]("since").required.description("Restrict the returned nodes to the ones changed at or after this moment.\n" + dateParamDescription),
-        queryParam[String]("until").optional.description("Restrict the returned nodes to the ones changed at or before this moment.\n"+ dateParamDescription)
+        queryParam[String]("since").required.description("Restrict the returned nodes to the ones changed at or after this moment.\n" + ISOdateTimeDescription),
+        queryParam[String]("until").optional.description("Restrict the returned nodes to the ones changed at or before this moment.\n"+ ISOdateTimeDescription)
       )
       tags "Integration (kalpa, Digiroad, Viitekehysmuunnin, ...)"
       summary "Returns the nodes changed after the given moment. May be restricted to an interval, too."
@@ -457,14 +407,115 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
 
   get(transformers = "/nodes_junctions/changes", operation(nodesToGeoJson)) {
     contentType = formats("json")
-    val since = DateTime.parse(params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter"))))
-    val untilUnformatted = params.get("until")
-    time(logger, s"GET request for /nodesAndJunctions", params=Some(params)) {
-      untilUnformatted match {
-        case Some(u) => nodesAndJunctionsService.getNodesWithTimeInterval(since, Some(DateTime.parse(u))).map(node => nodeToApi(node))
-        case _ => nodesAndJunctionsService.getNodesWithTimeInterval(since, None).map(node => nodeToApi(node))
+
+    time(logger, s"GET request for /nodes_junctions/changes", params=Some(params)) {
+      try {
+        val since: DateTime = dateParameterGetValidOrThrow("since")
+        val untilOption: Option[DateTime] = dateParameterOptionGetValidOrThrow("until")
+        if (untilOption.isDefined) {
+          datesInCorrectOrderOrThrow(since, untilOption.get)
+        }
+
+        nodesAndJunctionsService.getNodesWithTimeInterval(since, untilOption).map(node => nodeToApi(node))
+      } catch {
+        case t: Throwable =>
+          handleCommonIntegrationAPIExceptions(t, nodesToGeoJson.operationId)
       }
     }
+  }
+
+  /** Validates that the given query parameter <i>dateParameterName</i> contains a valid DateTime string.
+   *  More than a hundred years in the future is considered as an invalid date, too (for preventing Date overflow possibility, but a Date
+   *  very much in the future does not make sense anyway).
+   *  Assumes that the parameter is defined, and throws an exception, if there is no such <i>dateParameterName</i> query parameter available.
+   *  An empty value also causes an exception.
+   *
+   * @param dateParameterName name of the query parameter to be fetched, and validated
+   * @return A readily parsed ISO DateTime, if valid. If not valid
+   * @throws ViiteException if the <i>dateParameterName</i> does not contain a valid ISO8601 date string .*/
+  def dateParameterGetValidOrThrow(dateParameterName: String): DateTime = {
+    val aHundreadYearsInTheFuture = DateTime.now().plusYears(100)
+
+    val dateString = params.get(s"$dateParameterName")
+    dateString.getOrElse(throw ViiteException(s"Missing mandatory '$dateParameterName' parameter"))
+
+    if (dateString.isEmpty || dateString.get == "") {     // must have a value to parse
+      throw ViiteException(s"Empty '$dateParameterName' parameter.")
+    }
+    else {
+      try {
+    //  val dateParameter: DateTime = parseIsoDate(params.get("dateParameterName")).get // Existence checked -> should never go to else // TODO Check: is the parseIsoDate function useful? Use it instead?
+        val dateParameter: DateTime = DateTime.parse(dateString.getOrElse("!!!!"))      // Existence checked -> should never go to else
+        if (dateParameter.compareTo(aHundreadYearsInTheFuture) > 0)
+          throw ViiteException(s"No data that far in the future, check '$dateParameterName' ($dateParameter)")
+        else
+          dateParameter
+      }
+      catch {
+        case iae: IllegalArgumentException =>
+          throw ViiteException(s"$ISOdateTimeDescription. Now got $dateParameterName='${dateString.get}'.") //, iae.getMessage) // TODO more accurate message for logging? -> e.g. ViiteAPIException class with an additional field?
+        case psqle: PSQLException =>
+          throw ViiteException(s"Date out of bounds, check the given dates: ${request.getQueryString}.") //, s"${psqle.getMessage}")
+      }
+    }
+  }
+
+  /** Fetches, and returns a validated DateTime object if available in query parameter <i>dateParameterName</i>,
+   *  or None, if there is no such thing given.
+   *  Wrapping [[dateParameterGetValidOrThrow]] to get an Option[DateTime] for an optional query parameter.
+   * @param dateParameterName name of the query parameter to be fetched, and validated
+   * @return A valid DateTime object, or none
+   * @throws ViiteException from [[dateParameterGetValidOrThrow]] */
+  def dateParameterOptionGetValidOrThrow(dateParameterName: String): Option[DateTime] = {
+    if (params.get(s"$dateParameterName").isDefined) {
+      Some(dateParameterGetValidOrThrow(s"$dateParameterName"))
+    } else {
+      None
+    }
+  }
+
+  /** Compares the two given dates for correct timely ordering.
+   * Does not return anything, but throws a [[ViiteException]], if <i>until</i> is before <i>since</i>. */
+  def datesInCorrectOrderOrThrow(since: DateTime, until: DateTime): Unit = {
+    if (since.compareTo(until) > 0)
+      throw ViiteException(s"'Since' must not be later date than 'until' (${request.getQueryString}).")
+    else
+      Unit
+  }
+
+  /** Handles [[ViiteException]]s, [[IllegalArgumentException]]s, [[PSQLException]]s, and generic [[NonFatal]] Throwables.
+   * Intended usage in a catch block after your known function specific Exception cases
+   * @throws Throwable if it is considered a fatal one. */
+  def handleCommonIntegrationAPIExceptions(t: Throwable, operationId: Option[String]): Unit = {
+    t match {
+      case ve: ViiteException =>
+        BadRequestWithLoggerWarn(s"Check the given parameters. ${ve.getMessage}", "")
+      case iae: IllegalArgumentException =>
+        BadRequestWithLoggerWarn(s"$ISOdateTimeDescription. Now got '${request.getQueryString}''", iae.getMessage)
+      case psqle: PSQLException => // TODO remove? This applies when biiiig year (e.g. 2000000) given to DateTime parser. But year now restricted to be less than 100 years in checks before giving to dateTime parsing
+        BadRequestWithLoggerWarn(s"Date out of bounds, check the given dates: ${request.getQueryString}.", s"${psqle.getMessage}")
+      case nf if NonFatal(nf) => {
+        val requestString = s"GET request for ${request.getRequestURI}?${request.getQueryString} (${operationId})"
+        haltWithHTTP500WithLoggerError(requestString, nf)
+      }
+      case t if !NonFatal(t) => {
+        throw t
+      }
+    }
+  }
+
+  def BadRequestWithLoggerWarn(messageFor400: String, extraForLogger: String=""): Unit = {
+    logger.warn(messageFor400 + "  " + extraForLogger)
+    halt(BadRequest(messageFor400))
+  }
+
+  private def haltWithHTTP500WithLoggerError(whatWasCalledWhenError: String, throwable: Throwable) = {
+    val now = DateTime.now()
+    logger.error(s"An unexpected error in '$whatWasCalledWhenError ($now)': $throwable")
+    halt(InternalServerError(
+      s"You hit an unexpected error. Contact system administrator, or Viite development team.\n" +
+        s"Tell them to look for '$whatWasCalledWhenError ($now)'"
+    ))
   }
 
   def nodeToApi(node: (Option[Node], (Seq[NodePoint], Map[Junction, Seq[JunctionPoint]]))): Map[String, Any] = {
@@ -585,11 +636,8 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
     )
   }
 
-  private def fetchUpdatedRoadNames(since: DateTime, untilUnformatted: Option[String] = Option.empty[String]) = {
-    val result = untilUnformatted match {
-      case Some(until) => roadNameService.getUpdatedRoadNames(since, Some(DateTime.parse(until)))
-      case _ => roadNameService.getUpdatedRoadNames(since, None)
-    }
+  private def fetchUpdatedRoadNames(since: DateTime, untilOption: Option[DateTime]) = {
+    val result = roadNameService.getUpdatedRoadNames(since, untilOption)
     if (result.isLeft) {
       BadRequest(result.left)
     } else if (result.isRight) {
