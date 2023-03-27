@@ -2234,7 +2234,8 @@ Left|      |Right
 
       mockEmptyRoadAddressServiceCalls()
       val validationErrors = projectValidator.checkTrackCodePairing(project, inconsistentLinks).distinct
-      validationErrors.size should be(2)
+      validationErrors.size should be(1)
+      validationErrors.head.validationError should be(projectValidator.ValidationErrorList.InsufficientTrackCoverage)
     }
   }
 
