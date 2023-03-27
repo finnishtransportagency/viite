@@ -444,7 +444,7 @@ class RoadAddressService(
   }
 
   /**
-    * Gets all the road addresses in the same road number, road part number with start address less that
+    * Gets all the road addresses in the same road number, road part number with start address less than
     * the given address measure. If trackOption parameter is given it will also filter by track code.
     *
     * @param road        The road number
@@ -472,7 +472,7 @@ class RoadAddressService(
       if (addressM > 0) {
         roadAddresses.filter(ra => ra.startAddrMValue >= addressM || ra.endAddrMValue == addressM)
       }
-      else Seq(roadAddresses.head)
+      else if(roadAddresses.nonEmpty) Seq(roadAddresses.head) else Seq()
     }
   }
 
