@@ -143,7 +143,7 @@
   };
 
   dateUtils.isDateInYearRange = function (date, minYear, maxYear) {
-    return date.getFullYear() > (minYear - 1) && date.getFullYear() < (maxYear + 1);
+    return date.getFullYear() >= minYear && date.getFullYear() <= maxYear;
   };
 
   /** Converts date object to string "yyyy-mm-dd" */
