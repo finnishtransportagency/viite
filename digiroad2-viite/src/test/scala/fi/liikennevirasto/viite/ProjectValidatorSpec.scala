@@ -795,7 +795,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       mockEmptyRoadAddressServiceCalls()
 
       val errors = projectValidator.validateProject(updProject, currentProjectLinks).distinct
-      errors.filter(_.validationError.value == 18) should have size 0
+      errors.filter(_.validationError.value == projectValidator.ValidationErrorList.TerminationContinuity.value) should have size 0
     }
   }
 
@@ -844,7 +844,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       mockEmptyRoadAddressServiceCalls()
 
       val errors = projectValidator.validateProject(updProject, currentProjectLinks).distinct
-      errors.filter(_.validationError.value == 18) should have size 0
+      errors.filter(_.validationError.value == projectValidator.ValidationErrorList.TerminationContinuity.value) should have size 0
     }
   }
 
