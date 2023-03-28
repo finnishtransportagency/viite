@@ -448,7 +448,6 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
         linkPs.close()
 
         val linearlocations = List(
-          List(126019218,1,"3225257",3.062,22.456,3,"511790.071 6840314.779 0 0, 511786.541 6840333.849 0 19.394","2015-10-26 12:10:00.000",creator),
           List(126019231,1,"3227478",0.000,131.954,3,"512288.7 6838743.26 0 0, 512234.416 6838863.059 0 131.954","2016-03-30 12:03:00.000",creator),
           List(126019231,2,"3227484",0.000,15.908,3,"512295.534 6838728.895 0 0, 512288.7 6838743.26 0 15.908","2016-03-30 12:03:00.000",creator),
           List(126019231,3,"3227486",1.921,8.646,3,"512298.63 6838722.925 0 0, 512295.534 6838728.895 0 6.725","2016-03-30 12:03:00.000",creator),
@@ -465,6 +464,7 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
           List(148122023,2,"11910568",0.000,63.405,3,"512329.755 6838665.507 0 0, 512299.514 6838721.22 0 63.405","2016-03-30 12:03:00.000",creator),
           List(148122023,3,"11910585",0.000,65.218,3,"512365.37 6838610.901 0 0, 512329.755 6838665.507 0 65.218","2016-03-30 12:03:00.000",creator),
           List(148122023,4,"11910587",0.000,18.975,3,"512378.721 6838597.418 0 0, 512365.37 6838610.901 0 18.975","2016-03-30 12:03:00.000",creator),
+          List(126019218,1,"3225257",3.062,22.456,3,"511790.071 6840314.779 0 0, 511786.541 6840333.849 0 19.394","2015-10-26 12:10:00.000",creator),
           List(148122186,1,"3225257",0.000,3.062,3,"511790.61 6840311.765 0 0, 511790.071 6840314.779 0 3.062","2016-03-08 12:03:00.000",creator),
           List(148122186,2,"7330427",0.000,93.514,3,"511805.651 6840219.469 0 0, 511790.61 6840311.765 0 93.514","2016-03-08 12:03:00.000",creator),
           List(148122186,3,"7330434",0.000,64.403,3,"511814.67 6840155.702 0 0, 511805.651 6840219.469 0 64.403","2016-03-08 12:03:00.000",creator),
@@ -737,8 +737,11 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
           startingLinkId = Some(road_13_218.head.linkId))
 
         var links = road_13_218.map(addressToRoadLink)
-        val links2 = links.groupBy(_.linkId).partition(_._2.size == 1)
-        links = links2._1.values.flatten.toList ++ links2._2.map(p => p._2.head.copy(geometry = p._2.flatMap(_.geometry).distinct, length = p._2.map(_.length).sum, sourceId = ""))
+        val links2: (Map[String, List[RoadLink]], Map[String, List[RoadLink]]) = links.groupBy(_.linkId).partition(_._2.size == 1)
+        links = links2._1.values.flatten.toList ++ links2._2.map(p => p._2.head.copy(geometry = {
+          val geom: Seq[Point] = p._2.flatMap(_.geometry).sortBy(p => (p.x, p.y, p.z)).distinct;
+          if (p._2.head.geometry.head == geom.head) geom else geom.reverse
+        }, length = p._2.map(_.length).sum, sourceId = ""))
 
         when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[String]])).thenReturn(Seq())
         when(mockRoadLinkService.getRoadLinksByLinkIds(any[Set[String]])).thenAnswer(new Answer[Seq[RoadLink]] {
@@ -1016,13 +1019,16 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
 //        withDynTransaction {
                   projectService_db.recalculateProjectLinks(projectSaved.id, projectSaved.modifiedBy)
 //                }
+       // Check saved Project elys after VIITE-2922
+       // projectDAO.fetchById(projectSaved.id).get.elys shouldBe (Set(road_13_218.head.ely))
+
         val afterCalculatedProjectlinks = projectService_db.getProjectLinks(projectSaved.id)
         val calculatedProjectlinks      = afterCalculatedProjectlinks.filterNot(_.status == LinkStatus.Terminated)
 
         val leftSide = calculatedProjectlinks.filterNot(_.track == Track.RightSide).sortBy(_.startAddrMValue)
         val rightSide = calculatedProjectlinks.filterNot(_.track == Track.LeftSide).sortBy(_.startAddrMValue)
 
-        def continuosAddresses(t: Seq[ProjectLink]) = {
+        def continuosAddresses(t: Seq[ProjectLink]): ProjectLink = {
           t.sortBy(_.startAddrMValue).tail.foldLeft(t.head) { (cur, next) =>
             assert(next.startAddrMValue <= next.endAddrMValue)
             assert(cur.endAddrMValue == next.startAddrMValue)
@@ -1051,6 +1057,27 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
           assert(cur._2 == n._1)
           n
         }
+
+       /** 
+         * Checks continuity of addresses and geometry.
+         * @param pls Left or right side ProjectLinks with combined to check for continuity.
+         */
+         def validateAddressesWithGeometry(pls: Seq[ProjectLink]): Unit = {
+           val it = pls.sliding(2)
+           while (it.hasNext) {
+             it.next() match {
+               case Seq(curr, next) => {
+                 if (curr.discontinuity == Discontinuity.Continuous)
+                  curr.connected(next) shouldBe (true)
+                 else
+                  curr.connected(next) shouldBe (false)
+               }
+            }
+          }
+        }
+
+       validateAddressesWithGeometry(leftSide)
+       validateAddressesWithGeometry(rightSide)
 
          /* Create change table */
        val (changeProject, warningMessage) = projectService_db.getChangeProject(projectSaved.id)

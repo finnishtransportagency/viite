@@ -7,7 +7,7 @@ import java.nio.file.Paths
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LinkType, TrafficDirection, _}
 import fi.liikennevirasto.digiroad2.client.kgv.{ChangeInfo, ChangeType}
-import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ValidityPeriodDayOfWeek}
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLink}
 import fi.liikennevirasto.digiroad2.util.{KGVSerializer, Track}
 import fi.liikennevirasto.viite.dao.{Discontinuity, LinkStatus}
 import org.json4s._
@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory
 class JsonSerializer extends KGVSerializer {
   val logger = LoggerFactory.getLogger(getClass)
   protected implicit val jsonFormats: Formats = DefaultFormats + SideCodeSerializer + TrafficDirectionSerializer +
-    LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + LinkGeomSourceSerializer + LifecycleStatusSerializer +
+    LinkTypeSerializer + AdministrativeClassSerializer + LinkGeomSourceSerializer + LifecycleStatusSerializer +
     DiscontinuitySerializer + TrackSerializer + PointSerializer + ChangeTypeSerializer
 
   override def readCachedGeometry(file: File): Seq[RoadLink] = {
@@ -77,7 +77,7 @@ class JsonSerializer extends KGVSerializer {
 }
 object DigiroadSerializers {
   val jsonFormats: Formats = DefaultFormats + SideCodeSerializer + TrafficDirectionSerializer +
-    LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + LinkGeomSourceSerializer + LifecycleStatusSerializer +
+    LinkTypeSerializer + AdministrativeClassSerializer + LinkGeomSourceSerializer + LifecycleStatusSerializer +
     DiscontinuitySerializer + TrackSerializer + PointSerializer + LinkStatusSerializer + ChangeTypeSerializer
 }
 
@@ -97,12 +97,6 @@ case object TrafficDirectionSerializer extends CustomSerializer[TrafficDirection
   case JString(direction) => TrafficDirection(direction)
 }, {
   case t: TrafficDirection => JString(t.toString)
-}))
-
-case object DayofWeekSerializer extends CustomSerializer[ValidityPeriodDayOfWeek](format => ( {
-  case JString(dayOfWeek) => ValidityPeriodDayOfWeek(dayOfWeek)
-}, {
-  case d: ValidityPeriodDayOfWeek => JString(d.toString)
 }))
 
 case object LinkTypeSerializer extends CustomSerializer[LinkType](format => ( {

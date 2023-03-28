@@ -32,7 +32,7 @@ sealed trait Discontinuity {
 }
 
 object Discontinuity {
-  val values = Set(EndOfRoad, Discontinuous, ChangingELYCode, MinorDiscontinuity, Continuous, ParallelLink)
+  val values = Set(EndOfRoad, Discontinuous, ChangingELYCode, MinorDiscontinuity, Continuous)
 
   def apply(intValue: Int): Discontinuity = {
     values.find(_.value == intValue).getOrElse(Continuous)
@@ -75,19 +75,6 @@ object Discontinuity {
 
     def description = "Jatkuva"
   }
-
-  case object ParallelLink extends Discontinuity {
-    def value = 6
-
-    def description = "Parallel Link"
-  }
-
-  def replaceParallelLink(currentDiscontinuity: Discontinuity): Discontinuity = {
-    if (currentDiscontinuity == ParallelLink)
-      Continuous
-    else currentDiscontinuity
-  }
-
 }
 
 sealed trait CalibrationCode {
@@ -730,6 +717,7 @@ class RoadwayDAO extends BaseDAO {
     query + s" WHERE a.road_number = $road " + s"$roadPartFilter $trackFilter $mValueFilter and a.end_date is null and a.valid_to is null "
   }
 
+  @deprecated ("TODO refactor or remove. Table published_roadway is no longer in use, and is empty.")
   private def withRoadwayNumbersAndRoadNetwork(roadwayNumbers: Set[Long], roadNetworkId: Long, searchDate: Option[DateTime])(query: String): String = {
     val queryDate = if (searchDate.isDefined) s"to_date('${searchDate.get.toString("yyyy-MM-dd")}', 'YYYY-MM-DD') " else "CURRENT_DATE"
 
@@ -739,12 +727,14 @@ class RoadwayDAO extends BaseDAO {
         s"""in (${group.mkString(",")})"""
       }).mkString("", " or a.roadway_number ", "")
 
+      /** todo ("Table published_roadway is no longer in use, and is empty.")*/
       s"""$query
          join published_roadway net on net.ROADWAY_ID = a.id
          where net.network_id = $roadNetworkId and a.valid_to is null and (a.roadway_number $groupedRoadwayNumbers)
             and a.start_date <= $queryDate and (a.end_date is null or a.end_date >= $queryDate)"""
     }
     else
+      /** todo ("Table published_roadway is no longer in use, and is empty.")*/
       s"""$query
          join published_roadway net on net.ROADWAY_ID = a.id
          where net.network_id = $roadNetworkId and a.valid_to is null and a.roadway_number in (${roadwayNumbers.mkString(",")})

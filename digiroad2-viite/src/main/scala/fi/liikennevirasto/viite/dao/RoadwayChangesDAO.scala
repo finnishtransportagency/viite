@@ -5,7 +5,6 @@ import java.sql.{PreparedStatement, Timestamp}
 import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, ParallelLink}
 import fi.liikennevirasto.viite.process.{ProjectDeltaCalculator, RoadwaySection}
 import fi.liikennevirasto.viite.process.ProjectDeltaCalculator.{createTwoTrackOldAddressRoadParts, projectLinkDAO}
 import org.joda.time.DateTime
@@ -86,7 +85,7 @@ case class OldRoadAddress(ely: Long, roadNumber: Option[Long], track: Option[Lon
 case class NewRoadAddress(ely: Long, roadNumber: Long, track: Long, roadPartNumber: Long, startAddrM: Long,
                           endAddrM: Long, length: Long, administrativeClass: Long)
 
-case class ChangeInfoForRoadAddressChangesBrowser(startDate: DateTime, changeType: Long, reversed: Long, roadName: String, projectName: String,
+case class ChangeInfoForRoadAddressChangesBrowser(startDate: DateTime, changeType: Long, reversed: Long, roadName: Option[String], projectName: String,
                                                   projectAcceptedDate: DateTime,oldRoadAddress: OldRoadAddress, newRoadAddress: NewRoadAddress)
 
 
@@ -162,18 +161,13 @@ class RoadwayChangesDAO {
     val source = toRoadwayChangeSource(row)
     val target = toRoadwayChangeRecipient(row)
     RoadwayChangeInfo(AddressChangeType.apply(row.changeType), source, target,
-      replaceParallelLink(Discontinuity.apply(row.targetDiscontinuity.getOrElse(Discontinuity.Continuous.value))),
+      Discontinuity.apply(row.targetDiscontinuity.getOrElse(Discontinuity.Continuous.value)),
       AdministrativeClass.apply(row.targetAdministrativeClass.getOrElse(AdministrativeClass("Unknown").value)),
       row.reversed,
       row.orderInTable,
       target.ely.getOrElse(source.ely.get))
   }
 
-  private def replaceParallelLink(currentDiscontinuity: Discontinuity): Discontinuity = {
-    if (currentDiscontinuity == ParallelLink)
-      Continuous
-    else currentDiscontinuity
-  }
   // TODO: cleanup after modification dates and modified by are populated correctly
   private def getUserAndModDate(row: ChangeRow): (String, DateTime) = {
     val user = if (row.modifiedDate.isEmpty) {
@@ -491,7 +485,7 @@ SELECT
       val startDate = new DateTime(r.nextTimestamp())
       val changeType = r.nextLong()
       val reversed = r.nextLong()
-      val roadName = r.nextString()
+      val roadName = r.nextStringOption()
       val projectName = r.nextString()
       val projectAcceptedDate = new DateTime(r.nextTimestamp())
       val oldEly = r.nextLong()
@@ -594,12 +588,13 @@ SELECT
                    |	new_administrative_class
                    |FROM roadway_changes rc
                    |JOIN project p ON rc.project_id = p.id
-                   |-- Get the valid road name for the road that was modified in the project
-                   |JOIN road_name rn ON (rc.new_road_number = rn.road_number OR  rc.old_road_number = rn.road_number)
+                   |-- Get the valid road name for the road that was modified in the project, prioritizing the new road number
+                   |LEFT JOIN road_name rn ON rn.road_number = coalesce(rc.new_road_number, rc.old_road_number)
                    |  AND rn.valid_to IS NULL
                    |  AND rn.start_date <= p.start_date
-                   |  -- End date should be null or the same as the roads' end date (if the whole road was terminated in this project)
-                   |  AND (rn.end_date IS NULL OR rn.end_date = (p.start_date - INTERVAL '1 DAY'))
+                   |  -- End date should be null if the change is not a termination (5).
+                   |  -- If the road is terminated, the end date is the same as the end date of the road  (if the whole road was terminated in this project) or null if the start date of the road name start date is earlier than the start date of the project
+                   |  AND ((rc.change_type != 5 and rn.end_date IS null) OR (rc.change_type = 5 and (rn.end_date = (p.start_date - INTERVAL '1 DAY') or (rn.end_date is null and rn.start_date < p.start_date))))
                    """.stripMargin
       val filteredQuery = queryFilter(query)
       Q.queryNA[ChangeInfoForRoadAddressChangesBrowser](filteredQuery).iterator.toSeq

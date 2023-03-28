@@ -946,6 +946,15 @@ class ProjectLinkDAO {
     listQuery(query)
   }
 
+  def fetchProjectLinkElys(projectId: Long): Seq[Long] = {
+    time(logger, "Get elys from project links.") {
+      val query =
+        s"""SELECT DISTINCT ELY FROM PROJECT_LINK
+                where PROJECT_ID = $projectId """
+      Q.queryNA[Long](query).list.sorted
+    }
+  }
+
   implicit val getDiscontinuity: GetResult[Option[Discontinuity]] = new GetResult[Option[Discontinuity]] {
     def apply(r: PositionedResult): Option[Discontinuity] = {
       r.nextLongOption().map(l => Discontinuity.apply(l))

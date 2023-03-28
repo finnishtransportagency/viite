@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.util.{MissingTrackException, RoadAddressException}
 import fi.liikennevirasto.viite.{NewIdValue, UnsuccessfulRecalculationMessage}
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous, MinorDiscontinuity, ParallelLink}
+import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous, MinorDiscontinuity}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.process.{ProjectSectionMValueCalculator, TrackAddressingFactors}
 import org.slf4j.LoggerFactory
@@ -207,7 +207,7 @@ trait TrackCalculatorStrategy {
     * @return (Project links before the discontinuity point, project links after the discontinuity point)
     */
   protected def getUntilNearestAddress(seq: Seq[ProjectLink], endProjectLink: ProjectLink): (Seq[ProjectLink], Seq[ProjectLink]) = {
-    if (List(Discontinuous, MinorDiscontinuity, Continuous, ParallelLink).contains(endProjectLink.discontinuity)) {
+    if (List(Discontinuous, MinorDiscontinuity, Continuous).contains(endProjectLink.discontinuity)) {
       val continuousProjectLinks = seq.takeWhile(pl => pl.startAddrMValue <= endProjectLink.endAddrMValue)
       if (continuousProjectLinks.isEmpty)
         throw new MissingTrackException("Could not find any nearest road address")

@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite.process.strategy
 
-import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, MinorDiscontinuity, ParallelLink}
+import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, MinorDiscontinuity}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.{Discontinuity, ProjectLink}
 import fi.liikennevirasto.viite.{MaxDistanceForSearchDiscontinuityOnOppositeTrack, NewIdValue}
@@ -35,10 +35,8 @@ class DiscontinuityTrackCalculatorStrategy(discontinuities: Seq[Discontinuity]) 
     val restRight = firstRight.drop(right.size) ++ othersRight
 
     (left.last.discontinuity, right.last.discontinuity) match {
-      case (MinorDiscontinuity | ParallelLink, MinorDiscontinuity | ParallelLink) => // If both sides have a minor discontinuity
-        if (left.last.getEndPoints._2.distance2DTo(right.last.getEndPoints._2) < MaxDistanceForSearchDiscontinuityOnOppositeTrack
-            || (left.last.discontinuity == ParallelLink
-            || right.last.discontinuity == ParallelLink)) {
+      case (MinorDiscontinuity, MinorDiscontinuity) => // If both sides have a minor discontinuity
+        if (left.last.getEndPoints._2.distance2DTo(right.last.getEndPoints._2) < MaxDistanceForSearchDiscontinuityOnOppositeTrack) {
                   adjustTwoTracks(startAddress, left, right, userDefinedCalibrationPoint, restLeft, restRight)
         } else if (left.last.endAddrMValue < right.last.endAddrMValue) { // If the left side has a minor discontinuity
           val (newRight, newRestRight) = getUntilNearestAddress(rightProjectLinks, left.last)

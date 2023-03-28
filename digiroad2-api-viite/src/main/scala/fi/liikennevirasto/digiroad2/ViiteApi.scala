@@ -1,7 +1,5 @@
 package fi.liikennevirasto.digiroad2
 
-import java.text.SimpleDateFormat
-
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.JWTAuthentication
 import fi.liikennevirasto.digiroad2.client.kgv.KgvRoadLink
@@ -18,11 +16,12 @@ import fi.liikennevirasto.viite.util.DigiroadSerializers
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.json4s._
-import org.scalatra.{NotFound, _}
+import org.scalatra._
 import org.scalatra.json.JacksonJsonSupport
-import org.scalatra.swagger.{Swagger, _}
+import org.scalatra.swagger._
 import org.slf4j.{Logger, LoggerFactory}
 
+import java.text.SimpleDateFormat
 import scala.util.{Left, Right}
 import scala.util.parsing.json.JSON._
 
@@ -268,7 +267,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
     )
 
   get("/roadlinks/midpoint/:linkId", operation(getMidPointByLinkId)) {
-    val linkId = params("linkId")
+    val linkId: String = params("linkId")
     time(logger, s"GET request for /roadlinks/midpoint/$linkId") {
       roadLinkService.getMidPointByLinkId(linkId)
     }
@@ -284,7 +283,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
     )
 
   get("/roadlinks/mtkid/:mtkId", operation(getRoadLinkMiddlePointByMtkId)) {
-    val mtkId = params("mtkId").toLong
+    val mtkId: Long = params("mtkId").toLong
     time(logger, s"GET request for /roadlinks/mtkid/$mtkId") {
       roadLinkService.getRoadLinkMiddlePointBySourceId(mtkId)
     }
@@ -716,15 +715,28 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
   get("/roadlinks/roadaddress/project/all/:onlyActive", operation(getRoadAddressProjects)) {
     time(logger, "GET request for /roadlinks/roadaddress/project/all/:onlyActive") {
       val onlyActive = params("onlyActive").toBoolean
-      val projects = if (onlyActive) {
+      if (onlyActive) {
         projectService.getActiveProjects
       } else {
         projectService.getAllProjects
       }
-      val (deletedProjs, currentProjs) = projects.map(p => {
-        p.id -> (p, projectService.getProjectEly(p.id))
-      }).partition(_._2._2.isEmpty)
-      deletedProjs.map(p => roadAddressProjectToApi(p._2._1, p._2._2)) ++ currentProjs.sortBy(e => e._2._2.min).map(p => roadAddressProjectToApi(p._2._1, p._2._2))
+    }
+  }
+
+  private val getRoadAddressProjectStates: SwaggerSupportSyntax.OperationBuilder = (
+    apiOperation[Seq[(Int, Int)]]("getRoadAddressProjectStates")
+      .parameters(
+        pathParam[Int]("projectIDs").description("List of project ids to fetch states for.")
+      )
+      tags "ViiteAPI - Project states"
+      summary "Returns state codes for the requested project ids."
+    )
+
+  /** Gets the project information for the project list only for the given projects (projectIDs</>). */
+  get("/roadlinks/roadaddress/project/states/:projectIDs", operation(getRoadAddressProjectStates)) {
+    time(logger, "GET request for /roadlinks/roadaddress/project/states/:projectIDs") {
+      val projectIDs: Set[Int] = params("projectIDs").split(",").map(_.toInt).toSet
+      projectService.getProjectStates(projectIDs)
     }
   }
 
@@ -1110,7 +1122,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
         pathParam[Long]("projectID").description("Id of a project")
       )
       tags "ViiteAPI - RoadAddresses"
-      summary "Returns all the road names that are related to a certain project (referenced by the projectID) and within a certain roadNumber."
+      summary "Returns a road name that is related to a certain roadNumber or a certain project (referenced by the projectID)."
     )
 
   get("/roadlinks/roadname/:roadNumber/:projectID", operation(getRoadNamesByRoadNumberAndProjectId)) {
@@ -1687,7 +1699,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       "startDate" -> new SimpleDateFormat("dd.MM.yyyy").format(changeInfo.startDate.toDate),
       "changeType" -> changeInfo.changeType,
       "reversed" -> changeInfo.reversed,
-      "roadName" -> changeInfo.roadName,
+      "roadName" -> changeInfo.roadName.getOrElse(""),
       "projectName" -> changeInfo.projectName,
       "projectAcceptedDate" -> new SimpleDateFormat("dd.MM.yyyy").format(changeInfo.projectAcceptedDate.toDate),
       "oldEly" -> changeInfo.oldRoadAddress.ely,
@@ -1746,7 +1758,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
         "id" -> projectAddressLink.id,
         "status" -> projectAddressLink.status.value,
         "reversed" -> projectAddressLink.reversed,
-        "roadNameBlocked" -> (if (projectAddressLink.roadNumber != 0 && projectAddressLink.roadName.nonEmpty) roadNames.exists(_.roadNumber == projectAddressLink.roadNumber) else false)
+        "roadNameBlocked" -> (if (projectAddressLink.roadNumber != 0 && projectAddressLink.roadName.nonEmpty) roadNames.exists(_.roadNumber == projectAddressLink.roadNumber) else false),
+        "roadAddressRoadNumber" -> projectAddressLink.roadAddressRoadNumber,
+        "roadAddressRoadPart" -> projectAddressLink.roadAddressRoadPart
       )
         ++
         (if (projectAddressLink.isSplit)
@@ -1787,9 +1801,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       "startDate" -> formatToString(roadAddressProject.startDate.toString),
       "modifiedBy" -> roadAddressProject.modifiedBy,
       "additionalInfo" -> roadAddressProject.additionalInfo,
-      "status" -> roadAddressProject.status,
-      "statusCode" -> roadAddressProject.status.value,
-      "statusDescription" -> roadAddressProject.status.description,
+      "status" -> roadAddressProject.projectState,
+      "statusCode" -> roadAddressProject.projectState.value,
+      "statusDescription" -> roadAddressProject.projectState.description,
       "statusInfo" -> roadAddressProject.statusInfo,
       "elys" -> elys,
       "coordX" -> roadAddressProject.coordinates.get.x,
@@ -1978,7 +1992,7 @@ object ProjectConverter {
     Project(project.id, ProjectState.apply(project.status),
       if (project.name.length > 32) project.name.substring(0, 32).trim else project.name.trim, //TODO the name > 32 should be a handled exception since the user can't insert names with this size
       user.username, DateTime.now(), user.username, formatter.parseDateTime(project.startDate), DateTime.now(),
-      project.additionalInfo, project.reservedPartList.distinct.map(toReservedRoadPart), project.formedPartList.distinct.map(toReservedRoadPart), Option(project.additionalInfo))
+      project.additionalInfo, project.reservedPartList.distinct.map(toReservedRoadPart), project.formedPartList.distinct.map(toReservedRoadPart), Option(project.additionalInfo), elys = Set())
   }
 
   def toReservedRoadPart(rp: RoadPartExtractor): ProjectReservedPart = {
