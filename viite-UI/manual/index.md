@@ -3,7 +3,7 @@ Viite-sovelluksen käyttöohje
 Viite
 -----------------------
 
-Viite on Väylän tieosoitejärjestelmän ylläpitosovellus. Viitteellä hallitaan tieosoitejärjestelmän muutoksia ja se tarjoaa ajantasaisen kuvauksen tiestöstä <!--Digiroadin (VVH:n) ajantasaisella--> VVH:n jäädytetyllä linkkigeometrialla.
+Viite on Väylän tieosoitejärjestelmän ylläpitosovellus. Viitteellä hallitaan tieosoitejärjestelmän muutoksia ja se tarjoaa ajantasaisen kuvauksen tiestöstä KGV:n jäädytetyllä linkkigeometrialla.
 
 Linkin https://extranet.vayla.fi/group/extranet/etusivu alta Väylän extranetista löytyy Viite, Viite-sovelluksen yleiskuvaus, linkki tähän ohjeeseen ja tieto järjestelmäpäälliköstä. 
 
@@ -60,7 +60,7 @@ Tarkemmat tiedot tieosoitejärjestelmästä löydät täältä: https://vayla.fi
 2.1 Tiedon rakentuminen Viite-sovelluksessa
 --------------------------
 
-Viite-sovelluksessa tieosoiteverkko piirretään VVH:n tarjoaman Maanmittauslaitoksen keskilinja-aineiston päälle. 
+Viite-sovelluksessa tieosoiteverkko piirretään KGV:n tarjoaman Maanmittauslaitoksen keskilinja-aineiston päälle. 
 Viite käyttää keskilinja-aineistosta ns. jäädytettyä versiota, joka päivitetään noin puolivuosittain. Maanmittauslaitoksen keskilinja-aineisto muodostuu tielinkeistä. Tielinkki on tien, kadun, kevyen liikenteen väylän tai lauttayhteyden keskilinjageometrian pienin yksikkö. Tieosoiteverkko piirtyy geometrian päälle tieosoitesegmentteinä _lineaarisen referoinnin_ avulla. 
 
 Tielinkki on Viite-sovelluksen lineaarinen viitekehys, jonka geometriaan sidotaan tieosoitesegmentit. Kukin tieosoitesegmentti tietää, mille tielinkille se kuuluu (tielinkin ID), sekä kohdan, josta se alkaa ja loppuu kyseisellä tielinkillä. Tieosoitesegmentit ovat siten tielinkin mittaisia tai niitä lyhyempiä tieosoitteen osuuksia. Käyttöliittymässä kuitenkin pienin valittavissa oleva osuus on tielinkin mittainen (ks. luvut 5.1 ja 7.1).
@@ -103,7 +103,7 @@ Viite-sovellus päivittää automaattisesti tieosoitesegmentit takaisin ajantasa
 Automatiikka tekee korjaukset, kun
 
 1. __Tielinkki pitenee tai lyhenee alle metrin:__ Viite-sovellus lyhentää/pidentää tieosoitesegmenttiä automaattisesti muutoksen verran.
-2. __Maanmittauslaitos yhdistelee tielinkkejä, esimerkiksi poistamalla tonttiliittymiä maanteiden varsilta:__ Tieosoitesegmentit siirretään uudelle geometrialle automaattisesti Väyläverkon hallinnan (VVH) tarjoaman tielinkkien muutosrajapinnan avulla.
+2. __Maanmittauslaitos yhdistelee tielinkkejä, esimerkiksi poistamalla tonttiliittymiä maanteiden varsilta:__ Tieosoitesegmentit siirretään uudelle geometrialle automaattisesti MML:n keskilinjageometriavaraston (KGV) tarjoaman tielinkkien muutosrajapinnan avulla.
 -->
 
 4 Karttanäkymän toiminnot
@@ -420,10 +420,10 @@ Uusi-toimenpiteellä määritetään tieosoitteisto tieosoitteettomille tielinke
 
 Tieosoitteettomia linkkejä (piirtyvät kartalle harmaina) tai rakenteilla olevia linkkejä (piirtyvät kartalle katkoviivoina) voi toimenpidenäkymässä valita kerta- kaksois- tai Ctrl+klik-klikkauksilla kuten tieosoitteellisiakin tielinkkejä. 
 Kaksoisklikkaus valitsee yhden tielinkin. Ctrl+klikkauksella voi lisätä tai poistaa valintaan linkkejä yksi kerrallaan. 
-Kertaklikkaus valitsee ns. homogeenisen jakson, jonka määrittämiseen käytetään VVH:n tielinkin tienumeroa ja tieosanumeroa. Tienumeron tai tieosanumeron puuttuessa valinnassa käytetään tienimeä.
+Kertaklikkaus valitsee ns. homogeenisen jakson, jonka määrittämiseen käytetään KGV:n tielinkin tienumeroa ja tieosanumeroa. Tienumeron tai tieosanumeron puuttuessa valinnassa käytetään tienimeä.
 
 Toimenpidelomakkeen pudotusvalikosta valitaan Uusi (1). Lomakkeelle avautuvat kentät uuden tieosoitteen tietoja varten (2). 
-Jos valitulla tieosuudella on jo olemassa VVH:ssa tienumero ja tieosanumero, ne esitäyttyvät kenttiin automaattisesti.
+Jos valitulla tieosuudella on jo olemassa KGV:ssa tienumero ja tieosanumero, ne esitäyttyvät kenttiin automaattisesti.
 Linkkien Hallinnollista luokkaa voi muokata pudotusvalikosta (3). Tien nimi (4) on pakollinen tieto, kun tien numero on pienempi kuin 70000. 
 Uudelle tieosoitukselle voi antaa mitatut alku- ja loppuetäisyydet _Alussa_- ja _Lopussa_ -kenttiin (5).
 Tien kasvusuunnan voi kääntää _Käännä tieosan kasvusuunta_-napista (6), mutta tästä toiminnosta on enemmän hyötyä sen jälkeen, kun etäisyyslukemien laskemisen jälkeen tien alkuperäinen satunnainen kasvusuunta tulee näkyviin.
@@ -440,13 +440,13 @@ Jos syötetty uusi tieosoite on jo olemassa tieosoiteverkolla projektin alkupäi
 
 _Kuva 7.4: Tieosoite on jo olemassa projektin alkupäivänä._
 
-Tallennettuun tieosoitteeseen voi jatkaa uusien linkkien lisäämistä vaiheittain. Ensin valitaan tallennetun tieosan jatkeeksi seuraava linkki. Sitten valitaan lomakkeelta toimenpide Uusi, annetaan linkille sama tieosoite (TIE= tienumero, OSA=tieosanumero, AJR=ajoratakoodi) ja tallennetaan. Viite täyttää automaattisesti ELY-koodin, joka määräytyy tielinkin kuntakoodin perustella VVH:sta. 
+Tallennettuun tieosoitteeseen voi jatkaa uusien linkkien lisäämistä vaiheittain. Ensin valitaan tallennetun tieosan jatkeeksi seuraava linkki. Sitten valitaan lomakkeelta toimenpide Uusi, annetaan linkille sama tieosoite (TIE= tienumero, OSA=tieosanumero, AJR=ajoratakoodi) ja tallennetaan. Viite täyttää automaattisesti ELY-koodin, joka määräytyy tielinkin kuntakoodin perustella KGV:sta. 
 
 Projektin voi myös tallentaa ja sulkea ja jatkaa lisäystä samaan tieosoitteeseen myöhemmin. Kasvusuunta lisätylle osuudelle määräytyy aiemmin osoitteistettujen linkkien mukaan ja sitä voi edelleen muuttaa "Käännä kasvusuunta" -painikkeella. Etäisyysarvot (M-arvot) päivittyvät koko tieosalle, jolle on annettu sama tieosoite.
 
 __Uuden kiertoliittymän alkupaikan muuttaminen__
 
-Jos Uusi-toimenpiteellä tieosoitteistetuilla kiertoliittymän linkeillä on VVH:ssa (esim. Suravage-linkit) tienumero, kiertoliittymän voi ns. "pikaosoitteistaa". 
+Jos Uusi-toimenpiteellä tieosoitteistetuilla kiertoliittymän linkeillä on KGV:ssa (esim. Suravage-linkit) tienumero, kiertoliittymän voi ns. "pikaosoitteistaa". 
 Pikaosoitteistaminen tapahtuu klikkaamalla kiertoliittymän alkukohdaksi haluttua linkkiä. Tällöin koko kiertoliittymän linkit tulevat valituiksi. Uusi toimenpide asettaa alkukohdaksi klikatun linkin.
 
 Muussa tapauksessa kiertoliittymän alkukohta asetetaan manuaalisesti kahdessa vaiheessa:
