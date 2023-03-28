@@ -286,8 +286,7 @@ class SearchApi(roadAddressService: RoadAddressService,
         case e: Exception =>
           logger.info(s"$properKGVLinksListExpected. Got: ${request.body}. $e")
           halt(BadRequest(
-            s"$properKGVLinksListExpected. Got '${request.body}'.\n" +
-            s"The MML KGV style link ids expected in a list. '[link-id-1:n2,link-id-2:n2]'"
+            s"$properKGVLinksListExpected. Got '${request.body}'."
           ))
       }
 

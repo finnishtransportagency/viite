@@ -13,7 +13,7 @@ class SearchApiSpec extends FunSuite with ScalatraSuite {
   private val searchApi = new SearchApi(mockRoadAddressService, new ViiteSwagger)
   addServlet(searchApi, "/*")
 
-  val retWith400AndFeedbeck = "should return with 1) HTTP-400 BadRequest, and 2) a feedback message"
+  val retWith400AndFeedback = "should return with 1) HTTP-400 BadRequest, and 2) a feedback message"
 
 
   /* Test GET /search/road_numbers */
@@ -42,7 +42,7 @@ class SearchApiSpec extends FunSuite with ScalatraSuite {
   // TODO check that  'GET /search/road_address' passes with HTTP-200 when proper parameters given, and returns only [] if no data, or with data, when there exists such data
 
   test("Test GET /search/road_address " +
-    "- When a MISSING mandatory parameter (linkId) - Then " + retWith400AndFeedbeck)
+    "- When a MISSING mandatory parameter (linkId) - Then " + retWith400AndFeedback)
   {
     val linkMissingNotification = "Missing mandatory query parameter 'linkId'"
     get("/road_address")                                 {   status should equal(400);   response.body shouldBe linkMissingNotification   }
@@ -50,7 +50,7 @@ class SearchApiSpec extends FunSuite with ScalatraSuite {
   }
 
   test("Test GET /search/road_address " +
-    "- When an ERRONEOUS mandatory parameter (linkId) - Then " + retWith400AndFeedbeck)
+    "- When an ERRONEOUS mandatory parameter (linkId) - Then " + retWith400AndFeedback)
   {
     val erroneousLinkIdNotification = "[At least] a single malformed linkId. MML KGV link ids expected. Now got:"
 
@@ -62,7 +62,7 @@ class SearchApiSpec extends FunSuite with ScalatraSuite {
   }
 
   test("Test GET /search/road_address " +
-    "- When an ERRONEOUS optional parameter - Then " + retWith400AndFeedbeck)
+    "- When an ERRONEOUS optional parameter - Then " + retWith400AndFeedback)
   {
     val erroneousOptionalParameterNotification = "At least one malformed parameter: 'startMeasure' or 'endMeasure'. Now got"
 
@@ -75,7 +75,7 @@ class SearchApiSpec extends FunSuite with ScalatraSuite {
   }
 
   test("Test GET /search/road_address " +
-    "- Whan a parameter out-of-range - Then " + retWith400AndFeedbeck) {
+    "- Whan a parameter out-of-range - Then " + retWith400AndFeedback) {
     val properLinkIdParam = "linkId=36be5dec-0496-4292-b260-884664467174:1"
     val negativeMeasuresNotification = "Invalid value(s) in measure(s). A measure must be >=0, and start < end. Now got"
 
@@ -85,7 +85,7 @@ class SearchApiSpec extends FunSuite with ScalatraSuite {
   }
 
   test("Test GET /search/road_address " +
-    "- When start measure bigger than end measure - Then " + retWith400AndFeedbeck)
+    "- When start measure bigger than end measure - Then " + retWith400AndFeedback)
   {
     val erroneousMutualOrderingNotification = "Invalid value(s) in measure(s). A measure must be >=0, and start < end. Now got"
 
@@ -114,7 +114,7 @@ class SearchApiSpec extends FunSuite with ScalatraSuite {
   // TODO check that  'POST /search/road_address' passes with HTTP-200 when proper parameters given, and returns only [] if no data, or with data, when there exists such data
 
   test("Test POST /search/road_address " +
-    "- When a non-list as a body - Then " + retWith400AndFeedbeck)
+    "- When a non-list as a body - Then " + retWith400AndFeedback)
   {
     val properKGVLinksListExpected = "List of proper MML KGV link ids expected in the body; [id-1, id-2, ...]"
 
@@ -131,7 +131,7 @@ class SearchApiSpec extends FunSuite with ScalatraSuite {
   }
 
   test("Test POST /search/road_address " +
-    "- When a non-KGV linkID in the list in the body - Then " + retWith400AndFeedbeck)
+    "- When a non-KGV linkID in the list in the body - Then " + retWith400AndFeedback)
   {
     val OKlinkId = "36be5dec-0496-4292-b260-884664467174:1"
 
@@ -139,8 +139,7 @@ class SearchApiSpec extends FunSuite with ScalatraSuite {
     post("/road_address", "[]")      {   status should equal(400);      response.body should startWith(missingIdListNotification)    }
     post("/road_address", "[a]")     {   status should equal(400);      response.body should startWith(missingIdListNotification)    }
     post("/road_address", "[a,b]")   {   status should equal(400);      response.body should startWith(missingIdListNotification)    }
-    post("/road_address", OKlinkId)
-    {   status should equal(400);      response.body should startWith(missingIdListNotification)    }
+    post("/road_address", OKlinkId)  {   status should equal(400);      response.body should startWith(missingIdListNotification)    }
     post("/road_address", "[")       {   status should equal(400);      response.body should startWith(missingIdListNotification)    }
 
     val malformedKGVIdNotification = "[At least] a single malformed linkId. MML KGV link ids expected."
@@ -163,7 +162,7 @@ class SearchApiSpec extends FunSuite with ScalatraSuite {
   // TODO check that  'GET /search/road_address/{road}' passes with HTTP-200 when proper parameters given, and returns only [] if no data, or with data, when there exists such data
 
   test("Test GET /search/road_address/{road} " +
-    "- When a non-integer parameter - Then " + retWith400AndFeedbeck)
+    "- When a non-integer parameter - Then " + retWith400AndFeedback)
   {
     val invalidRoadFormatNotification = "Check the given parameters. An integer expected. Now got 'road="
     get("/road_address/a?tracks=1"  )            {   status should equal(400);   response.body should startWith(invalidRoadFormatNotification)    }
@@ -180,7 +179,7 @@ class SearchApiSpec extends FunSuite with ScalatraSuite {
   }
 
   test("Test GET /search/road_address/{road} " +
-    "- When a parameter out-of-range - Then " + retWith400AndFeedbeck)
+    "- When a parameter out-of-range - Then " + retWith400AndFeedback)
   {
     val invalidRoadNumberNotification = "Check the given parameters. Range of 'road' is 1 - 99999. Now got"
     get("/road_address/0?tracks=1")              {   status should equal(400);   response.body should startWith(invalidRoadNumberNotification)    }
@@ -198,7 +197,7 @@ class SearchApiSpec extends FunSuite with ScalatraSuite {
   // TODO check that  'POST /search/road_address/{road}' passes with HTTP-200 when proper parameters given, and returns only [] if no data, or with data, when there exists such data
 
   test("Test POST /search/road_address/{road} - " +
-    "- When a MISSING mandatory parameter (BODY) - Then " + retWith400AndFeedbeck)
+    "- When a MISSING mandatory parameter (BODY) - Then " + retWith400AndFeedback)
   {
     val missingParameterNotification = "Check the given parameters. Missing or faulty mandatory body parameters, or a non-JSON body. Check 'tracks', and 'roadParts' lists, and correct formatting of the body."
     post("/road_address/1",   "{                     \"tracks\":[0]}") {   status should equal(400);   response.body should startWith(missingParameterNotification)   }
@@ -206,7 +205,7 @@ class SearchApiSpec extends FunSuite with ScalatraSuite {
   }
 
   test("Test POST /search/road_address/{road} " +
-    "- When a FAULTY mandatory parameter (BODY) - Then " + retWith400AndFeedbeck)
+    "- When a FAULTY mandatory parameter (BODY) - Then " + retWith400AndFeedback)
   {
     val faultyParameterNotification = "Check the given parameters. Missing or faulty mandatory body parameters, or a non-JSON body. Check 'tracks', and 'roadParts' lists, and correct formatting of the body."
     post("/road_address/1", "{ \"roadParts\":,     \"tracks\":[0]  }") {   status should equal(400);   response.body should startWith(faultyParameterNotification)   }
@@ -225,7 +224,7 @@ class SearchApiSpec extends FunSuite with ScalatraSuite {
   }
 
   test("Test POST /search/road_address/{road} " +
-    "- When a non-integer parameter (PATH) - Then " + retWith400AndFeedbeck)
+    "- When a non-integer parameter (PATH) - Then " + retWith400AndFeedback)
   {
     val erroneousRoadNumberNotification = "Check the given parameters. An integer expected. Now got 'road="
     post("/road_address/a",  "{ \"roadParts\":[1],       \"tracks\":[0]  }") {   status should equal(400);   response.body should startWith(erroneousRoadNumberNotification)   }
@@ -235,7 +234,7 @@ class SearchApiSpec extends FunSuite with ScalatraSuite {
   }
 
   test("Test POST /search/road_address/{road} " +
-    "- When a non-integer parameter (BODY) - Then " + retWith400AndFeedbeck)
+    "- When a non-integer parameter (BODY) - Then " + retWith400AndFeedback)
   {
     val emptyParameterNotification = "Check the given parameters. Empty '"
     post("/road_address/1", "{ \"roadParts\":[],         \"tracks\":[0]  }") {   status should equal(400);   response.body should startWith(emptyParameterNotification) } //" 'roadParts' list in the body."
@@ -254,7 +253,7 @@ class SearchApiSpec extends FunSuite with ScalatraSuite {
   }
 
   test("Test POST /search/road_address/{road} " +
-    "- When a parameter out-of-range - Then " + retWith400AndFeedbeck)
+    "- When a parameter out-of-range - Then " + retWith400AndFeedback)
   {
     val roadNumberOutOfRangeNotification = "Check the given parameters. Range of 'road' is 1 - 99999. Now got "
     post("/road_address/0",     "{ \"roadParts\":[1],    \"tracks\":[0]  }") {   status should equal(400);   response.body should startWith(roadNumberOutOfRangeNotification)   }
@@ -277,7 +276,7 @@ class SearchApiSpec extends FunSuite with ScalatraSuite {
   // TODO check that  'GET /search/road_address/{road}/{roadPart}' passes with HTTP-200 when proper parameters given, and returns only [] if no data, or with data, when there exists such data
 
   test("Test GET /search/road_address/{road}/{roadPart} " +
-    "- When a non-integer parameter - Then " + retWith400AndFeedbeck)
+    "- When a non-integer parameter - Then " + retWith400AndFeedback)
   {
     val invalidRoadNumberNotification = "Check the given parameters. An integer expected. Now got 'road="
     get("/road_address/a/1")    {   status should equal(400);   response.body should startWith(invalidRoadNumberNotification)   }
@@ -295,7 +294,7 @@ class SearchApiSpec extends FunSuite with ScalatraSuite {
   }
 
   test ("Test GET /search/road_address/{road}/{roadPart} " +
-    "- When a parameter out-of-range - Then " + retWith400AndFeedbeck)
+    "- When a parameter out-of-range - Then " + retWith400AndFeedback)
   {
     val roadNumberOutOfRangeNotification = "Check the given parameters. Range of 'road' is 1 - 99999."
     get ("/road_address/0/1")        {   status should equal (400);   response.body should startWith (roadNumberOutOfRangeNotification)  }
@@ -312,7 +311,7 @@ class SearchApiSpec extends FunSuite with ScalatraSuite {
   // TODO check that  'GET /search/road_address/{road}/{roadPart}/{address}' passes with HTTP-200 when proper parameters given, and returns only [] if no data, or with data, when there exists such data
 
   test("Test GET /search/road_address/{road}/{roadPart}/{address} " +
-    "- When a non-integer parameter - Then " + retWith400AndFeedbeck)
+    "- When a non-integer parameter - Then " + retWith400AndFeedback)
   {
     val invalidRoadNumberNotification = "Check the given parameters. An integer expected. Now got 'road="
     get("/road_address/a/1/0?track=1")   {   status should equal(400);   response.body should startWith(invalidRoadNumberNotification)   }
@@ -348,7 +347,7 @@ class SearchApiSpec extends FunSuite with ScalatraSuite {
   }
 
   test("Test GET /search/road_address/{road}/{roadPart}/{address} " +
-    "- When a parameter out-of-range - Then " + retWith400AndFeedbeck)
+    "- When a parameter out-of-range - Then " + retWith400AndFeedback)
   {
     val roadNumberOutOfRangeNotification = "Check the given parameters. Range of 'road' is 1 - 99999."
     get("/road_address/0/1/0?track=1")        {   status should equal(400);   response.body should startWith(roadNumberOutOfRangeNotification)   }
@@ -374,7 +373,7 @@ class SearchApiSpec extends FunSuite with ScalatraSuite {
   // TODO check that  'GET /search/road_address/{road}/{roadPart}/{startAddress}/{endAddress}' passes with HTTP-200 when proper parameters given, and returns only [] if no data, or with data, when there exists such data
 
   test("Test GET /search/road_address/{road}/{roadPart}/{startAddress}/{endAddress} " +
-    "- When a non-integer parameter - Then " + retWith400AndFeedbeck)
+    "- When a non-integer parameter - Then " + retWith400AndFeedback)
   {
     val invalidRoadNumberNotification = "Check the given parameters. An integer expected. Now got 'road="
     get("/road_address/a/1/0/1000")   {   status should equal(400);   response.body should startWith(invalidRoadNumberNotification)   }
@@ -406,7 +405,7 @@ class SearchApiSpec extends FunSuite with ScalatraSuite {
   }
 
   test("Test GET /search/road_address/{road}/{roadPart}/{startAddress}/{endAddress} " +
-    "- When a parameter out-of-range - Then " + retWith400AndFeedbeck)
+    "- When a parameter out-of-range - Then " + retWith400AndFeedback)
   {
     val roadNumberOutOfRangeNotification = "Check the given parameters. Range of 'road' is 1 - 99999."
     get("/road_address/0/1/0/1000")        {   status should equal(400);   response.body should startWith(roadNumberOutOfRangeNotification)    }
