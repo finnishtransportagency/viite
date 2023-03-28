@@ -109,8 +109,8 @@ class SearchApi(roadAddressService: RoadAddressService,
       tags "SearchAPI (Digiroad)"
       summary "Returns all the existing road numbers at the current Viite road network."
       description "Returns List of all the existing road numbers at the current Viite road network." +
-              "The Viite current network may contain roadway number changes that will be in effect only in the future.\n"+
-              "<br />2023-02-23 The list is now sorted. Better exception handling, and more explicit feedback for the caller."
+                  "The Viite current network may contain roadway number changes that will be in effect only in the future.\n"+
+                  "<br />2023-02-23 The list is now sorted. Better exception handling, and more explicit feedback for the caller."
       parameter headerParam[String]("X-API-Key").required.description(XApiKeyDescription)
     )
   // TODO: "?" in the end is useless; does not take query params
@@ -197,7 +197,7 @@ class SearchApi(roadAddressService: RoadAddressService,
         pathParam[Long]("roadPart").required.description(roadPartNumberDescription),
         pathParam[Long]("address").required.description("Road Measure, the metric address value, of a road address"),
         pathParam[Long]("track").optional.description("(Optional) " + trackNumberFilterDescription +
-                                                    "\nIf omitted, any track is returned.")
+                                                      "\nIf omitted, any track is returned.")
       )
       tags "SearchAPI (Digiroad)"
       summary "Returns the road addresses within the given road part, returned as linear location sized parts.\n" +
@@ -277,22 +277,22 @@ class SearchApi(roadAddressService: RoadAddressService,
   // TODO: "?" in the end is useless; does not take query params
   post("/road_address/?", operation(getRoadAddressByLinkIds)) {
     val requestString = s"POST request for ${request.getRequestURI} (${getRoadAddressByLinkIds.operationId})"
+    val properKGVLinksListExpected = "List of proper MML KGV link ids expected in the body; [id-1, id-2, ...]"
     time(logger, requestString, params=Some(Map("requestBody" -> request.body))) {
 
       val linkIds = try { // Check that the formats of the parameters are ok
         parsedBody.extract[Set[String]]
       } catch {
         case e: Exception =>
-          logger.info(s"A malformed list of link ids in the body: ${request.body}. $e")
+          logger.info(s"$properKGVLinksListExpected. Got: ${request.body}. $e")
           halt(BadRequest(
-            s"Malformed list of link ids in the body. Got '${request.body}'.\n" +
-            s"The MML KGV style link ids expected in a list. '[link-id-1:n2,link-id-2:n2]'"
+            s"$properKGVLinksListExpected. Got '${request.body}'."
           ))
       }
 
       // Check the numeric validity of the parameters
       if(linkIds.isEmpty) // parsing to strings failed, or no links given
-        halt(BadRequest(s"List of proper MML KGV link ids expected in the body, as a 'linkIds' list. body: '${request.body}'"))
+        halt(BadRequest(s"$properKGVLinksListExpected. Got: '${request.body}'"))
       haltWith400IfInvalidLinkIds(linkIds)
       try {
         roadAddressService.getRoadAddressByLinkIds(linkIds).map(roadAddressMapper)
@@ -329,7 +329,7 @@ class SearchApi(roadAddressService: RoadAddressService,
       try {
         if ((parsedBody \ "tracks").toString.equals("JNothing") ||
           (parsedBody \ "roadParts").toString.equals("JNothing"))
-          throw ViiteException(s"Missing mandatory body parameters, or a non-JSON body. Check 'tracks', and 'roadParts' lists, and correct formatting of the body.")
+          throw ViiteException(s"Missing or faulty mandatory body parameters, or a non-JSON body. Check 'tracks', and 'roadParts' lists, and correct formatting of the body.")
 
         val roadNumber = roadNumberGetValidOrThrow("road")
         val tracks = tracksGetValidFromBodyOrThrow("tracks")
