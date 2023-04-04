@@ -3,7 +3,8 @@ Viite-sovelluksen käyttöohje
 Viite
 -----------------------
 
-Viite on Väylän tieosoitejärjestelmän ylläpitosovellus. Viitteellä hallitaan tieosoitejärjestelmän muutoksia ja se tarjoaa ajantasaisen kuvauksen tiestöstä KGV:n jäädytetyllä linkkigeometrialla.
+Viite on Väylän tieosoitejärjestelmän ylläpitosovellus. Viitteellä hallitaan tieosoitejärjestelmän muutoksia ja se tarjoaa kuvauksen tiestöstä 
+Maanmittauslaitoksen keskilinja-aineistoon perustuvan Väyläviraston Keskilinjageometriavaraston (KGV) jäädytetyllä linkkigeometrialla.
 
 Linkin https://extranet.vayla.fi/group/extranet/etusivu alta Väylän extranetista löytyy Viite, Viite-sovelluksen yleiskuvaus, linkki tähän ohjeeseen ja tieto järjestelmäpäälliköstä. 
 
@@ -103,7 +104,7 @@ Viite-sovellus päivittää automaattisesti tieosoitesegmentit takaisin ajantasa
 Automatiikka tekee korjaukset, kun
 
 1. __Tielinkki pitenee tai lyhenee alle metrin:__ Viite-sovellus lyhentää/pidentää tieosoitesegmenttiä automaattisesti muutoksen verran.
-2. __Maanmittauslaitos yhdistelee tielinkkejä, esimerkiksi poistamalla tonttiliittymiä maanteiden varsilta:__ Tieosoitesegmentit siirretään uudelle geometrialle automaattisesti MML:n keskilinjageometriavaraston (KGV) tarjoaman tielinkkien muutosrajapinnan avulla.
+2. __Maanmittauslaitos yhdistelee tielinkkejä, esimerkiksi poistamalla tonttiliittymiä maanteiden varsilta:__ Tieosoitesegmentit siirretään uudelle geometrialle automaattisesti Keskilinjageometriavaraston (KGV) tarjoaman tielinkkien muutosrajapinnan avulla.
 -->
 
 4 Karttanäkymän toiminnot

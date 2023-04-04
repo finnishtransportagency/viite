@@ -6,7 +6,8 @@ HUOM! 2023-03-28: Ohjeeseen päivitetty Tierekisterin ja VVHn poistumat, poistet
 VIITE
 -----------------------
 
-VIITE on Väyläviraston tieosoitejärjestelmän ylläpito-sovellus. Viitteellä hallitaan tieosoitejärjestelmän muutoksia ja se tarjoaa kuvauksen tiestöstä Keskilinjageometriavaraston (KGV:n) jäädytetyllä linkkigeometrialla. (Ajantasainen, ns. dynaaminen tieosoiteverkko tulossa, 2023)
+VIITE on Väyläviraston tieosoitejärjestelmän ylläpitosovellus. Viitteellä hallitaan tieosoitejärjestelmän muutoksia ja se tarjoaa kuvauksen tiestöstä 
+Maanmittauslaitoksen keskilinja-aineistoon perustuvan Väyläviraston Keskilinjageometriavaraston (KGV) jäädytetyllä linkkigeometrialla. (Ajantasainen, ns. dynaaminen tieosoiteverkko tulossa, 2023)
 
 Seuraavasta linkistä pääsee Väyläviraston extranet VIITE-sivulle (tällä hetkellä testiextranet käytössä, varsinainen extranet-osoite päivitetään myöhemmin), jossa kerrotaan Viitteen yleiskuvaus ja annetaan tiedotteita käyttäjille. Sivulla ylläpidetään myös dokumentaatiota Viitteestä. 
 
@@ -70,7 +71,7 @@ _Viite-sovelluksen yhteydet muihin järjestelmiin ja palveluihin. KUVA VANHENTUN
 
 ##Keskilinjageometriavarasto (KGV)##
 
-Viite-sovelluksessa pohja-aineistona oleva geometria tulee Väyläviraston Keskilinjageometriavarastosta (KGV). KGV:oon ladataan päivittäin Maanmittauslaitokselta päivitykset Maastotietokannan (MTK) keskilinja-aineistoon, jolloin myös Viite-sovellukselle olisi käytössä uusi keskilinjageometria joka päivä. Tällä hetkellä (2023-03) Viite käyttää jäädytettyä rajapinta,a jonka aineisto päivitetään puolen vuoden välein.
+Viite-sovelluksessa pohja-aineistona oleva geometria tulee Väyläviraston Keskilinjageometriavarastosta (KGV). KGV:oon ladataan päivittäin Maanmittauslaitokselta päivitykset Maastotietokannan (MTK) keskilinja-aineistoon, jolloin myös Viite-sovellukselle olisi käytössä uusi keskilinjageometria joka päivä. Tällä hetkellä (2023-03) Viite käyttää jäädytettyä rajapintaa, jonka aineisto päivitetään puolen vuoden välein.
 
 ##Digiroad (ent. OTH): Ominaisuustietojen hallinta##
 
@@ -231,10 +232,10 @@ Esimerkiksi: https://viite.vaylapilvi.fi/#linkProperty/025a3c1c-4ca3-4db6-845b-4
 
 _Kohdistaminen tielinkin ID:llä._
 
-5 Tuntemattomat tieosoitesegmentit
+5 
 --------------------------
 
-(Poistettu, Viiteessä ei ole olut tuntemattomia tielinkkejä enää useaan vuoteen(2023-03))
+(Kappale 5 poistettu (2023-03); toimintoa ei ole enää Viiteessä)
 
 6 Rakenteilla olevat tielinkit ja niiden tieosoitteet
 --------------------------
@@ -280,15 +281,15 @@ Tätä varten järjestelmä tekee automaattista yhdistelyä:
 (Poistettu, Viiteen linkkigeometria jäädytetty (2023-03))
 
 
-8 Geometriasta irti olevat tieosoitesegmentit
+8 
 --------------------------
 
-(Poistettu, Viiteessä ei irti olevia linkkigeometrioita; jäädytys(2023-03))
+(Kappale 8 poistettu (2023-03); toimintoa ei ole enää Viiteessä)
 
-9 Geometriasta irti olevien tieosoitesegmenttien korjaaminen takaisin geometrialle
+9 
 --------------------------
 
-(Poistettu, Viiteessä ei irti olevia linkkigeometrioita; jäädytys(2023-03))
+(Kappale 8 poistettu (2023-03); toimintoa ei ole enää Viiteessä)
 
 10 Tieosoiteprojektin tekeminen
 --------------------------
