@@ -8,13 +8,13 @@ CodePipeline kuuntelee Viiteen Gitin kehitysbranchiin (2023-03 tämä on nimelt�
 ja alkaa sen jälkeen automaattisesti buildata sen perusteella kehitysversiota CodeBuildilla. ("Push_to_postgis" -Build projekti.)    
 Buildaus tapahtuu  `buildspec.yaml`in mukaisesti; buildi asentelee konttiin ns. kaiken alusta asti ja ajaa testit ennen kuin uusi commit päästetään eteenpäin. 
 Onnistuneiden testien ja käännon jälkeen AWS nostaa uuden development-ympäristön pystyyn ja nitistää vanhat alta pois.   
-Virheellisestä käännöstä tulee AWS/SNS:n toimesta sähköposti niille, jotka ovat rekisteröityneet kuuntelemaan `viite-codebuild-status-email-topic`-viestejä.
+Jos buildi törmää virheeseen, tulee AWS/SNS:n toimesta sähköposti niille, jotka ovat rekisteröityneet kuuntelemaan `viite-codebuild-status-email-topic`-viestejä.
 
-Tuorein kehitysympäristöversio löytyy operaation päåätteeksi internetitse osoitteesta `https://viitedev.testivaylapilvi.fi/`.
+Tuorein kehitysympäristöversio löytyy operaation päätteeksi internetitse osoitteesta `https://viitedev.testivaylapilvi.fi/`.
 
 ### QA-ympäristön versiojulkaisu ###
 QA-ympäristöön julkaisu tapahtuu kehitysympäristöä vastaavasti,
-Viiteen Gitin QA-branchiin (2023-03 tämä on nimeltään 'NextRelease', ja sitä ei välttämättä aina ole olemassa) pushattuja commiteja.
+Viiteen Gitin QA-branchiin (2023-03 tämä on nimeltään `NextRelease`, ja se on olemassa vain tarpeen mukaan) pushattuja commiteja.
 Buildiprosesi menee vastaavasti kuin kehitysympäristössä.
 
 ### Tuotantoympäristön versiojulkaisu ###
