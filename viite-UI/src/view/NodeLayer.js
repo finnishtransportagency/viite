@@ -582,9 +582,6 @@
       eventListener.listenTo(eventbus, 'roadLinks:fetched', function () {
         if (applicationModel.getSelectedLayer() === 'node') {
           me.clearLayers(layers);
-          if (applicationModel.getCurrentAction() === -1) {
-            applicationModel.removeSpinner();
-          }
         }
       });
 
