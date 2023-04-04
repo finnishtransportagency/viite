@@ -271,28 +271,25 @@
       var rootElement = $('#feature-attributes');
       rootElement.empty();
 
-      var emptyFormDiv =
-        '<p class="form form-horizontal"></p>' +
-        '<div class="form-initial-state" id="emptyFormDiv">' +
-        '<button id="formProjectButton" class="action-mode-btn btn btn-block btn-primary">Tieosoiteprojektit</button>' +
-        '<button id="formNameToolButton" class="open-tool-mode-btn btn btn-block btn-primary" style="margin-top: 5px;">Tiennimen ylläpito</button>' +
-        '<button id="formNodesAndJunctionsButton" class="open-tool-mode-btn btn btn-block btn-primary" style="margin-top: 5px;">Solmut ja liittymät</button>' +
-        '<button id="formRoadAddressBrowserButton" class="open-tool-mode-btn btn btn-block btn-primary" style="margin-top: 5px;">Tieosoitteiden katselu</button>' +
-        '<button id="formRoadAddressChangesBrowserButton" class="open-tool-mode-btn btn btn-block btn-primary" style="margin-top: 5px;">Tieosoitemuutosten katselu</button>' +
-        '</div>';
+      var projectModeButton =  '<button id="formProjectButton" class="action-mode-btn btn btn-block btn-primary">Tieosoiteprojektit</button>';
+      var roadNameToolButton = '<button id="formNameToolButton" class="open-tool-mode-btn btn btn-block btn-primary" style="margin-top: 5px;">Tiennimen ylläpito</button>';
+      var nodesAndJunctionsButton = '<button id="formNodesAndJunctionsButton" class="open-tool-mode-btn btn btn-block btn-primary" style="margin-top: 5px;">Solmut ja liittymät</button>';
+      var roadAddressBrowserButton = '<button id="formRoadAddressBrowserButton" class="open-tool-mode-btn btn btn-block btn-primary" style="margin-top: 5px;">Tieosoitteiden katselu</button>';
+      var roadAddressChangesBrowserButton = '<button id="formRoadAddressChangesBrowserButton" class="open-tool-mode-btn btn btn-block btn-primary" style="margin-top: 5px;">Tieosoitemuutosten katselu</button>';
 
-      var emptyFormDivForViewMode =
-          '<p class="form form-horizontal"></p>' +
-          '<div class="form-initial-state" id="emptyFormDiv">' +
-          '<button id="formNodesAndJunctionsButton" class="open-tool-mode-btn btn btn-block btn-primary" style="margin-top: 5px;">Solmut ja liittymät</button>' +
-          '<button id="formRoadAddressBrowserButton" class="open-tool-mode-btn btn btn-block btn-primary" style="margin-top: 5px;">Tieosoitteiden katselu</button>' +
-          '<button id="formRoadAddressChangesBrowserButton" class="open-tool-mode-btn btn btn-block btn-primary" style="margin-top: 5px;">Tieosoitemuutosten katselu</button>' +
-          '</div>';
+      var toolButtonsDiv =
+          $('<div class="form-initial-state" id="emptyFormDiv">' +
+              nodesAndJunctionsButton +
+              roadAddressBrowserButton +
+              roadAddressChangesBrowserButton +
+          '</div>');
 
+      // add buttons for the view mode tools
+      rootElement.append(toolButtonsDiv);
+
+      // if the user has "viite" role then add the buttons for project mode and road name tool
       if (_.includes(startupParameters.roles, 'viite'))
-        rootElement.append(emptyFormDiv);
-      else
-        rootElement.append(emptyFormDivForViewMode);
+        toolButtonsDiv.prepend(projectModeButton + roadNameToolButton);
 
       $('[id=formProjectButton]').click(function () {
         if (applicationModel.isProjectOpen()) {
