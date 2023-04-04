@@ -489,9 +489,6 @@
         }
       }
       addSelectInteractions();
-      if (applicationModel.getCurrentAction() === -1) {
-        applicationModel.removeSpinner();
-      }
     };
 
     this.refreshView = function () {
