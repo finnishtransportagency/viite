@@ -15,7 +15,6 @@
     let openProject = false;
     let projectButton = false;
     let projectFeature;
-    let currentAction;
     let selectionType = ViiteEnumerations.SelectionType.All;
     let sessionUsername = '';
     let sessionUserRoles = '';
@@ -102,24 +101,12 @@
       eventbus.trigger('tool:changed', selectedTool);
     }
 
-    const getCurrentAction = function () {
-      return currentAction;
-    };
-
     const getUserGeoLocation = function () {
       return {
         x: centerLonLat[0],
         y: centerLonLat[1],
         zoom: zoom.level
       };
-    };
-
-    const setCurrentAction = function (action) {
-      currentAction = action;
-    };
-
-    const resetCurrentAction = function () {
-      currentAction = null;
     };
 
     function spinnerClassName(spinnerEvent) {
@@ -237,9 +224,6 @@
     };
 
     return {
-      getCurrentAction: getCurrentAction,
-      setCurrentAction: setCurrentAction,
-      resetCurrentAction: resetCurrentAction,
       refreshMap: refreshMap,
       getUserGeoLocation: getUserGeoLocation,
       setSelectedTool: setSelectedTool,

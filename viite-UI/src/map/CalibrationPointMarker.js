@@ -2,7 +2,6 @@
   root.CalibrationPoint = function (data) {
     var cachedMarker = null;
     var cachedDirectionArrow = null;
-    var firstCustomCalibrationPointValue = 4;
     var createCalibrationPointMarker = function () {
       const marker = new ol.Feature({
         geometry: new ol.geom.Point([data.points.x, data.points.y])

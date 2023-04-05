@@ -17,7 +17,6 @@
     var transferredStatus = LinkStatus.Transfer.value;
     var numberingStatus = LinkStatus.Numbering.value;
     var terminatedStatus = LinkStatus.Terminated.value;
-    var unknownStatus = LinkStatus.Undefined.value;
 
     var strokeWidthRules = [
       new StyleRule().where('zoomLevel').isIn([5, 6]).use({stroke: {width: 3}}),
@@ -263,25 +262,6 @@
       })
     ];
 
-    const fillRulesForUnAddressed = [
-      new StyleRule().where('status').is(unknownStatus).and('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).and('startAddressM').is(0).and('endAddressM').is(0).and('administrativeClassId').is(ViiteEnumerations.AdministrativeClass.PublicRoad.value).and('lifecycleStatus').isNot(ViiteEnumerations.lifecycleStatus.UnderConstruction.value).use({
-        stroke: {
-          color: '#646461',
-          lineCap: 'round',
-          opacity: 1
-        },
-        zIndex: ViiteEnumerations.ProjectModeZIndex.UnAddressedState.fill
-      }),
-      new StyleRule().where('status').is(unknownStatus).and('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).and('startAddressM').is(0).and('endAddressM').is(0).and('administrativeClassId').isNot(ViiteEnumerations.AdministrativeClass.PublicRoad.value).and('lifecycleStatus').isNot(ViiteEnumerations.lifecycleStatus.UnderConstruction.value).use({
-        stroke: {
-          color: '#646461',
-          lineCap: 'round',
-          opacity: 1
-        },
-        zIndex: ViiteEnumerations.ProjectModeZIndex.UnAddressedOther.fill
-      })
-    ];
-
     const fillRulesForProjectLinks = [
       new StyleRule().where('status').is(unchangedStatus).use({
         stroke: {
@@ -314,33 +294,6 @@
           opacity: 1
         },
         zIndex: ViiteEnumerations.ProjectModeZIndex.NumberingProjectLinks.fill
-      })
-    ];
-
-    var fillRulesForNotInProjectLinks = [
-      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.RampsAndRoundAboutsClass.value).use({
-        stroke: {
-          color: '#fff',
-          lineCap: 'butt',
-          lineDash: [10, 10]
-        },
-        zIndex: ViiteEnumerations.ProjectModeZIndex.NotInProjectRoadLinks.fill
-      }),
-      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.PedestrianAndBicyclesClass.value).use({
-        stroke: {
-          color: '#fff',
-          lineCap: 'butt',
-          lineDash: [10, 10]
-        },
-        zIndex: ViiteEnumerations.ProjectModeZIndex.NotInProjectRoadLinks.fill
-      }),
-      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.WinterRoadsClass.value).or('roadClass').is(ViiteEnumerations.RoadClass.PrivateRoadClass.value).or('roadClass').is(ViiteEnumerations.RoadClass.PathsClass.value).use({
-        stroke: {
-          color: '#f3f3f2',
-          lineCap: 'butt',
-          lineDash: [10, 10]
-        },
-        zIndex: ViiteEnumerations.ProjectModeZIndex.NotInProjectRoadLinks.fill
       })
     ];
 
