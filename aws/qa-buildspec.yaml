@@ -16,14 +16,6 @@ phases:
     commands:
       - pip install --upgrade awscli
       - $(aws ecr get-login --no-include-email --region eu-west-1)
-      - mkdir digiroad2-geo/lib
-      - aws s3 cp "s3://fi-viite-dev/geotools-19/gt-graph-19.0.jar" ./digiroad2-geo/lib
-      - aws s3 cp "s3://fi-viite-dev/geotools-19/gt-main-19.0.jar" ./digiroad2-geo/lib
-      - aws s3 cp "s3://fi-viite-dev/geotools-19/gt-api-19.0.jar" ./digiroad2-geo/lib
-      - aws s3 cp "s3://fi-viite-dev/geotools-19/gt-referencing-19.0.jar" ./digiroad2-geo/lib
-      - aws s3 cp "s3://fi-viite-dev/geotools-19/gt-metadata-19.0.jar" ./digiroad2-geo/lib
-      - aws s3 cp "s3://fi-viite-dev/geotools-19/gt-opengis-19.0.jar" ./digiroad2-geo/lib
-      - aws s3 cp "s3://fi-viite-dev/geotools-19/jgridshift-1.0.jar" ./digiroad2-geo/lib
       - rm -rf /etc/localtime && ln -s /usr/share/zoneinfo/Europe/Helsinki /etc/localtime
   build:
     commands:
