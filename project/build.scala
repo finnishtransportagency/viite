@@ -26,6 +26,8 @@ object Digiroad2Build extends Build {
   val JettyVersion = "9.2.15.v20160210"
   val TestOutputOptions = Tests.Argument(TestFrameworks.ScalaTest, "-oNCXELOPQRMI") // List only problems, and their summaries. Set suitable logback level to get the effect.
   val AwsSdkVersion = "2.17.148"
+  val GeoToolsVersion = "27.2"
+  val GeoToolsApiVersion = "20.5" //latest version of GeoToolsApi
 
   // Get build id to check if executing in aws environment.
   val awsBuildId: String = scala.util.Properties.envOrElse("CODEBUILD_BUILD_ID", null)
@@ -48,14 +50,14 @@ object Digiroad2Build extends Build {
             "joda-time" % "joda-time" % JodaTimeVersion,
             "com.typesafe.akka" %% "akka-actor" % AkkaVersion,
             "javax.media" % "jai_core" % "1.1.3" from "https://repo.osgeo.org/repository/release/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
-            "org.geotools" % "gt-graph" % "19.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/org/geotools/gt-graph/19.0/gt-graph-19.0.jar",
-            "org.geotools" % "gt-main" % "19.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/org/geotools/gt-main/19.0/gt-main-19.0.jar",
-            "org.geotools" % "gt-api" % "19.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/org/geotools/gt-api/19.0/gt-api-19.0.jar",
-            "org.geotools" % "gt-referencing" % "19.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/org/geotools/gt-referencing/19.0/gt-referencing-19.0.jar",
-            "org.geotools" % "gt-metadata" % "19.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/org/geotools/gt-metadata/19.0/gt-metadata-19.0.jar",
-            "org.geotools" % "gt-opengis" % "19.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/org/geotools/gt-opengis/19.0/gt-opengis-19.0.jar",
+            "org.geotools" % "gt-graph" % GeoToolsVersion from s"https://repo.osgeo.org/repository/release/org/geotools/gt-graph/$GeoToolsVersion/gt-graph-$GeoToolsVersion.jar",
+            "org.geotools" % "gt-main" % GeoToolsVersion from s"https://repo.osgeo.org/repository/release/org/geotools/gt-main/$GeoToolsVersion/gt-main-$GeoToolsVersion.jar",
+            "org.geotools" % "gt-api" % GeoToolsApiVersion from s"https://repo.osgeo.org/repository/geotools-releases/org%2Fgeotools%2Fgt-api%2F$GeoToolsApiVersion%2Fgt-api-$GeoToolsApiVersion.jar",
+            "org.geotools" % "gt-referencing" % GeoToolsVersion from s"https://repo.osgeo.org/repository/release/org/geotools/gt-referencing/$GeoToolsVersion/gt-referencing-$GeoToolsVersion.jar",
+            "org.geotools" % "gt-metadata" % GeoToolsVersion from s"https://repo.osgeo.org/repository/release/org/geotools/gt-metadata/$GeoToolsVersion/gt-metadata-$GeoToolsVersion.jar",
+            "org.geotools" % "gt-opengis" % GeoToolsVersion from s"https://repo.osgeo.org/repository/release/org/geotools/gt-opengis/$GeoToolsVersion/gt-opengis-$GeoToolsVersion.jar",
             "jgridshift" % "jgridshift" % "1.0" from "https://repo.osgeo.org/repository/release/jgridshift/jgridshift/1.0/jgridshift-1.0.jar",
-            "com.vividsolutions" % "jts-core" % "1.14.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/com/vividsolutions/jts-core/1.14.0/jts-core-1.14.0.jar",
+            "org.locationtech.jts" % "jts-core" % "1.18.2" from "https://repo1.maven.org/maven2/org/locationtech/jts/jts-core/1.18.2/jts-core-1.18.2.jar",
             "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test"
           )
         )
@@ -78,7 +80,7 @@ object Digiroad2Build extends Build {
             "joda-time" % "joda-time" % JodaTimeVersion,
             "com.typesafe.akka" %% "akka-actor" % AkkaVersion,
             "javax.media" % "jai_core" % "1.1.3" from "https://repo.osgeo.org/repository/release/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
-            "com.vividsolutions" % "jts-core" % "1.14.0",
+            "org.locationtech.jts" % "jts-core" % "1.18.2" from "https://repo1.maven.org/maven2/org/locationtech/jts/jts-core/1.18.2/jts-core-1.18.2.jar",
             "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test"
           )
         )
