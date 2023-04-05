@@ -13,11 +13,11 @@
           selected.unselect();
         });
         applicationModel.setActiveButtons(false);
-        eventbus.trigger('layer:enableButtons', true);
-        eventbus.trigger('linkProperties:unselected');
         setCurrent([]);
         dirty = false;
         featuresToKeep = [];
+        eventbus.trigger('layer:enableButtons', true);
+        eventbus.trigger('linkProperties:unselected');
         applicationModel.setActiveButtons(false);
       }
     };

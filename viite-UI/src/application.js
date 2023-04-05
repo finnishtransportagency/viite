@@ -63,6 +63,7 @@
 
   var createOpenLayersMap = function (startupParameters, layers) {
     var map = new ol.Map({
+      interactions : ol.interaction.defaults.defaults({doubleClickZoom :false}),
       keyboardEventTarget: document,
       target: 'mapdiv',
       layers: layers,
@@ -70,11 +71,13 @@
         center: [startupParameters.lon, startupParameters.lat],
         projection: 'EPSG:3067',
         zoom: startupParameters.zoom,
+        constrainResolution: true, // The view will always animate to the closest zoom level after an interaction
         resolutions: [2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1, 0.5, 0.25, 0.125, 0.0625]
       })
     });
 
     var shiftDragZoom = new ol.interaction.DragZoom({
+      className: "dragZoom",
       duration: 1500,
       condition: function (mapBrowserEvent) {
         var originalEvent = mapBrowserEvent.originalEvent;

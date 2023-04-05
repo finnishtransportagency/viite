@@ -69,7 +69,6 @@ module.exports = function (grunt) {
               'pikaday.js': 'node_modules/pikaday/pikaday.js',
               'proj4.js': 'node_modules/proj4/dist/proj4.js',
               'interact.min.js': 'node_modules/interactjs/dist/interact.min.js',
-              'ol.js': 'viite-UI/components/ol.js',
               'viite.min.js': 'dist/js/viite.js'
             }
           ],
