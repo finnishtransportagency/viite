@@ -32,61 +32,35 @@ object Digiroad2Build extends Build {
   // Get build id to check if executing in aws environment.
   val awsBuildId: String = scala.util.Properties.envOrElse("CODEBUILD_BUILD_ID", null)
 
-  lazy val geoJar = awsBuildId match {
-    case null => {
-      Project(
-        Digiroad2GeoName,
-        file(Digiroad2GeoName),
-        settings = Defaults.defaultSettings ++ Seq(
-          organization := Organization,
-          name := Digiroad2GeoName,
-          version := Version,
-          scalaVersion := ScalaVersion,
-          resolvers += Classpaths.typesafeReleases,
-          scalacOptions ++= Seq("-unchecked", "-feature"),
-          testOptions in Test += TestOutputOptions,
-          libraryDependencies ++= Seq(
-            "org.joda" % "joda-convert" % JodaConvertVersion,
-            "joda-time" % "joda-time" % JodaTimeVersion,
-            "com.typesafe.akka" %% "akka-actor" % AkkaVersion,
-            "javax.media" % "jai_core" % "1.1.3" from "https://repo.osgeo.org/repository/release/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
-            "org.geotools" % "gt-graph" % GeoToolsVersion from s"https://repo.osgeo.org/repository/release/org/geotools/gt-graph/$GeoToolsVersion/gt-graph-$GeoToolsVersion.jar",
-            "org.geotools" % "gt-main" % GeoToolsVersion from s"https://repo.osgeo.org/repository/release/org/geotools/gt-main/$GeoToolsVersion/gt-main-$GeoToolsVersion.jar",
-            "org.geotools" % "gt-api" % GeoToolsApiVersion from s"https://repo.osgeo.org/repository/geotools-releases/org%2Fgeotools%2Fgt-api%2F$GeoToolsApiVersion%2Fgt-api-$GeoToolsApiVersion.jar",
-            "org.geotools" % "gt-referencing" % GeoToolsVersion from s"https://repo.osgeo.org/repository/release/org/geotools/gt-referencing/$GeoToolsVersion/gt-referencing-$GeoToolsVersion.jar",
-            "org.geotools" % "gt-metadata" % GeoToolsVersion from s"https://repo.osgeo.org/repository/release/org/geotools/gt-metadata/$GeoToolsVersion/gt-metadata-$GeoToolsVersion.jar",
-            "org.geotools" % "gt-opengis" % GeoToolsVersion from s"https://repo.osgeo.org/repository/release/org/geotools/gt-opengis/$GeoToolsVersion/gt-opengis-$GeoToolsVersion.jar",
-            "jgridshift" % "jgridshift" % "1.0" from "https://repo.osgeo.org/repository/release/jgridshift/jgridshift/1.0/jgridshift-1.0.jar",
-            "org.locationtech.jts" % "jts-core" % "1.18.2" from "https://repo1.maven.org/maven2/org/locationtech/jts/jts-core/1.18.2/jts-core-1.18.2.jar",
-            "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test"
-          )
-        )
+  lazy val geoJar = Project (
+    Digiroad2GeoName,
+    file(Digiroad2GeoName),
+    settings = Defaults.defaultSettings ++ Seq(
+      organization := Organization,
+      name := Digiroad2GeoName,
+      version := Version,
+      scalaVersion := ScalaVersion,
+      resolvers += Classpaths.typesafeReleases,
+      scalacOptions ++= Seq("-unchecked", "-feature"),
+      testOptions in Test += TestOutputOptions,
+      libraryDependencies ++= Seq(
+        "org.joda" % "joda-convert" % JodaConvertVersion,
+        "joda-time" % "joda-time" % JodaTimeVersion,
+        "com.typesafe.akka" %% "akka-actor" % AkkaVersion,
+        "javax.media" % "jai_core" % "1.1.3" from "https://repo.osgeo.org/repository/release/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
+        "org.geotools" % "gt-graph" % GeoToolsVersion from s"https://repo.osgeo.org/repository/release/org/geotools/gt-graph/$GeoToolsVersion/gt-graph-$GeoToolsVersion.jar",
+        "org.geotools" % "gt-main" % GeoToolsVersion from s"https://repo.osgeo.org/repository/release/org/geotools/gt-main/$GeoToolsVersion/gt-main-$GeoToolsVersion.jar",
+        "org.geotools" % "gt-api" % GeoToolsApiVersion from s"https://repo.osgeo.org/repository/geotools-releases/org%2Fgeotools%2Fgt-api%2F$GeoToolsApiVersion%2Fgt-api-$GeoToolsApiVersion.jar",
+        "org.geotools" % "gt-referencing" % GeoToolsVersion from s"https://repo.osgeo.org/repository/release/org/geotools/gt-referencing/$GeoToolsVersion/gt-referencing-$GeoToolsVersion.jar",
+        "org.geotools" % "gt-metadata" % GeoToolsVersion from s"https://repo.osgeo.org/repository/release/org/geotools/gt-metadata/$GeoToolsVersion/gt-metadata-$GeoToolsVersion.jar",
+        "org.geotools" % "gt-opengis" % GeoToolsVersion from s"https://repo.osgeo.org/repository/release/org/geotools/gt-opengis/$GeoToolsVersion/gt-opengis-$GeoToolsVersion.jar",
+        "jgridshift" % "jgridshift" % "1.0" from "https://repo.osgeo.org/repository/release/jgridshift/jgridshift/1.0/jgridshift-1.0.jar",
+        "org.locationtech.jts" % "jts-core" % "1.18.2" from "https://repo1.maven.org/maven2/org/locationtech/jts/jts-core/1.18.2/jts-core-1.18.2.jar",
+        "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test"
       )
-    }
-    case _ => {
-      Project(
-        Digiroad2GeoName,
-        file(Digiroad2GeoName),
-        settings = Defaults.defaultSettings ++ Seq(
-          organization := Organization,
-          name := Digiroad2GeoName,
-          version := Version,
-          scalaVersion := ScalaVersion,
-          resolvers += Classpaths.typesafeReleases,
-          scalacOptions ++= Seq("-unchecked", "-feature"),
-          testOptions in Test += TestOutputOptions,
-          libraryDependencies ++= Seq(
-            "org.joda" % "joda-convert" % JodaConvertVersion,
-            "joda-time" % "joda-time" % JodaTimeVersion,
-            "com.typesafe.akka" %% "akka-actor" % AkkaVersion,
-            "javax.media" % "jai_core" % "1.1.3" from "https://repo.osgeo.org/repository/release/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
-            "org.locationtech.jts" % "jts-core" % "1.18.2" from "https://repo1.maven.org/maven2/org/locationtech/jts/jts-core/1.18.2/jts-core-1.18.2.jar",
-            "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test"
-          )
-        )
-      )
-    }
-  }
+    )
+  )
+    
 
   val Digiroad2PostGISName = "digiroad2-oracle"
   lazy val postgisJar = Project (
