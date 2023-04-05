@@ -120,11 +120,11 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
 
   get("/startupParameters", operation(getStartupParameters)) {
     time(logger, "GET request for /startupParameters") {
-      val (east, north, zoom) = {
+      val (east, north, zoom, roles) = {
         val config = userProvider.getCurrentUser().configuration
-        (config.east.map(_.toDouble), config.north.map(_.toDouble), config.zoom.map(_.toInt))
+        (config.east.map(_.toDouble), config.north.map(_.toDouble), config.zoom.map(_.toInt), config.roles)
       }
-      StartupParameters(east.getOrElse(DefaultLatitude), north.getOrElse(DefaultLongitude), zoom.getOrElse(DefaultZoomLevel), deploy_date)
+      StartupParameters(east.getOrElse(DefaultLatitude), north.getOrElse(DefaultLongitude), zoom.getOrElse(DefaultZoomLevel), deploy_date, roles)
     }
   }
 
@@ -1981,7 +1981,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
      projectService
    }*/
 
-  case class StartupParameters(lon: Double, lat: Double, zoom: Int, deploy_date: String)
+  case class StartupParameters(lon: Double, lat: Double, zoom: Int, deploy_date: String, roles: Set[String])
   case class RoadAndPartNumberException(private val message: String = "", private val cause: Throwable = None.orNull) extends Exception(message, cause)
 
 }
