@@ -9,9 +9,9 @@ VIITE
 VIITE on Väyläviraston tieosoitejärjestelmän ylläpitosovellus. Viitteellä hallitaan tieosoitejärjestelmän muutoksia ja se tarjoaa kuvauksen tiestöstä 
 Maanmittauslaitoksen keskilinja-aineistoon perustuvan Väyläviraston Keskilinjageometriavaraston (KGV) jäädytetyllä linkkigeometrialla. (Ajantasainen, ns. dynaaminen tieosoiteverkko tulossa, 2023)
 
-Seuraavasta linkistä pääsee Väyläviraston extranet VIITE-sivulle (tällä hetkellä testiextranet käytössä, varsinainen extranet-osoite päivitetään myöhemmin), jossa kerrotaan Viitteen yleiskuvaus ja annetaan tiedotteita käyttäjille. Sivulla ylläpidetään myös dokumentaatiota Viitteestä. 
+Seuraavasta linkistä pääsee Väyläviraston extranet sivulle, jonka kautta löytyy myös Linkki Viiteeseen, ja lyhyt yleiskuvaus-info. 
 
-https://testiextranet.vayla.fi/extranet/web/fi/viite?kategoria=7457637 (testi) 
+https://extranet.vayla.fi/etusivu
 
 __Huom! Suosittelemme Firefoxia tai Chromea, kun sovelluksella ylläpidetään Digiroad-tietoja.__
 
@@ -24,15 +24,15 @@ Viite-sovelluksen käyttöä varten tarvitaan Väyläviraston tunnukset (A-, U-,
 
 Kaikilla Väyläviraston tunnuksilla on pääsy Viite-sovellukseen.
 
-Viite-sovellukseen kirjaudutaan osoitteessa: <a href="https://extranet.vayla.fi/viite/" target="_blank">https://extranet.vayla.fi/viite/</a>.
+Viite-sovellukseen kirjaudutaan osoitteessa: <a href="https://viite.vaylapilvi.fi/" target="_blank">https://viite.vaylapilvi.fi/ </a>
 
-![Kirjautuminen Viite-sovellukseen.](k1.JPG)
+![Kirjautuminen Viite-sovellukseen.](k1.jpg)
 
 _Kirjautuminen Viite-sovellukseen._
 
 Kirjautumisen jälkeen avautuu karttakäyttöliittymässä katselutila.
 
-![Näkymä kirjautumisen jälkeen.](k2.JPG)
+![Näkymä kirjautumisen jälkeen.](k2.jpg)
 
 _Karttanäkymä kirjautumisen jälkeen._
 
@@ -49,7 +49,7 @@ Jos kirjautumisen jälkeen ei avaudu karttakäyttöliittymän katselutilaa, ei k
 Viite-sovelluksen käytöstä voi kysyä järjestelmävastaavalta: Jani.Lehenberg@vayla.fi.
 (Viitellä oli aiemmin operaattoritoimintaa, tässä roolissa oli lähinnä Janne Grekula janne.grekula@cgi.com.)
 
-####Ongelmatilanteet####
+#### Ongelmatilanteet ####
 
 Sovelluksen toimiessa virheellisesti (esim. kaikki aineistot eivät lataudu oikein) toimi seuraavasti:
 
@@ -69,21 +69,21 @@ Sovelluksen toimiessa virheellisesti (esim. kaikki aineistot eivät lataudu oike
 
 _Viite-sovelluksen yhteydet muihin järjestelmiin ja palveluihin. KUVA VANHENTUNUT; VVH->KGV, JA TIEREKISTERI POISTUNUT_
 
-##Keskilinjageometriavarasto (KGV)##
+### Keskilinjageometriavarasto (KGV) ###
 
 Viite-sovelluksessa pohja-aineistona oleva geometria tulee Väyläviraston Keskilinjageometriavarastosta (KGV). KGV:oon ladataan päivittäin Maanmittauslaitokselta päivitykset Maastotietokannan (MTK) keskilinja-aineistoon, jolloin myös Viite-sovellukselle olisi käytössä uusi keskilinjageometria joka päivä. Tällä hetkellä (2023-03) Viite käyttää jäädytettyä rajapintaa, jonka aineisto päivitetään puolen vuoden välein.
 
-##Digiroad (ent. OTH): Ominaisuustietojen hallinta##
+## Digiroad (ent. OTH): Ominaisuustietojen hallinta ##
 
 Digiroadissa on käytössä KGV:n tarjoama keskilinjageometria.
 
 Lisäksi Digiroad-sovellus hyödyntää Viitteen tieosoitetietoja, jotka näytetään Digiroadissa tielinkin ominaisuustietona.
 
-##Väyläviraston Tierekisteri##
+### Väyläviraston Tierekisteri ###
 
 _Tierekisteri on poistunut, sitä korvaa osittain Velho._
 
-##Velho##
+### Velho ###
 
 _TODO_
 
@@ -96,7 +96,7 @@ Tielinkki on Viite-sovelluksen lineaarinen viitekehys, eli sen geometriaan sidot
 
 Kullakin tieosoitesegmentillä on lisäksi tiettyjä sille annettuja ominaisuustietoja, kuten tienumero, tieosanumero ja ajoratakoodi. Tieosoitesegmenttien ominaisuustiedoista on kerrottu tarkemmin kohdassa "Tieosoitteen ominaisuustiedot".
 
-![Kohteita](k9.JPG)
+![Kohteita](k9.jpg)
 
 _Tieosoitesegmenttejä (1) ja muita tielinkkejä (2) Viitteen karttaikunnassa._
 
@@ -107,31 +107,31 @@ Palautteet geometrian eli tielinkkien virheistä voi laittaa Maanmittauslaitokse
 3. Karttanäkymän muokkaus
 --------------------------
 
-![Karttanäkymän muokkaus](k3.JPG)
+![Karttanäkymän muokkaus](k3.jpg)
 
 _Karttanäkymä._
 
-####Kartan liikutus####
+#### Kartan liikutus ####
 
 Karttaa liikutetaan raahaamalla.
 
-####Mittakaavataso####
+#### Mittakaavataso ####
 
 Kartan mittakaavatasoa muutetaan joko hiiren rullalla, tuplaklikkaamalla, Ctrl+piirto (alue) tai mittakaavapainikkeista (1). Mittakaavapainikkeita käyttämällä kartan keskitys säilyy. Hiiren rullalla, tuplaklikkaamalla tai Shift+piirto (alue) kartan keskitys siirtyy kursorin kohtaan.  Käytössä oleva mittakaavataso näkyy kartan oikeassa alakulmassa (2).
 
-####Kohdistin####
+#### Kohdistin ####
 
 Kohdistin (3) kertoo kartan keskipisteen. Kohdistimen koordinaatit näkyvät karttaikkunan oikeassa alakulmassa(4). Kun kartaa liikuttaa eli keskipiste muuttuu, päivittyvät koordinaatit. Oikean alakulman valinnan (5) avulla kohdistimen saa myös halutessaan piilotettua kartalta.
 
-####Merkitse piste kartalla####
+#### Merkitse piste kartalla ####
 
 Merkitse-painike (6) merkitsee sinisen pisteen kartan keskipisteeseen. Merkki poistuu vain, kun merkitään uusi piste kartalta.
 
-####Taustakartat####
+#### Taustakartat ####
 
 Taustakartaksi voi valita vasemman alakulman painikkeista maastokartan, ortokuvat tai taustakarttasarjan.
 
-####Hakukenttä####
+#### Hakukenttä ####
 
 Käyttöliittymässä on hakukenttä (8), jossa voi hakea koordinaateilla ja katuosoitteella tai tieosoitteella. Haku suoritetaan kirjoittamalla hakuehto hakukenttään ja klikkaamalla Hae. Hakutulos tulee listaan hakukentän alle. Hakutuloslistassa ylimpänä on maantieteellisesti kartan nykyistä keskipistettä lähimpänä oleva kohde. Mikäli hakutuloksia on vain yksi, keskittyy kartta automaattisesti haettuun kohteeseen. Jos hakutuloksia on useampi kuin yksi, täytyy listalta valita tulos, jolloin kartta keskittyy siihen. Tyhjennä tulokset -painike tyhjentää hakutuloslistan.
 
@@ -149,23 +149,23 @@ Geometrialtaan yleistetty tieosoiteverkko tulee näkyviin kun zoomaa tasolle jos
 
 Tieosoiteverkko on värikoodattu tienumeroiden mukaan. Vasemman yläkulman selitteessä on kerrottu kunkin värikoodin tienumerot. Lisäksi kartalle piirtyvät etäisyyslukemasymbolit, eli ne kohdat, joissa vaihtuu tieosa tai ajoratakoodi. Tieverkon kasvusuunta näkyy kartalla pisaran mallisena nuolena.
 
-![Mittakaavajanassa 2km](k4.JPG)
+![Mittakaavajanassa 2km](k4.jpg)
 
 _Mittakaavajanassa 2 km._
 
-![Mittakaavajanassa 100 m](k5.JPG)
+![Mittakaavajanassa 100 m](k5.jpg)
 
 _Mittakaavajanassa 100 m._
 
 Tieosoitteelliset kadut erottuvat kartalla muista tieosoitesegmenteistä siten, että niiden ympärillä on musta väritys.
 
-![Tieosoitteellinen katu](k16.JPG)
+![Tieosoitteellinen katu](k16.jpg)
 
 _Tieosoitteellinen katu, merkattuna mustalla värityksellä tienumeron värityksen lisäksi._
 
 Kun hiiren vie tieosoiteverkon päälle, tulee kartalle näkyviin "infolaatikko", joka kertoo kyseisen tieosoitesegmentin tienumeron, tieosanumeron, ajoratakoodin, alkuetäisyyden ja loppuetäisyyden.
 
-![Hover](k35.JPG)
+![Hover](k35.jpg)
 
 _Infolaatikko, kun hiiri on viety tieosoitesegmentin päälle._
 
@@ -173,18 +173,18 @@ _Infolaatikko, kun hiiri on viety tieosoitesegmentin päälle._
 --------------------------
 Kohteita voi valita klikkaamalla kartalta. Klikkaamalla kerran, sovellus valitsee kokonaisen tieosan. Valittu tieosa korostuu kartalla (1), ja sen tiedot tulevat näkyviin karttaikkunan oikeaan laitaan ominaisuustietonäkymään (2).
 
-![Tieosan valinta](k6.JPG)
+![Tieosan valinta](k6.jpg)
 
 _Tieosan valinta._
 
 Tuplaklikkaus valitsee yhden tielinkin mittaisen osuuden tieosoitteesta. Valittu osuus korostuu kartalla (3), ja sen tiedot tulevat näkyviin karttaikkunan oikeaan laitaan ominaisuustietonäkymään (4).
 
-![Tieosoitesegmentin valinta](k7.JPG)
+![Tieosoitesegmentin valinta](k7.jpg)
 
 _Tielinkin mittaisen osuuden valinta._
 
 
-##Tieosoitteen ominaisuustiedot##
+## Tieosoitteen ominaisuustiedot ##
 
 Tieosoitteilla on seuraavat ominaisuustiedot:
 
@@ -220,7 +220,7 @@ Käyttäjä voi muokata sitä tieosoiteprojekteissa.
 
 Palautteet hallinnollisen luokan virheistä voi toimittaa Maanmittauslaitokselle osoitteeseen maasto@maanmittauslaitos.fi. Mukaan selvitys virheestä ja sen sijainnista (kuvakaappaus tms.).
 
-##Kohdistaminen tieosoitteeseen tielinkin ID:n avulla##
+## Kohdistaminen tieosoitteeseen tielinkin ID:n avulla ##
 
 Kun kohdetta klikkaa kartalla, tulee selaimen osoiteriville näkyviin valitun kohteen tielinkin ID. Osoiterivillä olevan URL:n avulla voi myös kohdistaa käyttöliittymässä ko. tielinkkiin. URL:n voi esimerkiksi lähettää toiselle henkilölle sähköpostilla, jolloin hän pääsee samaan paikkaan käyttöliittymässä helposti.
 
@@ -228,7 +228,7 @@ Esimerkiksi: https://viite.vaylapilvi.fi/#linkProperty/025a3c1c-4ca3-4db6-845b-4
 025a3c1c-4ca3-4db6-845b-413db2eed009:1 on tielinkin ID, joka sislätää sekä linkin varsinaisen id:n (viivoilla pätkitty pitkä heksadesimaalinumero), että sen versionumeron (tässä '1').
 
 
-![Kohdistaminen tielinkin ID:llä](k8.JPG)
+![Kohdistaminen tielinkin ID:llä](k8.jpg)
 
 _Kohdistaminen tielinkin ID:llä._
 
@@ -267,7 +267,7 @@ Viite-sovelluksessa on muutamia automatiikan tekemiä yleistyksiä tai korjauksi
 
 __Huom! Automatiikka ei koskaan muuta tieosan mitattua pituutta. Arvot tieosien ja ajoratojen vaihtumiskohdissa pysyvät aina ennallaan automatiikan tekemien korjausten yhteydessä.__
 
-##7.1 Tieosoitesegmenttien yhdistely tielinkin mittaisiksi osuuksiksi##
+## 7.1 Tieosoitesegmenttien yhdistely tielinkin mittaisiksi osuuksiksi ##
 
 Kun käyttäjä valitsee kartalla kohteita tuplaklikkaamalla (luku 4.1), on pienin valittava yksikkö tielinkin mittainen osuus tieosoiteverkosta, koska tielinkki on pienin mahdollinen yksikkö Maanmittauslaitoksen ylläpitämällä linkkiverkolla.
 
@@ -276,7 +276,7 @@ Tätä varten järjestelmä tekee automaattista yhdistelyä:
 - Ne kohteet, joiden tielinkin ID, tie, tieosa, ajorata ja alkupäivämäärä ovat samoja (=tieosoitehistoria yhtenevä), on yhdistetty tietokannassa yhdeksi tielinkin mittaiseksi tieosoitesegmentiksi
 - Ne kohteet, joiden tielinkin ID, tie, tieosa, ajorata ovat samoja, mutta alkupäivämäärä ei ole sama (=tieosoitehistoria erilainen) ovat tietokannassa edelleen erillisiä kohteita, mutta käyttöliittymässä ne ovat valittavissa vain tielinkin mittaisena osuutena. Tällä varmistetaan, että käyttöliittymä toimii käyttäjän kannalta loogisesti, eli aina on valittavissa tielinkin mittainen osuus, mutta tieosoitehistoria säilytetään tietokantatasolla.
 
-##7.2 Tieosoitesegmenttien automaattinen korjaus jatkuvasti päivittyvällä linkkigeometrialla##
+## 7.2 Tieosoitesegmenttien automaattinen korjaus jatkuvasti päivittyvällä linkkigeometrialla ##
 
 (Poistettu, Viiteen linkkigeometria jäädytetty (2023-03))
 
@@ -296,7 +296,7 @@ Tätä varten järjestelmä tekee automaattista yhdistelyä:
 
 Uuden tieosoiteprojektin tekeminen aloitetaan klikkaamalla painiketta Tieosoiteprojektit (1) ja avautuvasta ikkunasta painiketta Uusi tieosoiteprojekti (2).
 
-![Uusi tieosoiteprojekti](k17.JPG)
+![Uusi tieosoiteprojekti](k17.jpg)
 
 _Tieosoiteprojektit -painike ja Uusi tieosoiteprojekti -painike._
 
@@ -308,7 +308,7 @@ _Tieosoiteprojektin perustietojen lomake._
 
 Pakollisia tietoja ovat nimi ja projektin muutosten voimaantulopäivämäärä, jotka on merkattu lomakkeelle oranssilla (3). Projektiin ei ole pakko täydentää yhtään tieosaa. Lisätiedot -kenttään käyttäjä voi halutessaan tehdä muistiinpanoja tieosoiteprojektista. Tiedot tallentuvat painamalla Jatka toimenpiteisiin -painiketta (4). Myös Poistu-painikkeesta Viite varmistaa haluaako käyttäjä tallentaa projektiin tehdyt muutokset.
 
-![Uusi tieosoiteprojekti](k19.JPG)
+![Uusi tieosoiteprojekti](k19.jpg)
 
 _Tieosoiteprojektin perustietojen täyttäminen._
 
@@ -316,7 +316,7 @@ Projektin tieosat lisätään täydentämällä niiden tiedot kenttiin tie, aosa
 
 Varaa -painikkeen painamisen jälkeen tieosan tiedot tulevat näkyviin lomakkeelle.
 
-![Uusi tieosoiteprojekti](k22.JPG)
+![Uusi tieosoiteprojekti](k22.jpg)
 
 _Tieosan tiedot lomakkeella Lisää -painikkeen painamisen jälkeen._
 
@@ -326,7 +326,7 @@ Käyttäjä voi poistaa varattuja tieosia klikkaamalla ruksia tieosan oikealla p
 
 
 
-![Uusi tieosoiteprojekti](k20.JPG)
+![Uusi tieosoiteprojekti](k20.jpg)
 
 _Kun tieosa on varattu projektiin Viite zoomaa kartan siten että tieosa näkyy kartalla kokonaisuudessaan._  
 
@@ -430,7 +430,7 @@ jotka piirtyvät kartalle harmaina, tai suravage-linkkejä, voi valita kerta- ta
 
 Valitut tielinkit näkyvät kartalla vihreällä korostettuna. Kun valitaan Toimenpiteet-alasvetovalikosta 'Uusi' (1) lomakkeelle avautuvat kentät uuden tieosoitteen tiedoille (2). Jos valitulla tieosuudella on jo olemassa KGV:ssa tienumero ja tieosanumero, ne esitäyttyvät kenttiin automattisesti.
 
-![Uusi tieosoite](k43.JPG)
+![Uusi tieosoite](k_toimenpide_uusi.jpg)
 
 _Kun toimenpidevalikosta valitaan 'Uusi', oikeaan laitaan ilmestyy näkyviin kentät uuden tieosoitteen syöttämistä varten._ 
 
@@ -499,7 +499,11 @@ Alla olevassa kuvasarjassa on tehty siirto ja kääntö osalle tieosaa. Projekti
 Tämän jälkeen siirtoon ja kääntöön voi valita lisää linkkejä tieltä 14 tai jättää loput ennalleen. Jälkimmäisessä tilanteessa loput projektiin valitut keltaiset aihiot tulee aina käsitellä 
 jotta muutosilmoitukset voi hyväksyä tieosoiteverkolle. Tässä tapauksessa, mikäli muuta ei tehdä, tulee tie 459 osa 1 valita kartalta ja tehdä sille muutosilmoitus "Siirto" ja painaa Tallenna. Samoin tehdään tielle 14 osalle 1. Ilmoitusten yhteenvetotaulu avataan ja mikäli tiedot ovat valmiit, voi ne hyväksyä tieosoiteverkolle vihreästä painikkeesta.  
 
-![Siirto ja kääntö](k48.JPG)
+![Siirto ja kääntö](k48.jpg)
+
+![Siirto ja kääntö](k51.jpg)
+
+![Siirto ja kääntö](k52.jpg)
 
 _Kuvasarjassa siirretään osa tiestä 14 tielle 459. Tieosoitteiden kasvusuunnat teillä ovat vastakkaiset, jolloin siirrossa tien 14 kasvusuunta kääntyy._
 
@@ -548,7 +552,7 @@ _Taulukon avaus ja yhteenvetotaulukon näkymä._
 
 Viite-sovellus tekee tieosoiteprojektissa automaattisia tarkastuksia jotka auttavat käyttäjää valmistelemaan tieosoiteprojektin teknisesti virheettömäksi. Tarkistukset ovat projektissa jatkuvasti päällä ja reagoivat projektin tilan muutoksiin aina "Päivitä etäisyyslukemat"-napin painalluksen jälkeen. Avatun projektin tarkistusilmoitukset ilmestyvät käyttäjälle projektissa oikealle tarkistusnäkymään "Jatka toimenpiteisiin"-napin painalluksen jälkeen. Tarkistusilmoituksia voi olla samanaikaisesti auki useita. Tieosoiteprojektin voi hyväksyä tieosoiteverkolle kun se läpäisee kaikki tarkistukset eli silloin kun oikean reunan formilla ei ole yhtään tarkistusilmoitusta.
 
-![Tarkisilmoitusnäkymä](k49.JPG)
+![Tarkisilmoitusnäkymä](k49.png)
 
 _Tarkistusilmoitukset näkyvät projektissa oikealla._
 
@@ -566,7 +570,7 @@ _Tielinkki 7304402 on tieosan viimeinen linkki mutta siltä puuttuu jatkuvuuskoo
 
 Karttanäkymä kohdistuu tarkistusilmoituksen kohteena olevan tielinkin keskikohtaan painamalla "Korjaa"-painiketta. Painamalla Korjaa-nappia uudestaan kohdistus siirtyy seuraavaan tielinkkiin jos sama tarkistus kohdistuu useampaan linkkiin. Käyttäjä voi nyt valita tarkistusilmoituksen kohteena olevan tielinkin ja tehdä sille tarkistuksen korjaavan toimenpiteen. 
 
-####Tieosoiteprojektissa tehtävät tarkastukset:####
+#### Tieosoiteprojektissa tehtävät tarkastukset: ####
 
 Tieosoiteprojektiin kohdistuvat tarkistukset:
 
