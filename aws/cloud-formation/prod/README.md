@@ -141,7 +141,9 @@ aws cloudformation update-stack \
 ```
 
 ### Kontin päivitys
-Kehitystiimi puskee uuden kontin ECR repositorioon jonka jälkeen service päivitetään komennolla:
+Kehitystiimi puskee uuden kontin ECR repositorioon (`aws-deploy-prod.sh`-skriptillä),
+jonka jälkeen viesti pilvioperaattorille, joka päivittää servicen.   
+Service päivitetään komennolla:
 ```
 aws ecs update-service \
 --cluster Prod-Viite-prod-ECS-Cluster-Private \
