@@ -566,6 +566,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
         val projectSaved = projectService.createRoadLinkProject(roadAddressProject)
         val fetched = projectService.getSingleProjectById(projectSaved.id).get
         val latestPublishedNetwork = roadNetworkService.getLatestPublishedNetworkDate
+        saveProjectAction(projectSaved.id, "CreateRoadAddressProject", Some(request.body))
         val firstAddress: Map[String, Any] =
           fetched.reservedParts.find(_.startingLinkId.nonEmpty).map(p => "projectAddresses" -> p.startingLinkId.get).toMap
         Map("project" -> roadAddressProjectToApi(fetched, projectService.getProjectEly(fetched.id)), "publishedNetworkDate" -> formatDateTimeToString(latestPublishedNetwork),
@@ -600,6 +601,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       val roadAddressProject = ProjectConverter.toRoadAddressProject(project, user)
       try {
         val projectSaved = projectService.saveProject(roadAddressProject)
+        saveProjectAction(projectSaved.id, "SaveRoadAddressProject", Some(request.body))
         val firstLink = projectService.getFirstProjectLink(projectSaved)
         Map("project" -> roadAddressProjectToApi(projectSaved, projectService.getProjectEly(projectSaved.id)), "projectAddresses" -> firstLink,
           "reservedInfo" -> projectSaved.reservedParts.map(projectReservedPartToApi),
@@ -824,6 +826,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
           val user = userProvider.getCurrentUser().username
           projectService.revertLinks(linksToRevert.projectId, linksToRevert.roadNumber, linksToRevert.roadPartNumber, linksToRevert.links, linksToRevert.coordinates, user) match {
             case None =>
+              saveProjectAction(linksToRevert.projectId, "RevertProjectLinkChanges", Some(getFilteredJSONString(parsedBody)))
               val projectErrors = projectService.validateProjectByIdHighPriorityOnly(linksToRevert.projectId).map(projectService.projectValidator.errorPartsToApi)
               val project = projectService.getSingleProjectById(linksToRevert.projectId).get
               Map("success" -> true,
@@ -868,6 +871,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
         val response = projectService.createProjectLinks(links.linkIds, links.projectId, links.roadNumber, links.roadPartNumber, Track.apply(links.trackCode), Discontinuity.apply(links.discontinuity), AdministrativeClass.apply(links.administrativeClass), LinkGeomSource.apply(links.roadLinkSource), links.roadEly, user.username, links.roadName.getOrElse(halt(BadRequest("Road name is mandatory"))), Some(links.coordinates))
         response.get("success") match {
           case Some(true) =>
+            saveProjectAction(links.projectId, "CreateProjectLinks", Some(getFilteredJSONString(parsedBody)))
             val projectErrors = response.getOrElse("projectErrors", Seq).asInstanceOf[Seq[projectService.projectValidator.ValidationErrorDetails]].map(projectService.projectValidator.errorPartsToApi)
             Map("success" -> true,
               "publishable" -> !response.contains("projectErrors"),
@@ -913,6 +917,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
             case None =>
               val projectErrors = projectService.validateProjectByIdHighPriorityOnly(links.projectId).map(projectService.projectValidator.errorPartsToApi)
               val project = projectService.getSingleProjectById(links.projectId).get
+              saveProjectAction(links.projectId, "UpdateProjectLinks", Some(getFilteredJSONString(parsedBody)))
               Map("success" -> true, "id" -> links.projectId,
                 "publishable" -> projectErrors.isEmpty,
                 "projectErrors" -> projectErrors,
@@ -1037,6 +1042,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
               "discontinuity" -> changeInfo.discontinuity.value, "source" -> changeInfo.source,
               "target" -> changeInfo.target, "reversed" -> changeInfo.reversed)))
       ).getOrElse(None)
+      saveProjectAction(projectId, "RecalculateChangeTable")
       Map("changeTable" -> changeTableData, "warningMessage" -> warningMessage)
     }
   }
@@ -1059,6 +1065,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
           val invalidUnchangedLinkErrors = projectService.projectValidator.checkForInvalidUnchangedLinks(project, projectLinkDAO.fetchProjectLinks(projectId))
           if (invalidUnchangedLinkErrors.isEmpty) {
             projectService.recalculateProjectLinks(projectId, project.modifiedBy)
+            saveProjectAction(projectId, "RecalculateProject")
           }
           invalidUnchangedLinkErrors
         }
@@ -1971,6 +1978,35 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       case _ => None
     }
   }
+
+  /**
+   * Takes a [[JValue]] object and filters out fields that return true from the removeField cases.
+   * A new field can be added by a new "case ("toBeRemoved", _) => true" row above the "case _ => false"
+   *
+   * This method is used to format POST and PUT request bodies for storage in the database table project_action_history
+   * Removed field "ids" contains ProjectLink ids that aren't useful for replicating projects after the fact.
+   * @param json
+   * @return A JSON object in String representation
+   */
+  def getFilteredJSONString(json: JValue): String = {
+    compact(render(json.removeField {
+      case ("ids", _) => true
+      case _ => false
+    }))
+  }
+
+  /**
+   * Saves a request body from an API call that modifies the data of a project. The request bodies can be utilized to replicate
+   * projects that have created incorrect data e.g. roadway history rows with 0 length or overlapping history rows.
+   *
+   */
+  def saveProjectAction(projectId: Long, actionType: String, payload: Option[String] = None): Unit = {
+    val username = userProvider.getCurrentUser().username
+    withDynTransaction {
+      ProjectActionHistoryDAO.create(projectId, actionType, username, payload)
+    }
+  }
+
 
   /* @throws(classOf[Exception])
    // TODO This method was removed previously for some reason. Is this still valid? At least many methods use this.
