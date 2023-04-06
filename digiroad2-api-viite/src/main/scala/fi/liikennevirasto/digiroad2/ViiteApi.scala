@@ -1065,14 +1065,15 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
           val invalidUnchangedLinkErrors = projectService.projectValidator.checkForInvalidUnchangedLinks(project, projectLinkDAO.fetchProjectLinks(projectId))
           if (invalidUnchangedLinkErrors.isEmpty) {
             projectService.recalculateProjectLinks(projectId, project.modifiedBy)
-            saveProjectAction(projectId, "RecalculateProject")
           }
           invalidUnchangedLinkErrors
         }
         val validationErrors = if (invalidUnchangedLinkErrors.nonEmpty)
           invalidUnchangedLinkErrors.map(projectService.projectValidator.errorPartsToApi)
-        else
+        else {
           projectService.validateProjectById(projectId).map(projectService.projectValidator.errorPartsToApi)
+          saveProjectAction(projectId, "RecalculateProject")
+        }
 
         // return validation errors
         Map("success" -> true, "validationErrors" -> validationErrors)
