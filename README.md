@@ -61,10 +61,10 @@ by copying the xml-files from the `aws/local-dev/idea-run-configurations` folder
 - Test.xml
   - Run the backend unit tests (needs the fixture reset test data)
 
-Add the following environment variables to the run configurations. (The api keys and passwords can be found from the Viite projects confluence page)
+Add the following environment variables to the run configurations. 
+The api keys can be found from the Viite project's Confluence page. (You need a permission to view the password page in Confluence) 
 - Server & Test 
   - kgvApiKey
-  - vvhRestApiPassword
   - rasterServiceApiKey
   - vkmApiKey
 
