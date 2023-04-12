@@ -22,7 +22,7 @@ object Digiroad2Build extends Build {
   val CommonsIOVersion = "2.6"
   val JsonJacksonVersion = "3.5.3"
   val MockitoCoreVersion = "2.18.3"
-  val LogbackClassicVersion = "1.2.3"
+  val LogbackClassicVersion = "1.3.6" // Java EE version. 1.4.x requires Jakarta instead of JavaEE
   val JettyVersion = "9.2.15.v20160210"
   val TestOutputOptions = Tests.Argument(TestFrameworks.ScalaTest, "-oNCXELOPQRMI") // List only problems, and their summaries. Set suitable logback level to get the effect.
   val AwsSdkVersion = "2.17.148"
