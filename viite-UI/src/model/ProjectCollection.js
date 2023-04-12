@@ -99,6 +99,15 @@
       });
     };
 
+    this.getProjectStates = function (projectIDs) {
+      if (projectIDs.length > 0)
+        return backend.getRoadAddressProjectStates(projectIDs, function (projects) {
+          eventbus.trigger('roadAddressProjectStates:fetched', projects);
+        });
+      else
+        return null;
+    };
+
     this.getProjectsWithLinksById = function (projectId) {
       return backend.getProjectsWithLinksById(projectId, function (result) {
         roadAddressProjects = result.project;
@@ -562,9 +571,6 @@
       var errors = _.each(projectErrors, function (error) {
         var errorIds = error.ids;
         error.linkIds = [];
-        if (error.errorCode === 8) {
-          error.linkIds = error.ids;
-        }
         _.each(projectLinks(), function (pl) {
           if (_.includes(errorIds, pl.getData().id)) {
             error.linkIds.push(pl.getData().linkId);

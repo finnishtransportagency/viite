@@ -97,7 +97,7 @@ trait KgvOperation extends LinkOperationsAbstract{
       trycounter += 1
       success = true
 
-      result = time(logger, s"Fetch roadLink features, (try $trycounter)", url = Some(url)) {
+      result = time(logger, s"Fetch roadLink features, (try $trycounter)", url = None) {
 
           val request = new HttpGet(url)
           addHeaders(request)
@@ -265,7 +265,7 @@ trait KgvOperation extends LinkOperationsAbstract{
     queryByFilter(Some(combineFiltersWithAnd(withLinkIdFilter(linkIds), filter)))
   }
 
-  protected def queryRoadAndPartWithFilter(linkIds: Set[String], filter: String): List[(Long, Long, Int)] = {
+  protected def queryRoadAndPartWithFilter(linkIds: Set[String], filter: String): List[(Option[Long], Option[Long], Int)] = {
     val filterString = s"&filter=${encode(combineFiltersWithAnd(withLinkIdFilter(linkIds), filter))}"
     val url          = s"${restApiEndPoint}/${serviceName}/items?filter-lang=${cqlLang}&crs=${crs}${filterString}"
     fetchFeatures(url) match {

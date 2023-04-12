@@ -1,38 +1,42 @@
 # Versiojulkaisu
 
-Ympäristön käyttöönotto ja versioiden julkaisu on automatisoitu [Capistranolla](http://capistranorb.com/). Uuden version julkaisu tehdään `cap`-komennolla. Esimerkiksi testiympäristöön vienti on:
+Kehitys- ja QA-ympäristöjen versiojulkaisu on automatisoitu AWS:n CodePipelinellä.   
+Tuotantoympäristön päivityksessä tarvitaan pilvioperaattorin apua, koska tuotanto on ns. Full service -sopimuksella, eikä Viite-kehitystiimillä ei ole siten tuotantoympäristöön kaikkia oikeuksia.
 
-    bundle exec cap staging deploy
+### Kehitysympäristön versiojulkaisu ###
+CodePipeline kuuntelee Viiteen Gitin kehitysbranchiin (2023-03 tämä on nimeltään `postgis`) pushattuja commiteja, 
+ja alkaa sen jälkeen automaattisesti buildata sen perusteella kehitysversiota CodeBuildilla. ("Push_to_postgis" -Build projekti.)    
+Buildaus tapahtuu  `buildspec.yaml`in mukaisesti; buildi asentelee konttiin ns. kaiken alusta asti ja ajaa testit ennen kuin uusi commit päästetään eteenpäin. 
+Onnistuneiden testien ja käännon jälkeen AWS nostaa uuden development-ympäristön pystyyn ja nitistää vanhat alta pois.   
+Jos buildi törmää virheeseen, tulee AWS/SNS:n toimesta sähköposti niille, jotka ovat rekisteröityneet kuuntelemaan `viite-codebuild-status-email-topic`-viestejä.
 
-Tämän komennon voi ajaa kehittäjän koneella sekä CI-koneella.
+Tuorein kehitysympäristöversio löytyy operaation päätteeksi internetitse osoitteesta `https://viitedev.testivaylapilvi.fi/`.
 
-Käyttöönotto on määritelty [config/deploy.rb](config/deploy.rb)-tiedostossa. Kyseisellä Capistrano-määritelmällä voidaan Digiroad2-järjestelmä asentaa haluttuun ympäristöön. Samalla komennolla voidaan myös viedä uusi versio Digiroad2-järjestelmästä kyseiseen järjestelmään. Lisäksi kullekin kohdeympäristölle määritellään omat tiedostot, kuten alla.
+### QA-ympäristön versiojulkaisu ###
+QA-ympäristöön julkaisu tapahtuu kehitysympäristöä vastaavasti,
+Viiteen Gitin QA-branchiin (2023-03 tämä on nimeltään `NextRelease`, ja se on olemassa vain tarpeen mukaan) pushattuja commiteja.
+Buildiprosesi menee vastaavasti kuin kehitysympäristössä.
 
-Liikennevirastolla käyttöönotto on määritelty seuraaville ympäristöille:
-* Tuotantoympäristö, jonka asetukset on määritelty [production.rb](config/deploy/production.rb)- ja [production2.rb](config/deploy/production2.rb)-tiedostoissa.
-* Testiympäristö, jonka asetukset on määritelty [staging.rb](config/deploy/staging.rb)-tiedostossa.
-* Integraatiotestausympäristö, jonka asetukset on määritelty [testing.rb](config/deploy/testing.rb)- ja [testing2.rb](config/deploy/testing2.rb)-tiedostoissa.
+### Tuotantoympäristön versiojulkaisu ###
+Ensin tiimi puskee tuotannon AWS/ECR-repoon uuden, QA-ympäristössä jo luodun, kontin.
+Sen jälkeen tarvitaan vielä servicen päivitys, jonka hoitaa pilvioperaattori.
+Miten - tarkempia ohjeita: `viite\aws\cloud-formation\prod\README.md`.
 
-## Ympäristöjen osoitteiden asettaminen
+### Tekniset ohjeet ###
+`viite\aws\cloud-formation]\<ympäristö>\README.md`.
 
-Capistrano-skripteissä ei ole asetettu ympäristöjen IP-osoitteita. IP-osoitteet kullekin palvelinnimelle määritellään SSH-asetustiedostossa `~/.ssh/config`. Esimerkiksi CI-koneella on asetettu tuotantoympäristön palvelinnimet: 
 
-```
-host production1
-  Hostname <ip-osoite>
-  
-host production2
-  Hostname <ip-osoite>
-```
+## Postgis-kantojen alustus ja päivitys
 
-Koneiden palvelinnimet voi katsoa Capistrano-skripteistä.
+Olemassaolevat dev, QA ja prod toki riittänevät pitkälle, mutta uusia kantoja voi kysellä tarvittaessa pilvioperaattorilta.   
+He alustavat tarvittaessa Postgis-tietokannan ja skeemat sinne, minne tiimillä ei ole valtuuksia tietokantoja luoda.
 
-## Oracle-kantojen alustus ja päivitys
+Viite:n Postgis-kanta on versioitu.
+Tietokannan rakenne päivitetään automaattisesti buildauksien yhteydessä (ks. `buildspec.yaml`).
 
-Käyttöönotto alustaa tarvittaessa Oracle-tietokannan ja skeemat. Tietokannan alustuksessa tietokantayhteyden määritykseen käytetään samaa `bonecp.properties` tiedostoa kuin järjestelmän ajossa. Katso lisätietoja [Digiroad-2](README.md) artikkelista.
+Automaattipäivitys on toteutettu [Flyway](http://flywaydb.org/)-tietokantamigraatiotyökalulla.
+Tietokantamigraatiomääritykset on versioitu `db.migration`-paketissa `digiroad2-oracle`-projektissa.
+Flyway päivittää tiedon käytössä olevasta migraatioversiosta tietokantaan itseensä; versiotieto löytyy taulusta `schema_version`.
 
-Digiroad2:n Oracle-kanta on versioitu. Käyttöönotossa tarkistetaan onko käyttöönotettava järjestelmä riippuva uudemmasta kantaversiosta kuin käytössä oleva. Mikäli kanta on vanhempaa versiota viedään kanta automaattisesti uusimpaan versioon käyttäen tietokantamigraatiomäärityksiä jotka on tallennettu `db.migration` paketissa `digiroad2-oracle` projektissa.
+Katso lisätietoja [Digiroad-2](README.md) artikkelista.
 
-Tietokannan versio ylläpidetään tietokannassa itsessään taulussa `schema_version`.
-
-Tietokannan automaattinen päivitys on toteutettu [Flyway](http://flywaydb.org/) tietokantamigraatiotyökalulla.

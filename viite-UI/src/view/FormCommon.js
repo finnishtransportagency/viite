@@ -143,15 +143,6 @@
       return '<label class="control-label-small" style="text-transform: none">' + label + '</label>';
     };
 
-
-    const addSmallLabelTopped = function (label) {
-      return '<label class="control-label-small" style="vertical-align: top;">' + label + '</label>';
-    };
-
-    const addSmallLabelWrapped = function (label) {
-      return '<label class="control-label-small" style="word-wrap: break-word;max-width: 250px">' + label + '</label>';
-    };
-
     const addSmallInputNumber = function (id, value, isDisabled, maxLength) {
       //Validate only number characters on "onkeypress" including TAB and backspace
       const disabled = isDisabled ? ' readonly="readonly" ' : '';
@@ -345,6 +336,7 @@
 
     const getProjectErrors = function (projectErrors, links, projectCollection) {
       let buttonIndex = 0;
+      let errorIndex = 0;
       let errorLines = '';
       projectCollection.clearCoordinates();
       projectErrors.sort(function (a, b) {
@@ -359,13 +351,23 @@
           buttonIndex++;
         }
         errorLines += '<div class="form-project-errors-list' + (error.priority === 1 ? ' warning' : '') + '">' +
-          addSmallLabelTopped('LINKIDS: ') + ' ' + addSmallLabelWrapped(error.linkIds) + '</br>' +
           addSmallLabel('VIRHE: ') + ' ' + addSmallLabelLowercase((error.errorMessage ? error.errorMessage : 'N/A')) + '</br>' +
           addSmallLabel('INFO: ') + ' ' + addSmallLabelLowercase((error.info ? error.info : 'N/A')) + '</br>' +
-          (button.html ? button.html : '') + '</br> <hr class="horizontal-line"/>' +
-          '</div>';
+          (button.html ? button.html : '') +
+          addLinkIdListButton(errorIndex, error.linkIds) +
+          '</br> <hr class="horizontal-line"/>' +
+        '</div>';
+        errorIndex++;
       });
+
       return errorLines;
+    };
+
+    const addLinkIdListButton = function (errorIndex, linkIds) {
+      if (linkIds.length > 0)
+        return '<button id= "' + errorIndex + '" class="btn btn-primary linkIdList">Linkkien id:t</button>';
+      else
+        return '';
     };
 
     return {

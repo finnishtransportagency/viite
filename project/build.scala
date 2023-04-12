@@ -1,9 +1,9 @@
 import io.gatling.sbt.GatlingPlugin
 import org.scalatra.sbt._
-import sbt.Keys.{unmanagedResourceDirectories, _}
 import sbt.{Def, _}
-import sbtassembly.Plugin.AssemblyKeys._
+import sbt.Keys.{unmanagedResourceDirectories, _}
 import sbtassembly.Plugin.{MergeStrategy, PathList}
+import sbtassembly.Plugin.AssemblyKeys._
 
 object Digiroad2Build extends Build {
   val Organization = "fi.liikennevirasto"
@@ -26,65 +26,39 @@ object Digiroad2Build extends Build {
   val JettyVersion = "9.2.15.v20160210"
   val TestOutputOptions = Tests.Argument(TestFrameworks.ScalaTest, "-oNCXELOPQRMI") // List only problems, and their summaries. Set suitable logback level to get the effect.
   val AwsSdkVersion = "2.17.148"
+  val GeoToolsVersion = "27.2"
 
   // Get build id to check if executing in aws environment.
   val awsBuildId: String = scala.util.Properties.envOrElse("CODEBUILD_BUILD_ID", null)
 
-  lazy val geoJar = awsBuildId match {
-    case null => {
-      Project(
-        Digiroad2GeoName,
-        file(Digiroad2GeoName),
-        settings = Defaults.defaultSettings ++ Seq(
-          organization := Organization,
-          name := Digiroad2GeoName,
-          version := Version,
-          scalaVersion := ScalaVersion,
-          resolvers += Classpaths.typesafeReleases,
-          scalacOptions ++= Seq("-unchecked", "-feature"),
-          testOptions in Test += TestOutputOptions,
-          libraryDependencies ++= Seq(
-            "org.joda" % "joda-convert" % JodaConvertVersion,
-            "joda-time" % "joda-time" % JodaTimeVersion,
-            "com.typesafe.akka" %% "akka-actor" % AkkaVersion,
-            "javax.media" % "jai_core" % "1.1.3" from "https://repo.osgeo.org/repository/release/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
-            "org.geotools" % "gt-graph" % "19.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/org/geotools/gt-graph/19.0/gt-graph-19.0.jar",
-            "org.geotools" % "gt-main" % "19.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/org/geotools/gt-main/19.0/gt-main-19.0.jar",
-            "org.geotools" % "gt-api" % "19.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/org/geotools/gt-api/19.0/gt-api-19.0.jar",
-            "org.geotools" % "gt-referencing" % "19.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/org/geotools/gt-referencing/19.0/gt-referencing-19.0.jar",
-            "org.geotools" % "gt-metadata" % "19.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/org/geotools/gt-metadata/19.0/gt-metadata-19.0.jar",
-            "org.geotools" % "gt-opengis" % "19.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/org/geotools/gt-opengis/19.0/gt-opengis-19.0.jar",
-            "jgridshift" % "jgridshift" % "1.0" from "https://repo.osgeo.org/repository/release/jgridshift/jgridshift/1.0/jgridshift-1.0.jar",
-            "com.vividsolutions" % "jts-core" % "1.14.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/com/vividsolutions/jts-core/1.14.0/jts-core-1.14.0.jar",
-            "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test"
-          )
-        )
+  lazy val geoJar = Project (
+    Digiroad2GeoName,
+    file(Digiroad2GeoName),
+    settings = Defaults.defaultSettings ++ Seq(
+      organization := Organization,
+      name := Digiroad2GeoName,
+      version := Version,
+      scalaVersion := ScalaVersion,
+      resolvers += Classpaths.typesafeReleases,
+      scalacOptions ++= Seq("-unchecked", "-feature"),
+      testOptions in Test += TestOutputOptions,
+      libraryDependencies ++= Seq(
+        "org.joda" % "joda-convert" % JodaConvertVersion,
+        "joda-time" % "joda-time" % JodaTimeVersion,
+        "com.typesafe.akka" %% "akka-actor" % AkkaVersion,
+        "javax.media" % "jai_core" % "1.1.3" from "https://repo.osgeo.org/repository/release/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
+        "org.geotools" % "gt-graph" % GeoToolsVersion from s"https://repo.osgeo.org/repository/release/org/geotools/gt-graph/$GeoToolsVersion/gt-graph-$GeoToolsVersion.jar",
+        "org.geotools" % "gt-main" % GeoToolsVersion from s"https://repo.osgeo.org/repository/release/org/geotools/gt-main/$GeoToolsVersion/gt-main-$GeoToolsVersion.jar",
+        "org.geotools" % "gt-referencing" % GeoToolsVersion from s"https://repo.osgeo.org/repository/release/org/geotools/gt-referencing/$GeoToolsVersion/gt-referencing-$GeoToolsVersion.jar",
+        "org.geotools" % "gt-metadata" % GeoToolsVersion from s"https://repo.osgeo.org/repository/release/org/geotools/gt-metadata/$GeoToolsVersion/gt-metadata-$GeoToolsVersion.jar",
+        "org.geotools" % "gt-opengis" % GeoToolsVersion from s"https://repo.osgeo.org/repository/release/org/geotools/gt-opengis/$GeoToolsVersion/gt-opengis-$GeoToolsVersion.jar",
+        "jgridshift" % "jgridshift" % "1.0" from "https://repo.osgeo.org/repository/release/jgridshift/jgridshift/1.0/jgridshift-1.0.jar",
+        "org.locationtech.jts" % "jts-core" % "1.18.2" from "https://repo1.maven.org/maven2/org/locationtech/jts/jts-core/1.18.2/jts-core-1.18.2.jar",
+        "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test"
       )
-    }
-    case _ => {
-      Project(
-        Digiroad2GeoName,
-        file(Digiroad2GeoName),
-        settings = Defaults.defaultSettings ++ Seq(
-          organization := Organization,
-          name := Digiroad2GeoName,
-          version := Version,
-          scalaVersion := ScalaVersion,
-          resolvers += Classpaths.typesafeReleases,
-          scalacOptions ++= Seq("-unchecked", "-feature"),
-          testOptions in Test += TestOutputOptions,
-          libraryDependencies ++= Seq(
-            "org.joda" % "joda-convert" % JodaConvertVersion,
-            "joda-time" % "joda-time" % JodaTimeVersion,
-            "com.typesafe.akka" %% "akka-actor" % AkkaVersion,
-            "javax.media" % "jai_core" % "1.1.3" from "https://repo.osgeo.org/repository/release/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
-            "com.vividsolutions" % "jts-core" % "1.14.0",
-            "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test"
-          )
-        )
-      )
-    }
-  }
+    )
+  )
+    
 
   val Digiroad2PostGISName = "digiroad2-oracle"
   lazy val postgisJar = Project (
@@ -232,7 +206,7 @@ object Digiroad2Build extends Build {
       ),
       unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf"
     )
-  ) dependsOn(geoJar, postgisJar, viiteJar, commonApiJar % "compile->compile;test->test")
+  ) dependsOn(geoJar, postgisJar, viiteJar % "test->test", commonApiJar % "compile->compile;test->test")
 
   lazy val warProject = Project (
     Digiroad2Name,

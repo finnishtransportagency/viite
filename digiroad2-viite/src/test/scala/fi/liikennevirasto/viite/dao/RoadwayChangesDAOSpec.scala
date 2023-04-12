@@ -303,7 +303,7 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("When fetching road address change infos for road address browser then return change infos based on the parameters given") {
+  test("[ChangeInfoForRoadAddressChangesBrowser] When fetching road address change infos for road address browser then return change infos based on the parameters given") {
     runWithRollback {
       val roadNameId = Sequences.nextRoadNameId
       val projectId = Sequences.nextViiteProjectId
@@ -388,7 +388,7 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("When fetching road address change info for a terminated road (-> type of change: termination) for the road address browser then return the change info of the terminated layer") {
+  test("[ChangeInfoForRoadAddressChangesBrowser] When the road has been terminated (-> type of change: termination) then return the change info of the terminated layer") {
     runWithRollback {
       val roadNameId = Sequences.nextRoadNameId
       val projectId = Sequences.nextViiteProjectId
@@ -435,6 +435,141 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
       val roadNames = result.map(res => res.roadName).distinct
       roadNames.size should be(1) // the history road name should not be returned for the change info, only the road name that the road had before it was terminated
       roadNames.head should equal(Some("Turku-Oulu"))
+    }
+  }
+
+  test("[ChangeInfoForRoadAddressChangesBrowser] When a road has no road name then return the change info without a road name") {
+    runWithRollback {
+      val projectId = Sequences.nextViiteProjectId
+      val roadwayChangeId = 10L
+      val changeTypeNew = 2L
+      val roadNumber = 75999L
+      val roadPartNumber = 999L
+      val ely = 10L
+      val adminClass = 1
+      val discontinuity = 1L
+      val trackCombined = 0L
+
+      val dao = new RoadwayChangesDAO()
+
+      sqlu""" insert into ROADWAY_CHANGES(project_id,change_type,new_road_number,new_road_part_number,old_discontinuity,new_discontinuity,
+                                            old_administrative_class,new_administrative_class,old_ely,new_ely,new_start_addr_m,new_end_addr_m, new_track,roadway_change_id)
+                                   Values($projectId,$changeTypeNew,$roadNumber,$roadPartNumber,$discontinuity,$discontinuity,$adminClass,
+                                          $adminClass,$ely,$ely,0,1000, $trackCombined, $roadwayChangeId)
+          """.execute
+
+      projectDAO.create(
+        Project(projectId, ProjectState.Accepted, "New road without a name test","test", DateTime.parse("2022-07-07"),"test",DateTime.parse("2022-07-01"),
+          DateTime.parse("2022-07-07"),"",Seq(),Seq(),None,None)
+      )
+
+      // set the accepted date for the project
+      sqlu"""update project set accepted_date= TIMESTAMP '2022-07-07 12:26:36.000000' where id=$projectId""".execute
+
+      val startDate = "2022-07-05"
+      val dateTargetProjectAccepted = "ProjectAcceptedDate"
+
+      val result = dao.fetchChangeInfosForRoadAddressChangesBrowser(Some(startDate), None, Some(dateTargetProjectAccepted), None, Some(roadNumber), None, None)
+      result.size should be (1)
+      val roadNames = result.map(res => res.roadName).distinct
+      roadNames.head should equal(None)
+    }
+  }
+
+  test("[ChangeInfoForRoadAddressChangesBrowser] When a road number has road name history then return the correct road name without a duplicate") {
+    runWithRollback {
+      val roadNameId = Sequences.nextRoadNameId
+      val projectId = Sequences.nextViiteProjectId
+      val roadwayChangeId = 10L
+      val changeTypeNew = 2L
+      val roadNumber = 75999L
+      val roadPartNumber = 999L
+      val ely = 10L
+      val adminClass = 1
+      val discontinuity = 1L
+      val trackCombined = 0L
+      val projectStartDate = DateTime.parse("2022-07-07")
+      val roadNameEndDate = DateTime.parse("2022-07-06") // the history road name end date
+
+      val dao = new RoadwayChangesDAO()
+
+      sqlu""" insert into ROADWAY_CHANGES(project_id,change_type,new_road_number,new_road_part_number,old_discontinuity,new_discontinuity,
+                                            old_administrative_class,new_administrative_class,old_ely,new_ely,new_start_addr_m,new_end_addr_m, new_track,roadway_change_id)
+                                   Values($projectId,$changeTypeNew,$roadNumber,$roadPartNumber,$discontinuity,$discontinuity,$adminClass,
+                                          $adminClass,$ely,$ely,0,1000, $trackCombined, $roadwayChangeId)
+          """.execute
+
+      projectDAO.create(
+        Project(projectId, ProjectState.Accepted, "New road and name","test", projectStartDate,"test",projectStartDate,
+          projectStartDate,"",Seq(),Seq(),None,None)
+      )
+
+      // set the accepted date for the project
+      sqlu"""update project set accepted_date= TIMESTAMP '2022-07-07 12:26:36.000000' where id=$projectId""".execute
+
+      // create road name history for the road number
+      RoadNameDAO.create(
+        Seq(
+          RoadName(roadNameId, roadNumber, "TURKU-PORI-KOKKOLA-OULU", Some(DateTime.parse("1989-01-01")),Some(roadNameEndDate),Some(DateTime.parse("2006-01-17")),None,"test"),
+          RoadName(roadNameId + 1, roadNumber, "Turku-Oulu", Some(projectStartDate),None,Some(projectStartDate),None,"test")
+        )
+      )
+
+      val startDate = "2022-07-05"
+      val dateTargetProjectAccepted = "ProjectAcceptedDate"
+
+      val result = dao.fetchChangeInfosForRoadAddressChangesBrowser(Some(startDate), None, Some(dateTargetProjectAccepted), None, Some(roadNumber), None, None)
+      result.size should be (1)
+      result.head.roadName should be (Some("Turku-Oulu"))
+    }
+  }
+
+  test("[ChangeInfoForRoadAddressChangesBrowser] When whole road part is transferred to be" +
+    " completely new road with new road name, return the change info with the new name") {
+    runWithRollback {
+      val roadNameId = Sequences.nextRoadNameId
+      val projectId = Sequences.nextViiteProjectId
+      val roadwayChangeId = 10L
+      val changeTypeTransfer = 3L
+      val oldRoadNumber = 8L
+      val oldRoadPartNumber = 219L
+      val newRoadNumber = 46020L
+      val newRoadPartNumber = 1L
+      val ely = 10L
+      val adminClass = 1
+      val discontinuity = 1L
+      val trackCombined = 0L
+      val projectStartDate = DateTime.parse("2022-01-15")
+
+      val dao = new RoadwayChangesDAO()
+
+      sqlu"""insert into ROADWAY_CHANGES(project_id,change_type,old_road_number,old_road_part_number,old_track,old_start_addr_m,old_end_addr_m,
+                                            new_road_number,new_road_part_number,new_track,new_start_addr_m,new_end_addr_m,old_discontinuity,new_discontinuity,
+                                            old_administrative_class,new_administrative_class,old_ely,new_ely, roadway_change_id)
+                                  values($projectId,$changeTypeTransfer,$oldRoadNumber,$oldRoadPartNumber,$trackCombined,0,1000,$newRoadNumber,$newRoadPartNumber,
+                                         $trackCombined,0,1000,$discontinuity,$discontinuity,$adminClass,$adminClass,$ely,$ely,$roadwayChangeId)
+          """.execute
+
+      // create current both the new and the old road name
+      RoadNameDAO.create(
+        Seq(
+          RoadName(roadNameId, newRoadNumber, "Uusi tie", Some(DateTime.parse("2022-01-15")),None,Some(DateTime.parse("2022-01-15")),None,"test"),
+          RoadName(roadNameId + 1, oldRoadNumber, "Vanha tie", Some(DateTime.parse("1989-01-01")),Some(DateTime.parse("2022-01-14")),Some(DateTime.parse("2006-01-17")),None,"test")
+        )
+      )
+
+      projectDAO.create(
+        Project(projectId, ProjectState.Accepted, "Siirto uudeksi tieksi","test", DateTime.parse("2022-01-15"),"test",projectStartDate,
+          DateTime.parse("2022-01-15"),"",Seq(),Seq(),None,None)
+      )
+      // set the accepted date for the project
+      sqlu"""update project set accepted_date= TIMESTAMP '2022-01-15 12:26:36.000000' where id=$projectId""".execute
+
+      val startDate = "2022-01-01"
+      val dateTargetProjectAccepted = "ProjectAcceptedDate"
+      val result = dao.fetchChangeInfosForRoadAddressChangesBrowser(Some(startDate), None, Some(dateTargetProjectAccepted), None, Some(newRoadNumber), None, None)
+      result.size should be (1) // only one change info should be returned
+      result.head.roadName should be (Some("Uusi tie")) // and the road name should be the new one
     }
   }
 }

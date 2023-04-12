@@ -125,15 +125,24 @@ object ProjectDeltaCalculator {
 
     val oppositeStatusNotChanged = if (oppositeOriginalAddressLinks.size == 2) oppositeOriginalAddressLinks.head.status == oppositeOriginalAddressLinks.last.status else true
 
-    if (!oppositeStatusChange && (matchAddr && sameStatus && matchContinuity && administrativeClassesMatch && trackNotUpdated && originalTrackContinuous && (newLinks || oppositeTrackNotUpdated) && !(hasCalibrationPoint || hasParallelLinkOnCalibrationPoint)) &&
+    if (!oppositeStatusChange && (matchAddr && sameStatus && matchContinuity && administrativeClassesMatch && trackNotUpdated && originalTrackContinuous &&
+      (newLinks || oppositeTrackNotUpdated) && !(hasCalibrationPoint || hasParallelLinkOnCalibrationPoint)) &&
         administrativeClassesMatch && oppositeStatusNotChanged && originalAdministrativeClassContinuous) {
-      val pl1OriginalAddressSet = if (pl1.reversed)
-        pl1.copy(originalStartAddrMValue = pl2.originalStartAddrMValue, roadwayId = pl1.roadwayId)
-      else
-        pl1.copy(originalEndAddrMValue = pl2.originalEndAddrMValue, roadwayId = pl2.roadwayId)
+      val minStartAddrMValue = Math.min(pl1.originalStartAddrMValue, pl2.originalStartAddrMValue)
+      val maxEndAddrMValue = Math.max(pl1.originalEndAddrMValue, pl2.originalEndAddrMValue)
+      val pl1OriginalAddressSet = {
+        if (pl1.reversed)
+          pl1.copy(originalStartAddrMValue = minStartAddrMValue,
+            originalEndAddrMValue = maxEndAddrMValue, roadwayId = pl1.roadwayId)
+        else
+          pl1.copy(originalStartAddrMValue = minStartAddrMValue,
+            originalEndAddrMValue = maxEndAddrMValue, roadwayId = pl2.roadwayId)
+      }
 
       Seq(
-        pl1OriginalAddressSet.copy(discontinuity = pl2.discontinuity, endAddrMValue = pl2.endAddrMValue, calibrationPointTypes = (pl1.startCalibrationPointType, pl2.endCalibrationPointType), originalCalibrationPointTypes = (pl1.originalCalibrationPointTypes._1, pl2.originalCalibrationPointTypes._2))
+        pl1OriginalAddressSet.copy(discontinuity = pl2.discontinuity, endAddrMValue = pl2.endAddrMValue,
+          calibrationPointTypes = (pl1.startCalibrationPointType, pl2.endCalibrationPointType),
+          originalCalibrationPointTypes = (pl1.originalCalibrationPointTypes._1, pl2.originalCalibrationPointTypes._2))
           )
     }
     else {
@@ -199,10 +208,8 @@ object ProjectDeltaCalculator {
           else
             Seq(r1.copy(discontinuity = r2.discontinuity, endAddrMValue = r2.endAddrMValue, calibrationPointTypes = r2.calibrationPointTypes))
         case LinkStatus.New =>
-          if (hasUdcp ||( !hasParallelLinkOnCalibrationPoint && !hasCalibrationPoint) && r1.discontinuity.value != Discontinuity.ParallelLink.value ) { // && !r1.isSplit
+          if (hasUdcp ||( !hasParallelLinkOnCalibrationPoint && !hasCalibrationPoint)) { // && !r1.isSplit
             Seq(r1.copy(discontinuity = r2.discontinuity, endAddrMValue = r2.endAddrMValue, calibrationPointTypes = r2.calibrationPointTypes, connectedLinkId = r2.connectedLinkId))
-          } else if (!hasCalibrationPoint && r1.discontinuity.value == Discontinuity.ParallelLink.value) {
-            Seq(r2, r1)
           } else {
             Seq(r2, r1)
           }
