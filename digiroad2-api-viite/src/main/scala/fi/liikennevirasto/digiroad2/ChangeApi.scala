@@ -6,15 +6,24 @@ import fi.liikennevirasto.viite.{ChangedRoadAddress, NodesAndJunctionsService, R
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.json4s.{DefaultFormats, Formats}
-import org.scalatra.{BadRequest, ScalatraServlet}
+import org.postgresql.util.PSQLException
+import org.scalatra.{BadRequest, InternalServerError, ScalatraServlet}
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.swagger._
 import org.slf4j.{Logger, LoggerFactory}
+
+import scala.util.control.NonFatal
 
 
 class ChangeApi(roadAddressService: RoadAddressService, nodesAndJunctionsService: NodesAndJunctionsService, implicit val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupport with SwaggerSupport  {
   val logger: Logger = LoggerFactory.getLogger(getClass)
   val DateTimePropertyFormat: DateTimeFormatter = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss")
+
+  val XApiKeyDescription =
+    "You need an API key to use Viite APIs.\n" +
+    "Get your API key from the technical system owner (järjestelmävastaava)."
+  val dateParamDescription =
+    "Date in the ISO8601 date and time format, YYYY-MM[-DD[THH[:mm[:ss]]]], for example: <i>2020-02-20T01:23:45</i>"
 
   protected implicit val jsonFormats: Formats = DefaultFormats
   protected val applicationDescription = "The user interface API "
@@ -26,21 +35,58 @@ class ChangeApi(roadAddressService: RoadAddressService, nodesAndJunctionsService
   val roadNumberToGeoJson: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String, Any]]("roadNumberToGeoJson")
       .parameters(
-        queryParam[String]("since").description("Start date of the road addresses changes. Date in format ISO8601. For example 2020-04-29T13:59:59"),
-        queryParam[String]("until").description("End date of the road addresses changes. Date in format ISO8601")
+        queryParam[String]("since").required.description("The earliest moment for the road address changes to be returned.\n" + dateParamDescription),
+        queryParam[String]("until").required.description("The latest moment for the road address changes to be returned.\n" + dateParamDescription)
       )
       tags "ChangeAPI (TN-ITS)"
-      summary "This will return all the changes found on the road addresses that are between the period defined by the \"since\" and  \"until\" parameters."
+      summary "Returns all the changes made to the road addresses within the given time interval, in the TN-ITS-accepted format."
+      parameter headerParam[String]("X-API-Key").description(XApiKeyDescription)
   )
 
   get("/road_numbers", operation(roadNumberToGeoJson)) {
     contentType = formats("json")
-    val since = DateTime.parse(params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter"))))
-    val until = DateTime.parse(params.get("until").getOrElse(halt(BadRequest("Missing mandatory 'until' parameter"))))
 
-    time(logger, s"GET request for /road_numbers", params=Some(params)) {
-      roadNumberToGeoJson(since, roadAddressService.getChanged(since, until))
+    val sinceUnformatted = params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter")))
+    val untilUnformatted = params.get("until").getOrElse(halt(BadRequest("Missing mandatory 'until' parameter")))
+    try {
+      val since = DateTime.parse(sinceUnformatted)
+      val until = DateTime.parse(untilUnformatted)
+      if (since.compareTo(until) > 0) {
+        BadRequestWithLoggerWarn(s"'since' cannot be later than 'until'. ${request.getQueryString}", s"(${request.getRequestURI})")
+      }
+      else {
+        time(logger, s"GET request for /road_numbers", params = Some(params)) {
+          roadNumberToGeoJson(since, roadAddressService.getChanged(since, until))
+        }
+      }
+    } catch {
+      case iae: IllegalArgumentException =>
+        BadRequestWithLoggerWarn(s"Invalid 'since', or/and 'until' parameters. Got ${request.getQueryString} \n" +
+          s" ${iae.getMessage}\n $dateParamDescription","")
+      case nsee: NoSuchElementException =>
+        BadRequestWithLoggerWarn(s"The data asked for has gap(s), result set generation unsuccessful for interval ${request.getQueryString}.",
+          s"${nsee.getMessage}")
+
+      case psqle: PSQLException =>
+        BadRequestWithLoggerWarn(s"Date out of bounds, check the given dates: ${request.getQueryString}.", s"${psqle.getMessage}")
+      case nf if NonFatal(nf) =>
+        val requestString = s"GET request for ${request.getRequestURI}?${request.getQueryString} (${roadNumberToGeoJson.operationId})"
+        haltWithHTTP500WithLoggerError(requestString, nf)
     }
+  }
+
+  private def haltWithHTTP500WithLoggerError(whatWasCalledWhenError: String, throwable: Throwable) = {
+    var now = DateTime.now()
+    logger.error(s"An unexpected error in '$whatWasCalledWhenError ($now)': $throwable")
+    halt(InternalServerError(
+      s"You hit an unexpected error. Contact system administrator, or Viite development team.\n" +
+      s"Tell them to look for '$whatWasCalledWhenError ($now)'"
+    ))
+  }
+
+  def BadRequestWithLoggerWarn(messageFor400: String, extraForLogger: String) = {
+    logger.warn(messageFor400 + "  " + extraForLogger)
+    BadRequest(messageFor400)
   }
 
   private def extractChangeType(since: DateTime, expired: Boolean, createdDateTime: Option[DateTime]) = {

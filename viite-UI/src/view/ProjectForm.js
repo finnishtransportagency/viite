@@ -730,6 +730,7 @@
           eventbus.trigger('roadAddressProject:clearOnClose');
           projectLinkLayer.hide();
         }
+        eventbus.trigger('layers:removeProjectModeFeaturesFromTheLayers');
         applicationModel.removeSpinner();
       };
 

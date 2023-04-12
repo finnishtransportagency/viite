@@ -123,7 +123,7 @@ goto end
 
 :run
 
-"%_JAVACMD%" %_JAVA_OPTS% %SBT_OPTS% -cp "%SBT_HOME%sbt-launch.jar" xsbt.boot.Boot %*
+"%_JAVACMD%" %_JAVA_OPTS% %SBT_OPTS% -cp "%SBT_HOME%/bin/sbt-launch.jar" xsbt.boot.Boot %*
 goto :eof
 
 :process

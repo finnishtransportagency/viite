@@ -37,7 +37,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     }
   }
 
-  test("Test integrationApi.roadAddressLinksToApi() When supliying a simple Road Address Link Then return a Sequence of a String to Value mappings that represent the Road Address Link.") {
+  test("Test integrationApi.roadAddressLinksToApi() When supplying a simple Road Address Link Then return a Sequence of a String to Value mappings that represent the Road Address Link.") {
     val geometry = Seq(Point(0.0, 0.0), Point(1.0, 0.0, 0.5), Point(4.0, 4.0, 1.5))
     // This roadAddressLink has linearLocationId equal to zero, just to compile.
     val roadAdressLink = RoadAddressLink(63298, 0, 5171208.toString, geometry, GeometryUtils.geometryLength(geometry), AdministrativeClass.Municipality, InUse, NormalLinkInterface, AdministrativeClass.Municipality, None, BigInt(0), "", None, None, 5, 205, 1, 0, 0, 0, 6, "2015-01-01", "2015-12-31", 0.0, 0.0, SideCode.TowardsDigitizing, Some(CalibrationPoint(120.toString, 1, 2)), None, sourceId = "")
@@ -123,9 +123,17 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     }
   }
 
-  test("Test When asking for changes in the roadnames correctly including the Since but with no data to return Then returns status code 200 and a empty array as the response body.") {
+  test("Test When asking for changes in the roadnames with Since too much in the future Then returns status code 400.") {
     when(mockRoadNameService.getUpdatedRoadNames(any[DateTime], any[Option[DateTime]])).thenReturn(Right(Seq()))
     get("/roadnames/changes?since=9999-01-01") {
+      status should equal(400)
+      response.getHeader("Content-Type").toLowerCase should (equal("application/json;charset=utf-8") or equal("application/json; charset=utf-8"))
+    }
+  }
+
+  test("Test When asking for changes in the roadnames correctly including the Since but with no data to return Then returns status code 200 and a empty array as the response body.") {
+    when(mockRoadNameService.getUpdatedRoadNames(any[DateTime], any[Option[DateTime]])).thenReturn(Right(Seq()))
+    get("/roadnames/changes?since=2099-01-01") { // 2099: "very much in the future". If this test some day in the future fails for the date, just move it forward. (MK, 2023-03)
       status should equal(200)
       // Different Jetty-versions have variation in Content-Type
       response.getHeader("Content-Type").toLowerCase should (equal("application/json;charset=utf-8") or equal("application/json; charset=utf-8"))
@@ -169,10 +177,10 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
   test("Test When asking for changes in the roadnames correctly including the Since with many updates to return to 2 roads Then returns status code 200 and a filled array with the info for the updates.") {
     when(mockRoadNameService.getUpdatedRoadNames(any[DateTime], any[Option[DateTime]])).thenReturn(
       Right(Seq(
-        RoadName(4, 3, "ANOTHER ROAD", date(2017, 12, 12), None, date(2017, 12, 1), None, "MOCK"),
-        RoadName(3, 2, "MY ROAD", date(2018, 2, 2), None, date(2017, 12, 1), None, "MOCK"),
-        RoadName(2, 2, "THEROAD", date(2000, 2, 2), date(2018, 2, 1), date(2017, 12, 1), None, "MOCK"),
-        RoadName(1, 2, "OLDROAD", date(1900, 2, 2), date(2000, 2, 1), date(1900, 1, 1), None, "MOCK")
+        RoadName(4, 3, "ANOTHER ROAD", date(2017, 12, 12), None,             date(2017, 12, 1), None, "MOCK"),
+        RoadName(3, 2, "MY ROAD",      date(2018,  2,  2), None,             date(2017, 12, 1), None, "MOCK"),
+        RoadName(2, 2, "THEROAD",      date(2000,  2,  2), date(2018, 2, 1), date(2017, 12, 1), None, "MOCK"),
+        RoadName(1, 2, "OLDROAD",      date(1900,  2,  2), date(2000, 2, 1), date(1900, 1,  1), None, "MOCK")
       ))
     )
     get("/roadnames/changes?since=2017-12-01") {
@@ -194,7 +202,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
 
   test("Test When asking for changes in the roadnames correctly including the Since with no updates to any road Then returns status code 200 and the returning array should be empty.") {
     when(mockRoadNameService.getUpdatedRoadNames(any[DateTime], any[Option[DateTime]])).thenReturn(Right(Seq()))
-    get("/roadnames/changes?since=9999-01-01&until=9999-01-01") {
+    get("/roadnames/changes?since=2099-01-01&until=2099-01-01") { // 2099: "very much in the future". If this test some day in the future fails for the date, just move it forward. (MK, 2023-03)
       status should equal(200)
       // Different Jetty-versions have variation in Content-Type
       response.getHeader("Content-Type").toLowerCase should (equal("application/json;charset=utf-8") or equal("application/json; charset=utf-8"))

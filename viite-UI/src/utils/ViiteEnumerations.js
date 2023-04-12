@@ -111,6 +111,41 @@
     unAddressedRoadsLayer: {value: 11}
   };
 
+  root.ViewModeZIndex = {
+    UnAddressedOther: {border: 10, stroke: 11, fill: 12},
+    UnAddressedState: {border: 20, stroke: 20, fill: 20},
+    UnAddressedOtherUnderConstruction: {border: 30, stroke: 31, fill: 32},
+    UnAddressedStateUnderConstruction: {border: 40, stroke: 41, fill: 42},
+    PedestrianAndBicycleRoad: {border: 50, stroke: 51, fill: 52},
+    PrivateRoad: {border: 60, stroke: 61, fill: 62},
+    Street: {border: 70, stroke: 71, fill: 72},
+    Ramp: {border: 80, stroke: 81, fill: 82},
+    ConnectingRoad: {border: 90, stroke: 91, fill: 92},
+    RegionalRoad: {border: 100, stroke: 101, fill: 102},
+    MainRoad: {border: 110, stroke: 111, fill: 112},
+    Highway: {border: 120, stroke: 121, fill: 122},
+    ReservedRoad: {value: 130},
+    DirectionMarker: {value: 140},
+    CalibrationPoint: {value: 150}
+  };
+
+  root.ProjectModeZIndex = {
+    NotInProjectRoadLinks: {border: 10, stroke: 11, fill: 12},
+    TerminatedProjectLinks: {border: 20, stroke: 21, fill: 22},
+    UnAddressedOther: {border: 30, stroke: 31, fill: 32},
+    UnAddressedState: {border: 40, stroke: 41, fill: 42},
+    UnAddressedUnderConstructionOther: {border: 50, stroke: 51, fill: 52},
+    UnAddressedUnderConstructionState: {border: 60, stroke: 61, fill: 62},
+    TransferredProjectLinks: {border: 70, stroke: 71, fill: 72},
+    UnchangedProjectLinks: {border: 70, stroke: 71, fill: 72},
+    NumberingProjectLinks: {border: 70, stroke: 71, fill: 72},
+    NewProjectLinks: {border: 70, stroke: 71, fill: 72},
+    NotHandledProjectLinks: {border: 80, stroke: 81, fill: 82},
+    CalibrationPoint: {value: 90},
+    SelectedProjectLink: {value: 100},
+    DirectionMarker: {value: 110}
+  };
+
   root.AdministrativeClass = {
     Empty: {value: 0, description: "", displayText: "--", textValue: ""},
     PublicRoad: {value: 1, description: "Yleinen tie", displayText: "1 Valtio", textValue: "Valtio"},
@@ -216,8 +251,7 @@
     Discontinuous: {value: 2, description: "Epäjatkuva"},
     ChangingELYCode: {value: 3, description: "ELY:n raja"},
     MinorDiscontinuity: {value: 4, description: "Lievä epäjatkuvuus"},
-    Continuous: {value: 5, description: "Jatkuva"},
-    ParallelLink: {value: 6, description: "Parallel Link"}
+    Continuous: {value: 5, description: "Jatkuva"}
 
   };
 }(window.ViiteEnumerations = window.ViiteEnumerations || {}));

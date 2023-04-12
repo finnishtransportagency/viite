@@ -386,14 +386,14 @@ class RoadAddressService(
 
   def locationInputParser(searchStringOption: Option[String]): Map[String, Seq[Long]] = {
     val searchString = searchStringOption.getOrElse("")
-    val linkIdRegex = """(\w+-\w+-\w+-\w+-\w+:\d+)""".r // Link UUID
-    val linkIds = linkIdRegex.findFirstIn(searchString)
+    val linkIdRegex  = """(\w+-\w+-\w+-\w+-\w+:\d+)""".r // Link UUID
+    val linkIds      = linkIdRegex.findFirstIn(searchString)
 
     if (linkIds.nonEmpty)
       Map(("linkId", Seq(-1L)))
     else {
       val numRegex = """(\d+)""".r
-      val nums = numRegex.findAllIn(searchString).map(_.toLong).toSeq
+      val nums     = numRegex.findAllIn(searchString).map(_.toLong).toSeq
       val letterRegex = """([A-Za-zÀ-ÿ])""".r
       val letters = letterRegex.findFirstIn(searchString)
       if (letters.isEmpty)
@@ -444,7 +444,7 @@ class RoadAddressService(
   }
 
   /**
-    * Gets all the road addresses in the same road number, road part number with start address less that
+    * Gets all the road addresses in the same road number, road part number with start address less than
     * the given address measure. If trackOption parameter is given it will also filter by track code.
     *
     * @param road        The road number
@@ -472,7 +472,7 @@ class RoadAddressService(
       if (addressM > 0) {
         roadAddresses.filter(ra => ra.startAddrMValue >= addressM || ra.endAddrMValue == addressM)
       }
-      else Seq(roadAddresses.head)
+      else if(roadAddresses.nonEmpty) Seq(roadAddresses.head) else Seq()
     }
   }
 
@@ -1072,7 +1072,7 @@ sealed trait RoadClass {
 
 object RoadClass {
   val values: Set[RoadClass] = Set(HighwayClass, MainRoadClass, RegionalClass, ConnectingClass, MinorConnectingClass, StreetClass,
-    RampsAndRoundaboutsClass, PedestrianAndBicyclesClassA, PedestrianAndBicyclesClassB, WinterRoadsClass, PathsClass, ConstructionSiteTemporaryClass,
+    RampsAndRoundaboutsClass, PedestrianAndBicyclesClassA, PedestrianAndBicyclesClassB, WinterRoadsClass, PathsClass,
     PrivateRoadClass, NoClass)
 
   val forNodes: Set[Int] = Set(HighwayClass, MainRoadClass, RegionalClass, ConnectingClass, MinorConnectingClass,
@@ -1149,12 +1149,6 @@ object RoadClass {
     def value = 10
 
     def roads: Range.Inclusive = 62001 to 62999
-  }
-
-  case object ConstructionSiteTemporaryClass extends RoadClass {
-    def value = 11
-
-    def roads: Range.Inclusive = 9900 to 9999
   }
 
   case object PrivateRoadClass extends RoadClass {
