@@ -10,9 +10,21 @@
                         '<option value="RoadAddressStartDate">Muutoksen voimaantulopvm</option>' +
                     '</select>' +
                 '</div>' +
-                '<div class="input-container"><label class="control-label-small">Alkupvm</label> <input type="text" class="road-address-browser-date-input" id="roadAddrChangesStartDate"required/></div>' +
+                '<div class="input-container">' +
+                    '<label class="control-label-small">Alkupvm</label>' +
+                    '<div>' +
+                        ' <input type="text" class="road-address-browser-date-input" id="roadAddrChangesStartDate"required/>' +
+                        ' <i class="fa fa-calendar" id="calendarIconStartDate" style="margin-left: -20px; color: #282826"></i>' +
+                    '</div>' +
+                '</div>' +
                 '<div class="input-container"> <b style="margin-top: 25px"> - </b></div>' +
-                '<div class="input-container"><label class="control-label-small">Loppupvm</label> <input type="text" class="road-address-browser-date-input" id="roadAddrChangesEndDate" /></div>' +
+                '<div class="input-container">' +
+                    '<label class="control-label-small">Loppupvm</label>' +
+                    '<div>' +
+                        ' <input type="text" class="road-address-browser-date-input" id="roadAddrChangesEndDate" />' +
+                        ' <i class="fa fa-calendar" id="calendarIconEndDate" style="margin-left: -20px; color: #282826"></i>' +
+                    '</div>' +
+                '</div>' +
                 '<div class="input-container">' +
                     '<label class="control-label-small">Ely</label>' +
                     '<select name id="roadAddrChangesInputEly" /> ' +
@@ -30,7 +42,13 @@
 
         function getRoadAddressBrowserForm() {
             return '<form id="roadAddressBrowser" class="road-address-browser-form">' +
-            '<div class="input-container"><label class="control-label-small">Tilannepvm</label> <input type="text" id="roadAddrSituationDate" value="' + dateutil.getCurrentDateString() + '" style="width: 100px" required/></div>' +
+            '<div class="input-container">' +
+                '<label class="control-label-small">Tilannepvm</label>' +
+                '<div>' +
+                    ' <input type="text" id="roadAddrSituationDate" value="' + dateutil.getCurrentDateString() + '" style="width: 100px" required />' +
+                    ' <i class="fa fa-calendar" id="calendarIcon" style="margin-left: -20px; color: #282826"></i>' +
+                '</div>' +
+            '</div>' +
             '<div class="input-container"><label class="control-label-small">Ely</label>' +
             '<select name id="roadAddrInputEly" /> ' +
                 createElyDropDownOptions() +
