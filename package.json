@@ -35,7 +35,7 @@
     "lodash": "4.17.19",
     "moment": "2.24.0",
     "ol": "7.3.0",
-    "pikaday": "1.8.0",
+    "pikaday": "1.8.2",
     "proj4": "^2.6.0",
     "requirejs": "2.3.6",
     "web-console-reporter": "1.0.0",
