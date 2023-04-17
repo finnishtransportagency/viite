@@ -1,7 +1,6 @@
 (function (dateUtils) {
   var FINNISH_DATE_FORMAT = 'D.M.YYYY';
   dateUtils.FINNISH_DATE_FORMAT = FINNISH_DATE_FORMAT;
-  var ISO_8601_DATE_FORMAT = 'YYYY-MM-DD';
   var FINNISH_HINT_TEXT = 'pp.kk.vvvv';
   var FINNISH_PIKADAY_I18N = {
     previousMonth: 'edellinen kuukausi',
@@ -11,24 +10,12 @@
     weekdaysShort: ['Su', 'Ma', 'Ti', 'Ke', 'To', 'Pe', 'La']
   };
 
-  dateUtils.iso8601toFinnish = function (iso8601DateString) {
-    return _.isString(iso8601DateString) ? moment(iso8601DateString, ISO_8601_DATE_FORMAT).format(FINNISH_DATE_FORMAT) : "";
-  };
-
-  dateUtils.finnishToIso8601 = function (finnishDateString) {
-    return moment(finnishDateString, FINNISH_DATE_FORMAT).format(ISO_8601_DATE_FORMAT);
-  };
-
   var dateToFinnishString = function (s) {
     return s ? moment(s, dateUtils.FINNISH_DATE_FORMAT) : null;
   };
 
   dateUtils.addFinnishDatePicker = function (element, additionalOptions) {
     return addPicker(jQuery(element),additionalOptions);
-  };
-
-  dateUtils.addFinnishDatePickerWithStartDate = function (element, startDate) {
-    return addPickerWithStartDate(jQuery(element), startDate);
   };
 
   dateUtils.addSingleDatePicker = function (element, additionalOptions) {
@@ -43,10 +30,6 @@
     return datePicker;
   };
 
-  dateUtils.removeDatePickersFromDom = function () {
-    jQuery('.pika-single.is-bound.is-hidden').remove();
-  };
-
   function addPicker(jqueryElement, additionalOptions) {
     var basicOptions = {
       field: jqueryElement.get(0),
@@ -59,31 +42,10 @@
     var options = {
       ...basicOptions,
       ...additionalOptions
-    }
+    };
 
     var picker = new Pikaday(options);
 
-    jqueryElement.keypress(function (e) {
-      if (e.which === 13) { // hide on enter key press
-        picker.hide();
-        jqueryElement.blur();
-      }
-    });
-    jqueryElement.attr('placeholder', FINNISH_HINT_TEXT);
-    return picker;
-  }
-
-  function addPickerWithStartDate(jqueryElement, startDate, onDraw, onSelect) {
-    var picker = new Pikaday({
-      field: jqueryElement.get(0),
-      format: FINNISH_DATE_FORMAT,
-      firstDay: 1,
-      yearRange: [1950, 2050],
-      onDraw: onDraw,
-      onSelect: onSelect,
-      i18n: FINNISH_PIKADAY_I18N,
-      defaultDate: moment(startDate, FINNISH_DATE_FORMAT).toDate()
-    });
     jqueryElement.keypress(function (e) {
       if (e.which === 13) { // hide on enter key press
         picker.hide();
