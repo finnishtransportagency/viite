@@ -238,7 +238,11 @@
 
         function addDatePicker() {
             const dateInput = $('#roadAddrSituationDate');
-            datePicker = dateutil.addSingleDatePicker(dateInput);
+            const triggerElement = document.getElementById('calendarIcon');
+            const options = {
+                trigger: triggerElement
+            };
+            datePicker = dateutil.addSingleDatePicker(dateInput, options);
         }
 
         function destroyDatePicker() {
@@ -381,6 +385,10 @@
         }
 
         function bindEvents() {
+
+            document.getElementById('roadAddrSituationDate').onchange = function () {
+                datePicker.hide();
+            };
 
             // if any of the input fields change (the input fields are child elements of this wrapper/parent element)
             document.getElementById('roadAddressBrowser').onchange = function () {
