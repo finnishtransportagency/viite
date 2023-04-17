@@ -125,8 +125,8 @@
             const inputField = $('#' + inputFieldId);
             const triggerElement = document.getElementById(triggerElementId);
             const options = {
-                trigger: triggerElement,
-            }
+                trigger: triggerElement
+            };
             const datePicker = dateutil.addSingleDatePicker(inputField, options);
             datePickers.push(datePicker);
         }

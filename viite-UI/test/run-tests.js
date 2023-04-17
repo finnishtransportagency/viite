@@ -44,7 +44,6 @@ require.config({
 require(['lodash', 'moment', 'GeometryUtils',
     'unit-tests/geometry-calculations-spec',
     'unit-tests/GeometryUtilsSpec',
-    'unit-tests/date-utils-spec',
     'unit-tests/LocationInputParserSpec'],
   function (lodash, moment) {
     window._ = lodash;
