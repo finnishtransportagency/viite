@@ -53,7 +53,7 @@
       format: FINNISH_DATE_FORMAT,
       firstDay: 1,
       yearRange: [1900, 2050],
-      i18n: FINNISH_PIKADAY_I18N,
+      i18n: FINNISH_PIKADAY_I18N
     };
 
     var options = {

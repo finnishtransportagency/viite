@@ -127,7 +127,7 @@
             const options = {
                 trigger: triggerElement,
             }
-            const datePicker = dateutil.addSingleDatePicker(inputField, options)
+            const datePicker = dateutil.addSingleDatePicker(inputField, options);
             datePickers.push(datePicker);
         }
 
