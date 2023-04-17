@@ -110,8 +110,8 @@
         function toggle() {
             $('.container').append('<div class="road-address-browser-modal-overlay confirm-modal"><div class="road-address-browser-modal-window"></div></div>');
             $('.road-address-browser-modal-window').append(roadAddressChangesBrowserWindow.toggle());
-            addDatePicker("roadAddrChangesStartDate");
-            addDatePicker("roadAddrChangesEndDate");
+            addDatePicker("roadAddrChangesStartDate", "calendarIconStartDate");
+            addDatePicker("roadAddrChangesEndDate", "calendarIconEndDate");
             bindEvents();
         }
 
@@ -121,9 +121,13 @@
             destroyDatePickers();
         }
 
-        function addDatePicker(inputFieldId) {
+        function addDatePicker(inputFieldId, triggerElementId) {
             const inputField = $('#' + inputFieldId);
-            const datePicker = dateutil.addSingleDatePicker(inputField);
+            const triggerElement = document.getElementById(triggerElementId);
+            const options = {
+                trigger: triggerElement,
+            }
+            const datePicker = dateutil.addSingleDatePicker(inputField, options)
             datePickers.push(datePicker);
         }
 
@@ -132,6 +136,12 @@
                 datePicker.destroy();
             });
             datePickers = [];
+        }
+
+        function hidePickers() {
+            datePickers.forEach((picker) => {
+                picker.hide();
+            });
         }
 
         function exportDataAsExcelFile() {
@@ -233,6 +243,14 @@
         }
 
         function bindEvents() {
+
+            document.getElementById('roadAddrChangesStartDate').onchange = function () {
+                hidePickers();
+            };
+
+            document.getElementById('roadAddrChangesEndDate').onchange = function () {
+                hidePickers();
+            };
 
             // if any of the input fields change (the input fields are child elements of this wrapper/parent element)
             document.getElementById('roadAddressChangesBrowser').onchange = function () {
