@@ -14,8 +14,12 @@ object Digiroad2Build extends Build {
   val ScalaVersion = "2.11.7"
   val ScalatraVersion = "2.6.3"
   val ScalaTestVersion = "3.2.0-SNAP7"
-  val JodaConvertVersion = "2.0.1"
-  val JodaTimeVersion = "2.9.9"
+
+  val JodaConvertVersion = "2.2.3" // no dependencies
+  val JodaTimeVersion = "2.12.5" // dep on joda-convert // TODO "Note that from Java SE 8 onwards, users are asked to migrate to java.time (JSR-310) - a core part of the JDK which replaces this project." (from https://mvnrepository.com/artifact/joda-time/joda-time)
+  val SlickVersion = "3.0.0"
+  val JodaSlickMapperVersion = "2.2.0" // provides slick 3.1.1, joda-time 2.7, and joda-convert 1.7
+
   val AkkaVersion = "2.3.16"
   val HttpClientVersion = "4.5.5"
   val NewRelicApiVersion = "3.1.1"
@@ -82,11 +86,11 @@ object Digiroad2Build extends Build {
         "commons-codec" % "commons-codec" % "1.9",
         "com.jolbox" % "bonecp" % "0.8.0.RELEASE",
         "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test",
-        "com.typesafe.slick" %% "slick" % "3.0.0",
+        "com.typesafe.slick" %% "slick" % SlickVersion,
         "org.json4s"   %% "json4s-jackson" % JsonJacksonVersion,
         "org.joda" % "joda-convert" % JodaConvertVersion,
         "joda-time" % "joda-time" % JodaTimeVersion,
-        "com.github.tototoshi" %% "slick-joda-mapper" % "2.2.0",
+        "com.github.tototoshi" %% "slick-joda-mapper" % JodaSlickMapperVersion,
         "com.github.tototoshi" %% "scala-csv" % "1.3.5",
         "org.apache.httpcomponents" % "httpclient" % HttpClientVersion,
         "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
