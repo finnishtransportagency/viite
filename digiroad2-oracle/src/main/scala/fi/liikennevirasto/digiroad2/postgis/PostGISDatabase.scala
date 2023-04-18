@@ -1,7 +1,6 @@
 package fi.liikennevirasto.digiroad2.postgis
 
 import java.sql.Date
-
 import javax.sql.DataSource
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
@@ -9,7 +8,7 @@ import org.joda.time.LocalDate
 import slick.driver.JdbcDriver.backend.Database
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
-import org.postgis.PGgeometry
+import net.postgis.jdbc.geometry.GeometryBuilder
 import org.postgresql.util.PGobject
 
 object PostGISDatabase {
@@ -137,7 +136,7 @@ object PostGISDatabase {
   def loadJGeometryToGeometry(geometry: Option[Object]): Seq[Point] = {
     if (geometry.nonEmpty) {
       val pgObject = geometry.get.asInstanceOf[PGobject]
-      val geom = PGgeometry.geomFromString(pgObject.getValue)
+      val geom = GeometryBuilder.geomFromString(pgObject.getValue)
       val n = geom.numPoints()
       var points: Seq[Point] = Seq()
       for (i <- 1 to n) {
