@@ -3,56 +3,75 @@
 
         function getRoadAddressChangesBrowserForm() {
             return '<form class="road-address-browser-form" id="roadAddressChangesBrowser">' +
-                '<div class="input-container">' +
-                    '<label class="control-label-small">Rajausperuste</label>' +
-                    '<select id="dateTarget">' +
-                        '<option value="ProjectAcceptedDate">Projektin hyväksymispvm</option>' +
-                        '<option value="RoadAddressStartDate">Muutoksen voimaantulopvm</option>' +
-                    '</select>' +
-                '</div>' +
-                '<div class="input-container"><label class="control-label-small">Alkupvm</label> <input type="text" class="road-address-browser-date-input" id="roadAddrChangesStartDate"required/></div>' +
-                '<div class="input-container"> <b style="margin-top: 25px"> - </b></div>' +
-                '<div class="input-container"><label class="control-label-small">Loppupvm</label> <input type="text" class="road-address-browser-date-input" id="roadAddrChangesEndDate" /></div>' +
-                '<div class="input-container">' +
-                    '<label class="control-label-small">Ely</label>' +
-                    '<select name id="roadAddrChangesInputEly" /> ' +
-                        createElyDropDownOptions() +
-                    '</select>' +
-                '</div>' +
-                createRoadNumberInputField("roadAddrChangesInputRoad") +
-                createRoadPartNumberInputFields("roadAddrChangesInputStartPart", "roadAddrChangesInputEndPart") +
-                '<div class="road-address-browser-form-button-wrapper">' +
-                    createSearchButton("fetchRoadAddressChanges") +
-                    createExcelDownloadButton() +
-                '</div>' +
+                        '<div class="input-container">' +
+                            '<label class="control-label-small">Rajausperuste</label>' +
+                            '<select id="dateTarget">' +
+                                '<option value="ProjectAcceptedDate">Projektin hyväksymispvm</option>' +
+                                '<option value="RoadAddressStartDate">Muutoksen voimaantulopvm</option>' +
+                            '</select>' +
+                        '</div>' +
+                        '<div class="input-container">' +
+                            '<label class="control-label-small">Alkupvm</label>' +
+                            '<div>' +
+                                ' <input type="text" class="road-address-browser-date-input" id="roadAddrChangesStartDate"required/>' +
+                                ' <i class="fa fa-calendar" id="calendarIconStartDate" style="margin-left: -20px; color: #282826"></i>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="input-container"> <b style="margin-top: 25px"> - </b></div>' +
+                        '<div class="input-container">' +
+                            '<label class="control-label-small">Loppupvm</label>' +
+                            '<div>' +
+                                ' <input type="text" class="road-address-browser-date-input" id="roadAddrChangesEndDate" />' +
+                                ' <i class="fa fa-calendar" id="calendarIconEndDate" style="margin-left: -20px; color: #282826"></i>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="input-container">' +
+                            '<label class="control-label-small">Ely</label>' +
+                            '<select name id="roadAddrChangesInputEly" /> ' +
+                                createElyDropDownOptions() +
+                            '</select>' +
+                        '</div>' +
+                        createRoadNumberInputField("roadAddrChangesInputRoad") +
+                        createRoadPartNumberInputFields("roadAddrChangesInputStartPart", "roadAddrChangesInputEndPart") +
+                        '<div class="road-address-browser-form-button-wrapper">' +
+                            createSearchButton("fetchRoadAddressChanges") +
+                            createExcelDownloadButton() +
+                        '</div>' +
                 '</form>';
         }
 
         function getRoadAddressBrowserForm() {
-            return '<form id="roadAddressBrowser" class="road-address-browser-form">' +
-            '<div class="input-container"><label class="control-label-small">Tilannepvm</label> <input type="text" id="roadAddrSituationDate" value="' + dateutil.getCurrentDateString() + '" style="width: 100px" required/></div>' +
-            '<div class="input-container"><label class="control-label-small">Ely</label>' +
-            '<select name id="roadAddrInputEly" /> ' +
-                createElyDropDownOptions() +
-            '</select>' +
-            '</div>' +
-            createRoadNumberInputField("roadAddrInputRoad") +
-            createRoadPartNumberInputFields("roadAddrInputStartPart", "roadAddrInputEndPart") +
-            '<div class="input-container">' +
-                '<label class="control-label-small">Hakukohde</label>' +
-                '<select id="targetValue">' +
-                    '<option value="Tracks">Ajoradat</option>' +
-                    '<option value="RoadParts">Tieosat</option>' +
-                    '<option value="Nodes">Solmut</option>' +
-                    '<option value="Junctions">Liittymät</option>' +
-                    '<option value="RoadNames">Tiennimet</option>' +
-                '</select>' +
-            '</div>' +
-            '<div class="road-address-browser-form-button-wrapper">' +
-                createSearchButton("fetchRoadAddresses") +
-                createExcelDownloadButton() +
-            '</div>' +
-            '</form>';
+            return  '<form id="roadAddressBrowser" class="road-address-browser-form">' +
+                        '<div class="input-container">' +
+                            '<label class="control-label-small">Tilannepvm</label>' +
+                            '<div>' +
+                                ' <input type="text" id="roadAddrSituationDate" value="' + dateutil.getCurrentDateString() + '" style="width: 100px" required />' +
+                                ' <i class="fa fa-calendar" id="calendarIcon" style="margin-left: -20px; color: #282826"></i>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="input-container">' +
+                            '<label class="control-label-small">Ely</label>' +
+                            '<select name id="roadAddrInputEly" /> ' +
+                                createElyDropDownOptions() +
+                            '</select>' +
+                        '</div>' +
+                        createRoadNumberInputField("roadAddrInputRoad") +
+                        createRoadPartNumberInputFields("roadAddrInputStartPart", "roadAddrInputEndPart") +
+                        '<div class="input-container">' +
+                            '<label class="control-label-small">Hakukohde</label>' +
+                            '<select id="targetValue">' +
+                                '<option value="Tracks">Ajoradat</option>' +
+                                '<option value="RoadParts">Tieosat</option>' +
+                                '<option value="Nodes">Solmut</option>' +
+                                '<option value="Junctions">Liittymät</option>' +
+                                '<option value="RoadNames">Tiennimet</option>' +
+                            '</select>' +
+                        '</div>' +
+                        '<div class="road-address-browser-form-button-wrapper">' +
+                            createSearchButton("fetchRoadAddresses") +
+                            createExcelDownloadButton() +
+                        '</div>' +
+                    '</form>';
         }
 
         function createElyDropDownOptions() {

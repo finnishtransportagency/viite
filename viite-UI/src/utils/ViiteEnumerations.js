@@ -101,17 +101,16 @@
     Unknown: {value: 99, description: "Unknown"}
   };
 
-  root.RoadZIndex = {
-    VectorLayer: {value: 1},
-    RoadLinkStyleZIndex: {value: 2},
-    CalibrationPointLayer: {value: 3},
-    UnderConstructionLayer: {value: 4},
-    ReservedRoadLayer: {value: 6},
-    DirectionMarkerLayer: {value: 8},
-    unAddressedRoadsLayer: {value: 11}
+  root.NodesAndJunctionsZIndex = {
+    DirectionMarker: {value: 140},
+    NodePointTemplate: {value: 160, selected: 165},
+    NodeMarker: {value: 170, selected: 175},
+    JunctionTemplate: {value: 180, selected: 185},
+    JunctionMarker: {value: 190, selected: 195}
   };
 
   root.ViewModeZIndex = {
+    BorderStyle: {value: 1},
     UnAddressedOther: {border: 10, stroke: 11, fill: 12},
     UnAddressedState: {border: 20, stroke: 20, fill: 20},
     UnAddressedOtherUnderConstruction: {border: 30, stroke: 31, fill: 32},
@@ -130,6 +129,7 @@
   };
 
   root.ProjectModeZIndex = {
+    BorderStyle: {value: 1},
     NotInProjectRoadLinks: {border: 10, stroke: 11, fill: 12},
     TerminatedProjectLinks: {border: 20, stroke: 21, fill: 22},
     UnAddressedOther: {border: 30, stroke: 31, fill: 32},

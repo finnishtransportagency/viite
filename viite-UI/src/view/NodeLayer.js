@@ -10,63 +10,62 @@
     var junctionMarkerVector = dblVector();
     var nodePointTemplateVector = dblVector();
     var junctionTemplateVector = dblVector();
-    var RoadZIndex = ViiteEnumerations.RoadZIndex;
 
     var directionMarkerLayer = new ol.layer.Vector({
       source: directionMarkerVector,
       name: 'directionMarkerLayer',
-      zIndex: RoadZIndex.VectorLayer.value
+      zIndex: ViiteEnumerations.NodesAndJunctionsZIndex.DirectionMarker.value
     });
 
     var nodeMarkerLayer = new ol.layer.Vector({
       source: nodeMarkerVector.unselected,
       name: 'nodeMarkerLayer',
-      zIndex: RoadZIndex.CalibrationPointLayer.value,
+      zIndex: ViiteEnumerations.NodesAndJunctionsZIndex.NodeMarker.value,
       selectable: false
     });
 
     var nodeMarkerSelectedLayer = new ol.layer.Vector({
       source: nodeMarkerVector.selected,
       name: 'nodeMarkerSelectedLayer',
-      zIndex: RoadZIndex.CalibrationPointLayer.value
+      zIndex: ViiteEnumerations.NodesAndJunctionsZIndex.NodeMarker.selected
     });
 
     var junctionMarkerLayer = new ol.layer.Vector({
       source: junctionMarkerVector.unselected,
       name: 'junctionMarkerLayer',
-      zIndex: RoadZIndex.CalibrationPointLayer.value + 1
+      zIndex: ViiteEnumerations.NodesAndJunctionsZIndex.JunctionMarker.value
     });
 
     var junctionMarkerSelectedLayer = new ol.layer.Vector({
       source: junctionMarkerVector.selected,
       name: 'junctionMarkerSelectedLayer',
-      zIndex: RoadZIndex.CalibrationPointLayer.value + 1
+      zIndex: ViiteEnumerations.NodesAndJunctionsZIndex.JunctionMarker.selected
     });
 
     var nodePointTemplateLayer = new ol.layer.Vector({
       source: nodePointTemplateVector.unselected,
       name: 'nodePointTemplateLayer',
-      zIndex: RoadZIndex.CalibrationPointLayer.value - 1,
+      zIndex: ViiteEnumerations.NodesAndJunctionsZIndex.NodePointTemplate.value,
       selectable: false
     });
 
     var nodePointTemplateSelectedLayer = new ol.layer.Vector({
       source: nodePointTemplateVector.selected,
       name: 'nodePointTemplateSelectedLayer',
-      zIndex: RoadZIndex.CalibrationPointLayer.value - 1
+      zIndex: ViiteEnumerations.NodesAndJunctionsZIndex.NodePointTemplate.selected
     });
 
     var junctionTemplateLayer = new ol.layer.Vector({
       source: junctionTemplateVector.unselected,
       name: 'junctionTemplateLayer',
-      zIndex: RoadZIndex.CalibrationPointLayer.value + 1,
+      zIndex: ViiteEnumerations.NodesAndJunctionsZIndex.JunctionTemplate.value,
       selectable: false
     });
 
     var junctionTemplateSelectedLayer = new ol.layer.Vector({
       source: junctionTemplateVector.selected,
       name: 'junctionTemplateSelectedLayer',
-      zIndex: RoadZIndex.CalibrationPointLayer.value + 1
+      zIndex: ViiteEnumerations.NodesAndJunctionsZIndex.JunctionTemplate.selected
     });
 
     var layers = [directionMarkerLayer, nodeMarkerLayer, nodeMarkerSelectedLayer, junctionMarkerLayer, junctionMarkerSelectedLayer, nodePointTemplateLayer, nodePointTemplateSelectedLayer, junctionTemplateLayer, junctionTemplateSelectedLayer];
@@ -116,7 +115,6 @@
      * sending them to the selectedNode.open for further processing.
      */
     nodeLayerSelectInteraction.on('select', function (event) {
-      nodeLayerSelectInteraction.setMap(null); // stop openLayers from using internal unmanaged layer
       var selectedNode = _.find(event.selected, function (selectionTarget) {
         return !_.isUndefined(selectionTarget.node);
       });
