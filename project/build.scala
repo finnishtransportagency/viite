@@ -14,15 +14,19 @@ object Digiroad2Build extends Build {
   val ScalaVersion = "2.11.7"
   val ScalatraVersion = "2.6.3"
   val ScalaTestVersion = "3.2.0-SNAP7"
-  val JodaConvertVersion = "2.0.1"
-  val JodaTimeVersion = "2.9.9"
+
+  val JodaConvertVersion = "2.2.3" // no dependencies
+  val JodaTimeVersion = "2.12.5" // dep on joda-convert // TODO "Note that from Java SE 8 onwards, users are asked to migrate to java.time (JSR-310) - a core part of the JDK which replaces this project." (from https://mvnrepository.com/artifact/joda-time/joda-time)
+  val SlickVersion = "3.0.0"
+  val JodaSlickMapperVersion = "2.2.0" // provides slick 3.1.1, joda-time 2.7, and joda-convert 1.7
+
   val AkkaVersion = "2.3.16"
   val HttpClientVersion = "4.5.5"
   val NewRelicApiVersion = "3.1.1"
   val CommonsIOVersion = "2.6"
   val JsonJacksonVersion = "3.5.3"
   val MockitoCoreVersion = "2.18.3"
-  val LogbackClassicVersion = "1.2.3"
+  val LogbackClassicVersion = "1.3.6" // Java EE version. 1.4.x requires Jakarta instead of JavaEE
   val JettyVersion = "9.2.15.v20160210"
   val TestOutputOptions = Tests.Argument(TestFrameworks.ScalaTest, "-oNCXELOPQRMI") // List only problems, and their summaries. Set suitable logback level to get the effect.
   val AwsSdkVersion = "2.17.148"
@@ -82,18 +86,19 @@ object Digiroad2Build extends Build {
         "commons-codec" % "commons-codec" % "1.9",
         "com.jolbox" % "bonecp" % "0.8.0.RELEASE",
         "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test",
-        "com.typesafe.slick" %% "slick" % "3.0.0",
+        "com.typesafe.slick" %% "slick" % SlickVersion,
         "org.json4s"   %% "json4s-jackson" % JsonJacksonVersion,
         "org.joda" % "joda-convert" % JodaConvertVersion,
         "joda-time" % "joda-time" % JodaTimeVersion,
-        "com.github.tototoshi" %% "slick-joda-mapper" % "2.2.0",
+        "com.github.tototoshi" %% "slick-joda-mapper" % JodaSlickMapperVersion,
         "com.github.tototoshi" %% "scala-csv" % "1.3.5",
         "org.apache.httpcomponents" % "httpclient" % HttpClientVersion,
         "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
         "org.mockito" % "mockito-core" % MockitoCoreVersion % "test",
         "com.googlecode.flyway" % "flyway-core" % "2.3.1",
-        "org.postgresql" % "postgresql" % "42.2.5",
-        "net.postgis" % "postgis-jdbc" % "2.3.0"
+        "org.postgresql" % "postgresql" % "42.2.27",
+        "net.postgis" % "postgis-geometry" % "2021.1.0",
+        "net.postgis" % "postgis-jdbc" % "2021.1.0" // dep postgresql, and from 2.5.0 and up: postgis-geometry
       ),
       unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf"
     )
@@ -266,6 +271,7 @@ object Digiroad2Build extends Build {
       case x if x.endsWith("mime.types") => MergeStrategy.last
       case PathList("META-INF", "io.netty.versions.properties") => MergeStrategy.discard
       case PathList("META-INF", "maven", "com.fasterxml.jackson.core", "jackson-core", _*) => MergeStrategy.discard
+      case x if x.endsWith("module-info.class") => MergeStrategy.discard // for logback, and slf4j-api
       case x => old(x)
     } }
   )

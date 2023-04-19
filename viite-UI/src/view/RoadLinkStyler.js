@@ -432,7 +432,7 @@
       fillStyle.addRules(fillRules);
       fillStyle.addRules(fillWidthRules);
 
-      const borderStyle = new StyleRuleProvider({zIndex: ViiteEnumerations.RoadZIndex.VectorLayer.value});
+      const borderStyle = new StyleRuleProvider({zIndex: ViiteEnumerations.ViewModeZIndex.BorderStyle.value});
       borderStyle.addRules(borderRules);
 
       return [strokeStyle.getStyle(linkData, {zoomLevel: zoomlevels.getViewZoom(map)}),
