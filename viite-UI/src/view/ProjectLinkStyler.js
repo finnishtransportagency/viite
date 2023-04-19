@@ -335,7 +335,7 @@
       projectLinkFillStyle.addRules(fillWidthRules);
       projectLinkFillStyle.addRules(fillRulesForProjectLinks);
 
-      const borderStyle = new StyleRuleProvider({zIndex: ViiteEnumerations.RoadZIndex.VectorLayer.value});
+      const borderStyle = new StyleRuleProvider({zIndex: ViiteEnumerations.ProjectModeZIndex.BorderStyle.value});
       borderStyle.addRules(borderRules);
 
       return [projectLinkFillStyle.getStyle(linkData, {zoomLevel: zoomlevels.getViewZoom(map)}),
@@ -347,7 +347,7 @@
       notInProjectStrokeStyle.addRules(strokeRulesForNotInProjectLinks);
       notInProjectStrokeStyle.addRules(strokeWidthRulesForNotInProjectLinks);
 
-      const borderStyle = new StyleRuleProvider({zIndex: ViiteEnumerations.RoadZIndex.VectorLayer.value});
+      const borderStyle = new StyleRuleProvider({zIndex: ViiteEnumerations.ProjectModeZIndex.BorderStyle.value});
       borderStyle.addRules(borderRules);
 
       return [notInProjectStrokeStyle.getStyle(linkData, {zoomLevel: zoomlevels.getViewZoom(map)}),
