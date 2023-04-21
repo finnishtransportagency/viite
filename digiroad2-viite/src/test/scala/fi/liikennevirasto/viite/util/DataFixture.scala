@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.ds
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.{MunicipalityCodeImporter, SqlScriptRunner, ViiteProperties}
+import fi.liikennevirasto.digiroad2.util.{SqlScriptRunner, ViiteProperties}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.{ApplyChangeInfoProcess, ContinuityChecker, RoadNetworkChecker, RoadwayAddressMapper}
@@ -244,7 +244,8 @@ object DataFixture {
       "insert_calibration_points.sql",
       "insert_linear_locations.sql",
       "insert_project_link_data.sql",
-      "insert_road_names.sql"
+      "insert_road_names.sql",
+      "municipalities.sql"
     ))
   }
 
@@ -261,15 +262,6 @@ object DataFixture {
 
   def flywayInit() {
     flyway.init()
-  }
-
-  def importMunicipalityCodes() {
-    println("\nCommencing municipality code import at time: ")
-    println(DateTime.now())
-    new MunicipalityCodeImporter().importMunicipalityCodes()
-    println("Municipality code import complete at time: ")
-    println(DateTime.now())
-    println("\n")
   }
 
   def main(args: Array[String]): Unit = {
@@ -320,7 +312,6 @@ object DataFixture {
       case Some("test") =>
         tearDown()
         setUpTest()
-        importMunicipalityCodes()
       case Some("flyway_init") =>
         flywayInit()
       case Some("test_integration_api_all_municipalities") =>
