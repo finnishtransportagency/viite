@@ -209,7 +209,7 @@ class DataImporter {
   }
 
   def importMunicipalities(): Unit = {
-    SqlScriptRunner.runScriptInClasspath("/municipalities.sql")
+    SqlScriptRunner.runScripts(List("municipalities.sql"))
   }
 
   def importNodesAndJunctions(): Unit = {
