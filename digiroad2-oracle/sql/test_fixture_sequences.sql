@@ -169,3 +169,12 @@ create sequence ROAD_NAME_SEQ
   increment by 1
   cache 100
   cycle;
+
+drop sequence SERVICE_USER_SEQ;
+create sequence SERVICE_USER_SEQ
+  minvalue 1
+  no maxvalue
+  start with 100
+  increment by 1
+  cache 10
+  cycle;
