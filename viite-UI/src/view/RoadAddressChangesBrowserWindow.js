@@ -1,7 +1,6 @@
 (function (root) {
     root.RoadAddressChangesBrowserWindow = function (backend, roadAddressBrowserForm) {
         let searchParams = {};
-        let datePickers = [];
         const me = this;
 
         const roadAddressChangesBrowserWindow = $('<div class="form-horizontal road-address-changes-browser-window"></div>').hide();
@@ -110,38 +109,12 @@
         function toggle() {
             $('.container').append('<div class="road-address-browser-modal-overlay confirm-modal"><div class="road-address-browser-modal-window"></div></div>');
             $('.road-address-browser-modal-window').append(roadAddressChangesBrowserWindow.toggle());
-            addDatePicker("roadAddrChangesStartDate", "calendarIconStartDate");
-            addDatePicker("roadAddrChangesEndDate", "calendarIconEndDate");
             bindEvents();
         }
 
         function hide() {
             $('.road-address-browser-modal-window').append(roadAddressChangesBrowserWindow.toggle());
             $('.road-address-browser-modal-overlay').remove();
-            destroyDatePickers();
-        }
-
-        function addDatePicker(inputFieldId, triggerElementId) {
-            const inputField = $('#' + inputFieldId);
-            const triggerElement = document.getElementById(triggerElementId);
-            const options = {
-                trigger: triggerElement
-            };
-            const datePicker = dateutil.addSingleDatePicker(inputField, options);
-            datePickers.push(datePicker);
-        }
-
-        function destroyDatePickers() {
-            datePickers.forEach((datePicker) => {
-                datePicker.destroy();
-            });
-            datePickers = [];
-        }
-
-        function hidePickers() {
-            datePickers.forEach((picker) => {
-                picker.hide();
-            });
         }
 
         function exportDataAsExcelFile() {
@@ -243,14 +216,6 @@
         }
 
         function bindEvents() {
-
-            document.getElementById('roadAddrChangesStartDate').onchange = function () {
-                hidePickers();
-            };
-
-            document.getElementById('roadAddrChangesEndDate').onchange = function () {
-                hidePickers();
-            };
 
             // if any of the input fields change (the input fields are child elements of this wrapper/parent element)
             document.getElementById('roadAddressChangesBrowser').onchange = function () {
