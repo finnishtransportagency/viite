@@ -195,7 +195,7 @@
       }),
       new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).and('startAddressM').is(0).and('endAddressM').is(0).and('administrativeClassId').is(ViiteEnumerations.AdministrativeClass.PublicRoad.value).use({
         stroke: {
-          color: '#1E1E1E',
+          color: '#646461',
           lineCap: 'round'
         },
         zIndex: ViiteEnumerations.ProjectModeZIndex.UnAddressedState.stroke
