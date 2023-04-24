@@ -1,7 +1,6 @@
 (function (root) {
     root.RoadAddressBrowserWindow = function (backend, roadAddressBrowserForm) {
         let searchParams = {};
-        let datePicker = '';
         const me = this;
 
         const roadAddrBrowserWindow = $('<div id="road-address-browser-window" class="form-horizontal road-address-browser-window"></div>').hide();
@@ -232,27 +231,12 @@
         function toggle() {
             $('.container').append('<div class="road-address-browser-modal-overlay confirm-modal"><div class="road-address-browser-modal-window"></div></div>');
             $('.road-address-browser-modal-window').append(roadAddrBrowserWindow.toggle());
-            addDatePicker();
             bindEvents();
-        }
-
-        function addDatePicker() {
-            const dateInput = $('#roadAddrSituationDate');
-            const triggerElement = document.getElementById('calendarIcon');
-            const options = {
-                trigger: triggerElement
-            };
-            datePicker = dateutil.addSingleDatePicker(dateInput, options);
-        }
-
-        function destroyDatePicker() {
-            datePicker.destroy();
         }
 
         function hide() {
             $('.road-address-browser-modal-window').append(roadAddrBrowserWindow.toggle());
             $('.road-address-browser-modal-overlay').remove();
-            destroyDatePicker();
         }
 
         function exportDataAsExcelFile() {
@@ -385,10 +369,6 @@
         }
 
         function bindEvents() {
-
-            document.getElementById('roadAddrSituationDate').onchange = function () {
-                datePicker.hide();
-            };
 
             // if any of the input fields change (the input fields are child elements of this wrapper/parent element)
             document.getElementById('roadAddressBrowser').onchange = function () {
