@@ -173,7 +173,7 @@
                         roadAddrChangesEndDate.setCustomValidity("Loppupäivämäärä ei voi olla ennen alkupäivämäärää");
                     }
                     if (roadAddrEndDateObject.getTime() === roadAddrStartDateObject.getTime()) {
-                        roadAddrChangesEndDate.setCustomValidity("Alku- ja loppupäivämäärä ei voi olla sama. Jos haluat vain yhden päivän tulokset, syötä peräkkäiset päivät.")
+                        roadAddrChangesEndDate.setCustomValidity("Alku- ja loppupäivämäärä ei voi olla sama. Jos haluat vain yhden päivän tulokset, syötä peräkkäiset päivät.");
                     }
                 }
                 return reportValidations();
