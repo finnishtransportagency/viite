@@ -1,13 +1,17 @@
 (function (dateUtils) {
-  var FINNISH_DATE_FORMAT = 'D.M.YYYY';
+  const FINNISH_DATE_FORMAT = 'D.M.YYYY';
   dateUtils.FINNISH_DATE_FORMAT = FINNISH_DATE_FORMAT;
-  var FINNISH_HINT_TEXT = 'pp.kk.vvvv';
-  var FINNISH_PIKADAY_I18N = {
+  const FINNISH_HINT_TEXT = 'pp.kk.vvvv';
+  const FINNISH_PIKADAY_I18N = {
     previousMonth: 'edellinen kuukausi',
     nextMonth: 'seuraava kuukausi',
     months: ['Tammikuu', 'Helmikuu', 'Maaliskuu', 'Huhtikuu', 'Toukokuu', 'Kes&auml;kuu', 'Hein&auml;kuu', 'Elokuu', 'Syyskuu', 'Lokakuu', 'Marraskuu', 'Joulukuu'],
     weekdays: ['sunnuntai', 'maanantai', 'tiistai', 'keskiviikko', 'torstai', 'perjantai', 'lauantai'],
     weekdaysShort: ['Su', 'Ma', 'Ti', 'Ke', 'To', 'Pe', 'La']
+  };
+
+  dateUtils.dateObjectToFinnishString = function (dateObject) {
+    return moment(dateObject).format(FINNISH_DATE_FORMAT);
   };
 
   var dateToFinnishString = function (s) {
