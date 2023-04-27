@@ -258,8 +258,8 @@ object Digiroad2Build extends Build {
     .enablePlugins(GatlingPlugin)
     .settings(scalaVersion := ScalaVersion)
     .settings(libraryDependencies ++= Seq(
-      "io.gatling.highcharts" % "gatling-charts-highcharts" % "2.1.7" % "test",
-      "io.gatling" % "gatling-test-framework" % "2.1.7" % "test"))
+      "io.gatling.highcharts" % "gatling-charts-highcharts" % "3.9.3" % "test",
+      "io.gatling" % "gatling-test-framework" % "3.9.3" % "test"))
 
   val assemblySettings: Seq[Def.Setting[_]] = sbtassembly.Plugin.assemblySettings ++ Seq(
     mainClass in assembly := Some("fi.liikennevirasto.digiroad2.ProductionServer"),
