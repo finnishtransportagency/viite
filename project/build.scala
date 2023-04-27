@@ -21,7 +21,7 @@ object Digiroad2Build extends Build {
   val JodaSlickMapperVersion = "2.2.0" // provides slick 3.1.1, joda-time 2.7, and joda-convert 1.7
 
   val AkkaVersion = "2.3.16"
-  val HttpClientVersion = "4.5.5"
+  val HttpClientVersion = "4.5.14"
   val NewRelicApiVersion = "3.1.1"
   val CommonsIOVersion = "2.6"
   val JsonJacksonVersion = "3.7.0-M7"
@@ -84,7 +84,7 @@ object Digiroad2Build extends Build {
       testOptions in Test += TestOutputOptions,
       libraryDependencies ++= Seq(
         "org.apache.commons" % "commons-lang3" % "3.2",
-        "commons-codec" % "commons-codec" % "1.9",
+        "commons-codec" % "commons-codec" % "1.15",
         "com.jolbox" % "bonecp" % "0.8.0.RELEASE",
         "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test",
         "com.typesafe.slick" %% "slick" % SlickVersion,
@@ -93,7 +93,7 @@ object Digiroad2Build extends Build {
         "joda-time" % "joda-time" % JodaTimeVersion,
         "com.github.tototoshi" %% "slick-joda-mapper" % JodaSlickMapperVersion,
         "com.github.tototoshi" %% "scala-csv" % "1.3.5",
-        "org.apache.httpcomponents" % "httpclient" % HttpClientVersion,
+        "org.apache.httpcomponents" % "httpclient" % HttpClientVersion, //dep on commons-codec & httpcomponents
         "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
         "org.mockito" % "mockito-core" % MockitoCoreVersion % "test",
         "com.googlecode.flyway" % "flyway-core" % "2.3.1",
@@ -207,7 +207,7 @@ object Digiroad2Build extends Build {
         "ch.qos.logback" % "logback-classic" % LogbackClassicVersion % "runtime",
         "commons-io" % "commons-io" % CommonsIOVersion,
         "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
-        "org.apache.httpcomponents" % "httpclient" % "4.3.3",
+        "org.apache.httpcomponents" % "httpclient" % HttpClientVersion, //dep on commons-codec & httpcomponents
         "org.scalatra" %% "scalatra-swagger"  % ScalatraVersion
       ),
       unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf"
@@ -245,7 +245,7 @@ object Digiroad2Build extends Build {
         "ch.qos.logback" % "logback-classic" % LogbackClassicVersion % "runtime",
         "commons-io" % "commons-io" % CommonsIOVersion,
         "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
-        "org.apache.httpcomponents" % "httpclient" % "4.3.3",
+        "org.apache.httpcomponents" % "httpclient" % HttpClientVersion, //dep on commons-codec & httpcomponents
         "org.eclipse.jetty" % "jetty-webapp" % JettyVersion % "container;compile",
         "org.eclipse.jetty" % "jetty-servlets" % JettyVersion % "container;compile",
         "org.eclipse.jetty" % "jetty-proxy" % JettyVersion % "container;compile",
