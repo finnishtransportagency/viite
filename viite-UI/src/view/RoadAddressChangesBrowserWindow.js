@@ -145,9 +145,11 @@
 
             // convert date input text to date object
             const roadAddrStartDateObject  = moment(roadAddrChangesStartDate.value, "DD-MM-YYYY").toDate();
+            const roadAddrEndDateObject  = moment(roadAddrChangesEndDate.value, "DD-MM-YYYY").toDate();
 
             function reportValidations() {
                 return roadAddrChangesStartDate.reportValidity() &&
+                    roadAddrChangesEndDate.reportValidity() &&
                     ely.reportValidity() &&
                     roadNumber.reportValidity() &&
                     minRoadPartNumber.reportValidity() &&
@@ -165,8 +167,15 @@
 
             function willPassValidations() {
                 validateDate(roadAddrStartDateObject);
-                if (roadAddrChangesEndDate.value)
-                    validateDate(moment(roadAddrChangesEndDate.value, "DD-MM-YYYY").toDate());
+                if (roadAddrChangesEndDate.value) {
+                    validateDate(roadAddrEndDateObject);
+                    if (roadAddrEndDateObject.getTime() < roadAddrStartDateObject.getTime()) {
+                        roadAddrChangesEndDate.setCustomValidity("Loppupäivämäärä ei voi olla ennen alkupäivämäärää");
+                    }
+                    if (roadAddrEndDateObject.getTime() === roadAddrStartDateObject.getTime()) {
+                        roadAddrChangesEndDate.setCustomValidity("Alku- ja loppupäivämäärä ei voi olla sama. Jos haluat vain yhden päivän tulokset, syötä peräkkäiset päivät.")
+                    }
+                }
                 return reportValidations();
             }
 
@@ -177,7 +186,7 @@
                     dateTarget: dateTarget.value
                 };
                 if (roadAddrChangesEndDate.value)
-                    params.endDate = dateutil.parseDateToString(moment(roadAddrChangesEndDate.value, "DD-MM-YYYY").toDate());
+                    params.endDate = dateutil.parseDateToString(roadAddrEndDateObject);
                 if (ely.value)
                     params.ely = ely.value;
                 if (roadNumber.value)
@@ -192,6 +201,7 @@
             //reset ely and roadAddrStartDate input fields' custom validity
             ely.setCustomValidity("");
             roadAddrChangesStartDate.setCustomValidity("");
+            roadAddrChangesEndDate.setCustomValidity("");
 
             if (willPassValidations())
                 fetchRoadAddressChanges(createParams());
