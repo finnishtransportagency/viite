@@ -24,7 +24,8 @@ object Digiroad2Build extends Build {
   val HttpClientVersion = "4.5.5"
   val NewRelicApiVersion = "3.1.1"
   val CommonsIOVersion = "2.6"
-  val JsonJacksonVersion = "3.5.3"
+  val JsonJacksonVersion = "3.7.0-M7"
+  val JsonNative = JsonJacksonVersion
   val MockitoCoreVersion = "2.18.3"
   val LogbackClassicVersion = "1.3.6" // Java EE version. 1.4.x requires Jakarta instead of JavaEE
   val JettyVersion = "9.2.15.v20160210"
@@ -196,8 +197,8 @@ object Digiroad2Build extends Build {
         "org.scalatra" %% "scalatra" % ScalatraVersion,
         "org.scalatra" %% "scalatra-json" % ScalatraVersion,
         "org.json4s"   %% "json4s-jackson" % JsonJacksonVersion,
-        "org.json4s"   %% "json4s-native" % "3.5.2",
         "org.scala-lang.modules"   %% "scala-parser-combinators" % "1.1.0",
+        "org.json4s"   %% "json4s-native" % JsonNative,
         "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test",
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
         "org.scalatra" %% "scalatra-auth" % ScalatraVersion,
