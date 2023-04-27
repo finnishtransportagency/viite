@@ -217,7 +217,7 @@
               '<td class="innerName" style="width: 270px;">' + staticFieldProjectName(proj.name) + '</td>' +
               '<td style="width: 60px; word-break: break-word" title="' + info + '">' + staticFieldProjectList(proj.elys) + '</td>' +
               '<td class="innerCreatedBy" style="width: 120px;" title="' + info + '">' + staticFieldProjectList(proj.createdBy) + '</td>' +
-              '<td style="width: 120px;" title="' + info + '">' + staticFieldProjectList(proj.createdDate) + '</td>' +
+              '<td style="width: 120px;" title="' + info + '">' + staticFieldProjectList(dateutil.dateObjectToFinnishString(new Date(proj.createdDate))) + '</td>' +
               '<td style="width: 100px;" title="' + info + '">' + staticFieldProjectList(proj.statusDescription) + '</td>';
             switch (proj.statusCode) {
               case projectStatus.ErrorInViite.value:
