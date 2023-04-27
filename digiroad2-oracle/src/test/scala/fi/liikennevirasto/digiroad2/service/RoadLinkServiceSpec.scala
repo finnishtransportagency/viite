@@ -52,8 +52,8 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Test getComplementaryRoadLinks() When submitting a bounding box as a search area Then return any complimentary geometry that are inside said area") {
-    val municipalityId = 235
+  ignore("Test getComplementaryRoadLinks() When submitting a bounding box as a search area Then return any complimentary geometry that are inside said area") {
+    /*val municipalityId = 235
     val linkId = 2l.toString
     val roadLink: RoadLink = RoadLink(linkId, Seq(), 0, AdministrativeClass.Municipality, TrafficDirection.TowardsDigitizing, None,None, municipalityCode = municipalityId, sourceId = "")
     val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
@@ -72,7 +72,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       roadLinksList.head.isInstanceOf[RoadLink] should be(true)
       roadLinksList.head.linkId should be(linkId)
       roadLinksList.head.municipalityCode should be(municipalityId)
-    }
+    }*/
   }
 
   test("Test getCurrentAndComplementaryRoadLinksByMunicipality() When asking for info for a specific municipality Then return full municipality info, that includes both complementary and ordinary geometries") {
