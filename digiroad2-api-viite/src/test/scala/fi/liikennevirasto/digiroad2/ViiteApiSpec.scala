@@ -110,7 +110,7 @@ class ViiteApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter {
   test("Test /roadlinks/project/prefill When given linkId and testProjectId with existing project and road Then should return succesfully with prefill data.") {
     get("/roadlinks/project/prefill?linkId=6117675&currentProjectId=7081807") {
       status should equal(200)
-      body should equal("""{"roadPartNumber":1,"success":true,"roadNumber":77997,"ely":1,"roadName":"","roadNameSource":99}""")
+      body should equal("""{"roadPartNumber":1,"success":true,"roadNumber":77997,"ely":1,"roadName":"PreFillName","roadNameSource":1}""")
     }
 //    get("/roadlinks/project/prefill?linkId=6117675&currentProjectId=7081807") {
 //      status should equal(200)
@@ -145,8 +145,6 @@ class ViiteApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter {
 
   test("Test /roadlinks/roadname/:roadNumber/:projectID") {
     roadAddressService.withDynSession {
-      val testProjectRoadName = "Project_road_77998_name"
-      ProjectLinkNameDAO.create(testProjectId, 77998, testProjectRoadName)
       // RoadName
       get("/roadlinks/roadname/5/7081807") {
         status should equal(200)
@@ -155,9 +153,8 @@ class ViiteApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter {
       // ProjectLinkName
       get("/roadlinks/roadname/77998/7081807") {
         status should equal(200)
-        body should equal("""{"roadName":"""" + testProjectRoadName + """","isCurrent":false}""")
+        body should equal("""{"roadName":"Project_road_77998_name","isCurrent":false}""")
       }
-      ProjectLinkNameDAO.removeByProject(testProjectId)
     }
   }
 
