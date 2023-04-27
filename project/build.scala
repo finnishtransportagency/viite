@@ -133,7 +133,7 @@ object Digiroad2Build extends Build {
         "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
         "org.apache.httpcomponents" % "httpclient" % HttpClientVersion,
         "org.scalatra" %% "scalatra-swagger"  % ScalatraVersion,
-        "com.github.nscala-time" %% "nscala-time" % "2.22.0",
+        "com.github.nscala-time" %% "nscala-time" % "2.32.0",
         "software.amazon.awssdk" % "s3" % AwsSdkVersion,
         "software.amazon.awssdk" % "sso" % AwsSdkVersion
       ),
