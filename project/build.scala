@@ -26,7 +26,7 @@ object Digiroad2Build extends Build {
   val CommonsIOVersion = "2.6"
   val JsonJacksonVersion = "3.7.0-M7"
   val JsonNative = JsonJacksonVersion
-  val MockitoCoreVersion = "2.18.3"
+  val MockitoCoreVersion = "4.11.0" // 5.0.0 and up requires Java update to Java 11: "java.lang.UnsupportedClassVersionError: org/mockito/Mockito has been compiled by a more recent version of the Java Runtime (class file version 55.0), this version of the Java Runtime only recognizes class file versions up to 52.0"
   val LogbackClassicVersion = "1.3.6" // Java EE version. 1.4.x requires Jakarta instead of JavaEE
   val JettyVersion = "9.2.15.v20160210"
   val TestOutputOptions = Tests.Argument(TestFrameworks.ScalaTest, "-oNCXELOPQRMI") // List only problems, and their summaries. Set suitable logback level to get the effect.
