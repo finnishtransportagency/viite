@@ -20,7 +20,9 @@ object Digiroad2Build extends Build {
   val SlickVersion = "3.0.0"
   val JodaSlickMapperVersion = "2.2.0" // provides slick 3.1.1, joda-time 2.7, and joda-convert 1.7
 
-  val AkkaVersion = "2.3.16"
+  val AkkaVersion = "2.5.32" // 2.6.x and up requires Scala 2.12 or greater
+  val akkaActor   = "com.typesafe.akka" %% "akka-actor"   % AkkaVersion
+  val akkaTestkit = "com.typesafe.akka" %% "akka-testkit" % AkkaVersion
   val HttpClientVersion = "4.5.14"
   val NewRelicApiVersion = "3.1.1"
   val CommonsIOVersion = "2.6"
@@ -50,7 +52,7 @@ object Digiroad2Build extends Build {
       libraryDependencies ++= Seq(
         "org.joda" % "joda-convert" % JodaConvertVersion,
         "joda-time" % "joda-time" % JodaTimeVersion,
-        "com.typesafe.akka" %% "akka-actor" % AkkaVersion,
+        akkaActor,
         "javax.media" % "jai_core" % "1.1.3" from "https://repo.osgeo.org/repository/release/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
         "org.geotools" % "gt-graph" % GeoToolsVersion from s"https://repo.osgeo.org/repository/release/org/geotools/gt-graph/$GeoToolsVersion/gt-graph-$GeoToolsVersion.jar",
         "org.geotools" % "gt-main" % GeoToolsVersion from s"https://repo.osgeo.org/repository/release/org/geotools/gt-main/$GeoToolsVersion/gt-main-$GeoToolsVersion.jar",
@@ -128,7 +130,7 @@ object Digiroad2Build extends Build {
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
         "org.scalatra" %% "scalatra-auth" % ScalatraVersion % "test",
         "org.mockito" % "mockito-core" % MockitoCoreVersion % "test",
-        "com.typesafe.akka" %% "akka-testkit" % AkkaVersion % "test",
+        akkaTestkit % "test",
         "ch.qos.logback" % "logback-classic" % LogbackClassicVersion % "runtime",
         "commons-io" % "commons-io" % CommonsIOVersion,
         "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
@@ -158,7 +160,7 @@ object Digiroad2Build extends Build {
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
       testOptions in Test += TestOutputOptions,
       libraryDependencies ++= Seq(
-        "com.typesafe.akka" %% "akka-actor" % AkkaVersion,
+        akkaActor,
         "org.apache.httpcomponents" % "httpclient" % HttpClientVersion,
         "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "compile, test",
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
@@ -203,7 +205,7 @@ object Digiroad2Build extends Build {
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
         "org.scalatra" %% "scalatra-auth" % ScalatraVersion,
         "org.mockito" % "mockito-core" % MockitoCoreVersion % "test",
-        "com.typesafe.akka" %% "akka-testkit" % AkkaVersion % "test",
+        akkaTestkit % "test",
         "ch.qos.logback" % "logback-classic" % LogbackClassicVersion % "runtime",
         "commons-io" % "commons-io" % CommonsIOVersion,
         "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
@@ -241,7 +243,7 @@ object Digiroad2Build extends Build {
         "org.scalatra" %% "scalatra-auth" % ScalatraVersion,
         "org.scalatra" %% "scalatra-swagger"  % ScalatraVersion,
         "org.mockito" % "mockito-core" % MockitoCoreVersion % "test",
-        "com.typesafe.akka" %% "akka-testkit" % AkkaVersion % "test",
+        akkaTestkit % "test",
         "ch.qos.logback" % "logback-classic" % LogbackClassicVersion % "runtime",
         "commons-io" % "commons-io" % CommonsIOVersion,
         "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
