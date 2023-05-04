@@ -477,6 +477,11 @@ class ProjectValidator {
     }
   }
 
+  /**
+   * @param affectedPlIds Id's of the project links affected by the validation error.
+   * @param affectedLinkIds linkId's of the project links affected by the validation error.
+   * @param coordinates the coordinates where to zoom when the validation error is clicked on the UI.
+   * */
   case class ValidationErrorDetails(projectId: Long, validationError: ValidationError,
                                     affectedPlIds: Seq[Long], affectedLinkIds: Seq[String], coordinates: Seq[ProjectCoordinates],
                                     optionalInformation: Option[String])
