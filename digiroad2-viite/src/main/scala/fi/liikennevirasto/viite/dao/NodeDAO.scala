@@ -150,7 +150,7 @@ case class Node(id: Long, nodeNumber: Long, coordinates: Point, name: Option[Str
 
 case class RoadAttributes(roadNumber: Long, roadPartNumber: Long, addrMValue: Long)
 
-case class NodeForRoadAddressBrowser(ely: Long, roadNumber: Long, roadPartNumber: Long, addrM: Long, startDate: DateTime, nodeType: NodeType, name: Option[String], nodeNumber: Long)
+case class NodeForRoadAddressBrowser(ely: Long, roadNumber: Long, roadPartNumber: Long, addrM: Long, startDate: DateTime, nodeType: NodeType, name: Option[String], nodeCoordinates: Point, nodeNumber: Long)
 
 class NodeDAO extends BaseDAO {
 
@@ -188,9 +188,11 @@ class NodeDAO extends BaseDAO {
       val startDate = new DateTime(r.nextDate())
       val nodeType = NodeType.apply(r.nextInt())
       val name = r.nextStringOption()
+      val coordX = r.nextLong()
+      val coordY = r.nextLong()
       val nodeNumber =r.nextLong()
 
-      NodeForRoadAddressBrowser(ely, roadNumber, roadPartNumber, addrM, startDate, nodeType, name, nodeNumber)
+      NodeForRoadAddressBrowser(ely, roadNumber, roadPartNumber, addrM, startDate, nodeType, name, Point(coordX, coordY), nodeNumber)
     }
   }
 
@@ -270,7 +272,7 @@ class NodeDAO extends BaseDAO {
     def fetchNodes(queryFilter: String => String): Seq[NodeForRoadAddressBrowser] = {
       val query =
         """
-      SELECT DISTINCT rw.ely, rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rp.ADDR_M, node.START_DATE, node.type, node.NAME, node.NODE_NUMBER
+      SELECT DISTINCT rw.ely, rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rp.ADDR_M, node.START_DATE, node.type, node.NAME, ST_X(node.COORDINATES) AS xcoord, ST_Y(node.COORDINATES) AS ycoord, node.NODE_NUMBER
 		  FROM NODE node
       JOIN NODE_POINT np ON node.NODE_NUMBER = np.NODE_NUMBER AND np.VALID_TO IS NULL
       JOIN ROADWAY_POINT rp ON np.ROADWAY_POINT_ID = rp.ID

@@ -112,6 +112,8 @@
                                             <th>Alkupvm</th>
                                             <th>Tyyppi</th>
                                             <th>Nimi</th>
+                                            <th>P-Koord</th>
+                                            <th>I-Koord</th>
                                             <th>Solmunumero</th>
                                         </tr>
                                     </thead>
@@ -126,6 +128,8 @@
                                             <td>${results[i].startDate}</td>
                                             <td>${results[i].nodeType}</td>
                                             <td>${results[i].nodeName}</td>
+                                            <td>${results[i].nodeCoordinates.y}</td>
+                                            <td>${results[i].nodeCoordinates.x}</td>
                                             <td>${results[i].nodeNumber}</td>
                                         </tr>`;
             }
