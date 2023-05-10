@@ -12,7 +12,7 @@ object Digiroad2Build extends Build {
   val Version = "0.1.0-SNAPSHOT"
 
   val ScalaVersion = "2.11.7"
-  val ScalatraVersion = "2.6.3"
+  val ScalatraVersion = "2.6.5"
   val ScalaTestVersion = "3.2.0-SNAP7"
 
   val JodaConvertVersion = "2.2.3" // no dependencies
