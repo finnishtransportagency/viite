@@ -441,6 +441,15 @@ class ProjectService(
   }
 
   def createProjectLinks(linkIds: Seq[String], projectId: Long, roadNumber: Long, roadPartNumber: Long, track: Track, userGivenDiscontinuity: Discontinuity, administrativeClass: AdministrativeClass, roadLinkSource: LinkGeomSource, roadEly: Long, user: String, roadName: String, coordinates: Option[ProjectCoordinates] = None): Map[String, Any] = {
+
+    def createProjectElyCodes(): Unit = {
+      val elysForProject = projectLinkDAO.fetchProjectLinkElys(projectId) :+ roadEly
+      val updatedCount = projectDAO.updateProjectElys(projectId, elysForProject.toSet.toSeq)
+      if (updatedCount != 1) {
+        logger.warn(s"Ely-codes for project: $projectId were not updated.")
+      }
+    }
+
     withDynTransaction {
       writableWithValidTrack(projectId, track.value) match {
         case None =>
@@ -463,6 +472,7 @@ class ProjectService(
             else {
               saveProjectCoordinates(project.id, calculateProjectCoordinates(project.id))
             }
+            createProjectElyCodes()
             addNewLinksToProject(sortRamps(projectLinks, linkIds), projectId, user, linkId, newTransaction = false, userGivenDiscontinuity) match {
               case Some(errorMessage) => {
                 Map("success" -> false, "errorMessage" -> errorMessage)
@@ -1431,9 +1441,10 @@ class ProjectService(
     /* Update elycodes into project table */
     def updateProjectElyCodes(): Unit = {
       val elysForProject = projectLinkDAO.fetchProjectLinkElys(projectId)
-      val updatedCount   = projectDAO.updateProjectElys(projectId, elysForProject)
-      if (updatedCount != 1)
+      val updatedCount = projectDAO.updateProjectElys(projectId, elysForProject)
+      if (updatedCount != 1) {
         logger.warn(s"Ely-codes for project: $projectId were not updated.")
+      }
     }
 
     try {
