@@ -1128,7 +1128,7 @@ class ProjectValidator {
     }
 
     /*
-      * This will validate if a shift in ely code in all links of a certain part ocoured and happened correctly.
+      * This will validate if a shift in ely code in all links of a certain part occurred and happened correctly.
       * To be correct, the change needs to:
       * A. have all links transition to a new ELY
       * B. all links must have the UnChanged Link status
@@ -1241,8 +1241,11 @@ class ProjectValidator {
           val validationErrorsWithUnCalculated: Iterable[ValidationErrorDetails] =
           if (elysInUnCalculated.size > 1 && !getProjectLinksFromMap(notCalculatedParts).exists(_.discontinuity == Discontinuity.ChangingELYCode)) {
               val pls = findConnectedTo( getProjectLinksFromMap(notCalculatedParts), getProjectLinksFromMap(notCalculatedParts))
-              createValidationErrorDetails(pls.head.roadNumber, pls.head.roadPartNumber, pls)
-            } else Seq.empty[ValidationErrorDetails]
+              if (pls.nonEmpty)
+                createValidationErrorDetails(pls.head.roadNumber, pls.head.roadPartNumber, pls)
+              else Seq.empty[ValidationErrorDetails]
+          }
+          else Seq.empty[ValidationErrorDetails]
 
         if (validationErrorsWithUnCalculated.nonEmpty)
             validationErrorsWithUnCalculated
