@@ -388,7 +388,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
           parseDate(situationDate).isDefined && // situationDate is mandatory for all targets
           target.isDefined && // target is always mandatory
             ((ely.isDefined && ely.get > 0L && ely.get <= 14L) || (roadNumber.isDefined && roadNumber.get > 0L && roadNumber.get <= 99999L)) || //either ely OR road number is required
-            target.get == "RoadNames" //  unless target is RoadNames
+            target.get == "RoadNames" || //  unless target is RoadNames
+            target.get == "Nodes" || // unless target is Nodes
+            target.get == "Junctions" // unless target is Junctions
         val optionalRoadPartInputsValid = (minRoadPartNumber, maxRoadPartNumber) match {
           case (Some(minPart), Some(maxPart)) => minPart >= 1 && minPart <= 999 && maxPart >= 1 && maxPart <= 999 && minPart <= maxPart
           case (Some(minPart), None) => minPart >= 1 && minPart <= 999
