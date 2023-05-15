@@ -1,7 +1,8 @@
 (function (root) {
     root.RoadAddressBrowserWindow = function (backend, roadAddressBrowserForm) {
-        let searchParams = {};
         const me = this;
+        let searchParams = {};
+        let searchResults = [];
 
         const roadAddrBrowserWindow = $('<div id="road-address-browser-window" class="form-horizontal road-address-browser-window"></div>').hide();
         const roadAddressChangesBrowserHeader = $(
@@ -18,6 +19,25 @@
         roadAddrBrowserWindow.append(roadAddressChangesBrowserHeader);
         roadAddrBrowserWindow.append(roadAddressBrowserForm.getRoadAddressBrowserForm());
 
+        function createArrayOfArraysForTracks(results) {
+            const array = [];
+            let arrayPointer = -1;
+            array[++arrayPointer] = ['Ely','Tie', 'Ajr', 'Osa', 'Let', 'Pituus', 'Hall. luokka', 'Alkupvm'];
+            for (let i = 0, len = results.length; i < len; i++) {
+                array[++arrayPointer] = [
+                    results[i].ely,
+                    results[i].roadNumber,
+                    results[i].track,
+                    results[i].roadPartNumber,
+                    results[i].startAddrM,
+                    results[i].endAddrM,
+                    results[i].lengthAddrM,
+                    EnumerationUtils.getAdministrativeClassTextValue(results[i].administrativeClass),
+                    results[i].startDate
+                ];
+            }
+            return array; // join the array to one large string and create jquery element from said string
+        }
 
         /**
          *      This function is performance critical. Pointers in use for reasonable processing time.
@@ -59,6 +79,24 @@
             return $(arr.join('')); // join the array to one large string and create jquery element from said string
         }
 
+        function createArrayOfArraysForRoadParts(results) {
+            const array = [];
+            let arrayPointer = -1;
+            array[++arrayPointer] = ['Ely','Tie', 'Osa', 'Aet', 'Let', 'Pituus', 'Alkupvm'];
+            for (let i = 0, len = results.length; i < len; i++) {
+                array[++arrayPointer] = [
+                    results[i].ely,
+                    results[i].roadNumber,
+                    results[i].roadPartNumber,
+                    results[i].startAddrM,
+                    results[i].endAddrM,
+                    results[i].lengthAddrM,
+                    results[i].startDate
+                ];
+            }
+            return array; // join the array to one large string and create jquery element from said string
+        }
+
         /**
          *      This function is performance critical. Pointers in use for reasonable processing time.
          *      If edited be sure to measure table creation time with the largest possible dataset!
@@ -93,6 +131,25 @@
             arr[++arrPointer] =`    </tbody>
                             </table>`;
             return $(arr.join('')); // join the array to one large string and create jquery element from said string
+        }
+
+        function createArrayOfArraysForNodes(results) {
+            const array = [];
+            let arrayPointer = -1;
+            array[++arrayPointer] = ['Ely','Tie', 'Osa', 'Et', 'Alkupvm', 'Tyyppi', 'Nimi', 'Solmunumero'];
+            for (let i = 0, len = results.length; i < len; i++) {
+                array[++arrayPointer] = [
+                    results[i].ely,
+                    results[i].roadNumber,
+                    results[i].roadPartNumber,
+                    results[i].addrM,
+                    results[i].startDate,
+                    results[i].nodeType,
+                    results[i].nodeName,
+                    results[i].nodeNumber
+                ];
+            }
+            return array; // join the array to one large string and create jquery element from said string
         }
 
         /**
@@ -132,6 +189,29 @@
             arr[++arrPointer] =     `</tbody>
                                 </table>`;
             return $(arr.join('')); // join the array to one large string and create jquery element from said string
+        }
+
+        function createArrayOfArraysForJunctions(results) {
+            const array = [];
+            let arrayPointer = -1;
+            array[++arrayPointer] = ['Solmu-numero','P-Koord', 'I-Koord', 'Nimi', 'Solmu-tyyppi', 'Alkupvm', 'Liittymä-nro', 'Tie', 'Ajr', 'Osa', 'Et', 'EJ'];
+            for (let i = 0, len = results.length; i < len; i++) {
+                array[++arrayPointer] = [
+                    results[i].nodeNumber,
+                    results[i].nodeCoordinates.y,
+                    results[i].nodeCoordinates.x,
+                    results[i].nodeName,
+                    results[i].nodeType,
+                    results[i].startDate,
+                    results[i].junctionNumber,
+                    results[i].roadNumber,
+                    results[i].track,
+                    results[i].roadPartNumber,
+                    results[i].addrM,
+                    EnumerationUtils.getBeforeAfterDisplayText(results[i].beforeAfter)
+                ];
+            }
+            return array; // join the array to one large string and create jquery element from said string
         }
 
         /**
@@ -179,6 +259,20 @@
             arr[++arrPointer] =`    </tbody>
                                 </table>`;
             return $(arr.join('')); // join the array to one large string and create jquery element from said string
+        }
+
+        function createArrayOfArraysForRoadNames(results) {
+            const array = [];
+            let arrayPointer = -1;
+            array[++arrayPointer] = ['Ely', 'Tie', 'Nimi'];
+            for (let i = 0, len = results.length; i < len; i++) {
+                array[++arrayPointer] = [
+                    results[i].ely,
+                    results[i].roadNumber,
+                    results[i].roadName
+                ];
+            }
+            return array; // join the array to one large string and create jquery element from said string
         }
 
         /**
@@ -251,9 +345,42 @@
                 // table cell value 01.06.2022 is read by sheetJS as 1/6/2022 i.e. M = 1, D = 6
                 // so when we want to construct the finnish date format DD.MM.YYYY we need to put them in reversed order MM.DD.YYYY
             };
-            const wb = XLSX.utils.table_to_book(document.getElementById("roadAddressBrowserTable"), options);
-            /* Export to file (start a download) */
-            XLSX.writeFile(wb, fileName);
+
+            let data = [];
+            switch (params.target) {
+                case "Tracks":
+                    data = createArrayOfArraysForTracks(me.getSearchResults());
+                    break;
+                case "RoadParts":
+                    data = createArrayOfArraysForRoadParts(me.getSearchResults());
+                    break;
+                case "Nodes":
+                    data = createArrayOfArraysForNodes(me.getSearchResults());
+                    break;
+                case "Junctions":
+                    data = createArrayOfArraysForJunctions(me.getSearchResults());
+                    break;
+                case "RoadNames":
+                    data = createArrayOfArraysForRoadNames(me.getSearchResults());
+                    break;
+                default:
+            }
+            // Create a web worker
+            const worker = new Worker("src/utils/SheetJsWorker.js");
+            // Send data to the web worker to process
+            worker.postMessage([data, options]);
+            applicationModel.addSpinner();
+            worker.onmessage = function(event) { // listen to messages from the web worker
+                const worksheet = event.data;
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet);
+                XLSX.writeFile(workbook, fileName);
+                applicationModel.removeSpinner();
+            };
+            worker.onerror = (event) => {
+                applicationModel.removeSpinner();
+                console.log("There was an error with the web worker!", event.message);
+            };
         }
 
         function getData() {
@@ -319,11 +446,11 @@
             switch (targetValue.value) {
                 case "Tracks":
                 case "RoadParts":
-                case "Nodes":
-                case "Junctions":
                     if (willPassValidations())
                         fetchByTargetValue(createParams());
                     break;
+                case "Nodes":
+                case "Junctions":
                 case "RoadNames":
                     validateDate(roadAddrSituationDateObject);
                     if (reportValidations())
@@ -341,18 +468,23 @@
                     me.setSearchParams(params);
                     switch (params.target) {
                         case "Tracks":
+                            me.setSearchResults(result.tracks);
                             showData(result.tracks, createResultTableForTracks(result.tracks));
                             break;
                         case "RoadParts":
+                            me.setSearchResults(result.roadParts);
                             showData(result.roadParts, createResultTableForRoadParts(result.roadParts));
                             break;
                         case "Nodes":
+                            me.setSearchResults(result.nodes);
                             showData(result.nodes, createResultTableForNodes(result.nodes));
                             break;
                         case "Junctions":
+                            me.setSearchResults(result.junctions);
                             showData(result.junctions, createResultTableForJunctions(result.junctions));
                             break;
                         case "RoadNames":
+                            me.setSearchResults(result.roadNames);
                             showData(result.roadNames, createResultTableForRoadNames(result.roadNames));
                             break;
                         default:
@@ -363,6 +495,7 @@
         }
 
         function clearResultsAndDisableExcelButton() {
+            me.setSearchResults([]); // empty the search results
             $('.road-address-browser-window-results-table').remove(); // empty the result table
             $('#exportAsExcelFile').prop("disabled", true); //disable Excel download button
             $('#tableNotification').remove(); // remove notification if present
@@ -438,6 +571,14 @@
 
         this.getSearchParams = function() {
             return searchParams;
+        };
+
+        this.setSearchResults = function(results) {
+            searchResults = results;
+        };
+
+        this.getSearchResults = function() {
+            return searchResults;
         };
 
         return {
