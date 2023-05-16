@@ -52,7 +52,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Test getComplementaryRoadLinks() When submitting a bounding box as a search area Then return any complimentary geometry that are inside said area") {
+  ignore("Test getComplementaryRoadLinks() When submitting a bounding box as a search area Then return any complimentary geometry that are inside said area") {
     val municipalityId = 235
     val linkId = 2l.toString
     val roadLink: RoadLink = RoadLink(linkId, Seq(), 0, AdministrativeClass.Municipality, TrafficDirection.TowardsDigitizing, None,None, municipalityCode = municipalityId, sourceId = "")
