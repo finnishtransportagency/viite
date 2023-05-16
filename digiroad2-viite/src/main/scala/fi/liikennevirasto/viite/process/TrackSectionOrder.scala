@@ -59,6 +59,7 @@ object TrackSectionOrder {
         val (projectLinksWithValues, newLinks) = projectLinks.partition(_.endAddrMValue != 0)
         val projectLinkChain =
           if (projectLinksWithValues.nonEmpty) {
+            //is this sorted by any means? --- doesn't have to be as the recursion can add links to either side of the initial link
             val (startPoint, endPoint) = projectLinksWithValues.head.getEndPointsOnlyBySide
             recursiveFindNearestProjectLinks(ProjectLinkChain(Seq(projectLinksWithValues.head), startPoint, endPoint), projectLinksWithValues.tail ++ newLinks)
           } else {

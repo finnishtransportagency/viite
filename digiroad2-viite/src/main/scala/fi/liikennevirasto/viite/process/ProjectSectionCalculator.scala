@@ -25,7 +25,7 @@ object ProjectSectionCalculator {
     */
   def assignMValues(projectLinks: Seq[ProjectLink], userGivenCalibrationPoints: Seq[UserDefinedCalibrationPoint] = Seq()): Seq[ProjectLink] = {
     logger.info(s"Starting MValue assignment for ${projectLinks.size} links")
-    val others = projectLinks.filterNot(_.status == LinkStatus.Terminated)
+    val others = projectLinks.filterNot(_.status == LinkStatus.Terminated) // == projectLinks
     val (newLinks, nonTerminatedLinks) = others.partition(l => l.status == LinkStatus.New)
     try {
 

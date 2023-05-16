@@ -1629,6 +1629,7 @@ class ProjectService(
     unConnnected ++ connected
   }
 
+  //newTrack, newDiscontinuity, completelyNewLinkIds never used
   def recalculateProjectLinks(projectId: Long, userName: String, roadParts: Set[(Long, Long)] = Set(), newTrack: Option[Track] = None, newDiscontinuity: Option[Discontinuity] = None, completelyNewLinkIds: Seq[Long] = Seq()): Unit = {
 
     logger.info(s"Recalculating project $projectId, parts ${roadParts.map(p => {
@@ -1643,15 +1644,17 @@ class ProjectService(
         (pl.roadNumber, pl.roadPartNumber)
       }).flatMap {
         grp =>
+          //Reverts splitted links of a previous recalculation (userdefined calibration points to NoCP etc)
           val fusedLinks = getFusedProjectLinks(grp._2)
           val calibrationPoints = ProjectCalibrationPointDAO.fetchByRoadPart(projectId, grp._1._1, grp._1._2)
           val calculatedLinks   = ProjectSectionCalculator.assignMValues(fusedLinks, calibrationPoints).sortBy(_.endAddrMValue)
           if (!calculatedLinks.exists(_.isNotCalculated) && newDiscontinuity.isDefined && newTrack.isDefined &&
               roadParts.contains((calculatedLinks.head.roadNumber, calculatedLinks.head.roadPartNumber))) {
-            if (completelyNewLinkIds.nonEmpty) {
+            if (completelyNewLinkIds.nonEmpty)  { //always false
               val (completelyNew, others) = calculatedLinks.partition(cl => {
                 completelyNewLinkIds.contains(cl.id) || cl.id == NewIdValue
               })
+              //never reached, ignore
               others ++ (if (completelyNew.nonEmpty) {
                 completelyNew.init :+ completelyNew.last.copy(discontinuity = newDiscontinuity.get)
               } else {
@@ -1659,6 +1662,7 @@ class ProjectService(
               })
             } else {
               val (filtered, rest) = calculatedLinks.partition(_.track == newTrack.get)
+              //never reached, ignore
               rest ++ (if (filtered.nonEmpty) {
                 filtered.init :+ filtered.last.copy(discontinuity = newDiscontinuity.get)
               } else {
