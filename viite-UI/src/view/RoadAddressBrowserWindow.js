@@ -304,24 +304,6 @@
             return $(arr.join('')); // join the array to one large string and create jquery element from said string
         }
 
-        function showData(results, table) {
-            if (results.length === 0) {
-                roadAddrBrowserWindow.append($('<p id="tableNotification"><b>Hakuehdoilla ei löytynyt yhtäkään osumaa</b></p>'));
-                roadAddrBrowserWindow.append(table.hide());
-            }
-            else if (results.length <= ViiteConstants.MAX_ROWS_TO_DISPLAY) {
-                roadAddrBrowserWindow.append(table);
-                $('#exportAsExcelFile').prop("disabled", false); // enable Excel download button
-            }
-            else {
-                // hide the results, and notify the user to download the result table as an Excel file
-                roadAddrBrowserWindow.append($('<p id="tableNotification"><b>Tulostaulu liian suuri, lataa tulokset Excel-taulukkona</b></p>'));
-                roadAddrBrowserWindow.append(table.hide());
-                $('#exportAsExcelFile').prop("disabled", false); // enable Excel download button
-            }
-        }
-
-
         function toggle() {
             $('.container').append('<div class="road-address-browser-modal-overlay confirm-modal"><div class="road-address-browser-modal-window"></div></div>');
             $('.road-address-browser-modal-window').append(roadAddrBrowserWindow.toggle());
@@ -460,35 +442,60 @@
             }
         }
 
+        function createResultTable(params, results) {
+            let resultTable;
+            switch (params.target) {
+                case "Tracks":
+                    resultTable = createResultTableForTracks(results);
+                    break;
+                case "RoadParts":
+                    resultTable = createResultTableForRoadParts(results);
+                    break;
+                case "Nodes":
+                    resultTable = createResultTableForNodes(results);
+                    break;
+                case "Junctions":
+                    resultTable = createResultTableForJunctions(results);
+                    break;
+                case "RoadNames":
+                    resultTable = createResultTableForRoadNames(results);
+                    break;
+                default:
+            }
+            return resultTable;
+        }
+
+        function showData(table) {
+            roadAddrBrowserWindow.append(table);
+            $('#exportAsExcelFile').prop("disabled", false); // enable Excel download button
+        }
+
+        function showTableTooBigNotification() {
+            roadAddrBrowserWindow.append($('<p id="tableNotification"><b>Tulostaulu liian suuri, lataa tulokset Excel-taulukkona</b></p>'));
+            $('#exportAsExcelFile').prop("disabled", false); // enable Excel download button
+        }
+
+        function showNoResultsFoundNotification() {
+            roadAddrBrowserWindow.append($('<p id="tableNotification"><b>Hakuehdoilla ei löytynyt yhtäkään osumaa</b></p>'));
+        }
+
         function fetchByTargetValue(params) {
             applicationModel.addSpinner();
             backend.getDataForRoadAddressBrowser(params, function(result) {
                 if (result.success) {
                     applicationModel.removeSpinner();
                     me.setSearchParams(params);
-                    switch (params.target) {
-                        case "Tracks":
-                            me.setSearchResults(result.tracks);
-                            showData(result.tracks, createResultTableForTracks(result.tracks));
-                            break;
-                        case "RoadParts":
-                            me.setSearchResults(result.roadParts);
-                            showData(result.roadParts, createResultTableForRoadParts(result.roadParts));
-                            break;
-                        case "Nodes":
-                            me.setSearchResults(result.nodes);
-                            showData(result.nodes, createResultTableForNodes(result.nodes));
-                            break;
-                        case "Junctions":
-                            me.setSearchResults(result.junctions);
-                            showData(result.junctions, createResultTableForJunctions(result.junctions));
-                            break;
-                        case "RoadNames":
-                            me.setSearchResults(result.roadNames);
-                            showData(result.roadNames, createResultTableForRoadNames(result.roadNames));
-                            break;
-                        default:
+                    me.setSearchResults(result.results);
+                    if (result.results.length > 0) {
+                        if (result.results.length <= ViiteConstants.MAX_ROWS_TO_DISPLAY) {
+                            showData(createResultTable(params, result.results));
+                        } else {
+                            showTableTooBigNotification();
+                        }
+                    } else {
+                        showNoResultsFoundNotification();
                     }
+
                 } else
                     new ModalConfirm(result.error);
             });

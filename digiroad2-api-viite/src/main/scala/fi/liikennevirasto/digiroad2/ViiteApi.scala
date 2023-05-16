@@ -413,19 +413,19 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
           target match {
             case Some("Tracks") =>
               val tracksForRoadAddressBrowser = roadAddressService.getTracksForRoadAddressBrowser(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
-              Map("success" -> true, "tracks" -> tracksForRoadAddressBrowser.map(roadAddressBrowserTracksToApi))
+              Map("success" -> true, "results" -> tracksForRoadAddressBrowser.map(roadAddressBrowserTracksToApi))
             case Some("RoadParts") =>
               val roadPartsForRoadAddressBrowser = roadAddressService.getRoadPartsForRoadAddressBrowser(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
-              Map("success" -> true, "roadParts" -> roadPartsForRoadAddressBrowser.map(roadAddressBrowserRoadPartsToApi))
+              Map("success" -> true, "results" -> roadPartsForRoadAddressBrowser.map(roadAddressBrowserRoadPartsToApi))
             case Some("Nodes") =>
               val nodesForRoadAddressBrowser = nodesAndJunctionsService.getNodesForRoadAddressBrowser(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
-              Map("success" -> true, "nodes" -> nodesForRoadAddressBrowser.map(roadAddressBrowserNodesToApi))
+              Map("success" -> true, "results" -> nodesForRoadAddressBrowser.map(roadAddressBrowserNodesToApi))
             case Some("Junctions") =>
               val junctionsForRoadAddressBrowser = nodesAndJunctionsService.getJunctionsForRoadAddressBrowser(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
-              Map("success" -> true, "junctions" -> junctionsForRoadAddressBrowser.map(roadAddressBrowserJunctionsToApi))
+              Map("success" -> true, "results" -> junctionsForRoadAddressBrowser.map(roadAddressBrowserJunctionsToApi))
             case Some("RoadNames") =>
               val roadNamesForRoadAddressBrowser = roadNameService.getRoadNamesForRoadAddressBrowser(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
-              Map("success" -> true, "roadNames" -> roadNamesForRoadAddressBrowser.map(roadAddressBrowserRoadNamesToApi))
+              Map("success" -> true, "results" -> roadNamesForRoadAddressBrowser.map(roadAddressBrowserRoadNamesToApi))
             case _ => Map("success" -> false, "error" -> "Tieosoitteiden haku epäonnistui, haun kohdearvo puuttuu tai on väärin syötetty")
           }
         } else
