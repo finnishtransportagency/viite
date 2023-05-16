@@ -866,8 +866,15 @@ class ProjectValidator {
       val prevLeftRoadAddress = Seq(previousRoadAddress.filter(_.track != Track.RightSide).maxBy(_.endAddrMValue))
       val prevRightRoadAddress = Seq(previousRoadAddress.filter(_.track != Track.LeftSide).maxBy(_.endAddrMValue))
 
-      val nextLeftRoadAddress = Seq(nextRoadAddress.filter(_.track != Track.RightSide).minBy(_.startAddrMValue))
-      val nextRightRoadAddress = Seq(nextRoadAddress.filter(_.track != Track.LeftSide).minBy(_.startAddrMValue))
+      val leftRoadAddresses = nextRoadAddress.filter(_.track != Track.RightSide)
+      val rightRoadAddresses = nextRoadAddress.filter(_.track != Track.LeftSide)
+
+      val nextLeftRoadAddress = if (leftRoadAddresses.nonEmpty) {
+        Seq(leftRoadAddresses.minBy(_.startAddrMValue))
+      } else Seq.empty[BaseRoadAddress]
+      val nextRightRoadAddress = if (rightRoadAddresses.nonEmpty) {
+        Seq(rightRoadAddresses.minBy(_.startAddrMValue))
+      }  else Seq.empty[BaseRoadAddress]
 
       /**
        * Runs the provided validation function against the RoadAddress before the start of the road part
@@ -891,8 +898,11 @@ class ProjectValidator {
        * This takes priority over other validations and is returned alone if a ValidationError is found.
        */
       def validateDiscontinuity(pl: Seq[BaseRoadAddress])(ra: BaseRoadAddress): Boolean = {
-        ra.discontinuity != Discontinuity.Discontinuous &&
-          !ra.connected(pl.head)
+        if (pl.nonEmpty) {
+          ra.discontinuity != Discontinuity.Discontinuous &&
+            !ra.connected(pl.head)
+        } else
+          false
       }
 
       val notDiscontinuousCodeOnDisconnectedRoadAddressErrors = validatePreviousRoadAddress(prevLeftRoadAddress)(validateDiscontinuity(nextLeftRoadAddress)
