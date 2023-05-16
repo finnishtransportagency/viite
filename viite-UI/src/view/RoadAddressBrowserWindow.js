@@ -22,7 +22,7 @@
         function createArrayOfArraysForTracks(results) {
             const array = [];
             let arrayPointer = -1;
-            array[++arrayPointer] = ['Ely','Tie', 'Ajr', 'Osa', 'Let', 'Pituus', 'Hall. luokka', 'Alkupvm'];
+            array[++arrayPointer] = ['Ely','Tie', 'Ajr', 'Osa', 'Aet', 'Let', 'Pituus', 'Hall. luokka', 'Alkupvm'];
             for (let i = 0, len = results.length; i < len; i++) {
                 array[++arrayPointer] = [
                     results[i].ely,
