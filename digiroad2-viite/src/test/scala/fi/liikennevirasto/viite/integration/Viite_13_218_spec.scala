@@ -149,7 +149,8 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
 
   /* update errors*/
   def errorPartsToApi(errorParts: projectService_db.projectValidator.ValidationErrorDetails): Map[String, Any] = {
-    Map("ids" -> errorParts.affectedIds,
+    Map("ids" -> errorParts.affectedPlIds,
+      "linkIds" -> errorParts.affectedLinkIds,
       "errorCode" -> errorParts.validationError.value,
       "errorMessage" -> errorParts.validationError.message,
       "info" -> errorParts.optionalInformation,
