@@ -12,14 +12,7 @@
       "sortELY": {
         toStr: "ELY", width: "50",
         sortFunc: function (a, b) {
-          let i = 0;
-          while (i < a.elys.length && i < b.elys.length) {
-            if (a.elys[i] !== b.elys[i]) {
-              return a.elys[i] - b.elys[i];
-            }
-            i++;
-          }
-          return a.elys.length - b.elys.length;
+          return a.ely - b.ely;
         }
       },
       "sortUser": {
