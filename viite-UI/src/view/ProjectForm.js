@@ -33,8 +33,8 @@
         '</div>';
     };
 
-    var inputFieldRequired = function (labelText, id, placeholder, value, maxLength) {
-      var lengthLimit = '';
+    const inputFieldRequired = function (labelText, id, placeholder, value, maxLength) {
+      let lengthLimit = '';
       if (maxLength)
         lengthLimit = 'maxlength="' + maxLength + '"';
       return '<div class="form-group input-required">' +
@@ -43,7 +43,18 @@
         '</div>';
     };
 
-    var title = function (projectName) {
+    const dateInputFieldRequired = function (labelText, id, placeholder, value, maxLength) {
+      //Validate only number characters on "onkeypress" including backspace, forward slash, divide, hyphen, period
+      let lengthLimit = '';
+      if (maxLength)
+        lengthLimit = 'maxlength="' + maxLength + '"';
+      return '<div class="form-group input-required">' +
+          '<label class="control-label required">' + labelText + '</label>' +
+          '<input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.keyCode == 9 || event.keyCode == 46 || event.keyCode == 45 || event.keyCode == 47 || event.keyCode == 111" class="form-control" id = "' + id + '"' + lengthLimit + ' placeholder = "' + placeholder + '" value="' + value + '"/>' +
+          '</div>';
+    };
+
+    const title = function (projectName) {
       const projectNameFixed = (projectName) ? projectName : "Uusi tieosoiteprojekti";
       return '<span class ="edit-mode-title">' + projectNameFixed + '</span>';
     };
@@ -73,7 +84,7 @@
         '<div class="form-group editable form-editable-roadAddressProject"> ' +
         '<form  id="roadAddressProject"  class="input-unit-combination form-group form-horizontal roadAddressProject">' +
         inputFieldRequired('*Nimi', 'nimi', '', '', 32) +
-        inputFieldRequired('*Alkupvm', 'projectStartDate', 'pp.kk.vvvv', '') +
+        dateInputFieldRequired('*Alkupvm', 'projectStartDate', 'pp.kk.vvvv', '', 10) +
         '   <div class="form-check-date-notifications"> ' +
         '     <p id="projectStartDate-validation-notification"> </p>' +
         '   </div>' +
@@ -112,7 +123,7 @@
         '<div class="form-group editable form-editable-roadAddressProject"> ' +
         '<form id="roadAddressProject" class="input-unit-combination form-group form-horizontal roadAddressProject">' +
         inputFieldRequired('*Nimi', 'nimi', '', project.name, 32) +
-        inputFieldRequired('*Alkupvm', 'projectStartDate', 'pp.kk.vvvv', project.startDate) +
+        dateInputFieldRequired('*Alkupvm', 'projectStartDate', 'pp.kk.vvvv', project.startDate, 10) +
         '   <div class="form-check-date-notifications"> ' +
         '     <p id="projectStartDate-validation-notification"> </p>' +
         '   </div>' +
@@ -146,6 +157,8 @@
         '</div></div></div></div>' +
         '<footer>' + actionButtons() + '</footer>');
     };
+
+
 
     var selectedProjectLinkTemplateDisabledButtons = function (project) {
       return _.template('' +
@@ -199,6 +212,8 @@
         eventbus.trigger('projectStartDate:notificationCheck', $(this).val());
       });
     };
+
+
 
     var formIsInvalid = function (rootElement) {
       return !(rootElement.find('#nimi').val() && rootElement.find('#projectStartDate').val() !== '');
