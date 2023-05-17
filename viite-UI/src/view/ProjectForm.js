@@ -213,8 +213,6 @@
       });
     };
 
-
-
     var formIsInvalid = function (rootElement) {
       return !(rootElement.find('#nimi').val() && rootElement.find('#projectStartDate').val() !== '');
     };
