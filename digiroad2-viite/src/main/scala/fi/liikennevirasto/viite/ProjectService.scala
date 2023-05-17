@@ -445,7 +445,7 @@ class ProjectService(
     def createProjectElyCodes(): Unit = {
       val elysForProject = projectLinkDAO.fetchProjectLinkElys(projectId) :+ roadEly
       val updatedCount = projectDAO.updateProjectElys(projectId, elysForProject.toSet.toSeq)
-      if (updatedCount != 1) {
+      if (updatedCount == 0) {
         logger.warn(s"Ely-codes for project: $projectId were not updated.")
       }
     }
