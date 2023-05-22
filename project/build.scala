@@ -151,13 +151,13 @@ object Digiroad2Build extends Build {
     )
   ) dependsOn(geoJar, DBJar % "compile->compile;test->test")
 
-  val Digiroad2ApiName = "digiroad2-api-common"
+  val viiteCommonApiProjectName = "viite-api-common"
   lazy val commonApiJar = Project (
-    Digiroad2ApiName,
-    file(Digiroad2ApiName),
+    viiteCommonApiProjectName,
+    file(viiteCommonApiProjectName),
     settings = Defaults.coreDefaultSettings ++ Seq(
       organization := Organization,
-      name := Digiroad2ApiName,
+      name := viiteCommonApiProjectName,
       version := Version,
       scalaVersion := ScalaVersion,
       resolvers += Classpaths.typesafeReleases,
