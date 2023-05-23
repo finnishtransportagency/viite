@@ -47,7 +47,7 @@ object Digiroad2Build extends Build {
 
   lazy val geoJar = Project (
     Digiroad2GeoName,
-    file(Digiroad2GeoName),
+    file(s"viite-backend/$Digiroad2GeoName"),
     settings = Defaults.coreDefaultSettings ++ Seq(
       organization := Organization,
       name := Digiroad2GeoName,
@@ -73,11 +73,10 @@ object Digiroad2Build extends Build {
     )
   )
     
-
   val Digiroad2PostGISName = "digiroad2-oracle"
   lazy val postgisJar = Project (
     Digiroad2PostGISName,
-    file(Digiroad2PostGISName),
+    file(s"viite-backend/$Digiroad2PostGISName"),
     settings = Defaults.coreDefaultSettings ++ Seq(
       organization := Organization,
       name := Digiroad2PostGISName,
@@ -117,7 +116,7 @@ object Digiroad2Build extends Build {
   val Digiroad2ViiteName = "digiroad2-viite"
   lazy val viiteJar = Project (
     Digiroad2ViiteName,
-    file(Digiroad2ViiteName),
+    file(s"viite-backend/$Digiroad2ViiteName"),
     settings = Defaults.coreDefaultSettings ++ Seq(
       organization := Organization,
       name := Digiroad2ViiteName,
@@ -154,7 +153,7 @@ object Digiroad2Build extends Build {
   val Digiroad2ApiName = "digiroad2-api-common"
   lazy val commonApiJar = Project (
     Digiroad2ApiName,
-    file(Digiroad2ApiName),
+    file(s"viite-backend/$Digiroad2ApiName"),
     settings = Defaults.coreDefaultSettings ++ Seq(
       organization := Organization,
       name := Digiroad2ApiName,
@@ -190,7 +189,7 @@ object Digiroad2Build extends Build {
   val Digiroad2ViiteApiName = "digiroad2-api-viite"
   lazy val viiteApiJar = Project (
     Digiroad2ViiteApiName,
-    file(Digiroad2ViiteApiName),
+    file(s"viite-backend/$Digiroad2ViiteApiName"),
     settings = Defaults.coreDefaultSettings ++ Seq(
       organization := Organization,
       name := Digiroad2ViiteApiName,
@@ -263,7 +262,7 @@ object Digiroad2Build extends Build {
   ) dependsOn(geoJar, postgisJar, viiteJar, commonApiJar, viiteApiJar) aggregate
     (geoJar, postgisJar, viiteJar, commonApiJar, viiteApiJar)
 
-  lazy val gatling = project.in(file("digiroad2-gatling"))
+  lazy val gatling = project.in(file(s"viite-integration-test/digiroad2-gatling"))
     .enablePlugins(GatlingPlugin)
     .settings(scalaVersion := ScalaVersion)
     .settings(libraryDependencies ++= Seq(
