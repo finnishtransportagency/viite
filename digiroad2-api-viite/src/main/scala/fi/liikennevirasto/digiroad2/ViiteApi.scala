@@ -1668,6 +1668,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       "startDate" -> new SimpleDateFormat("dd.MM.yyyy").format(node.startDate.toDate),
       "nodeType" -> node.nodeType.displayValue,
       "nodeName" -> node.name,
+      "nodeCoordinates" -> node.nodeCoordinates,
       "nodeNumber" -> node.nodeNumber
     )
   }
