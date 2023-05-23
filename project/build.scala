@@ -48,7 +48,7 @@ object Digiroad2Build extends Build {
   lazy val geoJar = Project (
     Digiroad2GeoName,
     file(Digiroad2GeoName),
-    settings = Defaults.defaultSettings ++ Seq(
+    settings = Defaults.coreDefaultSettings ++ Seq(
       organization := Organization,
       name := Digiroad2GeoName,
       version := Version,
@@ -78,7 +78,7 @@ object Digiroad2Build extends Build {
   lazy val postgisJar = Project (
     Digiroad2PostGISName,
     file(Digiroad2PostGISName),
-    settings = Defaults.defaultSettings ++ Seq(
+    settings = Defaults.coreDefaultSettings ++ Seq(
       organization := Organization,
       name := Digiroad2PostGISName,
       version := Version,
@@ -118,7 +118,7 @@ object Digiroad2Build extends Build {
   lazy val viiteJar = Project (
     Digiroad2ViiteName,
     file(Digiroad2ViiteName),
-    settings = Defaults.defaultSettings ++ Seq(
+    settings = Defaults.coreDefaultSettings ++ Seq(
       organization := Organization,
       name := Digiroad2ViiteName,
       version := Version,
@@ -155,7 +155,7 @@ object Digiroad2Build extends Build {
   lazy val commonApiJar = Project (
     Digiroad2ApiName,
     file(Digiroad2ApiName),
-    settings = Defaults.defaultSettings ++ Seq(
+    settings = Defaults.coreDefaultSettings ++ Seq(
       organization := Organization,
       name := Digiroad2ApiName,
       version := Version,
@@ -191,7 +191,7 @@ object Digiroad2Build extends Build {
   lazy val viiteApiJar = Project (
     Digiroad2ViiteApiName,
     file(Digiroad2ViiteApiName),
-    settings = Defaults.defaultSettings ++ Seq(
+    settings = Defaults.coreDefaultSettings ++ Seq(
       organization := Organization,
       name := Digiroad2ViiteApiName,
       version := Version,
@@ -225,7 +225,7 @@ object Digiroad2Build extends Build {
   lazy val warProject = Project (
     Digiroad2Name,
     file("."),
-    settings = Defaults.defaultSettings
+    settings = Defaults.coreDefaultSettings
       ++ assemblySettings
       ++ net.virtualvoid.sbt.graph.Plugin.graphSettings
       ++ ScalatraPlugin.scalatraWithJRebel ++ Seq(
