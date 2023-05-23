@@ -136,7 +136,7 @@
         function createArrayOfArraysForNodes(results) {
             const array = [];
             let arrayPointer = -1;
-            array[++arrayPointer] = ['Ely','Tie', 'Osa', 'Et', 'Alkupvm', 'Tyyppi', 'Nimi', 'Solmunumero'];
+            array[++arrayPointer] = ['Ely','Tie', 'Osa', 'Et', 'Alkupvm', 'Tyyppi', 'Nimi', 'P-Koord', 'I-Koord', 'Solmunumero'];
             for (let i = 0, len = results.length; i < len; i++) {
                 array[++arrayPointer] = [
                     results[i].ely,
@@ -146,6 +146,8 @@
                     results[i].startDate,
                     results[i].nodeType,
                     results[i].nodeName,
+                    results[i].nodeCoordinates.y,
+                    results[i].nodeCoordinates.x,
                     results[i].nodeNumber
                 ];
             }
