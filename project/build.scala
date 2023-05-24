@@ -186,13 +186,13 @@ object Digiroad2Build extends Build {
     )
   ) dependsOn(geoJar, DBJar, viiteJar)
 
-  val Digiroad2ViiteApiName = "digiroad2-api-viite"
-  lazy val viiteApiJar = Project (
-    Digiroad2ViiteApiName,
-    file(s"viite-backend/$Digiroad2ViiteApiName"),
+  val ApiProjectName = "api"
+  lazy val ApiJar = Project (
+    ApiProjectName,
+    file(s"viite-backend/$ApiProjectName"),
     settings = Defaults.coreDefaultSettings ++ Seq(
       organization := Organization,
-      name := Digiroad2ViiteApiName,
+      name := ApiProjectName,
       version := Version,
       scalaVersion := ScalaVersion,
       resolvers += Classpaths.typesafeReleases,
@@ -259,8 +259,8 @@ object Digiroad2Build extends Build {
         "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "container;provided;test" artifacts (Artifact("javax.servlet", "jar", "jar"))
       )
     )
-  ) dependsOn(geoJar, DBJar, viiteJar, apiCommonJar, viiteApiJar) aggregate
-    (geoJar, DBJar, viiteJar, apiCommonJar, viiteApiJar)
+  ) dependsOn(geoJar, DBJar, viiteJar, apiCommonJar, ApiJar) aggregate
+    (geoJar, DBJar, viiteJar, apiCommonJar, ApiJar)
 
   lazy val gatling = project.in(file(s"viite-integration-test/digiroad2-gatling"))
     .enablePlugins(GatlingPlugin)
