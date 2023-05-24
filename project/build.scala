@@ -8,7 +8,6 @@ import sbtassembly.Plugin.AssemblyKeys._
 object Digiroad2Build extends Build {
   val Organization = "fi.liikennevirasto"
   val Digiroad2Name = "viite"
-  val Digiroad2GeoName = "digiroad2-geo"
   val Version = "0.1.0-SNAPSHOT"
 
   val ScalaVersion = "2.11.7"
@@ -45,12 +44,13 @@ object Digiroad2Build extends Build {
   // Get build id to check if executing in aws environment.
   val awsBuildId: String = scala.util.Properties.envOrElse("CODEBUILD_BUILD_ID", null)
 
+  val GeoProjectName = "geo"
   lazy val geoJar = Project (
-    Digiroad2GeoName,
-    file(s"viite-backend/$Digiroad2GeoName"),
+    GeoProjectName,
+    file(s"viite-backend/$GeoProjectName"),
     settings = Defaults.coreDefaultSettings ++ Seq(
       organization := Organization,
-      name := Digiroad2GeoName,
+      name := GeoProjectName,
       version := Version,
       scalaVersion := ScalaVersion,
       resolvers += Classpaths.typesafeReleases,
