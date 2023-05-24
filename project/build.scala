@@ -150,13 +150,13 @@ object Digiroad2Build extends Build {
     )
   ) dependsOn(geoJar, DBJar % "compile->compile;test->test")
 
-  val Digiroad2ApiName = "digiroad2-api-common"
-  lazy val commonApiJar = Project (
-    Digiroad2ApiName,
-    file(s"viite-backend/$Digiroad2ApiName"),
+  val ApiCommonProjectName = "api-common"
+  lazy val apiCommonJar = Project (
+    ApiCommonProjectName,
+    file(s"viite-backend/$ApiCommonProjectName"),
     settings = Defaults.coreDefaultSettings ++ Seq(
       organization := Organization,
-      name := Digiroad2ApiName,
+      name := ApiCommonProjectName,
       version := Version,
       scalaVersion := ScalaVersion,
       resolvers += Classpaths.typesafeReleases,
@@ -219,7 +219,7 @@ object Digiroad2Build extends Build {
       ),
       unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf"
     )
-  ) dependsOn(geoJar, DBJar, viiteJar % "test->test", commonApiJar % "compile->compile;test->test")
+  ) dependsOn(geoJar, DBJar, viiteJar % "test->test", apiCommonJar % "compile->compile;test->test")
 
   lazy val warProject = Project (
     Digiroad2Name,
@@ -259,8 +259,8 @@ object Digiroad2Build extends Build {
         "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "container;provided;test" artifacts (Artifact("javax.servlet", "jar", "jar"))
       )
     )
-  ) dependsOn(geoJar, DBJar, viiteJar, commonApiJar, viiteApiJar) aggregate
-    (geoJar, DBJar, viiteJar, commonApiJar, viiteApiJar)
+  ) dependsOn(geoJar, DBJar, viiteJar, apiCommonJar, viiteApiJar) aggregate
+    (geoJar, DBJar, viiteJar, apiCommonJar, viiteApiJar)
 
   lazy val gatling = project.in(file(s"viite-integration-test/digiroad2-gatling"))
     .enablePlugins(GatlingPlugin)
