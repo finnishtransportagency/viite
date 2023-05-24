@@ -13,7 +13,7 @@ object SqlScriptRunner {
   }
 
   def runViiteScripts(filenames: Seq[String]) {
-    executeStatements(filenames.flatMap(readScriptStatements("./viite-backend/digiroad2-viite/sql/", _)))
+    executeStatements(filenames.flatMap(readScriptStatements("./viite-backend/viite-main/sql/", _)))
   }
 
   def runScriptInClasspath(filename: String): Unit = {
