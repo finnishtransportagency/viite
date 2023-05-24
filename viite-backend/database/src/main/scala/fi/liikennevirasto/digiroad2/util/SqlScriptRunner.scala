@@ -9,7 +9,7 @@ import scala.io.{BufferedSource, Codec, Source}
 
 object SqlScriptRunner {
   def runScripts(filenames: Seq[String]) {
-    executeStatements(filenames.flatMap(readScriptStatements("./viite-backend/digiroad2-oracle/sql/", _)))
+    executeStatements(filenames.flatMap(readScriptStatements("./viite-backend/database/sql/", _)))
   }
 
   def runViiteScripts(filenames: Seq[String]) {
