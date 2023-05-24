@@ -38,7 +38,7 @@ PostGIS server can be stopped with the `aws/local-dev/postgis/stop-postgis.sh` s
 
 Docker Compose installs and starts the PostGIS database server.
 
-[Read more about Viite PostGIS here](aws/local-dev/postgis/README.md)
+[Read more about Viite PostGIS here](local-dev/postgis/README.md)
 
 Idea Run Configurations
 -----------------------
