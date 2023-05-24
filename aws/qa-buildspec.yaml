@@ -19,8 +19,8 @@ phases:
   build:
     commands:
       - grunt test
-      - sbt ${1} ${2} "project digiroad2-viite" "test:run-main fi.liikennevirasto.viite.util.DataFixture flyway_migrate"
-      - sbt ${1} ${2} "project digiroad2-viite" "test:run-main fi.liikennevirasto.viite.util.DataFixture test"
+      - sbt ${1} ${2} "project viite-main" "test:run-main fi.liikennevirasto.viite.util.DataFixture flyway_migrate"
+      - sbt ${1} ${2} "project viite-main" "test:run-main fi.liikennevirasto.viite.util.DataFixture test"
       - sbt test
       - grunt deploy
       - sbt clean
