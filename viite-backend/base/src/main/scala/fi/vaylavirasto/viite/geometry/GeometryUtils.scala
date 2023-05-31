@@ -1,6 +1,4 @@
-package fi.liikennevirasto.digiroad2
-
-import fi.liikennevirasto.digiroad2.linearasset.PolyLine
+package fi.vaylavirasto.viite.geometry
 
 object GeometryUtils {
 
