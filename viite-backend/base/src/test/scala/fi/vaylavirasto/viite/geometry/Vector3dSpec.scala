@@ -1,8 +1,8 @@
-package fi.liikennevirasto.digiroad2
+package fi.vaylavirasto.viite.geometry
 
 import org.scalatest._
 
-class PointSpec extends FunSuite with Matchers {
+class Vector3dSpec extends FunSuite with Matchers {
 
   val tolerance = 0.00001
 
