@@ -1,10 +1,9 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.util.Track.RightSide
 import fi.liikennevirasto.viite
 import fi.liikennevirasto.viite.dao.{ProjectLink, _}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
+import fi.vaylavirasto.viite.model.Track
 import org.joda.time.DateTime
 
 /**
@@ -268,7 +267,7 @@ object ProjectDeltaCalculator {
     val fusedValues = addressMValues % 2 match {
       case 0 => addressMValues / 2
       case _ =>
-        if (track == RightSide ^ (mValue * 2 < addressMValues)) {
+        if (track == Track.RightSide ^ (mValue * 2 < addressMValues)) {
           (addressMValues + 1) / 2
         } else {
           addressMValues / 2

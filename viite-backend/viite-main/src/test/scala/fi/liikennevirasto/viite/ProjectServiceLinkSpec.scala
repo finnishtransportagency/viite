@@ -9,8 +9,6 @@ import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
@@ -21,6 +19,7 @@ import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.{ProjectSectionCalculator, RoadwayAddressMapper}
 import fi.liikennevirasto.viite.util.{StaticTestData, _}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point, PolyLine}
+import fi.vaylavirasto.viite.model.Track
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, when}
@@ -148,9 +147,9 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
     projectDAO.create(project)
     val links =
       if (changeTrack) {
-        withTrack(RightSide) ++ withTrack(LeftSide)
+        withTrack(Track.RightSide) ++ withTrack(Track.LeftSide)
       } else {
-        withTrack(Combined)
+        withTrack(Track.Combined)
       }
     projectReservedPartDAO.reserveRoadPart(id, roadNumber, roadPartNumber, "u")
     projectLinkDAO.create(links)

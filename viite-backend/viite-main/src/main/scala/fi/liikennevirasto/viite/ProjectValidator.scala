@@ -5,14 +5,14 @@ import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangl
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.client.kgv.KgvRoadLink
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.{Track, ViiteProperties}
+import fi.liikennevirasto.digiroad2.util.{ViiteProperties}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.process.{RoadwayAddressMapper, TrackSectionOrder}
 import fi.liikennevirasto.viite.process.TrackSectionOrder.findChainEndpoints
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
+import fi.vaylavirasto.viite.model.Track
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 
@@ -699,7 +699,7 @@ class ProjectValidator {
 
     val notCombinedLinks = projectLinks.filterNot(_.track == Track.Combined)
     def checkMinMaxTrack(trackInterval: Seq[ProjectLink]): Option[ProjectLink] = {
-      if (trackInterval.head.track != Combined) {
+      if (trackInterval.head.track != Track.Combined) {
         val minTrackLink = trackInterval.minBy(_.startAddrMValue)
         val maxTrackLink = trackInterval.maxBy(_.endAddrMValue)
         val notCombinedNonTerminatedLinksInRoadPart = notCombinedLinks.filter(l => l.roadNumber == minTrackLink.roadNumber && l.roadPartNumber == minTrackLink.roadPartNumber && l.status != LinkStatus.Terminated)
@@ -1337,7 +1337,7 @@ class ProjectValidator {
       }
 
       val discontinuous: Seq[ProjectLink] = roadProjectLinks.groupBy(s => (s.roadNumber, s.roadPartNumber)).flatMap { g =>
-        val trackIntervals: Seq[Seq[ProjectLink]] = Seq(g._2.filter(_.track != RightSide), g._2.filter(_.track != LeftSide))
+        val trackIntervals: Seq[Seq[ProjectLink]] = Seq(g._2.filter(_.track != Track.RightSide), g._2.filter(_.track != Track.LeftSide))
         trackIntervals.flatMap {
           interval => {
             if (interval.size > 1) {
@@ -1368,7 +1368,7 @@ class ProjectValidator {
       }
 
       val discontinuous: Seq[ProjectLink] = roadProjectLinks.groupBy(s => (s.roadNumber, s.roadPartNumber)).flatMap { g =>
-        val trackIntervals = Seq(g._2.filter(_.track != RightSide), g._2.filter(_.track != LeftSide))
+        val trackIntervals = Seq(g._2.filter(_.track != Track.RightSide), g._2.filter(_.track != Track.LeftSide))
         trackIntervals.flatMap {
           interval => {
             if (interval.size > 1) {
@@ -1427,7 +1427,7 @@ class ProjectValidator {
         error(project.id, ValidationErrorList.DiscontinuityOnRamp)(roadProjectLinks.filter { pl =>
           // Check that pl has no discontinuity unless on last link and after it the possible project link is connected
           val nextLink = roadProjectLinks.find(pl2 => pl2.startAddrMValue == pl.endAddrMValue &&
-            (pl.track == Combined || pl2.track == Combined || pl.track == pl2.track ))
+            (pl.track == Track.Combined || pl2.track == Track.Combined || pl.track == pl2.track ))
           (nextLink.nonEmpty && pl.discontinuity != Discontinuity.Continuous) ||
             nextLink.exists(pl2 => !pl.connected(pl2))
         })
@@ -1452,7 +1452,7 @@ class ProjectValidator {
     def checkEndOfRoadOnLastPart: Seq[ValidationErrorDetails] = {
       val afterCheckErrors = roadProjectLinks.groupBy(_.roadNumber).flatMap { g =>
         val roadNumber = g._1
-        val trackIntervals = Seq(g._2.filter(_.track != RightSide), g._2.filter(_.track != LeftSide))
+        val trackIntervals = Seq(g._2.filter(_.track != Track.RightSide), g._2.filter(_.track != Track.LeftSide))
         val validRoadParts = roadAddressService.getValidRoadAddressParts(roadNumber, project.startDate)
         trackIntervals.flatMap {
           interval =>
@@ -1504,7 +1504,7 @@ class ProjectValidator {
     def checkDiscontinuityOnLastLinkPart: Seq[ValidationErrorDetails] = {
       val discontinuityErrors = roadProjectLinks.groupBy(_.roadNumber).flatMap { g =>
         val validRoadParts = roadAddressService.getValidRoadAddressParts(g._1.toInt, project.startDate)
-        val trackIntervals = Seq(g._2.filter(_.track != RightSide), g._2.filter(_.track != LeftSide))
+        val trackIntervals = Seq(g._2.filter(_.track != Track.RightSide), g._2.filter(_.track != Track.LeftSide))
         trackIntervals.flatMap {
           interval =>
             val nonTerminated = interval.filter(r => r.status != LinkStatus.Terminated)

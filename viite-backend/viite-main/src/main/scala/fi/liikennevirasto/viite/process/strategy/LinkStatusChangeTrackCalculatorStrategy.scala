@@ -1,10 +1,10 @@
 package fi.liikennevirasto.viite.process.strategy
 
-import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao.LinkStatus.New
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectLink}
+import fi.vaylavirasto.viite.model.Track
 
 
 class LinkStatusChangeTrackCalculatorStrategy extends TrackCalculatorStrategy {
