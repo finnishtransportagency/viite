@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
+import fi.liikennevirasto.digiroad2.DigiroadEventBus
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.LifecycleStatus.UnknownLifecycleStatus
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
@@ -16,6 +16,7 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
+import fi.vaylavirasto.viite.geometry.Point
 import org.joda.time.DateTime
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any

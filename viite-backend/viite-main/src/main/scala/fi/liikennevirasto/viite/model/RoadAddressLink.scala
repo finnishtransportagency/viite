@@ -1,9 +1,8 @@
 package fi.liikennevirasto.viite.model
 
-import fi.liikennevirasto.digiroad2.{Point, Vector3d}
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, _}
-import fi.liikennevirasto.digiroad2.linearasset.PolyLine
 import fi.liikennevirasto.viite.dao.CalibrationPoint
+import fi.vaylavirasto.viite.geometry.{Point, PolyLine, Vector3d}
 
 trait RoadAddressLinkLike extends PolyLine {
   def id: Long

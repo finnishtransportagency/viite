@@ -1,10 +1,8 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.GeometryUtils.to2DGeometry
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.util.{MissingTrackException, RoadAddressException, Track}
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Matrix, Point, Vector3d}
 import fi.liikennevirasto.viite.MaxDistanceForConnectedLinks
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, RoadAddressCP}
@@ -12,6 +10,7 @@ import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous, Mi
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao._
+import fi.vaylavirasto.viite.geometry.{GeometryUtils, Matrix, Point, Vector3d}
 
 import scala.annotation.tailrec
 
@@ -326,7 +325,7 @@ object TrackSectionOrder {
               } else {
                 val nextLinkTogo: Seq[ProjectLink] =
                   if (connected.forall(_.sideCode != SideCode.Unknown))
-                    connected.filter(pl => to2DGeometry(pl.startingPoint) != to2DGeometry(currentPoint))
+                    connected.filter(pl => GeometryUtils.to2DGeometry(pl.startingPoint) != GeometryUtils.to2DGeometry(currentPoint))
                   else Seq()
                 val l = if (ready.isEmpty) connected.head else if (nextLinkTogo.nonEmpty) nextLinkTogo.head else pickRightMost(ready.last, connected)
                 (getOppositeEnd(l, currentPoint), l)

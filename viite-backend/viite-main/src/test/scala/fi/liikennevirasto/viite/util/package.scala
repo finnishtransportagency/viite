@@ -1,6 +1,5 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
@@ -10,6 +9,7 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
 import fi.liikennevirasto.viite.dao.Discontinuity.EndOfRoad
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink, RoadAddressLinkLike}
+import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession

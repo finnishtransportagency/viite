@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite.util
 
-import fi.liikennevirasto.digiroad2.{GeometryUtils, _}
+import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
@@ -9,6 +9,7 @@ import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
+import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database

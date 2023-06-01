@@ -1,12 +1,12 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.{GeometryUtils, _}
+import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.LifecycleStatus.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.dao.Sequences
-import fi.liikennevirasto.digiroad2.linearasset.{PolyLine, RoadLink}
+import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
@@ -20,6 +20,7 @@ import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.{ProjectSectionCalculator, RoadwayAddressMapper}
 import fi.liikennevirasto.viite.util.{StaticTestData, _}
+import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point, PolyLine}
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, when}

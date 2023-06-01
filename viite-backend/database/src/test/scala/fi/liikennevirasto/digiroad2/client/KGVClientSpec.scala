@@ -1,11 +1,11 @@
 package fi.liikennevirasto.digiroad2.client
 
 import org.locationtech.jts.geom.GeometryFactory
-import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.client.kgv.KgvRoadLink
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
+import fi.vaylavirasto.viite.geometry.Point
 import org.geotools.geometry.jts.GeometryBuilder
 import org.scalatest.{FunSuite, Matchers}
 

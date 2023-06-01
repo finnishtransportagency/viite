@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.{asset, DigiroadEventBus, GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, asset}
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.FrozenLinkInterface
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
@@ -15,6 +15,7 @@ import fi.liikennevirasto.viite.dao.Discontinuity._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.util._
+import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import org.scalatest.mockito.MockitoSugar

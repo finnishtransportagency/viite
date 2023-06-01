@@ -1,9 +1,9 @@
 package fi.liikennevirasto.viite.model
 
-import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.LifecycleStatus.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{ComplementaryLinkInterface, NormalLinkInterface}
+import fi.vaylavirasto.viite.geometry.Point
 // Used in debugging when needed.
 import org.scalatest.{FunSuite, Matchers}
 

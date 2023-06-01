@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.Point
+import fi.vaylavirasto.viite.geometry.Point
 
 trait RoadAddressMapper {
 

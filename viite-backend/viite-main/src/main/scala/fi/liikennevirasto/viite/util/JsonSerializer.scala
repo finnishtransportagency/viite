@@ -3,13 +3,12 @@ package fi.liikennevirasto.viite.util
 import java.io.{File, FileReader, FileWriter}
 import java.nio.file.Files.copy
 import java.nio.file.Paths
-
-import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LinkType, TrafficDirection, _}
 import fi.liikennevirasto.digiroad2.client.kgv.{ChangeInfo, ChangeType}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink}
 import fi.liikennevirasto.digiroad2.util.{KGVSerializer, Track}
 import fi.liikennevirasto.viite.dao.{Discontinuity, LinkStatus}
+import fi.vaylavirasto.viite.geometry.Point
 import org.json4s._
 import org.json4s.JsonAST.{JDouble, JInt, JObject, JString}
 import org.json4s.jackson.Serialization.{read, write}

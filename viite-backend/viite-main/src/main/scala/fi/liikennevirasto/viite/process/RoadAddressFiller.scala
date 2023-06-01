@@ -1,12 +1,12 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.{RoadAddressLinkBuilder, _}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink}
+import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import org.slf4j.{Logger, LoggerFactory}
 
 

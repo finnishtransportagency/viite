@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite.dao
 
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.DigiroadEventBus
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
 import fi.liikennevirasto.digiroad2.dao.Sequences
@@ -12,6 +12,7 @@ import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.liikennevirasto.viite.NewIdValue
+import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import org.joda.time.DateTime
 import org.postgresql.util.PSQLException
 import org.scalatest.{FunSuite, Matchers}

@@ -17,6 +17,7 @@ import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous}
 import fi.liikennevirasto.viite.dao.LinkStatus.NotHandled
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
+import fi.vaylavirasto.viite.geometry.Point
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import org.scalatest.mockito.MockitoSugar

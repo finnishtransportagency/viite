@@ -1,6 +1,5 @@
 package fi.liikennevirasto.viite.util
 
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.NewIdValue
@@ -8,6 +7,7 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{JunctionPointCP, NoCP, UserDefinedCP}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.process.{RoadwayAddressMapper, TrackSectionOrder}
+import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import org.slf4j.LoggerFactory
 
 import scala.language.postfixOps
@@ -463,7 +463,7 @@ object TwoTrackRoadUtils {
   private def getNewGeometryFromSplitMeasure(
     pl: _root_.fi.liikennevirasto.viite.dao.ProjectLink,
     endPoints: _root_.scala.Predef.Map[
-      _root_.fi.liikennevirasto.digiroad2.Point,
+      _root_.fi.vaylavirasto.viite.geometry.Point,
       _root_.fi.liikennevirasto.viite.dao.ProjectLink
     ],
     splitMeasure: Double
@@ -487,7 +487,7 @@ object TwoTrackRoadUtils {
   private def getGeometryFromSplitMeasure(
     pl: _root_.fi.liikennevirasto.viite.dao.ProjectLink,
     endPoints: _root_.scala.Predef.Map[
-      _root_.fi.liikennevirasto.digiroad2.Point,
+      _root_.fi.vaylavirasto.viite.geometry.Point,
       _root_.fi.liikennevirasto.viite.dao.ProjectLink
     ],
     splitMeasure: Double

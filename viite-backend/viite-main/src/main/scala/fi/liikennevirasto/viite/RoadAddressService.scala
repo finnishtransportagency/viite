@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.{GeometryUtils, _}
+import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.client.kgv._
@@ -16,6 +16,7 @@ import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.process.RoadAddressFiller.ChangeSet
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
+import fi.vaylavirasto.viite.geometry.GeometryUtils
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 

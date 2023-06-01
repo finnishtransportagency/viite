@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.linearasset
+
+import fi.vaylavirasto.viite.geometry.{GeometryUtils, PolyLine}
 import org.locationtech.jts.geom.LineSegment
-import fi.liikennevirasto.digiroad2.GeometryUtils
 import org.geotools.graph.build.line.BasicLineGraphGenerator
 import org.geotools.graph.structure.Graph
 import org.geotools.graph.structure.basic.BasicEdge

@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.{GeometryUtils, _}
+import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.AdministrativeClass.State
 import fi.liikennevirasto.digiroad2.asset.LifecycleStatus.InUse
@@ -17,6 +17,7 @@ import fi.liikennevirasto.viite.model.RoadAddressLinkLike
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.liikennevirasto.viite.process.strategy.DefaultSectionCalculatorStrategy
 import fi.liikennevirasto.viite.util._
+import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, when}

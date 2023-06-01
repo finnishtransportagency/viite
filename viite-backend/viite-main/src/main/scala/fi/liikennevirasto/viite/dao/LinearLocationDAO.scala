@@ -1,8 +1,6 @@
 package fi.liikennevirasto.viite.dao
 
 import java.sql.Timestamp
-
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
@@ -12,6 +10,7 @@ import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{JunctionPointCP, RoadAddressCP}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
+import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import org.slf4j.LoggerFactory

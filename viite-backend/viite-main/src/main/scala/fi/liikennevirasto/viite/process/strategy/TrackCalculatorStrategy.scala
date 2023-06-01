@@ -1,12 +1,12 @@
 package fi.liikennevirasto.viite.process.strategy
 
-import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.util.{MissingTrackException, RoadAddressException}
 import fi.liikennevirasto.viite.{NewIdValue, UnsuccessfulRecalculationMessage}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous, MinorDiscontinuity}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.process.{ProjectSectionMValueCalculator, TrackAddressingFactors}
+import fi.vaylavirasto.viite.geometry.GeometryUtils
 import org.slf4j.LoggerFactory
 
 

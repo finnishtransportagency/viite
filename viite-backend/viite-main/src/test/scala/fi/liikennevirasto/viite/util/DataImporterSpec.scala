@@ -1,6 +1,6 @@
 //package fi.liikennevirasto.viite.util
 //
-//import fi.liikennevirasto.digiroad2.Point
+//import fi.vaylavirasto.viite.geometry.Point
 //import fi.liikennevirasto.digiroad2.asset.SideCode.Unknown
 //import fi.liikennevirasto.digiroad2.asset._
 //import fi.liikennevirasto.digiroad2.client.vvh._

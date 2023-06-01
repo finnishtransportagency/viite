@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.viite.{RoadAddressService, RoadNameService}
 import fi.liikennevirasto.viite.dao.{CalibrationPoint, RoadName}
 import fi.liikennevirasto.viite.model.{RoadAddressLink}
+import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, Formats}
 import org.mockito.ArgumentMatchers.any

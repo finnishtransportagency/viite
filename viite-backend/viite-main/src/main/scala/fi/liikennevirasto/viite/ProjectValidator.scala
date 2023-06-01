@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle}
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.client.kgv.KgvRoadLink
@@ -12,6 +12,7 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.process.{RoadwayAddressMapper, TrackSectionOrder}
 import fi.liikennevirasto.viite.process.TrackSectionOrder.findChainEndpoints
+import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 

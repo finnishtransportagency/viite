@@ -2,11 +2,11 @@ package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, RoadAddressCP}
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao._
+import fi.vaylavirasto.viite.geometry.Point
 import org.joda.time.DateTime
 import org.mockito.Mockito.when
 import org.scalatest.mockito.MockitoSugar

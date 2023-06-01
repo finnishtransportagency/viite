@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
+import fi.liikennevirasto.digiroad2.DigiroadEventBus
 import fi.liikennevirasto.viite
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.Discontinuity.Discontinuous
