@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.asset
 
-import fi.liikennevirasto.digiroad2.{Point, Vector3d}
+import fi.vaylavirasto.viite.geometry.{Point, Vector3d}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 

@@ -1,12 +1,12 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, SideCode}
 import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.digiroad2.util.{MissingRoadwayNumberException, MissingTrackException, Track}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.process.strategy.RoadAddressSectionCalculatorContext
+import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import org.slf4j.LoggerFactory
 
 object ProjectSectionCalculator {

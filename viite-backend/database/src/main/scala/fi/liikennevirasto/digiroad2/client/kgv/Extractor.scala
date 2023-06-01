@@ -1,8 +1,8 @@
 package fi.liikennevirasto.digiroad2.client.kgv
 
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LifecycleStatus, LinkGeomSource, TrafficDirection}
-import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.vaylavirasto.viite.geometry.Point
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 

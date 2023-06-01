@@ -9,6 +9,7 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
+import fi.vaylavirasto.viite.geometry.Point
 import org.mockito.Mockito.reset
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import org.scalatest.mockito.MockitoSugar

@@ -1,8 +1,8 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils}
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LinkGeomSource, _}
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{apply => _, Unknown => _}
+import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
 import fi.liikennevirasto.digiroad2.client.kgv.KgvRoadLink
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -10,6 +10,7 @@ import fi.liikennevirasto.digiroad2.util.{Track, ViiteProperties}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{RoadAddressLink}
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
+import fi.vaylavirasto.viite.geometry.GeometryUtils
 
 class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLocationDAO) extends AddressLinkBuilder {
 

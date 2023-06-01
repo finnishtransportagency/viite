@@ -1,11 +1,11 @@
 package fi.liikennevirasto.digiroad2.client.kgv
 
-import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.kgv.FilterOgc.withLifecycleStatusFilter
 import fi.liikennevirasto.digiroad2.dao.ComplementaryLinkDAO
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
+import fi.vaylavirasto.viite.geometry.Point
 
 import scala.collection.immutable
 import scala.concurrent.ExecutionContext.Implicits.global

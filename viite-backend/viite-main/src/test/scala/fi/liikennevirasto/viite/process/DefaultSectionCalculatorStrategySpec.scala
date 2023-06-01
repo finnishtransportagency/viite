@@ -1,6 +1,5 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{ComplementaryLinkInterface, FrozenLinkInterface, NormalLinkInterface}
 import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
@@ -14,6 +13,7 @@ import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibr
 import fi.liikennevirasto.viite.process.strategy.DefaultSectionCalculatorStrategy
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import fi.liikennevirasto.viite.ProjectValidationException
+import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database

@@ -1,12 +1,13 @@
 package fi.liikennevirasto.digiroad2.service
 
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, DummySerializer, Point}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, DummySerializer}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.kgv._
 import fi.liikennevirasto.digiroad2.dao.ComplementaryLinkDAO
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.KGVSerializer
+import fi.vaylavirasto.viite.geometry.Point
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}

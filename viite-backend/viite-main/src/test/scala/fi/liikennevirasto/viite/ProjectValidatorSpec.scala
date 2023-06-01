@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point, Vector3d}
+import fi.liikennevirasto.digiroad2.DigiroadEventBus
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.asset.AdministrativeClass.{Municipality, State}
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.FrozenLinkInterface
@@ -17,6 +17,7 @@ import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
+import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point, Vector3d}
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when

@@ -4,8 +4,8 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.LifecycleStatus.UnknownLifecycleStatus
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.viite.dao._
+import fi.vaylavirasto.viite.geometry.Point
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 
 

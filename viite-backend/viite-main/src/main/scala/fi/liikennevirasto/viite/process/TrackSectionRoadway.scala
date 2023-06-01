@@ -1,6 +1,6 @@
 //package fi.liikennevirasto.viite.process
 //
-//import fi.liikennevirasto.GeometryUtils
+//import fi.vaylavirasto.viite.geometry.GeometryUtils
 //import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
 //import fi.liikennevirasto.digiroad2.dao.Sequences
 //import fi.liikennevirasto.digiroad2.util.Track

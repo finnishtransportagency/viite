@@ -1,11 +1,10 @@
 package fi.liikennevirasto.viite.dao
 
 import java.sql.BatchUpdateException
-
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.Track.Combined
-import fi.liikennevirasto.digiroad2.{Point, asset}
+import fi.liikennevirasto.digiroad2.asset
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{CalibrationPointLocation, CalibrationPointType}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
@@ -15,6 +14,7 @@ import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
+import fi.vaylavirasto.viite.geometry.Point
 
 class LinearLocationDAOSpec extends FunSuite with Matchers {
 

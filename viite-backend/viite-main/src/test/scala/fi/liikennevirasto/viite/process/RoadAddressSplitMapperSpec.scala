@@ -1,6 +1,5 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.LinkStatus.{Terminated, Transfer}

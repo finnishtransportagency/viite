@@ -1,10 +1,10 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLinkLike}
+import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 
 object ProjectAddressLinkBuilder extends AddressLinkBuilder {
 

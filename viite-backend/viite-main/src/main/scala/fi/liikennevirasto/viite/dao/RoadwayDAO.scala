@@ -1,7 +1,6 @@
 package fi.liikennevirasto.viite.dao
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d}
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
@@ -15,6 +14,7 @@ import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.BaseCalibrationPo
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.model.RoadAddressLinkLike
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
+import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point, Vector3d}
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import org.slf4j.LoggerFactory

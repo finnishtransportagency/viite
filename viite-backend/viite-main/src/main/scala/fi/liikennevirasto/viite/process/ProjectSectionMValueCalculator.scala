@@ -1,10 +1,10 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectLink}
+import fi.vaylavirasto.viite.geometry.Point
 
 object ProjectSectionMValueCalculator {
 

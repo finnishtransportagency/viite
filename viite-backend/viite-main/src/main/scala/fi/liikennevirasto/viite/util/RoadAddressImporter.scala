@@ -1,12 +1,10 @@
 package fi.liikennevirasto.viite.util
 
 import java.sql.{PreparedStatement, Timestamp}
-
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import org.joda.time.format.ISODateTimeFormat
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.client.kgv.{HistoryRoadLink, KgvRoadLink}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
@@ -15,6 +13,7 @@ import fi.liikennevirasto.viite.dao.{CalibrationCode, RoadwayPoint, TerminationC
 import fi.liikennevirasto.viite.dao.CalibrationCode.{AtBeginning, AtBoth, AtEnd}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{CalibrationPoint, CalibrationPointLocation, CalibrationPointType}
 import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent, Termination}
+import fi.vaylavirasto.viite.geometry.GeometryUtils
 import org.joda.time._
 import slick.jdbc._
 import slick.jdbc.StaticQuery.interpolation

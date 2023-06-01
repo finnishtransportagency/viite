@@ -1,11 +1,10 @@
 package fi.liikennevirasto.digiroad2.util
 
 import java.io.File
-
-import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.kgv.{ChangeInfo, ChangeType}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.vaylavirasto.viite.geometry.Point
 import org.scalatest.{FunSuite, Matchers}
 
 class JsonSerializerTest extends FunSuite with Matchers {

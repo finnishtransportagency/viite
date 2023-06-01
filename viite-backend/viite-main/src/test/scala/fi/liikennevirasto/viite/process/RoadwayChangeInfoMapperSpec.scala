@@ -1,10 +1,10 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.{Discontinuity, RoadAddress}
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
+import fi.vaylavirasto.viite.geometry.Point
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 
