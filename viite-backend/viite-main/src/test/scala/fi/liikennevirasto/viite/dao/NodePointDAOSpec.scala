@@ -9,9 +9,9 @@ import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import fi.liikennevirasto.digiroad2.dao.Sequences
-import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.vaylavirasto.viite.geometry.Point
+import fi.vaylavirasto.viite.model.Track
 
 class NodePointDAOSpec extends FunSuite with Matchers {
 

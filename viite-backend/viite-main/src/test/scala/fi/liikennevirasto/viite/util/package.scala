@@ -3,13 +3,12 @@ package fi.liikennevirasto.viite
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
 import fi.liikennevirasto.viite.dao.Discontinuity.EndOfRoad
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink, RoadAddressLinkLike}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
+import fi.vaylavirasto.viite.model.Track
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -151,9 +150,9 @@ package object util {
           val (roadNumber, roadPartNumber) = (road._1, road._2)
           projectReservedPartDAO.reserveRoadPart(projectId, roadNumber, roadPartNumber, "u")
           if (changeTrack) {
-            withTrack(RightSide, roadNumber, roadPartNumber) ++ withTrack(LeftSide, roadNumber, roadPartNumber)
+            withTrack(Track.RightSide, roadNumber, roadPartNumber) ++ withTrack(Track.LeftSide, roadNumber, roadPartNumber)
           } else {
-            withTrack(Combined, roadNumber, roadPartNumber)
+            withTrack(Track.Combined, roadNumber, roadPartNumber)
           }
         }
       }
@@ -168,7 +167,7 @@ package object util {
       "", Seq(), Seq(), None, None)
     projectDAO.create(project)
     val links = addrM.init.zip(addrM.tail).map { case (st, en) =>
-      projectLink(st, en, Combined, id, linkStatus).copy(roadNumber = 39999)
+      projectLink(st, en, Track.Combined, id, linkStatus).copy(roadNumber = 39999)
     }
     projectReservedPartDAO.reserveRoadPart(id, 39999L, 1L, "u")
     projectLinkDAO.create(links.init :+ links.last.copy(discontinuity = EndOfRoad))

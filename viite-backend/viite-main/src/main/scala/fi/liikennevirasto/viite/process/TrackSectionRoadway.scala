@@ -3,11 +3,11 @@
 //import fi.vaylavirasto.viite.geometry.GeometryUtils
 //import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
 //import fi.liikennevirasto.digiroad2.dao.Sequences
-//import fi.liikennevirasto.digiroad2.util.Track
 //import fi.liikennevirasto.viite.dao.LinkStatus.Terminated
 //import fi.liikennevirasto.viite.dao._
 //import fi.liikennevirasto.viite.process.strategy.TrackCalculatorContext
 //import fi.liikennevirasto.viite.{MaxThresholdDistance, NewIdValue, RoadType}
+//import fi.vaylavirasto.viite.model.Track
 //import org.slf4j.LoggerFactory
 //
 //import scala.annotation.tailrec

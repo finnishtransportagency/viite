@@ -1,8 +1,8 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.BaseCalibrationPoint
 import fi.liikennevirasto.viite.dao.{BaseRoadAddress, ProjectLink, RoadAddress}
+import fi.vaylavirasto.viite.model.Track
 
 trait LinkRoadAddressCalculator {
   def recalculate[T <: BaseRoadAddress](addressList: Seq[T]): Seq[T]

@@ -6,14 +6,13 @@ import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDi
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.util.Track.LeftSide
 import fi.liikennevirasto.viite.Dummies.dummyLinearLocation
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, RoadAddressCP}
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.liikennevirasto.viite.NewIdValue
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point, Vector3d}
+import fi.vaylavirasto.viite.model.Track
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import org.scalatest.mock.MockitoSugar
@@ -312,7 +311,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       links.size should be(2)
       projectReservedPartDAO.reserveRoadPart(projectId, newRoadNumber, newPartNumber, "test")
       projectLinkDAO.updateProjectLinkNumbering(projectId, roadNumber1, roadPartNumber1, LinkStatus.Numbering, newRoadNumber, newPartNumber, "test", 0)
-      projectLinkDAO.updateProjectLinkAdministrativeClassDiscontinuity(Set(links.filter(_.track == LeftSide).maxBy(_.endAddrMValue).id), LinkStatus.Numbering, "test", links.filter(_.track == LeftSide).head.administrativeClass.value, Some(Discontinuity.MinorDiscontinuity.value))
+      projectLinkDAO.updateProjectLinkAdministrativeClassDiscontinuity(Set(links.filter(_.track == Track.LeftSide).maxBy(_.endAddrMValue).id), LinkStatus.Numbering, "test", links.filter(_.track == Track.LeftSide).head.administrativeClass.value, Some(Discontinuity.MinorDiscontinuity.value))
       val linksAfterUpdate = projectLinkDAO.fetchProjectLinks(projectId)
       linksAfterUpdate.size should be(2)
       linksAfterUpdate.groupBy(p => (p.roadNumber, p.roadPartNumber)).keys.head should be((newRoadNumber, newPartNumber))

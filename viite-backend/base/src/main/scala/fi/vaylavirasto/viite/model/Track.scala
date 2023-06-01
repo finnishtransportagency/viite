@@ -1,4 +1,4 @@
-package fi.liikennevirasto.digiroad2.util
+package fi.vaylavirasto.viite.model
 
 /**
   * A road consists of 1-2 tracks (fi: "ajorata"). 2 tracks are separated by a fence or grass for example.
@@ -9,6 +9,7 @@ sealed trait Track {
 
   override def toString: String = value.toString
 }
+
 object Track {
   val values = Set(Combined, RightSide, LeftSide, Unknown)
 
@@ -30,6 +31,7 @@ object Track {
 
   /**
     * Switch left to right and vice versa
+    *
     * @param track Track value to switch
     * @return
     */
@@ -45,13 +47,8 @@ object Track {
     prev == next || prev == Track.Combined || next == Track.Combined
   }
 
-  case object Combined extends Track { def value = 0 }
-  case object RightSide extends Track { def value = 1 }
-  case object LeftSide extends Track { def value = 2 }
-  case object Unknown extends Track { def value = 99 }
+  case object Combined  extends Track {    def value = 0    }
+  case object RightSide extends Track {    def value = 1    }
+  case object LeftSide  extends Track {    def value = 2    }
+  case object Unknown   extends Track {    def value = 99   }
 }
-
-class RoadAddressException(response: String) extends RuntimeException(response)
-class RoadPartReservedException(response: String) extends RoadAddressException(response)
-class MissingTrackException(response: String) extends RoadAddressException(response)
-class MissingRoadwayNumberException(response: String) extends RoadAddressException(response)
