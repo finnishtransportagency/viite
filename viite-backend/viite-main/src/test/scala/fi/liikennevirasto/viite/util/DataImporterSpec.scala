@@ -1,8 +1,5 @@
 //package fi.liikennevirasto.viite.util
 //
-//import fi.vaylavirasto.viite.geometry.Point
-//import fi.liikennevirasto.digiroad2.asset.SideCode.Unknown
-//import fi.liikennevirasto.digiroad2.asset._
 //import fi.liikennevirasto.digiroad2.client.vvh._
 //import fi.liikennevirasto.viite.dao._
 //import org.joda.time.format.DateTimeFormat
@@ -13,6 +10,8 @@
 //import Database.dynamicSession
 //import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 //import fi.liikennevirasto.digiroad2.service.RoadLinkService
+//import fi.vaylavirasto.viite.model.Point
+//import fi.vaylavirasto.viite.model.{AdministrativeClass, SideCode, TrafficDirection}
 //import org.joda.time.DateTime
 //import org.mockito.ArgumentMatchers.any
 //import slick.driver.JdbcDriver
@@ -48,27 +47,27 @@
 //
 //  val roadsToBeConverted = Seq(
 //    //              TIE AOSA AJR JATKUU AET LET ALKU LOPPU ALKUPVM                       LOPPUPVM                      MUUTOSPVM                    -    ELY  TIETYYPPI -  LINKID  KAYTTAJA  ALKUX             ALKUY              LOPPUX            LOPPUY         AJORATAID  SIDE
-//    ConversionAddress(25, 22, 1, 5, 694, 756, 0, 62, Some(d("01.03.2016")), None, Some(d("30.03.2016")), None, 1, 1, 0, 1L.toString, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 2, Unknown),
-//    ConversionAddress(25, 22, 0, 5, 694, 756, 0, 62, Some(d("29.10.2008")), Some(d("29.02.2016")), Some(d("08.03.2016")), None, 1, 1, 0, 1L.toString, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 2, Unknown),
-//    ConversionAddress(25, 22, 1, 5, 694, 756, 0, 62, Some(d("31.10.2006")), Some(d("28.10.2008")), Some(d("29.10.2008")), None, 1, 1, 0, 1L.toString, "TR", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 2, Unknown),
-//    ConversionAddress(25, 22, 0, 5, 694, 756, 0, 62, Some(d("15.12.2005")), Some(d("30.10.2006")), Some(d("29.10.2008")), None, 1, 1, 0, 1L.toString, "TR", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 2, Unknown),
-//    ConversionAddress(25, 22, 1, 5, 756, 765, 62, 71, Some(d("01.03.2016")), None, Some(d("30.03.2016")), None, 1, 1, 0, 1L.toString, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 1, Unknown, CalibrationCode.AtBeginning),
-//    ConversionAddress(25, 22, 0, 5, 756, 765, 62, 71, Some(d("29.10.2008")), Some(d("29.02.2016")), Some(d("08.03.2016")), None, 1, 1, 0, 1L.toString, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 1, Unknown),
-//    ConversionAddress(25, 22, 1, 5, 756, 765, 62, 71, Some(d("31.10.2006")), Some(d("28.10.2008")), Some(d("29.10.2008")), None, 1, 1, 0, 1L.toString, "TR", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 1, Unknown),
-//    ConversionAddress(25, 22, 0, 5, 756, 765, 62, 71, Some(d("15.12.2005")), Some(d("30.10.2006")), Some(d("29.10.2008")), None, 1, 1, 0, 1L.toString, "TR", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 1, Unknown),
-//    ConversionAddress(25, 22, 1, 5, 765, 810, 71, 116, Some(d("01.03.2016")), None, Some(d("30.03.2016")), None, 1, 1, 0, 1L.toString, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 3, Unknown, CalibrationCode.AtEnd),
-//    ConversionAddress(25, 22, 0, 5, 765, 810, 71, 116, Some(d("15.12.2005")), Some(d("29.02.2016")), Some(d("08.03.2016")), None, 1, 1, 0, 1L.toString, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 3, Unknown),
-//    ConversionAddress(25, 22, 0, 5, 6221, 6230, 62, 71, Some(d("01.01.1996")), Some(d("14.12.2005")), Some(d("29.10.2008")), None, 1, 1, 0, 1L.toString, "TR", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 1, Unknown),
-//    ConversionAddress(25, 22, 0, 5, 6230, 6275, 71, 116, Some(d("01.01.1996")), Some(d("14.12.2005")), Some(d("08.03.2016")), None, 1, 1, 0, 1L.toString, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 3, Unknown),
-//    ConversionAddress(53, 22, 0, 5, 6221, 6230, 62, 71, Some(d("01.11.1963")), Some(d("31.12.1995")), Some(d("29.10.2008")), None, 1, 1, 0, 1L.toString, "TR", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 1, Unknown),
-//    ConversionAddress(53, 22, 0, 5, 6230, 6275, 71, 116, Some(d("01.11.1963")), Some(d("31.12.1995")), Some(d("08.03.2016")), None, 1, 1, 0, 1L.toString, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 3, Unknown)
+//    ConversionAddress(25, 22, 1, 5, 694, 756, 0, 62, Some(d("01.03.2016")), None, Some(d("30.03.2016")), None, 1, 1, 0, 1L.toString, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 2, SideCode.Unknown),
+//    ConversionAddress(25, 22, 0, 5, 694, 756, 0, 62, Some(d("29.10.2008")), Some(d("29.02.2016")), Some(d("08.03.2016")), None, 1, 1, 0, 1L.toString, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 2, SideCode.Unknown),
+//    ConversionAddress(25, 22, 1, 5, 694, 756, 0, 62, Some(d("31.10.2006")), Some(d("28.10.2008")), Some(d("29.10.2008")), None, 1, 1, 0, 1L.toString, "TR", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 2, SideCode.Unknown),
+//    ConversionAddress(25, 22, 0, 5, 694, 756, 0, 62, Some(d("15.12.2005")), Some(d("30.10.2006")), Some(d("29.10.2008")), None, 1, 1, 0, 1L.toString, "TR", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 2, SideCode.Unknown),
+//    ConversionAddress(25, 22, 1, 5, 756, 765, 62, 71, Some(d("01.03.2016")), None, Some(d("30.03.2016")), None, 1, 1, 0, 1L.toString, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 1, SideCode.Unknown, CalibrationCode.AtBeginning),
+//    ConversionAddress(25, 22, 0, 5, 756, 765, 62, 71, Some(d("29.10.2008")), Some(d("29.02.2016")), Some(d("08.03.2016")), None, 1, 1, 0, 1L.toString, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 1, SideCode.Unknown),
+//    ConversionAddress(25, 22, 1, 5, 756, 765, 62, 71, Some(d("31.10.2006")), Some(d("28.10.2008")), Some(d("29.10.2008")), None, 1, 1, 0, 1L.toString, "TR", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 1, SideCode.Unknown),
+//    ConversionAddress(25, 22, 0, 5, 756, 765, 62, 71, Some(d("15.12.2005")), Some(d("30.10.2006")), Some(d("29.10.2008")), None, 1, 1, 0, 1L.toString, "TR", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 1, SideCode.Unknown),
+//    ConversionAddress(25, 22, 1, 5, 765, 810, 71, 116, Some(d("01.03.2016")), None, Some(d("30.03.2016")), None, 1, 1, 0, 1L.toString, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 3, SideCode.Unknown, CalibrationCode.AtEnd),
+//    ConversionAddress(25, 22, 0, 5, 765, 810, 71, 116, Some(d("15.12.2005")), Some(d("29.02.2016")), Some(d("08.03.2016")), None, 1, 1, 0, 1L.toString, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 3, SideCode.Unknown),
+//    ConversionAddress(25, 22, 0, 5, 6221, 6230, 62, 71, Some(d("01.01.1996")), Some(d("14.12.2005")), Some(d("29.10.2008")), None, 1, 1, 0, 1L.toString, "TR", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 1, SideCode.Unknown),
+//    ConversionAddress(25, 22, 0, 5, 6230, 6275, 71, 116, Some(d("01.01.1996")), Some(d("14.12.2005")), Some(d("08.03.2016")), None, 1, 1, 0, 1L.toString, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 3, SideCode.Unknown),
+//    ConversionAddress(53, 22, 0, 5, 6221, 6230, 62, 71, Some(d("01.11.1963")), Some(d("31.12.1995")), Some(d("29.10.2008")), None, 1, 1, 0, 1L.toString, "TR", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 1, SideCode.Unknown),
+//    ConversionAddress(53, 22, 0, 5, 6230, 6275, 71, 116, Some(d("01.11.1963")), Some(d("31.12.1995")), Some(d("08.03.2016")), None, 1, 1, 0, 1L.toString, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 3, SideCode.Unknown)
 //  )
 //
 //  val terminatedRoadsToBeConverted = Seq(
 //    //           TIE AOSA  AJR JATKUU AET LET   ALKU LOPPU ALKUPVM                      LOPPUPVM                       MUUTOSPVM                    LAKKAUTUSPVM                  ELY TIETYYPPI T  LINKID  KAYTTAJA     ALKUX             ALKUY              LOPPUX            LOPPUY         AJORATAID  SIDE
-//    ConversionAddress(30, 1, 1, 5, 0, 100, 201, 300, Some(d("01.03.1980")), Some(d("30.01.1991")), Some(d("30.01.1990")), None, 1, 3, 1, 0.toString, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 3, Unknown),
-//    ConversionAddress(30, 1, 1, 5, 100, 200, 300, 400, Some(d("01.03.1980")), Some(d("30.01.1991")), Some(d("30.01.1990")), None, 1, 3, 1, 0.toString, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 4, Unknown),
-//    ConversionAddress(30, 2, 1, 5, 0, 100, 0, 99, Some(d("01.03.1980")), Some(d("30.01.1991")), Some(d("30.01.1990")), None, 1, 3, 1, 0.toString, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 5, Unknown)
+//    ConversionAddress(30, 1, 1, 5, 0, 100, 201, 300, Some(d("01.03.1980")), Some(d("30.01.1991")), Some(d("30.01.1990")), None, 1, 3, 1, 0.toString, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 3, SideCode.Unknown),
+//    ConversionAddress(30, 1, 1, 5, 100, 200, 300, 400, Some(d("01.03.1980")), Some(d("30.01.1991")), Some(d("30.01.1990")), None, 1, 3, 1, 0.toString, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 4, SideCode.Unknown),
+//    ConversionAddress(30, 2, 1, 5, 0, 100, 0, 99, Some(d("01.03.1980")), Some(d("30.01.1991")), Some(d("30.01.1990")), None, 1, 3, 1, 0.toString, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 5, SideCode.Unknown)
 //  )
 //
 //  val vvhRoadLinks = List(

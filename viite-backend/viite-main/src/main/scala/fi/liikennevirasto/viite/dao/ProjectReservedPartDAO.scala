@@ -1,4 +1,5 @@
 package fi.liikennevirasto.viite.dao
+
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite._
 import fi.vaylavirasto.viite.model.Track

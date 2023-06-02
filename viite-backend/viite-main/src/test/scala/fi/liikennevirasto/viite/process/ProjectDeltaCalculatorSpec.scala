@@ -1,8 +1,5 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LinkGeomSource}
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{FrozenLinkInterface, NormalLinkInterface}
-import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.viite.NewIdValue
@@ -14,7 +11,9 @@ import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.process.ProjectDeltaCalculator.createTwoTrackOldAddressRoadParts
 import fi.liikennevirasto.viite.util.{toProjectLink, toTransition}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.Track
+import fi.vaylavirasto.viite.model.LinkGeomSource.{FrozenLinkInterface, NormalLinkInterface}
+import fi.vaylavirasto.viite.model.SideCode.{AgainstDigitizing, TowardsDigitizing}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, LinkGeomSource, Track}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import org.scalatest.enablers.Definition.definitionOfOption

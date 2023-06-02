@@ -57,6 +57,7 @@ object Digiroad2Build extends Build {
       scalacOptions ++= Seq("-unchecked", "-feature"),
       testOptions in Test += TestOutputOptions,
       libraryDependencies ++= Seq(
+        jodaTime,
         "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test"
       )
     )

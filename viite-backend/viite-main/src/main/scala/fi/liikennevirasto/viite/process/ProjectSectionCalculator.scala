@@ -1,13 +1,11 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, SideCode}
-import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.digiroad2.util.{MissingRoadwayNumberException, MissingTrackException}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.process.strategy.RoadAddressSectionCalculatorContext
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.Track
+import fi.vaylavirasto.viite.model.{AdministrativeClass, SideCode, Track}
 import org.slf4j.LoggerFactory
 
 object ProjectSectionCalculator {
@@ -213,11 +211,11 @@ case class TrackSection(roadNumber: Long, roadPartNumber: Long, track: Track,
     links.map(l => l.copy(sideCode = SideCode.switch(l.sideCode))).reverse)
 
   lazy val startGeometry: Point = links.head.sideCode match {
-    case AgainstDigitizing => links.head.geometry.last
+    case  SideCode.AgainstDigitizing => links.head.geometry.last
     case _ => links.head.geometry.head
   }
   lazy val endGeometry: Point = links.last.sideCode match {
-    case AgainstDigitizing => links.last.geometry.head
+    case  SideCode.AgainstDigitizing => links.last.geometry.head
     case _ => links.last.geometry.last
   }
   lazy val startAddrM: Long = links.map(_.startAddrMValue).min
@@ -242,12 +240,12 @@ case class CombinedSection(startGeometry: Point, endGeometry: Point, geometryLen
   }
 
   lazy val addressStartGeometry: Point = sideCode match {
-    case AgainstDigitizing => endGeometry
+    case  SideCode.AgainstDigitizing => endGeometry
     case _ => startGeometry
   }
 
   lazy val addressEndGeometry: Point = sideCode match {
-    case AgainstDigitizing => startGeometry
+    case  SideCode.AgainstDigitizing => startGeometry
     case _ => endGeometry
   }
 

@@ -1,12 +1,6 @@
 package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.asset.LifecycleStatus.InUse
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
-import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
-import fi.liikennevirasto.digiroad2.asset.TrafficDirection.BothDirections
-import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.viite.dao._
@@ -16,7 +10,7 @@ import fi.liikennevirasto.viite.dao.LinkStatus.NotHandled
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.vaylavirasto.viite.geometry.Point
-import fi.vaylavirasto.viite.model.Track
+import fi.vaylavirasto.viite.model.{AdministrativeClass, LifecycleStatus, LinkGeomSource, RoadLink, SideCode, Track, TrafficDirection}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import org.scalatest.mockito.MockitoSugar
@@ -107,7 +101,7 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
       roadAddressLink.length should be (22.808)
       roadAddressLink.linearLocationId should be (1234)
       roadAddressLink.linkId should be (12345L.toString)
-      roadAddressLink.sideCode should be (TowardsDigitizing)
+      roadAddressLink.sideCode should be (SideCode.TowardsDigitizing)
     }
   }
 
@@ -122,7 +116,7 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
       roadAddressLink.linearLocationId should be (1234)
       roadAddressLink.linkId should be (1L.toString)
       roadAddressLink.administrativeClassMML should be (AdministrativeClass.Municipality)
-      roadAddressLink.sideCode should be (TowardsDigitizing)
+      roadAddressLink.sideCode should be (SideCode.TowardsDigitizing)
 //      roadAddressLink.roadType should be (AdministrativeClass.MunicipalityStreetRoad)
     }
   }
@@ -131,13 +125,13 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
     val unknownProjectLink = ProjectLink(0, 0, 0, Track.Unknown, Discontinuity.Continuous, 0, 0, 0, 0, None, None, None, 0.toString, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), List(), 0, NotHandled, AdministrativeClass.Unknown, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 8, reversed = false, None, 85088L)
     val projectLinks =
       Map(
-        1717380l.toString -> ProjectLink(1270, 0, 0, Track.apply(99), Continuous, 1021, 1028, 1021, 1028, None, None, None, 1717380.toString, 0.0, 6.0, AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP), List(), 1227, NotHandled, AdministrativeClass.Unknown, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 8, reversed = false, None, 85088L),
-        1717374l.toString -> ProjectLink(1259, 1130, 0, Track.Combined, Continuous, 959, 1021, 959, 1021, None, None, None, 1717374.toString, 0.0, 61.0, AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP), List(), 1227, NotHandled, AdministrativeClass.Unknown, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 8, reversed = false, None, 85088L)
+        1717380l.toString -> ProjectLink(1270, 0, 0, Track.apply(99), Continuous, 1021, 1028, 1021, 1028, None, None, None, 1717380.toString, 0.0, 6.0,  SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP), List(), 1227, NotHandled, AdministrativeClass.Unknown, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 8, reversed = false, None, 85088L),
+        1717374l.toString -> ProjectLink(1259, 1130, 0, Track.Combined, Continuous, 959, 1021, 959, 1021, None, None, None, 1717374.toString, 0.0, 61.0,  SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP), List(), 1227, NotHandled, AdministrativeClass.Unknown, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 8, reversed = false, None, 85088L)
       )
 
     val roadLinks = Seq(
-      RoadLink(1717380.toString, List(Point(358594.785, 6678940.735, 57.788000000000466), Point(358599.713, 6678945.133, 57.78100000000268)), 6.605118318435748, AdministrativeClass.State, BothDirections, Some("14.10.2016 21:15:13"), Some("vvh_modified"), InUse, NormalLinkInterface, 257, ""),
-      RoadLink(1717374.toString, List(Point(358599.713, 6678945.133, 57.78100000000268), Point(358601.644, 6678946.448, 57.771999999997206), Point(358621.812, 6678964.766, 57.41000000000349), Point(358630.04, 6678971.657, 57.10099999999511), Point(358638.064, 6678977.863, 56.78599999999278), Point(358647.408, 6678984.55, 56.31399999999849)), 61.948020518025565, AdministrativeClass.State, BothDirections, Some("14.10.2016 21:15:13"), Some("vvh_modified"), InUse, NormalLinkInterface, 0, "")
+      RoadLink(1717380.toString, List(Point(358594.785, 6678940.735, 57.788000000000466), Point(358599.713, 6678945.133, 57.78100000000268)), 6.605118318435748, AdministrativeClass.State,  TrafficDirection.BothDirections, Some("14.10.2016 21:15:13"), Some("vvh_modified"),  LifecycleStatus.InUse,  LinkGeomSource.NormalLinkInterface, 257, ""),
+      RoadLink(1717374.toString, List(Point(358599.713, 6678945.133, 57.78100000000268), Point(358601.644, 6678946.448, 57.771999999997206), Point(358621.812, 6678964.766, 57.41000000000349), Point(358630.04, 6678971.657, 57.10099999999511), Point(358638.064, 6678977.863, 56.78599999999278), Point(358647.408, 6678984.55, 56.31399999999849)), 61.948020518025565, AdministrativeClass.State,  TrafficDirection.BothDirections, Some("14.10.2016 21:15:13"), Some("vvh_modified"),  LifecycleStatus.InUse,  LinkGeomSource.NormalLinkInterface, 0, "")
     )
     val projectRoadLinks = roadLinks.map {
       rl =>

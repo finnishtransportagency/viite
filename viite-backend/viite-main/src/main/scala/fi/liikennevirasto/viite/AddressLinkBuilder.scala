@@ -1,4 +1,5 @@
 package fi.liikennevirasto.viite
+
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.viite.dao._
 import org.joda.time.DateTime

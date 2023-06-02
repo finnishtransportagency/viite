@@ -1,8 +1,6 @@
 package fi.liikennevirasto.viite.dao
 
 import java.sql.Timestamp
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
-import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.postgis.{MassQuery, PostGISDatabase}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
@@ -10,7 +8,8 @@ import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{JunctionPointCP, RoadAddressCP}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
-import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
+import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
+import fi.vaylavirasto.viite.model.{LinkGeomSource, SideCode}
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import org.slf4j.LoggerFactory
@@ -66,12 +65,12 @@ trait BaseLinearLocation {
 
   def connected(ra2: BaseLinearLocation): Boolean = {
     val currEndPoint = sideCode match {
-      case AgainstDigitizing => geometry.head
+      case SideCode.AgainstDigitizing => geometry.head
       case _ => geometry.last
     }
 
     val nextStartPoint = ra2.sideCode match {
-      case AgainstDigitizing => ra2.geometry.last
+      case SideCode.AgainstDigitizing => ra2.geometry.last
       case _ => ra2.geometry.head
     }
 

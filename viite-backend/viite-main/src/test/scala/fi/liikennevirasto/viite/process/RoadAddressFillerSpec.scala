@@ -1,11 +1,8 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.asset.LifecycleStatus.UnknownLifecycleStatus
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
-import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.viite.dao._
 import fi.vaylavirasto.viite.geometry.Point
+import fi.vaylavirasto.viite.model.{AdministrativeClass, LifecycleStatus, LinkGeomSource, RoadLink, SideCode, TrafficDirection}
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 
 
@@ -19,7 +16,7 @@ class RoadAddressFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   private def dummyRoadLink(linkId: String, yCoordinates: Seq[Double], linkGeomSource: LinkGeomSource): RoadLink = {
-    RoadLink(linkId, yCoordinates.map(y => Point(0.0, y)), yCoordinates.sum - yCoordinates.head, AdministrativeClass.Municipality, TrafficDirection.TowardsDigitizing, None, None, UnknownLifecycleStatus, linkGeomSource, 257, "")
+    RoadLink(linkId, yCoordinates.map(y => Point(0.0, y)), yCoordinates.sum - yCoordinates.head, AdministrativeClass.Municipality, TrafficDirection.TowardsDigitizing, None, None, LifecycleStatus.UnknownLifecycleStatus, linkGeomSource, 257, "")
   }
 
   test("Test adjustToTopology When there is any exists a linear location to be adjusted Then should not have any change set") {
@@ -31,9 +28,9 @@ class RoadAddressFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
     )
 
     val roadLinks = Seq(
-      dummyRoadLink(linkId = 123L.toString, Seq(0.0, 10.0, 20.0), NormalLinkInterface),
-      dummyRoadLink(linkId = 124L.toString, Seq(20.0, 30.0), NormalLinkInterface),
-      dummyRoadLink(linkId = 125L.toString, Seq(30.0, 40.0), NormalLinkInterface)
+      dummyRoadLink(linkId = 123L.toString, Seq(0.0, 10.0, 20.0), LinkGeomSource.NormalLinkInterface),
+      dummyRoadLink(linkId = 124L.toString, Seq(20.0, 30.0), LinkGeomSource.NormalLinkInterface),
+      dummyRoadLink(linkId = 125L.toString, Seq(30.0, 40.0), LinkGeomSource.NormalLinkInterface)
     )
 
     val (adjustedLinearLocations, changeSet) = RoadAddressFiller.adjustToTopology(roadLinks, linearLocations)
@@ -53,9 +50,9 @@ class RoadAddressFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
     )
 
     val roadLinks = Seq(
-      dummyRoadLink(linkId = 123L.toString, Seq(0.0, 10.0, 20.0), NormalLinkInterface),
-      dummyRoadLink(linkId = 124L.toString, Seq(20.0, 30.0), NormalLinkInterface),
-      dummyRoadLink(linkId = 125L.toString, Seq(30.0, 40.0), NormalLinkInterface)
+      dummyRoadLink(linkId = 123L.toString, Seq(0.0, 10.0, 20.0), LinkGeomSource.NormalLinkInterface),
+      dummyRoadLink(linkId = 124L.toString, Seq(20.0, 30.0), LinkGeomSource.NormalLinkInterface),
+      dummyRoadLink(linkId = 125L.toString, Seq(30.0, 40.0), LinkGeomSource.NormalLinkInterface)
     )
 
     val (adjustedLinearLocations, changeSet) = RoadAddressFiller.adjustToTopology(roadLinks, linearLocations)
@@ -77,9 +74,9 @@ class RoadAddressFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
     )
 
     val roadLinks = Seq(
-      dummyRoadLink(linkId = 123L.toString, Seq(0.0, 10.0, 20.0), NormalLinkInterface),
-      dummyRoadLink(linkId = 124L.toString, Seq(20.0, 30.0), NormalLinkInterface),
-      dummyRoadLink(linkId = 125L.toString, Seq(30.0, 35.0, 40.0), NormalLinkInterface)
+      dummyRoadLink(linkId = 123L.toString, Seq(0.0, 10.0, 20.0), LinkGeomSource.NormalLinkInterface),
+      dummyRoadLink(linkId = 124L.toString, Seq(20.0, 30.0), LinkGeomSource.NormalLinkInterface),
+      dummyRoadLink(linkId = 125L.toString, Seq(30.0, 35.0, 40.0), LinkGeomSource.NormalLinkInterface)
     )
 
     val (adjustedLinearLocations, changeSet) = RoadAddressFiller.adjustToTopology(roadLinks, linearLocations)
@@ -112,9 +109,9 @@ class RoadAddressFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
     )
 
     val roadLinks = Seq(
-      dummyRoadLink(linkId = 123L.toString, Seq(0.0, 10.0, 20.0), NormalLinkInterface),
-      dummyRoadLink(linkId = 124L.toString, Seq(20.0, 30.0), NormalLinkInterface),
-      dummyRoadLink(linkId = 125L.toString, Seq(30.0, 35.0, 40.0), NormalLinkInterface)
+      dummyRoadLink(linkId = 123L.toString, Seq(0.0, 10.0, 20.0), LinkGeomSource.NormalLinkInterface),
+      dummyRoadLink(linkId = 124L.toString, Seq(20.0, 30.0), LinkGeomSource.NormalLinkInterface),
+      dummyRoadLink(linkId = 125L.toString, Seq(30.0, 35.0, 40.0), LinkGeomSource.NormalLinkInterface)
     )
 
     val (adjustedLinearLocations, changeSet) = RoadAddressFiller.adjustToTopology(roadLinks, linearLocations)
@@ -147,9 +144,9 @@ class RoadAddressFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
     )
 
     val roadLinks = Seq(
-      dummyRoadLink(linkId = 123L.toString, Seq(0.0, 10.0, 20.0), NormalLinkInterface),
-      dummyRoadLink(linkId = 124L.toString, Seq(20.0, 30.0), NormalLinkInterface),
-      dummyRoadLink(linkId = 125L.toString, Seq(30.0, 35.0, 40.0), NormalLinkInterface)
+      dummyRoadLink(linkId = 123L.toString, Seq(0.0, 10.0, 20.0), LinkGeomSource.NormalLinkInterface),
+      dummyRoadLink(linkId = 124L.toString, Seq(20.0, 30.0), LinkGeomSource.NormalLinkInterface),
+      dummyRoadLink(linkId = 125L.toString, Seq(30.0, 35.0, 40.0), LinkGeomSource.NormalLinkInterface)
     )
 
     val (adjustedLinearLocations, changeSet) = RoadAddressFiller.adjustToTopology(roadLinks, linearLocations)

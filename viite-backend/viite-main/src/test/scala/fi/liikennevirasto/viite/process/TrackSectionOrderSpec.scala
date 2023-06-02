@@ -1,7 +1,5 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.viite.Dummies
 import fi.liikennevirasto.viite.Dummies._
@@ -10,7 +8,7 @@ import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.util.toProjectLink
 import fi.vaylavirasto.viite.geometry.Point
-import fi.vaylavirasto.viite.model.Track
+import fi.vaylavirasto.viite.model.{AdministrativeClass, LinkGeomSource, SideCode, Track}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
@@ -93,7 +91,7 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     TrackSectionOrder.isRoundabout(list.tail) should be (false)
     val result = TrackSectionOrder.mValueRoundabout(list)
     result should have size 8
-    result.head.sideCode should be (TowardsDigitizing)
+    result.head.sideCode should be (SideCode.TowardsDigitizing)
     result.forall(_.sideCode == result.head.sideCode) should be (false)
     result.head.geometry should be (list.head.geometry)
   }
@@ -144,7 +142,7 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     TrackSectionOrder.isRoundabout(list.tail) should be (false)
     val result = TrackSectionOrder.mValueRoundabout(list)
     result should have size 8
-    result.head.sideCode should be (AgainstDigitizing)
+    result.head.sideCode should be (SideCode.AgainstDigitizing)
     result.forall(_.sideCode == result.head.sideCode) should be (false)
     result.head.geometry should be (list.head.geometry)
   }

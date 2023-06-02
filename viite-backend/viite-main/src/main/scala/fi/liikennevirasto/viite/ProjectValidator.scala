@@ -1,8 +1,6 @@
 package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle}
-import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.client.kgv.KgvRoadLink
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{ViiteProperties}
@@ -11,8 +9,8 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.process.{RoadwayAddressMapper, TrackSectionOrder}
 import fi.liikennevirasto.viite.process.TrackSectionOrder.findChainEndpoints
-import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.Track
+import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, SideCode, Track}
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 
@@ -101,16 +99,17 @@ class ProjectValidator {
   // Utility method, will return correct GeometryEndpoint
   private def endPoint(b: BaseRoadAddress) = {
     b.sideCode match {
-      case TowardsDigitizing => b.geometry.last
-      case AgainstDigitizing => b.geometry.head
+      case SideCode.TowardsDigitizing => b.geometry.last
+      case SideCode.AgainstDigitizing => b.geometry.head
       case _ => Point(0.0, 0.0)
     }
   }
 
+  //TODO POISTA
   private def startPoint(b: BaseRoadAddress) = {
     b.sideCode match {
-      case TowardsDigitizing => b.geometry.head
-      case AgainstDigitizing => b.geometry.last
+      case SideCode.TowardsDigitizing => b.geometry.head
+      case SideCode.AgainstDigitizing => b.geometry.last
       case _ => Point(0.0, 0.0)
     }
   }

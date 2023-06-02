@@ -1,12 +1,11 @@
 package fi.liikennevirasto.viite.util
 
-import fi.liikennevirasto.digiroad2.asset.SideCode
-import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing, Unknown}
 import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{CalibrationPointLocation, CalibrationPointType}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.{BaseCalibrationPoint, UserDefinedCalibrationPoint}
 import fi.liikennevirasto.viite.dao._
 import fi.vaylavirasto.viite.geometry.GeometryUtils
+import fi.vaylavirasto.viite.model.SideCode
 import org.slf4j.LoggerFactory
 
 object CalibrationPointsUtils {
@@ -16,16 +15,16 @@ object CalibrationPointsUtils {
   def toCalibrationPoints(startCalibrationPoint: CalibrationPointType, endCalibrationPoint: CalibrationPointType, linkId: String, startMValue: Double, endMValue: Double, startAddrMValue: Long, endAddrMValue: Long, sideCode: SideCode):
   (Option[CalibrationPoint], Option[CalibrationPoint]) = {
     (sideCode: SideCode) match {
-      case BothDirections => (None, None) // Invalid choice
-      case TowardsDigitizing => (
+      case SideCode.BothDirections => (None, None) // Invalid choice
+      case SideCode.TowardsDigitizing => (
         if ((startCalibrationPoint: CalibrationPointType) != CalibrationPointType.NoCP) Some(CalibrationPoint(linkId: String, 0.0, startAddrMValue: Long, startCalibrationPoint: CalibrationPointType)) else None,
         if ((endCalibrationPoint: CalibrationPointType) != CalibrationPointType.NoCP) Some(CalibrationPoint(linkId: String, (endMValue: Double) - (startMValue: Double), endAddrMValue: Long, endCalibrationPoint: CalibrationPointType)) else None
       )
-      case AgainstDigitizing => (
+      case SideCode.AgainstDigitizing => (
         if ((startCalibrationPoint: CalibrationPointType) != CalibrationPointType.NoCP) Some(CalibrationPoint(linkId: String, (endMValue: Double) - (startMValue: Double), startAddrMValue: Long, startCalibrationPoint: CalibrationPointType)) else None,
         if ((endCalibrationPoint: CalibrationPointType) != CalibrationPointType.NoCP) Some(CalibrationPoint(linkId: String, 0.0, endAddrMValue: Long, endCalibrationPoint: CalibrationPointType)) else None
       )
-      case Unknown => (None, None) // Invalid choice
+      case SideCode.Unknown => (None, None) // Invalid choice
     }
   }
 
@@ -44,24 +43,24 @@ object CalibrationPointsUtils {
 
   def makeStartCP(roadAddress: RoadAddress) = {
     Some(CalibrationPoint(roadAddress.linkId,
-      if (roadAddress.sideCode == TowardsDigitizing) 0.0
+      if (roadAddress.sideCode == SideCode.TowardsDigitizing) 0.0
       else GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.startAddrMValue, roadAddress.startCalibrationPointType))
   }
 
   def makeStartCP(projectLink: ProjectLink) = {
     Some(CalibrationPoint(projectLink.linkId,
-      if (projectLink.sideCode == TowardsDigitizing) 0.0
+      if (projectLink.sideCode == SideCode.TowardsDigitizing) 0.0
       else projectLink.geometryLength, projectLink.startAddrMValue, projectLink.startCalibrationPointType))
   }
 
   def makeEndCP(roadAddress: RoadAddress) = {
     Some(CalibrationPoint(roadAddress.linkId,
-      if (roadAddress.sideCode == AgainstDigitizing) 0.0
+      if (roadAddress.sideCode == SideCode.AgainstDigitizing) 0.0
       else GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.endAddrMValue, roadAddress.endCalibrationPointType))
   }
 
   def makeEndCP(projectLink: ProjectLink, userDefinedCalibrationPoint: Option[UserDefinedCalibrationPoint]) = {
-    val segmentValue = if (projectLink.sideCode == AgainstDigitizing) 0.0 else projectLink.geometryLength
+    val segmentValue = if (projectLink.sideCode == SideCode.AgainstDigitizing) 0.0 else projectLink.geometryLength
     val addressValue = userDefinedCalibrationPoint match {
       case Some(userCalibrationPoint) => if (userCalibrationPoint.addressMValue < projectLink.startAddrMValue) projectLink.endAddrMValue else userCalibrationPoint.addressMValue
       case None => projectLink.endAddrMValue
