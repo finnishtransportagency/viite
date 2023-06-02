@@ -1,14 +1,12 @@
 package fi.liikennevirasto.viite.dao
 
-import fi.liikennevirasto.digiroad2.asset.AdministrativeClass.{Municipality, State}
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{JunctionPointCP, NoCP, RoadAddressCP}
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.util.{projectLinkDAO, projectReservedPartDAO}
-import fi.vaylavirasto.viite.model.Track
+import fi.vaylavirasto.viite.model.{AdministrativeClass, LinkGeomSource, SideCode, Track}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
@@ -156,10 +154,10 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
         c.changeInfo.target.endAddressM.get should be > c.changeInfo.target.startAddressM.get
 
         c.changeInfo.source.startRoadPartNumber.get should be(roadPartNumber)
-        c.changeInfo.source.administrativeClass.get should be(Municipality)
+        c.changeInfo.source.administrativeClass.get should be(AdministrativeClass.Municipality)
         c.changeInfo.source.ely.get should be(rws.head.ely)
         c.changeInfo.target.startRoadPartNumber.get should be(roadPartNumber)
-        c.changeInfo.target.administrativeClass.get should be(Municipality)
+        c.changeInfo.target.administrativeClass.get should be(AdministrativeClass.Municipality)
         c.changeInfo.target.ely.get should be(rws.head.ely)
       })
     }
@@ -196,13 +194,13 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
         c.changeInfo.target.ely.get should be(5)
       })
       val (changesToMunicipality, changesToState) = changes.sortBy(_.changeInfo.orderInChangeTable).partition(_.changeInfo.target.startAddressM.get == 0)
-      changesToMunicipality.head.changeInfo.source.administrativeClass should be(Some(Municipality))
-      changesToMunicipality.head.changeInfo.target.administrativeClass should be(Some(Municipality))
+      changesToMunicipality.head.changeInfo.source.administrativeClass should be(Some(AdministrativeClass.Municipality))
+      changesToMunicipality.head.changeInfo.target.administrativeClass should be(Some(AdministrativeClass.Municipality))
       changesToMunicipality.head.changeInfo.source.discontinuity should be(Some(Discontinuity.Continuous))
       changesToMunicipality.head.changeInfo.target.discontinuity should be(Some(Discontinuity.Continuous))
 
-      changesToState.head.changeInfo.source.administrativeClass should be(Some(Municipality))
-      changesToState.head.changeInfo.target.administrativeClass should be(Some(State))
+      changesToState.head.changeInfo.source.administrativeClass should be(Some(AdministrativeClass.Municipality))
+      changesToState.head.changeInfo.target.administrativeClass should be(Some(AdministrativeClass.State))
       changesToState.head.changeInfo.source.discontinuity should be(Some(Discontinuity.Discontinuous))
       changesToState.head.changeInfo.target.discontinuity should be(Some(Discontinuity.Discontinuous))
     }

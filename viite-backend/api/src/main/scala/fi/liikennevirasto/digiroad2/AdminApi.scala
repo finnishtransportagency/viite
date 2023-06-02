@@ -1,11 +1,10 @@
 package fi.liikennevirasto.digiroad2
 
 import java.net.URLDecoder
-
-import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.util.DatabaseMigration
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.util.DataImporter
+import fi.vaylavirasto.viite.asset.{Modification, TimeStamps}
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.HttpClientBuilder
 import org.json4s.{DefaultFormats, Formats, StringInput}

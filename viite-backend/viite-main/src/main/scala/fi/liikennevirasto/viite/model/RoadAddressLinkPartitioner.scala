@@ -1,7 +1,7 @@
 package fi.liikennevirasto.viite.model
 
-import fi.liikennevirasto.digiroad2.asset.{LifecycleStatus, LinkGeomSource}
 import fi.liikennevirasto.digiroad2.linearasset.GraphPartitioner
+import fi.vaylavirasto.viite.model.{LifecycleStatus, LinkGeomSource}
 
 object RoadAddressLinkPartitioner extends GraphPartitioner {
 

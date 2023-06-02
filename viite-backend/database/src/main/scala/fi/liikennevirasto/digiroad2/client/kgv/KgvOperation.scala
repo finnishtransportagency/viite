@@ -1,9 +1,10 @@
 package fi.liikennevirasto.digiroad2.client.kgv
 
-import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.kgv.FilterOgc.{combineFiltersWithAnd, withLinkIdFilter, withMunicipalityFilter, withRoadNumbersFilter}
 import fi.liikennevirasto.digiroad2.util.{Parallel, ViiteProperties}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
+import fi.vaylavirasto.viite.geometry.BoundingRectangle
+import fi.vaylavirasto.viite.model.LinkGeomSource
 import org.apache.http.HttpStatus
 import org.apache.http.client.config.{CookieSpecs, RequestConfig}
 import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet, HttpRequestBase}

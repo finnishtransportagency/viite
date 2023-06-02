@@ -1,10 +1,7 @@
 package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.client.kgv._
-import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
@@ -15,8 +12,8 @@ import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.process.RoadAddressFiller.ChangeSet
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
-import fi.vaylavirasto.viite.geometry.GeometryUtils
-import fi.vaylavirasto.viite.model.Track
+import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils}
+import fi.vaylavirasto.viite.model.{RoadLink, SideCode, Track}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
@@ -344,13 +341,13 @@ class RoadAddressService(
             val geometryLength = ral.endMValue - ral.startMValue
             val geometryMeasure = roadAddressLinkMValueLengthPercentageFactor * geometryLength
             val point = ral match {
-              case r if (r.startAddressM.toDouble == addressM && r.sideCode == TowardsDigitizing) || (r.endAddressM == addressM && r.sideCode == AgainstDigitizing) =>
+              case r if (r.startAddressM.toDouble == addressM && r.sideCode == SideCode.TowardsDigitizing) || (r.endAddressM == addressM && r.sideCode == SideCode.AgainstDigitizing) =>
                 r.geometry.headOption
-              case r if (r.startAddressM.toDouble == addressM && r.sideCode == AgainstDigitizing) || (r.endAddressM == addressM && r.sideCode == TowardsDigitizing) =>
+              case r if (r.startAddressM.toDouble == addressM && r.sideCode == SideCode.AgainstDigitizing) || (r.endAddressM == addressM && r.sideCode == SideCode.TowardsDigitizing) =>
                 r.geometry.lastOption
               case r =>
                 val mValue: Double = r.sideCode match {
-                  case AgainstDigitizing => geometryLength - geometryMeasure
+                  case SideCode.AgainstDigitizing => geometryLength - geometryMeasure
                   case _ => geometryMeasure
                 }
                 GeometryUtils.calculatePointFromLinearReference(r.geometry, mValue)

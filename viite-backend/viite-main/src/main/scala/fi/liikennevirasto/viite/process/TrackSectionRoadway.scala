@@ -1,13 +1,12 @@
 //package fi.liikennevirasto.viite.process
 //
-//import fi.vaylavirasto.viite.geometry.GeometryUtils
-//import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
 //import fi.liikennevirasto.digiroad2.dao.Sequences
 //import fi.liikennevirasto.viite.dao.LinkStatus.Terminated
 //import fi.liikennevirasto.viite.dao._
 //import fi.liikennevirasto.viite.process.strategy.TrackCalculatorContext
 //import fi.liikennevirasto.viite.{MaxThresholdDistance, NewIdValue, RoadType}
-//import fi.vaylavirasto.viite.model.Track
+//import fi.vaylavirasto.viite.geometry.GeometryUtils
+//import fi.vaylavirasto.viite.model.{SideCode, Track}
 //import org.slf4j.LoggerFactory
 //
 //import scala.annotation.tailrec
@@ -285,13 +284,13 @@
 //        } else {
 //          (perfectTransferGroupCoeff * totalOppositeTrackMLength) - processedOppositeTrack.init.map(l => l.endMValue - l.startMValue).sum
 //        }
-//        val firstSplitLinkGeom = if (linkToBeSplit.sideCode == TowardsDigitizing) GeometryUtils.truncateGeometry2D(linkToBeSplit.geometry, 0.0, splitMValue)
+//        val firstSplitLinkGeom = if (linkToBeSplit.sideCode == SideCode.TowardsDigitizing) GeometryUtils.truncateGeometry2D(linkToBeSplit.geometry, 0.0, splitMValue)
 //        else GeometryUtils.truncateGeometry2D(linkToBeSplit.geometry, linkToBeSplit.endMValue - splitMValue, linkToBeSplit.endMValue)
-//        val (firstSplitStartMeasure, firstSplitEndMeasure) = if (linkToBeSplit.sideCode == TowardsDigitizing) (linkToBeSplit.startMValue, linkToBeSplit.startMValue + splitMValue) else
+//        val (firstSplitStartMeasure, firstSplitEndMeasure) = if (linkToBeSplit.sideCode == SideCode.TowardsDigitizing) (linkToBeSplit.startMValue, linkToBeSplit.startMValue + splitMValue) else
 //          (linkToBeSplit.endMValue - splitMValue, linkToBeSplit.endMValue)
-//        val (secondSplitStartMeasure, secondSplitEndMeasure) = if (linkToBeSplit.sideCode == TowardsDigitizing) (linkToBeSplit.startMValue + splitMValue, linkToBeSplit.endMValue) else
+//        val (secondSplitStartMeasure, secondSplitEndMeasure) = if (linkToBeSplit.sideCode == SideCode.TowardsDigitizing) (linkToBeSplit.startMValue + splitMValue, linkToBeSplit.endMValue) else
 //          (linkToBeSplit.startMValue, linkToBeSplit.endMValue - splitMValue)
-//        val secondLinkGeom = if (linkToBeSplit.sideCode == TowardsDigitizing) GeometryUtils.truncateGeometry2D(linkToBeSplit.geometry, splitMValue, linkToBeSplit.endMValue)
+//        val secondLinkGeom = if (linkToBeSplit.sideCode == SideCode.TowardsDigitizing) GeometryUtils.truncateGeometry2D(linkToBeSplit.geometry, splitMValue, linkToBeSplit.endMValue)
 //        else GeometryUtils.truncateGeometry2D(linkToBeSplit.geometry, 0.0, linkToBeSplit.endMValue - splitMValue)
 //
 //        //  processedLinks without and with roadwayNumber

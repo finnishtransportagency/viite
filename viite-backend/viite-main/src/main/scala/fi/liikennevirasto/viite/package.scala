@@ -1,10 +1,10 @@
 package fi.liikennevirasto
 
-import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.viite.dao.{BaseRoadAddress, LinkStatus}
 import fi.liikennevirasto.viite.dao.Discontinuity.{ChangingELYCode, Discontinuous, EndOfRoad}
 import fi.liikennevirasto.viite.model.RoadAddressLinkLike
 import fi.vaylavirasto.viite.geometry.Point
+import fi.vaylavirasto.viite.model.SideCode
 
 package object viite {
   /* Tolerance in which we can allow MValues to be equal */

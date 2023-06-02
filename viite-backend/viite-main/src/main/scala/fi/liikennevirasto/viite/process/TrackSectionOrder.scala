@@ -1,7 +1,5 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.asset.SideCode
-import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.util.{MissingTrackException, RoadAddressException}
 import fi.liikennevirasto.viite.MaxDistanceForConnectedLinks
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
@@ -11,8 +9,7 @@ import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao._
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Matrix, Point, Vector3d}
-
-import fi.vaylavirasto.viite.model.Track
+import fi.vaylavirasto.viite.model.{SideCode, Track}
 import scala.annotation.tailrec
 
 
@@ -176,8 +173,8 @@ object TrackSectionOrder {
 
     def firstPoint(pl: ProjectLink) = {
       pl.sideCode match {
-        case TowardsDigitizing => pl.geometry.head
-        case AgainstDigitizing => pl.geometry.last
+        case SideCode.TowardsDigitizing => pl.geometry.head
+        case SideCode.AgainstDigitizing => pl.geometry.last
         case _ => throw new InvalidGeometryException("SideCode was not decided")
       }
     }
@@ -187,7 +184,7 @@ object TrackSectionOrder {
         // Put calibration point at the end
         val last = ready.last
         ready.init ++ Seq(adjust(last, startCalibrationPoint = Some(None), endCalibrationPoint = Some(Some(
-          CalibrationPoint(last.linkId, if (last.sideCode == AgainstDigitizing) 0.0 else last.geometryLength, last.endAddrMValue, last.endCalibrationPointType)))))
+          CalibrationPoint(last.linkId, if (last.sideCode ==  SideCode.AgainstDigitizing) 0.0 else last.geometryLength, last.endAddrMValue, last.endCalibrationPointType)))))
       }
       else {
         val hit = unprocessed.find(pl => GeometryUtils.areAdjacent(pl.geometry, currentPoint, MaxDistanceForConnectedLinks))
@@ -211,7 +208,7 @@ object TrackSectionOrder {
 
     val firstLink = seq.head // First link is defined by end user and must be always first
     // Put calibration point at the beginning
-    val ordered = recursive(firstLink.geometry.last, Seq(adjust(firstLink, sideCode = Some(TowardsDigitizing),
+    val ordered = recursive(firstLink.geometry.last, Seq(adjust(firstLink, sideCode = Some(SideCode.TowardsDigitizing),
       startAddrMValue = Some(0L), endAddrMValue =
         Some(if (firstLink.status == New)
           Math.round(firstLink.geometryLength)
@@ -224,7 +221,7 @@ object TrackSectionOrder {
     else {
       val reOrdered = recursive(firstLink.geometry.head,
 
-        Seq(adjust(firstLink, sideCode = Some(AgainstDigitizing),
+        Seq(adjust(firstLink, sideCode = Some(SideCode.AgainstDigitizing),
           startAddrMValue = Some(0L), endAddrMValue =
             Some(if (firstLink.status == New)
               Math.round(firstLink.geometryLength)

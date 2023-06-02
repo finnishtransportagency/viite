@@ -3,11 +3,10 @@ package fi.liikennevirasto.digiroad2.postgis
 import java.sql.Date
 import javax.sql.DataSource
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
-import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import org.joda.time.LocalDate
 import slick.driver.JdbcDriver.backend.Database
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
-import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
+import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
 import net.postgis.jdbc.geometry.GeometryBuilder
 import org.postgresql.util.PGobject
 
