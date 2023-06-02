@@ -1,6 +1,5 @@
-package fi.liikennevirasto.digiroad2.linearasset
+package fi.vaylavirasto.viite.model
 
-import fi.liikennevirasto.digiroad2.asset._
 import fi.vaylavirasto.viite.geometry.{Point, PolyLine}
 import org.joda.time.DateTime
 
