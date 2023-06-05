@@ -234,21 +234,6 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
     sectionRoadway.flatMap(r => mapRoadAddresses(r, groupedLinearLocations(r.roadwayNumber)))
   }
 
-  /**
-    * Uses the RoadwayDAO to get the current roadway information the is associated with a specific version of the road network, said roadway information is connected to the entries of given linearLocations.
-    * Both information is then mixed and returned as fully fledged RoadAddress entries.
-    *
-    * @param linearLocations : Seq[LinearLocation] - The collection of Linear Locations entries
-    * @param roadNetworkId   : Long - the id of the road network version
-    * @return
-    */
-  def getNetworkVersionRoadAddressesByLinearLocation(linearLocations: Seq[LinearLocation], roadNetworkId: Long, searchDate: Option[DateTime]): Seq[RoadAddress] = {
-    val groupedLinearLocations = linearLocations.groupBy(_.roadwayNumber)
-    val roadwayAddresses = roadwayDAO.fetchAllByRoadwayNumbers(linearLocations.map(_.roadwayNumber).toSet, roadNetworkId, searchDate)
-
-    roadwayAddresses.flatMap(r => mapRoadAddresses(r, groupedLinearLocations(r.roadwayNumber)))
-  }
-
   // TODO Might be a good idea to move this method to the RoadAddressService
   /**
     * Uses the LinearLocationDAO to get the linear location information that is connected to the entries of given Roadway entries.

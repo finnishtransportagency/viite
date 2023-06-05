@@ -158,33 +158,6 @@ class RoadNetworkService {
 
           roadwaysErrors ++ linearLocationErrors
         }
-        if (errors.nonEmpty) {
-          val uniqueErrors = errors.groupBy(g => (g.roadwayId, g.linearLocationId, g.error, g.network_version)).map(_._2.head).toSeq
-          val existingErrors = roadNetworkDAO.getRoadNetworkErrors
-
-          val newErrors = uniqueErrors.filterNot(r => existingErrors.exists(e => e.roadwayId == r.roadwayId && e.linearLocationId == r.linearLocationId && e.error == r.error && e.network_version == r.network_version))
-          newErrors.sortBy(_.roadwayId).foreach { e =>
-            logger.info(s" Found error for roadway id ${e.roadwayId}, linear location id ${e.linearLocationId}")
-            roadNetworkDAO.addRoadNetworkError(e.roadwayId, e.linearLocationId, e.error, e.network_version)
-          }
-        }
-
-        /*
-        * Used for actor cases only.
-        * Batch should only deal with expiring and publishing of road network after run all chunks of the entire road network
-        */
-        if (options.throughActor) {
-          if (options.currNetworkVersion.nonEmpty && !roadNetworkDAO.hasCurrentNetworkErrors) {
-            logger.info(s"No errors found. Creating new publishable version for the road network")
-            roadNetworkDAO.expireRoadNetwork
-            roadNetworkDAO.createPublishedRoadNetwork(options.nextNetworkVersion)
-            val newId = roadNetworkDAO.getLatestRoadNetworkVersionId
-            roadwayDAO.fetchAllCurrentAndValidRoadwayIds.foreach(id => roadNetworkDAO.createPublishedRoadway(newId.get, id))
-          } else {
-            logger.info(s"Network errors found or current network version not found. Check road_network_error and published_road_network tables")
-          }
-        }
-
       } catch {
         case e: SQLIntegrityConstraintViolationException => logger.error("A road network check is already running")
         case e: SQLException =>
@@ -195,13 +168,6 @@ class RoadNetworkService {
           println(s"\n" + e.getMessage + s"\n"+ e.printStackTrace)
           dynamicSession.rollback()
       }
-    }
-
-  }
-
-  def getLatestPublishedNetworkDate: Option[DateTime] = {
-    withDynSession {
-      roadNetworkDAO.getLatestPublishedNetworkDate
     }
   }
 }

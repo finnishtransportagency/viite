@@ -76,9 +76,6 @@ object Digiroad2Context {
   val roadAddressUpdater: ActorRef = system.actorOf(Props(classOf[RoadAddressUpdater], roadAddressService), name = "roadAddressUpdater")
   eventbus.subscribe(roadAddressUpdater, "roadAddress:persistChangeSet")
 
-  val roadNetworkChecker: ActorRef = system.actorOf(Props(classOf[RoadNetworkChecker], roadNetworkService), name = "roadNetworkChecker")
-  eventbus.subscribe(roadNetworkChecker, "roadAddress:RoadNetworkChecker")
-
   lazy val roadAddressService: RoadAddressService =
     new RoadAddressService(
                             roadLinkService,

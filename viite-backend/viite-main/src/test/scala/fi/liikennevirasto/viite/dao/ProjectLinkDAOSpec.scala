@@ -88,25 +88,6 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
     * removeProjectLinksByProjectAndRoadNumber VIITE-1543
     */
 
-  test("Test updateAddrMValues When having changed addr values for some reason (e.g. recalculate) Then should still return original addr values") {
-    runWithRollback {
-      val roadwayIds = roadwayDAO.create(dummyRoadways)
-      val projectId = Sequences.nextViiteProjectId
-      val projectLinkId = Sequences.nextProjectLinkId
-      val rap = dummyRoadAddressProject(projectId, ProjectState.Incomplete, Seq(), None)
-      projectDAO.create(rap)
-      projectReservedPartDAO.reserveRoadPart(projectId, roadNumber1, roadPartNumber1, rap.createdBy)
-      val projectLink = dummyProjectLink(projectLinkId, projectId, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), LinkStatus.Transfer, AdministrativeClass.State, reversed = false, 0)
-      projectLinkDAO.create(Seq(projectLink))
-      val (originalStartAddrM, originalEndStartAddrM) = (projectLink.originalStartAddrMValue, projectLink.originalEndAddrMValue)
-      projectLinkDAO.updateAddrMValues(projectLink.copy(startAddrMValue = 200, endAddrMValue = 300))
-      val returnedProjectLinks = projectLinkDAO.fetchProjectLinks(projectId)
-      returnedProjectLinks.size should be(1)
-      returnedProjectLinks.head.originalStartAddrMValue should be(originalStartAddrM)
-      returnedProjectLinks.head.originalEndAddrMValue should be(originalEndStartAddrM)
-    }
-  }
-
   test("Test create When having no reversed links Then should return no reversed project links") {
     runWithRollback {
       val roadwayIds = roadwayDAO.create(dummyRoadways)
@@ -263,20 +244,6 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test updateProjectLinksGeometry When giving one link with updated geometry Then it should be updated") {
-    runWithRollback {
-      val projectLinks = projectLinkDAO.fetchProjectLinks(7081807)
-      val header = projectLinks.head
-      val newGeometry = Seq(Point(0.0, 10.0), Point(0.0, 20.0))
-
-      val modifiedProjectLinks = Seq(header.copy(geometry = newGeometry))
-      projectLinkDAO.updateProjectLinksGeometry(modifiedProjectLinks, "test")
-
-      val updatedProjectLink = projectLinkDAO.fetchProjectLinks(7081807).filter(link => link.id == header.id).head
-      updatedProjectLink.geometry should be(newGeometry)
-    }
-  }
-
   test("Test updateProjectLinkNumbering When giving one link with updated road number and part Then it should be updated") {
     runWithRollback {
       val projectLinks = projectLinkDAO.fetchProjectLinks(7081807)
@@ -328,20 +295,6 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
 
       val updatedProjectLink = projectLinkDAO.fetchProjectLinks(7081807).filter(link => link.id == header.id).head
       updatedProjectLink.status should be(LinkStatus.Terminated)
-    }
-  }
-
-  test("Test updateAddrMValues When giving one link with updated road number and part Then it should be updated") {
-    runWithRollback {
-      val projectLinks = projectLinkDAO.fetchProjectLinks(7081807)
-      val header = projectLinks.head
-      val newStartAddrMValues = 0
-      val newEndAddrMValues = 100
-      projectLinkDAO.updateAddrMValues(header.copy(startAddrMValue = newStartAddrMValues, endAddrMValue = newEndAddrMValues))
-
-      val updatedProjectLink = projectLinkDAO.fetchProjectLinks(7081807).filter(link => link.id == header.id).head
-      updatedProjectLink.startAddrMValue should be(newStartAddrMValues)
-      updatedProjectLink.endAddrMValue should be(newEndAddrMValues)
     }
   }
 

@@ -270,10 +270,7 @@ class RoadAddressService(
 
 
     val roadAddresses = withDynTransaction {
-      roadNetworkDAO.getLatestRoadNetworkVersionId match {
-        case Some(roadNetworkId) => roadwayAddressMapper.getNetworkVersionRoadAddressesByLinearLocation(adjustedLinearLocations, roadNetworkId, searchDate)
-        case _ => roadwayAddressMapper.getCurrentRoadAddressesByLinearLocation(adjustedLinearLocations, searchDate)
-      }
+      roadwayAddressMapper.getCurrentRoadAddressesByLinearLocation(adjustedLinearLocations, searchDate)
     }
 
     roadAddresses.flatMap { ra =>
