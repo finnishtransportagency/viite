@@ -2436,29 +2436,19 @@ Left|      |Right
 
   test("Test checkRoadContinuityCodes When there is a road end on a previous connected road part outside of project Then should be a validation error") {
     runWithRollback {
-      val raId = Sequences.nextRoadwayId
       val linearLocationId = Sequences.nextLinearLocationId
 
       val ra = Seq(
         RoadAddress(12345, linearLocationId, 19999L, 1L, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000.toString, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), Seq(Point(0.0, 40.0), Point(0.0, 50.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None, None)
       )
 
-      val roadway = Roadway(raId, roadwayNumber1, 19999L, 1L, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, 0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, DateTime.parse("1901-01-01"), None)
-
-      val linearLocation = LinearLocation(linearLocationId, 1, 1000.toString, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l, (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))), Seq(Point(0.0, 40.0), Point(0.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None)
-
-      roadwayDAO.create(Seq(roadway))
-      linearLocationDAO.create(Seq(linearLocation))
-
       val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(10L, 20L), roads = Seq((19999L, 2L, "Test road")), discontinuity = Discontinuity.EndOfRoad)
       val editedProjectLinks = projectLinks.map(pl => pl.copy(geometry=Seq(Point(0.0, 50.0+pl.startMValue), Point(0.0, 50.0+pl.endMValue))))
 
       when(mockRoadAddressService.getValidRoadAddressParts(any[Long], any[DateTime])).thenReturn(Seq(1L,2L))
-      when(mockRoadAddressService.getRoadAddressesFiltered(any[Long], any[Long])).thenReturn(Seq.empty[RoadAddress])
-      when(mockRoadAddressService.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq.empty[LinearLocation])
-      when(mockRoadAddressService.getCurrentRoadAddresses(any[Seq[LinearLocation]])).thenReturn(Seq.empty[RoadAddress])
       when(mockRoadAddressService.getRoadAddressWithRoadAndPart(any[Long], any[Long], any[Boolean], any[Boolean], any[Boolean])).thenReturn(Seq(ra.head))
       when(mockRoadAddressService.getPreviousRoadPartNumber(any[Long], any[Long])).thenReturn(Some(1L))
+
       val errors = projectValidator.validateProject(project, editedProjectLinks)
       errors should have size 1
       errors.head.validationError.value should be(projectValidator.ValidationErrorList.DoubleEndOfRoad.value)
