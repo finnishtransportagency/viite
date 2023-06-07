@@ -534,7 +534,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
             val head = roadsInFirstPoint filterNot RoadAddressFilters.sameRoadPart(projectLink)
             val tail = projectLink.discontinuity match {
               case Discontinuity.EndOfRoad | Discontinuity.Discontinuous | Discontinuity.MinorDiscontinuity =>
-                // Roundabouts (20001 to 39999) : at the last link of the round lane - EndOfRoad or Discontinuous
+                // Roundabouts (20000 to 39999) : at the last link of the round lane - EndOfRoad or Discontinuous
                 roadsInLastPoint
               case _ =>
                 // Ramps : where road number OR road part number change

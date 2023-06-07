@@ -143,7 +143,7 @@ package object viite {
   val NodeNotFoundErrorMessage = "Päivitettävää solmua ei löytynyt."
   val NodeStartDateUpdateErrorMessage = "Solmun uusi alkupäivämäärä ei saa olla ennen nykyistä alkupäivämäärää."
 
-  val RampsMinBound = 20001
+  val RampsMinBound = 20000
   val RampsMaxBound = 39999
 
   val MaxLengthChange = 20.0
