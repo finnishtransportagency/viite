@@ -72,7 +72,7 @@
       const projectEditable = project.statusCode === editableStatus;
       let trackCodeDropdown;
       if (track === Track.Unknown.value) {
-        trackCodeDropdown = (roadNumber >= 20001 && roadNumber <= 39999) ? '0' : '';
+        trackCodeDropdown = (roadNumber >= 20000 && roadNumber <= 39999) ? '0' : '';
       } else {
         trackCodeDropdown = track;
       }
@@ -108,7 +108,7 @@
               roadNameField.prop('disabled', response.roadNameSource === RoadNameSource.RoadAddressSource.value);
               $('.project-form button.update').prop("disabled", false);
             }
-            if (!_.isUndefined(response.roadNumber) && response.roadNumber >= 20001 && response.roadNumber <= 39999)
+            if (!_.isUndefined(response.roadNumber) && response.roadNumber >= 20000 && response.roadNumber <= 39999)
               $('#trackCodeDropdown').val("0");
           }
         });
