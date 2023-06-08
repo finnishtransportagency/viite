@@ -13,7 +13,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{SqlScriptRunner, ViiteProperties}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.process.{ApplyChangeInfoProcess, ContinuityChecker, RoadNetworkChecker, RoadwayAddressMapper}
+import fi.liikennevirasto.viite.process.{ApplyChangeInfoProcess, ContinuityChecker, RoadwayAddressMapper}
 import fi.liikennevirasto.viite.util.DataImporter.Conversion
 import org.joda.time.DateTime
 
@@ -73,19 +73,6 @@ object DataFixture {
 
   def updateLinearLocationGeometry(): Unit = {
     dataImporter.updateLinearLocationGeometry()
-  }
-
-  def checkRoadNetwork(): Unit = {
-    println(s"\nstart checking road network at time: ${DateTime.now()}")
-    val KGVClient = new KgvRoadLink
-    val username = ViiteProperties.bonecpUsername
-    val roadLinkService = new RoadLinkService(KGVClient, new DummyEventBus, new DummySerializer, geometryFrozen)
-    PostGISDatabase.withDynTransaction {
-      val checker = new RoadNetworkChecker(roadLinkService)
-      checker.checkRoadNetwork(username)
-    }
-    println(s"\nend checking road network at time: ${DateTime.now()}")
-    println()
   }
 
   def importComplementaryRoadAddress(): Unit = {
@@ -283,8 +270,6 @@ object DataFixture {
     }
 
     operation match {
-      case Some("check_road_network") =>
-        checkRoadNetwork()
       case Some("flyway_migrate") =>
         migrateAll()
       case Some("flyway_repair") =>

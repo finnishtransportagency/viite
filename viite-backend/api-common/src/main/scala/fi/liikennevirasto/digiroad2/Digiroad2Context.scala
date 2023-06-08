@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
-import fi.liikennevirasto.viite.{AwsService, NodesAndJunctionsService, ProjectService, RoadAddressService, RoadCheckOptions, RoadNameService, RoadNetworkService}
+import fi.liikennevirasto.viite.{AwsService, NodesAndJunctionsService, ProjectService, RoadAddressService, RoadNameService}
 import fi.liikennevirasto.viite.dao.{LinearLocationDAO, _}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.ChangeSet
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
@@ -24,13 +24,6 @@ class RoadAddressUpdater(roadAddressService: RoadAddressService) extends Actor {
   def receive: PartialFunction[Any, Unit] = {
     case w: ChangeSet => roadAddressService.updateChangeSet(w)
     case _                    => println("roadAddressUpdater: Received unknown message")
-  }
-}
-
-class RoadNetworkChecker(roadNetworkService: RoadNetworkService) extends Actor {
-  def receive: PartialFunction[Any, Unit] = {
-    case w: RoadCheckOptions =>  roadNetworkService.checkRoadAddressNetwork(w)
-    case _ => println("roadAddressChecker: Received unknown message")
   }
 }
 
@@ -76,9 +69,6 @@ object Digiroad2Context {
   val roadAddressUpdater: ActorRef = system.actorOf(Props(classOf[RoadAddressUpdater], roadAddressService), name = "roadAddressUpdater")
   eventbus.subscribe(roadAddressUpdater, "roadAddress:persistChangeSet")
 
-  val roadNetworkChecker: ActorRef = system.actorOf(Props(classOf[RoadNetworkChecker], roadNetworkService), name = "roadNetworkChecker")
-  eventbus.subscribe(roadNetworkChecker, "roadAddress:RoadNetworkChecker")
-
   lazy val roadAddressService: RoadAddressService =
     new RoadAddressService(
                             roadLinkService,
@@ -112,10 +102,6 @@ object Digiroad2Context {
                         eventbus,
                         ViiteProperties.kgvRoadlinkFrozen
                       )
-  }
-
-  lazy val roadNetworkService: RoadNetworkService = {
-    new RoadNetworkService
   }
 
   lazy val roadNameService : RoadNameService = {

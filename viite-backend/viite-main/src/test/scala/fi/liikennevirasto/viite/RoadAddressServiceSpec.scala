@@ -225,39 +225,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     roadAddressesWithLinearGeometry.map(_.linkId).distinct should be (linearLocations.map(_.linkId).distinct)
   }
 
-  test("Test getAllByMunicipality When exists road network version Then returns road addresses of that version") {
-
-    val linearLocations = List(
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 1L, linkId = 123L.toString, startMValue = 0.0, endMValue = 10.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 2L, linkId = 123L.toString, startMValue = 10.0, endMValue = 20.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 3L, linkId = 124L.toString, startMValue = 0.0, endMValue = 10.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 4L, linkId = 125L.toString, startMValue = 0.0, endMValue = 10.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 5L, linkId = 126L.toString, startMValue = 0.0, endMValue = 10.0)
-    )
-
-    val roadways = Seq(
-      dummyRoadway(roadwayNumber = 1L, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 400L, DateTime.now(), None)
-    )
-
-    val roadLinks = Seq(
-      dummyRoadLink(linkId = 123L.toString, Seq(0.0, 10.0, 20.0), NormalLinkInterface),
-      dummyRoadLink(linkId = 124L.toString, Seq(0.0, 10.0), NormalLinkInterface)
-    )
-
-    when(mockLinearLocationDAO.fetchRoadwayByLinkId(any[Set[String]])).thenReturn(linearLocations)
-
-    when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Int], Some(any[DateTime]))).thenReturn(roadways)
-    when(mockRoadNetworkDAO.getLatestRoadNetworkVersionId).thenReturn(Some(1L))
-
-
-    //Road Link service mocks
-    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[Int])).thenReturn((roadLinks, Seq()))
-
-    val roads = roadAddressService.getAllByMunicipality(municipality = 100)
-
-    verify(mockRoadwayDAO, times(1)).fetchAllByRoadwayNumbers(Set(1L), 1, None)
-  }
-
   def toRoadwayAndLinearLocation(p: ProjectLink):(LinearLocation, Roadway) = {
     val startDate = p.startDate.getOrElse(DateTime.now()).minusDays(1)
 
@@ -268,53 +235,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       p.roadwayNumber, Some(startDate), p.endDate),
       Roadway(-1000, p.roadwayNumber, p.roadNumber, p.roadPartNumber, p.administrativeClass, p.track, p.discontinuity, p.startAddrMValue, p.endAddrMValue, p.reversed, startDate, p.endDate,
         p.createdBy.getOrElse("-"), p.roadName, p.ely, TerminationCode.NoTermination, DateTime.now(), None))
-  }
-
-  test("Test getAllByMunicipality When does not exists road network version Then returns current road addresses") {
-    implicit def dateTimeOrdering: Ordering[DateTime] = Ordering.fromLessThan(_ isBefore _)
-    val linearLocations = List(
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 1L, linkId = 123L.toString, startMValue = 0.0, endMValue = 10.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 2L, linkId = 123L.toString, startMValue = 10.0, endMValue = 20.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 3L, linkId = 124L.toString, startMValue = 0.0, endMValue = 10.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 4L, linkId = 125L.toString, startMValue = 0.0, endMValue = 10.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 5L, linkId = 126L.toString, startMValue = 0.0, endMValue = 10.0)
-    )
-
-    val roadways = Seq(
-      dummyRoadway(roadwayNumber = 1L, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 400L, DateTime.now(), None)
-    )
-
-    val roadLinks = Seq(
-      dummyRoadLink(linkId = 123L.toString, Seq(0.0, 10.0, 20.0), NormalLinkInterface),
-      dummyRoadLink(linkId = 124L.toString, Seq(0.0, 10.0), NormalLinkInterface)
-    )
-
-    when(mockLinearLocationDAO.fetchRoadwayByLinkId(any[Set[String]])).thenReturn(linearLocations)
-
-    when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[DateTime])).thenReturn(roadways)
-    when(mockRoadNetworkDAO.getLatestRoadNetworkVersionId).thenReturn(None)
-
-
-    //Road Link service mocks
-    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[Int])).thenReturn((roadLinks, Seq()))
-
-    val now = DateTime.now
-    roadAddressService.getAllByMunicipality(municipality = 100)
-
-    val dateTimeCaptor: ArgumentCaptor[DateTime] = ArgumentCaptor.forClass(classOf[DateTime])
-    val roadwayCaptor: ArgumentCaptor[Set[Long]] = ArgumentCaptor.forClass(classOf[Set[Long]])
-
-    verify(mockRoadwayDAO, times(1)).fetchAllByRoadwayNumbers(roadwayCaptor.capture, dateTimeCaptor.capture)
-
-    val capturedDateTime = dateTimeCaptor.getAllValues
-    val capturedRoadways = roadwayCaptor.getAllValues
-    val dateTimeDate = capturedDateTime.get(0)
-    val roadwaysSet = capturedRoadways.get(0)
-
-    roadwaysSet.size should be (1)
-    roadwaysSet.head should be (1L)
-
-    dateTimeDate should be >= now
   }
 
   test("Test getRoadAddress When the biggest address in section is greater than the parameter $addressM Then should filter out all the road addresses with start address less than $addressM") {

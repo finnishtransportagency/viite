@@ -64,7 +64,7 @@ case class NodeExtractor(id: Long = NewIdValue, nodeNumber: Long = NewIdValue, c
                          createdTime: Option[String], editor: Option[String] = None, publishedTime: Option[DateTime] = None, registrationDate: Option[String] = None,
                          junctions: List[JunctionExtractor], nodePoints: List[NodePointExtractor])
 
-class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink, val roadAddressService: RoadAddressService, val projectService: ProjectService, val roadNetworkService: RoadNetworkService, val roadNameService: RoadNameService, val nodesAndJunctionsService: NodesAndJunctionsService, val userProvider: UserProvider = Digiroad2Context.userProvider, val deploy_date: String = Digiroad2Context.deploy_date, implicit val swagger: Swagger)
+class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink, val roadAddressService: RoadAddressService, val projectService: ProjectService, val roadNameService: RoadNameService, val nodesAndJunctionsService: NodesAndJunctionsService, val userProvider: UserProvider = Digiroad2Context.userProvider, val deploy_date: String = Digiroad2Context.deploy_date, implicit val swagger: Swagger)
   extends ScalatraServlet
     with JacksonJsonSupport
     with CorsSupport
@@ -567,10 +567,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       try {
         val projectSaved = projectService.createRoadLinkProject(roadAddressProject)
         val fetched = projectService.getSingleProjectById(projectSaved.id).get
-        val latestPublishedNetwork = roadNetworkService.getLatestPublishedNetworkDate
         val firstAddress: Map[String, Any] =
           fetched.reservedParts.find(_.startingLinkId.nonEmpty).map(p => "projectAddresses" -> p.startingLinkId.get).toMap
-        Map("project" -> roadAddressProjectToApi(fetched, projectService.getProjectEly(fetched.id)), "publishedNetworkDate" -> formatDateTimeToString(latestPublishedNetwork),
+        Map("project" -> roadAddressProjectToApi(fetched, projectService.getProjectEly(fetched.id)),
           "reservedInfo" -> fetched.reservedParts.map(projectReservedPartToApi), "formedInfo" -> fetched.formedParts.map(projectFormedPartToApi(Some(fetched.id))),
           "success" -> true) ++ firstAddress
       } catch {
@@ -762,10 +761,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
             val formedparts = project.formedParts.map(projectFormedPartToApi(Some(project.id)))
             val errorParts = projectService.validateProjectById(project.id)
             val publishable = errorParts.isEmpty
-            val latestPublishedNetwork = roadNetworkService.getLatestPublishedNetworkDate
             Map("project" -> projectMap, "linkId" -> project.reservedParts.find(_.startingLinkId.nonEmpty).flatMap(_.startingLinkId),
-              "reservedInfo" -> reservedparts, "formedInfo" -> formedparts, "publishable" -> publishable, "projectErrors" -> errorParts.map(projectService.projectValidator.errorPartsToApi),
-              "publishedNetworkDate" -> formatDateTimeToString(latestPublishedNetwork))
+              "reservedInfo" -> reservedparts, "formedInfo" -> formedparts, "publishable" -> publishable, "projectErrors" -> errorParts.map(projectService.projectValidator.errorPartsToApi))
           case _ => halt(NotFound("Project not found"))
         }
       } catch {

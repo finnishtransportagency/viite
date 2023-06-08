@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.asset.LifecycleStatus.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.FrozenLinkInterface
 import fi.liikennevirasto.digiroad2.dao.ComplementaryLinkDAO
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.viite.{NodesAndJunctionsService, PreFillInfo, ProjectService, RoadAddressService, RoadNameService, RoadNameSource, RoadNetworkService, ViiteVkmClient}
+import fi.liikennevirasto.viite.{NodesAndJunctionsService, PreFillInfo, ProjectService, RoadAddressService, RoadNameService, RoadNameSource, ViiteVkmClient}
 import fi.liikennevirasto.viite.dao.{ProjectLinkDAO, ProjectLinkNameDAO}
 import fi.liikennevirasto.viite.util.{runWithRollback, DigiroadSerializers, JsonSerializer}
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
@@ -36,7 +36,6 @@ class ViiteApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter {
   val complementaryData     : ComplementaryLinkDAO        = MockitoSugar.mock[ComplementaryLinkDAO]
 
   val mockProjectService          : ProjectService           = MockitoSugar.mock[ProjectService]
-  val mockRoadNetworkService      : RoadNetworkService       = MockitoSugar.mock[RoadNetworkService]
   val mockNodesAndJunctionsService: NodesAndJunctionsService = MockitoSugar.mock[NodesAndJunctionsService]
   val roadNameService             : RoadNameService          = new RoadNameService { override def withDynTransaction[T](f: => T): T = runWithRollback(f) }
 
@@ -78,7 +77,7 @@ class ViiteApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter {
     override def withDynTransaction[T](f: => T): T = runWithRollback(f)
   }
 
-    private val viiteApi = new ViiteApi(roadLinkService, mockKgvRoadLink, roadAddressService, projectService, mockRoadNetworkService, roadNameService, mockNodesAndJunctionsService, swagger = new ViiteSwagger)
+    private val viiteApi = new ViiteApi(roadLinkService, mockKgvRoadLink, roadAddressService, projectService, roadNameService, mockNodesAndJunctionsService, swagger = new ViiteSwagger)
 
   addServlet(viiteApi, "/*")
 
