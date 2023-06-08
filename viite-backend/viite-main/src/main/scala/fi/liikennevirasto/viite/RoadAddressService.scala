@@ -1114,7 +1114,7 @@ object RoadClass {
   case object RampsAndRoundaboutsClass extends RoadClass {
     def value = 7
 
-    def roads: Range.Inclusive = 20001 to 39999
+    def roads: Range.Inclusive = 20000 to 39999
   }
 
   case object StreetClass extends RoadClass {
@@ -1151,7 +1151,7 @@ object RoadClass {
   case object PrivateRoadClass extends RoadClass {
     def value = 12
 
-    def roads: Range.Inclusive = 50001 to 59999
+    def roads: Range.Inclusive = 50000 to 59999
   }
 
   case object NoClass extends RoadClass {

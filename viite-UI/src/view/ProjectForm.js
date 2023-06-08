@@ -33,8 +33,8 @@
         '</div>';
     };
 
-    var inputFieldRequired = function (labelText, id, placeholder, value, maxLength) {
-      var lengthLimit = '';
+    const inputFieldRequired = function (labelText, id, placeholder, value, maxLength) {
+      let lengthLimit = '';
       if (maxLength)
         lengthLimit = 'maxlength="' + maxLength + '"';
       return '<div class="form-group input-required">' +
@@ -43,7 +43,7 @@
         '</div>';
     };
 
-    var title = function (projectName) {
+    const title = function (projectName) {
       const projectNameFixed = (projectName) ? projectName : "Uusi tieosoiteprojekti";
       return '<span class ="edit-mode-title">' + projectNameFixed + '</span>';
     };
@@ -73,7 +73,7 @@
         '<div class="form-group editable form-editable-roadAddressProject"> ' +
         '<form  id="roadAddressProject"  class="input-unit-combination form-group form-horizontal roadAddressProject">' +
         inputFieldRequired('*Nimi', 'nimi', '', '', 32) +
-        inputFieldRequired('*Alkupvm', 'projectStartDate', 'pp.kk.vvvv', '') +
+        inputFieldRequired('*Alkupvm', 'projectStartDate', 'pp.kk.vvvv', '', 10) +
         '   <div class="form-check-date-notifications"> ' +
         '     <p id="projectStartDate-validation-notification"> </p>' +
         '   </div>' +
@@ -111,7 +111,7 @@
         '<div class="form-group editable form-editable-roadAddressProject"> ' +
         '<form id="roadAddressProject" class="input-unit-combination form-group form-horizontal roadAddressProject">' +
         inputFieldRequired('*Nimi', 'nimi', '', project.name, 32) +
-        inputFieldRequired('*Alkupvm', 'projectStartDate', 'pp.kk.vvvv', project.startDate) +
+        inputFieldRequired('*Alkupvm', 'projectStartDate', 'pp.kk.vvvv', project.startDate, 10) +
         '   <div class="form-check-date-notifications"> ' +
         '     <p id="projectStartDate-validation-notification"> </p>' +
         '   </div>' +
@@ -146,6 +146,8 @@
         '<footer>' + actionButtons() + '</footer>');
     };
 
+
+
     var selectedProjectLinkTemplateDisabledButtons = function (project) {
       return _.template('' +
         '<header>' +
@@ -172,7 +174,6 @@
       }
       else
         return '';
-
     };
 
     var addSmallLabel = function (label) {
@@ -200,7 +201,9 @@
     };
 
     var formIsInvalid = function (rootElement) {
-      return !(rootElement.find('#nimi').val() && rootElement.find('#projectStartDate').val() !== '');
+      const dateRegex = /^\d{1,2}.\d{1,2}.\d{4}$/;
+      const startDateValue = rootElement.find('#projectStartDate').val();
+      return !((rootElement.find('#nimi').val() && startDateValue !== '') && dateRegex.test(startDateValue));
     };
 
     var projDateEmpty = function (rootElement) {
@@ -507,7 +510,20 @@
 
       var checkDateNotification = function (projectStartDate) {
         var projectNotificationText = "";
-        var parts_DMY=projectStartDate.split('.');
+
+        var parts_DMY = projectStartDate.split('.');
+        //Allowed characters for date input field
+        const allowedChars = /^[0-9.]+$/;
+
+        //Check the project start date input field for incorrect characters
+        if (allowedChars.test(projectStartDate) || projectStartDate.length === 0) {
+          projectNotificationText = "";
+        }
+        else {
+          projectNotificationText = 'Päivämäärä saa sisältää vain numeroita tai pisteitä';
+        }
+
+        //Check the dat input field for dates older than 20 years or dates over 1 year in the future
         var projectSD = new Date(parts_DMY[2], parts_DMY[1] - 1, parts_DMY[0]);
         var nowDate = new Date();
         if(projectSD.getFullYear() < nowDate.getFullYear()-20) {
@@ -518,6 +534,7 @@
         }
         return   projectNotificationText;
       };
+
       eventbus.on('projectStartDate:notificationCheck', function (projectStartDate) {
         $('#projectStartDate-validation-notification').html(checkDateNotification(projectStartDate));
       });
