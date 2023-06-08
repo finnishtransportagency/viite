@@ -64,7 +64,7 @@ case class NodeExtractor(id: Long = NewIdValue, nodeNumber: Long = NewIdValue, c
                          createdTime: Option[String], editor: Option[String] = None, publishedTime: Option[DateTime] = None, registrationDate: Option[String] = None,
                          junctions: List[JunctionExtractor], nodePoints: List[NodePointExtractor])
 
-class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink, val roadAddressService: RoadAddressService, val projectService: ProjectService, val roadNetworkService: RoadNetworkService, val roadNameService: RoadNameService, val nodesAndJunctionsService: NodesAndJunctionsService, val userProvider: UserProvider = Digiroad2Context.userProvider, val deploy_date: String = Digiroad2Context.deploy_date, implicit val swagger: Swagger)
+class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink, val roadAddressService: RoadAddressService, val projectService: ProjectService, val roadNameService: RoadNameService, val nodesAndJunctionsService: NodesAndJunctionsService, val userProvider: UserProvider = Digiroad2Context.userProvider, val deploy_date: String = Digiroad2Context.deploy_date, implicit val swagger: Swagger)
   extends ScalatraServlet
     with JacksonJsonSupport
     with CorsSupport
