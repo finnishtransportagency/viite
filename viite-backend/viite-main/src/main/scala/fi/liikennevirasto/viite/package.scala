@@ -143,6 +143,16 @@ package object viite {
   val NodeNotFoundErrorMessage = "Päivitettävää solmua ei löytynyt."
   val NodeStartDateUpdateErrorMessage = "Solmun uusi alkupäivämäärä ei saa olla ennen nykyistä alkupäivämäärää."
 
+  // RoadNetwork validation error messages
+  val MissingCalibrationPointFromTheStart = "Kalibrointipiste puuttuu kohteen alusta"
+  val MissingCalibrationPointFromTheEnd = "Kalibrointipiste puuttuu kohteen lopusta"
+  val MissingCalibrationPointFromJunctions = "Kalibrointipiste puuttuu liittymästä"
+  val MissingRoadwayPointFromTheStart = "Roadway point puuttuu kohteen alusta"
+  val MissingRoadwayPointFromTheEnd = "Roadway point puuttuu kohteen lopusta"
+  val OverlappingRoadwaysOnLinearLocation = "Liian monta roadwayta lineaarilokaatiolla"
+  val InvalidRoadwayLengthTroughHistory = "Roadwaylla esiintyy pituus eroja historiassa"
+  val OverlappingRoadwayInHistory = "Tiellä esiintyy päällekkäisiä roadwayta historiassa"
+
   val RampsMinBound = 20000
   val RampsMaxBound = 39999
 

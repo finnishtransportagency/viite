@@ -4,14 +4,10 @@ import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.dao.Sequences
+import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.liikennevirasto.viite.AddressConsistencyValidator.AddressError
-import org.slf4j.LoggerFactory
-import slick.jdbc.StaticQuery.interpolation
+import fi.liikennevirasto.digiroad2.util.Track
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
-
-case class RoadNetworkError(id: Long, roadwayId: Long, linearLocationId: Long, error: AddressError, error_timestamp: Long, network_version: Option[Long])
 
 
 /** Data type for /summary API data */
@@ -22,9 +18,644 @@ case class RoadwayNetworkSummaryRow
   track: Int, startAddressM: Int, endAddressM: Int, continuity: Int
 )
 
-class RoadNetworkDAO {
+case class MissingCalibrationPoint(roadNumber: Long, roadPartNumber: Long, track: Long, addrM: Long, createdTime: DateTime, createdBy: String)
+case class MissingCalibrationPointFromJunction(missingCalibrationPoint: MissingCalibrationPoint, junctionPointId: Long, junctionNumber: Long, nodeNumber: Long, beforeAfter: BeforeAfter)
+case class MissingRoadwayPoint(roadNumber: Long, roadPartNumber: Long, track: Long, addrM: Long, createdTime: DateTime, createdBy: String)
+case class InvalidRoadwayLength(roadwayNumber: Long, startDate: DateTime, endDate: Option[DateTime], roadNumber: Long, roadPartNumber: Long, track: Long, startAddrM: Long, endAddrM: Long, length: Long, createdBy: String, createdTime: DateTime)
 
-  protected def logger = LoggerFactory.getLogger(getClass)
+class RoadNetworkDAO extends BaseDAO {
+
+  private implicit val missingCalibrationPoint: GetResult[MissingCalibrationPoint] = new GetResult[MissingCalibrationPoint] {
+    def apply(r: PositionedResult): MissingCalibrationPoint = {
+
+      val roadNumber = r.nextLong()
+      val roadPartNumber = r.nextLong()
+      val track = r.nextLong()
+      val addrM = r.nextLong()
+      val createdTime = formatter.parseDateTime(r.nextDate.toString)
+      val createdBy = r.nextString()
+
+      MissingCalibrationPoint(roadNumber, roadPartNumber, track, addrM, createdTime, createdBy)
+    }
+  }
+
+  private implicit val missingCalibrationPointFromJunction: GetResult[MissingCalibrationPointFromJunction] = new GetResult[MissingCalibrationPointFromJunction] {
+    def apply(r: PositionedResult): MissingCalibrationPointFromJunction = {
+
+      val junctionPointId = r.nextLong()
+      val junctionNumber = r.nextLong()
+      val nodeNumber = r.nextLong()
+      val roadNumber = r.nextLong()
+      val roadPartNumber = r.nextLong()
+      val track = r.nextLong()
+      val addrM = r.nextLong()
+      val beforeAfter = r.nextLong()
+      val createdTime = formatter.parseDateTime(r.nextDate.toString)
+      val createdBy = r.nextString()
+
+      MissingCalibrationPointFromJunction(MissingCalibrationPoint(roadNumber, roadPartNumber, track, addrM, createdTime, createdBy),junctionPointId, junctionNumber, nodeNumber, BeforeAfter.apply(beforeAfter))
+    }
+  }
+
+  private implicit val missingRoadwayPoint: GetResult[MissingRoadwayPoint] = new GetResult[MissingRoadwayPoint] {
+    def apply(r: PositionedResult): MissingRoadwayPoint = {
+
+      val roadNumber = r.nextLong()
+      val roadPartNumber = r.nextLong()
+      val track = r.nextLong()
+      val startAddrM = r.nextLong()
+      val createdTime = formatter.parseDateTime(r.nextDate.toString)
+      val createdBy = r.nextString()
+
+      MissingRoadwayPoint(roadNumber, roadPartNumber, track, startAddrM, createdTime, createdBy)
+    }
+  }
+
+  private implicit val invalidRoadwayLength: GetResult[InvalidRoadwayLength] = new GetResult[InvalidRoadwayLength] {
+    def apply(r: PositionedResult): InvalidRoadwayLength = {
+
+      val length = r.nextLong()
+      val roadwayNumber = r.nextLong()
+      val startDate = formatter.parseDateTime(r.nextDate.toString)
+      val endDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
+      val roadNumber = r.nextLong()
+      val roadPartNumber = r.nextLong()
+      val track = r.nextLong()
+      val startAddrM = r.nextLong()
+      val endAddrM = r.nextLong()
+      val createdBy = r.nextString()
+      val createdTime = formatter.parseDateTime(r.nextDate.toString)
+
+      InvalidRoadwayLength(roadwayNumber, startDate, endDate, roadNumber, roadPartNumber, track, startAddrM, endAddrM, length, createdBy, createdTime)
+    }
+  }
+
+  private implicit val getRoadway: GetResult[Roadway] = new GetResult[Roadway] {
+    def apply(r: PositionedResult): Roadway = {
+
+      val id = r.nextLong()
+      val roadwayNumber = r.nextLong()
+      val roadNumber = r.nextLong()
+      val roadPartNumber = r.nextLong()
+      val trackCode = r.nextInt()
+      val startAddrMValue = r.nextLong()
+      val endAddrMValue = r.nextLong()
+      val reverted = r.nextBoolean()
+      val discontinuity = r.nextInt()
+      val startDate = formatter.parseDateTime(r.nextDate.toString)
+      val endDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
+      val createdBy = r.nextString()
+      val administrativeClass = AdministrativeClass.apply(r.nextInt())
+      val ely = r.nextLong()
+      val terminated = TerminationCode.apply(r.nextInt())
+      val validFrom = formatter.parseDateTime(r.nextDate.toString)
+      val validTo = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
+      val roadName = r.nextStringOption()
+
+      Roadway(id, roadwayNumber, roadNumber, roadPartNumber, administrativeClass, Track.apply(trackCode), Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, reverted, startDate, endDate, createdBy, roadName, ely, terminated, validFrom, validTo)
+    }
+  }
+
+  def fetchMissingCalibrationPointsFromStart(): Seq[MissingCalibrationPoint] = {
+    val query =
+      s"""
+         |SELECT r.road_number,r.road_part_number,r.track,rp.addr_m ,r.created_time,r.created_by
+         |FROM roadway_point rp,roadway r
+         |WHERE (NOT EXISTS (SELECT 4 FROM calibration_point cp2 WHERE cp2.valid_to IS NULL AND cp2.roadway_point_id = rp.id ))
+         |AND r.roadway_number = rp.roadway_number AND r.valid_to IS NULL AND r.end_date IS NULL
+         |AND r.road_number<70000 AND rp.addr_m = 0
+         |ORDER BY r.road_number,r.road_part_number,r.track,rp.addr_m;""".stripMargin
+    Q.queryNA[MissingCalibrationPoint](query).iterator.toSeq
+  }
+
+  def fetchMissingCalibrationPointsFromStart(roadNumber: Long, roadPartNumber: Long): Seq[MissingCalibrationPoint] = {
+    val query =
+      s"""
+         |WITH roadways
+         |     AS (SELECT *
+         |         FROM roadway
+         |         WHERE valid_to IS NULL
+         |         AND road_number = ${roadNumber}
+         |         AND road_part_number = ${roadPartNumber}
+         |         )
+         |SELECT r.road_number,r.road_part_number,r.track,rp.addr_m ,r.created_time,r.created_by
+         |FROM roadway_point rp,roadways r
+         |WHERE (NOT EXISTS (SELECT 4 FROM calibration_point cp2 WHERE cp2.valid_to IS NULL AND cp2.roadway_point_id = rp.id ))
+         |AND r.roadway_number = rp.roadway_number AND r.valid_to IS NULL AND r.end_date IS NULL
+         |AND r.road_number<70000 AND rp.addr_m = 0
+         |ORDER BY r.road_number,r.road_part_number,r.track,rp.addr_m;""".stripMargin
+    Q.queryNA[MissingCalibrationPoint](query).iterator.toSeq
+  }
+
+  def fetchMissingCalibrationPointsFromEnd(): Seq[MissingCalibrationPoint] = {
+    val query =
+      s"""
+        SELECT r.road_number,r.road_part_number,r.track,rp.addr_m ,r.created_time,r.created_by
+        FROM roadway_point rp, roadway r
+        WHERE
+        (NOT EXISTS (SELECT 4 FROM calibration_point cp2 WHERE cp2.valid_to IS NULL AND cp2.roadway_point_id = rp.id))
+        AND r.roadway_number = rp.roadway_number AND r.valid_to IS NULL AND r.end_date IS NULL
+        AND r.road_number < 70000 AND rp.addr_m = (SELECT MAX(r2.end_addr_m) FROM roadway r2
+        WHERE r2.valid_to IS NULL AND r2.end_date IS NULL AND r.road_number = r2.road_number AND r.road_part_number = r2.road_part_number)
+        ORDER BY r.road_number, r.road_part_number, r.track, rp.addr_m;""".stripMargin
+    Q.queryNA[MissingCalibrationPoint](query).iterator.toSeq
+  }
+
+  def fetchMissingCalibrationPointsFromEnd(roadNumber: Long, roadPartNumber: Long): Seq[MissingCalibrationPoint] = {
+    val query =
+      s"""
+        WITH roadways
+          AS (SELECT *
+          FROM roadway
+          WHERE valid_to IS NULL
+          AND road_number = ${roadNumber}
+          AND road_part_number = ${roadPartNumber}
+        )
+        SELECT r.road_number,r.road_part_number,r.track,rp.addr_m ,r.created_time,r.created_by
+        FROM roadway_point rp, roadways r
+        WHERE
+        (NOT EXISTS (SELECT 4 FROM calibration_point cp2 WHERE cp2.valid_to IS NULL AND cp2.roadway_point_id = rp.id))
+        AND r.roadway_number = rp.roadway_number AND r.valid_to IS NULL AND r.end_date IS NULL
+        AND r.road_number < 70000 AND rp.addr_m = (SELECT MAX(r2.end_addr_m) FROM roadway r2
+        WHERE r2.valid_to IS NULL AND r2.end_date IS NULL AND r.road_number = r2.road_number AND r.road_part_number = r2.road_part_number)
+        ORDER BY r.road_number, r.road_part_number, r.track, rp.addr_m;""".stripMargin
+    Q.queryNA[MissingCalibrationPoint](query).iterator.toSeq
+  }
+
+  def fetchMissingCalibrationPointsFromJunctions(): Seq[MissingCalibrationPointFromJunction] = {
+    val query =
+      s"""
+         |SELECT jp.id AS junction_point_id,
+         |       j.junction_number,
+         |       j.node_number,
+         |       r.road_number,
+         |       r.road_part_number,
+         |       r.track,
+         |       rp.addr_m,
+         |       jp.before_after,
+         |       r.created_time,
+         |       r.created_by
+         |FROM   junction_point jp,
+         |       roadway_point rp,
+         |       roadway r,
+         |       junction j
+         |WHERE  jp.valid_to IS NULL
+         |       AND ( NOT EXISTS (SELECT 4
+         |                         FROM   calibration_point cp2
+         |                         WHERE  cp2.valid_to IS NULL
+         |                                AND cp2.roadway_point_id = jp.roadway_point_id)
+         |           )
+         |       AND rp.id = jp.roadway_point_id
+         |       AND r.roadway_number = rp.roadway_number
+         |       AND r.valid_to IS NULL
+         |       AND r.end_date IS NULL
+         |       AND r.road_number < 70000
+         |       AND j.id = jp.junction_id
+         |       AND j.end_date IS NULL
+         |       AND j.valid_to IS NULL
+         |ORDER  BY j.node_number,
+         |          j.junction_number,
+         |          r.road_number,
+         |          r.road_part_number,
+         |          r.track,
+         |          rp.addr_m; """.stripMargin
+    Q.queryNA[MissingCalibrationPointFromJunction](query).iterator.toSeq
+  }
+
+  def fetchMissingCalibrationPointsFromJunctions(roadNumber: Long, roadPartNumber: Long): Seq[MissingCalibrationPointFromJunction] = {
+    val query =
+      s"""
+         |WITH roadways
+         |          AS (SELECT *
+         |          FROM roadway
+         |          WHERE valid_to IS NULL
+         |          AND road_number = ${roadNumber}
+         |          AND road_part_number = ${roadPartNumber}
+         |        )
+         |SELECT jp.id AS junction_point_id,
+         |       j.junction_number,
+         |       j.node_number,
+         |       r.road_number,
+         |       r.road_part_number,
+         |       r.track,
+         |       rp.addr_m,
+         |       jp.before_after,
+         |       r.created_time,
+         |       r.created_by
+         |FROM   junction_point jp,
+         |       roadway_point rp,
+         |       roadways r,
+         |       junction j
+         |WHERE  jp.valid_to IS NULL
+         |       AND ( NOT EXISTS (SELECT 4
+         |                         FROM   calibration_point cp2
+         |                         WHERE  cp2.valid_to IS NULL
+         |                                AND cp2.roadway_point_id = jp.roadway_point_id)
+         |           )
+         |       AND rp.id = jp.roadway_point_id
+         |       AND r.roadway_number = rp.roadway_number
+         |       AND r.valid_to IS NULL
+         |       AND r.end_date IS NULL
+         |       AND r.road_number < 70000
+         |       AND j.id = jp.junction_id
+         |       AND j.end_date IS NULL
+         |       AND j.valid_to IS NULL
+         |ORDER  BY j.node_number,
+         |          j.junction_number,
+         |          r.road_number,
+         |          r.road_part_number,
+         |          r.track,
+         |          rp.addr_m; """.stripMargin
+    Q.queryNA[MissingCalibrationPointFromJunction](query).iterator.toSeq
+  }
+
+  def fetchMissingRoadwayPointsFromStart(): Seq[MissingRoadwayPoint] = {
+    val query =
+      s"""
+         |SELECT r.road_number,
+         |       r.road_part_number,
+         |       r.track,
+         |       r.start_addr_m,
+         |       r.created_time,
+         |       r.created_by
+         |FROM   roadway r
+         |WHERE  ( NOT EXISTS (SELECT 4
+         |                     FROM   roadway_point rp
+         |                     WHERE  r.roadway_number = rp.roadway_number
+         |                            AND r.start_addr_m = rp.addr_m) )
+         |       AND r.valid_to IS NULL
+         |       AND r.end_date IS NULL
+         |       AND r.road_number < 70000
+         |       AND r.start_addr_m = 0
+         |ORDER  BY r.road_number,
+         |          r.road_part_number,
+         |          r.track,
+         |          r.end_addr_m;""".stripMargin
+    Q.queryNA[MissingRoadwayPoint](query).iterator.toSeq
+  }
+
+  def fetchMissingRoadwayPointsFromStart(roadNumber: Long, roadPartNumber: Long): Seq[MissingRoadwayPoint] = {
+    val query =
+      s"""
+         |WITH roadways
+         |          AS (SELECT *
+         |          FROM roadway
+         |          WHERE valid_to IS NULL
+         |          AND road_number = ${roadNumber}
+         |          AND road_part_number = ${roadPartNumber}
+         |        )
+         |SELECT r.road_number,
+         |       r.road_part_number,
+         |       r.track,
+         |       r.start_addr_m,
+         |       r.created_time,
+         |       r.created_by
+         |FROM   roadways r
+         |WHERE  ( NOT EXISTS (SELECT 4
+         |                     FROM   roadway_point rp
+         |                     WHERE  r.roadway_number = rp.roadway_number
+         |                            AND r.start_addr_m = rp.addr_m) )
+         |       AND r.valid_to IS NULL
+         |       AND r.end_date IS NULL
+         |       AND r.road_number < 70000
+         |       AND r.start_addr_m = 0
+         |ORDER  BY r.road_number,
+         |          r.road_part_number,
+         |          r.track,
+         |          r.end_addr_m;""".stripMargin
+    Q.queryNA[MissingRoadwayPoint](query).iterator.toSeq
+  }
+
+  def fetchMissingRoadwayPointsFromEnd(): Seq[MissingRoadwayPoint] = {
+    val query =
+      s"""
+         |SELECT r.road_number,
+         |       r.road_part_number,
+         |       r.track,
+         |       r.end_addr_m,
+         |       r.created_time,
+         |       r.created_by
+         |FROM   roadway r
+         |WHERE  ( NOT EXISTS (SELECT 4
+         |                     FROM   roadway_point rp
+         |                     WHERE  r.roadway_number = rp.roadway_number
+         |                            AND r.end_addr_m = rp.addr_m) )
+         |       AND r.valid_to IS NULL
+         |       AND r.end_date IS NULL
+         |       AND r.road_number < 70000
+         |       AND r.end_addr_m = (SELECT Max(r2.end_addr_m)
+         |                           FROM   roadway r2
+         |                           WHERE  r2.valid_to IS NULL
+         |                                  AND r2.end_date IS NULL
+         |                                  AND r.road_number = r2.road_number
+         |                                  AND r.road_part_number = r2.road_part_number)
+         |ORDER  BY r.road_number,
+         |          r.road_part_number,
+         |          r.track,
+         |          r.end_addr_m; """.stripMargin
+    Q.queryNA[MissingRoadwayPoint](query).iterator.toSeq
+  }
+
+  def fetchMissingRoadwayPointsFromEnd(roadNumber: Long, roadPartNumber: Long): Seq[MissingRoadwayPoint] = {
+    val query =
+      s"""
+         |WITH roadways
+         |          AS (SELECT *
+         |          FROM roadway
+         |          WHERE valid_to IS NULL
+         |          AND road_number = ${roadNumber}
+         |          AND road_part_number = ${roadPartNumber}
+         |        )
+         |SELECT r.road_number,
+         |       r.road_part_number,
+         |       r.track,
+         |       r.end_addr_m,
+         |       r.created_time,
+         |       r.created_by
+         |FROM   roadways r
+         |WHERE  ( NOT EXISTS (SELECT 4
+         |                     FROM   roadway_point rp
+         |                     WHERE  r.roadway_number = rp.roadway_number
+         |                            AND r.end_addr_m = rp.addr_m) )
+         |       AND r.valid_to IS NULL
+         |       AND r.end_date IS NULL
+         |       AND r.road_number < 70000
+         |       AND r.end_addr_m = (SELECT Max(r2.end_addr_m)
+         |                           FROM   roadway r2
+         |                           WHERE  r2.valid_to IS NULL
+         |                                  AND r2.end_date IS NULL
+         |                                  AND r.road_number = r2.road_number
+         |                                  AND r.road_part_number = r2.road_part_number)
+         |ORDER  BY r.road_number,
+         |          r.road_part_number,
+         |          r.track,
+         |          r.end_addr_m; """.stripMargin
+    Q.queryNA[MissingRoadwayPoint](query).iterator.toSeq
+  }
+
+  def fetchOverlappingRoadwaysOnLinearLocations(roadNumber: Long, roadPartNumber: Long): Seq[(Long, Long, Long, Long, Long, Long, DateTime, DateTime, Long, String, Long, Long, Long, String, DateTime)] = {
+    val query =
+      s"""
+         |WITH roadways
+         |     AS (SELECT *
+         |         FROM   roadway
+         |         WHERE  valid_to IS NULL
+         |         AND road_number = ${roadNumber}
+         |         AND road_part_number = ${roadPartNumber}
+         |         )
+         |SELECT r.roadway_number,
+         |       r.road_number,
+         |       r.road_part_number,
+         |       r.track,
+         |       r.start_addr_m,
+         |       r.end_addr_m,
+         |       r.start_date,
+         |       r.end_date,
+         |       l.id,
+         |       l.link_id,
+         |       l.roadway_number,
+         |       l.start_measure,
+         |       l.end_measure,
+         |       l.created_by,
+         |       l.created_time
+         |FROM   roadways r,
+         |       linear_location l
+         |WHERE  r.roadway_number = l.roadway_number
+         |       AND r.valid_to IS NULL
+         |       AND l.valid_to IS NULL --and r.end_date is null
+         |       AND EXISTS (SELECT 4
+         |                   FROM   linear_location l2,
+         |                          roadway r2
+         |                   WHERE  l.link_id = l2.link_id
+         |                          AND ( NOT r2.roadway_number = r.roadway_number )
+         |                          AND ( ( l.start_measure >= l2.start_measure
+         |                                  AND l.start_measure < l2.end_measure )
+         |                                 OR ( l.end_measure > l2.start_measure
+         |                                      AND l.end_measure <= l2.end_measure )
+         |                                 OR ( l.start_measure < l2.start_measure
+         |                                      AND l.end_measure > l2.end_measure ) )
+         |                          AND r2.roadway_number = l2.roadway_number
+         |                          AND r2.valid_to IS NULL
+         |                          AND l2.valid_to IS NULL --and r2.end_date is null
+         |                  )
+         |UNION
+         |SELECT r.roadway_number,
+         |       r.road_number,
+         |       r.road_part_number,
+         |       r.track,
+         |       r.start_addr_m,
+         |       r.end_addr_m,
+         |       r.start_date,
+         |       r.end_date,
+         |       l.id,
+         |       l.link_id,
+         |       l.roadway_number,
+         |       l.start_measure,
+         |       l.end_measure,
+         |       l.created_by,
+         |       l.created_time
+         |FROM   roadways r,
+         |       linear_location l
+         |WHERE  r.roadway_number = l.roadway_number
+         |       AND r.valid_to IS NULL
+         |       AND l.valid_to IS NULL --and r.end_date is null
+         |       AND EXISTS (SELECT 4
+         |                   FROM   linear_location l2,
+         |                          roadway r2
+         |                   WHERE  l.link_id = l2.link_id
+         |                          AND l.start_measure < l2.start_measure
+         |                          AND l2.valid_to IS NULL
+         |                          AND r2.roadway_number = l2.roadway_number)
+         |       AND ( NOT EXISTS (SELECT 4
+         |                         FROM   linear_location l2,
+         |                                roadway r2
+         |                         WHERE  l.link_id = l2.link_id
+         |                                AND l2.start_measure = l.end_measure
+         |                                AND l2.valid_to IS NULL
+         |                                AND r2.valid_to IS NULL
+         |                                --and r2.end_date is null
+         |                                AND r2.roadway_number = l2.roadway_number) )
+         |UNION
+         |SELECT r.roadway_number,
+         |       r.road_number,
+         |       r.road_part_number,
+         |       r.track,
+         |       r.start_addr_m,
+         |       r.end_addr_m,
+         |       r.start_date,
+         |       r.end_date,
+         |       l.id,
+         |       l.link_id,
+         |       l.roadway_number,
+         |       l.start_measure,
+         |       l.end_measure,
+         |       l.created_by,
+         |       l.created_time
+         |FROM   roadways r,
+         |       linear_location l
+         |WHERE  r.roadway_number = l.roadway_number
+         |       AND r.valid_to IS NULL
+         |       AND l.valid_to IS NULL --and r.end_date is null
+         |       AND EXISTS (SELECT 4
+         |                   FROM   linear_location l2,
+         |                          roadway r2
+         |                   WHERE  l.link_id = l2.link_id
+         |                          AND l.start_measure > l2.start_measure
+         |                          AND l2.valid_to IS NULL
+         |                          AND r2.roadway_number = l2.roadway_number)
+         |       AND ( NOT EXISTS (SELECT 4
+         |                         FROM   linear_location l2,
+         |                                roadway r2
+         |                         WHERE  l.link_id = l2.link_id
+         |                                AND l.start_measure = l2.end_measure
+         |                                AND l2.valid_to IS NULL
+         |                                AND r2.valid_to IS NULL
+         |                                --and r2.end_date is null
+         |                                AND r2.roadway_number = l2.roadway_number) )
+         |ORDER  BY link_id,
+         |          start_measure;""".stripMargin
+    Q.queryNA[(Long, Long, Long, Long, Long, Long, DateTime, DateTime, Long, String, Long, Long, Long, String, DateTime)](query).iterator.toSeq
+  }
+
+  def fetchInvalidRoadwayLengths(): Seq[InvalidRoadwayLength] = {
+    val query =
+      s"""
+         |SELECT DISTINCT r.end_addr_m - r.start_addr_m AS pituus,
+         |                r.roadway_number,
+         |                r.start_date,
+         |                r.end_date,
+         |                r.road_number,
+         |                r.road_part_number,
+         |                r.track,
+         |                r.start_addr_m,
+         |                r.end_addr_m,
+         |                r.created_by,
+         |                r.created_time
+         |FROM   roadway r
+         |WHERE  r.valid_to IS NULL
+         |       AND ( EXISTS (SELECT 4
+         |                     FROM   roadway r2
+         |                     WHERE  r.roadway_number = r2.roadway_number
+         |                            AND ( NOT r2.end_addr_m - r2.start_addr_m =
+         |                                      r.end_addr_m - r.start_addr_m )
+         |                            AND r2.valid_to IS NULL) )
+         |ORDER  BY r.roadway_number, r.road_number, r.road_part_number""".stripMargin
+    Q.queryNA[InvalidRoadwayLength](query).iterator.toSeq
+  }
+
+  def fetchInvalidRoadwayLengthTroughHistory(roadNumber: Long, roadPartNumber: Long): Seq[InvalidRoadwayLength] = {
+    val query =
+      s"""
+         |WITH roadways
+         |     AS (SELECT *
+         |         FROM roadway
+         |         WHERE valid_to IS NULL
+         |         AND road_number = ${roadNumber}
+         |         AND road_part_number = ${roadPartNumber}
+         |         )
+         |SELECT DISTINCT r.end_addr_m - r.start_addr_m AS pituus,
+         |                r.roadway_number,
+         |                r.start_date,
+         |                r.end_date,
+         |                r.road_number,
+         |                r.road_part_number,
+         |                r.track,
+         |                r.start_addr_m,
+         |                r.end_addr_m,
+         |                r.created_by,
+         |                r.created_time
+         |FROM   roadways r
+         |WHERE  r.valid_to IS NULL
+         |       AND ( EXISTS (SELECT 4
+         |                     FROM   roadway r2
+         |                     WHERE  r.roadway_number = r2.roadway_number
+         |                            AND ( NOT r2.end_addr_m - r2.start_addr_m =
+         |                                      r.end_addr_m - r.start_addr_m )
+         |                            AND r2.valid_to IS NULL) )
+         |ORDER  BY r.road_number""".stripMargin
+    Q.queryNA[InvalidRoadwayLength](query).iterator.toSeq
+  }
+
+  def fetchOverlappingRoadwaysInHistory(): Seq[Roadway] = {
+    val query =
+      s"""
+         SELECT DISTINCT r.id, r.ROADWAY_NUMBER, r.road_number, r.road_part_number, r.TRACK, r.start_addr_m, r.end_addr_m,
+         |          r.reversed, r.discontinuity, r.start_date, r.end_date, r.created_by, r.ADMINISTRATIVE_CLASS, r.ely, r.terminated,
+         |          r.valid_from, r.valid_to,
+         |          (select rn.road_name from road_name rn where rn.road_number = r.road_number and rn.end_date is null and rn.valid_to is null) as road_name
+         |FROM   roadway r
+         |WHERE  r.valid_to IS NULL
+         |       AND ( EXISTS (SELECT 4
+         |                     FROM   roadway r2
+         |                     WHERE  r.road_number = r2.road_number
+         |                            AND ( NOT r.id = r2.id )
+         |                            AND r.road_part_number = r2.road_part_number
+         |                            AND ( r.track = 0
+         |                                   OR r2.track = 0
+         |                                   OR r.track = r2.track )
+         |                            AND ( ( r.start_addr_m >= r2.start_addr_m
+         |                                    AND r.start_addr_m < r2.end_addr_m )
+         |                                   OR ( r.end_addr_m > r2.start_addr_m
+         |                                        AND r.end_addr_m <= r2.end_addr_m )
+         |                                   OR ( r.start_addr_m < r2.start_addr_m
+         |                                        AND r.end_addr_m > r2.end_addr_m ) )
+         |                            AND r2.valid_to IS NULL --and r2.end_date is null
+         |                            AND ( ( r.start_date > r2.start_date
+         |                                    AND r.start_date < r2.end_date )
+         |                                   OR ( r.end_date > r2.start_date
+         |                                        AND r.end_date < r2.end_date )
+         |                                   OR ( r.start_date < r2.start_date
+         |                                        AND r.end_date > r2.end_date ) )) )
+         |ORDER  BY r.road_number,
+         |          r.road_part_number,
+         |          r.start_addr_m,
+         |          r.track """.stripMargin
+    Q.queryNA[Roadway](query).iterator.toSeq
+  }
+
+  def fetchOverlappingRoadwaysInHistory(roadNumber: Long, roadPartNumber: Long): Seq[Roadway] = {
+    val query =
+      s"""
+         |WITH roadways
+         |     AS (SELECT *
+         |         FROM roadway
+         |         WHERE valid_to IS NULL
+         |         AND road_number = ${roadNumber}
+         |         AND road_part_number = ${roadPartNumber}
+         |         )
+         |SELECT DISTINCT r.id, r.ROADWAY_NUMBER, r.road_number, r.road_part_number, r.TRACK, r.start_addr_m, r.end_addr_m,
+         |          r.reversed, r.discontinuity, r.start_date, r.end_date, r.created_by, r.ADMINISTRATIVE_CLASS, r.ely, r.terminated,
+         |          r.valid_from, r.valid_to,
+         |          (select rn.road_name from road_name rn where rn.road_number = r.road_number and rn.end_date is null and rn.valid_to is null) as road_name
+         |FROM   roadways r
+         |WHERE  r.valid_to IS NULL
+         |       AND ( EXISTS (SELECT 4
+         |                     FROM   roadway r2
+         |                     WHERE  r.road_number = r2.road_number
+         |                            AND ( NOT r.id = r2.id )
+         |                            AND r.road_part_number = r2.road_part_number
+         |                            AND ( r.track = 0
+         |                                   OR r2.track = 0
+         |                                   OR r.track = r2.track )
+         |                            AND ( ( r.start_addr_m >= r2.start_addr_m
+         |                                    AND r.start_addr_m < r2.end_addr_m )
+         |                                   OR ( r.end_addr_m > r2.start_addr_m
+         |                                        AND r.end_addr_m <= r2.end_addr_m )
+         |                                   OR ( r.start_addr_m < r2.start_addr_m
+         |                                        AND r.end_addr_m > r2.end_addr_m ) )
+         |                            AND r2.valid_to IS NULL --and r2.end_date is null
+         |                            AND ( ( r.start_date > r2.start_date
+         |                                    AND r.start_date < r2.end_date )
+         |                                   OR ( r.end_date > r2.start_date
+         |                                        AND r.end_date < r2.end_date )
+         |                                   OR ( r.start_date < r2.start_date
+         |                                        AND r.end_date > r2.end_date ) )) )
+         |ORDER  BY r.road_number,
+         |          r.road_part_number,
+         |          r.start_addr_m,
+         |          r.track """.stripMargin
+    Q.queryNA[Roadway](query).iterator.toSeq
+  }
 
   /**
     * Fetches the data required for /summary API result generation.

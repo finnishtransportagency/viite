@@ -6,6 +6,12 @@
     var gettingRoadLinks;
     moment.locale('fi');
 
+    this.getRoadNetworkErrors = _.throttle(function (callback) {
+      return $.get('api/viite/roadnetworkerrors', function (data) {
+        return _.isFunction(callback) && callback(data);
+      });
+    }, 1000);
+
     this.getDataForRoadAddressBrowser = _.throttle(function (params, callback) {
       return $.get('api/viite/roadaddressbrowser', params, function (data) {
         return _.isFunction(callback) && callback(data);

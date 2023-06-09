@@ -10,9 +10,9 @@ import fi.liikennevirasto.digiroad2.asset.LifecycleStatus.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.FrozenLinkInterface
 import fi.liikennevirasto.digiroad2.dao.ComplementaryLinkDAO
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.viite.{NodesAndJunctionsService, PreFillInfo, ProjectService, RoadAddressService, RoadNameService, RoadNameSource, ViiteVkmClient}
-import fi.liikennevirasto.viite.dao.{ProjectLinkDAO, ProjectLinkNameDAO}
-import fi.liikennevirasto.viite.util.{runWithRollback, DigiroadSerializers, JsonSerializer}
+import fi.liikennevirasto.viite.{NodesAndJunctionsService, PreFillInfo, ProjectService, RoadAddressService, RoadNameService, RoadNameSource, RoadNetworkValidator, ViiteVkmClient}
+import fi.liikennevirasto.viite.dao.{ProjectLinkDAO}
+import fi.liikennevirasto.viite.util.{DigiroadSerializers, JsonSerializer, runWithRollback}
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
@@ -37,6 +37,7 @@ class ViiteApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter {
 
   val mockProjectService          : ProjectService           = MockitoSugar.mock[ProjectService]
   val mockNodesAndJunctionsService: NodesAndJunctionsService = MockitoSugar.mock[NodesAndJunctionsService]
+  val mockRoadNetworkValidator    : RoadNetworkValidator     = MockitoSugar.mock[RoadNetworkValidator]
   val roadNameService             : RoadNameService          = new RoadNameService { override def withDynTransaction[T](f: => T): T = runWithRollback(f) }
 
   val mockViiteVkmClient: ViiteVkmClient = MockitoSugar.mock[ViiteVkmClient]
@@ -77,7 +78,7 @@ class ViiteApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter {
     override def withDynTransaction[T](f: => T): T = runWithRollback(f)
   }
 
-    private val viiteApi = new ViiteApi(roadLinkService, mockKgvRoadLink, roadAddressService, projectService, roadNameService, mockNodesAndJunctionsService, swagger = new ViiteSwagger)
+    private val viiteApi = new ViiteApi(roadLinkService, mockKgvRoadLink, roadAddressService, projectService, roadNameService, mockNodesAndJunctionsService, mockRoadNetworkValidator, swagger = new ViiteSwagger)
 
   addServlet(viiteApi, "/*")
 

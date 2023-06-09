@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReservedException, Track}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.liikennevirasto.digiroad2.Digiroad2Context.projectLinkDAO
+import fi.liikennevirasto.digiroad2.Digiroad2Context.{projectLinkDAO}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model._
@@ -64,7 +64,7 @@ case class NodeExtractor(id: Long = NewIdValue, nodeNumber: Long = NewIdValue, c
                          createdTime: Option[String], editor: Option[String] = None, publishedTime: Option[DateTime] = None, registrationDate: Option[String] = None,
                          junctions: List[JunctionExtractor], nodePoints: List[NodePointExtractor])
 
-class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink, val roadAddressService: RoadAddressService, val projectService: ProjectService, val roadNameService: RoadNameService, val nodesAndJunctionsService: NodesAndJunctionsService, val userProvider: UserProvider = Digiroad2Context.userProvider, val deploy_date: String = Digiroad2Context.deploy_date, implicit val swagger: Swagger)
+class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink, val roadAddressService: RoadAddressService, val projectService: ProjectService, val roadNameService: RoadNameService, val nodesAndJunctionsService: NodesAndJunctionsService, val roadNetworkValidator: RoadNetworkValidator, val userProvider: UserProvider = Digiroad2Context.userProvider, val deploy_date: String = Digiroad2Context.deploy_date, implicit val swagger: Swagger)
   extends ScalatraServlet
     with JacksonJsonSupport
     with CorsSupport
@@ -354,6 +354,115 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
         case None => Map("success" -> true)
       }
     }
+  }
+
+  private val getRoadNetworkErrors: SwaggerSupportSyntax.OperationBuilder = (
+    apiOperation[Map[String, Any]]("roadnetworkerrors")
+      tags "ViiteAPI - RoadNetworkErrors"
+      summary "Gets all the road network errors."
+    )
+
+  get("/roadnetworkerrors", operation(getRoadNetworkErrors)) {
+    time(logger, s"GET request for /roadnetworkerrors") {
+      try {
+        val missingCalibrationPointsFromTheStart = roadNetworkValidator.getMissingCalibrationPointsFromTheStart()
+        val missingCalibrationPointsFromTheEnd = roadNetworkValidator.getMissingCalibrationPointsFromTheEnd()
+        val missingCalibrationPointsFromJunctions = roadNetworkValidator.getMissingCalibrationPointsFromJunctions()
+        val missingRoadwayPointsFromTheStart = roadNetworkValidator.getMissingRoadwayPointsFromTheStart()
+        val missingRoadwayPointsFromTheEnd = roadNetworkValidator.getMissingRoadwayPointsFromTheEnd()
+        val invalidRoadwayLengths = roadNetworkValidator.getInvalidRoadwayLengths()
+        val overlappingRoadways = roadNetworkValidator.getOverlappingRoadways()
+
+        Map("success" -> true,
+          "missingCalibrationPointsFromStart" -> missingCalibrationPointsFromTheStart.map(cp => missingCalibrationPointToApi(cp)),
+          "missingCalibrationPointsFromEnd" -> missingCalibrationPointsFromTheEnd.map(cp => missingCalibrationPointToApi(cp)),
+          "missingCalibrationPointsFromJunctions" -> missingCalibrationPointsFromJunctions.map(cp => missingCalibrationPointFromJunctionToApi(cp)),
+          "missingRoadwayPointsFromStart" -> missingRoadwayPointsFromTheStart.map(rwp => missingRoadwayPointToApi(rwp)),
+          "missingRoadwayPointsFromEnd" -> missingRoadwayPointsFromTheEnd.map(rwp => missingRoadwayPointToApi(rwp)),
+          "invalidRoadwayLengths" -> invalidRoadwayLengths.map(rw => invalidRoadwayLengthToApi(rw)),
+          "overlappingRoadways" -> overlappingRoadways.map(rw => roadwayToApi(rw)))
+
+      } catch {
+        case e: Throwable =>
+          logger.error(s"Fetching road network errors failed. ${e}")
+          Map("success" -> false, "error" -> "Tieverkon virheiden haku epäonnistui, ota yhteys Viite tukeen.")
+      }
+    }
+  }
+
+  def missingCalibrationPointToApi(cp: MissingCalibrationPoint): Map[String, Any] = {
+    Map(
+      "roadNumber" -> cp.roadNumber,
+      "roadPartNumber" -> cp.roadPartNumber,
+      "track" -> cp.track,
+      "addrM" -> cp.addrM,
+      "createdTime" -> cp.createdTime,
+      "createdBy" -> cp.createdBy
+    )
+  }
+
+  def missingCalibrationPointFromJunctionToApi(cp: MissingCalibrationPointFromJunction): Map[String, Any] = {
+    Map(
+      "roadNumber" -> cp.missingCalibrationPoint.roadNumber,
+      "roadPartNumber" -> cp.missingCalibrationPoint.roadPartNumber,
+      "track" -> cp.missingCalibrationPoint.track,
+      "addrM" -> cp.missingCalibrationPoint.addrM,
+      "createdTime" -> cp.missingCalibrationPoint.createdTime,
+      "createdBy" -> cp.missingCalibrationPoint.createdBy,
+      "junctionPointId" -> cp.junctionPointId,
+      "junctionNumber"-> cp.junctionNumber,
+      "nodeNumber" -> cp.nodeNumber,
+      "beforeAfter" -> cp.beforeAfter
+    )
+  }
+
+  def missingRoadwayPointToApi(rwp: MissingRoadwayPoint): Map[String, Any] = {
+    Map(
+      "roadNumber" -> rwp.roadNumber,
+      "roadPartNumber" -> rwp.roadPartNumber,
+      "track" -> rwp.track,
+      "addrM" -> rwp.addrM,
+      "createdTime" -> rwp.createdTime,
+      "createdBy" -> rwp.createdBy
+    )
+  }
+
+  def invalidRoadwayLengthToApi(rw: InvalidRoadwayLength): Map[String, Any] = {
+    Map(
+      "roadwayNumber" -> rw.roadwayNumber,
+      "startDate" -> rw.startDate,
+      "endDate" -> rw.endDate,
+      "roadNumber" -> rw.roadNumber,
+      "roadPartNumber" -> rw.roadPartNumber,
+      "track" -> rw.track,
+      "startAddrM" -> rw.startAddrM,
+      "endAddrM" -> rw.endAddrM,
+      "length" -> rw.length,
+      "createdBy" -> rw.createdBy,
+      "createdTime" -> rw.createdTime
+    )
+  }
+
+  def roadwayToApi(rw: Roadway): Map[String, Any] = {
+    Map(
+      "roadwayId" -> rw.id,
+      "roadwayNumber" -> rw.roadwayNumber,
+      "roadNumber" -> rw.roadNumber,
+      "roadPartNumber" -> rw.roadPartNumber,
+      "track" -> rw.track,
+      "startAddrM" -> rw.startAddrMValue,
+      "endAddrM" -> rw.endAddrMValue,
+      "reversed" -> rw.reversed,
+      "discontinuity" -> rw.discontinuity,
+      "startDate" -> rw.startDate,
+      "endDate" -> rw.endDate,
+      "createdBy" -> rw.createdBy,
+      "administrativeClass" -> rw.administrativeClass,
+      "ely" -> rw.ely,
+      "terminated" -> rw.terminated,
+      "validFrom" -> rw.validFrom,
+      "validTo" -> rw.validTo
+    )
   }
 
   private val getDataForRoadAddressBrowser: SwaggerSupportSyntax.OperationBuilder = (
