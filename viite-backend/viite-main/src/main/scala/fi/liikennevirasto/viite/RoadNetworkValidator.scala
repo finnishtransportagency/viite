@@ -1,7 +1,7 @@
 package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.withDynSession
-import fi.liikennevirasto.viite.dao.{InvalidRoadwayLength, MissingCalibrationPoint, MissingCalibrationPointFromJunction, MissingRoadwayPoint, RoadNetworkDAO, Roadway}
+import fi.liikennevirasto.viite.dao.{InvalidRoadwayLength, MissingCalibrationPoint, MissingCalibrationPointFromJunction, MissingRoadwayPoint, OverlappingRoadwayOnLinearLocation, RoadNetworkDAO, Roadway}
 import fi.liikennevirasto.viite.process.RoadPart
 import org.slf4j.LoggerFactory
 
@@ -45,12 +45,17 @@ class RoadNetworkValidator {
     }
   }
 
-  def getOverlappingRoadways(): Seq[Roadway] = {
+  def getOverlappingRoadwaysInHistory(): Seq[Roadway] = {
     withDynSession {
       roadNetworkDAO.fetchOverlappingRoadwaysInHistory()
     }
   }
 
+  def getOverlappingRoadwaysOnLinearLocations(): Seq[OverlappingRoadwayOnLinearLocation] = {
+    withDynSession {
+      roadNetworkDAO.fetchOverlappingRoadwaysOnLinearLocations()
+    }
+  }
 
   def validateRoadNetwork(roadParts: Seq[RoadPart]): Unit = {
     roadParts.foreach(roadPart => {

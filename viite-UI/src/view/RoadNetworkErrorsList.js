@@ -31,6 +31,8 @@
                         showInvalidRoadwayLengths(result.invalidRoadwayLengths);
                     if (result.overlappingRoadways.length > 0)
                         showOverlappingRoadways(result.overlappingRoadways);
+                    if (result.overlappingRoadwaysOnLinearLocations.length > 0)
+                        showOverlappingRoadwaysOnLinearLocations(result.overlappingRoadwaysOnLinearLocations);
                 } else {
                     showErrorMessage(result.error);
                 }
@@ -175,6 +177,37 @@
                                     <td>${rw.startAddrM}</td>
                                     <td>${rw.endAddrM}</td>
                                     <td>${rw.roadwayNumber}</td>
+                                </tr>`);
+                table.append(tableRow);
+            });
+            contentWrapper.append(table);
+        };
+
+        const showOverlappingRoadwaysOnLinearLocations = function (overlappingRoadways) {
+            const contentWrapper = $('#roadNetworkErrorWindowContent');
+            contentWrapper.append('<h3>Päällekkäiset roadwayt lineaarilokaatioilla</h3>');
+            const table = $('<table class="viite-table"> ' +
+                '<thead> ' +
+                '<th>Tie</th>' +
+                '<th>Osa</th>' +
+                '<th>Ajr</th>' +
+                '<th>Aet</th>' +
+                '<th>Let</th>' +
+                '<th>Roadway numero</th>' +
+                '<th>Lineaarilokaatio Id</th>' +
+                '<th>Link Id</th>' +
+                '</thead>' +
+                '<tbody></tbody></table>');
+            overlappingRoadways.forEach((rw) => {
+                const tableRow = $(`<tr>
+                                    <td>${rw.roadNumber}</td>
+                                    <td>${rw.roadPartNumber}</td>
+                                    <td>${rw.track}</td>
+                                    <td>${rw.startAddrM}</td>
+                                    <td>${rw.endAddrM}</td>
+                                    <td>${rw.roadwayNumber}</td>
+                                    <td>${rw.linearLocationId}</td>
+                                    <td>${rw.linkId}</td>
                                 </tr>`);
                 table.append(tableRow);
             });

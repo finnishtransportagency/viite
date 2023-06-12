@@ -23,6 +23,8 @@ case class MissingCalibrationPointFromJunction(missingCalibrationPoint: MissingC
 case class MissingRoadwayPoint(roadNumber: Long, roadPartNumber: Long, track: Long, addrM: Long, createdTime: DateTime, createdBy: String)
 case class InvalidRoadwayLength(roadwayNumber: Long, startDate: DateTime, endDate: Option[DateTime], roadNumber: Long, roadPartNumber: Long, track: Long, startAddrM: Long, endAddrM: Long, length: Long, createdBy: String, createdTime: DateTime)
 
+case class OverlappingRoadwayOnLinearLocation(roadway: Roadway, linearLocationId: Long, linkId: String, linearLocationRoadwayNumber: Long, linearLocationStartMeasure: Long, linearLocationEndMeasure: Long, linearLocationCreatedBy: String, linearLocationCreatedTime: DateTime)
+
 class RoadNetworkDAO extends BaseDAO {
 
   private implicit val missingCalibrationPoint: GetResult[MissingCalibrationPoint] = new GetResult[MissingCalibrationPoint] {
@@ -113,6 +115,42 @@ class RoadNetworkDAO extends BaseDAO {
       val roadName = r.nextStringOption()
 
       Roadway(id, roadwayNumber, roadNumber, roadPartNumber, administrativeClass, Track.apply(trackCode), Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, reverted, startDate, endDate, createdBy, roadName, ely, terminated, validFrom, validTo)
+    }
+  }
+
+  private implicit val getOverlappingRoadwayOnLinearLocation: GetResult[OverlappingRoadwayOnLinearLocation] = new GetResult[OverlappingRoadwayOnLinearLocation] {
+    def apply(r: PositionedResult): OverlappingRoadwayOnLinearLocation = {
+
+      val id = r.nextLong()
+      val roadwayNumber = r.nextLong()
+      val roadNumber = r.nextLong()
+      val roadPartNumber = r.nextLong()
+      val trackCode = r.nextInt()
+      val startAddrMValue = r.nextLong()
+      val endAddrMValue = r.nextLong()
+      val reverted = r.nextBoolean()
+      val discontinuity = r.nextInt()
+      val startDate = formatter.parseDateTime(r.nextDate.toString)
+      val endDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
+      val createdBy = r.nextString()
+      val administrativeClass = AdministrativeClass.apply(r.nextInt())
+      val ely = r.nextLong()
+      val terminated = TerminationCode.apply(r.nextInt())
+      val validFrom = formatter.parseDateTime(r.nextDate.toString)
+      val validTo = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
+      val roadName = r.nextStringOption()
+
+      val linearLocationId = r.nextLong()
+      val linkId = r.nextString()
+      val linearLocationRoadwayNumber = r.nextLong()
+      val linearLocationStartMeasure = r.nextLong()
+      val linearLocationEndMeasure = r.nextLong()
+      val linearLocationCreatedBy = r.nextString()
+      val linearLocationCreatedTime = formatter.parseDateTime(r.nextDate.toString)
+
+      OverlappingRoadwayOnLinearLocation(Roadway(id, roadwayNumber, roadNumber, roadPartNumber, administrativeClass, Track.apply(trackCode), Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, reverted, startDate, endDate, createdBy, roadName, ely, terminated, validFrom, validTo),
+        linearLocationId, linkId, linearLocationRoadwayNumber, linearLocationStartMeasure, linearLocationEndMeasure, linearLocationCreatedBy, linearLocationCreatedTime
+      )
     }
   }
 
@@ -393,7 +431,107 @@ class RoadNetworkDAO extends BaseDAO {
     Q.queryNA[MissingRoadwayPoint](query).iterator.toSeq
   }
 
-  def fetchOverlappingRoadwaysOnLinearLocations(roadNumber: Long, roadPartNumber: Long): Seq[(Long, Long, Long, Long, Long, Long, DateTime, DateTime, Long, String, Long, Long, Long, String, DateTime)] = {
+  def fetchOverlappingRoadwaysOnLinearLocations(): Seq[OverlappingRoadwayOnLinearLocation] = {
+    val query =
+      s"""SELECT DISTINCT r.id, r.ROADWAY_NUMBER, r.road_number, r.road_part_number, r.TRACK, r.start_addr_m, r.end_addr_m,
+         |          r.reversed, r.discontinuity, r.start_date, r.end_date, r.created_by, r.ADMINISTRATIVE_CLASS, r.ely, r.terminated,
+         |          r.valid_from, r.valid_to,
+         |          (select rn.road_name from road_name rn where rn.road_number = r.road_number and rn.end_date is null and rn.valid_to is null) as road_name,
+         |       l.id as linearLocationId,
+         |       l.link_id,
+         |       l.roadway_number,
+         |       l.start_measure,
+         |       l.end_measure,
+         |       l.created_by,
+         |       l.created_time
+         |FROM   roadway r
+         |join linear_location l on r.roadway_number = l.roadway_number
+         |WHERE r.valid_to IS NULL
+         |       AND l.valid_to IS NULL
+         |       AND EXISTS (SELECT 4
+         |                   FROM   linear_location l2,
+         |                          roadway r2
+         |                   WHERE  l.link_id = l2.link_id
+         |                          AND ( NOT r2.roadway_number = r.roadway_number )
+         |                          AND ( ( l.start_measure >= l2.start_measure
+         |                                  AND l.start_measure < l2.end_measure )
+         |                                 OR ( l.end_measure > l2.start_measure
+         |                                      AND l.end_measure <= l2.end_measure )
+         |                                 OR ( l.start_measure < l2.start_measure
+         |                                      AND l.end_measure > l2.end_measure ) )
+         |                          AND r2.roadway_number = l2.roadway_number
+         |                          AND r2.valid_to IS NULL
+         |                          AND l2.valid_to IS NULL
+         |                  )
+         |UNION
+         |SELECT DISTINCT r.id, r.ROADWAY_NUMBER, r.road_number, r.road_part_number, r.TRACK, r.start_addr_m, r.end_addr_m,
+         |          r.reversed, r.discontinuity, r.start_date, r.end_date, r.created_by, r.ADMINISTRATIVE_CLASS, r.ely, r.terminated,
+         |          r.valid_from, r.valid_to,
+         |          (select rn.road_name from road_name rn where rn.road_number = r.road_number and rn.end_date is null and rn.valid_to is null) as road_name,
+         |       l.id as linearLocationId,
+         |       l.link_id,
+         |       l.roadway_number,
+         |       l.start_measure,
+         |       l.end_measure,
+         |       l.created_by,
+         |       l.created_time
+         |FROM   roadway r
+         |       join linear_location l on r.roadway_number = l.roadway_number
+         |where  r.valid_to IS NULL
+         |       AND l.valid_to IS NULL
+         |       AND EXISTS (SELECT 4
+         |                   FROM   linear_location l2,
+         |                          roadway r2
+         |                   WHERE  l.link_id = l2.link_id
+         |                          AND l.start_measure < l2.start_measure
+         |                          AND l2.valid_to IS NULL
+         |                          AND r2.roadway_number = l2.roadway_number)
+         |       AND ( NOT EXISTS (SELECT 4
+         |                         FROM   linear_location l2,
+         |                                roadway r2
+         |                         WHERE  l.link_id = l2.link_id
+         |                                AND l2.start_measure = l.end_measure
+         |                                AND l2.valid_to IS NULL
+         |                                AND r2.valid_to IS NULL
+         |                                AND r2.roadway_number = l2.roadway_number) )
+         |UNION
+         |SELECT DISTINCT r.id, r.ROADWAY_NUMBER, r.road_number, r.road_part_number, r.TRACK, r.start_addr_m, r.end_addr_m,
+         |          r.reversed, r.discontinuity, r.start_date, r.end_date, r.created_by, r.ADMINISTRATIVE_CLASS, r.ely, r.terminated,
+         |          r.valid_from, r.valid_to,
+         |          (select rn.road_name from road_name rn where rn.road_number = r.road_number and rn.end_date is null and rn.valid_to is null) as road_name,
+         |       l.id as linearLocationId,
+         |       l.link_id,
+         |       l.roadway_number,
+         |       l.start_measure,
+         |       l.end_measure,
+         |       l.created_by,
+         |       l.created_time
+         |FROM   roadway r
+         |join linear_location l on r.roadway_number = l.roadway_number
+         |WHERE  r.valid_to IS NULL
+         |       AND l.valid_to IS NULL
+         |       AND EXISTS (SELECT 4
+         |                   FROM   linear_location l2,
+         |                          roadway r2
+         |                   WHERE  l.link_id = l2.link_id
+         |                          AND l.start_measure > l2.start_measure
+         |                          AND l2.valid_to IS NULL
+         |                          AND r2.roadway_number = l2.roadway_number)
+         |       AND ( NOT EXISTS (SELECT 4
+         |                         FROM   linear_location l2,
+         |                                roadway r2
+         |                         WHERE  l.link_id = l2.link_id
+         |                                AND l.start_measure = l2.end_measure
+         |                                AND l2.valid_to IS NULL
+         |                                AND r2.valid_to IS NULL
+         |                                AND r2.roadway_number = l2.roadway_number) )
+         |ORDER  BY link_id, linearLocationId,
+         |          start_measure;""".stripMargin
+
+    Q.queryNA[OverlappingRoadwayOnLinearLocation](query).iterator.toSeq
+  }
+
+  def fetchOverlappingRoadwaysOnLinearLocations(roadNumber: Long, roadPartNumber: Long): Seq[OverlappingRoadwayOnLinearLocation] = {
     val query =
       s"""
          |WITH roadways
@@ -514,7 +652,7 @@ class RoadNetworkDAO extends BaseDAO {
          |                                AND r2.roadway_number = l2.roadway_number) )
          |ORDER  BY link_id,
          |          start_measure;""".stripMargin
-    Q.queryNA[(Long, Long, Long, Long, Long, Long, DateTime, DateTime, Long, String, Long, Long, Long, String, DateTime)](query).iterator.toSeq
+    Q.queryNA[OverlappingRoadwayOnLinearLocation](query).iterator.toSeq
   }
 
   def fetchInvalidRoadwayLengths(): Seq[InvalidRoadwayLength] = {

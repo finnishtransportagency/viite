@@ -371,7 +371,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
         val missingRoadwayPointsFromTheStart = roadNetworkValidator.getMissingRoadwayPointsFromTheStart()
         val missingRoadwayPointsFromTheEnd = roadNetworkValidator.getMissingRoadwayPointsFromTheEnd()
         val invalidRoadwayLengths = roadNetworkValidator.getInvalidRoadwayLengths()
-        val overlappingRoadways = roadNetworkValidator.getOverlappingRoadways()
+        val overlappingRoadways = roadNetworkValidator.getOverlappingRoadwaysInHistory()
+        val overlappingRoadwaysOnLinearLocations = roadNetworkValidator.getOverlappingRoadwaysOnLinearLocations()
 
         Map("success" -> true,
           "missingCalibrationPointsFromStart" -> missingCalibrationPointsFromTheStart.map(cp => missingCalibrationPointToApi(cp)),
@@ -380,7 +381,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
           "missingRoadwayPointsFromStart" -> missingRoadwayPointsFromTheStart.map(rwp => missingRoadwayPointToApi(rwp)),
           "missingRoadwayPointsFromEnd" -> missingRoadwayPointsFromTheEnd.map(rwp => missingRoadwayPointToApi(rwp)),
           "invalidRoadwayLengths" -> invalidRoadwayLengths.map(rw => invalidRoadwayLengthToApi(rw)),
-          "overlappingRoadways" -> overlappingRoadways.map(rw => roadwayToApi(rw)))
+          "overlappingRoadways" -> overlappingRoadways.map(rw => roadwayToApi(rw)),
+          "overlappingRoadwaysOnLinearLocations" -> overlappingRoadwaysOnLinearLocations.map(rw => overlappingRoadwayOnLinearLocationToApi(rw)))
 
       } catch {
         case e: Throwable =>
@@ -462,6 +464,35 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       "terminated" -> rw.terminated,
       "validFrom" -> rw.validFrom,
       "validTo" -> rw.validTo
+    )
+  }
+
+  def overlappingRoadwayOnLinearLocationToApi(rw: OverlappingRoadwayOnLinearLocation): Map[String, Any] = {
+    Map(
+      "roadwayId" -> rw.roadway.id,
+      "roadwayNumber" -> rw.roadway.roadwayNumber,
+      "roadNumber" -> rw.roadway.roadNumber,
+      "roadPartNumber" -> rw.roadway.roadPartNumber,
+      "track" -> rw.roadway.track,
+      "startAddrM" -> rw.roadway.startAddrMValue,
+      "endAddrM" -> rw.roadway.endAddrMValue,
+      "reversed" -> rw.roadway.reversed,
+      "discontinuity" -> rw.roadway.discontinuity,
+      "startDate" -> rw.roadway.startDate,
+      "endDate" -> rw.roadway.endDate,
+      "createdBy" -> rw.roadway.createdBy,
+      "administrativeClass" -> rw.roadway.administrativeClass,
+      "ely" -> rw.roadway.ely,
+      "terminated" -> rw.roadway.terminated,
+      "validFrom" -> rw.roadway.validFrom,
+      "validTo" -> rw.roadway.validTo,
+      "linearLocationId" -> rw.linearLocationId,
+      "linkId" -> rw.linkId,
+      "linearLocationRoadwayNumber" -> rw.linearLocationRoadwayNumber,
+      "linearLocationStartMeasure" -> rw.linearLocationStartMeasure,
+      "linearLocationEndMeasure" -> rw.linearLocationEndMeasure,
+      "linearLocationCreatedTime" -> rw.linearLocationCreatedTime,
+      "linearLocationCreatedBy" -> rw.linearLocationCreatedBy
     )
   }
 
