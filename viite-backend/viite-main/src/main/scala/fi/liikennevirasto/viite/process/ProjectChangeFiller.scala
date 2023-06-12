@@ -1,7 +1,8 @@
 package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.viite.ProjectRoadLinkChange
-import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectLink, ProjectRoadwayChange, RoadAddress}
+import fi.liikennevirasto.viite.dao.{ProjectLink, ProjectRoadwayChange, RoadAddress}
+import fi.vaylavirasto.viite.model.LinkStatus
 
 object ProjectChangeFiller {
   def mapLinksToChanges(roadwayChanges: List[ProjectRoadwayChange], roadwayProjectLinkIds: Seq[(Long, Long)], projectLinks: Seq[ProjectLink], projectLinkChanges: Seq[ProjectRoadLinkChange]): Seq[(ProjectRoadwayChange, Seq[ProjectLink])] = {

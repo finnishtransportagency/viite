@@ -1,10 +1,10 @@
 package fi.liikennevirasto.viite.model
 
-import fi.liikennevirasto.viite.dao.{CalibrationPoint, LinkStatus}
+import fi.liikennevirasto.viite.dao.CalibrationPoint
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
 import fi.vaylavirasto.viite.geometry.Point
-import fi.vaylavirasto.viite.model.{AdministrativeClass, LifecycleStatus, LinkGeomSource, SideCode}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, LifecycleStatus, LinkGeomSource, LinkStatus, SideCode}
 import org.joda.time.DateTime
 
 trait ProjectAddressLinkLike extends RoadAddressLinkLike {

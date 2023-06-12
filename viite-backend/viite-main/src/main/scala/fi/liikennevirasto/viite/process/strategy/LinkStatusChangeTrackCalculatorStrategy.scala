@@ -1,10 +1,9 @@
 package fi.liikennevirasto.viite.process.strategy
 
 import fi.liikennevirasto.viite.NewIdValue
-import fi.liikennevirasto.viite.dao.LinkStatus.New
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
-import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectLink}
-import fi.vaylavirasto.viite.model.Track
+import fi.liikennevirasto.viite.dao.ProjectLink
+import fi.vaylavirasto.viite.model.{LinkStatus, Track}
 
 
 class LinkStatusChangeTrackCalculatorStrategy extends TrackCalculatorStrategy {
@@ -17,7 +16,7 @@ class LinkStatusChangeTrackCalculatorStrategy extends TrackCalculatorStrategy {
 
   override def applicableStrategy(headProjectLink: ProjectLink, projectLink: ProjectLink): Boolean = {
     //Will be applied if the link status changes for every status change detected and track is Left or Right
-    projectLink.status != headProjectLink.status && (projectLink.status != New && headProjectLink.status != New) &&
+    projectLink.status != headProjectLink.status && (projectLink.status != LinkStatus.New && headProjectLink.status != LinkStatus.New) &&
       (projectLink.track == Track.LeftSide || projectLink.track == Track.RightSide)
   }
 

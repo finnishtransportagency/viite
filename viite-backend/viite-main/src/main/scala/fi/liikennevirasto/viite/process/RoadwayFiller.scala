@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, Track}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LinkStatus, Track}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 

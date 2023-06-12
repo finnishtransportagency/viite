@@ -5,15 +5,13 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{JunctionPointCP, NoCP, RoadAddressCP}
-import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, EndOfRoad, MinorDiscontinuity}
-import fi.liikennevirasto.viite.dao.LinkStatus.{Terminated, Transfer}
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.process.ProjectDeltaCalculator.createTwoTrackOldAddressRoadParts
 import fi.liikennevirasto.viite.util.{toProjectLink, toTransition}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.LinkGeomSource.{FrozenLinkInterface, NormalLinkInterface}
 import fi.vaylavirasto.viite.model.SideCode.{AgainstDigitizing, TowardsDigitizing}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, LinkGeomSource, Track}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LinkGeomSource, LinkStatus, Track}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import org.scalatest.enablers.Definition.definitionOfOption
@@ -37,7 +35,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
 
   private def createRoadAddress(start: Long, distance: Long, roadwayNumber: Long = 0L) = {
     //TODO the road address now have the linear location id and has been set to 1L
-    RoadAddress(id = start, linearLocationId = 1L, roadNumber = 5, roadPartNumber = 205, administrativeClass = AdministrativeClass.State, track = Track.Combined, discontinuity = Continuous, startAddrMValue = start, endAddrMValue = start + distance, linkId = start.toString, startMValue = 0.0, endMValue = distance.toDouble, sideCode = TowardsDigitizing, adjustedTimestamp = 0L, geometry = Seq(Point(0.0, start), Point(0.0, start + distance)), linkGeomSource = NormalLinkInterface, ely = 8, terminated = NoTermination, roadwayNumber = roadwayNumber)
+    RoadAddress(id = start, linearLocationId = 1L, roadNumber = 5, roadPartNumber = 205, administrativeClass = AdministrativeClass.State, track = Track.Combined, discontinuity = Discontinuity.Continuous, startAddrMValue = start, endAddrMValue = start + distance, linkId = start.toString, startMValue = 0.0, endMValue = distance.toDouble, sideCode = TowardsDigitizing, adjustedTimestamp = 0L, geometry = Seq(Point(0.0, start), Point(0.0, start + distance)), linkGeomSource = NormalLinkInterface, ely = 8, terminated = NoTermination, roadwayNumber = roadwayNumber)
   }
 
   private val project: Project = Project(13L, ProjectState.Incomplete, "foo", "user", DateTime.now(), "user", DateTime.now(),
@@ -267,22 +265,22 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
     runWithRollback {
       def plId: Long = Sequences.nextProjectLinkId
       val allProjectLinks = Seq(
-        ProjectLink(plId,1999,1,Track.RightSide,Continuous,0,100,0,100,None,None,Some("test_user"),1286532.toString,0.0,100.0,TowardsDigitizing,(RoadAddressCP,NoCP),(RoadAddressCP,NoCP),List(Point(0.0,0.0,0.0), Point(0.0,100.0,0.0)),1227332,Terminated,AdministrativeClass.State,NormalLinkInterface,100.0,1316836,0,8,false,None,0,1000000000,None,None,None,None,None,None,None),
-        ProjectLink(plId,1999,1,Track.RightSide,Continuous,100,210,100,210,None,None,Some("test_user"),1286533.toString,0.0,110.0,TowardsDigitizing,(RoadAddressCP,NoCP),(RoadAddressCP,NoCP),List(Point(0.0,100.0,0.0), Point(0.0,210.0,0.0)),1227332,Terminated,AdministrativeClass.State,NormalLinkInterface,110.0,1316836,0,8,false,None,0,1000000000,None,None,None,None,None,None,None),
-        ProjectLink(plId,1999,1,Track.LeftSide,Continuous,0,200,0,200,None,None,Some("test_user"),1286538.toString,0.0,200.0,TowardsDigitizing,(RoadAddressCP,NoCP),(RoadAddressCP,NoCP),List(Point(5.0,0.0,0.0), Point(5.0,200.0,0.0)),1227332,Terminated,AdministrativeClass.State,NormalLinkInterface,200.0,1316838,0,8,false,None,0,1000000001,None,None,None,None,None,None,None),
+        ProjectLink(plId,1999,1,Track.RightSide,Discontinuity.Continuous,  0,100,  0,100,None,None,Some("test_user"),1286532.toString,0.0,100.0,TowardsDigitizing,(RoadAddressCP,NoCP),(RoadAddressCP,NoCP),List(Point(0.0,  0.0,0.0), Point(0.0,100.0,0.0)),1227332,LinkStatus.Terminated,AdministrativeClass.State,NormalLinkInterface,100.0,1316836,0,8,false,None,0,1000000000,None,None,None,None,None,None,None),
+        ProjectLink(plId,1999,1,Track.RightSide,Discontinuity.Continuous,100,210,100,210,None,None,Some("test_user"),1286533.toString,0.0,110.0,TowardsDigitizing,(RoadAddressCP,NoCP),(RoadAddressCP,NoCP),List(Point(0.0,100.0,0.0), Point(0.0,210.0,0.0)),1227332,LinkStatus.Terminated,AdministrativeClass.State,NormalLinkInterface,110.0,1316836,0,8,false,None,0,1000000000,None,None,None,None,None,None,None),
+        ProjectLink(plId,1999,1,Track.LeftSide, Discontinuity.Continuous,  0,200,  0,200,None,None,Some("test_user"),1286538.toString,0.0,200.0,TowardsDigitizing,(RoadAddressCP,NoCP),(RoadAddressCP,NoCP),List(Point(5.0,  0.0,0.0), Point(5.0,200.0,0.0)),1227332,LinkStatus.Terminated,AdministrativeClass.State,NormalLinkInterface,200.0,1316838,0,8,false,None,0,1000000001,None,None,None,None,None,None,None),
 
-        ProjectLink(plId,1999,1,Track.RightSide,Continuous,0,210,210,420,None,None,Some("test_user"),1286434.toString,0.0,210.0,TowardsDigitizing,(RoadAddressCP,NoCP),(NoCP,NoCP),List(Point(0.0,200.0,0.0), Point(0.0,400.0,0.0)),1227332,Transfer,AdministrativeClass.State,NormalLinkInterface,200.0,1316836,0,8,false,None,0,1417932,None,None,None,None,None,None,None),
-        ProjectLink(plId,1999,1,Track.RightSide,Continuous,210,420,420,630,None,None,Some("test_user"),1286435.toString,0.0,210.0,TowardsDigitizing,(NoCP,NoCP),(NoCP,NoCP),List(Point(0.0,400.0,0.0), Point(0.0,600.0,0.0)),1227332,Transfer,AdministrativeClass.State,NormalLinkInterface,200.0,1316836,0,8,false,None,0,1417932,None,None,None,None,None,None,None),
-        ProjectLink(plId,1999,1,Track.RightSide,Continuous,420,590,630,800,None,None,Some("test_user"),1286436.toString,0.0,161.9047619047619,TowardsDigitizing,(NoCP,NoCP),(NoCP,NoCP),List(Point(0.0,600.0,0.0), Point(0.0,761.905,0.0)),1227332,Transfer,AdministrativeClass.State,NormalLinkInterface,161.9047619047619,1316836,0,8,false,Some(1286436L.toString),0,1417932,None,None,None,None,None,None,None),
-        ProjectLink(plId,1999,1,Track.RightSide,Continuous,590,630,800,840,None,None,Some("test_user"),1286436.toString,161.9047619047619,210.0,TowardsDigitizing,(NoCP,NoCP),(NoCP,NoCP),List(Point(0.0,761.905,0.0), Point(0.0,800.0,0.0)),1227332,Transfer,AdministrativeClass.State,NormalLinkInterface,38.0952380952381,1316836,0,8,false,Some(1286436L.toString),0,1417932,None,None,None,None,None,None,None),
-        ProjectLink(plId,1999,1,Track.RightSide,EndOfRoad, 630,795,840,1000,None,None,Some("test_user"),1286437.toString,0.0,210.0,TowardsDigitizing,(NoCP,RoadAddressCP),(NoCP,NoCP),List(Point(0.0,800.0,0.0), Point(0.0,1000.0,0.0)),1227332,Transfer,AdministrativeClass.State,NormalLinkInterface,200.0,1316836,0,8,false,None,0,1417932,None,None,None,None,None,None,None),
+        ProjectLink(plId,1999,1,Track.RightSide,Discontinuity.Continuous,  0,210,210, 420,None,None,Some("test_user"),1286434.toString,  0.0,210.0,            TowardsDigitizing,(RoadAddressCP,NoCP),(NoCP,NoCP),List(Point(0.0,200.0,  0.0), Point(0.0, 400.0,  0.0)),1227332,LinkStatus.Transfer,AdministrativeClass.State,NormalLinkInterface,200.0,            1316836,0,8,false,None,0,1417932,None,None,None,None,None,None,None),
+        ProjectLink(plId,1999,1,Track.RightSide,Discontinuity.Continuous,210,420,420, 630,None,None,Some("test_user"),1286435.toString,  0.0,210.0,            TowardsDigitizing,(NoCP,NoCP),         (NoCP,NoCP),List(Point(0.0,400.0,  0.0), Point(0.0, 600.0,  0.0)),1227332,LinkStatus.Transfer,AdministrativeClass.State,NormalLinkInterface,200.0,            1316836,0,8,false,None,0,1417932,None,None,None,None,None,None,None),
+        ProjectLink(plId,1999,1,Track.RightSide,Discontinuity.Continuous,420,590,630, 800,None,None,Some("test_user"),1286436.toString,  0.0,161.9047619047619,TowardsDigitizing,(NoCP,NoCP),         (NoCP,NoCP),List(Point(0.0,600.0,  0.0), Point(0.0, 761.905,0.0)),1227332,LinkStatus.Transfer,AdministrativeClass.State,NormalLinkInterface,161.9047619047619,1316836,0,8,false,Some(1286436L.toString),0,1417932,None,None,None,None,None,None,None),
+        ProjectLink(plId,1999,1,Track.RightSide,Discontinuity.Continuous,590,630,800, 840,None,None,Some("test_user"),1286436.toString,161.9047619047619,210.0,TowardsDigitizing,(NoCP,NoCP),         (NoCP,NoCP),List(Point(0.0,761.905,0.0), Point(0.0, 800.0,  0.0)),1227332,LinkStatus.Transfer,AdministrativeClass.State,NormalLinkInterface, 38.0952380952381,1316836,0,8,false,Some(1286436L.toString),0,1417932,None,None,None,None,None,None,None),
+        ProjectLink(plId,1999,1,Track.RightSide,Discontinuity.EndOfRoad, 630,795,840,1000,None,None,Some("test_user"),1286437.toString,  0.0,210.0,            TowardsDigitizing,(NoCP,RoadAddressCP),(NoCP,NoCP),List(Point(0.0,800.0,  0.0), Point(0.0,1000.0,  0.0)),1227332,LinkStatus.Transfer,AdministrativeClass.State,NormalLinkInterface,200.0,            1316836,0,8,false,None,0,1417932,None,None,None,None,None,None,None),
 
-        ProjectLink(plId,1999,1,Track.LeftSide,Continuous,0,10,200,210,None,None,Some("test_user"),1286438.toString,0.0,10.0,TowardsDigitizing,(RoadAddressCP,NoCP),(NoCP,NoCP),List(Point(5.0,200.0,0.0), Point(5.0,210.0,0.0)),1227332,Transfer,AdministrativeClass.State,NormalLinkInterface,10.0,1316838,0,8,false,None,0,1000000001,None,None,None,None,None,None,None),
-        ProjectLink(plId,1999,1,Track.LeftSide,Continuous,10,200,210,400,None,None,Some("test_user"),1286438.toString,10.0,200.0,TowardsDigitizing,(NoCP,NoCP),(NoCP,NoCP),List(Point(5.0,210.0,0.0), Point(5.0,400.0,0.0)),1227332,Transfer,AdministrativeClass.State,NormalLinkInterface,190.0,1316838,0,8,false,None,0,1000000001,None,None,None,None,None,None,None),
-        ProjectLink(plId,1999,1,Track.LeftSide,Continuous,200,400,400,600,None,None,Some("test_user"),1286440.toString,0.0,200.0,TowardsDigitizing,(NoCP,NoCP),(NoCP,NoCP),List(Point(5.0,400.0,0.0), Point(5.0,600.0,0.0)),1227332,Transfer,AdministrativeClass.State,NormalLinkInterface,200.0,1316838,0,8,false,None,0,1000000001,None,None,None,None,None,None,None),
-        ProjectLink(plId,1999,1,Track.LeftSide,Continuous,400,600,600,800,None,None,Some("test_user"),1286441.toString,0.0,200.0,TowardsDigitizing,(NoCP,NoCP),(NoCP,NoCP),List(Point(5.0,600.0,0.0), Point(5.0,800.0,0.0)),1227332,Transfer,AdministrativeClass.State,NormalLinkInterface,200.0,1316838,0,8,false,None,0,1000000001,None,None,None,None,None,None,None),
-        ProjectLink(plId,1999,1,Track.LeftSide,Continuous,600,640,800,840,None,None,Some("test_user"),1286442.toString,0.0,40.0,TowardsDigitizing,(NoCP,NoCP),(NoCP,NoCP),List(Point(5.0,800.0,0.0), Point(5.0,840.0,0.0)),1227332,Transfer,AdministrativeClass.State,NormalLinkInterface,40.0,1316838,0,8,false,Some(1286442.toString),0,1000000001,None,None,None,None,None,None,None),
-        ProjectLink(plId,1999,1,Track.LeftSide,EndOfRoad, 640,795,840,1000,None,None,Some("test_user"),1286442.toString,40.0,200.0,TowardsDigitizing,(NoCP,RoadAddressCP),(NoCP,NoCP),List(Point(5.0,840.0,0.0), Point(5.0,1000.0,0.0)),1227332,Transfer,AdministrativeClass.State,NormalLinkInterface,160.0,1316838,0,8,false,Some(1286442.toString),0,1000000001,None,None,None,None,None,None,None)
+        ProjectLink(plId,1999,1,Track.LeftSide,Discontinuity.Continuous,  0, 10,200, 210,None,None,Some("test_user"),1286438.toString, 0.0, 10.0,TowardsDigitizing,(RoadAddressCP,NoCP),(NoCP,NoCP),List(Point(5.0,200.0,0.0), Point(5.0, 210.0,0.0)),1227332,LinkStatus.Transfer,AdministrativeClass.State,NormalLinkInterface, 10.0,1316838,0,8,false,None,0,1000000001,None,None,None,None,None,None,None),
+        ProjectLink(plId,1999,1,Track.LeftSide,Discontinuity.Continuous, 10,200,210, 400,None,None,Some("test_user"),1286438.toString,10.0,200.0,TowardsDigitizing,(NoCP,NoCP),         (NoCP,NoCP),List(Point(5.0,210.0,0.0), Point(5.0, 400.0,0.0)),1227332,LinkStatus.Transfer,AdministrativeClass.State,NormalLinkInterface,190.0,1316838,0,8,false,None,0,1000000001,None,None,None,None,None,None,None),
+        ProjectLink(plId,1999,1,Track.LeftSide,Discontinuity.Continuous,200,400,400, 600,None,None,Some("test_user"),1286440.toString, 0.0,200.0,TowardsDigitizing,(NoCP,NoCP),         (NoCP,NoCP),List(Point(5.0,400.0,0.0), Point(5.0, 600.0,0.0)),1227332,LinkStatus.Transfer,AdministrativeClass.State,NormalLinkInterface,200.0,1316838,0,8,false,None,0,1000000001,None,None,None,None,None,None,None),
+        ProjectLink(plId,1999,1,Track.LeftSide,Discontinuity.Continuous,400,600,600, 800,None,None,Some("test_user"),1286441.toString, 0.0,200.0,TowardsDigitizing,(NoCP,NoCP),         (NoCP,NoCP),List(Point(5.0,600.0,0.0), Point(5.0, 800.0,0.0)),1227332,LinkStatus.Transfer,AdministrativeClass.State,NormalLinkInterface,200.0,1316838,0,8,false,None,0,1000000001,None,None,None,None,None,None,None),
+        ProjectLink(plId,1999,1,Track.LeftSide,Discontinuity.Continuous,600,640,800, 840,None,None,Some("test_user"),1286442.toString, 0.0, 40.0,TowardsDigitizing,(NoCP,NoCP),         (NoCP,NoCP),List(Point(5.0,800.0,0.0), Point(5.0, 840.0,0.0)),1227332,LinkStatus.Transfer,AdministrativeClass.State,NormalLinkInterface, 40.0,1316838,0,8,false,Some(1286442.toString),0,1000000001,None,None,None,None,None,None,None),
+        ProjectLink(plId,1999,1,Track.LeftSide,Discontinuity.EndOfRoad, 640,795,840,1000,None,None,Some("test_user"),1286442.toString,40.0,200.0,TowardsDigitizing,(NoCP,RoadAddressCP),(NoCP,NoCP),List(Point(5.0,840.0,0.0), Point(5.0,1000.0,0.0)),1227332,LinkStatus.Transfer,AdministrativeClass.State,NormalLinkInterface,160.0,1316838,0,8,false,Some(1286442.toString),0,1000000001,None,None,None,None,None,None,None)
       )
 
       val transferred = ProjectDeltaCalculator.generateChangeTableRowsFromProjectLinks(allProjectLinks.filter(_.status != LinkStatus.Terminated), allProjectLinks)
@@ -500,7 +498,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       transferredPaired.filter(_._1.startMAddr == 0) should have size 1
       transferredPaired.map(x => {
         (x._1.startMAddr, x._2.startMAddr, x._1.endMAddr, x._2.endMAddr, x._1.discontinuity, x._2.discontinuity)
-      }).foreach(_ should (be((0L, 0L, 4403L, 4403L, Continuous, EndOfRoad)) or be((4403L, 762L, 8469L, 4828L, Continuous, Continuous))))
+      }).foreach(_ should (be((0L, 0L, 4403L, 4403L, Discontinuity.Continuous, Discontinuity.EndOfRoad)) or be((4403L, 762L, 8469L, 4828L, Discontinuity.Continuous, Discontinuity.Continuous))))
 
       adjustedTerminated.map(x => {
         (x.startMAddr, x.endMAddr)
@@ -542,10 +540,10 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       transferredPaired should have size 4
       val createdTargets = transferredPaired.asInstanceOf[List[(RoadwaySection, RoadwaySection)]].sortBy(rs => (rs._1.startMAddr, rs._1.track.value))
       val validTargets = Seq(
-        (  0L, 125L, Track.Combined,  Continuous),
-        (125L, 241L, Track.RightSide, MinorDiscontinuity),
-        (125L, 241L, Track.LeftSide,  Continuous),
-        (241L, 367L, Track.Combined,  EndOfRoad))
+        (  0L, 125L, Track.Combined,  Discontinuity.Continuous),
+        (125L, 241L, Track.RightSide, Discontinuity.MinorDiscontinuity),
+        (125L, 241L, Track.LeftSide,  Discontinuity.Continuous),
+        (241L, 367L, Track.Combined,  Discontinuity.EndOfRoad))
 
       createdTargets.map(x => {
         (x._1.startMAddr, x._1.endMAddr, x._1.track,x._1.discontinuity)
@@ -751,19 +749,19 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
                 "Then two track part track and minor discontinuity should be reversed and address lengths should be unchanged.") {
     runWithRollback {
       val transfer = Seq(
-        (createRoadAddress(0, 1).copy(id = 0, discontinuity = Continuous),
-          createTransferProjectLink(0,1).copy(discontinuity           = EndOfRoad, startAddrMValue         = 1498, endAddrMValue           = 1987, originalStartAddrMValue = 0, originalEndAddrMValue   = 489, roadwayId               = 0, reversed                = true)
+        (createRoadAddress(0, 1).copy(id = 0, discontinuity = Discontinuity.Continuous),
+          createTransferProjectLink(0,1).copy(discontinuity           = Discontinuity.EndOfRoad, startAddrMValue         = 1498, endAddrMValue           = 1987, originalStartAddrMValue = 0, originalEndAddrMValue   = 489, roadwayId               = 0, reversed                = true)
         ),
-        (createRoadAddress(0,1).copy(id = 1, discontinuity = MinorDiscontinuity),
-          createTransferProjectLink(0,1).copy(discontinuity           = Continuous, startAddrMValue         = 1098, endAddrMValue           = 1498, originalStartAddrMValue = 489, originalEndAddrMValue   = 889, roadwayId               = 0, reversed                = true)
+        (createRoadAddress(0,1).copy(id = 1, discontinuity = Discontinuity.MinorDiscontinuity),
+          createTransferProjectLink(0,1).copy(discontinuity           = Discontinuity.Continuous, startAddrMValue         = 1098, endAddrMValue           = 1498, originalStartAddrMValue = 489, originalEndAddrMValue   = 889, roadwayId               = 0, reversed                = true)
         ),
-        (createRoadAddress(0,1).copy(id = 2, discontinuity = Continuous),
-          createTransferProjectLink(0,1).copy(discontinuity           = MinorDiscontinuity, startAddrMValue         = 463, endAddrMValue           = 1098, originalStartAddrMValue = 889, originalEndAddrMValue   = 1524, roadwayId               = 1, reversed                = true)
+        (createRoadAddress(0,1).copy(id = 2, discontinuity = Discontinuity.Continuous),
+          createTransferProjectLink(0,1).copy(discontinuity           = Discontinuity.MinorDiscontinuity, startAddrMValue         = 463, endAddrMValue           = 1098, originalStartAddrMValue = 889, originalEndAddrMValue   = 1524, roadwayId               = 1, reversed                = true)
         ),
-        (createRoadAddress(0,1).copy(id = 3, track         = Track.LeftSide, discontinuity = EndOfRoad),
+        (createRoadAddress(0,1).copy(id = 3, track         = Track.LeftSide, discontinuity = Discontinuity.EndOfRoad),
           createTransferProjectLink(0,1).copy(track                   = Track.LeftSide, startAddrMValue         = 0, endAddrMValue           = 463, originalStartAddrMValue = 1524, originalEndAddrMValue   = 1987, roadwayId               = 2, reversed                = true)
         ),
-        (createRoadAddress(0,1).copy(id = 4, track         = Track.RightSide, discontinuity = EndOfRoad),
+        (createRoadAddress(0,1).copy(id = 4, track         = Track.RightSide, discontinuity = Discontinuity.EndOfRoad),
           createTransferProjectLink(0,1).copy(track                   = Track.RightSide, startAddrMValue         = 0, endAddrMValue           = 463, originalStartAddrMValue = 1524, originalEndAddrMValue   = 1987, roadwayId               = 3, reversed                = true)
         )
       )
@@ -1119,36 +1117,36 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
   }
 
   test("Test ProjectDeltaCalculator.partition When executing Multiple transfers with reversal and discontinuity change operations Then returns the correct From RoadSection -> To RoadSection mapping.") {
-    val transfer = Seq((createRoadAddress(0, 502).copy(discontinuity = MinorDiscontinuity),
+    val transfer = Seq((createRoadAddress(0, 502).copy(discontinuity = Discontinuity.MinorDiscontinuity),
       createTransferProjectLink(1524, 502).copy(reversed = true)),
       (createRoadAddress(502, 1524),
-        createTransferProjectLink(0, 1524).copy(discontinuity = MinorDiscontinuity, reversed = true)))
+        createTransferProjectLink(0, 1524).copy(discontinuity = Discontinuity.MinorDiscontinuity, reversed = true)))
     val mapping =
       ProjectDeltaCalculator.partition(transfer).adjustedSections.map(_._1)
     mapping should have size 2
     mapping.foreach { case (from, to) =>
       from.endMAddr - from.startMAddr should be(to.endMAddr - to.startMAddr)
-      if (from.discontinuity != Continuous)
-        to.discontinuity should be(Continuous)
+      if (from.discontinuity != Discontinuity.Continuous)
+        to.discontinuity should be(Discontinuity.Continuous)
       else
-        to.discontinuity should be(MinorDiscontinuity)
+        to.discontinuity should be(Discontinuity.MinorDiscontinuity)
     }
   }
 
   test("Multiple transfers with reversal and discontinuity") {
-    val transfer = Seq((createRoadAddress(0, 502).copy(discontinuity = MinorDiscontinuity),
+    val transfer = Seq((createRoadAddress(0, 502).copy(discontinuity = Discontinuity.MinorDiscontinuity),
       createTransferProjectLink(1524, 502).copy(reversed = true)),
       (createRoadAddress(502, 1524),
-        createTransferProjectLink(0, 1524).copy(discontinuity = MinorDiscontinuity, reversed = true)))
+        createTransferProjectLink(0, 1524).copy(discontinuity = Discontinuity.MinorDiscontinuity, reversed = true)))
     val mapping =
       ProjectDeltaCalculator.partition(transfer).adjustedSections.map(_._1)
     mapping should have size 2
     mapping.foreach { case (from, to) =>
       from.endMAddr - from.startMAddr should be(to.endMAddr - to.startMAddr)
-      if (from.discontinuity != Continuous)
-        to.discontinuity should be(Continuous)
+      if (from.discontinuity != Discontinuity.Continuous)
+        to.discontinuity should be(Discontinuity.Continuous)
       else
-        to.discontinuity should be(MinorDiscontinuity)
+        to.discontinuity should be(Discontinuity.MinorDiscontinuity)
     }
   }
 

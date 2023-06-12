@@ -1,9 +1,9 @@
 package fi.liikennevirasto.viite.util
 
-import fi.liikennevirasto.viite.dao.{Discontinuity, LinkStatus, ProjectCoordinates, ProjectLink}
+import fi.liikennevirasto.viite.dao.{ProjectCoordinates, ProjectLink}
 import fi.liikennevirasto.viite.{MaxDistanceForConnectedLinks, _}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point, PolyLine}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, LinkGeomSource, RoadLink, SideCode, Track}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LinkGeomSource, LinkStatus, RoadLink, SideCode, Track}
 
 /**
   * Split suravage link together with project link template

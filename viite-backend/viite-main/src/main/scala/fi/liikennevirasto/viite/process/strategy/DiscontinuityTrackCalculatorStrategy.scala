@@ -1,9 +1,9 @@
 package fi.liikennevirasto.viite.process.strategy
 
-import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, MinorDiscontinuity}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
-import fi.liikennevirasto.viite.dao.{Discontinuity, ProjectLink}
+import fi.liikennevirasto.viite.dao.{ProjectLink}
 import fi.liikennevirasto.viite.{MaxDistanceForSearchDiscontinuityOnOppositeTrack, NewIdValue}
+import fi.vaylavirasto.viite.model.Discontinuity
 
 class DiscontinuityTrackCalculatorStrategy(discontinuities: Seq[Discontinuity]) extends TrackCalculatorStrategy {
 
@@ -35,7 +35,7 @@ class DiscontinuityTrackCalculatorStrategy(discontinuities: Seq[Discontinuity]) 
     val restRight = firstRight.drop(right.size) ++ othersRight
 
     (left.last.discontinuity, right.last.discontinuity) match {
-      case (MinorDiscontinuity, MinorDiscontinuity) => // If both sides have a minor discontinuity
+      case (Discontinuity.MinorDiscontinuity, Discontinuity.MinorDiscontinuity) => // If both sides have a minor discontinuity
         if (left.last.getEndPoints._2.distance2DTo(right.last.getEndPoints._2) < MaxDistanceForSearchDiscontinuityOnOppositeTrack) {
                   adjustTwoTracks(startAddress, left, right, userDefinedCalibrationPoint, restLeft, restRight)
         } else if (left.last.endAddrMValue < right.last.endAddrMValue) { // If the left side has a minor discontinuity
@@ -45,14 +45,14 @@ class DiscontinuityTrackCalculatorStrategy(discontinuities: Seq[Discontinuity]) 
           val (newLeft, newLeftRest) = getUntilNearestAddress(leftProjectLinks, right.last)
           adjustTwoTracks(startAddress, newLeft, right, userDefinedCalibrationPoint, newLeftRest, restRight)
         }
-      case (MinorDiscontinuity, _) => // If the left side has a minor discontinuity
+      case (Discontinuity.MinorDiscontinuity, _) => // If the left side has a minor discontinuity
         val (newRight, newRestRight) = getUntilNearestAddress(rightProjectLinks, left.last)
         adjustTwoTracks(startAddress, left, newRight, userDefinedCalibrationPoint, restLeft, newRestRight)
-      case (_, MinorDiscontinuity) => // If the right side has a minor discontinuity
+      case (_, Discontinuity.MinorDiscontinuity) => // If the right side has a minor discontinuity
         val (newLeft, newLeftRest) = getUntilNearestAddress(leftProjectLinks, right.last)
         adjustTwoTracks(startAddress, newLeft, right, userDefinedCalibrationPoint, newLeftRest, restRight)
 
-      case (Continuous, Continuous) => // If both sides have a continuity?
+      case (Discontinuity.Continuous, Discontinuity.Continuous) => // If both sides have a continuity?
         adjustTwoTracks(startAddress, left, right, userDefinedCalibrationPoint, restLeft, restRight)
 
       /* left here if needed for some case. Was in place of: case (_, MinorDiscontinuity) above. */

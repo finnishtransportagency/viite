@@ -3,12 +3,12 @@ package fi.liikennevirasto.viite
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
 import fi.liikennevirasto.digiroad2.client.kgv.KgvRoadLink
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.{ViiteProperties}
+import fi.liikennevirasto.digiroad2.util.ViiteProperties
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.model.{RoadAddressLink}
+import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.vaylavirasto.viite.geometry.GeometryUtils
-import fi.vaylavirasto.viite.model.{AdministrativeClass, LifecycleStatus, LinkGeomSource, RoadLink, RoadLinkLike, SideCode, Track}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LifecycleStatus, LinkGeomSource, RoadLink, RoadLinkLike, SideCode, Track}
 
 class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLocationDAO) extends AddressLinkBuilder {
 
