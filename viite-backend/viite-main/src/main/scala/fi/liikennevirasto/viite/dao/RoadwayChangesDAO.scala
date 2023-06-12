@@ -3,7 +3,8 @@ package fi.liikennevirasto.viite.dao
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.viite.process.{ProjectDeltaCalculator, RoadwaySection}
 import fi.liikennevirasto.viite.process.ProjectDeltaCalculator.{createTwoTrackOldAddressRoadParts, projectLinkDAO}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, Track}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LinkStatus, Track}
+
 import java.sql.{PreparedStatement, Timestamp}
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}

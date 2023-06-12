@@ -4,10 +4,9 @@ import java.io.{File, FileReader, FileWriter}
 import java.nio.file.Files.copy
 import java.nio.file.Paths
 import fi.liikennevirasto.digiroad2.client.kgv.{ChangeInfo, ChangeType}
-import fi.liikennevirasto.digiroad2.util.{KGVSerializer}
-import fi.liikennevirasto.viite.dao.{Discontinuity, LinkStatus}
+import fi.liikennevirasto.digiroad2.util.KGVSerializer
 import fi.vaylavirasto.viite.geometry.Point
-import fi.vaylavirasto.viite.model.{AdministrativeClass, LifecycleStatus, LinkGeomSource, LinkType, RoadLink, SideCode, Track, TrafficDirection}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LifecycleStatus, LinkGeomSource, LinkStatus, LinkType, RoadLink, SideCode, Track, TrafficDirection}
 import org.json4s._
 import org.json4s.JsonAST.{JDouble, JInt, JObject, JString}
 import org.json4s.jackson.Serialization.{read, write}

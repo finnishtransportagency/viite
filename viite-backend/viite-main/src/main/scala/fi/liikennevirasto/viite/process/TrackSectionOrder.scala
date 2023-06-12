@@ -4,12 +4,11 @@ import fi.liikennevirasto.digiroad2.util.{MissingTrackException, RoadAddressExce
 import fi.liikennevirasto.viite.MaxDistanceForConnectedLinks
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, RoadAddressCP}
-import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous, MinorDiscontinuity}
-import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao._
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Matrix, Point, Vector3d}
-import fi.vaylavirasto.viite.model.{SideCode, Track}
+import fi.vaylavirasto.viite.model.{Discontinuity, LinkStatus, SideCode, Track}
+
 import scala.annotation.tailrec
 
 
@@ -193,9 +192,9 @@ object TrackSectionOrder {
         val sideCode = if (hit.geometry.last == nextPoint) SideCode.TowardsDigitizing else SideCode.AgainstDigitizing
         val prevAddrM = ready.last.endAddrMValue
         val endAddrM = hit.status match {
-          case NotHandled | UnChanged | Transfer | Numbering =>
+          case LinkStatus.NotHandled | LinkStatus.UnChanged | LinkStatus.Transfer | LinkStatus.Numbering =>
             ready.last.endAddrMValue + (hit.endAddrMValue - hit.startAddrMValue)
-          case New =>
+          case LinkStatus.New =>
             prevAddrM + Math.round(hit.geometryLength)
           case _ =>
             hit.endAddrMValue
@@ -210,7 +209,7 @@ object TrackSectionOrder {
     // Put calibration point at the beginning
     val ordered = recursive(firstLink.geometry.last, Seq(adjust(firstLink, sideCode = Some(SideCode.TowardsDigitizing),
       startAddrMValue = Some(0L), endAddrMValue =
-        Some(if (firstLink.status == New)
+        Some(if (firstLink.status == LinkStatus.New)
           Math.round(firstLink.geometryLength)
         else
           firstLink.endAddrMValue - firstLink.startAddrMValue),
@@ -223,7 +222,7 @@ object TrackSectionOrder {
 
         Seq(adjust(firstLink, sideCode = Some(SideCode.AgainstDigitizing),
           startAddrMValue = Some(0L), endAddrMValue =
-            Some(if (firstLink.status == New)
+            Some(if (firstLink.status == LinkStatus.New)
               Math.round(firstLink.geometryLength)
             else
               firstLink.endAddrMValue - firstLink.startAddrMValue),
@@ -279,7 +278,7 @@ object TrackSectionOrder {
         case 0 => None
         case 1 => connectedLinks.headOption
         case _ =>
-          val nextCandidates = connectedLinks.filter(connectedLink => lastLinkOption.get.endAddrMValue == connectedLink.startAddrMValue && lastLinkOption.get.discontinuity == Continuous)
+          val nextCandidates = connectedLinks.filter(connectedLink => lastLinkOption.get.endAddrMValue == connectedLink.startAddrMValue && lastLinkOption.get.discontinuity == Discontinuity.Continuous)
           if (nextCandidates.nonEmpty && nextCandidates.size == 1) {
             nextCandidates.headOption
           }
@@ -427,7 +426,7 @@ object TrackSectionOrder {
 
   protected def setOnSideCalibrationPoints(initialProjectLinks: Seq[ProjectLink], userCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): Seq[ProjectLink] = {
 
-    if (initialProjectLinks.head.status == NotHandled)
+    if (initialProjectLinks.head.status == LinkStatus.NotHandled)
       initialProjectLinks
     else
       initialProjectLinks.size match {
@@ -450,8 +449,8 @@ object TrackSectionOrder {
               Seq(i)
             } else {
               if (list.last.administrativeClass != i.administrativeClass || list.last.track != i.track || list.last.roadNumber != i.roadNumber ||
-                list.last.roadPartNumber != i.roadPartNumber || list.last.discontinuity == Discontinuous ||
-                list.last.discontinuity == MinorDiscontinuity) {
+                list.last.roadPartNumber != i.roadPartNumber || list.last.discontinuity == Discontinuity.Discontinuous ||
+                list.last.discontinuity == Discontinuity.MinorDiscontinuity) {
                 val last = list.last
                 list.dropRight(1) ++ Seq(setCalibrationPoint(last, None, last.calibrationPoints._1.nonEmpty, hasEndCP = true, last.startCalibrationPointType, RoadAddressCP),
                   setCalibrationPoint(i, None, hasStartCP = true, hasEndCP = i.calibrationPoints._2.nonEmpty, RoadAddressCP, i.endCalibrationPointType))

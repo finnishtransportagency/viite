@@ -7,7 +7,7 @@ import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{Ju
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.process.{RoadwayAddressMapper, TrackSectionOrder}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.Track
+import fi.vaylavirasto.viite.model.{Discontinuity, LinkStatus, Track}
 import org.slf4j.LoggerFactory
 
 import scala.language.postfixOps

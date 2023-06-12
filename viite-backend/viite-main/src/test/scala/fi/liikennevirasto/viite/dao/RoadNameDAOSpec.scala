@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite.dao
 
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.vaylavirasto.viite.model.{AdministrativeClass, Track}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, Track}
 import org.scalatest.{FunSuite, Matchers}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
