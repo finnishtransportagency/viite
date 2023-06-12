@@ -22,24 +22,7 @@ import slick.jdbc.StaticQuery.interpolation
 
 //TODO naming SQL conventions
 
-sealed trait LinkStatus {
-  def value: Int
-  def description: String
-}
 
-object LinkStatus {
-  val values = Set(NotHandled, Terminated, New, Transfer, UnChanged, Numbering, Unknown)
-  case object NotHandled extends LinkStatus {def value = 0; def description = "Käsittelemättä"}
-  case object UnChanged  extends LinkStatus {def value = 1; def description = "Ennallaan"}
-  case object New extends LinkStatus {def value = 2; def description = "Uusi"}
-  case object Transfer extends LinkStatus {def value = 3; def description = "Siirto"}
-  case object Numbering extends LinkStatus {def value = 4; def description = "Numerointi"}
-  case object Terminated extends LinkStatus {def value = 5; def description = "Lakkautettu"}
-  case object Unknown extends LinkStatus {def value = 99; def description = "Tuntematon"}
-  def apply(intValue: Int): LinkStatus = {
-    values.find(_.value == intValue).getOrElse(Unknown)
-  }
-}
 
 case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track, discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, originalStartAddrMValue: Long, originalEndAddrMValue: Long, startDate: Option[DateTime] = None, endDate: Option[DateTime] = None, createdBy: Option[String] = None, linkId: String, startMValue: Double, endMValue: Double, sideCode: SideCode, calibrationPointTypes: (CalibrationPointType, CalibrationPointType) = (NoCP, NoCP), originalCalibrationPointTypes: (CalibrationPointType, CalibrationPointType) = (NoCP, NoCP), geometry: Seq[Point], projectId: Long, status: LinkStatus, administrativeClass: AdministrativeClass, linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, geometryLength: Double, roadwayId: Long, linearLocationId: Long, ely: Long, reversed: Boolean, connectedLinkId: Option[String] = None, linkGeometryTimeStamp: Long, roadwayNumber: Long = NewIdValue, roadName: Option[String] = None, roadAddressLength: Option[Long] = None, roadAddressStartAddrM: Option[Long] = None, roadAddressEndAddrM: Option[Long] = None, roadAddressTrack: Option[Track] = None, roadAddressRoadNumber: Option[Long] = None, roadAddressRoadPart: Option[Long] = None)
   extends BaseRoadAddress with PolyLine {
