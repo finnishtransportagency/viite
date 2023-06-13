@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent}
-import fi.vaylavirasto.viite.model.{RoadAddressChangeType, AdministrativeClass, Discontinuity, LinkStatus, Track}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, RoadAddressChangeType, Track}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
@@ -109,7 +109,7 @@ object RoadwayFiller {
       val currentRoadway                = changes.currentRoadway
       val historyRoadways: Seq[Roadway] = changes.historyRoadways
       val projectLinksInRoadway         = changes.projectLinks
-      val (terminatedProjectLinks, others) = projectLinksInRoadway.partition(_.status == LinkStatus.Termination)
+      val (terminatedProjectLinks, others) = projectLinksInRoadway.partition(_.status == RoadAddressChangeType.Termination)
       val elyChanged                       = if (others.nonEmpty) currentRoadway.ely != others.head.ely else false
       val addressChanged                   = if (others.nonEmpty) others.last.endAddrMValue != currentRoadway.endAddrMValue || (others.head.startAddrMValue) != currentRoadway.startAddrMValue else false
       val adminClassed                     = others.groupBy(pl => AdminClassRwn(pl.administrativeClass, pl.roadwayNumber))

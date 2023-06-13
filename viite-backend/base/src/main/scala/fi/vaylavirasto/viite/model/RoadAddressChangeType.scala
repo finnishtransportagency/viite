@@ -2,10 +2,18 @@ package fi.vaylavirasto.viite.model
 
 sealed trait RoadAddressChangeType {
   def value: Int
+
+  def description: String
 }
 
+/**
+  * Types for the road address network change types available in Viite ("toimenpide" in finnish).
+  * RoadAddressChangeType describes, what kind of an operation is made for a part of a road (typically, of length of a link, or a roadway)
+  * Has also NotHandled, and Unknown "change types". NotHandled for links just picked for changes but not yet changed,
+  * and Unknown whose usage should be checked; seems almost useless, and pointless (<- TODO!).
+  */
 object RoadAddressChangeType {
-  val values = Set(Unchanged, New, Transfer, Renumeration, Termination)
+  val values = Set(NotHandled, Unchanged, New, Transfer, Renumeration, Termination)
 
   def apply(intValue: Int): RoadAddressChangeType = {
     values.find(_.value == intValue).getOrElse(Unknown)

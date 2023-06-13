@@ -5,7 +5,7 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.process.strategy.RoadAddressSectionCalculatorContext
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LinkStatus, SideCode, Track}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, RoadAddressChangeType, SideCode, Track}
 import org.slf4j.LoggerFactory
 
 object ProjectSectionCalculator {
@@ -15,7 +15,7 @@ object ProjectSectionCalculator {
   /**
     * NOTE! Should be called from project service only at recalculate method - other places are usually wrong places
     * and may miss user given calibration points etc.
-    * Recalculates the AddressMValues for project links. LinkStatus.New will get reassigned values and all
+    * Recalculates the AddressMValues for project links. RoadAddressChangeType.New will get reassigned values and all
     * others will have the transfer/unchanged rules applied for them.
     * Terminated links will not be recalculated
     *
@@ -24,8 +24,8 @@ object ProjectSectionCalculator {
     */
   def assignMValues(projectLinks: Seq[ProjectLink], userGivenCalibrationPoints: Seq[UserDefinedCalibrationPoint] = Seq()): Seq[ProjectLink] = {
     logger.info(s"Starting MValue assignment for ${projectLinks.size} links")
-    val others = projectLinks.filterNot(_.status == LinkStatus.Termination)
-    val (newLinks, nonTerminatedLinks) = others.partition(l => l.status == LinkStatus.New)
+    val others = projectLinks.filterNot(_.status == RoadAddressChangeType.Termination)
+    val (newLinks, nonTerminatedLinks) = others.partition(l => l.status == RoadAddressChangeType.New)
     try {
 
       val calculator = RoadAddressSectionCalculatorContext.getStrategy(others)
@@ -41,7 +41,7 @@ object ProjectSectionCalculator {
     logger.info(s"Starting MValue assignment for ${terminated.size} terminated links")
     try {
 
-      val allProjectLinks = nonTerminatedLinks.filter(_.status != LinkStatus.New) ++ terminated
+      val allProjectLinks = nonTerminatedLinks.filter(_.status != RoadAddressChangeType.New) ++ terminated
       val group = allProjectLinks.groupBy {
         pl => (pl.roadAddressRoadNumber.getOrElse(pl.roadNumber), pl.roadAddressRoadPart.getOrElse(pl.roadPartNumber))
       }
@@ -85,9 +85,9 @@ object ProjectSectionCalculator {
     if (left.isEmpty || right.isEmpty) {
       Seq[ProjectLink]()
     } else {
-      val leftTerminated = left.filter(_.status == LinkStatus.Termination)
-      val rightTerminated = right.filter(_.status == LinkStatus.Termination)
-      val nonTerminatedSortedByStartAddr: Seq[ProjectLink] = projectLinks.filterNot(_.status == LinkStatus.Termination).sortBy(_.startAddrMValue)
+      val leftTerminated = left.filter(_.status == RoadAddressChangeType.Termination)
+      val rightTerminated = right.filter(_.status == RoadAddressChangeType.Termination)
+      val nonTerminatedSortedByStartAddr: Seq[ProjectLink] = projectLinks.filterNot(_.status == RoadAddressChangeType.Termination).sortBy(_.startAddrMValue)
 
       /* Set terminated link heads to new calculated values. */
       val leftReassignedStart: Seq[ProjectLink] = leftTerminated.map(leftTerminatedpl => {
@@ -249,12 +249,12 @@ case class CombinedSection(startGeometry: Point, endGeometry: Point, geometryLen
     case _ => endGeometry
   }
 
-  lazy val linkStatus: LinkStatus = right.links.head.status
+  lazy val roadAddressChangeType: RoadAddressChangeType = right.links.head.status
 
   lazy val startAddrM: Long = right.links.map(_.startAddrMValue).min
 
   lazy val endAddrM: Long = right.links.map(_.endAddrMValue).max
 
-  lazy val linkStatusCodes: Set[LinkStatus] = (right.links.map(_.status) ++ left.links.map(_.status)).toSet
+  lazy val roadAddressChangeTypeCodes: Set[RoadAddressChangeType] = (right.links.map(_.status) ++ left.links.map(_.status)).toSet
 }
 

@@ -886,7 +886,7 @@ class RoadwayDAO extends BaseDAO {
 
   /**
    * Fetches all road_part_numbers for roadNumber that aren't reserved in another project where
-   * each ProjectLink with road_part_number would have status=LinkStatus.Terminated
+   * each ProjectLink with road_part_number would have status=RoadAddressChangeType.Termination
    * In use because of the considerable delay between accepting road address changes and changes being transferred to TR.
    * Said delay is no longer present in AWS.
    * TODO: Refactor this function as it's no longer needed.

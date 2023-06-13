@@ -6,7 +6,7 @@ import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{No
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.process.{ProjectSectionMValueCalculator, TrackSectionOrder}
 import fi.liikennevirasto.viite.NewIdValue
-import fi.vaylavirasto.viite.model.LinkStatus
+import fi.vaylavirasto.viite.model.RoadAddressChangeType
 
 class RoundaboutSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrategy {
 
@@ -22,7 +22,7 @@ class RoundaboutSectionCalculatorStrategy extends RoadAddressSectionCalculatorSt
       newProjectLinks.headOption).toSeq
     val rest = (newProjectLinks ++ oldProjectLinks).filterNot(startingLink.contains)
     val mValued = TrackSectionOrder.mValueRoundabout(startingLink ++ rest)
-    val (newLinksWithoutRoadwayNumber, newLinkswithRoadwayNumber) = mValued.partition(npl => npl.status == LinkStatus.New && (npl.roadwayNumber == NewIdValue || npl.roadwayNumber == 0))
+    val (newLinksWithoutRoadwayNumber, newLinkswithRoadwayNumber) = mValued.partition(npl => npl.status == RoadAddressChangeType.New && (npl.roadwayNumber == NewIdValue || npl.roadwayNumber == 0))
     var mValuedWithRwns = if (newLinksWithoutRoadwayNumber.nonEmpty) {
       val newRoadwayNumber = Sequences.nextRoadwayNumber
       (newLinksWithoutRoadwayNumber.map(_.copy(roadwayNumber = newRoadwayNumber)) ++ newLinkswithRoadwayNumber).sortBy(_.startAddrMValue)

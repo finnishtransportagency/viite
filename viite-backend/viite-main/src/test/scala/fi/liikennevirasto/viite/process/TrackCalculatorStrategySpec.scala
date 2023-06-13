@@ -4,7 +4,7 @@ import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoC
 import fi.liikennevirasto.viite.dao.ProjectLink
 import fi.liikennevirasto.viite.process.strategy.{LinkStatusChangeTrackCalculatorStrategy, TrackCalculatorContext, TrackCalculatorResult}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LinkGeomSource, LinkStatus, SideCode, Track}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LinkGeomSource, RoadAddressChangeType, SideCode, Track}
 import org.scalatest.{FunSuite, Matchers}
 
 class TrackCalculatorStrategySpec extends FunSuite with Matchers {
@@ -15,19 +15,17 @@ class TrackCalculatorStrategySpec extends FunSuite with Matchers {
     val geomLeft3 = Seq(Point(30.0, 20.0), Point(40.0, 20.0))
 
 
-    val projectLinkLeft1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 10L, 0L, 10L, None, None, None, 12345L.toString, 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), geomLeft1, 0L, LinkStatus.Transfer, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomLeft1), 0L, 0, 1L, reversed = false, None, 86400L)
-    val projectLinkLeft2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 10L, 20L, 10L, 20L, None, None, None, 12346L.toString, 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), geomLeft2, 0L, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomLeft2), 0L, 0, 1L, reversed = false, None, 86400L)
-    val projectLinkLeft3 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 20L, 30L, 20L, 30L, None, None, None, 12347L.toString, 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), geomLeft2, 0L, LinkStatus.Transfer, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomLeft3), 0L, 0, 1L, reversed = false, None, 86400L)
+    val projectLinkLeft1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous,  0L, 10L,  0L, 10L, None, None, None, 12345L.toString, 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), geomLeft1, 0L, RoadAddressChangeType.Transfer, AdministrativeClass.State,        LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomLeft1), 0L, 0, 1L, reversed = false, None, 86400L)
+    val projectLinkLeft2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 10L, 20L, 10L, 20L, None, None, None, 12346L.toString, 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), geomLeft2, 0L, RoadAddressChangeType.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomLeft2), 0L, 0, 1L, reversed = false, None, 86400L)
+    val projectLinkLeft3 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 20L, 30L, 20L, 30L, None, None, None, 12347L.toString, 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), geomLeft2, 0L, RoadAddressChangeType.Transfer, AdministrativeClass.State,        LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomLeft3), 0L, 0, 1L, reversed = false, None, 86400L)
 
     val geomRight1 = Seq(Point(10.0, 10.0), Point(20.0, 10.0))
     val geomRight2 = Seq(Point(20.0, 10.0), Point(30.0, 10.0))
     val geomRight3 = Seq(Point(30.0, 10.0), Point(40.0, 10.0))
 
-    val projectLinkRight1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 10L, 0L, 10L, None, None, None, 12348L.toString, 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), geomRight1, 0L, LinkStatus.Transfer, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight1), 0L, 0, 1L, reversed = false, None, 86400L)
-
-    val projectLinkRight2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 10L, 20L, 10L, 20L, None, None, None, 12349L.toString, 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), geomRight2, 0L, LinkStatus.Transfer, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight2), 0L, 0, 1L, reversed = false, None, 86400L)
-
-    val projectLinkRight3 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 20L, 30L, 20L, 30L, None, None, None, 12350L.toString, 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), geomRight2, 0L, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight3), 0L, 0, 1L, reversed = false, None, 86400L)
+    val projectLinkRight1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous,  0L, 10L,  0L, 10L, None, None, None, 12348L.toString, 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), geomRight1, 0L, RoadAddressChangeType.Transfer, AdministrativeClass.State,        LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight1), 0L, 0, 1L, reversed = false, None, 86400L)
+    val projectLinkRight2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 10L, 20L, 10L, 20L, None, None, None, 12349L.toString, 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), geomRight2, 0L, RoadAddressChangeType.Transfer, AdministrativeClass.State,        LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight2), 0L, 0, 1L, reversed = false, None, 86400L)
+    val projectLinkRight3 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 20L, 30L, 20L, 30L, None, None, None, 12350L.toString, 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), geomRight2, 0L, RoadAddressChangeType.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight3), 0L, 0, 1L, reversed = false, None, 86400L)
 
 
     val leftSideProjectLinks = Seq(projectLinkLeft1, projectLinkLeft2, projectLinkLeft3)
