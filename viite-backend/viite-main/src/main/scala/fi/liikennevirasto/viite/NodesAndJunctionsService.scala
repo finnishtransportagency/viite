@@ -9,7 +9,7 @@ import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
-import fi.vaylavirasto.viite.model.{BeforeAfter, Discontinuity, LinkStatus, NodePointType, Track}
+import fi.vaylavirasto.viite.model.{BeforeAfter, Discontinuity, RoadAddressChangeType, NodePointType, Track}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
@@ -454,7 +454,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
 
     time(logger, "Handling junction point templates") {
-      val nonTerminatedLinks: Seq[BaseRoadAddress] = projectLinks.filter(pl => RoadClass.forJunctions.contains(pl.roadNumber.toInt) && pl.status != LinkStatus.Termination)
+      val nonTerminatedLinks: Seq[BaseRoadAddress] = projectLinks.filter(pl => RoadClass.forJunctions.contains(pl.roadNumber.toInt) && pl.status != RoadAddressChangeType.Termination)
       // Update junctionPoint Before/After if projectLink is reversed
       nonTerminatedLinks.map { projectLink =>
 
@@ -732,7 +732,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
     time(logger, "Handling node point templates") {
       try {
-        val filteredLinks = projectLinks.filter(pl => RoadClass.forNodes.contains(pl.roadNumber.toInt) && pl.status != LinkStatus.Termination).filterNot(_.track == Track.LeftSide)
+        val filteredLinks = projectLinks.filter(pl => RoadClass.forNodes.contains(pl.roadNumber.toInt) && pl.status != RoadAddressChangeType.Termination).filterNot(_.track == Track.LeftSide)
         val groupSections = filteredLinks.groupBy(l => (l.roadNumber, l.roadPartNumber))
 
         groupSections.values.foreach { group =>
@@ -975,7 +975,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     val filteredProjectLinks = projectLinks
       .filter(pl => RoadClass.forJunctions.contains(pl.roadNumber.toInt))
 
-    val terminated = filteredProjectLinks.filter(_.status == LinkStatus.Termination)
+    val terminated = filteredProjectLinks.filter(_.status == RoadAddressChangeType.Termination)
 
     val terminatedRoadwayNumbers = terminated.map(_.roadwayNumber).distinct
     val (terminatedNodePoints, terminatedJunctionPoints): (Seq[NodePoint], Seq[JunctionPoint]) =

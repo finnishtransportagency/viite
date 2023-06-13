@@ -6,7 +6,7 @@ import java.nio.file.Paths
 import fi.liikennevirasto.digiroad2.client.kgv.{ChangeInfo, ChangeType}
 import fi.liikennevirasto.digiroad2.util.KGVSerializer
 import fi.vaylavirasto.viite.geometry.Point
-import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LifecycleStatus, LinkGeomSource, LinkStatus, LinkType, RoadLink, SideCode, Track, TrafficDirection}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LifecycleStatus, LinkGeomSource, RoadAddressChangeType, LinkType, RoadLink, SideCode, Track, TrafficDirection}
 import org.json4s._
 import org.json4s.JsonAST.{JDouble, JInt, JObject, JString}
 import org.json4s.jackson.Serialization.{read, write}
@@ -75,7 +75,7 @@ class JsonSerializer extends KGVSerializer {
 object DigiroadSerializers {
   val jsonFormats: Formats = DefaultFormats + SideCodeSerializer + TrafficDirectionSerializer +
     LinkTypeSerializer + AdministrativeClassSerializer + LinkGeomSourceSerializer + LifecycleStatusSerializer +
-    DiscontinuitySerializer + TrackSerializer + PointSerializer + LinkStatusSerializer + ChangeTypeSerializer
+    DiscontinuitySerializer + TrackSerializer + PointSerializer + RoadAddressChangeTypeSerializer + ChangeTypeSerializer
 }
 
 case object ChangeTypeSerializer extends CustomSerializer[ChangeType](format => ( {
@@ -144,10 +144,10 @@ case object PointSerializer extends CustomSerializer[Point](format => ( {
   case p: Point => JObject(("x", JDouble(p.x)), ("y", JDouble(p.y)), ("z", JDouble(p.z)))
 }))
 
-case object LinkStatusSerializer extends CustomSerializer[LinkStatus](format => ( {
+case object RoadAddressChangeTypeSerializer extends CustomSerializer[RoadAddressChangeType](format => ( {
   case i: JInt =>
-    LinkStatus.apply(i.values.intValue)
+    RoadAddressChangeType.apply(i.values.intValue)
 }, {
-  case l: LinkStatus => JInt(l.value)
+  case l: RoadAddressChangeType => JInt(l.value)
 }
 ))

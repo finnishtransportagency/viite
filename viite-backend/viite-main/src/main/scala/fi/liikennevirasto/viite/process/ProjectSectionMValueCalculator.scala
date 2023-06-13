@@ -3,7 +3,7 @@ package fi.liikennevirasto.viite.process
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.ProjectLink
 import fi.vaylavirasto.viite.geometry.Point
-import fi.vaylavirasto.viite.model.{LinkStatus, Track}
+import fi.vaylavirasto.viite.model.{RoadAddressChangeType, Track}
 
 object ProjectSectionMValueCalculator {
 
@@ -24,7 +24,7 @@ object ProjectSectionMValueCalculator {
     }
 
     // Group all consecutive links with same status
-    val (unchanged, others) = seq.partition(_.status == LinkStatus.Unchanged)
+    val (unchanged, others) = seq.partition(_.status == RoadAddressChangeType.Unchanged)
     val mapped = unchanged.groupBy(_.startAddrMValue)
     if (mapped.values.exists(_.size != 1)) {
       throw new InvalidAddressDataException(s"Multiple unchanged links specified with overlapping address value ${mapped.values.filter(_.size != 1).mkString(", ")}")
@@ -74,9 +74,9 @@ object ProjectSectionMValueCalculator {
         val someCalibrationPoint: Option[UserDefinedCalibrationPoint] = cps.get(pl.id)
 
           pl.status match {
-          case LinkStatus.New => if (someCalibrationPoint.nonEmpty) someCalibrationPoint.get.addressMValue else m + Math.abs(pl.geometryLength) * coEff
-            case LinkStatus.Transfer | LinkStatus.NotHandled | LinkStatus.Renumeration | LinkStatus.Unchanged => m + (pl.originalEndAddrMValue - pl.originalStartAddrMValue)
-            case LinkStatus.Termination => pl.endAddrMValue
+          case RoadAddressChangeType.New => if (someCalibrationPoint.nonEmpty) someCalibrationPoint.get.addressMValue else m + Math.abs(pl.geometryLength) * coEff
+            case RoadAddressChangeType.Transfer | RoadAddressChangeType.NotHandled | RoadAddressChangeType.Renumeration | RoadAddressChangeType.Unchanged => m + (pl.originalEndAddrMValue - pl.originalStartAddrMValue)
+            case RoadAddressChangeType.Termination => pl.endAddrMValue
             case _ => throw new InvalidAddressDataException(s"Invalid status found at value assignment ${pl.status}, linkId: ${pl.linkId}")
           }
       }
@@ -89,10 +89,10 @@ object ProjectSectionMValueCalculator {
   def calculateAddressingFactors(seq: Seq[ProjectLink]): TrackAddressingFactors = {
     seq.foldLeft[TrackAddressingFactors](TrackAddressingFactors(0, 0, 0.0)) { case (a, pl) =>
       pl.status match {
-        case LinkStatus.Unchanged | LinkStatus.Renumeration => a.copy(unChangedLength = a.unChangedLength + pl.addrMLength)
-        case LinkStatus.Transfer | LinkStatus.NotHandled => a.copy(transferLength = a.transferLength + pl.addrMLength)
-        case LinkStatus.New => a.copy(newLength = a.newLength + pl.geometryLength)
-        case LinkStatus.Termination => a
+        case RoadAddressChangeType.Unchanged | RoadAddressChangeType.Renumeration => a.copy(unChangedLength = a.unChangedLength + pl.addrMLength)
+        case RoadAddressChangeType.Transfer | RoadAddressChangeType.NotHandled => a.copy(transferLength = a.transferLength + pl.addrMLength)
+        case RoadAddressChangeType.New => a.copy(newLength = a.newLength + pl.geometryLength)
+        case RoadAddressChangeType.Termination => a
         case _ => throw new InvalidAddressDataException(s"Invalid status found at factor assignment ${pl.status}, linkId: ${pl.linkId}")
       }
     }
@@ -101,9 +101,9 @@ object ProjectSectionMValueCalculator {
   def assignTerminatedLinkValues(seq: Seq[ProjectLink], addrSt: Long): Seq[ProjectLink] = {
     val newAddressValues = seq.scanLeft(addrSt) { case (m, pl) =>
       pl.status match {
-        case LinkStatus.Termination =>
+        case RoadAddressChangeType.Termination =>
           m + pl.addrMLength
-        case LinkStatus.Unchanged | LinkStatus.Transfer | LinkStatus.NotHandled | LinkStatus.Renumeration =>
+        case RoadAddressChangeType.Unchanged | RoadAddressChangeType.Transfer | RoadAddressChangeType.NotHandled | RoadAddressChangeType.Renumeration =>
           pl.roadAddressEndAddrM.getOrElse(pl.endAddrMValue)
         case _ => throw new InvalidAddressDataException(s"Invalid status found at value assignment ${pl.status}, linkId: ${pl.linkId}")
       }
