@@ -11,7 +11,7 @@ import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{No
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, BeforeAfter, Discontinuity, LinkGeomSource, LinkStatus, NodePointType, NodeType, SideCode, Track}
+import fi.vaylavirasto.viite.model.{AddressChangeType, AdministrativeClass, BeforeAfter, Discontinuity, LinkGeomSource, LinkStatus, NodePointType, NodeType, SideCode, Track}
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.{any, anyLong}
 import org.mockito.Mockito.when
