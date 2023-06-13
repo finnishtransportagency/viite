@@ -109,7 +109,7 @@ object RoadwayFiller {
       val currentRoadway                = changes.currentRoadway
       val historyRoadways: Seq[Roadway] = changes.historyRoadways
       val projectLinksInRoadway         = changes.projectLinks
-      val (terminatedProjectLinks, others) = projectLinksInRoadway.partition(_.status == LinkStatus.Terminated)
+      val (terminatedProjectLinks, others) = projectLinksInRoadway.partition(_.status == LinkStatus.Termination)
       val elyChanged                       = if (others.nonEmpty) currentRoadway.ely != others.head.ely else false
       val addressChanged                   = if (others.nonEmpty) others.last.endAddrMValue != currentRoadway.endAddrMValue || (others.head.startAddrMValue) != currentRoadway.startAddrMValue else false
       val adminClassed                     = others.groupBy(pl => AdminClassRwn(pl.administrativeClass, pl.roadwayNumber))

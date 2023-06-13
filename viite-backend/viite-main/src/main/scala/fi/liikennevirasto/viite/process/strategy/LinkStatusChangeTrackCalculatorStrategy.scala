@@ -69,7 +69,7 @@ class TerminatedLinkStatusChangeStrategy extends  LinkStatusChangeTrackCalculato
   override def applicableStrategy(headProjectLink: ProjectLink, projectLink: ProjectLink): Boolean = {
     //Will be applied if the link status changes FROM or TO a status equal "TERMINATED" and track is Left or Right
     projectLink.status != headProjectLink.status &&
-      (projectLink.status == LinkStatus.Terminated || headProjectLink.status == LinkStatus.Terminated) &&
+      (projectLink.status == LinkStatus.Termination || headProjectLink.status == LinkStatus.Termination) &&
       (projectLink.track == Track.Combined && headProjectLink.track != Track.Combined)
   }
 

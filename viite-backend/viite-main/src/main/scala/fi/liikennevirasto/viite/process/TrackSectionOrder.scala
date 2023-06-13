@@ -192,7 +192,7 @@ object TrackSectionOrder {
         val sideCode = if (hit.geometry.last == nextPoint) SideCode.TowardsDigitizing else SideCode.AgainstDigitizing
         val prevAddrM = ready.last.endAddrMValue
         val endAddrM = hit.status match {
-          case LinkStatus.NotHandled | LinkStatus.UnChanged | LinkStatus.Transfer | LinkStatus.Numbering =>
+          case LinkStatus.NotHandled | LinkStatus.Unchanged | LinkStatus.Transfer | LinkStatus.Renumeration =>
             ready.last.endAddrMValue + (hit.endAddrMValue - hit.startAddrMValue)
           case LinkStatus.New =>
             prevAddrM + Math.round(hit.geometryLength)

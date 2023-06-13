@@ -780,7 +780,7 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
         }).toList
 
         val road_tracks_to_test_1 = List(
-          Test_config(first_road_part_to_update, 5, LinkStatus.UnChanged)
+          Test_config(first_road_part_to_update, 5, LinkStatus.Unchanged)
         )
 
         for (test_track <- road_tracks_to_test_1) {
@@ -793,7 +793,7 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
         }).toList
 
         val road_tracks_to_test_2 = List(
-          Test_terminated_config(links_to_terminate, LinkStatus.Terminated)
+          Test_terminated_config(links_to_terminate, LinkStatus.Termination)
         )
 
         for (test_track <- road_tracks_to_test_2) {
@@ -1020,7 +1020,7 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
        // projectDAO.fetchById(projectSaved.id).get.elys shouldBe (Set(road_13_218.head.ely))
 
         val afterCalculatedProjectlinks = projectService_db.getProjectLinks(projectSaved.id)
-        val calculatedProjectlinks      = afterCalculatedProjectlinks.filterNot(_.status == LinkStatus.Terminated)
+        val calculatedProjectlinks      = afterCalculatedProjectlinks.filterNot(_.status == LinkStatus.Termination)
 
         val leftSide = calculatedProjectlinks.filterNot(_.track == Track.RightSide).sortBy(_.startAddrMValue)
         val rightSide = calculatedProjectlinks.filterNot(_.track == Track.LeftSide).sortBy(_.startAddrMValue)

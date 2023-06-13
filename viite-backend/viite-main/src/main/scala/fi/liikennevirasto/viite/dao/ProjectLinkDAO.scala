@@ -184,9 +184,9 @@ class ProjectLinkDAO {
   PROJECT_LINK.LINEAR_LOCATION_ID, PROJECT_LINK.ELY, PROJECT_LINK.REVERSED, PROJECT_LINK.CONNECTED_LINK_ID,
   CASE
     WHEN STATUS = ${LinkStatus.NotHandled.value} THEN null
-    WHEN STATUS IN (${LinkStatus.Terminated.value}, ${LinkStatus.UnChanged.value}) THEN ROADWAY.START_DATE
+    WHEN STATUS IN (${LinkStatus.Termination.value}, ${LinkStatus.Unchanged.value}) THEN ROADWAY.START_DATE
     ELSE PRJ.START_DATE END as start_date,
-  CASE WHEN STATUS = ${LinkStatus.Terminated.value} THEN PRJ.START_DATE - 1 ELSE null END as end_date,
+  CASE WHEN STATUS = ${LinkStatus.Termination.value} THEN PRJ.START_DATE - 1 ELSE null END as end_date,
   PROJECT_LINK.ADJUSTED_TIMESTAMP,
   CASE
     WHEN rn.road_name IS NOT NULL AND rn.END_DATE IS NULL AND rn.VALID_TO IS null THEN rn.road_name
@@ -219,9 +219,9 @@ class ProjectLinkDAO {
           plh.REVERSED, plh.CONNECTED_LINK_ID,
           CASE
             WHEN STATUS = ${LinkStatus.NotHandled.value} THEN null
-            WHEN STATUS IN (${LinkStatus.Terminated.value}, ${LinkStatus.UnChanged.value}) THEN ROADWAY.START_DATE
+            WHEN STATUS IN (${LinkStatus.Termination.value}, ${LinkStatus.Unchanged.value}) THEN ROADWAY.START_DATE
             ELSE PRJ.START_DATE END as start_date,
-          CASE WHEN STATUS = ${LinkStatus.Terminated.value} THEN PRJ.START_DATE - 1 ELSE null END as end_date,
+          CASE WHEN STATUS = ${LinkStatus.Termination.value} THEN PRJ.START_DATE - 1 ELSE null END as end_date,
           plh.ADJUSTED_TIMESTAMP,
           CASE
             WHEN rn.road_name IS NOT NULL AND rn.END_DATE IS NULL AND rn.VALID_TO IS null THEN rn.road_name
@@ -402,7 +402,7 @@ class ProjectLinkDAO {
   def updateProjectLinks(projectLinks: Seq[ProjectLink], modifier: String, addresses: Seq[RoadAddress]): Unit = {
       time(logger, "Update project links") {
         val nonUpdatingStatus = Set[LinkStatus](LinkStatus.NotHandled)
-        val maxInEachTracks = projectLinks.filter(pl => pl.status == LinkStatus.UnChanged).groupBy(_.track).map(p => p._2.maxBy(_.endAddrMValue).id).toSeq
+        val maxInEachTracks = projectLinks.filter(pl => pl.status == LinkStatus.Unchanged).groupBy(_.track).map(p => p._2.maxBy(_.endAddrMValue).id).toSeq
         val links = projectLinks.map { pl =>
           if (!pl.isSplit && nonUpdatingStatus.contains(pl.status) && addresses.map(_.linearLocationId).contains(pl.linearLocationId) && !maxInEachTracks.contains(pl.id)) {
             val ra = addresses.find(_.linearLocationId == pl.linearLocationId).get
@@ -686,7 +686,7 @@ class ProjectLinkDAO {
     time(logger, "Update project link numbering") {
       val user = userName.replaceAll("[^A-Za-z0-9\\-]+", "")
       val sql = s"UPDATE PROJECT_LINK SET STATUS = ${linkStatus.value}, MODIFIED_BY='$user', ROAD_NUMBER = $newRoadNumber, ROAD_PART_NUMBER = $newRoadPart, ELY = $ely " +
-        s"WHERE PROJECT_ID = $projectId  AND ROAD_NUMBER = $roadNumber AND ROAD_PART_NUMBER = $roadPart AND STATUS != ${LinkStatus.Terminated.value}"
+        s"WHERE PROJECT_ID = $projectId  AND ROAD_NUMBER = $roadNumber AND ROAD_PART_NUMBER = $roadPart AND STATUS != ${LinkStatus.Termination.value}"
       Q.updateNA(sql).execute
     }
   }
@@ -766,7 +766,7 @@ class ProjectLinkDAO {
       val roadPartMaxAddr =
         sql"""SELECT MAX(END_ADDR_M) FROM PROJECT_LINK
          where project_link.project_id = $projectId and project_link.road_number = $roadNumber and project_link.road_part_number = $roadPartNumber
-         and project_link.status != ${LinkStatus.Terminated.value}
+         and project_link.status != ${LinkStatus.Termination.value}
          """.as[Long].firstOption.getOrElse(0L)
       val updateProjectLink = s"""
         update project_link
@@ -777,7 +777,7 @@ class ProjectLinkDAO {
           SIDE = (CASE SIDE WHEN ${SideCode.TowardsDigitizing.value} THEN ${SideCode.AgainstDigitizing.value} ELSE ${SideCode.TowardsDigitizing.value} END),
           reversed = (CASE WHEN reversed = 0 AND status != ${LinkStatus.New.value} THEN 1 WHEN reversed = 1 AND status != ${LinkStatus.New.value} THEN 0 ELSE 0 END)
         where project_link.project_id = $projectId and project_link.road_number = $roadNumber and project_link.road_part_number = $roadPartNumber
-          and project_link.status != ${LinkStatus.Terminated.value}"""
+          and project_link.status != ${LinkStatus.Termination.value}"""
       Q.updateNA(updateProjectLink).execute
     }
   }
@@ -813,10 +813,10 @@ class ProjectLinkDAO {
 
   def getProjectLinksContinuityCodes(projectId: Long, roadNumber: Long, roadPartNumber: Long): Map[Long, Discontinuity] = {
     sql""" SELECT END_ADDR_M, DISCONTINUITY_TYPE FROM PROJECT_LINK WHERE PROJECT_ID = $projectId AND
-         ROAD_NUMBER = $roadNumber AND ROAD_PART_NUMBER = $roadPartNumber AND STATUS != ${LinkStatus.Terminated.value}
+         ROAD_NUMBER = $roadNumber AND ROAD_PART_NUMBER = $roadPartNumber AND STATUS != ${LinkStatus.Termination.value}
          AND (DISCONTINUITY_TYPE != ${Discontinuity.Continuous.value} OR END_ADDR_M =
          (SELECT MAX(END_ADDR_M) FROM PROJECT_LINK WHERE PROJECT_ID = $projectId AND
-           ROAD_NUMBER = $roadNumber AND ROAD_PART_NUMBER = $roadPartNumber AND STATUS != ${LinkStatus.Terminated.value}))
+           ROAD_NUMBER = $roadNumber AND ROAD_PART_NUMBER = $roadPartNumber AND STATUS != ${LinkStatus.Termination.value}))
        """.as[(Long, Int)].list.map(x => x._1 -> Discontinuity.apply(x._2)).toMap
   }
 
