@@ -13,7 +13,7 @@
     var dirtyProjectLinkIds = [];
     var dirtyProjectLinks = [];
     var publishableProject = false;
-    var LinkStatus = ViiteEnumerations.LinkStatus;
+    var RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
     var ProjectStatus = ViiteEnumerations.ProjectStatus;
     var Track = ViiteEnumerations.Track;
     var BAD_REQUEST_400 = 400;
@@ -125,7 +125,7 @@
       });
     };
 
-    this.revertLinkStatus = function () {
+    this.revertRoadAddressChangeType = function () {
       resetEditedDistance();
       var fetchedLinks = this.getAll();
       dirtyProjectLinkIds.forEach(function (dirtyLink) {
@@ -249,7 +249,7 @@
           applicationModel.addSpinner();
           resetEditedDistance();
           var ids = dataJson.ids;
-          if (dataJson.linkStatus === LinkStatus.New.value && ids.length === 0) {
+          if (dataJson.roadAddressChangeType === RoadAddressChangeType.New.value && ids.length === 0) {
             backend.createProjectLinks(dataJson, function (successObject) {
               if (successObject.success) {
                 publishableProject = successObject.publishable;
@@ -342,7 +342,7 @@
       var dataJson = {
         ids: ids,
         linkIds: linkIds,
-        linkStatus: statusCode,
+        roadAddressChangeType: statusCode,
         projectId: projectId,
         roadNumber: Number(roadAddressProjectForm.find('#tie')[0].value),
         roadPartNumber: Number(roadAddressProjectForm.find('#osa')[0].value),
@@ -364,7 +364,7 @@
       var changedLink = _.chain(changedLinks).uniq().sortBy(function (cl) {
         return cl.endAddressM;
       }).last().value();
-      var isNewRoad = changedLink.status === LinkStatus.New.value;
+      var isNewRoad = changedLink.status === RoadAddressChangeType.New.value;
 
       var validUserEndAddress = !validUserGivenAddrMValues(_.head(dataJson.ids || dataJson.linkIds), dataJson.userDefinedEndAddressM);
       if (isNewRoad && (editedEndDistance || editedBeginDistance) && validUserEndAddress) {
@@ -433,7 +433,7 @@
     this.changeNewProjectLinkDirection = function (projectId, selectedLinks) {
       applicationModel.addSpinner();
       var links = _.filter(selectedLinks, function (link) {
-        return link.status !== LinkStatus.Terminated.value;
+        return link.status !== RoadAddressChangeType.Terminated.value;
       });
       var coordinates = applicationModel.getUserGeoLocation();
       var dataJson = {

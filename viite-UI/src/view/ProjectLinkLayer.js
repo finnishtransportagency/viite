@@ -5,7 +5,7 @@
     var me = this;
 
     var SideCode = ViiteEnumerations.SideCode;
-    var LinkStatus = ViiteEnumerations.LinkStatus;
+    var RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
     var RoadClass = ViiteEnumerations.RoadClass;
     var lifecycleStatus = ViiteEnumerations.lifecycleStatus;
     var isNotEditingData = true;
@@ -113,14 +113,14 @@
       });
     };
 
-    var possibleStatusForSelection = [LinkStatus.NotHandled.value, LinkStatus.New.value, LinkStatus.Terminated.value, LinkStatus.Transfer.value, LinkStatus.Unchanged.value, LinkStatus.Numbering.value];
+    var possibleStatusForSelection = [RoadAddressChangeType.NotHandled.value, RoadAddressChangeType.New.value, RoadAddressChangeType.Terminated.value, RoadAddressChangeType.Transfer.value, RoadAddressChangeType.Unchanged.value, RoadAddressChangeType.Numbering.value];
 
     var selectSingleClick = new ol.interaction.Select({
       layer: [projectLinkLayer, underConstructionRoadProjectLayer, unAddressedRoadsProjectLayer, notHandledProjectLinksLayer, terminatedProjectLinkLayer],
       condition: ol.events.condition.singleClick,
       style: function (feature) {
         if (feature.linkData) {
-          if (projectLinkStatusIn(feature.linkData, possibleStatusForSelection) || feature.linkData.roadClass === RoadClass.NoClass.value ||
+          if (projectRoadAddressChangeTypeIn(feature.linkData, possibleStatusForSelection) || feature.linkData.roadClass === RoadClass.NoClass.value ||
             feature.linkData.lifecycleStatus === lifecycleStatus.UnderConstruction.value) {
             return projectLinkStyler.getSelectionLinkStyle(feature.linkData, map);
           }
@@ -139,7 +139,7 @@
       var selection = _.find(ctrlPressed ? [rawSelection] : [rawSelection].concat(selectSingleClick.getFeatures().getArray()), function (selectionTarget) {
         if (selectionTarget)
           return !_.isUndefined(selectionTarget.linkData) && (
-            projectLinkStatusIn(selectionTarget.linkData, possibleStatusForSelection) || selectionTarget.linkData.roadClass === RoadClass.NoClass.value);
+            projectRoadAddressChangeTypeIn(selectionTarget.linkData, possibleStatusForSelection) || selectionTarget.linkData.roadClass === RoadClass.NoClass.value);
         else return false;
       });
       if (ctrlPressed) {
@@ -184,7 +184,7 @@
       layer: [projectLinkLayer, underConstructionRoadProjectLayer, unAddressedRoadsProjectLayer, terminatedProjectLinkLayer, notHandledProjectLinksLayer],
       condition: ol.events.condition.doubleClick,
       style: function (feature) {
-        if (projectLinkStatusIn(feature.linkData, possibleStatusForSelection) || feature.linkData.roadClass === RoadClass.NoClass.value ||
+        if (projectRoadAddressChangeTypeIn(feature.linkData, possibleStatusForSelection) || feature.linkData.roadClass === RoadClass.NoClass.value ||
           feature.linkData.lifecycleStatus === lifecycleStatus.UnderConstruction.value) {
           return projectLinkStyler.getSelectionLinkStyle(feature.linkData, map);
         }
@@ -198,7 +198,7 @@
       var ctrlPressed = event.mapBrowserEvent.originalEvent.ctrlKey;
       var selection = _.find(event.selected, function (selectionTarget) {
         return (!_.isUndefined(selectionTarget.linkData) && (
-            projectLinkStatusIn(selectionTarget.linkData, possibleStatusForSelection) ||
+            projectRoadAddressChangeTypeIn(selectionTarget.linkData, possibleStatusForSelection) ||
             selectionTarget.linkData.roadClass === RoadClass.NoClass.value ||
             selectionTarget.linkData.lifecycleStatus === lifecycleStatus.UnderConstruction.value)
         );
@@ -260,7 +260,7 @@
           .concat(unAddressedRoadsProjectLayer.getSource().getFeatures())
           .concat(notHandledProjectLinksLayer.getSource().getFeatures())
           .concat(terminatedProjectLinkLayer.getSource().getFeatures()), function (feature) {
-        var canIHighlight = (!_.isUndefined(feature.linkData.linkId) || feature.linkData.status === LinkStatus.Terminated.value
+        var canIHighlight = (!_.isUndefined(feature.linkData.linkId) || feature.linkData.status === RoadAddressChangeType.Terminated.value
           ? selectedProjectLinkProperty.isSelected(getSelectedId(feature.linkData)) : false);
         if (canIHighlight) {
           featuresToHighlight.push(feature);
@@ -360,7 +360,7 @@
     };
 
 
-    var projectLinkStatusIn = function (projectLink, possibleStatus) {
+    var projectRoadAddressChangeTypeIn = function (projectLink, possibleStatus) {
       if (!_.isUndefined(possibleStatus) && !_.isUndefined(projectLink))
         return _.includes(possibleStatus, projectLink.status);
       else return false;
@@ -424,15 +424,15 @@
 
         // get the links that are not in the project
         var [outsideOfProjectLinks, inProjectWithRoadNumberLinks] = _.partition(linksWithRoadNumber, function (link) {
-          return link.status === LinkStatus.Undefined.value;
+          return link.status === RoadAddressChangeType.Undefined.value;
         });
 
         var [notHandledLinks, othersInProject] = _.partition(inProjectWithRoadNumberLinks, function (link){
-          return link.status === LinkStatus.NotHandled.value;
+          return link.status === RoadAddressChangeType.NotHandled.value;
         });
 
         var [terminatedLinks, restOfProjectLinks] = _.partition(othersInProject, function (link) {
-          return link.status === LinkStatus.Terminated.value;
+          return link.status === RoadAddressChangeType.Terminated.value;
         });
 
         // add under construction roads to correct layer

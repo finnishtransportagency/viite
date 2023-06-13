@@ -1,6 +1,6 @@
 (function (root) {
   root.ProjectEditForm = function (map, projectCollection, selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend) {
-    var LinkStatus = ViiteEnumerations.LinkStatus;
+    var RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
     var CalibrationCode = ViiteEnumerations.CalibrationCode;
     var editableStatus = [ViiteEnumerations.ProjectStatus.Incomplete.value, ViiteEnumerations.ProjectStatus.Unknown.value];
     var ValidElys = _.map(ViiteEnumerations.ElyCodes, function (ely) {
@@ -33,11 +33,11 @@
     };
 
     var defineOptionModifiers = function (option, selection) {
-      var linkStatus = selection[0].status;
-      var targetLinkStatus = _.find(LinkStatus, function (ls) {
+      var roadAddressChangeType = selection[0].status;
+      var targetRoadAddressChangeType = _.find(RoadAddressChangeType, function (ls) {
         return ls.description === option || (option === '' && ls.value === 99);
       });
-      return transitionModifiers(targetLinkStatus, linkStatus);
+      return transitionModifiers(targetRoadAddressChangeType, roadAddressChangeType);
     };
 
     var selectedProjectLinkTemplate = function (project, selected, errorMessage) {
@@ -108,18 +108,18 @@
     };
 
     var selectionForm = function (project, selection, selected, road) {
-      var defaultOption = (selected[0].status === LinkStatus.NotHandled.value ? LinkStatus.NotHandled.description : LinkStatus.Undefined.description);
+      var defaultOption = (selected[0].status === RoadAddressChangeType.NotHandled.value ? RoadAddressChangeType.NotHandled.description : RoadAddressChangeType.Undefined.description);
       return '<form id="roadAddressProjectForm" class="input-unit-combination form-group form-horizontal roadAddressProject">' +
         '<label>Toimenpiteet,' + selection + '</label>' +
         '<div class="input-unit-combination">' +
         '<select class="action-select" id="dropDown_0" size="1">' +
         '<option id="drop_0_" ' + defineOptionModifiers(defaultOption, selected) + '>Valitse</option>' +
-        '<option id="drop_0_' + LinkStatus.Unchanged.description + '" value=' + LinkStatus.Unchanged.description + ' ' + defineOptionModifiers(LinkStatus.Unchanged.description, selected) + '>' + LinkStatus.Unchanged.displayText + '</option>' +
-        '<option id="drop_0_' + LinkStatus.Transfer.description + '" value=' + LinkStatus.Transfer.description + ' ' + defineOptionModifiers(LinkStatus.Transfer.description, selected) + '>' + LinkStatus.Transfer.displayText + '</option>' +
-        '<option id="drop_0_' + LinkStatus.New.description + '" value=' + LinkStatus.New.description + ' ' + defineOptionModifiers(LinkStatus.New.description, selected) + '>' + LinkStatus.New.displayText + '</option>' +
-        '<option id="drop_0_' + LinkStatus.Terminated.description + '" value=' + LinkStatus.Terminated.description + ' ' + defineOptionModifiers(LinkStatus.Terminated.description, selected) + '>' + LinkStatus.Terminated.displayText + '</option>' +
-        '<option id="drop_0_' + LinkStatus.Numbering.description + '" value=' + LinkStatus.Numbering.description + ' ' + defineOptionModifiers(LinkStatus.Numbering.description, selected) + '>' + LinkStatus.Numbering.displayText + '</option>' +
-        '<option id="drop_0_' + LinkStatus.Revert.description + '" value=' + LinkStatus.Revert.description + ' ' + defineOptionModifiers(LinkStatus.Revert.description, selected) + '>' + LinkStatus.Revert.displayText +'</option>' +
+        '<option id="drop_0_' + RoadAddressChangeType.Unchanged.description + '" value=' + RoadAddressChangeType.Unchanged.description + ' ' + defineOptionModifiers(RoadAddressChangeType.Unchanged.description, selected) + '>' + RoadAddressChangeType.Unchanged.displayText + '</option>' +
+        '<option id="drop_0_' + RoadAddressChangeType.Transfer.description + '" value=' + RoadAddressChangeType.Transfer.description + ' ' + defineOptionModifiers(RoadAddressChangeType.Transfer.description, selected) + '>' + RoadAddressChangeType.Transfer.displayText + '</option>' +
+        '<option id="drop_0_' + RoadAddressChangeType.New.description + '" value=' + RoadAddressChangeType.New.description + ' ' + defineOptionModifiers(RoadAddressChangeType.New.description, selected) + '>' + RoadAddressChangeType.New.displayText + '</option>' +
+        '<option id="drop_0_' + RoadAddressChangeType.Terminated.description + '" value=' + RoadAddressChangeType.Terminated.description + ' ' + defineOptionModifiers(RoadAddressChangeType.Terminated.description, selected) + '>' + RoadAddressChangeType.Terminated.displayText + '</option>' +
+        '<option id="drop_0_' + RoadAddressChangeType.Numbering.description + '" value=' + RoadAddressChangeType.Numbering.description + ' ' + defineOptionModifiers(RoadAddressChangeType.Numbering.description, selected) + '>' + RoadAddressChangeType.Numbering.displayText + '</option>' +
+        '<option id="drop_0_' + RoadAddressChangeType.Revert.description + '" value=' + RoadAddressChangeType.Revert.description + ' ' + defineOptionModifiers(RoadAddressChangeType.Revert.description, selected) + '>' + RoadAddressChangeType.Revert.displayText +'</option>' +
         '</select>' +
         '</div>' +
         formCommon.newRoadAddressInfo(project, selected, selectedProjectLink, road) +
@@ -184,27 +184,27 @@
     };
 
     var changeDropDownValue = function (statusCode) {
-      var dropdown_0_new = $("#dropDown_0 option[value=" + LinkStatus.New.description + "]");
+      var dropdown_0_new = $("#dropDown_0 option[value=" + RoadAddressChangeType.New.description + "]");
       var rootElement = $('#feature-attributes');
       switch (statusCode) {
-        case LinkStatus.Unchanged.value:
+        case RoadAddressChangeType.Unchanged.value:
           dropdown_0_new.prop('disabled', true);
-          $("#dropDown_0 option[value=" + LinkStatus.Unchanged.description + "]").attr('selected', 'selected').change();
+          $("#dropDown_0 option[value=" + RoadAddressChangeType.Unchanged.description + "]").attr('selected', 'selected').change();
           break;
-        case LinkStatus.New.value:
+        case RoadAddressChangeType.New.value:
           dropdown_0_new.attr('selected', 'selected').change();
           projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
           rootElement.find('.new-road-address').prop("hidden", false);
           if (selectedProjectLink[0].id !== 0)
             rootElement.find('.changeDirectionDiv').prop("hidden", false);
           break;
-        case LinkStatus.Transfer.value:
+        case RoadAddressChangeType.Transfer.value:
           dropdown_0_new.prop('disabled', true);
-          $("#dropDown_0 option[value=" + LinkStatus.Transfer.description + "]").attr('selected', 'selected').change();
+          $("#dropDown_0 option[value=" + RoadAddressChangeType.Transfer.description + "]").attr('selected', 'selected').change();
           rootElement.find('.changeDirectionDiv').prop("hidden", true); // TODO remove this line when Velho integration can handle road reversing
           break;
-        case LinkStatus.Numbering.value:
-          $("#dropDown_0 option[value=" + LinkStatus.Numbering.description + "]").attr('selected', 'selected').change();
+        case RoadAddressChangeType.Numbering.value:
+          $("#dropDown_0 option[value=" + RoadAddressChangeType.Numbering.description + "]").attr('selected', 'selected').change();
           break;
         default:
           break;
@@ -213,7 +213,7 @@
     };
 
     var removeNumberingFromDropdown = function () {
-      $("#dropDown_0").children("#dropDown_0 option[value=" + LinkStatus.Numbering.description + "]").remove();
+      $("#dropDown_0").children("#dropDown_0 option[value=" + RoadAddressChangeType.Numbering.description + "]").remove();
     };
 
     var fillDistanceValues = function (selectedLinks) {
@@ -290,11 +290,11 @@
         checkInputs();
         changeDropDownValue(selectedProjectLink[0].status);
         /* Disable numbering if the road part has any other status set. */
-        if (selectedProjectLink[0].status !== LinkStatus.Numbering.value &&
+        if (selectedProjectLink[0].status !== RoadAddressChangeType.Numbering.value &&
             _.filter(projectCollection.getAll(), function (pl) {
                 return pl.roadAddressRoadNumber === selectedProjectLink[0].roadNumber &&
                     pl.roadAddressRoadPart === selectedProjectLink[0].roadPartNumber &&
-                    (pl.status !== LinkStatus.NotHandled.value && pl.status !== LinkStatus.Numbering.value);
+                    (pl.status !== RoadAddressChangeType.NotHandled.value && pl.status !== RoadAddressChangeType.Numbering.value);
             }).length !== 0) {
               removeNumberingFromDropdown();
         }
@@ -414,7 +414,7 @@
 
       var canChangeDirection = function () {
         if (_.isUndefined(_.find(selectedProjectLink, function (link) {
-          return (link.status === LinkStatus.Terminated.value || link.status === LinkStatus.NotHandled.value);
+          return (link.status === RoadAddressChangeType.Terminated.value || link.status === RoadAddressChangeType.NotHandled.value);
         }))) {
           rootElement.find('.changeDirectionDiv').prop("hidden", false);
         } else {
@@ -433,11 +433,11 @@
 
         var statusDropdown_0 = $('#dropDown_0').val();
 
-        var objectDropdown_0 = _.find(LinkStatus, function (obj) {
+        var objectDropdown_0 = _.find(RoadAddressChangeType, function (obj) {
           return obj.description === statusDropdown_0;
         });
 
-        if (objectDropdown_0.value === LinkStatus.Revert.value) {
+        if (objectDropdown_0.value === RoadAddressChangeType.Revert.value) {
           projectCollection.revertChangesRoadlink(selectedProjectLink);
         }
         else {
@@ -466,7 +466,7 @@
         };
 
       var cancelChanges = function () {
-        projectCollection.revertLinkStatus();
+        projectCollection.revertRoadAddressChangeType();
         projectCollection.setDirty([]);
         projectCollection.setTmpDirty([]);
         projectLinkLayer.clearHighlights();
@@ -505,14 +505,14 @@
         $('#trackCodeDropdown').prop('disabled', false);
         $('#discontinuityDropdown').prop('disabled', false);
         $('#administrativeClassDropdown').prop('disabled', false);
-        if (this.value === LinkStatus.Terminated.description) {
+        if (this.value === RoadAddressChangeType.Terminated.description) {
           rootElement.find('.new-road-address').prop("hidden", true);
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
           projectCollection.setDirty(_.map(selectedProjectLink, function (link) {
             return {
               'id': link.id,
               'linkId': link.linkId,
-              'status': LinkStatus.Terminated.value,
+              'status': RoadAddressChangeType.Terminated.value,
               'roadLinkSource': link.roadLinkSource,
               'points': link.points,
               'linearLocationId': link.linearLocationId
@@ -520,12 +520,12 @@
           }));
           projectCollection.setTmpDirty(projectCollection.getDirty());
           rootElement.find('.project-form button.update').prop("disabled", false);
-        } else if (this.value === LinkStatus.New.description) {
+        } else if (this.value === RoadAddressChangeType.New.description) {
           projectCollection.setDirty(_.map(selectedProjectLink, function (link) {
             return {
               'id': link.id,
               'linkId': link.linkId,
-              'status': LinkStatus.New.value,
+              'status': RoadAddressChangeType.New.value,
               'roadLinkSource': link.roadLinkSource,
               'points': link.points,
               'linearLocationId': link.linearLocationId
@@ -538,7 +538,7 @@
             rootElement.find('.changeDirectionDiv').prop("hidden", false);
             rootElement.find('#distanceValue').prop("hidden", false);
           }
-        } else if (this.value === LinkStatus.Unchanged.description) {
+        } else if (this.value === RoadAddressChangeType.Unchanged.description) {
           rootElement.find('.new-road-address').prop("hidden", false);
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
           $('#tie').prop('disabled', true);
@@ -550,19 +550,19 @@
             return {
               'id': link.id,
               'linkId': link.linkId,
-              'status': LinkStatus.Unchanged.value,
+              'status': RoadAddressChangeType.Unchanged.value,
               'roadLinkSource': link.roadLinkSource,
               'points': link.points,
               'linearLocationId': link.linearLocationId
             };
           }));
           projectCollection.setTmpDirty(projectCollection.getDirty());
-        } else if (this.value === LinkStatus.Transfer.description) {
+        } else if (this.value === RoadAddressChangeType.Transfer.description) {
           projectCollection.setDirty(_.map(selectedProjectLink, function (link) {
             return {
               'id': link.id,
               'linkId': link.linkId,
-              'status': LinkStatus.Transfer.value,
+              'status': RoadAddressChangeType.Transfer.value,
               'roadLinkSource': link.roadLinkSource,
               'points': link.points,
               'linearLocationId': link.linearLocationId
@@ -571,7 +571,7 @@
           projectCollection.setTmpDirty(projectCollection.getDirty());
           rootElement.find('.new-road-address').prop("hidden", false);
           canChangeDirection();
-        } else if (this.value === LinkStatus.Numbering.description) {
+        } else if (this.value === RoadAddressChangeType.Numbering.description) {
           new ModalConfirm("Numerointi koskee kokonaista tieosaa. Valintaasi on tarvittaessa laajennettu koko tieosalle.");
           $('#trackCodeDropdown').prop('disabled', true);
           $('#discontinuityDropdown').prop('disabled', false);
@@ -580,7 +580,7 @@
             return {
               'id': link.id,
               'linkId': link.linkId,
-              'status': LinkStatus.Numbering.value,
+              'status': RoadAddressChangeType.Numbering.value,
               'roadLinkSource': link.roadLinkSource,
               'points': link.points,
               'linearLocationId': link.linearLocationId
@@ -590,7 +590,7 @@
           rootElement.find('.new-road-address').prop("hidden", false);
           rootElement.find('.project-form button.update').prop("disabled", false);
           canChangeDirection();
-        } else if (this.value === LinkStatus.Revert.description) {
+        } else if (this.value === RoadAddressChangeType.Revert.description) {
           rootElement.find('.new-road-address').prop("hidden", true);
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
           rootElement.find('.project-form button.update').prop("disabled", false);
