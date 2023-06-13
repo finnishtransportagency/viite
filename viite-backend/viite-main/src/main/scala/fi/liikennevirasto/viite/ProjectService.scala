@@ -16,7 +16,7 @@ import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink}
 import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.util.SplitOptions
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LinkGeomSource, LinkStatus, RoadLink, RoadLinkLike, SideCode, Track, TrafficDirection}
+import fi.vaylavirasto.viite.model.{AddressChangeType, AdministrativeClass, Discontinuity, LinkGeomSource, LinkStatus, RoadLink, RoadLinkLike, SideCode, Track, TrafficDirection}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
