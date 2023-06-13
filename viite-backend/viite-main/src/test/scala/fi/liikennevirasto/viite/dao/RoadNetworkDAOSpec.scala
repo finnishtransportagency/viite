@@ -40,7 +40,7 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
 
   val testRoadway3 = Roadway(NewIdValue, roadwayNumber3, roadNumber2, 1, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 2"), 1, TerminationCode.NoTermination)
 
-  test("Test When there are missing roadway points from the start and end of the roadway Then identify them") {
+  test("Test existence of roadway points from the start and end of the roadway by fetchMissingRoadwayPointsFromStart. Correctly assess both existing, and missing roadway points.") {
     runWithRollback {
       // create roadway without roadway points
       roadwayDAO.create(Seq(testRoadway1))
@@ -74,7 +74,7 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
 
       roadwayDAO.create(Seq(roadway1, roadway2))
 
-      val res = dao.fetchInvalidRoadwayLengthTroughHistory(roadNumber, roadPartNumber)
+      val res = dao.fetchInvalidRoadwayLengths(roadNumber, roadPartNumber)
       res.length should be (2)
     }
   }

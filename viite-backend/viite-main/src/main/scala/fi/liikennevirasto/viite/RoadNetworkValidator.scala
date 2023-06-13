@@ -119,7 +119,7 @@ class RoadNetworkValidator {
 
   def validateRoadwayLengthThroughHistory(roadNumber: Long, roadPartNumber: Long): Unit = {
     logger.info(s"Validating roadway lengths through history for road part: ${roadNumber}/${roadPartNumber}")
-    val invalidRoadwayLength = roadNetworkDAO.fetchInvalidRoadwayLengthTroughHistory(roadNumber, roadPartNumber)
+    val invalidRoadwayLength = roadNetworkDAO.fetchInvalidRoadwayLengths(roadNumber, roadPartNumber)
     if (invalidRoadwayLength.nonEmpty) {
       logger.warn(s"Found invalid roadway lengths through history for road part: ${roadNumber}/${roadPartNumber}")
       throw new RoadNetworkValidationException(InvalidRoadwayLengthTroughHistory)

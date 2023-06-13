@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReservedException, Track}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.liikennevirasto.digiroad2.Digiroad2Context.{projectLinkDAO}
+import fi.liikennevirasto.digiroad2.Digiroad2Context.projectLinkDAO
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model._
@@ -359,7 +359,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
   private val getRoadNetworkErrors: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String, Any]]("roadnetworkerrors")
       tags "ViiteAPI - RoadNetworkErrors"
-      summary "Gets all the road network errors."
+      summary "Runs road network integrity checks, returning all the found errors, e.g. missing points (roadway p., calibration p.), or roadways' integrity errors"
     )
 
   get("/roadnetworkerrors", operation(getRoadNetworkErrors)) {

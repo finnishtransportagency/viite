@@ -150,7 +150,7 @@ package object viite {
   val MissingRoadwayPointFromTheStart = "Roadway point puuttuu kohteen alusta"
   val MissingRoadwayPointFromTheEnd = "Roadway point puuttuu kohteen lopusta"
   val OverlappingRoadwaysOnLinearLocation = "Liian monta roadwayta lineaarilokaatiolla"
-  val InvalidRoadwayLengthTroughHistory = "Roadwaylla esiintyy pituus eroja historiassa"
+  val InvalidRoadwayLengthTroughHistory = "Roadwaylla pituuseroja historiassa"
   val OverlappingRoadwayInHistory = "Tiellä esiintyy päällekkäisiä roadwayta historiassa"
 
   val RampsMinBound = 20000

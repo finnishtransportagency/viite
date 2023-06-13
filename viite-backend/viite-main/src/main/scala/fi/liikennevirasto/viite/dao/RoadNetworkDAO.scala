@@ -154,10 +154,12 @@ class RoadNetworkDAO extends BaseDAO {
     }
   }
 
+  val selectMissingCalibrationPointFromStart = s"""SELECT r.road_number,r.road_part_number,r.track,rp.addr_m ,r.created_time,r.created_by""".stripMargin
+
   def fetchMissingCalibrationPointsFromStart(): Seq[MissingCalibrationPoint] = {
     val query =
       s"""
-         |SELECT r.road_number,r.road_part_number,r.track,rp.addr_m ,r.created_time,r.created_by
+         |${selectMissingCalibrationPointFromStart}
          |FROM roadway_point rp,roadway r
          |WHERE (NOT EXISTS (SELECT 4 FROM calibration_point cp2 WHERE cp2.valid_to IS NULL AND cp2.roadway_point_id = rp.id ))
          |AND r.roadway_number = rp.roadway_number AND r.valid_to IS NULL AND r.end_date IS NULL
@@ -176,7 +178,7 @@ class RoadNetworkDAO extends BaseDAO {
          |         AND road_number = ${roadNumber}
          |         AND road_part_number = ${roadPartNumber}
          |         )
-         |SELECT r.road_number,r.road_part_number,r.track,rp.addr_m ,r.created_time,r.created_by
+         |${selectMissingCalibrationPointFromStart}
          |FROM roadway_point rp,roadways r
          |WHERE (NOT EXISTS (SELECT 4 FROM calibration_point cp2 WHERE cp2.valid_to IS NULL AND cp2.roadway_point_id = rp.id ))
          |AND r.roadway_number = rp.roadway_number AND r.valid_to IS NULL AND r.end_date IS NULL
@@ -185,10 +187,12 @@ class RoadNetworkDAO extends BaseDAO {
     Q.queryNA[MissingCalibrationPoint](query).iterator.toSeq
   }
 
+  val selectMissingCalibrationPointFromEnd = s"""SELECT r.road_number,r.road_part_number,r.track,rp.addr_m ,r.created_time,r.created_by""".stripMargin
+
   def fetchMissingCalibrationPointsFromEnd(): Seq[MissingCalibrationPoint] = {
     val query =
       s"""
-        SELECT r.road_number,r.road_part_number,r.track,rp.addr_m ,r.created_time,r.created_by
+        ${selectMissingCalibrationPointFromEnd}
         FROM roadway_point rp, roadway r
         WHERE
         (NOT EXISTS (SELECT 4 FROM calibration_point cp2 WHERE cp2.valid_to IS NULL AND cp2.roadway_point_id = rp.id))
@@ -209,7 +213,7 @@ class RoadNetworkDAO extends BaseDAO {
           AND road_number = ${roadNumber}
           AND road_part_number = ${roadPartNumber}
         )
-        SELECT r.road_number,r.road_part_number,r.track,rp.addr_m ,r.created_time,r.created_by
+        ${selectMissingCalibrationPointFromEnd}
         FROM roadway_point rp, roadways r
         WHERE
         (NOT EXISTS (SELECT 4 FROM calibration_point cp2 WHERE cp2.valid_to IS NULL AND cp2.roadway_point_id = rp.id))
@@ -220,19 +224,12 @@ class RoadNetworkDAO extends BaseDAO {
     Q.queryNA[MissingCalibrationPoint](query).iterator.toSeq
   }
 
+  val selectMissingCalibrationPointFromJunction = s"""SELECT jp.id AS junction_point_id,j.junction_number,j.node_number,r.road_number,r.road_part_number,r.track,rp.addr_m,jp.before_after,r.created_time,r.created_by""".stripMargin
+
   def fetchMissingCalibrationPointsFromJunctions(): Seq[MissingCalibrationPointFromJunction] = {
     val query =
       s"""
-         |SELECT jp.id AS junction_point_id,
-         |       j.junction_number,
-         |       j.node_number,
-         |       r.road_number,
-         |       r.road_part_number,
-         |       r.track,
-         |       rp.addr_m,
-         |       jp.before_after,
-         |       r.created_time,
-         |       r.created_by
+         ${selectMissingCalibrationPointFromJunction}
          |FROM   junction_point jp,
          |       roadway_point rp,
          |       roadway r,
@@ -270,16 +267,7 @@ class RoadNetworkDAO extends BaseDAO {
          |          AND road_number = ${roadNumber}
          |          AND road_part_number = ${roadPartNumber}
          |        )
-         |SELECT jp.id AS junction_point_id,
-         |       j.junction_number,
-         |       j.node_number,
-         |       r.road_number,
-         |       r.road_part_number,
-         |       r.track,
-         |       rp.addr_m,
-         |       jp.before_after,
-         |       r.created_time,
-         |       r.created_by
+         |${selectMissingCalibrationPointFromJunction}
          |FROM   junction_point jp,
          |       roadway_point rp,
          |       roadways r,
@@ -307,15 +295,12 @@ class RoadNetworkDAO extends BaseDAO {
     Q.queryNA[MissingCalibrationPointFromJunction](query).iterator.toSeq
   }
 
+  val selectMissingRoadwayPointFromStart = s"""SELECT r.road_number,r.road_part_number,r.track,r.start_addr_m,r.created_time, r.created_by""".stripMargin
+
   def fetchMissingRoadwayPointsFromStart(): Seq[MissingRoadwayPoint] = {
     val query =
       s"""
-         |SELECT r.road_number,
-         |       r.road_part_number,
-         |       r.track,
-         |       r.start_addr_m,
-         |       r.created_time,
-         |       r.created_by
+         ${selectMissingRoadwayPointFromStart}
          |FROM   roadway r
          |WHERE  ( NOT EXISTS (SELECT 4
          |                     FROM   roadway_point rp
@@ -342,12 +327,7 @@ class RoadNetworkDAO extends BaseDAO {
          |          AND road_number = ${roadNumber}
          |          AND road_part_number = ${roadPartNumber}
          |        )
-         |SELECT r.road_number,
-         |       r.road_part_number,
-         |       r.track,
-         |       r.start_addr_m,
-         |       r.created_time,
-         |       r.created_by
+         |${selectMissingRoadwayPointFromStart}
          |FROM   roadways r
          |WHERE  ( NOT EXISTS (SELECT 4
          |                     FROM   roadway_point rp
@@ -364,15 +344,12 @@ class RoadNetworkDAO extends BaseDAO {
     Q.queryNA[MissingRoadwayPoint](query).iterator.toSeq
   }
 
+  val selectMissingRoadwayPointFromEnd = s"""SELECT r.road_number,r.road_part_number,r.track,r.end_addr_m,r.created_time,r.created_by""".stripMargin
+
   def fetchMissingRoadwayPointsFromEnd(): Seq[MissingRoadwayPoint] = {
     val query =
       s"""
-         |SELECT r.road_number,
-         |       r.road_part_number,
-         |       r.track,
-         |       r.end_addr_m,
-         |       r.created_time,
-         |       r.created_by
+         ${selectMissingRoadwayPointFromEnd}
          |FROM   roadway r
          |WHERE  ( NOT EXISTS (SELECT 4
          |                     FROM   roadway_point rp
@@ -404,12 +381,7 @@ class RoadNetworkDAO extends BaseDAO {
          |          AND road_number = ${roadNumber}
          |          AND road_part_number = ${roadPartNumber}
          |        )
-         |SELECT r.road_number,
-         |       r.road_part_number,
-         |       r.track,
-         |       r.end_addr_m,
-         |       r.created_time,
-         |       r.created_by
+         |${selectMissingRoadwayPointFromEnd}
          |FROM   roadways r
          |WHERE  ( NOT EXISTS (SELECT 4
          |                     FROM   roadway_point rp
@@ -431,102 +403,42 @@ class RoadNetworkDAO extends BaseDAO {
     Q.queryNA[MissingRoadwayPoint](query).iterator.toSeq
   }
 
+  val selectOverlappingRoadwayOnLinearLocation =
+    s"""SELECT DISTINCT r.id, r.roadway_number, r.road_number, r.road_part_number, r.track,
+       | r.start_addr_m, r.end_addr_m, r.reversed, r.discontinuity, r.start_date, r.end_date,
+       |  r.created_by, r.administrative_class, r.ely, r.terminated, r.valid_from, r.valid_to,
+       |   (SELECT rn.road_name FROM road_name rn WHERE rn.road_number = r.road_number AND rn.end_date IS NULL AND rn.valid_to IS NULL) AS road_name,
+       |    l.id AS linearLocationId, l.link_id, l.roadway_number, l.start_measure, l.end_measure, l.created_by, l.created_time""".stripMargin
+
   def fetchOverlappingRoadwaysOnLinearLocations(): Seq[OverlappingRoadwayOnLinearLocation] = {
     val query =
-      s"""SELECT DISTINCT r.id, r.ROADWAY_NUMBER, r.road_number, r.road_part_number, r.TRACK, r.start_addr_m, r.end_addr_m,
-         |          r.reversed, r.discontinuity, r.start_date, r.end_date, r.created_by, r.ADMINISTRATIVE_CLASS, r.ely, r.terminated,
-         |          r.valid_from, r.valid_to,
-         |          (select rn.road_name from road_name rn where rn.road_number = r.road_number and rn.end_date is null and rn.valid_to is null) as road_name,
-         |       l.id as linearLocationId,
-         |       l.link_id,
-         |       l.roadway_number,
-         |       l.start_measure,
-         |       l.end_measure,
-         |       l.created_by,
-         |       l.created_time
-         |FROM   roadway r
-         |join linear_location l on r.roadway_number = l.roadway_number
-         |WHERE r.valid_to IS NULL
-         |       AND l.valid_to IS NULL
-         |       AND EXISTS (SELECT 4
-         |                   FROM   linear_location l2,
-         |                          roadway r2
+      s"""WITH roadways
+         |     AS (SELECT *
+         |         FROM   roadway
+         |         WHERE  valid_to IS NULL),
+         |     linearlocations
+         |     AS (SELECT *
+         |         FROM   linear_location
+         |         WHERE  valid_to IS NULL)
+         ${selectOverlappingRoadwayOnLinearLocation}
+         |FROM   roadways r
+         |       JOIN linearlocations l
+         |         ON r.roadway_number = l.roadway_number
+         |WHERE EXISTS (SELECT 4
+         |                   FROM   linearlocations l2
+         |                          JOIN roadway r2
+         |                            ON r2.roadway_number = l2.roadway_number
          |                   WHERE  l.link_id = l2.link_id
-         |                          AND ( NOT r2.roadway_number = r.roadway_number )
-         |                          AND ( ( l.start_measure >= l2.start_measure
-         |                                  AND l.start_measure < l2.end_measure )
-         |                                 OR ( l.end_measure > l2.start_measure
-         |                                      AND l.end_measure <= l2.end_measure )
-         |                                 OR ( l.start_measure < l2.start_measure
-         |                                      AND l.end_measure > l2.end_measure ) )
-         |                          AND r2.roadway_number = l2.roadway_number
          |                          AND r2.valid_to IS NULL
          |                          AND l2.valid_to IS NULL
-         |                  )
-         |UNION
-         |SELECT DISTINCT r.id, r.ROADWAY_NUMBER, r.road_number, r.road_part_number, r.TRACK, r.start_addr_m, r.end_addr_m,
-         |          r.reversed, r.discontinuity, r.start_date, r.end_date, r.created_by, r.ADMINISTRATIVE_CLASS, r.ely, r.terminated,
-         |          r.valid_from, r.valid_to,
-         |          (select rn.road_name from road_name rn where rn.road_number = r.road_number and rn.end_date is null and rn.valid_to is null) as road_name,
-         |       l.id as linearLocationId,
-         |       l.link_id,
-         |       l.roadway_number,
-         |       l.start_measure,
-         |       l.end_measure,
-         |       l.created_by,
-         |       l.created_time
-         |FROM   roadway r
-         |       join linear_location l on r.roadway_number = l.roadway_number
-         |where  r.valid_to IS NULL
-         |       AND l.valid_to IS NULL
-         |       AND EXISTS (SELECT 4
-         |                   FROM   linear_location l2,
-         |                          roadway r2
-         |                   WHERE  l.link_id = l2.link_id
-         |                          AND l.start_measure < l2.start_measure
-         |                          AND l2.valid_to IS NULL
-         |                          AND r2.roadway_number = l2.roadway_number)
-         |       AND ( NOT EXISTS (SELECT 4
-         |                         FROM   linear_location l2,
-         |                                roadway r2
-         |                         WHERE  l.link_id = l2.link_id
-         |                                AND l2.start_measure = l.end_measure
-         |                                AND l2.valid_to IS NULL
-         |                                AND r2.valid_to IS NULL
-         |                                AND r2.roadway_number = l2.roadway_number) )
-         |UNION
-         |SELECT DISTINCT r.id, r.ROADWAY_NUMBER, r.road_number, r.road_part_number, r.TRACK, r.start_addr_m, r.end_addr_m,
-         |          r.reversed, r.discontinuity, r.start_date, r.end_date, r.created_by, r.ADMINISTRATIVE_CLASS, r.ely, r.terminated,
-         |          r.valid_from, r.valid_to,
-         |          (select rn.road_name from road_name rn where rn.road_number = r.road_number and rn.end_date is null and rn.valid_to is null) as road_name,
-         |       l.id as linearLocationId,
-         |       l.link_id,
-         |       l.roadway_number,
-         |       l.start_measure,
-         |       l.end_measure,
-         |       l.created_by,
-         |       l.created_time
-         |FROM   roadway r
-         |join linear_location l on r.roadway_number = l.roadway_number
-         |WHERE  r.valid_to IS NULL
-         |       AND l.valid_to IS NULL
-         |       AND EXISTS (SELECT 4
-         |                   FROM   linear_location l2,
-         |                          roadway r2
-         |                   WHERE  l.link_id = l2.link_id
-         |                          AND l.start_measure > l2.start_measure
-         |                          AND l2.valid_to IS NULL
-         |                          AND r2.roadway_number = l2.roadway_number)
-         |       AND ( NOT EXISTS (SELECT 4
-         |                         FROM   linear_location l2,
-         |                                roadway r2
-         |                         WHERE  l.link_id = l2.link_id
-         |                                AND l.start_measure = l2.end_measure
-         |                                AND l2.valid_to IS NULL
-         |                                AND r2.valid_to IS NULL
-         |                                AND r2.roadway_number = l2.roadway_number) )
-         |ORDER  BY link_id, linearLocationId,
-         |          start_measure;""".stripMargin
+         |                          AND ( NOT r2.roadway_number = r.roadway_number )
+         |                          AND ( ( l.start_measure >= l2.start_measure
+         |                                  AND l.start_measure < l2.end_measure ) --  if the beginning of linearlocation l is somewhere between the start and end of linearlocation l2
+         |                                 OR ( l.end_measure > l2.start_measure
+         |                                      AND l.end_measure <= l2.end_measure ) --  if the end of linearlocation l is somewhere between the start and end of linearlocation l2.
+         |                                 OR ( l.start_measure < l2.start_measure
+         |                                      AND l.end_measure > l2.end_measure ) ) -- if linearlocation l completely spans over linearlocation l2
+         |                  ) """.stripMargin
 
     Q.queryNA[OverlappingRoadwayOnLinearLocation](query).iterator.toSeq
   }
@@ -534,141 +446,54 @@ class RoadNetworkDAO extends BaseDAO {
   def fetchOverlappingRoadwaysOnLinearLocations(roadNumber: Long, roadPartNumber: Long): Seq[OverlappingRoadwayOnLinearLocation] = {
     val query =
       s"""
-         |WITH roadways
+         WITH roadways
          |     AS (SELECT *
          |         FROM   roadway
          |         WHERE  valid_to IS NULL
          |         AND road_number = ${roadNumber}
-         |         AND road_part_number = ${roadPartNumber}
-         |         )
-         |SELECT r.roadway_number,
-         |       r.road_number,
-         |       r.road_part_number,
-         |       r.track,
-         |       r.start_addr_m,
-         |       r.end_addr_m,
-         |       r.start_date,
-         |       r.end_date,
-         |       l.id,
-         |       l.link_id,
-         |       l.roadway_number,
-         |       l.start_measure,
-         |       l.end_measure,
-         |       l.created_by,
-         |       l.created_time
-         |FROM   roadways r,
-         |       linear_location l
-         |WHERE  r.roadway_number = l.roadway_number
-         |       AND r.valid_to IS NULL
-         |       AND l.valid_to IS NULL --and r.end_date is null
-         |       AND EXISTS (SELECT 4
-         |                   FROM   linear_location l2,
-         |                          roadway r2
+         |         AND road_part_number = ${roadPartNumber}),
+         |     linearlocations
+         |     AS (SELECT *
+         |         FROM   linear_location
+         |         WHERE  valid_to IS NULL)
+         ${selectOverlappingRoadwayOnLinearLocation}
+         |FROM   roadways r
+         |       JOIN linearlocations l
+         |         ON r.roadway_number = l.roadway_number
+         |WHERE EXISTS (SELECT 4
+         |                   FROM   linearlocations l2
+         |                          JOIN roadway r2
+         |                            ON r2.roadway_number = l2.roadway_number
          |                   WHERE  l.link_id = l2.link_id
+         |                          AND r2.valid_to IS NULL
+         |                          AND l2.valid_to IS NULL
          |                          AND ( NOT r2.roadway_number = r.roadway_number )
          |                          AND ( ( l.start_measure >= l2.start_measure
-         |                                  AND l.start_measure < l2.end_measure )
+         |                                  AND l.start_measure < l2.end_measure ) --  if the beginning of linearlocation l is somewhere between the start and end of linearlocation l2
          |                                 OR ( l.end_measure > l2.start_measure
-         |                                      AND l.end_measure <= l2.end_measure )
+         |                                      AND l.end_measure <= l2.end_measure ) --  if the end of linearlocation l is somewhere between the start and end of linearlocation l2.
          |                                 OR ( l.start_measure < l2.start_measure
-         |                                      AND l.end_measure > l2.end_measure ) )
-         |                          AND r2.roadway_number = l2.roadway_number
-         |                          AND r2.valid_to IS NULL
-         |                          AND l2.valid_to IS NULL --and r2.end_date is null
-         |                  )
-         |UNION
-         |SELECT r.roadway_number,
-         |       r.road_number,
-         |       r.road_part_number,
-         |       r.track,
-         |       r.start_addr_m,
-         |       r.end_addr_m,
-         |       r.start_date,
-         |       r.end_date,
-         |       l.id,
-         |       l.link_id,
-         |       l.roadway_number,
-         |       l.start_measure,
-         |       l.end_measure,
-         |       l.created_by,
-         |       l.created_time
-         |FROM   roadways r,
-         |       linear_location l
-         |WHERE  r.roadway_number = l.roadway_number
-         |       AND r.valid_to IS NULL
-         |       AND l.valid_to IS NULL --and r.end_date is null
-         |       AND EXISTS (SELECT 4
-         |                   FROM   linear_location l2,
-         |                          roadway r2
-         |                   WHERE  l.link_id = l2.link_id
-         |                          AND l.start_measure < l2.start_measure
-         |                          AND l2.valid_to IS NULL
-         |                          AND r2.roadway_number = l2.roadway_number)
-         |       AND ( NOT EXISTS (SELECT 4
-         |                         FROM   linear_location l2,
-         |                                roadway r2
-         |                         WHERE  l.link_id = l2.link_id
-         |                                AND l2.start_measure = l.end_measure
-         |                                AND l2.valid_to IS NULL
-         |                                AND r2.valid_to IS NULL
-         |                                --and r2.end_date is null
-         |                                AND r2.roadway_number = l2.roadway_number) )
-         |UNION
-         |SELECT r.roadway_number,
-         |       r.road_number,
-         |       r.road_part_number,
-         |       r.track,
-         |       r.start_addr_m,
-         |       r.end_addr_m,
-         |       r.start_date,
-         |       r.end_date,
-         |       l.id,
-         |       l.link_id,
-         |       l.roadway_number,
-         |       l.start_measure,
-         |       l.end_measure,
-         |       l.created_by,
-         |       l.created_time
-         |FROM   roadways r,
-         |       linear_location l
-         |WHERE  r.roadway_number = l.roadway_number
-         |       AND r.valid_to IS NULL
-         |       AND l.valid_to IS NULL --and r.end_date is null
-         |       AND EXISTS (SELECT 4
-         |                   FROM   linear_location l2,
-         |                          roadway r2
-         |                   WHERE  l.link_id = l2.link_id
-         |                          AND l.start_measure > l2.start_measure
-         |                          AND l2.valid_to IS NULL
-         |                          AND r2.roadway_number = l2.roadway_number)
-         |       AND ( NOT EXISTS (SELECT 4
-         |                         FROM   linear_location l2,
-         |                                roadway r2
-         |                         WHERE  l.link_id = l2.link_id
-         |                                AND l.start_measure = l2.end_measure
-         |                                AND l2.valid_to IS NULL
-         |                                AND r2.valid_to IS NULL
-         |                                --and r2.end_date is null
-         |                                AND r2.roadway_number = l2.roadway_number) )
-         |ORDER  BY link_id,
-         |          start_measure;""".stripMargin
+         |                                      AND l.end_measure > l2.end_measure ) ) -- if linearlocation l completely spans over linearlocation l2
+         |                  ) """.stripMargin
     Q.queryNA[OverlappingRoadwayOnLinearLocation](query).iterator.toSeq
   }
+
+  val selectinvalidRoadwayLength = s"""SELECT DISTINCT r.end_addr_m - r.start_addr_m AS pituus,
+                                       |                r.roadway_number,
+                                       |                r.start_date,
+                                       |                r.end_date,
+                                       |                r.road_number,
+                                       |                r.road_part_number,
+                                       |                r.track,
+                                       |                r.start_addr_m,
+                                       |                r.end_addr_m,
+                                       |                r.created_by,
+                                       |                r.created_time""".stripMargin
 
   def fetchInvalidRoadwayLengths(): Seq[InvalidRoadwayLength] = {
     val query =
       s"""
-         |SELECT DISTINCT r.end_addr_m - r.start_addr_m AS pituus,
-         |                r.roadway_number,
-         |                r.start_date,
-         |                r.end_date,
-         |                r.road_number,
-         |                r.road_part_number,
-         |                r.track,
-         |                r.start_addr_m,
-         |                r.end_addr_m,
-         |                r.created_by,
-         |                r.created_time
+         ${selectinvalidRoadwayLength}
          |FROM   roadway r
          |WHERE  r.valid_to IS NULL
          |       AND ( EXISTS (SELECT 4
@@ -681,7 +506,7 @@ class RoadNetworkDAO extends BaseDAO {
     Q.queryNA[InvalidRoadwayLength](query).iterator.toSeq
   }
 
-  def fetchInvalidRoadwayLengthTroughHistory(roadNumber: Long, roadPartNumber: Long): Seq[InvalidRoadwayLength] = {
+  def fetchInvalidRoadwayLengths(roadNumber: Long, roadPartNumber: Long): Seq[InvalidRoadwayLength] = {
     val query =
       s"""
          |WITH roadways
@@ -691,17 +516,7 @@ class RoadNetworkDAO extends BaseDAO {
          |         AND road_number = ${roadNumber}
          |         AND road_part_number = ${roadPartNumber}
          |         )
-         |SELECT DISTINCT r.end_addr_m - r.start_addr_m AS pituus,
-         |                r.roadway_number,
-         |                r.start_date,
-         |                r.end_date,
-         |                r.road_number,
-         |                r.road_part_number,
-         |                r.track,
-         |                r.start_addr_m,
-         |                r.end_addr_m,
-         |                r.created_by,
-         |                r.created_time
+         |${selectinvalidRoadwayLength}
          |FROM   roadways r
          |WHERE  r.valid_to IS NULL
          |       AND ( EXISTS (SELECT 4
@@ -714,13 +529,15 @@ class RoadNetworkDAO extends BaseDAO {
     Q.queryNA[InvalidRoadwayLength](query).iterator.toSeq
   }
 
+  val selectOverlappingRoadway = s"""SELECT DISTINCT r.id, r.ROADWAY_NUMBER, r.road_number, r.road_part_number, r.TRACK, r.start_addr_m, r.end_addr_m,
+                                    |          r.reversed, r.discontinuity, r.start_date, r.end_date, r.created_by, r.ADMINISTRATIVE_CLASS, r.ely, r.terminated,
+                                    |          r.valid_from, r.valid_to,
+                                    |          (select rn.road_name from road_name rn where rn.road_number = r.road_number and rn.end_date is null and rn.valid_to is null) as road_name""".stripMargin
+
   def fetchOverlappingRoadwaysInHistory(): Seq[Roadway] = {
     val query =
       s"""
-         SELECT DISTINCT r.id, r.ROADWAY_NUMBER, r.road_number, r.road_part_number, r.TRACK, r.start_addr_m, r.end_addr_m,
-         |          r.reversed, r.discontinuity, r.start_date, r.end_date, r.created_by, r.ADMINISTRATIVE_CLASS, r.ely, r.terminated,
-         |          r.valid_from, r.valid_to,
-         |          (select rn.road_name from road_name rn where rn.road_number = r.road_number and rn.end_date is null and rn.valid_to is null) as road_name
+         ${selectOverlappingRoadway}
          |FROM   roadway r
          |WHERE  r.valid_to IS NULL
          |       AND ( EXISTS (SELECT 4
@@ -761,10 +578,7 @@ class RoadNetworkDAO extends BaseDAO {
          |         AND road_number = ${roadNumber}
          |         AND road_part_number = ${roadPartNumber}
          |         )
-         |SELECT DISTINCT r.id, r.ROADWAY_NUMBER, r.road_number, r.road_part_number, r.TRACK, r.start_addr_m, r.end_addr_m,
-         |          r.reversed, r.discontinuity, r.start_date, r.end_date, r.created_by, r.ADMINISTRATIVE_CLASS, r.ely, r.terminated,
-         |          r.valid_from, r.valid_to,
-         |          (select rn.road_name from road_name rn where rn.road_number = r.road_number and rn.end_date is null and rn.valid_to is null) as road_name
+         |${selectOverlappingRoadway}
          |FROM   roadways r
          |WHERE  r.valid_to IS NULL
          |       AND ( EXISTS (SELECT 4
