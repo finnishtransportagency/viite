@@ -17,7 +17,7 @@ import fi.liikennevirasto.viite.process.{ProjectSectionCalculator, RoadwayAddres
 import fi.liikennevirasto.viite.process.strategy.DefaultSectionCalculatorStrategy
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point, PolyLine}
-import fi.vaylavirasto.viite.model.{AddressChangeType, AdministrativeClass, Discontinuity, LifecycleStatus, LinkGeomSource, LinkStatus, RoadLink, SideCode, Track, TrafficDirection}
+import fi.vaylavirasto.viite.model.{RoadAddressChangeType, AdministrativeClass, Discontinuity, LifecycleStatus, LinkGeomSource, LinkStatus, RoadLink, SideCode, Track, TrafficDirection}
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
@@ -159,7 +159,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   // note, functionality moved here from former ViiteTierekisteriClient at Tierekisteri removal (2021-09)
   val defaultChangeInfo = RoadwayChangeInfo(
-    AddressChangeType.apply(2),
+    RoadAddressChangeType.apply(2),
     RoadwayChangeSection(None, None, None, None, None, None, None, None, None),
     RoadwayChangeSection(Option(403), Option(0), Option(8), Option(0), Option(8), Option(1001),
       Option(AdministrativeClass.State), Option(Discontinuity.Continuous), Option(5)),
@@ -2055,7 +2055,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sqlu"""INSERT INTO PROJECT_LINK_NAME VALUES (nextval('PROJECT_LINK_NAME_SEQ'), $projectId, 66666, 'ROAD TEST')""".execute
       val namesBeforeUpdate = RoadNameDAO.getLatestRoadName(66666)
       val changeInfos = List(
-        RoadwayChangeInfo(AddressChangeType.New,
+        RoadwayChangeInfo(RoadAddressChangeType.New,
           source = dummyRoadwayChangeSection(Some(66666L), Some(1L), Some(0L), Some(0L), Some(100L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
           target = dummyRoadwayChangeSection(Some(66666L), Some(1L), Some(0L), Some(0L), Some(100L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
           Discontinuity.Continuous, AdministrativeClass.apply(1), reversed = false, 1)
@@ -2160,7 +2160,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sqlu"""INSERT INTO PROJECT_LINK_NAME VALUES (nextval('PROJECT_LINK_NAME_SEQ'), $projectId, 66666, 'another road name test')""".execute
 
       val changeInfos = List(
-        RoadwayChangeInfo(AddressChangeType.New,
+        RoadwayChangeInfo(RoadAddressChangeType.New,
           source = dummyRoadwayChangeSection(Some(66666L), Some(1L), Some(0L), Some(0L), Some(100L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
           target = dummyRoadwayChangeSection(Some(66666L), Some(1L), Some(0L), Some(0L), Some(100L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
           Discontinuity.Continuous, AdministrativeClass.apply(1), reversed = false, 1)
@@ -2198,7 +2198,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       sqlu"""INSERT INTO PROJECT_LINK_NAME VALUES (nextval('PROJECT_LINK_NAME_SEQ'), $projectId, 66666, 'road name test')""".execute
       val changeInfos = List(
-        RoadwayChangeInfo(AddressChangeType.New,
+        RoadwayChangeInfo(RoadAddressChangeType.New,
           source = dummyRoadwayChangeSection(Some(66666L), Some(1L), Some(0L), Some(0L), Some(100L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
           target = dummyRoadwayChangeSection(Some(66666L), Some(1L), Some(0L), Some(0L), Some(100L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
           Discontinuity.Continuous, AdministrativeClass.apply(1), reversed = false, 1)
@@ -2252,11 +2252,11 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       RoadNameDAO.getLatestRoadName(55555).isEmpty should be (true)
       RoadNameDAO.getLatestRoadName(66666).isEmpty should be (true)
       val changeInfos = List(
-        RoadwayChangeInfo(AddressChangeType.New,
+        RoadwayChangeInfo(RoadAddressChangeType.New,
           source = dummyRoadwayChangeSection(Some(66666L), Some(1L), Some(0L), Some(0L), Some(100L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
           target = dummyRoadwayChangeSection(Some(66666L), Some(1L), Some(0L), Some(0L), Some(100L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
           Discontinuity.Continuous, AdministrativeClass.apply(1), reversed = false, 1),
-        RoadwayChangeInfo(AddressChangeType.New,
+        RoadwayChangeInfo(RoadAddressChangeType.New,
           source = dummyRoadwayChangeSection(Some(55555L), Some(1L), Some(0L), Some(0L), Some(100L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
           target = dummyRoadwayChangeSection(Some(55555L), Some(1L), Some(0L), Some(0L), Some(100L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
           Discontinuity.Continuous, AdministrativeClass.apply(1), reversed = false, 1)
@@ -2538,29 +2538,29 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val project = projectService.createRoadLinkProject(rap)
 
       val changeInfos = List(
-        RoadwayChangeInfo(AddressChangeType.New,
+        RoadwayChangeInfo(RoadAddressChangeType.New,
           source = dummyRoadwayChangeSection(Some(testRoadNumber1), Some(1L), Some(0L), Some(0L), Some(100L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
           target = dummyRoadwayChangeSection(Some(testRoadNumber1), Some(1L), Some(0L), Some(100L), Some(200L), Some(AdministrativeClass.apply(3)), Some(Discontinuity.Continuous), Some(8L)),
           Discontinuity.Continuous, AdministrativeClass.apply(1), reversed = false, 1),
 
-        RoadwayChangeInfo(AddressChangeType.New,
+        RoadwayChangeInfo(RoadAddressChangeType.New,
           source = dummyRoadwayChangeSection(Some(testRoadNumber1), Some(1L), Some(0L), Some(100L), Some(200L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
           target = dummyRoadwayChangeSection(Some(testRoadNumber1), Some(1L), Some(0L), Some(100L), Some(200L), Some(AdministrativeClass.apply(3)), Some(Discontinuity.Continuous), Some(8L)),
           Discontinuity.Continuous, AdministrativeClass.apply(3), reversed = false, 2),
 
-        RoadwayChangeInfo(AddressChangeType.New,
+        RoadwayChangeInfo(RoadAddressChangeType.New,
           source = dummyRoadwayChangeSection(Some(testRoadNumber1), Some(1L), Some(0L), Some(200L), Some(400L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
           target = dummyRoadwayChangeSection(Some(testRoadNumber1), Some(1L), Some(0L), Some(200L), Some(400L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
           Discontinuity.Continuous, AdministrativeClass.apply(3), reversed = false, 3),
-        RoadwayChangeInfo(AddressChangeType.New,
+        RoadwayChangeInfo(RoadAddressChangeType.New,
           source = dummyRoadwayChangeSection(Some(testRoadNumber2), Some(1L), Some(0L), Some(200L), Some(400L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
           target = dummyRoadwayChangeSection(Some(testRoadNumber2), Some(1L), Some(0L), Some(200L), Some(400L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
           Discontinuity.Continuous, AdministrativeClass.apply(3), reversed = false, 3),
-        RoadwayChangeInfo(AddressChangeType.New,
+        RoadwayChangeInfo(RoadAddressChangeType.New,
           source = dummyRoadwayChangeSection(Some(testRoadNumber2), Some(1L), Some(0L), Some(200L), Some(400L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
           target = dummyRoadwayChangeSection(Some(testRoadNumber2), Some(1L), Some(0L), Some(200L), Some(400L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
           Discontinuity.Continuous, AdministrativeClass.apply(3), reversed = false, 3),
-        RoadwayChangeInfo(AddressChangeType.New,
+        RoadwayChangeInfo(RoadAddressChangeType.New,
           source = dummyRoadwayChangeSection(Some(testRoadNumber2), Some(1L), Some(0L), Some(200L), Some(400L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
           target = dummyRoadwayChangeSection(Some(testRoadNumber2), Some(1L), Some(0L), Some(200L), Some(400L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
           Discontinuity.Continuous, AdministrativeClass.apply(3), reversed = false, 3)
@@ -2613,17 +2613,17 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       RoadNameDAO.create(roadnames)
 
       val changeInfos = List(
-        RoadwayChangeInfo(AddressChangeType.Termination,
+        RoadwayChangeInfo(RoadAddressChangeType.Termination,
           source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
           target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(AdministrativeClass.apply(3)), Some(Discontinuity.Continuous), Some(8L)),
           Discontinuity.Continuous, AdministrativeClass.apply(1), reversed = false, 1),
 
-        RoadwayChangeInfo(AddressChangeType.Unchanged,
+        RoadwayChangeInfo(RoadAddressChangeType.Unchanged,
           source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
           target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(AdministrativeClass.apply(3)), Some(Discontinuity.Continuous), Some(8L)),
           Discontinuity.Continuous, AdministrativeClass.apply(3), reversed = false, 2),
 
-        RoadwayChangeInfo(AddressChangeType.Unchanged,
+        RoadwayChangeInfo(RoadAddressChangeType.Unchanged,
           source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(200L), Some(400L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
           target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(200L), Some(400L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
           Discontinuity.Continuous, AdministrativeClass.apply(3), reversed = false, 3)
@@ -2667,7 +2667,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       roadwayDAO.create(roadways)
 
       val changeInfos = List(
-        RoadwayChangeInfo(AddressChangeType.Transfer,
+        RoadwayChangeInfo(RoadAddressChangeType.Transfer,
           source = dummyRoadwayChangeSection(Some(srcRoadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
           target = dummyRoadwayChangeSection(Some(targetRoadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(AdministrativeClass.apply(3)), Some(Discontinuity.Continuous), Some(8L)),
           Discontinuity.Continuous, AdministrativeClass.apply(1), reversed = false, 1)
@@ -2713,7 +2713,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       roadwayDAO.create(roadways)
 
       val changeInfos = List(
-        RoadwayChangeInfo(AddressChangeType.Transfer,
+        RoadwayChangeInfo(RoadAddressChangeType.Transfer,
           source = dummyRoadwayChangeSection(Some(srcRoadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
           target = dummyRoadwayChangeSection(Some(targetRoadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(AdministrativeClass.apply(3)), Some(Discontinuity.Continuous), Some(8L)),
           Discontinuity.Continuous, AdministrativeClass.apply(1), reversed = false, 1)
@@ -2751,7 +2751,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       roadwayDAO.create(roadways)
 
       val changeInfos = List(
-        RoadwayChangeInfo(AddressChangeType.ReNumeration,
+        RoadwayChangeInfo(RoadAddressChangeType.Renumeration,
           source = dummyRoadwayChangeSection(Some(srcRoadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
           target = dummyRoadwayChangeSection(Some(targetRoadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(AdministrativeClass.apply(3)), Some(Discontinuity.Continuous), Some(8L)),
           Discontinuity.Continuous, AdministrativeClass.apply(1), reversed = false, 1)
@@ -2797,7 +2797,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       roadwayDAO.create(roadways)
 
       val changeInfos = List(
-        RoadwayChangeInfo(AddressChangeType.ReNumeration,
+        RoadwayChangeInfo(RoadAddressChangeType.Renumeration,
           source = dummyRoadwayChangeSection(Some(srcRoadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
           target = dummyRoadwayChangeSection(Some(targetRoadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(AdministrativeClass.apply(3)), Some(Discontinuity.Continuous), Some(8L)),
           Discontinuity.Continuous, AdministrativeClass.apply(1), reversed = false, 1)

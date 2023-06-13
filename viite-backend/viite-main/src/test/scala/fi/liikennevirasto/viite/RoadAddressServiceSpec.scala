@@ -11,7 +11,7 @@ import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
-import fi.vaylavirasto.viite.model.{AddressChangeType, AdministrativeClass, Discontinuity, LifecycleStatus, LinkGeomSource, LinkStatus, RoadLink, SideCode, Track, TrafficDirection}
+import fi.vaylavirasto.viite.model.{RoadAddressChangeType, AdministrativeClass, Discontinuity, LifecycleStatus, LinkGeomSource, LinkStatus, RoadLink, SideCode, Track, TrafficDirection}
 import org.joda.time.DateTime
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
@@ -853,7 +853,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
         ProjectRoadwayChange(
           projectId, Some(projectName), ely, user, DateTime.now(),
           RoadwayChangeInfo(
-            AddressChangeType.New,
+            RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14L)),
             RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(0), Some(5), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14)),
             Discontinuity.Continuous, AdministrativeClass.State, false, 4481L, 14),
@@ -861,7 +861,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
         ProjectRoadwayChange(
           projectId, Some(projectName), ely, user, DateTime.now(),
           RoadwayChangeInfo(
-            AddressChangeType.Transfer,
+            RoadAddressChangeType.Transfer,
             RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(0), Some(10), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14)),
             RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(5), Some(15), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
             Discontinuity.EndOfRoad, AdministrativeClass.State, false, 4481L, 14),
@@ -869,7 +869,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
         ProjectRoadwayChange(
           projectId, Some(projectName), ely, user, DateTime.now(),
           RoadwayChangeInfo(
-            AddressChangeType.Transfer,
+            RoadAddressChangeType.Transfer,
             RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(10), Some(20), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
             RoadwayChangeSection(Some(19527), Some(0), Some(1), Some(1), Some(0), Some(10), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
             Discontinuity.EndOfRoad, AdministrativeClass.State, false, 4481L, 14),
@@ -971,7 +971,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
         ProjectRoadwayChange(
           projectId, Some(projectName), ely, user, DateTime.now(),
           RoadwayChangeInfo(
-            AddressChangeType.Unchanged,
+            RoadAddressChangeType.Unchanged,
             RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(0), Some(5), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14)),
             RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(0), Some(5), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14)),
             Discontinuity.EndOfRoad, AdministrativeClass.State, false, 4481L, 14),
@@ -979,7 +979,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
         ProjectRoadwayChange(
           projectId, Some(projectName), ely, user, DateTime.now(),
           RoadwayChangeInfo(
-            AddressChangeType.Unchanged,
+            RoadAddressChangeType.Unchanged,
             RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(5), Some(10), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14)),
             RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(5), Some(10), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
             Discontinuity.EndOfRoad, AdministrativeClass.State, false, 4481L, 14),
@@ -987,7 +987,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
         ProjectRoadwayChange(
           projectId, Some(projectName), ely, user, DateTime.now(),
           RoadwayChangeInfo(
-            AddressChangeType.Transfer,
+            RoadAddressChangeType.Transfer,
             RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(10), Some(13), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
             RoadwayChangeSection(Some(19527), Some(0), Some(1), Some(1), Some(0), Some(3), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14)),
             Discontinuity.Continuous, AdministrativeClass.State, false, 4481L, 14),
@@ -995,7 +995,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
         ProjectRoadwayChange(
           projectId, Some(projectName), ely, user, DateTime.now(),
           RoadwayChangeInfo(
-            AddressChangeType.Transfer,
+            RoadAddressChangeType.Transfer,
             RoadwayChangeSection(Some(19527), Some(0), Some(1), Some(1), Some(0), Some(10), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
             RoadwayChangeSection(Some(19527), Some(0), Some(1), Some(1), Some(3), Some(13), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
             Discontinuity.EndOfRoad, AdministrativeClass.State, false, 4481L, 14),
