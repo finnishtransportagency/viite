@@ -16,7 +16,7 @@ import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink}
 import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.util.SplitOptions
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.{AddressChangeType, AdministrativeClass, Discontinuity, LinkGeomSource, LinkStatus, RoadLink, RoadLinkLike, SideCode, Track, TrafficDirection}
+import fi.vaylavirasto.viite.model.{RoadAddressChangeType, AdministrativeClass, Discontinuity, LinkGeomSource, LinkStatus, RoadLink, RoadLinkLike, SideCode, Track, TrafficDirection}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
@@ -2216,7 +2216,7 @@ class ProjectService(
     roadwayChanges.foreach(rwc => {
       val srcRoadNumberOptional = rwc.changeInfo.source.roadNumber
       val targetRoadNumberOptional = rwc.changeInfo.target.roadNumber
-      if ((rwc.changeInfo.changeType.equals(AddressChangeType.ReNumeration) || rwc.changeInfo.changeType.equals(AddressChangeType.Transfer)
+      if ((rwc.changeInfo.changeType.equals(RoadAddressChangeType.Renumeration) || rwc.changeInfo.changeType.equals(RoadAddressChangeType.Transfer)
                                                                                && targetRoadNumberOptional.isDefined && srcRoadNumberOptional.isDefined)) {
         val srcRoadNumber = srcRoadNumberOptional.get
         val targetRoadNumber = targetRoadNumberOptional.get
@@ -2244,7 +2244,7 @@ class ProjectService(
   def handleTerminatedRoadwayChanges(roadwayChanges: Seq[ProjectRoadwayChange]): Unit = {
     roadwayChanges.foreach(rwc => {
       val roadNumberOptional = rwc.changeInfo.source.roadNumber
-      if (rwc.changeInfo.changeType.equals(AddressChangeType.Termination) && roadNumberOptional.isDefined) {
+      if (rwc.changeInfo.changeType.equals(RoadAddressChangeType.Termination) && roadNumberOptional.isDefined) {
         val roadNumber = roadNumberOptional.get
         val roadways = roadwayDAO.fetchAllByRoad(roadNumber)
         val roadNameOpt = RoadNameDAO.getLatestRoadName(roadNumber)
@@ -2258,7 +2258,7 @@ class ProjectService(
   def handleNewRoadNames(roadwayChanges: Seq[ProjectRoadwayChange]): Unit = {
     val roadNames = roadwayChanges.flatMap(rwc => {
       val roadNumberOptional = rwc.changeInfo.target.roadNumber
-      if (rwc.changeInfo.changeType.equals(AddressChangeType.New) && roadNumberOptional.isDefined) {
+      if (rwc.changeInfo.changeType.equals(RoadAddressChangeType.New) && roadNumberOptional.isDefined) {
         val roadNumber = roadNumberOptional.get
         val existingRoadNames = RoadNameDAO.getCurrentRoadNamesByRoadNumber(roadNumber)
         val projectLinkNames = ProjectLinkNameDAO.get(Set(roadNumber), rwc.projectId)

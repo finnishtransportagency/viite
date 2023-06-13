@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent}
-import fi.vaylavirasto.viite.model.{AddressChangeType, AdministrativeClass, Discontinuity, LinkStatus, Track}
+import fi.vaylavirasto.viite.model.{RoadAddressChangeType, AdministrativeClass, Discontinuity, LinkStatus, Track}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
@@ -402,7 +402,10 @@ object RoadwayFiller {
       }
     }
 
-    val (operationsToCheck, rest) = changesWithLinks.partition(c => List(AddressChangeType.Unchanged, AddressChangeType.Transfer, AddressChangeType.ReNumeration, AddressChangeType.Termination).contains(c._1.changeInfo.changeType))
+    val (operationsToCheck, rest) = changesWithLinks.partition(c => List(
+      RoadAddressChangeType.Unchanged, RoadAddressChangeType.Transfer,
+      RoadAddressChangeType.Renumeration, RoadAddressChangeType.Termination
+    ).contains(c._1.changeInfo.changeType))
     (groupedSections(operationsToCheck).toSeq ++ rest).sortBy(_._1.changeInfo.orderInChangeTable)
   }
 
