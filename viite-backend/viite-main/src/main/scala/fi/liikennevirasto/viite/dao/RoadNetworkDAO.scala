@@ -171,7 +171,7 @@ class RoadNetworkDAO extends BaseDAO {
   def fetchMissingCalibrationPointsFromStart(roadNumber: Long, roadPartNumber: Long): Seq[MissingCalibrationPoint] = {
     val query =
       s"""
-         |WITH roadways
+         |WITH selectedRoadways
          |     AS (SELECT *
          |         FROM roadway
          |         WHERE valid_to IS NULL
@@ -179,7 +179,7 @@ class RoadNetworkDAO extends BaseDAO {
          |         AND road_part_number = ${roadPartNumber}
          |         )
          |${selectMissingCalibrationPointFromStart}
-         |FROM roadway_point rp,roadways r
+         |FROM roadway_point rp, selectedRoadways r
          |WHERE (NOT EXISTS (SELECT 4 FROM calibration_point cp2 WHERE cp2.valid_to IS NULL AND cp2.roadway_point_id = rp.id ))
          |AND r.roadway_number = rp.roadway_number AND r.valid_to IS NULL AND r.end_date IS NULL
          |AND r.road_number<70000 AND rp.addr_m = 0
@@ -206,7 +206,7 @@ class RoadNetworkDAO extends BaseDAO {
   def fetchMissingCalibrationPointsFromEnd(roadNumber: Long, roadPartNumber: Long): Seq[MissingCalibrationPoint] = {
     val query =
       s"""
-        WITH roadways
+        WITH selectedRoadways
           AS (SELECT *
           FROM roadway
           WHERE valid_to IS NULL
@@ -214,7 +214,7 @@ class RoadNetworkDAO extends BaseDAO {
           AND road_part_number = ${roadPartNumber}
         )
         ${selectMissingCalibrationPointFromEnd}
-        FROM roadway_point rp, roadways r
+        FROM roadway_point rp, selectedRoadways r
         WHERE
         (NOT EXISTS (SELECT 4 FROM calibration_point cp2 WHERE cp2.valid_to IS NULL AND cp2.roadway_point_id = rp.id))
         AND r.roadway_number = rp.roadway_number AND r.valid_to IS NULL AND r.end_date IS NULL
@@ -260,7 +260,7 @@ class RoadNetworkDAO extends BaseDAO {
   def fetchMissingCalibrationPointsFromJunctions(roadNumber: Long, roadPartNumber: Long): Seq[MissingCalibrationPointFromJunction] = {
     val query =
       s"""
-         |WITH roadways
+         |WITH selectedRoadways
          |          AS (SELECT *
          |          FROM roadway
          |          WHERE valid_to IS NULL
@@ -270,7 +270,7 @@ class RoadNetworkDAO extends BaseDAO {
          |${selectMissingCalibrationPointFromJunction}
          |FROM   junction_point jp,
          |       roadway_point rp,
-         |       roadways r,
+         |       selectedRoadways r,
          |       junction j
          |WHERE  jp.valid_to IS NULL
          |       AND ( NOT EXISTS (SELECT 4
@@ -320,7 +320,7 @@ class RoadNetworkDAO extends BaseDAO {
   def fetchMissingRoadwayPointsFromStart(roadNumber: Long, roadPartNumber: Long): Seq[MissingRoadwayPoint] = {
     val query =
       s"""
-         |WITH roadways
+         |WITH selectedRoadways
          |          AS (SELECT *
          |          FROM roadway
          |          WHERE valid_to IS NULL
@@ -328,7 +328,7 @@ class RoadNetworkDAO extends BaseDAO {
          |          AND road_part_number = ${roadPartNumber}
          |        )
          |${selectMissingRoadwayPointFromStart}
-         |FROM   roadways r
+         |FROM   selectedRoadways r
          |WHERE  ( NOT EXISTS (SELECT 4
          |                     FROM   roadway_point rp
          |                     WHERE  r.roadway_number = rp.roadway_number
@@ -374,7 +374,7 @@ class RoadNetworkDAO extends BaseDAO {
   def fetchMissingRoadwayPointsFromEnd(roadNumber: Long, roadPartNumber: Long): Seq[MissingRoadwayPoint] = {
     val query =
       s"""
-         |WITH roadways
+         |WITH selectedRoadways
          |          AS (SELECT *
          |          FROM roadway
          |          WHERE valid_to IS NULL
@@ -382,7 +382,7 @@ class RoadNetworkDAO extends BaseDAO {
          |          AND road_part_number = ${roadPartNumber}
          |        )
          |${selectMissingRoadwayPointFromEnd}
-         |FROM   roadways r
+         |FROM   selectedRoadways r
          |WHERE  ( NOT EXISTS (SELECT 4
          |                     FROM   roadway_point rp
          |                     WHERE  r.roadway_number = rp.roadway_number
@@ -412,20 +412,20 @@ class RoadNetworkDAO extends BaseDAO {
 
   def fetchOverlappingRoadwaysOnLinearLocations(): Seq[OverlappingRoadwayOnLinearLocation] = {
     val query =
-      s"""WITH roadways
+      s"""WITH selectedRoadways
          |     AS (SELECT *
          |         FROM   roadway
          |         WHERE  valid_to IS NULL),
-         |     linearlocations
+         |     selectedLinearLocations
          |     AS (SELECT *
          |         FROM   linear_location
          |         WHERE  valid_to IS NULL)
          ${selectOverlappingRoadwayOnLinearLocation}
-         |FROM   roadways r
-         |       JOIN linearlocations l
+         |FROM   selectedRoadways r
+         |       JOIN selectedLinearLocations l
          |         ON r.roadway_number = l.roadway_number
          |WHERE EXISTS (SELECT 4
-         |                   FROM   linearlocations l2
+         |                   FROM   selectedLinearLocations l2
          |                          JOIN roadway r2
          |                            ON r2.roadway_number = l2.roadway_number
          |                   WHERE  l.link_id = l2.link_id
@@ -446,22 +446,22 @@ class RoadNetworkDAO extends BaseDAO {
   def fetchOverlappingRoadwaysOnLinearLocations(roadNumber: Long, roadPartNumber: Long): Seq[OverlappingRoadwayOnLinearLocation] = {
     val query =
       s"""
-         WITH roadways
+         WITH selectedRoadways
          |     AS (SELECT *
          |         FROM   roadway
          |         WHERE  valid_to IS NULL
          |         AND road_number = ${roadNumber}
          |         AND road_part_number = ${roadPartNumber}),
-         |     linearlocations
+         |     selectedLinearLocations
          |     AS (SELECT *
          |         FROM   linear_location
          |         WHERE  valid_to IS NULL)
          ${selectOverlappingRoadwayOnLinearLocation}
-         |FROM   roadways r
-         |       JOIN linearlocations l
+         |FROM   selectedRoadways r
+         |       JOIN selectedLinearLocations l
          |         ON r.roadway_number = l.roadway_number
          |WHERE EXISTS (SELECT 4
-         |                   FROM   linearlocations l2
+         |                   FROM   selectedLinearLocations l2
          |                          JOIN roadway r2
          |                            ON r2.roadway_number = l2.roadway_number
          |                   WHERE  l.link_id = l2.link_id
@@ -509,7 +509,7 @@ class RoadNetworkDAO extends BaseDAO {
   def fetchInvalidRoadwayLengths(roadNumber: Long, roadPartNumber: Long): Seq[InvalidRoadwayLength] = {
     val query =
       s"""
-         |WITH roadways
+         |WITH selectedRoadways
          |     AS (SELECT *
          |         FROM roadway
          |         WHERE valid_to IS NULL
@@ -517,7 +517,7 @@ class RoadNetworkDAO extends BaseDAO {
          |         AND road_part_number = ${roadPartNumber}
          |         )
          |${selectinvalidRoadwayLength}
-         |FROM   roadways r
+         |FROM   selectedRoadways r
          |WHERE  r.valid_to IS NULL
          |       AND ( EXISTS (SELECT 4
          |                     FROM   roadway r2
@@ -571,7 +571,7 @@ class RoadNetworkDAO extends BaseDAO {
   def fetchOverlappingRoadwaysInHistory(roadNumber: Long, roadPartNumber: Long): Seq[Roadway] = {
     val query =
       s"""
-         |WITH roadways
+         |WITH selectedRoadways
          |     AS (SELECT *
          |         FROM roadway
          |         WHERE valid_to IS NULL
@@ -579,7 +579,7 @@ class RoadNetworkDAO extends BaseDAO {
          |         AND road_part_number = ${roadPartNumber}
          |         )
          |${selectOverlappingRoadway}
-         |FROM   roadways r
+         |FROM   selectedRoadways r
          |WHERE  r.valid_to IS NULL
          |       AND ( EXISTS (SELECT 4
          |                     FROM   roadway r2
