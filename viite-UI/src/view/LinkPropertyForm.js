@@ -291,6 +291,10 @@
               roadNameToolButton +
               '</div>');
 
+      var roadNetworkErrorsToolDiv = $('<div class="form-initial-state" style>' +
+          roadNetworkErrorsListButton +
+          '</div>');
+
       // add buttons for the view mode tools
       rootElement.append(toolButtonsDivForViewMode);
 
@@ -300,7 +304,7 @@
 
       // if the user has "operator" role then add the button for road network error tool
       if (_.includes(startupParameters.roles, 'operator'))
-        toolButtonsDivForWriteMode.append(roadNetworkErrorsListButton);
+        rootElement.append(roadNetworkErrorsToolDiv);
 
 
       $('[id=formProjectButton]').click(function () {

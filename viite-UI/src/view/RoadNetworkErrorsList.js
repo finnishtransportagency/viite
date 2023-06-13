@@ -18,8 +18,10 @@
 
             $('.road-network-error-list-modal-window').append(networkErrorListWindow);
 
+            applicationModel.addSpinner();
+
             backend.getRoadNetworkErrors(function(result) {
-                console.log('result', result);
+                applicationModel.removeSpinner();
                 if (result.success === true) {
                     if (result.missingCalibrationPointsFromStart.length > 0 || result.missingCalibrationPointsFromEnd.length > 0)
                         showMissingCalibrationPoints(result.missingCalibrationPointsFromStart.concat(result.missingCalibrationPointsFromEnd));
