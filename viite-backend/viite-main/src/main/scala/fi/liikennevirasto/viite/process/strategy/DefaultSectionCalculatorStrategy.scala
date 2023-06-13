@@ -91,7 +91,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     val roadwayNumbers = if (continuousProjectLinks.nonEmpty && continuousProjectLinks.exists(_.status == LinkStatus.New)) {
       // then we now that for sure the addresses increased their length for the part => new roadwayNumber for the new sections
       (givenRoadwayNumber, Sequences.nextRoadwayNumber)
-    } else if (continuousProjectLinks.nonEmpty && continuousProjectLinks.exists(_.status == LinkStatus.Numbering)) {
+    } else if (continuousProjectLinks.nonEmpty && continuousProjectLinks.exists(_.status == LinkStatus.Renumeration)) {
       // then we know for sure that the addresses didn't change the address length part, only changed the number of road or part => same roadwayNumber
       (continuousProjectLinks.headOption.map(_.roadwayNumber).get, givenRoadwayNumber)
     } else {
@@ -374,7 +374,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     validateAddresses(leftLinks.sortBy(_.startAddrMValue))
     validateAddresses(rightLinks.sortBy(_.startAddrMValue))
 
-    val allProjectLinks         = (projectLinkDAO.fetchProjectLinks(leftLinks.head.projectId, Some(LinkStatus.Terminated)) ++ leftLinks ++ rightLinks).sortBy(_.startAddrMValue)
+    val allProjectLinks         = (projectLinkDAO.fetchProjectLinks(leftLinks.head.projectId, Some(LinkStatus.Termination)) ++ leftLinks ++ rightLinks).sortBy(_.startAddrMValue)
     val twoTracksWithTerminated = allProjectLinks.filter(filterExistingLinks)
 
     val (rightOnlyWithTerminated, leftOnlyWithTerminated) = twoTracksWithTerminated.partition(_.track == Track.RightSide)
@@ -417,7 +417,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     val splitCreatedCpsFromRightSide = toUdcpMap(updatedudcpsFromRightSideSplits).toMap
     val splitCreatedCpsFromLeftSide  = toUdcpMap(udcpsFromLeftSideSplits).toMap
 
-    val (adjustedLeft, adjustedRight) = (leftLinksWithSplits.filterNot(_.status == LinkStatus.Terminated), rightLinksWithSplits.filterNot(_.status == LinkStatus.Terminated))
+    val (adjustedLeft, adjustedRight) = (leftLinksWithSplits.filterNot(_.status == LinkStatus.Termination), rightLinksWithSplits.filterNot(_.status == LinkStatus.Termination))
 
     validateMValuesOfSplittedLinks(adjustedLeft.sortBy(_.startAddrMValue))
     validateMValuesOfSplittedLinks(adjustedRight.sortBy(_.startAddrMValue))
@@ -471,7 +471,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       val oldFirst: Option[ProjectLink] =
       if (foundConnectedLinks.nonEmpty) {
         foundConnectedLinks.find(_.status == LinkStatus.New)
-          .orElse(foundConnectedLinks.find(l => l.status == LinkStatus.UnChanged))
+          .orElse(foundConnectedLinks.find(l => l.status == LinkStatus.Unchanged))
           .orElse(foundConnectedLinks.headOption)
       } else {
         None
@@ -554,7 +554,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
 
     // Pick the one with calibration point set to zero: or any old link with lowest address: or new links by direction
     calibrationPoints.find(_.addressMValue == 0).flatMap(calibrationPointToPoint).getOrElse(
-      oldLinks.filter(_.status == LinkStatus.UnChanged).sortBy(_.startAddrMValue).headOption.map(pl => (pl.startingPoint, pl)).getOrElse {
+      oldLinks.filter(_.status == LinkStatus.Unchanged).sortBy(_.startAddrMValue).headOption.map(pl => (pl.startingPoint, pl)).getOrElse {
         val remainLinks = oldLinks ++ newLinks
         if (remainLinks.isEmpty)
           throw new MissingTrackException("Missing right track starting project links")
@@ -585,7 +585,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         val oldFirst: Option[ProjectLink] =
           if (foundConnectedLinks.nonEmpty) {
             foundConnectedLinks.find(_.status == LinkStatus.New)
-              .orElse(foundConnectedLinks.find(l => l.status == LinkStatus.UnChanged))
+              .orElse(foundConnectedLinks.find(l => l.status == LinkStatus.Unchanged))
               .orElse(foundConnectedLinks.headOption)
           } else {
             None

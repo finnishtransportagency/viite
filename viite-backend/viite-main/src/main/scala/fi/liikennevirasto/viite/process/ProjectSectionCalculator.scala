@@ -24,7 +24,7 @@ object ProjectSectionCalculator {
     */
   def assignMValues(projectLinks: Seq[ProjectLink], userGivenCalibrationPoints: Seq[UserDefinedCalibrationPoint] = Seq()): Seq[ProjectLink] = {
     logger.info(s"Starting MValue assignment for ${projectLinks.size} links")
-    val others = projectLinks.filterNot(_.status == LinkStatus.Terminated)
+    val others = projectLinks.filterNot(_.status == LinkStatus.Termination)
     val (newLinks, nonTerminatedLinks) = others.partition(l => l.status == LinkStatus.New)
     try {
 
@@ -85,9 +85,9 @@ object ProjectSectionCalculator {
     if (left.isEmpty || right.isEmpty) {
       Seq[ProjectLink]()
     } else {
-      val leftTerminated = left.filter(_.status == LinkStatus.Terminated)
-      val rightTerminated = right.filter(_.status == LinkStatus.Terminated)
-      val nonTerminatedSortedByStartAddr: Seq[ProjectLink] = projectLinks.filterNot(_.status == LinkStatus.Terminated).sortBy(_.startAddrMValue)
+      val leftTerminated = left.filter(_.status == LinkStatus.Termination)
+      val rightTerminated = right.filter(_.status == LinkStatus.Termination)
+      val nonTerminatedSortedByStartAddr: Seq[ProjectLink] = projectLinks.filterNot(_.status == LinkStatus.Termination).sortBy(_.startAddrMValue)
 
       /* Set terminated link heads to new calculated values. */
       val leftReassignedStart: Seq[ProjectLink] = leftTerminated.map(leftTerminatedpl => {

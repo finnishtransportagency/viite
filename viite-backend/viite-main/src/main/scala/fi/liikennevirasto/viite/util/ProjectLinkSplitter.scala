@@ -84,7 +84,7 @@ object ProjectLinkSplitter {
       nProjectLinks.headOption match {
         case Some(nProjectLink) =>
           if (GeometryUtils.areAdjacent(pProjectLink.geometry, nProjectLink.geometry)) {
-            merge(nProjectLink.copy(status = LinkStatus.Terminated), nProjectLinks.tail, copy(pProjectLink, nProjectLink, result))
+            merge(nProjectLink.copy(status = LinkStatus.Termination), nProjectLinks.tail, copy(pProjectLink, nProjectLink, result))
           } else {
             result.copy(allTerminatedProjectLinks = result.allTerminatedProjectLinks ++ Seq(pProjectLink))
           }
@@ -105,14 +105,21 @@ object ProjectLinkSplitter {
       val keptGeom = GeometryUtils.truncateGeometry2D(adjustedTemplate.geometry, 0.0, templateM)
       val termGeom = GeometryUtils.truncateGeometry2D(roadLink.geometry, templateM, roadLink.length)
       val (splitA, splitB) = suravageWithOptions(suravage, adjustedTemplate, split, suravageM, splitAddressM, templateM, isReversed, keptGeom)
-      val splitT = templateLink.copy(startAddrMValue = Math.min(splitAddressM, adjustedTemplate.addrAt(adjustedTemplate.endMValue)), endAddrMValue = Math.max(splitAddressM, adjustedTemplate.addrAt(adjustedTemplate.endMValue)), startMValue = templateM, geometry = termGeom, status = LinkStatus.Terminated, geometryLength = templateLink.endMValue - templateM, connectedLinkId = Some(suravage.linkId))
+      val splitT = templateLink.copy(
+        startAddrMValue = Math.min(splitAddressM, adjustedTemplate.addrAt(adjustedTemplate.endMValue)),
+        endAddrMValue = Math.max(splitAddressM, adjustedTemplate.addrAt(adjustedTemplate.endMValue)), startMValue = templateM, geometry = termGeom,
+        status = LinkStatus.Termination, geometryLength = templateLink.endMValue - templateM, connectedLinkId = Some(suravage.linkId)
+      )
       (splitA, splitB, splitT)
     }
     def movedFromEnd(suravageM: Double, templateM: Double, splitAddressM: Long, isReversed: Boolean) = {
       val termGeom = GeometryUtils.truncateGeometry2D(adjustedTemplate.geometry, 0.0, templateM)
       val keptGeom = GeometryUtils.truncateGeometry2D(roadLink.geometry, templateM, roadLink.length)
       val (splitA, splitB) = suravageWithOptions(suravage, adjustedTemplate, split, suravageM, splitAddressM, templateM, isReversed, keptGeom)
-      val splitT = templateLink.copy(startAddrMValue = splitAddressM, endAddrMValue = adjustedTemplate.endAddrMValue, endMValue = templateM, status = LinkStatus.Terminated, geometryLength = templateM, connectedLinkId = Some(suravage.linkId))
+      val splitT = templateLink.copy(
+        startAddrMValue = splitAddressM, endAddrMValue = adjustedTemplate.endAddrMValue, endMValue = templateM,
+        status = LinkStatus.Termination, geometryLength = templateM, connectedLinkId = Some(suravage.linkId)
+      )
       (splitA, splitB, splitT)
     }
     def switchDigitization(splits: (ProjectLink, ProjectLink, ProjectLink)) = {
@@ -204,7 +211,7 @@ case class SplitResult(splitA: ProjectLink, splitB: ProjectLink, allTerminatedPr
     (Seq(splitA, splitB)
       ++ (allTerminatedProjectLinks.filterNot(_.id == terminatedProjectLink.id)
       ++ Seq(terminatedProjectLink.copy(startAddrMValue = originalProjectLink.startAddrMValue, geometry = GeometryUtils.truncateGeometry2D(originalProjectLink.geometry, 0.0, terminatedProjectLink.endMValue - terminatedProjectLink.startMValue), geometryLength = originalProjectLink.geometryLength))
-      ).map(pl => pl.copy(status = LinkStatus.Terminated, connectedLinkId = terminatedProjectLink.connectedLinkId)
+      ).map(pl => pl.copy(status = LinkStatus.Termination, connectedLinkId = terminatedProjectLink.connectedLinkId)
     )).filter(isShorterProjectLinks)
   }
 

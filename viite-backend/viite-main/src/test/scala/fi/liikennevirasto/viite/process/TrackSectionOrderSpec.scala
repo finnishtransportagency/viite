@@ -356,8 +356,8 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
 
     /* Two unchanged projectLinks and one with different side code and road istransferred to the unchanged road. */
     val projectLinks = List(
-      Dummies.dummyProjectLink(1, 1, Track.Combined, Discontinuity.Continuous,     0, 10, None, None, 0.toString, 0, 10, SideCode.TowardsDigitizing, LinkStatus.UnChanged, geometry = points1, roadwayNumber = rwn1).copy(roadwayId = 0),
-      Dummies.dummyProjectLink(1, 1, Track.Combined, Discontinuity.Continuous,    10, 20, None, None, 0.toString, 0, 10, SideCode.TowardsDigitizing, LinkStatus.UnChanged, geometry = points2, roadwayNumber = rwn1).copy(roadwayId = 0),
+      Dummies.dummyProjectLink(1, 1, Track.Combined, Discontinuity.Continuous,     0, 10, None, None, 0.toString, 0, 10, SideCode.TowardsDigitizing, LinkStatus.Unchanged, geometry = points1, roadwayNumber = rwn1).copy(roadwayId = 0),
+      Dummies.dummyProjectLink(1, 1, Track.Combined, Discontinuity.Continuous,    10, 20, None, None, 0.toString, 0, 10, SideCode.TowardsDigitizing, LinkStatus.Unchanged, geometry = points2, roadwayNumber = rwn1).copy(roadwayId = 0),
       Dummies.dummyProjectLink(1, 1, Track.Combined, Discontinuity.Discontinuous, 20, 30, None, None, 1.toString, 0, 10, SideCode.AgainstDigitizing, LinkStatus.Transfer,  geometry = points3, roadwayNumber = rwn2).copy(roadwayId = 1)
     )
 

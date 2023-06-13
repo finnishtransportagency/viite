@@ -201,8 +201,8 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       projectLinkDAO.create(projectLinks)
       val returnedProjectLinks = projectLinkDAO.fetchProjectLinks(id)
       val biggestProjectLink = returnedProjectLinks.maxBy(_.endAddrMValue)
-      projectLinkDAO.updateProjectLinkAdministrativeClassDiscontinuity(returnedProjectLinks.map(x => x.id).filterNot(_ == biggestProjectLink.id).toSet, LinkStatus.UnChanged, "test", 2, None)
-      projectLinkDAO.updateProjectLinkAdministrativeClassDiscontinuity(Set(biggestProjectLink.id), LinkStatus.UnChanged, "test", 2, Some(2))
+      projectLinkDAO.updateProjectLinkAdministrativeClassDiscontinuity(returnedProjectLinks.map(x => x.id).filterNot(_ == biggestProjectLink.id).toSet, LinkStatus.Unchanged, "test", 2, None)
+      projectLinkDAO.updateProjectLinkAdministrativeClassDiscontinuity(Set(biggestProjectLink.id), LinkStatus.Unchanged, "test", 2, Some(2))
       val savedProjectLinks = projectLinkDAO.fetchProjectLinks(id)
       savedProjectLinks.count(_.administrativeClass.value == 2) should be(savedProjectLinks.size)
       savedProjectLinks.count(_.discontinuity.value == 2) should be(1)
@@ -308,8 +308,8 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       val links = projectLinkDAO.fetchProjectLinks(projectId)
       links.size should be(2)
       projectReservedPartDAO.reserveRoadPart(projectId, newRoadNumber, newPartNumber, "test")
-      projectLinkDAO.updateProjectLinkNumbering(projectId, roadNumber1, roadPartNumber1, LinkStatus.Numbering, newRoadNumber, newPartNumber, "test", 0)
-      projectLinkDAO.updateProjectLinkAdministrativeClassDiscontinuity(Set(links.filter(_.track == Track.LeftSide).maxBy(_.endAddrMValue).id), LinkStatus.Numbering, "test", links.filter(_.track == Track.LeftSide).head.administrativeClass.value, Some(Discontinuity.MinorDiscontinuity.value))
+      projectLinkDAO.updateProjectLinkNumbering(projectId, roadNumber1, roadPartNumber1, LinkStatus.Renumeration, newRoadNumber, newPartNumber, "test", 0)
+      projectLinkDAO.updateProjectLinkAdministrativeClassDiscontinuity(Set(links.filter(_.track == Track.LeftSide).maxBy(_.endAddrMValue).id), LinkStatus.Renumeration, "test", links.filter(_.track == Track.LeftSide).head.administrativeClass.value, Some(Discontinuity.MinorDiscontinuity.value))
       val linksAfterUpdate = projectLinkDAO.fetchProjectLinks(projectId)
       linksAfterUpdate.size should be(2)
       linksAfterUpdate.groupBy(p => (p.roadNumber, p.roadPartNumber)).keys.head should be((newRoadNumber, newPartNumber))
@@ -322,10 +322,10 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       val projectLinks = projectLinkDAO.fetchProjectLinks(7081807)
       val header = projectLinks.head
-      projectLinkDAO.updateProjectLinksStatus(Set(header.id), LinkStatus.Terminated, "test")
+      projectLinkDAO.updateProjectLinksStatus(Set(header.id), LinkStatus.Termination, "test")
 
       val updatedProjectLink = projectLinkDAO.fetchProjectLinks(7081807).filter(link => link.id == header.id).head
-      updatedProjectLink.status should be(LinkStatus.Terminated)
+      updatedProjectLink.status should be(LinkStatus.Termination)
     }
   }
 
@@ -613,7 +613,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       projectLinkDAO.create(projectLinks)
 
       val result1 = projectLinkDAO.countLinksByStatus(projectId, roadNumber1, roadPartNumber1, Set(LinkStatus.Transfer.value))
-      val result2 = projectLinkDAO.countLinksByStatus(projectId, roadNumber1, roadPartNumber1, Set(LinkStatus.UnChanged.value, LinkStatus.Terminated.value, LinkStatus.Unknown.value, LinkStatus.NotHandled.value, LinkStatus.Numbering.value, LinkStatus.New.value))
+      val result2 = projectLinkDAO.countLinksByStatus(projectId, roadNumber1, roadPartNumber1, Set(LinkStatus.Unchanged.value, LinkStatus.Termination.value, LinkStatus.Unknown.value, LinkStatus.NotHandled.value, LinkStatus.Renumeration.value, LinkStatus.New.value))
       result1 should be(projectLinks.size)
       result2 should be(0)
     }

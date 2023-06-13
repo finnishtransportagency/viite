@@ -2004,7 +2004,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
             "roadName" -> splittedLinks.roadName.getOrElse(""),
             "roadLinkSource" -> splittedLinks.linkGeomSource.value
           ))
-      case LinkStatus.Terminated =>
+      case LinkStatus.Termination =>
         Map("c" ->
           Map(
             "linkId" -> splittedLinks.linkId,

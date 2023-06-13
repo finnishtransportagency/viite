@@ -314,13 +314,13 @@ class RoadwayChangesDAO {
 
           val allProjectLinks = projectLinkDAO.fetchProjectLinks(project.id)
 
-          val nonTerminatedProjectlinks = allProjectLinks.filter(_.status != LinkStatus.Terminated)
+          val nonTerminatedProjectlinks = allProjectLinks.filter(_.status != LinkStatus.Termination)
 
           val changeTableRows = ProjectDeltaCalculator.generateChangeTableRowsFromProjectLinks(nonTerminatedProjectlinks, allProjectLinks)
-          val unChanged_roadway_sections = changeTableRows.adjustedSections.zip(changeTableRows.originalSections).filter(_._1.projectLinks.exists(_.status == LinkStatus.UnChanged))
+          val unChanged_roadway_sections = changeTableRows.adjustedSections.zip(changeTableRows.originalSections).filter(_._1.projectLinks.exists(_.status == LinkStatus.Unchanged))
           val transferred_roadway_sections = changeTableRows.adjustedSections.zip(changeTableRows.originalSections).filter(_._1.projectLinks.exists(_.status == LinkStatus.Transfer))
           val new_roadway_sections = changeTableRows.adjustedSections.zip(changeTableRows.originalSections).filter(_._1.projectLinks.exists(_.status == LinkStatus.New))
-          val numbering_sections = changeTableRows.adjustedSections.zip(changeTableRows.originalSections).filter(_._1.projectLinks.exists(_.status == LinkStatus.Numbering))
+          val numbering_sections = changeTableRows.adjustedSections.zip(changeTableRows.originalSections).filter(_._1.projectLinks.exists(_.status == LinkStatus.Renumeration))
 
           unChanged_roadway_sections.foreach { case (roadwaySection1, roadwaySection2) =>
             addToBatchWithOldValues(roadwaySection2, roadwaySection1, RoadAddressChangeType.Unchanged, roadwayChangePS, roadWayChangesLinkPS)
@@ -336,7 +336,7 @@ class RoadwayChangesDAO {
 
           new_roadway_sections.foreach(roadwaySection => addToBatch(roadwaySection._1, RoadAddressChangeType.New, roadwayChangePS, roadWayChangesLinkPS))
 
-          val terminated = ProjectDeltaCalculator.generateChangeTableRowsFromProjectLinks(allProjectLinks.filter(_.status == LinkStatus.Terminated), allProjectLinks)
+          val terminated = ProjectDeltaCalculator.generateChangeTableRowsFromProjectLinks(allProjectLinks.filter(_.status == LinkStatus.Termination), allProjectLinks)
 
           val twoTrackOldAddressRoadParts = createTwoTrackOldAddressRoadParts(unChanged_roadway_sections,transferred_roadway_sections, terminated)
           val old_road_two_track_parts = ProjectDeltaCalculator.matchTerminatedRoadwaySections(twoTrackOldAddressRoadParts)
