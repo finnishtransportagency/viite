@@ -1,10 +1,8 @@
 package fi.liikennevirasto.viite.model
 
 import fi.liikennevirasto.viite.dao.CalibrationPoint
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
 import fi.vaylavirasto.viite.geometry.Point
-import fi.vaylavirasto.viite.model.{AdministrativeClass, LifecycleStatus, LinkGeomSource, RoadAddressChangeType, SideCode}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, CalibrationPointType, LifecycleStatus, LinkGeomSource, RoadAddressChangeType, SideCode}
 import org.joda.time.DateTime
 
 trait ProjectAddressLinkLike extends RoadAddressLinkLike {
@@ -95,12 +93,12 @@ case class ProjectAddressLink(id                    : Long,
 
   def startCalibrationPointType: CalibrationPointType = {
     if (startCalibrationPoint.isDefined) startCalibrationPoint.get.typeCode
-    else NoCP
+    else CalibrationPointType.NoCP
   }
 
   def endCalibrationPointType: CalibrationPointType = {
     if (endCalibrationPoint.isDefined) endCalibrationPoint.get.typeCode
-    else NoCP
+    else CalibrationPointType.NoCP
   }
 
 }

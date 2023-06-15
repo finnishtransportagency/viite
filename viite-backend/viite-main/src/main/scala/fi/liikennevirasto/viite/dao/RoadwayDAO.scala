@@ -5,14 +5,12 @@ import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.postgis.MassQuery
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.BaseCalibrationPoint
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.model.RoadAddressLinkLike
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point, Vector3d}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LinkGeomSource, SideCode, Track}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, CalibrationPointType, Discontinuity, LinkGeomSource, SideCode, Track}
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import org.slf4j.LoggerFactory
@@ -166,11 +164,11 @@ trait BaseRoadAddress {
   def copyWithGeometry(newGeometry: Seq[Point]): BaseRoadAddress
 
   def hasCalibrationPointAtStart: Boolean = {
-    startCalibrationPoint.getOrElse(NoCP) != NoCP
+    startCalibrationPoint.getOrElse(CalibrationPointType.NoCP) != CalibrationPointType.NoCP
   }
 
   def hasCalibrationPointAtEnd: Boolean = {
-    endCalibrationPoint.getOrElse(NoCP) != NoCP
+    endCalibrationPoint.getOrElse(CalibrationPointType.NoCP) != CalibrationPointType.NoCP
   }
 
   def liesInBetween(ra: BaseRoadAddress): Boolean = {
@@ -277,11 +275,11 @@ case class RoadAddress(id: Long, linearLocationId: Long, roadNumber: Long, roadP
 
   def startCalibrationPointType: CalibrationPointType = startCalibrationPoint match {
     case Some(cp) => cp.typeCode
-    case None => NoCP
+    case None => CalibrationPointType.NoCP
   }
   def endCalibrationPointType: CalibrationPointType = endCalibrationPoint match {
     case Some(cp) => cp.typeCode
-    case None => NoCP
+    case None => CalibrationPointType.NoCP
   }
 
   def calibrationPointTypes: (CalibrationPointType, CalibrationPointType) = (startCalibrationPointType, endCalibrationPointType)

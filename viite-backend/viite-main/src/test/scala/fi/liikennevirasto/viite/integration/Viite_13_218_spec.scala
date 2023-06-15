@@ -12,7 +12,7 @@ import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.liikennevirasto.viite.process.strategy.DefaultSectionCalculatorStrategy
 import fi.liikennevirasto.viite.util._
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LifecycleStatus, LinkGeomSource, RoadAddressChangeType, RoadLink, SideCode, Track, TrafficDirection}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, CalibrationPointType, Discontinuity, LifecycleStatus, LinkGeomSource, RoadAddressChangeType, RoadLink, SideCode, Track, TrafficDirection}
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, when}
@@ -1218,7 +1218,7 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
         /* Terminated links without calibrationpoints before should not have any calibrationpoints after. */
         terminatedWithoutOriginalCPs.diff(CPIds) should have size 2
 
-        cals.filterNot(_.typeCode == CalibrationPointDAO.CalibrationPointType.JunctionPointCP) //puuttuu cp alusta ja roadwaypoint myös
+        cals.filterNot(_.typeCode == CalibrationPointType.JunctionPointCP) //puuttuu cp alusta ja roadwaypoint myös
 
         val currentRoadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers(currentRws.map(_.roadwayNumber).distinct)
 
@@ -1231,7 +1231,7 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
           t1.isDefined && t1.get.roadwayNumber == cal.roadwayNumber
         } ) shouldBe true
 
-        val roadAddressCals = cals.filter(_.typeCode == CalibrationPointDAO.CalibrationPointType.RoadAddressCP).groupBy(_.addrM)
+        val roadAddressCals = cals.filter(_.typeCode == CalibrationPointType.RoadAddressCP).groupBy(_.addrM)
         roadAddressCals.minBy(_._1)._1 shouldBe currentRws.minBy(_.startAddrMValue).startAddrMValue
         roadAddressCals.maxBy(_._1)._1 shouldBe currentRws.maxBy(_.endAddrMValue).endAddrMValue
 

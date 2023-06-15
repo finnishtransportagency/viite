@@ -1,11 +1,10 @@
 package fi.liikennevirasto.viite.util
 
 import fi.liikennevirasto.viite.NewIdValue
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{CalibrationPointLocation, CalibrationPointType}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.{BaseCalibrationPoint, UserDefinedCalibrationPoint}
 import fi.liikennevirasto.viite.dao._
 import fi.vaylavirasto.viite.geometry.GeometryUtils
-import fi.vaylavirasto.viite.model.SideCode
+import fi.vaylavirasto.viite.model.{CalibrationPointLocation, CalibrationPointType, SideCode}
 import org.slf4j.LoggerFactory
 
 object CalibrationPointsUtils {

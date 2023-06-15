@@ -1,9 +1,9 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
 import fi.liikennevirasto.viite.dao.ProjectLink
 import fi.liikennevirasto.viite.process.strategy.{LinkStatusChangeTrackCalculatorStrategy, TrackCalculatorContext, TrackCalculatorResult}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
+import fi.vaylavirasto.viite.model.CalibrationPointType.NoCP
 import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LinkGeomSource, RoadAddressChangeType, SideCode, Track}
 import org.scalatest.{FunSuite, Matchers}
 
