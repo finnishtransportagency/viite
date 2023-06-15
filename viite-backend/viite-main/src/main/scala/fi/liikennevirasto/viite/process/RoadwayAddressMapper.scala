@@ -120,10 +120,10 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
         val (startCP, endCP) = (linearLocation.startCalibrationPoint.addrM, linearLocation.endCalibrationPoint.addrM)
 
         val calibrationPoints = (
-          startCP.map(address => CalibrationPoint(linearLocation.linkId,
+          startCP.map(address => ProjectCalibrationPoint(linearLocation.linkId,
             if (linearLocation.sideCode == SideCode.TowardsDigitizing) 0 else geometryLength,
             address, linearLocation.startCalibrationPointType)),
-          endCP.map(address => CalibrationPoint(linearLocation.linkId,
+          endCP.map(address => ProjectCalibrationPoint(linearLocation.linkId,
             if (linearLocation.sideCode == SideCode.AgainstDigitizing) 0 else geometryLength,
             address, linearLocation.endCalibrationPointType))
         )

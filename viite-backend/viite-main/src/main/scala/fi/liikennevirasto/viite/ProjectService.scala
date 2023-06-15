@@ -1466,9 +1466,9 @@ class ProjectService(
               ProjectCalibrationPointDAO.createCalibrationPoint(calibrationPoint)
             else
               ProjectCalibrationPointDAO.updateSpecificCalibrationPointMeasures(foundCalibrationPoint.head.id, addressM.toDouble - endSegment.startMValue, addressM)
-            Seq(CalibrationPoint)
+            Seq(ProjectCalibrationPoint)
           } else
-            Seq.empty[CalibrationPoint]
+            Seq.empty[ProjectCalibrationPoint]
         })
         roadAddressChangeType match {
           case RoadAddressChangeType.Termination =>

@@ -11,8 +11,6 @@ import fi.vaylavirasto.viite.model.{CalibrationPoint, CalibrationPointLocation, 
 
 object CalibrationPointDAO {
 
-
-
   implicit val getRoadwayPointRow = new GetResult[CalibrationPoint] {
     def apply(r: PositionedResult): CalibrationPoint = {
       val calibrationPointId = r.nextLong()
