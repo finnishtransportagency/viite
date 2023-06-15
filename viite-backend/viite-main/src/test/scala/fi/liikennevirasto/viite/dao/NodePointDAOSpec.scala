@@ -6,8 +6,8 @@ import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
+import fi.vaylavirasto.viite.dao.Sequences
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
 import fi.vaylavirasto.viite.model.{AdministrativeClass, BeforeAfter, Discontinuity, LinkGeomSource, NodePointType, NodeType, SideCode, Track}
 

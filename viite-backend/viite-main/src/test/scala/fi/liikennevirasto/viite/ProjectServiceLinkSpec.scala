@@ -1,7 +1,6 @@
 package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.viite.dao._
@@ -10,6 +9,7 @@ import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.{ProjectSectionCalculator, RoadwayAddressMapper}
 import fi.liikennevirasto.viite.util.{StaticTestData, _}
+import fi.vaylavirasto.viite.dao.Sequences
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point, PolyLine}
 import fi.vaylavirasto.viite.model.{AdministrativeClass, CalibrationPointType, Discontinuity, LifecycleStatus, LinkGeomSource, RoadAddressChangeType, RoadLink, SideCode, Track, TrafficDirection}
 import org.joda.time.DateTime

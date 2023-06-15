@@ -1,11 +1,11 @@
 package fi.liikennevirasto.viite.dao
 
 import fi.liikennevirasto.digiroad2.DigiroadEventBus
-import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
+import fi.vaylavirasto.viite.dao.Sequences
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.CalibrationPointType.NoCP
 import fi.vaylavirasto.viite.model.{AdministrativeClass, CalibrationPointType, Discontinuity, LinkGeomSource, RoadAddressChangeType, SideCode, Track}

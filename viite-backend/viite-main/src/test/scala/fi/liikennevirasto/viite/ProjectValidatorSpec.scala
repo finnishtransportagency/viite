@@ -1,7 +1,6 @@
 package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2.DigiroadEventBus
-import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.viite.dao._
@@ -9,6 +8,7 @@ import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
+import fi.vaylavirasto.viite.dao.Sequences
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point, Vector3d}
 import fi.vaylavirasto.viite.model.CalibrationPointType.NoCP
 import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LinkGeomSource, RoadAddressChangeType, SideCode, Track}
