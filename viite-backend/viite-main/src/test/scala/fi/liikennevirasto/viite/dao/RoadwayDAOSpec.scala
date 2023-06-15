@@ -1,10 +1,10 @@
 package fi.liikennevirasto.viite.dao
 
 import java.sql.SQLException
-import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.viite.AddressConsistencyValidator.AddressError
 import fi.liikennevirasto.viite._
+import fi.vaylavirasto.viite.dao.Sequences
 import fi.vaylavirasto.viite.geometry.Point
 import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LinkGeomSource, SideCode, Track}
 import org.joda.time.DateTime

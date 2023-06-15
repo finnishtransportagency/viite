@@ -6,7 +6,6 @@ import com.googlecode.flyway.core.Flyway
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.kgv.KgvRoadLink
-import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.ds
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -15,6 +14,7 @@ import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.{ApplyChangeInfoProcess, ContinuityChecker, RoadwayAddressMapper}
 import fi.liikennevirasto.viite.util.DataImporter.Conversion
+import fi.vaylavirasto.viite.dao.Queries
 import org.joda.time.DateTime
 
 import scala.collection.parallel.ForkJoinTaskSupport

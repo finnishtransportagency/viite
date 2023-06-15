@@ -1,8 +1,8 @@
 package fi.liikennevirasto.viite.dao
 
-import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.viite.process.{ProjectDeltaCalculator, RoadwaySection}
 import fi.liikennevirasto.viite.process.ProjectDeltaCalculator.{createTwoTrackOldAddressRoadParts, projectLinkDAO}
+import fi.vaylavirasto.viite.dao.Sequences
 import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, RoadAddressChangeType, Track}
 
 import java.sql.{PreparedStatement, Timestamp}

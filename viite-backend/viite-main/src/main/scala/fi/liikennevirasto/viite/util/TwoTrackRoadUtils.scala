@@ -1,10 +1,10 @@
 package fi.liikennevirasto.viite.util
 
-import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.process.{RoadwayAddressMapper, TrackSectionOrder}
+import fi.vaylavirasto.viite.dao.Sequences
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.{CalibrationPointType, Discontinuity, RoadAddressChangeType, Track}
 import org.slf4j.LoggerFactory

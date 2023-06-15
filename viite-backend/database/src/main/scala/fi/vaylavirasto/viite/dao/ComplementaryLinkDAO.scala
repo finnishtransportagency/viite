@@ -1,4 +1,4 @@
-package fi.liikennevirasto.digiroad2.dao
+package fi.vaylavirasto.viite.dao
 
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.client.kgv.FilterOgc.withRoadNumbersFilter
