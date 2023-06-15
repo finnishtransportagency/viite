@@ -2314,7 +2314,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       updatedProjectLinks.exists { x => x.status == RoadAddressChangeType.Unchanged } should be(true)
       updatedProjectLinks.exists { x => x.status == RoadAddressChangeType.Termination } should be(true)
       val calculatedProjectLinks = ProjectSectionCalculator.assignMValues(updatedProjectLinks)
-      calculatedProjectLinks.filter(pl => pl.linkId == 5168579.toString).head.calibrationPoints should be((None, Some(CalibrationPoint(5168579.toString, 15.173, 4681, RoadAddressCP))))
+      calculatedProjectLinks.filter(pl => pl.linkId == 5168579.toString).head.calibrationPoints should be((None, Some(ProjectCalibrationPoint(5168579.toString, 15.173, 4681, RoadAddressCP))))
 
       projectService.updateProjectLinks(savedProject.id, Set(), Seq(5168579.toString), RoadAddressChangeType.Termination, "-", 0, 0, 0, Option.empty[Int])
       val updatedProjectLinks_ = projectLinkDAO.fetchProjectLinks(savedProject.id).toList
@@ -2323,7 +2323,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val updatedProjectLinks2_ = projectLinkDAO.fetchProjectLinks(savedProject.id).toList
       updatedProjectLinks2_.filter(pl => pl.linkId == 5168579.toString).head.calibrationPoints should be((None, None))
       val lastValid = sortedRoad206AfterTermination.filter(_.status != RoadAddressChangeType.Termination).last
-      sortedRoad206AfterTermination.filter(_.status != RoadAddressChangeType.Termination).last.calibrationPoints should be((None, Some(CalibrationPoint(lastValid.linkId, lastValid.endMValue, lastValid.endAddrMValue, RoadAddressCP))))
+      sortedRoad206AfterTermination.filter(_.status != RoadAddressChangeType.Termination).last.calibrationPoints should be((None, Some(ProjectCalibrationPoint(lastValid.linkId, lastValid.endMValue, lastValid.endAddrMValue, RoadAddressCP))))
       updatedProjectLinks2.filter(pl => pl.roadPartNumber == 205).exists { x => x.status == RoadAddressChangeType.Termination } should be(false)
     }
     runWithRollback {
