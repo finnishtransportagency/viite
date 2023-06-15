@@ -4,11 +4,11 @@ import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{JunctionPointCP, NoCP, RoadAddressCP}
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.process.ProjectDeltaCalculator.createTwoTrackOldAddressRoadParts
 import fi.liikennevirasto.viite.util.{toProjectLink, toTransition}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
+import fi.vaylavirasto.viite.model.CalibrationPointType.{JunctionPointCP, NoCP, RoadAddressCP, UserDefinedCP}
 import fi.vaylavirasto.viite.model.LinkGeomSource.{FrozenLinkInterface, NormalLinkInterface}
 import fi.vaylavirasto.viite.model.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LinkGeomSource, RoadAddressChangeType, Track}
@@ -1157,7 +1157,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       })
       val projectLinksWithCp = addresses.sortBy(_.startAddrMValue).map(a => {
         val projectLink = toProjectLink(project, RoadAddressChangeType.Unchanged)(a.copy(ely = 5))
-        if (a.id == 10L) (a.copy(roadwayNumber = 1), projectLink.copy(calibrationPointTypes = (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.UserDefinedCP), roadwayNumber = 1)) else if (a.id > 10L) (a.copy(roadwayNumber = 2), projectLink.copy(roadwayNumber = 2)) else (a.copy(roadwayNumber = 1), projectLink.copy(roadwayNumber = 1))
+        if (a.id == 10L) (a.copy(roadwayNumber = 1), projectLink.copy(calibrationPointTypes = (NoCP, UserDefinedCP), roadwayNumber = 1)) else if (a.id > 10L) (a.copy(roadwayNumber = 2), projectLink.copy(roadwayNumber = 2)) else (a.copy(roadwayNumber = 1), projectLink.copy(roadwayNumber = 1))
       })
 
       val partitionCp = ProjectDeltaCalculator.generateChangeTableRowsFromProjectLinks(projectLinksWithCp.map(_._2), Seq()).adjustedSections
@@ -1181,7 +1181,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       val projectLinksWithCp = addresses.sortBy(_.startAddrMValue).map(a => {
         val projectLink = toProjectLink(project, RoadAddressChangeType.Unchanged)(a.copy(ely = 5))
         if (a.id == 10L)
-          (a.copy(roadwayNumber = 1), projectLink.copy(calibrationPointTypes = (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.JunctionPointCP), roadwayNumber = 1))
+          (a.copy(roadwayNumber = 1), projectLink.copy(calibrationPointTypes = (NoCP, JunctionPointCP), roadwayNumber = 1))
         else if (a.id > 10L)
             (a.copy(roadwayNumber = 2), projectLink.copy(roadwayNumber = 2))
         else

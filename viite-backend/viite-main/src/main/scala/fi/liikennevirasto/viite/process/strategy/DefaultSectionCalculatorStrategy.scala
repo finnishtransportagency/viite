@@ -4,14 +4,13 @@ import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.util.{MissingRoadwayNumberException, MissingTrackException, RoadAddressException}
 import fi.liikennevirasto.viite.{ContinuousAddressCapErrorMessage, LengthMismatchErrorMessage, NegativeLengthErrorMessage, NewIdValue, ProjectValidationException, ProjectValidator, UnsuccessfulRecalculationMessage}
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.UserDefinedCP
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.process.strategy.FirstRestSections.{getUpdatedContinuousRoadwaySections, lengthCompare}
 import fi.liikennevirasto.viite.util.TwoTrackRoadUtils
 import fi.liikennevirasto.viite.util.TwoTrackRoadUtils._
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point, Vector3d}
-import fi.vaylavirasto.viite.model.{Discontinuity, RoadAddressChangeType, SideCode, Track}
+import fi.vaylavirasto.viite.model.{CalibrationPointType, Discontinuity, RoadAddressChangeType, SideCode, Track}
 import org.slf4j.LoggerFactory
 
 import scala.collection.immutable.ListMap
@@ -389,7 +388,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     val (leftLinksWithUdcps, splittedRightLinks, udcpsFromRightSideSplits) = TwoTrackRoadUtils.splitPlsAtStatusChange(adjustedLeftLinksBeforeStatusSplits, adjustedRightLinksBeforeStatusSplits)
     val (rightLinksWithUdcps, splittedLeftLinks, udcpsFromLeftSideSplits) = TwoTrackRoadUtils.splitPlsAtStatusChange(splittedRightLinks, leftLinksWithUdcps)
 
-    val udcpSplitsAtOriginalAddresses = (filterOldLinks(rightLinksWithUdcps) ++ filterOldLinks(splittedLeftLinks)).filter(_.endCalibrationPointType == UserDefinedCP).map(_.originalEndAddrMValue).filter(_ > 0)
+    val udcpSplitsAtOriginalAddresses = (filterOldLinks(rightLinksWithUdcps) ++ filterOldLinks(splittedLeftLinks)).filter(_.endCalibrationPointType == CalibrationPointType.UserDefinedCP).map(_.originalEndAddrMValue).filter(_ > 0)
     val sortedSplitOriginalAddresses = (getContinuousByStatus(rightLinksWithUdcps) ++ getContinuousByStatus(splittedLeftLinks) ++ udcpSplitsAtOriginalAddresses).distinct.sorted
 
     val leftLinksWithSplits  = splitByOriginalAddresses(splittedLeftLinks, sortedSplitOriginalAddresses)

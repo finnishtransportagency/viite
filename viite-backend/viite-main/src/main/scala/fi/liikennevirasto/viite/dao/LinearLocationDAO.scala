@@ -5,11 +5,9 @@ import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.postgis.{MassQuery, PostGISDatabase}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{JunctionPointCP, RoadAddressCP}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.{LinkGeomSource, SideCode}
+import fi.vaylavirasto.viite.model.{CalibrationPointType, LinkGeomSource, SideCode}
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import org.slf4j.LoggerFactory
@@ -93,14 +91,14 @@ case class CalibrationPointReference(addrM: Option[Long], typeCode: Option[Calib
 
   def isRoadAddressCP(): Boolean = {
     this.typeCode match {
-      case Some(t) if t.equals(RoadAddressCP) => true
+      case Some(t) if t.equals(CalibrationPointType.RoadAddressCP) => true
       case _ => false
     }
   }
 
   def isJunctionPointCP(): Boolean = {
     this.typeCode match {
-      case Some(t) if t.equals(JunctionPointCP) => true
+      case Some(t) if t.equals(CalibrationPointType.JunctionPointCP) => true
       case _ => false
     }
   }
