@@ -7,6 +7,7 @@ import fi.liikennevirasto.digiroad2.util.ViiteProperties
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
+import fi.vaylavirasto.viite.dao.UnaddressedRoadLink
 import fi.vaylavirasto.viite.geometry.GeometryUtils
 import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LifecycleStatus, LinkGeomSource, RoadLink, RoadLinkLike, SideCode, Track}
 

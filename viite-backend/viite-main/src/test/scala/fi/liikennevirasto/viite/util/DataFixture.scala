@@ -1,7 +1,6 @@
 package fi.liikennevirasto.viite.util
 
 import java.util.Properties
-
 import com.googlecode.flyway.core.Flyway
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2._
@@ -14,7 +13,7 @@ import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.{ApplyChangeInfoProcess, ContinuityChecker, RoadwayAddressMapper}
 import fi.liikennevirasto.viite.util.DataImporter.Conversion
-import fi.vaylavirasto.viite.dao.Queries
+import fi.vaylavirasto.viite.dao.{MunicipalityDAO, Queries}
 import org.joda.time.DateTime
 
 import scala.collection.parallel.ForkJoinTaskSupport

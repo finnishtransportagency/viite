@@ -9,7 +9,7 @@ import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.{ProjectSectionCalculator, RoadwayAddressMapper}
 import fi.liikennevirasto.viite.util.{StaticTestData, _}
-import fi.vaylavirasto.viite.dao.Sequences
+import fi.vaylavirasto.viite.dao.{ProjectLinkNameDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point, PolyLine}
 import fi.vaylavirasto.viite.model.{AdministrativeClass, CalibrationPointType, Discontinuity, LifecycleStatus, LinkGeomSource, RoadAddressChangeType, RoadLink, SideCode, Track, TrafficDirection}
 import org.joda.time.DateTime

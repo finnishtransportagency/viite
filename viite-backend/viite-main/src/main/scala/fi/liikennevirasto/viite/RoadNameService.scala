@@ -1,7 +1,7 @@
 package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.viite.dao.{ProjectLinkNameDAO, RoadName, RoadNameDAO, RoadNameForRoadAddressBrowser}
+import fi.vaylavirasto.viite.dao.{ProjectLinkNameDAO, RoadName, RoadNameDAO, RoadNameForRoadAddressBrowser}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory

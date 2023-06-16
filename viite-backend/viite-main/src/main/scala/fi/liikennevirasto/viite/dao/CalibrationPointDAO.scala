@@ -6,7 +6,6 @@ import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import fi.liikennevirasto.viite.NewIdValue
 import fi.vaylavirasto.viite.dao.Sequences
-import fi.vaylavirasto.viite.model.BeforeAfter
 import fi.vaylavirasto.viite.model.{CalibrationPoint, CalibrationPointLocation, CalibrationPointType}
 
 object CalibrationPointDAO {

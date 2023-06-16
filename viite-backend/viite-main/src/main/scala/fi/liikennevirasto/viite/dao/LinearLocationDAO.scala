@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.postgis.{MassQuery, PostGISDatabase}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
-import fi.vaylavirasto.viite.dao.{Queries, Sequences}
+import fi.vaylavirasto.viite.dao.{LinkDAO, Queries, Sequences}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.{CalibrationPointType, LinkGeomSource, SideCode}
 import org.joda.time.DateTime

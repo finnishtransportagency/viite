@@ -1,8 +1,9 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.viite.{RoadAddressService, RoadNameService}
-import fi.liikennevirasto.viite.dao.{ProjectCalibrationPoint, RoadName}
+import fi.liikennevirasto.viite.dao.ProjectCalibrationPoint
 import fi.liikennevirasto.viite.model.RoadAddressLink
+import fi.vaylavirasto.viite.dao.RoadName
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.{AdministrativeClass, LifecycleStatus, LinkGeomSource, SideCode}
 import org.joda.time.DateTime
