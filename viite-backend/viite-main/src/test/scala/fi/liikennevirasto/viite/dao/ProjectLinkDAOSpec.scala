@@ -1,18 +1,16 @@
 package fi.liikennevirasto.viite.dao
 
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point, Vector3d}
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LinkGeomSource, SideCode}
-import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
+import fi.liikennevirasto.digiroad2.DigiroadEventBus
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.util.Track.LeftSide
 import fi.liikennevirasto.viite.Dummies.dummyLinearLocation
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, RoadAddressCP}
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.liikennevirasto.viite.NewIdValue
+import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point, Vector3d}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, LinkGeomSource, SideCode, Track}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import org.scalatest.mock.MockitoSugar
@@ -77,7 +75,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
   }
 
   def dummyProjectLink(id: Long, projectId: Long, linkId: String, roadwayId: Long = 0, roadwayNumber: Long = roadwayNumber1, roadNumber: Long = roadNumber1, roadPartNumber: Long = roadPartNumber1, startAddrMValue: Long, endAddrMValue: Long, startMValue: Double, endMValue: Double, endDate: Option[DateTime] = None, calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), geometry: Seq[Point] = Seq(), status: LinkStatus, administrativeClass: AdministrativeClass, reversed: Boolean, linearLocationId: Long, connectedLinkId: Option[String] = None, track: Track = Track.Combined): ProjectLink =
-    ProjectLink(id, roadNumber, roadPartNumber, track, Discontinuity.Continuous, startAddrMValue, endAddrMValue, startAddrMValue, endAddrMValue, Some(DateTime.parse("1901-01-01")), endDate, Some("testUser"), linkId, startMValue, endMValue, TowardsDigitizing, (if (calibrationPoints._1.isDefined) calibrationPoints._1.get.typeCode else NoCP, if (calibrationPoints._2.isDefined) calibrationPoints._2.get.typeCode else NoCP), (NoCP, NoCP), geometry, projectId, status, administrativeClass, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geometry), roadwayId, linearLocationId, 0, reversed, connectedLinkId = connectedLinkId, 631152000, roadwayNumber, roadAddressLength = Some(endAddrMValue - startAddrMValue))
+    ProjectLink(id, roadNumber, roadPartNumber, track, Discontinuity.Continuous, startAddrMValue, endAddrMValue, startAddrMValue, endAddrMValue, Some(DateTime.parse("1901-01-01")), endDate, Some("testUser"), linkId, startMValue, endMValue, SideCode.TowardsDigitizing, (if (calibrationPoints._1.isDefined) calibrationPoints._1.get.typeCode else NoCP, if (calibrationPoints._2.isDefined) calibrationPoints._2.get.typeCode else NoCP), (NoCP, NoCP), geometry, projectId, status, administrativeClass, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geometry), roadwayId, linearLocationId, 0, reversed, connectedLinkId = connectedLinkId, 631152000, roadwayNumber, roadAddressLength = Some(endAddrMValue - startAddrMValue))
 
   private def dummyRoadAddressProject(id: Long, status: ProjectState, reservedParts: Seq[ProjectReservedPart] = List.empty[ProjectReservedPart], coordinates: Option[ProjectCoordinates] = None): Project = {
     Project(id, status, "testProject", "testUser", DateTime.parse("1901-01-01"), "testUser", DateTime.parse("1901-01-01"), DateTime.now(), "additional info here", reservedParts, Seq(), Some("current status info"), coordinates)
@@ -311,7 +309,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       links.size should be(2)
       projectReservedPartDAO.reserveRoadPart(projectId, newRoadNumber, newPartNumber, "test")
       projectLinkDAO.updateProjectLinkNumbering(projectId, roadNumber1, roadPartNumber1, LinkStatus.Numbering, newRoadNumber, newPartNumber, "test", 0)
-      projectLinkDAO.updateProjectLinkAdministrativeClassDiscontinuity(Set(links.filter(_.track == LeftSide).maxBy(_.endAddrMValue).id), LinkStatus.Numbering, "test", links.filter(_.track == LeftSide).head.administrativeClass.value, Some(Discontinuity.MinorDiscontinuity.value))
+      projectLinkDAO.updateProjectLinkAdministrativeClassDiscontinuity(Set(links.filter(_.track == Track.LeftSide).maxBy(_.endAddrMValue).id), LinkStatus.Numbering, "test", links.filter(_.track == Track.LeftSide).head.administrativeClass.value, Some(Discontinuity.MinorDiscontinuity.value))
       val linksAfterUpdate = projectLinkDAO.fetchProjectLinks(projectId)
       linksAfterUpdate.size should be(2)
       linksAfterUpdate.groupBy(p => (p.roadNumber, p.roadPartNumber)).keys.head should be((newRoadNumber, newPartNumber))
@@ -757,7 +755,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
   }
 
   test("Test ProjectLink.lastSegmentDirection When / against digitizing and not reversed Then correct vector") {
-    val projectLink = dummyProjectLink2.copy(sideCode = AgainstDigitizing, geometry = Seq(Point(50, 50), Point(150, 150), Point(200, 200)))
+    val projectLink = dummyProjectLink2.copy(sideCode = SideCode.AgainstDigitizing, geometry = Seq(Point(50, 50), Point(150, 150), Point(200, 200)))
     projectLink.lastSegmentDirection should be(Vector3d(-100, -100, 0))
   }
 
@@ -767,7 +765,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
   }
 
   test("Test ProjectLink.lastSegmentDirection When \\ against digitizing and not reversed Then correct vector") {
-    val projectLink = dummyProjectLink2.copy(sideCode = AgainstDigitizing, geometry = Seq(Point(-50, 50), Point(-150, 150), Point(-200, 200)))
+    val projectLink = dummyProjectLink2.copy(sideCode = SideCode.AgainstDigitizing, geometry = Seq(Point(-50, 50), Point(-150, 150), Point(-200, 200)))
     projectLink.lastSegmentDirection should be(Vector3d(100, -100, 0))
   }
 
@@ -777,7 +775,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
   }
 
   test("Test ProjectLink.lastSegmentDirection When / against digitizing and reversed Then correct vector") {
-    val projectLink = dummyProjectLink2.copy(sideCode = AgainstDigitizing, geometry = Seq(Point(50, 50), Point(150, 150), Point(200, 200)), reversed = true)
+    val projectLink = dummyProjectLink2.copy(sideCode = SideCode.AgainstDigitizing, geometry = Seq(Point(50, 50), Point(150, 150), Point(200, 200)), reversed = true)
     projectLink.lastSegmentDirection should be(Vector3d(50, 50, 0))
   }
 
@@ -787,7 +785,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
   }
 
   test("Test ProjectLink.lastSegmentDirection When \\ against digitizing and reversed Then correct vector") {
-    val projectLink = dummyProjectLink2.copy(sideCode = AgainstDigitizing, geometry = Seq(Point(-50, 50), Point(-150, 150), Point(-200, 200)), reversed = true)
+    val projectLink = dummyProjectLink2.copy(sideCode = SideCode.AgainstDigitizing, geometry = Seq(Point(-50, 50), Point(-150, 150), Point(-200, 200)), reversed = true)
     projectLink.lastSegmentDirection should be(Vector3d(-50, 50, 0))
   }
 

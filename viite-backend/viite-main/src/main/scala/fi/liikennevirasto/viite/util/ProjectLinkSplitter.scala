@@ -1,13 +1,9 @@
 package fi.liikennevirasto.viite.util
 
-import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
-import fi.liikennevirasto.digiroad2.GeometryUtils
-import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode, AdministrativeClass}
-import fi.liikennevirasto.digiroad2.linearasset.{PolyLine, RoadLink}
-import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.viite.dao.{Discontinuity, LinkStatus, ProjectCoordinates, ProjectLink}
 import fi.liikennevirasto.viite.{MaxDistanceForConnectedLinks, _}
+import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point, PolyLine}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, LinkGeomSource, RoadLink, SideCode, Track}
 
 /**
   * Split suravage link together with project link template

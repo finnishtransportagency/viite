@@ -1,8 +1,8 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.asset.{SideCode, TrafficDirection}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.{ChangedRoadAddress, NodesAndJunctionsService, RoadAddressService}
+import fi.vaylavirasto.viite.model.{SideCode, TrafficDirection}
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.json4s.{DefaultFormats, Formats}

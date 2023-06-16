@@ -1,18 +1,15 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, TrafficDirection}
 import fi.liikennevirasto.digiroad2.client.kgv.{KgvRoadLink, KgvRoadLinkClient}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
-import fi.liikennevirasto.digiroad2.asset.AdministrativeClass.State
-import fi.liikennevirasto.digiroad2.asset.LifecycleStatus.InUse
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.FrozenLinkInterface
 import fi.liikennevirasto.digiroad2.dao.ComplementaryLinkDAO
-import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.viite.{NodesAndJunctionsService, PreFillInfo, ProjectService, RoadAddressService, RoadNameService, RoadNameSource, RoadNetworkValidator, ViiteVkmClient}
 import fi.liikennevirasto.viite.dao.{ProjectLinkDAO}
 import fi.liikennevirasto.viite.util.{DigiroadSerializers, JsonSerializer, runWithRollback}
+import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, LifecycleStatus, LinkGeomSource, RoadLink, TrafficDirection}
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
@@ -49,9 +46,9 @@ class ViiteApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter {
   when(mockKgvRoadLink.frozenTimeRoadLinkData).thenReturn(frozenTimeRoadLinkData)
   when(mockKgvRoadLink.complementaryData).thenReturn(complementaryData)
 
-  val testRoadLink  = RoadLink("6117675", Seq(Point(6975409, 527825, 85.90899999999965), Point(6975409, 528516)), 691.186, State, TrafficDirection.AgainstDigitizing, Some("25.06.2015 03:00:00"), Some("vvh_modified"), InUse, FrozenLinkInterface, 749, "")
-  val mockRoadLink  = RoadLink("3236208", Seq(Point(506770.557, 6824285.205), Point(507110.817, 6824195.643)), 368.357, State, TrafficDirection.TowardsDigitizing, Some("25.06.2015 03:00:00"), Some("vvh_modified"), InUse, FrozenLinkInterface, 749, "")
-  val mockRoadLink2 = RoadLink("f4745622-bfed-4ebd-aa32-aadeefe6289e:1", Seq(Point(534583.06,6994860.59,96.545),Point(534622.935,6994867.342,96.677),Point(534648.202,6994871.385,96.554),Point(534670.801,6994874.999,96.471),Point(534680.071,6994876.473,96.493),Point(534681.014,6994876.676,96.505),Point(534702.96,6994880.636,96.925),Point(534734.215,6994886.084,97.63),Point(534756.75,6994890.217,98.151)), 691.186, State, TrafficDirection.AgainstDigitizing, Some("25.06.2015 03:00:00"), Some("vvh_modified"), InUse, FrozenLinkInterface, 749, "")
+  val testRoadLink  = RoadLink("6117675", Seq(Point(6975409, 527825, 85.90899999999965), Point(6975409, 528516)), 691.186, AdministrativeClass.State, TrafficDirection.AgainstDigitizing, Some("25.06.2015 03:00:00"), Some("vvh_modified"), LifecycleStatus.InUse, LinkGeomSource.FrozenLinkInterface, 749, "")
+  val mockRoadLink  = RoadLink("3236208", Seq(Point(506770.557, 6824285.205), Point(507110.817, 6824195.643)), 368.357, AdministrativeClass.State, TrafficDirection.TowardsDigitizing, Some("25.06.2015 03:00:00"), Some("vvh_modified"), LifecycleStatus.InUse, LinkGeomSource.FrozenLinkInterface, 749, "")
+  val mockRoadLink2 = RoadLink("f4745622-bfed-4ebd-aa32-aadeefe6289e:1", Seq(Point(534583.06,6994860.59,96.545),Point(534622.935,6994867.342,96.677),Point(534648.202,6994871.385,96.554),Point(534670.801,6994874.999,96.471),Point(534680.071,6994876.473,96.493),Point(534681.014,6994876.676,96.505),Point(534702.96,6994880.636,96.925),Point(534734.215,6994886.084,97.63),Point(534756.75,6994890.217,98.151)), 691.186, AdministrativeClass.State, TrafficDirection.AgainstDigitizing, Some("25.06.2015 03:00:00"), Some("vvh_modified"), LifecycleStatus.InUse, LinkGeomSource.FrozenLinkInterface, 749, "")
 
   when(frozenTimeRoadLinkData.fetchByLinkId("6117675")).thenReturn(Some(testRoadLink))
   when(frozenTimeRoadLinkData.fetchByLinkId("f4745622-bfed-4ebd-aa32-aadeefe6289e:1")).thenReturn(Some(mockRoadLink2))

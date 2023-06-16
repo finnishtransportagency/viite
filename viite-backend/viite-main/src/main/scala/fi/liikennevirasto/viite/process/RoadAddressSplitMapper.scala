@@ -1,8 +1,8 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao.ProjectLink
+import fi.vaylavirasto.viite.geometry.GeometryUtils
 
 object RoadAddressSplitMapper extends RoadAddressMapper {
   def createAddressMap(splitProjectLinks: Seq[ProjectLink]): Seq[LinearLocationMapping] = {

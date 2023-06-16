@@ -1,20 +1,17 @@
 package fi.liikennevirasto.viite.dao
 
 import java.sql.BatchUpdateException
-
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.util.Track.Combined
-import fi.liikennevirasto.digiroad2.{Point, asset}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{CalibrationPointLocation, CalibrationPointType}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
+import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, LinkGeomSource, SideCode, Track}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
-import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 
 class LinearLocationDAOSpec extends FunSuite with Matchers {
 
@@ -410,7 +407,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId2)))
 
       val before = linearLocationDAO.fetchById(id1).getOrElse(fail())
-      before.sideCode should be(asset.SideCode.TowardsDigitizing)
+      before.sideCode should be(SideCode.TowardsDigitizing)
 
       // Update geometry so that the direction of digitization changes
       val newStart: Point = Point(0.0, 0.0)
@@ -431,7 +428,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       updated.geometry.head.y should be(newStart.y +- 0.001)
       updated.geometry.last.x should be(newEnd.x +- 0.001)
       updated.geometry.last.y should be(newEnd.y +- 0.001)
-      updated.sideCode should be(asset.SideCode.TowardsDigitizing)
+      updated.sideCode should be(SideCode.TowardsDigitizing)
 
     }
   }
@@ -444,7 +441,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId2)))
 
       val before = linearLocationDAO.fetchById(id1).getOrElse(fail())
-      before.sideCode should be(asset.SideCode.TowardsDigitizing)
+      before.sideCode should be(SideCode.TowardsDigitizing)
 
       // Update geometry so that the direction of digitization changes
       val newStart = Point(0.0, 100.0)
@@ -465,7 +462,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       updated.geometry.head.y should be(newStart.y +- 0.001)
       updated.geometry.last.x should be(newEnd.x +- 0.001)
       updated.geometry.last.y should be(newEnd.y +- 0.001)
-      updated.sideCode should be(asset.SideCode.AgainstDigitizing)
+      updated.sideCode should be(SideCode.AgainstDigitizing)
 
     }
   }
@@ -478,7 +475,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId2)))
 
       val before = linearLocationDAO.fetchById(id1).getOrElse(fail())
-      before.sideCode should be(asset.SideCode.TowardsDigitizing)
+      before.sideCode should be(SideCode.TowardsDigitizing)
 
       // Update geometry so that the direction of digitization changes
       val newStart = Point(100.0, 0.0)
@@ -499,7 +496,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       updated.geometry.head.y should be(newStart.y +- 0.001)
       updated.geometry.last.x should be(newEnd.x +- 0.001)
       updated.geometry.last.y should be(newEnd.y +- 0.001)
-      updated.sideCode should be(asset.SideCode.AgainstDigitizing)
+      updated.sideCode should be(SideCode.AgainstDigitizing)
 
     }
   }
@@ -603,7 +600,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId1, roadwayNumber = roadwayNumber1)))
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId2, geometry = Seq(Point(1000.0, 1000.0), Point(1100.0, 1000.0)), roadwayNumber = roadwayNumber1)))
 
-      roadwayDAO.create(Seq(Roadway(NewIdValue, roadwayNumber1, -9999, 1, AdministrativeClass.State, Combined, Discontinuity.Continuous, 0, 200, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("ROAD 1"), 1, TerminationCode.NoTermination)))
+      roadwayDAO.create(Seq(Roadway(NewIdValue, roadwayNumber1, -9999, 1, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, 200, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("ROAD 1"), 1, TerminationCode.NoTermination)))
 
       val locations = linearLocationDAO.fetchByRoadAddress(-9999,1, 1)
       locations.size should be(2)
@@ -637,9 +634,9 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId2, geometry = Seq(Point(1000.0, 1000.0), Point(1100.0, 1000.0)), roadwayNumber = roadwayNumber1)))
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, linkId = linkId3, roadwayNumber = roadwayNumber2)))
 
-      roadwayDAO.create(Seq(Roadway(NewIdValue, roadwayNumber1, 100, 1, AdministrativeClass.State, Combined, Discontinuity.Continuous, 0, 200, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("ROAD 1"), 1, TerminationCode.NoTermination)))
+      roadwayDAO.create(Seq(Roadway(NewIdValue, roadwayNumber1, 100, 1, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, 200, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("ROAD 1"), 1, TerminationCode.NoTermination)))
 
-      roadwayDAO.create(Seq(Roadway(NewIdValue, roadwayNumber2, 101, 1, AdministrativeClass.State, Combined, Discontinuity.Continuous, 0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("ROAD 2"), 1, TerminationCode.NoTermination)))
+      roadwayDAO.create(Seq(Roadway(NewIdValue, roadwayNumber2, 101, 1, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("ROAD 2"), 1, TerminationCode.NoTermination)))
 
       val roadNumberFilter = Seq((100, 100))
       val locations = linearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(Point(900.0, 900.0), Point(1200.0, 1200.0)), roadNumberFilter)

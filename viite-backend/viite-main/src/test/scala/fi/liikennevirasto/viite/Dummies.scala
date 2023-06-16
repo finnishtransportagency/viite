@@ -1,16 +1,12 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.asset.LifecycleStatus.UnknownLifecycleStatus
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.HistoryLinkInterface
 import fi.liikennevirasto.digiroad2.client.kgv.{ChangeInfo, ChangeType, FeatureClass, HistoryRoadLink}
-import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
 import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
+import fi.vaylavirasto.viite.geometry.Point
+import fi.vaylavirasto.viite.model.{AdministrativeClass, LifecycleStatus, LinkGeomSource, RoadLink, SideCode, Track, TrafficDirection}
 import org.joda.time.DateTime
 
 object Dummies {
@@ -57,11 +53,11 @@ object Dummies {
 
   def dummyHistoryRoadLink(linkId: String, yCoordinates: Seq[Double]): HistoryRoadLink = {
     val municipalityCode = 0
-    HistoryRoadLink(linkId, municipalityCode, yCoordinates.map(y => Point(0.0, y)), AdministrativeClass.Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.DrivePath, 0L, 0L, Map(), UnknownLifecycleStatus, HistoryLinkInterface, yCoordinates.sum)
+    HistoryRoadLink(linkId, municipalityCode, yCoordinates.map(y => Point(0.0, y)), AdministrativeClass.Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.DrivePath, 0L, 0L, Map(), LifecycleStatus.UnknownLifecycleStatus, LinkGeomSource.HistoryLinkInterface, yCoordinates.sum)
   }
 
   def dummyRoadLink(linkId: String, yCoordinates: Seq[Double], linkGeomSource: LinkGeomSource): RoadLink = {
-    RoadLink(linkId, yCoordinates.map(y => Point(0.0, y)), yCoordinates.sum, AdministrativeClass.Municipality, TrafficDirection.TowardsDigitizing, None, None, UnknownLifecycleStatus, linkGeomSource, 0, "")
+    RoadLink(linkId, yCoordinates.map(y => Point(0.0, y)), yCoordinates.sum, AdministrativeClass.Municipality, TrafficDirection.TowardsDigitizing, None, None, LifecycleStatus.UnknownLifecycleStatus, linkGeomSource, 0, "")
   }
 
   def dummyChangeInfo(changeType: ChangeType, oldId: String, newId: String, oldStartMeasure: Double, oldEndMeasure: Double, newStartMeasure: Double, newEndMeasure: Double, vvhTimeStamp: Long): ChangeInfo = {
