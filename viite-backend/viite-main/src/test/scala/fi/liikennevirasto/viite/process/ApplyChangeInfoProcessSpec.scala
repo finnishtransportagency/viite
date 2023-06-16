@@ -1,11 +1,11 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
-import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.client.kgv.ChangeType
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.Dummies._
 import fi.liikennevirasto.viite.process.RoadAddressFiller.ChangeSet
+import fi.vaylavirasto.viite.model.LinkGeomSource.NormalLinkInterface
+import fi.vaylavirasto.viite.model.SideCode
 import org.scalatest.{FunSuite, Matchers}
 
 class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {

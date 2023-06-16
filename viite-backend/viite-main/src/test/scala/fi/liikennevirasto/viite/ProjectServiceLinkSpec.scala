@@ -1,16 +1,9 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.{GeometryUtils, _}
-import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.asset.LifecycleStatus.InUse
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
-import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
+import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.dao.Sequences
-import fi.liikennevirasto.digiroad2.linearasset.{PolyLine, RoadLink}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
@@ -20,6 +13,8 @@ import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.{ProjectSectionCalculator, RoadwayAddressMapper}
 import fi.liikennevirasto.viite.util.{StaticTestData, _}
+import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point, PolyLine}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, LifecycleStatus, LinkGeomSource, RoadLink, SideCode, Track, TrafficDirection}
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, when}
@@ -147,9 +142,9 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
     projectDAO.create(project)
     val links =
       if (changeTrack) {
-        withTrack(RightSide) ++ withTrack(LeftSide)
+        withTrack(Track.RightSide) ++ withTrack(Track.LeftSide)
       } else {
-        withTrack(Combined)
+        withTrack(Track.Combined)
       }
     projectReservedPartDAO.reserveRoadPart(id, roadNumber, roadPartNumber, "u")
     projectLinkDAO.create(links)
@@ -164,10 +159,10 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
   private def extractTrafficDirection(sideCode: SideCode, track: Track): TrafficDirection = {
     (sideCode, track) match {
       case (_, Track.Combined) => TrafficDirection.BothDirections
-      case (TowardsDigitizing, Track.RightSide) => TrafficDirection.TowardsDigitizing
-      case (TowardsDigitizing, Track.LeftSide) => TrafficDirection.AgainstDigitizing
-      case (AgainstDigitizing, Track.RightSide) => TrafficDirection.AgainstDigitizing
-      case (AgainstDigitizing, Track.LeftSide) => TrafficDirection.TowardsDigitizing
+      case (SideCode.TowardsDigitizing, Track.RightSide) => TrafficDirection.TowardsDigitizing
+      case (SideCode.TowardsDigitizing, Track.LeftSide) => TrafficDirection.AgainstDigitizing
+      case (SideCode.AgainstDigitizing, Track.RightSide) => TrafficDirection.AgainstDigitizing
+      case (SideCode.AgainstDigitizing, Track.LeftSide) => TrafficDirection.TowardsDigitizing
       case (_, _) => TrafficDirection.UnknownDirection
     }
   }
@@ -216,7 +211,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
   }
 
   private def mockForProject[T <: PolyLine](id: Long, l: Seq[T] = Seq()): OngoingStubbing[Seq[RoadLink]] = {
-    val roadLink = RoadLink(Sequences.nextViitePrimaryKeySeqValue.toString, Seq(Point(535602.222, 6982200.25, 89.9999), Point(535605.272, 6982204.22, 85.90899999999965)), 540.3960283713503, AdministrativeClass.State, TrafficDirection.AgainstDigitizing, Some("25.06.2015 03:00:00"), Some("vvh_modified"), InUse, NormalLinkInterface, 749, "")
+    val roadLink = RoadLink(Sequences.nextViitePrimaryKeySeqValue.toString, Seq(Point(535602.222, 6982200.25, 89.9999), Point(535605.272, 6982204.22, 85.90899999999965)), 540.3960283713503, AdministrativeClass.State, TrafficDirection.AgainstDigitizing, Some("25.06.2015 03:00:00"), Some("vvh_modified"), LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, 749, "")
     val (projectLinks, palinks) = l.partition(_.isInstanceOf[ProjectLink])
     val dbLinks = projectLinkDAO.fetchProjectLinks(id)
     when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[String]])).thenReturn(Seq())
@@ -292,7 +287,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
   }
 
   test("Test projectService.addNewLinksToProject() When adding two consecutive roadlinks to project road number & road part Then check the correct insertion of the roadlinks.") {
-    val roadLink = RoadLink(5175306.toString, Seq(Point(535602.222, 6982200.25, 89.9999), Point(535605.272, 6982204.22, 85.90899999999965)), 540.3960283713503, AdministrativeClass.State, TrafficDirection.AgainstDigitizing, Some("25.06.2015 03:00:00"), Some("vvh_modified"), InUse, NormalLinkInterface, 749, "")
+    val roadLink = RoadLink(5175306.toString, Seq(Point(535602.222, 6982200.25, 89.9999), Point(535605.272, 6982204.22, 85.90899999999965)), 540.3960283713503, AdministrativeClass.State, TrafficDirection.AgainstDigitizing, Some("25.06.2015 03:00:00"), Some("vvh_modified"), LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, 749, "")
     when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[String]])).thenReturn(Seq())
     when(mockRoadLinkService.getRoadLinksByLinkIds(Set(5175306L.toString))).thenReturn(Seq(roadLink))
     runWithRollback {
@@ -646,12 +641,12 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
         }.values.toSeq
       val start = links.find(_.linkId == 123L.toString)
       start.isEmpty should be(false)
-      start.get.sideCode should be(AgainstDigitizing)
+      start.get.sideCode should be(SideCode.AgainstDigitizing)
       start.get.startAddressM should be(0L)
       start.get.endAddressM should be(9L)
       val end = links.find(_.linkId == 122L.toString)
       end.isEmpty should be(false)
-      end.get.sideCode should be(TowardsDigitizing)
+      end.get.sideCode should be(SideCode.TowardsDigitizing)
       end.get.startAddressM should be(19L)
       end.get.endAddressM should be(28L)
       end.get.discontinuity should be(Discontinuity.EndOfRoad.value)

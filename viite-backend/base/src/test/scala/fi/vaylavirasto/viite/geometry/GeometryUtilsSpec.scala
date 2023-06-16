@@ -1,4 +1,4 @@
-package fi.liikennevirasto.digiroad2
+package fi.vaylavirasto.viite.geometry
 
 import org.scalatest._
 

@@ -1,9 +1,8 @@
 package fi.liikennevirasto.digiroad2.util
 
-import java.io.File
-
 import fi.liikennevirasto.digiroad2.client.kgv.ChangeInfo
-import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.vaylavirasto.viite.model.RoadLink
+import java.io.File
 
 /**
   * Created by venholat on 2.6.2016.

@@ -1,17 +1,15 @@
 package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.DigiroadEventBus
-import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.digiroad2.client.kgv.{KgvRoadLink, KgvRoadLinkClient}
-import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.Dummies._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.ProjectState.UpdatingToRoadNetwork
 import fi.liikennevirasto.viite.dao.TerminationCode._
+import fi.vaylavirasto.viite.model.{AdministrativeClass, RoadLink, Track}
 import org.joda.time.DateTime
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import org.scalatest.mock.MockitoSugar

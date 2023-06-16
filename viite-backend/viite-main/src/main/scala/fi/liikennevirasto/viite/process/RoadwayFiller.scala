@@ -1,12 +1,10 @@
 package fi.liikennevirasto.viite.process
 
-
-import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.digiroad2.dao.Sequences
-import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, Track}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 

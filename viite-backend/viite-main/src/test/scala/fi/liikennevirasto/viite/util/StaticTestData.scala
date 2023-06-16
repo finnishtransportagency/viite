@@ -1,12 +1,10 @@
 package fi.liikennevirasto.viite.util
 
 import java.io.{File, FileReader}
-
-import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.kgv._
-import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.util.KGVSerializer
+import fi.vaylavirasto.viite.geometry.Point
+import fi.vaylavirasto.viite.model.{AdministrativeClass, LifecycleStatus, LinkGeomSource, LinkType, RoadLink, RoadLinkLike, SideCode, TrafficDirection}
 import org.json4s.{CustomSerializer, DefaultFormats, Formats}
 import org.json4s.JsonAST.{JInt, JString}
 import org.json4s.jackson.Serialization.read

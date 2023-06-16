@@ -1,10 +1,9 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
-import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLinkLike}
+import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, LifecycleStatus, RoadLinkLike, SideCode}
 
 object ProjectAddressLinkBuilder extends AddressLinkBuilder {
 
@@ -22,7 +21,7 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
 
     val calibrationPoints = pl.calibrationPoints
 
-    ProjectAddressLink(pl.id, pl.linkId, pl.geometry, pl.geometryLength, fi.liikennevirasto.digiroad2.asset.AdministrativeClass.Unknown, LifecycleStatus.UnknownLifecycleStatus, pl.linkGeomSource, pl.administrativeClass, pl.roadName, 0L, "", None, Some("vvh_modified"), pl.roadNumber, pl.roadPartNumber, pl.track.value, pl.ely, pl.discontinuity.value, pl.startAddrMValue, pl.endAddrMValue, pl.startMValue, pl.endMValue, pl.sideCode, calibrationPoints._1, calibrationPoints._2, pl.status, pl.roadwayId, pl.linearLocationId, pl.reversed, pl.connectedLinkId, originalGeometry, sourceId = "", roadAddressRoadNumber = pl.roadAddressRoadNumber, roadAddressRoadPart = pl.roadAddressRoadPart)
+    ProjectAddressLink(pl.id, pl.linkId, pl.geometry, pl.geometryLength, AdministrativeClass.Unknown, LifecycleStatus.UnknownLifecycleStatus, pl.linkGeomSource, pl.administrativeClass, pl.roadName, 0L, "", None, Some("vvh_modified"), pl.roadNumber, pl.roadPartNumber, pl.track.value, pl.ely, pl.discontinuity.value, pl.startAddrMValue, pl.endAddrMValue, pl.startMValue, pl.endMValue, pl.sideCode, calibrationPoints._1, calibrationPoints._2, pl.status, pl.roadwayId, pl.linearLocationId, pl.reversed, pl.connectedLinkId, originalGeometry, sourceId = "", roadAddressRoadNumber = pl.roadAddressRoadNumber, roadAddressRoadPart = pl.roadAddressRoadPart)
   }
 
   @Deprecated

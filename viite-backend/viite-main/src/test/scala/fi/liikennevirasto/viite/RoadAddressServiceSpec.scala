@@ -1,21 +1,17 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
-import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.asset.LifecycleStatus.UnknownLifecycleStatus
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
-import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
+import fi.liikennevirasto.digiroad2.DigiroadEventBus
 import fi.liikennevirasto.digiroad2.client.kgv._
 import fi.liikennevirasto.digiroad2.dao.Sequences
-import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.Dummies._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
+import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, LifecycleStatus, LinkGeomSource, RoadLink, SideCode, Track, TrafficDirection}
 import org.joda.time.DateTime
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
@@ -113,10 +109,10 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   private def extractTrafficDirection(sideCode: SideCode, track: Track): TrafficDirection = {
     (sideCode, track) match {
       case (_, Track.Combined) => TrafficDirection.BothDirections
-      case (TowardsDigitizing, Track.RightSide) => TrafficDirection.TowardsDigitizing
-      case (TowardsDigitizing, Track.LeftSide) => TrafficDirection.AgainstDigitizing
-      case (AgainstDigitizing, Track.RightSide) => TrafficDirection.AgainstDigitizing
-      case (AgainstDigitizing, Track.LeftSide) => TrafficDirection.TowardsDigitizing
+      case (SideCode.TowardsDigitizing, Track.RightSide) => TrafficDirection.TowardsDigitizing
+      case (SideCode.TowardsDigitizing, Track.LeftSide) => TrafficDirection.AgainstDigitizing
+      case (SideCode.AgainstDigitizing, Track.RightSide) => TrafficDirection.AgainstDigitizing
+      case (SideCode.AgainstDigitizing, Track.LeftSide) => TrafficDirection.TowardsDigitizing
       case (_, _) => TrafficDirection.UnknownDirection
     }
   }
@@ -143,8 +139,8 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     )
 
     val roadLinks = Seq(
-      dummyRoadLink(linkId = 123L.toString, Seq(0.0, 10.0, 20.0), NormalLinkInterface),
-      dummyRoadLink(linkId = 124L.toString, Seq(0.0, 10.0), NormalLinkInterface)
+      dummyRoadLink(linkId = 123L.toString, Seq(0.0, 10.0, 20.0), LinkGeomSource.NormalLinkInterface),
+      dummyRoadLink(linkId = 124L.toString, Seq(0.0, 10.0), LinkGeomSource.NormalLinkInterface)
     )
 
     when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int,Int)]])).thenReturn(linearLocations)
@@ -183,8 +179,8 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     )
 
     val roadLinks = Seq(
-      dummyRoadLink(linkId = 123L.toString, Seq(0.0, 10.0, 20.0), NormalLinkInterface),
-      dummyRoadLink(linkId = 124L.toString, Seq(0.0, 10.0), NormalLinkInterface)
+      dummyRoadLink(linkId = 123L.toString, Seq(0.0, 10.0, 20.0), LinkGeomSource.NormalLinkInterface),
+      dummyRoadLink(linkId = 124L.toString, Seq(0.0, 10.0), LinkGeomSource.NormalLinkInterface)
     )
 
     when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int,Int)]])).thenReturn(linearLocations)
@@ -423,7 +419,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     when(mockLinearLocationDAO.fetchByRoadAddress(any[Long],any[Long],any[Long], any[Option[Long]])).thenReturn(towardsDigitizingLinearLocation)
 
     val towardsDigitizingRoadLink = Seq(
-      RoadLink(linkId, Seq(Point(0.0, 10.0), Point(0.0, 15.0)), 10.0, AdministrativeClass.Municipality, TrafficDirection.TowardsDigitizing, None, None, UnknownLifecycleStatus, NormalLinkInterface, 235, "")
+      RoadLink(linkId, Seq(Point(0.0, 10.0), Point(0.0, 15.0)), 10.0, AdministrativeClass.Municipality, TrafficDirection.TowardsDigitizing, None, None, LifecycleStatus.UnknownLifecycleStatus, LinkGeomSource.NormalLinkInterface, 235, "")
     )
 
 

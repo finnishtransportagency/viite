@@ -1,13 +1,10 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.GeometryUtils
-import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
-import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
 import fi.liikennevirasto.viite.dao.{Discontinuity, LinkStatus, ProjectLink}
 import fi.liikennevirasto.viite.process.strategy.{LinkStatusChangeTrackCalculatorStrategy, TrackCalculatorContext, TrackCalculatorResult}
+import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, LinkGeomSource, SideCode, Track}
 import org.scalatest.{FunSuite, Matchers}
 
 class TrackCalculatorStrategySpec extends FunSuite with Matchers {

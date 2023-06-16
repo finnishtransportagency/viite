@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.client.kgv
 
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource}
+import fi.vaylavirasto.viite.geometry.BoundingRectangle
+import fi.vaylavirasto.viite.model.LinkGeomSource
 import org.json4s.{DefaultFormats, Formats}
 import org.slf4j.LoggerFactory
 

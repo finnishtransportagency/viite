@@ -1,14 +1,13 @@
 package fi.liikennevirasto.viite.util
 
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
+import fi.vaylavirasto.viite.geometry.Point
+import fi.vaylavirasto.viite.model.{SideCode, Track, TrafficDirection}
 import org.mockito.Mockito.reset
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import org.scalatest.mockito.MockitoSugar
@@ -164,10 +163,10 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
   private def extractTrafficDirection(sideCode: SideCode, track: Track): TrafficDirection = {
     (sideCode, track) match {
       case (_, Track.Combined) => TrafficDirection.BothDirections
-      case (TowardsDigitizing, Track.RightSide) => TrafficDirection.TowardsDigitizing
-      case (TowardsDigitizing, Track.LeftSide) => TrafficDirection.AgainstDigitizing
-      case (AgainstDigitizing, Track.RightSide) => TrafficDirection.AgainstDigitizing
-      case (AgainstDigitizing, Track.LeftSide) => TrafficDirection.TowardsDigitizing
+      case (SideCode.TowardsDigitizing, Track.RightSide) => TrafficDirection.TowardsDigitizing
+      case (SideCode.TowardsDigitizing, Track.LeftSide ) => TrafficDirection.AgainstDigitizing
+      case (SideCode.AgainstDigitizing, Track.RightSide) => TrafficDirection.AgainstDigitizing
+      case (SideCode.AgainstDigitizing, Track.LeftSide ) => TrafficDirection.TowardsDigitizing
       case (_, _) => TrafficDirection.UnknownDirection
     }
   }
