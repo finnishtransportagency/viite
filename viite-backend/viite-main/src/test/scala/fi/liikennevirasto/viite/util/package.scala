@@ -3,7 +3,7 @@ package fi.liikennevirasto.viite
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink, RoadAddressLinkLike}
-import fi.vaylavirasto.viite.dao.Sequences
+import fi.vaylavirasto.viite.dao.{ProjectLinkNameDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.CalibrationPointType.NoCP
 import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LinkGeomSource, RoadAddressChangeType, SideCode, Track}

@@ -9,7 +9,7 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.util._
-import fi.vaylavirasto.viite.dao.Sequences
+import fi.vaylavirasto.viite.dao.{Link, LinkDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.CalibrationPointType.{JunctionPointCP, NoCP, RoadAddressCP, UserDefinedCP}
 import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LinkGeomSource, RoadAddressChangeType, SideCode, Track}

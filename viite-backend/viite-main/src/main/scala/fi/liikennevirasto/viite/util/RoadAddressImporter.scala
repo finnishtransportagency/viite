@@ -9,7 +9,7 @@ import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.{CalibrationCode, RoadwayPoint, TerminationCode, _}
 import fi.liikennevirasto.viite.dao.CalibrationCode.{AtBeginning, AtBoth, AtEnd}
 import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent, Termination}
-import fi.vaylavirasto.viite.dao.Sequences
+import fi.vaylavirasto.viite.dao.{LinkDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.GeometryUtils
 import fi.vaylavirasto.viite.model.{CalibrationPoint, CalibrationPointLocation, CalibrationPointType, LinkGeomSource, RoadLinkLike, SideCode}
 import org.joda.time._

@@ -12,8 +12,9 @@ import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model._
 import fi.liikennevirasto.viite.util.DigiroadSerializers
+import fi.vaylavirasto.viite.dao.{RoadName, RoadNameForRoadAddressBrowser}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, BeforeAfter, Discontinuity, LinkGeomSource, RoadAddressChangeType, NodePointType, NodeType, Track}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, BeforeAfter, Discontinuity, LinkGeomSource, NodePointType, NodeType, RoadAddressChangeType, Track}
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.json4s._

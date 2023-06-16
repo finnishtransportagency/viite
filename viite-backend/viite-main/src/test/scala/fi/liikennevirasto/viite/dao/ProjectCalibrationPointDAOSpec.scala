@@ -4,7 +4,7 @@ import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.DigiroadEventBus
-import fi.liikennevirasto.viite
+import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.{RoadAddressMerge, RoadAddressService}
 import fi.vaylavirasto.viite.dao.Sequences
@@ -50,7 +50,7 @@ class ProjectCalibrationPointDAOSpec extends FunSuite with Matchers {
       addTestProjects()
       addProjectRoads()
       ProjectCalibrationPointDAO.createCalibrationPoint(1, 1, 0.0, 15)
-      ProjectCalibrationPointDAO.createCalibrationPoint(UserDefinedCalibrationPoint(viite.NewIdValue, 2, 2, 1.1, 20))
+      ProjectCalibrationPointDAO.createCalibrationPoint(UserDefinedCalibrationPoint(NewIdValue, 2, 2, 1.1, 20))
       val calibrationPointsAmmount = sql""" Select count(*) from PROJECT_CALIBRATION_POINT""".as[Long].first
       calibrationPointsAmmount should be (2)
     }
@@ -64,7 +64,7 @@ class ProjectCalibrationPointDAOSpec extends FunSuite with Matchers {
       ProjectCalibrationPointDAO.createCalibrationPoint(1, 1, 14.0, 25)
       val calibrationPoints = ProjectCalibrationPointDAO.findCalibrationPointByRemainingValues(1, 1, 0.05, 0.075)
       calibrationPoints.size should be (1)
-      calibrationPoints.head.id != viite.NewIdValue should be (true)
+      calibrationPoints.head.id != NewIdValue should be (true)
       calibrationPoints.head.projectId should be (1)
       val roadCalibrationPoints = ProjectCalibrationPointDAO.findCalibrationPointsOfRoad(1,1)
       roadCalibrationPoints.size should be (2)
