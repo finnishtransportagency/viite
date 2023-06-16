@@ -25,7 +25,7 @@
         function createResultTable(results) {
             const arr = [];
             let arrPointer = -1;
-            arr[++arrPointer] = `<table id="roadAddressChangesBrowserTable" class="road-address-browser-window-results-table">
+            arr[++arrPointer] = `<table id="roadAddressChangesBrowserTable" class="road-address-browser-window-results-table viite-table">
                                     <thead>
                                         <tr>
                                             <th>Voimaantulopvm</th>
@@ -107,7 +107,7 @@
         }
 
         function toggle() {
-            $('.container').append('<div class="road-address-browser-modal-overlay confirm-modal"><div class="road-address-browser-modal-window"></div></div>');
+            $('.container').append('<div class="road-address-browser-modal-overlay viite-modal-overlay confirm-modal"><div class="road-address-browser-modal-window"></div></div>');
             $('.road-address-browser-modal-window').append(roadAddressChangesBrowserWindow.toggle());
             bindEvents();
         }
