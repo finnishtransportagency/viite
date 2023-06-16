@@ -1,4 +1,4 @@
-package fi.liikennevirasto.viite.dao
+package fi.vaylavirasto.viite.dao
 
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
