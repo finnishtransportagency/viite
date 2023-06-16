@@ -23,6 +23,7 @@ case class MissingCalibrationPointFromJunction(missingCalibrationPoint: MissingC
 case class MissingRoadwayPoint(roadNumber: Long, roadPartNumber: Long, track: Long, addrM: Long, createdTime: DateTime, createdBy: String)
 case class InvalidRoadwayLength(roadwayNumber: Long, startDate: DateTime, endDate: Option[DateTime], roadNumber: Long, roadPartNumber: Long, track: Long, startAddrM: Long, endAddrM: Long, length: Long, createdBy: String, createdTime: DateTime)
 
+//TODO better naming case class
 case class OverlappingRoadwayOnLinearLocation(roadway: Roadway, linearLocationId: Long, linkId: String, linearLocationRoadwayNumber: Long, linearLocationStartMeasure: Long, linearLocationEndMeasure: Long, linearLocationCreatedBy: String, linearLocationCreatedTime: DateTime)
 
 class RoadNetworkDAO extends BaseDAO {
@@ -410,6 +411,8 @@ class RoadNetworkDAO extends BaseDAO {
        |   (SELECT rn.road_name FROM road_name rn WHERE rn.road_number = r.road_number AND rn.end_date IS NULL AND rn.valid_to IS NULL) AS road_name,
        |    l.id AS linearLocationId, l.link_id, l.roadway_number, l.start_measure, l.end_measure, l.created_by, l.created_time""".stripMargin
 
+
+  //TODO better naming for this query and case class
   def fetchOverlappingRoadwaysOnLinearLocations(): Seq[OverlappingRoadwayOnLinearLocation] = {
     val query =
       s"""WITH selectedRoadways
@@ -443,6 +446,7 @@ class RoadNetworkDAO extends BaseDAO {
     Q.queryNA[OverlappingRoadwayOnLinearLocation](query).iterator.toSeq
   }
 
+  //TODO better naming for this query and case class
   def fetchOverlappingRoadwaysOnLinearLocations(roadNumber: Long, roadPartNumber: Long): Seq[OverlappingRoadwayOnLinearLocation] = {
     val query =
       s"""
