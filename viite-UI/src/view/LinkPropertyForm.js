@@ -1,5 +1,5 @@
 (function (root) {
-  root.LinkPropertyForm = function (selectedLinkProperty, roadNamingTool, projectListModel, roadAddressBrowser, roadAddressChangesBrowser, startupParameters) {
+  root.LinkPropertyForm = function (selectedLinkProperty, roadNamingTool, projectListModel, roadAddressBrowser, roadAddressChangesBrowser, startupParameters, roadNetworkErrorsList) {
     var selectionType = ViiteEnumerations.SelectionType;
     var decodedAttributes = [
       {
@@ -276,20 +276,36 @@
       var nodesAndJunctionsButton = '<button id="formNodesAndJunctionsButton" class="open-tool-mode-btn btn btn-block btn-primary" style="margin-top: 5px;">Solmut ja liittymät</button>';
       var roadAddressBrowserButton = '<button id="formRoadAddressBrowserButton" class="open-tool-mode-btn btn btn-block btn-primary" style="margin-top: 5px;">Tieosoitteiden katselu</button>';
       var roadAddressChangesBrowserButton = '<button id="formRoadAddressChangesBrowserButton" class="open-tool-mode-btn btn btn-block btn-primary" style="margin-top: 5px;">Tieosoitemuutosten katselu</button>';
+      var roadNetworkErrorsListButton = '<button id="formRoadNetworkErrorsListButton" class="open-tool-mode-btn btn btn-block btn-primary" style="margin-top: 5px;">Tieosoiteverkon virheet</button>';
 
-      var toolButtonsDiv =
+      var toolButtonsDivForViewMode =
           $('<div class="form-initial-state" id="emptyFormDiv">' +
               nodesAndJunctionsButton +
               roadAddressBrowserButton +
               roadAddressChangesBrowserButton +
           '</div>');
 
+      var toolButtonsDivForWriteMode =
+          $('<div class="form-initial-state" style>' +
+              projectModeButton +
+              roadNameToolButton +
+              '</div>');
+
+      var roadNetworkErrorsToolDiv = $('<div class="form-initial-state" style>' +
+          roadNetworkErrorsListButton +
+          '</div>');
+
       // add buttons for the view mode tools
-      rootElement.append(toolButtonsDiv);
+      rootElement.append(toolButtonsDivForViewMode);
 
       // if the user has "viite" role then add the buttons for project mode and road name tool
       if (_.includes(startupParameters.roles, 'viite'))
-        toolButtonsDiv.prepend(projectModeButton + roadNameToolButton);
+        rootElement.prepend(toolButtonsDivForWriteMode);
+
+      // if the user has "operator" role then add the button for road network error tool
+      if (_.includes(startupParameters.roles, 'operator'))
+        rootElement.append(roadNetworkErrorsToolDiv);
+
 
       $('[id=formProjectButton]').click(function () {
         if (applicationModel.isProjectOpen()) {
@@ -317,6 +333,11 @@
 
       $('[id=formRoadAddressChangesBrowserButton]').click(function () {
         roadAddressChangesBrowser.toggle();
+        return false;
+      });
+
+      $('[id=formRoadNetworkErrorsListButton]').click(function () {
+        roadNetworkErrorsList.showRoadNetworkErrorsListWindow();
         return false;
       });
     };

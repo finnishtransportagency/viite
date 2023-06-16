@@ -108,7 +108,7 @@ class ProjectService(
 
   private val logger = LoggerFactory.getLogger(getClass)
   val projectValidator = new ProjectValidator
-  val allowedSideCodes = List(SideCode.TowardsDigitizing, SideCode.AgainstDigitizing)
+  val roadNetworkValidator = new RoadNetworkValidator
   val roadAddressLinkBuilder = new RoadAddressLinkBuilder(roadwayDAO, linearLocationDAO)
 
   val roadNetworkDAO = new RoadNetworkDAO
@@ -1986,22 +1986,20 @@ class ProjectService(
   private def preserveProjectToDB(projectID: Long): Unit = {
     projectDAO.fetchTRIdByProjectId(projectID) match {
       case Some(trId) =>
-        val roadNumbers: Option[Set[Long]] = projectDAO.fetchProjectStatus(projectID).map { currentState =>
+        val currentState = projectDAO.fetchProjectStatus(projectID)
           logger.info(s"Current status is $currentState")
-          if (currentState == UpdatingToRoadNetwork) {
+          if (currentState.isDefined && currentState.get == UpdatingToRoadNetwork) {
             logger.info(s"Start importing road addresses of project $projectID to the road network")
             try {
-              updateRoadwaysAndLinearLocationsWithProjectLinks(projectID)
+              val roadParts = updateRoadwaysAndLinearLocationsWithProjectLinks(projectID)
+              roadNetworkValidator.validateRoadNetwork(roadParts)
             } catch {
-              case t: InvalidAddressDataException => {
-                throw t  // Rethrow the unexpected error.
-              }
+              case t: InvalidAddressDataException =>
+                throw t // Rethrow the unexpected error.
+              case t: RoadNetworkValidationException =>
+                throw t // Rethrow the unexpected error.
             }
           } else Set.empty[Long]
-        }
-        if (roadNumbers.isEmpty || roadNumbers.get.isEmpty) {
-          logger.error(s"No road numbers available in project $projectID")
-        }
       case None =>
         logger.info(s"During status checking VIITE wasn't able to find TR_ID to project $projectID")
         appendStatusInfo(fetchProjectById(projectID).head, " Failed to find TR-ID ")
@@ -2068,7 +2066,7 @@ class ProjectService(
     * @throws InvalidAddressDataException when there are no links to process.
     * @throws re-throws explicitly ProjectValidationException, SQLException, Exception
     */
-  def updateRoadwaysAndLinearLocationsWithProjectLinks(projectID: Long): Set[Long] = {
+  def updateRoadwaysAndLinearLocationsWithProjectLinks(projectID: Long): Seq[RoadPart] = {
     def handleRoadPrimaryTables(currentRoadways: Map[Long, Roadway], historyRoadways: Map[Long, Roadway], roadwaysToInsert: Iterable[Roadway], historyRoadwaysToKeep: Seq[Long], linearLocationsToInsert: Iterable[LinearLocation], project: Project): Seq[Long] = {
       logger.debug(s"Creating history rows based on operation")
       linearLocationDAO.expireByRoadwayNumbers((currentRoadways ++ historyRoadways).map(_._2.roadwayNumber).toSet)
@@ -2197,7 +2195,9 @@ class ProjectService(
         Some(project.startDate.minusDays(1)), nodeIds, project.createdBy)
 
       nodesAndJunctionsService.publishNodes(nodeIds, project.createdBy)
-      projectLinks.map(_.roadNumber).toSet
+      val oldRoadParts = projectLinks.map(pl => RoadPart (pl.originalRoadNumber, pl.originalRoadPartNumber))
+      val newRoadParts = projectLinks.map(pl => RoadPart(pl.roadNumber, pl.roadPartNumber))
+      (oldRoadParts ++ newRoadParts).distinct
     } catch {
       case e: ProjectValidationException =>
         logger.error("Failed to validate project message:" + e.getMessage)

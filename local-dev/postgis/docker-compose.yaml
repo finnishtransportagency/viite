@@ -2,6 +2,7 @@ version: "3.3"
 services:
   postgres:
     image: postgis/postgis:latest
+    shm_size: 200m
     container_name: 'postgis-viite'
     environment:
       POSTGRES_USER: viite
