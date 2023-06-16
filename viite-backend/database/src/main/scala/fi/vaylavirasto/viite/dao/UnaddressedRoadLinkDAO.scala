@@ -1,4 +1,4 @@
-package fi.liikennevirasto.viite.dao
+package fi.vaylavirasto.viite.dao
 
 import fi.vaylavirasto.viite.geometry.Point
 import fi.vaylavirasto.viite.model.AdministrativeClass
