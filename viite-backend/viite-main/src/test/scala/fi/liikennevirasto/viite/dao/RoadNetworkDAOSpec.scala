@@ -94,7 +94,7 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  //TODO better for this test (when the case class and query gets better name)
+  //TODO better name for this test (when the case class and query gets better name)
   test("Test When there are overlapping roadways on linear locations Then identify them") {
     runWithRollback {
       val roadNumber = 10
