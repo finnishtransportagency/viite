@@ -4,9 +4,8 @@ import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.liikennevirasto.digiroad2.util.Track
+import fi.vaylavirasto.viite.model.{AdministrativeClass, Track}
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 
