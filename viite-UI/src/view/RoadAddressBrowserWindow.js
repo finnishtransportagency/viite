@@ -46,7 +46,7 @@
         function createResultTableForTracks(results) {
             const arr = [];
             let arrPointer = -1;
-            arr[++arrPointer] = `<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table">
+            arr[++arrPointer] = `<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table viite-table">
                                     <thead>
                                         <tr>
                                             <th>Ely</th>
@@ -104,7 +104,7 @@
         function createResultTableForRoadParts(results) {
             const arr = [];
             let arrPointer = -1;
-            arr[++arrPointer] = `<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table">
+            arr[++arrPointer] = `<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table viite-table">
                                     <thead>
                                         <tr>
                                             <th>Ely</th>
@@ -161,7 +161,7 @@
         function createResultTableForNodes(results) {
             const arr = [];
             let arrPointer = -1;
-            arr[++arrPointer] =`<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table">
+            arr[++arrPointer] =`<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table viite-table">
                                     <thead>
                                         <tr>
                                             <th>Ely</th>
@@ -227,7 +227,7 @@
         function createResultTableForJunctions(results) {
             const arr = [];
             let arrPointer = -1;
-            arr[++arrPointer] =`<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table">
+            arr[++arrPointer] =`<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table viite-table">
                                     <thead>
                                         <tr>
                                             <th>Solmu-numero</th>
@@ -288,7 +288,7 @@
         function createResultTableForRoadNames(results) {
             const arr = [];
             let arrPointer = -1;
-            arr[++arrPointer] = `<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table">
+            arr[++arrPointer] = `<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table viite-table">
                                     <thead>
                                         <tr>
                                             <th>Ely</th>
@@ -311,7 +311,7 @@
         }
 
         function toggle() {
-            $('.container').append('<div class="road-address-browser-modal-overlay confirm-modal"><div class="road-address-browser-modal-window"></div></div>');
+            $('.container').append('<div class="road-address-browser-modal-overlay viite-modal-overlay confirm-modal"><div class="road-address-browser-modal-window"></div></div>');
             $('.road-address-browser-modal-window').append(roadAddrBrowserWindow.toggle());
             bindEvents();
         }
