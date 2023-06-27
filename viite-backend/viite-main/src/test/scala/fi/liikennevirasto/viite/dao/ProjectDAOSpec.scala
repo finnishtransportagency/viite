@@ -103,56 +103,6 @@ class ProjectDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  /** @deprecated Tierekisteri connection has been removed from Viite. TRId to be removed, too. */
-  test("Test fetchTRIdByProjectId When the project has Tierekisteri identifier Then should return Tierekisteri identifier") {
-    runWithRollback {
-      val projectId = Sequences.nextViiteProjectId
-      val project =  dummyProject(projectId, ProjectState.Incomplete, List(), None)
-      projectDAO.create(project)
-
-      val trId = Sequences.nextViiteProjectId
-      sqlu"""update project set tr_id = $trId where id = $projectId""".execute
-
-      val assignedTrId = projectDAO.fetchTRIdByProjectId(projectId)
-
-      assignedTrId should be (Some(trId))
-    }
-  }
-
-  /** @deprecated Tierekisteri connection has been removed from Viite. TRId to be removed, too. */
-  test("Test assignNewProjectTRId When the project has Tierekisteri identifier Then should assign a new Tierekisteri identifier to the project") {
-    runWithRollback {
-      val projectId = Sequences.nextViiteProjectId
-      val project =  dummyProject(projectId, ProjectState.Incomplete, List(), None)
-      projectDAO.create(project)
-
-      val oldTrId = projectDAO.fetchTRIdByProjectId(projectId)
-
-      projectDAO.assignNewProjectTRId(projectId)
-
-      val newTrId = projectDAO.fetchTRIdByProjectId(projectId)
-
-      oldTrId should not be newTrId
-    }
-  }
-
-  /** @deprecated Tierekisteri connection has been removed from Viite. TRId to be removed, too. */
-  test("Test removeProjectTRId When the project has Tierekisteri identifier Then should be removed") {
-    runWithRollback {
-      val projectId = Sequences.nextViiteProjectId
-      val project =  dummyProject(projectId, ProjectState.Incomplete, List(), None)
-      projectDAO.create(project)
-
-      projectDAO.assignNewProjectTRId(projectId)
-
-      projectDAO.removeProjectTRId(projectId)
-
-      val trId = projectDAO.fetchTRIdByProjectId(projectId)
-
-      trId should be (None)
-    }
-  }
-
   test("Test updateProjectStateInfo When project info is updated Then project info should change") {
     runWithRollback {
       val id = Sequences.nextViiteProjectId

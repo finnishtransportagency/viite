@@ -850,30 +850,21 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
       // create roadway changes that will be handed to the handleRoadwayPointsUpdate function
       val roadwayChanges = List(
-        ProjectRoadwayChange(
-          projectId, Some(projectName), ely, user, DateTime.now(),
-          RoadwayChangeInfo(
-            AddressChangeType.New,
-            RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14L)),
-            RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(0), Some(5), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14)),
-            Discontinuity.Continuous, AdministrativeClass.State, false, 4481L, 14),
-          date, Some(1049600)),
-        ProjectRoadwayChange(
-          projectId, Some(projectName), ely, user, DateTime.now(),
-          RoadwayChangeInfo(
-            AddressChangeType.Transfer,
-            RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(0), Some(10), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14)),
-            RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(5), Some(15), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
-            Discontinuity.EndOfRoad, AdministrativeClass.State, false, 4481L, 14),
-          date, Some(1049600)),
-        ProjectRoadwayChange(
-          projectId, Some(projectName), ely, user, DateTime.now(),
-          RoadwayChangeInfo(
-            AddressChangeType.Transfer,
-            RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(10), Some(20), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
-            RoadwayChangeSection(Some(19527), Some(0), Some(1), Some(1), Some(0), Some(10), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
-            Discontinuity.EndOfRoad, AdministrativeClass.State, false, 4481L, 14),
-          date, Some(1049600))
+        ProjectRoadwayChange(projectId, Some(projectName), ely, user, DateTime.now(), RoadwayChangeInfo(
+          AddressChangeType.New,
+          RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14L)),
+          RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(0), Some(5), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14)),
+          Discontinuity.Continuous, AdministrativeClass.State, false, 4481L, 14), date),
+        ProjectRoadwayChange(projectId, Some(projectName), ely, user, DateTime.now(), RoadwayChangeInfo(
+          AddressChangeType.Transfer,
+          RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(0), Some(10), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14)),
+          RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(5), Some(15), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
+          Discontinuity.EndOfRoad, AdministrativeClass.State, false, 4481L, 14), date),
+        ProjectRoadwayChange(projectId, Some(projectName), ely, user, DateTime.now(), RoadwayChangeInfo(
+          AddressChangeType.Transfer,
+          RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(10), Some(20), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
+          RoadwayChangeSection(Some(19527), Some(0), Some(1), Some(1), Some(0), Some(10), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
+          Discontinuity.EndOfRoad, AdministrativeClass.State, false, 4481L, 14), date)
       )
 
       when(mockRoadwayDAO.fetchAllBySectionAndTracks(19510, 1, Set(Track.Combined))).thenReturn(newRoadwaysFor19510)
@@ -968,38 +959,26 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
       // create roadway changes that will be handed to the handleRoadwayPointsUpdate function
       val roadwayChanges = List(
-        ProjectRoadwayChange(
-          projectId, Some(projectName), ely, user, DateTime.now(),
-          RoadwayChangeInfo(
-            AddressChangeType.Unchanged,
-            RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(0), Some(5), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14)),
-            RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(0), Some(5), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14)),
-            Discontinuity.EndOfRoad, AdministrativeClass.State, false, 4481L, 14),
-          date, Some(1049600)),
-        ProjectRoadwayChange(
-          projectId, Some(projectName), ely, user, DateTime.now(),
-          RoadwayChangeInfo(
-            AddressChangeType.Unchanged,
-            RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(5), Some(10), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14)),
-            RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(5), Some(10), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
-            Discontinuity.EndOfRoad, AdministrativeClass.State, false, 4481L, 14),
-          date, Some(1049600)),
-        ProjectRoadwayChange(
-          projectId, Some(projectName), ely, user, DateTime.now(),
-          RoadwayChangeInfo(
-            AddressChangeType.Transfer,
-            RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(10), Some(13), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
-            RoadwayChangeSection(Some(19527), Some(0), Some(1), Some(1), Some(0), Some(3), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14)),
-            Discontinuity.Continuous, AdministrativeClass.State, false, 4481L, 14),
-          date, Some(1049600)),
-        ProjectRoadwayChange(
-          projectId, Some(projectName), ely, user, DateTime.now(),
-          RoadwayChangeInfo(
-            AddressChangeType.Transfer,
-            RoadwayChangeSection(Some(19527), Some(0), Some(1), Some(1), Some(0), Some(10), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
-            RoadwayChangeSection(Some(19527), Some(0), Some(1), Some(1), Some(3), Some(13), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
-            Discontinuity.EndOfRoad, AdministrativeClass.State, false, 4481L, 14),
-          date, Some(1049600))
+        ProjectRoadwayChange(projectId, Some(projectName), ely, user, DateTime.now(), RoadwayChangeInfo(
+          AddressChangeType.Unchanged,
+          RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(0), Some(5), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14)),
+          RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(0), Some(5), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14)),
+          Discontinuity.EndOfRoad, AdministrativeClass.State, false, 4481L, 14), date),
+        ProjectRoadwayChange(projectId, Some(projectName), ely, user, DateTime.now(), RoadwayChangeInfo(
+          AddressChangeType.Unchanged,
+          RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(5), Some(10), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14)),
+          RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(5), Some(10), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
+          Discontinuity.EndOfRoad, AdministrativeClass.State, false, 4481L, 14), date),
+        ProjectRoadwayChange(projectId, Some(projectName), ely, user, DateTime.now(), RoadwayChangeInfo(
+          AddressChangeType.Transfer,
+          RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(10), Some(13), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
+          RoadwayChangeSection(Some(19527), Some(0), Some(1), Some(1), Some(0), Some(3), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14)),
+          Discontinuity.Continuous, AdministrativeClass.State, false, 4481L, 14), date),
+        ProjectRoadwayChange(projectId, Some(projectName), ely, user, DateTime.now(), RoadwayChangeInfo(
+          AddressChangeType.Transfer,
+          RoadwayChangeSection(Some(19527), Some(0), Some(1), Some(1), Some(0), Some(10), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
+          RoadwayChangeSection(Some(19527), Some(0), Some(1), Some(1), Some(3), Some(13), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
+          Discontinuity.EndOfRoad, AdministrativeClass.State, false, 4481L, 14), date)
       )
 
       when(mockRoadwayDAO.fetchAllBySectionAndTracks(19510, 1, Set(Track.Combined))).thenReturn(newRoadwaysFor19510)

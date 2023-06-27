@@ -56,8 +56,7 @@ case class RoadwayChangeSectionTR(roadNumber: Option[Long], trackCode: Option[Lo
 case class RoadwayChangeInfo(changeType: AddressChangeType, source: RoadwayChangeSection, target: RoadwayChangeSection,
                              discontinuity: Discontinuity, administrativeClass: AdministrativeClass, reversed: Boolean, orderInChangeTable: Long, ely: Long = -1L)
 
-case class ProjectRoadwayChange(projectId: Long, projectName: Option[String], ely: Long, user: String, changeDate: DateTime,
-                                changeInfo: RoadwayChangeInfo, projectStartDate: DateTime, rotatingTRId: Option[Long])
+case class ProjectRoadwayChange(projectId: Long, projectName: Option[String], ely: Long, user: String, changeDate: DateTime, changeInfo: RoadwayChangeInfo, projectStartDate: DateTime)
 
 case class ChangeRow(projectId: Long, projectName: Option[String], createdBy: String, createdDate: Option[DateTime], startDate: Option[DateTime],
                      modifiedBy: String, modifiedDate: Option[DateTime], targetEly: Long, changeType: Int, sourceRoadNumber: Option[Long],
@@ -66,7 +65,7 @@ case class ChangeRow(projectId: Long, projectName: Option[String], createdBy: St
                      targetTrackCode: Option[Long], targetStartRoadPartNumber: Option[Long], targetEndRoadPartNumber: Option[Long],
                      targetStartAddressM: Option[Long], targetEndAddressM: Option[Long], targetDiscontinuity: Option[Int],
                      targetAdministrativeClass: Option[Int], sourceAdministrativeClass: Option[Int], sourceDiscontinuity: Option[Int],
-                     sourceEly: Option[Long], rotatingTRId: Option[Long], reversed: Boolean, orderInTable: Long)
+                     sourceEly: Option[Long], reversed: Boolean, orderInTable: Long)
 
 case class ChangeTableRows(adjustedSections: Iterable[((RoadwaySection, RoadwaySection), Option[String])], originalSections: Iterable[(RoadwaySection, RoadwaySection)])
 
@@ -126,7 +125,6 @@ class RoadwayChangesDAO {
       val sourceAdministrativeClass= r.nextIntOption
       val sourceDiscontinuity = r.nextIntOption
       val sourceEly = r.nextLongOption
-      val rotatingTRIdr = r.nextLongOption
       val reversed = r.nextBoolean
       val orderInTable = r.nextLong
 
@@ -137,7 +135,7 @@ class RoadwayChangesDAO {
         targetTrackCode: Option[Long], targetStartRoadPartNumber: Option[Long], targetEndRoadPartNumber: Option[Long],
         targetStartAddressM: Option[Long], targetEndAddressM: Option[Long], targetDiscontinuity: Option[Int],
         targetAdministrativeClass: Option[Int], sourceAdministrativeClass: Option[Int], sourceDiscontinuity: Option[Int],
-        sourceEly: Option[Long], rotatingTRIdr: Option[Long], reversed: Boolean, orderInTable: Long)
+        sourceEly: Option[Long], reversed: Boolean, orderInTable: Long)
     }
   }
 
@@ -198,8 +196,7 @@ class RoadwayChangesDAO {
     resultList.map { row => {
       val changeInfo = toRoadwayChangeInfo(row)
       val (user, date) = getUserAndModDate(row)
-      ProjectRoadwayChange(row.projectId, row.projectName, row.targetEly, user, date, changeInfo, row.startDate.get,
-        row.rotatingTRId)
+      ProjectRoadwayChange(row.projectId, row.projectName, row.targetEly, user, date, changeInfo, row.startDate.get)
     }
     }
   }
@@ -216,7 +213,7 @@ class RoadwayChangesDAO {
                 rac.old_start_addr_m, rac.old_end_addr_m, rac.new_road_number, rac.new_TRACK,
                 rac.new_road_part_number, rac.new_road_part_number,
                 rac.new_start_addr_m, rac.new_end_addr_m, rac.new_discontinuity, rac.new_administrative_class, rac.old_administrative_class,
-                rac.old_discontinuity, rac.old_ely, p.tr_id, rac.reversed, rac.ROADWAY_CHANGE_ID
+                rac.old_discontinuity, rac.old_ely, rac.reversed, rac.ROADWAY_CHANGE_ID
                 From ROADWAY_CHANGES rac Inner Join Project p on rac.project_id = p.id
                 $withProjectIds
                 ORDER BY COALESCE(rac.new_road_number, rac.old_road_number), COALESCE(rac.new_road_part_number, rac.old_road_part_number),

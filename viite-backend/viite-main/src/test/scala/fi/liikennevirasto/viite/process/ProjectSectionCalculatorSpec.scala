@@ -1738,8 +1738,8 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
        "When a long road with one part having discontinuities and track changes is transferred" +
        "Then addresses should be calculated in correct order. ") {
     runWithRollback {
-      sqlu"""INSERT INTO public.project (id,state,"name",created_by,created_date,modified_by,modified_date,add_info,start_date,status_info,tr_id,coord_x,coord_y,zoom) VALUES
-        (1088,1,'40921','silari','2021-09-10 10:52:28.106','silari','2021-09-10 10:52:28.106','','2021-09-11','',NULL,370312.481,6670979.546,12)""".execute
+      sqlu"""INSERT INTO public.project (id,state,"name",created_by,created_date,modified_by,modified_date,add_info,start_date,status_info,coord_x,coord_y,zoom) VALUES
+        (1088,1,'40921','silari','2021-09-10 10:52:28.106','silari','2021-09-10 10:52:28.106','','2021-09-11','',370312.481,6670979.546,12)""".execute
       sqlu"""INSERT INTO public.project_reserved_road_part (id,road_number,road_part_number,project_id,created_by) VALUES (1121,40921,1,1088,'silari')""".execute
       sqlu"""INSERT INTO PROJECT_LINK (ID,PROJECT_ID,TRACK,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,START_ADDR_M,END_ADDR_M,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,ADMINISTRATIVE_CLASS,ROADWAY_ID,LINEAR_LOCATION_ID,CONNECTED_LINK_ID,ELY,REVERSED,SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE,GEOMETRY,ORIGINAL_START_ADDR_M,ORIGINAL_END_ADDR_M,ROADWAY_NUMBER,START_CALIBRATION_POINT,END_CALIBRATION_POINT,ORIG_START_CALIBRATION_POINT,ORIG_END_CALIBRATION_POINT) VALUES
        (109845,1088,2,5,40921,1,5001,5004,'silari','silari',to_date('13.09.2021','DD.MM.YYYY'),to_date('13.09.2021','DD.MM.YYYY'),3,2,NULL,NULL,  NULL,1,0,2,8.156,11.215,145627,1533770939000,4,ST_GeomFromText('LINESTRING(371976.11 6671478.579 4.054000000003725, 374401.696 6672120.164 12.414999999993597)', 3067),5001,5004,310124270,0,2,0,2)
