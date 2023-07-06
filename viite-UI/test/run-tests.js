@@ -42,7 +42,6 @@ require.config({
   waitSeconds: 10
 });
 require(['lodash', 'moment', 'GeometryUtils',
-    'unit-tests/geometry-calculations-spec',
     'unit-tests/GeometryUtilsSpec',
     'unit-tests/LocationInputParserSpec'],
   function (lodash, moment) {
