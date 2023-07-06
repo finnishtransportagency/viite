@@ -1319,7 +1319,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val errors = projectValidator.validateProject(updProject, currentProjectLinks).distinct
       errors should have size 1
-      errors.head.affectedIds.head should be(currentProjectLinks.head.id)
+      errors.head.affectedPlIds.head should be(currentProjectLinks.head.id)
       errors.head.validationError.value should be(projectValidator.ValidationErrorList.EndOfRoadNotOnLastPart.value)
     }
   }
@@ -1682,7 +1682,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       validationErrors.size should be(1)
       validationErrors.head.validationError.value should be(projectValidator.ValidationErrorList.ErrorInValidationOfUnchangedLinks.value)
       val lastTwoProjectLinkIds = projectLinks.tail.map(pl => pl.id).toList
-      val affectedIds = validationErrors.head.affectedIds
+      val affectedIds = validationErrors.head.affectedPlIds
       affectedIds should contain theSameElementsInOrderAs lastTwoProjectLinkIds
     }
   }
@@ -1749,7 +1749,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       validationErrors.size should be(1)
       validationErrors.head.validationError.value should be(projectValidator.ValidationErrorList.ErrorInValidationOfUnchangedLinks.value)
-      val affectedIds = validationErrors.head.affectedIds
+      val affectedIds = validationErrors.head.affectedPlIds
       val invalidUnchangedPlId = projectLinks.tail.head.id
       affectedIds.size should be (1)
       affectedIds.head shouldEqual invalidUnchangedPlId
@@ -2860,7 +2860,7 @@ Left|      |Right
       validationErrors.size should be(1)
       validationErrors.head.projectId should be(project.id)
       validationErrors.head.validationError.value should be(projectValidator.ValidationErrorList.MissingEndOfRoad.value)
-      validationErrors.head.affectedIds.sorted should be(projectLinks.filterNot(_.track == Track.Combined).map(_.id).sorted)
+      validationErrors.head.affectedPlIds.sorted should be(projectLinks.filterNot(_.track == Track.Combined).map(_.id).sorted)
       //Should only have error in LEFT TRACK
 
       val leftErrors = projectValidator.checkRoadContinuityCodes(project, projectLinks.map(pl => {
@@ -2871,7 +2871,7 @@ Left|      |Right
       leftErrors.size should be(1)
       leftErrors.head.projectId should be(project.id)
       leftErrors.head.validationError.value should be(projectValidator.ValidationErrorList.MissingEndOfRoad.value)
-      leftErrors.head.affectedIds.sorted should be(projectLinks.filter(_.track == Track.LeftSide).map(_.id).sorted)
+      leftErrors.head.affectedPlIds.sorted should be(projectLinks.filter(_.track == Track.LeftSide).map(_.id).sorted)
       //Should only have error in RIGHT TRACK
       val rightErrors = projectValidator.checkRoadContinuityCodes(project, projectLinks.map(pl => {
         if (pl.track == Track.LeftSide)
@@ -2881,7 +2881,7 @@ Left|      |Right
       rightErrors.size should be(1)
       rightErrors.head.projectId should be(project.id)
       rightErrors.head.validationError.value should be(projectValidator.ValidationErrorList.MissingEndOfRoad.value)
-      rightErrors.head.affectedIds.sorted should be(projectLinks.filter(_.track == Track.RightSide).map(_.id).sorted)
+      rightErrors.head.affectedPlIds.sorted should be(projectLinks.filter(_.track == Track.RightSide).map(_.id).sorted)
       //Should have no error
       val noErrors = projectValidator.checkRoadContinuityCodes(project, projectLinks.map(pl => {
         if (pl.track != Track.Combined)
@@ -2941,7 +2941,7 @@ Left|      |Right
       }))
       errorsAtEnd.size should be(1)
       errorsAtEnd.head.validationError.value should be(projectValidator.ValidationErrorList.DiscontinuousFound.value)
-      errorsAtEnd.head.affectedIds.sorted should be(projectLinks.filter(pl => pl.roadPartNumber == 1L && pl.track != Track.Combined).map(_.id).sorted)
+      errorsAtEnd.head.affectedPlIds.sorted should be(projectLinks.filter(pl => pl.roadPartNumber == 1L && pl.track != Track.Combined).map(_.id).sorted)
     }
   }
 
@@ -3148,8 +3148,8 @@ Left|      |Right
       val checkRoadContinuityChecks = projectValidator.checkRoadContinuityCodes(project, updatedProjectLinks)
       checkRoadContinuityChecks.size should be(1)
       checkRoadContinuityChecks.head.validationError should be(projectValidator.ValidationErrorList.MissingEndOfRoad)
-      checkRoadContinuityChecks.head.affectedIds.size should be(1)
-      checkRoadContinuityChecks.head.affectedIds.head should be(updatedProjectLinks.find(p => p.roadNumber != 20000L && p.endAddrMValue == updatedProjectLinks.filter(_.roadNumber != 20000L).maxBy(_.endAddrMValue).endAddrMValue).get.id)
+      checkRoadContinuityChecks.head.affectedPlIds.size should be(1)
+      checkRoadContinuityChecks.head.affectedPlIds.head should be(updatedProjectLinks.find(p => p.roadNumber != 20000L && p.endAddrMValue == updatedProjectLinks.filter(_.roadNumber != 20000L).maxBy(_.endAddrMValue).endAddrMValue).get.id)
     }
   }
 
