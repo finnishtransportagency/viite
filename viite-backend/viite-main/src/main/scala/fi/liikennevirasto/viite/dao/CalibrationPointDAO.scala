@@ -1,12 +1,12 @@
 package fi.liikennevirasto.viite.dao
 
 import fi.liikennevirasto.digiroad2.dao.Sequences
-import fi.liikennevirasto.viite.dao.BeforeAfter.{After, Before}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import fi.liikennevirasto.viite.NewIdValue
+import fi.vaylavirasto.viite.model.BeforeAfter
 
 object CalibrationPointDAO {
 
@@ -44,8 +44,8 @@ object CalibrationPointDAO {
 
     def apply(pos: BeforeAfter): CalibrationPointLocation = {
       pos match {
-        case After => StartOfLink
-        case Before => EndOfLink
+        case BeforeAfter.After => StartOfLink
+        case BeforeAfter.Before => EndOfLink
         case _ => Unknown
       }
     }

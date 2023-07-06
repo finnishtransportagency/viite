@@ -3,16 +3,15 @@ package fi.liikennevirasto.viite
 import fi.liikennevirasto.digiroad2.client.kgv.{ChangeInfo, ChangeType, FeatureClass, HistoryRoadLink}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
-import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.vaylavirasto.viite.geometry.Point
-import fi.vaylavirasto.viite.model.{AdministrativeClass, LifecycleStatus, LinkGeomSource, RoadLink, SideCode, Track, TrafficDirection}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LifecycleStatus, LinkGeomSource, LinkStatus, RoadLink, SideCode, Track, TrafficDirection}
 import org.joda.time.DateTime
 
 object Dummies {
 
   def dummyRoadway(roadwayNumber: Long, roadNumber: Long, roadPartNumber: Long, startAddrM: Long, endAddrM: Long, startDate: DateTime, endDate: Option[DateTime], roadwayId: Long = 0L): Roadway = {
-    Roadway(roadwayId, roadwayNumber, roadNumber, roadPartNumber, AdministrativeClass.State, Track.Combined, Continuous, startAddrM, endAddrM, reversed = false, startDate, endDate, "user", None, 0L, NoTermination)
+    Roadway(roadwayId, roadwayNumber, roadNumber, roadPartNumber, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, startAddrM, endAddrM, reversed = false, startDate, endDate, "user", None, 0L, NoTermination)
   }
 
   def dummyRoadwayChangeSection(roadNumber: Option[Long], roadPartNumber: Option[Long], track: Option[Long], startAddressM: Option[Long], endAddressM: Option[Long], administrativeClass: Option[AdministrativeClass] = Some(AdministrativeClass.State), discontinuity: Option[Discontinuity], ely: Option[Long]): RoadwayChangeSection = {
@@ -40,7 +39,7 @@ object Dummies {
     dummyRoadAddress(roadwayNumber, roadNumber, roadPartNumber, startAddrM, endAddrM, startDate, endDate, linkId, startMValue, endMValue, linkGeomSource)
 
   def dummyRoadAddress(roadwayNumber: Long, roadNumber: Long, roadPartNumber: Long, startAddrM: Long, endAddrM: Long, startDate: Option[DateTime], endDate: Option[DateTime], linkId: String, startMValue: Double, endMValue: Double, linkGeomSource: LinkGeomSource, geometry: Seq[Point] = Seq()): RoadAddress = {
-    RoadAddress(0L, 0L, roadNumber, roadPartNumber, AdministrativeClass.State, Track.Combined, Continuous, startAddrM, endAddrM, startDate, endDate, None, linkId, startMValue, endMValue, SideCode.TowardsDigitizing, 0L, (None, None), if (geometry.nonEmpty) geometry else Seq(Point(0.0, startMValue), Point(0.0, endMValue)), linkGeomSource, 0L, NoTermination, roadwayNumber, None, None, None)
+    RoadAddress(0L, 0L, roadNumber, roadPartNumber, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, startAddrM, endAddrM, startDate, endDate, None, linkId, startMValue, endMValue, SideCode.TowardsDigitizing, 0L, (None, None), if (geometry.nonEmpty) geometry else Seq(Point(0.0, startMValue), Point(0.0, endMValue)), linkGeomSource, 0L, NoTermination, roadwayNumber, None, None, None)
   }
 
   def dummyProjectLink(roadNumber: Long, roadPartNumber: Long, trackCode: Track, discontinuityType: Discontinuity, startAddrM: Long, endAddrM: Long, startDate: Option[DateTime], endDate: Option[DateTime] = None, linkId: String = 0.toString, startMValue: Double = 0, endMValue: Double = 0, sideCode: SideCode = SideCode.Unknown, status: LinkStatus, projectId: Long = 0, administrativeClass: AdministrativeClass = AdministrativeClass.State, geometry: Seq[Point] = Seq(), roadwayNumber: Long = 0L): ProjectLink = {

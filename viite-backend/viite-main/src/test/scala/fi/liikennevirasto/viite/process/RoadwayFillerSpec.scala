@@ -9,7 +9,7 @@ import fi.liikennevirasto.viite.Dummies._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.ProjectState.UpdatingToRoadNetwork
 import fi.liikennevirasto.viite.dao.TerminationCode._
-import fi.vaylavirasto.viite.model.{AdministrativeClass, RoadLink, Track}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LinkStatus, RoadLink, Track}
 import org.joda.time.DateTime
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import org.scalatest.mock.MockitoSugar

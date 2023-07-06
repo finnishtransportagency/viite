@@ -5,14 +5,13 @@ import fi.liikennevirasto.digiroad2.util.{MissingRoadwayNumberException, Missing
 import fi.liikennevirasto.viite.{ContinuousAddressCapErrorMessage, LengthMismatchErrorMessage, NegativeLengthErrorMessage, NewIdValue, ProjectValidationException, ProjectValidator, UnsuccessfulRecalculationMessage}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.UserDefinedCP
-import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.process.strategy.FirstRestSections.{getUpdatedContinuousRoadwaySections, lengthCompare}
 import fi.liikennevirasto.viite.util.TwoTrackRoadUtils
 import fi.liikennevirasto.viite.util.TwoTrackRoadUtils._
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point, Vector3d}
-import fi.vaylavirasto.viite.model.{SideCode, Track}
+import fi.vaylavirasto.viite.model.{Discontinuity, LinkStatus, SideCode, Track}
 import org.slf4j.LoggerFactory
 
 import scala.collection.immutable.ListMap
@@ -703,7 +702,7 @@ object FirstRestSections {
     (sect.size > 1) && {
       val lastLengthDifference       = Math.abs(sect.last.endAddrMValue - oppositeSect.last.endAddrMValue)
       val secondLastLengthDifference = Math.abs(sect(sect.size - 2).endAddrMValue - oppositeSect.last.endAddrMValue)
-      ((sect.last.discontinuity != Continuous) || (oppositeSect.last.discontinuity != Continuous)) &&
+      ((sect.last.discontinuity != Discontinuity.Continuous) || (oppositeSect.last.discontinuity != Discontinuity.Continuous)) &&
       lastLengthDifference > secondLastLengthDifference &&
       secondLastLengthDifference != 0 // Equal case should be found by lengthCompare().
     }

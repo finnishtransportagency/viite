@@ -8,11 +8,10 @@ import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
-import fi.liikennevirasto.viite.dao.LinkStatus.{NotHandled, UnChanged}
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point, PolyLine, Vector3d}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, LinkGeomSource, SideCode, Track}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LinkGeomSource, LinkStatus, SideCode, Track}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -22,24 +21,7 @@ import slick.jdbc.StaticQuery.interpolation
 
 //TODO naming SQL conventions
 
-sealed trait LinkStatus {
-  def value: Int
-  def description: String
-}
 
-object LinkStatus {
-  val values = Set(NotHandled, Terminated, New, Transfer, UnChanged, Numbering, Unknown)
-  case object NotHandled extends LinkStatus {def value = 0; def description = "Käsittelemättä"}
-  case object UnChanged  extends LinkStatus {def value = 1; def description = "Ennallaan"}
-  case object New extends LinkStatus {def value = 2; def description = "Uusi"}
-  case object Transfer extends LinkStatus {def value = 3; def description = "Siirto"}
-  case object Numbering extends LinkStatus {def value = 4; def description = "Numerointi"}
-  case object Terminated extends LinkStatus {def value = 5; def description = "Lakkautettu"}
-  case object Unknown extends LinkStatus {def value = 99; def description = "Tuntematon"}
-  def apply(intValue: Int): LinkStatus = {
-    values.find(_.value == intValue).getOrElse(Unknown)
-  }
-}
 
 case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track, discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, originalStartAddrMValue: Long, originalEndAddrMValue: Long, startDate: Option[DateTime] = None, endDate: Option[DateTime] = None, createdBy: Option[String] = None, linkId: String, startMValue: Double, endMValue: Double, sideCode: SideCode, calibrationPointTypes: (CalibrationPointType, CalibrationPointType) = (NoCP, NoCP), originalCalibrationPointTypes: (CalibrationPointType, CalibrationPointType) = (NoCP, NoCP), geometry: Seq[Point], projectId: Long, status: LinkStatus, administrativeClass: AdministrativeClass, linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, geometryLength: Double, roadwayId: Long, linearLocationId: Long, ely: Long, reversed: Boolean, connectedLinkId: Option[String] = None, linkGeometryTimeStamp: Long, roadwayNumber: Long = NewIdValue, roadName: Option[String] = None, roadAddressLength: Option[Long] = None, roadAddressStartAddrM: Option[Long] = None, roadAddressEndAddrM: Option[Long] = None, roadAddressTrack: Option[Track] = None, roadAddressRoadNumber: Option[Long] = None, roadAddressRoadPart: Option[Long] = None)
   extends BaseRoadAddress with PolyLine {
@@ -419,8 +401,8 @@ class ProjectLinkDAO {
 
   def updateProjectLinks(projectLinks: Seq[ProjectLink], modifier: String, addresses: Seq[RoadAddress]): Unit = {
       time(logger, "Update project links") {
-        val nonUpdatingStatus = Set[LinkStatus](NotHandled)
-        val maxInEachTracks = projectLinks.filter(pl => pl.status == UnChanged).groupBy(_.track).map(p => p._2.maxBy(_.endAddrMValue).id).toSeq
+        val nonUpdatingStatus = Set[LinkStatus](LinkStatus.NotHandled)
+        val maxInEachTracks = projectLinks.filter(pl => pl.status == LinkStatus.UnChanged).groupBy(_.track).map(p => p._2.maxBy(_.endAddrMValue).id).toSeq
         val links = projectLinks.map { pl =>
           if (!pl.isSplit && nonUpdatingStatus.contains(pl.status) && addresses.map(_.linearLocationId).contains(pl.linearLocationId) && !maxInEachTracks.contains(pl.id)) {
             val ra = addresses.find(_.linearLocationId == pl.linearLocationId).get

@@ -5,7 +5,7 @@ import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao.{ProjectLinkDAO, _}
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import fi.vaylavirasto.viite.geometry.BoundingRectangle
-import fi.vaylavirasto.viite.model.SideCode
+import fi.vaylavirasto.viite.model.{Discontinuity, SideCode}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 

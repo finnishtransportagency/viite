@@ -1,14 +1,15 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao.ProjectLink
 import fi.vaylavirasto.viite.geometry.GeometryUtils
+import fi.vaylavirasto.viite.model.LinkStatus
 
+//TODO REMOVE THE FILE?
 object RoadAddressSplitMapper extends RoadAddressMapper {
   def createAddressMap(splitProjectLinks: Seq[ProjectLink]): Seq[LinearLocationMapping] = {
     splitProjectLinks.groupBy(_.linearLocationId).flatMap { case (_, seq) =>
-      val templateTerm = seq.find(_.status == Terminated)
-      val kept = seq.find(pl => pl.status == Transfer || pl.status == UnChanged)
+      val templateTerm = seq.find(_.status == LinkStatus.Terminated)
+      val kept = seq.find(pl => pl.status == LinkStatus.Transfer || pl.status == LinkStatus.UnChanged)
       (templateTerm, kept) match {
         case (Some(t), Some(k)) if GeometryUtils.areAdjacent(t.geometry.head, k.geometry.last) =>
           // t extends k

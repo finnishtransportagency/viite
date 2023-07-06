@@ -10,7 +10,7 @@ import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoC
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.liikennevirasto.viite.NewIdValue
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, LinkGeomSource, SideCode, Track}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, BeforeAfter, Discontinuity, LinkGeomSource, LinkStatus, SideCode, Track}
 import org.joda.time.DateTime
 import org.postgresql.util.PSQLException
 import org.scalatest.{FunSuite, Matchers}

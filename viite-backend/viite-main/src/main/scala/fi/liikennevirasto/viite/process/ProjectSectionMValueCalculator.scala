@@ -1,10 +1,9 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
-import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectLink}
+import fi.liikennevirasto.viite.dao.ProjectLink
 import fi.vaylavirasto.viite.geometry.Point
-import fi.vaylavirasto.viite.model.Track
+import fi.vaylavirasto.viite.model.{LinkStatus, Track}
 
 object ProjectSectionMValueCalculator {
 
@@ -90,10 +89,10 @@ object ProjectSectionMValueCalculator {
   def calculateAddressingFactors(seq: Seq[ProjectLink]): TrackAddressingFactors = {
     seq.foldLeft[TrackAddressingFactors](TrackAddressingFactors(0, 0, 0.0)) { case (a, pl) =>
       pl.status match {
-        case UnChanged | Numbering => a.copy(unChangedLength = a.unChangedLength + pl.addrMLength)
-        case Transfer | LinkStatus.NotHandled => a.copy(transferLength = a.transferLength + pl.addrMLength)
-        case New => a.copy(newLength = a.newLength + pl.geometryLength)
-        case Terminated => a
+        case LinkStatus.UnChanged | LinkStatus.Numbering => a.copy(unChangedLength = a.unChangedLength + pl.addrMLength)
+        case LinkStatus.Transfer | LinkStatus.NotHandled => a.copy(transferLength = a.transferLength + pl.addrMLength)
+        case LinkStatus.New => a.copy(newLength = a.newLength + pl.geometryLength)
+        case LinkStatus.Terminated => a
         case _ => throw new InvalidAddressDataException(s"Invalid status found at factor assignment ${pl.status}, linkId: ${pl.linkId}")
       }
     }
