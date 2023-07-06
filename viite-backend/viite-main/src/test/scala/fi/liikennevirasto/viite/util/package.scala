@@ -4,10 +4,9 @@ import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
-import fi.liikennevirasto.viite.dao.Discontinuity.EndOfRoad
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink, RoadAddressLinkLike}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, LinkGeomSource, SideCode, Track}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LinkGeomSource, LinkStatus, SideCode, Track}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -169,7 +168,7 @@ package object util {
       projectLink(st, en, Track.Combined, id, linkStatus).copy(roadNumber = 39999)
     }
     projectReservedPartDAO.reserveRoadPart(id, 39999L, 1L, "u")
-    projectLinkDAO.create(links.init :+ links.last.copy(discontinuity = EndOfRoad))
+    projectLinkDAO.create(links.init :+ links.last.copy(discontinuity = Discontinuity.EndOfRoad))
     project
   }
 

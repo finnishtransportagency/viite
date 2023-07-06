@@ -3,7 +3,7 @@ package fi.liikennevirasto.viite.process
 import fi.liikennevirasto.viite
 import fi.liikennevirasto.viite.dao.{ProjectLink, _}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
-import fi.vaylavirasto.viite.model.Track
+import fi.vaylavirasto.viite.model.{Discontinuity, LinkStatus, Track}
 import org.joda.time.DateTime
 
 /**

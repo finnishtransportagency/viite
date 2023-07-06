@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite.dao
 
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite._
-import fi.vaylavirasto.viite.model.Track
+import fi.vaylavirasto.viite.model.{Discontinuity, LinkStatus, Track}
 import org.slf4j.{Logger, LoggerFactory}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.{StaticQuery => Q}

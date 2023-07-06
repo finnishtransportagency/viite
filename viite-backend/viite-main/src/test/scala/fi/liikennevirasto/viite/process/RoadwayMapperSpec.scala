@@ -4,7 +4,7 @@ import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{No
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao._
 import fi.vaylavirasto.viite.geometry.Point
-import fi.vaylavirasto.viite.model.{AdministrativeClass, LinkGeomSource, SideCode, Track}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LinkGeomSource, SideCode, Track}
 import org.joda.time.DateTime
 import org.mockito.Mockito.when
 import org.scalatest.mockito.MockitoSugar

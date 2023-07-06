@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.viite.NewIdValue
 import fi.vaylavirasto.viite.geometry.Point
-import fi.vaylavirasto.viite.model.{AdministrativeClass, Track}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, BeforeAfter, Discontinuity, NodePointType, NodeType, Track}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
@@ -159,7 +159,7 @@ class JunctionDAOSpec extends FunSuite with Matchers {
       junctionPointDAO.create(
         Seq(
           JunctionPoint(Sequences.nextJunctionPointId, BeforeAfter.Before, rwpId, junctionId, Some(DateTime.parse("1992-10-08")), None, DateTime.parse("1992-10-08"), None, "test", Some(DateTime.parse("1992-10-08")), roadwayNumber1, junctionAddrM, roadNumber, roadPartNumber, Track.Combined, Discontinuity.Continuous, Point(100,100)),
-          JunctionPoint(Sequences.nextJunctionPointId, BeforeAfter.After, rwpId, junctionId, Some(DateTime.parse("1992-10-08")), None, DateTime.parse("1992-10-08"), None, "test", Some(DateTime.parse("1992-10-08")), roadwayNumber1, junctionAddrM, roadNumber, roadPartNumber, Track.Combined, Discontinuity.Continuous, Point(100,100))
+          JunctionPoint(Sequences.nextJunctionPointId, BeforeAfter.After,  rwpId, junctionId, Some(DateTime.parse("1992-10-08")), None, DateTime.parse("1992-10-08"), None, "test", Some(DateTime.parse("1992-10-08")), roadwayNumber1, junctionAddrM, roadNumber, roadPartNumber, Track.Combined, Discontinuity.Continuous, Point(100,100))
         )
       )
 

@@ -5,13 +5,13 @@ import fi.liikennevirasto.digiroad2.DigiroadEventBus
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.viite.dao.{BeforeAfter, _}
+import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointLocation
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, RoadAddressCP}
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, LinkGeomSource, SideCode, Track}
+import fi.vaylavirasto.viite.model.{AddressChangeType, AdministrativeClass, BeforeAfter, Discontinuity, LinkGeomSource, LinkStatus, NodePointType, NodeType, SideCode, Track}
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.{any, anyLong}
 import org.mockito.Mockito.when

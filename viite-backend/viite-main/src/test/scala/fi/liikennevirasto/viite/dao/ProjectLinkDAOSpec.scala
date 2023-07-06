@@ -10,7 +10,7 @@ import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.liikennevirasto.viite.NewIdValue
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point, Vector3d}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, LinkGeomSource, SideCode, Track}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LinkGeomSource, LinkStatus, SideCode, Track}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import org.scalatest.mock.MockitoSugar
