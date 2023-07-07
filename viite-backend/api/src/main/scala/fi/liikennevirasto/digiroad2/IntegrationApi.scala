@@ -627,8 +627,8 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
     }
   }
 
-  private def calibrationPoint(startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint]) = {
-    def calibrationPointMapper(calibrationPoint: Option[CalibrationPoint]) = {
+  private def calibrationPoint(startCalibrationPoint: Option[ProjectCalibrationPoint], endCalibrationPoint: Option[ProjectCalibrationPoint]) = {
+    def calibrationPointMapper(calibrationPoint: Option[ProjectCalibrationPoint]) = {
       calibrationPoint.map(cp => Map("link_id" -> cp.linkId, "address_m_value" -> cp.addressMValue, "segment_m_value" -> cp.segmentMValue))
     }
 

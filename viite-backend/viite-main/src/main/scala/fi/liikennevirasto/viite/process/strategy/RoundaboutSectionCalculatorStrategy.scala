@@ -2,11 +2,10 @@ package fi.liikennevirasto.viite.process.strategy
 
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.viite.dao.ProjectLink
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, RoadAddressCP}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.process.{ProjectSectionMValueCalculator, TrackSectionOrder}
 import fi.liikennevirasto.viite.NewIdValue
-import fi.vaylavirasto.viite.model.RoadAddressChangeType
+import fi.vaylavirasto.viite.model.{CalibrationPointType, RoadAddressChangeType}
 
 class RoundaboutSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrategy {
 
@@ -31,7 +30,7 @@ class RoundaboutSectionCalculatorStrategy extends RoadAddressSectionCalculatorSt
     val startPl = mValuedWithRwns.minBy(_.startAddrMValue)
     val endPl   = mValuedWithRwns.maxBy(_.endAddrMValue)
 
-    mValuedWithRwns = startPl.copy(calibrationPointTypes = (RoadAddressCP, startPl.endCalibrationPointType)) +: mValuedWithRwns.filterNot(pl => Seq(startPl.id,endPl.id).contains(pl.id)) :+ endPl.copy(calibrationPointTypes = (endPl.startCalibrationPointType,RoadAddressCP))
+    mValuedWithRwns = startPl.copy(calibrationPointTypes = (CalibrationPointType.RoadAddressCP, startPl.endCalibrationPointType)) +: mValuedWithRwns.filterNot(pl => Seq(startPl.id,endPl.id).contains(pl.id)) :+ endPl.copy(calibrationPointTypes = (endPl.startCalibrationPointType,CalibrationPointType.RoadAddressCP))
 
     if (userCalibrationPoints.nonEmpty) {
       val withCalibration = mValuedWithRwns.map(pl =>
@@ -39,18 +38,18 @@ class RoundaboutSectionCalculatorStrategy extends RoadAddressSectionCalculatorSt
           case s if s.size == 2 =>
             val (st, en) = (s.minBy(_.addressMValue), s.maxBy(_.addressMValue))
             val startCPType = pl.startCalibrationPointType
-            val endCPType = if (pl.originalEndCalibrationPointType == NoCP) RoadAddressCP else pl.endCalibrationPointType
+            val endCPType = if (pl.originalEndCalibrationPointType == CalibrationPointType.NoCP) CalibrationPointType.RoadAddressCP else pl.endCalibrationPointType
             pl.copy(startAddrMValue = st.addressMValue, endAddrMValue = en.addressMValue, calibrationPointTypes = (startCPType, endCPType))
           case s if s.size == 1 && s.head.segmentMValue == 0.0 =>
             val startCPType =  pl.startCalibrationPointType
-            val endCPType = if (pl.originalEndCalibrationPointType == NoCP) RoadAddressCP else pl.endCalibrationPointType
+            val endCPType = if (pl.originalEndCalibrationPointType == CalibrationPointType.NoCP) CalibrationPointType.RoadAddressCP else pl.endCalibrationPointType
             pl.copy(startAddrMValue = s.head.addressMValue, calibrationPointTypes = (startCPType, endCPType))
           case s if s.size == 1 && s.head.segmentMValue != 0.0 =>
             val startCPType = pl.startCalibrationPointType
-            val endCPType = if (pl.originalEndCalibrationPointType == NoCP) RoadAddressCP else pl.endCalibrationPointType
+            val endCPType = if (pl.originalEndCalibrationPointType == CalibrationPointType.NoCP) CalibrationPointType.RoadAddressCP else pl.endCalibrationPointType
             pl.copy(endAddrMValue = s.head.addressMValue, calibrationPointTypes = (startCPType, endCPType))
           case _ =>
-            pl.copy(calibrationPointTypes = (NoCP, NoCP))
+            pl.copy(calibrationPointTypes = (CalibrationPointType.NoCP, CalibrationPointType.NoCP))
         }
       )
       val factors = ProjectSectionMValueCalculator.calculateAddressingFactors(withCalibration)

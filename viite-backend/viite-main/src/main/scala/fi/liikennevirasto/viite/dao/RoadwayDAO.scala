@@ -5,14 +5,12 @@ import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.postgis.MassQuery
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.BaseCalibrationPoint
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.model.RoadAddressLinkLike
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point, Vector3d}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LinkGeomSource, SideCode, Track}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, CalibrationPointType, Discontinuity, LinkGeomSource, SideCode, Track}
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import org.slf4j.LoggerFactory
@@ -87,7 +85,12 @@ object CalibrationCode {
 
 }
 
-case class CalibrationPoint(linkId: String, segmentMValue: Double, addressMValue: Long, typeCode: CalibrationPointType = CalibrationPointType.UnknownCP) extends BaseCalibrationPoint {
+case class ProjectCalibrationPoint(
+                             linkId: String,
+                             segmentMValue: Double,
+                             addressMValue: Long,
+                             typeCode: CalibrationPointType = CalibrationPointType.UnknownCP
+                           ) extends BaseCalibrationPoint {
   def this(linkId: Long, segmentMValue: Double, addressMValue: Long, typeCode: CalibrationPointType) =
    this(linkId.toString, segmentMValue, addressMValue, typeCode)
 }
@@ -124,9 +127,7 @@ trait BaseRoadAddress {
   def linearLocationId: Long
 
   def roadNumber: Long
-
   def roadPartNumber: Long
-
   def track: Track
 
   def discontinuity: Discontinuity
@@ -134,11 +135,9 @@ trait BaseRoadAddress {
   def administrativeClass: AdministrativeClass
 
   def startAddrMValue: Long
-
   def endAddrMValue: Long
 
   def startDate: Option[DateTime]
-
   def endDate: Option[DateTime]
 
   def createdBy: Option[String]
@@ -146,7 +145,6 @@ trait BaseRoadAddress {
   def linkId: String
 
   def startMValue: Double
-
   def endMValue: Double
 
   def sideCode: SideCode
@@ -166,11 +164,11 @@ trait BaseRoadAddress {
   def copyWithGeometry(newGeometry: Seq[Point]): BaseRoadAddress
 
   def hasCalibrationPointAtStart: Boolean = {
-    startCalibrationPoint.getOrElse(NoCP) != NoCP
+    startCalibrationPoint.getOrElse(CalibrationPointType.NoCP) != CalibrationPointType.NoCP
   }
 
   def hasCalibrationPointAtEnd: Boolean = {
-    endCalibrationPoint.getOrElse(NoCP) != NoCP
+    endCalibrationPoint.getOrElse(CalibrationPointType.NoCP) != CalibrationPointType.NoCP
   }
 
   def liesInBetween(ra: BaseRoadAddress): Boolean = {
@@ -263,25 +261,42 @@ trait BaseRoadAddress {
   }
 
   lazy val startCalibrationPoint: Option[BaseCalibrationPoint] = calibrationPoints._1
-  lazy val endCalibrationPoint: Option[BaseCalibrationPoint] = calibrationPoints._2
+  lazy val endCalibrationPoint:   Option[BaseCalibrationPoint] = calibrationPoints._2
 }
 
 //TODO the start date and the created by should not be optional on the road address case class
 // Note: Geometry on road address is not directed: it isn't guaranteed to have a direction of digitization or road addressing
-case class RoadAddress(id: Long, linearLocationId: Long, roadNumber: Long, roadPartNumber: Long, administrativeClass: AdministrativeClass, track: Track, discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None, endDate: Option[DateTime] = None, createdBy: Option[String] = None, linkId: String, startMValue: Double, endMValue: Double, sideCode: SideCode, adjustedTimestamp: Long, calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), geometry: Seq[Point], linkGeomSource: LinkGeomSource, ely: Long, terminated: TerminationCode = NoTermination, roadwayNumber: Long, validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None, roadName: Option[String] = None) extends BaseRoadAddress {
-  def this(id: Long, linearLocationId: Long, roadNumber: Long, roadPartNumber: Long, administrativeClass: AdministrativeClass, track: Track, discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime], endDate: Option[DateTime], createdBy: Option[String], linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode, adjustedTimestamp: Long, calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]), geometry: Seq[Point], linkGeomSource: LinkGeomSource, ely: Long, terminated: TerminationCode, roadwayNumber: Long, validFrom: Option[DateTime], validTo: Option[DateTime], roadName: Option[String]) =
-   this(id, linearLocationId, roadNumber, roadPartNumber, administrativeClass, track, discontinuity, startAddrMValue, endAddrMValue, startDate, endDate, createdBy, linkId.toString, startMValue, endMValue, sideCode, adjustedTimestamp, calibrationPoints, geometry, linkGeomSource, ely, terminated, roadwayNumber, validFrom, validTo, roadName)
+case class RoadAddress(id: Long, linearLocationId: Long, roadNumber: Long, roadPartNumber: Long, administrativeClass: AdministrativeClass, track: Track, discontinuity: Discontinuity,
+                       startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None, endDate: Option[DateTime] = None,
+                       createdBy: Option[String] = None, linkId: String, startMValue: Double, endMValue: Double, sideCode: SideCode, adjustedTimestamp: Long,
+                       calibrationPoints: (Option[ProjectCalibrationPoint], Option[ProjectCalibrationPoint]) = (None, None),
+                       geometry: Seq[Point], linkGeomSource: LinkGeomSource,
+                       ely: Long, terminated: TerminationCode = NoTermination, roadwayNumber: Long,
+                       validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None, roadName: Option[String] = None) extends BaseRoadAddress {
+  def this(id: Long, linearLocationId: Long, roadNumber: Long, roadPartNumber: Long, administrativeClass: AdministrativeClass, track: Track, discontinuity: Discontinuity,
+           startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime], endDate: Option[DateTime],
+           createdBy: Option[String], linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode, adjustedTimestamp: Long,
+           calibrationPoints: (Option[ProjectCalibrationPoint], Option[ProjectCalibrationPoint]),
+           geometry: Seq[Point], linkGeomSource: LinkGeomSource,
+           ely: Long, terminated: TerminationCode, roadwayNumber: Long,
+           validFrom: Option[DateTime], validTo: Option[DateTime], roadName: Option[String]) =
+   this(id, linearLocationId, roadNumber, roadPartNumber, administrativeClass, track, discontinuity,
+     startAddrMValue, endAddrMValue, startDate, endDate,
+     createdBy, linkId.toString, startMValue, endMValue, sideCode, adjustedTimestamp,
+     calibrationPoints, geometry, linkGeomSource,
+     ely, terminated, roadwayNumber,
+     validFrom, validTo, roadName)
 
-  override lazy val startCalibrationPoint: Option[CalibrationPoint] = calibrationPoints._1
-  override lazy val endCalibrationPoint: Option[CalibrationPoint] = calibrationPoints._2
+  override lazy val startCalibrationPoint: Option[ProjectCalibrationPoint] = calibrationPoints._1
+  override lazy val endCalibrationPoint:   Option[ProjectCalibrationPoint] = calibrationPoints._2
 
   def startCalibrationPointType: CalibrationPointType = startCalibrationPoint match {
     case Some(cp) => cp.typeCode
-    case None => NoCP
+    case None => CalibrationPointType.NoCP
   }
   def endCalibrationPointType: CalibrationPointType = endCalibrationPoint match {
     case Some(cp) => cp.typeCode
-    case None => NoCP
+    case None => CalibrationPointType.NoCP
   }
 
   def calibrationPointTypes: (CalibrationPointType, CalibrationPointType) = (startCalibrationPointType, endCalibrationPointType)

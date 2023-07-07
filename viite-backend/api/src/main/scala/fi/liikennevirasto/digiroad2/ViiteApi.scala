@@ -2097,7 +2097,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
   private def formatDateTimeToShortPatternString(dateOption: Option[DateTime]): Option[String] =
     dateOption.map { date => date.toString(DateTimeFormat.forPattern("dd.MM.yyyy")) }
 
-  private def calibrationPointToApi(geometry: Seq[Point], calibrationPoint: Option[CalibrationPoint]): Option[Map[String, Any]] = {
+  private def calibrationPointToApi(geometry: Seq[Point], calibrationPoint: Option[ProjectCalibrationPoint]): Option[Map[String, Any]] = {
     calibrationPoint match {
       case Some(point) =>
         val calculatedPoint = GeometryUtils.calculatePointFromLinearReference(geometry, point.segmentMValue)

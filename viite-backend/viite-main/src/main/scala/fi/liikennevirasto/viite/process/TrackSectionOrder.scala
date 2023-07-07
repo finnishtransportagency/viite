@@ -2,12 +2,11 @@ package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.util.{MissingTrackException, RoadAddressException}
 import fi.liikennevirasto.viite.MaxDistanceForConnectedLinks
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, RoadAddressCP}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao._
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Matrix, Point, Vector3d}
-import fi.vaylavirasto.viite.model.{Discontinuity, RoadAddressChangeType, SideCode, Track}
+import fi.vaylavirasto.viite.model.CalibrationPointType.RoadAddressCP
+import fi.vaylavirasto.viite.model.{CalibrationPointType, Discontinuity, RoadAddressChangeType, SideCode, Track}
 
 import scala.annotation.tailrec
 
@@ -165,8 +164,9 @@ object TrackSectionOrder {
       */
     // TODO Check that this works with André's roundabout case
     def adjust(pl: ProjectLink, sideCode: Option[SideCode] = None, startAddrMValue: Option[Long] = None,
-               endAddrMValue: Option[Long] = None, startCalibrationPoint: Option[Option[CalibrationPoint]] = None,
-               endCalibrationPoint: Option[Option[CalibrationPoint]] = None) = {
+               endAddrMValue: Option[Long] = None,
+               startCalibrationPoint: Option[Option[ProjectCalibrationPoint]] = None,
+               endCalibrationPoint: Option[Option[ProjectCalibrationPoint]] = None) = {
       pl.copy(startAddrMValue = startAddrMValue.getOrElse(pl.startAddrMValue), endAddrMValue = endAddrMValue.getOrElse(pl.endAddrMValue), sideCode = sideCode.getOrElse(pl.sideCode), calibrationPointTypes = (pl.startCalibrationPointType, pl.endCalibrationPointType))
     }
 
@@ -183,7 +183,7 @@ object TrackSectionOrder {
         // Put calibration point at the end
         val last = ready.last
         ready.init ++ Seq(adjust(last, startCalibrationPoint = Some(None), endCalibrationPoint = Some(Some(
-          CalibrationPoint(last.linkId, if (last.sideCode ==  SideCode.AgainstDigitizing) 0.0 else last.geometryLength, last.endAddrMValue, last.endCalibrationPointType)))))
+          ProjectCalibrationPoint(last.linkId, if (last.sideCode ==  SideCode.AgainstDigitizing) 0.0 else last.geometryLength, last.endAddrMValue, last.endCalibrationPointType)))))
       }
       else {
         val hit = unprocessed.find(pl => GeometryUtils.areAdjacent(pl.geometry, currentPoint, MaxDistanceForConnectedLinks))
@@ -213,7 +213,7 @@ object TrackSectionOrder {
           Math.round(firstLink.geometryLength)
         else
           firstLink.endAddrMValue - firstLink.startAddrMValue),
-      startCalibrationPoint = Some(Some(CalibrationPoint(firstLink.linkId, 0.0, 0L, firstLink.startCalibrationPointType))),
+      startCalibrationPoint = Some(Some(ProjectCalibrationPoint(firstLink.linkId, 0.0, 0L, firstLink.startCalibrationPointType))),
       endCalibrationPoint = Some(None))), seq.tail)
     if (isCounterClockwise(ordered.map(firstPoint)))
       ordered
@@ -226,7 +226,7 @@ object TrackSectionOrder {
               Math.round(firstLink.geometryLength)
             else
               firstLink.endAddrMValue - firstLink.startAddrMValue),
-          startCalibrationPoint = Some(Some(CalibrationPoint(firstLink.linkId, firstLink.geometryLength, 0L, firstLink.startCalibrationPointType))),
+          startCalibrationPoint = Some(Some(ProjectCalibrationPoint(firstLink.linkId, firstLink.geometryLength, 0L, firstLink.startCalibrationPointType))),
           endCalibrationPoint = Some(None))),
         seq.tail)
       if (isCounterClockwise(reOrdered.map(firstPoint)))
@@ -436,8 +436,8 @@ object TrackSectionOrder {
             hasStartCP = true, hasEndCP = true, RoadAddressCP, RoadAddressCP))
         case _ =>
           val projectLinks = initialProjectLinks.map(p => p.copy(calibrationPointTypes =
-                                                    (if (p.startCalibrationPointType != RoadAddressCP) p.startCalibrationPointType else NoCP,
-                                                      if (p.endCalibrationPointType != RoadAddressCP) p.endCalibrationPointType else NoCP)))
+                                                    (if (p.startCalibrationPointType != RoadAddressCP) p.startCalibrationPointType else CalibrationPointType.NoCP,
+                                                      if (p.endCalibrationPointType != RoadAddressCP) p.endCalibrationPointType else CalibrationPointType.NoCP)))
           val raCPs = Seq(setCalibrationPoint(projectLinks.head, userCalibrationPoint.get(projectLinks.head.id),
             hasStartCP = true, hasEndCP = projectLinks.tail.head.calibrationPoints._1.isDefined,
             RoadAddressCP, projectLinks.tail.head.startCalibrationPointType)) ++ projectLinks.init.tail ++ Seq(setCalibrationPoint(projectLinks.last,
@@ -466,8 +466,8 @@ object TrackSectionOrder {
   protected def setCalibrationPoint(pl: ProjectLink, userCalibrationPoint: Option[UserDefinedCalibrationPoint],
                                     hasStartCP: Boolean, hasEndCP: Boolean,
                                     startType: CalibrationPointType, endType: CalibrationPointType): ProjectLink = {
-    val startCP = if (hasStartCP) startType else NoCP
-    val endCP = if (hasEndCP) endType else NoCP
+    val startCP = if (hasStartCP) startType else CalibrationPointType.NoCP
+    val endCP = if (hasEndCP) endType else CalibrationPointType.NoCP
     pl.copy(calibrationPointTypes = (startCP, endCP))
   }
 

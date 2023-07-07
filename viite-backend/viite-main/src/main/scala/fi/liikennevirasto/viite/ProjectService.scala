@@ -8,7 +8,6 @@ import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReserved
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.ProjectAddressLinkBuilder.municipalityRoadMaintainerMapping
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{JunctionPointCP, NoCP, UserDefinedCP}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.ProjectState._
 import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Termination}
@@ -16,6 +15,7 @@ import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink}
 import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.util.SplitOptions
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
+import fi.vaylavirasto.viite.model.CalibrationPointType.{JunctionPointCP, NoCP, UserDefinedCP}
 import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LinkGeomSource, RoadAddressChangeType, RoadLink, RoadLinkLike, SideCode, Track, TrafficDirection}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
@@ -1460,15 +1460,15 @@ class ProjectService(
             case _ => false
           }
           /* Store the user defined calibration point with given address even if other calibratation type exists. */
-          if (!calibrationPointIsPresent || lastEndSegmentLink.last.endCalibrationPointType != CalibrationPointDAO.CalibrationPointType.UserDefinedCP) {
+          if (!calibrationPointIsPresent || lastEndSegmentLink.last.endCalibrationPointType != UserDefinedCP) {
             val foundCalibrationPoint = ProjectCalibrationPointDAO.findEndCalibrationPoint(endSegment.id, projectId)
             if (foundCalibrationPoint.isEmpty)
               ProjectCalibrationPointDAO.createCalibrationPoint(calibrationPoint)
             else
               ProjectCalibrationPointDAO.updateSpecificCalibrationPointMeasures(foundCalibrationPoint.head.id, addressM.toDouble - endSegment.startMValue, addressM)
-            Seq(CalibrationPoint)
+            Seq(ProjectCalibrationPoint)
           } else
-            Seq.empty[CalibrationPoint]
+            Seq.empty[ProjectCalibrationPoint]
         })
         roadAddressChangeType match {
           case RoadAddressChangeType.Termination =>
@@ -2134,7 +2134,7 @@ class ProjectService(
     val project = projectDAO.fetchById(projectID).get
     val nodeIds = nodeDAO.fetchNodeNumbersByProject(projectID)
     /* Remove userdefined calibrationpoints from calculation. Assume udcp:s defined at projectlink splits. */
-    val projectLinks = projectLinkDAO.fetchProjectLinks(projectID).map(pl => if (pl.calibrationPointTypes._2 == CalibrationPointDAO.CalibrationPointType.UserDefinedCP) pl.copy(calibrationPointTypes = (pl.calibrationPointTypes._1, CalibrationPointDAO.CalibrationPointType.NoCP)) else pl )
+    val projectLinks = projectLinkDAO.fetchProjectLinks(projectID).map(pl => if (pl.calibrationPointTypes._2 == UserDefinedCP) pl.copy(calibrationPointTypes = (pl.calibrationPointTypes._1, NoCP)) else pl )
     if (projectLinks.isEmpty) {
       logger.error(s" There are no addresses to update, rollbacking update of project ${project.id}")
       throw new InvalidAddressDataException(s"There were no addresses to update in project ${project.id}")
