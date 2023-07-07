@@ -8,7 +8,7 @@ import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoC
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.vaylavirasto.viite.geometry.Point
-import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LifecycleStatus, LinkGeomSource, LinkStatus, RoadLink, SideCode, Track, TrafficDirection}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LifecycleStatus, LinkGeomSource, RoadAddressChangeType, RoadLink, SideCode, Track, TrafficDirection}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import org.scalatest.mockito.MockitoSugar
@@ -120,11 +120,11 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
   }
 
   test("Test ProjectAddressLinkBuilder.build() When building project address links from regular project links and road links Then return the build ProjectAddressLinks.") {
-    val unknownProjectLink = ProjectLink(0, 0, 0, Track.Unknown, Discontinuity.Continuous, 0, 0, 0, 0, None, None, None, 0.toString, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), List(), 0, LinkStatus.NotHandled, AdministrativeClass.Unknown, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 8, reversed = false, None, 85088L)
+    val unknownProjectLink = ProjectLink(   0,    0, 0, Track.Unknown,  Discontinuity.Continuous,    0,    0,    0,    0, None, None, None,       0.toString, 0.0,  0.0, SideCode.Unknown,           (NoCP, NoCP), (NoCP, NoCP), List(),    0, RoadAddressChangeType.NotHandled, AdministrativeClass.Unknown, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 8, reversed = false, None, 85088L)
     val projectLinks =
       Map(
-        1717380l.toString -> ProjectLink(1270, 0, 0, Track.apply(99), Discontinuity.Continuous, 1021, 1028, 1021, 1028, None, None, None, 1717380.toString, 0.0, 6.0,  SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP), List(), 1227, LinkStatus.NotHandled, AdministrativeClass.Unknown, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 8, reversed = false, None, 85088L),
-        1717374l.toString -> ProjectLink(1259, 1130, 0, Track.Combined, Discontinuity.Continuous, 959, 1021, 959, 1021, None, None, None, 1717374.toString, 0.0, 61.0,  SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP), List(), 1227, LinkStatus.NotHandled, AdministrativeClass.Unknown, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 8, reversed = false, None, 85088L)
+        1717380l.toString -> ProjectLink(1270,    0, 0, Track.Unknown,  Discontinuity.Continuous, 1021, 1028, 1021, 1028, None, None, None, 1717380.toString, 0.0,  6.0, SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP), List(), 1227, RoadAddressChangeType.NotHandled, AdministrativeClass.Unknown, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 8, reversed = false, None, 85088L),
+        1717374l.toString -> ProjectLink(1259, 1130, 0, Track.Combined, Discontinuity.Continuous,  959, 1021,  959, 1021, None, None, None, 1717374.toString, 0.0, 61.0, SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP), List(), 1227, RoadAddressChangeType.NotHandled, AdministrativeClass.Unknown, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 8, reversed = false, None, 85088L)
       )
 
     val roadLinks = Seq(

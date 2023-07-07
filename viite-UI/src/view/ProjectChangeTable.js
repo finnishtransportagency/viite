@@ -3,7 +3,7 @@
 
     // change table is not open in the beginning of the project
     var changeTableOpen = false;
-    var LinkStatus = ViiteEnumerations.LinkStatus;
+    var RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
     var ProjectStatus = ViiteEnumerations.ProjectStatus;
     var windowMaximized = false;
     var formCommon = new FormCommon('');
@@ -132,13 +132,13 @@
             rowColorClass = 'white-row';
           }
           htmlTable += '<tr class="row-changes ' + rowColorClass + '">';
-          if (changeInfoSeq.changetype === LinkStatus.New.value) {
+          if (changeInfoSeq.changetype === RoadAddressChangeType.New.value) {
             htmlTable += getEmptySource(changeInfoSeq);
           } else {
             htmlTable += getSourceInfo(changeInfoSeq);
           }
           htmlTable += getReversed(changeInfoSeq);
-          if (changeInfoSeq.changetype === LinkStatus.Terminated.value) {
+          if (changeInfoSeq.changetype === RoadAddressChangeType.Terminated.value) {
             htmlTable += getEmptyTarget();
           } else {
             htmlTable += getTargetInfo(changeInfoSeq);

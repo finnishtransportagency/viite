@@ -7,7 +7,7 @@ import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{No
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao._
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Matrix, Point, Vector3d}
-import fi.vaylavirasto.viite.model.{Discontinuity, LinkStatus, SideCode, Track}
+import fi.vaylavirasto.viite.model.{Discontinuity, RoadAddressChangeType, SideCode, Track}
 
 import scala.annotation.tailrec
 
@@ -35,7 +35,7 @@ object TrackSectionOrder {
 
       val startPointMinDistance = unprocessed.map(mapDistances(projectLinkChain.startPoint)).minBy(_.distance)
       val endPointMinDistance = unprocessed.map(mapDistances(projectLinkChain.endPoint)).minBy(_.distance)
-      val calculatedEndPoint = if (endPointMinDistance.projectLink.status == LinkStatus.New && endPointMinDistance.projectLink.endAddrMValue == 0) endPointMinDistance.point else endPointMinDistance.projectLink.endPoint
+      val calculatedEndPoint = if (endPointMinDistance.projectLink.status == RoadAddressChangeType.New && endPointMinDistance.projectLink.endAddrMValue == 0) endPointMinDistance.point else endPointMinDistance.projectLink.endPoint
       val (resultProjectLinkChain, newUnprocessed) = if (startPointMinDistance.distance > endPointMinDistance.distance || endPointMinDistance.projectLink.startAddrMValue == projectLinkChain.sortedProjectLinks.last.endAddrMValue && endPointMinDistance.projectLink.endAddrMValue != 0 && projectLinkChain.sortedProjectLinks.last.endAddrMValue != 0)
         (projectLinkChain.copy(sortedProjectLinks = projectLinkChain.sortedProjectLinks :+ endPointMinDistance.projectLink, endPoint = calculatedEndPoint), unprocessed.filterNot(pl => pl.id == endPointMinDistance.projectLink.id))
       else
@@ -192,9 +192,9 @@ object TrackSectionOrder {
         val sideCode = if (hit.geometry.last == nextPoint) SideCode.TowardsDigitizing else SideCode.AgainstDigitizing
         val prevAddrM = ready.last.endAddrMValue
         val endAddrM = hit.status match {
-          case LinkStatus.NotHandled | LinkStatus.UnChanged | LinkStatus.Transfer | LinkStatus.Numbering =>
+          case RoadAddressChangeType.NotHandled | RoadAddressChangeType.Unchanged | RoadAddressChangeType.Transfer | RoadAddressChangeType.Renumeration =>
             ready.last.endAddrMValue + (hit.endAddrMValue - hit.startAddrMValue)
-          case LinkStatus.New =>
+          case RoadAddressChangeType.New =>
             prevAddrM + Math.round(hit.geometryLength)
           case _ =>
             hit.endAddrMValue
@@ -209,7 +209,7 @@ object TrackSectionOrder {
     // Put calibration point at the beginning
     val ordered = recursive(firstLink.geometry.last, Seq(adjust(firstLink, sideCode = Some(SideCode.TowardsDigitizing),
       startAddrMValue = Some(0L), endAddrMValue =
-        Some(if (firstLink.status == LinkStatus.New)
+        Some(if (firstLink.status == RoadAddressChangeType.New)
           Math.round(firstLink.geometryLength)
         else
           firstLink.endAddrMValue - firstLink.startAddrMValue),
@@ -222,7 +222,7 @@ object TrackSectionOrder {
 
         Seq(adjust(firstLink, sideCode = Some(SideCode.AgainstDigitizing),
           startAddrMValue = Some(0L), endAddrMValue =
-            Some(if (firstLink.status == LinkStatus.New)
+            Some(if (firstLink.status == RoadAddressChangeType.New)
               Math.round(firstLink.geometryLength)
             else
               firstLink.endAddrMValue - firstLink.startAddrMValue),
@@ -426,7 +426,7 @@ object TrackSectionOrder {
 
   protected def setOnSideCalibrationPoints(initialProjectLinks: Seq[ProjectLink], userCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): Seq[ProjectLink] = {
 
-    if (initialProjectLinks.head.status == LinkStatus.NotHandled)
+    if (initialProjectLinks.head.status == RoadAddressChangeType.NotHandled)
       initialProjectLinks
     else
       initialProjectLinks.size match {

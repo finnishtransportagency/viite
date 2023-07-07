@@ -2,12 +2,12 @@ package fi.liikennevirasto.viite.model
 
 import fi.liikennevirasto.digiroad2.linearasset.GraphPartitioner
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.LinkStatus
+import fi.vaylavirasto.viite.model.RoadAddressChangeType
 
 object ProjectLinkPartitioner extends GraphPartitioner {
 
   def partition[T <: ProjectAddressLinkLike](projectLinks: Seq[T]): Seq[Seq[T]] = {
-    val (outside, inProject) = projectLinks.partition(_.status == LinkStatus.Unknown)
+    val (outside, inProject) = projectLinks.partition(_.status == RoadAddressChangeType.Unknown)
     val inProjectGroups = inProject.groupBy(l => (l.status, l.roadNumber, l.roadPartNumber, l.trackCode, l.administrativeClass, l.elyCode))
     val (outsideWithRoadName, outsideWithoutRoadName) = outside.partition(link => link.roadNumber != 0 && link.roadPartNumber != 0)
     val groupedUnnamedRoads = groupRoadsWithoutName(Seq(), Seq(), outsideWithoutRoadName, outsideWithoutRoadName)

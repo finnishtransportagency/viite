@@ -12,7 +12,7 @@ import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.process.RoadAddressFiller.ChangeSet
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils}
-import fi.vaylavirasto.viite.model.{AddressChangeType, BeforeAfter, Discontinuity, RoadLink, SideCode, Track}
+import fi.vaylavirasto.viite.model.{RoadAddressChangeType, BeforeAfter, Discontinuity, RoadLink, SideCode, Track}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
@@ -957,8 +957,8 @@ class RoadAddressService(
     try {
 
       val projectRoadwayChanges = roadwayChanges.filter(rw => List(
-        AddressChangeType.Transfer, AddressChangeType.ReNumeration,
-        AddressChangeType.Unchanged, AddressChangeType.Termination
+        RoadAddressChangeType.Transfer, RoadAddressChangeType.Renumeration,
+        RoadAddressChangeType.Unchanged, RoadAddressChangeType.Termination
       ).contains(rw.changeInfo.changeType))
       val updatedRoadwayPoints: Seq[RoadwayPoint] = projectRoadwayChanges.sortBy(_.changeInfo.target.startAddressM).foldLeft(
         Seq.empty[RoadwayPoint]) { (list, rwc) =>
@@ -970,7 +970,7 @@ class RoadAddressService(
             (source.startRoadPartNumber.get to source.endRoadPartNumber.get contains entry.roadPartNumber) &&
             entry.originalStartAddr >= source.startAddressM.get && entry.originalEndAddr <= source.endAddressM.get
         }
-        val roadwayNumbers = if (change.changeType == AddressChangeType.Termination) {
+        val roadwayNumbers = if (change.changeType == RoadAddressChangeType.Termination) {
           terminatedRoadwayNumbersChanges.map(_.newRoadwayNumber).distinct
         } else {
           val roadwayNumbersInOriginalRoadPart = projectLinkChanges.filter(lc => lc.originalRoadNumber == source.roadNumber.get && lc.originalRoadPartNumber == source.startRoadPartNumber.get && lc.status.value == change.changeType.value)
@@ -988,7 +988,7 @@ class RoadAddressService(
         }.distinct
 
         if (roadwayPoints.nonEmpty) {
-          if (change.changeType == AddressChangeType.Transfer || change.changeType == AddressChangeType.Unchanged) {
+          if (change.changeType == RoadAddressChangeType.Transfer || change.changeType == RoadAddressChangeType.Unchanged) {
             if (!change.reversed) {
               val rwPoints: Seq[RoadwayPoint] = roadwayPoints.flatMap { rwp =>
 
@@ -1017,7 +1017,7 @@ class RoadAddressService(
               }
               list ++ rwPoints
             }
-          } else if (change.changeType == AddressChangeType.ReNumeration) {
+          } else if (change.changeType == RoadAddressChangeType.Renumeration) {
             if (change.reversed) {
               val rwPoints: Seq[RoadwayPoint] = roadwayPoints.flatMap { rwp =>
                 val newAddrM = Seq(source.endAddressM.get, target.endAddressM.get).max - rwp.addrMValue
@@ -1027,7 +1027,7 @@ class RoadAddressService(
             } else {
               list
             }
-          } else if (change.changeType == AddressChangeType.Termination) {
+          } else if (change.changeType == RoadAddressChangeType.Termination) {
             val rwPoints: Seq[RoadwayPoint] = roadwayPoints.flatMap { rwp =>
               val terminatedRoadAddress = terminatedRoadwayNumbersChanges.find(change => change.originalRoadwayNumber == rwp.roadwayNumber &&
                 change.originalStartAddr >= source.startAddressM.get && change.originalEndAddr <= source.endAddressM.get

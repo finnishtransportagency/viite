@@ -3,7 +3,7 @@ package fi.liikennevirasto.viite.process.strategy
 import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.ProjectLink
-import fi.vaylavirasto.viite.model.{LinkStatus, Track}
+import fi.vaylavirasto.viite.model.{RoadAddressChangeType, Track}
 
 
 class LinkStatusChangeTrackCalculatorStrategy extends TrackCalculatorStrategy {
@@ -16,7 +16,7 @@ class LinkStatusChangeTrackCalculatorStrategy extends TrackCalculatorStrategy {
 
   override def applicableStrategy(headProjectLink: ProjectLink, projectLink: ProjectLink): Boolean = {
     //Will be applied if the link status changes for every status change detected and track is Left or Right
-    projectLink.status != headProjectLink.status && (projectLink.status != LinkStatus.New && headProjectLink.status != LinkStatus.New) &&
+    projectLink.status != headProjectLink.status && (projectLink.status != RoadAddressChangeType.New && headProjectLink.status != RoadAddressChangeType.New) &&
       (projectLink.track == Track.LeftSide || projectLink.track == Track.RightSide)
   }
 
@@ -47,7 +47,7 @@ class LinkStatusChangeTrackCalculatorStrategy extends TrackCalculatorStrategy {
 }
 
 
-class TerminatedLinkStatusChangeStrategy extends  LinkStatusChangeTrackCalculatorStrategy {
+class TerminationOperationChangeStrategy extends  LinkStatusChangeTrackCalculatorStrategy {
 
   protected def adjustTwoTrackss(startAddress: Option[Long], endAddress: Option[Long], leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink], calibrationPoints: Map[Long, UserDefinedCalibrationPoint],
                                 restLeftProjectLinks: Seq[ProjectLink] = Seq(), restRightProjectLinks: Seq[ProjectLink] = Seq()): TrackCalculatorResult = {
@@ -69,7 +69,7 @@ class TerminatedLinkStatusChangeStrategy extends  LinkStatusChangeTrackCalculato
   override def applicableStrategy(headProjectLink: ProjectLink, projectLink: ProjectLink): Boolean = {
     //Will be applied if the link status changes FROM or TO a status equal "TERMINATED" and track is Left or Right
     projectLink.status != headProjectLink.status &&
-      (projectLink.status == LinkStatus.Terminated || headProjectLink.status == LinkStatus.Terminated) &&
+      (projectLink.status == RoadAddressChangeType.Termination || headProjectLink.status == RoadAddressChangeType.Termination) &&
       (projectLink.track == Track.Combined && headProjectLink.track != Track.Combined)
   }
 

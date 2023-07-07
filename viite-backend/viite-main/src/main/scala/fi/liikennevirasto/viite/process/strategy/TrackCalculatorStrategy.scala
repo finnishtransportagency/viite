@@ -6,7 +6,7 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.process.{ProjectSectionMValueCalculator, TrackAddressingFactors}
 import fi.vaylavirasto.viite.geometry.GeometryUtils
-import fi.vaylavirasto.viite.model.{Discontinuity, LinkStatus}
+import fi.vaylavirasto.viite.model.{Discontinuity, RoadAddressChangeType}
 import org.slf4j.LoggerFactory
 
 
@@ -20,15 +20,15 @@ object TrackCalculatorContext {
     new DefaultTrackCalculatorStrategy
   }
 
-  private lazy val terminatedLinkStatusChangeStrategy: TerminatedLinkStatusChangeStrategy = {
-    new TerminatedLinkStatusChangeStrategy
+  private lazy val terminationOperationChangeStrategy: TerminationOperationChangeStrategy = {
+    new TerminationOperationChangeStrategy
   }
 
   private lazy val defaultTrackCalculatorStrategy: DefaultTrackCalculatorStrategy = {
     new DefaultTrackCalculatorStrategy
   }
 
-  private val strategies = Seq(minorDiscontinuityStrategy, discontinuousStrategy, terminatedLinkStatusChangeStrategy)
+  private val strategies = Seq(minorDiscontinuityStrategy, discontinuousStrategy, terminationOperationChangeStrategy)
 
   def getNextStrategy(projectLinks: Seq[ProjectLink]): Option[(Long, TrackCalculatorStrategy)] = {
     val head = projectLinks.head
@@ -149,7 +149,7 @@ trait TrackCalculatorStrategy {
   }
 
   protected def setLastEndAddrMValue(projectLinks: Seq[ProjectLink], endAddressMValue: Long): Seq[ProjectLink] = {
-    if (projectLinks.last.status != LinkStatus.NotHandled) {
+    if (projectLinks.last.status != RoadAddressChangeType.NotHandled) {
       if (projectLinks.last.startAddrMValue > endAddressMValue) {
         val logger = LoggerFactory.getLogger(getClass)
         logger.error(s"Averaged address caused negative length. " +
@@ -180,7 +180,7 @@ trait TrackCalculatorStrategy {
     def addressLengthRight = Math.max(0, rightProjectLinks.last.originalEndAddrMValue - rightProjectLinks.last.originalStartAddrMValue)
     def addressLengthLeft  = Math.max(0, leftProjectLinks.last.originalEndAddrMValue  -  leftProjectLinks.last.originalStartAddrMValue)
 
-    val minimumEndAddress = (leftProjectLinks.exists(_.status == LinkStatus.New), rightProjectLinks.exists(_.status == LinkStatus.New)) match {
+    val minimumEndAddress = (leftProjectLinks.exists(_.status == RoadAddressChangeType.New), rightProjectLinks.exists(_.status == RoadAddressChangeType.New)) match {
       case (true,true) => fixedMinimimumAddress
       case (true, false)  => rightProjectLinks.last.startAddrMValue + addressLengthRight
       case (false, true)  => leftProjectLinks.last.startAddrMValue + addressLengthLeft

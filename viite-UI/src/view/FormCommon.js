@@ -188,7 +188,7 @@
     };
 
     const directionChangedInfo = function (selected, isPartialReversed) {
-      if (selected[0].status === ViiteEnumerations.LinkStatus.New.value) return '';
+      if (selected[0].status === ViiteEnumerations.RoadAddressChangeType.New.value) return '';
       if (isPartialReversed) {
         return '<label class="form-group">Osittain käännetty</label>';
       } else if (selected[0].reversed) {

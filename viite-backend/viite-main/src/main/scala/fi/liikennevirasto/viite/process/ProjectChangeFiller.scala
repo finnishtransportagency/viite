@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.viite.ProjectRoadLinkChange
 import fi.liikennevirasto.viite.dao.{ProjectLink, ProjectRoadwayChange, RoadAddress}
-import fi.vaylavirasto.viite.model.LinkStatus
+import fi.vaylavirasto.viite.model.RoadAddressChangeType
 
 object ProjectChangeFiller {
   def mapLinksToChanges(roadwayChanges: List[ProjectRoadwayChange], roadwayProjectLinkIds: Seq[(Long, Long)], projectLinks: Seq[ProjectLink], projectLinkChanges: Seq[ProjectRoadLinkChange]): Seq[(ProjectRoadwayChange, Seq[ProjectLink])] = {
@@ -19,7 +19,7 @@ object ProjectChangeFiller {
   }
 
   def mapAddressProjectionsToLinks(roadwayLinks: Seq[ProjectLink], projectLinkChanges: Seq[ProjectRoadLinkChange], mappedRoadAddressesProjection: Seq[RoadAddress]): (Seq[ProjectLink], Seq[ProjectRoadLinkChange]) = {
-    val (terminatedRoadwayLinks, validRoadwayLinks) = roadwayLinks.partition(_.status == LinkStatus.Terminated)
+    val (terminatedRoadwayLinks, validRoadwayLinks) = roadwayLinks.partition(_.status == RoadAddressChangeType.Termination)
     val enrichedProjectLinks = validRoadwayLinks.map { l =>
       val ra = mappedRoadAddressesProjection.find(_.linearLocationId == l.linearLocationId)
       if (ra.isDefined)
@@ -28,7 +28,7 @@ object ProjectChangeFiller {
         None
     }.filter(_.isDefined).map(_.get) ++ terminatedRoadwayLinks
 
-    val (terminatedProjectLinkChanges, validProjectLinkChanges) = projectLinkChanges.partition(_.status == LinkStatus.Terminated)
+    val (terminatedProjectLinkChanges, validProjectLinkChanges) = projectLinkChanges.partition(_.status == RoadAddressChangeType.Termination)
     val enrichedProjectRoadLinkChanges = validProjectLinkChanges.map { rlc =>
       val pl = enrichedProjectLinks.find(_.id == rlc.id)
       if (pl.isDefined) {

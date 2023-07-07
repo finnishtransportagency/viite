@@ -7,7 +7,7 @@ import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{Ju
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.process.{RoadwayAddressMapper, TrackSectionOrder}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.{Discontinuity, LinkStatus, Track}
+import fi.vaylavirasto.viite.model.{Discontinuity, RoadAddressChangeType, Track}
 import org.slf4j.LoggerFactory
 
 import scala.language.postfixOps
@@ -253,7 +253,7 @@ object TwoTrackRoadUtils {
         val hasOtherSideLink = roadPartLinks.filter(pl =>
           pl.track  != Track.Combined &&
           pl.track  != last.track &&
-          pl.status != LinkStatus.NotHandled &&
+          pl.status != RoadAddressChangeType.NotHandled &&
           (pl.startAddrMValue < last.endAddrMValue && pl.endAddrMValue >= last.endAddrMValue)
         )
 
@@ -418,7 +418,7 @@ object TwoTrackRoadUtils {
         val hasOtherSideLink = roadPartLinks.filter(pl =>
           pl.track          != Track.Combined &&
           pl.track          != last.track &&
-          pl.status         != LinkStatus.NotHandled &&
+          pl.status         != RoadAddressChangeType.NotHandled &&
           pl.startAddrMValue < last.endAddrMValue &&
           pl.endAddrMValue  >= last.endAddrMValue
         )
@@ -551,8 +551,8 @@ object TwoTrackRoadUtils {
 
         val hasOtherSideLink = roadPartLinks.filter(pl =>
           pl.originalTrack          != Track.Combined &&
-          pl.status                 != LinkStatus.NotHandled &&
-          pl.status                 != LinkStatus.New &&
+          pl.status                 != RoadAddressChangeType.NotHandled &&
+          pl.status                 != RoadAddressChangeType.New &&
           pl.originalStartAddrMValue < splitAddress &&
           pl.originalEndAddrMValue  > splitAddress
         )
@@ -608,7 +608,7 @@ object TwoTrackRoadUtils {
         continuousByStatus(continuousOriginalAddressSection._2, addtomap(continuousOriginalAddressSection._1, result))
       }
     }
-    val filterNew = projectLinkSeq.filter(_.status != LinkStatus.New)
+    val filterNew = projectLinkSeq.filter(_.status != RoadAddressChangeType.New)
     val filteredProjectLinks = if (filterNew.nonEmpty) filterNew.init else Seq()
     continuousByStatus(filteredProjectLinks.sortBy(_.originalStartAddrMValue))
   }
@@ -623,11 +623,11 @@ object TwoTrackRoadUtils {
   }) ++ news).sortBy(_.startAddrMValue)
 
   def filterOldLinks(pls: Seq[ProjectLink]) = {
-    val filtered = pls.filter(_.status != LinkStatus.New)
+    val filtered = pls.filter(_.status != RoadAddressChangeType.New)
     if (filtered.nonEmpty) filtered.init else Seq()
   }
   def filterExistingLinks(pl: ProjectLink) =
-    pl.status != LinkStatus.New && pl.track != Track.Combined
+    pl.status != RoadAddressChangeType.New && pl.track != Track.Combined
 
   def splitByOriginalAddresses(pls: Seq[ProjectLink], originalAddressEnds: Seq[Long]) = {
     originalAddressEnds.foldLeft(pls)((l1, l2) => {
