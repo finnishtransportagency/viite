@@ -568,16 +568,7 @@
     };
 
     this.getProjectErrors = function () {
-      var errors = _.each(projectErrors, function (error) {
-        var errorIds = error.ids;
-        error.linkIds = [];
-        _.each(projectLinks(), function (pl) {
-          if (_.includes(errorIds, pl.getData().id)) {
-            error.linkIds.push(pl.getData().linkId);
-          }
-        });
-      });
-      return (!_.isUndefined(errors) && errors.length > 0) ? errors : [];
+      return projectErrors;
     };
 
     this.pushCoordinates = function (button) {
