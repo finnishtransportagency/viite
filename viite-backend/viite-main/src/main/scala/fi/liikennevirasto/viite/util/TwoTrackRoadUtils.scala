@@ -3,11 +3,10 @@ package fi.liikennevirasto.viite.util
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{JunctionPointCP, NoCP, UserDefinedCP}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.process.{RoadwayAddressMapper, TrackSectionOrder}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.{Discontinuity, RoadAddressChangeType, Track}
+import fi.vaylavirasto.viite.model.{CalibrationPointType, Discontinuity, RoadAddressChangeType, Track}
 import org.slf4j.LoggerFactory
 
 import scala.language.postfixOps
@@ -136,12 +135,12 @@ object TwoTrackRoadUtils {
         if (pl.calibrationPoints._1.isDefined)
           (
             pl.calibrationPoints._1.get.typeCode,
-            CalibrationPointDAO.CalibrationPointType.UserDefinedCP
+            CalibrationPointType.UserDefinedCP
           )
         else
           (
-            CalibrationPointDAO.CalibrationPointType.NoCP,
-            CalibrationPointDAO.CalibrationPointType.UserDefinedCP
+            CalibrationPointType.NoCP,
+            CalibrationPointType.UserDefinedCP
           )
       val calsForSecondPart = getCalibrationPointsForSecondPart(pl)
       val addressLength =
@@ -180,10 +179,10 @@ object TwoTrackRoadUtils {
      *
      */
     def createCalibrationPoints(
-      startCP:              CalibrationPointDAO.CalibrationPointType,
-      endCP:                CalibrationPointDAO.CalibrationPointType,
-      otherSideLinkStartCP: CalibrationPointDAO.CalibrationPointType,
-      otherSideLinkEndCP:   CalibrationPointDAO.CalibrationPointType,
+      startCP:              CalibrationPointType,
+      endCP:                CalibrationPointType,
+      otherSideLinkStartCP: CalibrationPointType,
+      otherSideLinkEndCP:   CalibrationPointType,
       otherSideLink:        ProjectLink
     ): (Seq[Option[UserDefinedCalibrationPoint]], Option[(ProjectLink, ProjectLink)]) = {
       val leftCalibrationPoint =
@@ -263,22 +262,22 @@ object TwoTrackRoadUtils {
           val otherSideLink = hasOtherSideLink(indexOfMin)
 
           val startCP = last.startCalibrationPointType match {
-            case JunctionPointCP => JunctionPointCP
-            case UserDefinedCP   => UserDefinedCP
-            case _               => NoCP
+            case CalibrationPointType.JunctionPointCP => CalibrationPointType.JunctionPointCP
+            case CalibrationPointType.UserDefinedCP   => CalibrationPointType.UserDefinedCP
+            case _               => CalibrationPointType.NoCP
           }
           val endCP = last.endCalibrationPointType match {
-            case JunctionPointCP => JunctionPointCP
-            case _               => UserDefinedCP
+            case CalibrationPointType.JunctionPointCP => CalibrationPointType.JunctionPointCP
+            case _               => CalibrationPointType.UserDefinedCP
           }
           val otherSideLinkStartCP = otherSideLink.startCalibrationPointType match {
-            case JunctionPointCP => JunctionPointCP
-            case UserDefinedCP   => UserDefinedCP
-            case _               => NoCP
+            case CalibrationPointType.JunctionPointCP => CalibrationPointType.JunctionPointCP
+            case CalibrationPointType.UserDefinedCP   => CalibrationPointType.UserDefinedCP
+            case _               => CalibrationPointType.NoCP
           }
           val otherSideLinkEndCP = otherSideLink.endCalibrationPointType match {
-            case JunctionPointCP => JunctionPointCP
-            case _               => UserDefinedCP
+            case CalibrationPointType.JunctionPointCP => CalibrationPointType.JunctionPointCP
+            case _               => CalibrationPointType.UserDefinedCP
           }
 
           if (otherSideLink.endAddrMValue != last.endAddrMValue) {
@@ -388,12 +387,12 @@ object TwoTrackRoadUtils {
         if (pl.calibrationPoints._1.isDefined)
           (
             pl.calibrationPoints._1.get.typeCode,
-            CalibrationPointDAO.CalibrationPointType.NoCP
+            CalibrationPointType.NoCP
           )
         else
           (
-            CalibrationPointDAO.CalibrationPointType.NoCP,
-            CalibrationPointDAO.CalibrationPointType.NoCP
+            CalibrationPointType.NoCP,
+            CalibrationPointType.NoCP
           )
       val calsForSecondPart = getCalibrationPointsForSecondPart(pl)
       val addressLength     = pl.endAddrMValue - address
@@ -450,13 +449,13 @@ object TwoTrackRoadUtils {
   ) = {
     if (pl.calibrationPoints._2.isDefined)
       (
-        CalibrationPointDAO.CalibrationPointType.NoCP,
+        CalibrationPointType.NoCP,
         pl.calibrationPoints._2.get.typeCode
       )
     else
       (
-        CalibrationPointDAO.CalibrationPointType.NoCP,
-        CalibrationPointDAO.CalibrationPointType.NoCP
+        CalibrationPointType.NoCP,
+        CalibrationPointType.NoCP
       )
   }
 
@@ -531,10 +530,10 @@ object TwoTrackRoadUtils {
       val calsForFirstPart =
         if (pl.calibrationPoints._1.isDefined)
           (pl.calibrationPoints._1.get.typeCode,
-           CalibrationPointDAO.CalibrationPointType.NoCP)
+           CalibrationPointType.NoCP)
         else
-          (CalibrationPointDAO.CalibrationPointType.NoCP,
-           CalibrationPointDAO.CalibrationPointType.NoCP)
+          (CalibrationPointType.NoCP,
+           CalibrationPointType.NoCP)
       val calsForSecondPart =
         getCalibrationPointsForSecondPart(pl)
       val splittedEndAddrMValue =

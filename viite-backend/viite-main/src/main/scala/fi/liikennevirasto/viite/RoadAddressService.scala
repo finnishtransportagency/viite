@@ -6,13 +6,12 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.dao.{RoadwayPointDAO, _}
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{CalibrationPointLocation, CalibrationPointType}
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.process.RoadAddressFiller.ChangeSet
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils}
-import fi.vaylavirasto.viite.model.{RoadAddressChangeType, BeforeAfter, Discontinuity, RoadLink, SideCode, Track}
+import fi.vaylavirasto.viite.model.{BeforeAfter, CalibrationPointLocation, CalibrationPointType, Discontinuity, RoadAddressChangeType, RoadLink, SideCode, Track}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 

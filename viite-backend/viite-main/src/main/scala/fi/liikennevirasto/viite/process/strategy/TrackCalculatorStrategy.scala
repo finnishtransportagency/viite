@@ -6,7 +6,7 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.process.{ProjectSectionMValueCalculator, TrackAddressingFactors}
 import fi.vaylavirasto.viite.geometry.GeometryUtils
-import fi.vaylavirasto.viite.model.{Discontinuity, RoadAddressChangeType}
+import fi.vaylavirasto.viite.model.{CalibrationPointType, Discontinuity, RoadAddressChangeType}
 import org.slf4j.LoggerFactory
 
 
@@ -139,7 +139,7 @@ trait TrackCalculatorStrategy {
 
     val reversed = rightLink.reversed || leftLink.reversed
     (leftLink.calibrationPointTypes._2, rightLink.calibrationPointTypes._2) match {
-      case (CalibrationPointDAO.CalibrationPointType.UserDefinedCP, _ ) | (_, CalibrationPointDAO.CalibrationPointType.UserDefinedCP) =>
+      case (CalibrationPointType.UserDefinedCP, _ ) | (_, CalibrationPointType.UserDefinedCP) =>
         userCalibrationPoint.map(c => (c.addressMValue, c.addressMValue)).getOrElse(
           (averageOfAddressMValues(rightLink.startAddrMValue, leftLink.startAddrMValue, reversed), averageOfAddressMValues(rightLink.endAddrMValue, leftLink.endAddrMValue, reversed))
         )

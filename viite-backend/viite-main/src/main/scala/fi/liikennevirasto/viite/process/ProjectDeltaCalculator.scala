@@ -2,8 +2,7 @@ package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.viite
 import fi.liikennevirasto.viite.dao.{ProjectLink, _}
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
-import fi.vaylavirasto.viite.model.{Discontinuity, RoadAddressChangeType, Track}
+import fi.vaylavirasto.viite.model.{CalibrationPointType, Discontinuity, RoadAddressChangeType, Track}
 import org.joda.time.DateTime
 
 /**
@@ -189,7 +188,7 @@ object ProjectDeltaCalculator {
         parallelLastOnCalibrationPoint.nonEmpty
       } else
         false
-  val hasUdcp = r1.calibrationPointTypes._2 == CalibrationPointDAO.CalibrationPointType.UserDefinedCP && r1.status == RoadAddressChangeType.New && r2.status == RoadAddressChangeType.New
+  val hasUdcp = r1.calibrationPointTypes._2 == CalibrationPointType.UserDefinedCP && r1.status == RoadAddressChangeType.New && r2.status == RoadAddressChangeType.New
 
     val openBasedOnSource = hasCalibrationPoint && r1.hasCalibrationPointCreatedInProject
     if (r1.endAddrMValue == r2.startAddrMValue)

@@ -1,7 +1,7 @@
 package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
-import fi.liikennevirasto.viite.dao.{CalibrationPoint, RoadAddress}
+import fi.liikennevirasto.viite.dao.{ProjectCalibrationPoint, RoadAddress}
 import fi.vaylavirasto.viite.model.{LinkGeomSource, SideCode, Track}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}

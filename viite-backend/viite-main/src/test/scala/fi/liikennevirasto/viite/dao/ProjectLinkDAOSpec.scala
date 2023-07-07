@@ -5,11 +5,11 @@ import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.viite.Dummies.dummyLinearLocation
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, RoadAddressCP}
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.liikennevirasto.viite.NewIdValue
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point, Vector3d}
+import fi.vaylavirasto.viite.model.CalibrationPointType.{NoCP, RoadAddressCP}
 import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LinkGeomSource, RoadAddressChangeType, SideCode, Track}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
@@ -74,7 +74,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
     )
   }
 
-  def dummyProjectLink(id: Long, projectId: Long, linkId: String, roadwayId: Long = 0, roadwayNumber: Long = roadwayNumber1, roadNumber: Long = roadNumber1, roadPartNumber: Long = roadPartNumber1, startAddrMValue: Long, endAddrMValue: Long, startMValue: Double, endMValue: Double, endDate: Option[DateTime] = None, calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), geometry: Seq[Point] = Seq(), status: RoadAddressChangeType, administrativeClass: AdministrativeClass, reversed: Boolean, linearLocationId: Long, connectedLinkId: Option[String] = None, track: Track = Track.Combined): ProjectLink =
+  def dummyProjectLink(id: Long, projectId: Long, linkId: String, roadwayId: Long = 0, roadwayNumber: Long = roadwayNumber1, roadNumber: Long = roadNumber1, roadPartNumber: Long = roadPartNumber1, startAddrMValue: Long, endAddrMValue: Long, startMValue: Double, endMValue: Double, endDate: Option[DateTime] = None, calibrationPoints: (Option[ProjectCalibrationPoint], Option[ProjectCalibrationPoint]) = (None, None), geometry: Seq[Point] = Seq(), status: RoadAddressChangeType, administrativeClass: AdministrativeClass, reversed: Boolean, linearLocationId: Long, connectedLinkId: Option[String] = None, track: Track = Track.Combined): ProjectLink =
     ProjectLink(id, roadNumber, roadPartNumber, track, Discontinuity.Continuous, startAddrMValue, endAddrMValue, startAddrMValue, endAddrMValue, Some(DateTime.parse("1901-01-01")), endDate, Some("testUser"), linkId, startMValue, endMValue, SideCode.TowardsDigitizing, (if (calibrationPoints._1.isDefined) calibrationPoints._1.get.typeCode else NoCP, if (calibrationPoints._2.isDefined) calibrationPoints._2.get.typeCode else NoCP), (NoCP, NoCP), geometry, projectId, status, administrativeClass, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geometry), roadwayId, linearLocationId, 0, reversed, connectedLinkId = connectedLinkId, 631152000, roadwayNumber, roadAddressLength = Some(endAddrMValue - startAddrMValue))
 
   private def dummyRoadAddressProject(id: Long, status: ProjectState, reservedParts: Seq[ProjectReservedPart] = List.empty[ProjectReservedPart], coordinates: Option[ProjectCoordinates] = None): Project = {
@@ -131,9 +131,9 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       projectDAO.create(project)
       projectReservedPartDAO.reserveRoadPart(projectId, roadNumber1, roadPartNumber1, project.createdBy)
       val projectLinks = Seq(
-        dummyProjectLink(projectLinkId1, projectId, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1,   0, 100, 0.0, 100.0, None, (Some(CalibrationPoint(linkId1, 0.0, 0, RoadAddressCP)),     None), Seq(), RoadAddressChangeType.New, AdministrativeClass.State, reversed = false, 0)
+        dummyProjectLink(projectLinkId1, projectId, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1,   0, 100, 0.0, 100.0, None, (Some(ProjectCalibrationPoint(linkId1, 0.0, 0, RoadAddressCP)),     None), Seq(), RoadAddressChangeType.New, AdministrativeClass.State, reversed = false, 0)
                                           .copy(originalCalibrationPointTypes = (NoCP, NoCP)),
-        dummyProjectLink(projectLinkId2, projectId, linkId2, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 100, 200, 0.0, 100.0, None, (None, Some(CalibrationPoint(linkId2, 100.0, 200, RoadAddressCP))), Seq(), RoadAddressChangeType.New, AdministrativeClass.State, reversed = false, 0)
+        dummyProjectLink(projectLinkId2, projectId, linkId2, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 100, 200, 0.0, 100.0, None, (None, Some(ProjectCalibrationPoint(linkId2, 100.0, 200, RoadAddressCP))), Seq(), RoadAddressChangeType.New, AdministrativeClass.State, reversed = false, 0)
                                           .copy(originalCalibrationPointTypes = (NoCP, NoCP))
       )
       projectLinkDAO.create(projectLinks)

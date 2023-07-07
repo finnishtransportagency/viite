@@ -2,9 +2,9 @@ package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2.client.kgv.{ChangeInfo, ChangeType, FeatureClass, HistoryRoadLink}
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.vaylavirasto.viite.geometry.Point
+import fi.vaylavirasto.viite.model.CalibrationPointType.NoCP
 import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LifecycleStatus, LinkGeomSource, RoadAddressChangeType, RoadLink, SideCode, Track, TrafficDirection}
 import org.joda.time.DateTime
 

@@ -55,7 +55,7 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
   }
 
 
-  private def build(roadLink: RoadLinkLike, id: Long, geom: Seq[Point], length: Double, roadNumber: Long, roadPartNumber: Long, trackCode: Int, roadName: Option[String], municipalityCode: Int, administrativeClass: AdministrativeClass, discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startMValue: Double, endMValue: Double, sideCode: SideCode, startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint], status: RoadAddressChangeType, roadwayId: Long, linearLocationId: Long, ely: Long, reversed: Boolean, connectedLinkId: Option[String], originalGeometry: Option[Seq[Point]]): ProjectAddressLink = {
+  private def build(roadLink: RoadLinkLike, id: Long, geom: Seq[Point], length: Double, roadNumber: Long, roadPartNumber: Long, trackCode: Int, roadName: Option[String], municipalityCode: Int, administrativeClass: AdministrativeClass, discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startMValue: Double, endMValue: Double, sideCode: SideCode, startCalibrationPoint: Option[ProjectCalibrationPoint], endCalibrationPoint: Option[ProjectCalibrationPoint], status: RoadAddressChangeType, roadwayId: Long, linearLocationId: Long, ely: Long, reversed: Boolean, connectedLinkId: Option[String], originalGeometry: Option[Seq[Point]]): ProjectAddressLink = {
 
     val linkId =
       if (connectedLinkId.nonEmpty && status == RoadAddressChangeType.New)
