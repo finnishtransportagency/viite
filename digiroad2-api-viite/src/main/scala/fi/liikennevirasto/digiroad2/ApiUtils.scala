@@ -18,7 +18,7 @@ import scala.util.Random
 
 object ApiUtils {
   val logger: Logger = LoggerFactory.getLogger(getClass)
-  val s3Service: awsService.S3.type = awsService.S3
+  lazy val s3Service: awsService.S3.type = awsService.S3
   val s3Bucket: String = ViiteProperties.apiS3BucketName
   val objectTTLSeconds: Int =
     if (ViiteProperties.apiS3ObjectTTLSeconds != null) ViiteProperties.apiS3ObjectTTLSeconds.toInt

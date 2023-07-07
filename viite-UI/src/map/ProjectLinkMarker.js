@@ -14,7 +14,7 @@
           src: 'images/link-properties/flag-floating-plus-stick.svg',
           anchor: [0, 1]
         }),
-        zIndex: 10
+        zIndex: ViiteEnumerations.ProjectModeZIndex.DirectionMarker.value
       });
 
       var colorMap =
@@ -57,7 +57,7 @@
             rotation: rl.sideCode === ViiteEnumerations.SideCode.AgainstDigitizing.value ? ((middlePoint.angleFromNorth * Math.PI) / 180) + Math.PI : middlePoint.angleFromNorth * Math.PI / 180,
             src: 'data:image/svg+xml;utf8,' + directionMarker
           }),
-          zIndex: 10
+          zIndex: ViiteEnumerations.ProjectModeZIndex.DirectionMarker.value
         });
       };
       if (roadLink.roadLinkType === -1) {

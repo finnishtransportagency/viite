@@ -90,8 +90,6 @@ package object viite {
   val RampDiscontinuityFoundMessage = "Rampin tieosan sisällä on epäjatkuvuuksia. Tarkista Jatkuu-koodit."
   val DiscontinuityInsideRoadPartMessage = "Epäjatkuvuus (2) voi olla vain tieosan lopussa."
   val DistinctAdministrativeClassesBetweenTracksMessage = "Rinnakkaisilla ajoradoilla eri hallinnollinen luokka."
-  val DiscontinuityOnParallelLinksMessage = "Rinnakkaiselta ajoradalta puuttuu jatkuu-koodi 5 Jatkuva (Rinnakkainen linkki)."
-  val WrongParallelLinksMessage = "Väärä paikka rinnakkaiselle linkille."
   val RoadNotEndingInElyBorderMessage = "Tien lopussa pitää olla jatkuu-koodi 1. Korjaa jatkuu-koodi."
   val RoadContinuesInAnotherElyMessage = "Jatkuu-koodi %s on virheellinen, koska tie jatkuu toisessa ELY:ssa. "
   val MinorDiscontinuousWhenRoadConnectingRoundabout = "Tieosalla on lievä epäjatkuvuus. Määrittele Jatkuvuuskoodi oikein kyseiselle linkille."
@@ -136,6 +134,9 @@ package object viite {
 
   // Viite-2714
   val NoReverseErrorMessage = "Tieosoitteen kääntö ominaisuus on tilapäisesti poissa käytöstä. Tarkista että projektissa ei ole käännettyjä linkkejä."
+
+  val UniformAdminClassOnLinkMessage   = "Linkki voi sisältää vain yhtä hallinnollista luokkaa."
+  val geomLengthDifferenceBetweenTracks = "Huom! Ajoratojen geometriapituuksissa yli 20% poikkeama."
 
   // Nodes and Junctions error messages
   val ReturnedTooManyNodesErrorMessage = "Hakusi palauttaa yli 50 kohdetta, rajaa hakua pienemmäksi."

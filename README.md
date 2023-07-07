@@ -14,16 +14,12 @@ git clone https://github.com/finnishtransportagency/viite.git
 
 Frontend
 ---------
-Install [yarn](https://yarnpkg.com/lang/en/)
-[Install node.js](http://howtonode.org/how-to-install-nodejs) (you will get also [npm](https://npmjs.org/))
-```
-npm install -g yarn
-```
+Install [node.js](https://nodejs.org/en/download/releases) (Version 14.21.3 works well. You will also get [npm](https://npmjs.org/))   
 Fetch and install the dependencies needed by the UI
 ```
-npm install && yarn install
+npm install
 ```
-Install [grunt](http://gruntjs.com/getting-started)
+Install [grunt-cli](http://gruntjs.com/getting-started) if you want to run grunt from the command line
 ```
 npm install -g grunt-cli
 ```
@@ -43,14 +39,6 @@ PostGIS server can be stopped with the `aws/local-dev/postgis/stop-postgis.sh` s
 Docker Compose installs and starts the PostGIS database server.
 
 [Read more about Viite PostGIS here](aws/local-dev/postgis/README.md)
-
-Required Integrations
----------------------
-Viite needs to get the links, the background maps and the coordinates for addresses
-from external systems. For these connections to work, open Väylä VPN and
-open SSH-tunnel with the needed port forwardings to a Väylä server.
-- 9180: Viite running in devtest environment (TODO: When we are fully in AWS, this needs to be changed.)
-- 8997: OAG
 
 Idea Run Configurations
 -----------------------
@@ -72,6 +60,16 @@ by copying the xml-files from the `aws/local-dev/idea-run-configurations` folder
   - Run the backend server
 - Test.xml
   - Run the backend unit tests (needs the fixture reset test data)
+
+Add the following environment variables to the run configurations. 
+The api keys can be found from the Viite project's Confluence page. (You need a permission to view the password page in Confluence) 
+- Server & Test 
+  - kgvApiKey
+  - rasterServiceApiKey
+  - vkmApiKey
+
+- Grunt Server
+  - rasterServiceApiKey
   
 Building and Running the Backend
 ---------------------------------

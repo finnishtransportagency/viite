@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.util.Track.LeftSide
 import fi.liikennevirasto.viite.RoadAddressFilters.{connectingBothHeads, continuousTopology, reversedConnectingBothHeads, reversedContinuousTopology}
 import fi.liikennevirasto.viite.dao.BeforeAfter.{After, Before}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{CalibrationPointLocation, CalibrationPointType}
-import fi.liikennevirasto.viite.dao.Discontinuity.{Discontinuous, MinorDiscontinuity, ParallelLink}
+import fi.liikennevirasto.viite.dao.Discontinuity.{Discontinuous, MinorDiscontinuity}
 import fi.liikennevirasto.viite.dao.NodePointType.RoadNodePoint
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.RoadAddressLink
@@ -1048,7 +1048,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
     def discontinuousPartIntersection(junctionPointsToCheck: Seq[JunctionPoint]): Boolean = {
       junctionPointsToCheck.groupBy(jp => (jp.roadNumber, jp.roadPartNumber, jp.addrM, jp.beforeAfter)).keys.size > 2 ||
-        junctionPointsToCheck.filter(_.beforeAfter == Before).exists(jp => List(Discontinuous, MinorDiscontinuity, ParallelLink).contains(jp.discontinuity))
+        junctionPointsToCheck.filter(_.beforeAfter == Before).exists(jp => List(Discontinuous, MinorDiscontinuity).contains(jp.discontinuity))
     }
 
     def rampsAndRoundaboutsDiscontinuityInSameOwnRoadNumber(junctionPointsToCheck: Seq[JunctionPoint]): Boolean = {

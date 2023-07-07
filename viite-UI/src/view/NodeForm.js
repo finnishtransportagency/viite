@@ -119,7 +119,7 @@
         '   <div>' +
         staticField('Solmunumero:', nodeNumber) +
         staticField('Koordinaatit (<i>P</i>, <i>I</i>):', '<span id="node-coordinates">' + node.coordinates.y + ', ' + node.coordinates.x + '</span>') +
-        inputFieldRequired('Solmun nimi', 'nodeName', '', nodeName, 'maxlength', 32) +
+        inputFieldRequired('Solmun nimi', 'nodeName', '', nodeName, 'maxlength', 30) +
         addNodeTypeDropdown('Solmutyyppi', 'nodeTypeDropdown', getNodeType(node.type)) +
         inputFieldRequired('Alkupvm', 'nodeStartDate', 'pp.kk.vvvv', startDate, 'disabled', true) +
         '   <div class="form-check-date-notifications"> ' +

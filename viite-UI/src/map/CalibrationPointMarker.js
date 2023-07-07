@@ -2,7 +2,6 @@
   root.CalibrationPoint = function (data) {
     var cachedMarker = null;
     var cachedDirectionArrow = null;
-    var firstCustomCalibrationPointValue = 4;
     var createCalibrationPointMarker = function () {
       const marker = new ol.Feature({
         geometry: new ol.geom.Point([data.points.x, data.points.y])
@@ -15,17 +14,7 @@
             anchor: [0.5, 1]
           })
         });
-
-        var calibrationPointMarkerStyleCustom = new ol.style.Style({
-          image: new ol.style.Icon({
-            src: "images/custom-calibration-point.svg",
-            anchor: [0.5, 1]
-          })
-        });
-        if (data.calibrationCode <= firstCustomCalibrationPointValue)
-          marker.setStyle(calibrationPointMarkerStyle);
-        else
-          marker.setStyle(calibrationPointMarkerStyleCustom);
+        marker.setStyle(calibrationPointMarkerStyle);
       }
       return marker;
     };

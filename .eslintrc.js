@@ -128,7 +128,7 @@ module.exports = {
         "consistent-this": ["warn", "me"],
         "curly": "off",
         "default-case": "error",
-        "dot-location": "warn",
+        "dot-location": "off",
         "dot-notation": "error",
         "eol-last": "warn",
         "eqeqeq": "warn",

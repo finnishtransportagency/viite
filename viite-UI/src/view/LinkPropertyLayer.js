@@ -3,18 +3,14 @@
     Layer.call(this, map);
     var me = this;
 
-    var underConstructionMarkerVector = new ol.source.Vector({});
     var directionMarkerVector = new ol.source.Vector({});
+    var selectedDirectionMarkerVector = new ol.source.Vector({});
     var calibrationPointVector = new ol.source.Vector({});
     var underConstructionRoadLayerVector = new ol.source.Vector({});
     var unAddressedRoadLayerVector = new ol.source.Vector({});
     var reservedRoadVector = new ol.source.Vector({});
-
+    var selectedRoadVector = new ol.source.Vector({});
     var SelectionType = ViiteEnumerations.SelectionType;
-    var lifecycleStatus = ViiteEnumerations.lifecycleStatus;
-    var SideCode = ViiteEnumerations.SideCode;
-    var RoadZIndex = ViiteEnumerations.RoadZIndex;
-
     var isActiveLayer = false;
     var cachedMarker = null;
 
@@ -23,21 +19,14 @@
     var directionMarkerLayer = new ol.layer.Vector({
       source: directionMarkerVector,
       name: 'directionMarkerLayer',
-      zIndex: RoadZIndex.DirectionMarkerLayer.value
+      zIndex: ViiteEnumerations.ViewModeZIndex.DirectionMarker.value
     });
     directionMarkerLayer.set('name', 'directionMarkerLayer');
-
-    var underConstructionMarkerLayer = new ol.layer.Vector({
-      source: underConstructionMarkerVector,
-      name: 'underConstructionMarkerLayer',
-      zIndex: RoadZIndex.DirectionMarkerLayer.value
-    });
-    underConstructionMarkerLayer.set('name', 'underConstructionMarkerLayer');
 
     var calibrationPointLayer = new ol.layer.Vector({
       source: calibrationPointVector,
       name: 'calibrationPointLayer',
-      zIndex: RoadZIndex.CalibrationPointLayer.value
+      zIndex: ViiteEnumerations.ViewModeZIndex.CalibrationPoint.value
     });
     calibrationPointLayer.set('name', 'calibrationPointLayer');
 
@@ -45,7 +34,7 @@
     var reservedRoadLayer = new ol.layer.Vector({
       source: reservedRoadVector,
       name: 'reservedRoadLayer',
-      zIndex: RoadZIndex.ReservedRoadLayer.value
+      zIndex: ViiteEnumerations.ViewModeZIndex.ReservedRoad.value
     });
     reservedRoadLayer.set('name', 'reservedRoadLayer');
 
@@ -53,8 +42,7 @@
       source: underConstructionRoadLayerVector,
       name: 'underConstructionRoadLayer',
       style: function (feature) {
-        return [roadLinkStyler.getBorderStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)}), roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)}),
-          roadLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)})];
+        return roadLinkStyler.getUnderConstructionStyles(feature.linkData, map);
       }
     });
     underConstructionRoadLayer.set('name', 'underConstructionRoadLayer');
@@ -63,22 +51,65 @@
       source: unAddressedRoadLayerVector,
       name: 'unAddressedRoadLayer',
       style: function (feature) {
-        return [roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)}),
-          roadLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)})];
+        return roadLinkStyler.getUnAddressedStyles(feature.linkData, map);
       }
     });
     unAddressedRoadLayer.set('name', 'unAddressedRoadLayer');
 
+    /**
+     * When a road link is selected it will be added to this layer.
+     * This layer will be drawn on top of all the other road link layers and the other layers will have dimmed opacity.
+     * This will "highlight" the selected road link.
+     * */
+    var selectedRoadLayer = new ol.layer.Vector({
+      source: selectedRoadVector,
+      name: 'selectedRoadLayer',
+      style: function (feature) {
+        return getStyleForSelection(feature);
+      }
+    });
 
-    var layers = [roadLayer.layer, directionMarkerLayer, underConstructionMarkerLayer, calibrationPointLayer,
-      underConstructionRoadLayer, unAddressedRoadLayer, reservedRoadLayer];
+    /**
+     * A selected road link has its own "selected" direction marker
+     * (the other direction markers have dimmed opacity if they aren't selected)
+     * */
+    var selectedDirectionMarkerLayer = new ol.layer.Vector({
+      source: selectedDirectionMarkerVector,
+      name: 'selectedDirectionMarkerLayer',
+      zIndex: ViiteEnumerations.ViewModeZIndex.DirectionMarker.value
+    });
+    selectedDirectionMarkerLayer.set('name', 'selectedDirectionMarkerLayer');
+
+    /**
+     * The order of these layers in this array affects the order these layers are presented on the map.
+     * i.e. the first one is the bottom most layer drawn and the last one is the top most layer drawn
+     * */
+    var layers = [unAddressedRoadLayer, underConstructionRoadLayer, roadLayer.layer, reservedRoadLayer, selectedRoadLayer, directionMarkerLayer, selectedDirectionMarkerLayer, calibrationPointLayer];
+
+    me.eventListener.listenTo(eventbus,'layers:removeViewModeFeaturesFromTheLayers', function() {
+      me.removeFeaturesFromLayers(layers);
+    });
 
     var setGeneralOpacity = function (opacity) {
       roadLayer.layer.setOpacity(opacity);
       directionMarkerLayer.setOpacity(opacity);
-      underConstructionMarkerLayer.setOpacity(opacity);
       underConstructionRoadLayer.setOpacity(opacity);
       unAddressedRoadLayer.setOpacity(opacity);
+    };
+
+    const getStyleForSelection = function (feature) {
+      // for normal road links
+      if (feature.linkData.roadClass !== ViiteEnumerations.RoadClass.NoClass.value) {
+        return roadLinkStyler.getRoadLinkStyles(feature.linkData, map);
+      }
+      // for unaddressed road links
+      else if (feature.linkData.roadClass === ViiteEnumerations.RoadClass.NoClass.value && feature.linkData.lifecycleStatus !== ViiteEnumerations.lifecycleStatus.UnderConstruction.value) {
+        return roadLinkStyler.getUnAddressedStyles(feature.linkData, map);
+      }
+      // for under construction road links
+      else {
+        return roadLinkStyler.getUnderConstructionStyles(feature.linkData, map);
+      }
     };
 
     /**
@@ -98,9 +129,7 @@
       condition: ol.events.condition.doubleClick,
       //The new/temporary layer needs to have a style function as well, we define it here.
       style: function (feature) {
-        return [roadLinkStyler.getBorderStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)}),
-          roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)}),
-          roadLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)})];
+        return roadLinkStyler.getRoadLinkStyles(feature.linkData, map);
       }
     });
 
@@ -147,9 +176,9 @@
           }
         }
       }
+      redraw();
     });
     selectDoubleClick.set('name', 'selectDoubleClickInteractionLPL');
-
 
     var zoomDoubleClickListener = function (_event) {
       if (isActiveLayer)
@@ -176,18 +205,19 @@
       layers: [roadLayer.layer, underConstructionRoadLayer, unAddressedRoadLayer],
       //Limit this interaction to the singleClick
       condition: ol.events.condition.singleClick,
-      filter: function (feature) {
-        var currentSelectionType = applicationModel.getSelectionType().value;
-        if (currentSelectionType === SelectionType.Unknown.value) {
-          return feature.linkData.roadLinkType === RoadLinkType.UnknownRoadLinkType.value;
-        } else {
-          return currentSelectionType === SelectionType.All.value;
-        }
-      },
       style: function (feature) {
-        return [roadLinkStyler.getBorderStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)}),
-          roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)}),
-          roadLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)})];
+        // for normal road links
+        if (feature.linkData.roadClass !== ViiteEnumerations.RoadClass.NoClass.value) {
+          return roadLinkStyler.getRoadLinkStyles(feature.linkData, map);
+        }
+        // for unaddressed road links
+        else if (feature.linkData.roadClass === ViiteEnumerations.RoadClass.NoClass.value && feature.linkData.lifecycleStatus !== ViiteEnumerations.lifecycleStatus.UnderConstruction.value) {
+          return roadLinkStyler.getUnAddressedStyles(feature.linkData, map);
+        }
+        // for under construction road links
+        else {
+          return roadLinkStyler.getUnderConstructionStyles(feature.linkData, map);
+        }
       }
     });
     selectSingleClick.set('name', 'selectSingleClickInteractionLPL');
@@ -224,14 +254,7 @@
             // set the clicked linear location id so we know what road link group to update after fetching road links in backend
             roadCollection.setClickedLinearLocationId(selection.linearLocationId);
             // gets all the road links from backend and starts a cycle that updates road link group in RoadCollection.js
-            roadCollection.fetchWholeRoadPart(selection.roadNumber, selection.roadPartNumber);
-
-            // listens to the event when the road link group is updated (with whole roadpart) and then continues the process normally with the updated road link groups
-            eventbus.listenTo(eventbus,'roadCollection:wholeRoadPartFetched', function () {
-              applicationModel.removeSpinner();
-              var features = getAllFeatures();
-              selectedLinkProperty.open(selection, true, features);
-            });
+            roadCollection.fetchWholeRoadPart(selection.roadNumber, selection.roadPartNumber, selection);
           }
           // opens only the visible parts of the roads (bounding box view)
           selectedLinkProperty.open(selection, true, visibleFeatures);
@@ -239,6 +262,13 @@
       } else { // if selectedF was undefined we want to deselect all selected links
         selectedLinkProperty.close();
       }
+    });
+
+    // listens to the event when the road link group is updated (with whole road part) and then continues the process normally with the updated road link groups
+    eventbus.listenTo(eventbus,'roadCollection:wholeRoadPartFetched', function (selection) {
+      applicationModel.removeSpinner();
+      var features = getAllFeatures();
+      selectedLinkProperty.open(selection, true, features);
     });
 
     map.on('click', function (event) {
@@ -351,27 +381,26 @@
       var extent = map.getView().calculateExtent(map.getSize());
       var visibleRoads = withRoads ? roadLayer.layer.getSource().getFeaturesInExtent(extent) : [];
       var visibleDirectionalMarkers = withDirectionalMarkers ? directionMarkerLayer.getSource().getFeaturesInExtent(extent) : [];
-      var visibleUnderConstructionMarkers = withDirectionalMarkers ? underConstructionMarkerLayer.getSource().getFeaturesInExtent(extent) : [];
       var visibleUnderConstructionRoads = withUnderConstructionRoads ? underConstructionRoadLayer.getSource().getFeaturesInExtent(extent) : [];
       var visibleUnAddressedRoads = withVisibleUnAddressedRoads ? unAddressedRoadLayer.getSource().getFeaturesInExtent(extent) : [];
-      return visibleRoads.concat(visibleDirectionalMarkers).concat(visibleUnderConstructionMarkers).concat(visibleUnderConstructionRoads).concat(visibleUnAddressedRoads);
+      return visibleRoads.concat(visibleDirectionalMarkers).concat(visibleUnderConstructionRoads).concat(visibleUnAddressedRoads);
     };
 
     var getAllFeatures = function () {
       var roads = roadLayer.layer.getSource().getFeatures();
       var directionalMarkers = directionMarkerLayer.getSource().getFeatures();
-      var underConstructionMarkers = underConstructionMarkerLayer.getSource().getFeatures();
       var underConstructionRoads = underConstructionRoadLayer.getSource().getFeatures();
       var unAddressedRoads = unAddressedRoadLayer.getSource().getFeatures();
-      return roads.concat(directionalMarkers).concat(underConstructionMarkers).concat(underConstructionRoads).concat(unAddressedRoads);
+      return roads.concat(directionalMarkers).concat(underConstructionRoads).concat(unAddressedRoads);
     };
 
     /**
-     * This will add all the following interactions from the map:
+     * This will add all the following interactions to the map:
      * -selectDoubleClick
      * -selectSingleClick
      */
     var addSelectInteractions = function () {
+      removeSelectInteractions();
       map.addInteraction(selectDoubleClick);
       map.addInteraction(selectSingleClick);
     };
@@ -389,50 +418,69 @@
     //We add the defined interactions to the map.
     addSelectInteractions();
 
-    var unselectRoadLink = function () {
-      _.map(roadLayer.layer.getSource().getFeatures(), function (feature) {
-        if (feature.linkData.gapTransfering) {
-          feature.linkData.gapTransfering = false;
-          var unknownRoadStyle = roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)});
-          feature.setStyle(unknownRoadStyle);
-        }
-      });
-    };
-
     var redraw = function () {
+      var addLinkFeaturesToLayer = function (links, destinationLayer) {
+        _.map(links, function (link) {
+          var points = _.map(link.points, function (point) {
+            return [point.x, point.y];
+          });
+          var feature = new ol.Feature({
+            geometry: new ol.geom.LineString(points)
+          });
+          feature.linkData = link;
+          destinationLayer.getSource().addFeatures([feature]);
+        });
+      };
+
       cachedMarker = new LinkPropertyMarker(selectedLinkProperty);
       removeSelectInteractions();
+      me.clearLayers([roadLayer.layer, underConstructionRoadLayer, unAddressedRoadLayer, directionMarkerLayer, selectedDirectionMarkerLayer, calibrationPointLayer, selectedRoadLayer]);
+
       var allRoadLinks = roadCollection.getAll();
-      var underConstructionLinks = roadCollection.getUnderConstructionLinks();
+      const [roadLinksWithoutRoadNumber, roadLinksWithRoadNumber] = _.partition(allRoadLinks, function (roadLink) {
+        return roadLink.roadNumber === 0;
+      });
+      const [underConstruction, unAddressed] = _.partition(roadLinksWithoutRoadNumber, function (roadLink) {
+        return roadLink.lifecycleStatus === ViiteEnumerations.lifecycleStatus.UnderConstruction.value;
+      });
+
+      const selectedLinks = selectedLinkProperty.get();
+
+      // add road links to correct layer
+      addLinkFeaturesToLayer(roadLinksWithRoadNumber, roadLayer.layer);
+
+      // add under construction links to correct layer
+      addLinkFeaturesToLayer(underConstruction, underConstructionRoadLayer);
+
+      // add unAddressed links to correct layer
+      addLinkFeaturesToLayer(unAddressed, unAddressedRoadLayer);
+
+      // add selected links to correct layer
+      addLinkFeaturesToLayer(selectedLinks, selectedRoadLayer);
+
       var roadLinks = _.reject(allRoadLinks, function (rl) {
-        return _.includes(_.map(underConstructionLinks, function (sl) {
+        return _.includes(_.map(underConstruction, function (sl) {
           return sl.linkId;
         }), rl.linkId);
       });
-      me.clearLayers([underConstructionRoadLayer, unAddressedRoadLayer, directionMarkerLayer, underConstructionMarkerLayer, calibrationPointLayer]);
 
       if (zoomlevels.getViewZoom(map) >= zoomlevels.minZoomForRoadNetwork) {
-
-        var directionRoadMarker = _.filter(roadLinks, function (roadlink) {
-          return roadlink.sideCode === SideCode.AgainstDigitizing.value || roadlink.sideCode === SideCode.TowardsDigitizing.value;
-        });
-
         if (zoomlevels.getViewZoom(map) > zoomlevels.minZoomForDirectionalMarkers) {
-          _.each(directionRoadMarker, function (directionLink) {
+          _.each(roadLinksWithRoadNumber, function (directionLink) {
             cachedMarker.createMarker(directionLink, function (marker) {
               directionMarkerLayer.getSource().addFeature(marker);
             });
           });
 
-          _.each(underConstructionLinks, function (directionLink) {
+          // add direction markers for selected links
+          _.each(selectedLinks, function (directionLink) {
             cachedMarker.createMarker(directionLink, function (marker) {
-              underConstructionMarkerLayer.getSource().addFeature(marker);
+              selectedDirectionMarkerLayer.getSource().addFeature(marker);
             });
           });
         }
-
-        //Removed the need to check if the buttons are active in order to draw calibration points.
-        if (zoomlevels.getViewZoom(map) >= zoomlevels.minZoomLevelForCalibrationPoints) {
+        // Draw calibration points in view mode only
+        if (zoomlevels.getViewZoom(map) >= zoomlevels.minZoomLevelForCalibrationPoints && applicationModel.getSelectedLayer() === 'linkProperty') {
           var actualPoints = me.drawCalibrationMarkers(calibrationPointLayer.source, roadLinks);
           _.each(actualPoints, function (actualPoint) {
             var calMarker = new CalibrationPoint(actualPoint);
@@ -441,9 +489,6 @@
         }
       }
       addSelectInteractions();
-      if (applicationModel.getCurrentAction() === -1) {
-        applicationModel.removeSpinner();
-      }
     };
 
     this.refreshView = function () {
@@ -473,6 +518,12 @@
         selectDoubleClick.getFeatures().clear();
       }
     };
+
+    eventbus.listenTo(eventbus, 'linkProperties:selected linkProperties:unselected roadLinks:fetched', function() {
+      if (applicationModel.getSelectedLayer() === 'linkProperty' || applicationModel.getSelectedLayer() === 'node') {
+        redraw();
+      }
+    });
 
     this.layerStarted = function (eventListener) {
       var linkPropertyChangeHandler = _.partial(handleLinkPropertyChanged, eventListener);
@@ -506,69 +557,11 @@
           addFeaturesToSelection(features);
         }
       });
-
-      eventListener.listenTo(eventbus, 'roadLinks:fetched', function () {
-        if (applicationModel.getSelectedLayer() === 'linkProperty') {
-          redraw();
-        }
-      });
-      eventListener.listenTo(eventbus, 'underConstructionRoadLinks:fetched', function (underConstructionRoads) {
-        var partitioned = _.partition(_.flatten(underConstructionRoads), function (feature) {
-          return feature.getData().lifecycleStatus === lifecycleStatus.UnderConstruction.value && feature.getData().roadNumber === 0;
-        });
-        var ol3underConstructionRoads =
-          _.map(partitioned[0], function (road) {
-            var roadData = road.getData();
-            var points = _.map(roadData.points, function (point) {
-              return [point.x, point.y];
-            });
-            var feature = new ol.Feature({
-              geometry: new ol.geom.LineString(points)
-            });
-            feature.linkData = roadData;
-            return feature;
-          });
-        underConstructionRoadLayer.getSource().clear();
-        underConstructionRoadLayer.getSource().addFeatures(ol3underConstructionRoads);
-
-        var ol3noInfoRoads =
-          _.map(partitioned[1], function (road) {
-            var roadData = road.getData();
-            var points = _.map(roadData.points, function (point) {
-              return [point.x, point.y];
-            });
-            var feature = new ol.Feature({
-              geometry: new ol.geom.LineString(points)
-            });
-            feature.linkData = roadData;
-            return feature;
-          });
-        roadLayer.layer.getSource().addFeatures(ol3noInfoRoads);
-      });
-
-      eventListener.listenTo(eventbus, 'unAddressedRoadLinks:fetched', function (unAddressedRoads) {
-
-        var ol3noInfoRoads =
-          _.map(_.flatten(unAddressedRoads), function (road) {
-            var roadData = road.getData();
-            var points = _.map(roadData.points, function (point) {
-              return [point.x, point.y];
-            });
-            var feature = new ol.Feature({
-              geometry: new ol.geom.LineString(points)
-            });
-            feature.linkData = roadData;
-            return feature;
-          });
-        unAddressedRoadLayer.getSource().clear();
-        unAddressedRoadLayer.getSource().addFeatures(ol3noInfoRoads);
-      });
       eventListener.listenTo(eventbus, 'unAddressedRoads:toggleVisibility', function (visibility) {
         unAddressedRoadLayer.setVisible(visibility);
       });
       eventListener.listenTo(eventbus, 'underConstructionRoads:toggleVisibility', function (visibility) {
         underConstructionRoadLayer.setVisible(visibility);
-        underConstructionMarkerLayer.setVisible(visibility);
       });
       eventListener.listenTo(eventbus, 'linkProperty:visibilityChanged', function () {
         //Exclude underConstruction layers from toggle
@@ -592,7 +585,7 @@
 
     me.eventListener.listenTo(eventbus, 'linkProperties:highlightReservedRoads', function (reservedOLFeatures) {
       var styledFeatures = _.map(reservedOLFeatures, function (feature) {
-        feature.setStyle(roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)}));
+        feature.setStyle(roadLinkStyler.getRoadLinkStyles(feature.linkData, map));
         return feature;
       });
       if (applicationModel.getSelectedLayer() === "linkProperty") { //check if user is still in reservation form
@@ -683,7 +676,6 @@
     };
 
     var hideLayer = function () {
-      unselectRoadLink();
       me.clearLayers(layers);
     };
 

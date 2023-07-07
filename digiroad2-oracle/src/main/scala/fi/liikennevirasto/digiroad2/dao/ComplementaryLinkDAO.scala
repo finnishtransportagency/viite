@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import org.joda.time.DateTime
-import org.postgis.PGgeometry
+import net.postgis.jdbc.geometry.GeometryBuilder
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
@@ -61,15 +61,16 @@ class ComplementaryLinkDAO {
       val modifiedAt = extractModifiedAt(Map(
         "starttime"              -> r.nextDateOption.map(d => formatter.parseDateTime(d.toString)),
         "versionstarttime"       -> r.nextDateOption.map(d => formatter.parseDateTime(d.toString)),
-        "sourcemodificationtime" -> r.nextDateOption.map(d => formatter.parseDateTime(d.toString)
-      ))).map(_.toString())
+        "sourcemodificationtime" -> r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
+      )).map(_.toString())
 
-      val geom = PGgeometry.geomFromString(r.nextString())
+      val geom = GeometryBuilder.geomFromString(r.nextString())
       var geometry: Seq[Point] = Seq()
       for (i <- 1 to geom.numPoints()) {
         val point = geom.getPoint(i - 1)
         geometry = geometry :+ Point(point.x, point.y, point.z)
       }
+
       RoadLink(linkId, geometry, length, administrativeClass, TrafficDirection.UnknownDirection, modifiedAt, None, lifecycleStatus, LinkGeomSource.ComplementaryLinkInterface, municipalityCode, "")
     }
   }

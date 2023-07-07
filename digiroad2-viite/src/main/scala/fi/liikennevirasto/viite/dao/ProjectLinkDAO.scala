@@ -706,7 +706,7 @@ class ProjectLinkDAO {
   def updateProjectLinkNumbering(projectId: Long, roadNumber: Long, roadPart: Long, linkStatus: LinkStatus, newRoadNumber: Long, newRoadPart: Long, userName: String, ely: Long ): Unit = {
     time(logger, "Update project link numbering") {
       val user = userName.replaceAll("[^A-Za-z0-9\\-]+", "")
-      val sql = s"UPDATE PROJECT_LINK SET STATUS = ${linkStatus.value}, MODIFIED_BY='$user', ROAD_NUMBER = $newRoadNumber, ROAD_PART_NUMBER = $newRoadPart, ELY = $ely" +
+      val sql = s"UPDATE PROJECT_LINK SET STATUS = ${linkStatus.value}, MODIFIED_BY='$user', ROAD_NUMBER = $newRoadNumber, ROAD_PART_NUMBER = $newRoadPart, ELY = $ely " +
         s"WHERE PROJECT_ID = $projectId  AND ROAD_NUMBER = $roadNumber AND ROAD_PART_NUMBER = $roadPart AND STATUS != ${LinkStatus.Terminated.value}"
       Q.updateNA(sql).execute
     }
@@ -944,6 +944,15 @@ class ProjectLinkDAO {
       s"""$projectLinkQueryBase
                 where PROJECT_LINK.PROJECT_ID = $projectId AND (PROJECT_LINK.LINK_ID = '$linkId' OR PROJECT_LINK.CONNECTED_LINK_ID = '$linkId')"""
     listQuery(query)
+  }
+
+  def fetchProjectLinkElys(projectId: Long): Seq[Long] = {
+    time(logger, "Get elys from project links.") {
+      val query =
+        s"""SELECT DISTINCT ELY FROM PROJECT_LINK
+                where PROJECT_ID = $projectId """
+      Q.queryNA[Long](query).list.sorted
+    }
   }
 
   implicit val getDiscontinuity: GetResult[Option[Discontinuity]] = new GetResult[Option[Discontinuity]] {

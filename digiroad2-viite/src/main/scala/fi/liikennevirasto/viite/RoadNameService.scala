@@ -1,12 +1,12 @@
 package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.user.User
-import fi.liikennevirasto.viite.dao.{ProjectLinkNameDAO, RoadName, RoadNameDAO}
+import fi.liikennevirasto.viite.dao.{ProjectLinkNameDAO, RoadName, RoadNameDAO, RoadNameForRoadAddressBrowser}
 import org.joda.time.DateTime
-import org.slf4j.LoggerFactory
-import scala.util.control.NonFatal
 import org.joda.time.format.DateTimeFormat
+import org.slf4j.LoggerFactory
+
+import scala.util.control.NonFatal
 
 case class RoadNameRow(id: Long, name: String, startDate: String, endDate: Option[String])
 
@@ -32,7 +32,7 @@ class RoadNameService() {
     }
   }
 
-  def getRoadNamesForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]) = {
+  def getRoadNamesForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[RoadNameForRoadAddressBrowser] = {
     withDynSession {
       RoadNameDAO.fetchRoadNamesForRoadAddressBrowser(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
     }
@@ -83,7 +83,7 @@ class RoadNameService() {
           Right(RoadNameDAO.getAllByRoadName(roadName, oStartDate, oEndDate))
         case (Some(roadNumber), None) =>
           Right(RoadNameDAO.getAllByRoadNumber(roadNumber.toLong, oStartDate, oEndDate))
-        case (None, None) => Left("Missing RoadNumber")
+        case (None, None) => Left("Missing either RoadNumber or RoadName")
       }
     } catch {
       case longParsingException: NumberFormatException => Left("Could not parse road number")
