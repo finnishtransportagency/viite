@@ -289,10 +289,14 @@
       function updateForm() {
         checkInputs();
         changeDropDownValue(selectedProjectLink[0].status);
-        if (selectedProjectLink[0].status !== LinkStatus.Numbering.value && _.filter(projectCollection.getFormedParts(), function (formedLink) {
-          return formedLink.roadNumber === selectedProjectLink[0].roadNumber && formedLink.roadPartNumber === selectedProjectLink[0].roadPartNumber;
-        }).length !== 0) {
-          removeNumberingFromDropdown();
+        /* Disable numbering if the road part has any other status set. */
+        if (selectedProjectLink[0].status !== LinkStatus.Numbering.value &&
+            _.filter(projectCollection.getAll(), function (pl) {
+                return pl.roadAddressRoadNumber === selectedProjectLink[0].roadNumber &&
+                    pl.roadAddressRoadPart === selectedProjectLink[0].roadPartNumber &&
+                    (pl.status !== LinkStatus.NotHandled.value && pl.status !== LinkStatus.Numbering.value);
+            }).length !== 0) {
+              removeNumberingFromDropdown();
         }
         disableFormInputs();
         const projectLinkMaxByEndAddressM = _.maxBy(selectedProjectLink, function (projectLink) {
@@ -654,12 +658,27 @@
         var currentProject = projectCollection.getCurrentProject();
         // add spinner
         applicationModel.addSpinner();
+
+        $('.validation-warning').remove();
         // fire backend call to recalculate and validate the current project with the project id
         backend.recalculateAndValidateProject(currentProject.project.id, function (response) {
           // if recalculation and validation did not throw exceptions in the backend
           if (response.success) {
+
+              const trackGeometryLengthDeviationErrorCode = 38;
+              if (response.validationErrors.filter((error) => error.errorCode === trackGeometryLengthDeviationErrorCode).length > 0) {
+                  const trackGeometryLengthDeviationError = response.validationErrors.filter((error) => error.errorCode === trackGeometryLengthDeviationErrorCode)[0];
+                      // "Ajoratojen geometriapituuksissa yli 20% poikkeama."
+                  new GenericConfirmPopup(trackGeometryLengthDeviationError.errorMessage, {
+                      type: "alert"
+                  });
+                  $('.form,.form-horizontal,.form-dark').append('<label class="validation-warning">' +trackGeometryLengthDeviationError.errorMessage + "<br> LinkId: " + trackGeometryLengthDeviationError.info + '</label>');
+                  response.validationErrors = response.validationErrors.filter((error) => error.errorCode !== trackGeometryLengthDeviationErrorCode);
+              }
+
             // set project errors that were returned by the backend validations and write them to user (removes the spinner also)
             projectCollection.setAndWriteProjectErrorsToUser(response.validationErrors);
+
             if (Object.keys(response.validationErrors).length === 0) {
               // if no validation errors are present, show changes button and remove title
               formCommon.setDisabledAndTitleAttributesById("changes-button", false, "");
@@ -672,7 +691,7 @@
             eventbus.trigger('roadAddressProject:setRecalculatedAfterChangesFlag', true);
           }
           // if something went wrong during recalculation or validation, show error to user
-          else if (response.hasOwnProperty('validationErrors') && !_.isEmpty(response.validationErrors)) {
+          else if ('validationErrors' in response && !_.isEmpty(response.validationErrors)) {
               // set project errors that were returned by the backend validations and write them to user (removes the spinner also)
               projectCollection.setAndWriteProjectErrorsToUser(response.validationErrors);
           } else {
@@ -688,6 +707,7 @@
         checkInputs();
         setFormDirty();
         if (event.target.id === "tie" && (dropdown_0.val() === 'New' || dropdown_0.val() === 'Transfer' || dropdown_0.val() === 'Numbering')) {
+          rootElement.find('.project-form button.update').prop("disabled", true);
           backend.getRoadName($(this).val(), projectCollection.getCurrentProject().project.id, function (data) {
             if (data.roadName) {
               editedNameByUser = false;
@@ -697,7 +717,6 @@
               } else {
                 roadNameField.prop('disabled', false);
               }
-              checkInputs();
             } else {
               if (roadNameField.prop('disabled') || !editedNameByUser) {
                 $('#roadName').val('').change();
@@ -705,6 +724,7 @@
               }
               roadNameField.prop('disabled', false);
             }
+            checkInputs();
           });
         }
       });
@@ -712,6 +732,15 @@
       rootElement.on('keyup, input', '#roadName', function () {
         checkInputs();
         editedNameByUser = $('#roadName').val !== '';
+      });
+
+      // show project errors' link id list in a popup window
+      rootElement.on('click', '.linkIdList', function (event) {
+        const error = projectCollection.getProjectErrors()[event.currentTarget.id];
+        if (error.linkIds.length > 0) {
+          const linkIdsText = error.linkIds.join(', ');
+          GenericConfirmPopup(linkIdsText, {type: "alert"});
+        }
       });
 
       rootElement.on('click', '.projectErrorButton', function (event) {

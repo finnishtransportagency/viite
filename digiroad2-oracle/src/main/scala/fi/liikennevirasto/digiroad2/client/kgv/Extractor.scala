@@ -130,11 +130,12 @@ object Extractor {
               sourceid)
   }
 
-  def extractRoadNumberAndPartFeature(feature: Feature): (Long, Long, Int)  = {
+  def extractRoadNumberAndPartFeature(feature: Feature): (Option[Long], Option[Long], Int)  = {
     val attributes = feature.properties
-    (Try(attributes("roadnumber").asInstanceOf[String].toLong).getOrElse(-1),
-     Try(attributes("roadpartnumber").asInstanceOf[String].toLong).getOrElse(-1),
-     Try(attributes("municipalitycode").asInstanceOf[String].toInt).getOrElse(-1)
-    )
+    val roadNumber = Try(attributes("roadnumber").asInstanceOf[String]).getOrElse("")
+    val roadPartNumber = Try(attributes("roadpartnumber").asInstanceOf[String]).getOrElse("")
+    val municipalityCode = Try(attributes("municipalitycode").asInstanceOf[String].toInt).getOrElse(-1)
+
+    (Try(roadNumber.toLong).toOption, Try(roadPartNumber.toLong).toOption, municipalityCode)
   }
 }

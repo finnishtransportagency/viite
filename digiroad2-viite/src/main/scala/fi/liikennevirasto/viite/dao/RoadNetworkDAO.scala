@@ -26,14 +26,17 @@ class RoadNetworkDAO {
 
   protected def logger = LoggerFactory.getLogger(getClass)
 
+  @deprecated ("Table published_road_network is no longer in use, and is empty.")
   def createPublishedRoadNetwork (publishedRoadNetworkId: Long = Sequences.nextPublishedRoadNetworkId): Unit = {
     sqlu"""INSERT INTO published_road_network (id, created) VALUES ($publishedRoadNetworkId, current_timestamp)""".execute
   }
 
+  @deprecated ("Table published_road_network is no longer in use, and is empty.")
   def expireRoadNetwork: Unit = {
     sqlu"""UPDATE published_road_network SET valid_to = current_timestamp WHERE id = (SELECT MAX(ID) FROM published_road_network)""".execute
   }
 
+  @deprecated ("Table published_roadway is no longer in use, and is empty.")
   def createPublishedRoadway(networkVersion: Long, roadwayId: Long): Unit = {
     sqlu"""INSERT INTO PUBLISHED_ROADWAY (network_id, ROADWAY_ID) VALUES ($networkVersion, $roadwayId)""".execute
   }
@@ -66,10 +69,12 @@ class RoadNetworkDAO {
     sql"""SELECT COUNT(*) FROM road_network_error """.as[Long].first > 0
   }
 
+  @deprecated ("Table published_road_network is no longer in use, and is empty.")
   def hasCurrentNetworkErrors: Boolean = {
     sql"""SELECT COUNT(*) FROM road_network_error where ROAD_NETWORK_VERSION = (SELECT MAX(id) FROM published_road_network WHERE valid_to is NULL) """.as[Long].first > 0
   }
 
+  @deprecated ("Table published_road_network is no longer in use, and is empty.")
   def hasCurrentNetworkErrorsForOtherNumbers(roads: Set[Long]): Boolean = {
     val query =
       s"""SELECT COUNT(*) FROM road_network_error where ROAD_NETWORK_VERSION = (SELECT MAX(id) FROM published_road_network WHERE valid_to is NULL)
@@ -77,10 +82,12 @@ class RoadNetworkDAO {
     Q.queryNA[Long](query).list.head > 0
   }
 
+  @deprecated ("Table published_road_network is no longer in use, and is empty.")
   def getLatestRoadNetworkVersionId: Option[Long] = {
     sql"""SELECT MAX(id) FROM published_road_network WHERE valid_to is null""".as[Option[Long]].first
   }
 
+  @deprecated ("Table published_road_network is no longer in use, and is empty.")
   def getLatestPublishedNetworkDate: Option[DateTime] = {
     sql"""SELECT MAX(created) as created FROM published_road_network WHERE valid_to is null""".as[Option[DateTime]].first
   }

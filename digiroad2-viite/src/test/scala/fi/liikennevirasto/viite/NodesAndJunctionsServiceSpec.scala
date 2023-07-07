@@ -762,11 +762,11 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
         Some(Seq(rw1WithId, rw2WithId, rw3WithId, rw4WithId)), Some(Seq(orderedlll1, orderedlll2, orderedlll3, orderedrll1, orderedrll2, orderedrll3, orderedrll4)), Some(leftPLinks ++ rightPLinks))
 
       val projectChanges = List(
-        // left - parallel link
+        // left - continuous
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(AddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
-            RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.ParallelLink), Some(8L)),
+            RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
           , DateTime.now, Some(0L)),
         // right - discontinuous

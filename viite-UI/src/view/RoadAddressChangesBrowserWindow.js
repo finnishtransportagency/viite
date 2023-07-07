@@ -1,7 +1,6 @@
 (function (root) {
     root.RoadAddressChangesBrowserWindow = function (backend, roadAddressBrowserForm) {
         let searchParams = {};
-        let datePickers = [];
         const me = this;
 
         const roadAddressChangesBrowserWindow = $('<div class="form-horizontal road-address-changes-browser-window"></div>').hide();
@@ -110,28 +109,12 @@
         function toggle() {
             $('.container').append('<div class="road-address-browser-modal-overlay confirm-modal"><div class="road-address-browser-modal-window"></div></div>');
             $('.road-address-browser-modal-window').append(roadAddressChangesBrowserWindow.toggle());
-            addDatePicker("roadAddrChangesStartDate");
-            addDatePicker("roadAddrChangesEndDate");
             bindEvents();
         }
 
         function hide() {
             $('.road-address-browser-modal-window').append(roadAddressChangesBrowserWindow.toggle());
             $('.road-address-browser-modal-overlay').remove();
-            destroyDatePickers();
-        }
-
-        function addDatePicker(inputFieldId) {
-            const inputField = $('#' + inputFieldId);
-            const datePicker = dateutil.addSingleDatePicker(inputField);
-            datePickers.push(datePicker);
-        }
-
-        function destroyDatePickers() {
-            datePickers.forEach((datePicker) => {
-                datePicker.destroy();
-            });
-            datePickers = [];
         }
 
         function exportDataAsExcelFile() {
@@ -162,9 +145,11 @@
 
             // convert date input text to date object
             const roadAddrStartDateObject  = moment(roadAddrChangesStartDate.value, "DD-MM-YYYY").toDate();
+            const roadAddrEndDateObject  = moment(roadAddrChangesEndDate.value, "DD-MM-YYYY").toDate();
 
             function reportValidations() {
                 return roadAddrChangesStartDate.reportValidity() &&
+                    roadAddrChangesEndDate.reportValidity() &&
                     ely.reportValidity() &&
                     roadNumber.reportValidity() &&
                     minRoadPartNumber.reportValidity() &&
@@ -182,8 +167,15 @@
 
             function willPassValidations() {
                 validateDate(roadAddrStartDateObject);
-                if (roadAddrChangesEndDate.value)
-                    validateDate(moment(roadAddrChangesEndDate.value, "DD-MM-YYYY").toDate());
+                if (roadAddrChangesEndDate.value) {
+                    validateDate(roadAddrEndDateObject);
+                    if (roadAddrEndDateObject.getTime() < roadAddrStartDateObject.getTime()) {
+                        roadAddrChangesEndDate.setCustomValidity("Loppupäivämäärä ei voi olla ennen alkupäivämäärää");
+                    }
+                    if (roadAddrEndDateObject.getTime() === roadAddrStartDateObject.getTime()) {
+                        roadAddrChangesEndDate.setCustomValidity("Alku- ja loppupäivämäärä ei voi olla sama. Jos haluat vain yhden päivän tulokset, syötä peräkkäiset päivät.");
+                    }
+                }
                 return reportValidations();
             }
 
@@ -194,7 +186,7 @@
                     dateTarget: dateTarget.value
                 };
                 if (roadAddrChangesEndDate.value)
-                    params.endDate = dateutil.parseDateToString(moment(roadAddrChangesEndDate.value, "DD-MM-YYYY").toDate());
+                    params.endDate = dateutil.parseDateToString(roadAddrEndDateObject);
                 if (ely.value)
                     params.ely = ely.value;
                 if (roadNumber.value)
@@ -209,6 +201,7 @@
             //reset ely and roadAddrStartDate input fields' custom validity
             ely.setCustomValidity("");
             roadAddrChangesStartDate.setCustomValidity("");
+            roadAddrChangesEndDate.setCustomValidity("");
 
             if (willPassValidations())
                 fetchRoadAddressChanges(createParams());

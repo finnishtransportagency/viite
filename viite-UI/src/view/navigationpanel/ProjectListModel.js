@@ -100,7 +100,7 @@
         '<label class="control-label-projects-list">' + dataField + '</label>' +
         '</div>';
       return field;
-    };
+      };
 
     var pollProjects = null;
 
@@ -111,7 +111,7 @@
       bindEvents();
       fetchProjects();
       // start polling projects evey 60 seconds
-      pollProjects = setInterval(fetchProjects, 60 * 1000);
+      pollProjects = setInterval(fetchProjectStates, 60 * 1000);
     }
 
     function hide() {
@@ -123,6 +123,10 @@
 
     function fetchProjects() {
       projectCollection.getProjects(onlyActive());
+    }
+
+    function fetchProjectStates() {
+      projectCollection.getProjectStates(_.map(projectArray, "id"));
     }
 
     function onlyActive() {
@@ -171,6 +175,18 @@
         $('#sync').removeClass("btn-spin"); // stop the sync button from spinning
       });
 
+      eventbus.on('roadAddressProjectStates:fetched', function (idsAndStates) {
+        projectArray = _.map(projectArray, (project) => {
+          const statusCode = idsAndStates.find((idState) => idState._1 === project.id)._2;
+          project.statusCode = statusCode;
+          project.statusDescription = Object.values(ViiteEnumerations.ProjectStatus).find((enumState) => enumState.value === statusCode).description;
+          return project;
+        });
+        createProjectList(projectArray);
+        userFilterVisibility();
+        $('#sync').removeClass("btn-spin"); // stop the sync button from spinning
+      });
+
       var createProjectList = function (projects) {
         var sortedProjects = projects.sort(function (a, b) {
           var cmp = headers[orderBy.id].sortFunc(a, b);
@@ -201,7 +217,7 @@
               '<td class="innerName" style="width: 270px;">' + staticFieldProjectName(proj.name) + '</td>' +
               '<td style="width: 60px; word-break: break-word" title="' + info + '">' + staticFieldProjectList(proj.elys) + '</td>' +
               '<td class="innerCreatedBy" style="width: 120px;" title="' + info + '">' + staticFieldProjectList(proj.createdBy) + '</td>' +
-              '<td style="width: 120px;" title="' + info + '">' + staticFieldProjectList(proj.createdDate) + '</td>' +
+              '<td style="width: 120px;" title="' + info + '">' + staticFieldProjectList(dateutil.dateObjectToFinnishString(new Date(proj.createdDate))) + '</td>' +
               '<td style="width: 100px;" title="' + info + '">' + staticFieldProjectList(proj.statusDescription) + '</td>';
             switch (proj.statusCode) {
               case projectStatus.ErrorInViite.value:
