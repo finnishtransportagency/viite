@@ -10,7 +10,7 @@ import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.liikennevirasto.viite.NewIdValue
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point, Vector3d}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LinkGeomSource, LinkStatus, SideCode, Track}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LinkGeomSource, RoadAddressChangeType, SideCode, Track}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import org.scalatest.mock.MockitoSugar
@@ -74,7 +74,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
     )
   }
 
-  def dummyProjectLink(id: Long, projectId: Long, linkId: String, roadwayId: Long = 0, roadwayNumber: Long = roadwayNumber1, roadNumber: Long = roadNumber1, roadPartNumber: Long = roadPartNumber1, startAddrMValue: Long, endAddrMValue: Long, startMValue: Double, endMValue: Double, endDate: Option[DateTime] = None, calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), geometry: Seq[Point] = Seq(), status: LinkStatus, administrativeClass: AdministrativeClass, reversed: Boolean, linearLocationId: Long, connectedLinkId: Option[String] = None, track: Track = Track.Combined): ProjectLink =
+  def dummyProjectLink(id: Long, projectId: Long, linkId: String, roadwayId: Long = 0, roadwayNumber: Long = roadwayNumber1, roadNumber: Long = roadNumber1, roadPartNumber: Long = roadPartNumber1, startAddrMValue: Long, endAddrMValue: Long, startMValue: Double, endMValue: Double, endDate: Option[DateTime] = None, calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), geometry: Seq[Point] = Seq(), status: RoadAddressChangeType, administrativeClass: AdministrativeClass, reversed: Boolean, linearLocationId: Long, connectedLinkId: Option[String] = None, track: Track = Track.Combined): ProjectLink =
     ProjectLink(id, roadNumber, roadPartNumber, track, Discontinuity.Continuous, startAddrMValue, endAddrMValue, startAddrMValue, endAddrMValue, Some(DateTime.parse("1901-01-01")), endDate, Some("testUser"), linkId, startMValue, endMValue, SideCode.TowardsDigitizing, (if (calibrationPoints._1.isDefined) calibrationPoints._1.get.typeCode else NoCP, if (calibrationPoints._2.isDefined) calibrationPoints._2.get.typeCode else NoCP), (NoCP, NoCP), geometry, projectId, status, administrativeClass, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geometry), roadwayId, linearLocationId, 0, reversed, connectedLinkId = connectedLinkId, 631152000, roadwayNumber, roadAddressLength = Some(endAddrMValue - startAddrMValue))
 
   private def dummyRoadAddressProject(id: Long, status: ProjectState, reservedParts: Seq[ProjectReservedPart] = List.empty[ProjectReservedPart], coordinates: Option[ProjectCoordinates] = None): Project = {
@@ -94,7 +94,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       val rap = dummyRoadAddressProject(projectId, ProjectState.Incomplete, Seq(), None)
       projectDAO.create(rap)
       projectReservedPartDAO.reserveRoadPart(projectId, roadNumber1, roadPartNumber1, rap.createdBy)
-      val projectLink = dummyProjectLink(projectLinkId, projectId, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), LinkStatus.Transfer, AdministrativeClass.State, reversed = false, 0)
+      val projectLink = dummyProjectLink(projectLinkId, projectId, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), RoadAddressChangeType.Transfer, AdministrativeClass.State, reversed = false, 0)
       projectLinkDAO.create(Seq(projectLink))
       val (originalStartAddrM, originalEndStartAddrM) = (projectLink.originalStartAddrMValue, projectLink.originalEndAddrMValue)
       projectLinkDAO.updateAddrMValues(projectLink.copy(startAddrMValue = 200, endAddrMValue = 300))
@@ -113,7 +113,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       val rap = dummyRoadAddressProject(projectId, ProjectState.Incomplete, Seq(), None)
       projectDAO.create(rap)
       projectReservedPartDAO.reserveRoadPart(projectId, roadNumber1, roadPartNumber1, rap.createdBy)
-      val projectLinks = Seq(dummyProjectLink(projectLinkId, projectId, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), LinkStatus.Transfer, AdministrativeClass.State, reversed = false, 0)
+      val projectLinks = Seq(dummyProjectLink(projectLinkId, projectId, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), RoadAddressChangeType.Transfer, AdministrativeClass.State, reversed = false, 0)
       )
       projectLinkDAO.create(projectLinks)
       val returnedProjectLinks = projectLinkDAO.fetchProjectLinks(projectId)
@@ -131,9 +131,9 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       projectDAO.create(project)
       projectReservedPartDAO.reserveRoadPart(projectId, roadNumber1, roadPartNumber1, project.createdBy)
       val projectLinks = Seq(
-        dummyProjectLink(projectLinkId1, projectId, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (Some(CalibrationPoint(linkId1, 0.0, 0, RoadAddressCP)), None), Seq(), LinkStatus.New, AdministrativeClass.State, reversed = false, 0)
+        dummyProjectLink(projectLinkId1, projectId, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1,   0, 100, 0.0, 100.0, None, (Some(CalibrationPoint(linkId1, 0.0, 0, RoadAddressCP)),     None), Seq(), RoadAddressChangeType.New, AdministrativeClass.State, reversed = false, 0)
                                           .copy(originalCalibrationPointTypes = (NoCP, NoCP)),
-        dummyProjectLink(projectLinkId2, projectId, linkId2, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 100, 200, 0.0, 100.0, None, (None, Some(CalibrationPoint(linkId2, 100.0, 200, RoadAddressCP))), Seq(), LinkStatus.New, AdministrativeClass.State, reversed = false, 0)
+        dummyProjectLink(projectLinkId2, projectId, linkId2, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 100, 200, 0.0, 100.0, None, (None, Some(CalibrationPoint(linkId2, 100.0, 200, RoadAddressCP))), Seq(), RoadAddressChangeType.New, AdministrativeClass.State, reversed = false, 0)
                                           .copy(originalCalibrationPointTypes = (NoCP, NoCP))
       )
       projectLinkDAO.create(projectLinks)
@@ -173,8 +173,8 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, rap.createdBy)
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber2, rap.createdBy)
       val projectLinks = Seq(
-        dummyProjectLink(projectLinkId1, id, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), LinkStatus.Transfer, AdministrativeClass.State, reversed = false, 0),
-        dummyProjectLink(projectLinkId2, id, linkId2, roadwayIds.last, roadwayNumber2, roadNumber1, roadPartNumber2, 0, 100, 0.0, 100.0, None, (None, None), Seq(), LinkStatus.Transfer, AdministrativeClass.State, reversed = false, 0)
+        dummyProjectLink(projectLinkId1, id, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), RoadAddressChangeType.Transfer, AdministrativeClass.State, reversed = false, 0),
+        dummyProjectLink(projectLinkId2, id, linkId2, roadwayIds.last, roadwayNumber2, roadNumber1, roadPartNumber2, 0, 100, 0.0, 100.0, None, (None, None), Seq(), RoadAddressChangeType.Transfer, AdministrativeClass.State, reversed = false, 0)
       )
       projectLinkDAO.create(projectLinks)
       projectDAO.fetchById(id).nonEmpty should be(true)
@@ -195,14 +195,14 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, rap.createdBy)
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber2, rap.createdBy)
       val projectLinks = Seq(
-        dummyProjectLink(projectLinkId1, id, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), LinkStatus.Transfer, AdministrativeClass.State, reversed = false, 0),
-        dummyProjectLink(projectLinkId2, id, linkId2, roadwayIds.last, roadwayNumber2, roadNumber1, roadPartNumber1, 100, 200, 100.0, 200.0, None, (None, None), Seq(), LinkStatus.Transfer, AdministrativeClass.State, reversed = false, 0)
+        dummyProjectLink(projectLinkId1, id, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1,   0, 100,   0.0, 100.0, None, (None, None), Seq(), RoadAddressChangeType.Transfer, AdministrativeClass.State, reversed = false, 0),
+        dummyProjectLink(projectLinkId2, id, linkId2, roadwayIds.last, roadwayNumber2, roadNumber1, roadPartNumber1, 100, 200, 100.0, 200.0, None, (None, None), Seq(), RoadAddressChangeType.Transfer, AdministrativeClass.State, reversed = false, 0)
       )
       projectLinkDAO.create(projectLinks)
       val returnedProjectLinks = projectLinkDAO.fetchProjectLinks(id)
       val biggestProjectLink = returnedProjectLinks.maxBy(_.endAddrMValue)
-      projectLinkDAO.updateProjectLinkAdministrativeClassDiscontinuity(returnedProjectLinks.map(x => x.id).filterNot(_ == biggestProjectLink.id).toSet, LinkStatus.UnChanged, "test", 2, None)
-      projectLinkDAO.updateProjectLinkAdministrativeClassDiscontinuity(Set(biggestProjectLink.id), LinkStatus.UnChanged, "test", 2, Some(2))
+      projectLinkDAO.updateProjectLinkAdministrativeClassDiscontinuity(returnedProjectLinks.map(x => x.id).filterNot(_ == biggestProjectLink.id).toSet, RoadAddressChangeType.Unchanged, "test", 2, None)
+      projectLinkDAO.updateProjectLinkAdministrativeClassDiscontinuity(Set(biggestProjectLink.id), RoadAddressChangeType.Unchanged, "test", 2, Some(2))
       val savedProjectLinks = projectLinkDAO.fetchProjectLinks(id)
       savedProjectLinks.count(_.administrativeClass.value == 2) should be(savedProjectLinks.size)
       savedProjectLinks.count(_.discontinuity.value == 2) should be(1)
@@ -221,8 +221,8 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, rap.createdBy)
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber2, rap.createdBy)
       val projectLinks = Seq(
-        dummyProjectLink(projectLinkId1, id, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), LinkStatus.Transfer, AdministrativeClass.State, reversed = false, 0),
-        dummyProjectLink(projectLinkId2, id, linkId2, roadwayIds.last, roadwayNumber2, roadNumber1, roadPartNumber2, 0, 100, 0.0, 100.0, None, (None, None), Seq(), LinkStatus.Transfer, AdministrativeClass.State, reversed = false, 0)
+        dummyProjectLink(projectLinkId1, id, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), RoadAddressChangeType.Transfer, AdministrativeClass.State, reversed = false, 0),
+        dummyProjectLink(projectLinkId2, id, linkId2, roadwayIds.last, roadwayNumber2, roadNumber1, roadPartNumber2, 0, 100, 0.0, 100.0, None, (None, None), Seq(), RoadAddressChangeType.Transfer, AdministrativeClass.State, reversed = false, 0)
       )
       projectLinkDAO.create(projectLinks.map(x => x.copy(reversed = true)))
       val returnedProjectLinks = projectLinkDAO.fetchProjectLinks(id)
@@ -244,7 +244,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       val newStartAddrMValue = header.startAddrMValue + 1
       val newEndAddrMValue = header.endAddrMValue + 1
       val newTrack = Track.Unknown
-      val newStatus = LinkStatus.Unknown
+      val newStatus = RoadAddressChangeType.Unknown
 
       val modifiedProjectLinks = Seq(header.copy(track = newTrack, discontinuity = newDiscontinuty, startAddrMValue = newStartAddrMValue, endAddrMValue = newEndAddrMValue, status = newStatus, administrativeClass = administrativeClass))
       projectLinkDAO.updateProjectLinks(modifiedProjectLinks, "test", Seq())
@@ -302,14 +302,14 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       val rap = dummyRoadAddressProject(projectId, ProjectState.Incomplete, Seq(), None)
       projectDAO.create(rap)
       projectReservedPartDAO.reserveRoadPart(projectId, roadNumber1, roadPartNumber1, rap.createdBy)
-      val projectLinkRightSide = dummyProjectLink(projectLinkId1, projectId, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), LinkStatus.Transfer, AdministrativeClass.State, reversed = false, 0, track = Track.RightSide)
-      val projectLinkLeftSide = dummyProjectLink(projectLinkId2, projectId, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), LinkStatus.Transfer, AdministrativeClass.State, reversed = false, 0, track = Track.LeftSide)
+      val projectLinkRightSide = dummyProjectLink(projectLinkId1, projectId, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), RoadAddressChangeType.Transfer, AdministrativeClass.State, reversed = false, 0, track = Track.RightSide)
+      val projectLinkLeftSide  = dummyProjectLink(projectLinkId2, projectId, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), RoadAddressChangeType.Transfer, AdministrativeClass.State, reversed = false, 0, track = Track.LeftSide)
       projectLinkDAO.create(Seq(projectLinkLeftSide, projectLinkRightSide))
       val links = projectLinkDAO.fetchProjectLinks(projectId)
       links.size should be(2)
       projectReservedPartDAO.reserveRoadPart(projectId, newRoadNumber, newPartNumber, "test")
-      projectLinkDAO.updateProjectLinkNumbering(projectId, roadNumber1, roadPartNumber1, LinkStatus.Numbering, newRoadNumber, newPartNumber, "test", 0)
-      projectLinkDAO.updateProjectLinkAdministrativeClassDiscontinuity(Set(links.filter(_.track == Track.LeftSide).maxBy(_.endAddrMValue).id), LinkStatus.Numbering, "test", links.filter(_.track == Track.LeftSide).head.administrativeClass.value, Some(Discontinuity.MinorDiscontinuity.value))
+      projectLinkDAO.updateProjectLinkNumbering(projectId, roadNumber1, roadPartNumber1, RoadAddressChangeType.Renumeration, newRoadNumber, newPartNumber, "test", 0)
+      projectLinkDAO.updateProjectLinkAdministrativeClassDiscontinuity(Set(links.filter(_.track == Track.LeftSide).maxBy(_.endAddrMValue).id), RoadAddressChangeType.Renumeration, "test", links.filter(_.track == Track.LeftSide).head.administrativeClass.value, Some(Discontinuity.MinorDiscontinuity.value))
       val linksAfterUpdate = projectLinkDAO.fetchProjectLinks(projectId)
       linksAfterUpdate.size should be(2)
       linksAfterUpdate.groupBy(p => (p.roadNumber, p.roadPartNumber)).keys.head should be((newRoadNumber, newPartNumber))
@@ -322,10 +322,10 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       val projectLinks = projectLinkDAO.fetchProjectLinks(7081807)
       val header = projectLinks.head
-      projectLinkDAO.updateProjectLinksStatus(Set(header.id), LinkStatus.Terminated, "test")
+      projectLinkDAO.updateProjectLinksStatus(Set(header.id), RoadAddressChangeType.Termination, "test")
 
       val updatedProjectLink = projectLinkDAO.fetchProjectLinks(7081807).filter(link => link.id == header.id).head
-      updatedProjectLink.status should be(LinkStatus.Terminated)
+      updatedProjectLink.status should be(RoadAddressChangeType.Termination)
     }
   }
 
@@ -360,7 +360,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       projectDAO.create(rap)
       projectReservedPartDAO.reserveRoadPart(projectId, roadNumber1, roadPartNumber1, rap.createdBy)
       val projectLinks = Seq(
-        dummyProjectLink(Sequences.nextProjectLinkId, projectId, linkId1, roadway.id, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), LinkStatus.Transfer, AdministrativeClass.State, reversed = false, linearLocationId = linearLocation.id)
+        dummyProjectLink(Sequences.nextProjectLinkId, projectId, linkId1, roadway.id, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), RoadAddressChangeType.Transfer, AdministrativeClass.State, reversed = false, linearLocationId = linearLocation.id)
       )
       projectLinkDAO.create(projectLinks)
 
@@ -434,7 +434,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       projectDAO.create(rap)
       projectReservedPartDAO.reserveRoadPart(projectId, roadNumber1, roadPartNumber1, rap.createdBy)
       val projectLinks = Seq(
-        dummyProjectLink(Sequences.nextProjectLinkId, projectId, linkId1, roadway.id, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), LinkStatus.Transfer, AdministrativeClass.State, reversed = false, linearLocationId = linearLocation.id, connectedLinkId = Some(connectedId))
+        dummyProjectLink(Sequences.nextProjectLinkId, projectId, linkId1, roadway.id, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), RoadAddressChangeType.Transfer, AdministrativeClass.State, reversed = false, linearLocationId = linearLocation.id, connectedLinkId = Some(connectedId))
       )
       projectLinkDAO.create(projectLinks)
 
@@ -461,7 +461,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       projectDAO.create(rap)
       projectReservedPartDAO.reserveRoadPart(projectId, roadNumber1, roadPartNumber1, rap.createdBy)
       val projectLinks = Seq(
-        dummyProjectLink(Sequences.nextProjectLinkId, projectId, linkId1, roadway.id, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), LinkStatus.Transfer, AdministrativeClass.State, reversed = false, linearLocationId = linearLocation.id, connectedLinkId = Some(connectedId))
+        dummyProjectLink(Sequences.nextProjectLinkId, projectId, linkId1, roadway.id, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), RoadAddressChangeType.Transfer, AdministrativeClass.State, reversed = false, linearLocationId = linearLocation.id, connectedLinkId = Some(connectedId))
       )
       projectLinkDAO.create(projectLinks)
 
@@ -489,7 +489,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       projectDAO.create(rap)
       projectReservedPartDAO.reserveRoadPart(projectId, roadNumber1, roadPartNumber1, rap.createdBy)
       val projectLinks = Seq(
-        dummyProjectLink(Sequences.nextProjectLinkId, projectId, linkId1, roadway.id, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), LinkStatus.Transfer, AdministrativeClass.State, reversed = false, linearLocationId = linearLocation.id, connectedLinkId = Some(connectedId))
+        dummyProjectLink(Sequences.nextProjectLinkId, projectId, linkId1, roadway.id, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), RoadAddressChangeType.Transfer, AdministrativeClass.State, reversed = false, linearLocationId = linearLocation.id, connectedLinkId = Some(connectedId))
       )
       projectLinkDAO.create(projectLinks)
 
@@ -518,7 +518,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       projectDAO.create(rap)
       projectReservedPartDAO.reserveRoadPart(projectId, roadNumber1, roadPartNumber1, rap.createdBy)
       val projectLinks = Seq(
-        dummyProjectLink(Sequences.nextProjectLinkId, projectId, linkId1, roadway.id, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), LinkStatus.Transfer, AdministrativeClass.State, reversed = false, linearLocationId = linearLocation.id, connectedLinkId = Some(connectedId))
+        dummyProjectLink(Sequences.nextProjectLinkId, projectId, linkId1, roadway.id, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), RoadAddressChangeType.Transfer, AdministrativeClass.State, reversed = false, linearLocationId = linearLocation.id, connectedLinkId = Some(connectedId))
       )
       projectLinkDAO.create(projectLinks)
 
@@ -540,8 +540,8 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, rap.createdBy)
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber2, rap.createdBy)
       val projectLinks = Seq(
-        dummyProjectLink(projectLinkId1, id, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), LinkStatus.Transfer, AdministrativeClass.State, reversed = false, linearLocationIds.head),
-        dummyProjectLink(projectLinkId2, id, linkId2, roadwayIds.last, roadwayNumber1, roadNumber1, roadPartNumber2, 0, 100, 0.0, 100.0, None, (None, None), Seq(), LinkStatus.Transfer, AdministrativeClass.State, reversed = false, linearLocationIds.last)
+        dummyProjectLink(projectLinkId1, id, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), RoadAddressChangeType.Transfer, AdministrativeClass.State, reversed = false, linearLocationIds.head),
+        dummyProjectLink(projectLinkId2, id, linkId2, roadwayIds.last, roadwayNumber1, roadNumber1, roadPartNumber2, 0, 100, 0.0, 100.0, None, (None, None), Seq(), RoadAddressChangeType.Transfer, AdministrativeClass.State, reversed = false, linearLocationIds.last)
       )
       projectLinkDAO.create(projectLinks)
       projectReservedPartDAO.fetchProjectReservedPart(roadNumber1, roadPartNumber1) should be(Some(rap.id, "TestProject"))
@@ -576,7 +576,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       projectDAO.create(rap)
       projectReservedPartDAO.reserveRoadPart(projectId, roadNumber1, roadPartNumber1, rap.createdBy)
       val projectLinks = Seq(
-        dummyProjectLink(Sequences.nextProjectLinkId, projectId, linkId1, roadway.id, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), LinkStatus.Transfer, AdministrativeClass.State, reversed = false, linearLocationId = linearLocation.id, connectedLinkId = Some(connectedId))
+        dummyProjectLink(Sequences.nextProjectLinkId, projectId, linkId1, roadway.id, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), RoadAddressChangeType.Transfer, AdministrativeClass.State, reversed = false, linearLocationId = linearLocation.id, connectedLinkId = Some(connectedId))
       )
       projectLinkDAO.create(projectLinks)
 
@@ -590,7 +590,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
   }
   //  projectLinkDAO.countLinksByStatus(projectId, roadNumber, roadPartNumber, Set(UnChanged.value, NotHandled.value))
 
-  test("Test countLinksByStatus When creating one projectLink with some status Then when searching by that LinkStatus it should be returned ") {
+  test("Test countLinksByStatus When creating one projectLink with some status Then when searching by that RoadAddressChangeType it should be returned ") {
     runWithRollback {
       val projectId = Sequences.nextViiteProjectId
       val linearLocationId = 1
@@ -608,12 +608,12 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       projectDAO.create(rap)
       projectReservedPartDAO.reserveRoadPart(projectId, roadNumber1, roadPartNumber1, rap.createdBy)
       val projectLinks = Seq(
-        dummyProjectLink(Sequences.nextProjectLinkId, projectId, linkId1, roadway.id, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), LinkStatus.Transfer, AdministrativeClass.State, reversed = false, linearLocationId = linearLocation.id, connectedLinkId = Some(connectedId))
+        dummyProjectLink(Sequences.nextProjectLinkId, projectId, linkId1, roadway.id, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), RoadAddressChangeType.Transfer, AdministrativeClass.State, reversed = false, linearLocationId = linearLocation.id, connectedLinkId = Some(connectedId))
       )
       projectLinkDAO.create(projectLinks)
 
-      val result1 = projectLinkDAO.countLinksByStatus(projectId, roadNumber1, roadPartNumber1, Set(LinkStatus.Transfer.value))
-      val result2 = projectLinkDAO.countLinksByStatus(projectId, roadNumber1, roadPartNumber1, Set(LinkStatus.UnChanged.value, LinkStatus.Terminated.value, LinkStatus.Unknown.value, LinkStatus.NotHandled.value, LinkStatus.Numbering.value, LinkStatus.New.value))
+      val result1 = projectLinkDAO.countLinksByStatus(projectId, roadNumber1, roadPartNumber1, Set(RoadAddressChangeType.Transfer.value))
+      val result2 = projectLinkDAO.countLinksByStatus(projectId, roadNumber1, roadPartNumber1, Set(RoadAddressChangeType.Unchanged.value, RoadAddressChangeType.Termination.value, RoadAddressChangeType.Unknown.value, RoadAddressChangeType.NotHandled.value, RoadAddressChangeType.Renumeration.value, RoadAddressChangeType.New.value))
       result1 should be(projectLinks.size)
       result2 should be(0)
     }
@@ -630,8 +630,8 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, rap.createdBy)
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber2, rap.createdBy)
       val projectLinks = Seq(
-        dummyProjectLink(projectLinkId1, id, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), LinkStatus.Transfer, AdministrativeClass.State, reversed = false, 0),
-        dummyProjectLink(projectLinkId2, id, linkId1, roadwayIds.last, roadwayNumber1, roadNumber1, roadPartNumber2, 0, 100, 0.0, 100.0, None, (None, None), Seq(), LinkStatus.Transfer, AdministrativeClass.State, reversed = false, 0)
+        dummyProjectLink(projectLinkId1, id, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), RoadAddressChangeType.Transfer, AdministrativeClass.State, reversed = false, 0),
+        dummyProjectLink(projectLinkId2, id, linkId1, roadwayIds.last, roadwayNumber1, roadNumber1, roadPartNumber2, 0, 100, 0.0, 100.0, None, (None, None), Seq(), RoadAddressChangeType.Transfer, AdministrativeClass.State, reversed = false, 0)
       )
       projectLinkDAO.create(projectLinks)
       val first = projectLinkDAO.fetchFirstLink(id, roadNumber1, roadPartNumber1)
@@ -650,8 +650,8 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, rap.createdBy)
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber2, rap.createdBy)
       val projectLinks = Seq(
-        dummyProjectLink(projectLinkId1, id, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), LinkStatus.Transfer, AdministrativeClass.State, reversed = false, 0),
-        dummyProjectLink(projectLinkId2, id, linkId1, roadwayIds.last, roadwayNumber1, roadNumber1, roadPartNumber2, 0, 100, 0.0, 100.0, None, (None, None), Seq(), LinkStatus.Transfer, AdministrativeClass.State, reversed = false, 0)
+        dummyProjectLink(projectLinkId1, id, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), RoadAddressChangeType.Transfer, AdministrativeClass.State, reversed = false, 0),
+        dummyProjectLink(projectLinkId2, id, linkId1, roadwayIds.last, roadwayNumber1, roadNumber1, roadPartNumber2, 0, 100, 0.0, 100.0, None, (None, None), Seq(), RoadAddressChangeType.Transfer, AdministrativeClass.State, reversed = false, 0)
       )
       projectLinkDAO.create(projectLinks)
       projectLinkDAO.removeProjectLinksById(Set(projectLinkId1))
@@ -672,8 +672,8 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, rap.createdBy)
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber2, rap.createdBy)
       val projectLinks = Seq(
-        dummyProjectLink(projectLinkId1, id, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), LinkStatus.Transfer, AdministrativeClass.State, reversed = false, 0),
-        dummyProjectLink(projectLinkId2, id, linkId1, roadwayIds.last, roadwayNumber1, roadNumber1, roadPartNumber2, 0, 100, 0.0, 100.0, None, (None, None), Seq(), LinkStatus.Transfer, AdministrativeClass.State, reversed = false, 0)
+        dummyProjectLink(projectLinkId1, id, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), RoadAddressChangeType.Transfer, AdministrativeClass.State, reversed = false, 0),
+        dummyProjectLink(projectLinkId2, id, linkId1, roadwayIds.last, roadwayNumber1, roadNumber1, roadPartNumber2, 0, 100, 0.0, 100.0, None, (None, None), Seq(), RoadAddressChangeType.Transfer, AdministrativeClass.State, reversed = false, 0)
       )
       projectLinkDAO.create(projectLinks)
       projectLinkDAO.removeProjectLinksByProject(id)
@@ -693,8 +693,8 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, rap.createdBy)
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber2, rap.createdBy)
       val projectLinks = Seq(
-        dummyProjectLink(projectLinkId1, id, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), LinkStatus.Transfer, AdministrativeClass.State, reversed = false, 0),
-        dummyProjectLink(projectLinkId2, id, linkId1, roadwayIds.last, roadwayNumber1, roadNumber1, roadPartNumber2, 0, 100, 0.0, 100.0, None, (None, None), Seq(), LinkStatus.Transfer, AdministrativeClass.State, reversed = false, 0)
+        dummyProjectLink(projectLinkId1, id, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), RoadAddressChangeType.Transfer, AdministrativeClass.State, reversed = false, 0),
+        dummyProjectLink(projectLinkId2, id, linkId1, roadwayIds.last, roadwayNumber1, roadNumber1, roadPartNumber2, 0, 100, 0.0, 100.0, None, (None, None), Seq(), RoadAddressChangeType.Transfer, AdministrativeClass.State, reversed = false, 0)
       )
       projectLinkDAO.create(projectLinks)
       projectLinkDAO.removeProjectLinksByLinkId(id, Set(linkId1))
@@ -714,9 +714,9 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       projectDAO.create(rap)
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, rap.createdBy)
       val projectLinks = Seq(
-        dummyProjectLink(projectLinkId3, id, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), LinkStatus.Transfer, AdministrativeClass.State, reversed = false, 0),
-        dummyProjectLink(projectLinkId1, id, linkId2, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 40, 0.0, 40.0, None, (None, None), Seq(), LinkStatus.Transfer, AdministrativeClass.State, reversed = false, 0, Some(linkId1)),
-        dummyProjectLink(projectLinkId2, id, linkId3, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 40, 100, 0.0, 60.0, None, (None, None), Seq(), LinkStatus.Transfer, AdministrativeClass.State, reversed = false, 0, Some(linkId1))
+        dummyProjectLink(projectLinkId3, id, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1,  0, 100, 0.0, 100.0, None, (None, None), Seq(), RoadAddressChangeType.Transfer, AdministrativeClass.State, reversed = false, 0),
+        dummyProjectLink(projectLinkId1, id, linkId2, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1,  0,  40, 0.0,  40.0, None, (None, None), Seq(), RoadAddressChangeType.Transfer, AdministrativeClass.State, reversed = false, 0, Some(linkId1)),
+        dummyProjectLink(projectLinkId2, id, linkId3, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 40, 100, 0.0,  60.0, None, (None, None), Seq(), RoadAddressChangeType.Transfer, AdministrativeClass.State, reversed = false, 0, Some(linkId1))
       )
       projectLinkDAO.create(projectLinks)
       projectLinkDAO.fetchSplitLinks(id, linkId1)
@@ -736,8 +736,8 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, rap.createdBy)
       projectReservedPartDAO.reserveRoadPart(id, roadNumber2, roadPartNumber2, rap.createdBy)
       val projectLinks = Seq(
-        dummyProjectLink(projectLinkId1, id, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), LinkStatus.Transfer, AdministrativeClass.State, reversed = false, 0),
-        dummyProjectLink(projectLinkId2, id, linkId2, roadwayIds.last, roadwayNumber2, roadNumber2, roadPartNumber2, 0, 100, 0.0, 100.0, None, (None, None), Seq(), LinkStatus.Transfer, AdministrativeClass.State, reversed = false, 0)
+        dummyProjectLink(projectLinkId1, id, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), RoadAddressChangeType.Transfer, AdministrativeClass.State, reversed = false, 0),
+        dummyProjectLink(projectLinkId2, id, linkId2, roadwayIds.last, roadwayNumber2, roadNumber2, roadPartNumber2, 0, 100, 0.0, 100.0, None, (None, None), Seq(), RoadAddressChangeType.Transfer, AdministrativeClass.State, reversed = false, 0)
       )
       projectLinkDAO.create(projectLinks)
       projectLinkDAO.removeProjectLinksByProjectAndRoadNumber(id, roadNumber1, roadPartNumber1)
@@ -747,7 +747,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  val dummyProjectLink2 = dummyProjectLink(0, 0, 0.toString, 0, 0, 0, 0, 0, 100, 0.0, 100.0, None, (None, None), Seq(), LinkStatus.Transfer, AdministrativeClass.State, reversed = false, 0)
+  val dummyProjectLink2 = dummyProjectLink(0, 0, 0.toString, 0, 0, 0, 0, 0, 100, 0.0, 100.0, None, (None, None), Seq(), RoadAddressChangeType.Transfer, AdministrativeClass.State, reversed = false, 0)
 
   test("Test ProjectLink.lastSegmentDirection When / towards digitizing and not reversed Then correct vector") {
     val projectLink = dummyProjectLink2.copy(geometry = Seq(Point(50, 50), Point(150, 150), Point(200, 200)))

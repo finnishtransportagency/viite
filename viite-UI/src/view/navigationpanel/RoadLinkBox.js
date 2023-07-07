@@ -1,6 +1,6 @@
 (function (root) {
   root.RoadLinkBox = function (selectedProjectLinkProperty) {
-    var LinkStatus = ViiteEnumerations.LinkStatus;
+    var RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
     var className = 'road-link';
     var title = 'Selite';
     var selectToolIcon = '<img src="images/select-tool.svg"/>';
@@ -98,27 +98,27 @@
 
     var roadProjectOperations = function () {
       return '<div class="legend-entry">' +
-        '<div class="label">' + LinkStatus.Unchanged.displayText + '</div>' +
+        '<div class="label">' + RoadAddressChangeType.Unchanged.displayText + '</div>' +
         '<div class="symbol linear operation-type-unchanged"></div>' +
         '</div>' +
         '<div class="legend-entry">' +
-        '<div class="label">' + LinkStatus.New.displayText + '</div>' +
+        '<div class="label">' + RoadAddressChangeType.New.displayText + '</div>' +
         '<div class="symbol linear operation-type-new"></div>' +
         '</div>' +
         '<div class="legend-entry">' +
-        '<div class="label">' + LinkStatus.Transfer.displayText + '</div>' +
+        '<div class="label">' + RoadAddressChangeType.Transfer.displayText + '</div>' +
         '<div class="symbol linear operation-type-transfer"></div>' +
         '</div>' +
         '<div class="legend-entry">' +
-        '<div class="label">' + LinkStatus.Terminated.displayText + '</div>' +
+        '<div class="label">' + RoadAddressChangeType.Terminated.displayText + '</div>' +
         '<div class="symbol linear operation-type-terminated"></div>' +
         '</div>' +
         '<div class="legend-entry">' +
-        '<div class="label">' + LinkStatus.Numbering.displayText + '</div>' +
+        '<div class="label">' + RoadAddressChangeType.Numbering.displayText + '</div>' +
         '<div class="symbol linear operation-type-renumbered"></div>' +
         '</div>' +
         '<div class="legend-entry">' +
-        '<div class="label">' + LinkStatus.NotHandled.displayText + '</div>' +
+        '<div class="label">' + RoadAddressChangeType.NotHandled.displayText + '</div>' +
         '<div class="symbol linear operation-type-unhandeled"></div>' +
         '</div>' +
         createLifecycleStatusLegendEntries() +

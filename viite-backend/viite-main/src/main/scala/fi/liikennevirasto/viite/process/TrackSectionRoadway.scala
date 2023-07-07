@@ -1,12 +1,11 @@
 //package fi.liikennevirasto.viite.process
 //
 //import fi.liikennevirasto.digiroad2.dao.Sequences
-//import fi.liikennevirasto.viite.dao.LinkStatus.Terminated
 //import fi.liikennevirasto.viite.dao._
 //import fi.liikennevirasto.viite.process.strategy.TrackCalculatorContext
 //import fi.liikennevirasto.viite.{MaxThresholdDistance, NewIdValue, RoadType}
 //import fi.vaylavirasto.viite.geometry.GeometryUtils
-//import fi.vaylavirasto.viite.model.{SideCode, Track}
+//import fi.vaylavirasto.viite.model.{RoadAddressChangeType, SideCode, Track}
 //import org.slf4j.LoggerFactory
 //
 //import scala.annotation.tailrec
@@ -45,7 +44,7 @@
 //          .map(pl => (pl.roadAddressRoadNumber.get, pl.roadAddressRoadPart.get)).distinct.toSet, prjId)
 //    }.getOrElse(Seq.empty[ProjectLink])
 //
-//    if (rightLinks.isEmpty || leftLinks.isEmpty || (newRoadAddresses ++ originalRoadAddresses).exists(_.status == LinkStatus.NotHandled)) {
+//    if (rightLinks.isEmpty || leftLinks.isEmpty || (newRoadAddresses ++ originalRoadAddresses).exists(_.status == RoadAddressChangeType.NotHandled)) {
 //      ((firstRight, restRight), (firstLeft, restLeft))
 //    } else if (firstRight.map(_.roadwayNumber).distinct.size == firstLeft.map(_.roadwayNumber).distinct.size) {
 //      val newRoadwayNumber1 = Sequences.nextRoadwayNumber
@@ -62,7 +61,7 @@
 //  private def continuousRoadwaySection(seq: Seq[ProjectLink], givenRoadwayNumber: Long, opposite: Seq[ProjectLink] = Seq.empty[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
 //    val track = seq.headOption.map(_.track).getOrElse(Track.Unknown)
 //    val roadType = seq.headOption.map(_.roadType.value).getOrElse(RoadType.Empty.value)
-//    val status = seq.headOption.map(_.status.value).getOrElse(LinkStatus.NotHandled.value)
+//    val status = seq.headOption.map(_.status.value).getOrElse(RoadAddressChangeType.NotHandled.value)
 //
 //    val (continuousProjectLinks, restProjectLinks) = {
 //      val splitAddrMValue = opposite.find(_.isSplit).map(_.endAddrMValue)
@@ -85,11 +84,11 @@
 //
 //  private def assignRoadwayNumbersInContinuousSection(links: Seq[ProjectLink], givenRoadwayNumber: Long): Seq[ProjectLink] = {
 //    val roadwayNumber = links.headOption.map(_.roadwayNumber).getOrElse(NewIdValue)
-//    val firstLinkStatus = links.headOption.map(_.status).getOrElse(LinkStatus.Unknown)
-//    val originalHistorySection = if (firstLinkStatus == LinkStatus.New) Seq() else links.takeWhile(pl => pl.roadwayNumber == roadwayNumber)
+//    val firstLinkOperationType = links.headOption.map(_.status).getOrElse(RoadAddressChangeType.Unknown)
+//    val originalHistorySection = if (firstLinkOperationType == RoadAddressChangeType.New) Seq() else links.takeWhile(pl => pl.roadwayNumber == roadwayNumber)
 //    val continuousRoadwayNumberSection =
-//      if (firstLinkStatus == LinkStatus.New)
-//        links.takeWhile(pl => pl.status.equals(LinkStatus.New)).sortBy(_.startAddrMValue)
+//      if (firstLinkOperationType == RoadAddressChangeType.New)
+//        links.takeWhile(pl => pl.status.equals(RoadAddressChangeType.New)).sortBy(_.startAddrMValue)
 //      else
 //        links.takeWhile(pl => pl.roadwayNumber == roadwayNumber).sortBy(_.startAddrMValue)
 //
@@ -106,10 +105,10 @@
 //      roadAddresses
 //    }
 //
-//    val roadwayNumbers = if (continuousProjectLinks.nonEmpty && continuousProjectLinks.exists(_.status == LinkStatus.New)) {
+//    val roadwayNumbers = if (continuousProjectLinks.nonEmpty && continuousProjectLinks.exists(_.status == RoadAddressChangeType.New)) {
 //      // then we now that for sure the addresses increased their length for the part => new roadwayNumber for the new sections
 //      (givenRoadwayNumber, Sequences.nextRoadwayNumber)
-//    } else if (continuousProjectLinks.nonEmpty && continuousProjectLinks.exists(_.status == LinkStatus.Numbering)) {
+//    } else if (continuousProjectLinks.nonEmpty && continuousProjectLinks.exists(_.status == RoadAddressChangeType.Numbering)) {
 //      // then we now that for sure the addresses didnt change the address length part, only changed the number of road or part => same roadwayNumber
 //      (continuousProjectLinks.headOption.map(_.roadwayNumber).get, givenRoadwayNumber)
 //    } else {
@@ -145,7 +144,7 @@
 //    val groupedReferenceLinks: ListMap[Long, Seq[ProjectLink]] = ListMap(
 //      referenceLinks.map { pl =>
 //        pl.status match {
-//          case LinkStatus.New => pl.copy(roadwayNumber = NewIdValue)
+//          case RoadAddressChangeType.New => pl.copy(roadwayNumber = NewIdValue)
 //          case _ => pl
 //        }
 //      }.groupBy(_.roadwayNumber).toSeq.sortBy(r => r._2.minBy(_.startAddrMValue).startAddrMValue): _*)
@@ -153,7 +152,7 @@
 //    val otherLength: Double = otherLinks.map(l => l.endMValue - l.startMValue).sum
 //    val resetLinksIfNeed = otherLinks.map { pl =>
 //      pl.status match {
-//        case LinkStatus.New => pl.copy(roadwayNumber = NewIdValue)
+//        case RoadAddressChangeType.New => pl.copy(roadwayNumber = NewIdValue)
 //        case _ => pl
 //      }
 //    }
@@ -176,7 +175,7 @@
 //    val processedReferenceProjectLinks = reAssignedRoadwayNumbers(processedProjectLinks.filter(pl => referenceTrack.contains(pl.track)), Sequences.nextRoadwayNumber, processedOthersProjectLinks)
 //
 //    val reAssignedOppositeRoadwayNumbers: Seq[ProjectLink] =
-//      if (processedOthersProjectLinks.exists(l => l.status == LinkStatus.New && l.isSplit))
+//      if (processedOthersProjectLinks.exists(l => l.status == RoadAddressChangeType.New && l.isSplit))
 //        processedOthersProjectLinks
 //      else
 //        reAssignedRoadwayNumbers(processedOthersProjectLinks, Sequences.nextRoadwayNumber)
@@ -340,7 +339,7 @@
 //
 //        val processedOppositeTrackWithSplitLink = assignedRwnLinks ++ unassignedRwnLinks.map(_.copy(roadwayNumber = nextRoadwayNumber)) :+
 //          linkToBeSplit.copy(startMValue = firstSplitStartMeasure, endMValue = firstSplitEndMeasure, geometry = firstSplitLinkGeom, geometryLength = GeometryUtils.geometryLength(firstSplitLinkGeom),
-//            startAddrMValue = startAddrMValue.getOrElse(linkToBeSplit.startAddrMValue), endAddrMValue = splitEndAddrM, roadwayNumber = if (linkToBeSplit.status == LinkStatus.New || remainingReference.head._2.size == 1) nextRoadwayNumber else linkToBeSplit.roadwayNumber, connectedLinkId = Some(linkToBeSplit.linkId), discontinuity = Discontinuity.Continuous)
+//            startAddrMValue = startAddrMValue.getOrElse(linkToBeSplit.startAddrMValue), endAddrMValue = splitEndAddrM, roadwayNumber = if (linkToBeSplit.status == RoadAddressChangeType.New || remainingReference.head._2.size == 1) nextRoadwayNumber else linkToBeSplit.roadwayNumber, connectedLinkId = Some(linkToBeSplit.linkId), discontinuity = Discontinuity.Continuous)
 //
 //        logger.info(s"Project link for reference section (matching split): (${remainingReference.head._2.last.roadNumber}, ${remainingReference.head._2.last.roadPartNumber}, ${remainingReference.head._2.last.track})")
 //        logger.info(s"\tfrom: (${remainingReference.head._2.last.originalStartAddrMValue} - ${remainingReference.head._2.last.originalEndAddrMValue})")

@@ -4,7 +4,7 @@ import fi.liikennevirasto.viite.dao.BaseRoadAddress
 import fi.liikennevirasto.viite.model.RoadAddressLinkLike
 import fi.vaylavirasto.viite.geometry.Point
 import fi.vaylavirasto.viite.model.Discontinuity.{ChangingELYCode, Discontinuous, EndOfRoad}
-import fi.vaylavirasto.viite.model.{LinkStatus, SideCode}
+import fi.vaylavirasto.viite.model.{RoadAddressChangeType, SideCode}
 
 package object viite {
   /* Tolerance in which we can allow MValues to be equal */
@@ -114,7 +114,7 @@ package object viite {
 
   //ELY-code error messages
   val MultipleElysInPartMessage = s"Samalla tieosalla eri elynumeroita. Tieosan tulee vaihtua ELY-rajalla. Korjaa tieosa- tai elynumeroa."
-  val IncorrectLinkStatusOnElyCodeChangeMessage =  s"ELY-koodin muutos ei onnistu, ota yhteyttä pääkäyttäjään."
+  val IncorrectOperationTypeOnElyCodeChangeMessage =  s"ELY-koodin muutos ei onnistu, ota yhteyttä pääkäyttäjään."
   val ElyCodeChangeButNoRoadPartChangeMessage = s"ELY-numeromuutos havaittu mutta tieosoitemuutos puuttuu. Tieosanumeron tulee vaihtua ELY-rajalla."
   val ElyCodeChangeButNoElyChangeMessage = s"ELY-numeromuutos havaittu mutta  ${ChangingELYCode.description}(${ChangingELYCode.value}) jatkuvuuskoodi on väärä. ELY:n rajalla jatkuvuuskoodin tulee olla 3."
   val ElyCodeDiscontinuityChangeButNoElyChangeMessage = s"Tieosan %d lopussa jatkuu-koodiksi määritelty ${ChangingELYCode.description} (${ChangingELYCode.value}), tarkista tieosien %d ja %s ELY-koodit tai korjaa jatkuu-koodia."
@@ -164,7 +164,7 @@ package object viite {
   val DefaultLongitude = 6900000.0
   val DefaultLatitude = 390000.0
   val DefaultZoomLevel = 2
-  val operationsLeavingHistory = List(LinkStatus.Transfer, LinkStatus.Numbering, LinkStatus.Terminated)
+  val operationsLeavingHistory = List(RoadAddressChangeType.Transfer, RoadAddressChangeType.Renumeration, RoadAddressChangeType.Termination)
 
   //--------------------------------------------------------------------
   //--------------------------------Swagger text here-----------------
@@ -272,7 +272,7 @@ package object viite {
     "|:----------------------:|:------------------:|:-----------------------------------------------------------------------------------:|:-----:|\n" +
     "|           ids          |      Set[Long]     |                              Id's of the project links                              |       |\n" +
     "|         linkIds        |      Seq[String]   |                            LinkId's of the project links                            |       |\n" +
-    "|       linkStatus       |         Int        |                       Current link status of the project links                      |       |\n" +
+    "| roadAddressChangeType  |         Int        |            Currently assigned roadAddressChangeType of the project link             |       |\n" +
     "|        projectId       |        Long        |                                  Id of the project                                  |       |\n" +
     "|       roadNumber       |        Long        |                         Road Number of All the project links                        |       |\n" +
     "|     roadPartNumber     |        Long        |                      Road Part Number of All the project links                      |       |\n" +
@@ -281,7 +281,7 @@ package object viite {
     "|         roadEly        |        Long        |                            Ely code of all project links                            |       |\n" +
     "|     roadLinkSource     |         Int        |                        Road link source of all project links                        |       |\n" +
     "|  administrative class  |         Int        |               Administrative class code for all the project links                   |       |\n" +
-    "| userDefinedEndAddressM |     Option[Int]    | Optional value, simbolizes if there is a specific value for the end address m value |       |\n" +
+    "| userDefinedEndAddressM |     Option[Int]    | Optional value, symbolizes if there is a specific value for the end address m value |       |\n" +
     "|       coordinates      | ProjectCoordinates |  This represents the middle point of all the project links involved in the project  |       |\n" +
     "|        roadName        |   Option[String]   |                Possible road name for all the project links sent here               |       |\n" +
     "|        reversed        |   Option[Boolean]  |                   Defines whether or not these roads are reversed                   |       |"

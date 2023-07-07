@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent}
-import fi.vaylavirasto.viite.model.{AddressChangeType, AdministrativeClass, Discontinuity, LinkStatus, Track}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, RoadAddressChangeType, Track}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
@@ -109,7 +109,7 @@ object RoadwayFiller {
       val currentRoadway                = changes.currentRoadway
       val historyRoadways: Seq[Roadway] = changes.historyRoadways
       val projectLinksInRoadway         = changes.projectLinks
-      val (terminatedProjectLinks, others) = projectLinksInRoadway.partition(_.status == LinkStatus.Terminated)
+      val (terminatedProjectLinks, others) = projectLinksInRoadway.partition(_.status == RoadAddressChangeType.Termination)
       val elyChanged                       = if (others.nonEmpty) currentRoadway.ely != others.head.ely else false
       val addressChanged                   = if (others.nonEmpty) others.last.endAddrMValue != currentRoadway.endAddrMValue || (others.head.startAddrMValue) != currentRoadway.startAddrMValue else false
       val adminClassed                     = others.groupBy(pl => AdminClassRwn(pl.administrativeClass, pl.roadwayNumber))
@@ -402,7 +402,10 @@ object RoadwayFiller {
       }
     }
 
-    val (operationsToCheck, rest) = changesWithLinks.partition(c => List(AddressChangeType.Unchanged, AddressChangeType.Transfer, AddressChangeType.ReNumeration, AddressChangeType.Termination).contains(c._1.changeInfo.changeType))
+    val (operationsToCheck, rest) = changesWithLinks.partition(c => List(
+      RoadAddressChangeType.Unchanged, RoadAddressChangeType.Transfer,
+      RoadAddressChangeType.Renumeration, RoadAddressChangeType.Termination
+    ).contains(c._1.changeInfo.changeType))
     (groupedSections(operationsToCheck).toSeq ++ rest).sortBy(_._1.changeInfo.orderInChangeTable)
   }
 
