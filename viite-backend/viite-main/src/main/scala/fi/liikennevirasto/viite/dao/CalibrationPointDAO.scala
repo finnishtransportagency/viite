@@ -1,12 +1,11 @@
 package fi.liikennevirasto.viite.dao
 
-import fi.liikennevirasto.digiroad2.dao.Sequences
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import fi.liikennevirasto.viite.NewIdValue
-import fi.vaylavirasto.viite.model.BeforeAfter
+import fi.vaylavirasto.viite.dao.Sequences
 import fi.vaylavirasto.viite.model.{CalibrationPoint, CalibrationPointLocation, CalibrationPointType}
 
 object CalibrationPointDAO {

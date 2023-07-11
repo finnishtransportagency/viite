@@ -5,8 +5,8 @@ import java.sql.{PreparedStatement, Timestamp}
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.viite.dao.{NodeDAO, RoadwayPointDAO}
+import fi.vaylavirasto.viite.dao.Sequences
 import org.joda.time._
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._

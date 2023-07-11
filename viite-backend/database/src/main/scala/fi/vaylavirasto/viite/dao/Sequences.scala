@@ -1,13 +1,12 @@
-package fi.liikennevirasto.digiroad2.dao
+package fi.vaylavirasto.viite.dao
 
-import fi.liikennevirasto.digiroad2.dao.Queries._
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 
 object Sequences {
 
   def nextViitePrimaryKeySeqValue: Long = {
-    nextViitePrimaryKeyId.as[Long].first
+    Queries.nextViitePrimaryKeyId.as[Long].first
   }
 
   def nextViiteProjectId: Long = {

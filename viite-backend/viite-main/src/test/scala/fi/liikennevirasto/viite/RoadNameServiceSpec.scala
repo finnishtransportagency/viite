@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
-import fi.liikennevirasto.viite.dao.{RoadName, RoadNameDAO}
+import fi.vaylavirasto.viite.dao.{RoadName, RoadNameDAO}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.scalatest.{FunSuite, Matchers}

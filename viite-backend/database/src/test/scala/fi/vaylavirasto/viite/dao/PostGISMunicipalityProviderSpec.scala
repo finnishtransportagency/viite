@@ -1,4 +1,4 @@
-package fi.liikennevirasto.digiroad2.dao
+package fi.vaylavirasto.viite.dao
 
 import org.scalatest.{FunSuite, Matchers, Tag}
 

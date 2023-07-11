@@ -1,10 +1,7 @@
-package fi.liikennevirasto.viite.dao
+package fi.vaylavirasto.viite.dao
 
 import java.sql.{Date, Timestamp}
-
-import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.dao.Sequences
-import fi.liikennevirasto.digiroad2.user.User
+import com.github.tototoshi.slick.MySQLJodaSupport._ // Required for implicit functions' usage
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.slf4j.LoggerFactory

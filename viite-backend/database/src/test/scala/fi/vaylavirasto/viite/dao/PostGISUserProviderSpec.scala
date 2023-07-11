@@ -1,4 +1,4 @@
-package fi.liikennevirasto.digiroad2.dao
+package fi.vaylavirasto.viite.dao
 
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.user.Configuration

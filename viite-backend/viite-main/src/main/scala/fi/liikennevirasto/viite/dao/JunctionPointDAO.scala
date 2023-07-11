@@ -1,9 +1,9 @@
 package fi.liikennevirasto.viite.dao
 
 import fi.liikennevirasto.viite.NewIdValue
-import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
+import fi.vaylavirasto.viite.dao.Sequences
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
 import fi.vaylavirasto.viite.model.{BeforeAfter, Discontinuity, Track}
 import org.joda.time.DateTime

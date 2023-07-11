@@ -2,12 +2,12 @@ package fi.liikennevirasto.viite
 
 import java.sql.Date
 import fi.liikennevirasto.digiroad2.DigiroadEventBus
-import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
+import fi.vaylavirasto.viite.dao.Sequences
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
 import fi.vaylavirasto.viite.model.CalibrationPointType.{NoCP, RoadAddressCP}
 import fi.vaylavirasto.viite.model.{AdministrativeClass, BeforeAfter, CalibrationPointLocation, Discontinuity, LinkGeomSource, NodePointType, NodeType, RoadAddressChangeType, SideCode, Track}
