@@ -38,21 +38,21 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
   lazy val isNotCalculated: Boolean = endAddrMValue == 0L
   lazy val isCalculated: Boolean = !isNotCalculated
 
-  lazy val roadway = roadwayDAO.fetchAllByRoadwayId(Seq(roadwayId)).headOption
+  private lazy val roadway = roadwayDAO.fetchAllByRoadwayId(Seq(roadwayId)).headOption
 
   def originalRoadNumber: Long = if (roadway.isDefined) roadway.get.roadNumber else roadNumber
 
   def originalRoadPartNumber: Long = if (roadway.isDefined) roadway.get.roadPartNumber else roadPartNumber
 
-  def originalAdministrativeClass = if (roadway.isDefined) roadway.get.administrativeClass else administrativeClass
+  def originalAdministrativeClass: AdministrativeClass = if (roadway.isDefined) roadway.get.administrativeClass else administrativeClass
 
-  def originalTrack = if (roadway.isDefined) roadway.get.track else track
+  def originalTrack: Track = if (roadway.isDefined) roadway.get.track else track
 
   def originalEly: Long = if (roadway.isDefined) roadway.get.ely else ely
 
   private def isTheLastProjectLinkOnRoadway = roadway.isDefined && this.originalEndAddrMValue == roadway.get.endAddrMValue
 
-  def originalDiscontinuity = if (isTheLastProjectLinkOnRoadway) roadway.get.discontinuity else if (roadway.isDefined) Discontinuity.Continuous else discontinuity
+  def originalDiscontinuity: Discontinuity = if (isTheLastProjectLinkOnRoadway) roadway.get.discontinuity else if (roadway.isDefined) Discontinuity.Continuous else discontinuity
 
   def oppositeEndPoint(point: Point) : Point = {
     if (GeometryUtils.areAdjacent(point, geometry.head)) geometry.last else geometry.head
@@ -730,7 +730,7 @@ class ProjectLinkDAO {
 
     time(logger, "Update project link values") {
       val lineString: String = PostGISDatabase.createJGeometry(roadAddress.geometry)
-      val geometryQuery = s"ST_GeomFromText('${lineString}', 3067)"
+      val geometryQuery = s"ST_GeomFromText('$lineString', 3067)"
       val updateGeometry = if (updateGeom) s", GEOMETRY = $geometryQuery" else s""
       val idFilter = plId match {
         case Some(id) => s"AND ID = $id"

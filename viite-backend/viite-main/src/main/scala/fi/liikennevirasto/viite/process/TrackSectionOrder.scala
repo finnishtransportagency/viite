@@ -178,6 +178,7 @@ object TrackSectionOrder {
       }
     }
 
+    @tailrec
     def recursive(currentPoint: Point, ready: Seq[ProjectLink], unprocessed: Seq[ProjectLink]): Seq[ProjectLink] = {
       if (unprocessed.isEmpty) {
         // Put calibration point at the end
@@ -287,6 +288,7 @@ object TrackSectionOrder {
       }
     }
 
+    @tailrec
     def recursiveFindAndExtend(currentPoint: Point, ready: Seq[ProjectLink], unprocessed: Seq[ProjectLink], oppositeTrack: Seq[ProjectLink]): Seq[ProjectLink] = {
       if (unprocessed.isEmpty)
         ready
@@ -340,8 +342,8 @@ object TrackSectionOrder {
             SideCode.TowardsDigitizing
         }
         /* Sets reverse flag if sidecode change occurs with road/roadpart change. */
-        def setReverseFlag = if (sideCode != nextLink.sideCode && (nextLink.roadNumber != nextLink.originalRoadNumber || nextLink.roadPartNumber != nextLink.originalRoadPartNumber)) !nextLink.reversed else nextLink.reversed
-        recursiveFindAndExtend(nextPoint, ready ++ Seq(nextLink.copy(sideCode = sideCode, reversed = setReverseFlag)), unprocessed.filterNot(pl => pl == nextLink), oppositeTrack)
+        def setReverseFlag() = if (sideCode != nextLink.sideCode && (nextLink.roadNumber != nextLink.originalRoadNumber || nextLink.roadPartNumber != nextLink.originalRoadPartNumber)) !nextLink.reversed else nextLink.reversed
+        recursiveFindAndExtend(nextPoint, ready ++ Seq(nextLink.copy(sideCode = sideCode, reversed = setReverseFlag())), unprocessed.filterNot(pl => pl == nextLink), oppositeTrack)
       }
     }
 

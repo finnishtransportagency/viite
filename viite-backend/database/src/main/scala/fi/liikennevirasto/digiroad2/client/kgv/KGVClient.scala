@@ -28,7 +28,7 @@ class KgvRoadLink {
 class KgvRoadLinkClient[T](collection: Option[KgvCollection] = None, linkGeomSourceValue:Option[LinkGeomSource] = None) extends KgvOperation {
 
   override type LinkType = T
-  override protected val serviceName = collection.getOrElse(throw new ClientException("Collection is not defined") ).value
+  override protected val serviceName: String = collection.getOrElse(throw new ClientException("Collection is not defined") ).value
   override protected val linkGeomSource: LinkGeomSource = linkGeomSourceValue.getOrElse(throw new ClientException("LinkGeomSource is not defined") )
   val restApiEndPoint: String = ViiteProperties.kgvEndpoint
   val filter:Filter = FilterOgc

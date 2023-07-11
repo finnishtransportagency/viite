@@ -30,15 +30,13 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
   private val roadNumber1 = 990
   private val roadNumber2 = 993
 
-  private val roadwayNumber1 = 1000000000l
+  private val roadwayNumber1 = 1000000000L
   private val roadwayNumber2 = 2000000000l
   private val roadwayNumber3 = 3000000000l
 
-  val testRoadway1 = Roadway(NewIdValue, roadwayNumber1, roadNumber1, 1, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
-
-  val testRoadway2 = Roadway(NewIdValue, roadwayNumber2, roadNumber1, 2, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 100, 200, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
-
-  val testRoadway3 = Roadway(NewIdValue, roadwayNumber3, roadNumber2, 1, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 2"), 1, TerminationCode.NoTermination)
+  private val testRoadway1 = Roadway(NewIdValue, roadwayNumber1, roadNumber1, 1, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous,   0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
+  private val testRoadway2 = Roadway(NewIdValue, roadwayNumber2, roadNumber1, 2, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 100, 200, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
+  private val testRoadway3 = Roadway(NewIdValue, roadwayNumber3, roadNumber2, 1, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous,   0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 2"), 1, TerminationCode.NoTermination)
 
   test("Test existence of roadway points from the start and end of the roadway by fetchMissingRoadwayPointsFromStart. Correctly assess both existing, and missing roadway points.") {
     runWithRollback {
@@ -102,8 +100,8 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
       val roadwayNumber = Sequences.nextRoadwayNumber
       val roadwayNumber3 = Sequences.nextRoadwayNumber
 
-      val linearLocation1 = LinearLocation(Sequences.nextLinearLocationId, 4, 1000l.toString, 0.0, 288.0,SideCode.TowardsDigitizing,10000000000l,(CalibrationPointReference(Some(0l)), CalibrationPointReference.None),Seq(Point(0.0, 0.0), Point(0.0, 288.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber)
-      val linearLocation2 = LinearLocation(Sequences.nextLinearLocationId, 1, 1000l.toString, 0.0, 288.0,SideCode.TowardsDigitizing,10000000000l,(CalibrationPointReference(Some(0l)), CalibrationPointReference.None),Seq(Point(0.0, 0.0), Point(0.0, 288.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber3)
+      val linearLocation1 = LinearLocation(Sequences.nextLinearLocationId, 4, 1000L.toString, 0.0, 288.0,SideCode.TowardsDigitizing,10000000000L,(CalibrationPointReference(Some(0L)), CalibrationPointReference.None),Seq(Point(0.0, 0.0), Point(0.0, 288.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber)
+      val linearLocation2 = LinearLocation(Sequences.nextLinearLocationId, 1, 1000L.toString, 0.0, 288.0,SideCode.TowardsDigitizing,10000000000L,(CalibrationPointReference(Some(0L)), CalibrationPointReference.None),Seq(Point(0.0, 0.0), Point(0.0, 288.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber3)
 
       linearLocationDAO.create(Seq(linearLocation1, linearLocation2))
 

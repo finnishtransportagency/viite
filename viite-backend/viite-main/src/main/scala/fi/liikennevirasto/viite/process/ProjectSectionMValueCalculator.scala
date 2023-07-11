@@ -70,16 +70,15 @@ object ProjectSectionMValueCalculator {
         if (seq.exists(_.track == Track.RightSide || seq.forall(_.track == Track.Combined))) orderedPairs._1 else orderedPairs._2.reverse
       } else seq
 
-      val newAddressValues = ordered.scanLeft(addrSt.getOrElse(0.0)) { case (m, pl) => {
-        val someCalibrationPoint: Option[UserDefinedCalibrationPoint] = cps.get(pl.id)
-
+      val newAddressValues = ordered.scanLeft(addrSt.getOrElse(0.0)) {
+        case (m, pl) =>
+          val someCalibrationPoint: Option[UserDefinedCalibrationPoint] = cps.get(pl.id)
           pl.status match {
-          case RoadAddressChangeType.New => if (someCalibrationPoint.nonEmpty) someCalibrationPoint.get.addressMValue else m + Math.abs(pl.geometryLength) * coEff
+            case RoadAddressChangeType.New => if (someCalibrationPoint.nonEmpty) someCalibrationPoint.get.addressMValue else m + Math.abs(pl.geometryLength) * coEff
             case RoadAddressChangeType.Transfer | RoadAddressChangeType.NotHandled | RoadAddressChangeType.Renumeration | RoadAddressChangeType.Unchanged => m + (pl.originalEndAddrMValue - pl.originalStartAddrMValue)
             case RoadAddressChangeType.Termination => pl.endAddrMValue
             case _ => throw new InvalidAddressDataException(s"Invalid status found at value assignment ${pl.status}, linkId: ${pl.linkId}")
           }
-      }
       }
       seq.zip(newAddressValues.zip(newAddressValues.tail)).map { case (pl, (st, en)) => pl.copy(startAddrMValue = Math.round(st), endAddrMValue = Math.round(en))
       }

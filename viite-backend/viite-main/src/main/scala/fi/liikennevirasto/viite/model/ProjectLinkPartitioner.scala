@@ -4,6 +4,8 @@ import fi.liikennevirasto.digiroad2.linearasset.GraphPartitioner
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.RoadAddressChangeType
 
+import scala.annotation.tailrec
+
 object ProjectLinkPartitioner extends GraphPartitioner {
 
   def partition[T <: ProjectAddressLinkLike](projectLinks: Seq[T]): Seq[Seq[T]] = {
@@ -17,6 +19,7 @@ object ProjectLinkPartitioner extends GraphPartitioner {
     clusters.map(linksFromCluster) ++ groupedUnnamedRoads
   }
 
+  @tailrec
   def groupRoadsWithoutName[T <: ProjectAddressLinkLike](ready: Seq[Seq[T]], prepared: Seq[T], unprocessed: Seq[T], allLinks: Seq[T], pointToConnect: Point = Point(0, 0)): Seq[Seq[T]] = {
     if (unprocessed.isEmpty) {
       ready ++ Seq(prepared)

@@ -184,12 +184,11 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
   def mapLinearLocations(roadway: Roadway, projectLinks: Seq[ProjectLink]): Seq[LinearLocation] = {
     projectLinks.sortBy(_.startAddrMValue).zip(1 to projectLinks.size).
       map {
-        case (projectLink, key) => {
+        case (projectLink, key) =>
           LinearLocation(projectLink.linearLocationId, key, projectLink.linkId, projectLink.startMValue, projectLink.endMValue, projectLink.sideCode, projectLink.linkGeometryTimeStamp,
             (CalibrationPointsUtils.toCalibrationPointReference(projectLink.startCalibrationPoint),
               CalibrationPointsUtils.toCalibrationPointReference(projectLink.endCalibrationPoint)),
             projectLink.geometry, projectLink.linkGeomSource, roadway.roadwayNumber, Some(DateTime.now()))
-      }
     }
   }
 

@@ -16,7 +16,7 @@ sealed trait LinkGeomSource{
   */
 
 object LinkGeomSource{
-  val values = Set(
+  private val values = Set(
     NormalLinkInterface,
     ComplementaryLinkInterface,
     FrozenLinkInterface,

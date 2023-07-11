@@ -8,11 +8,11 @@ import slick.jdbc.{StaticQuery => Q}
 import scala.io.{BufferedSource, Codec, Source}
 
 object SqlScriptRunner {
-  def runScripts(filenames: Seq[String]) {
+  def runScripts(filenames: Seq[String]): Unit = {
     executeStatements(filenames.flatMap(readScriptStatements("./viite-backend/database/sql/", _)))
   }
 
-  def runViiteScripts(filenames: Seq[String]) {
+  def runViiteScripts(filenames: Seq[String]): Unit = {
     executeStatements(filenames.flatMap(readScriptStatements("./viite-backend/viite-main/sql/", _)))
   }
 
@@ -33,7 +33,7 @@ object SqlScriptRunner {
     commentR.replaceAllIn(withComments, "").split(";")
   }
 
-  def executeStatements(stmts: Seq[String]) {
+  def executeStatements(stmts: Seq[String]): Unit = {
     println("Running " + stmts.length + " statements...")
     var i = 0
     PostGISDatabase.withDynTransaction {
@@ -44,19 +44,18 @@ object SqlScriptRunner {
           if (i % 10 == 0)
             println("" + i + " / " + stmts.length)
         } catch {
-          case e: Exception => {
+          case e: Exception =>
             e.printStackTrace
             println("failed statement: " + stmt.replaceAll("\\)", ")\n"))
             println("CONTINUING WITH NEXT STATEMENT...")
             return
-          }
         }
       }
       println("DONE!")
     }
   }
 
-  def executeStatement(statement: String) = executeStatements(List(statement))
+  def executeStatement(statement: String): Unit = executeStatements(List(statement))
 
   def executeStatements(sqls: String): Unit = {
     val statements = sqls.split(";")

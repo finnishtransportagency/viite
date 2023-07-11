@@ -24,7 +24,7 @@ sealed trait CalibrationCode {
 }
 
 object CalibrationCode {
-  val values = Set(No, AtEnd, AtBeginning, AtBoth)
+  val values: Set[CalibrationCode] = Set(No, AtEnd, AtBeginning, AtBoth)
 
   def apply(intValue: Int): CalibrationCode = {
     values.find(_.value == intValue).getOrElse(No)

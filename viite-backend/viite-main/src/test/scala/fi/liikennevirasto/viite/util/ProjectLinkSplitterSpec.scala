@@ -17,11 +17,11 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   val mockProjectService = MockitoSugar.mock[ProjectService]
-  val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
-  val mockRoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
-  val mockNodesAndJunctionsService = MockitoSugar.mock[NodesAndJunctionsService]
-  val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
+  private val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+  private val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
+  private val mockRoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
+  private val mockNodesAndJunctionsService = MockitoSugar.mock[NodesAndJunctionsService]
+  private val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val projectDAO = new ProjectDAO
   val projectLinkDAO = new ProjectLinkDAO
   val roadwayDAO = new RoadwayDAO

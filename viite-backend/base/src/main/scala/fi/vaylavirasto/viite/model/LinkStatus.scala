@@ -8,7 +8,7 @@ sealed trait LinkStatus {
 
 //TODO LinkStatus should be renamed to ProjectLinkStatus
 object LinkStatus {
-  val values = Set(NotHandled, Termination, New, Transfer, Unchanged, Renumeration, Unknown)
+  private val values = Set(NotHandled, Termination, New, Transfer, Unchanged, Renumeration, Unknown)
   case object NotHandled    extends LinkStatus {def value =  0; def description = "Käsittelemättä" }
   case object Unchanged     extends LinkStatus {def value =  1; def description = "Ennallaan"      }
   case object New           extends LinkStatus {def value =  2; def description = "Uusi"           }

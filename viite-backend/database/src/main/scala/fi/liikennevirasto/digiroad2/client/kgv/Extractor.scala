@@ -80,10 +80,9 @@ object Extractor {
   private def anyToDouble(value: Any): Option[Double] = {
     value match {
       case null => None
-      case _ => {
+      case _ =>
         val doubleValue = Try(value.toString.toDouble).getOrElse(throw new NumberFormatException(s"Failed to convert value: ${value.toString}") )
         Some(doubleValue)
-      }
     }
   }
 
@@ -104,7 +103,7 @@ object Extractor {
   def extractFeature(feature: Feature, linkGeomSource: LinkGeomSource): RoadLink = {
     val attributes = feature.properties
     val linkGeometry: Seq[Point] = feature.geometry.coordinates.map(point => {
-      Point(anyToDouble(point(0)).get, anyToDouble(point(1)).get, anyToDouble(point(2)).get)
+      Point(anyToDouble(point.head).get, anyToDouble(point(1)).get, anyToDouble(point(2)).get)
     })
     val sourceid = attributes("sourceid").asInstanceOf[String]
     val linkId = attributes("id").asInstanceOf[String]

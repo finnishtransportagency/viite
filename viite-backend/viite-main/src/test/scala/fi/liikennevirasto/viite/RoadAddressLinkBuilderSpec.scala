@@ -26,17 +26,17 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
     }
   }
 
-  val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockNodesAndJunctionsService = MockitoSugar.mock[NodesAndJunctionsService]
-  val mockRoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
-  val mockLinearLocationDAO = MockitoSugar.mock[LinearLocationDAO]
-  val mockRoadwayDAO = MockitoSugar.mock[RoadwayDAO]
-  val mockRoadNetworkDAO = MockitoSugar.mock[RoadNetworkDAO]
+  private val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
+  private val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+  private val mockNodesAndJunctionsService = MockitoSugar.mock[NodesAndJunctionsService]
+  private val mockRoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
+  private val mockLinearLocationDAO = MockitoSugar.mock[LinearLocationDAO]
+  private val mockRoadwayDAO = MockitoSugar.mock[RoadwayDAO]
+  private val mockRoadNetworkDAO = MockitoSugar.mock[RoadNetworkDAO]
   val mockProjectLinkDAO = MockitoSugar.mock[ProjectLinkDAO]
-  val mockRoadwayPointDAO = MockitoSugar.mock[RoadwayPointDAO]
-  val mockNodePointDAO = MockitoSugar.mock[NodePointDAO]
-  val mockJunctionPointDAO = MockitoSugar.mock[JunctionPointDAO]
+  private val mockRoadwayPointDAO = MockitoSugar.mock[RoadwayPointDAO]
+  private val mockNodePointDAO = MockitoSugar.mock[NodePointDAO]
+  private val mockJunctionPointDAO = MockitoSugar.mock[JunctionPointDAO]
   val projectDAO = new ProjectDAO
   val projectLinkDAO = new ProjectLinkDAO
   val projectReservedPartDAO = new ProjectReservedPartDAO
@@ -123,8 +123,8 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
     val unknownProjectLink = ProjectLink(   0,    0, 0, Track.Unknown,  Discontinuity.Continuous,    0,    0,    0,    0, None, None, None,       0.toString, 0.0,  0.0, SideCode.Unknown,           (NoCP, NoCP), (NoCP, NoCP), List(),    0, RoadAddressChangeType.NotHandled, AdministrativeClass.Unknown, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 8, reversed = false, None, 85088L)
     val projectLinks =
       Map(
-        1717380l.toString -> ProjectLink(1270,    0, 0, Track.Unknown,  Discontinuity.Continuous, 1021, 1028, 1021, 1028, None, None, None, 1717380.toString, 0.0,  6.0, SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP), List(), 1227, RoadAddressChangeType.NotHandled, AdministrativeClass.Unknown, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 8, reversed = false, None, 85088L),
-        1717374l.toString -> ProjectLink(1259, 1130, 0, Track.Combined, Discontinuity.Continuous,  959, 1021,  959, 1021, None, None, None, 1717374.toString, 0.0, 61.0, SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP), List(), 1227, RoadAddressChangeType.NotHandled, AdministrativeClass.Unknown, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 8, reversed = false, None, 85088L)
+        1717380L.toString -> ProjectLink(1270,    0, 0, Track.Unknown,  Discontinuity.Continuous, 1021, 1028, 1021, 1028, None, None, None, 1717380.toString, 0.0,  6.0, SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP), List(), 1227, RoadAddressChangeType.NotHandled, AdministrativeClass.Unknown, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 8, reversed = false, None, 85088L),
+        1717374L.toString -> ProjectLink(1259, 1130, 0, Track.Combined, Discontinuity.Continuous,  959, 1021,  959, 1021, None, None, None, 1717374.toString, 0.0, 61.0, SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP), List(), 1227, RoadAddressChangeType.NotHandled, AdministrativeClass.Unknown, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 8, reversed = false, None, 85088L)
       )
 
     val roadLinks = Seq(

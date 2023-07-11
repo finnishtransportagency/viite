@@ -59,13 +59,13 @@ case class ChangeInfoForRoadAddressChangesBrowser(startDate: DateTime, changeTyp
 class RoadwayChangesDAO {
   val formatter: DateTimeFormatter = ISODateTimeFormat.dateOptionalTimeParser()
   val projectDAO = new ProjectDAO
-  implicit val getDiscontinuity = GetResult[Discontinuity](r => Discontinuity.apply(r.nextInt()))
+  implicit val getDiscontinuity: GetResult[Discontinuity] = GetResult[Discontinuity](r => Discontinuity.apply(r.nextInt()))
 
-  implicit val getAddressChangeType = GetResult[RoadAddressChangeType](r => RoadAddressChangeType.apply(r.nextInt()))
+  implicit val getAddressChangeType: GetResult[RoadAddressChangeType] = GetResult[RoadAddressChangeType](r => RoadAddressChangeType.apply(r.nextInt()))
 
-  implicit val getAdministrativeClass = GetResult[AdministrativeClass](r => AdministrativeClass.apply(r.nextInt()))
+  implicit val getAdministrativeClass: GetResult[AdministrativeClass] = GetResult[AdministrativeClass](r => AdministrativeClass.apply(r.nextInt()))
 
-  implicit val getRoadwayChangeRow = new GetResult[ChangeRow] {
+  implicit val getRoadwayChangeRow: GetResult[ChangeRow] = new GetResult[ChangeRow] {
     def apply(r: PositionedResult) = {
       val projectId = r.nextLong
       val projectName = r.nextStringOption

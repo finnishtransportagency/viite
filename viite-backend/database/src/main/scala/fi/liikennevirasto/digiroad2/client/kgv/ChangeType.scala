@@ -53,7 +53,7 @@ sealed trait ChangeType {
 }
 
 object ChangeType {
-  val values = Set(Unknown, CombinedModifiedPart, CombinedRemovedPart, LengthenedCommonPart, LengthenedNewPart, DividedModifiedPart, DividedNewPart, ShortenedCommonPart, ShortenedRemovedPart, Removed, New, ReplacedCommonPart, ReplacedNewPart, ReplacedRemovedPart)
+  val values : Set[ChangeType] = Set(Unknown, CombinedModifiedPart, CombinedRemovedPart, LengthenedCommonPart, LengthenedNewPart, DividedModifiedPart, DividedNewPart, ShortenedCommonPart, ShortenedRemovedPart, Removed, New, ReplacedCommonPart, ReplacedNewPart, ReplacedRemovedPart)
 
   def apply(intValue: Int): ChangeType = {
     values.find(_.value == intValue).getOrElse(Unknown)
@@ -66,7 +66,7 @@ object ChangeType {
    * @param changeInfo changeInfo object to check
    * @return true, if this is a replacement
    */
-  def isReplacementChange(changeInfo: ChangeInfo) = { // Where asset geo location should be replaced with another
+  def isReplacementChange(changeInfo: ChangeInfo): Boolean = { // Where asset geo location should be replaced with another
     changeInfo.changeType match {
       case CombinedModifiedPart => true
       case CombinedRemovedPart => true
@@ -92,7 +92,7 @@ object ChangeType {
    * @param changeInfo changeInfo object to check
    * @return true, if this is an extension
    */
-  def isExtensionChange(changeInfo: ChangeInfo) = { // Where asset geo location is a new extension (non-existing)
+  def isExtensionChange(changeInfo: ChangeInfo) : Boolean = { // Where asset geo location is a new extension (non-existing)
     changeInfo.changeType match {
       case LengthenedNewPart => true
       case ReplacedNewPart => true
@@ -114,7 +114,7 @@ object ChangeType {
    * @param changeInfo changeInfo object to check
    * @return true, if this is a removed segment
    */
-  def isRemovalChange(changeInfo: ChangeInfo) = { // Where asset should be removed completely or partially
+  def isRemovalChange(changeInfo: ChangeInfo) : Boolean = { // Where asset should be removed completely or partially
     changeInfo.changeType match {
       case Removed => true
       case ReplacedRemovedPart => true
@@ -129,7 +129,7 @@ object ChangeType {
    * @param changeInfo changeInfo object to check
    * @return true, if this is a new segment
    */
-  def isCreationChange(changeInfo: ChangeInfo) = { // Where asset geo location should be replaced with another
+  def isCreationChange(changeInfo: ChangeInfo) : Boolean = { // Where asset geo location should be replaced with another
     changeInfo.changeType match {
       case New => true
       case _ => false

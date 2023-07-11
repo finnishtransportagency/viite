@@ -30,7 +30,7 @@ class RoadAddressUpdater(roadAddressService: RoadAddressService) extends Actor {
 object Digiroad2Context {
   val Digiroad2ServerOriginatedResponseHeader = "Digiroad2-Server-Originated-Response"
 
-  val system = ActorSystem("Digiroad2")
+  private val system = ActorSystem("Digiroad2")
   import system.dispatcher
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
@@ -57,10 +57,9 @@ object Digiroad2Context {
           logger.info("Flyway migrate successful.")
           Ok("Flyway migrate successful.\n")
         } catch {
-          case e: Exception => {
+          case e: Exception =>
             logger.error("Flyway migrate failed.", e)
             InternalServerError(s"Flyway migrate failed: ${e.getMessage}")
-          }
         }
       }
     }

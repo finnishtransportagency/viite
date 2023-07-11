@@ -9,17 +9,11 @@ case class Configuration(
                         )
 case class User(id: Long, username: String, configuration: Configuration) {
 
-  def isViewer() = configuration.roles(Role.Viewer)
-
-  def isViiteUser(): Boolean = configuration.roles(Role.ViiteUser)
-
-  def hasViiteWriteAccess(): Boolean = configuration.roles(Role.ViiteUser)
-
-  def isOperator(): Boolean = {
-    configuration.roles(Role.Operator)
-  }
-
-  def isNotInViite(): Boolean = {
+  def isViewer:            Boolean = configuration.roles(Role.Viewer)
+  def isViiteUser:         Boolean = configuration.roles(Role.ViiteUser)
+  def hasViiteWriteAccess: Boolean = configuration.roles(Role.ViiteUser)
+  def isOperator:          Boolean = configuration.roles(Role.Operator)
+  def isNotInViite:        Boolean = {
     id == 0
   }
 

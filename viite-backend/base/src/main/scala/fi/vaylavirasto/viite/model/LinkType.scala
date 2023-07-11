@@ -6,7 +6,7 @@ sealed trait LinkType
 }
 
 object LinkType {
-  val values = Set(
+  private val values = Set(
     Motorway,
     MultipleCarriageway,
     SingleCarriageway,

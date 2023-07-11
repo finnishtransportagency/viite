@@ -92,12 +92,12 @@ object ProjectSectionCalculator {
       /* Set terminated link heads to new calculated values. */
       val leftReassignedStart: Seq[ProjectLink] = leftTerminated.map(leftTerminatedpl => {
         val startingPointLink = nonTerminatedSortedByStartAddr.find(pl => {
-          pl.id != leftTerminatedpl.id && (pl.startingPoint.connected(leftTerminatedpl.startingPoint))
+          pl.id != leftTerminatedpl.id && pl.startingPoint.connected(leftTerminatedpl.startingPoint)
         })
         if (startingPointLink.isDefined) leftTerminatedpl.copy(startAddrMValue = startingPointLink.get.startAddrMValue)
         else {
           val endingPointLink = nonTerminatedSortedByStartAddr.find(pl => {
-            pl.id != leftTerminatedpl.id && (pl.endPoint.connected(leftTerminatedpl.startingPoint))
+            pl.id != leftTerminatedpl.id && pl.endPoint.connected(leftTerminatedpl.startingPoint)
           })
           if (endingPointLink.isDefined) leftTerminatedpl.copy(startAddrMValue = endingPointLink.get.endAddrMValue)
           else leftTerminatedpl
@@ -106,12 +106,12 @@ object ProjectSectionCalculator {
 
       val leftReassignedEnd: Seq[ProjectLink] = leftReassignedStart.map(leftTerminatedpl => {
         val startingPointLink = nonTerminatedSortedByStartAddr.find(pl =>
-          (pl.id != leftTerminatedpl.id && ( pl.startingPoint.connected(leftTerminatedpl.endPoint))
-        ))
+          pl.id != leftTerminatedpl.id && pl.startingPoint.connected(leftTerminatedpl.endPoint)
+        )
         if (startingPointLink.isDefined) leftTerminatedpl.copy(endAddrMValue = startingPointLink.get.startAddrMValue)
         else {
           val endPointLink = nonTerminatedSortedByStartAddr.find(pl =>
-            pl.id != leftTerminatedpl.id && (pl.endPoint.connected(leftTerminatedpl.endPoint))
+            pl.id != leftTerminatedpl.id && pl.endPoint.connected(leftTerminatedpl.endPoint)
           )
           if (endPointLink.isDefined) leftTerminatedpl.copy(endAddrMValue = endPointLink.get.endAddrMValue)
           else leftTerminatedpl
@@ -120,12 +120,12 @@ object ProjectSectionCalculator {
 
       val rightReassignedStart: Seq[ProjectLink] = rightTerminated.map(rightTerminatedpl => {
         val startingPointLink = nonTerminatedSortedByStartAddr.find(pl =>
-          pl.id != rightTerminatedpl.id && (pl.startingPoint.connected(rightTerminatedpl.startingPoint))
+          pl.id != rightTerminatedpl.id && pl.startingPoint.connected(rightTerminatedpl.startingPoint)
         )
         if (startingPointLink.isDefined) rightTerminatedpl.copy(startAddrMValue = startingPointLink.get.startAddrMValue)
         else {
           val endingPointLink = nonTerminatedSortedByStartAddr.find(pl =>
-            pl.id != rightTerminatedpl.id && (pl.endPoint.connected(rightTerminatedpl.startingPoint))
+            pl.id != rightTerminatedpl.id && pl.endPoint.connected(rightTerminatedpl.startingPoint)
           )
           if (endingPointLink.isDefined) rightTerminatedpl.copy(startAddrMValue = endingPointLink.get.endAddrMValue)
           else rightTerminatedpl
@@ -134,12 +134,12 @@ object ProjectSectionCalculator {
 
       val rightReassignedEnd: Seq[ProjectLink] = rightReassignedStart.map(rightTerminatedpl => {
         val startingPointLink = nonTerminatedSortedByStartAddr.find(pl => {
-          pl.id != rightTerminatedpl.id && (pl.startingPoint.connected(rightTerminatedpl.endPoint))
+          pl.id != rightTerminatedpl.id && pl.startingPoint.connected(rightTerminatedpl.endPoint)
         })
         if (startingPointLink.isDefined) rightTerminatedpl.copy(endAddrMValue = startingPointLink.get.startAddrMValue)
         else {
           val endPointLink = nonTerminatedSortedByStartAddr.find(pl => {
-            pl.id != rightTerminatedpl.id && (pl.endPoint.connected(rightTerminatedpl.endPoint))
+            pl.id != rightTerminatedpl.id && pl.endPoint.connected(rightTerminatedpl.endPoint)
           })
           if (endPointLink.isDefined) rightTerminatedpl.copy(endAddrMValue = endPointLink.get.endAddrMValue)
           else rightTerminatedpl

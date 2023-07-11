@@ -961,6 +961,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       nodePointDAO.expireById(nodePointsOfExpiredNodes.map(_.id))
     }
 
+    @tailrec
     def continuousSectionByAdministrativeClass(section: Seq[ProjectLink], continuousSection: Seq[Seq[ProjectLink]] = Seq.empty): Seq[Seq[ProjectLink]] = {
       if (section.isEmpty)
         continuousSection

@@ -11,7 +11,7 @@ import fi.vaylavirasto.viite.asset.{Modification, TimeStamps}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.{AdministrativeClass, SideCode}
 import org.joda.time.format.ISODateTimeFormat
-import org.joda.time.{DateTime, DateTimeZone}
+import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, Formats}
 import org.postgresql.util.PSQLException
 import org.scalatra.json.JacksonJsonSupport
@@ -30,7 +30,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
 
   val apiId = "integration-api"
 
-  val XApiKeyDescription =
+  private val XApiKeyDescription =
     "You need an API key to use Viite APIs.\n" +
     "Get your API key from the technical system owner (järjestelmävastaava)."
   val ISOdateTimeDescription =
@@ -74,7 +74,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
       }
       catch {
         case nfe: NumberFormatException =>
-          BadRequestWithLoggerWarn(s"Incorrectly formatted municipality code: '${municipality}'", nfe.getMessage)
+          BadRequestWithLoggerWarn(s"Incorrectly formatted municipality code: '$municipality'", nfe.getMessage)
       // TODO Leaving as comment for now... but... This is unexpected generic exception; rather point to telling to the dev team -> handleCommonIntegrationAPIExceptions? -> Remove from here
       //case e: Exception =>
       //  BadRequestWithLoggerWarn(s"Failed to get road addresses for municipality $municipalityCode", e.getMessage)
@@ -129,14 +129,13 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
     val roadnumberMap: Map[Int, Seq[RoadwayNetworkSummaryRow]] = roadNetworkSummary.groupBy(_.roadNumber)
 
     roadnumberMap.toList.sortBy(_._1).map { // foreach roadnumber, handle the sequence of rows
-      case(key_RoadNumber,uniqueRoadnumberMap) => {
+      case(key_RoadNumber,uniqueRoadnumberMap) =>
         Map(
           "roadnumber" -> key_RoadNumber,
           "roadname" -> uniqueRoadnumberMap.head.roadName, // each row in the road number seq has the same roadName; take any (here: first)
           "roadparts" ->
             parseRoadpartsForSummary( uniqueRoadnumberMap.groupBy(_.roadPartNumber) )
         )
-      }
     }
   }
   /**
@@ -155,7 +154,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
 
         val admClassWithinRoadPARTMap: Map[Int, Seq[RoadwayNetworkSummaryRow]] = uniqueRoadPARTMap.groupBy(_.administrativeClass)
         admClassWithinRoadPARTMap.toList.sortBy(_._1).map {
-          case(key_AdmClassWithinRoadPART,uniqueAdmClassWithinRoadPARTMap) => {
+          case(_/*key_AdmClassWithinRoadPART*/,uniqueAdmClassWithinRoadPARTMap) =>
             Map(
               "roadpartnumber" -> key_RoadPARTNumber,
               "ely" -> uniqueAdmClassWithinRoadPARTMap.head.elyCode, // each row in the road part seq has the same roadName; take any (here: first)
@@ -163,7 +162,6 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
               "tracks" ->
                 parseTracksForSummary( uniqueAdmClassWithinRoadPARTMap )
             )
-          }
         }
       }
     }
@@ -454,9 +452,9 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
           dateParameter
       }
       catch {
-        case iae: IllegalArgumentException =>
+        case _: IllegalArgumentException =>
           throw ViiteException(s"$ISOdateTimeDescription. Now got $dateParameterName='${dateString.get}'.") //, iae.getMessage) // TODO more accurate message for logging? -> e.g. ViiteAPIException class with an additional field?
-        case psqle: PSQLException =>
+        case _: PSQLException =>
           throw ViiteException(s"Date out of bounds, check the given dates: ${request.getQueryString}.") //, s"${psqle.getMessage}")
       }
     }
@@ -496,13 +494,11 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
         BadRequestWithLoggerWarn(s"$ISOdateTimeDescription. Now got '${request.getQueryString}''", iae.getMessage)
       case psqle: PSQLException => // TODO remove? This applies when biiiig year (e.g. 2000000) given to DateTime parser. But year now restricted to be less than 100 years in checks before giving to dateTime parsing
         BadRequestWithLoggerWarn(s"Date out of bounds, check the given dates: ${request.getQueryString}.", s"${psqle.getMessage}")
-      case nf if NonFatal(nf) => {
-        val requestString = s"GET request for ${request.getRequestURI}?${request.getQueryString} (${operationId})"
+      case nf if NonFatal(nf) =>
+        val requestString = s"GET request for ${request.getRequestURI}?${request.getQueryString} ($operationId)"
         haltWithHTTP500WithLoggerError(requestString, nf)
-      }
-      case t if !NonFatal(t) => {
+      case t if !NonFatal(t) =>
         throw t
-      }
     }
   }
 
@@ -691,9 +687,6 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
 
   private def formatDateTimeToIsoString(dateOption: Option[DateTime]): Option[String] =
   dateOption.map { date => ISODateTimeFormat.dateTimeNoMillis().print(date) }
-
-  private def formatDateTimeToIsoUtcString(dateOption: Option[DateTime]): Option[String] =
-    dateOption.map { date => ISODateTimeFormat.dateTimeNoMillis().print(date.withZone(DateTimeZone.UTC)) }
 
   private def parseIsoDate(dateString: Option[String]): Option[DateTime] = {
     var dateTime = None: Option[DateTime]

@@ -19,7 +19,7 @@ class ChangeApi(roadAddressService: RoadAddressService, nodesAndJunctionsService
   val logger: Logger = LoggerFactory.getLogger(getClass)
   val DateTimePropertyFormat: DateTimeFormatter = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss")
 
-  val XApiKeyDescription =
+  private val XApiKeyDescription =
     "You need an API key to use Viite APIs.\n" +
     "Get your API key from the technical system owner (järjestelmävastaava)."
   val dateParamDescription =
@@ -76,7 +76,7 @@ class ChangeApi(roadAddressService: RoadAddressService, nodesAndJunctionsService
   }
 
   private def haltWithHTTP500WithLoggerError(whatWasCalledWhenError: String, throwable: Throwable) = {
-    var now = DateTime.now()
+    val now = DateTime.now()
     logger.error(s"An unexpected error in '$whatWasCalledWhenError ($now)': $throwable")
     halt(InternalServerError(
       s"You hit an unexpected error. Contact system administrator, or Viite development team.\n" +
@@ -84,7 +84,7 @@ class ChangeApi(roadAddressService: RoadAddressService, nodesAndJunctionsService
     ))
   }
 
-  def BadRequestWithLoggerWarn(messageFor400: String, extraForLogger: String) = {
+  private def BadRequestWithLoggerWarn(messageFor400: String, extraForLogger: String) = {
     logger.warn(messageFor400 + "  " + extraForLogger)
     BadRequest(messageFor400)
   }

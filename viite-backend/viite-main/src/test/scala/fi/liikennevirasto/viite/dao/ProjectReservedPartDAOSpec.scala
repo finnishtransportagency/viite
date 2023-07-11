@@ -55,14 +55,14 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
   private val roadPartNumber1 = 1
   private val roadPartNumber2 = 2
 
-  private val roadwayNumber1 = 1000000000l
-  private val roadwayNumber2 = 2000000000l
+  private val roadwayNumber1 = 1000000000L
+  private val roadwayNumber2 = 2000000000L
   private val roadwayNumber3 = 3000000000l
 
-  private val linkId1 = 1000l.toString
-  private val linkId2 = 2000l.toString
-  private val linkId3 = 3000l.toString
-  private val linkId4 = 4000l.toString
+  private val linkId1 = 1000L.toString
+  private val linkId2 = 2000L.toString
+  private val linkId3 = 3000L.toString
+  private val linkId4 = 4000L.toString
 
   private val linearLocationId = 0
 
@@ -451,7 +451,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
       )
 
       val linearLocations = (roadways ++ outsideRoadways).zipWithIndex.map {
-        case (roadway, i) => LinearLocation(NewIdValue, 1, linkId1 + i, 0.0, 2.8, SideCode.TowardsDigitizing, 10000000000l, (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(99.0, 99.0), Point(101.0, 101.0)), LinkGeomSource.NormalLinkInterface, roadway.roadwayNumber)
+        case (roadway, i) => LinearLocation(NewIdValue, 1, linkId1 + i, 0.0, 2.8, SideCode.TowardsDigitizing, 10000000000L, (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(99.0, 99.0), Point(101.0, 101.0)), LinkGeomSource.NormalLinkInterface, roadway.roadwayNumber)
       }
 
       linearLocationDAO.create(linearLocations)
@@ -516,11 +516,11 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
       val notReservedRoadway = roadwayDAO.fetchAllBySection(newNotReservedRoadway.roadNumber, newNotReservedRoadway.roadPartNumber).head
       val reservedRoadway2 = roadwayDAO.fetchAllBySection(newReservedRoadway2.roadNumber, newReservedRoadway2.roadPartNumber).head
 
-      val intersectingRoadwayLocation = LinearLocation(NewIdValue, 1, linkId1, 0.0, 2.8, SideCode.TowardsDigitizing, 10000000000l, (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(99.0, 99.0), Point(101.0, 101.0)), LinkGeomSource.NormalLinkInterface, intersectingRoadway.roadwayNumber)
-      val intersectingRoadwayLocation2 = LinearLocation(NewIdValue, 1, linkId1, 0.0, 2.8, SideCode.TowardsDigitizing, 10000000000l, (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(99.0, 99.0), Point(101.0, 101.0)), LinkGeomSource.NormalLinkInterface, intersectingRoadway2.roadwayNumber)
-      val reservedRoadwayLocation = LinearLocation(NewIdValue, 1, linkId2, 0.0, 2.8, SideCode.TowardsDigitizing, 10000000000l, (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(99.0, 99.0), Point(101.0, 101.0)), LinkGeomSource.NormalLinkInterface, reservedRoadway.roadwayNumber)
-      val notReservedRoadwayLocation = LinearLocation(NewIdValue, 1, linkId3, 0.0, 2.8, SideCode.TowardsDigitizing, 10000000000l, (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(99.0, 99.0), Point(101.0, 101.0)), LinkGeomSource.NormalLinkInterface, notReservedRoadway.roadwayNumber)
-      val reservedRoadway2Location = LinearLocation(NewIdValue, 1, linkId4, 0.0, 2.8, SideCode.TowardsDigitizing, 10000000000l, (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(99.0, 99.0), Point(101.0, 101.0)), LinkGeomSource.NormalLinkInterface, reservedRoadway2.roadwayNumber)
+      val intersectingRoadwayLocation  = LinearLocation(NewIdValue, 1, linkId1, 0.0, 2.8, SideCode.TowardsDigitizing, 10000000000L, (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(99.0, 99.0), Point(101.0, 101.0)), LinkGeomSource.NormalLinkInterface, intersectingRoadway.roadwayNumber)
+      val intersectingRoadwayLocation2 = LinearLocation(NewIdValue, 1, linkId1, 0.0, 2.8, SideCode.TowardsDigitizing, 10000000000L, (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(99.0, 99.0), Point(101.0, 101.0)), LinkGeomSource.NormalLinkInterface, intersectingRoadway2.roadwayNumber)
+      val reservedRoadwayLocation      = LinearLocation(NewIdValue, 1, linkId2, 0.0, 2.8, SideCode.TowardsDigitizing, 10000000000L, (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(99.0, 99.0), Point(101.0, 101.0)), LinkGeomSource.NormalLinkInterface, reservedRoadway.roadwayNumber)
+      val notReservedRoadwayLocation   = LinearLocation(NewIdValue, 1, linkId3, 0.0, 2.8, SideCode.TowardsDigitizing, 10000000000L, (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(99.0, 99.0), Point(101.0, 101.0)), LinkGeomSource.NormalLinkInterface, notReservedRoadway.roadwayNumber)
+      val reservedRoadway2Location     = LinearLocation(NewIdValue, 1, linkId4, 0.0, 2.8, SideCode.TowardsDigitizing, 10000000000L, (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(99.0, 99.0), Point(101.0, 101.0)), LinkGeomSource.NormalLinkInterface, reservedRoadway2.roadwayNumber)
 
       linearLocationDAO.create(Seq(intersectingRoadwayLocation, intersectingRoadwayLocation2, reservedRoadwayLocation, notReservedRoadwayLocation, reservedRoadway2Location))
 

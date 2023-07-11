@@ -8,7 +8,7 @@ sealed trait TrafficDirection {
 }
 
 object TrafficDirection {
-  val values = Set(BothDirections, AgainstDigitizing, TowardsDigitizing, UnknownDirection)
+  private val values = Set(BothDirections, AgainstDigitizing, TowardsDigitizing, UnknownDirection)
 
   def apply(intValue: Int): TrafficDirection = {
     values.find(_.value == intValue).getOrElse(UnknownDirection)

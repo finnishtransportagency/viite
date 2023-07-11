@@ -736,7 +736,7 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
         var links = road_13_218.map(addressToRoadLink)
         val links2: (Map[String, List[RoadLink]], Map[String, List[RoadLink]]) = links.groupBy(_.linkId).partition(_._2.size == 1)
         links = links2._1.values.flatten.toList ++ links2._2.map(p => p._2.head.copy(geometry = {
-          val geom: Seq[Point] = p._2.flatMap(_.geometry).sortBy(p => (p.x, p.y, p.z)).distinct;
+          val geom: Seq[Point] = p._2.flatMap(_.geometry).sortBy(p => (p.x, p.y, p.z)).distinct
           if (p._2.head.geometry.head == geom.head) geom else geom.reverse
         }, length = p._2.map(_.length).sum, sourceId = ""))
 
@@ -1036,8 +1036,10 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
         continuosAddresses(leftSide)
         continuosAddresses(rightSide)
 
-        val oldAddresses = ((afterCalculatedProjectlinks.filter(pl => pl.status != RoadAddressChangeType.New && pl.track != Track.LeftSide)).sortBy(_.originalStartAddrMValue).toList.map(pl => (pl.originalStartAddrMValue, pl.originalEndAddrMValue, pl.status)),
-                      (afterCalculatedProjectlinks.filter(pl => pl.status != RoadAddressChangeType.New && pl.track != Track.RightSide)).sortBy(_.originalStartAddrMValue).toList.map(pl => (pl.originalStartAddrMValue, pl.originalEndAddrMValue, pl.status)))
+        val oldAddresses = (
+          afterCalculatedProjectlinks.filter(pl => pl.status != RoadAddressChangeType.New && pl.track != Track.LeftSide).sortBy(_.originalStartAddrMValue).toList.map(pl => (pl.originalStartAddrMValue, pl.originalEndAddrMValue, pl.status)),
+          afterCalculatedProjectlinks.filter(pl => pl.status != RoadAddressChangeType.New && pl.track != Track.RightSide).sortBy(_.originalStartAddrMValue).toList.map(pl => (pl.originalStartAddrMValue, pl.originalEndAddrMValue, pl.status))
+        )
 
         /* Check original addresses continuos*/
         assert(oldAddresses._1.head._1 == 0)
@@ -1063,12 +1065,11 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
            val it = pls.sliding(2)
            while (it.hasNext) {
              it.next() match {
-               case Seq(curr, next) => {
+               case Seq(curr, next) =>
                  if (curr.discontinuity == Discontinuity.Continuous)
-                  curr.connected(next) shouldBe (true)
+                  curr.connected(next) shouldBe true
                  else
-                  curr.connected(next) shouldBe (false)
-               }
+                  curr.connected(next) shouldBe false
             }
           }
         }
@@ -1115,7 +1116,7 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
         )
 
         /* Check two track addresses are continuous on each track. */
-        def check_two_track_continuous(x: Seq[RoadwayChangeSection]) = {
+        def check_two_track_continuous(x: Seq[RoadwayChangeSection]): Unit = {
           Seq(Track.LeftSide, Track.RightSide).foreach(track => {
             val trackAddresses = x.filterNot(_.trackCode.get == track.value).sortBy(_.startAddressM.get).map(rcs => {
               (rcs.startAddressM.get, rcs.endAddressM.get)
@@ -1137,12 +1138,11 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
        val afterSecondCalc = projectService_db.getProjectLinks(projectSaved.id)
        afterSecondCalc.size should be (afterCalculatedProjectlinks.size)
        afterSecondCalc.sortBy(pl => (pl.startAddrMValue, pl.track.value)).zip(afterCalculatedProjectlinks.sortBy(pl => (pl.startAddrMValue, pl.track.value))).foreach{
-         case (pl1, pl2) => {
+         case (pl1, pl2) =>
            pl1.startAddrMValue should be(pl2.startAddrMValue)
            pl1.endAddrMValue should be(pl2.endAddrMValue)
            pl1.startMValue should be(pl2.startMValue)
            pl1.endMValue should be(pl2.endMValue)
-         }
        }
 
         projectDAO.updateProjectStatus(projectSaved.id, ProjectState.UpdatingToRoadNetwork)
@@ -1170,10 +1170,9 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
          val it = t.sliding(2)
          while (it.hasNext) {
            it.next() match {
-             case Seq(cur, next) => {
+             case Seq(cur, next) =>
                assert(next.startAddrMValue <= next.endAddrMValue)
                assert(cur.endAddrMValue == next.startAddrMValue)
-             }
            }
          }
        }
@@ -1192,10 +1191,9 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
          val it = t.sliding(2)
          while (it.hasNext) {
            it.next() match {
-             case Seq(cur, next) => {
+             case Seq(cur, next) =>
                assert(next.startAddrMValue <= next.endAddrMValue)
                assert(cur.endAddrMValue == next.startAddrMValue)
-             }
            }
          }
        }

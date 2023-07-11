@@ -6,14 +6,14 @@ import org.scalatra.{InternalServerError, Ok, ScalatraServlet}
 import org.slf4j.LoggerFactory
 
 class PingApi extends ScalatraServlet {
-  val logger = LoggerFactory.getLogger(getClass)
+  private val logger = LoggerFactory.getLogger(getClass)
 
   def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
 
   get("/") {
     withDynSession {
       try {
-        val dbTime = PingDAO.getDbTime()
+        val dbTime = PingDAO.getDbTime
         Ok(s"OK (DB Time: $dbTime)\n")
       } catch {
         case e: Exception =>

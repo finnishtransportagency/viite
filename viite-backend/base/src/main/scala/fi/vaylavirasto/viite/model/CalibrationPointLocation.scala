@@ -5,7 +5,7 @@ trait CalibrationPointLocation {
 }
 
 object CalibrationPointLocation {
-  val values = Set(StartOfLink, EndOfLink, Unknown)
+  private val values = Set(StartOfLink, EndOfLink, Unknown)
 
   def apply(intValue: Int): CalibrationPointLocation = {
     values.find(_.value == intValue).getOrElse(Unknown)

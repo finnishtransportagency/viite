@@ -31,8 +31,8 @@ trait Filter {
 
 object FilterOgc extends Filter {
 
-  val singleFilter:       (String, String) => String = (field: String, value: String) => s"${field}='${value}'"
-  val singleAddQuotation: String => String           = (value: String) => s"'${value}'"
+  val singleFilter:       (String, String) => String = (field: String, value: String) => s"$field='$value'"
+  val singleAddQuotation: String => String           = (value: String) => s"'$value'"
 
   override def withSourceIdFilter(sourceIds: Set[Long]): String =
     withFilter("sourceid", sourceIds)

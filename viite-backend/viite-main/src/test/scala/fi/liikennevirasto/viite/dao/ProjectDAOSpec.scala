@@ -45,11 +45,11 @@ class ProjectDAOSpec extends FunSuite with Matchers {
   private val roadPartNumber1 = 1
   private val roadPartNumber2 = 2
 
-  private val roadwayNumber1 = 1000l
-  private val roadwayNumber2 = 2000l
+  private val roadwayNumber1 = 1000L
+  private val roadwayNumber2 = 2000L
 
-  private val linkId1 = 1000l.toString
-  private val linkId2 = 2000l.toString
+  private val linkId1 = 1000L.toString
+  private val linkId2 = 2000L.toString
 
   private val linearLocationId = 0
 

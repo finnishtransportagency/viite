@@ -106,7 +106,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
     contentType = formats("json") + "; charset=utf-8"
     try {
       authenticateForApi(request)(userProvider)
-      if (request.isWrite && !userProvider.getCurrentUser().hasViiteWriteAccess) {
+      if (request.isWrite && !userProvider.getCurrentUser.hasViiteWriteAccess) {
         halt(Unauthorized("No write permissions"))
       }
     } catch {
@@ -123,7 +123,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
   get("/startupParameters", operation(getStartupParameters)) {
     time(logger, "GET request for /startupParameters") {
       val (east, north, zoom, roles) = {
-        val config = userProvider.getCurrentUser().configuration
+        val config = userProvider.getCurrentUser.configuration
         (config.east.map(_.toDouble), config.north.map(_.toDouble), config.zoom.map(_.toInt), config.roles)
       }
       StartupParameters(east.getOrElse(DefaultLatitude), north.getOrElse(DefaultLongitude), zoom.getOrElse(DefaultZoomLevel), deploy_date, roles)
@@ -138,7 +138,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
 
   get("/user", operation(getUser)) {
     time(logger, "GET request for /user") {
-      Map("userName" -> userProvider.getCurrentUser().username, "roles" -> userProvider.getCurrentUser().configuration.roles)
+      Map("userName" -> userProvider.getCurrentUser.username, "roles" -> userProvider.getCurrentUser.configuration.roles)
     }
   }
 
@@ -182,7 +182,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
         case _ => 0L
       }
 
-    time(logger, s"GET request for /roadlinks (roadnumber: $roadNumber) (roadpart: ${roadPartNumber})") {
+    time(logger, s"GET request for /roadlinks (roadnumber: $roadNumber) (roadpart: $roadPartNumber)") {
       if (roadNumber == 0){
         BadRequest("Missing mandatory 'roadnumber' parameter")
       }
@@ -350,7 +350,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
     val roadNumber = params("roadNumber").toLong
     time(logger, s"PUT request for /roadnames/$roadNumber") {
       val roadNames = parsedBody.extract[Seq[RoadNameRow]]
-      val username = userProvider.getCurrentUser().username
+      val username = userProvider.getCurrentUser.username
       roadNameService.addOrUpdateRoadNames(roadNumber, roadNames, username) match {
         case Some(err) => Map("success" -> false, "errorMessage" -> err)
         case None => Map("success" -> true)
@@ -367,14 +367,14 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
   get("/roadnetworkerrors", operation(getRoadNetworkErrors)) {
     time(logger, s"GET request for /roadnetworkerrors") {
       try {
-        val missingCalibrationPointsFromTheStart = roadNetworkValidator.getMissingCalibrationPointsFromTheStart()
-        val missingCalibrationPointsFromTheEnd = roadNetworkValidator.getMissingCalibrationPointsFromTheEnd()
-        val missingCalibrationPointsFromJunctions = roadNetworkValidator.getMissingCalibrationPointsFromJunctions()
-        val missingRoadwayPointsFromTheStart = roadNetworkValidator.getMissingRoadwayPointsFromTheStart()
-        val missingRoadwayPointsFromTheEnd = roadNetworkValidator.getMissingRoadwayPointsFromTheEnd()
-        val invalidRoadwayLengths = roadNetworkValidator.getInvalidRoadwayLengths()
-        val overlappingRoadways = roadNetworkValidator.getOverlappingRoadwaysInHistory()
-        val overlappingRoadwaysOnLinearLocations = roadNetworkValidator.getOverlappingRoadwaysOnLinearLocations()
+        val missingCalibrationPointsFromTheStart = roadNetworkValidator.getMissingCalibrationPointsFromTheStart
+        val missingCalibrationPointsFromTheEnd = roadNetworkValidator.getMissingCalibrationPointsFromTheEnd
+        val missingCalibrationPointsFromJunctions = roadNetworkValidator.getMissingCalibrationPointsFromJunctions
+        val missingRoadwayPointsFromTheStart = roadNetworkValidator.getMissingRoadwayPointsFromTheStart
+        val missingRoadwayPointsFromTheEnd = roadNetworkValidator.getMissingRoadwayPointsFromTheEnd
+        val invalidRoadwayLengths = roadNetworkValidator.getInvalidRoadwayLengths
+        val overlappingRoadways = roadNetworkValidator.getOverlappingRoadwaysInHistory
+        val overlappingRoadwaysOnLinearLocations = roadNetworkValidator.getOverlappingRoadwaysOnLinearLocations
 
         Map("success" -> true,
           "missingCalibrationPointsFromStart" -> missingCalibrationPointsFromTheStart.map(cp => missingCalibrationPointToApi(cp)),
@@ -388,7 +388,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
 
       } catch {
         case e: Throwable =>
-          logger.error(s"Fetching road network errors failed. ${e}")
+          logger.error(s"Fetching road network errors failed. $e")
           Map("success" -> false, "error" -> "Tieverkon virheiden haku epäonnistui, ota yhteys Viite tukeen.")
       }
     }
@@ -574,10 +574,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
           Map("success" -> false, "error" -> "Tieosotteiden haku epäonnistui, tarkista syöttämäsi tiedot")
 
       } catch {
-        case e: Throwable => {
-          logger.error(s"Error fetching data for road address browser ${e}")
+        case e: Throwable =>
+          logger.error(s"Error fetching data for road address browser $e")
           Map("success" -> false, "error" -> "Tieosoitteiden haku epäonnistui, ota yhteys Viite tukeen")
-        }
       }
     }
   }
@@ -662,10 +661,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
           Map("success" -> false, "error" -> "Tieosoitemuutosten haku epäonnistui, tarkista syöttämäsi tiedot")
 
       } catch {
-        case e: Throwable => {
-          logger.error(s"Error fetching data for road address changes browser ${e}")
+        case e: Throwable =>
+          logger.error(s"Error fetching data for road address changes browser $e")
           Map("success" -> false, "error" -> "Tieosoitemuutosten haku epäonnistui, ota yhteys Viite tukeen")
-        }
       }
     }
   }
@@ -704,7 +702,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
   post("/roadlinks/roadaddress/project",operation(createRoadAddressProject)) {
     time(logger, "POST request for /roadlinks/roadaddress/project") {
       val project = parsedBody.extract[RoadAddressProjectExtractor]
-      val user = userProvider.getCurrentUser()
+      val user = userProvider.getCurrentUser
       val roadAddressProject = ProjectConverter.toRoadAddressProject(project, user)
       try {
         val projectSaved = projectService.createRoadLinkProject(roadAddressProject)
@@ -739,7 +737,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
   put("/roadlinks/roadaddress/project", operation(saveRoadAddressProject)) {
     time(logger, "PUT request for /roadlinks/roadaddress/project") {
       val project = parsedBody.extract[RoadAddressProjectExtractor]
-      val user = userProvider.getCurrentUser()
+      val user = userProvider.getCurrentUser
       val roadAddressProject = ProjectConverter.toRoadAddressProject(project, user)
       try {
         val projectSaved = projectService.saveProject(roadAddressProject)
@@ -805,11 +803,11 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
         if (sendStatus.validationSuccess && sendStatus.sendSuccess) {
           Map("sendSuccess" -> true)
         } else {
-          logger.error(s"Failed to append project ${projectID} to road network. Error: ${sendStatus.errorMessage.getOrElse("-")}")
+          logger.error(s"Failed to append project $projectID to road network. Error: ${sendStatus.errorMessage.getOrElse("-")}")
           Map("sendSuccess" -> false, "errorMessage" -> sendStatus.errorMessage.getOrElse(ProjectCouldNotBeAppendedToRoadNetwork))
         }
       } else {
-        logger.error(s"Cannot append project ${projectID} to the road network. Error: ${projectWritableError.get}")
+        logger.error(s"Cannot append project $projectID to the road network. Error: ${projectWritableError.get}")
         Map("sendSuccess" -> false, "errorMessage" -> projectWritableError.get)
       }
     }
@@ -827,7 +825,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
 
   put("/project/reverse", operation(changeDirection)) {
     time(logger, "PUT request for /project/reverse") {
-      val user = userProvider.getCurrentUser()
+      val user = userProvider.getCurrentUser
       try {
         val roadInfo = parsedBody.extract[RevertRoadLinksExtractor]
         projectService.changeDirection(roadInfo.projectId, roadInfo.roadNumber, roadInfo.roadPartNumber, roadInfo.links, roadInfo.coordinates, user.username) match {
@@ -962,7 +960,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       try {
         val linksToRevert = parsedBody.extract[RevertRoadLinksExtractor]
         if (linksToRevert.links.nonEmpty) {
-          val user = userProvider.getCurrentUser().username
+          val user = userProvider.getCurrentUser.username
           projectService.revertLinks(linksToRevert.projectId, linksToRevert.roadNumber, linksToRevert.roadPartNumber, linksToRevert.links, linksToRevert.coordinates, user) match {
             case None =>
               val projectErrors = projectService.validateProjectByIdHighPriorityOnly(linksToRevert.projectId).map(projectService.projectValidator.errorPartsToApi)
@@ -998,7 +996,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
 
   post("/roadlinks/roadaddress/project/links", operation(createProjectLinks)) {
     time(logger, "POST request for /roadlinks/roadaddress/project/links") {
-      val user = userProvider.getCurrentUser()
+      val user = userProvider.getCurrentUser
       try {
         val links = parsedBody.extract[RoadAddressProjectLinksExtractor]
         if (links.roadNumber == 0)
@@ -1018,7 +1016,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
         }
       } catch {
         case e: RoadAndPartNumberException => Map("success" -> false, "errorMessage" -> e.getMessage)
-        case e: IllegalStateException => Map("success" -> false, "errorMessage" -> "Projekti ei ole enää muokattavissa")
+        case _: IllegalStateException => Map("success" -> false, "errorMessage" -> "Projekti ei ole enää muokattavissa")
         case e: MappingException =>
           logger.warn("Exception treating road links", e)
           BadRequest("Missing mandatory ProjectLink parameter")
@@ -1041,7 +1039,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
 
   put("/roadlinks/roadaddress/project/links", operation(updateProjectLinks)) {
     time(logger, "PUT request for /roadlinks/roadaddress/project/links") {
-      val user = userProvider.getCurrentUser()
+      val user = userProvider.getCurrentUser
       try {
         val links = parsedBody.extract[RoadAddressProjectLinksExtractor]
         if (links.roadNumber == 0)
@@ -1095,7 +1093,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       case _ => 0L
     }
     time(logger, s"GET request for /project/roadlinks (zoom: $zoom, id: $id)") {
-      userProvider.getCurrentUser()
+      userProvider.getCurrentUser
       if (id == 0)
         BadRequest("Missing mandatory 'id' parameter")
       else
@@ -1141,7 +1139,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
   delete("/project/trid/:projectId", operation(removeRotatingTRIdByProjectId)) {
     val projectId = params("projectId").toLong
     time(logger, s"DELETE request for /project/trid/$projectId") {
-      userProvider.getCurrentUser()
+      userProvider.getCurrentUser
       val oError = projectService.removeRotatingTRId(projectId)
       oError match {
         case Some(error) =>
@@ -1237,7 +1235,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       case Some(s) if s != "" => s.split("-").map(_.trim.toLong).toSeq
       case _ => Seq()
     }
-    time(logger, s"GET request for /junctions/getEditableStatusOfJunctionPoints/ (junctionPointIds: ${ids})") {
+    time(logger, s"GET request for /junctions/getEditableStatusOfJunctionPoints/ (junctionPointIds: $ids)") {
       val isOnAdministrativeClassChangingSpot = nodesAndJunctionsService.areJunctionPointsOnAdministrativeClassChangingSpot(ids)
       val isOnReservedPart  = nodesAndJunctionsService.areJunctionPointsOnReservedRoadPart(ids)
       val isOnRoadwayChangingSpot = nodesAndJunctionsService.areJunctionPointsOnRoadwayChangingSpot(ids) // TODO remove this check when VIITE-2524 gets implemented
@@ -1311,7 +1309,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
 
   get("/getRoadLinkDate", operation(getRoadLinkDate)) {
     time(logger, s"GET request for getRoadLinkDate"){
-      projectService.getRoadLinkDate()
+      projectService.getRoadLinkDate
     }
   }
 
@@ -1350,7 +1348,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
 
   get("/templates", operation(getNodePointAndJunctionTemplates)) {
     time(logger, s"GET request for /templates") {
-      val authorizedElys = userProvider.getCurrentUser().getAuthorizedElys
+      val authorizedElys = userProvider.getCurrentUser.getAuthorizedElys
       Map("nodePointTemplates" -> nodesAndJunctionsService.getNodePointTemplates(authorizedElys.toSeq).map(nodePointTemplateToApi),
         "junctionTemplates" -> nodesAndJunctionsService.getJunctionTemplates(authorizedElys.toSeq).map(junctionTemplateToApi))
     }
@@ -1405,7 +1403,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
 
   post("/nodes", operation(addOrUpdate)) {
     time(logger, s"POST request for /nodes") {
-      val username = userProvider.getCurrentUser().username
+      val username = userProvider.getCurrentUser.username
       try {
         val nodeInfo = parsedBody.extract[NodeExtractor]
         val node: Node = NodesAndJunctionsConverter.toNode(nodeInfo, username)
@@ -1434,7 +1432,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
   put("/nodes/:id", operation(update)) {
     val id = params("id").toLong
     time(logger, s"PUT request for /nodes/$id") {
-      val username = userProvider.getCurrentUser().username
+      val username = userProvider.getCurrentUser.username
       try {
         val nodeInfo = parsedBody.extract[NodeExtractor]
         val node: Node = NodesAndJunctionsConverter.toNode(nodeInfo, username)
@@ -1509,10 +1507,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
         Seq()
       case DrawRoadPartsOnly =>
         Seq()
-      case DrawLinearPublicRoads => projectService.getProjectLinksLinear(roadAddressService, projectId, boundingRectangle, Seq((1, 19999), (40000, 49999)), Set())
-      case DrawPublicRoads => projectService.getProjectLinksWithoutSuravage(roadAddressService, projectId, boundingRectangle, Seq((1, 19999), (40000, 49999)), Set())
-      case DrawAllRoads => projectService.getProjectLinksWithoutSuravage(roadAddressService, projectId, boundingRectangle, Seq(), Set(), everything = true)
-      case _ => projectService.getProjectLinksWithoutSuravage(roadAddressService, projectId, boundingRectangle, Seq((1, 19999)), Set())
+      case DrawLinearPublicRoads => projectService.getProjectLinksLinear(projectId, boundingRectangle, Seq((1, 19999), (40000, 49999)), Set())
+      case DrawPublicRoads => projectService.getProjectLinksWithoutSuravage(projectId, boundingRectangle, Seq((1, 19999), (40000, 49999)), Set())
+      case DrawAllRoads => projectService.getProjectLinksWithoutSuravage(projectId, boundingRectangle, Seq(), Set(), everything = true)
+      case _ => projectService.getProjectLinksWithoutSuravage(projectId, boundingRectangle, Seq((1, 19999)), Set())
     }
     logger.info(s"End fetching data for id=$projectId project service (zoom level $zoomLevel) in ${(System.currentTimeMillis() - startTime) * 0.001}s")
 
@@ -2144,7 +2142,7 @@ object ProjectConverter {
 
 object NodesAndJunctionsConverter {
 
-  val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
+  private val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
 
   def toNode(node: NodeExtractor, username: String) : Node = {
     val endDate = if (node.endDate.isDefined) Option(formatter.parseDateTime(node.endDate.get)) else None
@@ -2193,7 +2191,7 @@ object NodesAndJunctionsConverter {
       val createdTime = if (nodePoint.createdTime.isDefined) Option(formatter.parseDateTime(nodePoint.createdTime.get)) else None
 
       NodePoint(nodePoint.id, BeforeAfter.apply(nodePoint.beforeAfter), nodePoint.roadwayPointId, nodePoint.nodeNumber, NodePointType.apply(nodePoint.`type`),
-        startDate, endDate, formatter.parseDateTime(nodePoint.validFrom.toString), validTo,
+        startDate, endDate, formatter.parseDateTime(nodePoint.validFrom), validTo,
         nodePoint.createdBy, createdTime, nodePoint.roadwayNumber, nodePoint.addrM,
         nodePoint.roadNumber, nodePoint.roadPartNumber, Track.apply(nodePoint.track), nodePoint.elyCode)
     }

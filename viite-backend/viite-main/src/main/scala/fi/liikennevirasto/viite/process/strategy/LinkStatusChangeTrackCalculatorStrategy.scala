@@ -1,6 +1,5 @@
 package fi.liikennevirasto.viite.process.strategy
 
-import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.ProjectLink
 import fi.vaylavirasto.viite.model.{RoadAddressChangeType, Track}

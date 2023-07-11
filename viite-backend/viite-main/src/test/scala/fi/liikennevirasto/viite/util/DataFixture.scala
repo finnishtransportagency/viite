@@ -202,12 +202,11 @@ object DataFixture {
     flyway.migrate()
   }
 
-  def repair() = {
+  def repair(): Unit = {
     flyway.repair()
   }
 
-  def tearDown() {
-
+  def tearDown(): Unit = {
     // flyway.clean()
     // This old version of Flyway tries to drop the postgis extension too, so we clean the database manually instead
     SqlScriptRunner.runScriptInClasspath("/clear-db.sql")
@@ -219,7 +218,7 @@ object DataFixture {
 
   }
 
-  def setUpTest() {
+  def setUpTest(): Unit = {
     migrateAll()
     SqlScriptRunner.runScripts(List(
       "insert_users.sql",
@@ -246,7 +245,7 @@ object DataFixture {
     new BoneCPDataSource(cfg)
   }
 
-  def flywayInit() {
+  def flywayInit(): Unit = {
     flyway.init()
   }
 

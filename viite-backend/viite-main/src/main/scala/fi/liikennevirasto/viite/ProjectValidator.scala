@@ -13,11 +13,12 @@ import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, RoadAddr
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 
+import scala.annotation.tailrec
 import scala.collection.immutable.ListMap
 
 class ProjectValidator {
 
-  val logger = LoggerFactory.getLogger(getClass)
+  private val logger = LoggerFactory.getLogger(getClass)
   lazy val KGVClient: KgvRoadLink = new KgvRoadLink
   val eventBus = new DummyEventBus
   val linkService = new RoadLinkService(KGVClient, eventBus, new DummySerializer, ViiteProperties.kgvRoadlinkFrozen)
@@ -27,7 +28,7 @@ class ProjectValidator {
   val roadwayPointDAO = new RoadwayPointDAO
   val nodePointDAO = new NodePointDAO
   val junctionPointDAO = new JunctionPointDAO
-  val roadAddressService = new RoadAddressService(linkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, new RoadwayAddressMapper(roadwayDAO, linearLocationDAO), eventBus, ViiteProperties.kgvRoadlinkFrozen) {
+  val roadAddressService: RoadAddressService = new RoadAddressService(linkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, new RoadwayAddressMapper(roadwayDAO, linearLocationDAO), eventBus, ViiteProperties.kgvRoadlinkFrozen) {
 
     override def withDynSession[T](f: => T): T = f
 
@@ -104,15 +105,6 @@ class ProjectValidator {
     }
   }
 
-  //TODO POISTA
-  private def startPoint(b: BaseRoadAddress) = {
-    b.sideCode match {
-      case SideCode.TowardsDigitizing => b.geometry.head
-      case SideCode.AgainstDigitizing => b.geometry.last
-      case _ => Point(0.0, 0.0)
-    }
-  }
-
   sealed trait ValidationError {
     def value: Int
 
@@ -124,7 +116,7 @@ class ProjectValidator {
   }
 
   object ValidationErrorList {
-    val values = Set(MinorDiscontinuityFound, DiscontinuousFound, InsufficientTrackCoverage, DiscontinuousAddressScheme,
+    val values: Set[ValidationError] = Set(MinorDiscontinuityFound, DiscontinuousFound, InsufficientTrackCoverage, DiscontinuousAddressScheme,
       SharedLinkIdsExist, NoContinuityCodesAtEnd, UnsuccessfulRecalculation, MissingEndOfRoad, HasNotHandledLinks, ConnectedDiscontinuousLink,
       IncompatibleDiscontinuityCodes, EndOfRoadNotOnLastPart, ElyCodeChangeDetected, DiscontinuityOnRamp, DiscontinuityInsideRoadPart,
       DiscontinuousCodeOnConnectedRoadPartOutside, NotDiscontinuousCodeOnDisconnectedRoadPartOutside, ElyDiscontinuityCodeBeforeProjectButNoElyChange,
@@ -759,6 +751,7 @@ class ProjectValidator {
       }.toSeq
     }
 
+    @tailrec
     def recursiveCheckTrackChange(links: Seq[ProjectLink], errorLinks: Seq[ProjectLink] = Seq()): Option[ValidationErrorDetails] = {
       if (links.isEmpty) {
         error(project.id, ValidationErrorList.InsufficientTrackCoverage)(errorLinks)
@@ -770,6 +763,7 @@ class ProjectValidator {
       }
     }
 
+    @tailrec
     def getTwoTrackInterval(links: Seq[ProjectLink], interval: Seq[(Long, Seq[ProjectLink])]): Seq[(Long, Seq[ProjectLink])] = {
       if (links.isEmpty || links.exists(_.isNotCalculated)) {
         interval
@@ -787,6 +781,7 @@ class ProjectValidator {
       error(project.id, ValidationErrorList.DistinctAdministrativeClassesBetweenTracks)(errorLinks)
     }
 
+    @tailrec
     def recursiveCheckTwoTrackGeometryLength(roadPartLinks: Seq[ProjectLink],
                                              errorLinks   : Seq[ProjectLink] = Seq()
                                             ): Option[ValidationErrorDetails] = {
@@ -886,7 +881,7 @@ class ProjectValidator {
        * Runs the provided validation function against the RoadAddress before the start of the road part
        * reserved for current project.
        *
-       * @param validationFunction
+       * @param validationFunction to be run
        * @param error The ValidationError that is returned if validationFunction finds an invalid RoadAddress
        * @return If errors are found in the validation, returns an OutsideOfProjectError with ValidationError error
        */
@@ -1050,7 +1045,7 @@ class ProjectValidator {
 
     //Identifies road parts reserved in project where each project link is transferred to another road part, as this requires continuity validation
     val roadPartsTransferredFromProject = allProjectLinks.groupBy(pl => (pl.originalRoadNumber, pl.originalRoadPartNumber)).filter {
-      case ((originalRoad, originalPart), pls) =>
+      case ((originalRoad, _/*originalPart*/), pls) =>
         pls.forall(pl => (pl.status == RoadAddressChangeType.Transfer || pl.status == RoadAddressChangeType.Renumeration) && pl.roadNumber != pl.originalRoadNumber) &&
           !allProjectLinks.exists(pl => pl.roadNumber == originalRoad)
     }.keys
@@ -1060,7 +1055,7 @@ class ProjectValidator {
     }
 
     (previousRoadPartValidationErrors ++ previousOriginalRoadPartValidationErrors).groupBy(_.affectedPlIds).flatMap {
-      case (linkIds, validationErrors) => Seq(validationErrors.head)
+      case (_/*linkIds*/, validationErrors) => Seq(validationErrors.head)
     }.toSeq
   }
 
@@ -1091,9 +1086,9 @@ class ProjectValidator {
         ProjectCoordinates(middlePoint.x, middlePoint.y, defaultZoomlevel)
       })
     }
+
+    @tailrec
     def recProjectGroupsEly(unprocessed: Map[(Long, Long), Seq[ProjectLink]], processed: Map[(Long, Long), Seq[ProjectLink]], acumulatedErrors: Seq[ValidationErrorDetails] = Seq.empty[ValidationErrorDetails]): Seq[ValidationErrorDetails] = {
-
-
       if (processed.isEmpty && unprocessed.nonEmpty) {
         recProjectGroupsEly(unprocessed.tail, Map(unprocessed.head))
       } else {

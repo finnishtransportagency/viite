@@ -9,6 +9,7 @@ import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.{CalibrationPointType, Discontinuity, RoadAddressChangeType, Track}
 import org.slf4j.LoggerFactory
 
+import scala.annotation.tailrec
 import scala.language.postfixOps
 
 object TwoTrackRoadUtils {
@@ -36,7 +37,7 @@ object TwoTrackRoadUtils {
     * @return
     *   Tuple3 updated projectlinks and user defined calibration points.
     *   (trackToSearchStatusChanges[ProjectLink], oppositeTrack[ProjectLink],
-    *   udcp[Option[UserDefinedCalibrationPoint]])
+    *   udcp[Option[UserDefinedCalibrationPoint] ])
     */
   def splitPlsAtStatusChange(
     trackToSearchStatusChanges: Seq[ProjectLink],
@@ -173,7 +174,7 @@ object TwoTrackRoadUtils {
      * @param otherSideLink
      *   The opposite track projectlink.
      * @return
-     *   Tuple2 (Seq[Option[UserDefinedCalibrationPoint]], Option[(ProjectLink, ProjectLink)])
+     *   Tuple2 (Seq[Option[UserDefinedCalibrationPoint] ], Option[(ProjectLink, ProjectLink)])
      *   A new calibration point for opposite track and a new for current track
      *   if does not exists, and corresponding projectlinks.
      *
@@ -569,6 +570,7 @@ object TwoTrackRoadUtils {
         } else None
     }
 
+  @tailrec
   def getContinuousOriginalAddressSection(seq: Seq[ProjectLink], processed: Seq[ProjectLink] = Seq()): (Seq[ProjectLink], Seq[ProjectLink]) = {
     if (seq.isEmpty)
       (processed, seq)
@@ -589,17 +591,18 @@ object TwoTrackRoadUtils {
     }
   }
 
-  def splitByOriginalAddress(twoTrackOnlyWithTerminated: Seq[Long], side: Seq[ProjectLink]) = {
-    twoTrackOnlyWithTerminated.foldLeft(side) { case (a, b) => {
+  def splitByOriginalAddress(twoTrackOnlyWithTerminated: Seq[Long], side: Seq[ProjectLink]): Seq[ProjectLink] = {
+    twoTrackOnlyWithTerminated.foldLeft(side) {
+      case (a, b) =>
         val res = TwoTrackRoadUtils.findAndCreateSplitsAtOriginalAddress(b, a)
         if (res.isDefined) (a.filterNot(_.id == res.get._1.id) :+ res.get._1 :+ res.get._2).sortBy(_.startAddrMValue) else a
-      }
     }
   }
 
-  def toProjectLinkSeq(plsTupleOptions: Seq[Option[(ProjectLink, ProjectLink)]]) = plsTupleOptions collect toSequence flatten
+  def toProjectLinkSeq(plsTupleOptions: Seq[Option[(ProjectLink, ProjectLink)]]): Seq[ProjectLink] = plsTupleOptions collect toSequence flatten
 
   def getContinuousByStatus(projectLinkSeq: Seq[ProjectLink]): Seq[Long] = {
+    @tailrec
     def continuousByStatus(pls: Seq[ProjectLink], result: Seq[Long] = Seq()): Seq[Long] = {
       if (pls.isEmpty) result
       else {
@@ -617,18 +620,18 @@ object TwoTrackRoadUtils {
     case x: Some[(ProjectLink, ProjectLink)] => Seq(x.get._1, x.get._2)
   }
 
-  def combineAndSort(olds: Seq[ProjectLink], news: Seq[ProjectLink]) = (olds.filterNot(pl => {
+  def combineAndSort(olds: Seq[ProjectLink], news: Seq[ProjectLink]): Seq[ProjectLink] = (olds.filterNot(pl => {
     news.map(_.id).contains(pl.id)
   }) ++ news).sortBy(_.startAddrMValue)
 
-  def filterOldLinks(pls: Seq[ProjectLink]) = {
+  def filterOldLinks(pls: Seq[ProjectLink]): Seq[ProjectLink] = {
     val filtered = pls.filter(_.status != RoadAddressChangeType.New)
     if (filtered.nonEmpty) filtered.init else Seq()
   }
-  def filterExistingLinks(pl: ProjectLink) =
+  def filterExistingLinks(pl: ProjectLink): Boolean =
     pl.status != RoadAddressChangeType.New && pl.track != Track.Combined
 
-  def splitByOriginalAddresses(pls: Seq[ProjectLink], originalAddressEnds: Seq[Long]) = {
+  def splitByOriginalAddresses(pls: Seq[ProjectLink], originalAddressEnds: Seq[Long]): Seq[ProjectLink] = {
     originalAddressEnds.foldLeft(pls)((l1, l2) => {
       val s: Seq[Option[(ProjectLink, ProjectLink)]] = Seq(TwoTrackRoadUtils.findAndCreateSplitsAtOriginalAddress(l2, l1))
       combineAndSort(l1, toProjectLinkSeq(s))

@@ -36,7 +36,7 @@ object DataImporter {
       new BoneCPDataSource(cfg)
     }
 
-    def database() = Database.forDataSource(dataSource)
+    def database(): DatabaseDef = Database.forDataSource(dataSource)
     val roadLinkTable: String = "tielinkki"
     val busStopTable: String = "lineaarilokaatio"
   }
@@ -56,7 +56,7 @@ class DataImporter {
   def withDynTransaction(f: => Unit): Unit = PostGISDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
 
-  def time[A](f: => A) = {
+  def time[A](f: => A): A = {
     val s = System.nanoTime
     val ret = f
     println("time for insert " + (System.nanoTime - s) / 1e6 + "ms")
@@ -218,7 +218,7 @@ class DataImporter {
     importNodesAndJunctions(Conversion.database())
   }
 
-  def importNodesAndJunctions(conversionDatabase: DatabaseDef) = {
+  def importNodesAndJunctions(conversionDatabase: DatabaseDef): Unit = {
     withDynTransaction {
       println("\nImporting nodes and junctions started at time: ")
       println(DateTime.now())
@@ -238,7 +238,7 @@ class DataImporter {
     }
   }
 
-  def resetRoadAddressSequences() = {
+  def resetRoadAddressSequences(): Unit = {
     println("\nResetting road related sequences started at time: ")
     println(DateTime.now())
 
@@ -268,7 +268,7 @@ class DataImporter {
     sequenceResetter.resetSequenceToNumber("NODE_SEQ", 1)
   }
 
-  private def updateNodePointType() = {
+  private def updateNodePointType(): Unit = {
     println("\nUpdating nodePointTypes started at time: ")
     println(DateTime.now())
 
@@ -367,9 +367,8 @@ class DataImporter {
 
   protected def fetchGroupedLinkIds: Seq[Set[String]] = {
     val linkIds = sql"""select distinct link_id from linear_location where link_id is not null order by link_id""".as[String].list
-    linkIds.toSet.grouped(25000).asInstanceOf[Iterator[Set[String]]].toSeq
+    linkIds.toSet.grouped(25000).toSeq
   }
-
 
   private def updateLinearLocationGeometry(KGVClient: KgvRoadLink, geometryFrozen: Boolean): Unit = {
     val eventBus = new DummyEventBus
@@ -390,7 +389,7 @@ class DataImporter {
               val newGeom = GeometryUtils.truncateGeometry3D(roadLink.geometry, segment.startMValue, segment.endMValue)
               if (!segment.geometry.equals(Nil) && !newGeom.equals(Nil)) {
                 if(skipped%100==0 && skipped>0){ // print some progress info, though nothing has been changing for a while
-                  println(s"Skipped geometry updates on ${skipped} linear locations")
+                  println(s"Skipped geometry updates on $skipped linear locations")
                 }
                 val distanceFromHeadToHead = segment.geometry.head.distance2DTo(newGeom.head)
                 val distanceFromHeadToLast = segment.geometry.head.distance2DTo(newGeom.last)
@@ -401,7 +400,7 @@ class DataImporter {
                   ((distanceFromLastToHead > MinDistanceForGeometryUpdate) &&
                     (distanceFromLastToLast > MinDistanceForGeometryUpdate))) {
                   if(skipped>0){
-                    println(s"Skipped geometry updates on ${skipped} linear locations (minimal or no change on geometry)")
+                    println(s"Skipped geometry updates on $skipped linear locations (minimal or no change on geometry)")
                     skipped = 0
                   }
                   updateGeometry(segment.id, newGeom)
@@ -417,7 +416,7 @@ class DataImporter {
         }
     }
     if(skipped>0){
-      println(s"Skipped geometry updates on ${skipped} linear locations")
+      println(s"Skipped geometry updates on $skipped linear locations")
     }
     println(s"Geometries changed count: $changed")
   }
@@ -449,7 +448,7 @@ class DataImporter {
     updateCalibrationPointTypesQuery()
   }
 
-  def updateCalibrationPointTypesQuery() = {
+  def updateCalibrationPointTypesQuery(): Unit = {
     SqlScriptRunner.runScriptInClasspath("/update_calibration_point_types.sql")
   }
 

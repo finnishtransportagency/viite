@@ -66,8 +66,8 @@ package object viite {
   val ErrorOtherActionWithNumbering = "Numeroinnin yhteydessä samalle tieosalle ei voi tehdä muita toimenpiteitä. Numerointia ei tehty."
   val ErrorTransferActionWithNumbering = "Numeroinnin yhteydessä samalle tieosalle ei voi tehdä muita toimenpiteitä. Siirtoa ei tehty."
   val ErrorNewActionWithNumbering = "Numeroinnin yhteydessä samalla tieosalle ei voi tehdä muita toimenpiteitä. Toimenpidettä Uusi ei tehty."
-  val MissingEndOfRoadMessage = s"Tieosalle ei ole määritelty jatkuvuuskoodia" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value}), tieosan viimeiselle linkille."
-  val EndOfRoadNotOnLastPartMessage = s"Tieosalle on määritelty jatkuvuuskoodi" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value}), vaikka tieosan jälkeen on olemassa tieosa."
+  val MissingEndOfRoadMessage: String = s"Tieosalle ei ole määritelty jatkuvuuskoodia" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value}), tieosan viimeiselle linkille."
+  val EndOfRoadNotOnLastPartMessage: String = s"Tieosalle on määritelty jatkuvuuskoodi" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value}), vaikka tieosan jälkeen on olemassa tieosa."
   val MinorDiscontinuityFoundMessage = "Tieosalla on lievä epäjatkuvuus. Määrittele jatkuvuuskoodi oikein kyseiselle linkille."
   val DiscontinuousFoundMessage = "Tieosalla on epäjatkuvuus. Määrittele jatkuvuuskoodi oikein kyseiselle linkille."
   val InsufficientTrackCoverageMessage = "Tieosalta puuttuu toinen ajorata. Numeroi molemmat ajoradat."
@@ -76,15 +76,15 @@ package object viite {
   //VIITE-453 Not implemented yet (2)
   val SharedLinkIdsExistMessage = "Linkillä on voimassa oleva tieosoite tämän projektin alkupäivämäärällä."
   val ContactViiteSupportMessage = "Ota yhteys Viite tukeen."
-  val UnsuccessfulRecalculationMessage = "Etäisyysarvojen laskenta epäonnistui. " + ContactViiteSupportMessage
-  val ContinuousAddressCapErrorMessage = UnsuccessfulRecalculationMessage + "\nTieosoitteet eivät muodostu jatkuvaksi."
-  val NegativeLengthErrorMessage       = UnsuccessfulRecalculationMessage + "\nLinkille %s muodostuu negatiivinen pituus."
-  val LengthMismatchErrorMessage       = UnsuccessfulRecalculationMessage + "\nLinkin %s uusi pituus eroaa yli sallitun rajan (%d) vanhaan pituuteen verrattuna."
+  val UnsuccessfulRecalculationMessage: String = "Etäisyysarvojen laskenta epäonnistui. " + ContactViiteSupportMessage
+  val ContinuousAddressCapErrorMessage: String = UnsuccessfulRecalculationMessage + "\nTieosoitteet eivät muodostu jatkuvaksi."
+  val NegativeLengthErrorMessage: String       = UnsuccessfulRecalculationMessage + "\nLinkille %s muodostuu negatiivinen pituus."
+  val LengthMismatchErrorMessage: String       = UnsuccessfulRecalculationMessage + "\nLinkin %s uusi pituus eroaa yli sallitun rajan (%d) vanhaan pituuteen verrattuna."
 
   val NoContinuityCodesAtEndMessage = "Tieosan lopusta puuttuu jatkuvuuskoodi."
   val ConnectedDiscontinuousMessage = "Jatkuva tielinkki on merkitty epäjatkuvaksi, korjaa jatkuu-koodi."
   val DifferingDiscontinuityCodesForTracks = " Tieosan lopussa on yhteensopimattomat jatkuu-koodit. Tarkista jatkuu-koodit."
-  val ElyCodeChangeNotPresent = s" Tieosan lopussa ei ole jatkuvuuskoodia " + s""" "${ChangingELYCode.description}" """ + s"(${ChangingELYCode.value})."
+  val ElyCodeChangeNotPresent: String = s" Tieosan lopussa ei ole jatkuvuuskoodia " + s""" "${ChangingELYCode.description}" """ + s"(${ChangingELYCode.value})."
   val HasNotHandledLinksMessage = "%d kpl käsittelemättömiä linkkejä tiellä %d tieosalla %d."
   val ErrorInValidationOfUnchangedLinksMessage = "Ennallaan toimenpidettä ei voi edeltää muu kuin ennallaan-toimenpide."
   val RampDiscontinuityFoundMessage = "Rampin tieosan sisällä on epäjatkuvuuksia. Tarkista Jatkuu-koodit."
@@ -93,7 +93,7 @@ package object viite {
   val RoadNotEndingInElyBorderMessage = "Tien lopussa pitää olla jatkuu-koodi 1. Korjaa jatkuu-koodi."
   val RoadContinuesInAnotherElyMessage = "Jatkuu-koodi %s on virheellinen, koska tie jatkuu toisessa ELY:ssa. "
   val MinorDiscontinuousWhenRoadConnectingRoundabout = "Tieosalla on lievä epäjatkuvuus. Määrittele Jatkuvuuskoodi oikein kyseiselle linkille."
-  val WrongDiscontinuityWhenAdjacentToTerminatedRoad = "Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuoliselle tieosalle täytyy muuttaa jatkuvuuskoodi" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value}). Muuta jatkuvuuskoodiksi" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value}) tieosoitteelle %s."
+  val WrongDiscontinuityWhenAdjacentToTerminatedRoad: String = "Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuoliselle tieosalle täytyy muuttaa jatkuvuuskoodi" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value}). Muuta jatkuvuuskoodiksi" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value}) tieosoitteelle %s."
   val DoubleEndOfRoadMessage = s"""Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuolisen tieosan jatkuvuuskoodia "${EndOfRoad.description}" (${EndOfRoad.value}) tulee muuttaa. Tarkasta ja muuta tieosoitteen %s jatkuvuuskoodi."""
   val DiscontinuousCodeOnConnectedRoadPartOutsideMessage = s"""Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuolisen tieosan jatkuvuuskoodia "${Discontinuous.description}" (${Discontinuous.value}) tulee muuttaa. Tarkasta ja muuta tieosoitteen %s jatkuvuuskoodi."""
   val NotDiscontinuousCodeOnDisconnectedRoadPartOutsideMessage = s"""Tekemäsi tieosoitemuutoksen vuoksi projektia edeltävän tieosan päähän muodostuu epäjatkuvuus. Tarkasta ja muuta tieosan %s jatkuvuuskoodi."""
@@ -160,17 +160,17 @@ package object viite {
 
   val DefaultScreenWidth = 1920
   val DefaultScreenHeight = 1080
-  val Resolutions = Array(2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1, 0.5, 0.25, 0.125, 0.0625)
+  val Resolutions: Array[Double] = Array(2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1, 0.5, 0.25, 0.125, 0.0625)
   val DefaultLongitude = 6900000.0
   val DefaultLatitude = 390000.0
   val DefaultZoomLevel = 2
-  val operationsLeavingHistory = List(RoadAddressChangeType.Transfer, RoadAddressChangeType.Renumeration, RoadAddressChangeType.Termination)
+  val operationsLeavingHistory: List[RoadAddressChangeType] = List(RoadAddressChangeType.Transfer, RoadAddressChangeType.Renumeration, RoadAddressChangeType.Termination)
 
   //--------------------------------------------------------------------
   //--------------------------------Swagger text here-----------------
   //--------------------------------------------------------------------
 
-  val getRoadAddressNotes = "Zoom level affects what kind of roads it will return: \r\n" +
+  val getRoadAddressNotes: String = "Zoom level affects what kind of roads it will return: \r\n" +
     "| Lower Zoom Level | Higher Zoom Level |      Drawing Type     |                                  " +
     "                                                                                       Meaning    " +
     "                                                                                                  " +
@@ -193,7 +193,7 @@ package object viite {
     "Returns all road address links (combination between our roadway, linear location and vvh information) based on the limits imposed by the boundingRectangle." +
     "                                              |"
 
-  val roadNameRowStructure = "" +
+  val roadNameRowStructure: String = "" +
     "| Field Name |   Field Type   |                                 Description                                 |\n" +
     "|:----------:|:--------------:|:---------------------------------------------------------------------------:|\n" +
     "|     id     |      Long      |             The id of a road name row, -1000 for new road names.            |\n" +
@@ -201,7 +201,7 @@ package object viite {
     "|  startDate |     String     |        Start date of this modification, default format (dd.MM.yyyy).        |\n" +
     "|   endDate  | Option[String] | Optional value, end date of this modification, default format (dd.MM.yyyy). |"
 
-  val roadDataStringDescription = "" +
+  val roadDataStringDescription: String = "" +
     "|    Field Name   | Field Type |          Description         |\n" +
     "|:---------------:|:----------:|:----------------------------:|\n" +
     "|  selectedLinks  |  Seq[Long] |                              |\n" +
@@ -211,10 +211,10 @@ package object viite {
     "|  roadPartNumber |    Long    |                              |\n" +
     "|    trackCode    |    Long    |                              |"
 
-  val exampleAdjacentRoadDataString = "" +
+  val exampleAdjacentRoadDataString: String = "" +
     "{ \"id\": 0, \"linkId\": 0, \"selectedLinks\": [0], \"selectedIds\": [0], \"roadPartNumber\" : 0, \"trackCode\": 0 }"
 
-  val exampleRoadDataString = "" +
+  val exampleRoadDataString: String = "" +
     "[\n" +
     "  \t{\n" +
     "    \t\t\"id\": 0,\n" +
@@ -224,16 +224,16 @@ package object viite {
     "  \t}\n" +
     "]"
 
-  val transferRoadLinksExampleString = "{ \"sourceLinkIds\": [\"AA\"], \"targetLinkIds\": [\"AA\"] }"
+  val transferRoadLinksExampleString: String = "{ \"sourceLinkIds\": [\"AA\"], \"targetLinkIds\": [\"AA\"] }"
 
-  val roadPartExtractorStructure = "" +
+  val roadPartExtractorStructure: String = "" +
     "|   Field Name   | Field Type |\n" +
     "|:--------------:|:----------:|\n" +
     "|   roadNumber   |    Long    |\n" +
     "| roadPartNumber |    Long    |\n" +
     "|       ely      |    Long    |"
 
-  val projectStatusStructure = "" +
+  val projectStatusStructure: String = "" +
     "| Status Code |       Project Status       |              Description              |\n" +
     "|:-----------:|:--------------------------:|:-------------------------------------:|\n" +
     "|      0      |        ErrorInViite        |       Virhe Viite-sovelluksessa       |\n" +
@@ -245,7 +245,7 @@ package object viite {
     "|      99     |           Unknown          |               Tuntematon              |"
 
 
-  val roadAddressProjectExtractorStructure = "" +
+  val roadAddressProjectExtractorStructure: String = "" +
     "|   Field Name   |        Field Type       |                   Description                   |                              Notes                             |\n" +
     "|:--------------:|:-----------------------:|:-----------------------------------------------:|:--------------------------------------------------------------:|\n" +
     "|       id       |           Long          |               Project id to create              |                Should be -1000 for new projects                |\n" +
@@ -258,7 +258,7 @@ package object viite {
     "|   resolution   |           Int           | Default zoom level to start to open the project |                                                                |"
 
 
-  val revertRoadLinksExtractorStructure = "" +
+  val revertRoadLinksExtractorStructure: String = "" +
     "|   Field Name   |     Field Type     |                                        Description                                        |                     Notes                     |\n" +
     "|:--------------:|:------------------:|:-----------------------------------------------------------------------------------------:|:---------------------------------------------:|\n" +
     "|    projectId   |        Long        |                                     Id of the project                                     |                                               |\n" +
@@ -267,7 +267,7 @@ package object viite {
     "|      links     | List[LinkToRevert] |List of the following fields (id: Long, linkId: String, status: Long, geometry: Seq[Point])|                                               |\n" +
     "|   coordinates  | ProjectCoordinates |                      Composed of a (x: Double, y: Double, zoom: Int)                      | Their default values are (390000, 6900000, 2) |"
 
-  val roadAddressProjectLinksExtractorStructure = "" +
+  val roadAddressProjectLinksExtractorStructure: String = "" +
     "|       Field Name       |     Field Type     |                                     Description                                     | Notes |\n" +
     "|:----------------------:|:------------------:|:-----------------------------------------------------------------------------------:|:-----:|\n" +
     "|           ids          |      Set[Long]     |                              Id's of the project links                              |       |\n" +
@@ -286,7 +286,7 @@ package object viite {
     "|        roadName        |   Option[String]   |                Possible road name for all the project links sent here               |       |\n" +
     "|        reversed        |   Option[Boolean]  |                   Defines whether or not these roads are reversed                   |       |"
 
-  val defaultProjectEly = -1L
+  val defaultProjectEly: Long = -1L
 
   def parseStringGeometry(geomString: String): Seq[Point] = {
     if (geomString.nonEmpty)

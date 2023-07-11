@@ -26,8 +26,8 @@ class PostGISUserProviderSpec extends FunSuite with Matchers {
     "When trying to find a specific user name and creating a user for that user name " +
     "Then getUser() should return 'None' before creating, and the created user after creating it.") {
     runWithRollback {
-      executeStatement("DELETE FROM service_user WHERE username = '" + TestUserName.toLowerCase() + "'");
-      provider.getUser(TestUserName) shouldBe (None)
+      executeStatement("DELETE FROM service_user WHERE username = '" + TestUserName.toLowerCase() + "'")
+      provider.getUser(TestUserName) shouldBe None
       provider.createUser(TestUserName, Configuration(north = Some(1000)))
       val user = provider.getUser(TestUserName).get
       user.username should be(TestUserName.toLowerCase)

@@ -26,13 +26,13 @@ class JunctionDAOSpec extends FunSuite with Matchers {
   val nodePointDAO = new NodePointDAO
   val junctionPointDAO = new JunctionPointDAO
 
-  val testJunction1 = Junction(NewIdValue, None, None, DateTime.parse("2019-01-01"), None,
+  private val testJunction1 = Junction(NewIdValue, None, None, DateTime.parse("2019-01-01"), None,
     DateTime.parse("2019-01-01"), None, "Test", None)
 
-  val testJunction2 = Junction(NewIdValue, None, None, DateTime.parse("2019-01-02"), None,
+  private val testJunction2 = Junction(NewIdValue, None, None, DateTime.parse("2019-01-02"), None,
     DateTime.parse("2019-01-02"), None, "Test", None)
 
-  val testNode1 = Node(NewIdValue, NewIdValue, Point(100, 100), Some("Test node 1"), NodeType.NormalIntersection,
+  private val testNode1 = Node(NewIdValue, NewIdValue, Point(100, 100), Some("Test node 1"), NodeType.NormalIntersection,
     DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, "Test", None, registrationDate = new DateTime())
 
   test("Test create When nothing to create Then return empty Seq") {

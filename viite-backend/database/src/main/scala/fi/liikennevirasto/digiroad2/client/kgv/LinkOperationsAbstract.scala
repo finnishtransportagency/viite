@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory
 trait LinkOperationsAbstract {
   type LinkType
   type Content
-  lazy val logger = LoggerFactory.getLogger(getClass)
+  protected lazy val logger = LoggerFactory.getLogger(getClass)
   protected val linkGeomSource: LinkGeomSource
 
   protected def restApiEndPoint: String
@@ -31,4 +31,4 @@ trait LinkOperationsAbstract {
   protected def queryByRoadNumbersAndMunicipality(municipality: Int, roadNumbers: Seq[(Int, Int)]): Seq[LinkType]
 }
 
-case class LinkOperationError(content: String, statusCode:String, url:String = "") extends Exception(s"Content: ${content}, Status code: ${statusCode}, ${url} ")
+case class LinkOperationError(content: String, statusCode:String, url:String = "") extends Exception(s"Content: $content, Status code: $statusCode, $url ")

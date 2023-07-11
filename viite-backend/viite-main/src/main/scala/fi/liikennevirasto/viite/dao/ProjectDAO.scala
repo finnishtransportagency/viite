@@ -20,10 +20,10 @@ sealed trait ProjectState {
 
 object ProjectState {
 
-  val values = Set(Incomplete, Deleted, ErrorInViite, InUpdateQueue, UpdatingToRoadNetwork, Accepted, Unknown)
+  val values: Set[ProjectState] = Set(Incomplete, Deleted, ErrorInViite, InUpdateQueue, UpdatingToRoadNetwork, Accepted, Unknown)
 
   // These states are final
-  val finalProjectStates = Set(ProjectState.Accepted.value)
+  val finalProjectStates: Set[Int] = Set(ProjectState.Accepted.value)
 
   def apply(value: Long): ProjectState = {
     values.find(_.value == value).getOrElse(Unknown)
@@ -175,11 +175,11 @@ class ProjectDAO {
     Q.queryNA[Long](s"Select tr_id From Project WHERE Id=$projectId AND tr_id IS NOT NULL ").list.headOption
   }
 
-  def updateProjectStatus(projectID: Long, state: ProjectState) {
+  def updateProjectStatus(projectID: Long, state: ProjectState): Unit = {
     sqlu""" update project set state=${state.value} WHERE id=$projectID""".execute
   }
 
-  def changeProjectStatusToAccepted(projectID: Long){
+  def changeProjectStatusToAccepted(projectID: Long): Unit = {
     sqlu""" update project set state=${ProjectState.Accepted.value}, accepted_date=current_timestamp WHERE id=$projectID""".execute
   }
 
