@@ -4,6 +4,7 @@ import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.{RoadAddressLinkBuilder, _}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink}
+import fi.vaylavirasto.viite.dao.UnaddressedRoadLink
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.{AdministrativeClass, RoadLinkLike}
 import org.slf4j.{Logger, LoggerFactory}

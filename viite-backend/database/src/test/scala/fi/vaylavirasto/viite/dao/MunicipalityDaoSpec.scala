@@ -1,4 +1,4 @@
-package fi.liikennevirasto.viite.dao
+package fi.vaylavirasto.viite.dao
 
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database

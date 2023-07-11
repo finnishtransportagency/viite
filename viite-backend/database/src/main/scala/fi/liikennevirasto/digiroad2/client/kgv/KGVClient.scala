@@ -1,8 +1,8 @@
 package fi.liikennevirasto.digiroad2.client.kgv
 
 import fi.liikennevirasto.digiroad2.client.kgv.FilterOgc.withLifecycleStatusFilter
-import fi.liikennevirasto.digiroad2.dao.ComplementaryLinkDAO
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
+import fi.vaylavirasto.viite.dao.ComplementaryLinkDAO
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
 import fi.vaylavirasto.viite.model.{AdministrativeClass, LifecycleStatus, LinkGeomSource, RoadLink, RoadLinkLike, TrafficDirection}
 

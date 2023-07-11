@@ -1,10 +1,10 @@
 package fi.liikennevirasto.viite.process.strategy
 
-import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.viite.dao.ProjectLink
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.process.{ProjectSectionMValueCalculator, TrackSectionOrder}
 import fi.liikennevirasto.viite.NewIdValue
+import fi.vaylavirasto.viite.dao.Sequences
 import fi.vaylavirasto.viite.model.{CalibrationPointType, RoadAddressChangeType}
 
 class RoundaboutSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrategy {
