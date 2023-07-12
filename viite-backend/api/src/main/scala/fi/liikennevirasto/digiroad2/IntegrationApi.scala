@@ -7,7 +7,6 @@ import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.{RoadAddressService, RoadNameService}
-import fi.vaylavirasto.viite.asset.{Modification, TimeStamps}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.{AdministrativeClass, SideCode}
 import org.joda.time.format.ISODateTimeFormat
@@ -39,8 +38,6 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
   protected val applicationDescription = "The integration API "
 
   protected implicit val jsonFormats: Formats = DefaultFormats
-
-  case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
 
   val getRoadAddressesByMunicipality: SwaggerSupportSyntax.OperationBuilder =
     (apiOperation[List[Map[String, Any]]]("getRoadAddressesByMunicipality")
@@ -687,24 +684,6 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
 
   private def formatDateTimeToIsoString(dateOption: Option[DateTime]): Option[String] =
   dateOption.map { date => ISODateTimeFormat.dateTimeNoMillis().print(date) }
-
-  private def parseIsoDate(dateString: Option[String]): Option[DateTime] = {
-    var dateTime = None: Option[DateTime]
-    if (dateString.nonEmpty) {
-      try {
-        dateTime = Option(ISODateTimeFormat.dateTime.parseDateTime(dateString.get))
-      } catch {
-        case _: Exception =>
-          try {
-            dateTime = Option(ISODateTimeFormat.dateTimeNoMillis().parseDateTime(dateString.get))
-          } catch {
-            case _: Exception =>
-                dateTime = Option(DateTime.parse(dateString.get))
-          }
-      }
-    }
-    dateTime
-  }
 
   def formatDate(date: DateTime): String = {
     date.toString(dateFormat)

@@ -2,9 +2,6 @@ package fi.vaylavirasto.viite.model
 
 sealed trait TrafficDirection {
   def value: Int
-  def isOneWay =
-    this == TrafficDirection.AgainstDigitizing ||
-      this == TrafficDirection.TowardsDigitizing
 }
 
 object TrafficDirection {

@@ -86,10 +86,6 @@ object Extractor {
     }
   }
 
-  def toBigInt(value: Int): BigInt = {
-    Try(BigInt(value)).getOrElse(throw new NumberFormatException(s"Failed to convert value: ${value.toString}"))
-  }
-
   private def extractModifiedAt(attributes: Map[String, Any]): Option[DateTime] = {
     val validFromDate = Option(new DateTime(attributes("sourcemodificationtime").asInstanceOf[String]).getMillis)
     var lastEditedDate : Option[Long] = Option(0)

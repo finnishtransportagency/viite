@@ -1,9 +1,7 @@
 package fi.liikennevirasto.digiroad2.postgis
 
-import java.sql.Date
 import javax.sql.DataSource
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
-import org.joda.time.LocalDate
 import slick.driver.JdbcDriver.backend.Database
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
@@ -81,10 +79,6 @@ object PostGISDatabase {
 
   def setSessionLanguage() {
     //sqlu"""alter session set nls_language = 'american'""".execute
-  }
-
-  def jodaToSqlDate(jodaDate: LocalDate): Date = {
-    new Date(jodaDate.toDate.getTime)
   }
 
   def initDataSource: DataSource = {

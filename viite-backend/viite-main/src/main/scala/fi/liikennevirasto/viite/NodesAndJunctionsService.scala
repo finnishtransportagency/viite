@@ -17,8 +17,6 @@ import scala.util.control.NonFatal
 
 class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayPointDAO, linearLocationDAO: LinearLocationDAO, nodeDAO: NodeDAO, nodePointDAO: NodePointDAO, junctionDAO: JunctionDAO, junctionPointDAO: JunctionPointDAO, roadwayChangesDAO: RoadwayChangesDAO, projectReservedPartDAO: ProjectReservedPartDAO) {
 
-  case class CompleteNode(node: Option[Node], nodePoints: Seq[NodePoint], junctions: Map[Junction, Seq[JunctionPoint]])
-
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
   def withDynTransactionNewOrExisting[T](f: => T): T = PostGISDatabase.withDynTransactionNewOrExisting(f)

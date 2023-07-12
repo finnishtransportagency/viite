@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory
 
 trait ViiteProperties {
   val userProvider: String
-  val municipalityProvider: String
   val eventBus: String
   val rasterServiceURL: String
   val rasterServiceApiKey: String
@@ -49,7 +48,6 @@ class ViitePropertiesFromEnv extends ViiteProperties {
   }
 
   val userProvider: String = scala.util.Properties.envOrElse("userProvider", null)
-  val municipalityProvider: String = scala.util.Properties.envOrElse("municipalityProvider", null)
   val eventBus: String = scala.util.Properties.envOrElse("eventBus", null)
   val rasterServiceURL: String = scala.util.Properties.envOrElse("rasterServiceURL", null)
   val rasterServiceApiKey: String = scala.util.Properties.envOrElse("rasterServiceApiKey", null)
@@ -128,7 +126,6 @@ class ViitePropertiesFromFile extends ViiteProperties {
   }
 
   override val userProvider: String = envProps.getProperty("userProvider")
-  override val municipalityProvider: String = envProps.getProperty("municipalityProvider")
   override val eventBus: String = envProps.getProperty("eventBus")
   override val rasterServiceURL: String = scala.util.Properties.envOrElse("rasterServiceURL", envProps.getProperty("rasterServiceURL"))
   override val rasterServiceApiKey: String = scala.util.Properties.envOrElse("rasterServiceApiKey", envProps.getProperty("rasterServiceApiKey"))
@@ -201,7 +198,6 @@ object ViiteProperties {
   }
 
   lazy val userProvider: String = properties.userProvider
-  lazy val municipalityProvider: String = properties.municipalityProvider
   lazy val eventBus: String = properties.eventBus
   lazy val rasterServiceURL: String = properties.rasterServiceURL
   lazy val rasterServiceApiKey: String = properties.rasterServiceApiKey

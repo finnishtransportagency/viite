@@ -31,20 +31,12 @@ import scala.util.parsing.json.JSON._
   * Created by venholat on 25.8.2016.
   */
 
-case class NewAddressDataExtracted(sourceIds: Set[Long], targetIds: Set[Long])
-
-case class RevertSplitExtractor(projectId: Option[Long], linkId: Option[Long], coordinates: ProjectCoordinates)
-
 case class RevertRoadLinksExtractor(projectId: Long, roadNumber: Long, roadPartNumber: Long, links: List[LinkToRevert], coordinates: ProjectCoordinates)
-
-case class ProjectRoadAddressInfo(projectId: Long, roadNumber: Long, roadPartNumber: Long)
 
 case class RoadAddressProjectExtractor(id: Long, projectEly: Option[Long], status: Long, name: String, startDate: String,
                                        additionalInfo: String, reservedPartList: List[RoadPartExtractor], formedPartList: List[RoadPartExtractor], resolution: Int)
 
 case class RoadAddressProjectLinksExtractor(ids: Set[Long], linkIds: Seq[String], roadAddressChangeType: Int, projectId: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Int, discontinuity: Int, roadEly: Long, roadLinkSource: Int, administrativeClass: Int, userDefinedEndAddressM: Option[Int], coordinates: ProjectCoordinates, roadName: Option[String], reversed: Option[Boolean])
-
-case class roadDataExtractor(chainLinkIds: Seq[Long] )
 
 case class RoadPartExtractor(roadNumber: Long, roadPartNumber: Long, ely: Long)
 
@@ -1716,15 +1708,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
     )
   }
 
-  def junctionInfoToApi(junctionInfo: JunctionInfo) : Map[String, Any] = {
-    Map("junctionId" -> junctionInfo.id,
-      "junctionNumber" -> junctionInfo.junctionNumber.orNull,
-      "nodeNumber" -> junctionInfo.nodeNumber,
-      "startDate" -> formatDateTimeToShortPatternString(Some(junctionInfo.startDate)),
-      "nodeNumber" -> junctionInfo.nodeNumber,
-      "nodeName" -> junctionInfo.nodeName)
-  }
-
   def junctionToApi(junction: (Junction, Seq[JunctionPoint])): Map[String, Any] = {
     Map("id" -> junction._1.id,
       "junctionNumber" -> junction._1.junctionNumber.orNull,
@@ -1914,20 +1897,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
         )
   }
 
-  def projectLinkToApi(projectLink: ProjectLink): Map[String, Any] = {
-    Map("id" -> projectLink.id,
-      "linkId" -> projectLink.linkId,
-      "geometry" -> projectLink.geometry,
-      "middlePoint" -> GeometryUtils.midPointGeometry(projectLink.geometry),
-      "startAddressM" -> projectLink.startAddrMValue,
-      "endAddressM" -> projectLink.endAddrMValue,
-      "status" -> projectLink.status.value,
-      "administrativeClassId" -> projectLink.administrativeClass.value,
-      "discontinuity" -> projectLink.discontinuity.value,
-      "elyCode" -> projectLink.ely,
-      "roadName" -> projectLink.roadName)
-  }
-
   def roadAddressProjectToApi(roadAddressProject: Project, elysList: Seq[Long]): Map[String, Any] = {
 
     val elys = if (elysList.isEmpty) Seq(-1) else elysList
@@ -1984,56 +1953,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
         }
       }
     )
-  }
-
-  def splitToApi(splittedLinks: ProjectLink): Map[String, Map[String, Any]] = {
-    splittedLinks.status match {
-      case RoadAddressChangeType.New =>
-        Map("b" ->
-          Map(
-            "linkId" -> splittedLinks.linkId,
-            "geometry" -> splittedLinks.geometry,
-            "middlePoint" -> GeometryUtils.midPointGeometry(splittedLinks.geometry),
-            "startAddressM" -> splittedLinks.startAddrMValue,
-            "endAddressM" -> splittedLinks.endAddrMValue,
-            "status" -> splittedLinks.status.value,
-            "administrativeClassId" -> splittedLinks.administrativeClass.value,
-            "discontinuity" -> splittedLinks.discontinuity.value,
-            "elyCode" -> splittedLinks.ely,
-            "roadName" -> splittedLinks.roadName.getOrElse(""),
-            "roadLinkSource" -> splittedLinks.linkGeomSource.value
-          ))
-      case RoadAddressChangeType.Termination =>
-        Map("c" ->
-          Map(
-            "linkId" -> splittedLinks.linkId,
-            "geometry" -> splittedLinks.geometry,
-            "middlePoint" -> GeometryUtils.midPointGeometry(splittedLinks.geometry),
-            "startAddressM" -> splittedLinks.startAddrMValue,
-            "endAddressM" -> splittedLinks.endAddrMValue,
-            "status" -> splittedLinks.status.value,
-            "administrativeClassId" -> splittedLinks.administrativeClass.value,
-            "discontinuity" -> splittedLinks.discontinuity.value,
-            "elyCode" -> splittedLinks.ely,
-            "roadName" -> splittedLinks.roadName.getOrElse(""),
-            "roadLinkSource" -> splittedLinks.linkGeomSource.value
-          ))
-      case _ =>
-        Map("a" ->
-          Map(
-            "linkId" -> splittedLinks.linkId,
-            "geometry" -> splittedLinks.geometry,
-            "middlePoint" -> GeometryUtils.midPointGeometry(splittedLinks.geometry),
-            "startAddressM" -> splittedLinks.startAddrMValue,
-            "endAddressM" -> splittedLinks.endAddrMValue,
-            "status" -> splittedLinks.status.value,
-            "administrativeClassId" -> splittedLinks.administrativeClass.value,
-            "discontinuity" -> splittedLinks.discontinuity.value,
-            "elyCode" -> splittedLinks.ely,
-            "roadName" -> splittedLinks.roadName.getOrElse(""),
-            "roadLinkSource" -> splittedLinks.linkGeomSource.value
-          ))
-    }
   }
 
   def nodeSearchToApi(nodeAndRoadAttr: (Node, RoadAttributes)): Map[String, Any] = {
@@ -2093,9 +2012,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
   private def formatDateTimeToString(dateOption: Option[DateTime]): Option[String] =
     dateOption.map { date => date.toString(DateTimeFormat.forPattern("dd.MM.yyyy, HH:mm:ss")) }
 
-  private def formatDateTimeToShortPatternString(dateOption: Option[DateTime]): Option[String] =
-    dateOption.map { date => date.toString(DateTimeFormat.forPattern("dd.MM.yyyy")) }
-
   private def calibrationPointToApi(geometry: Seq[Point], calibrationPoint: Option[ProjectCalibrationPoint]): Option[Map[String, Any]] = {
     calibrationPoint match {
       case Some(point) =>
@@ -2111,15 +2027,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       case _ => None
     }
   }
-
-  /* @throws(classOf[Exception])
-   // TODO This method was removed previously for some reason. Is this still valid? At least many methods use this.
-   private def projectWritable(projectId: Long): ProjectService = {
-     val writable = projectService.isWritableState(projectId)
-     if (!writable)
-       throw new IllegalStateException("Projekti ei ole enää muokattavissa") //project is not in modifiable state
-     projectService
-   }*/
 
   case class StartupParameters(lon: Double, lat: Double, zoom: Int, deploy_date: String, roles: Set[String])
   case class RoadAndPartNumberException(private val message: String = "", private val cause: Throwable = None.orNull) extends Exception(message, cause)
