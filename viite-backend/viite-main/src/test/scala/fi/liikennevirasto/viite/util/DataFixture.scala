@@ -39,8 +39,6 @@ object DataFixture {
   val junctionPointDAO = new JunctionPointDAO
   val roadAddressService = new RoadAddressService(linkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), eventBus, ViiteProperties.kgvRoadlinkFrozen)
 
-  lazy val continuityChecker = new ContinuityChecker(new RoadLinkService(KGVClient, new DummyEventBus, new DummySerializer, geometryFrozen))
-
   private lazy val numberThreads: Int = 6
 
   private def toIntNumber(value: Any): Int = {

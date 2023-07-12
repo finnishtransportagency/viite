@@ -1,11 +1,8 @@
 package fi.liikennevirasto.viite.dao
 
-import fi.liikennevirasto.digiroad2.DigiroadEventBus
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.viite.Dummies.dummyLinearLocation
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
-import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.liikennevirasto.viite.NewIdValue
 import fi.vaylavirasto.viite.dao.Sequences
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point, Vector3d}
@@ -13,7 +10,6 @@ import fi.vaylavirasto.viite.model.CalibrationPointType.{NoCP, RoadAddressCP}
 import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LinkGeomSource, RoadAddressChangeType, SideCode, Track}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
-import org.scalatest.mock.MockitoSugar
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
@@ -21,12 +17,6 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
   * Class to test DB trigger that does not allow reserving already reserved links to project
   */
 class ProjectLinkDAOSpec extends FunSuite with Matchers {
-  val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val mockRoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
-  val mockLinearLocationDAO = MockitoSugar.mock[LinearLocationDAO]
-  val mockRoadwayDAO = MockitoSugar.mock[RoadwayDAO]
-  val mockRoadNetworkDAO = MockitoSugar.mock[RoadNetworkDAO]
 
   def runWithRollback(f: => Unit): Unit = {
     // Prevent deadlocks in DB because we create and delete links in tests and don't handle the project ids properly
@@ -229,11 +219,6 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       val returnedProjectLinks = projectLinkDAO.fetchProjectLinks(id)
       returnedProjectLinks.count(x => x.reversed) should be(projectLinks.size)
     }
-  }
-
-  test("Test getProjectLinksByIds and removeProjectLinksById When supplying a empty list Then both methods should NOT throw an exception") {
-    projectLinkDAO.fetchProjectLinksByIds(Seq())
-    projectLinkDAO.removeProjectLinksById(Set())
   }
 
   test("Test updateProjectLinks When giving one new projectLink with new values Then it should update project link") {

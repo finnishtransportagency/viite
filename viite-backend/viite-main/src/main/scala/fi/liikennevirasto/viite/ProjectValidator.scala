@@ -477,38 +477,6 @@ class ProjectValidator {
                                     affectedPlIds: Seq[Long], affectedLinkIds: Seq[String], coordinates: Seq[ProjectCoordinates],
                                     optionalInformation: Option[String])
 
-  def findElyChangesOnAdjacentRoads(projectLink: ProjectLink, allProjectLinks: Seq[ProjectLink]): Boolean = {
-    val dim = 2
-    val points = GeometryUtils.geometryEndpoints(projectLink.geometry)
-    val roadAddresses = roadAddressService.getRoadAddressLinksByBoundingBox(BoundingRectangle(points._2.copy(x = points._2.x + dim, y = points._2.y + dim), points._2.copy(x = points._2.x - dim, y = points._2.y - dim)), Seq.empty)
-    val nextElyCodes = roadAddresses.filterNot(ra => allProjectLinks.exists(_.roadwayNumber == ra.roadwayNumber)).map(_.elyCode).toSet
-    nextElyCodes.nonEmpty && !nextElyCodes.forall(_ == projectLink.ely)
-  }
-
-  def findElyChangesOnNextProjectLinks(projectLink: ProjectLink, allProjectLinks: Seq[ProjectLink]): Boolean = {
-    val nextProjectLinks = allProjectLinks.filter(pl => pl.roadNumber == projectLink.roadNumber && pl.roadPartNumber > projectLink.roadPartNumber)
-    val nextPartStart =
-      if (nextProjectLinks.nonEmpty)
-        Some(nextProjectLinks.minBy(p => (p.roadNumber, p.roadPartNumber)))
-      else Option.empty
-    nextProjectLinks.isEmpty && (nextPartStart.isDefined && nextPartStart.get.ely == projectLink.ely)
-  }
-
-  def filterErrorsWithElyChange(continuityErrors: Seq[ValidationErrorDetails], allProjectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
-    if (allProjectLinks.size > 1) {
-      continuityErrors.distinct.filter(ce => {
-        val affectedProjectLinks = allProjectLinks.filter(pl => ce.affectedPlIds.contains(pl.id))
-        val filtered = affectedProjectLinks.filter(apl => {
-          val elyOnAdjacent = findElyChangesOnAdjacentRoads(apl, allProjectLinks)
-          val elyOnNext = findElyChangesOnNextProjectLinks(apl, allProjectLinks)
-          elyOnAdjacent || elyOnNext
-        })
-        filtered.isEmpty || (ce.validationError == ValidationErrorList.MissingEndOfRoad)
-      })
-    } else continuityErrors
-
-  }
-
   /** Validates project links. If high priority validation errors (to be tackled first) exists, only they are returned.
    * Else the normal priority validation errors get returned (if any). */
   def validateProject(project: Project, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {

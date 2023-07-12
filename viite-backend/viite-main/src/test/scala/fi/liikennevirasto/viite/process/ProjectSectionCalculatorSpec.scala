@@ -25,7 +25,6 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
   private val mockNodesAndJunctionsService = MockitoSugar.mock[NodesAndJunctionsService]
   val mockEventBus: DigiroadEventBus = MockitoSugar.mock[DigiroadEventBus]
   val mockRoadwayAddressMapper: RoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
-  val mockRoadwayDAO = MockitoSugar.mock[RoadwayDAO]
   val projectDAO = new ProjectDAO
   val projectReservedPartDAO = new ProjectReservedPartDAO
   val projectLinkDAO = new ProjectLinkDAO

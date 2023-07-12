@@ -2,7 +2,6 @@ package fi.liikennevirasto
 
 import fi.liikennevirasto.viite.dao.BaseRoadAddress
 import fi.liikennevirasto.viite.model.RoadAddressLinkLike
-import fi.vaylavirasto.viite.geometry.Point
 import fi.vaylavirasto.viite.model.Discontinuity.{ChangingELYCode, Discontinuous, EndOfRoad}
 import fi.vaylavirasto.viite.model.{RoadAddressChangeType, SideCode}
 
@@ -24,9 +23,6 @@ package object viite {
 
   val MinAllowedRoadAddressLength = 0.1
   /* No road address can be generated on a segment smaller than this. */
-
-  val MaxMoveDistanceBeforeFloating = 1.0
-  /* Maximum amount a road start / end may move until it is turned into a floating road address */
 
   val MaxDistanceForSearchDiscontinuityOnOppositeTrack = 20.0
 
@@ -288,25 +284,6 @@ package object viite {
 
   val defaultProjectEly: Long = -1L
 
-  def parseStringGeometry(geomString: String): Seq[Point] = {
-    if (geomString.nonEmpty)
-      toGeometry(geomString)
-    else
-      Seq()
-  }
-
-  def toGeometry(geometryString: String): Seq[Point] = {
-    def toBD(s: String): Double = {
-      BigDecimal(s).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
-    }
-    val pointRegex = raw"\[[^\]]*]".r
-    val regex = raw"\[(\-?\d+\.?\d*),(\-?\d+\.?\d*),?(\-?\d*\.?\d*)?\]".r
-    pointRegex.findAllIn(geometryString).map {
-      case regex(x, y, z) if z != "" => Point(toBD(x), toBD(y), toBD(z))
-      case regex(x, y, _) => Point(toBD(x), toBD(y))
-    }.toSeq
-  }
-
   def switchSideCode(sideCode: SideCode): SideCode = {
     // Switch between against and towards 2 -> 3, 3 -> 2
     SideCode.apply(5-sideCode.value)
@@ -322,18 +299,6 @@ package object viite {
 
   def isRamp(r: BaseRoadAddress): Boolean = {
     isRamp(r.roadNumber, r.track.value)
-  }
-
-  object CombineMaps {
-    type Mapped = Map[String, String]
-
-    def combine(x: Mapped, y: Mapped): Mapped = {
-      val x0 = x.withDefaultValue("")
-      val y0 = y.withDefaultValue("")
-      val keys = x.keys.toSet.union(y.keys.toSet)
-      keys.map { k => k -> (x0(k) + y0(k)) }.toMap
-    }
-
   }
 
   implicit class CaseClassToString(c: AnyRef) {

@@ -3,7 +3,6 @@ package fi.liikennevirasto.viite.dao
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.vaylavirasto.viite.model.{AdministrativeClass, BeforeAfter, Discontinuity, Track}
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}

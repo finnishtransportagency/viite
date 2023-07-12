@@ -26,7 +26,6 @@ import scala.util.{Left, Right}
 
 class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
-  val mockNodesAndJunctionsService = MockitoSugar.mock[NodesAndJunctionsService]
   private val roadNumber1 = 990
   private val roadwayNumber1 = 1000000000L
   private val roadwayNumber2 = 1000000002L
@@ -34,7 +33,6 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
   private val roadNumberLimits = Seq((RoadClass.forJunctions.start, RoadClass.forJunctions.end))
   private val mockLinearLocationDAO = MockitoSugar.mock[LinearLocationDAO]
   private val mockRoadwayDAO = MockitoSugar.mock[RoadwayDAO]
-  val mockRoadwayChangesDAO = MockitoSugar.mock[RoadwayChangesDAO]
   val mockRoadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockRoadwayAddressMapper: RoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
   val mockEventBus: DigiroadEventBus = MockitoSugar.mock[DigiroadEventBus]
@@ -354,7 +352,6 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val linearLocationId2 = Sequences.nextLinearLocationId
       val linearLocation = LinearLocation(linearLocationId1, 1, 12345.toString, 0L, 10L, SideCode.TowardsDigitizing, 0L, calibrationPoints = (CalibrationPointReference(Some(0)), CalibrationPointReference(Some(10))), geom1, LinkGeomSource.NormalLinkInterface, roadwayNumber1, None, None)
       val projectId = Sequences.nextViiteProjectId
-      val plId1 = Sequences.nextProjectLinkId
       val plId2 = Sequences.nextProjectLinkId
 
       val project = Project(projectId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
@@ -5228,7 +5225,6 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val roadwayNumber2 = Sequences.nextRoadwayNumber
       roadwayDAO.create(Seq(testRoadway1.copy(roadwayNumber = roadwayNumber1, track = Track.LeftSide)))
       roadwayDAO.create(Seq(testRoadway1.copy(roadwayNumber = roadwayNumber2, track = Track.RightSide)))
-      val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = roadwayNumber1, addrMValue = 10))
       val roadwayPointId2 = roadwayPointDAO.create(testRoadwayPoint2.copy(roadwayNumber = roadwayNumber2, addrMValue = 20))
       val junctionId2 = junctionDAO.create(Seq(testJunction1.copy(nodeNumber = Option(nodeNumber)))).head
       junctionPointDAO.create(Seq(testJunctionPoint1.copy(junctionId = junctionId2, roadwayPointId = roadwayPointId2)))

@@ -40,7 +40,6 @@ case class RoadAddressProjectLinksExtractor(ids: Set[Long], linkIds: Seq[String]
 
 case class RoadPartExtractor(roadNumber: Long, roadPartNumber: Long, ely: Long)
 
-
 case class NodePointExtractor(id: Long, beforeAfter: Int, roadwayPointId: Long, nodeNumber: Option[Long], `type`: Int = NodePointType.UnknownNodePointType.value,
                               startDate: Option[String], endDate: Option[String], validFrom: String, validTo: Option[String],
                               createdBy: String, createdTime: Option[String], roadwayNumber: Long, addrM : Long,

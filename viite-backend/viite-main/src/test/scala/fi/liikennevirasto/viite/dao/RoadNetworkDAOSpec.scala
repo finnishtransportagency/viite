@@ -28,15 +28,10 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
   val roadNetworkValidator = new RoadNetworkValidator
 
   private val roadNumber1 = 990
-  private val roadNumber2 = 993
 
   private val roadwayNumber1 = 1000000000L
-  private val roadwayNumber2 = 2000000000l
-  private val roadwayNumber3 = 3000000000l
 
   private val testRoadway1 = Roadway(NewIdValue, roadwayNumber1, roadNumber1, 1, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous,   0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
-  private val testRoadway2 = Roadway(NewIdValue, roadwayNumber2, roadNumber1, 2, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 100, 200, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
-  private val testRoadway3 = Roadway(NewIdValue, roadwayNumber3, roadNumber2, 1, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous,   0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 2"), 1, TerminationCode.NoTermination)
 
   test("Test existence of roadway points from the start and end of the roadway by fetchMissingRoadwayPointsFromStart. Correctly assess both existing, and missing roadway points.") {
     runWithRollback {

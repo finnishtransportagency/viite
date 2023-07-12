@@ -33,7 +33,6 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
   private val mockLinearLocationDAO = MockitoSugar.mock[LinearLocationDAO]
   private val mockRoadwayDAO = MockitoSugar.mock[RoadwayDAO]
   private val mockRoadNetworkDAO = MockitoSugar.mock[RoadNetworkDAO]
-  val mockProjectLinkDAO = MockitoSugar.mock[ProjectLinkDAO]
   private val mockRoadwayPointDAO = MockitoSugar.mock[RoadwayPointDAO]
   private val mockNodePointDAO = MockitoSugar.mock[NodePointDAO]
   private val mockJunctionPointDAO = MockitoSugar.mock[JunctionPointDAO]
@@ -106,7 +105,6 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
   test("Test RoadAddressLinkBuilder.build for roadlink and roadAddress input") {
     runWithRollback {
       val roadAddress = RoadAddress(1, 1234, 5, 999, AdministrativeClass.Unknown, Track.Combined, Discontinuity.Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 12345L.toString, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), Seq(Point(0.0, 0.0), Point(2.0, 9.8), Point(2.0, 9.8), Point(10.0, 19.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
-      val attributes1 = Map("starttime"-> (new DateTime(1446132842000L)), "versionstarttime"-> (new DateTime(1476468913000L)), "sourcemodificationtime"-> (new DateTime(1379548800000L)) )
       val roadlink = RoadLink(linkId = 1L.toString, List(Point(0.0, 0.0), Point(120.0, 0.0)), 120.0, AdministrativeClass.Municipality, TrafficDirection.BothDirections, None, None, municipalityCode = 0, sourceId = "")
 
       val roadAddressLink = roadAddressLinkBuilder.build(roadlink, roadAddress)

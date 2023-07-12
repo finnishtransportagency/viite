@@ -96,25 +96,6 @@ object ProjectSectionMValueCalculator {
       }
     }
   }
-
-  def assignTerminatedLinkValues(seq: Seq[ProjectLink], addrSt: Long): Seq[ProjectLink] = {
-    val newAddressValues = seq.scanLeft(addrSt) { case (m, pl) =>
-      pl.status match {
-        case RoadAddressChangeType.Termination =>
-          m + pl.addrMLength
-        case RoadAddressChangeType.Unchanged | RoadAddressChangeType.Transfer | RoadAddressChangeType.NotHandled | RoadAddressChangeType.Renumeration =>
-          pl.roadAddressEndAddrM.getOrElse(pl.endAddrMValue)
-        case _ => throw new InvalidAddressDataException(s"Invalid status found at value assignment ${pl.status}, linkId: ${pl.linkId}")
-      }
-    }
-    seq.zip(newAddressValues.zip(newAddressValues.tail)).map { case (pl, (st, en)) =>
-      pl.copy(startAddrMValue = Math.round(st), endAddrMValue = Math.round(en))
-    }
-  }
 }
 
 case class TrackAddressingFactors(unChangedLength: Long, transferLength: Long, newLength: Double)
-
-case class CalculatedValue(addressAndGeomLength: Either[Long, Double])
-
-case class AddressingGroup(previous: Option[ProjectLink], group: Seq[ProjectLink])

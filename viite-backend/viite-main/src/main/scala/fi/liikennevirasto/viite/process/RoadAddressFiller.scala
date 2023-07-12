@@ -3,7 +3,7 @@ package fi.liikennevirasto.viite.process
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.{RoadAddressLinkBuilder, _}
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink}
+import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.vaylavirasto.viite.dao.UnaddressedRoadLink
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.{AdministrativeClass, RoadLinkLike}
@@ -21,38 +21,6 @@ object RoadAddressFiller {
                       droppedSegmentIds: Set[Long],
                       adjustedMValues: Seq[LinearLocationAdjustment],
                       newLinearLocations: Seq[LinearLocation])
-
-  private def extendToGeometry(roadLink: RoadLinkLike, segments: Seq[ProjectAddressLink]): Seq[ProjectAddressLink] = {
-    if (segments.isEmpty || segments.exists(_.connectedLinkId.nonEmpty))
-      return segments
-    val linkLength = GeometryUtils.geometryLength(roadLink.geometry)
-    val sorted = segments.sortBy(_.endMValue)(Ordering[Double].reverse)
-    val lastSegment = sorted.head
-    val restSegments = sorted.tail
-    val allowedDiff = ((linkLength - MaxAllowedMValueError) - lastSegment.endMValue) <= MaxDistanceDiffAllowed
-    val adjustments = if ((lastSegment.endMValue < linkLength - MaxAllowedMValueError) && allowedDiff) {
-      restSegments ++ Seq(lastSegment.copy(endMValue = linkLength, sourceId = ""))
-    } else {
-      segments
-    }
-    adjustments
-  }
-
-  def fillProjectTopology(roadLinks: Seq[RoadLinkLike], roadAddressMap: Map[String, Seq[ProjectAddressLink]]): Seq[ProjectAddressLink] = {
-    val fillOperations: Seq[(RoadLinkLike, Seq[ProjectAddressLink]) => Seq[ProjectAddressLink]] = Seq(
-      extendToGeometry
-    )
-
-    roadLinks.foldLeft(Seq.empty[ProjectAddressLink]) { case (acc, roadLink) =>
-      val existingSegments = acc
-      val segment = roadAddressMap.getOrElse(roadLink.linkId, Seq())
-
-      val adjustedSegments = fillOperations.foldLeft(segment) { case (currentSegments, operation) =>
-        operation(roadLink, currentSegments)
-      }
-      existingSegments ++ adjustedSegments
-    }
-  }
 
   private def dropSegmentsOutsideGeometry(roadLink: RoadLinkLike, segments: Seq[LinearLocation], changeSet: ChangeSet): (Seq[LinearLocation], ChangeSet) = {
     val linkLength = GeometryUtils.geometryLength(roadLink.geometry)

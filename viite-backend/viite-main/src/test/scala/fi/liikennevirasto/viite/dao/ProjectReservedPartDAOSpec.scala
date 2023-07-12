@@ -1,10 +1,7 @@
 package fi.liikennevirasto.viite.dao
 
-import fi.liikennevirasto.digiroad2.DigiroadEventBus
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.viite.Dummies.dummyLinearLocation
-import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.liikennevirasto.viite.NewIdValue
 import fi.vaylavirasto.viite.dao.Sequences
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
@@ -13,7 +10,6 @@ import fi.vaylavirasto.viite.model.{AdministrativeClass, BeforeAfter, Calibratio
 import org.joda.time.DateTime
 import org.postgresql.util.PSQLException
 import org.scalatest.{FunSuite, Matchers}
-import org.scalatest.mock.MockitoSugar
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -22,12 +18,6 @@ import slick.jdbc.StaticQuery.interpolation
   * Class to test DB trigger that does not allow reserving already reserved parts to project
   */
 class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
-  val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val mockRoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
-  val mockLinearLocationDAO = MockitoSugar.mock[LinearLocationDAO]
-  val mockRoadwayDAO = MockitoSugar.mock[RoadwayDAO]
-  val mockRoadNetworkDAO = MockitoSugar.mock[RoadNetworkDAO]
 
   def runWithRollback(f: => Unit): Unit = {
     // Prevent deadlocks in DB because we create and delete links in tests and don't handle the project ids properly
@@ -57,7 +47,6 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
 
   private val roadwayNumber1 = 1000000000L
   private val roadwayNumber2 = 2000000000L
-  private val roadwayNumber3 = 3000000000l
 
   private val linkId1 = 1000L.toString
   private val linkId2 = 2000L.toString
@@ -241,7 +230,6 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
 
     test("Test isNotAvailableForProject When road is not terminated Then road part can be reserved") {
       runWithRollback {
-        val idr = roadwayDAO.getNextRoadwayId
         roadwayDAO.create(Seq(dummyRoadways.head.copy(startDate = DateTime.parse("1901-01-01"), endDate = Some(DateTime.parse("1901-12-31")))))
         val id = Sequences.nextViiteProjectId
         val rap = Project(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], Seq(), None)
@@ -312,7 +300,6 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
   test("Test roadPartReservedTo When getting the road parts reserved Then should return the project that has the roads") {
       runWithRollback {
         val roadwayIds = roadwayDAO.create(dummyRoadways)
-        val linearLocationIds = linearLocationDAO.create(dummyLinearLocations)
 
         val id = Sequences.nextViiteProjectId
         val projectLinkId = Sequences.nextProjectLinkId

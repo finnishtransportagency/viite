@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.vaylavirasto.viite.dao.MunicipalityDAO
-import org.joda.time.format.{DateTimeFormat, DateTimeFormatter, ISODateTimeFormat}
+import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 
 trait AddressLinkBuilder {
   val RoadNumber = "roadnumber"

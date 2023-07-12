@@ -235,17 +235,6 @@ class RoadAddressService(
   }
 
   /**
-    * Returns all of our road addresses (combination of roadway + linear location information) that share the same linkIds as those supplied.
-    *
-    * @param linkIds : Seq[Long] - The linkId's to fetch information
-    * @return
-    */
-  def getRoadAddressesByLinkIds(linkIds: Seq[String]): Seq[RoadAddress] = {
-    val linearLocations = linearLocationDAO.fetchByLinkId(linkIds.toSet)
-    roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations)
-  }
-
-  /**
     * Gets all the road addresses in the given municipality code.
     *
     * @param municipality The municipality code
@@ -1167,18 +1156,8 @@ class Contains(r: Range) {
 
 case class RoadAddressMerge(merged: Set[Long], created: Seq[RoadAddress])
 
-case class LinearLocationResult(current: Seq[LinearLocation])
-
 case class BoundingBoxResult(changeInfoF: Future[Seq[ChangeInfo]], roadAddressResultF: Future[(Seq[LinearLocation], Seq[HistoryRoadLink])],
                              roadLinkF: Future[Seq[RoadLink]], complementaryF: Future[Seq[RoadLink]])
-
-case class RoadAddressResult(roadAddressResultF: Future[Seq[LinearLocation]], roadLinkF: Future[Seq[RoadLink]], complementaryF: Future[Seq[RoadLink]])
-
-case class LinkRoadAddressHistory(v: (Seq[RoadAddress], Seq[RoadAddress])) {
-  val currentSegments: Seq[RoadAddress] = v._1
-  val historySegments: Seq[RoadAddress] = v._2
-  val allSegments: Seq[RoadAddress] = currentSegments ++ historySegments
-}
 
 case class ChangedRoadAddress(roadAddress: RoadAddress, link: RoadLink)
 
@@ -1246,8 +1225,6 @@ object AddressConsistencyValidator {
       values.find(_.value == intValue).get
     }
   }
-
-  case class AddressErrorDetails(linearLocationId: Long, linkId: Long, roadNumber: Long, roadPartNumber: Long, addressError: AddressError, ely: Long)
 
 }
 

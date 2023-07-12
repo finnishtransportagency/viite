@@ -124,18 +124,6 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
     project
   }
 
-  private def setUpProjectWithRampLinks(roadAddressChangeType: RoadAddressChangeType, addrM: Seq[Long]) = {
-    val id = Sequences.nextViiteProjectId
-    val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
-      "", Seq(), Seq(), None, None)
-    projectDAO.create(project)
-    val links = addrM.init.zip(addrM.tail).map { case (st, en) =>
-      projectLink(st, en, Track.Combined, id, roadAddressChangeType).copy(roadNumber = 39999)
-    }
-    projectReservedPartDAO.reserveRoadPart(id, 39999L, 1L, "u")
-    projectLinkDAO.create(links.init :+ links.last.copy(discontinuity = Discontinuity.EndOfRoad))
-    project
-  }
 
   private def addProjectLinksToProject(roadAddressChangeType: RoadAddressChangeType, addrM: Seq[Long], changeTrack: Boolean = false, roadNumber: Long = 19999L,
                                        roadPartNumber: Long = 1L, discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, roadwayId: Long = 0L,

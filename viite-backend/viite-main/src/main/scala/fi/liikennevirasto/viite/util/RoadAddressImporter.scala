@@ -324,8 +324,6 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, KGVClient: KgvRoadLin
       case (_/*key*/, addresses) =>
         val minAddress = addresses.head._1
         val maxAddress = addresses.last._1
-        val linkIds = addresses.map(_._1.linkId)
-        val currentAddresses = currentConversionAddresses.filter(add => add.roadwayNumber == minAddress.roadwayNumber && linkIds.contains(add.linkId)).sortBy(_.startAddressM)
 
         val roadAddress = IncomingRoadway(minAddress.roadwayNumber, minAddress.roadNumber, minAddress.roadPartNumber, minAddress.trackCode, minAddress.startAddressM, maxAddress.endAddressM, minAddress.directionFlag, minAddress.startDate, minAddress.endDate, "import", minAddress.administrativeClass, minAddress.ely, minAddress.validFrom, None, maxAddress.discontinuity, terminated = NoTermination.value)
 

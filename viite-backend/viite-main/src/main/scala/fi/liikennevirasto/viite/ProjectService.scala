@@ -102,8 +102,6 @@ class ProjectService(
   val projectValidator = new ProjectValidator
   val roadNetworkValidator = new RoadNetworkValidator
   val roadAddressLinkBuilder = new RoadAddressLinkBuilder(roadwayDAO, linearLocationDAO)
-  val roadNetworkDAO = new RoadNetworkDAO
-
   /**
     *
     * @param roadNumber    Road's number (long)

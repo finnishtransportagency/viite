@@ -13,7 +13,6 @@ import fi.vaylavirasto.viite.dao.Sequences
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
 import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LifecycleStatus, LinkGeomSource, RoadAddressChangeType, RoadLink, SideCode, Track, TrafficDirection}
 import org.joda.time.DateTime
-import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalatest.{FunSuite, Matchers}
@@ -31,9 +30,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   val mockRoadwayDAO: RoadwayDAO = MockitoSugar.mock[RoadwayDAO]
   val mockRoadNetworkDAO: RoadNetworkDAO = MockitoSugar.mock[RoadNetworkDAO]
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
-  val mockRoadwayPointDAO: RoadwayPointDAO = MockitoSugar.mock[RoadwayPointDAO]
-  val mockNodePointDAO = MockitoSugar.mock[NodePointDAO]
-  val mockJunctionPointDAO = MockitoSugar.mock[JunctionPointDAO]
 
   val roadwayAddressMappper = new RoadwayAddressMapper(mockRoadwayDAO, mockLinearLocationDAO)
   val projectDAO = new ProjectDAO
@@ -633,23 +629,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val generatedProperRoadwayNumbersAfterChanges = Seq(afterChangesTerminated.head, afterChangesTransfer.head)
       val mappedRoadwayChanges = projectLinkDAO.fetchProjectLinksChange(projectId)
 
-      val newRoads = Seq()
-      val terminated = Termination(Seq(
-        (
-          dummyRoadAddress(roadwayNumber1, 99, 2, 0, 5, Some(DateTime.now()), None, 12345.toString, 0, 5, LinkGeomSource.NormalLinkInterface, geom1),
-          afterUpdateProjectLinks.head
-        )
-      )
-      )
-      val unchanged = Unchanged(Seq())
-      val transferred = Transferred(Seq(
-        (
-          dummyRoadAddress(roadwayNumber1, 99, 2, 5, 20, Some(DateTime.now()), None, 12346.toString, 0, 15, LinkGeomSource.NormalLinkInterface, geom2),
-          beforeChangesTransfer
-        )
-      )
-      )
-      val renumbered = ReNumeration(Seq())
 
       val roadwayPointsBeforeTerminatedLink = afterUpdateProjectLinks.filter(_.status == RoadAddressChangeType.Termination).map(_.roadwayNumber).distinct.flatMap{ rwp=>
       roadwayPointDAO.fetchByRoadwayNumber(rwp)
@@ -687,7 +666,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val geom2 = Seq(Point(5.0, 0.0), Point(20.0, 0.0))
       val roadwayNumber1 = Sequences.nextRoadwayNumber
       val roadwayNumber2 = roadwayNumber1+1
-      val roadwayNumber2AfterChanges = roadwayNumber2+1
 
       val projectId = Sequences.nextViiteProjectId
       val rap =  dummyProject(projectId, ProjectState.Incomplete, Seq(), None).copy(startDate = DateTime.parse("2019-10-10"))
@@ -766,7 +744,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val roadwayPointsBeforeTransferLink = Seq(beforeChangesTransfer).filter(_.status == RoadAddressChangeType.Transfer).map(_.roadwayNumber).distinct.flatMap{ rwp=>
         roadwayPointDAO.fetchByRoadwayNumber(rwp)
       }
-      val delta = Delta(DateTime.now, newRoads , terminated, unchanged, transferred, renumbered)
       val reservedParts = Seq(ProjectReservedPart(0, 99, 2, Some(20), Some(Discontinuity.Continuous), Some(8L), None, None, None, Some(12345L.toString)))
       val formedParts = Seq(ProjectReservedPart(0, 99, 2, None, None, None, Some(15), Some(Discontinuity.Continuous), Some(8L), Some(12345L.toString)))
 
