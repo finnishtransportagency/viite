@@ -1,6 +1,5 @@
 package fi.vaylavirasto.viite.dao
 
-import fi.liikennevirasto.viite.dao.RoadNameDAO.getClass
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
