@@ -111,17 +111,17 @@ object Extractor {
     val modifiedBy = "KGV"
 
     RoadLink(
-              linkId,
-              linkGeometry,
-              geometryLength,
-              extractAdministrativeClass(attributes),
-              extractTrafficDirection(attributes),
-              extractModifiedAt(attributes).map(_.toString),
-              Some(modifiedBy),
-              extractLifecycleStatus(attributes),
-              linkGeomSource,
-              municipalityCode,
-              sourceid)
+      linkId,
+      linkGeometry,
+      geometryLength,
+      extractAdministrativeClass(attributes),
+      extractTrafficDirection(attributes),
+      extractModifiedAt(attributes).map(_.toString),
+      Some(modifiedBy),
+      extractLifecycleStatus(attributes),
+      linkGeomSource,
+      municipalityCode,
+      sourceid)
   }
 
   def extractRoadNumberAndPartFeature(feature: Feature): (Option[Long], Option[Long], Int)  = {

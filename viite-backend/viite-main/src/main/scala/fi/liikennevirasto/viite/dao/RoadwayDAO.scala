@@ -879,7 +879,6 @@ class RoadwayDAO extends BaseDAO {
    * @param ids : Seq[Long] - The ids of the roadway rows of which reversed tags should be flipped
    * @return
    */
-
   def updateReversedTagsInHistoryRows(ids: Set[Long]): Int = {
     val query =
       s"""

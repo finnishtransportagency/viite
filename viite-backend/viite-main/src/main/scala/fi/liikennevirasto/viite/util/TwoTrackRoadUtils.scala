@@ -412,8 +412,30 @@ object TwoTrackRoadUtils {
 
       val newPlId = Sequences.nextProjectLinkId
       val newProjectLinks = (
-                              pl.copy(discontinuity         = Discontinuity.Continuous, endAddrMValue         = splittedEndAddrMValue, originalEndAddrMValue = address, startMValue           = pl.startMValue, endMValue             = splitMeasure, calibrationPointTypes = calsForFirstPart, geometry              = geom, status                = pl.status, geometryLength        = splitMeasure - pl.startMValue, connectedLinkId       = Some(pl.linkId)),
-                              pl.copy(id                      = newPlId, startAddrMValue         = splittedEndAddrMValue, originalStartAddrMValue = address, startMValue             = splitMeasure, endMValue               = pl.endMValue, calibrationPointTypes   = calsForSecondPart, geometry                = new_geometry, status                  = pl.status, geometryLength          = pl.geometryLength - (splitMeasure - pl.startMValue), connectedLinkId         = Some(pl.linkId))
+                              pl.copy(
+                                discontinuity         = Discontinuity.Continuous,
+                                endAddrMValue         = splittedEndAddrMValue,
+                                originalEndAddrMValue = address,
+                                startMValue           = pl.startMValue,
+                                endMValue             = splitMeasure,
+                                calibrationPointTypes = calsForFirstPart,
+                                geometry              = geom,
+                                status                = pl.status,
+                                geometryLength        = splitMeasure - pl.startMValue,
+                                connectedLinkId       = Some(pl.linkId)
+                              ),
+                              pl.copy(
+                                id                      = newPlId,
+                                startAddrMValue         = splittedEndAddrMValue,
+                                originalStartAddrMValue = address,
+                                startMValue             = splitMeasure,
+                                endMValue               = pl.endMValue,
+                                calibrationPointTypes   = calsForSecondPart,
+                                geometry                = new_geometry,
+                                status                  = pl.status,
+                                geometryLength          = pl.geometryLength - (splitMeasure - pl.startMValue),
+                                connectedLinkId         = Some(pl.linkId)
+                              )
                             )
 
       (newProjectLinks._1, newProjectLinks._2)

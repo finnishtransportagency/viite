@@ -56,10 +56,10 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   val mockLinearLocationDAO: LinearLocationDAO = MockitoSugar.mock[LinearLocationDAO]
   val mockRoadwayChangesDAO: RoadwayChangesDAO = MockitoSugar.mock[RoadwayChangesDAO]
 
-  private val roadwayNumber1   = 1000000000l
-  private val roadwayNumber2   = 2000000000l
-  private val roadwayNumber3   = 3000000000l
-  private val roadwayNumber4   = 4000000000l
+  private val roadwayNumber1   = 1000000000L
+  private val roadwayNumber2   = 2000000000L
+  private val roadwayNumber3   = 3000000000L
+  private val roadwayNumber4   = 4000000000L
   private val linearLocationId = 1
   private val testProjectId    = 7081807
 

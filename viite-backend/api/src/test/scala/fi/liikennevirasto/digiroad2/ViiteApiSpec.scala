@@ -75,7 +75,7 @@ class ViiteApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter {
     override def withDynTransaction[T](f: => T): T = runWithRollback(f)
   }
 
-    private val viiteApi = new ViiteApi(roadLinkService, mockKgvRoadLink, roadAddressService, projectService, roadNameService, mockNodesAndJunctionsService, mockRoadNetworkValidator, swagger = new ViiteSwagger)
+  private val viiteApi = new ViiteApi(roadLinkService, mockKgvRoadLink, roadAddressService, projectService, roadNameService, mockNodesAndJunctionsService, mockRoadNetworkValidator, swagger = new ViiteSwagger)
 
   addServlet(viiteApi, "/*")
 

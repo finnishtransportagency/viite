@@ -162,7 +162,9 @@ object ApplyChangeInfoProcess {
       roadLink => GeometryUtils.truncateGeometry2D(roadLink.geometry, newStartMeasure, newEndMeasure)
     ).getOrElse(linearLocation.geometry)
 
-    linearLocation.copy(id = newId, orderNumber = linearLocation.orderNumber + (projection.orderIncrement.toDouble / decimalPlaces(linearLocation.orderNumber)), linkId = projection.newLinkId, startMValue = newStartMeasure, endMValue = newEndMeasure, sideCode = newSideCode, adjustedTimestamp = projection.timeStamp, calibrationPoints = (newStartCalibrationPoint, newEndCalibrationPoint), geometry = geometry)
+    linearLocation.copy(id = newId, orderNumber = linearLocation.orderNumber + (projection.orderIncrement.toDouble / decimalPlaces(linearLocation.orderNumber)),
+      linkId = projection.newLinkId, startMValue = newStartMeasure, endMValue = newEndMeasure, sideCode = newSideCode, adjustedTimestamp = projection.timeStamp,
+      calibrationPoints = (newStartCalibrationPoint, newEndCalibrationPoint), geometry = geometry)
   }
 
   private def filterOutOlderChanges(locations: Map[String, Seq[LinearLocation]])(change: ChangeInfo): Boolean = {
