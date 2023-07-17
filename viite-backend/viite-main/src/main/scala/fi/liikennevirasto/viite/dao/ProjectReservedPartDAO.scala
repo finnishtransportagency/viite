@@ -3,6 +3,7 @@ package fi.liikennevirasto.viite.dao
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite._
 import fi.vaylavirasto.viite.model.{Discontinuity, RoadAddressChangeType, Track}
+import fi.vaylavirasto.viite.dao.BaseDAO
 import org.slf4j.{Logger, LoggerFactory}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.{StaticQuery => Q}
@@ -16,8 +17,7 @@ case class ProjectReservedPart(id: Long, roadNumber: Long, roadPartNumber: Long,
   }
 }
 
-class ProjectReservedPartDAO {
-  private def logger: Logger = LoggerFactory.getLogger(getClass)
+class ProjectReservedPartDAO extends BaseDAO{
 
   /**
     * Removes reserved road part and deletes the project links associated to it.
@@ -30,32 +30,34 @@ class ProjectReservedPartDAO {
     */
   def removeReservedRoadPartAndChanges(projectId: Long, roadNumber: Long, roadPartNumber: Long): Unit = {
     time(logger, s"Remove reserved road part $roadNumber / $roadPartNumber from project $projectId") {
-      sqlu"""DELETE FROM ROADWAY_CHANGES_LINK WHERE PROJECT_ID = $projectId""".execute
-      sqlu"""DELETE FROM ROADWAY_CHANGES WHERE PROJECT_ID = $projectId""".execute
-      sqlu"""
-           DELETE FROM PROJECT_LINK WHERE PROJECT_ID = $projectId AND
-           (EXISTS (SELECT 1 FROM ROADWAY RA, LINEAR_LOCATION LC WHERE RA.ID = ROADWAY_ID AND
-           RA.ROAD_NUMBER = $roadNumber AND RA.ROAD_PART_NUMBER = $roadPartNumber))
-           OR (ROAD_NUMBER = $roadNumber AND ROAD_PART_NUMBER = $roadPartNumber
-           AND (STATUS != ${RoadAddressChangeType.NotHandled.value}))
-           """.execute
-      sqlu"""DELETE FROM PROJECT_RESERVED_ROAD_PART WHERE project_id = $projectId and road_number = $roadNumber and road_part_number = $roadPartNumber""".execute
+      runUpdateToDb(s"""DELETE FROM ROADWAY_CHANGES_LINK WHERE PROJECT_ID = $projectId""")
+      runUpdateToDb(s"""DELETE FROM ROADWAY_CHANGES WHERE PROJECT_ID = $projectId""")
+      runUpdateToDb(s"""
+        DELETE FROM PROJECT_LINK
+          WHERE PROJECT_ID = $projectId
+            AND (EXISTS (SELECT 1 FROM ROADWAY RA, LINEAR_LOCATION LC WHERE RA.ID = ROADWAY_ID AND
+                         RA.ROAD_NUMBER = $roadNumber AND RA.ROAD_PART_NUMBER = $roadPartNumber))
+             OR (ROAD_NUMBER = $roadNumber AND ROAD_PART_NUMBER = $roadPartNumber AND
+                 (STATUS != ${RoadAddressChangeType.NotHandled.value})
+          )
+        """)
+      runUpdateToDb(s"""DELETE FROM PROJECT_RESERVED_ROAD_PART WHERE project_id = $projectId and road_number = $roadNumber and road_part_number = $roadPartNumber""")
     }
   }
 
   def removeReservedRoadPart(projectId: Long, roadNumber: Long, roadPartNumber: Long): Unit = {
     time(logger, s"Remove ") {
-      sqlu"""DELETE FROM ROADWAY_CHANGES_LINK WHERE PROJECT_ID = $projectId""".execute
-      sqlu"""DELETE FROM ROADWAY_CHANGES WHERE PROJECT_ID = $projectId""".execute
-      sqlu"""DELETE FROM PROJECT_RESERVED_ROAD_PART WHERE project_id = $projectId and road_number = $roadNumber and road_part_number = $roadPartNumber""".execute
+      runUpdateToDb(s"""DELETE FROM ROADWAY_CHANGES_LINK WHERE PROJECT_ID = $projectId""")
+      runUpdateToDb(s"""DELETE FROM ROADWAY_CHANGES WHERE PROJECT_ID = $projectId""")
+      runUpdateToDb(s"""DELETE FROM PROJECT_RESERVED_ROAD_PART WHERE project_id = $projectId and road_number = $roadNumber and road_part_number = $roadPartNumber""")
     }
   }
 
   def removeReservedRoadPartsByProject(projectId: Long): Unit = {
     time(logger, s"Remove reserved road parts by project $projectId") {
-      sqlu"""DELETE FROM ROADWAY_CHANGES_LINK WHERE PROJECT_ID = $projectId""".execute
-      sqlu"""DELETE FROM ROADWAY_CHANGES WHERE PROJECT_ID = $projectId""".execute
-      sqlu"""DELETE FROM PROJECT_RESERVED_ROAD_PART WHERE project_id = $projectId""".execute
+      runUpdateToDb(s"""DELETE FROM ROADWAY_CHANGES_LINK WHERE PROJECT_ID = $projectId""")
+      runUpdateToDb(s"""DELETE FROM ROADWAY_CHANGES WHERE PROJECT_ID = $projectId""")
+      runUpdateToDb(s"""DELETE FROM PROJECT_RESERVED_ROAD_PART WHERE project_id = $projectId""")
     }
   }
 
@@ -423,8 +425,8 @@ class ProjectReservedPartDAO {
 
   def reserveRoadPart(projectId: Long, roadNumber: Long, roadPartNumber: Long, user: String): Unit = {
     time(logger, s"User $user reserves road part $roadNumber / $roadPartNumber for project $projectId") {
-      sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART(id, road_number, road_part_number, project_id, created_by)
-      SELECT nextval('viite_general_seq'), $roadNumber, $roadPartNumber, $projectId, $user""".execute
+      runUpdateToDb(s"""INSERT INTO PROJECT_RESERVED_ROAD_PART(id, road_number, road_part_number, project_id, created_by)
+                        SELECT nextval('viite_general_seq'), $roadNumber, $roadPartNumber, $projectId, '$user'""")
     }
   }
 

@@ -4,6 +4,7 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
+import fi.vaylavirasto.viite.postgis.DbUtils.runUpdateToDb
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
@@ -24,19 +25,19 @@ class ProjectCalibrationPointDAOSpec extends FunSuite with Matchers {
   val projectReservedPartDAO = new ProjectReservedPartDAO
 
   def addTestProjects(): Unit = {
-    sqlu"""insert into project (id,state,name,created_by, start_date) VALUES (1,0,'testproject','automatedtest', current_date)""".execute
-    sqlu"""insert into project (id,state,name,created_by, start_date) VALUES (2,0,'testproject2','automatedtest', current_date)""".execute
+    runUpdateToDb(s"""insert into project (id,state,name,created_by, start_date) VALUES (1,0,'testproject','automatedtest', current_date)""")
+    runUpdateToDb(s"""insert into project (id,state,name,created_by, start_date) VALUES (2,0,'testproject2','automatedtest', current_date)""")
   }
 
   def addProjectRoads(): Unit = {
     projectReservedPartDAO.reserveRoadPart(1, 1, 1, "TestUser")
     projectReservedPartDAO.reserveRoadPart(2, 2, 1, "TestUser")
-    sqlu"""insert into project_link (id,project_id,TRACK,discontinuity_type,road_number,road_part_number,start_addr_M,end_addr_M, original_start_addr_M, original_end_addr_M,created_by,
+    runUpdateToDb(s"""insert into project_link (id,project_id,TRACK,discontinuity_type,road_number,road_part_number,start_addr_M,end_addr_M, original_start_addr_M, original_end_addr_M,created_by,
           SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE) VALUES (1,1,1,0,1,1,1,1,1,1,'automatedtest',
-          1, 0, 208.951, 1610995, 0, 1)""".execute
-    sqlu"""insert into project_link (id,project_id,TRACK,discontinuity_type,road_number,road_part_number,start_addr_M,end_addr_M, original_start_addr_M, original_end_addr_M, created_by,
+          1, 0, 208.951, 1610995, 0, 1)""")
+    runUpdateToDb(s"""insert into project_link (id,project_id,TRACK,discontinuity_type,road_number,road_part_number,start_addr_M,end_addr_M, original_start_addr_M, original_end_addr_M, created_by,
           SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE) VALUES (2,2,1,0,2,1,1,1,1,1,'automatedtest',
-          1, 0, 208.951, 1610995, 0, 1)""".execute
+          1, 0, 208.951, 1610995, 0, 1)""")
   }
 
   test("Test createCalibrationPoint of calibration points When creating two calibrations points, Then they should be saved without any problems") {

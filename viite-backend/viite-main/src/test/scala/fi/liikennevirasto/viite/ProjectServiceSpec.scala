@@ -13,6 +13,7 @@ import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.{ProjectSectionCalculator, RoadwayAddressMapper}
 import fi.liikennevirasto.viite.process.strategy.DefaultSectionCalculatorStrategy
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
+import fi.vaylavirasto.viite.postgis.DbUtils.{runUpdateToDb}  // TODO extend BaseDAO instead?
 import fi.vaylavirasto.viite.dao.{ProjectLinkNameDAO, RoadName, RoadNameDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point, PolyLine}
 import fi.vaylavirasto.viite.model.CalibrationPointType.{JunctionPointCP, NoCP, RoadAddressCP, UserDefinedCP}
@@ -950,7 +951,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val user     = "test user"
       val roadAddressProject = Project(testProjectId, Incomplete, "preFill", user, DateTime.now(), user, DateTime.now().plusMonths(2), DateTime.now(), "", Seq(), Seq(), None, None, Set())
 
-      sqlu""" Insert into project_link_name values (nextval('viite_general_seq'), ${roadAddressProject.id}, $road, 'TestRoadName_Project_Link')""".execute
+      runUpdateToDb(s""" Insert into project_link_name values (nextval('viite_general_seq'), ${roadAddressProject.id}, $road, 'TestRoadName_Project_Link')""")
       projectReservedPartDAO.reserveRoadPart(testProjectId, road, roadPart, user)
       val projectLinks = roadwayAddressMapper.getRoadAddressesByRoadway(roadwayDAO.fetchAllByRoadAndPart(road, roadPart)).map(toProjectLink(roadAddressProject))
       projectLinkDAO.create(projectLinks)
@@ -969,8 +970,8 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       val roadAddressProject = Project(testProjectId, Incomplete, "preFill", user, DateTime.now(), user, DateTime.now().plusMonths(2), DateTime.now(), "", Seq(), Seq(), None, None, Set())
 
-      sqlu"""INSERT INTO ROAD_NAME VALUES (nextval('ROAD_NAME_SEQ'), $road, 'road name test', TIMESTAMP '2018-03-23 12:26:36.000000', null, TIMESTAMP '2018-03-23 12:26:36.000000', null, 'test user', TIMESTAMP '2018-03-23 12:26:36.000000')""".execute
-      sqlu""" Insert into project_link_name values (nextval('viite_general_seq'), ${roadAddressProject.id}, $road, 'TestRoadName_Project_Link')""".execute
+      runUpdateToDb(s"""INSERT INTO ROAD_NAME VALUES (nextval('ROAD_NAME_SEQ'), $road, 'road name test', TIMESTAMP '2018-03-23 12:26:36.000000', null, TIMESTAMP '2018-03-23 12:26:36.000000', null, 'test user', TIMESTAMP '2018-03-23 12:26:36.000000')""")
+      runUpdateToDb(s"""INSERT INTO project_link_name values (nextval('viite_general_seq'), ${roadAddressProject.id}, $road, 'TestRoadName_Project_Link')""")
       projectReservedPartDAO.reserveRoadPart(testProjectId, road, roadPart, user)
 
       val projectLinks = roadwayAddressMapper.getRoadAddressesByRoadway(roadwayDAO.fetchAllByRoadAndPart(road, 10)).map(toProjectLink(roadAddressProject))
@@ -1983,8 +1984,8 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       when(mockRoadLinkService.getRoadLinksByLinkIds(any[Set[String]])).thenAnswer(
         toMockAnswer(Seq(projectLink), roadLink)
       )
-      val historicRoadId = projectService.expireHistoryRows(roadwayId)
-      historicRoadId should be (1)
+      val historicRoadsUpdated = projectService.expireHistoryRows(roadwayId)
+      historicRoadsUpdated should be (1)
     }
   }
 

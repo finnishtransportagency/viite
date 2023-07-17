@@ -8,15 +8,18 @@ import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import slick.jdbc.StaticQuery.interpolation
+
 case class RoadName(id: Long, roadNumber: Long, roadName: String, startDate: Option[DateTime], endDate: Option[DateTime] = None,
                     validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None, createdBy: String)
 
 case class RoadNameForRoadAddressBrowser(ely: Long, roadNumber: Long, roadName: String)
 
-object RoadNameDAO {
-  private val logger = LoggerFactory.getLogger(getClass)
-  private val roadsNameQueryBase =  s"""select id,road_number,road_Name,start_date,end_date,valid_from,valid_To,created_By
-  from ROAD_NAME"""
+object RoadNameDAO extends BaseDAO {
+
+  private val roadsNameQueryBase =
+    s"""select id,road_number,road_Name,start_date,end_date,valid_from,valid_To,created_By
+        from ROAD_NAME"""
+
   implicit val getRoadNameRow: GetResult[RoadName] = new GetResult[RoadName] {
     def apply(r: PositionedResult) = {
       val roadNameId = r.nextLong()
@@ -160,7 +163,7 @@ object RoadNameDAO {
 
   def expire(id: Long, username: String): Int = {
     val query = s"""Update ROAD_NAME Set valid_to = current_timestamp, created_by = '$username' where id = $id"""
-    Q.updateNA(query).first
+    runUpdateToDb(query)
   }
 
   def expireAndCreateHistory(idToExpire: Long, username: String, historyRoadName: RoadName): Unit = {

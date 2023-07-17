@@ -8,12 +8,12 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.vaylavirasto.viite.dao.ProjectLinkNameDAO
 import fi.vaylavirasto.viite.model.RoadLink
+import fi.vaylavirasto.viite.postgis.DbUtils.runUpdateToDb
 import org.joda.time.DateTime
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import org.scalatest.mock.MockitoSugar
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.StaticQuery.interpolation
 
 
 class ProjectLinkNameDAOSpec extends FunSuite with Matchers with BeforeAndAfter {
@@ -159,7 +159,10 @@ class ProjectLinkNameDAOSpec extends FunSuite with Matchers with BeforeAndAfter 
       val rap = Project(projectId, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], Seq(), None)
       projectDAO.create(rap)
 
-      sqlu"""INSERT INTO ROAD_NAME VALUES (nextval('ROAD_NAME_SEQ'), 99999, 'test name', current_date, null, current_date, null, 'test user', current_date)""".execute
+      runUpdateToDb(
+        s"""INSERT INTO ROAD_NAME
+           |VALUES (nextval('ROAD_NAME_SEQ'), 99999, 'test name',
+           |current_date, null, current_date, null, 'test user', current_date)""".stripMargin)
 
       val beforeInsert = ProjectLinkNameDAO.get(99999, projectId)
       projectService.setProjectRoadName(projectId, 99999, "test name 2")

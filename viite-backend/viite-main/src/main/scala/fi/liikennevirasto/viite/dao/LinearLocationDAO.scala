@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.postgis.{MassQuery, PostGISDatabase}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
-import fi.vaylavirasto.viite.dao.{LinkDAO, Queries, Sequences}
+import fi.vaylavirasto.viite.dao.{BaseDAO, LinkDAO, Queries, Sequences}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.{CalibrationPointType, LinkGeomSource, SideCode}
 import org.joda.time.DateTime
@@ -130,11 +130,7 @@ case class LinearLocation(id: Long, orderNumber: Double, linkId: String, startMV
 }
 
 //TODO Rename all the method names to follow a rule like fetchById instead of have fetchById and QueryById
-class LinearLocationDAO {
-
-  private def logger = LoggerFactory.getLogger(getClass)
-
-  val formatter: DateTimeFormatter = ISODateTimeFormat.dateOptionalTimeParser()
+class LinearLocationDAO extends BaseDAO {
 
   // TODO If not used, remove
   def dateTimeParse(string: String): DateTime = {
@@ -429,7 +425,7 @@ class LinearLocationDAO {
     if (ids.isEmpty)
       0
     else
-      Q.updateNA(query).first
+      runUpdateToDb(query)
   }
 
   def expireByLinkId(linkIds: Set[String]): Int = {
@@ -451,7 +447,7 @@ class LinearLocationDAO {
     if (roadwayNumbers.isEmpty)
       0
     else
-      Q.updateNA(query).first
+      runUpdateToDb(query)
   }
 
   def update(adjustment: LinearLocationAdjustment,

@@ -2,16 +2,14 @@ package fi.liikennevirasto.viite.dao
 
 import fi.liikennevirasto.viite.process.{ProjectDeltaCalculator, RoadwaySection}
 import fi.liikennevirasto.viite.process.ProjectDeltaCalculator.{createTwoTrackOldAddressRoadParts, projectLinkDAO}
-import fi.vaylavirasto.viite.dao.Sequences
+import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
 import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, RoadAddressChangeType, Track}
-
 import java.sql.{PreparedStatement, Timestamp}
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
-import slick.jdbc.StaticQuery.interpolation
 
 case class RoadwayChangeSection(roadNumber: Option[Long], trackCode: Option[Long], startRoadPartNumber: Option[Long],
                                 endRoadPartNumber: Option[Long], startAddressM: Option[Long], endAddressM: Option[Long],
@@ -55,8 +53,7 @@ case class ChangeInfoForRoadAddressChangesBrowser(startDate: DateTime, changeTyp
 
 
 
-class RoadwayChangesDAO {
-  val formatter: DateTimeFormatter = ISODateTimeFormat.dateOptionalTimeParser()
+class RoadwayChangesDAO extends BaseDAO {
   val projectDAO = new ProjectDAO
   implicit val getDiscontinuity: GetResult[Discontinuity] = GetResult[Discontinuity](r => Discontinuity.apply(r.nextInt()))
 
@@ -106,7 +103,6 @@ class RoadwayChangesDAO {
     }
   }
 
-  val logger = LoggerFactory.getLogger(getClass)
 
   private def toRoadwayChangeRecipient(row: ChangeRow) = {
     RoadwayChangeSection(row.targetRoadNumber, row.targetTrackCode, row.targetStartRoadPartNumber, row.targetEndRoadPartNumber, row.targetStartAddressM, row.targetEndAddressM,
@@ -164,8 +160,7 @@ class RoadwayChangesDAO {
       val changeInfo = toRoadwayChangeInfo(row)
       val (user, date) = getUserAndModDate(row)
       ProjectRoadwayChange(row.projectId, row.projectName, row.targetEly, user, date, changeInfo, row.startDate.get)
-    }
-    }
+    }}
   }
 
   private def fetchRoadwayChanges(projectIds: Set[Long], queryList: String => List[ProjectRoadwayChange]): List[ProjectRoadwayChange] = {
@@ -194,8 +189,8 @@ class RoadwayChangesDAO {
   }
 
   def clearRoadChangeTable(projectId: Long): Unit = {
-    sqlu"""DELETE FROM ROADWAY_CHANGES_LINK WHERE project_id = $projectId""".execute
-    sqlu"""DELETE FROM ROADWAY_CHANGES WHERE project_id = $projectId""".execute
+    runUpdateToDb(s"""DELETE FROM ROADWAY_CHANGES_LINK WHERE project_id = $projectId""")
+    runUpdateToDb(s"""DELETE FROM ROADWAY_CHANGES WHERE project_id = $projectId""")
   }
 
   /** @return false, if project has no reservedParts, and no formedParts. True else. */
@@ -298,6 +293,7 @@ class RoadwayChangesDAO {
 
     val startTime = System.currentTimeMillis()
     logger.info("Begin delta insertion in ChangeTable")
+
     project match {
       case Some(project) =>
         if (project.reservedParts.nonEmpty || project.formedParts.nonEmpty) {

@@ -3,16 +3,13 @@ package fi.liikennevirasto.viite.dao
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.NewIdValue
-import fi.vaylavirasto.viite.dao.Sequences
+import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
 import fi.vaylavirasto.viite.model.{BeforeAfter, NodePointType, Track}
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
-
-
-
 
 
 case class NodePoint(id: Long, beforeAfter: BeforeAfter, roadwayPointId: Long, nodeNumber: Option[Long], nodePointType: NodePointType = NodePointType.UnknownNodePointType,
@@ -323,7 +320,7 @@ class NodePointDAO extends BaseDAO {
         AND type = ${nodePointType.value}
       """
     logger.debug(s"Expiring by number and type: $nodeNumber, ${nodePointType.value} \n    query: : $query")
-    Q.updateNA(query).execute
+    runUpdateToDb(query)
   }
 
   def fetchCalculatedNodePointsForNodeNumber(nodeNumber: Long): Seq[NodePoint] = {

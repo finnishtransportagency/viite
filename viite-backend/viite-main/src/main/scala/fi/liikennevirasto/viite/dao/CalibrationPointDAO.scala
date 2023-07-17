@@ -5,10 +5,10 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import fi.liikennevirasto.viite.NewIdValue
-import fi.vaylavirasto.viite.dao.Sequences
+import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
 import fi.vaylavirasto.viite.model.{CalibrationPoint, CalibrationPointLocation, CalibrationPointType}
 
-object CalibrationPointDAO {
+object CalibrationPointDAO extends BaseDAO {
 
   implicit val getRoadwayPointRow: GetResult[CalibrationPoint] = new GetResult[CalibrationPoint] {
     def apply(r: PositionedResult): CalibrationPoint = {
@@ -57,10 +57,10 @@ object CalibrationPointDAO {
   }
 
   def create(roadwayPointId: Long, linkId: String, startOrEnd: CalibrationPointLocation, calType: CalibrationPointType, createdBy: String): Unit = {
-    sqlu"""
+    runUpdateToDb(s"""
       Insert Into CALIBRATION_POINT (ID, ROADWAY_POINT_ID, LINK_ID, START_END, TYPE, CREATED_BY) VALUES
-      (${Sequences.nextCalibrationPointId}, $roadwayPointId, $linkId, ${startOrEnd.value}, ${calType.value}, $createdBy)
-      """.execute
+      (${Sequences.nextCalibrationPointId}, $roadwayPointId, '$linkId', ${startOrEnd.value}, ${calType.value}, '$createdBy')
+      """)
   }
 
   def fetch(id: Long): CalibrationPoint = {
@@ -158,7 +158,7 @@ object CalibrationPointDAO {
     queryList(query)
   }
 
-  def expireById(ids: Iterable[Long]): Int = {
+  def expireById(ids: Iterable[Long]): Unit = {
     val query =
       s"""
         Update CALIBRATION_POINT Set valid_to = current_timestamp where valid_to IS NULL and id in (${ids.mkString(", ")})
@@ -166,7 +166,7 @@ object CalibrationPointDAO {
     if (ids.isEmpty)
       0
     else
-      Q.updateNA(query).first
+      runUpdateToDb(query)
   }
 
   private def queryList(query: String): Seq[CalibrationPoint] = {

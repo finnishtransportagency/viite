@@ -6,11 +6,11 @@ import fi.vaylavirasto.viite.dao.Sequences
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.CalibrationPointType.NoCP
 import fi.vaylavirasto.viite.model.{AdministrativeClass, CalibrationPointType, Discontinuity, LinkGeomSource, RoadAddressChangeType, SideCode, Track}
+import fi.vaylavirasto.viite.postgis.DbUtils.runUpdateToDb
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.StaticQuery.interpolation
 
 /**
   * Class to test DB trigger that does not allow reserving already reserved links to project
@@ -103,7 +103,7 @@ class ProjectDAOSpec extends FunSuite with Matchers {
       projectDAO.create(rap)
       projectDAO.fetchById(id) match {
         case Some(project) =>
-        project.statusInfo should be (Some("current status info"))
+          project.statusInfo should be (Some("current status info"))
         case None => None should be(Project)
       }
       projectDAO.updateProjectStateInfo("updated info", id)

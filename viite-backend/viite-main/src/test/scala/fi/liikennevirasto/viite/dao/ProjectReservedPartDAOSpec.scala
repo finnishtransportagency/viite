@@ -7,6 +7,7 @@ import fi.vaylavirasto.viite.dao.Sequences
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.CalibrationPointType.NoCP
 import fi.vaylavirasto.viite.model.{AdministrativeClass, BeforeAfter, CalibrationPointType, Discontinuity, LinkGeomSource, RoadAddressChangeType, SideCode, Track}
+import fi.vaylavirasto.viite.postgis.DbUtils.runUpdateToDb
 import org.joda.time.DateTime
 import org.postgresql.util.PSQLException
 import org.scalatest.{FunSuite, Matchers}
@@ -212,7 +213,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
           "TestUser", DateTime.parse("1997-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], Seq(), None)
         projectDAO.create(rap)
         projectReservedPartDAO.isNotAvailableForProject(roadNumber1, roadPartNumber1, id) should be (true)
-        sqlu"""update ROADWAY set valid_to = current_timestamp WHERE road_number = $roadNumber1""".execute
+        runUpdateToDb(s"""update ROADWAY set valid_to = current_timestamp WHERE road_number = $roadNumber1""")
         roadwayDAO.create(Seq(dummyRoadways.head.copy(startDate = DateTime.parse("1975-11-18"))))
         projectReservedPartDAO.isNotAvailableForProject(roadNumber1, roadPartNumber1, id) should be (false)
       }
@@ -290,8 +291,8 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
       val projectId = 123
       val roadNumber = 99999
       val roadPartNumber = 1
-      sqlu"""INSERT INTO PROJECT VALUES ($projectId, 1, 'Test Project', 'Test', to_date('01.01.2018','DD.MM.YYYY'),'-', to_date('01.01.2018','DD.MM.YYYY'), null, to_date('01.01.2018','DD.MM.YYYY'), null, 0, 0, 0)""".execute
-      sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (11111, $roadNumber, $roadPartNumber, $projectId, 'Test')""".execute
+      runUpdateToDb(s"""INSERT INTO PROJECT VALUES ($projectId, 1, 'Test Project', 'Test', to_date('01.01.2018','DD.MM.YYYY'),'-', to_date('01.01.2018','DD.MM.YYYY'), null, to_date('01.01.2018','DD.MM.YYYY'), null, 0, 0, 0)""")
+      runUpdateToDb(s"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (11111, $roadNumber, $roadPartNumber, $projectId, 'Test')""")
       projectReservedPartDAO.removeReservedRoadPartAndChanges(projectId, roadNumber, roadPartNumber)
       projectReservedPartDAO.fetchReservedRoadParts(projectId).isEmpty should be (true)
     }
@@ -303,7 +304,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
 
         val id = Sequences.nextViiteProjectId
         val projectLinkId = Sequences.nextProjectLinkId
-        val rap = Project(id, ProjectState.apply(1), "'Test Project", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, Seq(), None)
+        val rap = Project(id, ProjectState.apply(1), "Test Project", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, Seq(), None)
         projectDAO.create(rap)
         projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, rap.createdBy)
         val projectLinks = Seq(dummyProjectLink(projectLinkId, id, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (NoCP, NoCP), Seq(), RoadAddressChangeType.Transfer, AdministrativeClass.State, reversed = false)
@@ -320,14 +321,14 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
 
       val id = Sequences.nextViiteProjectId
       val projectLinkId = Sequences.nextProjectLinkId
-      val rap = Project(id, ProjectState.apply(1), "'Test Project", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, Seq(), None)
+      val rap = Project(id, ProjectState.apply(1), "Test Project", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, Seq(), None)
       projectDAO.create(rap)
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, rap.createdBy)
       val projectLinks = Seq(dummyProjectLink(projectLinkId, id, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (NoCP, NoCP), Seq(), RoadAddressChangeType.Transfer, AdministrativeClass.State, reversed = false)
       )
       projectLinkDAO.create(projectLinks)
       val project = projectReservedPartDAO.fetchProjectReservedPart(roadNumber1, roadPartNumber1)
-      project should be(Some(id, "'Test Project"))
+      project should be(Some(id, "Test Project"))
     }
   }
 
@@ -336,8 +337,8 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
       val projectId = 123
       val roadNumber = 99999
       val roadPartNumber = 1
-      sqlu"""INSERT INTO PROJECT VALUES ($projectId, 1, 'Test Project', 'Test', to_date('01.01.2018','DD.MM.YYYY'),'-',to_date('01.01.2018','DD.MM.YYYY'), null, to_date('01.01.2018','DD.MM.YYYY'), null, 0, 0, 0)""".execute
-      sqlu"""
+      runUpdateToDb(s"""INSERT INTO PROJECT VALUES ($projectId, 1, 'Test Project', 'Test', to_date('01.01.2018','DD.MM.YYYY'),'-',to_date('01.01.2018','DD.MM.YYYY'), null, to_date('01.01.2018','DD.MM.YYYY'), null, 0, 0, 0)""")
+        runUpdateToDb(s"""
         INSERT INTO PROJECT_LINK_HISTORY
           (ID, PROJECT_ID, TRACK, DISCONTINUITY_TYPE, ROAD_NUMBER, ROAD_PART_NUMBER, START_ADDR_M, END_ADDR_M,
           CREATED_BY, MODIFIED_BY, CREATED_DATE, MODIFIED_DATE, STATUS, ADMINISTRATIVE_CLASS, ROADWAY_ID, LINEAR_LOCATION_ID, CONNECTED_LINK_ID,
@@ -349,7 +350,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
           8, 0, null, 2, 0, 10, 99999, 1533576206000, 1,
           null, 0, 10, NULL,
           3, 3, 3, 3)
-      """.execute
+      """)
       val fetched = projectReservedPartDAO.fetchHistoryRoadParts(projectId)
       fetched.size should be (1)
       fetched.head.roadNumber should be (roadNumber)
@@ -362,8 +363,8 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
       val projectId = 123
       val roadNumber = 99999
       val roadPartNumber = 1
-      sqlu"""INSERT INTO PROJECT VALUES ($projectId, 1, 'Test Project', 'Test', to_date('01.01.2018','DD.MM.YYYY'),'-',to_date('01.01.2018','DD.MM.YYYY'), null, to_date('01.01.2018','DD.MM.YYYY'), null, 0, 0, 0)""".execute
-      sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (11111, $roadNumber, $roadPartNumber, $projectId, 'Test')""".execute
+      runUpdateToDb(s"""INSERT INTO PROJECT VALUES ($projectId, 1, 'Test Project', 'Test', to_date('01.01.2018','DD.MM.YYYY'),'-',to_date('01.01.2018','DD.MM.YYYY'), null, to_date('01.01.2018','DD.MM.YYYY'), null, 0, 0, 0)""")
+      runUpdateToDb(s"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (11111, $roadNumber, $roadPartNumber, $projectId, 'Test')""")
       val fetched = projectReservedPartDAO.fetchReservedRoadParts(projectId)
       fetched.size should be (1)
       fetched.head.roadNumber should be (roadNumber)
@@ -377,7 +378,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
 
       val id = Sequences.nextViiteProjectId
       val projectLinkId = Sequences.nextProjectLinkId
-      val rap = Project(id, ProjectState.apply(1), "'Test Project", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, Seq(), None)
+      val rap = Project(id, ProjectState.apply(1), "Test Project", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, Seq(), None)
       projectDAO.create(rap)
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, rap.createdBy)
       val projectLinks = Seq(dummyProjectLink(projectLinkId, id, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (NoCP, NoCP), Seq(), RoadAddressChangeType.Transfer, AdministrativeClass.State, reversed = false)
@@ -397,10 +398,10 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
         val projectId2 = 124
         val roadNumber = 99999
         val roadPartNumber = 1
-        sqlu"""INSERT INTO PROJECT VALUES ($projectId, 1, 'Test Project', 'Test', to_date('01.01.2018','DD.MM.YYYY'),'-', to_date('01.01.2018','DD.MM.YYYY'), null, to_date('01.01.2018','DD.MM.YYYY'), null, 0, 0, 0)""".execute
-        sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (11111, $roadNumber, $roadPartNumber, $projectId, 'Test')""".execute
-        sqlu"""INSERT INTO PROJECT VALUES ($projectId2, 1, 'Test Project', 'Test', to_date('01.01.2018','DD.MM.YYYY'),'-',to_date('01.01.2018','DD.MM.YYYY'), null, to_date('01.01.2018','DD.MM.YYYY'), null, 0, 0, 0)""".execute
-        sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (11111, $roadNumber, $roadPartNumber, $projectId2, 'Test')""".execute
+        runUpdateToDb(s"""INSERT INTO PROJECT VALUES ($projectId, 1, 'Test Project', 'Test', to_date('01.01.2018','DD.MM.YYYY'),'-', to_date('01.01.2018','DD.MM.YYYY'), null, to_date('01.01.2018','DD.MM.YYYY'), null, 0, 0, 0)""")
+        runUpdateToDb(s"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (11111, $roadNumber, $roadPartNumber, $projectId, 'Test')""")
+        runUpdateToDb(s"""INSERT INTO PROJECT VALUES ($projectId2, 1, 'Test Project', 'Test', to_date('01.01.2018','DD.MM.YYYY'),'-',to_date('01.01.2018','DD.MM.YYYY'), null, to_date('01.01.2018','DD.MM.YYYY'), null, 0, 0, 0)""")
+        runUpdateToDb(s"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (11111, $roadNumber, $roadPartNumber, $projectId2, 'Test')""")
       }
       error.getMessage should include("project_reserved_road_part_pk")
     }
@@ -462,7 +463,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
       val id = Sequences.nextViiteProjectId
       val projectLinkId = Sequences.nextProjectLinkId
 
-      val rap = Project(id, ProjectState.apply(1), "'Test Project", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, Seq(), None)
+      val rap = Project(id, ProjectState.apply(1), "Test Project", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, Seq(), None)
       projectDAO.create(rap)
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, rap.createdBy)
 

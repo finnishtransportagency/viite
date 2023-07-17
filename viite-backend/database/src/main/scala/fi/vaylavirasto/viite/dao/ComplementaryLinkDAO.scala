@@ -15,15 +15,13 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class ComplementaryLinkDAO {
+class ComplementaryLinkDAO extends BaseDAO {
   val selectFromComplementaryLink =
     """
        SELECT id,adminclass,municipalitycode,lifecyclestatus,horizontallength,starttime,versionstarttime,sourcemodificationtime,geometry
        FROM complementary_link_table
     """
 
-  private def logger = LoggerFactory.getLogger(getClass)
-  val formatter: DateTimeFormatter = ISODateTimeFormat.dateOptionalTimeParser()
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransactionNewOrExisting(f)
 
   def extractModifiedAt(attributes: Map[String, Option[DateTime]]): Option[DateTime] = {

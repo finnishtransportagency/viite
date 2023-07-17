@@ -5,6 +5,7 @@ import fi.liikennevirasto.viite.NewIdValue
 import fi.vaylavirasto.viite.dao.Sequences
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
 import fi.vaylavirasto.viite.model.{AdministrativeClass, BeforeAfter, Discontinuity, NodePointType, NodeType, Track}
+import fi.vaylavirasto.viite.postgis.DbUtils.runUpdateToDb
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
@@ -137,7 +138,7 @@ class NodeDAOSpec extends FunSuite with Matchers {
       val junctionId = junctionDAO.create(Seq(testJunction1)).head
       val ids = junctionPointDAO.create(Seq(testJunctionPoint1.copy(junctionId = junctionId, roadwayPointId = roadwayPointId)))
 
-      sqlu""" insert into ROADWAY_CHANGES(project_id,change_type,new_road_number,new_road_part_number,new_TRACK,new_start_addr_m,new_end_addr_m,new_discontinuity,NEW_ADMINISTRATIVE_CLASS,new_ely, ROADWAY_CHANGE_ID) Values(100,1,$roadNumber1,$roadPartNumber1,1,0,10.5,1,1,8, 1) """.execute
+      runUpdateToDb(s"""INSERT INTO ROADWAY_CHANGES(project_id,change_type,new_road_number,new_road_part_number,new_TRACK,new_start_addr_m,new_end_addr_m,new_discontinuity,NEW_ADMINISTRATIVE_CLASS,new_ely, ROADWAY_CHANGE_ID) Values(100,1,$roadNumber1,$roadPartNumber1,1,0,10.5,1,1,8, 1) """)
       val projectId = sql"""Select rac.project_id From ROADWAY_CHANGES rac where new_road_number = $roadNumber1 and new_road_part_number = $roadPartNumber1""".as[Long].first
 
       val nodeNumbers = dao.fetchNodeNumbersByProject(projectId)
@@ -162,8 +163,8 @@ class NodeDAOSpec extends FunSuite with Matchers {
       val junctionId = junctionDAO.create(Seq(testJunction1)).head
       val ids = junctionPointDAO.create(Seq(testJunctionPoint1.copy(junctionId = junctionId, roadwayPointId = roadwayPointId)))
 
-      sqlu""" insert into ROADWAY_CHANGES(project_id,change_type,old_road_number,old_road_part_number,old_TRACK,old_start_addr_m,old_end_addr_m,old_discontinuity,new_discontinuity,OLD_ADMINISTRATIVE_CLASS,NEW_ADMINISTRATIVE_CLASS,old_ely,new_ely, ROADWAY_CHANGE_ID)
-                                   Values(100,2,$roadNumber1,$roadPartNumber1,1,0,10.5,1,1,1,1,8,8, 1) """.execute
+      runUpdateToDb(s"""INSERT INTO ROADWAY_CHANGES(project_id,change_type,old_road_number,old_road_part_number,old_TRACK,old_start_addr_m,old_end_addr_m,old_discontinuity,new_discontinuity,OLD_ADMINISTRATIVE_CLASS,NEW_ADMINISTRATIVE_CLASS,old_ely,new_ely, ROADWAY_CHANGE_ID)
+                                   Values(100,2,$roadNumber1,$roadPartNumber1,1,0,10.5,1,1,1,1,8,8, 1) """)
       val projectId = sql"""Select rac.project_id From ROADWAY_CHANGES rac where old_road_number = $roadNumber1 and old_road_part_number = $roadPartNumber1""".as[Long].first
 
       val nodeNumbers = dao.fetchNodeNumbersByProject(projectId)

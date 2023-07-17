@@ -18,6 +18,7 @@ import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LinkGeom
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
+
 import java.sql.SQLException
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global

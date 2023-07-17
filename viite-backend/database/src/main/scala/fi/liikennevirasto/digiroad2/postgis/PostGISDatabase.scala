@@ -78,7 +78,7 @@ object PostGISDatabase {
   }
 
   def setSessionLanguage() {
-    //sqlu"""alter session set nls_language = 'american'""".execute
+    //runUpdateToDb(s"""alter session set nls_language = 'american'""")
   }
 
   def initDataSource: DataSource = {

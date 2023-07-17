@@ -5,15 +5,14 @@ import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 import fi.liikennevirasto.viite.dao.RoadwayPointDAO
-import fi.vaylavirasto.viite.dao.{SequenceResetterDAO, Sequences}
+import fi.vaylavirasto.viite.dao.{BaseDAO, SequenceResetterDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.Point
 import org.joda.time._
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._
 
 
-class NodeImporter(conversionDatabase: DatabaseDef) {
-  val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
+class NodeImporter(conversionDatabase: DatabaseDef) extends BaseDAO {
 
   val roadwayPointDAO = new RoadwayPointDAO
 
@@ -184,6 +183,8 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
   }
 
   def datePrinter(date: Option[DateTime]): String = {
+    val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
+
     date match {
       case Some(dt) => dateFormatter.print(dt)
       case None => ""
