@@ -172,9 +172,6 @@
                     if (roadAddrEndDateObject.getTime() < roadAddrStartDateObject.getTime()) {
                         roadAddrChangesEndDate.setCustomValidity("Loppupäivämäärä ei voi olla ennen alkupäivämäärää");
                     }
-                    if (roadAddrEndDateObject.getTime() === roadAddrStartDateObject.getTime()) {
-                        roadAddrChangesEndDate.setCustomValidity("Alku- ja loppupäivämäärä ei voi olla sama. Jos haluat vain yhden päivän tulokset, syötä peräkkäiset päivät.");
-                    }
                 }
                 return reportValidations();
             }
@@ -204,6 +201,10 @@
             roadAddrChangesEndDate.setCustomValidity("");
 
             if (willPassValidations())
+
+                //Sets the end date 1 day ahead, so that the inputted end date will be included in the projectlisting.
+                dateutil.addOneDayToDate(roadAddrEndDateObject);
+
                 fetchRoadAddressChanges(createParams());
         }
 
