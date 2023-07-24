@@ -60,7 +60,7 @@
     var currentAllRoadLinks = [];
     var roadLinkGroups = [];
     var unaddressedRoadLinkGroups = [];
-    var LinkStatus = ViiteEnumerations.LinkStatus;
+    var RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
     var LinkSource = ViiteEnumerations.LinkGeomSource;
     var lifecycleStatus = ViiteEnumerations.lifecycleStatus;
     var clickedLinearLocationId = 0;
@@ -300,12 +300,12 @@
         projectId: projectId
       }, function (fetchedLinks) {
         var projectLinks = _.chain(fetchedLinks).flatten().filter(function (link) {
-          return link.status === LinkStatus.NotHandled.value ||
-              link.status === LinkStatus.New.value ||
-              link.status === LinkStatus.Terminated.value ||
-              link.status === LinkStatus.Unchanged.value ||
-              link.status === LinkStatus.Numbering.value ||
-              link.status === LinkStatus.Transfer.value;
+          return link.status === RoadAddressChangeType.NotHandled.value ||
+              link.status === RoadAddressChangeType.New.value ||
+              link.status === RoadAddressChangeType.Terminated.value ||
+              link.status === RoadAddressChangeType.Unchanged.value ||
+              link.status === RoadAddressChangeType.Numbering.value ||
+              link.status === RoadAddressChangeType.Transfer.value;
         }).uniq().value();
         var projectLinkFeatures = _.map(projectLinks, function (road) {
           var points = _.map(road.points, function (point) {

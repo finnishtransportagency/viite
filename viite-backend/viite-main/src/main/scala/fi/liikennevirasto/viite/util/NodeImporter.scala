@@ -5,9 +5,9 @@ import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.dao.{SequenceResetterDAO, Sequences}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.viite.dao.RoadwayPointDAO
+import fi.vaylavirasto.viite.dao.{SequenceResetterDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.Point
 import org.joda.time._
 import slick.jdbc.StaticQuery.interpolation

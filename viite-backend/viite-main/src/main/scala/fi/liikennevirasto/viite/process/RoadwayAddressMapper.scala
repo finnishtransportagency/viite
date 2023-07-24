@@ -5,7 +5,7 @@ import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao.{ProjectLinkDAO, _}
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import fi.vaylavirasto.viite.geometry.BoundingRectangle
-import fi.vaylavirasto.viite.model.SideCode
+import fi.vaylavirasto.viite.model.{Discontinuity, SideCode}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
@@ -120,10 +120,10 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
         val (startCP, endCP) = (linearLocation.startCalibrationPoint.addrM, linearLocation.endCalibrationPoint.addrM)
 
         val calibrationPoints = (
-          startCP.map(address => CalibrationPoint(linearLocation.linkId,
+          startCP.map(address => ProjectCalibrationPoint(linearLocation.linkId,
             if (linearLocation.sideCode == SideCode.TowardsDigitizing) 0 else geometryLength,
             address, linearLocation.startCalibrationPointType)),
-          endCP.map(address => CalibrationPoint(linearLocation.linkId,
+          endCP.map(address => ProjectCalibrationPoint(linearLocation.linkId,
             if (linearLocation.sideCode == SideCode.AgainstDigitizing) 0 else geometryLength,
             address, linearLocation.endCalibrationPointType))
         )

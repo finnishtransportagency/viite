@@ -1,10 +1,7 @@
-package fi.liikennevirasto.viite.dao
+package fi.vaylavirasto.viite.dao
 
-import fi.liikennevirasto.viite.dao.RoadNameDAO.getClass
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
-import slick.jdbc.{GetResult, PositionedResult}
-import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}

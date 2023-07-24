@@ -1,9 +1,10 @@
 package fi.liikennevirasto.viite.dao
 
-import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.viite.process.{ProjectDeltaCalculator, RoadwaySection}
 import fi.liikennevirasto.viite.process.ProjectDeltaCalculator.{createTwoTrackOldAddressRoadParts, projectLinkDAO}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, Track}
+import fi.vaylavirasto.viite.dao.Sequences
+import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, RoadAddressChangeType, Track}
+
 import java.sql.{PreparedStatement, Timestamp}
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
@@ -12,40 +13,6 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import slick.jdbc.StaticQuery.interpolation
 
-
-sealed trait AddressChangeType {
-  def value: Int
-}
-
-object AddressChangeType {
-  val values = Set(Unchanged, New, Transfer, ReNumeration, Termination)
-
-  def apply(intValue: Int): AddressChangeType = {
-    values.find(_.value == intValue).getOrElse(Unknown)
-  }
-
-  /*
-      Unchanged is a no-operation, tells TR that some road part or section stays intact but it needs
-        to be included in the message for other changes
-      New is a road address placing to a road that did not have road address before
-      Transfer is an adjustment of a road address, such as extending a road 100 meters from the start:
-        all the addresses on the first part are transferred with +100 to each start and end address M values.
-      ReNumeration is a change in road addressing but no physical or length changes. A road part gets a new
-        road and/or road part number.
-      Termination is for ending a road address (and possibly assigning the previously used road address
-        to a new physical location at the same time)
-   */
-
-  case object NotHandled extends AddressChangeType { def value = 0 }
-  case object Unchanged extends AddressChangeType { def value = 1 }
-  case object New extends AddressChangeType { def value = 2 }
-  case object Transfer extends AddressChangeType { def value = 3 }
-  case object ReNumeration extends AddressChangeType { def value = 4 }
-  case object Termination extends AddressChangeType { def value = 5 }
-  case object Unknown extends AddressChangeType { def value = 99 }
-
-}
-
 case class RoadwayChangeSection(roadNumber: Option[Long], trackCode: Option[Long], startRoadPartNumber: Option[Long],
                                 endRoadPartNumber: Option[Long], startAddressM: Option[Long], endAddressM: Option[Long],
                                 administrativeClass: Option[AdministrativeClass], discontinuity: Option[Discontinuity], ely: Option[Long])
@@ -53,7 +20,7 @@ case class RoadwayChangeSection(roadNumber: Option[Long], trackCode: Option[Long
 case class RoadwayChangeSectionTR(roadNumber: Option[Long], trackCode: Option[Long], startRoadPartNumber: Option[Long],
                                   endRoadPartNumber: Option[Long], startAddressM: Option[Long], endAddressM: Option[Long])
 
-case class RoadwayChangeInfo(changeType: AddressChangeType, source: RoadwayChangeSection, target: RoadwayChangeSection,
+case class RoadwayChangeInfo(changeType: RoadAddressChangeType, source: RoadwayChangeSection, target: RoadwayChangeSection,
                              discontinuity: Discontinuity, administrativeClass: AdministrativeClass, reversed: Boolean, orderInChangeTable: Long, ely: Long = -1L)
 
 case class ProjectRoadwayChange(projectId: Long, projectName: Option[String], ely: Long, user: String, changeDate: DateTime, changeInfo: RoadwayChangeInfo, projectStartDate: DateTime)
@@ -93,7 +60,7 @@ class RoadwayChangesDAO {
   val projectDAO = new ProjectDAO
   implicit val getDiscontinuity = GetResult[Discontinuity](r => Discontinuity.apply(r.nextInt()))
 
-  implicit val getAddressChangeType = GetResult[AddressChangeType](r => AddressChangeType.apply(r.nextInt()))
+  implicit val getAddressChangeType = GetResult[RoadAddressChangeType](r => RoadAddressChangeType.apply(r.nextInt()))
 
   implicit val getAdministrativeClass = GetResult[AdministrativeClass](r => AdministrativeClass.apply(r.nextInt()))
 
@@ -156,7 +123,7 @@ class RoadwayChangesDAO {
   private def toRoadwayChangeInfo(row: ChangeRow) = {
     val source = toRoadwayChangeSource(row)
     val target = toRoadwayChangeRecipient(row)
-    RoadwayChangeInfo(AddressChangeType.apply(row.changeType), source, target,
+    RoadwayChangeInfo(RoadAddressChangeType.apply(row.changeType), source, target,
       Discontinuity.apply(row.targetDiscontinuity.getOrElse(Discontinuity.Continuous.value)),
       AdministrativeClass.apply(row.targetAdministrativeClass.getOrElse(AdministrativeClass("Unknown").value)),
       row.reversed,
@@ -233,11 +200,11 @@ class RoadwayChangesDAO {
 
   /** @return false, if project has no reservedParts, and no formedParts. True else. */
   def insertDeltaToRoadChangeTable(projectId: Long, project: Option[Project]): (Boolean, Option[String]) = {
-    def addToBatch(roadwaySection: RoadwaySection, addressChangeType: AddressChangeType,
+    def addToBatch(roadwaySection: RoadwaySection, addressChangeType: RoadAddressChangeType,
                    roadwayChangePS: PreparedStatement, roadWayChangesLinkPS: PreparedStatement): Unit = {
       val nextChangeOrderLink = Sequences.nextRoadwayChangeLink
       addressChangeType match {
-        case AddressChangeType.New =>
+        case RoadAddressChangeType.New =>
           roadwayChangePS.setNull(3, java.sql.Types.INTEGER)
           roadwayChangePS.setLong(4, roadwaySection.roadNumber)
           roadwayChangePS.setNull(5, java.sql.Types.INTEGER)
@@ -248,7 +215,7 @@ class RoadwayChangesDAO {
           roadwayChangePS.setLong(10, roadwaySection.startMAddr)
           roadwayChangePS.setNull(11, java.sql.Types.INTEGER)
           roadwayChangePS.setLong(12, roadwaySection.endMAddr)
-        case AddressChangeType.Termination =>
+        case RoadAddressChangeType.Termination =>
           roadwayChangePS.setLong(3, roadwaySection.roadNumber)
           roadwayChangePS.setNull(4, java.sql.Types.INTEGER)
           roadwayChangePS.setLong(5, roadwaySection.roadPartNumberStart)
@@ -294,7 +261,7 @@ class RoadwayChangesDAO {
     }
 
     def addToBatchWithOldValues(oldRoadwaySection: RoadwaySection, newRoadwaySection: RoadwaySection,
-                                addressChangeType: AddressChangeType, roadwayChangePS: PreparedStatement,
+                                addressChangeType: RoadAddressChangeType, roadwayChangePS: PreparedStatement,
                                 roadWayChangesLinkPS: PreparedStatement): Unit = {
       val nextChangeOrderLink = Sequences.nextRoadwayChangeLink
       roadwayChangePS.setLong(1, projectId)
@@ -344,29 +311,29 @@ class RoadwayChangesDAO {
 
           val allProjectLinks = projectLinkDAO.fetchProjectLinks(project.id)
 
-          val nonTerminatedProjectlinks = allProjectLinks.filter(_.status != LinkStatus.Terminated)
+          val nonTerminatedProjectlinks = allProjectLinks.filter(_.status != RoadAddressChangeType.Termination)
 
           val changeTableRows = ProjectDeltaCalculator.generateChangeTableRowsFromProjectLinks(nonTerminatedProjectlinks, allProjectLinks)
-          val unChanged_roadway_sections = changeTableRows.adjustedSections.zip(changeTableRows.originalSections).filter(_._1.projectLinks.exists(_.status == LinkStatus.UnChanged))
-          val transferred_roadway_sections = changeTableRows.adjustedSections.zip(changeTableRows.originalSections).filter(_._1.projectLinks.exists(_.status == LinkStatus.Transfer))
-          val new_roadway_sections = changeTableRows.adjustedSections.zip(changeTableRows.originalSections).filter(_._1.projectLinks.exists(_.status == LinkStatus.New))
-          val numbering_sections = changeTableRows.adjustedSections.zip(changeTableRows.originalSections).filter(_._1.projectLinks.exists(_.status == LinkStatus.Numbering))
+          val unChanged_roadway_sections = changeTableRows.adjustedSections.zip(changeTableRows.originalSections).filter(_._1.projectLinks.exists(_.status == RoadAddressChangeType.Unchanged))
+          val transferred_roadway_sections = changeTableRows.adjustedSections.zip(changeTableRows.originalSections).filter(_._1.projectLinks.exists(_.status == RoadAddressChangeType.Transfer))
+          val new_roadway_sections = changeTableRows.adjustedSections.zip(changeTableRows.originalSections).filter(_._1.projectLinks.exists(_.status == RoadAddressChangeType.New))
+          val numbering_sections = changeTableRows.adjustedSections.zip(changeTableRows.originalSections).filter(_._1.projectLinks.exists(_.status == RoadAddressChangeType.Renumeration))
 
           unChanged_roadway_sections.foreach { case (roadwaySection1, roadwaySection2) =>
-            addToBatchWithOldValues(roadwaySection2, roadwaySection1, AddressChangeType.Unchanged, roadwayChangePS, roadWayChangesLinkPS)
+            addToBatchWithOldValues(roadwaySection2, roadwaySection1, RoadAddressChangeType.Unchanged, roadwayChangePS, roadWayChangesLinkPS)
           }
 
           transferred_roadway_sections.foreach { case (roadwaySection1, roadwaySection2) =>
-            addToBatchWithOldValues(roadwaySection2, roadwaySection1, AddressChangeType.Transfer, roadwayChangePS, roadWayChangesLinkPS)
+            addToBatchWithOldValues(roadwaySection2, roadwaySection1, RoadAddressChangeType.Transfer, roadwayChangePS, roadWayChangesLinkPS)
           }
 
           numbering_sections.foreach { case (roadwaySection1, roadwaySection2) =>
-            addToBatchWithOldValues(roadwaySection2, roadwaySection1, AddressChangeType.ReNumeration, roadwayChangePS, roadWayChangesLinkPS)
+            addToBatchWithOldValues(roadwaySection2, roadwaySection1, RoadAddressChangeType.Renumeration, roadwayChangePS, roadWayChangesLinkPS)
           }
 
-          new_roadway_sections.foreach(roadwaySection => addToBatch(roadwaySection._1, AddressChangeType.New, roadwayChangePS, roadWayChangesLinkPS))
+          new_roadway_sections.foreach(roadwaySection => addToBatch(roadwaySection._1, RoadAddressChangeType.New, roadwayChangePS, roadWayChangesLinkPS))
 
-          val terminated = ProjectDeltaCalculator.generateChangeTableRowsFromProjectLinks(allProjectLinks.filter(_.status == LinkStatus.Terminated), allProjectLinks)
+          val terminated = ProjectDeltaCalculator.generateChangeTableRowsFromProjectLinks(allProjectLinks.filter(_.status == RoadAddressChangeType.Termination), allProjectLinks)
 
           val twoTrackOldAddressRoadParts = createTwoTrackOldAddressRoadParts(unChanged_roadway_sections,transferred_roadway_sections, terminated)
           val old_road_two_track_parts = ProjectDeltaCalculator.matchTerminatedRoadwaySections(twoTrackOldAddressRoadParts)
@@ -377,7 +344,7 @@ class RoadwayChangesDAO {
           val adjustedTerminated = combinedTerminatedTrack ++ twoTrackAdjustedTerminated
 
           adjustedTerminated.foreach(roadwaySection =>
-            addToBatch(roadwaySection, AddressChangeType.Termination, roadwayChangePS, roadWayChangesLinkPS)
+            addToBatch(roadwaySection, RoadAddressChangeType.Termination, roadwayChangePS, roadWayChangesLinkPS)
           )
 
           roadwayChangePS.executeBatch()

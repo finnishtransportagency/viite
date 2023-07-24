@@ -3,10 +3,9 @@ package fi.liikennevirasto.viite.dao
 import java.sql.BatchUpdateException
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{CalibrationPointLocation, CalibrationPointType}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, LinkGeomSource, SideCode, Track}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, CalibrationPointLocation, CalibrationPointType, Discontinuity, LinkGeomSource, SideCode, Track}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database

@@ -2,9 +2,9 @@ package fi.liikennevirasto.digiroad2.service
 
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, DummySerializer}
 import fi.liikennevirasto.digiroad2.client.kgv._
-import fi.liikennevirasto.digiroad2.dao.ComplementaryLinkDAO
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.KGVSerializer
+import fi.vaylavirasto.viite.dao.ComplementaryLinkDAO
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
 import fi.vaylavirasto.viite.model.{AdministrativeClass, LifecycleStatus, RoadLink, TrafficDirection}
 import org.mockito.ArgumentMatchers.any

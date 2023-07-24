@@ -1,10 +1,8 @@
 package fi.liikennevirasto.viite.model
 
-import fi.liikennevirasto.viite.dao.{CalibrationPoint, LinkStatus}
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
+import fi.liikennevirasto.viite.dao.ProjectCalibrationPoint
 import fi.vaylavirasto.viite.geometry.Point
-import fi.vaylavirasto.viite.model.{AdministrativeClass, LifecycleStatus, LinkGeomSource, SideCode}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, CalibrationPointType, LifecycleStatus, LinkGeomSource, RoadAddressChangeType, SideCode}
 import org.joda.time.DateTime
 
 trait ProjectAddressLinkLike extends RoadAddressLinkLike {
@@ -31,9 +29,9 @@ trait ProjectAddressLinkLike extends RoadAddressLinkLike {
   def startMValue: Double
   def endMValue: Double
   def sideCode: SideCode
-  def startCalibrationPoint: Option[CalibrationPoint]
-  def endCalibrationPoint: Option[CalibrationPoint]
-  def status: LinkStatus
+  def startCalibrationPoint: Option[ProjectCalibrationPoint]
+  def endCalibrationPoint: Option[ProjectCalibrationPoint]
+  def status: RoadAddressChangeType
   def roadwayId: Long
   def connectedLinkId: Option[String]
   def partitioningName: String
@@ -67,9 +65,9 @@ case class ProjectAddressLink(id                    : Long,
                               startMValue           : Double,
                               endMValue             : Double,
                               sideCode              : SideCode,
-                              startCalibrationPoint : Option[CalibrationPoint],
-                              endCalibrationPoint   : Option[CalibrationPoint],
-                              status                : LinkStatus,
+                              startCalibrationPoint : Option[ProjectCalibrationPoint],
+                              endCalibrationPoint   : Option[ProjectCalibrationPoint],
+                              status                : RoadAddressChangeType,
                               roadwayId             : Long,
                               linearLocationId      : Long,
                               reversed              : Boolean = false,
@@ -95,12 +93,12 @@ case class ProjectAddressLink(id                    : Long,
 
   def startCalibrationPointType: CalibrationPointType = {
     if (startCalibrationPoint.isDefined) startCalibrationPoint.get.typeCode
-    else NoCP
+    else CalibrationPointType.NoCP
   }
 
   def endCalibrationPointType: CalibrationPointType = {
     if (endCalibrationPoint.isDefined) endCalibrationPoint.get.typeCode
-    else NoCP
+    else CalibrationPointType.NoCP
   }
 
 }

@@ -1,7 +1,6 @@
 package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.viite.dao.Discontinuity._
 import fi.liikennevirasto.viite.dao.{RoadAddress, RoadwayDAO}
 import fi.vaylavirasto.viite.model.Track
 

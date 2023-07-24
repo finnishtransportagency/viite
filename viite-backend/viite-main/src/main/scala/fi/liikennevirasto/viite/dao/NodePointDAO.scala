@@ -1,85 +1,19 @@
 package fi.liikennevirasto.viite.dao
 
-import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.NewIdValue
-import fi.liikennevirasto.viite.dao.NodePointType.CalculatedNodePoint
+import fi.vaylavirasto.viite.dao.Sequences
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
-import fi.vaylavirasto.viite.model.Track
+import fi.vaylavirasto.viite.model.{BeforeAfter, NodePointType, Track}
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
-sealed trait NodePointType {
-  def value: Int
 
-  def displayValue: String
-}
 
-object NodePointType {
-  val values: Set[NodePointType] = Set(RoadNodePoint, CalculatedNodePoint, UnknownNodePointType)
 
-  def apply(intValue: Int): NodePointType = {
-    values.find(_.value == intValue).getOrElse(UnknownNodePointType)
-  }
-
-  case object RoadNodePoint extends NodePointType {
-    def value = 1
-
-    def displayValue = "Tien solmukohta"
-  }
-
-  case object CalculatedNodePoint extends NodePointType {
-    def value = 2
-
-    def displayValue = "Laskettu solmukohta"
-  }
-
-  case object UnknownNodePointType extends NodePointType {
-    def value = 99
-
-    def displayValue = "Ei määritelty"
-  }
-}
-
-sealed trait BeforeAfter {
-  def value: Long
-  def acronym: String
-}
-
-object BeforeAfter {
-  val values: Set[BeforeAfter] = Set(Before, After, UnknownBeforeAfter)
-
-  def apply(intValue: Long): BeforeAfter = {
-    values.find(_.value == intValue).getOrElse(UnknownBeforeAfter)
-  }
-
-  def switch(beforeAfter: BeforeAfter): BeforeAfter = {
-    beforeAfter match {
-      case After => Before
-      case Before => After
-      case _ => beforeAfter
-    }
-  }
-
-  case object Before extends BeforeAfter {
-    def value = 1
-    def acronym = "E"
-  }
-
-  case object After extends BeforeAfter {
-    def value = 2
-    def acronym = "J"
-  }
-
-  case object UnknownBeforeAfter extends BeforeAfter {
-    def value = 9
-    def acronym = ""
-  }
-
-}
 
 case class NodePoint(id: Long, beforeAfter: BeforeAfter, roadwayPointId: Long, nodeNumber: Option[Long], nodePointType: NodePointType = NodePointType.UnknownNodePointType,
                      startDate: Option[DateTime], endDate: Option[DateTime], validFrom: DateTime, validTo: Option[DateTime],
@@ -505,7 +439,7 @@ class NodePointDAO extends BaseDAO {
   }
 
   def insertCalculatedNodePoint(roadwayPointId: Long, beforeAfter: BeforeAfter, nodeNumber: Long, username: String): Unit = {
-    create(Seq(NodePoint(NewIdValue, beforeAfter, roadwayPointId, Some(nodeNumber), CalculatedNodePoint,
+    create(Seq(NodePoint(NewIdValue, beforeAfter, roadwayPointId, Some(nodeNumber), NodePointType.CalculatedNodePoint,
       None, None, DateTime.now(), None,
       username, Some(DateTime.now()), 0L, 11,
       0, 0, null, 8)))

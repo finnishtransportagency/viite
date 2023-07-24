@@ -1,15 +1,14 @@
 package fi.liikennevirasto.viite.dao
 
 import fi.liikennevirasto.digiroad2.DigiroadEventBus
-import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
+import fi.vaylavirasto.viite.dao.Sequences
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, LinkGeomSource, SideCode, Track}
+import fi.vaylavirasto.viite.model.CalibrationPointType.NoCP
+import fi.vaylavirasto.viite.model.{AdministrativeClass, CalibrationPointType, Discontinuity, LinkGeomSource, RoadAddressChangeType, SideCode, Track}
 import org.joda.time.DateTime
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
@@ -65,7 +64,7 @@ class ProjectDAOSpec extends FunSuite with Matchers {
     )
   }
 
-  def dummyProjectLink(id: Long, projectId: Long, linkId: String, roadwayId: Long = 0, roadwayNumber: Long = roadwayNumber1, roadNumber: Long = roadNumber1, roadPartNumber: Long = roadPartNumber1, startAddrMValue: Long, endAddrMValue: Long, startMValue: Double, endMValue: Double, endDate: Option[DateTime] = None, calibrationPointTypes: (CalibrationPointType, CalibrationPointType), geometry: Seq[Point] = Seq(), status: LinkStatus, administrativeClass: AdministrativeClass, reversed: Boolean): ProjectLink =
+  def dummyProjectLink(id: Long, projectId: Long, linkId: String, roadwayId: Long = 0, roadwayNumber: Long = roadwayNumber1, roadNumber: Long = roadNumber1, roadPartNumber: Long = roadPartNumber1, startAddrMValue: Long, endAddrMValue: Long, startMValue: Double, endMValue: Double, endDate: Option[DateTime] = None, calibrationPointTypes: (CalibrationPointType, CalibrationPointType), geometry: Seq[Point] = Seq(), status: RoadAddressChangeType, administrativeClass: AdministrativeClass, reversed: Boolean): ProjectLink =
     ProjectLink(id, roadNumber, roadPartNumber, Track.Combined, Discontinuity.Continuous, startAddrMValue, endAddrMValue, startAddrMValue, endAddrMValue,
       Some(DateTime.parse("1901-01-01")), endDate, Some("testUser"), linkId, startMValue, endMValue, SideCode.TowardsDigitizing,
       calibrationPointTypes, (NoCP, NoCP), geometry, projectId, status, administrativeClass, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geometry),
@@ -92,8 +91,8 @@ class ProjectDAOSpec extends FunSuite with Matchers {
       val projectLinkId1 = Sequences.nextProjectLinkId
       val projectLinkId2 = Sequences.nextProjectLinkId
       val projectLinks = Seq(
-        dummyProjectLink(projectLinkId1, projId1, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (NoCP, NoCP), Seq(), LinkStatus.Transfer, AdministrativeClass.State, reversed = true),
-        dummyProjectLink(projectLinkId2, projId2, linkId2, roadwayIds.last, roadwayNumber1, roadNumber2, roadPartNumber1, 0, 100, 0.0, 100.0, None, (NoCP, NoCP), Seq(), LinkStatus.Transfer, AdministrativeClass.State, reversed = true)
+        dummyProjectLink(projectLinkId1, projId1, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (NoCP, NoCP), Seq(), RoadAddressChangeType.Transfer, AdministrativeClass.State, reversed = true),
+        dummyProjectLink(projectLinkId2, projId2, linkId2, roadwayIds.last, roadwayNumber1, roadNumber2, roadPartNumber1, 0, 100, 0.0, 100.0, None, (NoCP, NoCP), Seq(), RoadAddressChangeType.Transfer, AdministrativeClass.State, reversed = true)
       )
       projectLinkDAO.create(projectLinks)
       val waitingCountNow1 = projectDAO.fetchAllIdsByLinkId(linkId1).length

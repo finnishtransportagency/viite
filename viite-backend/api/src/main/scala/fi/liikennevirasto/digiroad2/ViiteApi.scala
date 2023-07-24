@@ -12,8 +12,9 @@ import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model._
 import fi.liikennevirasto.viite.util.DigiroadSerializers
+import fi.vaylavirasto.viite.dao.{RoadName, RoadNameForRoadAddressBrowser}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, LinkGeomSource, Track}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, BeforeAfter, Discontinuity, LinkGeomSource, NodePointType, NodeType, RoadAddressChangeType, Track}
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.json4s._
@@ -41,7 +42,7 @@ case class ProjectRoadAddressInfo(projectId: Long, roadNumber: Long, roadPartNum
 case class RoadAddressProjectExtractor(id: Long, projectEly: Option[Long], status: Long, name: String, startDate: String,
                                        additionalInfo: String, reservedPartList: List[RoadPartExtractor], formedPartList: List[RoadPartExtractor], resolution: Int)
 
-case class RoadAddressProjectLinksExtractor(ids: Set[Long], linkIds: Seq[String], linkStatus: Int, projectId: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Int, discontinuity: Int, roadEly: Long, roadLinkSource: Int, administrativeClass: Int, userDefinedEndAddressM: Option[Int], coordinates: ProjectCoordinates, roadName: Option[String], reversed: Option[Boolean])
+case class RoadAddressProjectLinksExtractor(ids: Set[Long], linkIds: Seq[String], roadAddressChangeType: Int, projectId: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Int, discontinuity: Int, roadEly: Long, roadLinkSource: Int, administrativeClass: Int, userDefinedEndAddressM: Option[Int], coordinates: ProjectCoordinates, roadName: Option[String], reversed: Option[Boolean])
 
 case class roadDataExtractor(chainLinkIds: Seq[Long] )
 
@@ -953,7 +954,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
           "Object Stucture: \r\n" + revertRoadLinksExtractorStructure)
       )
       tags "ViiteAPI - Project"
-      summary "This will return all the supplied project links to their ininital state (LinkStatus.Unhandled in the case of already pre-existing ones and simple removal in the case of new project links)."
+      summary "This will return all the supplied project links to their ininital state (RoadAddressChangeType.Unhandled in the case of already pre-existing ones and simple removal in the case of new project links)."
     )
 
   put("/roadlinks/roadaddress/project/revertchangesroadlink", operation(revertLinks)) {
@@ -1048,7 +1049,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
         if (links.roadPartNumber == 0)
           throw RoadAndPartNumberException("Virheellinen tieosanumero")
         if (projectService.validateLinkTrack(links.trackCode)) {
-          projectService.updateProjectLinks(links.projectId, links.ids, links.linkIds, LinkStatus.apply(links.linkStatus), user.username, links.roadNumber, links.roadPartNumber, links.trackCode, links.userDefinedEndAddressM, links.administrativeClass, links.discontinuity, Some(links.roadEly), links.reversed.getOrElse(false), roadName = links.roadName, Some(links.coordinates)) match {
+          projectService.updateProjectLinks(links.projectId, links.ids, links.linkIds, RoadAddressChangeType.apply(links.roadAddressChangeType), user.username, links.roadNumber, links.roadPartNumber, links.trackCode, links.userDefinedEndAddressM, links.administrativeClass, links.discontinuity, Some(links.roadEly), links.reversed.getOrElse(false), roadName = links.roadName, Some(links.coordinates)) match {
             case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
             case None =>
               val projectErrors = projectService.validateProjectByIdHighPriorityOnly(links.projectId).map(projectService.projectValidator.errorPartsToApi)
@@ -1988,7 +1989,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
 
   def splitToApi(splittedLinks: ProjectLink): Map[String, Map[String, Any]] = {
     splittedLinks.status match {
-      case LinkStatus.New =>
+      case RoadAddressChangeType.New =>
         Map("b" ->
           Map(
             "linkId" -> splittedLinks.linkId,
@@ -2003,7 +2004,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
             "roadName" -> splittedLinks.roadName.getOrElse(""),
             "roadLinkSource" -> splittedLinks.linkGeomSource.value
           ))
-      case LinkStatus.Terminated =>
+      case RoadAddressChangeType.Termination =>
         Map("c" ->
           Map(
             "linkId" -> splittedLinks.linkId,
@@ -2096,7 +2097,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
   private def formatDateTimeToShortPatternString(dateOption: Option[DateTime]): Option[String] =
     dateOption.map { date => date.toString(DateTimeFormat.forPattern("dd.MM.yyyy")) }
 
-  private def calibrationPointToApi(geometry: Seq[Point], calibrationPoint: Option[CalibrationPoint]): Option[Map[String, Any]] = {
+  private def calibrationPointToApi(geometry: Seq[Point], calibrationPoint: Option[ProjectCalibrationPoint]): Option[Map[String, Any]] = {
     calibrationPoint match {
       case Some(point) =>
         val calculatedPoint = GeometryUtils.calculatePointFromLinearReference(geometry, point.segmentMValue)

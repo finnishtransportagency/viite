@@ -10,13 +10,13 @@
      * Fill: This is the main color for the road link. zIndex: highest
      */
 
-    var LinkStatus = ViiteEnumerations.LinkStatus;
-    var notHandledStatus = LinkStatus.NotHandled.value;
-    var unchangedStatus = LinkStatus.Unchanged.value;
-    var newRoadAddressStatus = LinkStatus.New.value;
-    var transferredStatus = LinkStatus.Transfer.value;
-    var numberingStatus = LinkStatus.Numbering.value;
-    var terminatedStatus = LinkStatus.Terminated.value;
+    var RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
+    var notHandledStatus = RoadAddressChangeType.NotHandled.value;
+    var unchangedStatus = RoadAddressChangeType.Unchanged.value;
+    var newRoadAddressStatus = RoadAddressChangeType.New.value;
+    var transferredStatus = RoadAddressChangeType.Transfer.value;
+    var numberingStatus = RoadAddressChangeType.Numbering.value;
+    var terminatedStatus = RoadAddressChangeType.Terminated.value;
 
     var strokeWidthRules = [
       new StyleRule().where('zoomLevel').isIn([5, 6]).use({stroke: {width: 3}}),

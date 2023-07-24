@@ -759,7 +759,7 @@
       };
 
       var cancelChanges = function () {
-        projectCollection.revertLinkStatus();
+        projectCollection.revertRoadAddressChangeType();
         projectCollection.setDirty([]);
         projectCollection.setTmpDirty([]);
         projectLinkLayer.clearHighlights();

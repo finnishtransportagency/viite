@@ -3,16 +3,12 @@ package fi.liikennevirasto.viite
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.RoadAddressFilters.{connectingBothHeads, continuousTopology, reversedConnectingBothHeads, reversedContinuousTopology}
-import fi.liikennevirasto.viite.dao.BeforeAfter.{After, Before}
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{CalibrationPointLocation, CalibrationPointType}
-import fi.liikennevirasto.viite.dao.Discontinuity.{Discontinuous, MinorDiscontinuity}
-import fi.liikennevirasto.viite.dao.NodePointType.RoadNodePoint
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
-import fi.vaylavirasto.viite.model.Track
+import fi.vaylavirasto.viite.model.{BeforeAfter, CalibrationPointLocation, CalibrationPointType, Discontinuity, NodePointType, RoadAddressChangeType, Track}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
@@ -280,8 +276,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   def enrichNodePointCoordinates(roadAddressLinks: Seq[RoadAddressLink], nodePoints: Seq[NodePoint]): Seq[NodePoint] = {
       nodePoints.map { np =>
         np.copy(coordinates = np.beforeAfter match {
-          case Before if roadAddressLinks.exists(_.endAddressM == np.addrM) => roadAddressLinks.find(_.endAddressM == np.addrM).get.endPoint
-          case After if roadAddressLinks.exists(_.startAddressM == np.addrM) => roadAddressLinks.find(_.startAddressM == np.addrM).get.startingPoint
+          case BeforeAfter.Before if roadAddressLinks.exists(_.endAddressM == np.addrM) => roadAddressLinks.find(_.endAddressM == np.addrM).get.endPoint
+          case BeforeAfter.After if roadAddressLinks.exists(_.startAddressM == np.addrM) => roadAddressLinks.find(_.startAddressM == np.addrM).get.startingPoint
           case _ => np.coordinates
         })
       }
@@ -290,8 +286,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   def enrichJunctionPointCoordinates(roadAddressLinks: Seq[RoadAddressLink], jPoints: Seq[JunctionPoint]): Seq[JunctionPoint] = {
     jPoints.map { jp =>
       jp.copy(coordinates = jp.beforeAfter match {
-        case Before if roadAddressLinks.exists(_.endAddressM == jp.addrM) => roadAddressLinks.find(_.endAddressM == jp.addrM).get.endPoint
-        case After if roadAddressLinks.exists(_.startAddressM == jp.addrM) => roadAddressLinks.find(_.startAddressM == jp.addrM).get.startingPoint
+        case BeforeAfter.Before if roadAddressLinks.exists(_.endAddressM == jp.addrM) => roadAddressLinks.find(_.endAddressM == jp.addrM).get.endPoint
+        case BeforeAfter.After if roadAddressLinks.exists(_.startAddressM == jp.addrM) => roadAddressLinks.find(_.startAddressM == jp.addrM).get.startingPoint
         case _ => jp.coordinates
       })
     }
@@ -457,7 +453,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
 
     time(logger, "Handling junction point templates") {
-      val nonTerminatedLinks: Seq[BaseRoadAddress] = projectLinks.filter(pl => RoadClass.forJunctions.contains(pl.roadNumber.toInt) && pl.status != LinkStatus.Terminated)
+      val nonTerminatedLinks: Seq[BaseRoadAddress] = projectLinks.filter(pl => RoadClass.forJunctions.contains(pl.roadNumber.toInt) && pl.status != RoadAddressChangeType.Termination)
       // Update junctionPoint Before/After if projectLink is reversed
       nonTerminatedLinks.map { projectLink =>
 
@@ -728,14 +724,14 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
       if (existingCorrect.isEmpty) {
         nodePointDAO.create {
-          Seq(NodePoint(NewIdValue, pos, roadwayPointId, None, RoadNodePoint, None, None, DateTime.now(), None, username, Some(DateTime.now()), projectLink.roadwayNumber, addrM, projectLink.roadNumber, projectLink.roadPartNumber, projectLink.track, projectLink.ely))
+          Seq(NodePoint(NewIdValue, pos, roadwayPointId, None, NodePointType.RoadNodePoint, None, None, DateTime.now(), None, username, Some(DateTime.now()), projectLink.roadwayNumber, addrM, projectLink.roadNumber, projectLink.roadPartNumber, projectLink.track, projectLink.ely))
         }
       }
     }
 
     time(logger, "Handling node point templates") {
       try {
-        val filteredLinks = projectLinks.filter(pl => RoadClass.forNodes.contains(pl.roadNumber.toInt) && pl.status != LinkStatus.Terminated).filterNot(_.track == Track.LeftSide)
+        val filteredLinks = projectLinks.filter(pl => RoadClass.forNodes.contains(pl.roadNumber.toInt) && pl.status != RoadAddressChangeType.Termination).filterNot(_.track == Track.LeftSide)
         val groupSections = filteredLinks.groupBy(l => (l.roadNumber, l.roadPartNumber))
 
         groupSections.values.foreach { group =>
@@ -751,10 +747,10 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
             }.flatMap { rl =>
               if (headReversed) {
                 nodePointDAO.fetchRoadAddressNodePoints(Seq(rl.originalRoadwayNumber, headProjectLink.roadwayNumber))
-                  .find(np => np.beforeAfter == Before && np.addrM == rl.newStartAddr)
+                  .find(np => np.beforeAfter == BeforeAfter.Before && np.addrM == rl.newStartAddr)
               } else {
                 nodePointDAO.fetchRoadAddressNodePoints(Seq(rl.originalRoadwayNumber, headProjectLink.roadwayNumber).distinct)
-                  .find(np => np.beforeAfter == After && np.addrM == headProjectLink.startAddrMValue)
+                  .find(np => np.beforeAfter == BeforeAfter.After && np.addrM == headProjectLink.startAddrMValue)
               }
             }
 
@@ -768,10 +764,10 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
             }.flatMap { rl =>
               if (lastReversed) {
                 nodePointDAO.fetchRoadAddressNodePoints(Seq(rl.originalRoadwayNumber, lastLink.roadwayNumber))
-                  .find(np => np.beforeAfter == After && np.addrM == rl.newEndAddr)
+                  .find(np => np.beforeAfter == BeforeAfter.After && np.addrM == rl.newEndAddr)
               } else {
                 nodePointDAO.fetchRoadAddressNodePoints(Seq(rl.originalRoadwayNumber, lastLink.roadwayNumber))
-                  .find(np => np.beforeAfter == Before && np.addrM == lastLink.endAddrMValue)
+                  .find(np => np.beforeAfter == BeforeAfter.Before && np.addrM == lastLink.endAddrMValue)
               }
             }
 
@@ -978,7 +974,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     val filteredProjectLinks = projectLinks
       .filter(pl => RoadClass.forJunctions.contains(pl.roadNumber.toInt))
 
-    val terminated = filteredProjectLinks.filter(_.status == LinkStatus.Terminated)
+    val terminated = filteredProjectLinks.filter(_.status == RoadAddressChangeType.Termination)
 
     val terminatedRoadwayNumbers = terminated.map(_.roadwayNumber).distinct
     val (terminatedNodePoints, terminatedJunctionPoints): (Seq[NodePoint], Seq[JunctionPoint]) =
@@ -1014,7 +1010,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
       def isRoadPartIntersection(curr: JunctionPoint, rest: Seq[JunctionPoint]): Boolean = {
         val junctionPointsInSameAddrAndPart = rest.filter(jp => curr.roadNumber == jp.roadNumber && curr.roadPartNumber == jp.roadPartNumber && curr.addrM == jp.addrM)
-        val (before, after) = (junctionPointsInSameAddrAndPart :+ curr).partition(_.beforeAfter == Before)
+        val (before, after) = (junctionPointsInSameAddrAndPart :+ curr).partition(_.beforeAfter == BeforeAfter.Before)
         val junctionPointsInSamePart = rest.filter(jp => curr.roadNumber == jp.roadNumber && curr.roadPartNumber == jp.roadPartNumber)
         val combinedIntersection = junctionPointsInSamePart.map(_.addrM).exists(addr => addr != curr.addrM)
         (before.size > 1 && after.nonEmpty && !twoTrackToCombined(before, after)) || (before.nonEmpty && after.size > 1 && !combinedToTwoTrack(before, after)) || combinedIntersection
@@ -1036,7 +1032,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     def roadEndingInSameOwnRoadNumber(junctionPointsToCheck: Seq[JunctionPoint]): Boolean = {
 
       def isRoadEndingInItself(curr: JunctionPoint, rest: Seq[JunctionPoint]): Boolean = {
-        rest.exists(jp => curr.roadNumber == jp.roadNumber && curr.discontinuity == Discontinuity.EndOfRoad && jp.discontinuity != Discontinuity.EndOfRoad && curr.beforeAfter == Before)
+        rest.exists(jp => curr.roadNumber == jp.roadNumber && curr.discontinuity == Discontinuity.EndOfRoad && jp.discontinuity != Discontinuity.EndOfRoad && curr.beforeAfter == BeforeAfter.Before)
       }
 
       junctionPointsToCheck.exists { jpc =>
@@ -1046,14 +1042,14 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
     def discontinuousPartIntersection(junctionPointsToCheck: Seq[JunctionPoint]): Boolean = {
       junctionPointsToCheck.groupBy(jp => (jp.roadNumber, jp.roadPartNumber, jp.addrM, jp.beforeAfter)).keys.size > 2 ||
-        junctionPointsToCheck.filter(_.beforeAfter == Before).exists(jp => List(Discontinuous, MinorDiscontinuity).contains(jp.discontinuity))
+        junctionPointsToCheck.filter(_.beforeAfter == BeforeAfter.Before).exists(jp => List(Discontinuity.Discontinuous, Discontinuity.MinorDiscontinuity).contains(jp.discontinuity))
     }
 
     def rampsAndRoundaboutsDiscontinuityInSameOwnRoadNumber(junctionPointsToCheck: Seq[JunctionPoint]): Boolean = {
       val validEndingDiscontinuityForRamps = List(Discontinuity.EndOfRoad, Discontinuity.Discontinuous, Discontinuity.MinorDiscontinuity)
 
       def isRoadEndingInItself(curr: JunctionPoint, rest: Seq[JunctionPoint]): Boolean = {
-        rest.exists(jp => curr.roadNumber == jp.roadNumber && jp.addrM == 0 && validEndingDiscontinuityForRamps.contains(curr.discontinuity) && curr.beforeAfter == Before)
+        rest.exists(jp => curr.roadNumber == jp.roadNumber && jp.addrM == 0 && validEndingDiscontinuityForRamps.contains(curr.discontinuity) && curr.beforeAfter == BeforeAfter.Before)
       }
 
       junctionPointsToCheck.exists { jpc =>

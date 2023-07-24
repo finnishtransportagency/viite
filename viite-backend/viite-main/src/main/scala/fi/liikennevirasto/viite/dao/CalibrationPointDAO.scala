@@ -1,64 +1,14 @@
 package fi.liikennevirasto.viite.dao
 
-import fi.liikennevirasto.digiroad2.dao.Sequences
-import fi.liikennevirasto.viite.dao.BeforeAfter.{After, Before}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import fi.liikennevirasto.viite.NewIdValue
+import fi.vaylavirasto.viite.dao.Sequences
+import fi.vaylavirasto.viite.model.{CalibrationPoint, CalibrationPointLocation, CalibrationPointType}
 
 object CalibrationPointDAO {
-
-  trait CalibrationPointType extends Ordered[CalibrationPointType] {
-    def value: Int
-    def compare(that: CalibrationPointType): Int = {
-      this.value - that.value
-    }
-  }
-
-  object CalibrationPointType {
-    val values = Set(NoCP, UserDefinedCP, JunctionPointCP, RoadAddressCP, UnknownCP)
-
-    def apply(intValue: Int): CalibrationPointType = {
-      values.find(_.value == intValue).getOrElse(UnknownCP)
-    }
-
-    case object NoCP extends CalibrationPointType {def value = 0}
-    case object UserDefinedCP extends CalibrationPointType {def value = 1}
-    case object JunctionPointCP extends CalibrationPointType {def value = 2}
-    case object RoadAddressCP extends CalibrationPointType {def value = 3}
-    case object UnknownCP extends CalibrationPointType {def value = 99}
-  }
-
-  trait CalibrationPointLocation {
-    def value: Int
-  }
-
-  object CalibrationPointLocation {
-    val values = Set(StartOfLink, EndOfLink, Unknown)
-
-    def apply(intValue: Int): CalibrationPointLocation = {
-      values.find(_.value == intValue).getOrElse(Unknown)
-    }
-
-    def apply(pos: BeforeAfter): CalibrationPointLocation = {
-      pos match {
-        case After => StartOfLink
-        case Before => EndOfLink
-        case _ => Unknown
-      }
-    }
-
-    case object StartOfLink extends CalibrationPointLocation {def value = 0}
-    case object EndOfLink extends CalibrationPointLocation {def value = 1}
-    case object Unknown extends CalibrationPointLocation {def value = 99}
-  }
-
-  case class CalibrationPoint(id: Long, roadwayPointId: Long, linkId: String, roadwayNumber: Long, addrM: Long, startOrEnd: CalibrationPointLocation, typeCode: CalibrationPointType, validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None, createdBy: String, createdTime: Option[DateTime] = None) {
-   def this(id: Long, roadwayPointId: Long, linkId: Long, roadwayNumber: Long, addrM: Long, startOrEnd: CalibrationPointLocation, typeCode: CalibrationPointType, validFrom: Option[DateTime], validTo: Option[DateTime], createdBy: String, createdTime: Option[DateTime]) =
-    this(id, roadwayPointId, linkId.toString, roadwayNumber, addrM, startOrEnd, typeCode, validFrom, validTo, createdBy, createdTime)
-   }
 
   implicit val getRoadwayPointRow = new GetResult[CalibrationPoint] {
     def apply(r: PositionedResult): CalibrationPoint = {

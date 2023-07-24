@@ -1,4 +1,4 @@
-package fi.liikennevirasto.viite.dao
+package fi.vaylavirasto.viite.dao
 
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation

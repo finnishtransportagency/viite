@@ -3,10 +3,10 @@ package fi.liikennevirasto.viite.process.strategy
 import fi.liikennevirasto.digiroad2.util.{MissingTrackException, RoadAddressException}
 import fi.liikennevirasto.viite.{NewIdValue, UnsuccessfulRecalculationMessage}
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous, MinorDiscontinuity}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.process.{ProjectSectionMValueCalculator, TrackAddressingFactors}
 import fi.vaylavirasto.viite.geometry.GeometryUtils
+import fi.vaylavirasto.viite.model.{CalibrationPointType, Discontinuity, RoadAddressChangeType}
 import org.slf4j.LoggerFactory
 
 
@@ -20,15 +20,15 @@ object TrackCalculatorContext {
     new DefaultTrackCalculatorStrategy
   }
 
-  private lazy val terminatedLinkStatusChangeStrategy: TerminatedLinkStatusChangeStrategy = {
-    new TerminatedLinkStatusChangeStrategy
+  private lazy val terminationOperationChangeStrategy: TerminationOperationChangeStrategy = {
+    new TerminationOperationChangeStrategy
   }
 
   private lazy val defaultTrackCalculatorStrategy: DefaultTrackCalculatorStrategy = {
     new DefaultTrackCalculatorStrategy
   }
 
-  private val strategies = Seq(minorDiscontinuityStrategy, discontinuousStrategy, terminatedLinkStatusChangeStrategy)
+  private val strategies = Seq(minorDiscontinuityStrategy, discontinuousStrategy, terminationOperationChangeStrategy)
 
   def getNextStrategy(projectLinks: Seq[ProjectLink]): Option[(Long, TrackCalculatorStrategy)] = {
     val head = projectLinks.head
@@ -139,7 +139,7 @@ trait TrackCalculatorStrategy {
 
     val reversed = rightLink.reversed || leftLink.reversed
     (leftLink.calibrationPointTypes._2, rightLink.calibrationPointTypes._2) match {
-      case (CalibrationPointDAO.CalibrationPointType.UserDefinedCP, _ ) | (_, CalibrationPointDAO.CalibrationPointType.UserDefinedCP) =>
+      case (CalibrationPointType.UserDefinedCP, _ ) | (_, CalibrationPointType.UserDefinedCP) =>
         userCalibrationPoint.map(c => (c.addressMValue, c.addressMValue)).getOrElse(
           (averageOfAddressMValues(rightLink.startAddrMValue, leftLink.startAddrMValue, reversed), averageOfAddressMValues(rightLink.endAddrMValue, leftLink.endAddrMValue, reversed))
         )
@@ -149,7 +149,7 @@ trait TrackCalculatorStrategy {
   }
 
   protected def setLastEndAddrMValue(projectLinks: Seq[ProjectLink], endAddressMValue: Long): Seq[ProjectLink] = {
-    if (projectLinks.last.status != LinkStatus.NotHandled) {
+    if (projectLinks.last.status != RoadAddressChangeType.NotHandled) {
       if (projectLinks.last.startAddrMValue > endAddressMValue) {
         val logger = LoggerFactory.getLogger(getClass)
         logger.error(s"Averaged address caused negative length. " +
@@ -180,7 +180,7 @@ trait TrackCalculatorStrategy {
     def addressLengthRight = Math.max(0, rightProjectLinks.last.originalEndAddrMValue - rightProjectLinks.last.originalStartAddrMValue)
     def addressLengthLeft  = Math.max(0, leftProjectLinks.last.originalEndAddrMValue  -  leftProjectLinks.last.originalStartAddrMValue)
 
-    val minimumEndAddress = (leftProjectLinks.exists(_.status == LinkStatus.New), rightProjectLinks.exists(_.status == LinkStatus.New)) match {
+    val minimumEndAddress = (leftProjectLinks.exists(_.status == RoadAddressChangeType.New), rightProjectLinks.exists(_.status == RoadAddressChangeType.New)) match {
       case (true,true) => fixedMinimimumAddress
       case (true, false)  => rightProjectLinks.last.startAddrMValue + addressLengthRight
       case (false, true)  => leftProjectLinks.last.startAddrMValue + addressLengthLeft
@@ -207,7 +207,7 @@ trait TrackCalculatorStrategy {
     * @return (Project links before the discontinuity point, project links after the discontinuity point)
     */
   protected def getUntilNearestAddress(seq: Seq[ProjectLink], endProjectLink: ProjectLink): (Seq[ProjectLink], Seq[ProjectLink]) = {
-    if (List(Discontinuous, MinorDiscontinuity, Continuous).contains(endProjectLink.discontinuity)) {
+    if (List(Discontinuity.Discontinuous, Discontinuity.MinorDiscontinuity, Discontinuity.Continuous).contains(endProjectLink.discontinuity)) {
       val continuousProjectLinks = seq.takeWhile(pl => pl.startAddrMValue <= endProjectLink.endAddrMValue)
       if (continuousProjectLinks.isEmpty)
         throw new MissingTrackException("Could not find any nearest road address")
