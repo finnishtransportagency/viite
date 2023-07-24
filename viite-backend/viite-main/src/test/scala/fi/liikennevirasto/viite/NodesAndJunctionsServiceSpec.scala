@@ -298,8 +298,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(link1.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(link1.roadPartNumber), endRoadPartNumber = Some(link1.roadPartNumber), startAddressM = Some(link1.startAddrMValue), endAddressM = Some(link2.endAddrMValue), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
-            Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
-          , DateTime.now, Some(0L))
+            Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8), DateTime.now)
+
       )
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq(linearLocation))
@@ -378,8 +378,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(link1.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(link1.roadPartNumber), endRoadPartNumber = Some(link1.roadPartNumber), startAddressM = Some(link1.startAddrMValue), endAddressM = Some(link1.endAddrMValue), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
-            Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
-          , DateTime.now, Some(0L))
+            Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8), DateTime.now)
       )
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq(linearLocation))
@@ -466,7 +465,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(link1.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(link1.roadPartNumber), endRoadPartNumber = Some(link1.roadPartNumber), startAddressM = Some(link1.startAddrMValue), endAddressM = Some(link1.endAddrMValue), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
-          , DateTime.now, Some(0L))
+          , DateTime.now)
       )
 
       val reversedPls = pls.map(_.copy(sideCode = SideCode.switch(link1.sideCode), reversed = true))
@@ -550,7 +549,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(link1.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(link1.roadPartNumber), endRoadPartNumber = Some(link1.roadPartNumber), startAddressM = Some(link1.startAddrMValue), endAddressM = Some(link1.endAddrMValue), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
-          , DateTime.now, Some(0L))
+          , DateTime.now)
       )
 
       val reversedPls = pls.map(_.copy(sideCode = SideCode.switch(link1.sideCode), reversed = true))
@@ -634,8 +633,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(link1.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(link1.roadPartNumber), endRoadPartNumber = Some(link1.roadPartNumber), startAddressM = Some(link1.startAddrMValue), endAddressM = Some(link1.endAddrMValue), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
-            Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
-          , DateTime.now, Some(0L))
+            Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8), DateTime.now)
       )
 
       val reversedPls = pls.map(_.copy(sideCode = SideCode.switch(link1.sideCode), reversed = true))
@@ -766,28 +764,28 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         // right - discontinuous
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L)),
             Discontinuity.MinorDiscontinuity, AdministrativeClass.State, reversed = false, 2, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         //  left - end of road
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(10L), endAddressM = Some(20L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         //  right - end of road
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(10L), endAddressM = Some(20L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 4, 8)
-          , DateTime.now, Some(0L))
+          , DateTime.now)
       )
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq(orderedlll1, orderedlll2, orderedlll3, orderedrll1, orderedrll2, orderedrll3, orderedrll4))
@@ -924,28 +922,28 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(10L), endAddressM = Some(20L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = true, 1, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         // left -> right & end of road -> minor discontinuity
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.Transfer,
             RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(10L), endAddressM = Some(20L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
             Discontinuity.MinorDiscontinuity, AdministrativeClass.State, reversed = true, 2, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         //  right -> left & continuous -> end of road
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.Transfer,
             RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(10L), endAddressM = Some(20L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = true, 3, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         //  left -> right & minor discontinuity -> end of road
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.Transfer,
             RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(10L), endAddressM = Some(20L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = true, 4, 8)
-          , DateTime.now, Some(0L))
+          , DateTime.now)
       )
       // Get linear locations and roadway numbers
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq(orderedlll1, orderedlll2, orderedlll3, orderedrll1, orderedrll2, orderedrll3, orderedrll4))
@@ -1076,27 +1074,27 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(0L), endAddressM = Some(5L), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         //  right
         ProjectRoadwayChange(projectId1, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(0L), endAddressM = Some(5L), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L)),
             Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 2, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         //  combined
         ProjectRoadwayChange(projectId1, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(5L), endAddressM = Some(15L), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 3, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         ProjectRoadwayChange(projectId1, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(15L), endAddressM = Some(20L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 4, 8)
-          , DateTime.now, Some(0L))
+          , DateTime.now)
       )
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(leftGeom1.head, leftGeom1.head), roadNumberLimits)).thenReturn(Seq())
@@ -1144,27 +1142,27 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(0L), endAddressM = Some(5L), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(0L), endAddressM = Some(5L), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         // right
         ProjectRoadwayChange(projectId1, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.Unchanged,
             RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(0L), endAddressM = Some(5L), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(0L), endAddressM = Some(5L), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L)),
             Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 2, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         // combined
         ProjectRoadwayChange(projectId1, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.Transfer,
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(5L), endAddressM = Some(15L), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(5L), endAddressM = Some(15L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         ProjectRoadwayChange(projectId1, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.Termination,
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(15L), endAddressM = Some(20L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 4, 8)
-          , DateTime.now, Some(0L))
+          , DateTime.now)
       )
 
       linearLocationDAO.expireByRoadwayNumbers(Set(combLink1.roadwayNumber, combLink2.roadwayNumber))
@@ -1283,21 +1281,21 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(0L), endAddressM = Some(5L), Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
             Discontinuity.MinorDiscontinuity, AdministrativeClass.State, reversed = false, 1, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         //right
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(0L), endAddressM = Some(5L), Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
             Discontinuity.MinorDiscontinuity, AdministrativeClass.State, reversed = false, 2, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         //combined
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(5L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, 8)
-          , DateTime.now, Some(0L))
+          , DateTime.now)
       )
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(leftGeom1.head, leftGeom1.head), roadNumberLimits)).thenReturn(Seq())
@@ -1389,27 +1387,27 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(0L), endAddressM = Some(5L), Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
             Discontinuity.MinorDiscontinuity, AdministrativeClass.State, reversed = false, 1, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         //right
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(0L), endAddressM = Some(5L), Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
             Discontinuity.MinorDiscontinuity, AdministrativeClass.State, reversed = false, 2, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         //combined
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(5L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
             Discontinuity.MinorDiscontinuity, AdministrativeClass.State, reversed = false, 3, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(10L), endAddressM = Some(15L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 4, 8)
-          , DateTime.now, Some(0L))
+          , DateTime.now)
       )
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(leftGeom1.head, leftGeom1.head), roadNumberLimits)).thenReturn(Seq())
@@ -1502,27 +1500,27 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(0L), endAddressM = Some(5L), Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
             Discontinuity.MinorDiscontinuity, AdministrativeClass.State, reversed = false, 1, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         //right
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(0L), endAddressM = Some(5L), Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
             Discontinuity.MinorDiscontinuity, AdministrativeClass.State, reversed = false, 2, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         //combined
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(5L), endAddressM = Some(15L), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 3, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(10L), endAddressM = Some(15L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 4, 8)
-          , DateTime.now, Some(0L))
+          , DateTime.now)
       )
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(leftGeom1.head, leftGeom1.head), roadNumberLimits)).thenReturn(Seq())
@@ -1608,27 +1606,27 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(0L), endAddressM = Some(5L), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L)),
             Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 1, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         //right
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(0L), endAddressM = Some(5L), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 2, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         //combined
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(5L), endAddressM = Some(15L), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 3, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(15L), endAddressM = Some(25L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 4, 8)
-          , DateTime.now, Some(0L))
+          , DateTime.now)
       )
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(leftGeom1.head, leftGeom1.head), roadNumberLimits)).thenReturn(Seq())
@@ -1704,33 +1702,33 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
             RoadwayChangeSection(Some(rw1_1.roadNumber), Some(rw1_1.track.value), startRoadPartNumber = Some(rw1_1.roadPartNumber), endRoadPartNumber = Some(rw1_1.roadPartNumber), startAddressM = Some(rw1_1.startAddrMValue), endAddressM = Some(rw1_1.endAddrMValue), Some(rw1_1.administrativeClass), Some(rw1_1.discontinuity), Some(rw1_1.ely)),
             rw1_1.discontinuity, rw1_1.administrativeClass, reversed = false, 1, rw1_1.ely)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
             RoadwayChangeSection(Some(rw1_2.roadNumber), Some(rw1_2.track.value), startRoadPartNumber = Some(rw1_2.roadPartNumber), endRoadPartNumber = Some(rw1_2.roadPartNumber), startAddressM = Some(rw1_2.startAddrMValue), endAddressM = Some(rw1_2.endAddrMValue), Some(rw1_2.administrativeClass), Some(rw1_2.discontinuity), Some(rw1_2.ely)),
             rw1_2.discontinuity, rw1_2.administrativeClass, reversed = false, 2, rw1_2.ely)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         // road part 2
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
             RoadwayChangeSection(Some(rw2.roadNumber), Some(rw2.track.value), startRoadPartNumber = Some(rw2.roadPartNumber), endRoadPartNumber = Some(rw2.roadPartNumber), startAddressM = Some(rw2.startAddrMValue), endAddressM = Some(rw2.endAddrMValue), Some(rw2.administrativeClass), Some(rw2.discontinuity), Some(rw2.ely)),
             rw2.discontinuity, rw2.administrativeClass, reversed = false, 3, rw2.ely)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         // road part 3
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
             RoadwayChangeSection(Some(rw3_1.roadNumber), Some(rw1_1.track.value), startRoadPartNumber = Some(rw3_1.roadPartNumber), endRoadPartNumber = Some(rw3_1.roadPartNumber), startAddressM = Some(rw3_1.startAddrMValue), endAddressM = Some(rw3_1.endAddrMValue), Some(rw3_1.administrativeClass), Some(rw3_1.discontinuity), Some(rw3_1.ely)),
             rw3_1.discontinuity, rw3_1.administrativeClass, reversed = false, 4, rw1_1.ely)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
             RoadwayChangeSection(Some(rw3_2.roadNumber), Some(rw3_2.track.value), startRoadPartNumber = Some(rw3_2.roadPartNumber), endRoadPartNumber = Some(rw3_2.roadPartNumber), startAddressM = Some(rw3_2.startAddrMValue), endAddressM = Some(rw3_2.endAddrMValue), Some(rw3_2.administrativeClass), Some(rw3_2.discontinuity), Some(rw3_2.ely)),
             rw3_2.discontinuity, rw3_2.administrativeClass, reversed = false, 5, rw3_2.ely)
-          , DateTime.now, Some(0L))
+          , DateTime.now)
       )
 
       val mappedReservedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
@@ -1842,21 +1840,21 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
             RoadwayChangeSection(Some(rw1.roadNumber), Some(rw1.track.value), startRoadPartNumber = Some(rw1.roadPartNumber), endRoadPartNumber = Some(rw1.roadPartNumber), startAddressM = Some(rw1.startAddrMValue), endAddressM = Some(rw1.endAddrMValue), Some(rw1.administrativeClass), Some(rw1.discontinuity), Some(rw1.ely)),
             rw1.discontinuity, rw1.administrativeClass, reversed = false, 1, rw1.ely)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
 
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
             RoadwayChangeSection(Some(rw2_1.roadNumber), Some(rw2_1.track.value), startRoadPartNumber = Some(rw2_1.roadPartNumber), endRoadPartNumber = Some(rw2_1.roadPartNumber), startAddressM = Some(rw2_1.startAddrMValue), endAddressM = Some(rw2_1.endAddrMValue), Some(rw2_1.administrativeClass), Some(rw2_1.discontinuity), Some(rw2_1.ely)),
             rw2_1.discontinuity, rw2_1.administrativeClass, reversed = false, 1, rw2_1.ely)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
 
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
             RoadwayChangeSection(Some(rw2_2.roadNumber), Some(rw2_2.track.value), startRoadPartNumber = Some(rw2_2.roadPartNumber), endRoadPartNumber = Some(rw2_2.roadPartNumber), startAddressM = Some(rw2_2.startAddrMValue), endAddressM = Some(rw2_2.endAddrMValue), Some(rw2_2.administrativeClass), Some(rw2_2.discontinuity), Some(rw2_2.ely)),
             rw2_2.discontinuity, rw2_2.administrativeClass, reversed = false, 1, rw2_2.ely)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
 
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
@@ -1870,7 +1868,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
             RoadwayChangeSection(Some(rw4.roadNumber), Some(rw4.track.value), startRoadPartNumber = Some(rw4.roadPartNumber), endRoadPartNumber = Some(rw4.roadPartNumber), startAddressM = Some(rw4.startAddrMValue), endAddressM = Some(rw4.endAddrMValue), Some(rw4.administrativeClass), Some(rw4.discontinuity), Some(rw4.ely)),
             rw4.discontinuity, rw4.administrativeClass, reversed = false, 1, rw4.ely)
-          , DateTime.now, Some(0L))
+          , DateTime.now)
       )
 
       val mappedReservedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
@@ -1976,27 +1974,27 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         //right
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
             Discontinuity.MinorDiscontinuity, AdministrativeClass.State, reversed = false, 2, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         //combined
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(10L), endAddressM = Some(15L), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 3, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(15L), endAddressM = Some(20L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 4, 8)
-          , DateTime.now, Some(0L))
+          , DateTime.now)
       )
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(leftGeom1.head, leftGeom1.head), roadNumberLimits)).thenReturn(Seq())
@@ -2078,19 +2076,19 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part2), endRoadPartNumber = Some(part2), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L)),
             Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 2, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part3), endRoadPartNumber = Some(part3), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, 8)
-          , DateTime.now, Some(0L))
+          , DateTime.now)
       )
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom1.head, combGeom1.head), roadNumberLimits)).thenReturn(Seq())
@@ -2170,19 +2168,19 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part2), endRoadPartNumber = Some(part2), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L)),
             Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 2, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part3), endRoadPartNumber = Some(part3), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, 8)
-          , DateTime.now, Some(0L))
+          , DateTime.now)
       )
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom1.head, combGeom1.head), roadNumberLimits)).thenReturn(Seq(cll1, cll3))
@@ -2268,19 +2266,19 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part2), endRoadPartNumber = Some(part2), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L)),
             Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 2, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part3), endRoadPartNumber = Some(part3), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, 8)
-          , DateTime.now, Some(0L))
+          , DateTime.now)
       )
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom1.head, combGeom1.head), roadNumberLimits)).thenReturn(Seq(cll1))
@@ -2366,19 +2364,19 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part2), endRoadPartNumber = Some(part2), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L)),
             Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 2, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part3), endRoadPartNumber = Some(part3), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, 8)
-          , DateTime.now, Some(0L))
+          , DateTime.now)
       )
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq(lc1, lc2, lc3))
@@ -2452,25 +2450,25 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part2), endRoadPartNumber = Some(part2), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L)),
             Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 2, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part3), endRoadPartNumber = Some(part3), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L)),
             Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 3, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part4), endRoadPartNumber = Some(part4), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 4, 8)
-          , DateTime.now, Some(0L))
+          , DateTime.now)
       )
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq(lc1, lc2, lc3, lc4))
@@ -2545,19 +2543,19 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part2), endRoadPartNumber = Some(part2), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L)),
             Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 2, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part3), endRoadPartNumber = Some(part3), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, 8)
-          , DateTime.now, Some(0L))
+          , DateTime.now)
       )
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom1.head, combGeom1.head), roadNumberLimits)).thenReturn(Seq(lc1, lc3))
@@ -2605,13 +2603,13 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part3), endRoadPartNumber = Some(part3), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part3), endRoadPartNumber = Some(part3), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L)),
             Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 1, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         ProjectRoadwayChange(projectId + 1, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(4l), endRoadPartNumber = Some(4l), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 2, 8)
-          , DateTime.now, Some(0L))
+          , DateTime.now)
       )
 
       linearLocationDAO.expireByRoadwayNumbers(Set(combLink3.roadwayNumber))
@@ -2712,19 +2710,19 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part2), endRoadPartNumber = Some(part2), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L)),
             Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 2, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part3), endRoadPartNumber = Some(part3), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, 8)
-          , DateTime.now, Some(0L))
+          , DateTime.now)
       )
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom1.head, combGeom1.head), roadNumberLimits)).thenReturn(Seq(lc1))
@@ -2770,13 +2768,13 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(3l), endRoadPartNumber = Some(3l), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(3l), endRoadPartNumber = Some(3l), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L)),
             Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 1, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         ProjectRoadwayChange(projectId + 1, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(4l), endRoadPartNumber = Some(4l), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 2, 8)
-          , DateTime.now, Some(0L))
+          , DateTime.now)
       )
 
       linearLocationDAO.expireByRoadwayNumbers(Set(combLink3.roadwayNumber))
@@ -2891,7 +2889,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(0L), endAddressM = Some(25L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 1, 8)
-          , DateTime.now, Some(0L))
+          , DateTime.now)
       )
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq(orderedcll1, orderedcll2, orderedcll3, orderedcll4, orderedcll5))
@@ -2933,26 +2931,25 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         ProjectRoadwayChange(projectId + 1, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.Unchanged,
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(10L), endAddressM = Some(15L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(10L), endAddressM = Some(15L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 2, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.Termination,
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(15L), endAddressM = Some(20L), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 3, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.Termination,
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(20L), endAddressM = Some(25L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 4, 8)
-          , DateTime.now, Some(0L))
-
+          , DateTime.now)
       )
 
       linearLocationDAO.expireByRoadwayNumbers(Set(combLink4.roadwayNumber, combLink5.roadwayNumber))
@@ -3062,13 +3059,13 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road999), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), startAddressM = Some(0L), endAddressM = Some(20L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 1, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             RoadwayChangeSection(Some(road1000), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 2, 8)
-          , DateTime.now, Some(0L))
+          , DateTime.now)
       )
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq(orderedlc1, orderedlc2, orderedlc3))
@@ -3108,7 +3105,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(Some(road1000), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 1, 8)
-          , DateTime.now, Some(0L))
+          , DateTime.now)
       )
 
       linearLocationDAO.expireByRoadwayNumbers(Set(combLink3.roadwayNumber))
@@ -3215,19 +3212,19 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), startAddressM = Some(10L), endAddressM = Some(20L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 2, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part2), endRoadPartNumber = Some(part1), startAddressM = Some(0L), endAddressM = Some(15L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, 8)
-          , DateTime.now, Some(0L))
+          , DateTime.now)
       )
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq(lc1, lc2, lc3))
@@ -3269,7 +3266,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part2), endRoadPartNumber = Some(part1), startAddressM = Some(0L), endAddressM = Some(15L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, 8)
-          , DateTime.now, Some(0L))
+          , DateTime.now)
       )
 
       linearLocationDAO.expireByRoadwayNumbers(Set(combLink3.roadwayNumber))
@@ -3375,19 +3372,19 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), startAddressM = Some(10L), endAddressM = Some(20L), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L)),
             Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 2, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part2), endRoadPartNumber = Some(part2), startAddressM = Some(0L), endAddressM = Some(15L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, 8)
-          , DateTime.now, Some(0L))
+          , DateTime.now)
       )
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq(lc1, lc2, lc3))
@@ -3434,7 +3431,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part2), endRoadPartNumber = Some(part2), startAddressM = Some(0L), endAddressM = Some(15L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, 8)
-          , DateTime.now, Some(0L))
+          , DateTime.now)
       )
 
       linearLocationDAO.expireByRoadwayNumbers(Set(combLink3.roadwayNumber))
@@ -3547,13 +3544,13 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(0L), endAddressM = Some(15L), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(15L), endAddressM = Some(20L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 2, 8)
-          , DateTime.now, Some(0L))
+          , DateTime.now)
       )
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom1.head, combGeom1.head), roadNumberLimits)).thenReturn(Seq(lc1, lc4))
@@ -3638,13 +3635,13 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(0L), endAddressM = Some(15L), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(15L), endAddressM = Some(20L), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L)),
             Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 2, 8)
-          , DateTime.now, Some(0L))
+          , DateTime.now)
       )
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom1.head, combGeom1.head), roadNumberLimits)).thenReturn(Seq(orderedlc1, orderedlc2, orderedlc3, orderedlc4))
@@ -3729,13 +3726,13 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(0L), endAddressM = Some(15L), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
             RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(15L), endAddressM = Some(20L), Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
             Discontinuity.MinorDiscontinuity, AdministrativeClass.State, reversed = false, 2, 8)
-          , DateTime.now, Some(0L))
+          , DateTime.now)
       )
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom1.head, combGeom1.head), roadNumberLimits)).thenReturn(Seq(orderedlc1, orderedlc2, orderedlc3, orderedlc4))
@@ -3813,27 +3810,27 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(999), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(999L), endRoadPartNumber = Some(999L), startAddressM = Some(0L), endAddressM = Some(50L), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         //right
         ProjectRoadwayChange(0, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(999), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(999L), endRoadPartNumber = Some(999L), startAddressM = Some(0L), endAddressM = Some(50L), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 2, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         //combined
         ProjectRoadwayChange(0, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(999), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(999L), endRoadPartNumber = Some(999L), startAddressM = Some(50L), endAddressM = Some(100L), Some(AdministrativeClass.Municipality), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.Municipality, reversed = false, 3, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         ProjectRoadwayChange(0, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(999), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(999L), endRoadPartNumber = Some(999L), startAddressM = Some(50L), endAddressM = Some(150L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 3, 8)
-          , DateTime.now, Some(0L))
+          , DateTime.now)
       )
       val mappedChanges = projectLinkDAO.fetchProjectLinksChange(projectId)
       nodesAndJunctionsService.handleNodePoints(projectChanges, pls, mappedChanges)
@@ -3871,27 +3868,27 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(Some(999), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(999L), endRoadPartNumber = Some(999L), startAddressM = Some(0L), endAddressM = Some(50L), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(999), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(999L), endRoadPartNumber = Some(999L), startAddressM = Some(100), endAddressM = Some(150L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = true, 1, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         //right
         ProjectRoadwayChange(0, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.Transfer,
             RoadwayChangeSection(Some(999), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(999L), endRoadPartNumber = Some(999L), startAddressM = Some(0L), endAddressM = Some(50L), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(999), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(999L), endRoadPartNumber = Some(999L), startAddressM = Some(100), endAddressM = Some(150L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = true, 2, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         ProjectRoadwayChange(0, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.Transfer,
             RoadwayChangeSection(Some(999), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(999L), endRoadPartNumber = Some(999L), startAddressM = Some(50L), endAddressM = Some(100L), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(999), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(999L), endRoadPartNumber = Some(999L), startAddressM = Some(50L), endAddressM = Some(100L), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = true, 2, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         //combined
         ProjectRoadwayChange(0, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.Transfer,
             RoadwayChangeSection(Some(999), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(999L), endRoadPartNumber = Some(999L), startAddressM = Some(100), endAddressM = Some(150L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             RoadwayChangeSection(Some(999), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(999L), endRoadPartNumber = Some(999L), startAddressM = Some(0L), endAddressM = Some(50L), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = true, 3, 8)
-          , DateTime.now, Some(0L))
+          , DateTime.now)
       )
 
       val reversedPls = Seq(reversedCombined1, reversedCombined2, reversedRight, reversedLeft)
@@ -3966,13 +3963,13 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(roadLink1.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(roadLink1.roadPartNumber), endRoadPartNumber = Some(roadLink1.roadPartNumber), startAddressM = Some(0L), endAddressM = Some(100L), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         ProjectRoadwayChange(0, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(roadLink2.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(roadLink2.roadPartNumber), endRoadPartNumber = Some(roadLink2.roadPartNumber), startAddressM = Some(0L), endAddressM = Some(150L), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 2, 8)
-          , DateTime.now, Some(0L))
+          , DateTime.now)
       )
       val mappedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       // Creation of nodes and node points
@@ -4068,7 +4065,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(roadLink.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(roadLink.roadPartNumber), endRoadPartNumber = Some(roadLink.roadPartNumber), startAddressM = Some(0L), endAddressM = Some(100L), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
-          , DateTime.now, Some(0L))
+          , DateTime.now)
       )
       val mappedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       nodesAndJunctionsService.handleNodePoints(projectChanges, projectLinks, mappedRoadwayNumbers)
@@ -4161,7 +4158,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(roadLink.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(roadLink.roadPartNumber), endRoadPartNumber = Some(roadLink.roadPartNumber), startAddressM = Some(roadLink.startAddrMValue), endAddressM = Some(roadLink.endAddrMValue), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
-          , DateTime.now, Some(0L))
+          , DateTime.now)
       )
       val mappedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       // Creation of nodes and node points
@@ -4209,13 +4206,13 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(newRoadLink.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(newRoadLink.roadPartNumber), endRoadPartNumber = Some(newRoadLink.roadPartNumber), startAddressM = Some(newRoadLink.startAddrMValue), endAddressM = Some(newRoadLink.endAddrMValue), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         ProjectRoadwayChange(0, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(roadLink.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(roadLink.roadPartNumber), endRoadPartNumber = Some(roadLink.roadPartNumber), startAddressM = Some(roadLink.startAddrMValue), endAddressM = Some(roadLink.endAddrMValue), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
-          , DateTime.now, Some(0L))
+          , DateTime.now)
       )
       val mappedRoadwayNumbers2 = projectLinkDAO.fetchProjectLinksChange(projectId)
       nodesAndJunctionsService.handleNodePoints(projectChangesAfterChanges, Seq(roadLink, newRoadLink), mappedRoadwayNumbers2)
@@ -4277,13 +4274,13 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road1Link.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(road1Link.roadPartNumber), endRoadPartNumber = Some(road1Link.roadPartNumber), startAddressM = Some(road1Link.startAddrMValue), endAddressM = Some(road1Link.endAddrMValue), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         ProjectRoadwayChange(0, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road2Link.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(road2Link.roadPartNumber), endRoadPartNumber = Some(road2Link.roadPartNumber), startAddressM = Some(road2Link.startAddrMValue), endAddressM = Some(road2Link.endAddrMValue), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
-          , DateTime.now, Some(0L))
+          , DateTime.now)
       )
       val mappedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       // Creation of junction points template
@@ -4377,13 +4374,13 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road1Link1.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(road1Link1.roadPartNumber), endRoadPartNumber = Some(road1Link1.roadPartNumber), startAddressM = Some(road1Link1.startAddrMValue), endAddressM = Some(road1Link1.endAddrMValue), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         ProjectRoadwayChange(0, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road2Link.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(road2Link.roadPartNumber), endRoadPartNumber = Some(road2Link.roadPartNumber), startAddressM = Some(road2Link.startAddrMValue), endAddressM = Some(road2Link.endAddrMValue), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
-          , DateTime.now, Some(0L))
+          , DateTime.now)
       )
       val mappedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       // Creation of junction points template
@@ -4477,13 +4474,13 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road999), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), startAddressM = Some(0L), endAddressM = Some(20L), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L)),
             Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 1, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road1000), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), startAddressM = Some(0L), endAddressM = Some(9L), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L)),
             Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 2, 8)
-          , DateTime.now, Some(0L))
+          , DateTime.now)
       )
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq(orderedlll1, orderedlll2, orderedlll3))
@@ -4521,19 +4518,19 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(Some(road999), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), startAddressM = Some(10L), endAddressM = Some(20L), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L)),
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 1, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.Transfer,
             RoadwayChangeSection(Some(road999), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             RoadwayChangeSection(Some(road999), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 2, 8)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.Transfer,
             RoadwayChangeSection(Some(road1000), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), startAddressM = Some(0L), endAddressM = Some(9L), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L)),
             RoadwayChangeSection(Some(road999), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), startAddressM = Some(10L), endAddressM = Some(19L), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L)),
             Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 3, 8)
-          , DateTime.now, Some(0L))
+          , DateTime.now)
       )
 
       linearLocationDAO.expireByRoadwayNumbers(Set(rw1WithId.roadwayNumber, rw2WithId.roadwayNumber))
@@ -4666,21 +4663,21 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
             RoadwayChangeSection(Some(rw1.roadNumber), Some(rw1.track.value), startRoadPartNumber = Some(rw1.roadPartNumber), endRoadPartNumber = Some(rw1.roadPartNumber), startAddressM = Some(rw1.startAddrMValue), endAddressM = Some(rw1.endAddrMValue), Some(rw1.administrativeClass), Some(rw1.discontinuity), Some(rw1.ely)),
             rw1.discontinuity, rw1.administrativeClass, reversed = false, 1, rw1.ely)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
 
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
             RoadwayChangeSection(Some(rw2.roadNumber), Some(rw2.track.value), startRoadPartNumber = Some(rw2.roadPartNumber), endRoadPartNumber = Some(rw2.roadPartNumber), startAddressM = Some(rw2.startAddrMValue), endAddressM = Some(rw2.endAddrMValue), Some(rw2.administrativeClass), Some(rw2.discontinuity), Some(rw2.ely)),
             rw2.discontinuity, rw2.administrativeClass, reversed = false, 2, rw2.ely)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
 
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
             RoadwayChangeSection(Some(rw3.roadNumber), Some(rw3.track.value), startRoadPartNumber = Some(rw3.roadPartNumber), endRoadPartNumber = Some(rw3.roadPartNumber), startAddressM = Some(rw3.startAddrMValue), endAddressM = Some(rw3.endAddrMValue), Some(rw3.administrativeClass), Some(rw3.discontinuity), Some(rw3.ely)),
             rw3.discontinuity, rw3.administrativeClass, reversed = false, 3, rw3.ely)
-          , DateTime.now, Some(0L))
+          , DateTime.now)
       )
 
       val mappedReservedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
@@ -4747,42 +4744,42 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
             RoadwayChangeSection(Some(rw1.roadNumber), Some(rw1.track.value), startRoadPartNumber = Some(rw1.roadPartNumber), endRoadPartNumber = Some(rw1.roadPartNumber), startAddressM = Some(rw1.startAddrMValue), endAddressM = Some(rw1.endAddrMValue), Some(rw1.administrativeClass), Some(rw1.discontinuity), Some(rw1.ely)),
             rw1.discontinuity, rw1.administrativeClass, reversed = false, 1, rw1.ely)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
 
         ProjectRoadwayChange(project1Id, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
             RoadwayChangeSection(Some(rw2.roadNumber), Some(rw2.track.value), startRoadPartNumber = Some(rw2.roadPartNumber), endRoadPartNumber = Some(rw2.roadPartNumber), startAddressM = Some(rw2.startAddrMValue), endAddressM = Some(rw2.endAddrMValue), Some(rw2.administrativeClass), Some(rw2.discontinuity), Some(rw2.ely)),
             rw2.discontinuity, rw2.administrativeClass, reversed = false, 2, rw2.ely)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
 
         ProjectRoadwayChange(project1Id, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
             RoadwayChangeSection(Some(rw3.roadNumber), Some(rw3.track.value), startRoadPartNumber = Some(rw3.roadPartNumber), endRoadPartNumber = Some(rw3.roadPartNumber), startAddressM = Some(rw3.startAddrMValue), endAddressM = Some(rw3.endAddrMValue), Some(rw3.administrativeClass), Some(rw3.discontinuity), Some(rw3.ely)),
             rw3.discontinuity, rw3.administrativeClass, reversed = false, 3, rw3.ely)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
 
         ProjectRoadwayChange(project1Id, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
             RoadwayChangeSection(Some(rw4.roadNumber), Some(rw4.track.value), startRoadPartNumber = Some(rw4.roadPartNumber), endRoadPartNumber = Some(rw4.roadPartNumber), startAddressM = Some(rw4.startAddrMValue), endAddressM = Some(rw4.endAddrMValue), Some(rw4.administrativeClass), Some(rw4.discontinuity), Some(rw4.ely)),
             rw4.discontinuity, rw4.administrativeClass, reversed = false, 4, rw4.ely)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
 
         ProjectRoadwayChange(project1Id, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
             RoadwayChangeSection(Some(rw5.roadNumber), Some(rw5.track.value), startRoadPartNumber = Some(rw5.roadPartNumber), endRoadPartNumber = Some(rw5.roadPartNumber), startAddressM = Some(rw5.startAddrMValue), endAddressM = Some(rw5.endAddrMValue), Some(rw5.administrativeClass), Some(rw5.discontinuity), Some(rw5.ely)),
             rw5.discontinuity, rw5.administrativeClass, reversed = false, 5, rw5.ely)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
 
         ProjectRoadwayChange(project1Id, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
             RoadwayChangeSection(Some(rw6.roadNumber), Some(rw6.track.value), startRoadPartNumber = Some(rw6.roadPartNumber), endRoadPartNumber = Some(rw6.roadPartNumber), startAddressM = Some(rw6.startAddrMValue), endAddressM = Some(rw6.endAddrMValue), Some(rw6.administrativeClass), Some(rw6.discontinuity), Some(rw6.ely)),
             rw6.discontinuity, rw6.administrativeClass, reversed = false, 6, rw6.ely)
-          , DateTime.now, Some(0L))
+          , DateTime.now)
       )
 
       val mappedReservedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(project1Id)
@@ -4862,42 +4859,42 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(Some(rw4.roadNumber), Some(rw4.track.value), startRoadPartNumber = Some(rw4.roadPartNumber), endRoadPartNumber = Some(rw4.roadPartNumber), startAddressM = Some(rw4.startAddrMValue), endAddressM = Some(rw4.endAddrMValue), Some(rw4.administrativeClass), Some(rw4.discontinuity), Some(rw4.ely)),
             RoadwayChangeSection(Some(rw1t1.roadNumber), Some(rw1t1.track.value), startRoadPartNumber = Some(rw1t1.roadPartNumber), endRoadPartNumber = Some(rw1t1.roadPartNumber), startAddressM = Some(rw1t1.startAddrMValue), endAddressM = Some(rw1t1.endAddrMValue), Some(rw1t1.administrativeClass), Some(rw1t1.discontinuity), Some(rw1t1.ely)),
             rw1t1.discontinuity, rw1t1.administrativeClass, reversed = false, 1, rw1t1.ely)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
 
         ProjectRoadwayChange(project2Id, Some("project another name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.Transfer,
             RoadwayChangeSection(Some(rw1.roadNumber), Some(rw1.track.value), startRoadPartNumber = Some(rw1.roadPartNumber), endRoadPartNumber = Some(rw1.roadPartNumber), startAddressM = Some(rw1.startAddrMValue), endAddressM = Some(rw1.endAddrMValue), Some(rw1.administrativeClass), Some(rw1.discontinuity), Some(rw1.ely)),
             RoadwayChangeSection(Some(rw1t2.roadNumber), Some(rw1t2.track.value), startRoadPartNumber = Some(rw1t2.roadPartNumber), endRoadPartNumber = Some(rw1t2.roadPartNumber), startAddressM = Some(rw1t2.startAddrMValue), endAddressM = Some(rw1t2.endAddrMValue), Some(rw1t2.administrativeClass), Some(rw1t2.discontinuity), Some(rw1t2.ely)),
             rw1t2.discontinuity, rw1t2.administrativeClass, reversed = false, 2, rw1t2.ely)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
 
         ProjectRoadwayChange(project2Id, Some("project another name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.Transfer,
             RoadwayChangeSection(Some(rw5.roadNumber), Some(rw5.track.value), startRoadPartNumber = Some(rw5.roadPartNumber), endRoadPartNumber = Some(rw5.roadPartNumber), startAddressM = Some(rw5.startAddrMValue), endAddressM = Some(rw5.endAddrMValue), Some(rw5.administrativeClass), Some(rw5.discontinuity), Some(rw5.ely)),
             RoadwayChangeSection(Some(rw2t1.roadNumber), Some(rw2t1.track.value), startRoadPartNumber = Some(rw2t1.roadPartNumber), endRoadPartNumber = Some(rw2t1.roadPartNumber), startAddressM = Some(rw2t1.startAddrMValue), endAddressM = Some(rw2t1.endAddrMValue), Some(rw2t1.administrativeClass), Some(rw2t1.discontinuity), Some(rw2t1.ely)),
             rw2t1.discontinuity, rw2t1.administrativeClass, reversed = false, 3, rw2t1.ely)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
 
         ProjectRoadwayChange(project2Id, Some("project another name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.Transfer,
             RoadwayChangeSection(Some(rw2.roadNumber), Some(rw2.track.value), startRoadPartNumber = Some(rw2.roadPartNumber), endRoadPartNumber = Some(rw2.roadPartNumber), startAddressM = Some(rw2.startAddrMValue), endAddressM = Some(rw2.endAddrMValue), Some(rw2.administrativeClass), Some(rw2.discontinuity), Some(rw2.ely)),
             RoadwayChangeSection(Some(rw2t2.roadNumber), Some(rw2t2.track.value), startRoadPartNumber = Some(rw2t2.roadPartNumber), endRoadPartNumber = Some(rw2t2.roadPartNumber), startAddressM = Some(rw2t2.startAddrMValue), endAddressM = Some(rw2t2.endAddrMValue), Some(rw2t2.administrativeClass), Some(rw2t2.discontinuity), Some(rw2t2.ely)),
             rw2t2.discontinuity, rw2t2.administrativeClass, reversed = false, 4, rw2t2.ely)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
 
         ProjectRoadwayChange(project2Id, Some("project another name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.Transfer,
             RoadwayChangeSection(Some(rw6.roadNumber), Some(rw6.track.value), startRoadPartNumber = Some(rw6.roadPartNumber), endRoadPartNumber = Some(rw6.roadPartNumber), startAddressM = Some(rw6.startAddrMValue), endAddressM = Some(rw6.endAddrMValue), Some(rw6.administrativeClass), Some(rw6.discontinuity), Some(rw6.ely)),
             RoadwayChangeSection(Some(rw3t1.roadNumber), Some(rw3t1.track.value), startRoadPartNumber = Some(rw3t1.roadPartNumber), endRoadPartNumber = Some(rw3t1.roadPartNumber), startAddressM = Some(rw3t1.startAddrMValue), endAddressM = Some(rw3t1.endAddrMValue), Some(rw3t1.administrativeClass), Some(rw3t1.discontinuity), Some(rw3t1.ely)),
             rw3t1.discontinuity, rw3t1.administrativeClass, reversed = false, 5, rw3t1.ely)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
 
         ProjectRoadwayChange(project2Id, Some("project another name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.Transfer,
             RoadwayChangeSection(Some(rw3.roadNumber), Some(rw3.track.value), startRoadPartNumber = Some(rw3.roadPartNumber), endRoadPartNumber = Some(rw3.roadPartNumber), startAddressM = Some(rw3.startAddrMValue), endAddressM = Some(rw3.endAddrMValue), Some(rw3.administrativeClass), Some(rw3.discontinuity), Some(rw3.ely)),
             RoadwayChangeSection(Some(rw3t2.roadNumber), Some(rw3t2.track.value), startRoadPartNumber = Some(rw3t2.roadPartNumber), endRoadPartNumber = Some(rw3t2.roadPartNumber), startAddressM = Some(rw3t2.startAddrMValue), endAddressM = Some(rw3t2.endAddrMValue), Some(rw3t2.administrativeClass), Some(rw3t2.discontinuity), Some(rw3t2.ely)),
             rw3t2.discontinuity, rw3t2.administrativeClass, reversed = false, 6, rw3t2.ely)
-          , DateTime.now, Some(0L))
+          , DateTime.now)
       )
 
       val mappedReservedRoadwayNumbersAfterTrackChange = projectLinkDAO.fetchProjectLinksChange(project2Id)
