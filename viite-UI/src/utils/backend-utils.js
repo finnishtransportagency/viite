@@ -293,8 +293,8 @@
 
     this.reOpenProject = function (projectId, success, errorCallback) {
       $.ajax({
-        type: "DELETE",
-        url: "api/viite/project/trid/" + projectId,
+        type: "POST",
+        url: "api/viite/project/id/" + projectId,
         success: success,
         error: errorCallback
       });
