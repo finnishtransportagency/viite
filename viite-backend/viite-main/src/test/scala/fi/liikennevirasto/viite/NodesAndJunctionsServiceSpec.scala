@@ -1861,7 +1861,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
             RoadwayChangeSection(Some(rw3.roadNumber), Some(rw3.track.value), startRoadPartNumber = Some(rw3.roadPartNumber), endRoadPartNumber = Some(rw3.roadPartNumber), startAddressM = Some(rw3.startAddrMValue), endAddressM = Some(rw3.endAddrMValue), Some(rw3.administrativeClass), Some(rw3.discontinuity), Some(rw3.ely)),
             rw3.discontinuity, rw3.administrativeClass, reversed = false, 1, rw3.ely)
-          , DateTime.now, Some(0L)),
+          , DateTime.now),
 
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
