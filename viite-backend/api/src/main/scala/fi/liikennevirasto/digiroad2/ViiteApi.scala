@@ -1117,21 +1117,20 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
     }
   }
 
-  @deprecated ("Tierekisteri connection has been removed from Viite. TRId to be removed, too.")
-  private val removeRotatingTRIdByProjectId: SwaggerSupportSyntax.OperationBuilder = (
-    apiOperation[Map[String, Any]]("removeRotatingTRIdByProjectId")
+  private val reOpenProject: SwaggerSupportSyntax.OperationBuilder = (
+    apiOperation[Map[String, Any]]("reOpenProject")
       .parameters(
         pathParam[Long]("projectId").description("Id of a project")
       )
       tags "ViiteAPI - Project"
-      summary "This is a part of the re-opening of a project, this one will remove the TRId of a project that has the projectId supplied."
+      summary "This is a part of the re-opening of a project, this one will update the status of a project that has the projectId supplied."
     )
 
-  delete("/project/trid/:projectId", operation(removeRotatingTRIdByProjectId)) {
+  post("/project/id/:projectId", operation(reOpenProject)) {
     val projectId = params("projectId").toLong
-    time(logger, s"DELETE request for /project/trid/$projectId") {
+    time(logger, s"POST request for /project/id/$projectId") {
       userProvider.getCurrentUser
-      val oError = projectService.removeRotatingTRId(projectId)
+      val oError = projectService.reOpenProject(projectId)
       oError match {
         case Some(error) =>
           Map("success" -> "false", "message" -> error)

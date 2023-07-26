@@ -141,13 +141,6 @@ class ProjectService(
     projectDAO.updateProjectCoordinates(projectId, coordinates)
   }
 
-  @deprecated ("Tierekisteri connection has been removed from Viite. TRId to be removed, too.")
-  def fetchProjectInfoByTRId(trProjectId: Long): Option[Project] = {
-    withDynTransaction {
-      projectDAO.fetchByTRId(trProjectId)
-    }
-  }
-
   /**
     * Creates the new project
     * Adds the road addresses from the reserved parts to the project link table
@@ -964,7 +957,7 @@ class ProjectService(
 
   private def convertChangeDataToChangeProject(changeData: ProjectRoadwayChange): ChangeProject = {
     val changeInfo = changeData.changeInfo
-    ChangeProject(changeData.rotatingTRId.getOrElse(nullRotatingChangeProjectId), changeData.projectName.getOrElse(""), changeData.user,
+    ChangeProject(nullRotatingChangeProjectId, changeData.projectName.getOrElse(""), changeData.user,
       DateTimeFormat.forPattern("yyyy-MM-dd").print(changeData.projectStartDate), Seq(changeInfo))
   }
 
@@ -1698,46 +1691,20 @@ class ProjectService(
     }
   }
 
-  /** Nullifies projects tr_id attribute, changes status to unfinished and saves tr_info value to status_info. Tries to append old status info if it is possible
-    * otherwise it only takes first 300 chars
+  /** Changes projects status to unfinished
     *
     * @param projectId project-id
     * @return returns option error string
     */
-  @deprecated ("Tierekisteri connection has been removed from Viite. TRId to be removed, too.")
-  def removeRotatingTRId(projectId: Long): Option[String] = {
+
+  def reOpenProject(projectId: Long): Option[String] = {
     withDynSession {
       val project = fetchProjectById(projectId)
-      val rotatingTR_Id = projectDAO.fetchTRIdByProjectId(projectId)
       projectDAO.updateProjectStatus(projectId, ProjectState.Incomplete)
-      val addedStatus = if (rotatingTR_Id.isEmpty) "" else "[OLD TR_ID was " + rotatingTR_Id.get + "]"
       if (project.isEmpty)
         return Some("Projektia ei löytynyt")
-      appendStatusInfo(project.get, addedStatus)
     }
     None
-  }
-
-  /**
-    * Tries to append old status info if it is possible
-    * otherwise it only takes first 300 chars of the old status
-    *
-    * @param project
-    * @param appendMessage
-    */
-  private def appendStatusInfo(project: Project, appendMessage: String): Unit = {
-    val maxStringLength = 1000
-    project.statusInfo match { // before removing tr-id we want to save it in statusInfo if we need it later. Currently it is overwritten when we resend and get new error
-      case Some(statusInfo) =>
-        if ((statusInfo + appendMessage).length < maxStringLength)
-          projectDAO.updateProjectStateInfo(appendMessage + statusInfo, project.id)
-        else if (statusInfo.length + appendMessage.length < 600)
-          projectDAO.updateProjectStateInfo(appendMessage + statusInfo.substring(0, 300), project.id)
-      case None =>
-        if (appendMessage.nonEmpty)
-          projectDAO.updateProjectStateInfo(appendMessage, project.id)
-    }
-    projectDAO.removeProjectTRId(project.id)
   }
 
   /**
@@ -1753,8 +1720,6 @@ class ProjectService(
         return PublishResult(validationSuccess = false, sendSuccess = false, Some("Muutostaulun luonti epäonnistui. Tarkasta ely"))
       }
       else {
-        projectDAO.assignNewProjectTRId(projectId) //Generate new TR_ID // TODO TR id handling to be removed
-
         projectDAO.updateProjectStatus(projectId, InUpdateQueue)
         logger.info(s"Returning dummy 'Yesyes, TR part ok', as TR call removed")
         PublishResult(validationSuccess = true, sendSuccess = true, Some(""))
@@ -1933,26 +1898,20 @@ class ProjectService(
     * @param projectID : Long - The id of the project to be persisted.
     */
   private def preserveProjectToDB(projectID: Long): Unit = {
-    projectDAO.fetchTRIdByProjectId(projectID) match {
-      case Some(trId) =>
-        val currentState = projectDAO.fetchProjectStatus(projectID)
-          logger.info(s"Current status is $currentState")
-          if (currentState.isDefined && currentState.get == UpdatingToRoadNetwork) {
-            logger.info(s"Start importing road addresses of project $projectID to the road network")
-            try {
-              val roadParts = updateRoadwaysAndLinearLocationsWithProjectLinks(projectID)
-              roadNetworkValidator.validateRoadNetwork(roadParts)
-            } catch {
-              case t: InvalidAddressDataException =>
-                throw t // Rethrow the unexpected error.
-              case t: RoadNetworkValidationException =>
-                throw t // Rethrow the unexpected error.
-            }
-          } else Set.empty[Long]
-      case None =>
-        logger.info(s"During status checking VIITE wasn't able to find TR_ID to project $projectID")
-        appendStatusInfo(fetchProjectById(projectID).head, " Failed to find TR-ID ")
-    }
+    val currentState = projectDAO.fetchProjectStatus(projectID)
+      logger.info(s"Current status is $currentState")
+      if (currentState.isDefined && currentState.get == UpdatingToRoadNetwork) {
+        logger.info(s"Start importing road addresses of project $projectID to the road network")
+        try {
+          val roadParts = updateRoadwaysAndLinearLocationsWithProjectLinks(projectID)
+          roadNetworkValidator.validateRoadNetwork(roadParts)
+        } catch {
+          case t: InvalidAddressDataException =>
+            throw t // Rethrow the unexpected error.
+          case t: RoadNetworkValidationException =>
+            throw t // Rethrow the unexpected error.
+        }
+      } else Set.empty[Long]
   }
 
   /**

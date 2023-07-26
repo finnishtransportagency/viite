@@ -103,13 +103,6 @@ class ProjectDAO {
     Q.queryNA[Long](query).list
   }
 
-  @deprecated ("Tierekisteri connection has been removed from Viite. TRId to be removed, too.")
-  def fetchByTRId(trProjectId: Long): Option[Project] = {
-    time(logger, "Fetch project by tr_id") {
-      fetch(query => s"""$query where tr_id = $trProjectId""").headOption
-    }
-  }
-
   def fetchById(projectId: Long, withNullElyFilter: Boolean = false): Option[Project] = {
     time(logger, "Fetch project by id") {
       if(withNullElyFilter)
@@ -152,16 +145,6 @@ class ProjectDAO {
     Q.queryNA[(Int,Int)](query).list
   }
 
-  @deprecated ("Tierekisteri connection has been removed from Viite. TRId to be removed, too.")
-  def assignNewProjectTRId(projectId: Long): Unit = {
-    Q.updateNA(s"UPDATE PROJECT SET TR_ID = nextval('viite_project_seq') WHERE ID= $projectId").execute
-  }
-
-  @deprecated ("Tierekisteri connection has been removed from Viite. TRId to be removed, too.")
-  def removeProjectTRId(projectId: Long): Unit = {
-    Q.updateNA(s"UPDATE PROJECT SET TR_ID = NULL WHERE ID= $projectId").execute
-  }
-
   def updateProjectStateInfo(stateInfo: String, projectId: Long): Unit = {
     Q.updateNA(s"UPDATE PROJECT SET STATUS_INFO = '$stateInfo' WHERE ID= $projectId").execute
   }
@@ -170,10 +153,6 @@ class ProjectDAO {
     Q.updateNA(s"UPDATE PROJECT SET COORD_X = ${coordinates.x},COORD_Y = ${coordinates.y}, ZOOM = ${coordinates.zoom} WHERE ID= $projectId").execute
   }
 
-  @deprecated ("Tierekisteri connection has been removed from Viite. TRId to be removed, too.")
-  def fetchTRIdByProjectId(projectId: Long): Option[Long] = {
-    Q.queryNA[Long](s"Select tr_id From Project WHERE Id=$projectId AND tr_id IS NOT NULL ").list.headOption
-  }
 
   def updateProjectStatus(projectID: Long, state: ProjectState): Unit = {
     sqlu""" update project set state=${state.value} WHERE id=$projectID""".execute
