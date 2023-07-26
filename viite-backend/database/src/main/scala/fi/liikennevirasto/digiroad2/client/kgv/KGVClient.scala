@@ -5,8 +5,6 @@ import fi.liikennevirasto.digiroad2.util.ViiteProperties
 import fi.vaylavirasto.viite.dao.ComplementaryLinkDAO
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
 import fi.vaylavirasto.viite.model.{AdministrativeClass, LifecycleStatus, LinkGeomSource, RoadLink, RoadLinkLike, TrafficDirection}
-
-import scala.collection.immutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -28,7 +26,7 @@ class KgvRoadLink {
 class KgvRoadLinkClient[T](collection: Option[KgvCollection] = None, linkGeomSourceValue:Option[LinkGeomSource] = None) extends KgvOperation {
 
   override type LinkType = T
-  override protected val serviceName = collection.getOrElse(throw new ClientException("Collection is not defined") ).value
+  override protected val serviceName: String = collection.getOrElse(throw new ClientException("Collection is not defined") ).value
   override protected val linkGeomSource: LinkGeomSource = linkGeomSourceValue.getOrElse(throw new ClientException("LinkGeomSource is not defined") )
   val restApiEndPoint: String = ViiteProperties.kgvEndpoint
   val filter:Filter = FilterOgc

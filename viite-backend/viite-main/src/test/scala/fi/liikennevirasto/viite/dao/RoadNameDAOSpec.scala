@@ -29,7 +29,7 @@ class RoadNameDAOSpec extends FunSuite with Matchers {
       // create roadway
       roadwayDAO.create(
         Seq(
-          Roadway(Sequences.nextRoadwayId, Sequences.nextRoadwayNumber, roadNumber, roadPartNumber, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, 0L, 1000L, false, DateTime.parse(date), None, "test", Some("testRoad"), 1L, validFrom = DateTime.parse(date), validTo = None)
+          Roadway(Sequences.nextRoadwayId, Sequences.nextRoadwayNumber, roadNumber, roadPartNumber, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, 0L, 1000L, reversed=false, DateTime.parse(date), None, "test", Some("testRoad"), 1L, validFrom = DateTime.parse(date), validTo = None)
         )
       )
 
@@ -82,8 +82,8 @@ class RoadNameDAOSpec extends FunSuite with Matchers {
       val situationDateDayBeforeChanges = "2022-12-14"
 
       // ely changes from 1 to 9
-      val historyRoadway = Roadway(Sequences.nextRoadwayId, roadwayNumber, roadNumber, roadPartNumber, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, 0L, 1000L, false, DateTime.parse(rwHistoryStartDate),Some(DateTime.parse(rwHistoryEndDate)), "test", Some("oldName"),ely1, validFrom = DateTime.parse(validFrom), validTo = None)
-      val currentRoadway = Roadway(Sequences.nextRoadwayId, roadwayNumber, roadNumber, roadPartNumber, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, 0L, 1000L, false, DateTime.parse(rwCurrentStartDate), None, "test", Some("newName"),ely9, validFrom = DateTime.parse(validFrom), validTo = None)
+      val historyRoadway = Roadway(Sequences.nextRoadwayId, roadwayNumber, roadNumber, roadPartNumber, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, 0L, 1000L, reversed=false, DateTime.parse(rwHistoryStartDate),Some(DateTime.parse(rwHistoryEndDate)), "test", Some("oldName"),ely1, validFrom = DateTime.parse(validFrom), validTo = None)
+      val currentRoadway = Roadway(Sequences.nextRoadwayId, roadwayNumber, roadNumber, roadPartNumber, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, 0L, 1000L, reversed=false, DateTime.parse(rwCurrentStartDate), None, "test", Some("newName"),ely9, validFrom = DateTime.parse(validFrom), validTo = None)
 
       // create roadways
       roadwayDAO.create(

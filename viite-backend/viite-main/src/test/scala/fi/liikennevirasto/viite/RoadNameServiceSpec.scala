@@ -1,15 +1,13 @@
 package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.user.{Configuration, User}
-import fi.vaylavirasto.viite.dao.{RoadName, RoadNameDAO}
+import fi.vaylavirasto.viite.dao.RoadNameDAO
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{StaticQuery => Q}
 
 class RoadNameServiceSpec extends FunSuite with Matchers {
   private val roadNameService = new RoadNameService
@@ -31,7 +29,7 @@ class RoadNameServiceSpec extends FunSuite with Matchers {
       search match {
         case Right(result) =>
           result.size should be(1)
-        case Left(x) => println("should not get here")
+        case Left(_) => println("should not get here")
       }
     }
   }
@@ -44,7 +42,7 @@ class RoadNameServiceSpec extends FunSuite with Matchers {
       search match {
         case Right(result) =>
           result.size should be(1)
-        case Left(x) => println("should not get here")
+        case Left(_) => println("should not get here")
       }
     }
   }
@@ -57,7 +55,7 @@ class RoadNameServiceSpec extends FunSuite with Matchers {
       search match {
         case Right(result) =>
           result.size should be(1)
-        case Left(x) => println("should not get here")
+        case Left(_) => println("should not get here")
       }
     }
   }
@@ -70,7 +68,7 @@ class RoadNameServiceSpec extends FunSuite with Matchers {
       search match {
         case Right(result) =>
           result.size should be(1)
-        case Left(x) => println("should not get here")
+        case Left(_) => println("should not get here")
       }
     }
   }
@@ -83,7 +81,7 @@ class RoadNameServiceSpec extends FunSuite with Matchers {
       search match {
         case Right(result) =>
           result.size should be(0)
-        case Left(x) => println("should not get here")
+        case Left(_) => println("should not get here")
       }
     }
   }
@@ -96,7 +94,7 @@ class RoadNameServiceSpec extends FunSuite with Matchers {
       search match {
         case Right(result) =>
           result.size should be(0)
-        case Left(x) => println("should not get here")
+        case Left(_) => println("should not get here")
       }
     }
   }
@@ -109,7 +107,7 @@ class RoadNameServiceSpec extends FunSuite with Matchers {
       search match {
         case Right(result) =>
           result.size should be(1)
-        case Left(x) => println("should not get here")
+        case Left(_) => println("should not get here")
       }
     }
   }
@@ -215,7 +213,7 @@ class RoadNameServiceSpec extends FunSuite with Matchers {
   test("Test RoadNameService.getRoadNameByNumber() When no name exists for a specific road number Then it should return a formatted response instead of None") {
     runWithRollback {
       val result = roadNameService.getRoadNameByNumber(99999, 99999)
-      result.get("roadName").isDefined should be (true)
+      result.contains("roadName") should be (true)
       result("roadName") should be (None)
     }
   }

@@ -17,7 +17,7 @@ object RoadNameDAO {
   private val logger = LoggerFactory.getLogger(getClass)
   private val roadsNameQueryBase =  s"""select id,road_number,road_Name,start_date,end_date,valid_from,valid_To,created_By
   from ROAD_NAME"""
-  implicit val getRoadNameRow = new GetResult[RoadName] {
+  implicit val getRoadNameRow: GetResult[RoadName] = new GetResult[RoadName] {
     def apply(r: PositionedResult) = {
       val roadNameId = r.nextLong()
       val roadNumber = r.nextLong()
@@ -32,7 +32,7 @@ object RoadNameDAO {
     }
   }
 
-  implicit val getRoadNameForRoadAddressBrowser = new GetResult[RoadNameForRoadAddressBrowser] {
+  implicit val getRoadNameForRoadAddressBrowser: GetResult[RoadNameForRoadAddressBrowser] = new GetResult[RoadNameForRoadAddressBrowser] {
     def apply(r: PositionedResult) = {
       val ely = r.nextLong()
       val roadNumber = r.nextLong()
@@ -158,17 +158,17 @@ object RoadNameDAO {
     queryList(query).headOption
   }
 
-  def expire(id: Long, username: String) = {
+  def expire(id: Long, username: String): Int = {
     val query = s"""Update ROAD_NAME Set valid_to = current_timestamp, created_by = '$username' where id = $id"""
     Q.updateNA(query).first
   }
 
-  def expireAndCreateHistory(idToExpire: Long, username: String, historyRoadName: RoadName) = {
+  def expireAndCreateHistory(idToExpire: Long, username: String, historyRoadName: RoadName): Unit = {
     expire(idToExpire, username)
     create(Seq(historyRoadName))
   }
 
-  def update(id: Long, fields: Map[String, String]) = {
+  def update(id: Long, fields: Map[String, String]): Int = {
     val roadNumber = fields.get("roadNumber")
     val roadName = fields.get("roadName")
     val startDate = fields.get("startDate")
@@ -238,8 +238,10 @@ object RoadNameDAO {
     roadNamesPS.close()
   }
 
-  def fetchRoadNamesForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]) = {
-    def withOptionalParameters(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long])(query: String): String = {
+  def fetchRoadNamesForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long],
+                                          minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]) : Seq[RoadNameForRoadAddressBrowser]= {
+    def withOptionalParameters(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long],
+                               minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long])(query: String): String = {
       val rwDateCondition = "AND rw.START_DATE <='" + situationDate.get + "' AND (rw.END_DATE >= '" + situationDate.get + "' OR rw.END_DATE IS NULL)"
 
       /**

@@ -1,16 +1,12 @@
 package fi.liikennevirasto.viite.dao
 
-import fi.liikennevirasto.digiroad2.DigiroadEventBus
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.vaylavirasto.viite.dao.Sequences
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.CalibrationPointType.NoCP
 import fi.vaylavirasto.viite.model.{AdministrativeClass, CalibrationPointType, Discontinuity, LinkGeomSource, RoadAddressChangeType, SideCode, Track}
 import org.joda.time.DateTime
-import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -20,12 +16,6 @@ import slick.jdbc.StaticQuery.interpolation
   * Class to test DB trigger that does not allow reserving already reserved links to project
   */
 class ProjectDAOSpec extends FunSuite with Matchers {
-  val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val mockRoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
-  val mockLinearLocationDAO = MockitoSugar.mock[LinearLocationDAO]
-  val mockRoadwayDAO = MockitoSugar.mock[RoadwayDAO]
-  val mockRoadNetworkDAO = MockitoSugar.mock[RoadNetworkDAO]
 
   def runWithRollback(f: => Unit): Unit = {
     // Prevent deadlocks in DB because we create and delete links in tests and don't handle the project ids properly
@@ -45,11 +35,11 @@ class ProjectDAOSpec extends FunSuite with Matchers {
   private val roadPartNumber1 = 1
   private val roadPartNumber2 = 2
 
-  private val roadwayNumber1 = 1000l
-  private val roadwayNumber2 = 2000l
+  private val roadwayNumber1 = 1000L
+  private val roadwayNumber2 = 2000L
 
-  private val linkId1 = 1000l.toString
-  private val linkId2 = 2000l.toString
+  private val linkId1 = 1000L.toString
+  private val linkId2 = 2000L.toString
 
   private val linearLocationId = 0
 
@@ -64,7 +54,11 @@ class ProjectDAOSpec extends FunSuite with Matchers {
     )
   }
 
-  def dummyProjectLink(id: Long, projectId: Long, linkId: String, roadwayId: Long = 0, roadwayNumber: Long = roadwayNumber1, roadNumber: Long = roadNumber1, roadPartNumber: Long = roadPartNumber1, startAddrMValue: Long, endAddrMValue: Long, startMValue: Double, endMValue: Double, endDate: Option[DateTime] = None, calibrationPointTypes: (CalibrationPointType, CalibrationPointType), geometry: Seq[Point] = Seq(), status: RoadAddressChangeType, administrativeClass: AdministrativeClass, reversed: Boolean): ProjectLink =
+  def dummyProjectLink(id: Long, projectId: Long, linkId: String, roadwayId: Long = 0, roadwayNumber: Long = roadwayNumber1,
+                       roadNumber: Long = roadNumber1, roadPartNumber: Long = roadPartNumber1, startAddrMValue: Long, endAddrMValue: Long,
+                       startMValue: Double, endMValue: Double, endDate: Option[DateTime] = None,
+                       calibrationPointTypes: (CalibrationPointType, CalibrationPointType),
+                       geometry: Seq[Point] = Seq(), status: RoadAddressChangeType, administrativeClass: AdministrativeClass, reversed: Boolean): ProjectLink =
     ProjectLink(id, roadNumber, roadPartNumber, Track.Combined, Discontinuity.Continuous, startAddrMValue, endAddrMValue, startAddrMValue, endAddrMValue,
       Some(DateTime.parse("1901-01-01")), endDate, Some("testUser"), linkId, startMValue, endMValue, SideCode.TowardsDigitizing,
       calibrationPointTypes, (NoCP, NoCP), geometry, projectId, status, administrativeClass, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geometry),

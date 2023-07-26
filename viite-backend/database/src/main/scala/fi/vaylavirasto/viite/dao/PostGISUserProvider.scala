@@ -9,22 +9,22 @@ import org.json4s._
 import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization.{read, write}
 import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
+import slick.jdbc.{GetResult, PositionedResult}
 
 class PostGISUserProvider extends UserProvider {
-  implicit val formats = Serialization.formats(NoTypeHints)
-  implicit val getUser = new GetResult[User] {
+  implicit val formats: Formats = Serialization.formats(NoTypeHints)
+  implicit val getUser: GetResult[User] = new GetResult[User] {
     def apply(r: PositionedResult) = {
      User(r.nextLong(), r.nextString(), read[Configuration](r.nextString()))
     }
   }
-  implicit val getUserArea = new GetResult[Point] {
+  implicit val getUserArea: GetResult[Point] = new GetResult[Point] {
     def apply(r: PositionedResult) = {
       Point(r.nextDouble(), r.nextDouble(), r.nextDouble())
     }
   }
 
-  def createUser(username: String, config: Configuration) = {
+  def createUser(username: String, config: Configuration): Unit = {
     PostGISDatabase.withDynSession {
       sqlu"""
         insert into service_user (id, username, configuration)
@@ -47,7 +47,7 @@ class PostGISUserProvider extends UserProvider {
     }
   }
 
-  def deleteUser(username: String) = {
+  def deleteUser(username: String): Unit = {
     PostGISDatabase.withDynSession {
       sqlu"""delete from service_user where lower(username) = ${username.toLowerCase}""".execute
     }

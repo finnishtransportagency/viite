@@ -6,7 +6,7 @@ import fi.liikennevirasto.viite.RoadAddressService
 import fi.liikennevirasto.viite.dao.RoadAddress
 import fi.vaylavirasto.viite.model.Track
 import org.joda.time.DateTime
-import org.json4s.{Formats}
+import org.json4s.Formats
 import org.scalatra.{BadRequest, InternalServerError, ScalatraServlet}
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.swagger.{Swagger, _}
@@ -59,7 +59,7 @@ class SearchApi(roadAddressService: RoadAddressService,
     val requestString = s"GET request for ${request.getRequestURI}?${request.getQueryString} (${getRoadAddress.operationId})"
     time(logger, requestString, params=Some(params)) {
 
-      val linkId = params.getOrElse("linkId", halt(BadRequest("Missing mandatory query parameter 'linkId'"))).toString //TODO MAKE OTHER REQUIRED PARAMS LIKE THIS!
+      val linkId = params.getOrElse("linkId", halt(BadRequest("Missing mandatory query parameter 'linkId'"))) //TODO MAKE OTHER REQUIRED PARAMS LIKE THIS!
 
       try { // Check that the formats of the parameters are ok
         val startMeasureOption = params.get("startMeasure")
@@ -344,11 +344,11 @@ class SearchApi(roadAddressService: RoadAddressService,
     }
   }
 
-  /** Returns a valid road part list extracted from [[roadPartsParameterName]] in the body, if it is valid.
+  /** Returns a valid road part list extracted from <i>roadPartsParameterName</i> in the body, if it is valid.
    *
    * @param roadPartsParameterName name of the list to be extracted from the body, and validated
    * @return Sequence of valid road part values.
-   * @throws ViiteException, if the [[roadPartsParameterName]] list fails to comply with allowed track values, is missing, or malformed. */
+   * @throws ViiteException, if the <i>>roadPartsParameterName</i> list fails to comply with allowed track values, is missing, or malformed. */
   private def roadPartsGetValidOrThrow(roadPartsParameterName: String): Seq[Long] = {
     val roadPartsJson = (parsedBody \ roadPartsParameterName)
     if(roadPartsJson.toString.equals("JNothing"))
@@ -357,7 +357,7 @@ class SearchApi(roadAddressService: RoadAddressService,
     val roadParts = try {
       roadPartsJson.extract[Seq[Long]]
     } catch {
-      case me: org.json4s.MappingException =>
+      case _: org.json4s.MappingException =>
         throw ViiteException(s"Cannot parse '$roadPartsParameterName' list (in the body) to integer list. $roadPartNumberDescription")
     }
 
@@ -397,12 +397,12 @@ class SearchApi(roadAddressService: RoadAddressService,
     }
   }
 
-  /** Fetches, and returns a validated long valued parameter if available in query parameter [[queryParameterName]],
+  /** Fetches, and returns a validated long valued parameter if available in query parameter <i>queryParameterName</i>,
    * or throws a [[ViiteException]], it there is a missing or faulty value.
    *
    * @param queryParameterName name of the path parameter to be fetched, and validated
-   * @param minValue Smallest acceptable long value for the [[queryParameterName]] parameter
-   * @param maxValue Biiggest acceptable long value for the [[queryParameterName]] parameter
+   * @param minValue Smallest acceptable long value for the <i>queryParameterName</i> parameter
+   * @param maxValue Biiggest acceptable long value for the <i>queryParameterName</i> parameter
    * @return A valid long value fitting within the given min-max llimits. */
   def longParamGetValidOrThrow(queryParameterName: String, minValue: Long, maxValue: Long): Long = { // TODO Ain't an Int enough for these all?
 
@@ -415,7 +415,7 @@ class SearchApi(roadAddressService: RoadAddressService,
     val longParameter: Long = try {
       queryParameterString.get.toLong // Existence checked above -> .get should never fail
     } catch {
-      case nfe: NumberFormatException =>
+      case _: NumberFormatException =>
         throw ViiteException(s"An integer expected. Now got '$queryParameterName=${queryParameterString.get}'")
     }
 
@@ -425,29 +425,29 @@ class SearchApi(roadAddressService: RoadAddressService,
       longParameter
   }
 
-  /** [[LongParamGetValidOrThrow]] function called with road number limits. */
+  /** <i>LongParamGetValidOrThrow</i> function called with road number limits. */
   def roadNumberGetValidOrThrow(roadNumberParameterName: String): Long = {
     val minRoadNumber = 1
     val maxRoadNumber = 99999
     longParamGetValidOrThrow (roadNumberParameterName, minRoadNumber, maxRoadNumber )
   }
 
-  /** [[LongParamGetValidOrThrow]] function called with road part number limits. */
+  /** <i>LongParamGetValidOrThrow</i> function called with road part number limits. */
   def roadPartNumberGetValidOrThrow(roadPartNumberParameterName: String): Long = {
     val minRoadPartNumber = 1
     val maxRoadPartNumber = 999
     longParamGetValidOrThrow(roadPartNumberParameterName, minRoadPartNumber, maxRoadPartNumber)
   }
 
-  /** [[LongParamGetValidOrThrow]] function called with start address value limits. */
+  /** <i>LongParamGetValidOrThrow</i> function called with start address value limits. */
   def startAddressGetValidOrThrow(startAddressParameterName: String): Long = {
     val minStartAddress = 0
     val maxStartAddress = 1157000 // Finland, max. range in [m] :)
     longParamGetValidOrThrow(startAddressParameterName, minStartAddress, maxStartAddress)
   }
 
-  /** [[LongParamGetValidOrThrow]] function called with end address limits.
-   * Additionally checks, that the returned value is also bigger than given [[limitingStartAddress]]. */
+  /** <i>LongParamGetValidOrThrow</i> function called with end address limits.
+   * Additionally checks, that the returned value is also bigger than given <i>limitingStartAddress</i>. */
   def endAddressGetValidOrThrow(endAddressParameterName: String, limitingStartAddress: Long): Long = {
     val minEndAddress = 0
     val maxEndAddress = 1157000 // Finland, max. range in [m] :)
@@ -458,25 +458,26 @@ class SearchApi(roadAddressService: RoadAddressService,
       endAddress
   }
 
-  /** Returns a valid track extracted from [[trackParameterName]] parameter, or None if [[trackParameterName]] parameter is not given.
+  /** Returns a valid track extracted from <i>trackParameterName</i> parameter, or None if <i>trackParameterName</i> parameter is not given.
    * Wraps [[tracksGetValidOrThrow]].
    *
-   * @throws ViiteException, if the [[trackParameterName]] fails to comply with the allowed track values. */
+   * @param trackParameterName Name of the field where the track information is to be found
+   * @throws ViiteException, if the <i>trackParameterName</i> fails to comply with the allowed track values. */
   def trackOptionGetValidOrThrow(trackParameterName: String): Option[Int] = {
     val track = params.get(s"$trackParameterName")
     if (track.isDefined) {
       val trackSeq = {
         try { Seq(track.get.toInt) }
-        catch { case e: Exception =>   throw ViiteException(s"An invalid track parameter: '$trackParameterName=$track'. $trackNumberFilterDescription") }
+        catch { case _: Exception =>   throw ViiteException(s"An invalid track parameter: '$trackParameterName=$track'. $trackNumberFilterDescription") }
       }
       Some(tracksGetValidOrThrow(s"$trackParameterName", trackSeq).head)
     } else
       None
   }
 
-  /** Returns a valid track list extracted from [[tracksParameterName]] in the body, if it is valid.
+  /** Returns a valid track list extracted from <i>tracksParameterName</i> in the body, if it is valid.
    * Wraps [[tracksGetValidOrThrow]].
-   * @throws ViiteException, if the [[tracksParameterName]] list fails to comply with allowed track values, or there is no such list. */
+   * @throws ViiteException, if the <i>tracksParameterName</i> list fails to comply with allowed track values, or there is no such list. */
   private def tracksGetValidFromBodyOrThrow(tracksParameterName: String): Seq[Int] = {
     val tracksJson = (parsedBody \ "tracks")
     if(tracksJson.toString.equals("JNothing"))
@@ -485,7 +486,7 @@ class SearchApi(roadAddressService: RoadAddressService,
     val tracks = try {
       tracksJson.extract[Seq[Int]]
     } catch {
-      case me: org.json4s.MappingException =>
+      case _: org.json4s.MappingException =>
         throw ViiteException(s"Cannot parse '$tracksParameterName' list (in the body) to integer list. $trackNumberFilterDescription")
     }
 
@@ -495,22 +496,22 @@ class SearchApi(roadAddressService: RoadAddressService,
     tracksGetValidOrThrow (tracksParameterName, tracks)
   }
 
-  /** Returns a valid track list extracted from [[tracksParameterName]] parameters, if it is valid.
+  /** Returns a valid track list extracted from <i>tracksParameterName</i> parameters, if it is valid.
    * Wraps [[tracksGetValidOrThrow]].
-   * @throws ViiteException, if the [[tracksParameterName]] params fail to comply with allowed track values, or there is no such list. */
+   * @throws ViiteException, if the <i>tracksParameterName</i> params fail to comply with allowed track values, or there is no such list. */
   private def tracksGetValidFromURLOrThrow(tracksParameterName: String): Seq[Int] = {
     try {
       val tracks = multiParams.getOrElse(tracksParameterName, Seq()).map(_.toInt)
       tracksGetValidOrThrow (tracksParameterName, tracks)
     }
     catch {
-      case e: java.lang.NumberFormatException =>
+      case _: java.lang.NumberFormatException =>
         throw ViiteException(s"A malformed field in the query path: $tracksParameterName=${multiParams(tracksParameterName).toList.mkString("[", "; ", "]")}.\n" +
           s"$trackNumberFilterDescription")
     }
   }
 
-  /** Returns the given [[trackSeq]] back, if it contains, and contains only, valid track numbers.
+  /** Returns the given <i>trackSeq</i> back, if it contains, and contains only, valid track numbers.
    * @throws ViiteException, if the given Seq[Int] fails to comply with allowed track values, or the Seq is empty. */
   private def tracksGetValidOrThrow(tracksParameterName: String, trackSeq: Seq[Int]): Seq[Int] = {
     if (trackSeq.size < 1) {
@@ -546,12 +547,10 @@ class SearchApi(roadAddressService: RoadAddressService,
     t match {
       case ve: ViiteException =>
         BadRequestWithLoggerInfo(s"Check the given parameters. ${ve.getMessage}", s"${operationId.get}")
-      case nf if NonFatal(nf) => {
+      case nf if NonFatal(nf) =>
         haltWithHTTP500WithLoggerError(requestString, nf)
-      }
-      case f if !NonFatal(f) => {
+      case f if !NonFatal(f) =>
         haltWithHTTP500WithLoggerError("Fatal error. "+requestString, f)
-      }
     }
   }
 

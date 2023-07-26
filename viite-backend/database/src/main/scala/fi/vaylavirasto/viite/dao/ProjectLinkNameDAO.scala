@@ -1,7 +1,5 @@
 package fi.vaylavirasto.viite.dao
 
-import org.joda.time.DateTime
-import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
@@ -12,7 +10,7 @@ object ProjectLinkNameDAO {
 
   private val ptojectLinkNameQueryBase = s"""select id, project_id, road_number, road_name from project_link_name """
 
-  implicit val getProjectLinkNameRow = new GetResult[ProjectLinkName] {
+  implicit val getProjectLinkNameRow: GetResult[ProjectLinkName] = new GetResult[ProjectLinkName] {
     def apply(r: PositionedResult) = {
       val id = r.nextLong()
       val projectId = r.nextLong()

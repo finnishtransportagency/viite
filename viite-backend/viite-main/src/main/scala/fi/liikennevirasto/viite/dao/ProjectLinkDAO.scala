@@ -38,25 +38,21 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
   lazy val isNotCalculated: Boolean = endAddrMValue == 0L
   lazy val isCalculated: Boolean = !isNotCalculated
 
-  lazy val roadway = roadwayDAO.fetchAllByRoadwayId(Seq(roadwayId)).headOption
+  private lazy val roadway = roadwayDAO.fetchAllByRoadwayId(Seq(roadwayId)).headOption
 
   def originalRoadNumber: Long = if (roadway.isDefined) roadway.get.roadNumber else roadNumber
 
   def originalRoadPartNumber: Long = if (roadway.isDefined) roadway.get.roadPartNumber else roadPartNumber
 
-  def originalAdministrativeClass = if (roadway.isDefined) roadway.get.administrativeClass else administrativeClass
+  def originalAdministrativeClass: AdministrativeClass = if (roadway.isDefined) roadway.get.administrativeClass else administrativeClass
 
-  def originalTrack = if (roadway.isDefined) roadway.get.track else track
+  def originalTrack: Track = if (roadway.isDefined) roadway.get.track else track
 
   def originalEly: Long = if (roadway.isDefined) roadway.get.ely else ely
 
   private def isTheLastProjectLinkOnRoadway = roadway.isDefined && this.originalEndAddrMValue == roadway.get.endAddrMValue
 
-  def originalDiscontinuity = if (isTheLastProjectLinkOnRoadway) roadway.get.discontinuity else if (roadway.isDefined) Discontinuity.Continuous else discontinuity
-
-  def oppositeEndPoint(point: Point) : Point = {
-    if (GeometryUtils.areAdjacent(point, geometry.head)) geometry.last else geometry.head
-  }
+  def originalDiscontinuity: Discontinuity = if (isTheLastProjectLinkOnRoadway) roadway.get.discontinuity else if (roadway.isDefined) Discontinuity.Continuous else discontinuity
 
   def copyWithGeometry(newGeometry: Seq[Point]): ProjectLink = {
     this.copy(geometry = newGeometry, geometryLength = GeometryUtils.geometryLength(newGeometry))
@@ -75,10 +71,6 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
 
   def addrMLength(): Long = {
     endAddrMValue - startAddrMValue
-  }
-
-  def addrMOriginalLength: Long = {
-    originalEndAddrMValue - originalStartAddrMValue
   }
 
   def getFirstPoint: Point = {
@@ -100,17 +92,6 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
       case (SideCode.AgainstDigitizing, false) => GeometryUtils.firstSegmentDirection(geometry) scale -1
       case (SideCode.TowardsDigitizing, true) => GeometryUtils.firstSegmentDirection(geometry) scale -1
       case (SideCode.AgainstDigitizing, true) => GeometryUtils.lastSegmentDirection(geometry)
-      case (SideCode.BothDirections, _) => throw new InvalidAddressDataException(s"Bad sidecode $sideCode on project link")
-      case (SideCode.Unknown, _) => throw new InvalidAddressDataException(s"Bad sidecode $sideCode on project link")
-    }
-  }
-
-  def lastPoint: Point = {
-    (sideCode, reversed) match {
-      case (SideCode.TowardsDigitizing, false) => geometry.last
-      case (SideCode.AgainstDigitizing, false) => geometry.head
-      case (SideCode.TowardsDigitizing, true) => geometry.head
-      case (SideCode.AgainstDigitizing, true) => geometry.last
       case (SideCode.BothDirections, _) => throw new InvalidAddressDataException(s"Bad sidecode $sideCode on project link")
       case (SideCode.Unknown, _) => throw new InvalidAddressDataException(s"Bad sidecode $sideCode on project link")
     }
@@ -509,15 +490,6 @@ class ProjectLinkDAO {
     }
   }
 
-  def fetchRoadNumbersByProjectIdHistory(projectId: Long): Seq[Long] = {
-    time(logger, "Get road numbers history by project") {
-      val query =
-        s"""SELECT ROAD_NUMBER FROM PROJECT_LINK_HISTORY
-                where PROJECT_ID = $projectId order by ROAD_NUMBER """
-      Q.queryNA[Long](query).list
-    }
-  }
-
   def fetchProjectLinks(projectId: Long, roadAddressChangeTypeFilter: Option[RoadAddressChangeType] = None): Seq[ProjectLink] = {
     time(logger, "Get project links") {
       val filter = if (roadAddressChangeTypeFilter.isEmpty) "" else s"PROJECT_LINK.STATUS = ${roadAddressChangeTypeFilter.get.value} AND"
@@ -579,17 +551,6 @@ class ProjectLinkDAO {
         s"""$projectLinkQueryBase
                 where PROJECT_LINK.project_id <> $projectId order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
       listQuery(query)
-    }
-  }
-
-  def getProjectLinksByIds(projectId: Long, ids: Set[Long]): Seq[ProjectLink] = {
-    time(logger, "Get project links by ids") {
-      val filter = if (ids.nonEmpty) s"""AND PROJECT_LINK.LINEAR_LOCATION_ID in (${ids.mkString(",")})""" else ""
-      val query =
-
-        s"""$projectLinkQueryBase
-                where PROJECT_LINK.PROJECT_ID = $projectId $filter"""
-      listQuery(query).seq
     }
   }
 
@@ -730,7 +691,7 @@ class ProjectLinkDAO {
 
     time(logger, "Update project link values") {
       val lineString: String = PostGISDatabase.createJGeometry(roadAddress.geometry)
-      val geometryQuery = s"ST_GeomFromText('${lineString}', 3067)"
+      val geometryQuery = s"ST_GeomFromText('$lineString', 3067)"
       val updateGeometry = if (updateGeom) s", GEOMETRY = $geometryQuery" else s""
       val idFilter = plId match {
         case Some(id) => s"AND ID = $id"
@@ -781,19 +742,6 @@ class ProjectLinkDAO {
           and project_link.status != ${RoadAddressChangeType.Termination.value}"""
       Q.updateNA(updateProjectLink).execute
     }
-  }
-
-  def fetchProjectLinkIds(projectId: Long, roadNumber: Long, roadPartNumber: Long, status: Option[RoadAddressChangeType] = None,
-                          maxResults: Option[Int] = None): List[Long] =
-  {
-    val filter = status.map(s => s" AND status = ${s.value}").getOrElse("")
-    val limit = maxResults.map(s => s" LIMIT $s").getOrElse("")
-    val query= s"""
-         SELECT link_id
-         FROM Project_link
-         WHERE project_id = $projectId and road_number = $roadNumber and road_part_number = $roadPartNumber $filter $limit
-       """
-    Q.queryNA[Long](query).list
   }
 
   /**

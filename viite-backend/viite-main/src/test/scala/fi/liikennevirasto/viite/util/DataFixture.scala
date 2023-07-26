@@ -39,8 +39,6 @@ object DataFixture {
   val junctionPointDAO = new JunctionPointDAO
   val roadAddressService = new RoadAddressService(linkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), eventBus, ViiteProperties.kgvRoadlinkFrozen)
 
-  lazy val continuityChecker = new ContinuityChecker(new RoadLinkService(KGVClient, new DummyEventBus, new DummySerializer, geometryFrozen))
-
   private lazy val numberThreads: Int = 6
 
   private def toIntNumber(value: Any): Int = {
@@ -202,12 +200,11 @@ object DataFixture {
     flyway.migrate()
   }
 
-  def repair() = {
+  def repair(): Unit = {
     flyway.repair()
   }
 
-  def tearDown() {
-
+  def tearDown(): Unit = {
     // flyway.clean()
     // This old version of Flyway tries to drop the postgis extension too, so we clean the database manually instead
     SqlScriptRunner.runScriptInClasspath("/clear-db.sql")
@@ -219,7 +216,7 @@ object DataFixture {
 
   }
 
-  def setUpTest() {
+  def setUpTest(): Unit = {
     migrateAll()
     SqlScriptRunner.runScripts(List(
       "insert_users.sql",
@@ -246,7 +243,7 @@ object DataFixture {
     new BoneCPDataSource(cfg)
   }
 
-  def flywayInit() {
+  def flywayInit(): Unit = {
     flyway.init()
   }
 

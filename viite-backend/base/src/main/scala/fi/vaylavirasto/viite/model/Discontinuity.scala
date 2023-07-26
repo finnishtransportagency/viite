@@ -10,7 +10,7 @@ sealed trait Discontinuity {
 }
 
 object Discontinuity {
-  val values = Set(EndOfRoad, Discontinuous, ChangingELYCode, MinorDiscontinuity, Continuous)
+  private val values = Set(EndOfRoad, Discontinuous, ChangingELYCode, MinorDiscontinuity, Continuous)
 
   def apply(intValue: Int): Discontinuity = {
     values.find(_.value == intValue).getOrElse(Continuous)

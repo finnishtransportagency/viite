@@ -3,6 +3,7 @@ package fi.vaylavirasto.viite.geometry
 case class Vector3d(x: Double, y: Double, z: Double) {
   private val RotationLeft = Matrix(Seq(Seq(0.0, 1.0), Seq(-1.0, 0.0)))
   private val RotationRight = RotationLeft.transpose
+
   def rotateLeft(): Vector3d = {
     RotationLeft * this
   }

@@ -4,7 +4,6 @@ import java.net.URLDecoder
 import fi.liikennevirasto.digiroad2.util.DatabaseMigration
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.util.DataImporter
-import fi.vaylavirasto.viite.asset.{Modification, TimeStamps}
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.HttpClientBuilder
 import org.json4s.{DefaultFormats, Formats, StringInput}
@@ -50,8 +49,6 @@ class AdminApi(val dataImporter: DataImporter, implicit val swagger: Swagger) ex
 
   protected implicit val jsonFormats: Formats = DefaultFormats
 
-  case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
-
   before() {
     basicAuth
   }
@@ -63,10 +60,9 @@ class AdminApi(val dataImporter: DataImporter, implicit val swagger: Swagger) ex
         dataImporter.initialImport(conversionTable)
         Ok("Initial import successful.\n")
       } catch {
-        case e: Exception => {
+        case e: Exception =>
           logger.error("Initial import failed.", e)
           InternalServerError(s"Initial import failed: ${e.getMessage}")
-        }
       }
     }
   }
@@ -77,10 +73,9 @@ class AdminApi(val dataImporter: DataImporter, implicit val swagger: Swagger) ex
         dataImporter.updateLinearLocationGeometry()
         Ok("Geometry update successful.\n")
       } catch {
-        case e: Exception => {
+        case e: Exception =>
           logger.error("Geometry update failed.", e)
           InternalServerError(s"Geometry update failed: ${e.getMessage}")
-        }
       }
     }
   }
@@ -91,10 +86,9 @@ class AdminApi(val dataImporter: DataImporter, implicit val swagger: Swagger) ex
         dataImporter.importNodesAndJunctions()
         Ok("Importing nodes and junctions successful.\n")
       } catch {
-        case e: Exception => {
+        case e: Exception =>
           logger.error("Importing nodes and junctions failed.", e)
           InternalServerError(s"Importing nodes and junctions failed: ${e.getMessage}")
-        }
       }
     }
   }
@@ -105,10 +99,9 @@ class AdminApi(val dataImporter: DataImporter, implicit val swagger: Swagger) ex
         dataImporter.updateCalibrationPointTypes()
         Ok("Updating calibration point types successful.\n")
       } catch {
-        case e: Exception => {
+        case e: Exception =>
           logger.error("Updating calibration point types failed.", e)
           InternalServerError(s"Updating calibration point types failed: ${e.getMessage}")
-        }
       }
     }
   }
@@ -120,10 +113,9 @@ class AdminApi(val dataImporter: DataImporter, implicit val swagger: Swagger) ex
         dataImporter.importRoadAddresses(conversionTable)
         Ok("Importing road addresses successful.\n")
       } catch {
-        case e: Exception => {
+        case e: Exception =>
           logger.error("Importing road addresses failed.", e)
           InternalServerError(s"Importing road addresses failed: ${e.getMessage}")
-        }
       }
     }
   }
@@ -134,10 +126,9 @@ class AdminApi(val dataImporter: DataImporter, implicit val swagger: Swagger) ex
         dataImporter.importRoadNames()
         Ok("Importing road names successful.\n")
       } catch {
-        case e: Exception => {
+        case e: Exception =>
           logger.error("Importing road names failed.", e)
           InternalServerError(s"Importing road names failed: ${e.getMessage}")
-        }
       }
     }
   }
@@ -164,10 +155,9 @@ class AdminApi(val dataImporter: DataImporter, implicit val swagger: Swagger) ex
           Ok(s"Response status: $statusCode from url: $url\n")
         }
       } catch {
-        case e: Exception => {
+        case e: Exception =>
           logger.error("Test connection failed.", e)
           InternalServerError(s"Test connection failed: ${e.getMessage}")
-        }
       }
     }
   }
@@ -178,10 +168,9 @@ class AdminApi(val dataImporter: DataImporter, implicit val swagger: Swagger) ex
         dataImporter.importMunicipalities()
         Ok("Importing municipalities successful.\n")
       } catch {
-        case e: Exception => {
+        case e: Exception =>
           logger.error("Importing municipalities failed.", e)
           InternalServerError(s"Importing municipalities failed: ${e.getMessage}")
-        }
       }
     }
   }
@@ -192,10 +181,9 @@ class AdminApi(val dataImporter: DataImporter, implicit val swagger: Swagger) ex
         dataImporter.updateLinearLocationGeometry()
         Ok("Updating linear location geometry successful.\n")
       } catch {
-        case e: Exception => {
+        case e: Exception =>
           logger.error("Updating linear location geometry failed.", e)
           InternalServerError(s"Updating linear location geometry failed: ${e.getMessage}")
-        }
       }
     }
   }
@@ -208,10 +196,9 @@ class AdminApi(val dataImporter: DataImporter, implicit val swagger: Swagger) ex
         logger.info("Flyway init successful.")
         Ok("Flyway init successful.\n")
       } catch {
-        case e: Exception => {
+        case e: Exception =>
           logger.error("Flyway init failed.", e)
           InternalServerError(s"Flyway init failed: ${e.getMessage}")
-        }
       }
     }
   }
@@ -227,10 +214,9 @@ class AdminApi(val dataImporter: DataImporter, implicit val swagger: Swagger) ex
         logger.info("Flyway migrate successful.")
         Ok("Flyway migrate successful.\n")
       } catch {
-        case e: Exception => {
+        case e: Exception =>
           logger.error("Flyway migrate failed.", e)
           InternalServerError(s"Flyway migrate failed: ${e.getMessage}")
-        }
       }
     }
   }
@@ -241,10 +227,9 @@ class AdminApi(val dataImporter: DataImporter, implicit val swagger: Swagger) ex
         dataImporter.importNodesAndJunctions()
         Ok("Import nodes and junctions successful.\n")
       } catch {
-        case e: Exception => {
+        case e: Exception =>
           logger.error("Import nodes and junctions failed.", e)
           InternalServerError(s"Import nodes and junctions: ${e.getMessage}")
-        }
       }
     }
   }

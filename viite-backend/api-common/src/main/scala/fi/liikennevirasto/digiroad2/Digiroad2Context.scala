@@ -3,7 +3,6 @@ package fi.liikennevirasto.digiroad2
 import java.util.concurrent.TimeUnit
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import fi.liikennevirasto.digiroad2.client.kgv.KgvRoadLink
-import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
@@ -16,7 +15,6 @@ import org.slf4j.{Logger, LoggerFactory}
 import fi.liikennevirasto.digiroad2.util.DatabaseMigration
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import org.scalatra.{InternalServerError, Ok}
-
 import scala.concurrent.duration.FiniteDuration
 import scala.util.control.NonFatal
 
@@ -30,7 +28,7 @@ class RoadAddressUpdater(roadAddressService: RoadAddressService) extends Actor {
 object Digiroad2Context {
   val Digiroad2ServerOriginatedResponseHeader = "Digiroad2-Server-Originated-Response"
 
-  val system = ActorSystem("Digiroad2")
+  private val system = ActorSystem("Digiroad2")
   import system.dispatcher
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
@@ -57,10 +55,9 @@ object Digiroad2Context {
           logger.info("Flyway migrate successful.")
           Ok("Flyway migrate successful.\n")
         } catch {
-          case e: Exception => {
+          case e: Exception =>
             logger.error("Flyway migrate failed.", e)
             InternalServerError(s"Flyway migrate failed: ${e.getMessage}")
-          }
         }
       }
     }
@@ -136,10 +133,6 @@ object Digiroad2Context {
 
   lazy val userProvider: UserProvider = {
     Class.forName(ViiteProperties.userProvider).newInstance().asInstanceOf[UserProvider]
-  }
-
-  lazy val municipalityProvider: MunicipalityProvider = {
-    Class.forName(ViiteProperties.municipalityProvider).newInstance().asInstanceOf[MunicipalityProvider]
   }
 
   lazy val eventbus: DigiroadEventBus = {

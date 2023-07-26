@@ -162,7 +162,9 @@ object ApplyChangeInfoProcess {
       roadLink => GeometryUtils.truncateGeometry2D(roadLink.geometry, newStartMeasure, newEndMeasure)
     ).getOrElse(linearLocation.geometry)
 
-    linearLocation.copy(id = newId, orderNumber = linearLocation.orderNumber + (projection.orderIncrement.toDouble / decimalPlaces(linearLocation.orderNumber)), linkId = projection.newLinkId, startMValue = newStartMeasure, endMValue = newEndMeasure, sideCode = newSideCode, adjustedTimestamp = projection.timeStamp, calibrationPoints = (newStartCalibrationPoint, newEndCalibrationPoint), geometry = geometry)
+    linearLocation.copy(id = newId, orderNumber = linearLocation.orderNumber + (projection.orderIncrement.toDouble / decimalPlaces(linearLocation.orderNumber)),
+      linkId = projection.newLinkId, startMValue = newStartMeasure, endMValue = newEndMeasure, sideCode = newSideCode, adjustedTimestamp = projection.timeStamp,
+      calibrationPoints = (newStartCalibrationPoint, newEndCalibrationPoint), geometry = geometry)
   }
 
   private def filterOutOlderChanges(locations: Map[String, Seq[LinearLocation]])(change: ChangeInfo): Boolean = {
@@ -181,7 +183,7 @@ object ApplyChangeInfoProcess {
   }
 
   private def generateDividedProjections(dividedChanges: Seq[ChangeInfo]): Seq[Projection] = {
-    //TODO we can also take alway the min date on the diveded changes and apply that one then the find floating will set those to floatings
+    //TODO we can also take always the min date on the divided changes and apply that one then the find floating will set those to floatings
     //VVH change api doesn't seems to support multiple changes for the same day in the same link id.
     dividedChanges.groupBy(ch => ch.timeStamp).flatMap {
       case (_, groupedChanges) =>

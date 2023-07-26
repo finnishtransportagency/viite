@@ -13,7 +13,7 @@ sealed trait RoadAddressChangeType {
   * and Unknown whose usage should be checked; seems almost useless, and pointless (<- TODO!).
   */
 object RoadAddressChangeType {
-  val values = Set(NotHandled, Unchanged, New, Transfer, Renumeration, Termination)
+  private val values = Set(NotHandled, Unchanged, New, Transfer, Renumeration, Termination)
 
   def apply(intValue: Int): RoadAddressChangeType = {
     values.find(_.value == intValue).getOrElse(Unknown)

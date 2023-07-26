@@ -3,7 +3,6 @@ package fi.vaylavirasto.viite.dao
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import slick.jdbc.StaticQuery._
-import slick.jdbc.{StaticQuery => Q}
 
 object Queries {
 
@@ -42,35 +41,35 @@ object Queries {
 
   def nextJunctionPointId = sql"select nextval('JUNCTION_POINT_SEQ')"
 
-  def fetchProjectLinkIds(len: Int) = {
+  def fetchProjectLinkIds(len: Int): List[Long] = {
     sql"""select nextval('PROJECT_LINK_SEQ') from generate_series(1, $len)""".as[Long].list
   }
 
-  def fetchRoadwayIds(len: Int) = {
+  def fetchRoadwayIds(len: Int): List[Long] = {
     sql"""select nextval('ROADWAY_SEQ') from generate_series(1, $len)""".as[Long].list
   }
 
-  def fetchCalibrationPointIds(len: Int) = {
+  def fetchCalibrationPointIds(len: Int): List[Long] = {
     sql"""select nextval('CALIBRATION_POINT_SEQ') from generate_series(1, $len)""".as[Long].list
   }
 
-  def fetchNodeIds(len: Int) = {
+  def fetchNodeIds(len: Int): List[Long] = {
     sql"""select nextval('NODE_SEQ') from generate_series(1, $len)""".as[Long].list
   }
 
-  def fetchNodePointIds(len: Int) = {
+  def fetchNodePointIds(len: Int): List[Long] = {
     sql"""select nextval('NODE_POINT_SEQ') from generate_series(1, $len)""".as[Long].list
   }
 
-  def fetchJunctionPointIds(len: Int) = {
+  def fetchJunctionPointIds(len: Int): List[Long] = {
     sql"""select nextval('JUNCTION_POINT_SEQ') from generate_series(1, $len)""".as[Long].list
   }
 
-  def fetchJunctionIds(len: Int) = {
+  def fetchJunctionIds(len: Int): List[Long] = {
     sql"""select nextval('JUNCTION_SEQ') from generate_series(1, $len)""".as[Long].list
   }
 
-  def fetchLinearLocationIds(len: Int) = {
+  def fetchLinearLocationIds(len: Int): List[Long] = {
     sql"""select nextval('LINEAR_LOCATION_SEQ') from generate_series(1, $len)""".as[Long].list
   }
 
@@ -78,13 +77,6 @@ object Queries {
     sql"""
       select id from municipality
     """.as[Int].list
-  }
-
-  def getMunicipalitiesWithoutAhvenanmaa: Seq[Int] = {
-    //The road_maintainer_id of Ahvenanmaa is 0
-    sql"""
-      select id from municipality where ROAD_MAINTAINER_ID != 0
-      """.as[Int].list
   }
 
 }

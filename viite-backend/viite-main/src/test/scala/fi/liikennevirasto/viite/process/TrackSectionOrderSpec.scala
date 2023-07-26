@@ -27,7 +27,7 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
   }
 
   val projectId = 1
-  val rap = Project(projectId, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"),
+  private val rap = Project(projectId, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"),
     "TestUser", DateTime.parse("1972-03-03"), DateTime.parse("2700-01-01"), "Some additional info",
     List.empty[ProjectReservedPart], Seq(), None)
 

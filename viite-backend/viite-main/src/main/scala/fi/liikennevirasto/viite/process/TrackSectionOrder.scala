@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.util.{MissingTrackException, RoadAddressExce
 import fi.liikennevirasto.viite.MaxDistanceForConnectedLinks
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao._
-import fi.vaylavirasto.viite.geometry.{GeometryUtils, Matrix, Point, Vector3d}
+import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point, Vector3d}
 import fi.vaylavirasto.viite.model.CalibrationPointType.RoadAddressCP
 import fi.vaylavirasto.viite.model.{CalibrationPointType, Discontinuity, RoadAddressChangeType, SideCode, Track}
 
@@ -61,16 +61,6 @@ object TrackSectionOrder {
             recursiveFindNearestProjectLinks(ProjectLinkChain(Seq(newLinks.head), startPoint, endPoint), newLinks.tail)
           }
         Map(projectLinkChain.startPoint -> projectLinkChain.sortedProjectLinks.head, projectLinkChain.endPoint -> projectLinkChain.sortedProjectLinks.last)
-    }
-  }
-
-  def RotationMatrix(tangent: Vector3d): Matrix = {
-    if (Math.abs(tangent.x) <= fi.liikennevirasto.viite.Epsilon)
-      Matrix(Seq(Seq(0.0, -1.0), Seq(1.0, 0.0)))
-    else {
-      val k = tangent.y / tangent.x
-      val coeff = 1 / Math.sqrt(k * k + 1)
-      Matrix(Seq(Seq(coeff, -k * coeff), Seq(k * coeff, coeff)))
     }
   }
 
@@ -178,6 +168,7 @@ object TrackSectionOrder {
       }
     }
 
+    @tailrec
     def recursive(currentPoint: Point, ready: Seq[ProjectLink], unprocessed: Seq[ProjectLink]): Seq[ProjectLink] = {
       if (unprocessed.isEmpty) {
         // Put calibration point at the end
@@ -287,6 +278,7 @@ object TrackSectionOrder {
       }
     }
 
+    @tailrec
     def recursiveFindAndExtend(currentPoint: Point, ready: Seq[ProjectLink], unprocessed: Seq[ProjectLink], oppositeTrack: Seq[ProjectLink]): Seq[ProjectLink] = {
       if (unprocessed.isEmpty)
         ready
@@ -340,8 +332,8 @@ object TrackSectionOrder {
             SideCode.TowardsDigitizing
         }
         /* Sets reverse flag if sidecode change occurs with road/roadpart change. */
-        def setReverseFlag = if (sideCode != nextLink.sideCode && (nextLink.roadNumber != nextLink.originalRoadNumber || nextLink.roadPartNumber != nextLink.originalRoadPartNumber)) !nextLink.reversed else nextLink.reversed
-        recursiveFindAndExtend(nextPoint, ready ++ Seq(nextLink.copy(sideCode = sideCode, reversed = setReverseFlag)), unprocessed.filterNot(pl => pl == nextLink), oppositeTrack)
+        def setReverseFlag() = if (sideCode != nextLink.sideCode && (nextLink.roadNumber != nextLink.originalRoadNumber || nextLink.roadPartNumber != nextLink.originalRoadPartNumber)) !nextLink.reversed else nextLink.reversed
+        recursiveFindAndExtend(nextPoint, ready ++ Seq(nextLink.copy(sideCode = sideCode, reversed = setReverseFlag())), unprocessed.filterNot(pl => pl == nextLink), oppositeTrack)
       }
     }
 

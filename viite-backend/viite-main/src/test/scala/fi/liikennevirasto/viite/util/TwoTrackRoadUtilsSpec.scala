@@ -63,13 +63,12 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
     }
 
     def withTrack(testTrack: TestTrack): Seq[ProjectLink] = {
-      testTrack.status.zipWithIndex.map { case (status, index) => {
-        val (st, en) = (testTrack.geom(index).minBy(_.x).x.toLong, testTrack.geom(index).maxBy(_.x).x.toLong)
+      testTrack.status.zipWithIndex.map {
+        case (status, index) =>
+          val (st, en) = (testTrack.geom(index).minBy(_.x).x.toLong, testTrack.geom(index).maxBy(_.x).x.toLong)
 
-        projectLink(st, en, testTrack.track, id, status, roadNumber, roadPartNumber, discontinuity, ely, geom = testTrack.geom(index), linkId = index.toString, roadwayId = roadwayId,
-          startDate =
-            startDate)
-      }
+          projectLink(st, en, testTrack.track, id, status, roadNumber, roadPartNumber, discontinuity, ely, geom = testTrack.geom(index), linkId = index.toString, roadwayId = roadwayId,
+            startDate = startDate)
       }
     }
 

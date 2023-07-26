@@ -24,7 +24,7 @@ sealed trait CalibrationCode {
 }
 
 object CalibrationCode {
-  val values = Set(No, AtEnd, AtBeginning, AtBoth)
+  val values: Set[CalibrationCode] = Set(No, AtEnd, AtBeginning, AtBoth)
 
   def apply(intValue: Int): CalibrationCode = {
     values.find(_.value == intValue).getOrElse(No)
@@ -879,7 +879,6 @@ class RoadwayDAO extends BaseDAO {
    * @param ids : Seq[Long] - The ids of the roadway rows of which reversed tags should be flipped
    * @return
    */
-
   def updateReversedTagsInHistoryRows(ids: Set[Long]): Int = {
     val query =
       s"""

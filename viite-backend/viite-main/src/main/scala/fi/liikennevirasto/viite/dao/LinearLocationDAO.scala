@@ -405,11 +405,6 @@ class LinearLocationDAO {
     Q.queryNA[LinearLocation](filteredQuery).iterator.toSeq
   }
 
-  // TODO If not used, should be removed
-  def toTimeStamp(dateTime: Option[DateTime]): Option[Timestamp] = {
-    dateTime.map(dt => new Timestamp(dt.getMillis))
-  }
-
   /**
     * Remove Linear Locations (expire them). Don't use more than 1000 linear locations at once.
     *

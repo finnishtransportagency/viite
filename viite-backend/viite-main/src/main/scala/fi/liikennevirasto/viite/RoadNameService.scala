@@ -3,7 +3,7 @@ package fi.liikennevirasto.viite
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.vaylavirasto.viite.dao.{ProjectLinkNameDAO, RoadName, RoadNameDAO, RoadNameForRoadAddressBrowser}
 import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
+import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.slf4j.LoggerFactory
 
 import scala.util.control.NonFatal
@@ -18,7 +18,7 @@ class RoadNameService() {
 
   private val logger = LoggerFactory.getLogger(getClass)
 
-  val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
+  val formatter: DateTimeFormatter = DateTimeFormat.forPattern("dd.MM.yyyy")
 
   def getRoadNames(oRoadNumber: Option[String], oRoadName: Option[String], oStartDate: Option[DateTime], oEndDate: Option[DateTime]): Either[String, Seq[RoadName]] = {
     withDynTransaction {
@@ -86,7 +86,7 @@ class RoadNameService() {
         case (None, None) => Left("Missing either RoadNumber or RoadName")
       }
     } catch {
-      case longParsingException: NumberFormatException => Left("Could not parse road number")
+      case _/*longParsingException*/: NumberFormatException => Left("Could not parse road number")
       case e if NonFatal(e) => Left("Unknown error" + e)
     }
   }
@@ -137,20 +137,15 @@ class RoadNameService() {
       }
     }
     catch {
-      case longParsingException: NumberFormatException => Map("error" -> "Could not parse road number")
+      case _/*longParsingException*/: NumberFormatException => Map("error" -> "Could not parse road number")
       case e if NonFatal(e) => Map("error" -> "Unknown error")
     }
-  }
-
-  def getHasCurrentRoadName(roadNumber: Long): Boolean = {
-    RoadNameDAO.getCurrentRoadNamesByRoadNumber(roadNumber).nonEmpty
   }
 
   def getCurrentRoadNames(roadNumbers: Seq[Long]): Seq[RoadName] = {
     withDynSession {
       RoadNameDAO.getCurrentRoadNamesByRoadNumbers(roadNumbers)
     }
-
   }
 
 }

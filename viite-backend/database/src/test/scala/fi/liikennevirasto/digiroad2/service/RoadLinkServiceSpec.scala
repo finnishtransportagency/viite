@@ -32,7 +32,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   test("Test getRoadLinksByMunicipality() When supplying a specific municipality Id Then return the correct return of a ViiteRoadLink of that Municipality") {
     val municipalityId = 235
-    val linkId = 2l.toString
+    val linkId = 2L.toString
     val roadLink = RoadLink(linkId, Nil, 0, AdministrativeClass.Municipality, TrafficDirection.TowardsDigitizing, None, None, LifecycleStatus.UnknownLifecycleStatus, municipalityCode = municipalityId, sourceId = "")
 
     val mockKGVClient = MockitoSugar.mock[KgvRoadLink]
@@ -54,7 +54,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   ignore("Test getComplementaryRoadLinks() When submitting a bounding box as a search area Then return any complimentary geometry that are inside said area") {
     val municipalityId = 235
-    val linkId = 2l.toString
+    val linkId = 2L.toString
     val roadLink: RoadLink = RoadLink(linkId, Seq(), 0, AdministrativeClass.Municipality, TrafficDirection.TowardsDigitizing, None,None, municipalityCode = municipalityId, sourceId = "")
     val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
 
@@ -68,7 +68,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       val roadLinksList = Await.result(service.getComplementaryRoadLinks(boundingBox, Set.empty), Duration.Zero)
 
-      roadLinksList.length > 0 should be(true)
+      roadLinksList.nonEmpty should be(true)
       roadLinksList.head.isInstanceOf[RoadLink] should be(true)
       roadLinksList.head.linkId should be(linkId)
       roadLinksList.head.municipalityCode should be(municipalityId)
@@ -77,11 +77,11 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   test("Test getCurrentAndComplementaryRoadLinksByMunicipality() When asking for info for a specific municipality Then return full municipality info, that includes both complementary and ordinary geometries") {
     val municipalityId = 235
-    val linkId = Seq(1l, 2l).map(_.toString)
+    val linkId = Seq(1L, 2L).map(_.toString)
     val roadLinks = linkId.map(id =>
       RoadLink(id, Seq(), 0, AdministrativeClass.Municipality, TrafficDirection.TowardsDigitizing, None,None, municipalityCode = municipalityId, sourceId = "RoadLink")
     )
-    val linkIdComp = Seq(3l, 4l).map(_.toString)
+    val linkIdComp = Seq(3L, 4L).map(_.toString)
     val roadLinksComp = linkIdComp.map(id =>
       RoadLink(id, Seq(), 0, AdministrativeClass.Municipality, TrafficDirection.TowardsDigitizing, None,None, municipalityCode = municipalityId, sourceId = "Complementary")
     )

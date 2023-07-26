@@ -15,7 +15,7 @@ sealed trait AdministrativeClass {
 }
 
 object AdministrativeClass {
-  val values = Set(State, Municipality, Private, Unknown)
+  private val values = Set(State, Municipality, Private, Unknown)
 
   def apply(value: Int): AdministrativeClass = {
     values.find(_.value == value).getOrElse(Unknown)

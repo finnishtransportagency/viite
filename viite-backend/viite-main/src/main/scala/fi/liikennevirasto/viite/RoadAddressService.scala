@@ -72,7 +72,7 @@ class RoadAddressService(
     * @param roadNumberLimits  : Seq[(Int, Int) - A sequence of upper and lower limits of road numbers
     * @return
     */
-  def fetchLinearLocationByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)] = Seq()) = {
+  def fetchLinearLocationByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)] = Seq()): Seq[LinearLocation] = {
     withDynSession {
       time(logger, "Fetch addresses") {
         linearLocationDAO.fetchLinearLocationByBoundingBox(boundingRectangle, roadNumberLimits)
@@ -86,7 +86,7 @@ class RoadAddressService(
     * @param linearLocations : Seq[LinearLocation] - The linear locations to search
     * @return
     */
-  def getCurrentRoadAddresses(linearLocations: Seq[LinearLocation]) = {
+  def getCurrentRoadAddresses(linearLocations: Seq[LinearLocation]): Seq[RoadAddress] = {
     roadwayAddressMapper.getCurrentRoadAddressesByLinearLocation(linearLocations)
   }
 
@@ -107,7 +107,7 @@ class RoadAddressService(
 
     // get all the linear locations on the roadway numbers
     val allLinearLocations =  {
-      linearLocationDAO.fetchByRoadwayNumber(allRoadwayNumbersInRoadPart).toSeq
+      linearLocationDAO.fetchByRoadwayNumber(allRoadwayNumbersInRoadPart)
     }
 
     allLinearLocations
@@ -184,7 +184,7 @@ class RoadAddressService(
   def getRoadAddressLinksOfWholeRoadPart(roadNumber: Long, roadPartNumber: Long): Seq[RoadAddressLink] = {
 
     val allLinearLocations = withDynSession {
-      time(logger, s"Fetch addresses in road: ${roadNumber} & part: ${roadPartNumber} ") {
+      time(logger, s"Fetch addresses in road: $roadNumber & part: $roadPartNumber ") {
         getLinearLocationsInRoadPart(roadNumber, roadPartNumber)
       }
     }
@@ -232,17 +232,6 @@ class RoadAddressService(
     }
 
     roadAddresses.map(roadAddressLinkBuilder.build)
-  }
-
-  /**
-    * Returns all of our road addresses (combination of roadway + linear location information) that share the same linkIds as those supplied.
-    *
-    * @param linkIds : Seq[Long] - The linkId's to fetch information
-    * @return
-    */
-  def getRoadAddressesByLinkIds(linkIds: Seq[String]): Seq[RoadAddress] = {
-    val linearLocations = linearLocationDAO.fetchByLinkId(linkIds.toSet)
-    roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations)
   }
 
   /**
@@ -318,10 +307,9 @@ class RoadAddressService(
     val params = parsedInput.head._2
     var searchResult: Seq[Any] = null
     searchType match {
-      case "linkId" => {
+      case "linkId" =>
         val searchResultPoint = roadLinkService.getMidPointByLinkId(searchString.get)
         collectResult("linkId", Seq(searchResultPoint))
-      }
       case "road" => params.size match {
         case 1 =>
           // The params with type long can be MTKID or roadNumber
@@ -360,7 +348,7 @@ class RoadAddressService(
         val municipalityId = withDynSession {
           if (address.size > 1) MunicipalityDAO.getMunicipalityIdByName(address.last.trim).headOption.map(_._1) else None
         }
-        val (streetName, streetNumber) = address.head.split(" ").partition(_.matches(("\\D+")))
+        val (streetName, streetNumber) = address.head.split(" ").partition(_.matches("\\D+"))
 
         // Append '*' wildcard to street name. Keeps Viite search functionality similar to VKM's earlier version (upto 2020).
         // Pad with plain ' '. Strings expected to be (html-)unescaped, @see viiteVkmClient.get.
@@ -798,10 +786,9 @@ class RoadAddressService(
       )
       getRoadAddressLinks(boundingBoxResult)
     } catch {
-      case e: Throwable => {
+      case e: Throwable =>
         logger.error(s"$e ")
         Seq[RoadAddressLink]()
-      }
     }
   }
 
@@ -1169,18 +1156,8 @@ class Contains(r: Range) {
 
 case class RoadAddressMerge(merged: Set[Long], created: Seq[RoadAddress])
 
-case class LinearLocationResult(current: Seq[LinearLocation])
-
 case class BoundingBoxResult(changeInfoF: Future[Seq[ChangeInfo]], roadAddressResultF: Future[(Seq[LinearLocation], Seq[HistoryRoadLink])],
                              roadLinkF: Future[Seq[RoadLink]], complementaryF: Future[Seq[RoadLink]])
-
-case class RoadAddressResult(roadAddressResultF: Future[Seq[LinearLocation]], roadLinkF: Future[Seq[RoadLink]], complementaryF: Future[Seq[RoadLink]])
-
-case class LinkRoadAddressHistory(v: (Seq[RoadAddress], Seq[RoadAddress])) {
-  val currentSegments: Seq[RoadAddress] = v._1
-  val historySegments: Seq[RoadAddress] = v._2
-  val allSegments: Seq[RoadAddress] = currentSegments ++ historySegments
-}
 
 case class ChangedRoadAddress(roadAddress: RoadAddress, link: RoadLink)
 
@@ -1248,8 +1225,6 @@ object AddressConsistencyValidator {
       values.find(_.value == intValue).get
     }
   }
-
-  case class AddressErrorDetails(linearLocationId: Long, linkId: Long, roadNumber: Long, roadPartNumber: Long, addressError: AddressError, ely: Long)
 
 }
 

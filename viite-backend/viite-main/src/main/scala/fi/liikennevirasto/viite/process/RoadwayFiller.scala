@@ -12,7 +12,7 @@ object RoadwayFiller {
   case class RwChanges(currentRoadway: Roadway, historyRoadways: Seq[Roadway], projectLinks: Seq[ProjectLink])
 
   val projectDAO = new ProjectDAO
-  val logger = LoggerFactory.getLogger(getClass)
+  private val logger = LoggerFactory.getLogger(getClass)
 
 
   /**
@@ -111,11 +111,11 @@ object RoadwayFiller {
       val projectLinksInRoadway         = changes.projectLinks
       val (terminatedProjectLinks, others) = projectLinksInRoadway.partition(_.status == RoadAddressChangeType.Termination)
       val elyChanged                       = if (others.nonEmpty) currentRoadway.ely != others.head.ely else false
-      val addressChanged                   = if (others.nonEmpty) others.last.endAddrMValue != currentRoadway.endAddrMValue || (others.head.startAddrMValue) != currentRoadway.startAddrMValue else false
+      val addressChanged                   = if (others.nonEmpty) others.last.endAddrMValue != currentRoadway.endAddrMValue || others.head.startAddrMValue != currentRoadway.startAddrMValue else false
       val adminClassed                     = others.groupBy(pl => AdminClassRwn(pl.administrativeClass, pl.roadwayNumber))
       val project                          = projectDAO.fetchById(projectLinksInRoadway.head.projectId)
 
-      val roadways = adminClassed.map { case (adminClassRoadwayNumber, projectLinkSeq) => {
+      val roadways = adminClassed.map { case (adminClassRoadwayNumber, projectLinkSeq) =>
         if (roadwayHasChanges(currentRoadway, adminClassRoadwayNumber, projectLinkSeq) || elyChanged || addressChanged) {
             createRoadwaysWithLinearlocationsAndProjectLinks(currentRoadway, project, projectLinkSeq, historyRoadways)
         } else if (projectLinkSeq.nonEmpty) {
@@ -130,7 +130,7 @@ object RoadwayFiller {
           )
           GeneratedRoadway(existingRoadway, roadwayAddressMapper.mapLinearLocations(existingRoadway.head, projectLinksWithGivenAttributes), projectLinksWithGivenAttributes)
         } else GeneratedRoadway(Seq(), Seq(), Seq())
-      }}.toSeq
+      }.toSeq
 
       val roadwaysWithLinearlocations = (roadways.flatMap(_.roadway).distinct, roadways.flatMap(_.linearLocations), roadways.flatMap(_.projectLinks))
       val historyRowsOfTerminatedRoadway = terminatedHistory(historyRoadways, currentRoadway, terminatedProjectLinks)
