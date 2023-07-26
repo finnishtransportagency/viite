@@ -67,7 +67,7 @@ Resources:
           Cpu: 0
           Environment:
             - Name: userProvider
-              Value: fi.liikennevirasto.digiroad2.dao.PostGISUserProvider
+              Value: fi.vaylavirasto.viite.dao.PostGISUserProvider
             - Name: eventBus
               Value: fi.liikennevirasto.digiroad2.DigiroadEventBus
             - Name: oagProxyServer
