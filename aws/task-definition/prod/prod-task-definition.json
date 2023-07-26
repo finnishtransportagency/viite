@@ -19,7 +19,7 @@
             ],
             "cpu": 0,
             "environment": [
-                { "name": "userProvider",         "value": "fi.liikennevirasto.digiroad2.dao.PostGISUserProvider" },
+                { "name": "userProvider",         "value": "fi.vaylavirasto.viite.dao.PostGISUserProvider" },
                 { "name": "eventBus",             "value": "fi.liikennevirasto.digiroad2.DigiroadEventBus" },
                 { "name": "rasterServiceURL",     "value": "https://api.vaylapilvi.fi/rasteripalvelu-mml" },
                 { "name": "kgvRoadlink.frozen",   "value": "true" },
