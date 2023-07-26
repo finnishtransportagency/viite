@@ -384,7 +384,7 @@ class NodeDAO extends BaseDAO {
          AND NP.VALID_TO IS NULL
          AND N.VALID_TO IS NULL
                """
-    Q.queryNA[(Long)](query).iterator.toSeq
+    Q.queryNA[Long](query).iterator.toSeq
   }
 
 }

@@ -5,7 +5,7 @@ sealed trait LifecycleStatus {
 }
 
 object LifecycleStatus{
-  val values = Set[LifecycleStatus](
+  private val values = Set[LifecycleStatus](
     Planned,
     UnderConstruction,
     InUse,

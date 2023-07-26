@@ -13,7 +13,7 @@ object CalibrationPointsUtils {
 
   def toCalibrationPoints(startCalibrationPoint: CalibrationPointType, endCalibrationPoint: CalibrationPointType, linkId: String, startMValue: Double, endMValue: Double, startAddrMValue: Long, endAddrMValue: Long, sideCode: SideCode):
   (Option[ProjectCalibrationPoint], Option[ProjectCalibrationPoint]) = {
-    val length = (endMValue - startMValue)
+    val length = endMValue - startMValue
     (sideCode: SideCode) match {
       case SideCode.BothDirections => (None, None) // Invalid choice
       case SideCode.TowardsDigitizing => (

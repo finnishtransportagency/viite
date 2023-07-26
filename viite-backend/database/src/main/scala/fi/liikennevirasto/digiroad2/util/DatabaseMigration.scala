@@ -17,7 +17,7 @@ object DatabaseMigration {
     flyway.migrate()
   }
 
-  def flywayInit {
+  def flywayInit(): Unit = {
     val flyway = new Flyway()
     flyway.setDataSource(ds)
     flyway.setInitVersion("-1")

@@ -1,14 +1,9 @@
 package fi.liikennevirasto.viite.dao
 
-import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.DigiroadEventBus
 import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
-import fi.liikennevirasto.viite.{RoadAddressMerge, RoadAddressService}
-import fi.vaylavirasto.viite.dao.Sequences
-import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
@@ -16,11 +11,10 @@ import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{StaticQuery => Q}
 
 class ProjectCalibrationPointDAOSpec extends FunSuite with Matchers {
 
-  val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+  private val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   def runWithRollback(f: => Unit): Unit = {
     Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
       f
@@ -101,8 +95,8 @@ class ProjectCalibrationPointDAOSpec extends FunSuite with Matchers {
       addProjectRoads()
       val id = ProjectCalibrationPointDAO.createCalibrationPoint(1, 1, 0.0, 15)
       ProjectCalibrationPointDAO.removeSpecificCalibrationPoint(id)
-      val nonExistantCalibrationPoint = ProjectCalibrationPointDAO.findCalibrationPointById(id)
-      nonExistantCalibrationPoint.isEmpty should be (true)
+      val nonExistentCalibrationPoint = ProjectCalibrationPointDAO.findCalibrationPointById(id)
+      nonExistentCalibrationPoint.isEmpty should be (true)
     }
   }
 

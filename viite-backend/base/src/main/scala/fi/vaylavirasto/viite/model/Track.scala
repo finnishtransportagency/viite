@@ -11,7 +11,7 @@ sealed trait Track {
 }
 
 object Track {
-  val values = Set(Combined, RightSide, LeftSide, Unknown)
+  val values: Set[Track] = Set(Combined, RightSide, LeftSide, Unknown)
 
   def apply(intValue: Int): Track = {
     values.find(_.value == intValue).getOrElse(Unknown)

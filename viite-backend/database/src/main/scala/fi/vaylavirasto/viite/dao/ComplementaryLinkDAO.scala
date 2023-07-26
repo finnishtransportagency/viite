@@ -22,7 +22,7 @@ class ComplementaryLinkDAO {
        FROM complementary_link_table
     """
 
-  protected def logger = LoggerFactory.getLogger(getClass)
+  private def logger = LoggerFactory.getLogger(getClass)
   val formatter: DateTimeFormatter = ISODateTimeFormat.dateOptionalTimeParser()
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransactionNewOrExisting(f)
 

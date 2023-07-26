@@ -56,10 +56,10 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   val mockLinearLocationDAO: LinearLocationDAO = MockitoSugar.mock[LinearLocationDAO]
   val mockRoadwayChangesDAO: RoadwayChangesDAO = MockitoSugar.mock[RoadwayChangesDAO]
 
-  private val roadwayNumber1   = 1000000000l
-  private val roadwayNumber2   = 2000000000l
-  private val roadwayNumber3   = 3000000000l
-  private val roadwayNumber4   = 4000000000l
+  private val roadwayNumber1   = 1000000000L
+  private val roadwayNumber2   = 2000000000L
+  private val roadwayNumber3   = 3000000000L
+  private val roadwayNumber4   = 4000000000L
   private val linearLocationId = 1
   private val testProjectId    = 7081807
 
@@ -2806,60 +2806,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
     }
   }
-
-  //TODO remove after cleaning all floating code
-  /*test("If the supplied, old, road address has a valid_to < current_date then the outputted, new, road addresses are floating") {
-    val road = 5L
-    val roadPart = 205L
-    val origStartM = 1024L
-    val origEndM = 1547L
-    val linkId = 1049L
-    val endM = 520.387
-    val suravageLinkId = 5774839L
-
-    runWithRollback {
-
-    val linearLocationId = Sequences.nextLinearLocationId
-    val user = Some("user")
-    val project = Project(-1L, Incomplete, "split", user.get, DateTime.now(), user.get,
-      DateTime.now().plusMonths(2), DateTime.now(), "", Seq(), None, None)
-
-    // Original road address: 1024 -> 1547
-    val roadAddress = RoadAddress(1L, linearLocationId, road, roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, origStartM, origEndM, Some(DateTime.now().minusYears(10)),
-      None, None, linkId, 0.0, endM, SideCode.TowardsDigitizing, 86400L, (None, None),  Seq(Point(1024.0, 0.0), Point(1025.0, 1544.386)),
-      LinkGeomSource.NormalLinkInterface, 8L, NoTermination, 123)
-
-    val projectLink = ProjectLink(0, road, roadPart, Track.Combined, Discontinuity.Continuous, 0, 0, 0, 0, Some(DateTime.now()), None, user,
-      0, 0.0, 0.0, SideCode.TowardsDigitizing, (None, None),  Seq(Point(0.0, 0.0), Point(0.0, 0.0)),
-      -1L, null, AdministrativeClass.State, null, 0.0, 1L, linearLocationId, 8L, reversed = false, None, 748800L)
-    val transferAndNew = Seq(
-
-      // Transferred road address: 1028 -> 1128
-      projectLink.copy(id = 2, startAddrMValue = origStartM + 4, endAddrMValue = origStartM + 104, linkId = suravageLinkId,
-        startMValue = 0.0, endMValue = 99.384, geometry = Seq(Point(1024.0, 0.0), Point(1024.0, 99.384)), status = RoadAddressChangeType.Transfer,
-        linkGeomSource = LinkGeomSource.SuravageLinkInterface, geometryLength = 99.384, connectedLinkId = Some(linkId)),
-
-      // New road address: 1128 -> 1205
-      projectLink.copy(id = 3, startAddrMValue = origStartM + 104, endAddrMValue = origStartM + 181, linkId = suravageLinkId,
-        startMValue = 99.384, endMValue = 176.495, geometry = Seq(Point(1024.0, 99.384), Point(1101.111, 99.384)), status = RoadAddressChangeType.New,
-        linkGeomSource = LinkGeomSource.SuravageLinkInterface, geometryLength = 77.111, connectedLinkId = Some(linkId)),
-
-      // Terminated road address: 1124 -> 1547
-      projectLink.copy(id = 4, startAddrMValue = origStartM + 100, endAddrMValue = origEndM, linkId = linkId,
-        startMValue = 99.384, endMValue = endM, geometry = Seq(Point(1024.0, 99.384), Point(1025.0, 1544.386)), status = RoadAddressChangeType.Terminated,
-        linkGeomSource = LinkGeomSource.NormalLinkInterface, geometryLength = endM - 99.384, connectedLinkId = Some(suravageLinkId))
-
-    )
-    val yesterdayDate = Option(DateTime.now().plusDays(-1))
-    val result = projectService.createSplitRoadAddress(roadAddress.copy(validTo = yesterdayDate), transferAndNew, project)
-    result should have size 4
-    result.count(_.terminated == TerminationCode.Termination) should be(1)
-    result.count(_.startDate == roadAddress.startDate) should be(2)
-    result.count(_.startDate.get == project.startDate) should be(2)
-    result.count(_.endDate.isEmpty) should be(2)
-    result.filter(res => res.terminated == TerminationCode.NoTermination && res.roadwayNumber != -1000).forall(_.isFloating) should be(true)
-    }
-  }*/
 
   test("Test changeDirection When after the creation of valid project links on a project Then the side code of road addresses should be successfully reversed.") {
     runWithRollback {

@@ -9,7 +9,7 @@ trait CalibrationPointType extends Ordered[CalibrationPointType] {
 }
 
 object CalibrationPointType {
-  val values = Set(NoCP, UserDefinedCP, JunctionPointCP, RoadAddressCP, UnknownCP)
+  private val values = Set(NoCP, UserDefinedCP, JunctionPointCP, RoadAddressCP, UnknownCP)
 
   def apply(intValue: Int): CalibrationPointType = {
     values.find(_.value == intValue).getOrElse(UnknownCP)

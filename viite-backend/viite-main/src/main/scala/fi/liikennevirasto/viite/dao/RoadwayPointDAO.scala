@@ -23,7 +23,7 @@ case class RoadwayPoint(id: Long, roadwayNumber: Long, addrMValue: Long, created
 
 class RoadwayPointDAO extends BaseDAO {
 
-  implicit val getRoadwayPointRow = new GetResult[RoadwayPoint] {
+  implicit val getRoadwayPointRow: GetResult[RoadwayPoint] = new GetResult[RoadwayPoint] {
     def apply(r: PositionedResult): RoadwayPoint = {
       val roadwayPointId = r.nextLong()
       val roadwayNumber = r.nextLong()

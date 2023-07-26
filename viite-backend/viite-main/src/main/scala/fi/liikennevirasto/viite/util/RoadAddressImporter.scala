@@ -152,8 +152,6 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, KGVClient: KgvRoadLin
 
   private def fetchHistoryRoadLinksFromVVH(linkIds: Set[String]): Map[String, HistoryRoadLink] =
     Map[String, HistoryRoadLink]()
-  //    vvhClient.historyData.fetchVVHRoadlinks[HistoryRoadLink](linkIds).groupBy(_.linkId).mapValues(_.maxBy(_.endDate))
-
 
   private def adjustLinearLocation(linearLocation: IncomingLinearLocation, coefficient: Double): IncomingLinearLocation = {
     linearLocation.copy(startMeasure = BigDecimal(linearLocation.startMeasure * coefficient).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble, endMeasure = BigDecimal(linearLocation.endMeasure * coefficient).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble)
@@ -290,7 +288,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, KGVClient: KgvRoadLin
       case address =>
         address.sortBy(_.startAddressM).zip(1 to address.size)
     }.foreach {
-      case (key, addresses) =>
+      case (_/*key*/, addresses) =>
         addresses.foreach {
           //add current linear locations
           add =>
@@ -323,11 +321,9 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, KGVClient: KgvRoadLin
       case address =>
         address.sortBy(_.startAddressM).zip(1 to address.size)
     }.foreach {
-      case (key, addresses) =>
+      case (_/*key*/, addresses) =>
         val minAddress = addresses.head._1
         val maxAddress = addresses.last._1
-        val linkIds = addresses.map(_._1.linkId)
-        val currentAddresses = currentConversionAddresses.filter(add => add.roadwayNumber == minAddress.roadwayNumber && linkIds.contains(add.linkId)).sortBy(_.startAddressM)
 
         val roadAddress = IncomingRoadway(minAddress.roadwayNumber, minAddress.roadNumber, minAddress.roadPartNumber, minAddress.trackCode, minAddress.startAddressM, maxAddress.endAddressM, minAddress.directionFlag, minAddress.startDate, minAddress.endDate, "import", minAddress.administrativeClass, minAddress.ely, minAddress.validFrom, None, maxAddress.discontinuity, terminated = NoTermination.value)
 
@@ -383,7 +379,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, KGVClient: KgvRoadLin
     val roadways = terminatedConversionAddresses.groupBy(t => t.roadwayNumber)
 
     roadways.foreach {
-      case (roadwayNumber, roadways) =>
+      case (_/*roadwayNumber*/, roadways) =>
         val sorted = roadways.sortBy(-_.startDate.get.getMillis)
         val terminated = sorted.head
         val subsequent: Seq[ConversionAddress] = if (roadways.size > 1) {

@@ -1,7 +1,7 @@
 package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.viite.dao.ProjectLink
-import fi.liikennevirasto.viite.process.strategy.{LinkStatusChangeTrackCalculatorStrategy, TrackCalculatorContext, TrackCalculatorResult}
+import fi.liikennevirasto.viite.process.strategy.TrackCalculatorResult
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.CalibrationPointType.NoCP
 import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LinkGeomSource, RoadAddressChangeType, SideCode, Track}
@@ -30,7 +30,6 @@ class TrackCalculatorStrategySpec extends FunSuite with Matchers {
 
     val leftSideProjectLinks = Seq(projectLinkLeft1, projectLinkLeft2, projectLinkLeft3)
     val rightSideProjectLinks = Seq(projectLinkRight1, projectLinkRight2, projectLinkRight3)
-    val strategy = TrackCalculatorContext.getStrategy(leftSideProjectLinks, rightSideProjectLinks)
     val trackCalcResult = TrackCalculatorResult(leftSideProjectLinks, rightSideProjectLinks, 0L, 0L, Seq(), Seq())
 
     val (adjustedLeft, adjustedRight) = TrackSectionOrder.setCalibrationPoints(trackCalcResult.leftProjectLinks, trackCalcResult.rightProjectLinks, Map())

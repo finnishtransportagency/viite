@@ -33,18 +33,13 @@ class NodeDAOSpec extends FunSuite with Matchers {
   val junctionPointDAO = new JunctionPointDAO
 
   private val roadNumber1 = 990
-  private val roadwayNumber1 = 1000000000l
+  private val roadwayNumber1 = 1000000000L
   private val roadPartNumber1 = 1
-  val testRoadway1 = Roadway(NewIdValue, roadwayNumber1, roadNumber1, roadPartNumber1, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
-
-  val testRoadwayPoint1 = RoadwayPoint(NewIdValue, roadwayNumber1, 0, "Test", None, None, None)
-
-  val testNode1 = Node(NewIdValue, NewIdValue, Point(100, 100), Some("Test node 1"), NodeType.NormalIntersection,
+  private val testRoadway1 = Roadway(NewIdValue, roadwayNumber1, roadNumber1, roadPartNumber1, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
+  private val testRoadwayPoint1 = RoadwayPoint(NewIdValue, roadwayNumber1, 0, "Test", None, None, None)
+  private val testNode1 = Node(NewIdValue, NewIdValue, Point(100, 100), Some("Test node 1"), NodeType.NormalIntersection,
     DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, "Test", None, registrationDate = new DateTime())
-
-  val testRoadAttributes1 = RoadAttributes(roadNumber1, roadPartNumber1, 0)
-
-  val testNodePoint1 = NodePoint(NewIdValue, BeforeAfter.Before, -1, None, NodePointType.UnknownNodePointType, Some(testNode1.startDate), None,
+  private val testNodePoint1 = NodePoint(NewIdValue, BeforeAfter.Before, -1, None, NodePointType.UnknownNodePointType, Some(testNode1.startDate), None,
     DateTime.parse("2019-01-01"), None, "Test", None, 0, 0, 0, 0, Track.Combined, 0)
 
   test("Test fetchByRoadAttributes When non-existing road number Then return None") {
@@ -148,7 +143,7 @@ class NodeDAOSpec extends FunSuite with Matchers {
       val nodeNumbers = dao.fetchNodeNumbersByProject(projectId)
 
       nodeNumbers.size should be(1)
-      nodeNumbers(0) should be(nodeNumber)
+      nodeNumbers.head should be(nodeNumber)
     }
   }
 
@@ -174,14 +169,14 @@ class NodeDAOSpec extends FunSuite with Matchers {
       val nodeNumbers = dao.fetchNodeNumbersByProject(projectId)
 
       nodeNumbers.size should be(1)
-      nodeNumbers(0) should be(nodeNumber)
+      nodeNumbers.head should be(nodeNumber)
     }
   }
 
   test("Test Node publish") {
     runWithRollback {
       val nodeId = Sequences.nextNodeId
-      val nodeNumber = dao.create(Seq(testNode1.copy(id = nodeId))).head
+      /*val nodeNumber =*/ dao.create(Seq(testNode1.copy(id = nodeId))).head
       dao.publish(nodeId,"testuser")
       val node = dao.fetchById(nodeId)
       node.get.editor should be(Some("testuser"))

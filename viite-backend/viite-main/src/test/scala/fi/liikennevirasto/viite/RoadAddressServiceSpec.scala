@@ -13,7 +13,6 @@ import fi.vaylavirasto.viite.dao.Sequences
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
 import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LifecycleStatus, LinkGeomSource, RoadAddressChangeType, RoadLink, SideCode, Track, TrafficDirection}
 import org.joda.time.DateTime
-import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalatest.{FunSuite, Matchers}
@@ -31,9 +30,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   val mockRoadwayDAO: RoadwayDAO = MockitoSugar.mock[RoadwayDAO]
   val mockRoadNetworkDAO: RoadNetworkDAO = MockitoSugar.mock[RoadNetworkDAO]
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
-  val mockRoadwayPointDAO: RoadwayPointDAO = MockitoSugar.mock[RoadwayPointDAO]
-  val mockNodePointDAO = MockitoSugar.mock[NodePointDAO]
-  val mockJunctionPointDAO = MockitoSugar.mock[JunctionPointDAO]
 
   val roadwayAddressMappper = new RoadwayAddressMapper(mockRoadwayDAO, mockLinearLocationDAO)
   val projectDAO = new ProjectDAO
@@ -62,7 +58,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
     override def withDynSession[T](f: => T): T = f
     override def withDynTransaction[T](f: => T): T = f
-    override val viiteVkmClient = mockViiteVkmClient
+    override val viiteVkmClient: ViiteVkmClient = mockViiteVkmClient
   }
 
   val nodesAndJunctionsService = new NodesAndJunctionsService(mockRoadwayDAO,
@@ -633,23 +629,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val generatedProperRoadwayNumbersAfterChanges = Seq(afterChangesTerminated.head, afterChangesTransfer.head)
       val mappedRoadwayChanges = projectLinkDAO.fetchProjectLinksChange(projectId)
 
-      val newRoads = Seq()
-      val terminated = Termination(Seq(
-        (
-          dummyRoadAddress(roadwayNumber1, 99, 2, 0, 5, Some(DateTime.now()), None, 12345.toString, 0, 5, LinkGeomSource.NormalLinkInterface, geom1),
-          afterUpdateProjectLinks.head
-        )
-      )
-      )
-      val unchanged = Unchanged(Seq())
-      val transferred = Transferred(Seq(
-        (
-          dummyRoadAddress(roadwayNumber1, 99, 2, 5, 20, Some(DateTime.now()), None, 12346.toString, 0, 15, LinkGeomSource.NormalLinkInterface, geom2),
-          beforeChangesTransfer
-        )
-      )
-      )
-      val renumbered = ReNumeration(Seq())
 
       val roadwayPointsBeforeTerminatedLink = afterUpdateProjectLinks.filter(_.status == RoadAddressChangeType.Termination).map(_.roadwayNumber).distinct.flatMap{ rwp=>
       roadwayPointDAO.fetchByRoadwayNumber(rwp)
@@ -687,7 +666,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val geom2 = Seq(Point(5.0, 0.0), Point(20.0, 0.0))
       val roadwayNumber1 = Sequences.nextRoadwayNumber
       val roadwayNumber2 = roadwayNumber1+1
-      val roadwayNumber2AfterChanges = roadwayNumber2+1
 
       val projectId = Sequences.nextViiteProjectId
       val rap =  dummyProject(projectId, ProjectState.Incomplete, Seq(), None).copy(startDate = DateTime.parse("2019-10-10"))
@@ -766,7 +744,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val roadwayPointsBeforeTransferLink = Seq(beforeChangesTransfer).filter(_.status == RoadAddressChangeType.Transfer).map(_.roadwayNumber).distinct.flatMap{ rwp=>
         roadwayPointDAO.fetchByRoadwayNumber(rwp)
       }
-      val delta = Delta(DateTime.now, newRoads , terminated, unchanged, transferred, renumbered)
       val reservedParts = Seq(ProjectReservedPart(0, 99, 2, Some(20), Some(Discontinuity.Continuous), Some(8L), None, None, None, Some(12345L.toString)))
       val formedParts = Seq(ProjectReservedPart(0, 99, 2, None, None, None, Some(15), Some(Discontinuity.Continuous), Some(8L), Some(12345L.toString)))
 
@@ -830,12 +807,12 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
       // create roadways (after projects changes situation)
       val newRoadwaysFor19510 = Seq(
-        Roadway(Sequences.nextRoadwayId, newRoadwayNumber1, 19510, 1, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, 5, false, DateTime.now(), None, "silari", Some("testRoadName"), 14, TerminationCode.NoTermination, DateTime.now(), None),
-        Roadway(Sequences.nextRoadwayId, newRoadwayNumber2, 19510, 1, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, 5, 15, false, DateTime.now(), None, "silari", Some("testRoadName"), 14, TerminationCode.NoTermination, DateTime.now(), None)
+        Roadway(Sequences.nextRoadwayId, newRoadwayNumber1, 19510, 1, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, 5, reversed=false, DateTime.now(), None, "silari", Some("testRoadName"), 14, TerminationCode.NoTermination, DateTime.now(), None),
+        Roadway(Sequences.nextRoadwayId, newRoadwayNumber2, 19510, 1, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, 5, 15, reversed=false, DateTime.now(), None, "silari", Some("testRoadName"), 14, TerminationCode.NoTermination, DateTime.now(), None)
       )
 
       val newRoadwaysFor19527 = Seq(
-        Roadway(Sequences.nextRoadwayId, newRoadwayNumber3, 19527, 1, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, 0, 10, false, DateTime.now(), None, "silari", Some("testRoadName"), 14, TerminationCode.NoTermination, DateTime.now(), None)
+        Roadway(Sequences.nextRoadwayId, newRoadwayNumber3, 19527, 1, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, 0, 10, reversed=false, DateTime.now(), None, "silari", Some("testRoadName"), 14, TerminationCode.NoTermination, DateTime.now(), None)
       )
 
       val newRoadways = newRoadwaysFor19510.union(newRoadwaysFor19527)
@@ -843,9 +820,9 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
       // create project link changes that will be handed to the handleRoadwayPointsUpdate function
       val projectLinkChanges = Seq(
-        ProjectRoadLinkChange(Sequences.nextProjectLinkId, newRoadwayId1,llId,     llId,         0, 0, 19510, 1,  0,  0, 0,  5, RoadAddressChangeType.New,      false, newRoadwayNumber1, newRoadwayNumber1),
-        ProjectRoadLinkChange(Sequences.nextProjectLinkId, newRoadwayId2,llId + 1, llId + 1, 19510, 1, 19510, 1,  0, 10, 5, 15, RoadAddressChangeType.Transfer, false, originalRoadwayNumber1, newRoadwayNumber2),
-        ProjectRoadLinkChange(Sequences.nextProjectLinkId, newRoadwayId3,llId + 2, llId + 2, 19510, 1, 19527, 1, 10, 20, 0, 10, RoadAddressChangeType.Transfer, false, originalRoadwayNumber1, newRoadwayNumber3)
+        ProjectRoadLinkChange(Sequences.nextProjectLinkId, newRoadwayId1,llId,     llId,         0, 0, 19510, 1,  0,  0, 0,  5, RoadAddressChangeType.New,      reversed=false, newRoadwayNumber1, newRoadwayNumber1),
+        ProjectRoadLinkChange(Sequences.nextProjectLinkId, newRoadwayId2,llId + 1, llId + 1, 19510, 1, 19510, 1,  0, 10, 5, 15, RoadAddressChangeType.Transfer, reversed=false, originalRoadwayNumber1, newRoadwayNumber2),
+        ProjectRoadLinkChange(Sequences.nextProjectLinkId, newRoadwayId3,llId + 2, llId + 2, 19510, 1, 19527, 1, 10, 20, 0, 10, RoadAddressChangeType.Transfer, reversed=false, originalRoadwayNumber1, newRoadwayNumber3)
       )
 
       // create roadway changes that will be handed to the handleRoadwayPointsUpdate function
@@ -856,7 +833,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
             RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14L)),
             RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(0), Some(5), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14)),
-            Discontinuity.Continuous, AdministrativeClass.State, false, 4481L, 14),
+            Discontinuity.Continuous, AdministrativeClass.State, reversed=false, 4481L, 14),
           date),
         ProjectRoadwayChange(
           projectId, Some(projectName), ely, user, DateTime.now(),
@@ -864,7 +841,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
             RoadAddressChangeType.Transfer,
             RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(0), Some(10), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14)),
             RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(5), Some(15), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
-            Discontinuity.EndOfRoad, AdministrativeClass.State, false, 4481L, 14),
+            Discontinuity.EndOfRoad, AdministrativeClass.State, reversed=false, 4481L, 14),
           date),
         ProjectRoadwayChange(
           projectId, Some(projectName), ely, user, DateTime.now(),
@@ -872,7 +849,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
             RoadAddressChangeType.Transfer,
             RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(10), Some(20), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
             RoadwayChangeSection(Some(19527), Some(0), Some(1), Some(1), Some(0), Some(10), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
-            Discontinuity.EndOfRoad, AdministrativeClass.State, false, 4481L, 14),
+            Discontinuity.EndOfRoad, AdministrativeClass.State, reversed=false, 4481L, 14),
           date)
       )
 
@@ -946,13 +923,13 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
       // create new roadways (after projects changes situation)
       val newRoadwaysFor19510 = Seq(
-        Roadway(Sequences.nextRoadwayId, originalRoadwayNumber0, 19510, 1, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, 5, false, DateTime.now(), None, "silari", Some("testRoadName"), 14, TerminationCode.NoTermination, DateTime.now(), None),
-        Roadway(Sequences.nextRoadwayId, newRoadwayNumber1, 19510, 1, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, 5, 10, false, DateTime.now(), None, "silari", Some("testRoadName"), 14, TerminationCode.NoTermination, DateTime.now(), None)
+        Roadway(Sequences.nextRoadwayId, originalRoadwayNumber0, 19510, 1, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, 5, reversed=false, DateTime.now(), None, "silari", Some("testRoadName"), 14, TerminationCode.NoTermination, DateTime.now(), None),
+        Roadway(Sequences.nextRoadwayId, newRoadwayNumber1,      19510, 1, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, 5, 10, reversed=false, DateTime.now(), None, "silari", Some("testRoadName"), 14, TerminationCode.NoTermination, DateTime.now(), None)
       )
 
       val newRoadwaysFor19527 = Seq(
-        Roadway(Sequences.nextRoadwayId, newRoadwayNumber2, 19527, 1, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, 3, false, DateTime.now(), None, "silari", Some("testRoadName"), 14, TerminationCode.NoTermination, DateTime.now(), None),
-        Roadway(Sequences.nextRoadwayId, originalRoadwayNumber2, 19527, 1, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, 3, 13, false, DateTime.now(), None, "silari", Some("testRoadName2"), 14, TerminationCode.NoTermination, DateTime.now(), None)
+        Roadway(Sequences.nextRoadwayId, newRoadwayNumber2,      19527, 1, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, 3, reversed=false, DateTime.now(), None, "silari", Some("testRoadName"), 14, TerminationCode.NoTermination, DateTime.now(), None),
+        Roadway(Sequences.nextRoadwayId, originalRoadwayNumber2, 19527, 1, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, 3, 13, reversed=false, DateTime.now(), None, "silari", Some("testRoadName2"), 14, TerminationCode.NoTermination, DateTime.now(), None)
       )
 
       val newRoadways = newRoadwaysFor19510.union(newRoadwaysFor19527)
@@ -960,10 +937,10 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
       // create project link changes that will be handed to the handleRoadwayPointsUpdate function
       val projectLinkChanges = Seq(
-        ProjectRoadLinkChange(Sequences.nextProjectLinkId, originalRoadwayId0,llId,     llId,     19510, 1, 19510, 1,  0,  5, 0,  5, RoadAddressChangeType.Unchanged, false, originalRoadwayNumber0, originalRoadwayNumber0),
-        ProjectRoadLinkChange(Sequences.nextProjectLinkId, originalRoadwayId1,llId + 1, llId + 1, 19510, 1, 19510, 1,  5, 10, 5, 10, RoadAddressChangeType.Unchanged, false, originalRoadwayNumber1, newRoadwayNumber1),
-        ProjectRoadLinkChange(Sequences.nextProjectLinkId, originalRoadwayId1,llId + 2, llId + 2, 19510, 1, 19527, 1, 10, 13, 0,  3, RoadAddressChangeType.Transfer,  false, originalRoadwayNumber1, newRoadwayNumber2),
-        ProjectRoadLinkChange(Sequences.nextProjectLinkId, originalRoadwayId2,llId + 3, llId + 3, 19510, 1, 19510, 1,  0, 10, 3, 13, RoadAddressChangeType.Transfer,  false, originalRoadwayNumber2, originalRoadwayNumber2)
+        ProjectRoadLinkChange(Sequences.nextProjectLinkId, originalRoadwayId0,llId,     llId,     19510, 1, 19510, 1,  0,  5, 0,  5, RoadAddressChangeType.Unchanged, reversed=false, originalRoadwayNumber0, originalRoadwayNumber0),
+        ProjectRoadLinkChange(Sequences.nextProjectLinkId, originalRoadwayId1,llId + 1, llId + 1, 19510, 1, 19510, 1,  5, 10, 5, 10, RoadAddressChangeType.Unchanged, reversed=false, originalRoadwayNumber1, newRoadwayNumber1),
+        ProjectRoadLinkChange(Sequences.nextProjectLinkId, originalRoadwayId1,llId + 2, llId + 2, 19510, 1, 19527, 1, 10, 13, 0,  3, RoadAddressChangeType.Transfer,  reversed=false, originalRoadwayNumber1, newRoadwayNumber2),
+        ProjectRoadLinkChange(Sequences.nextProjectLinkId, originalRoadwayId2,llId + 3, llId + 3, 19510, 1, 19510, 1,  0, 10, 3, 13, RoadAddressChangeType.Transfer,  reversed=false, originalRoadwayNumber2, originalRoadwayNumber2)
       )
 
       // create roadway changes that will be handed to the handleRoadwayPointsUpdate function
@@ -974,7 +951,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
             RoadAddressChangeType.Unchanged,
             RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(0), Some(5), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14)),
             RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(0), Some(5), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14)),
-            Discontinuity.EndOfRoad, AdministrativeClass.State, false, 4481L, 14),
+            Discontinuity.EndOfRoad, AdministrativeClass.State, reversed=false, 4481L, 14),
           date),
         ProjectRoadwayChange(
           projectId, Some(projectName), ely, user, DateTime.now(),
@@ -982,7 +959,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
             RoadAddressChangeType.Unchanged,
             RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(5), Some(10), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14)),
             RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(5), Some(10), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
-            Discontinuity.EndOfRoad, AdministrativeClass.State, false, 4481L, 14),
+            Discontinuity.EndOfRoad, AdministrativeClass.State, reversed=false, 4481L, 14),
           date),
         ProjectRoadwayChange(
           projectId, Some(projectName), ely, user, DateTime.now(),
@@ -990,7 +967,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
             RoadAddressChangeType.Transfer,
             RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(10), Some(13), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
             RoadwayChangeSection(Some(19527), Some(0), Some(1), Some(1), Some(0), Some(3), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14)),
-            Discontinuity.Continuous, AdministrativeClass.State, false, 4481L, 14),
+            Discontinuity.Continuous, AdministrativeClass.State, reversed=false, 4481L, 14),
           date),
         ProjectRoadwayChange(
           projectId, Some(projectName), ely, user, DateTime.now(),
@@ -998,7 +975,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
             RoadAddressChangeType.Transfer,
             RoadwayChangeSection(Some(19527), Some(0), Some(1), Some(1), Some(0), Some(10), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
             RoadwayChangeSection(Some(19527), Some(0), Some(1), Some(1), Some(3), Some(13), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
-            Discontinuity.EndOfRoad, AdministrativeClass.State, false, 4481L, 14),
+            Discontinuity.EndOfRoad, AdministrativeClass.State, reversed=false, 4481L, 14),
           date)
       )
 

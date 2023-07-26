@@ -322,7 +322,7 @@ class NodePointDAO extends BaseDAO {
         Update NODE_POINT Set valid_to = CURRENT_TIMESTAMP where valid_to IS NULL AND node_number = $nodeNumber
         AND type = ${nodePointType.value}
       """
-    logger.debug(s"Expiring by number and type: ${nodeNumber}, ${nodePointType.value} \n    query: : $query")
+    logger.debug(s"Expiring by number and type: $nodeNumber, ${nodePointType.value} \n    query: : $query")
     Q.updateNA(query).execute
   }
 
@@ -337,7 +337,7 @@ class NodePointDAO extends BaseDAO {
          AND NP.type = 2
          ORDER BY NP.ID
        """
-    Q.queryNA[(NodePoint)](query).iterator.toSeq
+    Q.queryNA[NodePoint](query).iterator.toSeq
   }
 
   case class RoadPartInfo(roadNumber: Long, roadwayNumber: Long, roadPartNumber: Long, beforeAfter: Long, roadwayPointId: Long, addrM: Long, track: Long, startAddrM: Long, endAddrM: Long, roadwayId: Long)
@@ -384,7 +384,7 @@ class NodePointDAO extends BaseDAO {
           GROUP BY R.ROAD_PART_NUMBER
           ORDER BY R.ROAD_PART_NUMBER
        """
-    Q.queryNA[(Long)](query).firstOption
+    Q.queryNA[Long](query).firstOption
   }
 
   def fetchAverageAddrM(roadNumber: Long, roadPartNumber: Long, nodeNumber: Long): Long = {
@@ -410,7 +410,7 @@ class NodePointDAO extends BaseDAO {
               AND N.VALID_TO IS NULL
               AND N.NODE_NUMBER = $nodeNumber)
        """
-    Q.queryNA[(Long)](query).first
+    Q.queryNA[Long](query).first
   }
 
   // Only for debugging

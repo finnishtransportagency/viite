@@ -116,7 +116,9 @@ trait TrackCalculatorStrategy {
     ProjectSectionMValueCalculator.assignLinkValues(seq, userDefinedCalibrationPoint, Some(st.toDouble), Some(en.toDouble), if (coEff.isNaN || coEff.isInfinity) 1.0 else coEff)
   }
 
-  protected def adjustTwoTracks(right: Seq[ProjectLink], left: Seq[ProjectLink], startM: Long, endM: Long, userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]) = {
+  protected def adjustTwoTracks(right: Seq[ProjectLink], left: Seq[ProjectLink], startM: Long, endM: Long,
+                                userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): (Seq[ProjectLink],Seq[ProjectLink]) =
+  {
     (assignValues(left, startM, endM, ProjectSectionMValueCalculator.calculateAddressingFactors(left), userDefinedCalibrationPoint),
       assignValues(right, startM, endM, ProjectSectionMValueCalculator.calculateAddressingFactors(right), userDefinedCalibrationPoint))
   }
@@ -155,7 +157,7 @@ trait TrackCalculatorStrategy {
         logger.error(s"Averaged address caused negative length. " +
                      s"projectlink.id: ${projectLinks.last.id} " +
                      s"startAddrMValue: ${projectLinks.last.startAddrMValue} " +
-                     s"endAddressMValue: ${endAddressMValue}")
+                     s"endAddressMValue: $endAddressMValue")
         throw new RoadAddressException(UnsuccessfulRecalculationMessage + s"\nLinkin ${projectLinks.last.linkId} pituudeksi tulee ${endAddressMValue - projectLinks.last.startAddrMValue}")
       }
       projectLinks.init :+ projectLinks.last.copy(endAddrMValue = endAddressMValue)
@@ -184,11 +186,10 @@ trait TrackCalculatorStrategy {
       case (true,true) => fixedMinimimumAddress
       case (true, false)  => rightProjectLinks.last.startAddrMValue + addressLengthRight
       case (false, true)  => leftProjectLinks.last.startAddrMValue + addressLengthLeft
-      case (false,false)  => {
+      case (false,false)  =>
         val leftLength = startSectionAddress + leftProjectLinks.last.endAddrMValue - leftProjectLinks.head.startAddrMValue
         val rightLength = startSectionAddress + rightProjectLinks.last.endAddrMValue - rightProjectLinks.head.startAddrMValue
         averageOfAddressMValues(leftLength, rightLength, rightProjectLinks.head.reversed)
-      }
     }
 
     val (adjustedLeft, adjustedRight) = adjustTwoTracks(rightProjectLinks, leftProjectLinks, startSectionAddress, minimumEndAddress, calibrationPoints)

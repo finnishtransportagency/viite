@@ -222,14 +222,13 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       val it = pls.sliding(2)
       while (it.hasNext) {
         it.next() match {
-          case Seq(first, next) => {
+          case Seq(first, next) =>
             if (first.connectedLinkId.isDefined && next.connectedLinkId.isDefined && first.connectedLinkId == next.connectedLinkId)
               if (!(first.endMValue == next.startMValue || first.startMValue == next.endMValue)) {
                 val falsePls = Iterable(first, next)
                 val msg      = "Discontinuity in splitted links endMValue and startMValue in project"
                 throwExceptionWithErrorInfo(falsePls, msg)
             }
-          }
         }
       }
     }
@@ -291,11 +290,10 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     val it = pls.sliding(2)
     while (it.hasNext) {
       it.next() match {
-        case Seq(curr, next) => {
+        case Seq(curr, next) =>
           if (curr.discontinuity == Discontinuity.Continuous && !curr.connected(next)) {
             logger.error(s"Address geometry mismatch. linkIds: ${curr.linkId} ${next.linkId}")
           }
-        }
         case _ =>
       }
     }
@@ -339,8 +337,8 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
 
           lengthCompare(leftSections, rightSections) match {
             case 0 => continuousRoadwaySections
-            case 1 => getUpdatedContinuousRoadwaySections(rightSections, leftSections, true).getOrElse(continuousRoadwaySections)
-            case 2 => getUpdatedContinuousRoadwaySections(leftSections, rightSections, false).getOrElse(continuousRoadwaySections)
+            case 1 => getUpdatedContinuousRoadwaySections(rightSections, leftSections, rightSideFirst=true).getOrElse(continuousRoadwaySections)
+            case 2 => getUpdatedContinuousRoadwaySections(leftSections, rightSections, rightSideFirst=false).getOrElse(continuousRoadwaySections)
           }
         }
 

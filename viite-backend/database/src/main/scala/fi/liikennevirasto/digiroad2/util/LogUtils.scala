@@ -7,7 +7,7 @@ object LogUtils {
   /** Log only process durations that took more than this amount of time */
   val timeLoggingThresholdInMs = 0
 
-  /** Logs the time it took function <i>f</i> to complete, when ever it took more than {@link timeLoggingThresholdInMs}.
+  /** Logs the time it took function <i>f</i> to complete, when ever it took more than <i>>timeLoggingThresholdInMs</i>.
     * In case <i>f</i> fails, log line is printed as an error, otherwise as debug level line. */
   def time[R](logger: Logger, operationName: String, noFilter: Boolean = false, url :Option[String] = None, params: Option[Map[String, String]] = None)(f: => R): R = {
     val begin = System.currentTimeMillis()

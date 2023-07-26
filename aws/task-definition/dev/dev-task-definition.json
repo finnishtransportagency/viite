@@ -20,7 +20,6 @@
             "cpu": 0,
             "environment": [
                 { "name": "userProvider", "value": "fi.liikennevirasto.digiroad2.dao.PostGISUserProvider" },
-                { "name": "municipalityProvider", "value": "fi.liikennevirasto.digiroad2.dao.PostGISMunicipalityProvider" },
                 { "name": "eventBus", "value": "fi.liikennevirasto.digiroad2.DigiroadEventBus" },
                 { "name": "oagProxyServer", "value": "oag.vayla.fi" },
                 { "name": "oagProxyURL", "value": "https://oag.vayla.fi" },

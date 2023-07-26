@@ -26,7 +26,7 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
 
   val projectDAO = new ProjectDAO
   private val roadNumber1 = 990
-  private val roadwayNumber1 = 1000000000l
+  private val roadwayNumber1 = 1000000000L
   private val roadPartNumber1 = 1
   private def dummyProject(id: Long, status: ProjectState, reservedParts: Seq[ProjectReservedPart] = List.empty[ProjectReservedPart], coordinates: Option[ProjectCoordinates] = None): Project ={
     Project(id, status, "testProject", "testUser", DateTime.parse("2001-01-01"), "testUser", DateTime.parse("2001-01-01"), DateTime.now(), "additional info here", reservedParts, Seq(), Some("current status info"), coordinates)
@@ -213,26 +213,26 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
       val roadwayDAO = new RoadwayDAO
 
       val rw = roadwayDAO.create(Seq(testRoadway1))
-      val rwId = rw(0)
+      val rwId = rw.head
 
       sqlu""" update ROADWAY R SET VALID_FROM = TIMESTAMP '2120-01-02 12:26:36.000000' WHERE ID =  $rwId """.execute
-      val rws = roadwayDAO.fetchAllByRoadwayId(rw)
+//    val rws = roadwayDAO.fetchAllByRoadwayId(rw)  // for debug
       val projId1 = Sequences.nextViiteProjectId
       val rap =  dummyProject(projId1, ProjectState.Accepted, List(), None)
-      val pr = projectDAO.create(rap)
+      /*val pr =*/ projectDAO.create(rap)
 
       sqlu"""update project set accepted_date= TIMESTAMP '2120-01-02 12:26:36.000000' where id=$projId1""".execute
-      val pr2 = projectDAO.fetchById(projId1)
+//    val pr2 = projectDAO.fetchById(projId1)  // for debug
       val changeType = 2
       sqlu""" insert into ROADWAY_CHANGES(project_id,change_type,old_discontinuity,new_discontinuity,OLD_ADMINISTRATIVE_CLASS,NEW_ADMINISTRATIVE_CLASS,old_ely,new_ely, ROADWAY_CHANGE_ID,new_road_number,new_road_part_number,new_start_addr_m,new_end_addr_m)
                                    Values($projId1,$changeType,1,1,1,1,8,8,1,$roadNumber1,$roadPartNumber1,0,10.5) """.execute
-      val rwcs = dao.fetchRoadwayChanges(Set(projId1))
+//    val rwcs = dao.fetchRoadwayChanges(Set(projId1))  // for debug
       val startValidFromDate = DateTime.parse("2120-01-01")
       val endValidFromDate =  DateTime.parse("2120-01-03")
       var roadwayChangesInfo = dao.fetchRoadwayChangesInfo(startValidFromDate, Option(endValidFromDate))
 
       roadwayChangesInfo.size should be(1)
-      roadwayChangesInfo(0).change_type should be(changeType)
+      roadwayChangesInfo.head.change_type should be(changeType)
 
       sqlu""" insert into ROADWAY_CHANGES(project_id,change_type,old_road_number,old_road_part_number,old_TRACK,old_start_addr_m,old_end_addr_m,old_discontinuity,new_discontinuity,OLD_ADMINISTRATIVE_CLASS,NEW_ADMINISTRATIVE_CLASS,old_ely,new_ely, ROADWAY_CHANGE_ID)
                                    Values($projId1,5,$roadNumber1,$roadPartNumber1,1,0,10.5,1,1,1,1,8,8,2) """.execute

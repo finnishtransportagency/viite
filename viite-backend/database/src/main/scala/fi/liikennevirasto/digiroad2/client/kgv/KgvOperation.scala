@@ -165,7 +165,7 @@ trait KgvOperation extends LinkOperationsAbstract{
                   }
       }
       result match {
-        case Left(_) => time(logger, s"entering round ${trycounter + 1}", true, None){}
+        case Left(_) => time(logger, s"entering round ${trycounter + 1}", noFilter=true, None){}
         case Right(_) => Unit
       }
     } while (trycounter < MaxTries && !success)
@@ -173,7 +173,7 @@ trait KgvOperation extends LinkOperationsAbstract{
   }
 
   private def paginationRequest(base: String, limit: Int, startIndex: Int = 0): (String, Int) = {
-    (s"${base}&limit=${limit}&startIndex=${startIndex}", startIndex+limit)
+    (s"$base&limit=$limit&startIndex=$startIndex", startIndex+limit)
   }
 
   private def queryWithPaginationThreaded(baseUrl: String = ""): Seq[LinkType] = {
@@ -225,9 +225,9 @@ trait KgvOperation extends LinkOperationsAbstract{
   override protected def queryByRoadNumbersAndMunicipality(municipality: Int, roadNumbers: Seq[(Int, Int)]): Seq[LinkType] = {
     val roadNumberFilters = withRoadNumbersFilter(roadNumbers, includeAllPublicRoads = true)
     val filterString  = s"filter=${combineFiltersWithAnd(withMunicipalityFilter(Set(municipality)), roadNumberFilters)})"
-    val queryString = s"?${filterString}&filter-lang=${cqlLang}&crs=${crs}"
+    val queryString = s"?$filterString&filter-lang=$cqlLang&crs=$crs"
 
-    fetchFeatures(s"${restApiEndPoint}/${serviceName}/items/${queryString}") match {
+    fetchFeatures(s"$restApiEndPoint/$serviceName/items/$queryString") match {
       case Right(features) => features.get.features.map(t => Extractor.extractFeature(t, linkGeomSource).asInstanceOf[LinkType])
       case Left(error) => throw new ClientException(error.toString)
     }
@@ -241,7 +241,7 @@ trait KgvOperation extends LinkOperationsAbstract{
     }else {
       ""
     }
-    fetchFeatures(s"$restApiEndPoint/${serviceName}/items?bbox=$bbox&filter-lang=$cqlLang&bbox-crs=$bboxCrsType&crs=$crs&$filterString")
+    fetchFeatures(s"$restApiEndPoint/$serviceName/items?bbox=$bbox&filter-lang=$cqlLang&bbox-crs=$bboxCrsType&crs=$crs&$filterString")
     match {
       case Right(features) =>features.get.features.map(feature=>
         Extractor.extractFeature(feature, linkGeomSource).asInstanceOf[LinkType])
@@ -251,7 +251,7 @@ trait KgvOperation extends LinkOperationsAbstract{
 
   override protected def queryByMunicipality(municipality: Int, filter: Option[String] = None): Seq[LinkType] = {
     val filterString  = s"filter=${encode(combineFiltersWithAnd(withMunicipalityFilter(Set(municipality)), filter))}"
-    queryWithPaginationThreaded(s"${restApiEndPoint}/${serviceName}/items?${filterString}&filter-lang=${cqlLang}&crs=${crs}")
+    queryWithPaginationThreaded(s"$restApiEndPoint/$serviceName/items?$filterString&filter-lang=$cqlLang&crs=$crs")
   }
 
   override protected def queryByLinkIds[LinkType](linkIds: Set[String], filter: Option[String] = None): Seq[LinkType] = {
@@ -268,7 +268,7 @@ trait KgvOperation extends LinkOperationsAbstract{
 
   protected def queryRoadAndPartWithFilter(linkIds: Set[String], filter: String): List[(Option[Long], Option[Long], Int)] = {
     val filterString = s"&filter=${encode(combineFiltersWithAnd(withLinkIdFilter(linkIds), filter))}"
-    val url          = s"${restApiEndPoint}/${serviceName}/items?filter-lang=${cqlLang}&crs=${crs}${filterString}"
+    val url          = s"$restApiEndPoint/$serviceName/items?filter-lang=$cqlLang&crs=$crs$filterString"
     fetchFeatures(url) match {
       case Right(features) => features.get.features.map(feature => Extractor.extractRoadNumberAndPartFeature(feature))
       case Left(error) => throw new ClientException(error.toString)
@@ -277,7 +277,7 @@ trait KgvOperation extends LinkOperationsAbstract{
 
   protected def queryByFilter[LinkType](filter:Option[String],pagination:Boolean = false): Seq[LinkType] = {
     val filterString  = if (filter.nonEmpty) s"&filter=${encode(filter.get)}" else ""
-    val url = s"${restApiEndPoint}/${serviceName}/items?filter-lang=${cqlLang}&crs=${crs}${filterString}"
+    val url = s"$restApiEndPoint/$serviceName/items?filter-lang=$cqlLang&crs=$crs$filterString"
     if(!pagination){
       fetchFeatures(url)
       match {

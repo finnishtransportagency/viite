@@ -9,14 +9,14 @@ import org.scalatest.{FunSuite, Matchers}
   * Created by venholat on 21.10.2016.
   */
 class RoadAddressLinkPartitionerSpec extends FunSuite with Matchers {
-  lazy val roadAddressLinks = Seq(
-    makeRoadAddressLink(1, 0, 1, 1),
-    makeRoadAddressLink(2, 0, 1, 1),
-    makeRoadAddressLink(3, 0, 1, 1),
-    makeRoadAddressLink(4, 0, 1, 1),
-    makeRoadAddressLink(5, 0, 1, 1),
-    makeRoadAddressLink(6, 0, 1, 1),
-    makeRoadAddressLink(7, 0, 1, 1),
+  private lazy val roadAddressLinks = Seq(
+    makeRoadAddressLink( 1, 0, 1, 1),
+    makeRoadAddressLink( 2, 0, 1, 1),
+    makeRoadAddressLink( 3, 0, 1, 1),
+    makeRoadAddressLink( 4, 0, 1, 1),
+    makeRoadAddressLink( 5, 0, 1, 1),
+    makeRoadAddressLink( 6, 0, 1, 1),
+    makeRoadAddressLink( 7, 0, 1, 1),
     makeRoadAddressLink(11, 0, 1, 2),
     makeRoadAddressLink(12, 0, 1, 2),
     makeRoadAddressLink(13, 0, 1, 2),
@@ -24,16 +24,16 @@ class RoadAddressLinkPartitionerSpec extends FunSuite with Matchers {
     makeRoadAddressLink(15, 0, 1, 2),
     makeRoadAddressLink(16, 0, 1, 2),
     makeRoadAddressLink(17, 0, 1, 2),
-    makeRoadAddressLink(0, 1, 0, 0, 1.0, 1.0),
-    makeRoadAddressLink(0, 1, 0, 0, 11.0, 1.0),
-    makeRoadAddressLink(0, 1, 0, 0, 21.0, 1.0),
-    makeRoadAddressLink(0, 1, 0, 0, 31.0, 1.0),
-    makeRoadAddressLink(0, 1, 0, 0, 41.0, 1.0),
-    makeRoadAddressLink(0, 1, 0, 0, 1.0, 11.0),
-    makeRoadAddressLink(0, 1, 0, 0, 11.0, 11.0),
-    makeRoadAddressLink(0, 1, 0, 0, 21.0, 11.0),
-    makeRoadAddressLink(0, 1, 0, 0, 31.0, 11.0),
-    makeRoadAddressLink(0, 1, 0, 0, 41.0, 11.0)
+    makeRoadAddressLink( 0, 1, 0, 0,  1.0,  1.0),
+    makeRoadAddressLink( 0, 1, 0, 0, 11.0,  1.0),
+    makeRoadAddressLink( 0, 1, 0, 0, 21.0,  1.0),
+    makeRoadAddressLink( 0, 1, 0, 0, 31.0,  1.0),
+    makeRoadAddressLink( 0, 1, 0, 0, 41.0,  1.0),
+    makeRoadAddressLink( 0, 1, 0, 0,  1.0, 11.0),
+    makeRoadAddressLink( 0, 1, 0, 0, 11.0, 11.0),
+    makeRoadAddressLink( 0, 1, 0, 0, 21.0, 11.0),
+    makeRoadAddressLink( 0, 1, 0, 0, 31.0, 11.0),
+    makeRoadAddressLink( 0, 1, 0, 0, 41.0, 11.0)
   )
 
   private def makeRoadAddressLink(id: Long, anomaly: Int, roadNumber: Long, roadPartNumber: Long, deltaX: Double = 0.0, deltaY: Double = 0.0) = {
@@ -42,7 +42,9 @@ class RoadAddressLinkPartitionerSpec extends FunSuite with Matchers {
 
   test("Test partition should have specific fields (still to be defined) not empty") {
 
-    val roadLinks = Seq(RoadAddressLink(0, 0, 5171208.toString, Seq(Point(532837.14110884, 6993543.6296834), Point(533388.14110884, 6994014.1296834)), 0.0, AdministrativeClass.Municipality, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, AdministrativeClass.Municipality, None, BigInt(0), "", None, None, 5, 205, 1, 0, 0, 0, 1, "2015-01-01", "2016-01-01", 0.0, 0.0, SideCode.Unknown, None, None, 123, sourceId = ""))
+    val roadLinks = {
+      Seq(RoadAddressLink(0, 0, 5171208.toString, Seq(Point(532837.14110884, 6993543.6296834), Point(533388.14110884, 6994014.1296834)), 0.0, AdministrativeClass.Municipality, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, AdministrativeClass.Municipality, None, BigInt(0), "", None, None, 5, 205, 1, 0, 0, 0, 1, "2015-01-01", "2016-01-01", 0.0, 0.0, SideCode.Unknown, None, None, 123, sourceId = ""))
+    }
 
     val partitionedRoadLinks = RoadAddressLinkPartitioner.groupByHomogeneousSection(roadLinks)
 

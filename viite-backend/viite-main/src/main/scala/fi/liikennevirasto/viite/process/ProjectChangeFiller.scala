@@ -1,22 +1,10 @@
 package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.viite.ProjectRoadLinkChange
-import fi.liikennevirasto.viite.dao.{ProjectLink, ProjectRoadwayChange, RoadAddress}
+import fi.liikennevirasto.viite.dao.{ProjectLink, RoadAddress}
 import fi.vaylavirasto.viite.model.RoadAddressChangeType
 
 object ProjectChangeFiller {
-  def mapLinksToChanges(roadwayChanges: List[ProjectRoadwayChange], roadwayProjectLinkIds: Seq[(Long, Long)], projectLinks: Seq[ProjectLink], projectLinkChanges: Seq[ProjectRoadLinkChange]): Seq[(ProjectRoadwayChange, Seq[ProjectLink])] = {
-    roadwayChanges.map {
-      change =>
-        val linksRelatedToChange = roadwayProjectLinkIds.filter(link => link._1 == change.changeInfo.orderInChangeTable).map(_._2)
-        val projectLinksInChange = projectLinks.filter(pl => linksRelatedToChange.contains(pl.id))
-        val assignedProperRoadwayNumbers = projectLinksInChange.map { pl =>
-          val properRoadwayNumber = projectLinkChanges.find(_.id == pl.id)
-          pl.copy(roadwayNumber = properRoadwayNumber.get.newRoadwayNumber)
-        }
-        (change, assignedProperRoadwayNumbers)
-    }
-  }
 
   def mapAddressProjectionsToLinks(roadwayLinks: Seq[ProjectLink], projectLinkChanges: Seq[ProjectRoadLinkChange], mappedRoadAddressesProjection: Seq[RoadAddress]): (Seq[ProjectLink], Seq[ProjectRoadLinkChange]) = {
     val (terminatedRoadwayLinks, validRoadwayLinks) = roadwayLinks.partition(_.status == RoadAddressChangeType.Termination)

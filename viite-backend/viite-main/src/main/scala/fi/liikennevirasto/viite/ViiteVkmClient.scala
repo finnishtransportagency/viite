@@ -9,7 +9,6 @@ import org.apache.http.message.BasicNameValuePair
 import org.json4s.{DefaultFormats, StreamInput}
 import org.json4s.jackson.JsonMethods.parse
 import org.slf4j.LoggerFactory
-import java.net.URL
 
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
 import org.apache.http.client.config.{CookieSpecs, RequestConfig}
@@ -21,7 +20,7 @@ class ViiteVkmClient {
 
   case class VKMError(content: Map[String, Any], url: String)
 
-  val logger = LoggerFactory.getLogger(getClass)
+  private val logger = LoggerFactory.getLogger(getClass)
 
   private def getRestEndPoint: String = {
     val loadedKeyString = ViiteProperties.vkmUrl
@@ -66,9 +65,9 @@ class ViiteVkmClient {
   }
 
   def postFormUrlEncoded(urlPart: String, parameters: Map[String, String]): Any = {
-    implicit val formats = DefaultFormats
+    implicit val formats: DefaultFormats = DefaultFormats
 
-    val post = new HttpPost(s"${getRestEndPoint}$urlPart")
+    val post = new HttpPost(s"$getRestEndPoint$urlPart")
     val nameValuePairs = new java.util.ArrayList[NameValuePair]()
     parameters.foreach { case (key, value) =>
       nameValuePairs.add(new BasicNameValuePair(key, value))
@@ -82,7 +81,7 @@ class ViiteVkmClient {
       parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Any]
     } catch {
     case NonFatal(e) =>
-      logger.error(s"VkmClient failed: ${e.getMessage} ${getRestEndPoint}$urlPart", e)
+      logger.error(s"VkmClient failed: ${e.getMessage} $getRestEndPoint$urlPart", e)
       Map(("results","Failed"))
     } finally {
       if (response != null)

@@ -2,13 +2,10 @@ package fi.vaylavirasto.viite.model
 
 sealed trait TrafficDirection {
   def value: Int
-  def isOneWay =
-    this == TrafficDirection.AgainstDigitizing ||
-      this == TrafficDirection.TowardsDigitizing
 }
 
 object TrafficDirection {
-  val values = Set(BothDirections, AgainstDigitizing, TowardsDigitizing, UnknownDirection)
+  private val values = Set(BothDirections, AgainstDigitizing, TowardsDigitizing, UnknownDirection)
 
   def apply(intValue: Int): TrafficDirection = {
     values.find(_.value == intValue).getOrElse(UnknownDirection)

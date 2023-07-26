@@ -68,8 +68,6 @@ Resources:
           Environment:
             - Name: userProvider
               Value: fi.liikennevirasto.digiroad2.dao.PostGISUserProvider
-            - Name: municipalityProvider
-              Value: fi.liikennevirasto.digiroad2.dao.PostGISMunicipalityProvider
             - Name: eventBus
               Value: fi.liikennevirasto.digiroad2.DigiroadEventBus
             - Name: oagProxyServer

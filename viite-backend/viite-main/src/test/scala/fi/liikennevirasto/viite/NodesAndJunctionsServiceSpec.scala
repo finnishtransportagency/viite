@@ -26,15 +26,13 @@ import scala.util.{Left, Right}
 
 class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
-  val mockNodesAndJunctionsService = MockitoSugar.mock[NodesAndJunctionsService]
   private val roadNumber1 = 990
-  private val roadwayNumber1 = 1000000000l
-  private val roadwayNumber2 = 1000000002l
+  private val roadwayNumber1 = 1000000000L
+  private val roadwayNumber2 = 1000000002L
   private val roadPartNumber1 = 1
-  val roadNumberLimits = Seq((RoadClass.forJunctions.start, RoadClass.forJunctions.end))
-  val mockLinearLocationDAO = MockitoSugar.mock[LinearLocationDAO]
-  val mockRoadwayDAO = MockitoSugar.mock[RoadwayDAO]
-  val mockRoadwayChangesDAO = MockitoSugar.mock[RoadwayChangesDAO]
+  private val roadNumberLimits = Seq((RoadClass.forJunctions.start, RoadClass.forJunctions.end))
+  private val mockLinearLocationDAO = MockitoSugar.mock[LinearLocationDAO]
+  private val mockRoadwayDAO = MockitoSugar.mock[RoadwayDAO]
   val mockRoadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockRoadwayAddressMapper: RoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
   val mockEventBus: DigiroadEventBus = MockitoSugar.mock[DigiroadEventBus]
@@ -105,24 +103,24 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
-  val testRoadway1 = Roadway(NewIdValue, roadwayNumber1, roadNumber1, roadPartNumber1, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
+  private val testRoadway1 = Roadway(NewIdValue, roadwayNumber1, roadNumber1, roadPartNumber1, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
 
-  val testNode1 = Node(NewIdValue, NewIdValue, Point(100, 100), Some("Test node"), NodeType.NormalIntersection,
+  private val testNode1 = Node(NewIdValue, NewIdValue, Point(100, 100), Some("Test node"), NodeType.NormalIntersection,
     DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, "Test", None, registrationDate = new DateTime())
 
-  val testRoadwayPoint1 = RoadwayPoint(NewIdValue, roadwayNumber1, 0, "Test", None, None, None)
-  val testRoadwayPoint2 = RoadwayPoint(NewIdValue, roadwayNumber2, 0, "Test", None, None, None)
+  private val testRoadwayPoint1 = RoadwayPoint(NewIdValue, roadwayNumber1, 0, "Test", None, None, None)
+  private val testRoadwayPoint2 = RoadwayPoint(NewIdValue, roadwayNumber2, 0, "Test", None, None, None)
 
-  val testNodePoint1 = NodePoint(NewIdValue, BeforeAfter.Before, -1, None, NodePointType.UnknownNodePointType, Some(testNode1.startDate), testNode1.endDate,
+  private val testNodePoint1 = NodePoint(NewIdValue, BeforeAfter.Before, -1, None, NodePointType.UnknownNodePointType, Some(testNode1.startDate), testNode1.endDate,
     DateTime.parse("2019-01-01"), None, "Test", None, 0, 0, 0, 0, Track.Combined, 0)
 
-  val testJunction1 = Junction(NewIdValue, None, None, DateTime.parse("2019-01-01"), None,
+  private val testJunction1 = Junction(NewIdValue, None, None, DateTime.parse("2019-01-01"), None,
     DateTime.parse("2019-01-01"), None, "Test", None)
 
-  val testJunctionPoint1 = JunctionPoint(NewIdValue, BeforeAfter.Before, -1, -1, Some(testJunction1.startDate), testJunction1.endDate,
+  private val testJunctionPoint1 = JunctionPoint(NewIdValue, BeforeAfter.Before, -1, -1, Some(testJunction1.startDate), testJunction1.endDate,
     DateTime.parse("2019-01-01"), None, "Test", None, -1, 10, 0, 0, Track.Combined, Discontinuity.Continuous)
 
-  val testLinearLocation1 = LinearLocation(NewIdValue, 1, 1000l.toString, 0.0, 2.8, SideCode.TowardsDigitizing, 10000000000l, (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(99.0, 99.0), Point(101.0, 101.0)), LinkGeomSource.NormalLinkInterface, -1)
+  private val testLinearLocation1 = LinearLocation(NewIdValue, 1, 1000L.toString, 0.0, 2.8, SideCode.TowardsDigitizing, 10000000000L, (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(99.0, 99.0), Point(101.0, 101.0)), LinkGeomSource.NormalLinkInterface, -1)
 
   def dummyProjectLink(roadNumber: Long, roadPartNumber: Long, trackCode: Track, discontinuityType: Discontinuity, startAddrM: Long, endAddrM: Long, originalStartAddr: Long = 0, originalEndAddr: Long = 0, startDate: Option[DateTime], endDate: Option[DateTime] = None, linkId: String = "0", startMValue: Double = 0, endMValue: Double = 0, sideCode: SideCode = SideCode.Unknown, status: RoadAddressChangeType, projectId: Long = 0, administrativeClass: AdministrativeClass = AdministrativeClass.State, geometry: Seq[Point] = Seq(), roadwayNumber: Long): ProjectLink = {
     ProjectLink(0L, roadNumber, roadPartNumber, trackCode, discontinuityType, startAddrM, endAddrM, originalStartAddr, originalEndAddr, startDate, endDate, Some("user"), linkId, startMValue, endMValue, sideCode, (NoCP, NoCP), (NoCP, NoCP), geometry, projectId, status, administrativeClass, LinkGeomSource.NormalLinkInterface, geometryLength = 0.0, roadwayId = 0, linearLocationId = 0, ely = 8, reversed = false, None, linkGeometryTimeStamp = 0, roadwayNumber)
@@ -180,14 +178,13 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val nodesAndRoadAttributes = nodesAndJunctionsService.getNodesByRoadAttributes(roadNumber1, None, None)
       nodesAndRoadAttributes.isRight should be(true)
       nodesAndRoadAttributes match {
-        case Right(nodes) => {
+        case Right(nodes) =>
           nodes.size should be(1)
           val node = nodes.head
           node._1.name should be(Some("Test node"))
           node._1.coordinates should be(Point(100, 100))
           node._2.roadNumber should be(roadNumber1)
           node._2.roadPartNumber should be(roadPartNumber1)
-        }
         case _ => fail("Should not get here")
       }
     }
@@ -286,9 +283,9 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val link2 = dummyProjectLink(road1000, part, Track.Combined, Discontinuity.Continuous, 11, 20, 11, 20, Some(DateTime.now()), None, 12347.toString, 0, 10, SideCode.TowardsDigitizing, RoadAddressChangeType.New, projectId, AdministrativeClass.State, geom3, roadwayNumber + 1).copy(id = plId1 + 2, roadwayId = rwId + 1, linearLocationId = linearLocationId + 2)
 
       val linearLocations = Seq(
-        LinearLocation(linearLocationId, 1, 12345.toString, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l, (CalibrationPointReference(Some(0l)), CalibrationPointReference.None), Seq(Point(0.0, 0.0), Point(10.0, 0.0)), LinkGeomSource.ComplementaryLinkInterface, roadwayNumber, Some(DateTime.parse("2000-01-01")), None),
-        LinearLocation(linearLocationId + 1, 1, 12346.toString, 0.0, 11.0, SideCode.TowardsDigitizing, 10000000000l, (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(0.0, 0.0), Point(11.0, 0.0)), LinkGeomSource.ComplementaryLinkInterface, roadwayNumber + 1, Some(DateTime.parse("2000-01-01")), None),
-        LinearLocation(linearLocationId + 2, 2, 12347.toString, 0.0, 9.0, SideCode.TowardsDigitizing, 10000000000l, (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(11.0, 0.0), Point(20.0, 0.0)), LinkGeomSource.ComplementaryLinkInterface, roadwayNumber + 1, Some(DateTime.parse("2000-01-01")), None)
+        LinearLocation(linearLocationId,     1, 12345.toString, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000L, (CalibrationPointReference(Some(0L)), CalibrationPointReference.None), Seq(Point( 0.0, 0.0), Point(10.0, 0.0)), LinkGeomSource.ComplementaryLinkInterface, roadwayNumber,     Some(DateTime.parse("2000-01-01")), None),
+        LinearLocation(linearLocationId + 1, 1, 12346.toString, 0.0, 11.0, SideCode.TowardsDigitizing, 10000000000L, (CalibrationPointReference.None,      CalibrationPointReference.None), Seq(Point( 0.0, 0.0), Point(11.0, 0.0)), LinkGeomSource.ComplementaryLinkInterface, roadwayNumber + 1, Some(DateTime.parse("2000-01-01")), None),
+        LinearLocation(linearLocationId + 2, 2, 12347.toString, 0.0,  9.0, SideCode.TowardsDigitizing, 10000000000L, (CalibrationPointReference.None,      CalibrationPointReference.None), Seq(Point(11.0, 0.0), Point(20.0, 0.0)), LinkGeomSource.ComplementaryLinkInterface, roadwayNumber + 1, Some(DateTime.parse("2000-01-01")), None)
       )
       val pls = Seq(link1, link2)
       roadwayDAO.create(Seq(roadway, roadway2))
@@ -355,7 +352,6 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val linearLocationId2 = Sequences.nextLinearLocationId
       val linearLocation = LinearLocation(linearLocationId1, 1, 12345.toString, 0L, 10L, SideCode.TowardsDigitizing, 0L, calibrationPoints = (CalibrationPointReference(Some(0)), CalibrationPointReference(Some(10))), geom1, LinkGeomSource.NormalLinkInterface, roadwayNumber1, None, None)
       val projectId = Sequences.nextViiteProjectId
-      val plId1 = Sequences.nextProjectLinkId
       val plId2 = Sequences.nextProjectLinkId
 
       val project = Project(projectId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
@@ -365,8 +361,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
 
       val linearLocations = Seq(
-        LinearLocation(linearLocationId1, 1, 1000l.toString, 0.0, 50.0, SideCode.TowardsDigitizing, 10000000000l, (CalibrationPointReference(Some(0l)), CalibrationPointReference.None), Seq(Point(0.0, 0.0), Point(10.0, 0.0)), LinkGeomSource.ComplementaryLinkInterface, roadwayNumber1, Some(DateTime.parse("2000-01-01")), None),
-        LinearLocation(linearLocationId2, 1, 2000l.toString, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l, (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(10.0, 0.0), Point(20.0, 0.0)), LinkGeomSource.ComplementaryLinkInterface, roadwayNumber2, Some(DateTime.parse("2000-01-01")), None)
+        LinearLocation(linearLocationId1, 1, 1000L.toString, 0.0, 50.0, SideCode.TowardsDigitizing, 10000000000L, (CalibrationPointReference(Some(0L)), CalibrationPointReference.None), Seq(Point( 0.0, 0.0), Point(10.0, 0.0)), LinkGeomSource.ComplementaryLinkInterface, roadwayNumber1, Some(DateTime.parse("2000-01-01")), None),
+        LinearLocation(linearLocationId2, 1, 2000L.toString, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000L, (CalibrationPointReference.None,      CalibrationPointReference.None), Seq(Point(10.0, 0.0), Point(20.0, 0.0)), LinkGeomSource.ComplementaryLinkInterface, roadwayNumber2, Some(DateTime.parse("2000-01-01")), None)
       )
       val pls = Seq(link1)
       val reversedPls = pls.map(_.copy(sideCode = SideCode.switch(link1.sideCode), reversed = true))
@@ -734,13 +730,13 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val leftPLinks = Seq(leftLink1, leftLink2, leftLink3)
       val rightPLinks = Seq(rightLink1, rightLink2, rightLink3, rightLink4)
 
-      val (lll1, rw1): (LinearLocation, Roadway) = Seq(leftLink1).map(toRoadwayAndLinearLocation).head
-      val (lll2, rw2): (LinearLocation, Roadway) = Seq(leftLink2).map(toRoadwayAndLinearLocation).head
-      val (lll3, rw3): (LinearLocation, Roadway) = Seq(leftLink3).map(toRoadwayAndLinearLocation).head
-      val (rll1, rw4): (LinearLocation, Roadway) = Seq(rightLink1).map(toRoadwayAndLinearLocation).head
-      val (rll2, rw5): (LinearLocation, Roadway) = Seq(rightLink2).map(toRoadwayAndLinearLocation).head
-      val (rll3, rw6): (LinearLocation, Roadway) = Seq(rightLink3).map(toRoadwayAndLinearLocation).head
-      val (rll4, rw7): (LinearLocation, Roadway) = Seq(rightLink4).map(toRoadwayAndLinearLocation).head
+      val (lll1, _/*rw1*/): (LinearLocation, Roadway) = Seq(leftLink1).map(toRoadwayAndLinearLocation).head
+      val (lll2,    rw2  ): (LinearLocation, Roadway) = Seq(leftLink2).map(toRoadwayAndLinearLocation).head
+      val (lll3,    rw3  ): (LinearLocation, Roadway) = Seq(leftLink3).map(toRoadwayAndLinearLocation).head
+      val (rll1, _/*rw4*/): (LinearLocation, Roadway) = Seq(rightLink1).map(toRoadwayAndLinearLocation).head
+      val (rll2,    rw5  ): (LinearLocation, Roadway) = Seq(rightLink2).map(toRoadwayAndLinearLocation).head
+      val (rll3, _/*rw6*/): (LinearLocation, Roadway) = Seq(rightLink3).map(toRoadwayAndLinearLocation).head
+      val (rll4,    rw7  ): (LinearLocation, Roadway) = Seq(rightLink4).map(toRoadwayAndLinearLocation).head
       val rw1WithId = rw2.copy(startAddrMValue = 0, endAddrMValue = 10, ely = 8L)
       val rw2WithId = rw5.copy(startAddrMValue = 0, endAddrMValue = 10, ely = 8L)
       val rw3WithId = rw3.copy(startAddrMValue = 10, endAddrMValue = 20, ely = 8L)
@@ -887,13 +883,13 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val rightPLinks = Seq(rightLink1, rightLink2, rightLink3, rightLink4)
 
       // Grouping linear locations with roadways
-      val (lll1, rw1): (LinearLocation, Roadway) = Seq(leftLink1).map(toRoadwayAndLinearLocation).head
-      val (lll2, rw2): (LinearLocation, Roadway) = Seq(leftLink2).map(toRoadwayAndLinearLocation).head
-      val (lll3, rw3): (LinearLocation, Roadway) = Seq(leftLink3).map(toRoadwayAndLinearLocation).head
-      val (rll1, rw4): (LinearLocation, Roadway) = Seq(rightLink1).map(toRoadwayAndLinearLocation).head
-      val (rll2, rw5): (LinearLocation, Roadway) = Seq(rightLink2).map(toRoadwayAndLinearLocation).head
-      val (rll3, rw6): (LinearLocation, Roadway) = Seq(rightLink3).map(toRoadwayAndLinearLocation).head
-      val (rll4, rw7): (LinearLocation, Roadway) = Seq(rightLink4).map(toRoadwayAndLinearLocation).head
+      val (lll1, _/*rw1*/): (LinearLocation, Roadway) = Seq(leftLink1).map(toRoadwayAndLinearLocation).head
+      val (lll2,    rw2  ): (LinearLocation, Roadway) = Seq(leftLink2).map(toRoadwayAndLinearLocation).head
+      val (lll3,    rw3  ): (LinearLocation, Roadway) = Seq(leftLink3).map(toRoadwayAndLinearLocation).head
+      val (rll1, _/*rw4*/): (LinearLocation, Roadway) = Seq(rightLink1).map(toRoadwayAndLinearLocation).head
+      val (rll2,    rw5  ): (LinearLocation, Roadway) = Seq(rightLink2).map(toRoadwayAndLinearLocation).head
+      val (rll3, _/*rw6*/): (LinearLocation, Roadway) = Seq(rightLink3).map(toRoadwayAndLinearLocation).head
+      val (rll4,    rw7  ): (LinearLocation, Roadway) = Seq(rightLink4).map(toRoadwayAndLinearLocation).head
       // Defining roadways and their M values
       val rw1WithId = rw2.copy(ely = 8L, startAddrMValue = 0, endAddrMValue = 10)
       val rw2WithId = rw5.copy(ely = 8L, startAddrMValue = 0, endAddrMValue = 10)
@@ -1019,8 +1015,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val llId2 = Sequences.nextLinearLocationId
       val llId3 = Sequences.nextLinearLocationId
       val llId4 = Sequences.nextLinearLocationId
-      val llId5 = Sequences.nextLinearLocationId
-      val llId6 = Sequences.nextLinearLocationId
+//    val llId5 = Sequences.nextLinearLocationId
+//    val llId6 = Sequences.nextLinearLocationId
       val llId7 = Sequences.nextLinearLocationId
       val llId8 = Sequences.nextLinearLocationId
       val rwNumber1 = Sequences.nextRoadwayNumber
@@ -1098,19 +1094,19 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       )
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(leftGeom1.head, leftGeom1.head), roadNumberLimits)).thenReturn(Seq())
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set.empty[Long], false)).thenReturn(Seq())
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set.empty[Long], withHistory=false)).thenReturn(Seq())
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(leftGeom1.last, leftGeom1.last), roadNumberLimits)).thenReturn(Seq(lll1, orderedcll1, orderedcll2))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(lll1.roadwayNumber, orderedcll1.roadwayNumber), false)).thenReturn(Seq(rw1WithId, rw3WithId))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(lll1.roadwayNumber, orderedcll1.roadwayNumber), withHistory=false)).thenReturn(Seq(rw1WithId, rw3WithId))
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(rightGeom1.head, rightGeom1.head), roadNumberLimits)).thenReturn(Seq())
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(rightGeom1.last, rightGeom1.last), roadNumberLimits)).thenReturn(Seq(rll1, orderedcll1, orderedcll2))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(rll1.roadwayNumber, orderedcll1.roadwayNumber), false)).thenReturn(Seq(rw2WithId, rw3WithId))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(rll1.roadwayNumber, orderedcll1.roadwayNumber), withHistory=false)).thenReturn(Seq(rw2WithId, rw3WithId))
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom1.head, combGeom1.head), roadNumberLimits)).thenReturn(Seq(orderedcll1, orderedcll2, lll1))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(lll1.roadwayNumber, orderedcll1.roadwayNumber), false)).thenReturn(Seq(rw1WithId, rw3WithId))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(lll1.roadwayNumber, orderedcll1.roadwayNumber), withHistory=false)).thenReturn(Seq(rw1WithId, rw3WithId))
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom1.last, combGeom1.last), roadNumberLimits)).thenReturn(Seq(rll1, orderedcll1, orderedcll2))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(rll1.roadwayNumber, orderedcll1.roadwayNumber), false)).thenReturn(Seq(rw2WithId, rw3WithId))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(rll1.roadwayNumber, orderedcll1.roadwayNumber), withHistory=false)).thenReturn(Seq(rw2WithId, rw3WithId))
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom2.head, combGeom2.head), roadNumberLimits)).thenReturn(Seq(rll1, orderedcll1, orderedcll2))
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom2.last, combGeom2.last), roadNumberLimits)).thenReturn(Seq())
 
@@ -1119,7 +1115,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       nodesAndJunctionsService.handleNodePoints(projectChanges, leftPLinks ++ rightPLinks ++ combPLinks, mappedReservedRoadwayNumbers)
       nodesAndJunctionsService.handleJunctionAndJunctionPoints(projectChanges, leftPLinks ++ rightPLinks ++ combPLinks, mappedReservedRoadwayNumbers)
 
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(lll1.roadwayNumber, rll1.roadwayNumber, orderedcll1.roadwayNumber), false)).thenReturn(Seq(rw1WithId, rw2WithId, rw3WithId))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(lll1.roadwayNumber, rll1.roadwayNumber, orderedcll1.roadwayNumber), withHistory=false)).thenReturn(Seq(rw1WithId, rw2WithId, rw3WithId))
       nodesAndJunctionsService.expireObsoleteNodesAndJunctions(leftPLinks ++ rightPLinks ++ combPLinks, Some(project.startDate.minusDays(1)))
 
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers((leftPLinks ++ rightPLinks ++ combPLinks).map(_.roadwayNumber)).map(_.id)
@@ -1178,12 +1174,12 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val transferLinearLocation = orderedcll1.copy(id = transferCombLink1.linearLocationId, roadwayNumber = transferCombLink1.roadwayNumber)
       val terminatedLinearLocation = orderedcll2.copy(id = terminatedCombLink2.linearLocationId, roadwayNumber = terminatedCombLink2.roadwayNumber)
 
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(unchangedLeftLink1.roadwayNumber, transferCombLink1.roadwayNumber), false)).thenReturn(Seq(rw1WithId, rwTransfer))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(unchangedLeftLink1.roadwayNumber, transferCombLink1.roadwayNumber), withHistory=false)).thenReturn(Seq(rw1WithId, rwTransfer))
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(transferCombLink1.geometry.last, transferCombLink1.geometry.last), roadNumberLimits)).thenReturn(Seq(rll1, transferLinearLocation, terminatedLinearLocation))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(terminatedCombLink2.roadwayNumber), false)).thenReturn(Seq(rwTerminated))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(terminatedCombLink2.roadwayNumber), withHistory=false)).thenReturn(Seq(rwTerminated))
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(unchangedRightLink1.geometry.last, transferCombLink1.geometry.last), roadNumberLimits)).thenReturn(Seq(rll1, transferLinearLocation))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(unchangedRightLink1.roadwayNumber, transferCombLink1.roadwayNumber), false)).thenReturn(Seq(rw2WithId, rwTransfer))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(unchangedLeftLink1.roadwayNumber, unchangedRightLink1.roadwayNumber, transferCombLink1.roadwayNumber), false)).thenReturn(Seq(rw1WithId, rw2WithId, rwTransfer))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(unchangedRightLink1.roadwayNumber, transferCombLink1.roadwayNumber), withHistory=false)).thenReturn(Seq(rw2WithId, rwTransfer))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(unchangedLeftLink1.roadwayNumber, unchangedRightLink1.roadwayNumber, transferCombLink1.roadwayNumber), withHistory=false)).thenReturn(Seq(rw1WithId, rw2WithId, rwTransfer))
 
       buildTestDataForProject(Some(project2),
         Some(Seq(rwTransfer, rwTerminated)),
@@ -1299,7 +1295,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       )
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(leftGeom1.head, leftGeom1.head), roadNumberLimits)).thenReturn(Seq())
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set.empty[Long], false)).thenReturn(Seq())
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set.empty[Long], withHistory=false)).thenReturn(Seq())
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(leftGeom1.last, leftGeom1.last), roadNumberLimits)).thenReturn(Seq())
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(rightGeom1.head, rightGeom1.head), roadNumberLimits)).thenReturn(Seq())
@@ -1368,10 +1364,10 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val rightPLinks = Seq(rightLink1)
       val combPLinks = Seq(combLink1, combLink2)
 
-      val (lll1, rw1): (LinearLocation, Roadway) = Seq(leftLink1).map(toRoadwayAndLinearLocation).head
-      val (rll1, rw2): (LinearLocation, Roadway) = Seq(rightLink1).map(toRoadwayAndLinearLocation).head
-      val (cll1, rw3): (LinearLocation, Roadway) = Seq(combLink1).map(toRoadwayAndLinearLocation).head
-      val (cll2, rw4): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
+      val (lll1,   rw1  ): (LinearLocation, Roadway) = Seq(leftLink1).map(toRoadwayAndLinearLocation).head
+      val (rll1,   rw2  ): (LinearLocation, Roadway) = Seq(rightLink1).map(toRoadwayAndLinearLocation).head
+      val (cll1,   rw3  ): (LinearLocation, Roadway) = Seq(combLink1).map(toRoadwayAndLinearLocation).head
+      val (cll2,_/*rw4*/): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
       val rw1WithId = rw1.copy(startAddrMValue = 0, endAddrMValue = 5, ely = 8L)
       val rw2WithId = rw2.copy(startAddrMValue = 0, endAddrMValue = 5, ely = 8L)
       val rw3WithId = rw3.copy(startAddrMValue = 5, endAddrMValue = 15, ely = 8L)
@@ -1411,7 +1407,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       )
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(leftGeom1.head, leftGeom1.head), roadNumberLimits)).thenReturn(Seq())
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set.empty[Long], false)).thenReturn(Seq())
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set.empty[Long], withHistory=false)).thenReturn(Seq())
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(leftGeom1.last, leftGeom1.last), roadNumberLimits)).thenReturn(Seq())
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(rightGeom1.head, rightGeom1.head), roadNumberLimits)).thenReturn(Seq())
@@ -1481,10 +1477,10 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val rightPLinks = Seq(rightLink1)
       val combPLinks = Seq(combLink1, combLink2)
 
-      val (lll1, rw1): (LinearLocation, Roadway) = Seq(leftLink1).map(toRoadwayAndLinearLocation).head
-      val (rll1, rw2): (LinearLocation, Roadway) = Seq(rightLink1).map(toRoadwayAndLinearLocation).head
-      val (cll1, rw3): (LinearLocation, Roadway) = Seq(combLink1).map(toRoadwayAndLinearLocation).head
-      val (cll2, rw4): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
+      val (lll1,   rw1  ): (LinearLocation, Roadway) = Seq(leftLink1).map(toRoadwayAndLinearLocation).head
+      val (rll1,   rw2  ): (LinearLocation, Roadway) = Seq(rightLink1).map(toRoadwayAndLinearLocation).head
+      val (cll1,   rw3  ): (LinearLocation, Roadway) = Seq(combLink1).map(toRoadwayAndLinearLocation).head
+      val (cll2,_/*rw4*/): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
       val rw1WithId = rw1.copy(startAddrMValue = 0, endAddrMValue = 5, ely = 8L)
       val rw2WithId = rw2.copy(startAddrMValue = 0, endAddrMValue = 5, ely = 8L)
       val rw3WithId = rw3.copy(startAddrMValue = 5, endAddrMValue = 15, ely = 8L)
@@ -1524,14 +1520,14 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       )
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(leftGeom1.head, leftGeom1.head), roadNumberLimits)).thenReturn(Seq())
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set.empty[Long], false)).thenReturn(Seq())
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set.empty[Long], withHistory=false)).thenReturn(Seq())
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(leftGeom1.last, leftGeom1.last), roadNumberLimits)).thenReturn(Seq())
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(rightGeom1.head, rightGeom1.head), roadNumberLimits)).thenReturn(Seq())
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(rightGeom1.last, rightGeom1.last), roadNumberLimits)).thenReturn(Seq())
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom1.head, combGeom1.head), roadNumberLimits)).thenReturn(Seq())
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom1.last, combGeom1.last), roadNumberLimits)).thenReturn(Seq(orderedcll1, orderedcll2))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(orderedcll1.roadwayNumber, orderedcll2.roadwayNumber), false)).thenReturn(Seq(rw3WithId))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(orderedcll1.roadwayNumber, orderedcll2.roadwayNumber), withHistory=false)).thenReturn(Seq(rw3WithId))
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom2.last, combGeom2.last), roadNumberLimits)).thenReturn(Seq())
 
       val mappedReservedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
@@ -1587,10 +1583,10 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val rightPLinks = Seq(rightLink1)
       val combPLinks = Seq(combLink1, combLink2)
 
-      val (lll1, rw1): (LinearLocation, Roadway) = Seq(leftLink1).map(toRoadwayAndLinearLocation).head
-      val (rll1, rw2): (LinearLocation, Roadway) = Seq(rightLink1).map(toRoadwayAndLinearLocation).head
-      val (cll1, rw3): (LinearLocation, Roadway) = Seq(combLink1).map(toRoadwayAndLinearLocation).head
-      val (cll2, rw4): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
+      val (lll1,   rw1  ): (LinearLocation, Roadway) = Seq(leftLink1).map(toRoadwayAndLinearLocation).head
+      val (rll1,   rw2  ): (LinearLocation, Roadway) = Seq(rightLink1).map(toRoadwayAndLinearLocation).head
+      val (cll1,   rw3  ): (LinearLocation, Roadway) = Seq(combLink1).map(toRoadwayAndLinearLocation).head
+      val (cll2,_/*rw4*/): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
       val rw1WithId = rw1.copy(startAddrMValue = 0, endAddrMValue = 5, ely = 8L)
       val rw2WithId = rw2.copy(startAddrMValue = 0, endAddrMValue = 5, ely = 8L)
       val rw3WithId = rw3.copy(startAddrMValue = 5, endAddrMValue = 25, ely = 8L)
@@ -1630,14 +1626,14 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       )
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(leftGeom1.head, leftGeom1.head), roadNumberLimits)).thenReturn(Seq())
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set.empty[Long], false)).thenReturn(Seq())
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set.empty[Long], withHistory=false)).thenReturn(Seq())
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(leftGeom1.last, leftGeom1.last), roadNumberLimits)).thenReturn(Seq())
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(rightGeom1.head, rightGeom1.head), roadNumberLimits)).thenReturn(Seq())
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(rightGeom1.last, rightGeom1.last), roadNumberLimits)).thenReturn(Seq())
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom1.head, combGeom1.head), roadNumberLimits)).thenReturn(Seq())
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom1.last, combGeom1.last), roadNumberLimits)).thenReturn(Seq(orderedcll1, orderedcll2))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(orderedcll1.roadwayNumber, orderedcll2.roadwayNumber), false)).thenReturn(Seq(rw3WithId))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(orderedcll1.roadwayNumber, orderedcll2.roadwayNumber), withHistory=false)).thenReturn(Seq(rw3WithId))
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom2.last, combGeom2.last), roadNumberLimits)).thenReturn(Seq())
 
       val mappedReservedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
@@ -1750,20 +1746,20 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       pl2_2.tail.foreach { pl =>
         when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(pl.geometry.head, pl.geometry.head), roadNumberLimits)).thenReturn(ll2_1 ++ ll2_2 ++ ll2_3)
-        when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll2_1 ++ ll2_2 ++ ll2_3).map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw2))
+        when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll2_1 ++ ll2_2 ++ ll2_3).map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw2))
       }
 
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll1_1.map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw1_1))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll1_2.map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw1_2))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll1_1 ++ ll1_2).map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw1_1, rw1_2))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll3_1.map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw3_1))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll3_2.map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw3_2))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll3_1 ++ ll3_2).map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw3_1, rw3_2))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll1_1.map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw1_1))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll1_2.map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw1_2))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll1_1 ++ ll1_2).map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw1_1, rw1_2))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll3_1.map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw3_1))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll3_2.map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw3_2))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll3_1 ++ ll3_2).map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw3_1, rw3_2))
 
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll1_2 ++ ll2_1 ++ ll2_2 ++ ll2_3).map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw1_2, rw2))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll1_1 ++ ll2_1 ++ ll2_2 ++ ll2_3).map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw1_1, rw2))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll2_1 ++ ll2_2 ++ ll2_3 ++ ll3_2).map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw3_2, rw2))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll2_1 ++ ll2_2 ++ ll2_3 ++ ll3_1).map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw3_1, rw2))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll1_2 ++ ll2_1 ++ ll2_2 ++ ll2_3).map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw1_2, rw2))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll1_1 ++ ll2_1 ++ ll2_2 ++ ll2_3).map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw1_1, rw2))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll2_1 ++ ll2_2 ++ ll2_3 ++ ll3_2).map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw3_2, rw2))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll2_1 ++ ll2_2 ++ ll2_3 ++ ll3_1).map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw3_1, rw2))
 
       nodesAndJunctionsService.handleJunctionAndJunctionPoints(projectChanges, projectLinks, mappedReservedRoadwayNumbers)
 
@@ -1883,17 +1879,17 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(Point(10.0, 20.0), Point(10.0, 20.0)), roadNumberLimits)).thenReturn(ll3 ++ ll4)
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(Point(15.0, 20.0), Point(15.0, 20.0)), roadNumberLimits)).thenReturn(ll4)
 
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll1.map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw1))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll2_1.map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw2_1))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll2_2.map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw2_2))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll3.map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw3))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll4.map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw4))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll1  .map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw1))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll2_1.map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw2_1))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll2_2.map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw2_2))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll3  .map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw3))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll4  .map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw4))
 
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll1 ++ ll2_1 :+ ll2_2.head).map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw1, rw2_1, rw2_2))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll2_1 ++ ll2_2).map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw2_1, rw2_2))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll2_2 ++ ll3).map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw2_2, rw3))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll2_2.tail.map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw2_2))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll3 ++ ll4).map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw3, rw4))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll1   ++ ll2_1 :+ ll2_2.head).map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw1, rw2_1, rw2_2))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll2_1 ++ ll2_2).map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw2_1, rw2_2))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll2_2 ++ ll3  ).map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw2_2, rw3))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(   ll2_2.tail   .map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw2_2))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll3   ++ ll4  ).map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw3, rw4))
 
       nodesAndJunctionsService.handleJunctionAndJunctionPoints(projectChanges, projectLinks, mappedReservedRoadwayNumbers)
       nodesAndJunctionsService.expireObsoleteNodesAndJunctions(projectLinks, Some(project.startDate.minusDays(1)))
@@ -1952,11 +1948,11 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val rightPLinks = Seq(rightLink1)
       val combPLinks = Seq(combLink1, combLink2)
 
-      val (lll1, rw1): (LinearLocation, Roadway) = Seq(leftLink1).map(toRoadwayAndLinearLocation).head
-      val (lll2, rw11): (LinearLocation, Roadway) = Seq(leftLink2).map(toRoadwayAndLinearLocation).head
-      val (rll1, rw2): (LinearLocation, Roadway) = Seq(rightLink1).map(toRoadwayAndLinearLocation).head
-      val (cll1, rw3): (LinearLocation, Roadway) = Seq(combLink1).map(toRoadwayAndLinearLocation).head
-      val (cll2, rw4): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
+      val (lll1,   rw1   ): (LinearLocation, Roadway) = Seq(leftLink1).map(toRoadwayAndLinearLocation).head
+      val (lll2,_/*rw11*/): (LinearLocation, Roadway) = Seq(leftLink2).map(toRoadwayAndLinearLocation).head
+      val (rll1,   rw2   ): (LinearLocation, Roadway) = Seq(rightLink1).map(toRoadwayAndLinearLocation).head
+      val (cll1,   rw3   ): (LinearLocation, Roadway) = Seq(combLink1).map(toRoadwayAndLinearLocation).head
+      val (cll2,_/*rw4*/ ): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
       val rw1WithId = rw1.copy(startAddrMValue = 0, endAddrMValue = 10, ely = 8L)
       val rw2WithId = rw2.copy(startAddrMValue = 0, endAddrMValue = 10, ely = 8L)
       val rw3WithId = rw3.copy(startAddrMValue = 10, endAddrMValue = 20, ely = 8L)
@@ -1998,17 +1994,17 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       )
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(leftGeom1.head, leftGeom1.head), roadNumberLimits)).thenReturn(Seq())
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set.empty[Long], false)).thenReturn(Seq())
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set.empty[Long], withHistory=false)).thenReturn(Seq())
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(leftGeom1.last, leftGeom1.last), roadNumberLimits)).thenReturn(Seq(orderedlll1, orderedlll2))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(orderedlll1.roadwayNumber), false)).thenReturn(Seq(rw1WithId))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(orderedlll1.roadwayNumber), withHistory=false)).thenReturn(Seq(rw1WithId))
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(leftGeom2.last, leftGeom2.last), roadNumberLimits)).thenReturn(Seq(orderedlll1, orderedlll2, orderedcll1, orderedcll2))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(rw1WithId.roadwayNumber, orderedcll1.roadwayNumber), false)).thenReturn(Seq(rw1WithId, rw3WithId))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(rw1WithId.roadwayNumber, orderedcll1.roadwayNumber), withHistory=false)).thenReturn(Seq(rw1WithId, rw3WithId))
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(rightGeom1.head, rightGeom1.head), roadNumberLimits)).thenReturn(Seq())
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(rightGeom1.last, rightGeom1.last), roadNumberLimits)).thenReturn(Seq())
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom1.head, combGeom1.head), roadNumberLimits)).thenReturn(Seq())
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom1.last, combGeom1.last), roadNumberLimits)).thenReturn(Seq(orderedcll1, orderedcll2))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(orderedcll1.roadwayNumber, orderedcll2.roadwayNumber), false)).thenReturn(Seq(rw3WithId))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(orderedcll1.roadwayNumber, orderedcll2.roadwayNumber), withHistory=false)).thenReturn(Seq(rw3WithId))
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom2.last, combGeom2.last), roadNumberLimits)).thenReturn(Seq())
 
       val mappedReservedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
@@ -2092,9 +2088,9 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       )
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom1.head, combGeom1.head), roadNumberLimits)).thenReturn(Seq())
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set.empty[Long], false)).thenReturn(Seq())
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set.empty[Long], withHistory=false)).thenReturn(Seq())
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom1.last, combGeom1.last), roadNumberLimits)).thenReturn(Seq(cll1, cll2, cll3))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(cll1.roadwayNumber, cll2.roadwayNumber, cll3.roadwayNumber), false)).thenReturn(Seq(rw1WithId, rw2WithId, rw3WithId))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(cll1.roadwayNumber, cll2.roadwayNumber, cll3.roadwayNumber), withHistory=false)).thenReturn(Seq(rw1WithId, rw2WithId, rw3WithId))
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom2.last, combGeom2.last), roadNumberLimits)).thenReturn(Seq())
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom3.head, combGeom3.head), roadNumberLimits)).thenReturn(Seq())
 
@@ -2188,11 +2184,11 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom2.last, combGeom2.last), roadNumberLimits)).thenReturn(Seq(cll2))
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom3.head, combGeom3.head), roadNumberLimits)).thenReturn(Seq(cll3))
 
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(cll1.roadwayNumber), false)).thenReturn(Seq(rw1WithId))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(cll1.roadwayNumber, cll3.roadwayNumber), false)).thenReturn(Seq(rw1WithId, rw3WithId))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(cll1.roadwayNumber, cll2.roadwayNumber), false)).thenReturn(Seq(rw1WithId, rw2WithId))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(cll2.roadwayNumber), false)).thenReturn(Seq(rw2WithId))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(cll3.roadwayNumber), false)).thenReturn(Seq(rw3WithId))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(cll1.roadwayNumber), withHistory=false)).thenReturn(Seq(rw1WithId))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(cll1.roadwayNumber, cll3.roadwayNumber), withHistory=false)).thenReturn(Seq(rw1WithId, rw3WithId))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(cll1.roadwayNumber, cll2.roadwayNumber), withHistory=false)).thenReturn(Seq(rw1WithId, rw2WithId))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(cll2.roadwayNumber), withHistory=false)).thenReturn(Seq(rw2WithId))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(cll3.roadwayNumber), withHistory=false)).thenReturn(Seq(rw3WithId))
 
       val mappedReservedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       roadAddressService.handleRoadwayPointsUpdate(projectChanges, mappedReservedRoadwayNumbers)
@@ -2286,11 +2282,11 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom2.last, combGeom2.last), roadNumberLimits)).thenReturn(Seq(cll2, cll3))
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom3.head, combGeom3.head), roadNumberLimits)).thenReturn(Seq(cll3))
 
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(cll1.roadwayNumber), false)).thenReturn(Seq(rw1WithId))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(cll2.roadwayNumber), false)).thenReturn(Seq(rw2WithId))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(cll1.roadwayNumber, cll2.roadwayNumber), false)).thenReturn(Seq(rw1WithId, rw2WithId))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(cll2.roadwayNumber, cll3.roadwayNumber), false)).thenReturn(Seq(rw2WithId, rw3WithId))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(cll3.roadwayNumber), false)).thenReturn(Seq(rw3WithId))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(cll1.roadwayNumber), withHistory=false)).thenReturn(Seq(rw1WithId))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(cll2.roadwayNumber), withHistory=false)).thenReturn(Seq(rw2WithId))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(cll1.roadwayNumber, cll2.roadwayNumber), withHistory=false)).thenReturn(Seq(rw1WithId, rw2WithId))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(cll2.roadwayNumber, cll3.roadwayNumber), withHistory=false)).thenReturn(Seq(rw2WithId, rw3WithId))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(cll3.roadwayNumber), withHistory=false)).thenReturn(Seq(rw3WithId))
 
       val mappedReservedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       roadAddressService.handleRoadwayPointsUpdate(projectChanges, mappedReservedRoadwayNumbers)
@@ -2563,11 +2559,11 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom2.last, combGeom2.last), roadNumberLimits)).thenReturn(Seq(lc2))
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom3.head, combGeom3.head), roadNumberLimits)).thenReturn(Seq(lc3))
 
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(lc1.roadwayNumber), false)).thenReturn(Seq(rw1WithId))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(lc1.roadwayNumber, lc3.roadwayNumber), false)).thenReturn(Seq(rw1WithId, rw3WithId))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(lc1.roadwayNumber, lc2.roadwayNumber), false)).thenReturn(Seq(rw1WithId, rw2WithId))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(lc2.roadwayNumber), false)).thenReturn(Seq(rw2WithId))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(lc3.roadwayNumber), false)).thenReturn(Seq(rw3WithId))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(lc1.roadwayNumber), withHistory=false)).thenReturn(Seq(rw1WithId))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(lc1.roadwayNumber, lc3.roadwayNumber), withHistory=false)).thenReturn(Seq(rw1WithId, rw3WithId))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(lc1.roadwayNumber, lc2.roadwayNumber), withHistory=false)).thenReturn(Seq(rw1WithId, rw2WithId))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(lc2.roadwayNumber), withHistory=false)).thenReturn(Seq(rw2WithId))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(lc3.roadwayNumber), withHistory=false)).thenReturn(Seq(rw3WithId))
 
       val mappedReservedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       roadAddressService.handleRoadwayPointsUpdate(projectChanges, mappedReservedRoadwayNumbers)
@@ -2607,7 +2603,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
         ProjectRoadwayChange(projectId + 1, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
-            RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(4l), endRoadPartNumber = Some(4l), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
+            RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(4L), endRoadPartNumber = Some(4L), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 2, 8)
           , DateTime.now)
       )
@@ -2618,7 +2614,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val combGeom4 = Seq(Point(20.0, 0.0), Point(30.0, 0.0))
 
       val transferLink = dummyProjectLink(road, part3, Track.Combined, Discontinuity.Discontinuous, 0, 10, 0, 10, Some(DateTime.now()), None, 12347.toString, 0, 10, SideCode.TowardsDigitizing, RoadAddressChangeType.Unchanged, projectId + 1, AdministrativeClass.State, combGeom3, rwNumber + 2).copy(id = plId + 3, roadwayId = rwId + 3, linearLocationId = llId + 3)
-      val newLink      = dummyProjectLink(road,    4l, Track.Combined, Discontinuity.EndOfRoad,     0, 10, 0, 10, Some(DateTime.now()), None, 12348.toString, 0, 10, SideCode.TowardsDigitizing, RoadAddressChangeType.New,       projectId + 1, AdministrativeClass.State, combGeom4, rwNumber + 3).copy(id = plId + 4, roadwayId = rwId + 4, linearLocationId = llId + 4)
+      val newLink      = dummyProjectLink(road,    4L, Track.Combined, Discontinuity.EndOfRoad,     0, 10, 0, 10, Some(DateTime.now()), None, 12348.toString, 0, 10, SideCode.TowardsDigitizing, RoadAddressChangeType.New,       projectId + 1, AdministrativeClass.State, combGeom4, rwNumber + 3).copy(id = plId + 4, roadwayId = rwId + 4, linearLocationId = llId + 4)
 
       val (lc4, rw4): (LinearLocation, Roadway) = Seq(newLink).map(toRoadwayAndLinearLocation).head
       val rw3WithDiscontinuity = rw3WithId.copy(id = transferLink.roadwayId, roadwayNumber = transferLink.roadwayNumber, discontinuity = Discontinuity.Discontinuous)
@@ -2627,9 +2623,9 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom2.last, combGeom2.last), roadNumberLimits)).thenReturn(Seq(lc2, lc4))
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom4.last, combGeom4.last), roadNumberLimits)).thenReturn(Seq(lc4))
 
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(transferLink.roadwayNumber), false)).thenReturn(Seq(rw3WithDiscontinuity))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(lc2.roadwayNumber, newLink.roadwayNumber), false)).thenReturn(Seq(rw2WithId, rw4WithId))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(newLink.roadwayNumber), false)).thenReturn(Seq(rw4WithId))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(transferLink.roadwayNumber), withHistory=false)).thenReturn(Seq(rw3WithDiscontinuity))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(lc2.roadwayNumber, newLink.roadwayNumber), withHistory=false)).thenReturn(Seq(rw2WithId, rw4WithId))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(newLink.roadwayNumber), withHistory=false)).thenReturn(Seq(rw4WithId))
 
       buildTestDataForProject(Some(project2),
         Some(Seq(rw3WithDiscontinuity, rw4WithId)),
@@ -2730,10 +2726,10 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom2.last, combGeom2.last), roadNumberLimits)).thenReturn(Seq(lc2, lc3))
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom3.head, combGeom3.head), roadNumberLimits)).thenReturn(Seq(lc3))
 
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(lc1.roadwayNumber), false)).thenReturn(Seq(rw1WithId))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(lc3.roadwayNumber), false)).thenReturn(Seq(rw3WithId))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(lc1.roadwayNumber, lc2.roadwayNumber), false)).thenReturn(Seq(rw1WithId, rw2WithId))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(lc2.roadwayNumber, lc3.roadwayNumber), false)).thenReturn(Seq(rw2WithId, rw3WithId))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(lc1.roadwayNumber), withHistory=false)).thenReturn(Seq(rw1WithId))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(lc3.roadwayNumber), withHistory=false)).thenReturn(Seq(rw3WithId))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(lc1.roadwayNumber, lc2.roadwayNumber), withHistory=false)).thenReturn(Seq(rw1WithId, rw2WithId))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(lc2.roadwayNumber, lc3.roadwayNumber), withHistory=false)).thenReturn(Seq(rw2WithId, rw3WithId))
 
       val mappedReservedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       roadAddressService.handleRoadwayPointsUpdate(projectChanges, mappedReservedRoadwayNumbers)
@@ -2765,14 +2761,14 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val projectChanges2 = List(
         ProjectRoadwayChange(projectId + 1, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.Unchanged,
-            RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(3l), endRoadPartNumber = Some(3l), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
-            RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(3l), endRoadPartNumber = Some(3l), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L)),
+            RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(3L), endRoadPartNumber = Some(3L), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
+            RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(3L), endRoadPartNumber = Some(3L), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L)),
             Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 1, 8)
           , DateTime.now),
         ProjectRoadwayChange(projectId + 1, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
-            RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(4l), endRoadPartNumber = Some(4l), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
+            RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(4L), endRoadPartNumber = Some(4L), startAddressM = Some(0L), endAddressM = Some(10L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 2, 8)
           , DateTime.now)
       )
@@ -2782,8 +2778,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       projectLinkDAO.moveProjectLinksToHistory(projectId)
       val combGeom4 = Seq(Point(20.0, 0.0), Point(30.0, 0.0))
 
-      val transferLink = dummyProjectLink(road, 3l, Track.Combined, Discontinuity.Discontinuous, 0, 10, 0, 10, Some(DateTime.now()), None, 12347.toString, 0, 10, SideCode.TowardsDigitizing, RoadAddressChangeType.Unchanged, projectId + 1, AdministrativeClass.State, combGeom3, rwNumber + 2).copy(id = plId + 3, roadwayId = rwId + 3, linearLocationId = llId + 3)
-      val newLink = dummyProjectLink(road, 4l, Track.Combined, Discontinuity.EndOfRoad, 0, 10, 0, 10, Some(DateTime.now()), None, 12348.toString, 0, 10, SideCode.TowardsDigitizing, RoadAddressChangeType.New, projectId + 1, AdministrativeClass.State, combGeom4, rwNumber + 3).copy(id = plId + 4, roadwayId = rwId + 4, linearLocationId = llId + 4)
+      val transferLink = dummyProjectLink(road, 3L, Track.Combined, Discontinuity.Discontinuous, 0, 10, 0, 10, Some(DateTime.now()), None, 12347.toString, 0, 10, SideCode.TowardsDigitizing, RoadAddressChangeType.Unchanged, projectId + 1, AdministrativeClass.State, combGeom3, rwNumber + 2).copy(id = plId + 3, roadwayId = rwId + 3, linearLocationId = llId + 3)
+      val newLink = dummyProjectLink(road, 4L, Track.Combined, Discontinuity.EndOfRoad, 0, 10, 0, 10, Some(DateTime.now()), None, 12348.toString, 0, 10, SideCode.TowardsDigitizing, RoadAddressChangeType.New, projectId + 1, AdministrativeClass.State, combGeom4, rwNumber + 3).copy(id = plId + 4, roadwayId = rwId + 4, linearLocationId = llId + 4)
 
       val (lc4, rw4): (LinearLocation, Roadway) = Seq(newLink).map(toRoadwayAndLinearLocation).head
       val rw3WithDiscontinuity = rw3WithId.copy(id = transferLink.roadwayId, roadwayNumber = transferLink.roadwayNumber, discontinuity = Discontinuity.Discontinuous)
@@ -2793,9 +2789,9 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom2.last, combGeom2.last), roadNumberLimits)).thenReturn(Seq(lc2, lc3, lc4))
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom4.last, combGeom4.last), roadNumberLimits)).thenReturn(Seq(lc4))
 
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(transferLink.roadwayNumber), false)).thenReturn(Seq(rw3WithDiscontinuity))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(newLink.roadwayNumber), false)).thenReturn(Seq(rw4WithId))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(lc2.roadwayNumber, transferLink.roadwayNumber, newLink.roadwayNumber), false)).thenReturn(Seq(rw2WithId, rw3WithId, rw4WithId))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(transferLink.roadwayNumber), withHistory=false)).thenReturn(Seq(rw3WithDiscontinuity))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(newLink.roadwayNumber), withHistory=false)).thenReturn(Seq(rw4WithId))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(lc2.roadwayNumber, transferLink.roadwayNumber, newLink.roadwayNumber), withHistory=false)).thenReturn(Seq(rw2WithId, rw3WithId, rw4WithId))
 
       buildTestDataForProject(Some(project2),
         Some(Seq(rw3WithDiscontinuity, rw4WithId)),
@@ -2869,11 +2865,11 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val combPLinks = Seq(combLink1, combLink2, combLink3, combLink4, combLink5)
 
-      val (lc1, rw1): (LinearLocation, Roadway) = Seq(combLink1).map(toRoadwayAndLinearLocation).head
-      val (lc2, rw2): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
-      val (lc3, rw3): (LinearLocation, Roadway) = Seq(combLink3).map(toRoadwayAndLinearLocation).head
-      val (lc4, rw4): (LinearLocation, Roadway) = Seq(combLink4).map(toRoadwayAndLinearLocation).head
-      val (lc5, rw5): (LinearLocation, Roadway) = Seq(combLink5).map(toRoadwayAndLinearLocation).head
+      val (lc1,   rw1  ): (LinearLocation, Roadway) = Seq(combLink1).map(toRoadwayAndLinearLocation).head
+      val (lc2,_/*rw2*/): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
+      val (lc3,_/*rw3*/): (LinearLocation, Roadway) = Seq(combLink3).map(toRoadwayAndLinearLocation).head
+      val (lc4,_/*rw4*/): (LinearLocation, Roadway) = Seq(combLink4).map(toRoadwayAndLinearLocation).head
+      val (lc5,_/*rw5*/): (LinearLocation, Roadway) = Seq(combLink5).map(toRoadwayAndLinearLocation).head
       val rw1WithId = rw1.copy(startAddrMValue = 0, endAddrMValue = 25, ely = 8L)
       val orderedcll1 = lc1.copy(orderNumber = 1)
       val orderedcll2 = lc2.copy(orderNumber = 2)
@@ -3041,9 +3037,9 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val combPLinks = Seq(combLink1, combLink2)
 
-      val (lc1, rw1): (LinearLocation, Roadway) = Seq(combLink1).map(toRoadwayAndLinearLocation).head
-      val (lc2, rw2): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
-      val (lc3, rw3): (LinearLocation, Roadway) = Seq(combLink3).map(toRoadwayAndLinearLocation).head
+      val (lc1,   rw1  ): (LinearLocation, Roadway) = Seq(combLink1).map(toRoadwayAndLinearLocation).head
+      val (lc2,_/*rw2*/): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
+      val (lc3,   rw3  ): (LinearLocation, Roadway) = Seq(combLink3).map(toRoadwayAndLinearLocation).head
       val rw1WithId = rw1.copy(startAddrMValue = 0, endAddrMValue = 20, ely = 8L)
       val rw2WithId = rw3.copy(startAddrMValue = 0, endAddrMValue = 10, ely = 8L)
       val orderedlc1 = lc1.copy(orderNumber = 1)
@@ -3118,10 +3114,10 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val (lc4, rw4): (LinearLocation, Roadway) = Seq(terminatedLink).map(toRoadwayAndLinearLocation).head
       val rw4WithId = rw4.copy(id = terminatedLink.roadwayId, ely = 8L)
 
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(combLink1.roadwayNumber, combLink2.roadwayNumber, terminatedLink.roadwayNumber), false)).thenReturn(Seq(rw1WithId, rw2WithId, rw4WithId))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(combLink1.roadwayNumber), false)).thenReturn(Seq(rw1WithId))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(combLink2.roadwayNumber), false)).thenReturn(Seq(rw2WithId))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(terminatedLink.roadwayNumber), false)).thenReturn(Seq(rw4WithId))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(combLink1.roadwayNumber, combLink2.roadwayNumber, terminatedLink.roadwayNumber), withHistory=false)).thenReturn(Seq(rw1WithId, rw2WithId, rw4WithId))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(combLink1.roadwayNumber), withHistory=false)).thenReturn(Seq(rw1WithId))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(combLink2.roadwayNumber), withHistory=false)).thenReturn(Seq(rw2WithId))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(terminatedLink.roadwayNumber), withHistory=false)).thenReturn(Seq(rw4WithId))
 
       buildTestDataForProject(Some(project2),
         Some(Seq(rw4WithId)),
@@ -3197,9 +3193,9 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val combPLinks = Seq(combLink1, combLink2, combLink3)
 
-      val (lc1, rw1): (LinearLocation, Roadway) = Seq(combLink1).map(toRoadwayAndLinearLocation).head
-      val (lc2, rw2): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
-      val (lc3, rw3): (LinearLocation, Roadway) = Seq(combLink3).map(toRoadwayAndLinearLocation).head
+      val (lc1,   rw1  ): (LinearLocation, Roadway) = Seq(combLink1).map(toRoadwayAndLinearLocation).head
+      val (lc2,_/*rw2*/): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
+      val (lc3,   rw3  ): (LinearLocation, Roadway) = Seq(combLink3).map(toRoadwayAndLinearLocation).head
       val rw1WithId = rw1.copy(startAddrMValue = 0, endAddrMValue = 20, ely = 8L)
       val rw2WithId = rw3.copy(startAddrMValue = 0, endAddrMValue = 15, ely = 8L)
 
@@ -3357,9 +3353,9 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val combPLinks = Seq(combLink1, combLink2, combLink3)
 
-      val (lc1, rw1): (LinearLocation, Roadway) = Seq(combLink1).map(toRoadwayAndLinearLocation).head
-      val (lc2, rw2): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
-      val (lc3, rw3): (LinearLocation, Roadway) = Seq(combLink3).map(toRoadwayAndLinearLocation).head
+      val (lc1,   rw1  ): (LinearLocation, Roadway) = Seq(combLink1).map(toRoadwayAndLinearLocation).head
+      val (lc2,_/*rw2*/): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
+      val (lc3,   rw3  ): (LinearLocation, Roadway) = Seq(combLink3).map(toRoadwayAndLinearLocation).head
       val rw1WithId = rw1.copy(startAddrMValue = 0, endAddrMValue = 20, ely = 8L)
       val rw2WithId = rw3.copy(startAddrMValue = 0, endAddrMValue = 15, ely = 8L)
 
@@ -3529,10 +3525,10 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val combPLinks = Seq(combLink1, combLink2, combLink3, combLink4)
 
-      val (lc1, rw1): (LinearLocation, Roadway) = Seq(combLink1).map(toRoadwayAndLinearLocation).head
-      val (lc2, rw2): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
-      val (lc3, rw3): (LinearLocation, Roadway) = Seq(combLink3).map(toRoadwayAndLinearLocation).head
-      val (lc4, rw4): (LinearLocation, Roadway) = Seq(combLink4).map(toRoadwayAndLinearLocation).head
+      val (lc1,   rw1  ): (LinearLocation, Roadway) = Seq(combLink1).map(toRoadwayAndLinearLocation).head
+      val (lc2,_/*rw2*/): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
+      val (lc3,_/*rw3*/): (LinearLocation, Roadway) = Seq(combLink3).map(toRoadwayAndLinearLocation).head
+      val (lc4,_/*rw4*/): (LinearLocation, Roadway) = Seq(combLink4).map(toRoadwayAndLinearLocation).head
       val rw1WithId = rw1.copy(startAddrMValue = 0, endAddrMValue = 20, ely = 8L)
 
       buildTestDataForProject(Some(project), Some(Seq(rw1WithId)), Some(Seq(lc1, lc2, lc3, lc4)), Some(combPLinks))
@@ -3616,10 +3612,10 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val combPLinks = Seq(combLink1, combLink2, combLink3, combLink4)
 
-      val (lc1, rw1): (LinearLocation, Roadway) = Seq(combLink1).map(toRoadwayAndLinearLocation).head
-      val (lc2, rw2): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
-      val (lc3, rw3): (LinearLocation, Roadway) = Seq(combLink3).map(toRoadwayAndLinearLocation).head
-      val (lc4, rw4): (LinearLocation, Roadway) = Seq(combLink4).map(toRoadwayAndLinearLocation).head
+      val (lc1,   rw1  ): (LinearLocation, Roadway) = Seq(combLink1).map(toRoadwayAndLinearLocation).head
+      val (lc2,_/*rw2*/): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
+      val (lc3,_/*rw3*/): (LinearLocation, Roadway) = Seq(combLink3).map(toRoadwayAndLinearLocation).head
+      val (lc4,_/*rw4*/): (LinearLocation, Roadway) = Seq(combLink4).map(toRoadwayAndLinearLocation).head
       val rw1WithId = rw1.copy(startAddrMValue = 0, endAddrMValue = 20, ely = 8L)
       val orderedlc1 = lc1.copy(orderNumber = 1)
       val orderedlc2 = lc2.copy(orderNumber = 2)
@@ -3707,10 +3703,10 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val combPLinks = Seq(combLink1, combLink2, combLink3, combLink4)
 
-      val (lc1, rw1): (LinearLocation, Roadway) = Seq(combLink1).map(toRoadwayAndLinearLocation).head
-      val (lc2, rw2): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
-      val (lc3, rw3): (LinearLocation, Roadway) = Seq(combLink3).map(toRoadwayAndLinearLocation).head
-      val (lc4, rw4): (LinearLocation, Roadway) = Seq(combLink4).map(toRoadwayAndLinearLocation).head
+      val (lc1,   rw1  ): (LinearLocation, Roadway) = Seq(combLink1).map(toRoadwayAndLinearLocation).head
+      val (lc2,_/*rw2*/): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
+      val (lc3,_/*rw3*/): (LinearLocation, Roadway) = Seq(combLink3).map(toRoadwayAndLinearLocation).head
+      val (lc4,_/*rw4*/): (LinearLocation, Roadway) = Seq(combLink4).map(toRoadwayAndLinearLocation).head
       val rw1WithId = rw1.copy(startAddrMValue = 0, endAddrMValue = 20, ely = 8L)
       val orderedlc1 = lc1.copy(orderNumber = 1)
       val orderedlc2 = lc2.copy(orderNumber = 2)
@@ -3789,17 +3785,17 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       )
 
       val linearLocations = Seq(
-        LinearLocation(linearLocationId, 1, 1000l.toString, 0.0, 50.0, SideCode.TowardsDigitizing, 10000000000l, (CalibrationPointReference(Some(0l)), CalibrationPointReference.None), Seq(Point(0.0, 0.0), Point(50.0, 0.0)), LinkGeomSource.ComplementaryLinkInterface, roadwayNumber, Some(DateTime.parse("2000-01-01")), None),
-        LinearLocation(linearLocationId + 1, 1, 2000l.toString, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l, (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(0.0, 10.0), Point(50.0, 5.0)), LinkGeomSource.ComplementaryLinkInterface, roadwayNumber + 1, Some(DateTime.parse("2000-01-01")), None),
-        LinearLocation(linearLocationId + 2, 1, 3000l.toString, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l, (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(50.0, 5.0), Point(100.0, 5.0)), LinkGeomSource.ComplementaryLinkInterface, roadwayNumber + 2, Some(DateTime.parse("2000-01-01")), None),
-        LinearLocation(linearLocationId + 3, 1, 3000l.toString, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l, (CalibrationPointReference.None, CalibrationPointReference(Some(150l))), Seq(Point(100.0, 5.0), Point(150.0, 5.0)), LinkGeomSource.ComplementaryLinkInterface, roadwayNumber + 3, Some(DateTime.parse("2000-01-01")), None)
+        LinearLocation(linearLocationId,     1, 1000L.toString, 0.0, 50.0, SideCode.TowardsDigitizing, 10000000000L, (CalibrationPointReference(Some(0L)), CalibrationPointReference.None), Seq(Point(0.0, 0.0), Point(50.0, 0.0)), LinkGeomSource.ComplementaryLinkInterface, roadwayNumber, Some(DateTime.parse("2000-01-01")), None),
+        LinearLocation(linearLocationId + 1, 1, 2000L.toString, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000L, (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(0.0, 10.0), Point(50.0, 5.0)), LinkGeomSource.ComplementaryLinkInterface, roadwayNumber + 1, Some(DateTime.parse("2000-01-01")), None),
+        LinearLocation(linearLocationId + 2, 1, 3000L.toString, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000L, (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(50.0, 5.0), Point(100.0, 5.0)), LinkGeomSource.ComplementaryLinkInterface, roadwayNumber + 2, Some(DateTime.parse("2000-01-01")), None),
+        LinearLocation(linearLocationId + 3, 1, 3000L.toString, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000L, (CalibrationPointReference.None, CalibrationPointReference(Some(150L))), Seq(Point(100.0, 5.0), Point(150.0, 5.0)), LinkGeomSource.ComplementaryLinkInterface, roadwayNumber + 3, Some(DateTime.parse("2000-01-01")), None)
       )
       val roadwayIds = roadwayDAO.create(roadways)
 
-      val left      = dummyProjectLink(999, 999, Track.LeftSide, Discontinuity.Continuous,  0,  50,   0,  50, Some(DateTime.now()), None, 12345.toString, 0, 50, SideCode.TowardsDigitizing, RoadAddressChangeType.Transfer, 0L, AdministrativeClass.State,        leftGeom,  roadwayNumber    ).copy(id = id,     projectId = projectId, roadwayId = roadwayId,     linearLocationId = linearLocationId)
+      val left      = dummyProjectLink(999, 999, Track.LeftSide,  Discontinuity.Continuous,  0,  50,   0,  50, Some(DateTime.now()), None, 12345.toString, 0, 50, SideCode.TowardsDigitizing, RoadAddressChangeType.Transfer, 0L, AdministrativeClass.State,        leftGeom,  roadwayNumber    ).copy(id = id,     projectId = projectId, roadwayId = roadwayId,     linearLocationId = linearLocationId)
       val right     = dummyProjectLink(999, 999, Track.RightSide, Discontinuity.Continuous, 0,  50,   0,  50, Some(DateTime.now()), None, 12346.toString, 0, 50, SideCode.TowardsDigitizing, RoadAddressChangeType.Transfer, 0L, AdministrativeClass.State,        rightGeom, roadwayNumber + 1).copy(id = id + 1, projectId = projectId, roadwayId = roadwayId + 1, linearLocationId = linearLocationId + 1)
-      val combined1 = dummyProjectLink(999, 999, Track.Combined, Discontinuity.Continuous, 50, 100,  50, 100, Some(DateTime.now()), None, 12347.toString, 0, 50, SideCode.TowardsDigitizing, RoadAddressChangeType.Transfer, 0L, AdministrativeClass.Municipality, combGeom1, roadwayNumber + 2).copy(id = id + 2, projectId = projectId, roadwayId = roadwayId + 2, linearLocationId = linearLocationId + 2)
-      val combined2 = dummyProjectLink(999, 999, Track.Combined, Discontinuity.EndOfRoad, 100, 150, 100, 150, Some(DateTime.now()), None, 12348.toString, 0, 50, SideCode.TowardsDigitizing, RoadAddressChangeType.Transfer, 0L, AdministrativeClass.State,        combGeom2, roadwayNumber + 3).copy(id = id + 3, projectId = projectId, roadwayId = roadwayId + 3, linearLocationId = linearLocationId + 3)
+      val combined1 = dummyProjectLink(999, 999, Track.Combined,  Discontinuity.Continuous, 50, 100,  50, 100, Some(DateTime.now()), None, 12347.toString, 0, 50, SideCode.TowardsDigitizing, RoadAddressChangeType.Transfer, 0L, AdministrativeClass.Municipality, combGeom1, roadwayNumber + 2).copy(id = id + 2, projectId = projectId, roadwayId = roadwayId + 2, linearLocationId = linearLocationId + 2)
+      val combined2 = dummyProjectLink(999, 999, Track.Combined,  Discontinuity.EndOfRoad, 100, 150, 100, 150, Some(DateTime.now()), None, 12348.toString, 0, 50, SideCode.TowardsDigitizing, RoadAddressChangeType.Transfer, 0L, AdministrativeClass.State,        combGeom2, roadwayNumber + 3).copy(id = id + 3, projectId = projectId, roadwayId = roadwayId + 3, linearLocationId = linearLocationId + 3)
       val pls = Seq(left, right, combined1, combined2)
       buildTestDataForProject(Some(project), None, Some(linearLocations), Some(pls))
 
@@ -4456,9 +4452,9 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val combPLinks = Seq(combLink1, combLink2, combLink3)
 
-      val (lc1, rw1): (LinearLocation, Roadway) = Seq(combLink1).map(toRoadwayAndLinearLocation).head
-      val (lc2, rw2): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
-      val (lc3, rw3): (LinearLocation, Roadway) = Seq(combLink3).map(toRoadwayAndLinearLocation).head
+      val (lc1,   rw1  ): (LinearLocation, Roadway) = Seq(combLink1).map(toRoadwayAndLinearLocation).head
+      val (lc2,_/*rw2*/): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
+      val (lc3,   rw3  ): (LinearLocation, Roadway) = Seq(combLink3).map(toRoadwayAndLinearLocation).head
       val rw1WithId = rw1.copy(startAddrMValue = 0, endAddrMValue = 20, ely = 8L)
       val rw2WithId = rw3.copy(startAddrMValue = 0, endAddrMValue = 9, ely = 8L)
       val orderedlll1 = lc1.copy(orderNumber = 1)
@@ -4689,11 +4685,11 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(Point(20.0, 0.0), Point(20.0, 0.0)), roadNumberLimits)).thenReturn(ll2 ++ ll3)
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(Point(30.0, 0.0), Point(30.0, 0.0)), roadNumberLimits)).thenReturn(ll3)
 
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll1.map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw1))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll2.map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw2))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll1 ++ ll2).map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw1, rw2))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll2 ++ ll3).map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw2, rw3))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll3.map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw3))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(    ll1     .map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw1))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(    ll2     .map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw2))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll1 ++ ll2).map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw1, rw2))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll2 ++ ll3).map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw2, rw3))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(    ll3     .map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw3))
 
       nodesAndJunctionsService.handleJunctionAndJunctionPoints(projectChanges, projectLinks, mappedReservedRoadwayNumbers)
       nodesAndJunctionsService.expireObsoleteNodesAndJunctions(pl2++ pl1 ++ pl3, Some(project.startDate.minusDays(1)))
@@ -4786,27 +4782,27 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       roadAddressService.handleRoadwayPointsUpdate(projectChanges, mappedReservedRoadwayNumbers)
       nodesAndJunctionsService.handleNodePoints(projectChanges, projectLinks, mappedReservedRoadwayNumbers)
 
-      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(Point(0.0, 10.0), Point(0.0, 10.0)), roadNumberLimits)).thenReturn(ll1)
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(Point( 0.0, 10.0), Point( 0.0, 10.0)), roadNumberLimits)).thenReturn(ll1)
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(Point(10.0, 10.0), Point(10.0, 10.0)), roadNumberLimits)).thenReturn(ll1 ++ ll2)
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(Point(20.0, 10.0), Point(20.0, 10.0)), roadNumberLimits)).thenReturn(ll2 ++ ll3)
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(Point(30.0, 10.0), Point(30.0, 10.0)), roadNumberLimits)).thenReturn(ll3)
 
-      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(Point(0.0, 0.0), Point(0.0, 0.0)), roadNumberLimits)).thenReturn(ll4)
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(Point( 0.0, 0.0), Point( 0.0, 0.0)), roadNumberLimits)).thenReturn(ll4)
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(Point(10.0, 0.0), Point(10.0, 0.0)), roadNumberLimits)).thenReturn(ll4 ++ ll5)
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(Point(20.0, 0.0), Point(20.0, 0.0)), roadNumberLimits)).thenReturn(ll5 ++ ll6)
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(Point(30.0, 0.0), Point(30.0, 0.0)), roadNumberLimits)).thenReturn(ll6)
 
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll1.map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw1))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll2.map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw2))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll3.map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw3))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll1 ++ ll2).map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw1, rw2))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll2 ++ ll3).map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw2, rw3))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(    ll1     .map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw1))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(    ll2     .map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw2))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(    ll3     .map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw3))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll1 ++ ll2).map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw1, rw2))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll2 ++ ll3).map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw2, rw3))
 
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll4.map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw4))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll5.map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw5))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll6.map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw6))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll4 ++ ll5).map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw4, rw5))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll5 ++ ll6).map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw5, rw6))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(    ll4     .map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw4))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(    ll5     .map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw5))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(    ll6     .map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw6))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll4 ++ ll5).map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw4, rw5))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll5 ++ ll6).map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw5, rw6))
 
       nodesAndJunctionsService.handleJunctionAndJunctionPoints(projectChanges, projectLinks, mappedReservedRoadwayNumbers)
       nodesAndJunctionsService.expireObsoleteNodesAndJunctions(projectLinks, Some(project1.startDate.minusDays(1)))
@@ -4911,21 +4907,21 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(Point(20.0, 0.0), Point(20.0, 0.0)), roadNumberLimits)).thenReturn(ll2t1 ++ ll3t1)
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(Point(30.0, 0.0), Point(30.0, 0.0)), roadNumberLimits)).thenReturn(ll3t1)
 
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll1t1.map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw1t1))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll2t1.map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw2t1))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll3t1.map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw3t1))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll1t1 ++ ll2t1).map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw1t1, rw2t1))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll2t1 ++ ll3t1).map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw2t1, rw3t1))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(     ll1t1      .map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw1t1))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(     ll2t1      .map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw2t1))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(     ll3t1      .map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw3t1))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll1t1 ++ ll2t1).map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw1t1, rw2t1))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll2t1 ++ ll3t1).map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw2t1, rw3t1))
 
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll1t2.map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw1t2))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll2t2.map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw2t2))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll3t2.map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw3t2))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll1t2 ++ ll2t2).map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw1t2, rw2t2))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll2t2 ++ ll3t2).map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw2t2, rw3t2))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(     ll1t2      .map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw1t2))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(     ll2t2      .map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw2t2))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(     ll3t2      .map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw3t2))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll1t2 ++ ll2t2).map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw1t2, rw2t2))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll2t2 ++ ll3t2).map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw2t2, rw3t2))
 
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll1t1 ++ ll1t2).map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw1t1, rw1t2))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll2t1 ++ ll2t2).map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw2t1, rw2t2))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll3t1 ++ ll3t2).map(_.roadwayNumber).toSet, false)).thenReturn(Seq(rw3t1, rw3t2))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll1t1 ++ ll1t2).map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw1t1, rw1t2))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll2t1 ++ ll2t2).map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw2t1, rw2t2))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll3t1 ++ ll3t2).map(_.roadwayNumber).toSet, withHistory=false)).thenReturn(Seq(rw3t1, rw3t2))
 
       nodesAndJunctionsService.handleJunctionAndJunctionPoints(projectTrackChanges, projectLinksAfterTrackChange, mappedReservedRoadwayNumbersAfterTrackChange)
       nodesAndJunctionsService.expireObsoleteNodesAndJunctions(projectLinksAfterTrackChange, Some(project2.startDate.minusDays(1)))
@@ -4939,7 +4935,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     runWithRollback {
       val node = Node(NewIdValue, Sequences.nextNodeNumber, Point(0, 0), Some("Node name"), NodeType.EndOfRoad,
         DateTime.now().withTimeAtStartOfDay(), None, DateTime.now(), None, "user", Some(DateTime.now()), registrationDate = new DateTime())
-      nodesAndJunctionsService.addOrUpdateNode(node, false, node.createdBy) should be (node.nodeNumber)
+      nodesAndJunctionsService.addOrUpdateNode(node, isObsoleteNode=false, node.createdBy) should be (node.nodeNumber)
       val fetched = nodeDAO.fetchByNodeNumber(node.nodeNumber).getOrElse(fail("No node found"))
       fetched.startDate should be(node.startDate)
       fetched.nodeType should be(node.nodeType)
@@ -4962,7 +4958,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
         DateTime.now().withTimeAtStartOfDay(), None, DateTime.now(), None, "user", Some(DateTime.now().minusDays(1)), registrationDate = new DateTime())
       nodeDAO.create(Seq(node), node.createdBy)
       nodeDAO.fetchById(node.id) should not be None
-      nodesAndJunctionsService.addOrUpdateNode(node.copy(coordinates = Point(1, 1)), false, node.createdBy) should be (node.nodeNumber)
+      nodesAndJunctionsService.addOrUpdateNode(node.copy(coordinates = Point(1, 1)), isObsoleteNode=false, node.createdBy) should be (node.nodeNumber)
       nodeDAO.fetchById(node.id) should be(None)
       val updated = nodeDAO.fetchByNodeNumber(node.nodeNumber).getOrElse(fail("Node not found"))
       updated.id should not be node.id
@@ -4983,7 +4979,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
         DateTime.now().withTimeAtStartOfDay(), None, DateTime.now(), None, "user", Some(DateTime.now().minusDays(1)), registrationDate = new DateTime())
       nodeDAO.create(Seq(node), node.createdBy)
       nodeDAO.fetchById(node.id) should not be None
-      nodesAndJunctionsService.addOrUpdateNode(node.copy(coordinates = Point(1, 1), nodeType = NodeType.Bridge), false, node.createdBy) should be (node.nodeNumber)
+      nodesAndJunctionsService.addOrUpdateNode(node.copy(coordinates = Point(1, 1), nodeType = NodeType.Bridge), isObsoleteNode=false, node.createdBy) should be (node.nodeNumber)
       nodeDAO.fetchById(node.id) should be(None)
       val updated = nodeDAO.fetchByNodeNumber(node.nodeNumber).getOrElse(fail("Node not found"))
       updated.id should not be node.id
@@ -5007,7 +5003,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       nodeDAO.create(Seq(node), node.createdBy)
       nodeDAO.fetchById(node.id) should not be None
       nodesAndJunctionsService.addOrUpdateNode(node.copy(startDate = DateTime.now().plusDays(1).withTimeAtStartOfDay(),
-        nodeType = NodeType.Bridge), false, node.createdBy) should be (node.nodeNumber)
+        nodeType = NodeType.Bridge), isObsoleteNode=false, node.createdBy) should be (node.nodeNumber)
       nodeDAO.fetchById(node.id) should be(None)
       val updated = nodeDAO.fetchByNodeNumber(node.nodeNumber).getOrElse(fail("Node not found"))
       updated.id should not be node.id
@@ -5070,7 +5066,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val before = nodePointDAO.fetchByNodeNumbers(Seq(nodeNumber))
       nodesAndJunctionsService.calculateNodePointsForNode(nodeNumber, "TestUser")
       val after = nodePointDAO.fetchByNodeNumbers(Seq(nodeNumber))
-      before.map(_.id).toSet should not be (after.map(_.id).toSet)
+      before.map(_.id).toSet should not be after.map(_.id).toSet
       val newNodes = nodePointDAO.fetchCalculatedNodePointsForNodeNumber(nodeNumber)
       newNodes.size should be(1)
       newNodes(0).addrM should be(0)
@@ -5120,7 +5116,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val before = nodePointDAO.fetchByNodeNumbers(Seq(nodeNumber))
       nodesAndJunctionsService.calculateNodePointsForNode(nodeNumber, "TestUser")
       val after = nodePointDAO.fetchByNodeNumbers(Seq(nodeNumber))
-      before.map(_.id).toSet should not be (after.map(_.id).toSet)
+      before.map(_.id).toSet should not be after.map(_.id).toSet
       val newNodes = nodePointDAO.fetchCalculatedNodePointsForNodeNumber(nodeNumber)
       newNodes.size should be(1)
       newNodes(0).addrM should be(0)
@@ -5135,14 +5131,14 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       roadwayDAO.create(Seq(testRoadway1.copy(roadwayNumber = roadwayNumber1, track = Track.LeftSide)))
       roadwayDAO.create(Seq(testRoadway1.copy(roadwayNumber = roadwayNumber2, track = Track.RightSide)))
       val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = roadwayNumber1, addrMValue = 10))
-      val roadwayPointId2 = roadwayPointDAO.create(testRoadwayPoint2.copy(roadwayNumber = roadwayNumber2, addrMValue = 20))
+//    val roadwayPointId2 = roadwayPointDAO.create(testRoadwayPoint2.copy(roadwayNumber = roadwayNumber2, addrMValue = 20))
       val junctionId1 = junctionDAO.create(Seq(testJunction1.copy(nodeNumber = Option(nodeNumber)))).head
       junctionPointDAO.create(Seq(testJunctionPoint1.copy(junctionId = junctionId1, roadwayPointId = roadwayPointId1)))
 
       val before = nodePointDAO.fetchByNodeNumbers(Seq(nodeNumber))
       nodesAndJunctionsService.calculateNodePointsForNode(nodeNumber, "TestUser")
       val after = nodePointDAO.fetchByNodeNumbers(Seq(nodeNumber))
-      before.map(_.id).toSet should not be (after.map(_.id).toSet)
+      before.map(_.id).toSet should not be after.map(_.id).toSet
       val newNodePoints = nodePointDAO.fetchCalculatedNodePointsForNodeNumber(nodeNumber)
       newNodePoints.size should be(2)
       newNodePoints(0).addrM should be(10)
@@ -5174,7 +5170,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val after = nodePointDAO.fetchByNodeNumbers(Seq(nodeNumber))
 
-      before.map(_.id).toSet should not be (after.map(_.id).toSet)
+      before.map(_.id).toSet should not be after.map(_.id).toSet
       after.size should be(2)
       after(0).addrM should be (30)
       after(0).track should be (Track.RightSide)
@@ -5208,7 +5204,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val after = nodePointDAO.fetchByNodeNumbers(Seq(nodeNumber))
 
-      before.map(_.id).toSet should not be (after.map(_.id).toSet)
+      before.map(_.id).toSet should not be after.map(_.id).toSet
       after.size should be(2)
       after(0).addrM should be (60)
       after(0).track should be (Track.Combined)
@@ -5226,7 +5222,6 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val roadwayNumber2 = Sequences.nextRoadwayNumber
       roadwayDAO.create(Seq(testRoadway1.copy(roadwayNumber = roadwayNumber1, track = Track.LeftSide)))
       roadwayDAO.create(Seq(testRoadway1.copy(roadwayNumber = roadwayNumber2, track = Track.RightSide)))
-      val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = roadwayNumber1, addrMValue = 10))
       val roadwayPointId2 = roadwayPointDAO.create(testRoadwayPoint2.copy(roadwayNumber = roadwayNumber2, addrMValue = 20))
       val junctionId2 = junctionDAO.create(Seq(testJunction1.copy(nodeNumber = Option(nodeNumber)))).head
       junctionPointDAO.create(Seq(testJunctionPoint1.copy(junctionId = junctionId2, roadwayPointId = roadwayPointId2)))
@@ -5234,7 +5229,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val before = nodePointDAO.fetchByNodeNumbers(Seq(nodeNumber))
       nodesAndJunctionsService.calculateNodePointsForNode(nodeNumber, "TestUser")
       val after = nodePointDAO.fetchByNodeNumbers(Seq(nodeNumber))
-      before.map(_.id).toSet should not be (after.map(_.id).toSet)
+      before.map(_.id).toSet should not be after.map(_.id).toSet
       val newNodePoints = nodePointDAO.fetchCalculatedNodePointsForNodeNumber(nodeNumber)
       newNodePoints.size should be(2)
       newNodePoints(0).addrM should be(20)
@@ -5259,7 +5254,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val before = nodePointDAO.fetchByNodeNumbers(Seq(nodeNumber))
       nodesAndJunctionsService.calculateNodePointsForNode(nodeNumber, "TestUser")
       val after = nodePointDAO.fetchByNodeNumbers(Seq(nodeNumber))
-      before.map(_.id).toSet should not be (after.map(_.id).toSet)
+      before.map(_.id).toSet should not be after.map(_.id).toSet
       val newNodePoints = nodePointDAO.fetchCalculatedNodePointsForNodeNumber(nodeNumber)
       newNodePoints.size should be(2)
       newNodePoints(0).addrM should be(15)
@@ -5296,7 +5291,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val before = nodePointDAO.fetchByNodeNumbers(Seq(nodeNumber))
       nodesAndJunctionsService.calculateNodePointsForNode(nodeNumber, "TestUser")
       val after = nodePointDAO.fetchByNodeNumbers(Seq(nodeNumber))
-      before.map(_.id).toSet should not be (after.map(_.id).toSet)
+      before.map(_.id).toSet should not be after.map(_.id).toSet
       val newNodePoints = nodePointDAO.fetchCalculatedNodePointsForNodeNumber(nodeNumber)
       newNodePoints.size should be(4)
       newNodePoints(0).addrM should be(16) // (10 + 20 + 20) / 3 from roadwayNumber 1 and roadwayNumber 2 and from roadNumber 990
@@ -5337,7 +5332,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val before = nodePointDAO.fetchByNodeNumbers(Seq(nodeNumber))
       nodesAndJunctionsService.calculateNodePointsForNode(nodeNumber, "TestUser")
       val after = nodePointDAO.fetchByNodeNumbers(Seq(nodeNumber))
-      before.map(_.id).toSet should not be (after.map(_.id).toSet)
+      before.map(_.id).toSet should not be after.map(_.id).toSet
       val newNodePoints = nodePointDAO.fetchCalculatedNodePointsForNodeNumber(nodeNumber)
       newNodePoints.size should be(4)
       newNodePoints(0).addrM should be(16) // (10 + 20 + 20) / 3 from roadwayNumber 1 and roadwayNumber 2 and from roadNumber 990
@@ -5378,7 +5373,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val before = nodePointDAO.fetchByNodeNumbers(Seq(nodeNumber))
       nodesAndJunctionsService.calculateNodePointsForNode(nodeNumber, "TestUser")
       val after = nodePointDAO.fetchByNodeNumbers(Seq(nodeNumber))
-      before.map(_.id).toSet should not be (after.map(_.id).toSet)
+      before.map(_.id).toSet should not be after.map(_.id).toSet
       val newNodePoints = nodePointDAO.fetchCalculatedNodePointsForNodeNumber(nodeNumber)
       newNodePoints.size should be(6)
       newNodePoints(0).addrM should be(16) // (10 + 20 + 20) / 3 from roadwayNumber 1 and roadwayNumber 2 and from roadNumber 990
@@ -5414,12 +5409,12 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val before = nodePointDAO.fetchByNodeNumbers(Seq(nodeNumber))
       nodesAndJunctionsService.calculateNodePointsForNode(nodeNumber, "TestUser")
       val after = nodePointDAO.fetchByNodeNumbers(Seq(nodeNumber))
-      before.map(_.id).toSet should not be (after.map(_.id).toSet)
+      before.map(_.id).toSet should not be after.map(_.id).toSet
       val newNodePoints = nodePointDAO.fetchCalculatedNodePointsForNodeNumber(nodeNumber)
       newNodePoints.size should be(2)
       newNodePoints(0).addrM should be(100) // (20 + 180) / 2
       newNodePoints(1).addrM should be(100) // (20 + 180) / 2
-      newNodePoints(0).roadwayPointId should not be (newNodePoints(1).roadwayPointId)
+      newNodePoints(0).roadwayPointId should not be newNodePoints(1).roadwayPointId
     }
   }
 

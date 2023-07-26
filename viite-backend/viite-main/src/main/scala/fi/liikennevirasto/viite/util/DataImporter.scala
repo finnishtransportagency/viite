@@ -2,11 +2,9 @@ package fi.liikennevirasto.viite.util
 
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import javax.sql.DataSource
-import org.joda.time.format.{ISODateTimeFormat, PeriodFormat}
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
-
 import fi.liikennevirasto.digiroad2.client.kgv.KgvRoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -16,12 +14,10 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.util.DataImporter.Conversion
 import fi.vaylavirasto.viite.dao.SequenceResetterDAO
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, SideCode}
 import org.joda.time._
 import org.slf4j.LoggerFactory
 import slick.driver
 import slick.driver.JdbcDriver
-import slick.driver.JdbcDriver.backend.Database
 import slick.jdbc.StaticQuery.interpolation
 
 object DataImporter {
@@ -36,13 +32,7 @@ object DataImporter {
       new BoneCPDataSource(cfg)
     }
 
-    def database() = Database.forDataSource(dataSource)
-    val roadLinkTable: String = "tielinkki"
-    val busStopTable: String = "lineaarilokaatio"
-  }
-
-  def humanReadableDurationSince(startTime: DateTime): String = {
-    PeriodFormat.getDefault.print(new Period(startTime, DateTime.now()))
+    def database(): DatabaseDef = Database.forDataSource(dataSource)
   }
 }
 
@@ -56,47 +46,11 @@ class DataImporter {
   def withDynTransaction(f: => Unit): Unit = PostGISDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
 
-  def time[A](f: => A) = {
+  def time[A](f: => A): A = {
     val s = System.nanoTime
     val ret = f
     println("time for insert " + (System.nanoTime - s) / 1e6 + "ms")
     ret
-  }
-
-  val dateFormatter = ISODateTimeFormat.basicDate()
-
-  def getBatchDrivers(n: Int, m: Int, step: Int): List[(Int, Int)] = {
-    if ((m - n) < step) {
-      List((n, m))
-    } else {
-      val x = (n to m by step).sliding(2).map(x => (x(0), x(1) - 1)).toList
-      x :+ (x.last._2 + 1, m)
-    }
-  }
-
-  case class AdministrativeClassChangePoints(roadNumber: Long, roadPartNumber: Long, addrM: Long, before: AdministrativeClass, after: AdministrativeClass, elyCode: Long)
-
-  /**
-    * Get administrative class for road address object with a list of administrative class change points
-    *
-    * @param changePoints Road part change points for administrative classes
-    * @param roadAddress Road address to get the dministrative class for
-    * @return administrative class for the road address, or if a split is needed then a split point (address) and administrative classes for first and second split
-    */
-  def getAdministrativeClass(changePoints: Seq[AdministrativeClassChangePoints], roadAddress: RoadAddress): Either[AdministrativeClass, (Long, AdministrativeClass, AdministrativeClass)] = {
-    // Check if this road address overlaps the change point and needs to be split
-    val overlaps = changePoints.find(c => c.addrM > roadAddress.startAddrMValue && c.addrM < roadAddress.endAddrMValue)
-    if (overlaps.nonEmpty)
-      Right((overlaps.get.addrM, overlaps.get.before, overlaps.get.after))
-    else {
-      // There is no overlap, check if this road address is between [0, min(addrM))
-      if (roadAddress.startAddrMValue < changePoints.map(_.addrM).min) {
-        Left(changePoints.minBy(_.addrM).before)
-      } else {
-        Left(changePoints.filter(_.addrM <= roadAddress.startAddrMValue).maxBy(_.addrM).after)
-      }
-    }
-
   }
 
   def initialImport(importTableName: Option[String]): Unit = {
@@ -218,7 +172,7 @@ class DataImporter {
     importNodesAndJunctions(Conversion.database())
   }
 
-  def importNodesAndJunctions(conversionDatabase: DatabaseDef) = {
+  def importNodesAndJunctions(conversionDatabase: DatabaseDef): Unit = {
     withDynTransaction {
       println("\nImporting nodes and junctions started at time: ")
       println(DateTime.now())
@@ -238,7 +192,7 @@ class DataImporter {
     }
   }
 
-  def resetRoadAddressSequences() = {
+  def resetRoadAddressSequences(): Unit = {
     println("\nResetting road related sequences started at time: ")
     println(DateTime.now())
 
@@ -268,7 +222,7 @@ class DataImporter {
     sequenceResetter.resetSequenceToNumber("NODE_SEQ", 1)
   }
 
-  private def updateNodePointType() = {
+  private def updateNodePointType(): Unit = {
     println("\nUpdating nodePointTypes started at time: ")
     println(DateTime.now())
 
@@ -341,35 +295,10 @@ class DataImporter {
     new JunctionImporter(conversionDatabase)
   }
 
-  // TODO This is not used and should probably be removed.
-  def splitRoadAddresses(roadAddress: RoadAddress, addrMToSplit: Long, administrativeClassBefore: AdministrativeClass, administrativeClassAfter: AdministrativeClass, elyCode: Long): Seq[RoadAddress] = {
-    // mValue at split point on a TowardsDigitizing road address:
-    val splitMValue = roadAddress.startMValue + (roadAddress.endMValue - roadAddress.startMValue) / (roadAddress.endAddrMValue - roadAddress.startAddrMValue) * (addrMToSplit - roadAddress.startAddrMValue)
-    println(s"Splitting roadway id = ${roadAddress.id}, tie = ${roadAddress.roadNumber} and aosa = ${roadAddress.roadPartNumber}, on AddrMValue = $addrMToSplit")
-    val roadAddressA = roadAddress.copy(id = fi.liikennevirasto.viite.NewIdValue, administrativeClass = administrativeClassBefore, endAddrMValue = addrMToSplit, startMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
-                roadAddress.endMValue - splitMValue
-              else
-                0.0, endMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
-                roadAddress.endMValue
-              else
-                splitMValue, geometry = GeometryUtils.truncateGeometry2D(roadAddress.geometry, 0.0, splitMValue), ely = elyCode) // TODO Check roadway_number
-
-    val roadAddressB = roadAddress.copy(id = fi.liikennevirasto.viite.NewIdValue, administrativeClass = administrativeClassAfter, startAddrMValue = addrMToSplit, startMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
-                0.0
-              else
-                splitMValue, endMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
-                roadAddress.endMValue - splitMValue
-              else
-                roadAddress.endMValue, geometry = GeometryUtils.truncateGeometry2D(roadAddress.geometry, splitMValue, roadAddress.endMValue), ely = elyCode) // TODO Check roadway_number
-    Seq(roadAddressA, roadAddressB)
-  }
-
-
   protected def fetchGroupedLinkIds: Seq[Set[String]] = {
     val linkIds = sql"""select distinct link_id from linear_location where link_id is not null order by link_id""".as[String].list
-    linkIds.toSet.grouped(25000).asInstanceOf[Iterator[Set[String]]].toSeq
+    linkIds.toSet.grouped(25000).toSeq
   }
-
 
   private def updateLinearLocationGeometry(KGVClient: KgvRoadLink, geometryFrozen: Boolean): Unit = {
     val eventBus = new DummyEventBus
@@ -390,7 +319,7 @@ class DataImporter {
               val newGeom = GeometryUtils.truncateGeometry3D(roadLink.geometry, segment.startMValue, segment.endMValue)
               if (!segment.geometry.equals(Nil) && !newGeom.equals(Nil)) {
                 if(skipped%100==0 && skipped>0){ // print some progress info, though nothing has been changing for a while
-                  println(s"Skipped geometry updates on ${skipped} linear locations")
+                  println(s"Skipped geometry updates on $skipped linear locations")
                 }
                 val distanceFromHeadToHead = segment.geometry.head.distance2DTo(newGeom.head)
                 val distanceFromHeadToLast = segment.geometry.head.distance2DTo(newGeom.last)
@@ -401,7 +330,7 @@ class DataImporter {
                   ((distanceFromLastToHead > MinDistanceForGeometryUpdate) &&
                     (distanceFromLastToLast > MinDistanceForGeometryUpdate))) {
                   if(skipped>0){
-                    println(s"Skipped geometry updates on ${skipped} linear locations (minimal or no change on geometry)")
+                    println(s"Skipped geometry updates on $skipped linear locations (minimal or no change on geometry)")
                     skipped = 0
                   }
                   updateGeometry(segment.id, newGeom)
@@ -417,7 +346,7 @@ class DataImporter {
         }
     }
     if(skipped>0){
-      println(s"Skipped geometry updates on ${skipped} linear locations")
+      println(s"Skipped geometry updates on $skipped linear locations")
     }
     println(s"Geometries changed count: $changed")
   }
@@ -449,7 +378,7 @@ class DataImporter {
     updateCalibrationPointTypesQuery()
   }
 
-  def updateCalibrationPointTypesQuery() = {
+  def updateCalibrationPointTypesQuery(): Unit = {
     SqlScriptRunner.runScriptInClasspath("/update_calibration_point_types.sql")
   }
 

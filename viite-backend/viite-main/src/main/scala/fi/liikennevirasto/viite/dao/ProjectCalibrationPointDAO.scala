@@ -18,7 +18,7 @@ object ProjectCalibrationPointDAO {
 
   case class UserDefinedCalibrationPoint(id: Long, projectLinkId: Long, projectId: Long, segmentMValue: Double, addressMValue: Long) extends CalibrationPointMValues
 
-  implicit val getCalibrationPoint = new GetResult[UserDefinedCalibrationPoint] {
+  implicit val getCalibrationPoint: GetResult[UserDefinedCalibrationPoint] = new GetResult[UserDefinedCalibrationPoint] {
     def apply(r: PositionedResult) = {
 
       val id = r.nextLong()
@@ -113,32 +113,32 @@ object ProjectCalibrationPointDAO {
     nextCalibrationPointId
   }
 
-  def updateSpecificCalibrationPointMeasures(id: Long, segmentMValue: Double, addressMValue: Long) = {
+  def updateSpecificCalibrationPointMeasures(id: Long, segmentMValue: Double, addressMValue: Long): Unit = {
     sqlu"""
         Update PROJECT_CALIBRATION_POINT Set LINK_M = $segmentMValue, ADDRESS_M = $addressMValue Where ID = $id
       """.execute
   }
 
-  def removeSpecificCalibrationPoint(id: Long) = {
+  def removeSpecificCalibrationPoint(id: Long): Unit = {
     sqlu"""
         Delete From PROJECT_CALIBRATION_POINT Where ID = $id
       """.execute
   }
 
-  def removeAllCalibrationPointsFromRoad(projectLinkId: Long, projectId: Long) = {
+  def removeAllCalibrationPointsFromRoad(projectLinkId: Long, projectId: Long): Unit = {
     sqlu"""
         Delete From PROJECT_CALIBRATION_POINT Where PROJECT_LINK_ID = $projectLinkId And PROJECT_ID  = $projectId
       """.execute
   }
 
-  def removeAllCalibrationPoints(projectLinkIds: Set[Long]) = {
+  def removeAllCalibrationPoints(projectLinkIds: Set[Long]): Unit = {
     if (projectLinkIds.nonEmpty)
       sqlu"""
         Delete From PROJECT_CALIBRATION_POINT Where PROJECT_LINK_ID in (#${projectLinkIds.mkString(",")})
       """.execute
   }
 
-  def removeAllCalibrationPointsFromProject(projectId: Long) = {
+  def removeAllCalibrationPointsFromProject(projectId: Long): Unit = {
     sqlu"""
         Delete From PROJECT_CALIBRATION_POINT Where PROJECT_ID  = $projectId
       """.execute
