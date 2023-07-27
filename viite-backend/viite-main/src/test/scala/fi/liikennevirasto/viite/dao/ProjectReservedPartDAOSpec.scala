@@ -13,7 +13,6 @@ import org.postgresql.util.PSQLException
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.StaticQuery.interpolation
 
 /**
   * Class to test DB trigger that does not allow reserving already reserved parts to project

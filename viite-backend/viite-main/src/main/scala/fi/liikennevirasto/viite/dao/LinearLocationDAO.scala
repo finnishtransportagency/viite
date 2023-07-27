@@ -436,7 +436,7 @@ class LinearLocationDAO extends BaseDAO {
     if (linkIds.isEmpty)
       0
     else
-      Q.updateNA(query).first
+      runUpdateToDb(query)
   }
 
   def expireByRoadwayNumbers(roadwayNumbers: Set[Long]): Int = {

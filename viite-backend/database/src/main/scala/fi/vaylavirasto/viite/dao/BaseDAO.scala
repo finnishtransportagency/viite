@@ -14,7 +14,7 @@ class BaseDAO {
   protected val dateOptTimeFormatter: DateTimeFormatter = ISODateTimeFormat.dateOptionalTimeParser()
 
   /* OLD Slick 3.0.0 way to run direct SQL update queries. */
-  def runUpdateToDb(updateQuery: String) = {
+  def runUpdateToDb(updateQuery: String): Int = {
     sqlu"""#$updateQuery""".buildColl.toList.head //sqlu"""#$updateQuery""".execute
   }
 

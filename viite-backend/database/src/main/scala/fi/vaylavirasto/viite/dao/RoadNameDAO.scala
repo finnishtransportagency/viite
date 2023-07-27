@@ -1,7 +1,7 @@
 package fi.vaylavirasto.viite.dao
 
 import java.sql.{Date, Timestamp}
-import com.github.tototoshi.slick.MySQLJodaSupport._ // Required for implicit functions' usage
+import com.github.tototoshi.slick.MySQLJodaSupport._ // Required for implicit functions' usage slick.jdbc.SetParameter[org.joda.time.DateTime] sql"""
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.slf4j.LoggerFactory
@@ -184,7 +184,7 @@ object RoadNameDAO extends BaseDAO {
 
     val filters = Seq(numberFilter, nameFilter, startDateFilter, endDateFilter).filterNot(_ == "")
     val query = s"""Update ROAD_NAME Set ${filters.mkString(",")} where id = $id"""
-    Q.updateNA(query).first
+    runUpdateToDb(query)
   }
 
   def create(roadNames: Seq[RoadName]): Unit = {

@@ -309,7 +309,7 @@ class NodePointDAO extends BaseDAO {
       0
     else {
       logger.debug(s"Expiring by id: ${ids.mkString(", ")} \n    query: : $query")
-      Q.updateNA(query).first
+      runUpdateToDb(query)
     }
   }
 
