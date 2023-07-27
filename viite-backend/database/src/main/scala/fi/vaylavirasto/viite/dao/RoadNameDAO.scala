@@ -4,7 +4,6 @@ import java.sql.{Date, Timestamp}
 import com.github.tototoshi.slick.MySQLJodaSupport._ // Required for implicit functions' usage slick.jdbc.SetParameter[org.joda.time.DateTime] sql"""
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
-import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import slick.jdbc.StaticQuery.interpolation

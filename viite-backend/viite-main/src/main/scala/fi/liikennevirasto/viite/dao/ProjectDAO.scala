@@ -6,7 +6,6 @@ import fi.liikennevirasto.viite._
 import fi.vaylavirasto.viite.dao.BaseDAO
 import org.joda.time.DateTime
 import org.postgresql.jdbc.PgArray
-import org.slf4j.{Logger, LoggerFactory}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 

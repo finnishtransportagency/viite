@@ -7,7 +7,6 @@ import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, RoadAddr
 import java.sql.{PreparedStatement, Timestamp}
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
-import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 

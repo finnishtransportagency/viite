@@ -1,7 +1,6 @@
 package fi.liikennevirasto.digiroad2.postgis
 
 import fi.liikennevirasto.digiroad2.util.LogUtils
-import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import fi.vaylavirasto.viite.dao.BaseDAO
 import scala.language.implicitConversions

@@ -4,7 +4,6 @@ import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite._
 import fi.vaylavirasto.viite.model.{Discontinuity, RoadAddressChangeType, Track}
 import fi.vaylavirasto.viite.dao.BaseDAO
-import org.slf4j.{Logger, LoggerFactory}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.{StaticQuery => Q}
 import slick.jdbc.StaticQuery.interpolation
