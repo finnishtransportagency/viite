@@ -10,7 +10,7 @@ import fi.liikennevirasto.viite.process.{RoadwayAddressMapper, TrackSectionOrder
 import fi.liikennevirasto.viite.process.TrackSectionOrder.findChainEndpoints
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, RoadAddressChangeType, SideCode, Track}
-import org.joda.time.format.DateTimeFormat
+import fi.vaylavirasto.viite.util.DateTimeFormatters.finnishDateFormatter
 import org.slf4j.LoggerFactory
 
 import scala.annotation.tailrec
@@ -75,8 +75,7 @@ class ProjectValidator {
 
   def checkAvailable(number: Long, part: Long, currentProject: Project): Unit = {
     if (projectReservedPartDAO.isNotAvailableForProject(number, part, currentProject.id)) {
-      val fmt = DateTimeFormat.forPattern("dd.MM.yyyy")
-      throw new ProjectValidationException(RoadNotAvailableMessage.format(number, part, currentProject.startDate.toString(fmt)))
+      throw new ProjectValidationException(RoadNotAvailableMessage.format(number, part, currentProject.startDate.toString(finnishDateFormatter)))
     }
   }
 

@@ -6,8 +6,8 @@ import fi.liikennevirasto.viite.NewIdValue
 import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
 import fi.vaylavirasto.viite.model.{NodeType, Track}
+import fi.vaylavirasto.viite.util.DateTimeFormatters.{basicDateFormatter, dateOptTimeFormatter}
 import org.joda.time.DateTime
-import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
@@ -25,23 +25,25 @@ class JunctionDAO extends BaseDAO {
 
   implicit val getJunction: GetResult[Junction] = new GetResult[Junction] {
     def apply(r: PositionedResult): Junction = {
-      val id = r.nextLong()
+      val id             = r.nextLong()
       val junctionNumber = r.nextLongOption()
-      val nodeNumber = r.nextLongOption()
-      val startDate = formatter.parseDateTime(r.nextDate.toString)
-      val endDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
-      val validFrom = formatter.parseDateTime(r.nextDate.toString)
-      val validTo = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
-      val createdBy = r.nextString()
-      val createdTime = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
-      Junction(id, junctionNumber, nodeNumber, startDate, endDate, validFrom, validTo, createdBy, createdTime)
+      val nodeNumber     = r.nextLongOption()
+      val startDate      = dateOptTimeFormatter.parseDateTime(r.nextDate.toString)
+      val endDate        = r.nextDateOption.map(d => dateOptTimeFormatter.parseDateTime(d.toString))
+      val validFrom      = dateOptTimeFormatter.parseDateTime(r.nextDate.toString)
+      val validTo        = r.nextDateOption.map(d => dateOptTimeFormatter.parseDateTime(d.toString))
+      val createdBy      = r.nextString()
+      val createdTime    = r.nextDateOption.map(d => dateOptTimeFormatter.parseDateTime(d.toString))
+      Junction(
+        id, junctionNumber, nodeNumber, startDate, endDate,
+        validFrom, validTo, createdBy, createdTime)
     }
   }
 
   implicit val getJunctionTemplate: GetResult[JunctionTemplate] = new GetResult[JunctionTemplate] {
     def apply(r: PositionedResult): JunctionTemplate = {
       val junctionId = r.nextLong()
-      val startDate = formatter.parseDateTime(r.nextDate.toString)
+      val startDate = dateOptTimeFormatter.parseDateTime(r.nextDate.toString)
       val roadNumber = r.nextLong()
       val roadPartNumber = r.nextLong()
       val trackCode = r.nextInt()
@@ -57,7 +59,7 @@ class JunctionDAO extends BaseDAO {
       val id = r.nextLong()
       val junctionNumber = r.nextLongOption()
       val nodeNumber = r.nextLong()
-      val startDate = formatter.parseDateTime(r.nextDate.toString)
+      val startDate = dateOptTimeFormatter.parseDateTime(r.nextDate.toString)
       val nodeName = r.nextString()
 
       JunctionInfo(id, junctionNumber, startDate, nodeNumber, nodeName)

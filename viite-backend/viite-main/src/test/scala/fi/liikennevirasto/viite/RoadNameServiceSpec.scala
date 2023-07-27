@@ -4,14 +4,12 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.vaylavirasto.viite.dao.RoadNameDAO
 import fi.vaylavirasto.viite.postgis.DbUtils.runUpdateToDb
 import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
 class RoadNameServiceSpec extends FunSuite with Matchers {
   private val roadNameService = new RoadNameService
-  val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
 
   def runWithRollback[T](f: => T): T = {
     Database.forDataSource(PostGISDatabase.ds).withDynTransaction {

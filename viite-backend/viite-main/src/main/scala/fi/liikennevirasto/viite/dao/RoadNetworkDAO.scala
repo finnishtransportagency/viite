@@ -7,6 +7,7 @@ import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.vaylavirasto.viite.model.{AdministrativeClass, BeforeAfter, Discontinuity, Track}
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import fi.vaylavirasto.viite.dao.BaseDAO
+import fi.vaylavirasto.viite.util.DateTimeFormatters.dateOptTimeFormatter
 
 
 /** Data type for /summary API data */
@@ -34,7 +35,7 @@ class RoadNetworkDAO extends BaseDAO {
       val roadPartNumber = r.nextLong()
       val track = r.nextLong()
       val addrM = r.nextLong()
-      val createdTime = formatter.parseDateTime(r.nextDate.toString)
+      val createdTime = dateOptTimeFormatter.parseDateTime(r.nextDate.toString)
       val createdBy = r.nextString()
 
       MissingCalibrationPoint(roadNumber, roadPartNumber, track, addrM, createdTime, createdBy)
@@ -52,7 +53,7 @@ class RoadNetworkDAO extends BaseDAO {
       val track = r.nextLong()
       val addrM = r.nextLong()
       val beforeAfter = r.nextLong()
-      val createdTime = formatter.parseDateTime(r.nextDate.toString)
+      val createdTime = dateOptTimeFormatter.parseDateTime(r.nextDate.toString)
       val createdBy = r.nextString()
 
       MissingCalibrationPointFromJunction(MissingCalibrationPoint(roadNumber, roadPartNumber, track, addrM, createdTime, createdBy),junctionPointId, junctionNumber, nodeNumber, BeforeAfter.apply(beforeAfter))
@@ -66,7 +67,7 @@ class RoadNetworkDAO extends BaseDAO {
       val roadPartNumber = r.nextLong()
       val track = r.nextLong()
       val startAddrM = r.nextLong()
-      val createdTime = formatter.parseDateTime(r.nextDate.toString)
+      val createdTime = dateOptTimeFormatter.parseDateTime(r.nextDate.toString)
       val createdBy = r.nextString()
 
       MissingRoadwayPoint(roadNumber, roadPartNumber, track, startAddrM, createdTime, createdBy)
@@ -78,15 +79,15 @@ class RoadNetworkDAO extends BaseDAO {
 
       val length = r.nextLong()
       val roadwayNumber = r.nextLong()
-      val startDate = formatter.parseDateTime(r.nextDate.toString)
-      val endDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
+      val startDate      = dateOptTimeFormatter.parseDateTime(r.nextDate.toString)
+      val endDate        = r.nextDateOption.map(d => dateOptTimeFormatter.parseDateTime(d.toString))
       val roadNumber = r.nextLong()
       val roadPartNumber = r.nextLong()
       val track = r.nextLong()
       val startAddrM = r.nextLong()
       val endAddrM = r.nextLong()
       val createdBy = r.nextString()
-      val createdTime = formatter.parseDateTime(r.nextDate.toString)
+      val createdTime    = dateOptTimeFormatter.parseDateTime(r.nextDate.toString)
 
       InvalidRoadwayLength(roadwayNumber, startDate, endDate, roadNumber, roadPartNumber, track, startAddrM, endAddrM, length, createdBy, createdTime)
     }
@@ -104,14 +105,14 @@ class RoadNetworkDAO extends BaseDAO {
       val endAddrMValue = r.nextLong()
       val reverted = r.nextBoolean()
       val discontinuity = r.nextInt()
-      val startDate = formatter.parseDateTime(r.nextDate.toString)
-      val endDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
+      val startDate     = dateOptTimeFormatter.parseDateTime(r.nextDate.toString)
+      val endDate       = r.nextDateOption.map(d => dateOptTimeFormatter.parseDateTime(d.toString))
       val createdBy = r.nextString()
       val administrativeClass = AdministrativeClass.apply(r.nextInt())
       val ely = r.nextLong()
-      val terminated = TerminationCode.apply(r.nextInt())
-      val validFrom = formatter.parseDateTime(r.nextDate.toString)
-      val validTo = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
+      val terminated    = TerminationCode.apply(r.nextInt())
+      val validFrom     = dateOptTimeFormatter.parseDateTime(r.nextDate.toString)
+      val validTo       = r.nextDateOption.map(d => dateOptTimeFormatter.parseDateTime(d.toString))
       val roadName = r.nextStringOption()
 
       Roadway(id, roadwayNumber, roadNumber, roadPartNumber, administrativeClass, Track.apply(trackCode), Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, reverted, startDate, endDate, createdBy, roadName, ely, terminated, validFrom, validTo)
@@ -130,14 +131,14 @@ class RoadNetworkDAO extends BaseDAO {
       val endAddrMValue = r.nextLong()
       val reverted = r.nextBoolean()
       val discontinuity = r.nextInt()
-      val startDate = formatter.parseDateTime(r.nextDate.toString)
-      val endDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
+      val startDate     = dateOptTimeFormatter.parseDateTime(r.nextDate.toString)
+      val endDate       = r.nextDateOption.map(d => dateOptTimeFormatter.parseDateTime(d.toString))
       val createdBy = r.nextString()
       val administrativeClass = AdministrativeClass.apply(r.nextInt())
       val ely = r.nextLong()
       val terminated = TerminationCode.apply(r.nextInt())
-      val validFrom = formatter.parseDateTime(r.nextDate.toString)
-      val validTo = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
+      val validFrom     = dateOptTimeFormatter.parseDateTime(r.nextDate.toString)
+      val validTo       = r.nextDateOption.map(d => dateOptTimeFormatter.parseDateTime(d.toString))
       val roadName = r.nextStringOption()
 
       val linearLocationId = r.nextLong()
@@ -146,7 +147,7 @@ class RoadNetworkDAO extends BaseDAO {
       val linearLocationStartMeasure = r.nextLong()
       val linearLocationEndMeasure = r.nextLong()
       val linearLocationCreatedBy = r.nextString()
-      val linearLocationCreatedTime = formatter.parseDateTime(r.nextDate.toString)
+      val linearLocationCreatedTime = dateOptTimeFormatter.parseDateTime(r.nextDate.toString)
 
       OverlappingRoadwayOnLinearLocation(Roadway(id, roadwayNumber, roadNumber, roadPartNumber, administrativeClass, Track.apply(trackCode), Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, reverted, startDate, endDate, createdBy, roadName, ely, terminated, validFrom, validTo),
         linearLocationId, linkId, linearLocationRoadwayNumber, linearLocationStartMeasure, linearLocationEndMeasure, linearLocationCreatedBy, linearLocationCreatedTime

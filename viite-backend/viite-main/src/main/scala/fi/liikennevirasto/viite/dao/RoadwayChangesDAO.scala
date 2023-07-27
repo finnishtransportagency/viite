@@ -4,9 +4,9 @@ import fi.liikennevirasto.viite.process.{ProjectDeltaCalculator, RoadwaySection}
 import fi.liikennevirasto.viite.process.ProjectDeltaCalculator.{createTwoTrackOldAddressRoadParts, projectLinkDAO}
 import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
 import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, RoadAddressChangeType, Track}
+import fi.vaylavirasto.viite.util.DateTimeFormatters.dateOptTimeFormatter
 import java.sql.{PreparedStatement, Timestamp}
 import org.joda.time.DateTime
-import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
@@ -34,7 +34,6 @@ case class ChangeRow(projectId: Long, projectName: Option[String], createdBy: St
 case class ChangeTableRows(adjustedSections: Iterable[((RoadwaySection, RoadwaySection), Option[String])], originalSections: Iterable[(RoadwaySection, RoadwaySection)])
 
 case class ChangeTableRows2(adjustedSections: Iterable[RoadwaySection], originalSections: Iterable[RoadwaySection])
-case class ChangeTableRows3(terminatedSections: Iterable[RoadwaySection])
 
 case class RoadwayChangesInfo(roadwayChangeId: Long, startDate: DateTime, acceptedDate: DateTime, change_type: Long, reversed: Long,
                               old_road_number: Long, old_road_part_number: Long, old_TRACK: Long, old_start_addr_m: Long, old_end_addr_m: Long, old_discontinuity: Long, old_administrative_class: Long, old_ely: Long,
@@ -65,10 +64,10 @@ class RoadwayChangesDAO extends BaseDAO {
       val projectId = r.nextLong
       val projectName = r.nextStringOption
       val createdBy = r.nextString
-      val createdDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
-      val startDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
-      val modifiedBy = r.nextString
-      val modifiedDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
+      val createdDate  = r.nextDateOption.map(d => dateOptTimeFormatter.parseDateTime(d.toString))
+      val startDate    = r.nextDateOption.map(d => dateOptTimeFormatter.parseDateTime(d.toString))
+      val modifiedBy   = r.nextString
+      val modifiedDate = r.nextDateOption.map(d => dateOptTimeFormatter.parseDateTime(d.toString))
       val targetEly = r.nextLong
       val changeType = r.nextInt
       val sourceRoadNumber = r.nextLongOption
@@ -350,7 +349,8 @@ class RoadwayChangesDAO extends BaseDAO {
           logger.info("Delta insertion in ChangeTable completed in %d ms".format(endTime - startTime))
           val warning = Seq()
           (true, if (warning.nonEmpty) Option(warning.head) else None)
-        } else {
+        }
+        else {
           (false, None)
         }
       case _ => (false, None)

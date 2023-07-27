@@ -6,8 +6,8 @@ import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
 import fi.vaylavirasto.viite.model.{BeforeAfter, Discontinuity, Track}
+import fi.vaylavirasto.viite.util.DateTimeFormatters.dateOptTimeFormatter
 import org.joda.time.DateTime
-import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
@@ -17,8 +17,6 @@ case class JunctionPoint(id: Long, beforeAfter: BeforeAfter, roadwayPointId: Lon
                          roadNumber: Long, roadPartNumber: Long, track: Track, discontinuity: Discontinuity, coordinates: Point = Point(0.0, 0.0))
 
 class JunctionPointDAO extends BaseDAO {
-
-  val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 
   /** Get joined roadway-roadwayPoint-junctionPoint, junction-junctionPoint information for
     * still viable (end_date, and valid-to are null) junctionPoints in db */
@@ -49,16 +47,16 @@ class JunctionPointDAO extends BaseDAO {
       val id = r.nextLong()
       val beforeOrAfter = r.nextLong()
       val roadwayPointId = r.nextLong()
-      val junctionId = r.nextLong()
-      val startDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
-      val endDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
-      val validFrom = formatter.parseDateTime(r.nextDate.toString)
-      val validTo = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
-      val createdBy = r.nextString()
-      val createdTime = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
-      val roadwayNumber = r.nextLong()
-      val addrM = r.nextLong()
-      val roadNumber = r.nextLong()
+      val junctionId     = r.nextLong()
+      val startDate      = r.nextDateOption.map(d => dateOptTimeFormatter.parseDateTime(d.toString))
+      val endDate        = r.nextDateOption.map(d => dateOptTimeFormatter.parseDateTime(d.toString))
+      val validFrom      = dateOptTimeFormatter.parseDateTime(r.nextDate.toString)
+      val validTo        = r.nextDateOption.map(d => dateOptTimeFormatter.parseDateTime(d.toString))
+      val createdBy      = r.nextString()
+      val createdTime    = r.nextDateOption.map(d => dateOptTimeFormatter.parseDateTime(d.toString))
+      val roadwayNumber  = r.nextLong()
+      val addrM          = r.nextLong()
+      val roadNumber     = r.nextLong()
       val roadPartNumber = r.nextLong()
       val track = Track.apply(r.nextInt())
       val discontinuity = Discontinuity.apply(r.nextInt())

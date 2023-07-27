@@ -2,18 +2,17 @@ package fi.liikennevirasto.viite.util
 
 import java.sql.{PreparedStatement, Timestamp}
 
-import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 import fi.liikennevirasto.viite.dao.{NodeDAO, RoadwayPointDAO}
 import fi.vaylavirasto.viite.dao.Sequences
-import org.joda.time._
+import fi.vaylavirasto.viite.util.DateTimeFormatters.basicDateFormatter
+import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._
 
 
 class JunctionImporter(conversionDatabase: DatabaseDef) {
-  val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 
   val nodeDAO = new NodeDAO
 
@@ -156,7 +155,7 @@ class JunctionImporter(conversionDatabase: DatabaseDef) {
 
   def datePrinter(date: Option[DateTime]): String = {
     date match {
-      case Some(dt) => dateFormatter.print(dt)
+      case Some(dt) => basicDateFormatter.print(dt)
       case None => ""
     }
   }

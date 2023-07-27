@@ -1,13 +1,13 @@
 package fi.liikennevirasto.viite.util
 
 import java.sql.PreparedStatement
-import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 import fi.liikennevirasto.viite.dao.RoadwayPointDAO
 import fi.vaylavirasto.viite.dao.{BaseDAO, SequenceResetterDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.Point
-import org.joda.time._
+import fi.vaylavirasto.viite.util.DateTimeFormatters.basicDateFormatter
+import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._
 
@@ -149,14 +149,14 @@ class NodeImporter(conversionDatabase: DatabaseDef) extends BaseDAO {
     def apply(r: PositionedResult): ConversionNode = {
       val id = r.nextLong()
       val nodeNumber = r.nextLong()
-      val xValue = r.nextLong()
-      val yValue = r.nextLong()
-      val name = r.nextStringOption()
-      val nodeType = r.nextLong()
-      val startDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
-      val endDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
-      val validFrom = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
-      val createdBy = r.nextString()
+      val xValue     = r.nextLong()
+      val yValue     = r.nextLong()
+      val name       = r.nextStringOption()
+      val nodeType   = r.nextLong()
+      val startDate   = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val endDate     = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val validFrom   = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val createdBy   = r.nextString()
       val registrationDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       ConversionNode(id, nodeNumber, Point(xValue, yValue), name, nodeType, startDate, endDate, validFrom, None, createdBy, registrationDate)
     }
@@ -183,10 +183,8 @@ class NodeImporter(conversionDatabase: DatabaseDef) extends BaseDAO {
   }
 
   def datePrinter(date: Option[DateTime]): String = {
-    val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
-
     date match {
-      case Some(dt) => dateFormatter.print(dt)
+      case Some(dt) => basicDateFormatter.print(dt)
       case None => ""
     }
   }
