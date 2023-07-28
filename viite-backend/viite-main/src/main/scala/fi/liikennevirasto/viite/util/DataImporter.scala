@@ -12,10 +12,9 @@ import fi.liikennevirasto.digiroad2.util.{SqlScriptRunner, ViiteProperties}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.util.DataImporter.Conversion
-import fi.vaylavirasto.viite.dao.SequenceResetterDAO
+import fi.vaylavirasto.viite.dao.{BaseDAO, SequenceResetterDAO}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import org.joda.time._
-import org.slf4j.LoggerFactory
 import slick.driver
 import slick.driver.JdbcDriver
 import slick.jdbc.StaticQuery.interpolation
@@ -36,8 +35,7 @@ object DataImporter {
   }
 }
 
-class DataImporter {
-  val logger = LoggerFactory.getLogger(getClass)
+class DataImporter extends BaseDAO{
 
   private lazy val geometryFrozen: Boolean = ViiteProperties.kgvRoadlinkFrozen
 
@@ -88,53 +86,53 @@ class DataImporter {
       disableRoadwayTriggers
       println(s"\nDeleting old Alkulataus tables' data")
       println(s"  Deleting PROJECT_LINK_NAMEs         started at time: ${DateTime.now()}")
-      sqlu"""DELETE FROM PROJECT_LINK_NAME""".execute
+      runUpdateToDb(s"""DELETE FROM PROJECT_LINK_NAME""")
       println(s"  Deleting ROADWAY_CHANGES              started at time: ${DateTime.now()}")
-      sqlu"""DELETE FROM ROADWAY_CHANGES_LINK""".execute
+      runUpdateToDb(s"""DELETE FROM ROADWAY_CHANGES_LINK""")
       println(s"  Deleting PROJECT_LINKs                  started at time: ${DateTime.now()}")
-      sqlu"""DELETE FROM PROJECT_LINK""".execute
+      runUpdateToDb(s"""DELETE FROM PROJECT_LINK""")
       println(s"  Deleting PROJECT_INK_LHISTORY             started at time: ${DateTime.now()}")
-      sqlu"""DELETE FROM PROJECT_LINK_HISTORY""".execute
+      runUpdateToDb(s"""DELETE FROM PROJECT_LINK_HISTORY""")
       println(s"  Deleting PROJECT_RESERVED_ROAD_PARTs links  started at time: ${DateTime.now()}")
-      sqlu"""DELETE FROM PROJECT_RESERVED_ROAD_PART""".execute
+      runUpdateToDb(s"""DELETE FROM PROJECT_RESERVED_ROAD_PART""")
 
 
       // Delete other than accepted projects.
       // Accepted states: 0 = ProjectDAO.ProjectState.Accepted; 5 = ProjectState.DeprecatedSaved2ToTR
       println(s"  Deleting PROJECTs (state != 12|5)           started at time: ${DateTime.now()}")
-      sqlu"""DELETE FROM PROJECT WHERE STATE != 12 AND STATE != 5""".execute
+      runUpdateToDb(s"""DELETE FROM PROJECT WHERE STATE != 12 AND STATE != 5""")
 
       println(s"  Deleting ROADWAY_CHANGESs                 started at time: ${DateTime.now()}")
-      sqlu"""DELETE FROM ROADWAY_CHANGES WHERE project_id NOT IN (SELECT id FROM PROJECT)""".execute
+      runUpdateToDb(s"""DELETE FROM ROADWAY_CHANGES WHERE project_id NOT IN (SELECT id FROM PROJECT)""")
       println(s"  Deleting ROAD_NETWORK_ERRORs            started at time: ${DateTime.now()}")
-      sqlu"""DELETE FROM ROAD_NETWORK_ERROR""".execute
+      runUpdateToDb(s"""DELETE FROM ROAD_NETWORK_ERROR""")
 
       /* todo ("Table published_roadwayis no longer in use, and is empty.") */
       println(s"  Deleting PUBLISHED_ROADWAYs           started at time: ${DateTime.now()}")
-      sqlu"""DELETE FROM PUBLISHED_ROADWAY""".execute
+      runUpdateToDb(s"""DELETE FROM PUBLISHED_ROADWAY""")
 
       /* todo ("Table published_road_network is no longer in use, and is empty.") */
       println(s"  Deleting PUBLISHED_ROAD_NETWORKs    started at time: ${DateTime.now()}")
-      sqlu"""DELETE FROM PUBLISHED_ROAD_NETWORK""".execute
+      runUpdateToDb(s"""DELETE FROM PUBLISHED_ROAD_NETWORK""")
 
       println(s"  Deleting LINEAR_LOCATIONs         started at time: ${DateTime.now()}")
-      sqlu"""DELETE FROM LINEAR_LOCATION""".execute
+      runUpdateToDb(s"""DELETE FROM LINEAR_LOCATION""")
       println(s"  Deleting CALIBRATION_POINTs     started at time: ${DateTime.now()}")
-      sqlu"""DELETE FROM CALIBRATION_POINT""".execute
+      runUpdateToDb(s"""DELETE FROM CALIBRATION_POINT""")
       println(s"  Deleting JUNCTION_POINTs      started at time: ${DateTime.now()}")
-      sqlu"""DELETE FROM JUNCTION_POINT""".execute
+      runUpdateToDb(s"""DELETE FROM JUNCTION_POINT""")
       println(s"  Deleting NODE_POINTs        started at time: ${DateTime.now()}")
-      sqlu"""DELETE FROM NODE_POINT""".execute
+      runUpdateToDb(s"""DELETE FROM NODE_POINT""")
       println(s"  Deleting ROADWAY_POINTs   started at time: ${DateTime.now()}")
-      sqlu"""DELETE FROM ROADWAY_POINT""".execute
+      runUpdateToDb(s"""DELETE FROM ROADWAY_POINT""")
       println(s"  Deleting JUNCTIONs      started at time: ${DateTime.now()}")
-      sqlu"""DELETE FROM JUNCTION""".execute
+      runUpdateToDb(s"""DELETE FROM JUNCTION""")
       println(s"  Deleting NODEs        started at time: ${DateTime.now()}")
-      sqlu"""DELETE FROM NODE""".execute
+      runUpdateToDb(s"""DELETE FROM NODE""")
       println(s"  Deleting LINKs      started at time: ${DateTime.now()}")
-      sqlu"""DELETE FROM LINK""".execute
+      runUpdateToDb(s"""DELETE FROM LINK""")
       println(s"  Deleting ROADWAYs started at time: ${DateTime.now()}")
-      sqlu"""DELETE FROM ROADWAY""".execute
+      runUpdateToDb(s"""DELETE FROM ROADWAY""")
 
       resetRoadAddressSequences()
 
@@ -143,7 +141,7 @@ class DataImporter {
       roadAddressImporter.importRoadAddress()
 
       println(s"\n${DateTime.now()} - Updating terminated roadways information")
-      sqlu"""UPDATE ROADWAY SET TERMINATED = 2
+      runUpdateToDb(s"""UPDATE ROADWAY SET TERMINATED = 2
             WHERE TERMINATED = 0 AND end_date IS NOT null AND EXISTS (SELECT 1 FROM ROADWAY rw
             	WHERE ROADWAY.ROAD_NUMBER = rw.ROAD_NUMBER
             	AND ROADWAY.ROADWAY_NUMBER = rw.ROADWAY_NUMBER
@@ -152,7 +150,7 @@ class DataImporter {
             	AND ROADWAY.END_ADDR_M = rw.END_ADDR_M
             	AND ROADWAY.TRACK = rw.TRACK
             	AND ROADWAY.END_DATE = rw.start_date - 1
-            	AND rw.VALID_TO IS NULL AND rw.TERMINATED = 1)""".execute
+            	AND rw.VALID_TO IS NULL AND rw.TERMINATED = 1)""")
 
       println(s"\nEnabling roadway triggers    started at time: ${DateTime.now()}")
       enableRoadwayTriggers
@@ -177,10 +175,10 @@ class DataImporter {
       println("\nImporting nodes and junctions started at time: ")
       println(DateTime.now())
 
-      sqlu"""DELETE FROM JUNCTION_POINT""".execute
-      sqlu"""DELETE FROM NODE_POINT""".execute
-      sqlu"""DELETE FROM JUNCTION""".execute
-      sqlu"""DELETE FROM NODE""".execute
+      runUpdateToDb(s"""DELETE FROM JUNCTION_POINT""")
+      runUpdateToDb(s"""DELETE FROM NODE_POINT""")
+      runUpdateToDb(s"""DELETE FROM JUNCTION""")
+      runUpdateToDb(s"""DELETE FROM NODE""")
       resetNodesAndJunctionSequences()
 
       println(s"${DateTime.now()} - Old nodes and junctions data removed")
@@ -226,7 +224,7 @@ class DataImporter {
     println("\nUpdating nodePointTypes started at time: ")
     println(DateTime.now())
 
-    sqlu"""
+    runUpdateToDb(s"""
       UPDATE NODE_POINT NP SET TYPE = (SELECT CASE
           -- [TYPE = 99] Includes expired node points points or points attached to expired nodes
           WHEN (point.VALID_TO IS NOT NULL OR NOT EXISTS (SELECT 1 FROM NODE node
@@ -252,7 +250,7 @@ class DataImporter {
         LEFT JOIN ROADWAY_POINT rp ON point.ROADWAY_POINT_ID = rp.ID
         LEFT JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
           WHERE point.ID = NP.ID
-          LIMIT 1)""".execute
+          LIMIT 1)""")
   }
 
   def updateLinearLocationGeometry(): Unit = {
@@ -264,11 +262,11 @@ class DataImporter {
   }
 
   def enableRoadwayTriggers(): Unit = {
-    sqlu"""ALTER TABLE ROADWAY ENABLE TRIGGER USER""".execute
+    runUpdateToDb(s"""ALTER TABLE ROADWAY ENABLE TRIGGER USER""")
   }
 
   def disableRoadwayTriggers(): Unit = {
-    sqlu"""ALTER TABLE ROADWAY DISABLE TRIGGER USER""".execute
+    runUpdateToDb(s"""ALTER TABLE ROADWAY DISABLE TRIGGER USER""")
   }
 
   /** Resets the roadway sequence to (MAX-of-current-roadway-numbers)+1, or to 1, if no roadways available. */

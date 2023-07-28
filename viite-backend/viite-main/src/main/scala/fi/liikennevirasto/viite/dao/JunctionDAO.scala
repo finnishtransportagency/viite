@@ -3,7 +3,7 @@ package fi.liikennevirasto.viite.dao
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.NewIdValue
-import fi.vaylavirasto.viite.dao.Sequences
+import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
 import fi.vaylavirasto.viite.model.{NodeType, Track}
 import org.joda.time.DateTime
@@ -22,8 +22,6 @@ case class JunctionTemplate(id: Long, startDate: DateTime, roadNumber: Long, roa
 case class JunctionForRoadAddressBrowser(nodeNumber: Long, nodeCoordinates: Point, nodeName: Option[String], nodeType: NodeType, startDate: DateTime, junctionNumber: Option[Long], roadNumber: Long, track: Long, roadPartNumber: Long, addrM: Long, beforeAfter: Seq[Long])
 
 class JunctionDAO extends BaseDAO {
-
-  val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 
   implicit val getJunction: GetResult[Junction] = new GetResult[Junction] {
     def apply(r: PositionedResult): Junction = {
@@ -366,11 +364,11 @@ class JunctionDAO extends BaseDAO {
     * @param ids : Iterable[Long] - The ids of the junctions to expire.
     * @return
     */
-  def expireById(ids: Iterable[Long]): Int = {
+  def expireById(ids: Iterable[Long]): Unit = {
     if (ids.isEmpty) 0
     else {
       val query = s"""UPDATE JUNCTION SET VALID_TO = CURRENT_TIMESTAMP WHERE VALID_TO IS NULL AND ID IN (${ids.mkString(", ")})"""
-      Q.updateNA(query).first
+      runUpdateToDb(query)
     }
   }
 

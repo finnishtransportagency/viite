@@ -1,12 +1,11 @@
 package fi.vaylavirasto.viite.dao
 
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 case class ProjectLinkName(id: Long, projectId: Long, roadNumber: Long, roadName: String)
 
-object ProjectLinkNameDAO {
+object ProjectLinkNameDAO extends BaseDAO {
 
   private val ptojectLinkNameQueryBase = s"""select id, project_id, road_number, road_name from project_link_name """
 
@@ -59,31 +58,34 @@ object ProjectLinkNameDAO {
   }
 
   def create(projectId: Long, roadNumber: Long, roadName: String): Unit = {
-    sqlu"""
+    runUpdateToDb(s"""
          insert into project_link_name (id, project_id, road_number, road_name)
-         values (nextval('project_link_name_seq'), $projectId, $roadNumber, $roadName)
-    """.execute
+         values (nextval('project_link_name_seq'), $projectId, $roadNumber, '$roadName')
+    """)
   }
 
   def update(projectId: Long, roadNumber: Long, roadName: String): Unit = {
-    sqlu"""
-         update project_link_name set road_name = $roadName where project_id = $projectId and road_number = $roadNumber
-    """.execute
+    runUpdateToDb(s"""
+         update project_link_name set road_name = '$roadName'
+         where project_id = $projectId and road_number = $roadNumber
+    """)
   }
 
   def update(id: Long, roadName: String): Unit = {
-    sqlu"""
-         update project_link_name set road_name = $roadName where id = $id
-    """.execute
+    runUpdateToDb(s"""
+         update project_link_name set road_name = '$roadName' where id = $id
+    """)
   }
 
   def revert(roadNumber: Long, projectId: Long): Unit = {
-    sqlu"""
-        delete from project_link_name where road_number = $roadNumber and project_id = $projectId and (select count(distinct(ROAD_PART_NUMBER)) from project_link where road_number = $roadNumber and status != 0) < 2
-    """.execute
+    runUpdateToDb(s"""
+        delete from project_link_name
+        where road_number = $roadNumber and project_id = $projectId and (select count(distinct(ROAD_PART_NUMBER))
+        from project_link where road_number = $roadNumber and status != 0) < 2
+    """)
   }
 
   def removeByProject(projectId: Long): Unit = {
-    sqlu"""DELETE FROM PROJECT_LINK_NAME WHERE PROJECT_ID = $projectId""".execute
+    runUpdateToDb(s"""DELETE FROM PROJECT_LINK_NAME WHERE PROJECT_ID = $projectId""")
   }
 }

@@ -1,7 +1,6 @@
 package fi.vaylavirasto.viite.dao
 
 import org.joda.time.DateTime
-import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
@@ -11,8 +10,7 @@ case class Link(id: String, source: Long, adjustedTimestamp: Long, createdTime: 
    this(id.toString, source, adjustedTimestamp, createdTime)
 }
 
-object LinkDAO {
-  val formatter: DateTimeFormatter = ISODateTimeFormat.dateOptionalTimeParser()
+object LinkDAO extends BaseDAO {
   implicit val getLink: GetResult[Link] = new GetResult[Link] {
     def apply(r: PositionedResult): Link = {
       val id = r.nextString()
@@ -30,17 +28,16 @@ object LinkDAO {
   }
 
   def create(id: String, adjustedTimestamp: Long, source: Long): Unit = {
-    sqlu"""
-      insert into LINK (id, source, adjusted_timestamp) values ($id, $source, $adjustedTimestamp)
-      """.execute
-
+    runUpdateToDb(s"""
+      insert into LINK (id, source, adjusted_timestamp) values ('$id', $source, $adjustedTimestamp)
+      """)
   }
 
   def createIfEmptyFetch(id: String, adjustedTimestamp: Long, source: Long): Unit = {
     if (fetch(id).isEmpty) {
-      sqlu"""
-        INSERT INTO LINK (id, source, adjusted_timestamp) values ($id, $source, $adjustedTimestamp)
-      """.execute
+      runUpdateToDb(s"""
+        INSERT INTO LINK (id, source, adjusted_timestamp) values ('$id', $source, $adjustedTimestamp)
+      """)
     }
   }
 
@@ -50,6 +47,5 @@ object LinkDAO {
     """.as[Long].first
 
   }
-
 
 }

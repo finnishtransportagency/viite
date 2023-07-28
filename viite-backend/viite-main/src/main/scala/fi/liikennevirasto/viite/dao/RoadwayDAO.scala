@@ -7,17 +7,14 @@ import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.BaseCalibrationPoint
 import fi.liikennevirasto.viite.model.RoadAddressLinkLike
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
-import fi.vaylavirasto.viite.dao.{Queries, Sequences}
+import fi.vaylavirasto.viite.dao.{BaseDAO, Queries, Sequences}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point, Vector3d}
 import fi.vaylavirasto.viite.model.{AdministrativeClass, CalibrationPointType, Discontinuity, LinkGeomSource, SideCode, Track}
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
-import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import slick.jdbc.StaticQuery.interpolation
-
-
 
 sealed trait CalibrationCode {
   def value: Int
@@ -384,14 +381,6 @@ case class TrackForRoadAddressBrowser(ely: Long, roadNumber: Long, track: Long, 
 
 case class RoadPartForRoadAddressBrowser(ely: Long, roadNumber: Long, roadPartNumber: Long, startAddrM: Long, endAddrM: Long, roadAddressLengthM: Long, startDate: DateTime)
 
-class BaseDAO {
-  protected def logger = LoggerFactory.getLogger(getClass)
-
-  protected val formatter: DateTimeFormatter = ISODateTimeFormat.dateOptionalTimeParser()
-
-  val basicDateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
-
-}
 
 class RoadwayDAO extends BaseDAO {
   val linearLocationDAO = new LinearLocationDAO
@@ -870,30 +859,7 @@ class RoadwayDAO extends BaseDAO {
     if (ids.isEmpty)
       0
     else {
-      Q.updateNA(query).first
-    }
-  }
-
-  /**
-   * Flip reversed tags to be the opposite value (0 -> 1, 1 -> 0) in each history row of the road thats reversed
-   * @param ids : Seq[Long] - The ids of the roadway rows of which reversed tags should be flipped
-   * @return
-   */
-  def updateReversedTagsInHistoryRows(ids: Set[Long]): Int = {
-    val query =
-      s"""
-          UPDATE ROADWAY
-          SET reversed = CASE
-          WHEN reversed = 0 THEN 1
-          WHEN reversed = 1 THEN 0
-          END
-          WHERE valid_to IS NULL AND end_date IS NOT NULL AND id IN (${ids.mkString(",")})
-      """
-    if (ids.isEmpty)
-      0
-
-    else {
-      Q.updateNA(query).first
+      runUpdateToDb(query)
     }
   }
 
@@ -915,22 +881,6 @@ class RoadwayDAO extends BaseDAO {
               AND END_DATE IS NULL
               AND ra.road_part_number NOT IN (select distinct pl.road_part_number from project_link pl where (select count(distinct pl2.status) from project_link pl2 where pl2.road_part_number = ra.road_part_number and pl2.road_number = ra.road_number and pl.road_number = pl2.road_number)
                = 1 and pl.status = 5)
-      """.as[Long].list
-  }
-
-  def getValidRoadNumbers: List[Long] = {
-    sql"""
-       select distinct road_number
-              from ROADWAY
-              where valid_to IS NULL AND (end_date is NULL or end_date >= current_date) order by road_number
-      """.as[Long].list
-  }
-
-  def getValidBetweenRoadNumbers(roadNumbers: (Long, Long)): List[Long] = {
-    sql"""
-       select distinct road_number
-              from ROADWAY
-              where valid_to IS NULL AND (end_date is NULL or end_date >= current_date) AND road_number BETWEEN ${roadNumbers._1} AND ${roadNumbers._2}
       """.as[Long].list
   }
 
@@ -1180,4 +1130,5 @@ class RoadwayDAO extends BaseDAO {
     }
     fetchRoadParts(withOptionalParameters(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber))
   }
+
 }
