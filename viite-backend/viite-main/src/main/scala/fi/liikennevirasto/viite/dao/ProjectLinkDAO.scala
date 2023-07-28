@@ -7,11 +7,10 @@ import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
-import fi.vaylavirasto.viite.dao.Sequences
+import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point, PolyLine, Vector3d}
 import fi.vaylavirasto.viite.model.{AdministrativeClass, CalibrationPointType, Discontinuity, LinkGeomSource, RoadAddressChangeType, SideCode, Track}
 import org.joda.time.DateTime
-import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import slick.jdbc.StaticQuery.interpolation
@@ -149,8 +148,8 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
   }
 }
 
-class ProjectLinkDAO {
-  private def logger = LoggerFactory.getLogger(getClass)
+class ProjectLinkDAO extends BaseDAO {
+
   val roadwayDAO = new RoadwayDAO
 
   private val projectLinkQueryBase =
@@ -464,13 +463,13 @@ class ProjectLinkDAO {
                                         ): Unit = {
     time(logger,
       "Update project link calibrationpoints.") {
-      sqlu"""
+      runUpdateToDb(s"""
                 update project_link
                 set modified_date = current_timestamp,
                     start_calibration_point = ${cals._1.value},
                     end_calibration_point = ${cals._2.value}
                 where id = ${projectLink.id}
-      """.execute
+      """)
     }
   }
 
@@ -625,13 +624,13 @@ class ProjectLinkDAO {
   }
 
   def updateAddrMValues(projectLink: ProjectLink): Unit = {
-    sqlu"""
+    runUpdateToDb(s"""
       update project_link
       set modified_date = current_timestamp, start_addr_m = ${projectLink.startAddrMValue}, end_addr_m = ${projectLink.endAddrMValue},
           start_calibration_point = ${projectLink.startCalibrationPointType.value},
           end_calibration_point = ${projectLink.endCalibrationPointType.value}
       where id = ${projectLink.id}
-    """.execute
+    """)
   }
 
   /**
@@ -649,7 +648,7 @@ class ProjectLinkDAO {
       val user = userName.replaceAll("[^A-Za-z0-9\\-]+", "")
       val sql = s"UPDATE PROJECT_LINK SET STATUS = ${roadAddressChangeType.value}, MODIFIED_BY='$user', ROAD_NUMBER = $newRoadNumber, ROAD_PART_NUMBER = $newRoadPart, ELY = $ely " +
         s"WHERE PROJECT_ID = $projectId  AND ROAD_NUMBER = $roadNumber AND ROAD_PART_NUMBER = $roadPart AND STATUS != ${RoadAddressChangeType.Termination.value}"
-      Q.updateNA(sql).execute
+      runUpdateToDb(sql)
     }
   }
 
@@ -661,12 +660,12 @@ class ProjectLinkDAO {
           grp =>
             val sql = s"UPDATE PROJECT_LINK SET STATUS = ${roadAddressChangeType.value}, MODIFIED_BY='$user', ADMINISTRATIVE_CLASS= $administrativeClass " +
               s"WHERE ID IN ${grp.mkString("(", ",", ")")}"
-            Q.updateNA(sql).execute
+            runUpdateToDb(sql)
         }
       } else {
         val sql = s"UPDATE PROJECT_LINK SET STATUS = ${roadAddressChangeType.value}, MODIFIED_BY='$user', ADMINISTRATIVE_CLASS= $administrativeClass, DISCONTINUITY_TYPE = ${discontinuity.get} " +
           s"WHERE ID = ${projectLinkIds.head}"
-        Q.updateNA(sql).execute
+        runUpdateToDb(sql)
       }
     }
   }
@@ -677,7 +676,7 @@ class ProjectLinkDAO {
       grp =>
         val sql = s"UPDATE PROJECT_LINK SET STATUS = ${roadAddressChangeType.value}, MODIFIED_BY='$user' " +
           s"WHERE ID IN ${grp.mkString("(", ",", ")")}"
-        Q.updateNA(sql).execute
+        runUpdateToDb(sql)
     }
   }
 
@@ -711,7 +710,7 @@ class ProjectLinkDAO {
           start_measure = ${roadAddress.startMValue}, end_measure = ${roadAddress.endMValue} $updateGeometry
         WHERE LINEAR_LOCATION_ID = ${roadAddress.linearLocationId} AND PROJECT_ID = $projectId $idFilter
       """
-      Q.updateNA(updateProjectLink).execute
+      runUpdateToDb(updateProjectLink)
     }
   }
 
@@ -740,7 +739,7 @@ class ProjectLinkDAO {
           reversed = (CASE WHEN reversed = 0 AND status != ${RoadAddressChangeType.New.value} THEN 1 WHEN reversed = 1 AND status != ${RoadAddressChangeType.New.value} THEN 0 ELSE 0 END)
         where project_link.project_id = $projectId and project_link.road_number = $roadNumber and project_link.road_part_number = $roadPartNumber
           and project_link.status != ${RoadAddressChangeType.Termination.value}"""
-      Q.updateNA(updateProjectLink).execute
+      runUpdateToDb(updateProjectLink)
     }
   }
 
@@ -790,7 +789,7 @@ class ProjectLinkDAO {
         s"""
          DELETE FROM PROJECT_LINK WHERE id IN (${ids.mkString(",")})
        """
-      val count = Q.updateNA(deleteLinks).first
+      val count = runUpdateToDb(deleteLinks)
       count
     }
   }
@@ -823,8 +822,8 @@ class ProjectLinkDAO {
         project_id = $projectId $roadFilter $roadPartFilter $linkIdFilter"""
     val ids = Q.queryNA[Long](query).iterator.toSet
     if (ids.nonEmpty) {
-      sqlu"""DELETE FROM ROADWAY_CHANGES_LINK WHERE PROJECT_ID = $projectId""".execute
-      sqlu"""DELETE FROM ROADWAY_CHANGES WHERE PROJECT_ID = $projectId""".execute
+      runUpdateToDb(s"""DELETE FROM ROADWAY_CHANGES_LINK WHERE PROJECT_ID = $projectId""")
+      runUpdateToDb(s"""DELETE FROM ROADWAY_CHANGES WHERE PROJECT_ID = $projectId""")
       deleteProjectLinks(ids)
     }
     else
@@ -832,7 +831,7 @@ class ProjectLinkDAO {
   }
 
   def moveProjectLinksToHistory(projectId: Long): Unit = {
-    sqlu"""
+    runUpdateToDb(s"""
       INSERT INTO PROJECT_LINK_HISTORY (ID, PROJECT_ID, TRACK, DISCONTINUITY_TYPE,
         ROAD_NUMBER, ROAD_PART_NUMBER, START_ADDR_M, END_ADDR_M, CREATED_BY, MODIFIED_BY, CREATED_DATE,
         MODIFIED_DATE, STATUS, START_CALIBRATION_POINT, END_CALIBRATION_POINT,
@@ -846,10 +845,10 @@ class ProjectLinkDAO {
           CONNECTED_LINK_ID, ELY, REVERSED, SIDE, START_MEASURE, END_MEASURE, LINK_ID, ADJUSTED_TIMESTAMP,
           LINK_SOURCE, GEOMETRY, ORIGINAL_START_ADDR_M, ORIGINAL_END_ADDR_M, ROADWAY_NUMBER
         FROM PROJECT_LINK WHERE PROJECT_ID = $projectId)
-    """.execute
-    sqlu"""DELETE FROM ROADWAY_CHANGES_LINK WHERE PROJECT_ID = $projectId""".execute
-    sqlu"""DELETE FROM PROJECT_LINK WHERE PROJECT_ID = $projectId""".execute
-    sqlu"""DELETE FROM PROJECT_RESERVED_ROAD_PART WHERE PROJECT_ID = $projectId""".execute
+    """)
+    runUpdateToDb(s"""DELETE FROM ROADWAY_CHANGES_LINK WHERE PROJECT_ID = $projectId""")
+    runUpdateToDb(s"""DELETE FROM PROJECT_LINK WHERE PROJECT_ID = $projectId""")
+    runUpdateToDb(s"""DELETE FROM PROJECT_RESERVED_ROAD_PART WHERE PROJECT_ID = $projectId""")
   }
 
   def removeProjectLinksByProjectAndRoadNumber(projectId: Long, roadNumber: Long, roadPartNumber: Long): Int = {

@@ -7,10 +7,10 @@ import fi.vaylavirasto.viite.dao.{ProjectLinkNameDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.CalibrationPointType.NoCP
 import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LinkGeomSource, RoadAddressChangeType, SideCode, Track}
+import fi.vaylavirasto.viite.postgis.DbUtils.runUpdateToDb
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.StaticQuery.interpolation
 
 /**
   * Created by venholat on 14.6.2017.
@@ -117,14 +117,16 @@ package object util {
       val nextLinkId = Sequences.nextViitePrimaryKeySeqValue.toString
       val linearLocationId = Sequences.nextLinearLocationId
       val endMeasure = end - start
-      sqlu"""INSERT INTO ROADWAY VALUES ($roadwayId, 1000000000, $roadNumber, $roadPartNumber, $track, $start, $end, 0, ${discontinuity.value},
-            current_date, NULL, 'test user', to_timestamp('16-10-18 12.03.19.999393000','DD-MM-YY HH24.MI.SSXFF'), 0, $ely, 0, current_date, NULL)""".execute
+      runUpdateToDb(s"""INSERT INTO ROADWAY VALUES (
+                  $roadwayId, 1000000000, $roadNumber, $roadPartNumber, $track, $start, $end, 0, ${discontinuity.value}, current_date, NULL,
+                  'test user', to_timestamp('16-10-18 12.03.19.999393000','DD-MM-YY HH24.MI.SSXFF'), 0, $ely, 0, current_date, NULL)""")
 
-      sqlu"""INSERT INTO LINK (ID) VALUES ($nextLinkId)""".execute
+      runUpdateToDb(s"INSERT INTO LINK (ID) VALUES ($nextLinkId)")
 
       val linestring = s"LINESTRING($start 0 0 0, $end 0 0 $endMeasure)"
-      sqlu""" INSERT INTO LINEAR_LOCATION VALUES ($linearLocationId, 1000000000, 0, $nextLinkId, 0, $endMeasure, 0, ST_GeomFromText($linestring, 3067),
-            current_date, null, 'test user', to_timestamp('16-10-18 12.03.19.999393000','DD-MM-YY HH24.MI.SSXFF'))""".execute
+      runUpdateToDb(s"""INSERT INTO LINEAR_LOCATION VALUES (
+                  $linearLocationId, 1000000000, 0, $nextLinkId, 0, $endMeasure, 0, ST_GeomFromText('$linestring', 3067),
+                  current_date, null, 'test user', to_timestamp('16-10-18 12.03.19.999393000','DD-MM-YY HH24.MI.SSXFF'))""".stripMargin)
       (roadwayId, nextLinkId)
     }
 

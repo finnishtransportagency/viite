@@ -3,12 +3,11 @@ package fi.liikennevirasto.viite.dao
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite._
+import fi.vaylavirasto.viite.dao.BaseDAO
 import org.joda.time.DateTime
 import org.postgresql.jdbc.PgArray
-import org.slf4j.{Logger, LoggerFactory}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
-import slick.jdbc.StaticQuery.interpolation
 
 //TODO naming SQL conventions
 
@@ -62,31 +61,35 @@ case class Project(id            : Long,
 
 case class ProjectCoordinates(x: Double = DefaultLatitude, y: Double = DefaultLongitude, zoom: Int = DefaultZoomLevel)
 
-class ProjectDAO {
+class ProjectDAO extends BaseDAO {
   val projectReservedPartDAO = new ProjectReservedPartDAO
-  private def logger: Logger = LoggerFactory.getLogger(getClass)
 
   def create(project: Project): Unit = {
-    sqlu"""
+    runUpdateToDb(s"""
          insert into project (id, state, name, created_by, created_date, start_date ,modified_by, modified_date, add_info, status_info)
-         values (${project.id}, ${project.projectState.value}, ${project.name}, ${project.createdBy}, current_timestamp, ${project.startDate}, ${project.createdBy}, current_timestamp, ${project.additionalInfo}, ${project.statusInfo})
-         """.execute
+         values (${project.id}, ${project.projectState.value}, '${project.name}', '${project.createdBy}', current_timestamp,
+                '${project.startDate}', '${project.createdBy}', current_timestamp, '${project.additionalInfo}',
+                '${project.statusInfo.getOrElse("")}')
+         """)
   }
 
   def fetchAllIdsByLinkId(linkId: String): Seq[Long] =
     time(logger, """Get projects with given link id""") {
     val query =
       s"""SELECT P.ID
-             FROM PROJECT P
+            FROM PROJECT P
             JOIN PROJECT_LINK PL ON P.ID=PL.PROJECT_ID
             WHERE P.STATE = ${ProjectState.Incomplete.value} AND PL.LINK_ID='$linkId'"""
     Q.queryNA[Long](query).list
   }
 
   def update(roadAddressProject: Project): Unit = {
-    sqlu"""
-         update project set state = ${roadAddressProject.projectState.value}, name = ${roadAddressProject.name}, modified_by = ${roadAddressProject.modifiedBy} ,modified_date = current_timestamp, add_info=${roadAddressProject.additionalInfo}, start_date=${roadAddressProject.startDate} where id = ${roadAddressProject.id}
-         """.execute
+    runUpdateToDb(s"""
+         update project set state = ${roadAddressProject.projectState.value}, name = '${roadAddressProject.name}',
+                            modified_by = '${roadAddressProject.modifiedBy}', modified_date = current_timestamp,
+                            add_info='${roadAddressProject.additionalInfo}', start_date='${roadAddressProject.startDate}'
+         where id = ${roadAddressProject.id}
+         """)
   }
 
   def fetchProjectElyById(projectId: Long): Seq[Long] = {
@@ -146,20 +149,20 @@ class ProjectDAO {
   }
 
   def updateProjectStateInfo(stateInfo: String, projectId: Long): Unit = {
-    Q.updateNA(s"UPDATE PROJECT SET STATUS_INFO = '$stateInfo' WHERE ID= $projectId").execute
+    runUpdateToDb(s"UPDATE PROJECT SET STATUS_INFO = '$stateInfo' WHERE ID= $projectId")
   }
 
   def updateProjectCoordinates(projectId: Long, coordinates: ProjectCoordinates): Unit = {
-    Q.updateNA(s"UPDATE PROJECT SET COORD_X = ${coordinates.x},COORD_Y = ${coordinates.y}, ZOOM = ${coordinates.zoom} WHERE ID= $projectId").execute
+    runUpdateToDb(s"UPDATE PROJECT SET COORD_X = ${coordinates.x},COORD_Y = ${coordinates.y}, ZOOM = ${coordinates.zoom} WHERE ID= $projectId")
   }
 
 
   def updateProjectStatus(projectID: Long, state: ProjectState): Unit = {
-    sqlu""" update project set state=${state.value} WHERE id=$projectID""".execute
+    runUpdateToDb(s""" update project set state=${state.value} WHERE id=$projectID""")
   }
 
   def changeProjectStatusToAccepted(projectID: Long): Unit = {
-    sqlu""" update project set state=${ProjectState.Accepted.value}, accepted_date=current_timestamp WHERE id=$projectID""".execute
+    runUpdateToDb(s""" update project set state=${ProjectState.Accepted.value}, accepted_date=current_timestamp WHERE id=$projectID""")
   }
 
   /** Returns an id of a single project waiting for being updated to the road network. */
@@ -248,7 +251,7 @@ class ProjectDAO {
     time(logger, s"Update elys for project $projectId.") {
       if (elys.nonEmpty) {
         val query   = s"""UPDATE project p set elys = array[${elys.sorted.mkString(",")}] WHERE p.id = $projectId"""
-        Q.updateNA(query).first
+        runUpdateToDb(query)
       } else -1
     }
   }

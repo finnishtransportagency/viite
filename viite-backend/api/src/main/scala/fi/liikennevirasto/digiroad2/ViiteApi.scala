@@ -1968,7 +1968,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
   }
 
   /**
-    * For checking date validity we convert string datre to datetime options
+    * For checking date validity we convert string date to datetime options
     *
     * @param dateString string formated date dd.mm.yyyy
     * @return Joda datetime

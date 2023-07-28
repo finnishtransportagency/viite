@@ -3,8 +3,9 @@ package fi.liikennevirasto.viite.dao
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
+import fi.vaylavirasto.viite.dao.BaseDAO
 
-object ProjectCalibrationPointDAO {
+object ProjectCalibrationPointDAO extends BaseDAO {
 
   trait CalibrationPointMValues {
     def segmentMValue: Double
@@ -97,51 +98,58 @@ object ProjectCalibrationPointDAO {
 
   def createCalibrationPoint(calibrationPoint: UserDefinedCalibrationPoint): Long = {
     val nextCalibrationPointId = sql"""select nextval('PROJECT_CAL_POINT_ID_SEQ')""".as[Long].first
-    sqlu"""
-      Insert Into PROJECT_CALIBRATION_POINT (ID, PROJECT_LINK_ID, PROJECT_ID, LINK_M, ADDRESS_M) Values
-      ($nextCalibrationPointId, ${calibrationPoint.projectLinkId}, ${calibrationPoint.projectId}, ${calibrationPoint.segmentMValue}, ${calibrationPoint.addressMValue})
-      """.execute
+    runUpdateToDb(s"""
+      Insert Into PROJECT_CALIBRATION_POINT (ID, PROJECT_LINK_ID, PROJECT_ID, LINK_M, ADDRESS_M)
+      Values ($nextCalibrationPointId, ${calibrationPoint.projectLinkId}, ${calibrationPoint.projectId}, ${calibrationPoint.segmentMValue}, ${calibrationPoint.addressMValue})
+      """)
     nextCalibrationPointId
   }
 
   def createCalibrationPoint(projectLinkId: Long, projectId: Long, segmentMValue: Double, addressMValue: Long): Long = {
     val nextCalibrationPointId = sql"""select nextval('PROJECT_CAL_POINT_ID_SEQ')""".as[Long].first
-    sqlu"""
-      Insert Into PROJECT_CALIBRATION_POINT (ID, PROJECT_LINK_ID, PROJECT_ID, LINK_M, ADDRESS_M) Values
-      ($nextCalibrationPointId, $projectLinkId, $projectId, $segmentMValue, $addressMValue)
-      """.execute
+    runUpdateToDb(s"""
+      Insert Into PROJECT_CALIBRATION_POINT (ID, PROJECT_LINK_ID, PROJECT_ID, LINK_M, ADDRESS_M)
+      Values ($nextCalibrationPointId, $projectLinkId, $projectId, $segmentMValue, $addressMValue)
+      """)
     nextCalibrationPointId
   }
 
   def updateSpecificCalibrationPointMeasures(id: Long, segmentMValue: Double, addressMValue: Long): Unit = {
-    sqlu"""
-        Update PROJECT_CALIBRATION_POINT Set LINK_M = $segmentMValue, ADDRESS_M = $addressMValue Where ID = $id
-      """.execute
+    runUpdateToDb(s"""
+        Update PROJECT_CALIBRATION_POINT
+           Set LINK_M = $segmentMValue, ADDRESS_M = $addressMValue
+         Where ID = $id
+      """)
   }
 
   def removeSpecificCalibrationPoint(id: Long): Unit = {
-    sqlu"""
-        Delete From PROJECT_CALIBRATION_POINT Where ID = $id
-      """.execute
+    runUpdateToDb(s"""
+        Delete From PROJECT_CALIBRATION_POINT
+         Where ID = $id
+      """)
   }
 
   def removeAllCalibrationPointsFromRoad(projectLinkId: Long, projectId: Long): Unit = {
-    sqlu"""
-        Delete From PROJECT_CALIBRATION_POINT Where PROJECT_LINK_ID = $projectLinkId And PROJECT_ID  = $projectId
-      """.execute
+    runUpdateToDb(s"""
+        Delete From PROJECT_CALIBRATION_POINT
+         Where PROJECT_LINK_ID = $projectLinkId And PROJECT_ID = $projectId
+      """)
   }
 
   def removeAllCalibrationPoints(projectLinkIds: Set[Long]): Unit = {
     if (projectLinkIds.nonEmpty)
-      sqlu"""
-        Delete From PROJECT_CALIBRATION_POINT Where PROJECT_LINK_ID in (#${projectLinkIds.mkString(",")})
-      """.execute
+      runUpdateToDb(s"""
+        Delete From PROJECT_CALIBRATION_POINT
+         Where PROJECT_LINK_ID in (${projectLinkIds.mkString(",")})
+      """)
+    else 0
   }
 
   def removeAllCalibrationPointsFromProject(projectId: Long): Unit = {
-    sqlu"""
-        Delete From PROJECT_CALIBRATION_POINT Where PROJECT_ID  = $projectId
-      """.execute
+    runUpdateToDb(s"""
+        Delete From PROJECT_CALIBRATION_POINT
+        Where PROJECT_ID  = $projectId
+      """)
   }
 
 }

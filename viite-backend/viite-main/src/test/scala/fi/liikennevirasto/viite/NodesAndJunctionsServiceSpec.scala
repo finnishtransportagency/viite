@@ -7,6 +7,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
+import fi.vaylavirasto.viite.postgis.DbUtils.runUpdateToDb
 import fi.vaylavirasto.viite.dao.Sequences
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
 import fi.vaylavirasto.viite.model.CalibrationPointType.{NoCP, RoadAddressCP}
@@ -383,8 +384,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val reversedProjectChanges = projectChanges.map(p => p.copy(changeInfo = p.changeInfo.copy(changeType = RoadAddressChangeType.Transfer, source = p.changeInfo.target, reversed = true)))
 
       val mappedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
-      sqlu"""INSERT INTO LINK (ID) VALUES (12345)""".execute
-      sqlu"""INSERT INTO LINK (ID) VALUES (12346)""".execute
+      runUpdateToDb("""INSERT INTO LINK (ID) VALUES (12345)""")
+      runUpdateToDb("""INSERT INTO LINK (ID) VALUES (12346)""")
       nodesAndJunctionsService.handleJunctionAndJunctionPoints(projectChanges, pls, mappedRoadwayNumbers)
 
       val roadJunctionPoints = junctionPointDAO.fetchByRoadwayPoint(roadway1.roadwayNumber, roadway1.endAddrMValue, BeforeAfter.Before)
@@ -3986,14 +3987,14 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
         np => {
           if (np.roadwayNumber == roadLink1.roadwayNumber) {
             if (np.addrM == roadLink1.startAddrMValue)
-              sqlu"""UPDATE NODE_POINT SET NODE_NUMBER = $nodeNumber1 WHERE ID = ${np.id}""".execute
+              runUpdateToDb(s"""UPDATE NODE_POINT SET NODE_NUMBER = $nodeNumber1 WHERE ID = ${np.id}""")
             else if (np.addrM == roadLink1.endAddrMValue)
-              sqlu"""UPDATE NODE_POINT SET NODE_NUMBER = $nodeNumber2 WHERE ID = ${np.id}""".execute
+              runUpdateToDb(s"""UPDATE NODE_POINT SET NODE_NUMBER = $nodeNumber2 WHERE ID = ${np.id}""")
           } else if (np.roadwayNumber == roadLink2.roadwayNumber) {
             if (np.addrM == roadLink2.startAddrMValue)
-              sqlu"""UPDATE NODE_POINT SET NODE_NUMBER = $nodeNumber2 WHERE ID = ${np.id}""".execute
+              runUpdateToDb(s"""UPDATE NODE_POINT SET NODE_NUMBER = $nodeNumber2 WHERE ID = ${np.id}""")
             else if (np.addrM == roadLink2.endAddrMValue)
-              sqlu"""UPDATE NODE_POINT SET NODE_NUMBER = $nodeNumber3 WHERE ID = ${np.id}""".execute
+              runUpdateToDb(s"""UPDATE NODE_POINT SET NODE_NUMBER = $nodeNumber3 WHERE ID = ${np.id}""")
           }
         }
       )
@@ -4077,9 +4078,9 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       nodePointTemplates.foreach(
         np => {
           if (np.addrM == roadLink.startAddrMValue)
-            sqlu"""UPDATE NODE_POINT SET NODE_NUMBER = ${node1.nodeNumber} WHERE ID = ${np.id}""".execute
+            runUpdateToDb(s"""UPDATE NODE_POINT SET NODE_NUMBER = ${node1.nodeNumber} WHERE ID = ${np.id}""")
           else if (np.addrM == roadLink.endAddrMValue)
-            sqlu"""UPDATE NODE_POINT SET NODE_NUMBER = ${node2.nodeNumber} WHERE ID = ${np.id}""".execute
+            runUpdateToDb(s"""UPDATE NODE_POINT SET NODE_NUMBER = ${node2.nodeNumber} WHERE ID = ${np.id}""")
         }
       )
 
@@ -4171,9 +4172,9 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       nodePointTemplates.foreach(
         np => {
           if (np.addrM == roadLink.startAddrMValue)
-            sqlu"""UPDATE NODE_POINT SET NODE_NUMBER = ${node1.nodeNumber} WHERE ID = ${np.id}""".execute
+            runUpdateToDb(s"""UPDATE NODE_POINT SET NODE_NUMBER = ${node1.nodeNumber} WHERE ID = ${np.id}""")
           else if (np.addrM == roadLink.endAddrMValue)
-            sqlu"""UPDATE NODE_POINT SET NODE_NUMBER = ${node2.nodeNumber} WHERE ID = ${np.id}""".execute
+            runUpdateToDb(s"""UPDATE NODE_POINT SET NODE_NUMBER = ${node2.nodeNumber} WHERE ID = ${np.id}""")
         }
       )
 

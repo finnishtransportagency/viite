@@ -6,6 +6,7 @@ import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.vaylavirasto.viite.model.{AdministrativeClass, BeforeAfter, Discontinuity, Track}
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
+import fi.vaylavirasto.viite.dao.BaseDAO
 
 
 /** Data type for /summary API data */

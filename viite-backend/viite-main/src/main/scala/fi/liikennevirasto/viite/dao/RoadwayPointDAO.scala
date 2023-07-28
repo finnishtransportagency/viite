@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite.dao
 
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
-import fi.vaylavirasto.viite.dao.Sequences
+import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -11,13 +11,8 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 case class RoadwayPoint(id: Long, roadwayNumber: Long, addrMValue: Long, createdBy: String, createdTime: Option[DateTime] = None,
                         modifiedBy: Option[String] = None, modifiedTime: Option[DateTime] = None) {
 
-  def isNew: Boolean = {
-    id == NewIdValue
-  }
-
-  def isNotNew: Boolean = {
-    id != NewIdValue
-  }
+  def isNew:    Boolean = { id == NewIdValue }
+  def isNotNew: Boolean = { id != NewIdValue }
 
 }
 
@@ -44,20 +39,20 @@ class RoadwayPointDAO extends BaseDAO {
       roadwayPoint.id
     }
     logger.info(s"Insert roadway_point $id (roadwayNumber: ${roadwayPoint.roadwayNumber}, addrM: ${roadwayPoint.addrMValue})")
-    sqlu"""
-      Insert Into ROADWAY_POINT (ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) Values
-      ($id, ${roadwayPoint.roadwayNumber}, ${roadwayPoint.addrMValue}, ${roadwayPoint.createdBy}, ${roadwayPoint.createdBy})
-      """.execute
+    runUpdateToDb(s"""
+      Insert Into ROADWAY_POINT (ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY)
+      Values ($id, ${roadwayPoint.roadwayNumber}, ${roadwayPoint.addrMValue}, '${roadwayPoint.createdBy}', '${roadwayPoint.createdBy}')
+      """)
     id
   }
 
   def create(roadwayNumber: Long, addrMValue: Long, createdBy: String): Long = {
     val id = Sequences.nextRoadwayPointId
     logger.info(s"Insert roadway_point $id (roadwayNumber: $roadwayNumber, addrM: $addrMValue)")
-    sqlu"""
-      Insert Into ROADWAY_POINT (ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) Values
-      ($id, $roadwayNumber, $addrMValue, $createdBy, $createdBy)
-      """.execute
+    runUpdateToDb(s"""
+      Insert Into ROADWAY_POINT (ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY)
+      Values ($id, $roadwayNumber, $addrMValue, '$createdBy', '$createdBy')
+      """)
     id
   }
 
@@ -151,4 +146,5 @@ class RoadwayPointDAO extends BaseDAO {
   private def queryList(query: String): Seq[RoadwayPoint] = {
     Q.queryNA[RoadwayPoint](query).list
   }
+
 }

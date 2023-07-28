@@ -5,7 +5,7 @@ import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.NewIdValue
-import fi.vaylavirasto.viite.dao.Sequences
+import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
 import fi.vaylavirasto.viite.model.{NodePointType, NodeType}
 import org.joda.time.DateTime
@@ -188,9 +188,9 @@ class NodeDAO extends BaseDAO {
   }
 
   def publish(id: Long, editor: String = "-"): Unit = {
-    sqlu"""
-        Update NODE Set PUBLISHED_TIME = CURRENT_TIMESTAMP, EDITOR = $editor Where ID = $id
-      """.execute
+    runUpdateToDb(s"""
+        Update NODE Set PUBLISHED_TIME = CURRENT_TIMESTAMP, EDITOR = '$editor' Where ID = $id
+    """)
   }
 
   def create(nodes: Iterable[Node], createdBy: String = "-"): Seq[Long] = {
@@ -258,7 +258,7 @@ class NodeDAO extends BaseDAO {
     * @param ids : Iterable[Long] - The ids of the nodes to expire.
     * @return
     */
-  def expireById(ids: Iterable[Long]): Int = {
+  def expireById(ids: Iterable[Long]): Unit = {
     if (ids.isEmpty)
       0
     else {
@@ -266,7 +266,7 @@ class NodeDAO extends BaseDAO {
         UPDATE NODE SET valid_to = CURRENT_TIMESTAMP WHERE valid_to IS NULL AND id IN (${ids.mkString(", ")})
       """
       logger.debug(s"******* Expiring nodes by ids: ${ids.mkString(", ")} \n    query: : $query")
-      Q.updateNA(query).first
+      runUpdateToDb(query)
     }
   }
 

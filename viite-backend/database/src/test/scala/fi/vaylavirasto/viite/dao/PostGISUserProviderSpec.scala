@@ -2,7 +2,7 @@ package fi.vaylavirasto.viite.dao
 
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.user.Configuration
-import fi.liikennevirasto.digiroad2.util.SqlScriptRunner._
+import fi.vaylavirasto.viite.postgis.DbUtils.runUpdateToDb
 import org.scalatest.{FunSuite, Matchers}
 import slick.jdbc.JdbcBackend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -26,7 +26,9 @@ class PostGISUserProviderSpec extends FunSuite with Matchers {
     "When trying to find a specific user name and creating a user for that user name " +
     "Then getUser() should return 'None' before creating, and the created user after creating it.") {
     runWithRollback {
-      executeStatement("DELETE FROM service_user WHERE username = '" + TestUserName.toLowerCase() + "'")
+      PostGISDatabase.withDynSession {
+        runUpdateToDb(s"""DELETE FROM service_user WHERE username = '${TestUserName.toLowerCase()}'""")
+      }
       provider.getUser(TestUserName) shouldBe None
       provider.createUser(TestUserName, Configuration(north = Some(1000)))
       val user = provider.getUser(TestUserName).get

@@ -265,8 +265,7 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
     val zippedRows = rows.tail.zipWithIndex
     val valueRows  = zippedRows.tail.foldLeft(List(zippedRows.head._1)) { (a, b) => {
       if (b._2 % 2 != 0) a ++ List(b._1, separator) else a ++ List(b._1)
-    }
-    }
+    }}
     (separator +: rows.head +: separator +: valueRows).mkString("\n")
   }
 
