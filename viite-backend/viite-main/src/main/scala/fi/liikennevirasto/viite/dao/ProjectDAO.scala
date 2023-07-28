@@ -252,7 +252,6 @@ class ProjectDAO extends BaseDAO {
       if (elys.nonEmpty) {
         val query   = s"""UPDATE project p set elys = array[${elys.sorted.mkString(",")}] WHERE p.id = $projectId"""
         runUpdateToDb(query)
-        elys.size //TODO This correct?
       } else -1
     }
   }
