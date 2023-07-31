@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite.util
 
-import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.runWithRollback
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
@@ -10,24 +10,12 @@ import fi.vaylavirasto.viite.model.CalibrationPointType.{JunctionPointCP, NoCP, 
 import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LinkGeomSource, RoadAddressChangeType, SideCode, Track}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
-import slick.driver.JdbcDriver.backend.Database
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
 class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
 
   val projectDAO = new ProjectDAO
   val projectLinkDAO = new ProjectLinkDAO
   val projectReservedPartDAO = new ProjectReservedPartDAO
-
-  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
-
-  def runWithRollback[T](f: => T): T = {
-    Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
-      val t = f
-      dynamicSession.rollback()
-      t
-    }
-  }
 
   private def setUpProjectWithLinks(
                                      testTrack1: TestTrack,

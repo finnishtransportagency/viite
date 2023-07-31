@@ -202,12 +202,4 @@ package object util {
     ProjectLink(rl.id, rl.roadNumber, rl.roadPartNumber, Track.apply(rl.trackCode.toInt), Discontinuity.apply(rl.discontinuity), rl.startAddressM, rl.endAddressM, rl.startAddressM, rl.endAddressM, None, None, rl.modifiedBy, rl.linkId, rl.startMValue, rl.endMValue, rl.sideCode, (rl.startCalibrationPointType, rl.endCalibrationPointType), (rl.startCalibrationPointType, rl.endCalibrationPointType), rl.geometry, project.id, RoadAddressChangeType.NotHandled, AdministrativeClass.State, rl.roadLinkSource, GeometryUtils.geometryLength(rl.geometry), if (rl.status == RoadAddressChangeType.New) 0 else rl.id, if (rl.status == RoadAddressChangeType.New) 0 else rl.linearLocationId, rl.elyCode, reversed = false, None, rl.roadLinkTimeStamp)
   }
 
-  def runWithRollback[T](f: => T): T = {
-    Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
-      val t = f
-      dynamicSession.rollback()
-      t
-    }
-  }
-
 }

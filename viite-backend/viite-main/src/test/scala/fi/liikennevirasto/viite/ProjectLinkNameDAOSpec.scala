@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2.DigiroadEventBus
 import fi.liikennevirasto.digiroad2.client.kgv.{KgvRoadLink, KgvRoadLinkClient}
-import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.runWithRollback
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
@@ -12,8 +12,6 @@ import fi.vaylavirasto.viite.postgis.DbUtils.runUpdateToDb
 import org.joda.time.DateTime
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import org.scalatest.mock.MockitoSugar
-import slick.driver.JdbcDriver.backend.Database
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
 
 class ProjectLinkNameDAOSpec extends FunSuite with Matchers with BeforeAndAfter {
@@ -78,16 +76,6 @@ class ProjectLinkNameDAOSpec extends FunSuite with Matchers with BeforeAndAfter 
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f
-  }
-
-  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
-
-  def runWithRollback[T](f: => T): T = {
-    Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
-      val t = f
-      dynamicSession.rollback()
-      t
-    }
   }
 
   test("Test setProjectRoadName When there is no road/projectlink name and given one new road name Then save should be successful") {

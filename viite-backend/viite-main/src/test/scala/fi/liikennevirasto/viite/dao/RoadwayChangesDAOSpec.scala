@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite.dao
 
-import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.runWithRollback
 import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.util.{projectLinkDAO, projectReservedPartDAO}
@@ -10,20 +10,12 @@ import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LinkGeom
 import fi.vaylavirasto.viite.postgis.DbUtils.runUpdateToDb
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
-import slick.driver.JdbcDriver.backend.Database
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.driver.JdbcDriver.backend.Database.dynamicSession  // JdbcBackend#sessionDef
 import slick.jdbc.StaticQuery.interpolation
 
 import java.sql.Timestamp
 
 class RoadwayChangesDAOSpec extends FunSuite with Matchers {
-
-  def runWithRollback(f: => Unit): Unit = {
-    Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
-      f
-      dynamicSession.rollback()
-    }
-  }
 
   val projectDAO = new ProjectDAO
   private val roadNumber1 = 990

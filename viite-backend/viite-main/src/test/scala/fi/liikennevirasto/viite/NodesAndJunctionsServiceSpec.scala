@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite
 
 import java.sql.Date
 import fi.liikennevirasto.digiroad2.DigiroadEventBus
-import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.runWithRollback
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
@@ -19,8 +19,7 @@ import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.Answer
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import org.scalatest.mockito.MockitoSugar
-import slick.driver.JdbcDriver.backend.Database
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.driver.JdbcDriver.backend.Database.dynamicSession  // JdbcBackend#sessionDef
 import slick.jdbc.StaticQuery.interpolation
 
 import scala.util.{Left, Right}
@@ -94,15 +93,6 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
                             override def withDynSession[T](f: => T): T = f
                             override def withDynTransaction[T](f: => T): T = f
                           }
-
-  def runWithRollback(f: => Unit): Unit = {
-    Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
-      f
-      dynamicSession.rollback()
-    }
-  }
-
-  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
   private val testRoadway1 = Roadway(NewIdValue, roadwayNumber1, roadNumber1, roadPartNumber1, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
 

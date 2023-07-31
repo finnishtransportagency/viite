@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2.DigiroadEventBus
 import fi.liikennevirasto.digiroad2.client.kgv._
-import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.runWithRollback
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.viite.Dummies._
 import fi.liikennevirasto.viite.dao._
@@ -25,8 +25,7 @@ import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.Answer
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import org.scalatest.mock.MockitoSugar
-import slick.driver.JdbcDriver.backend.Database
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.driver.JdbcDriver.backend.Database.dynamicSession   // JdbcBackend#sessionDef
 import slick.jdbc.StaticQuery.interpolation
 
 import java.sql.BatchUpdateException
@@ -124,16 +123,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   after {
     reset(mockRoadLinkService)
-  }
-
-  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
-
-  def runWithRollback[T](f: => T): T = {
-    Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
-      val t = f
-      dynamicSession.rollback()
-      t
-    }
   }
 
   val linearLocations = Seq(

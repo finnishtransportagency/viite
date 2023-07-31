@@ -1,23 +1,13 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.runWithRollback
 import fi.vaylavirasto.viite.dao.RoadNameDAO
 import fi.vaylavirasto.viite.postgis.DbUtils.runUpdateToDb
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
-import slick.driver.JdbcDriver.backend.Database
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
 class RoadNameServiceSpec extends FunSuite with Matchers {
   private val roadNameService = new RoadNameService
-
-  def runWithRollback[T](f: => T): T = {
-    Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
-      val t = f
-      dynamicSession.rollback()
-      t
-    }
-  }
 
   test("Test roadNameService.getRoadNamesInTX() When searching for a newly create road name by it's road number Then return the entry for said road name.") {
     runWithRollback {

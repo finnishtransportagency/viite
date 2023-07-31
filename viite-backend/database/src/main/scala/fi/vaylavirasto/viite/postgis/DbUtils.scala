@@ -1,6 +1,6 @@
 package fi.vaylavirasto.viite.postgis
 
-import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
+//import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 

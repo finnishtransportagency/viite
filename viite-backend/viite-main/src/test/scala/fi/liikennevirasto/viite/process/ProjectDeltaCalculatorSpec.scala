@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.runWithRollback
 import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
@@ -15,23 +15,11 @@ import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LinkGeom
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import org.scalatest.enablers.Definition.definitionOfOption
-import slick.driver.JdbcDriver.backend.Database
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
 import scala.collection.immutable
 
 class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
   val roadwayDAO = new RoadwayDAO
-
-  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
-
-  def runWithRollback[T](f: => T): T = {
-    Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
-      val t = f
-      dynamicSession.rollback()
-      t
-    }
-  }
 
   private def createRoadAddress(start: Long, distance: Long, roadwayNumber: Long = 0L) = {
     //TODO the road address now have the linear location id and has been set to 1L

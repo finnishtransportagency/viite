@@ -1,16 +1,13 @@
 package fi.liikennevirasto.viite.dao
 
 import java.sql.BatchUpdateException
-import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.runWithRollback
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
 import fi.vaylavirasto.viite.model.{AdministrativeClass, CalibrationPointLocation, CalibrationPointType, Discontinuity, LinkGeomSource, SideCode, Track}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
-import slick.driver.JdbcDriver.backend.Database
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.StaticQuery.interpolation
 
 class LinearLocationDAOSpec extends FunSuite with Matchers {
 
@@ -19,13 +16,6 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
   val roadwayPointDAO = new RoadwayPointDAO
 
   private val testLinearLocation = LinearLocation(NewIdValue, 1, 1000L.toString, 0.0, 100.0, SideCode.TowardsDigitizing, 10000000000L, (CalibrationPointReference(Some(0L)), CalibrationPointReference.None), Seq(Point(0.0, 0.0), Point(0.0, 100.0)), LinkGeomSource.NormalLinkInterface, 200L)
-
-  def runWithRollback(f: => Unit): Unit = {
-    Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
-      f
-      dynamicSession.rollback()
-    }
-  }
 
   test("Test create When creating linear location with new roadway id and no calibration points Then return new linear location") {
     runWithRollback {

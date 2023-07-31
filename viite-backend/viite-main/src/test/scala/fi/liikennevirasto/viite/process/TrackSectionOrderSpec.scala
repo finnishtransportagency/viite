@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.runWithRollback
 import fi.liikennevirasto.viite.Dummies
 import fi.liikennevirasto.viite.Dummies._
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
@@ -10,17 +10,8 @@ import fi.vaylavirasto.viite.geometry.Point
 import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LinkGeomSource, RoadAddressChangeType, SideCode, Track}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
-import slick.driver.JdbcDriver.backend.Database
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
 class TrackSectionOrderSpec extends FunSuite with Matchers {
-
-  private def runWithRollback(f: => Unit): Unit = {
-    Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
-      f
-      dynamicSession.rollback()
-    }
-  }
 
   private def toDummyProjectLink(id: Long, geom: Seq[Point], track: Track = Track.Combined) = {
     dummyProjectLink(1L, 1L, track, Discontinuity.Continuous, 0, 10, Some(DateTime.now), linkId = id.toString, status = RoadAddressChangeType.NotHandled, geometry = geom)
