@@ -3,8 +3,8 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.{ChangedRoadAddress, NodesAndJunctionsService, RoadAddressService}
 import fi.vaylavirasto.viite.model.{SideCode, TrafficDirection}
+import fi.vaylavirasto.viite.util.DateTimeFormatters.finnishDateTimeFormatter
 import org.joda.time.DateTime
-import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.json4s.{DefaultFormats, Formats}
 import org.postgresql.util.PSQLException
 import org.scalatra.{BadRequest, InternalServerError, ScalatraServlet}
@@ -17,7 +17,6 @@ import scala.util.control.NonFatal
 
 class ChangeApi(roadAddressService: RoadAddressService, nodesAndJunctionsService: NodesAndJunctionsService, implicit val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupport with SwaggerSupport  {
   val logger: Logger = LoggerFactory.getLogger(getClass)
-  val DateTimePropertyFormat: DateTimeFormatter = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss")
 
   private val XApiKeyDescription =
     "You need an API key to use Viite APIs.\n" +
@@ -133,8 +132,8 @@ class ChangeApi(roadAddressService: RoadAddressService, nodesAndJunctionsService
                 "startMeasure" -> road.startMValue,
                 "endMeasure" -> road.endMValue,
                 "createdBy" -> road.createdBy,
-                "modifiedAt" -> road.validFrom.map(DateTimePropertyFormat.print(_)),
-                "createdAt" -> road.validFrom.map(DateTimePropertyFormat.print(_)),
+                "modifiedAt" -> road.validFrom.map(finnishDateTimeFormatter.print(_)),
+                "createdAt" -> road.validFrom.map(finnishDateTimeFormatter.print(_)),
                 "changeType" -> extractChangeType(since, road.isExpire, road.validFrom)
               )
           )

@@ -9,7 +9,7 @@ import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.{RoadAddressService, RoadNameService}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.{AdministrativeClass, SideCode}
-import org.joda.time.format.ISODateTimeFormat
+import fi.vaylavirasto.viite.util.DateTimeFormatters.dateTimeNoMillisFormatter
 import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, Formats}
 import org.postgresql.util.PSQLException
@@ -683,7 +683,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
   }
 
   private def formatDateTimeToIsoString(dateOption: Option[DateTime]): Option[String] =
-  dateOption.map { date => ISODateTimeFormat.dateTimeNoMillis().print(date) }
+  dateOption.map { date => dateTimeNoMillisFormatter.print(date) }
 
   def formatDate(date: DateTime): String = {
     date.toString(dateFormat)

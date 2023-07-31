@@ -10,7 +10,7 @@ import fi.liikennevirasto.viite.util.{DigiroadSerializers, JsonSerializer, runWi
 import fi.vaylavirasto.viite.dao.ComplementaryLinkDAO
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
 import fi.vaylavirasto.viite.model.{AdministrativeClass, LifecycleStatus, LinkGeomSource, RoadLink, TrafficDirection}
-import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
+import fi.vaylavirasto.viite.util.DateTimeFormatters.finnishDateTimeFormatter
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization.read
@@ -202,8 +202,7 @@ class ViiteApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter {
       val response = parse(StringInput(body)).values.asInstanceOf[Map[String, Any]]
       response should have size 1
       response.head._1 should be(("result"))
-      val formatter: DateTimeFormatter = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss")
-      formatter.parseDateTime(response.head._2.asInstanceOf[String].trim).getYear should be (2018)
+      finnishDateTimeFormatter.parseDateTime(response.head._2.asInstanceOf[String].trim).getYear should be (2018)
     }
   }
 

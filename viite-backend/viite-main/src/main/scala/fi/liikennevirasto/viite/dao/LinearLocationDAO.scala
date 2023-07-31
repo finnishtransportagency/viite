@@ -1,6 +1,5 @@
 package fi.liikennevirasto.viite.dao
 
-import java.sql.Timestamp
 import fi.liikennevirasto.digiroad2.postgis.{MassQuery, PostGISDatabase}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite._
@@ -8,8 +7,8 @@ import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustme
 import fi.vaylavirasto.viite.dao.{BaseDAO, LinkDAO, Queries, Sequences}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.{CalibrationPointType, LinkGeomSource, SideCode}
+import fi.vaylavirasto.viite.util.DateTimeFormatters.dateOptTimeFormatter
 import org.joda.time.DateTime
-import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import slick.jdbc.StaticQuery.interpolation
@@ -131,13 +130,6 @@ case class LinearLocation(id: Long, orderNumber: Double, linkId: String, startMV
 //TODO Rename all the method names to follow a rule like fetchById instead of have fetchById and QueryById
 class LinearLocationDAO extends BaseDAO {
 
-  // TODO If not used, remove
-  def dateTimeParse(string: String): DateTime = {
-    formatter.parseDateTime(string)
-  }
-
-  val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
-
   val selectFromLinearLocation =
     """
        SELECT loc.ID, loc.ROADWAY_NUMBER, loc.ORDER_NUMBER, loc.LINK_ID, loc.START_MEASURE, loc.END_MEASURE, loc.SIDE,
@@ -210,8 +202,8 @@ class LinearLocationDAO extends BaseDAO {
       val y1 = r.nextDouble()
       val x2 = r.nextDouble()
       val y2 = r.nextDouble()
-      val validFrom = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
-      val validTo = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
+      val validFrom = r.nextDateOption.map(d => dateOptTimeFormatter.parseDateTime(d.toString))
+      val validTo   = r.nextDateOption.map(d => dateOptTimeFormatter.parseDateTime(d.toString))
 
       val calStartTypeOption: Option[CalibrationPointType] = if (calStartType.isDefined) Some(CalibrationPointType.apply(calStartType.get)) else None
 

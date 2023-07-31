@@ -42,8 +42,7 @@ object ProjectCalibrationPointDAO extends BaseDAO {
 
     val tuples = Q.queryNA[UserDefinedCalibrationPoint](baseQuery).list
     tuples.groupBy(_.id).map {
-      case (_, calibrationPointList) =>
-        calibrationPointList.head
+      case (_, calibrationPointList) => calibrationPointList.head
     }.toList.headOption
   }
 

@@ -14,7 +14,7 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.util.DataImporter.Conversion
 import fi.vaylavirasto.viite.dao.{BaseDAO, SequenceResetterDAO}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
-import org.joda.time._
+import org.joda.time.DateTime
 import slick.driver
 import slick.driver.JdbcDriver
 import slick.jdbc.StaticQuery.interpolation

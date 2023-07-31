@@ -239,11 +239,12 @@ class RoadLinkService(val kgvClient: KgvRoadLink, val eventbus: DigiroadEventBus
   }
 
   def getRoadLinks(bounds    : BoundingRectangle, roadNumbers: Seq[(Int, Int)], municipalities: Set[Int],
-                   everything: Boolean, publicRoads: Boolean): Seq[RoadLink] =
+                   everything: Boolean, publicRoads: Boolean): Seq[RoadLink] = {
     if (bounds.area >= 1E6 || useFrozenLinkInterface)
       getRoadLinks(bounds, roadNumbers, municipalities, publicRoads)
     else
       getRoadLinksAndChangesFromVVH(bounds, roadNumbers, municipalities, everything, publicRoads)._1
+  }
 
   /**
     * Returns the road links from VVH by municipality.

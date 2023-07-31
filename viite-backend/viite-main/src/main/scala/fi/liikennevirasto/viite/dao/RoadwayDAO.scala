@@ -10,8 +10,8 @@ import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import fi.vaylavirasto.viite.dao.{BaseDAO, Queries, Sequences}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point, Vector3d}
 import fi.vaylavirasto.viite.model.{AdministrativeClass, CalibrationPointType, Discontinuity, LinkGeomSource, SideCode, Track}
+import fi.vaylavirasto.viite.util.DateTimeFormatters.{basicDateFormatter, dateOptTimeFormatter}
 import org.joda.time.DateTime
-import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import slick.jdbc.StaticQuery.interpolation
@@ -379,7 +379,8 @@ case class Roadway(id: Long, roadwayNumber: Long, roadNumber: Long, roadPartNumb
 
 case class TrackForRoadAddressBrowser(ely: Long, roadNumber: Long, track: Long, roadPartNumber: Long, startAddrM: Long, endAddrM: Long, roadAddressLengthM: Long, administrativeClass: Long, startDate: DateTime)
 
-case class RoadPartForRoadAddressBrowser(ely: Long, roadNumber: Long, roadPartNumber: Long, startAddrM: Long, endAddrM: Long, roadAddressLengthM: Long, startDate: DateTime)
+case class RoadPartForRoadAddressBrowser(ely: Long, roadNumber: Long, roadPartNumber: Long,
+                                         startAddrM: Long, endAddrM: Long, roadAddressLengthM: Long, startDate: DateTime)
 
 
 class RoadwayDAO extends BaseDAO {
@@ -658,7 +659,7 @@ class RoadwayDAO extends BaseDAO {
 
   private def withRoadwayNumbersAndDate(roadwayNumbers: Set[Long], searchDate: DateTime)(query: String): String = {
     def dateFilter(table: String): String = {
-      val strDate = dateFormatter.print(searchDate)
+      val strDate = basicDateFormatter.print(searchDate)
       s" ($table.start_date <= to_date('$strDate', 'yyyymmdd') and (to_date('$strDate', 'yyyymmdd') <= $table.end_date or $table.end_date is null))"
     }
 
@@ -767,14 +768,14 @@ class RoadwayDAO extends BaseDAO {
       val endAddrMValue = r.nextLong()
       val reverted = r.nextBoolean()
       val discontinuity = r.nextInt()
-      val startDate = formatter.parseDateTime(r.nextDate.toString)
-      val endDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
+      val startDate     = dateOptTimeFormatter.parseDateTime(r.nextDate.toString)
+      val endDate       = r.nextDateOption.map(d => dateOptTimeFormatter.parseDateTime(d.toString))
       val createdBy = r.nextString()
       val administrativeClass = AdministrativeClass.apply(r.nextInt())
       val ely = r.nextLong()
       val terminated = TerminationCode.apply(r.nextInt())
-      val validFrom = formatter.parseDateTime(r.nextDate.toString)
-      val validTo = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
+      val validFrom     = dateOptTimeFormatter.parseDateTime(r.nextDate.toString)
+      val validTo       = r.nextDateOption.map(d => dateOptTimeFormatter.parseDateTime(d.toString))
       val roadName = r.nextStringOption()
 
       Roadway(id, roadwayNumber, roadNumber, roadPartNumber, administrativeClass, Track.apply(trackCode), Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, reverted, startDate, endDate, createdBy, roadName, ely, terminated, validFrom, validTo)
@@ -792,7 +793,7 @@ class RoadwayDAO extends BaseDAO {
       val endAddrMValue = r.nextLong()
       val lengthAddrM = r.nextLong()
       val administrativeClass = r.nextLong()
-      val startDate = formatter.parseDateTime(r.nextDate.toString)
+      val startDate       = dateOptTimeFormatter.parseDateTime(r.nextDate.toString)
 
       TrackForRoadAddressBrowser(ely, roadNumber, trackCode, roadPartNumber, startAddrMValue, endAddrMValue, lengthAddrM, administrativeClass, startDate)
     }
@@ -807,7 +808,7 @@ class RoadwayDAO extends BaseDAO {
       val startAddrMValue = r.nextLong()
       val endAddrMValue = r.nextLong()
       val lengthAddrM = r.nextLong()
-      val startDate = formatter.parseDateTime(r.nextDate.toString)
+      val startDate       = dateOptTimeFormatter.parseDateTime(r.nextDate.toString)
 
       RoadPartForRoadAddressBrowser(ely, roadNumber, roadPartNumber, startAddrMValue, endAddrMValue, lengthAddrM, startDate)
     }
@@ -835,7 +836,6 @@ class RoadwayDAO extends BaseDAO {
     Q.queryNA[Long](query).firstOption
   }
 
-  val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 
   def expireHistory(ids: Set[Long]): Int = {
     if (ids.isEmpty) {

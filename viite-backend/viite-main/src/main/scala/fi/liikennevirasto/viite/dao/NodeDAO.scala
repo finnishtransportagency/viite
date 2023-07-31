@@ -9,7 +9,6 @@ import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
 import fi.vaylavirasto.viite.model.{NodePointType, NodeType}
 import org.joda.time.DateTime
-import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
@@ -23,9 +22,6 @@ case class RoadAttributes(roadNumber: Long, roadPartNumber: Long, addrMValue: Lo
 case class NodeForRoadAddressBrowser(ely: Long, roadNumber: Long, roadPartNumber: Long, addrM: Long, startDate: DateTime, nodeType: NodeType, name: Option[String], nodeCoordinates: Point, nodeNumber: Long)
 
 class NodeDAO extends BaseDAO {
-
-  val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
-  val dateTimeFormatter: DateTimeFormatter = ISODateTimeFormat.basicDateTimeNoMillis()
 
   implicit val getNode: GetResult[Node] = new GetResult[Node] {
     def apply(r: PositionedResult): Node = {

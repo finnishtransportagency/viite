@@ -2,7 +2,6 @@
 //
 //import fi.liikennevirasto.digiroad2.client.vvh._
 //import fi.liikennevirasto.viite.dao._
-//import org.joda.time.format.DateTimeFormat
 //import org.mockito.Mockito.when
 //import org.scalatest.mockito.MockitoSugar
 //import org.scalatest.{FunSuite, Matchers}
@@ -12,6 +11,7 @@
 //import fi.liikennevirasto.digiroad2.service.RoadLinkService
 //import fi.vaylavirasto.viite.model.Point
 //import fi.vaylavirasto.viite.model.{AdministrativeClass, SideCode, TrafficDirection}
+//import fi.vaylavirasto.viite.util.DateTimeFormatters.finnishDateFormatter
 //import org.joda.time.DateTime
 //import org.mockito.ArgumentMatchers.any
 //import slick.driver.JdbcDriver
@@ -38,9 +38,7 @@
 //  val mockVVHFrozenTimeRoadLinkClient = MockitoSugar.mock[VVHFrozenTimeRoadLinkClientServicePoint]
 //  val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
 //
-//  val dateTimeFormatter = DateTimeFormat.forPattern("dd.MM.yyyy")
-//
-//  def d(date: String): DateTime = {DateTime.parse(date, dateTimeFormatter)}
+//  def d(date: String): DateTime = {DateTime.parse(date, finnishDateFormatter)}
 //
 //  val roadwayDAO = new RoadwayDAO
 //  val linearLocationDAO = new LinearLocationDAO

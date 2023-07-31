@@ -1,7 +1,6 @@
 package fi.liikennevirasto.viite.util
 
 import java.sql.{PreparedStatement, Timestamp}
-import org.joda.time.format.ISODateTimeFormat
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.client.kgv.{HistoryRoadLink, KgvRoadLink}
@@ -12,7 +11,8 @@ import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent, 
 import fi.vaylavirasto.viite.dao.{BaseDAO, LinkDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.GeometryUtils
 import fi.vaylavirasto.viite.model.{CalibrationPoint, CalibrationPointLocation, CalibrationPointType, LinkGeomSource, RoadLinkLike, SideCode}
-import org.joda.time._
+import fi.vaylavirasto.viite.util.DateTimeFormatters.basicDateFormatter
+import org.joda.time.DateTime
 import slick.jdbc._
 import slick.jdbc.StaticQuery.interpolation
 
@@ -24,8 +24,6 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, KGVClient: KgvRoadLin
   case class IncomingRoadway(roadwayNumber: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Long, startAddrM: Long, endAddrM: Long, reversed: Long, startDate: Option[DateTime], endDate: Option[DateTime], createdBy: String, administrativeClass: Long, ely: Long, validFrom: Option[DateTime], validTo: Option[DateTime], discontinuity: Long, terminated: Long)
 
   case class IncomingLinearLocation(roadwayNumber: Long, orderNumber: Long, linkId: String, startMeasure: Double, endMeasure: Double, sideCode: SideCode, linkGeomSource: LinkGeomSource, createdBy: String, x1: Option[Double], y1: Option[Double], x2: Option[Double], y2: Option[Double], validFrom: Option[DateTime], validTo: Option[DateTime])
-
-  val dateFormatter = ISODateTimeFormat.basicDate()
 
   val roadwayPointDAO = new RoadwayPointDAO
 
@@ -55,7 +53,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, KGVClient: KgvRoadLin
 
   def datePrinter(date: Option[DateTime]): String = {
     date match {
-      case Some(dt) => dateFormatter.print(dt)
+      case Some(dt) => basicDateFormatter.print(dt)
       case None => ""
     }
   }
