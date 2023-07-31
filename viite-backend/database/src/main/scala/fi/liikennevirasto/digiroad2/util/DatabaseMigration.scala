@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.util
 
 import com.googlecode.flyway.core.Flyway
-import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase._
+import fi.vaylavirasto.viite.postgis.PostGISDatabase._
 
 object DatabaseMigration {
 

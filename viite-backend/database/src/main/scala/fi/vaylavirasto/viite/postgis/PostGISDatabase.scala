@@ -1,12 +1,14 @@
-package fi.liikennevirasto.digiroad2.postgis
+package fi.vaylavirasto.viite.postgis
 
-import javax.sql.DataSource
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
-import slick.driver.JdbcDriver.backend.Database
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
 import net.postgis.jdbc.geometry.GeometryBuilder
 import org.postgresql.util.PGobject
+import slick.driver.JdbcDriver.backend.Database
+
+import javax.sql.DataSource
+//import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
 object PostGISDatabase {

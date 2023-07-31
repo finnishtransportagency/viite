@@ -1,8 +1,7 @@
 package fi.liikennevirasto.digiroad2.util
 
+import fi.vaylavirasto.viite.postgis.PostGISDatabase
 import javax.sql.DataSource
-
-import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 

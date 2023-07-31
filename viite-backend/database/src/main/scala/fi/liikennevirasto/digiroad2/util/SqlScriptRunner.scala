@@ -1,8 +1,8 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+import fi.vaylavirasto.viite.postgis.PostGISDatabase
 import slick.jdbc.{StaticQuery => Q}
 
 import scala.io.{BufferedSource, Codec, Source}

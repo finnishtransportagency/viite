@@ -3,10 +3,10 @@ package fi.liikennevirasto.digiroad2.service
 import java.util.concurrent.TimeUnit
 import fi.liikennevirasto.digiroad2.DigiroadEventBus
 import fi.liikennevirasto.digiroad2.client.kgv._
-import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.KGVSerializer
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.{AdministrativeClass, RoadLink}
+import fi.vaylavirasto.viite.postgis.PostGISDatabase
 import org.joda.time.DateTime
 import org.slf4j.{Logger, LoggerFactory}
 import slick.jdbc.{GetResult, PositionedResult}
