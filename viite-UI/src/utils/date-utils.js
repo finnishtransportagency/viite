@@ -75,6 +75,11 @@
     return date.getFullYear() >= minYear && date.getFullYear() <= maxYear;
   };
 
+  /** Sets date to the next day */
+  dateUtils.addOneDayToDate = function (dateObject) {
+    dateObject.setDate(dateObject.getDate() + 1);
+  };
+
   /** Converts date object to string "yyyy-mm-dd" */
   dateUtils.parseDateToString = function (date) {
     const dayInNumber = date.getDate();
