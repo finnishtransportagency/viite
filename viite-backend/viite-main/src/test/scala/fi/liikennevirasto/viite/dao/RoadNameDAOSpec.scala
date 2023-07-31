@@ -1,21 +1,12 @@
 package fi.liikennevirasto.viite.dao
 
-import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.runWithRollback
 import fi.vaylavirasto.viite.dao.{RoadName, RoadNameDAO, RoadNameForRoadAddressBrowser, Sequences}
 import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, Track}
 import org.scalatest.{FunSuite, Matchers}
 import org.joda.time.DateTime
-import slick.driver.JdbcDriver.backend.Database
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
 class RoadNameDAOSpec extends FunSuite with Matchers {
-
-  def runWithRollback(f: => Unit): Unit = {
-    Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
-      f
-      dynamicSession.rollback()
-    }
-  }
 
   val roadwayDAO = new RoadwayDAO
 

@@ -1,22 +1,13 @@
 package fi.vaylavirasto.viite.dao
 
 import org.scalatest.{FunSuite, Matchers}
-import slick.driver.JdbcDriver.backend.Database
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.runWithRollback
 
 
 /**
   * Created by pedrosag on 31-10-2016.
   */
 class MunicipalityDaoSpec extends FunSuite with Matchers{
-
-  def runWithRollback(f: => Unit): Unit = {
-    Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
-      f
-      dynamicSession.rollback()
-    }
-  }
 
   test("Test getMunicipalityMapping When getting all municipalities Then should return some"){
     runWithRollback{

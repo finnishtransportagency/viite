@@ -1144,7 +1144,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       tags "ViiteAPI - Project"
       summary "Given a valid projectId, this will fetch all the changes made on said project."
     )
-  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
   get("/project/getchangetable/:projectId", operation(returnChangeTableById)) {
     val projectId = params("projectId").toLong
@@ -1179,7 +1178,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
     val projectId = params("projectId").toLong
     time(logger, s"GET request for /project/recalculateProject/$projectId") {
       try {
-        val invalidUnchangedLinkErrors = withDynTransaction {
+        val invalidUnchangedLinkErrors = PostGISDatabase.withDynTransaction {
           val project = projectService.fetchProjectById(projectId).get
           val invalidUnchangedLinkErrors = projectService.projectValidator.checkForInvalidUnchangedLinks(project, projectLinkDAO.fetchProjectLinks(projectId))
           if (invalidUnchangedLinkErrors.isEmpty) {

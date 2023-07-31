@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.runWithRollback
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.process.strategy.DefaultSectionCalculatorStrategy
@@ -13,16 +13,8 @@ import fi.vaylavirasto.viite.model.LinkGeomSource.{ComplementaryLinkInterface, F
 import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LinkGeomSource, RoadAddressChangeType, SideCode, Track}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
-import slick.driver.JdbcDriver.backend.Database
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
 class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
-  def runWithRollback(f: => Unit): Unit = {
-   Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
-      f
-      dynamicSession.rollback()
-    }
-  }
   val defaultSectionCalculatorStrategy = new DefaultSectionCalculatorStrategy
   val roadwayDAO = new RoadwayDAO
   val linearLocationDAO = new LinearLocationDAO

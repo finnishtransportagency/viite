@@ -1,19 +1,10 @@
 package fi.liikennevirasto.viite.dao
 
-import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.vaylavirasto.viite.model.CalibrationPointType
 import org.scalatest.{FunSuite, Matchers}
-import slick.driver.JdbcDriver.backend.Database
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.runWithRollback
 
 class CalibrationPointDAOSpec extends FunSuite with Matchers {
-
-  def runWithRollback(f: => Unit): Unit = {
-    Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
-      f
-      dynamicSession.rollback()
-    }
-  }
 
   test("Test compare calibration point types When compared Then comparison works correctly") {
     val a = CalibrationPointType.UserDefinedCP

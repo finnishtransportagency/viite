@@ -1,6 +1,7 @@
 //package fi.liikennevirasto.viite.util
 //
 //import fi.liikennevirasto.digiroad2.client.vvh._
+//import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.runWithRollback
 //import fi.liikennevirasto.viite.dao._
 //import org.mockito.Mockito.when
 //import org.scalatest.mockito.MockitoSugar
@@ -23,13 +24,6 @@
 //  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 //
 //  def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
-//
-//  def runWithRollback(f: => Unit): Unit = {
-//    Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
-//      f
-//      dynamicSession.rollback()
-//    }
-//  }
 //
 //  val mockVVHClient = MockitoSugar.mock[KgvRoadLink]
 //  val mockVVHRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient]
