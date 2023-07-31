@@ -2,8 +2,8 @@ package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.vaylavirasto.viite.dao.{ProjectLinkNameDAO, RoadName, RoadNameDAO, RoadNameForRoadAddressBrowser}
+import fi.vaylavirasto.viite.util.DateTimeFormatters.finnishDateFormatter
 import org.joda.time.DateTime
-import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.slf4j.LoggerFactory
 
 import scala.util.control.NonFatal
@@ -17,8 +17,6 @@ class RoadNameService() {
   def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
 
   private val logger = LoggerFactory.getLogger(getClass)
-
-  val formatter: DateTimeFormatter = DateTimeFormat.forPattern("dd.MM.yyyy")
 
   def getRoadNames(oRoadNumber: Option[String], oRoadName: Option[String], oStartDate: Option[DateTime], oEndDate: Option[DateTime]): Either[String, Seq[RoadName]] = {
     withDynTransaction {
@@ -44,7 +42,7 @@ class RoadNameService() {
         roadNameRow =>
           val roadNameOption = if (roadNameRow.id == NewIdValue) None else RoadNameDAO.getRoadNamesById(roadNameRow.id)
           val endDate = roadNameRow.endDate match {
-            case Some(dt) => Some(new DateTime(formatter.parseDateTime(dt)))
+            case Some(dt) => Some(new DateTime(finnishDateFormatter.parseDateTime(dt)))
             case _ => None
           }
           val newRoadName = roadNameOption match {
@@ -52,7 +50,7 @@ class RoadNameService() {
               RoadNameDAO.expire(roadNameRow.id, username)
               roadName.copy(createdBy = username, roadName = roadNameRow.name, endDate = endDate)
             case _ =>
-              val startDate = new DateTime(formatter.parseDateTime(roadNameRow.startDate))
+              val startDate = new DateTime(finnishDateFormatter.parseDateTime(roadNameRow.startDate))
               RoadName(NewIdValue, roadNumber, roadNameRow.name, Some(startDate), endDate, createdBy = username)
           }
 

@@ -15,8 +15,8 @@ import fi.vaylavirasto.viite.dao.{LinkDAO, ProjectLinkNameDAO, RoadName, RoadNam
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.CalibrationPointType.{JunctionPointCP, NoCP, UserDefinedCP}
 import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LinkGeomSource, RoadAddressChangeType, RoadLink, RoadLinkLike, SideCode, Track, TrafficDirection}
+import fi.vaylavirasto.viite.util.DateTimeFormatters.ISOdateFormatter
 import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 
 import java.sql.SQLException
@@ -959,7 +959,7 @@ class ProjectService(
   private def convertChangeDataToChangeProject(changeData: ProjectRoadwayChange): ChangeProject = {
     val changeInfo = changeData.changeInfo
     ChangeProject(nullRotatingChangeProjectId, changeData.projectName.getOrElse(""), changeData.user,
-      DateTimeFormat.forPattern("yyyy-MM-dd").print(changeData.projectStartDate), Seq(changeInfo))
+      ISOdateFormatter.print(changeData.projectStartDate), Seq(changeInfo))
   }
 
 

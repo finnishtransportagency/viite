@@ -15,8 +15,8 @@ import fi.liikennevirasto.viite.util.DigiroadSerializers
 import fi.vaylavirasto.viite.dao.{RoadName, RoadNameForRoadAddressBrowser}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.{AdministrativeClass, BeforeAfter, Discontinuity, LinkGeomSource, NodePointType, NodeType, RoadAddressChangeType, Track}
+import fi.vaylavirasto.viite.util.DateTimeFormatters.{ISOdateFormatter, dateSlashFormatter, finnishDateFormatter, finnishDateTimeFormatter, finnishDateCommaTimeFormatter}
 import org.joda.time.DateTime
-import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.json4s._
 import org.scalatra._
 import org.scalatra.json.JacksonJsonSupport
@@ -69,8 +69,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
   class Contains(r: Range) {
     def unapply(i: Int): Boolean = r contains i
   }
-
-  private val dtf: DateTimeFormatter = DateTimeFormat.forPattern("dd/MM/yyyy")
 
   /*  Roads */
   val DrawMainRoadPartsOnly = 1
@@ -506,10 +504,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
     time(logger, s"GET request for /roadaddressbrowser", params=Some(params)) {
       def validateInputs(situationDate: Option[String], target: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Boolean = {
         def parseDate(dateString: Option[String]): Option[DateTime] = {
-          val formatter = DateTimeFormat.forPattern("yyyy-MM-dd")
           try {
             if (dateString.isDefined) {
-              Some(formatter.parseDateTime(dateString.get))
+              Some(ISOdateFormatter.parseDateTime(dateString.get))
             } else
               None
           } catch {
@@ -590,10 +587,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
     time(logger, s"GET request for /roadaddresschangesbrowser") {
       def validateInputs(startDate: Option[String], endDate: Option[String], dateTarget: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Boolean = {
         def parseDate(dateString: Option[String]): Option[DateTime] = {
-          val formatter = DateTimeFormat.forPattern("yyyy-MM-dd")
           try {
             if (dateString.isDefined) {
-              Some(formatter.parseDateTime(dateString.get))
+              Some(ISOdateFormatter.parseDateTime(dateString.get))
             } else
               None
           } catch {
@@ -1975,7 +1971,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
     */
   private def optionStringToDateTime(dateString: Option[String]): Option[DateTime] = {
     dateString match {
-      case Some(date) => Some(dtf.parseDateTime(date))
+      case Some(date) => Some(dateSlashFormatter.parseDateTime(date))
       case _ => None
     }
   }
@@ -2008,7 +2004,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
   }
 
   private def formatDateTimeToString(dateOption: Option[DateTime]): Option[String] =
-    dateOption.map { date => date.toString(DateTimeFormat.forPattern("dd.MM.yyyy, HH:mm:ss")) }
+    dateOption.map { date => date.toString(finnishDateCommaTimeFormatter) }
 
   private def calibrationPointToApi(geometry: Seq[Point], calibrationPoint: Option[ProjectCalibrationPoint]): Option[Map[String, Any]] = {
     calibrationPoint match {
@@ -2033,10 +2029,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
 
 object ProjectConverter {
   def toRoadAddressProject(project: RoadAddressProjectExtractor, user: User): Project = {
-    val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
     Project(project.id, ProjectState.apply(project.status),
       if (project.name.length > 32) project.name.substring(0, 32).trim else project.name.trim, //TODO the name > 32 should be a handled exception since the user can't insert names with this size
-      user.username, DateTime.now(), user.username, formatter.parseDateTime(project.startDate), DateTime.now(),
+      user.username, DateTime.now(), user.username, finnishDateFormatter.parseDateTime(project.startDate), DateTime.now(),
       project.additionalInfo, project.reservedPartList.distinct.map(toReservedRoadPart), project.formedPartList.distinct.map(toReservedRoadPart), Option(project.additionalInfo), elys = Set())
   }
 
@@ -2047,26 +2042,24 @@ object ProjectConverter {
 
 object NodesAndJunctionsConverter {
 
-  private val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
-
   def toNode(node: NodeExtractor, username: String) : Node = {
-    val endDate = if (node.endDate.isDefined) Option(formatter.parseDateTime(node.endDate.get)) else None
-    val validFrom = if (node.validFrom.isDefined) formatter.parseDateTime(node.validFrom.get) else new DateTime()
-    val validTo = if (node.validTo.isDefined) Option(formatter.parseDateTime(node.validTo.get)) else None
-    val createdTime = if (node.createdTime.isDefined) Option(formatter.parseDateTime(node.createdTime.get)) else None
-    val registrationDate = if (node.registrationDate.isDefined) DateTime.parse(node.registrationDate.get) else new DateTime()
+    val endDate          = if (node.endDate.isDefined)     Option(finnishDateFormatter.parseDateTime(node.endDate.get))     else None
+    val validFrom        = if (node.validFrom.isDefined)          finnishDateFormatter.parseDateTime(node.validFrom.get)    else new DateTime()
+    val validTo          = if (node.validTo.isDefined)     Option(finnishDateFormatter.parseDateTime(node.validTo.get))     else None
+    val createdTime      = if (node.createdTime.isDefined) Option(finnishDateFormatter.parseDateTime(node.createdTime.get)) else None
+    val registrationDate = if (node.registrationDate.isDefined) DateTime.parse(node.registrationDate.get)                   else new DateTime()
 
     Node(node.id, node.nodeNumber, node.coordinates, node.name, NodeType.apply(node.`type`),
-         formatter.parseDateTime(node.startDate), endDate, validFrom, validTo, username, createdTime, registrationDate = registrationDate)
+      finnishDateFormatter.parseDateTime(node.startDate), endDate, validFrom, validTo, username, createdTime, registrationDate = registrationDate)
   }
 
   def toJunctions(junctions: Seq[JunctionExtractor]): Seq[Junction] = {
     junctions.map { junction =>
-      val validFrom = if (junction.validFrom.isDefined) formatter.parseDateTime(junction.validFrom.get) else new DateTime()
-      val validTo = if (junction.validTo.isDefined) Option(formatter.parseDateTime(junction.validTo.get)) else None
-      val startDate = formatter.parseDateTime(junction.startDate)
-      val endDate = if (junction.endDate.isDefined) Option(formatter.parseDateTime(junction.endDate.get)) else None
-      val createdTime = if (junction.createdTime.isDefined) Option(formatter.parseDateTime(junction.createdTime.get)) else None
+      val validFrom   = if (junction.validFrom.isDefined)          finnishDateFormatter.parseDateTime(junction.validFrom.get)    else new DateTime()
+      val validTo     = if (junction.validTo.isDefined)     Option(finnishDateFormatter.parseDateTime(junction.validTo.get))     else None
+      val startDate   =                                            finnishDateFormatter.parseDateTime(junction.startDate)
+      val endDate     = if (junction.endDate.isDefined)     Option(finnishDateFormatter.parseDateTime(junction.endDate.get))     else None
+      val createdTime = if (junction.createdTime.isDefined) Option(finnishDateFormatter.parseDateTime(junction.createdTime.get)) else None
 
       val junctionPoints = toJunctionPoints(junction, startDate, endDate)
 
@@ -2078,9 +2071,9 @@ object NodesAndJunctionsConverter {
   private def toJunctionPoints(junction: JunctionExtractor, startDate: DateTime, endDate: Option[DateTime]): List[JunctionPoint] = {
     junction.junctionPoints.map { jp =>
       val beforeAfter = BeforeAfter.apply(jp.beforeAfter)
-      val validFrom = if (jp.validFrom.isDefined) formatter.parseDateTime(jp.validFrom.get) else new DateTime()
-      val validTo = if (jp.validTo.isDefined) Option(formatter.parseDateTime(jp.validTo.get)) else None
-      val createdTime = if (jp.createdTime.isDefined) Option(formatter.parseDateTime(jp.createdTime.get)) else None
+      val validFrom   = if (jp.validFrom.isDefined)          finnishDateFormatter.parseDateTime(jp.validFrom.get)    else new DateTime()
+      val validTo     = if (jp.validTo.isDefined)     Option(finnishDateFormatter.parseDateTime(jp.validTo.get))     else None
+      val createdTime = if (jp.createdTime.isDefined) Option(finnishDateFormatter.parseDateTime(jp.createdTime.get)) else None
 
       JunctionPoint(jp.id, beforeAfter, jp.roadwayPointId, jp.junctionId, Some(startDate), endDate, validFrom, validTo,
         jp.createdBy.getOrElse("-"), createdTime, jp.roadwayNumber, jp.addrM, jp.roadNumber, jp.roadPartNumber,
@@ -2090,13 +2083,13 @@ object NodesAndJunctionsConverter {
 
   def toNodePoints(nodePoints: Seq[NodePointExtractor]): Seq[NodePoint] = {
     nodePoints.map { nodePoint =>
-      val validTo = if (nodePoint.validTo.isDefined) Option(formatter.parseDateTime(nodePoint.validTo.get)) else None
-      val startDate = if (nodePoint.startDate.isDefined) Option(formatter.parseDateTime(nodePoint.startDate.get)) else None
-      val endDate = if (nodePoint.endDate.isDefined) Option(formatter.parseDateTime(nodePoint.endDate.get)) else None
-      val createdTime = if (nodePoint.createdTime.isDefined) Option(formatter.parseDateTime(nodePoint.createdTime.get)) else None
+      val validTo     = if (nodePoint.validTo.isDefined)     Option(finnishDateFormatter.parseDateTime(nodePoint.validTo.get))     else None
+      val startDate   = if (nodePoint.startDate.isDefined)   Option(finnishDateFormatter.parseDateTime(nodePoint.startDate.get))   else None
+      val endDate     = if (nodePoint.endDate.isDefined)     Option(finnishDateFormatter.parseDateTime(nodePoint.endDate.get))     else None
+      val createdTime = if (nodePoint.createdTime.isDefined) Option(finnishDateFormatter.parseDateTime(nodePoint.createdTime.get)) else None
 
       NodePoint(nodePoint.id, BeforeAfter.apply(nodePoint.beforeAfter), nodePoint.roadwayPointId, nodePoint.nodeNumber, NodePointType.apply(nodePoint.`type`),
-        startDate, endDate, formatter.parseDateTime(nodePoint.validFrom), validTo,
+        startDate, endDate, finnishDateFormatter.parseDateTime(nodePoint.validFrom), validTo,
         nodePoint.createdBy, createdTime, nodePoint.roadwayNumber, nodePoint.addrM,
         nodePoint.roadNumber, nodePoint.roadPartNumber, Track.apply(nodePoint.track), nodePoint.elyCode)
     }

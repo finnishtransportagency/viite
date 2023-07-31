@@ -1,5 +1,6 @@
 package fi.vaylavirasto.viite.dao
 
+import fi.vaylavirasto.viite.util.DateTimeFormatters.dateOptTimeFormatter
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -16,7 +17,7 @@ object LinkDAO extends BaseDAO {
       val id = r.nextString()
       val source = r.nextLong()
       val adjustedTimestamp = r.nextLong()
-      val createdTime = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
+      val createdTime = r.nextDateOption.map(d => dateOptTimeFormatter.parseDateTime(d.toString))
 
       Link(id, source, adjustedTimestamp, createdTime)
     }

@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.client.kgv.FilterOgc.withRoadNumbersFilter
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
 import fi.vaylavirasto.viite.model.{AdministrativeClass, LifecycleStatus, LinkGeomSource, RoadLink, TrafficDirection}
-import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
+import fi.vaylavirasto.viite.util.DateTimeFormatters.dateOptTimeFormatter
 import org.joda.time.DateTime
 import net.postgis.jdbc.geometry.GeometryBuilder
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -55,9 +55,9 @@ class ComplementaryLinkDAO extends BaseDAO {
       val lifecycleStatus = LifecycleStatus(r.nextInt())
       val length = r.nextDouble()
       val modifiedAt = extractModifiedAt(Map(
-        "starttime"              -> r.nextDateOption.map(d => formatter.parseDateTime(d.toString)),
-        "versionstarttime"       -> r.nextDateOption.map(d => formatter.parseDateTime(d.toString)),
-        "sourcemodificationtime" -> r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
+        "starttime"              -> r.nextDateOption.map(d => dateOptTimeFormatter.parseDateTime(d.toString)),
+        "versionstarttime"       -> r.nextDateOption.map(d => dateOptTimeFormatter.parseDateTime(d.toString)),
+        "sourcemodificationtime" -> r.nextDateOption.map(d => dateOptTimeFormatter.parseDateTime(d.toString))
       )).map(_.toString())
 
       val geom = GeometryBuilder.geomFromString(r.nextString())
