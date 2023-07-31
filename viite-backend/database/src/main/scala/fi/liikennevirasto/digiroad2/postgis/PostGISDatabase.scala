@@ -7,6 +7,7 @@ import fi.liikennevirasto.digiroad2.util.ViiteProperties
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
 import net.postgis.jdbc.geometry.GeometryBuilder
 import org.postgresql.util.PGobject
+import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
 object PostGISDatabase {
   lazy val ds: DataSource = initDataSource
@@ -70,6 +71,18 @@ object PostGISDatabase {
       } finally {
         transactionOpen.set(false)
       }
+    }
+  }
+
+  /** Run transactions, and rollback them when finished.
+    * Usage in mind: running test spec files; Fixture reset data stays the same. */
+  def runWithRollback[T](f: => T): T = {
+    // Prevent deadlocks in DB because we create and delete links in tests and don't handle the project ids properly
+    // TODO: create projects with unique ids so we don't get into transaction deadlocks in tests
+    Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
+      val t = f
+      dynamicSession.rollback()
+      t
     }
   }
 

@@ -8,10 +8,8 @@ import org.slf4j.LoggerFactory
 class PingApi extends ScalatraServlet {
   private val logger = LoggerFactory.getLogger(getClass)
 
-  def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
-
   get("/") {
-    withDynSession {
+    PostGISDatabase.withDynSession {
       try {
         val dbTime = PingDAO.getDbTime
         Ok(s"OK (DB Time: $dbTime)\n")

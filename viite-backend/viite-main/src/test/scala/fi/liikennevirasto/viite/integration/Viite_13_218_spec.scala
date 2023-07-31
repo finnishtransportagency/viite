@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.kgv.KgvRoadLink
-import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.runWithRollback
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
 import fi.liikennevirasto.viite.dao._
@@ -19,8 +19,7 @@ import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.Answer
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import org.scalatest.mockito.MockitoSugar
-import slick.driver.JdbcDriver.backend.Database
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.driver.JdbcDriver.backend.Database.dynamicSession // for set<type>
 
 import scala.collection.immutable.HashMap
 import scala.collection.mutable.ListBuffer
@@ -95,25 +94,6 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
 
   after {
     reset(mockRoadLinkService)
-  }
-
-//  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
-//
-//  def runWithRollback[T](f: => T): T = {
-//    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
-//      val t = f
-//      dynamicSession.rollback()
-//  t
-//}
-//  }
-   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
-
-  def runWithRollback[T](f: => T): T = {
-    Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
-      val t = f
-      dynamicSession.rollback()
-      t
-    }
   }
 
   private def addressToRoadLink(ral: RoadAddress): RoadLink = {

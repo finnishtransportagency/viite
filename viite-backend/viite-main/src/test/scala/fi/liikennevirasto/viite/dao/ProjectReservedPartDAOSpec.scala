@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite.dao
 
-import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.runWithRollback
 import fi.liikennevirasto.viite.Dummies.dummyLinearLocation
 import fi.liikennevirasto.viite.NewIdValue
 import fi.vaylavirasto.viite.dao.Sequences
@@ -11,22 +11,11 @@ import fi.vaylavirasto.viite.postgis.DbUtils.runUpdateToDb
 import org.joda.time.DateTime
 import org.postgresql.util.PSQLException
 import org.scalatest.{FunSuite, Matchers}
-import slick.driver.JdbcDriver.backend.Database
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
 /**
   * Class to test DB trigger that does not allow reserving already reserved parts to project
   */
 class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
-
-  def runWithRollback(f: => Unit): Unit = {
-    // Prevent deadlocks in DB because we create and delete links in tests and don't handle the project ids properly
-    // TODO: create projects with unique ids so we don't get into transaction deadlocks in tests
-    Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
-      f
-      dynamicSession.rollback()
-    }
-  }
 
   val roadwayDAO = new RoadwayDAO
   val linearLocationDAO = new LinearLocationDAO

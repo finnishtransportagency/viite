@@ -1,21 +1,13 @@
 package fi.vaylavirasto.viite.dao
 
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.runWithRollback
 import fi.liikennevirasto.digiroad2.user.Configuration
 import fi.vaylavirasto.viite.postgis.DbUtils.runUpdateToDb
 import org.scalatest.{FunSuite, Matchers}
-import slick.jdbc.JdbcBackend.Database
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
 class PostGISUserProviderSpec extends FunSuite with Matchers {
 
-  def runWithRollback[T](f: => T): T = {
-    Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
-      val t = f
-      dynamicSession.rollback()
-      t
-    }
-  }
 
   val TestUserName = "userprovidertest"
   val north = 1000
