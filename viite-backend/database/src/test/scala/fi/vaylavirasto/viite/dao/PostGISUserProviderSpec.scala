@@ -1,13 +1,12 @@
 package fi.vaylavirasto.viite.dao
 
-import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.runWithRollback
 import fi.liikennevirasto.digiroad2.user.Configuration
 import fi.vaylavirasto.viite.postgis.DbUtils.runUpdateToDb
+import fi.vaylavirasto.viite.postgis.PostGISDatabase
+import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 import org.scalatest.{FunSuite, Matchers}
 
 class PostGISUserProviderSpec extends FunSuite with Matchers {
-
 
   val TestUserName = "userprovidertest"
   val north = 1000

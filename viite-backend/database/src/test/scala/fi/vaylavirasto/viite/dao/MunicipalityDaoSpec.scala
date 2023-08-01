@@ -1,7 +1,7 @@
 package fi.vaylavirasto.viite.dao
 
 import org.scalatest.{FunSuite, Matchers}
-import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.runWithRollback
+import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 
 
 /**

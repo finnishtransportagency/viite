@@ -1,7 +1,7 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.vaylavirasto.viite.dao.MunicipalityDAO
+import fi.vaylavirasto.viite.postgis.PostGISDatabase
 
 trait AddressLinkBuilder {
   val RoadNumber = "roadnumber"

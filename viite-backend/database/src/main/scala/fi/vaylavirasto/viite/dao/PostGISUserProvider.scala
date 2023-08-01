@@ -1,10 +1,10 @@
 package fi.vaylavirasto.viite.dao
 
-import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.user.{Configuration, User, UserProvider}
 import fi.vaylavirasto.viite.geometry.Point
+import fi.vaylavirasto.viite.postgis.PostGISDatabase
 import org.json4s._
 import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization.{read, write}

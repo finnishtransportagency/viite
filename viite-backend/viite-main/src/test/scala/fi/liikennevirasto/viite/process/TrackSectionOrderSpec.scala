@@ -1,6 +1,5 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.runWithRollback
 import fi.liikennevirasto.viite.Dummies
 import fi.liikennevirasto.viite.Dummies._
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
@@ -8,6 +7,7 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.util.toProjectLink
 import fi.vaylavirasto.viite.geometry.Point
 import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LinkGeomSource, RoadAddressChangeType, SideCode, Track}
+import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 
