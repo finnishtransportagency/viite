@@ -1,8 +1,8 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.withDynSession
 import fi.liikennevirasto.viite.dao.{InvalidRoadwayLength, MissingCalibrationPoint, MissingCalibrationPointFromJunction, MissingRoadwayPoint, OverlappingRoadwayOnLinearLocation, RoadNetworkDAO, Roadway}
 import fi.liikennevirasto.viite.process.RoadPart
+import fi.vaylavirasto.viite.postgis.PostGISDatabase.withDynSession
 import org.slf4j.LoggerFactory
 
 class RoadNetworkValidator {

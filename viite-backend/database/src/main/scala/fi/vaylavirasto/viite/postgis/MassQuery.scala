@@ -1,8 +1,9 @@
-package fi.liikennevirasto.digiroad2.postgis
+package fi.vaylavirasto.viite.postgis
 
 import fi.liikennevirasto.digiroad2.util.LogUtils
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import fi.vaylavirasto.viite.dao.BaseDAO
+import slick.driver.JdbcDriver.backend.Database.dynamicSession
+
 import scala.language.implicitConversions
 
 object MassQuery extends BaseDAO {

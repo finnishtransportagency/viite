@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.vaylavirasto.viite.dao.PingDAO
+import fi.vaylavirasto.viite.postgis.PostGISDatabase
 import org.scalatra.{InternalServerError, Ok, ScalatraServlet}
 import org.slf4j.LoggerFactory
 

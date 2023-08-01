@@ -1,8 +1,8 @@
 package fi.liikennevirasto.viite.dao
 
 import fi.vaylavirasto.viite.model.CalibrationPointType
+import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 import org.scalatest.{FunSuite, Matchers}
-import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.runWithRollback
 
 class CalibrationPointDAOSpec extends FunSuite with Matchers {
 

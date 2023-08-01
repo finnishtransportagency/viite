@@ -1,8 +1,8 @@
 package fi.liikennevirasto.viite.dao
 
-import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.runWithRollback
 import fi.vaylavirasto.viite.dao.{RoadName, RoadNameDAO, RoadNameForRoadAddressBrowser, Sequences}
 import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, Track}
+import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 import org.scalatest.{FunSuite, Matchers}
 import org.joda.time.DateTime
 

@@ -1,10 +1,10 @@
 package fi.liikennevirasto.viite.dao
 
-import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.runWithRollback
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.vaylavirasto.viite.postgis.DbUtils.runUpdateToDb
+import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar

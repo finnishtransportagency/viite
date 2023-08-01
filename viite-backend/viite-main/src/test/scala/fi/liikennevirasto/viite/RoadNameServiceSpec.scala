@@ -1,8 +1,8 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.runWithRollback
 import fi.vaylavirasto.viite.dao.RoadNameDAO
 import fi.vaylavirasto.viite.postgis.DbUtils.runUpdateToDb
+import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 
