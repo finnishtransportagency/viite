@@ -1493,8 +1493,10 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
         val roadwayPointIds = roadwayPointDAO.fetchByRoadwayNumber(roadwayNumber).map(_.id)
 
         val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPointIds)
+        val junctionIds = junctionPointTemplates.map(jp => jp.junctionId).toSet
 
         junctionPointTemplates.size should be(3)
+        junctionIds.size should be (1)
 
         val (junctionPointsAtMiddleOfTheRoad, junctionPointsAtTheEndOfRoad) = junctionPointTemplates.partition(jp => jp.addrM == 30)
 
