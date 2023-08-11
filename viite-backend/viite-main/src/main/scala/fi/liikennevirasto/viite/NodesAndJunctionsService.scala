@@ -533,11 +533,10 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
                 val tail = roadsInLastPoint
                 (head, tail)
               case Discontinuity.EndOfRoad =>
-                // Roundabouts (20000 to 39999) : at the last link of the round lane - EndOfRoad or Discontinuous
-                // Get the roads with same road number only if they are connected to the "End of road" - projectlinks' endPoint
+                // Get the roads with same road number only if they are connected to the "End of road" - projectlinks' endPoint (for loop road junction points)
                 // otherwise only get the roads that have different road number
-                val head = roadsInFirstPoint.filter(road => road.startingPoint.connected(projectLink.endPoint) || road.endPoint.connected(projectLink.endPoint) || road.roadNumber != projectLink.roadNumber)
-                val tail = roadsInLastPoint.filter(road => road.startingPoint.connected(projectLink.endPoint) || road.endPoint.connected(projectLink.endPoint) || road.roadNumber != projectLink.roadNumber)
+                val head = roadsInFirstPoint filter RoadAddressFilters.connectedToEndOrDifferentRoad(projectLink)
+                val tail = roadsInLastPoint filter RoadAddressFilters.connectedToEndOrDifferentRoad(projectLink)
                 (head, tail)
               case _ =>
                 // Ramps : where road number OR road part number change
@@ -548,11 +547,10 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
           } else {
             projectLink.discontinuity match {
               case Discontinuity.EndOfRoad =>
-                // Get the roads with same road number only if they are connected to the "End of road" - projectlinks' endPoint
+                // Get the roads with same road number only if they are connected to the "End of road" - projectlinks' endPoint (for loop road junction points)
                 // otherwise only get the roads that have different road number
-                val tail = roadsInLastPoint.filter(road => road.startingPoint.connected(projectLink.endPoint) || road.endPoint.connected(projectLink.endPoint) || road.roadNumber != projectLink.roadNumber)
-                val head = roadsInFirstPoint.filter(road => road.startingPoint.connected(projectLink.endPoint) || road.endPoint.connected(projectLink.endPoint) || road.roadNumber != projectLink.roadNumber)
-
+                val head = roadsInFirstPoint filter RoadAddressFilters.connectedToEndOrDifferentRoad(projectLink)
+                val tail = roadsInLastPoint filter RoadAddressFilters.connectedToEndOrDifferentRoad(projectLink)
                 (head, tail)
               case Discontinuity.MinorDiscontinuity =>
                 // Discontinuity cases for same road number
@@ -658,8 +656,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
           // VIITE-3043 find the existing junction for "loop road" aka "lenkkitie" that ends in itself.
           // This is only for the last project link with EndOfRoad Discontinuity otherwise its going to return nothing.
-          val existingJunctionId = if (projectLink.discontinuity == Discontinuity.EndOfRoad && roadsTo.forall(road => road.roadNumber == projectLink.roadNumber && road.roadPartNumber == projectLink.roadNumber)
-            && roadsFrom.forall(road => road.roadNumber == projectLink.roadNumber && road.roadPartNumber == projectLink.roadNumber)) {
+          val existingJunctionId = if (projectLink.discontinuity == Discontinuity.EndOfRoad && roadsTo.forall(road => road.roadNumber == projectLink.roadNumber && road.roadPartNumber == projectLink.roadPartNumber)
+            && roadsFrom.forall(road => road.roadNumber == projectLink.roadNumber && road.roadPartNumber == projectLink.roadPartNumber)) {
             val junctionIds = {
               val roadsToRoadwayPointIds = roadsTo.flatMap(r => roadwayPointDAO.fetch(r.roadwayNumber, r.endAddrMValue).map(_.id).toSeq)
               val roadsFromRoadwayPointIds = roadsFrom.flatMap(r => roadwayPointDAO.fetch(r.roadwayNumber, r.startAddrMValue).map(_.id).toSeq)

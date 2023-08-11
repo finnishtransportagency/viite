@@ -1447,8 +1447,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
         val plId1 = Sequences.nextProjectLinkId
         val plId2 = Sequences.nextProjectLinkId
         val projectId = Sequences.nextViiteProjectId
-        val linkId1 = 12345.toString
-        val linkId2 = 12346.toString
+        val linkId1 = "12345"
+        val linkId2 = "12346"
 
         val geom1 = Seq(Point(0.0, 30.0), Point(30.0, 30.0))
         val geom2 = Seq(Point(30.0, 30.0), Point(30.0, 30.0)) // NOTE: these are the starting and ending points, the link does make a loop like in the illustration above

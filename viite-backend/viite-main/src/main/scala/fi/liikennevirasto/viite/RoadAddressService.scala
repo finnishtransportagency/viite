@@ -1229,6 +1229,10 @@ object AddressConsistencyValidator {
 }
 
 object RoadAddressFilters {
+  def connectedToEndOrDifferentRoad(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    next.startingPoint.connected(curr.endPoint) || next.endPoint.connected(curr.endPoint) || next.roadNumber != curr.roadNumber
+  }
+
   def sameRoad(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
     curr.roadNumber == next.roadNumber
   }
