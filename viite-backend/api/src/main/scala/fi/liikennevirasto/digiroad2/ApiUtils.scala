@@ -18,7 +18,7 @@ import scala.util.Random
 
 object ApiUtils {
   val logger: Logger = LoggerFactory.getLogger(getClass)
-  lazy val s3Service: awsService.S3.type = awsService.S3
+  /*lazy*/ val s3Service: awsService.S3.type = awsService.S3
   val s3Bucket: String = ViiteProperties.apiS3BucketName
   val objectTTLSeconds: Int =
     if (ViiteProperties.apiS3ObjectTTLSeconds != null) ViiteProperties.apiS3ObjectTTLSeconds.toInt
@@ -31,7 +31,7 @@ object ApiUtils {
     * Avoid API Gateway restrictions
     * API Gateway timeouts if response is not received in 30 sec
     *  -> Return redirect to same url with retry param
-    *  -> Save response to S3 when its ready (access with pre-signed url)
+    *  -> Save response to S3 when it is ready (access with pre-signed url)
     */
   def avoidRestrictions[T](requestId: String, request: HttpServletRequest, params: Params,
                            responseType: String = "json")(f: Params => T): Any = {
@@ -50,11 +50,11 @@ object ApiUtils {
     val objectExists = s3Service.isS3ObjectAvailable(s3Bucket, workId, 2, Some(objectTTLSeconds))
 
     (params.get("retry"), objectExists) match {
-      case (_, true) =>
+      case (_, true) => // the result is ready, make the last redirect to the resulting file
         val preSignedUrl = s3Service.getPreSignedUrl(s3Bucket, workId)
         redirectToUrl(preSignedUrl, queryId)
 
-      case (None, false) =>
+      case (None, false) => // first call
         newQuery(workId, queryId, path, f, params, responseType)
 
       case (Some(retry: String), false) =>
@@ -75,6 +75,8 @@ object ApiUtils {
     s"${identifiers.mkString("_")}.$contentType"
   }
 
+  /** Get the API request running (returns in the future, saving the result into s3),
+    * and return with a redirect address. */
   def newQuery[T](workId: String, queryId: String, path: String, f: Params => T, params: Params, responseType: String): Any = {
     Future { // Complete query and save results to s3 in future
       val finished = f(params)
@@ -97,13 +99,18 @@ object ApiUtils {
     }
   }
 
+  /** Set the new redirect URL correctly, according to the given <i>nextRetry</i>.
+    * (Add retry param, or modify it as <i>nextRetry</i> tells, or make an URL without one.) */
   def redirectToUrl(path: String, queryId: String, nextRetry: Option[Int] = None): ActionResult = {
     nextRetry match {
       case Some(retryValue) if retryValue == 1 =>
         val paramSeparator = if (path.contains("?")) "&" else "?"
+logger.info(s"API LOG $queryId: Redirecting first time $path at ${DateTime.now}")
         Found.apply(path + paramSeparator + s"queryId=$queryId&retry=$retryValue")
       case Some(retryValue) if retryValue > 1 =>
         val newPath = path.replaceAll("""retry=\d+""", s"retry=$retryValue")
+logger.info(s"API LOG $queryId: Redirecting again $path at ${DateTime.now}")
+
         Found.apply(newPath)
       case _ =>
         logger.info(s"API LOG $queryId: Completed the query at ${DateTime.now}")

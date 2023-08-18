@@ -59,6 +59,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
     contentType = formats("json")
     ApiUtils.avoidRestrictions(apiId, request, params) { params =>
 
+logger.info(s"GET request for ${request.getRequestURI}?${request.getQueryString} --RUNNING--")
       val municipality = params.get("municipality").getOrElse(halt(BadRequest("Missing mandatory 'municipality' parameter")))
 
       //val searchDate = parseIsoDate(params.get("situationDate"))
@@ -67,15 +68,20 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
         val searchDate = dateParameterOptionGetValidOrThrow("situationDate")
         val knownAddressLinks = roadAddressService.getAllByMunicipality(municipalityCode, searchDate)
           .filter(ral => ral.roadNumber > 0)
+val road_address_API_result = 
         roadAddressLinksToApi(knownAddressLinks)
+logger.info(s"GET request for ${request.getRequestURI}?${request.getQueryString} --FINISHED--")
+road_address_API_result
       }
       catch {
         case nfe: NumberFormatException =>
-          BadRequestWithLoggerWarn(s"Incorrectly formatted municipality code: '$municipality'", nfe.getMessage)
+logger.info(s"GET request for ${request.getRequestURI}?${request.getQueryString} --ENDED in NumberFormatException--")
+          BadRequestWithLoggerWarn(s"Incorrectly formatted municipality code: '$municipality}'", nfe.getMessage)
       // TODO Leaving as comment for now... but... This is unexpected generic exception; rather point to telling to the dev team -> handleCommonIntegrationAPIExceptions? -> Remove from here
       //case e: Exception =>
       //  BadRequestWithLoggerWarn(s"Failed to get road addresses for municipality $municipalityCode", e.getMessage)
         case t: Throwable =>
+logger.info(s"GET request for ${request.getRequestURI}?${request.getQueryString} --ENDED in Throwable--")
           handleCommonIntegrationAPIExceptions(t, getRoadAddressesByMunicipality.operationId)
       }
     }
@@ -484,17 +490,23 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
    * Intended usage in a catch block after your known function specific Exception cases
    * @throws Throwable if it is considered a fatal one. */
   def handleCommonIntegrationAPIExceptions(t: Throwable, operationId: Option[String]): Unit = {
+val requestLogString = s"GET request for ${request.getRequestURI}?${request.getQueryString} (${operationId})"
     t match {
       case ve: ViiteException =>
+logger.info(s"$requestLogString --ENDED in ViiteException--")
         BadRequestWithLoggerWarn(s"Check the given parameters. ${ve.getMessage}", "")
       case iae: IllegalArgumentException =>
+logger.info(s"$requestLogString --ENDED in IllegalArgumentException--")
         BadRequestWithLoggerWarn(s"$ISOdateTimeDescription. Now got '${request.getQueryString}''", iae.getMessage)
       case psqle: PSQLException => // TODO remove? This applies when biiiig year (e.g. 2000000) given to DateTime parser. But year now restricted to be less than 100 years in checks before giving to dateTime parsing
+logger.info(s"$requestLogString --ENDED in PSQLException--")
         BadRequestWithLoggerWarn(s"Date out of bounds, check the given dates: ${request.getQueryString}.", s"${psqle.getMessage}")
       case nf if NonFatal(nf) =>
         val requestString = s"GET request for ${request.getRequestURI}?${request.getQueryString} ($operationId)"
+logger.info(s"$requestLogString --ENDED in NonFatal--")
         haltWithHTTP500WithLoggerError(requestString, nf)
       case t if !NonFatal(t) =>
+logger.info(s"$requestLogString --ENDED in !NonFatal--")
         throw t
     }
   }
