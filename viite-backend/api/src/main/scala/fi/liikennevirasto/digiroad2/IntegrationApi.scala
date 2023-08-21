@@ -63,7 +63,12 @@ logger.info(s"GET request for ${request.getRequestURI}?${request.getQueryString}
       val municipality = params.get("municipality").getOrElse(halt(BadRequest("Missing mandatory 'municipality' parameter")))
 
       //val searchDate = parseIsoDate(params.get("situationDate"))
+/*
+      // -- try-catch not in use due to usage of avoidRestrictions;  --
+      // -- We must not eat the exceptions, but let them go through, --
+      // -- so that the avoidRestrictions thread can print them      --
       try {
+*/
         val municipalityCode = municipality.toInt // may throw java.lang.NumberFormatException
         val searchDate = dateParameterOptionGetValidOrThrow("situationDate")
         val knownAddressLinks = roadAddressService.getAllByMunicipality(municipalityCode, searchDate)
@@ -72,7 +77,12 @@ val road_address_API_result =
         roadAddressLinksToApi(knownAddressLinks)
 logger.info(s"GET request for ${request.getRequestURI}?${request.getQueryString} --FINISHED--")
 road_address_API_result
+
+/*
       }
+  // -- try-catch not in use due to usage of avoidRestrictions;  --
+  // -- We must not eat the exceptions, but let them go through, --
+  // -- so that the avoidRestrictions thread can print them      --
       catch {
         case nfe: NumberFormatException =>
 logger.info(s"GET request for ${request.getRequestURI}?${request.getQueryString} --ENDED in NumberFormatException--")
@@ -84,6 +94,7 @@ logger.info(s"GET request for ${request.getRequestURI}?${request.getQueryString}
 logger.info(s"GET request for ${request.getRequestURI}?${request.getQueryString} --ENDED in Throwable--")
           handleCommonIntegrationAPIExceptions(t, getRoadAddressesByMunicipality.operationId)
       }
+*/
     }
   }
 
