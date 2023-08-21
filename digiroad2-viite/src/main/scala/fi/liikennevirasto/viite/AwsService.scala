@@ -32,7 +32,7 @@ class AwsService {
         s3.putObject(putRequest, RequestBody.fromString(body))
       } catch {
         case e: Throwable =>
-          logger.error("Unable to save to s3 ($s3Bucket), file id: $id", e)
+          logger.error(s"Unable to save to s3 ($s3Bucket), file id: $id", e)
       }
     }
 
