@@ -220,7 +220,7 @@ trait KgvOperation extends LinkOperationsAbstract{
           result
         }
         catch {
-          case te: TimeoutException => logger.info(s"queryWithPaginationThreaded - Future TIMEOUTed for $baseUrl")
+          case te: TimeoutException => logger.error(s"queryWithPaginationThreaded - Future TIMEOUTed" for $baseUrl")
             throw (te)
         }
       }
