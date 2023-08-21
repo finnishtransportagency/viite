@@ -79,7 +79,9 @@ object ApiUtils {
     * and return with a redirect address. */
   def newQuery[T](workId: String, queryId: String, path: String, f: Params => T, params: Params, responseType: String): Any = {
     Future { // Complete query and save results to s3 in future
+logger.info(s"We are in the future! (newQuery for queryId = $queryId)--")
       val finished = f(params)
+logger.info(s"Future is here! (queryId = $queryId)--")
       val responseBody = formatResponse(finished,  responseType)
       s3Service.saveFileToS3(s3Bucket, workId, responseBody, responseType)
     }

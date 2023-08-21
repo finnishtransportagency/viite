@@ -14,9 +14,10 @@ import org.json4s.jackson.JsonMethods.parse
 
 import java.io.IOException
 import java.net.URLEncoder
+import java.util.concurrent.TimeUnit
 import scala.annotation.tailrec
 import scala.collection.mutable
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await, Future, TimeoutException}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.util.Try
@@ -176,6 +177,8 @@ trait KgvOperation extends LinkOperationsAbstract{
   }
 
   private def queryWithPaginationThreaded(baseUrl: String = ""): Seq[LinkType] = {
+    val MAX_WAIT_TIME_MINUTES = 5 // How long we shall wait for the Future to return with the pagination data
+
     val pageAllReadyFetched: mutable.HashSet[String] = new mutable.HashSet()
 
     @tailrec
@@ -203,6 +206,7 @@ trait KgvOperation extends LinkOperationsAbstract{
       }
     }
 
+    logger.info(s"queryWithPaginationThreaded - Future starting for $baseUrl")
     val resultF = for { fut1 <- Future(paginateAtomic(baseUrl = baseUrl, limit = BATCH_SIZE, position = 0))
                         fut2 <- Future(paginateAtomic(baseUrl = baseUrl, limit = BATCH_SIZE, position = BATCH_SIZE * 2))
                         fut3 <- Future(paginateAtomic(baseUrl = baseUrl, limit = BATCH_SIZE, position = BATCH_SIZE * 3))
@@ -210,7 +214,15 @@ trait KgvOperation extends LinkOperationsAbstract{
 
     val items: (Set[FeatureCollection], Set[FeatureCollection], Set[FeatureCollection]) =
       time(logger, "Fetch KGV bounding box data") {
-        Await.result(resultF, Duration.Inf)
+        try {
+          val result = Await.result(resultF, Duration.apply(MAX_WAIT_TIME_MINUTES, TimeUnit.MINUTES))
+          logger.info(s"queryWithPaginationThreaded - Future waiting completed for $baseUrl")
+          result
+        }
+        catch {
+          case te: TimeoutException => logger.info(s"queryWithPaginationThreaded - Future TIMEOUTed for $baseUrl")
+            throw (te)
+        }
       }
     (items._1 ++ items._2 ++ items._3).flatMap(_.features.par.map(feature=>
       Extractor.extractFeature(feature, linkGeomSource).asInstanceOf[LinkType])).toList
