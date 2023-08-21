@@ -60,7 +60,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
     contentType = formats("json")
     ApiUtils.avoidRestrictions(apiId, request, params) { params =>
 
-logger.info(s"GET request for ${request.getRequestURI}?${request.getQueryString} --RUNNING--")
+//logger.info(s"GET request for ${request.getRequestURI}?${request.getQueryString} --RUNNING--") // Information logged in ApiUtils, at Future startup. Cannot use here; request not available in the Future thread.
       val municipality = params.get("municipality").getOrElse(halt(BadRequest("Missing mandatory 'municipality' parameter")))
 
       //val searchDate = parseIsoDate(params.get("situationDate"))
@@ -76,7 +76,7 @@ logger.info(s"GET request for ${request.getRequestURI}?${request.getQueryString}
           .filter(ral => ral.roadNumber > 0)
 val road_address_API_result = 
         roadAddressLinksToApi(knownAddressLinks)
-logger.info(s"GET request for ${request.getRequestURI}?${request.getQueryString} --FINISHED--")
+//logger.info(s"GET request for ${request.getRequestURI}?${request.getQueryString} --FINISHED--") // Information logged in ApiUtils, at Future startup. Cannot use here; request not available in the Future thread.
 road_address_API_result
 
 /*
