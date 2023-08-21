@@ -12,9 +12,10 @@ import org.scalatra.{ActionResult, BadRequest, Found, Params}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.annotation.tailrec
+import scala.compat.Platform.EOL
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.util.Random
+import scala.util.{Failure, Random}
 
 object ApiUtils {
   val logger: Logger = LoggerFactory.getLogger(getClass)
@@ -29,6 +30,7 @@ object ApiUtils {
 
   /**
     * Avoid API Gateway restrictions
+    * When using avoidRestrictions, do not hide errors but delegate these to avoidRestrictions method.
     * API Gateway timeouts if response is not received in 30 sec
     *  -> Return redirect to same url with retry param
     *  -> Save response to S3 when it is ready (access with pre-signed url)
@@ -63,7 +65,7 @@ object ApiUtils {
           redirectBasedOnS3ObjectExistence(workId, queryId, path, currentRetry)
         else {
           logger.info(s"API LOG $queryId: Maximum retries reached. Unable to respond to query.")
-          BadRequest("Maximum retries reached. Unable to get object.")
+          BadRequest("Request with id $queryId failed. Maximum retries reached. Unable to get object.")
         }
     }
   }
@@ -84,6 +86,10 @@ logger.info(s"We are in the future! (newQuery for queryId = $queryId)--")
 logger.info(s"Future is here! (queryId = $queryId)--")
       val responseBody = formatResponse(finished,  responseType)
       s3Service.saveFileToS3(s3Bucket, workId, responseBody, responseType)
+    }.onComplete {
+      case Failure(e) =>
+        logger.error(s"API LOG $queryId: error with message ${e.getMessage} and stacktrace: \n ${e.getStackTrace.mkString("", EOL, EOL)}")
+    //case Success(t) => Unit
     }
     redirectToUrl(path, queryId, Some(1))
   }
