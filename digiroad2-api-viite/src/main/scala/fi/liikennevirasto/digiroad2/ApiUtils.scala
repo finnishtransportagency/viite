@@ -15,7 +15,7 @@ import scala.annotation.tailrec
 import scala.compat.Platform.EOL
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.util.{Failure, Random}
+import scala.util.{Failure, Random, Success}
 
 object ApiUtils {
   val logger: Logger = LoggerFactory.getLogger(getClass)
@@ -65,7 +65,7 @@ object ApiUtils {
           redirectBasedOnS3ObjectExistence(workId, queryId, path, currentRetry)
         else {
           logger.info(s"API LOG $queryId: Maximum retries reached. Unable to respond to query.")
-          BadRequest("Request with id $queryId failed. Maximum retries reached. Unable to get object.")
+          BadRequest(s"Request with id $queryId failed. Maximum retries reached. Unable to get object.")
         }
     }
   }
@@ -89,7 +89,8 @@ logger.info(s"Future is here! (queryId = $queryId)--")
     }.onComplete {
       case Failure(e) =>
         logger.error(s"API LOG $queryId: error with message ${e.getMessage} and stacktrace: \n ${e.getStackTrace.mkString("", EOL, EOL)}")
-    //case Success(t) => Unit
+      case Success(t) =>
+        logger.info(s"API LOG $queryId: succeeded")
     }
     redirectToUrl(path, queryId, Some(1))
   }
