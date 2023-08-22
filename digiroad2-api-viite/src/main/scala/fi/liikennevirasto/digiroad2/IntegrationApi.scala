@@ -59,45 +59,83 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
   get("/road_address", operation(getRoadAddressesByMunicipality)) {
     contentType = formats("json")
     ApiUtils.avoidRestrictions(apiId, request, params) { params =>
-
-//logger.info(s"GET request for ${request.getRequestURI}?${request.getQueryString} --RUNNING--") // Information logged in ApiUtils, at Future startup. Cannot use here; request not available in the Future thread.
-      val municipality = params.get("municipality").getOrElse(halt(BadRequest("Missing mandatory 'municipality' parameter")))
-
-      //val searchDate = parseIsoDate(params.get("situationDate"))
-/*
-      // -- try-catch not in use due to usage of avoidRestrictions;  --
-      // -- We must not eat the exceptions, but let them go through, --
-      // -- so that the avoidRestrictions thread can print them      --
-      try {
-*/
-        val municipalityCode = municipality.toInt // may throw java.lang.NumberFormatException
-        val searchDate = dateParameterOptionGetValidOrThrow("situationDate")
-        val knownAddressLinks = roadAddressService.getAllByMunicipality(municipalityCode, searchDate)
-          .filter(ral => ral.roadNumber > 0)
-val road_address_API_result = 
-        roadAddressLinksToApi(knownAddressLinks)
-//logger.info(s"GET request for ${request.getRequestURI}?${request.getQueryString} --FINISHED--") // Information logged in ApiUtils, at Future startup. Cannot use here; request not available in the Future thread.
-road_address_API_result
-
-/*
+      params.get("municipality").map { municipality =>
+        try {
+          val municipalityCode = municipality.toInt
+          val searchDate = parseIsoDate(params.get("situationDate"))
+          try {
+            val knownAddressLinks = roadAddressService.getAllByMunicipality(municipalityCode, searchDate)
+              .filter(ral => ral.roadNumber > 0)
+            roadAddressLinksToApi(knownAddressLinks)
+          } catch {
+            case e: Exception =>
+              val message = s"Failed to get road addresses for municipality $municipalityCode"
+              logger.error(message, e)
+              BadRequest(message)
+          }
+        } catch {
+          case nfe: NumberFormatException =>
+            val message = s"Incorrectly formatted municipality code: " + nfe.getMessage
+            logger.error(message)
+            BadRequest(message)
+          case iae: IllegalArgumentException =>
+            val message = s"Incorrectly formatted date: " + iae.getMessage
+            logger.error(message)
+            BadRequest(message)
+          case e: Exception =>
+            val message = s"Invalid municipality code: $municipality"
+            logger.error(message)
+            BadRequest(message)
+        }
+      } getOrElse {
+        BadRequest("Missing mandatory 'municipality' parameter")
       }
-  // -- try-catch not in use due to usage of avoidRestrictions;  --
-  // -- We must not eat the exceptions, but let them go through, --
-  // -- so that the avoidRestrictions thread can print them      --
-      catch {
-        case nfe: NumberFormatException =>
-logger.info(s"GET request for ${request.getRequestURI}?${request.getQueryString} --ENDED in NumberFormatException--")
-          BadRequestWithLoggerWarn(s"Incorrectly formatted municipality code: '${municipality}'", nfe.getMessage)
-      // TODO Leaving as comment for now... but... This is unexpected generic exception; rather point to telling to the dev team -> handleCommonIntegrationAPIExceptions? -> Remove from here
-      //case e: Exception =>
-      //  BadRequestWithLoggerWarn(s"Failed to get road addresses for municipality $municipalityCode", e.getMessage)
-        case t: Throwable =>
-logger.info(s"GET request for ${request.getRequestURI}?${request.getQueryString} --ENDED in Throwable--")
-          handleCommonIntegrationAPIExceptions(t, getRoadAddressesByMunicipality.operationId)
-      }
-*/
     }
   }
+
+  /** BULLETPROOFED VERSION - PROBLEMS WITH PROD-environment. Using older version for now. */
+//  get("/road_address", operation(getRoadAddressesByMunicipality)) {
+//    contentType = formats("json")
+//    ApiUtils.avoidRestrictions(apiId, request, params) { params =>
+//
+////logger.info(s"GET request for ${request.getRequestURI}?${request.getQueryString} --RUNNING--") // Information logged in ApiUtils, at Future startup. Cannot use here; request not available in the Future thread.
+//      val municipality = params.get("municipality").getOrElse(halt(BadRequest("Missing mandatory 'municipality' parameter")))
+//
+//      //val searchDate = parseIsoDate(params.get("situationDate"))
+///*
+//      // -- try-catch not in use due to usage of avoidRestrictions;  --
+//      // -- We must not eat the exceptions, but let them go through, --
+//      // -- so that the avoidRestrictions thread can print them      --
+//      try {
+// */
+//        val municipalityCode = municipality.toInt // may throw java.lang.NumberFormatException
+//        val searchDate = dateParameterOptionGetValidOrThrow("situationDate")
+//        val knownAddressLinks = roadAddressService.getAllByMunicipality(municipalityCode, searchDate)
+//          .filter(ral => ral.roadNumber > 0)
+//val road_address_API_result =
+//        roadAddressLinksToApi(knownAddressLinks)
+////logger.info(s"GET request for ${request.getRequestURI}?${request.getQueryString} --FINISHED--") // Information logged in ApiUtils, at Future startup. Cannot use here; request not available in the Future thread.
+//road_address_API_result
+//
+///*
+//      }
+//  // -- try-catch not in use due to usage of avoidRestrictions;  --
+//  // -- We must not eat the exceptions, but let them go through, --
+//  // -- so that the avoidRestrictions thread can print them      --
+//      catch {
+//        case nfe: NumberFormatException =>
+//logger.info(s"GET request for ${request.getRequestURI}?${request.getQueryString} --ENDED in NumberFormatException--")
+//          BadRequestWithLoggerWarn(s"Incorrectly formatted municipality code: '${municipality}'", nfe.getMessage)
+//      // TODO Leaving as comment for now... but... This is unexpected generic exception; rather point to telling to the dev team -> handleCommonIntegrationAPIExceptions? -> Remove from here
+//      //case e: Exception =>
+//      //  BadRequestWithLoggerWarn(s"Failed to get road addresses for municipality $municipalityCode", e.getMessage)
+//        case t: Throwable =>
+//logger.info(s"GET request for ${request.getRequestURI}?${request.getQueryString} --ENDED in Throwable--")
+//          handleCommonIntegrationAPIExceptions(t, getRoadAddressesByMunicipality.operationId)
+//      }
+//*/
+//    }
+//  }
 
 
   val getRoadNetworkSummary: SwaggerSupportSyntax.OperationBuilder = (
