@@ -1417,6 +1417,94 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       junctionPointTemplates.length should be(0)
     }
   }
+  test(s"Test nodesAndJunctionsService.handleJunctionsAndJunctionPoints When creating a loop road with a ramp (roadNumber in range of 20000 - 39000) then junction and junction points should be created. ") {
+    loopRoadTest(25000)
+  }
+
+  test(s"Test nodesAndJunctionsService.handleJunctionsAndJunctionPoints When creating a loop road then junction and junction points should be created. ") {
+    loopRoadTest(46001)
+  }
+
+  def loopRoadTest(roadNumber: Long):Unit = {
+      runWithRollback {
+        /*
+        * |--C1-->|O|---------|
+        *          ^          |
+        *          |    C2    |
+        *          |          |
+        *          ------------
+        * C1: Combined link 1
+        * C2: looping link that ends on itself
+        * 0: Illustration where junction points should be created
+        *
+        * */
+
+        val roadPartNumber = 1L
+        val roadwayNumber = Sequences.nextRoadwayNumber
+        val roadwayId = Sequences.nextRoadwayId
+        val llId1 = Sequences.nextLinearLocationId
+        val llId2 = Sequences.nextLinearLocationId
+        val plId1 = Sequences.nextProjectLinkId
+        val plId2 = Sequences.nextProjectLinkId
+        val projectId = Sequences.nextViiteProjectId
+        val linkId1 = "12345"
+        val linkId2 = "12346"
+
+        val geom1 = Seq(Point(0.0, 30.0), Point(30.0, 30.0))
+        val geom2 = Seq(Point(30.0, 30.0), Point(30.0, 30.0)) // NOTE: these are the starting and ending points, the link does make a loop like in the illustration above
+
+        val normalProjectLink = dummyProjectLink(roadNumber, roadPartNumber, Track.Combined, Discontinuity.Continuous, 0, 30, 0, 30, Some(DateTime.now()), None, linkId1, 0, 30, SideCode.TowardsDigitizing, RoadAddressChangeType.New, projectId, AdministrativeClass.State, geom1, roadwayNumber).copy(id = plId1, projectId = projectId, roadwayId = roadwayId, linearLocationId = llId1)
+        val loopProjectLink = dummyProjectLink(roadNumber, roadPartNumber, Track.Combined, Discontinuity.EndOfRoad, 30, 120, 30, 120, Some(DateTime.now()), None, linkId2, 0, 120, SideCode.TowardsDigitizing, RoadAddressChangeType.New, projectId, AdministrativeClass.State, geom2, roadwayNumber).copy(id = plId2, projectId = projectId, roadwayId = roadwayId, linearLocationId = llId2)
+        val projectLinks = Seq(normalProjectLink, loopProjectLink)
+
+        roadwayDAO.create(Seq(Roadway(roadwayId, roadwayNumber, roadNumber, roadPartNumber, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, 0L, 120L, false, DateTime.now, None, "test", Some("test"), 14L)))
+        val roadway = roadwayDAO.fetchByRoadwayNumber(roadwayNumber).get
+
+        linearLocationDAO.create(
+          Seq(
+            LinearLocation(llId1, 1.0, linkId1, 0.0, 30.0, SideCode.TowardsDigitizing, 1691387623L, (CalibrationPointReference(None, None), CalibrationPointReference(None, None)), geom1, LinkGeomSource.NormalLinkInterface, roadwayNumber, Some(DateTime.now), None),
+            LinearLocation(llId2, 2.0, linkId2, 0.0, 90.0, SideCode.TowardsDigitizing, 1691387623L, (CalibrationPointReference(None, None), CalibrationPointReference(None, None)), geom2, LinkGeomSource.NormalLinkInterface, roadwayNumber, Some(DateTime.now), None)
+          )
+        )
+        val linearLocations = linearLocationDAO.fetchByIdMassQuery(Seq(llId1, llId2))
+
+        roadwayPointDAO.create(roadwayNumber, 30, "test")
+        roadwayPointDAO.create(roadwayNumber, 120, "test")
+
+        val roadwayChanges = Seq(
+          ProjectRoadwayChange(projectId, Some("test prject"), 14L, "test", DateTime.now,
+            RoadwayChangeInfo(RoadAddressChangeType.New,
+              RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
+              RoadwayChangeSection(Some(46001), Some(0), Some(1), Some(1), Some(0), Some(106), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
+              Discontinuity.EndOfRoad, AdministrativeClass.State, false, 1010664L, 14L),
+            DateTime.now)).toList
+
+        val mappedRoadwayNumbers = Seq(
+          ProjectRoadLinkChange(plId1, 0, 0, llId1, 0, 0, 46001, 1, 0, 0, 0, 30, RoadAddressChangeType.New, false, 0, roadwayNumber),
+          ProjectRoadLinkChange(plId2, 0, 0, llId2, 0, 0, 46001, 1, 0, 0, 30, 120, RoadAddressChangeType.New, false, 0, roadwayNumber)
+        )
+
+        when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(geom1.head, geom1.head), roadNumberLimits)).thenReturn(linearLocations)
+        when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(geom1.last, geom1.last), roadNumberLimits)).thenReturn(linearLocations)
+        when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(roadwayNumber))).thenReturn(Seq(roadway))
+
+        nodesAndJunctionsService.handleJunctionAndJunctionPoints(roadwayChanges, projectLinks, mappedRoadwayNumbers)
+
+        val roadwayPointIds = roadwayPointDAO.fetchByRoadwayNumber(roadwayNumber).map(_.id)
+
+        val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPointIds)
+        val junctionIds = junctionPointTemplates.map(jp => jp.junctionId).toSet
+
+        junctionPointTemplates.size should be(3)
+        junctionIds.size should be (1)
+
+        val (junctionPointsAtMiddleOfTheRoad, junctionPointsAtTheEndOfRoad) = junctionPointTemplates.partition(jp => jp.addrM == 30)
+
+        junctionPointsAtMiddleOfTheRoad.size should be(2)
+        junctionPointsAtTheEndOfRoad.size should be(1)
+        junctionPointsAtTheEndOfRoad.head.addrM should be(120)
+      }
+    }
 
   test("Test nodesAndJunctionsService.handleJunctionTemplates When creating two track Discontinuous links and one combined Continuous and one combined EndOfRoad that are not connected by geometry, only by address Then junction template and junctions points should not be created.") {
     runWithRollback {

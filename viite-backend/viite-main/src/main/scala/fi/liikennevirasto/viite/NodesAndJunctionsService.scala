@@ -407,6 +407,10 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
   def handleJunctionAndJunctionPoints(roadwayChanges: List[ProjectRoadwayChange], projectLinks: Seq[ProjectLink], mappedRoadwayNumbers: Seq[ProjectRoadLinkChange], username: String = "-"): Unit = {
 
+    def getExistingJunctionIds(roadwayPointIds: Seq[Long]): Seq[Long] = {
+      junctionPointDAO.fetchByRoadwayPointIds(roadwayPointIds).map(_.junctionId)
+    }
+
     /**
       * @return the junction id only if the road address r is connected to the road address projectLink
       */
@@ -420,7 +424,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       * Creates if needed: new roadway point, new junction, new junction point and new calibration point as JunctioncCP
       * @param target                road address for the new junction point and calibration point
       * @param pos              position of the junction point
-      * @param addr             address of the junction poitn
+      * @param addr             address of the junction point
       * @param roadsTo          roads ending in the current road address r
       * @param roadsFrom        roads starting in the current road address r
       */
@@ -523,22 +527,30 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
          */
         val (headRoads, tailRoads): (Seq[BaseRoadAddress], Seq[BaseRoadAddress]) = {
           if (RoadClass.RampsAndRoundaboutsClass.roads.contains(projectLink.roadNumber.toInt)) {
-            val head = roadsInFirstPoint filterNot RoadAddressFilters.sameRoadPart(projectLink)
-            val tail = projectLink.discontinuity match {
-              case Discontinuity.EndOfRoad | Discontinuity.Discontinuous | Discontinuity.MinorDiscontinuity =>
-                // Roundabouts (20000 to 39999) : at the last link of the round lane - EndOfRoad or Discontinuous
-                roadsInLastPoint
+            projectLink.discontinuity match {
+              case Discontinuity.Discontinuous | Discontinuity.MinorDiscontinuity =>
+                val head = roadsInFirstPoint filterNot RoadAddressFilters.sameRoadPart(projectLink)
+                val tail = roadsInLastPoint
+                (head, tail)
+              case Discontinuity.EndOfRoad =>
+                // Get the roads with same road number only if they are connected to the "End of road" - projectlinks' endPoint (for loop road junction points)
+                // otherwise only get the roads that have different road number
+                val head = roadsInFirstPoint filter RoadAddressFilters.connectedToEndOrDifferentRoad(projectLink)
+                val tail = roadsInLastPoint filter RoadAddressFilters.connectedToEndOrDifferentRoad(projectLink)
+                (head, tail)
               case _ =>
                 // Ramps : where road number OR road part number change
-                roadsInLastPoint filterNot RoadAddressFilters.sameRoadPart(projectLink)
+                val head = roadsInFirstPoint filterNot RoadAddressFilters.sameRoadPart(projectLink)
+                val tail = roadsInLastPoint filterNot RoadAddressFilters.sameRoadPart(projectLink)
+                (head, tail)
             }
-            (head, tail)
           } else {
             projectLink.discontinuity match {
               case Discontinuity.EndOfRoad =>
-                // Discontinuity EndOfRoad for same road number - The road ends in itself.
-                val head = roadsInFirstPoint.filterNot(RoadAddressFilters.sameRoad(projectLink))
-                val tail = roadsInLastPoint.filterNot(RoadAddressFilters.sameRoad(projectLink))
+                // Get the roads with same road number only if they are connected to the "End of road" - projectlinks' endPoint (for loop road junction points)
+                // otherwise only get the roads that have different road number
+                val head = roadsInFirstPoint filter RoadAddressFilters.connectedToEndOrDifferentRoad(projectLink)
+                val tail = roadsInLastPoint filter RoadAddressFilters.connectedToEndOrDifferentRoad(projectLink)
                 (head, tail)
               case Discontinuity.MinorDiscontinuity =>
                 // Discontinuity cases for same road number
@@ -627,38 +639,75 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
         // handle junction points for each project links
         val startCp: Option[(Long, String, CalibrationPointLocation)] = if ((roadsToHead ++ roadsFromHead).nonEmpty) {
-          createJunctionAndJunctionPointIfNeeded(projectLink, pos = BeforeAfter.After, addr = projectLink.startAddrMValue,
-            roadsTo = {
-              if(reversed){
-                roadsToHead.filter(_.newEndPoint.connected(projectLink.newStartingPoint))
-              }
-              else {
-                roadsToHead.filter(_.endPoint.connected(projectLink.startingPoint))
-              }
-            },
-            roadsFrom = if(reversed){
+          val roadsTo = {
+            if (reversed) {
+              roadsToHead.filter(_.newEndPoint.connected(projectLink.newStartingPoint))
+            } else {
+              roadsToHead.filter(_.endPoint.connected(projectLink.startingPoint))
+            }
+          }
+          val roadsFrom = {
+            if (reversed) {
               roadsFromHead.filter(_.newStartingPoint.connected(projectLink.newStartingPoint))
             } else {
-            roadsFromHead.filter(_.startingPoint.connected(projectLink.startingPoint))
-          })
+              roadsFromHead.filter(_.startingPoint.connected(projectLink.startingPoint))
+            }
+          }
+
+          // VIITE-3043 find the existing junction for "loop road" aka "lenkkitie" that ends in itself.
+          // This is only for the last project link with EndOfRoad Discontinuity otherwise its going to return nothing.
+          val existingJunctionId = if (projectLink.discontinuity == Discontinuity.EndOfRoad && roadsTo.forall(road => road.roadNumber == projectLink.roadNumber && road.roadPartNumber == projectLink.roadPartNumber)
+            && roadsFrom.forall(road => road.roadNumber == projectLink.roadNumber && road.roadPartNumber == projectLink.roadPartNumber)) {
+            val junctionIds = {
+              val roadsToRoadwayPointIds = roadsTo.flatMap(r => roadwayPointDAO.fetch(r.roadwayNumber, r.endAddrMValue).map(_.id).toSeq)
+              val roadsFromRoadwayPointIds = roadsFrom.flatMap(r => roadwayPointDAO.fetch(r.roadwayNumber, r.startAddrMValue).map(_.id).toSeq)
+              val roadwayPointIds = roadsToRoadwayPointIds ++ roadsFromRoadwayPointIds
+              if (roadwayPointIds.nonEmpty) {
+                getExistingJunctionIds(roadwayPointIds)
+              } else
+                Seq()
+            }
+            junctionIds.headOption
+          } else {None}
+
+          createJunctionAndJunctionPointIfNeeded(projectLink, existingJunctionId = existingJunctionId, pos = BeforeAfter.After, addr = projectLink.startAddrMValue, roadsTo = roadsTo, roadsFrom = roadsFrom)
         } else { None }
 
         val endCp: Option[(Long, String, CalibrationPointLocation)] = if ((roadsToTail ++ roadsFromTail).nonEmpty) {
-          createJunctionAndJunctionPointIfNeeded(projectLink, pos = BeforeAfter.Before, addr = projectLink.endAddrMValue,
-            roadsTo = {
-              if(reversed) {
-                roadsToTail.filter(_.newEndPoint.connected(projectLink.newEndPoint))
-              } else {
-                roadsToTail.filter(_.endPoint.connected(projectLink.endPoint))
-              }
-            },
-            roadsFrom = {
-              if(reversed){
-                roadsFromTail.filter(_.newStartingPoint.connected(projectLink.newEndPoint))
-              }else {
-                roadsFromTail.filter(_.startingPoint.connected(projectLink.endPoint))
-              }
-            })
+          val roadsTo = {
+            if (reversed) {
+              roadsToTail.filter(_.newEndPoint.connected(projectLink.newEndPoint))
+            } else {
+              roadsToTail.filter(_.endPoint.connected(projectLink.endPoint))
+            }
+          }
+
+          val roadsFrom = {
+            if (reversed) {
+              roadsFromTail.filter(_.newStartingPoint.connected(projectLink.newEndPoint))
+            } else {
+              roadsFromTail.filter(_.startingPoint.connected(projectLink.endPoint))
+            }
+          }
+
+          // VIITE-3043 find the existing junction for "loop road" aka "lenkkitie" that ends in itself.
+          // This is only for the last project link with EndOfRoad Discontinuity otherwise its going to return nothing.
+          val existingJunctionId = if (roadsTo.forall(road => road.roadNumber == projectLink.roadNumber && road.roadPartNumber == projectLink.roadPartNumber && projectLink.discontinuity == Discontinuity.EndOfRoad)
+            && roadsFrom.forall(road => road.roadNumber == projectLink.roadNumber && road.roadPartNumber == projectLink.roadPartNumber && projectLink.discontinuity == Discontinuity.EndOfRoad)) {
+            val junctionIds = {
+              val roadsToRoadwayPointIds = roadsTo.flatMap(r => roadwayPointDAO.fetch(r.roadwayNumber, r.endAddrMValue).map(_.id).toSeq)
+              val roadsFromRoadwayPointIds = roadsFrom.flatMap(r => roadwayPointDAO.fetch(r.roadwayNumber, r.startAddrMValue).map(_.id).toSeq)
+              val roadwayPointIds = roadsToRoadwayPointIds ++ roadsFromRoadwayPointIds
+              if (roadwayPointIds.nonEmpty) {
+                getExistingJunctionIds(roadwayPointIds)
+              } else
+                Seq()
+            }
+            junctionIds.headOption
+          } else {
+            None
+          }
+          createJunctionAndJunctionPointIfNeeded(projectLink, existingJunctionId = existingJunctionId, pos = BeforeAfter.Before, addr = projectLink.endAddrMValue,roadsTo = roadsTo,roadsFrom = roadsFrom)
         } else { None }
 
         // handle junction points for other roads, connected to each project link
@@ -1048,7 +1097,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       val validEndingDiscontinuityForRamps = List(Discontinuity.EndOfRoad, Discontinuity.Discontinuous, Discontinuity.MinorDiscontinuity)
 
       def isRoadEndingInItself(curr: JunctionPoint, rest: Seq[JunctionPoint]): Boolean = {
-        rest.exists(jp => curr.roadNumber == jp.roadNumber && jp.addrM == 0 && validEndingDiscontinuityForRamps.contains(curr.discontinuity) && curr.beforeAfter == BeforeAfter.Before)
+        rest.exists(jp => curr.roadNumber == jp.roadNumber && validEndingDiscontinuityForRamps.contains(curr.discontinuity) && curr.beforeAfter == BeforeAfter.Before)
       }
 
       junctionPointsToCheck.exists { jpc =>
