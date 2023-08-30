@@ -1186,8 +1186,26 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
               nodePointDAO.insertCalculatedNodePoint(rwPoint, BeforeAfter.After, nodeNumber, username)
               nodePointCount = nodePointCount + 2
             } else {
-              nodePointDAO.insertCalculatedNodePoint(rwPoint, beforeAfterValue, nodeNumber, username)
-              nodePointCount = nodePointCount + 1
+              val nodePointTemplates = nodePointDAO.fetchNodePointTemplateByRoadwayPointId(rwPoint).headOption
+              if (nodePointTemplates.nonEmpty) {
+                val nodePointTemplate = nodePointTemplates.head
+
+                if (nodePointTemplate.nodePointType == NodePointType.CalculatedNodePoint) {
+                  nodePointDAO.insertCalculatedNodePoint(rwPoint, beforeAfterValue, nodeNumber, username)
+                  nodePointCount = nodePointCount + 1
+                  //expire duplicate nodePointTemplate if there is one with the same roadwayPoint
+                  nodePointDAO.expireById(List(nodePointTemplate.id))
+                }
+                else if (nodePointTemplate.nodePointType == NodePointType.RoadNodePoint) {
+                  nodePointDAO.insertRoadNodePoint(rwPoint, beforeAfterValue, nodeNumber, username)
+                  nodePointCount = nodePointCount + 1
+                  //expire duplicate nodePointTemplate if there is one with the same roadwayPoint
+                  nodePointDAO.expireById(List(nodePointTemplate.id))
+                }
+              } else {
+                nodePointDAO.insertCalculatedNodePoint(rwPoint, beforeAfterValue, nodeNumber, username)
+                nodePointCount = nodePointCount + 1
+              }
             }
           })
       }

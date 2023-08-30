@@ -825,6 +825,8 @@ class RoadAddressService(
         if (cal.isDefined) {
           CalibrationPointDAO.expireById(Set(cal.get.id))
           logger.info(s"Expiring calibration point id:" + cal.get.id)
+          // Check if the expired calibrationpoint needs to be replaced with a JunctionCP
+          CalibrationPointsUtils.createCalibrationPointIfNeeded(ll.roadwayPointId, ll.linkId, CalibrationPointLocation.StartOfLink, CalibrationPointType.JunctionPointCP, username)
         } else {
           logger.error(s"Failed to expire start calibration point for link id: ${ll.linkId}")
         }
@@ -835,6 +837,8 @@ class RoadAddressService(
         if (cal.isDefined) {
           CalibrationPointDAO.expireById(Set(cal.get.id))
           logger.info(s"Expiring calibration point id:" + cal.get.id)
+          // Check if the expired calibrationpoint needs to be replaced with a JunctionCP
+          CalibrationPointsUtils.createCalibrationPointIfNeeded(ll.roadwayPointId, ll.linkId, CalibrationPointLocation.EndOfLink, CalibrationPointType.JunctionPointCP, username)
         } else {
           logger.error(s"Failed to expire end calibration point for link id: ${ll.linkId}")
         }
