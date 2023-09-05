@@ -15,7 +15,7 @@ import org.json4s.{DefaultFormats, Formats}
 import org.postgresql.util.PSQLException
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport, SwaggerSupportSyntax}
-import org.scalatra.{BadRequest, InternalServerError, ScalatraServlet}
+import org.scalatra.{BadRequest, InternalServerError, Params, ScalatraServlet}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.util.control.NonFatal
@@ -53,15 +53,24 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
       parameter queryParam[String]("situationDate").optional
         .description("(Optional) The road address information is returned from this exact moment (instead of the newest data).\n" + ISOdateTimeDescription)
     )
-
   /** TODO better name e.g. "road_addresses_of_municipality" */
   get("/road_address", operation(getRoadAddressesByMunicipality)) {
     contentType = formats("json")
+
+println("Threading print test: Going to avoidRestrictions")
     ApiUtils.avoidRestrictions(apiId, request, params) { params =>
+println("Threading print test: Now in avoidRestrictions")
       params.get("municipality").map { municipality =>
         try {
           val municipalityCode = municipality.toInt
-          val searchDate = parseIsoDate(params.get("situationDate"))
+          val searchDate: Option[DateTime] =
+            if (params.get("situationDate").isDefined) {
+              //Some(DateTime.parse(params.get("situationDate").getOrElse("!!!!"))) // Existence checked -> should never go to else
+              Some(dateParameterGetValidOrThrow("situationDate", Some(params)))
+            } else {
+              None
+            }
+
           try {
             val knownAddressLinks = roadAddressService.getAllByMunicipality(municipalityCode, searchDate)
               .filter(ral => ral.roadNumber > 0)
@@ -82,7 +91,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
             logger.error(message)
             BadRequest(message)
           case e: Exception =>
-            val message = s"Invalid municipality code: $municipality"
+            val message = e.getMessage
             logger.error(message)
             BadRequest(message)
         }
@@ -91,8 +100,9 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
       }
     }
   }
-
-  /** BULLETPROOFED VERSION - PROBLEMS WITH PROD-environment. Using older version for now. */
+  /** BULLETPROOFED VERSION of get("/road_address) - PROBLEMS WITH PROD-environment; implicitly available 'request', and
+    * 'param' may not be available, when calling from another thread. Using older code version for now. */
+//  /** TODO better name e.g. "road_addresses_of_municipality" */
 //  get("/road_address", operation(getRoadAddressesByMunicipality)) {
 //    contentType = formats("json")
 //    ApiUtils.avoidRestrictions(apiId, request, params) { params =>
@@ -483,12 +493,17 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
    *  An empty value also causes an exception.
    *
    * @param dateParameterName name of the query parameter to be fetched, and validated
-   * @return A readily parsed ISO DateTime, if valid. If not valid
+   * @param explicitParams Optional. Give the http query parameters explicitly, when they are not available implicitly.
+   *                       (That is, when the execution is run from a thread distinct to the original that received the http call. (e.g. from a scala Future))
+   * @return A readily parsed ISO DateTime, if valid. If not valid, throws an exception.
    * @throws ViiteException if the <i>dateParameterName</i> does not contain a valid ISO8601 date string .*/
-  def dateParameterGetValidOrThrow(dateParameterName: String): DateTime = {
+  def dateParameterGetValidOrThrow(dateParameterName: String, explicitParams: Option[Params] = None): DateTime = {
     val aHundreadYearsInTheFuture = DateTime.now().plusYears(100)
 
-    val dateString = params.get(s"$dateParameterName")
+    val dateString: Option[String] =
+      if(explicitParams.isDefined) { Option(explicitParams.get(s"$dateParameterName")) } // use the explicit parameters for printing (assume there is no other usable variables in the context)
+      else { params.get(s"$dateParameterName") }                                         // otherwise assume that the implicit 'request' is available
+
     dateString.getOrElse(throw ViiteException(s"Missing mandatory '$dateParameterName' parameter"))
 
     if (dateString.isEmpty || dateString.get == "") {     // must have a value to parse
@@ -507,7 +522,10 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
         case _: IllegalArgumentException =>
           throw ViiteException(s"$ISOdateTimeDescription. Now got $dateParameterName='${dateString.get}'.") //, iae.getMessage) // TODO more accurate message for logging? -> e.g. ViiteAPIException class with an additional field?
         case _: PSQLException =>
-          throw ViiteException(s"Date out of bounds, check the given dates: ${request.getQueryString}.") //, s"${psqle.getMessage}")
+          val queryString =
+            if(explicitParams.isDefined)  { s"$dateParameterName=dateString" } // use the explicit parameters for printing (assume there is no other usable variables in the context)
+            else { s" ${request.getQueryString}" }                             // otherwise assume that the implicit 'request' is available
+          throw ViiteException(s"Date out of bounds, check the given dates: $queryString.") //, s"${psqle.getMessage}")
       }
     }
   }
@@ -515,12 +533,15 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
   /** Fetches, and returns a validated DateTime object if available in query parameter <i>dateParameterName</i>,
    *  or None, if there is no such thing given.
    *  Wrapping [[dateParameterGetValidOrThrow]] to get an Option[DateTime] for an optional query parameter.
+   *
    * @param dateParameterName name of the query parameter to be fetched, and validated
+   * @param explicitParams    Optional. Give the http query parameters explicitly, when they are not available implicitly.
+   *                          (That is, when the execution is run from a thread distinct to the original that received the http call. (e.g. from a scala Future))
    * @return A valid DateTime object, or none
    * @throws ViiteException from [[dateParameterGetValidOrThrow]] */
-  def dateParameterOptionGetValidOrThrow(dateParameterName: String): Option[DateTime] = {
+  def dateParameterOptionGetValidOrThrow(dateParameterName: String, explicitParams: Option[Params] = None): Option[DateTime] = {
     if (params.get(s"$dateParameterName").isDefined) {
-      Some(dateParameterGetValidOrThrow(s"$dateParameterName"))
+      Some(dateParameterGetValidOrThrow(dateParameterName, explicitParams))
     } else {
       None
     }
@@ -540,22 +561,18 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
    * @throws Throwable if it is considered a fatal one. */
   def handleCommonIntegrationAPIExceptions(t: Throwable, operationId: Option[String]): Unit = {
 val requestLogString = s"GET request for ${request.getRequestURI}?${request.getQueryString} (${operationId})"
+    logger.info(s"$requestLogString --ENDED in ${t.getClass}--")
     t match {
       case ve: ViiteException =>
-logger.info(s"$requestLogString --ENDED in ViiteException--")
         BadRequestWithLoggerWarn(s"Check the given parameters. ${ve.getMessage}", "")
       case iae: IllegalArgumentException =>
-logger.info(s"$requestLogString --ENDED in IllegalArgumentException--")
         BadRequestWithLoggerWarn(s"$ISOdateTimeDescription. Now got '${request.getQueryString}''", iae.getMessage)
       case psqle: PSQLException => // TODO remove? This applies when biiiig year (e.g. 2000000) given to DateTime parser. But year now restricted to be less than 100 years in checks before giving to dateTime parsing
-logger.info(s"$requestLogString --ENDED in PSQLException--")
         BadRequestWithLoggerWarn(s"Date out of bounds, check the given dates: ${request.getQueryString}.", s"${psqle.getMessage}")
       case nf if NonFatal(nf) =>
         val requestString = s"GET request for ${request.getRequestURI}?${request.getQueryString} ($operationId)"
-logger.info(s"$requestLogString --ENDED in NonFatal--")
         haltWithHTTP500WithLoggerError(requestString, nf)
       case t if !NonFatal(t) =>
-logger.info(s"$requestLogString --ENDED in !NonFatal--")
         throw t
     }
   }

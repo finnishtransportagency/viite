@@ -39,13 +39,14 @@ object ApiUtils {
                            responseType: String = "json")(f: Params => T): Any = {
 
     // In case we are not using AWS in the current environment, just run the API request
-    if (!ViiteProperties.awsConnectionEnabled) return f(params)
+    if (!ViiteProperties.awsConnectionEnabled)
+      return f(params)
 
     logger.info(s"API LOG: ${request.getQueryString} in avoidRestrictions! (circumventing API time and size restrictions)--")
     val queryString = if (request.getQueryString != null) s"?${request.getQueryString}" else ""
     val path = "/viite" + request.getRequestURI + queryString
-    val workId = getWorkId(requestId, params, responseType) // Used to name s3 objects
-    val queryId = params.get("queryId") match {             // Used to identify requests in logs
+    val workId = getWorkId(requestId, params, responseType) // Used for naming the resulting s3 object
+    val queryId = params.get("queryId") match {             // Used for identifying log lines for the same query
       case Some(id) => id
       case None =>
         val id = Integer.toHexString(new Random().nextInt)
@@ -85,17 +86,22 @@ object ApiUtils {
   /** Get the API request running, and return with an initial redirect address, with retry count 1.
     * The API request returns in the future, and the result gets saved into s3) */
   def newQuery[T](workId: String, queryId: String, path: String, f: Params => T, params: Params, responseType: String): Any = {
+    var finished: Any = Unit
     Future { // Complete query and save results to s3 in future
-logger.info(s"We are in the future! (newQuery for queryId = $queryId)--")
-      val finished = f(params)
-logger.info(s"Future is here! (queryId = $queryId)--")
-      val responseBody = formatResponse(finished,  responseType)
-      s3Service.saveFileToS3(s3Bucket, workId, responseBody, responseType)
+      logger.info(s"We are in the future! (newQuery for queryId = $queryId)--")
+      finished = f(params)
     }.onComplete {
-      case Failure(e) =>
-        logger.error(s"API LOG $queryId: error with message ${e.getMessage} and stacktrace: \n ${e.getStackTrace.mkString("", EOL, EOL)}")
-      case Success(t) =>
-        logger.info(s"API LOG $queryId: succeeded")
+      case Failure(e) => { // The Future ended up in an exception
+        logger.info(s"API LOG $queryId: Future completed with failure: $finished")
+        //logger.error(s"API LOG $queryId: error ${e.getClass} with message ${e.getMessage} and stacktrace: \n ${e.getStackTrace.mkString("", EOL, EOL)}")
+        val errorResponseBody = e.getMessage
+        s3Service.saveFileToS3(s3Bucket, workId, errorResponseBody, "text/plain")
+      }
+      case Success(t) => {
+        logger.info(s"API LOG $queryId: Future completed with successfully. Returning $finished as $responseType")
+        val responseBody = formatResponse(finished, responseType)
+        s3Service.saveFileToS3(s3Bucket, workId, responseBody, responseType)
+      }
     }
     redirectToUrl(path, queryId, Some(1))
   }
@@ -108,6 +114,8 @@ logger.info(s"Future is here! (queryId = $queryId)--")
         Json(DefaultFormats).write(response.asInstanceOf[Set[Map[String, Any]]])
       case (response: Map[_, _], "json") =>
         Json(DefaultFormats).write(response.asInstanceOf[Map[String, Any]])
+      case (response: ActionResult, "json") => // ActionResult case: for Exception handling
+        response.body.toString
       case _ =>
         throw new NotImplementedError("Unrecognized response format")
     }
@@ -118,11 +126,11 @@ logger.info(s"Future is here! (queryId = $queryId)--")
     nextRetry match {
       case Some(retryValue) if retryValue == 1 =>
         val paramSeparator = if (path.contains("?")) "&" else "?"
-logger.info(s"API LOG $queryId: Redirecting first time $path at ${DateTime.now}")
+        logger.info(s"API LOG $queryId: Redirecting first time at ${DateTime.now}")
         Found.apply(path + paramSeparator + s"queryId=$queryId&retry=$retryValue")
       case Some(retryValue) if retryValue > 1 =>
         val newPath = path.replaceAll("""retry=\d+""", s"retry=$retryValue")
-logger.info(s"API LOG $queryId: Redirecting again $path at ${DateTime.now}")
+        logger.info(s"API LOG $queryId: Redirecting again at ${DateTime.now}")
 
         Found.apply(newPath)
       case _ =>
