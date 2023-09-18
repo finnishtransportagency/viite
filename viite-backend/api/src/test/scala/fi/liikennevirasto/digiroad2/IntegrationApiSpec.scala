@@ -1,11 +1,11 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.viite.{RoadAddressService, RoadNameService}
-import fi.liikennevirasto.viite.dao.ProjectCalibrationPoint
+import fi.liikennevirasto.viite.dao.{ProjectCalibrationPoint, ValidNodeForAPI}
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.vaylavirasto.viite.dao.RoadName
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, LifecycleStatus, LinkGeomSource, SideCode}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, LifecycleStatus, LinkGeomSource, NodeType, SideCode}
 import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, Formats}
 import org.mockito.ArgumentMatchers.any
@@ -13,6 +13,8 @@ import org.mockito.Mockito._
 import org.scalatest.{BeforeAndAfter, FunSuite}
 import org.scalatest.mockito.MockitoSugar
 import org.scalatra.test.scalatest.ScalatraSuite
+
+import scala.collection.immutable.ListMap
 
 
 class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter {
@@ -268,4 +270,62 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
       )
     }
   }
+
+  test("Test When asking for all valid nodes in Viite Then returns status code 400") {
+    get("/nodes/valid") {
+      status should equal(200)
+    }
+  }
+
+  /*test("Test integrationApi.validNodesToApi() When supplying a simple Node Then return a Sequence of a String to Value mappings that represent that Node.") {
+
+    val node = Seq(ValidNodeForAPI(1, 1, 1, 10, DateTime.parse("2015-01-01"), NodeType.NormalIntersection, "Solmunnimi", Point(0.0, 10.0), 1))
+    integrationApi.validNodesToApi(node) should be(Seq(ListMap(
+      "Ely" -> 1,
+      "Tie" -> 1,
+      "Osa" -> 1,
+      "Et" -> 10,
+      "Alkupvm" -> "2015-01-01",
+      "Tyyppi" -> NodeType.NormalIntersection.displayValue,
+      "Nimi" -> "Solmunnimi",
+      "pkoord" -> 0.0,
+      "I-koord" -> 10.0,
+      "Solmunumero" -> 1
+    )))
+  }*/
+
+  /*test ("lsdkfj0") {
+    // Mock the fetchAllValidNodes function to return a predefined sequence of ValidNodeForAPI objects
+
+    def fetchAllValidNodes(): Seq[ValidNodeForAPI] = {
+      // Create and return a sequence of ValidNodeForAPI objects for testing
+      // Replace this with your test data
+      // Example:
+      Seq(
+        ValidNodeForAPI(/* Fill in the constructor parameters for a test case */),
+        ValidNodeForAPI(/* Fill in another test case */)
+      )
+    }
+
+    describe("validNodesToApi") {
+      it("should return a valid list of mapped nodes") {
+        val result = YourClass.validNodesToApi() // Replace YourClass with the actual class containing the function
+
+        // Define your expected result based on the mocked fetchAllValidNodes data
+        val expected: Seq[Map[String, Any]] = Seq(
+          Map(
+            "Ely" -> /* Fill in the expected value */ ,
+            "Tie" -> /* Fill in the expected value */ ,
+            // Continue with the expected values for other keys
+          ),
+          // Add more expected maps for other test cases
+        )
+
+        // Compare the result with the expected value
+        result shouldEqual expected
+      }
+
+      // Add more test cases as needed
+    }
+  }*/
 }

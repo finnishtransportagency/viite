@@ -21,6 +21,9 @@ case class RoadAttributes(roadNumber: Long, roadPartNumber: Long, addrMValue: Lo
 
 case class NodeForRoadAddressBrowser(ely: Long, roadNumber: Long, roadPartNumber: Long, addrM: Long, startDate: DateTime, nodeType: NodeType, name: Option[String], nodeCoordinates: Point, nodeNumber: Long)
 
+case class SuperNode(nodeNumber: Long, startDate:  DateTime, nodeType: NodeType, name: String, nodeCoordinates: Point)
+case class NodesWithJunctions(nodeNumber: Long, startDate:  DateTime, nodeType: NodeType, name: String, nodeCoordinates: Point, junctions: Seq[JunctionOfNode])
+
 class NodeDAO extends BaseDAO {
 
   implicit val getNode: GetResult[Node] = new GetResult[Node] {
@@ -62,6 +65,90 @@ class NodeDAO extends BaseDAO {
     }
   }
 
+  implicit val getValidNodeForAPI: GetResult[SuperNode] = new GetResult[SuperNode] {
+    def apply(r: PositionedResult): SuperNode = {
+      val nodeNumber = r.nextLong()
+      val startDate = new DateTime(r.nextDate())
+      val nodeType = NodeType.apply(r.nextInt())
+      val name = r.nextString()
+      val coordX = r.nextLong()
+      val coordY = r.nextLong()
+      //val junctions = nodesAndJunctionsService.getValidJunctionsForAPI(nodeNumber)
+
+      SuperNode(nodeNumber, startDate, nodeType, name, Point(coordX, coordY))
+    }
+  }
+
+
+
+
+
+  implicit val getJunctionCoordinate: GetResult[Seq[JunctionCoordinate]] = new GetResult[Seq[JunctionCoordinate]] {
+
+    def getJunctionCoordinates(beforeAfter: String, jId: Long, rwpId: Long, sideCode: Long, points: Seq[JunctionCoordinate]): JunctionCoordinate = {
+      var junctionCoordinate = JunctionCoordinate(0.0, 0.0, 0.0)
+
+      if (!beforeAfter.contains("E,J")) {
+        val junctionCoordinateSequences = points
+        val junctionCoordinate1 = junctionCoordinateSequences.head
+        val junctionCoordinate2 = junctionCoordinateSequences.last
+
+        val point1 = junctionCoordinate1
+        val point2 = junctionCoordinate2
+
+        if (beforeAfter.contains('E') && sideCode == 2)
+          junctionCoordinate = point2
+        else if (beforeAfter.contains('E') && sideCode == 3)
+          junctionCoordinate = point1
+        else if (beforeAfter.contains('J') && sideCode == 2)
+          junctionCoordinate = point1
+        else if (beforeAfter.contains('J') && sideCode == 3)
+          junctionCoordinate = point2
+        else junctionCoordinate = JunctionCoordinate(1.0, 0.0, 0.0)
+      }
+
+      junctionCoordinate
+    }
+
+    def apply(r: PositionedResult): Seq[JunctionCoordinate] = {
+      /*val jId = r.nextLong()
+      val rwpId = r.nextLong()
+      val beforeAfter = parseBeforeAfterValue(r.nextString())
+      val sideCode = r.nextLong()*/
+      val startX = r.nextDouble()
+      val startY = r.nextDouble()
+      val startZ = r.nextDouble()
+      val endX = r.nextDouble()
+      val endY = r.nextDouble()
+      val endZ = r.nextDouble()
+
+      Seq(JunctionCoordinate(startX, startY, startZ),
+        JunctionCoordinate(endX, endY, endZ))
+
+      /*val result = getJunctionCoordinates(beforeAfter, jId, rwpId, sideCode, points)
+      JunctionCoordinate(result.x, result.y, result.z)*/
+    }
+  }
+
+  /*def fetch2CoordinatesByJunctionId(jid: Long, rwpId: Long): JunctionCoordinate = {
+    val query =
+      s"""
+      SELECT j.id, jp.roadway_point_id, json_agg(DISTINCT jp.before_after) as beforeafter, ll.side, ST_X(ST_StartPoint(ll.geometry)), ST_Y(ST_StartPoint(ll.geometry)), ST_Z(ST_StartPoint(ll.geometry))
+            ST_X(ST_EndPoint(ll.geometry)), ST_Y(ST_EndPoint(ll.geometry)), ST_Z(ST_EndPoint(ll.geometry))
+      FROM linear_location ll
+      JOIN calibration_point cp ON cp.link_id = ll.link_id AND cp.roadway_point_id = $rwpId
+      JOIN junction_point jp ON cp.roadway_point_id = jp.roadway_point_id
+      JOIN junction j ON jp.junction_id = j.id
+      WHERE j.id = $jid
+      """
+
+    queryListCoordinates(query)
+  }
+
+  def queryListCoordinates(query: String): JunctionCoordinate = {
+    Q.queryNA[JunctionCoordinate](query).iterator.toSeq
+  }*/
+
   private def queryList(query: String): List[Node] = {
     Q.queryNA[Node](query).list.groupBy(_.id).map {
       case (_, list) =>
@@ -100,6 +187,18 @@ class NodeDAO extends BaseDAO {
       where NODE_NUMBER = $nodeNumber and valid_to is null
       order by created_time desc, end_date desc
       """.as[Long].firstOption
+  }
+
+  def fetchValidNodesForAPI(): Seq[SuperNode] = {
+    val query =
+      s"""
+    SELECT DISTINCT node.NODE_NUMBER, node.START_DATE, node.type, node.NAME, ST_X(node.COORDINATES) AS xcoord, ST_Y(node.COORDINATES) AS ycoord
+    FROM NODE node
+    JOIN NODE_POINT np ON node.NODE_NUMBER = np.NODE_NUMBER AND np.VALID_TO IS NULL
+    JOIN ROADWAY_POINT rp ON np.ROADWAY_POINT_ID = rp.ID
+    JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS null
+    """
+    Q.queryNA[SuperNode](query).iterator.toSeq
   }
 
   def fetchNodesForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[NodeForRoadAddressBrowser] = {

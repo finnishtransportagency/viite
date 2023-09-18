@@ -18,6 +18,7 @@ import org.scalatra.swagger.{Swagger, SwaggerSupport, SwaggerSupportSyntax}
 import org.scalatra.{BadRequest, InternalServerError, ScalatraServlet}
 import org.slf4j.{Logger, LoggerFactory}
 
+import scala.collection.immutable.ListMap
 import scala.util.control.NonFatal
 
 class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameService: RoadNameService, implicit val swagger: Swagger) extends ScalatraServlet
@@ -419,6 +420,50 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
           handleCommonIntegrationAPIExceptions(t, nodesToGeoJson.operationId)
       }
     }
+  }
+
+  val getValidNodes: SwaggerSupportSyntax.OperationBuilder =
+    (apiOperation[List[Map[String, Any]]]("getValidNodes")
+      tags "Integration"
+      summary "Returns all valid nodes"
+      )
+
+  get("/nodes/valid", operation(getValidNodes)) {
+    contentType = formats("json")
+    time(logger, s"GET request for /nodes/valid") {
+      try {
+        validNodesWithJunctionsToApi(fetchAllValidNodesWithJunctions())
+      } catch {
+        case t: Throwable =>
+          handleCommonIntegrationAPIExceptions(t, getValidNodes.operationId)
+      }
+    }
+  }
+
+  def validNodesWithJunctionsToApi(fetchedNodes: Seq[NodesWithJunctions]): Seq[Map[String, Any]] = {
+    val nodesWithJunctions: Seq[NodesWithJunctions] = fetchedNodes
+
+    val mappedNodes: Seq[Map[String, Any]] = nodesWithJunctions.map(n => ListMap(
+      "nodeNumber" -> n.nodeNumber,
+      "startDate" -> n.startDate.toString(),
+      "type" -> n.nodeType.displayValue,
+      "name" -> n.name,
+      "nodeCoordinateX" -> n.nodeCoordinates.x,
+      "nodeCoordinateY" -> n.nodeCoordinates.y,
+      "Junctions:" -> n.junctions
+    ))
+
+    /*val sortedNodes = mappedNodes.sortBy(n => (n("Tie").asInstanceOf[Long], n("Osa").asInstanceOf[Long], n("Et").asInstanceOf[Long]))
+
+    sortedNodes*/
+    mappedNodes
+  }
+
+  private def fetchAllValidNodesWithJunctions(): Seq[NodesWithJunctions] = {
+    val result: Seq[NodesWithJunctions] = nodesAndJunctionsService.getAll()
+    if (result.isEmpty)
+      Seq.empty[NodesWithJunctions]
+    else result
   }
 
   /** Validates that the given query parameter <i>dateParameterName</i> contains a valid DateTime string.

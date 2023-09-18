@@ -1,10 +1,11 @@
 package fi.liikennevirasto.viite.dao
 
+import fi.liikennevirasto.digiroad2.client.kgv.Geometry
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.NewIdValue
 import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
-import fi.vaylavirasto.viite.model.{NodeType, Track}
+import fi.vaylavirasto.viite.model.{BeforeAfter, NodeType, SideCode, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase
 import fi.vaylavirasto.viite.util.DateTimeFormatters.{basicDateFormatter, dateOptTimeFormatter}
 import org.joda.time.DateTime
@@ -20,6 +21,10 @@ case class JunctionInfo(id: Long, junctionNumber: Option[Long], startDate: DateT
 case class JunctionTemplate(id: Long, startDate: DateTime, roadNumber: Long, roadPartNumber: Long, track: Track, addrM: Long, elyCode: Long, coords: Point = Point(0.0, 0.0))
 
 case class JunctionForRoadAddressBrowser(nodeNumber: Long, nodeCoordinates: Point, nodeName: Option[String], nodeType: NodeType, startDate: DateTime, junctionNumber: Option[Long], roadNumber: Long, track: Long, roadPartNumber: Long, addrM: Long, beforeAfter: Seq[Long])
+
+case class JunctionCoordinate(x: Double, y: Double, z: Double)
+case class JunctionOfNode(startDate: DateTime, junctionNumber: Option[Long], roadNumber: Long, track: Long, roadPartNumber: Long, addrM: Long, beforeAfter: String, junctionGeometry: Point)
+
 
 class JunctionDAO extends BaseDAO {
 
@@ -121,6 +126,57 @@ class JunctionDAO extends BaseDAO {
         """
       queryList(query)
     }
+  }
+
+  implicit val getJunctionOfNode: GetResult[JunctionOfNode] = new GetResult[JunctionOfNode] {
+
+    def parseBeforeAfterValue(beforeAfterToParse: String): String = {
+      // remove square brackets and spaces from the string i.e "[1, 2]" -> "1,2"
+      val beforeAfterParsed = beforeAfterToParse.replaceAll("[\\[\\]\\s]", "")
+      // Change beforeAfter value 1 to E "Ennen"
+      val beforeAfter1toE = beforeAfterParsed.replaceAll("1", "E")
+      // Change beforeAfter value 2 to J "Jälkeen"
+      val beforeAfter2toJ = beforeAfter1toE.replaceAll("2", "J")
+      beforeAfter2toJ
+    }
+
+    def junctionCoordinateToPoint(junctionCoordinate: JunctionCoordinate): Point = {
+      val resultPoint = Point(junctionCoordinate.x, junctionCoordinate.y, junctionCoordinate.z)
+      resultPoint
+    }
+
+    def apply(r: PositionedResult): JunctionOfNode = {
+      val jId: Long = r.nextLong()
+      val startDate = new DateTime(r.nextDate())
+      val junctionNumber = r.nextLongOption()
+      val rwpId = r.nextLong()
+      val roadNumber = r.nextLong()
+      val track = r.nextInt()
+      val roadPartNumber = r.nextLong()
+      val addrM = r.nextLong()
+      val beforeAfter = parseBeforeAfterValue(r.nextString())
+      val sideCode = r.nextLong()
+      val junctionGeometry: Point = Point(0.0, 0.0, 0.0) //junctionCoordinateToPoint(fetch2CoordinatesByJunctionId(jId, rwpId))
+
+      JunctionOfNode(startDate, junctionNumber, roadNumber, track, roadPartNumber, addrM, beforeAfter, junctionGeometry)
+
+    }
+  }
+
+  def fetchValidJunctionsForAPIByNodeNumber(nodeNumber: Long): Seq[JunctionOfNode] = {
+    val query =
+      s"""
+    SELECT j.id, j.start_date, j.junction_number, jp.roadway_point_id, rw.road_number, rw.track, rw.road_part_number, rp.addr_m, json_agg(DISTINCT jp.before_after) as beforeafter, ll.side
+    FROM JUNCTION j
+    JOIN JUNCTION_POINT jp ON j.id = jp.junction_id  AND jp.valid_to IS NULL
+    JOIN ROADWAY_POINT rp ON jp.roadway_point_id  = rp.ID
+    JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
+    JOIN CALIBRATION_POINT cp ON rp.ID = cp.ROADWAY_POINT_ID
+    JOIN LINEAR_LOCATION ll ON cp.LINK_ID = ll.LINK_ID
+    WHERE j.valid_to is NULL AND j.end_date IS NULL and j.node_Number = $nodeNumber
+    GROUP BY j.start_date, j.junction_number, jp.roadway_point_id, rw.road_number, rw.track, rw.road_part_number, rp.addr_m, j.id, ll.side
+    """
+    Q.queryNA[JunctionOfNode](query).iterator.toSeq
   }
 
   def fetchByIds(ids: Seq[Long]): Seq[Junction] = {

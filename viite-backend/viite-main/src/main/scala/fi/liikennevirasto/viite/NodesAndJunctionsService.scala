@@ -7,7 +7,7 @@ import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
-import fi.vaylavirasto.viite.model.{BeforeAfter, CalibrationPointLocation, CalibrationPointType, Discontinuity, NodePointType, RoadAddressChangeType, Track}
+import fi.vaylavirasto.viite.model.{BeforeAfter, CalibrationPointLocation, CalibrationPointType, Discontinuity, NodePointType, NodeType, RoadAddressChangeType, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -16,6 +16,8 @@ import scala.annotation.tailrec
 import scala.util.control.NonFatal
 
 class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayPointDAO, linearLocationDAO: LinearLocationDAO, nodeDAO: NodeDAO, nodePointDAO: NodePointDAO, junctionDAO: JunctionDAO, junctionPointDAO: JunctionPointDAO, roadwayChangesDAO: RoadwayChangesDAO, projectReservedPartDAO: ProjectReservedPartDAO) {
+
+
 
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
@@ -226,6 +228,27 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
   }
 
+  def getAll(): Seq[NodesWithJunctions] = {
+    val nodes: Seq[SuperNode] = getValidNodesForAPI()
+    val nodesWithJunctions: Seq[NodesWithJunctions] = nodes.map { node =>
+      val junctions = getValidJunctionsForAPI(node.nodeNumber)
+      NodesWithJunctions(nodeNumber = node.nodeNumber, startDate = node.startDate, nodeType = node.nodeType, name = node.name, nodeCoordinates = node.nodeCoordinates, junctions = junctions)
+    }
+    nodesWithJunctions
+  }
+
+  def getValidNodesForAPI(): Seq[SuperNode] = {
+    withDynSession {
+      nodeDAO.fetchValidNodesForAPI()
+    }
+  }
+
+  def getValidJunctionsForAPI(nodeNumber: Long): Seq[JunctionOfNode] = {
+    withDynSession {
+      junctionDAO.fetchValidJunctionsForAPIByNodeNumber(nodeNumber)
+    }
+  }
+
   def getNodesForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[NodeForRoadAddressBrowser] = {
     withDynSession {
       nodeDAO.fetchNodesForRoadAddressBrowser(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
@@ -259,7 +282,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
   def getNodesByBoundingBox(boundingRectangle: BoundingRectangle): Seq[Node] = {
     withDynSession {
-      time(logger, "Fetch nodes with junctions") {
+      time(logger, "Fetch nodes by bounding box") {
         nodeDAO.fetchByBoundingBox(boundingRectangle)
       }
     }
