@@ -231,7 +231,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   def getAll(): Seq[NodesWithJunctions] = {
     val nodes: Seq[SuperNode] = getValidNodesForAPI()
     val nodesWithJunctions: Seq[NodesWithJunctions] = nodes.map { node =>
-      val junctions = getValidJunctionsForAPI(node.nodeNumber)
+      val junctions = getValidJunctionsWithCoordinates(node.nodeNumber)
       NodesWithJunctions(nodeNumber = node.nodeNumber, startDate = node.startDate, nodeType = node.nodeType, name = node.name, nodeCoordinates = node.nodeCoordinates, junctions = junctions)
     }
     nodesWithJunctions
@@ -243,9 +243,24 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
   }
 
+  def getValidJunctionsWithCoordinates(nodeNumber: Long): Seq[JunctionWithCoordinate] = {
+    val junctions: Seq[JunctionOfNode] = getValidJunctionsForAPI(nodeNumber)
+    val junctionsWithCoordinates: Seq[JunctionWithCoordinate] = junctions.map { j =>
+      val coordinate = getCoordinatesForJunction(j.id, j.rwpId, j.beforeAfter, j.sideCode)
+      JunctionWithCoordinate(id = j.id, startDate = j.startDate, junctionNumber = j.junctionNumber, rwpId = j.rwpId, roadNumber = j.roadNumber, track = j.track, roadPartNumber = j.roadPartNumber, addrM = j.addrM, beforeAfter = j.beforeAfter, sideCode = j.sideCode, junctionCoordinate = coordinate)
+    }
+    junctionsWithCoordinates
+  }
+
   def getValidJunctionsForAPI(nodeNumber: Long): Seq[JunctionOfNode] = {
     withDynSession {
       junctionDAO.fetchValidJunctionsForAPIByNodeNumber(nodeNumber)
+    }
+  }
+
+  def getCoordinatesForJunction(jid: Long, rwpId: Long, beforeAfter: String, sideCode: Long): Point = {
+    withDynSession {
+      junctionDAO.fetchCoordinatesByJunctionId(jid, rwpId, beforeAfter, sideCode)
     }
   }
 

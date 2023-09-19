@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.viite.{RoadAddressService, RoadNameService}
-import fi.liikennevirasto.viite.dao.{ProjectCalibrationPoint, ValidNodeForAPI}
+import fi.liikennevirasto.viite.dao.{ProjectCalibrationPoint}
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.vaylavirasto.viite.dao.RoadName
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}

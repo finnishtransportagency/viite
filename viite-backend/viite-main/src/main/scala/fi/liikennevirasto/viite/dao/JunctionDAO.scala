@@ -23,8 +23,9 @@ case class JunctionTemplate(id: Long, startDate: DateTime, roadNumber: Long, roa
 case class JunctionForRoadAddressBrowser(nodeNumber: Long, nodeCoordinates: Point, nodeName: Option[String], nodeType: NodeType, startDate: DateTime, junctionNumber: Option[Long], roadNumber: Long, track: Long, roadPartNumber: Long, addrM: Long, beforeAfter: Seq[Long])
 
 case class JunctionCoordinate(x: Double, y: Double, z: Double)
-case class JunctionOfNode(startDate: DateTime, junctionNumber: Option[Long], roadNumber: Long, track: Long, roadPartNumber: Long, addrM: Long, beforeAfter: String, junctionGeometry: Point)
+case class JunctionOfNode(id: Long, startDate: DateTime, junctionNumber: Option[Long], rwpId: Long, roadNumber: Long, track: Long, roadPartNumber: Long, addrM: Long, beforeAfter: String, sideCode: Long)
 
+case class JunctionWithCoordinate(id: Long, startDate: DateTime, junctionNumber: Option[Long], rwpId: Long, roadNumber: Long, track: Long, roadPartNumber: Long, addrM: Long, beforeAfter: String, sideCode: Long, junctionCoordinate: Point)
 
 class JunctionDAO extends BaseDAO {
 
@@ -128,6 +129,34 @@ class JunctionDAO extends BaseDAO {
     }
   }
 
+
+
+  /*def getJunctionCoordinates(beforeAfter: String, jId: Long, rwpId: Long, sideCode: Long): JunctionCoordinate = {
+    val startAndEndPointsOfLinearLocation = fetch2CoordinatesByJunctionId(jId, rwpId)
+    var junctionCoordinate = JunctionCoordinate(0.0, 0.0, 0.0)
+
+    if (!beforeAfter.contains("E,J")) {
+      val junctionCoordinateSequences = points
+      val junctionCoordinate1 = junctionCoordinateSequences.head
+      val junctionCoordinate2 = junctionCoordinateSequences.last
+
+      val point1 = junctionCoordinate1
+      val point2 = junctionCoordinate2
+
+      if (beforeAfter.contains('E') && sideCode == 2)
+        junctionCoordinate = point2
+      else if (beforeAfter.contains('E') && sideCode == 3)
+        junctionCoordinate = point1
+      else if (beforeAfter.contains('J') && sideCode == 2)
+        junctionCoordinate = point1
+      else if (beforeAfter.contains('J') && sideCode == 3)
+        junctionCoordinate = point2
+      else junctionCoordinate = JunctionCoordinate(1.0, 0.0, 0.0)
+    }
+
+    junctionCoordinate
+  }*/
+
   implicit val getJunctionOfNode: GetResult[JunctionOfNode] = new GetResult[JunctionOfNode] {
 
     def parseBeforeAfterValue(beforeAfterToParse: String): String = {
@@ -138,11 +167,6 @@ class JunctionDAO extends BaseDAO {
       // Change beforeAfter value 2 to J "Jälkeen"
       val beforeAfter2toJ = beforeAfter1toE.replaceAll("2", "J")
       beforeAfter2toJ
-    }
-
-    def junctionCoordinateToPoint(junctionCoordinate: JunctionCoordinate): Point = {
-      val resultPoint = Point(junctionCoordinate.x, junctionCoordinate.y, junctionCoordinate.z)
-      resultPoint
     }
 
     def apply(r: PositionedResult): JunctionOfNode = {
@@ -156,11 +180,15 @@ class JunctionDAO extends BaseDAO {
       val addrM = r.nextLong()
       val beforeAfter = parseBeforeAfterValue(r.nextString())
       val sideCode = r.nextLong()
-      val junctionGeometry: Point = Point(0.0, 0.0, 0.0) //junctionCoordinateToPoint(fetch2CoordinatesByJunctionId(jId, rwpId))
+      //val junctionGeometry: Point = //junctionCoordinateToPoint(fetchCoordinatesByJunctionId(jId, rwpId, beforeAfter, sideCode))
 
-      JunctionOfNode(startDate, junctionNumber, roadNumber, track, roadPartNumber, addrM, beforeAfter, junctionGeometry)
-
+      JunctionOfNode(jId, startDate, junctionNumber, rwpId, roadNumber, track, roadPartNumber, addrM, beforeAfter, sideCode)
     }
+  }
+
+  def junctionCoordinateToPoint(junctionCoordinate: JunctionCoordinate): Point = {
+    val resultPoint = Point(junctionCoordinate.x, junctionCoordinate.y, junctionCoordinate.z)
+    resultPoint
   }
 
   def fetchValidJunctionsForAPIByNodeNumber(nodeNumber: Long): Seq[JunctionOfNode] = {
@@ -177,6 +205,37 @@ class JunctionDAO extends BaseDAO {
     GROUP BY j.start_date, j.junction_number, jp.roadway_point_id, rw.road_number, rw.track, rw.road_part_number, rp.addr_m, j.id, ll.side
     """
     Q.queryNA[JunctionOfNode](query).iterator.toSeq
+  }
+
+  implicit val getJunctionCoordinate: GetResult[JunctionCoordinate] = new GetResult[JunctionCoordinate] {
+    def apply(r: PositionedResult): JunctionCoordinate = {
+      val x = r.nextDouble()
+      val y = r.nextDouble()
+      val z = r.nextDouble()
+      JunctionCoordinate(x, y, z)
+    }
+  }
+
+  def fetchCoordinatesByJunctionId(jid: Long, rwpId: Long, beforeAfter: String, sideCode: Long): Point = {
+
+    val pointCondition = {
+      if ((beforeAfter.contains('E') && sideCode == 3) || (beforeAfter.contains('J') && sideCode == 2))
+        s" ST_X(ST_StartPoint(ll.geometry)), ST_Y(ST_StartPoint(ll.geometry)), ST_Z(ST_StartPoint(ll.geometry))"
+      else if ((beforeAfter.contains('E') && sideCode == 2) || (beforeAfter.contains('J') && sideCode == 3))
+        s" ST_X(ST_EndPoint(ll.geometry)), ST_Y(ST_EndPoint(ll.geometry)), ST_Z(ST_EndPoint(ll.geometry))"
+    }
+
+    val query =
+      s"""
+        SELECT $pointCondition
+        FROM linear_location ll
+        JOIN calibration_point cp ON cp.link_id = ll.link_id AND cp.roadway_point_id = $rwpId
+        JOIN junction_point jp ON cp.roadway_point_id = jp.roadway_point_id
+        JOIN junction j ON jp.junction_id = j.id
+        WHERE j.id = $jid
+        """
+
+    junctionCoordinateToPoint(Q.queryNA[JunctionCoordinate](query).iterator.toSeq.head)
   }
 
   def fetchByIds(ids: Seq[Long]): Seq[Junction] = {
