@@ -228,13 +228,10 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
   }
 
-  def getAll(): Seq[NodesWithJunctions] = {
-    val nodes: Seq[SuperNode] = getValidNodesForAPI()
-    val nodesWithJunctions: Seq[NodesWithJunctions] = nodes.map { node =>
-      val junctions = getValidJunctionsWithCoordinates(node.nodeNumber)
-      NodesWithJunctions(nodeNumber = node.nodeNumber, startDate = node.startDate, nodeType = node.nodeType, name = node.name, nodeCoordinates = node.nodeCoordinates, junctions = junctions)
+  def getValidJunctionsForAPI(): Seq[JunctionOfNode] = {
+    withDynSession {
+      junctionDAO.fetchValidJunctionsForAPIByNodeNumber()
     }
-    nodesWithJunctions
   }
 
   def getValidNodesForAPI(): Seq[SuperNode] = {
@@ -243,26 +240,85 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
   }
 
-  def getValidJunctionsWithCoordinates(nodeNumber: Long): Seq[JunctionWithCoordinate] = {
-    val junctions: Seq[JunctionOfNode] = getValidJunctionsForAPI(nodeNumber)
-    val junctionsWithCoordinates: Seq[JunctionWithCoordinate] = junctions.map { j =>
-      val coordinate = getCoordinatesForJunction(j.id, j.rwpId, j.beforeAfter, j.sideCode)
-      JunctionWithCoordinate(id = j.id, startDate = j.startDate, junctionNumber = j.junctionNumber, rwpId = j.rwpId, roadNumber = j.roadNumber, track = j.track, roadPartNumber = j.roadPartNumber, addrM = j.addrM, beforeAfter = j.beforeAfter, sideCode = j.sideCode, junctionCoordinate = coordinate)
-    }
-    junctionsWithCoordinates
+  def junctionCoordinateToPoint(junctionCoordinate: JunctionCoordinate): Point = {
+    val resultPoint = Point(junctionCoordinate.x, junctionCoordinate.y, junctionCoordinate.z)
+    resultPoint
   }
 
-  def getValidJunctionsForAPI(nodeNumber: Long): Seq[JunctionOfNode] = {
+  def getAll(): Seq[NodesWithJunctions] = {
+    val nodes: Seq[SuperNode] = getValidNodesForAPI()
+    val junctions: Seq[JunctionOfNode] = getValidJunctionsForAPI()
+    val startCoordinates: Seq[JunctionCoordinate] = getStartCoordinatesForJunction()
+
+    val junctionsMap: Map[Long, Seq[JunctionOfNode]] = junctions.groupBy(_.nodeNumber)
+    val startCoordinatesMap: Map[Long, Seq[JunctionCoordinate]] = startCoordinates.groupBy(_.jId)
+
+    // Combine nodes and junctions based on nodeNumber
+    val nodesWithJunctions: Seq[NodesWithJunctions] = nodes.map { node =>
+      val matchingJunctions = junctionsMap.getOrElse(node.nodeNumber, Seq.empty[JunctionOfNode])
+      val matchingCoordinates = startCoordinatesMap.getOrElse(node.nodeNumber, Seq.empty[JunctionCoordinate])
+      NodesWithJunctions(
+        nodeNumber = node.nodeNumber,
+        startDate = node.startDate,
+        nodeType = node.nodeType,
+        name = node.name,
+        nodeCoordinates = node.nodeCoordinates,
+        junctions = matchingJunctions.map(junction =>
+          JunctionWithCoordinate(
+            id = junction.id,
+            nodeNumber = junction.nodeNumber,
+            startDate = junction.startDate,
+            junctionNumber = junction.junctionNumber,
+            rwpId = junction.rwpId,
+            roadNumber = junction.roadNumber,
+            track = junction.track,
+            roadPartNumber = junction.roadPartNumber,
+            addrM = junction.addrM,
+            beforeAfter = junction.beforeAfter,
+            sideCode = junction.sideCode,
+            junctionCoordinate = matchingCoordinates.find(_.jId == junction.id)
+          )
+        )
+      )
+    }
+    nodesWithJunctions
+  }
+
+  def getStartCoordinatesForJunction(): Seq[JunctionCoordinate] = {
+    withDynSession {
+      junctionDAO.fetchStartCoordinatesByJunctionIdAndRwp()
+    }
+  }
+
+  /*def getAll(): Seq[NodesWithJunctions] = {
+    val nodes: Seq[SuperNode] = getValidNodesForAPI()
+    val nodesWithJunctions: Seq[NodesWithJunctions] = nodes.map { node =>
+      val junctions = getValidJunctionsWithCoordinates(node.nodeNumber)
+      NodesWithJunctions(nodeNumber = node.nodeNumber, startDate = node.startDate, nodeType = node.nodeType, name = node.name, nodeCoordinates = node.nodeCoordinates, junctions = junctions)
+    }
+    nodesWithJunctions
+  }*/
+
+  /*def getValidJunctionsWithCoordinates(): Seq[JunctionWithCoordinate] = {
+    val junctions: Seq[JunctionOfNode] = getValidJunctionsForAPI()
+    val junctionsWithCoordinates: Seq[JunctionWithCoordinate] = junctions.map { j =>
+      val coordinate = getCoordinatesForJunction(j.id, j.rwpId, j.beforeAfter, j.sideCode)
+      JunctionWithCoordinate(id = j.id, nodeNumber = j.nodeNumber, j.startDate, junctionNumber = j.junctionNumber, rwpId = j.rwpId, roadNumber = j.roadNumber, track = j.track, roadPartNumber = j.roadPartNumber, addrM = j.addrM, beforeAfter = j.beforeAfter, sideCode = j.sideCode, junctionCoordinate = Some(coordinate))
+    }
+    junctionsWithCoordinates
+  }*/
+
+  /*def getValidJunctionsForAPI(nodeNumber: Long): Seq[JunctionOfNode] = {
     withDynSession {
       junctionDAO.fetchValidJunctionsForAPIByNodeNumber(nodeNumber)
     }
-  }
+  }*/
 
-  def getCoordinatesForJunction(jid: Long, rwpId: Long, beforeAfter: String, sideCode: Long): Point = {
+  /*def getCoordinatesForJunction(jid: Long, rwpId: Long, beforeAfter: String, sideCode: Long): Point = {
     withDynSession {
       junctionDAO.fetchCoordinatesByJunctionId(jid, rwpId, beforeAfter, sideCode)
     }
-  }
+  }*/
 
   def getNodesForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[NodeForRoadAddressBrowser] = {
     withDynSession {

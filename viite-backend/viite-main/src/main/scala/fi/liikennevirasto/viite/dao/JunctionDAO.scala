@@ -22,10 +22,10 @@ case class JunctionTemplate(id: Long, startDate: DateTime, roadNumber: Long, roa
 
 case class JunctionForRoadAddressBrowser(nodeNumber: Long, nodeCoordinates: Point, nodeName: Option[String], nodeType: NodeType, startDate: DateTime, junctionNumber: Option[Long], roadNumber: Long, track: Long, roadPartNumber: Long, addrM: Long, beforeAfter: Seq[Long])
 
-case class JunctionCoordinate(x: Double, y: Double, z: Double)
-case class JunctionOfNode(id: Long, startDate: DateTime, junctionNumber: Option[Long], rwpId: Long, roadNumber: Long, track: Long, roadPartNumber: Long, addrM: Long, beforeAfter: String, sideCode: Long)
+case class JunctionCoordinate(jId: Long, x: Double, y: Double, z: Double)
+case class JunctionOfNode(id: Long, nodeNumber: Long, startDate: DateTime, junctionNumber: Option[Long], rwpId: Long, roadNumber: Long, track: Long, roadPartNumber: Long, addrM: Long, beforeAfter: String, sideCode: Long)
 
-case class JunctionWithCoordinate(id: Long, startDate: DateTime, junctionNumber: Option[Long], rwpId: Long, roadNumber: Long, track: Long, roadPartNumber: Long, addrM: Long, beforeAfter: String, sideCode: Long, junctionCoordinate: Point)
+case class JunctionWithCoordinate(id: Long, nodeNumber: Long, startDate: DateTime, junctionNumber: Option[Long], rwpId: Long, roadNumber: Long, track: Long, roadPartNumber: Long, addrM: Long, beforeAfter: String, sideCode: Long, junctionCoordinate: Option[JunctionCoordinate])
 
 class JunctionDAO extends BaseDAO {
 
@@ -129,8 +129,6 @@ class JunctionDAO extends BaseDAO {
     }
   }
 
-
-
   /*def getJunctionCoordinates(beforeAfter: String, jId: Long, rwpId: Long, sideCode: Long): JunctionCoordinate = {
     val startAndEndPointsOfLinearLocation = fetch2CoordinatesByJunctionId(jId, rwpId)
     var junctionCoordinate = JunctionCoordinate(0.0, 0.0, 0.0)
@@ -171,6 +169,7 @@ class JunctionDAO extends BaseDAO {
 
     def apply(r: PositionedResult): JunctionOfNode = {
       val jId: Long = r.nextLong()
+      val nodeNumber: Long = r.nextLong()
       val startDate = new DateTime(r.nextDate())
       val junctionNumber = r.nextLongOption()
       val rwpId = r.nextLong()
@@ -182,7 +181,7 @@ class JunctionDAO extends BaseDAO {
       val sideCode = r.nextLong()
       //val junctionGeometry: Point = //junctionCoordinateToPoint(fetchCoordinatesByJunctionId(jId, rwpId, beforeAfter, sideCode))
 
-      JunctionOfNode(jId, startDate, junctionNumber, rwpId, roadNumber, track, roadPartNumber, addrM, beforeAfter, sideCode)
+      JunctionOfNode(jId, nodeNumber, startDate, junctionNumber, rwpId, roadNumber, track, roadPartNumber, addrM, beforeAfter, sideCode)
     }
   }
 
@@ -191,28 +190,29 @@ class JunctionDAO extends BaseDAO {
     resultPoint
   }
 
-  def fetchValidJunctionsForAPIByNodeNumber(nodeNumber: Long): Seq[JunctionOfNode] = {
+  def fetchValidJunctionsForAPIByNodeNumber(): Seq[JunctionOfNode] = {
     val query =
       s"""
-    SELECT j.id, j.start_date, j.junction_number, jp.roadway_point_id, rw.road_number, rw.track, rw.road_part_number, rp.addr_m, json_agg(DISTINCT jp.before_after) as beforeafter, ll.side
-    FROM JUNCTION j
-    JOIN JUNCTION_POINT jp ON j.id = jp.junction_id  AND jp.valid_to IS NULL
-    JOIN ROADWAY_POINT rp ON jp.roadway_point_id  = rp.ID
-    JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
-    JOIN CALIBRATION_POINT cp ON rp.ID = cp.ROADWAY_POINT_ID
-    JOIN LINEAR_LOCATION ll ON cp.LINK_ID = ll.LINK_ID
-    WHERE j.valid_to is NULL AND j.end_date IS NULL and j.node_Number = $nodeNumber
-    GROUP BY j.start_date, j.junction_number, jp.roadway_point_id, rw.road_number, rw.track, rw.road_part_number, rp.addr_m, j.id, ll.side
-    """
+      SELECT j.id, j.node_number, j.start_date, j.junction_number, jp.roadway_point_id, rw.road_number, rw.track, rw.road_part_number, rp.addr_m, json_agg(DISTINCT jp.before_after) as beforeafter, ll.side
+      FROM JUNCTION j
+      JOIN JUNCTION_POINT jp ON j.id = jp.junction_id  AND jp.valid_to IS NULL
+      JOIN ROADWAY_POINT rp ON jp.roadway_point_id  = rp.ID
+      JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
+      JOIN CALIBRATION_POINT cp ON rp.ID = cp.ROADWAY_POINT_ID
+      JOIN LINEAR_LOCATION ll ON cp.LINK_ID = ll.LINK_ID
+      WHERE j.valid_to is NULL AND j.end_date IS NULL
+      GROUP BY j.start_date, j.junction_number, jp.roadway_point_id, rw.road_number, rw.track, rw.road_part_number, rp.addr_m, j.id, ll.side
+      """
     Q.queryNA[JunctionOfNode](query).iterator.toSeq
   }
 
   implicit val getJunctionCoordinate: GetResult[JunctionCoordinate] = new GetResult[JunctionCoordinate] {
     def apply(r: PositionedResult): JunctionCoordinate = {
+      val id = r.nextLong()
       val x = r.nextDouble()
       val y = r.nextDouble()
       val z = r.nextDouble()
-      JunctionCoordinate(x, y, z)
+      JunctionCoordinate(id, x, y, z)
     }
   }
 
@@ -236,6 +236,21 @@ class JunctionDAO extends BaseDAO {
         """
 
     junctionCoordinateToPoint(Q.queryNA[JunctionCoordinate](query).iterator.toSeq.head)
+  }
+
+  def fetchStartCoordinatesByJunctionIdAndRwp(): Seq[JunctionCoordinate] = {
+
+    val query =
+      s"""
+        SELECT j.id, ST_X(ST_StartPoint(ll.geometry)), ST_Y(ST_StartPoint(ll.geometry)), ST_Z(ST_StartPoint(ll.geometry))
+        FROM linear_location ll
+        JOIN calibration_point cp ON cp.link_id = ll.link_id
+        JOIN junction_point jp ON cp.roadway_point_id = jp.roadway_point_id
+        JOIN junction j ON jp.junction_id = j.id
+        WHERE j.valid_to is NULL AND j.end_date IS NULL
+        """
+
+    Q.queryNA[JunctionCoordinate](query).iterator.toSeq
   }
 
   def fetchByIds(ids: Seq[Long]): Seq[Junction] = {

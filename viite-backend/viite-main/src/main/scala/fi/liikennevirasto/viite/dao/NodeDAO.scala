@@ -73,7 +73,6 @@ class NodeDAO extends BaseDAO {
       val name = r.nextString()
       val coordX = r.nextLong()
       val coordY = r.nextLong()
-      //val junctions = nodesAndJunctionsService.getValidJunctionsForAPI(nodeNumber)
 
       SuperNode(nodeNumber, startDate, nodeType, name, Point(coordX, coordY))
     }

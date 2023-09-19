@@ -443,15 +443,36 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
   def validNodesWithJunctionsToApi(fetchedNodes: Seq[NodesWithJunctions]): Seq[Map[String, Any]] = {
     val nodesWithJunctions: Seq[NodesWithJunctions] = fetchedNodes
 
-    val mappedNodes: Seq[Map[String, Any]] = nodesWithJunctions.map(n => ListMap(
-      "nodeNumber" -> n.nodeNumber,
-      "startDate" -> n.startDate.toString(),
-      "type" -> n.nodeType.displayValue,
-      "name" -> n.name,
-      "nodeCoordinateX" -> n.nodeCoordinates.x,
-      "nodeCoordinateY" -> n.nodeCoordinates.y,
-      "Junctions:" -> n.junctions
-    ))
+    val mappedNodes: Seq[Map[String, Any]] = nodesWithJunctions.map { n =>
+      val junctionsMapped = n.junctions.map { junction =>
+        val junctionCoordinateMap = Map(
+          "x" -> junction.junctionCoordinate.map(_.x).getOrElse("N/A"),
+          "y" -> junction.junctionCoordinate.map(_.y).getOrElse("N/A")
+        )
+
+        ListMap(
+          "startDate" -> junction.startDate.toString(),
+          "junctionNumber" -> junction.junctionNumber.getOrElse("N/A"),
+          "roadNumber" -> junction.roadNumber,
+          "track" -> junction.track,
+          "roadPartNumber" -> junction.roadPartNumber,
+          "addrM" -> junction.addrM,
+          "beforeAfter" -> junction.beforeAfter,
+          "junctionCoordinate" -> junctionCoordinateMap
+        )
+      }
+
+      ListMap(
+        "nodeNumber" -> n.nodeNumber,
+        "startDate" -> n.startDate.toString(),
+        "type" -> n.nodeType.displayValue,
+        "name" -> n.name,
+        "nodeCoordinateX" -> n.nodeCoordinates.x,
+        "nodeCoordinateY" -> n.nodeCoordinates.y,
+        "junctions" -> junctionsMapped
+      )
+    }
+
 
     /*val sortedNodes = mappedNodes.sortBy(n => (n("Tie").asInstanceOf[Long], n("Osa").asInstanceOf[Long], n("Et").asInstanceOf[Long]))
 
