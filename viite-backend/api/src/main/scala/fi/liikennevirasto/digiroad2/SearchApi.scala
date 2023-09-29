@@ -5,6 +5,7 @@ import fi.liikennevirasto.viite.util.DigiroadSerializers
 import fi.liikennevirasto.viite.RoadAddressService
 import fi.liikennevirasto.viite.dao.RoadAddress
 import fi.vaylavirasto.viite.model.Track
+import fi.vaylavirasto.viite.util.ViiteException
 import org.joda.time.DateTime
 import org.json4s.Formats
 import org.scalatra.{BadRequest, InternalServerError, ScalatraServlet}

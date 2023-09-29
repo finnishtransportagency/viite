@@ -15,6 +15,7 @@ class ScalatraBootstrap extends LifeCycle {
   implicit val swagger: ViiteSwagger = new ViiteSwagger
 
   override def init(context: ServletContext) {
+    context.mount(new DynamicRoadNetworkApi(Digiroad2Context.dynamicRoadNetworkService), "/api/roadnetwork/*")
     context.mount(new SessionApi, "/api/auth/*")
     context.mount(new PingApi, "/api/ping/*")
     context.mount(new AdminApi(Digiroad2Context.dataImporter, swagger), "/api/admin/*")

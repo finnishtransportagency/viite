@@ -6,6 +6,7 @@ import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustme
 import fi.vaylavirasto.viite.dao.{BaseDAO, LinkDAO, Queries, Sequences}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.{CalibrationPointType, LinkGeomSource, SideCode}
+import fi.vaylavirasto.viite.postgis.MassQuery.logger
 import fi.vaylavirasto.viite.postgis.{MassQuery, PostGISDatabase}
 import fi.vaylavirasto.viite.util.DateTimeFormatters.dateOptTimeFormatter
 import org.joda.time.DateTime
@@ -639,6 +640,15 @@ class LinearLocationDAO extends BaseDAO {
       s"""
           $selectFromLinearLocation
           WHERE loc.VALID_TO IS NULL
+       """
+    queryList(query)
+  }
+
+  def fetchActiveLinearLocationsWithRoadAddresses(): Seq[LinearLocation] = {
+    val query =
+      s"""
+          $selectFromLinearLocation
+          WHERE loc.VALID_TO IS NULL AND loc.ROADWAY_NUMBER IN (SELECT ROADWAY_NUMBER FROM ROADWAY WHERE VALID_TO IS NULL AND END_DATE IS NULL)
        """
     queryList(query)
   }
