@@ -289,6 +289,21 @@ class LinearLocationDAO extends BaseDAO {
     fetchByIdMassQuery(ids, rejectInvalids)
   }
 
+
+  def fetchByLinkIdAndMValueRange(linkId: String, filterMvalueMin: Double, filterMvalueMax: Double): List[LinearLocation] = {
+    time(logger, "Fetch linear locations by link id, and M values") {
+
+      val query =
+        s"""
+          $selectFromLinearLocation
+          WHERE loc.link_id like '$linkId'
+          AND loc.start_measure >= $filterMvalueMin AND loc.end_measure <= $filterMvalueMax
+          AND loc.valid_to is null
+        """
+      queryList(query)
+    }
+  }
+
   def fetchByLinkId(linkIds: Set[String], filterIds: Set[Long] = Set()): List[LinearLocation] = {
     time(logger, "Fetch linear locations by link id") {
       if (linkIds.isEmpty) {

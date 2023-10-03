@@ -417,7 +417,7 @@ class LinkNetworkUpdater {
    * Invalidates the old, and created new linear locations according to the given split <i>change</i>.
    *
    * @param change        The link network change whose related changes we want to make to the database.
-   * @param changeSetName Used as the creator (createdBy) for the linearLocations created.
+   * @param changeMetaData changeSetName used as the creator (createdBy) for the linearLocations created.
    * @return              Sequence of ids of the created linearLocations
    */
   private def linearLocationChangesDueToNetworkLinkSplit(change: LinkNetworkSplitChange, changeMetaData: ChangeSetMetaData): Unit = {
@@ -519,42 +519,39 @@ class LinkNetworkUpdater {
    * @return              Sequence of ids of the created linearLocations
    */
   private def linearLocationChangesDueToNetworkLinkReplace(change: LinkNetworkReplaceChange, changeMetaData: ChangeSetMetaData) = {
-    val oldLinearLocations = linearLocationDAO.fetchByLinkId(Set(change.oldLink.linkId))
+    val replInfo = change.replaceInfo
+    val oldLinearLocations = linearLocationDAO.fetchByLinkIdAndMValueRange(change.oldLink.linkId, replInfo.oldFromMValue, replInfo.newToMValue)
 
     oldLinearLocations.size match {
       case 0 =>
         throw ViiteException(s"LinkNetworkChange: No old linear location found " +
           s"for link ${change.oldLink.linkId} when trying to expire old ones.")
-      case 1 =>
-        //TODO the real stuff is run for this option. No Throws here.
       case _ =>
-        throw ViiteException(s"LinkNetworkChange: Too many valid linear locations found " +
-          s"for link ${change.oldLink.linkId} when trying to expire old ones.")
-    } // match
+        //TODO the real stuff is run for this option. No Throws here.
+    }
 
     val llIds = oldLinearLocations.map(_.id).toSet
-    /*val numInvalidatedLLs: Int =*/ linearLocationDAO.expireByIds(llIds)
 
-    // when only one linearlocation, we know what to do
-    val oldLL = oldLinearLocations.head
+    oldLinearLocations.foreach(oldLL => {
+      val newLL = LinearLocation(
+        NewIdValue,                                //id: Long,
+        oldLL.orderNumber,                         //orderNumber: Double,
+        change.newLink.linkId,                     //linkId: String,
+        change.replaceInfo.newFromMValue,          //startMValue: Double, // TODO change .newFromMValue to an interpolating algorithm, when geometry changed
+        change.replaceInfo.newToMValue,            //endMValue:   Double, // TODO change .newFromMValue to an interpolating algorithm, when geometry changed
+        decideNewSideCode(change.replaceInfo.digitizationChange, oldLL.sideCode),
+        0, // Not required, link created elsewhere //adjustedTimestamp: Long,
+        (CalibrationPointReference.None, CalibrationPointReference.None), //CPs created elsewhere //calibrationPoints: (CalibrationPointReference, CalibrationPointReference) = (CalibrationPointReference.None, CalibrationPointReference.None)
+        Seq(change.newLink.geometry.head, change.newLink.geometry.last),  //geometry: Seq[Point]
+        LinkGeomSource.Unknown, // Not required, link created elsewhere
+        oldLL.roadwayNumber,                       //roadwayNumber: Long
+        None,        // Not used at create         //validFrom: Option[DateTime] = None
+        None         // Not used at create         //validTo:   Option[DateTime] = None
+      )
 
-    val newLL = LinearLocation(
-      NewIdValue,                                //id: Long,
-      oldLL.orderNumber,                         //orderNumber: Double,
-      change.newLink.linkId,                     //linkId: String,
-      change.replaceInfo.newFromMValue,          //startMValue: Double,
-      change.replaceInfo.newToMValue,            //endMValue:   Double,
-      decideNewSideCode(change.replaceInfo.digitizationChange, oldLL.sideCode),
-      0, // Not required, link created elsewhere //adjustedTimestamp: Long,
-      (CalibrationPointReference.None, CalibrationPointReference.None), //CPs created elsewhere //calibrationPoints: (CalibrationPointReference, CalibrationPointReference) = (CalibrationPointReference.None, CalibrationPointReference.None)
-      Seq(change.newLink.geometry.head, change.newLink.geometry.last),  //geometry: Seq[Point]
-      LinkGeomSource.Unknown, // Not required, link created elsewhere
-      oldLL.roadwayNumber,                       //roadwayNumber: Long
-      None,        // Not used at create         //validFrom: Option[DateTime] = None
-      None         // Not used at create         //validTo:   Option[DateTime] = None
-    )
-
-    linearLocationDAO.create(Seq(newLL), changeMetaData.changeSetName)
+      linearLocationDAO.create(Seq(newLL), changeMetaData.changeSetName)
+      /*val numInvalidatedLLs: Int =*/ linearLocationDAO.expireByIds(llIds)
+    }) // oldLinearLocations.foreach
   }
 
   private def calibrationPointChangesDueToNetworkLinkReplace(change: LinkNetworkReplaceChange, changeMetaData: ChangeSetMetaData): Seq[(Long, Long)] = {    //TODO RETURN id mapper list for old-new CPs
