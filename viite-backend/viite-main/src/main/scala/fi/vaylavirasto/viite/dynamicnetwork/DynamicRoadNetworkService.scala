@@ -1,23 +1,23 @@
-package fi.liikennevirasto.viite.util
+package fi.vaylavirasto.viite.dynamicnetwork
 
 import fi.liikennevirasto.digiroad2.client.kgv.KgvRoadLink
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.dao.{LinearLocation, LinearLocationDAO, RoadwayDAO}
 import fi.vaylavirasto.viite.geometry.Point
-import fi.vaylavirasto.viite.model.RoadLink
+import fi.vaylavirasto.viite.model.{LinkGeomSource, RoadLink}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase
+import fi.vaylavirasto.viite.util.DateTimeFormatters.finnishDateFormatter
 import fi.vaylavirasto.viite.util.ViiteException
 import org.apache.http.client.config.{CookieSpecs, RequestConfig}
 import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet, HttpRequestBase}
 import org.apache.http.impl.client.HttpClients
 import org.apache.http.util.EntityUtils
+import org.joda.time.DateTime
 import org.json4s.DefaultFormats
 import org.json4s.JsonAST.JArray
 import org.json4s.jackson.JsonMethods.parse
 import org.slf4j.{Logger, LoggerFactory}
 
-import java.text.SimpleDateFormat
-import java.util.{Date}
 import scala.collection.mutable.ListBuffer
 
 case class ChangeSet()
@@ -29,24 +29,9 @@ case class TiekamuRoadLinkChange(oldLinkId: String,
                                  newStartM: Double,
                                  newEndM: Double)
 
-case class ViiteRoadLinkChange(changeType: String,
-                               oldLinkInfo: LinkInfo,
-                               newLinkInfo: Seq[LinkInfo],
-                               replaceInfo: Seq[ReplaceInfo])
-case class LinkInfo(linkId: String,
-                    linkLength: Double,
-                    geometry: Seq[Point])
-case class ReplaceInfo(oldLinkId: String,
-                       oldFromMValue: Double,
-                       oldToMValue: Double,
-                       newLinkId: String,
-                       newFromMValue: Double,
-                       newToMValue: Double,
-                       digitizationChange: Boolean)
-
 case class TiekamuRoadLinkChangeError(errorMessage: String, change: TiekamuRoadLinkChange)
 
-class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO: RoadwayDAO, val kgvClient: KgvRoadLink) {
+class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO: RoadwayDAO, val kgvClient: KgvRoadLink, linkNetworkUpdater: LinkNetworkUpdater) {
 
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
@@ -58,12 +43,12 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
   protected def addHeaders(request: HttpRequestBase): Unit = {
     request.addHeader("accept", "application/geo+json")
   }
-  def createRoadLinkChangeSets(previousDate: Date, newDate: Date): Unit = {
-    def viiteRoadLinkChangeToMap(change: ViiteRoadLinkChange): Map[String, Any] = {
+  def createRoadLinkChangeSets(previousDate: DateTime, newDate: DateTime): Unit = {
+    def viiteRoadLinkChangeToMap(change: LinkNetworkChange): Map[String, Any] = {
       Map(
         "changeType" -> change.changeType,
-        "old" -> linkInfoToMap(change.oldLinkInfo),
-        "new" -> change.newLinkInfo.map(changeInfo => linkInfoToMap(changeInfo)),
+        "old" -> linkInfoToMap(change.oldLink),
+        "new" -> change.newLinks.map(changeInfo => linkInfoToMap(changeInfo)),
         "replaceInfo" -> change.replaceInfo.map(replace => replaceInfoToMap(replace))
       )
     }
@@ -90,8 +75,8 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
     def extractTiekamuRoadLinkChanges(responseString: String):Seq[TiekamuRoadLinkChange] = {
 
       /**TODO REMOVE THESE WHEN IN PRODUCTION THIS IS FOR LOCAL DUMMY JSON*/
-      //val localParsedMockJson = parse(responseString.substring(1, responseString.length() - 1))
-      //val features = (localParsedMockJson \ "features").asInstanceOf[JArray].arr
+      //      val localParsedMockJson = parse(responseString.substring(1, responseString.length() - 1))
+      //      val features = (localParsedMockJson \ "features").asInstanceOf[JArray].arr
 
       // Parse the JSON response
       val parsedJson = parse(responseString)
@@ -113,7 +98,7 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
       tiekamuRoadLinkChanges
     }
 
-    def createViiteRoadLinkChanges(groupedByOldLinkId:  Map[String, Seq[TiekamuRoadLinkChange]], newLinkIds: Set[String], activeLinearLocations: Seq[LinearLocation]):Seq[ViiteRoadLinkChange] = {
+    def createViiteRoadLinkChanges(groupedByOldLinkId:  Map[String, Seq[TiekamuRoadLinkChange]], newLinkIds: Set[String], activeLinearLocations: Seq[LinearLocation]):Seq[LinkNetworkChange] = {
       def getDigitizationChangedValue(change: TiekamuRoadLinkChange):Boolean = {
         if (change.newStartM > change.newEndM)
           true
@@ -132,10 +117,10 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
 
         val viiteRoadLinkChange = {
           if (changeInfos.size > 1) {
-            changeType = "Split"
+            changeType = "split"
 
           } else {
-            changeType = "Replace"
+            changeType = "replace"
           }
           val oldInfo = LinkInfo(changeInfos.head.oldLinkId, changeInfos.map(_.oldEndM).max - changeInfos.map(_.newStartM).min, activeLinearLocations.filter(ll => ll.linkId == linkId).head.geometry)
           val newInfo = changeInfos.map(ch => {
@@ -145,7 +130,7 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
           })
           val replaceInfo = changeInfos.map(ch => ReplaceInfo(ch.oldLinkId, ch.oldStartM, ch.oldEndM, ch.newLinkId, ch.newStartM, ch.newEndM, getDigitizationChangedValue(ch)))
 
-          ViiteRoadLinkChange(changeType, oldInfo, newInfo, replaceInfo)
+          LinkNetworkChange(changeType, oldInfo, newInfo, replaceInfo)
         }
         viiteRoadLinkChange
       }).toSeq
@@ -198,18 +183,6 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
       tiekamuRoadLinkChangeErrors
     }
 
-    val formatter = new SimpleDateFormat("dd.MM.yyyy")
-    val previousDateFormatted = formatter.format(previousDate)
-    val newDateFormatted = formatter.format(newDate)
-
-    val tiekamuEndpoint = "https://paikkatietodev.testivaylapilvi.fi/viitekehysmuunnin/tiekamu?"
-    val tiekamuDateParams = s"tilannepvm=${previousDateFormatted}&asti=${newDateFormatted}"
-    val tiekamuReturnValueParam = "&palautusarvot=72"
-    val url = tiekamuEndpoint ++ tiekamuDateParams ++ tiekamuReturnValueParam
-
-    logger.info(s"Started creating changesets... ")
-    val request = new HttpGet(url)
-    addHeaders(request)
 
     var response: CloseableHttpResponse = null
     val client = HttpClients.custom()
@@ -222,13 +195,26 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
     try {
       withDynTransaction {
         time(logger, "Creating Viite road link change info sets") {
+
+          val previousDateFinnishFormat = finnishDateFormatter.print(previousDate)
+          val newDateFinnishFormat = finnishDateFormatter.print(newDate)
+          val tiekamuEndpoint = "https://paikkatietodev.testivaylapilvi.fi/viitekehysmuunnin/tiekamu?"
+          val tiekamuDateParams = s"tilannepvm=${previousDateFinnishFormat}&asti=${newDateFinnishFormat}"
+          val tiekamuReturnValueParam = "&palautusarvot=72"
+          val url = tiekamuEndpoint ++ tiekamuDateParams ++ tiekamuReturnValueParam
+
+          //TODO remove this local endpoint url
+          //val url = "http://localhost:3000/muutokset"
+
+          logger.info(s"Started creating changesets... ")
+          val request = new HttpGet(url)
+          addHeaders(request)
           response = client.execute(request)
           //val changes = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]]
           val entity = response.getEntity
           val responseString = EntityUtils.toString(entity, "UTF-8")
 
           val tiekamuRoadLinkChanges = extractTiekamuRoadLinkChanges(responseString)
-          tiekamuRoadLinkChanges.foreach(ch => println(ch))
 
           // filter change infos so that only the ones that target links with road addresses are left
           // get linear locations that are on active road addresses
@@ -246,12 +232,14 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
           val groupedByOldLinkId = filteredChangeInfos.groupBy(changeInfo => changeInfo.oldLinkId)
 
           val viiteRoadLinkChanges = createViiteRoadLinkChanges(groupedByOldLinkId, newLinkIds, activeLinearLocations)
-          viiteRoadLinkChanges.foreach(ch => println(ch))
+          viiteRoadLinkChanges.foreach(rlc => println(rlc))
+
+          logger.info(s"${viiteRoadLinkChanges.size} changesets created succesfully. Starting next phase..")
 
           // TODO save the created change sets to DB or S3 Bucket
 
-          // TODO make the connection with LinkNetworkUpdator and pass the ViiteRoadLinkChanges to it
-          //LinkNetworkUpdater.persistLinkNetworkChanges(viiteRoadLinkChanges)
+          // TODO naming convention to changeSetName
+          linkNetworkUpdater.persistLinkNetworkChanges(viiteRoadLinkChanges, "changeSetNamePlaceHolder", newDate,LinkGeomSource.NormalLinkInterface)
         }
       }
     } catch {

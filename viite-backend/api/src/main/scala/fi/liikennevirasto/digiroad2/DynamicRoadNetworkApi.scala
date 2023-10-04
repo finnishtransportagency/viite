@@ -1,17 +1,22 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.liikennevirasto.viite.util.DynamicRoadNetworkService
+import fi.vaylavirasto.viite.dynamicnetwork.DynamicRoadNetworkService
 import org.scalatra._
 import org.slf4j.{Logger, LoggerFactory}
+import fi.vaylavirasto.viite.util.DateTimeFormatters.ISOdateFormatter
+import org.joda.time.DateTime
 
-import java.text.{ParseException, SimpleDateFormat}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-
 class DynamicRoadNetworkApi(dynamicRoadNetworkService: DynamicRoadNetworkService) extends ScalatraServlet{
   val logger: Logger = LoggerFactory.getLogger(getClass)
+
+  def validateDateParams(previousDate: String, newDate: String): (DateTime, DateTime) = {
+    val format = ISOdateFormatter
+    (format.parseDateTime(previousDate), format.parseDateTime(newDate))
+  }
 
   get("/create_changesets") {
     time(logger, "GET request for /create_changesets") {
@@ -22,13 +27,11 @@ class DynamicRoadNetworkApi(dynamicRoadNetworkService: DynamicRoadNetworkService
       (previousDate, newDate) match {
         case (Some(previousDate), Some(newDate)) =>
           try {
-            val format = new SimpleDateFormat("yyyy-MM-dd")
-            val previousDateObject = format.parse(previousDate)
-            val newDateObject = format.parse(newDate)
-            Future(dynamicRoadNetworkService.createRoadLinkChangeSets(previousDateObject, newDateObject))
+            val (previousDateTimeObject, newDateTimeObject) = validateDateParams(previousDate, newDate)
+            Future(dynamicRoadNetworkService.createRoadLinkChangeSets(previousDateTimeObject, newDateTimeObject))
             "Samuutus käynnistetty"
           } catch {
-            case ex: ParseException =>
+            case ex: IllegalArgumentException =>
               logger.error("Creating changesets failed.", ex)
               BadRequest("Unable to parse date, the date should be in yyyy-mm-dd format.")
             case e: Exception =>
