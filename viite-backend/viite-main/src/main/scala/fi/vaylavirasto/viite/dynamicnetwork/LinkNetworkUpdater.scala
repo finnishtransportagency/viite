@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.util.LogUtils
 import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao.{CalibrationPointDAO, CalibrationPointReference, LinearLocation, LinearLocationDAO}
 import fi.vaylavirasto.viite.dao.LinkDAO
-import fi.vaylavirasto.viite.geometry.Point
+import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.CalibrationPointLocation.{EndOfLink, StartOfLink}
 import fi.vaylavirasto.viite.model.{CalibrationPoint, LinkGeomSource, SideCode}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase
@@ -404,9 +404,9 @@ class LinkNetworkUpdater {
           throw ViiteException(s"LinkNetworkChange: Invalid ReplaceChange. A link ids do not match. Check " +
             s"${oldLink.linkId} vs. ${replaceInfo.oldLinkId}, and ${newLink.linkId} vs. ${replaceInfo.newLinkId}.")
         }
-        logger.debug("data integrity: lengths")
-        if (oldLink.linkLength != replaceInfo.oldToMValue // old link lengths must always match
-          ||newLink.linkLength > replaceInfo.newToMValue // new link may be a combination of two old -> replaceInfo may have partial measure here
+        logger.debug(s"data integrity: lengths must match sufficiently. Allowed difference: ${GeometryUtils.DefaultEpsilon} m ")
+        if (GeometryUtils.scaleToThreeDigits(oldLink.linkLength) != replaceInfo.oldToMValue // old link lengths must always match
+          ||GeometryUtils.scaleToThreeDigits(newLink.linkLength) > replaceInfo.newToMValue  // new link may be a combination of two old -> replaceInfo may have partial measure here
         ) {
           throw ViiteException(s"LinkNetworkChange: Invalid ReplaceChange. A link lengths do not match. Check " +
             s"${oldLink.linkLength} vs. ${replaceInfo.oldToMValue}, and ${newLink.linkLength} vs. ${replaceInfo.newToMValue}.")

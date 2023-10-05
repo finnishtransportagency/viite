@@ -3,7 +3,7 @@ package fi.vaylavirasto.viite.geometry
 object GeometryUtils {
 
   /** Default value of minimum distance where locations are considered to be same */
-  final private val DefaultEpsilon = 0.01
+  final val DefaultEpsilon = 0.01
   /** If links are more than <i>MaxDistanceForConnectedLinks</i> apart, they are considered to being disconnected. */
   val MaxDistanceForConnectedLinks = 0.1
 
