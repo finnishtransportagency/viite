@@ -20,6 +20,7 @@ class KgvRoadLink {
   lazy val roadLinkData: KgvRoadLinkClient[RoadLink] = new KgvRoadLinkClient[RoadLink](Some(KgvCollection.UnFrozen), Some(LinkGeomSource.NormalLinkInterface))
   lazy val frozenTimeRoadLinkData: KgvRoadLinkClient[RoadLink] = new KgvRoadLinkClient[RoadLink](Some(KgvCollection.Frozen), Some(LinkGeomSource.FrozenLinkInterface))
   lazy val roadLinkChangeInfo: KgvRoadLinkClient[ChangeInfo] = new KgvRoadLinkClient[ChangeInfo](Some(KgvCollection.Changes), Some(LinkGeomSource.Change))
+  lazy val roadLinkVersionsData: KgvRoadLinkClient[RoadLink] = new KgvRoadLinkClient[RoadLink](Some(KgvCollection.LinkVersions), Some(LinkGeomSource.RoadLinksVersions))
   lazy val complementaryData: ComplementaryLinkDAO           = new ComplementaryLinkDAO
 }
 

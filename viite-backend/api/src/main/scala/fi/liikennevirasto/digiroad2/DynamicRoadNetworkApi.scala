@@ -28,7 +28,7 @@ class DynamicRoadNetworkApi(dynamicRoadNetworkService: DynamicRoadNetworkService
         case (Some(previousDate), Some(newDate)) =>
           try {
             val (previousDateTimeObject, newDateTimeObject) = validateDateParams(previousDate, newDate)
-            Future(dynamicRoadNetworkService.createRoadLinkChangeSets(previousDateTimeObject, newDateTimeObject))
+            Future(dynamicRoadNetworkService.updateLinkNetwork(previousDateTimeObject, newDateTimeObject))
             "Samuutus käynnistetty"
           } catch {
             case ex: IllegalArgumentException =>
@@ -43,5 +43,3 @@ class DynamicRoadNetworkApi(dynamicRoadNetworkService: DynamicRoadNetworkService
     }
   }
 }
-
-
