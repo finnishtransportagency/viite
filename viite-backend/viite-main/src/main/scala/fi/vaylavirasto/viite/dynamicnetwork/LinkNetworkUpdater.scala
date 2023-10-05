@@ -2,6 +2,7 @@ package fi.vaylavirasto.viite.dynamicnetwork
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.core.JsonParseException
+import fi.liikennevirasto.digiroad2.util.LogUtils
 import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao.{CalibrationPointDAO, CalibrationPointReference, LinearLocation, LinearLocationDAO}
 import fi.vaylavirasto.viite.dao.LinkDAO
@@ -39,12 +40,12 @@ case class PointWkt(@JsonProperty("x") x: Double,
  * Use for both the current ("old"), and the replacing ("new") links.
  *
  * @param linkId Unique identifier of the link.
- * @param linkLength Geometry length of the whole link, from start (0) to the other end of the geometry.
+ * @param linkLength (2D) Geometry length of the whole link, from start (0) to the other end of the geometry.
  * @param geometry  //TODO end points, or the whole geometry of the link? Or whatever? Do we need to interpolate? At least two points. 2D? 3D?
  */
 case class LinkInfo(linkId: String,
                     linkLength: Double,
-                    geometry: List[Point] // TODO Point ok for the type?
+                    geometry: Seq[Point] // TODO Point ok for the type?
                     )
 /**
  * Replace info, telling which part of the current ("old") link gets replaced with which part of the replacing ("new") link.
@@ -84,13 +85,13 @@ case class ReplaceInfo( oldLinkId: String, oldFromMValue: Double, oldToMValue: D
  *     "old": {
  *         "linkId": "oldLink:1",
  *         "linkLength": 43.498,
- *         "geometry":  "LINESTRING ZM(x y zstart,x y zend)" //TODO only end points, or the whole geometry?
+ *         "geometry":  "LINESTRING ZM(x y zstart, [... ,] x y zend)" // At least start, and end points of the geometry
  *         },
  *     "new": [
  *         {
  *             "linkId": "newLink:1",
  *             "linkLength": 49.631,
- *             "geometry":  "LINESTRING ZM(x y zstart,x y zend)" // TODO only end points, or the whole geometry?
+ *             "geometry":  "LINESTRING ZM(x y zstart, ... , x y zend)" // The whole geometry required for possibility to split to linear locations
  *         },
  *         { ... }
  *     ],
@@ -119,8 +120,8 @@ case class ReplaceInfo( oldLinkId: String, oldFromMValue: Double, oldToMValue: D
  */
 case class LinkNetworkChange(changeType:  String,
                              oldLink:     LinkInfo,
-                             newLinks:    List[LinkInfo],
-                             replaceInfo: List[ReplaceInfo]
+                             newLinks:    Seq[LinkInfo],
+                             replaceInfo: Seq[ReplaceInfo]
                             )
 /** A NetworkLink change of type "replace". Use only for validated, proper changes of type "replace".
  * Use function convertToAValidReplaceChange for validation, and conversion. */
@@ -158,20 +159,20 @@ class LinkNetworkUpdater {
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
 
-  private val linearLocationDAO = new LinearLocationDAO //TODO Why LinearLocationDAO is a class, not an object?
+  private val linearLocationDAO = new LinearLocationDAO // LinearLocationDAO is a class, fot testing possibility (must be able to override db functionality)
 
   /**
    * Takes in a change set JSON, and extracts a list of [[LinkNetworkChange]]s out of it.
    *
-   * @param changeSetJSON JSON containing dynamic link network changes, of type List[ [[LinkNetworkChange]] ]
+   * @param changeSetJSON JSON containing dynamic link network changes, of type Seq[ [[LinkNetworkChange]] ]
    * @param changeSetName Name of the set the given JSON has been received from. Used for logging.
    * @throws ViiteException if the given JSON cannot be deserialized to a list of [[LinkNetworkChange]]s
    */
-  def parseJSONForLinkNetworkChanges(changeSetJSON: String, changeSetName: String): List[LinkNetworkChange] = {
+  def parseJSONForLinkNetworkChanges(changeSetJSON: String, changeSetName: String): Seq[LinkNetworkChange] = {
 
-    def getSamingSet(changeSetJSON: String): List[LinkNetworkChange] = {
+    def getSamingSet(changeSetJSON: String): Seq[LinkNetworkChange] = {
       JsonMethods.parse(changeSetJSON)
-        .extract[List[LinkNetworkChange]] // We assume to get at least one object to process. If none possible, use .extractOpt
+        .extract[Seq[LinkNetworkChange]] // We assume to get at least one object to process. If none possible, use .extractOpt
       //.getOrElse(Seq.empty[LinkNetworkChange])
     }
 
@@ -180,33 +181,37 @@ class LinkNetworkUpdater {
       throw ViiteException(s"$excStr:\r  $myMessage\r    ${t.getMessage}\r\r")
     }
 
-    try {
-      changeSetJSON match {
-        case ""     => List[LinkNetworkChange]() // Nothing to process
-        case "[]"   => List[LinkNetworkChange]() // Nothing to process
-        case "{}"   => List[LinkNetworkChange]() // Nothing to process
-        case "[{}]" => List[LinkNetworkChange]() // Nothing to process
-        case _ => getSamingSet(changeSetJSON) // may throw ViiteException
+    LogUtils.time(logger, s"Persist LinkNetworkChanges to Viite data structures $changeSetName") {
+
+      try {
+        changeSetJSON match {
+          case ""     => Seq[LinkNetworkChange]() // Nothing to process
+          case "[]"   => Seq[LinkNetworkChange]() // Nothing to process
+          case "{}"   => Seq[LinkNetworkChange]() // Nothing to process
+          case "[{}]" => Seq[LinkNetworkChange]() // Nothing to process
+          case _ => getSamingSet(changeSetJSON) // may throw ViiteException
+        }
       }
-    }
-    catch {
-      case e: JsonParseException => reThrow("Incorrectly formatted JSON. Not a proper Link Network change JSON.",e)
-      case e: MappingException   => reThrow("Incorrectly formatted JSON. Not a proper Link Network change JSON.",e)
-      case t: Throwable          => reThrow("Probably incorrectly formatted JSON. Unexpected exception not considered:",t)
+      catch {
+        case e: JsonParseException => reThrow("Incorrectly formatted JSON. Not a proper Link Network change JSON.",e)
+        case e: MappingException   => reThrow("Incorrectly formatted JSON. Not a proper Link Network change JSON.",e)
+        case t: Throwable          => reThrow("Probably incorrectly formatted JSON. Unexpected exception not considered:",t)
+      }
+
     }
   }
 
   /**
-   * Wrapper for persistLinkNetworkChanges(List[LinkNetworkChange], ChangeSetMetaData),
+   * Wrapper for persistLinkNetworkChanges(Seq[LinkNetworkChange], ChangeSetMetaData),
    * parsing ChangeSetMetaData from changeSetName, linkDataRetrievalTime, and linkGeomSource.
    *
-   * @param changeSet List of link network changes ([[LinkNetworkChange]]) to be persisted
+   * @param changeSet List of link network changes (Seq[ [[LinkNetworkChange]] ]) to be persisted
    * @param linkDataRetrievalTime
    * @param linkGeomSource Source from where the link data / geometries of the set have been
    * @param changeSetName of type [[LinkNetworkChange]]
    * @throws ViiteException if any of the change data is invalid, or incongruent, or there is no such change to be made within Viite
    */
-  def persistLinkNetworkChanges(changeSet: List[LinkNetworkChange],
+  def persistLinkNetworkChanges(changeSet: Seq[LinkNetworkChange],
                                 changeSetName: String,
                                 linkDataRetrievalTime: DateTime,
                                 linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface
@@ -219,52 +224,59 @@ class LinkNetworkUpdater {
    * Takes in a change set describing dynamic changes to the underlying link network,
    * validates each change, and makes the corresponding changes to the Viite data structures,
    * iff all changes are valid changes for Viite.
+   * @note  All of the changes are run within in a single transaction, that either passes or fails.
+   *        That is, either the whole changeSet is set as the Viite link network state, or none of it.
    *
-   * @param changeSet List of link network changes ([[LinkNetworkChange]]) to be persisted
-   * @param changeMetaData
+   * @param changeSet List of link network changes (Seq[ [[LinkNetworkChange]] ]) to be persisted
+   * @param changeMetaData see [[ChangeSetMetaData]]
    * @throws ViiteException if any of the change data is invalid, or incongruent, or there is no such change to be made within Viite
    */
-  def persistLinkNetworkChanges(changeSet: List[LinkNetworkChange], changeMetaData: ChangeSetMetaData): Unit = {
+  def persistLinkNetworkChanges(changeSet: Seq[LinkNetworkChange], changeMetaData: ChangeSetMetaData): Unit = {
 
     def persistLinkNetworkChange(change: LinkNetworkChange, changeMetaData: ChangeSetMetaData): Unit = {
       change.changeType match {
-        case "replace" => replaceChange(change, changeMetaData)
-        case "split"   => splitChange  (change, changeMetaData)
+        case "replace" => persistReplaceChange(change, changeMetaData)
+        case "split"   => persistSplitChange  (change, changeMetaData)
         //case "combine" => combineChange(changeSetName, change)
       }
     }
 
-    //try {
-      withDynTransaction { // TODO IS THE TRANSACTION WRAPPING ENOUGH?
+    LogUtils.time(logger, s"Persist LinkNetworkChanges to Viite data structures, change set ${changeMetaData.changeSetName}") {
+      //try { // TODO Informing MML in case of error?
+      withDynTransaction {
         changeSet.foreach(change => persistLinkNetworkChange(change, changeMetaData))
       }
-    //}
-    //catch { // TODO Informing MML about an error here?
-    //  case e: Exception => throw ViiteException(s"An exception when handling dynamic change set $changeSetName:\r${e.getMessage}\r\r")
-    //}
-
+      //}
+      //catch { // TODO Informing MML about an error here?
+      //  case e: Exception => throw ViiteException(s"An exception when handling dynamic change set $changeSetName:\r${e.getMessage}\r\r")
+      //}
+    }
   }
 
-  private def replaceChange(change: LinkNetworkChange, changeMetaData: ChangeSetMetaData): Unit = {
+  private def persistReplaceChange(change: LinkNetworkChange, changeMetaData: ChangeSetMetaData): Unit = {
 
     logger.debug("Going to transformed to a LinkNetworkReplaceChange")
     val aReplaceChange: LinkNetworkReplaceChange = convertToAValidReplaceChange(change).get // returns or throws
     logger.debug("Transformed to a LinkNetworkReplaceChange")
 
-    linkChangesDueToNetworkLinkChange(change, changeMetaData);                      logger.debug("Link created")
-    calibrationPointChangesDueToNetworkLinkReplace(aReplaceChange, changeMetaData); logger.debug("CalibrationPoints changed")
-    linearLocationChangesDueToNetworkLinkReplace(aReplaceChange, changeMetaData);   logger.debug("Linear locations changed")
+    LogUtils.time(logger, s"Make a Replace change to Viite data structures (${change.oldLink.linkId}=>${change.newLinks.map(nl => nl.linkId).mkString(", ")}") {
+      linkChangesDueToNetworkLinkChange(change, changeMetaData);                      logger.debug("Link created")
+      calibrationPointChangesDueToNetworkLinkReplace(aReplaceChange, changeMetaData); logger.debug("CalibrationPoints changed")
+      linearLocationChangesDueToNetworkLinkReplace(aReplaceChange, changeMetaData);   logger.debug("Linear locations changed")
+    }
   }
 
-  private def splitChange(change: LinkNetworkChange, changeMetaData: ChangeSetMetaData): Unit = {
+  private def persistSplitChange(change: LinkNetworkChange, changeMetaData: ChangeSetMetaData): Unit = {
 
     logger.debug("Going to transformed to a LinkNetworkSplitChange")
     val aSplitChange: LinkNetworkSplitChange = convertToAValidSplitChange(change).get // returns or throws
     logger.debug("Transformed to a LinkNetworkSplitChange")
 
-    linkChangesDueToNetworkLinkChange(change, changeMetaData);                  logger.debug("Link created")
-    calibrationPointChangesDueToNetworkLinkSplit(aSplitChange, changeMetaData); logger.debug("CalibrationPoints changed")
-    linearLocationChangesDueToNetworkLinkSplit(aSplitChange, changeMetaData);   logger.debug("Linear locations changed")
+    LogUtils.time(logger, s"Make a Split change to Viite data structures (${change.oldLink.linkId}=>${change.newLinks.map(nl => nl.linkId).mkString(", ")}") {
+      linkChangesDueToNetworkLinkChange(change, changeMetaData);                  logger.debug("Link created")
+      calibrationPointChangesDueToNetworkLinkSplit(aSplitChange, changeMetaData); logger.debug("CalibrationPoints changed")
+      linearLocationChangesDueToNetworkLinkSplit(aSplitChange, changeMetaData);   logger.debug("Linear locations changed")
+    }
   }
 
   /**
@@ -534,7 +546,7 @@ class LinkNetworkUpdater {
 
     oldLinearLocations.foreach(oldLL => {
       val newLL = LinearLocation(
-        NewIdValue,                                //id: Long,
+        NewIdValue,                                //id:          Long,
         oldLL.orderNumber,                         //orderNumber: Double,
         change.newLink.linkId,                     //linkId: String,
         change.replaceInfo.newFromMValue,          //startMValue: Double, // TODO change .newFromMValue to an interpolating algorithm, when geometry changed
@@ -545,8 +557,8 @@ class LinkNetworkUpdater {
         Seq(change.newLink.geometry.head, change.newLink.geometry.last),  //geometry: Seq[Point]
         LinkGeomSource.Unknown, // Not required, link created elsewhere
         oldLL.roadwayNumber,                       //roadwayNumber: Long
-        None,        // Not used at create         //validFrom: Option[DateTime] = None
-        None         // Not used at create         //validTo:   Option[DateTime] = None
+        None,        // Not used at create (why?)  //validFrom: Option[DateTime] = None
+        None         // Not used at create (why?)  //validTo:   Option[DateTime] = None
       )
 
       linearLocationDAO.create(Seq(newLL), changeMetaData.changeSetName)

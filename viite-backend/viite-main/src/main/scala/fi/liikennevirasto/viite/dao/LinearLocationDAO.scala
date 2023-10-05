@@ -290,6 +290,15 @@ class LinearLocationDAO extends BaseDAO {
   }
 
 
+  /**
+   * Returns the linear locations within the current network (valid_to is null), who
+   * have the given <i>linkId</i>, and
+   * have their M values fit within <i>filterMvalueMin</i>...<i>filterMvalueMax</i> range.
+   *
+   * @param linkId Filters the returned linear locations to those that have this link id.
+   * @param filterMvalueMin Filters the returned linear locations to those having startMvalue at least this much
+   * @param filterMvalueMax Filters the returned linear locations to those having  endMvalue  at most  this much
+   */
   def fetchByLinkIdAndMValueRange(linkId: String, filterMvalueMin: Double, filterMvalueMax: Double): List[LinearLocation] = {
     time(logger, "Fetch linear locations by link id, and M values") {
 
