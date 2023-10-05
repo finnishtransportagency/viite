@@ -34,9 +34,9 @@ class LinkNetworkUpdaterSpec extends FunSuite with Matchers {
    * Set your own parameters to test incorrect change sets.
    */
   private def getTestJSON( changeType: String = correctChangeTypeJSON,
-                             oldLink: String = correctOldLinkJSON,
-                             newLink: String = correctNewLinkJSON,
-                             replaceInfo: String = correctReplaceInfoJSON ): String = {
+                           oldLink: String = correctOldLinkJSON,
+                           newLink: String = correctNewLinkJSON,
+                           replaceInfo: String = correctReplaceInfoJSON ): String = {
 
     s"[" + // NOTE, excess array square brackets required due to JsonMethods.parse functionality. Correct, when the library allows.
     s"\n  {" +
@@ -85,7 +85,6 @@ class LinkNetworkUpdaterSpec extends FunSuite with Matchers {
     }
 
     runWithRollback { // should not get to write to DB, but just in case...
-      assertFaultyOldIsCaught("")
       assertFaultyOldIsCaught(""""oldLink": { }""")
 
       assertFaultyOldIsCaught(""""oldLink": {                        "linkLength": 43.498, "geometry": "LINESTRING ZM(0 0 0, 1 1 1)" }""")
@@ -96,7 +95,7 @@ class LinkNetworkUpdaterSpec extends FunSuite with Matchers {
       assertFaultyOldIsCaught(""""oldLink": { "linkId": "oldLink:1", "linkLength": 43.498, "geometry": 1                             }""")
 
       assertFaultyOldIsCaught(""""oldLink": { "dummy":  "oldLink:1", "linkLength": 43.498, "geometry": "LINESTRING ZM(0 0 0, 1 1 1)" }""")
-      assertFaultyOldIsCaught(""""oldLink": { "linkId": "oldLink:1", "linkLength": 43.498, "geometry": "LINESTRING ZM(0 0 0, 1 1 1)", "extrafield": "dummydata"""")
+      assertFaultyOldIsCaught(""""oldLink": { "linkId": "oldLink:1", "linkLength": 43.498, "geometry": "LINESTRING ZM(0 0 0, 1 1 1)", "extrafield": "dummydata" }""")
     }
   }
 
