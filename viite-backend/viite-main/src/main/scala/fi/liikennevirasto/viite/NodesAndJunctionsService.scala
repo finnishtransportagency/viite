@@ -1,7 +1,7 @@
 package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.liikennevirasto.viite.RoadAddressFilters.{connectingBothHeads, continuousTopology, reversedConnectingBothHeads, reversedContinuousTopology}
+import fi.liikennevirasto.viite.RoadAddressFilters.{connectingBothHeads, continuousTopology, endingOfRoad, reversedConnectingBothHeads, reversedContinuousTopology}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
@@ -230,7 +230,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
   def getValidJunctionsForAPI(): Seq[JunctionOfNode] = {
     withDynSession {
-      junctionDAO.fetchValidJunctionsForAPIByNodeNumber()
+      val junctions = junctionDAO.fetchValidJunctionsForAPI()
+      junctions.toSeq
     }
   }
 
@@ -240,8 +241,35 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
   }
 
+  def rightCoordinate(startCoordinates: Seq[JunctionCoordinate], endCoordinates: Seq[JunctionCoordinate], j: JunctionOfNode, jidtollid: Seq[Jidtollid]): Option[JunctionCoordinate] = {
+    //TODO: Oikean EJ koordinaatin päättely
+    val rightllid: Option[Jidtollid] = jidtollid.find(r => {r.jId == j.id && r.roadwayNumber == j.roadwayNumber})
+    //val rightllid: Option[Jidtollid] = rightjid.find(r => {r.roadwayNumber == j.roadwayNumber})
+
+    val startPoint: Option[JunctionCoordinate] = rightllid.flatMap { rightLlid =>
+      startCoordinates.find { point =>
+        point.llId == rightLlid.llid
+      }
+    }
+
+    val endPoint: Option[JunctionCoordinate] = rightllid.flatMap { rightLlid =>
+      endCoordinates.find { point =>
+        point.llId == rightLlid.llid
+      }
+    }
+
+    (j.beforeAfter, j.sideCode) match {
+      case ("E", 2) => endPoint
+      case ("E", 3) => startPoint
+      case ("J", 2) => startPoint
+      case ("J", 3) => endPoint
+      case ("E,J", 2) => endPoint
+      case ("E,J", 3) => startPoint
+    }
+  }
+
   def junctionCoordinateToPoint(junctionCoordinate: JunctionCoordinate): Point = {
-    val resultPoint = Point(junctionCoordinate.x, junctionCoordinate.y, junctionCoordinate.z)
+    val resultPoint = Point(junctionCoordinate.x, junctionCoordinate.y)
     resultPoint
   }
 
@@ -249,14 +277,15 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     val nodes: Seq[SuperNode] = getValidNodesForAPI()
     val junctions: Seq[JunctionOfNode] = getValidJunctionsForAPI()
     val startCoordinates: Seq[JunctionCoordinate] = getStartCoordinatesForJunction()
+    val endCoordinates: Seq[JunctionCoordinate] = getEndCoordinatesForJunction()
+    val jidtollid: Seq[Jidtollid] = getllids()
 
     val junctionsMap: Map[Long, Seq[JunctionOfNode]] = junctions.groupBy(_.nodeNumber)
-    val startCoordinatesMap: Map[Long, Seq[JunctionCoordinate]] = startCoordinates.groupBy(_.jId)
 
     // Combine nodes and junctions based on nodeNumber
     val nodesWithJunctions: Seq[NodesWithJunctions] = nodes.map { node =>
       val matchingJunctions = junctionsMap.getOrElse(node.nodeNumber, Seq.empty[JunctionOfNode])
-      val matchingCoordinates = startCoordinatesMap.getOrElse(node.nodeNumber, Seq.empty[JunctionCoordinate])
+
       NodesWithJunctions(
         nodeNumber = node.nodeNumber,
         startDate = node.startDate,
@@ -276,7 +305,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
             addrM = junction.addrM,
             beforeAfter = junction.beforeAfter,
             sideCode = junction.sideCode,
-            junctionCoordinate = matchingCoordinates.find(_.jId == junction.id)
+            roadwayNumber = junction.roadwayNumber,
+            junctionCoordinate = rightCoordinate(startCoordinates, endCoordinates, junction, jidtollid)
           )
         )
       )
@@ -284,9 +314,21 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     nodesWithJunctions
   }
 
+  def getllids(): Seq[Jidtollid] = {
+    withDynSession {
+      junctionDAO.fetchllidandjid()
+    }
+  }
+
   def getStartCoordinatesForJunction(): Seq[JunctionCoordinate] = {
     withDynSession {
       junctionDAO.fetchStartCoordinatesByJunctionIdAndRwp()
+    }
+  }
+
+  def getEndCoordinatesForJunction(): Seq[JunctionCoordinate] = {
+    withDynSession {
+      junctionDAO.fetchEndCoordinatesByJunctionIdAndRwp()
     }
   }
 

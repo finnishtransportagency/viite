@@ -473,10 +473,6 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
       )
     }
 
-
-    /*val sortedNodes = mappedNodes.sortBy(n => (n("Tie").asInstanceOf[Long], n("Osa").asInstanceOf[Long], n("Et").asInstanceOf[Long]))
-
-    sortedNodes*/
     mappedNodes
   }
 
