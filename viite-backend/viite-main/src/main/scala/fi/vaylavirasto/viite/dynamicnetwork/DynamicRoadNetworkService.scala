@@ -106,40 +106,75 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
       tiekamuRoadLinkChanges
     }
 
-    def createViiteLinkNetworkChanges(groupedByOldLinkId:  Map[String, Seq[TiekamuRoadLinkChange]], newLinkIds: Set[String], oldLinkIds:Set[String]):Seq[LinkNetworkChange] = {
+    def createViiteLinkNetworkChanges(groupedByOldLinkId:  Map[String, Seq[TiekamuRoadLinkChange]], newLinkIds: Set[String], oldLinkIds:Set[String], activeLinearLocations: Seq[LinearLocation]):Seq[LinkNetworkChange] = {
       def getDigitizationChangedValue(change: TiekamuRoadLinkChange): Boolean = {
         if (change.newStartM > change.newEndM)
           true
         else
           false
       }
-      time(logger, "Creating Viite LinkNetworkChange sets") {
-        // fetch roadLinks from KGV
-        // these are used for getting geometry and link lengths
-        val kgvRoadLinks = kgvClient.roadLinkData.fetchByLinkIds(newLinkIds)
-        val kgvOldRoadLinks = kgvClient.roadLinkVersionsData.fetchByLinkIds(oldLinkIds)
 
-        val changeInfos = groupedByOldLinkId.map(group => {
+      def createOldLinkInfo(kgvRoadLinks: Seq[DynamicRoadNetworkService.this.kgvClient.roadLinkVersionsData.LinkType], oldLinkId: String): LinkInfo = {
+        val oldLinkInfo = {
+          val kgvRoadLinkOld = kgvRoadLinks.find(rl => rl.linkId == oldLinkId)
+          if (kgvRoadLinkOld.isDefined)
+            LinkInfo(oldLinkId, kgvRoadLinkOld.get.length, kgvRoadLinkOld.get.geometry)
+          else
+            throw ViiteException(s"Can't create change set without KGV road link data for oldLinkId: ${oldLinkId} ")
+        }
+        oldLinkInfo
+      }
+
+      def createNewLinkInfos(kgvRoadLinks: Seq[DynamicRoadNetworkService.this.kgvClient.roadLinkVersionsData.LinkType], distinctChangeInfosByNewLink: Seq[TiekamuRoadLinkChange]): Seq[LinkInfo] = {
+        val newLinkInfo = distinctChangeInfosByNewLink.map(ch => {
+          val kgvNewLink = kgvRoadLinks.find(newLink => ch.newLinkId == newLink.linkId)
+          if (kgvNewLink.isDefined)
+            LinkInfo(ch.newLinkId, kgvNewLink.get.length, kgvNewLink.get.geometry)
+          else
+            throw ViiteException(s"Can't create change set without KGV road link data for newLinkId: ${ch.newLinkId} ")
+        })
+        newLinkInfo
+      }
+
+      def createReplaceInfos(changeInfos: Seq[TiekamuRoadLinkChange]): Seq[ReplaceInfo] = {
+        def createViiteMetaData(linearLocations: Seq[LinearLocation]): Seq[ViiteMetaData] = {
+          val viiteMetaData = linearLocations.map(ll => {
+            val roadway = roadwayDAO.fetchAllByRoadwayNumbers(Set(ll.roadwayNumber)).head
+            ViiteMetaData(ll.id, ll.roadwayNumber, ll.orderNumber, roadway.roadNumber, roadway.roadPartNumber)
+          })
+          viiteMetaData
+        }
+
+        val replaceInfos = changeInfos.map(ch => {
+          val linearLocations = activeLinearLocations.filter(ll => ll.linkId == ch.oldLinkId && ll.startMValue >= ch.oldStartM && ll.endMValue <= ch.oldEndM)
+          if (linearLocations.nonEmpty) {
+            val viiteMetaData = createViiteMetaData(linearLocations)
+            ReplaceInfo(ch.oldLinkId, ch.oldStartM, ch.oldEndM, ch.newLinkId, ch.newStartM, ch.newEndM, getDigitizationChangedValue(ch), viiteMetaData)
+          } else
+            throw ViiteException(s"Can't create change set without existing active Linearlocation with old linkId ${ch.oldLinkId} and startMValue ${ch.oldStartM} and endMValue ${ch.oldEndM}")
+        })
+        replaceInfos
+      }
+
+      time(logger, "Creating Viite LinkNetworkChange sets") {
+        // fetch roadLinks from KGV these are used for getting geometry and link lengths
+        val kgvRoadLinks = kgvClient.roadLinkVersionsData.fetchByLinkIds(newLinkIds ++ oldLinkIds)
+
+        val linkNetworkChanges = groupedByOldLinkId.map(group => {
           val oldLinkId = group._1
           val changeInfos = group._2
-          val kgvLinkNew = kgvRoadLinks.find(rl => rl.linkId == changeInfos.head.newLinkId)
-          val kgvRoadLinkOld = kgvOldRoadLinks.find(rl => rl.linkId == oldLinkId)
+          val distinctChangeInfosByNewLink = changeInfos.groupBy(_.newLinkId).values.map(_.head).toSeq
 
           val viiteRoadLinkChange = {
-            val changeType = if (changeInfos.size > 1) "split" else "replace"
-            if (kgvLinkNew.isDefined && kgvRoadLinkOld.isDefined) {
-              val oldInfo = LinkInfo(oldLinkId, kgvRoadLinkOld.get.length, kgvRoadLinkOld.get.geometry)
-              val newInfo = changeInfos.map(ch => LinkInfo(ch.newLinkId, kgvLinkNew.get.length, kgvLinkNew.get.geometry))
-              val replaceInfo = changeInfos.map(ch => ReplaceInfo(ch.oldLinkId, ch.oldStartM, ch.oldEndM, ch.newLinkId, ch.newStartM, ch.newEndM, getDigitizationChangedValue(ch)))
-              LinkNetworkChange(changeType, oldInfo, newInfo, replaceInfo)
-            } else {
-              throw ViiteException(s"Can't create change set without KGV road link data. OldLinkId: ${oldLinkId}, newLinkId: ${changeInfos.head.newLinkId}")
-            }
-
+            val changeType = if (changeInfos.map(_.newLinkId).distinct.size > 1) "split" else "replace"
+            val oldInfo = createOldLinkInfo(kgvRoadLinks, oldLinkId)
+            val newInfo = createNewLinkInfos(kgvRoadLinks, distinctChangeInfosByNewLink)
+            val replaceInfo = createReplaceInfos(changeInfos)
+            LinkNetworkChange(changeType, oldInfo, newInfo, replaceInfo)
           }
           viiteRoadLinkChange
         }).toSeq
-        changeInfos
+        linkNetworkChanges
       }
     }
 
@@ -237,7 +272,7 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
         val errors = validateTiekamuRoadLinkChanges(filteredChangeInfos, activeLinearLocations)
 
         if (errors.nonEmpty)
-          throw new ViiteException(s"Creation of Viite road link change set failed: ${errors.head}")
+          throw ViiteException(s"Creation of Viite road link change set failed: ${errors.size} errors found. ${errors}")
 
         //get the new and the old linkIds to Set[String]
         val newLinkIds = filteredChangeInfos.map(_.newLinkId).toSet
@@ -246,7 +281,7 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
         // group the changes by old linkId (oldLinkId, Seq[TiekamuRoadLinkChange])
         val groupedByOldLinkId = filteredChangeInfos.groupBy(changeInfo => changeInfo.oldLinkId)
 
-        createViiteLinkNetworkChanges(groupedByOldLinkId, newLinkIds, oldLinkIds)
+        createViiteLinkNetworkChanges(groupedByOldLinkId, newLinkIds, oldLinkIds, activeLinearLocations)
       }
     }
   }
@@ -266,4 +301,3 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
     }
   }
 }
-
