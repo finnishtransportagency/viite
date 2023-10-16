@@ -131,7 +131,7 @@ case class ReplaceInfo( oldLinkId: String, oldFromMValue: Double, oldToMValue: D
 case class LinkNetworkChange(changeType:  String,
                              oldLink:     LinkInfo,
                              newLinks:    Seq[LinkInfo],
-                             replaceInfo: Seq[ReplaceInfo]
+                             replaceInfos: Seq[ReplaceInfo]
                             )
 /**
  * A NetworkLink change of type "replace". Use only for validated, proper changes of type "replace".
@@ -141,13 +141,13 @@ case class LinkNetworkChange(changeType:  String,
  * Use function convertToAValidReplaceChange for validation, and conversion. */
 private case class LinkNetworkReplaceChange(oldLink: LinkInfo,
                                             newLink: LinkInfo,
-                                            replaceInfo: ReplaceInfo
+                                            replaceInfos: Seq[ReplaceInfo]
                                            )
 /** A NetworkLink change of type "split". Use only for validated, proper changes of type "split".
  * Use function convertToAValidSplitChange for validation, and conversion. */
 private case class LinkNetworkSplitChange(oldLink:     LinkInfo,
                                           newLinks:    Seq[LinkInfo],
-                                          replaceInfo: Seq[ReplaceInfo]
+                                          replaceInfos: Seq[ReplaceInfo]
                                          )
 
 /**
@@ -275,7 +275,7 @@ class LinkNetworkUpdater {
       }
     }
 
-    LogUtils.time(logger, s"Persist LinkNetworkChanges to Viite data structures, change set ${changeMetaData.changeSetName}") {
+    LogUtils.time(logger, s"Persist LinkNetworkChanges to Viite data structures, change set '${changeMetaData.changeSetName}'") {
       //try { // TODO Informing MML in case of error?
       withDynTransaction {
         changeSet.foreach(change => persistLinkNetworkChange(change, changeMetaData))
@@ -333,19 +333,19 @@ class LinkNetworkUpdater {
 
     logger.debug("size considerations")
     if ( change.newLinks.size <= 2
-      || change.replaceInfo.size <= 2
-      || change.newLinks.size != change.replaceInfo.size
+      || change.replaceInfos.size <= 2
+      || change.newLinks.size != change.replaceInfos.size
     ) {
       throw ViiteException(s"LinkNetworkChange: Invalid SplitChange. A split must have at least " +
         s"two new links, and their corresponding replace infos. " +
-        s"There are ${change.newLinks.size} new links, and ${change.replaceInfo.size} replace infos " +
+        s"There are ${change.newLinks.size} new links, and ${change.replaceInfos.size} replace infos " +
         s"when going to split ${change.oldLink.linkId}.")
     }
 
     // Ok, now we know we have a proper amount of components
     val oldLink = change.oldLink
     val newLinks = change.newLinks
-    val splitInfos = change.replaceInfo
+    val splitInfos = change.replaceInfos
 
     logger.debug("data integrity: link ids")
     if (!splitInfos.forall(si => oldLink.linkId == si.oldLinkId)) {
@@ -426,31 +426,35 @@ class LinkNetworkUpdater {
       throw ViiteException(s"LinkNetworkChange: Invalid ReplaceChange. A replace must have exactly one new link. " +
         s"There are ${change.newLinks.size} new links when going to replace ${change.oldLink.linkId}.")
     }
-    if (change.replaceInfo.size != 1) {
-      throw ViiteException(s"LinkNetworkChange: Invalid ReplaceChange. A replace must have exactly one replaceInfo. " +
-        s"There are ${change.replaceInfo.size} replace infos when going to replace ${change.oldLink.linkId}.")
+    if (change.replaceInfos.size == 0) {
+      throw ViiteException(s"LinkNetworkChange: Invalid ReplaceChange. A replace must have at least one replaceInfo. " +
+        s"There is no replace infos when going to replace ${change.oldLink.linkId}.")
     }
     // Ok, we know we have a proper amount of components
     val oldLink = change.oldLink
     val newLink = change.newLinks.head
-    val replaceInfo = change.replaceInfo.head
+    val replaceInfos = change.replaceInfos
 
     logger.debug("data integrity: link ids")
-    // -- data integrity - link ids --
-    if (oldLink.linkId != replaceInfo.oldLinkId
-     || newLink.linkId != replaceInfo.newLinkId) {
-      throw ViiteException(s"LinkNetworkChange: Invalid ReplaceChange. Link ids in LinkInfos and ReplaceInfos do not match. " +
-        s"Check ${oldLink.linkId} vs. ${replaceInfo.oldLinkId}, and ${newLink.linkId} vs. ${replaceInfo.newLinkId}.")
+    if (!replaceInfos.forall(ri => oldLink.linkId == ri.oldLinkId)) {
+      throw ViiteException(s"LinkNetworkChange: Invalid ReplaceChange. The old link ${oldLink.linkId} must be part of all of the replace infos. ")
+    }
+    if(!replaceInfos.forall(r => newLink.linkId==r.newLinkId)) {
+      throw ViiteException(s"LinkNetworkChange: Invalid ReplaceChange. The new link ${newLink.linkId} must be part of all of the replace infos. ")
     }
 
-    logger.debug(s"data integrity: lengths must match sufficiently. Allowed difference: ${GeometryUtils.DefaultEpsilon} m ")
-    if ( !linkLengthsConsideredTheSame(oldLink.linkLength, replaceInfo.oldToMValue) // old link lengths must always match, resolution: GeometryUtils.DefaultEpsilon
-      || GeometryUtils.scaleToThreeDigits(newLink.linkLength) > replaceInfo.newToMValue                              // new link may be a combination of two old -> replaceInfo may have partial measure here ...
-      || !linkLengthsConsideredTheSame(newLink.linkLength, replaceInfo.newToMValue) // ...otherwise, new link lengths must match, resolution: GeometryUtils.DefaultEpsilon
-    ) {
-      throw ViiteException(s"LinkNetworkChange: Invalid ReplaceChange. Link lengths do not match. Check " +
-        s"${oldLink.linkLength} vs. ${replaceInfo.oldToMValue} (${oldLink.linkId}), and " +
-        s"${newLink.linkLength} vs. ${replaceInfo.newToMValue} (${newLink.linkId}).")
+    logger.debug(s"data integrity: told lengths must match sufficiently. Allowed difference: ${GeometryUtils.DefaultEpsilon} m ")
+    val oldLinLocLengths = replaceInfos.map(ri => (ri.oldToMValue-ri.oldFromMValue).abs)
+    val newLinLocLengths = replaceInfos.map(ri => (ri.newToMValue-ri.newFromMValue).abs)
+    val sumOfOldLengths = oldLinLocLengths.foldLeft(0.0)( (cumul,next) => cumul + next )
+    val sumOfNewLengths = newLinLocLengths.foldLeft(0.0)( (cumul,next) => cumul + next )
+    val oldlinkOK = linkLengthsConsideredTheSame(oldLink.linkLength, sumOfOldLengths)   // old link lengths must match (resolution: GeometryUtils.DefaultEpsilon)
+    val newlinkOK = linkLengthsConsideredTheSame(newLink.linkLength, sumOfNewLengths)   // new link lengths must match (resolution: GeometryUtils.DefaultEpsilon) in replace
+    //  GeometryUtils.scaleToThreeDigits(newLink.linkLength) > sumOfNewLengths             // TODO USE THIS IN SPLIT //... or replaceInfo lengths smaller than newLength, when new link continues within another oldLink.
+    if (!oldlinkOK || !newlinkOK) {
+      throw ViiteException(s"LinkNetworkChange: Invalid ReplaceChange. Link_ lengths of the ReplaceChange do not match. Check " +
+        s"${oldLink.linkLength} vs. ${oldLinLocLengths.mkString("+")}(=$sumOfOldLengths) (${oldLink.linkId}), and " +
+        s"${newLink.linkLength} vs. ${newLinLocLengths.mkString("+")}(=$sumOfNewLengths) (${newLink.linkId}).")
     }
 
     logger.debug(s"data integrity: geometry requirements")
@@ -466,12 +470,14 @@ class LinkNetworkUpdater {
     //TODO link.geometry vs. link.linkLength checks?
 
     logger.debug("data integrity: digitization")
-    if (replaceInfo.digitizationChange) {
+    replaceInfos.foreach(
+      ri => if (ri.digitizationChange) {
       // TODO is digitizationChange always ok as is, or do we have to check something when it is true?
-    }
+      }
+    )
 
     logger.debug("Validations for a replace change passed, returning a proper LinkNetworkReplaceChange")
-    Some(LinkNetworkReplaceChange(oldLink, newLink, replaceInfo))
+    Some(LinkNetworkReplaceChange(oldLink, newLink, replaceInfos))
   }
 
   /**
@@ -503,7 +509,7 @@ class LinkNetworkUpdater {
     val oldLL = oldLinearLocations.head
     // TODO what if we have at least two linear locations, what do we do then?
 
-    change.replaceInfo.foreach(ri => {
+    change.replaceInfos.foreach(ri => {
       val correspondingLinkCandidates: Seq[LinkInfo] = change.newLinks.filter(nl => nl.linkId==ri.newLinkId)
       val correspondingLink = correspondingLinkCandidates.headOption.getOrElse(
         throw ViiteException(s"LinkNetworkChange: Invalid SplitChange. No corresponding link found. ")
@@ -542,8 +548,9 @@ class LinkNetworkUpdater {
     var idPairs: Seq[(Long, Long)] = Seq()
 
     // create corresponding calibration points for new links, based on the old calibration points
-    val linkStartInfo: Option[ReplaceInfo] = change.replaceInfo.find(ri => ri.oldFromMValue == 0)
-    val linkEndInfo:   Option[ReplaceInfo] = change.replaceInfo.find(ri => ri.oldToMValue == change.oldLink.linkLength)
+    val linkStartInfo: Option[ReplaceInfo] = change.replaceInfos.find(ri => ri.oldFromMValue == 0)  // TODO is this reversed, if addresses grow in the opposite direction to?
+    val linkEndInfo:   Option[ReplaceInfo] = change.replaceInfos.find(ri => ri.oldToMValue == change.oldLink.linkLength)
+
     val newStartCP = startCP.get.copy(
       id = NewIdValue,
       linkId = linkStartInfo.get.newLinkId,
@@ -569,48 +576,50 @@ class LinkNetworkUpdater {
    * @return               Sequence of ids of the created linearLocations
    */
   private def linearLocationChangesDueToNetworkLinkReplace(change: LinkNetworkReplaceChange, changeMetaData: ChangeSetMetaData) = {
-    val replInfo = change.replaceInfo
 
-    val oldLinearLocations = linearLocationDAO.fetchByLinkIdAndMValueRange(change.oldLink.linkId, replInfo.oldFromMValue, replInfo.newToMValue)
-    if(oldLinearLocations.isEmpty) {
-        throw ViiteException(s"LinkNetworkChange: No old linear location found " +
-          s"for link ${change.oldLink.linkId} when trying to expire old ones.")
-    }
+    val llGeomLength = GeometryUtils.lineGeometryLength2D(change.newLink.geometry)
 
-    val llIds = oldLinearLocations.map(_.id).toSet
-
-    oldLinearLocations.foreach(oldLL => {
-      val llGeomLength = GeometryUtils.lineGeometryLength2D(change.newLink.geometry)
-      var (llMinMVal, llMaxMVal) = getCorrespondingNewLinkMvalueRange(change.oldLink, oldLL.startMValue, oldLL.endMValue, change.newLink)
-      println(s"length, and calculated: ${llMaxMVal}, ${llGeomLength}")
-
-      val minMValuePointOpt = GeometryUtils.calculatePointFromLinearReference(change.newLink.geometry, llMinMVal) // TODO snap to geometry points? Check not overflowing the link length?
-      val maxMValuePointOpt = GeometryUtils.calculatePointFromLinearReference(change.newLink.geometry, llMaxMVal) // TODO snap to geometry points? Check not overflowing the link length?
-      if(minMValuePointOpt.isEmpty || maxMValuePointOpt.isEmpty) { // check that we got'em all
-        ViiteException(s"LinkNetworkChange: Could not get a corresponding point for either of both ends of the " +
-          s"new linear location referring to the new link  ${change.newLink.linkId}.")
+    change.replaceInfos.foreach(ri => { // make changes Tiekamu change by Tiekamu change
+      //TODO CAN THIS BE REMOVED, WHEN ViiteMetaData is available
+      val oldLinearLocations = linearLocationDAO.fetchByLinkIdAndMValueRange(change.oldLink.linkId, ri.oldFromMValue, ri.newToMValue)
+      if(oldLinearLocations.isEmpty) {
+          throw ViiteException(s"LinkNetworkReplaceChange: No old linear location found for link ${change.oldLink.linkId}.")
       }
 
+      oldLinearLocations.foreach(oldLL => { // make changes linearlocation wise. Usually there is only one. But might be many.
+        var (newLlMinMVal, newLlMaxMVal) = getCorrespondingNewLinkMvalueRange(change.oldLink, oldLL.startMValue, oldLL.endMValue, change.newLink)
 
-      val newLL = LinearLocation(
-        NewIdValue,                                //id:          Long,
-        oldLL.orderNumber,                         //orderNumber: Double,
-        change.newLink.linkId,                     //linkId: String,
-        llMinMVal,  //replInfo.newFromMValue,      //startMValue: Double,
-        llMaxMVal,  //replInfo.newToMValue,        //endMValue:   Double,
-        decideNewSideCode(change.replaceInfo.digitizationChange, oldLL.sideCode),
-        0, // Not required, link created elsewhere //adjustedTimestamp: Long,
-        (CalibrationPointReference.None, CalibrationPointReference.None), //CPs created elsewhere //calibrationPoints: (CalibrationPointReference, CalibrationPointReference) = (CalibrationPointReference.None, CalibrationPointReference.None)
-        Seq(minMValuePointOpt.get.with3decimals, maxMValuePointOpt.get.with3decimals), //geometry: Seq[Point]
-        LinkGeomSource.Unknown, // Not required, link created elsewhere
-        oldLL.roadwayNumber,                       //roadwayNumber: Long
-        None,        // Not used at create (why?)  //validFrom: Option[DateTime] = None
-        None         // Not used at create (why?)  //validTo:   Option[DateTime] = None
-      )
+        val minMValuePointOpt = GeometryUtils.calculatePointFromLinearReference(change.newLink.geometry, newLlMinMVal) // TODO snap to geometry points? Check not overflowing the link length?
+        val maxMValuePointOpt = GeometryUtils.calculatePointFromLinearReference(change.newLink.geometry, newLlMaxMVal) // TODO snap to geometry points? Check not overflowing the link length?
+        if(minMValuePointOpt.isEmpty || maxMValuePointOpt.isEmpty) { // check that we got'em all
+          ViiteException(s"LinkNetworkReplaceChange: Could not get a corresponding point for either of both ends of the " +
+            s"new linear location referring to the new link  ${change.newLink.linkId}.")
+        }
 
-      linearLocationDAO.create(Seq(newLL), changeMetaData.changeSetName)
-      /*val numInvalidatedLLs: Int =*/ linearLocationDAO.expireByIds(llIds)
-    }) // oldLinearLocations.foreach
+//      println(s"Geometrian pituus: ${GeometryUtils.geometryLength(change.newLink.geometry)}, MRJ-version: ${GeometryUtils.lineGeometryLength2D(change.newLink.geometry)} (Tiekamun mukaan: ${change.newLink.linkLength})")
+//      println(s"interpo: ${minMValuePointOpt.get.with3decimals}, ${maxMValuePointOpt.get.with3decimals}")
+
+        val newLL = LinearLocation(
+          NewIdValue,             //id:          Long,
+          oldLL.orderNumber,      //orderNumber: Double, //TODO handling of the orderNumber, when NEW split in replaceInfo, not already in Viite?
+          change.newLink.linkId,  //linkId: String,
+          newLlMinMVal,           //startMValue: Double, //replInfo.newFromMValue would do, if there always were only one Viite old ll corresponding to a replaceInfo
+          newLlMaxMVal,           //endMValue:   Double, //replInfo.newToMValue   would do, if there always were only one Viite old ll corresponding to a replaceInfo
+          decideNewSideCode(ri.digitizationChange, oldLL.sideCode),
+          0, // Not required, link created elsewhere //adjustedTimestamp: Long,
+          (CalibrationPointReference.None, CalibrationPointReference.None), //CPs created elsewhere //calibrationPoints: (CalibrationPointReference, CalibrationPointReference) = (CalibrationPointReference.None, CalibrationPointReference.None)
+          Seq(minMValuePointOpt.get.with3decimals, maxMValuePointOpt.get.with3decimals), //geometry: Seq[Point]
+          LinkGeomSource.Unknown, // Not required, link created elsewhere
+          oldLL.roadwayNumber,                       //roadwayNumber: Long
+          None,        // Not used at create (why?)  //validFrom: Option[DateTime] = None
+          None         // Not used at create (why?)  //validTo:   Option[DateTime] = None
+        )
+
+        linearLocationDAO.create(Seq(newLL), changeMetaData.changeSetName)
+        val llIds = oldLinearLocations.map(_.id).toSet
+        /*val numInvalidatedLLs: Int =*/ linearLocationDAO.expireByIds(llIds)
+      }) // oldLinearLocations.foreach
+    }) // change.replaceInfos.foreach
   }
 
   /**
@@ -720,13 +729,10 @@ class LinkNetworkUpdater {
     if(oldMaxMValue<0 || oldMaxMValue>oldLink.linkLength) {
       ViiteException(s"oldMaxMValue (now $oldMaxMValue)  may not refer outside the length of the link (0...${oldLink.linkLength}).")
     }
-//println(s"old: ${oldMinMValue} new: ${oldMaxMValue} (out of ${oldLink.linkLength})")
     val minMValuePercentage = oldMinMValue/oldLink.linkLength
     val maxMValuePercentage = oldMaxMValue/oldLink.linkLength
-println(s"old: ${minMValuePercentage} new: ${maxMValuePercentage}")
     val newLinkMinMvalue = minMValuePercentage*newLink.linkLength
     val newLinkMaxMValue = maxMValuePercentage*newLink.linkLength
-//(s"old: ${newLinkMinMvalue} new: ${newLinkMaxMValue}")
 
     (newLinkMinMvalue, newLinkMaxMValue)
   }
