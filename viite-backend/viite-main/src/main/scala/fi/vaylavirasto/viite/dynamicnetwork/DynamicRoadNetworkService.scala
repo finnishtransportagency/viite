@@ -146,7 +146,7 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
         }
 
         val replaceInfos = changeInfos.map(ch => {
-          val linearLocations = activeLinearLocations.filter(ll => ll.linkId == ch.oldLinkId && ll.startMValue >= ch.oldStartM && ll.endMValue <= ch.oldEndM)
+          val linearLocations = activeLinearLocations.filter(ll => ll.linkId == ch.oldLinkId)
           if (linearLocations.nonEmpty) {
             val viiteMetaData = createViiteMetaData(linearLocations)
             ReplaceInfo(ch.oldLinkId, ch.oldStartM, ch.oldEndM, ch.newLinkId, ch.newStartM, ch.newEndM, getDigitizationChangedValue(ch), viiteMetaData)
