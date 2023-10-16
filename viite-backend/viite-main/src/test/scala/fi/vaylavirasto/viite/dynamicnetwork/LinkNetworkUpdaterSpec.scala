@@ -157,8 +157,9 @@ class LinkNetworkUpdaterSpec extends FunSuite with Matchers {
   private val correctChangeType: String = "replace"
   private val correctOldLink: LinkInfo = LinkInfo("oldLink:1", 5.000, correctOldSegment)
   private val correctNewLink: LinkInfo = LinkInfo("newLink:2", 10.000, correctNewSegment)
-  private val correctReplaceInfo: ReplaceInfo = ReplaceInfo("oldLink:1", 0.0, 5.000, "newLink:2", 0.0, 10.000, digitizationChange=false)
+  private val correctReplaceInfo: ReplaceInfo = ReplaceInfo("oldLink:1", 0.0, 5.000, "newLink:2", 0.0, 10.000, digitizationChange=false, dummyMeta)
 
+  private val dummyMeta = ViiteMetaData(1,1,1,1,1)
 
   /** Change builder, to build a single LinkNetworkChange for testing.
    * Change type must be given, but the other values have simple, congruent contents in them as default.
@@ -187,9 +188,10 @@ class LinkNetworkUpdaterSpec extends FunSuite with Matchers {
       assertFaultyStructureIsCaught( getTestChange("replace", correctOldLink, Seq(),                              Seq(correctReplaceInfo)) ) // must have exacly one new link
       assertFaultyStructureIsCaught( getTestChange("replace", correctOldLink, Seq(correctNewLink,correctNewLink), Seq(correctReplaceInfo)) ) // must have exacly one new link
 
-      assertFaultyStructureIsCaught( getTestChange("split",   correctOldLink, Seq(correctNewLink),                Seq()                  ) ) // must have a replaceInfo
-      assertFaultyStructureIsCaught( getTestChange("split",   correctOldLink, Seq(),                              Seq(correctReplaceInfo)) ) // must at least two new links
-      assertFaultyStructureIsCaught( getTestChange("split",   correctOldLink, Seq(correctNewLink),                Seq(correctReplaceInfo)) ) // must at least two new links
+      assertFaultyStructureIsCaught( getTestChange("split", correctOldLink, Seq(correctNewLink,correctNewLink),   Seq()                  ) ) // must have at least two replaceInfos
+      assertFaultyStructureIsCaught( getTestChange("split", correctOldLink, Seq(correctNewLink,correctNewLink),   Seq(correctReplaceInfo)) ) // must have at least two replaceInfos
+      assertFaultyStructureIsCaught( getTestChange("split", correctOldLink, Seq(),               Seq(correctReplaceInfo,correctReplaceInfo)) ) // must have at least two new links
+      assertFaultyStructureIsCaught( getTestChange("split", correctOldLink, Seq(correctNewLink), Seq(correctReplaceInfo,correctReplaceInfo)) ) // must have at least two new links
     }
   }
 
@@ -227,19 +229,19 @@ class LinkNetworkUpdaterSpec extends FunSuite with Matchers {
     }
 
     runWithRollback { // should not get to write to DB, but just in case...
-      assertFaultyReplaceInfoIsCaught(ReplaceInfo("oldLink:12", 0.0,  5.000,   "newLink:2",   0.0, 10.000, digitizationChange=false))
-      assertFaultyReplaceInfoIsCaught(ReplaceInfo("oldLink:1", -1.0,  5.000,   "newLink:2",   0.0, 10.000, digitizationChange=false))
-      assertFaultyReplaceInfoIsCaught(ReplaceInfo("oldLink:1",  0.0, 10.000,   "newLink:2",   0.0, 10.000, digitizationChange=false))
+      assertFaultyReplaceInfoIsCaught(ReplaceInfo("oldLink:12", 0.0,  5.000,   "newLink:2",   0.0, 10.000, digitizationChange=false, dummyMeta))
+      assertFaultyReplaceInfoIsCaught(ReplaceInfo("oldLink:1", -1.0,  5.000,   "newLink:2",   0.0, 10.000, digitizationChange=false, dummyMeta))
+      assertFaultyReplaceInfoIsCaught(ReplaceInfo("oldLink:1",  0.0, 10.000,   "newLink:2",   0.0, 10.000, digitizationChange=false, dummyMeta))
 
-      assertFaultyReplaceInfoIsCaught(ReplaceInfo("oldLink:1",  0.0,  1.000,   "newLink:2",   0.0, 10.000, digitizationChange=false))// would be allowed for split
-      assertFaultyReplaceInfoIsCaught(ReplaceInfo("oldLink:1",  1.0,  5.000,   "newLink:2",   0.0, 10.000, digitizationChange=false))// would be allowed for split
+      assertFaultyReplaceInfoIsCaught(ReplaceInfo("oldLink:1",  0.0,  1.000,   "newLink:2",   0.0, 10.000, digitizationChange=false, dummyMeta))// would be allowed for split
+      assertFaultyReplaceInfoIsCaught(ReplaceInfo("oldLink:1",  1.0,  5.000,   "newLink:2",   0.0, 10.000, digitizationChange=false, dummyMeta))// would be allowed for split
 
-      assertFaultyReplaceInfoIsCaught(ReplaceInfo("oldLink:1",  0.0,  5.000,   "newLink:23",  0.0, 10.000, digitizationChange=false))
-      assertFaultyReplaceInfoIsCaught(ReplaceInfo("oldLink:1",  0.0,  5.000,   "newLink:2",  -1.0, 10.000, digitizationChange=false))
-      assertFaultyReplaceInfoIsCaught(ReplaceInfo("oldLink:1",  0.0,  5.000,   "newLink:2",   0.0, 20.000, digitizationChange=false))
+      assertFaultyReplaceInfoIsCaught(ReplaceInfo("oldLink:1",  0.0,  5.000,   "newLink:23",  0.0, 10.000, digitizationChange=false, dummyMeta))
+      assertFaultyReplaceInfoIsCaught(ReplaceInfo("oldLink:1",  0.0,  5.000,   "newLink:2",  -1.0, 10.000, digitizationChange=false, dummyMeta))
+      assertFaultyReplaceInfoIsCaught(ReplaceInfo("oldLink:1",  0.0,  5.000,   "newLink:2",   0.0, 20.000, digitizationChange=false, dummyMeta))
 
-      assertFaultyReplaceInfoIsCaught(ReplaceInfo("oldLink:1",  0.0,  5.000,   "newLink:2",   0.0,  2.000, digitizationChange=false))// would be allowed for combine
-      assertFaultyReplaceInfoIsCaught(ReplaceInfo("oldLink:1",  0.0,  5.000,   "newLink:2",   2.0, 10.000, digitizationChange=false))// would be allowed for combine
+      assertFaultyReplaceInfoIsCaught(ReplaceInfo("oldLink:1",  0.0,  5.000,   "newLink:2",   0.0,  2.000, digitizationChange=false, dummyMeta))// would be allowed for combine
+      assertFaultyReplaceInfoIsCaught(ReplaceInfo("oldLink:1",  0.0,  5.000,   "newLink:2",   2.0, 10.000, digitizationChange=false, dummyMeta))// would be allowed for combine
     }
   }
 
@@ -250,7 +252,7 @@ class LinkNetworkUpdaterSpec extends FunSuite with Matchers {
     val newSegment: Seq[Point] = Seq(Point(0.1, 0.1, 0.1), Point( 0.1, 27.562, 0.1))
     val oldLink: LinkInfo = LinkInfo("152148",    25.398, oldSegment)
     val newLink: LinkInfo = LinkInfo("newLink:2", 27.462, newSegment)
-    val replaceInfo: ReplaceInfo = ReplaceInfo("152148", 0.0, 25.398, "newLink:2", 0.0, 27.462, digitizationChange=false)
+    val replaceInfo: ReplaceInfo = ReplaceInfo("152148", 0.0, 25.398, "newLink:2", 0.0, 27.462, digitizationChange=false, dummyMeta)
 
     def runLinkNetworkChangeWithRollback(faultyChangeList: Seq[LinkNetworkChange], testingWhat: String) = {
       runWithRollback { // do not save.
@@ -313,7 +315,8 @@ class LinkNetworkUpdaterSpec extends FunSuite with Matchers {
       Seq(ReplaceInfo(
         oldLinkId, 0.0, 125.614,
         newLinkId, 0.0, 134.929,
-        digitizationChange = false
+        digitizationChange = false,
+        dummyMeta
       ))
     )
 

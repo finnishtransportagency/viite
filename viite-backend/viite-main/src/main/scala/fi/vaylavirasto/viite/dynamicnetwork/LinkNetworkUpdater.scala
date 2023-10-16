@@ -79,7 +79,7 @@ case class ViiteMetaData(linearLocationId: Long,
 case class ReplaceInfo( oldLinkId: String, oldFromMValue: Double, oldToMValue: Double,
                         newLinkId: String, newFromMValue: Double, newToMValue: Double,
                         digitizationChange: Boolean,
-                        oldLinkViiteData: Option[ViiteMetaData] = None
+                        oldLinkViiteData: ViiteMetaData
                        )
 /**
  * A generic network link change type, for reading the whole JSON ("samuutussetti") in.
@@ -337,7 +337,7 @@ class LinkNetworkUpdater {
       || change.newLinks.size != change.replaceInfos.size
     ) {
       throw ViiteException(s"LinkNetworkChange: Invalid SplitChange. A split must have at least " +
-        s"two new links, and their corresponding replace infos. " +
+        s"two new links, and their corresponding replace infos (who may be further splitted to smaller chunks). " +
         s"There are ${change.newLinks.size} new links, and ${change.replaceInfos.size} replace infos " +
         s"when going to split ${change.oldLink.linkId}.")
     }
@@ -448,13 +448,13 @@ class LinkNetworkUpdater {
     val newLinLocLengths = replaceInfos.map(ri => (ri.newToMValue-ri.newFromMValue).abs)
     val sumOfOldLengths = oldLinLocLengths.foldLeft(0.0)( (cumul,next) => cumul + next )
     val sumOfNewLengths = newLinLocLengths.foldLeft(0.0)( (cumul,next) => cumul + next )
-    val oldlinkOK = linkLengthsConsideredTheSame(oldLink.linkLength, sumOfOldLengths)   // old link lengths must match (resolution: GeometryUtils.DefaultEpsilon)
-    val newlinkOK = linkLengthsConsideredTheSame(newLink.linkLength, sumOfNewLengths)   // new link lengths must match (resolution: GeometryUtils.DefaultEpsilon) in replace
-    //  GeometryUtils.scaleToThreeDigits(newLink.linkLength) > sumOfNewLengths             // TODO USE THIS IN SPLIT //... or replaceInfo lengths smaller than newLength, when new link continues within another oldLink.
+    val oldlinkOK = linkLengthsConsideredTheSame(oldLink.linkLength, sumOfOldLengths)       // old link, and replaceInfo lengths must match (resolution: GeometryUtils.DefaultEpsilon).
+    val newlinkOK = linkLengthsConsideredTheSame(newLink.linkLength, sumOfNewLengths) ||    // new link, and replaceInfo lengths must match (resolution: GeometryUtils.DefaultEpsilon) ...
+                     GeometryUtils.scaleToThreeDigits(newLink.linkLength) > sumOfNewLengths //... or replaceInfo lengths be smaller than new link length, when new link continues within another oldLink.
     if (!oldlinkOK || !newlinkOK) {
-      throw ViiteException(s"LinkNetworkChange: Invalid ReplaceChange. Link_ lengths of the ReplaceChange do not match. Check " +
-        s"${oldLink.linkLength} vs. ${oldLinLocLengths.mkString("+")}(=$sumOfOldLengths) (${oldLink.linkId}), and " +
-        s"${newLink.linkLength} vs. ${newLinLocLengths.mkString("+")}(=$sumOfNewLengths) (${newLink.linkId}).")
+      throw ViiteException(s"LinkNetworkChange: Invalid ReplaceChange. Link lengths of the ReplaceChange do not match. Check\r" +
+        s"(old link ${oldLink.linkId}: ${oldLink.linkLength} vs. ${oldLinLocLengths.mkString("+")}=$sumOfOldLengths), and\r " +
+        s"(new link ${newLink.linkId}: ${newLink.linkLength} vs. ${newLinLocLengths.mkString("+")}=$sumOfNewLengths).")
     }
 
     logger.debug(s"data integrity: geometry requirements")
