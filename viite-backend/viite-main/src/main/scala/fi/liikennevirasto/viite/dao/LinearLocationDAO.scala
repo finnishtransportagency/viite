@@ -305,7 +305,7 @@ class LinearLocationDAO extends BaseDAO {
       val query =
         s"""
           $selectFromLinearLocation
-          WHERE loc.link_id like '$linkId'
+          WHERE loc.link_id = '$linkId'
           AND loc.start_measure >= $filterMvalueMin AND loc.end_measure <= $filterMvalueMax
           AND loc.valid_to is null
         """
