@@ -302,11 +302,15 @@ class LinearLocationDAO extends BaseDAO {
   def fetchByLinkIdAndMValueRange(linkId: String, filterMvalueMin: Double, filterMvalueMax: Double): List[LinearLocation] = {
     time(logger, "Fetch linear locations by link id, and M values") {
 
+      val mustStartBefore = filterMvalueMax + GeometryUtils.DefaultEpsilon
+      val mustEndAfter    = filterMvalueMin - GeometryUtils.DefaultEpsilon
+
       val query =
         s"""
           $selectFromLinearLocation
           WHERE loc.link_id = '$linkId'
-          AND loc.start_measure >= $filterMvalueMin AND loc.end_measure <= $filterMvalueMax
+          AND loc.start_measure <= $mustStartBefore -- The start of a valid linear location is before the given max value
+          AND loc.end_measure   >= $mustEndAfter    -- The end   of a valid linear location is after  the given min value
           AND loc.valid_to is null
         """
       queryList(query)
