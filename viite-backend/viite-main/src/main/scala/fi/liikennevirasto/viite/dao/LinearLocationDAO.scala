@@ -294,15 +294,15 @@ class LinearLocationDAO extends BaseDAO {
    * Returns the linear locations within the current network (valid_to is null), who
    * have the given <i>linkId</i>, and
    * have their M values fit within <i>filterMvalueMin</i>...<i>filterMvalueMax</i> range.
-   * The results are a bit robust: A linear location that is less than [[GeometryUtils.DefaultEpsilon]]
-   * inside of the given range at either or both its ends, is not included in the results.
+   * The results are a bit robust filtered: A linear location that overlaps less than [[GeometryUtils.DefaultEpsilon]]
+   * the given range at either end, is not included in the results.
    * @todo should it be e.g. 10cm instead of [[GeometryUtils.DefaultEpsilon]]?
    *
    * @param linkId          Filters the returned linear locations to those having this link id.
-   * @param filterMvalueMin Filters the returned linear locations to those that do not enter the range at minimum end
-   * @param filterMvalueMax Filters the returned linear locations to those that do not enter the range at maximum end
+   * @param filterMvalueMin Filters the returned linear locations to those that enter the range at minimum end
+   * @param filterMvalueMax Filters the returned linear locations to those that enter the range at maximum end
    * @return List of Linear locations within given range, ordered by their start measures.
-   *         an overlap less than [[GeometryUtils.DefaultEpsilon]] is not seen as fitting the range
+   *         An overlap less than [[GeometryUtils.DefaultEpsilon]] is not seen as fitting the range.
    */
   def fetchByLinkIdAndMValueRange(linkId: String, filterMvalueMin: Double, filterMvalueMax: Double): List[LinearLocation] = {
     time(logger, "Fetch linear locations by link id, and M values") {
