@@ -294,10 +294,13 @@ class LinearLocationDAO extends BaseDAO {
    * Returns the linear locations within the current network (valid_to is null), who
    * have the given <i>linkId</i>, and
    * have their M values fit within <i>filterMvalueMin</i>...<i>filterMvalueMax</i> range.
+   * Accuracy of the results is [[GeometryUtils.DefaultEpsilon]]. That is, a linear location may reside [[GeometryUtils.DefaultEpsilon]]
+   * outside of the given range at either or both its ends, and it still will be included, in the results.
    *
    * @param linkId Filters the returned linear locations to those that have this link id.
    * @param filterMvalueMin Filters the returned linear locations to those having startMvalue at least this much
    * @param filterMvalueMax Filters the returned linear locations to those having  endMvalue  at most  this much
+   * @return List of Linear locations within given range, ordered by their start measures.
    */
   def fetchByLinkIdAndMValueRange(linkId: String, filterMvalueMin: Double, filterMvalueMax: Double): List[LinearLocation] = {
     time(logger, "Fetch linear locations by link id, and M values") {
@@ -312,6 +315,7 @@ class LinearLocationDAO extends BaseDAO {
           AND loc.start_measure <= $mustStartBefore -- The start of a valid linear location is before the given max value
           AND loc.end_measure   >= $mustEndAfter    -- The end   of a valid linear location is after  the given min value
           AND loc.valid_to is null
+          ORDER BY loc.START_MEASURE
         """
       queryList(query)
     }

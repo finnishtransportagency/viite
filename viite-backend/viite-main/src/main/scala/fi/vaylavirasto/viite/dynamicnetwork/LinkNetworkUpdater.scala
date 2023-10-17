@@ -581,7 +581,7 @@ class LinkNetworkUpdater {
 
     change.replaceInfos.foreach(ri => { // make changes Tiekamu change by Tiekamu change
       //TODO CAN THIS BE REMOVED, WHEN ViiteMetaData is available
-      val oldLinearLocations = linearLocationDAO.fetchByLinkIdAndMValueRange(change.oldLink.linkId, ri.oldFromMValue, ri.newToMValue)
+      val oldLinearLocations = linearLocationDAO.fetchByLinkIdAndMValueRange(change.oldLink.linkId, ri.oldFromMValue, ri.oldToMValue)
       if(oldLinearLocations.isEmpty) {
           throw ViiteException(s"LinkNetworkReplaceChange: No old linear location found for link ${change.oldLink.linkId}.")
       }
@@ -616,8 +616,8 @@ class LinkNetworkUpdater {
         )
 
         linearLocationDAO.create(Seq(newLL), changeMetaData.changeSetName)
-        val llIds = oldLinearLocations.map(_.id).toSet
-        /*val numInvalidatedLLs: Int =*/ linearLocationDAO.expireByIds(llIds)
+        //val llIds = oldLinearLocations.map(_.id).toSet
+        /*val numInvalidatedLLs: Int =*/ linearLocationDAO.expireByIds(Set(oldLL.id.toLong))  //(llIds)
       }) // oldLinearLocations.foreach
     }) // change.replaceInfos.foreach
   }
