@@ -2,6 +2,8 @@ package fi.vaylavirasto.viite.dynamicnetwork
 
 import fi.liikennevirasto.digiroad2.client.kgv.KgvRoadLink
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
+import fi.liikennevirasto.digiroad2.util.ViiteProperties
+import fi.liikennevirasto.viite.AwsService
 import fi.liikennevirasto.viite.dao.{LinearLocation, LinearLocationDAO, RoadwayDAO}
 import fi.vaylavirasto.viite.geometry.Point
 import fi.vaylavirasto.viite.model.{LinkGeomSource, RoadLink}
@@ -12,15 +14,14 @@ import org.apache.http.client.config.{CookieSpecs, RequestConfig}
 import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet, HttpRequestBase}
 import org.apache.http.impl.client.{CloseableHttpClient, HttpClients}
 import org.apache.http.util.EntityUtils
-import org.joda.time.DateTime
+import org.joda.time.{DateTime, LocalDateTime}
 import org.json4s.DefaultFormats
 import org.json4s.JsonAST.JArray
+import org.json4s.jackson.Json
 import org.json4s.jackson.JsonMethods.parse
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.mutable.ListBuffer
-
-case class ChangeSet()
 
 case class TiekamuRoadLinkChange(oldLinkId: String,
                                  oldStartM: Double,
@@ -31,7 +32,7 @@ case class TiekamuRoadLinkChange(oldLinkId: String,
 
 case class TiekamuRoadLinkChangeError(errorMessage: String, change: TiekamuRoadLinkChange)
 
-class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO: RoadwayDAO, val kgvClient: KgvRoadLink, linkNetworkUpdater: LinkNetworkUpdater) {
+class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO: RoadwayDAO, val kgvClient: KgvRoadLink, awsService: AwsService, linkNetworkUpdater: LinkNetworkUpdater) {
 
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
@@ -43,6 +44,45 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
   protected def addHeaders(request: HttpRequestBase): Unit = {
     request.addHeader("accept", "application/geo+json")
   }
+
+  def linkNetworkChangeToMap(change: LinkNetworkChange): Map[String, Any] = {
+    Map(
+      "changeType" -> change.changeType,
+      "oldLink" -> linkInfoToMap(change.oldLink),
+      "newLinks" -> change.newLinks.map(changeInfo => linkInfoToMap(changeInfo)),
+      "replaceInfos" -> change.replaceInfos.map(replace => replaceInfoToMap(replace))
+    )
+  }
+
+  def linkInfoToMap(linkInfo: LinkInfo): Map[String, Any] = {
+    Map(
+      "linkId" -> linkInfo.linkId,
+      "linkLength" -> linkInfo.linkLength,
+      "geometry" -> linkInfo.geometry
+    )
+  }
+
+  def replaceInfoToMap(replaceInfo: ReplaceInfo): Map[String, Any] = {
+    Map(
+      "oldLinkId" -> replaceInfo.oldLinkId,
+      "oldFromMValue" -> replaceInfo.oldFromMValue,
+      "oldToMValue" -> replaceInfo.oldToMValue,
+      "newFromMValue" -> replaceInfo.newFromMValue,
+      "newToMValue" -> replaceInfo.newToMValue,
+      "digitizationChange" -> replaceInfo.digitizationChange,
+      "oldLinkViiteData" -> replaceInfo.oldLinkViiteData.map(oldLinkViiteData => viiteMetaDataToMap(oldLinkViiteData))
+    )
+  }
+
+  def viiteMetaDataToMap(data: ViiteMetaData): Map[String, Any] = {
+    Map(
+      "linearLocationId" -> data.linearLocationId,
+      "roadwayNumber" -> data.roadwayNumber,
+      "orderNumber" -> data.orderNumber,
+      "roadNumber" -> data.roadNumber,
+      "roadPartNumber" -> data.roadPartNumber
+    )
+  }
   def createRoadLinkChangeSets(previousDate: DateTime, newDate: DateTime): Seq[LinkNetworkChange] = {
 
     var response: CloseableHttpResponse = null
@@ -52,34 +92,6 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
           .setCookieSpec(CookieSpecs.STANDARD)
           .build())
       .build()
-
-    def viiteRoadLinkChangeToMap(change: LinkNetworkChange): Map[String, Any] = {
-      Map(
-        "changeType" -> change.changeType,
-        "old" -> linkInfoToMap(change.oldLink),
-        "new" -> change.newLinks.map(changeInfo => linkInfoToMap(changeInfo)),
-        "replaceInfo" -> change.replaceInfo.map(replace => replaceInfoToMap(replace))
-      )
-    }
-
-    def linkInfoToMap(linkInfo: LinkInfo): Map[String, Any] = {
-      Map(
-        "linkId" -> linkInfo.linkId,
-        "linkLength" -> linkInfo.linkLength,
-        "geometry" -> linkInfo.geometry
-      )
-    }
-
-    def replaceInfoToMap(replaceInfo: ReplaceInfo): Map[String, Any] = {
-      Map(
-        "oldLinkId" -> replaceInfo.oldLinkId,
-        "oldFromMValue" -> replaceInfo.oldFromMValue,
-        "oldToMValue" -> replaceInfo.oldToMValue,
-        "newFromMValue" -> replaceInfo.newFromMValue,
-        "newToMValue" -> replaceInfo.newToMValue,
-        "digitizationChange" -> replaceInfo.digitizationChange
-      )
-    }
 
     def extractTiekamuRoadLinkChanges(responseString: String):Seq[TiekamuRoadLinkChange] = {
       //TODO REMOVE THESE WHEN IN PRODUCTION THIS IS FOR LOCAL DUMMY JSON
@@ -140,7 +152,7 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
         def createViiteMetaData(linearLocations: Seq[LinearLocation]): Seq[ViiteMetaData] = {
           val viiteMetaData = linearLocations.map(ll => {
             val roadway = roadwayDAO.fetchAllByRoadwayNumbers(Set(ll.roadwayNumber)).head
-            ViiteMetaData(ll.id, ll.roadwayNumber, ll.orderNumber, roadway.roadNumber, roadway.roadPartNumber)
+            ViiteMetaData(ll.id, ll.roadwayNumber, ll.orderNumber.toInt, roadway.roadNumber, roadway.roadPartNumber)
           })
           viiteMetaData
         }
@@ -290,9 +302,13 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
     logger.info(s"Link network update started, updating from ${previousDate} to ${newDate}")
     try {
       val viiteChangeSets = createRoadLinkChangeSets(previousDate: DateTime, newDate: DateTime)
-      // TODO save the created change sets to DB or S3 Bucket
-      // TODO naming convention to changeSetName
-      linkNetworkUpdater.persistLinkNetworkChanges(viiteChangeSets, "changeSetNamePlaceHolder", newDate, LinkGeomSource.NormalLinkInterface)
+      // TODO save the created change sets to DB or S3 Bucket not tested yet
+      //val jsonChangeSets = Json(DefaultFormats).write(viiteChangeSets.map(change => linkNetworkChangeToMap(change)))
+      //val changeSetName = s"ViiteLinkNetworkChangeSet-${LocalDateTime.now()}" //TODO is this good enough naming/id convention to change sets
+      //val bucketName: String = ViiteProperties.dynamicLinkNetworkS3BucketName
+      //awsService.S3.saveFileToS3(bucketName, changeSetName, jsonChangeSets, "json")
+
+      linkNetworkUpdater.persistLinkNetworkChanges(viiteChangeSets, changeSetName, newDate, LinkGeomSource.NormalLinkInterface)
     } catch {
       case ex: ViiteException =>
         logger.error(s"Creating road link change info sets failed with ${ex}")

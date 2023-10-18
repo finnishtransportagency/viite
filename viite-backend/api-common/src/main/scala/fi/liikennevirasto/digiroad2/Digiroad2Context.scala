@@ -217,7 +217,7 @@ object Digiroad2Context {
   }
 
   lazy val dynamicRoadNetworkService: DynamicRoadNetworkService = {
-    new DynamicRoadNetworkService(linearLocationDAO, roadwayDAO, kgvRoadLinkClient, linkNetworkUpdater)
+    new DynamicRoadNetworkService(linearLocationDAO, roadwayDAO, kgvRoadLinkClient, awsService, linkNetworkUpdater)
   }
 
   val env = ViiteProperties.env
