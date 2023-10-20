@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
 import fi.liikennevirasto.viite.AwsService
 import fi.liikennevirasto.viite.dao.{LinearLocation, LinearLocationDAO, RoadwayDAO}
+import fi.vaylavirasto.viite.geometry.GeometryUtils.scaleToThreeDigits
 import fi.vaylavirasto.viite.geometry.Point
 import fi.vaylavirasto.viite.model.{LinkGeomSource, RoadLink}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase
@@ -130,7 +131,7 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
         val oldLinkInfo = {
           val kgvRoadLinkOld = kgvRoadLinks.find(rl => rl.linkId == oldLinkId)
           if (kgvRoadLinkOld.isDefined)
-            LinkInfo(oldLinkId, kgvRoadLinkOld.get.length, kgvRoadLinkOld.get.geometry)
+            LinkInfo(oldLinkId, scaleToThreeDigits(kgvRoadLinkOld.get.length), kgvRoadLinkOld.get.geometry)
           else
             throw ViiteException(s"Can't create change set without KGV road link data for oldLinkId: ${oldLinkId} ")
         }
@@ -141,14 +142,14 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
         val newLinkInfo = distinctChangeInfosByNewLink.map(ch => {
           val kgvNewLink = kgvRoadLinks.find(newLink => ch.newLinkId == newLink.linkId)
           if (kgvNewLink.isDefined)
-            LinkInfo(ch.newLinkId, kgvNewLink.get.length, kgvNewLink.get.geometry)
+            LinkInfo(ch.newLinkId, scaleToThreeDigits(kgvNewLink.get.length), kgvNewLink.get.geometry)
           else
             throw ViiteException(s"Can't create change set without KGV road link data for newLinkId: ${ch.newLinkId} ")
         })
         newLinkInfo
       }
 
-      def createReplaceInfos(changeInfos: Seq[TiekamuRoadLinkChange]): Seq[ReplaceInfo] = {
+      def createReplaceInfos(tiekamuRoadLinkChanges: Seq[TiekamuRoadLinkChange]): Seq[ReplaceInfo] = {
         def createViiteMetaData(linearLocations: Seq[LinearLocation]): Seq[ViiteMetaData] = {
           val viiteMetaData = linearLocations.map(ll => {
             val roadway = roadwayDAO.fetchAllByRoadwayNumbers(Set(ll.roadwayNumber)).head
@@ -157,7 +158,70 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
           viiteMetaData
         }
 
-        val replaceInfos = changeInfos.map(ch => {
+        /**
+         * In order to merge TiekamuRoadLinkChanges to one they need to:
+         * - share the same oldLinkId
+         * - share the same newLinkId
+         * - be continuous by the M values
+         *
+         * So first we group the TiekamuRoadLinkChanges by the old- and newLinkId.
+         * Then we order the groups by the oldStartM -value
+         * Then we create continuous sections of those groups
+         * Then those sections can be merged in to one TiekamuRoadLinkChange
+         * And lastly we return the list of merged TiekamuRoadLinkChanges
+         * */
+        def mergeTiekamuRoadLinkChanges(tiekamuRoadLinkChanges: Seq[TiekamuRoadLinkChange]): Seq[TiekamuRoadLinkChange] = {
+          def createSections(tiekamuRoadLinkChanges: Seq[TiekamuRoadLinkChange]): Seq[Seq[TiekamuRoadLinkChange]] = {
+            tiekamuRoadLinkChanges.foldLeft(Seq[Seq[TiekamuRoadLinkChange]]()) {
+              (sections, change) =>
+                sections match {
+                  // If sections is empty, create a new section with the current change and wrap it in a Seq
+                  case Seq() => Seq(Seq(change))
+                  // If there are existing sections, check if the current change can be appended to the last section
+                  case currentSection +: rest =>
+                    if (change.oldStartM == currentSection.last.oldEndM) {
+                      (currentSection :+ change) +: rest // Add the updated section to the sections list
+                    } else {
+                      Seq(change) +: sections // Create a new section with the current change and prepend it to sections
+                    }
+                }
+            }
+          }
+
+          def mergeSectionIntoOneTiekamuRoadLinkChange(section: Seq[TiekamuRoadLinkChange]): TiekamuRoadLinkChange = {
+            val oldLinkId = section.head.oldLinkId
+            val lowestOldStartM = section.map(_.oldStartM).min
+            val highestOldEndM = section.map(_.oldEndM).max
+            val newLinkId = section.head.newLinkId
+            val lowestNewStartM = section.map(_.newStartM).min
+            val highestNewEndM = section.map(_.newEndM).max
+            // Create a merged TiekamuRoadLinkChange with the lowest oldStartM and highest oldEndM
+            TiekamuRoadLinkChange(oldLinkId, lowestOldStartM, highestOldEndM, newLinkId, lowestNewStartM, highestNewEndM)
+          }
+
+          // Create sections and merge them into a single TiekamuRoadLinkChange
+          def createMergedTiekamuRoadLinkChanges(changes: Seq[TiekamuRoadLinkChange]): Seq[TiekamuRoadLinkChange] = {
+            // Create individual sections
+            val sections: Seq[Seq[TiekamuRoadLinkChange]] = createSections(changes)
+            // Merge sections into a single change and collect them into a sequence
+            val mergedSections: Seq[TiekamuRoadLinkChange] = sections.map(section => mergeSectionIntoOneTiekamuRoadLinkChange(section))
+            mergedSections
+          }
+          // group the changeInfos by both the oldLinkId and the newLinkId  Map[(oldLinkId, newLinkId), Seq[TiekamuRoadLinkChange]]
+          val groupedByBothLinkIds = tiekamuRoadLinkChanges.groupBy(ch => (ch.oldLinkId, ch.newLinkId))
+
+          val mergedTiekamuRoadLinkChanges: Seq[TiekamuRoadLinkChange] = groupedByBothLinkIds.values.flatMap(changes => {
+            // sort the changes by oldStartM
+            val sortedChanges = changes.sortWith(_.oldStartM < _.oldStartM)
+            createMergedTiekamuRoadLinkChanges(sortedChanges)
+          }).toSeq
+
+          mergedTiekamuRoadLinkChanges
+        }
+
+        val mergedTiekamuRoadLinkChanges = mergeTiekamuRoadLinkChanges(tiekamuRoadLinkChanges)
+
+        val replaceInfos = mergedTiekamuRoadLinkChanges.map(ch => {
           val linearLocations = activeLinearLocations.filter(ll => ll.linkId == ch.oldLinkId)
           if (linearLocations.nonEmpty) {
             val viiteMetaData = createViiteMetaData(linearLocations)
@@ -174,14 +238,14 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
 
         val linkNetworkChanges = groupedByOldLinkId.map(group => {
           val oldLinkId = group._1
-          val changeInfos = group._2
-          val distinctChangeInfosByNewLink = changeInfos.groupBy(_.newLinkId).values.map(_.head).toSeq
+          val tiekamuRoadLinkChangeInfos = group._2
+          val distinctChangeInfosByNewLink = tiekamuRoadLinkChangeInfos.groupBy(_.newLinkId).values.map(_.head).toSeq
 
           val viiteRoadLinkChange = {
-            val changeType = if (changeInfos.map(_.newLinkId).distinct.size > 1) "split" else "replace"
+            val changeType = if (tiekamuRoadLinkChangeInfos.map(_.newLinkId).distinct.size > 1) "split" else "replace"
             val oldInfo = createOldLinkInfo(kgvRoadLinks, oldLinkId)
             val newInfo = createNewLinkInfos(kgvRoadLinks, distinctChangeInfosByNewLink)
-            val replaceInfo = createReplaceInfos(changeInfos)
+            val replaceInfo = createReplaceInfos(tiekamuRoadLinkChangeInfos)
             LinkNetworkChange(changeType, oldInfo, newInfo, replaceInfo)
           }
           viiteRoadLinkChange
@@ -304,16 +368,16 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
       val viiteChangeSets = createRoadLinkChangeSets(previousDate: DateTime, newDate: DateTime)
       // TODO save the created change sets to DB or S3 Bucket not tested yet
       //val jsonChangeSets = Json(DefaultFormats).write(viiteChangeSets.map(change => linkNetworkChangeToMap(change)))
-      //val changeSetName = s"ViiteLinkNetworkChangeSet-${LocalDateTime.now()}" //TODO is this good enough naming/id convention to change sets
+      val changeSetName = s"ViiteLinkNetworkChangeSet-${LocalDateTime.now()}" //TODO is this good enough naming/id convention to change sets
       //val bucketName: String = ViiteProperties.dynamicLinkNetworkS3BucketName
       //awsService.S3.saveFileToS3(bucketName, changeSetName, jsonChangeSets, "json")
 
       linkNetworkUpdater.persistLinkNetworkChanges(viiteChangeSets, changeSetName, newDate, LinkGeomSource.NormalLinkInterface)
     } catch {
       case ex: ViiteException =>
-        logger.error(s"Creating road link change info sets failed with ${ex}")
+        logger.error(s"Updating road link network failed with ${ex}")
       case e: Exception =>
-        logger.error(s"An error occured while creating road link change info sets: ${e}")
+        logger.error(s"An error occurred while updating road link network: ${e}")
     }
   }
 }
