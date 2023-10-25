@@ -363,21 +363,21 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
   }
 
   def updateLinkNetwork(previousDate: DateTime, newDate: DateTime): Unit = {
-    logger.info(s"Link network update started, updating from ${previousDate} to ${newDate}")
-    try {
-      val viiteChangeSets = createRoadLinkChangeSets(previousDate: DateTime, newDate: DateTime)
-      // TODO save the created change sets to DB or S3 Bucket not tested yet
-      //val jsonChangeSets = Json(DefaultFormats).write(viiteChangeSets.map(change => linkNetworkChangeToMap(change)))
-      val changeSetName = s"ViiteLinkNetworkChangeSet-${LocalDateTime.now()}" //TODO is this good enough naming/id convention to change sets
-      //val bucketName: String = ViiteProperties.dynamicLinkNetworkS3BucketName
-      //awsService.S3.saveFileToS3(bucketName, changeSetName, jsonChangeSets, "json")
+    time(logger, s"Updating road link network from ${previousDate} to ${newDate}") {
+      try {
+        val viiteChangeSets = createRoadLinkChangeSets(previousDate: DateTime, newDate: DateTime)
+        val jsonChangeSets = Json(DefaultFormats).write(viiteChangeSets.map(change => linkNetworkChangeToMap(change)))
+        val changeSetName = s"ViiteLinkNetworkChangeSet-${LocalDateTime.now()}" //TODO is this good enough naming/id convention to change sets
+        val bucketName: String = ViiteProperties.dynamicLinkNetworkS3BucketName
+        awsService.S3.saveFileToS3(bucketName, changeSetName, jsonChangeSets, "json")
 
-      linkNetworkUpdater.persistLinkNetworkChanges(viiteChangeSets, changeSetName, newDate, LinkGeomSource.NormalLinkInterface)
-    } catch {
-      case ex: ViiteException =>
-        logger.error(s"Updating road link network failed with ${ex}")
-      case e: Exception =>
-        logger.error(s"An error occurred while updating road link network: ${e}")
+        linkNetworkUpdater.persistLinkNetworkChanges(viiteChangeSets, changeSetName, newDate, LinkGeomSource.NormalLinkInterface)
+      } catch {
+        case ex: ViiteException =>
+          logger.error(s"Updating road link network failed with ${ex}")
+        case e: Exception =>
+          logger.error(s"An error occurred while updating road link network: ${e}")
+      }
     }
   }
 }
