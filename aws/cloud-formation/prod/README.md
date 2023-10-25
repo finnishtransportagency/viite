@@ -68,6 +68,16 @@ aws cloudformation create-stack \
 --parameters file://aws/cloud-formation/prod/prod-api-s3-parameter.json
 ```
 
+### Luo S3 dynaamisen tielinkki verkon muutosseteille
+
+```
+aws cloudformation create-stack \
+--stack-name [esim. viite-prod-dynamic-link-network-s3] \
+--capabilities CAPABILITY_NAMED_IAM \
+--template-body file://aws/cloud-formation/viite-dynamic-link-network-s3.yaml \
+--parameters file://aws/cloud-formation/prod/prod-dynamic-link-network-s3-parameter.json
+```
+
 ### Luo task-definition
 
 ```
