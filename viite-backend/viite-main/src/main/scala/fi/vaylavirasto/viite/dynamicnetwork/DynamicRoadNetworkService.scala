@@ -153,7 +153,7 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
         def createViiteMetaData(linearLocations: Seq[LinearLocation]): Seq[ViiteMetaData] = {
           val viiteMetaData = linearLocations.map(ll => {
             val roadway = roadwayDAO.fetchAllByRoadwayNumbers(Set(ll.roadwayNumber)).head
-            ViiteMetaData(ll.id, ll.roadwayNumber, ll.orderNumber.toInt, roadway.roadNumber, roadway.roadPartNumber)
+            ViiteMetaData(ll.id, ll.startMValue, ll.endMValue, ll.roadwayNumber, ll.orderNumber.toInt, roadway.roadNumber, roadway.roadPartNumber)
           })
           viiteMetaData
         }
