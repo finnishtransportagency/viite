@@ -4,7 +4,7 @@ sealed trait SideCode {
   def value: Int
 }
 object SideCode {
-  private val values = Set(BothDirections, TowardsDigitizing, AgainstDigitizing, Unknown)
+  private val values = Set(TowardsDigitizing, AgainstDigitizing, Unknown)
 
   def apply(intValue: Int): SideCode = {
     values.find(_.value == intValue).getOrElse(Unknown)
@@ -18,7 +18,6 @@ object SideCode {
     }
   }
 
-  case object BothDirections    extends SideCode { def value = 1 }
   case object TowardsDigitizing extends SideCode { def value = 2 }
   case object AgainstDigitizing extends SideCode { def value = 3 }
   case object Unknown           extends SideCode { def value = 9 }

@@ -467,7 +467,6 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
           oldLink.startAddrMValue should be((linksLast.endAddrMValue - newLink.endAddrMValue) +- 1)
           oldLink.endAddrMValue should be((linksLast.endAddrMValue - newLink.startAddrMValue) +- 1)
           val sideCodeChangeCorrect = (oldLink.sideCode, newLink.sideCode) match {
-            case (SideCode.BothDirections, SideCode.BothDirections) => true
             case (SideCode.AgainstDigitizing, SideCode.TowardsDigitizing) => true
             case (SideCode.TowardsDigitizing, SideCode.AgainstDigitizing) => true
             case _ => false
