@@ -1,11 +1,15 @@
 package fi.liikennevirasto.digiroad2
 
+import fi.liikennevirasto.digiroad2.Digiroad2Context.dynamicRoadNetworkService
+
 import java.net.URLDecoder
 import fi.liikennevirasto.digiroad2.util.DatabaseMigration
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.util.DataImporter
+import fi.vaylavirasto.viite.util.DateTimeFormatters.ISOdateFormatter
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.HttpClientBuilder
+import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, Formats, StringInput}
 import org.scalatra._
 import org.scalatra.auth.{ScentryConfig, ScentrySupport}
@@ -13,6 +17,9 @@ import org.scalatra.auth.strategy.BasicAuthSupport
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
 import org.slf4j.{Logger, LoggerFactory}
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 trait AdminAuthenticationSupport extends ScentrySupport[BasicAuthUser] with BasicAuthSupport[BasicAuthUser] {
   self: ScalatraBase =>
@@ -230,6 +237,36 @@ class AdminApi(val dataImporter: DataImporter, implicit val swagger: Swagger) ex
         case e: Exception =>
           logger.error("Import nodes and junctions failed.", e)
           InternalServerError(s"Import nodes and junctions: ${e.getMessage}")
+      }
+    }
+  }
+
+  def validateDateParams(previousDate: String, newDate: String): (DateTime, DateTime) = {
+    val format = ISOdateFormatter
+    (format.parseDateTime(previousDate), format.parseDateTime(newDate))
+  }
+
+  get("/update_link_network") {
+    time(logger, "GET request for /update_link_network") {
+
+      val previousDate = params.get("previousDate")
+      val newDate = params.get("newDate")
+
+      (previousDate, newDate) match {
+        case (Some(previousDate), Some(newDate)) =>
+          try {
+            val (previousDateTimeObject, newDateTimeObject) = validateDateParams(previousDate, newDate)
+            Future(dynamicRoadNetworkService.updateLinkNetwork(previousDateTimeObject, newDateTimeObject))
+            "Samuutus käynnistetty"
+          } catch {
+            case ex: IllegalArgumentException =>
+              logger.error("Updating link network failed.", ex)
+              BadRequest("Unable to parse date, the date should be in yyyy-mm-dd format.")
+            case e: Exception =>
+              logger.error("Updating link network failed.", e)
+              InternalServerError(s"Updating link network failed: ${e.getMessage}")
+          }
+        case _ => BadRequest("Missing mandatory date parameter from the url - for example: /update_link_network?previousDate=2023-05-20&newDate=2023-05-23")
       }
     }
   }
