@@ -23,7 +23,40 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test create When creating new linear location Then read it successfully from the database") {
+  test("Test FetchCoordinatesForJunction when there are 2 linear locations with the same start and endpoints, but is against digitizing Then return coordinate point of junction") {
+    runWithRollback {
+      val crossingRoads: Seq[RoadwaysForJunction] = Seq(
+        RoadwaysForJunction(
+          jId = 1,
+          roadwayNumber = 100,
+          roadNumber = 1,
+          track = 0,
+          roadPartNumber = 1,
+          addrM = 1,
+          beforeAfter = 100
+        ),
+        RoadwaysForJunction(
+          jId = 1,
+          roadwayNumber = 200,
+          roadNumber = 1,
+          track = 0,
+          roadPartNumber = 2,
+          addrM = 0,
+          beforeAfter = 2
+        )
+      )
+      val allLL: Seq[LinearLocation] = Seq(LinearLocation(NewIdValue, 2, 1001L.toString, 0.0, 100.0, SideCode.AgainstDigitizing, 10000000000L, (CalibrationPointReference(Some(0L)), CalibrationPointReference.None), Seq(Point(0.0, 100.0), Point(0.0, 200.0)), LinkGeomSource.NormalLinkInterface, 100L), LinearLocation(NewIdValue, 2, 1001L.toString, 0.0, 100.0, SideCode.AgainstDigitizing, 10000000000L, (CalibrationPointReference(Some(0L)), CalibrationPointReference.None), Seq(Point(0.0, 100.0), Point(0.0, 200.0)), LinkGeomSource.NormalLinkInterface, 100L)) // Provide test allLL
+      val llIds: Seq[Long] = Seq(allLL.head.id, allLL.last.id)
+      val result: Option[Point] = linearLocationDAO.fetchCoordinatesForJunction(llIds, crossingRoads, allLL)
+
+      val expectedPoint: Option[Point] = Some(Point(0.0, 200.0))
+
+      result should be(expectedPoint)
+    }
+
+  }
+
+    test("Test create When creating new linear location Then read it successfully from the database") {
     runWithRollback {
       val id = linearLocationDAO.getNextLinearLocationId
       val orderNumber = 1

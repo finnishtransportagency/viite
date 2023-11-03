@@ -1,11 +1,10 @@
 package fi.liikennevirasto.viite.dao
 
-import fi.liikennevirasto.digiroad2.client.kgv.Geometry
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.NewIdValue
 import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
-import fi.vaylavirasto.viite.model.{BeforeAfter, NodeType, SideCode, Track}
+import fi.vaylavirasto.viite.model.{BeforeAfter, NodeType, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase
 import fi.vaylavirasto.viite.util.DateTimeFormatters.{basicDateFormatter, dateOptTimeFormatter}
 import org.joda.time.DateTime
@@ -22,11 +21,11 @@ case class JunctionTemplate(id: Long, startDate: DateTime, roadNumber: Long, roa
 
 case class JunctionForRoadAddressBrowser(nodeNumber: Long, nodeCoordinates: Point, nodeName: Option[String], nodeType: NodeType, startDate: DateTime, junctionNumber: Option[Long], roadNumber: Long, track: Long, roadPartNumber: Long, addrM: Long, beforeAfter: Seq[Long])
 
-case class JunctionCoordinate(jId: Long, llId: Long, x: Double, y: Double)
-case class Jidtollid(jId: Long, roadwayNumber: Long, llid: Long)
-case class JunctionOfNode(id: Long, nodeNumber: Long, startDate: DateTime, junctionNumber: Option[Long], rwpId: Long, roadNumber: Long, track: Long, roadPartNumber: Long, addrM: Long, beforeAfter: String, sideCode: Long, roadwayNumber: Long)
 
-case class JunctionWithCoordinate(id: Long, nodeNumber: Long, startDate: DateTime, junctionNumber: Option[Long], rwpId: Long, roadNumber: Long, track: Long, roadPartNumber: Long, addrM: Long, beforeAfter: String, sideCode: Long, roadwayNumber: Long, junctionCoordinate: Option[JunctionCoordinate])
+case class JunctionWithCoordinate(id: Long, junctionNumber: Option[Long], nodeNumber: Option[Long], startDate: DateTime, endDate: Option[DateTime],
+                                      validFrom: DateTime, validTo: Option[DateTime], createdBy: String, createdTime: Option[DateTime], xCoord: Double, yCoord: Double, crossingRoads: Seq[RoadwaysForJunction])
+case class JunctionWithLinearLocation(id: Long, junctionNumber: Option[Long], nodeNumber: Option[Long], startDate: DateTime, endDate: Option[DateTime],
+                                      validFrom: DateTime, validTo: Option[DateTime], createdBy: String, createdTime: Option[DateTime], llId: Seq[Long])
 
 class JunctionDAO extends BaseDAO {
 
@@ -44,6 +43,39 @@ class JunctionDAO extends BaseDAO {
       Junction(
         id, junctionNumber, nodeNumber, startDate, endDate,
         validFrom, validTo, createdBy, createdTime)
+    }
+  }
+
+  implicit val getJunctionWithLinearLocation: GetResult[JunctionWithLinearLocation] = new GetResult[JunctionWithLinearLocation] {
+    def parseJsonbAgg(stringToParse: String): Seq[Long] = {
+      val res = stringToParse.replaceAll("[\\[\\]\\s]","")
+      res.split(",").map(_.toLong).toSeq
+    }
+
+    def parseBeforeAfterValue(beforeAfterToParse: String): String = {
+      // remove square brackets and spaces from the string i.e "[1, 2]" -> "1,2"
+      val beforeAfterParsed = beforeAfterToParse.replaceAll("[\\[\\]\\s]", "")
+      // Change beforeAfter value 1 to E "Ennen"
+      val beforeAfter1toE = beforeAfterParsed.replaceAll("1", "E")
+      // Change beforeAfter value 2 to J "Jälkeen"
+      val beforeAfter2toJ = beforeAfter1toE.replaceAll("2", "J")
+      beforeAfter2toJ
+    }
+
+    def apply(r: PositionedResult): JunctionWithLinearLocation = {
+      val id = r.nextLong()
+      val junctionNumber = r.nextLongOption()
+      val nodeNumber = r.nextLongOption()
+      val startDate = dateOptTimeFormatter.parseDateTime(r.nextDate.toString)
+      val endDate = r.nextDateOption.map(d => dateOptTimeFormatter.parseDateTime(d.toString))
+      val validFrom = dateOptTimeFormatter.parseDateTime(r.nextDate.toString)
+      val validTo = r.nextDateOption.map(d => dateOptTimeFormatter.parseDateTime(d.toString))
+      val createdBy = r.nextString()
+      val createdTime = r.nextDateOption.map(d => dateOptTimeFormatter.parseDateTime(d.toString))
+      val llIds: Seq[Long] = parseJsonbAgg(r.rs.getString("ll_id"))
+
+      JunctionWithLinearLocation(id, junctionNumber, nodeNumber, startDate, endDate,
+        validFrom, validTo, createdBy, createdTime, llIds)
     }
   }
 
@@ -117,6 +149,26 @@ class JunctionDAO extends BaseDAO {
     fetchJunctionsByNodeNumbers(Seq(nodeNumber))
   }
 
+  def fetchJunctionsByNodeNumbersWithLinearLocation(nodeNumbers: Seq[Long]): Seq[JunctionWithLinearLocation] = {
+    if (nodeNumbers.isEmpty) {
+      Seq()
+    } else {
+      val query =
+        s"""
+    select distinct J.ID, J.JUNCTION_NUMBER, J.NODE_NUMBER, J.START_DATE, J.END_DATE, J.VALID_FROM, J.VALID_TO, J.CREATED_BY, J.CREATED_TIME, jsonb_agg(distinct ll.id) as ll_id
+              FROM JUNCTION J
+              join junction_point jp on j.id = jp.junction_id and jp.valid_to is null
+              join calibration_point cp on jp.roadway_point_id = cp.roadway_point_id and cp.valid_to is null
+              join linear_location ll on cp.link_id = ll.link_id and ll.valid_to is null
+              join roadway_point rp on cp.roadway_point_id = rp.id and rp.roadway_number = ll.roadway_number
+              join roadway r on ll.roadway_number = r.roadway_number and r.valid_to is null and r.end_date is null
+      where j.NODE_NUMBER in (${nodeNumbers.mkString(", ")}) AND j.VALID_TO IS NULL AND j.END_DATE IS NULL
+      group by j.id
+    """
+      Q.queryNA[JunctionWithLinearLocation](query).iterator.toSeq
+    }
+  }
+
   def fetchJunctionsByNodeNumbers(nodeNumbers: Seq[Long]): Seq[Junction] = {
     if (nodeNumbers.isEmpty) {
       Seq()
@@ -128,147 +180,6 @@ class JunctionDAO extends BaseDAO {
         """
       queryList(query)
     }
-  }
-
-  implicit val getJunctionOfNode: GetResult[JunctionOfNode] = new GetResult[JunctionOfNode] {
-
-    def parseBeforeAfterValue(beforeAfterToParse: String): String = {
-      // remove square brackets and spaces from the string i.e "[1, 2]" -> "1,2"
-      val beforeAfterParsed = beforeAfterToParse.replaceAll("[\\[\\]\\s]", "")
-      // Change beforeAfter value 1 to E "Ennen"
-      val beforeAfter1toE = beforeAfterParsed.replaceAll("1", "E")
-      // Change beforeAfter value 2 to J "Jälkeen"
-      val beforeAfter2toJ = beforeAfter1toE.replaceAll("2", "J")
-      beforeAfter2toJ
-    }
-
-    def apply(r: PositionedResult): JunctionOfNode = {
-      val jId: Long = r.nextLong()
-      val nodeNumber: Long = r.nextLong()
-      val startDate = new DateTime(r.nextDate())
-      val junctionNumber = r.nextLongOption()
-      val rwpId = r.nextLong()
-      val roadNumber = r.nextLong()
-      val track = r.nextInt()
-      val roadPartNumber = r.nextLong()
-      val addrM = r.nextLong()
-      val beforeAfter = parseBeforeAfterValue(r.nextString())
-      val sideCode = r.nextLong()
-      val roadwayNumber = r.nextLong()
-
-      JunctionOfNode(jId, nodeNumber, startDate, junctionNumber, rwpId, roadNumber, track, roadPartNumber, addrM, beforeAfter, sideCode, roadwayNumber)
-    }
-  }
-
-  def junctionCoordinateToPoint(junctionCoordinate: JunctionCoordinate): Point = {
-    val resultPoint = Point(junctionCoordinate.x, junctionCoordinate.y)
-    resultPoint
-  }
-
-  def fetchValidJunctionsForAPI(): Set[JunctionOfNode] = {
-    val query =
-      s"""
-      SELECT j.id, j.node_number, j.start_date, j.junction_number, jp.roadway_point_id, rw.road_number, rw.track, rw.road_part_number, rp.addr_m, json_agg(DISTINCT jp.before_after) as beforeafter, ll.side, ll.roadway_number
-      FROM JUNCTION j
-      JOIN JUNCTION_POINT jp ON j.id = jp.junction_id  AND jp.valid_to IS NULL
-      JOIN ROADWAY_POINT rp ON jp.roadway_point_id  = rp.ID
-      JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
-      JOIN CALIBRATION_POINT cp ON rp.ID = cp.ROADWAY_POINT_ID
-      JOIN LINEAR_LOCATION ll ON cp.LINK_ID = ll.LINK_ID
-      WHERE j.valid_to is NULL AND j.end_date IS NULL
-      GROUP BY j.start_date, j.junction_number, jp.roadway_point_id, rw.road_number, rw.track, rw.road_part_number, rp.addr_m, j.id, cp.start_end, ll.side, ll.roadway_number
-      """
-    Q.queryNA[JunctionOfNode](query).iterator.toSet
-  }
-
-  implicit val getJidtollid: GetResult[Jidtollid] = new GetResult[Jidtollid] {
-    def apply(r: PositionedResult): Jidtollid = {
-      val jid = r.nextLong()
-      val roadwayNumber = r.nextLong()
-      val llid = r.nextLong()
-
-      Jidtollid(jid, roadwayNumber, llid)
-    }
-  }
-
-  implicit val getJunctionCoordinate: GetResult[JunctionCoordinate] = new GetResult[JunctionCoordinate] {
-    def apply(r: PositionedResult): JunctionCoordinate = {
-      val id = r.nextLong()
-      val llId = r.nextLong()
-      val x = r.nextDouble()
-      val y = r.nextDouble()
-
-      JunctionCoordinate(id, llId, x, y)
-    }
-  }
-
-  def fetchCoordinatesByJunctionId(jid: Long, rwpId: Long, beforeAfter: String, sideCode: Long): Point = {
-
-    val pointCondition = {
-      if ((beforeAfter.contains('E') && sideCode == 3) || (beforeAfter.contains('J') && sideCode == 2))
-        s" ST_X(ST_StartPoint(ll.geometry)), ST_Y(ST_StartPoint(ll.geometry)), ST_Z(ST_StartPoint(ll.geometry))"
-      else if ((beforeAfter.contains('E') && sideCode == 2) || (beforeAfter.contains('J') && sideCode == 3))
-        s" ST_X(ST_EndPoint(ll.geometry)), ST_Y(ST_EndPoint(ll.geometry)), ST_Z(ST_EndPoint(ll.geometry))"
-    }
-
-    val query =
-      s"""
-        SELECT $pointCondition
-        FROM linear_location ll
-        JOIN calibration_point cp ON cp.link_id = ll.link_id AND cp.roadway_point_id = $rwpId
-        JOIN junction_point jp ON cp.roadway_point_id = jp.roadway_point_id
-        JOIN junction j ON jp.junction_id = j.id
-        WHERE j.id = $jid
-        """
-
-    junctionCoordinateToPoint(Q.queryNA[JunctionCoordinate](query).iterator.toSeq.head)
-  }
-
-  def fetchllidandjid(): Seq[Jidtollid] = {
-    val query =
-      s"""
-        SELECT j.id, r.roadway_number, ll.id
-        FROM junction j
-        JOIN junction_point jp ON jp.junction_id = j.id
-        JOIN calibration_point cp ON cp.roadway_point_id = jp.roadway_point_id
-        JOIN linear_location ll ON ll.link_id = cp.link_id
-        JOIN roadway r ON r.roadway_number = ll.roadway_number AND r.valid_to IS NULL AND r.end_date IS NULL
-        WHERE j.valid_to IS NULL AND ll.valid_to IS NULL
-        GROUP BY j.id, r.roadway_number, ll.id
-        """
-    Q.queryNA[Jidtollid](query).iterator.toSeq
-  }
-
-  def fetchStartCoordinatesByJunctionIdAndRwp(): Seq[JunctionCoordinate] = {
-
-    val query =
-      s"""
-        SELECT DISTINCT j.id, ll.id, ST_X(ST_StartPoint(ll.geometry)), ST_Y(ST_StartPoint(ll.geometry)), ST_Z(ST_StartPoint(ll.geometry))
-        FROM linear_location ll
-        JOIN calibration_point cp ON cp.link_id = ll.link_id AND ll.valid_to IS NULL
-        JOIN roadway_point rp ON rp.id = cp.roadway_point_id
-        JOIN junction_point jp ON cp.roadway_point_id = jp.roadway_point_id AND jp.valid_to IS NULL
-        JOIN junction j ON jp.junction_id = j.id
-        WHERE j.valid_to IS NULL
-        """
-
-    Q.queryNA[JunctionCoordinate](query).iterator.toSeq
-  }
-
-  def fetchEndCoordinatesByJunctionIdAndRwp(): Seq[JunctionCoordinate] = {
-
-    val query =
-      s"""
-        SELECT DISTINCT j.id, ll.id, ST_X(ST_EndPoint(ll.geometry)), ST_Y(ST_EndPoint(ll.geometry)), ST_Z(ST_EndPoint(ll.geometry))
-        FROM linear_location ll
-        JOIN calibration_point cp ON cp.link_id = ll.link_id AND ll.valid_to IS NULL
-        JOIN roadway_point rp ON rp.id = cp.roadway_point_id
-        JOIN junction_point jp ON cp.roadway_point_id = jp.roadway_point_id AND jp.valid_to IS NULL
-        JOIN junction j ON jp.junction_id = j.id
-        WHERE j.valid_to is NULL
-        """
-
-    Q.queryNA[JunctionCoordinate](query).iterator.toSeq
   }
 
   def fetchByIds(ids: Seq[Long]): Seq[Junction] = {

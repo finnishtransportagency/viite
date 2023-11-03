@@ -82,6 +82,9 @@ trait BaseLinearLocation {
   def endCalibrationPointType: CalibrationPointType =
     if (endCalibrationPoint.typeCode.isDefined) endCalibrationPoint.typeCode.get else CalibrationPointType.NoCP
 }
+case class JunctionCoordinate(xCoord: Double, yCoord: Double)
+
+
 
 case class CalibrationPointReference(addrM: Option[Long], typeCode: Option[CalibrationPointType] = Option.empty) {
   def isEmpty: Boolean = addrM.isEmpty
@@ -211,6 +214,15 @@ class LinearLocationDAO extends BaseDAO {
 
       LinearLocation(id, orderNumber, linkId, startMeasure, endMeasure, SideCode.apply(sideCode), adjustedTimestamp, (CalibrationPointReference(calStartAddrM, calStartTypeOption),
           CalibrationPointReference(calEndAddrM, calEndTypeOption)), Seq(Point(x1, y1), Point(x2, y2)), LinkGeomSource.apply(linkSource), roadwayNumber, validFrom, validTo)
+    }
+  }
+
+  implicit val getJunctionCoordinate: GetResult[JunctionCoordinate] = new GetResult[JunctionCoordinate] {
+    def apply(r: PositionedResult): JunctionCoordinate = {
+      val xCoord = r.nextDouble()
+      val yCoord = r.nextDouble()
+
+      JunctionCoordinate(xCoord, yCoord)
     }
   }
 
@@ -390,6 +402,76 @@ class LinearLocationDAO extends BaseDAO {
       """
     val filteredQuery = queryFilter(query)
     Q.queryNA[LinearLocation](filteredQuery).iterator.toSeq
+  }
+
+  def fetchCoordinatesForJunction(llIds: Seq[Long], crossingRoads: Seq[RoadwaysForJunction], allLL: Seq[LinearLocation]): Option[Point] = {
+    val llLength = llIds.length
+    var intersectionFunction = s""
+    var closingBracket = s""
+
+
+    if (llLength == 2) { //Tarkistetaan onko geometrian alku ja loppupisteet samat
+      val ll1 = allLL.find(_.id == llIds(0))
+      val ll2 = allLL.find(_.id == llIds(1))
+
+      if (ll1.get.geometry == ll2.get.geometry) {
+        val cr1 = crossingRoads.find(_.roadwayNumber == ll1.get.roadwayNumber)
+        val cr2 = crossingRoads.find(_.roadwayNumber == ll2.get.roadwayNumber)
+
+        val sideCodeBeforeAfter1: (Int, Long) = (ll1.get.sideCode.value, cr1.get.beforeAfter)
+        val sideCodeBeforeAfter2: (Int, Long) = (ll2.get.sideCode.value, cr2.get.beforeAfter)
+
+        var point = Point(0,0)
+
+        if (sideCodeBeforeAfter1._1 == 2 || sideCodeBeforeAfter2._1 == 2) {
+          // Atleast one sidecode is 2
+          point = if (sideCodeBeforeAfter1._1 == 2) {
+            if (sideCodeBeforeAfter1._2 == 1) ll1.get.getLastPoint
+            else ll1.get.getFirstPoint
+          } else {
+            if (sideCodeBeforeAfter2._2 == 1) ll2.get.getLastPoint
+            else ll2.get.getFirstPoint
+          }
+        } else if (sideCodeBeforeAfter1._1 == 3 && sideCodeBeforeAfter2._1 == 3) {
+          // Both side codes are 3
+          point = if (sideCodeBeforeAfter1._2 == 1) ll1.get.getLastPoint
+          else if (sideCodeBeforeAfter1._2 == 2) ll1.get.getFirstPoint
+          else if (sideCodeBeforeAfter2._2 == 1) ll2.get.getLastPoint
+          else ll2.get.getFirstPoint
+        }
+        return Some(point)
+      }
+    }
+
+    intersectionFunction = ""
+    closingBracket = ""
+    for (i <- 2 until math.min(llLength, 8)) {
+      val llId = llIds(i)
+      intersectionFunction += s"ST_Intersection((SELECT ll.geometry FROM linear_location ll WHERE ll.id = $llId),"
+      closingBracket += ", 0.001)"
+    }
+
+    val query = {
+      s"""
+         SELECT DISTINCT
+         ST_X(${intersectionFunction}
+              ST_Intersection((SELECT ll.geometry
+                   FROM linear_location ll
+                   WHERE ll.id = ${llIds(0)}), (SELECT ll.geometry
+                   FROM linear_location ll
+                   WHERE ll.id = ${llIds(1)})${closingBracket})) AS xCoord,
+         ST_Y(${intersectionFunction}
+              ST_Intersection((SELECT ll.geometry
+                   FROM linear_location ll
+                   WHERE ll.id = ${llIds(0)}), (SELECT ll.geometry
+                   FROM linear_location ll
+                   WHERE ll.id = ${llIds(1)})${closingBracket})) AS yCoord
+      """
+    }
+    val res = Q.queryNA[JunctionCoordinate](query).firstOption
+
+    val point: Option[Point] = res.map(junction => Point(junction.xCoord, junction.yCoord))
+    point
   }
 
   /**

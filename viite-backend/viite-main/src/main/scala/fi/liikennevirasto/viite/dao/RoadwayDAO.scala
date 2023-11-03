@@ -91,6 +91,8 @@ case class ProjectCalibrationPoint(
    this(linkId.toString, segmentMValue, addressMValue, typeCode)
 }
 
+case class RoadwaysForJunction(jId: Long, roadwayNumber: Long, roadNumber: Long, track: Long, roadPartNumber: Long, addrM: Long, beforeAfter: Long)
+
 sealed trait TerminationCode {
   def value: Int
 }
@@ -812,6 +814,32 @@ class RoadwayDAO extends BaseDAO {
 
       RoadPartForRoadAddressBrowser(ely, roadNumber, roadPartNumber, startAddrMValue, endAddrMValue, lengthAddrM, startDate)
     }
+  }
+
+  private implicit val getRoadwaysForJunction: GetResult[RoadwaysForJunction] = new GetResult[RoadwaysForJunction] {
+    def apply(r: PositionedResult): RoadwaysForJunction = {
+      val jId = r.nextLong()
+      val roadwayNumber = r.nextLong()
+      val roadNumber = r.nextLong()
+      val track = r.nextLong()
+      val roadPartNumber = r.nextLong()
+      val addrM = r.nextLong()
+      val beforeAfter = r.nextLong()
+
+      RoadwaysForJunction(jId, roadwayNumber, roadNumber, track, roadPartNumber, addrM, beforeAfter)
+    }
+  }
+
+  def fetchRoadByJId(): Seq[RoadwaysForJunction] = {
+    val query =
+      s"""
+         select jp.junction_id, r.roadway_number, r.road_number, r.track, r.road_part_number, rp.addr_m, jp.before_after
+         from roadway r
+         join roadway_point rp on r.roadway_number = rp.roadway_number
+         join junction_point jp on rp.id = jp.roadway_point_id and jp.valid_to is null
+         where r.valid_to is null and r.end_date is null
+       """
+      Q.queryNA[RoadwaysForJunction](query).iterator.toSeq
   }
 
   /**

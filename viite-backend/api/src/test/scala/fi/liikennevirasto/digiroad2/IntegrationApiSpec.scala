@@ -125,6 +125,12 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     }
   }
 
+  test("Test When asking for valid nodes with junctions Then return status code 200") {
+    get("/nodes/valid") {
+      status should equal(200)
+    }
+  }
+
   test("Test When asking for changes in the roadnames with Since too much in the future Then returns status code 400.") {
     when(mockRoadNameService.getUpdatedRoadNames(any[DateTime], any[Option[DateTime]])).thenReturn(Right(Seq()))
     get("/roadnames/changes?since=9999-01-01") {

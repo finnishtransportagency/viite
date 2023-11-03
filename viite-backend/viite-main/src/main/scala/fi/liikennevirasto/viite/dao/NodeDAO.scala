@@ -19,10 +19,9 @@ case class Node(id: Long, nodeNumber: Long, coordinates: Point, name: Option[Str
 
 case class RoadAttributes(roadNumber: Long, roadPartNumber: Long, addrMValue: Long)
 
-case class NodeForRoadAddressBrowser(ely: Long, roadNumber: Long, roadPartNumber: Long, addrM: Long, startDate: DateTime, nodeType: NodeType, name: Option[String], nodeCoordinates: Point, nodeNumber: Long)
+case class NodeWithJunctions(node: Node, junctionsWithCoordinates: Seq[JunctionWithCoordinate])
 
-case class SuperNode(nodeNumber: Long, startDate:  DateTime, nodeType: NodeType, name: String, nodeCoordinates: Point)
-case class NodesWithJunctions(nodeNumber: Long, startDate:  DateTime, nodeType: NodeType, name: String, nodeCoordinates: Point, junctions: Seq[JunctionWithCoordinate])
+case class NodeForRoadAddressBrowser(ely: Long, roadNumber: Long, roadPartNumber: Long, addrM: Long, startDate: DateTime, nodeType: NodeType, name: Option[String], nodeCoordinates: Point, nodeNumber: Long)
 
 class NodeDAO extends BaseDAO {
 
@@ -59,22 +58,9 @@ class NodeDAO extends BaseDAO {
       val name = r.nextStringOption()
       val coordX = r.nextLong()
       val coordY = r.nextLong()
-      val nodeNumber = r.nextLong()
+      val nodeNumber =r.nextLong()
 
       NodeForRoadAddressBrowser(ely, roadNumber, roadPartNumber, addrM, startDate, nodeType, name, Point(coordX, coordY), nodeNumber)
-    }
-  }
-
-  implicit val getValidNodeForAPI: GetResult[SuperNode] = new GetResult[SuperNode] {
-    def apply(r: PositionedResult): SuperNode = {
-      val nodeNumber = r.nextLong()
-      val startDate = new DateTime(r.nextDate())
-      val nodeType = NodeType.apply(r.nextInt())
-      val name = r.nextString()
-      val coordX = r.nextLong()
-      val coordY = r.nextLong()
-
-      SuperNode(nodeNumber, startDate, nodeType, name, Point(coordX, coordY))
     }
   }
 
@@ -118,16 +104,14 @@ class NodeDAO extends BaseDAO {
       """.as[Long].firstOption
   }
 
-  def fetchValidNodesForAPI(): Seq[SuperNode] = {
+  def fetchAllValidNodes(): Seq[Node] = {
     val query =
-      s"""
-    SELECT DISTINCT node.NODE_NUMBER, node.START_DATE, node.type, node.NAME, ST_X(node.COORDINATES) AS xcoord, ST_Y(node.COORDINATES) AS ycoord
-    FROM NODE node
-    JOIN NODE_POINT np ON node.NODE_NUMBER = np.NODE_NUMBER AND np.VALID_TO IS NULL
-    JOIN ROADWAY_POINT rp ON np.ROADWAY_POINT_ID = rp.ID
-    JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS null
+    s"""
+      SELECT n.id, n.node_number, ST_X(n.COORDINATES), ST_Y(n.COORDINATES), n."name", n."type", n.start_date, n.end_date, n.valid_from, n.valid_to, n.created_by, n.created_time, n.editor, n.published_time, n.registration_date
+      FROM node n
+      WHERE n.end_date IS NULL AND n.valid_to IS NULL
     """
-    Q.queryNA[SuperNode](query).iterator.toSeq
+    queryList(query)
   }
 
   def fetchNodesForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[NodeForRoadAddressBrowser] = {
