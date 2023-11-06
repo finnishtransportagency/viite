@@ -595,7 +595,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
         Map(
           "muokattu_viimeksi" -> roadAddressLink.modifiedAt.getOrElse(""),
           geometryWKT(
-            if (roadAddressLink.sideCode == SideCode.BothDirections || roadAddressLink.sideCode == SideCode.AgainstDigitizing)
+            if (roadAddressLink.sideCode == SideCode.AgainstDigitizing)
               roadAddressLink.geometry.reverse
             else
               roadAddressLink.geometry
