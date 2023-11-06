@@ -15,7 +15,6 @@ object CalibrationPointsUtils {
   (Option[ProjectCalibrationPoint], Option[ProjectCalibrationPoint]) = {
     val length = endMValue - startMValue
     (sideCode: SideCode) match {
-      case SideCode.BothDirections => (None, None) // Invalid choice
       case SideCode.TowardsDigitizing => (
         if (startCalibrationPoint != CalibrationPointType.NoCP) Some(ProjectCalibrationPoint(linkId, 0.0,    startAddrMValue, startCalibrationPoint)) else None,
         if (endCalibrationPoint   != CalibrationPointType.NoCP) Some(ProjectCalibrationPoint(linkId, length, endAddrMValue,   endCalibrationPoint  )) else None
