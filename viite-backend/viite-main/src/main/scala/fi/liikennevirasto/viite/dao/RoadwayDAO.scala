@@ -830,7 +830,11 @@ class RoadwayDAO extends BaseDAO {
     }
   }
 
-  def fetchRoadByJId(): Seq[RoadwaysForJunction] = {
+  /**
+   * Fetch all current road addresses based on the junction they join
+   * @return
+   */
+  def fetchCrossingRoadsInJunction(): Seq[RoadwaysForJunction] = {
     val query =
       s"""
          select jp.junction_id, r.roadway_number, r.road_number, r.track, r.road_part_number, rp.addr_m, jp.before_after

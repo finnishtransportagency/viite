@@ -362,7 +362,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
     }
   }
 
-  def validNodesWithJunctionsToApi(fetchedNodes: Seq[NodeWithJunctions]): Seq[Map[String, Any]] = {
+  private def validNodesWithJunctionsToApi(fetchedNodes: Seq[NodeWithJunctions]): Seq[Map[String, Any]] = {
     val nodesWithJunctions: Seq[NodeWithJunctions] = fetchedNodes
 
     def beforeAfterToLetter(l: Long): String = {
@@ -406,14 +406,13 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
   }
 
   private def fetchAllValidNodesWithJunctions(): Seq[NodeWithJunctions] = {
-    val result: Seq[NodeWithJunctions] = nodesAndJunctionsService.getAllValidNodesWithJunctions()
+    val result: Seq[NodeWithJunctions] = nodesAndJunctionsService.getAllValidNodesWithJunctions
     if (result.isEmpty) {
       Seq.empty[NodeWithJunctions]
     } else {
       result
     }
   }
-
 
   val getLinearLocationChanges: SwaggerSupportSyntax.OperationBuilder =
     (apiOperation[List[Map[String, Any]]]("getLinearLocationChanges")
@@ -493,67 +492,6 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
           handleCommonIntegrationAPIExceptions(t, nodesToGeoJson.operationId)
       }
     }
-  }
-
-  val getValidNodes: SwaggerSupportSyntax.OperationBuilder =
-    (apiOperation[List[Map[String, Any]]]("getValidNodes")
-      tags "Integration"
-      summary "Returns all valid nodes"
-      )
-
-  get("/nodes/valid", operation(getValidNodes)) {
-    contentType = formats("json")
-    time(logger, s"GET request for /nodes/valid") {
-      try {
-        validNodesWithJunctionsToApi(fetchAllValidNodesWithJunctions())
-      } catch {
-        case t: Throwable =>
-          handleCommonIntegrationAPIExceptions(t, getValidNodes.operationId)
-      }
-    }
-  }
-
-  def validNodesWithJunctionsToApi(fetchedNodes: Seq[NodesWithJunctions]): Seq[Map[String, Any]] = {
-    val nodesWithJunctions: Seq[NodesWithJunctions] = fetchedNodes
-
-    val mappedNodes: Seq[Map[String, Any]] = nodesWithJunctions.map { n =>
-      val junctionsMapped = n.junctions.map { junction =>
-        val junctionCoordinateMap = Map(
-          "x" -> junction.junctionCoordinate.map(_.x).getOrElse("N/A"),
-          "y" -> junction.junctionCoordinate.map(_.y).getOrElse("N/A")
-        )
-
-        ListMap(
-          "startDate" -> junction.startDate.toString(),
-          "junctionNumber" -> junction.junctionNumber.getOrElse("N/A"),
-          "roadNumber" -> junction.roadNumber,
-          "track" -> junction.track,
-          "roadPartNumber" -> junction.roadPartNumber,
-          "addrM" -> junction.addrM,
-          "beforeAfter" -> junction.beforeAfter,
-          "junctionCoordinate" -> junctionCoordinateMap
-        )
-      }
-
-      ListMap(
-        "nodeNumber" -> n.nodeNumber,
-        "startDate" -> n.startDate.toString(),
-        "type" -> n.nodeType.displayValue,
-        "name" -> n.name,
-        "nodeCoordinateX" -> n.nodeCoordinates.x,
-        "nodeCoordinateY" -> n.nodeCoordinates.y,
-        "junctions" -> junctionsMapped
-      )
-    }
-
-    mappedNodes
-  }
-
-  private def fetchAllValidNodesWithJunctions(): Seq[NodesWithJunctions] = {
-    val result: Seq[NodesWithJunctions] = nodesAndJunctionsService.getAll()
-    if (result.isEmpty)
-      Seq.empty[NodesWithJunctions]
-    else result
   }
 
   /** Validates that the given query parameter <i>dateParameterName</i> contains a valid DateTime string.

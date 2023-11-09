@@ -45,9 +45,9 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
           beforeAfter = 2
         )
       )
-      val allLL: Seq[LinearLocation] = Seq(LinearLocation(NewIdValue, 2, 1001L.toString, 0.0, 100.0, SideCode.AgainstDigitizing, 10000000000L, (CalibrationPointReference(Some(0L)), CalibrationPointReference.None), Seq(Point(0.0, 100.0), Point(0.0, 200.0)), LinkGeomSource.NormalLinkInterface, 100L), LinearLocation(NewIdValue, 2, 1001L.toString, 0.0, 100.0, SideCode.AgainstDigitizing, 10000000000L, (CalibrationPointReference(Some(0L)), CalibrationPointReference.None), Seq(Point(0.0, 100.0), Point(0.0, 200.0)), LinkGeomSource.NormalLinkInterface, 100L)) // Provide test allLL
-      val llIds: Seq[Long] = Seq(allLL.head.id, allLL.last.id)
-      val result: Option[Point] = linearLocationDAO.fetchCoordinatesForJunction(llIds, crossingRoads, allLL)
+      val currentLinearLocations: Seq[LinearLocation] = Seq(LinearLocation(NewIdValue, 2, 1001L.toString, 0.0, 100.0, SideCode.AgainstDigitizing, 10000000000L, (CalibrationPointReference(Some(0L)), CalibrationPointReference.None), Seq(Point(0.0, 100.0), Point(0.0, 200.0)), LinkGeomSource.NormalLinkInterface, 100L), LinearLocation(NewIdValue, 2, 1001L.toString, 0.0, 100.0, SideCode.AgainstDigitizing, 10000000000L, (CalibrationPointReference(Some(0L)), CalibrationPointReference.None), Seq(Point(0.0, 100.0), Point(0.0, 200.0)), LinkGeomSource.NormalLinkInterface, 100L)) // Provide test allLL
+      val llIds: Seq[Long] = Seq(currentLinearLocations.head.id, currentLinearLocations.last.id)
+      val result: Option[Point] = linearLocationDAO.fetchCoordinatesForJunction(llIds, crossingRoads, currentLinearLocations)
 
       val expectedPoint: Option[Point] = Some(Point(0.0, 200.0))
 

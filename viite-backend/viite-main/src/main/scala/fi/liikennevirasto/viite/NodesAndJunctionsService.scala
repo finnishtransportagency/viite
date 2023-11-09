@@ -226,49 +226,49 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
   }
 
-  def getNodes(): Seq[Node] = {
+  private def getNodes: Seq[Node] = {
     withDynSession {
       nodeDAO.fetchAllValidNodes()
     }
   }
 
-  def getJunctionsWithLinearLocation(validNodeNumbers: Seq[Long]): Seq[JunctionWithLinearLocation] = {
+  private def getJunctionsWithLinearLocation(validNodeNumbers: Seq[Long]): Seq[JunctionWithLinearLocation] = {
     withDynSession {
-      junctionDAO.fetchJunctionsByNodeNumbersWithLinearLocation(validNodeNumbers)
+      linearLocationDAO.fetchJunctionsByNodeNumbersWithLinearLocation(validNodeNumbers)
     }
   }
 
-  def getCrossingRoads(): Seq[RoadwaysForJunction] = {
+  private def getCrossingRoads: Seq[RoadwaysForJunction] = {
     withDynSession {
-      roadwayDAO.fetchRoadByJId()
+      roadwayDAO.fetchCrossingRoadsInJunction()
     }
   }
 
-  def getCurrentLinearLocations(): Seq[LinearLocation] = {
+  private def getCurrentLinearLocations: Seq[LinearLocation] = {
     withDynSession {
       linearLocationDAO.fetchCurrentLinearLocations
     }
   }
 
-  def getCoordinatesForJunction(llId: Seq[Long], crossingRoads: Seq[RoadwaysForJunction], allLL: Seq[LinearLocation]): Option[Point] = {
+  def getCoordinatesForJunction(llIds: Seq[Long], crossingRoads: Seq[RoadwaysForJunction], currentLinearLocations: Seq[LinearLocation]): Option[Point] = {
     withDynSession {
-      linearLocationDAO.fetchCoordinatesForJunction(llId, crossingRoads, allLL)
+      linearLocationDAO.fetchCoordinatesForJunction(llIds, crossingRoads, currentLinearLocations)
     }
   }
 
-  def getAllValidNodesWithJunctions(): Seq[NodeWithJunctions] = {
-    val nodes: Seq[Node] = getNodes()
+  def getAllValidNodesWithJunctions: Seq[NodeWithJunctions] = {
+    val nodes: Seq[Node] = getNodes
     val validNodeNumbers: Seq[Long] = nodes.map(node => node.nodeNumber)
     val junctions: Seq[JunctionWithLinearLocation] = getJunctionsWithLinearLocation(validNodeNumbers)
-    val allLL = getCurrentLinearLocations()
-    val allCrossingRoads = getCrossingRoads()
+    val currentLinearLocations = getCurrentLinearLocations
+    val allCrossingRoads = getCrossingRoads
 
     val nodesWithJunctions: Seq[NodeWithJunctions] = nodes.map(node => {
       val junctionsWithCoordinates: Seq[JunctionWithCoordinate] = junctions.collect {
         case j if j.nodeNumber.contains(node.nodeNumber) =>
           val crossingRoads: Seq[RoadwaysForJunction] = allCrossingRoads.filter(cr => cr.jId == j.id)
-          val coord: Option[Point] = getCoordinatesForJunction(j.llId, crossingRoads, allLL)
-          val (x, y) = coord match {
+          val coordinates: Option[Point] = getCoordinatesForJunction(j.llId, crossingRoads, currentLinearLocations)
+          val (x, y) = coordinates match {
             case Some(c) => (c.x, c.y)
             case None => (0.0, 0.0)
           }
@@ -353,7 +353,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         val nodes = (nodesByBoundingBox ++ junctionsByBoundingBox.flatMap { case (junction, _) if junction.nodeNumber.isDefined => nodeDAO.fetchByNodeNumber(junction.nodeNumber.get) }).distinct
 
         val nodePoints = nodePointDAO.fetchByNodeNumbers(nodes.map(_.nodeNumber))
-        val junctions = junctionDAO.fetchJunctionsByNodeNumbers(nodes.map(_.nodeNumber))
+        val junctions = junctionDAO.fetchJunctionsByValidNodeNumbers(nodes.map(_.nodeNumber))
         val junctionPoints = junctionPointDAO.fetchByJunctionIds(junctions.map(_.id))
 
         val groupedRoadLinks = raLinks.groupBy(_.roadwayNumber)
@@ -387,7 +387,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     withDynSession {
       val nodes = nodeDAO.fetchAllByDateRange(sinceDate, untilDate)
       val nodePoints = nodePointDAO.fetchByNodeNumbers(nodes.map(_.nodeNumber))
-      val junctions = junctionDAO.fetchJunctionsByNodeNumbers(nodes.map(_.nodeNumber))
+      val junctions = junctionDAO.fetchJunctionsByValidNodeNumbers(nodes.map(_.nodeNumber))
       val junctionPoints = junctionPointDAO.fetchByJunctionIds(junctions.map(_.id))
       nodes.map {
         node =>
