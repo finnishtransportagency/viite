@@ -511,11 +511,11 @@ object GeometryUtils {
    * <pre>
    *        original line segment to project from
    *             |- -|- - - - - - - - -|- - - - - -|- - - - - - - - - - - ...
-   *               x1orig        xOrigToProject    x2orig
+   *              origMin      origValToProject  origMax
    *
    *        line segment to project to
    * |- - - - - - - -|- - - - - - - - - - - -|- - - - - - - -|- - - - - - ...
-   *              x1proj                  RETURN           x2proj
+   *              projMin                 RETURN          projMax
    * </pre>
    *
    * @param origMin min value defining the original range. 0<=origMin.
@@ -530,12 +530,12 @@ object GeometryUtils {
                         projMin: Double, projMax: Double,
                         origValToProject: Double): Double = {
 
-    if(origMin<0      ) {    throw ViiteException(s"x1orig ($origMin) must be >=0."     )    }
-    if(projMin<0      ) {    throw ViiteException(s"x1proj ($projMin) must be >=0."     )    }
-    if(origMax<origMin) {    throw ViiteException(s"x2orig ($origMax) must be >=origMin ($origMin).")    }
-    if(projMax<projMin) {    throw ViiteException(s"x2proj ($projMax) must be >=projMin ($projMin).")    }
+    if(origMin<0      ) {    throw ViiteException(s"origMin ($origMin) must be >=0."     )    }
+    if(projMin<0      ) {    throw ViiteException(s"projMin ($projMin) must be >=0."     )    }
+    if(origMax<origMin) {    throw ViiteException(s"origMax ($origMax) must be >=origMin ($origMin).")    }
+    if(projMax<projMin) {    throw ViiteException(s"projMax ($projMax) must be >=projMin ($projMin).")    }
     if(origValToProject<origMin || origValToProject>origMax) {
-      ViiteException(s"xOrigToProject ($origValToProject) must fit within the given original range (${origMin}...${origMax}.")
+      ViiteException(s"origValToProject ($origValToProject) must fit within the given original range (${origMin}...${origMax}.")
     }
 
     val xProjected = scaleToThreeDigits(projMin + (projMax-projMin)/(origMax-origMin)* (origValToProject-origMin))
