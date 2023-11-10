@@ -504,4 +504,48 @@ object GeometryUtils {
     }
   }
 
+  /**
+   * When given an original range, a corresponding range to project to, and a value to project,
+   * returns the projected value (result rounded to 3 decimals).
+   *
+   * <pre>
+   *        original line segment to project from
+   *             |- -|- - - - - - - - -|- - - - - -|- - - - - - - - - - - ...
+   *               x1orig        xOrigToProject    x2orig
+   *
+   *        line segment to project to
+   * |- - - - - - - -|- - - - - - - - - - - -|- - - - - - - -|- - - - - - ...
+   *              x1proj                  RETURN           x2proj
+   * </pre>
+   *
+   * @param origMin min value defining the original range. 0<=origMin.
+   * @param origMax max value defining the original range. origMin<origMax.
+   * @param projMin min value defining the projectable range. 0<=projMin.
+   * @param projMax max value defining the projectable range. projMin<projMax.
+   * @param origValToProject The value to be projected to the another line segment. origMin<=origValToProject<=origMax
+   * @throws ViiteException if any of the given parameters are invalid, or the resulting projected value
+   *                        does not fit within the projectable range.
+   */
+  def getProjectedValue(origMin: Double, origMax: Double,
+                        projMin: Double, projMax: Double,
+                        origValToProject: Double): Double = {
+
+    if(origMin<0      ) {    throw ViiteException(s"x1orig ($origMin) must be >=0."     )    }
+    if(projMin<0      ) {    throw ViiteException(s"x1proj ($projMin) must be >=0."     )    }
+    if(origMax<origMin) {    throw ViiteException(s"x2orig ($origMax) must be >=origMin ($origMin).")    }
+    if(projMax<projMin) {    throw ViiteException(s"x2proj ($projMax) must be >=projMin ($projMin).")    }
+    if(origValToProject<origMin || origValToProject>origMax) {
+      ViiteException(s"xOrigToProject ($origValToProject) must fit within the given original range (${origMin}...${origMax}.")
+    }
+
+    val xProjected = scaleToThreeDigits(projMin + (projMax-projMin)/(origMax-origMin)* (origValToProject-origMin))
+
+    // Nah, should never end up here. But well, whatever. Checking still.
+    if(xProjected<projMin || xProjected>projMax) {
+      throw ViiteException(s"xProjected ($xProjected) must fit within given projectable range (${projMin}...${projMax}.)")
+    }
+
+    xProjected
+  }
+
 }
