@@ -654,30 +654,37 @@ llsAtTheSameRoadwayAtLeastAsFar.foreach(asdf => println(s"${asdf._1.orderNumber}
     val startCP: Option[CalibrationPoint] = CPsOfOldLink.find(cp => cp.startOrEnd==StartOfLink)
     val endCP:   Option[CalibrationPoint] = CPsOfOldLink.find(cp => cp.startOrEnd==EndOfLink  )
 
-    // expire old calibration points, referring to the old link
-    CalibrationPointDAO.expireById(CPsOfOldLink.map(_.id))
-
-    //TODO RETURN id mapper list for old-new CPs
     var idPairs: Seq[(Long, Long)] = Seq()
 
     // create corresponding calibration points for new links, based on the old calibration points
-    val linkStartInfo: Option[ReplaceInfo] = change.replaceInfos.find(ri => ri.oldFromMValue == 0)  // TODO is this reversed, if addresses grow in the opposite direction to?
+    val linkStartInfo: Option[ReplaceInfo] = change.replaceInfos.find(ri => ri.oldFromMValue == 0)  // TODO is this reversed, if addresses grow in the opposite direction?
     val linkEndInfo:   Option[ReplaceInfo] = change.replaceInfos.find(ri => ri.oldToMValue == change.oldLink.linkLength)
 
-    val newStartCP = startCP.get.copy(
-      id = NewIdValue,
-      linkId = linkStartInfo.get.newLinkId,
-      createdBy = changeMetaData.changeSetName,
-      createdTime = Some(changeMetaData.linkDataRetrievalDate)
-    )
-    val newStartCPid = CalibrationPointDAO.create(Seq(newStartCP)).head // we know we have only one
-    idPairs = idPairs :+ (newStartCP.id, newStartCPid)
+    if(startCP.isDefined) {
+      val newStartCP = startCP.get.copy(
+        id = NewIdValue,
+        linkId = linkStartInfo.get.newLinkId,
+        createdBy = changeMetaData.changeSetName,
+        createdTime = Some(changeMetaData.linkDataRetrievalDate)
+      )
+      val newStartCPid = CalibrationPointDAO.create(Seq(newStartCP)).head // we know we have only one
+      idPairs = idPairs :+ (newStartCP.id, newStartCPid)
+    }
 
-    val newEndCP = endCP.get.copy(id = NewIdValue, linkId = linkEndInfo.get.newLinkId)
-    val newEndCPid = CalibrationPointDAO.create(Seq(newEndCP)).head // we know we have only one
-    idPairs = idPairs :+ (newEndCP.id, newEndCPid)
+    if(endCP.isDefined) {
+      val newEndCP = endCP.get.copy(
+        id = NewIdValue,
+        linkId = linkEndInfo.get.newLinkId,
+        createdBy = changeMetaData.changeSetName,
+        createdTime = Some(changeMetaData.linkDataRetrievalDate)
+      )
+      val newEndCPid = CalibrationPointDAO.create(Seq(newEndCP)).head // we know we have only one
+      idPairs = idPairs :+ (newEndCP.id, newEndCPid)
+    }
 
-    //TODO RETURN id mapper list for old-new CPs
+    // expire old calibration points, referring to the old link
+    CalibrationPointDAO.expireById(CPsOfOldLink.map(_.id))
+
     idPairs
   }
 
