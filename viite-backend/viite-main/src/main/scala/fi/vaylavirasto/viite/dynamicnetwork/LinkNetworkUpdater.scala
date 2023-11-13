@@ -299,12 +299,22 @@ class LinkNetworkUpdater {
     logger.debug("Transformed to a LinkNetworkReplaceChange")
 
     // Split linear locations in advance, if the changes do not conform to the current linear locations. So the changes due to link replacements go smoothly.
-    aReplaceChange.replaceInfos.foreach( ri => {
-      ri.oldLinkViiteData.foreach( olvd => {
-        if( (olvd.mValueStart+GeometryUtils.DefaultEpsilon)<ri.oldFromMValue ) { splitLinearLocation(olvd.linearLocationId, ri.oldFromMValue, changeMetaData) }
-        if( (olvd.mValueEnd  -GeometryUtils.DefaultEpsilon)>ri.oldToMValue   ) { splitLinearLocation(olvd.linearLocationId, ri.oldToMValue,   changeMetaData) }
+    RecursivelySplit(aReplaceChange)
+
+    def RecursivelySplit(aReplaceChange: LinkNetworkReplaceChange) {
+      aReplaceChange.replaceInfos.foreach( ri => {
+        ri.oldLinkViiteData.foreach( olvd => {
+          if     ( (olvd.mValueStart+GeometryUtils.DefaultEpsilon)<ri.oldFromMValue ) {
+            splitLinearLocation(olvd.linearLocationId, ri.oldFromMValue, changeMetaData)
+            RecursivelySplit(aReplaceChange)
+          }
+          else if( (olvd.mValueEnd  -GeometryUtils.DefaultEpsilon)>ri.oldToMValue   ) {
+            splitLinearLocation(olvd.linearLocationId, ri.oldToMValue,   changeMetaData)
+            RecursivelySplit(aReplaceChange)
+          }
+        })
       })
-    })
+    }
 
     // Make the changes due to link replacements
     LogUtils.time(logger, s"Persist  a Replace change  to Viite data structures (${change.oldLink.linkId}=>${change.newLinks.map(nl => nl.linkId).mkString(", ")})") {
