@@ -128,9 +128,9 @@ case class ReplaceInfo( oldLinkId: String, oldFromMValue: Double, oldToMValue: D
  * </pre>
  *
  * @param changeType Type of the change. A "replace", or a "split".
- * @param oldLink Data describing the old link in the link network, before the change.
+ * @param oldLink  Data describing the old link in the link network, before the change.
  * @param newLinks Data describing the new links that replace the oldLink in the updated link network.
- * @param replaceInfo Data describing the relation (correspondence) between the oldLink, and the newLinks.
+ * @param replaceInfos Data describing the relation (correspondence) between the oldLink, and the newLinks.
  */
 case class LinkNetworkChange(changeType:  String,
                              oldLink:     LinkInfo,
@@ -378,6 +378,14 @@ llsAtTheSameRoadwayAtLeastAsFar.foreach(asdf => println(s"${asdf._1.orderNumber}
     val aSplitChange: LinkNetworkSplitChange = convertToAValidSplitChange(change).get // returns or throws
     logger.debug("Transformed to a LinkNetworkSplitChange")
 
+    // Split linear locations in advance, if the changes do not conform to the current linear locations. So the changes due to link replacements go smoothly.
+    aSplitChange.replaceInfos.foreach( ri => {
+      ri.oldLinkViiteData.foreach( olvd => {
+        if( (olvd.mValueStart+GeometryUtils.DefaultEpsilon)<ri.oldFromMValue ) { splitLinearLocation(olvd.linearLocationId, ri.oldFromMValue, changeMetaData) }
+        if( (olvd.mValueEnd  -GeometryUtils.DefaultEpsilon)>ri.oldToMValue   ) { splitLinearLocation(olvd.linearLocationId, ri.oldToMValue,   changeMetaData) }
+      })
+    })
+
     LogUtils.time(logger, s"Make a Split change to Viite data structures (${change.oldLink.linkId}=>${change.newLinks.map(nl => nl.linkId).mkString(", ")}") {
       linkChangesDueToNetworkLinkChange(change, changeMetaData);                  logger.debug("Link created")
       calibrationPointChangesDueToNetworkLinkSplit(aSplitChange, changeMetaData); logger.debug("CalibrationPoints changed")
@@ -495,7 +503,7 @@ llsAtTheSameRoadwayAtLeastAsFar.foreach(asdf => println(s"${asdf._1.orderNumber}
       throw ViiteException(s"LinkNetworkChange: Invalid ReplaceChange. A replace must have exactly one new link. " +
         s"There are ${change.newLinks.size} new links when going to replace ${change.oldLink.linkId}.")
     }
-    if (change.replaceInfos.size == 0) {
+    if (change.replaceInfos.isEmpty) {
       throw ViiteException(s"LinkNetworkChange: Invalid ReplaceChange. A replace must have at least one replaceInfo. " +
         s"There is no replace infos when going to replace ${change.oldLink.linkId}.")
     }
@@ -557,50 +565,55 @@ llsAtTheSameRoadwayAtLeastAsFar.foreach(asdf => println(s"${asdf._1.orderNumber}
    * @return              Sequence of ids of the created linearLocations
    */
   private def linearLocationChangesDueToNetworkLinkSplit(change: LinkNetworkSplitChange, changeMetaData: ChangeSetMetaData): Unit = {
-    val oldLinearLocations = linearLocationDAO.fetchByLinkId(Set(change.oldLink.linkId))
-
-    oldLinearLocations.size match {
-      case 0 =>
-        throw ViiteException(s"LinkNetworkChange: No old linear location found " +
-          s"for link ${change.oldLink.linkId} when trying to expire old ones.")
-      case 1 =>
-        //TODO the real stuff is run for this option. No Throws here.
-      case _ =>
-        //TODO this may be a valid option, too. Should split old, and new to more than one, then?
-        throw ViiteException(s"LinkNetworkChange: Too many valid linear locations found " +
-          s"for link ${change.oldLink.linkId} when trying to expire old ones.")
-    } // match
-
-    val llIds = oldLinearLocations.map(_.id).toSet
-    /*val numInvalidatedLLs: Int =*/ linearLocationDAO.expireByIds(llIds)
-
-    // when only one linearlocation, we know what to do
-    val oldLL = oldLinearLocations.head
-    // TODO what if we have at least two linear locations, what do we do then?
 
     change.replaceInfos.foreach(ri => {
-      val correspondingLinkCandidates: Seq[LinkInfo] = change.newLinks.filter(nl => nl.linkId==ri.newLinkId)
-      val correspondingLink = correspondingLinkCandidates.headOption.getOrElse(
-        throw ViiteException(s"LinkNetworkChange: Invalid SplitChange. No corresponding link found. ")
-      )
+      val oldLinearLocations = linearLocationDAO.fetchByLinkIdAndMValueRange(change.oldLink.linkId, ri.oldFromMValue, ri.oldToMValue)
+      if(oldLinearLocations.isEmpty) {
+          throw ViiteException(s"LinkNetworkReplaceChange: No old linear location found for link ${change.oldLink.linkId}.")
+      }
 
-      val newLL = LinearLocation(
-        NewIdValue,          //id: Long,
-        oldLL.orderNumber,   //orderNumber: Double,
-        ri.newLinkId,        //linkId: String,
-        ri.newFromMValue,    //startMValue: Double,
-        ri.newToMValue,      //endMValue:   Double,
-        decideNewSideCode(ri.digitizationChange, oldLL.sideCode),
-        0, // Not required, link created elsewhere //adjustedTimestamp: Long,
-        (CalibrationPointReference.None, CalibrationPointReference.None), //CPs created elsewhere //calibrationPoints: (CalibrationPointReference, CalibrationPointReference) = (CalibrationPointReference.None, CalibrationPointReference.None)
-        Seq(correspondingLink.geometry.head, correspondingLink.geometry.last), //geometry: Seq[Point]
-        LinkGeomSource.Unknown, // Not required, link created elsewhere
-        oldLL.roadwayNumber,    //roadwayNumber: Long
-        None, // Not used at create         //validFrom: Option[DateTime] = None
-        None  // Not used at create         //validTo:   Option[DateTime] = None
-      ) // LinearLocation
+      val oldLlsSorted = oldLinearLocations.sortBy(_.startMValue)
+      if(!linkLengthsConsideredTheSame(ri.oldFromMValue, oldLlsSorted.head.startMValue)) {
+        throw ViiteException(s"LinkNetworkReplaceChange: start values do not match sufficiently: ${ri.oldFromMValue} vs. ${oldLlsSorted.head.startMValue}.")
+      }
+      if(!linkLengthsConsideredTheSame(ri.oldToMValue, oldLlsSorted.last.endMValue)  ) {
+        throw ViiteException(s"LinkNetworkReplaceChange:  end  values do not match sufficiently: ${ri.oldToMValue}   vs. ${oldLlsSorted.last.endMValue}."  )
+      }
 
-    linearLocationDAO.create(Seq(newLL), changeMetaData.changeSetName)
+      oldLlsSorted.foreach(oldLL => { // make changes linearlocation wise. Usually there is only one. But might be many.
+
+        var newLlStartMValue = GeometryUtils.getProjectedValue(ri.oldFromMValue, ri.oldToMValue, ri.newFromMValue, ri.newToMValue, oldLL.startMValue)
+        var newLlEndMValue   = GeometryUtils.getProjectedValue(ri.oldFromMValue, ri.oldToMValue, ri.newFromMValue, ri.newToMValue, oldLL.endMValue  )
+
+        val linkGeomForReplaceInfo = change.newLinks.find(_.linkId == ri.newLinkId).get.geometry
+        val minMValuePointOpt = GeometryUtils.calculatePointFromLinearReference(linkGeomForReplaceInfo, newLlStartMValue) // TODO snap to geometry points? Check not overflowing the link length?
+        val maxMValuePointOpt = GeometryUtils.calculatePointFromLinearReference(linkGeomForReplaceInfo, newLlEndMValue)   // TODO snap to geometry points? Check not overflowing the link length?
+        if(minMValuePointOpt.isEmpty || maxMValuePointOpt.isEmpty) { // check that we got'em all
+          ViiteException(s"LinkNetworkReplaceChange: Could not get a corresponding point for either of both ends of the " +
+            s"new linear location referring to the new link  ${change.newLinks.find(_.linkId == ri.newLinkId).get.linkId}.")
+        }
+
+        val newLL = LinearLocation(
+          NewIdValue,          //id: Long,
+          oldLL.orderNumber,   //orderNumber: Double,      //note: handling of the orderNumber handled by splitting the linear locations in advance
+          ri.newLinkId,        //linkId: String,
+          newLlStartMValue,    //startMValue: Double, //ri.newFromMValue would do, if there always were only one Viite old ll corresponding to a replaceInfo
+          newLlEndMValue,      //endMValue:   Double, //ri.newToMValue   would do, if there always were only one Viite old ll corresponding to a replaceInfo
+          decideNewSideCode(ri.digitizationChange, oldLL.sideCode),
+          0,                   //adjustedTimestamp: Long, // Not required, link created elsewhere
+          (CalibrationPointReference.None, CalibrationPointReference.None), //CPs created elsewhere //calibrationPoints: (CalibrationPointReference, CalibrationPointReference) = (CalibrationPointReference.None, CalibrationPointReference.None)
+          Seq(minMValuePointOpt.get.with3decimals, maxMValuePointOpt.get.with3decimals), //geometry: Seq[Point]
+          //Seq(correspondingLink.geometry.head, correspondingLink.geometry.last), //geometry: Seq[Point]
+          LinkGeomSource.Unknown, // Not required, link created elsewhere
+          oldLL.roadwayNumber,    //roadwayNumber: Long
+          None, // Not used at create         //validFrom: Option[DateTime] = None
+          None  // Not used at create         //validTo:   Option[DateTime] = None
+        ) // LinearLocation
+
+        linearLocationDAO.create(Seq(newLL), changeMetaData.changeSetName)
+        //val llIds = oldLinearLocations.map(_.id).toSet
+        /*val numInvalidatedLLs: Int =*/ linearLocationDAO.expireByIds(Set(oldLL.id))  //(llIds)
+      }) // oldLlsSorted.foreach
     }) // change.replaceInfo.foreach
   }
 
@@ -646,8 +659,6 @@ llsAtTheSameRoadwayAtLeastAsFar.foreach(asdf => println(s"${asdf._1.orderNumber}
    */
   private def linearLocationChangesDueToNetworkLinkReplace(change: LinkNetworkReplaceChange, changeMetaData: ChangeSetMetaData) = {
 
-    val llGeomLength = GeometryUtils.lineGeometryLength2D(change.newLink.geometry)
-
     change.replaceInfos.foreach(ri => { // make changes Tiekamu change by Tiekamu change
 
       val oldLinearLocations = linearLocationDAO.fetchByLinkIdAndMValueRange(change.oldLink.linkId, ri.oldFromMValue, ri.oldToMValue)
@@ -676,21 +687,19 @@ llsAtTheSameRoadwayAtLeastAsFar.foreach(asdf => println(s"${asdf._1.orderNumber}
             s"new linear location referring to the new link  ${change.newLink.linkId}.")
         }
 
-//      println(s"Geometrian pituus: ${GeometryUtils.geometryLength(change.newLink.geometry)}, MRJ-version: ${GeometryUtils.lineGeometryLength2D(change.newLink.geometry)} (Tiekamun mukaan: ${change.newLink.linkLength})")
-//      println(s"interpo: ${minMValuePointOpt.get.with3decimals}, ${maxMValuePointOpt.get.with3decimals}")
 
         val newLL = LinearLocation(
           NewIdValue,             //id:          Long,
           oldLL.orderNumber,      //orderNumber: Double,      //note: handling of the orderNumber handled by splitting the linear locations in advance
           change.newLink.linkId,  //linkId: String,
-          newLlStartMValue,       //startMValue: Double,      //replInfo.newFromMValue would do, if there always were only one Viite old ll corresponding to a replaceInfo
-          newLlEndMValue,         //endMValue:   Double,      //replInfo.newToMValue   would do, if there always were only one Viite old ll corresponding to a replaceInfo
+          newLlStartMValue,       //startMValue: Double,      //ri.newFromMValue would do, if there always were only one Viite old ll corresponding to a replaceInfo
+          newLlEndMValue,         //endMValue:   Double,      //ri.newToMValue   would do, if there always were only one Viite old ll corresponding to a replaceInfo
           decideNewSideCode(ri.digitizationChange, oldLL.sideCode),
           0,                      //adjustedTimestamp: Long,  // Not required, link created elsewhere
           (CalibrationPointReference.None, CalibrationPointReference.None), //CPs created elsewhere //calibrationPoints: (CalibrationPointReference, CalibrationPointReference) = (CalibrationPointReference.None, CalibrationPointReference.None)
           Seq(minMValuePointOpt.get.with3decimals, maxMValuePointOpt.get.with3decimals), //geometry: Seq[Point]
           LinkGeomSource.Unknown, // Not required, link created elsewhere
-          oldLL.roadwayNumber,                       //roadwayNumber: Long
+          oldLL.roadwayNumber,    //roadwayNumber: Long
           None,          //validFrom: Option[DateTime] = None  // Not used at create (why?)
           None           //validTo:   Option[DateTime] = None  // Not used at create (why?)
         )
