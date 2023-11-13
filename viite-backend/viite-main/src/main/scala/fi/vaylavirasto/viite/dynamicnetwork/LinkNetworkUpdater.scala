@@ -325,10 +325,10 @@ class LinkNetworkUpdater {
 
 
     // tarkistetaan, että mValue osuu lineaarilokaatioon
-    if(llToBeSplit.startMValue<mValueForSplit ||
-       llToBeSplit.endMValue>mValueForSplit) {
+    if(mValueForSplit<llToBeSplit.startMValue ||
+       mValueForSplit>llToBeSplit.endMValue) {
       throw ViiteException(
-        s"SplitLinearLocation: m-value range (${llToBeSplit.startMValue}-${llToBeSplit.endMValue>mValueForSplit}) " +
+        s"SplitLinearLocation: m-value range (${llToBeSplit.startMValue}-${llToBeSplit.endMValue}) " +
         s"of the linearLocation $linearLocationId does not reach $mValueForSplit. Cannot split."
       )
     }
