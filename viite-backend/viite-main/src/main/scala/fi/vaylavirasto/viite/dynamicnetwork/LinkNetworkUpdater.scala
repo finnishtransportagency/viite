@@ -303,15 +303,16 @@ class LinkNetworkUpdater {
 
     def RecursivelySplit(aReplaceChange: LinkNetworkReplaceChange) {
       aReplaceChange.replaceInfos.foreach( ri => {
-        ri.oldLinkViiteData.foreach( olvd => {
-          if     ( (olvd.mValueStart+GeometryUtils.DefaultEpsilon)<ri.oldFromMValue ) {
-            logger.debug(s"RecursivelySplitting (Replace) ${olvd.linearLocationId} (${olvd.mValueStart}...${olvd.mValueEnd}) at oldFromMValue ${ri.oldFromMValue}")
-            splitLinearLocation(olvd.linearLocationId, ri.oldFromMValue, changeMetaData)
+        val oldLinearLocations = linearLocationDAO.fetchByLinkIdAndMValueRange(change.oldLink.linkId, ri.oldFromMValue, ri.oldToMValue)
+        oldLinearLocations.foreach( oldll => {
+          if     ( (oldll.startMValue+GeometryUtils.DefaultEpsilon)<ri.oldFromMValue ) {
+            logger.debug(s"RecursivelySplitting (Replace) ${oldll.id} (${oldll.startMValue}...${oldll.endMValue}) at oldFromMValue ${ri.oldFromMValue}")
+            splitLinearLocation(oldll.id, ri.oldFromMValue, changeMetaData)
             RecursivelySplit(aReplaceChange)
           }
-          else if( (olvd.mValueEnd  -GeometryUtils.DefaultEpsilon)>ri.oldToMValue   ) {
-            logger.debug(s"RecursivelySplitting (Replace) ${olvd.linearLocationId} (${olvd.mValueStart}...${olvd.mValueEnd}) at oldToMValue ${ri.oldToMValue}")
-            splitLinearLocation(olvd.linearLocationId, ri.oldToMValue,   changeMetaData)
+          else if( (oldll.endMValue-GeometryUtils.DefaultEpsilon)>ri.oldToMValue   ) {
+            logger.debug(s"RecursivelySplitting (Replace) ${oldll.id} (${oldll.startMValue}...${oldll.endMValue}) at oldToMValue ${ri.oldToMValue}")
+            splitLinearLocation(oldll.id, ri.oldToMValue,   changeMetaData)
             RecursivelySplit(aReplaceChange)
           }
           else {
@@ -398,15 +399,16 @@ llsAtTheSameRoadwayAtLeastAsFar.foreach(asdf => println(s"${asdf._1.orderNumber}
 
     def RecursivelySplit(aSplitChange: LinkNetworkSplitChange) {
       aSplitChange.replaceInfos.foreach( ri => {
-        ri.oldLinkViiteData.foreach( olvd => {
-          if     ( (olvd.mValueStart+GeometryUtils.DefaultEpsilon)<ri.oldFromMValue ) {
-            logger.debug(s"RecursivelySplitting (Split) ${olvd.linearLocationId} (${olvd.mValueStart}...${olvd.mValueEnd}) at oldFromMValue ${ri.oldFromMValue}")
-            splitLinearLocation(olvd.linearLocationId, ri.oldFromMValue, changeMetaData)
+        val oldLinearLocations = linearLocationDAO.fetchByLinkIdAndMValueRange(change.oldLink.linkId, ri.oldFromMValue, ri.oldToMValue)
+        oldLinearLocations.foreach( oldll => {
+          if     ( (oldll.startMValue+GeometryUtils.DefaultEpsilon)<ri.oldFromMValue ) {
+            logger.debug(s"RecursivelySplitting (Split) ${oldll.id} (${oldll.startMValue}...${oldll.endMValue}) at oldFromMValue ${ri.oldFromMValue}")
+            splitLinearLocation(oldll.id, ri.oldFromMValue, changeMetaData)
             RecursivelySplit(aSplitChange)
           }
-          else if( (olvd.mValueEnd  -GeometryUtils.DefaultEpsilon)>ri.oldToMValue   ) {
-            logger.debug(s"RecursivelySplitting (Split) ${olvd.linearLocationId} (${olvd.mValueStart}...${olvd.mValueEnd}) at oldToMValue ${ri.oldToMValue}")
-            splitLinearLocation(olvd.linearLocationId, ri.oldToMValue,   changeMetaData)
+          else if( (oldll.endMValue  -GeometryUtils.DefaultEpsilon)>ri.oldToMValue   ) {
+            logger.debug(s"RecursivelySplitting (Split) ${oldll.id} (${oldll.startMValue}...${oldll.endMValue}) at oldToMValue ${ri.oldToMValue}")
+            splitLinearLocation(oldll.id, ri.oldToMValue,   changeMetaData)
             RecursivelySplit(aSplitChange)
           }
           else {
