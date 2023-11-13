@@ -389,13 +389,22 @@ llsAtTheSameRoadwayAtLeastAsFar.foreach(asdf => println(s"${asdf._1.orderNumber}
     logger.debug("Transformed to a LinkNetworkSplitChange")
 
     // Split linear locations in advance, if the changes do not conform to the current linear locations. So the changes due to link replacements go smoothly.
-    aSplitChange.replaceInfos.foreach( ri => {
-      ri.oldLinkViiteData.foreach( olvd => {
-        if( (olvd.mValueStart+GeometryUtils.DefaultEpsilon)<ri.oldFromMValue ) { splitLinearLocation(olvd.linearLocationId, ri.oldFromMValue, changeMetaData) }
-        if( (olvd.mValueEnd  -GeometryUtils.DefaultEpsilon)>ri.oldToMValue   ) { splitLinearLocation(olvd.linearLocationId, ri.oldToMValue,   changeMetaData) }
-      })
-    })
+    RecursivelySplit(aSplitChange)
 
+    def RecursivelySplit(aSplitChange: LinkNetworkSplitChange) {
+      aSplitChange.replaceInfos.foreach( ri => {
+        ri.oldLinkViiteData.foreach( olvd => {
+          if     ( (olvd.mValueStart+GeometryUtils.DefaultEpsilon)<ri.oldFromMValue ) {
+            splitLinearLocation(olvd.linearLocationId, ri.oldFromMValue, changeMetaData)
+            RecursivelySplit(aSplitChange)
+          }
+          else if( (olvd.mValueEnd  -GeometryUtils.DefaultEpsilon)>ri.oldToMValue   ) {
+            splitLinearLocation(olvd.linearLocationId, ri.oldToMValue,   changeMetaData)
+            RecursivelySplit(aSplitChange)
+          }
+        })
+      })
+    }
     LogUtils.time(logger, s"Make a Split change to Viite data structures (${change.oldLink.linkId}=>${change.newLinks.map(nl => nl.linkId).mkString(", ")}") {
       linkChangesDueToNetworkLinkChange(change, changeMetaData);                  logger.debug("Link created")
       calibrationPointChangesDueToNetworkLinkSplit(aSplitChange, changeMetaData); logger.debug("CalibrationPoints changed")
