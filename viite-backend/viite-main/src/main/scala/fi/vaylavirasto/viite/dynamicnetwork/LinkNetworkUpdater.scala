@@ -444,8 +444,8 @@ llsAtTheSameRoadwayAtLeastAsFar.foreach(asdf => println(s"${asdf._1.orderNumber}
 
     logger.debug("size considerations")
     if ( change.newLinks.size < 2
-      || change.replaceInfos.size < 2
-      || change.newLinks.size != change.replaceInfos.size
+      || change.replaceInfos.size < change.newLinks.size // at least one replaceInfo per a new link
+      //|| change.newLinks.size != change.replaceInfos.size
     ) {
       throw ViiteException(s"LinkNetworkChange: Invalid SplitChange. A split must have at least " +
         s"two new links, and their corresponding replace infos (who may be further splitted to smaller chunks). " +
@@ -469,21 +469,21 @@ llsAtTheSameRoadwayAtLeastAsFar.foreach(asdf => println(s"${asdf._1.orderNumber}
     )
 
     logger.debug(s"data integrity: told lengths must match sufficiently. Allowed difference: ${GeometryUtils.DefaultEpsilon} m ")
-    val oldLengthFromOldLink    = oldLink.linkLength
-    val oldLengthFromSplitInfos = splitInfos.foldLeft(0.0)((cumulLength,splitInfo) => cumulLength + splitInfo.oldToMValue-splitInfo.oldFromMValue)
-    val newLengthFromNewLinks   = newLinks  .foldLeft(0.0)((cumulLength,splitInfo) => cumulLength + splitInfo.linkLength)
-    val newLengthFromSplitInfos = splitInfos.foldLeft(0.0)((cumulLength,splitInfo) => cumulLength + splitInfo.newToMValue-splitInfo.newFromMValue)
+    val oldLengthFromOldLink    = GeometryUtils.scaleToThreeDigits(oldLink.linkLength) // may already be rounded to three digits, but whatever
+    val oldLengthFromSplitInfos = GeometryUtils.scaleToThreeDigits(splitInfos.foldLeft(0.0)((cumulLength,splitInfo) => cumulLength + splitInfo.oldToMValue-splitInfo.oldFromMValue))
+    val newLengthFromNewLinks   = GeometryUtils.scaleToThreeDigits(newLinks  .foldLeft(0.0)((cumulLength,splitInfo) => cumulLength + splitInfo.linkLength))
+    val newLengthFromSplitInfos = GeometryUtils.scaleToThreeDigits(splitInfos.foldLeft(0.0)((cumulLength,splitInfo) => cumulLength + splitInfo.newToMValue-splitInfo.newFromMValue))
 
     if (oldLengthFromOldLink  != oldLengthFromSplitInfos) {  // old link lengths must always match
       throw ViiteException(s"LinkNetworkChange: Invalid SplitChange. Old link lengths do not match when splitting link $oldLink." +
         s"Check that lengths (oldToMValue-oldFromMValue) in the replaceInfos (now $oldLengthFromSplitInfos) " +
         s"sum up to that of the old link length ($oldLink.linkLength)")
     }
-    if (newLengthFromNewLinks != newLengthFromSplitInfos) { // new link lengths must always match
-      throw ViiteException(s"LinkNetworkChange: Invalid SplitChange. New link lengths do not match when splitting link $oldLink." +
-        s"Check that lengths (newToMValue-newFromMValue) in the replaceInfos (now $newLengthFromSplitInfos) " +
-        s"sum up to that of the lengths of the new links ($newLengthFromNewLinks).")
-    }
+    //if (newLengthFromNewLinks != newLengthFromSplitInfos) { // new link lengths must always match //TODO NO! Does not apply to Splits. New links may be splitted to multiple old links, and thus multiple changes. If wish to check this, must be checked at upper levels.
+    //  throw ViiteException(s"LinkNetworkChange: Invalid SplitChange. New link lengths do not match when splitting link $oldLink." +
+    //    s"Check that lengths (newToMValue-newFromMValue) in the replaceInfos (now $newLengthFromSplitInfos) " +
+    //    s"sum up to that of the lengths of the new links ($newLengthFromNewLinks).")
+    //}
 
     logger.debug(s"data integrity: geometry requirements")
     if(oldLink.geometry.size<2) {
