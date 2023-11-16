@@ -61,7 +61,7 @@ aws cloudformation create-stack \
 --parameters file://aws/cloud-formation/qa/qa-api-s3-parameter.json
 ```
 
-### Luo S3 dynaamisen tielinkki verkon muutosseteille
+### Luo S3 dynaamisen tielinkkiverkon muutosseteille
 
 ```
 aws cloudformation create-stack \

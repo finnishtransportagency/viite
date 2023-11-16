@@ -261,7 +261,7 @@ class AdminApi(val dataImporter: DataImporter, implicit val swagger: Swagger) ex
           } catch {
             case ex: IllegalArgumentException =>
               logger.error("Updating link network failed.", ex)
-              BadRequest("Unable to parse date, the date should be in yyyy-mm-dd format.")
+              BadRequest("Unable to parse date, the date should be in yyyy-MM-dd format.")
             case e: Exception =>
               logger.error("Updating link network failed.", e)
               InternalServerError(s"Updating link network failed: ${e.getMessage}")
