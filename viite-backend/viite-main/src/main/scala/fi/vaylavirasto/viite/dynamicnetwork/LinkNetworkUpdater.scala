@@ -299,24 +299,22 @@ class LinkNetworkUpdater {
     logger.debug("Transformed to a LinkNetworkReplaceChange")
 
     // Split linear locations in advance, if the changes do not conform to the current linear locations. So the changes due to link replacements go smoothly.
-    RecursivelySplit(aReplaceChange)
+    Split(aReplaceChange)
 
-    def RecursivelySplit(aReplaceChange: LinkNetworkReplaceChange) {
+    def Split(aReplaceChange: LinkNetworkReplaceChange) {
       aReplaceChange.replaceInfos.foreach( ri => {
         val oldLinearLocations = linearLocationDAO.fetchByLinkIdAndMValueRange(change.oldLink.linkId, ri.oldFromMValue, ri.oldToMValue)
         oldLinearLocations.foreach( oldll => {
           if     ( (oldll.startMValue+GeometryUtils.DefaultEpsilon)<ri.oldFromMValue ) {
-            logger.debug(s"RecursivelySplitting (Replace) ${oldll.id} (${oldll.startMValue}...${oldll.endMValue}) at oldFromMValue ${ri.oldFromMValue}")
+            logger.debug(s"Splitting (Replace) ${oldll.id} (${oldll.startMValue}...${oldll.endMValue}) at oldFromMValue ${ri.oldFromMValue}")
             splitLinearLocation(oldll.id, ri.oldFromMValue, changeMetaData)
-            RecursivelySplit(aReplaceChange)
           }
           else if( (oldll.endMValue-GeometryUtils.DefaultEpsilon)>ri.oldToMValue   ) {
-            logger.debug(s"RecursivelySplitting (Replace) ${oldll.id} (${oldll.startMValue}...${oldll.endMValue}) at oldToMValue ${ri.oldToMValue}")
+            logger.debug(s"Splitting (Replace) ${oldll.id} (${oldll.startMValue}...${oldll.endMValue}) at oldToMValue ${ri.oldToMValue}")
             splitLinearLocation(oldll.id, ri.oldToMValue,   changeMetaData)
-            RecursivelySplit(aReplaceChange)
           }
           else {
-            logger.debug(s"RecursivelySplit (Replace) finished")
+            logger.debug(s"Splitting (Replace) finished")
           }
         })
       })
@@ -368,6 +366,7 @@ class LinkNetworkUpdater {
     val oldONr = llToBeSplit.orderNumber
     val splittedONrStart = if(llToBeSplit.sideCode==2) oldONr else oldONr+1
     val splittedONrEnd   = if(llToBeSplit.sideCode==2) oldONr+1 else oldONr
+println(s"Splitting ll: ${oldONr} (old orderNr) -> ${splittedONrStart}&${splittedONrEnd} (new orderNrs)")
     // ...ja luodaan uudet lineaarilokaatiot jotka vastaavat alkuperäistä katkottuna (alkuM=toBeSplit.startM ... endM=mValue ja alkuM=mValue ... endM=toBeSplit.endM)
     val newStartLL = llToBeSplit.copy(id=NewIdValue, endMValue  =mValueForSplit, orderNumber=splittedONrStart, geometry=Seq(llToBeSplit.geometry.head, splittingPoint.get)) //TODO get may fail
     val newEndLL   = llToBeSplit.copy(id=NewIdValue, startMValue=mValueForSplit, orderNumber=splittedONrEnd,   geometry=Seq(splittingPoint.get, llToBeSplit.geometry.last)) //TODO get may fail
@@ -380,7 +379,7 @@ class LinkNetworkUpdater {
     // generoi roadwayn lineaarilokaatioille uudet järjestysnumerot; yhtä suuremmat kuin tähän mennessä, koska yksi tuli lisää
     val roadwayLlsPlusNewOrdNums = llsAtTheSameRoadway.zip(List.range(2, llsAtTheSameRoadway.size+1))
     // jätä orderNumber-päivitettäväksi vain ne lineaarilokaatiot, jotka ovat roadwaylla splitatun lineaarilokaation jälkeen
-    val roadwayLlsFartherAway: Seq[(LinearLocation, Int)] = roadwayLlsPlusNewOrdNums.filter(_._1.startMValue>=llToBeSplit.endMValue)
+    val roadwayLlsFartherAway: Seq[(LinearLocation, Int)] = roadwayLlsPlusNewOrdNums.filter(_._1.orderNumber>=llToBeSplit.orderNumber + 2)
 roadwayLlsFartherAway.foreach(asdf => println(s"${asdf._1.orderNumber} -> ${asdf._2}  "))
     // tallennetaan lineaarilokaatiot, joiden orderNumber muuttui, ja ekspiroidaan vanhat
     roadwayLlsFartherAway.foreach(ll => {
@@ -398,24 +397,22 @@ roadwayLlsFartherAway.foreach(asdf => println(s"${asdf._1.orderNumber} -> ${asdf
     logger.debug("Transformed to a LinkNetworkSplitChange")
 
     // Split linear locations in advance, if the changes do not conform to the current linear locations. So the changes due to link replacements go smoothly.
-    RecursivelySplit(aSplitChange)
+    Split(aSplitChange)
 
-    def RecursivelySplit(aSplitChange: LinkNetworkSplitChange) {
+    def Split(aSplitChange: LinkNetworkSplitChange) {
       aSplitChange.replaceInfos.foreach( ri => {
         val oldLinearLocations = linearLocationDAO.fetchByLinkIdAndMValueRange(change.oldLink.linkId, ri.oldFromMValue, ri.oldToMValue)
         oldLinearLocations.foreach( oldll => {
           if     ( (oldll.startMValue+GeometryUtils.DefaultEpsilon)<ri.oldFromMValue ) {
-            logger.debug(s"RecursivelySplitting (Split) ${oldll.id} (${oldll.startMValue}...${oldll.endMValue}) at oldFromMValue ${ri.oldFromMValue}")
+            logger.debug(s"Splitting (Split) ${oldll.id} (${oldll.startMValue}...${oldll.endMValue}) at oldFromMValue ${ri.oldFromMValue}")
             splitLinearLocation(oldll.id, ri.oldFromMValue, changeMetaData)
-            RecursivelySplit(aSplitChange)
           }
           else if( (oldll.endMValue  -GeometryUtils.DefaultEpsilon)>ri.oldToMValue   ) {
-            logger.debug(s"RecursivelySplitting (Split) ${oldll.id} (${oldll.startMValue}...${oldll.endMValue}) at oldToMValue ${ri.oldToMValue}")
+            logger.debug(s"Splitting (Split) ${oldll.id} (${oldll.startMValue}...${oldll.endMValue}) at oldToMValue ${ri.oldToMValue}")
             splitLinearLocation(oldll.id, ri.oldToMValue,   changeMetaData)
-            RecursivelySplit(aSplitChange)
           }
           else {
-            logger.debug(s"RecursivelySplit (Split) finished")
+            logger.debug(s"Splitting (Split) finished")
           }
         })
       })
@@ -602,6 +599,9 @@ roadwayLlsFartherAway.foreach(asdf => println(s"${asdf._1.orderNumber} -> ${asdf
 
     change.replaceInfos.foreach(ri => {
       val oldLinearLocations = linearLocationDAO.fetchByLinkIdAndMValueRange(change.oldLink.linkId, ri.oldFromMValue, ri.oldToMValue)
+println()
+oldLinearLocations.foreach(ll => println(s"${ll}"))
+
       if(oldLinearLocations.isEmpty) {
           throw ViiteException(s"LinkNetworkReplaceChange: No old linear location found for link ${change.oldLink.linkId}.")
       }
