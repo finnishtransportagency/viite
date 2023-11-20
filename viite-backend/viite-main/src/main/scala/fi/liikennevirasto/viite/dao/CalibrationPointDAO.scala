@@ -56,6 +56,12 @@ object CalibrationPointDAO extends BaseDAO {
     createCalibrationPoints.map(_.id).toSeq
   }
 
+  def create(cp: CalibrationPoint): Long = {
+    println(s"Trying to create a CP ${cp}")
+    create(cp.roadwayPointId, cp.linkId, cp.startOrEnd, cp.typeCode, cp.createdBy)
+    cp.id
+  }
+
   def create(roadwayPointId: Long, linkId: String, startOrEnd: CalibrationPointLocation, calType: CalibrationPointType, createdBy: String): Unit = {
     runUpdateToDb(s"""
       Insert Into CALIBRATION_POINT (ID, ROADWAY_POINT_ID, LINK_ID, START_END, TYPE, CREATED_BY) VALUES

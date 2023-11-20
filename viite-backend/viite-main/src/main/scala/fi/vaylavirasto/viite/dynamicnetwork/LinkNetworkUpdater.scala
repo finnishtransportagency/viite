@@ -9,6 +9,7 @@ import fi.liikennevirasto.viite.dao.{CalibrationPointDAO, CalibrationPointRefere
 import fi.vaylavirasto.viite.dao.LinkDAO
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.CalibrationPointLocation.{EndOfLink, StartOfLink}
+import fi.vaylavirasto.viite.model.SideCode.TowardsDigitizing
 import fi.vaylavirasto.viite.model.{CalibrationPoint, LinkGeomSource, SideCode}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase
 import fi.vaylavirasto.viite.util.ViiteException
@@ -364,8 +365,8 @@ class LinkNetworkUpdater {
     //////// Luodaan ja tallennetaan uudet lineaarilokaatiot ////////
     //Säädetään splitattujen orderNumberit sideCoden mukaisesti...
     val oldONr = llToBeSplit.orderNumber
-    val splittedONrStart = if(llToBeSplit.sideCode==2) oldONr else oldONr+1
-    val splittedONrEnd   = if(llToBeSplit.sideCode==2) oldONr+1 else oldONr
+    val splittedONrStart = if(llToBeSplit.sideCode==TowardsDigitizing) oldONr else oldONr+1
+    val splittedONrEnd   = if(llToBeSplit.sideCode==TowardsDigitizing) oldONr+1 else oldONr
 println(s"Splitting ll: ${oldONr} (old orderNr) -> ${splittedONrStart}&${splittedONrEnd} (new orderNrs)")
     // ...ja luodaan uudet lineaarilokaatiot jotka vastaavat alkuperäistä katkottuna (alkuM=toBeSplit.startM ... endM=mValue ja alkuM=mValue ... endM=toBeSplit.endM)
     val newStartLL = llToBeSplit.copy(id=NewIdValue, endMValue  =mValueForSplit, orderNumber=splittedONrStart, geometry=Seq(llToBeSplit.geometry.head, splittingPoint.get)) //TODO get may fail
@@ -637,7 +638,6 @@ oldLinearLocations.foreach(ll => println(s"${ll}"))
           0,                   //adjustedTimestamp: Long, // Not required, link created elsewhere
           (CalibrationPointReference.None, CalibrationPointReference.None), //CPs created elsewhere //calibrationPoints: (CalibrationPointReference, CalibrationPointReference) = (CalibrationPointReference.None, CalibrationPointReference.None)
           Seq(minMValuePointOpt.get.with3decimals, maxMValuePointOpt.get.with3decimals), //geometry: Seq[Point]
-          //Seq(correspondingLink.geometry.head, correspondingLink.geometry.last), //geometry: Seq[Point]
           LinkGeomSource.Unknown, // Not required, link created elsewhere
           oldLL.roadwayNumber,    //roadwayNumber: Long
           None, // Not used at create         //validFrom: Option[DateTime] = None
@@ -645,8 +645,7 @@ oldLinearLocations.foreach(ll => println(s"${ll}"))
         ) // LinearLocation
 
         linearLocationDAO.create(Seq(newLL), changeMetaData.changeSetName)
-        //val llIds = oldLinearLocations.map(_.id).toSet
-        /*val numInvalidatedLLs: Int =*/ linearLocationDAO.expireByIds(Set(oldLL.id))  //(llIds)
+        /*val numInvalidatedLLs: Int =*/ linearLocationDAO.expireByIds(Set(oldLL.id))
       }) // oldLlsSorted.foreach
     }) // change.replaceInfo.foreach
   }
@@ -746,8 +745,7 @@ oldLinearLocations.foreach(ll => println(s"${ll}"))
         )
 
         linearLocationDAO.create(Seq(newLL), changeMetaData.changeSetName)
-        //val llIds = oldLinearLocations.map(_.id).toSet
-        /*val numInvalidatedLLs: Int =*/ linearLocationDAO.expireByIds(Set(oldLL.id))  //(llIds)
+        /*val numInvalidatedLLs: Int =*/ linearLocationDAO.expireByIds(Set(oldLL.id))
       }) // oldLlsSorted.foreach
     }) // change.replaceInfos.foreach
   }
