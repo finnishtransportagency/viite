@@ -367,7 +367,7 @@ class LinkNetworkUpdater {
     val oldONr = llToBeSplit.orderNumber
     val splittedONrStart = if(llToBeSplit.sideCode==TowardsDigitizing) oldONr else oldONr+1
     val splittedONrEnd   = if(llToBeSplit.sideCode==TowardsDigitizing) oldONr+1 else oldONr
-println(s"Splitting ll: ${oldONr} (old orderNr) -> ${splittedONrStart}&${splittedONrEnd} (new orderNrs)")
+println(s"Splitting ll $linearLocationId: $oldONr (old orderNr) -> $splittedONrStart&$splittedONrEnd (new orderNrs)")
     // ...ja luodaan uudet lineaarilokaatiot jotka vastaavat alkuperäistä katkottuna (alkuM=toBeSplit.startM ... endM=mValue ja alkuM=mValue ... endM=toBeSplit.endM)
     val newStartLL = llToBeSplit.copy(id=NewIdValue, endMValue  =mValueForSplit, orderNumber=splittedONrStart, geometry=Seq(llToBeSplit.geometry.head, splittingPoint.get)) //TODO get may fail
     val newEndLL   = llToBeSplit.copy(id=NewIdValue, startMValue=mValueForSplit, orderNumber=splittedONrEnd,   geometry=Seq(splittingPoint.get, llToBeSplit.geometry.last)) //TODO get may fail
@@ -381,7 +381,9 @@ println(s"Splitting ll: ${oldONr} (old orderNr) -> ${splittedONrStart}&${splitte
     val roadwayLlsPlusNewOrdNums = llsAtTheSameRoadway.zip(List.range(2, llsAtTheSameRoadway.size+1))
     // jätä orderNumber-päivitettäväksi vain ne lineaarilokaatiot, jotka ovat roadwaylla splitatun lineaarilokaation jälkeen
     val roadwayLlsFartherAway: Seq[(LinearLocation, Int)] = roadwayLlsPlusNewOrdNums.filter(_._1.orderNumber>=llToBeSplit.orderNumber + 2)
-roadwayLlsFartherAway.foreach(asdf => println(s"${asdf._1.orderNumber} -> ${asdf._2}  "))
+print(s"Re-orderNumbering roadway ${llToBeSplit.roadwayNumber}: ")
+roadwayLlsFartherAway.foreach(asdf => print(s"${asdf._1.orderNumber} -> ${asdf._2}, "))
+println()
     // tallennetaan lineaarilokaatiot, joiden orderNumber muuttui, ja ekspiroidaan vanhat
     roadwayLlsFartherAway.foreach(ll => {
       val LLWithNewOrderNumber = ll._1.copy(id=NewIdValue, orderNumber=ll._2)
