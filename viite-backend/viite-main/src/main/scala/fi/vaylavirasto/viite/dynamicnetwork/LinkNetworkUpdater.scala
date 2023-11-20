@@ -380,7 +380,7 @@ println(s"Splitting ll $linearLocationId: $oldONr (old orderNr) -> $splittedONrS
     // generoi roadwayn lineaarilokaatioille uudet järjestysnumerot; yhtä suuremmat kuin tähän mennessä, koska yksi tuli lisää
     val roadwayLlsPlusNewOrdNums = llsAtTheSameRoadway.zip(List.range(2, llsAtTheSameRoadway.size+1))
     // jätä orderNumber-päivitettäväksi vain ne lineaarilokaatiot, jotka ovat roadwaylla splitatun lineaarilokaation jälkeen
-    val roadwayLlsFartherAway: Seq[(LinearLocation, Int)] = roadwayLlsPlusNewOrdNums.filter(_._1.orderNumber>=llToBeSplit.orderNumber + 2)
+    val roadwayLlsFartherAway: Seq[(LinearLocation, Int)] = roadwayLlsPlusNewOrdNums.filter(_._1.orderNumber>llToBeSplit.orderNumber)
 print(s"Re-orderNumbering roadway ${llToBeSplit.roadwayNumber}: ")
 roadwayLlsFartherAway.foreach(asdf => print(s"${asdf._1.orderNumber} -> ${asdf._2}, "))
 println()
