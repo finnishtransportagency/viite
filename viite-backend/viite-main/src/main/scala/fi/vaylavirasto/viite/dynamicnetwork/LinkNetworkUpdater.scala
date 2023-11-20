@@ -360,27 +360,30 @@ class LinkNetworkUpdater {
     )}
     val splittingPoint: Option[Point] = GeometryUtils.calculatePointFromLinearReference(llKGVRoadLink.head.geometry, mValueForSplit)
 
-    // luodaan uusi lineaarilokaatio jolla sama alkuM kuin toBeSplit.startM ja endM = mValue
-    // luodaan uusi lineaarilokaatio jolla alkuM = mValue ja toBeSplit.endM
-    val newStartLL = llToBeSplit.copy(id=NewIdValue, endMValue  =mValueForSplit, geometry=Seq(llToBeSplit.geometry.head, splittingPoint.get)) //TODO get may fail
-    val newEndLL   = llToBeSplit.copy(id=NewIdValue, startMValue=mValueForSplit, geometry=Seq(splittingPoint.get, llToBeSplit.geometry.last)) //TODO get may fail
+    //////// Haetaan kaikki saman roadwayn lineaarilokaatiot, orderNumberien myöhempää päivitystä varten (sorttaa orderNumber-järjestykseen) ////////
+    val llsAtTheSameRoadway: Seq[LinearLocation] = linearLocationDAO.fetchByRoadways(Set(llToBeSplit.roadwayNumber)).sortBy(_.orderNumber)
 
-    // luodaan splitatut ja ekspiroidaan vanha lineaarilokaatio
+    //////// Luodaan ja tallennetaan uudet lineaarilokaatiot ////////
+    //Säädetään splitattujen orderNumberit sideCoden mukaisesti...
+    val oldONr = llToBeSplit.orderNumber
+    val splittedONrStart = if(llToBeSplit.sideCode==2) oldONr else oldONr+1
+    val splittedONrEnd   = if(llToBeSplit.sideCode==2) oldONr+1 else oldONr
+    // ...ja luodaan uudet lineaarilokaatiot jotka vastaavat alkuperäistä katkottuna (alkuM=toBeSplit.startM ... endM=mValue ja alkuM=mValue ... endM=toBeSplit.endM)
+    val newStartLL = llToBeSplit.copy(id=NewIdValue, endMValue  =mValueForSplit, orderNumber=splittedONrStart, geometry=Seq(llToBeSplit.geometry.head, splittingPoint.get)) //TODO get may fail
+    val newEndLL   = llToBeSplit.copy(id=NewIdValue, startMValue=mValueForSplit, orderNumber=splittedONrEnd,   geometry=Seq(splittingPoint.get, llToBeSplit.geometry.last)) //TODO get may fail
+    // tallennetaan splitatut ja ekspiroidaan vanha lineaarilokaatio
     linearLocationDAO.create(Seq(newStartLL), changeMetaData.changeSetName)
     linearLocationDAO.create(Seq(newEndLL),   changeMetaData.changeSetName)
     linearLocationDAO.expireByIds(Set(llToBeSplit.id))
 
-
-    //////////// Säädetään OrderNumberit uusiksi ////////////
-
-    // haetaan kaikki lineaarilokaatiot toBeSplit.roadway:lla (sorttaa alku-M-arvon mukaiseen järjestykseen)
-    val llsAtTheSameRoadway: Seq[LinearLocation] = linearLocationDAO.fetchByRoadways(Set(llToBeSplit.roadwayNumber)).sortBy(_.startMValue)
-
-    val llsAtThSameRWplusNewOrdNums = llsAtTheSameRoadway.zip(List.range(1, llsAtTheSameRoadway.size+1))
-    val llsAtTheSameRoadwayAtLeastAsFar: Seq[(LinearLocation, Int)] = llsAtThSameRWplusNewOrdNums.filter(_._1.startMValue>=mValueForSplit)
-llsAtTheSameRoadwayAtLeastAsFar.foreach(asdf => println(s"${asdf._1.orderNumber} -> ${asdf._2}  "))
-
-    llsAtTheSameRoadwayAtLeastAsFar.foreach(ll => {
+    //////// Säädetään loput OrderNumberit huomioimaan väliin tulleen uuden lineaarilokaation ////////
+    // generoi roadwayn lineaarilokaatioille uudet järjestysnumerot; yhtä suuremmat kuin tähän mennessä, koska yksi tuli lisää
+    val roadwayLlsPlusNewOrdNums = llsAtTheSameRoadway.zip(List.range(2, llsAtTheSameRoadway.size+1))
+    // jätä orderNumber-päivitettäväksi vain ne lineaarilokaatiot, jotka ovat roadwaylla splitatun lineaarilokaation jälkeen
+    val roadwayLlsFartherAway: Seq[(LinearLocation, Int)] = roadwayLlsPlusNewOrdNums.filter(_._1.startMValue>=llToBeSplit.endMValue)
+roadwayLlsFartherAway.foreach(asdf => println(s"${asdf._1.orderNumber} -> ${asdf._2}  "))
+    // tallennetaan lineaarilokaatiot, joiden orderNumber muuttui, ja ekspiroidaan vanhat
+    roadwayLlsFartherAway.foreach(ll => {
       val LLWithNewOrderNumber = ll._1.copy(id=NewIdValue, orderNumber=ll._2)
       linearLocationDAO.create(Seq(LLWithNewOrderNumber), changeMetaData.changeSetName)
       linearLocationDAO.expireByIds(Set(ll._1.id))
@@ -770,7 +773,7 @@ llsAtTheSameRoadwayAtLeastAsFar.foreach(asdf => println(s"${asdf._1.orderNumber}
         createdBy = changeMetaData.changeSetName,
         createdTime = Some(changeMetaData.linkDataRetrievalDate)
       )
-      val newCPid = CalibrationPointDAO.create(Seq(newCP)).head // pick head; we know we have only one
+      val newCPid = CalibrationPointDAO.create(newCP)
       idPairs = idPairs:+(oldCP.id,newCPid)
     })
 

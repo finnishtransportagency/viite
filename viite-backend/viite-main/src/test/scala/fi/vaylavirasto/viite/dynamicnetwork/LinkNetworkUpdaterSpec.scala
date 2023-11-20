@@ -1,7 +1,7 @@
  package fi.vaylavirasto.viite.dynamicnetwork
 
 //import fi.liikennevirasto.digiroad2.{LinkInfo, LinkNetworkChange, LinkNetworkUpdater, ReplaceInfo}
-import fi.liikennevirasto.viite.dao.LinearLocationDAO
+import fi.liikennevirasto.viite.dao.{CalibrationPointDAO, LinearLocationDAO}
 import fi.vaylavirasto.viite.dao.LinkDAO
 import fi.vaylavirasto.viite.geometry.Point
 import fi.vaylavirasto.viite.model.LinkGeomSource
@@ -321,6 +321,7 @@ class LinkNetworkUpdaterSpec extends FunSuite with Matchers {
     )
 
     val llDAO = new LinearLocationDAO
+
     runWithRollback { // we do not really want to change the DB
       //LinkDAO.createIfEmptyFetch(linkIdWithoutVersion+":1",DateTime.now().getMillis,LinkGeomSource.Change.value)
 
@@ -333,15 +334,18 @@ class LinkNetworkUpdaterSpec extends FunSuite with Matchers {
       LinkDAO.fetch(newLinkId)            shouldBe empty
       llDAO.fetchByLinkId(Set(newLinkId)) shouldBe empty
 
+      CalibrationPointDAO.fetchByLinkId(Seq(oldLinkId)) should not be empty
+      CalibrationPointDAO.fetchByLinkId(Seq(newLinkId)) shouldBe empty
+
       linkNetworkUpdater.persistLinkNetworkChanges(
         Seq(properNetworkChange),
-        "Testing proper Network change (version change)",
+        "Test Network change (version)",
         DateTime.now,
         LinkGeomSource.Unknown // We have no "Test data" option.
       )
       //logger.debug("Persisted.")
 //
-   // check the old link stuff has been invalidated ...
+      // check the old link stuff has been invalidated ...
       val llAfter = llDAO.fetchByLinkId(Set(newLinkId))
       LinkDAO.fetch(oldLinkId)            should not be empty // not deleted, and no valid_to available
       llDAO.fetchByLinkId(Set(oldLinkId)) shouldBe empty
@@ -350,6 +354,8 @@ class LinkNetworkUpdaterSpec extends FunSuite with Matchers {
       llAfter                             should not be empty
 
       llBefore should not be (llAfter)
+
+      CalibrationPointDAO.fetchByLinkId(Seq(newLinkId)) should not be empty
     }
   }
 
