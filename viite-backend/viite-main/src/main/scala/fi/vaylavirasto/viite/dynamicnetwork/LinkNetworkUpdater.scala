@@ -671,7 +671,7 @@ oldLinearLocations.foreach(ll => println(s"${ll}"))
         createdBy = changeMetaData.changeSetName,
         createdTime = Some(changeMetaData.linkDataRetrievalDate)
       )
-      val newStartCPid = CalibrationPointDAO.create(Seq(newStartCP)).head // we know we have only one
+      val newStartCPid = CalibrationPointDAO.create(newStartCP)
       idPairs = idPairs :+ (newStartCP.id, newStartCPid)
     }
 
@@ -682,7 +682,7 @@ oldLinearLocations.foreach(ll => println(s"${ll}"))
         createdBy = changeMetaData.changeSetName,
         createdTime = Some(changeMetaData.linkDataRetrievalDate)
       )
-      val newEndCPid = CalibrationPointDAO.create(Seq(newEndCP)).head // we know we have only one
+      val newEndCPid = CalibrationPointDAO.create(newEndCP)
       idPairs = idPairs :+ (newEndCP.id, newEndCPid)
     }
 
