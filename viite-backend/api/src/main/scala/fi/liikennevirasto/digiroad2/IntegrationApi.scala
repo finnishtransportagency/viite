@@ -356,7 +356,6 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
         validNodesWithJunctionsToApi(fetchedNodesWithJunctions)
       } catch {
         case t: Throwable =>
-            throw t
           handleCommonIntegrationAPIExceptions(t, getValidNodes.operationId)
       }
     }
@@ -383,30 +382,30 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
             "addrM" -> cr.addrM,
             "beforeAfter" -> beforeAfterToLetter(cr.beforeAfter)
           )
-          }
-          ListMap(
-            "startDate" -> j.startDate.toString(),
-            "junctionNumber" -> j.junctionNumber.getOrElse("N/A"),
-            "junctionCoordinateX" -> j.xCoord.toLong,
-            "junctionCoordinateY" -> j.yCoord.toLong,
-            "road_address" -> mappedCrossingRoads
-          )
         }
         ListMap(
-          "nodeNumber" -> n.node.nodeNumber,
-          "startDate" -> n.node.startDate.toString(),
-          "type" -> n.node.nodeType.value,
-          "name" -> n.node.name,
-          "nodeCoordinateX" -> n.node.coordinates.x.toLong,
-          "nodeCoordinateY" -> n.node.coordinates.y.toLong,
-          "junctions" -> mappedJunctions
+          "startDate" -> j.startDate.toString(),
+          "junctionNumber" -> j.junctionNumber.getOrElse("N/A"),
+          "junctionCoordinateX" -> j.xCoord.toLong,
+          "junctionCoordinateY" -> j.yCoord.toLong,
+          "road_address" -> mappedCrossingRoads
         )
+      }
+      ListMap(
+        "nodeNumber" -> n.node.nodeNumber,
+        "startDate" -> n.node.startDate.toString(),
+        "type" -> n.node.nodeType.value,
+        "name" -> n.node.name,
+        "nodeCoordinateX" -> n.node.coordinates.x.toLong,
+        "nodeCoordinateY" -> n.node.coordinates.y.toLong,
+        "junctions" -> mappedJunctions
+      )
     }
     mappedNodes
   }
 
   private def fetchAllValidNodesWithJunctions(): Seq[NodeWithJunctions] = {
-    val result: Seq[NodeWithJunctions] = nodesAndJunctionsService.getAllValidNodesWithJunctions
+    val result: Seq[NodeWithJunctions] = APIServiceForNodesAndJunctions.getAllValidNodesWithJunctions
     if (result.isEmpty) {
       Seq.empty[NodeWithJunctions]
     } else {

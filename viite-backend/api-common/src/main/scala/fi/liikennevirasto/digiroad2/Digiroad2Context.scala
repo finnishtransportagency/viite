@@ -6,8 +6,8 @@ import fi.liikennevirasto.digiroad2.client.kgv.KgvRoadLink
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
-import fi.liikennevirasto.viite.{AwsService, NodesAndJunctionsService, ProjectService, RoadAddressService, RoadNameService, RoadNetworkValidator}
-import fi.liikennevirasto.viite.dao.{LinearLocationDAO, _}
+import fi.liikennevirasto.viite.{AwsService, APIServiceForNodesAndJunctions, NodesAndJunctionsService, ProjectService, RoadAddressService, RoadNameService, RoadNetworkValidator}
+import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.RoadAddressFiller.ChangeSet
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.liikennevirasto.viite.util.{DataImporter, JsonSerializer}
@@ -117,6 +117,15 @@ object Digiroad2Context {
                                   roadwayChangesDAO,
                                   projectReservedPartDAO
                                 )
+  }
+
+  lazy val APIServiceForNodesAndJunctions: APIServiceForNodesAndJunctions = {
+    new APIServiceForNodesAndJunctions(
+                                  roadwayDAO,
+                                  linearLocationDAO,
+                                  nodeDAO,
+                                  junctionDAO
+    )
   }
 
   lazy val roadNetworkValidator: RoadNetworkValidator = {

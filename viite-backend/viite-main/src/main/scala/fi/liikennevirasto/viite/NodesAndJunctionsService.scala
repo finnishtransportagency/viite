@@ -226,59 +226,6 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
   }
 
-  private def getNodes: Seq[Node] = {
-    withDynSession {
-      nodeDAO.fetchAllValidNodes()
-    }
-  }
-
-  private def getJunctionsWithLinearLocation(validNodeNumbers: Seq[Long]): Seq[JunctionWithLinearLocation] = {
-    withDynSession {
-      linearLocationDAO.fetchJunctionsByNodeNumbersWithLinearLocation(validNodeNumbers)
-    }
-  }
-
-  private def getCrossingRoads: Seq[RoadwaysForJunction] = {
-    withDynSession {
-      roadwayDAO.fetchCrossingRoadsInJunction()
-    }
-  }
-
-  private def getCurrentLinearLocations: Seq[LinearLocation] = {
-    withDynSession {
-      linearLocationDAO.fetchCurrentLinearLocations
-    }
-  }
-
-  def getCoordinatesForJunction(llIds: Seq[Long], crossingRoads: Seq[RoadwaysForJunction], currentLinearLocations: Seq[LinearLocation]): Option[Point] = {
-    withDynSession {
-      linearLocationDAO.fetchCoordinatesForJunction(llIds, crossingRoads, currentLinearLocations)
-    }
-  }
-
-  def getAllValidNodesWithJunctions: Seq[NodeWithJunctions] = {
-    val nodes: Seq[Node] = getNodes
-    val validNodeNumbers: Seq[Long] = nodes.map(node => node.nodeNumber)
-    val junctions: Seq[JunctionWithLinearLocation] = getJunctionsWithLinearLocation(validNodeNumbers)
-    val currentLinearLocations = getCurrentLinearLocations
-    val allCrossingRoads = getCrossingRoads
-
-    val nodesWithJunctions: Seq[NodeWithJunctions] = nodes.map(node => {
-      val junctionsWithCoordinates: Seq[JunctionWithCoordinate] = junctions.collect {
-        case j if j.nodeNumber.contains(node.nodeNumber) =>
-          val crossingRoads: Seq[RoadwaysForJunction] = allCrossingRoads.filter(cr => cr.jId == j.id)
-          val coordinates: Option[Point] = getCoordinatesForJunction(j.llId, crossingRoads, currentLinearLocations)
-          val (x, y) = coordinates match {
-            case Some(c) => (c.x, c.y)
-            case None => (0.0, 0.0)
-          }
-          JunctionWithCoordinate(j.id, j.junctionNumber, j.nodeNumber, j.startDate, j.endDate, j.validFrom, j.validTo, j.createdBy, j.createdTime, x, y, crossingRoads)
-      }
-      NodeWithJunctions(node, junctionsWithCoordinates)
-    })
-    nodesWithJunctions
-  }
-
   def getNodesForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[NodeForRoadAddressBrowser] = {
     withDynSession {
       nodeDAO.fetchNodesForRoadAddressBrowser(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)

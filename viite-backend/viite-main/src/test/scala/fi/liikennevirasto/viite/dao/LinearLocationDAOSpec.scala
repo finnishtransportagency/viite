@@ -23,7 +23,23 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test FetchCoordinatesForJunction when there are 2 linear locations with the same start and endpoints, but is against digitizing Then return coordinate point of junction") {
+  /**
+   * This test is for a case where loop-road is formed by 2 linear locations and share the geometry shares the same start and endpoints.
+   * The case has to have only 2 crossing roads at either end, otherwise it will be handled in a different function.
+   * In a case which has only 2 roads crossing in a junction, the function that handles all others junctions to find a coordinate of a junction, lacks sufficient information and needs to be calculated with side code and before-after values.
+   * This is a rare edge-case.
+   *
+   * Example:
+   * X = junction
+   *
+   *     -------X   <-- Junction that needs to be handles with side code and before-after values
+   *    |       |
+   *    X-------
+   *    |
+   *    |
+   *
+   */
+  test("Test FetchCoordinatesForJunction when there are two linear locations with the same start and endpoints forming a loop-road, but are against digitizing direction Then return coordinate point of junction") {
     runWithRollback {
       val crossingRoads: Seq[RoadwaysForJunction] = Seq(
         RoadwaysForJunction(
@@ -32,24 +48,27 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
           roadNumber = 1,
           track = 0,
           roadPartNumber = 1,
-          addrM = 1,
-          beforeAfter = 100
+          addrM = 100,
+          beforeAfter = 1
         ),
         RoadwaysForJunction(
           jId = 1,
           roadwayNumber = 200,
-          roadNumber = 1,
+          roadNumber = 2,
           track = 0,
-          roadPartNumber = 2,
-          addrM = 0,
-          beforeAfter = 2
+          roadPartNumber = 1,
+          addrM = 200,
+          beforeAfter = 1
         )
       )
-      val currentLinearLocations: Seq[LinearLocation] = Seq(LinearLocation(NewIdValue, 2, 1001L.toString, 0.0, 100.0, SideCode.AgainstDigitizing, 10000000000L, (CalibrationPointReference(Some(0L)), CalibrationPointReference.None), Seq(Point(0.0, 100.0), Point(0.0, 200.0)), LinkGeomSource.NormalLinkInterface, 100L), LinearLocation(NewIdValue, 2, 1001L.toString, 0.0, 100.0, SideCode.AgainstDigitizing, 10000000000L, (CalibrationPointReference(Some(0L)), CalibrationPointReference.None), Seq(Point(0.0, 100.0), Point(0.0, 200.0)), LinkGeomSource.NormalLinkInterface, 100L)) // Provide test allLL
+      val currentLinearLocations: Seq[LinearLocation] = Seq(
+        LinearLocation(NewIdValue, 2, 1001L.toString, 0.0, 100.0, SideCode.AgainstDigitizing, 10000000000L, (CalibrationPointReference(Some(0L)), CalibrationPointReference.None), Seq(Point(0.0, 100.0), Point(0.0, 200.0)), LinkGeomSource.NormalLinkInterface, 100L),
+        LinearLocation(NewIdValue, 2, 1001L.toString, 0.0, 100.0, SideCode.AgainstDigitizing, 10000000000L, (CalibrationPointReference(Some(0L)), CalibrationPointReference.None), Seq(Point(0.0, 100.0), Point(0.0, 200.0)), LinkGeomSource.NormalLinkInterface, 100L))
       val llIds: Seq[Long] = Seq(currentLinearLocations.head.id, currentLinearLocations.last.id)
       val result: Option[Point] = linearLocationDAO.fetchCoordinatesForJunction(llIds, crossingRoads, currentLinearLocations)
 
-      val expectedPoint: Option[Point] = Some(Point(0.0, 200.0))
+      // Expected point is either at the start or end of the geometry depending on the side code and before-after values, using the logic in the fetchCoordinatesForJunctions.
+      val expectedPoint: Option[Point] = Some(Point(0.0, 100.0))
 
       result should be(expectedPoint)
     }

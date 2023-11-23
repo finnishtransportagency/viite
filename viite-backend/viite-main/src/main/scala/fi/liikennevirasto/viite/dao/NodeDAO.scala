@@ -19,9 +19,9 @@ case class Node(id: Long, nodeNumber: Long, coordinates: Point, name: Option[Str
 
 case class RoadAttributes(roadNumber: Long, roadPartNumber: Long, addrMValue: Long)
 
-case class NodeWithJunctions(node: Node, junctionsWithCoordinates: Seq[JunctionWithCoordinate])
-
 case class NodeForRoadAddressBrowser(ely: Long, roadNumber: Long, roadPartNumber: Long, addrM: Long, startDate: DateTime, nodeType: NodeType, name: Option[String], nodeCoordinates: Point, nodeNumber: Long)
+
+case class NodeWithJunctions(node: Node, junctionsWithCoordinates: Seq[JunctionWithCoordinateAndCrossingRoads])
 
 class NodeDAO extends BaseDAO {
 
