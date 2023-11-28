@@ -256,7 +256,7 @@ class AdminApi(val dataImporter: DataImporter, implicit val swagger: Swagger) ex
         case (Some(previousDate), Some(newDate)) =>
           try {
             val (previousDateTimeObject, newDateTimeObject) = validateDateParams(previousDate, newDate)
-            Future(dynamicRoadNetworkService.updateLinkNetwork(previousDateTimeObject, newDateTimeObject))
+            Future(dynamicRoadNetworkService.initiateLinkNetworkUpdates(previousDateTimeObject, newDateTimeObject))
             "Samuutus käynnistetty"
           } catch {
             case ex: IllegalArgumentException =>
