@@ -386,8 +386,8 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
         ListMap(
           "startDate" -> j.startDate.toString(),
           "junctionNumber" -> j.junctionNumber.getOrElse("N/A"),
-          "junctionCoordinateX" -> j.xCoord.toLong,
-          "junctionCoordinateY" -> j.yCoord.toLong,
+          "junctionCoordinateX" -> Option(j.xCoord).filter(_ != 0).map(_.toLong).getOrElse("N/A"), // If the value is 0 (coordinates could not be calculated), API returns "N/A"
+          "junctionCoordinateY" -> Option(j.yCoord).filter(_ != 0).map(_.toLong).getOrElse("N/A"), // If the value is 0 (coordinates could not be calculated), API returns "N/A"
           "road_address" -> mappedCrossingRoads
         )
       }

@@ -8,7 +8,7 @@ class APIServiceForNodesAndJunctions(roadwayDAO: RoadwayDAO, linearLocationDAO: 
 
   def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
 
-  private def getNodes: Seq[Node] = {
+  private def getAllValidNodes: Seq[Node] = {
     withDynSession {
       nodeDAO.fetchAllValidNodes()
     }
@@ -49,15 +49,21 @@ class APIServiceForNodesAndJunctions(roadwayDAO: RoadwayDAO, linearLocationDAO: 
    * @return All valid nodes including:
    *         Junctions in that node
    *         Roads connected to that junction
+   *         Coordinates of the junction (the blue circle)
    *         Example: Seq(Node(Junction1(Road1, Road2),Junction2(Road3,Road4))
    */
   def getAllValidNodesWithJunctions: Seq[NodeWithJunctions] = {
-    val nodes: Seq[Node] = getNodes
+    // Get all required data to keep the query duration short
+    // The data is retrieved with separate functions (e.g. getAllValidNodes) to keep the Dynamic Sessions separate and to avoid nested Dynamic Sessions
+    val nodes: Seq[Node] = getAllValidNodes
     val validNodeNumbers: Seq[Long] = nodes.map(node => node.nodeNumber)
     val junctions: Seq[JunctionWithLinearLocation] = getJunctionsWithLinearLocation(validNodeNumbers)
     val currentLinearLocations = getCurrentLinearLocations
     val allCrossingRoads = getCrossingRoads
 
+    // 1. Junctions are mapped with calculated coordinate and crossing roads
+    // 2. Nodes are mapped with junctions (which include coordinates and crossing roads)
+    // 3. List of all valid nodes and junctions is returned
     val nodesWithJunctions: Seq[NodeWithJunctions] = nodes.map(node => {
       val junctionsWithCoordinates: Seq[JunctionWithCoordinateAndCrossingRoads] = junctions.collect {
         case j if j.nodeNumber.contains(node.nodeNumber) =>
@@ -65,7 +71,7 @@ class APIServiceForNodesAndJunctions(roadwayDAO: RoadwayDAO, linearLocationDAO: 
           val coordinates: Option[Point] = getCoordinatesForJunction(j.llId, crossingRoads, currentLinearLocations)
           val (x, y) = coordinates match {
             case Some(c) => (c.x, c.y)
-            case None => (0.0, 0.0)
+            case None => (0.0, 0.0) // If junction's coordinates are not found, return Point(0.0, 0.0) which is later printed as "N/A" in the API
           }
           JunctionWithCoordinateAndCrossingRoads(j.id, j.junctionNumber, j.nodeNumber, j.startDate, j.endDate, j.validFrom, j.validTo, j.createdBy, j.createdTime, x, y, crossingRoads)
       }

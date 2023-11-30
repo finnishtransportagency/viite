@@ -411,8 +411,6 @@ class LinearLocationDAO extends BaseDAO {
 
   def fetchCoordinatesForJunction(llIds: Seq[Long], crossingRoads: Seq[RoadwaysForJunction], allLL: Seq[LinearLocation]): Option[Point] = {
     val llLength = llIds.length
-    var intersectionFunction = s""
-    var closingBracket = s""
 
     if (llLength == 2) { //Check whether the geometry's start and endpoints are the same with 2 linear locations.
       val ll1 = allLL.find(_.id == llIds(0))
@@ -439,30 +437,32 @@ class LinearLocationDAO extends BaseDAO {
       }
     }
 
-    intersectionFunction = ""
-    closingBracket = ""
+    var intersectionFunction = s""
+    var closingBracket = s""
+    val precision = MaxDistanceForConnectedLinks
+
     for (i <- 2 until math.min(llLength, 8)) {
       val llId = llIds(i)
-      intersectionFunction += s"ST_Intersection((SELECT ll.geometry FROM linear_location ll WHERE ll.id = $llId),"
-      closingBracket += ", 0.001)"
+      intersectionFunction += s"ST_Intersection((SELECT st_ReducePrecision(ll.geometry, $precision) FROM linear_location ll WHERE ll.id = $llId),"
+      closingBracket += ")"
     }
 
     val query = {
       s"""
-         SELECT DISTINCT
-         ST_X(${intersectionFunction}
-              ST_Intersection((SELECT ll.geometry
-                   FROM linear_location ll
-                   WHERE ll.id = ${llIds(0)}), (SELECT ll.geometry
-                   FROM linear_location ll
-                   WHERE ll.id = ${llIds(1)})${closingBracket})) AS xCoord,
-         ST_Y(${intersectionFunction}
-              ST_Intersection((SELECT ll.geometry
-                   FROM linear_location ll
-                   WHERE ll.id = ${llIds(0)}), (SELECT ll.geometry
-                   FROM linear_location ll
-                   WHERE ll.id = ${llIds(1)})${closingBracket})) AS yCoord
-      """
+             SELECT DISTINCT
+             ST_X(${intersectionFunction}
+                  ST_Intersection((SELECT st_ReducePrecision(ll.geometry, $precision)
+                       FROM linear_location ll
+                       WHERE ll.id = ${llIds(0)}), (SELECT st_ReducePrecision(ll.geometry, $precision)
+                       FROM linear_location ll
+                       WHERE ll.id = ${llIds(1)})${closingBracket})) AS xCoord,
+             ST_Y(${intersectionFunction}
+                  ST_Intersection((SELECT st_ReducePrecision(ll.geometry, $precision)
+                       FROM linear_location ll
+                       WHERE ll.id = ${llIds(0)}), (SELECT st_ReducePrecision(ll.geometry, $precision)
+                       FROM linear_location ll
+                       WHERE ll.id = ${llIds(1)})${closingBracket})) AS yCoord
+          """
     }
     val res = Q.queryNA[JunctionCoordinate](query).firstOption
 

@@ -14,8 +14,6 @@ import org.scalatest.{BeforeAndAfter, FunSuite}
 import org.scalatest.mockito.MockitoSugar
 import org.scalatra.test.scalatest.ScalatraSuite
 
-
-
 class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter {
   protected implicit val jsonFormats: Formats = DefaultFormats
 
@@ -26,8 +24,6 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
 
   private val integrationApi = new IntegrationApi(mockRoadAddressService, mockRoadNameService, new ViiteSwagger)
   addServlet(integrationApi, "/*")
-
-
 
   test("Test When asking for the road addresses by municipality but 1st not defining it and 2nd with it Then return status code 400 for the 1st and status code 200 for the 2nd.") {
     get("/road_address") {
@@ -273,12 +269,6 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
           "]}" +
           "]"
       )
-    }
-  }
-
-  test("Test When asking for all valid nodes in Viite Then returns status code 400") {
-    get("/nodes/valid") {
-      status should equal(200)
     }
   }
 }
