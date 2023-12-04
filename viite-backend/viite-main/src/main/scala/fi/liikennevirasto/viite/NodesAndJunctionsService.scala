@@ -1190,6 +1190,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
               if (nodePointTemplates.nonEmpty) {
                 val nodePointTemplate = nodePointTemplates.head
 
+                // Check what is the type of the TEMPLATE and insert a equivalent nodePoint, then delete any duplicate TEMPLATES
+
                 if (nodePointTemplate.nodePointType == NodePointType.CalculatedNodePoint) {
                   nodePointDAO.insertCalculatedNodePoint(rwPoint, beforeAfterValue, nodeNumber, username)
                   nodePointCount = nodePointCount + 1

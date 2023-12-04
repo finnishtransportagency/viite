@@ -5530,7 +5530,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
        * Before changes:
        *       1   |     2     |     2
        *           x           x
-       *    -----x|o|x--------|o|x------>R
+       *    -----x|o|x--------|o|x------>x
        * (Junction in the middle of roadpart-2 has only 1 roadwayPoint since roadpart does not change)
        *
        * After changes:
