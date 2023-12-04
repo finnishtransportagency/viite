@@ -5,7 +5,7 @@ import fi.liikennevirasto.viite.dao.ProjectCalibrationPoint
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.vaylavirasto.viite.dao.RoadName
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, LifecycleStatus, LinkGeomSource, SideCode}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, LifecycleStatus, LinkGeomSource, NodeType, SideCode}
 import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, Formats}
 import org.mockito.ArgumentMatchers.any
@@ -13,7 +13,6 @@ import org.mockito.Mockito._
 import org.scalatest.{BeforeAndAfter, FunSuite}
 import org.scalatest.mockito.MockitoSugar
 import org.scalatra.test.scalatest.ScalatraSuite
-
 
 class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter {
   protected implicit val jsonFormats: Formats = DefaultFormats
@@ -25,8 +24,6 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
 
   private val integrationApi = new IntegrationApi(mockRoadAddressService, mockRoadNameService, new ViiteSwagger)
   addServlet(integrationApi, "/*")
-
-
 
   test("Test When asking for the road addresses by municipality but 1st not defining it and 2nd with it Then return status code 400 for the 1st and status code 200 for the 2nd.") {
     get("/road_address") {
@@ -120,6 +117,12 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
   test("Test When asking for changes in the roadnames including the Since parameter but giving it a incorrect date Then returns status code 400") {
     get("/roadnames/changes?since=1.1.2018") {
       status should equal(400)
+    }
+  }
+
+  test("Test When asking for valid nodes with junctions Then return status code 200") {
+    get("/nodes/valid") {
+      status should equal(200)
     }
   }
 
