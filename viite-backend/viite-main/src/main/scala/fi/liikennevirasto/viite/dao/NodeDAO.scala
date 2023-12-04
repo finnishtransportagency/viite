@@ -21,6 +21,8 @@ case class RoadAttributes(roadNumber: Long, roadPartNumber: Long, addrMValue: Lo
 
 case class NodeForRoadAddressBrowser(ely: Long, roadNumber: Long, roadPartNumber: Long, addrM: Long, startDate: DateTime, nodeType: NodeType, name: Option[String], nodeCoordinates: Point, nodeNumber: Long)
 
+case class NodeWithJunctions(node: Node, junctionsWithCoordinates: Seq[JunctionWithCoordinateAndCrossingRoads])
+
 class NodeDAO extends BaseDAO {
 
   implicit val getNode: GetResult[Node] = new GetResult[Node] {
@@ -100,6 +102,16 @@ class NodeDAO extends BaseDAO {
       where NODE_NUMBER = $nodeNumber and valid_to is null
       order by created_time desc, end_date desc
       """.as[Long].firstOption
+  }
+
+  def fetchAllValidNodes(): Seq[Node] = {
+    val query =
+    s"""
+      SELECT n.id, n.node_number, ST_X(n.COORDINATES), ST_Y(n.COORDINATES), n."name", n."type", n.start_date, n.end_date, n.valid_from, n.valid_to, n.created_by, n.created_time, n.editor, n.published_time, n.registration_date
+      FROM node n
+      WHERE n.end_date IS NULL AND n.valid_to IS NULL
+    """
+    queryList(query)
   }
 
   def fetchNodesForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[NodeForRoadAddressBrowser] = {
