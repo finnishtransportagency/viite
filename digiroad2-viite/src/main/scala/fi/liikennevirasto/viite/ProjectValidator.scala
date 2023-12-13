@@ -1131,8 +1131,7 @@ class ProjectValidator {
             }
             recProjectGroupsEly(unprocessed.tail, Map(unprocessed.head) ++ processed, errors ++ acumulatedErrors)
           } else {
-            if (biggestPrevious.discontinuity == Discontinuity.ChangingELYCode) {
-              val affectedProjectLinks = Seq(biggestPrevious, lowestCurrent)
+            if (biggestPrevious.discontinuity == Discontinuity.ChangingELYCode && biggestPrevious.roadNumber == lowestCurrent.roadNumber) {              val affectedProjectLinks = Seq(biggestPrevious, lowestCurrent)
               val coords = prepareCoordinates(affectedProjectLinks)
               recProjectGroupsEly(unprocessed.tail, Map(unprocessed.head) ++ processed, acumulatedErrors ++ Seq(ValidationErrorDetails(project.id, alterMessage(ValidationErrorList.ElyCodeDiscontinuityChangeButNoElyChange, currentRoadAndPart = Some(Seq((biggestPrevious.roadNumber, biggestPrevious.roadPartNumber))), nextRoadAndPart = Some(Seq((lowestCurrent.roadNumber, lowestCurrent.roadPartNumber)))), affectedProjectLinks.map(_.id), affectedProjectLinks.map(_.linkId), coords, Option(biggestPrevious.roadNumber.toString))))
             } else {
