@@ -302,7 +302,7 @@ class LinkNetworkUpdater {
     // Split linear locations in advance, if the changes do not conform to the current linear locations. So the changes due to link replacements go smoothly.
     Split(aReplaceChange)
 
-    def Split(aReplaceChange: LinkNetworkReplaceChange) {
+    def Split(aReplaceChange: LinkNetworkReplaceChange) = {
       aReplaceChange.replaceInfos.foreach( ri => {
         val oldLinearLocations = linearLocationDAO.fetchByLinkIdAndMValueRange(change.oldLink.linkId, ri.oldFromMValue, ri.oldToMValue)
         oldLinearLocations.foreach( oldll => {
@@ -367,7 +367,8 @@ class LinkNetworkUpdater {
     val oldONr = llToBeSplit.orderNumber
     val splittedONrStart = if(llToBeSplit.sideCode==TowardsDigitizing) oldONr else oldONr+1
     val splittedONrEnd   = if(llToBeSplit.sideCode==TowardsDigitizing) oldONr+1 else oldONr
-println(s"Splitting ll $linearLocationId: $oldONr (old orderNr) -> $splittedONrStart&$splittedONrEnd (new orderNrs)")
+
+    logger.debug(s"Splitting ll $linearLocationId: $oldONr (old orderNr) -> $splittedONrStart&$splittedONrEnd (new orderNrs)")
     // ...ja luodaan uudet lineaarilokaatiot jotka vastaavat alkuperäistä katkottuna (alkuM=toBeSplit.startM ... endM=mValue ja alkuM=mValue ... endM=toBeSplit.endM)
     val newStartLL = llToBeSplit.copy(id=NewIdValue, endMValue  =mValueForSplit, orderNumber=splittedONrStart, geometry=Seq(llToBeSplit.geometry.head, splittingPoint.get)) //TODO get may fail
     val newEndLL   = llToBeSplit.copy(id=NewIdValue, startMValue=mValueForSplit, orderNumber=splittedONrEnd,   geometry=Seq(splittingPoint.get, llToBeSplit.geometry.last)) //TODO get may fail
@@ -376,14 +377,14 @@ println(s"Splitting ll $linearLocationId: $oldONr (old orderNr) -> $splittedONrS
     linearLocationDAO.create(Seq(newEndLL),   changeMetaData.changeSetName)
     linearLocationDAO.expireByIds(Set(llToBeSplit.id))
 
-    //////// Säädetään loput OrderNumberit huomioimaan väliin tulleen uuden lineaarilokaation ////////
+    //////// Säädetään loput OrderNumberit huomioimaan väliin tullut uusi lineaarilokaatio ////////
     // generoi roadwayn lineaarilokaatioille uudet järjestysnumerot; yhtä suuremmat kuin tähän mennessä, koska yksi tuli lisää
     val roadwayLlsPlusNewOrdNums = llsAtTheSameRoadway.zip(List.range(2, llsAtTheSameRoadway.size+2)) // end number of the range is the first number not contained
     // jätä orderNumber-päivitettäväksi vain ne lineaarilokaatiot, jotka ovat roadwaylla splitatun lineaarilokaation jälkeen
     val roadwayLlsFartherAway: Seq[(LinearLocation, Int)] = roadwayLlsPlusNewOrdNums.filter(_._1.orderNumber>llToBeSplit.orderNumber)
-print(s"Re-orderNumbering roadway ${llToBeSplit.roadwayNumber}: ")
-roadwayLlsFartherAway.foreach(asdf => print(s"${asdf._1.orderNumber} -> ${asdf._2}, "))
-println()
+    logger.debug(s"Re-orderNumbering roadway ${llToBeSplit.roadwayNumber}: ")
+    roadwayLlsFartherAway.foreach(asdf => logger.debug(s"${asdf._1.orderNumber} -> ${asdf._2}, "))
+    logger.debug("")
     // tallennetaan lineaarilokaatiot, joiden orderNumber muuttui, ja ekspiroidaan vanhat
     roadwayLlsFartherAway.foreach(ll => {
       val LLWithNewOrderNumber = ll._1.copy(id=NewIdValue, orderNumber=ll._2)
@@ -395,14 +396,14 @@ println()
 
   private def persistSplitChange(change: LinkNetworkChange, changeMetaData: ChangeSetMetaData): Unit = {
 
-    logger.debug("Going to transformed to a LinkNetworkSplitChange")
+    logger.debug("LinkNetworkChange going to be transformed to a LinkNetworkSplitChange")
     val aSplitChange: LinkNetworkSplitChange = convertToAValidSplitChange(change).get // returns or throws
     logger.debug("Transformed to a LinkNetworkSplitChange")
 
     // Split linear locations in advance, if the changes do not conform to the current linear locations. So the changes due to link replacements go smoothly.
     Split(aSplitChange)
 
-    def Split(aSplitChange: LinkNetworkSplitChange) {
+    def Split(aSplitChange: LinkNetworkSplitChange) = {
       aSplitChange.replaceInfos.foreach( ri => {
         val oldLinearLocations = linearLocationDAO.fetchByLinkIdAndMValueRange(change.oldLink.linkId, ri.oldFromMValue, ri.oldToMValue)
         oldLinearLocations.foreach( oldll => {
@@ -642,8 +643,6 @@ println()
 
     change.replaceInfos.foreach(ri => {
       val oldLinearLocations = linearLocationDAO.fetchByLinkIdAndMValueRange(change.oldLink.linkId, ri.oldFromMValue, ri.oldToMValue)
-println()
-oldLinearLocations.foreach(ll => println(s"${ll}"))
 
       if(oldLinearLocations.isEmpty) {
           throw ViiteException(s"LinkNetworkReplaceChange: No old linear location found for link ${change.oldLink.linkId}.")
@@ -689,10 +688,10 @@ oldLinearLocations.foreach(ll => println(s"${ll}"))
         linearLocationDAO.create(Seq(newLL), changeMetaData.changeSetName)
         /*val numInvalidatedLLs: Int =*/ linearLocationDAO.expireByIds(Set(oldLL.id))
       }) // oldLlsSorted.foreach
-    }) // change.replaceInfo.foreach
+    }) // change.replaceInfos.foreach
   }
 
-  private def calibrationPointChangesDueToNetworkLinkSplit(change: LinkNetworkSplitChange, changeMetaData: ChangeSetMetaData): Seq[(Long, Long)] = { // TODO RETURN id mapper list for old-new CPs?
+  private def calibrationPointChangesDueToNetworkLinkSplit(change: LinkNetworkSplitChange, changeMetaData: ChangeSetMetaData): Seq[(Long, Long)] = {
     val oldLinkId = change.oldLink.linkId
     val CPsOfOldLink: Seq[CalibrationPoint] = CalibrationPointDAO.fetchByLinkId(Seq(oldLinkId))  // There might be none, and that is ok.
     val startCP: Option[CalibrationPoint] = CPsOfOldLink.find(cp => cp.startOrEnd==StartOfLink)
@@ -701,9 +700,10 @@ oldLinearLocations.foreach(ll => println(s"${ll}"))
     var idPairs: Seq[(Long, Long)] = Seq()
 
     // create corresponding calibration points for new links, based on the old calibration points
-    val linkStartInfo: Option[ReplaceInfo] = change.replaceInfos.find(ri => ri.oldFromMValue == 0)  // TODO is this reversed, if addresses grow in the opposite direction?
+    val linkStartInfo: Option[ReplaceInfo] = change.replaceInfos.find(ri => ri.oldFromMValue == 0)  // TODO is this reversed, if the addresses grow in the opposite direction?
     val linkEndInfo:   Option[ReplaceInfo] = change.replaceInfos.find(ri => ri.oldToMValue == change.oldLink.linkLength)
 
+    // if there was a start CP on the link, make a copy of it, belonging to the new link
     if(startCP.isDefined) {
       val newStartCP = startCP.get.copy(
         id = NewIdValue,
@@ -715,6 +715,7 @@ oldLinearLocations.foreach(ll => println(s"${ll}"))
       idPairs = idPairs :+ (newStartCP.id, newStartCPid)
     }
 
+    // if there was a end CP on the link, make a copy of it, belonging to the new link
     if(endCP.isDefined) {
       val newEndCP = endCP.get.copy(
         id = NewIdValue,
@@ -805,7 +806,7 @@ oldLinearLocations.foreach(ll => println(s"${ll}"))
 
     var idPairs: Seq[(Long, Long)] = Seq()
 
-    // create corresponding calibration points, based on the old calibration points
+    // create corresponding calibration points for the new link, based on the old calibration points of the old link
     CPsOfOldLink.foreach(oldCP => {
       val newCP = oldCP.copy(
         id = NewIdValue,
@@ -865,6 +866,7 @@ oldLinearLocations.foreach(ll => println(s"${ll}"))
     if (digitizationChanged) SideCode.switch(oldSideCode) else oldSideCode
   }
 
+  //TODO UNUSED? REMOVE?
   /**
    * When given an old link, and two measured values to define a range within the old link,
    * returns values that percent wise correspond to those measured values on the new link.
