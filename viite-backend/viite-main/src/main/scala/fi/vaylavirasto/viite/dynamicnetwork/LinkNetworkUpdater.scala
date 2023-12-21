@@ -866,57 +866,6 @@ class LinkNetworkUpdater {
     if (digitizationChanged) SideCode.switch(oldSideCode) else oldSideCode
   }
 
-  //TODO UNUSED? REMOVE?
-  /**
-   * When given an old link, and two measured values to define a range within the old link,
-   * returns values that percent wise correspond to those measured values on the new link.
-   *
-   * <pre>
-   *                 old link, length 25
-   * |- - - - -|- - - - - - - - - -|- - - - - - - - - -|
-   * 00       05                   15                 25
-   *      oldMinMValue        oldMaxMValue
-   *          20%                  60%
-   *
-   *                 new link, length 30
-   * |- - - - - -|- - - - - - - - - - - -|- - - - - - - - - - - -|
-   * 00         06                      18                     30
-   *      newLinkMinMvalue        newLinkMaxMValue
-   *            20%                     60%
-   * </pre>
-   *
-   * @param oldLink The old link defining the possible range of the original m values (0...linkLength)
-   * @param oldMinMValue The smaller of the M values, whose location on the new link is to be returned
-   * @param oldMaxMValue The bigger of the M values, whose location on the new link is to be returned
-   * @param newLink The new link defining the possible range of the returned m values
-   * @throws ViiteException if given oldMinMValue, or oldMaxMValue falls outside of the old link range
-   *
-   * @todo Snapping to oldLink geometry points, if given mvalues are close enough? (Less than GeometryUtils.DefaultEpsilon away?)
-   */
-  private def getCorrespondingNewLinkMvalueRange(oldLink: LinkInfo, oldMinMValue: Double, oldMaxMValue: Double,
-                                                 newLink: LinkInfo, newMinMValue: Double, newMaxMValue: Double): (Double, Double) = {
-
-    if(oldMinMValue<0 || oldMinMValue>oldLink.linkLength) {
-      ViiteException(s"oldMinMValue (now $oldMinMValue) may not refer outside the length of the link (0...${oldLink.linkLength}).")
-    }
-    if(oldMaxMValue<0 || oldMaxMValue>oldLink.linkLength) {
-      ViiteException(s"oldMaxMValue (now $oldMaxMValue)  may not refer outside the length of the link (0...${oldLink.linkLength}).")
-    }
-    if(newMinMValue<0 || newMinMValue>newLink.linkLength) {
-      ViiteException(s"newMinMValue (now $newMinMValue) may not refer outside the length of the link (0...${newLink.linkLength}).")
-    }
-    if(newMaxMValue<0 || newMaxMValue>newLink.linkLength) {
-      ViiteException(s"newMaxMValue (now $newMaxMValue)  may not refer outside the length of the link (0...${newLink.linkLength}).")
-    }
-
-    val minMValuePercentage = oldMinMValue/oldLink.linkLength
-    val maxMValuePercentage = oldMaxMValue/oldLink.linkLength
-    val newLinkMinMvalue = minMValuePercentage*newLink.linkLength*newMinMValue
-    val newLinkMaxMValue = maxMValuePercentage*newLink.linkLength*newMaxMValue
-
-    (newLinkMinMvalue, newLinkMaxMValue)
-  }
-
   /** Tell if the given length measures are considered to be the same.
    * Tolerance is [[GeometryUtils.DefaultEpsilon]].
    */
