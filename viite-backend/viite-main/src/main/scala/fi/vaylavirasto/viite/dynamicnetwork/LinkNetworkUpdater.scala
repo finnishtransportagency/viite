@@ -545,6 +545,59 @@ println()
    */
   private def convertToAValidReplaceChange(change: LinkNetworkChange): Option[LinkNetworkReplaceChange] = {
 
+    // <sub functions>
+    def checkForInvalidSequenceSizes(change: LinkNetworkChange) = {
+      logger.debug("size considerations")
+      if (change.newLinks.size != 1) {
+        throw ViiteException(s"LinkNetworkChange: Invalid ReplaceChange. A replace must have exactly one new link. " +
+          s"There are ${change.newLinks.size} new links when going to replace ${change.oldLink.linkId}.")
+      }
+      if (change.replaceInfos.isEmpty) {
+        throw ViiteException(s"LinkNetworkChange: Invalid ReplaceChange. A replace must have at least one replaceInfo. " +
+          s"There is no replace infos when going to replace ${change.oldLink.linkId}.")
+      }
+    }
+
+    def checkForInvalidLinkIds(oldLink: LinkInfo, newLink: LinkInfo, replaceInfos: Seq[ReplaceInfo]) = {
+      logger.debug("data integrity: link ids")
+      if (!replaceInfos.forall(ri => oldLink.linkId == ri.oldLinkId)) {
+        throw ViiteException(s"LinkNetworkChange: Invalid ReplaceChange. The old link ${oldLink.linkId} must be part of all of the replace infos. ")
+      }
+      if(!replaceInfos.forall(r => newLink.linkId==r.newLinkId)) {
+        throw ViiteException(s"LinkNetworkChange: Invalid ReplaceChange. The new link ${newLink.linkId} must be part of all of the replace infos. ")
+      }
+    }
+
+    def checksForInvalidLinkLengths(oldLink: LinkInfo, newLink: LinkInfo, replaceInfos: Seq[ReplaceInfo]) = {
+      logger.debug(s"data integrity: told lengths must match sufficiently. Allowed difference: ${GeometryUtils.DefaultEpsilon} m ")
+      val oldLinLocLengths = replaceInfos.map(ri => (ri.oldToMValue-ri.oldFromMValue).abs)
+      val newLinLocLengths = replaceInfos.map(ri => (ri.newToMValue-ri.newFromMValue).abs)
+      val sumOfOldLengths = oldLinLocLengths.foldLeft(0.0)( (cumul,next) => cumul + next )
+      val sumOfNewLengths = newLinLocLengths.foldLeft(0.0)( (cumul,next) => cumul + next )
+      val oldlinkOK = linkLengthsConsideredTheSame(oldLink.linkLength, sumOfOldLengths)       // old link, and replaceInfo lengths must match (resolution: GeometryUtils.DefaultEpsilon).
+      val newlinkOK = linkLengthsConsideredTheSame(newLink.linkLength, sumOfNewLengths) ||    // new link, and replaceInfo lengths must match (resolution: GeometryUtils.DefaultEpsilon) ...
+                       GeometryUtils.scaleToThreeDigits(newLink.linkLength) > sumOfNewLengths //... or replaceInfo lengths be smaller than new link length, when new link continues within another oldLink.
+      if (!oldlinkOK || !newlinkOK) {
+        throw ViiteException(s"LinkNetworkChange: Invalid ReplaceChange. Link lengths of the ReplaceChange do not match. Check\r" +
+          s"(old link ${oldLink.linkId}: ${oldLink.linkLength} vs. ${oldLinLocLengths.mkString("+")}=$sumOfOldLengths), and\r " +
+          s"(new link ${newLink.linkId}: ${newLink.linkLength} vs. ${newLinLocLengths.mkString("+")}=$sumOfNewLengths).")
+      }
+    }
+
+    def checksForInvalidGeometry(oldLink: LinkInfo, newLink: LinkInfo) = {
+      logger.debug(s"data integrity: geometry requirements")
+      if(oldLink.geometry.size<2) {
+        throw ViiteException(s"LinkNetworkChange: Invalid old link geometry. " +
+          s"A geometry must have at least two points. ${oldLink.linkId}: ${oldLink.geometry}")
+      }
+      if(newLink.geometry.size<2) {
+        throw ViiteException(s"LinkNetworkChange: Invalid new link geometry. " +
+          s"A geometry must have at least two points. ${newLink.linkId}: ${newLink.geometry}")
+      }
+    }
+    // </sub functions>
+
+
     // Validate the change for a replace change; get out with a throw if the change is not a valid replace change
 
     if(!change.changeType.equals("replace")) {
@@ -552,51 +605,18 @@ println()
         s"Check the parameter of the calling function.")
     }
 
-    logger.debug("size considerations")
-    if (change.newLinks.size != 1) {
-      throw ViiteException(s"LinkNetworkChange: Invalid ReplaceChange. A replace must have exactly one new link. " +
-        s"There are ${change.newLinks.size} new links when going to replace ${change.oldLink.linkId}.")
-    }
-    if (change.replaceInfos.isEmpty) {
-      throw ViiteException(s"LinkNetworkChange: Invalid ReplaceChange. A replace must have at least one replaceInfo. " +
-        s"There is no replace infos when going to replace ${change.oldLink.linkId}.")
-    }
+    checkForInvalidSequenceSizes(change: LinkNetworkChange)
+
     // Ok, we know we have a proper amount of components
     val oldLink = change.oldLink
     val newLink = change.newLinks.head
     val replaceInfos = change.replaceInfos
 
-    logger.debug("data integrity: link ids")
-    if (!replaceInfos.forall(ri => oldLink.linkId == ri.oldLinkId)) {
-      throw ViiteException(s"LinkNetworkChange: Invalid ReplaceChange. The old link ${oldLink.linkId} must be part of all of the replace infos. ")
-    }
-    if(!replaceInfos.forall(r => newLink.linkId==r.newLinkId)) {
-      throw ViiteException(s"LinkNetworkChange: Invalid ReplaceChange. The new link ${newLink.linkId} must be part of all of the replace infos. ")
-    }
+    checkForInvalidLinkIds(oldLink, newLink, replaceInfos)
 
-    logger.debug(s"data integrity: told lengths must match sufficiently. Allowed difference: ${GeometryUtils.DefaultEpsilon} m ")
-    val oldLinLocLengths = replaceInfos.map(ri => (ri.oldToMValue-ri.oldFromMValue).abs)
-    val newLinLocLengths = replaceInfos.map(ri => (ri.newToMValue-ri.newFromMValue).abs)
-    val sumOfOldLengths = oldLinLocLengths.foldLeft(0.0)( (cumul,next) => cumul + next )
-    val sumOfNewLengths = newLinLocLengths.foldLeft(0.0)( (cumul,next) => cumul + next )
-    val oldlinkOK = linkLengthsConsideredTheSame(oldLink.linkLength, sumOfOldLengths)       // old link, and replaceInfo lengths must match (resolution: GeometryUtils.DefaultEpsilon).
-    val newlinkOK = linkLengthsConsideredTheSame(newLink.linkLength, sumOfNewLengths) ||    // new link, and replaceInfo lengths must match (resolution: GeometryUtils.DefaultEpsilon) ...
-                     GeometryUtils.scaleToThreeDigits(newLink.linkLength) > sumOfNewLengths //... or replaceInfo lengths be smaller than new link length, when new link continues within another oldLink.
-    if (!oldlinkOK || !newlinkOK) {
-      throw ViiteException(s"LinkNetworkChange: Invalid ReplaceChange. Link lengths of the ReplaceChange do not match. Check\r" +
-        s"(old link ${oldLink.linkId}: ${oldLink.linkLength} vs. ${oldLinLocLengths.mkString("+")}=$sumOfOldLengths), and\r " +
-        s"(new link ${newLink.linkId}: ${newLink.linkLength} vs. ${newLinLocLengths.mkString("+")}=$sumOfNewLengths).")
-    }
+    checksForInvalidLinkLengths(oldLink: LinkInfo, newLink, replaceInfos)
 
-    logger.debug(s"data integrity: geometry requirements")
-    if(oldLink.geometry.size<2) {
-      throw ViiteException(s"LinkNetworkChange: Invalid old link geometry. " +
-        s"A geometry must have at least two points. ${oldLink.linkId}: ${oldLink.geometry}")
-    }
-    if(newLink.geometry.size<2) {
-      throw ViiteException(s"LinkNetworkChange: Invalid new link geometry. " +
-        s"A geometry must have at least two points. ${newLink.linkId}: ${newLink.geometry}")
-    }
+    checksForInvalidGeometry(oldLink, newLink)
 
     //TODO link.geometry vs. link.linkLength checks?
 
