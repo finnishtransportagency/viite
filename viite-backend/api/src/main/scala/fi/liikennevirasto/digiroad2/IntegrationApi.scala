@@ -351,12 +351,14 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
   get("/nodes/valid", operation(getValidNodes)) {
     contentType = formats("json")
     time(logger, s"GET request for /nodes/valid") {
-      try {
-        val fetchedNodesWithJunctions = fetchAllValidNodesWithJunctions()
-        validNodesWithJunctionsToApi(fetchedNodesWithJunctions)
-      } catch {
-        case t: Throwable =>
-          handleCommonIntegrationAPIExceptions(t, getValidNodes.operationId)
+      ApiUtils.avoidRestrictions(apiId, request, params) { params =>
+        try {
+          val fetchedNodesWithJunctions = fetchAllValidNodesWithJunctions()
+          validNodesWithJunctionsToApi(fetchedNodesWithJunctions)
+        } catch {
+          case t: Throwable =>
+            handleCommonIntegrationAPIExceptions(t, getValidNodes.operationId)
+        }
       }
     }
   }
