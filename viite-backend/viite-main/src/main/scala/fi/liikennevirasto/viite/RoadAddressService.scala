@@ -261,7 +261,10 @@ class RoadAddressService(
 
     roadAddresses.flatMap { ra =>
       val roadLink = roadLinks.find(rl => rl.linkId == ra.linkId)
-      roadLink.map(rl => roadAddressLinkBuilder.build(rl, ra))
+      roadLink.map(rl => {
+        val ral: RoadAddressLink = roadAddressLinkBuilder.build(rl, ra)
+        ral.copy(geometry = (ral.geometry.dropRight(1):+rl.geometry.last.with3decimals) ) // Nasty hack to retain already correctly rounded 3 decimals from linear location
+      })
     }
   }
 
