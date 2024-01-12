@@ -172,10 +172,19 @@ object GeometryUtils {
       geometry2Endpoints._2.distance2DTo(geometry1EndPoints._2) < epsilon
   }
 
+  /** Tells whether the given <i>geometry1</i> is considered to be adjacent to the point <i>geometry2</i>.
+   * Returns true (geometry is seen as adjacent to the point), if either of the end points of <i>geometry1</i> is close enough to the point <i>geometry2</i>. False else.
+   * Uses [[DefaultEpsilon]] as the limiting allowed distance.
+   */
   def areAdjacent(geometry1: Seq[Point], geometry2: Point): Boolean = {
     areAdjacent(geometry1, geometry2, DefaultEpsilon)
   }
 
+  /** Tells whether the given <i>geometry1</i> is considered to be adjacent to the point <i>geometry2</i>.
+   * Returns true (geometry is seen as adjacent to the point), if either of the end points of <i>geometry1</i> is close enough to the point <i>geometry2</i>. False else.
+   *
+   * @param epsilon the limits the allowed distance, defining the adjacency tolerance.
+   */
   def areAdjacent(geometry1: Seq[Point], geometry2: Point, epsilon: Double): Boolean = {
     val geometry1EndPoints = GeometryUtils.geometryEndpoints(geometry1)
     geometry2.distance2DTo(geometry1EndPoints._1) < epsilon ||
@@ -187,13 +196,13 @@ object GeometryUtils {
       withinTolerance(GeometryUtils.geometryEndpoints(geometry1), GeometryUtils.geometryEndpoints(geometry2), maxDistanceDiffAllowed))
   }
 
-  /** @return True, if 2D distance of <i>point1</i>, and <i>point2</i> is smaller than <i>[[GeometryUtils.DefaultEpsilon]]</i>.
+  /** @return True, if 2D distance between <i>point1</i>, and <i>point2</i> is smaller than <i>[[GeometryUtils.DefaultEpsilon]]</i>.
    *          False else. */
   def areAdjacent(point1: Point, point2: Point): Boolean = {
     areAdjacent(point1, point2, DefaultEpsilon)
   }
 
-  /** @return True, if 2D distance of <i>point1</i>, and <i>point2</i> is smaller than <i>epsilon</i>.
+  /** @return True, if 2D distance between <i>point1</i>, and <i>point2</i> is smaller than <i>epsilon</i>.
    *          False else. */
   def areAdjacent(point1: Point, point2: Point, epsilon: Double): Boolean = {
     point1.distance2DTo(point2) < epsilon
