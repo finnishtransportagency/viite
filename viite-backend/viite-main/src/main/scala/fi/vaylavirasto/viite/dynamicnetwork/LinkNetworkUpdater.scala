@@ -577,7 +577,7 @@ class LinkNetworkUpdater {
       val sumOfNewLengths = newLinLocLengths.foldLeft(0.0)( (cumul,next) => cumul + next )
       val oldlinkOK = linkLengthsConsideredTheSame(oldLink.linkLength, sumOfOldLengths)       // old link, and replaceInfo lengths must match (resolution: GeometryUtils.DefaultEpsilon).
       val newlinkOK = linkLengthsConsideredTheSame(newLink.linkLength, sumOfNewLengths) ||    // new link, and replaceInfo lengths must match (resolution: GeometryUtils.DefaultEpsilon) ...
-                       GeometryUtils.scaleToThreeDigits(newLink.linkLength) > sumOfNewLengths //... or replaceInfo lengths be smaller than new link length, when new link continues within another oldLink.
+                       GeometryUtils.scaleToThreeDigits(newLink.linkLength) > GeometryUtils.scaleToThreeDigits(sumOfNewLengths) //... or replaceInfo lengths be smaller than new link length, when new link continues within another oldLink.
       if (!oldlinkOK || !newlinkOK) {
         throw ViiteException(s"LinkNetworkChange: Invalid ReplaceChange. Link lengths of the ReplaceChange do not match. Check\r" +
           s"(old link ${oldLink.linkId}: ${oldLink.linkLength} vs. ${oldLinLocLengths.mkString("+")}=$sumOfOldLengths), and\r " +
