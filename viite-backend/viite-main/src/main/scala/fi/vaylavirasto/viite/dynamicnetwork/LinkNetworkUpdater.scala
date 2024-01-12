@@ -383,7 +383,7 @@ class LinkNetworkUpdater {
     // jätä orderNumber-päivitettäväksi vain ne lineaarilokaatiot, jotka ovat roadwaylla splitatun lineaarilokaation jälkeen
     val roadwayLlsFartherAway: Seq[(LinearLocation, Int)] = roadwayLlsPlusNewOrdNums.filter(_._1.orderNumber>llToBeSplit.orderNumber)
     logger.debug(s"Re-orderNumbering roadway ${llToBeSplit.roadwayNumber}: ")
-    roadwayLlsFartherAway.foreach(asdf => logger.debug(s"${asdf._1.orderNumber} -> ${asdf._2}, "))
+    roadwayLlsFartherAway.foreach(fartherLls => logger.debug(s"${fartherLls._1.orderNumber} -> ${fartherLls._2}, "))
     logger.debug("")
     // tallennetaan lineaarilokaatiot, joiden orderNumber muuttui, ja ekspiroidaan vanhat
     roadwayLlsFartherAway.foreach(ll => {
