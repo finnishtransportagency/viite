@@ -1,5 +1,6 @@
 package fi.vaylavirasto.viite.geometry
 
+import fi.vaylavirasto.viite.util.ViiteException
 import org.scalatest._
 
 class GeometryUtilsSpec extends FunSuite with Matchers {
@@ -246,5 +247,38 @@ class GeometryUtilsSpec extends FunSuite with Matchers {
     val geometry1 = List(Point(0.0, 0.0), Point(1.0, 0.0), Point(1.0, 1.0))
     val geometry2 = List(Point(1.0, 1.0), Point(1.0, 0.0), Point(0.0, 0.0))
     GeometryUtils.geometryMoved(1.0)(geometry1, geometry2) should be (true)
+  }
+
+  test("Test getProjectedValue When erroneous inputs, Then throw ViiteException."){
+    // negative start values are not acceptable
+    assertThrows[ViiteException] { GeometryUtils.getProjectedValue( -1.0, 100,   0.0, 110,  50) }
+    assertThrows[ViiteException] { GeometryUtils.getProjectedValue(  0.0, 100,  -1.0, 110,  50) }
+
+    // mins must be smaller than maxes
+    assertThrows[ViiteException] { GeometryUtils.getProjectedValue(100.0,   0,   0.0, 110,  50) }
+    assertThrows[ViiteException] { GeometryUtils.getProjectedValue(  0.0, 100, 100.0,   0,  50) }
+
+    // value to project must fit within the original range
+    assertThrows[ViiteException] { GeometryUtils.getProjectedValue(100.0, 200,   0.0, 110,  50) }
+    assertThrows[ViiteException] { GeometryUtils.getProjectedValue(  0.0, 100,   0.0, 110, 250) }
+  }
+
+  test("Test getProjectedValue When correct inputs, Then get correct projected results."){
+    // check that values in the middle of the range get projected correctly
+    GeometryUtils.getProjectedValue( 0.0, 100,  0.0, 110,  50) should be ( 55)
+    GeometryUtils.getProjectedValue(10.0, 110,  0.0, 110,  60) should be ( 55)
+    GeometryUtils.getProjectedValue( 0.0, 100, 10.0, 120,  50) should be ( 65)
+
+    // check that the values hitting the range end points get projected correctly
+    GeometryUtils.getProjectedValue( 0.0, 100,  0.0, 110,   0) should be (  0)
+    GeometryUtils.getProjectedValue( 0.0, 100,  0.0, 110, 100) should be (110)
+
+    // check that the values hitting the range end points get projected correctly when original has an offset
+    GeometryUtils.getProjectedValue(10.0, 110,  0.0, 110,  10) should be (  0)
+    GeometryUtils.getProjectedValue(10.0, 110,  0.0, 110, 110) should be (110)
+
+    // check that the values hitting the range end points get projected correctly when line to project to has an offset
+    GeometryUtils.getProjectedValue( 0.0, 100, 10.0, 120,   0) should be ( 10)
+    GeometryUtils.getProjectedValue( 0.0, 100, 10.0, 120, 100) should be (120)
   }
 }
