@@ -230,8 +230,14 @@ object ProjectDeltaCalculator {
 
   private def sortAndTakeTerminated(pls: Seq[ProjectLink]): Seq[ProjectLink] = {
     if (pls.isEmpty) pls
-    else
-      Seq(pls.sortBy(_.originalStartAddrMValue).takeWhile {_.status == RoadAddressChangeType.Termination}.last)
+    else {
+      val sortedProjectLinks = pls.sortBy(_.originalStartAddrMValue)
+      val terminatedProjectLinks = sortedProjectLinks.takeWhile {_.status == RoadAddressChangeType.Termination}
+      if (terminatedProjectLinks.nonEmpty)
+        Seq(terminatedProjectLinks.last)
+      else
+        Seq()
+    }
   }
 
   /** Create change table rows
@@ -243,16 +249,14 @@ object ProjectDeltaCalculator {
   def generateChangeTableRowsFromProjectLinks(projectLinks: Seq[ProjectLink], allProjectLinks: Seq[ProjectLink]): ChangeTableRows2 = {
     val startLinks = projectLinks.filter(pl => pl.startAddrMValue == 0).groupBy(pl => {
       (pl.roadNumber, pl.roadPartNumber)})
-    val terminatedForAveraging =
-      allProjectLinks.filter(pl => {
-        pl.track != Track.Combined
-      }).groupBy(pl => {
-        (pl.roadNumber, pl.roadPartNumber)
-      }).mapValues(pls => {
+    val leftAndRightTrackProjectLinks = allProjectLinks.filter(pl => {pl.track != Track.Combined})
+    val leftAndRightTrackProjectLinksGroupedByRoadAndPart = leftAndRightTrackProjectLinks.groupBy(pl => {(pl.roadNumber, pl.roadPartNumber)})
+    val terminatedForAveraging = leftAndRightTrackProjectLinksGroupedByRoadAndPart.mapValues(pls => {
         if (pls.exists(pl => pl.status == RoadAddressChangeType.Termination && pl.originalStartAddrMValue == 0)) {
-        val (r, l) = pls.partition(_.track == Track.RightSide)
-        Seq(sortAndTakeTerminated(r),sortAndTakeTerminated(l)).flatten
-      } else Seq()
+          val (r, l) = pls.partition(_.track == Track.RightSide)
+          Seq(sortAndTakeTerminated(r),sortAndTakeTerminated(l)).flatten
+      } else
+          Seq()
       })
 
 
