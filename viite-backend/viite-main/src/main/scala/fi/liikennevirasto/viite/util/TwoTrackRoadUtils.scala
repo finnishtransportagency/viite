@@ -120,30 +120,32 @@ object TwoTrackRoadUtils {
         pl.originalStartAddrMValue + (address - pl.startAddrMValue)
 
       val newProjectLinkBeforeSplit = pl.copy(
-        discontinuity = Discontinuity.Continuous,
-        endAddrMValue = address,
+        discontinuity         = Discontinuity.Continuous,
+        endAddrMValue         = address,
         originalEndAddrMValue = splittedOriginalEndAddrMValue,
-        startMValue = pl.startMValue,
-        endMValue = splitMeasure,
+        startMValue           = pl.startMValue,
+        endMValue             = splitMeasure,
         calibrationPointTypes = calsForFirstPart,
-        geometry = geometryBeforeSplitPoint,
-        status = pl.status,
-        geometryLength = splitMeasure - pl.startMValue,
-        connectedLinkId = Some(pl.linkId))
+        geometry              = geometryBeforeSplitPoint,
+        status                = pl.status,
+        geometryLength        = splitMeasure - pl.startMValue,
+        connectedLinkId       = Some(pl.linkId)
+      )
 
       val newProjectLinkAfterSplit = pl.copy(
-        id = Sequences.nextProjectLinkId,
-        startAddrMValue = address,
-        endAddrMValue = pl.endAddrMValue,
+        id                      = Sequences.nextProjectLinkId,
+        startAddrMValue         = address,
+        endAddrMValue           = pl.endAddrMValue,
         originalStartAddrMValue = splittedOriginalEndAddrMValue,
-        originalEndAddrMValue = pl.originalEndAddrMValue,
-        startMValue = splitMeasure,
-        endMValue = pl.endMValue,
-        calibrationPointTypes = calsForSecondPart,
-        geometry = geometryAfterSplitPoint,
-        status = pl.status,
-        geometryLength = pl.geometryLength - (splitMeasure - pl.startMValue),
-        connectedLinkId = Some(pl.linkId))
+        originalEndAddrMValue   = pl.originalEndAddrMValue,
+        startMValue             = splitMeasure,
+        endMValue               = pl.endMValue,
+        calibrationPointTypes   = calsForSecondPart,
+        geometry                = geometryAfterSplitPoint,
+        status                  = pl.status,
+        geometryLength          = pl.geometryLength - (splitMeasure - pl.startMValue),
+        connectedLinkId         = Some(pl.linkId)
+      )
 
       (newProjectLinkBeforeSplit, newProjectLinkAfterSplit)
     }
