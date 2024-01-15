@@ -26,16 +26,23 @@ object TrackSectionOrder {
 
     @tailrec
     def recursiveFindNearestProjectLinks(projectLinkChain: ProjectLinkChain, unprocessed: Seq[ProjectLink]): ProjectLinkChain = {
-      def mapDistances(p: Point)(pl: ProjectLink): ProjectLinkNonConnectedDistance = {
-        val (sP, eP) = pl.getEndPoints
-        val (sD, eD) = (sP.distance2DTo(p), eP.distance2DTo(p))
-        if (sD < eD) ProjectLinkNonConnectedDistance(pl, eP, sD) else ProjectLinkNonConnectedDistance(pl, sP, eD)
+      def mapDistances(point: Point)(pl: ProjectLink): ProjectLinkNonConnectedDistance = {
+        val (startPointPL, endPointPL) = pl.getEndPoints // get the start- and endPoint of the project link
+        val (distanceFromPointToPLStartPoint, distanceFromPointToPLEndPoint) = (startPointPL.distance2DTo(point), endPointPL.distance2DTo(point)) // calculate the distance from the point to the start- and endPoint of the projectLink
+        if (distanceFromPointToPLStartPoint < distanceFromPointToPLEndPoint)
+          ProjectLinkNonConnectedDistance(pl, endPointPL, distanceFromPointToPLStartPoint)
+        else
+          ProjectLinkNonConnectedDistance(pl, startPointPL, distanceFromPointToPLEndPoint)
       }
 
       val startPointMinDistance = unprocessed.map(mapDistances(projectLinkChain.startPoint)).minBy(_.distance)
       val endPointMinDistance = unprocessed.map(mapDistances(projectLinkChain.endPoint)).minBy(_.distance)
       val calculatedEndPoint = if (endPointMinDistance.projectLink.status == RoadAddressChangeType.New && endPointMinDistance.projectLink.endAddrMValue == 0) endPointMinDistance.point else endPointMinDistance.projectLink.endPoint
-      val (resultProjectLinkChain, newUnprocessed) = if (startPointMinDistance.distance > endPointMinDistance.distance || endPointMinDistance.projectLink.startAddrMValue == projectLinkChain.sortedProjectLinks.last.endAddrMValue && endPointMinDistance.projectLink.endAddrMValue != 0 && projectLinkChain.sortedProjectLinks.last.endAddrMValue != 0)
+      val (resultProjectLinkChain, newUnprocessed) =
+        if (startPointMinDistance.distance > endPointMinDistance.distance
+          || endPointMinDistance.projectLink.startAddrMValue == projectLinkChain.sortedProjectLinks.last.endAddrMValue
+          && endPointMinDistance.projectLink.endAddrMValue != 0
+          && projectLinkChain.sortedProjectLinks.last.endAddrMValue != 0)
         (projectLinkChain.copy(sortedProjectLinks = projectLinkChain.sortedProjectLinks :+ endPointMinDistance.projectLink, endPoint = calculatedEndPoint), unprocessed.filterNot(pl => pl.id == endPointMinDistance.projectLink.id))
       else
         (projectLinkChain.copy(sortedProjectLinks = startPointMinDistance.projectLink +: projectLinkChain.sortedProjectLinks, startPoint = startPointMinDistance.point), unprocessed.filterNot(pl => pl.id == startPointMinDistance.projectLink.id))
