@@ -908,7 +908,9 @@ class RoadAddressService(
         val calibrationPoint = CalibrationPointDAO.fetchByRoadwayPointId(oldRoadwayPointId).filter(_.startOrEnd == CalibrationPointLocation.StartOfLink)
         logger.info(s"Update calibration point (${calibrationPoint.map(_.id)}) for after roadway point id: $oldRoadwayPointId to $newRoadwayPointId, startOrEnd: $startOrEnd")
         CalibrationPointDAO.expireById(calibrationPoint.map(_.id))
-        CalibrationPointDAO.create(calibrationPoint.map(_.copy(id = NewIdValue, roadwayPointId = newRoadwayPointId, startOrEnd = startOrEnd, typeCode = CalibrationPointType.RoadAddressCP, createdBy = username)))
+        calibrationPoint.foreach(cp => CalibrationPointDAO.
+          create(newRoadwayPointId, cp.linkId, startOrEnd, CalibrationPointType.RoadAddressCP, username)
+        )
       }
     }
 
