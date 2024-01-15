@@ -199,6 +199,13 @@ object GeometryUtils {
     point1.distance2DTo(point2) < epsilon
   }
 
+  def areGeometriesConnected(geom1StartPoint: Point, geom1EndPoint: Point, geom2StartPoint: Point, geom2EndPoint: Point): Boolean = {
+    GeometryUtils.areAdjacent(geom1EndPoint, geom2StartPoint) ||    // ---1-->---2-->
+      GeometryUtils.areAdjacent(geom1StartPoint, geom2EndPoint) ||  // <--1---<--2---
+      GeometryUtils.areAdjacent(geom1EndPoint, geom2EndPoint) ||    // ---1--><--2---
+      GeometryUtils.areAdjacent(geom1StartPoint, geom2StartPoint)   // <--1--|--2--->
+  }
+
   def segmentByMinimumDistance(point: Point, segments: Seq[Point]): (Point, Point) = {
     val partitions = segments.init.zip(segments.tail)
     partitions.minBy { p => minimumDistance(point, p) }
