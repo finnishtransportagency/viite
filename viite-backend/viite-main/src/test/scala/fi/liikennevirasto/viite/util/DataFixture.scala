@@ -147,7 +147,7 @@ object DataFixture {
 
     //get All municipalities and group them for ely
     PostGISDatabase.withDynTransaction {
-      MunicipalityDAO.getDigiroadMunicipalityMapping
+      MunicipalityDAO.getDigiroadMunicipalityToElyMapping
     }.groupBy(_._2).foreach {
       case (ely, municipalityEly) =>
 

@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.DigiroadEventBus
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReservedException}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.liikennevirasto.viite.ProjectAddressLinkBuilder.municipalityRoadMaintainerMapping
+import fi.liikennevirasto.viite.ProjectAddressLinkBuilder.municipalityToViiteELYMapping
 import fi.liikennevirasto.viite.dao._
 import ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.ProjectState._
@@ -233,7 +233,7 @@ class ProjectService(
         preFillRoadName(
           roadNumber,
           roadPartNumber,
-          Try(municipalityRoadMaintainerMapping(municipalitycode)).getOrElse(-1),
+          Try(municipalityToViiteELYMapping(municipalitycode)).getOrElse(-1),
           projectId
         )
       case _ => Left(s"Link could not be found from project: $projectId")
@@ -647,7 +647,7 @@ class ProjectService(
     * @return
     */
   def changeDirection(projectId: Long, roadNumber: Long, roadPartNumber: Long, links: Seq[LinkToRevert], coordinates: ProjectCoordinates, username: String): Option[String] = {
-    roadAddressLinkBuilder.municipalityRoadMaintainerMapping // make sure it is populated outside of this TX
+    roadAddressLinkBuilder.municipalityToViiteELYMapping // make sure it is populated outside of this TX
     try {
       withDynTransaction {
         projectWritableCheckInSession(projectId) match {

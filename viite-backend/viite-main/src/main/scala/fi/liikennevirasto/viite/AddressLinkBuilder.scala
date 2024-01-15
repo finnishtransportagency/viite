@@ -7,11 +7,11 @@ trait AddressLinkBuilder {
   val RoadNumber = "roadnumber"
 
   /** Viite municipality to ELY code mapping */
-  lazy val municipalityRoadMaintainerMapping: Map[Long, Long] = if (PostGISDatabase.isWithinSession)
-    MunicipalityDAO.getMunicipalityRoadMaintainers
+  lazy val municipalityToViiteELYMapping: Map[Long, Long] = if (PostGISDatabase.isWithinSession)
+    MunicipalityDAO.getViiteMunicipalityToElyMapping
   else
     PostGISDatabase.withDynSession {
-      MunicipalityDAO.getMunicipalityRoadMaintainers
+      MunicipalityDAO.getViiteMunicipalityToElyMapping
     }
 
   lazy val municipalityNamesMapping: Map[Long, String] = if (PostGISDatabase.isWithinSession)
