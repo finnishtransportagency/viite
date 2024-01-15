@@ -33,14 +33,7 @@ object TwoTrackRoadUtils {
     *   (trackToSearchStatusChanges[ProjectLink], oppositeTrack[ProjectLink],
     *   udcp[Option[UserDefinedCalibrationPoint] ])
     */
-  def splitPlsAtStatusChange(
-    trackToSearchStatusChanges: Seq[ProjectLink],
-    oppositeTrack:              Seq[ProjectLink]
-  ): (
-    Seq[ProjectLink],
-    Seq[ProjectLink],
-    Seq[Option[UserDefinedCalibrationPoint]]
-  ) = {
+  def splitPlsAtStatusChange(trackToSearchStatusChanges: Seq[ProjectLink], oppositeTrack: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink], Seq[Option[UserDefinedCalibrationPoint]]) = {
     trackToSearchStatusChanges.tail.foldLeft(
       (
         Seq(trackToSearchStatusChanges.head),
@@ -95,15 +88,7 @@ object TwoTrackRoadUtils {
   }
 
   /* split start */
-  private def createCalibrationPointsAtStatusChange(
-    toUpdateLinks: Seq[ProjectLink],
-    roadPartLinks: Seq[ProjectLink],
-    projectId:     Long
-  ): (
-    Option[(ProjectLink, ProjectLink)],
-    Seq[Option[UserDefinedCalibrationPoint]],
-    Option[(ProjectLink, ProjectLink)]
-  ) = {
+  private def createCalibrationPointsAtStatusChange(toUpdateLinks: Seq[ProjectLink], roadPartLinks: Seq[ProjectLink], projectId: Long): (Option[(ProjectLink, ProjectLink)], Seq[Option[UserDefinedCalibrationPoint]], Option[(ProjectLink, ProjectLink)]) = {
     val last = toUpdateLinks.maxBy(_.endAddrMValue)
     val roadPartCalibrationPoints =
       ProjectCalibrationPointDAO.fetchByRoadPart(
@@ -112,19 +97,11 @@ object TwoTrackRoadUtils {
         last.roadPartNumber
       )
 
-    def splitAt(
-      pl:        ProjectLink,
-      address:   Long,
-      endPoints: Map[Point, ProjectLink]
-    ): (ProjectLink, ProjectLink) = {
-      val coefficient =
-          (pl.endMValue - pl.startMValue) / (pl.endAddrMValue - pl.startAddrMValue)
-      val splitMeasure =
-          pl.startMValue + (math.abs(
-            pl.startAddrMValue - address
-          ) * coefficient)
-      val geom         = getGeometryFromSplitMeasure(pl, endPoints, splitMeasure)
-      val new_geometry = getNewGeometryFromSplitMeasure(pl, endPoints, splitMeasure)
+    def splitAt(pl: ProjectLink, address: Long, endPoints: Map[Point, ProjectLink]): (ProjectLink, ProjectLink) = {
+      val coefficient = (pl.endMValue - pl.startMValue) / (pl.endAddrMValue - pl.startAddrMValue)
+      val splitMeasure = pl.startMValue + (math.abs(pl.startAddrMValue - address) * coefficient)
+      val geometryBeforeSplitPoint  = getGeometryFromSplitMeasure(pl, endPoints, splitMeasure)
+      val geometryAfterSplitPoint   = getNewGeometryFromSplitMeasure(pl, endPoints, splitMeasure)
 
       val calsForFirstPart =
         if (pl.calibrationPoints._1.isDefined)
@@ -142,13 +119,35 @@ object TwoTrackRoadUtils {
       val splittedOriginalEndAddrMValue =
         pl.originalStartAddrMValue + (address - pl.startAddrMValue)
 
-      val newPlId = Sequences.nextProjectLinkId
-      val newProjectLinks = (
-        pl.copy(discontinuity         = Discontinuity.Continuous, endAddrMValue         = address, originalEndAddrMValue = splittedOriginalEndAddrMValue, startMValue           = pl.startMValue, endMValue             = splitMeasure, calibrationPointTypes = calsForFirstPart, geometry              = geom, status                = pl.status, geometryLength        = splitMeasure - pl.startMValue, connectedLinkId       = Some(pl.linkId)),
-        pl.copy(id = NewIdValue, startAddrMValue         = address, endAddrMValue           = pl.endAddrMValue, originalStartAddrMValue = splittedOriginalEndAddrMValue, originalEndAddrMValue   = pl.originalEndAddrMValue, startMValue             = splitMeasure, endMValue               = pl.endMValue, calibrationPointTypes   = calsForSecondPart, geometry                = new_geometry, status                  = pl.status, geometryLength          = pl.geometryLength - (splitMeasure - pl.startMValue), connectedLinkId         = Some(pl.linkId))
+      val newProjectLinkBeforeSplit = pl.copy(
+        discontinuity         = Discontinuity.Continuous,
+        endAddrMValue         = address,
+        originalEndAddrMValue = splittedOriginalEndAddrMValue,
+        startMValue           = pl.startMValue,
+        endMValue             = splitMeasure,
+        calibrationPointTypes = calsForFirstPart,
+        geometry              = geometryBeforeSplitPoint,
+        status                = pl.status,
+        geometryLength        = splitMeasure - pl.startMValue,
+        connectedLinkId       = Some(pl.linkId)
       )
 
-      (newProjectLinks._1, newProjectLinks._2.copy(id = newPlId))
+      val newProjectLinkAfterSplit = pl.copy(
+        id                      = Sequences.nextProjectLinkId,
+        startAddrMValue         = address,
+        endAddrMValue           = pl.endAddrMValue,
+        originalStartAddrMValue = splittedOriginalEndAddrMValue,
+        originalEndAddrMValue   = pl.originalEndAddrMValue,
+        startMValue             = splitMeasure,
+        endMValue               = pl.endMValue,
+        calibrationPointTypes   = calsForSecondPart,
+        geometry                = geometryAfterSplitPoint,
+        status                  = pl.status,
+        geometryLength          = pl.geometryLength - (splitMeasure - pl.startMValue),
+        connectedLinkId         = Some(pl.linkId)
+      )
+
+      (newProjectLinkBeforeSplit, newProjectLinkAfterSplit)
     }
 
     /** Create calibration points of type user defined
@@ -232,14 +231,7 @@ object TwoTrackRoadUtils {
         (Seq.empty[Option[UserDefinedCalibrationPoint]], None)
     }
 
-    def splitAndSetCalibrationPointsAtEnd(
-      last:          ProjectLink,
-      roadPartLinks: Seq[ProjectLink]
-    ): (
-      Option[(ProjectLink, ProjectLink)],
-      Seq[Option[UserDefinedCalibrationPoint]],
-      Option[(ProjectLink, ProjectLink)]
-    ) = {
+    def splitAndSetCalibrationPointsAtEnd(last: ProjectLink, roadPartLinks: Seq[ProjectLink]): (Option[(ProjectLink, ProjectLink)], Seq[Option[UserDefinedCalibrationPoint]], Option[(ProjectLink, ProjectLink)]) = {
       if (last.track != Track.Combined && last.discontinuity == Discontinuity.Continuous) {
 
         val hasOtherSideLink = roadPartLinks.filter(pl =>
@@ -274,17 +266,10 @@ object TwoTrackRoadUtils {
           }
 
           if (otherSideLink.endAddrMValue != last.endAddrMValue) {
-            val endPoints = TrackSectionOrder.findChainEndpoints(
-              roadPartLinks.filter(pl =>
-                pl.endAddrMValue <= otherSideLink.endAddrMValue && pl.track == otherSideLink.track
-              )
-            )
-            val (plPart1, plPart2) =
-                splitAt(otherSideLink, last.endAddrMValue, endPoints)
-            val (
-              newCP: Seq[Option[UserDefinedCalibrationPoint]],
-              cpUpdatedPls
-            ) =
+            val section = findConnectedSection(otherSideLink, roadPartLinks.filter(pl => pl.endAddrMValue <= otherSideLink.endAddrMValue && pl.track == otherSideLink.track))
+            val endPoints = TrackSectionOrder.findChainEndpoints(section)
+            val (plPart1, plPart2) = splitAt(otherSideLink, last.endAddrMValue, endPoints)
+            val (newCP: Seq[Option[UserDefinedCalibrationPoint]], cpUpdatedPls) =
               createCalibrationPoints(
                 startCP,
                 endCP,
@@ -294,10 +279,7 @@ object TwoTrackRoadUtils {
               )
             (Some(plPart1, plPart2), newCP, cpUpdatedPls)
           } else {
-            val (
-              newCP: Seq[Option[UserDefinedCalibrationPoint]],
-              cpUpdatedPls
-            ) =
+            val (newCP: Seq[Option[UserDefinedCalibrationPoint]], cpUpdatedPls) =
               createCalibrationPoints(
                 startCP,
                 endCP,
@@ -314,6 +296,26 @@ object TwoTrackRoadUtils {
     splitAndSetCalibrationPointsAtEnd(last, roadPartLinks)
   }
 
+  def findConnectedSection(startLink: ProjectLink, allLinks: Seq[ProjectLink]): List[ProjectLink] = {
+    def findSection(currentLink: ProjectLink, section: List[ProjectLink]): List[ProjectLink] = {
+      val currentIndex = allLinks.indexOf(currentLink)
+      val nextIndex = currentIndex - 1
+
+      if (nextIndex < allLinks.length && nextIndex > 0) {
+        val nextLink = allLinks(nextIndex)
+
+        if (GeometryUtils.areGeometriesConnected(currentLink.startingPoint, currentLink.endPoint, nextLink.startingPoint, nextLink.endPoint)) {
+          findSection(nextLink, currentLink :: section)
+        } else {
+          currentLink :: section
+        }
+      } else {
+        currentLink :: section
+      }
+    }
+
+    findSection(startLink, List.empty[ProjectLink])
+  }
 
   private def getCalibrationPointsForSecondPart(
     pl: _root_.fi.liikennevirasto.viite.dao.ProjectLink
@@ -380,23 +382,12 @@ object TwoTrackRoadUtils {
   /* split end */
 
 
-  def findAndCreateSplitsAtOriginalAddress(
-                                         splitAddress: Long,
-                                         roadPartLinks: Seq[ProjectLink]
-                                       ): Option[(ProjectLink, ProjectLink)] = {
-    def splitAt(
-                 pl:        ProjectLink,
-                 address:   Long,
-                 endPoints: Map[Point, ProjectLink]
-               ): (ProjectLink, ProjectLink) = {
-      val coefficient =
-        (pl.endMValue - pl.startMValue) / (pl.originalEndAddrMValue - pl.originalStartAddrMValue)
-      val splitMeasure =
-        pl.startMValue + (math.abs(pl.originalStartAddrMValue - address) * coefficient)
-      val geom =
-        getGeometryFromSplitMeasure(pl,endPoints, splitMeasure)
-      val new_geometry =
-        getNewGeometryFromSplitMeasure(pl, endPoints, splitMeasure)
+  def findAndCreateSplitsAtOriginalAddress(splitAddress: Long, roadPartLinks: Seq[ProjectLink]): Option[(ProjectLink, ProjectLink)] = {
+    def splitAt(pl: ProjectLink, address: Long, endPoints: Map[Point, ProjectLink]): (ProjectLink, ProjectLink) = {
+      val coefficient = (pl.endMValue - pl.startMValue) / (pl.originalEndAddrMValue - pl.originalStartAddrMValue)
+      val splitMeasure = pl.startMValue + (math.abs(pl.originalStartAddrMValue - address) * coefficient)
+      val geometryBeforeSplitPoint = getGeometryFromSplitMeasure(pl,endPoints, splitMeasure)
+      val geometryAfterSplitPoint = getNewGeometryFromSplitMeasure(pl, endPoints, splitMeasure)
 
       val calsForFirstPart =
         if (pl.calibrationPoints._1.isDefined)
@@ -419,7 +410,7 @@ object TwoTrackRoadUtils {
                                 startMValue           = pl.startMValue,
                                 endMValue             = splitMeasure,
                                 calibrationPointTypes = calsForFirstPart,
-                                geometry              = geom,
+                                geometry              = geometryBeforeSplitPoint,
                                 status                = pl.status,
                                 geometryLength        = splitMeasure - pl.startMValue,
                                 connectedLinkId       = Some(pl.linkId)
@@ -431,7 +422,7 @@ object TwoTrackRoadUtils {
                                 startMValue             = splitMeasure,
                                 endMValue               = pl.endMValue,
                                 calibrationPointTypes   = calsForSecondPart,
-                                geometry                = new_geometry,
+                                geometry                = geometryAfterSplitPoint,
                                 status                  = pl.status,
                                 geometryLength          = pl.geometryLength - (splitMeasure - pl.startMValue),
                                 connectedLinkId         = Some(pl.linkId)
@@ -451,11 +442,8 @@ object TwoTrackRoadUtils {
 
         if (hasOtherSideLink.nonEmpty) {
           val otherSideLink = hasOtherSideLink.head
-            val endPoints = TrackSectionOrder.findChainEndpoints(
-              roadPartLinks.filter(pl =>
-                pl.originalEndAddrMValue <= otherSideLink.originalEndAddrMValue && pl.originalEndAddrMValue != 0 && pl.originalTrack == otherSideLink.originalTrack
-              )
-            )
+          val section = findConnectedSection(otherSideLink, roadPartLinks.filter(pl => pl.originalEndAddrMValue <= otherSideLink.originalEndAddrMValue && pl.originalEndAddrMValue != 0 && pl.originalTrack == otherSideLink.originalTrack))
+          val endPoints = TrackSectionOrder.findChainEndpoints(section)
             val (plPart1, plPart2) =
               splitAt(otherSideLink, splitAddress, endPoints)
             Some(plPart1, plPart2)
