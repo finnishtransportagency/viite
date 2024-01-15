@@ -10,7 +10,7 @@ import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.process.RoadAddressFiller.ChangeSet
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import fi.vaylavirasto.viite.dao.MunicipalityDAO
-import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils}
+import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.{BeforeAfter, CalibrationPointLocation, CalibrationPointType, Discontinuity, RoadAddressChangeType, RoadLink, SideCode, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase
 import org.joda.time.DateTime
@@ -234,6 +234,9 @@ class RoadAddressService(
     roadAddresses.map(roadAddressLinkBuilder.build)
   }
 
+  // maximum allowed length difference for VIITE-3083 rounding inconsistency
+  val maxAllowedLengthDifference = Point(0,0).distance2DTo(Point(0.001,0.001)) // 1mm to each direction
+
   /**
     * Gets all the road addresses in the given municipality code.
     *
@@ -263,7 +266,16 @@ class RoadAddressService(
       val roadLink = roadLinks.find(rl => rl.linkId == ra.linkId)
       roadLink.map(rl => {
         val ral: RoadAddressLink = roadAddressLinkBuilder.build(rl, ra)
-        ral.copy(geometry = (ral.geometry.dropRight(1):+rl.geometry.last.with3decimals) ) // Nasty hack to retain already correctly rounded 3 decimals from linear location
+
+        // ---- Start of VIITE-3083 hack ---
+        // Instead of returning just the RoadAddressLink returned by the roadAddressLinkBuilder.build function retain the linear location with "correct" 3 decimals in the last geometry point
+        if(ral.geometry.last.distance2DTo(rl.geometry.last) <= maxAllowedLengthDifference)
+          // VIITE-3083 if the calculated last point is off by just a minimal amount, use the end point from the linear location, instead. ---
+          // --- This corrects slight rounding inconsistencies between the last points of roadAddressLinkBuilder.build output, and the linear location geometry.
+          ral.copy(geometry = (ral.geometry.dropRight(1):+rl.geometry.last.with3decimals) ) // VIITE-3083 Hack to retain already correctly rounded 3 decimals from linear location
+        else
+        // ---- End of VIITE-3083 hack ----
+          ral     // VIITE-3083 default value with calculated geometry. Otherwise, keep the whole calculated geometry.
       })
     }
   }
