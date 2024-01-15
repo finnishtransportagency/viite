@@ -29,11 +29,6 @@ object CalibrationPointDAO extends BaseDAO {
   }
 
   def create(cp: CalibrationPoint): Long = {
-    create(cp.roadwayPointId, cp.linkId, cp.startOrEnd, cp.typeCode, cp.createdBy)
-    cp.id
-  }
-
-  def create(cp: CalibrationPoint): Long = {
     logger.debug(s"Trying to create a CP ${cp}")
     create(cp.roadwayPointId, cp.linkId, cp.startOrEnd, cp.typeCode, cp.createdBy)
 
