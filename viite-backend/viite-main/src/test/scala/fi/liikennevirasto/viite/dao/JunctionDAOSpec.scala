@@ -72,7 +72,7 @@ class JunctionDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       val nodeNumber = nodeDAO.create(Seq(testNode1)).head
       dao.create(Seq(testJunction1.copy(nodeNumber = Some(nodeNumber)), testJunction2.copy(nodeNumber = Some(nodeNumber))))
-      val fetched = dao.fetchJunctionsByNodeNumbers(Seq(nodeNumber + 1)) // Non-existing node id
+      val fetched = dao.fetchJunctionsByValidNodeNumbers(Seq(nodeNumber + 1)) // Non-existing node id
       fetched.size should be(0)
     }
   }
@@ -80,10 +80,10 @@ class JunctionDAOSpec extends FunSuite with Matchers {
   test("Test fetchJunctionByNodeIds When fetched Then return junctions") {
     runWithRollback {
       val nodeNumber = nodeDAO.create(Seq(testNode1)).head
-      val fetched1 = dao.fetchJunctionsByNodeNumbers(Seq(nodeNumber))
+      val fetched1 = dao.fetchJunctionsByValidNodeNumbers(Seq(nodeNumber))
       fetched1.size should be(0)
       dao.create(Seq(testJunction1.copy(nodeNumber = Some(nodeNumber)), testJunction2.copy(nodeNumber = Some(nodeNumber))))
-      val fetched2 = dao.fetchJunctionsByNodeNumbers(Seq(nodeNumber))
+      val fetched2 = dao.fetchJunctionsByValidNodeNumbers(Seq(nodeNumber))
       fetched2.size should be(2)
     }
   }

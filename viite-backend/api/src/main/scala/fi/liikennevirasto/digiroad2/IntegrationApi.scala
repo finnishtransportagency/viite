@@ -19,6 +19,7 @@ import org.scalatra.swagger.{Swagger, SwaggerSupport, SwaggerSupportSyntax}
 import org.scalatra.{BadRequest, InternalServerError, ScalatraServlet}
 import org.slf4j.{Logger, LoggerFactory}
 
+import scala.collection.immutable.ListMap
 import scala.util.control.NonFatal
 
 class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameService: RoadNameService, implicit val swagger: Swagger) extends ScalatraServlet
@@ -342,6 +343,79 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
         }
     )
 
+  val getValidNodes: SwaggerSupportSyntax.OperationBuilder =
+    (apiOperation[List[Map[String, Any]]]("getValidNodes")
+      tags "Integration"
+      summary "Returns all valid nodes"
+      )
+
+  get("/nodes/valid", operation(getValidNodes)) {
+    contentType = formats("json")
+    time(logger, s"GET request for /nodes/valid") {
+      ApiUtils.avoidRestrictions(apiId, request, params) { params =>
+        try {
+          val fetchedNodesWithJunctions = fetchAllValidNodesWithJunctions()
+          validNodesWithJunctionsToApi(fetchedNodesWithJunctions)
+        } catch {
+          case t: Throwable =>
+            handleCommonIntegrationAPIExceptions(t, getValidNodes.operationId)
+        }
+      }
+    }
+  }
+
+  private def validNodesWithJunctionsToApi(fetchedNodes: Seq[NodeWithJunctions]): Seq[Map[String, Any]] = {
+    val nodesWithJunctions: Seq[NodeWithJunctions] = fetchedNodes
+
+    def beforeAfterToLetter(l: Long): String = {
+      val result = l match {
+        case 1 => "E"
+        case 2 => "J"
+      }
+      result
+    }
+
+    val mappedNodes: Seq[Map[String, Any]] = nodesWithJunctions.map { n =>
+      val mappedJunctions = n.junctionsWithCoordinates.map { j =>
+        val mappedCrossingRoads = j.crossingRoads.map { cr =>
+          ListMap(
+            "roadNumber" -> cr.roadNumber,
+            "roadPartNumber" -> cr.roadPartNumber,
+            "track" -> cr.track,
+            "addrM" -> cr.addrM,
+            "beforeAfter" -> beforeAfterToLetter(cr.beforeAfter)
+          )
+        }
+        ListMap(
+          "startDate" -> j.startDate.toString(),
+          "junctionNumber" -> j.junctionNumber.getOrElse("N/A"),
+          "junctionCoordinateX" -> Option(j.xCoord).filter(_ != 0).map(_.toLong).getOrElse("N/A"), // If the value is 0 (coordinates could not be calculated), API returns "N/A"
+          "junctionCoordinateY" -> Option(j.yCoord).filter(_ != 0).map(_.toLong).getOrElse("N/A"), // If the value is 0 (coordinates could not be calculated), API returns "N/A"
+          "road_address" -> mappedCrossingRoads
+        )
+      }
+      ListMap(
+        "nodeNumber" -> n.node.nodeNumber,
+        "startDate" -> n.node.startDate.toString(),
+        "type" -> n.node.nodeType.value,
+        "name" -> n.node.name,
+        "nodeCoordinateX" -> n.node.coordinates.x.toLong,
+        "nodeCoordinateY" -> n.node.coordinates.y.toLong,
+        "junctions" -> mappedJunctions
+      )
+    }
+    mappedNodes
+  }
+
+  private def fetchAllValidNodesWithJunctions(): Seq[NodeWithJunctions] = {
+    val result: Seq[NodeWithJunctions] = APIServiceForNodesAndJunctions.getAllValidNodesWithJunctions
+    if (result.isEmpty) {
+      Seq.empty[NodeWithJunctions]
+    } else {
+      result
+    }
+  }
+
   val getLinearLocationChanges: SwaggerSupportSyntax.OperationBuilder =
     (apiOperation[List[Map[String, Any]]]("getLinearLocationChanges")
       tags "Integration (kalpa, Digiroad, Viitekehysmuunnin, ...)"
@@ -596,7 +670,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
         Map(
           "muokattu_viimeksi" -> roadAddressLink.modifiedAt.getOrElse(""),
           geometryWKT(
-            if (roadAddressLink.sideCode == SideCode.BothDirections || roadAddressLink.sideCode == SideCode.AgainstDigitizing)
+            if (roadAddressLink.sideCode == SideCode.AgainstDigitizing)
               roadAddressLink.geometry.reverse
             else
               roadAddressLink.geometry
