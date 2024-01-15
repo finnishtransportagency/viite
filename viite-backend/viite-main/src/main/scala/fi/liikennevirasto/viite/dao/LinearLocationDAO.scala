@@ -311,6 +311,40 @@ class LinearLocationDAO extends BaseDAO {
     fetchByIdMassQuery(ids, rejectInvalids)
   }
 
+
+  /**
+   * Returns the linear locations within the current network (valid_to is null), who
+   * have the given <i>linkId</i>, and
+   * have their M values fit within <i>filterMvalueMin</i>...<i>filterMvalueMax</i> range.
+   * The results are a bit robust filtered: A linear location that overlaps less than [[GeometryUtils.DefaultEpsilon]]
+   * the given range at either end, is not included in the results.
+   * @todo should it be e.g. 10cm instead of [[GeometryUtils.DefaultEpsilon]]?
+   *
+   * @param linkId          Filters the returned linear locations to those having this link id.
+   * @param filterMvalueMin Filters the returned linear locations to those that enter the range at minimum end
+   * @param filterMvalueMax Filters the returned linear locations to those that enter the range at maximum end
+   * @return List of Linear locations within given range, ordered by their start measures.
+   *         An overlap less than [[GeometryUtils.DefaultEpsilon]] is not seen as fitting the range.
+   */
+  def fetchByLinkIdAndMValueRange(linkId: String, filterMvalueMin: Double, filterMvalueMax: Double): List[LinearLocation] = {
+    time(logger, "Fetch linear locations by link id, and M values") {
+
+      val mustStartBefore = filterMvalueMax - GeometryUtils.DefaultEpsilon // do not count overlap less than epsilon at max value end
+      val mustEndAfter    = filterMvalueMin + GeometryUtils.DefaultEpsilon // do not count overlap less than epsilon at min value end
+
+      val query =
+        s"""
+          $selectFromLinearLocation
+          WHERE loc.link_id = '$linkId'
+          AND loc.start_measure <= $mustStartBefore -- The start of a valid linear location is before the given max value
+          AND loc.end_measure   >= $mustEndAfter    -- The end   of a valid linear location is after  the given min value
+          AND loc.valid_to is null
+          ORDER BY loc.START_MEASURE
+        """
+      queryList(query)
+    }
+  }
+
   def fetchByLinkId(linkIds: Set[String], filterIds: Set[Long] = Set()): List[LinearLocation] = {
     time(logger, "Fetch linear locations by link id") {
       if (linkIds.isEmpty) {

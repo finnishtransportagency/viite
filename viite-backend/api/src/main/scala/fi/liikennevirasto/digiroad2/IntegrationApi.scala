@@ -10,6 +10,7 @@ import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.{AdministrativeClass, SideCode}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase
 import fi.vaylavirasto.viite.util.DateTimeFormatters.dateTimeNoMillisFormatter
+import fi.vaylavirasto.viite.util.ViiteException
 import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, Formats}
 import org.postgresql.util.PSQLException

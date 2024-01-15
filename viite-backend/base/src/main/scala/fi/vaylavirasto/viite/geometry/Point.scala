@@ -31,13 +31,28 @@ case class Point(x: Double, y: Double, z: Double = 0.0) {
     Point(GeometryUtils.scaleToThreeDigits(x + that.x), GeometryUtils.scaleToThreeDigits(y + that.y), z + that.z)
   }
 
+  /** Return this Point with its coordinates rounded to the nearest 3rd decimal. */
+  def with3decimals = {
+    Point(
+      GeometryUtils.scaleToThreeDigits(this.x),
+      GeometryUtils.scaleToThreeDigits(this.y),
+      GeometryUtils.scaleToThreeDigits(this.z)
+    )
+  }
+
   lazy val toVector: Vector3d = {
     this - Point(0.0, 0.0)
   }
 
-  /** @return Whether this Point and <i>point</i> are interpreted of being connected. The points are  interpreted
-   *          of being connected, if they are less than [[GeometryUtils.MaxDistanceForConnectedLinks]] apart from each other. */
+  /** @return Whether this Point and <i>point</i> are interpreted of being connected. The points are considered
+   *          being connected, if they are less than [[GeometryUtils.MaxDistanceForConnectedLinks]] apart from each other. */
   def connected(point: Point): Boolean = {
     GeometryUtils.areAdjacent(this, point, GeometryUtils.MaxDistanceForConnectedLinks)
+  }
+
+  /** @return Whether this Point and <i>point</i> are interpreted as being the same. The points are considered
+   *          the same, if they are less than [[GeometryUtils.DefaultEpsilon]] apart from each other. */
+  def consideredSameAs(point: Point): Boolean = {
+    GeometryUtils.areAdjacent(this, point, GeometryUtils.DefaultEpsilon)
   }
 }

@@ -6,6 +6,7 @@ import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
 import fi.vaylavirasto.viite.model.{CalibrationPoint, CalibrationPointLocation, CalibrationPointType}
+import fi.vaylavirasto.viite.util.ViiteException
 
 object CalibrationPointDAO extends BaseDAO {
 
@@ -32,11 +33,21 @@ object CalibrationPointDAO extends BaseDAO {
     cp.id
   }
 
+  def create(cp: CalibrationPoint): Long = {
+    logger.debug(s"Trying to create a CP ${cp}")
+    create(cp.roadwayPointId, cp.linkId, cp.startOrEnd, cp.typeCode, cp.createdBy)
+
+    val cpOption = CalibrationPointDAO.fetch(cp.linkId, cp.startOrEnd.value) // get the CP for the id
+    cpOption.getOrElse(throw ViiteException("The created (or so I thought) calibration point was not found!"))
+      .id
+  }
+
   def create(roadwayPointId: Long,
              linkId: String,
              startOrEnd: CalibrationPointLocation,
              calType: CalibrationPointType,
              createdBy: String): Unit = {
+
     runUpdateToDb(s"""
       Insert Into CALIBRATION_POINT (ID, ROADWAY_POINT_ID, LINK_ID, START_END, TYPE, CREATED_BY) VALUES
       (${Sequences.nextCalibrationPointId}, $roadwayPointId, '$linkId', ${startOrEnd.value}, ${calType.value}, '$createdBy')
