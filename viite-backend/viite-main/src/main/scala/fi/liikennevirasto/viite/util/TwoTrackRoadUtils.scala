@@ -297,13 +297,6 @@ object TwoTrackRoadUtils {
   }
 
   def findConnectedSection(startLink: ProjectLink, allLinks: Seq[ProjectLink]): List[ProjectLink] = {
-    def isConnected(link1: ProjectLink, link2: ProjectLink): Boolean = {
-        GeometryUtils.areAdjacent(link1.getLastPoint, link2.getFirstPoint) || // ---1-->---2-->
-        GeometryUtils.areAdjacent(link1.getFirstPoint, link2.getLastPoint)|| // <--1---<--2---
-        GeometryUtils.areAdjacent(link1.getLastPoint, link2.getLastPoint) || // ---1--><--2---
-        GeometryUtils.areAdjacent(link1.getFirstPoint, link2.getFirstPoint) // <--1--|--2--->
-    }
-
     def findSection(currentLink: ProjectLink, section: List[ProjectLink]): List[ProjectLink] = {
       val currentIndex = allLinks.indexOf(currentLink)
       val nextIndex = currentIndex - 1
@@ -311,7 +304,7 @@ object TwoTrackRoadUtils {
       if (nextIndex < allLinks.length && nextIndex > 0) {
         val nextLink = allLinks(nextIndex)
 
-        if (isConnected(currentLink, nextLink)) {
+        if (GeometryUtils.areGeometriesConnected(currentLink.startingPoint, currentLink.endPoint, nextLink.startingPoint, nextLink.endPoint)) {
           findSection(nextLink, currentLink :: section)
         } else {
           currentLink :: section
