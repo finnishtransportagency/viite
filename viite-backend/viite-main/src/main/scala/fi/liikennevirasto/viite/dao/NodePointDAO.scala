@@ -156,7 +156,7 @@ class NodePointDAO extends BaseDAO {
     queryList(query)
   }
 
-  /** Get the eligible (valid_to is null) NodePoints that have the given roadwayNumber. */
+  /** Get the eligible (valid_to is null) NodePoints and NodePoint templates that have the given roadwayNumber. */
   def fetchByRoadwayNumber(roadwayNumber: Long): Seq[NodePoint] = {
     val query =
       s"""
@@ -204,7 +204,7 @@ class NodePointDAO extends BaseDAO {
           FROM NODE_POINT NP
           JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
           JOIN ROADWAY RW ON (RP.ROADWAY_NUMBER = RW.ROADWAY_NUMBER AND RW.end_date is NULL AND RW.VALID_TO IS NULL)
-          where RP.roadway_number in (${roadwayNumbers.mkString(", ")}) and NP.valid_to is null
+          where RP.roadway_number in (${roadwayNumbers.mkString(", ")}) and NP.valid_to is null and NP.node_number is null
        """
       }
     queryList(query)
@@ -359,6 +359,15 @@ class NodePointDAO extends BaseDAO {
     }
   }
 
+  def fetchNodePointTemplateByRoadwayPointId(roadwayPointId: Long): Seq[NodePoint] = {
+    val query =
+      s"""
+     $selectFromNodePoint
+     where NP.ROADWAY_POINT_ID = $roadwayPointId and NP.valid_to is null and NP.node_number is null
+   """
+    queryList(query)
+  }
+
   def fetchNodePointsCountForRoadAndRoadPart(roadNumber: Long, roadPartNumber: Long, beforeAfter: Long, nodeNumber: Long): Option[Long] = {
     val query =
       s"""
@@ -431,6 +440,13 @@ class NodePointDAO extends BaseDAO {
           ORDER BY R.ROAD_NUMBER, R.ROAD_PART_NUMBER
        """
         queryList(query)
+  }
+
+  def insertRoadNodePoint(roadwayPointId: Long, beforeAfter: BeforeAfter, nodeNumber: Long, username: String): Unit = {
+    create(Seq(NodePoint(NewIdValue, beforeAfter, roadwayPointId, Some(nodeNumber), NodePointType.RoadNodePoint,
+      None, None, DateTime.now(), None,
+      username, Some(DateTime.now()), 0L, 11,
+      0, 0, null, 8)))
   }
 
   def insertCalculatedNodePoint(roadwayPointId: Long, beforeAfter: BeforeAfter, nodeNumber: Long, username: String): Unit = {

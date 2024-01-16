@@ -7,7 +7,7 @@ import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
-import fi.vaylavirasto.viite.model.{BeforeAfter, CalibrationPointLocation, CalibrationPointType, Discontinuity, NodePointType, RoadAddressChangeType, Track}
+import fi.vaylavirasto.viite.model.{BeforeAfter, CalibrationPointLocation, CalibrationPointType, Discontinuity, NodePointType, NodeType, RoadAddressChangeType, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -300,7 +300,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         val nodes = (nodesByBoundingBox ++ junctionsByBoundingBox.flatMap { case (junction, _) if junction.nodeNumber.isDefined => nodeDAO.fetchByNodeNumber(junction.nodeNumber.get) }).distinct
 
         val nodePoints = nodePointDAO.fetchByNodeNumbers(nodes.map(_.nodeNumber))
-        val junctions = junctionDAO.fetchJunctionsByNodeNumbers(nodes.map(_.nodeNumber))
+        val junctions = junctionDAO.fetchJunctionsByValidNodeNumbers(nodes.map(_.nodeNumber))
         val junctionPoints = junctionPointDAO.fetchByJunctionIds(junctions.map(_.id))
 
         val groupedRoadLinks = raLinks.groupBy(_.roadwayNumber)
@@ -334,7 +334,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     withDynSession {
       val nodes = nodeDAO.fetchAllByDateRange(sinceDate, untilDate)
       val nodePoints = nodePointDAO.fetchByNodeNumbers(nodes.map(_.nodeNumber))
-      val junctions = junctionDAO.fetchJunctionsByNodeNumbers(nodes.map(_.nodeNumber))
+      val junctions = junctionDAO.fetchJunctionsByValidNodeNumbers(nodes.map(_.nodeNumber))
       val junctionPoints = junctionPointDAO.fetchByJunctionIds(junctions.map(_.id))
       nodes.map {
         node =>
@@ -1186,8 +1186,28 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
               nodePointDAO.insertCalculatedNodePoint(rwPoint, BeforeAfter.After, nodeNumber, username)
               nodePointCount = nodePointCount + 2
             } else {
-              nodePointDAO.insertCalculatedNodePoint(rwPoint, beforeAfterValue, nodeNumber, username)
-              nodePointCount = nodePointCount + 1
+              val nodePointTemplates = nodePointDAO.fetchNodePointTemplateByRoadwayPointId(rwPoint).headOption
+              if (nodePointTemplates.nonEmpty) {
+                val nodePointTemplate = nodePointTemplates.head
+
+                // Check what is the type of the TEMPLATE and insert a equivalent nodePoint, then delete any duplicate TEMPLATES
+
+                if (nodePointTemplate.nodePointType == NodePointType.CalculatedNodePoint) {
+                  nodePointDAO.insertCalculatedNodePoint(rwPoint, beforeAfterValue, nodeNumber, username)
+                  nodePointCount = nodePointCount + 1
+                  //expire duplicate nodePointTemplate if there is one with the same roadwayPoint
+                  nodePointDAO.expireById(List(nodePointTemplate.id))
+                }
+                else if (nodePointTemplate.nodePointType == NodePointType.RoadNodePoint) {
+                  nodePointDAO.insertRoadNodePoint(rwPoint, beforeAfterValue, nodeNumber, username)
+                  nodePointCount = nodePointCount + 1
+                  //expire duplicate nodePointTemplate if there is one with the same roadwayPoint
+                  nodePointDAO.expireById(List(nodePointTemplate.id))
+                }
+              } else {
+                nodePointDAO.insertCalculatedNodePoint(rwPoint, beforeAfterValue, nodeNumber, username)
+                nodePointCount = nodePointCount + 1
+              }
             }
           })
       }

@@ -6,7 +6,7 @@ import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
 import fi.vaylavirasto.viite.model.{NodeType, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase
-import fi.vaylavirasto.viite.util.DateTimeFormatters.{basicDateFormatter, dateOptTimeFormatter}
+import fi.vaylavirasto.viite.util.DateTimeFormatters.dateOptTimeFormatter
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
@@ -20,6 +20,12 @@ case class JunctionInfo(id: Long, junctionNumber: Option[Long], startDate: DateT
 case class JunctionTemplate(id: Long, startDate: DateTime, roadNumber: Long, roadPartNumber: Long, track: Track, addrM: Long, elyCode: Long, coords: Point = Point(0.0, 0.0))
 
 case class JunctionForRoadAddressBrowser(nodeNumber: Long, nodeCoordinates: Point, nodeName: Option[String], nodeType: NodeType, startDate: DateTime, junctionNumber: Option[Long], roadNumber: Long, track: Long, roadPartNumber: Long, addrM: Long, beforeAfter: Seq[Long])
+
+case class JunctionWithCoordinateAndCrossingRoads(id: Long, junctionNumber: Option[Long], nodeNumber: Option[Long], startDate: DateTime, endDate: Option[DateTime],
+                                                  validFrom: DateTime, validTo: Option[DateTime], createdBy: String, createdTime: Option[DateTime], xCoord: Double, yCoord: Double, crossingRoads: Seq[RoadwaysForJunction])
+
+case class JunctionWithLinearLocation(id: Long, junctionNumber: Option[Long], nodeNumber: Option[Long], startDate: DateTime, endDate: Option[DateTime],
+                                      validFrom: DateTime, validTo: Option[DateTime], createdBy: String, createdTime: Option[DateTime], llId: Seq[Long])
 
 class JunctionDAO extends BaseDAO {
 
@@ -92,6 +98,49 @@ class JunctionDAO extends BaseDAO {
     }
   }
 
+  implicit val getJunctionWithLinearLocation: GetResult[JunctionWithLinearLocation] = new GetResult[JunctionWithLinearLocation] {
+    def parseJsonbAgg(stringToParse: String): Seq[Long] = {
+      val res = stringToParse.replaceAll("[\\[\\]\\s]", "")
+      res.split(",").map(_.toLong).toSeq
+    }
+
+    def apply(r: PositionedResult): JunctionWithLinearLocation = {
+      val id = r.nextLong()
+      val junctionNumber = r.nextLongOption()
+      val nodeNumber = r.nextLongOption()
+      val startDate = dateOptTimeFormatter.parseDateTime(r.nextDate.toString)
+      val endDate = r.nextDateOption.map(d => dateOptTimeFormatter.parseDateTime(d.toString))
+      val validFrom = dateOptTimeFormatter.parseDateTime(r.nextDate.toString)
+      val validTo = r.nextDateOption.map(d => dateOptTimeFormatter.parseDateTime(d.toString))
+      val createdBy = r.nextString()
+      val createdTime = r.nextDateOption.map(d => dateOptTimeFormatter.parseDateTime(d.toString))
+      val llIds: Seq[Long] = parseJsonbAgg(r.rs.getString("ll_id"))
+
+      JunctionWithLinearLocation(id, junctionNumber, nodeNumber, startDate, endDate,
+        validFrom, validTo, createdBy, createdTime, llIds)
+    }
+  }
+
+  def fetchJunctionsByNodeNumbersWithLinearLocation(nodeNumbers: Seq[Long]): Seq[JunctionWithLinearLocation] = {
+    if (nodeNumbers.isEmpty) {
+      Seq()
+    } else {
+      val query =
+        s"""
+    select distinct J.ID, J.JUNCTION_NUMBER, J.NODE_NUMBER, J.START_DATE, J.END_DATE, J.VALID_FROM, J.VALID_TO, J.CREATED_BY, J.CREATED_TIME, jsonb_agg(distinct ll.id) as ll_id
+              FROM JUNCTION J
+              join junction_point jp on j.id = jp.junction_id and jp.valid_to is null
+              join calibration_point cp on jp.roadway_point_id = cp.roadway_point_id and cp.valid_to is null
+              join linear_location ll on cp.link_id = ll.link_id and ll.valid_to is null
+              join roadway_point rp on cp.roadway_point_id = rp.id and rp.roadway_number = ll.roadway_number
+              join roadway r on ll.roadway_number = r.roadway_number and r.valid_to is null and r.end_date is null
+      where j.NODE_NUMBER in (${nodeNumbers.mkString(", ")}) AND j.VALID_TO IS NULL AND j.END_DATE IS NULL
+      group by j.id
+    """
+      Q.queryNA[JunctionWithLinearLocation](query).iterator.toSeq
+    }
+  }
+
   private def queryList(query: String): List[Junction] = {
     Q.queryNA[Junction](query).list.groupBy(_.id).map {
       case (_, list) =>
@@ -107,10 +156,10 @@ class JunctionDAO extends BaseDAO {
   }
 
   def fetchJunctionByNodeNumber(nodeNumber: Long): Seq[Junction] = {
-    fetchJunctionsByNodeNumbers(Seq(nodeNumber))
+    fetchJunctionsByValidNodeNumbers(Seq(nodeNumber))
   }
 
-  def fetchJunctionsByNodeNumbers(nodeNumbers: Seq[Long]): Seq[Junction] = {
+  def fetchJunctionsByValidNodeNumbers(nodeNumbers: Seq[Long]): Seq[Junction] = {
     if (nodeNumbers.isEmpty) {
       Seq()
     } else {

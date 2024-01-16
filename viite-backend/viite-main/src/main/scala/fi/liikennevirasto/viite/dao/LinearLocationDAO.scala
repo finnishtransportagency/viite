@@ -110,7 +110,12 @@ object CalibrationPointReference {
 // Notes:
 //  - Geometry on linear location is not directed: it isn't guaranteed to have a direction of digitization or road addressing
 //  - Order number is a Double in LinearLocation case class and Long on the database because when there is for example divided change type we need to add more linear locations
-case class LinearLocation(id: Long, orderNumber: Double, linkId: String, startMValue: Double, endMValue: Double, sideCode: SideCode, adjustedTimestamp: Long, calibrationPoints: (CalibrationPointReference, CalibrationPointReference) = (CalibrationPointReference.None, CalibrationPointReference.None), geometry: Seq[Point], linkGeomSource: LinkGeomSource, roadwayNumber: Long, validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None) extends BaseLinearLocation {
+case class LinearLocation(id: Long, orderNumber: Double, linkId: String,
+                          startMValue: Double, endMValue: Double, sideCode: SideCode, adjustedTimestamp: Long,
+                          calibrationPoints: (CalibrationPointReference, CalibrationPointReference) = (CalibrationPointReference.None, CalibrationPointReference.None),
+                          geometry: Seq[Point], linkGeomSource: LinkGeomSource,
+                          roadwayNumber: Long,
+                          validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None) extends BaseLinearLocation {
   def this(id: Long, orderNumber: Double, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode, adjustedTimestamp: Long, calibrationPoints: (CalibrationPointReference, CalibrationPointReference), geometry: Seq[Point], linkGeomSource: LinkGeomSource, roadwayNumber: Long, validFrom: Option[DateTime], validTo: Option[DateTime]) =
    this(id, orderNumber, linkId.toString, startMValue, endMValue, sideCode, adjustedTimestamp, calibrationPoints, geometry, linkGeomSource, roadwayNumber, validFrom, validTo)
 
@@ -128,6 +133,14 @@ case class LinearLocation(id: Long, orderNumber: Double, linkId: String, startMV
 
 }
 
+/**
+ * Coordinate point of junction (the blue circle on the map).
+ * Used only in /nodes/valid API
+ * @param xCoord
+ * @param yCoord
+ */
+case class JunctionCoordinate(xCoord: Double, yCoord: Double)
+
 //TODO Rename all the method names to follow a rule like fetchById instead of have fetchById and QueryById
 class LinearLocationDAO extends BaseDAO {
 
@@ -135,9 +148,9 @@ class LinearLocationDAO extends BaseDAO {
     """
        SELECT loc.ID, loc.ROADWAY_NUMBER, loc.ORDER_NUMBER, loc.LINK_ID, loc.START_MEASURE, loc.END_MEASURE, loc.SIDE,
               (SELECT RP.ADDR_M FROM CALIBRATION_POINT CP JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID WHERE cp.LINK_ID = loc.LINK_ID AND loc.ROADWAY_NUMBER = rp.ROADWAY_NUMBER AND cp.START_END = 0 AND cp.VALID_TO IS NULL) AS cal_start_addr_m,
-              (SELECT CP.TYPE FROM CALIBRATION_POINT CP JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID WHERE cp.LINK_ID = loc.LINK_ID AND loc.ROADWAY_NUMBER = rp.ROADWAY_NUMBER AND cp.START_END = 0 AND cp.VALID_TO IS NULL) AS cal_start_type,
+              (SELECT CP.TYPE FROM   CALIBRATION_POINT CP JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID WHERE cp.LINK_ID = loc.LINK_ID AND loc.ROADWAY_NUMBER = rp.ROADWAY_NUMBER AND cp.START_END = 0 AND cp.VALID_TO IS NULL) AS cal_start_type,
               (SELECT RP.ADDR_M FROM CALIBRATION_POINT CP JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID WHERE cp.LINK_ID = loc.LINK_ID AND loc.ROADWAY_NUMBER = rp.ROADWAY_NUMBER AND cp.START_END = 1 AND cp.VALID_TO IS NULL) AS cal_end_addr_m,
-              (SELECT CP.TYPE FROM CALIBRATION_POINT CP JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID WHERE cp.LINK_ID = loc.LINK_ID AND loc.ROADWAY_NUMBER = rp.ROADWAY_NUMBER AND cp.START_END = 1 AND cp.VALID_TO IS NULL) AS cal_end_type,
+              (SELECT CP.TYPE FROM   CALIBRATION_POINT CP JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID WHERE cp.LINK_ID = loc.LINK_ID AND loc.ROADWAY_NUMBER = rp.ROADWAY_NUMBER AND cp.START_END = 1 AND cp.VALID_TO IS NULL) AS cal_end_type,
               link.SOURCE, link.ADJUSTED_TIMESTAMP, ST_X(ST_StartPoint(loc.geometry)), ST_Y(ST_StartPoint(loc.geometry)), ST_X(ST_EndPoint(loc.geometry)), ST_Y(ST_EndPoint(loc.geometry)), loc.valid_from, loc.valid_to
         FROM LINEAR_LOCATION loc
         JOIN LINK link ON (link.ID = loc.LINK_ID)
@@ -215,6 +228,15 @@ class LinearLocationDAO extends BaseDAO {
     }
   }
 
+  implicit val getJunctionCoordinate: GetResult[JunctionCoordinate] = new GetResult[JunctionCoordinate] {
+    def apply(r: PositionedResult): JunctionCoordinate = {
+      val xCoord = r.nextDouble()
+      val yCoord = r.nextDouble()
+
+      JunctionCoordinate(xCoord, yCoord)
+    }
+  }
+
   def fetchLinkIdsInChunk(min: String, max: String): List[String] = { //TODO: Refactor for new linkId
     sql"""
       select distinct(loc.link_id)
@@ -288,6 +310,40 @@ class LinearLocationDAO extends BaseDAO {
 
   def queryByIdMassQuery(ids: Set[Long], rejectInvalids: Boolean = true): List[LinearLocation] = {
     fetchByIdMassQuery(ids, rejectInvalids)
+  }
+
+
+  /**
+   * Returns the linear locations within the current network (valid_to is null), who
+   * have the given <i>linkId</i>, and
+   * have their M values fit within <i>filterMvalueMin</i>...<i>filterMvalueMax</i> range.
+   * The results are a bit robust filtered: A linear location that overlaps less than [[GeometryUtils.DefaultEpsilon]]
+   * the given range at either end, is not included in the results.
+   * @todo should it be e.g. 10cm instead of [[GeometryUtils.DefaultEpsilon]]?
+   *
+   * @param linkId          Filters the returned linear locations to those having this link id.
+   * @param filterMvalueMin Filters the returned linear locations to those that enter the range at minimum end
+   * @param filterMvalueMax Filters the returned linear locations to those that enter the range at maximum end
+   * @return List of Linear locations within given range, ordered by their start measures.
+   *         An overlap less than [[GeometryUtils.DefaultEpsilon]] is not seen as fitting the range.
+   */
+  def fetchByLinkIdAndMValueRange(linkId: String, filterMvalueMin: Double, filterMvalueMax: Double): List[LinearLocation] = {
+    time(logger, "Fetch linear locations by link id, and M values") {
+
+      val mustStartBefore = filterMvalueMax - GeometryUtils.DefaultEpsilon // do not count overlap less than epsilon at max value end
+      val mustEndAfter    = filterMvalueMin + GeometryUtils.DefaultEpsilon // do not count overlap less than epsilon at min value end
+
+      val query =
+        s"""
+          $selectFromLinearLocation
+          WHERE loc.link_id = '$linkId'
+          AND loc.start_measure <= $mustStartBefore -- The start of a valid linear location is before the given max value
+          AND loc.end_measure   >= $mustEndAfter    -- The end   of a valid linear location is after  the given min value
+          AND loc.valid_to is null
+          ORDER BY loc.START_MEASURE
+        """
+      queryList(query)
+    }
   }
 
   def fetchByLinkId(linkIds: Set[String], filterIds: Set[Long] = Set()): List[LinearLocation] = {
@@ -391,6 +447,67 @@ class LinearLocationDAO extends BaseDAO {
       """
     val filteredQuery = queryFilter(query)
     Q.queryNA[LinearLocation](filteredQuery).iterator.toSeq
+  }
+
+  def fetchCoordinatesForJunction(llIds: Seq[Long], crossingRoads: Seq[RoadwaysForJunction], allLL: Seq[LinearLocation]): Option[Point] = {
+    val llLength = llIds.length
+
+    if (llLength == 2) { //Check whether the geometry's start and endpoints are the same with 2 linear locations.
+      val ll1 = allLL.find(_.id == llIds(0))
+      val ll2 = allLL.find(_.id == llIds(1))
+
+      if (ll1.get.geometry == ll2.get.geometry) {
+        val cr1 = crossingRoads.find(_.roadwayNumber == ll1.get.roadwayNumber)
+        val cr2 = crossingRoads.find(_.roadwayNumber == ll2.get.roadwayNumber)
+
+        val beforeAfter1: Long = cr1.get.beforeAfter
+        val beforeAfter2: Long = cr2.get.beforeAfter
+
+        var point = Point(0,0)
+
+        point =
+          (if (beforeAfter1 == beforeAfter2) { // If both have same before-after
+            if (beforeAfter1 == 1) ll1.get.getLastPoint
+            else ll2.get.getFirstPoint
+          } else {
+            if (beforeAfter1 == 1) ll1.get.getLastPoint
+            else ll2.get.getLastPoint
+          })
+        return Some(point)
+      }
+    }
+
+    var intersectionFunction = s""
+    var closingBracket = s""
+    val precision = MaxDistanceForConnectedLinks
+
+    for (i <- 2 until math.min(llLength, 8)) {
+      val llId = llIds(i)
+      intersectionFunction += s"ST_Intersection((SELECT st_ReducePrecision(ll.geometry, $precision) FROM linear_location ll WHERE ll.id = $llId),"
+      closingBracket += ")"
+    }
+
+    val query = {
+      s"""
+             SELECT DISTINCT
+             ST_X(${intersectionFunction}
+                  ST_Intersection((SELECT st_ReducePrecision(ll.geometry, $precision)
+                       FROM linear_location ll
+                       WHERE ll.id = ${llIds(0)}), (SELECT st_ReducePrecision(ll.geometry, $precision)
+                       FROM linear_location ll
+                       WHERE ll.id = ${llIds(1)})${closingBracket})) AS xCoord,
+             ST_Y(${intersectionFunction}
+                  ST_Intersection((SELECT st_ReducePrecision(ll.geometry, $precision)
+                       FROM linear_location ll
+                       WHERE ll.id = ${llIds(0)}), (SELECT st_ReducePrecision(ll.geometry, $precision)
+                       FROM linear_location ll
+                       WHERE ll.id = ${llIds(1)})${closingBracket})) AS yCoord
+          """
+    }
+    val res = Q.queryNA[JunctionCoordinate](query).firstOption
+
+    val point: Option[Point] = res.map(junction => Point(junction.xCoord, junction.yCoord))
+    point
   }
 
   /**

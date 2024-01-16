@@ -4,9 +4,9 @@ import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
-import fi.liikennevirasto.viite.NewIdValue
 import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
 import fi.vaylavirasto.viite.model.{CalibrationPoint, CalibrationPointLocation, CalibrationPointType}
+import fi.vaylavirasto.viite.util.ViiteException
 
 object CalibrationPointDAO extends BaseDAO {
 
@@ -28,35 +28,21 @@ object CalibrationPointDAO extends BaseDAO {
     }
   }
 
-  // TODO Check this method! It failed silently in updating junction point address, but the other create method works.
-  def create(calibrationPoints: Iterable[CalibrationPoint]): Seq[Long] = {
-    val ps = dynamicSession.prepareStatement(
-      """INSERT INTO CALIBRATION_POINT (ID, ROADWAY_POINT_ID, LINK_ID, START_END, TYPE, CREATED_BY)
-      VALUES (?, ?, ?, ?, ?, ?)""".stripMargin)
+  def create(cp: CalibrationPoint): Long = {
+    logger.debug(s"Trying to create a CP ${cp}")
+    create(cp.roadwayPointId, cp.linkId, cp.startOrEnd, cp.typeCode, cp.createdBy)
 
-    // set ids for the calibration points without one
-    val (ready, idLess) = calibrationPoints.partition(_.id != NewIdValue)
-    val newIds = Sequences.fetchCalibrationPointIds(idLess.size)
-    val createCalibrationPoints = ready ++ idLess.zip(newIds).map(x =>
-      x._1.copy(id = x._2)
-    )
-
-    createCalibrationPoints.foreach {
-      calibrationPoint =>
-        ps.setLong(1, calibrationPoint.id)
-        ps.setLong(2, calibrationPoint.roadwayPointId)
-        ps.setString(3, calibrationPoint.linkId)
-        ps.setInt(4, calibrationPoint.startOrEnd.value)
-        ps.setInt(5, calibrationPoint.typeCode.value)
-        ps.setString(6, calibrationPoint.createdBy)
-    }
-
-    ps.executeBatch()
-    ps.close()
-    createCalibrationPoints.map(_.id).toSeq
+    val cpOption = CalibrationPointDAO.fetch(cp.linkId, cp.startOrEnd.value) // get the CP for the id
+    cpOption.getOrElse(throw ViiteException("The created (or so I thought) calibration point was not found!"))
+      .id
   }
 
-  def create(roadwayPointId: Long, linkId: String, startOrEnd: CalibrationPointLocation, calType: CalibrationPointType, createdBy: String): Unit = {
+  def create(roadwayPointId: Long,
+             linkId: String,
+             startOrEnd: CalibrationPointLocation,
+             calType: CalibrationPointType,
+             createdBy: String): Unit = {
+
     runUpdateToDb(s"""
       Insert Into CALIBRATION_POINT (ID, ROADWAY_POINT_ID, LINK_ID, START_END, TYPE, CREATED_BY) VALUES
       (${Sequences.nextCalibrationPointId}, $roadwayPointId, '$linkId', ${startOrEnd.value}, ${calType.value}, '$createdBy')
@@ -119,17 +105,6 @@ object CalibrationPointDAO extends BaseDAO {
      """.as[Long].list.toSet
   }
 
-  def fetchByRoadwayPointInExpiredJunctionPoint(roadwayPointId: Long, addr: Long): Set[Long] = {
-    sql"""
-         SELECT CP.ID
-         FROM CALIBRATION_POINT CP
-         JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID
-         JOIN JUNCTION_POINT JP ON JP.ROADWAY_POINT_ID = RP.ID
-         JOIN JUNCTION J ON J.ID = JP.JUNCTION_ID
-         WHERE cp.roadway_point_id = $roadwayPointId AND rp.addr_m = $addr AND CP.VALID_TO IS NULL AND JP.VALID_TO IS NOT NULL
-     """.as[Long].list.toSet
-  }
-
   def fetchByLinkId(linkIds: Iterable[String]): Seq[CalibrationPoint] = {
     if (linkIds.isEmpty) {
       Seq()
@@ -147,7 +122,7 @@ object CalibrationPointDAO extends BaseDAO {
   }
 
   def fetch(calibrationPointsLinkIds: Seq[String], startOrEnd: Long): Seq[CalibrationPoint] = {
-    val whereClause = calibrationPointsLinkIds.map(p => s" (link_id = ''' + $p + ''' and start_end = $startOrEnd)").mkString(" where ", " or ", "")
+    val whereClause = calibrationPointsLinkIds.map(p => s" (link_id = '$p' and start_end = $startOrEnd)").mkString(" where ", " or ", "")
     val query = s"""
      SELECT CP.ID, ROADWAY_POINT_ID, LINK_ID, ROADWAY_NUMBER, RP.ADDR_M, START_END, TYPE, VALID_FROM, VALID_TO, CP.CREATED_BY, CP.CREATED_TIME
      FROM CALIBRATION_POINT CP

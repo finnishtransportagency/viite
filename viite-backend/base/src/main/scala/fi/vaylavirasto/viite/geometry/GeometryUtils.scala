@@ -1,9 +1,11 @@
 package fi.vaylavirasto.viite.geometry
 
+import fi.vaylavirasto.viite.util.ViiteException
+
 object GeometryUtils {
 
-  /** Default value of minimum distance where locations are considered to be same */
-  final private val DefaultEpsilon = 0.01
+  /** Default value of minimum distance where locations are considered to be same, in [m]. */
+  final val DefaultEpsilon = 0.01
   /** If links are more than <i>MaxDistanceForConnectedLinks</i> apart, they are considered to being disconnected. */
   val MaxDistanceForConnectedLinks = 0.1
 
@@ -123,6 +125,23 @@ object GeometryUtils {
     }
   }
 
+  /**
+   * Calculates the 2D line length of the <i>geometry</i> (that is, length on (x,y) plane), and rounds the length to 3 digits.
+   *
+   * @param geometry Line geometry given as sequence of [[Point]]s.
+   * @throws ViiteException if the <i>geometry</i> contains less than 2 points
+   */
+  def lineGeometryLength2D(geometry: Seq[Point]): Double = {
+    if (geometry.size < 2) {
+      ViiteException(s"The given geometry ($geometry) does not have the required two points (at minimum)")
+    }
+    val segments: Seq[(Point, Point)] = geometry.dropRight(1) zip geometry.tail // Pair subsequent coordinates to get geometry line as line segments
+    val length = segments.foldLeft(0.0) ( (accumulatedLength, nextSegment) =>
+      accumulatedLength + (nextSegment._1.distance2DTo(nextSegment._2))
+    )
+    scaleToThreeDigits(length)
+  }
+
   /** Returns a point that resembles the given <i>p</i>, but with z = 0.0.  */
   def to2DGeometry(p: Point): Point = {
     p.copy(z = 0.0)
@@ -172,10 +191,19 @@ object GeometryUtils {
       geometry2Endpoints._2.distance2DTo(geometry1EndPoints._2) < epsilon
   }
 
+  /** Tells whether the given <i>geometry1</i> is considered to be adjacent to the point <i>geometry2</i>.
+   * Returns true (geometry is seen as adjacent to the point), if either of the end points of <i>geometry1</i> is close enough to the point <i>geometry2</i>. False else.
+   * Uses [[DefaultEpsilon]] as the limiting allowed distance.
+   */
   def areAdjacent(geometry1: Seq[Point], geometry2: Point): Boolean = {
     areAdjacent(geometry1, geometry2, DefaultEpsilon)
   }
 
+  /** Tells whether the given <i>geometry1</i> is considered to be adjacent to the point <i>geometry2</i>.
+   * Returns true (geometry is seen as adjacent to the point), if either of the end points of <i>geometry1</i> is close enough to the point <i>geometry2</i>. False else.
+   *
+   * @param epsilon the limits the allowed distance, defining the adjacency tolerance.
+   */
   def areAdjacent(geometry1: Seq[Point], geometry2: Point, epsilon: Double): Boolean = {
     val geometry1EndPoints = GeometryUtils.geometryEndpoints(geometry1)
     geometry2.distance2DTo(geometry1EndPoints._1) < epsilon ||
@@ -187,16 +215,23 @@ object GeometryUtils {
       withinTolerance(GeometryUtils.geometryEndpoints(geometry1), GeometryUtils.geometryEndpoints(geometry2), maxDistanceDiffAllowed))
   }
 
-  /** @return True, if 2D distance of <i>point1</i>, and <i>point2</i> is smaller than <i>[[GeometryUtils.DefaultEpsilon]]</i>.
+  /** @return True, if 2D distance between <i>point1</i>, and <i>point2</i> is smaller than <i>[[GeometryUtils.DefaultEpsilon]]</i>.
    *          False else. */
   def areAdjacent(point1: Point, point2: Point): Boolean = {
     areAdjacent(point1, point2, DefaultEpsilon)
   }
 
-  /** @return True, if 2D distance of <i>point1</i>, and <i>point2</i> is smaller than <i>epsilon</i>.
+  /** @return True, if 2D distance between <i>point1</i>, and <i>point2</i> is smaller than <i>epsilon</i>.
    *          False else. */
   def areAdjacent(point1: Point, point2: Point, epsilon: Double): Boolean = {
     point1.distance2DTo(point2) < epsilon
+  }
+
+  def areGeometriesConnected(geom1StartPoint: Point, geom1EndPoint: Point, geom2StartPoint: Point, geom2EndPoint: Point): Boolean = {
+    GeometryUtils.areAdjacent(geom1EndPoint, geom2StartPoint) ||    // ---1-->---2-->
+      GeometryUtils.areAdjacent(geom1StartPoint, geom2EndPoint) ||  // <--1---<--2---
+      GeometryUtils.areAdjacent(geom1EndPoint, geom2EndPoint) ||    // ---1--><--2---
+      GeometryUtils.areAdjacent(geom1StartPoint, geom2StartPoint)   // <--1--|--2--->
   }
 
   def segmentByMinimumDistance(point: Point, segments: Seq[Point]): (Point, Point) = {
@@ -483,6 +518,50 @@ object GeometryUtils {
     } else {
       false
     }
+  }
+
+  /**
+   * When given an original range, a corresponding range to project to, and a value to project,
+   * returns the projected value (result rounded to 3 decimals).
+   *
+   * <pre>
+   *        original line segment to project from
+   *             |- -|- - - - - - - - -|- - - - - -|- - - - - - - - - - - ...
+   *              origMin      origValToProject  origMax
+   *
+   *        line segment to project to
+   * |- - - - - - - -|- - - - - - - - - - - -|- - - - - - - -|- - - - - - ...
+   *              projMin                 RETURN          projMax
+   * </pre>
+   *
+   * @param origMin min value defining the original range. 0<=origMin.
+   * @param origMax max value defining the original range. origMin<origMax.
+   * @param projMin min value defining the projectable range. 0<=projMin.
+   * @param projMax max value defining the projectable range. projMin<projMax.
+   * @param origValToProject The value to be projected to the another line segment. origMin<=origValToProject<=origMax
+   * @throws ViiteException if any of the given parameters are invalid, or the resulting projected value
+   *                        does not fit within the projectable range.
+   */
+  def getProjectedValue(origMin: Double, origMax: Double,
+                        projMin: Double, projMax: Double,
+                        origValToProject: Double): Double = {
+
+    if(origMin<0      ) {    throw ViiteException(s"origMin ($origMin) must be >=0."     )    }
+    if(projMin<0      ) {    throw ViiteException(s"projMin ($projMin) must be >=0."     )    }
+    if(origMax<origMin) {    throw ViiteException(s"origMax ($origMax) must be >=origMin ($origMin).")    }
+    if(projMax<projMin) {    throw ViiteException(s"projMax ($projMax) must be >=projMin ($projMin).")    }
+    if(origValToProject<origMin || origValToProject>origMax) {
+      ViiteException(s"origValToProject ($origValToProject) must fit within the given original range (${origMin}...${origMax}.")
+    }
+
+    val xProjected = scaleToThreeDigits(projMin + (projMax-projMin)/(origMax-origMin)* (origValToProject-origMin))
+
+    // Nah, should never end up here. But well, whatever. Checking still.
+    if(xProjected<projMin || xProjected>projMax) {
+      throw ViiteException(s"xProjected ($xProjected) must fit within given projectable range (${projMin}...${projMax}.)")
+    }
+
+    xProjected
   }
 
 }

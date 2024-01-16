@@ -37,7 +37,13 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
       case AdministrativeClass.Unknown => roadLink.administrativeClass
       case _ => roadAddress.administrativeClass
     }
-    RoadAddressLink(roadAddress.id, roadAddress.linearLocationId, roadLink.linkId, geom, length, roadLink.administrativeClass, roadLink.lifecycleStatus, roadLink.linkSource, administrativeClass, roadName, municipalityCode, municipalityName, roadLink.modifiedAt, Some(modifiedBy), roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, roadAddress.ely, roadAddress.discontinuity.value, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(finnishDateFormatter.print).getOrElse(""), roadAddress.endDate.map(finnishDateFormatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue, roadAddress.sideCode, roadAddress.startCalibrationPoint, roadAddress.calibrationPoints._2, roadAddress.roadwayNumber, sourceId = roadLink.sourceId)
+    RoadAddressLink(roadAddress.id, roadAddress.linearLocationId, roadLink.linkId, geom, length,
+      roadLink.administrativeClass, roadLink.lifecycleStatus, roadLink.linkSource, administrativeClass, roadName,
+      municipalityCode, municipalityName, roadLink.modifiedAt, Some(modifiedBy),
+      roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value,
+      roadAddress.ely, roadAddress.discontinuity.value, roadAddress.startAddrMValue, roadAddress.endAddrMValue,
+      roadAddress.startDate.map(finnishDateFormatter.print).getOrElse(""), roadAddress.endDate.map(finnishDateFormatter.print).getOrElse(""),
+      roadAddress.startMValue, roadAddress.endMValue, roadAddress.sideCode, roadAddress.startCalibrationPoint, roadAddress.calibrationPoints._2, roadAddress.roadwayNumber, sourceId = roadLink.sourceId)
   }
 
   def build(roadAddress: RoadAddress): RoadAddressLink = {
