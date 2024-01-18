@@ -435,15 +435,15 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
           // if there are change infos that combine two or more links but the road address is not homogeneous between those merging links then its an error
           val isRoadAddressHomogeneous = roadGroups.size < 2
           val changesInSameRoadway = roadGroups.head._2.map(_.roadwayNumber).distinct.size == 1 // used only when we already know roadGroup has only one item, thus handling .head only is enough
-          if (!isRoadAddressHomogeneous)
-            tiekamuRoadLinkChangeErrors += TiekamuRoadLinkChangeError("Two or more links with non homogeneous road addresses (road number, road part number, track) cannot merge together", change, getMetaData(change, linearLocations))
-          else if (isRoadAddressHomogeneous && changesInSameRoadway) {
-            if (!checkRoadAddressContinuityForSingleRoadway(oldLinearLocations, change))
-              tiekamuRoadLinkChangeErrors += TiekamuRoadLinkChangeError("Road address not continuous, cannot merge links together", change, getMetaData(change, linearLocations))
-          }
-          else if (isRoadAddressHomogeneous && !changesInSameRoadway) {
-            if (!checkRoadAddressContinuityBetweenRoadways(oldLinearLocations, change)) {
-              tiekamuRoadLinkChangeErrors += TiekamuRoadLinkChangeError("Road address not continuous, cannot merge links together", change, getMetaData(change, linearLocations))
+          isRoadAddressHomogeneous match {
+            case false => tiekamuRoadLinkChangeErrors += TiekamuRoadLinkChangeError("Two or more links with non homogeneous road addresses (road number, road part number, track) cannot merge together", change, getMetaData(change, linearLocations))
+            case true => {
+              changesInSameRoadway match {
+                case true => if (!checkRoadAddressContinuityForSingleRoadway(oldLinearLocations, change))
+                  tiekamuRoadLinkChangeErrors += TiekamuRoadLinkChangeError("Road address not continuous, cannot merge links together", change, getMetaData(change, linearLocations))
+                case false => if (!checkRoadAddressContinuityBetweenRoadways(oldLinearLocations, change))
+                  tiekamuRoadLinkChangeErrors += TiekamuRoadLinkChangeError("Road address not continuous, cannot merge links together", change, getMetaData(change, linearLocations))
+              }
             }
           }
         }
