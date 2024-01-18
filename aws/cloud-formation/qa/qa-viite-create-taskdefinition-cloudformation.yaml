@@ -16,6 +16,10 @@ Parameters:
     Type: Number
     Default: 300
     Description: Seconds, how long s3 object can be fetched after last modification
+  DynamicLinkNetworkS3BucketName:
+    Type: String
+    Default: qa-vayla-viite-dynamic-link-network-bucket
+    Description: Name of s3 bucket for dynamic link network change sets
 Resources:
   # This is a role which is used by the ECS tasks themselves.
   ECSTaskExecutionRoleForViite:
@@ -106,6 +110,8 @@ Resources:
               Value: !Sub '${ApiS3BucketName}'
             - Name: apiS3ObjectTTLSeconds
               Value: !Sub '${ApiS3ObjectTTLSeconds}'
+            - Name: dynamicLinkNetworkS3BucketName
+              Value: !Sub '${DynamicLinkNetworkS3BucketName}'
             - Name: kgvEndpoint
               Value: 'https://api.vaylapilvi.fi/paikkatiedot/ogc/features/collections'
           Secrets:
