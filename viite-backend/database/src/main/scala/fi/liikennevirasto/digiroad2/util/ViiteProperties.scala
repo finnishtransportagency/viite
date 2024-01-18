@@ -26,6 +26,7 @@ trait ViiteProperties {
   val latestDeploy: String
   val env: String
   val apiS3BucketName: String
+  val dynamicLinkNetworkS3BucketName: String
   val awsConnectionEnabled: Boolean
   val apiS3ObjectTTLSeconds: String
 
@@ -71,6 +72,7 @@ class ViitePropertiesFromEnv extends ViiteProperties {
   val latestDeploy: String = revisionProperties.getProperty("latestDeploy", "-")
   val env: String = scala.util.Properties.envOrElse("env", "Unknown")
   val apiS3BucketName: String = scala.util.Properties.envOrElse("apiS3BucketName", null)
+  val dynamicLinkNetworkS3BucketName: String = scala.util.Properties.envOrElse("dynamicLinkNetworkS3BucketName", null)
   val awsConnectionEnabled: Boolean = scala.util.Properties.envOrElse("awsConnectionEnabled", "true").toBoolean
   val apiS3ObjectTTLSeconds: String = scala.util.Properties.envOrElse("apiS3ObjectTTLSeconds", null)
 
@@ -146,6 +148,7 @@ class ViitePropertiesFromFile extends ViiteProperties {
   override val latestDeploy: String = revisionProperties.getProperty("latestDeploy", "-")
   override val env: String = envProps.getProperty("env")
   override val apiS3BucketName: String = scala.util.Properties.envOrElse("apiS3BucketName", envProps.getProperty("apiS3BucketName"))
+  override val dynamicLinkNetworkS3BucketName: String = scala.util.Properties.envOrElse("dynamicLinkNetworkS3BucketName", envProps.getProperty("dynamicLinkNetworkS3BucketName"))
   override val awsConnectionEnabled: Boolean = envProps.getProperty("awsConnectionEnabled", "true").toBoolean
   override val apiS3ObjectTTLSeconds: String = scala.util.Properties.envOrElse("apiS3ObjectTTLSeconds", envProps.getProperty("apiS3ObjectTTLSeconds"))
 
@@ -220,6 +223,7 @@ object ViiteProperties {
   lazy val bonecpProperties: Properties = properties.bonecpProperties
   lazy val conversionBonecpProperties: Properties = properties.conversionBonecpProperties
   lazy val apiS3BucketName: String = properties.apiS3BucketName
+  lazy val dynamicLinkNetworkS3BucketName: String = properties.dynamicLinkNetworkS3BucketName
   lazy val awsConnectionEnabled: Boolean = properties.awsConnectionEnabled
   lazy val apiS3ObjectTTLSeconds: String = properties.apiS3ObjectTTLSeconds
 

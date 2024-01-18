@@ -11,6 +11,7 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.RoadAddressFiller.ChangeSet
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.liikennevirasto.viite.util.{DataImporter, JsonSerializer}
+import fi.vaylavirasto.viite.dynamicnetwork.{DynamicRoadNetworkService, LinkNetworkUpdater}
 import org.slf4j.{Logger, LoggerFactory}
 import fi.liikennevirasto.digiroad2.util.DatabaseMigration
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
@@ -208,6 +209,10 @@ object Digiroad2Context {
 
   lazy val dataImporter: DataImporter = new DataImporter
 
+  lazy val linkNetworkUpdater: LinkNetworkUpdater = {
+    new LinkNetworkUpdater
+  }
+
   lazy val deploy_date: String = {
     ViiteProperties.latestDeploy
   }
@@ -218,6 +223,10 @@ object Digiroad2Context {
 
   lazy val awsService: AwsService = {
     new AwsService()
+  }
+
+  lazy val dynamicRoadNetworkService: DynamicRoadNetworkService = {
+    new DynamicRoadNetworkService(linearLocationDAO, roadwayDAO, kgvRoadLinkClient, awsService, linkNetworkUpdater)
   }
 
   val env = ViiteProperties.env
