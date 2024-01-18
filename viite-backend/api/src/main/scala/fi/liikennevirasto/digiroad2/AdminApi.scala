@@ -246,6 +246,12 @@ class AdminApi(val dataImporter: DataImporter, implicit val swagger: Swagger) ex
     (format.parseDateTime(previousDate), format.parseDateTime(newDate))
   }
 
+  /**
+   * Part of dynamic link network.
+   * End point to initiate link network update from @previousDate to @newDate
+   * @param previousDate (YYYY-MM-DD) Previous road link network version date (usually the road link network version that Viite is using at the moment)
+   * @param newDate (YYYY-MM-DD) The date to which the road link network (version) will be updated to.
+   */
   get("/update_link_network") {
     time(logger, "GET request for /update_link_network") {
 

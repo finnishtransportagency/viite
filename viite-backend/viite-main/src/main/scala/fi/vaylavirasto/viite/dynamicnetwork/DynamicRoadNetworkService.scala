@@ -328,9 +328,6 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
           val tiekamuReturnValueParam = "&palautusarvot=72"
           val url = tiekamuEndpoint ++ tiekamuDateParams ++ tiekamuReturnValueParam
 
-          //TODO remove this local endpoint url
-          //val url = "http://localhost:3000/muutokset"
-
           val request = new HttpGet(url)
           addHeaders(request)
           time(logger, "Fetching change set data from Tiekamu") {
@@ -389,10 +386,6 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
       existsConnectingRoadway(roadway, otherRoadways)
     }
 
-    def checkRoadAddressHomogeneity(roadGroups: Map[(Long, Long, Track), Seq[Roadway]]): Boolean = {
-      roadGroups.size < 2
-    }
-
     def getMetaData(change: TiekamuRoadLinkChange, activeLinearLocations: Seq[LinearLocation]): TiekamuRoadLinkErrorMetaData = {
       val errorLink = change.oldLinkId
       val errorLinearLocations = activeLinearLocations.filter(ll => ll.linkId == errorLink)
@@ -440,8 +433,8 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
           // group the roadways with roadNumber, roadPartNumber and track
           val roadGroups = roadways.groupBy(rw => (rw.roadNumber, rw.roadPartNumber, rw.track))
           // if there are change infos that combine two or more links but the road address is not homogeneous between those merging links then its an error
-          val isRoadAddressHomogeneous = checkRoadAddressHomogeneity(roadGroups)
-          val changesInSameRoadway = roadGroups.head._2.map(_.roadwayNumber).distinct.size == 1
+          val isRoadAddressHomogeneous = roadGroups.size < 2
+          val changesInSameRoadway = roadGroups.head._2.map(_.roadwayNumber).distinct.size == 1 // used only when we already know roadGroup has only one item, thus handling .head only is enough
           if (!isRoadAddressHomogeneous)
             tiekamuRoadLinkChangeErrors += TiekamuRoadLinkChangeError("Two or more links with non homogeneous road addresses (road number, road part number, track) cannot merge together", change, getMetaData(change, linearLocations))
           else if (isRoadAddressHomogeneous && changesInSameRoadway) {
@@ -459,7 +452,11 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
     }
   }
 
-  def filterOutErrornessParts(tiekamuRoadLinkChanges: Seq[TiekamuRoadLinkChange], activeLinearLocations: Seq[LinearLocation], tiekamuRoadLinkChangeErrors: Seq[TiekamuRoadLinkChangeError]): ((Seq[TiekamuRoadLinkChange], Seq[TiekamuRoadLinkChange]), Seq[LinearLocation]) = {
+  /** If the change set includes an erroneous link update, then this function will filter out the whole road part (where the erroneous link update lies) from the change set.
+   * @param activeLinearLocations Linearlocations that are in use on the road network at the moment
+   * i.e. linear locations' valid_to IS NULL in the database AND the linear location is on a roadway that is on the current road network (roadways' valid_to IS NULL AND end_date IS NULL)
+   */
+  def filterOutErroneousParts(tiekamuRoadLinkChanges: Seq[TiekamuRoadLinkChange], activeLinearLocations: Seq[LinearLocation], tiekamuRoadLinkChangeErrors: Seq[TiekamuRoadLinkChangeError]): ((Seq[TiekamuRoadLinkChange], Seq[TiekamuRoadLinkChange]), Seq[LinearLocation]) = {
     val errorLinks = tiekamuRoadLinkChangeErrors.map(err => err.change.oldLinkId)
     val errorLinearLocations = activeLinearLocations.filter(ll => errorLinks.contains(ll.linkId))
     val errorRoadwayNumbers = errorLinearLocations.map(_.roadwayNumber)
@@ -471,7 +468,6 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
     val affectedRoadwayNumbers = errorRoadsParts.flatMap(roadAndPart => roadwayDAO.fetchAllByRoadAndPart(roadAndPart._1, roadAndPart._2)).map(_.roadwayNumber)
     val activeLinearLocationsWithoutAffected = activeLinearLocations.filterNot(ll => affectedRoadwayNumbers.contains(ll.roadwayNumber))
     val affectedLinkIds = activeLinearLocations.filter(ll => affectedRoadwayNumbers.contains(ll.roadwayNumber)).map(_.linkId)
-    //(tiekamuRoadLinkChanges.filterNot(ch => affectedLinkIds.contains(ch.oldLinkId)), activeLinearLocationsWithoutAffected)
     val (affectedTiekamuRoadLinkChanges, validTiekamuRoadLinkChanges) =  tiekamuRoadLinkChanges.partition(ch => affectedLinkIds.contains(ch.oldLinkId))
     ((validTiekamuRoadLinkChanges, affectedTiekamuRoadLinkChanges), activeLinearLocationsWithoutAffected)
   }
@@ -487,11 +483,11 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
       // fetch roadLinks from KGV these are used for getting geometry and link lengths
       val kgvRoadLinks = kgvClient.roadLinkVersionsData.fetchByLinkIds(newLinkIds ++ oldLinkIds)
 
-      val tiekamuRoadLinkChangeErrors = validateTiekamuRoadLinkChanges(tiekamuRoadLinkChanges, activeLinearLocations ,kgvRoadLinks)
+      val tiekamuRoadLinkChangeErrors = validateTiekamuRoadLinkChanges(tiekamuRoadLinkChanges, activeLinearLocations, kgvRoadLinks)
       var skippedTiekamuRoadLinkChanges = Seq.empty[TiekamuRoadLinkChange]
       val (validTiekamuRoadLinkChanges, validActiveLinearLocations) = {
         if (tiekamuRoadLinkChangeErrors.nonEmpty) {
-          val ((validTiekamuRoadLinkChanges, affectedTiekamuRoadLinkChanges), validActiveLinearLocations) =  filterOutErrornessParts(tiekamuRoadLinkChanges, activeLinearLocations, tiekamuRoadLinkChangeErrors)
+          val ((validTiekamuRoadLinkChanges, affectedTiekamuRoadLinkChanges), validActiveLinearLocations) =  filterOutErroneousParts(tiekamuRoadLinkChanges, activeLinearLocations, tiekamuRoadLinkChangeErrors)
           skippedTiekamuRoadLinkChanges = affectedTiekamuRoadLinkChanges
           (validTiekamuRoadLinkChanges, validActiveLinearLocations)
         } else {
@@ -516,7 +512,8 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
         }
         if (skippedTiekamuRoadLinkChanges.nonEmpty) {
           // SkippedTiekamuRoadLinkChanges-yyyy-MM-dd-yyyy-MM-dd-yyyy-MM-dd:hh:mm:ss (SkippedTiekamuRoadLinkChanges-previousDate-newDate-currentTimeStamp)
-          val s3SkippedChangeSetsName = "SkippedTiekamuRoadLinkChanges" + "-" + previousDate.getYear + "-" + previousDate.getMonthOfYear + "-" + previousDate.getDayOfMonth + "-" + newDate.getYear + "-" + newDate.getMonthOfYear + "-" + newDate.getDayOfMonth + "-" + DateTime.now()
+          val s3SkippedChangeSetsName = s"SkippedTiekamuRoadLinkChanges-${previousDate.getYear}-${previousDate.getMonthOfYear}-${previousDate.getDayOfMonth}-" +
+                                        s"${newDate.getYear}-${newDate.getMonthOfYear}-${newDate.getDayOfMonth}-${DateTime.now()}"
           val jsonSkippedChanges = Json(DefaultFormats).write(skippedTiekamuRoadLinkChanges.map(skippedChange => skippedTiekamuRoadLinkChangeToMap(skippedChange)))
           awsService.S3.saveFileToS3(bucketName, s3SkippedChangeSetsName, jsonSkippedChanges, "json") // save the error details to S3
         }
@@ -534,11 +531,13 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
       val (viiteChangeSets, tiekamuRoadLinkChangeErrors, skippedTiekamuRoadLinkChanges) = createChangeSetsAndErrorsList(previousDate, newDate)
 
       // yyyy-MM-dd-yyyy-MM-dd
-      val changeDateString = previousDate.getYear + "-" + previousDate.getMonthOfYear + "-" + previousDate.getDayOfMonth + "-" + newDate.getYear + "-" + newDate.getMonthOfYear + "-" + newDate.getDayOfMonth
+      val changeDateString =  s"${previousDate.getYear}-${previousDate.getMonthOfYear}-${previousDate.getDayOfMonth}-" +
+                              s"${newDate.getYear}-${newDate.getMonthOfYear}-${newDate.getDayOfMonth}"
 
       if (tiekamuRoadLinkChangeErrors.nonEmpty) {
         val jsonErrorParts = Json(DefaultFormats).write(tiekamuRoadLinkChangeErrors.map(error => tiekamuRoadLinkChangeErrorToMap(error)))
-        val s3ChangeSetErrorsName = previousDate.getDayOfMonth + "-" + previousDate.getMonthOfYear + "-" + previousDate.getYear + "-" + newDate.getDayOfMonth + "-" + newDate.getMonthOfYear + "-" + newDate.getYear + "-" + DateTime.now() + "-Errors"
+        val s3ChangeSetErrorsName = s"${previousDate.getDayOfMonth}-${previousDate.getMonthOfYear}-${previousDate.getYear}-" +
+                                    s"${newDate.getDayOfMonth}-${newDate.getMonthOfYear}-${newDate.getYear}-${DateTime.now()}-Errors"
         awsService.S3.saveFileToS3(bucketName, s3ChangeSetErrorsName, jsonErrorParts, "json") // save the error details to S3
       }
 
