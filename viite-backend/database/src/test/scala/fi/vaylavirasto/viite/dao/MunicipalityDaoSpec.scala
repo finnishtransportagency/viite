@@ -35,22 +35,22 @@ class MunicipalityDaoSpec extends FunSuite with Matchers{
       municipalityMap.isEmpty should be(false)
 
       val (selectedMunicipalityId, selectedElyNro) = municipalityMap.head // pick a municipality, whichever is returned first
-      val ViiteMunicipalityToELYMap = MunicipalityDAO.getViiteMunicipalityToElyMapping
-      ViiteMunicipalityToELYMap.isEmpty should be(false)
+      val viiteMunicipalityToELYMap = MunicipalityDAO.getViiteMunicipalityToElyMapping
+      viiteMunicipalityToELYMap.isEmpty should be(false)
 
       // check that the picked municipality returns the correct Digiroad-ELY - Viite-ELY mapping
-      ViiteMunicipalityToELYMap.contains(selectedMunicipalityId) should be (true)
+      viiteMunicipalityToELYMap.contains(selectedMunicipalityId) should be (true)
       selectedElyNro match {
-        case 1 => ViiteMunicipalityToELYMap(selectedMunicipalityId) should be (14)
-        case 2 => ViiteMunicipalityToELYMap(selectedMunicipalityId) should be (12)
-        case 3 => ViiteMunicipalityToELYMap(selectedMunicipalityId) should be (10)
-        case 4 => ViiteMunicipalityToELYMap(selectedMunicipalityId) should be (9)
-        case 5 => ViiteMunicipalityToELYMap(selectedMunicipalityId) should be (8)
-        case 6 => ViiteMunicipalityToELYMap(selectedMunicipalityId) should be (4)
-        case 7 => ViiteMunicipalityToELYMap(selectedMunicipalityId) should be (2)
-        case 8 => ViiteMunicipalityToELYMap(selectedMunicipalityId) should be (3)
-        case 9 => ViiteMunicipalityToELYMap(selectedMunicipalityId) should be (1)
-        case 0 => ViiteMunicipalityToELYMap(selectedMunicipalityId) should be (0)
+        case 1 => viiteMunicipalityToELYMap(selectedMunicipalityId) should be (14)
+        case 2 => viiteMunicipalityToELYMap(selectedMunicipalityId) should be (12)
+        case 3 => viiteMunicipalityToELYMap(selectedMunicipalityId) should be (10)
+        case 4 => viiteMunicipalityToELYMap(selectedMunicipalityId) should be (9)
+        case 5 => viiteMunicipalityToELYMap(selectedMunicipalityId) should be (8)
+        case 6 => viiteMunicipalityToELYMap(selectedMunicipalityId) should be (4)
+        case 7 => viiteMunicipalityToELYMap(selectedMunicipalityId) should be (2)
+        case 8 => viiteMunicipalityToELYMap(selectedMunicipalityId) should be (3)
+        case 9 => viiteMunicipalityToELYMap(selectedMunicipalityId) should be (1)
+        case 0 => viiteMunicipalityToELYMap(selectedMunicipalityId) should be (0)
       }
     }
   }
