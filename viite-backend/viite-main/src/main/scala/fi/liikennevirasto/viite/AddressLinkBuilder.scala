@@ -6,11 +6,12 @@ import fi.vaylavirasto.viite.postgis.PostGISDatabase
 trait AddressLinkBuilder {
   val RoadNumber = "roadnumber"
 
-  lazy val municipalityRoadMaintainerMapping: Map[Long, Long] = if (PostGISDatabase.isWithinSession)
-    MunicipalityDAO.getMunicipalityRoadMaintainers
+  /** Viite municipality to ELY code mapping */
+  lazy val municipalityToViiteELYMapping: Map[Long, Long] = if (PostGISDatabase.isWithinSession)
+    MunicipalityDAO.getViiteMunicipalityToElyMapping
   else
     PostGISDatabase.withDynSession {
-      MunicipalityDAO.getMunicipalityRoadMaintainers
+      MunicipalityDAO.getViiteMunicipalityToElyMapping
     }
 
   lazy val municipalityNamesMapping: Map[Long, String] = if (PostGISDatabase.isWithinSession)
