@@ -1659,12 +1659,52 @@ class ProjectService(
     //check if entire section changed
     sectionGroup.values.flatMap { pls =>
       if (!pls.forall(_.status == RoadAddressChangeType.Termination)) {
-        val newRoadwayNumber = Sequences.nextRoadwayNumber
         val terminated = pls.filter(_.status == RoadAddressChangeType.Termination)
-        terminated.map(_.copy(roadwayNumber = newRoadwayNumber))
+        val terminatedSections = createTerminatedSections(terminated)
+        val terminatedWithNewRoadwayNumbers = terminatedSections.flatMap(terminatedSection => {
+          val newRoadwayNumber = Sequences.nextRoadwayNumber
+          terminatedSection.map(pl => pl.copy(roadwayNumber = newRoadwayNumber))
+        })
+        terminatedWithNewRoadwayNumbers
       } else pls.filter(_.status == RoadAddressChangeType.Termination)
     }.toSeq
   }
+
+  def createTerminatedSections(terminatedProjectLinks: Seq[ProjectLink]): Seq[Seq[ProjectLink]] = {
+    //
+    def projectLinksOriginallyContinuousByAddressMValue(pl1: ProjectLink, pl2: ProjectLink): Boolean = {
+      pl1.originalEndAddrMValue == pl2.originalStartAddrMValue ||
+        pl2.originalEndAddrMValue == pl1.originalStartAddrMValue
+    }
+
+    // Iterative function to build sections
+    def buildSections(links: Seq[ProjectLink]): Seq[Seq[ProjectLink]] = {
+      var result: Seq[Seq[ProjectLink]] = Seq.empty
+      var currentSection: Seq[ProjectLink] = Seq.empty
+
+      for (link <- links) {
+        if (currentSection.isEmpty || projectLinksOriginallyContinuousByAddressMValue(currentSection.last, link)) {
+          // Extend the current section if it's empty or the project links were originally continuous by address M values
+          currentSection :+= link
+        } else {
+          // Start a new section
+          result :+= currentSection
+          currentSection = Seq(link)
+        }
+      }
+
+      // Add the last section
+      if (currentSection.nonEmpty) {
+        result :+= currentSection
+      }
+
+      result
+    }
+
+    // Start building sections with the input project links
+    buildSections(terminatedProjectLinks)
+  }
+
 
   /** @return Whether we did the recalculation or not
     * @throws IllegalArgumentException when the given project is not found. */

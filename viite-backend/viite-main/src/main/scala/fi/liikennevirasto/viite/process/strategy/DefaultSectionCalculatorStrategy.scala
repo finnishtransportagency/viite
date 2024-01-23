@@ -129,25 +129,58 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
   }
 
   private def continuousRoadwaySection(seq: Seq[ProjectLink], givenRoadwayNumber: Long): (Seq[ProjectLink], Seq[ProjectLink]) = {
-    val track =
-      seq.headOption.map(_.track).getOrElse(Track.Unknown)
-    val discontinuity =
-      seq.head.discontinuity
-    val administrativeClass =
-      seq.head.administrativeClass
-    val continuousProjectLinks =
-      seq.takeWhile(pl => pl.track == track && pl.discontinuity == discontinuity && pl.administrativeClass == administrativeClass)
-    def canIncludeNonContinuous: Boolean = {
-      val nextLink = seq(continuousProjectLinks.size)
-      nextLink.track == track && nextLink.administrativeClass == administrativeClass && nextLink.discontinuity != Discontinuity.Continuous
+    def createConnectedSection(startLink: ProjectLink, allLinks: Seq[ProjectLink]): List[ProjectLink] = {
+      def getSection(currentLink: ProjectLink, section: List[ProjectLink]): List[ProjectLink] = {
+        val currentIndex = allLinks.indexOf(currentLink)
+        val nextIndex = currentIndex + 1
+
+        if (nextIndex < allLinks.length && nextIndex > 0) {
+          val nextLink = allLinks(nextIndex)
+
+          if (GeometryUtils.areGeometriesConnected(currentLink.startingPoint, currentLink.endPoint, nextLink.startingPoint, nextLink.endPoint)) {
+            getSection(nextLink, section :+ currentLink)
+          } else {
+            section :+ currentLink
+          }
+        } else {
+          section :+ currentLink
+        }
+      }
+
+      getSection(startLink, List.empty[ProjectLink])
     }
+
+    val track = seq.headOption.map(_.track).getOrElse(Track.Unknown)
+    val administrativeClass = seq.head.administrativeClass
+    val connectedSection = createConnectedSection(seq.head, seq)
+
+    val linksAfterFirst =
+      if (connectedSection.tail.nonEmpty)
+        connectedSection.tail.takeWhile(pl => pl.track == track && pl.discontinuity == Discontinuity.Continuous && pl.administrativeClass == administrativeClass)
+      else Seq()
+
+    val continuousProjectLinks: Seq[ProjectLink] = Seq(seq.head) ++ linksAfterFirst
+
+    def canIncludeNonContinuous: Boolean = {
+      val lastContinuousLink = seq(continuousProjectLinks.size - 1)
+      val nextLink = seq(continuousProjectLinks.size)
+      nextLink.track == track &&
+      nextLink.administrativeClass == administrativeClass &&
+      nextLink.discontinuity != Discontinuity.Continuous &&
+      GeometryUtils.areGeometriesConnected(nextLink.startingPoint,
+                                           nextLink.endPoint,
+                                           lastContinuousLink.startingPoint,
+                                           lastContinuousLink.endPoint)
+    }
+
     val continuousProjectLinksWithDiscontinuity =
       if (seq.size > continuousProjectLinks.size && canIncludeNonContinuous)
         seq.take(continuousProjectLinks.size+1)
       else
         continuousProjectLinks
-    val assignedContinuousSection =
-      assignRoadwayNumbersInContinuousSection(continuousProjectLinksWithDiscontinuity, givenRoadwayNumber)
+
+    val assignedContinuousSection = assignRoadwayNumbersInContinuousSection(continuousProjectLinksWithDiscontinuity, givenRoadwayNumber)
+
     (assignedContinuousSection, seq.drop(continuousProjectLinksWithDiscontinuity.size))
   }
 
