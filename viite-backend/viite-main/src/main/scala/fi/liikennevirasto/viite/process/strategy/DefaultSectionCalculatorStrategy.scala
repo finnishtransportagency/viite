@@ -129,12 +129,12 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
   }
 
   private def continuousRoadwaySection(seq: Seq[ProjectLink], givenRoadwayNumber: Long): (Seq[ProjectLink], Seq[ProjectLink]) = {
-    def createConnectedSection(startLink: ProjectLink, allLinks: Seq[ProjectLink]): List[ProjectLink] = {
+    def pickGeometricallyConnectedSection(startLink: ProjectLink, allLinks: Seq[ProjectLink]): List[ProjectLink] = {
       def getSection(currentLink: ProjectLink, section: List[ProjectLink]): List[ProjectLink] = {
         val currentIndex = allLinks.indexOf(currentLink)
         val nextIndex = currentIndex + 1
 
-        if (nextIndex < allLinks.length && nextIndex > 0) {
+        if (nextIndex < allLinks.length) {
           val nextLink = allLinks(nextIndex)
 
           if (GeometryUtils.areGeometriesConnected(currentLink.startingPoint, currentLink.endPoint, nextLink.startingPoint, nextLink.endPoint)) {
@@ -152,7 +152,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
 
     val track = seq.headOption.map(_.track).getOrElse(Track.Unknown)
     val administrativeClass = seq.head.administrativeClass
-    val connectedSection = createConnectedSection(seq.head, seq)
+    val connectedSection = pickGeometricallyConnectedSection(seq.head, seq)
 
     val linksAfterFirst =
       if (connectedSection.tail.nonEmpty)
