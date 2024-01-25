@@ -55,7 +55,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
           if (sec.right == sec.left)
             sec.right.links
           else {
-            sec.right.links ++ sec.left.links.filterNot(_.track == Track.Combined) // Remove dublicated
+            sec.right.links ++ sec.left.links.filterNot(_.track == Track.Combined) // Remove duplicated
           }
         }
       } catch {
@@ -128,7 +128,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       (if (rest.isEmpty) Seq() else assignRoadwayNumbersInContinuousSection(rest, nextRoadwayNumber))
   }
 
-  private def continuousRoadwaySection(seq: Seq[ProjectLink], givenRoadwayNumber: Long): (Seq[ProjectLink], Seq[ProjectLink]) = {
+  private def continuousRoadwaySection(projectLinks: Seq[ProjectLink], givenRoadwayNumber: Long): (Seq[ProjectLink], Seq[ProjectLink]) = {
     def pickGeometricallyConnectedSection(startLink: ProjectLink, allLinks: Seq[ProjectLink]): List[ProjectLink] = {
       def getSection(currentLink: ProjectLink, section: List[ProjectLink]): List[ProjectLink] = {
         val currentIndex = allLinks.indexOf(currentLink)
@@ -149,21 +149,21 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
 
       getSection(startLink, List.empty[ProjectLink])
     }
-
-    val track = seq.headOption.map(_.track).getOrElse(Track.Unknown)
-    val administrativeClass = seq.head.administrativeClass
-    val connectedSection = pickGeometricallyConnectedSection(seq.head, seq)
+    val firstProjectLink = projectLinks.head
+    val track = firstProjectLink.track
+    val administrativeClass = firstProjectLink.administrativeClass
+    val connectedSection = pickGeometricallyConnectedSection(firstProjectLink, projectLinks)
 
     val linksAfterFirst =
       if (connectedSection.tail.nonEmpty)
         connectedSection.tail.takeWhile(pl => pl.track == track && pl.discontinuity == Discontinuity.Continuous && pl.administrativeClass == administrativeClass)
       else Seq()
 
-    val continuousProjectLinks: Seq[ProjectLink] = Seq(seq.head) ++ linksAfterFirst
+    val continuousProjectLinks: Seq[ProjectLink] = Seq(firstProjectLink) ++ linksAfterFirst
 
     def canIncludeNonContinuous: Boolean = {
-      val lastContinuousLink = seq(continuousProjectLinks.size - 1)
-      val nextLink = seq(continuousProjectLinks.size)
+      val lastContinuousLink = projectLinks(continuousProjectLinks.size - 1)
+      val nextLink = projectLinks(continuousProjectLinks.size)
       nextLink.track == track &&
       nextLink.administrativeClass == administrativeClass &&
       nextLink.discontinuity != Discontinuity.Continuous &&
@@ -174,14 +174,14 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     }
 
     val continuousProjectLinksWithDiscontinuity =
-      if (seq.size > continuousProjectLinks.size && canIncludeNonContinuous)
-        seq.take(continuousProjectLinks.size+1)
+      if (projectLinks.size > continuousProjectLinks.size && canIncludeNonContinuous)
+        projectLinks.take(continuousProjectLinks.size+1)
       else
         continuousProjectLinks
 
     val assignedContinuousSection = assignRoadwayNumbersInContinuousSection(continuousProjectLinksWithDiscontinuity, givenRoadwayNumber)
 
-    (assignedContinuousSection, seq.drop(continuousProjectLinksWithDiscontinuity.size))
+    (assignedContinuousSection, projectLinks.drop(continuousProjectLinksWithDiscontinuity.size))
   }
 
   /***
