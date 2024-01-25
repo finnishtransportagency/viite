@@ -3460,6 +3460,102 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
+  test("Test projectService.recalculateProjectLinks() and the way roadway numbers are handled in the process") {
+    runWithRollback {
+      val elyNumber = 9
+      val roadNumber = 18001
+      val roadPartNumber = 1
+      val reversedBoolean = false
+      val track = Track.Combined
+      val terminatedStatus = RoadAddressChangeType.Termination
+      val transferStatus = RoadAddressChangeType.Transfer
+      val unchangedStatus = RoadAddressChangeType.Unchanged
+      val projectId = 999
+      val originalRoadwayId = 10
+      val originalRoadwayNumber = 1000
+
+      // create the original roadway
+      roadwayDAO.create(Seq(
+        Roadway(originalRoadwayId, originalRoadwayNumber, roadNumber, roadPartNumber, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, 0, 700, reversedBoolean, DateTime.now(),None,"Test", Some("Test"), elyNumber, TerminationCode.NoTermination, DateTime.now(),None)
+      ))
+
+      val linearLocationId1 = 1
+      val linearLocationId2 = 2
+      val linearLocationId3 = 3
+      val linearLocationId4 = 4
+      val linearLocationId5 = 5
+      val linearLocationId6 = 6
+      val linearLocationId7 = 7
+
+      val linkId1 = "testtest-test-test-test-testtest:1"
+      val linkId2 = "testtest-test-test-test-testtest:2"
+      val linkId3 = "testtest-test-test-test-testtest:3"
+      val linkId4 = "testtest-test-test-test-testtest:4"
+      val linkId5 = "testtest-test-test-test-testtest:5"
+      val linkId6 = "testtest-test-test-test-testtest:6"
+      val linkId7 = "testtest-test-test-test-testtest:7"
+
+      // create linear locations
+      val linearLocations = Seq(
+        dummyLinearLocation(id = linearLocationId1, roadwayNumber = originalRoadwayNumber, orderNumber = 1L, linkId = linkId1, startMValue = 0.0, endMValue = 100.0, SideCode.TowardsDigitizing, LinkGeomSource.FrozenLinkInterface, 0L, Seq(Point(0.0, 100.0))),
+        dummyLinearLocation(id = linearLocationId2, roadwayNumber = originalRoadwayNumber, orderNumber = 2L, linkId = linkId2, startMValue = 0.0, endMValue = 100.0, SideCode.TowardsDigitizing, LinkGeomSource.FrozenLinkInterface, 0L, Seq(Point(100.0, 200.0))),
+        dummyLinearLocation(id = linearLocationId3, roadwayNumber = originalRoadwayNumber, orderNumber = 3L, linkId = linkId3, startMValue = 0.0, endMValue = 100.0, SideCode.TowardsDigitizing, LinkGeomSource.FrozenLinkInterface, 0L, Seq(Point(200.0, 300.0))),
+        dummyLinearLocation(id = linearLocationId4, roadwayNumber = originalRoadwayNumber, orderNumber = 4L, linkId = linkId4, startMValue = 0.0, endMValue = 100.0, SideCode.TowardsDigitizing, LinkGeomSource.FrozenLinkInterface, 0L, Seq(Point(300.0, 400.0))),
+        dummyLinearLocation(id = linearLocationId5, roadwayNumber = originalRoadwayNumber, orderNumber = 5L, linkId = linkId5, startMValue = 0.0, endMValue = 100.0, SideCode.TowardsDigitizing, LinkGeomSource.FrozenLinkInterface, 0L, Seq(Point(400.0, 500.0))),
+        dummyLinearLocation(id = linearLocationId6, roadwayNumber = originalRoadwayNumber, orderNumber = 6L, linkId = linkId6, startMValue = 0.0, endMValue = 100.0, SideCode.TowardsDigitizing, LinkGeomSource.FrozenLinkInterface, 0L, Seq(Point(500.0, 600.0))),
+        dummyLinearLocation(id = linearLocationId7, roadwayNumber = originalRoadwayNumber, orderNumber = 7L, linkId = linkId7, startMValue = 0.0, endMValue = 100.0, SideCode.TowardsDigitizing, LinkGeomSource.FrozenLinkInterface, 0L, Seq(Point(600.0, 700.0)))
+      )
+      linearLocationDAO.create(linearLocations)
+
+      // create project
+      val project = Project(projectId, ProjectState.Incomplete, "testProject", "test", DateTime.now, "", startDate = DateTime.now().plusDays(10), DateTime.now(),"", Seq(),Seq(),None, None, Set())
+      projectDAO.create(project)
+
+      // reserve the road part for the project
+      projectReservedPartDAO.reserveRoadPart(projectId, roadNumber, roadPartNumber, "test")
+
+      // The project links are in a state in which they have changes applied to them but not yet recalculated.
+      val projectLinks = Seq(
+        ProjectLink(1000, roadNumber, roadPartNumber, track, Discontinuity.MinorDiscontinuity, 0, 100, 0, 100, None, None, Some("test"), "testtest-test-test-test-testtest:1",0 , 100, SideCode.TowardsDigitizing, (RoadAddressCP, NoCP), (RoadAddressCP, NoCP), List(Point(0.0, 0.0, 0.0), Point(100.0, 0.0, 0.0)), projectId, unchangedStatus, AdministrativeClass.State, LinkGeomSource.FrozenLinkInterface, 100.0, originalRoadwayId, linearLocationId1, elyNumber, reversedBoolean,None, 1634598047000L, originalRoadwayNumber, Some("testRoadName")),
+        ProjectLink(1001, roadNumber, roadPartNumber, track, Discontinuity.Continuous, 100, 200, 100, 200, None, None, Some("test"), "testtest-test-test-test-testtest:2",0 , 100, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), List(Point(100.0, 0.0, 0.0), Point(200.0, 0.0, 0.0)), projectId, terminatedStatus, AdministrativeClass.State, LinkGeomSource.FrozenLinkInterface, 100.0, originalRoadwayId, linearLocationId2, elyNumber, reversedBoolean,None, 1634598047000L, originalRoadwayNumber, Some("testRoadName")),
+        ProjectLink(1002, roadNumber, roadPartNumber, track, Discontinuity.MinorDiscontinuity, 200, 300, 200, 300, None, None, Some("test"), "testtest-test-test-test-testtest:3",0 , 100, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), List(Point(200.0, 0.0, 0.0), Point(300.0, 0.0, 0.0)), projectId, transferStatus, AdministrativeClass.State, LinkGeomSource.FrozenLinkInterface, 100.0, originalRoadwayId, linearLocationId3, elyNumber, reversedBoolean,None, 1634598047000L, originalRoadwayNumber, Some("testRoadName")),
+        ProjectLink(1003, roadNumber, roadPartNumber, track, Discontinuity.Continuous, 300, 400, 300, 400, None, None, Some("test"), "testtest-test-test-test-testtest:4",0 , 100, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), List(Point(300.0, 0.0, 0.0), Point(400.0, 0.0, 0.0)), projectId, terminatedStatus, AdministrativeClass.State, LinkGeomSource.FrozenLinkInterface, 100.0, originalRoadwayId, linearLocationId4, elyNumber, reversedBoolean,None, 1634598047000L, originalRoadwayNumber, Some("testRoadName")),
+        ProjectLink(1004, roadNumber, roadPartNumber, track, Discontinuity.Continuous, 400, 500, 400, 500, None, None, Some("test"), "testtest-test-test-test-testtest:5",0 , 100, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), List(Point(400.0, 0.0, 0.0), Point(500.0, 0.0, 0.0)), projectId, transferStatus, AdministrativeClass.State, LinkGeomSource.FrozenLinkInterface, 100.0, originalRoadwayId, linearLocationId5, elyNumber, reversedBoolean,None, 1634598047000L, originalRoadwayNumber, Some("testRoadName")),
+        ProjectLink(1005, roadNumber, roadPartNumber, track, Discontinuity.Continuous, 500, 600, 500, 600, None, None, Some("test"), "testtest-test-test-test-testtest:6",0 , 100, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), List(Point(500.0, 0.0, 0.0), Point(600.0, 0.0, 0.0)), projectId, transferStatus, AdministrativeClass.State, LinkGeomSource.FrozenLinkInterface, 100.0, originalRoadwayId, linearLocationId6, elyNumber, reversedBoolean,None, 1634598047000L, originalRoadwayNumber, Some("testRoadName")),
+        ProjectLink(1006, roadNumber, roadPartNumber, track, Discontinuity.EndOfRoad, 600, 700, 600, 700, None, None, Some("test"), "testtest-test-test-test-testtest:7",0 , 100, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, RoadAddressCP), List(Point(600.0, 0.0, 0.0), Point(700.0, 0.0, 0.0)), projectId, transferStatus, AdministrativeClass.State, LinkGeomSource.FrozenLinkInterface, 100.0, originalRoadwayId, linearLocationId7, elyNumber, reversedBoolean,None, 1634598047000L, originalRoadwayNumber, Some("testRoadName"))
+      )
+      projectLinkDAO.create(projectLinks)
+
+      // fetch project links from database and check that they indeed were created
+      val createdProjectLinks = projectLinkDAO.fetchProjectLinks(projectId)
+      createdProjectLinks.size should be (7)
+
+      // recalculate the project links (this will assign new roadway numbers and update the addr M values)
+      projectService.recalculateProjectLinks(projectId, "test")
+
+      // fetch the project links from the database
+      val recalculatedProjectLinks = projectLinkDAO.fetchProjectLinks(projectId).sortBy(_.originalStartAddrMValue)
+
+      recalculatedProjectLinks.foreach(pl => println(pl.startAddrMValue, pl.endAddrMValue, pl.status, pl.roadwayNumber))
+
+      // none of the project links should have the original roadway number anymore
+      recalculatedProjectLinks.map(_.roadwayNumber) should not contain originalRoadwayNumber
+
+      val terminatedProjectLinks = recalculatedProjectLinks.filter(_.status == RoadAddressChangeType.Termination)
+      val newRoadwayNumbersForTerminatedProjectLinks = terminatedProjectLinks.map(_.roadwayNumber).toSet
+      newRoadwayNumbersForTerminatedProjectLinks.size should be (2) // The terminated project links should have different roadway numbers
+
+      val firstFourProjectLinks = recalculatedProjectLinks.take(4)
+      val firstFourPlRoadwayNumbers = firstFourProjectLinks.map(_.roadwayNumber).toSet
+      firstFourPlRoadwayNumbers.size should be (4) // the first four project links should all have different roadway numbers
+
+      val lastThreeProjectLinks = recalculatedProjectLinks.takeRight(3)
+      val lastThreePlRoadwayNumber = lastThreeProjectLinks.map(_.roadwayNumber).toSet
+
+      lastThreePlRoadwayNumber.size should be (1) // the last three project links should have same roadway number
+    }
+  }
+
   def toRoadwayAndLinearLocation(p: ProjectLink):(LinearLocation, Roadway) = {
     val startDate = p.startDate.getOrElse(DateTime.now()).minusDays(1)
 
