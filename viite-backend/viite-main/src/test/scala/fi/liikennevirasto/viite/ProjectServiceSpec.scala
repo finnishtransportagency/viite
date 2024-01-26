@@ -3461,6 +3461,25 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("Test projectService.recalculateProjectLinks() and the way roadway numbers are handled in the process") {
+    /**
+     *  0                    Road address change types on project links                   700
+     *  |---------->|==========>|---------->|==========>|---------->|---------->|----------> End of road
+     *    Unchanged  Terminated   Transfer    Terminated  Transfer    Transfer    Transfer
+     *
+     *
+     *         Original addr m values and roadway on project links before recalculation
+     *  0           100         200         300         400       500          600        700
+     *  |---------->|==========>|---------->|==========>|---------->|---------->|----------> End of Road
+     *    Roadway1    Roadway1    Roadway1    Roadway1    Roadway1    Roadway1    Roadway1
+     *
+     *
+     *         New addr m values and roadways on project links after recalculation
+     *  0           100         100         200         200       300          400        500
+     *  |---------->|==========>|---------->|==========>|---------->|---------->|----------> End of Road
+     *    Roadway2    Roadway3    Roadway4    Roadway5    Roadway6    Roadway6    Roadway6
+     *
+     */
+
     runWithRollback {
       val elyNumber = 9
       val roadNumber = 18001
