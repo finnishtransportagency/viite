@@ -1,4 +1,4 @@
-FROM openjdk:jre-alpine
+FROM amazoncorretto:8-alpine-jre
 RUN apk --no-cache add curl
 RUN mkdir /src
 RUN mkdir /src/main
