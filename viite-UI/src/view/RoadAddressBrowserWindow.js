@@ -402,6 +402,12 @@
                 }
             }
 
+            // Clear date error message when typing is started again
+            document.getElementById('roadAddrSituationDate').addEventListener('input', function() {
+                validateDate(this.value);
+                this.setCustomValidity("");
+            });
+
             function validateElyAndRoadNumber (elyElement, roadNumberElement) {
                 if (elyElement.value === "" && roadNumberElement.value === "")
                     elyElement.setCustomValidity("Ely tai Tie on pakollinen tieto");
