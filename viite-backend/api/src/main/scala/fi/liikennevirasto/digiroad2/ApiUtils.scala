@@ -19,7 +19,7 @@ import scala.util.{Failure, Random, Success}
 
 object ApiUtils {
   val logger: Logger = LoggerFactory.getLogger(getClass)
-  /*lazy*/ val s3Service: awsService.S3.type = awsService.S3
+  lazy val s3Service: awsService.S3.type = awsService.S3
   val s3Bucket: String = ViiteProperties.apiS3BucketName
   val objectTTLSeconds: Int =
     if (ViiteProperties.apiS3ObjectTTLSeconds != null) ViiteProperties.apiS3ObjectTTLSeconds.toInt
@@ -94,6 +94,11 @@ object ApiUtils {
       case Failure(e) => { // The Future ended up in an exception
         logger.info(s"API LOG $queryId: Future completed with failure: $finished")
         //logger.error(s"API LOG $queryId: error ${e.getClass} with message ${e.getMessage} and stacktrace: \n ${e.getStackTrace.mkString("", EOL, EOL)}")
+
+        // Save the error message to S3, so that the caller gets the error feedback from there, ...
+        // ... and does not stay stuck waiting forever in the case of a failure.
+        // (Tried to get that work with "more beautiful" ways, but did not succeed. ...
+        // ... But if you can, make it happen. :) )
         val errorResponseBody = e.getMessage
         s3Service.saveFileToS3(s3Bucket, workId, errorResponseBody, "text/plain")
       }
