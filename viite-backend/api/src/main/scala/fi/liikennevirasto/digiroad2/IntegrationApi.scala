@@ -57,9 +57,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
   get("/road_address", operation(getRoadAddress)) {
     contentType = formats("json")
 
-println("Threading print test: Going to avoidRestrictions")
     ApiUtils.avoidRestrictions(apiId, request, params) { params =>
-println("Threading print test: Now in avoidRestrictions")
       params.get("municipality").map { municipality =>
         try {
           val municipalityCode = municipality.toInt
@@ -119,8 +117,9 @@ println("Threading print test: Now in avoidRestrictions")
     * 'param' may not be available, when calling from another thread. */
   get("/road_addresses_by_municipality", operation(getRoadAddressesByMunicipality)) {
     contentType = formats("json")
+println("Threading print test: Going to avoidRestrictions")
     ApiUtils.avoidRestrictions(apiId, request, params) { params =>
-
+println("Threading print test: Now in avoidRestrictions")
 //logger.info(s"GET request for ${request.getRequestURI}?${request.getQueryString} --RUNNING--") // Information logged from ApiUtils, distinct Future thread. Cannot use here; 'request' not available in the Future thread.
       val municipality = params.get("municipality").getOrElse(
         {
@@ -567,7 +566,7 @@ println("Threading print test: Now in avoidRestrictions")
    * Intended usage in a catch block after your known function specific Exception cases
    * @throws Throwable if it is considered a fatal one. */
   def handleCommonIntegrationAPIExceptions(t: Throwable, operationId: Option[String]): Unit = {
-val requestLogString = s"GET request for ${request.getRequestURI}?${request.getQueryString} (${operationId})"
+    val requestLogString = s"GET request for ${request.getRequestURI}?${request.getQueryString} (${operationId})"
     logger.info(s"$requestLogString --ENDED in ${t.getClass}--")
     t match {
       case ve: ViiteException =>
