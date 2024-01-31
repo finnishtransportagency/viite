@@ -275,7 +275,7 @@ class RoadAddressService(
           ral.copy(geometry = (ral.geometry.dropRight(1):+rl.geometry.last.with3decimals) ) // VIITE-3083 Hack to retain already correctly rounded 3 decimals from linear location
         else
         // ---- End of VIITE-3083 hack ----
-          ral     // VIITE-3083 default value with calculated geometry. Otherwise, keep the whole calculated geometry.
+          ral     // VIITE-3083 default value. Keep the whole calculated geometry, if other than slight difference between the linear location, and calculated end point values.
       })
     }
   }
