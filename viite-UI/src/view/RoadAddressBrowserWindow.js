@@ -390,14 +390,23 @@
                     maxRoadPartNumber.reportValidity();
             }
 
-            function validateDate(date) {
-                if (dateutil.isValidDate(date)) {
-                    if(!dateutil.isDateInYearRange(date, ViiteConstants.MIN_YEAR_INPUT, ViiteConstants.MAX_YEAR_INPUT))
+            function validateDate(dateString) {
+                if (dateutil.isFinnishDateString(dateString)) {
+                    if (dateutil.isDateInYearRange(roadAddrSituationDateObject, ViiteConstants.MIN_YEAR_INPUT, ViiteConstants.MAX_YEAR_INPUT)) {
+                        roadAddrSituationDate.setCustomValidity("");
+                    } else {
                         roadAddrSituationDate.setCustomValidity("Vuosiluvun tulee olla väliltä " + ViiteConstants.MIN_YEAR_INPUT + " - " + ViiteConstants.MAX_YEAR_INPUT);
-                }
-                else
+                    }
+                } else {
                     roadAddrSituationDate.setCustomValidity("Päivämäärän tulee olla muodossa pp.kk.yyyy");
+                }
             }
+
+            // Clear date error message when typing is started again
+            document.getElementById('roadAddrSituationDate').addEventListener('input', function() {
+                validateDate(this.value);
+                this.setCustomValidity("");
+            });
 
             function validateElyAndRoadNumber (elyElement, roadNumberElement) {
                 if (elyElement.value === "" && roadNumberElement.value === "")
@@ -405,7 +414,7 @@
             }
 
             function willPassValidations() {
-                validateDate(roadAddrSituationDateObject);
+                validateDate(roadAddrSituationDate.value);
                 validateElyAndRoadNumber(ely, roadNumber);
                 return reportValidations();
             }
