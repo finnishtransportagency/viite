@@ -16,7 +16,7 @@ import org.json4s.{DefaultFormats, Formats}
 import org.postgresql.util.PSQLException
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport, SwaggerSupportSyntax}
-import org.scalatra.{BadRequest, InternalServerError, ScalatraServlet}
+import org.scalatra.{BadRequest, InternalServerError, Params, ScalatraServlet}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.immutable.ListMap
@@ -41,8 +41,8 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
 
   protected implicit val jsonFormats: Formats = DefaultFormats
 
-  val getRoadAddressesByMunicipality: SwaggerSupportSyntax.OperationBuilder =
-    (apiOperation[List[Map[String, Any]]]("getRoadAddressesByMunicipality")
+  val getRoadAddress: SwaggerSupportSyntax.OperationBuilder =
+    (apiOperation[List[Map[String, Any]]]("getRoadAddress")
       tags "Integration (kalpa, Digiroad, Viitekehysmuunnin, ...)"
       summary "Returns all the road addresses of the municipality stated as the municipality parameter.\n"
       description "Returns all the road addresses of the queried <i>municipality</i>.\n" +
@@ -55,30 +55,101 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
       parameter queryParam[String]("situationDate").optional
         .description("(Optional) The road address information is returned from this exact moment (instead of the newest data).\n" + ISOdateTimeDescription)
     )
-
   /** TODO better name e.g. "road_addresses_of_municipality" */
-  get("/road_address", operation(getRoadAddressesByMunicipality)) {
+  get("/road_address", operation(getRoadAddress)) {
     contentType = formats("json")
+
     ApiUtils.avoidRestrictions(apiId, request, params) { params =>
+      params.get("municipality").map { municipality =>
+        try {
+          val municipalityCode = municipality.toInt
+          val searchDate: Option[DateTime] =
+            if (params.get("situationDate").isDefined) {
+              //Some(DateTime.parse(params.get("situationDate").getOrElse("!!!!"))) // Existence checked -> should never go to else
+              Some(dateParameterGetValidOrThrow("situationDate", Some(params)))
+            } else {
+              None
+            }
 
-      val municipality = params.get("municipality").getOrElse(halt(BadRequest("Missing mandatory 'municipality' parameter")))
+          try {
+            val knownAddressLinks = roadAddressService.getAllByMunicipality(municipalityCode, searchDate)
+              .filter(ral => ral.roadNumber > 0)
+            roadAddressLinksToApi(knownAddressLinks)
+          } catch {
+            case e: Exception =>
+              val message = s"Failed to get road addresses for municipality $municipalityCode"
+              logger.error(message, e)
+              BadRequest(message)
+          }
+        } catch {
+          case nfe: NumberFormatException =>
+            val message = s"Incorrectly formatted municipality code: " + nfe.getMessage
+            logger.error(message)
+            BadRequest(message)
+          case iae: IllegalArgumentException =>
+            val message = s"Incorrectly formatted date: " + iae.getMessage
+            logger.error(message)
+            BadRequest(message)
+          case e: Exception =>
+            val message = e.getMessage
+            logger.error(message)
+            BadRequest(message)
+        }
+      } getOrElse {
+        BadRequest("Missing mandatory 'municipality' parameter")
+      }
+    }
+  }
 
-      //val searchDate = parseIsoDate(params.get("situationDate"))
+  val getRoadAddressesByMunicipality: SwaggerSupportSyntax.OperationBuilder =
+    (apiOperation[List[Map[String, Any]]]("getRoadAddressesByMunicipality")
+      tags "Integration (kalpa, Digiroad, Viitekehysmuunnin, ...)"
+      summary "Experimental BULLETPROOFED VERSION of get(\"/road_address). Returns all the road addresses of the municipality stated as the municipality parameter.\n"
+      description "Returns all the road addresses of the queried <i>municipality</i>.\n" +
+      "Returns the newest information possible (may contain partially future addresses) by default if <i>situationDate</i> is omitted, " +
+      "or the road address network valid at <i>situationDate</i>, when <i>situationDate</i> is given.\n" +
+      "Uses HTTP redirects for the heavier queries, to address some timeout issues."
+      parameter headerParam[String]("X-API-Key").required.description(XApiKeyDescription)
+      parameter queryParam[Int]("municipality").required
+      .description("The municipality identifier.\nFor the list, see https://www2.tilastokeskus.fi/fi/luokitukset/kunta/.")
+      parameter queryParam[String]("situationDate").optional
+      .description("(Optional) The road address information is returned from this exact moment (instead of the newest data).\n" + ISOdateTimeDescription)
+      )
+  /** BULLETPROOFED VERSION of get("/road_address) - PROBLEMS WITH PROD-environment; implicitly available 'request', and
+    * 'param' may not be available, when calling from another thread. */
+  get("/road_addresses_by_municipality", operation(getRoadAddressesByMunicipality)) {
+    contentType = formats("json")
+println("Threading print test: Going to avoidRestrictions")
+    ApiUtils.avoidRestrictions(apiId, request, params) { params =>
+println("Threading print test: Now in avoidRestrictions")
+//logger.info(s"GET request for ${request.getRequestURI}?${request.getQueryString} --RUNNING--") // Information logged from ApiUtils, distinct Future thread. Cannot use here; 'request' not available in the Future thread.
+      val municipality = params.get("municipality").getOrElse(
+        {
+          //halt(BadRequest("Missing mandatory 'municipality' parameter"))     // Use if _not_ using avoidRestrictions
+          throw ViiteException("Missing mandatory 'municipality' parameter") // Use if _using_ avoidRestrictions
+        }
+      )
+
       try {
         val municipalityCode = municipality.toInt // may throw java.lang.NumberFormatException
-        val searchDate = dateParameterOptionGetValidOrThrow("situationDate")
+        val searchDate = dateParameterOptionGetValidOrThrow("situationDate", Some(params))
         val knownAddressLinks = roadAddressService.getAllByMunicipality(municipalityCode, searchDate)
           .filter(ral => ral.roadNumber > 0)
         roadAddressLinksToApi(knownAddressLinks)
+//logger.info(s"GET request for ${request.getRequestURI}?${request.getQueryString} --FINISHED--") // Information logged from ApiUtils, distinct Future thread. Cannot use here; 'request' not available in the Future thread.
+
       }
       catch {
         case nfe: NumberFormatException =>
-          BadRequestWithLoggerWarn(s"Incorrectly formatted municipality code: '$municipality'", nfe.getMessage)
+          //BadRequestWithLoggerWarn(s"Incorrectly formatted municipality code: '${municipality}'", nfe.getMessage)  // Use if _not_ using avoidRestrictions
+          BadRequest(nfe.getMessage)                                                                                 // Use if _using_ avoidRestrictions
       // TODO Leaving as comment for now... but... This is unexpected generic exception; rather point to telling to the dev team -> handleCommonIntegrationAPIExceptions? -> Remove from here
-      //case e: Exception =>
-      //  BadRequestWithLoggerWarn(s"Failed to get road addresses for municipality $municipalityCode", e.getMessage)
+        case e: Exception =>
+          //BadRequestWithLoggerWarn(s"Failed to get road addresses for municipality $municipality", e.getMessage)  // Use if _not_ using avoidRestrictions
+          BadRequest(e.getMessage)                                                                                  // Use if _using_ avoidRestrictions
         case t: Throwable =>
-          handleCommonIntegrationAPIExceptions(t, getRoadAddressesByMunicipality.operationId)
+          //handleCommonIntegrationAPIExceptions(t, getRodAddressesByMunicipality.operationId)  // Use if _not_ using avoidRestrictions
+          BadRequest(t.getMessage)                                                              // Use if _using_ avoidRestrictions
       }
     }
   }
@@ -503,12 +574,17 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
    *  An empty value also causes an exception.
    *
    * @param dateParameterName name of the query parameter to be fetched, and validated
-   * @return A readily parsed ISO DateTime, if valid. If not valid
+   * @param explicitParams Optional. Give the http query parameters explicitly, when they are not available implicitly.
+   *                       (That is, when the execution is run from a thread distinct to the original that received the http call. (e.g. from a scala Future))
+   * @return A readily parsed ISO DateTime, if valid. If not valid, throws an exception.
    * @throws ViiteException if the <i>dateParameterName</i> does not contain a valid ISO8601 date string .*/
-  def dateParameterGetValidOrThrow(dateParameterName: String): DateTime = {
+  def dateParameterGetValidOrThrow(dateParameterName: String, explicitParams: Option[Params] = None): DateTime = {
     val aHundreadYearsInTheFuture = DateTime.now().plusYears(100)
 
-    val dateString = params.get(s"$dateParameterName")
+    val dateString: Option[String] =
+      if(explicitParams.isDefined) { Option(explicitParams.get(s"$dateParameterName")) } // use the explicit parameters for printing (assume there is no other usable variables in the context)
+      else { params.get(s"$dateParameterName") }                                         // otherwise assume that the implicit 'request' is available
+
     dateString.getOrElse(throw ViiteException(s"Missing mandatory '$dateParameterName' parameter"))
 
     if (dateString.isEmpty || dateString.get == "") {     // must have a value to parse
@@ -527,7 +603,10 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
         case _: IllegalArgumentException =>
           throw ViiteException(s"$ISOdateTimeDescription. Now got $dateParameterName='${dateString.get}'.") //, iae.getMessage) // TODO more accurate message for logging? -> e.g. ViiteAPIException class with an additional field?
         case _: PSQLException =>
-          throw ViiteException(s"Date out of bounds, check the given dates: ${request.getQueryString}.") //, s"${psqle.getMessage}")
+          val queryString =
+            if(explicitParams.isDefined)  { s"$dateParameterName=dateString" } // use the explicit parameters for printing (assume there is no other usable variables in the context)
+            else { s" ${request.getQueryString}" }                             // otherwise assume that the implicit 'request' is available
+          throw ViiteException(s"Date out of bounds, check the given dates: $queryString.") //, s"${psqle.getMessage}")
       }
     }
   }
@@ -535,12 +614,15 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
   /** Fetches, and returns a validated DateTime object if available in query parameter <i>dateParameterName</i>,
    *  or None, if there is no such thing given.
    *  Wrapping [[dateParameterGetValidOrThrow]] to get an Option[DateTime] for an optional query parameter.
+   *
    * @param dateParameterName name of the query parameter to be fetched, and validated
+   * @param explicitParams    Optional. Give the http query parameters explicitly, when they are not available implicitly.
+   *                          (That is, when the execution is run from a thread distinct to the original that received the http call. (e.g. from a scala Future))
    * @return A valid DateTime object, or none
    * @throws ViiteException from [[dateParameterGetValidOrThrow]] */
-  def dateParameterOptionGetValidOrThrow(dateParameterName: String): Option[DateTime] = {
+  def dateParameterOptionGetValidOrThrow(dateParameterName: String, explicitParams: Option[Params] = None): Option[DateTime] = {
     if (params.get(s"$dateParameterName").isDefined) {
-      Some(dateParameterGetValidOrThrow(s"$dateParameterName"))
+      Some(dateParameterGetValidOrThrow(dateParameterName, explicitParams))
     } else {
       None
     }
@@ -559,6 +641,8 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
    * Intended usage in a catch block after your known function specific Exception cases
    * @throws Throwable if it is considered a fatal one. */
   def handleCommonIntegrationAPIExceptions(t: Throwable, operationId: Option[String]): Unit = {
+    val requestLogString = s"GET request for ${request.getRequestURI}?${request.getQueryString} (${operationId})"
+    logger.info(s"$requestLogString --ENDED in ${t.getClass}--")
     t match {
       case ve: ViiteException =>
         BadRequestWithLoggerWarn(s"Check the given parameters. ${ve.getMessage}", "")

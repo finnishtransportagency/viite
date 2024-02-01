@@ -159,7 +159,7 @@ class RoadLinkService(val kgvClient: KgvRoadLink, val eventbus: DigiroadEventBus
       f1Result <- kgvClient.complementaryData.fetchComplementaryByMunicipalitiesF(municipalities)
       f2Result <- Future(Seq()) //vvhClient.roadLinkChangeInfo.fetchByMunicipalityF(municipalities) VIITE-2789
       f3Result <- if (useFrozenLinkInterface)
-        kgvClient.frozenTimeRoadLinkData.fetchByMunicipalityF(municipalities)
+                    kgvClient.frozenTimeRoadLinkData.fetchByMunicipalityF(municipalities)
                   else
                     kgvClient.roadLinkData.fetchByMunicipalityF(municipalities)
     } yield (f1Result, f2Result, f3Result)
