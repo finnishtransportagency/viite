@@ -25,7 +25,7 @@
         function createResultTable(results) {
             const arr = [];
             let arrPointer = -1;
-            arr[++arrPointer] = `<table id="roadAddressChangesBrowserTable" class="road-address-browser-window-results-table">
+            arr[++arrPointer] = `<table id="roadAddressChangesBrowserTable" class="road-address-browser-window-results-table viite-table">
                                     <thead>
                                         <tr>
                                             <th>Voimaantulopvm</th>
@@ -107,7 +107,7 @@
         }
 
         function toggle() {
-            $('.container').append('<div class="road-address-browser-modal-overlay confirm-modal"><div class="road-address-browser-modal-window"></div></div>');
+            $('.container').append('<div class="road-address-browser-modal-overlay viite-modal-overlay confirm-modal"><div class="road-address-browser-modal-window"></div></div>');
             $('.road-address-browser-modal-window').append(roadAddressChangesBrowserWindow.toggle());
             bindEvents();
         }
@@ -172,9 +172,6 @@
                     if (roadAddrEndDateObject.getTime() < roadAddrStartDateObject.getTime()) {
                         roadAddrChangesEndDate.setCustomValidity("Loppupäivämäärä ei voi olla ennen alkupäivämäärää");
                     }
-                    if (roadAddrEndDateObject.getTime() === roadAddrStartDateObject.getTime()) {
-                        roadAddrChangesEndDate.setCustomValidity("Alku- ja loppupäivämäärä ei voi olla sama. Jos haluat vain yhden päivän tulokset, syötä peräkkäiset päivät.");
-                    }
                 }
                 return reportValidations();
             }
@@ -204,6 +201,10 @@
             roadAddrChangesEndDate.setCustomValidity("");
 
             if (willPassValidations())
+
+                //Sets the end date 1 day ahead, so that the inputted end date will be included in the projectlisting.
+                dateutil.addOneDayToDate(roadAddrEndDateObject);
+
                 fetchRoadAddressChanges(createParams());
         }
 

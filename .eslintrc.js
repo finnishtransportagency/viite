@@ -59,6 +59,7 @@ module.exports = {
         "RoadAddressChangesBrowserWindow": "writable",
         "LinkPropertyForm": "writable",
         "NodeSearchForm": "writable",
+        "RoadNetworkErrorsList": "writable",
         "NodeForm": "writable",
         "ProjectForm": "writable",
         "ProjectEditForm": "writable",
