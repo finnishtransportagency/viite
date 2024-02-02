@@ -6,6 +6,12 @@
     var gettingRoadLinks;
     moment.locale('fi');
 
+    this.getRoadNetworkErrors = _.throttle(function (callback) {
+      return $.get('api/viite/roadnetworkerrors', function (data) {
+        return _.isFunction(callback) && callback(data);
+      });
+    }, 1000);
+
     this.getDataForRoadAddressBrowser = _.throttle(function (params, callback) {
       return $.get('api/viite/roadaddressbrowser', params, function (data) {
         return _.isFunction(callback) && callback(data);
@@ -287,8 +293,8 @@
 
     this.reOpenProject = function (projectId, success, errorCallback) {
       $.ajax({
-        type: "DELETE",
-        url: "api/viite/project/trid/" + projectId,
+        type: "POST",
+        url: "api/viite/project/id/" + projectId,
         success: success,
         error: errorCallback
       });

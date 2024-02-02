@@ -1,5 +1,5 @@
 (function (root) {
-  root.LinkStatus = {
+  root.RoadAddressChangeType = {
     NotHandled: {value: 0, description: "NotHandled", transitionFrom: [0], displayText: "Käsittelemätön"},
     Unchanged: {value: 1, description: "Unchanged", transitionFrom: [0, 1, 3, 5], displayText: "Ennallaan"},
     New: {value: 2, description: "New", transitionFrom: [99, 2], displayText: "Uusi"},

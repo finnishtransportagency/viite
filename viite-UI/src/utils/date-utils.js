@@ -18,6 +18,12 @@
     return s ? moment(s, dateUtils.FINNISH_DATE_FORMAT) : null;
   };
 
+  dateUtils.isFinnishDateString = function (dateString) {
+    // Regular expression to match date format with day 1-31 and month 1-12
+    const regex = /^(0?[1-9]|[12]\d|3[01])\.(0?[1-9]|1[0-2])\.(\d{4})$/;
+    return regex.test(dateString);
+  };
+
   dateUtils.addFinnishDatePicker = function (element, additionalOptions) {
     return addPicker(jQuery(element),additionalOptions);
   };
@@ -73,6 +79,11 @@
 
   dateUtils.isDateInYearRange = function (date, minYear, maxYear) {
     return date.getFullYear() >= minYear && date.getFullYear() <= maxYear;
+  };
+
+  /** Sets date to the next day */
+  dateUtils.addOneDayToDate = function (dateObject) {
+    dateObject.setDate(dateObject.getDate() + 1);
   };
 
   /** Converts date object to string "yyyy-mm-dd" */
