@@ -106,15 +106,15 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
       tags "Integration (kalpa, Digiroad, Viitekehysmuunnin, ...)"
       summary "Experimental BULLETPROOFED VERSION of get(\"/road_address). Returns all the road addresses of the municipality stated as the municipality parameter.\n"
       description "Returns all the road addresses of the queried <i>municipality</i>.\n" +
-      "Returns the newest information possible (may contain partially future addresses) by default if <i>situationDate</i> is omitted, " +
-      "or the road address network valid at <i>situationDate</i>, when <i>situationDate</i> is given.\n" +
-      "Uses HTTP redirects for the heavier queries, to address some timeout issues."
+              "Returns the newest information possible (may contain partially future addresses) by default if <i>situationDate</i> is omitted, " +
+              "or the road address network valid at <i>situationDate</i>, when <i>situationDate</i> is given.\n" +
+              "Uses HTTP redirects for the heavier queries, to address some timeout issues."
       parameter headerParam[String]("X-API-Key").required.description(XApiKeyDescription)
       parameter queryParam[Int]("municipality").required
-      .description("The municipality identifier.\nFor the list, see https://www2.tilastokeskus.fi/fi/luokitukset/kunta/.")
+        .description("The municipality identifier.\nFor the list, see https://www2.tilastokeskus.fi/fi/luokitukset/kunta/.")
       parameter queryParam[String]("situationDate").optional
-      .description("(Optional) The road address information is returned from this exact moment (instead of the newest data).\n" + ISOdateTimeDescription)
-      )
+        .description("(Optional) The road address information is returned from this exact moment (instead of the newest data).\n" + ISOdateTimeDescription)
+    )
   /** BULLETPROOFED VERSION of get("/road_address) - PROBLEMS WITH PROD-environment; implicitly available 'request', and
     * 'param' may not be available, when calling from another thread. */
   get("/road_addresses_by_municipality", operation(getRoadAddressesByMunicipality)) {
