@@ -106,15 +106,15 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
       tags "Integration (kalpa, Digiroad, Viitekehysmuunnin, ...)"
       summary "Experimental BULLETPROOFED VERSION of get(\"/road_address). Returns all the road addresses of the municipality stated as the municipality parameter.\n"
       description "Returns all the road addresses of the queried <i>municipality</i>.\n" +
-      "Returns the newest information possible (may contain partially future addresses) by default if <i>situationDate</i> is omitted, " +
-      "or the road address network valid at <i>situationDate</i>, when <i>situationDate</i> is given.\n" +
-      "Uses HTTP redirects for the heavier queries, to address some timeout issues."
+              "Returns the newest information possible (may contain partially future addresses) by default if <i>situationDate</i> is omitted, " +
+              "or the road address network valid at <i>situationDate</i>, when <i>situationDate</i> is given.\n" +
+              "Uses HTTP redirects for the heavier queries, to address some timeout issues."
       parameter headerParam[String]("X-API-Key").required.description(XApiKeyDescription)
       parameter queryParam[Int]("municipality").required
-      .description("The municipality identifier.\nFor the list, see https://www2.tilastokeskus.fi/fi/luokitukset/kunta/.")
+        .description("The municipality identifier.\nFor the list, see https://www2.tilastokeskus.fi/fi/luokitukset/kunta/.")
       parameter queryParam[String]("situationDate").optional
-      .description("(Optional) The road address information is returned from this exact moment (instead of the newest data).\n" + ISOdateTimeDescription)
-      )
+        .description("(Optional) The road address information is returned from this exact moment (instead of the newest data).\n" + ISOdateTimeDescription)
+    )
   /** BULLETPROOFED VERSION of get("/road_address) - PROBLEMS WITH PROD-environment; implicitly available 'request', and
     * 'param' may not be available, when calling from another thread. */
   get("/road_addresses_by_municipality", operation(getRoadAddressesByMunicipality)) {
@@ -645,15 +645,20 @@ println("Threading print test: Now in avoidRestrictions")
     logger.info(s"$requestLogString --ENDED in ${t.getClass}--")
     t match {
       case ve: ViiteException =>
+logger.info(s"$requestLogString --ENDED in ViiteException--")
         BadRequestWithLoggerWarn(s"Check the given parameters. ${ve.getMessage}", "")
       case iae: IllegalArgumentException =>
+logger.info(s"$requestLogString --ENDED in IllegalArgumentException--")
         BadRequestWithLoggerWarn(s"$ISOdateTimeDescription. Now got '${request.getQueryString}''", iae.getMessage)
       case psqle: PSQLException => // TODO remove? This applies when biiiig year (e.g. 2000000) given to DateTime parser. But year now restricted to be less than 100 years in checks before giving to dateTime parsing
+logger.info(s"$requestLogString --ENDED in PSQLException--")
         BadRequestWithLoggerWarn(s"Date out of bounds, check the given dates: ${request.getQueryString}.", s"${psqle.getMessage}")
       case nf if NonFatal(nf) =>
         val requestString = s"GET request for ${request.getRequestURI}?${request.getQueryString} ($operationId)"
+logger.info(s"$requestLogString --ENDED in NonFatal--")
         haltWithHTTP500WithLoggerError(requestString, nf)
       case t if !NonFatal(t) =>
+logger.info(s"$requestLogString --ENDED in !NonFatal--")
         throw t
     }
   }

@@ -511,7 +511,7 @@ class ProjectValidator {
     val normalPriorityValidations: Seq[(Project, Seq[ProjectLink]) => Seq[ValidationErrorDetails]] = Seq(
       // sequence of validator functions, in INCREASING priority order (as these get turned around in the next step)
       checkNoReverseInProject,
-      checkUniformAdminClassOnLink,
+      //checkUniformAdminClassOnLink,
       checkProjectElyCodes,
       checkDiscontinuityOnPreviousRoadPart,
       checkProjectContinuity,
