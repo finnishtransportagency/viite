@@ -469,95 +469,70 @@ SELECT
     }
   }
 
-  def fetchChangeInfosForRoadAddressChangesBrowser(startDate: Option[String], endDate: Option[String], dateTarget: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[ChangeInfoForRoadAddressChangesBrowser] = {
-    def withOptionalParameters(startDate: Option[String], endDate: Option[String], dateTarget: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long])(query: String): String  = {
-      val targetDate = {
-        if (dateTarget.isDefined) {
-          if (dateTarget.get == "ProjectAcceptedDate")
-            "p.accepted_date"
-          else if (dateTarget.get == "RoadAddressStartDate")
-            "p.start_date"
-        }
+  def fetchChangeInfosForRoadAddressChangesBrowser(startDate: Option[String], endDate: Option[String], dateTarget: Option[String],
+                                                   ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long],
+                                                   maxRoadPartNumber: Option[Long]): Seq[ChangeInfoForRoadAddressChangesBrowser] = {
+    def withOptionalParameters(query: String): String = {
+
+      val conditions = scala.collection.mutable.ListBuffer[String]()
+
+      // Determine the date field to use based on dateTarget
+      val dateField = dateTarget match {
+        case Some("ProjectAcceptedDate") => "p.accepted_date"
+        case Some("RoadAddressStartDate") => "p.start_date"
+        case _ => "p.accepted_date" // Default to accepted date if dateTarget is not specified or recognized
       }
 
-      val startDateCondition = targetDate + " >='" + startDate.get + "'"
+      startDate.foreach(sd => conditions += s"$dateField >= '$sd'")
+      endDate.foreach(ed => conditions += s"AND $dateField <= '$ed'")
 
-      val endDateCondition = {
-        if (endDate.nonEmpty)
-          "AND " + targetDate + " <='" + endDate.get + "'"
-        else
-          ""
+      // These conditions will determine which projects to include based on search criteria
+      // All roadway changes related to these projects will be fetched regardless of these specific filters
+      val projectRelatedConditions = scala.collection.mutable.ListBuffer[String]()
+      ely.foreach(e => projectRelatedConditions += s"(rc.new_ely = $e OR rc.old_ely = $e)")
+      roadNumber.foreach(rn => projectRelatedConditions += s"(rc.new_road_number = $rn OR rc.old_road_number = $rn)")
+      (minRoadPartNumber, maxRoadPartNumber) match {
+        case (Some(minPart), Some(maxPart)) => projectRelatedConditions += s"(rc.new_road_part_number BETWEEN $minPart AND $maxPart OR rc.old_road_part_number BETWEEN $minPart AND $maxPart)"
+        case _ =>
       }
 
-      val elyCondition = {
-        if (ely.nonEmpty)
-          s" AND (rc.new_ely = ${ely.get} OR rc.old_ely = ${ely.get})"
-        else
-          ""
-      }
+      // Construct the WHERE clause for project selection
+      val projectSelectionWhereClause = if (projectRelatedConditions.nonEmpty) projectRelatedConditions.mkString(" AND ") else "1=1" // Always true if no specific project-related conditions
 
-      val roadNumberCondition = {
-        if (roadNumber.nonEmpty)
-          s" AND (rc.new_road_number = ${roadNumber.get} OR rc.old_road_number = ${roadNumber.get})"
-        else
-          ""
-      }
+      // The final SQL fetches all changes for projects matching the initial criteria
+      val finalQuery = s"""
+        WITH RelevantProjects AS (
+          SELECT DISTINCT p.id FROM project p
+          JOIN roadway_changes rc ON rc.project_id = p.id
+          WHERE ${conditions.mkString(" AND ")} AND ($projectSelectionWhereClause)
+        ), AllRelatedRoadwayChanges AS (
+          SELECT rc.* FROM roadway_changes rc
+          JOIN RelevantProjects rp ON rp.id = rc.project_id
+        )
+        SELECT
+          p.start_date, rc.change_type, rc.reversed, rn.road_name, p.name, p.accepted_date,
+          rc.old_ely, rc.old_road_number, rc.old_track, rc.old_road_part_number,
+          rc.old_start_addr_m, rc.old_end_addr_m, rc.old_end_addr_m - rc.old_start_addr_m AS old_length, rc.old_administrative_class,
+          rc.new_ely, rc.new_road_number, rc.new_track, rc.new_road_part_number,
+          rc.new_start_addr_m, rc.new_end_addr_m, rc.new_end_addr_m - rc.new_start_addr_m AS new_length, rc.new_administrative_class
+        FROM AllRelatedRoadwayChanges rc
+        JOIN project p ON rc.project_id = p.id
+        LEFT JOIN road_name rn ON rn.road_number = COALESCE(rc.new_road_number, rc.old_road_number)
+          AND rn.valid_to IS NULL
+          AND rn.start_date <= p.start_date
+        ORDER BY p.start_date, rc.new_road_number, rc.new_road_part_number, rc.new_start_addr_m, rc.new_track
+      """.stripMargin
 
-      val roadPartCondition = {
-        val parts = (minRoadPartNumber, maxRoadPartNumber)
-        parts match {
-          case (Some(minPart), Some(maxPart)) => s"AND (rc.new_road_part_number BETWEEN $minPart AND $maxPart OR rc.old_road_part_number BETWEEN $minPart AND $maxPart)"
-          case (None, Some(maxPart)) => s"AND (rc.new_road_part_number <= $maxPart OR rc.old_road_part_number <= $maxPart)"
-          case (Some(minPart), None) => s"AND (rc.new_road_part_number >= $minPart OR rc.old_road_part_number >= $minPart)"
-          case _ => ""
-        }
-      }
-
-      s"""$query
-         |WHERE $startDateCondition $endDateCondition $elyCondition $roadNumberCondition $roadPartCondition
-         |ORDER BY p.id, new_road_number, new_road_part_number, new_start_addr_m, new_track
-         |""".stripMargin
+      finalQuery
     }
 
     def fetchChangeInfos(queryFilter: String => String): Seq[ChangeInfoForRoadAddressChangesBrowser] = {
-      val query ="""SELECT
-                   |	p.start_date,
-                   |	change_type,
-                   |	reversed,
-                   |	rn.road_name,
-                   |	p.name,
-                   |	p.accepted_date,
-                   |	old_ely,
-                   |	old_road_number,
-                   |	old_track,
-                   |	old_road_part_number,
-                   |	old_start_addr_m,
-                   |	old_end_addr_m,
-                   |	old_end_addr_m - old_start_addr_m,
-                   |	old_administrative_class,
-                   |	new_ely,
-                   |	new_road_number,
-                   |	new_track,
-                   |	new_road_part_number,
-                   |	new_start_addr_m,
-                   |	new_end_addr_m,
-                   |	new_end_addr_m - new_start_addr_m,
-                   |	new_administrative_class
-                   |FROM roadway_changes rc
-                   |JOIN project p ON rc.project_id = p.id
-                   |-- Get the valid road name for the road that was modified in the project, prioritizing the new road number
-                   |LEFT JOIN road_name rn ON rn.road_number = coalesce(rc.new_road_number, rc.old_road_number)
-                   |  AND rn.valid_to IS NULL
-                   |  AND rn.start_date <= p.start_date
-                   |  -- End date should be null if the change is not a termination (5).
-                   |  -- If the road is terminated, the end date is the same as the end date of the road  (if the whole road was terminated in this project) or null if the start date of the road name start date is earlier than the start date of the project
-                   |  AND ((rc.change_type != 5 and rn.end_date IS null) OR (rc.change_type = 5 and (rn.end_date = (p.start_date - INTERVAL '1 DAY') or (rn.end_date is null and rn.start_date < p.start_date))))
-                   """.stripMargin
-      val filteredQuery = queryFilter(query)
+      val baseQuery = "" // Base query is constructed within `withOptionalParameters`
+      val filteredQuery = queryFilter(baseQuery)
       Q.queryNA[ChangeInfoForRoadAddressChangesBrowser](filteredQuery).iterator.toSeq
     }
 
-    fetchChangeInfos(withOptionalParameters(startDate, endDate, dateTarget, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber))
+    fetchChangeInfos(withOptionalParameters)
   }
 
 }
