@@ -520,6 +520,10 @@ SELECT
         LEFT JOIN road_name rn ON rn.road_number = COALESCE(rc.new_road_number, rc.old_road_number)
           AND rn.valid_to IS NULL
           AND rn.start_date <= p.start_date
+           -- End date should be null if the change is not a termination (5).
+           -- If the road is terminated, the end date is the same as the end date of the road  (if the whole road was terminated in this project) or null if the start date of the road name start date is earlier than the start date of the project
+          AND ((rc.change_type != 5 and rn.end_date IS null) OR (rc.change_type = 5 and (rn.end_date = (p.start_date - INTERVAL '1 DAY') or (rn.end_date is null and rn.start_date < p.start_date))))
+
         ORDER BY p.start_date, rc.new_road_number, rc.new_road_part_number, rc.new_start_addr_m, rc.new_track
       """.stripMargin
 
