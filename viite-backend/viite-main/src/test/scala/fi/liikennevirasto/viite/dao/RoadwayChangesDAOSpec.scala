@@ -572,4 +572,80 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
       result.head.roadName should be (Some("Uusi tie")) // and the road name should be the new one
     }
   }
+
+  test("[ChangeInfoForRoadAddressChangesBrowser] When fetching roadway changes with roadPartNumber, then return ALL changes related to projects that have changes on the roadPartNumber") {
+    runWithRollback {
+      val projectId1 = Sequences.nextViiteProjectId
+      val projectId2 = Sequences.nextViiteProjectId
+      val roadwayChangeId = 10L
+      val changeTypeNew = 2
+      val changeTypeUnChanged = 1
+      val roadNumber = 12345L
+      val secondRoadNumber = 54322L
+      val firstRoadPartNumber = 1L
+      val secondRoadPartNumber = 2L
+      val ely = 10L
+      val adminClass = 1
+      val discontinuity = 1L
+      val trackCombined = 0L
+      val startDate1 = "2022-01-01"
+      val startDate2 = "2022-07-01"
+      val projectStartDate = DateTime.parse("2022-06-01")
+      val projectEndDate = DateTime.parse("2022-06-30")
+
+      // Create two projects that both affect the same road part
+      projectDAO.create(Project(projectId1, ProjectState.Accepted, "Project 1", "tester", projectStartDate, "tester",
+        projectStartDate, projectEndDate, "", Seq(), Seq(), None, None))
+      projectDAO.create(Project(projectId2, ProjectState.Accepted, "Project 2", "tester", projectStartDate.plusDays(10), "tester",
+        projectStartDate.plusDays(10), projectEndDate.plusDays(10), "", Seq(), Seq(), None, None))
+
+      runUpdateToDb(s""" insert into ROADWAY_CHANGES(project_id,change_type,new_road_number,new_road_part_number,old_discontinuity,new_discontinuity,
+                                            old_administrative_class,new_administrative_class,old_ely,new_ely,new_start_addr_m,new_end_addr_m, new_track,roadway_change_id)
+                                   Values($projectId1,$changeTypeNew,$roadNumber,$firstRoadPartNumber,$discontinuity,$discontinuity,$adminClass,
+                                          $adminClass,$ely,$ely,0,1000, $trackCombined, $roadwayChangeId)
+                     """)
+
+      runUpdateToDb(s""" insert into ROADWAY_CHANGES(project_id,change_type,new_road_number,new_road_part_number,old_discontinuity,new_discontinuity,
+                                            old_administrative_class,new_administrative_class,old_ely,new_ely,new_start_addr_m,new_end_addr_m, new_track,roadway_change_id)
+                                   Values($projectId2,$changeTypeUnChanged,$roadNumber,$firstRoadPartNumber,$discontinuity,$discontinuity,$adminClass,
+                                            $adminClass,$ely,$ely,0,1000, $trackCombined, $roadwayChangeId + 1)
+                     """)
+
+      // Insert roadway_changes with different road_part_number to project2
+      runUpdateToDb(s""" insert into ROADWAY_CHANGES(project_id,change_type,new_road_number,new_road_part_number,old_discontinuity,new_discontinuity,
+                                            old_administrative_class,new_administrative_class,old_ely,new_ely,new_start_addr_m,new_end_addr_m, new_track,roadway_change_id)
+                                   Values($projectId2,$changeTypeNew,$roadNumber,$secondRoadPartNumber,$discontinuity,$discontinuity,$adminClass,
+                                            $adminClass,$ely,$ely,1000,2000, $trackCombined, $roadwayChangeId + 2)
+                     """)
+      // Insert new road with new road_number to project1
+      runUpdateToDb(s""" insert into ROADWAY_CHANGES(project_id,change_type,new_road_number,new_road_part_number,old_discontinuity,new_discontinuity,
+                                            old_administrative_class,new_administrative_class,old_ely,new_ely,new_start_addr_m,new_end_addr_m, new_track,roadway_change_id)
+                                   Values($projectId1,$changeTypeNew,$secondRoadNumber,$firstRoadPartNumber,$discontinuity,$discontinuity,$adminClass,
+                                            $adminClass,$ely,$ely,0,500, $trackCombined, $roadwayChangeId + 3)
+                     """)
+
+
+      // Update projects to have accepted dates
+      runUpdateToDb(s"""update project set accepted_date= TIMESTAMP '2022-06-30 12:26:36.000000' where id in ($projectId1)""")
+      runUpdateToDb(s"""update project set accepted_date= TIMESTAMP '2022-07-10 12:26:36.000000' where id in ($projectId2)""")
+      val dao = new RoadwayChangesDAO()
+
+      // Fetch change infos for the specified roadNumber and roadPartNumber
+      val dateTargetProjectAccepted = "ProjectAcceptedDate"
+      val result = dao.fetchChangeInfosForRoadAddressChangesBrowser(Some(startDate1), None, Some(dateTargetProjectAccepted), None, Some(roadNumber), Some(firstRoadPartNumber), Some(firstRoadPartNumber))
+      result.size should be >= 4 // Expecting 4 change infos
+
+      val result2 = dao.fetchChangeInfosForRoadAddressChangesBrowser(Some(startDate2), None, Some(dateTargetProjectAccepted), None, Some(roadNumber), Some(firstRoadPartNumber), Some(firstRoadPartNumber))
+      result2.size should be >= 2 // Expecting 2 change infos after startDate2
+
+      // Check that both firstRoadPartNumber and secondRoadPartNumber are included in the results
+      val roadPartNumbersInResults = result.map(_.newRoadAddress.roadPartNumber).distinct
+      roadPartNumbersInResults should contain allOf (firstRoadPartNumber, secondRoadPartNumber)
+
+      // Check that both RoadNumber and secondRoadNumber are included in the results
+      val roadNumbersInResults = result.map(_.newRoadAddress.roadNumber).distinct
+      roadNumbersInResults should contain allOf (roadNumber, secondRoadNumber)
+
+    }
+  }
 }
