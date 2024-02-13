@@ -474,8 +474,6 @@ SELECT
                                                    maxRoadPartNumber: Option[Long]): Seq[ChangeInfoForRoadAddressChangesBrowser] = {
     def withOptionalParameters(query: String): String = {
 
-      val conditions = scala.collection.mutable.ListBuffer[String]()
-
       // Determine the date field to use based on dateTarget
       val dateField = dateTarget match {
         case Some("ProjectAcceptedDate") => "p.accepted_date"
@@ -483,18 +481,22 @@ SELECT
         case _ => "p.accepted_date" // Default to accepted date if dateTarget is not specified or recognized
       }
 
-      startDate.foreach(sd => conditions += s"$dateField >= '$sd'")
-      endDate.foreach(ed => conditions += s"AND $dateField <= '$ed'")
+      val dateConditions = Seq.empty[String] ++
+        startDate.map(sd => s"$dateField >= '$sd'").toSeq ++
+        endDate.map(ed => s"$dateField <= '$ed'").toSeq
 
       // These conditions will determine which projects to include based on search criteria
-      // All roadway changes related to these projects will be fetched regardless of these specific filters
-      val projectRelatedConditions = scala.collection.mutable.ListBuffer[String]()
-      ely.foreach(e => projectRelatedConditions += s"(rc.new_ely = $e OR rc.old_ely = $e)")
-      roadNumber.foreach(rn => projectRelatedConditions += s"(rc.new_road_number = $rn OR rc.old_road_number = $rn)")
-      (minRoadPartNumber, maxRoadPartNumber) match {
-        case (Some(minPart), Some(maxPart)) => projectRelatedConditions += s"(rc.new_road_part_number BETWEEN $minPart AND $maxPart OR rc.old_road_part_number BETWEEN $minPart AND $maxPart)"
-        case _ =>
+      // Return every roadway change within the projects matching the specific filters
+      val elyAndRoadNumberConditions = Seq.empty[String] ++
+        ely.map(e => s"(rc.new_ely = $e OR rc.old_ely = $e)").toSeq ++
+        roadNumber.map(rn => s"(rc.new_road_number = $rn OR rc.old_road_number = $rn)").toSeq
+
+      val roadPartCondition = (minRoadPartNumber, maxRoadPartNumber) match {
+        case (Some(minPart), Some(maxPart)) => Seq(s"(rc.new_road_part_number BETWEEN $minPart AND $maxPart OR rc.old_road_part_number BETWEEN $minPart AND $maxPart)")
+        case _ => Seq.empty[String]
       }
+
+      val projectRelatedConditions = elyAndRoadNumberConditions ++ roadPartCondition
 
       // Construct the WHERE clause for project selection
       val projectSelectionWhereClause = if (projectRelatedConditions.nonEmpty) projectRelatedConditions.mkString(" AND ") else "1=1" // Always true if no specific project-related conditions
@@ -504,7 +506,7 @@ SELECT
         WITH RelevantProjects AS (
           SELECT DISTINCT p.id FROM project p
           JOIN roadway_changes rc ON rc.project_id = p.id
-          WHERE ${conditions.mkString(" AND ")} AND ($projectSelectionWhereClause)
+          WHERE ${dateConditions.mkString(" AND ")} AND ($projectSelectionWhereClause)
         ), AllRelatedRoadwayChanges AS (
           SELECT rc.* FROM roadway_changes rc
           JOIN RelevantProjects rp ON rp.id = rc.project_id
