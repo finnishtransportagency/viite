@@ -588,8 +588,8 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
       val adminClass = 1
       val discontinuity = 1L
       val trackCombined = 0L
-      val startDate1 = "2022-01-01"
-      val startDate2 = "2022-07-01"
+      val queryStartDate1 = "2022-01-01"
+      val queryStartDate2 = "2022-07-01"
       val projectStartDate = DateTime.parse("2022-06-01")
       val projectEndDate = DateTime.parse("2022-06-30")
 
@@ -632,10 +632,10 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
 
       // Fetch change infos for the specified roadNumber and roadPartNumber
       val dateTargetProjectAccepted = "ProjectAcceptedDate"
-      val result = dao.fetchChangeInfosForRoadAddressChangesBrowser(Some(startDate1), None, Some(dateTargetProjectAccepted), None, Some(roadNumber), Some(firstRoadPartNumber), Some(firstRoadPartNumber))
+      val result = dao.fetchChangeInfosForRoadAddressChangesBrowser(Some(queryStartDate1), None, Some(dateTargetProjectAccepted), None, Some(roadNumber), Some(firstRoadPartNumber), Some(firstRoadPartNumber))
       result.size should be >= 4 // Expecting 4 change infos
 
-      val result2 = dao.fetchChangeInfosForRoadAddressChangesBrowser(Some(startDate2), None, Some(dateTargetProjectAccepted), None, Some(roadNumber), Some(firstRoadPartNumber), Some(firstRoadPartNumber))
+      val result2 = dao.fetchChangeInfosForRoadAddressChangesBrowser(Some(queryStartDate2), None, Some(dateTargetProjectAccepted), None, Some(roadNumber), Some(firstRoadPartNumber), Some(firstRoadPartNumber))
       result2.size should be >= 2 // Expecting 2 change infos after startDate2
 
       // Check that both firstRoadPartNumber and secondRoadPartNumber are included in the results
