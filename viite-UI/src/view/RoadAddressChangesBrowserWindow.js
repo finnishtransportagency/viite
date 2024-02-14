@@ -194,7 +194,7 @@
                 }
                 // Validate end date
                 if (roadAddrChangesEndDate.value && validateDate(roadAddrChangesEndDate.value, roadAddrChangesEndDate)) {
-                        if (roadAddrEndDateObject.getTime() < roadAddrStartDateObject.getTime()) {
+                    if (roadAddrEndDateObject.getTime() < roadAddrStartDateObject.getTime()) {
                         roadAddrChangesEndDate.setCustomValidity("Loppupäivämäärä ei voi olla ennen alkupäivämäärää");
                     }
                 }
