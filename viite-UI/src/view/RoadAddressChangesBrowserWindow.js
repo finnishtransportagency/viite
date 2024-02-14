@@ -157,18 +157,20 @@
             }
 
             function validateDate(dateString, dateElement) {
-                if (dateutil.isFinnishDateString(dateString)) {
+                // Check format ignoring whitespace
+                if (dateutil.isFinnishDateString(dateString.trim())) {
                     const dateObject = moment(dateString, "DD-MM-YYYY").toDate();
                     if (dateutil.isDateInYearRange(dateObject, ViiteConstants.MIN_YEAR_INPUT, ViiteConstants.MAX_YEAR_INPUT)) {
                         dateElement.setCustomValidity("");
                     } else {
                         dateElement.setCustomValidity("Vuosiluvun tulee olla väliltä " + ViiteConstants.MIN_YEAR_INPUT + " - " + ViiteConstants.MAX_YEAR_INPUT);
-                        dateElement.reportValidity();
+                        return false;
                     }
                 } else {
                     dateElement.setCustomValidity("Päivämäärän tulee olla muodossa pp.kk.yyyy");
-                    dateElement.reportValidity();
+                    return false;
                 }
+                return true;
             }
 
             // Clear date error message when typing is started again
@@ -183,20 +185,16 @@
             });
 
             function willPassValidations() {
-                if (roadAddrChangesStartDate.value.trim()) {
-                    // If start date is provided, validate it
+                // If start date is provided, validate it
+                if (roadAddrChangesStartDate.value.trim().length > 0) {
                     validateDate(roadAddrChangesStartDate.value, roadAddrChangesStartDate);
                 } else {
                     // If start date is not provided, set custom validity
                     roadAddrChangesStartDate.setCustomValidity("Alkupäivämäärä on pakollinen tieto");
-                    roadAddrChangesStartDate.reportValidity();
-                    return false;
                 }
-
-                validateDate(roadAddrChangesStartDate.value, roadAddrChangesStartDate);
-                if (roadAddrChangesEndDate.value) {
-                    validateDate(roadAddrChangesEndDate.value, roadAddrChangesEndDate);
-                    if (roadAddrEndDateObject.getTime() < roadAddrStartDateObject.getTime()) {
+                // Validate end date
+                if (roadAddrChangesEndDate.value && validateDate(roadAddrChangesEndDate.value, roadAddrChangesEndDate)) {
+                        if (roadAddrEndDateObject.getTime() < roadAddrStartDateObject.getTime()) {
                         roadAddrChangesEndDate.setCustomValidity("Loppupäivämäärä ei voi olla ennen alkupäivämäärää");
                     }
                 }
