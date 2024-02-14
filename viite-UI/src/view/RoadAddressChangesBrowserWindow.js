@@ -162,6 +162,7 @@
                     const dateObject = moment(dateString, "DD-MM-YYYY").toDate();
                     if (dateutil.isDateInYearRange(dateObject, ViiteConstants.MIN_YEAR_INPUT, ViiteConstants.MAX_YEAR_INPUT)) {
                         dateElement.setCustomValidity("");
+                        return true;
                     } else {
                         dateElement.setCustomValidity("Vuosiluvun tulee olla väliltä " + ViiteConstants.MIN_YEAR_INPUT + " - " + ViiteConstants.MAX_YEAR_INPUT);
                         return false;
@@ -170,7 +171,6 @@
                     dateElement.setCustomValidity("Päivämäärän tulee olla muodossa pp.kk.yyyy");
                     return false;
                 }
-                return true;
             }
 
             // Clear date error message when typing is started again
