@@ -449,7 +449,7 @@
                 case "Nodes":
                 case "Junctions":
                 case "RoadNames":
-                    validateDate(roadAddrSituationDateObject);
+                    validateDate(roadAddrSituationDate.value);
                     if (reportValidations())
                         fetchByTargetValue(createParams());
                     break;
