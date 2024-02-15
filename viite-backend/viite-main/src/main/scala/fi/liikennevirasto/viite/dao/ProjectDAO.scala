@@ -161,6 +161,10 @@ class ProjectDAO extends BaseDAO {
     runUpdateToDb(s""" update project set state=${state.value} WHERE id=$projectID""")
   }
 
+  def updateProjectStatusWithInfo(projectID: Long, state: ProjectState, statusInfo: String): Unit = {
+    runUpdateToDb(s""" update project set state=${state.value}, STATUS_INFO='$statusInfo' WHERE id=$projectID""")
+  }
+
   def changeProjectStatusToAccepted(projectID: Long): Unit = {
     runUpdateToDb(s""" update project set state=${ProjectState.Accepted.value}, accepted_date=current_timestamp WHERE id=$projectID""")
   }
