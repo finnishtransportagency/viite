@@ -156,24 +156,53 @@
                     maxRoadPartNumber.reportValidity();
             }
 
-            function validateDate(date) {
-                if (dateutil.isValidDate(date)) {
-                    if(!dateutil.isDateInYearRange(date, ViiteConstants.MIN_YEAR_INPUT, ViiteConstants.MAX_YEAR_INPUT))
-                        roadAddrChangesStartDate.setCustomValidity("Vuosiluvun tulee olla väliltä " + ViiteConstants.MIN_YEAR_INPUT + " - " + ViiteConstants.MAX_YEAR_INPUT);
+            function validateDate(dateString, dateElement) {
+                // Check format ignoring whitespace
+                if (dateutil.isFinnishDateString(dateString.trim())) {
+                    const dateObject = moment(dateString, "DD-MM-YYYY").toDate();
+                    if (dateutil.isDateInYearRange(dateObject, ViiteConstants.MIN_YEAR_INPUT, ViiteConstants.MAX_YEAR_INPUT)) {
+                        dateElement.setCustomValidity("");
+                        return true;
+                    } else {
+                        dateElement.setCustomValidity("Vuosiluvun tulee olla väliltä " + ViiteConstants.MIN_YEAR_INPUT + " - " + ViiteConstants.MAX_YEAR_INPUT);
+                        return false;
+                    }
+                } else {
+                    dateElement.setCustomValidity("Päivämäärän tulee olla muodossa pp.kk.yyyy");
+                    return false;
                 }
-                else
-                    roadAddrChangesStartDate.setCustomValidity("Päivämäärän tulee olla muodossa pp.kk.yyyy");
             }
 
+            // Clear date error message when typing is started again
+            roadAddrChangesStartDate.addEventListener('input', function() {
+                validateDate(this.value, this);
+                this.setCustomValidity("");
+            });
+
+            roadAddrChangesEndDate.addEventListener('input', function() {
+                validateDate(this.value, this);
+                this.setCustomValidity("");
+            });
+
             function willPassValidations() {
-                validateDate(roadAddrStartDateObject);
-                if (roadAddrChangesEndDate.value) {
-                    validateDate(roadAddrEndDateObject);
+                // If start date is provided, validate it
+                if (roadAddrChangesStartDate.value.trim().length > 0) {
+                    validateDate(roadAddrChangesStartDate.value, roadAddrChangesStartDate);
+                } else {
+                    // If start date is not provided, set custom validity
+                    roadAddrChangesStartDate.setCustomValidity("Alkupäivämäärä on pakollinen tieto");
+                }
+                // Validate end date
+                if (roadAddrChangesEndDate.value && validateDate(roadAddrChangesEndDate.value, roadAddrChangesEndDate)) {
                     if (roadAddrEndDateObject.getTime() < roadAddrStartDateObject.getTime()) {
                         roadAddrChangesEndDate.setCustomValidity("Loppupäivämäärä ei voi olla ennen alkupäivämäärää");
                     }
                 }
                 return reportValidations();
+            }
+
+            if (!willPassValidations()) {
+                return; // Stop execution if validation fails
             }
 
             function createParams() {

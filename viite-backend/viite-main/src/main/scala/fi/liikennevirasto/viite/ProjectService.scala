@@ -1638,33 +1638,100 @@ class ProjectService(
             calculatedLinks
       }.toSeq
 
-      val assignedTerminatedRoadwayNumbers = assignTerminatedRoadwayNumbers(others ++ terminated)
-      val originalAddresses                = roadAddressService.getRoadAddressesByRoadwayIds((recalculated ++ terminated).map(_.roadwayId))
-      projectLinkDAO.updateProjectLinks(recalculated ++ assignedTerminatedRoadwayNumbers, userName, originalAddresses)
+      val terminatedProjectLinksWithAssignedRoadwayNumbers = assignRoadwayNumbersToTerminatedProjectLinks(projectLinks)
+      val originalAddresses = roadAddressService.getRoadAddressesByRoadwayIds((recalculated ++ terminated).map(_.roadwayId))
+      projectLinkDAO.updateProjectLinks(recalculated ++ terminatedProjectLinksWithAssignedRoadwayNumbers, userName, originalAddresses)
       val projectLinkIdsToDB = recalculated.map(_.id).diff(projectLinks.map(_.id))
       projectLinkDAO.create(recalculated.filter(pl => projectLinkIdsToDB.contains(pl.id)))
     }
   }
 
-  /*
-    1.group and check if all links existing in the section are terminated.
-    1.1.If yes Then there is no need to expire the section. for e.g. RwNumber 123 : |--Terminated-->|--Terminated-->|
-    1.2.If not, then we are splitting the section for e.g. RwNumber 123 : |--Other action-->|--Terminated-->|
-      and if we split the section then we need to assign one new roadwaynumber to the terminated projectlinks
+  /**
+   * Handles the roadway numbering of terminated project links
+   * The process:
+   * 1.     group the projectLinks in to sections by roadway and track and check if all the links existing in the section are terminated.
+   *
+   * 1.1.   If yes Then there is no need to expire the roadway section and the roadway numbers can stay as they are.
+   *        e.g. RwNumber 123 : |--Terminated-->|--Terminated-->|
+   *
+   * 1.2.1  If not, then we are splitting the original roadway section in to smaller sections.
+   *        And when we split the original roadway section then we need to assign new roadway number to the terminated project links.
+   *
+   *        example 1: RwNumber 123 : |--Other action-->|--Terminated-->|
+   *        The terminated project links will be assigned new roadway number
+   *
+   *        example 2: VIITE-3038 If the section is divided in to more than one terminated section
+   *        e.g. RwNumber 123 : |--Other action-->|--Terminated-->|--Other action-->|--Terminated-->|--Other action-->|
+   *        then each of the terminated sections will need to be assigned new roadway numbers
+   *
+   * @param allProjectLinks: all the project links of the project (terminated and non terminated)
    */
   // VIITE-2179
-  private def assignTerminatedRoadwayNumbers(seq: Seq[ProjectLink]): Seq[ProjectLink] = {
-    //getting sections by RoadwayNumber
-    val sectionGroup = seq.groupBy(pl => (pl.track, pl.roadwayNumber))
-    //check if entire section changed
+  private def assignRoadwayNumbersToTerminatedProjectLinks(allProjectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
+    //getting project link sections by roadway number and track
+    val sectionGroup = allProjectLinks.groupBy(pl => (pl.track, pl.roadwayNumber))
+    //check if entire project link section was terminated
     sectionGroup.values.flatMap { pls =>
       if (!pls.forall(_.status == RoadAddressChangeType.Termination)) {
-        val newRoadwayNumber = Sequences.nextRoadwayNumber
-        val terminated = pls.filter(_.status == RoadAddressChangeType.Termination)
-        terminated.map(_.copy(roadwayNumber = newRoadwayNumber))
+        val terminatedProjectLinksOnSameOriginalRoadway = pls.filter(_.status == RoadAddressChangeType.Termination)
+        val terminatedSections = divideTerminatedProjectLinksInToSections(terminatedProjectLinksOnSameOriginalRoadway)
+        val terminatedWithNewRoadwayNumbers = terminatedSections.flatMap(terminatedSection => {
+          val newRoadwayNumber = Sequences.nextRoadwayNumber
+          terminatedSection.map(pl => pl.copy(roadwayNumber = newRoadwayNumber))
+        })
+        terminatedWithNewRoadwayNumbers
       } else pls.filter(_.status == RoadAddressChangeType.Termination)
     }.toSeq
   }
+
+  /**
+   * Divide terminated project links in to continuous sections by their original addr M values
+   *
+   * In this example the original roadway has startAddrm: 0 and endAddrM: 600
+   * The roadway has been terminated in three different sections of the original roadway illustrated below (Note: non terminated project links not included in the illustration)
+   *
+   * original addrM:             100        150        200         250      300       350      400
+   * terminated project Links:   |---TPL1--->|---TPL2--->           |--TPL3-->        |--TPL4-->
+   *
+   * The function divides these terminated project links in to sections like this:
+   * Seq(Seq(TPL1,TPL2), Seq(TPL3), Seq(TPL4))
+   *
+   * @param terminatedProjectLinks: Project links on the same original roadway with Terminated status (The sequence needs to be ordered by the addrM values)
+   */
+  def divideTerminatedProjectLinksInToSections(terminatedProjectLinks: Seq[ProjectLink]): Seq[Seq[ProjectLink]] = {
+    def projectLinksOriginallyContinuousByAddressMValue(pl1: ProjectLink, pl2: ProjectLink): Boolean = {
+      pl1.originalEndAddrMValue == pl2.originalStartAddrMValue ||
+        pl2.originalEndAddrMValue == pl1.originalStartAddrMValue
+    }
+
+    // Iterative function to build sections
+    def buildSections(links: Seq[ProjectLink]): Seq[Seq[ProjectLink]] = {
+      var result: Seq[Seq[ProjectLink]] = Seq.empty
+      var currentSection: Seq[ProjectLink] = Seq.empty
+
+      for (link <- links) {
+        if (currentSection.isEmpty || projectLinksOriginallyContinuousByAddressMValue(currentSection.last, link)) {
+          // Extend the current section if it's empty or the project links were originally continuous by address M values
+          currentSection :+= link
+        } else {
+          // Start a new section
+          result :+= currentSection
+          currentSection = Seq(link)
+        }
+      }
+
+      // Add the last section to the result sets
+      if (currentSection.nonEmpty) {
+        result :+= currentSection
+      }
+
+      result
+    }
+
+    // Start building sections with the input project links
+    buildSections(terminatedProjectLinks)
+  }
+
 
   /** @return Whether we did the recalculation or not
     * @throws IllegalArgumentException when the given project is not found. */
