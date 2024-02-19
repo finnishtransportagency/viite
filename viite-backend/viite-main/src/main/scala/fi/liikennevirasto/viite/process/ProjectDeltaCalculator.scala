@@ -442,7 +442,6 @@ object ProjectDeltaCalculator {
 case class Delta(startDate: DateTime, newRoads: Seq[ProjectLink], terminations: Termination,
                  unChanged: Unchanged, transferred: Transferred, numbering: ReNumeration)
 
-case class RoadPart(roadNumber: Long, roadPartNumber: Long)
 
 case class Termination(mapping: Seq[(RoadAddress, ProjectLink)])
 
