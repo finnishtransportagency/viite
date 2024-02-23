@@ -13,7 +13,7 @@ import fi.liikennevirasto.viite.model._
 import fi.liikennevirasto.viite.util.DigiroadSerializers
 import fi.vaylavirasto.viite.dao.{RoadName, RoadNameForRoadAddressBrowser}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, BeforeAfter, Discontinuity, LinkGeomSource, NodePointType, NodeType, RoadAddressChangeType, Track}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, BeforeAfter, Discontinuity, LinkGeomSource, NodePointType, NodeType, RoadAddressChangeType, RoadPart, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase
 import fi.vaylavirasto.viite.util.DateTimeFormatters.{ISOdateFormatter, dateSlashFormatter, finnishDateFormatter, finnishDateTimeFormatter, finnishDateCommaTimeFormatter}
 import org.joda.time.DateTime
@@ -31,19 +31,21 @@ import scala.util.parsing.json.JSON._
   * Created by venholat on 25.8.2016.
   */
 
-case class RevertRoadLinksExtractor(projectId: Long, roadNumber: Long, roadPartNumber: Long, links: List[LinkToRevert], coordinates: ProjectCoordinates)
+case class RevertRoadLinksExtractor(projectId: Long, /*roadPart: RoadPart,*/roadNumber: Long, roadPartNumber: Long, links: List[LinkToRevert], coordinates: ProjectCoordinates)
 
 case class RoadAddressProjectExtractor(id: Long, projectEly: Option[Long], status: Long, name: String, startDate: String,
-                                       additionalInfo: String, reservedPartList: List[RoadPartExtractor], formedPartList: List[RoadPartExtractor], resolution: Int)
+                                       additionalInfo: String, reservedPartList: List[RoadPartElyExtractor], formedPartList: List[RoadPartElyExtractor], resolution: Int)
 
-case class RoadAddressProjectLinksExtractor(ids: Set[Long], linkIds: Seq[String], roadAddressChangeType: Int, projectId: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Int, discontinuity: Int, roadEly: Long, roadLinkSource: Int, administrativeClass: Int, userDefinedEndAddressM: Option[Int], coordinates: ProjectCoordinates, roadName: Option[String], reversed: Option[Boolean])
+case class RoadAddressProjectLinksExtractor(ids: Set[Long], linkIds: Seq[String], roadAddressChangeType: Int, projectId: Long,
+                                            /*roadPart: RoadPart,*/roadNumber: Long, roadPartNumber: Long, trackCode: Int, discontinuity: Int, roadEly: Long, roadLinkSource: Int, administrativeClass: Int,
+                                            userDefinedEndAddressM: Option[Int], coordinates: ProjectCoordinates, roadName: Option[String], reversed: Option[Boolean])
 
-case class RoadPartExtractor(roadNumber: Long, roadPartNumber: Long, ely: Long)
+case class RoadPartElyExtractor(roadNumber: Long, roadPartNumber: Long, ely: Long)
 
 case class NodePointExtractor(id: Long, beforeAfter: Int, roadwayPointId: Long, nodeNumber: Option[Long], `type`: Int = NodePointType.UnknownNodePointType.value,
                               startDate: Option[String], endDate: Option[String], validFrom: String, validTo: Option[String],
                               createdBy: String, createdTime: Option[String], roadwayNumber: Long, addrM : Long,
-                              roadNumber: Long, roadPartNumber: Long, track: Int, elyCode: Long)
+                              /*roadPart: RoadPart,*/roadNumber: Long, roadPartNumber: Long, track: Int, elyCode: Long)
 
 case class JunctionExtractor(id: Long, junctionNumber: Option[Long], nodeNumber: Option[Long],
                              junctionPoints: List[JunctionPointExtractor], startDate: String, endDate: Option[String],
@@ -51,7 +53,7 @@ case class JunctionExtractor(id: Long, junctionNumber: Option[Long], nodeNumber:
 
 case class JunctionPointExtractor(id: Long, beforeAfter: Long, junctionId: Long, nodeNumber: Option[Long], validFrom: Option[String],
                                   validTo: Option[String], createdBy: Option[String], createdTime: Option[String],
-                                  roadwayNumber: Long, roadwayPointId: Long, addrM: Long, roadNumber: Long, roadPartNumber: Long, track: Track)
+                                  roadwayNumber: Long, roadwayPointId: Long, addrM: Long, /*roadPart: RoadPart,*/roadNumber: Long, roadPartNumber: Long, track: Track)
 
 case class NodeExtractor(id: Long = NewIdValue, nodeNumber: Long = NewIdValue, coordinates: Point, name: Option[String], `type`: Int, startDate: String, endDate: Option[String], validFrom: Option[String], validTo: Option[String],
                          createdTime: Option[String], editor: Option[String] = None, publishedTime: Option[DateTime] = None, registrationDate: Option[String] = None,
@@ -108,7 +110,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
     (apiOperation[List[Map[String, Any]]]("getStartupParameters")
       tags "ViiteAPI - General"
       summary "Show all startup parameters")
-
   get("/startupParameters", operation(getStartupParameters)) {
     time(logger, "GET request for /startupParameters") {
       val (east, north, zoom, roles) = {
@@ -124,7 +125,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       tags "ViiteAPI - General"
       summary "Shows the current user's username and it's roles."
       )
-
   get("/user", operation(getUser)) {
     time(logger, "GET request for /user") {
       Map("userName" -> userProvider.getCurrentUser.username, "roles" -> userProvider.getCurrentUser.configuration.roles)
@@ -141,7 +141,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       tags "ViiteAPI - RoadAddresses"
       summary "Returns all the road addresses that fit inside the viewport."
     )
-
   get("/roadaddress", operation(getRoadAddress)) {
     response.setHeader("Access-Control-Allow-Headers", "*")
     val zoom = chooseDrawType(params.getOrElse("zoom", "5"))
@@ -159,7 +158,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       tags "ViiteAPI - RoadAddresses"
       summary "Returns all the road addresses of the road part"
     )
-
   get("/roadlinks/wholeroadpart/", operation(getRoadLinksOfWholeRoadPart)) {
     response.setHeader("Access-Control-Allow-Headers", "*")
       val roadNumber: Long = params.get("roadnumber") match {
@@ -179,7 +177,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
         BadRequest("Missing mandatory 'roadpart' parameter")
       }
       else {
-        getRoadAddressLinksByRoadPartNumber(roadNumber, roadPartNumber)
+        getRoadAddressLinksByRoadPartNumber(RoadPart(roadNumber,roadPartNumber))
       }
     }
   }
@@ -194,7 +192,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       tags "ViiteAPI - NodesAndJunctions"
       summary "Returns all the road nodes that fit inside the viewport."
     )
-
   get("/nodesjunctions", operation(getNodesAndJunctions)) {
     response.setHeader("Access-Control-Allow-Headers", "*")
     val zoomLinks = chooseDrawType(params.getOrElse("zoom", "5"))
@@ -215,7 +212,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       tags "ViiteAPI - RoadAddresses"
       summary "Returns the RoadAddressLink object of the given linkId"
     )
-
   get("/roadaddress/linkid/:linkId", operation(getRoadAddressLinkByLinkId)) {
     val linkId = params("linkId")
     time(logger, s"GET request for /roadAddress/linkid/$linkId") {
@@ -235,7 +231,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       tags "ViiteAPI - Project"
       summary "Fetch prefill information like roadNumber, roadPartNumber, roadName, roadNameSource"
     )
-
   get("/roadlinks/project/prefill", operation(fetchPreFill)) {
     val linkId = params("linkId")
     val currentProjectId = params("currentProjectId").toLong
@@ -256,7 +251,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       tags "ViiteAPI - RoadAddresses"
       summary "getMidPointByLinkId"
     )
-
   get("/roadlinks/midpoint/:linkId", operation(getMidPointByLinkId)) {
     val linkId: String = params("linkId")
     time(logger, s"GET request for /roadlinks/midpoint/$linkId") {
@@ -272,7 +266,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       tags "ViiteAPI - RoadAddresses"
       summary "getRoadLinkMiddlePointByMtkId"
     )
-
   get("/roadlinks/mtkid/:mtkId", operation(getRoadLinkMiddlePointByMtkId)) {
     val mtkId: Long = params("mtkId").toLong
     time(logger, s"GET request for /roadlinks/mtkid/$mtkId") {
@@ -291,7 +284,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       tags "ViiteAPI - RoadAddresses"
       summary "Searches road names by road number, road name and between history"
     )
-
   get("/roadnames", operation(getRoadNames)) {
     val roadNumber = params.get("roadNumber")
     val roadName = params.get("roadName")
@@ -313,7 +305,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       tags "ViiteAPI - NodesAndJunctions"
       summary "Get junctionpoints by ids of junctions"
     )
-
   get("/junctions/:id/junction-points", operation(getJunctionPointsByJunctionIds)) {
     val junctionId = params("id").toLong
     val x: Seq[Long] = Seq(junctionId)
@@ -334,7 +325,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       tags "ViiteAPI - RoadAddresses"
       summary "Submits one, or many, rows of RoadAddressNames to either be created or updated on the database."
     )
-
   put("/roadnames/:roadNumber", operation(saveRoadNamesByRoadNumber)) {
     val roadNumber = params("roadNumber").toLong
     time(logger, s"PUT request for /roadnames/$roadNumber") {
@@ -352,7 +342,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       tags "ViiteAPI - RoadNetworkErrors"
       summary "Runs road network integrity checks, returning all the found errors, e.g. missing points (roadway p., calibration p.), or roadways' integrity errors"
     )
-
   get("/roadnetworkerrors", operation(getRoadNetworkErrors)) {
     time(logger, s"GET request for /roadnetworkerrors") {
       try {
@@ -385,8 +374,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
 
   def missingCalibrationPointToApi(cp: MissingCalibrationPoint): Map[String, Any] = {
     Map(
-      "roadNumber" -> cp.roadNumber,
-      "roadPartNumber" -> cp.roadPartNumber,
+      "roadNumber" -> cp.roadPart.roadNumber,
+      "roadPartNumber" -> cp.roadPart.partNumber,
       "track" -> cp.track,
       "addrM" -> cp.addrM,
       "createdTime" -> cp.createdTime,
@@ -396,8 +385,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
 
   def missingCalibrationPointFromJunctionToApi(cp: MissingCalibrationPointFromJunction): Map[String, Any] = {
     Map(
-      "roadNumber" -> cp.missingCalibrationPoint.roadNumber,
-      "roadPartNumber" -> cp.missingCalibrationPoint.roadPartNumber,
+      "roadNumber" -> cp.missingCalibrationPoint.roadPart.roadNumber,
+      "roadPartNumber" -> cp.missingCalibrationPoint.roadPart.partNumber,
       "track" -> cp.missingCalibrationPoint.track,
       "addrM" -> cp.missingCalibrationPoint.addrM,
       "createdTime" -> cp.missingCalibrationPoint.createdTime,
@@ -411,8 +400,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
 
   def missingRoadwayPointToApi(rwp: MissingRoadwayPoint): Map[String, Any] = {
     Map(
-      "roadNumber" -> rwp.roadNumber,
-      "roadPartNumber" -> rwp.roadPartNumber,
+      "roadNumber" -> rwp.roadPart.roadNumber,
+      "roadPartNumber" -> rwp.roadPart.partNumber,
       "track" -> rwp.track,
       "addrM" -> rwp.addrM,
       "createdTime" -> rwp.createdTime,
@@ -425,8 +414,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       "roadwayNumber" -> rw.roadwayNumber,
       "startDate" -> rw.startDate,
       "endDate" -> rw.endDate,
-      "roadNumber" -> rw.roadNumber,
-      "roadPartNumber" -> rw.roadPartNumber,
+      "roadNumber" -> rw.roadPart.roadNumber,
+      "roadPartNumber" -> rw.roadPart.partNumber,
       "track" -> rw.track,
       "startAddrM" -> rw.startAddrM,
       "endAddrM" -> rw.endAddrM,
@@ -440,8 +429,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
     Map(
       "roadwayId" -> rw.id,
       "roadwayNumber" -> rw.roadwayNumber,
-      "roadNumber" -> rw.roadNumber,
-      "roadPartNumber" -> rw.roadPartNumber,
+      "roadNumber" -> rw.roadPart.roadNumber,
+      "roadPartNumber" -> rw.roadPart.partNumber,
       "track" -> rw.track,
       "startAddrM" -> rw.startAddrMValue,
       "endAddrM" -> rw.endAddrMValue,
@@ -462,8 +451,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
     Map(
       "roadwayId" -> rw.roadway.id,
       "roadwayNumber" -> rw.roadway.roadwayNumber,
-      "roadNumber" -> rw.roadway.roadNumber,
-      "roadPartNumber" -> rw.roadway.roadPartNumber,
+      "roadNumber" -> rw.roadway.roadPart.roadNumber,
+      "roadPartNumber" -> rw.roadway.roadPart.partNumber,
       "track" -> rw.roadway.track,
       "startAddrM" -> rw.roadway.startAddrMValue,
       "endAddrM" -> rw.roadway.endAddrMValue,
@@ -499,7 +488,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       tags "ViiteAPI - Road Address Browser"
       summary "Returns data for road address browser based on the search criteria"
     )
-
   get("/roadaddressbrowser", operation(getDataForRoadAddressBrowser)) {
     time(logger, s"GET request for /roadaddressbrowser", params=Some(params)) {
       def validateInputs(situationDate: Option[String], target: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Boolean = {
@@ -582,7 +570,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       tags "ViiteAPI - Road Address Changes Browser"
       summary "Returns change info for road address changes browser based on the search criteria"
     )
-
   get("/roadaddresschangesbrowser", operation(getDataForRoadAddressChangesBrowser)) {
     time(logger, s"GET request for /roadaddresschangesbrowser") {
       def validateInputs(startDate: Option[String], endDate: Option[String], dateTarget: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Boolean = {
@@ -663,7 +650,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       tags "ViiteAPI - Project"
       summary "Returns a sequence of all ProjectAddressLinks that share the same LinkId."
     )
-
   get("/project/roadaddress/linkid/:linkId", operation(getProjectAddressLinksByLinkIds)) {
     val linkId = params("linkId")
     time(logger, s"GET request for /project/roadAddress/linkid/$linkId") {
@@ -685,7 +671,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       tags "ViiteAPI - Project"
       summary "This is responsible of creating a new Road address project."
     )
-
   post("/roadlinks/roadaddress/project",operation(createRoadAddressProject)) {
     time(logger, "POST request for /roadlinks/roadaddress/project") {
       val project = parsedBody.extract[RoadAddressProjectExtractor]
@@ -720,7 +705,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       tags "ViiteAPI - Project"
       summary "This is responsible of saving any changes on a Road address project."
     )
-
   put("/roadlinks/roadaddress/project", operation(saveRoadAddressProject)) {
     time(logger, "PUT request for /roadlinks/roadaddress/project") {
       val project = parsedBody.extract[RoadAddressProjectExtractor]
@@ -754,7 +738,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       tags "ViiteAPI - Project"
       summary "This will delete a project and all dependant information, that shares the given Id."
     )
-
   delete("/roadlinks/roadaddress/project", operation(deleteProjectById)) {
     val projectId = parsedBody.extract[Long]
     time(logger, s"DELETE request for /roadlinks/roadaddress/project (projectId: $projectId)") {
@@ -780,7 +763,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       tags "ViiteAPI - Project"
       summary "This will send a project and all dependant information, that shares the given ProjectId to Viite for further analysis, and for saving to Road Network. We assume that the project has no validation issues."
     )
-
   post("/roadlinks/roadaddress/project/sendProjectChangesToViite", operation(sendProjectChangesToViiteByProjectId)) {
     val projectID = (parsedBody \ "projectID").extract[Long]
     time(logger, s"POST request for /roadlinks/roadaddress/project/sendProjectChangesToViite (projectID: $projectID)") {
@@ -809,13 +791,12 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       tags "ViiteAPI - Project"
       summary "This will send all the data necessary to perform the reversal of project links"
     )
-
   put("/project/reverse", operation(changeDirection)) {
     time(logger, "PUT request for /project/reverse") {
       val user = userProvider.getCurrentUser
       try {
         val roadInfo = parsedBody.extract[RevertRoadLinksExtractor]
-        projectService.changeDirection(roadInfo.projectId, roadInfo.roadNumber, roadInfo.roadPartNumber, roadInfo.links, roadInfo.coordinates, user.username) match {
+        projectService.changeDirection(roadInfo.projectId, RoadPart(roadInfo.roadNumber, roadInfo.roadPartNumber), roadInfo.links, roadInfo.coordinates, user.username) match {
           case Some(errorMessage) =>
             Map("success" -> false, "errorMessage" -> errorMessage)
           case None =>
@@ -839,7 +820,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       tags "ViiteAPI - Project"
       summary "Returns all the necessary information on all or only the active projects to be shown on the project selection window."
     )
-
   get("/roadlinks/roadaddress/project/all/:onlyActive", operation(getRoadAddressProjects)) {
     time(logger, "GET request for /roadlinks/roadaddress/project/all/:onlyActive") {
       val onlyActive = params("onlyActive").toBoolean
@@ -859,7 +839,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       tags "ViiteAPI - Project states"
       summary "Returns state codes for the requested project ids."
     )
-
   /** Gets the project information for the project list only for the given projects (projectIDs</>). */
   get("/roadlinks/roadaddress/project/states/:projectIDs", operation(getRoadAddressProjectStates)) {
     time(logger, "GET request for /roadlinks/roadaddress/project/states/:projectIDs") {
@@ -876,7 +855,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       tags "ViiteAPI - Project"
       summary "This will retrive all the information of a specific project, identifiable by it's id."
     )
-
   get("/roadlinks/roadaddress/project/all/projectId/:id", operation(getSingleProjectById)) {
     val projectId = params("id").toLong
     time(logger, s"GET request for /roadlinks/roadaddress/project/all/projectId/$projectId") {
@@ -912,7 +890,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       tags "ViiteAPI - Project"
       summary "This will retrieve all the information of a specific project, identifiable by it's id."
     )
-
   get("/roadlinks/roadaddress/project/validatereservedlink/", operation(checkRoadPartExistsAndReservable)) {
     try {
       val roadNumber = params("roadNumber").toLong
@@ -941,14 +918,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       tags "ViiteAPI - Project"
       summary "This will return all the supplied project links to their ininital state (RoadAddressChangeType.Unhandled in the case of already pre-existing ones and simple removal in the case of new project links)."
     )
-
   put("/roadlinks/roadaddress/project/revertchangesroadlink", operation(revertLinks)) {
     time(logger, "PUT request for /roadlinks/roadaddress/project/revertchangesroadlink") {
       try {
         val linksToRevert = parsedBody.extract[RevertRoadLinksExtractor]
         if (linksToRevert.links.nonEmpty) {
           val user = userProvider.getCurrentUser.username
-          projectService.revertLinks(linksToRevert.projectId, linksToRevert.roadNumber, linksToRevert.roadPartNumber, linksToRevert.links, linksToRevert.coordinates, user) match {
+          projectService.revertLinks(linksToRevert.projectId, RoadPart(linksToRevert.roadNumber, linksToRevert.roadPartNumber), linksToRevert.links, linksToRevert.coordinates, user) match {
             case None =>
               val projectErrors = projectService.validateProjectByIdHighPriorityOnly(linksToRevert.projectId).map(projectService.projectValidator.errorPartsToApi)
               val project = projectService.getSingleProjectById(linksToRevert.projectId).get
@@ -980,7 +956,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       tags "ViiteAPI - Project"
       summary "This will receive all the project link data in order to be created."
     )
-
   post("/roadlinks/roadaddress/project/links", operation(createProjectLinks)) {
     time(logger, "POST request for /roadlinks/roadaddress/project/links") {
       val user = userProvider.getCurrentUser
@@ -991,7 +966,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
         if (links.roadPartNumber == 0)
           throw RoadAndPartNumberException("Virheellinen tieosanumero")
         logger.debug(s"Creating new links: ${links.linkIds.mkString(",")}")
-        val response = projectService.createProjectLinks(links.linkIds, links.projectId, links.roadNumber, links.roadPartNumber, Track.apply(links.trackCode), Discontinuity.apply(links.discontinuity), AdministrativeClass.apply(links.administrativeClass), LinkGeomSource.apply(links.roadLinkSource), links.roadEly, user.username, links.roadName.getOrElse(halt(BadRequest("Road name is mandatory"))), Some(links.coordinates))
+        val response = projectService.createProjectLinks(links.linkIds, links.projectId, RoadPart(links.roadNumber, links.roadPartNumber), Track.apply(links.trackCode), Discontinuity.apply(links.discontinuity), AdministrativeClass.apply(links.administrativeClass), LinkGeomSource.apply(links.roadLinkSource), links.roadEly, user.username, links.roadName.getOrElse(halt(BadRequest("Road name is mandatory"))), Some(links.coordinates))
         response.get("success") match {
           case Some(true) =>
             val projectErrors = response.getOrElse("projectErrors", Seq).asInstanceOf[Seq[projectService.projectValidator.ValidationErrorDetails]].map(projectService.projectValidator.errorPartsToApi)
@@ -1023,7 +998,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       tags "ViiteAPI - Project"
       summary "This will receive all the project link data with changes to be commited on the system."
     )
-
   put("/roadlinks/roadaddress/project/links", operation(updateProjectLinks)) {
     time(logger, "PUT request for /roadlinks/roadaddress/project/links") {
       val user = userProvider.getCurrentUser
@@ -1034,7 +1008,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
         if (links.roadPartNumber == 0)
           throw RoadAndPartNumberException("Virheellinen tieosanumero")
         if (projectService.validateLinkTrack(links.trackCode)) {
-          projectService.updateProjectLinks(links.projectId, links.ids, links.linkIds, RoadAddressChangeType.apply(links.roadAddressChangeType), user.username, links.roadNumber, links.roadPartNumber, links.trackCode, links.userDefinedEndAddressM, links.administrativeClass, links.discontinuity, Some(links.roadEly), links.reversed.getOrElse(false), roadName = links.roadName, Some(links.coordinates)) match {
+          projectService.updateProjectLinks(links.projectId, links.ids, links.linkIds, RoadAddressChangeType.apply(links.roadAddressChangeType), user.username, RoadPart(links.roadNumber, links.roadPartNumber), links.trackCode, links.userDefinedEndAddressM, links.administrativeClass, links.discontinuity, Some(links.roadEly), links.reversed.getOrElse(false), roadName = links.roadName, Some(links.coordinates)) match {
             case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
             case None =>
               val projectErrors = projectService.validateProjectByIdHighPriorityOnly(links.projectId).map(projectService.projectValidator.errorPartsToApi)
@@ -1071,7 +1045,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       tags "ViiteAPI - Project"
       summary "Akin to the one used by the road addresses, this one will return all road addresses and project links that are within the viewport defined by the bounding box."
     )
-
   get("/project/roadlinks", operation(getProjectLinksByBoundingBox)) {
     response.setHeader("Access-Control-Allow-Headers", "*")
     val zoom = chooseDrawType(params.getOrElse("zoom", "5"))
@@ -1098,7 +1071,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       tags "ViiteAPI - Project"
       summary "Akin to the one used by the road addresses, this one will return all road addresses and project links of a specific project.."
     )
-
   get("/project/links/:projectId", operation(getProjectLinksByProjectId)) {
     val id: Long = params.get("projectId") match {
       case Some(s) if s != "" && s.toLong != 0 => s.toLong
@@ -1121,7 +1093,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       tags "ViiteAPI - Project"
       summary "This is a part of the re-opening of a project, this one will update the status of a project that has the projectId supplied."
     )
-
   post("/project/id/:projectId", operation(reOpenProject)) {
     val projectId = params("projectId").toLong
     time(logger, s"POST request for /project/id/$projectId") {
@@ -1144,7 +1115,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       tags "ViiteAPI - Project"
       summary "Given a valid projectId, this will fetch all the changes made on said project."
     )
-
   get("/project/getchangetable/:projectId", operation(returnChangeTableById)) {
     val projectId = params("projectId").toLong
 
@@ -1173,7 +1143,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       tags "ViiteAPI - Project"
       summary "Given a valid projectId, this will run recalculation and the validations to the project in question."
     )
-
   get("/project/recalculateProject/:projectId", operation(recalculateAndValidateProject)) {
     val projectId = params("projectId").toLong
     time(logger, s"GET request for /project/recalculateProject/$projectId") {
@@ -1213,7 +1182,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       tags "ViiteAPI - NodesAndJunctions"
       summary "Validates the junction points' editability."
     )
-
   get("/junctions/getEditableStatusOfJunctionPoints", operation(getEditableStatusOfJunctionPoints)) {
     response.setHeader("Access-Control-Allow-Headers", "*")
     val ids: Seq[Long] = params.get("ids") match {
@@ -1248,7 +1216,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       tags "ViiteAPI - RoadAddresses"
       summary "Returns a road name that is related to a certain roadNumber or a certain project (referenced by the projectID)."
     )
-
   get("/roadlinks/roadname/:roadNumber/:projectID", operation(getRoadNamesByRoadNumberAndProjectId)) {
     val roadNumber = params.get("roadNumber").map(_.toLong)
     val projectId = params.get("projectID").map(_.toLong)
@@ -1280,7 +1247,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       summary "Returns coordinates to support single box search."
       description ""
     )
-
   get("/roadlinks/search", operation(getCoordinatesForSearch)) {
     val searchString = params.get("search")
     roadAddressService.getSearchResults(searchString)
@@ -1291,7 +1257,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       tags "ViiteAPI - General"
       summary "Get maximum of adjusted timestamp of Road Link Date from projectService."
     )
-
   get("/getRoadLinkDate", operation(getRoadLinkDate)) {
     time(logger, s"GET request for getRoadLinkDate"){
       projectService.getRoadLinkDate
@@ -1308,7 +1273,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       tags "ViiteAPI - NodesAndJunctions"
       summary "Returns all the nodes belonging to the road number and possibly withing the given range of road part numbers."
     )
-
   get("/nodes", operation(getNodesByRoadAttributes)) {
     val roadNumber = params.get("roadNumber").map(_.toLong)
     val minRoadPartNumber = params.get("minRoadPartNumber").map(_.toLong)
@@ -1330,7 +1294,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       tags "ViiteAPI - NodesAndJunctions"
       summary "Get NodePoint And JunctionTemplates"
     )
-
   get("/templates", operation(getNodePointAndJunctionTemplates)) {
     time(logger, s"GET request for /templates") {
       val authorizedElys = userProvider.getCurrentUser.getAuthorizedElys
@@ -1347,7 +1310,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       tags "ViiteAPI - NodesAndJunctions"
       summary "Get NodePointTemplate by Id"
     )
-
   get("/node-point-templates/:id", operation(getNodePointTemplateById)) {
     val id = params("id").toLong
     time(logger, s"GET request for /node-point-templates/$id") {
@@ -1366,7 +1328,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       tags "ViiteAPI - NodesAndJunctions"
       summary "Get JunctionTemplates by Id"
     )
-
   get("/junction-templates/:id", operation(getJunctionTemplatesById)) {
     val id = params("id").toLong
     time(logger, s"GET request for /junction-templates/$id") {
@@ -1385,7 +1346,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       tags "ViiteAPI - NodesAndJunctions"
       summary "Add or update nodes, junctions and nodepoints."
     )
-
   post("/nodes", operation(addOrUpdate)) {
     time(logger, s"POST request for /nodes") {
       val username = userProvider.getCurrentUser.username
@@ -1413,7 +1373,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       tags "ViiteAPI - NodesAndJunctions"
       summary "Update nodes, junctions and nodepoints."
     )
-
   put("/nodes/:id", operation(update)) {
     val id = params("id").toLong
     time(logger, s"PUT request for /nodes/$id") {
@@ -1459,8 +1418,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
     }
   }
 
-  private def getRoadAddressLinksByRoadPartNumber(roadNumber: Long, roadPartNumber: Long): Seq[Seq[Map[String, Any]]] = {
-    val viiteRoadLinks = Seq(roadAddressService.getRoadAddressLinksOfWholeRoadPart(roadNumber, roadPartNumber))
+  private def getRoadAddressLinksByRoadPartNumber(roadPart: RoadPart): Seq[Seq[Map[String, Any]]] = {
+    val viiteRoadLinks = Seq(roadAddressService.getRoadAddressLinksOfWholeRoadPart(roadPart))
     viiteRoadLinks.map{_.map(roadAddressLinkToApi)}
   }
 
@@ -1500,7 +1459,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
     logger.info(s"End fetching data for id=$projectId project service (zoom level $zoomLevel) in ${(System.currentTimeMillis() - startTime) * 0.001}s")
 
     val partitionedRoadLinks = ProjectLinkPartitioner.partition(viiteRoadLinks.filter(_.length >= MinAllowedRoadAddressLength))
-    val validRoadNumbers = partitionedRoadLinks.flatten.map(_.roadNumber).filter(value => value > 0).distinct
+    val validRoadNumbers = partitionedRoadLinks.flatten.map(_.roadPart.roadNumber).filter(value => value > 0).distinct
     if (validRoadNumbers.nonEmpty) {
       val roadNames = roadNameService.getCurrentRoadNames(validRoadNumbers)
       partitionedRoadLinks.map {
@@ -1572,7 +1531,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       "calibrationPoints" -> Seq(calibrationPointToApi(roadAddressLink.geometry, roadAddressLink.startCalibrationPoint),
         calibrationPointToApi(roadAddressLink.geometry, roadAddressLink.endCalibrationPoint)),
       "administrativeClassMML" -> roadAddressLink.administrativeClassMML.toString,
-      "roadClass" -> RoadClass.get(roadAddressLink.roadNumber.toInt),
+      "roadClass" -> RoadClass.get(roadAddressLink.roadPart.roadNumber.toInt),
       "administrativeClassId" -> roadAddressLink.administrativeClass.value,
       "modifiedAt" -> roadAddressLink.modifiedAt,
       "modifiedBy" -> roadAddressLink.modifiedBy,
@@ -1580,8 +1539,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       "municipalityName" -> roadAddressLink.municipalityName,
       "roadNameFi" -> "",
       "roadNameSe" -> "",
-      "roadNumber" -> roadAddressLink.roadNumber,
-      "roadPartNumber" -> roadAddressLink.roadPartNumber,
+      "roadNumber" -> roadAddressLink.roadPart.roadNumber,
+      "roadPartNumber" -> roadAddressLink.roadPart.partNumber,
       "elyCode" -> roadAddressLink.elyCode,
       "trackCode" -> roadAddressLink.trackCode,
       "startAddressM" -> roadAddressLink.startAddressM,
@@ -1624,8 +1583,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
   def nodePointToApi(nodePoint: NodePoint) : Map[String, Any] = {
     Map("id" -> nodePoint.id,
       "nodeNumber" -> nodePoint.nodeNumber,
-      "roadNumber" -> nodePoint.roadNumber,
-      "roadPartNumber" -> nodePoint.roadPartNumber,
+      "roadNumber" -> nodePoint.roadPart.roadNumber,
+      "roadPartNumber" -> nodePoint.roadPart.partNumber,
       "addrM" -> nodePoint.addrM,
       "roadwayNumber" -> nodePoint.roadwayNumber,
       "beforeAfter" -> nodePoint.beforeAfter.value,
@@ -1654,8 +1613,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       "roadwayNumber" -> nodePoint.roadwayNumber,
       "addrM" -> nodePoint.addrM,
       "elyCode" -> nodePoint.elyCode,
-      "roadNumber" -> nodePoint.roadNumber,
-      "roadPartNumber" -> nodePoint.roadPartNumber,
+      "roadNumber" -> nodePoint.roadPart.roadNumber,
+      "roadPartNumber" -> nodePoint.roadPart.partNumber,
       "track" -> nodePoint.track,
       "coordinates" -> Map(
         "x" ->  nodePoint.coordinates.x,
@@ -1668,8 +1627,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       "id" -> junctionTemplate.id,
       "junctionNumber" -> null,
       "startDate" -> formatToString(junctionTemplate.startDate.toString),
-      "roadNumber" -> junctionTemplate.roadNumber,
-      "roadPartNumber" -> junctionTemplate.roadPartNumber,
+      "roadNumber" -> junctionTemplate.roadPart.roadNumber,
+      "roadPartNumber" -> junctionTemplate.roadPart.partNumber,
       "track" -> junctionTemplate.track,
       "addrM" -> junctionTemplate.addrM,
       "elyCode" -> junctionTemplate.elyCode)
@@ -1692,8 +1651,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       "createdBy" -> junctionPoint.createdBy,
       "roadwayNumber" -> junctionPoint.roadwayNumber,
       "addrM" -> junctionPoint.addrM,
-      "roadNumber" -> junctionPoint.roadNumber,
-      "roadPartNumber" -> junctionPoint.roadPartNumber,
+      "roadNumber" -> junctionPoint.roadPart.roadNumber,
+      "roadPartNumber" -> junctionPoint.roadPart.partNumber,
       "track" -> junctionPoint.track,
       "coordinates" -> Map(
         "x" ->  junctionPoint.coordinates.x,
@@ -1720,8 +1679,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       "junctionId" -> junctionPoint.junctionId,
       "roadwayNumber" -> junctionPoint.roadwayNumber,
       "roadwayPointId" -> junctionPoint.roadwayPointId,
-      "roadNumber" -> junctionPoint.roadNumber,
-      "roadPartNumber" -> junctionPoint.roadPartNumber,
+      "roadNumber" -> junctionPoint.roadPart.roadNumber,
+      "roadPartNumber" -> junctionPoint.roadPart.partNumber,
       "track" -> junctionPoint.track.value,
       "addrM" -> junctionPoint.addrM,
       "beforeAfter" -> junctionPoint.beforeAfter.value,
@@ -1749,9 +1708,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
   def roadAddressBrowserTracksToApi(track: TrackForRoadAddressBrowser): Map[String, Any] = {
     Map(
       "ely" -> track.ely,
-      "roadNumber" -> track.roadNumber,
+      "roadNumber" -> track.roadPart.roadNumber,
       "track" -> track.track,
-      "roadPartNumber" -> track.roadPartNumber,
+      "roadPartNumber" -> track.roadPart.partNumber,
       "startAddrM" -> track.startAddrM,
       "endAddrM" -> track.endAddrM,
       "lengthAddrM" -> track.roadAddressLengthM,
@@ -1763,8 +1722,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
   def roadAddressBrowserRoadPartsToApi(roadPart: RoadPartForRoadAddressBrowser): Map[String, Any] = {
     Map(
       "ely" -> roadPart.ely,
-      "roadNumber" -> roadPart.roadNumber,
-      "roadPartNumber" -> roadPart.roadPartNumber,
+      "roadNumber" -> roadPart.roadPart.roadNumber,
+      "roadPartNumber" -> roadPart.roadPart.partNumber,
       "startAddrM" -> roadPart.startAddrM,
       "endAddrM" -> roadPart.endAddrM,
       "lengthAddrM" -> roadPart.roadAddressLengthM,
@@ -1775,8 +1734,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
   def roadAddressBrowserNodesToApi(node: NodeForRoadAddressBrowser): Map[String, Any] = {
     Map(
       "ely" -> node.ely,
-      "roadNumber" -> node.roadNumber,
-      "roadPartNumber" -> node.roadPartNumber,
+      "roadNumber" -> node.roadPart.roadNumber,
+      "roadPartNumber" -> node.roadPart.partNumber,
       "addrM" -> node.addrM,
       "startDate" -> new SimpleDateFormat("dd.MM.yyyy").format(node.startDate.toDate),
       "nodeType" -> node.nodeType.displayValue,
@@ -1794,9 +1753,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       "nodeType" -> junction.nodeType.displayValue,
       "startDate" -> new SimpleDateFormat("dd.MM.yyyy").format(junction.startDate.toDate),
       "junctionNumber" -> junction.junctionNumber,
-      "roadNumber" -> junction.roadNumber,
+      "roadNumber" -> junction.roadPart.roadNumber,
       "track" -> junction.track,
-      "roadPartNumber" -> junction.roadPartNumber,
+      "roadPartNumber" -> junction.roadPart.partNumber,
       "addrM" -> junction.addrM,
       "beforeAfter" -> junction.beforeAfter
     )
@@ -1811,6 +1770,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
   }
 
   def roadAddressChangeInfoToApi(changeInfo: ChangeInfoForRoadAddressChangesBrowser): Map[String, Any] = {
+    val oldPart = changeInfo.oldRoadAddress.roadPart
     Map(
       "startDate" -> new SimpleDateFormat("dd.MM.yyyy").format(changeInfo.startDate.toDate),
       "changeType" -> changeInfo.changeType,
@@ -1819,17 +1779,17 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       "projectName" -> changeInfo.projectName,
       "projectAcceptedDate" -> new SimpleDateFormat("dd.MM.yyyy").format(changeInfo.projectAcceptedDate.toDate),
       "oldEly" -> changeInfo.oldRoadAddress.ely,
-      "oldRoadNumber" -> changeInfo.oldRoadAddress.roadNumber.getOrElse(""),
+      "oldRoadNumber"     -> (if(oldPart.nonEmpty) oldPart.get.roadNumber else ""),
       "oldTrack" -> changeInfo.oldRoadAddress.track.getOrElse(""),
-      "oldRoadPartNumber" -> changeInfo.oldRoadAddress.roadPartNumber.getOrElse(""),
+      "oldRoadPartNumber" -> (if(oldPart.nonEmpty) oldPart.get.partNumber else ""),
       "oldStartAddrM" -> changeInfo.oldRoadAddress.startAddrM.getOrElse(""),
       "oldEndAddrM" -> changeInfo.oldRoadAddress.endAddrM.getOrElse(""),
       "oldLength" -> changeInfo.oldRoadAddress.length.getOrElse(""),
       "oldAdministrativeClass" -> changeInfo.oldRoadAddress.administrativeClass,
       "newEly" -> changeInfo.newRoadAddress.ely,
-      "newRoadNumber" -> changeInfo.newRoadAddress.roadNumber,
+      "newRoadNumber" -> changeInfo.newRoadAddress.roadPart.roadNumber,
       "newTrack" -> changeInfo.newRoadAddress.track,
-      "newRoadPartNumber" -> changeInfo.newRoadAddress.roadPartNumber,
+      "newRoadPartNumber" -> changeInfo.newRoadAddress.roadPart.partNumber,
       "newStartAddrM" -> changeInfo.newRoadAddress.startAddrM,
       "newEndAddrM" -> changeInfo.newRoadAddress.endAddrM,
       "newLength" -> changeInfo.newRoadAddress.length,
@@ -1838,6 +1798,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
   }
 
   def projectAddressLinkToApi(projectAddressLink: ProjectAddressLink, roadNames: Seq[RoadName] = Seq()): Map[String, Any] = {
+    val roadAddressPart = projectAddressLink.roadAddressRoadPart
     (Map(
         "success" -> true,
         "roadwayId" -> projectAddressLink.roadwayId,
@@ -1850,7 +1811,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
         "calibrationPoints" -> Seq(calibrationPointToApi(projectAddressLink.geometry, projectAddressLink.startCalibrationPoint),
           calibrationPointToApi(projectAddressLink.geometry, projectAddressLink.endCalibrationPoint)),
         "administrativeClassMML" -> projectAddressLink.administrativeClassMML.toString,
-        "roadClass" -> RoadClass.get(projectAddressLink.roadNumber.toInt),
+        "roadClass" -> RoadClass.get(projectAddressLink.roadPart.roadNumber.toInt),
         "administrativeClassId" -> projectAddressLink.administrativeClass.value,
         "modifiedAt" -> projectAddressLink.modifiedAt,
         "modifiedBy" -> projectAddressLink.modifiedBy,
@@ -1858,8 +1819,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
         "municipalityName" -> projectAddressLink.municipalityName,
         "roadNameFi" -> "",
         "roadNameSe" -> "",
-        "roadNumber" -> projectAddressLink.roadNumber,
-        "roadPartNumber" -> projectAddressLink.roadPartNumber,
+        "roadNumber"     -> projectAddressLink.roadPart.roadNumber,
+        "roadPartNumber" -> projectAddressLink.roadPart.partNumber,
         "elyCode" -> projectAddressLink.elyCode,
         "trackCode" -> projectAddressLink.trackCode,
         "startAddressM" -> projectAddressLink.startAddressM,
@@ -1874,9 +1835,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
         "id" -> projectAddressLink.id,
         "status" -> projectAddressLink.status.value,
         "reversed" -> projectAddressLink.reversed,
-        "roadNameBlocked" -> (if (projectAddressLink.roadNumber != 0 && projectAddressLink.roadName.nonEmpty) roadNames.exists(_.roadNumber == projectAddressLink.roadNumber) else false),
-        "roadAddressRoadNumber" -> projectAddressLink.roadAddressRoadNumber,
-        "roadAddressRoadPart" -> projectAddressLink.roadAddressRoadPart
+        "roadNameBlocked" -> (if (projectAddressLink.roadPart.roadNumber != 0 && projectAddressLink.roadName.nonEmpty) roadNames.exists(_.roadNumber == projectAddressLink.roadPart.roadNumber) else false),
+        "roadAddressRoadNumber" -> (if(roadAddressPart.nonEmpty) roadAddressPart.get.roadNumber else ""),
+        "roadAddressRoadPart"   -> (if(roadAddressPart.nonEmpty) roadAddressPart.get.partNumber else "")
       )
         ++
         (if (projectAddressLink.isSplit)
@@ -1915,8 +1876,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
   }
 
   def projectReservedPartToApi(reservedRoadPart: ProjectReservedPart): Map[String, Any] = {
-    Map("roadNumber" -> reservedRoadPart.roadNumber,
-      "roadPartNumber" -> reservedRoadPart.roadPartNumber,
+    Map("roadNumber" -> reservedRoadPart.roadPart.roadNumber,
+      "roadPartNumber" -> reservedRoadPart.roadPart.partNumber,
       "id" -> reservedRoadPart.id,
       "currentEly" -> reservedRoadPart.ely,
       "currentLength" -> reservedRoadPart.addressLength,
@@ -1929,8 +1890,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
   }
 
   def projectFormedPartToApi(projectId: Option[Long] = None)(formedRoadPart: ProjectReservedPart): Map[String, Any] = {
-    Map("roadNumber" -> formedRoadPart.roadNumber,
-      "roadPartNumber" -> formedRoadPart.roadPartNumber,
+    Map("roadNumber" -> formedRoadPart.roadPart.roadNumber,
+      "roadPartNumber" -> formedRoadPart.roadPart.partNumber,
       "id" -> formedRoadPart.id,
       "currentEly" -> formedRoadPart.ely,
       "currentLength" -> formedRoadPart.addressLength,
@@ -1942,7 +1903,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       "roadAddresses" -> {
         projectId match {
           case None => Seq.empty
-          case _ => projectService.getRoadAddressesFromFormedRoadPart(formedRoadPart.roadNumber, formedRoadPart.roadPartNumber, projectId.get)
+          case _ => projectService.getRoadAddressesFromFormedRoadPart(formedRoadPart.roadPart, projectId.get)
         }
       }
     )
@@ -1957,8 +1918,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
         "y" -> node.coordinates.y),
       "name" -> node.name,
       "type" -> node.nodeType.displayValue,
-      "roadNumber" -> roadAttr.roadNumber,
-      "roadPartNumber" -> roadAttr.roadPartNumber,
+      "roadNumber" -> roadAttr.roadPart.roadNumber,
+      "roadPartNumber" -> roadAttr.roadPart.partNumber,
       "addrMValue" -> roadAttr.addrMValue)
   }
 
@@ -2031,11 +1992,11 @@ object ProjectConverter {
     Project(project.id, ProjectState.apply(project.status),
       if (project.name.length > 32) project.name.substring(0, 32).trim else project.name.trim, //TODO the name > 32 should be a handled exception since the user can't insert names with this size
       user.username, DateTime.now(), user.username, finnishDateFormatter.parseDateTime(project.startDate), DateTime.now(),
-      project.additionalInfo, project.reservedPartList.distinct.map(toReservedRoadPart), project.formedPartList.distinct.map(toReservedRoadPart), Option(project.additionalInfo), elys = Set())
+      project.additionalInfo, project.reservedPartList.distinct.map(toReservedRoadPartEly), project.formedPartList.distinct.map(toReservedRoadPartEly), Option(project.additionalInfo), elys = Set())
   }
 
-  def toReservedRoadPart(rp: RoadPartExtractor): ProjectReservedPart = {
-    ProjectReservedPart(0L, rp.roadNumber, rp.roadPartNumber, None, None, Some(rp.ely), None, None, None, None)
+  def toReservedRoadPartEly(rp: RoadPartElyExtractor): ProjectReservedPart = {
+    ProjectReservedPart(0L, RoadPart(rp.roadNumber, rp.roadPartNumber), None, None, Some(rp.ely), None, None, None, None)
   }
 }
 
@@ -2075,7 +2036,7 @@ object NodesAndJunctionsConverter {
       val createdTime = if (jp.createdTime.isDefined) Option(finnishDateFormatter.parseDateTime(jp.createdTime.get)) else None
 
       JunctionPoint(jp.id, beforeAfter, jp.roadwayPointId, jp.junctionId, Some(startDate), endDate, validFrom, validTo,
-        jp.createdBy.getOrElse("-"), createdTime, jp.roadwayNumber, jp.addrM, jp.roadNumber, jp.roadPartNumber,
+        jp.createdBy.getOrElse("-"), createdTime, jp.roadwayNumber, jp.addrM, RoadPart(jp.roadNumber, jp.roadPartNumber),
         jp.track, Discontinuity.Continuous)
     }
   }
@@ -2090,7 +2051,7 @@ object NodesAndJunctionsConverter {
       NodePoint(nodePoint.id, BeforeAfter.apply(nodePoint.beforeAfter), nodePoint.roadwayPointId, nodePoint.nodeNumber, NodePointType.apply(nodePoint.`type`),
         startDate, endDate, finnishDateFormatter.parseDateTime(nodePoint.validFrom), validTo,
         nodePoint.createdBy, createdTime, nodePoint.roadwayNumber, nodePoint.addrM,
-        nodePoint.roadNumber, nodePoint.roadPartNumber, Track.apply(nodePoint.track), nodePoint.elyCode)
+        RoadPart(nodePoint.roadNumber, nodePoint.roadPartNumber), Track.apply(nodePoint.track), nodePoint.elyCode)
     }
   }
 }

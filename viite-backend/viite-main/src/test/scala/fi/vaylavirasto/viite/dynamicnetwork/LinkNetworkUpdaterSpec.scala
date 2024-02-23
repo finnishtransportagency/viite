@@ -4,7 +4,7 @@
 import fi.liikennevirasto.viite.dao.{CalibrationPointDAO, LinearLocationDAO}
 import fi.vaylavirasto.viite.dao.LinkDAO
 import fi.vaylavirasto.viite.geometry.Point
-import fi.vaylavirasto.viite.model.LinkGeomSource
+import fi.vaylavirasto.viite.model.{LinkGeomSource, RoadPart}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 import fi.vaylavirasto.viite.util.ViiteException
 import org.joda.time.DateTime
@@ -159,7 +159,7 @@ class LinkNetworkUpdaterSpec extends FunSuite with Matchers {
   private val correctNewLink: LinkInfo = LinkInfo("newLink:2", 10.000, correctNewSegment)
   private val correctReplaceInfo: ReplaceInfo = ReplaceInfo("oldLink:1", 0.0, 5.000, "newLink:2", 0.0, 10.000, digitizationChange=false, dummyMeta)
 
-  private val dummyMeta = Seq(ViiteMetaData(1,0.0,1.0,1,1,1,1))
+  private val dummyMeta = Seq(ViiteMetaData(1,0.0,1.0,1,1,RoadPart(1,1)))
 
   /** Change builder, to build a single LinkNetworkChange for testing.
    * Change type must be given, but the other values have simple, congruent contents in them as default.

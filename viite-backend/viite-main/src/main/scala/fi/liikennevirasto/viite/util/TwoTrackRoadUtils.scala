@@ -93,8 +93,7 @@ object TwoTrackRoadUtils {
     val roadPartCalibrationPoints =
       ProjectCalibrationPointDAO.fetchByRoadPart(
         projectId,
-        last.roadNumber,
-        last.roadPartNumber
+        last.roadPart
       )
 
     def splitAt(pl: ProjectLink, address: Long, endPoints: Map[Point, ProjectLink]): (ProjectLink, ProjectLink) = {
@@ -459,11 +458,10 @@ object TwoTrackRoadUtils {
     else {
       val head     = seq.head
       val track    = processed.last.originalTrack
-      val road     = processed.last.originalRoadNumber
-      val roadPart = processed.last.originalRoadPartNumber
+      val roadPart = processed.last.originalRoadPart
       val address  = processed.last.originalEndAddrMValue
       val status   = processed.last.status
-      if (head.originalTrack == track && head.originalRoadNumber == road && head.originalRoadPartNumber == roadPart && head.originalStartAddrMValue == address && head.status == status) {
+      if (head.originalTrack == track && head.originalRoadPart == roadPart && head.originalStartAddrMValue == address && head.status == status) {
         getContinuousOriginalAddressSection(seq.tail, processed :+ head)
       } else {
         (processed, seq)

@@ -7,7 +7,7 @@ import fi.liikennevirasto.viite.AwsService
 import fi.liikennevirasto.viite.dao.{LinearLocation, LinearLocationDAO, Roadway, RoadwayDAO}
 import fi.vaylavirasto.viite.geometry.GeometryUtils
 import fi.vaylavirasto.viite.geometry.GeometryUtils.scaleToThreeDigits
-import fi.vaylavirasto.viite.model.{LinkGeomSource, Track}
+import fi.vaylavirasto.viite.model.{LinkGeomSource, RoadPart, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase
 import fi.vaylavirasto.viite.util.DateTimeFormatters.finnishDateFormatter
 import fi.vaylavirasto.viite.util.ViiteException
@@ -36,8 +36,7 @@ case class TiekamuRoadLinkChangeError(errorMessage: String,
                                       change: TiekamuRoadLinkChange,
                                       metaData: TiekamuRoadLinkErrorMetaData)
 
-case class TiekamuRoadLinkErrorMetaData(roadNumber: Long,
-                                        roadPartNumber: Long,
+case class TiekamuRoadLinkErrorMetaData(roadPart: RoadPart,
                                         roadwayNumber:Long,
                                         linearLocationIds: Seq[Long],
                                         linkId: String)
@@ -67,8 +66,8 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
       "newStartM" -> tiekamuRoadLinkChangeError.change.newStartM,
       "newEndM" -> tiekamuRoadLinkChangeError.change.newEndM,
       "digitizationChange" -> tiekamuRoadLinkChangeError.change.digitizationChange,
-      "roadNumber" -> tiekamuRoadLinkChangeError.metaData.roadNumber,
-      "roadPartNumber" -> tiekamuRoadLinkChangeError.metaData.roadPartNumber,
+      "roadNumber" -> tiekamuRoadLinkChangeError.metaData.roadPart.roadNumber,
+      "roadPartNumber" -> tiekamuRoadLinkChangeError.metaData.roadPart.partNumber,
       "linearLocationIds" -> tiekamuRoadLinkChangeError.metaData.linearLocationIds
     )
   }
@@ -119,8 +118,8 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
       "linearLocationId" -> data.linearLocationId,
       "roadwayNumber" -> data.roadwayNumber,
       "orderNumber" -> data.orderNumber,
-      "roadNumber" -> data.roadNumber,
-      "roadPartNumber" -> data.roadPartNumber
+      "roadNumber" -> data.roadPart.roadNumber,
+      "roadPartNumber" -> data.roadPart.partNumber
     )
   }
 
@@ -153,7 +152,7 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
       def createViiteMetaData(linearLocations: Seq[LinearLocation]): Seq[ViiteMetaData] = {
         val viiteMetaData = linearLocations.map(ll => {
           val roadway = roadwayDAO.fetchAllByRoadwayNumbers(Set(ll.roadwayNumber)).head
-          ViiteMetaData(ll.id, ll.startMValue, ll.endMValue, ll.roadwayNumber, ll.orderNumber.toInt, roadway.roadNumber, roadway.roadPartNumber)
+          ViiteMetaData(ll.id, ll.startMValue, ll.endMValue, ll.roadwayNumber, ll.orderNumber.toInt, roadway.roadPart)
         })
         viiteMetaData
       }
@@ -392,9 +391,9 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
       val errorRoadwayNumbers = errorLinearLocations.map(_.roadwayNumber)
       val errorRoadways = roadwayDAO.fetchAllByRoadwayNumbers(errorRoadwayNumbers.toSet)
       val errorRoadsParts = errorRoadways.map(r => {
-        (r.roadNumber, r.roadPartNumber)
+        (r.roadPart)
       })
-      TiekamuRoadLinkErrorMetaData(errorRoadsParts.head._1, errorRoadsParts.head._2, errorRoadways.head.roadwayNumber, errorLinearLocations.map(_.id), errorLink)
+      TiekamuRoadLinkErrorMetaData(errorRoadsParts.head, errorRoadways.head.roadwayNumber, errorLinearLocations.map(_.id), errorLink)
     }
 
     time(logger, "Validating TiekamuRoadLinkChange sets") {
@@ -430,8 +429,8 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
           val oldLinkIds = otherChangesWithSameNewLinkId.map(_.oldLinkId)
           val oldLinearLocations = linearLocations.filter(ll => oldLinkIds.contains(ll.linkId))
           val roadways = roadwayDAO.fetchAllByRoadwayNumbers(oldLinearLocations.map(_.roadwayNumber).toSet)
-          // group the roadways with roadNumber, roadPartNumber and track
-          val roadGroups = roadways.groupBy(rw => (rw.roadNumber, rw.roadPartNumber, rw.track))
+          // group the roadways with roadPart and track
+          val roadGroups = roadways.groupBy(rw => (rw.roadPart, rw.track))
           // if there are change infos that combine two or more links but the road address is not homogeneous between those merging links then its an error
           val isRoadAddressHomogeneous = roadGroups.size < 2
           val changesInSameRoadway = roadGroups.head._2.map(_.roadwayNumber).distinct.size == 1 // used only when we already know roadGroup has only one item, thus handling .head only is enough
@@ -462,10 +461,10 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
     val errorRoadwayNumbers = errorLinearLocations.map(_.roadwayNumber)
     val errorRoadways = roadwayDAO.fetchAllByRoadwayNumbers(errorRoadwayNumbers.toSet)
     val errorRoadsParts = errorRoadways.map(r => {
-      (r.roadNumber, r.roadPartNumber)
+      (r.roadPart)
     })
     logger.error(s"${tiekamuRoadLinkChangeErrors.size} errors found on road addresses: ${errorRoadsParts.toList}! Here is the list of errors: ${tiekamuRoadLinkChangeErrors.toList}")
-    val affectedRoadwayNumbers = errorRoadsParts.flatMap(roadAndPart => roadwayDAO.fetchAllByRoadAndPart(roadAndPart._1, roadAndPart._2)).map(_.roadwayNumber)
+    val affectedRoadwayNumbers = errorRoadsParts.flatMap(roadAndPart => roadwayDAO.fetchAllByRoadAndPart(roadAndPart)).map(_.roadwayNumber)
     val activeLinearLocationsWithoutAffected = activeLinearLocations.filterNot(ll => affectedRoadwayNumbers.contains(ll.roadwayNumber))
     val affectedLinkIds = activeLinearLocations.filter(ll => affectedRoadwayNumbers.contains(ll.roadwayNumber)).map(_.linkId)
     val (affectedTiekamuRoadLinkChanges, validTiekamuRoadLinkChanges) =  tiekamuRoadLinkChanges.partition(ch => affectedLinkIds.contains(ch.oldLinkId))
