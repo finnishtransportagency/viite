@@ -398,7 +398,7 @@
                         roadAddrSituationDate.setCustomValidity("Vuosiluvun tulee olla väliltä " + ViiteConstants.MIN_YEAR_INPUT + " - " + ViiteConstants.MAX_YEAR_INPUT);
                     }
                 } else {
-                    roadAddrSituationDate.setCustomValidity("Päivämäärän tulee olla muodossa pp.kk.yyyy");
+                    roadAddrSituationDate.setCustomValidity("Päivämäärän tulee olla muodossa pp.kk.vvvv");
                 }
             }
 
