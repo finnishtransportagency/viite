@@ -140,14 +140,15 @@ package object viite {
   val NodeStartDateUpdateErrorMessage = "Solmun uusi alkupäivämäärä ei saa olla ennen nykyistä alkupäivämäärää."
 
   // RoadNetwork validation error messages
-  val MissingCalibrationPointFromTheStart = "Kalibrointipiste puuttuu kohteen alusta"
-  val MissingCalibrationPointFromTheEnd = "Kalibrointipiste puuttuu kohteen lopusta"
-  val MissingCalibrationPointFromJunctions = "Kalibrointipiste puuttuu liittymästä"
-  val MissingRoadwayPointFromTheStart = "Roadway point puuttuu kohteen alusta"
-  val MissingRoadwayPointFromTheEnd = "Roadway point puuttuu kohteen lopusta"
-  val OverlappingRoadwaysOnLinearLocation = "Liian monta roadwayta lineaarilokaatiolla"
-  val InvalidRoadwayLengthTroughHistory = "Roadwaylla pituuseroja historiassa"
-  val OverlappingRoadwayInHistory = "Tiellä esiintyy päällekkäisiä roadwayta historiassa"
+  val IntegrityValidationError = "Virhe tieosoiteverkon eheydessä"
+  val MissingCalibrationPointFromTheStart  = s"$IntegrityValidationError: Kalibrointipiste puuttuu kohteen alusta"
+  val MissingCalibrationPointFromTheEnd    = s"$IntegrityValidationError: Kalibrointipiste puuttuu kohteen lopusta"
+  val MissingCalibrationPointFromJunctions = s"$IntegrityValidationError: Kalibrointipiste puuttuu liittymästä"
+  val MissingRoadwayPointFromTheStart      = s"$IntegrityValidationError: Roadway point puuttuu kohteen alusta"
+  val MissingRoadwayPointFromTheEnd        = s"$IntegrityValidationError: Roadway point puuttuu kohteen lopusta"
+  val OverlappingRoadwaysOnLinearLocation  = s"$IntegrityValidationError: Liian monta roadwayta lineaarilokaatiolla"
+  val InvalidRoadwayLengthTroughHistory    = s"$IntegrityValidationError: Roadwaylla pituuseroja historiassa"
+  val OverlappingRoadwayInHistory          = s"$IntegrityValidationError: Tiellä esiintyy päällekkäisiä roadwayta historiassa"
 
   val RampsMinBound = 20000
   val RampsMaxBound = 39999
