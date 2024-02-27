@@ -1932,6 +1932,9 @@ class ProjectService(
             logger.error(s"SQL error while preserving the project $projectId" +
                          s" to the road network. ${t.getMessage}", t)
             setProjectStatus(projectId, ProjectState.ErrorInViite)
+          case t: RoadNetworkValidationException =>
+            logger.error(s"The project $projectId did not pass the generic Viite network validations. ${t.getMessage}", t)
+            setProjectStatusWithInfo(projectId, ProjectState.ErrorInViite, t.getMessage)
           // If we got an unexpected error, re-throw it, too.
           case t: Exception =>
             logger.error(s"Unexpected exception while preserving the project $projectId" +
@@ -1946,6 +1949,12 @@ class ProjectService(
   def setProjectStatus(projectId: Long, projectState: ProjectState): Unit = {
     withDynSession {
       projectDAO.updateProjectStatus(projectId, projectState)
+    }
+  }
+
+  def setProjectStatusWithInfo(projectId: Long, projectState: ProjectState, statusInfo: String): Unit = {
+    withDynSession {
+      projectDAO.updateProjectStatusWithInfo(projectId, projectState, statusInfo)
     }
   }
 
