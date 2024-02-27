@@ -168,7 +168,7 @@
                         return false;
                     }
                 } else {
-                    dateElement.setCustomValidity("Päivämäärän tulee olla muodossa pp.kk.yyyy");
+                    dateElement.setCustomValidity("Päivämäärän tulee olla muodossa pp.kk.vvvv");
                     return false;
                 }
             }
