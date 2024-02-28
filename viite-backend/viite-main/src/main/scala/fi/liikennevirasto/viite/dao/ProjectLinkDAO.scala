@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite.dao
 
-import java.sql.Types
+import java.sql.{SQLException, Types}
 import java.util.Date
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite._
@@ -710,6 +710,70 @@ class ProjectLinkDAO extends BaseDAO {
         WHERE LINEAR_LOCATION_ID = ${roadAddress.linearLocationId} AND PROJECT_ID = $projectId $idFilter
       """
       runUpdateToDb(updateProjectLink)
+    }
+  }
+
+  def batchUpdateProjectLinks(projectLinks: Seq[ProjectLink], modifier: String): Unit = {
+    // Used with resetAndUpdateProjectLinks() when terminating in project.
+    // Could be used with revertSortedLinks() if modified correctly?
+    if (projectLinks.nonEmpty) {
+      time(logger, "Batch update project links") {
+        val updatePS = dynamicSession.prepareStatement(
+          """
+        UPDATE project_link
+          SET
+            ROAD_NUMBER = ?,
+            ROAD_PART_NUMBER = ?,
+            TRACK = ?,
+            DISCONTINUITY_TYPE = ?,
+            STATUS = ?,
+            ADMINISTRATIVE_CLASS = ?,
+            START_ADDR_M = ?,
+            END_ADDR_M = ?,
+            START_CALIBRATION_POINT = ?,
+            END_CALIBRATION_POINT = ?,
+            ORIG_START_CALIBRATION_POINT = ?,
+            ORIG_END_CALIBRATION_POINT = ?,
+            SIDE = ?,
+            ELY = ?,
+            START_MEASURE = ?,
+            END_MEASURE = ?,
+            MODIFIED_BY = ?
+          WHERE LINEAR_LOCATION_ID = ? AND PROJECT_ID = ? AND ID = ?
+      """)
+
+        projectLinks.foreach { pl =>
+          updatePS.setLong(1, pl.roadNumber)
+          updatePS.setLong(2, pl.roadPartNumber)
+          updatePS.setInt(3, pl.track.value)
+          updatePS.setInt(4, pl.discontinuity.value)
+          updatePS.setInt(5, pl.status.value)
+          updatePS.setInt(6, pl.administrativeClass.value)
+          updatePS.setLong(7, pl.startAddrMValue)
+          updatePS.setLong(8, pl.endAddrMValue)
+          updatePS.setInt(9, pl.calibrationPointTypes._1.value)
+          updatePS.setInt(10, pl.calibrationPointTypes._2.value)
+          updatePS.setInt(11, pl.calibrationPointTypes._1.value)
+          updatePS.setInt(12, pl.calibrationPointTypes._2.value)
+          updatePS.setInt(13, pl.sideCode.value)
+          updatePS.setLong(14, pl.ely)
+          updatePS.setDouble(15, pl.startMValue)
+          updatePS.setDouble(16, pl.endMValue)
+          updatePS.setString(17, modifier)
+          updatePS.setLong(18, pl.linearLocationId)
+          updatePS.setLong(19, pl.projectId)
+          updatePS.setLong(20, pl.id)
+          updatePS.addBatch()
+        }
+
+        try {
+          updatePS.executeBatch()
+        } catch {
+          case e: SQLException => e.printStackTrace()
+        } finally {
+          updatePS.close()
+        }
+      }
     }
   }
 
