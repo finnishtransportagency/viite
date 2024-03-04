@@ -712,10 +712,8 @@ class ProjectLinkDAO extends BaseDAO {
       runUpdateToDb(updateProjectLink)
     }
   }
-
-  def batchUpdateProjectLinks(projectLinks: Seq[ProjectLink], modifier: String): Unit = {
-    // Used with resetAndUpdateProjectLinks() when terminating in project.
-    // Could be used with revertSortedLinks() if modified correctly?
+  def batchUpdateProjectLinksToReset(projectLinks: Seq[ProjectLink]): Unit = {
+    // Used with resetAndUpdateProjectLinks to batch update original values to terminated projectLinks
     if (projectLinks.nonEmpty) {
       time(logger, "Batch update project links") {
         val updatePS = dynamicSession.prepareStatement(
@@ -726,7 +724,6 @@ class ProjectLinkDAO extends BaseDAO {
             ROAD_PART_NUMBER = ?,
             TRACK = ?,
             DISCONTINUITY_TYPE = ?,
-            STATUS = ?,
             ADMINISTRATIVE_CLASS = ?,
             START_ADDR_M = ?,
             END_ADDR_M = ?,
@@ -738,8 +735,8 @@ class ProjectLinkDAO extends BaseDAO {
             ELY = ?,
             START_MEASURE = ?,
             END_MEASURE = ?,
-            MODIFIED_BY = ?
-          WHERE LINEAR_LOCATION_ID = ? AND PROJECT_ID = ? AND ID = ?
+            STATUS = ?
+          WHERE LINEAR_LOCATION_ID = ? AND ID = ?
       """)
 
         projectLinks.foreach { pl =>
@@ -747,22 +744,20 @@ class ProjectLinkDAO extends BaseDAO {
           updatePS.setLong(2, pl.roadPartNumber)
           updatePS.setInt(3, pl.track.value)
           updatePS.setInt(4, pl.discontinuity.value)
-          updatePS.setInt(5, pl.status.value)
-          updatePS.setInt(6, pl.administrativeClass.value)
-          updatePS.setLong(7, pl.startAddrMValue)
-          updatePS.setLong(8, pl.endAddrMValue)
-          updatePS.setInt(9, pl.calibrationPointTypes._1.value)
-          updatePS.setInt(10, pl.calibrationPointTypes._2.value)
-          updatePS.setInt(11, pl.calibrationPointTypes._1.value)
-          updatePS.setInt(12, pl.calibrationPointTypes._2.value)
-          updatePS.setInt(13, pl.sideCode.value)
-          updatePS.setLong(14, pl.ely)
-          updatePS.setDouble(15, pl.startMValue)
-          updatePS.setDouble(16, pl.endMValue)
-          updatePS.setString(17, modifier)
-          updatePS.setLong(18, pl.linearLocationId)
-          updatePS.setLong(19, pl.projectId)
-          updatePS.setLong(20, pl.id)
+          updatePS.setInt(5, pl.administrativeClass.value)
+          updatePS.setLong(6, pl.startAddrMValue)
+          updatePS.setLong(7, pl.endAddrMValue)
+          updatePS.setInt(8, pl.calibrationPointTypes._1.value)
+          updatePS.setInt(9, pl.calibrationPointTypes._2.value)
+          updatePS.setInt(10, pl.calibrationPointTypes._1.value)
+          updatePS.setInt(11, pl.calibrationPointTypes._2.value)
+          updatePS.setInt(12, pl.sideCode.value)
+          updatePS.setLong(13, pl.ely)
+          updatePS.setDouble(14, pl.startMValue)
+          updatePS.setDouble(15, pl.endMValue)
+          updatePS.setInt(16, RoadAddressChangeType.NotHandled.value) // as it's the original value before changes
+          updatePS.setLong(17, pl.linearLocationId)
+          updatePS.setLong(18, pl.id)
           updatePS.addBatch()
         }
 
