@@ -3,19 +3,23 @@ package fi.liikennevirasto.viite.dao
 import fi.liikennevirasto.viite.process.{ProjectDeltaCalculator, RoadwaySection}
 import fi.liikennevirasto.viite.process.ProjectDeltaCalculator.{createTwoTrackOldAddressRoadParts, projectLinkDAO}
 import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, RoadAddressChangeType, RoadPart, Track}
+import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinuity, RoadAddressChangeType, RoadPart, Track}
 import fi.vaylavirasto.viite.util.DateTimeFormatters.dateOptTimeFormatter
+
 import java.sql.{PreparedStatement, Timestamp}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 case class RoadwayChangeSection(roadNumber: Option[Long], trackCode: Option[Long], startRoadPartNumber: Option[Long],
-                                endRoadPartNumber: Option[Long], startAddressM: Option[Long], endAddressM: Option[Long],
-                                administrativeClass: Option[AdministrativeClass], discontinuity: Option[Discontinuity], ely: Option[Long])
+                                endRoadPartNumber: Option[Long], addrMRange: Option[AddrMRange],
+                                administrativeClass: Option[AdministrativeClass], discontinuity: Option[Discontinuity], ely: Option[Long]) {
+  def getStartOption: Option[Long] = {  if (addrMRange.isEmpty) None else Some(addrMRange.get.startAddrM)  }
+  def getEndOption:   Option[Long] = {  if (addrMRange.isEmpty) None else Some(addrMRange.get.endAddrM  )  }
+}
 
 case class RoadwayChangeSectionTR(roadNumber: Option[Long], trackCode: Option[Long], startRoadPartNumber: Option[Long],
-                                  endRoadPartNumber: Option[Long], startAddressM: Option[Long], endAddressM: Option[Long])
+                                  endRoadPartNumber: Option[Long], addrMRange: Option[AddrMRange])
 
 case class RoadwayChangeInfo(changeType: RoadAddressChangeType, source: RoadwayChangeSection, target: RoadwayChangeSection,
                              discontinuity: Discontinuity, administrativeClass: AdministrativeClass, reversed: Boolean, orderInChangeTable: Long, ely: Long = -1L)
@@ -25,9 +29,9 @@ case class ProjectRoadwayChange(projectId: Long, projectName: Option[String], el
 case class ChangeRow(projectId: Long, projectName: Option[String], createdBy: String, createdDate: Option[DateTime], startDate: Option[DateTime],
                      modifiedBy: String, modifiedDate: Option[DateTime], targetEly: Long, changeType: Int, sourceRoadNumber: Option[Long],
                      sourceTrackCode: Option[Long], sourceStartRoadPartNumber: Option[Long], sourceEndRoadPartNumber: Option[Long],
-                     sourceStartAddressM: Option[Long], sourceEndAddressM: Option[Long], targetRoadNumber: Option[Long],
+                     sourceAddrMRange: Option[AddrMRange], targetRoadNumber: Option[Long],
                      targetTrackCode: Option[Long], targetStartRoadPartNumber: Option[Long], targetEndRoadPartNumber: Option[Long],
-                     targetStartAddressM: Option[Long], targetEndAddressM: Option[Long], targetDiscontinuity: Option[Int],
+                     targetAddrMRange: Option[AddrMRange], targetDiscontinuity: Option[Int],
                      targetAdministrativeClass: Option[Int], sourceAdministrativeClass: Option[Int], sourceDiscontinuity: Option[Int],
                      sourceEly: Option[Long], reversed: Boolean, orderInTable: Long)
 
@@ -40,10 +44,10 @@ case class RoadwayChangesInfo(roadwayChangeId: Long, startDate: DateTime, accept
                               new_road_number: Long, new_road_part_number: Long, new_TRACK: Long, new_start_addr_m: Long, new_end_addr_m: Long, new_discontinuity: Long, new_administrative_class: Long, new_ely: Long)
 
 case class OldRoadAddress(ely: Long, roadPart: Option[RoadPart], track: Option[Long],
-                          startAddrM: Option[Long], endAddrM: Option[Long], length: Option[Long], administrativeClass: Long)
+                          addrMRange: Option[AddrMRange], length: Option[Long], administrativeClass: Long)
 
-case class NewRoadAddress(ely: Long, roadPart: RoadPart, track: Long, startAddrM: Long,
-                          endAddrM: Long, length: Long, administrativeClass: Long)
+case class NewRoadAddress(ely: Long, roadPart: RoadPart, track: Long, addrMRange: AddrMRange,
+                          length: Long, administrativeClass: Long)
 
 case class ChangeInfoForRoadAddressChangesBrowser(startDate: DateTime, changeType: Long, reversed: Long, roadName: Option[String], projectName: String,
                                                   projectAcceptedDate: DateTime,oldRoadAddress: OldRoadAddress, newRoadAddress: NewRoadAddress)
@@ -90,12 +94,15 @@ class RoadwayChangesDAO extends BaseDAO {
       val reversed = r.nextBoolean
       val orderInTable = r.nextLong
 
+      val sourceAddrMRange = if(sourceStartAddressM.isDefined && sourceEndAddressM.isDefined) Some(AddrMRange(sourceStartAddressM.get, sourceEndAddressM.get)) else None
+      val targetAddrMRange = if(targetStartAddressM.isDefined && targetEndAddressM.isDefined) Some(AddrMRange(targetStartAddressM.get, targetEndAddressM.get)) else None
+
       ChangeRow(projectId, projectName: Option[String], createdBy: String, createdDate: Option[DateTime], startDate: Option[DateTime],
         modifiedBy: String, modifiedDate: Option[DateTime], targetEly: Long, changeType: Int, sourceRoadNumber: Option[Long],
         sourceTrackCode: Option[Long], sourceStartRoadPartNumber: Option[Long], sourceEndRoadPartNumber: Option[Long],
-        sourceStartAddressM: Option[Long], sourceEndAddressM: Option[Long], targetRoadNumber: Option[Long],
+        sourceAddrMRange: Option[AddrMRange], targetRoadNumber: Option[Long],
         targetTrackCode: Option[Long], targetStartRoadPartNumber: Option[Long], targetEndRoadPartNumber: Option[Long],
-        targetStartAddressM: Option[Long], targetEndAddressM: Option[Long], targetDiscontinuity: Option[Int],
+        targetAddrMRange: Option[AddrMRange], targetDiscontinuity: Option[Int],
         targetAdministrativeClass: Option[Int], sourceAdministrativeClass: Option[Int], sourceDiscontinuity: Option[Int],
         sourceEly: Option[Long], reversed: Boolean, orderInTable: Long)
     }
@@ -103,13 +110,13 @@ class RoadwayChangesDAO extends BaseDAO {
 
 
   private def toRoadwayChangeRecipient(row: ChangeRow) = {
-    RoadwayChangeSection(row.targetRoadNumber, row.targetTrackCode, row.targetStartRoadPartNumber, row.targetEndRoadPartNumber, row.targetStartAddressM, row.targetEndAddressM,
+    RoadwayChangeSection(row.targetRoadNumber, row.targetTrackCode, row.targetStartRoadPartNumber, row.targetEndRoadPartNumber, row.targetAddrMRange,
       Some(AdministrativeClass.apply(row.targetAdministrativeClass.getOrElse(AdministrativeClass("Unknown").value))),
       Some(Discontinuity.apply(row.targetDiscontinuity.getOrElse(Discontinuity.Continuous.value))), Some(row.targetEly))
   }
 
   private def toRoadwayChangeSource(row: ChangeRow) = {
-    RoadwayChangeSection(row.sourceRoadNumber, row.sourceTrackCode, row.sourceStartRoadPartNumber, row.sourceEndRoadPartNumber, row.sourceStartAddressM, row.sourceEndAddressM,
+    RoadwayChangeSection(row.sourceRoadNumber, row.sourceTrackCode, row.sourceStartRoadPartNumber, row.sourceEndRoadPartNumber, row.sourceAddrMRange,
       Some(AdministrativeClass.apply(row.sourceAdministrativeClass.getOrElse(AdministrativeClass("Unknown").value))),
       Some(Discontinuity.apply(row.sourceDiscontinuity.getOrElse(Discontinuity.Continuous.value))), row.sourceEly)
   }
@@ -205,9 +212,9 @@ class RoadwayChangesDAO extends BaseDAO {
           roadwayChangePS.setNull(7, java.sql.Types.INTEGER)
           roadwayChangePS.setLong(8, roadwaySection.track.value)
           roadwayChangePS.setNull(9, java.sql.Types.INTEGER)
-          roadwayChangePS.setLong(10, roadwaySection.startMAddr)
+          roadwayChangePS.setLong(10, roadwaySection.addrMRange.startAddrM)
           roadwayChangePS.setNull(11, java.sql.Types.INTEGER)
-          roadwayChangePS.setLong(12, roadwaySection.endMAddr)
+          roadwayChangePS.setLong(12, roadwaySection.addrMRange.endAddrM)
         case RoadAddressChangeType.Termination =>
           roadwayChangePS.setLong(3, roadwaySection.roadNumber)
           roadwayChangePS.setNull(4, java.sql.Types.INTEGER)
@@ -215,9 +222,9 @@ class RoadwayChangesDAO extends BaseDAO {
           roadwayChangePS.setNull(6, java.sql.Types.INTEGER)
           roadwayChangePS.setLong(7, roadwaySection.track.value)
           roadwayChangePS.setNull(8, java.sql.Types.INTEGER)
-          roadwayChangePS.setLong(9, roadwaySection.startMAddr)
+          roadwayChangePS.setLong(9, roadwaySection.addrMRange.startAddrM)
           roadwayChangePS.setNull(10, java.sql.Types.INTEGER)
-          roadwayChangePS.setLong(11, roadwaySection.endMAddr)
+          roadwayChangePS.setLong(11, roadwaySection.addrMRange.endAddrM)
           roadwayChangePS.setNull(12, java.sql.Types.INTEGER)
         case _ =>
           roadwayChangePS.setLong(3, roadwaySection.roadNumber)
@@ -226,10 +233,10 @@ class RoadwayChangesDAO extends BaseDAO {
           roadwayChangePS.setLong(6, roadwaySection.roadPartNumberStart)
           roadwayChangePS.setLong(7, roadwaySection.track.value)
           roadwayChangePS.setLong(8, roadwaySection.track.value)
-          roadwayChangePS.setLong(9, roadwaySection.startMAddr)
-          roadwayChangePS.setLong(10, roadwaySection.startMAddr)
-          roadwayChangePS.setLong(11, roadwaySection.endMAddr)
-          roadwayChangePS.setLong(12, roadwaySection.endMAddr)
+          roadwayChangePS.setLong(9, roadwaySection.addrMRange.startAddrM)
+          roadwayChangePS.setLong(10, roadwaySection.addrMRange.startAddrM)
+          roadwayChangePS.setLong(11, roadwaySection.addrMRange.endAddrM)
+          roadwayChangePS.setLong(12, roadwaySection.addrMRange.endAddrM)
       }
       roadwayChangePS.setLong(1, projectId)
       roadwayChangePS.setLong(2, addressChangeType.value)
@@ -265,10 +272,10 @@ class RoadwayChangesDAO extends BaseDAO {
       roadwayChangePS.setLong(6, newRoadwaySection.roadPartNumberStart)
       roadwayChangePS.setLong(7, oldRoadwaySection.track.value)
       roadwayChangePS.setLong(8, newRoadwaySection.track.value)
-      roadwayChangePS.setDouble(9, oldRoadwaySection.startMAddr)
-      roadwayChangePS.setDouble(10, newRoadwaySection.startMAddr)
-      roadwayChangePS.setDouble(11, oldRoadwaySection.endMAddr)
-      roadwayChangePS.setDouble(12, newRoadwaySection.endMAddr)
+      roadwayChangePS.setDouble(9, oldRoadwaySection.addrMRange.startAddrM)
+      roadwayChangePS.setDouble(10, newRoadwaySection.addrMRange.startAddrM)
+      roadwayChangePS.setDouble(11, oldRoadwaySection.addrMRange.endAddrM)
+      roadwayChangePS.setDouble(12, newRoadwaySection.addrMRange.endAddrM)
       roadwayChangePS.setLong(13, newRoadwaySection.discontinuity.value)
       roadwayChangePS.setLong(14, newRoadwaySection.administrativeClass.value)
       roadwayChangePS.setLong(15, newRoadwaySection.ely)
@@ -463,9 +470,12 @@ SELECT
       val newAdministrativeClass = r.nextLong()
 
       val oldRoadPart = if(oldRoadNumber.nonEmpty && oldRoadPartNumber.nonEmpty) Some(RoadPart(oldRoadNumber.get, oldRoadPartNumber.get)) else None
+      val oldAddrMRange = if(oldStartAddrM.isDefined && oldEndAddrM.isDefined) Some(AddrMRange(oldStartAddrM.get, oldEndAddrM.get)) else None
+      val oldRoadAddress = OldRoadAddress(oldEly, oldRoadPart, oldTrack, oldAddrMRange, oldLength, oldAdministrativeClass)
+
       val newRoadPart = RoadPart(newRoadNumber, newRoadPartNumber)
-      val oldRoadAddress = OldRoadAddress(oldEly, oldRoadPart, oldTrack, oldStartAddrM, oldEndAddrM, oldLength, oldAdministrativeClass)
-      val newRoadAddress = NewRoadAddress(newEly, newRoadPart, newTrack, newStartAddrM, newEndAddrM, newLength, newAdministrativeClass)
+      val newAddrMRange = AddrMRange(newStartAddrM, newEndAddrM)
+      val newRoadAddress = NewRoadAddress(newEly, newRoadPart, newTrack, newAddrMRange, newLength, newAdministrativeClass)
 
       ChangeInfoForRoadAddressChangesBrowser(startDate, changeType, reversed, roadName, projectName: String, projectAcceptedDate, oldRoadAddress, newRoadAddress)
     }

@@ -5,7 +5,7 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.process.strategy.RoadAddressSectionCalculatorContext
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, RoadAddressChangeType, RoadPart, SideCode, Track}
+import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinuity, RoadAddressChangeType, RoadPart, SideCode, Track}
 import org.slf4j.LoggerFactory
 
 object ProjectSectionCalculator {
@@ -75,26 +75,26 @@ object ProjectSectionCalculator {
 
   private def calculateSectionAddressValues(part: RoadPart, projectLinks: Seq[ProjectLink]) : Seq[ProjectLink] = {
 
-    val left = projectLinks.filter(pl => pl.roadAddressTrack.getOrElse(pl.track) != Track.RightSide).sortBy(_.roadAddressStartAddrM)
-    val right = projectLinks.filter(pl => pl.roadAddressTrack.getOrElse(pl.track) != Track.LeftSide).sortBy(_.roadAddressStartAddrM)
+    val left  = projectLinks.filter(pl => pl.roadAddressTrack.getOrElse(pl.track) != Track.RightSide).sortBy(_.roadAddressMRange.get.startAddrM)
+    val right = projectLinks.filter(pl => pl.roadAddressTrack.getOrElse(pl.track) != Track.LeftSide ).sortBy(_.roadAddressMRange.get.startAddrM)
     if (left.isEmpty || right.isEmpty) {
       Seq[ProjectLink]()
     } else {
       val leftTerminated = left.filter(_.status == RoadAddressChangeType.Termination)
       val rightTerminated = right.filter(_.status == RoadAddressChangeType.Termination)
-      val nonTerminatedSortedByStartAddr: Seq[ProjectLink] = projectLinks.filterNot(_.status == RoadAddressChangeType.Termination).sortBy(_.startAddrMValue)
+      val nonTerminatedSortedByStartAddr: Seq[ProjectLink] = projectLinks.filterNot(_.status == RoadAddressChangeType.Termination).sortBy(_.addrMRange.startAddrM)
 
       /* Set terminated link heads to new calculated values. */
       val leftReassignedStart: Seq[ProjectLink] = leftTerminated.map(leftTerminatedpl => {
         val startingPointLink = nonTerminatedSortedByStartAddr.find(pl => {
           pl.id != leftTerminatedpl.id && pl.startingPoint.connected(leftTerminatedpl.startingPoint)
         })
-        if (startingPointLink.isDefined) leftTerminatedpl.copy(startAddrMValue = startingPointLink.get.startAddrMValue)
+        if (startingPointLink.isDefined) leftTerminatedpl.copy(addrMRange = AddrMRange(startingPointLink.get.addrMRange.startAddrM, leftTerminatedpl.addrMRange.endAddrM))
         else {
           val endingPointLink = nonTerminatedSortedByStartAddr.find(pl => {
             pl.id != leftTerminatedpl.id && pl.endPoint.connected(leftTerminatedpl.startingPoint)
           })
-          if (endingPointLink.isDefined) leftTerminatedpl.copy(startAddrMValue = endingPointLink.get.endAddrMValue)
+          if (endingPointLink.isDefined) leftTerminatedpl.copy(addrMRange = AddrMRange(endingPointLink.get.addrMRange.endAddrM, leftTerminatedpl.addrMRange.endAddrM))
           else leftTerminatedpl
         }
       })
@@ -103,12 +103,12 @@ object ProjectSectionCalculator {
         val startingPointLink = nonTerminatedSortedByStartAddr.find(pl =>
           pl.id != leftTerminatedpl.id && pl.startingPoint.connected(leftTerminatedpl.endPoint)
         )
-        if (startingPointLink.isDefined) leftTerminatedpl.copy(endAddrMValue = startingPointLink.get.startAddrMValue)
+        if (startingPointLink.isDefined) leftTerminatedpl.copy(addrMRange = AddrMRange(leftTerminatedpl.addrMRange.startAddrM, startingPointLink.get.addrMRange.startAddrM))
         else {
           val endPointLink = nonTerminatedSortedByStartAddr.find(pl =>
             pl.id != leftTerminatedpl.id && pl.endPoint.connected(leftTerminatedpl.endPoint)
           )
-          if (endPointLink.isDefined) leftTerminatedpl.copy(endAddrMValue = endPointLink.get.endAddrMValue)
+          if (endPointLink.isDefined) leftTerminatedpl.copy(addrMRange = AddrMRange(leftTerminatedpl.addrMRange.startAddrM, endPointLink.get.addrMRange.endAddrM))
           else leftTerminatedpl
         }
       })
@@ -117,12 +117,12 @@ object ProjectSectionCalculator {
         val startingPointLink = nonTerminatedSortedByStartAddr.find(pl =>
           pl.id != rightTerminatedpl.id && pl.startingPoint.connected(rightTerminatedpl.startingPoint)
         )
-        if (startingPointLink.isDefined) rightTerminatedpl.copy(startAddrMValue = startingPointLink.get.startAddrMValue)
+        if (startingPointLink.isDefined) rightTerminatedpl.copy(addrMRange = AddrMRange(startingPointLink.get.addrMRange.startAddrM, rightTerminatedpl.addrMRange.endAddrM))
         else {
           val endingPointLink = nonTerminatedSortedByStartAddr.find(pl =>
             pl.id != rightTerminatedpl.id && pl.endPoint.connected(rightTerminatedpl.startingPoint)
           )
-          if (endingPointLink.isDefined) rightTerminatedpl.copy(startAddrMValue = endingPointLink.get.endAddrMValue)
+          if (endingPointLink.isDefined) rightTerminatedpl.copy(addrMRange = AddrMRange(endingPointLink.get.addrMRange.endAddrM, rightTerminatedpl.addrMRange.endAddrM))
           else rightTerminatedpl
         }
       })
@@ -131,12 +131,12 @@ object ProjectSectionCalculator {
         val startingPointLink = nonTerminatedSortedByStartAddr.find(pl => {
           pl.id != rightTerminatedpl.id && pl.startingPoint.connected(rightTerminatedpl.endPoint)
         })
-        if (startingPointLink.isDefined) rightTerminatedpl.copy(endAddrMValue = startingPointLink.get.startAddrMValue)
+        if (startingPointLink.isDefined) rightTerminatedpl.copy(addrMRange = AddrMRange(rightTerminatedpl.addrMRange.startAddrM, startingPointLink.get.addrMRange.endAddrM))
         else {
           val endPointLink = nonTerminatedSortedByStartAddr.find(pl => {
             pl.id != rightTerminatedpl.id && pl.endPoint.connected(rightTerminatedpl.endPoint)
           })
-          if (endPointLink.isDefined) rightTerminatedpl.copy(endAddrMValue = endPointLink.get.endAddrMValue)
+          if (endPointLink.isDefined) rightTerminatedpl.copy(addrMRange = AddrMRange(rightTerminatedpl.addrMRange.startAddrM, endPointLink.get.addrMRange.endAddrM))
           else rightTerminatedpl
         }
       })
@@ -148,25 +148,25 @@ object ProjectSectionCalculator {
           rightReassignedEnd ++ leftReassignedEnd
       }
       def checkAverage: Seq[ProjectLink] =  {
-        val maxrpl      = rightReassignedEnd.maxBy(_.endAddrMValue)
-        val maxlpl      = leftReassignedEnd.maxBy(_.endAddrMValue)
-        val endAddrDiff = Math.abs(maxrpl.endAddrMValue - maxlpl.endAddrMValue)
+        val maxrpl      = rightReassignedEnd.maxBy(_.addrMRange.endAddrM)
+        val maxlpl      = leftReassignedEnd.maxBy(_.addrMRange.endAddrM)
+        val endAddrDiff = Math.abs(maxrpl.addrMRange.endAddrM - maxlpl.addrMRange.endAddrM)
         val minLength   = Math.min(maxrpl.geometryLength, maxrpl.geometryLength)
         // Ensure difference is not too great, i.e. links are about aligned.
         if (endAddrDiff < minLength) {
-          val avg = Math.round((maxrpl.endAddrMValue + maxlpl.endAddrMValue) / 2)
-          (rightReassignedEnd.filterNot(_.id == maxrpl.id) :+ maxrpl.copy(endAddrMValue = avg)) ++
-          (leftReassignedEnd.filterNot(_.track == Track.Combined).filterNot(_.id == maxlpl.id) :+ maxlpl.copy(endAddrMValue = avg))
+          val avg = Math.round((maxrpl.addrMRange.endAddrM + maxlpl.addrMRange.endAddrM) / 2)
+          (rightReassignedEnd.filterNot(_.id == maxrpl.id) :+ maxrpl.copy(addrMRange = AddrMRange(maxrpl.addrMRange.startAddrM, avg))) ++
+          (leftReassignedEnd.filterNot(_.track == Track.Combined).filterNot(_.id == maxlpl.id) :+ maxlpl.copy(addrMRange = AddrMRange(maxrpl.addrMRange.startAddrM, avg)))
         } else
           retval
       }
 
       /* Average end values for change table when terminated links are the last links on the road part. */
       if (rightReassignedEnd.nonEmpty && leftReassignedEnd.nonEmpty) {
-        val rightReassignedMax = rightReassignedEnd.maxBy(_.endAddrMValue).endAddrMValue
-        val leftReassignedMax  = leftReassignedEnd.maxBy(_.endAddrMValue).endAddrMValue
-        val leftmax            = left.maxBy(_.endAddrMValue).endAddrMValue
-        val rightmax           = right.maxBy(_.endAddrMValue).endAddrMValue
+        val rightReassignedMax = rightReassignedEnd.maxBy(_.addrMRange.endAddrM).addrMRange.endAddrM
+        val leftReassignedMax  = leftReassignedEnd.maxBy(_.addrMRange.endAddrM).addrMRange.endAddrM
+        val leftmax            = left.maxBy(_.addrMRange.endAddrM).addrMRange.endAddrM
+        val rightmax           = right.maxBy(_.addrMRange.endAddrM).addrMRange.endAddrM
 
         if (rightReassignedMax != leftReassignedMax && leftmax <= leftReassignedMax && rightmax <= rightReassignedMax)
           checkAverage
@@ -179,7 +179,7 @@ object ProjectSectionCalculator {
   }
 }
 
-case class RoadwaySection(roadNumber: Long, roadPartNumberStart: Long, roadPartNumberEnd: Long, track: Track, startMAddr: Long, endMAddr: Long, discontinuity: Discontinuity, administrativeClass: AdministrativeClass, ely: Long, reversed: Boolean, roadwayNumber: Long, projectLinks: Seq[ProjectLink]) {
+case class RoadwaySection(roadNumber: Long, roadPartNumberStart: Long, roadPartNumberEnd: Long, track: Track, addrMRange: AddrMRange, discontinuity: Discontinuity, administrativeClass: AdministrativeClass, ely: Long, reversed: Boolean, roadwayNumber: Long, projectLinks: Seq[ProjectLink]) {
 }
 
 case class TrackSection(roadPart: RoadPart, track: Track,
@@ -193,8 +193,8 @@ case class TrackSection(roadPart: RoadPart, track: Track,
     case  SideCode.AgainstDigitizing => links.last.geometry.head
     case _ => links.last.geometry.last
   }
-  lazy val startAddrM: Long = links.map(_.startAddrMValue).min
-  lazy val endAddrM: Long = links.map(_.endAddrMValue).max
+  lazy val startAddrM: Long = links.map(_.addrMRange.startAddrM).min
+  lazy val endAddrM: Long = links.map(_.addrMRange.endAddrM).max
 
 }
 
@@ -209,7 +209,7 @@ case class CombinedSection(startGeometry: Point, endGeometry: Point, geometryLen
   lazy val roadAddressChangeType: RoadAddressChangeType = right.links.head.status
 
 
-  lazy val endAddrM: Long = right.links.map(_.endAddrMValue).max
+  lazy val endAddrM: Long = right.links.map(_.addrMRange.endAddrM).max
 
 }
 

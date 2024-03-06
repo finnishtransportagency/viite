@@ -4,7 +4,7 @@ import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.vaylavirasto.viite.model.{AdministrativeClass, BeforeAfter, Discontinuity, RoadPart, Track}
+import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, BeforeAfter, Discontinuity, RoadPart, Track}
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import fi.vaylavirasto.viite.dao.BaseDAO
 import fi.vaylavirasto.viite.util.DateTimeFormatters.dateOptTimeFormatter
@@ -21,7 +21,7 @@ case class RoadwayNetworkSummaryRow
 case class MissingCalibrationPoint(roadPart: RoadPart, track: Long, addrM: Long, createdTime: DateTime, createdBy: String)
 case class MissingCalibrationPointFromJunction(missingCalibrationPoint: MissingCalibrationPoint, junctionPointId: Long, junctionNumber: Long, nodeNumber: Long, beforeAfter: BeforeAfter)
 case class MissingRoadwayPoint(roadPart: RoadPart, track: Long, addrM: Long, createdTime: DateTime, createdBy: String)
-case class InvalidRoadwayLength(roadwayNumber: Long, startDate: DateTime, endDate: Option[DateTime], roadPart: RoadPart, track: Long, startAddrM: Long, endAddrM: Long, length: Long, createdBy: String, createdTime: DateTime)
+case class InvalidRoadwayLength(roadwayNumber: Long, startDate: DateTime, endDate: Option[DateTime], roadPart: RoadPart, track: Long, addrMRange: AddrMRange, length: Long, createdBy: String, createdTime: DateTime)
 
 //TODO better naming case class
 case class OverlappingRoadwayOnLinearLocation(roadway: Roadway, linearLocationId: Long, linkId: String, linearLocationRoadwayNumber: Long, linearLocationStartMeasure: Long, linearLocationEndMeasure: Long, linearLocationCreatedBy: String, linearLocationCreatedTime: DateTime)
@@ -89,7 +89,7 @@ class RoadNetworkDAO extends BaseDAO {
       val createdBy = r.nextString()
       val createdTime    = dateOptTimeFormatter.parseDateTime(r.nextDate.toString)
 
-      InvalidRoadwayLength(roadwayNumber, startDate, endDate, RoadPart(roadNumber,roadPartNumber), track, startAddrM, endAddrM, length, createdBy, createdTime)
+      InvalidRoadwayLength(roadwayNumber, startDate, endDate, RoadPart(roadNumber,roadPartNumber), track, AddrMRange(startAddrM, endAddrM), length, createdBy, createdTime)
     }
   }
 
@@ -115,7 +115,7 @@ class RoadNetworkDAO extends BaseDAO {
       val validTo       = r.nextDateOption.map(d => dateOptTimeFormatter.parseDateTime(d.toString))
       val roadName = r.nextStringOption()
 
-      Roadway(id, roadwayNumber, RoadPart(roadNumber,roadPartNumber), administrativeClass, Track.apply(trackCode), Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, reverted, startDate, endDate, createdBy, roadName, ely, terminated, validFrom, validTo)
+      Roadway(id, roadwayNumber, RoadPart(roadNumber,roadPartNumber), administrativeClass, Track.apply(trackCode), Discontinuity.apply(discontinuity), AddrMRange(startAddrMValue, endAddrMValue), reverted, startDate, endDate, createdBy, roadName, ely, terminated, validFrom, validTo)
     }
   }
 
@@ -149,7 +149,7 @@ class RoadNetworkDAO extends BaseDAO {
       val linearLocationCreatedBy = r.nextString()
       val linearLocationCreatedTime = dateOptTimeFormatter.parseDateTime(r.nextDate.toString)
 
-      OverlappingRoadwayOnLinearLocation(Roadway(id, roadwayNumber, RoadPart(roadNumber,roadPartNumber), administrativeClass, Track.apply(trackCode), Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, reverted, startDate, endDate, createdBy, roadName, ely, terminated, validFrom, validTo),
+      OverlappingRoadwayOnLinearLocation(Roadway(id, roadwayNumber, RoadPart(roadNumber,roadPartNumber), administrativeClass, Track.apply(trackCode), Discontinuity.apply(discontinuity), AddrMRange(startAddrMValue, endAddrMValue), reverted, startDate, endDate, createdBy, roadName, ely, terminated, validFrom, validTo),
         linearLocationId, linkId, linearLocationRoadwayNumber, linearLocationStartMeasure, linearLocationEndMeasure, linearLocationCreatedBy, linearLocationCreatedTime
       )
     }

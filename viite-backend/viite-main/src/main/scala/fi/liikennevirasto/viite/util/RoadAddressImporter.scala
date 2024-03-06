@@ -10,18 +10,18 @@ import fi.liikennevirasto.viite.dao.CalibrationCode.{AtBeginning, AtBoth, AtEnd}
 import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent, Termination}
 import fi.vaylavirasto.viite.dao.{BaseDAO, LinkDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.GeometryUtils
-import fi.vaylavirasto.viite.model.{CalibrationPoint, CalibrationPointLocation, CalibrationPointType, LinkGeomSource, RoadLinkLike, RoadPart, SideCode}
+import fi.vaylavirasto.viite.model.{AddrMRange, CalibrationPoint, CalibrationPointLocation, CalibrationPointType, LinkGeomSource, RoadLinkLike, RoadPart, SideCode}
 import fi.vaylavirasto.viite.util.DateTimeFormatters.basicDateFormatter
 import org.joda.time.DateTime
 import slick.jdbc._
 import slick.jdbc.StaticQuery.interpolation
 
 
-case class ConversionAddress(roadPart: RoadPart, trackCode: Long, discontinuity: Long, startAddressM: Long, endAddressM: Long, startM: Double, endM: Double, startDate: Option[DateTime], endDate: Option[DateTime], validFrom: Option[DateTime], expirationDate: Option[DateTime], ely: Long, administrativeClass: Long, terminated: Long, linkId: String, userId: String, x1: Option[Double], y1: Option[Double], x2: Option[Double], y2: Option[Double], roadwayNumber: Long, sideCode: SideCode, calibrationCode: CalibrationCode = CalibrationCode.No, directionFlag: Long = 0)
+case class ConversionAddress(roadPart: RoadPart, trackCode: Long, discontinuity: Long, addrMRange: AddrMRange, startM: Double, endM: Double, startDate: Option[DateTime], endDate: Option[DateTime], validFrom: Option[DateTime], expirationDate: Option[DateTime], ely: Long, administrativeClass: Long, terminated: Long, linkId: String, userId: String, x1: Option[Double], y1: Option[Double], x2: Option[Double], y2: Option[Double], roadwayNumber: Long, sideCode: SideCode, calibrationCode: CalibrationCode = CalibrationCode.No, directionFlag: Long = 0)
 
 class RoadAddressImporter(conversionDatabase: DatabaseDef, KGVClient: KgvRoadLink, importOptions: ImportOptions)  extends BaseDAO {
 
-  case class IncomingRoadway(roadwayNumber: Long, roadPart: RoadPart, trackCode: Long, startAddrM: Long, endAddrM: Long, reversed: Long, startDate: Option[DateTime], endDate: Option[DateTime], createdBy: String, administrativeClass: Long, ely: Long, validFrom: Option[DateTime], validTo: Option[DateTime], discontinuity: Long, terminated: Long)
+  case class IncomingRoadway(roadwayNumber: Long, roadPart: RoadPart, trackCode: Long, addrMRange: AddrMRange, reversed: Long, startDate: Option[DateTime], endDate: Option[DateTime], createdBy: String, administrativeClass: Long, ely: Long, validFrom: Option[DateTime], validTo: Option[DateTime], discontinuity: Long, terminated: Long)
 
   case class IncomingLinearLocation(roadwayNumber: Long, orderNumber: Long, linkId: String, startMeasure: Double, endMeasure: Double, sideCode: SideCode, linkGeomSource: LinkGeomSource, createdBy: String, x1: Option[Double], y1: Option[Double], x2: Option[Double], y2: Option[Double], validFrom: Option[DateTime], validTo: Option[DateTime])
 
@@ -63,8 +63,8 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, KGVClient: KgvRoadLin
     roadwayStatement.setLong(2, roadway.roadPart.roadNumber)
     roadwayStatement.setLong(3, roadway.roadPart.partNumber)
     roadwayStatement.setLong(4, roadway.trackCode)
-    roadwayStatement.setLong(5, roadway.startAddrM)
-    roadwayStatement.setLong(6, roadway.endAddrM)
+    roadwayStatement.setLong(5, roadway.addrMRange.startAddrM)
+    roadwayStatement.setLong(6, roadway.addrMRange.endAddrM)
     roadwayStatement.setLong(7, roadway.reversed)
     if (roadway.startDate.isDefined) {
       roadwayStatement.setDate(8, new java.sql.Date(roadway.startDate.get.getMillis))
@@ -284,7 +284,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, KGVClient: KgvRoadLin
     insertLinks(linkPs, mappedRoadLinks.values ++ mappedHistoryRoadLinks.values)
     currentMappedConversionAddresses.mapValues {
       case address =>
-        address.sortBy(_.startAddressM).zip(1 to address.size)
+        address.sortBy(_.addrMRange.startAddrM).zip(1 to address.size)
     }.foreach {
       case (_/*key*/, addresses) =>
         addresses.foreach {
@@ -308,8 +308,9 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, KGVClient: KgvRoadLin
 
         val minAddress = addresses.head._1
         val maxAddress = addresses.last._1
+        val combinedAddr = AddrMRange(minAddress.addrMRange.startAddrM, maxAddress.addrMRange.endAddrM)
 
-        val roadAddress = IncomingRoadway(minAddress.roadwayNumber, minAddress.roadPart, minAddress.trackCode, minAddress.startAddressM, maxAddress.endAddressM, reversed = 0, minAddress.startDate,
+        val roadAddress = IncomingRoadway(minAddress.roadwayNumber, minAddress.roadPart, minAddress.trackCode, combinedAddr, reversed = 0, minAddress.startDate,
           None, "import", minAddress.administrativeClass, minAddress.ely, minAddress.validFrom, None, maxAddress.discontinuity, terminated = NoTermination.value)
 
         insertRoadway(roadwayPs, roadAddress)
@@ -317,13 +318,14 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, KGVClient: KgvRoadLin
 
     historyMappedConversionAddresses.mapValues {
       case address =>
-        address.sortBy(_.startAddressM).zip(1 to address.size)
+        address.sortBy(_.addrMRange.startAddrM).zip(1 to address.size)
     }.foreach {
       case (_/*key*/, addresses) =>
         val minAddress = addresses.head._1
         val maxAddress = addresses.last._1
+        val combinedAddr = AddrMRange(minAddress.addrMRange.startAddrM, maxAddress.addrMRange.endAddrM)
 
-        val roadAddress = IncomingRoadway(minAddress.roadwayNumber, minAddress.roadPart, minAddress.trackCode, minAddress.startAddressM, maxAddress.endAddressM, minAddress.directionFlag, minAddress.startDate, minAddress.endDate, "import", minAddress.administrativeClass, minAddress.ely, minAddress.validFrom, None, maxAddress.discontinuity, terminated = NoTermination.value)
+        val roadAddress = IncomingRoadway(minAddress.roadwayNumber, minAddress.roadPart, minAddress.trackCode, combinedAddr, minAddress.directionFlag, minAddress.startDate, minAddress.endDate, "import", minAddress.administrativeClass, minAddress.ely, minAddress.validFrom, None, maxAddress.discontinuity, terminated = NoTermination.value)
 
         insertRoadway(roadwayPs, roadAddress)
     }
@@ -368,7 +370,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, KGVClient: KgvRoadLin
   }
 
   private def createIncomingRoadway(r: ConversionAddress, terminated: TerminationCode): IncomingRoadway = {
-    IncomingRoadway(r.roadwayNumber, r.roadPart, r.trackCode, r.startAddressM, r.endAddressM, reversed = 0, r.startDate, r.endDate, "import", r.administrativeClass, r.ely, r.validFrom, r.expirationDate, r.discontinuity, terminated = terminated.value)
+    IncomingRoadway(r.roadwayNumber, r.roadPart, r.trackCode, r.addrMRange, reversed = 0, r.startDate, r.endDate, "import", r.administrativeClass, r.ely, r.validFrom, r.expirationDate, r.discontinuity, terminated = terminated.value)
   }
 
   private def importTerminatedAddresses(terminatedConversionAddresses: Seq[ConversionAddress]): Unit = {
@@ -396,7 +398,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, KGVClient: KgvRoadLin
   private def getStartCalibrationPoint(convertedAddress: ConversionAddress): Option[(RoadwayPoint, CalibrationPoint)] = {
     convertedAddress.calibrationCode match {
       case AtBeginning | AtBoth =>
-        val existingRoadwayPoint = roadwayPointDAO.fetch(convertedAddress.roadwayNumber, convertedAddress.startAddressM)
+        val existingRoadwayPoint = roadwayPointDAO.fetch(convertedAddress.roadwayNumber, convertedAddress.addrMRange.startAddrM)
         existingRoadwayPoint match {
           case Some(x) =>
             val existingCalibrationPoint = CalibrationPointDAO.fetchByRoadwayPointId(x.id).find(_.startOrEnd == CalibrationPointLocation.StartOfLink)
@@ -405,8 +407,8 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, KGVClient: KgvRoadLin
             else
               Some((existingRoadwayPoint.get, CalibrationPoint(NewIdValue, x.id, convertedAddress.linkId, x.roadwayNumber, x.addrMValue, CalibrationPointLocation.StartOfLink, CalibrationPointType.RoadAddressCP, createdBy = "import")))
           case _ =>
-            Some(RoadwayPoint(NewIdValue, convertedAddress.roadwayNumber, convertedAddress.startAddressM, "import"),
-              CalibrationPoint(NewIdValue, NewIdValue, convertedAddress.linkId, convertedAddress.roadwayNumber, convertedAddress.startAddressM, CalibrationPointLocation.StartOfLink, CalibrationPointType.RoadAddressCP, createdBy = "import"))
+            Some(RoadwayPoint(NewIdValue, convertedAddress.roadwayNumber, convertedAddress.addrMRange.startAddrM, "import"),
+              CalibrationPoint(NewIdValue, NewIdValue, convertedAddress.linkId, convertedAddress.roadwayNumber, convertedAddress.addrMRange.startAddrM, CalibrationPointLocation.StartOfLink, CalibrationPointType.RoadAddressCP, createdBy = "import"))
         }
       case _ => None
     }
@@ -416,7 +418,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, KGVClient: KgvRoadLin
     convertedAddress.calibrationCode match {
       case AtEnd | AtBoth =>
 
-        val existingRoadwayPoint = roadwayPointDAO.fetch(convertedAddress.roadwayNumber, convertedAddress.endAddressM)
+        val existingRoadwayPoint = roadwayPointDAO.fetch(convertedAddress.roadwayNumber, convertedAddress.addrMRange.endAddrM)
         existingRoadwayPoint match {
           case Some(x) =>
             val existingCalibrationPoint = CalibrationPointDAO.fetchByRoadwayPointId(x.id).find(_.startOrEnd == CalibrationPointLocation.EndOfLink)
@@ -425,7 +427,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, KGVClient: KgvRoadLin
             else
               Some((existingRoadwayPoint.get, CalibrationPoint(NewIdValue, x.id, convertedAddress.linkId, x.roadwayNumber, x.addrMValue, CalibrationPointLocation.EndOfLink, CalibrationPointType.RoadAddressCP, createdBy = "import")))
           case _ =>
-            Some(RoadwayPoint(NewIdValue, convertedAddress.roadwayNumber, convertedAddress.endAddressM, "import"), CalibrationPoint(NewIdValue, NewIdValue, convertedAddress.linkId, convertedAddress.roadwayNumber, convertedAddress.endAddressM, CalibrationPointLocation.EndOfLink, CalibrationPointType.RoadAddressCP, createdBy = "import"))
+            Some(RoadwayPoint(NewIdValue, convertedAddress.roadwayNumber, convertedAddress.addrMRange.endAddrM, "import"), CalibrationPoint(NewIdValue, NewIdValue, convertedAddress.linkId, convertedAddress.roadwayNumber, convertedAddress.addrMRange.endAddrM, CalibrationPointLocation.EndOfLink, CalibrationPointType.RoadAddressCP, createdBy = "import"))
         }
       case _ => None
     }
@@ -460,7 +462,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, KGVClient: KgvRoadLin
       val endCalibrationPoint = r.nextLong()
 
 
-      def getCalibrationCode(startCalibrationPoint: Long, endCalibrationPoint: Long, startAddrM: Long, endAddrM: Long): CalibrationCode = {
+      def getCalibrationCode(startCalibrationPoint: Long, endCalibrationPoint: Long, addrMRange: AddrMRange): CalibrationCode = {
         if (startAddrM < endAddrM) {
           (startCalibrationPoint, endCalibrationPoint) match {
             case (1, 1) => CalibrationCode.AtBoth
@@ -480,10 +482,10 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, KGVClient: KgvRoadLin
 
       val roadPart = RoadPart(roadNumber,roadPartNumber)
       if (startAddrM < endAddrM) {
-        ConversionAddress(roadPart, trackCode, discontinuity, startAddrM, endAddrM, startM, endM, startDate, endDateOption, validFrom, expirationDate, ely, administrativeClass, 0, linkId, userId, Option(x1), Option(y1), Option(x2), Option(y2), roadwayNumber, SideCode.TowardsDigitizing, getCalibrationCode(startCalibrationPoint, endCalibrationPoint, startAddrM, endAddrM), directionFlag)
+        ConversionAddress(roadPart, trackCode, discontinuity, AddrMRange(startAddrM, endAddrM), startM, endM, startDate, endDateOption, validFrom, expirationDate, ely, administrativeClass, 0, linkId, userId, Option(x1), Option(y1), Option(x2), Option(y2), roadwayNumber, SideCode.TowardsDigitizing, getCalibrationCode(startCalibrationPoint, endCalibrationPoint, AddrMRange(startAddrM, endAddrM)), directionFlag)
       } else {
         //switch startAddrM, endAddrM and set the side code to AgainstDigitizing
-        ConversionAddress(roadPart, trackCode, discontinuity, endAddrM, startAddrM, startM, endM, startDate, endDateOption, validFrom, expirationDate, ely, administrativeClass, 0, linkId, userId, Option(x1), Option(y1), Option(x2), Option(y2), roadwayNumber, SideCode.AgainstDigitizing, getCalibrationCode(startCalibrationPoint, endCalibrationPoint, startAddrM, endAddrM), directionFlag)
+        ConversionAddress(roadPart, trackCode, discontinuity, AddrMRange(endAddrM, startAddrM), startM, endM, startDate, endDateOption, validFrom, expirationDate, ely, administrativeClass, 0, linkId, userId, Option(x1), Option(y1), Option(x2), Option(y2), roadwayNumber, SideCode.AgainstDigitizing, getCalibrationCode(startCalibrationPoint, endCalibrationPoint, AddrMRange(startAddrM, endAddrM)), directionFlag)
       }
     }
   }

@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite.process.strategy
 
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.ProjectLink
-import fi.vaylavirasto.viite.model.{RoadAddressChangeType, Track}
+import fi.vaylavirasto.viite.model.{AddrMRange, RoadAddressChangeType, Track}
 
 
 class LinkStatusChangeTrackCalculatorStrategy extends TrackCalculatorStrategy {
@@ -11,7 +11,7 @@ class LinkStatusChangeTrackCalculatorStrategy extends TrackCalculatorStrategy {
 
   val AdjustmentToleranceMeters = 3L
 
-  override def getStrategyAddress(projectLink: ProjectLink): Long = projectLink.startAddrMValue
+  override def getStrategyAddress(projectLink: ProjectLink): Long = projectLink.addrMRange.startAddrM
 
   override def applicableStrategy(headProjectLink: ProjectLink, projectLink: ProjectLink): Boolean = {
     //Will be applied if the link status changes for every status change detected and track is Left or Right
@@ -25,8 +25,8 @@ class LinkStatusChangeTrackCalculatorStrategy extends TrackCalculatorStrategy {
 
     val (lastLeft, lastRight) = (left.last, right.last)
 
-    if (lastRight.endAddrMValue <= lastLeft.endAddrMValue) {
-      val distance = lastRight.toMeters(lastLeft.endAddrMValue - lastRight.endAddrMValue)
+    if (lastRight.addrMRange.endAddrM <= lastLeft.addrMRange.endAddrM) {
+      val distance = lastRight.toMeters(lastLeft.addrMRange.endAddrM - lastRight.addrMRange.endAddrM)
       if (distance < AdjustmentToleranceMeters) {
         adjustTwoTracks(startAddress, left, right, userDefinedCalibrationPoint, restLeft, restRight)
       } else {
@@ -34,7 +34,7 @@ class LinkStatusChangeTrackCalculatorStrategy extends TrackCalculatorStrategy {
         adjustTwoTracks(startAddress, newLeft, right, userDefinedCalibrationPoint, newRestLeft, restRight)
       }
     } else {
-      val distance = lastLeft.toMeters(lastRight.endAddrMValue - lastLeft.endAddrMValue)
+      val distance = lastLeft.toMeters(lastRight.addrMRange.endAddrM - lastLeft.addrMRange.endAddrM)
       if (distance < AdjustmentToleranceMeters) {
         adjustTwoTracks(startAddress, left, right, userDefinedCalibrationPoint, restLeft, restRight)
       } else {
@@ -62,7 +62,7 @@ class TerminationOperationChangeStrategy extends  LinkStatusChangeTrackCalculato
     // NEW sections. For example if in one of the sides we have a TRANSFER section it will use the value after recalculate all the existing sections with the original length.
     val endSectionAddress = endAddress.getOrElse(getFixedAddress(adjustedLeft.last, adjustedRight.last, availableCalibrationPoint)._2)
 
-    TrackCalculatorResult(setLastEndAddrMValue(adjustedLeft, endSectionAddress), setLastEndAddrMValue(adjustedRight, endSectionAddress), startSectionAddress, endSectionAddress, restLeftProjectLinks, restRightProjectLinks)
+    TrackCalculatorResult(setLastEndAddrMValue(adjustedLeft, endSectionAddress), setLastEndAddrMValue(adjustedRight, endSectionAddress), AddrMRange(startSectionAddress, endSectionAddress), restLeftProjectLinks, restRightProjectLinks)
   }
 
   override def applicableStrategy(headProjectLink: ProjectLink, projectLink: ProjectLink): Boolean = {
@@ -77,12 +77,12 @@ class TerminationOperationChangeStrategy extends  LinkStatusChangeTrackCalculato
     val (right, restRight) = rightProjectLinks.span(_.status == rightProjectLinks.head.status)
 
     val (lastLeft, lastRight) = (left.last, right.last)
-    if (lastRight.endAddrMValue <= lastLeft.endAddrMValue) {
+    if (lastRight.addrMRange.endAddrM <= lastLeft.addrMRange.endAddrM) {
       val (newLeft, newRestLeft) = getUntilNearestAddress(leftProjectLinks, lastRight)
-      adjustTwoTrackss(startAddress, Some(lastRight.endAddrMValue), newLeft, right, userDefinedCalibrationPoint, newRestLeft, restRight)
+      adjustTwoTrackss(startAddress, Some(lastRight.addrMRange.endAddrM), newLeft, right, userDefinedCalibrationPoint, newRestLeft, restRight)
     } else {
       val (newRight, newRestRight) = getUntilNearestAddress(rightProjectLinks, lastLeft)
-      adjustTwoTrackss(startAddress, Some(lastLeft.endAddrMValue), left, newRight, userDefinedCalibrationPoint, restLeft, newRestRight)
+      adjustTwoTrackss(startAddress, Some(lastLeft.addrMRange.endAddrM), left, newRight, userDefinedCalibrationPoint, restLeft, newRestRight)
     }
   }
 }

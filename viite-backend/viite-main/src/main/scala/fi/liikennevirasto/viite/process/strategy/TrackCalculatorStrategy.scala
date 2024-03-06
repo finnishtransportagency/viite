@@ -6,7 +6,7 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.process.{ProjectSectionMValueCalculator, TrackAddressingFactors}
 import fi.vaylavirasto.viite.geometry.GeometryUtils
-import fi.vaylavirasto.viite.model.{CalibrationPointType, Discontinuity, RoadAddressChangeType}
+import fi.vaylavirasto.viite.model.{AddrMRange, CalibrationPointType, Discontinuity, RoadAddressChangeType}
 import org.slf4j.LoggerFactory
 
 
@@ -56,7 +56,7 @@ object TrackCalculatorContext {
   }
 }
 
-case class TrackCalculatorResult(leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink], startAddrMValue: Long, endAddrMValue: Long, restLeft: Seq[ProjectLink] = Seq(), restRight: Seq[ProjectLink] = Seq())
+case class TrackCalculatorResult(leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink], addrMRange: AddrMRange, restLeft: Seq[ProjectLink] = Seq(), restRight: Seq[ProjectLink] = Seq())
 
 /**
   * Strategy used on the DefaultSectionCalculatorStrategy
@@ -73,8 +73,8 @@ trait TrackCalculatorStrategy {
     * @return Returns two project links, the existing one with changed measures and a new one
     */
   protected def splitAt(pl: ProjectLink, address: Long): (ProjectLink, ProjectLink) = {
-    val coefficient = (pl.endMValue - pl.startMValue) / (pl.endAddrMValue - pl.startAddrMValue)
-    val splitMeasure = pl.startMValue + ((pl.startAddrMValue - address) * coefficient)
+    val coefficient = (pl.endMValue - pl.startMValue) / (pl.addrMRange.endAddrM - pl.addrMRange.startAddrM)
+    val splitMeasure = pl.startMValue + ((pl.addrMRange.startAddrM - address) * coefficient)
     (
       pl.copy(geometry = GeometryUtils.truncateGeometry2D(pl.geometry, startMeasure = 0, endMeasure = splitMeasure), geometryLength = splitMeasure, connectedLinkId = Some(pl.linkId)),
       pl.copy(id = NewIdValue, geometry = GeometryUtils.truncateGeometry2D(pl.geometry, startMeasure = splitMeasure, endMeasure = pl.geometryLength), geometryLength = pl.geometryLength - splitMeasure, connectedLinkId = Some(pl.linkId))
@@ -143,24 +143,24 @@ trait TrackCalculatorStrategy {
     (leftLink.calibrationPointTypes._2, rightLink.calibrationPointTypes._2) match {
       case (CalibrationPointType.UserDefinedCP, _ ) | (_, CalibrationPointType.UserDefinedCP) =>
         userCalibrationPoint.map(c => (c.addressMValue, c.addressMValue)).getOrElse(
-          (averageOfAddressMValues(rightLink.startAddrMValue, leftLink.startAddrMValue, reversed), averageOfAddressMValues(rightLink.endAddrMValue, leftLink.endAddrMValue, reversed))
+          (averageOfAddressMValues(rightLink.addrMRange.startAddrM, leftLink.addrMRange.startAddrM, reversed), averageOfAddressMValues(rightLink.addrMRange.endAddrM, leftLink.addrMRange.endAddrM, reversed))
         )
       case _ =>
-          (averageOfAddressMValues(rightLink.startAddrMValue, leftLink.startAddrMValue, reversed), averageOfAddressMValues(rightLink.endAddrMValue, leftLink.endAddrMValue, reversed))
+          (averageOfAddressMValues(rightLink.addrMRange.startAddrM, leftLink.addrMRange.startAddrM, reversed), averageOfAddressMValues(rightLink.addrMRange.endAddrM, leftLink.addrMRange.endAddrM, reversed))
     }
   }
 
   protected def setLastEndAddrMValue(projectLinks: Seq[ProjectLink], endAddressMValue: Long): Seq[ProjectLink] = {
     if (projectLinks.last.status != RoadAddressChangeType.NotHandled) {
-      if (projectLinks.last.startAddrMValue > endAddressMValue) {
+      if (projectLinks.last.addrMRange.startAddrM > endAddressMValue) {
         val logger = LoggerFactory.getLogger(getClass)
         logger.error(s"Averaged address caused negative length. " +
                      s"projectlink.id: ${projectLinks.last.id} " +
-                     s"startAddrMValue: ${projectLinks.last.startAddrMValue} " +
+                     s"addrMRange.startAddrM: ${projectLinks.last.addrMRange.startAddrM} " +
                      s"endAddressMValue: $endAddressMValue")
-        throw new RoadAddressException(UnsuccessfulRecalculationMessage + s"\nLinkin ${projectLinks.last.linkId} pituudeksi tulee ${endAddressMValue - projectLinks.last.startAddrMValue}")
+        throw new RoadAddressException(UnsuccessfulRecalculationMessage + s"\nLinkin ${projectLinks.last.linkId} pituudeksi tulee ${endAddressMValue - projectLinks.last.addrMRange.startAddrM}")
       }
-      projectLinks.init :+ projectLinks.last.copy(endAddrMValue = endAddressMValue)
+      projectLinks.init :+ projectLinks.last.copy(addrMRange = AddrMRange(projectLinks.last.addrMRange.startAddrM, endAddressMValue))
     }
     else
       projectLinks
@@ -178,17 +178,17 @@ trait TrackCalculatorStrategy {
 
     // With minimum end address we want to maintain existing links' address lengths. Otherwise, average value could cause existing link lengths change.
     def fixedAddress = getFixedAddress(leftProjectLinks.last, rightProjectLinks.last, availableCalibrationPoint)._2
-    def fixedMinimimumAddress = Math.max(Math.max(rightProjectLinks.last.startAddrMValue + 1, leftProjectLinks.last.startAddrMValue + 1), fixedAddress)
-    def addressLengthRight = Math.max(0, rightProjectLinks.last.originalEndAddrMValue - rightProjectLinks.last.originalStartAddrMValue)
-    def addressLengthLeft  = Math.max(0, leftProjectLinks.last.originalEndAddrMValue  -  leftProjectLinks.last.originalStartAddrMValue)
+    def fixedMinimimumAddress = Math.max(Math.max(rightProjectLinks.last.addrMRange.startAddrM + 1, leftProjectLinks.last.addrMRange.startAddrM + 1), fixedAddress)
+    def addressLengthRight = Math.max(0, rightProjectLinks.last.originalAddrMRange.endAddrM - rightProjectLinks.last.originalAddrMRange.startAddrM)
+    def addressLengthLeft  = Math.max(0, leftProjectLinks.last.originalAddrMRange.endAddrM  -  leftProjectLinks.last.originalAddrMRange.startAddrM)
 
     val minimumEndAddress = (leftProjectLinks.exists(_.status == RoadAddressChangeType.New), rightProjectLinks.exists(_.status == RoadAddressChangeType.New)) match {
       case (true,true) => fixedMinimimumAddress
-      case (true, false)  => rightProjectLinks.last.startAddrMValue + addressLengthRight
-      case (false, true)  => leftProjectLinks.last.startAddrMValue + addressLengthLeft
+      case (true, false)  => rightProjectLinks.last.addrMRange.startAddrM + addressLengthRight
+      case (false, true)  => leftProjectLinks.last.addrMRange.startAddrM + addressLengthLeft
       case (false,false)  =>
-        val leftLength = startSectionAddress + leftProjectLinks.last.endAddrMValue - leftProjectLinks.head.startAddrMValue
-        val rightLength = startSectionAddress + rightProjectLinks.last.endAddrMValue - rightProjectLinks.head.startAddrMValue
+        val leftLength = startSectionAddress + leftProjectLinks.last.addrMRange.endAddrM - leftProjectLinks.head.addrMRange.startAddrM
+        val rightLength = startSectionAddress + rightProjectLinks.last.addrMRange.endAddrM - rightProjectLinks.head.addrMRange.startAddrM
         averageOfAddressMValues(leftLength, rightLength, rightProjectLinks.head.reversed)
     }
 
@@ -197,7 +197,7 @@ trait TrackCalculatorStrategy {
     TrackCalculatorResult(
       setLastEndAddrMValue(adjustedLeft, minimumEndAddress),
       setLastEndAddrMValue(adjustedRight, minimumEndAddress),
-      startSectionAddress, minimumEndAddress,
+      AddrMRange(startSectionAddress, minimumEndAddress),
       restLeftProjectLinks,
       restRightProjectLinks)
   }
@@ -209,12 +209,12 @@ trait TrackCalculatorStrategy {
     */
   protected def getUntilNearestAddress(seq: Seq[ProjectLink], endProjectLink: ProjectLink): (Seq[ProjectLink], Seq[ProjectLink]) = {
     if (List(Discontinuity.Discontinuous, Discontinuity.MinorDiscontinuity, Discontinuity.Continuous).contains(endProjectLink.discontinuity)) {
-      val continuousProjectLinks = seq.takeWhile(pl => pl.startAddrMValue <= endProjectLink.endAddrMValue)
+      val continuousProjectLinks = seq.takeWhile(pl => pl.addrMRange.startAddrM <= endProjectLink.addrMRange.endAddrM)
       if (continuousProjectLinks.isEmpty)
         throw new MissingTrackException("Could not find any nearest road address")
 
       val lastProjectLink = continuousProjectLinks.last
-      if (continuousProjectLinks.size > 1 && lastProjectLink.toMeters(Math.abs(endProjectLink.endAddrMValue - lastProjectLink.startAddrMValue)) < lastProjectLink.toMeters(Math.abs(endProjectLink.endAddrMValue - lastProjectLink.endAddrMValue))) {
+      if (continuousProjectLinks.size > 1 && lastProjectLink.toMeters(Math.abs(endProjectLink.addrMRange.endAddrM - lastProjectLink.addrMRange.startAddrM)) < lastProjectLink.toMeters(Math.abs(endProjectLink.addrMRange.endAddrM - lastProjectLink.addrMRange.endAddrM))) {
         (continuousProjectLinks.init, lastProjectLink +: seq.drop(continuousProjectLinks.size))
       } else {
         (continuousProjectLinks, seq.drop(continuousProjectLinks.size))
@@ -226,7 +226,7 @@ trait TrackCalculatorStrategy {
   }
 
 
-  def getStrategyAddress(projectLink: ProjectLink): Long = projectLink.endAddrMValue
+  def getStrategyAddress(projectLink: ProjectLink): Long = projectLink.addrMRange.endAddrM
 
   def applicableStrategy(headProjectLink: ProjectLink, projectLink: ProjectLink): Boolean = false
 
