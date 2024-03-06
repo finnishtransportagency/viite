@@ -1,7 +1,7 @@
 package fi.liikennevirasto.viite.model
 
 import fi.vaylavirasto.viite.geometry.Point
-import fi.vaylavirasto.viite.model.{AdministrativeClass, LifecycleStatus, LinkGeomSource, RoadPart, SideCode}
+import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, LifecycleStatus, LinkGeomSource, RoadPart, SideCode}
 // Used in debugging when needed.
 import org.scalatest.{FunSuite, Matchers}
 
@@ -37,13 +37,13 @@ class RoadAddressLinkPartitionerSpec extends FunSuite with Matchers {
   )
 
   private def makeRoadAddressLink(id: Long, anomaly: Int, roadPart: RoadPart, deltaX: Double = 0.0, deltaY: Double = 0.0) = {
-    RoadAddressLink(id, id, id.toString, Seq(Point(id * 10.0 + deltaX, anomaly * 10.0 + deltaY), Point((id + 1) * 10.0 + deltaX, anomaly * 10.0 + deltaY)), 10.0, AdministrativeClass.State, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, AdministrativeClass.State, None, BigInt(0), "", None, None, roadPart, 1, 1, 1, id * 10, (id + 1) * 10, "", "", 0.0, 10.0, SideCode.TowardsDigitizing, None, None, sourceId = "")
+    RoadAddressLink(id, id, id.toString, Seq(Point(id * 10.0 + deltaX, anomaly * 10.0 + deltaY), Point((id + 1) * 10.0 + deltaX, anomaly * 10.0 + deltaY)), 10.0, AdministrativeClass.State, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, AdministrativeClass.State, None, BigInt(0), "", None, None, roadPart, 1, 1, 1, AddrMRange(id * 10, (id + 1) * 10), "", "", 0.0, 10.0, SideCode.TowardsDigitizing, None, None, sourceId = "")
   }
 
   test("Test partition should have specific fields (still to be defined) not empty") {
 
     val roadLinks = {
-      Seq(RoadAddressLink(0, 0, 5171208.toString, Seq(Point(532837.14110884, 6993543.6296834), Point(533388.14110884, 6994014.1296834)), 0.0, AdministrativeClass.Municipality, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, AdministrativeClass.Municipality, None, BigInt(0), "", None, None, RoadPart(5, 205), 1, 0, 0, 0, 1, "2015-01-01", "2016-01-01", 0.0, 0.0, SideCode.Unknown, None, None, 123, sourceId = ""))
+      Seq(RoadAddressLink(0, 0, 5171208.toString, Seq(Point(532837.14110884, 6993543.6296834), Point(533388.14110884, 6994014.1296834)), 0.0, AdministrativeClass.Municipality, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, AdministrativeClass.Municipality, None, BigInt(0), "", None, None, RoadPart(5, 205), 1, 0, 0, AddrMRange(0, 1), "2015-01-01", "2016-01-01", 0.0, 0.0, SideCode.Unknown, None, None, 123, sourceId = ""))
     }
 
     val partitionedRoadLinks = RoadAddressLinkPartitioner.groupByHomogeneousSection(roadLinks)
@@ -67,8 +67,8 @@ class RoadAddressLinkPartitionerSpec extends FunSuite with Matchers {
     val roadNumber2 = 2
 
     val roadLinks = Seq(
-      RoadAddressLink(0, 0, 5171208.toString, Seq(Point(532837.14110884, 6993543.6296834), Point(533388.14110884, 6994014.1296834)), 0.0, AdministrativeClass.Municipality, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, AdministrativeClass.Municipality, None, BigInt(0), "", None, None, RoadPart(roadNumber1, 205), 1, 0, 0, 0, 1, "2015-01-01", "2016-01-01", 0.0, 0.0, SideCode.Unknown, None, None, 123, sourceId = ""),
-      RoadAddressLink(0, 0, 5171208.toString, Seq(Point(532837.14110884, 6993543.6296834), Point(533388.14110884, 6994014.1296834)), 0.0, AdministrativeClass.Municipality, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, AdministrativeClass.Municipality, None, BigInt(0), "", None, None, RoadPart(roadNumber2, 205), 1, 0, 0, 0, 1, "2015-01-01", "2016-01-01", 0.0, 0.0, SideCode.Unknown, None, None, 123, sourceId = "")
+      RoadAddressLink(0, 0, 5171208.toString, Seq(Point(532837.14110884, 6993543.6296834), Point(533388.14110884, 6994014.1296834)), 0.0, AdministrativeClass.Municipality, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, AdministrativeClass.Municipality, None, BigInt(0), "", None, None, RoadPart(roadNumber1, 205), 1, 0, 0, AddrMRange(0, 1), "2015-01-01", "2016-01-01", 0.0, 0.0, SideCode.Unknown, None, None, 123, sourceId = ""),
+      RoadAddressLink(0, 0, 5171208.toString, Seq(Point(532837.14110884, 6993543.6296834), Point(533388.14110884, 6994014.1296834)), 0.0, AdministrativeClass.Municipality, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, AdministrativeClass.Municipality, None, BigInt(0), "", None, None, RoadPart(roadNumber2, 205), 1, 0, 0, AddrMRange(0, 1), "2015-01-01", "2016-01-01", 0.0, 0.0, SideCode.Unknown, None, None, 123, sourceId = "")
     )
 
     val partitionedRoadLinks = RoadAddressLinkPartitioner.groupByHomogeneousSection(roadLinks)
@@ -80,8 +80,8 @@ class RoadAddressLinkPartitionerSpec extends FunSuite with Matchers {
     val roadPartNumber2 = 2
 
     val roadLinks = Seq(
-      RoadAddressLink(0, 0, 5171208.toString, Seq(Point(532837.14110884, 6993543.6296834), Point(533388.14110884, 6994014.1296834)), 0.0, AdministrativeClass.Municipality, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, AdministrativeClass.Municipality, None, BigInt(0), "", None, None, RoadPart(1, roadPartNumber1), 1, 0, 0, 0, 1, "2015-01-01", "2016-01-01", 0.0, 0.0, SideCode.Unknown, None, None, 123, sourceId = ""),
-      RoadAddressLink(0, 0, 5171208.toString, Seq(Point(532837.14110884, 6993543.6296834), Point(533388.14110884, 6994014.1296834)), 0.0, AdministrativeClass.Municipality, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, AdministrativeClass.Municipality, None, BigInt(0), "", None, None, RoadPart(1, roadPartNumber2), 1, 0, 0, 0, 1, "2015-01-01", "2016-01-01", 0.0, 0.0, SideCode.Unknown, None, None, 123, sourceId = "")
+      RoadAddressLink(0, 0, 5171208.toString, Seq(Point(532837.14110884, 6993543.6296834), Point(533388.14110884, 6994014.1296834)), 0.0, AdministrativeClass.Municipality, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, AdministrativeClass.Municipality, None, BigInt(0), "", None, None, RoadPart(1, roadPartNumber1), 1, 0, 0, AddrMRange(0, 1), "2015-01-01", "2016-01-01", 0.0, 0.0, SideCode.Unknown, None, None, 123, sourceId = ""),
+      RoadAddressLink(0, 0, 5171208.toString, Seq(Point(532837.14110884, 6993543.6296834), Point(533388.14110884, 6994014.1296834)), 0.0, AdministrativeClass.Municipality, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, AdministrativeClass.Municipality, None, BigInt(0), "", None, None, RoadPart(1, roadPartNumber2), 1, 0, 0, AddrMRange(0, 1), "2015-01-01", "2016-01-01", 0.0, 0.0, SideCode.Unknown, None, None, 123, sourceId = "")
     )
 
     val partitionedRoadLinks = RoadAddressLinkPartitioner.groupByHomogeneousSection(roadLinks)
@@ -95,8 +95,8 @@ class RoadAddressLinkPartitionerSpec extends FunSuite with Matchers {
     val track2 = 2
 
     val roadLinks = Seq(
-      RoadAddressLink(0, 0, 5171208.toString, Seq(Point(532837.14110884, 6993543.6296834), Point(533388.14110884, 6994014.1296834)), 0.0, AdministrativeClass.Municipality, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, AdministrativeClass.Municipality, None, BigInt(0), "", None, None, RoadPart(roadNumber1, roadPartNumber1), track1, 0, 0, 0, 1, "2015-01-01", "2016-01-01", 0.0, 0.0, SideCode.Unknown, None, None, 123, sourceId = ""),
-      RoadAddressLink(0, 0, 5171208.toString, Seq(Point(532837.14110884, 6993543.6296834), Point(533388.14110884, 6994014.1296834)), 0.0, AdministrativeClass.Municipality, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, AdministrativeClass.Municipality, None, BigInt(0), "", None, None, RoadPart(roadNumber1, roadPartNumber1), track2, 0, 0, 0, 1, "2015-01-01", "2016-01-01", 0.0, 0.0, SideCode.Unknown, None, None, 123, sourceId = "")
+      RoadAddressLink(0, 0, 5171208.toString, Seq(Point(532837.14110884, 6993543.6296834), Point(533388.14110884, 6994014.1296834)), 0.0, AdministrativeClass.Municipality, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, AdministrativeClass.Municipality, None, BigInt(0), "", None, None, RoadPart(roadNumber1, roadPartNumber1), track1, 0, 0, AddrMRange(0, 1), "2015-01-01", "2016-01-01", 0.0, 0.0, SideCode.Unknown, None, None, 123, sourceId = ""),
+      RoadAddressLink(0, 0, 5171208.toString, Seq(Point(532837.14110884, 6993543.6296834), Point(533388.14110884, 6994014.1296834)), 0.0, AdministrativeClass.Municipality, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, AdministrativeClass.Municipality, None, BigInt(0), "", None, None, RoadPart(roadNumber1, roadPartNumber1), track2, 0, 0, AddrMRange(0, 1), "2015-01-01", "2016-01-01", 0.0, 0.0, SideCode.Unknown, None, None, 123, sourceId = "")
     )
 
     val partitionedRoadLinks = RoadAddressLinkPartitioner.groupByHomogeneousSection(roadLinks)
@@ -106,8 +106,8 @@ class RoadAddressLinkPartitionerSpec extends FunSuite with Matchers {
   test("Test partition When 1 link have LinkGeomSource.ComplimentaryLinkInterface and other one have any other LinkGeomSource Then they will be in different groups of RoadAddressLinks") {
 
     val roadLinks = Seq(
-      RoadAddressLink(0, 0, 5171208.toString, Seq(Point(532837.14110884, 6993543.6296834), Point(533388.14110884, 6994014.1296834)), 0.0, AdministrativeClass.Municipality, LifecycleStatus.InUse, LinkGeomSource.ComplementaryLinkInterface, AdministrativeClass.Municipality, None, BigInt(0), "", None, None, RoadPart(1, 1), 1, 0, 0, 0, 1, "2015-01-01", "2016-01-01", 0.0, 0.0, SideCode.Unknown, None, None, 123, sourceId = ""),
-      RoadAddressLink(0, 0, 5171208.toString, Seq(Point(532837.14110884, 6993543.6296834), Point(533388.14110884, 6994014.1296834)), 0.0, AdministrativeClass.Municipality, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface,        AdministrativeClass.Municipality, None, BigInt(0), "", None, None, RoadPart(1, 1), 1, 0, 0, 0, 1, "2015-01-01", "2016-01-01", 0.0, 0.0, SideCode.Unknown, None, None, 123, sourceId = "")
+      RoadAddressLink(0, 0, 5171208.toString, Seq(Point(532837.14110884, 6993543.6296834), Point(533388.14110884, 6994014.1296834)), 0.0, AdministrativeClass.Municipality, LifecycleStatus.InUse, LinkGeomSource.ComplementaryLinkInterface, AdministrativeClass.Municipality, None, BigInt(0), "", None, None, RoadPart(1, 1), 1, 0, 0, AddrMRange(0, 1), "2015-01-01", "2016-01-01", 0.0, 0.0, SideCode.Unknown, None, None, 123, sourceId = ""),
+      RoadAddressLink(0, 0, 5171208.toString, Seq(Point(532837.14110884, 6993543.6296834), Point(533388.14110884, 6994014.1296834)), 0.0, AdministrativeClass.Municipality, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface,        AdministrativeClass.Municipality, None, BigInt(0), "", None, None, RoadPart(1, 1), 1, 0, 0, AddrMRange(0, 1), "2015-01-01", "2016-01-01", 0.0, 0.0, SideCode.Unknown, None, None, 123, sourceId = "")
     )
 
     val partitionedRoadLinks = RoadAddressLinkPartitioner.groupByHomogeneousSection(roadLinks)
@@ -117,8 +117,8 @@ class RoadAddressLinkPartitionerSpec extends FunSuite with Matchers {
   test("Test partition When 2 links have LinkGeomSource that are not ComplimentaryLinkInterface neither SuravageLinkInterface Then they will be in same group of RoadAddressLinks") {
 
     val roadLinks = Seq(
-      RoadAddressLink(0, 0, 5171208.toString, Seq(Point(532837.14110884, 6993543.6296834), Point(533388.14110884, 6994014.1296834)), 0.0, AdministrativeClass.Municipality, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, AdministrativeClass.Municipality, None, BigInt(0), "", None, None, RoadPart(1, 1), 1, 0, 0, 0, 1, "2015-01-01", "2016-01-01", 0.0, 0.0, SideCode.Unknown, None, None, 123, sourceId = ""),
-      RoadAddressLink(0, 0, 5171208.toString, Seq(Point(532837.14110884, 6993543.6296834), Point(533388.14110884, 6994014.1296834)), 0.0, AdministrativeClass.Municipality, LifecycleStatus.InUse, LinkGeomSource.Unknown,             AdministrativeClass.Municipality, None, BigInt(0), "", None, None, RoadPart(1, 1), 1, 0, 0, 0, 1, "2015-01-01", "2016-01-01", 0.0, 0.0, SideCode.Unknown, None, None, 123, sourceId = "")
+      RoadAddressLink(0, 0, 5171208.toString, Seq(Point(532837.14110884, 6993543.6296834), Point(533388.14110884, 6994014.1296834)), 0.0, AdministrativeClass.Municipality, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, AdministrativeClass.Municipality, None, BigInt(0), "", None, None, RoadPart(1, 1), 1, 0, 0, AddrMRange(0, 1), "2015-01-01", "2016-01-01", 0.0, 0.0, SideCode.Unknown, None, None, 123, sourceId = ""),
+      RoadAddressLink(0, 0, 5171208.toString, Seq(Point(532837.14110884, 6993543.6296834), Point(533388.14110884, 6994014.1296834)), 0.0, AdministrativeClass.Municipality, LifecycleStatus.InUse, LinkGeomSource.Unknown,             AdministrativeClass.Municipality, None, BigInt(0), "", None, None, RoadPart(1, 1), 1, 0, 0, AddrMRange(0, 1), "2015-01-01", "2016-01-01", 0.0, 0.0, SideCode.Unknown, None, None, 123, sourceId = "")
     )
 
     val partitionedRoadLinks = RoadAddressLinkPartitioner.groupByHomogeneousSection(roadLinks)

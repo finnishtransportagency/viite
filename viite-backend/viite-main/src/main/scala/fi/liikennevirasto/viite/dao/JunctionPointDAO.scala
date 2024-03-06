@@ -4,7 +4,7 @@ import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
-import fi.vaylavirasto.viite.model.{BeforeAfter, Discontinuity, RoadPart, Track}
+import fi.vaylavirasto.viite.model.{AddrMRange, BeforeAfter, Discontinuity, RoadPart, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase
 import fi.vaylavirasto.viite.util.DateTimeFormatters.dateOptTimeFormatter
 import org.joda.time.DateTime
@@ -122,12 +122,12 @@ class JunctionPointDAO extends BaseDAO {
     queryList(query).headOption
   }
 
-  def fetchByMultipleRoadwayPoints(roadwayNumber: Long, startAddrMValue: Long, endAddrMValue: Long): Option[JunctionPoint] = {
+  def fetchByMultipleRoadwayPoints(roadwayNumber: Long, addrMRange: AddrMRange): Option[JunctionPoint] = {
     val query =
       s"""
         $junctionPointQuery
         WHERE JP.VALID_TO IS NULL
-        AND RP.ROADWAY_NUMBER = $roadwayNumber AND RP.ADDR_M in ( $startAddrMValue, $endAddrMValue)
+        AND RP.ROADWAY_NUMBER = $roadwayNumber AND RP.ADDR_M in ( ${addrMRange.startAddrM}, ${addrMRange.endAddrM})
       """
     queryList(query).headOption
   }

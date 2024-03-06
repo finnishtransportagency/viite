@@ -4,7 +4,7 @@ import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao.{LinearLocation, LinearLocationDAO, ProjectCalibrationPoint, ProjectLink, RoadAddress, Roadway, RoadwayDAO}
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import fi.vaylavirasto.viite.geometry.BoundingRectangle
-import fi.vaylavirasto.viite.model.{Discontinuity, RoadPart, SideCode}
+import fi.vaylavirasto.viite.model.{AddrMRange, Discontinuity, RoadPart, SideCode}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -31,7 +31,7 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
 
 
     //Fix calibration points in history road addresses
-    val addressLength = historyRoadwayAddress.endAddrMValue - historyRoadwayAddress.startAddrMValue
+    val addressLength = historyRoadwayAddress.addrMRange.endAddrM - historyRoadwayAddress.addrMRange.startAddrM
 
     assert(addressLength >= 0)
 
@@ -58,11 +58,11 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
     * @return The address of the history calibration point
     */
   private def calculateAddressHistoryCalibrationPoint(currentRoadwayAddress: Roadway, historyRoadwayAddress: Roadway)(currentCalibrationAddress: Long): Long = {
-    val currentAddressLength = currentRoadwayAddress.endAddrMValue - currentRoadwayAddress.startAddrMValue
-    val historyAddressLength = historyRoadwayAddress.endAddrMValue - historyRoadwayAddress.startAddrMValue
-    val calibrationLength = currentCalibrationAddress - currentRoadwayAddress.startAddrMValue
+    val currentAddressLength = currentRoadwayAddress.addrMRange.endAddrM - currentRoadwayAddress.addrMRange.startAddrM
+    val historyAddressLength = historyRoadwayAddress.addrMRange.endAddrM - historyRoadwayAddress.addrMRange.startAddrM
+    val calibrationLength = currentCalibrationAddress - currentRoadwayAddress.addrMRange.startAddrM
 
-    historyRoadwayAddress.startAddrMValue + (historyAddressLength * calibrationLength / currentAddressLength)
+    historyRoadwayAddress.addrMRange.startAddrM + (historyAddressLength * calibrationLength / currentAddressLength)
   }
 
   /**
@@ -74,7 +74,7 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
     * @param endAddress      The boundary end address value
     * @return Returns the mapped road addresses
     */
-  private def boundaryAddressMap(roadway: Roadway, linearLocations: Seq[LinearLocation], startAddress: Long, endAddress: Long): Seq[RoadAddress] = {
+  private def boundaryAddressMap(roadway: Roadway, linearLocations: Seq[LinearLocation], addrMRange: AddrMRange): Seq[RoadAddress] = {
 
     def mappedAddressValues(remaining: Seq[LinearLocation], processed: Seq[LinearLocation], startAddr: Double, endAddr: Double, coef: Double, list: Seq[Long], increment: Int, depth: Int = 1): Seq[Long] = {
       if (remaining.isEmpty) {
@@ -94,11 +94,11 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
           if (depth > 105) throw new RuntimeException(message)
         }
 
-        val adjustedList: Seq[Long] = if ((previewValue < endAddress) && (previewValue > startAddr)) {
+        val adjustedList: Seq[Long] = if ((previewValue < addrMRange.endAddrM) && (previewValue > startAddr)) {
           list :+ Math.round(previewValue)
         } else if (previewValue <= startAddr) {
           mappedAddressValues(Seq(remaining.head), processed, list.last, endAddr, coef, list, increment + 1, depth + 1)
-        } else if (previewValue <= endAddress) {
+        } else if (previewValue <= addrMRange.endAddrM) {
           mappedAddressValues(Seq(remaining.head), processed, list.last, endAddr, coef, list, increment - 1, depth + 1)
         } else {
           mappedAddressValues(processed.last +: remaining, processed.init, list.init.last, endAddr, coef, list.init, increment - 1, depth + 1)
@@ -108,11 +108,11 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
 
     }
 
-    val coefficient = (endAddress - startAddress) / linearLocations.map(l => l.endMValue - l.startMValue).sum
+    val coefficient = (addrMRange.endAddrM - addrMRange.startAddrM) / linearLocations.map(l => l.endMValue - l.startMValue).sum
 
     val sortedLinearLocations = linearLocations.sortBy(_.orderNumber)
 
-    val addresses = mappedAddressValues(sortedLinearLocations.init, Seq(), startAddress, endAddress, coefficient, Seq(startAddress), 0) :+ endAddress
+    val addresses = mappedAddressValues(sortedLinearLocations.init, Seq(), addrMRange.startAddrM, addrMRange.endAddrM, coefficient, Seq(addrMRange.startAddrM), 0) :+ addrMRange.endAddrM
 
     sortedLinearLocations.zip(addresses.zip(addresses.tail)).map {
       case (linearLocation, (st, en)) =>
@@ -128,7 +128,7 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
             address, linearLocation.endCalibrationPointType))
         )
 
-        RoadAddress(roadway.id, linearLocation.id, roadway.roadPart, roadway.administrativeClass, roadway.track, Discontinuity.Continuous, st, en, Some(roadway.startDate), roadway.endDate, Some(roadway.createdBy), linearLocation.linkId, linearLocation.startMValue, linearLocation.endMValue, linearLocation.sideCode, linearLocation.adjustedTimestamp, calibrationPoints, linearLocation.geometry, linearLocation.linkGeomSource, roadway.ely, roadway.terminated, roadway.roadwayNumber, linearLocation.validFrom, linearLocation.validTo, roadway.roadName)
+        RoadAddress(roadway.id, linearLocation.id, roadway.roadPart, roadway.administrativeClass, roadway.track, Discontinuity.Continuous, AddrMRange(st, en), Some(roadway.startDate), roadway.endDate, Some(roadway.createdBy), linearLocation.linkId, linearLocation.startMValue, linearLocation.endMValue, linearLocation.sideCode, linearLocation.adjustedTimestamp, calibrationPoints, linearLocation.geometry, linearLocation.linkGeomSource, roadway.ely, roadway.terminated, roadway.roadwayNumber, linearLocation.validFrom, linearLocation.validTo, roadway.roadName)
     }
   }
 
@@ -155,10 +155,12 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
 
     val (toProcess, others) = getUntilCalibrationPoint(linearLocations.sortBy(_.orderNumber))
 
-    val startAddrMValue = if (toProcess.head.startCalibrationPoint.isDefined) toProcess.head.startCalibrationPoint.addrM.get else roadway.startAddrMValue
-    val endAddrMValue = if (toProcess.last.endCalibrationPoint.isDefined) toProcess.last.endCalibrationPoint.addrM.get else roadway.endAddrMValue
+    val addressRange = AddrMRange(
+      if (toProcess.head.startCalibrationPoint.isDefined) toProcess.head.startCalibrationPoint.addrM.get else roadway.addrMRange.startAddrM,
+      if (toProcess.last.endCalibrationPoint.isDefined) toProcess.last.endCalibrationPoint.addrM.get else roadway.addrMRange.endAddrM
+    )
 
-    boundaryAddressMap(roadway, toProcess, startAddrMValue, endAddrMValue) ++ recursiveMapRoadAddresses(roadway, others)
+    boundaryAddressMap(roadway, toProcess, addressRange) ++ recursiveMapRoadAddresses(roadway, others)
   }
 
   /**
@@ -182,7 +184,7 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
   }
 
   def mapLinearLocations(roadway: Roadway, projectLinks: Seq[ProjectLink]): Seq[LinearLocation] = {
-    projectLinks.sortBy(_.startAddrMValue).zip(1 to projectLinks.size).
+    projectLinks.sortBy(_.addrMRange.startAddrM).zip(1 to projectLinks.size).
       map {
         case (projectLink, key) =>
           LinearLocation(projectLink.linearLocationId, key, projectLink.linkId, projectLink.startMValue, projectLink.endMValue, projectLink.sideCode, projectLink.linkGeometryTimeStamp,

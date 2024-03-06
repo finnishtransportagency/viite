@@ -4,7 +4,7 @@ import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao._
 import fi.vaylavirasto.viite.geometry.Point
 import fi.vaylavirasto.viite.model.CalibrationPointType.RoadAddressCP
-import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LinkGeomSource, RoadPart, SideCode, Track}
+import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinuity, LinkGeomSource, RoadPart, SideCode, Track}
 import org.joda.time.DateTime
 import org.mockito.Mockito.when
 import org.scalatest.mockito.MockitoSugar
@@ -21,7 +21,7 @@ class RoadwayMapperSpec extends FunSuite with Matchers{
     val roadwayNumber = 12L
     val startDate = new DateTime(2007, 1, 1, 0, 0)
 
-    val roadwayAddress = Roadway(2L, roadwayNumber, RoadPart(1551, 2), AdministrativeClass.State, Track.Combined, Discontinuity.Discontinuous, 140, 300, reversed = false, startDate, None, "test_user", None, 0, NoTermination, startDate)
+    val roadwayAddress = Roadway(2L, roadwayNumber, RoadPart(1551, 2), AdministrativeClass.State, Track.Combined, Discontinuity.Discontinuous, AddrMRange(140, 300), reversed = false, startDate, None, "test_user", None, 0, NoTermination, startDate)
     val linearLocations = Seq(
       LinearLocation(2L, 1, 125.toString, 45.0, 105.0, SideCode.TowardsDigitizing, 0, (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(45.0,0.0), Point(105.0,0.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber),
       LinearLocation(3L, 2, 123.toString, 0.0, 49.0, SideCode.TowardsDigitizing, 0, (CalibrationPointReference.None, CalibrationPointReference(Some(250), Some(RoadAddressCP))), Seq(Point(105.0,0.0), Point(154.0,0.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber),
@@ -33,19 +33,17 @@ class RoadwayMapperSpec extends FunSuite with Matchers{
     roadAddresses.size should be (3)
 
     val roadAddress1 = roadAddresses.find(_.linkId == 125.toString).get
-    roadAddress1.startAddrMValue should be (140)
+    roadAddress1.addrMRange.startAddrM should be (140)
     roadAddress1.calibrationPoints should be (None, None)
     roadAddress1.discontinuity should be (Discontinuity.Continuous)
 
     val roadAddress2 = roadAddresses.find(_.linkId == 123.toString).get
-    roadAddress2.startAddrMValue should be (roadAddress1.endAddrMValue)
-    roadAddress2.endAddrMValue should be (250)
+    roadAddress2.addrMRange should be (AddrMRange(roadAddress1.addrMRange.endAddrM,250))
     roadAddress2.calibrationPoints should be (None, Some(ProjectCalibrationPoint(123.toString, 49.0, 250, RoadAddressCP)))
     roadAddress2.discontinuity should be (Discontinuity.Continuous)
 
     val roadAddress3 = roadAddresses.find(_.linkId == 124.toString).get
-    roadAddress3.startAddrMValue should be (250)
-    roadAddress3.endAddrMValue should be (300)
+    roadAddress3.addrMRange should be (AddrMRange(250,300))
     roadAddress3.calibrationPoints should be (Some(ProjectCalibrationPoint(124.toString, 0.0, 250, RoadAddressCP)), Some(ProjectCalibrationPoint(124.toString, 51.0, 300, RoadAddressCP)))
     roadAddress3.discontinuity should be (Discontinuity.Discontinuous)
   }
@@ -58,8 +56,8 @@ class RoadwayMapperSpec extends FunSuite with Matchers{
     val historyStartDate = new DateTime(1975, 7, 1, 0, 0)
     val historyEndDate = new DateTime(2006, 12, 31, 0, 0)
 
-    val currentRoadwayAddress = Roadway(2L, roadwayNumber, RoadPart(1551, 2), AdministrativeClass.State, Track.Combined, Discontinuity.Discontinuous, 140, 300, reversed = false, currentStartDate, None, "test_user", None, 0, NoTermination, currentStartDate)
-    val historyRoadwayAddress = Roadway(3L, roadwayNumber, RoadPart(1551, 2), AdministrativeClass.State, Track.Combined, Discontinuity.Discontinuous, 240, 400, reversed = false, historyStartDate, Some(historyEndDate), "test_user", None, 0, NoTermination, historyStartDate)
+    val currentRoadwayAddress = Roadway(2L, roadwayNumber, RoadPart(1551, 2), AdministrativeClass.State, Track.Combined, Discontinuity.Discontinuous, AddrMRange(140, 300), reversed = false, currentStartDate, None, "test_user", None, 0, NoTermination, currentStartDate)
+    val historyRoadwayAddress = Roadway(3L, roadwayNumber, RoadPart(1551, 2), AdministrativeClass.State, Track.Combined, Discontinuity.Discontinuous, AddrMRange(240, 400), reversed = false, historyStartDate, Some(historyEndDate), "test_user", None, 0, NoTermination, historyStartDate)
     val linearLocations = Seq(
       LinearLocation(2L, 1, 125.toString, 45.0, 105.0, SideCode.TowardsDigitizing, 0, (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(45.0,0.0), Point(105.0,0.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber),
       LinearLocation(3L, 2, 123.toString, 0.0, 49.0, SideCode.TowardsDigitizing, 0, (CalibrationPointReference.None, CalibrationPointReference(Some(250), Some(RoadAddressCP))), Seq(Point(105.0,0.0), Point(154.0,0.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber),
@@ -73,19 +71,17 @@ class RoadwayMapperSpec extends FunSuite with Matchers{
     roadAddresses.size should be (3)
 
     val roadAddress1 = roadAddresses.find(_.linkId == 125.toString).get
-    roadAddress1.startAddrMValue should be (240)
+    roadAddress1.addrMRange.startAddrM should be (240)
     roadAddress1.calibrationPoints should be (None, None)
     roadAddress1.discontinuity should be (Discontinuity.Continuous)
 
     val roadAddress2 = roadAddresses.find(_.linkId == 123.toString).get
-    roadAddress2.startAddrMValue should be (roadAddress1.endAddrMValue)
-    roadAddress2.endAddrMValue should be (350)
+    roadAddress2.addrMRange should be (AddrMRange(roadAddress1.addrMRange.endAddrM,350))
     roadAddress2.calibrationPoints should be (None, Some(ProjectCalibrationPoint(123.toString, 49.0, 350, RoadAddressCP)))
     roadAddress2.discontinuity should be (Discontinuity.Continuous)
 
     val roadAddress3 = roadAddresses.find(_.linkId == 124.toString).get
-    roadAddress3.startAddrMValue should be (350)
-    roadAddress3.endAddrMValue should be (400)
+    roadAddress3.addrMRange should be (AddrMRange(350,400))
     roadAddress3.calibrationPoints should be (Some(ProjectCalibrationPoint(124.toString, 0.0, 350, RoadAddressCP)), Some(ProjectCalibrationPoint(124.toString, 51.0, 400, RoadAddressCP)))
     roadAddress3.discontinuity should be (Discontinuity.Discontinuous)
   }

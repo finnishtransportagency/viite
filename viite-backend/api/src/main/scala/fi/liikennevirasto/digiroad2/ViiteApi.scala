@@ -13,7 +13,7 @@ import fi.liikennevirasto.viite.model._
 import fi.liikennevirasto.viite.util.DigiroadSerializers
 import fi.vaylavirasto.viite.dao.{RoadName, RoadNameForRoadAddressBrowser}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, BeforeAfter, Discontinuity, LinkGeomSource, NodePointType, NodeType, RoadAddressChangeType, RoadPart, Track}
+import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, BeforeAfter, Discontinuity, LinkGeomSource, NodePointType, NodeType, RoadAddressChangeType, RoadPart, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase
 import fi.vaylavirasto.viite.util.DateTimeFormatters.{ISOdateFormatter, dateSlashFormatter, finnishDateFormatter, finnishDateTimeFormatter, finnishDateCommaTimeFormatter}
 import org.joda.time.DateTime
@@ -417,8 +417,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       "roadNumber" -> rw.roadPart.roadNumber,
       "roadPartNumber" -> rw.roadPart.partNumber,
       "track" -> rw.track,
-      "startAddrM" -> rw.startAddrM,
-      "endAddrM" -> rw.endAddrM,
+      "startAddrM" -> rw.addrMRange.startAddrM,
+      "endAddrM" -> rw.addrMRange.endAddrM,
       "length" -> rw.length,
       "createdBy" -> rw.createdBy,
       "createdTime" -> rw.createdTime
@@ -432,8 +432,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       "roadNumber" -> rw.roadPart.roadNumber,
       "roadPartNumber" -> rw.roadPart.partNumber,
       "track" -> rw.track,
-      "startAddrM" -> rw.startAddrMValue,
-      "endAddrM" -> rw.endAddrMValue,
+      "startAddrM" -> rw.addrMRange.startAddrM,
+      "endAddrM"   -> rw.addrMRange.endAddrM,
       "reversed" -> rw.reversed,
       "discontinuity" -> rw.discontinuity,
       "startDate" -> rw.startDate,
@@ -454,8 +454,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       "roadNumber" -> rw.roadway.roadPart.roadNumber,
       "roadPartNumber" -> rw.roadway.roadPart.partNumber,
       "track" -> rw.roadway.track,
-      "startAddrM" -> rw.roadway.startAddrMValue,
-      "endAddrM" -> rw.roadway.endAddrMValue,
+      "startAddrM" -> rw.roadway.addrMRange.startAddrM,
+      "endAddrM"   -> rw.roadway.addrMRange.endAddrM,
       "reversed" -> rw.roadway.reversed,
       "discontinuity" -> rw.roadway.discontinuity,
       "startDate" -> rw.roadway.startDate,
@@ -1543,8 +1543,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       "roadPartNumber" -> roadAddressLink.roadPart.partNumber,
       "elyCode" -> roadAddressLink.elyCode,
       "trackCode" -> roadAddressLink.trackCode,
-      "startAddressM" -> roadAddressLink.startAddressM,
-      "endAddressM" -> roadAddressLink.endAddressM,
+      "startAddressM" -> roadAddressLink.addrMRange.startAddrM,
+      "endAddressM"   -> roadAddressLink.addrMRange.endAddrM,
       "discontinuity" -> roadAddressLink.discontinuity,
       "lifecycleStatus" -> roadAddressLink.lifecycleStatus.value,
       "startMValue" -> roadAddressLink.startMValue,
@@ -1711,8 +1711,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       "roadNumber" -> track.roadPart.roadNumber,
       "track" -> track.track,
       "roadPartNumber" -> track.roadPart.partNumber,
-      "startAddrM" -> track.startAddrM,
-      "endAddrM" -> track.endAddrM,
+      "startAddrM" -> track.addrMRange.startAddrM,
+      "endAddrM"   -> track.addrMRange.endAddrM,
       "lengthAddrM" -> track.roadAddressLengthM,
       "administrativeClass" -> track.administrativeClass,
       "startDate" -> new SimpleDateFormat("dd.MM.yyyy").format(track.startDate.toDate)
@@ -1724,8 +1724,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       "ely" -> roadPart.ely,
       "roadNumber" -> roadPart.roadPart.roadNumber,
       "roadPartNumber" -> roadPart.roadPart.partNumber,
-      "startAddrM" -> roadPart.startAddrM,
-      "endAddrM" -> roadPart.endAddrM,
+      "startAddrM" -> roadPart.addrMRange.startAddrM,
+      "endAddrM"   -> roadPart.addrMRange.endAddrM,
       "lengthAddrM" -> roadPart.roadAddressLengthM,
       "startDate" -> new SimpleDateFormat("dd.MM.yyyy").format(roadPart.startDate.toDate)
     )
@@ -1771,6 +1771,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
 
   def roadAddressChangeInfoToApi(changeInfo: ChangeInfoForRoadAddressChangesBrowser): Map[String, Any] = {
     val oldPart = changeInfo.oldRoadAddress.roadPart
+    val oldRange = changeInfo.oldRoadAddress.addrMRange
     Map(
       "startDate" -> new SimpleDateFormat("dd.MM.yyyy").format(changeInfo.startDate.toDate),
       "changeType" -> changeInfo.changeType,
@@ -1782,16 +1783,16 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       "oldRoadNumber"     -> (if(oldPart.nonEmpty) oldPart.get.roadNumber else ""),
       "oldTrack" -> changeInfo.oldRoadAddress.track.getOrElse(""),
       "oldRoadPartNumber" -> (if(oldPart.nonEmpty) oldPart.get.partNumber else ""),
-      "oldStartAddrM" -> changeInfo.oldRoadAddress.startAddrM.getOrElse(""),
-      "oldEndAddrM" -> changeInfo.oldRoadAddress.endAddrM.getOrElse(""),
+      "oldStartAddrM" -> (if(oldRange.nonEmpty) oldRange.get.startAddrM else ""),
+      "oldEndAddrM"   -> (if(oldRange.nonEmpty) oldRange.get.endAddrM   else ""),
       "oldLength" -> changeInfo.oldRoadAddress.length.getOrElse(""),
       "oldAdministrativeClass" -> changeInfo.oldRoadAddress.administrativeClass,
       "newEly" -> changeInfo.newRoadAddress.ely,
       "newRoadNumber" -> changeInfo.newRoadAddress.roadPart.roadNumber,
       "newTrack" -> changeInfo.newRoadAddress.track,
       "newRoadPartNumber" -> changeInfo.newRoadAddress.roadPart.partNumber,
-      "newStartAddrM" -> changeInfo.newRoadAddress.startAddrM,
-      "newEndAddrM" -> changeInfo.newRoadAddress.endAddrM,
+      "newStartAddrM" -> changeInfo.newRoadAddress.addrMRange.startAddrM,
+      "newEndAddrM" -> changeInfo.newRoadAddress.addrMRange.endAddrM,
       "newLength" -> changeInfo.newRoadAddress.length,
       "newAdministrativeClass" -> changeInfo.newRoadAddress.administrativeClass
     )
@@ -1823,8 +1824,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
         "roadPartNumber" -> projectAddressLink.roadPart.partNumber,
         "elyCode" -> projectAddressLink.elyCode,
         "trackCode" -> projectAddressLink.trackCode,
-        "startAddressM" -> projectAddressLink.startAddressM,
-        "endAddressM" -> projectAddressLink.endAddressM,
+        "startAddressM" -> projectAddressLink.addrMRange.startAddrM,
+        "endAddressM"   -> projectAddressLink.addrMRange.endAddrM,
         "discontinuity" -> projectAddressLink.discontinuity,
         "lifecycleStatus" -> projectAddressLink.lifecycleStatus.value,
         "startMValue" -> projectAddressLink.startMValue,
@@ -1942,9 +1943,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
     if (links.nonEmpty)
       Some(links.tail.foldLeft(links.head) {
         case (a: RoadAddressLink, b) =>
-          a.copy(startAddressM = Math.min(a.startAddressM, b.startAddressM), endAddressM = Math.max(a.endAddressM, b.endAddressM), startMValue = Math.min(a.startMValue, b.endMValue), sourceId = "").asInstanceOf[T]
+          a.copy(addrMRange = AddrMRange(Math.min(a.addrMRange.startAddrM, b.addrMRange.startAddrM), Math.max(a.addrMRange.endAddrM, b.addrMRange.endAddrM)), startMValue = Math.min(a.startMValue, b.endMValue), sourceId = "").asInstanceOf[T]
         case (a: ProjectAddressLink, b) =>
-          a.copy(startAddressM = Math.min(a.startAddressM, b.startAddressM), endAddressM = Math.max(a.endAddressM, b.endAddressM), startMValue = Math.min(a.startMValue, b.endMValue), sourceId = "").asInstanceOf[T]
+          a.copy(addrMRange = AddrMRange(Math.min(a.addrMRange.startAddrM, b.addrMRange.startAddrM), Math.max(a.addrMRange.endAddrM, b.addrMRange.endAddrM)), startMValue = Math.min(a.startMValue, b.endMValue), sourceId = "").asInstanceOf[T]
       })
     else
       None

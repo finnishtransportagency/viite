@@ -5,7 +5,7 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
-import fi.vaylavirasto.viite.model.{CalibrationPoint, CalibrationPointLocation, CalibrationPointType}
+import fi.vaylavirasto.viite.model.{AddrMRange, CalibrationPoint, CalibrationPointLocation, CalibrationPointType}
 import fi.vaylavirasto.viite.util.ViiteException
 
 object CalibrationPointDAO extends BaseDAO {
@@ -96,12 +96,12 @@ object CalibrationPointDAO extends BaseDAO {
     }
   }
 
-  def fetchIdByRoadwayNumberSection(roadwayNumber: Long, startAddr: Long, endAddr: Long): Set[Long] = {
+  def fetchIdByRoadwayNumberSection(roadwayNumber: Long, addrMRange: AddrMRange): Set[Long] = {
     sql"""
          SELECT CP.ID
          FROM CALIBRATION_POINT CP
          JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID
-         WHERE RP.roadway_number = $roadwayNumber AND RP.ADDR_M BETWEEN $startAddr AND $endAddr AND CP.VALID_TO IS NULL
+         WHERE RP.roadway_number = $roadwayNumber AND RP.ADDR_M BETWEEN ${addrMRange.startAddrM} AND ${addrMRange.endAddrM} AND CP.VALID_TO IS NULL
      """.as[Long].list.toSet
   }
 

@@ -121,16 +121,16 @@
 //        val road_30_1_history = roadwayDAO.fetchAllByRoadAndPart(30, 1, withHistory = true)
 //        road_30_1_history.size should be(2)
 //        val roadway_30_1 = road_30_1_history.filter(r => r.terminated == TerminationCode.Termination).sortBy(_
-//          .startAddrMValue)
+//          .addrMRange.startAddrM)
 //        val roadway_30_1_history = road_30_1_history.filter(r => r.terminated == TerminationCode.Subsequent)
 //        roadway_30_1_history.size should be(0)
 //        roadway_30_1.size should be(2)
 //        roadway_30_1.head.endDate should not be None
-//        roadway_30_1.head.startAddrMValue should be(0)
-//        roadway_30_1.head.endAddrMValue should be(100)
+//        roadway_30_1.head.addrMRange.startAddrM should be(0)
+//        roadway_30_1.head.addrMRange.endAddrM should be(100)
 //        roadway_30_1.last.endDate should not be None
-//        roadway_30_1.last.startAddrMValue should be(100)
-//        roadway_30_1.last.endAddrMValue should be(200)
+//        roadway_30_1.last.addrMRange.startAddrM should be(100)
+//        roadway_30_1.last.addrMRange.endAddrM should be(200)
 //
 //        val road_30_2_history = roadwayDAO.fetchAllByRoadAndPart(30, 2, withHistory = true)
 //        road_30_2_history.size should be(1)
@@ -139,8 +139,7 @@
 //        roadway_30_2.size should be(1)
 //        roadway_30_2_history.size should be(0)
 //        roadway_30_2.head.endDate should not be None
-//        roadway_30_2.head.startAddrMValue should be(0)
-//        roadway_30_2.head.endAddrMValue should be(100)
+//        roadway_30_2.head.addrMRange should be(AddrMRange(0,100))
 //
 //        val roadway1Ids = sql"""select a.id from ROADWAY a where roadway_number = 1""".as[Long].list
 //        roadway1Ids.size should be(6)

@@ -4,24 +4,24 @@ import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.{BaseCalibrationPoint, UserDefinedCalibrationPoint}
 import fi.liikennevirasto.viite.dao._
 import fi.vaylavirasto.viite.geometry.GeometryUtils
-import fi.vaylavirasto.viite.model.{CalibrationPointLocation, CalibrationPointType, SideCode}
+import fi.vaylavirasto.viite.model.{AddrMRange, CalibrationPointLocation, CalibrationPointType, SideCode}
 import org.slf4j.LoggerFactory
 
 object CalibrationPointsUtils {
 
   private val logger = LoggerFactory.getLogger(getClass)
 
-  def toCalibrationPoints(startCalibrationPoint: CalibrationPointType, endCalibrationPoint: CalibrationPointType, linkId: String, startMValue: Double, endMValue: Double, startAddrMValue: Long, endAddrMValue: Long, sideCode: SideCode):
+  def toCalibrationPoints(startCalibrationPoint: CalibrationPointType, endCalibrationPoint: CalibrationPointType, linkId: String, startMValue: Double, endMValue: Double, addrMRange: AddrMRange, sideCode: SideCode):
   (Option[ProjectCalibrationPoint], Option[ProjectCalibrationPoint]) = {
     val length = endMValue - startMValue
     (sideCode: SideCode) match {
       case SideCode.TowardsDigitizing => (
-        if (startCalibrationPoint != CalibrationPointType.NoCP) Some(ProjectCalibrationPoint(linkId, 0.0,    startAddrMValue, startCalibrationPoint)) else None,
-        if (endCalibrationPoint   != CalibrationPointType.NoCP) Some(ProjectCalibrationPoint(linkId, length, endAddrMValue,   endCalibrationPoint  )) else None
+        if (startCalibrationPoint != CalibrationPointType.NoCP) Some(ProjectCalibrationPoint(linkId, 0.0,    addrMRange.startAddrM, startCalibrationPoint)) else None,
+        if (endCalibrationPoint   != CalibrationPointType.NoCP) Some(ProjectCalibrationPoint(linkId, length, addrMRange.endAddrM,   endCalibrationPoint  )) else None
       )
       case SideCode.AgainstDigitizing => (
-        if (startCalibrationPoint != CalibrationPointType.NoCP) Some(ProjectCalibrationPoint(linkId, length, startAddrMValue, startCalibrationPoint)) else None,
-        if (endCalibrationPoint   != CalibrationPointType.NoCP) Some(ProjectCalibrationPoint(linkId, 0.0,    endAddrMValue,   endCalibrationPoint  )) else None
+        if (startCalibrationPoint != CalibrationPointType.NoCP) Some(ProjectCalibrationPoint(linkId, length, addrMRange.startAddrM, startCalibrationPoint)) else None,
+        if (endCalibrationPoint   != CalibrationPointType.NoCP) Some(ProjectCalibrationPoint(linkId, 0.0,    addrMRange.endAddrM,   endCalibrationPoint  )) else None
       )
       case SideCode.Unknown => (None, None) // Invalid choice
     }
@@ -43,26 +43,26 @@ object CalibrationPointsUtils {
   def makeStartCP(roadAddress: RoadAddress) = {
     Some(ProjectCalibrationPoint(roadAddress.linkId,
       if (roadAddress.sideCode == SideCode.TowardsDigitizing) 0.0
-      else GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.startAddrMValue, roadAddress.startCalibrationPointType))
+      else GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.addrMRange.startAddrM, roadAddress.startCalibrationPointType))
   }
 
   def makeStartCP(projectLink: ProjectLink) = {
     Some(ProjectCalibrationPoint(projectLink.linkId,
       if (projectLink.sideCode == SideCode.TowardsDigitizing) 0.0
-      else projectLink.geometryLength, projectLink.startAddrMValue, projectLink.startCalibrationPointType))
+      else projectLink.geometryLength, projectLink.addrMRange.startAddrM, projectLink.startCalibrationPointType))
   }
 
   def makeEndCP(roadAddress: RoadAddress) = {
     Some(ProjectCalibrationPoint(roadAddress.linkId,
       if (roadAddress.sideCode == SideCode.AgainstDigitizing) 0.0
-      else GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.endAddrMValue, roadAddress.endCalibrationPointType))
+      else GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.addrMRange.endAddrM, roadAddress.endCalibrationPointType))
   }
 
   def makeEndCP(projectLink: ProjectLink, userDefinedCalibrationPoint: Option[UserDefinedCalibrationPoint]) = {
     val segmentValue = if (projectLink.sideCode == SideCode.AgainstDigitizing) 0.0 else projectLink.geometryLength
     val addressValue = userDefinedCalibrationPoint match {
-      case Some(userCalibrationPoint) => if (userCalibrationPoint.addressMValue < projectLink.startAddrMValue) projectLink.endAddrMValue else userCalibrationPoint.addressMValue
-      case None => projectLink.endAddrMValue
+      case Some(userCalibrationPoint) => if (userCalibrationPoint.addressMValue < projectLink.addrMRange.startAddrM) projectLink.addrMRange.endAddrM else userCalibrationPoint.addressMValue
+      case None => projectLink.addrMRange.endAddrM
     }
     Some(ProjectCalibrationPoint(projectLink.linkId, segmentValue, addressValue, projectLink.endCalibrationPointType))
   }

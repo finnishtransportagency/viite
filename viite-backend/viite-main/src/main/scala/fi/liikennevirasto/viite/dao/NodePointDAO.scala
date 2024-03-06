@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.NewIdValue
 import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
-import fi.vaylavirasto.viite.model.{BeforeAfter, NodePointType, RoadPart, Track}
+import fi.vaylavirasto.viite.model.{AddrMRange, BeforeAfter, NodePointType, RoadPart, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase
 import fi.vaylavirasto.viite.util.DateTimeFormatters.dateOptTimeFormatter
 import org.joda.time.DateTime
@@ -335,7 +335,7 @@ class NodePointDAO extends BaseDAO {
     Q.queryNA[NodePoint](query).iterator.toSeq
   }
 
-  case class RoadPartInfo(roadPart: RoadPart, roadwayNumber: Long, beforeAfter: Long, roadwayPointId: Long, addrM: Long, track: Long, startAddrM: Long, endAddrM: Long, roadwayId: Long)
+  case class RoadPartInfo(roadPart: RoadPart, roadwayNumber: Long, beforeAfter: Long, roadwayPointId: Long, addrM: Long, track: Long, addrMRange: AddrMRange, roadwayId: Long)
 
   def fetchRoadPartsInfoForNode(nodeNumber: Long): Seq[RoadPartInfo] = {
     val query =
@@ -355,7 +355,7 @@ class NodePointDAO extends BaseDAO {
        """
     Q.queryNA[(Long, Long, Long, Long, Long, Long, Long, Long, Long, Long)](query).list.map {
       case (roadNumber, roadwayNumber, roadPartNumber, beforeAfter, roadwayPointId, addrM, track, startAddrM, endAddrM, roadwayId) =>
-        RoadPartInfo(RoadPart(roadNumber, roadPartNumber), roadwayNumber, beforeAfter, roadwayPointId, addrM, track, startAddrM, endAddrM, roadwayId)
+        RoadPartInfo(RoadPart(roadNumber, roadPartNumber), roadwayNumber, beforeAfter, roadwayPointId, addrM, track, AddrMRange(startAddrM, endAddrM), roadwayId)
     }
   }
 

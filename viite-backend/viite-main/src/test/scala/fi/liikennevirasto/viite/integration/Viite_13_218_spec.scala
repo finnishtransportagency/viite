@@ -10,7 +10,7 @@ import fi.liikennevirasto.viite.process.strategy.DefaultSectionCalculatorStrateg
 import fi.liikennevirasto.viite.util._
 import fi.vaylavirasto.viite.dao.Sequences
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, CalibrationPointType, Discontinuity, LifecycleStatus, LinkGeomSource, RoadAddressChangeType, RoadLink, RoadPart, SideCode, Track, TrafficDirection}
+import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, CalibrationPointType, Discontinuity, LifecycleStatus, LinkGeomSource, RoadAddressChangeType, RoadLink, RoadPart, SideCode, Track, TrafficDirection}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
@@ -692,12 +692,12 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
         val test_road_part = RoadPart(13, 218)
 
         val road_13_218 = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocationDAO.fetchByRoadways(roadwayDAO.fetchAllBySection(test_road_part).map(_.roadwayNumber)
-                                                                                                                            .toSet)).sortBy(_.startAddrMValue).toList
+                                                                                                                            .toSet)).sortBy(_.addrMRange.startAddrM).toList
         
         val reservedRoadPart_1 = ProjectReservedPart(
           road_13_218.head.id,
           road_13_218.head.roadPart,
-          Some(road_13_218.head.endAddrMValue),
+          Some(road_13_218.head.addrMRange.endAddrM),
           Some(road_13_218.head.discontinuity),
           Some(road_13_218.head.ely),
           newLength = None,
@@ -748,7 +748,7 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
                                            roadAddressChangeType: RoadAddressChangeType
                                          )
         val first_road_part_to_update = projectService_db.getProjectLinks(projectSaved.id).filter(x => {
-          x.track == Track(0) && x.endAddrMValue <= 1510
+          x.track == Track(0) && x.addrMRange.endAddrM <= 1510
         }).toList
 
         val road_tracks_to_test_1 = List(
@@ -985,13 +985,13 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
         val afterCalculatedProjectlinks = projectService_db.getProjectLinks(projectSaved.id)
         val calculatedProjectlinks      = afterCalculatedProjectlinks.filterNot(_.status == RoadAddressChangeType.Termination)
 
-        val leftSide = calculatedProjectlinks.filterNot(_.track == Track.RightSide).sortBy(_.startAddrMValue)
-        val rightSide = calculatedProjectlinks.filterNot(_.track == Track.LeftSide).sortBy(_.startAddrMValue)
+        val leftSide  = calculatedProjectlinks.filterNot(_.track == Track.RightSide).sortBy(_.addrMRange.startAddrM)
+        val rightSide = calculatedProjectlinks.filterNot(_.track == Track.LeftSide ).sortBy(_.addrMRange.startAddrM)
 
         def continuosAddresses(t: Seq[ProjectLink]): ProjectLink = {
-          t.sortBy(_.startAddrMValue).tail.foldLeft(t.head) { (cur, next) =>
-            assert(next.startAddrMValue <= next.endAddrMValue)
-            assert(cur.endAddrMValue == next.startAddrMValue)
+          t.sortBy(_.addrMRange.startAddrM).tail.foldLeft(t.head) { (cur, next) =>
+            assert(next.addrMRange.startAddrM <= next.addrMRange.endAddrM)
+            assert(cur.addrMRange.endAddrM == next.addrMRange.startAddrM)
             next
           }
         }
@@ -1000,23 +1000,23 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
         continuosAddresses(rightSide)
 
         val oldAddresses = (
-          afterCalculatedProjectlinks.filter(pl => pl.status != RoadAddressChangeType.New && pl.track != Track.LeftSide).sortBy(_.originalStartAddrMValue).toList.map(pl => (pl.originalStartAddrMValue, pl.originalEndAddrMValue, pl.status)),
-          afterCalculatedProjectlinks.filter(pl => pl.status != RoadAddressChangeType.New && pl.track != Track.RightSide).sortBy(_.originalStartAddrMValue).toList.map(pl => (pl.originalStartAddrMValue, pl.originalEndAddrMValue, pl.status))
+          afterCalculatedProjectlinks.filter(pl => pl.status != RoadAddressChangeType.New && pl.track !=  Track.LeftSide).sortBy(_.originalAddrMRange.startAddrM).toList.map(pl => (pl.originalAddrMRange, pl.status)),
+          afterCalculatedProjectlinks.filter(pl => pl.status != RoadAddressChangeType.New && pl.track != Track.RightSide).sortBy(_.originalAddrMRange.startAddrM).toList.map(pl => (pl.originalAddrMRange, pl.status))
         )
 
         /* Check original addresses continuos*/
-        assert(oldAddresses._1.head._1 == 0)
-        assert(oldAddresses._1.head._1 == oldAddresses._2.head._1)
-        assert(oldAddresses._1.last._2 == oldAddresses._2.last._2)
+        assert(oldAddresses._1.head._1.startAddrM == 0)
+        assert(oldAddresses._1.head._1.startAddrM == oldAddresses._2.head._1.startAddrM)
+        assert(oldAddresses._1.last._1.endAddrM   == oldAddresses._2.last._1.endAddrM  )
         oldAddresses._1.tail.foldLeft(oldAddresses._1.head) { (cur, n) =>
-          assert(n._1 <= n._2)
-          assert(cur._2 == n._1)
+          assert(n._1.startAddrM <= n._1.endAddrM)
+          assert(cur._1.endAddrM == n._1.startAddrM)
           n
         }
 
         oldAddresses._2.tail.foldLeft(oldAddresses._2.head) { (cur, n) =>
-          assert(n._1 <= n._2)
-          assert(cur._2 == n._1)
+          assert(n._1.startAddrM <= n._1.endAddrM)
+          assert(cur._1.endAddrM == n._1.startAddrM)
           n
         }
 
@@ -1058,7 +1058,7 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
         val two_track_unchanged_and_transfers = changeProject.get.changeInfoSeq.filter(changeInfo => List(1,3).contains(changeInfo.changeType.value))
 
         // Cross check source/target lengths
-        two_track_unchanged_and_transfers.foreach(t => (t.source.endAddressM.get - t.source.startAddressM.get) should be (t.target.endAddressM.get - t.target.startAddressM.get))
+        two_track_unchanged_and_transfers.foreach(t => (t.source.addrMRange.get.endAddrM - t.source.addrMRange.get.startAddrM) should be (t.target.addrMRange.get.endAddrM - t.target.addrMRange.get.startAddrM))
 
         // Value checks
         two_track_nonterminated_sources.foreach(rcs => {
@@ -1069,20 +1069,19 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
         })
 
         /* Check two tracks has equal start and end addresses on both tracks and even count of two track lines. */
-        val two_track_groups: Iterable[Seq[RoadwayChangeSection]] = two_track_nonterminated_sources.filterNot(_.trackCode.get == 0).groupBy(t => t.startAddressM).values
+        val two_track_groups: Iterable[Seq[RoadwayChangeSection]] = two_track_nonterminated_sources.filterNot(_.trackCode.get == 0).groupBy(t => t.addrMRange.get.startAddrM).values
         two_track_groups.foreach(two_track_pair => {
           two_track_pair.size should be(2)
           two_track_pair.head.trackCode.get should not be two_track_pair.last.trackCode.get
-          two_track_pair.head.startAddressM.get should be(two_track_pair.last.startAddressM.get)
-          two_track_pair.head.endAddressM.get should be(two_track_pair.last.endAddressM.get)
+          two_track_pair.head.addrMRange.get should be(two_track_pair.last.addrMRange.get)
         }
         )
 
         /* Check two track addresses are continuous on each track. */
         def check_two_track_continuous(x: Seq[RoadwayChangeSection]): Unit = {
           Seq(Track.LeftSide, Track.RightSide).foreach(track => {
-            val trackAddresses = x.filterNot(_.trackCode.get == track.value).sortBy(_.startAddressM.get).map(rcs => {
-              (rcs.startAddressM.get, rcs.endAddressM.get)
+            val trackAddresses = x.filterNot(_.trackCode.get == track.value).sortBy(_.addrMRange.get.startAddrM).map(rcs => {
+              (rcs.addrMRange.get.startAddrM, rcs.addrMRange.get.endAddrM)
             })
             trackAddresses.tail.foldLeft(trackAddresses.head._2) { (cur, next) =>
               assert(next._1 < next._2) // StartAddress < EndAddress
@@ -1100,10 +1099,9 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
        projectService_db.recalculateProjectLinks(projectSaved.id, "")
        val afterSecondCalc = projectService_db.getProjectLinks(projectSaved.id)
        afterSecondCalc.size should be (afterCalculatedProjectlinks.size)
-       afterSecondCalc.sortBy(pl => (pl.startAddrMValue, pl.track.value)).zip(afterCalculatedProjectlinks.sortBy(pl => (pl.startAddrMValue, pl.track.value))).foreach{
+       afterSecondCalc.sortBy(pl => (pl.addrMRange.startAddrM, pl.track.value)).zip(afterCalculatedProjectlinks.sortBy(pl => (pl.addrMRange.startAddrM, pl.track.value))).foreach{
          case (pl1, pl2) =>
-           pl1.startAddrMValue should be(pl2.startAddrMValue)
-           pl1.endAddrMValue should be(pl2.endAddrMValue)
+           pl1.addrMRange should be(pl2.addrMRange)
            pl1.startMValue should be(pl2.startMValue)
            pl1.endMValue should be(pl2.endMValue)
        }
@@ -1134,8 +1132,8 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
          while (it.hasNext) {
            it.next() match {
              case Seq(cur, next) =>
-               assert(next.startAddrMValue <= next.endAddrMValue)
-               assert(cur.endAddrMValue == next.startAddrMValue)
+               assert(next.addrMRange.startAddrM <= next.addrMRange.endAddrM)
+               assert(cur.addrMRange.endAddrM == next.addrMRange.startAddrM)
            }
          }
        }
@@ -1155,19 +1153,19 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
          while (it.hasNext) {
            it.next() match {
              case Seq(cur, next) =>
-               assert(next.startAddrMValue <= next.endAddrMValue)
-               assert(cur.endAddrMValue == next.startAddrMValue)
+               assert(next.addrMRange.startAddrM <= next.addrMRange.endAddrM)
+               assert(cur.addrMRange.endAddrM == next.addrMRange.startAddrM)
            }
          }
        }
 
         /* Check roadAddresses formed correctly. */
-        continuosRoadAddressses(addresses.filterNot(_.track == Track.LeftSide).sortBy(_.startAddrMValue))
-        continuosRoadAddressses(addresses.filterNot(_.track == Track.RightSide).sortBy(_.startAddrMValue))
+        continuosRoadAddressses(addresses.filterNot(_.track == Track.LeftSide ).sortBy(_.addrMRange.startAddrM))
+        continuosRoadAddressses(addresses.filterNot(_.track == Track.RightSide).sortBy(_.addrMRange.startAddrM))
 
         /* Less well tested part below. */
 
-        val calIds = currentRws.flatMap(crw => CalibrationPointDAO.fetchIdByRoadwayNumberSection(crw.roadwayNumber, 0, 5000))
+        val calIds = currentRws.flatMap(crw => CalibrationPointDAO.fetchIdByRoadwayNumberSection(crw.roadwayNumber, AddrMRange(0, 5000)))
         val cals = calIds.map(cpid => CalibrationPointDAO.fetch(cpid))
 
         /* Current roadways should not have any expired calibrations points. */
@@ -1193,8 +1191,8 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
         } ) shouldBe true
 
         val roadAddressCals = cals.filter(_.typeCode == CalibrationPointType.RoadAddressCP).groupBy(_.addrM)
-        roadAddressCals.minBy(_._1)._1 shouldBe currentRws.minBy(_.startAddrMValue).startAddrMValue
-        roadAddressCals.maxBy(_._1)._1 shouldBe currentRws.maxBy(_.endAddrMValue).endAddrMValue
+        roadAddressCals.minBy(_._1)._1 shouldBe currentRws.minBy(_.addrMRange.startAddrM).addrMRange.startAddrM
+        roadAddressCals.maxBy(_._1)._1 shouldBe currentRws.maxBy(_.addrMRange.endAddrM  ).addrMRange.endAddrM
 
         println("All good! :)")
 

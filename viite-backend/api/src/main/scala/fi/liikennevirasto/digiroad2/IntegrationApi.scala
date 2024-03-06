@@ -7,7 +7,7 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.{RoadAddressService, RoadNameService}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, SideCode}
+import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, SideCode}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase
 import fi.vaylavirasto.viite.util.DateTimeFormatters.dateTimeNoMillisFormatter
 import fi.vaylavirasto.viite.util.ViiteException
@@ -319,8 +319,8 @@ println("Threading print test: Now in avoidRestrictions")
           "roadNumber" -> r.roadPart.roadNumber,
           "roadPartNumber" -> r.roadPart.partNumber,
           "track" -> r.track.value,
-          "startAddrMValue" -> r.startAddrMValue,
-          "endAddrMValue" -> r.endAddrMValue,
+          "startAddrMValue" -> r.addrMRange.startAddrM,
+          "endAddrMValue" -> r.addrMRange.endAddrM,
           "discontinuity" -> r.discontinuity.value,
           "ely" -> r.ely,
           "roadType" -> r.administrativeClass.asRoadTypeValue,
@@ -508,7 +508,7 @@ println("Threading print test: Now in avoidRestrictions")
           }
 
           val addrValuesMap: scala.collection.mutable.Map[Long,(Long, Long)] = scala.collection.mutable.Map()
-          roadaddresses.foreach(r => addrValuesMap += (r.linearLocationId -> (r.startAddrMValue, r.endAddrMValue)))
+          roadaddresses.foreach(r => addrValuesMap += (r.linearLocationId -> (r.addrMRange.startAddrM, r.addrMRange.endAddrM)))
           logger.info("linear locations size {}, roadaddresses size {}", linearLocations.size, roadaddresses.size)
 
           linearLocations.map(l => Map(
@@ -518,8 +518,8 @@ println("Threading print test: Now in avoidRestrictions")
             "orderNumber" -> l.orderNumber,
             "side" -> l.sideCode.value,
             "linkGeomSource" -> l.linkGeomSource.value,
-            "startAddrValue" -> addrValuesMap.getOrElse(l.id, (None, None))._1,
-            "endAddrValue" -> addrValuesMap.getOrElse(l.id, (None, None))._2,
+            "startAddrValue" -> addrValuesMap.getOrElse(l.id, (None,None))._1,
+            "endAddrValue" -> addrValuesMap.getOrElse(l.id, (None,None))._2,
             "startMValue" -> l.startMValue,
             "endMValue" -> l.endMValue,
             "startCalibrationPoint" -> l.startCalibrationPoint.addrM,
@@ -758,7 +758,7 @@ println("Threading print test: Now in avoidRestrictions")
               roadAddressLink.geometry.reverse
             else
               roadAddressLink.geometry
-            , roadAddressLink.startAddressM, roadAddressLink.endAddressM),
+            , roadAddressLink.addrMRange.startAddrM, roadAddressLink.addrMRange.endAddrM),
           "id" -> roadAddressLink.id,
           "link_id" -> roadAddressLink.linkId,
           "link_source" -> roadAddressLink.roadLinkSource.value,
@@ -766,8 +766,8 @@ println("Threading print test: Now in avoidRestrictions")
           "road_part_number" -> roadAddressLink.roadPart.partNumber,
           "track_code" -> roadAddressLink.trackCode,
           "side_code" -> roadAddressLink.sideCode.value,
-          "start_addr_m" -> roadAddressLink.startAddressM,
-          "end_addr_m" -> roadAddressLink.endAddressM,
+          "start_addr_m" -> roadAddressLink.addrMRange.startAddrM,
+          "end_addr_m"   -> roadAddressLink.addrMRange.endAddrM,
           "ely_code" -> roadAddressLink.elyCode,
           "road_type" -> roadAddressLink.administrativeClass.asRoadTypeValue,
           "administrative_class" -> roadAddressLink.administrativeClass.value,
