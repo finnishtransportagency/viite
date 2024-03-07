@@ -1402,6 +1402,7 @@ class ProjectService(
             originalCalibrationPointTypes = (startCpType, startCpType),
             sideCode = ra.sideCode,
             ely = ra.ely,
+            discontinuity = ra.discontinuity,
             startMValue = ra.startMValue,
             endMValue = ra.endMValue,
             linearLocationId = ra.linearLocationId,

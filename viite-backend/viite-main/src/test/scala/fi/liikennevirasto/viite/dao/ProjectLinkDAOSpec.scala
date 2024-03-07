@@ -435,7 +435,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       )
       // Perform the batch update
       projectLinkDAO.batchUpdateProjectLinksToReset(resetProjectLinks)
-      projectLinkDAO.batchUpdateProjectLinksToReset(resetProjectLinksFalsely) // these should not be updated with incorrect linearLocationId
+      projectLinkDAO.batchUpdateProjectLinksToReset(resetProjectLinksFalsely) // This should not update anything with incorrect linearLocationId
       // Fetch and verify the updates
       val updatedProjectLinks = projectLinkDAO.fetchProjectLinks(projectId)
 
