@@ -1395,7 +1395,6 @@ class ProjectService(
             roadNumber = ra.roadNumber,
             roadPartNumber = ra.roadPartNumber,
             track = ra.track,
-            discontinuity = ra.discontinuity,
             administrativeClass = ra.administrativeClass,
             startAddrMValue = ra.startAddrMValue,
             endAddrMValue = ra.endAddrMValue,
@@ -1406,7 +1405,6 @@ class ProjectService(
             startMValue = ra.startMValue,
             endMValue = ra.endMValue,
             linearLocationId = ra.linearLocationId,
-            projectId = projectId,
             id = projectLink.id,
             linkId = projectLink.linkId
           )
