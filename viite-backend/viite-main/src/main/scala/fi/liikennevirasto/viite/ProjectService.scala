@@ -1513,7 +1513,7 @@ class ProjectService(
 
           case RoadAddressChangeType.Unchanged =>
             checkAndMakeReservation(projectId, newRoadNumber, newRoadPartNumber, RoadAddressChangeType.Unchanged, toUpdateLinks)
-            // ely, aadministrativeClass and discontinuity can change when changeType is unChanged
+            // ely, administrativeClass and discontinuity can change when changeType is unChanged
             val updatedLinks = toUpdateLinks.map { link =>
               link.copy(
                 ely = ely.getOrElse(link.ely),
