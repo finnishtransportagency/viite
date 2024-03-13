@@ -27,9 +27,9 @@ object TwoTrackRoadUtils {
     * @param trackToSearchStatusChanges
     *   A track to search for link status changes.
     * @param oppositeTrack
-    *   The opposite track projectlinks to split at status change.
+    *   The opposite track project links to split at status change.
     * @return
-    *   Tuple3 updated projectlinks and user defined calibration points.
+    *   Tuple3 updated project links and user defined calibration points.
     *   (trackToSearchStatusChanges[ProjectLink], oppositeTrack[ProjectLink],
     *   udcp[Option[UserDefinedCalibrationPoint] ])
     */
@@ -41,7 +41,7 @@ object TwoTrackRoadUtils {
         Seq.empty[Option[UserDefinedCalibrationPoint]]
       )
     ) { (prevPl_othersidePls_udcps, currentPl) =>
-      // Check if status changes and do spliting with user defined calibration point if links on both sides do not split at the same position.
+      // Check if status changes and do splitting with user defined calibration point if links on both sides do not split at the same position.
       if (currentPl.status != prevPl_othersidePls_udcps._1.last.status) {
         val splitted_pls = this.createCalibrationPointsAtStatusChange(
           Seq(prevPl_othersidePls_udcps._1.last),
@@ -382,57 +382,79 @@ object TwoTrackRoadUtils {
   /* split end */
 
 
-  def findAndCreateSplitsAtOriginalAddress(splitAddress: Long, roadPartLinks: Seq[ProjectLink]): Option[(ProjectLink, ProjectLink)] = {
-    def splitAt(pl: ProjectLink, address: Long, endPoints: Map[Point, ProjectLink]): (ProjectLink, ProjectLink) = {
-      val coefficient = (pl.endMValue - pl.startMValue) / (pl.originalEndAddrMValue - pl.originalStartAddrMValue)
-      val splitMeasure = pl.startMValue + (math.abs(pl.originalStartAddrMValue - address) * coefficient)
-      val geometryBeforeSplitPoint = getGeometryFromSplitMeasure(pl,endPoints, splitMeasure)
-      val geometryAfterSplitPoint = getNewGeometryFromSplitMeasure(pl, endPoints, splitMeasure)
+  /**
+   * Finds and creates splits in project links at the specified original address.
+   *
+   * This function splits a project link at the given original address and creates two new project links.
+   * The splitting operation is performed based on the provided original address and the sequence of project links.
+   *
+   * @param splitAddress The original address where the split should occur.
+   * @param projectLinks The sequence of ProjectLinks.
+   * @return An optional tuple containing two ProjectLink objects representing the split parts
+   *         if a split is found, otherwise None.
+   */
+  def findAndCreateSplitsAtOriginalAddress(splitAddress: Long, projectLinks: Seq[ProjectLink]): Option[(ProjectLink, ProjectLink)] = {
+    /**
+     * Splits a project link at the specified address and creates two new project links.
+     *
+     * This function splits a project link into two parts at the specified address.
+     * It calculates the split measure, geometries, calibration points, and other attributes for the split parts.
+     *
+     * @param projectLink        The ProjectLink object to be split.
+     * @param address   The address where the split should occur.
+     * @param endPoints A map containing endpoints of the connected chain sections.
+     * @return A tuple containing two ProjectLink objects representing the split parts.
+     */
+    def splitAt(projectLink: ProjectLink, address: Long, endPoints: Map[Point, ProjectLink]): (ProjectLink, ProjectLink) = {
+      val coefficient = (projectLink.endMValue - projectLink.startMValue) / (projectLink.originalEndAddrMValue - projectLink.originalStartAddrMValue)
+      val splitMeasure = projectLink.startMValue + (math.abs(projectLink.originalStartAddrMValue - address) * coefficient)
+      val geometryBeforeSplitPoint = getGeometryFromSplitMeasure(projectLink,endPoints, splitMeasure)
+      val geometryAfterSplitPoint = getNewGeometryFromSplitMeasure(projectLink, endPoints, splitMeasure)
 
       val calsForFirstPart =
-        if (pl.calibrationPoints._1.isDefined)
-          (pl.calibrationPoints._1.get.typeCode,
+        if (projectLink.calibrationPoints._1.isDefined)
+          (projectLink.calibrationPoints._1.get.typeCode,
            CalibrationPointType.NoCP)
         else
           (CalibrationPointType.NoCP,
            CalibrationPointType.NoCP)
       val calsForSecondPart =
-        getCalibrationPointsForSecondPart(pl)
-      val splittedEndAddrMValue =
-        pl.startAddrMValue + (address - pl.originalStartAddrMValue)
+        getCalibrationPointsForSecondPart(projectLink)
+      val splitEndAddrMValue =
+        projectLink.startAddrMValue + (address - projectLink.originalStartAddrMValue)
 
-      val newPlId = Sequences.nextProjectLinkId
+      val newProjectLinkId = Sequences.nextProjectLinkId
       val newProjectLinks = (
-                              pl.copy(
+                              projectLink.copy(
                                 discontinuity         = Discontinuity.Continuous,
-                                endAddrMValue         = splittedEndAddrMValue,
+                                endAddrMValue         = splitEndAddrMValue,
                                 originalEndAddrMValue = address,
-                                startMValue           = pl.startMValue,
+                                startMValue           = projectLink.startMValue,
                                 endMValue             = splitMeasure,
                                 calibrationPointTypes = calsForFirstPart,
                                 geometry              = geometryBeforeSplitPoint,
-                                status                = pl.status,
-                                geometryLength        = splitMeasure - pl.startMValue,
-                                connectedLinkId       = Some(pl.linkId)
+                                status                = projectLink.status,
+                                geometryLength        = splitMeasure - projectLink.startMValue,
+                                connectedLinkId       = Some(projectLink.linkId)
                               ),
-                              pl.copy(
-                                id                      = newPlId,
-                                startAddrMValue         = splittedEndAddrMValue,
+                              projectLink.copy(
+                                id                      = newProjectLinkId,
+                                startAddrMValue         = splitEndAddrMValue,
                                 originalStartAddrMValue = address,
                                 startMValue             = splitMeasure,
-                                endMValue               = pl.endMValue,
+                                endMValue               = projectLink.endMValue,
                                 calibrationPointTypes   = calsForSecondPart,
                                 geometry                = geometryAfterSplitPoint,
-                                status                  = pl.status,
-                                geometryLength          = pl.geometryLength - (splitMeasure - pl.startMValue),
-                                connectedLinkId         = Some(pl.linkId)
+                                status                  = projectLink.status,
+                                geometryLength          = projectLink.geometryLength - (splitMeasure - projectLink.startMValue),
+                                connectedLinkId         = Some(projectLink.linkId)
                               )
                             )
 
       (newProjectLinks._1, newProjectLinks._2)
     }
 
-        val hasOtherSideLink = roadPartLinks.filter(pl =>
+        val hasOtherSideLink = projectLinks.filter(pl =>
           pl.originalTrack          != Track.Combined &&
           pl.status                 != RoadAddressChangeType.NotHandled &&
           pl.status                 != RoadAddressChangeType.New &&
@@ -442,7 +464,7 @@ object TwoTrackRoadUtils {
 
         if (hasOtherSideLink.nonEmpty) {
           val otherSideLink = hasOtherSideLink.head
-          val section = findConnectedSection(otherSideLink, roadPartLinks.filter(pl => pl.originalEndAddrMValue <= otherSideLink.originalEndAddrMValue && pl.originalEndAddrMValue != 0 && pl.originalTrack == otherSideLink.originalTrack))
+          val section = findConnectedSection(otherSideLink, projectLinks.filter(pl => pl.originalEndAddrMValue <= otherSideLink.originalEndAddrMValue && pl.originalEndAddrMValue != 0 && pl.originalTrack == otherSideLink.originalTrack))
           val endPoints = TrackSectionOrder.findChainEndpoints(section)
             val (plPart1, plPart2) =
               splitAt(otherSideLink, splitAddress, endPoints)
@@ -450,71 +472,122 @@ object TwoTrackRoadUtils {
         } else None
     }
 
+  /**
+   * This function recursively identifies and extracts a continuous segment of project links
+   * with consistent original address properties from the projectLinksToProcess. It starts
+   * by comparing the original address properties (track, road number, road part number,
+   * address M values, and status) of the first project link with the last processed
+   * project link. If they match, the current project link is added to the processed sequence.
+   * If not, the function returns the processed sequence and the remaining sequence. This
+   * process continues until the entire sequence is processed. The resulting tuple contains
+   * the continuous original address section and the remaining project links.
+   *
+   * @param projectLinksToProcess       The sequence of project links to process.
+   * @param processed The sequence of project links that have been processed.
+   * @return A tuple containing the continuous original address section and the
+   *         remaining project links.
+   */
   @tailrec
-  def getContinuousOriginalAddressSection(seq: Seq[ProjectLink], processed: Seq[ProjectLink] = Seq()): (Seq[ProjectLink], Seq[ProjectLink]) = {
-    if (seq.isEmpty)
-      (processed, seq)
+  def getContinuousOriginalAddressSection(projectLinksToProcess: Seq[ProjectLink], processed: Seq[ProjectLink] = Seq()): (Seq[ProjectLink], Seq[ProjectLink]) = {
+    if (projectLinksToProcess.isEmpty)
+      (processed, projectLinksToProcess)
     else if (processed.isEmpty)
-      getContinuousOriginalAddressSection(seq.tail, Seq(seq.head))
+      getContinuousOriginalAddressSection(projectLinksToProcess.tail, Seq(projectLinksToProcess.head))
     else {
-      val head     = seq.head
+      val head     = projectLinksToProcess.head
       val track    = processed.last.originalTrack
       val road     = processed.last.originalRoadNumber
       val roadPart = processed.last.originalRoadPartNumber
       val address  = processed.last.originalEndAddrMValue
       val status   = processed.last.status
       if (head.originalTrack == track && head.originalRoadNumber == road && head.originalRoadPartNumber == roadPart && head.originalStartAddrMValue == address && head.status == status) {
-        getContinuousOriginalAddressSection(seq.tail, processed :+ head)
+        getContinuousOriginalAddressSection(projectLinksToProcess.tail, processed :+ head)
       } else {
-        (processed, seq)
+        (processed, projectLinksToProcess)
       }
-    }
-  }
-
-  def splitByOriginalAddress(twoTrackOnlyWithTerminated: Seq[Long], side: Seq[ProjectLink]): Seq[ProjectLink] = {
-    twoTrackOnlyWithTerminated.foldLeft(side) {
-      case (a, b) =>
-        val res = TwoTrackRoadUtils.findAndCreateSplitsAtOriginalAddress(b, a)
-        if (res.isDefined) (a.filterNot(_.id == res.get._1.id) :+ res.get._1 :+ res.get._2).sortBy(_.startAddrMValue) else a
     }
   }
 
   def toProjectLinkSeq(plsTupleOptions: Seq[Option[(ProjectLink, ProjectLink)]]): Seq[ProjectLink] = plsTupleOptions collect toSequence flatten
 
-  def getContinuousByStatus(projectLinkSeq: Seq[ProjectLink]): Seq[Long] = {
+  /**
+   * Retrieves continuous original address sections by status from a sequence of project links.
+   *
+   * This function iterates over the project links, filters out links with 'New' status,
+   * and retrieves continuous original address sections from the filtered links. The resulting
+   * sequence contains the original end address M values of the continuous sections sorted
+   * by their original start address M value.
+   *
+   * @param projectLinks The sequence of project links from which to retrieve continuous
+   *                     original address sections by status.
+   * @return A sequence of original end address M values representing continuous
+   *         segments of project links filtered by status.
+   */
+  def findOriginalEndAddressesOfContinuousSectionsExcludingNewLinks(projectLinks: Seq[ProjectLink]): Seq[Long] = {
     @tailrec
-    def continuousByStatus(pls: Seq[ProjectLink], result: Seq[Long] = Seq()): Seq[Long] = {
+    def findOriginalEndAddressesOfContinuousSections(pls: Seq[ProjectLink], result: Seq[Long] = Seq()): Seq[Long] = {
       if (pls.isEmpty) result
       else {
-        val continuousOriginalAddressSection = getContinuousOriginalAddressSection(pls)
-        continuousByStatus(continuousOriginalAddressSection._2, addtomap(continuousOriginalAddressSection._1, result))
+        val (continuousSection, remainingLinks) = getContinuousOriginalAddressSection(pls)
+        findOriginalEndAddressesOfContinuousSections(remainingLinks, appendOriginalEndAddrMValue(continuousSection, result))
       }
     }
-    val filterNew = projectLinkSeq.filter(_.status != RoadAddressChangeType.New)
-    val filteredProjectLinks = if (filterNew.nonEmpty) filterNew.init else Seq()
-    continuousByStatus(filteredProjectLinks.sortBy(_.originalStartAddrMValue))
+    val withoutNewLinks = projectLinks.filter(_.status != RoadAddressChangeType.New)
+    val filteredProjectLinks = if (withoutNewLinks.nonEmpty) withoutNewLinks.init else Seq()
+    findOriginalEndAddressesOfContinuousSections(filteredProjectLinks.sortBy(_.originalStartAddrMValue))
   }
-  def addtomap(pls: Seq[ProjectLink], res: Seq[Long]): Seq[Long] = res :+ pls.last.originalEndAddrMValue
+  def appendOriginalEndAddrMValue(projectLinks: Seq[ProjectLink], sequenceOfAddrMValues: Seq[Long]): Seq[Long] = sequenceOfAddrMValues :+ projectLinks.last.originalEndAddrMValue
 
   val toSequence: PartialFunction[Option[(ProjectLink, ProjectLink)], Seq[ProjectLink]] = {
     case x: Some[(ProjectLink, ProjectLink)] => Seq(x.get._1, x.get._2)
   }
 
-  def combineAndSort(olds: Seq[ProjectLink], news: Seq[ProjectLink]): Seq[ProjectLink] = (olds.filterNot(pl => {
-    news.map(_.id).contains(pl.id)
-  }) ++ news).sortBy(_.startAddrMValue)
+  /**
+   * Combines and sorts the sequences of old and new project links.
+   *
+   * This function takes two sequences of project links, 'oldLinks' and 'newLinks', and combines them
+   * while ensuring there are no duplicate project links based on their IDs. Finally, it sorts
+   * the combined sequence based on the start address M value of each project link.
+   *
+   * @param oldLinks The sequence of old project links.
+   * @param newLinks The sequence of new project links.
+   * @return A sorted sequence of combined project links, where duplicates from 'oldLinks' have
+   *         been filtered out and the resulting sequence is sorted by start address M value.
+   */
+  def combineAndSort(oldLinks: Seq[ProjectLink], newLinks: Seq[ProjectLink]): Seq[ProjectLink] = (oldLinks.filterNot(pl => {
+    newLinks.map(_.id).contains(pl.id)
+  }) ++ newLinks).sortBy(_.startAddrMValue)
 
-  def filterOldLinks(pls: Seq[ProjectLink]): Seq[ProjectLink] = {
-    val filtered = pls.filter(_.status != RoadAddressChangeType.New)
+  /**
+   * Filters out project links with a change type of "New".
+   *
+   * @param projectLinks The sequence of ProjectLink objects to filter.
+   * @return A sequence of ProjectLink objects excluding those with a status of "New".
+   */
+  def filterOutNewLinks(projectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
+    val filtered = projectLinks.filter(_.status != RoadAddressChangeType.New)
     if (filtered.nonEmpty) filtered.init else Seq()
   }
-  def filterExistingLinks(pl: ProjectLink): Boolean =
+  def filterOutNewAndCombinedLinks(pl: ProjectLink): Boolean =
     pl.status != RoadAddressChangeType.New && pl.track != Track.Combined
 
-  def splitByOriginalAddresses(pls: Seq[ProjectLink], originalAddressEnds: Seq[Long]): Seq[ProjectLink] = {
-    originalAddressEnds.foldLeft(pls)((l1, l2) => {
-      val s: Seq[Option[(ProjectLink, ProjectLink)]] = Seq(TwoTrackRoadUtils.findAndCreateSplitsAtOriginalAddress(l2, l1))
-      combineAndSort(l1, toProjectLinkSeq(s))
-    })
+  /**
+   * Splits project links by original addresses.
+   *
+   * Given a sequence of project links and a sequence of original address ends,
+   * this function splits the project links at each original address end point.
+   * It adds the resulting splits to the projectLink sequence and sorts the sequence based on original addresses.
+   *
+   * @param projectLinks                  The sequence of ProjectLink objects to split.
+   * @param originalEndAddresses          The sequence of original address end points.
+   * @return                              A sequence of ProjectLink objects split by original addresses.
+   */
+  def splitByOriginalAddresses(projectLinks: Seq[ProjectLink], originalEndAddresses: Seq[Long]): Seq[ProjectLink] = {
+    originalEndAddresses.foldLeft(projectLinks) { (currentLinks, originalEndAddress) =>
+      val splitResultOption: Seq[Option[(ProjectLink, ProjectLink)]] = Seq(
+        TwoTrackRoadUtils.findAndCreateSplitsAtOriginalAddress(originalEndAddress, currentLinks)
+      )
+      combineAndSort(currentLinks, toProjectLinkSeq(splitResultOption))
+    }
   }
 }
