@@ -372,7 +372,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test batchUpdateProjectLinksToReset to update new values") {
+  test("Test batchUpdateProjectLinksToReset When batch updating project links back to original values Then all the project link values should reset.") {
     runWithRollback {
       // Mock logger to verify that no rows were updated
       val mockLogger = mock[Logger]
