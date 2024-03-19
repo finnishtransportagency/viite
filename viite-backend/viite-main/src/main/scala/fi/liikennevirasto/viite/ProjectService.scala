@@ -1383,9 +1383,12 @@ class ProjectService(
           (false, None, None)
       }
     }
-
+    /**
+     * Resets project links to match original road addresses.
+     * Fuses any split links prior to resetting.
+     * @param toReset A sequence of ProjectLinks to reset.
+     */
     def resetAndUpdateProjectLinks(toReset: Seq[ProjectLink]): Unit = {
-      // Reset and update project links to their original state based on road addresses
       val roadAddresses = roadAddressService.getRoadAddressesByRoadwayIds(toReset.map(_.roadwayId))
       val updatedLinks = toReset.flatMap { projectLink =>
         roadAddresses.find(roadAddress => projectLink.linearLocationId == roadAddress.linearLocationId).map { ra =>

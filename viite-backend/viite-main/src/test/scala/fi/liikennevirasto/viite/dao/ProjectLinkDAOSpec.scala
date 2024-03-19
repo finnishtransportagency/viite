@@ -9,9 +9,11 @@ import fi.vaylavirasto.viite.model.CalibrationPointType.{NoCP, RoadAddressCP}
 import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LinkGeomSource, RoadAddressChangeType, SideCode, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 import org.joda.time.DateTime
+import org.mockito.ArgumentMatchers.contains
+import org.mockito.Mockito.verify
+import org.scalatest.mockito.MockitoSugar.mock
 import org.scalatest.{FunSuite, Matchers}
-
-import java.sql.SQLException
+import org.slf4j.Logger
 
 /**
   * Class to test DB trigger that does not allow reserving already reserved links to project
@@ -372,6 +374,11 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
 
   test("Test batchUpdateProjectLinksToReset to update new values") {
     runWithRollback {
+      // Mock logger to verify that no rows were updated
+      val mockLogger = mock[Logger]
+      val projectLinkDAO = new ProjectLinkDAO {
+        override protected def logger: Logger = mockLogger
+      }
       // Create project
       val projectId = Sequences.nextViiteProjectId
       val rap = dummyRoadAddressProject(projectId, ProjectState.Incomplete, List.empty, None)
@@ -438,6 +445,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       // Perform the batch update
       projectLinkDAO.batchUpdateProjectLinksToReset(resetProjectLinks)
       projectLinkDAO.batchUpdateProjectLinksToReset(resetProjectLinksFalsely) // This should not update anything with incorrect linearLocationId
+      verify(mockLogger).warn(contains("No rows were updated")) // Verify that the logger was called with the expected message
       // Fetch and verify the updates
       val updatedProjectLinks = projectLinkDAO.fetchProjectLinks(projectId)
       updatedProjectLinks.foreach { link =>

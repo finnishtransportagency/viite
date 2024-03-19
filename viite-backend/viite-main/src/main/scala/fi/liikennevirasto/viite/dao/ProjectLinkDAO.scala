@@ -712,8 +712,13 @@ class ProjectLinkDAO extends BaseDAO {
       runUpdateToDb(updateProjectLink)
     }
   }
+
+  /**
+   * Updates a batch of project links to their original road address values when terminating links.
+   * Logs warnings for no updates or errors during execution.
+   * @param projectLinks A sequence of ProjectLinks to update
+   */
   def batchUpdateProjectLinksToReset(projectLinks: Seq[ProjectLink]): Unit = {
-    // Used with resetAndUpdateProjectLinks to batch update original values to terminated projectLinks
     if (projectLinks.nonEmpty) {
       time(logger, "Batch update project links") {
         val updatePS = dynamicSession.prepareStatement(
@@ -739,6 +744,7 @@ class ProjectLinkDAO extends BaseDAO {
           WHERE LINEAR_LOCATION_ID = ? AND ID = ?
       """)
 
+        try {
         projectLinks.foreach { pl =>
           updatePS.setLong(1, pl.roadNumber)
           updatePS.setLong(2, pl.roadPartNumber)
@@ -761,10 +767,14 @@ class ProjectLinkDAO extends BaseDAO {
           updatePS.addBatch()
         }
 
-        try {
-          updatePS.executeBatch()
+          val updateCounts = updatePS.executeBatch()
+          // Check if any updates were made
+          val updatesMade = updateCounts.exists(count => count > 0)
+          if (!updatesMade) {
+            logger.warn("No rows were updated during the batch update operation.")
+          }
         } catch {
-          case e: SQLException => e.printStackTrace()
+          case e: SQLException => logger.error("SQL Exception encountered: ", e)
         } finally {
           updatePS.close()
         }
