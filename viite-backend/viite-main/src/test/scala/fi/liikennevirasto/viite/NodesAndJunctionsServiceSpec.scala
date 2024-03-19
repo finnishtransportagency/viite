@@ -3903,7 +3903,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
         ProjectRoadwayChange(0, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(RoadAddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
-            RoadwayChangeSection(Some(999), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(999L), endRoadPartNumber = Some(999L), startAddressM = Some(50L), endAddressM = Some(150L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
+            RoadwayChangeSection(Some(999), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(999L), endRoadPartNumber = Some(999L), startAddressM = Some(100L), endAddressM = Some(150L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 3, 8)
           , DateTime.now)
       )
@@ -3968,19 +3968,29 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val reversedPls = Seq(reversedCombined1, reversedCombined2, reversedRight, reversedLeft)
 
-      val reversedRoadways = Seq(Roadway(roadwayId + 4, left.roadwayNumber, 999, 999, AdministrativeClass.State, Track.LeftSide, Discontinuity.EndOfRoad, 100, 150, reversed = true, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination),
-        Roadway(roadwayId + 5, right.roadwayNumber, 999, 999, AdministrativeClass.State, Track.RightSide, Discontinuity.EndOfRoad, 100, 150, reversed = true, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination),
-        Roadway(roadwayId + 6, combined1.roadwayNumber, 999, 999, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 50, 100, reversed = true, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination),
-        Roadway(roadwayId + 7, combined2.roadwayNumber, 999, 999, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, 50, reversed = true, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
-      )
+      val leftReversedRoadway = Roadway(roadwayId + 4, left.roadwayNumber, 999, 999, AdministrativeClass.State, Track.LeftSide, Discontinuity.EndOfRoad, 100, 150, reversed = true, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
+      val rightReversedRoadway = Roadway(roadwayId + 5, right.roadwayNumber, 999, 999, AdministrativeClass.State, Track.RightSide, Discontinuity.EndOfRoad, 100, 150, reversed = true, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
+      val combined1ReversedRoadway = Roadway(roadwayId + 6, combined1.roadwayNumber, 999, 999, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 50, 100, reversed = true, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
+      val combined2ReversedRoadway = Roadway(roadwayId + 7, combined2.roadwayNumber, 999, 999, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, 50, reversed = true, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
+
+      val reversedRoadways = Seq(leftReversedRoadway, rightReversedRoadway, combined1ReversedRoadway, combined2ReversedRoadway)
 
       roadwayDAO.expireById(roadwayIds.toSet)
-      roadwayDAO.create(reversedRoadways)
+
+      val reversedRoadwayIds = roadwayDAO.create(reversedRoadways)
+
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(leftReversedRoadway.roadwayNumber))).thenReturn(Seq(leftReversedRoadway))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(rightReversedRoadway.roadwayNumber))).thenReturn(Seq(rightReversedRoadway))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(combined1ReversedRoadway.roadwayNumber))).thenReturn(Seq(combined1ReversedRoadway))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(combined2ReversedRoadway.roadwayNumber))).thenReturn(Seq(combined2ReversedRoadway))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(leftReversedRoadway.roadwayNumber,rightReversedRoadway.roadwayNumber))).thenReturn(Seq(leftReversedRoadway,rightReversedRoadway))
+
       //projectlinks are now reversed
       projectLinkDAO.updateProjectLinks(reversedPls, "user", Seq())
       val mappedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       roadAddressService.handleRoadwayPointsUpdate(reversedProjectChanges, mappedRoadwayNumbers)
       nodesAndJunctionsService.handleNodePoints(reversedProjectChanges, reversedPls, mappedRoadwayNumbers)
+      nodesAndJunctionsService.expireObsoleteNodesAndJunctions(reversedPls, Some(DateTime.now()), "test")
       val fetchedReversedNodesPoints = reversedPls.flatMap(pl => nodePointDAO.fetchTemplatesByRoadwayNumber(pl.roadwayNumber)).sortBy(_.id)
       fetchedNodesPoints.size should be(fetchedReversedNodesPoints.size)
       fetchedNodesPoints.zip(fetchedReversedNodesPoints.reverse).foreach { case (before, after) =>
