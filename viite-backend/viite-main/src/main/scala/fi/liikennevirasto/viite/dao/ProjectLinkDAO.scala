@@ -712,8 +712,13 @@ class ProjectLinkDAO extends BaseDAO {
       runUpdateToDb(updateProjectLink)
     }
   }
+
+  /**
+   * Updates a batch of project links to their original road address values when terminating links.
+   * Logs warnings for no updates or errors during execution.
+   * @param projectLinks A sequence of ProjectLinks to update
+   */
   def batchUpdateProjectLinksToReset(projectLinks: Seq[ProjectLink]): Unit = {
-    // Used with resetAndUpdateProjectLinks to batch update original values to terminated projectLinks
     if (projectLinks.nonEmpty) {
       time(logger, "Batch update project links") {
         val updatePS = dynamicSession.prepareStatement(
@@ -735,10 +740,14 @@ class ProjectLinkDAO extends BaseDAO {
             ELY = ?,
             START_MEASURE = ?,
             END_MEASURE = ?,
-            STATUS = ?
+            ORIGINAL_START_ADDR_M = ?,
+            ORIGINAL_END_ADDR_M = ?,
+            STATUS = ?,
+            GEOMETRY = ST_GeomFromText(?, 3067)
           WHERE LINEAR_LOCATION_ID = ? AND ID = ?
       """)
 
+        try {
         projectLinks.foreach { pl =>
           updatePS.setLong(1, pl.roadNumber)
           updatePS.setLong(2, pl.roadPartNumber)
@@ -755,16 +764,23 @@ class ProjectLinkDAO extends BaseDAO {
           updatePS.setLong(13, pl.ely)
           updatePS.setDouble(14, pl.startMValue)
           updatePS.setDouble(15, pl.endMValue)
-          updatePS.setInt(16, RoadAddressChangeType.NotHandled.value) // as it's the original value before changes
-          updatePS.setLong(17, pl.linearLocationId)
-          updatePS.setLong(18, pl.id)
+          updatePS.setLong(16, pl.startAddrMValue)
+          updatePS.setLong(17, pl.endAddrMValue)
+          updatePS.setInt(18, RoadAddressChangeType.NotHandled.value) // as it's the original value before changes
+          updatePS.setString(19, PostGISDatabase.createJGeometry(pl.geometry))
+          updatePS.setLong(20, pl.linearLocationId)
+          updatePS.setLong(21, pl.id)
           updatePS.addBatch()
         }
 
-        try {
-          updatePS.executeBatch()
+          val updateCounts = updatePS.executeBatch()
+          // Check if any updates were made
+          val updatesMade = updateCounts.exists(count => count > 0)
+          if (!updatesMade) {
+            logger.warn("No rows were updated during the batch update operation.")
+          }
         } catch {
-          case e: SQLException => e.printStackTrace()
+          case e: SQLException => logger.error("SQL Exception encountered: ", e)
         } finally {
           updatePS.close()
         }

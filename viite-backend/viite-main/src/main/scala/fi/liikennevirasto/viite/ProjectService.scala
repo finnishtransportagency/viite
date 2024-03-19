@@ -1383,14 +1383,18 @@ class ProjectService(
           (false, None, None)
       }
     }
-
+    /**
+     * Resets project links to match original road addresses.
+     * Fuses any split links prior to resetting.
+     * @param toReset A sequence of ProjectLinks to reset.
+     */
     def resetAndUpdateProjectLinks(toReset: Seq[ProjectLink]): Unit = {
-      // Reset and update project links to their original state based on road addresses
-      val roadAddresses = roadAddressService.getRoadAddressesByRoadwayIds(toReset.map(_.roadwayId))
-      val updatedLinks = toReset.flatMap { projectLink =>
+      val preprocessedLinks = getFusedProjectLinks(toReset)
+      val roadAddresses = roadAddressService.getRoadAddressesByRoadwayIds(preprocessedLinks.map(_.roadwayId))
+      val updatedLinks = preprocessedLinks.flatMap { projectLink =>
         roadAddresses.find(roadAddress => projectLink.linearLocationId == roadAddress.linearLocationId).map { ra =>
-          val startCpType = ra.calibrationPoints._1.map(_.typeCode).getOrElse(CalibrationPointType.NoCP)
-          val endCpType = ra.calibrationPoints._2.map(_.typeCode).getOrElse(CalibrationPointType.NoCP)
+          val startCpType = projectLink.calibrationPoints._1.map(_.typeCode).getOrElse(CalibrationPointType.NoCP)
+          val endCpType = projectLink.calibrationPoints._2.map(_.typeCode).getOrElse(CalibrationPointType.NoCP)
           projectLink.copy(
             roadNumber = ra.roadNumber,
             roadPartNumber = ra.roadPartNumber,
@@ -1398,6 +1402,8 @@ class ProjectService(
             administrativeClass = ra.administrativeClass,
             startAddrMValue = ra.startAddrMValue,
             endAddrMValue = ra.endAddrMValue,
+            originalStartAddrMValue = ra.startAddrMValue,
+            originalEndAddrMValue = ra.endAddrMValue,
             calibrationPointTypes = (startCpType, endCpType),
             originalCalibrationPointTypes = (startCpType, startCpType),
             sideCode = ra.sideCode,
@@ -1405,6 +1411,7 @@ class ProjectService(
             discontinuity = ra.discontinuity,
             startMValue = ra.startMValue,
             endMValue = ra.endMValue,
+            geometry = projectLink.geometry,
             linearLocationId = ra.linearLocationId,
             id = projectLink.id,
             linkId = projectLink.linkId
