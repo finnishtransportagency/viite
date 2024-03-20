@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite.dao
 
-import java.sql.Types
+import java.sql.{SQLException, Types}
 import java.util.Date
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite._
@@ -710,6 +710,75 @@ class ProjectLinkDAO extends BaseDAO {
         WHERE LINEAR_LOCATION_ID = ${roadAddress.linearLocationId} AND PROJECT_ID = $projectId $idFilter
       """
       runUpdateToDb(updateProjectLink)
+    }
+  }
+
+  /**
+   * Updates a batch of project links to their original road address values when terminating links.
+   * Logs warnings for no updates or errors during execution.
+   * @param projectLinks A sequence of ProjectLinks to update
+   */
+  def batchUpdateProjectLinksToReset(projectLinks: Seq[ProjectLink]): Unit = {
+    if (projectLinks.nonEmpty) {
+      time(logger, "Batch update project links") {
+        val updatePS = dynamicSession.prepareStatement(
+          """
+        UPDATE project_link
+          SET
+            ROAD_NUMBER = ?,
+            ROAD_PART_NUMBER = ?,
+            TRACK = ?,
+            DISCONTINUITY_TYPE = ?,
+            ADMINISTRATIVE_CLASS = ?,
+            START_ADDR_M = ?,
+            END_ADDR_M = ?,
+            START_CALIBRATION_POINT = ?,
+            END_CALIBRATION_POINT = ?,
+            ORIG_START_CALIBRATION_POINT = ?,
+            ORIG_END_CALIBRATION_POINT = ?,
+            SIDE = ?,
+            ELY = ?,
+            START_MEASURE = ?,
+            END_MEASURE = ?,
+            STATUS = ?
+          WHERE LINEAR_LOCATION_ID = ? AND ID = ?
+      """)
+
+        try {
+        projectLinks.foreach { pl =>
+          updatePS.setLong(1, pl.roadNumber)
+          updatePS.setLong(2, pl.roadPartNumber)
+          updatePS.setInt(3, pl.track.value)
+          updatePS.setInt(4, pl.discontinuity.value)
+          updatePS.setInt(5, pl.administrativeClass.value)
+          updatePS.setLong(6, pl.startAddrMValue)
+          updatePS.setLong(7, pl.endAddrMValue)
+          updatePS.setInt(8, pl.calibrationPointTypes._1.value)
+          updatePS.setInt(9, pl.calibrationPointTypes._2.value)
+          updatePS.setInt(10, pl.calibrationPointTypes._1.value)
+          updatePS.setInt(11, pl.calibrationPointTypes._2.value)
+          updatePS.setInt(12, pl.sideCode.value)
+          updatePS.setLong(13, pl.ely)
+          updatePS.setDouble(14, pl.startMValue)
+          updatePS.setDouble(15, pl.endMValue)
+          updatePS.setInt(16, RoadAddressChangeType.NotHandled.value) // as it's the original value before changes
+          updatePS.setLong(17, pl.linearLocationId)
+          updatePS.setLong(18, pl.id)
+          updatePS.addBatch()
+        }
+
+          val updateCounts = updatePS.executeBatch()
+          // Check if any updates were made
+          val updatesMade = updateCounts.exists(count => count > 0)
+          if (!updatesMade) {
+            logger.warn("No rows were updated during the batch update operation.")
+          }
+        } catch {
+          case e: SQLException => logger.error("SQL Exception encountered: ", e)
+        } finally {
+          updatePS.close()
+        }
+      }
     }
   }
 
