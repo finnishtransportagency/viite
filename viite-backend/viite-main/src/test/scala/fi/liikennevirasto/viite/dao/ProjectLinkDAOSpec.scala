@@ -9,7 +9,11 @@ import fi.vaylavirasto.viite.model.CalibrationPointType.{NoCP, RoadAddressCP}
 import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LinkGeomSource, RoadAddressChangeType, SideCode, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 import org.joda.time.DateTime
+import org.mockito.ArgumentMatchers.contains
+import org.mockito.Mockito.verify
+import org.scalatest.mockito.MockitoSugar.mock
 import org.scalatest.{FunSuite, Matchers}
+import org.slf4j.Logger
 
 /**
   * Class to test DB trigger that does not allow reserving already reserved links to project
@@ -365,6 +369,97 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       updatedProjectLink.endMValue should be(endMValue)
       updatedProjectLink.sideCode should be(side)
       updatedProjectLink.geometry should be(geometry)
+    }
+  }
+
+  test("Test batchUpdateProjectLinksToReset When batch updating project links back to original values Then all the project link values should reset.") {
+    runWithRollback {
+      // Mock logger to verify that no rows were updated
+      val mockLogger = mock[Logger]
+      val projectLinkDAO = new ProjectLinkDAO {
+        override protected def logger: Logger = mockLogger
+      }
+      // Create project
+      val projectId = Sequences.nextViiteProjectId
+      val rap = dummyRoadAddressProject(projectId, ProjectState.Incomplete, List.empty, None)
+      projectDAO.create(rap)
+      // "Original" values for which to reset into
+      val originalRoadNumber = roadNumber1
+      val originalRoadPartNumber = roadPartNumber1
+      val originalTrack = Track.Combined
+      val originalDiscontinuity = Discontinuity.Continuous
+      val originalAdministrativeClass = AdministrativeClass.State
+      val originalEly = 1
+      val originalStartAddrMValue = 0L
+      val originalEndAddrMValue = 10L
+      val originalStartMValue = 0.0
+      val originalEndMValue = 10.0
+      val originalSide = SideCode.TowardsDigitizing
+      val originalLinkID = 1000L.toString
+      // Roadway
+      val raId = Sequences.nextRoadwayId
+      val roadway = Roadway(raId, roadwayNumber1, originalRoadNumber, originalRoadPartNumber, originalAdministrativeClass, originalTrack, originalDiscontinuity,
+        0L, 10L, reversed = false, DateTime.now(), None, "testUser", None, 8, NoTermination, DateTime.now(), None)
+      roadwayDAO.create(Seq(roadway))
+      // LinearLocation
+      val linearLocationId = 1
+      val linearLocation = LinearLocation(linearLocationId, 1, originalLinkID, originalStartMValue, originalEndMValue, originalSide,
+        10000000000L, (CalibrationPointReference(Some(0L)), CalibrationPointReference(Some(10L))), Seq(Point(0.0, 10.0),
+          Point(10.0, 20.0)), LinkGeomSource.ComplementaryLinkInterface, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None)
+      linearLocationDAO.create(Seq(linearLocation))
+      // Reserve roadParts
+      projectReservedPartDAO.reserveRoadPart(projectId, roadNumber1, roadPartNumber1, rap.createdBy)
+      projectReservedPartDAO.reserveRoadPart(projectId, roadNumber2, roadPartNumber2, rap.createdBy)
+      // Create project Links
+      val projectLinkId1 = Sequences.nextProjectLinkId
+      val projectLinks = Seq(
+        dummyProjectLink(projectLinkId1, projectId, originalLinkID, roadway.id, roadwayNumber2, roadNumber2, roadPartNumber2,
+          0, 100, 0.0, 10.0, None, (None, None), Seq(Point(0.0, 0.0), Point(0.0, 10.0)),
+          RoadAddressChangeType.Transfer, AdministrativeClass.State, reversed = false, linearLocationId = linearLocationId)
+      )
+      projectLinkDAO.create(projectLinks)
+      // Update values
+      val resetProjectLinks = projectLinks.map(pl =>
+        pl.copy(
+          roadNumber = originalRoadNumber,
+          roadPartNumber = originalRoadPartNumber,
+          track = originalTrack,
+          administrativeClass = originalAdministrativeClass,
+          startAddrMValue = originalStartAddrMValue,
+          endAddrMValue = originalEndAddrMValue,
+          startMValue = originalStartMValue,
+          endMValue = originalEndMValue,
+          ely = originalEly,
+          linearLocationId = pl.linearLocationId,
+          id = pl.id
+        )
+      )
+      val resetProjectLinksFalsely = projectLinks.map(pl =>
+        pl.copy(
+          linearLocationId = -2, // wrong linearLocationId
+          id = pl.id,
+          roadNumber = -1,
+          roadPartNumber = -2
+        )
+      )
+      // Perform the batch update
+      projectLinkDAO.batchUpdateProjectLinksToReset(resetProjectLinks)
+      projectLinkDAO.batchUpdateProjectLinksToReset(resetProjectLinksFalsely) // This should not update anything with incorrect linearLocationId
+      verify(mockLogger).warn(contains("No rows were updated")) // Verify that the logger was called with the expected message
+      // Fetch and verify the updates
+      val updatedProjectLinks = projectLinkDAO.fetchProjectLinks(projectId)
+      updatedProjectLinks.foreach { link =>
+        link.roadNumber shouldBe originalRoadNumber
+        link.roadPartNumber shouldBe originalRoadPartNumber
+        link.track shouldBe originalTrack
+        link.discontinuity shouldBe originalDiscontinuity
+        link.administrativeClass shouldBe originalAdministrativeClass
+        link.startAddrMValue shouldBe originalStartAddrMValue
+        link.endAddrMValue shouldBe originalEndAddrMValue
+        link.startMValue shouldBe originalStartMValue
+        link.endMValue shouldBe originalEndMValue
+        link.status shouldBe RoadAddressChangeType.NotHandled
+      }
     }
   }
 
