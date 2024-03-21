@@ -1389,7 +1389,7 @@ class ProjectService(
      * @param toReset A sequence of ProjectLinks to reset.
      */
     def resetAndUpdateProjectLinks(toReset: Seq[ProjectLink]): Unit = {
-      val preprocessedLinks = getFusedProjectLinks(toReset)
+      val preprocessedLinks = processAndFuseSplitProjectLinks(toReset)
       val roadAddresses = roadAddressService.getRoadAddressesByRoadwayIds(preprocessedLinks.map(_.roadwayId))
       val updatedLinks = preprocessedLinks.flatMap { projectLink =>
         roadAddresses.find(roadAddress => projectLink.linearLocationId == roadAddress.linearLocationId).map { ra =>
@@ -1575,7 +1575,7 @@ class ProjectService(
     }
   }
 
-  def fuseSplittedProjectLinks(links: Seq[ProjectLink]): Seq[ProjectLink] = {
+  def fuseSplitProjectLinks(links: Seq[ProjectLink]): Seq[ProjectLink] = {
     val sorted = links.sortBy(_.startMValue)
     val linkIds = sorted.map(_.linkId).distinct
     if (!sorted.exists(_.reversed) &&
@@ -1612,27 +1612,39 @@ class ProjectService(
       links
   }
 
-  /***
-   * Required when user calculates project more than once.
-   * Removes user defined calibration points and splits generated in previous calc.
-   * @param pls Non-terminated ProjectLinks in the same road/part.
-   * @return ProjectLinks without split made in previous calculation if any.
+  /**
+   * Fuses split project links and removes splits made in previous calculations. This is essential for projects recalculated multiple times to ensure project links reflect the correct state.
+   * Removes user defined calibration points and merges splits generated in previous calc.
+   *
+   * @param projectLinks Sequence of non-terminated ProjectLinks within the same road/part.
+   * @return Sequence of ProjectLinks with previous splits fused and unnecessary data removed.
    */
-  def getFusedProjectLinks(pls: Seq[ProjectLink]): Seq[ProjectLink] = if (pls.isEmpty) {
-    Seq()
-  } else {
-    val (connectedGroups, unConnectedGroups) = pls.groupBy(_.connectedLinkId).partition(_._1.isDefined)
-    val unConnnected                         = unConnectedGroups.values.flatten.toSeq
-    val connected                            = connectedGroups.values.flatMap(v => {
-      fuseSplittedProjectLinks(v.map(f = c => {
-        c.endCalibrationPointType match {case UserDefinedCP => c.copy(calibrationPointTypes = (c.startCalibrationPointType, NoCP)); case _ => c;}
-      }))
-    }).toSeq
-    val connectedIds                         = connected.map(_.id).toSet
-    val connectedGroupsIds                   = connectedGroups.values.flatten.map(_.id).toSet
-    roadwayChangesDAO.clearRoadChangeTable(pls.head.projectId)
-    projectLinkDAO.removeProjectLinksById(connectedGroupsIds.diff(connectedIds))
-    unConnnected ++ connected
+  def processAndFuseSplitProjectLinks(projectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
+    if (projectLinks.isEmpty) {
+      Seq()
+    } else {
+      val (connectedGroups, unConnectedGroups) = projectLinks.groupBy(_.connectedLinkId).partition(_._1.isDefined)
+      val unConnected = unConnectedGroups.values.flatten.toSeq
+      val connected = connectedGroups.values.flatMap { groupLinks =>
+        val modifiedLinks = groupLinks.map { projectLink =>
+          // Modify only the end calibration point type if it's user-defined, otherwise leave it unchanged.
+          val updatedCalibrationPoints = projectLink.endCalibrationPointType match {
+            case UserDefinedCP =>
+              (projectLink.startCalibrationPointType, NoCP) // Reset end calibration point to NoCP if it's user-defined.
+            case _ =>
+              projectLink.calibrationPointTypes
+          }
+          projectLink.copy(calibrationPointTypes = updatedCalibrationPoints)
+        }
+        // Fuse the modified links, by merging previously split links into one .
+        fuseSplitProjectLinks(modifiedLinks)
+      }.toSeq
+      val connectedIds = connected.map(_.id).toSet
+      val connectedGroupsIds = connectedGroups.values.flatten.map(_.id).toSet
+      roadwayChangesDAO.clearRoadChangeTable(projectLinks.head.projectId)
+      projectLinkDAO.removeProjectLinksById(connectedGroupsIds.diff(connectedIds))
+      unConnected ++ connected
+    }
   }
 
   def recalculateProjectLinks(projectId: Long, userName: String, roadParts: Set[(Long, Long)] = Set(), newTrack: Option[Track] = None, newDiscontinuity: Option[Discontinuity] = None, completelyNewLinkIds: Seq[Long] = Seq()): Unit = {
@@ -1649,7 +1661,7 @@ class ProjectService(
         (pl.roadNumber, pl.roadPartNumber)
       }).flatMap {
         grp =>
-          val fusedLinks = getFusedProjectLinks(grp._2)
+          val fusedLinks = processAndFuseSplitProjectLinks(grp._2)
           val calibrationPoints = ProjectCalibrationPointDAO.fetchByRoadPart(projectId, grp._1._1, grp._1._2)
           val calculatedLinks   = ProjectSectionCalculator.assignMValues(fusedLinks, calibrationPoints).sortBy(_.endAddrMValue)
           if (!calculatedLinks.exists(_.isNotCalculated) && newDiscontinuity.isDefined && newTrack.isDefined &&
