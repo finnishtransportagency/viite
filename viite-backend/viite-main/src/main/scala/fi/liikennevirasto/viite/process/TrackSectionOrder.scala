@@ -235,8 +235,14 @@ object TrackSectionOrder {
   }
 
   private def getOppositeEnd(link: BaseRoadAddress, point: Point): Point = {
-    val (st, en) = link.getEndPoints
-    if (st.distance2DTo(point) < en.distance2DTo(point)) en else st
+    val (startPoint, endPoint) = link.getEndPoints
+
+    // Calculate distances from the provided point to both start and end points
+    val distanceToStart = startPoint.distance2DTo(point)
+    val distanceToEnd = endPoint.distance2DTo(point)
+
+    // Determine the opposite end based on the shorter distance from the provided point
+    if (distanceToStart < distanceToEnd) endPoint else startPoint
   }
 
   def orderProjectLinksTopologyByGeometry(startingPoints: (Point, Point), list: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
@@ -339,7 +345,12 @@ object TrackSectionOrder {
             SideCode.TowardsDigitizing
         }
         /* Sets reverse flag if sidecode change occurs with road/roadpart change. */
-        def setReverseFlag() = if (sideCode != nextLink.sideCode && (nextLink.roadNumber != nextLink.originalRoadNumber || nextLink.roadPartNumber != nextLink.originalRoadPartNumber)) !nextLink.reversed else nextLink.reversed
+        def setReverseFlag() = {
+          if (sideCode != nextLink.sideCode && (nextLink.roadNumber != nextLink.originalRoadNumber || nextLink.roadPartNumber != nextLink.originalRoadPartNumber))
+            !nextLink.reversed
+          else
+            nextLink.reversed
+        }
         recursiveFindAndExtend(nextPoint, ready ++ Seq(nextLink.copy(sideCode = sideCode, reversed = setReverseFlag())), unprocessed.filterNot(pl => pl == nextLink), oppositeTrack)
       }
     }
@@ -347,7 +358,8 @@ object TrackSectionOrder {
     val track01 = list.filter(_.track != Track.LeftSide)
     val track02 = list.filter(_.track != Track.RightSide)
 
-    (recursiveFindAndExtend(startingPoints._1, Seq(), track01, track02), recursiveFindAndExtend(startingPoints._2, Seq(), track02, track01))
+    (recursiveFindAndExtend(startingPoints._1, Seq(), track01, track02),
+      recursiveFindAndExtend(startingPoints._2, Seq(), track02, track01))
   }
 
   def createCombinedSections(rightLinks: Seq[ProjectLink], leftLinks: Seq[ProjectLink]): Seq[CombinedSection] = {
