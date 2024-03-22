@@ -1146,6 +1146,44 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
     }
   }
 
+  test("Test findStartingPoints When terminating first links on two track and transferring the remaining links on two track road Then the road should still maintain the previous existing direction") {
+    /**
+     * ------L Transf--------> 100
+     * ^                      ^
+     * |                      |
+     * |                      |
+     * L Term                 R Transf
+     * |                      |
+     * |                      |
+     * |                      |
+     * 0-------R Term-------->
+     * */
+    runWithRollback {
+
+      val geomTerminatedLeftLink = Seq(Point(25.0,25.0), Point(25.0,75.0))
+      val geomTransferredLeftLink = Seq(Point(25.0, 75.0), Point(75.0, 75.0))
+
+      val geomTerminatedRightLink = Seq(Point(25.0,25.0), Point(75.0, 25.0))
+      val geomTransferredRightLink = Seq(Point(75.0, 25.0), Point(75.0, 75.0))
+
+      val plId = Sequences.nextProjectLinkId
+
+      // NOTE: The terminated links are not used in the start point calculation, but they are displayed here to aid in understanding the test case.
+      val terminatedLeftLink = ProjectLink(plId + 1, 9999L, 1L, Track.LeftSide, Discontinuity.Continuous, 0L, 50L, 0L, 50L, None, None, None, 12345L.toString, 0.0, 50.0, SideCode.TowardsDigitizing,(NoCP, NoCP), (NoCP, NoCP), geomTerminatedLeftLink, 0L, RoadAddressChangeType.Termination, AdministrativeClass.State,LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTerminatedLeftLink),0L, 0, 0, reversed = false, None, 86400L)
+      val terminatedRightLink = ProjectLink(plId + 1, 9999L, 1L, Track.RightSide, Discontinuity.Continuous, 0L, 50L, 0L, 50L, None, None, None, 12345L.toString, 0.0, 50.0, SideCode.TowardsDigitizing,(NoCP, NoCP), (NoCP, NoCP), geomTerminatedRightLink, 0L, RoadAddressChangeType.Termination, AdministrativeClass.State,LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTerminatedRightLink),0L, 0, 0, reversed = false, None, 86400L)
+
+      val transferredLeftLink = ProjectLink(plId + 1, 9999L, 1L, Track.LeftSide, Discontinuity.EndOfRoad, 50L, 100L, 50L, 100L, None, None, None, 12345L.toString, 0.0, 50.0, SideCode.TowardsDigitizing,(NoCP, NoCP), (NoCP, NoCP), geomTransferredLeftLink, 0L, RoadAddressChangeType.Transfer, AdministrativeClass.State,LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferredLeftLink),0L, 0, 0, reversed = false, None, 86400L)
+      val transferredRightLink = ProjectLink(plId + 1, 9999L, 1L, Track.RightSide, Discontinuity.EndOfRoad, 50L, 100L, 50L, 100L, None, None, None, 12345L.toString, 0.0, 50.0, SideCode.TowardsDigitizing,(NoCP, NoCP), (NoCP, NoCP), geomTransferredRightLink, 0L, RoadAddressChangeType.Transfer, AdministrativeClass.State,LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferredRightLink),0L, 0, 0, reversed = false, None, 86400L)
+
+      val nonTerminatedProjectLinks = Seq(transferredRightLink,transferredLeftLink)
+
+      val newProjectLinks = Seq()
+
+      val startingPointsForCalculations = defaultSectionCalculatorStrategy.findStartingPoints(newProjectLinks, nonTerminatedProjectLinks, Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
+      startingPointsForCalculations should be((transferredRightLink.geometry.head, transferredLeftLink.geometry.head))
+    }
+  }
+
   test("Test findStartingPoints " +
        "When a combined road has a loopend" +
        "Then startingpoint from triple connection should be found.") {
