@@ -504,6 +504,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     */
   def findStartingPoints(newLinks: Seq[ProjectLink], oldLinks: Seq[ProjectLink], otherRoadPartLinks: Seq[ProjectLink],
                          calibrationPoints: Seq[UserDefinedCalibrationPoint]): (Point, Point) = {
+
     val (rightStartPoint, pl) = findStartingPoint(newLinks.filter(_.track != Track.LeftSide), oldLinks.filter(_.track != Track.LeftSide), otherRoadPartLinks, calibrationPoints, (newLinks ++ oldLinks).filter(_.track == Track.LeftSide))
 
     if ((oldLinks ++ newLinks).exists(pl => GeometryUtils.areAdjacent(pl.geometry, rightStartPoint) && pl.track == Track.Combined)) {
@@ -537,7 +538,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         None
       }
 
-      (rightStartPoint,
+      val leftStartPoint = {
         if (endPointsWithValues.size == 1) {
           val endLinkWithValues = endPointsWithValues.head._2
           val (currentEndPoint, otherEndPoint) = chainEndPoints.partition(_._2.id == endPointsWithValues.head._2.id)
@@ -575,17 +576,12 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
               candidateEndPoint
             }
           } else {
-            val startPoint1 = chainEndPoints.minBy(p => p._1.distance2DTo(rightStartPoint))._1
-            val startPoint2 = chainEndPoints.maxBy(p => p._1.distance2DTo(rightStartPoint))._1
-            val connectingPoint = otherRoadPartLinks.find(l => GeometryUtils.areAdjacent(l.getLastPoint, startPoint1) || GeometryUtils.areAdjacent(l.getFirstPoint, startPoint2))
-            if (otherRoadPartLinks.isEmpty || connectingPoint.nonEmpty) {
-              startPoint1
-            } else {
-              startPoint2
-            }
+            // find the left start point normally
+            findStartingPoint(newLinks.filter(_.track != Track.RightSide), oldLinks.filter(_.track != Track.RightSide), otherRoadPartLinks, calibrationPoints, (newLinks ++ oldLinks).filter(_.track == Track.RightSide))._1
           }
         }
-      )
+      }
+      (rightStartPoint, leftStartPoint)
     }
   }
 
