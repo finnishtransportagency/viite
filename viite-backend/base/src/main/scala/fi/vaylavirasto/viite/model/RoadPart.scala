@@ -26,10 +26,10 @@ case class RoadPart (roadNumber: Long, partNumber: Long) extends Ordered[RoadPar
   override def toString : String = {  s"$roadNumber/$partNumber"  }
 
   /** Returns true, if the compared RoadParts have same road number, and both RoadParts are valid. Else false. */
-  def isAtSameRoadThan(other: RoadPart): Boolean = {  this.roadNumber == other.roadNumber && this.isValid && other.isValid }
-  /** Returns true, if the compared RoadParts have same road number, and this RoadPArt has smaller part number than <i>other</i>, and both RoadParts are valid. Else false. */
+  def isAtSameRoadAs  (other: RoadPart): Boolean = {  this.roadNumber == other.roadNumber && this.isValid && other.isValid }
+  /** Returns true, if the compared RoadParts have same road number, and this RoadPart has smaller part number than <i>other</i>, and both RoadParts are valid. Else false. */
   def isBefore        (other: RoadPart): Boolean = {  this.roadNumber == other.roadNumber && this.partNumber < other.partNumber && this.isValid && other.isValid  }
-  /** Returns true, if the compared RoadParts have same road number, and this RoadPArt has bigger  part number than <i>other</i>, and both RoadParts are valid. Else false. */
+  /** Returns true, if the compared RoadParts have same road number, and this RoadPart has bigger  part number than <i>other</i>, and both RoadParts are valid. Else false. */
   def isAfter         (other: RoadPart): Boolean = {  this.roadNumber == other.roadNumber && this.partNumber > other.partNumber && this.isValid && other.isValid  }
 
   /** Convenience function. Returns true, if this RoadPart is invalid (see [[RoadPart.isInvalid]]). Else false. */
