@@ -13,7 +13,7 @@ import fi.liikennevirasto.viite.process._
 import fi.vaylavirasto.viite.dao.{LinkDAO, ProjectLinkNameDAO, RoadName, RoadNameDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.CalibrationPointType.{JunctionPointCP, NoCP, UserDefinedCP}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LinkGeomSource, RoadAddressChangeType, RoadLink, RoadLinkLike, RoadPart, SideCode, Track, TrafficDirection}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, CalibrationPointType, Discontinuity, LinkGeomSource, RoadAddressChangeType, RoadLink, RoadLinkLike, RoadPart, SideCode, Track, TrafficDirection}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase
 import fi.vaylavirasto.viite.util.DateTimeFormatters.ISOdateFormatter
 import org.joda.time.DateTime
@@ -1341,7 +1341,7 @@ class ProjectService(
       (replaceable, reservedPart.roadPart)
     }
 
-    def updateAdministrativeClassDiscontinuity(links: Seq[ProjectLink]): Unit = {
+    def setDiscontinuityAndUpdateProjectLinks(links: Seq[ProjectLink]): Unit = {
       val originalAddresses = roadAddressService.getRoadAddressesByRoadwayIds(links.map(_.roadwayId))
       if (links.nonEmpty) {
         val lastSegment = links.maxBy(_.endAddrMValue)
@@ -1376,17 +1376,38 @@ class ProjectService(
           (false, None)
       }
     }
-
-    def resetLinkValues(toReset: Seq[ProjectLink]): Unit = {
-      val addressesForRoadway = roadAddressService.getRoadAddressesByRoadwayIds(toReset.map(_.roadwayId))
-      val filteredAddresses   = addressesForRoadway.filter(link => {
-        toReset.map(_.linkId).contains(link.linkId)
-      })
-      filteredAddresses.foreach(ra => {
-        val pls = toReset.filter(pl => pl.roadwayId == ra.id)
-        pls.foreach(pl => projectLinkDAO.updateProjectLinkValues(projectId, ra.copy(ely = pl.ely),
-          updateGeom = false, plId = Some(pl.id)))
-      })
+    /**
+     * Resets project links to match original road addresses.
+     * @param toReset A sequence of ProjectLinks to reset.
+     */
+    def resetAndUpdateProjectLinks(toReset: Seq[ProjectLink]): Unit = {
+      val roadAddresses = roadAddressService.getRoadAddressesByRoadwayIds(toReset.map(_.roadwayId))
+      val updatedLinks = toReset.flatMap { projectLink =>
+        roadAddresses.find(roadAddress => projectLink.linearLocationId == roadAddress.linearLocationId).map { ra =>
+          val startCpType = ra.calibrationPoints._1.map(_.typeCode).getOrElse(CalibrationPointType.NoCP)
+          val endCpType = ra.calibrationPoints._2.map(_.typeCode).getOrElse(CalibrationPointType.NoCP)
+          projectLink.copy(
+            roadPart = ra.roadPart,
+            track = ra.track,
+            administrativeClass = ra.administrativeClass,
+            startAddrMValue = ra.startAddrMValue,
+            endAddrMValue = ra.endAddrMValue,
+            calibrationPointTypes = (startCpType, endCpType),
+            originalCalibrationPointTypes = (startCpType, startCpType),
+            sideCode = ra.sideCode,
+            ely = ra.ely,
+            discontinuity = ra.discontinuity,
+            startMValue = ra.startMValue,
+            endMValue = ra.endMValue,
+            linearLocationId = ra.linearLocationId,
+            id = projectLink.id,
+            linkId = projectLink.linkId
+          )
+    }
+      }
+      if (updatedLinks.nonEmpty) {
+        projectLinkDAO.batchUpdateProjectLinksToReset(updatedLinks)
+      }
     }
 
     /* Update elycodes into project table */
@@ -1422,9 +1443,8 @@ class ProjectService(
         })
         roadAddressChangeType match {
           case RoadAddressChangeType.Termination =>
-            // Fetching road addresses in order to obtain the original addressMValues, since we may not have those values
-            // on project_link table, after previous recalculations
-            resetLinkValues(toUpdateLinks)
+            // Reset and update projectLinks to their original state based on road addresses
+            resetAndUpdateProjectLinks(toUpdateLinks)
             projectLinkDAO.updateProjectLinksStatus(toUpdateLinks.map(_.id).toSet, RoadAddressChangeType.Termination, userName)
 
           case RoadAddressChangeType.Renumeration =>
@@ -1488,18 +1508,29 @@ class ProjectService(
 
           case RoadAddressChangeType.Unchanged =>
             checkAndMakeReservation(projectId, newRoadPart, RoadAddressChangeType.Unchanged, toUpdateLinks)
-            // Reset back to original values
-            val updated = toUpdateLinks.map(l => {
-              l.copy(ely = ely.getOrElse(l.ely))
-            })
-            resetLinkValues(updated)
-            updateAdministrativeClassDiscontinuity(updated.map(_.copy(status = roadAddressChangeType, administrativeClass = AdministrativeClass.apply(administrativeClass.toInt))))
+            // ely, administrativeClass and discontinuity can change when changeType is unChanged
+            val updatedLinks = toUpdateLinks.map { link =>
+              link.copy(
+                ely = ely.getOrElse(link.ely),
+                administrativeClass = AdministrativeClass.apply(administrativeClass.toInt),
+                status = roadAddressChangeType
+              )
+            }
+            setDiscontinuityAndUpdateProjectLinks(updatedLinks)
 
           case RoadAddressChangeType.New => {
             // Current logic allows only re adding new road addresses within same road/part group
             if (toUpdateLinks.groupBy(l => (l.roadPart)).size <= 1) {
               checkAndMakeReservation(projectId, newRoadPart, RoadAddressChangeType.New, toUpdateLinks)
-              updateAdministrativeClassDiscontinuity(toUpdateLinks.map(l => l.copy(roadPart = newRoadPart, track = Track.apply(newTrackCode), administrativeClass = AdministrativeClass.apply(administrativeClass.toInt), ely = ely.getOrElse(l.ely))))
+              val updatedLinks = toUpdateLinks.map { link =>
+                link.copy(
+                  roadPart = newRoadPart,
+                  track = Track.apply(newTrackCode),
+                  administrativeClass = AdministrativeClass.apply(administrativeClass.toInt),
+                  ely = ely.getOrElse(link.ely)
+                )
+              }
+              setDiscontinuityAndUpdateProjectLinks(updatedLinks)
               val nameError = roadName.flatMap(setProjectRoadName(projectId, newRoadPart.roadNumber, _)).toList.headOption
               if (nameError.nonEmpty)
                 return nameError
