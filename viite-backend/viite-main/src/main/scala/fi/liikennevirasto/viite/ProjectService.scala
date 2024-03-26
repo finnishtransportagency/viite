@@ -13,7 +13,9 @@ import fi.liikennevirasto.viite.process._
 import fi.vaylavirasto.viite.dao.{LinkDAO, ProjectLinkNameDAO, RoadName, RoadNameDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.CalibrationPointType.{JunctionPointCP, NoCP, UserDefinedCP}
+
 import fi.vaylavirasto.viite.model.{AdministrativeClass, CalibrationPointType, Discontinuity, LinkGeomSource, RoadAddressChangeType, RoadLink, RoadLinkLike, RoadPart, SideCode, Track, TrafficDirection}
+
 import fi.vaylavirasto.viite.postgis.PostGISDatabase
 import fi.vaylavirasto.viite.util.DateTimeFormatters.ISOdateFormatter
 import org.joda.time.DateTime
@@ -1403,7 +1405,7 @@ class ProjectService(
             id = projectLink.id,
             linkId = projectLink.linkId
           )
-    }
+        }
       }
       if (updatedLinks.nonEmpty) {
         projectLinkDAO.batchUpdateProjectLinksToReset(updatedLinks)

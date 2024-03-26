@@ -586,6 +586,6 @@ object TwoTrackRoadUtils {
         TwoTrackRoadUtils.findAndCreateSplitsAtOriginalAddress(originalEndAddress, currentLinks)
       )
       combineAndSort(currentLinks, toProjectLinkSeq(splitResultOption))
-  }
+    }
   }
 }
