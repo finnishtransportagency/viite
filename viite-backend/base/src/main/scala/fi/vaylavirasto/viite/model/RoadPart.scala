@@ -18,11 +18,12 @@ case class RoadPart (roadNumber: Long, partNumber: Long) extends Ordered[RoadPar
   val maxRoadNumber = 99999
   val maxPartNumber = 999
 
-  // throws IllegalArgumentException if requirements not met
+  // throws ViiteException at construction, if basic class requirements are not met
   try {
     require((roadNumber>=0 & roadNumber <= maxRoadNumber),      s"Road number must be between (0-)1-$maxRoadNumber")
     require((partNumber>=0 & partNumber <= maxPartNumber), s"Road part number must be between (0-)1-$maxPartNumber")
   } catch {
+    // replace the default IllegalArgumentException with ViiteException, so we know this is from our code.
     case iae: IllegalArgumentException => throw new ViiteException(iae.getMessage)
   }
   /** Returns the RoadPart in the format "roadNumber/partNumber", e.g. "3575/1".

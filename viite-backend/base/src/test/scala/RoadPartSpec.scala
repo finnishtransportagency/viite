@@ -6,7 +6,6 @@ import org.scalatest._
 class RoadPartSpec extends FunSuite with Matchers {
 
   test("RoadPart: RoadPart construction succeeds, when given valid road number, and road part number.") {
-    val okNum = 100
     noException should be thrownBy (RoadPart(    1,  1))
     noException should be thrownBy (RoadPart(    1,999))
     noException should be thrownBy (RoadPart(99999,  1))
