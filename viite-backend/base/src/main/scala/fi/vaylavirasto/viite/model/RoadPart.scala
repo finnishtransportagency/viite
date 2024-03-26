@@ -20,8 +20,8 @@ case class RoadPart (roadNumber: Long, partNumber: Long) extends Ordered[RoadPar
 
   // throws ViiteException at construction, if basic class requirements are not met
   try {
-    require((roadNumber>=0 & roadNumber <= maxRoadNumber),      s"Road number must be between (0-)1-$maxRoadNumber")
-    require((partNumber>=0 & partNumber <= maxPartNumber), s"Road part number must be between (0-)1-$maxPartNumber")
+    require((roadNumber>=0 & roadNumber <= maxRoadNumber),      s"Road number must be between 1-$maxRoadNumber, or 0 if still undefined")
+    require((partNumber>=0 & partNumber <= maxPartNumber), s"Road part number must be between 1-$maxPartNumber, or 0 if still undefined")
   } catch {
     // replace the default IllegalArgumentException with ViiteException, so we know this is from our code.
     case iae: IllegalArgumentException => throw new ViiteException(iae.getMessage)
