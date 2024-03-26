@@ -1,5 +1,5 @@
-package fi.liikennevirasto.viite.model
-import fi.vaylavirasto.viite.model.RoadPart
+package fi.vaylavirasto.viite.model
+
 import fi.vaylavirasto.viite.util.ViiteException
 import org.scalatest._
 
