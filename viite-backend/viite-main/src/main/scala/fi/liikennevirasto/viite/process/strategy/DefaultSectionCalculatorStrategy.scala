@@ -31,14 +31,14 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
 
   override def assignMValues(newProjectLinks: Seq[ProjectLink], oldProjectLinks: Seq[ProjectLink], userCalibrationPoints: Seq[UserDefinedCalibrationPoint]): Seq[ProjectLink] = {
 
-    val groupedProjectLinks = newProjectLinks.groupBy(record => (record.roadNumber, record.roadPartNumber))
-    val groupedOldLinks = oldProjectLinks.groupBy(record => (record.roadNumber, record.roadPartNumber))
+    val groupedProjectLinks = newProjectLinks.groupBy(record => (record.roadPart))
+    val groupedOldLinks = oldProjectLinks.groupBy(record => (record.roadPart))
     val group = (groupedProjectLinks.keySet ++ groupedOldLinks.keySet).map(k =>
       k -> (groupedProjectLinks.getOrElse(k, Seq()), groupedOldLinks.getOrElse(k, Seq())))
     group.flatMap { case (part, (projectLinks, oldLinks)) =>
       try {
         val oldRoadLinks = if (projectLinks.nonEmpty) {
-          projectLinkDAO.fetchByProjectRoad(part._1, projectLinks.head.projectId).filterNot(l => l.roadPartNumber == part._2)
+          projectLinkDAO.fetchByProjectRoad(part.roadNumber, projectLinks.head.projectId).filterNot(l => l.roadPart.partNumber == part.partNumber)
         } else {
           Seq.empty[ProjectLink]
         }
@@ -63,7 +63,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
           logger.warn(ex.getMessage)
           throw ex
         case ex: InvalidAddressDataException =>
-          logger.warn(s"Can't calculate road/road part ${part._1}/${part._2}: " + ex.getMessage)
+          logger.warn(s"Can't calculate road part ${part}: " + ex.getMessage)
           throw ex
         case ex: NoSuchElementException =>
           logger.error("Delta calculation failed: " + ex.getMessage, ex)

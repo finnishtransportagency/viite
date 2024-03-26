@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite.dao
 
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite._
-import fi.vaylavirasto.viite.model.{Discontinuity, RoadAddressChangeType, Track}
+import fi.vaylavirasto.viite.model.{Discontinuity, RoadAddressChangeType, RoadPart, Track}
 import fi.vaylavirasto.viite.dao.BaseDAO
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.{StaticQuery => Q}
@@ -10,9 +10,9 @@ import slick.jdbc.StaticQuery.interpolation
 
 //TODO naming SQL conventions
 
-case class ProjectReservedPart(id: Long, roadNumber: Long, roadPartNumber: Long, addressLength: Option[Long] = None, discontinuity: Option[Discontinuity] = None, ely: Option[Long] = None, newLength: Option[Long] = None, newDiscontinuity: Option[Discontinuity] = None, newEly: Option[Long] = None, startingLinkId: Option[String] = None) {
+case class ProjectReservedPart(id: Long, roadPart: RoadPart, addressLength: Option[Long] = None, discontinuity: Option[Discontinuity] = None, ely: Option[Long] = None, newLength: Option[Long] = None, newDiscontinuity: Option[Discontinuity] = None, newEly: Option[Long] = None, startingLinkId: Option[String] = None) {
   def holds(baseRoadAddress: BaseRoadAddress): Boolean = {
-    roadNumber == baseRoadAddress.roadNumber && roadPartNumber == baseRoadAddress.roadPartNumber
+    roadPart == baseRoadAddress.roadPart
   }
 }
 
@@ -27,28 +27,28 @@ class ProjectReservedPartDAO extends BaseDAO{
     * @param roadNumber       Road number of the reserved part to remove
     * @param roadPartNumber   Road part number to remove
     */
-  def removeReservedRoadPartAndChanges(projectId: Long, roadNumber: Long, roadPartNumber: Long): Unit = {
-    time(logger, s"Remove reserved road part $roadNumber / $roadPartNumber from project $projectId") {
+  def removeReservedRoadPartAndChanges(projectId: Long, roadPart: RoadPart): Unit = {
+    time(logger, s"Remove reserved road part $roadPart from project $projectId") {
       runUpdateToDb(s"""DELETE FROM ROADWAY_CHANGES_LINK WHERE PROJECT_ID = $projectId""")
       runUpdateToDb(s"""DELETE FROM ROADWAY_CHANGES WHERE PROJECT_ID = $projectId""")
       runUpdateToDb(s"""
         DELETE FROM PROJECT_LINK
           WHERE PROJECT_ID = $projectId
             AND (EXISTS (SELECT 1 FROM ROADWAY RA, LINEAR_LOCATION LC WHERE RA.ID = ROADWAY_ID AND
-                         RA.ROAD_NUMBER = $roadNumber AND RA.ROAD_PART_NUMBER = $roadPartNumber))
-             OR (ROAD_NUMBER = $roadNumber AND ROAD_PART_NUMBER = $roadPartNumber AND
+                         RA.ROAD_NUMBER = ${roadPart.roadNumber} AND RA.ROAD_PART_NUMBER = ${roadPart.partNumber}))
+             OR (ROAD_NUMBER = ${roadPart.roadNumber} AND ROAD_PART_NUMBER = ${roadPart.partNumber} AND
                  (STATUS != ${RoadAddressChangeType.NotHandled.value})
           )
         """)
-      runUpdateToDb(s"""DELETE FROM PROJECT_RESERVED_ROAD_PART WHERE project_id = $projectId and road_number = $roadNumber and road_part_number = $roadPartNumber""")
+      runUpdateToDb(s"""DELETE FROM PROJECT_RESERVED_ROAD_PART WHERE project_id = $projectId and road_number = ${roadPart.roadNumber} and road_part_number = ${roadPart.partNumber}""")
     }
   }
 
-  def removeReservedRoadPart(projectId: Long, roadNumber: Long, roadPartNumber: Long): Unit = {
+  def removeReservedRoadPart(projectId: Long, roadPart: RoadPart): Unit = {
     time(logger, s"Remove ") {
       runUpdateToDb(s"""DELETE FROM ROADWAY_CHANGES_LINK WHERE PROJECT_ID = $projectId""")
       runUpdateToDb(s"""DELETE FROM ROADWAY_CHANGES WHERE PROJECT_ID = $projectId""")
-      runUpdateToDb(s"""DELETE FROM PROJECT_RESERVED_ROAD_PART WHERE project_id = $projectId and road_number = $roadNumber and road_part_number = $roadPartNumber""")
+      runUpdateToDb(s"""DELETE FROM PROJECT_RESERVED_ROAD_PART WHERE project_id = $projectId and road_number = ${roadPart.roadNumber} and road_part_number = ${roadPart.partNumber}""")
     }
   }
 
@@ -79,7 +79,7 @@ class ProjectReservedPartDAO extends BaseDAO{
       Q.queryNA[(Long, Long, Option[Long], Option[Long], Option[Long], Option[String])](sql).list.map {
         case (roadNumber, roadPartNumber, length, ely, discontinuityOpt, startingLinkId) =>
           val discontinuity = discontinuityOpt.map(Discontinuity.apply)
-          ProjectReservedPart(noReservedPartId, roadNumber, roadPartNumber, length, discontinuity, ely, length, discontinuity, ely, startingLinkId)
+          ProjectReservedPart(noReservedPartId, RoadPart(roadNumber, roadPartNumber), length, discontinuity, ely, length, discontinuity, ely, startingLinkId)
       }
     }
   }
@@ -89,7 +89,7 @@ class ProjectReservedPartDAO extends BaseDAO{
       val sql = s"""SELECT rp.id, rp.road_number, rp.road_part_number FROM PROJECT_RESERVED_ROAD_PART rp WHERE rp.project_id = $projectId"""
       Q.queryNA[(Long, Long, Long)](sql).list.map {
         case (id, road, part) =>
-          ProjectReservedPart(id, road, part, None, None, None, None, None, None, None)
+          ProjectReservedPart(id, RoadPart(road, part), None, None, None, None, None, None, None)
       }
     }
   }
@@ -152,13 +152,13 @@ class ProjectReservedPartDAO extends BaseDAO{
        */
       Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[String])](sql).list.map {
         case (id, road, part, length, ely, discontinuity, startingLinkId) =>
-          ProjectReservedPart(id, road, part, length, discontinuity.map(Discontinuity.apply), ely, None, None, None, startingLinkId)
+          ProjectReservedPart(id, RoadPart(road, part), length, discontinuity.map(Discontinuity.apply), ely, None, None, None, startingLinkId)
       }
     }
   }
 
   def fetchFormedRoadParts(projectId: Long, withProjectId: Boolean = true): Seq[ProjectReservedPart] = {
-    (formedByIncrease(projectId, withProjectId)++formedByReduction(projectId, withProjectId)).sortBy(p => (p.roadNumber, p.roadPartNumber))
+    (formedByIncrease(projectId, withProjectId)++formedByReduction(projectId, withProjectId)).sortBy(p => p.roadPart)
   }
 
   def formedByIncrease(projectId: Long, withProjectId: Boolean = true): Seq[ProjectReservedPart] = {
@@ -221,7 +221,7 @@ class ProjectReservedPartDAO extends BaseDAO{
        */
       Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[String])](sql).list.map {
         case (id, road, part, newLength, newEly, newDiscontinuity, startingLinkId) =>
-          ProjectReservedPart(id, road, part, None, None, None, newLength, newDiscontinuity.map(Discontinuity.apply), newEly, startingLinkId)
+          ProjectReservedPart(id, RoadPart(road, part), None, None, None, newLength, newDiscontinuity.map(Discontinuity.apply), newEly, startingLinkId)
       }
     }
   }
@@ -252,12 +252,12 @@ class ProjectReservedPartDAO extends BaseDAO{
             GROUP BY rp.id, pl.project_id, rw.road_number, rw.road_part_number) gr ORDER BY gr.road_number, gr.road_part_number"""
       Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[String])](sql).list.map {
         case (id, road, part, newLength, newEly, newDiscontinuity, startingLinkId) =>
-          ProjectReservedPart(id, road, part, None, None, None, newLength, newDiscontinuity.map(Discontinuity.apply), newEly, startingLinkId)
+          ProjectReservedPart(id, RoadPart(road, part), None, None, None, newLength, newDiscontinuity.map(Discontinuity.apply), newEly, startingLinkId)
       }
     }
   }
 
- def fetchReservedRoadPart(roadNumber: Long, roadPartNumber: Long): Option[ProjectReservedPart] = {
+ def fetchReservedRoadPart(roadPart: RoadPart): Option[ProjectReservedPart] = {
     time(logger, "Fetch reserved road part") {
       val sql =
         s"""SELECT ID, ROAD_NUMBER, ROAD_PART_NUMBER, length, ely,
@@ -292,8 +292,8 @@ class ProjectReservedPartDAO extends BaseDAO{
             OR ra.ID = pl.ROADWAY_ID)
           LEFT JOIN LINEAR_LOCATION lc ON
             (lc.ID = pl.LINEAR_LOCATION_ID)
-          WHERE rp.ROAD_NUMBER = $roadNumber
-            AND rp.ROAD_PART_NUMBER = $roadPartNumber
+          WHERE rp.ROAD_NUMBER = ${roadPart.roadNumber}
+            AND rp.ROAD_PART_NUMBER = ${roadPart.partNumber}
             AND ra.END_DATE IS NULL
             AND ra.VALID_TO IS NULL
             AND (pl.STATUS IS NULL
@@ -302,12 +302,12 @@ class ProjectReservedPartDAO extends BaseDAO{
           GROUP BY rp.ID, rp.PROJECT_ID, rp.ROAD_NUMBER, rp.ROAD_PART_NUMBER) gr"""
       Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[String])](sql).firstOption.map {
         case (id, road, part, length, ely, discontinuity, linkId) =>
-          ProjectReservedPart(id, road, part, length, discontinuity.map(Discontinuity.apply), ely, None, None, None, linkId)
+          ProjectReservedPart(id, RoadPart(road, part), length, discontinuity.map(Discontinuity.apply), ely, None, None, None, linkId)
       }
     }
   }
 
-  def fetchFormedRoadPart(roadNumber: Long, roadPartNumber: Long): Option[ProjectReservedPart] = {
+  def fetchFormedRoadPart(roadPart: RoadPart): Option[ProjectReservedPart] = {
     time(logger, "Fetch reserved road part") {
       val sql =
         s"""SELECT ID, ROAD_NUMBER, ROAD_PART_NUMBER, length_new, ely_new,
@@ -343,8 +343,8 @@ class ProjectReservedPartDAO extends BaseDAO{
             OR ra.ID = pl.ROADWAY_ID)
           LEFT JOIN LINEAR_LOCATION lc ON
             (lc.ID = pl.LINEAR_LOCATION_ID)
-          WHERE rp.ROAD_NUMBER = $roadNumber
-            AND rp.ROAD_PART_NUMBER = $roadPartNumber
+          WHERE rp.ROAD_NUMBER = ${roadPart.roadNumber}
+            AND rp.ROAD_PART_NUMBER = ${roadPart.partNumber}
             AND ra.END_DATE IS NULL
             AND ra.VALID_TO IS NULL
             AND (pl.STATUS IS NULL
@@ -355,12 +355,12 @@ class ProjectReservedPartDAO extends BaseDAO{
           GROUP BY rp.ID, rp.PROJECT_ID, rp.ROAD_NUMBER, rp.ROAD_PART_NUMBER) gr"""
       Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[String])](sql).firstOption.map {
         case (id, road, part, newLength, newEly, newDiscontinuity, linkId) =>
-          ProjectReservedPart(id, road, part, None, None, None, newLength, newDiscontinuity.map(Discontinuity.apply), newEly, linkId)
+          ProjectReservedPart(id, RoadPart(road, part), None, None, None, newLength, newDiscontinuity.map(Discontinuity.apply), newEly, linkId)
       }
     }
   }
 
-  def roadPartReservedTo(roadNumber: Long, roadPart: Long, projectId: Long = 0, withProjectId: Boolean = false): Option[(Long, String)] = {
+  def roadPartReservedTo(roadPart: RoadPart, projectId: Long = 0, withProjectId: Boolean = false): Option[(Long, String)] = {
     time(logger, "Road part reserved to") {
       val filter = if (withProjectId && projectId != 0) s" AND p.ID = $projectId " else ""
       val query =
@@ -368,12 +368,12 @@ class ProjectReservedPartDAO extends BaseDAO{
               FROM project p
               JOIN PROJECT_RESERVED_ROAD_PART l
            ON l.PROJECT_ID = p.ID
-           WHERE l.road_number=$roadNumber AND l.road_part_number=$roadPart $filter"""
+           WHERE l.road_number=${roadPart.roadNumber} AND l.road_part_number=${roadPart.partNumber} $filter"""
       Q.queryNA[(Long, String)](query).firstOption
     }
   }
 
-  def fetchProjectReservedPart(roadNumber: Long, roadPart: Long, projectId: Long = 0, withProjectId: Option[Boolean] = None): Option[(Long, String)] = {
+  def fetchProjectReservedPart(roadPart: RoadPart, projectId: Long = 0, withProjectId: Option[Boolean] = None): Option[(Long, String)] = {
     time(logger, "Road part reserved by other project") {
       val filter = (withProjectId, projectId != 0) match {
         case (_, false) => ""
@@ -385,14 +385,14 @@ class ProjectReservedPartDAO extends BaseDAO{
         s"""
         SELECT prj.ID, prj.NAME FROM PROJECT prj
         JOIN PROJECT_RESERVED_ROAD_PART res ON res.PROJECT_ID = prj.ID
-        WHERE res.road_number = $roadNumber AND res.road_part_number = $roadPart
+        WHERE res.road_number = ${roadPart.roadNumber} AND res.road_part_number = ${roadPart.partNumber}
           AND prj.ID IN (
             SELECT DISTINCT(pl.PROJECT_ID) FROM PROJECT_LINK pl
             WHERE pl.LINK_ID IN (
               SELECT ll.LINK_ID FROM LINEAR_LOCATION ll
               INNER JOIN ROADWAY rw ON ll.ROADWAY_NUMBER = rw.ROADWAY_NUMBER
-              WHERE rw.ROAD_NUMBER = $roadNumber
-              AND rw.ROAD_PART_NUMBER = $roadPart
+              WHERE rw.ROAD_NUMBER = ${roadPart.roadNumber}
+              AND rw.ROAD_PART_NUMBER = ${roadPart.partNumber}
             )
           )
         $filter
@@ -401,7 +401,7 @@ class ProjectReservedPartDAO extends BaseDAO{
     }
   }
 
-  def fetchProjectReservedJunctions(roadNumber: Long, roadPart: Long, projectId: Long): Seq[String] = {
+  def fetchProjectReservedJunctions(roadPart: RoadPart, projectId: Long): Seq[String] = {
     sql"""
      SELECT distinct prj.NAME FROM PROJECT prj
          JOIN PROJECT_RESERVED_ROAD_PART res ON (res.PROJECT_ID = prj.ID AND prj.ID <> $projectId)
@@ -418,30 +418,30 @@ class ProjectReservedPartDAO extends BaseDAO{
                   JOIN JUNCTION_POINT jp ON j.id = jp.JUNCTION_ID
                   JOIN ROADWAY_POINT rp ON jp.ROADWAY_POINT_ID = rp.id
                   JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER
-                  WHERE rw.ROAD_NUMBER = $roadNumber AND rw.ROAD_PART_NUMBER = $roadPart AND j.VALID_TO IS null AND jp.VALID_TO IS NULL AND rw.VALID_TO IS NULL))))
+                  WHERE rw.ROAD_NUMBER = ${roadPart.roadNumber} AND rw.ROAD_PART_NUMBER = ${roadPart.partNumber} AND j.VALID_TO IS null AND jp.VALID_TO IS NULL AND rw.VALID_TO IS NULL))))
        """.as[String].list
   }
 
-  def reserveRoadPart(projectId: Long, roadNumber: Long, roadPartNumber: Long, user: String): Unit = {
-    time(logger, s"User $user reserves road part $roadNumber / $roadPartNumber for project $projectId") {
+  def reserveRoadPart(projectId: Long, roadPart: RoadPart, user: String): Unit = {
+    time(logger, s"User $user reserves road part $roadPart for project $projectId") {
       runUpdateToDb(s"""INSERT INTO PROJECT_RESERVED_ROAD_PART(id, road_number, road_part_number, project_id, created_by)
-                        SELECT nextval('viite_general_seq'), $roadNumber, $roadPartNumber, $projectId, '$user'""")
+                        SELECT nextval('viite_general_seq'), ${roadPart.roadNumber}, ${roadPart.partNumber}, $projectId, '$user'""")
     }
   }
 
-  def isNotAvailableForProject(roadNumber: Long, roadPartNumber: Long, projectId: Long): Boolean = {
-    time(logger, s"Check if the road part $roadNumber/$roadPartNumber is not available for the project $projectId") {
+  def isNotAvailableForProject(roadPart: RoadPart, projectId: Long): Boolean = {
+    time(logger, s"Check if the road part $roadPart is not available for the project $projectId") {
       val query =
         s"""
           SELECT 1 WHERE EXISTS(select 1
              from project pro,
              ROADWAY ra
-             where  pro.id = $projectId AND road_number = $roadNumber AND road_part_number = $roadPartNumber AND
+             where  pro.id = $projectId AND road_number = ${roadPart.roadNumber} AND road_part_number = ${roadPart.partNumber} AND
              (ra.START_DATE > pro.START_DATE or ra.END_DATE >= pro.START_DATE) AND
              ra.VALID_TO is null) OR EXISTS (
              SELECT 1 FROM project_reserved_road_part pro, ROADWAY ra
               WHERE pro.project_id != $projectId AND pro.road_number = ra.road_number AND pro.road_part_number = ra.road_part_number
-               AND pro.road_number = $roadNumber AND pro.road_part_number = $roadPartNumber AND ra.end_date IS NULL)"""
+               AND pro.road_number = ${roadPart.roadNumber} AND pro.road_part_number = ${roadPart.partNumber} AND ra.end_date IS NULL)"""
       Q.queryNA[Int](query).firstOption.nonEmpty
     }
   }

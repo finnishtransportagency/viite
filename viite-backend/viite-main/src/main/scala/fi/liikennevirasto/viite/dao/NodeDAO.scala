@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.NewIdValue
 import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
-import fi.vaylavirasto.viite.model.{NodePointType, NodeType}
+import fi.vaylavirasto.viite.model.{NodePointType, NodeType, RoadPart}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -17,9 +17,9 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 case class Node(id: Long, nodeNumber: Long, coordinates: Point, name: Option[String], nodeType: NodeType, startDate: DateTime, endDate: Option[DateTime], validFrom: DateTime, validTo: Option[DateTime],
                 createdBy: String, createdTime: Option[DateTime], editor: Option[String] = None, publishedTime: Option[DateTime] = None, registrationDate: DateTime)
 
-case class RoadAttributes(roadNumber: Long, roadPartNumber: Long, addrMValue: Long)
+case class RoadAttributes(roadPart: RoadPart, addrMValue: Long)
 
-case class NodeForRoadAddressBrowser(ely: Long, roadNumber: Long, roadPartNumber: Long, addrM: Long, startDate: DateTime, nodeType: NodeType, name: Option[String], nodeCoordinates: Point, nodeNumber: Long)
+case class NodeForRoadAddressBrowser(ely: Long, roadPart: RoadPart, addrM: Long, startDate: DateTime, nodeType: NodeType, name: Option[String], nodeCoordinates: Point, nodeNumber: Long)
 
 case class NodeWithJunctions(node: Node, junctionsWithCoordinates: Seq[JunctionWithCoordinateAndCrossingRoads])
 
@@ -60,7 +60,7 @@ class NodeDAO extends BaseDAO {
       val coordY = r.nextLong()
       val nodeNumber =r.nextLong()
 
-      NodeForRoadAddressBrowser(ely, roadNumber, roadPartNumber, addrM, startDate, nodeType, name, Point(coordX, coordY), nodeNumber)
+      NodeForRoadAddressBrowser(ely, RoadPart(roadNumber, roadPartNumber), addrM, startDate, nodeType, name, Point(coordX, coordY), nodeNumber)
     }
   }
 
@@ -191,7 +191,7 @@ class NodeDAO extends BaseDAO {
       createdBy, createdTime, registrationDate, roadNumber, roadPartNumber, addrMValue) =>
 
         (Node(id, nodeNumber, Point(x, y), name, NodeType.apply(nodeType.getOrElse(NodeType.UnknownNodeType.value)), startDate, endDate, validFrom, validTo, createdBy, createdTime, None, None, registrationDate),
-          RoadAttributes(roadNumber, roadPartNumber, addrMValue))
+          RoadAttributes(RoadPart(roadNumber, roadPartNumber), addrMValue))
     }
   }
 

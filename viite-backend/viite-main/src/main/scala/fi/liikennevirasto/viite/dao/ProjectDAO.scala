@@ -4,6 +4,7 @@ import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite._
 import fi.vaylavirasto.viite.dao.BaseDAO
+import fi.vaylavirasto.viite.model.RoadPart
 import org.joda.time.DateTime
 import org.postgresql.jdbc.PgArray
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -51,11 +52,11 @@ case class Project(id            : Long,
                    coordinates   : Option[ProjectCoordinates] = Some(ProjectCoordinates()),
                    elys          : Set[Int] = Set()
                   ) {
-  def isReserved(roadNumber: Long, roadPartNumber: Long): Boolean = {
-    reservedParts.exists(p => p.roadNumber == roadNumber && p.roadPartNumber == roadPartNumber)
+  def isReserved(roadPart: RoadPart): Boolean = {
+    reservedParts.exists(p => p.roadPart == roadPart)
   }
-  def isFormed(roadNumber: Long, roadPartNumber: Long): Boolean = {
-    formedParts.exists(p => p.roadNumber == roadNumber && p.roadPartNumber == roadPartNumber)
+  def isFormed(roadPart: RoadPart): Boolean = {
+    formedParts.exists(p => p.roadPart == roadPart)
   }
 }
 
