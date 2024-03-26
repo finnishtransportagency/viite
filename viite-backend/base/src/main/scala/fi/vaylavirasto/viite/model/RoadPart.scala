@@ -35,10 +35,10 @@ case class RoadPart (roadNumber: Long, partNumber: Long) extends Ordered[RoadPar
   /** Convenience function. Returns true, if this RoadPart is invalid (see [[RoadPart.isInvalid]]). Else false. */
   def isUnaddressed: Boolean = {  this.isInvalid  }
   /** A valid road part is one with positive road number, and road part number.
-    * Returns true, if this RoadPart has both road number, and road part number greater than zeroes. Else false. */
+    * Returns true, if this RoadPart has greater than zero both road number, and road part number. Else false. */
   def isValid:       Boolean = {  this.roadNumber >  0 && this.partNumber >  0  }
   /** An invalid road part has at least one unacceptable value.
-    * Returns true, if this RoadPart has either road number, or road part number (or both) at most zero. Else false. */
+    * Returns true, if this RoadPart has at most zero road number, or road part number (or both). Else false. */
   def isInvalid:     Boolean = {  this.roadNumber <= 0 || this.partNumber <= 0  }
 
   /** Provides [[Ordered]] extension, thus offering comparison operators ==, <, >, <=, and >=.

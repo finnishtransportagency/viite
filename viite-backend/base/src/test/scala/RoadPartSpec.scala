@@ -76,7 +76,7 @@ class RoadPartSpec extends FunSuite with Matchers {
     RoadPart(1,1).isAfter(RoadPart(1,0)) shouldBe false
   }
 
-  test("Test RoadPart.isUnaddressed: Returns true, if this RoadPart has either road number, or road part number zeroes. Else false.") {
+  test("Test RoadPart.isUnaddressed: Returns true, if this RoadPart has at most zero road number, or road part number. Else false.") {
     RoadPart(0,1).isUnaddressed shouldBe true
     RoadPart(1,0).isUnaddressed shouldBe true
     RoadPart(0,0).isUnaddressed shouldBe true
@@ -86,7 +86,7 @@ class RoadPartSpec extends FunSuite with Matchers {
     RoadPart(99999,999).isUnaddressed shouldBe false
   }
 
-  test("Test RoadPart.isValid Returns true, if this RoadPart has both road number, and road part number greater than zeroes. Else false.") {
+  test("Test RoadPart.isValid:       Returns true, if this RoadPart has zero as both road number, and road part number. Else false.") {
     RoadPart(    1,  1).isValid shouldBe true
     RoadPart(99999,999).isValid shouldBe true
 
@@ -96,7 +96,7 @@ class RoadPartSpec extends FunSuite with Matchers {
     RoadPart(0,0).isValid shouldBe false
   }
 
-  test("Test RoadPart.isInvalid Returns true, if this RoadPart has either road number, or road part number at most zero. Else false.") {
+  test("Test RoadPart.isInvalid:     Returns true, if this RoadPart has at most zero road number, or road part number. Else false.") {
     RoadPart(0,1).isInvalid shouldBe true
     RoadPart(1,0).isInvalid shouldBe true
     RoadPart(0,0).isInvalid shouldBe true
