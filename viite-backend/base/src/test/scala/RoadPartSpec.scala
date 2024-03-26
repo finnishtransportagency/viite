@@ -1,5 +1,6 @@
 package fi.liikennevirasto.viite.model
 import fi.vaylavirasto.viite.model.RoadPart
+import fi.vaylavirasto.viite.util.ViiteException
 import org.scalatest._
 
 class RoadPartSpec extends FunSuite with Matchers {
@@ -14,10 +15,10 @@ class RoadPartSpec extends FunSuite with Matchers {
 
   test("RoadPart: RoadPart construction fails, if given invalid road number, or road part number.") {
     val okNum = 100
-    intercept[IllegalArgumentException](RoadPart(    -1,okNum)) shouldBe a[IllegalArgumentException]
-    intercept[IllegalArgumentException](RoadPart(100000,okNum)) shouldBe a[IllegalArgumentException]
-    intercept[IllegalArgumentException](RoadPart( okNum,   -1)) shouldBe a[IllegalArgumentException]
-    intercept[IllegalArgumentException](RoadPart( okNum, 1000)) shouldBe a[IllegalArgumentException]
+    intercept[Exception](RoadPart(    -1,okNum)) shouldBe a[ViiteException]
+    intercept[Exception](RoadPart(100000,okNum)) shouldBe a[ViiteException]
+    intercept[Exception](RoadPart( okNum,   -1)) shouldBe a[ViiteException]
+    intercept[Exception](RoadPart( okNum, 1000)) shouldBe a[ViiteException]
   }
 
   test("RoadPart: Creating RoadPart(0,0) (unaddressed RoadPart) succeeds") {

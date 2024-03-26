@@ -1,5 +1,7 @@
 package fi.vaylavirasto.viite.model
 
+import fi.vaylavirasto.viite.util.ViiteException
+
 import scala.math.Ordered.orderingToOrdered // for compare function
 
 /**
@@ -17,9 +19,12 @@ case class RoadPart (roadNumber: Long, partNumber: Long) extends Ordered[RoadPar
   val maxPartNumber = 999
 
   // throws IllegalArgumentException if requirements not met
-  require((roadNumber>=0 & roadNumber <= maxRoadNumber), s"Road number must be between (0-)1-$maxRoadNumber")
-  require((partNumber>=0 & partNumber <= maxPartNumber), s"Road number must be between (0-)1-$maxPartNumber")
-
+  try {
+    require((roadNumber>=0 & roadNumber <= maxRoadNumber),      s"Road number must be between (0-)1-$maxRoadNumber")
+    require((partNumber>=0 & partNumber <= maxPartNumber), s"Road part number must be between (0-)1-$maxPartNumber")
+  } catch {
+    case iae: IllegalArgumentException => throw new ViiteException(iae.getMessage)
+  }
   /** Returns the RoadPart in the format "roadNumber/partNumber", e.g. "3575/1".
     * Overrides the very basic java.Object.toString.
     * @override [[java.object.String]] */
