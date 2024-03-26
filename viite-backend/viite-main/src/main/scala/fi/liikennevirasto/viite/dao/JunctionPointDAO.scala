@@ -4,7 +4,7 @@ import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
-import fi.vaylavirasto.viite.model.{BeforeAfter, Discontinuity, Track}
+import fi.vaylavirasto.viite.model.{BeforeAfter, Discontinuity, RoadPart, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase
 import fi.vaylavirasto.viite.util.DateTimeFormatters.dateOptTimeFormatter
 import org.joda.time.DateTime
@@ -14,7 +14,7 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 case class JunctionPoint(id: Long, beforeAfter: BeforeAfter, roadwayPointId: Long, junctionId: Long, startDate: Option[DateTime], endDate: Option[DateTime],
                          validFrom: DateTime, validTo: Option[DateTime], createdBy: String, createdTime: Option[DateTime], roadwayNumber: Long, addrM: Long,
-                         roadNumber: Long, roadPartNumber: Long, track: Track, discontinuity: Discontinuity, coordinates: Point = Point(0.0, 0.0))
+                         roadPart: RoadPart, track: Track, discontinuity: Discontinuity, coordinates: Point = Point(0.0, 0.0))
 
 class JunctionPointDAO extends BaseDAO {
 
@@ -61,7 +61,7 @@ class JunctionPointDAO extends BaseDAO {
       val track = Track.apply(r.nextInt())
       val discontinuity = Discontinuity.apply(r.nextInt())
 
-      JunctionPoint(id, BeforeAfter.apply(beforeOrAfter), roadwayPointId, junctionId, startDate, endDate, validFrom, validTo, createdBy, createdTime, roadwayNumber, addrM, roadNumber, roadPartNumber, track, discontinuity)
+      JunctionPoint(id, BeforeAfter.apply(beforeOrAfter), roadwayPointId, junctionId, startDate, endDate, validFrom, validTo, createdBy, createdTime, roadwayNumber, addrM, RoadPart(roadNumber,roadPartNumber), track, discontinuity)
     }
   }
 

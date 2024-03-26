@@ -4,6 +4,7 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import fi.vaylavirasto.viite.dao.BaseDAO
+import fi.vaylavirasto.viite.model.RoadPart
 
 object ProjectCalibrationPointDAO extends BaseDAO {
 
@@ -81,12 +82,12 @@ object ProjectCalibrationPointDAO extends BaseDAO {
     }
   }
 
-  def fetchByRoadPart(projectId: Long, roadNumber: Long, roadPartNumber: Long): Seq[UserDefinedCalibrationPoint] = {
+  def fetchByRoadPart(projectId: Long, roadPart: RoadPart): Seq[UserDefinedCalibrationPoint] = {
     val baseQuery =
       s"""
          Select PROJECT_CALIBRATION_POINT.ID, PROJECT_LINK_ID, pl.PROJECT_ID, LINK_M, ADDRESS_M From PROJECT_CALIBRATION_POINT JOIN PROJECT_LINK pl
            ON (pl.ID = PROJECT_CALIBRATION_POINT.PROJECT_LINK_ID)
-         WHERE pl.ROAD_NUMBER = $roadNumber AND pl.ROAD_PART_NUMBER = $roadPartNumber
+         WHERE pl.ROAD_NUMBER = ${roadPart.roadNumber} AND pl.ROAD_PART_NUMBER = ${roadPart.partNumber}
          AND pl.PROJECT_ID = $projectId
        """
 

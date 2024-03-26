@@ -8,7 +8,7 @@ import fi.liikennevirasto.viite.model.RoadAddressLinkLike
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import fi.vaylavirasto.viite.dao.{BaseDAO, Queries, Sequences}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point, Vector3d}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, CalibrationPointType, Discontinuity, LinkGeomSource, SideCode, Track}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, CalibrationPointType, Discontinuity, LinkGeomSource, RoadPart, SideCode, Track}
 import fi.vaylavirasto.viite.postgis.MassQuery
 import fi.vaylavirasto.viite.util.DateTimeFormatters.{basicDateFormatter, dateOptTimeFormatter}
 import org.joda.time.DateTime
@@ -91,7 +91,7 @@ case class ProjectCalibrationPoint(
    this(linkId.toString, segmentMValue, addressMValue, typeCode)
 }
 
-case class RoadwaysForJunction(jId: Long, roadwayNumber: Long, roadNumber: Long, track: Long, roadPartNumber: Long, addrM: Long, beforeAfter: Long)
+case class RoadwaysForJunction(jId: Long, roadwayNumber: Long, roadPart: RoadPart, track: Long, addrM: Long, beforeAfter: Long)
 
 sealed trait TerminationCode {
   def value: Int
@@ -124,8 +124,7 @@ trait BaseRoadAddress {
 
   def linearLocationId: Long
 
-  def roadNumber: Long
-  def roadPartNumber: Long
+  def roadPart: RoadPart
   def track: Track
 
   def discontinuity: Discontinuity
@@ -264,21 +263,21 @@ trait BaseRoadAddress {
 
 //TODO the start date and the created by should not be optional on the road address case class
 // Note: Geometry on road address is not directed: it isn't guaranteed to have a direction of digitization or road addressing
-case class RoadAddress(id: Long, linearLocationId: Long, roadNumber: Long, roadPartNumber: Long, administrativeClass: AdministrativeClass, track: Track, discontinuity: Discontinuity,
+case class RoadAddress(id: Long, linearLocationId: Long, roadPart: RoadPart, administrativeClass: AdministrativeClass, track: Track, discontinuity: Discontinuity,
                        startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None, endDate: Option[DateTime] = None,
                        createdBy: Option[String] = None, linkId: String, startMValue: Double, endMValue: Double, sideCode: SideCode, adjustedTimestamp: Long,
                        calibrationPoints: (Option[ProjectCalibrationPoint], Option[ProjectCalibrationPoint]) = (None, None),
                        geometry: Seq[Point], linkGeomSource: LinkGeomSource,
                        ely: Long, terminated: TerminationCode = TerminationCode.NoTermination, roadwayNumber: Long,
                        validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None, roadName: Option[String] = None) extends BaseRoadAddress {
-  def this(id: Long, linearLocationId: Long, roadNumber: Long, roadPartNumber: Long, administrativeClass: AdministrativeClass, track: Track, discontinuity: Discontinuity,
+  def this(id: Long, linearLocationId: Long, roadPart: RoadPart, administrativeClass: AdministrativeClass, track: Track, discontinuity: Discontinuity,
            startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime], endDate: Option[DateTime],
            createdBy: Option[String], linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode, adjustedTimestamp: Long,
            calibrationPoints: (Option[ProjectCalibrationPoint], Option[ProjectCalibrationPoint]),
            geometry: Seq[Point], linkGeomSource: LinkGeomSource,
            ely: Long, terminated: TerminationCode, roadwayNumber: Long,
            validFrom: Option[DateTime], validTo: Option[DateTime], roadName: Option[String]) =
-   this(id, linearLocationId, roadNumber, roadPartNumber, administrativeClass, track, discontinuity,
+   this(id, linearLocationId, roadPart, administrativeClass, track, discontinuity,
      startAddrMValue, endAddrMValue, startDate, endDate,
      createdBy, linkId.toString, startMValue, endMValue, sideCode, adjustedTimestamp,
      calibrationPoints, geometry, linkGeomSource,
@@ -377,11 +376,11 @@ case class RoadAddress(id: Long, linearLocationId: Long, roadNumber: Long, roadP
   }
 }
 
-case class Roadway(id: Long, roadwayNumber: Long, roadNumber: Long, roadPartNumber: Long, administrativeClass: AdministrativeClass, track: Track, discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, reversed: Boolean = false, startDate: DateTime, endDate: Option[DateTime] = None, createdBy: String, roadName: Option[String], ely: Long, terminated: TerminationCode = TerminationCode.NoTermination, validFrom: DateTime = DateTime.now(), validTo: Option[DateTime] = None)
+case class Roadway(id: Long, roadwayNumber: Long, roadPart: RoadPart, administrativeClass: AdministrativeClass, track: Track, discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, reversed: Boolean = false, startDate: DateTime, endDate: Option[DateTime] = None, createdBy: String, roadName: Option[String], ely: Long, terminated: TerminationCode = TerminationCode.NoTermination, validFrom: DateTime = DateTime.now(), validTo: Option[DateTime] = None)
 
-case class TrackForRoadAddressBrowser(ely: Long, roadNumber: Long, track: Long, roadPartNumber: Long, startAddrM: Long, endAddrM: Long, roadAddressLengthM: Long, administrativeClass: Long, startDate: DateTime)
+case class TrackForRoadAddressBrowser(ely: Long, roadPart: RoadPart, track: Long, startAddrM: Long, endAddrM: Long, roadAddressLengthM: Long, administrativeClass: Long, startDate: DateTime)
 
-case class RoadPartForRoadAddressBrowser(ely: Long, roadNumber: Long, roadPartNumber: Long,
+case class RoadPartForRoadAddressBrowser(ely: Long, roadPart: RoadPart,
                                          startAddrM: Long, endAddrM: Long, roadAddressLengthM: Long, startDate: DateTime)
 
 
@@ -406,32 +405,30 @@ class RoadwayDAO extends BaseDAO {
   }
 
   /**
-    * Fetch all the current road addresses by road number and road part
+    * Fetch all the current road addresses by road part
     *
-    * @param roadNumber     The road number
-    * @param roadPartNumber The road part number
+    * @param roadPart The road part
     * @return Current road addresses at road address section
     */
-  def fetchAllBySection(roadNumber: Long, roadPartNumber: Long): Seq[Roadway] = {
+  def fetchAllBySection(roadPart: RoadPart): Seq[Roadway] = {
     time(logger, "Fetch road address by road number and road part number") {
-      fetch(withSection(roadNumber, roadPartNumber))
+      fetch(withSection(roadPart))
     }
   }
 
   /**
     * Fetch all the current road addresses by road number, road part number and track codes
     *
-    * @param roadNumber     The road number
-    * @param roadPartNumber The road part number
-    * @param tracks         The set of track codes
+    * @param roadPart  The road part
+    * @param tracks    The set of track codes
     * @return Current road addresses at specified section
     */
-  def fetchAllBySectionAndTracks(roadNumber: Long, roadPartNumber: Long, tracks: Set[Track]): Seq[Roadway] = {
+  def fetchAllBySectionAndTracks(roadPart: RoadPart, tracks: Set[Track]): Seq[Roadway] = {
     time(logger, "Fetch roadway by road number, road part number and tracks") {
       if (tracks == null || tracks.isEmpty) {
         Seq()
       } else {
-        fetch(withSectionAndTracks(roadNumber, roadPartNumber, tracks))
+        fetch(withSectionAndTracks(roadPart, tracks))
       }
     }
   }
@@ -475,18 +472,17 @@ class RoadwayDAO extends BaseDAO {
   }
 
   /**
-    * Will get a collection of Roadways from our database based on the road number, road part number given.
+    * Will get a collection of Roadways from our database based on the road part given.
     * Also has query modifiers that will inform if it should return history roadways (default value no) or if should get only the end parts (max end address m value, default value no).
     *
-    * @param roadNumber   : Long - Road Number
-    * @param roadPart     : Long - Road Part Number
+    * @param roadPart     : RoadPart - Road part
     * @param withHistory  : Boolean - Query modifier, indicates if should fetch history roadways or not
     * @param fetchOnlyEnd : Boolean - Query modifier, indicates if should fetch only the end parts or not
     * @return
     */
-  def fetchAllByRoadAndPart(roadNumber: Long, roadPart: Long, withHistory: Boolean = false, fetchOnlyEnd: Boolean = false): Seq[Roadway] = {
+  def fetchAllByRoadAndPart(roadPart: RoadPart, withHistory: Boolean = false, fetchOnlyEnd: Boolean = false): Seq[Roadway] = {
     time(logger, "Fetch roadway by road number and part") {
-      fetch(withRoadAndPart(roadNumber, roadPart, withHistory, fetchOnlyEnd))
+      fetch(withRoadAndPart(roadPart, withHistory, fetchOnlyEnd))
     }
   }
 
@@ -516,15 +512,15 @@ class RoadwayDAO extends BaseDAO {
     }
   }
 
-  def fetchAllBySectionTrackAndAddresses(roadNumber: Long, roadPartNumber: Long, track: Track, startAddrM: Option[Long], endAddrM: Option[Long]): Seq[Roadway] = {
+  def fetchAllBySectionTrackAndAddresses(roadPart: RoadPart, track: Track, startAddrM: Option[Long], endAddrM: Option[Long]): Seq[Roadway] = {
     time(logger, "Fetch road address by road number, road part number, start address measure and end address measure") {
-      fetch(withSectionTrackAndAddresses(roadNumber, roadPartNumber, track, startAddrM, endAddrM))
+      fetch(withSectionTrackAndAddresses(roadPart, track, startAddrM, endAddrM))
     }
   }
 
-  def fetchAllBySectionAndAddresses(roadNumber: Long, roadPartNumber: Long, startAddrM: Option[Long], endAddrM: Option[Long], track: Option[Long] = None): Seq[Roadway] = {
+  def fetchAllBySectionAndAddresses(roadPart: RoadPart, startAddrM: Option[Long], endAddrM: Option[Long], track: Option[Long] = None): Seq[Roadway] = {
     time(logger, "Fetch road address by road number, road part number, start address measure and end address measure") {
-      fetch(withSectionAndAddresses(roadNumber, roadPartNumber, startAddrM, endAddrM, track))
+      fetch(withSectionAndAddresses(roadPart, startAddrM, endAddrM, track))
     }
   }
 
@@ -584,12 +580,12 @@ class RoadwayDAO extends BaseDAO {
     Q.queryNA[Roadway](filteredQuery).iterator.toSeq
   }
 
-  private def withSection(roadNumber: Long, roadPartNumber: Long)(query: String): String = {
-    s"""$query where valid_to is null and end_date is null and road_number = $roadNumber and road_part_number = $roadPartNumber"""
+  private def withSection(roadPart: RoadPart)(query: String): String = {
+    s"""$query where valid_to is null and end_date is null and road_number = ${roadPart.roadNumber} and road_part_number = ${roadPart.partNumber}"""
   }
 
-  private def withSectionAndTracks(roadNumber: Long, roadPartNumber: Long, tracks: Set[Track])(query: String): String = {
-    s"""$query where valid_to is null and end_date is null and road_number = $roadNumber and road_part_number = $roadPartNumber and TRACK in (${tracks.mkString(",")})"""
+  private def withSectionAndTracks(roadPart: RoadPart, tracks: Set[Track])(query: String): String = {
+    s"""$query where valid_to is null and end_date is null and road_number = ${roadPart.roadNumber} and road_part_number = ${roadPart.partNumber} and TRACK in (${tracks.mkString(",")})"""
   }
 
   private def withSectionAndTracks(roadNumber: Long, roadPartNumbers: Set[Long], tracks: Set[Track])(query: String): String = {
@@ -623,23 +619,22 @@ class RoadwayDAO extends BaseDAO {
     * Defines the portion of the query that will filter the results based on the given road number, road part number and if it should include history roadways or fetch only their end parts.
     * Will return the completed SQL query.
     *
-    * @param roadNumber     : Long - Road Number
-    * @param roadPart       : Long - Road Part Number
+    * @param roadPart       : RoadPart - Road Part
     * @param includeHistory : Boolean - Query modifier, indicates if should fetch history roadways or not
     * @param fetchOnlyEnd   : Boolean - Query modifier, indicates if should fetch only the end parts or not
     * @param query          : String - The actual SQL query string
     * @return
     */
-  private def withRoadAndPart(roadNumber: Long, roadPart: Long, includeHistory: Boolean = false, fetchOnlyEnd: Boolean = false)(query: String): String = {
+  private def withRoadAndPart(roadPart: RoadPart, includeHistory: Boolean = false, fetchOnlyEnd: Boolean = false)(query: String): String = {
     val historyFilter = if (!includeHistory)
       " AND end_date is null"
     else
       ""
 
     val endPart = if (fetchOnlyEnd) {
-      s" AND a.end_addr_m = (Select max(road.end_addr_m) from roadway road Where road.road_number = $roadNumber And road.road_part_number = $roadPart And (road.valid_to IS NULL AND road.end_date is null))"
+      s" AND a.end_addr_m = (Select max(road.end_addr_m) from roadway road Where road.road_number = ${roadPart.roadNumber} And road.road_part_number = ${roadPart.partNumber} And (road.valid_to IS NULL AND road.end_date is null))"
     } else ""
-    s"""$query where valid_to is null AND road_number = $roadNumber AND Road_Part_Number = $roadPart $historyFilter $endPart"""
+    s"""$query where valid_to is null AND road_number = ${roadPart.roadNumber} AND Road_Part_Number = ${roadPart.partNumber} $historyFilter $endPart"""
   }
 
   private def withRoadNumber(road: Long, roadPart: Option[Long], track: Option[Track], mValue: Option[Long])(query: String): String = {
@@ -679,7 +674,7 @@ class RoadwayDAO extends BaseDAO {
       s"""$query where a.valid_to is null and ${dateFilter(table = "a")} and a.roadway_number in (${roadwayNumbers.mkString(",")})"""
   }
 
-  private def withSectionAndAddresses(roadNumber: Long, roadPartNumber: Long, startAddrMOption: Option[Long], endAddrMOption: Option[Long], track: Option[Long] = None)(query: String) = {
+  private def withSectionAndAddresses(roadPart: RoadPart, startAddrMOption: Option[Long], endAddrMOption: Option[Long], track: Option[Long] = None)(query: String) = {
     val trackFilter = track.map(t => s"""and a.track = $t""").getOrElse(s"""""")
     val addressFilter = (startAddrMOption, endAddrMOption) match {
       case (Some(startAddrM), Some(endAddrM)) => s"""and ((a.start_addr_m >= $startAddrM and a.end_addr_m <= $endAddrM) or (a.start_addr_m <= $startAddrM and a.end_addr_m > $startAddrM) or (a.start_addr_m < $endAddrM and a.end_addr_m >= $endAddrM)) $trackFilter"""
@@ -687,17 +682,17 @@ class RoadwayDAO extends BaseDAO {
       case (_, Some(endAddrM)) => s"""and a.start_addr_m < $endAddrM $trackFilter"""
       case _ => s""""""
     }
-    s"""$query where valid_to is null and end_date is null and road_number = $roadNumber and road_part_number = $roadPartNumber $addressFilter"""
+    s"""$query where valid_to is null and end_date is null and road_number = ${roadPart.roadNumber} and road_part_number = ${roadPart.partNumber} $addressFilter"""
   }
 
-  private def withSectionTrackAndAddresses(roadNumber: Long, roadPartNumber: Long, track: Track, startAddrMOption: Option[Long], endAddrMOption: Option[Long])(query: String) = {
+  private def withSectionTrackAndAddresses(roadPart: RoadPart, track: Track, startAddrMOption: Option[Long], endAddrMOption: Option[Long])(query: String) = {
     val addressFilter = (startAddrMOption, endAddrMOption) match {
       case (Some(startAddrM), Some(endAddrM)) => s"""and ((a.start_addr_m >= $startAddrM and a.end_addr_m <= $endAddrM) or (a.start_addr_m <= $startAddrM and a.end_addr_m > $startAddrM) or (a.start_addr_m < $endAddrM and a.end_addr_m >= $endAddrM))"""
       case (Some(startAddrM), _) => s"""and a.end_addr_m > $startAddrM"""
       case (_, Some(endAddrM)) => s"""and a.start_addr_m < $endAddrM"""
       case _ => s""""""
     }
-    s"""$query where valid_to is null and end_date is null and road_number = $roadNumber and road_part_number = $roadPartNumber and TRACK = $track $addressFilter"""
+    s"""$query where valid_to is null and end_date is null and road_number = ${roadPart.roadNumber} and road_part_number = ${roadPart.partNumber} and TRACK = $track $addressFilter"""
   }
 
   private def withRoadwayNumber(roadwayNumber: Long)(query: String): String = {
@@ -763,8 +758,7 @@ class RoadwayDAO extends BaseDAO {
 
       val id = r.nextLong()
       val roadwayNumber = r.nextLong()
-      val roadNumber = r.nextLong()
-      val roadPartNumber = r.nextLong()
+      val roadPart = RoadPart(r.nextLong(), r.nextLong())
       val trackCode = r.nextInt()
       val startAddrMValue = r.nextLong()
       val endAddrMValue = r.nextLong()
@@ -780,7 +774,7 @@ class RoadwayDAO extends BaseDAO {
       val validTo       = r.nextDateOption.map(d => dateOptTimeFormatter.parseDateTime(d.toString))
       val roadName = r.nextStringOption()
 
-      Roadway(id, roadwayNumber, roadNumber, roadPartNumber, administrativeClass, Track.apply(trackCode), Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, reverted, startDate, endDate, createdBy, roadName, ely, terminated, validFrom, validTo)
+      Roadway(id, roadwayNumber, roadPart, administrativeClass, Track.apply(trackCode), Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, reverted, startDate, endDate, createdBy, roadName, ely, terminated, validFrom, validTo)
     }
   }
 
@@ -797,7 +791,7 @@ class RoadwayDAO extends BaseDAO {
       val administrativeClass = r.nextLong()
       val startDate       = dateOptTimeFormatter.parseDateTime(r.nextDate.toString)
 
-      TrackForRoadAddressBrowser(ely, roadNumber, trackCode, roadPartNumber, startAddrMValue, endAddrMValue, lengthAddrM, administrativeClass, startDate)
+      TrackForRoadAddressBrowser(ely, RoadPart(roadNumber, roadPartNumber), trackCode, startAddrMValue, endAddrMValue, lengthAddrM, administrativeClass, startDate)
     }
   }
 
@@ -812,7 +806,7 @@ class RoadwayDAO extends BaseDAO {
       val lengthAddrM = r.nextLong()
       val startDate       = dateOptTimeFormatter.parseDateTime(r.nextDate.toString)
 
-      RoadPartForRoadAddressBrowser(ely, roadNumber, roadPartNumber, startAddrMValue, endAddrMValue, lengthAddrM, startDate)
+      RoadPartForRoadAddressBrowser(ely, RoadPart(roadNumber, roadPartNumber), startAddrMValue, endAddrMValue, lengthAddrM, startDate)
     }
   }
 
@@ -826,7 +820,7 @@ class RoadwayDAO extends BaseDAO {
       val addrM = r.nextLong()
       val beforeAfter = r.nextLong()
 
-      RoadwaysForJunction(jId, roadwayNumber, roadNumber, track, roadPartNumber, addrM, beforeAfter)
+      RoadwaysForJunction(jId, roadwayNumber, RoadPart(roadNumber, roadPartNumber), track, addrM, beforeAfter)
     }
   }
 
@@ -849,17 +843,16 @@ class RoadwayDAO extends BaseDAO {
   /**
     * Full SQL query to return, if existing, a road part number that is < than the supplied current one.
     *
-    * @param roadNumber : Long - Roadway Road Number
-    * @param current    : Long - Roadway Road Part Number
+    * @param roadPart - Roadway Road Part Number
     * @return
     */
-  def fetchPreviousRoadPartNumber(roadNumber: Long, current: Long): Option[Long] = {
+  def fetchPreviousRoadPartNumber(roadPart: RoadPart): Option[Long] = {
     val query =
       s"""
             SELECT * FROM (
               SELECT ra.road_part_number
               FROM ROADWAY ra
-              WHERE road_number = $roadNumber AND road_part_number < $current
+              WHERE road_number = ${roadPart.roadNumber} AND road_part_number < ${roadPart.partNumber}
                 AND valid_to IS NULL AND end_date IS NULL
               ORDER BY road_part_number DESC
             ) AS PREVIOUS
@@ -940,8 +933,8 @@ class RoadwayDAO extends BaseDAO {
       }
       roadwayPS.setLong(1, address.id)
       roadwayPS.setLong(2, roadwayNumber)
-      roadwayPS.setLong(3, address.roadNumber)
-      roadwayPS.setLong(4, address.roadPartNumber)
+      roadwayPS.setLong(3, address.roadPart.roadNumber)
+      roadwayPS.setLong(4, address.roadPart.partNumber)
       roadwayPS.setInt(5, address.track.value)
       roadwayPS.setLong(6, address.startAddrMValue)
       roadwayPS.setLong(7, address.endAddrMValue)
@@ -965,17 +958,17 @@ class RoadwayDAO extends BaseDAO {
   }
 
   // TODO Instead of returning Option[(Long, Long, ...)] return Option[RoadPartInfo]
-  def getRoadPartInfo(roadNumber: Long, roadPart: Long): Option[(Long, String, Long, Long, Long, Option[DateTime], Option[DateTime])] = {
+  def getRoadPartInfo(roadPart: RoadPart): Option[(Long, String, Long, Long, Long, Option[DateTime], Option[DateTime])] = {
     val query =
       s"""SELECT r.id, l.link_id, r.end_addr_M, r.discontinuity, r.ely,
             (Select Max(ra.start_date) from ROADWAY ra Where r.ROAD_PART_NUMBER = ra.ROAD_PART_NUMBER and r.ROAD_NUMBER = ra.ROAD_NUMBER) as start_date,
             (Select Max(ra.end_Date) from ROADWAY ra Where r.ROAD_PART_NUMBER = ra.ROAD_PART_NUMBER and r.ROAD_NUMBER = ra.ROAD_NUMBER) as end_date
           FROM ROADWAY r
             INNER JOIN LINEAR_LOCATION l on r.ROADWAY_NUMBER = l.ROADWAY_NUMBER
-            INNER JOIN (Select  MAX(rm.start_addr_m) as maxstartaddrm FROM ROADWAY rm WHERE rm.road_number=$roadNumber AND rm.road_part_number=$roadPart AND
+            INNER JOIN (Select  MAX(rm.start_addr_m) as maxstartaddrm FROM ROADWAY rm WHERE rm.road_number=${roadPart.roadNumber} AND rm.road_part_number=${roadPart.partNumber} AND
               rm.valid_to is null AND rm.end_date is null AND rm.TRACK in (0,1)) ra
               on r.START_ADDR_M=ra.maxstartaddrm
-          WHERE r.road_number=$roadNumber AND r.road_part_number=$roadPart AND
+          WHERE r.road_number=${roadPart.roadNumber} AND r.road_part_number=${roadPart.partNumber} AND
             r.valid_to is null AND r.end_date is null AND r.TRACK in (0,1)"""
     Q.queryNA[(Long, String, Long, Long, Long, Option[DateTime], Option[DateTime])](query).firstOption
   }
