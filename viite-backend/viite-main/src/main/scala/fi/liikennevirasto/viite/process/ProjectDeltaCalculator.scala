@@ -250,8 +250,8 @@ object ProjectDeltaCalculator {
     val startLinks = projectLinks.filter(pl => pl.startAddrMValue == 0).groupBy(pl => {
       (pl.roadPart)})
     val leftAndRightTrackProjectLinks = allProjectLinks.filter(pl => {pl.track != Track.Combined})
-    val leftAndRightTrackProjectLinksGroupedByRoadAndPart = leftAndRightTrackProjectLinks.groupBy(pl => {(pl.roadPart)})
-    val terminatedForAveraging = leftAndRightTrackProjectLinksGroupedByRoadAndPart.mapValues(pls => {
+    val leftAndRightTrackProjectLinksGroupedByRoadPart = leftAndRightTrackProjectLinks.groupBy(pl => {pl.roadPart})
+    val terminatedForAveraging = leftAndRightTrackProjectLinksGroupedByRoadPart.mapValues(pls => {
         if (pls.exists(pl => pl.status == RoadAddressChangeType.Termination && pl.originalStartAddrMValue == 0)) {
           val (r, l) = pls.partition(_.track == Track.RightSide)
           Seq(sortAndTakeTerminated(r),sortAndTakeTerminated(l)).flatten
