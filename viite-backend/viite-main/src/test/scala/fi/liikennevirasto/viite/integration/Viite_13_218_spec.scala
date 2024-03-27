@@ -1110,7 +1110,7 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
 
         projectDAO.updateProjectStatus(projectSaved.id, ProjectState.UpdatingToRoadNetwork)
         projectService_db.updateRoadwaysAndLinearLocationsWithProjectLinks(projectSaved.id)
-        val roadways = roadwayDAO.fetchAllByRoadAndPart(test_road_part, withHistory = true).toList
+        val roadways = roadwayDAO.fetchAllByRoadPart(test_road_part, withHistory = true).toList
         val linearLocations = linearLocationDAO.fetchByRoadways(roadways.map(_.roadwayNumber).toSet).toList
 
         /* Check Roadways and linearlocations have a match. */

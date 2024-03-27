@@ -480,9 +480,9 @@ class RoadwayDAO extends BaseDAO {
     * @param fetchOnlyEnd : Boolean - Query modifier, indicates if should fetch only the end parts or not
     * @return
     */
-  def fetchAllByRoadAndPart(roadPart: RoadPart, withHistory: Boolean = false, fetchOnlyEnd: Boolean = false): Seq[Roadway] = {
+  def fetchAllByRoadPart(roadPart: RoadPart, withHistory: Boolean = false, fetchOnlyEnd: Boolean = false): Seq[Roadway] = {
     time(logger, "Fetch roadway by road number and part") {
-      fetch(withRoadAndPart(roadPart, withHistory, fetchOnlyEnd))
+      fetch(withRoadPart(roadPart, withHistory, fetchOnlyEnd))
     }
   }
 
@@ -625,7 +625,7 @@ class RoadwayDAO extends BaseDAO {
     * @param query          : String - The actual SQL query string
     * @return
     */
-  private def withRoadAndPart(roadPart: RoadPart, includeHistory: Boolean = false, fetchOnlyEnd: Boolean = false)(query: String): String = {
+  private def withRoadPart(roadPart: RoadPart, includeHistory: Boolean = false, fetchOnlyEnd: Boolean = false)(query: String): String = {
     val historyFilter = if (!includeHistory)
       " AND end_date is null"
     else

@@ -178,52 +178,52 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  // fetchAllByRoadAndPart
+  // fetchAllByRoadPart
 
-  test("Test fetchAllByRoadAndPart When non-existing road number Then return None") {
+  test("Test fetchAllByRoadPart When non-existing road number Then return None") {
     runWithRollback {
       dao.create(List(testRoadway1))
-      dao.fetchAllByRoadAndPart(RoadPart(nonExistingRoadNumber, testRoadway1.roadPart.partNumber)).size should be(0)
+      dao.fetchAllByRoadPart(RoadPart(nonExistingRoadNumber, testRoadway1.roadPart.partNumber)).size should be(0)
     }
   }
 
-  test("Test fetchAllByRoadAndPart When non-existing road part number Then return None") {
+  test("Test fetchAllByRoadPart When non-existing road part number Then return None") {
     runWithRollback {
       dao.create(List(testRoadway1))
-      dao.fetchAllByRoadAndPart(nonExistingRoadPart).size should be(0)
+      dao.fetchAllByRoadPart(nonExistingRoadPart).size should be(0)
     }
   }
 
-  test("Test fetchAllByRoadAndPart When existing road and road part number Then return roadways") {
+  test("Test fetchAllByRoadPart When existing road and road part number Then return roadways") {
     runWithRollback {
       dao.create(List(testRoadway1, testRoadway2.copy(roadPart = rw1roadPart), testRoadway3))
-      val roadways = dao.fetchAllByRoadAndPart(RoadPart(roadNumber1, roadPartNumber1))
+      val roadways = dao.fetchAllByRoadPart(RoadPart(roadNumber1, roadPartNumber1))
       roadways.count(r => r.roadwayNumber == roadwayNumber1) should be(1)
       roadways.count(r => r.roadwayNumber == roadwayNumber2) should be(1)
       roadways.size should be(2)
     }
   }
 
-  test("Test fetchAllByRoadAndPart When existing road and road part number with history Then return roadways") {
+  test("Test fetchAllByRoadPart When existing road and road part number with history Then return roadways") {
     runWithRollback {
       dao.create(List(testRoadway1, testRoadway2.copy(roadPart = rw1roadPart, endDate = Some(DateTime.now())), testRoadway3))
-      val roadwaysWithoutHistory = dao.fetchAllByRoadAndPart(RoadPart(roadNumber1, roadPartNumber1))
+      val roadwaysWithoutHistory = dao.fetchAllByRoadPart(RoadPart(roadNumber1, roadPartNumber1))
       roadwaysWithoutHistory.count(r => r.roadwayNumber == roadwayNumber1) should be(1)
       roadwaysWithoutHistory.size should be(1)
-      val roadways = dao.fetchAllByRoadAndPart(RoadPart(roadNumber1, roadPartNumber1), withHistory = true)
+      val roadways = dao.fetchAllByRoadPart(RoadPart(roadNumber1, roadPartNumber1), withHistory = true)
       roadways.count(r => r.roadwayNumber == roadwayNumber1) should be(1)
       roadways.count(r => r.roadwayNumber == roadwayNumber2) should be(1)
       roadways.size should be(2)
     }
   }
 
-  test("Test fetchAllByRoadAndPart When existing road and road part number and terminated Then return roadways") {
+  test("Test fetchAllByRoadPart When existing road and road part number and terminated Then return roadways") {
     runWithRollback {
       dao.create(List(testRoadway1, testRoadway2.copy(roadPart = rw1roadPart, endDate = Some(DateTime.now()), terminated = TerminationCode.Termination), testRoadway3))
-      val roadwaysWithoutHistory = dao.fetchAllByRoadAndPart(RoadPart(roadNumber1, roadPartNumber1))
+      val roadwaysWithoutHistory = dao.fetchAllByRoadPart(RoadPart(roadNumber1, roadPartNumber1))
       roadwaysWithoutHistory.count(r => r.roadwayNumber == roadwayNumber1) should be(1)
       roadwaysWithoutHistory.size should be(1)
-      val roadways = dao.fetchAllByRoadAndPart(RoadPart(roadNumber1, roadPartNumber1), withHistory = true)
+      val roadways = dao.fetchAllByRoadPart(RoadPart(roadNumber1, roadPartNumber1), withHistory = true)
       roadways.count(r => r.roadwayNumber == roadwayNumber1) should be(1)
       roadways.count(r => r.roadwayNumber == roadwayNumber2) should be(1)
       roadways.size should be(2)
@@ -897,7 +897,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
       val recentlyCreatedRoadNumber = dao.fetchAllByRoad(testRoadway1.roadPart.roadNumber)
       recentlyCreatedRoadNumber.size should be (2)
       Seq(roadwayId1, roadwayId2).sorted should be (recentlyCreatedRoadNumber.map(_.id).sorted)
-      val secondRoadPart = dao.fetchAllByRoadAndPart(RoadPart(testRoadway1.roadPart.roadNumber, secondRoadway.roadPart.partNumber))
+      val secondRoadPart = dao.fetchAllByRoadPart(RoadPart(testRoadway1.roadPart.roadNumber, secondRoadway.roadPart.partNumber))
       secondRoadPart.size should be (1)
       secondRoadPart.head.id should be (roadwayId2)
     }

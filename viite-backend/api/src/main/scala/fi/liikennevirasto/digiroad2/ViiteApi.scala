@@ -962,9 +962,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       try {
         val links = parsedBody.extract[RoadAddressProjectLinksExtractor]
         if (links.roadNumber == 0)
-          throw RoadAndPartNumberException("Virheellinen tienumero")
+          throw RoadPartException("Virheellinen tienumero")
         if (links.roadPartNumber == 0)
-          throw RoadAndPartNumberException("Virheellinen tieosanumero")
+          throw RoadPartException("Virheellinen tieosanumero")
         logger.debug(s"Creating new links: ${links.linkIds.mkString(",")}")
         val response = projectService.createProjectLinks(links.linkIds, links.projectId, RoadPart(links.roadNumber, links.roadPartNumber), Track.apply(links.trackCode), Discontinuity.apply(links.discontinuity), AdministrativeClass.apply(links.administrativeClass), LinkGeomSource.apply(links.roadLinkSource), links.roadEly, user.username, links.roadName.getOrElse(halt(BadRequest("Road name is mandatory"))), Some(links.coordinates))
         response.get("success") match {
@@ -977,7 +977,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
           case _ => response
         }
       } catch {
-        case e: RoadAndPartNumberException => Map("success" -> false, "errorMessage" -> e.getMessage)
+        case e: RoadPartException => Map("success" -> false, "errorMessage" -> e.getMessage)
         case _: IllegalStateException => Map("success" -> false, "errorMessage" -> "Projekti ei ole enää muokattavissa")
         case e: MappingException =>
           logger.warn("Exception treating road links", e)
@@ -1004,9 +1004,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       try {
         val links = parsedBody.extract[RoadAddressProjectLinksExtractor]
         if (links.roadNumber == 0)
-          throw RoadAndPartNumberException("Virheellinen tienumero")
+          throw RoadPartException("Virheellinen tienumero")
         if (links.roadPartNumber == 0)
-          throw RoadAndPartNumberException("Virheellinen tieosanumero")
+          throw RoadPartException("Virheellinen tieosanumero")
         if (projectService.validateLinkTrack(links.trackCode)) {
           projectService.updateProjectLinks(links.projectId, links.ids, links.linkIds, RoadAddressChangeType.apply(links.roadAddressChangeType), user.username, RoadPart(links.roadNumber, links.roadPartNumber), links.trackCode, links.userDefinedEndAddressM, links.administrativeClass, links.discontinuity, Some(links.roadEly), links.reversed.getOrElse(false), roadName = links.roadName, Some(links.coordinates)) match {
             case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
@@ -1022,7 +1022,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
           Map("success" -> false, "errorMessage" -> "Ajoratakoodi puuttuu")
         }
       } catch {
-        case e: RoadAndPartNumberException => Map("success" -> false, "errorMessage" -> e.getMessage)
+        case e: RoadPartException => Map("success" -> false, "errorMessage" -> e.getMessage)
         case _: IllegalStateException => Map("success" -> false, "errorMessage" -> "Projekti ei ole enää muokattavissa")
         case e: MappingException =>
           logger.warn("Exception treating road links", e)
@@ -1983,7 +1983,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
   }
 
   case class StartupParameters(lon: Double, lat: Double, zoom: Int, deploy_date: String, roles: Set[String])
-  case class RoadAndPartNumberException(private val message: String = "", private val cause: Throwable = None.orNull) extends Exception(message, cause)
+  case class RoadPartException(private val message: String = "", private val cause: Throwable = None.orNull) extends Exception(message, cause)
 
 }
 

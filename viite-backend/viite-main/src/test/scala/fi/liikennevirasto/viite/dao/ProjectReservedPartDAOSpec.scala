@@ -83,7 +83,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
         val rap1 = Project(id1, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], Seq(), None)
         projectDAO.create(rap1)
         // Check that the DB contains only null values in end dates
-        roadwayDAO.fetchAllByRoadAndPart(RoadPart(5, 205)).map(_.endDate).forall(ed => ed.isEmpty) should be (true)
+        roadwayDAO.fetchAllByRoadPart(RoadPart(5, 205)).map(_.endDate).forall(ed => ed.isEmpty) should be (true)
         val reserveNotAvailable = projectReservedPartDAO.isNotAvailableForProject(RoadPart(5, 205), id1)
         reserveNotAvailable should be (false)
       }
@@ -106,7 +106,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
         val rap3 = Project(id3, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1962-11-01"),
           "TestUser", DateTime.parse("1962-11-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], Seq(), None)
         projectDAO.create(rap3)
-        roadwayDAO.fetchAllByRoadAndPart(RoadPart(5, 207)).map(r => r.startDate.toDate).min should be (DateTime.parse("1962-11-01").toDate)
+        roadwayDAO.fetchAllByRoadPart(RoadPart(5, 207)).map(r => r.startDate.toDate).min should be (DateTime.parse("1962-11-01").toDate)
         val reserveNotAvailable = projectReservedPartDAO.isNotAvailableForProject(RoadPart(5,207), id3)
         reserveNotAvailable should be (false)
       }
