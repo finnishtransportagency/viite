@@ -1682,7 +1682,7 @@ class ProjectService(
     originalLink.startAddrMValue == splitLink.startAddrMValue && originalLink.endAddrMValue == splitLink.endAddrMValue
   }
 
-   def recalculateProjectLinks(projectId: Long, userName: String, roadParts: Set[RoadPart] = Set(), newTrack: Option[Track] = None, newDiscontinuity: Option[Discontinuity] = None, completelyNewLinkIds: Seq[Long] = Seq()): Unit = {
+  def recalculateProjectLinks(projectId: Long, userName: String, roadParts: Set[RoadPart] = Set(), newTrack: Option[Track] = None, newDiscontinuity: Option[Discontinuity] = None, completelyNewLinkIds: Seq[Long] = Seq()): Unit = {
 
     logger.info(s"Recalculating project $projectId, parts ${roadParts.mkString(", ")}")
 
