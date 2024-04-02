@@ -3,7 +3,7 @@ package fi.liikennevirasto.viite.dao
 import fi.liikennevirasto.viite.NewIdValue
 import fi.vaylavirasto.viite.dao.Sequences
 import fi.vaylavirasto.viite.geometry.Point
-import fi.vaylavirasto.viite.model.{AdministrativeClass, BeforeAfter, Discontinuity, NodePointType, NodeType, Track}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, BeforeAfter, Discontinuity, NodePointType, NodeType, RoadPart, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
@@ -101,8 +101,7 @@ class JunctionDAOSpec extends FunSuite with Matchers {
       * */
 
     runWithRollback {
-      val roadNumber = 76
-      val roadPartNumber = 1
+      val roadPart = RoadPart(76,1)
       val junctionAddrM = 250
       val endAddrM = 500
 
@@ -120,8 +119,8 @@ class JunctionDAOSpec extends FunSuite with Matchers {
       val roadwayNumber2 = Sequences.nextRoadwayNumber
       roadwayDAO.create(
         Seq(
-          Roadway(roadwayDAO.getNextRoadwayId, roadwayNumber1, roadNumber, roadPartNumber, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, 0, 300, reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
-          Roadway(roadwayDAO.getNextRoadwayId, roadwayNumber2, roadNumber, roadPartNumber, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, 300, 500, reversed = false, DateTime.parse("2021-01-01"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination)
+          Roadway(roadwayDAO.getNextRoadwayId, roadwayNumber1, roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, 0, 300, reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
+          Roadway(roadwayDAO.getNextRoadwayId, roadwayNumber2, roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, 300, 500, reversed = false, DateTime.parse("2021-01-01"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination)
 
         )
       )
@@ -135,8 +134,8 @@ class JunctionDAOSpec extends FunSuite with Matchers {
       // create node points
       nodePointDAO.create(
         Seq(
-          NodePoint(Sequences.nextNodePointId, BeforeAfter.Before, rwpId, Some(nodeNumber1), NodePointType.RoadNodePoint, Some(DateTime.parse("1992-10-08")), None, DateTime.parse("1992-10-08"), None, "test", Some(DateTime.parse("1992-10-08")), roadwayNumber1, junctionAddrM, roadNumber, roadPartNumber, Track.Combined, 1, Point(100, 100)),
-          NodePoint(Sequences.nextNodePointId, BeforeAfter.Before, rwpId2, Some(nodeNumber2), NodePointType.RoadNodePoint, Some(DateTime.parse("2021-01-01")), None, DateTime.parse("2021-01-01"), None, "test", Some(DateTime.parse("2021-01-01")), roadwayNumber2, endAddrM, roadNumber, roadPartNumber, Track.Combined, 1, Point(100, 200))
+          NodePoint(Sequences.nextNodePointId, BeforeAfter.Before, rwpId,  Some(nodeNumber1), NodePointType.RoadNodePoint, Some(DateTime.parse("1992-10-08")), None, DateTime.parse("1992-10-08"), None, "test", Some(DateTime.parse("1992-10-08")), roadwayNumber1, junctionAddrM, roadPart, Track.Combined, 1, Point(100, 100)),
+          NodePoint(Sequences.nextNodePointId, BeforeAfter.Before, rwpId2, Some(nodeNumber2), NodePointType.RoadNodePoint, Some(DateTime.parse("2021-01-01")), None, DateTime.parse("2021-01-01"), None, "test", Some(DateTime.parse("2021-01-01")), roadwayNumber2, endAddrM,      roadPart, Track.Combined, 1, Point(100, 200))
         )
       )
       // create junction
@@ -149,18 +148,18 @@ class JunctionDAOSpec extends FunSuite with Matchers {
       // create junction points
       junctionPointDAO.create(
         Seq(
-          JunctionPoint(Sequences.nextJunctionPointId, BeforeAfter.Before, rwpId, junctionId, Some(DateTime.parse("1992-10-08")), None, DateTime.parse("1992-10-08"), None, "test", Some(DateTime.parse("1992-10-08")), roadwayNumber1, junctionAddrM, roadNumber, roadPartNumber, Track.Combined, Discontinuity.Continuous, Point(100,100)),
-          JunctionPoint(Sequences.nextJunctionPointId, BeforeAfter.After,  rwpId, junctionId, Some(DateTime.parse("1992-10-08")), None, DateTime.parse("1992-10-08"), None, "test", Some(DateTime.parse("1992-10-08")), roadwayNumber1, junctionAddrM, roadNumber, roadPartNumber, Track.Combined, Discontinuity.Continuous, Point(100,100))
+          JunctionPoint(Sequences.nextJunctionPointId, BeforeAfter.Before, rwpId, junctionId, Some(DateTime.parse("1992-10-08")), None, DateTime.parse("1992-10-08"), None, "test", Some(DateTime.parse("1992-10-08")), roadwayNumber1, junctionAddrM, roadPart, Track.Combined, Discontinuity.Continuous, Point(100,100)),
+          JunctionPoint(Sequences.nextJunctionPointId, BeforeAfter.After,  rwpId, junctionId, Some(DateTime.parse("1992-10-08")), None, DateTime.parse("1992-10-08"), None, "test", Some(DateTime.parse("1992-10-08")), roadwayNumber1, junctionAddrM, roadPart, Track.Combined, Discontinuity.Continuous, Point(100,100))
         )
       )
 
       // fetch and test
-      val resultForQuery1 = dao.fetchJunctionsForRoadAddressBrowser(Some("2022-01-01"), None, Some(roadNumber), None, None)
+      val resultForQuery1 = dao.fetchJunctionsForRoadAddressBrowser(Some("2022-01-01"), None, Some(roadPart.roadNumber), None, None)
       resultForQuery1.size should be (1)
       resultForQuery1.head shouldBe a [JunctionForRoadAddressBrowser]
       resultForQuery1.head.beforeAfter should (contain (1) and contain (2) and have length 2) // 1 = Before, 2 = After
 
-      val resultForQuery2 = dao.fetchJunctionsForRoadAddressBrowser(Some("1992-01-01"), None, Some(roadNumber), None, None)
+      val resultForQuery2 = dao.fetchJunctionsForRoadAddressBrowser(Some("1992-01-01"), None, Some(roadPart.roadNumber), None, None)
       resultForQuery2.size should be (0)
     }
   }

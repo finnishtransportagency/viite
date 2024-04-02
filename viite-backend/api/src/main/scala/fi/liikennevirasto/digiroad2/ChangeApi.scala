@@ -112,7 +112,7 @@ class ChangeApi(roadAddressService: RoadAddressService, nodesAndJunctionsService
             ),
             "properties" ->
               Map(
-                "value" -> road.roadNumber,
+                "value" -> road.roadPart.roadNumber,
                 "link" -> Map(
                   "type" -> "Feature",
                   "id" -> link.linkId,
