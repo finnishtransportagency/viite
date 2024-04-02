@@ -1630,11 +1630,12 @@ class ProjectService(
     roadwayChangesDAO.clearRoadChangeTable(pls.head.projectId)
     projectLinkDAO.removeProjectLinksById(connectedGroupsIds.diff(connectedIds))
     unConnnected ++ connected
+  }
 
   /***
    * Required when user calculates project more than once and terminates split previously project links.
    * If project links are split in previous calculation and are terminated, the unnecessary splits need to be removed.
-   * The termination process handles updating the original link to state before split, so the newly created split links can be removed.
+   * The termination process handles updating the original link to state before split, so the newly created split links can be removed when recalculating.
    * Removes unnecessary splits generated in previous calc when terminating.
    * Updates the geometry to the original values from KGV.
    * @throws Exception if the split link removal fails.
@@ -1648,7 +1649,7 @@ class ProjectService(
 
     splitProjectLinkGroups.foreach {
       case (_, links) if links.size > 1 => // If there are more than one link in the group, check if the split link should be removed
-        val sortedLinks = links.sortBy(_.id)
+        val sortedLinks = links.sortBy(_.id) // As the links are sorted by id, the first link is the original link and the second is the split link
         val (originalLink, splitLink) = (sortedLinks.head, sortedLinks(1))
 
         if (shouldRemoveSplitLink(originalLink, splitLink)) {
@@ -1680,7 +1681,6 @@ class ProjectService(
       projectLinkDAO.updateProjectLinkGeometry(originalLink.id, updatedGeom)
       val updatedLink = originalLink.copy(geometry = updatedGeom)
       updatedProjectLinks += updatedLink
-      logger.info(s"Updated geometry for projectLinkId: ${originalLink.id}")
     }
   }
 
