@@ -716,6 +716,7 @@ class ProjectLinkDAO extends BaseDAO {
   /**
    * Updates a batch of project links to their original road address values when terminating links.
    * Logs warnings for no updates or errors during execution.
+   * @throws SQLException if an error occurs during the batch update operation
    * @param projectLinks A sequence of ProjectLinks to update
    */
   def batchUpdateProjectLinksToReset(projectLinks: Seq[ProjectLink]): Unit = {
@@ -732,6 +733,8 @@ class ProjectLinkDAO extends BaseDAO {
             ADMINISTRATIVE_CLASS = ?,
             START_ADDR_M = ?,
             END_ADDR_M = ?,
+            ORIGINAL_START_ADDR_M = ?,
+            ORIGINAL_END_ADDR_M = ?,
             START_CALIBRATION_POINT = ?,
             END_CALIBRATION_POINT = ?,
             ORIG_START_CALIBRATION_POINT = ?,
@@ -753,17 +756,19 @@ class ProjectLinkDAO extends BaseDAO {
           updatePS.setInt(5, pl.administrativeClass.value)
           updatePS.setLong(6, pl.startAddrMValue)
           updatePS.setLong(7, pl.endAddrMValue)
-          updatePS.setInt(8, pl.calibrationPointTypes._1.value)
-          updatePS.setInt(9, pl.calibrationPointTypes._2.value)
+          updatePS.setLong(8, pl.startAddrMValue)
+          updatePS.setLong(9, pl.originalEndAddrMValue)
           updatePS.setInt(10, pl.calibrationPointTypes._1.value)
           updatePS.setInt(11, pl.calibrationPointTypes._2.value)
-          updatePS.setInt(12, pl.sideCode.value)
-          updatePS.setLong(13, pl.ely)
-          updatePS.setDouble(14, pl.startMValue)
-          updatePS.setDouble(15, pl.endMValue)
-          updatePS.setInt(16, RoadAddressChangeType.NotHandled.value) // as it's the original value before changes
-          updatePS.setLong(17, pl.linearLocationId)
-          updatePS.setLong(18, pl.id)
+          updatePS.setInt(12, pl.calibrationPointTypes._1.value)
+          updatePS.setInt(13, pl.calibrationPointTypes._2.value)
+          updatePS.setInt(14, pl.sideCode.value)
+          updatePS.setLong(15, pl.ely)
+          updatePS.setDouble(16, pl.startMValue)
+          updatePS.setDouble(17, pl.endMValue)
+          updatePS.setInt(18, RoadAddressChangeType.NotHandled.value) // as it's the original value before changes
+          updatePS.setLong(19, pl.linearLocationId)
+          updatePS.setLong(20, pl.id)
           updatePS.addBatch()
         }
 
@@ -782,6 +787,28 @@ class ProjectLinkDAO extends BaseDAO {
     }
   }
 
+  def updateProjectLinkGeometry(projectLinkId: Long, geometry: Seq[Point]): Unit = {
+    val geometryString = PostGISDatabase.createJGeometry(geometry)
+    val sql = s"""
+    UPDATE project_link
+    SET modified_date = current_timestamp, geometry = ST_GeomFromText('$geometryString', 3067), connected_link_id = NULL
+    WHERE id = $projectLinkId
+  """
+
+    try {
+      val updateCount = runUpdateToDb(sql)
+      if (updateCount == 0) {
+        logger.warn(s"No records were updated for projectLinkId: $projectLinkId")
+      } else {
+        logger.info(s"Updated geometry for projectLinkId: $projectLinkId, affected rows: $updateCount")
+      }
+    } catch {
+      case e: SQLException =>
+        logger.error(s"SQLException occurred while updating geometry for projectLinkId: $projectLinkId", e)
+      case e: Exception =>
+        logger.error(s"Unexpected exception occurred while updating geometry for projectLinkId: $projectLinkId", e)
+    }
+  }
   /**
     * Reverses the road part in project. Switches side codes 2 <-> 3, updates calibration points start <-> end,
     * updates track codes 1 <-> 2
@@ -896,6 +923,45 @@ class ProjectLinkDAO extends BaseDAO {
     }
     else
       0
+  }
+
+  def removeConnectedLinkId(originalLink: ProjectLink): Unit = {
+    val sql = s"""
+      UPDATE project_link
+      SET connected_link_id = NULL
+      WHERE id = ${originalLink.id}
+    """
+
+    try {
+      runUpdateToDb(sql)
+      logger.info(s"Removed connected_link_id for projectLinkId: ${originalLink.id}")
+    } catch {
+      case e: SQLException =>
+        logger.error(s"SQLException occurred while removing connected_link_id for projectLinkId: ${originalLink.id}", e)
+      case e: Exception =>
+        logger.error(s"Unexpected exception occurred while removing connected_link_id for projectLinkId: ${originalLink.id}", e)
+    }
+  }
+
+  /**
+   * Handles the removal of a split link and updates necessary fields for the original link.
+   * @throws Exception if an error occurs during the transaction
+   * @param splitLinkId The ID of the split link to remove.
+   * @param originalLink The original link that the split link was created from.
+   * @param projectId The ID of the project these links belong to.
+   */
+  def handleSplitLinkRemovalAndUpdate(splitLinkId: Long, originalLink: ProjectLink, projectId: Long): Unit = {
+    // Begin transaction to ensure atomicity with dynamic session
+    dynamicSession.withTransaction {
+      try {
+        removeProjectLinksById(Set(splitLinkId))
+        removeConnectedLinkId(originalLink)
+      } catch {
+        case e: Exception =>
+          logger.error(s"Error handling split link removal and update for splitLinkId: $splitLinkId, originalLinkId: ${originalLink.id}, projectId: $projectId", e)
+          throw e // Re-throw exception to trigger transaction rollback
+      }
+      }
   }
 
   def moveProjectLinksToHistory(projectId: Long): Unit = {
