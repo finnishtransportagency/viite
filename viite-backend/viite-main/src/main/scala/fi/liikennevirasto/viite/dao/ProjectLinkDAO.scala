@@ -942,22 +942,22 @@ println(sql)
   /**
    * Handles the removal of a split link and updates necessary fields for the original link.
    * @throws Exception if an error occurs during the transaction
-   * @param splitLinkId The ID of the split link to remove.
-   * @param originalLink The original link that the split link was created from.
+   * @param splitProjectLinkId The ID of the split link to remove.
+   * @param originalProjectLink The original link that the split link was created from.
    * @param projectId The ID of the project these links belong to.
    */
-  def handleSplitLinkRemovalAndUpdate(splitLinkId: Long, originalLink: ProjectLink, projectId: Long): Unit = {
+  def handleSplitProjectLinkRemovalAndUpdate(splitProjectLinkId: Long, originalProjectLink: ProjectLink, projectId: Long): Unit = {
     // Begin transaction to ensure atomicity with dynamic session
     dynamicSession.withTransaction {
       try {
-        removeProjectLinksById(Set(splitLinkId))
-        removeConnectedLinkId(originalLink)
+        removeProjectLinksById(Set(splitProjectLinkId))
+        removeConnectedLinkId(originalProjectLink)
       } catch {
         case e: Exception =>
-          logger.error(s"Error handling split link removal and update for splitLinkId: $splitLinkId, originalLinkId: ${originalLink.id}, projectId: $projectId", e)
+          logger.error(s"Error handling split link removal and update for splitLinkId: $splitProjectLinkId, originalLinkId: ${originalProjectLink.id}, projectId: $projectId", e)
           throw e // Re-throw exception to trigger transaction rollback
       }
-      }
+    }
   }
 
   def moveProjectLinksToHistory(projectId: Long): Unit = {

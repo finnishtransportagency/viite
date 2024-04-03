@@ -13,11 +13,10 @@ import fi.liikennevirasto.viite.process._
 import fi.vaylavirasto.viite.dao.{LinkDAO, ProjectLinkNameDAO, RoadName, RoadNameDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.CalibrationPointType.{JunctionPointCP, NoCP, UserDefinedCP}
-
 import fi.vaylavirasto.viite.model.{AdministrativeClass, CalibrationPointType, Discontinuity, LinkGeomSource, RoadAddressChangeType, RoadLink, RoadLinkLike, RoadPart, SideCode, Track, TrafficDirection}
-
 import fi.vaylavirasto.viite.postgis.PostGISDatabase
 import fi.vaylavirasto.viite.util.DateTimeFormatters.ISOdateFormatter
+import fi.vaylavirasto.viite.util.ViiteException
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
@@ -1627,11 +1626,11 @@ class ProjectService(
 
   /***
    * Required when user calculates project more than once and terminates split previously project links.
-   * If project links are split in previous calculation and are terminated, the unnecessary splits need to be removed.
+   * If project links are split in previous calculation and are now terminated, the unnecessary splits need to be removed.
    * The termination process handles updating the original link to state before split, so the newly created split links can be removed when recalculating.
    * Removes unnecessary splits generated in previous calc when terminating.
    * Updates the geometry to the original values from KGV.
-   * @throws Exception if the split link removal fails.
+   * @throws ViiteException if the split link removal fails.
    * @param projectLinks terminated ProjectLinks.
    * @return ProjectLinks without split made in previous calculation if any.
    */
@@ -1643,43 +1642,44 @@ class ProjectService(
     splitProjectLinkGroups.foreach {
       case (_, links) if links.size > 1 => // If there are more than one link in the group, check if the split link should be removed
         val sortedLinks = links.sortBy(_.id) // As the links are sorted by id, the first link is the original link and the second is the split link
-        val (originalLink, splitLink) = (sortedLinks.head, sortedLinks(1))
+        val (originalProjectLink, splitProjectLink) = (sortedLinks.head, sortedLinks(1))
 
-        if (shouldRemoveSplitLink(originalLink, splitLink)) {
-          removeSplitLink(splitLink, originalLink, projectId)
-          updateGeometryOfOriginalLink(originalLink, updatedProjectLinks)
+        if (shouldRemoveSplitProjectLink(originalProjectLink, splitProjectLink)) {
+          removeSplitProjectLink(splitProjectLink, originalProjectLink, projectId)
+          updateGeometryOfOriginalProjectLink(originalProjectLink, updatedProjectLinks)
         } else {
-          logger.info(s"Split link ${splitLink.id} does not have matching start and end address values with its original link ${originalLink.id}, skipping removal.")
+          logger.info(s"Split link ${splitProjectLink.id} does not have matching start and end address values with its original link ${originalProjectLink.id}, skipping removal.")
         }
-      case _ => // No action needed if there are no more than one link
+      case _ => // No action needed if there are no more than one project link
     }
 
     projectLinks.filterNot(link => updatedProjectLinks.contains(link)) ++ updatedProjectLinks
   }
 
-  private def removeSplitLink(splitLink: ProjectLink, originalLink: ProjectLink, projectId: Long): Unit = {
-    logger.info(s"Removing split project link: ${splitLink.id}")
+  private def removeSplitProjectLink(splitProjectLink: ProjectLink, originalProjectLink: ProjectLink, projectId: Long): Unit = {
+    logger.info(s"Removing split project link: ${splitProjectLink.id}")
     try {
       roadwayChangesDAO.clearRoadChangeTable(projectId)
-      projectLinkDAO.handleSplitLinkRemovalAndUpdate(splitLink.id, originalLink, projectId)
+      projectLinkDAO.handleSplitProjectLinkRemovalAndUpdate(splitProjectLink.id, originalProjectLink, projectId)
     } catch {
-      case e: Exception => logger.error(s"Failed to remove split project link: ${splitLink.id}", e)
+      case e: ViiteException => logger.error(s"Failed to remove split project link: ${splitProjectLink.id}", e)
     }
   }
 
-  private def updateGeometryOfOriginalLink(originalLink: ProjectLink, updatedProjectLinks: scala.collection.mutable.Buffer[ProjectLink]): Unit = {
-    val kgvRoadLinks = roadLinkService.getCurrentAndComplementaryRoadLinks(Set(originalLink.linkId))
-    kgvRoadLinks.find(_.linkId == originalLink.linkId).foreach { kgvGeometry =>
-      val updatedGeom = GeometryUtils.truncateGeometry3D(kgvGeometry.geometry, originalLink.startMValue, originalLink.endMValue)
-      projectLinkDAO.updateProjectLinkGeometry(originalLink.id, updatedGeom)
-      val updatedLink = originalLink.copy(geometry = updatedGeom)
-      updatedProjectLinks += updatedLink
+  private def updateGeometryOfOriginalProjectLink(originalProjectLink: ProjectLink, updatedProjectLinks: scala.collection.mutable.Buffer[ProjectLink]): Unit = {
+    val kgvRoadLinks = roadLinkService.getCurrentAndComplementaryRoadLinks(Set(originalProjectLink.linkId))
+    kgvRoadLinks.find(_.linkId == originalProjectLink.linkId).foreach { kgvGeometry =>
+      val updatedGeom = GeometryUtils.truncateGeometry3D(kgvGeometry.geometry, originalProjectLink.startMValue, originalProjectLink.endMValue)
+      projectLinkDAO.updateProjectLinkGeometry(originalProjectLink.id, updatedGeom)
+      val updatedProjectLink = originalProjectLink.copy(geometry = updatedGeom)
+      updatedProjectLinks += updatedProjectLink
     }
   }
+
 
   // If both project links have same the same address m values after termination, the other can be removed.
-  private def shouldRemoveSplitLink(originalLink: ProjectLink, splitLink: ProjectLink): Boolean = {
-    originalLink.startAddrMValue == splitLink.startAddrMValue && originalLink.endAddrMValue == splitLink.endAddrMValue
+  private def shouldRemoveSplitProjectLink(originalProjectLink: ProjectLink, splitProjectLink: ProjectLink): Boolean = {
+    originalProjectLink.startAddrMValue == splitProjectLink.startAddrMValue && originalProjectLink.endAddrMValue == splitProjectLink.endAddrMValue
   }
 
   def recalculateProjectLinks(projectId: Long, userName: String, roadParts: Set[RoadPart] = Set(), newTrack: Option[Track] = None, newDiscontinuity: Option[Discontinuity] = None, completelyNewLinkIds: Seq[Long] = Seq()): Unit = {
