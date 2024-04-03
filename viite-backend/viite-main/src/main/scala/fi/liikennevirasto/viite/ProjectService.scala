@@ -1677,7 +1677,7 @@ class ProjectService(
   }
 
 
-  // If both project links have same the same address m values after termination, the other can be removed.
+  // If both project links have the same address m values after termination, the other can be removed.
   private def shouldRemoveSplitProjectLink(originalProjectLink: ProjectLink, splitProjectLink: ProjectLink): Boolean = {
     originalProjectLink.startAddrMValue == splitProjectLink.startAddrMValue && originalProjectLink.endAddrMValue == splitProjectLink.endAddrMValue
   }
