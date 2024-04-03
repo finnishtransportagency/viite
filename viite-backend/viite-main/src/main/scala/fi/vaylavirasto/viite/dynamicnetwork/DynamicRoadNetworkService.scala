@@ -464,7 +464,7 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
       (r.roadPart)
     })
     logger.error(s"${tiekamuRoadLinkChangeErrors.size} errors found on road addresses: ${errorRoadsParts.toList}! Here is the list of errors: ${tiekamuRoadLinkChangeErrors.toList}")
-    val affectedRoadwayNumbers = errorRoadsParts.flatMap(roadAndPart => roadwayDAO.fetchAllByRoadAndPart(roadAndPart)).map(_.roadwayNumber)
+    val affectedRoadwayNumbers = errorRoadsParts.flatMap(roadAndPart => roadwayDAO.fetchAllByRoadPart(roadAndPart)).map(_.roadwayNumber)
     val activeLinearLocationsWithoutAffected = activeLinearLocations.filterNot(ll => affectedRoadwayNumbers.contains(ll.roadwayNumber))
     val affectedLinkIds = activeLinearLocations.filter(ll => affectedRoadwayNumbers.contains(ll.roadwayNumber)).map(_.linkId)
     val (affectedTiekamuRoadLinkChanges, validTiekamuRoadLinkChanges) =  tiekamuRoadLinkChanges.partition(ch => affectedLinkIds.contains(ch.oldLinkId))

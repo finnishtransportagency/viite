@@ -113,9 +113,9 @@ class ProjectService(
     * @return Optional error message, None if no error
     */
   def checkRoadPartsExist(roadNumber: Long, roadStartPart: Long, roadEndPart: Long): Option[String] = {
-    if (roadwayDAO.fetchAllByRoadAndPart(RoadPart(roadNumber, roadStartPart)).isEmpty) {
+    if (roadwayDAO.fetchAllByRoadPart(RoadPart(roadNumber, roadStartPart)).isEmpty) {
       Some(ErrorStartingRoadPartNotFound)
-    } else if (roadwayDAO.fetchAllByRoadAndPart(RoadPart(roadNumber, roadEndPart)).isEmpty) {
+    } else if (roadwayDAO.fetchAllByRoadPart(RoadPart(roadNumber, roadEndPart)).isEmpty) {
       Some(ErrorEndingRoadPartNotFound)
     } else
       None
@@ -156,7 +156,7 @@ class ProjectService(
       val projectLinks = projectLinkDAO.fetchProjectLinks(projectId).filterNot(pl => List(RoadAddressChangeType.NotHandled, RoadAddressChangeType.Termination).contains(pl.status)).groupBy(pl => (pl.roadPart))
 
       val reservedAndFormedParts: Seq[ProjectReservedPart] = projectReservedRoadParts.flatMap { rp =>
-        val sortedAddresses: Seq[RoadAddress] = roadAddressService.getRoadAddressWithRoadAndPart(rp.roadPart, newTransaction = false).sortBy(_.startAddrMValue)
+        val sortedAddresses: Seq[RoadAddress] = roadAddressService.getRoadAddressWithRoadPart(rp.roadPart, newTransaction = false).sortBy(_.startAddrMValue)
         val roadPartLinks = projectLinks.filter(pl => pl._1 == (rp.roadPart))
 
         //reservedParts
@@ -552,7 +552,7 @@ class ProjectService(
               (pl.geometry.head, pl.geometry.last)
             })
             val prevRoadPartGeom      = if (existingLinks.isEmpty && newRoadPart.partNumber > 1) {
-              val rw = roadwayDAO.fetchAllByRoadAndPart(RoadPart(newRoadPart.roadNumber, newRoadPart.partNumber - 1), withHistory=false, fetchOnlyEnd=true).filter(_.track == newLinks.head.track) //TODO "-1" is incorrect..? The previous part might be more than one number away
+              val rw = roadwayDAO.fetchAllByRoadPart(RoadPart(newRoadPart.roadNumber, newRoadPart.partNumber - 1), withHistory=false, fetchOnlyEnd=true).filter(_.track == newLinks.head.track) //TODO "-1" is incorrect..? The previous part might be more than one number away
               linearLocationDAO.fetchByRoadways(rw.map(_.roadwayNumber).toSet).sortBy(_.orderNumber).map(l => {
                 (l.getFirstPoint, l.getLastPoint)
               })
@@ -1325,7 +1325,7 @@ class ProjectService(
 
     def isCompletelyNewPart(toUpdateLinks: Seq[ProjectLink]): (Boolean, RoadPart) = {
       val reservedPart = projectReservedPartDAO.fetchReservedRoadPart(toUpdateLinks.head.roadPart).get
-      val newSavedLinks = if (roadwayDAO.fetchAllByRoadAndPart(reservedPart.roadPart).isEmpty) {
+      val newSavedLinks = if (roadwayDAO.fetchAllByRoadPart(reservedPart.roadPart).isEmpty) {
         projectLinkDAO.fetchByProjectRoadPart(reservedPart.roadPart, projectId)
       } else Seq.empty
       /*
