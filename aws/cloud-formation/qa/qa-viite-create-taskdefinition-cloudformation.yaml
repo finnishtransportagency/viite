@@ -109,7 +109,7 @@ Resources:
             - Name: apiS3ObjectTTLSeconds
               Value: !Sub '${ApiS3ObjectTTLSeconds}'
             - Name: kgvEndpoint
-              Value: 'https://api.vaylapilvi.fi/paikkatiedot/ogc/features/collections'
+              Value: 'https://api.vaylapilvi.fi/paikkatiedot/ogc/features/v1/collections'
           Secrets:
             - Name: bonecp.password
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/Viite/QA/rds.viite.db.password'
