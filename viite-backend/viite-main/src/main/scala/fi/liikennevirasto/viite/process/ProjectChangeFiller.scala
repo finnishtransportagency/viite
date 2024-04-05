@@ -11,7 +11,7 @@ object ProjectChangeFiller {
     val enrichedProjectLinks = validRoadwayLinks.map { l =>
       val ra = mappedRoadAddressesProjection.find(_.linearLocationId == l.linearLocationId)
       if (ra.isDefined)
-        Some(l.copy(startAddrMValue = ra.get.startAddrMValue, endAddrMValue = ra.get.endAddrMValue))
+        Some(l.copy(startAddrMValue = ra.get.addrMRange.start, endAddrMValue = ra.get.addrMRange.end))
       else
         None
     }.filter(_.isDefined).map(_.get) ++ terminatedRoadwayLinks

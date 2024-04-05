@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.viite
 import fi.liikennevirasto.viite.dao.{ProjectLink, _}
-import fi.vaylavirasto.viite.model.{CalibrationPointType, Discontinuity, RoadAddressChangeType, RoadPart, Track}
+import fi.vaylavirasto.viite.model.{AddrMRange, CalibrationPointType, Discontinuity, RoadAddressChangeType, RoadPart, Track}
 import org.joda.time.DateTime
 
 import scala.annotation.tailrec
@@ -78,7 +78,7 @@ object ProjectDeltaCalculator {
     if (matchAddr && matchContinuity && !hasCalibrationPoint &&
         ra1.administrativeClass == ra2.administrativeClass && pl1.administrativeClass == pl2.administrativeClass && pl1.reversed == pl2.reversed) {
       Seq((
-            ra1.asInstanceOf[RoadAddress].copy(discontinuity = ra2.discontinuity, endAddrMValue = ra2.endAddrMValue).asInstanceOf[R],
+            ra1.asInstanceOf[RoadAddress].copy(discontinuity = ra2.discontinuity, addrMRange = AddrMRange(ra1.asInstanceOf[RoadAddress].addrMRange.start, ra2.addrMRange.end)).asInstanceOf[R],
             pl1.copy(discontinuity = pl2.discontinuity, endAddrMValue = pl2.endAddrMValue, calibrationPointTypes = (pl1.startCalibrationPointType, pl2.endCalibrationPointType), originalCalibrationPointTypes = (pl1.originalCalibrationPointTypes._1, pl2.originalCalibrationPointTypes._2)).asInstanceOf[P]
           ))
     }
@@ -316,7 +316,7 @@ object ProjectDeltaCalculator {
     def toRoadAddressSection(o: Seq[BaseRoadAddress]) = {
       o.map(ra =>
         RoadwaySection(ra.roadPart.roadNumber, ra.roadPart.partNumber, ra.roadPart.partNumber,
-          ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.administrativeClass, ra.ely, ra.reversed, ra.roadwayNumber, Seq()))
+          ra.track, ra.addrMRange.start, ra.addrMRange.end, ra.discontinuity, ra.administrativeClass, ra.ely, ra.reversed, ra.roadwayNumber, Seq()))
     }
 
       val trans_ =  transfers.groupBy(x => (x._1.roadPart, x._1.track, x._2.roadPart, x._2.track, x._1.id))

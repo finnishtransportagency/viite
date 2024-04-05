@@ -386,7 +386,7 @@ class ProjectLinkDAO extends BaseDAO {
           if (!pl.isSplit && nonUpdatingStatus.contains(pl.status) && addresses.map(_.linearLocationId).contains(pl.linearLocationId) && !maxInEachTracks.contains(pl.id)) {
             val ra = addresses.find(_.linearLocationId == pl.linearLocationId).get
             // Discontinuity, administrative class and calibration points may change with Unchanged status
-            pl.copy(roadPart = ra.roadPart, track = ra.track, startAddrMValue = ra.startAddrMValue, endAddrMValue = ra.endAddrMValue, reversed = false)
+            pl.copy(roadPart = ra.roadPart, track = ra.track, startAddrMValue = ra.addrMRange.start, endAddrMValue = ra.addrMRange.end, reversed = false)
           } else
             pl
         }
@@ -698,7 +698,7 @@ println(sql)
         UPDATE PROJECT_LINK SET ROAD_NUMBER = ${roadAddress.roadPart.roadNumber},
           ROAD_PART_NUMBER = ${roadAddress.roadPart.partNumber}, TRACK = ${roadAddress.track.value},
           DISCONTINUITY_TYPE = ${roadAddress.discontinuity.value}, ADMINISTRATIVE_CLASS = ${roadAddress.administrativeClass.value},
-          STATUS = ${RoadAddressChangeType.NotHandled.value}, START_ADDR_M = ${roadAddress.startAddrMValue}, END_ADDR_M = ${roadAddress.endAddrMValue},
+          STATUS = ${RoadAddressChangeType.NotHandled.value}, START_ADDR_M = ${roadAddress.addrMRange.start}, END_ADDR_M = ${roadAddress.addrMRange.end},
           START_CALIBRATION_POINT = ${roadAddress.startCalibrationPointType.value},
           END_CALIBRATION_POINT = ${roadAddress.endCalibrationPointType.value},
           ORIG_START_CALIBRATION_POINT = ${roadAddress.startCalibrationPointType.value},

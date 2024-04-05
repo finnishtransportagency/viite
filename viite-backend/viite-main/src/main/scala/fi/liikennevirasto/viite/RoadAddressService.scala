@@ -328,11 +328,11 @@ class RoadAddressService(
           // The params with type long can be MTKID or roadNumber
           val searchResultPoint = roadLinkService.getRoadLinkMiddlePointBySourceId(params.head)
           val partialResultSeq = collectResult("mtkId", Seq(searchResultPoint))
-          val searchResult = getFirstOrEmpty(getRoadAddressWithRoadNumberAddress(params.head).sortBy(address => (address.roadPart.partNumber, address.startAddrMValue)))
+          val searchResult = getFirstOrEmpty(getRoadAddressWithRoadNumberAddress(params.head).sortBy(address => (address.roadPart.partNumber, address.addrMRange.start)))
           collectResult("road", searchResult, partialResultSeq)
         case 2 =>
           collectResult("road", getFirstOrEmpty(getRoadAddressWithRoadNumberParts(params.head, Set(params(1)), Set(Track.Combined, Track.LeftSide, Track.RightSide))
-          .sortBy(address => (address.roadPart.partNumber, address.startAddrMValue))
+          .sortBy(address => (address.roadPart.partNumber, address.addrMRange.start))
         ))
         case 3 | 4 =>
           val roadNumber = params(0)
@@ -435,8 +435,8 @@ class RoadAddressService(
   def getRoadAddressForSearch(roadPart: RoadPart, addressM: Long, track: Option[Long] = None): Seq[RoadAddress] = {
     withDynSession {
       val roadways = roadwayDAO.fetchAllBySectionAndAddresses(roadPart, Some(addressM), Some(addressM), track)
-      val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadways).sortBy(_.startAddrMValue)
-      roadAddresses.filter(ra => (track.isEmpty || track.contains(ra.track.value)) && ra.startAddrMValue <= addressM && ra.endAddrMValue >= addressM)
+      val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadways).sortBy(_.addrMRange.start)
+      roadAddresses.filter(ra => (track.isEmpty || track.contains(ra.track.value)) && ra.addrMRange.start <= addressM && ra.addrMRange.end >= addressM)
     }
   }
 
@@ -464,9 +464,9 @@ class RoadAddressService(
             roadwayDAO.fetchAllBySectionAndAddresses(roadPart, None, None)
       }
 
-      val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadways).sortBy(_.startAddrMValue)
+      val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadways).sortBy(_.addrMRange.start)
       if (addressM > 0) {
-        roadAddresses.filter(ra => ra.startAddrMValue >= addressM || ra.endAddrMValue == addressM)
+        roadAddresses.filter(ra => ra.addrMRange.start >= addressM || ra.addrMRange.end == addressM)
       }
       else if(roadAddresses.nonEmpty) Seq(roadAddresses.head) else Seq()
     }
@@ -1288,7 +1288,7 @@ object RoadAddressFilters {
   }
 
   def continuousAddress(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
-    curr.endAddrMValue == next.startAddrMValue
+    curr.addrMRange.end == next.addrMRange.start
   }
 
   def discontinuousAddress(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {

@@ -43,7 +43,7 @@ object CalibrationPointsUtils {
   def makeStartCP(roadAddress: RoadAddress) = {
     Some(ProjectCalibrationPoint(roadAddress.linkId,
       if (roadAddress.sideCode == SideCode.TowardsDigitizing) 0.0
-      else GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.startAddrMValue, roadAddress.startCalibrationPointType))
+      else GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.addrMRange.start, roadAddress.startCalibrationPointType))
   }
 
   def makeStartCP(projectLink: ProjectLink) = {
@@ -55,7 +55,7 @@ object CalibrationPointsUtils {
   def makeEndCP(roadAddress: RoadAddress) = {
     Some(ProjectCalibrationPoint(roadAddress.linkId,
       if (roadAddress.sideCode == SideCode.AgainstDigitizing) 0.0
-      else GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.endAddrMValue, roadAddress.endCalibrationPointType))
+      else GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.addrMRange.end, roadAddress.endCalibrationPointType))
   }
 
   def makeEndCP(projectLink: ProjectLink, userDefinedCalibrationPoint: Option[UserDefinedCalibrationPoint]) = {

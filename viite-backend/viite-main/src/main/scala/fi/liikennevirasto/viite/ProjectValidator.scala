@@ -831,17 +831,17 @@ class ProjectValidator {
   def checkDiscontinuityOnPreviousRoadPart(project: Project, allProjectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
 
     def validateDiscontinuityBetweenTwoRoadAddresses(previousRoadAddress: Seq[BaseRoadAddress], nextRoadAddress: Seq[BaseRoadAddress]): Seq[ValidationErrorDetails] = {
-      val prevLeftRoadAddress = Seq(previousRoadAddress.filter(_.track != Track.RightSide).maxBy(_.endAddrMValue))
-      val prevRightRoadAddress = Seq(previousRoadAddress.filter(_.track != Track.LeftSide).maxBy(_.endAddrMValue))
+      val prevLeftRoadAddress = Seq(previousRoadAddress.filter(_.track != Track.RightSide).maxBy(_.addrMRange.end))
+      val prevRightRoadAddress = Seq(previousRoadAddress.filter(_.track != Track.LeftSide).maxBy(_.addrMRange.end))
 
       val leftRoadAddresses = nextRoadAddress.filter(_.track != Track.RightSide)
       val rightRoadAddresses = nextRoadAddress.filter(_.track != Track.LeftSide)
 
       val nextLeftRoadAddress = if (leftRoadAddresses.nonEmpty) {
-        Seq(leftRoadAddresses.minBy(_.startAddrMValue))
+        Seq(leftRoadAddresses.minBy(_.addrMRange.start))
       } else Seq.empty[BaseRoadAddress]
       val nextRightRoadAddress = if (rightRoadAddresses.nonEmpty) {
-        Seq(rightRoadAddresses.minBy(_.startAddrMValue))
+        Seq(rightRoadAddresses.minBy(_.addrMRange.start))
       }  else Seq.empty[BaseRoadAddress]
 
       /**
@@ -993,7 +993,7 @@ class ProjectValidator {
               validateDiscontinuityBetweenTwoRoadAddresses(previousRoadwayRoadAddresses, nextRoadAddress)
             } else if (previousRoadwayRoadAddresses.nonEmpty && nextRoadAddress.isEmpty &&
               !project.formedParts.exists(formed => formed.roadPart.isAfter(roadPart)) &&
-              previousRoadwayRoadAddresses.maxBy(_.endAddrMValue).discontinuity != Discontinuity.EndOfRoad) {
+              previousRoadwayRoadAddresses.maxBy(_.addrMRange.end).discontinuity != Discontinuity.EndOfRoad) {
               //The previousRoadwayRoadAddress is the last road part with the roadNumber road and needs to have EndOfRoad Discontinuity
               outsideOfProjectError(
                 project.id,
@@ -1542,7 +1542,7 @@ class ProjectValidator {
         projectLinkDAO.fetchByProjectRoadPart(RoadPart(road, nextProjectPart.get), project.id).filter(l => RoadAddressChangeType.Termination.value != l.status.value && l.startAddrMValue == 0L)
       else {
         roadAddressService.getRoadAddressesFiltered(RoadPart(road, nextAddressPart.get))
-          .filterNot(rp => allProjectLinks.exists(link => (rp.roadPart != link.roadPart) && rp.linearLocationId == link.linearLocationId)).filter(_.startAddrMValue == 0L)
+          .filterNot(rp => allProjectLinks.exists(link => (rp.roadPart != link.roadPart) && rp.linearLocationId == link.linearLocationId)).filter(_.addrMRange.start == 0L)
       }
     }
 
