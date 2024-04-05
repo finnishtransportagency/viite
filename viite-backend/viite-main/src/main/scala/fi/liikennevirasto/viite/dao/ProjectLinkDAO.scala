@@ -8,7 +8,7 @@ import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point, PolyLine, Vector3d}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, CalibrationPointType, Discontinuity, LinkGeomSource, RoadAddressChangeType, RoadPart, SideCode, Track}
+import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, CalibrationPointType, Discontinuity, LinkGeomSource, RoadAddressChangeType, RoadPart, SideCode, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -20,21 +20,22 @@ import slick.jdbc.StaticQuery.interpolation
 
 
 
-case class ProjectLink(id: Long, roadPart: RoadPart, track: Track, discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, originalStartAddrMValue: Long, originalEndAddrMValue: Long, startDate: Option[DateTime] = None, endDate: Option[DateTime] = None, createdBy: Option[String] = None, linkId: String, startMValue: Double, endMValue: Double, sideCode: SideCode,
+case class ProjectLink(id: Long, roadPart: RoadPart, track: Track, discontinuity: Discontinuity, addrMRange: AddrMRange, originalAddrMRange: AddrMRange, startDate: Option[DateTime] = None, endDate: Option[DateTime] = None, createdBy: Option[String] = None, linkId: String, startMValue: Double, endMValue: Double, sideCode: SideCode,
                        calibrationPointTypes: (CalibrationPointType, CalibrationPointType) = (CalibrationPointType.NoCP, CalibrationPointType.NoCP),
                        originalCalibrationPointTypes: (CalibrationPointType, CalibrationPointType) = (CalibrationPointType.NoCP, CalibrationPointType.NoCP),
                        geometry: Seq[Point], projectId: Long, status: RoadAddressChangeType, administrativeClass: AdministrativeClass, linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, geometryLength: Double, roadwayId: Long, linearLocationId: Long, ely: Long, reversed: Boolean, connectedLinkId: Option[String] = None, linkGeometryTimeStamp: Long, roadwayNumber: Long = NewIdValue, roadName: Option[String] = None, roadAddressLength: Option[Long] = None, roadAddressStartAddrM: Option[Long] = None, roadAddressEndAddrM: Option[Long] = None, roadAddressTrack: Option[Track] = None, roadAddressRoadPart: Option[RoadPart] = None)
   extends BaseRoadAddress with PolyLine {
 
-  def this(id: Long, roadPart: RoadPart, track: Track, discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, originalStartAddrMValue: Long, originalEndAddrMValue: Long, startDate: Option[DateTime], endDate: Option[DateTime], createdBy: Option[String], linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode, calibrationPointTypes: (CalibrationPointType, CalibrationPointType), originalCalibrationPointTypes: (CalibrationPointType, CalibrationPointType), geometry: Seq[Point], projectId: Long, status: RoadAddressChangeType, administrativeClass: AdministrativeClass, linkGeomSource: LinkGeomSource, geometryLength: Double, roadwayId: Long, linearLocationId: Long, ely: Long, reversed: Boolean, connectedLinkId: Option[Long], linkGeometryTimeStamp: Long, roadwayNumber: Long, roadName: Option[String], roadAddressLength: Option[Long], roadAddressStartAddrM: Option[Long], roadAddressEndAddrM: Option[Long], roadAddressTrack: Option[Track], roadAddressRoadPart: Option[RoadPart]) =
-    this(id, roadPart, track, discontinuity, startAddrMValue, endAddrMValue, originalStartAddrMValue, originalEndAddrMValue, startDate, endDate, createdBy, linkId.toString, startMValue, endMValue, sideCode, calibrationPointTypes, originalCalibrationPointTypes, geometry, projectId, status, administrativeClass, linkGeomSource, geometryLength, roadwayId, linearLocationId, ely, reversed, connectedLinkId.asInstanceOf[Option[String]], linkGeometryTimeStamp, roadwayNumber, roadName, roadAddressLength, roadAddressStartAddrM, roadAddressEndAddrM, roadAddressTrack, roadAddressRoadPart)
+  def this(id: Long, roadPart: RoadPart, track: Track, discontinuity: Discontinuity, addrMRange: AddrMRange, originalAddrMRange: AddrMRange, startDate: Option[DateTime], endDate: Option[DateTime], createdBy: Option[String], linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode, calibrationPointTypes: (CalibrationPointType, CalibrationPointType), originalCalibrationPointTypes: (CalibrationPointType, CalibrationPointType), geometry: Seq[Point], projectId: Long, status: RoadAddressChangeType, administrativeClass: AdministrativeClass, linkGeomSource: LinkGeomSource, geometryLength: Double, roadwayId: Long, linearLocationId: Long, ely: Long, reversed: Boolean, connectedLinkId: Option[Long], linkGeometryTimeStamp: Long, roadwayNumber: Long, roadName: Option[String], roadAddressLength: Option[Long], roadAddressStartAddrM: Option[Long], roadAddressEndAddrM: Option[Long], roadAddressTrack: Option[Track], roadAddressRoadPart: Option[RoadPart]) =
+    this(id, roadPart, track, discontinuity, addrMRange, originalAddrMRange, startDate, endDate, createdBy, linkId.toString, startMValue, endMValue, sideCode, calibrationPointTypes, originalCalibrationPointTypes, geometry, projectId, status, administrativeClass, linkGeomSource, geometryLength, roadwayId, linearLocationId, ely, reversed, connectedLinkId.asInstanceOf[Option[String]], linkGeometryTimeStamp, roadwayNumber, roadName, roadAddressLength, roadAddressStartAddrM, roadAddressEndAddrM, roadAddressTrack, roadAddressRoadPart)
 
   override lazy val startCalibrationPoint: Option[ProjectCalibrationPoint] = calibrationPoints._1
   override lazy val endCalibrationPoint: Option[ProjectCalibrationPoint] = calibrationPoints._2
 
   val isSplit: Boolean = connectedLinkId.nonEmpty || connectedLinkId.contains(0L)
 
-  lazy val isNotCalculated: Boolean = endAddrMValue == 0L
+  // TODO refactor
+  lazy val isNotCalculated: Boolean = addrMRange.end == 0L
   lazy val isCalculated: Boolean = !isNotCalculated
 
   private lazy val roadway = roadwayDAO.fetchAllByRoadwayId(Seq(roadwayId)).headOption
@@ -47,7 +48,7 @@ case class ProjectLink(id: Long, roadPart: RoadPart, track: Track, discontinuity
 
   def originalEly: Long = if (roadway.isDefined) roadway.get.ely else ely
 
-  private def isTheLastProjectLinkOnRoadway = roadway.isDefined && this.originalEndAddrMValue == roadway.get.endAddrMValue
+  private def isTheLastProjectLinkOnRoadway = roadway.isDefined && this.originalAddrMRange.end == roadway.get.endAddrMValue
 
   def originalDiscontinuity: Discontinuity = if (isTheLastProjectLinkOnRoadway) roadway.get.discontinuity else if (roadway.isDefined) Discontinuity.Continuous else discontinuity
 
@@ -56,18 +57,18 @@ case class ProjectLink(id: Long, roadPart: RoadPart, track: Track, discontinuity
   }
 
   def addrAt(a: Double): Long = {
-    val coefficient = (endAddrMValue - startAddrMValue) / (endMValue - startMValue)
+    val coefficient = (addrMRange.end - addrMRange.start) / (endMValue - startMValue)
     sideCode match {
       case SideCode.AgainstDigitizing =>
-        endAddrMValue - Math.round((a-startMValue) * coefficient)
+        addrMRange.end - Math.round((a-startMValue) * coefficient)
       case SideCode.TowardsDigitizing =>
-        startAddrMValue + Math.round((a-startMValue) * coefficient)
+        addrMRange.start + Math.round((a-startMValue) * coefficient)
       case _ => throw new InvalidAddressDataException(s"Bad sidecode $sideCode on project link")
     }
   }
 
   def addrMLength(): Long = {
-    endAddrMValue - startAddrMValue
+    addrMRange.end - addrMRange.start
   }
 
   def getFirstPoint: Point = {
@@ -79,7 +80,7 @@ case class ProjectLink(id: Long, roadPart: RoadPart, track: Track, discontinuity
   }
 
   def toMeters(address: Long): Double = {
-    val coefficient = (endMValue - startMValue) / (endAddrMValue - startAddrMValue)
+    val coefficient = (endMValue - startMValue) / (addrMRange.end - addrMRange.start)
     coefficient * address
   }
 
@@ -95,7 +96,7 @@ case class ProjectLink(id: Long, roadPart: RoadPart, track: Track, discontinuity
 
   def calibrationPoints: (Option[ProjectCalibrationPoint], Option[ProjectCalibrationPoint]) = {
     CalibrationPointsUtils.toCalibrationPoints(calibrationPointTypes._1, calibrationPointTypes._2, linkId,
-      startMValue, endMValue, startAddrMValue, endAddrMValue, sideCode)
+      startMValue, endMValue, addrMRange.start, addrMRange.end, sideCode)
   }
 
   def hasCalibrationPointAt(addressMValue: Long): Boolean = {
@@ -275,7 +276,7 @@ class ProjectLinkDAO extends BaseDAO {
       val projectRoadwayNumber = r.nextLong()
 
       val roadAddressRoadPart = if(roadAddressRoadNumber.nonEmpty && roadAddressRoadPartNumber.nonEmpty) { Some(RoadPart(roadAddressRoadNumber.get, roadAddressRoadPartNumber.get)) } else None
-      ProjectLink(projectLinkId, RoadPart(roadNumber, roadPartNumber), trackCode, discontinuityType, startAddrM, endAddrM, originalStartAddrMValue, originalEndAddrMValue, startDate, endDate, createdBy, linkId, startMValue, endMValue, sideCode, calibrationPoints, originalCalibrationPointTypes, PostGISDatabase.loadJGeometryToGeometry(geom), projectId, status, administrativeClass, source, length, roadwayId, linearLocationId, ely, reversed, connectedLinkId, geometryTimeStamp, if (projectRoadwayNumber == 0 || projectRoadwayNumber == NewIdValue) roadwayNumber else projectRoadwayNumber, Some(roadName), roadAddressEndAddrM.map(endAddr => endAddr - roadAddressStartAddrM.getOrElse(0L)), roadAddressStartAddrM, roadAddressEndAddrM, roadAddressTrack, roadAddressRoadPart)
+      ProjectLink(projectLinkId, RoadPart(roadNumber, roadPartNumber), trackCode, discontinuityType, AddrMRange(startAddrM, endAddrM), AddrMRange(originalStartAddrMValue, originalEndAddrMValue), startDate, endDate, createdBy, linkId, startMValue, endMValue, sideCode, calibrationPoints, originalCalibrationPointTypes, PostGISDatabase.loadJGeometryToGeometry(geom), projectId, status, administrativeClass, source, length, roadwayId, linearLocationId, ely, reversed, connectedLinkId, geometryTimeStamp, if (projectRoadwayNumber == 0 || projectRoadwayNumber == NewIdValue) roadwayNumber else projectRoadwayNumber, Some(roadName), roadAddressEndAddrM.map(endAddr => endAddr - roadAddressStartAddrM.getOrElse(0L)), roadAddressStartAddrM, roadAddressEndAddrM, roadAddressTrack, roadAddressRoadPart)
     }
   }
 
@@ -333,10 +334,10 @@ class ProjectLinkDAO extends BaseDAO {
         addressPS.setLong(4, pl.roadPart.partNumber)
         addressPS.setLong(5, pl.track.value)
         addressPS.setLong(6, pl.discontinuity.value)
-        addressPS.setLong(7, pl.startAddrMValue)
-        addressPS.setLong(8, pl.endAddrMValue)
-        addressPS.setLong(9, pl.originalStartAddrMValue)
-        addressPS.setLong(10, pl.originalEndAddrMValue)
+        addressPS.setLong(7, pl.addrMRange.start)
+        addressPS.setLong(8, pl.addrMRange.end)
+        addressPS.setLong(9, pl.originalAddrMRange.start)
+        addressPS.setLong(10, pl.originalAddrMRange.end)
         addressPS.setString(11, pl.createdBy.orNull)
         addressPS.setString(12, pl.createdBy.orNull)
 
@@ -381,12 +382,12 @@ class ProjectLinkDAO extends BaseDAO {
   def updateProjectLinks(projectLinks: Seq[ProjectLink], modifier: String, addresses: Seq[RoadAddress]): Unit = {
       time(logger, "Update project links") {
         val nonUpdatingStatus = Set[RoadAddressChangeType](RoadAddressChangeType.NotHandled)
-        val maxInEachTracks = projectLinks.filter(pl => pl.status == RoadAddressChangeType.Unchanged).groupBy(_.track).map(p => p._2.maxBy(_.endAddrMValue).id).toSeq
+        val maxInEachTracks = projectLinks.filter(pl => pl.status == RoadAddressChangeType.Unchanged).groupBy(_.track).map(p => p._2.maxBy(_.addrMRange.end).id).toSeq
         val links = projectLinks.map { pl =>
           if (!pl.isSplit && nonUpdatingStatus.contains(pl.status) && addresses.map(_.linearLocationId).contains(pl.linearLocationId) && !maxInEachTracks.contains(pl.id)) {
             val ra = addresses.find(_.linearLocationId == pl.linearLocationId).get
             // Discontinuity, administrative class and calibration points may change with Unchanged status
-            pl.copy(roadPart = ra.roadPart, track = ra.track, startAddrMValue = ra.addrMRange.start, endAddrMValue = ra.addrMRange.end, reversed = false)
+            pl.copy(roadPart = ra.roadPart, track = ra.track, addrMRange = AddrMRange(ra.addrMRange.start, ra.addrMRange.end), reversed = false)
           } else
             pl
         }
@@ -404,10 +405,10 @@ class ProjectLinkDAO extends BaseDAO {
           projectLinkPS.setLong(2, projectLink.roadPart.partNumber)
           projectLinkPS.setInt(3, projectLink.track.value)
           projectLinkPS.setInt(4, projectLink.discontinuity.value)
-          projectLinkPS.setLong(5, projectLink.startAddrMValue)
-          projectLinkPS.setLong(6, projectLink.endAddrMValue)
-          projectLinkPS.setLong(7, projectLink.originalStartAddrMValue)
-          projectLinkPS.setLong(8, projectLink.originalEndAddrMValue)
+          projectLinkPS.setLong(5, projectLink.addrMRange.start)
+          projectLinkPS.setLong(6, projectLink.addrMRange.end)
+          projectLinkPS.setLong(7, projectLink.originalAddrMRange.start)
+          projectLinkPS.setLong(8, projectLink.originalAddrMRange.end  )
           projectLinkPS.setString(9, modifier)
           projectLinkPS.setLong(10, projectLink.projectId)
           projectLinkPS.setInt(11, projectLink.startCalibrationPointType.value)
@@ -624,7 +625,7 @@ class ProjectLinkDAO extends BaseDAO {
   def updateAddrMValues(projectLink: ProjectLink): Unit = {
     runUpdateToDb(s"""
       update project_link
-      set modified_date = current_timestamp, start_addr_m = ${projectLink.startAddrMValue}, end_addr_m = ${projectLink.endAddrMValue},
+      set modified_date = current_timestamp, start_addr_m = ${projectLink.addrMRange.start}, end_addr_m = ${projectLink.addrMRange.end},
           start_calibration_point = ${projectLink.startCalibrationPointType.value},
           end_calibration_point = ${projectLink.endCalibrationPointType.value}
       where id = ${projectLink.id}
@@ -749,8 +750,8 @@ println(sql)
           updatePS.setInt(3, pl.track.value)
           updatePS.setInt(4, pl.discontinuity.value)
           updatePS.setInt(5, pl.administrativeClass.value)
-          updatePS.setLong(6, pl.startAddrMValue)
-          updatePS.setLong(7, pl.endAddrMValue)
+          updatePS.setLong(6, pl.addrMRange.start)
+          updatePS.setLong(7, pl.addrMRange.end)
           updatePS.setInt(8, pl.calibrationPointTypes._1.value)
           updatePS.setInt(9, pl.calibrationPointTypes._2.value)
           updatePS.setInt(10, pl.calibrationPointTypes._1.value)

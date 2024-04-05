@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.viite.ProjectRoadLinkChange
 import fi.liikennevirasto.viite.dao.{ProjectLink, RoadAddress}
-import fi.vaylavirasto.viite.model.RoadAddressChangeType
+import fi.vaylavirasto.viite.model.{AddrMRange, RoadAddressChangeType}
 
 object ProjectChangeFiller {
 
@@ -11,7 +11,7 @@ object ProjectChangeFiller {
     val enrichedProjectLinks = validRoadwayLinks.map { l =>
       val ra = mappedRoadAddressesProjection.find(_.linearLocationId == l.linearLocationId)
       if (ra.isDefined)
-        Some(l.copy(startAddrMValue = ra.get.addrMRange.start, endAddrMValue = ra.get.addrMRange.end))
+        Some(l.copy(addrMRange = AddrMRange(ra.get.addrMRange.start, ra.get.addrMRange.end)))
       else
         None
     }.filter(_.isDefined).map(_.get) ++ terminatedRoadwayLinks
@@ -21,7 +21,7 @@ object ProjectChangeFiller {
       val pl = enrichedProjectLinks.find(_.id == rlc.id)
       if (pl.isDefined) {
         val pl_ = pl.get
-        Some(rlc.copy(linearLocationId = pl_.linearLocationId, newStartAddr = pl_.startAddrMValue, newEndAddr = pl_.endAddrMValue))
+        Some(rlc.copy(linearLocationId = pl_.linearLocationId, newStartAddr = pl_.addrMRange.start, newEndAddr = pl_.addrMRange.end))
       }
       else
         None
