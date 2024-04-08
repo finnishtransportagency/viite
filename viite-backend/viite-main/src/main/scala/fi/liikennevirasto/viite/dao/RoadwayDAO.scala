@@ -375,7 +375,7 @@ case class RoadAddress(id: Long, linearLocationId: Long, roadPart: RoadPart, adm
   }
 }
 
-case class Roadway(id: Long, roadwayNumber: Long, roadPart: RoadPart, administrativeClass: AdministrativeClass, track: Track, discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, reversed: Boolean = false, startDate: DateTime, endDate: Option[DateTime] = None, createdBy: String, roadName: Option[String], ely: Long, terminated: TerminationCode = TerminationCode.NoTermination, validFrom: DateTime = DateTime.now(), validTo: Option[DateTime] = None)
+case class Roadway(id: Long, roadwayNumber: Long, roadPart: RoadPart, administrativeClass: AdministrativeClass, track: Track, discontinuity: Discontinuity, addrMRange: AddrMRange, reversed: Boolean = false, startDate: DateTime, endDate: Option[DateTime] = None, createdBy: String, roadName: Option[String], ely: Long, terminated: TerminationCode = TerminationCode.NoTermination, validFrom: DateTime = DateTime.now(), validTo: Option[DateTime] = None)
 
 case class TrackForRoadAddressBrowser(ely: Long, roadPart: RoadPart, track: Long, startAddrM: Long, endAddrM: Long, roadAddressLengthM: Long, administrativeClass: Long, startDate: DateTime)
 
@@ -773,7 +773,7 @@ class RoadwayDAO extends BaseDAO {
       val validTo       = r.nextDateOption.map(d => dateOptTimeFormatter.parseDateTime(d.toString))
       val roadName = r.nextStringOption()
 
-      Roadway(id, roadwayNumber, roadPart, administrativeClass, Track.apply(trackCode), Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, reverted, startDate, endDate, createdBy, roadName, ely, terminated, validFrom, validTo)
+      Roadway(id, roadwayNumber, roadPart, administrativeClass, Track.apply(trackCode), Discontinuity.apply(discontinuity), AddrMRange(startAddrMValue, endAddrMValue), reverted, startDate, endDate, createdBy, roadName, ely, terminated, validFrom, validTo)
     }
   }
 
@@ -935,8 +935,8 @@ class RoadwayDAO extends BaseDAO {
       roadwayPS.setLong(3, address.roadPart.roadNumber)
       roadwayPS.setLong(4, address.roadPart.partNumber)
       roadwayPS.setInt(5, address.track.value)
-      roadwayPS.setLong(6, address.startAddrMValue)
-      roadwayPS.setLong(7, address.endAddrMValue)
+      roadwayPS.setLong(6, address.addrMRange.start)
+      roadwayPS.setLong(7, address.addrMRange.end)
       roadwayPS.setInt(8, if (address.reversed) 1 else 0)
       roadwayPS.setInt(9, address.discontinuity.value)
       roadwayPS.setDate(10, new java.sql.Date(address.startDate.getMillis))

@@ -31,7 +31,7 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
 
 
     //Fix calibration points in history road addresses
-    val addressLength = historyRoadwayAddress.endAddrMValue - historyRoadwayAddress.startAddrMValue
+    val addressLength = historyRoadwayAddress.addrMRange.end - historyRoadwayAddress.addrMRange.start
 
     assert(addressLength >= 0)
 
@@ -58,11 +58,11 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
     * @return The address of the history calibration point
     */
   private def calculateAddressHistoryCalibrationPoint(currentRoadwayAddress: Roadway, historyRoadwayAddress: Roadway)(currentCalibrationAddress: Long): Long = {
-    val currentAddressLength = currentRoadwayAddress.endAddrMValue - currentRoadwayAddress.startAddrMValue
-    val historyAddressLength = historyRoadwayAddress.endAddrMValue - historyRoadwayAddress.startAddrMValue
-    val calibrationLength = currentCalibrationAddress - currentRoadwayAddress.startAddrMValue
+    val currentAddressLength = currentRoadwayAddress.addrMRange.end - currentRoadwayAddress.addrMRange.start
+    val historyAddressLength = historyRoadwayAddress.addrMRange.end - historyRoadwayAddress.addrMRange.start
+    val calibrationLength = currentCalibrationAddress - currentRoadwayAddress.addrMRange.start
 
-    historyRoadwayAddress.startAddrMValue + (historyAddressLength * calibrationLength / currentAddressLength)
+    historyRoadwayAddress.addrMRange.start + (historyAddressLength * calibrationLength / currentAddressLength)
   }
 
   /**
@@ -155,8 +155,8 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
 
     val (toProcess, others) = getUntilCalibrationPoint(linearLocations.sortBy(_.orderNumber))
 
-    val startAddrMValue = if (toProcess.head.startCalibrationPoint.isDefined) toProcess.head.startCalibrationPoint.addrM.get else roadway.startAddrMValue
-    val endAddrMValue = if (toProcess.last.endCalibrationPoint.isDefined) toProcess.last.endCalibrationPoint.addrM.get else roadway.endAddrMValue
+    val startAddrMValue = if (toProcess.head.startCalibrationPoint.isDefined) toProcess.head.startCalibrationPoint.addrM.get else roadway.addrMRange.start
+    val endAddrMValue = if (toProcess.last.endCalibrationPoint.isDefined) toProcess.last.endCalibrationPoint.addrM.get else roadway.addrMRange.end
 
     boundaryAddressMap(roadway, toProcess, startAddrMValue, endAddrMValue) ++ recursiveMapRoadAddresses(roadway, others)
   }
