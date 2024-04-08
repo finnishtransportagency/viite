@@ -157,7 +157,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         if(originalAddresses.isEmpty || continuousProjectLinks.isEmpty) {
           false
         } else {
-          (continuousProjectLinks.last.addrMRange.end - continuousProjectLinks.head.addrMRange.start) == (originalAddresses.get.endAddrMValue - originalAddresses.get.startAddrMValue)
+          (continuousProjectLinks.last.addrMRange.end - continuousProjectLinks.head.addrMRange.start) == (originalAddresses.get.addrMRange.end - originalAddresses.get.addrMRange.start)
         }
       }
 
