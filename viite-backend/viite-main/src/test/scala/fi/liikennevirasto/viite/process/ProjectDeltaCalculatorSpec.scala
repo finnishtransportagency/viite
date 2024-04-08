@@ -40,7 +40,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
   def toRoadway(ps: Seq[ProjectLink]): Roadway = {
     val p = ps.head
     val startDate = p.startDate.getOrElse(DateTime.now()).minusDays(1)
-    Roadway(p.roadwayId, p.roadwayNumber, p.roadPart, p.administrativeClass, p.track, p.discontinuity, ps.head.addrMRange.start, ps.last.addrMRange.end, p.reversed, startDate, p.endDate, p.createdBy.getOrElse("-"), p.roadName, p.ely, TerminationCode.NoTermination, DateTime.now(), None)
+    Roadway(p.roadwayId, p.roadwayNumber, p.roadPart, p.administrativeClass, p.track, p.discontinuity, AddrMRange(ps.head.addrMRange.start, ps.last.addrMRange.end), p.reversed, startDate, p.endDate, p.createdBy.getOrElse("-"), p.roadName, p.ely, TerminationCode.NoTermination, DateTime.now(), None)
   }
 
   test("Test ProjectDeltaCalculator.partition When executing multiple transfers on single road part Then returns the correct From RoadSection -> To RoadSection mapping.") {
@@ -131,9 +131,9 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       val rightLinks    = projectLinks.filter(_.track == Track.RightSide)
       val leftLinks     = projectLinks.filter(_.track == Track.LeftSide)
 
-      val roadway0      = toRoadway(combinedLinks).copy(track = combinedTrackAddresses.head.track, startAddrMValue = 0, endAddrMValue = combinedTrackAddresses.max.addrMRange.end)
-      val roadway1      = toRoadway(rightLinks).copy(track = leftTrackAddresses.head.track, startAddrMValue = combinedTrackAddresses.max.addrMRange.end, endAddrMValue = leftTrackAddresses.max.addrMRange.end)
-      val roadway2      = toRoadway(leftLinks).copy(track = rightTrackAddresses.head.track, startAddrMValue = combinedTrackAddresses.max.addrMRange.end, endAddrMValue = rightTrackAddresses.max.addrMRange.end)
+      val roadway0      = toRoadway(combinedLinks).copy(track = combinedTrackAddresses.head.track, addrMRange = AddrMRange(0,                                      combinedTrackAddresses.max.addrMRange.end))
+      val roadway1      = toRoadway(rightLinks   ).copy(track = leftTrackAddresses.head.track,     addrMRange = AddrMRange(combinedTrackAddresses.max.addrMRange.end,  leftTrackAddresses.max.addrMRange.end))
+      val roadway2      = toRoadway(leftLinks    ).copy(track = rightTrackAddresses.head.track,    addrMRange = AddrMRange(combinedTrackAddresses.max.addrMRange.end, rightTrackAddresses.max.addrMRange.end))
 
       roadwayDAO.create(Seq(roadway0, roadway1, roadway2))
 
@@ -189,9 +189,9 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       val (combinedLinks, leftLinks) = projectLinks.filter(_.track == Track.Combined).partition(_.addrMRange.end < 120)
       val rightLinks    = projectLinks.filter(_.track == Track.RightSide)
 
-      val roadway0      = toRoadway(combinedLinks).copy(track = combinedTrackAddresses.head.track, startAddrMValue = 0, endAddrMValue = combinedTrackAddresses.max.addrMRange.end)
-      val roadway1      = toRoadway(leftLinks).copy(track = leftTrackAddresses.head.track, startAddrMValue = combinedTrackAddresses.max.addrMRange.end, endAddrMValue = leftTrackAddresses.max.addrMRange.end)
-      val roadway2      = toRoadway(rightLinks).copy(track = rightTrackAddresses.head.track, startAddrMValue = combinedTrackAddresses.max.addrMRange.end, endAddrMValue = rightTrackAddresses.max.addrMRange.end)
+      val roadway0      = toRoadway(combinedLinks).copy(track = combinedTrackAddresses.head.track, addrMRange = AddrMRange(0,                                         combinedTrackAddresses.max.addrMRange.end))
+      val roadway1      = toRoadway(leftLinks    ).copy(track =     leftTrackAddresses.head.track, addrMRange = AddrMRange(combinedTrackAddresses.max.addrMRange.end,     leftTrackAddresses.max.addrMRange.end))
+      val roadway2      = toRoadway(rightLinks   ).copy(track =    rightTrackAddresses.head.track, addrMRange = AddrMRange(combinedTrackAddresses.max.addrMRange.end,    rightTrackAddresses.max.addrMRange.end))
 
       roadwayDAO.create(Seq(roadway0, roadway1, roadway2))
 
@@ -339,7 +339,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       )
 
       roadwayDAO.create(
-        Seq(Roadway(78131,186094356,roadPart1,AdministrativeClass.Municipality,Track.Combined,Discontinuity.EndOfRoad,0,2697,reversed = false,DateTime.parse("2017-07-02T00:00:00.000+03:00"),None,createdBy,roadName,8,TerminationCode.NoTermination,DateTime.parse("2017-10-16T00:00:00.000+03:00"),None))
+        Seq(Roadway(78131,186094356,roadPart1,AdministrativeClass.Municipality,Track.Combined,Discontinuity.EndOfRoad,AddrMRange(0,2697),reversed = false,DateTime.parse("2017-07-02T00:00:00.000+03:00"),None,createdBy,roadName,8,TerminationCode.NoTermination,DateTime.parse("2017-10-16T00:00:00.000+03:00"),None))
       )
 
       val transferred = ProjectDeltaCalculator.generateChangeTableRowsFromProjectLinks(projectLinks.filter(_.status != RoadAddressChangeType.Termination), projectLinks)
@@ -372,10 +372,10 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       val projectId = Sequences.nextViiteProjectId
 
       roadwayDAO.create(Seq(
-        Roadway(30701,64686,RoadPart(18385,1),AdministrativeClass.State,Track.Combined,Discontinuity.Continuous,   0,2568,reversed = false,DateTime.parse("1933-01-01T00:00:00.000+02:00"),   None,createdBy,roadName,12,TerminationCode.NoTermination,DateTime.parse("1998-10-16T00:00:00.000+03:00"),None),
-        Roadway(30920,64355,roadPart,         AdministrativeClass.State,Track.Combined,Discontinuity.Continuous,   0,1400,reversed = false,DateTime.parse("1967-01-01T00:00:00.000+02:00"),   None,createdBy,roadName,12,TerminationCode.NoTermination,DateTime.parse("1998-10-16T00:00:00.000+03:00"),None),
-        Roadway(30993,64687,RoadPart(18385,1),AdministrativeClass.State,Track.Combined,Discontinuity.EndOfRoad, 2568,4403,reversed = false,DateTime.parse("1901-01-01T00:00:00.000+01:39:49"),None,createdBy,roadName,12,TerminationCode.NoTermination,DateTime.parse("1998-10-16T00:00:00.000+03:00"),None),
-        Roadway(31341,64356,roadPart         ,AdministrativeClass.State,Track.Combined,Discontinuity.Continuous,1400,4828,reversed = false,DateTime.parse("1952-01-01T00:00:00.000+02:00"),   None,createdBy,roadName,12,TerminationCode.NoTermination,DateTime.parse("1998-10-16T00:00:00.000+03:00"),None)
+        Roadway(30701,64686,RoadPart(18385,1),AdministrativeClass.State,Track.Combined,Discontinuity.Continuous,AddrMRange(   0,2568),reversed = false,DateTime.parse("1933-01-01T00:00:00.000+02:00"),   None,createdBy,roadName,12,TerminationCode.NoTermination,DateTime.parse("1998-10-16T00:00:00.000+03:00"),None),
+        Roadway(30920,64355,roadPart,         AdministrativeClass.State,Track.Combined,Discontinuity.Continuous,AddrMRange(   0,1400),reversed = false,DateTime.parse("1967-01-01T00:00:00.000+02:00"),   None,createdBy,roadName,12,TerminationCode.NoTermination,DateTime.parse("1998-10-16T00:00:00.000+03:00"),None),
+        Roadway(30993,64687,RoadPart(18385,1),AdministrativeClass.State,Track.Combined,Discontinuity.EndOfRoad, AddrMRange(2568,4403),reversed = false,DateTime.parse("1901-01-01T00:00:00.000+01:39:49"),None,createdBy,roadName,12,TerminationCode.NoTermination,DateTime.parse("1998-10-16T00:00:00.000+03:00"),None),
+        Roadway(31341,64356,roadPart         ,AdministrativeClass.State,Track.Combined,Discontinuity.Continuous,AddrMRange(1400,4828),reversed = false,DateTime.parse("1952-01-01T00:00:00.000+02:00"),   None,createdBy,roadName,12,TerminationCode.NoTermination,DateTime.parse("1998-10-16T00:00:00.000+03:00"),None)
       ))
 
       val allProjectLinks = Seq(
@@ -761,27 +761,24 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
           .find(_.id == 0)
           .get
           .copy(discontinuity   = Discontinuity.MinorDiscontinuity,
-            startAddrMValue = 0,
-            endAddrMValue   = 889
+            addrMRange = AddrMRange(0,889)
           ),
         combinedRoadwayPart
           .find(_.id == 1)
           .get
-          .copy(discontinuity = Discontinuity.Continuous, startAddrMValue = 889, endAddrMValue = 1524),
+          .copy(discontinuity = Discontinuity.Continuous, addrMRange = AddrMRange(889, 1524)),
         createdRoadways205
           .find(_.track == Track.LeftSide)
           .get
           .copy(track       = Track.RightSide,
-            startAddrMValue = 1524,
-            endAddrMValue   = 1987,
+            addrMRange      = AddrMRange(1524, 1987),
             discontinuity   = Discontinuity.EndOfRoad
           ),
         createdRoadways205
           .find(_.track == Track.RightSide)
           .get
           .copy(track       = Track.LeftSide,
-            startAddrMValue = 1524,
-            endAddrMValue   = 1987,
+            addrMRange      = AddrMRange(1524,1987),
             discontinuity   = Discontinuity.EndOfRoad
           )
       ).map(_.copy(reversed = false))
@@ -846,8 +843,8 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
         (a, toProjectLink(project, RoadAddressChangeType.Transfer)(a.copy(roadPart = RoadPart(a.roadPart.roadNumber, endRoadPart))).copy(roadwayId = 2))
       })
       var links = addressLinks.map(_._2)
-      val rw1 = Roadway(1, 1000, RoadPart(5, startRoadPart), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, addressMLength, ely = 8, startDate = DateTime.now(), createdBy = "", roadName = None)
-      val rw2 = Roadway(2, 1001, RoadPart(5, endRoadPart  ), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, addressMLength, ely = 8, startDate = DateTime.now(), createdBy = "", roadName = None)
+      val rw1 = Roadway(1, 1000, RoadPart(5, startRoadPart), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0, addressMLength), ely = 8, startDate = DateTime.now(), createdBy = "", roadName = None)
+      val rw2 = Roadway(2, 1001, RoadPart(5, endRoadPart  ), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0, addressMLength), ely = 8, startDate = DateTime.now(), createdBy = "", roadName = None)
 
       roadwayDAO.create(Seq(rw1,rw2))
 
@@ -896,8 +893,8 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       })
 
       var links = addressLinks.map(_._2)
-      val rw1 = Roadway(1, 1000, RoadPart(5, 205), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, addressMLengthFirst, ely = 8, startDate = DateTime.now(), createdBy = "", roadName = None)
-      val rw2 = Roadway(2, 1001, RoadPart(5, 205), AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, 0, addressMLengthFirst + addressMLengthSecond, ely = 8, startDate = DateTime.now(), createdBy = "", roadName = None)
+      val rw1 = Roadway(1, 1000, RoadPart(5, 205), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0, addressMLengthFirst),                        ely = 8, startDate = DateTime.now(), createdBy = "", roadName = None)
+      val rw2 = Roadway(2, 1001, RoadPart(5, 205), AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad,  AddrMRange(0, addressMLengthFirst + addressMLengthSecond), ely = 8, startDate = DateTime.now(), createdBy = "", roadName = None)
 
       roadwayDAO.create(Seq(rw1,rw2))
 
@@ -1228,7 +1225,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       firstSection.head.endMAddr    should be(maxAddr + lengthChange)
       firstSection.head.reversed    should be(false)
       secondSection.head.startMAddr should be(maxAddr + lengthChange)
-      secondSection.head.endMAddr   should be(maxAddr + lengthChange + roadway206.endAddrMValue)
+      secondSection.head.endMAddr   should be(maxAddr + lengthChange + roadway206.addrMRange.end)
       secondSection.head.reversed   should be(false)
       secondSection.last.startMAddr should be(0)
       secondSection.last.endMAddr   should be(maxAddr)
@@ -1236,11 +1233,11 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
 
       val originalSections205 = partitioned.originalSections.find(p => p.roadPartNumberStart == 205 && p.roadwayNumber == 0).get
       originalSections205.startMAddr should be(0)
-      originalSections205.endMAddr   should be(roadway205.endAddrMValue)
+      originalSections205.endMAddr   should be(roadway205.addrMRange.end)
 
       val originalSections206 = partitioned.originalSections.find(_.roadPartNumberStart == 206).get
       originalSections206.startMAddr should be(0)
-      originalSections206.endMAddr   should be(roadway206.endAddrMValue)
+      originalSections206.endMAddr   should be(roadway206.addrMRange.end)
     }
   }
 }
