@@ -453,7 +453,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
         link.endAddrMValue shouldBe originalEndAddrMValue
         link.startMValue shouldBe originalStartMValue
         link.endMValue shouldBe originalEndMValue
-        link.status shouldBe RoadAddressChangeType.NotHandled
+        link.status shouldBe RoadAddressChangeType.Termination
       }
     }
   }
