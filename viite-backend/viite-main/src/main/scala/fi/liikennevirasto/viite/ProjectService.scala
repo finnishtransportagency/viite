@@ -1750,7 +1750,6 @@ class ProjectService(
       }.toSeq
 
       val terminatedProjectLinksWithAssignedRoadwayNumbers = assignRoadwayNumbersToTerminatedProjectLinks(projectLinks)
-      //val terminatedLinksToUpdate = removeSplitTerminatedProjectLinksAndUpdateGeometry(terminatedProjectLinksWithAssignedRoadwayNumbers, projectId)
       val originalAddresses = roadAddressService.getRoadAddressesByRoadwayIds((recalculated ++ terminated).map(_.roadwayId))
       projectLinkDAO.updateProjectLinks(recalculated ++ terminatedProjectLinksWithAssignedRoadwayNumbers, userName, originalAddresses)
       val projectLinkIdsToDB = recalculated.map(_.id).diff(projectLinks.map(_.id))
