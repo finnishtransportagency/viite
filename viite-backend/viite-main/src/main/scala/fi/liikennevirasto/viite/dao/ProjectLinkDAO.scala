@@ -699,6 +699,7 @@ println(sql)
           ROAD_PART_NUMBER = ${roadAddress.roadPart.partNumber}, TRACK = ${roadAddress.track.value},
           DISCONTINUITY_TYPE = ${roadAddress.discontinuity.value}, ADMINISTRATIVE_CLASS = ${roadAddress.administrativeClass.value},
           STATUS = ${RoadAddressChangeType.NotHandled.value}, START_ADDR_M = ${roadAddress.startAddrMValue}, END_ADDR_M = ${roadAddress.endAddrMValue},
+          ORIGINAL_START_ADDR_M = ${roadAddress.startAddrMValue}, ORIGINAL_END_ADDR_M = ${roadAddress.endAddrMValue},
           START_CALIBRATION_POINT = ${roadAddress.startCalibrationPointType.value},
           END_CALIBRATION_POINT = ${roadAddress.endCalibrationPointType.value},
           ORIG_START_CALIBRATION_POINT = ${roadAddress.startCalibrationPointType.value},
@@ -742,7 +743,7 @@ println(sql)
             START_MEASURE = ?,
             END_MEASURE = ?,
             STATUS = ?
-          WHERE LINEAR_LOCATION_ID = ? AND ID = ?
+          WHERE LINEAR_LOCATION_ID = ? AND PROJECT_ID = ?
       """)
 
         try {
@@ -764,9 +765,9 @@ println(sql)
           updatePS.setLong(15, pl.ely)
           updatePS.setDouble(16, pl.startMValue)
           updatePS.setDouble(17, pl.endMValue)
-          updatePS.setInt(18, RoadAddressChangeType.NotHandled.value) // as it's the original value before changes
+          updatePS.setInt(18, RoadAddressChangeType.Termination.value)
           updatePS.setLong(19, pl.linearLocationId)
-          updatePS.setLong(20, pl.id)
+          updatePS.setLong(20, pl.projectId)
           updatePS.addBatch()
         }
 
@@ -942,22 +943,24 @@ println(sql)
   /**
    * Handles the removal of a split link and updates necessary fields for the original link.
    * @throws Exception if an error occurs during the transaction
-   * @param splitProjectLinkId The ID of the split link to remove.
+   * @param splitProjectLinkIds Set of the IDs of the split link to remove.
    * @param originalProjectLink The original link that the split link was created from.
    * @param projectId The ID of the project these links belong to.
    */
-  def handleSplitProjectLinkRemovalAndUpdate(splitProjectLinkId: Long, originalProjectLink: ProjectLink, projectId: Long): Unit = {
-    // Begin transaction to ensure atomicity with dynamic session
-    dynamicSession.withTransaction {
+  def handleSplitProjectLinksRemovalAndUpdate(splitProjectLinkIds: Seq[Long], originalProjectLink: ProjectLink, projectId: Long): Unit = {
       try {
-        removeProjectLinksById(Set(splitProjectLinkId))
+        // Remove all split project links
+        if (splitProjectLinkIds.nonEmpty) {
+          removeProjectLinksById(splitProjectLinkIds.toSet)
+          logger.info(s"Removed split project links: ${splitProjectLinkIds.mkString(", ")}")
+        }
+        // Clear the connectedLinkId for the original link if splits were removed
         removeConnectedLinkId(originalProjectLink)
+        logger.info(s"Cleared connectedLinkId for original project link: ${originalProjectLink.id}")
       } catch {
         case e: Exception =>
-          logger.error(s"Error handling split link removal and update for splitLinkId: $splitProjectLinkId, originalLinkId: ${originalProjectLink.id}, projectId: $projectId", e)
-          throw e // Re-throw exception to trigger transaction rollback
+          logger.error(s"Error during split link removal and update for originalLinkId: ${originalProjectLink.id}, projectId: $projectId", e)
       }
-    }
   }
 
   def moveProjectLinksToHistory(projectId: Long): Unit = {
