@@ -1216,9 +1216,9 @@ class ProjectService(
 
     val afterUpdateLinks = projectLinkDAO.fetchByProjectRoadPart(roadPart, projectId)
     // handle possible split project links that were split in the project
-    val preservedProjectLinks = handleSplitProjectLinks(afterUpdateLinks, projectId)
+    val preservedProjectLinks = identifyAndHandleSplitProjectLinks(afterUpdateLinks, projectId)
 
-    if (afterUpdateLinks.isEmpty) {
+    if (preservedProjectLinks.isEmpty) {
       releaseRoadPart(projectId, roadPart, userName)
     }
   }
@@ -1411,7 +1411,7 @@ class ProjectService(
         val connectedLinkIds = updatedLinks.flatMap(_.connectedLinkId).distinct
         val connectedProjectLinks = projectLinkDAO.fetchProjectLinksByConnectedLinkId(connectedLinkIds)
         // check and remove links that were split from the project
-        handleSplitProjectLinks(connectedProjectLinks, projectId)
+        identifyAndHandleSplitProjectLinks(connectedProjectLinks, projectId)
       }
     }
 
@@ -1637,23 +1637,20 @@ class ProjectService(
    * @param projectId The ID of the project being processed.
    * @return A sequence of project links with unnecessary splits removed.
    */
-  def handleSplitProjectLinks(projectLinks: Seq[ProjectLink], projectId: Long): Seq[ProjectLink] = {
+  def identifyAndHandleSplitProjectLinks(projectLinks: Seq[ProjectLink], projectId: Long): Seq[ProjectLink] = {
     // A mutable collection to keep track of updated project links
     val updatedProjectLinks = scala.collection.mutable.Buffer[ProjectLink]()
 
     // Identify splits to remove
-    val splitsToHandle = identifySplitsToRemove(projectLinks)
+    val splitsToHandle = identifySplitsToHandle(projectLinks)
 
     if (splitsToHandle.nonEmpty) {
       splitsToHandle.foreach { case (originalProjectLink, splitProjectLinks) =>
-        // Log the IDs of the split project links to be removed
+        // Remove split project links and update geometry of the original project link
         logger.info(s"Removing split project links for original link ID: ${originalProjectLink.id} with split link IDs: ${splitProjectLinks.map(_.id).mkString(", ")}")
-
-        // Remove split project links based on their IDs
         val splitLinkIds = splitProjectLinks.map(_.id)
         removeSplitProjectLinks(splitLinkIds, originalProjectLink, projectId)
 
-        // Update geometry of the original project link and add to updated links
         updateGeometryOfOriginalProjectLink(originalProjectLink) match {
           case Some(updatedLink) => updatedProjectLinks += updatedLink
           case None => updatedProjectLinks += originalProjectLink // If geometry was not updated, keep the original
@@ -1661,21 +1658,29 @@ class ProjectService(
       }
     } else {
       logger.info("No split project links to handle.")
-      // If no splits to handle, return the project links
+      // If no splits to handle, return the original not handled project links
       return projectLinks
     }
-
     // Return the final updated list of project links
     updatedProjectLinks
   }
 
-  def identifySplitsToRemove(projectLinks: Seq[ProjectLink]): Map[ProjectLink, Seq[ProjectLink]] = {
-    projectLinks.groupBy(_.linearLocationId).flatMap {
-      case (_, links) if links.size > 1 =>
-        val originalLink = links.minBy(_.id)
-        val splits = links.filter(link => link.id != originalLink.id && shouldRemoveSplitProjectLink(originalLink, link))
-        if (splits.nonEmpty) Some(originalLink -> splits) else None
-      case _ => None
+  /**
+   * Identifies splits in project links that need to be handled. This only works after the termination or reverting of project links.
+   * Splits are identified based on the linear location ID of the project links.
+   * If a split is found where the start and end address M values are the same as the original project link, it is considered unnecessary and should be removed.
+   * @param projectLinks The project links to be evaluated.
+   * @return A map of original project links to their corresponding split project links or empty map if no splits to remove are found.
+   */
+  def identifySplitsToHandle(projectLinks: Seq[ProjectLink]): Map[ProjectLink, Seq[ProjectLink]] = {
+    projectLinks.groupBy(_.linearLocationId).flatMap { case (_, links) =>
+      val originalLink = links.minBy(_.id) // Assuming the first link is always the original
+      val splitsToRemove = links.filter { splitLink =>
+        splitLink.id != originalLink.id &&
+          originalLink.startAddrMValue == splitLink.startAddrMValue &&
+          originalLink.endAddrMValue == splitLink.endAddrMValue
+      }
+      if (splitsToRemove.nonEmpty) Some(originalLink -> splitsToRemove) else None
     }
   }
 
@@ -1688,7 +1693,6 @@ class ProjectService(
    * @param projectId The ID of the project for which the operation is being performed.
    */
   private def removeSplitProjectLinks(splitProjectLinkIds: Seq[Long], originalProjectLink: ProjectLink, projectId: Long): Unit = {
-    logger.info(s"Removing split project link: ${splitProjectLinkIds}")
     try {
       roadwayChangesDAO.clearRoadChangeTable(projectId)
       projectLinkDAO.handleSplitProjectLinksRemovalAndUpdate(splitProjectLinkIds, originalProjectLink, projectId)
@@ -1704,11 +1708,6 @@ class ProjectService(
       projectLinkDAO.updateProjectLinkGeometry(originalProjectLink.id, updatedGeom)
       originalProjectLink.copy(geometry = updatedGeom)
     }
-  }
-
-  // If both project links have the same address m values after termination, the other can be removed.
-  private def shouldRemoveSplitProjectLink(originalProjectLink: ProjectLink, splitProjectLink: ProjectLink): Boolean = {
-    originalProjectLink.startAddrMValue == splitProjectLink.startAddrMValue && originalProjectLink.endAddrMValue == splitProjectLink.endAddrMValue
   }
 
   def recalculateProjectLinks(projectId: Long, userName: String, roadParts: Set[RoadPart] = Set(), newTrack: Option[Track] = None, newDiscontinuity: Option[Discontinuity] = None, completelyNewLinkIds: Seq[Long] = Seq()): Unit = {
