@@ -190,7 +190,7 @@ object RoadwayFiller {
                             headProjectLink.administrativeClass,
                             headProjectLink.track,
                             lastProjectLink.discontinuity,
-                            headProjectLink.addrMRange,
+                            AddrMRange(headProjectLink.addrMRange.start, lastProjectLink.addrMRange.end),
                             false,
                             newRoadwayStartDate,
                             None,
