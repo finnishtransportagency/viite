@@ -136,7 +136,7 @@ package object util {
       addrM.init.zip(addrM.tail).map {
         case (st, en) =>
           val (roadwayId, linkId) = if (withRoadAddress) createRoadAddresses(roadPart, t.value, st, en) else (0L, 0L.toString)
-          projectLink(st, en, t, projectId, roadAddressChangeType, roadPart, discontinuity, ely, linkId, roadwayId)
+          projectLink(AddrMRange(st, en), t, projectId, roadAddressChangeType, roadPart, discontinuity, ely, linkId, roadwayId)
       }
     }
 
@@ -167,7 +167,7 @@ package object util {
       "", Seq(), Seq(), None, None)
     projectDAO.create(project)
     val links = addrM.init.zip(addrM.tail).map { case (st, en) =>
-      val pl = projectLink(st, en, Track.Combined, id, roadAddressChangeType)
+      val pl = projectLink(AddrMRange(st, en), Track.Combined, id, roadAddressChangeType)
       pl.copy(roadPart = RoadPart(39999, pl.roadPart.partNumber))
     }
     projectReservedPartDAO.reserveRoadPart(id, RoadPart(39999, 1), "u")
@@ -175,8 +175,8 @@ package object util {
     project
   }
 
-  def projectLink(startAddrM: Long, endAddrM: Long, track: Track, projectId: Long, status: RoadAddressChangeType = RoadAddressChangeType.NotHandled, roadPart: RoadPart = RoadPart(19999, 1), discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, linkId: String = "0", roadwayId: Long = 0L, linearLocationId: Long = 0L): ProjectLink = {
-    ProjectLink(NewIdValue, roadPart, track, discontinuity, AddrMRange(startAddrM, endAddrM), AddrMRange(startAddrM, endAddrM), None, None, Some("User"), linkId, 0.0, (endAddrM - startAddrM).toDouble, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), Seq(Point(0.0, startAddrM), Point(0.0, endAddrM)), projectId, status, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, (endAddrM - startAddrM).toDouble, roadwayId, linearLocationId, ely, reversed = false, None, 0L)
+  def projectLink(addrMRange: AddrMRange, track: Track, projectId: Long, status: RoadAddressChangeType = RoadAddressChangeType.NotHandled, roadPart: RoadPart = RoadPart(19999, 1), discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, linkId: String = "0", roadwayId: Long = 0L, linearLocationId: Long = 0L): ProjectLink = {
+    ProjectLink(NewIdValue, roadPart, track, discontinuity, addrMRange, addrMRange, None, None, Some("User"), linkId, 0.0, (addrMRange.end - addrMRange.start).toDouble, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), Seq(Point(0.0, addrMRange.start), Point(0.0, addrMRange.end)), projectId, status, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, (addrMRange.end - addrMRange.start).toDouble, roadwayId, linearLocationId, ely, reversed = false, None, 0L)
   }
 
   def toTransition(project: Project, status: RoadAddressChangeType)(roadAddress: RoadAddress): (RoadAddress, ProjectLink) = {
