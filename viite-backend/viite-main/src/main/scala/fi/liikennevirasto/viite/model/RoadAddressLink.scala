@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite.model
 
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPoint
 import fi.vaylavirasto.viite.geometry.{Point, PolyLine, Vector3d}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, LifecycleStatus, LinkGeomSource, RoadPart, SideCode}
+import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, LifecycleStatus, LinkGeomSource, RoadPart, SideCode}
 
 trait RoadAddressLinkLike extends PolyLine {
   def id: Long
@@ -23,8 +23,7 @@ trait RoadAddressLinkLike extends PolyLine {
   def trackCode: Long
   def elyCode: Long
   def discontinuity: Long
-  def startAddressM: Long
-  def endAddressM: Long
+  def addrMRange: AddrMRange
   def startMValue: Double
   def endMValue: Double
   def sideCode: SideCode
@@ -40,7 +39,7 @@ case class RoadAddressLink(id: Long, linearLocationId: Long, linkId: String, geo
                            municipalityCode: BigInt, municipalityName: String,
                            modifiedAt: Option[String], modifiedBy: Option[String],
                            roadPart: RoadPart, trackCode: Long, elyCode: Long, discontinuity: Long,
-                           startAddressM: Long, endAddressM: Long, startDate: String, endDate: String,
+                           addrMRange: AddrMRange, startDate: String, endDate: String,
                            startMValue: Double, endMValue: Double, sideCode: SideCode,
                            startCalibrationPoint: Option[ProjectCalibrationPoint], endCalibrationPoint: Option[ProjectCalibrationPoint],
                            roadwayNumber: Long = 0, newGeometry: Option[Seq[Point]] = None, sourceId: String) extends RoadAddressLinkLike {

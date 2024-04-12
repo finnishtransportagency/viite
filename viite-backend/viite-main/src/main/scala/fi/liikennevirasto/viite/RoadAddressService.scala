@@ -341,13 +341,13 @@ class RoadAddressService(
           val track = if (params.size == 4) Some(params(3)) else None
           val ralOption = getRoadAddressLink(RoadPart(roadNumber, roadPart), addressM, track)
           ralOption.foldLeft(Seq.empty[Map[String, Seq[Any]]])((partialResultSeq, ral) => {
-            val roadAddressLinkMValueLengthPercentageFactor = (addressM - ral.startAddressM.toDouble) / (ral.endAddressM.toDouble - ral.startAddressM)
+            val roadAddressLinkMValueLengthPercentageFactor = (addressM - ral.addrMRange.start.toDouble) / (ral.addrMRange.end.toDouble - ral.addrMRange.start)
             val geometryLength = ral.endMValue - ral.startMValue
             val geometryMeasure = roadAddressLinkMValueLengthPercentageFactor * geometryLength
             val point = ral match {
-              case r if (r.startAddressM.toDouble == addressM && r.sideCode == SideCode.TowardsDigitizing) || (r.endAddressM == addressM && r.sideCode == SideCode.AgainstDigitizing) =>
+              case r if (r.addrMRange.start.toDouble == addressM && r.sideCode == SideCode.TowardsDigitizing) || (r.addrMRange.end == addressM && r.sideCode == SideCode.AgainstDigitizing) =>
                 r.geometry.headOption
-              case r if (r.startAddressM.toDouble == addressM && r.sideCode == SideCode.AgainstDigitizing) || (r.endAddressM == addressM && r.sideCode == SideCode.TowardsDigitizing) =>
+              case r if (r.addrMRange.start.toDouble == addressM && r.sideCode == SideCode.AgainstDigitizing) || (r.addrMRange.end == addressM && r.sideCode == SideCode.TowardsDigitizing) =>
                 r.geometry.lastOption
               case r =>
                 val mValue: Double = r.sideCode match {
@@ -407,7 +407,7 @@ class RoadAddressService(
     *
     * @param roadPart  The road part
     * @param addressM  The addressM that is in between the returned RoadAddress
-    * @return Returns RoadAddressLink in track 0 or 1 or given track which contains dynamically calculated startAddressM and endAddressM
+    * @return Returns RoadAddressLink in track 0 or 1 or given track which contains dynamically calculated addrMRange
     *         and includes detailed geometry in that link fetched dynamically from KGV
     */
   def getRoadAddressLink(roadPart: RoadPart, addressM: Long, track: Option[Long] = None): Option[RoadAddressLink] = {
@@ -420,7 +420,7 @@ class RoadAddressService(
     val roadAddresses = getRoadAddressForSearch(roadPart, addressM, track)
     val roadLinks = roadLinkService.getRoadLinksByLinkIds(linearLocationsLinkIds)
     val rals = RoadAddressFiller.fillTopology(roadLinks, roadAddresses)
-    val filteredRals = rals.filter(al => al.startAddressM <= addressM && al.endAddressM >= addressM && (al.startAddressM != 0 || al.endAddressM != 0))
+    val filteredRals = rals.filter(al => al.addrMRange.start <= addressM && al.addrMRange.end >= addressM && (al.addrMRange.start != 0 || al.addrMRange.end != 0))
     val ral = filteredRals.filter(al => (track.nonEmpty && track.contains(al.trackCode)) || al.trackCode != Track.LeftSide.value)
     ral.headOption
   }
