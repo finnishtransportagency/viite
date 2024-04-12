@@ -56,7 +56,7 @@ object TrackCalculatorContext {
   }
 }
 
-case class TrackCalculatorResult(leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink], startAddrMValue: Long, endAddrMValue: Long, restLeft: Seq[ProjectLink] = Seq(), restRight: Seq[ProjectLink] = Seq())
+case class TrackCalculatorResult(leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink], addrMRange: AddrMRange, restLeft: Seq[ProjectLink] = Seq(), restRight: Seq[ProjectLink] = Seq())
 
 /**
   * Strategy used on the DefaultSectionCalculatorStrategy
@@ -195,7 +195,7 @@ trait TrackCalculatorStrategy {
     TrackCalculatorResult(
       setLastEndAddrMValue(adjustedLeft, minimumEndAddress),
       setLastEndAddrMValue(adjustedRight, minimumEndAddress),
-      sectionStartAddress, minimumEndAddress,
+      AddrMRange(sectionStartAddress, minimumEndAddress),
       restLeftProjectLinks,
       restRightProjectLinks)
   }

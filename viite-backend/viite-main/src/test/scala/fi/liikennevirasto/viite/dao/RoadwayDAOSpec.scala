@@ -952,9 +952,9 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
       val (combinedTrack, twoTrack) = result.partition(row => row.track == 0)
       combinedTrack.size should be (3)
       twoTrack.size should be (8)
-      val startAddrMs = result.map(row => row.startAddrM).distinct
+      val startAddrMs = result.map(row => row.addrMRange.start).distinct
       startAddrMs should be (Seq(0, 1545, 1701, 1815, 2022, 2333, 5061))
-      val endAddrMs = result.map(row => row.endAddrM).distinct
+      val endAddrMs = result.map(row => row.addrMRange.end).distinct
       endAddrMs should be (Seq(1545, 1701, 1815, 2022, 2333, 5061, 5239))
 
     }
@@ -1007,9 +1007,9 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
       val result = dao.fetchRoadPartsForRoadAddressBrowser(Some(date), None, Some(roadPart.roadNumber), Some(roadPart.partNumber), Some(roadPart.partNumber))
       result.size should be (1)                               // one road part should always return one result row
       result.head shouldBe a [RoadPartForRoadAddressBrowser]
-      val startAddrM = result.head.startAddrM
+      val startAddrM = result.head.addrMRange.start
       startAddrM should be (0)                                // max endAddrM - min startAddrM
-      val endAddrM = result.head.endAddrM
+      val endAddrM = result.head.addrMRange.end
       endAddrM should be (5239)                               // max endAddrM
       val startDate = result.head.startDate
       startDate should be (DateTime.parse("2017-12-15")) // latest date of all of the roadways on the road part
@@ -1055,25 +1055,25 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
       val resultForRoadParts = dao.fetchRoadPartsForRoadAddressBrowser(Some(afterChangesSituationDate), None, Some(roadPart.roadNumber), Some(roadPart.partNumber), Some(roadPart.partNumber))
       resultForRoadParts.size should be (1) // a single line per (the whole) road part
       resultForRoadParts.head shouldBe a [RoadPartForRoadAddressBrowser]
-      resultForRoadParts.head.endAddrM should be (2200)
+      resultForRoadParts.head.addrMRange.end should be (2200)
 
       // situation date before changes
       val historyResultForRoadPart = dao.fetchRoadPartsForRoadAddressBrowser(Some(historyChangesSituationDate), None, Some(roadPart.roadNumber), Some(roadPart.partNumber), Some(roadPart.partNumber))
       historyResultForRoadPart.size should be (1)
       historyResultForRoadPart.head shouldBe a [RoadPartForRoadAddressBrowser]
-      historyResultForRoadPart.head.endAddrM should be (2080)
+      historyResultForRoadPart.head.addrMRange.end should be (2080)
 
       // situation date after changes
       val resultForTrack = dao.fetchTracksForRoadAddressBrowser(Some(afterChangesSituationDate), None, Some(roadPart.roadNumber), Some(roadPart.partNumber), Some(roadPart.partNumber))
       resultForTrack.size should be (1)
       resultForTrack.head shouldBe a [TrackForRoadAddressBrowser]
-      resultForTrack.head.endAddrM should be (2200)
+      resultForTrack.head.addrMRange.end should be (2200)
 
       // situation date before changes
       val historyResultTrack = dao.fetchTracksForRoadAddressBrowser(Some(historyChangesSituationDate), None, Some(roadPart.roadNumber), Some(roadPart.partNumber), Some(roadPart.partNumber))
       historyResultTrack.size should be (1)
       historyResultTrack.head shouldBe a [TrackForRoadAddressBrowser]
-      historyResultTrack.head.endAddrM should be (2080)
+      historyResultTrack.head.addrMRange.end should be (2080)
     }
   }
 
