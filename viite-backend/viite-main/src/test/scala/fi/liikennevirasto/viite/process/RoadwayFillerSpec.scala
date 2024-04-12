@@ -83,7 +83,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
                 "Then check correctly assigned roadway id's."){
     runWithRollback {
       val roadways = Map(
-        (0L, dummyRoadway(roadwayNumber = 1L, roadPart = RoadPart(1, 1), startAddrM = 0L, endAddrM = 400L, DateTime.now(), None))
+        (0L, dummyRoadway(roadwayNumber = 1L, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(0L, 400L), DateTime.now(), None))
       )
 
       val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(),
@@ -93,9 +93,9 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       /* Note: Projectlinks should have different roadwaynumbers as project calculation will assign new roadwaynumbers and applyRoadwayChanges() assumes so. */
       val projectLinks = Seq(
-        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous,   0L, 100L, Some(DateTime.now()), status = RoadAddressChangeType.Unchanged, administrativeClass = AdministrativeClass.apply(1), roadwayNumber = 10),
-        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, 100L, 200L, Some(DateTime.now()), status = RoadAddressChangeType.Unchanged, administrativeClass = AdministrativeClass.apply(3), roadwayNumber = 20),
-        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, 200L, 400L, Some(DateTime.now()), status = RoadAddressChangeType.Unchanged, administrativeClass = AdministrativeClass.apply(1), roadwayNumber = 30)
+        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(  0L, 100L), Some(DateTime.now()), status = RoadAddressChangeType.Unchanged, administrativeClass = AdministrativeClass.apply(1), roadwayNumber = 10),
+        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(100L, 200L), Some(DateTime.now()), status = RoadAddressChangeType.Unchanged, administrativeClass = AdministrativeClass.apply(3), roadwayNumber = 20),
+        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(200L, 400L), Some(DateTime.now()), status = RoadAddressChangeType.Unchanged, administrativeClass = AdministrativeClass.apply(1), roadwayNumber = 30)
       )
 
       val roadwayChanges = roadways.values.map(r => RoadwayFiller.RwChanges(r, Seq.empty[Roadway], projectLinks.filter(_.roadwayId == r.id))).toSeq
@@ -112,9 +112,9 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Test RoadwayFiller.applyNewLinks() When dealing with newly created addresses with a new administrative class between them Then check correctly assigned roadway id's.") {
     runWithRollback {
       val projectLinks = Seq(
-        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous,   0L, 100L, Some(DateTime.now()), status = RoadAddressChangeType.New, administrativeClass = AdministrativeClass.apply(1), roadwayNumber = NewIdValue),
-        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, 100L, 200L, Some(DateTime.now()), status = RoadAddressChangeType.New, administrativeClass = AdministrativeClass.apply(3), roadwayNumber = NewIdValue+1),
-        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, 200L, 400L, Some(DateTime.now()), status = RoadAddressChangeType.New, administrativeClass = AdministrativeClass.apply(1), roadwayNumber = NewIdValue+2)
+        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(  0L, 100L), Some(DateTime.now()), status = RoadAddressChangeType.New, administrativeClass = AdministrativeClass.apply(1), roadwayNumber = NewIdValue),
+        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(100L, 200L), Some(DateTime.now()), status = RoadAddressChangeType.New, administrativeClass = AdministrativeClass.apply(3), roadwayNumber = NewIdValue+1),
+        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(200L, 400L), Some(DateTime.now()), status = RoadAddressChangeType.New, administrativeClass = AdministrativeClass.apply(1), roadwayNumber = NewIdValue+2)
       )
 
       val result = RoadwayFiller.applyNewLinks(projectLinks)
@@ -131,16 +131,16 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
                 "When dealing with one unchanged road having no history with administrative class change in the middle " +
                 "Then should return 3 new roadways and one new history row.") {
     runWithRollback {
-      val roadway = dummyRoadway(roadwayNumber = 1L, roadPart = RoadPart(1, 1), startAddrM = 0L, endAddrM = 400L, DateTime.now(), None).copy(discontinuity = Discontinuity.EndOfRoad, ely = 8)
+      val roadway = dummyRoadway(roadwayNumber = 1L, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(0L, 400L), DateTime.now(), None).copy(discontinuity = Discontinuity.EndOfRoad, ely = 8)
       roadwayDAO.create(Seq(roadway))
 
       val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(), Seq(ProjectReservedPart(0L, RoadPart(1, 1), None, None, None, None, None, None, None)), Seq(), None)
       projectDAO.create(project)
 
       val projectLinks = Seq(
-        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous,   0L, 100L, Some(DateTime.now()), status = RoadAddressChangeType.Unchanged, administrativeClass = AdministrativeClass.State,        roadwayNumber = NewIdValue),
-        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, 100L, 200L, Some(DateTime.now()), status = RoadAddressChangeType.Unchanged, administrativeClass = AdministrativeClass.Municipality, roadwayNumber = NewIdValue+1),
-        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.EndOfRoad,  200L, 400L, Some(DateTime.now()), status = RoadAddressChangeType.Unchanged, administrativeClass = AdministrativeClass.State,        roadwayNumber = NewIdValue+2)
+        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(  0L, 100L), Some(DateTime.now()), status = RoadAddressChangeType.Unchanged, administrativeClass = AdministrativeClass.State,        roadwayNumber = NewIdValue),
+        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(100L, 200L), Some(DateTime.now()), status = RoadAddressChangeType.Unchanged, administrativeClass = AdministrativeClass.Municipality, roadwayNumber = NewIdValue+1),
+        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.EndOfRoad,  AddrMRange(200L, 400L), Some(DateTime.now()), status = RoadAddressChangeType.Unchanged, administrativeClass = AdministrativeClass.State,        roadwayNumber = NewIdValue+2)
       )
 
       val changeAdminClassProjectLink = projectLinks(1)
@@ -173,14 +173,14 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
                  "Then old roadway is expired and a new is created with new address and old roadway number.") {
     runWithRollback{
       val roadwayNumber = 1L
-      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), startAddrM = 0L, endAddrM = 400L, DateTime.now().minusDays(2), None).copy(ely = 8)
+      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(0L, 400L), DateTime.now().minusDays(2), None).copy(ely = 8)
       roadwayDAO.create(Seq(roadway))
 
       val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(), Seq(ProjectReservedPart(0L, RoadPart(1, 1), None, None, None, None, None, None, None)), Seq(), None)
       projectDAO.create(project)
 
       val projectLinks = Seq(
-        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, 100L, 500L, Some(DateTime.now()), status = RoadAddressChangeType.Renumeration, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber).copy(originalAddrMRange = roadway.addrMRange)
+        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(100L, 500L), Some(DateTime.now()), status = RoadAddressChangeType.Renumeration, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber).copy(originalAddrMRange = roadway.addrMRange)
       )
 
       val roadwayChanges = Seq(RoadwayFiller.RwChanges(roadway, Seq.empty[Roadway], projectLinks))
@@ -213,14 +213,14 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
     "Then history row is created and a new row is created with new address and old roadway number.") {
     runWithRollback{
       val roadwayNumber = 1L
-      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), startAddrM = 0L, endAddrM = 400L, DateTime.now().minusDays(2), None).copy(ely = 8)
+      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(0L, 400L), DateTime.now().minusDays(2), None).copy(ely = 8)
       roadwayDAO.create(Seq(roadway))
 
       val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(), Seq(ProjectReservedPart(0L, RoadPart(1, 1), None, None, None, None, None, None, None)), Seq(), None)
       projectDAO.create(project)
 
       val projectLinks = Seq(
-        dummyProjectLink(RoadPart(1, 2), Track.Combined, Discontinuity.Continuous, 0L, 400L, Some(DateTime.now()), status = RoadAddressChangeType.Renumeration, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber).copy(originalAddrMRange = roadway.addrMRange)
+        dummyProjectLink(RoadPart(1, 2), Track.Combined, Discontinuity.Continuous, AddrMRange(0L, 400L), Some(DateTime.now()), status = RoadAddressChangeType.Renumeration, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber).copy(originalAddrMRange = roadway.addrMRange)
       )
 
       val roadwayChanges = Seq(RoadwayFiller.RwChanges(roadway, Seq.empty[Roadway], projectLinks))
@@ -253,14 +253,14 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
     "Then history row is created and a new row is created with new address and old roadway number.") {
     runWithRollback{
       val roadwayNumber = 1L
-      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), startAddrM = 0L, endAddrM = 400L, DateTime.now().minusDays(2), None).copy(ely = 8)
+      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(0L, 400L), DateTime.now().minusDays(2), None).copy(ely = 8)
       roadwayDAO.create(Seq(roadway))
 
       val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(), Seq(ProjectReservedPart(0L, RoadPart(1, 1), None, None, None, None, None, None, None)), Seq(), None)
       projectDAO.create(project)
 
       val projectLinks = Seq(
-        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, 0L, 400L, Some(DateTime.now()), status = RoadAddressChangeType.Transfer, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber).copy(originalAddrMRange = roadway.addrMRange, ely = 10)
+        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(0L, 400L), Some(DateTime.now()), status = RoadAddressChangeType.Transfer, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber).copy(originalAddrMRange = roadway.addrMRange, ely = 10)
       )
 
       val roadwayChanges = Seq(RoadwayFiller.RwChanges(roadway, Seq.empty[Roadway], projectLinks))
@@ -295,14 +295,14 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
     "Then history row is created and a new row is created with new address and old roadway number.") {
     runWithRollback{
       val roadwayNumber = 1L
-      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), startAddrM = 0L, endAddrM = 400L, DateTime.now(), None).copy(ely = 8)
+      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(0L, 400L), DateTime.now(), None).copy(ely = 8)
       roadwayDAO.create(Seq(roadway))
 
       val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(), Seq(ProjectReservedPart(0L, RoadPart(1, 1), None, None, None, None, None, None, None)), Seq(), None)
       projectDAO.create(project)
 
       val projectLinks = Seq(
-        dummyProjectLink(RoadPart(2, 1), Track.Combined, Discontinuity.Continuous, 0L, 400L, Some(DateTime.now()), status = RoadAddressChangeType.Transfer, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber).copy(originalAddrMRange = roadway.addrMRange)
+        dummyProjectLink(RoadPart(2, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(0L, 400L), Some(DateTime.now()), status = RoadAddressChangeType.Transfer, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber).copy(originalAddrMRange = roadway.addrMRange)
       )
 
       val roadwayChanges = Seq(RoadwayFiller.RwChanges(roadway, Seq.empty[Roadway], projectLinks))
@@ -335,14 +335,14 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
                  "Then old roadway is unchanged and a new is created with new address and roadway number.") {
     runWithRollback{
       val roadwayNumber = 1L
-      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), startAddrM = 100L, endAddrM = 170L, DateTime.now(), None).copy(ely = 8)
+      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(100L, 170L), DateTime.now(), None).copy(ely = 8)
       roadwayDAO.create(Seq(roadway))
 
       val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(), Seq(ProjectReservedPart(0L, RoadPart(1, 1), None, None, None, None, None, None, None)), Seq(), None)
       projectDAO.create(project)
 
-      val unChangedProjectLink = dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, 100L, 170L, Some(DateTime.now()), status = RoadAddressChangeType.Unchanged, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber).copy(originalAddrMRange = roadway.addrMRange)
-      val newProjectLink       = dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, 170L, 200L, Some(DateTime.now()), status = RoadAddressChangeType.New,       administrativeClass = AdministrativeClass.State)
+      val unChangedProjectLink = dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(100L, 170L), Some(DateTime.now()), status = RoadAddressChangeType.Unchanged, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber).copy(originalAddrMRange = roadway.addrMRange)
+      val newProjectLink       = dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(170L, 200L), Some(DateTime.now()), status = RoadAddressChangeType.New,       administrativeClass = AdministrativeClass.State)
 
       val roadwayChanges = Seq(RoadwayFiller.RwChanges(roadway, Seq.empty[Roadway], Seq(unChangedProjectLink)))
       val resultForUnchanged = RoadwayFiller.applyRoadwayChanges(roadwayChanges).flatten.filter(_._1.nonEmpty)
@@ -373,15 +373,15 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
                  "Then two new roadways are created and one expired.") {
     runWithRollback{
       val roadwayNumber = 1L
-      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), startAddrM = 0L, endAddrM = 400L, DateTime.now(), None).copy(ely = 8)
+      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(0L, 400L), DateTime.now(), None).copy(ely = 8)
       roadwayDAO.create(Seq(roadway))
 
       val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(), Seq(ProjectReservedPart(0L, RoadPart(1, 1), None, None, None, None, None, None, None)), Seq(), None)
       projectDAO.create(project)
 
       val projectLinks = Seq(
-      dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.MinorDiscontinuity, 0L, 200L, Some(DateTime.now()), status = RoadAddressChangeType.Unchanged, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber+1),
-      dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous,       200L, 400L, Some(DateTime.now()), status = RoadAddressChangeType.New,       administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber+2)
+      dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.MinorDiscontinuity,AddrMRange(  0L, 200L), Some(DateTime.now()), status = RoadAddressChangeType.Unchanged, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber+1),
+      dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous,        AddrMRange(200L, 400L), Some(DateTime.now()), status = RoadAddressChangeType.New,       administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber+2)
       )
 
       val roadwayChanges = Seq(RoadwayFiller.RwChanges(roadway, Seq.empty[Roadway], projectLinks))
@@ -420,17 +420,17 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
                  "Then three new roadways are created and one expired.") {
     runWithRollback{
       val roadwayNumber = 1L
-      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), startAddrM = 0L, endAddrM = 400L, DateTime.now(), None).copy(ely = 8)
+      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(0L, 400L), DateTime.now(), None).copy(ely = 8)
       roadwayDAO.create(Seq(roadway))
 
       val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(), Seq(ProjectReservedPart(0L, RoadPart(1, 1), None, None, None, None, None, None, None)), Seq(), None)
       projectDAO.create(project)
 
       val projectLinks = Seq(
-        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous,   0L, 200L, Some(DateTime.now()), status = RoadAddressChangeType.Unchanged, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber+1),
-        dummyProjectLink(RoadPart(1, 1), Track.LeftSide, Discontinuity.Continuous, 200L, 400L, Some(DateTime.now()), status = RoadAddressChangeType.Transfer,  administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber+2)
+        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(  0L, 200L), Some(DateTime.now()), status = RoadAddressChangeType.Unchanged, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber+1),
+        dummyProjectLink(RoadPart(1, 1), Track.LeftSide, Discontinuity.Continuous, AddrMRange(200L, 400L), Some(DateTime.now()), status = RoadAddressChangeType.Transfer,  administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber+2)
       )
-      val newLink = dummyProjectLink(RoadPart(1, 1), Track.RightSide, Discontinuity.Continuous, 200L, 400L, Some(DateTime.now()), status = RoadAddressChangeType.New, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber+3)
+      val newLink = dummyProjectLink(RoadPart(1, 1), Track.RightSide, Discontinuity.Continuous, AddrMRange(200L, 400L), Some(DateTime.now()), status = RoadAddressChangeType.New, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber+3)
 
       val roadwayChanges = Seq(RoadwayFiller.RwChanges(roadway, Seq.empty[Roadway], projectLinks))
       val resultForUnchanged = RoadwayFiller.applyRoadwayChanges(roadwayChanges).flatten.filter(_._1.nonEmpty)
@@ -491,10 +491,10 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       projectDAO.create(project)
 
       val newProjectLinks = Seq(
-        dummyProjectLink(RoadPart(1, 1), Track.LeftSide,  Discontinuity.MinorDiscontinuity, 0L, 200L, Some(DateTime.now()), status = RoadAddressChangeType.New, administrativeClass = AdministrativeClass.State,        roadwayNumber = roadwayNumber+1),
-        dummyProjectLink(RoadPart(1, 1), Track.LeftSide,  Discontinuity.Continuous,       200L, 400L, Some(DateTime.now()), status = RoadAddressChangeType.New, administrativeClass = AdministrativeClass.Municipality, roadwayNumber = roadwayNumber+2),
-        dummyProjectLink(RoadPart(1, 1), Track.RightSide, Discontinuity.Continuous,         0L, 200L, Some(DateTime.now()), status = RoadAddressChangeType.New, administrativeClass = AdministrativeClass.State,        roadwayNumber = roadwayNumber+3),
-        dummyProjectLink(RoadPart(1, 1), Track.RightSide, Discontinuity.Continuous,       200L, 400L, Some(DateTime.now()), status = RoadAddressChangeType.New, administrativeClass = AdministrativeClass.Municipality, roadwayNumber = roadwayNumber+4)
+        dummyProjectLink(RoadPart(1, 1), Track.LeftSide,  Discontinuity.MinorDiscontinuity,AddrMRange(  0L, 200L), Some(DateTime.now()), status = RoadAddressChangeType.New, administrativeClass = AdministrativeClass.State,        roadwayNumber = roadwayNumber+1),
+        dummyProjectLink(RoadPart(1, 1), Track.LeftSide,  Discontinuity.Continuous,        AddrMRange(200L, 400L), Some(DateTime.now()), status = RoadAddressChangeType.New, administrativeClass = AdministrativeClass.Municipality, roadwayNumber = roadwayNumber+2),
+        dummyProjectLink(RoadPart(1, 1), Track.RightSide, Discontinuity.Continuous,        AddrMRange(  0L, 200L), Some(DateTime.now()), status = RoadAddressChangeType.New, administrativeClass = AdministrativeClass.State,        roadwayNumber = roadwayNumber+3),
+        dummyProjectLink(RoadPart(1, 1), Track.RightSide, Discontinuity.Continuous,        AddrMRange(200L, 400L), Some(DateTime.now()), status = RoadAddressChangeType.New, administrativeClass = AdministrativeClass.Municipality, roadwayNumber = roadwayNumber+4)
       )
 
       val resultForNew = RoadwayFiller.applyNewLinks(newProjectLinks)
@@ -540,7 +540,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Test RoadwayFiller.applyRoadwayChanges() When dealing with unchanged at roads at the start and terminated at the end Then check correctly assigned roadway id's.") {
     runWithRollback {
       val roadways = Map(
-        (0L, dummyRoadway(roadwayNumber = 1L, roadPart = RoadPart(1, 1), startAddrM = 0L, endAddrM = 200L, DateTime.now(), None))
+        (0L, dummyRoadway(roadwayNumber = 1L, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(0L, 200L), DateTime.now(), None))
       )
 
       val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(),
@@ -549,8 +549,8 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       projectDAO.create(project)
 
       val projectLinks = Seq(
-        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous,   0L, 100L, Some(DateTime.now()), status = RoadAddressChangeType.Unchanged,   administrativeClass = AdministrativeClass.apply(1), roadwayNumber = 10),
-        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, 100L, 200L, Some(DateTime.now()), status = RoadAddressChangeType.Termination, administrativeClass = AdministrativeClass.apply(1), roadwayNumber = 20)
+        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(  0L, 100L), Some(DateTime.now()), status = RoadAddressChangeType.Unchanged,   administrativeClass = AdministrativeClass.apply(1), roadwayNumber = 10),
+        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(100L, 200L), Some(DateTime.now()), status = RoadAddressChangeType.Termination, administrativeClass = AdministrativeClass.apply(1), roadwayNumber = 20)
       )
 
       val roadwayChanges = roadways.values.map(r => RoadwayFiller.RwChanges(r, Seq.empty[Roadway], projectLinks)).toSeq
@@ -568,7 +568,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Test RoadwayFiller.applyRoadwayChanges() When dealing with the termination of the first link and the transferring the remainder Then check correctly assigned roadway id's.") {
     runWithRollback {
       val roadways = Map(
-        (0L, dummyRoadway(roadwayNumber = 1L, roadPart = RoadPart(1, 1), startAddrM = 0L, endAddrM = 200L, DateTime.now(), None))
+        (0L, dummyRoadway(roadwayNumber = 1L, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(0L, 200L), DateTime.now(), None))
       )
 
       val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(),
@@ -577,8 +577,8 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       projectDAO.create(project)
 
       val projectLinks = Seq(
-        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous,   0L, 100L, Some(DateTime.now()), status = RoadAddressChangeType.Termination, administrativeClass = AdministrativeClass.apply(1), roadwayNumber = 10),
-        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, 100L, 200L, Some(DateTime.now()), status = RoadAddressChangeType.Transfer,     administrativeClass = AdministrativeClass.apply(1), roadwayNumber = 20)
+        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(  0L, 100L), Some(DateTime.now()), status = RoadAddressChangeType.Termination, administrativeClass = AdministrativeClass.apply(1), roadwayNumber = 10),
+        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(100L, 200L), Some(DateTime.now()), status = RoadAddressChangeType.Transfer,     administrativeClass = AdministrativeClass.apply(1), roadwayNumber = 20)
       )
 
       val roadwayChanges = roadways.values.map(r => RoadwayFiller.RwChanges(r, Seq.empty[Roadway], projectLinks)).toSeq
@@ -596,7 +596,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Test RoadwayFiller.applyRoadwayChanges() When dealing with a termination in the Middle of the Roadway Then check correctly assigned roadway id's.") {
     runWithRollback {
       val roadways = Map(
-        (0L, dummyRoadway(roadwayNumber = 1L, roadPart = RoadPart(1, 1), startAddrM = 0L, endAddrM = 300L, DateTime.now(), None))
+        (0L, dummyRoadway(roadwayNumber = 1L, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(0L, 300L), DateTime.now(), None))
       )
 
       val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(),
@@ -605,10 +605,10 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       projectDAO.create(project)
 
       val projectLinks = Seq(
-        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous,   0L, 100L, Some(DateTime.now()),                                 status = RoadAddressChangeType.Unchanged,   administrativeClass = AdministrativeClass.apply(1), roadwayNumber = 10),
-        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, 100L, 200L, Some(DateTime.now()), endDate = Some(DateTime.now()), status = RoadAddressChangeType.Termination, administrativeClass = AdministrativeClass.apply(1), roadwayNumber = 20),
-        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, 100L, 500L, Some(DateTime.now()),                                 status = RoadAddressChangeType.New,         administrativeClass = AdministrativeClass.apply(1), roadwayNumber = 30),
-        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, 500L, 600L, Some(DateTime.now()),                                 status = RoadAddressChangeType.Transfer,    administrativeClass = AdministrativeClass.apply(1), roadwayNumber = 40)
+        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(  0L, 100L), Some(DateTime.now()),                                 status = RoadAddressChangeType.Unchanged,   administrativeClass = AdministrativeClass.apply(1), roadwayNumber = 10),
+        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(100L, 200L), Some(DateTime.now()), endDate = Some(DateTime.now()), status = RoadAddressChangeType.Termination, administrativeClass = AdministrativeClass.apply(1), roadwayNumber = 20),
+        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(100L, 500L), Some(DateTime.now()),                                 status = RoadAddressChangeType.New,         administrativeClass = AdministrativeClass.apply(1), roadwayNumber = 30),
+        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(500L, 600L), Some(DateTime.now()),                                 status = RoadAddressChangeType.Transfer,    administrativeClass = AdministrativeClass.apply(1), roadwayNumber = 40)
       )
 
       val roadwayChanges = roadways.values.map(r => RoadwayFiller.RwChanges(r, Seq.empty[Roadway], projectLinks.filterNot(_.status == RoadAddressChangeType.New))).toSeq
@@ -655,19 +655,19 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       val roadwayNumber = 99L
       val newRoadwayNumber1 = 1L
       val newRoadwayNumber2 = 2L
-      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), startAddrM = 0L, endAddrM = 545L, DateTime.now().minusDays(2), None).copy(ely = 10)
+      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(0L, 545L), DateTime.now().minusDays(2), None).copy(ely = 10)
       roadwayDAO.create(Seq(roadway))
 
       val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(), Seq(ProjectReservedPart(0L, RoadPart(1, 1), None, None, None, None, None, None, None)), Seq(), None)
       projectDAO.create(project)
 
       val projectLinks = Seq(
-        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous,  0L,  14L, Some(DateTime.now()), status = RoadAddressChangeType.Unchanged, administrativeClass = AdministrativeClass.State, roadwayNumber = newRoadwayNumber1).copy(originalAddrMRange = AddrMRange( 0L,  14L), ely = 10),
-        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, 14L, 370L, Some(DateTime.now()), status = RoadAddressChangeType.Unchanged, administrativeClass = AdministrativeClass.State, roadwayNumber = newRoadwayNumber1).copy(originalAddrMRange = AddrMRange(14L, 370L), ely = 10),
+        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, AddrMRange( 0L,  14L), Some(DateTime.now()), status = RoadAddressChangeType.Unchanged, administrativeClass = AdministrativeClass.State, roadwayNumber = newRoadwayNumber1).copy(originalAddrMRange = AddrMRange( 0L,  14L), ely = 10),
+        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(14L, 370L), Some(DateTime.now()), status = RoadAddressChangeType.Unchanged, administrativeClass = AdministrativeClass.State, roadwayNumber = newRoadwayNumber1).copy(originalAddrMRange = AddrMRange(14L, 370L), ely = 10),
 
-        dummyProjectLink(RoadPart(1, 2), Track.Combined, Discontinuity.Continuous,   0L, 120L, Some(DateTime.now()), status = RoadAddressChangeType.Transfer, administrativeClass = AdministrativeClass.State, roadwayNumber = newRoadwayNumber2).copy(originalAddrMRange = AddrMRange(370L, 490L), ely = 10),
-        dummyProjectLink(RoadPart(1, 2), Track.Combined, Discontinuity.Continuous, 120L, 142L, Some(DateTime.now()), status = RoadAddressChangeType.Transfer, administrativeClass = AdministrativeClass.State, roadwayNumber = newRoadwayNumber2).copy(originalAddrMRange = AddrMRange(490L, 512L), ely = 10),
-        dummyProjectLink(RoadPart(1, 2), Track.Combined, Discontinuity.EndOfRoad,  142L, 175L, Some(DateTime.now()), status = RoadAddressChangeType.Transfer, administrativeClass = AdministrativeClass.State, roadwayNumber = newRoadwayNumber2).copy(originalAddrMRange = AddrMRange(512L, 545L), ely = 10)
+        dummyProjectLink(RoadPart(1, 2), Track.Combined, Discontinuity.Continuous, AddrMRange(  0L, 120L), Some(DateTime.now()), status = RoadAddressChangeType.Transfer, administrativeClass = AdministrativeClass.State, roadwayNumber = newRoadwayNumber2).copy(originalAddrMRange = AddrMRange(370L, 490L), ely = 10),
+        dummyProjectLink(RoadPart(1, 2), Track.Combined, Discontinuity.Continuous, AddrMRange(120L, 142L), Some(DateTime.now()), status = RoadAddressChangeType.Transfer, administrativeClass = AdministrativeClass.State, roadwayNumber = newRoadwayNumber2).copy(originalAddrMRange = AddrMRange(490L, 512L), ely = 10),
+        dummyProjectLink(RoadPart(1, 2), Track.Combined, Discontinuity.EndOfRoad,  AddrMRange(142L, 175L), Some(DateTime.now()), status = RoadAddressChangeType.Transfer, administrativeClass = AdministrativeClass.State, roadwayNumber = newRoadwayNumber2).copy(originalAddrMRange = AddrMRange(512L, 545L), ely = 10)
       )
 
       val roadwayChanges = Seq(RoadwayFiller.RwChanges(roadway, Seq.empty[Roadway], projectLinks))
@@ -727,17 +727,17 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
     runWithRollback {
       val roadwayNumber = 99L
 
-      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 2), startAddrM = 0L, endAddrM = 175L, DateTime.now().minusDays(5), None).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad)
-      val historyRoadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), startAddrM = 370L, endAddrM = 545L, DateTime.now().minusDays(10), Some(DateTime.now().minusDays(3)), 1L).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad)
+      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 2), addrMRange = AddrMRange(0L, 175L), DateTime.now().minusDays(5), None).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad)
+      val historyRoadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(370L, 545L), DateTime.now().minusDays(10), Some(DateTime.now().minusDays(3)), 1L).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad)
       roadwayDAO.create(Seq(roadway, historyRoadway))
 
       val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(), Seq(ProjectReservedPart(0L, RoadPart(1, 2), None, None, None, None, None, None, None)), Seq(), None)
       projectDAO.create(project)
 
       val projectLinks = Seq(
-        dummyProjectLink(RoadPart(1, 2), Track.Combined, Discontinuity.Continuous,   0L, 120L, Some(DateTime.now()), status = RoadAddressChangeType.Unchanged, administrativeClass = AdministrativeClass.Municipality, roadwayNumber = roadwayNumber + 1).copy(originalAddrMRange = AddrMRange(  0L, 120L), ely = 10),
-        dummyProjectLink(RoadPart(1, 2), Track.Combined, Discontinuity.Continuous, 120L, 142L, Some(DateTime.now()), status = RoadAddressChangeType.Unchanged, administrativeClass = AdministrativeClass.State,        roadwayNumber = roadwayNumber + 2).copy(originalAddrMRange = AddrMRange(120L, 142L), ely = 10),
-        dummyProjectLink(RoadPart(1, 2), Track.Combined, Discontinuity.EndOfRoad,  142L, 175L, Some(DateTime.now()), status = RoadAddressChangeType.Unchanged, administrativeClass = AdministrativeClass.State,        roadwayNumber = roadwayNumber + 2).copy(originalAddrMRange = AddrMRange(142L, 175L), ely = 10)
+        dummyProjectLink(RoadPart(1, 2), Track.Combined, Discontinuity.Continuous, AddrMRange(  0L, 120L), Some(DateTime.now()), status = RoadAddressChangeType.Unchanged, administrativeClass = AdministrativeClass.Municipality, roadwayNumber = roadwayNumber + 1).copy(originalAddrMRange = AddrMRange(  0L, 120L), ely = 10),
+        dummyProjectLink(RoadPart(1, 2), Track.Combined, Discontinuity.Continuous, AddrMRange(120L, 142L), Some(DateTime.now()), status = RoadAddressChangeType.Unchanged, administrativeClass = AdministrativeClass.State,        roadwayNumber = roadwayNumber + 2).copy(originalAddrMRange = AddrMRange(120L, 142L), ely = 10),
+        dummyProjectLink(RoadPart(1, 2), Track.Combined, Discontinuity.EndOfRoad,  AddrMRange(142L, 175L), Some(DateTime.now()), status = RoadAddressChangeType.Unchanged, administrativeClass = AdministrativeClass.State,        roadwayNumber = roadwayNumber + 2).copy(originalAddrMRange = AddrMRange(142L, 175L), ely = 10)
       )
 
       val roadwayChanges = Seq(RoadwayFiller.RwChanges(roadway, Seq(historyRoadway), projectLinks))
@@ -792,19 +792,19 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       val roadwayNumber1 = 99L
       val roadwayNumber2 = 100L
 
-      val roadway1        = dummyRoadway(roadwayNumber = roadwayNumber1, roadPart = RoadPart( 55, 1), startAddrM =   0L, endAddrM = 120L, DateTime.now().minusDays(5), None).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad)
-      val historyRoadway1 = dummyRoadway(roadwayNumber = roadwayNumber1, roadPart = RoadPart( 55, 1), startAddrM = 370L, endAddrM = 490L, DateTime.now().minusDays(10), Some(DateTime.now().minusDays(3)), 1L).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad)
-      val roadway2        = dummyRoadway(roadwayNumber = roadwayNumber2, roadPart = RoadPart( 56, 1), startAddrM =   0L, endAddrM =  55L, DateTime.now().minusDays(5), None).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad, id = 52)
-      val historyRoadway2 = dummyRoadway(roadwayNumber = roadwayNumber2, roadPart = RoadPart( 56, 1), startAddrM =   0L, endAddrM =  55L, DateTime.now().minusDays(10), Some(DateTime.now().minusDays(3)), 1L).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad, id = 53)
+      val roadway1        = dummyRoadway(roadwayNumber = roadwayNumber1, roadPart = RoadPart( 55, 1), addrMRange = AddrMRange(  0L, 120L), DateTime.now().minusDays(5), None).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad)
+      val historyRoadway1 = dummyRoadway(roadwayNumber = roadwayNumber1, roadPart = RoadPart( 55, 1), addrMRange = AddrMRange(370L, 490L), DateTime.now().minusDays(10), Some(DateTime.now().minusDays(3)), 1L).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad)
+      val roadway2        = dummyRoadway(roadwayNumber = roadwayNumber2, roadPart = RoadPart( 56, 1), addrMRange = AddrMRange(  0L,  55L), DateTime.now().minusDays(5), None).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad, id = 52)
+      val historyRoadway2 = dummyRoadway(roadwayNumber = roadwayNumber2, roadPart = RoadPart( 56, 1), addrMRange = AddrMRange(  0L,  55L), DateTime.now().minusDays(10), Some(DateTime.now().minusDays(3)), 1L).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad, id = 53)
       roadwayDAO.create(Seq(roadway1, historyRoadway1, roadway2, historyRoadway2))
 
       val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(), Seq(ProjectReservedPart(0L, RoadPart(55, 1), None, None, None, None, None, None, None), ProjectReservedPart(0L, RoadPart(56, 1), None, None, None, None, None, None, None)), Seq(), None)
       projectDAO.create(project)
 
-      val transferLink = Seq(dummyProjectLink(RoadPart(56, 1), Track.Combined, Discontinuity.Continuous, 0L, 120L, Some(DateTime.now()), endDate = Some(DateTime.now()), status = RoadAddressChangeType.Transfer, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber1).copy(originalAddrMRange = AddrMRange(0L, 120L), ely = 10))
+      val transferLink = Seq(dummyProjectLink(RoadPart(56, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(0L, 120L), Some(DateTime.now()), endDate = Some(DateTime.now()), status = RoadAddressChangeType.Transfer, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber1).copy(originalAddrMRange = AddrMRange(0L, 120L), ely = 10))
       val projectLinks = Seq(
-        dummyProjectLink(RoadPart(56, 1), Track.Combined, Discontinuity.Continuous, 120L, 142L, Some(DateTime.now()), status = RoadAddressChangeType.Transfer, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber2).copy(originalAddrMRange = AddrMRange( 0L, 22L), ely = 10),
-        dummyProjectLink(RoadPart(56, 1), Track.Combined, Discontinuity.EndOfRoad,  142L, 175L, Some(DateTime.now()), status = RoadAddressChangeType.Transfer, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber2).copy(originalAddrMRange = AddrMRange(22L, 55L), ely = 10)
+        dummyProjectLink(RoadPart(56, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(120L, 142L), Some(DateTime.now()), status = RoadAddressChangeType.Transfer, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber2).copy(originalAddrMRange = AddrMRange( 0L, 22L), ely = 10),
+        dummyProjectLink(RoadPart(56, 1), Track.Combined, Discontinuity.EndOfRoad,  AddrMRange(142L, 175L), Some(DateTime.now()), status = RoadAddressChangeType.Transfer, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber2).copy(originalAddrMRange = AddrMRange(22L, 55L), ely = 10)
       )
 
       val roadwayChanges = Seq(RoadwayFiller.RwChanges(roadway1, Seq(historyRoadway1), transferLink),
@@ -858,21 +858,21 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       val roadwayNumber1 = 99L
       val roadwayNumber2 = 100L
 
-      val roadway1        = dummyRoadway(roadwayNumber = roadwayNumber1, roadPart = RoadPart(55, 1), startAddrM = 0L, endAddrM = 142L, DateTime.now().minusDays(5), None).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad, id=50)
-      val historyRoadway1 = dummyRoadway(roadwayNumber = roadwayNumber1, roadPart = RoadPart(55, 1), startAddrM = 370L, endAddrM = 512L, DateTime.now().minusDays(10), Some(DateTime.now().minusDays(3)), 1L).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad, id=51)
-      val roadway2        = dummyRoadway(roadwayNumber = roadwayNumber2, roadPart = RoadPart(56, 1), startAddrM = 0L, endAddrM = 33L, DateTime.now().minusDays(5), None).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad, id = 52)
-      val historyRoadway2 = dummyRoadway(roadwayNumber = roadwayNumber2, roadPart = RoadPart(56, 1), startAddrM = 0L, endAddrM = 33L, DateTime.now().minusDays(10), Some(DateTime.now().minusDays(3)), 1L).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad, id = 53)
+      val roadway1        = dummyRoadway(roadwayNumber = roadwayNumber1, roadPart = RoadPart(55, 1), addrMRange = AddrMRange(  0L, 142L), DateTime.now().minusDays(5), None).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad, id=50)
+      val historyRoadway1 = dummyRoadway(roadwayNumber = roadwayNumber1, roadPart = RoadPart(55, 1), addrMRange = AddrMRange(370L, 512L), DateTime.now().minusDays(10), Some(DateTime.now().minusDays(3)), 1L).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad, id=51)
+      val roadway2        = dummyRoadway(roadwayNumber = roadwayNumber2, roadPart = RoadPart(56, 1), addrMRange = AddrMRange(  0L,  33L), DateTime.now().minusDays(5), None).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad, id = 52)
+      val historyRoadway2 = dummyRoadway(roadwayNumber = roadwayNumber2, roadPart = RoadPart(56, 1), addrMRange = AddrMRange(  0L,  33L), DateTime.now().minusDays(10), Some(DateTime.now().minusDays(3)), 1L).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad, id = 53)
       roadwayDAO.create(Seq(roadway1, historyRoadway1, roadway2, historyRoadway2))
 
       val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(), Seq(ProjectReservedPart(0L, RoadPart(55, 1), None, None, None, None, None, None, None), ProjectReservedPart(0L, RoadPart(56, 1), None, None, None, None, None, None, None)), Seq(), None)
       projectDAO.create(project)
 
       val transferRoadway = Seq(
-        dummyProjectLink(RoadPart(55, 1), Track.Combined, Discontinuity.EndOfRoad, 0L, 120L, Some(DateTime.now()), endDate = Some(DateTime.now()), status = RoadAddressChangeType.Transfer, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber1+2).copy(originalAddrMRange = AddrMRange(0L, 120L), ely = 10, roadwayId=50),
-        dummyProjectLink(RoadPart(56, 1), Track.Combined, Discontinuity.Continuous, 0L, 22L, Some(DateTime.now()), status = RoadAddressChangeType.Transfer, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber1+3).copy(originalAddrMRange = AddrMRange(120L, 142L), ely = 10, roadwayId=50)
+        dummyProjectLink(RoadPart(55, 1), Track.Combined, Discontinuity.EndOfRoad,  AddrMRange(0L, 120L), Some(DateTime.now()), endDate = Some(DateTime.now()), status = RoadAddressChangeType.Transfer, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber1+2).copy(originalAddrMRange = AddrMRange(0L, 120L), ely = 10, roadwayId=50),
+        dummyProjectLink(RoadPart(56, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(0L,  22L), Some(DateTime.now()), status = RoadAddressChangeType.Transfer, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber1+3).copy(originalAddrMRange = AddrMRange(120L, 142L), ely = 10, roadwayId=50)
       )
       val projectLinks = Seq(
-        dummyProjectLink(RoadPart(56, 1), Track.Combined, Discontinuity.EndOfRoad, 22L, 55L, Some(DateTime.now()), status = RoadAddressChangeType.Transfer, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber2).copy(originalAddrMRange = AddrMRange(0L, 33L), ely = 10, roadwayId=52)
+        dummyProjectLink(RoadPart(56, 1), Track.Combined, Discontinuity.EndOfRoad, AddrMRange(22L, 55L), Some(DateTime.now()), status = RoadAddressChangeType.Transfer, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber2).copy(originalAddrMRange = AddrMRange(0L, 33L), ely = 10, roadwayId=52)
       )
 
       val roadwayChanges = Seq(RoadwayFiller.RwChanges(roadway1, Seq(historyRoadway1), transferRoadway),
@@ -942,17 +942,17 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
     runWithRollback {
       val roadwayNumber = 99L
 
-      val roadway        = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 2), startAddrM =   0L, endAddrM = 175L, DateTime.now().minusDays(5), None).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad)
-      val historyRoadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), startAddrM = 370L, endAddrM = 545L, DateTime.now().minusDays(10), Some(DateTime.now().minusDays(3)), 1L).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad)
+      val roadway        = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 2), addrMRange = AddrMRange(  0L, 175L), DateTime.now().minusDays(5), None).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad)
+      val historyRoadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(370L, 545L), DateTime.now().minusDays(10), Some(DateTime.now().minusDays(3)), 1L).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad)
       roadwayDAO.create(Seq(roadway, historyRoadway))
 
       val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(), Seq(ProjectReservedPart(0L, RoadPart(1, 2), None, None, None, None, None, None, None)), Seq(), None)
       projectDAO.create(project)
 
       val projectLinks = Seq(
-        dummyProjectLink(RoadPart(1, 2), Track.Combined, Discontinuity.Continuous, 0L, 120L, Some(DateTime.now()), endDate = Some(DateTime.now()), status = RoadAddressChangeType.Termination, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber+1).copy(originalAddrMRange = AddrMRange(0L, 120L), ely = 10),
-        dummyProjectLink(RoadPart(1, 2), Track.Combined, Discontinuity.Continuous, 0L,  22L, Some(DateTime.now()), status = RoadAddressChangeType.Transfer, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber+2).copy(originalAddrMRange = AddrMRange(120L, 142 ), ely = 10),
-        dummyProjectLink(RoadPart(1, 2), Track.Combined, Discontinuity.EndOfRoad, 22L,  55L, Some(DateTime.now()), status = RoadAddressChangeType.Transfer, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber+2).copy(originalAddrMRange = AddrMRange(142L, 175L), ely = 10)
+        dummyProjectLink(RoadPart(1, 2), Track.Combined, Discontinuity.Continuous,AddrMRange( 0L, 120L), Some(DateTime.now()), endDate = Some(DateTime.now()), status = RoadAddressChangeType.Termination, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber+1).copy(originalAddrMRange = AddrMRange(0L, 120L), ely = 10),
+        dummyProjectLink(RoadPart(1, 2), Track.Combined, Discontinuity.Continuous,AddrMRange( 0L,  22L), Some(DateTime.now()), status = RoadAddressChangeType.Transfer, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber+2).copy(originalAddrMRange = AddrMRange(120L, 142 ), ely = 10),
+        dummyProjectLink(RoadPart(1, 2), Track.Combined, Discontinuity.EndOfRoad, AddrMRange(22L,  55L), Some(DateTime.now()), status = RoadAddressChangeType.Transfer, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber+2).copy(originalAddrMRange = AddrMRange(142L, 175L), ely = 10)
       )
 
       val roadwayChanges = Seq(RoadwayFiller.RwChanges(roadway, Seq(historyRoadway), projectLinks))
@@ -1017,17 +1017,17 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
     runWithRollback{
       val roadwayNumber = 99L
 
-      val roadway        = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 2), startAddrM =   0L, endAddrM = 175L, DateTime.now().minusDays(5), None).copy(ely = 10)
-      val historyRoadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), startAddrM = 370L, endAddrM = 545L, DateTime.now().minusDays(10), Some(DateTime.now().minusDays(3)), 1L).copy(ely = 10)
+      val roadway        = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 2), addrMRange = AddrMRange(  0L, 175L), DateTime.now().minusDays(5), None).copy(ely = 10)
+      val historyRoadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(370L, 545L), DateTime.now().minusDays(10), Some(DateTime.now().minusDays(3)), 1L).copy(ely = 10)
       roadwayDAO.create(Seq(roadway, historyRoadway))
 
       val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(), Seq(ProjectReservedPart(0L, RoadPart(1, 2), None, None, None, None, None, None, None)), Seq(), None)
       projectDAO.create(project)
 
       val projectLinks = Seq(
-        dummyProjectLink(RoadPart(1, 3), Track.Combined, Discontinuity.Continuous,   0L, 120L, Some(DateTime.now()), status = RoadAddressChangeType.Transfer, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber).copy(originalAddrMRange = AddrMRange(  0L, 120L), ely = 10),
-        dummyProjectLink(RoadPart(1, 3), Track.Combined, Discontinuity.Continuous, 120L, 142L, Some(DateTime.now()), status = RoadAddressChangeType.Transfer, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber).copy(originalAddrMRange = AddrMRange(120L, 142 ), ely = 10),
-        dummyProjectLink(RoadPart(1, 3), Track.Combined, Discontinuity.EndOfRoad,  142L, 175L, Some(DateTime.now()), status = RoadAddressChangeType.Transfer, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber).copy(originalAddrMRange = AddrMRange(142L, 175L), ely = 10)
+        dummyProjectLink(RoadPart(1, 3), Track.Combined, Discontinuity.Continuous, AddrMRange(  0L, 120L), Some(DateTime.now()), status = RoadAddressChangeType.Transfer, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber).copy(originalAddrMRange = AddrMRange(  0L, 120L), ely = 10),
+        dummyProjectLink(RoadPart(1, 3), Track.Combined, Discontinuity.Continuous, AddrMRange(120L, 142L), Some(DateTime.now()), status = RoadAddressChangeType.Transfer, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber).copy(originalAddrMRange = AddrMRange(120L, 142 ), ely = 10),
+        dummyProjectLink(RoadPart(1, 3), Track.Combined, Discontinuity.EndOfRoad,  AddrMRange(142L, 175L), Some(DateTime.now()), status = RoadAddressChangeType.Transfer, administrativeClass = AdministrativeClass.State, roadwayNumber = roadwayNumber).copy(originalAddrMRange = AddrMRange(142L, 175L), ely = 10)
       )
 
       val roadwayChanges = Seq(RoadwayFiller.RwChanges(roadway, Seq(historyRoadway), projectLinks))
@@ -1084,10 +1084,10 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       val newRoadwayNumber1 = 1L
       val newRoadwayNumber2 = 2L
 
-      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 3), startAddrM = 0L, endAddrM = 175L, DateTime.now().minusDays(5), None, 1L).copy(ely = 10)
+      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 3), addrMRange = AddrMRange(0L, 175L), DateTime.now().minusDays(5), None, 1L).copy(ely = 10)
       val historyRoadways = Seq(
-        dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 2), startAddrM = 0L, endAddrM = 175L, DateTime.now().minusDays(10), Some(DateTime.now().minusDays(6)), 2L).copy(ely = 10),
-        dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), startAddrM = 370L, endAddrM = 545L, DateTime.now().minusDays(20), Some(DateTime.now().minusDays(11)), 3L).copy(ely = 10)
+        dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 2), addrMRange = AddrMRange(  0L, 175L), DateTime.now().minusDays(10), Some(DateTime.now().minusDays( 6)), 2L).copy(ely = 10),
+        dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(370L, 545L), DateTime.now().minusDays(20), Some(DateTime.now().minusDays(11)), 3L).copy(ely = 10)
       )
 
       roadwayDAO.create(Seq(roadway) ++ historyRoadways)
@@ -1096,9 +1096,9 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       projectDAO.create(project)
 
       val projectLinks = Seq(
-        dummyProjectLink(RoadPart(1, 3), Track.Combined, Discontinuity.Continuous, 0L, 120L, Some(DateTime.now()), status = RoadAddressChangeType.Unchanged, administrativeClass = AdministrativeClass.State, roadwayNumber = newRoadwayNumber1).copy(originalAddrMRange = AddrMRange(  0L, 120L), ely = 10),
-        dummyProjectLink(RoadPart(1, 4), Track.Combined, Discontinuity.Continuous, 0L,  22L, Some(DateTime.now()), status = RoadAddressChangeType.Transfer,  administrativeClass = AdministrativeClass.State, roadwayNumber = newRoadwayNumber2).copy(originalAddrMRange = AddrMRange(120L, 142 ), ely = 10),
-        dummyProjectLink(RoadPart(1, 4), Track.Combined, Discontinuity.EndOfRoad, 22L,  55L, Some(DateTime.now()), status = RoadAddressChangeType.Transfer,  administrativeClass = AdministrativeClass.State, roadwayNumber = newRoadwayNumber2).copy(originalAddrMRange = AddrMRange(142L, 175L), ely = 10)
+        dummyProjectLink(RoadPart(1, 3), Track.Combined, Discontinuity.Continuous,AddrMRange( 0L, 120L), Some(DateTime.now()), status = RoadAddressChangeType.Unchanged, administrativeClass = AdministrativeClass.State, roadwayNumber = newRoadwayNumber1).copy(originalAddrMRange = AddrMRange(  0L, 120L), ely = 10),
+        dummyProjectLink(RoadPart(1, 4), Track.Combined, Discontinuity.Continuous,AddrMRange( 0L,  22L), Some(DateTime.now()), status = RoadAddressChangeType.Transfer,  administrativeClass = AdministrativeClass.State, roadwayNumber = newRoadwayNumber2).copy(originalAddrMRange = AddrMRange(120L, 142 ), ely = 10),
+        dummyProjectLink(RoadPart(1, 4), Track.Combined, Discontinuity.EndOfRoad, AddrMRange(22L,  55L), Some(DateTime.now()), status = RoadAddressChangeType.Transfer,  administrativeClass = AdministrativeClass.State, roadwayNumber = newRoadwayNumber2).copy(originalAddrMRange = AddrMRange(142L, 175L), ely = 10)
       )
 
       val roadwayChanges = Seq(RoadwayFiller.RwChanges(roadway, historyRoadways, projectLinks))
@@ -1157,16 +1157,16 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Test RoadwayFiller.applyRoadwayChanges() When dealing with a termination of a roadway with history Then check correctly assigned roadway id's.") {
     runWithRollback {
       val roadways = Map(
-        (0L, dummyRoadway(roadwayNumber = 1L, roadPart = RoadPart(1, 1), startAddrM = 0L, endAddrM = 200L, DateTime.parse("1950-01-01"), None))
+        (0L, dummyRoadway(roadwayNumber = 1L, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(0L, 200L), DateTime.parse("1950-01-01"), None))
       )
 
       val historyRoadways = Map(
-        (0L, dummyRoadway(roadwayNumber = 1L, roadPart = RoadPart(1, 1), startAddrM = 100L, endAddrM = 300L, DateTime.parse("1901-01-01"), Some(DateTime.parse("1950-01-01"))))
+        (0L, dummyRoadway(roadwayNumber = 1L, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(100L, 300L), DateTime.parse("1901-01-01"), Some(DateTime.parse("1950-01-01"))))
       )
 
       val projectLinks = Seq(
-        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous,   0L, 100L, Some(DateTime.now()), status = RoadAddressChangeType.Termination, administrativeClass = AdministrativeClass.apply(1)),
-        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, 100L, 200L, Some(DateTime.now()), status = RoadAddressChangeType.Termination, administrativeClass = AdministrativeClass.apply(1))
+        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(  0L, 100L), Some(DateTime.now()), status = RoadAddressChangeType.Termination, administrativeClass = AdministrativeClass.apply(1)),
+        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(100L, 200L), Some(DateTime.now()), status = RoadAddressChangeType.Termination, administrativeClass = AdministrativeClass.apply(1))
       )
 
       val roadwayChanges = roadways.values.map(r => RoadwayFiller.RwChanges(r, historyRoadways.values.toSeq, projectLinks.filterNot(_.status == RoadAddressChangeType.New))).toSeq
@@ -1185,8 +1185,8 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Test RoadwayFiller.applyRoadwayChanges() When dealing with transferred addresses check if the end_addr_m values are correct"){
     runWithRollback {
       val roadways = Map(
-        (0L, dummyRoadway(roadwayNumber = 1L, roadPart = RoadPart(9999, 1), startAddrM = 0L, endAddrM =  400L, DateTime.now(), None)),
-        (0L, dummyRoadway(roadwayNumber = 1L, roadPart = RoadPart(9999, 2), startAddrM = 0L, endAddrM = 1000L, DateTime.now(), None))
+        (0L, dummyRoadway(roadwayNumber = 1L, roadPart = RoadPart(9999, 1), addrMRange = AddrMRange(0L,  400L), DateTime.now(), None)),
+        (0L, dummyRoadway(roadwayNumber = 1L, roadPart = RoadPart(9999, 2), addrMRange = AddrMRange(0L, 1000L), DateTime.now(), None))
       )
 
       val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(),
@@ -1196,9 +1196,9 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       projectDAO.create(project)
 
       val projectLinks = Seq(
-        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous,   0L,  100L, Some(DateTime.now()), status = RoadAddressChangeType.Unchanged, administrativeClass = AdministrativeClass.apply(1), roadwayNumber = 10),
-        dummyProjectLink(RoadPart(1, 2), Track.Combined, Discontinuity.Continuous,   0L,  300L, Some(DateTime.now()), status = RoadAddressChangeType.Transfer,  administrativeClass = AdministrativeClass.apply(1), roadwayNumber = 20),
-        dummyProjectLink(RoadPart(1, 2), Track.Combined, Discontinuity.Continuous, 300L, 1000L, Some(DateTime.now()), status = RoadAddressChangeType.Transfer,  administrativeClass = AdministrativeClass.apply(1), roadwayNumber = 30)
+        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(  0L,  100L), Some(DateTime.now()), status = RoadAddressChangeType.Unchanged, administrativeClass = AdministrativeClass.apply(1), roadwayNumber = 10),
+        dummyProjectLink(RoadPart(1, 2), Track.Combined, Discontinuity.Continuous, AddrMRange(  0L,  300L), Some(DateTime.now()), status = RoadAddressChangeType.Transfer,  administrativeClass = AdministrativeClass.apply(1), roadwayNumber = 20),
+        dummyProjectLink(RoadPart(1, 2), Track.Combined, Discontinuity.Continuous, AddrMRange(300L, 1000L), Some(DateTime.now()), status = RoadAddressChangeType.Transfer,  administrativeClass = AdministrativeClass.apply(1), roadwayNumber = 30)
       )
 
       val roadwayChanges = roadways.values.map(r => RoadwayFiller.RwChanges(r, Seq.empty[Roadway], projectLinks.filterNot(_.status == RoadAddressChangeType.New))).toSeq
@@ -1221,12 +1221,12 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       val roadwayNumber1 = 1
 
       val roadways = Map(
-        (0L, dummyRoadway(roadwayNumber = 1L, roadPart = RoadPart(1, 1), startAddrM = 0L, endAddrM = 300L, DateTime.now(), None))
+        (0L, dummyRoadway(roadwayNumber = 1L, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(0L, 300L), DateTime.now(), None))
       )
 
       val projectLinks = Seq(
-        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous,   0L, 100L, Some(DateTime.now()), status = RoadAddressChangeType.Unchanged, administrativeClass = AdministrativeClass.apply(1)).copy(ely = 0, roadwayNumber = roadwayNumber1),
-        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, 100L, 300L, Some(DateTime.now()), status = RoadAddressChangeType.Transfer,  administrativeClass = AdministrativeClass.apply(1)).copy(ely = 0, roadwayNumber = roadwayNumber1)
+        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(  0L, 100L), Some(DateTime.now()), status = RoadAddressChangeType.Unchanged, administrativeClass = AdministrativeClass.apply(1)).copy(ely = 0, roadwayNumber = roadwayNumber1),
+        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(100L, 300L), Some(DateTime.now()), status = RoadAddressChangeType.Transfer,  administrativeClass = AdministrativeClass.apply(1)).copy(ely = 0, roadwayNumber = roadwayNumber1)
       )
 
       val roadwayChanges = roadways.values.map(r => RoadwayFiller.RwChanges(r, Seq.empty[Roadway], projectLinks.filterNot(_.status == RoadAddressChangeType.New))).toSeq
