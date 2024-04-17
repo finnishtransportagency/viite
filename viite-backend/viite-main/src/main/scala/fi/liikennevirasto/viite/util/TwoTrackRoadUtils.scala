@@ -133,7 +133,7 @@ object TwoTrackRoadUtils {
 
       val newProjectLinkAfterSplit = pl.copy(
         id                      = Sequences.nextProjectLinkId,
-        addrMRange              = AddrMRange(address,                       pl.addrMRange.end         ),
+        addrMRange              = AddrMRange(address,                       pl.addrMRange.end        ),
         originalAddrMRange      = AddrMRange(splittedOriginalEndAddrMValue, pl.originalAddrMRange.end),
         startMValue             = splitMeasure,
         endMValue               = pl.endMValue,
