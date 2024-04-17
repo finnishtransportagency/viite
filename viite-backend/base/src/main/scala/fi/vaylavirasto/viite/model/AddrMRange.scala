@@ -21,7 +21,8 @@ case class AddrMRange (start: Long, end: Long)// extends Ordered[AddrMRange]
   try {
     require((start>=minAddrMZero && start <= maxAddrM), s"A start address must be between $minAddrMZero-$maxAddrM.")
     require((  end>=minAddrMZero &&   end <= maxAddrM), s"An  end address must be between $minAddrMZero-$maxAddrM.")
-    require((  start < end || (start==0 &&  end==0)), s"A start address (now $start) must be smaller than end address (now $end), or range must be undefined (0-0).")
+    // Calculations so far require leaving this - I think very substantial - restriction out.
+    //require((  start < end || (start==0 &&  end==0)), s"A start address (now $start) must be smaller than end address (now $end), or range must be undefined (0-0).")
   } catch  {
     case e: IllegalArgumentException => throw ViiteException(e.getMessage)
   }
