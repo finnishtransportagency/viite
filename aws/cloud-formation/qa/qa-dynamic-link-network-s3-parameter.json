@@ -1,0 +1,18 @@
+[
+  {
+    "ParameterKey": "ApplicationName",
+    "ParameterValue": "viite"
+  },
+  {
+    "ParameterKey": "Environment",
+    "ParameterValue": "qa"
+  },
+  {
+    "ParameterKey": "Owner",
+    "ParameterValue": "vayla"
+  },
+  {
+    "ParameterKey": "Project",
+    "ParameterValue": "viite"
+  }
+]

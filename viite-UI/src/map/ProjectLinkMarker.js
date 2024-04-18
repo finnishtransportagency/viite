@@ -33,7 +33,7 @@
         };
 
       var directionMarkerColor = function (roadLinka) {
-        if (roadLinka.status === ViiteEnumerations.LinkStatus.New.value) {
+        if (roadLinka.status === ViiteEnumerations.RoadAddressChangeType.New.value) {
           return '#ff55dd';
         } else if (roadLinka.roadClass in colorMap) {
           return colorMap[roadLinka.roadClass];
