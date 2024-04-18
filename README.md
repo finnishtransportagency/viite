@@ -29,21 +29,21 @@ Database
 Install PostGIS by [downloading and installing it from here](https://postgis.net/install/), or
 by using Docker Compose:
 ```
-cd aws/local-dev/postgis
+cd local-dev/postgis
 docker-compose up
 ```
-or by running the `aws/local-dev/postgis/start-postgis.sh` script.
+or by running the `local-dev/postgis/start-postgis.sh` script.
 
-PostGIS server can be stopped with the `aws/local-dev/postgis/stop-postgis.sh` script.
+PostGIS server can be stopped with the `local-dev/postgis/stop-postgis.sh` script.
 
 Docker Compose installs and starts the PostGIS database server.
 
-[Read more about Viite PostGIS here](aws/local-dev/postgis/README.md)
+[Read more about Viite PostGIS here](local-dev/postgis/README.md)
 
 Idea Run Configurations
 -----------------------
 If you are developing with the IntelliJ Idea, you can import the run configurations
-by copying the xml-files from the `aws/local-dev/idea-run-configurations` folder to the
+by copying the xml-files from the `local-dev/idea-run-configurations` folder to the
 `.idea/runConfigurations` folder (under the project folder). Restart Idea to see the new run configurations.
 
 - Flyway_init.xml

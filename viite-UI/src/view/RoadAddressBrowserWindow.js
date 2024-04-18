@@ -46,7 +46,7 @@
         function createResultTableForTracks(results) {
             const arr = [];
             let arrPointer = -1;
-            arr[++arrPointer] = `<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table">
+            arr[++arrPointer] = `<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table viite-table">
                                     <thead>
                                         <tr>
                                             <th>Ely</th>
@@ -104,7 +104,7 @@
         function createResultTableForRoadParts(results) {
             const arr = [];
             let arrPointer = -1;
-            arr[++arrPointer] = `<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table">
+            arr[++arrPointer] = `<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table viite-table">
                                     <thead>
                                         <tr>
                                             <th>Ely</th>
@@ -136,7 +136,7 @@
         function createArrayOfArraysForNodes(results) {
             const array = [];
             let arrayPointer = -1;
-            array[++arrayPointer] = ['Ely','Tie', 'Osa', 'Et', 'Alkupvm', 'Tyyppi', 'Nimi', 'Solmunumero'];
+            array[++arrayPointer] = ['Ely','Tie', 'Osa', 'Et', 'Alkupvm', 'Tyyppi', 'Nimi', 'P-Koord', 'I-Koord', 'Solmunumero'];
             for (let i = 0, len = results.length; i < len; i++) {
                 array[++arrayPointer] = [
                     results[i].ely,
@@ -146,6 +146,8 @@
                     results[i].startDate,
                     results[i].nodeType,
                     results[i].nodeName,
+                    results[i].nodeCoordinates.y,
+                    results[i].nodeCoordinates.x,
                     results[i].nodeNumber
                 ];
             }
@@ -159,7 +161,7 @@
         function createResultTableForNodes(results) {
             const arr = [];
             let arrPointer = -1;
-            arr[++arrPointer] =`<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table">
+            arr[++arrPointer] =`<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table viite-table">
                                     <thead>
                                         <tr>
                                             <th>Ely</th>
@@ -169,6 +171,8 @@
                                             <th>Alkupvm</th>
                                             <th>Tyyppi</th>
                                             <th>Nimi</th>
+                                            <th>P-Koord</th>
+                                            <th>I-Koord</th>
                                             <th>Solmunumero</th>
                                         </tr>
                                     </thead>
@@ -183,6 +187,8 @@
                                             <td>${results[i].startDate}</td>
                                             <td>${results[i].nodeType}</td>
                                             <td>${results[i].nodeName}</td>
+                                            <td>${results[i].nodeCoordinates.y}</td>
+                                            <td>${results[i].nodeCoordinates.x}</td>
                                             <td>${results[i].nodeNumber}</td>
                                         </tr>`;
             }
@@ -221,7 +227,7 @@
         function createResultTableForJunctions(results) {
             const arr = [];
             let arrPointer = -1;
-            arr[++arrPointer] =`<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table">
+            arr[++arrPointer] =`<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table viite-table">
                                     <thead>
                                         <tr>
                                             <th>Solmu-numero</th>
@@ -282,7 +288,7 @@
         function createResultTableForRoadNames(results) {
             const arr = [];
             let arrPointer = -1;
-            arr[++arrPointer] = `<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table">
+            arr[++arrPointer] = `<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table viite-table">
                                     <thead>
                                         <tr>
                                             <th>Ely</th>
@@ -305,7 +311,7 @@
         }
 
         function toggle() {
-            $('.container').append('<div class="road-address-browser-modal-overlay confirm-modal"><div class="road-address-browser-modal-window"></div></div>');
+            $('.container').append('<div class="road-address-browser-modal-overlay viite-modal-overlay confirm-modal"><div class="road-address-browser-modal-window"></div></div>');
             $('.road-address-browser-modal-window').append(roadAddrBrowserWindow.toggle());
             bindEvents();
         }
@@ -384,14 +390,23 @@
                     maxRoadPartNumber.reportValidity();
             }
 
-            function validateDate(date) {
-                if (dateutil.isValidDate(date)) {
-                    if(!dateutil.isDateInYearRange(date, ViiteConstants.MIN_YEAR_INPUT, ViiteConstants.MAX_YEAR_INPUT))
+            function validateDate(dateString) {
+                if (dateutil.isFinnishDateString(dateString)) {
+                    if (dateutil.isDateInYearRange(roadAddrSituationDateObject, ViiteConstants.MIN_YEAR_INPUT, ViiteConstants.MAX_YEAR_INPUT)) {
+                        roadAddrSituationDate.setCustomValidity("");
+                    } else {
                         roadAddrSituationDate.setCustomValidity("Vuosiluvun tulee olla väliltä " + ViiteConstants.MIN_YEAR_INPUT + " - " + ViiteConstants.MAX_YEAR_INPUT);
+                    }
+                } else {
+                    roadAddrSituationDate.setCustomValidity("Päivämäärän tulee olla muodossa pp.kk.vvvv");
                 }
-                else
-                    roadAddrSituationDate.setCustomValidity("Päivämäärän tulee olla muodossa pp.kk.yyyy");
             }
+
+            // Clear date error message when typing is started again
+            document.getElementById('roadAddrSituationDate').addEventListener('input', function() {
+                validateDate(this.value);
+                this.setCustomValidity("");
+            });
 
             function validateElyAndRoadNumber (elyElement, roadNumberElement) {
                 if (elyElement.value === "" && roadNumberElement.value === "")
@@ -399,7 +414,7 @@
             }
 
             function willPassValidations() {
-                validateDate(roadAddrSituationDateObject);
+                validateDate(roadAddrSituationDate.value);
                 validateElyAndRoadNumber(ely, roadNumber);
                 return reportValidations();
             }
@@ -434,7 +449,7 @@
                 case "Nodes":
                 case "Junctions":
                 case "RoadNames":
-                    validateDate(roadAddrSituationDateObject);
+                    validateDate(roadAddrSituationDate.value);
                     if (reportValidations())
                         fetchByTargetValue(createParams());
                     break;
