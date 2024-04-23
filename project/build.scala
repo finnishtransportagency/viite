@@ -29,7 +29,7 @@ object Digiroad2Build extends Build {
   val JettyVersion = "9.2.15.v20160210"
   val TestOutputOptions = Tests.Argument(TestFrameworks.ScalaTest, "-oNCXELOPQRMI") // List only problems, and their summaries. Set suitable logback level to get the effect.
   val AwsSdkVersion = "2.17.148"
-  val GeoToolsVersion = "27.2"
+  val GeoToolsVersion = "28.3"
 
   val jodaConvert    = "org.joda"             %  "joda-convert"  % JodaConvertVersion
   val jodaTime       = "joda-time"            %  "joda-time"     % JodaTimeVersion
