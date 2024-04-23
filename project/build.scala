@@ -124,7 +124,7 @@ object Digiroad2Build extends Build {
         "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
         mockitoCore % "test",
         "com.googlecode.flyway" % "flyway-core" % "2.3.1",
-        "org.postgresql" % "postgresql" % "42.2.27",
+        "org.postgresql" % "postgresql" % "42.2.28",
         "net.postgis" % "postgis-geometry" % "2021.1.0",
         "net.postgis" % "postgis-jdbc" % "2021.1.0" // dep postgresql, and from 2.5.0 and up: postgis-geometry
       ),
