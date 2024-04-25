@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.viite.dao.{InvalidRoadwayLength, MissingCalibrationPoint, MissingCalibrationPointFromJunction, MissingRoadwayPoint, OverlappingRoadwayOnLinearLocation, RoadNetworkDAO, Roadway}
+import fi.liikennevirasto.viite.dao.{LinksWithExtraCalibrationPoints, InvalidRoadwayLength, MissingCalibrationPoint, MissingCalibrationPointFromJunction, MissingRoadwayPoint, OverlappingRoadwayOnLinearLocation, RoadNetworkDAO, Roadway}
 import fi.vaylavirasto.viite.model.RoadPart
 import fi.vaylavirasto.viite.postgis.PostGISDatabase.withDynSession
 import org.slf4j.LoggerFactory
@@ -24,6 +24,12 @@ class RoadNetworkValidator {
   def getMissingCalibrationPointsFromJunctions: Seq[MissingCalibrationPointFromJunction] = {
     withDynSession {
       roadNetworkDAO.fetchMissingCalibrationPointsFromJunctions()
+    }
+  }
+
+  def getLinksWithExtraCalibrationPoints: Seq[LinksWithExtraCalibrationPoints] = {
+    withDynSession {
+      roadNetworkDAO.fetchLinksWithExtraCalibrationPoints()
     }
   }
 
