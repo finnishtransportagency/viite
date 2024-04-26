@@ -1,7 +1,7 @@
 package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.viite.dao.{InvalidRoadwayLength, MissingCalibrationPoint, MissingCalibrationPointFromJunction, MissingRoadwayPoint, OverlappingRoadwayOnLinearLocation, RoadNetworkDAO, Roadway}
-import fi.liikennevirasto.viite.process.RoadPart
+import fi.vaylavirasto.viite.model.RoadPart
 import fi.vaylavirasto.viite.postgis.PostGISDatabase.withDynSession
 import org.slf4j.LoggerFactory
 
@@ -59,20 +59,19 @@ class RoadNetworkValidator {
 
   def validateRoadNetwork(roadParts: Seq[RoadPart]): Unit = {
     roadParts.foreach(roadPart => {
-      validateCalibrationPoints(roadPart.roadNumber, roadPart.roadPartNumber)
-      validateRoadwayPoints(roadPart.roadNumber, roadPart.roadPartNumber)
-      validateRoadways(roadPart.roadNumber, roadPart.roadPartNumber)
-      validateRoadwayLengthThroughHistory(roadPart.roadNumber, roadPart.roadPartNumber)
-      validateOverlappingRoadwaysInHistory(roadPart.roadNumber, roadPart.roadPartNumber)
+      validateCalibrationPoints(roadPart)
+      validateRoadwayPoints(roadPart)
+      validateRoadways(roadPart)
+      validateRoadwayLengthThroughHistory(roadPart)
+      validateOverlappingRoadwaysInHistory(roadPart)
     })
   }
 
-  def validateCalibrationPoints(roadNumber: Long, roadPartNumber: Long): Unit = {
-    val roadPart = s"$roadNumber/$roadPartNumber"
+  def validateCalibrationPoints(roadPart: RoadPart): Unit = {
     logger.info(s"Validating calibration points on road part:  $roadPart")
-    val missingCalibrationPointsFromStart = roadNetworkDAO.fetchMissingCalibrationPointsFromStart(roadNumber, roadPartNumber)
-    val missingCalibrationPointFromTheEnd = roadNetworkDAO.fetchMissingCalibrationPointsFromEnd(roadNumber, roadPartNumber)
-    val missingCalibrationPointFromJunction = roadNetworkDAO.fetchMissingCalibrationPointsFromJunctions(roadNumber, roadPartNumber)
+    val missingCalibrationPointsFromStart = roadNetworkDAO.fetchMissingCalibrationPointsFromStart(roadPart)
+    val missingCalibrationPointFromTheEnd = roadNetworkDAO.fetchMissingCalibrationPointsFromEnd(roadPart)
+    val missingCalibrationPointFromJunction = roadNetworkDAO.fetchMissingCalibrationPointsFromJunctions(roadPart)
     if (missingCalibrationPointsFromStart.nonEmpty) {
       logger.warn(s"Found missing calibration points for road part start: $roadPart:\r ${missingCalibrationPointsFromStart.mkString("\r ")}")
       throw new RoadNetworkValidationException(s"$MissingCalibrationPointFromTheStart (tieosa $roadPart)")
@@ -90,11 +89,10 @@ class RoadNetworkValidator {
     }
   }
 
-  def validateRoadwayPoints(roadNumber: Long, roadPartNumber: Long): Unit = {
-    val roadPart = s"$roadNumber/$roadPartNumber"
+  def validateRoadwayPoints(roadPart: RoadPart): Unit = {
     logger.info(s"Validating roadway points on road part:  $roadPart")
-    val missingRoadwayPointsFromTheStart = roadNetworkDAO.fetchMissingRoadwayPointsFromStart(roadNumber, roadPartNumber)
-    val missingRoadwayPointFromTheEnd = roadNetworkDAO.fetchMissingRoadwayPointsFromEnd(roadNumber, roadPartNumber)
+    val missingRoadwayPointsFromTheStart = roadNetworkDAO.fetchMissingRoadwayPointsFromStart(roadPart)
+    val missingRoadwayPointFromTheEnd = roadNetworkDAO.fetchMissingRoadwayPointsFromEnd(roadPart)
     if(missingRoadwayPointsFromTheStart.nonEmpty) {
       logger.warn(s"Found missing roadway points for road part start: $roadPart:\r ${missingRoadwayPointsFromTheStart.mkString("\r ")}")
       throw new RoadNetworkValidationException(s"$MissingRoadwayPointFromTheStart (tieosa $roadPart)")
@@ -108,10 +106,9 @@ class RoadNetworkValidator {
 
   }
 
-  def validateRoadways(roadNumber: Long, roadPartNumber: Long): Unit = {
-    val roadPart = s"$roadNumber/$roadPartNumber"
+  def validateRoadways(roadPart: RoadPart): Unit = {
     logger.info(s"Validating roadways for road part: $roadPart")
-    val overlappingRoadwaysOnLinearLocations = roadNetworkDAO.fetchOverlappingRoadwaysOnLinearLocations(roadNumber, roadPartNumber)
+    val overlappingRoadwaysOnLinearLocations = roadNetworkDAO.fetchOverlappingRoadwaysOnLinearLocations(roadPart)
     if (overlappingRoadwaysOnLinearLocations.nonEmpty) {
         logger.warn(s"Found overlapping roadways on linear locations for road part: $roadPart\r: ${overlappingRoadwaysOnLinearLocations.mkString("\r ")}")
       throw new RoadNetworkValidationException(s"$OverlappingRoadwaysOnLinearLocation (tieosa $roadPart)")
@@ -120,10 +117,9 @@ class RoadNetworkValidator {
     }
   }
 
-  def validateRoadwayLengthThroughHistory(roadNumber: Long, roadPartNumber: Long): Unit = {
-    val roadPart = s"$roadNumber/$roadPartNumber"
+  def validateRoadwayLengthThroughHistory(roadPart: RoadPart): Unit = {
     logger.info(s"Validating roadway lengths through history for road part: $roadPart")
-    val invalidRoadwayLength = roadNetworkDAO.fetchInvalidRoadwayLengths(roadNumber, roadPartNumber)
+    val invalidRoadwayLength = roadNetworkDAO.fetchInvalidRoadwayLengths(roadPart)
     if (invalidRoadwayLength.nonEmpty) {
       logger.warn(s"Found invalid roadway lengths through history for road part: $roadPart\r: ${invalidRoadwayLength.mkString("\r ")}")
       throw new RoadNetworkValidationException(s"$InvalidRoadwayLengthTroughHistory (tieosa $roadPart)")
@@ -132,10 +128,9 @@ class RoadNetworkValidator {
     }
   }
 
-  def validateOverlappingRoadwaysInHistory(roadNumber: Long, roadPartNumber: Long): Unit = {
-    val roadPart = s"$roadNumber/$roadPartNumber"
+  def validateOverlappingRoadwaysInHistory(roadPart: RoadPart): Unit = {
     logger.info(s"Validating overlapping roadways in history for road part: $roadPart")
-    val overlappingRoadwaysInHistory = roadNetworkDAO.fetchOverlappingRoadwaysInHistory(roadNumber, roadPartNumber)
+    val overlappingRoadwaysInHistory = roadNetworkDAO.fetchOverlappingRoadwaysInHistory(roadPart)
     if (overlappingRoadwaysInHistory.nonEmpty) {
       logger.warn(s"Found overlapping roadways in history for road part: $roadPart")
       throw new RoadNetworkValidationException(s"$OverlappingRoadwayInHistory (tieosa $roadPart)")

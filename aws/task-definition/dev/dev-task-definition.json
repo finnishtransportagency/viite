@@ -40,7 +40,7 @@
                 { "name": "apiS3BucketName", "value":  "dev-vaylavirasto-viite-api-store-bucket"},
                 { "name": "apiS3ObjectTTLSeconds", "value":  "300"},
                 { "name": "env", "value": "Dev" },
-                { "name": "kgvEndpoint", "value": "https://api.vaylapilvi.fi/paikkatiedot/ogc/features/collections" }
+                { "name": "kgvEndpoint", "value": "https://api.testivaylapilvi.fi/paikkatiedot/ogc/features/v1/collections" }
             ],
             "mountPoints": [],
             "secrets": [

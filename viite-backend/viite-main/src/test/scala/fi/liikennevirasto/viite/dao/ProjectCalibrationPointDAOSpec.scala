@@ -3,6 +3,7 @@ package fi.liikennevirasto.viite.dao
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
+import fi.vaylavirasto.viite.model.RoadPart
 import fi.vaylavirasto.viite.postgis.DbUtils.runUpdateToDb
 import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 import org.mockito.ArgumentMatchers.any
@@ -24,8 +25,8 @@ class ProjectCalibrationPointDAOSpec extends FunSuite with Matchers {
   }
 
   def addProjectRoads(): Unit = {
-    projectReservedPartDAO.reserveRoadPart(1, 1, 1, "TestUser")
-    projectReservedPartDAO.reserveRoadPart(2, 2, 1, "TestUser")
+    projectReservedPartDAO.reserveRoadPart(1, RoadPart(1, 1), "TestUser")
+    projectReservedPartDAO.reserveRoadPart(2, RoadPart(2, 1), "TestUser")
     runUpdateToDb(s"""insert into project_link (id,project_id,TRACK,discontinuity_type,road_number,road_part_number,start_addr_M,end_addr_M, original_start_addr_M, original_end_addr_M,created_by,
           SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE) VALUES (1,1,1,0,1,1,1,1,1,1,'automatedtest',
           1, 0, 208.951, 1610995, 0, 1)""")
