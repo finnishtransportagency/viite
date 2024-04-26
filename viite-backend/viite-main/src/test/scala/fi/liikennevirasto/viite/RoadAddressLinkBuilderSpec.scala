@@ -7,7 +7,7 @@ import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.vaylavirasto.viite.geometry.Point
 import fi.vaylavirasto.viite.model.CalibrationPointType.NoCP
-import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LifecycleStatus, LinkGeomSource, RoadAddressChangeType, RoadLink, SideCode, Track, TrafficDirection}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LifecycleStatus, LinkGeomSource, RoadAddressChangeType, RoadLink, RoadPart, SideCode, Track, TrafficDirection}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
@@ -81,7 +81,7 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
 
   test("Test RoadAddressLinkBuilder.build for roadAddress input") {
     runWithRollback {
-      val roadAddress = RoadAddress(1, 1234, 5, 999, AdministrativeClass.Unknown, Track.Combined, Discontinuity.Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 12345L.toString, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), Seq(Point(0.0, 0.0), Point(2.0, 9.8), Point(2.0, 9.8), Point(10.0, 19.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+      val roadAddress = RoadAddress(1, 1234, RoadPart(5, 999), AdministrativeClass.Unknown, Track.Combined, Discontinuity.Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 12345L.toString, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), Seq(Point(0.0, 0.0), Point(2.0, 9.8), Point(2.0, 9.8), Point(10.0, 19.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
 
       val roadAddressLink = roadAddressLinkBuilder.build(roadAddress)
       roadAddressLink.length should be (22.808)
@@ -93,7 +93,7 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
 
   test("Test RoadAddressLinkBuilder.build for roadlink and roadAddress input") {
     runWithRollback {
-      val roadAddress = RoadAddress(1, 1234, 5, 999, AdministrativeClass.Unknown, Track.Combined, Discontinuity.Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 12345L.toString, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), Seq(Point(0.0, 0.0), Point(2.0, 9.8), Point(2.0, 9.8), Point(10.0, 19.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+      val roadAddress = RoadAddress(1, 1234, RoadPart(5, 999), AdministrativeClass.Unknown, Track.Combined, Discontinuity.Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 12345L.toString, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), Seq(Point(0.0, 0.0), Point(2.0, 9.8), Point(2.0, 9.8), Point(10.0, 19.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
       val roadlink = RoadLink(linkId = 1L.toString, List(Point(0.0, 0.0), Point(120.0, 0.0)), 120.0, AdministrativeClass.Municipality, TrafficDirection.BothDirections, None, None, municipalityCode = 0, sourceId = "")
 
       val roadAddressLink = roadAddressLinkBuilder.build(roadlink, roadAddress)
@@ -107,11 +107,11 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
   }
 
   test("Test ProjectAddressLinkBuilder.build() When building project address links from regular project links and road links Then return the build ProjectAddressLinks.") {
-    val unknownProjectLink = ProjectLink(   0,    0, 0, Track.Unknown,  Discontinuity.Continuous,    0,    0,    0,    0, None, None, None,       0.toString, 0.0,  0.0, SideCode.Unknown,           (NoCP, NoCP), (NoCP, NoCP), List(),    0, RoadAddressChangeType.NotHandled, AdministrativeClass.Unknown, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 8, reversed = false, None, 85088L)
+    val unknownProjectLink = ProjectLink(   0,    RoadPart(0, 0), Track.Unknown,  Discontinuity.Continuous,    0,    0,    0,    0, None, None, None,       0.toString, 0.0,  0.0, SideCode.Unknown,           (NoCP, NoCP), (NoCP, NoCP), List(),    0, RoadAddressChangeType.NotHandled, AdministrativeClass.Unknown, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 8, reversed = false, None, 85088L)
     val projectLinks =
       Map(
-        1717380L.toString -> ProjectLink(1270,    0, 0, Track.Unknown,  Discontinuity.Continuous, 1021, 1028, 1021, 1028, None, None, None, 1717380.toString, 0.0,  6.0, SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP), List(), 1227, RoadAddressChangeType.NotHandled, AdministrativeClass.Unknown, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 8, reversed = false, None, 85088L),
-        1717374L.toString -> ProjectLink(1259, 1130, 0, Track.Combined, Discontinuity.Continuous,  959, 1021,  959, 1021, None, None, None, 1717374.toString, 0.0, 61.0, SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP), List(), 1227, RoadAddressChangeType.NotHandled, AdministrativeClass.Unknown, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 8, reversed = false, None, 85088L)
+        1717380L.toString -> ProjectLink(1270, RoadPart(   0, 0), Track.Unknown,  Discontinuity.Continuous, 1021, 1028, 1021, 1028, None, None, None, 1717380.toString, 0.0,  6.0, SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP), List(), 1227, RoadAddressChangeType.NotHandled, AdministrativeClass.Unknown, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 8, reversed = false, None, 85088L),
+        1717374L.toString -> ProjectLink(1259, RoadPart(1130, 0), Track.Combined, Discontinuity.Continuous,  959, 1021,  959, 1021, None, None, None, 1717374.toString, 0.0, 61.0, SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP), List(), 1227, RoadAddressChangeType.NotHandled, AdministrativeClass.Unknown, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 8, reversed = false, None, 85088L)
       )
 
     val roadLinks = Seq(
@@ -127,13 +127,11 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
     val pal1 = projectRoadLinks.head._2
     val pal2 = projectRoadLinks.tail.head._2
 
-    pal1.roadNumber should be(0)
-    pal1.roadPartNumber should be(0)
+    pal1.roadPart should be(RoadPart(0,0))
     pal1.trackCode should be(99)
     pal1.municipalityCode should be(BigInt(257))
 
-    pal2.roadNumber should be(1130)
-    pal2.roadPartNumber should be(0)
+    pal2.roadPart should be(RoadPart(1130,0))
     pal2.trackCode should be(0)
     pal2.municipalityCode should be(BigInt(0))
   }

@@ -4,7 +4,7 @@ import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.vaylavirasto.viite.model.{AdministrativeClass, BeforeAfter, Discontinuity, Track}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, BeforeAfter, Discontinuity, RoadPart, Track}
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import fi.vaylavirasto.viite.dao.BaseDAO
 import fi.vaylavirasto.viite.util.DateTimeFormatters.dateOptTimeFormatter
@@ -13,15 +13,15 @@ import fi.vaylavirasto.viite.util.DateTimeFormatters.dateOptTimeFormatter
 /** Data type for /summary API data */
 case class RoadwayNetworkSummaryRow
 (
-  roadNumber: Int, roadName: String,
-  roadPartNumber: Int, elyCode: Int, administrativeClass: Int,
+  roadPart: RoadPart, roadName: String,
+  elyCode: Int, administrativeClass: Int,
   track: Int, startAddressM: Int, endAddressM: Int, continuity: Int
 )
 
-case class MissingCalibrationPoint(roadNumber: Long, roadPartNumber: Long, track: Long, addrM: Long, createdTime: DateTime, createdBy: String)
+case class MissingCalibrationPoint(roadPart: RoadPart, track: Long, addrM: Long, createdTime: DateTime, createdBy: String)
 case class MissingCalibrationPointFromJunction(missingCalibrationPoint: MissingCalibrationPoint, junctionPointId: Long, junctionNumber: Long, nodeNumber: Long, beforeAfter: BeforeAfter)
-case class MissingRoadwayPoint(roadNumber: Long, roadPartNumber: Long, track: Long, addrM: Long, createdTime: DateTime, createdBy: String)
-case class InvalidRoadwayLength(roadwayNumber: Long, startDate: DateTime, endDate: Option[DateTime], roadNumber: Long, roadPartNumber: Long, track: Long, startAddrM: Long, endAddrM: Long, length: Long, createdBy: String, createdTime: DateTime)
+case class MissingRoadwayPoint(roadPart: RoadPart, track: Long, addrM: Long, createdTime: DateTime, createdBy: String)
+case class InvalidRoadwayLength(roadwayNumber: Long, startDate: DateTime, endDate: Option[DateTime], roadPart: RoadPart, track: Long, startAddrM: Long, endAddrM: Long, length: Long, createdBy: String, createdTime: DateTime)
 
 //TODO better naming case class
 case class OverlappingRoadwayOnLinearLocation(roadway: Roadway, linearLocationId: Long, linkId: String, linearLocationRoadwayNumber: Long, linearLocationStartMeasure: Long, linearLocationEndMeasure: Long, linearLocationCreatedBy: String, linearLocationCreatedTime: DateTime)
@@ -38,7 +38,7 @@ class RoadNetworkDAO extends BaseDAO {
       val createdTime = dateOptTimeFormatter.parseDateTime(r.nextDate.toString)
       val createdBy = r.nextString()
 
-      MissingCalibrationPoint(roadNumber, roadPartNumber, track, addrM, createdTime, createdBy)
+      MissingCalibrationPoint(RoadPart(roadNumber, roadPartNumber), track, addrM, createdTime, createdBy)
     }
   }
 
@@ -56,7 +56,7 @@ class RoadNetworkDAO extends BaseDAO {
       val createdTime = dateOptTimeFormatter.parseDateTime(r.nextDate.toString)
       val createdBy = r.nextString()
 
-      MissingCalibrationPointFromJunction(MissingCalibrationPoint(roadNumber, roadPartNumber, track, addrM, createdTime, createdBy),junctionPointId, junctionNumber, nodeNumber, BeforeAfter.apply(beforeAfter))
+      MissingCalibrationPointFromJunction(MissingCalibrationPoint(RoadPart(roadNumber, roadPartNumber), track, addrM, createdTime, createdBy),junctionPointId, junctionNumber, nodeNumber, BeforeAfter.apply(beforeAfter))
     }
   }
 
@@ -70,7 +70,7 @@ class RoadNetworkDAO extends BaseDAO {
       val createdTime = dateOptTimeFormatter.parseDateTime(r.nextDate.toString)
       val createdBy = r.nextString()
 
-      MissingRoadwayPoint(roadNumber, roadPartNumber, track, startAddrM, createdTime, createdBy)
+      MissingRoadwayPoint(RoadPart(roadNumber,roadPartNumber), track, startAddrM, createdTime, createdBy)
     }
   }
 
@@ -89,7 +89,7 @@ class RoadNetworkDAO extends BaseDAO {
       val createdBy = r.nextString()
       val createdTime    = dateOptTimeFormatter.parseDateTime(r.nextDate.toString)
 
-      InvalidRoadwayLength(roadwayNumber, startDate, endDate, roadNumber, roadPartNumber, track, startAddrM, endAddrM, length, createdBy, createdTime)
+      InvalidRoadwayLength(roadwayNumber, startDate, endDate, RoadPart(roadNumber,roadPartNumber), track, startAddrM, endAddrM, length, createdBy, createdTime)
     }
   }
 
@@ -115,7 +115,7 @@ class RoadNetworkDAO extends BaseDAO {
       val validTo       = r.nextDateOption.map(d => dateOptTimeFormatter.parseDateTime(d.toString))
       val roadName = r.nextStringOption()
 
-      Roadway(id, roadwayNumber, roadNumber, roadPartNumber, administrativeClass, Track.apply(trackCode), Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, reverted, startDate, endDate, createdBy, roadName, ely, terminated, validFrom, validTo)
+      Roadway(id, roadwayNumber, RoadPart(roadNumber,roadPartNumber), administrativeClass, Track.apply(trackCode), Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, reverted, startDate, endDate, createdBy, roadName, ely, terminated, validFrom, validTo)
     }
   }
 
@@ -149,7 +149,7 @@ class RoadNetworkDAO extends BaseDAO {
       val linearLocationCreatedBy = r.nextString()
       val linearLocationCreatedTime = dateOptTimeFormatter.parseDateTime(r.nextDate.toString)
 
-      OverlappingRoadwayOnLinearLocation(Roadway(id, roadwayNumber, roadNumber, roadPartNumber, administrativeClass, Track.apply(trackCode), Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, reverted, startDate, endDate, createdBy, roadName, ely, terminated, validFrom, validTo),
+      OverlappingRoadwayOnLinearLocation(Roadway(id, roadwayNumber, RoadPart(roadNumber,roadPartNumber), administrativeClass, Track.apply(trackCode), Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, reverted, startDate, endDate, createdBy, roadName, ely, terminated, validFrom, validTo),
         linearLocationId, linkId, linearLocationRoadwayNumber, linearLocationStartMeasure, linearLocationEndMeasure, linearLocationCreatedBy, linearLocationCreatedTime
       )
     }
@@ -169,15 +169,15 @@ class RoadNetworkDAO extends BaseDAO {
     Q.queryNA[MissingCalibrationPoint](query).iterator.toSeq
   }
 
-  def fetchMissingCalibrationPointsFromStart(roadNumber: Long, roadPartNumber: Long): Seq[MissingCalibrationPoint] = {
+  def fetchMissingCalibrationPointsFromStart(roadPart: RoadPart): Seq[MissingCalibrationPoint] = {
     val query =
       s"""
          |WITH selectedRoadways
          |     AS (SELECT *
          |         FROM roadway
          |         WHERE valid_to IS NULL
-         |         AND road_number = $roadNumber
-         |         AND road_part_number = $roadPartNumber
+         |         AND road_number = ${roadPart.roadNumber}
+         |         AND road_part_number = ${roadPart.partNumber}
          |         )
          |$selectMissingCalibrationPointFromStart
          |FROM roadway_point rp, selectedRoadways r
@@ -204,15 +204,15 @@ class RoadNetworkDAO extends BaseDAO {
     Q.queryNA[MissingCalibrationPoint](query).iterator.toSeq
   }
 
-  def fetchMissingCalibrationPointsFromEnd(roadNumber: Long, roadPartNumber: Long): Seq[MissingCalibrationPoint] = {
+  def fetchMissingCalibrationPointsFromEnd(roadPart: RoadPart): Seq[MissingCalibrationPoint] = {
     val query =
       s"""
         WITH selectedRoadways
           AS (SELECT *
           FROM roadway
           WHERE valid_to IS NULL
-          AND road_number = $roadNumber
-          AND road_part_number = $roadPartNumber
+          AND road_number = ${roadPart.roadNumber}
+          AND road_part_number = ${roadPart.partNumber}
         )
         $selectMissingCalibrationPointFromEnd
         FROM roadway_point rp, selectedRoadways r
@@ -258,15 +258,15 @@ class RoadNetworkDAO extends BaseDAO {
     Q.queryNA[MissingCalibrationPointFromJunction](query).iterator.toSeq
   }
 
-  def fetchMissingCalibrationPointsFromJunctions(roadNumber: Long, roadPartNumber: Long): Seq[MissingCalibrationPointFromJunction] = {
+  def fetchMissingCalibrationPointsFromJunctions(roadPart: RoadPart): Seq[MissingCalibrationPointFromJunction] = {
     val query =
       s"""
          |WITH selectedRoadways
          |          AS (SELECT *
          |          FROM roadway
          |          WHERE valid_to IS NULL
-         |          AND road_number = $roadNumber
-         |          AND road_part_number = $roadPartNumber
+         |          AND road_number = ${roadPart.roadNumber}
+         |          AND road_part_number = ${roadPart.partNumber}
          |        )
          |$selectMissingCalibrationPointFromJunction
          |FROM   junction_point jp,
@@ -318,15 +318,15 @@ class RoadNetworkDAO extends BaseDAO {
     Q.queryNA[MissingRoadwayPoint](query).iterator.toSeq
   }
 
-  def fetchMissingRoadwayPointsFromStart(roadNumber: Long, roadPartNumber: Long): Seq[MissingRoadwayPoint] = {
+  def fetchMissingRoadwayPointsFromStart(roadPart: RoadPart): Seq[MissingRoadwayPoint] = {
     val query =
       s"""
          |WITH selectedRoadways
          |          AS (SELECT *
          |          FROM roadway
          |          WHERE valid_to IS NULL
-         |          AND road_number = $roadNumber
-         |          AND road_part_number = $roadPartNumber
+         |          AND road_number = ${roadPart.roadNumber}
+         |          AND road_part_number = ${roadPart.partNumber}
          |        )
          |$selectMissingRoadwayPointFromStart
          |FROM   selectedRoadways r
@@ -372,15 +372,15 @@ class RoadNetworkDAO extends BaseDAO {
     Q.queryNA[MissingRoadwayPoint](query).iterator.toSeq
   }
 
-  def fetchMissingRoadwayPointsFromEnd(roadNumber: Long, roadPartNumber: Long): Seq[MissingRoadwayPoint] = {
+  def fetchMissingRoadwayPointsFromEnd(roadPart: RoadPart): Seq[MissingRoadwayPoint] = {
     val query =
       s"""
          |WITH selectedRoadways
          |          AS (SELECT *
          |          FROM roadway
          |          WHERE valid_to IS NULL
-         |          AND road_number = $roadNumber
-         |          AND road_part_number = $roadPartNumber
+         |          AND road_number = ${roadPart.roadNumber}
+         |          AND road_part_number = ${roadPart.partNumber}
          |        )
          |$selectMissingRoadwayPointFromEnd
          |FROM   selectedRoadways r
@@ -447,15 +447,15 @@ class RoadNetworkDAO extends BaseDAO {
   }
 
   //TODO better naming for this query and case class
-  def fetchOverlappingRoadwaysOnLinearLocations(roadNumber: Long, roadPartNumber: Long): Seq[OverlappingRoadwayOnLinearLocation] = {
+  def fetchOverlappingRoadwaysOnLinearLocations(roadPart: RoadPart): Seq[OverlappingRoadwayOnLinearLocation] = {
     val query =
       s"""
          WITH selectedRoadways
          |     AS (SELECT *
          |         FROM   roadway
          |         WHERE  valid_to IS NULL
-         |         AND road_number = $roadNumber
-         |         AND road_part_number = $roadPartNumber),
+         |         AND road_number = ${roadPart.roadNumber}
+         |         AND road_part_number = ${roadPart.partNumber}),
          |     selectedLinearLocations
          |     AS (SELECT *
          |         FROM   linear_location
@@ -510,15 +510,15 @@ class RoadNetworkDAO extends BaseDAO {
     Q.queryNA[InvalidRoadwayLength](query).iterator.toSeq
   }
 
-  def fetchInvalidRoadwayLengths(roadNumber: Long, roadPartNumber: Long): Seq[InvalidRoadwayLength] = {
+  def fetchInvalidRoadwayLengths(roadPart: RoadPart): Seq[InvalidRoadwayLength] = {
     val query =
       s"""
          |WITH selectedRoadways
          |     AS (SELECT *
          |         FROM roadway
          |         WHERE valid_to IS NULL
-         |         AND road_number = $roadNumber
-         |         AND road_part_number = $roadPartNumber
+         |         AND road_number = ${roadPart.roadNumber}
+         |         AND road_part_number = ${roadPart.partNumber}
          |         )
          |$selectinvalidRoadwayLength
          |FROM   selectedRoadways r
@@ -572,15 +572,15 @@ class RoadNetworkDAO extends BaseDAO {
     Q.queryNA[Roadway](query).iterator.toSeq
   }
 
-  def fetchOverlappingRoadwaysInHistory(roadNumber: Long, roadPartNumber: Long): Seq[Roadway] = {
+  def fetchOverlappingRoadwaysInHistory(roadPart: RoadPart): Seq[Roadway] = {
     val query =
       s"""
          |WITH selectedRoadways
          |     AS (SELECT *
          |         FROM roadway
          |         WHERE valid_to IS NULL
-         |         AND road_number = $roadNumber
-         |         AND road_part_number = $roadPartNumber
+         |         AND road_number = ${roadPart.roadNumber}
+         |         AND road_part_number = ${roadPart.partNumber}
          |         )
          |$selectOverlappingRoadway
          |FROM   selectedRoadways r
@@ -668,8 +668,8 @@ class RoadNetworkDAO extends BaseDAO {
       val continuity = r.nextInt()
 
       RoadwayNetworkSummaryRow(
-        roadNumber, roadName,
-        roadPartNumber, elyCode, administrativeClass,
+        RoadPart(roadNumber,roadPartNumber), roadName,
+        elyCode, administrativeClass,
         track, startAddressM, endAddressM, continuity)
     }
   }

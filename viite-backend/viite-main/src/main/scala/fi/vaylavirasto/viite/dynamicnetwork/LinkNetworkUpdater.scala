@@ -10,7 +10,7 @@ import fi.vaylavirasto.viite.dao.LinkDAO
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.CalibrationPointLocation.{EndOfLink, StartOfLink}
 import fi.vaylavirasto.viite.model.SideCode.TowardsDigitizing
-import fi.vaylavirasto.viite.model.{CalibrationPoint, LinkGeomSource, SideCode}
+import fi.vaylavirasto.viite.model.{CalibrationPoint, LinkGeomSource, RoadPart, SideCode}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase
 import fi.vaylavirasto.viite.util.ViiteException
 import org.joda.time.DateTime
@@ -47,16 +47,14 @@ case class LinkInfo(linkId: String,
  * @param roadwayNumber    Roadway number  this (part of the) old link belongs to
  * @param linearLocationId Linear location this (part of the) old link belongs to
  * @param orderNumber      Number telling the ordering of the linear locations on the roadway
- * @param roadNumber       Road number     where this linear location belongs to
- * @param roadPartNumber   Road part of the road this linear location belongs to
+ * @param roadPart         Road part      this linear location belongs to
  */
 case class ViiteMetaData(linearLocationId: Long,
                          mValueStart:      Double,
                          mValueEnd:        Double,
                          roadwayNumber:    Long,
                          orderNumber:      Int,
-                         roadNumber:       Long,
-                         roadPartNumber:   Long
+                         roadPart:         RoadPart
                         )
 
 
