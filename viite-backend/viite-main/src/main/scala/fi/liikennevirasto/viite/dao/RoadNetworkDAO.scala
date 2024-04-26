@@ -465,6 +465,58 @@ class RoadNetworkDAO extends BaseDAO {
     Q.queryNA[LinksWithExtraCalibrationPoints](query).list
   }
 
+  def fetchExtraCalibrationPointsByRoadPart(roadPart: RoadPart): Seq[LinksWithExtraCalibrationPoints] = {
+    val query =
+      s"""
+      SELECT
+        sub.LINK_ID,
+        R.ROAD_NUMBER,
+        R.ROAD_PART_NUMBER,
+        sub.START_END,
+        sub.CALIBRATION_POINT_COUNT,
+        ARRAY_AGG(CP.ID) AS CALIBRATION_POINT_IDS
+      FROM (
+        SELECT
+          CP.LINK_ID,
+          CP.START_END,
+          COUNT(*) AS CALIBRATION_POINT_COUNT
+        FROM
+          CALIBRATION_POINT CP
+        JOIN
+          ROADWAY_POINT RP ON CP.ROADWAY_POINT_ID = RP.ID
+        WHERE
+          CP.VALID_TO IS NULL
+          AND RP.ROADWAY_NUMBER IN (
+            SELECT ROADWAY_NUMBER FROM ROADWAY WHERE ROAD_NUMBER = ${roadPart.roadNumber} AND ROAD_PART_NUMBER = ${roadPart.partNumber}
+            AND VALID_TO IS NULL AND END_DATE IS NULL
+          )
+        GROUP BY
+          CP.LINK_ID, CP.START_END
+        HAVING
+          COUNT(*) > 1
+      ) sub
+      JOIN
+        CALIBRATION_POINT CP ON sub.LINK_ID = CP.LINK_ID AND sub.START_END = CP.START_END
+      JOIN
+        ROADWAY_POINT RP ON CP.ROADWAY_POINT_ID = RP.ID
+      JOIN
+        ROADWAY R ON RP.ROADWAY_NUMBER = R.ROADWAY_NUMBER
+      WHERE
+        CP.VALID_TO IS NULL
+        AND R.VALID_TO IS NULL
+        AND R.END_DATE IS NULL
+      GROUP BY
+        sub.LINK_ID,
+        sub.START_END,
+        sub.CALIBRATION_POINT_COUNT,
+        R.ROAD_NUMBER,
+        R.ROAD_PART_NUMBER
+      ORDER BY
+        R.ROAD_NUMBER, R.ROAD_PART_NUMBER
+    """
+    Q.queryNA[LinksWithExtraCalibrationPoints](query).list
+  }
+
   private val selectOverlappingRoadwayOnLinearLocation =
     s"""SELECT DISTINCT r.id, r.roadway_number, r.road_number, r.road_part_number, r.track,
        | r.start_addr_m, r.end_addr_m, r.reversed, r.discontinuity, r.start_date, r.end_date,
