@@ -100,7 +100,7 @@ class RoadAddressService(
   def getLinearLocationsInRoadPart(roadPart: RoadPart): Seq[LinearLocation] = {
 
     // get roadways of the road part
-    val roadwaysOnPart = roadwayDAO.fetchAllByRoadAndPart(roadPart)
+    val roadwaysOnPart = roadwayDAO.fetchAllByRoadPart(roadPart)
 
     // get all the roadwayNumbers from the roadways
     val allRoadwayNumbersInRoadPart = roadwaysOnPart.map(rw => rw.roadwayNumber)
@@ -516,14 +516,14 @@ class RoadAddressService(
     * @param fetchOnlyEnd The optional parameter that allows the search for the link with bigger endAddrM value
     * @return Returns all the filtered road addresses
     */
-  def getRoadAddressWithRoadAndPart(roadPart: RoadPart, withHistory: Boolean = false, fetchOnlyEnd: Boolean = false, newTransaction: Boolean = true): Seq[RoadAddress] = {
+  def getRoadAddressWithRoadPart(roadPart: RoadPart, withHistory: Boolean = false, fetchOnlyEnd: Boolean = false, newTransaction: Boolean = true): Seq[RoadAddress] = {
     if (newTransaction)
       withDynSession {
-        val roadways = roadwayDAO.fetchAllByRoadAndPart(roadPart, withHistory, fetchOnlyEnd)
+        val roadways = roadwayDAO.fetchAllByRoadPart(roadPart, withHistory, fetchOnlyEnd)
         roadwayAddressMapper.getRoadAddressesByRoadway(roadways)
       }
     else {
-      val roadways = roadwayDAO.fetchAllByRoadAndPart(roadPart, withHistory, fetchOnlyEnd)
+      val roadways = roadwayDAO.fetchAllByRoadPart(roadPart, withHistory, fetchOnlyEnd)
       roadwayAddressMapper.getRoadAddressesByRoadway(roadways)
     }
   }
