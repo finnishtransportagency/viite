@@ -29,7 +29,7 @@ object Digiroad2Build extends Build {
   val JettyVersion = "9.2.15.v20160210"
   val TestOutputOptions = Tests.Argument(TestFrameworks.ScalaTest, "-oNCXELOPQRMI") // List only problems, and their summaries. Set suitable logback level to get the effect.
   val AwsSdkVersion = "2.17.148"
-  val GeoToolsVersion = "27.2"
+  val GeoToolsVersion = "28.3"
 
   val jodaConvert    = "org.joda"             %  "joda-convert"  % JodaConvertVersion
   val jodaTime       = "joda-time"            %  "joda-time"     % JodaTimeVersion
@@ -124,7 +124,7 @@ object Digiroad2Build extends Build {
         "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
         mockitoCore % "test",
         "com.googlecode.flyway" % "flyway-core" % "2.3.1",
-        "org.postgresql" % "postgresql" % "42.2.27",
+        "org.postgresql" % "postgresql" % "42.2.28",
         "net.postgis" % "postgis-geometry" % "2021.1.0",
         "net.postgis" % "postgis-jdbc" % "2021.1.0" // dep postgresql, and from 2.5.0 and up: postgis-geometry
       ),

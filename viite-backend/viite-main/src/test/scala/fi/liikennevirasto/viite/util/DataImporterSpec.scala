@@ -114,11 +114,11 @@
 //
 //        dataImporter.importRoadAddressData(null, mockVVHClient, importOptions)
 //
-//        val road_25_22 = roadwayDAO.fetchAllByRoadAndPart(25, 22)
+//        val road_25_22 = roadwayDAO.fetchAllByRoadPart(25, 22)
 //        road_25_22.size should be(3)
 //
 //        // Terminated roadways
-//        val road_30_1_history = roadwayDAO.fetchAllByRoadAndPart(30, 1, withHistory = true)
+//        val road_30_1_history = roadwayDAO.fetchAllByRoadPart(30, 1, withHistory = true)
 //        road_30_1_history.size should be(2)
 //        val roadway_30_1 = road_30_1_history.filter(r => r.terminated == TerminationCode.Termination).sortBy(_
 //          .startAddrMValue)
@@ -132,7 +132,7 @@
 //        roadway_30_1.last.startAddrMValue should be(100)
 //        roadway_30_1.last.endAddrMValue should be(200)
 //
-//        val road_30_2_history = roadwayDAO.fetchAllByRoadAndPart(30, 2, withHistory = true)
+//        val road_30_2_history = roadwayDAO.fetchAllByRoadPart(30, 2, withHistory = true)
 //        road_30_2_history.size should be(1)
 //        val roadway_30_2 = road_30_2_history.filter(r => r.terminated == TerminationCode.Termination)
 //        val roadway_30_2_history = road_30_2_history.filter(r => r.terminated == TerminationCode.Subsequent)

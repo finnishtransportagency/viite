@@ -9,7 +9,7 @@ import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.vaylavirasto.viite.dao.UnaddressedRoadLink
 import fi.vaylavirasto.viite.geometry.GeometryUtils
-import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LifecycleStatus, LinkGeomSource, RoadLink, RoadLinkLike, SideCode, Track}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LifecycleStatus, LinkGeomSource, RoadLink, RoadLinkLike, RoadPart, SideCode, Track}
 import fi.vaylavirasto.viite.util.DateTimeFormatters.finnishDateFormatter
 
 class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLocationDAO) extends AddressLinkBuilder {
@@ -40,7 +40,7 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
     RoadAddressLink(roadAddress.id, roadAddress.linearLocationId, roadLink.linkId, geom, length,
       roadLink.administrativeClass, roadLink.lifecycleStatus, roadLink.linkSource, administrativeClass, roadName,
       municipalityCode, municipalityName, roadLink.modifiedAt, Some(modifiedBy),
-      roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value,
+      roadAddress.roadPart, roadAddress.track.value,
       roadAddress.ely, roadAddress.discontinuity.value, roadAddress.startAddrMValue, roadAddress.endAddrMValue,
       roadAddress.startDate.map(finnishDateFormatter.print).getOrElse(""), roadAddress.endDate.map(finnishDateFormatter.print).getOrElse(""),
       roadAddress.startMValue, roadAddress.endMValue, roadAddress.sideCode, roadAddress.startCalibrationPoint, roadAddress.calibrationPoints._2, roadAddress.roadwayNumber, sourceId = roadLink.sourceId)
@@ -51,7 +51,7 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
     val length = GeometryUtils.geometryLength(geom)
     val municipalityCode = 0
     val administrativeClass = roadAddress.administrativeClass
-    RoadAddressLink(roadAddress.id, roadAddress.linearLocationId, roadAddress.linkId, geom, length, AdministrativeClass(1), LifecycleStatus.apply(0), LinkGeomSource.apply(1), administrativeClass, roadAddress.roadName, municipalityCode, "", Some(""), Some(modifiedBy), roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, 0, roadAddress.discontinuity.value, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(finnishDateFormatter.print).getOrElse(""), roadAddress.endDate.map(finnishDateFormatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue, roadAddress.sideCode, roadAddress.startCalibrationPoint, roadAddress.calibrationPoints._2, roadAddress.roadwayNumber, sourceId = "")
+    RoadAddressLink(roadAddress.id, roadAddress.linearLocationId, roadAddress.linkId, geom, length, AdministrativeClass(1), LifecycleStatus.apply(0), LinkGeomSource.apply(1), administrativeClass, roadAddress.roadName, municipalityCode, "", Some(""), Some(modifiedBy), roadAddress.roadPart, roadAddress.track.value, 0, roadAddress.discontinuity.value, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(finnishDateFormatter.print).getOrElse(""), roadAddress.endDate.map(finnishDateFormatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue, roadAddress.sideCode, roadAddress.startCalibrationPoint, roadAddress.calibrationPoints._2, roadAddress.roadwayNumber, sourceId = "")
   }
 
   def build(roadLink: RoadLinkLike, unaddressedRoadLink: UnaddressedRoadLink): RoadAddressLink = {
@@ -69,6 +69,6 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
       case AdministrativeClass.Unknown => roadLink.administrativeClass
       case _ => unaddressedRoadLink.administrativeClass
     }
-    RoadAddressLink(0, 0, roadLink.linkId, geom, length, roadLink.administrativeClass, roadLink.lifecycleStatus, roadLink.linkSource, administrativeClass, None, municipalityCode, municipalityName, roadLink.modifiedAt, Some("kgv_modified"), 0, 0, Track.Unknown.value, municipalityToViiteELYMapping.getOrElse(roadLink.municipalityCode, -1), Discontinuity.Continuous.value, 0, 0, "", "", 0.0, length, SideCode.Unknown, None, None, newGeometry = Some(roadLink.geometry), sourceId = roadLink.sourceId)
+    RoadAddressLink(0, 0, roadLink.linkId, geom, length, roadLink.administrativeClass, roadLink.lifecycleStatus, roadLink.linkSource, administrativeClass, None, municipalityCode, municipalityName, roadLink.modifiedAt, Some("kgv_modified"), RoadPart(0, 0), Track.Unknown.value, municipalityToViiteELYMapping.getOrElse(roadLink.municipalityCode, -1), Discontinuity.Continuous.value, 0, 0, "", "", 0.0, length, SideCode.Unknown, None, None, newGeometry = Some(roadLink.geometry), sourceId = roadLink.sourceId)
   }
 }

@@ -5,7 +5,7 @@ import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
 import fi.vaylavirasto.viite.dao.{BaseDAO, LinkDAO, Queries, Sequences}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.{CalibrationPointType, LinkGeomSource, SideCode}
+import fi.vaylavirasto.viite.model.{CalibrationPointType, LinkGeomSource, RoadPart, SideCode}
 import fi.vaylavirasto.viite.postgis.MassQuery.logger
 import fi.vaylavirasto.viite.postgis.{MassQuery, PostGISDatabase}
 import fi.vaylavirasto.viite.util.DateTimeFormatters.dateOptTimeFormatter
@@ -676,7 +676,7 @@ class LinearLocationDAO extends BaseDAO {
     }
   }
 
-  def fetchByRoadAddress(roadNumber: Long, roadPart:Long, addressM: Long, track: Option[Long] = None): Seq[LinearLocation] = {
+  def fetchByRoadAddress(roadPart: RoadPart, addressM: Long, track: Option[Long] = None): Seq[LinearLocation] = {
     time(logger, "Fetch linear locations by Road Address") {
       val trackFilter = track.map(t => s"""AND rw.TRACK = $t""").getOrElse(s"""""")
       val query =
@@ -684,7 +684,7 @@ class LinearLocationDAO extends BaseDAO {
           $selectFromLinearLocation
           JOIN ROADWAY rw ON loc.ROADWAY_NUMBER = rw.ROADWAY_NUMBER
           WHERE rw.VALID_TO IS NULL AND rw.END_DATE IS NULL AND loc.VALID_TO IS NULL AND
-          rw.ROAD_NUMBER = $roadNumber AND rw.ROAD_PART_NUMBER = $roadPart
+          rw.ROAD_NUMBER = ${roadPart.roadNumber} AND rw.ROAD_PART_NUMBER = ${roadPart.partNumber}
           AND rw.START_ADDR_M <= $addressM AND rw.END_ADDR_M >= $addressM
           $trackFilter
           ORDER BY loc.ORDER_NUMBER

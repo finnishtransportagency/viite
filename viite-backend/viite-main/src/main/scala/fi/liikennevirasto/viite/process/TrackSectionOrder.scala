@@ -339,7 +339,7 @@ object TrackSectionOrder {
             SideCode.TowardsDigitizing
         }
         /* Sets reverse flag if sidecode change occurs with road/roadpart change. */
-        def setReverseFlag() = if (sideCode != nextLink.sideCode && (nextLink.roadNumber != nextLink.originalRoadNumber || nextLink.roadPartNumber != nextLink.originalRoadPartNumber)) !nextLink.reversed else nextLink.reversed
+        def setReverseFlag() = if (sideCode != nextLink.sideCode && nextLink.roadPart != nextLink.originalRoadPart) !nextLink.reversed else nextLink.reversed
         recursiveFindAndExtend(nextPoint, ready ++ Seq(nextLink.copy(sideCode = sideCode, reversed = setReverseFlag())), unprocessed.filterNot(pl => pl == nextLink), oppositeTrack)
       }
     }
@@ -353,7 +353,7 @@ object TrackSectionOrder {
   def createCombinedSections(rightLinks: Seq[ProjectLink], leftLinks: Seq[ProjectLink]): Seq[CombinedSection] = {
     def fromProjectLinks(s: Seq[ProjectLink]): TrackSection = {
       val pl = s.head
-      TrackSection(pl.roadNumber, pl.roadPartNumber, pl.track, s.map(_.geometryLength).sum, s)
+      TrackSection(pl.roadPart, pl.track, s.map(_.geometryLength).sum, s)
     }
 
     def groupIntoSections(seq: Seq[ProjectLink]): Seq[TrackSection] = {
@@ -447,8 +447,8 @@ object TrackSectionOrder {
             if (list.isEmpty) {
               Seq(i)
             } else {
-              if (list.last.administrativeClass != i.administrativeClass || list.last.track != i.track || list.last.roadNumber != i.roadNumber ||
-                list.last.roadPartNumber != i.roadPartNumber || list.last.discontinuity == Discontinuity.Discontinuous ||
+              if (list.last.administrativeClass != i.administrativeClass || list.last.track != i.track || list.last.roadPart != i.roadPart ||
+                list.last.discontinuity == Discontinuity.Discontinuous ||
                 list.last.discontinuity == Discontinuity.MinorDiscontinuity) {
                 val last = list.last
                 list.dropRight(1) ++ Seq(setCalibrationPoint(last, None, last.calibrationPoints._1.nonEmpty, hasEndCP = true, last.startCalibrationPointType, RoadAddressCP),

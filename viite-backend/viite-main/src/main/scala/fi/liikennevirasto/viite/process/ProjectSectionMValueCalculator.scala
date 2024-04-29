@@ -46,7 +46,7 @@ object ProjectSectionMValueCalculator {
   }
 
   def isSameTrack(previous: ProjectLink, currentLink: ProjectLink): Boolean = {
-    previous.roadNumber == currentLink.roadNumber && previous.roadPartNumber == currentLink.roadPartNumber && previous.track == currentLink.track
+    previous.roadPart == currentLink.roadPart && previous.track == currentLink.track
   }
   private def orderEndPoints(firstLink: ProjectLink, onceConnected: ProjectLink, unConnectedEndPoint: Point, tripleConnectionEndPoint: Point) = {
     if (firstLink.id == onceConnected.id)
