@@ -101,7 +101,7 @@ object Extractor {
     val linkGeometry: Seq[Point] = feature.geometry.coordinates.map(point => {
       Point(anyToDouble(point.head).get, anyToDouble(point(1)).get, anyToDouble(point(2)).get)
     })
-    val sourceid = attributes("sourceid").asInstanceOf[BigInt].toString
+    val sourceid = attributes("sourceid").asInstanceOf[String]
     val linkId = attributes("id").asInstanceOf[String]
     val municipalityCode = Try(attributes("municipalitycode").asInstanceOf[String].toInt).getOrElse({
       logger.warn(s"No municipality code for linkId: $linkId from $linkGeomSource.")
