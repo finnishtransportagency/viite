@@ -5,7 +5,7 @@ import fi.liikennevirasto.viite.AwsService
 import fi.liikennevirasto.viite.dao._
 import fi.vaylavirasto.viite.dao.{Link, LinkDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.Point
-import fi.vaylavirasto.viite.model.{AdministrativeClass, CalibrationPoint, CalibrationPointLocation, CalibrationPointType, Discontinuity, LifecycleStatus, LinkGeomSource, RoadLink, SideCode, Track, TrafficDirection}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, CalibrationPoint, CalibrationPointLocation, CalibrationPointType, Discontinuity, LifecycleStatus, LinkGeomSource, RoadLink, RoadPart, SideCode, Track, TrafficDirection}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
@@ -36,7 +36,7 @@ class DynamicRoadNetworkServiceSpec extends FunSuite with Matchers{
 
       // Create Roadways
       roadwayDAO.create(Seq(
-        Roadway(Sequences.nextRoadwayId, roadwayNumber1, 18344, 1, AdministrativeClass.State, Track.Combined,Discontinuity.EndOfRoad, 0, 100, false, DateTime.now().minusDays(1), None, "test", Some("Test road"), 9,TerminationCode.NoTermination, DateTime.now().minusDays(1),None)
+        Roadway(Sequences.nextRoadwayId, roadwayNumber1, RoadPart(18344, 1), AdministrativeClass.State, Track.Combined,Discontinuity.EndOfRoad, 0, 100, false, DateTime.now().minusDays(1), None, "test", Some("Test road"), 9,TerminationCode.NoTermination, DateTime.now().minusDays(1),None)
       ))
 
       // Create LinearLocations

@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.util.DigiroadSerializers
 import fi.liikennevirasto.viite.RoadAddressService
 import fi.liikennevirasto.viite.dao.RoadAddress
-import fi.vaylavirasto.viite.model.Track
+import fi.vaylavirasto.viite.model.{RoadPart, Track}
 import fi.vaylavirasto.viite.util.ViiteException
 import org.joda.time.DateTime
 import org.json4s.Formats
@@ -181,7 +181,7 @@ class SearchApi(roadAddressService: RoadAddressService,
         val roadNumber = roadNumberGetValidOrThrow("road")
         val roadPart = roadPartNumberGetValidOrThrow("roadPart")
 
-        roadAddressService.getRoadAddressesFiltered(roadNumber, roadPart).map(roadAddressMapper)
+        roadAddressService.getRoadAddressesFiltered(RoadPart(roadNumber,roadPart)).map(roadAddressMapper)
       }
       catch {
         case t: Throwable => handleCommonSearchAPIExceptions(t, getRoadAddressWithRoadNumber.operationId)
@@ -216,7 +216,7 @@ class SearchApi(roadAddressService: RoadAddressService,
         val roadPart = roadPartNumberGetValidOrThrow("roadPart")
         val address = startAddressGetValidOrThrow("address")
         val track = trackOptionGetValidOrThrow("track")
-        roadAddressService.getRoadAddress(roadNumber, roadPart, address, Track.applyOption(track)).map(roadAddressMapper)
+        roadAddressService.getRoadAddress(RoadPart(roadNumber, roadPart), address, Track.applyOption(track)).map(roadAddressMapper)
       }
       catch {
         case t: Throwable => handleCommonSearchAPIExceptions(t, getRoadAddressesFiltered2.operationId)
@@ -254,7 +254,7 @@ class SearchApi(roadAddressService: RoadAddressService,
         val startAddress = startAddressGetValidOrThrow("startAddress")
         val endAddress = endAddressGetValidOrThrow("endAddress", startAddress)
 
-        roadAddressService.getRoadAddressesFiltered(roadNumber, roadPart, startAddress, endAddress).map(roadAddressMapper)
+        roadAddressService.getRoadAddressesFiltered(RoadPart(roadNumber, roadPart), startAddress, endAddress).map(roadAddressMapper)
       }
       catch {
         case t: Throwable => handleCommonSearchAPIExceptions(t, getRoadAddressesFiltered3.operationId)
@@ -558,8 +558,8 @@ class SearchApi(roadAddressService: RoadAddressService,
   private def roadAddressMapper(roadAddress : RoadAddress) = {
     Map(
       "id" -> roadAddress.id,
-      "roadNumber" -> roadAddress.roadNumber,
-      "roadPartNumber" -> roadAddress.roadPartNumber,
+      "roadNumber" -> roadAddress.roadPart.roadNumber,
+      "roadPartNumber" -> roadAddress.roadPart.partNumber,
       "track" -> roadAddress.track,
       "startAddrM" -> roadAddress.startAddrMValue,
       "endAddrM" -> roadAddress.endAddrMValue,
