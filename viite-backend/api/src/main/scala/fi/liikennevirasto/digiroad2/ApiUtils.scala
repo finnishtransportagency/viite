@@ -92,7 +92,8 @@ object ApiUtils {
       finished = f(params)
     }.onComplete {
       case Failure(e) => { // The Future ended up in an exception
-        logger.info(s"API LOG $queryId: Future completed with failure: $finished")
+        val throwableInfo: String = { if(e.isInstanceOf[Exception]) { e.getMessage } else { e.getClass.toString } }
+        logger.info(s"API LOG $queryId: Future completed with failure: $finished ($throwableInfo)")
         //logger.error(s"API LOG $queryId: error ${e.getClass} with message ${e.getMessage} and stacktrace: \n ${e.getStackTrace.mkString("", EOL, EOL)}")
 
         // Save the error message to S3, so that the caller gets the error feedback from there, ...

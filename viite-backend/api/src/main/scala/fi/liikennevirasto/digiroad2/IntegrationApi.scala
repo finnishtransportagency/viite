@@ -642,14 +642,20 @@ println("Threading print test: Now in avoidRestrictions")
    * @throws Throwable if it is considered a fatal one. */
   def handleCommonIntegrationAPIExceptions(t: Throwable, operationId: Option[String]): Unit = {
     val requestLogString = s"GET request for ${request.getRequestURI}?${request.getQueryString} (${operationId})"
-    logger.info(s"$requestLogString --ENDED in ${t.getClass}--")
+    logger.info(s"$requestLogString --ENDED in ${t.getClass}: ${t.getMessage}--")
     t match {
       case ve: ViiteException =>
         BadRequestWithLoggerWarn(s"Check the given parameters. ${ve.getMessage}", "")
       case iae: IllegalArgumentException =>
         BadRequestWithLoggerWarn(s"$ISOdateTimeDescription. Now got '${request.getQueryString}''", iae.getMessage)
-      case psqle: PSQLException => // TODO remove? This applies when biiiig year (e.g. 2000000) given to DateTime parser. But year now restricted to be less than 100 years in checks before giving to dateTime parsing
-        BadRequestWithLoggerWarn(s"Date out of bounds, check the given dates: ${request.getQueryString}.", s"${psqle.getMessage}")
+      case psqle: PSQLException =>
+        Option(request.getQueryString) match {
+          case None =>   // an api call without parameters - that is, the user has no possibilities to change the outcome
+            BadRequestWithLoggerWarn(s"Data integrity error found by ${request.getRequestURI}: ${psqle.getMessage}")
+          case _ =>
+            // TODO remove? This applies when biiiig year (e.g. 2000000) given to DateTime parser. But year now restricted to be less than 100 years in checks before giving to dateTime parsing
+            BadRequestWithLoggerWarn(s"Date out of bounds, check the given dates: ${request.getQueryString}.", s"${psqle.getMessage}")
+        }
       case nf if NonFatal(nf) =>
         val requestString = s"GET request for ${request.getRequestURI}?${request.getQueryString} ($operationId)"
         haltWithHTTP500WithLoggerError(requestString, nf)
