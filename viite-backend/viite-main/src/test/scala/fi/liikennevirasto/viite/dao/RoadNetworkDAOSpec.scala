@@ -3,7 +3,7 @@ package fi.liikennevirasto.viite.dao
 import fi.liikennevirasto.viite._
 import fi.vaylavirasto.viite.dao.Sequences
 import fi.vaylavirasto.viite.geometry.Point
-import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LinkGeomSource, RoadPart, SideCode, Track}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, CalibrationPoint, CalibrationPointLocation, CalibrationPointType, Discontinuity, LinkGeomSource, RoadPart, SideCode, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
@@ -98,4 +98,103 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
       res.size should be (2)
     }
   }
+
+  test("Test When there are extra calibration points Then identify them") {
+    runWithRollback {
+      val linkId1 = "testtest-test-test-test-test:1"
+      val linkId2 = "testtest-test-test-test-test:2"
+
+      val geometry1 = Seq(Point(0.0, 0.0), Point(0.0,50.0))
+      val geometry2 = Seq(Point(0.0, 50.0), Point(0.0, 100.0))
+
+      val roadwayNumber1 = Sequences.nextRoadwayNumber
+      val roadwayNumber2 = Sequences.nextRoadwayNumber
+      val roadwayNumber3 = Sequences.nextRoadwayNumber
+
+      val roadPart = RoadPart(18344, 1)
+
+      // Create Roadways with different roadway numbers
+      roadwayDAO.create(Seq(
+        Roadway(Sequences.nextRoadwayId, roadwayNumber1, roadPart, AdministrativeClass.State, Track.Combined,Discontinuity.Continuous, 0, 100, false, DateTime.now().minusDays(1), None, "test", Some("Test road"), 9,TerminationCode.NoTermination, DateTime.now().minusDays(1),None),
+        Roadway(Sequences.nextRoadwayId, roadwayNumber2, roadPart, AdministrativeClass.State, Track.Combined,Discontinuity.EndOfRoad, 0, 100, false, DateTime.now().minusDays(1), None, "test", Some("Test road"), 9,TerminationCode.NoTermination, DateTime.now().minusDays(1),None),
+        Roadway(Sequences.nextRoadwayId, roadwayNumber3, roadPart, AdministrativeClass.State, Track.Combined,Discontinuity.EndOfRoad, 100, 200, false, DateTime.now().minusDays(1), None, "test", Some("Test road"), 9,TerminationCode.NoTermination, DateTime.now().minusDays(1),None)
+      ))
+
+      // Create LinearLocations
+      val linearLocationIds = linearLocationDAO.create(Seq(
+        // First 2 with same roadway number and linkId
+        LinearLocation(Sequences.nextLinearLocationId, 1.0,
+          linkId1, 0.0, 50.0,
+          SideCode.TowardsDigitizing, 10000000000L,
+          (CalibrationPointReference(Some(0), Some(CalibrationPointType.RoadAddressCP)), CalibrationPointReference(Some(50), Some(CalibrationPointType.RoadAddressCP))),
+          geometry1,LinkGeomSource.NormalLinkInterface,
+          roadwayNumber1,Some(DateTime.now().minusDays(1)), None),
+        LinearLocation(Sequences.nextLinearLocationId, 2.0,
+          linkId1, 50.0, 100.0,
+          SideCode.TowardsDigitizing, 10000000000L,
+          (CalibrationPointReference(Some(50), Some(CalibrationPointType.RoadAddressCP)), CalibrationPointReference(Some(100), Some(CalibrationPointType.RoadAddressCP))),
+          geometry2, LinkGeomSource.NormalLinkInterface,
+          roadwayNumber1, Some(DateTime.now().minusDays(1)), None),
+
+        // Next 2 with different roadway number but same linkId
+        LinearLocation(Sequences.nextLinearLocationId, 3.0,
+          linkId2, 100.0, 150.0,
+          SideCode.TowardsDigitizing, 10000000000L,
+          (CalibrationPointReference(None, None), CalibrationPointReference(Some(150), Some(CalibrationPointType.RoadAddressCP))),
+          geometry1,LinkGeomSource.NormalLinkInterface,
+          roadwayNumber2,Some(DateTime.now().minusDays(1)), None),
+        LinearLocation(Sequences.nextLinearLocationId, 4.0,
+          linkId2, 150.0, 200.0,
+          SideCode.TowardsDigitizing, 10000000000L,
+          (CalibrationPointReference(None, None), CalibrationPointReference(Some(200), Some(CalibrationPointType.RoadAddressCP))),
+          geometry2, LinkGeomSource.NormalLinkInterface,
+          roadwayNumber3, Some(DateTime.now().minusDays(1)), None)
+      ))
+
+      // Create RoadwayPoints
+      val roadwayPointId1 = roadwayPointDAO.create(roadwayNumber1, 0, "test")
+      val roadwayPointId2 = roadwayPointDAO.create(roadwayNumber1, 50, "test")
+      val roadwayPointId3 = roadwayPointDAO.create(roadwayNumber1, 50, "test")
+      val roadwayPointId4 = roadwayPointDAO.create(roadwayNumber1, 100, "test")
+      val roadwayPointId5 = roadwayPointDAO.create(roadwayNumber2, 100, "test")
+      val roadwayPointId6 = roadwayPointDAO.create(roadwayNumber2, 150, "test")
+      val roadwayPointId7 = roadwayPointDAO.create(roadwayNumber3, 200, "test")
+
+      // Create CalibrationPoints
+      CalibrationPointDAO.create(CalibrationPoint(Sequences.nextCalibrationPointId, roadwayPointId1, linkId1, roadwayNumber1, 0,
+        CalibrationPointLocation.StartOfLink, CalibrationPointType.RoadAddressCP,
+        Some(DateTime.now().minusDays(1)), None, "Test", Some(DateTime.now())))
+      CalibrationPointDAO.create(CalibrationPoint(Sequences.nextCalibrationPointId, roadwayPointId2, linkId1, roadwayNumber1, 50,
+        CalibrationPointLocation.EndOfLink, CalibrationPointType.RoadAddressCP,
+        Some(DateTime.now().minusDays(1)), None, "Test", Some(DateTime.now())))
+      CalibrationPointDAO.create(CalibrationPoint(Sequences.nextCalibrationPointId, roadwayPointId3, linkId1, roadwayNumber1, 50,
+        CalibrationPointLocation.StartOfLink, CalibrationPointType.RoadAddressCP,
+        Some(DateTime.now().minusDays(1)), None, "Test", Some(DateTime.now())))
+      CalibrationPointDAO.create(CalibrationPoint(Sequences.nextCalibrationPointId, roadwayPointId4, linkId1, roadwayNumber1, 100,
+        CalibrationPointLocation.EndOfLink, CalibrationPointType.RoadAddressCP,
+        Some(DateTime.now().minusDays(1)), None, "Test", Some(DateTime.now())))
+      CalibrationPointDAO.create(CalibrationPoint(Sequences.nextCalibrationPointId, roadwayPointId5, linkId2, roadwayNumber1, 100,
+        CalibrationPointLocation.StartOfLink, CalibrationPointType.RoadAddressCP,
+        Some(DateTime.now().minusDays(1)), None, "Test", Some(DateTime.now())))
+      CalibrationPointDAO.create(CalibrationPoint(Sequences.nextCalibrationPointId, roadwayPointId6, linkId2, roadwayNumber2, 150,
+        CalibrationPointLocation.EndOfLink, CalibrationPointType.RoadAddressCP,
+        Some(DateTime.now().minusDays(1)), None, "Test", Some(DateTime.now())))
+      CalibrationPointDAO.create(CalibrationPoint(Sequences.nextCalibrationPointId, roadwayPointId7, linkId2, roadwayNumber2, 200,
+        CalibrationPointLocation.EndOfLink, CalibrationPointType.RoadAddressCP,
+        Some(DateTime.now().minusDays(1)), None, "Test", Some(DateTime.now())))
+
+      // Test all three queries for links with extra calibration points
+      val linksWithExtraCalPointsOnSameRoadway = dao.fetchLinksWithExtraCalibrationPointsWithSameRoadwayNumber()
+      linksWithExtraCalPointsOnSameRoadway.exists(_.linkId == linkId1) shouldBe true
+      linksWithExtraCalPointsOnSameRoadway.map(_.linkId) should not contain (linkId2)
+
+      val allLinksWithExtraCalPoints = dao.fetchLinksWithExtraCalibrationPoints()
+      allLinksWithExtraCalPoints.map(_.linkId) should contain allOf (linkId1, linkId2)
+
+      val linksWithExtraCalibrationPointsByRoadPart = dao.fetchLinksWithExtraCalibrationPointsByRoadPart(roadPart)
+      linksWithExtraCalibrationPointsByRoadPart.map(_.linkId) should contain allOf (linkId1, linkId2)
+
+    }
+  }
+
 }
