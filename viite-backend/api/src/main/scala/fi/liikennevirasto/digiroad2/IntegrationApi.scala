@@ -73,7 +73,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
 
           try {
             val knownAddressLinks = roadAddressService.getAllByMunicipality(municipalityCode, searchDate)
-              .filter(ral => ral.roadNumber > 0)
+              .filter(ral => ral.roadPart.roadNumber > 0)
             roadAddressLinksToApi(knownAddressLinks)
           } catch {
             case e: Exception =>
@@ -134,7 +134,7 @@ println("Threading print test: Now in avoidRestrictions")
         val municipalityCode = municipality.toInt // may throw java.lang.NumberFormatException
         val searchDate = dateParameterOptionGetValidOrThrow("situationDate", Some(params))
         val knownAddressLinks = roadAddressService.getAllByMunicipality(municipalityCode, searchDate)
-          .filter(ral => ral.roadNumber > 0)
+          .filter(ral => ral.roadPart.roadNumber > 0)
         roadAddressLinksToApi(knownAddressLinks)
 //logger.info(s"GET request for ${request.getRequestURI}?${request.getQueryString} --FINISHED--") // Information logged from ApiUtils, distinct Future thread. Cannot use here; 'request' not available in the Future thread.
 
@@ -196,7 +196,7 @@ println("Threading print test: Now in avoidRestrictions")
   private def currentRoadNetworkSummaryToAPI(roadNetworkSummary: Seq[RoadwayNetworkSummaryRow]): List[Map[String, Any]] = {
     logger.info("Summary: fetchCurrentRoadNetworkSummary")
 
-    val roadnumberMap: Map[Int, Seq[RoadwayNetworkSummaryRow]] = roadNetworkSummary.groupBy(_.roadNumber)
+    val roadnumberMap: Map[Long, Seq[RoadwayNetworkSummaryRow]] = roadNetworkSummary.groupBy(_.roadPart.roadNumber)
 
     roadnumberMap.toList.sortBy(_._1).map { // foreach roadnumber, handle the sequence of rows
       case(key_RoadNumber,uniqueRoadnumberMap) =>
@@ -204,7 +204,7 @@ println("Threading print test: Now in avoidRestrictions")
           "roadnumber" -> key_RoadNumber,
           "roadname" -> uniqueRoadnumberMap.head.roadName, // each row in the road number seq has the same roadName; take any (here: first)
           "roadparts" ->
-            parseRoadpartsForSummary( uniqueRoadnumberMap.groupBy(_.roadPartNumber) )
+            parseRoadpartsForSummary( uniqueRoadnumberMap.groupBy(_.roadPart.partNumber) )
         )
     }
   }
@@ -217,12 +217,12 @@ println("Threading print test: Now in avoidRestrictions")
     * @return List of <i>road part + administrative group</i> defined items containing the valid network addresses of that
     *         part of the road network.
     */
-  private def parseRoadpartsForSummary(uniqueRoadnumberMap: Map[Int, Seq[RoadwayNetworkSummaryRow]]): List[Map[String, Any]] = {
-    val roadPARTnumberMap: Map[Int, Seq[RoadwayNetworkSummaryRow]] = uniqueRoadnumberMap
+  private def parseRoadpartsForSummary(uniqueRoadnumberMap: Map[Long, Seq[RoadwayNetworkSummaryRow]]): List[Map[String, Any]] = {
+    val roadPARTnumberMap: Map[Long, Seq[RoadwayNetworkSummaryRow]] = uniqueRoadnumberMap
     roadPARTnumberMap.toList.sortBy(_._1).flatMap { // foreach roadpartnumber, handle the sequence of rows
       case(key_RoadPARTNumber,uniqueRoadPARTMap) => {
 
-        val admClassWithinRoadPARTMap: Map[Int, Seq[RoadwayNetworkSummaryRow]] = uniqueRoadPARTMap.groupBy(_.administrativeClass)
+        val admClassWithinRoadPARTMap: Map[Long, Seq[RoadwayNetworkSummaryRow]] = uniqueRoadPARTMap.groupBy(_.administrativeClass)
         admClassWithinRoadPARTMap.toList.sortBy(_._1).map {
           case(_/*key_AdmClassWithinRoadPART*/,uniqueAdmClassWithinRoadPARTMap) =>
             Map(
@@ -316,8 +316,8 @@ println("Threading print test: Now in avoidRestrictions")
         roadways.map(r => Map(
           "id" -> r.id,
           "roadwayNumber" -> r.roadwayNumber,
-          "roadNumber" -> r.roadNumber,
-          "roadPartNumber" -> r.roadPartNumber,
+          "roadNumber" -> r.roadPart.roadNumber,
+          "roadPartNumber" -> r.roadPart.partNumber,
           "track" -> r.track.value,
           "startAddrMValue" -> r.startAddrMValue,
           "endAddrMValue" -> r.endAddrMValue,
@@ -450,8 +450,8 @@ println("Threading print test: Now in avoidRestrictions")
       val mappedJunctions = n.junctionsWithCoordinates.map { j =>
         val mappedCrossingRoads = j.crossingRoads.map { cr =>
           ListMap(
-            "roadNumber" -> cr.roadNumber,
-            "roadPartNumber" -> cr.roadPartNumber,
+            "roadNumber" -> cr.roadPart.roadNumber,
+            "roadPartNumber" -> cr.roadPart.partNumber,
             "track" -> cr.track,
             "addrM" -> cr.addrM,
             "beforeAfter" -> beforeAfterToLetter(cr.beforeAfter)
@@ -642,14 +642,20 @@ println("Threading print test: Now in avoidRestrictions")
    * @throws Throwable if it is considered a fatal one. */
   def handleCommonIntegrationAPIExceptions(t: Throwable, operationId: Option[String]): Unit = {
     val requestLogString = s"GET request for ${request.getRequestURI}?${request.getQueryString} (${operationId})"
-    logger.info(s"$requestLogString --ENDED in ${t.getClass}--")
+    logger.info(s"$requestLogString --ENDED in ${t.getClass}: ${t.getMessage}--")
     t match {
       case ve: ViiteException =>
         BadRequestWithLoggerWarn(s"Check the given parameters. ${ve.getMessage}", "")
       case iae: IllegalArgumentException =>
         BadRequestWithLoggerWarn(s"$ISOdateTimeDescription. Now got '${request.getQueryString}''", iae.getMessage)
-      case psqle: PSQLException => // TODO remove? This applies when biiiig year (e.g. 2000000) given to DateTime parser. But year now restricted to be less than 100 years in checks before giving to dateTime parsing
-        BadRequestWithLoggerWarn(s"Date out of bounds, check the given dates: ${request.getQueryString}.", s"${psqle.getMessage}")
+      case psqle: PSQLException =>
+        Option(request.getQueryString) match {
+          case None =>   // an api call without parameters - that is, the user has no possibilities to change the outcome
+            BadRequestWithLoggerWarn(s"Data integrity error found by ${request.getRequestURI}: ${psqle.getMessage}")
+          case _ =>
+            // TODO remove? This applies when biiiig year (e.g. 2000000) given to DateTime parser. But year now restricted to be less than 100 years in checks before giving to dateTime parsing
+            BadRequestWithLoggerWarn(s"Date out of bounds, check the given dates: ${request.getQueryString}.", s"${psqle.getMessage}")
+        }
       case nf if NonFatal(nf) =>
         val requestString = s"GET request for ${request.getRequestURI}?${request.getQueryString} ($operationId)"
         haltWithHTTP500WithLoggerError(requestString, nf)
@@ -699,8 +705,8 @@ println("Threading print test: Now in avoidRestrictions")
   def nodePointToApi(nodePoint: NodePoint) : Map[String, Any] = {
     Map(
       "before_after" -> nodePoint.beforeAfter.acronym,
-      "road" -> nodePoint.roadNumber,
-      "road_part" -> nodePoint.roadPartNumber,
+      "road" -> nodePoint.roadPart.roadNumber,
+      "road_part" -> nodePoint.roadPart.partNumber,
       "track" -> nodePoint.track.value,
       "distance" -> nodePoint.addrM,
       "start_date" -> (if (nodePoint.startDate.isDefined) nodePoint.startDate.get.toString else null),
@@ -721,8 +727,8 @@ println("Threading print test: Now in avoidRestrictions")
   def junctionPointToApi(junctionPoint: JunctionPoint) : Map[String, Any] = {
     Map(
       "before_after" -> junctionPoint.beforeAfter.acronym,
-      "road" -> junctionPoint.roadNumber,
-      "road_part" -> junctionPoint.roadPartNumber,
+      "road" -> junctionPoint.roadPart.roadNumber,
+      "road_part" -> junctionPoint.roadPart.partNumber,
       "track" -> junctionPoint.track.value,
       "distance" -> junctionPoint.addrM,
       "start_date" -> (if (junctionPoint.startDate.isDefined) junctionPoint.startDate.get.toString else null),
@@ -762,8 +768,8 @@ println("Threading print test: Now in avoidRestrictions")
           "id" -> roadAddressLink.id,
           "link_id" -> roadAddressLink.linkId,
           "link_source" -> roadAddressLink.roadLinkSource.value,
-          "road_number" -> roadAddressLink.roadNumber,
-          "road_part_number" -> roadAddressLink.roadPartNumber,
+          "road_number" -> roadAddressLink.roadPart.roadNumber,
+          "road_part_number" -> roadAddressLink.roadPart.partNumber,
           "track_code" -> roadAddressLink.trackCode,
           "side_code" -> roadAddressLink.sideCode.value,
           "start_addr_m" -> roadAddressLink.startAddressM,

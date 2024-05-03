@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.viite.dao._
 import fi.vaylavirasto.viite.geometry.Point
-import fi.vaylavirasto.viite.model.{LinkGeomSource, NodeType, SideCode}
+import fi.vaylavirasto.viite.model.{LinkGeomSource, NodeType, RoadPart, SideCode}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 import org.joda.time.DateTime
 import org.mockito.Mockito.when
@@ -50,7 +50,7 @@ class APIServiceForNodesAndJunctionsSpec extends FunSuite with Matchers with Bef
         when(mockLinearLocationDAO.fetchCurrentLinearLocations).thenReturn(allLL)
 
         // Dummy roads to me mocked (not important in this test but have to be set)
-        val allCrossingRoads: Seq[RoadwaysForJunction] = Seq(RoadwaysForJunction(1, 1, 1, 0, 1, 3, 1), RoadwaysForJunction(1, 2, 1, 0, 1, 7, 2), RoadwaysForJunction(1, 3, 2, 0, 1, 0, 2))
+        val allCrossingRoads: Seq[RoadwaysForJunction] = Seq(RoadwaysForJunction(1, 1, RoadPart(1, 0), 1, 3, 1), RoadwaysForJunction(1, 2, RoadPart(1, 0), 1, 7, 2), RoadwaysForJunction(1, 3, RoadPart(2, 0), 1, 0, 2))
         when(mockRoadwayDAO.fetchCrossingRoadsInJunction()).thenReturn(allCrossingRoads)
 
         val junctionCoordinate: Option[Point] = Some(Point(101.0, 101.0))

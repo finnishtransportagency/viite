@@ -5,7 +5,7 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.process.strategy.RoadAddressSectionCalculatorContext
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, RoadAddressChangeType, SideCode, Track}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, RoadAddressChangeType, RoadPart, SideCode, Track}
 import org.slf4j.LoggerFactory
 
 object ProjectSectionCalculator {
@@ -43,18 +43,18 @@ object ProjectSectionCalculator {
 
       val allProjectLinks = nonTerminatedLinks.filter(_.status != RoadAddressChangeType.New) ++ terminated
       val group = allProjectLinks.groupBy {
-        pl => (pl.roadAddressRoadNumber.getOrElse(pl.roadNumber), pl.roadAddressRoadPart.getOrElse(pl.roadPartNumber))
+        pl => (pl.roadAddressRoadPart.getOrElse(pl.roadPart))
       }
 
-      group.flatMap { case (part, projectLinks) =>
+      group.flatMap { case (roadPart, projectLinks) =>
         try {
-          calculateSectionAddressValues(part, projectLinks)
+          calculateSectionAddressValues(roadPart, projectLinks)
         } catch {
           case ex @ (_: MissingTrackException | _: MissingRoadwayNumberException) =>
             logger.warn(ex.getMessage)
             terminated
           case ex: InvalidAddressDataException =>
-            logger.info(s"Can't calculate terminated road/road part ${part._1}/${part._2}: " + ex.getMessage)
+            logger.info(s"Can't calculate terminated road part $roadPart: " + ex.getMessage)
             terminated
           case ex: NoSuchElementException =>
             logger.info("Delta terminated calculation failed: " + ex.getMessage, ex)
@@ -73,7 +73,7 @@ object ProjectSectionCalculator {
     }
   }
 
-  private def calculateSectionAddressValues(part: (Long, Long), projectLinks: Seq[ProjectLink]) : Seq[ProjectLink] = {
+  private def calculateSectionAddressValues(part: RoadPart, projectLinks: Seq[ProjectLink]) : Seq[ProjectLink] = {
 
     val left = projectLinks.filter(pl => pl.roadAddressTrack.getOrElse(pl.track) != Track.RightSide).sortBy(_.roadAddressStartAddrM)
     val right = projectLinks.filter(pl => pl.roadAddressTrack.getOrElse(pl.track) != Track.LeftSide).sortBy(_.roadAddressStartAddrM)
@@ -182,7 +182,7 @@ object ProjectSectionCalculator {
 case class RoadwaySection(roadNumber: Long, roadPartNumberStart: Long, roadPartNumberEnd: Long, track: Track, startMAddr: Long, endMAddr: Long, discontinuity: Discontinuity, administrativeClass: AdministrativeClass, ely: Long, reversed: Boolean, roadwayNumber: Long, projectLinks: Seq[ProjectLink]) {
 }
 
-case class TrackSection(roadNumber: Long, roadPartNumber: Long, track: Track,
+case class TrackSection(roadPart: RoadPart, track: Track,
                         geometryLength: Double, links: Seq[ProjectLink]) {
 
   lazy val startGeometry: Point = links.head.sideCode match {
