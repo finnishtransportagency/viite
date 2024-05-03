@@ -3,7 +3,7 @@ package fi.liikennevirasto.viite.dao
 import fi.liikennevirasto.viite.process.{ProjectDeltaCalculator, RoadwaySection}
 import fi.liikennevirasto.viite.process.ProjectDeltaCalculator.{createTwoTrackOldAddressRoadParts, projectLinkDAO}
 import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, RoadAddressChangeType, Track}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, RoadAddressChangeType, RoadPart, Track}
 import fi.vaylavirasto.viite.util.DateTimeFormatters.dateOptTimeFormatter
 import java.sql.{PreparedStatement, Timestamp}
 import org.joda.time.DateTime
@@ -39,10 +39,10 @@ case class RoadwayChangesInfo(roadwayChangeId: Long, startDate: DateTime, accept
                               old_road_number: Long, old_road_part_number: Long, old_TRACK: Long, old_start_addr_m: Long, old_end_addr_m: Long, old_discontinuity: Long, old_administrative_class: Long, old_ely: Long,
                               new_road_number: Long, new_road_part_number: Long, new_TRACK: Long, new_start_addr_m: Long, new_end_addr_m: Long, new_discontinuity: Long, new_administrative_class: Long, new_ely: Long)
 
-case class OldRoadAddress(ely: Long, roadNumber: Option[Long], track: Option[Long], roadPartNumber: Option[Long],
+case class OldRoadAddress(ely: Long, roadPart: Option[RoadPart], track: Option[Long],
                           startAddrM: Option[Long], endAddrM: Option[Long], length: Option[Long], administrativeClass: Long)
 
-case class NewRoadAddress(ely: Long, roadNumber: Long, track: Long, roadPartNumber: Long, startAddrM: Long,
+case class NewRoadAddress(ely: Long, roadPart: RoadPart, track: Long, startAddrM: Long,
                           endAddrM: Long, length: Long, administrativeClass: Long)
 
 case class ChangeInfoForRoadAddressChangesBrowser(startDate: DateTime, changeType: Long, reversed: Long, roadName: Option[String], projectName: String,
@@ -462,8 +462,10 @@ SELECT
       val newLength = r.nextLong()
       val newAdministrativeClass = r.nextLong()
 
-      val oldRoadAddress = OldRoadAddress(oldEly, oldRoadNumber, oldTrack, oldRoadPartNumber, oldStartAddrM, oldEndAddrM, oldLength, oldAdministrativeClass)
-      val newRoadAddress = NewRoadAddress(newEly, newRoadNumber, newTrack, newRoadPartNumber, newStartAddrM, newEndAddrM, newLength, newAdministrativeClass)
+      val oldRoadPart = if(oldRoadNumber.nonEmpty && oldRoadPartNumber.nonEmpty) Some(RoadPart(oldRoadNumber.get, oldRoadPartNumber.get)) else None
+      val newRoadPart = RoadPart(newRoadNumber, newRoadPartNumber)
+      val oldRoadAddress = OldRoadAddress(oldEly, oldRoadPart, oldTrack, oldStartAddrM, oldEndAddrM, oldLength, oldAdministrativeClass)
+      val newRoadAddress = NewRoadAddress(newEly, newRoadPart, newTrack, newStartAddrM, newEndAddrM, newLength, newAdministrativeClass)
 
       ChangeInfoForRoadAddressChangesBrowser(startDate, changeType, reversed, roadName, projectName: String, projectAcceptedDate, oldRoadAddress, newRoadAddress)
     }

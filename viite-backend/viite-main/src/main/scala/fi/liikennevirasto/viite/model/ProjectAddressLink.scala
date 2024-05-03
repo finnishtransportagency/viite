@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite.model
 
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPoint
 import fi.vaylavirasto.viite.geometry.Point
-import fi.vaylavirasto.viite.model.{AdministrativeClass, CalibrationPointType, LifecycleStatus, LinkGeomSource, RoadAddressChangeType, SideCode}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, CalibrationPointType, LifecycleStatus, LinkGeomSource, RoadAddressChangeType, RoadPart, SideCode}
 import org.joda.time.DateTime
 
 trait ProjectAddressLinkLike extends RoadAddressLinkLike {
@@ -19,8 +19,7 @@ trait ProjectAddressLinkLike extends RoadAddressLinkLike {
   def municipalityName: String
   def modifiedAt: Option[String]
   def modifiedBy: Option[String]
-  def roadNumber: Long
-  def roadPartNumber: Long
+  def roadPart: RoadPart
   def trackCode: Long
   def elyCode: Long
   def discontinuity: Long
@@ -38,8 +37,7 @@ trait ProjectAddressLinkLike extends RoadAddressLinkLike {
   def isSplit: Boolean
   def originalGeometry: Option[Seq[Point]]
   def roadwayNumber: Long
-  def roadAddressRoadNumber: Option[Long]
-  def roadAddressRoadPart: Option[Long]
+  def roadAddressRoadPart: Option[RoadPart]
 }
 
 case class ProjectAddressLink(id                    : Long,
@@ -55,8 +53,7 @@ case class ProjectAddressLink(id                    : Long,
                               municipalityName      : String,
                               modifiedAt            : Option[String],
                               modifiedBy            : Option[String],
-                              roadNumber            : Long,
-                              roadPartNumber        : Long,
+                              roadPart              : RoadPart,
                               trackCode             : Long,
                               elyCode               : Long,
                               discontinuity         : Long,
@@ -75,12 +72,11 @@ case class ProjectAddressLink(id                    : Long,
                               originalGeometry      : Option[Seq[Point]] = None,
                               roadwayNumber         : Long = 0,
                               sourceId              : String,
-                              roadAddressRoadNumber : Option[Long] = None,
-                              roadAddressRoadPart   : Option[Long] = None
+                              roadAddressRoadPart   : Option[RoadPart] = None
                              ) extends ProjectAddressLinkLike {
   override def partitioningName: String = {
-    if (roadNumber > 0)
-      s"$roadNumber/$roadPartNumber/$trackCode"
+    if (roadPart.roadNumber > 0) // TODO comparing to 0 obsolete, RoadPart does not allow values <1
+      s"$roadPart/$trackCode"
     else
       ""
   }

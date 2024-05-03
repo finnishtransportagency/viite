@@ -81,7 +81,7 @@ package object viite {
   val ConnectedDiscontinuousMessage = "Jatkuva tielinkki on merkitty epäjatkuvaksi, korjaa jatkuu-koodi."
   val DifferingDiscontinuityCodesForTracks = " Tieosan lopussa on yhteensopimattomat jatkuu-koodit. Tarkista jatkuu-koodit."
   val ElyCodeChangeNotPresent: String = s" Tieosan lopussa ei ole jatkuvuuskoodia " + s""" "${ChangingELYCode.description}" """ + s"(${ChangingELYCode.value})."
-  val HasNotHandledLinksMessage = "%d kpl käsittelemättömiä linkkejä tiellä %d tieosalla %d."
+  val HasNotHandledLinksMessage = "%d kpl käsittelemättömiä linkkejä tieosalla %s."
   val ErrorInValidationOfUnchangedLinksMessage = "Ennallaan toimenpidettä ei voi edeltää muu kuin ennallaan-toimenpide."
   val RampDiscontinuityFoundMessage = "Rampin tieosan sisällä on epäjatkuvuuksia. Tarkista Jatkuu-koodit."
   val DiscontinuityInsideRoadPartMessage = "Epäjatkuvuus (2) voi olla vain tieosan lopussa."
@@ -113,10 +113,10 @@ package object viite {
   val IncorrectOperationTypeOnElyCodeChangeMessage =  s"ELY-koodin muutos ei onnistu, ota yhteyttä pääkäyttäjään."
   val ElyCodeChangeButNoRoadPartChangeMessage = s"ELY-numeromuutos havaittu mutta tieosoitemuutos puuttuu. Tieosanumeron tulee vaihtua ELY-rajalla."
   val ElyCodeChangeButNoElyChangeMessage = s"ELY-numeromuutos havaittu mutta  ${ChangingELYCode.description}(${ChangingELYCode.value}) jatkuvuuskoodi on väärä. ELY:n rajalla jatkuvuuskoodin tulee olla 3."
-  val ElyCodeDiscontinuityChangeButNoElyChangeMessage = s"Tieosan %d lopussa jatkuu-koodiksi määritelty ${ChangingELYCode.description} (${ChangingELYCode.value}), tarkista tieosien %d ja %s ELY-koodit tai korjaa jatkuu-koodia."
+  val ElyCodeDiscontinuityChangeButNoElyChangeMessage = s"Tieosan %s lopussa jatkuu-koodiksi määritelty ${ChangingELYCode.description} (${ChangingELYCode.value}), tarkista tieosien %s ja %s ELY-koodit tai korjaa jatkuu-koodia."
   val ElyCodeChangeButNotOnEndMessage = s"Tieosan keskellä on jatkuu-koodiksi määritelty ${ChangingELYCode.value}, korjaa jatkuu-koodi."
   val UnpairedElyCodeChangeMessage = s"Tieosan lopussa on vain toiselle ajoradalle määritelty jatkuu-koodiksi ${ChangingELYCode.description} (${ChangingELYCode.value}), korjaa jatkuu-koodi."
-  val RoadNotReservedMessage = s"Toimenpidettä ei saa tehdä tieosalle, jota ei ole varattu projektiin. Varaa tie %d osa %d."
+  val RoadNotReservedMessage = s"Toimenpidettä ei saa tehdä tieosalle, jota ei ole varattu projektiin. Varaa tieosa %s."
   //RoadNetworkChecker error messages
   val ErrorOverlappingRoadAddress = "Road address overlaps another one."
   val ErrorInconsistentTopology = "Topology have inconsistent data."
@@ -295,11 +295,11 @@ package object viite {
   }
 
   def isRamp(r: RoadAddressLinkLike): Boolean = {
-    isRamp(r.roadNumber, r.trackCode)
+    isRamp(r.roadPart.roadNumber, r.trackCode)
   }
 
   def isRamp(r: BaseRoadAddress): Boolean = {
-    isRamp(r.roadNumber, r.track.value)
+    isRamp(r.roadPart.roadNumber, r.track.value)
   }
 
   implicit class CaseClassToString(c: AnyRef) {

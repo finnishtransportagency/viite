@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.NewIdValue
 import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
-import fi.vaylavirasto.viite.model.{NodeType, Track}
+import fi.vaylavirasto.viite.model.{NodeType, RoadPart, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase
 import fi.vaylavirasto.viite.util.DateTimeFormatters.dateOptTimeFormatter
 import org.joda.time.DateTime
@@ -17,9 +17,9 @@ case class Junction(id: Long, junctionNumber: Option[Long], nodeNumber: Option[L
 
 case class JunctionInfo(id: Long, junctionNumber: Option[Long], startDate: DateTime, nodeNumber: Long, nodeName: String)
 
-case class JunctionTemplate(id: Long, startDate: DateTime, roadNumber: Long, roadPartNumber: Long, track: Track, addrM: Long, elyCode: Long, coords: Point = Point(0.0, 0.0))
+case class JunctionTemplate(id: Long, startDate: DateTime, roadPart: RoadPart, track: Track, addrM: Long, elyCode: Long, coords: Point = Point(0.0, 0.0))
 
-case class JunctionForRoadAddressBrowser(nodeNumber: Long, nodeCoordinates: Point, nodeName: Option[String], nodeType: NodeType, startDate: DateTime, junctionNumber: Option[Long], roadNumber: Long, track: Long, roadPartNumber: Long, addrM: Long, beforeAfter: Seq[Long])
+case class JunctionForRoadAddressBrowser(nodeNumber: Long, nodeCoordinates: Point, nodeName: Option[String], nodeType: NodeType, startDate: DateTime, junctionNumber: Option[Long], roadPart: RoadPart, track: Long, addrM: Long, beforeAfter: Seq[Long])
 
 case class JunctionWithCoordinateAndCrossingRoads(id: Long, junctionNumber: Option[Long], nodeNumber: Option[Long], startDate: DateTime, endDate: Option[DateTime],
                                                   validFrom: DateTime, validTo: Option[DateTime], createdBy: String, createdTime: Option[DateTime], xCoord: Double, yCoord: Double, crossingRoads: Seq[RoadwaysForJunction])
@@ -56,7 +56,7 @@ class JunctionDAO extends BaseDAO {
       val addrM = r.nextLong()
       val ely = r.nextLong()
 
-      JunctionTemplate(junctionId, startDate, roadNumber, roadPartNumber, Track.apply(trackCode), addrM, ely)
+      JunctionTemplate(junctionId, startDate, RoadPart(roadNumber, roadPartNumber), Track.apply(trackCode), addrM, ely)
     }
   }
 
@@ -94,7 +94,7 @@ class JunctionDAO extends BaseDAO {
       val addrM = r.nextLong()
       val beforeAfter = parseBeforeAfterValue(r.rs.getString("beforeafter"))
 
-      JunctionForRoadAddressBrowser(nodeNumber, Point(coordX, coordY), nodeName, nodeType, startDate, junctionNumber, roadNumber, trackCode, roadPartNumber, addrM, beforeAfter)
+      JunctionForRoadAddressBrowser(nodeNumber, Point(coordX, coordY), nodeName, nodeType, startDate, junctionNumber, RoadPart(roadNumber, roadPartNumber), trackCode, addrM, beforeAfter)
     }
   }
 
@@ -151,7 +151,7 @@ class JunctionDAO extends BaseDAO {
   private def queryListTemplate(query: String): List[JunctionTemplate] = {
     Q.queryNA[JunctionTemplate](query).list.groupBy(_.id).map {
       case (_, list) =>
-        list.minBy(jt => (jt.roadNumber, jt.roadPartNumber, jt.addrM))
+        list.minBy(jt => (jt.roadPart.roadNumber, jt.roadPart.partNumber, jt.addrM))
     }.toList
   }
 
