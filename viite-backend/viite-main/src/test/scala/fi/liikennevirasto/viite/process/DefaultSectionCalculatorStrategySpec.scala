@@ -2830,4 +2830,114 @@ Left     ^  ^   Right
     testNewExistingTwoTrackNew(RoadAddressChangeType.Transfer, SideCode.AgainstDigitizing)
   }
 
+  test("getProjectLinksInSameRoadwayUntilCalibrationPoint When project links are on the same roadway and between calibration points Then all project links should be returned.") {
+    runWithRollback {
+      val geom1 = Seq(Point(0.0, 10.0), Point(0.0, 20.0))
+      val geom2 = Seq(Point(0.0, 20.0), Point(0.0, 30.0))
+      val geom3 = Seq(Point(0.0, 30.0), Point(0.0, 40.0))
+      val geom4 = Seq(Point(0.0, 40.0), Point(0.0, 50.0))
+      val roadPart = RoadPart(9999, 1)
+      val projectId = Sequences.nextViiteProjectId
+      val projectLinks1 = Seq(
+        ProjectLink(Sequences.nextProjectLinkId, roadPart, Track.Combined, Discontinuity.Continuous, 0, 10, 0, 10, None, None, Some("test"), "f7e653d4-a559-49c9-bd9c-383daeb1e654:1", 0.0, 10.0, SideCode.TowardsDigitizing, (RoadAddressCP,NoCP), (RoadAddressCP,NoCP), geom1, projectId, RoadAddressChangeType.Unchanged, AdministrativeClass.Municipality, FrozenLinkInterface, 10.0, Sequences.nextRoadwayId, Sequences.nextLinearLocationId, 14, reversed = false, None, 1652179948783L, 0, Some("roadName"), None, None, None, None),
+        ProjectLink(Sequences.nextProjectLinkId, roadPart, Track.Combined, Discontinuity.Continuous, 10, 20, 10, 20, None, None, Some("test"), "f7e653d4-a559-49c9-bd9c-383daeb1e654:2", 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP,NoCP), (NoCP,NoCP), geom2, projectId, RoadAddressChangeType.Unchanged, AdministrativeClass.Municipality, FrozenLinkInterface, 10.0, Sequences.nextRoadwayId, Sequences.nextLinearLocationId, 14, reversed = false, None, 1652179948783L, 0, Some("roadName"), None, None, None, None),
+        ProjectLink(Sequences.nextProjectLinkId, roadPart, Track.Combined, Discontinuity.Continuous, 20, 30, 20, 30, None, None, Some("test"), "f7e653d4-a559-49c9-bd9c-383daeb1e654:3", 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP,NoCP), (NoCP,NoCP), geom3, projectId, RoadAddressChangeType.Unchanged, AdministrativeClass.Municipality, FrozenLinkInterface, 10.0, Sequences.nextRoadwayId, Sequences.nextLinearLocationId, 14, reversed = false, None, 1652179948783L, 0, Some("roadName"), None, None, None, None),
+        ProjectLink(Sequences.nextProjectLinkId, roadPart, Track.Combined, Discontinuity.EndOfRoad, 30, 40, 30, 40, None, None, Some("test"), "f7e653d4-a559-49c9-bd9c-383daeb1e654:4", 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP,RoadAddressCP), (NoCP,RoadAddressCP), geom4, projectId, RoadAddressChangeType.Unchanged, AdministrativeClass.State, FrozenLinkInterface, 10.0, Sequences.nextRoadwayId, Sequences.nextLinearLocationId, 14, reversed = false, None, 1652179948783L, 0, Some("roadName"), None, None, None, None)
+      )
+
+      val (pls, rest) = defaultSectionCalculatorStrategy.getProjectLinksInSameRoadwayUntilCalibrationPoint(projectLinks1)
+      pls.size should be (4)
+      rest.size should be (0)
+
+    }
+  }
+
+  test("getProjectLinksInSameRoadwayUntilCalibrationPoint When project links are on the same roadway and there is a calibration point in the middle then half of the project links should be returned.") {
+    runWithRollback {
+      val geom1 = Seq(Point(0.0, 10.0), Point(0.0, 20.0))
+      val geom2 = Seq(Point(0.0, 20.0), Point(0.0, 30.0))
+      val geom3 = Seq(Point(0.0, 40.0), Point(0.0, 50.0))
+      val geom4 = Seq(Point(0.0, 50.0), Point(0.0, 60.0))
+      val roadPart = RoadPart(9999, 1)
+      val projectId = Sequences.nextViiteProjectId
+      val projectLinks1 = Seq(
+        ProjectLink(Sequences.nextProjectLinkId, roadPart, Track.Combined, Discontinuity.Continuous, 0, 10, 0, 10, None, None, Some("test"), "f7e653d4-a559-49c9-bd9c-383daeb1e654:1", 0.0, 10.0, SideCode.TowardsDigitizing, (RoadAddressCP, NoCP), (RoadAddressCP, NoCP), geom1, projectId, RoadAddressChangeType.Unchanged, AdministrativeClass.Municipality, FrozenLinkInterface, 10.0, Sequences.nextRoadwayId, Sequences.nextLinearLocationId, 14, reversed = false, None, 1652179948783L, 0, Some("roadName"), None, None, None, None),
+        ProjectLink(Sequences.nextProjectLinkId, roadPart, Track.Combined, Discontinuity.MinorDiscontinuity, 10, 20, 10, 20, None, None, Some("test"), "f7e653d4-a559-49c9-bd9c-383daeb1e654:2", 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, JunctionPointCP), (NoCP, JunctionPointCP), geom2, projectId, RoadAddressChangeType.Unchanged, AdministrativeClass.Municipality, FrozenLinkInterface, 10.0, Sequences.nextRoadwayId, Sequences.nextLinearLocationId, 14, reversed = false, None, 1652179948783L, 0, Some("roadName"), None, None, None, None),
+        ProjectLink(Sequences.nextProjectLinkId, roadPart, Track.Combined, Discontinuity.Continuous, 20, 30, 20, 30, None, None, Some("test"), "f7e653d4-a559-49c9-bd9c-383daeb1e654:3", 0.0, 10.0, SideCode.TowardsDigitizing, (JunctionPointCP, NoCP), (JunctionPointCP, NoCP), geom3, projectId, RoadAddressChangeType.Unchanged, AdministrativeClass.Municipality, FrozenLinkInterface, 10.0, Sequences.nextRoadwayId, Sequences.nextLinearLocationId, 14, reversed = false, None, 1652179948783L, 0, Some("roadName"), None, None, None, None),
+        ProjectLink(Sequences.nextProjectLinkId, roadPart, Track.Combined, Discontinuity.EndOfRoad, 30, 40, 30, 40, None, None, Some("test"), "f7e653d4-a559-49c9-bd9c-383daeb1e654:4", 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, RoadAddressCP), (NoCP, RoadAddressCP), geom4, projectId, RoadAddressChangeType.Unchanged, AdministrativeClass.State, FrozenLinkInterface, 10.0, Sequences.nextRoadwayId, Sequences.nextLinearLocationId, 14, reversed = false, None, 1652179948783L, 0, Some("roadName"), None, None, None, None)
+      )
+
+      val (pls, rest) = defaultSectionCalculatorStrategy.getProjectLinksInSameRoadwayUntilCalibrationPoint(projectLinks1)
+      pls.size should be(2)
+      rest.size should be(2)
+
+    }
+  }
+
+  test("getProjectLinksInSameRoadwayUntilCalibrationPoint When the first project link has a calibration point in start and end Then only the first project link should be returned.") {
+    runWithRollback {
+      val geom1 = Seq(Point(0.0, 10.0), Point(0.0, 20.0))
+      val geom2 = Seq(Point(0.0, 30.0), Point(0.0, 40.0))
+      val geom3 = Seq(Point(0.0, 40.0), Point(0.0, 50.0))
+      val geom4 = Seq(Point(0.0, 50.0), Point(0.0, 60.0))
+      val roadPart = RoadPart(9999, 1)
+      val projectId = Sequences.nextViiteProjectId
+      val projectLinks1 = Seq(
+        ProjectLink(Sequences.nextProjectLinkId, roadPart, Track.Combined, Discontinuity.MinorDiscontinuity, 0, 10, 0, 10, None, None, Some("test"), "f7e653d4-a559-49c9-bd9c-383daeb1e654:1", 0.0, 10.0, SideCode.TowardsDigitizing, (RoadAddressCP, JunctionPointCP), (RoadAddressCP, JunctionPointCP), geom1, projectId, RoadAddressChangeType.Unchanged, AdministrativeClass.Municipality, FrozenLinkInterface, 10.0, Sequences.nextRoadwayId, Sequences.nextLinearLocationId, 14, reversed = false, None, 1652179948783L, 0, Some("roadName"), None, None, None, None),
+        ProjectLink(Sequences.nextProjectLinkId, roadPart, Track.Combined, Discontinuity.Continuous, 10, 20, 10, 20, None, None, Some("test"), "f7e653d4-a559-49c9-bd9c-383daeb1e654:2", 0.0, 10.0, SideCode.TowardsDigitizing, (JunctionPointCP, NoCP), (JunctionPointCP, NoCP), geom2, projectId, RoadAddressChangeType.Unchanged, AdministrativeClass.Municipality, FrozenLinkInterface, 10.0, Sequences.nextRoadwayId, Sequences.nextLinearLocationId, 14, reversed = false, None, 1652179948783L, 0, Some("roadName"), None, None, None, None),
+        ProjectLink(Sequences.nextProjectLinkId, roadPart, Track.Combined, Discontinuity.Continuous, 20, 30, 20, 30, None, None, Some("test"), "f7e653d4-a559-49c9-bd9c-383daeb1e654:3", 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), geom3, projectId, RoadAddressChangeType.Unchanged, AdministrativeClass.Municipality, FrozenLinkInterface, 10.0, Sequences.nextRoadwayId, Sequences.nextLinearLocationId, 14, reversed = false, None, 1652179948783L, 0, Some("roadName"), None, None, None, None),
+        ProjectLink(Sequences.nextProjectLinkId, roadPart, Track.Combined, Discontinuity.EndOfRoad, 30, 40, 30, 40, None, None, Some("test"), "f7e653d4-a559-49c9-bd9c-383daeb1e654:4", 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, RoadAddressCP), (NoCP, RoadAddressCP), geom4, projectId, RoadAddressChangeType.Unchanged, AdministrativeClass.State, FrozenLinkInterface, 10.0, Sequences.nextRoadwayId, Sequences.nextLinearLocationId, 14, reversed = false, None, 1652179948783L, 0, Some("roadName"), None, None, None, None)
+      )
+
+      val (pls, rest) = defaultSectionCalculatorStrategy.getProjectLinksInSameRoadwayUntilCalibrationPoint(projectLinks1)
+      pls.size should be(1)
+      rest.size should be(3)
+
+    }
+  }
+
+  test("getProjectLinksInSameRoadwayUntilCalibrationPoint When the first project link has a calibration point in the end Then only the first project link should be returned.") {
+    runWithRollback {
+      val geom1 = Seq(Point(0.0, 10.0), Point(0.0, 20.0))
+      val geom2 = Seq(Point(0.0, 30.0), Point(0.0, 40.0))
+      val geom3 = Seq(Point(0.0, 40.0), Point(0.0, 50.0))
+      val geom4 = Seq(Point(0.0, 50.0), Point(0.0, 60.0))
+      val roadPart = RoadPart(9999, 1)
+      val projectId = Sequences.nextViiteProjectId
+      val projectLinks1 = Seq(
+        ProjectLink(Sequences.nextProjectLinkId, roadPart, Track.Combined, Discontinuity.Continuous, 0, 10, 0, 10, None, None, Some("test"), "f7e653d4-a559-49c9-bd9c-383daeb1e654:1", 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, JunctionPointCP), (NoCP, NoCP), geom1, projectId, RoadAddressChangeType.Unchanged, AdministrativeClass.Municipality, FrozenLinkInterface, 10.0, Sequences.nextRoadwayId, Sequences.nextLinearLocationId, 14, reversed = false, None, 1652179948783L, 0, Some("roadName"), None, None, None, None),
+        ProjectLink(Sequences.nextProjectLinkId, roadPart, Track.Combined, Discontinuity.Continuous, 10, 20, 10, 20, None, None, Some("test"), "f7e653d4-a559-49c9-bd9c-383daeb1e654:2", 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), geom2, projectId, RoadAddressChangeType.Unchanged, AdministrativeClass.Municipality, FrozenLinkInterface, 10.0, Sequences.nextRoadwayId, Sequences.nextLinearLocationId, 14, reversed = false, None, 1652179948783L, 0, Some("roadName"), None, None, None, None),
+        ProjectLink(Sequences.nextProjectLinkId, roadPart, Track.Combined, Discontinuity.Continuous, 20, 30, 20, 30, None, None, Some("test"), "f7e653d4-a559-49c9-bd9c-383daeb1e654:3", 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, RoadAddressCP), (NoCP, NoCP), geom3, projectId, RoadAddressChangeType.Unchanged, AdministrativeClass.Municipality, FrozenLinkInterface, 10.0, Sequences.nextRoadwayId, Sequences.nextLinearLocationId, 14, reversed = false, None, 1652179948783L, 0, Some("roadName"), None, None, None, None),
+        ProjectLink(Sequences.nextProjectLinkId, roadPart, Track.Combined, Discontinuity.Continuous, 30, 40, 30, 40, None, None, Some("test"), "f7e653d4-a559-49c9-bd9c-383daeb1e654:4", 0.0, 10.0, SideCode.TowardsDigitizing, (RoadAddressCP, RoadAddressCP), (NoCP, NoCP), geom4, projectId, RoadAddressChangeType.Unchanged, AdministrativeClass.State, FrozenLinkInterface, 10.0, Sequences.nextRoadwayId, Sequences.nextLinearLocationId, 14, reversed = false, None, 1652179948783L, 0, Some("roadName"), None, None, None, None)
+      )
+
+      val (pls, rest) = defaultSectionCalculatorStrategy.getProjectLinksInSameRoadwayUntilCalibrationPoint(projectLinks1)
+      pls.size should be(1)
+      rest.size should be(3)
+
+    }
+  }
+
+  test("getProjectLinksInSameRoadwayUntilCalibrationPoint When all the project links are on different roadways and there are no calibration points in the middle Then only the first project link should be returned.") {
+    runWithRollback {
+      val geom1 = Seq(Point(0.0, 10.0), Point(0.0, 20.0))
+      val geom2 = Seq(Point(0.0, 30.0), Point(0.0, 40.0))
+      val geom3 = Seq(Point(0.0, 40.0), Point(0.0, 50.0))
+      val geom4 = Seq(Point(0.0, 50.0), Point(0.0, 60.0))
+      val roadPart = RoadPart(9999, 1)
+      val projectId = Sequences.nextViiteProjectId
+      val projectLinks = Seq(
+        ProjectLink(Sequences.nextProjectLinkId, roadPart, Track.Combined, Discontinuity.Continuous, 0, 10, 0, 10, None, None, Some("test"), "f7e653d4-a559-49c9-bd9c-383daeb1e654:1", 0.0, 10.0, SideCode.TowardsDigitizing, (RoadAddressCP, NoCP), (RoadAddressCP, NoCP), geom1, projectId, RoadAddressChangeType.Unchanged, AdministrativeClass.Municipality, FrozenLinkInterface, 10.0, Sequences.nextRoadwayId, Sequences.nextLinearLocationId, 14, reversed = false, None, 1652179948783L, Sequences.nextRoadwayNumber, Some("roadName"), None, None, None, None),
+        ProjectLink(Sequences.nextProjectLinkId, roadPart, Track.Combined, Discontinuity.Continuous, 10, 20, 10, 20, None, None, Some("test"), "f7e653d4-a559-49c9-bd9c-383daeb1e654:2", 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), geom2, projectId, RoadAddressChangeType.Unchanged, AdministrativeClass.Municipality, FrozenLinkInterface, 10.0, Sequences.nextRoadwayId, Sequences.nextLinearLocationId, 14, reversed = false, None, 1652179948783L, Sequences.nextRoadwayNumber, Some("roadName"), None, None, None, None),
+        ProjectLink(Sequences.nextProjectLinkId, roadPart, Track.Combined, Discontinuity.Continuous, 20, 30, 20, 30, None, None, Some("test"), "f7e653d4-a559-49c9-bd9c-383daeb1e654:3", 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), geom3, projectId, RoadAddressChangeType.Unchanged, AdministrativeClass.Municipality, FrozenLinkInterface, 10.0, Sequences.nextRoadwayId, Sequences.nextLinearLocationId, 14, reversed = false, None, 1652179948783L, Sequences.nextRoadwayNumber, Some("roadName"), None, None, None, None),
+        ProjectLink(Sequences.nextProjectLinkId, roadPart, Track.Combined, Discontinuity.Continuous, 30, 40, 30, 40, None, None, Some("test"), "f7e653d4-a559-49c9-bd9c-383daeb1e654:4", 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, RoadAddressCP), (NoCP, RoadAddressCP), geom4, projectId, RoadAddressChangeType.Unchanged, AdministrativeClass.State, FrozenLinkInterface, 10.0, Sequences.nextRoadwayId, Sequences.nextLinearLocationId, 14, reversed = false, None, 1652179948783L, Sequences.nextRoadwayNumber, Some("roadName"), None, None, None, None)
+      )
+
+      val (pls, rest) = defaultSectionCalculatorStrategy.getProjectLinksInSameRoadwayUntilCalibrationPoint(projectLinks)
+      pls.size should be(1)
+      rest.size should be(3)
+
+    }
+  }
+
 }
