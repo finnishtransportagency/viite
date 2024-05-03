@@ -31,20 +31,22 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
 
   override def assignMValues(newProjectLinks: Seq[ProjectLink], oldProjectLinks: Seq[ProjectLink], userCalibrationPoints: Seq[UserDefinedCalibrationPoint]): Seq[ProjectLink] = {
 
-    val groupedProjectLinks = newProjectLinks.groupBy(record => (record.roadPart))
-    val groupedOldLinks = oldProjectLinks.groupBy(record => (record.roadPart))
-    val group = (groupedProjectLinks.keySet ++ groupedOldLinks.keySet).map(k =>
-      k -> (groupedProjectLinks.getOrElse(k, Seq()), groupedOldLinks.getOrElse(k, Seq())))
-    group.flatMap { case (part, (projectLinks, oldLinks)) =>
+    val groupedNewLinks = newProjectLinks.groupBy(projectLink => (projectLink.roadPart))
+    val groupedOldLinks = oldProjectLinks.groupBy(projectLink => (projectLink.roadPart))
+    val group = (groupedNewLinks.keySet ++ groupedOldLinks.keySet).map(k =>
+      k -> (groupedNewLinks.getOrElse(k, Seq()), groupedOldLinks.getOrElse(k, Seq())))
+
+    group.flatMap { case (part, (newLinks, oldLinks)) =>
       try {
-        val oldRoadLinks = if (projectLinks.nonEmpty) {
-          projectLinkDAO.fetchByProjectRoad(part.roadNumber, projectLinks.head.projectId).filterNot(l => l.roadPart.partNumber == part.partNumber)
+        val plsOnSameRoadDifferentPart = if (newLinks.nonEmpty) {
+          projectLinkDAO.fetchByProjectRoad(part.roadNumber, newLinks.head.projectId).filterNot(l => l.roadPart.partNumber == part.partNumber)
+
         } else {
           Seq.empty[ProjectLink]
         }
-        val currStartPoints = findStartingPoints(projectLinks, oldLinks, oldRoadLinks, userCalibrationPoints)
+        val currStartPoints = findStartingPoints(newLinks, oldLinks, plsOnSameRoadDifferentPart, userCalibrationPoints)
 
-        val (right, left) = TrackSectionOrder.orderProjectLinksTopologyByGeometry(currStartPoints, projectLinks ++ oldLinks)
+        val (right, left) = TrackSectionOrder.orderProjectLinksTopologyByGeometry(currStartPoints, newLinks ++ oldLinks)
         val ordSections = TrackSectionOrder.createCombinedSections(right, left)
 
         // TODO: userCalibrationPoints to Long -> Seq[UserDefinedCalibrationPoint] in method params
@@ -503,9 +505,10 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     */
   def findStartingPoints(newLinks: Seq[ProjectLink], oldLinks: Seq[ProjectLink], otherRoadPartLinks: Seq[ProjectLink],
                          calibrationPoints: Seq[UserDefinedCalibrationPoint]): (Point, Point) = {
+
     val (rightStartPoint, pl) = findStartingPoint(newLinks.filter(_.track != Track.LeftSide), oldLinks.filter(_.track != Track.LeftSide), otherRoadPartLinks, calibrationPoints, (newLinks ++ oldLinks).filter(_.track == Track.LeftSide))
 
-    if ((oldLinks ++ newLinks).exists(l => GeometryUtils.areAdjacent(l.geometry, rightStartPoint) && l.track == Track.Combined)) {
+    if ((oldLinks ++ newLinks).exists(pl => GeometryUtils.areAdjacent(pl.geometry, rightStartPoint) && pl.track == Track.Combined)) {
       (rightStartPoint, rightStartPoint)
     } else {
       // Get left track non-connected points and find the closest to right track starting point
@@ -536,7 +539,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         None
       }
 
-      (rightStartPoint,
+      val leftStartPoint = {
         if (endPointsWithValues.size == 1) {
           val endLinkWithValues = endPointsWithValues.head._2
           val (currentEndPoint, otherEndPoint) = chainEndPoints.partition(_._2.id == endPointsWithValues.head._2.id)
@@ -574,17 +577,12 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
               candidateEndPoint
             }
           } else {
-            val startPoint1 = chainEndPoints.minBy(p => p._1.distance2DTo(rightStartPoint))._1
-            val startPoint2 = chainEndPoints.maxBy(p => p._1.distance2DTo(rightStartPoint))._1
-            val connectingPoint = otherRoadPartLinks.find(l => GeometryUtils.areAdjacent(l.getLastPoint, startPoint1) || GeometryUtils.areAdjacent(l.getFirstPoint, startPoint2))
-            if (otherRoadPartLinks.isEmpty || connectingPoint.nonEmpty) {
-              startPoint1
-            } else {
-              startPoint2
-            }
+            // find the left start point normally
+            findStartingPoint(newLinks.filter(_.track != Track.RightSide), oldLinks.filter(_.track != Track.RightSide), otherRoadPartLinks, calibrationPoints, (newLinks ++ oldLinks).filter(_.track == Track.RightSide))._1
           }
         }
-      )
+      }
+      (rightStartPoint, leftStartPoint)
     }
   }
 
