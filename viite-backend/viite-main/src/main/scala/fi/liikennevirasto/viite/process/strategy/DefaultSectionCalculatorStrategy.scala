@@ -179,7 +179,16 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       (if (rest.isEmpty) Seq() else assignRoadwayNumbersInContinuousSection(rest, nextRoadwayNumber))
   }
 
-  private def continuousRoadwaySection(projectLinks: Seq[ProjectLink], givenRoadwayNumber: Long): (Seq[ProjectLink], Seq[ProjectLink]) = {
+  /**
+   * Retrieves the continuous roadway section from the given sequence of project links starting from the specified roadway number.
+   *
+   * @param projectLinks        The sequence of project links representing the roadway section.
+   * @param givenRoadwayNumber  The starting roadway number.
+   * @return                    A tuple containing two sequences of project links:
+   *                            - The continuous roadway section.
+   *                            - The remaining project links after the continuous section.
+   */
+  private def getContinuousRoadwaySection(projectLinks: Seq[ProjectLink], givenRoadwayNumber: Long): (Seq[ProjectLink], Seq[ProjectLink]) = {
     def pickGeometricallyConnectedSection(startLink: ProjectLink, allLinks: Seq[ProjectLink]): List[ProjectLink] = {
       def getSection(currentLink: ProjectLink, section: List[ProjectLink]): List[ProjectLink] = {
         val currentIndex = allLinks.indexOf(currentLink)
@@ -421,7 +430,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       val ((firstRight, restRight), (firstLeft, restLeft)): ((Seq[ProjectLink], Seq[ProjectLink]), (Seq[ProjectLink], Seq[ProjectLink])) = {
         val newRoadwayNumber1 = Sequences.nextRoadwayNumber
         val newRoadwayNumber2 = if (rightLinks.head.track == Track.Combined || leftLinks.head.track == Track.Combined) newRoadwayNumber1 else Sequences.nextRoadwayNumber
-        val continuousRoadwaySections = (continuousRoadwaySection(rightLinks, newRoadwayNumber1), continuousRoadwaySection(leftLinks, newRoadwayNumber2))
+        val continuousRoadwaySections = (getContinuousRoadwaySection(rightLinks, newRoadwayNumber1), getContinuousRoadwaySection(leftLinks, newRoadwayNumber2))
         val rightSections = FirstRestSections.apply _ tupled continuousRoadwaySections._1
         val leftSections = FirstRestSections.apply _ tupled continuousRoadwaySections._2
 
