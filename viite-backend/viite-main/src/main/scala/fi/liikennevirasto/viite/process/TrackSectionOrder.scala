@@ -347,7 +347,7 @@ object TrackSectionOrder {
         /* Sets reverse flag if sidecode change occurs with road/roadpart change. */
 
         def setReverseFlag() = {
-          if (sideCode != nextLink.sideCode && (nextLink.roadPart.roadNumber != nextLink..originalRoadPart.roadNumber || nextLink.roadPart.partNumber != nextLink.originalRoadPart.partNumber))
+          if (sideCode != nextLink.sideCode && (nextLink.roadPart.roadNumber != nextLink.originalRoadPart.roadNumber || nextLink.roadPart.partNumber != nextLink.originalRoadPart.partNumber))
             !nextLink.reversed
           else
             nextLink.reversed
