@@ -55,7 +55,7 @@ class RoundaboutSectionCalculatorStrategy extends RoadAddressSectionCalculatorSt
       val factors = ProjectSectionMValueCalculator.calculateAddressingFactors(withCalibration)
       val coEff = (withCalibration.map(_.endAddrMValue).max - factors.unChangedLength - factors.transferLength) / factors.newLength
       val calMap = userCalibrationPoints.map(c => c.projectLinkId -> c).toMap
-      ProjectSectionMValueCalculator.assignLinkValues(withCalibration, calMap, None, None, coEff)
+      ProjectSectionMValueCalculator.assignLinkValues(withCalibration, calMap, None, coEff)
     } else {
       mValuedWithRwns
     }
