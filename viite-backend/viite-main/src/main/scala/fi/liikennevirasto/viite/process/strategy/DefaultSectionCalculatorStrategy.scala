@@ -31,10 +31,15 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
 
   override def assignAddrMValues(newProjectLinks: Seq[ProjectLink], oldProjectLinks: Seq[ProjectLink], userCalibrationPoints: Seq[UserDefinedCalibrationPoint]): Seq[ProjectLink] = {
 
+    // Group new and old project links by road part
     val groupedProjectLinks = newProjectLinks.groupBy(record => (record.roadPart))
     val groupedOldLinks = oldProjectLinks.groupBy(record => (record.roadPart))
+
+    // Combine grouped project links
     val group = (groupedProjectLinks.keySet ++ groupedOldLinks.keySet).map(k =>
       k -> (groupedProjectLinks.getOrElse(k, Seq()), groupedOldLinks.getOrElse(k, Seq())))
+
+    // Process each road part separately
     group.flatMap { case (part, (projectLinks, oldLinks)) =>
       try {
         val oldRoadLinks = if (projectLinks.nonEmpty) {
@@ -42,8 +47,10 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         } else {
           Seq.empty[ProjectLink]
         }
+        // Find starting points for project links
         val currStartPoints = findStartingPoints(projectLinks, oldLinks, oldRoadLinks, userCalibrationPoints)
 
+        // Order project links by topology
         val (right, left) = TrackSectionOrder.orderProjectLinksTopologyByGeometry(currStartPoints, projectLinks ++ oldLinks)
         val ordSections = TrackSectionOrder.createCombinedSections(right, left)
 
@@ -333,12 +340,12 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
   }
 
   /**
-    * Check validation errors for ProjectLinks.
-    * Used here in case of calculation error to check if user has entered incompatible values.
-    *
-    * @param projectlinks ProjectLinks from calculation
-    * @return sequence of ValidationErrorDetails if any
-    */
+   * Check validation errors for ProjectLinks.
+   * Used here in case of calculation error to check if user has entered incompatible values.
+   *
+   * @param projectlinks ProjectLinks from calculation
+   * @return sequence of ValidationErrorDetails if any
+   */
   def checkForValidationErrors(projectlinks: Seq[ProjectLink]): Seq[projectValidator.ValidationErrorDetails] = {
     val validationErrors = projectValidator.projectLinksNormalPriorityValidation(projectDAO.fetchById(projectlinks.head.projectId).get, projectlinks)
     if (validationErrors.nonEmpty)

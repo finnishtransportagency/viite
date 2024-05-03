@@ -107,12 +107,13 @@ object TrackSectionOrder {
   }
 
   /**
-    * Returns a mapping of the startPoint or endPoint and all adjacent BaseRoadAddresses to said point
-    *
-    * @param seq BaseRoadAddresses
-    * @tparam T Type
-    * @return
-    */
+   * Finds once-connected links in a sequence of BaseRoadAddress instances.
+   * Once-connected links are those that are connected to only one other link in the sequence.
+   *
+   * @param seq An iterable collection of BaseRoadAddress instances representing road segments.
+   * @return A map where each Point represents the start or end point of a road segment,
+   *         mapped to the corresponding BaseRoadAddress instance that it is connected to.
+   */
   def findOnceConnectedLinks[T <: BaseRoadAddress](seq: Iterable[T]): Map[Point, T] = {
 
     // Creates a mapping of (startPoint -> BaseRoadAddress, endPoint -> BaseRoadAddress
@@ -350,6 +351,17 @@ object TrackSectionOrder {
     (recursiveFindAndExtend(startingPoints._1, Seq(), track01, track02), recursiveFindAndExtend(startingPoints._2, Seq(), track02, track01))
   }
 
+  /**
+   * Creates combined sections from project links on the right and left tracks.
+   *
+   * This function groups project links into track sections and combines corresponding sections from
+   * the right and left tracks into combined sections.
+   *
+   * @param rightLinks Sequence of project links on the right track.
+   * @param leftLinks  Sequence of project links on the left track.
+   * @return Sequence of combined sections derived from the input project links.
+   * @throws InvalidAddressDataException if the input data is invalid or missing.
+   */
   def createCombinedSections(rightLinks: Seq[ProjectLink], leftLinks: Seq[ProjectLink]): Seq[CombinedSection] = {
     def fromProjectLinks(s: Seq[ProjectLink]): TrackSection = {
       val pl = s.head
@@ -374,6 +386,18 @@ object TrackSectionOrder {
     createCombinedSectionss(rightSections, leftSections)
   }
 
+  /**
+   * Creates combined sections from sequences of track sections on the right and left tracks.
+   *
+   * This function combines corresponding track sections from the right and left tracks into
+   * combined sections, considering their geometries and lengths.
+   *
+   * @param rightSections Sequence of track sections on the right track.
+   * @param leftSections  Sequence of track sections on the left track.
+   * @return Sequence of combined sections derived from the input track sections.
+   * @throws MissingTrackException if the left track is missing starting project links for a combined section.
+   * @throws RoadAddressException  if there is an incorrect track code encountered.
+   */
   def createCombinedSectionss(rightSections: Seq[TrackSection], leftSections: Seq[TrackSection]): Seq[CombinedSection] = {
 
     def combineSections(rightSection: Seq[TrackSection], leftSection: Seq[TrackSection]): Seq[CombinedSection] = {
@@ -437,24 +461,24 @@ object TrackSectionOrder {
           val projectLinks = initialProjectLinks.map(p => p.copy(calibrationPointTypes =
                                                     (if (p.startCalibrationPointType != RoadAddressCP) p.startCalibrationPointType else CalibrationPointType.NoCP,
                                                       if (p.endCalibrationPointType != RoadAddressCP) p.endCalibrationPointType else CalibrationPointType.NoCP)))
-          val raCPs = Seq(setCalibrationPoint(projectLinks.head, userCalibrationPoint.get(projectLinks.head.id),
+          val projectLinksWithRoadAddressCPs = Seq(setCalibrationPoint(projectLinks.head, userCalibrationPoint.get(projectLinks.head.id),
             hasStartCP = true, hasEndCP = projectLinks.tail.head.calibrationPoints._1.isDefined,
             RoadAddressCP, projectLinks.tail.head.startCalibrationPointType)) ++ projectLinks.init.tail ++ Seq(setCalibrationPoint(projectLinks.last,
             userCalibrationPoint.get(projectLinks.last.id),
             projectLinks.init.last.calibrationPoints._2.isDefined, hasEndCP = true, projectLinks.init.last.endCalibrationPointType, RoadAddressCP))
 
-          val linksWithCPs: Seq[ProjectLink] = raCPs.foldLeft(Seq.empty[ProjectLink]) { (list, i) =>
+          val linksWithCPs: Seq[ProjectLink] = projectLinksWithRoadAddressCPs.foldLeft(Seq.empty[ProjectLink]) { (list, pl) =>
             if (list.isEmpty) {
-              Seq(i)
+              Seq(pl)
             } else {
-              if (list.last.administrativeClass != i.administrativeClass || list.last.track != i.track || list.last.roadPart != i.roadPart ||
+              if (list.last.administrativeClass != pl.administrativeClass || list.last.track != pl.track || list.last.roadPart != pl.roadPart ||
                 list.last.discontinuity == Discontinuity.Discontinuous ||
                 list.last.discontinuity == Discontinuity.MinorDiscontinuity) {
                 val last = list.last
                 list.dropRight(1) ++ Seq(setCalibrationPoint(last, None, last.calibrationPoints._1.nonEmpty, hasEndCP = true, last.startCalibrationPointType, RoadAddressCP),
-                  setCalibrationPoint(i, None, hasStartCP = true, hasEndCP = i.calibrationPoints._2.nonEmpty, RoadAddressCP, i.endCalibrationPointType))
+                  setCalibrationPoint(pl, None, hasStartCP = true, hasEndCP = pl.calibrationPoints._2.nonEmpty, RoadAddressCP, pl.endCalibrationPointType))
               } else {
-                list :+ i
+                list :+ pl
               }
             }
           }
