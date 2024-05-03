@@ -465,9 +465,12 @@ object TwoTrackRoadUtils {
           val otherSideLink = hasOtherSideLink.head
           val section = findConnectedSection(otherSideLink, projectLinks.filter(pl => pl.originalEndAddrMValue <= otherSideLink.originalEndAddrMValue && pl.originalEndAddrMValue != 0 && pl.originalTrack == otherSideLink.originalTrack))
           val endPoints = TrackSectionOrder.findChainEndpoints(section)
-            val (plPart1, plPart2) =
-              splitAt(otherSideLink, splitAddress, endPoints)
+          if (otherSideLink.startAddrMValue + (splitAddress - otherSideLink.originalStartAddrMValue) == otherSideLink.endAddrMValue)
+            None
+          else {
+            val (plPart1, plPart2) = splitAt(otherSideLink, splitAddress, endPoints)
             Some(plPart1, plPart2)
+          }
         } else None
     }
 

@@ -22,6 +22,7 @@ import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
 import java.sql.SQLException
+import scala.collection.mutable.ListBuffer
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
@@ -1622,6 +1623,16 @@ class ProjectService(
     projectLinkDAO.removeProjectLinksById(connectedGroupsIds.diff(connectedIds))
     unConnnected ++ connected
   }
+  def adjustCalibrationPoints(projectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
+    projectLinks.map(pl => {
+      if (pl.discontinuity != Discontinuity.Continuous)
+        pl.copy(calibrationPointTypes = (pl.calibrationPointTypes._1, CalibrationPointType.RoadAddressCP))
+      else if (projectLinks.exists(pl2 => pl2.originalStartAddrMValue == pl.originalEndAddrMValue && pl.track != pl2.track))
+        pl.copy(calibrationPointTypes = (pl.calibrationPointTypes._1, CalibrationPointType.RoadAddressCP))
+      else
+        pl
+    })
+  }
 
   def recalculateProjectLinks(projectId: Long, userName: String, roadParts: Set[RoadPart] = Set(), newTrack: Option[Track] = None, newDiscontinuity: Option[Discontinuity] = None, completelyNewLinkIds: Seq[Long] = Seq()): Unit = {
 
@@ -1631,15 +1642,20 @@ class ProjectService(
       val projectLinks = projectLinkDAO.fetchProjectLinks(projectId)
       val (terminated, others) = projectLinks.partition(_.status == RoadAddressChangeType.Termination)
 
+      var terminatedProjectLinks = new ListBuffer[ProjectLink]()
       val recalculated = others.groupBy(pl => {
         (pl.roadPart)
       }).flatMap {
         grp =>
           val fusedLinks = getFusedProjectLinks(grp._2)
           val calibrationPoints = ProjectCalibrationPointDAO.fetchByRoadPart(projectId, grp._1)
-          val calculatedLinks   = ProjectSectionCalculator.assignMValues(fusedLinks, calibrationPoints).sortBy(_.endAddrMValue)
+          val projectLinksWithAdjustedCalibrationPoints = adjustCalibrationPoints(fusedLinks)
+          val adjustedLinks = ProjectSectionCalculator.assignAddrMValues(projectLinksWithAdjustedCalibrationPoints, calibrationPoints)
+          val (adjustedNonTerminated, adjustedTerminated) = adjustedLinks.partition(pl => pl.status != RoadAddressChangeType.Termination)
+          terminatedProjectLinks ++= adjustedTerminated
+          val calculatedLinks = adjustedNonTerminated.sortBy(_.endAddrMValue)
           if (!calculatedLinks.exists(_.isNotCalculated) && newDiscontinuity.isDefined && newTrack.isDefined &&
-              roadParts.contains((calculatedLinks.head.roadPart))) {
+            roadParts.contains((calculatedLinks.head.roadPart))) {
             if (completelyNewLinkIds.nonEmpty) {
               val (completelyNew, others) = calculatedLinks.partition(cl => {
                 completelyNewLinkIds.contains(cl.id) || cl.id == NewIdValue
@@ -1662,8 +1678,8 @@ class ProjectService(
             calculatedLinks
       }.toSeq
 
-      val terminatedProjectLinksWithAssignedRoadwayNumbers = assignRoadwayNumbersToTerminatedProjectLinks(projectLinks)
-      val originalAddresses = roadAddressService.getRoadAddressesByRoadwayIds((recalculated ++ terminated).map(_.roadwayId))
+      val terminatedProjectLinksWithAssignedRoadwayNumbers = assignRoadwayNumbersToTerminatedProjectLinks(others ++ terminatedProjectLinks)
+      val originalAddresses = roadAddressService.getRoadAddressesByRoadwayIds((recalculated ++ terminatedProjectLinks).map(_.roadwayId))
       projectLinkDAO.updateProjectLinks(recalculated ++ terminatedProjectLinksWithAssignedRoadwayNumbers, userName, originalAddresses)
       val projectLinkIdsToDB = recalculated.map(_.id).diff(projectLinks.map(_.id))
       projectLinkDAO.create(recalculated.filter(pl => projectLinkIdsToDB.contains(pl.id)))
