@@ -27,6 +27,8 @@
                         showMissingCalibrationPoints(result.missingCalibrationPointsFromStart.concat(result.missingCalibrationPointsFromEnd));
                     if (result.missingCalibrationPointsFromJunctions.length > 0)
                         showMissingCalibrationPointsForJunctions(result.missingCalibrationPointsFromJunctions);
+                    if (result.linksWithExtraCalibrationPointsOnSameRoadway.length > 0)
+                        showLinksWithExtraCalibrationPointsOnSameRoadway(result.linksWithExtraCalibrationPointsOnSameRoadway);
                     if (result.linksWithExtraCalibrationPoints.length > 0)
                         showLinksWithExtraCalibrationPoints(result.linksWithExtraCalibrationPoints);
                     if (result.missingRoadwayPointsFromStart.length > 0 || result.missingRoadwayPointsFromEnd.length > 0)
@@ -104,6 +106,33 @@
                                     <td>${cp.junctionPointId}</td>
                                 </tr>`);
                 table.append(string);
+            });
+            contentWrapper.append(table);
+        };
+
+        const showLinksWithExtraCalibrationPointsOnSameRoadway = function (linksWithExtraCalibrationPointsOnSameRoadway) {
+            const contentWrapper = $('#roadNetworkErrorWindowContent');
+            contentWrapper.append('<h3>Linkit joilla on ylimääräisiä kalibrointipisteitä samalla roadwayllä (estää kartan päivittymisen)</h3>');
+            const table = $('<table class="viite-table"> ' +
+                '<thead> ' +
+                '<th>Linkin Id</th>' +
+                '<th>Tie</th>' +
+                '<th>Osa</th>' +
+                '<th>Kpl/Alku</th>' +
+                '<th>Kpl/Loppu</th>' +
+                '<th>Kalibrointipisteiden Id:t</th>'+
+                '</thead>' +
+                '<tbody></tbody></table>');
+            linksWithExtraCalibrationPointsOnSameRoadway.forEach((link) => {
+                const tableRow = $(`<tr>
+                            <td>${link.linkId}</td>
+                            <td>${link.roadNumber}</td>
+                            <td>${link.roadPartNumber}</td>
+                            <td>${link.startCount}</td>
+                            <td>${link.endCount}</td>
+                            <td>${link.calibrationPoints}</td>
+                        </tr>`);
+                table.append(tableRow);
             });
             contentWrapper.append(table);
         };

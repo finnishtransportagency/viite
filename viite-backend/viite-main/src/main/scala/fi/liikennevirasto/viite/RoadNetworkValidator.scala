@@ -33,6 +33,12 @@ class RoadNetworkValidator {
     }
   }
 
+  def getLinksWithExtraCalibrationPointsOnSameRoadway: Seq[LinksWithExtraCalibrationPoints] = {
+    withDynSession {
+      roadNetworkDAO.fetchLinksWithExtraCalibrationPointsWithSameRoadwayNumber()
+    }
+  }
+
   def getMissingRoadwayPointsFromTheStart: Seq[MissingRoadwayPoint] = {
     withDynSession {
       roadNetworkDAO.fetchMissingRoadwayPointsFromStart()
@@ -78,7 +84,7 @@ class RoadNetworkValidator {
     val missingCalibrationPointsFromStart = roadNetworkDAO.fetchMissingCalibrationPointsFromStart(roadPart)
     val missingCalibrationPointFromTheEnd = roadNetworkDAO.fetchMissingCalibrationPointsFromEnd(roadPart)
     val missingCalibrationPointFromJunction = roadNetworkDAO.fetchMissingCalibrationPointsFromJunctions(roadPart)
-    val extraCalibrationPoints = roadNetworkDAO.fetchExtraCalibrationPointsByRoadPart(roadPart)
+    val extraCalibrationPoints = roadNetworkDAO.fetchLinksWithExtraCalibrationPointsByRoadPart(roadPart)
     if (missingCalibrationPointsFromStart.nonEmpty) {
       logger.warn(s"Found missing calibration points for road part start: $roadPart:\r ${missingCalibrationPointsFromStart.mkString("\r ")}")
       throw new RoadNetworkValidationException(s"$MissingCalibrationPointFromTheStart (tieosa $roadPart)")
