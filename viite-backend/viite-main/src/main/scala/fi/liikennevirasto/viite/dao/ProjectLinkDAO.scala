@@ -718,7 +718,7 @@ println(sql)
    * @throws SQLException if an error occurs during the batch update operation
    * @param projectLinks A sequence of ProjectLinks to update
    */
-  def batchUpdateProjectLinksToReset(projectLinks: Seq[ProjectLink]): Unit = {
+  def batchUpdateProjectLinksToTerminate(projectLinks: Seq[ProjectLink]): Unit = {
     if (projectLinks.nonEmpty) {
       time(logger, "Batch update project links") {
         val updatePS = dynamicSession.prepareStatement(
@@ -755,7 +755,7 @@ println(sql)
           updatePS.setInt(5, pl.administrativeClass.value)
           updatePS.setLong(6, pl.startAddrMValue)
           updatePS.setLong(7, pl.endAddrMValue)
-          updatePS.setLong(8, pl.startAddrMValue)
+          updatePS.setLong(8, pl.originalStartAddrMValue)
           updatePS.setLong(9, pl.originalEndAddrMValue)
           updatePS.setInt(10, pl.calibrationPointTypes._1.value)
           updatePS.setInt(11, pl.calibrationPointTypes._2.value)

@@ -1377,7 +1377,7 @@ class ProjectService(
      * Resets project links to match original road addresses.
      * @param toReset A sequence of ProjectLinks to reset.
      */
-    def resetAndUpdateProjectLinks(toReset: Seq[ProjectLink]): Unit = {
+    def resetAndUpdateTerminatedProjectLinks(toReset: Seq[ProjectLink]): Unit = {
       val roadAddresses = roadAddressService.getRoadAddressesByRoadwayIds(toReset.map(_.roadwayId))
       val updatedLinks = toReset.flatMap { projectLink =>
         roadAddresses.find(roadAddress => projectLink.linearLocationId == roadAddress.linearLocationId).map { ra =>
@@ -1405,7 +1405,7 @@ class ProjectService(
         }
       }
       if (updatedLinks.nonEmpty) {
-        projectLinkDAO.batchUpdateProjectLinksToReset(updatedLinks)
+        projectLinkDAO.batchUpdateProjectLinksToTerminate(updatedLinks)
 
         // Fetch connected project links to check for splits
         val connectedLinkIds = updatedLinks.flatMap(_.connectedLinkId).distinct
@@ -1449,7 +1449,7 @@ class ProjectService(
         roadAddressChangeType match {
           case RoadAddressChangeType.Termination =>
             // Reset and update projectLinks to their original state based on road addresses
-            resetAndUpdateProjectLinks(toUpdateLinks)
+            resetAndUpdateTerminatedProjectLinks(toUpdateLinks)
             projectLinkDAO.updateProjectLinksStatus(toUpdateLinks.map(_.id).toSet, RoadAddressChangeType.Termination, userName)
 
           case RoadAddressChangeType.Renumeration =>
