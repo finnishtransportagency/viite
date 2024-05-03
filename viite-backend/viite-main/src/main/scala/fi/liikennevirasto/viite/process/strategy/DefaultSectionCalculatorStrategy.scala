@@ -29,7 +29,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
   // TODO: Check this need
   val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLocationDAO)
 
-  override def assignMValues(newProjectLinks: Seq[ProjectLink], oldProjectLinks: Seq[ProjectLink], userCalibrationPoints: Seq[UserDefinedCalibrationPoint]): Seq[ProjectLink] = {
+  override def assignAddrMValues(newProjectLinks: Seq[ProjectLink], oldProjectLinks: Seq[ProjectLink], userCalibrationPoints: Seq[UserDefinedCalibrationPoint]): Seq[ProjectLink] = {
 
     val groupedProjectLinks = newProjectLinks.groupBy(record => (record.roadPart))
     val groupedOldLinks = oldProjectLinks.groupBy(record => (record.roadPart))

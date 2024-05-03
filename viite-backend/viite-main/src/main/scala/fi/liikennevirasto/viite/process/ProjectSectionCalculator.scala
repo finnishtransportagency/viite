@@ -22,7 +22,7 @@ object ProjectSectionCalculator {
     * @param projectLinks List of addressed links in project
     * @return Sequence of project links with address values and calibration points.
     */
-  def assignMValues(projectLinks: Seq[ProjectLink], userGivenCalibrationPoints: Seq[UserDefinedCalibrationPoint] = Seq()): Seq[ProjectLink] = {
+  def assignAddrMValues(projectLinks: Seq[ProjectLink], userGivenCalibrationPoints: Seq[UserDefinedCalibrationPoint] = Seq()): Seq[ProjectLink] = {
     logger.info(s"Starting MValue assignment for ${projectLinks.size} links")
     val others = projectLinks.filterNot(_.status == RoadAddressChangeType.Termination)
     val (newLinks, nonTerminatedLinks) = others.partition(l => l.status == RoadAddressChangeType.New)
@@ -30,7 +30,7 @@ object ProjectSectionCalculator {
 
       val calculator = RoadAddressSectionCalculatorContext.getStrategy(others)
       logger.info(s"${calculator.name} strategy")
-      calculator.assignMValues(newLinks, nonTerminatedLinks, userGivenCalibrationPoints)
+      calculator.assignAddrMValues(newLinks, nonTerminatedLinks, userGivenCalibrationPoints)
 
     } finally {
       logger.info(s"Finished MValue assignment for ${projectLinks.size} links")

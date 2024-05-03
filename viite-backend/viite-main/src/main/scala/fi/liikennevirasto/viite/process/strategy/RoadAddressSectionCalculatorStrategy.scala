@@ -47,5 +47,5 @@ trait RoadAddressSectionCalculatorStrategy {
     * @param userCalibrationPoints User defined calibration points
     * @return Returns all the project links with recalculated measures
     */
-  def assignMValues(newProjectLinks: Seq[ProjectLink], oldProjectLinks: Seq[ProjectLink], userCalibrationPoints: Seq[UserDefinedCalibrationPoint]): Seq[ProjectLink]
+  def assignAddrMValues(newProjectLinks: Seq[ProjectLink], oldProjectLinks: Seq[ProjectLink], userCalibrationPoints: Seq[UserDefinedCalibrationPoint]): Seq[ProjectLink]
 }
