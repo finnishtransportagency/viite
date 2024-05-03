@@ -421,7 +421,7 @@ class RoadNetworkDAO extends BaseDAO {
   }
 
   /**
-   * Construct query to links with extra calibration points (more than one calibration point on start/end of the same link)
+   * Construct query to find links with extra calibration points (more than one calibration point on start/end of the same link)
    * @param roadPartFilter fetch extra calibration points for specific road part
    * @param sameRoadwayNumber fetch extra calibration points with the same roadway number
    * @return LinksWithExtraCalibrationPoints query
