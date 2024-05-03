@@ -383,5 +383,4 @@ class DataImporter extends BaseDAO{
 }
 
 case class ImportOptions(onlyComplementaryLinks: Boolean, useFrozenLinkService: Boolean, conversionTable: String, onlyCurrentRoads: Boolean)
-case class RoadPart(roadNumber: Long, roadPart: Long, ely: Long)
 
