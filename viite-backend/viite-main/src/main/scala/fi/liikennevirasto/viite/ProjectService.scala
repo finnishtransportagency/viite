@@ -2037,7 +2037,8 @@ class ProjectService(
     * @throws re-throws explicitly ProjectValidationException, SQLException, Exception
     */
   def updateRoadwaysAndLinearLocationsWithProjectLinks(projectID: Long): Seq[RoadPart] = {
-    def handleRoadPrimaryTables(currentRoadways: Map[Long, Roadway], historyRoadways: Map[Long, Roadway], roadwaysToInsert: Iterable[Roadway], historyRoadwaysToKeep: Seq[Long], linearLocationsToInsert: Iterable[LinearLocation], project: Project): Seq[Long] = {
+    def handleRoadPrimaryTables(currentRoadways: Map[Long, Roadway], historyRoadways: Map[Long, Roadway], roadwaysToInsert: Iterable[Roadway], historyRoadwaysToKeep: Seq[Long],
+                                linearLocationsToInsert: Iterable[LinearLocation], project: Project, terminatedLinkIDs: Seq[String]): Seq[Long] = {
       logger.debug(s"Creating history rows based on operation")
       linearLocationDAO.expireByRoadwayNumbers((currentRoadways ++ historyRoadways).map(_._2.roadwayNumber).toSet)
       (currentRoadways ++ historyRoadways.filterNot(hist => historyRoadwaysToKeep.contains(hist._1))).map(roadway => expireHistoryRows(roadway._1))
@@ -2047,8 +2048,10 @@ class ProjectService(
         roadway.endDate.isEmpty || !roadway.startDate.isAfter(roadway.endDate.get)
       ).map(_.copy(createdBy = project.createdBy))
       )
-      logger.debug(s"Inserting linear locations")
-      linearLocationDAO.create(linearLocationsToInsert, createdBy = project.createdBy)
+
+      val nonTerminatingLinearLocationsToInsert = linearLocationsToInsert.filterNot(l => terminatedLinkIDs.contains(l.linkId))
+      logger.debug(s"Inserting linear locations: ${nonTerminatingLinearLocationsToInsert.mkString(", ")}")
+      linearLocationDAO.create(nonTerminatingLinearLocationsToInsert, createdBy = project.createdBy)
       roadwayIds
     }
 
@@ -2116,6 +2119,7 @@ class ProjectService(
 
     val roadwayChanges = roadwayChangesDAO.fetchRoadwayChanges(Set(projectID))
     val mappedRoadwayChanges = currentRoadways.values.map(r => RoadwayFiller.RwChanges(r, findHistoryRoadways(r.roadwayNumber), projectLinks.filter(_.roadwayId == r.id))).toList
+    val terminatedLinkIDs = projectLinkDAO.fetchProjectLinks(projectID, Some(RoadAddressChangeType.Termination)).map(_.linkId)
 
     try {
       logger.debug(s"Moving project links to project link history.")
@@ -2156,7 +2160,8 @@ class ProjectService(
         sorted_lins.zip(1 to lins.size).map(ls => ls._1.copy(orderNumber =  ls._2))
       })
 
-      val roadwayIds = handleRoadPrimaryTables(currentRoadways, historyRoadways, roadwaysToInsert, historyRoadwaysToKeep, linearLocationsToInsert, project)
+      val roadwayIds = handleRoadPrimaryTables(currentRoadways, historyRoadways, roadwaysToInsert, historyRoadwaysToKeep,
+        linearLocationsToInsert, project, terminatedLinkIDs)
       handleRoadComplementaryTables(roadwayChanges, projectLinkChanges, linearLocationsToInsert,
         roadwayIds, generatedRoadways, projectLinks,
         Some(project.startDate.minusDays(1)), nodeIds, project.createdBy)
