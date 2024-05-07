@@ -303,9 +303,9 @@ object TwoTrackRoadUtils {
       if (nextIndex < allLinks.length && nextIndex > 0) {
         val nextLink = allLinks(nextIndex)
 
-        if (GeometryUtils.areGeometriesConnected(currentLink.startingPoint, currentLink.endPoint, nextLink.startingPoint, nextLink.endPoint)) {
+        if (GeometryUtils.areAdjacent(currentLink.startingPoint, nextLink.endPoint))
           findSection(nextLink, currentLink :: section)
-        } else {
+        else {
           currentLink :: section
         }
       } else {
