@@ -355,26 +355,19 @@ object TwoTrackRoadUtils {
         .reverse
   }
 
-  private def getGeometryFromSplitMeasure(
-    pl: _root_.fi.liikennevirasto.viite.dao.ProjectLink,
-    endPoints: _root_.scala.Predef.Map[
-      _root_.fi.vaylavirasto.viite.geometry.Point,
-      _root_.fi.liikennevirasto.viite.dao.ProjectLink
-    ],
-    splitMeasure: Double
-  ): Seq[Point] = {
-    if (pl.geometry.last == endPoints.last._1)
+  private def getGeometryFromSplitMeasure(projectLink: ProjectLink, endPoints: Map[Point, ProjectLink], splitMeasure: Double): Seq[Point] = {
+    if (projectLink.geometry.last == endPoints.last._1)
       GeometryUtils.truncateGeometry2D(
-        pl.geometry,
+        projectLink.geometry,
         startMeasure = 0,
-        endMeasure   = splitMeasure - pl.startMValue
+        endMeasure   = splitMeasure - projectLink.startMValue
       )
     else
       GeometryUtils
         .truncateGeometry2D(
-          pl.geometry.reverse,
+          projectLink.geometry.reverse,
           startMeasure = 0,
-          endMeasure   = splitMeasure - pl.startMValue
+          endMeasure   = splitMeasure - projectLink.startMValue
         )
         .reverse
   }
