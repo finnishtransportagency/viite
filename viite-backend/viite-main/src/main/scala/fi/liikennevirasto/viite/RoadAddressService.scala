@@ -818,15 +818,15 @@ class RoadAddressService(
 
   def handleCalibrationPoints(linearLocations: Iterable[LinearLocation], username: String = "-"): Unit = {
 
-    val startCalibrationPointsToCheck = linearLocations.filter(_.startCalibrationPoint.isDefined)
-    val endCalibrationPointsToCheck = linearLocations.filter(_.endCalibrationPoint.isDefined)
+    val linearLocationsWithStartCP = linearLocations.filter(_.startCalibrationPoint.isDefined)
+    val linearLocationsWithEndCP = linearLocations.filter(_.endCalibrationPoint.isDefined)
 
     // Fetch current linear locations and check which calibration points should be expired
     val currentCPs = CalibrationPointDAO.fetchByLinkId(linearLocations.map(l => l.linkId))
     val currentStartCP = currentCPs.filter(_.startOrEnd == CalibrationPointLocation.StartOfLink)
     val currentEndCP = currentCPs.filter(_.startOrEnd == CalibrationPointLocation.EndOfLink)
-    val startCPsToBeExpired = currentStartCP.filter(c => !startCalibrationPointsToCheck.exists(sc => sc.linkId == c.linkId && (sc.startCalibrationPoint.isDefined && c.startOrEnd == CalibrationPointLocation.StartOfLink)))
-    val endCPsToBeExpired = currentEndCP.filter(c => !endCalibrationPointsToCheck.exists(sc => sc.linkId == c.linkId && (sc.endCalibrationPoint.isDefined && c.startOrEnd == CalibrationPointLocation.EndOfLink)))
+    val startCPsToBeExpired = currentStartCP.filter(c => !linearLocationsWithStartCP.exists(sc => sc.linkId == c.linkId && (sc.startCalibrationPoint.isDefined && c.startOrEnd == CalibrationPointLocation.StartOfLink)))
+    val endCPsToBeExpired = currentEndCP.filter(c => !linearLocationsWithEndCP.exists(sc => sc.linkId == c.linkId && (sc.endCalibrationPoint.isDefined && c.startOrEnd == CalibrationPointLocation.EndOfLink)))
 
     // Expire calibration points not applied by project road changes logic
     startCPsToBeExpired.foreach {
@@ -855,7 +855,7 @@ class RoadAddressService(
     }
 
     // Check other calibration points
-    startCalibrationPointsToCheck.foreach {
+    linearLocationsWithStartCP.foreach {
       cal =>
         val roadwayPointId =
           roadwayPointDAO.fetch(cal.roadwayNumber, cal.startCalibrationPoint.addrM.get) match {
@@ -867,7 +867,7 @@ class RoadAddressService(
           }
         CalibrationPointsUtils.createCalibrationPointIfNeeded(roadwayPointId, cal.linkId, CalibrationPointLocation.StartOfLink, cal.startCalibrationPointType, username)
     }
-    endCalibrationPointsToCheck.foreach {
+    linearLocationsWithEndCP.foreach {
       cal =>
         val roadwayPointId =
           roadwayPointDAO.fetch(cal.roadwayNumber, cal.endCalibrationPoint.addrM.get) match {
