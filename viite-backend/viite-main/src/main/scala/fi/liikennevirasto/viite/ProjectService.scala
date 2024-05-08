@@ -2138,9 +2138,9 @@ class ProjectService(
       roadwaysToInsert.foreach(rwtoinsert => logger.info(s"roadwaysToInsert ${rwtoinsert.roadwayNumber} ${rwtoinsert.endDate} ${rwtoinsert.validTo}"))
 
       /* Fuse linearlocations with the same roadwaynumber and linkid. */
-      val linksToFuse = linearLocationsToInsert.groupBy(ll => (ll.roadwayNumber, ll.linkId)).values.filter(_.size > 1)
-      val linksToFuseIds = linksToFuse.flatten.map(_.id).toSeq
-      val fusedLinearLocations = linksToFuse.map(lls => {
+      val linearLocationsToFuse = linearLocationsToInsert.groupBy(ll => (ll.roadwayNumber, ll.linkId)).values.filter(_.size > 1)
+      val linearLocationsToFuseIds = linearLocationsToFuse.flatten.map(_.id).toSeq
+      val fusedLinearLocations = linearLocationsToFuse.map(lls => {
         val firstLl =  lls.minBy(_.startMValue)
         val lastLl = lls.maxBy(_.endMValue)
         val geometries =
@@ -2150,7 +2150,7 @@ class ProjectService(
             lls.sortBy(ll => -ll.startMValue).flatMap(_.geometry).distinct
         firstLl.copy(startMValue = firstLl.startMValue, endMValue = lastLl.endMValue, calibrationPoints = (firstLl.startCalibrationPoint, lastLl.endCalibrationPoint), geometry = geometries)
       })
-      linearLocationsToInsert = linearLocationsToInsert.filterNot(ll => linksToFuseIds.contains(ll.id)) ++ fusedLinearLocations
+      linearLocationsToInsert = linearLocationsToInsert.filterNot(ll => linearLocationsToFuseIds.contains(ll.id)) ++ fusedLinearLocations
 
       /* Update order numbers. */
       val rwns = generatedRoadways.flatMap(_._1).map(g => g.roadwayNumber).distinct
