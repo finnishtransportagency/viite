@@ -2038,7 +2038,7 @@ class ProjectService(
     */
   def updateRoadwaysAndLinearLocationsWithProjectLinks(projectID: Long): Seq[RoadPart] = {
     def handleRoadPrimaryTables(currentRoadways: Map[Long, Roadway], historyRoadways: Map[Long, Roadway], roadwaysToInsert: Iterable[Roadway], historyRoadwaysToKeep: Seq[Long],
-                                linearLocationsToInsert: Iterable[LinearLocation], project: Project, terminatedLinkIDs: Seq[String]): Seq[Long] = {
+                                nonTerminatingLinearLocationsToInsert: Iterable[LinearLocation], project: Project): Seq[Long] = {
       logger.debug(s"Creating history rows based on operation")
       linearLocationDAO.expireByRoadwayNumbers((currentRoadways ++ historyRoadways).map(_._2.roadwayNumber).toSet)
       (currentRoadways ++ historyRoadways.filterNot(hist => historyRoadwaysToKeep.contains(hist._1))).map(roadway => expireHistoryRows(roadway._1))
@@ -2049,7 +2049,7 @@ class ProjectService(
       ).map(_.copy(createdBy = project.createdBy))
       )
 
-      val nonTerminatingLinearLocationsToInsert = linearLocationsToInsert.filterNot(l => terminatedLinkIDs.contains(l.linkId))
+      // Insert new linear locations excluding linear locations of terminated links
       logger.debug(s"Inserting linear locations: ${nonTerminatingLinearLocationsToInsert.mkString(", ")}")
       linearLocationDAO.create(nonTerminatingLinearLocationsToInsert, createdBy = project.createdBy)
       roadwayIds
@@ -2119,6 +2119,8 @@ class ProjectService(
 
     val roadwayChanges = roadwayChangesDAO.fetchRoadwayChanges(Set(projectID))
     val mappedRoadwayChanges = currentRoadways.values.map(r => RoadwayFiller.RwChanges(r, findHistoryRoadways(r.roadwayNumber), projectLinks.filter(_.roadwayId == r.id))).toList
+
+    // fetch terminated link ids before moving project links to project link history
     val terminatedLinkIDs = projectLinkDAO.fetchProjectLinks(projectID, Some(RoadAddressChangeType.Termination)).map(_.linkId)
 
     try {
@@ -2136,9 +2138,9 @@ class ProjectService(
       roadwaysToInsert.foreach(rwtoinsert => logger.info(s"roadwaysToInsert ${rwtoinsert.roadwayNumber} ${rwtoinsert.endDate} ${rwtoinsert.validTo}"))
 
       /* Fuse linearlocations with the same roadwaynumber and linkid. */
-      val linsToFuse = linearLocationsToInsert.groupBy(ll => (ll.roadwayNumber, ll.linkId)).values.filter(_.size > 1)
-      val linsToFuseIds = linsToFuse.flatten.map(_.id).toSeq
-      val fusedLinearLocations = linsToFuse.map(lls => {
+      val linksToFuse = linearLocationsToInsert.groupBy(ll => (ll.roadwayNumber, ll.linkId)).values.filter(_.size > 1)
+      val linksToFuseIds = linksToFuse.flatten.map(_.id).toSeq
+      val fusedLinearLocations = linksToFuse.map(lls => {
         val firstLl =  lls.minBy(_.startMValue)
         val lastLl = lls.maxBy(_.endMValue)
         val geometries =
@@ -2148,7 +2150,7 @@ class ProjectService(
             lls.sortBy(ll => -ll.startMValue).flatMap(_.geometry).distinct
         firstLl.copy(startMValue = firstLl.startMValue, endMValue = lastLl.endMValue, calibrationPoints = (firstLl.startCalibrationPoint, lastLl.endCalibrationPoint), geometry = geometries)
       })
-      linearLocationsToInsert = linearLocationsToInsert.filterNot(ll => linsToFuseIds.contains(ll.id)) ++ fusedLinearLocations
+      linearLocationsToInsert = linearLocationsToInsert.filterNot(ll => linksToFuseIds.contains(ll.id)) ++ fusedLinearLocations
 
       /* Update order numbers. */
       val rwns = generatedRoadways.flatMap(_._1).map(g => g.roadwayNumber).distinct
@@ -2160,8 +2162,11 @@ class ProjectService(
         sorted_lins.zip(1 to lins.size).map(ls => ls._1.copy(orderNumber =  ls._2))
       })
 
+      // Exclude linear locations that are terminated from insertion
+      val nonTerminatingLinearLocationsToInsert = linearLocationsToInsert.filterNot(l => terminatedLinkIDs.contains(l.linkId))
+
       val roadwayIds = handleRoadPrimaryTables(currentRoadways, historyRoadways, roadwaysToInsert, historyRoadwaysToKeep,
-        linearLocationsToInsert, project, terminatedLinkIDs)
+        nonTerminatingLinearLocationsToInsert, project)
       handleRoadComplementaryTables(roadwayChanges, projectLinkChanges, linearLocationsToInsert,
         roadwayIds, generatedRoadways, projectLinks,
         Some(project.startDate.minusDays(1)), nodeIds, project.createdBy)
