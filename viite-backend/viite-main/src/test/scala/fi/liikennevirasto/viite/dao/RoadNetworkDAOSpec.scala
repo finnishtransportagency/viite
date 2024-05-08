@@ -106,6 +106,8 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
 
       val geometry1 = Seq(Point(0.0, 0.0), Point(0.0,50.0))
       val geometry2 = Seq(Point(0.0, 50.0), Point(0.0, 100.0))
+      val geometry3 = Seq(Point(0.0, 100.0), Point(0.0, 150.0))
+      val geometry4 = Seq(Point(0.0, 150.0), Point(0.0, 200.0))
 
       val roadwayNumber1 = Sequences.nextRoadwayNumber
       val roadwayNumber2 = Sequences.nextRoadwayNumber
@@ -116,8 +118,8 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
       // Create Roadways with different roadway numbers
       roadwayDAO.create(Seq(
         Roadway(Sequences.nextRoadwayId, roadwayNumber1, roadPart, AdministrativeClass.State, Track.Combined,Discontinuity.Continuous, 0, 100, false, DateTime.now().minusDays(1), None, "test", Some("Test road"), 9,TerminationCode.NoTermination, DateTime.now().minusDays(1),None),
-        Roadway(Sequences.nextRoadwayId, roadwayNumber2, roadPart, AdministrativeClass.State, Track.Combined,Discontinuity.EndOfRoad, 0, 100, false, DateTime.now().minusDays(1), None, "test", Some("Test road"), 9,TerminationCode.NoTermination, DateTime.now().minusDays(1),None),
-        Roadway(Sequences.nextRoadwayId, roadwayNumber3, roadPart, AdministrativeClass.State, Track.Combined,Discontinuity.EndOfRoad, 100, 200, false, DateTime.now().minusDays(1), None, "test", Some("Test road"), 9,TerminationCode.NoTermination, DateTime.now().minusDays(1),None)
+        Roadway(Sequences.nextRoadwayId, roadwayNumber2, roadPart, AdministrativeClass.State, Track.Combined,Discontinuity.Continuous, 100, 150, false, DateTime.now().minusDays(1), None, "test", Some("Test road"), 9,TerminationCode.NoTermination, DateTime.now().minusDays(1),None),
+        Roadway(Sequences.nextRoadwayId, roadwayNumber3, roadPart, AdministrativeClass.State, Track.Combined,Discontinuity.EndOfRoad, 150, 200, false, DateTime.now().minusDays(1), None, "test", Some("Test road"), 9,TerminationCode.NoTermination, DateTime.now().minusDays(1),None)
       ))
 
       // Create LinearLocations
@@ -141,13 +143,13 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
           linkId2, 100.0, 150.0,
           SideCode.TowardsDigitizing, 10000000000L,
           (CalibrationPointReference(None, None), CalibrationPointReference(Some(150), Some(CalibrationPointType.RoadAddressCP))),
-          geometry1,LinkGeomSource.NormalLinkInterface,
+          geometry3,LinkGeomSource.NormalLinkInterface,
           roadwayNumber2,Some(DateTime.now().minusDays(1)), None),
         LinearLocation(Sequences.nextLinearLocationId, 4.0,
           linkId2, 150.0, 200.0,
           SideCode.TowardsDigitizing, 10000000000L,
           (CalibrationPointReference(None, None), CalibrationPointReference(Some(200), Some(CalibrationPointType.RoadAddressCP))),
-          geometry2, LinkGeomSource.NormalLinkInterface,
+          geometry4, LinkGeomSource.NormalLinkInterface,
           roadwayNumber3, Some(DateTime.now().minusDays(1)), None)
       ))
 
