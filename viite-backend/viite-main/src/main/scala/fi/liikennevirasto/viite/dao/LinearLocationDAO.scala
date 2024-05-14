@@ -484,11 +484,13 @@ class LinearLocationDAO extends BaseDAO {
 
     for (i <- 2 until math.min(llLength, 8)) { // loop through the other than the first two (if any) LLs
       val llId = llIds(i)
-      intersectionFunction += s"ST_Intersection((SELECT st_ReducePrecision(ll.geometry, $precision) FROM linear_location ll WHERE ll.id = $llId),"
+      // Using ClosestPoint as intersection function, as intersection sometimes fails to produce a coordinate (not intersecting at all?)
+      intersectionFunction += s"ST_ClosestPoint((SELECT ST_ReducePrecision(ll.geometry, $precision) FROM linear_location ll WHERE ll.id = $llId),"
       closingBracket += ")"
     }
+    // Using ClosestPoint as intersection function, as intersection sometimes fails to produce a coordinate (not intersecting at all?)
     val intersectionOfTheFirstTwoLLs = s"""
-        ST_Intersection(
+        ST_ClosestPoint(
           (SELECT ST_ReducePrecision(ll.geometry, $precision)  FROM linear_location ll  WHERE ll.id = ${llIds(0)}),
           (SELECT ST_ReducePrecision(ll.geometry, $precision)  FROM linear_location ll  WHERE ll.id = ${llIds(1)})
         )
