@@ -486,23 +486,18 @@ class LinearLocationDAO extends BaseDAO {
       intersectionFunction += s"ST_Intersection((SELECT st_ReducePrecision(ll.geometry, $precision) FROM linear_location ll WHERE ll.id = $llId),"
       closingBracket += ")"
     }
-
+    val intersectionOfTheFirstTwoLLs = s"""
+        ST_Intersection(
+          (SELECT ST_ReducePrecision(ll.geometry, $precision)  FROM linear_location ll  WHERE ll.id = ${llIds(0)}),
+          (SELECT ST_ReducePrecision(ll.geometry, $precision)  FROM linear_location ll  WHERE ll.id = ${llIds(1)})
+        )
+    """
     val query = {
       s"""
-             SELECT DISTINCT
-             ST_X(${intersectionFunction}
-                  ST_Intersection((SELECT st_ReducePrecision(ll.geometry, $precision)
-                       FROM linear_location ll
-                       WHERE ll.id = ${llIds(0)}), (SELECT st_ReducePrecision(ll.geometry, $precision)
-                       FROM linear_location ll
-                       WHERE ll.id = ${llIds(1)})${closingBracket})) AS xCoord,
-             ST_Y(${intersectionFunction}
-                  ST_Intersection((SELECT st_ReducePrecision(ll.geometry, $precision)
-                       FROM linear_location ll
-                       WHERE ll.id = ${llIds(0)}), (SELECT st_ReducePrecision(ll.geometry, $precision)
-                       FROM linear_location ll
-                       WHERE ll.id = ${llIds(1)})${closingBracket})) AS yCoord
-          """
+         SELECT DISTINCT
+         ST_X(${intersectionFunction} $intersectionOfTheFirstTwoLLs ${closingBracket}) AS xCoord,
+         ST_Y(${intersectionFunction} $intersectionOfTheFirstTwoLLs ${closingBracket}) AS yCoord
+      """
     }
     val res = Q.queryNA[JunctionCoordinate](query).firstOption
 
