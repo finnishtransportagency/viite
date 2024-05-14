@@ -944,7 +944,10 @@ object FirstRestSections {
   }
 
   def getEqualRoadwaySections(sect: FirstRestSections, oppositeSect: FirstRestSections): ((Seq[ProjectLink], Seq[ProjectLink]), (Seq[ProjectLink], Seq[ProjectLink])) = {
-    val newFirstSection = sect.first.takeWhile(_.endAddrMValue <= oppositeSect.first.last.endAddrMValue)
+    val newFirstSection = {
+      val closestEndPl = sect.first.minBy(pl => Math.abs(pl.endAddrMValue - oppositeSect.first.last.endAddrMValue))
+      sect.first.takeWhile(pl => pl.endAddrMValue <= closestEndPl.endAddrMValue)
+    }
     val newRestSection  = sect.first.drop(newFirstSection.size) ++ sect.rest
     ((newFirstSection, newRestSection), FirstRestSections.unapply(oppositeSect).get)
   }
