@@ -4,6 +4,7 @@ import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
 import fi.vaylavirasto.viite.dao.{BaseDAO, LinkDAO, Queries, Sequences}
+import fi.vaylavirasto.viite.geometry.GeometryUtils.scaleToThreeDigits
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.{CalibrationPointType, LinkGeomSource, RoadPart, SideCode}
 import fi.vaylavirasto.viite.postgis.MassQuery.logger
@@ -481,7 +482,7 @@ class LinearLocationDAO extends BaseDAO {
     var closingBracket = s""
     val precision = MaxDistanceForConnectedLinks
 
-    for (i <- 2 until math.min(llLength, 8)) {
+    for (i <- 2 until math.min(llLength, 8)) { // loop through the other than the first two (if any) LLs
       val llId = llIds(i)
       intersectionFunction += s"ST_Intersection((SELECT st_ReducePrecision(ll.geometry, $precision) FROM linear_location ll WHERE ll.id = $llId),"
       closingBracket += ")"
@@ -499,10 +500,16 @@ class LinearLocationDAO extends BaseDAO {
          ST_Y(${intersectionFunction} $intersectionOfTheFirstTwoLLs ${closingBracket}) AS yCoord
       """
     }
-    val res = Q.queryNA[JunctionCoordinate](query).firstOption
-
-    val point: Option[Point] = res.map(junction => Point(junction.xCoord, junction.yCoord))
-    point
+    try {
+      val res = Q.queryNA[JunctionCoordinate](query).firstOption
+      val point: Option[Point] = res.map(junction => Point(scaleToThreeDigits(junction.xCoord), scaleToThreeDigits(junction.yCoord)))
+      point
+    }
+    catch {
+      case e: Exception =>
+          logger.error(s"Exception ${e.getClass} at fetchCoordinatesForJunction: ${e.getMessage}.\nThe failing query was:\n$query")
+          throw e
+    }
   }
 
   /**
