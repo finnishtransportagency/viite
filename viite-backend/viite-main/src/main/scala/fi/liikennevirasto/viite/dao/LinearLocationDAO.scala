@@ -481,14 +481,16 @@ class LinearLocationDAO extends BaseDAO {
     var intersectionFunction = s""
     var closingBracket = s""
     val precision = MaxDistanceForConnectedLinks
+    var maxCheckedLLs = 8 // The closest point most probably is not further away than 8 LLs. 8 is already quite much.
 
-    for (i <- 2 until math.min(llLength, 8)) { // loop through the other than the first two (if any) LLs
+    // First two LLs already checked. Find / Check for the closest point within max. maxCheckedLLs more linearLocations
+    for (i <- 2 until math.min(llLength, maxCheckedLLs)) {
       val llId = llIds(i)
-      // Using ClosestPoint as intersection function, as intersection sometimes fails to produce a coordinate (not intersecting at all?)
+      // Using ClosestPoint as intersection function, as ST_Intersection sometimes fails to produce a coordinate (not intersecting at all?)
       intersectionFunction += s"ST_ClosestPoint((SELECT ST_ReducePrecision(ll.geometry, $precision) FROM linear_location ll WHERE ll.id = $llId),"
       closingBracket += ")"
     }
-    // Using ClosestPoint as intersection function, as intersection sometimes fails to produce a coordinate (not intersecting at all?)
+    // Using ClosestPoint as intersection function, as ST_Intersection sometimes fails to produce a coordinate (not intersecting at all?)
     val intersectionOfTheFirstTwoLLs = s"""
         ST_ClosestPoint(
           (SELECT ST_ReducePrecision(ll.geometry, $precision)  FROM linear_location ll  WHERE ll.id = ${llIds(0)}),
