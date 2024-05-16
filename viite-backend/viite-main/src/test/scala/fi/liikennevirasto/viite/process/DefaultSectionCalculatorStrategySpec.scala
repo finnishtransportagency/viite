@@ -1202,8 +1202,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
         (5384,5603,1),
         (5603,5616,1),
         (5616,5639,1),
-        (5639,5640,1),
-        (5640,5673,1),
+        (5639,5673,1),
         (0,109,2),
         (109,135,2),
         (135,230,2),
@@ -1228,8 +1227,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
         (1829,1857,2),
         (1857,2098,2),
         (2098,2190,2),
-        (2790,2880,2),
-        (2880,2882,2),
+        (2790,2882,2),
         (2882,2910,2),
         (2910,2922,2),
         (2922,2985,2),
@@ -1246,8 +1244,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
         (5353,5392,2),
         (5392,5602,2),
         (5602,5616,2),
-        (5616,5639,2),
-        (5639,5640,2),
+        (5616,5640,2),
         (5640,5673,2)
       )
       // Group by track and startAddrMValue

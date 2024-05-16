@@ -594,14 +594,15 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     val rightTrackOriginalEndAddresses = findOriginalEndAddressesOfContinuousSectionsExcludingNewLinks(rightTrackLinksWithoutNew)
     val leftTrackOriginalEndAddresses = findOriginalEndAddressesOfContinuousSectionsExcludingNewLinks(leftTrackLinksWithoutNew)
 
-    val distinctOriginalEndAddresses = (rightTrackOriginalEndAddresses ++ leftTrackOriginalEndAddresses).distinct.sorted
 
+    //  TODO VIITE-3120 The commented code below seems obsolete in current Viite app, commented out so they are available if needed after all (if you are deleting these lines, be sure to delete the other functions and code tagged with "TODO VIITE-3120")
     /* Adjust addresses before splits, calibration points after splits don't restrict calculation. */
+    //val distinctOriginalEndAddresses = (rightTrackOriginalEndAddresses ++ leftTrackOriginalEndAddresses).distinct.sorted
+    //val leftLinksSplitByOriginalAddress = splitByOriginalAddresses(leftLinks, distinctOriginalEndAddresses)
+    //val rightLinksSplitByOriginalAddress = splitByOriginalAddresses(rightLinks, distinctOriginalEndAddresses)
+    //val (adjustedLeftLinks, adjustedRightLinks) = adjustTracksToMatch(leftLinksSplitByOriginalAddress, rightLinksSplitByOriginalAddress, None, userDefinedCalibrationPointMap)
 
-    val leftLinksSplitByOriginalAddress = splitByOriginalAddresses(leftLinks, distinctOriginalEndAddresses)
-    val rightLinksSplitByOriginalAddress = splitByOriginalAddresses(rightLinks, distinctOriginalEndAddresses)
-
-    val (adjustedLeftLinks, adjustedRightLinks) = adjustTracksToMatch(leftLinksSplitByOriginalAddress, rightLinksSplitByOriginalAddress, None, userDefinedCalibrationPointMap)
+    val (adjustedLeftLinks, adjustedRightLinks) = adjustTracksToMatch(leftLinks, rightLinks, None, userDefinedCalibrationPointMap)
 
     (adjustedLeftLinks, adjustedRightLinks)
   }
@@ -625,11 +626,6 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     val (leftLinksWithUdcps, splittedRightLinks, udcpsFromRightSideSplits) = TwoTrackRoadUtils.splitPlsAtStatusChange(adjustedLeftLinks, adjustedRightLinks)
     val (rightLinksWithUdcps, splittedLeftLinks, udcpsFromLeftSideSplits) = TwoTrackRoadUtils.splitPlsAtStatusChange(splittedRightLinks, leftLinksWithUdcps)
 
-    val udcpSplitsAtOriginalAddresses = (filterOutNewLinks(rightLinksWithUdcps) ++ filterOutNewLinks(splittedLeftLinks)).filter(_.endCalibrationPointType == CalibrationPointType.UserDefinedCP).map(_.originalEndAddrMValue).filter(_ > 0)
-    val sortedSplitOriginalAddresses = (findOriginalEndAddressesOfContinuousSectionsExcludingNewLinks(rightLinksWithUdcps) ++ findOriginalEndAddressesOfContinuousSectionsExcludingNewLinks(splittedLeftLinks) ++ udcpSplitsAtOriginalAddresses).distinct.sorted
-
-    val leftLinksWithSplits  = splitByOriginalAddresses(splittedLeftLinks, sortedSplitOriginalAddresses)
-    val rightLinksWithSplits = splitByOriginalAddresses(rightLinksWithUdcps, sortedSplitOriginalAddresses)
 
     def isUserDefinedCalibrationPointDefined(udcp: Option[UserDefinedCalibrationPoint]) =
       udcp.isDefined && udcp.get.isInstanceOf[UserDefinedCalibrationPoint]
@@ -662,7 +658,14 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     val splitCreatedCpsFromRightSide = toUdcpMap(updatedUDCPsFromRightSideSplits).toMap
     val splitCreatedCpsFromLeftSide  = toUdcpMap(udcpsFromLeftSideSplits).toMap
 
-    val (adjustedLeftWithoutTerminated, adjustedRightWithoutTerminated) = (leftLinksWithSplits.filterNot(_.status == RoadAddressChangeType.Termination).sortBy(_.startAddrMValue), rightLinksWithSplits.filterNot(_.status == RoadAddressChangeType.Termination).sortBy(_.startAddrMValue))
+    //  TODO VIITE-3120 The commented code below seems obsolete in current Viite app, commented out so they are available if needed after all (if you are deleting these lines, be sure to delete the other functions aswell tagged with "TODO VIITE-3120")
+    //val udcpSplitsAtOriginalAddresses = (filterOutNewLinks(rightLinksWithUdcps) ++ filterOutNewLinks(splittedLeftLinks)).filter(_.endCalibrationPointType == CalibrationPointType.UserDefinedCP).map(_.originalEndAddrMValue).filter(_ > 0)
+    //val sortedSplitOriginalAddresses = (findOriginalEndAddressesOfContinuousSectionsExcludingNewLinks(rightLinksWithUdcps) ++ findOriginalEndAddressesOfContinuousSectionsExcludingNewLinks(splittedLeftLinks) ++ udcpSplitsAtOriginalAddresses).distinct.sorted
+    //val leftLinksWithSplits  = splitByOriginalAddresses(splittedLeftLinks, sortedSplitOriginalAddresses)
+    //val rightLinksWithSplits = splitByOriginalAddresses(rightLinksWithUdcps, sortedSplitOriginalAddresses)
+    //val (adjustedLeftWithoutTerminated, adjustedRightWithoutTerminated) = (leftLinksWithSplits.filterNot(_.status == RoadAddressChangeType.Termination).sortBy(_.startAddrMValue), rightLinksWithSplits.filterNot(_.status == RoadAddressChangeType.Termination).sortBy(_.startAddrMValue))
+
+    val (adjustedLeftWithoutTerminated, adjustedRightWithoutTerminated) = (splittedLeftLinks.filterNot(_.status == RoadAddressChangeType.Termination).sortBy(_.startAddrMValue), rightLinksWithUdcps.filterNot(_.status == RoadAddressChangeType.Termination).sortBy(_.startAddrMValue))
 
     val (right, left) = TrackSectionOrder.setCalibrationPoints(adjustedRightWithoutTerminated, adjustedLeftWithoutTerminated, userDefinedCalibrationPoint ++ splitCreatedCpsFromRightSide ++ splitCreatedCpsFromLeftSide)
     TrackSectionOrder.createCombinedSections(right, left)
