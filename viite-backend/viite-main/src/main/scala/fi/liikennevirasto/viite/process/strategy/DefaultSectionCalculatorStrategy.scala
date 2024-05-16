@@ -617,46 +617,60 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
   private def calculateSectionAddressValues(leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink],
                                             userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): Seq[CombinedSection] = {
 
-    val leftLinksReAdjusted = leftProjectLinks.filter(_.status == RoadAddressChangeType.Unchanged) ++ ProjectSectionMValueCalculator.assignLinkValues(leftProjectLinks.filter(_.status != RoadAddressChangeType.Unchanged), userDefinedCalibrationPoint, leftProjectLinks.filter(pl => pl.status == RoadAddressChangeType.Unchanged).map(_.endAddrMValue.toDouble).sorted.lastOption)
-    val rightLinksReAdjusted = rightProjectLinks.filter(_.status == RoadAddressChangeType.Unchanged) ++ ProjectSectionMValueCalculator.assignLinkValues(rightProjectLinks.filter(_.status != RoadAddressChangeType.Unchanged), userDefinedCalibrationPoint, rightProjectLinks.filter(pl => pl.status == RoadAddressChangeType.Unchanged).map(_.endAddrMValue.toDouble).sorted.lastOption)
+    def handleUserDefinedCalibrationPoints(udcpsFromRightSideSplits: Seq[Option[UserDefinedCalibrationPoint]],
+                                           udcpsFromLeftSideSplits: Seq[Option[UserDefinedCalibrationPoint]],
+                                           splittedLeftLinks: Seq[ProjectLink]):  (Map[Long, UserDefinedCalibrationPoint],  Map[Long, UserDefinedCalibrationPoint]) = {
+
+      def isUserDefinedCalibrationPointDefined(udcp: Option[UserDefinedCalibrationPoint]) = {
+        udcp.isDefined && udcp.get.isInstanceOf[UserDefinedCalibrationPoint]
+      }
+      def toUdcpMap(udcp: Seq[Option[UserDefinedCalibrationPoint]]) = {
+        udcp.filter(isUserDefinedCalibrationPointDefined).map(_.get).map(c => c.projectLinkId -> c)
+      }
+
+      // Combine UserDefinedCalibrationPoints from right and left side splits,
+      // filter out those that are not defined or not instances of UserDefinedCalibrationPoint,
+      // group them by project link ID, and filter out groups with only one UDCP.
+      val duplicateUDCPs = (udcpsFromRightSideSplits ++ udcpsFromLeftSideSplits)
+        .filter(isUserDefinedCalibrationPointDefined)
+        .groupBy(_.get.projectLinkId)
+        .filter(_._2.size > 1)
+
+      /* Update udcp project link if split after second pass. */
+      val updatedUDCPsFromRightSideSplits = duplicateUDCPs.foldLeft(udcpsFromRightSideSplits) { (udcps, cur) => {
+        val splittedLeftLink       = splittedLeftLinks.find(_.id == cur._1)
+        // Check if the left link is split and has a connected link
+        if (splittedLeftLink.isDefined && splittedLeftLink.get.connectedLinkId.isDefined) {
+          // Find the new link created after the split
+          val newLink = splittedLeftLinks.find(_.startAddrMValue == splittedLeftLink.get.endAddrMValue).get
+
+          val udcpToUpdate = udcps.find(_.get.projectLinkId == cur._1)
+          udcps.filterNot(_.get.projectLinkId == cur._1) :+ Some(udcpToUpdate.get.get.copy(projectLinkId = newLink.id))
+        } else {
+          udcps
+        }
+      }}
+
+      (toUdcpMap(updatedUDCPsFromRightSideSplits).toMap, toUdcpMap(udcpsFromLeftSideSplits).toMap)
+    }
+
+    val leftLinksWithAddrMValues = ProjectSectionMValueCalculator.assignLinkValues(leftProjectLinks.filter(_.status != RoadAddressChangeType.Unchanged), userDefinedCalibrationPoint,
+      leftProjectLinks.filter(pl => pl.status == RoadAddressChangeType.Unchanged).map(_.endAddrMValue.toDouble).sorted.lastOption)
+
+    val rightLinksWithAddrMValues = ProjectSectionMValueCalculator.assignLinkValues(rightProjectLinks.filter(_.status != RoadAddressChangeType.Unchanged), userDefinedCalibrationPoint,
+      rightProjectLinks.filter(pl => pl.status == RoadAddressChangeType.Unchanged).map(_.endAddrMValue.toDouble).sorted.lastOption)
+
+    // combine the unchanged links and the adjusted links
+    val leftLinks = leftProjectLinks.filter(_.status == RoadAddressChangeType.Unchanged) ++ leftLinksWithAddrMValues
+    val rightLinks = rightProjectLinks.filter(_.status == RoadAddressChangeType.Unchanged) ++ rightLinksWithAddrMValues
 
     // adjusts tracks to match, splits by original addrM values etc
-    val (adjustedLeftLinks, adjustedRightLinks) = adjustLinksOnTracks(rightLinksReAdjusted, leftLinksReAdjusted, userDefinedCalibrationPoint)
+    val (trackAdjustedLeftLinks, trackAdjustedRightLinks) = adjustLinksOnTracks(rightLinks, leftLinks, userDefinedCalibrationPoint)
 
-    val (leftLinksWithUdcps, splittedRightLinks, udcpsFromRightSideSplits) = TwoTrackRoadUtils.splitPlsAtStatusChange(adjustedLeftLinks, adjustedRightLinks)
+    val (leftLinksWithUdcps, splittedRightLinks, udcpsFromRightSideSplits) = TwoTrackRoadUtils.splitPlsAtStatusChange(trackAdjustedLeftLinks, trackAdjustedRightLinks)
     val (rightLinksWithUdcps, splittedLeftLinks, udcpsFromLeftSideSplits) = TwoTrackRoadUtils.splitPlsAtStatusChange(splittedRightLinks, leftLinksWithUdcps)
 
-
-    def isUserDefinedCalibrationPointDefined(udcp: Option[UserDefinedCalibrationPoint]) =
-      udcp.isDefined && udcp.get.isInstanceOf[UserDefinedCalibrationPoint]
-
-    // Combine UserDefinedCalibrationPoints from right and left side splits,
-    // filter out those that are not defined or not instances of UserDefinedCalibrationPoint,
-    // group them by project link ID, and filter out groups with only one UDCP.
-    val duplicateUDCPs = (udcpsFromRightSideSplits ++ udcpsFromLeftSideSplits)
-      .filter(isUserDefinedCalibrationPointDefined)
-      .groupBy(_.get.projectLinkId)
-      .filter(_._2.size > 1)
-
-    /* Update udcp project link if split after second pass. */
-    val updatedUDCPsFromRightSideSplits = duplicateUDCPs.foldLeft(udcpsFromRightSideSplits) { (udcps, cur) => {
-      val splittedLeftLink       = splittedLeftLinks.find(_.id == cur._1)
-      // Check if the left link is split and has a connected link
-      if (splittedLeftLink.isDefined && splittedLeftLink.get.connectedLinkId.isDefined) {
-        // Find the new link created after the split
-        val newLink = splittedLeftLinks.find(_.startAddrMValue == splittedLeftLink.get.endAddrMValue).get
-
-        val udcpToUpdate = udcps.find(_.get.projectLinkId == cur._1)
-        udcps.filterNot(_.get.projectLinkId == cur._1) :+ Some(udcpToUpdate.get.get.copy(projectLinkId = newLink.id))
-      } else {
-        udcps
-      }
-    }}
-
-    def toUdcpMap(udcp: Seq[Option[UserDefinedCalibrationPoint]]) = udcp.filter(isUserDefinedCalibrationPointDefined).map(_.get).map(c => c.projectLinkId -> c)
-
-    val splitCreatedCpsFromRightSide = toUdcpMap(updatedUDCPsFromRightSideSplits).toMap
-    val splitCreatedCpsFromLeftSide  = toUdcpMap(udcpsFromLeftSideSplits).toMap
+    val (splitCreatedCpsFromRightSide, splitCreatedCpsFromLeftSide) = handleUserDefinedCalibrationPoints(udcpsFromRightSideSplits, udcpsFromLeftSideSplits, splittedLeftLinks)
 
     //  TODO VIITE-3120 The commented code below seems obsolete in current Viite app, commented out so they are available if needed after all (if you are deleting these lines, be sure to delete the other functions aswell tagged with "TODO VIITE-3120")
     //val udcpSplitsAtOriginalAddresses = (filterOutNewLinks(rightLinksWithUdcps) ++ filterOutNewLinks(splittedLeftLinks)).filter(_.endCalibrationPointType == CalibrationPointType.UserDefinedCP).map(_.originalEndAddrMValue).filter(_ > 0)
