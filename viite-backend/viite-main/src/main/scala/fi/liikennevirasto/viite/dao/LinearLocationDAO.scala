@@ -4,6 +4,7 @@ import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
 import fi.vaylavirasto.viite.dao.{BaseDAO, LinkDAO, Queries, Sequences}
+import fi.vaylavirasto.viite.geometry.GeometryUtils.scaleToThreeDigits
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.{CalibrationPointType, LinkGeomSource, RoadPart, SideCode}
 import fi.vaylavirasto.viite.postgis.MassQuery.logger
@@ -480,34 +481,39 @@ class LinearLocationDAO extends BaseDAO {
     var intersectionFunction = s""
     var closingBracket = s""
     val precision = MaxDistanceForConnectedLinks
+    var maxCheckedLLs = 8 // The closest point most probably is not further away than 8 LLs. 8 is already quite much.
 
-    for (i <- 2 until math.min(llLength, 8)) {
+    // First two LLs already checked. Find / Check for the closest point within max. maxCheckedLLs more linearLocations
+    for (i <- 2 until math.min(llLength, maxCheckedLLs)) {
       val llId = llIds(i)
-      intersectionFunction += s"ST_Intersection((SELECT st_ReducePrecision(ll.geometry, $precision) FROM linear_location ll WHERE ll.id = $llId),"
+      // Using ClosestPoint as intersection function, as ST_Intersection sometimes fails to produce a coordinate (not intersecting at all?)
+      intersectionFunction += s"ST_ClosestPoint((SELECT ST_ReducePrecision(ll.geometry, $precision) FROM linear_location ll WHERE ll.id = $llId),"
       closingBracket += ")"
     }
-
+    // Using ClosestPoint as intersection function, as ST_Intersection sometimes fails to produce a coordinate (not intersecting at all?)
+    val intersectionOfTheFirstTwoLLs = s"""
+        ST_ClosestPoint(
+          (SELECT ST_ReducePrecision(ll.geometry, $precision)  FROM linear_location ll  WHERE ll.id = ${llIds(0)}),
+          (SELECT ST_ReducePrecision(ll.geometry, $precision)  FROM linear_location ll  WHERE ll.id = ${llIds(1)})
+        )
+    """
     val query = {
       s"""
-             SELECT DISTINCT
-             ST_X(${intersectionFunction}
-                  ST_Intersection((SELECT st_ReducePrecision(ll.geometry, $precision)
-                       FROM linear_location ll
-                       WHERE ll.id = ${llIds(0)}), (SELECT st_ReducePrecision(ll.geometry, $precision)
-                       FROM linear_location ll
-                       WHERE ll.id = ${llIds(1)})${closingBracket})) AS xCoord,
-             ST_Y(${intersectionFunction}
-                  ST_Intersection((SELECT st_ReducePrecision(ll.geometry, $precision)
-                       FROM linear_location ll
-                       WHERE ll.id = ${llIds(0)}), (SELECT st_ReducePrecision(ll.geometry, $precision)
-                       FROM linear_location ll
-                       WHERE ll.id = ${llIds(1)})${closingBracket})) AS yCoord
-          """
+         SELECT DISTINCT
+         ST_X(${intersectionFunction} $intersectionOfTheFirstTwoLLs ${closingBracket}) AS xCoord,
+         ST_Y(${intersectionFunction} $intersectionOfTheFirstTwoLLs ${closingBracket}) AS yCoord
+      """
     }
-    val res = Q.queryNA[JunctionCoordinate](query).firstOption
-
-    val point: Option[Point] = res.map(junction => Point(junction.xCoord, junction.yCoord))
-    point
+    try {
+      val res = Q.queryNA[JunctionCoordinate](query).firstOption
+      val point: Option[Point] = res.map(junction => Point(scaleToThreeDigits(junction.xCoord), scaleToThreeDigits(junction.yCoord)))
+      point
+    }
+    catch {
+      case e: Exception =>
+          logger.error(s"Exception ${e.getClass} at fetchCoordinatesForJunction: ${e.getMessage}.\nThe failing query was:\n$query")
+          throw e
+    }
   }
 
   /**
