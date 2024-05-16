@@ -946,9 +946,17 @@ class RoadAddressService(
       if (roadwayNumberInPoint.isDefined) {
         if (rwp.roadwayNumber != roadwayNumberInPoint.get || rwp.addrMValue != newAddrM) {
           val newRwp = rwp.copy(roadwayNumber = roadwayNumberInPoint.get, addrMValue = newAddrM, modifiedBy = Some(username))
-          logger.info(s"Updating roadway_point ${rwp.id}: (roadwayNumber: ${rwp.roadwayNumber} -> ${newRwp.roadwayNumber}, addr: ${rwp.addrMValue} -> ${newRwp.addrMValue})")
-          roadwayPointDAO.update(newRwp)
-          Seq(newRwp)
+          val existingRoadwayPoint = roadwayPointDAO.fetch(newRwp.roadwayNumber, newRwp.addrMValue)
+          if (existingRoadwayPoint.isEmpty) {
+            logger.info(s"Updating roadway_point ${rwp.id}: (roadwayNumber: ${rwp.roadwayNumber} -> ${newRwp.roadwayNumber}, addr: ${rwp.addrMValue} -> ${newRwp.addrMValue})")
+            roadwayPointDAO.update(newRwp)
+            Seq(newRwp)
+          }
+          else {
+            logger.info(s"Skipping roadway points' roadwayNumber (${rwp.roadwayNumber} -> ${newRwp.roadwayNumber}) and addrM (${rwp.addrMValue} -> ${newRwp.addrMValue}) update " +
+              s"because a similar roadway point already exists in the database with these values (id: ${existingRoadwayPoint.get.id}, roadwayNumber: ${existingRoadwayPoint.get.roadwayNumber}, addrMValue: ${existingRoadwayPoint.get.addrMValue})")
+            Seq()
+          }
         } else {
           Seq()
         }

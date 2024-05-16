@@ -429,7 +429,8 @@ println("Threading print test: Now in avoidRestrictions")
           validNodesWithJunctionsToApi(fetchedNodesWithJunctions)
         } catch {
           case t: Throwable =>
-            handleCommonIntegrationAPIExceptions(t, getValidNodes.operationId)
+            //handleCommonIntegrationAPIExceptions(t, getValidNodes.operationId)  // Use if _not_ using avoidRestrictions
+            InternalServerError(t.getMessage)                                     // Use if _using_ avoidRestrictions
         }
       }
     }
