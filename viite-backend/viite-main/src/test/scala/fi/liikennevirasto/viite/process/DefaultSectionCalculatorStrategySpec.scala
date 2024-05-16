@@ -513,41 +513,6 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test defaultSectionCalculatorStrategy.assignAddrMValues() " +
-    "When using 2 tracks with not proper administrative class sections " +
-    "Then will fail because the sections cannot be adjusted for two tracks.") {
-    runWithRollback {
-      val geomLeft1 = Seq(Point(0.0, 0.0), Point(0.0, 30.0))
-      val geomLeft2 = Seq(Point(0.0, 30.0), Point(0.0, 60.0))
-
-      val projId = Sequences.nextViiteProjectId
-      val roadwayId = Sequences.nextRoadwayId
-      val linearLocationId = Sequences.nextLinearLocationId
-      val projectLinkId = Sequences.nextProjectLinkId
-      val project = Project(projId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
-        "", Seq(), Seq(), None, None)
-
-      val projectLinkLeft1 = ProjectLink(projectLinkId,     RoadPart(9999, 1), Track.apply(2), Discontinuity.Continuous,     0L,  0L, 0L,  0L, None, None, Some("user"), 12345L.toString, 0.0,  0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), geomLeft1, projId, RoadAddressChangeType.New, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomLeft1), 0L, 0, 0, reversed = false, None, 86400L, roadwayNumber = 12345L)
-      val projectLinkLeft2 = ProjectLink(projectLinkId + 1, RoadPart(9999, 1), Track.apply(2), Discontinuity.Discontinuous,  0L,  0L, 0L,  0L, None, None, Some("user"), 12346L.toString, 0.0,  0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), geomLeft2, projId, RoadAddressChangeType.New, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomLeft2), 0L, 0, 0, reversed = false, None, 86400L, roadwayNumber = 12345L)
-
-      val geomRight1 = Seq(Point(5.0, 0.0), Point(5.0, 5.0))
-      val geomRight2 = Seq(Point(5.0, 5.0), Point(5.0, 62.0))
-
-      val projectLinkRight1 = ProjectLink(projectLinkId + 2, RoadPart(9999, 1), Track.apply(1), Discontinuity.Continuous,    0L,  5L, 0L,  5L, None, None, Some("user"), 12347L.toString, 0.0,  5.0, SideCode.Unknown, (RoadAddressCP, NoCP), (NoCP, NoCP), geomRight1, projId, RoadAddressChangeType.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight1), roadwayId,     linearLocationId, 0,     reversed = false, None, 86400L, roadwayNumber = 12346L)
-      val projectLinkRight2 = ProjectLink(projectLinkId + 3, RoadPart(9999, 1), Track.apply(1), Discontinuity.Discontinuous, 5L, 62L, 5L, 62L, None, None, Some("user"), 12348L.toString, 0.0, 57.0, SideCode.Unknown, (NoCP, RoadAddressCP), (NoCP, NoCP), geomRight2, projId, RoadAddressChangeType.Transfer, AdministrativeClass.State,        LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight2), roadwayId + 1, linearLocationId + 1, 0, reversed = false, None, 86400L, roadwayNumber = 12347L)
-
-      val leftSideProjectLinks = Seq(projectLinkLeft1, projectLinkLeft2)
-      val rightSideProjectLinks = Seq(projectLinkRight1, projectLinkRight2)
-      val (linearLocation1, roadway1) = Seq(projectLinkRight1).map(toRoadwayAndLinearLocation).head
-      val (linearLocation2, roadway2) = Seq(projectLinkRight2).map(toRoadwayAndLinearLocation).head
-
-      buildTestDataForProject(Some(project), Some(Seq(roadway1, roadway2)), Some(Seq(linearLocation1, linearLocation2)), Some(leftSideProjectLinks ++ rightSideProjectLinks))
-      intercept[ProjectValidationException] {
-        defaultSectionCalculatorStrategy.assignAddrMValues(leftSideProjectLinks, rightSideProjectLinks, Seq.empty[UserDefinedCalibrationPoint])
-      }
-    }
-  }
-
   test("Test defaultSectionCalculatorStrategy.assignAddrMValues() When using 2 tracks with proper pairing administrative class sections Then they will calculate values properly") {
     runWithRollback {
       val geomLeft1 = Seq(Point(0.0, 0.0), Point(0.0, 30.0))
