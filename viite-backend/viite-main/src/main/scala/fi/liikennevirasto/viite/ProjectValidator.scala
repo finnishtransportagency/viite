@@ -1331,13 +1331,13 @@ class ProjectValidator {
           interval => {
             if (interval.size > 1) {
               if (interval.exists(_.endAddrMValue == 0)) {
-                val onceConnectedNewLinks = TrackSectionOrder.findSinglyConnectedLinks(interval)
-                if (onceConnectedNewLinks.size < 3)
+                val singlyConnectedNewLinks = TrackSectionOrder.findSinglyConnectedLinks(interval)
+                if (singlyConnectedNewLinks.size < 3)
                   None
                 else {
-                  val endPointLinks     = findChainEndpoints(onceConnectedNewLinks.values.toSeq)
-                  val middleLinks       = onceConnectedNewLinks.filter((p: (Point, ProjectLink)) => !endPointLinks.exists(p2 => GeometryUtils.areAdjacent(p2._1,GeometryUtils.to2DGeometry(p._1))))
-                  val lastLink          = endPointLinks.find(p => p._2.discontinuity != Discontinuity.Continuous).getOrElse(onceConnectedNewLinks.maxBy(_._2.id))
+                  val endPointLinks     = findChainEndpoints(singlyConnectedNewLinks.values.toSeq)
+                  val middleLinks       = singlyConnectedNewLinks.filter((p: (Point, ProjectLink)) => !endPointLinks.exists(p2 => GeometryUtils.areAdjacent(p2._1,GeometryUtils.to2DGeometry(p._1))))
+                  val lastLink          = endPointLinks.find(p => p._2.discontinuity != Discontinuity.Continuous).getOrElse(singlyConnectedNewLinks.maxBy(_._2.id))
                   val dists             = middleLinks.map(l => l._1.distance2DTo(lastLink._1) -> l._2)
                   val discontinuousLink = dists.maxBy(_._1)._2
                   if (discontinuousLink.discontinuity == Discontinuity.Continuous)

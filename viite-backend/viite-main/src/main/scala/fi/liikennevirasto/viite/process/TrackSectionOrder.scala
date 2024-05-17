@@ -108,7 +108,7 @@ object TrackSectionOrder {
 
   /**
    * Finds singly connected links in a sequence of BaseRoadAddress instances.
-   * singly connected links are those that are connected to only one other link in the sequence.
+   * Singly connected links are those that are connected to only one other link in the sequence.
    *
    * @param seq An iterable collection of BaseRoadAddress instances representing road segments.
    * @return A map where each Point represents the start or end point of a road segment,
