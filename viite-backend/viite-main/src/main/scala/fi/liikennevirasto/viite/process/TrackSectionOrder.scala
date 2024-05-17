@@ -107,14 +107,14 @@ object TrackSectionOrder {
   }
 
   /**
-   * Finds once-connected links in a sequence of BaseRoadAddress instances.
-   * Once-connected links are those that are connected to only one other link in the sequence.
+   * Finds singly connected links in a sequence of BaseRoadAddress instances.
+   * singly connected links are those that are connected to only one other link in the sequence.
    *
    * @param seq An iterable collection of BaseRoadAddress instances representing road segments.
    * @return A map where each Point represents the start or end point of a road segment,
    *         mapped to the corresponding BaseRoadAddress instance that it is connected to.
    */
-  def findOnceConnectedLinks[T <: BaseRoadAddress](seq: Iterable[T]): Map[Point, T] = {
+  def findSinglyConnectedLinks[T <: BaseRoadAddress](seq: Iterable[T]): Map[Point, T] = {
 
     // Creates a mapping of (startPoint -> BaseRoadAddress, endPoint -> BaseRoadAddress
     // Then groups it by points and reduces the mapped values to the distinct BaseRoadAddresses
@@ -130,7 +130,7 @@ object TrackSectionOrder {
   }
 
   def isRoundabout[T <: BaseRoadAddress](seq: Iterable[T]): Boolean = {
-    seq.nonEmpty && seq.map(_.track).toSet.size == 1 && findOnceConnectedLinks(seq).isEmpty && seq.forall(pl =>
+    seq.nonEmpty && seq.map(_.track).toSet.size == 1 && findSinglyConnectedLinks(seq).isEmpty && seq.forall(pl =>
       seq.count(pl2 =>
         GeometryUtils.areAdjacent(pl.geometry, pl2.geometry, MaxDistanceForConnectedLinks)) == 3) // the link itself and two connected
   }
@@ -302,7 +302,7 @@ object TrackSectionOrder {
 
         val (nextPoint, nextLink): (Point, ProjectLink) = connected.size match {
           case 0 =>
-            val subsetB = findOnceConnectedLinks(unprocessed)
+            val subsetB = findSinglyConnectedLinks(unprocessed)
             if (subsetB.nonEmpty) {
               val (closestPoint, link) = subsetB.minBy(b => (currentPoint - b._1).length())
               (getOppositeEnd(link, closestPoint), link)
@@ -316,10 +316,10 @@ object TrackSectionOrder {
             if (nextLinkSameTrack.nonEmpty) {
               (getOppositeEnd(nextLinkSameTrack.get, currentPoint), nextLinkSameTrack.get)
             } else {
-              if (findOnceConnectedLinks(unprocessed).exists(b => {
+              if (findSinglyConnectedLinks(unprocessed).exists(b => {
                 (currentPoint - b._1).length() <= fi.liikennevirasto.viite.MaxJumpForSection
               })) {
-                val (nPoint, link) = findOnceConnectedLinks(unprocessed).filter(b => {
+                val (nPoint, link) = findSinglyConnectedLinks(unprocessed).filter(b => {
                   (currentPoint - b._1).length() <= fi.liikennevirasto.viite.MaxJumpForSection
                 }).minBy(b => {
                   (currentPoint - b._1).length()

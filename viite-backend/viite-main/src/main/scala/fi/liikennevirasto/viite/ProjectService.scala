@@ -559,7 +559,7 @@ class ProjectService(
               })
             } else Seq()
             val existingLinksGeoms    = if (existingLinks.nonEmpty) existingLinks else prevRoadPartGeom
-            val onceConnectedNewLinks = TrackSectionOrder.findOnceConnectedLinks(newLinks)
+            val onceConnectedNewLinks = TrackSectionOrder.findSinglyConnectedLinks(newLinks)
             val endLinkOfNewLinks     = onceConnectedNewLinks.filterNot(onceConnected => {
               existingLinksGeoms.exists(el => {
                 onceConnected._1.connected(el._1) || onceConnected._1.connected(el._2)

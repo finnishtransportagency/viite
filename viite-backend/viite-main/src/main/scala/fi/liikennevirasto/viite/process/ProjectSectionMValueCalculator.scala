@@ -81,7 +81,7 @@ object ProjectSectionMValueCalculator {
       val ordered =
         if (projectLinks.exists(pl => pl.isNotCalculated)) {
 
-          val seqOfEnds = TrackSectionOrder.findOnceConnectedLinks(projectLinks).values.toSeq // Some complex cases may need simplifying to find ends correctly.
+          val seqOfEnds = TrackSectionOrder.findSinglyConnectedLinks(projectLinks).values.toSeq // Some complex cases may need simplifying to find ends correctly.
 
           val endPoints = if (projectLinks.exists(pl => pl.endAddrMValue == 0)) TrackSectionOrder.findChainEndpoints(projectLinks) else  TrackSectionOrder.findChainEndpoints(seqOfEnds)
 
