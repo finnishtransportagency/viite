@@ -559,8 +559,8 @@ class ProjectService(
               })
             } else Seq()
             val existingLinksGeoms    = if (existingLinks.nonEmpty) existingLinks else prevRoadPartGeom
-            val onceConnectedNewLinks = TrackSectionOrder.findSinglyConnectedLinks(newLinks)
-            val endLinkOfNewLinks     = onceConnectedNewLinks.filterNot(onceConnected => {
+            val singlyConnectedNewLinks = TrackSectionOrder.findSinglyConnectedLinks(newLinks)
+            val endLinkOfNewLinks     = singlyConnectedNewLinks.filterNot(onceConnected => {
               existingLinksGeoms.exists(el => {
                 onceConnected._1.connected(el._1) || onceConnected._1.connected(el._2)
               })
@@ -580,7 +580,7 @@ class ProjectService(
                 newLinks.filterNot(_.equals(endLink)) :+ endLink.copy(discontinuity = discontinuity)
               case _ =>  // Case when new link selection has discontinuities in geometry
                 val firstLinkGeometry = newLinks.find(_.linkId == firstLinkId).get.geometry
-                val otherEndPoints    = onceConnectedNewLinks.filterNot(_._2.linkId == firstLinkId).keys
+                val otherEndPoints    = singlyConnectedNewLinks.filterNot(_._2.linkId == firstLinkId).keys
                 def minDistanceToOtherEndpoints(p: Point) = otherEndPoints.map(p => (p,p.distance2DTo(p))).minBy(_._2)
                 val closestEndPointToFirstLink = Seq(minDistanceToOtherEndpoints(firstLinkGeometry.head), minDistanceToOtherEndpoints(firstLinkGeometry.last)).minBy(_._2)._1
                 // Startpoint as one of first link end points further a way from closest(next link) link end point
