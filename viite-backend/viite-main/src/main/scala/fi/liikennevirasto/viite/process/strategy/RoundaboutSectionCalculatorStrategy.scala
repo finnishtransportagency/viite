@@ -15,7 +15,7 @@ class RoundaboutSectionCalculatorStrategy extends RoadAddressSectionCalculatorSt
     TrackSectionOrder.isRoundabout(projectLinks)
   }
 
-  override def assignMValues(newProjectLinks: Seq[ProjectLink], oldProjectLinks: Seq[ProjectLink], userCalibrationPoints: Seq[UserDefinedCalibrationPoint]): Seq[ProjectLink] = {
+  override def assignAddrMValues(newProjectLinks: Seq[ProjectLink], oldProjectLinks: Seq[ProjectLink], userCalibrationPoints: Seq[UserDefinedCalibrationPoint]): Seq[ProjectLink] = {
     val startingLink = oldProjectLinks.sortBy(_.startAddrMValue).headOption.orElse(
       newProjectLinks.find(pl => pl.endAddrMValue != 0 && pl.startAddrMValue == 0)).orElse(
       newProjectLinks.headOption).toSeq
@@ -55,7 +55,7 @@ class RoundaboutSectionCalculatorStrategy extends RoadAddressSectionCalculatorSt
       val factors = ProjectSectionMValueCalculator.calculateAddressingFactors(withCalibration)
       val coEff = (withCalibration.map(_.endAddrMValue).max - factors.unChangedLength - factors.transferLength) / factors.newLength
       val calMap = userCalibrationPoints.map(c => c.projectLinkId -> c).toMap
-      ProjectSectionMValueCalculator.assignLinkValues(withCalibration, calMap, None, None, coEff)
+      ProjectSectionMValueCalculator.assignLinkValues(withCalibration, calMap, None, coEff)
     } else {
       mValuedWithRwns
     }

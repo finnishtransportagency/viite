@@ -21,6 +21,7 @@ import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
 import java.sql.SQLException
+import scala.collection.mutable.ListBuffer
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
@@ -112,9 +113,9 @@ class ProjectService(
     * @return Optional error message, None if no error
     */
   def checkRoadPartsExist(roadNumber: Long, roadStartPart: Long, roadEndPart: Long): Option[String] = {
-    if (roadwayDAO.fetchAllByRoadAndPart(RoadPart(roadNumber, roadStartPart)).isEmpty) {
+    if (roadwayDAO.fetchAllByRoadPart(RoadPart(roadNumber, roadStartPart)).isEmpty) {
       Some(ErrorStartingRoadPartNotFound)
-    } else if (roadwayDAO.fetchAllByRoadAndPart(RoadPart(roadNumber, roadEndPart)).isEmpty) {
+    } else if (roadwayDAO.fetchAllByRoadPart(RoadPart(roadNumber, roadEndPart)).isEmpty) {
       Some(ErrorEndingRoadPartNotFound)
     } else
       None
@@ -155,7 +156,7 @@ class ProjectService(
       val projectLinks = projectLinkDAO.fetchProjectLinks(projectId).filterNot(pl => List(RoadAddressChangeType.NotHandled, RoadAddressChangeType.Termination).contains(pl.status)).groupBy(pl => (pl.roadPart))
 
       val reservedAndFormedParts: Seq[ProjectReservedPart] = projectReservedRoadParts.flatMap { rp =>
-        val sortedAddresses: Seq[RoadAddress] = roadAddressService.getRoadAddressWithRoadAndPart(rp.roadPart, newTransaction = false).sortBy(_.startAddrMValue)
+        val sortedAddresses: Seq[RoadAddress] = roadAddressService.getRoadAddressWithRoadPart(rp.roadPart, newTransaction = false).sortBy(_.startAddrMValue)
         val roadPartLinks = projectLinks.filter(pl => pl._1 == (rp.roadPart))
 
         //reservedParts
@@ -551,14 +552,14 @@ class ProjectService(
               (pl.geometry.head, pl.geometry.last)
             })
             val prevRoadPartGeom      = if (existingLinks.isEmpty && newRoadPart.partNumber > 1) {
-              val rw = roadwayDAO.fetchAllByRoadAndPart(RoadPart(newRoadPart.roadNumber, newRoadPart.partNumber - 1), withHistory=false, fetchOnlyEnd=true).filter(_.track == newLinks.head.track) //TODO "-1" is incorrect..? The previous part might be more than one number away
+              val rw = roadwayDAO.fetchAllByRoadPart(RoadPart(newRoadPart.roadNumber, newRoadPart.partNumber - 1), withHistory=false, fetchOnlyEnd=true).filter(_.track == newLinks.head.track) //TODO "-1" is incorrect..? The previous part might be more than one number away
               linearLocationDAO.fetchByRoadways(rw.map(_.roadwayNumber).toSet).sortBy(_.orderNumber).map(l => {
                 (l.getFirstPoint, l.getLastPoint)
               })
             } else Seq()
             val existingLinksGeoms    = if (existingLinks.nonEmpty) existingLinks else prevRoadPartGeom
-            val onceConnectedNewLinks = TrackSectionOrder.findOnceConnectedLinks(newLinks)
-            val endLinkOfNewLinks     = onceConnectedNewLinks.filterNot(onceConnected => {
+            val singlyConnectedNewLinks = TrackSectionOrder.findSinglyConnectedLinks(newLinks)
+            val endLinkOfNewLinks     = singlyConnectedNewLinks.filterNot(onceConnected => {
               existingLinksGeoms.exists(el => {
                 onceConnected._1.connected(el._1) || onceConnected._1.connected(el._2)
               })
@@ -578,7 +579,7 @@ class ProjectService(
                 newLinks.filterNot(_.equals(endLink)) :+ endLink.copy(discontinuity = discontinuity)
               case _ =>  // Case when new link selection has discontinuities in geometry
                 val firstLinkGeometry = newLinks.find(_.linkId == firstLinkId).get.geometry
-                val otherEndPoints    = onceConnectedNewLinks.filterNot(_._2.linkId == firstLinkId).keys
+                val otherEndPoints    = singlyConnectedNewLinks.filterNot(_._2.linkId == firstLinkId).keys
                 def minDistanceToOtherEndpoints(p: Point) = otherEndPoints.map(p => (p,p.distance2DTo(p))).minBy(_._2)
                 val closestEndPointToFirstLink = Seq(minDistanceToOtherEndpoints(firstLinkGeometry.head), minDistanceToOtherEndpoints(firstLinkGeometry.last)).minBy(_._2)._1
                 // Startpoint as one of first link end points further a way from closest(next link) link end point
@@ -1320,7 +1321,7 @@ class ProjectService(
 
     def isCompletelyNewPart(toUpdateLinks: Seq[ProjectLink]): (Boolean, RoadPart) = {
       val reservedPart = projectReservedPartDAO.fetchReservedRoadPart(toUpdateLinks.head.roadPart).get
-      val newSavedLinks = if (roadwayDAO.fetchAllByRoadAndPart(reservedPart.roadPart).isEmpty) {
+      val newSavedLinks = if (roadwayDAO.fetchAllByRoadPart(reservedPart.roadPart).isEmpty) {
         projectLinkDAO.fetchByProjectRoadPart(reservedPart.roadPart, projectId)
       } else Seq.empty
       /*
@@ -1710,47 +1711,49 @@ class ProjectService(
     }
   }
 
-  def recalculateProjectLinks(projectId: Long, userName: String, roadParts: Set[RoadPart] = Set(), newTrack: Option[Track] = None, newDiscontinuity: Option[Discontinuity] = None, completelyNewLinkIds: Seq[Long] = Seq()): Unit = {
+  /**
+   * Adjusts calibration points for project links by adding RoadAddressCp to discontinuous links
+   * and to spots where the track changes (e.g., from double track to single track or vice versa).
+   * @param projectLinks A sequence of project links that need to be checked and adjusted
+   * @return A sequence of project links with adjusted calibration points
+   */
+  def adjustCalibrationPointsOnProjectLinks(projectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
+    projectLinks.map(pl => {
+      if (pl.discontinuity != Discontinuity.Continuous ||
+        projectLinks.exists(pl2 =>  pl.originalEndAddrMValue != 0 && pl2.originalStartAddrMValue == pl.originalEndAddrMValue && pl.track != pl2.track)) {
+        pl.copy(calibrationPointTypes = (pl.calibrationPointTypes._1, CalibrationPointType.RoadAddressCP))
+      } else
+        pl
+    })
+  }
+
+  def recalculateProjectLinks(projectId: Long, userName: String, roadParts: Set[RoadPart] = Set()): Unit = {
+
 
     logger.info(s"Recalculating project $projectId, parts ${roadParts.mkString(", ")}")
 
     time(logger, "Recalculate links") {
       val projectLinks = projectLinkDAO.fetchProjectLinks(projectId)
-      val (terminated, others) = projectLinks.partition(_.status == RoadAddressChangeType.Termination)
+      val nonTerminatedProjectLinks = projectLinks.filterNot(_.status == RoadAddressChangeType.Termination)
 
-      val recalculated = others.groupBy(pl => {
+      var terminatedProjectLinks = new ListBuffer[ProjectLink]()
+      val recalculated = nonTerminatedProjectLinks.groupBy(pl => {
         (pl.roadPart)
       }).flatMap {
         grp =>
           val fusedLinks = getFusedProjectLinks(grp._2)
           val calibrationPoints = ProjectCalibrationPointDAO.fetchByRoadPart(projectId, grp._1)
-          val calculatedLinks   = ProjectSectionCalculator.assignMValues(fusedLinks, calibrationPoints).sortBy(_.endAddrMValue)
-          if (!calculatedLinks.exists(_.isNotCalculated) && newDiscontinuity.isDefined && newTrack.isDefined &&
-              roadParts.contains((calculatedLinks.head.roadPart))) {
-            if (completelyNewLinkIds.nonEmpty) {
-              val (completelyNew, others) = calculatedLinks.partition(cl => {
-                completelyNewLinkIds.contains(cl.id) || cl.id == NewIdValue
-              })
-              others ++ (if (completelyNew.nonEmpty) {
-                completelyNew.init :+ completelyNew.last.copy(discontinuity = newDiscontinuity.get)
-              } else {
-                Seq()
-              })
-            } else {
-              val (filtered, rest) = calculatedLinks.partition(_.track == newTrack.get)
-              rest ++ (if (filtered.nonEmpty) {
-                filtered.init :+ filtered.last.copy(discontinuity = newDiscontinuity.get)
-              } else {
-                Seq()
-              })
-            }
-          }
-          else
-            calculatedLinks
+          val projectLinksWithAdjustedCalibrationPoints = adjustCalibrationPointsOnProjectLinks(fusedLinks)
+          val recalculatedProjectLinks = ProjectSectionCalculator.assignAddrMValues(projectLinksWithAdjustedCalibrationPoints, calibrationPoints)
+          val (recalculatedNonTerminated, recalculatedTerminated) = recalculatedProjectLinks.partition(pl => pl.status != RoadAddressChangeType.Termination)
+
+          terminatedProjectLinks ++= recalculatedTerminated
+
+          recalculatedNonTerminated.sortBy(_.endAddrMValue)
       }.toSeq
 
-      val terminatedProjectLinksWithAssignedRoadwayNumbers = assignRoadwayNumbersToTerminatedProjectLinks(projectLinks)
-      val originalAddresses = roadAddressService.getRoadAddressesByRoadwayIds((recalculated ++ terminated).map(_.roadwayId))
+      val terminatedProjectLinksWithAssignedRoadwayNumbers = assignRoadwayNumbersToTerminatedProjectLinks(nonTerminatedProjectLinks ++ terminatedProjectLinks)
+      val originalAddresses = roadAddressService.getRoadAddressesByRoadwayIds((recalculated ++ terminatedProjectLinks).map(_.roadwayId))
       projectLinkDAO.updateProjectLinks(recalculated ++ terminatedProjectLinksWithAssignedRoadwayNumbers, userName, originalAddresses)
       val projectLinkIdsToDB = recalculated.map(_.id).diff(projectLinks.map(_.id))
       projectLinkDAO.create(recalculated.filter(pl => projectLinkIdsToDB.contains(pl.id)))
