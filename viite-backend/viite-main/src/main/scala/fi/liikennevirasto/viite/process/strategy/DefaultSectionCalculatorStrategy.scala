@@ -717,7 +717,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       val endPointsWithValues = ListMap(chainEndPoints.filter(link => link._2.startAddrMValue >= 0 && link._2.endAddrMValue != 0).toSeq
         .sortWith(_._2.startAddrMValue < _._2.startAddrMValue): _*)
 
-      val foundConnectedLinks = TrackSectionOrder.findOnceConnectedLinks(remainLinks)
+      val foundConnectedLinks = TrackSectionOrder.findSinglyConnectedLinks(remainLinks)
         .values.filter(link => link.startAddrMValue == 0 && link.endAddrMValue != 0)
 
       // In case there is some old starting link, we want to prioritize the one that didn't change or was not treated yet.
@@ -735,7 +735,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         if (endPointsWithValues.size == 1) {
           val endLinkWithValues = endPointsWithValues.head._2
           val (currentEndPoint, otherEndPoint) = chainEndPoints.partition(_._2.id == endPointsWithValues.head._2.id)
-          val onceConnectLinks = TrackSectionOrder.findOnceConnectedLinks(linksWithoutValues)
+          val onceConnectLinks = TrackSectionOrder.findSinglyConnectedLinks(linksWithoutValues)
           val existsCloserProjectlink = linksWithValues.filter(pl => pl.startAddrMValue < endLinkWithValues.startAddrMValue && pl.id != endLinkWithValues.id)
           if (endPointsWithValues.nonEmpty && onceConnectLinks.nonEmpty && linksWithValues.nonEmpty
             && (oldFirst.isDefined && points.count(p => GeometryUtils.areAdjacent(p._1, oldFirst.get.startingPoint)
@@ -823,7 +823,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         val endPointsWithValues = ListMap(chainEndPoints.filter(link => link._2.startAddrMValue >= 0 && link._2.endAddrMValue != 0).toSeq
           .sortWith(_._2.startAddrMValue < _._2.startAddrMValue): _*)
 
-        val onceConnectedLinks = TrackSectionOrder.findOnceConnectedLinks(remainLinks)
+        val onceConnectedLinks = TrackSectionOrder.findSinglyConnectedLinks(remainLinks)
         var foundConnectedLinks = onceConnectedLinks.values.filter(link => link.startAddrMValue == 0 && link.endAddrMValue != 0)
         /* Check if an existing road with loop end is reversed. */
         if (onceConnectedLinks.size == 1 && foundConnectedLinks.isEmpty && TrackSectionOrder.hasTripleConnectionPoint(remainLinks) && remainLinks.forall(pl => pl.status == RoadAddressChangeType.Transfer && pl.reversed))
@@ -844,7 +844,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         if (endPointsWithValues.size == 1) {
           val endLinkWithValues = endPointsWithValues.head._2
           val (currentEndPoint, otherEndPoint) = chainEndPoints.partition(_._2.id == endPointsWithValues.head._2.id)
-          val onceConnectLinks = TrackSectionOrder.findOnceConnectedLinks(linksWithoutValues)
+          val onceConnectLinks = TrackSectionOrder.findSinglyConnectedLinks(linksWithoutValues)
           val existsCloserProjectlink = linksWithValues.filter(pl => pl.startAddrMValue < endLinkWithValues.startAddrMValue && pl.id != endLinkWithValues.id)
           if (endPointsWithValues.nonEmpty && onceConnectLinks.nonEmpty && linksWithValues.nonEmpty
             && (oldFirst.isDefined && points.count(p => GeometryUtils.areAdjacent(p._1, oldFirst.get.startingPoint)

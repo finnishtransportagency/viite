@@ -1331,7 +1331,7 @@ class ProjectValidator {
           interval => {
             if (interval.size > 1) {
               if (interval.exists(_.endAddrMValue == 0)) {
-                val onceConnectedNewLinks = TrackSectionOrder.findOnceConnectedLinks(interval)
+                val onceConnectedNewLinks = TrackSectionOrder.findSinglyConnectedLinks(interval)
                 if (onceConnectedNewLinks.size < 3)
                   None
                 else {
