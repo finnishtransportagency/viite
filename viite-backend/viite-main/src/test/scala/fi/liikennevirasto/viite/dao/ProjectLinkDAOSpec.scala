@@ -370,7 +370,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test batchUpdateProjectLinksToReset When batch updating project links back to original values Then all the project link values should reset.") {
+  test("Test batchUpdateProjectLinksToTerminate When batch updating project links back to original values Then all the project link values should reset except for RoadAddressChangeType which should be updated to termination.") {
     runWithRollback {
       // Mock logger to verify that no rows were updated
       val mockLogger = mock[Logger]
@@ -439,8 +439,8 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
         )
       )
       // Perform the batch update
-      projectLinkDAO.batchUpdateProjectLinksToReset(resetProjectLinks)
-      projectLinkDAO.batchUpdateProjectLinksToReset(resetProjectLinksFalsely) // This should not update anything with incorrect linearLocationId
+      projectLinkDAO.batchUpdateProjectLinksToTerminate(resetProjectLinks)
+      projectLinkDAO.batchUpdateProjectLinksToTerminate(resetProjectLinksFalsely) // This should not update anything with incorrect linearLocationId
       verify(mockLogger).warn(contains("No rows were updated")) // Verify that the logger was called with the expected message
       // Fetch and verify the updates
       val updatedProjectLinks = projectLinkDAO.fetchProjectLinks(projectId)
@@ -453,7 +453,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
         link.endAddrMValue shouldBe originalEndAddrMValue
         link.startMValue shouldBe originalStartMValue
         link.endMValue shouldBe originalEndMValue
-        link.status shouldBe RoadAddressChangeType.NotHandled
+        link.status shouldBe RoadAddressChangeType.Termination
       }
     }
   }
