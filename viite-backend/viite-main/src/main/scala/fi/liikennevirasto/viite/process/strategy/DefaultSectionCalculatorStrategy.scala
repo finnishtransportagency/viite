@@ -592,16 +592,12 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
    */
   def adjustLinksOnTracks(rightLinks: Seq[ProjectLink], leftLinks: Seq[ProjectLink], userDefinedCalibrationPointMap: Map[Long, UserDefinedCalibrationPoint]): (Seq[ProjectLink], Seq[ProjectLink]) = {
 
-    val twoTrackLinksWithoutNew = (leftLinks ++ rightLinks).filter(filterOutNewAndCombinedLinks)
-
-    val (rightTrackLinksWithoutNew, leftTrackLinksWithoutNew) = twoTrackLinksWithoutNew.partition(_.track == Track.RightSide)
-
-    val rightTrackOriginalEndAddresses = findOriginalEndAddressesOfContinuousSectionsExcludingNewLinks(rightTrackLinksWithoutNew)
-    val leftTrackOriginalEndAddresses = findOriginalEndAddressesOfContinuousSectionsExcludingNewLinks(leftTrackLinksWithoutNew)
-
-
     //  TODO VIITE-3120 The commented code below seems obsolete in current Viite app, commented out so they are available if needed after all (if you are deleting these lines, be sure to delete the other functions and code tagged with "TODO VIITE-3120")
     /* Adjust addresses before splits, calibration points after splits don't restrict calculation. */
+    //val twoTrackLinksWithoutNew = (leftLinks ++ rightLinks).filter(filterOutNewAndCombinedLinks)
+    //val (rightTrackLinksWithoutNew, leftTrackLinksWithoutNew) = twoTrackLinksWithoutNew.partition(_.track == Track.RightSide)
+    //val rightTrackOriginalEndAddresses = findOriginalEndAddressesOfContinuousSectionsExcludingNewLinks(rightTrackLinksWithoutNew)
+    //val leftTrackOriginalEndAddresses = findOriginalEndAddressesOfContinuousSectionsExcludingNewLinks(leftTrackLinksWithoutNew)
     //val distinctOriginalEndAddresses = (rightTrackOriginalEndAddresses ++ leftTrackOriginalEndAddresses).distinct.sorted
     //val leftLinksSplitByOriginalAddress = splitByOriginalAddresses(leftLinks, distinctOriginalEndAddresses)
     //val rightLinksSplitByOriginalAddress = splitByOriginalAddresses(rightLinks, distinctOriginalEndAddresses)
@@ -669,7 +665,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     val leftLinks = leftProjectLinks.filter(_.status == RoadAddressChangeType.Unchanged) ++ leftLinksWithAddrMValues
     val rightLinks = rightProjectLinks.filter(_.status == RoadAddressChangeType.Unchanged) ++ rightLinksWithAddrMValues
 
-    // adjusts tracks to match, splits by original addrM values etc
+    // adjusts tracks to match
     val (trackAdjustedLeftLinks, trackAdjustedRightLinks) = adjustLinksOnTracks(rightLinks, leftLinks, userDefinedCalibrationPoint)
 
     val (leftLinksWithUdcps, splittedRightLinks, udcpsFromRightSideSplits) = TwoTrackRoadUtils.splitPlsAtStatusChange(trackAdjustedLeftLinks, trackAdjustedRightLinks)
