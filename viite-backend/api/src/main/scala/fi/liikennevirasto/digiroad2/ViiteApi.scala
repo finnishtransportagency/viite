@@ -340,7 +340,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
   private val getRoadNetworkErrors: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String, Any]]("roadnetworkerrors")
       tags "ViiteAPI - RoadNetworkErrors"
-      summary "Runs road network integrity checks, returning all the found errors, e.g. missing points (roadway p., calibration p.), or roadways' integrity errors"
+      summary "Runs road network integrity checks, returning all the found errors, e.g. missing or extra points (roadway p., calibration p.), or roadways' integrity errors"
     )
   get("/roadnetworkerrors", operation(getRoadNetworkErrors)) {
     time(logger, s"GET request for /roadnetworkerrors") {
@@ -348,6 +348,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
         val missingCalibrationPointsFromTheStart = roadNetworkValidator.getMissingCalibrationPointsFromTheStart
         val missingCalibrationPointsFromTheEnd = roadNetworkValidator.getMissingCalibrationPointsFromTheEnd
         val missingCalibrationPointsFromJunctions = roadNetworkValidator.getMissingCalibrationPointsFromJunctions
+        val linksWithExtraCalibrationPoints = roadNetworkValidator.getLinksWithExtraCalibrationPoints
+        val linksWithExtraCalibrationPointsOnSameRoadway = roadNetworkValidator.getLinksWithExtraCalibrationPointsOnSameRoadway
         val missingRoadwayPointsFromTheStart = roadNetworkValidator.getMissingRoadwayPointsFromTheStart
         val missingRoadwayPointsFromTheEnd = roadNetworkValidator.getMissingRoadwayPointsFromTheEnd
         val invalidRoadwayLengths = roadNetworkValidator.getInvalidRoadwayLengths
@@ -358,6 +360,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
           "missingCalibrationPointsFromStart" -> missingCalibrationPointsFromTheStart.map(cp => missingCalibrationPointToApi(cp)),
           "missingCalibrationPointsFromEnd" -> missingCalibrationPointsFromTheEnd.map(cp => missingCalibrationPointToApi(cp)),
           "missingCalibrationPointsFromJunctions" -> missingCalibrationPointsFromJunctions.map(cp => missingCalibrationPointFromJunctionToApi(cp)),
+          "linksWithExtraCalibrationPoints" -> linksWithExtraCalibrationPoints.map(l => linksWithExtraCalibrationPointsToApi(l)),
+          "linksWithExtraCalibrationPointsOnSameRoadway" -> linksWithExtraCalibrationPointsOnSameRoadway.map(l => linksWithExtraCalibrationPointsOnSameRoadwayToApi(l)),
           "missingRoadwayPointsFromStart" -> missingRoadwayPointsFromTheStart.map(rwp => missingRoadwayPointToApi(rwp)),
           "missingRoadwayPointsFromEnd" -> missingRoadwayPointsFromTheEnd.map(rwp => missingRoadwayPointToApi(rwp)),
           "invalidRoadwayLengths" -> invalidRoadwayLengths.map(rw => invalidRoadwayLengthToApi(rw)),
@@ -395,6 +399,28 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       "junctionNumber"-> cp.junctionNumber,
       "nodeNumber" -> cp.nodeNumber,
       "beforeAfter" -> cp.beforeAfter
+    )
+  }
+
+  def linksWithExtraCalibrationPointsToApi(link: LinksWithExtraCalibrationPoints): Map[String, Any] = {
+    Map(
+      "linkId" -> link.linkId,
+      "roadNumber" -> link.roadPart.roadNumber,
+      "roadPartNumber" -> link.roadPart.partNumber,
+      "startCount" -> link.startCount,
+      "endCount" -> link.endCount,
+      "calibrationPoints" -> link.calibrationPointIds
+    )
+  }
+
+  def linksWithExtraCalibrationPointsOnSameRoadwayToApi(link: LinksWithExtraCalibrationPoints): Map[String, Any] = {
+    Map(
+      "linkId" -> link.linkId,
+      "roadNumber" -> link.roadPart.roadNumber,
+      "roadPartNumber" -> link.roadPart.partNumber,
+      "startCount" -> link.startCount,
+      "endCount" -> link.endCount,
+      "calibrationPoints" -> link.calibrationPointIds
     )
   }
 
