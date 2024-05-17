@@ -11,6 +11,7 @@ import fi.liikennevirasto.viite.util.TwoTrackRoadUtils._
 import fi.vaylavirasto.viite.dao.Sequences
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point, Vector3d}
 import fi.vaylavirasto.viite.model.{CalibrationPointType, Discontinuity, RoadAddressChangeType, SideCode, Track}
+import fi.vaylavirasto.viite.util.ViiteException
 import org.slf4j.LoggerFactory
 
 import scala.collection.immutable.ListMap
@@ -478,6 +479,29 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       (Seq(projectLinks.head),projectLinks.tail)
   }
 
+  /**
+   * Adjusts the address values of a sequence of project links and returns the updated sequence.
+   *
+   * This function processes a given sequence of project links (`projectLinks`) by first sorting them based on their
+   * starting address values (`startAddrMValue`). It then recursively adjusts the address values within segments of
+   * project links that belong to the same roadway until a calibration point is reached. The adjusted address values
+   * are spread across the project links, including handling terminated links (`terminatedLinks`).
+   *
+   * The function performs the following steps:
+   * 1. Sorts the `projectLinks` by `startAddrMValue`.
+   * 2. If there are no project links to process, returns an empty sequence.
+   * 3. Divides the sorted project links into a segment to process and the remaining links.
+   * 4. Determines the start and end address values for the segment to process.
+   * 5. Spreads the address values across the links in the segment and recursively processes the remaining links.
+   * 6. Partitions the adjusted links into terminated and non-terminated links, ensuring that terminated links are
+   *    distinct.
+   * 7. Combines and returns the adjusted non-terminated and distinct terminated links.
+   *
+   * @param projectLinks    Project links to be processed and adjusted. (The project links are expected to have addrMValues assigned to them already)
+   * @param terminatedLinks Terminated project links that are on the same road part and need to be considered
+   *                        during the adjustment.
+   * @return A sequence of `ProjectLink` objects with adjusted address values, including distinct terminated links.
+   */
   def mapAddressValuesForProjectLinks(projectLinks: Seq[ProjectLink], terminatedLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
     val sortedProjectLinks = projectLinks.sortBy(_.startAddrMValue)
 
@@ -531,7 +555,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         if (depth > 100) {
           val message = s"mappedAddressValues got in infinite recursion. ProjectLink id = ${currentProjectLink.id}, startMValue = ${currentProjectLink.startMValue}, endMValue = ${currentProjectLink.endMValue}, previewValue = $previewValue, remaining = ${remaining.length}"
           logger.error(message)
-          if (depth > 105) throw new RuntimeException(message)
+          if (depth > 105) throw new ViiteException(message)
         }
 
         val adjustedList: Seq[Long] = if ((previewValue < endAddrM) && (previewValue > startAddr)) {
@@ -558,21 +582,21 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       case (projectLink, (st, en)) =>
         val terminatedLinkAfterUnchangedProjectLink = terminatedLinks.find(terminated => terminated.originalStartAddrMValue == projectLink.originalEndAddrMValue && projectLink.status == RoadAddressChangeType.Unchanged)
 
-        val adjustedTerminatedLink =
-          if (terminatedLinkAfterUnchangedProjectLink.nonEmpty)
-            Some(terminatedLinkAfterUnchangedProjectLink.get.copy(startAddrMValue = en, originalStartAddrMValue = en))
-          else None
-
-        if (adjustedTerminatedLink.nonEmpty) {
+        if (terminatedLinkAfterUnchangedProjectLink.nonEmpty) {
+          val adjustedTerminatedLink = terminatedLinkAfterUnchangedProjectLink.get.copy(startAddrMValue = en, originalStartAddrMValue = en)
           val index = terminatedLinks.indexOf(terminatedLinkAfterUnchangedProjectLink.get)
-          adjustedTerminated = terminatedLinks.updated(index, adjustedTerminatedLink.get)
+          adjustedTerminated = terminatedLinks.updated(index, adjustedTerminatedLink)
         }
 
         projectLink.status match {
-          case RoadAddressChangeType.Transfer  => projectLink.copy(startAddrMValue = st, endAddrMValue = en)
-          case RoadAddressChangeType.Renumeration => projectLink.copy(startAddrMValue = st, endAddrMValue = en)
-          case RoadAddressChangeType.Unchanged => projectLink.copy(startAddrMValue = st, endAddrMValue = en, originalStartAddrMValue = st, originalEndAddrMValue = en)
-          case RoadAddressChangeType.New => projectLink.copy(startAddrMValue = st, endAddrMValue = en)
+          case RoadAddressChangeType.Transfer |
+               RoadAddressChangeType.Renumeration |
+               RoadAddressChangeType.New =>
+            projectLink.copy(startAddrMValue = st, endAddrMValue = en)
+
+          case RoadAddressChangeType.Unchanged =>
+            projectLink.copy(startAddrMValue = st, endAddrMValue = en, originalStartAddrMValue = st, originalEndAddrMValue = en)
+
           case _ => projectLink
         }
     }
