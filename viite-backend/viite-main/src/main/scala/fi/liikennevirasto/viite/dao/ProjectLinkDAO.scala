@@ -700,7 +700,7 @@ println(sql)
           ROAD_PART_NUMBER = ${roadAddress.roadPart.partNumber}, TRACK = ${roadAddress.track.value},
           DISCONTINUITY_TYPE = ${roadAddress.discontinuity.value}, ADMINISTRATIVE_CLASS = ${roadAddress.administrativeClass.value},
           STATUS = ${RoadAddressChangeType.NotHandled.value}, START_ADDR_M = ${roadAddress.addrMRange.start}, END_ADDR_M = ${roadAddress.addrMRange.end},
-          ORIGINAL_START_ADDR_M = ${roadAddress.startAddrMValue}, ORIGINAL_END_ADDR_M = ${roadAddress.endAddrMValue},
+          ORIGINAL_START_ADDR_M = ${roadAddress.addrMRange.start}, ORIGINAL_END_ADDR_M = ${roadAddress.addrMRange.end},
           START_CALIBRATION_POINT = ${roadAddress.startCalibrationPointType.value},
           END_CALIBRATION_POINT = ${roadAddress.endCalibrationPointType.value},
           ORIG_START_CALIBRATION_POINT = ${roadAddress.startCalibrationPointType.value},
@@ -756,8 +756,8 @@ println(sql)
           updatePS.setInt(5, pl.administrativeClass.value)
           updatePS.setLong(6, pl.addrMRange.start)
           updatePS.setLong(7, pl.addrMRange.end)
-          updatePS.setLong(8, pl.originalStartAddrMValue)
-          updatePS.setLong(9, pl.originalEndAddrMValue)
+          updatePS.setLong(8, pl.originalAddrMRange.start)
+          updatePS.setLong(9, pl.originalAddrMRange.end)
           updatePS.setInt(10, pl.calibrationPointTypes._1.value)
           updatePS.setInt(11, pl.calibrationPointTypes._2.value)
           updatePS.setInt(12, pl.calibrationPointTypes._1.value)

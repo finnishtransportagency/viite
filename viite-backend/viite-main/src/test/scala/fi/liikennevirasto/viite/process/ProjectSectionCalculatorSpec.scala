@@ -539,7 +539,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       recalculatedProjectLinks.size should be (3)
       val recalculatedProjectLink3 = recalculatedProjectLinks.find(_.linkId == idRoad3).get
       val recalculatedProjectLink2 = recalculatedProjectLinks.find(_.linkId == idRoad2).get
-      recalculatedProjectLink3.startAddrMValue should be(AddrMRange(recalculatedProjectLink2.endAddrMValue,30L))
+      recalculatedProjectLink3.addrMRange should be(AddrMRange(recalculatedProjectLink2.addrMRange.end,30L))
       recalculatedProjectLink3.calibrationPoints._1 should be(None) // last project link shouldn't have start calibration point
       recalculatedProjectLink3.calibrationPoints._2.nonEmpty should be(true) // last project link should have end calibration point
       recalculatedProjectLink2.calibrationPoints._1 should be(None) // middle project link should not have start calibration point no more
@@ -628,8 +628,8 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       projectLinksWithNewAddrMValues.filter(_.id == idRoad0).foreach { r =>
         r.calibrationPoints should be(None, None)
         // new value = original + (new end - old end)
-        r.startAddrMValue should be(updatedProjectLink0.get.addrMRange.start + maxAddr - updatedProjectLink3.get.addrMRange.end)
-        r.endAddrMValue   should be(updatedProjectLink0.get.addrMRange.end   + maxAddr - updatedProjectLink3.get.addrMRange.end)
+        r.addrMRange.start should be(updatedProjectLink0.get.addrMRange.start + maxAddr - updatedProjectLink3.get.addrMRange.end)
+        r.addrMRange.end   should be(updatedProjectLink0.get.addrMRange.end   + maxAddr - updatedProjectLink3.get.addrMRange.end)
       }
       projectLinksWithNewAddrMValues.filter(_.id == idRoad3).foreach { r =>
         r.calibrationPoints should be(None, Some(ProjectCalibrationPoint(12348.toString, Math.round(10.399999999999999 * 10.0) / 10.0, 44, RoadAddressCP)))
@@ -1700,7 +1700,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       // Check that correct addresses have not changed.
       updatedProjectLinks.foreach(pl => {
         val projectLinkBefore = projectLinkSeq.find(_.id == pl.id).get
-        pl.addrMRange should be(projectLinkBefore.addrMRange
+        pl.addrMRange should be(projectLinkBefore.addrMRange)
         pl.sideCode should be(projectLinkBefore.sideCode)
         pl.reversed should be(projectLinkBefore.reversed)
       })

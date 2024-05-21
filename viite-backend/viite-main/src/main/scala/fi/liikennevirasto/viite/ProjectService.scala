@@ -1389,8 +1389,7 @@ class ProjectService(
             track = ra.track,
             administrativeClass = ra.administrativeClass,
             addrMRange = AddrMRange(ra.addrMRange.start, ra.addrMRange.end),
-            originalStartAddrMValue = ra.startAddrMValue,
-            originalEndAddrMValue = ra.endAddrMValue,
+            originalAddrMRange = ra.addrMRange,
             calibrationPointTypes = (startCpType, endCpType),
             originalCalibrationPointTypes = (startCpType, startCpType),
             sideCode = ra.sideCode,
@@ -1677,8 +1676,7 @@ class ProjectService(
       val originalLink = links.minBy(_.id) // Assuming the first link is always the original
       val splitsToRemove = links.filter { splitLink =>
         splitLink.id != originalLink.id &&
-          originalLink.startAddrMValue == splitLink.startAddrMValue &&
-          originalLink.endAddrMValue == splitLink.endAddrMValue
+          originalLink.addrMRange == splitLink.addrMRange
       }
       if (splitsToRemove.nonEmpty) Some(originalLink -> splitsToRemove) else None
     }
@@ -1719,7 +1717,7 @@ class ProjectService(
   def adjustCalibrationPointsOnProjectLinks(projectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
     projectLinks.map(pl => {
       if (pl.discontinuity != Discontinuity.Continuous ||
-        projectLinks.exists(pl2 =>  pl.originalEndAddrMValue != 0 && pl2.originalStartAddrMValue == pl.originalEndAddrMValue && pl.track != pl2.track)) {
+        projectLinks.exists(pl2 =>  pl.originalAddrMRange.end != 0 && pl2.originalAddrMRange.start == pl.originalAddrMRange.end && pl.track != pl2.track)) {
         pl.copy(calibrationPointTypes = (pl.calibrationPointTypes._1, CalibrationPointType.RoadAddressCP))
       } else
         pl
