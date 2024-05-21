@@ -446,16 +446,17 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test findAndCreateSplitsAtOriginalAddress() When split address is in address range of a new link Then originalAddress splitting should have no effect.") {
-    val geomTrack1_1 = Seq(Point(0.0, 0.0),   Point(100.0, 0.0))
-    val geomTrack1_2 = Seq(Point(100.0, 0.0), Point(200.0, 0.0))
-
-    val projectLinkTrack1_1 = ProjectLink(1001L, RoadPart(9999, 1), Track.apply(1), Discontinuity.Continuous, AddrMRange(  0L, 100L), AddrMRange(  0L, 100L), None, None, None, 1L.toString, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), geomTrack1_1, 0L, RoadAddressChangeType.New, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTrack1_1), 0L, 0, 0, reversed = false, None, 86400L)
-    val projectLinkTrack1_2 = ProjectLink(1002L, RoadPart(9999, 1), Track.apply(1), Discontinuity.Continuous, AddrMRange(100L, 200L), AddrMRange(100L, 200L), None, None, None, 2L.toString, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), geomTrack1_2, 0L, RoadAddressChangeType.New, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTrack1_2), 0L, 0, 0, reversed = false, None, 86400L)
-
-    val newLinks = runWithRollback {
-      TwoTrackRoadUtils.findAndCreateSplitsAtOriginalAddress(99, Seq(projectLinkTrack1_1, projectLinkTrack1_2))
+//  TODO VIITE-3120 The commented code below seems obsolete in current Viite app, commented out so they are available if needed after all (if you are deleting these lines, be sure to delete the other functions and code tagged with "TODO VIITE-3120")
+  //  test("Test findAndCreateSplitsAtOriginalAddress() When split address is in address range of a new link Then originalAddress splitting should have no effect.") {
+//    val geomTrack1_1 = Seq(Point(0.0, 0.0),   Point(100.0, 0.0))
+//    val geomTrack1_2 = Seq(Point(100.0, 0.0), Point(200.0, 0.0))
+//
+//    val projectLinkTrack1_1 = ProjectLink(1001L, RoadPart(9999, 1), Track.apply(1), Discontinuity.Continuous, AddrMRange(  0L, 100L), AddrMRange(  0L, 100L), None, None, None, 1L.toString, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), geomTrack1_1, 0L, RoadAddressChangeType.New, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTrack1_1), 0L, 0, 0, reversed = false, None, 86400L)
+//    val projectLinkTrack1_2 = ProjectLink(1002L, RoadPart(9999, 1), Track.apply(1), Discontinuity.Continuous, AddrMRange(100L, 200L), AddrMRange(100L, 200L), None, None, None, 2L.toString, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), geomTrack1_2, 0L, RoadAddressChangeType.New, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTrack1_2), 0L, 0, 0, reversed = false, None, 86400L)
+//
+//    val newLinks = runWithRollback {
+//      TwoTrackRoadUtils.findAndCreateSplitsAtOriginalAddress(99, Seq(projectLinkTrack1_1, projectLinkTrack1_2))
+//    }
+//    newLinks should not be 'defined
+//  }
     }
-    newLinks should not be 'defined
-  }
-}

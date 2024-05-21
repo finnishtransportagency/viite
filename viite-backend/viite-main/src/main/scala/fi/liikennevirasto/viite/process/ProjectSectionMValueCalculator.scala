@@ -7,7 +7,17 @@ import fi.vaylavirasto.viite.model.{AddrMRange, RoadAddressChangeType, Track}
 
 object ProjectSectionMValueCalculator {
 
-  def calculateMValuesForTrack(seq: Seq[ProjectLink], calibrationPoints: Map[Long, UserDefinedCalibrationPoint]): Seq[ProjectLink] = {
+  /**
+   * Calculates address values for project links on a track based on calibration points.
+   *
+   * This function processes a sequence of project links, ensuring proper address measure continuity and alignment.
+   *
+   * @param projectLinks               Sequence of project links to be processed.
+   * @param calibrationPoints Map containing calibration points, where keys are link IDs.
+   * @return Sequence of project links with calculated address measure values.
+   * @throws InvalidAddressDataException if the input data violates address measure constraints.
+   */
+  def calculateAddressMValuesForTrack(projectLinks: Seq[ProjectLink], calibrationPoints: Map[Long, UserDefinedCalibrationPoint]): Seq[ProjectLink] = {
     // That is an address connected extension of this
     def isExtensionOf(ext: ProjectLink)(thisPL: ProjectLink) = {
       thisPL.originalAddrMRange.end == ext.originalAddrMRange.start &&
@@ -24,7 +34,7 @@ object ProjectSectionMValueCalculator {
     }
 
     // Group all consecutive links with same status
-    val (unchanged, others) = seq.partition(_.status == RoadAddressChangeType.Unchanged)
+    val (unchanged, others) = projectLinks.partition(_.status == RoadAddressChangeType.Unchanged)
     val mapped = unchanged.groupBy(_.addrMRange.start)
     if (mapped.values.exists(_.size != 1)) {
       throw new InvalidAddressDataException(s"Multiple unchanged links specified with overlapping address value ${mapped.values.filter(_.size != 1).mkString(", ")}")
@@ -42,7 +52,7 @@ object ProjectSectionMValueCalculator {
         }
       }))
       throw new InvalidAddressDataException(s"Invalid unchanged link found")
-    unchanged.map(resetEndAddrMValue) ++ assignLinkValues(others, calibrationPoints, unchanged.map(_.addrMRange.end.toDouble).sorted.lastOption, None)
+    unchanged.map(resetEndAddrMValue) ++ assignLinkValues(others, calibrationPoints, unchanged.map(_.addrMRange.end.toDouble).sorted.lastOption)
   }
 
   def isSameTrack(previous: ProjectLink, currentLink: ProjectLink): Boolean = {
@@ -55,24 +65,42 @@ object ProjectSectionMValueCalculator {
       (tripleConnectionEndPoint, unConnectedEndPoint)
   }
 
-  def assignLinkValues(seq: Seq[ProjectLink], cps: Map[Long, UserDefinedCalibrationPoint], addrSt: Option[Double], addrEn: Option[Double], coEff: Double = 1.0): Seq[ProjectLink] = {
-    if (seq.isEmpty) Seq() else {
-      val ordered = if (seq.exists(pl => pl.isNotCalculated)) {
-        val seqOfEnds = TrackSectionOrder.findOnceConnectedLinks(seq).values.toSeq // Some complex cases may need simplifying to find ends correctly.
-        val endPoints = if (seq.exists(pl => pl.addrMRange.end == 0)) TrackSectionOrder.findChainEndpoints(seq) else  TrackSectionOrder.findChainEndpoints(seqOfEnds)
+  /**
+   * Assigns address values to project links based on their geometry and calibration points.
+   *
+   * @param projectLinks    Sequence of project links to be processed.
+   * @param calibrationPointMap    Map containing calibration points, where keys are link IDs.
+   * @param addrSt Optional starting address value. If not provided, defaults to 0.0.
+   * @param coEff  Coefficient to adjust the address values based on geometry length. Defaults to 1.0.
+   * @return Sequence of project links with assigned address values.
+   */
+  def assignLinkValues(projectLinks: Seq[ProjectLink], calibrationPointMap: Map[Long, UserDefinedCalibrationPoint], addrSt: Option[Double], coEff: Double = 1.0): Seq[ProjectLink] = {
+    if (projectLinks.isEmpty)
+      Seq()
+    else {
+      val ordered =
+        if (projectLinks.exists(pl => pl.isNotCalculated)) {
+
+          val seqOfEnds = TrackSectionOrder.findSinglyConnectedLinks(projectLinks).values.toSeq // Some complex cases may need simplifying to find ends correctly.
+
+          val endPoints = if (projectLinks.exists(pl => pl.addrMRange.end == 0)) TrackSectionOrder.findChainEndpoints(projectLinks) else  TrackSectionOrder.findChainEndpoints(seqOfEnds)
+
         val firstLastEndpoint = (endPoints.head._1, endPoints.last._1)
+
         val mappedEndpoints   = if (seqOfEnds.size == 1) {
-          val firstEndPoint  = TrackSectionOrder.getUnConnectedPoint(seq)
-          val secondEndPoint = TrackSectionOrder.getTripleConnectionPoint(seq)
-          if (firstEndPoint.isDefined && secondEndPoint.isDefined) orderEndPoints(seq.head, seqOfEnds.head, firstEndPoint.get, secondEndPoint.get) else firstLastEndpoint
-        } else firstLastEndpoint
-        val orderedPairs      = TrackSectionOrder.orderProjectLinksTopologyByGeometry(mappedEndpoints, seq)
-        if (seq.exists(_.track == Track.RightSide || seq.forall(_.track == Track.Combined))) orderedPairs._1 else orderedPairs._2.reverse
-      } else seq
+            val firstEndPoint  = TrackSectionOrder.getUnConnectedPoint(projectLinks)
+            val secondEndPoint = TrackSectionOrder.getTripleConnectionPoint(projectLinks)
+            if (firstEndPoint.isDefined && secondEndPoint.isDefined) orderEndPoints(projectLinks.head, seqOfEnds.head, firstEndPoint.get, secondEndPoint.get) else firstLastEndpoint
+          } else
+            firstLastEndpoint
+          val orderedPairs      = TrackSectionOrder.orderProjectLinksTopologyByGeometry(mappedEndpoints, projectLinks)
+          if (projectLinks.exists(_.track == Track.RightSide || projectLinks.forall(_.track == Track.Combined))) orderedPairs._1 else orderedPairs._2.reverse
+      } else
+          projectLinks
 
       val newAddressValues = ordered.scanLeft(addrSt.getOrElse(0.0)) {
         case (m, pl) =>
-          val someCalibrationPoint: Option[UserDefinedCalibrationPoint] = cps.get(pl.id)
+          val someCalibrationPoint: Option[UserDefinedCalibrationPoint] = calibrationPointMap.get(pl.id)
           pl.status match {
             case RoadAddressChangeType.New => if (someCalibrationPoint.nonEmpty) someCalibrationPoint.get.addressMValue else m + Math.abs(pl.geometryLength) * coEff
             case RoadAddressChangeType.Transfer | RoadAddressChangeType.NotHandled | RoadAddressChangeType.Renumeration | RoadAddressChangeType.Unchanged => m + (pl.originalAddrMRange.end - pl.originalAddrMRange.start)
@@ -80,7 +108,7 @@ object ProjectSectionMValueCalculator {
             case _ => throw new InvalidAddressDataException(s"Invalid status found at value assignment ${pl.status}, linkId: ${pl.linkId}")
           }
       }
-      seq.zip(newAddressValues.zip(newAddressValues.tail)).map { case (pl, (st, en)) => pl.copy(addrMRange = AddrMRange(Math.round(st), Math.round(en)))
+      projectLinks.zip(newAddressValues.zip(newAddressValues.tail)).map { case (pl, (st, en)) => pl.copy(addrMRange = AddrMRange(Math.round(st), Math.round(en)))
       }
     }
   }

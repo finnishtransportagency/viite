@@ -740,14 +740,21 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
   }
 
-  /*
-    1)  The nodes are created only for tracks 0 and 1
-    2)  A node template is always created if :
-      2.1)  road number is < 20000 or between 40000-70000
-      2.2)  and at the beginning/end of each road part, ely borders, or when administrative class changes
-      2.3)  on each junction with a road number (except number over 70 000)
+  /**
+   * Handles the creation and expiration of node points based on project roadway changes.
+   *
+   * 1)  The nodes are created only for tracks 0 and 1
+   * 2)  A node template is always created if :
+   * 2.1)  road number is < 20000 or between 40000-70000
+   * 2.2)  and at the beginning/end of each road part, ely borders, or when administrative class changes
+   * 2.3)  on each junction with a road number (except number over 70 000)
+   *
+   * @param roadwayChanges         List of roadway changes in the project.
+   * @param projectLinks           Sequence of project links.
+   * @param projectRoadLinkChanges Sequence of project road link changes.
+   * @param username               Username associated with the changes (default value: "-").
      */
-  def handleNodePoints(roadwayChanges: List[ProjectRoadwayChange], projectLinks: Seq[ProjectLink], mappedRoadwayNumbers: Seq[ProjectRoadLinkChange], username: String = "-"): Unit = {
+  def handleNodePoints(roadwayChanges: List[ProjectRoadwayChange], projectLinks: Seq[ProjectLink], projectRoadLinkChanges: Seq[ProjectRoadLinkChange], username: String = "-"): Unit = {
     @tailrec
     def continuousNodeSections(seq: Seq[ProjectLink], administrativeClassesSection: Seq[Seq[ProjectLink]] = Seq.empty[Seq[ProjectLink]]): (Seq[ProjectLink], Seq[Seq[ProjectLink]]) = {
       if (seq.isEmpty) {
@@ -778,23 +785,29 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
     time(logger, "Handling node point templates") {
       try {
-        val filteredLinks = projectLinks.filter(pl => RoadClass.forNodes.contains(pl.roadPart.roadNumber.toInt) && pl.status != RoadAddressChangeType.Termination).filterNot(_.track == Track.LeftSide)
-        val groupSections = filteredLinks.groupBy(l => (l.roadPart))
 
-        groupSections.values.foreach { group =>
-          val administrativeClassSections: Seq[Seq[ProjectLink]] = continuousNodeSections(group.sortBy(_.addrMRange.start))._2
+        val filteredLinks = projectLinks.filter(pl =>
+          RoadClass.forNodes.contains(pl.roadPart.roadNumber.toInt) && // Road number is < 20000 or between 40000-70000
+          pl.status != RoadAddressChangeType.Termination && // Terminated are handled elsewhere
+          pl.track != Track.LeftSide) // Nodes are created only for tracks 0 and 1 (Combined and Right side)
+
+        val groupedByRoadPart = filteredLinks.groupBy(pl => (pl.roadPart))
+
+
+        groupedByRoadPart.values.foreach { projectLinks =>
+          val administrativeClassSections: Seq[Seq[ProjectLink]] = continuousNodeSections(projectLinks.sortBy(_.addrMRange.start))._2
           administrativeClassSections.foreach { section =>
 
             val headProjectLink = section.head
             val headReversed = roadwayChanges.exists(ch => ch.changeInfo.target.startAddressM.nonEmpty && headProjectLink.addrMRange.start == ch.changeInfo.target.startAddressM.get
               && ch.changeInfo.target.endAddressM.nonEmpty && headProjectLink.addrMRange.end == ch.changeInfo.target.endAddressM.get && ch.changeInfo.reversed)
 
-            val headNodePoint: Option[NodePoint] = mappedRoadwayNumbers.find { rl =>
+            val headNodePoint: Option[NodePoint] = projectRoadLinkChanges.find { rl =>
               headProjectLink.addrMRange.start == rl.newStartAddr && headProjectLink.addrMRange.end == rl.newEndAddr && headProjectLink.roadwayNumber == rl.newRoadwayNumber
             }.flatMap { rl =>
               if (headReversed) {
                 nodePointDAO.fetchRoadAddressNodePoints(Seq(rl.originalRoadwayNumber, headProjectLink.roadwayNumber))
-                  .find(np => np.beforeAfter == BeforeAfter.Before && np.addrM == rl.newStartAddr)
+                .find(np => np.beforeAfter == BeforeAfter.After && np.addrM == rl.newStartAddr)
               } else {
                 nodePointDAO.fetchRoadAddressNodePoints(Seq(rl.originalRoadwayNumber, headProjectLink.roadwayNumber).distinct)
                   .find(np => np.beforeAfter == BeforeAfter.After && np.addrM == headProjectLink.addrMRange.start)
@@ -806,12 +819,12 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
             val lastLink = section.last
             val lastReversed = roadwayChanges.exists(ch => ch.changeInfo.target.endAddressM.nonEmpty && lastLink.addrMRange.end == ch.changeInfo.target.endAddressM.get && ch.changeInfo.reversed)
 
-            val lastNodePoint = mappedRoadwayNumbers.find { rl =>
+            val lastNodePoint = projectRoadLinkChanges.find { rl =>
               lastLink.addrMRange.start == rl.newStartAddr && lastLink.addrMRange.end == rl.newEndAddr && lastLink.roadwayNumber == rl.newRoadwayNumber
             }.flatMap { rl =>
               if (lastReversed) {
                 nodePointDAO.fetchRoadAddressNodePoints(Seq(rl.originalRoadwayNumber, lastLink.roadwayNumber))
-                  .find(np => np.beforeAfter == BeforeAfter.After && np.addrM == rl.newEndAddr)
+                  .find(np => np.beforeAfter == BeforeAfter.Before && np.addrM == rl.newEndAddr)
               } else {
                 nodePointDAO.fetchRoadAddressNodePoints(Seq(rl.originalRoadwayNumber, lastLink.roadwayNumber))
                   .find(np => np.beforeAfter == BeforeAfter.Before && np.addrM == lastLink.addrMRange.end)

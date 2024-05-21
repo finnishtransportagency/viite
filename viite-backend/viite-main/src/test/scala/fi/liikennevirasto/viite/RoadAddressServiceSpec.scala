@@ -1041,7 +1041,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       projectService.updateProjectLinks(projectId, Set(), Seq(projectLinks.last.linkId), RoadAddressChangeType.Transfer,  "-", RoadPart(99, 2), 0, Option.empty[Int])
 
       val updatedProjectLinks_ = projectLinkDAO.fetchProjectLinks(projectId).toList
-      val updatedProjectLinks2 = ProjectSectionCalculator.assignMValues(updatedProjectLinks_)
+      val updatedProjectLinks2 = ProjectSectionCalculator.assignAddrMValues(updatedProjectLinks_)
 
       val afterUpdateProjectLinks = updatedProjectLinks2.sortBy(pl => (pl.addrMRange.start, pl.roadPart.partNumber))
       val beforeDualPoint = afterUpdateProjectLinks.head.copy(roadwayNumber = roadwayNumber2)

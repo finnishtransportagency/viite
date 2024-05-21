@@ -309,7 +309,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       others.forall(_.discontinuity == Discontinuity.Continuous) should be (true)
 
       // Check calculation succeeds with expected order and values
-      val calculated = ProjectSectionCalculator.assignMValues(links)
+      val calculated = ProjectSectionCalculator.assignAddrMValues(links)
       val calculatedPl1 = calculated.find(_.linkId == 4224569.toString)
       val calculatedPl2 = calculated.find(_.linkId == 4224590.toString)
       val calculatedPl3 = calculated.find(_.linkId == 12531914.toString)
@@ -359,7 +359,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       others.forall(_.discontinuity == Discontinuity.Continuous) should be (true)
 
       // Check calculation succeeds with expected order and values
-      val calculated = ProjectSectionCalculator.assignMValues(links)
+      val calculated = ProjectSectionCalculator.assignAddrMValues(links)
       val calculatedPl1 = calculated.find(_.linkId == 12531914.toString)
       val calculatedPl2 = calculated.find(_.linkId == 4224590.toString)
       val calculatedPl3 = calculated.find(_.linkId == 4224569.toString)
@@ -407,7 +407,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
         val geom = mappedGeoms(l.linkId)
         l.copy(endMValue = GeometryUtils.geometryLength(geom), geometry = geom, geometryLength = GeometryUtils.geometryLength(geom))
       }
-      val adjusted = ProjectSectionCalculator.assignMValues(geomToLinks)
+      val adjusted = ProjectSectionCalculator.assignAddrMValues(geomToLinks)
       val projectLinkIds = geomToLinks.map(_.id)
       projectLinkDAO.create(adjusted.filter(pl => !projectLinkIds.contains(pl.id)))
       projectLinkDAO.updateProjectLinks(adjusted, "-", Seq())
@@ -590,7 +590,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
 
       // Test if roadwaynumbers are assigned.
       val projectLinksFromDB = projectLinkDAO.fetchProjectLinks(project.id)
-      val afterAssign: Seq[ProjectLink] = ProjectSectionCalculator.assignMValues(projectLinksFromDB)
+      val afterAssign: Seq[ProjectLink] = ProjectSectionCalculator.assignAddrMValues(projectLinksFromDB)
       afterAssign.forall(pl => pl.roadwayNumber != 0 && pl.roadwayNumber != NewIdValue)
 
       // Test if RoadAddressCPs are assigned.
@@ -600,7 +600,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       // Test if user defined end address is assigned.
       val userAddress = 1000
       val calibrationPoint = UserDefinedCalibrationPoint(NewIdValue, afterAssign.maxBy(_.addrMRange.end).id, project.id, userAddress - afterAssign.maxBy(_.addrMRange.end).startMValue, userAddress)
-      val afterAssignWithUserAddress  = ProjectSectionCalculator.assignMValues(projectLinksFromDB, Seq(calibrationPoint))
+      val afterAssignWithUserAddress  = ProjectSectionCalculator.assignAddrMValues(projectLinksFromDB, Seq(calibrationPoint))
       afterAssignWithUserAddress.maxBy(_.addrMRange.end).addrMRange.end should be(userAddress)
     }
   }
