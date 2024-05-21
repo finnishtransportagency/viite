@@ -2940,7 +2940,7 @@ Left     ^  ^   Right
     }
   }
 
-  test("Test assignAddrMValues() When two track road part has terminated links at the end and new minor discontinuity on both tracks Then calculation should be able to adjust the tracks to match") {
+  test("Test assignAddrMValues() When two track road part has terminated links at the track changing spot and new minor discontinuity on both tracks Then calculation should be able to adjust the tracks to match") {
     // Based on a real life project on road part 49529/1
     runWithRollback {
       val projectId = Sequences.nextViiteProjectId
