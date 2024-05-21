@@ -2392,10 +2392,6 @@ class ProjectService(
 
 }
 
-class SplittingException(s: String) extends RuntimeException {
-  override def getMessage: String = s
-}
-
 case class ProjectBoundingBoxResult(projectLinkResultF: Future[Seq[ProjectLink]], roadLinkF: Future[Seq[RoadLink]],
                                     complementaryF: Future[Seq[RoadLink]])
 
