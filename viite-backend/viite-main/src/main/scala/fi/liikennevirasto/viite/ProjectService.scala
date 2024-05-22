@@ -891,27 +891,6 @@ class ProjectService(
     }
   }
 
-  /**
-    * This method will not be used now because we don't want to show suravage in project mode. It will be used in future.
-    * It will execute a search by bounding box to find both the suravage links and project links contained in them, following that it will filter out all suravages that do not have a match with the project links.
-    * With the previous results we just run them through the builder and output the result.
-    *
-    * @param roadAddressService : RoadAddressService - The road address service
-    * @param projectId          : Long - The active project id
-    * @param boundingRectangle  : BoundingRectangle - Search rectangle defined by 2 point.
-    * @param roadNumberLimits   : Seq(Int, Int) - Defines the upper and lower limits of the road number that can be retrived.
-    * @param municipalities     : Seq(Int) - Defines from what municipalities we fetch infomration.
-    * @param everything         : Boolean - Used in the filter
-    * @param publicRoads        : Boolean - Used in the filter
-    * @return
-    */
-  def getProjectLinks(roadAddressService: RoadAddressService, projectId: Long, boundingRectangle: BoundingRectangle,
-                      roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int], everything: Boolean = false,
-                      publicRoads: Boolean = false): Seq[ProjectAddressLink] = {
-    val fetch = fetchBoundingBoxF(boundingRectangle, projectId, roadNumberLimits, municipalities, everything, publicRoads)
-    fetchProjectRoadLinks(projectId, boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads, fetch)
-  }
-
   //Temporary method that will be replaced for getProjectLinksWithSuravage method
   def getProjectLinksWithoutSuravage(projectId: Long, boundingRectangle: BoundingRectangle,
                                      roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int], everything: Boolean = false,
@@ -968,17 +947,6 @@ class ProjectService(
       ISOdateFormatter.print(changeData.projectStartDate), Seq(changeInfo))
   }
 
-
-  def prettyPrintLog(roadwayChanges: List[ProjectRoadwayChange]): Unit = {
-    roadwayChanges.groupBy(a => (a.projectId, a.projectName, a.projectStartDate, a.ely)).foreach(g => {
-      val (projectId, projectName, projectStartDate, projectEly) = g._1
-      val changes = g._2
-      logger.info(s"Changes for project [ID: $projectId; Name: ${projectName.getOrElse("")}; StartDate: $projectStartDate; Ely: $projectEly]:")
-      changes.foreach(c => {
-        logger.info(s"Change: ${c.toStringWithFields}")
-      })
-    })
-  }
 
   def getProjectAddressLinksByLinkIds(linkIdsToGet: Set[String]): Seq[ProjectAddressLink] = {
     if (linkIdsToGet.isEmpty)
