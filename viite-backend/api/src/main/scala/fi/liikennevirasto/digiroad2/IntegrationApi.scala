@@ -488,8 +488,10 @@ println(s"validNodesWithJunctionsToApi in /nodes/valid") // TODO remove when deb
   private def fetchAllValidNodesWithJunctions(): Seq[NodeWithJunctions] = {
     val result: Seq[NodeWithJunctions] = APIServiceForNodesAndJunctions.getAllValidNodesWithJunctions
     if (result.isEmpty) {
+println(s"fetchAllValidNodesWithJunctions RETURNED EMPTY")                     // TODO remove when debugging is done. This is ugly!
       Seq.empty[NodeWithJunctions]
     } else {
+println(s"fetchAllValidNodesWithJunctions GOT RESULT, of size ${result.size}") // TODO remove when debugging is done. This is ugly!
       result
     }
   }
