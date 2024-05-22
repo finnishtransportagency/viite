@@ -6,7 +6,7 @@ import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibr
 import fi.vaylavirasto.viite.dao.Sequences
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.CalibrationPointType.{JunctionPointCP, NoCP, UserDefinedCP}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LinkGeomSource, RoadAddressChangeType, RoadPart, SideCode, Track}
+import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinuity, LinkGeomSource, RoadAddressChangeType, RoadPart, SideCode, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
@@ -45,7 +45,7 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
                      linearLocationId: Long = 0L,
                      startDate       : Option[DateTime] = None
                    ) = {
-      ProjectLink(NewIdValue, roadPart, track, discontinuity, startAddrM, endAddrM, startAddrM, endAddrM, startDate, None, Some("User"), linkId, 0.0, (endAddrM - startAddrM).toDouble, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), geom: Seq[Point], projectId, status, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, (endAddrM - startAddrM).toDouble, roadwayId, linearLocationId, ely, reversed = false, None, 0L)
+      ProjectLink(NewIdValue, roadPart, track, discontinuity, AddrMRange(startAddrM, endAddrM), AddrMRange(startAddrM, endAddrM), startDate, None, Some("User"), linkId, 0.0, (endAddrM - startAddrM).toDouble, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), geom: Seq[Point], projectId, status, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, (endAddrM - startAddrM).toDouble, roadwayId, linearLocationId, ely, reversed = false, None, 0L)
     }
 
     def withTrack(testTrack: TestTrack): Seq[ProjectLink] = {
@@ -80,9 +80,9 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
     val geomTrack1_2 = Seq(Point(100.0, 0.0), Point(200.0, 0.0))
     val geomTrack2   = Seq(Point(0.0, 10.0),  Point(200.0, 10.0))
 
-    val projectLinkTrack1_1 = ProjectLink(1001L, RoadPart(9999, 1), Track.apply(1), Discontinuity.Continuous,   0L, 100L,   0L, 100L, None, None, None, 1L.toString, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), geomTrack1_1, 0L, RoadAddressChangeType.Unchanged, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTrack1_1), 0L, 0, 0, reversed = false, None, 86400L)
-    val projectLinkTrack1_2 = ProjectLink(1002L, RoadPart(9999, 1), Track.apply(1), Discontinuity.Continuous, 100L, 200L, 100L, 200L, None, None, None, 2L.toString, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), geomTrack1_2, 0L, RoadAddressChangeType.Unchanged, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTrack1_2), 0L, 0, 0, reversed = false, None, 86400L)
-    val projectLinkTrack2   = ProjectLink(1003L, RoadPart(9999, 1), Track.apply(2), Discontinuity.Continuous,   0L, 200L,   0L, 200L, None, None, None, 3L.toString, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), geomTrack2,   0L, RoadAddressChangeType.Unchanged, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTrack2),   0L, 0, 0, reversed = false, None, 86400L)
+    val projectLinkTrack1_1 = ProjectLink(1001L, RoadPart(9999, 1), Track.apply(1), Discontinuity.Continuous, AddrMRange(  0L, 100L), AddrMRange(  0L, 100L), None, None, None, 1L.toString, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), geomTrack1_1, 0L, RoadAddressChangeType.Unchanged, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTrack1_1), 0L, 0, 0, reversed = false, None, 86400L)
+    val projectLinkTrack1_2 = ProjectLink(1002L, RoadPart(9999, 1), Track.apply(1), Discontinuity.Continuous, AddrMRange(100L, 200L), AddrMRange(100L, 200L), None, None, None, 2L.toString, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), geomTrack1_2, 0L, RoadAddressChangeType.Unchanged, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTrack1_2), 0L, 0, 0, reversed = false, None, 86400L)
+    val projectLinkTrack2   = ProjectLink(1003L, RoadPart(9999, 1), Track.apply(2), Discontinuity.Continuous, AddrMRange(  0L, 200L), AddrMRange(  0L, 200L), None, None, None, 3L.toString, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), geomTrack2,   0L, RoadAddressChangeType.Unchanged, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTrack2),   0L, 0, 0, reversed = false, None, 86400L)
 
     val (track1, track2, udcp) = TwoTrackRoadUtils.splitPlsAtStatusChange(Seq(projectLinkTrack1_1, projectLinkTrack1_2), Seq(projectLinkTrack2))
     track1 should have size 2
@@ -110,18 +110,14 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
       track2 should have size 2
       udcp   should have size 2
 
-      track1.head.startAddrMValue shouldBe 0
-      track1.head.endAddrMValue   shouldBe 100
-      track1.last.startAddrMValue shouldBe 100
-      track1.last.endAddrMValue   shouldBe 200
+      track1.head.addrMRange shouldBe AddrMRange(  0,100)
+      track1.last.addrMRange shouldBe AddrMRange(100,200)
 
       track1.head.calibrationPointTypes shouldBe (NoCP, UserDefinedCP)
       track1.last.calibrationPointTypes shouldBe (NoCP, NoCP)
 
-      track2.head.startAddrMValue shouldBe 0
-      track2.head.endAddrMValue   shouldBe 100
-      track2.last.startAddrMValue shouldBe 100
-      track2.last.endAddrMValue   shouldBe 200
+      track2.head.addrMRange shouldBe AddrMRange(  0,100)
+      track2.last.addrMRange shouldBe AddrMRange(100,200)
 
       track2.head.calibrationPointTypes shouldBe (NoCP, UserDefinedCP)
       track2.last.calibrationPointTypes shouldBe (NoCP, NoCP)
@@ -149,18 +145,14 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
       track2 should have size 2
       udcp   should have size 2
 
-      track1.head.startAddrMValue shouldBe 0
-      track1.head.endAddrMValue   shouldBe 100
-      track1.last.startAddrMValue shouldBe 100
-      track1.last.endAddrMValue   shouldBe 200
+      track1.head.addrMRange shouldBe AddrMRange(  0,100)
+      track1.last.addrMRange shouldBe AddrMRange(100,200)
 
       track1.head.calibrationPointTypes shouldBe (NoCP, JunctionPointCP)
       track1.last.calibrationPointTypes shouldBe (JunctionPointCP, NoCP)
 
-      track2.head.startAddrMValue shouldBe 0
-      track2.head.endAddrMValue   shouldBe 100
-      track2.last.startAddrMValue shouldBe 100
-      track2.last.endAddrMValue   shouldBe 200
+      track2.head.addrMRange shouldBe AddrMRange(  0,100)
+      track2.last.addrMRange shouldBe AddrMRange(100,200)
 
       track2.head.calibrationPointTypes shouldBe (NoCP, UserDefinedCP)
       track2.last.calibrationPointTypes shouldBe (NoCP, NoCP)
@@ -184,10 +176,8 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
       track2 should have size 2
         udcp should have size 2
 
-      track1.head.startAddrMValue shouldBe 0
-      track1.head.endAddrMValue   shouldBe 100
-      track1.last.startAddrMValue shouldBe 100
-      track1.last.endAddrMValue   shouldBe 200
+      track1.head.addrMRange shouldBe AddrMRange(  0,100)
+      track1.last.addrMRange shouldBe AddrMRange(100,200)
 
       track1.head.geometry shouldBe geomTrack1_1
       track1.last.geometry shouldBe geomTrack1_2
@@ -195,10 +185,8 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
       track1.head.calibrationPointTypes shouldBe (NoCP, UserDefinedCP)
       track1.last.calibrationPointTypes shouldBe (NoCP, NoCP)
 
-      track2.head.startAddrMValue shouldBe 0
-      track2.head.endAddrMValue   shouldBe 100
-      track2.last.startAddrMValue shouldBe 100
-      track2.last.endAddrMValue   shouldBe 200
+      track2.head.addrMRange shouldBe AddrMRange(  0,100)
+      track2.last.addrMRange shouldBe AddrMRange(100,200)
 
       track2.head.geometry shouldBe Seq(Point(0.0, 10.0), Point(100.0, 10.0))
       track2.last.geometry shouldBe Seq(Point(100.0, 10.0), Point(200.0, 10.0))
@@ -225,12 +213,9 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
       track2 should have size 3
       udcp should   have size 4
 
-      track1(0).startAddrMValue shouldBe 0
-      track1(0).endAddrMValue   shouldBe 100
-      track1(1).startAddrMValue shouldBe 100
-      track1(1).endAddrMValue   shouldBe 200
-      track1(2).startAddrMValue shouldBe 200
-      track1(2).endAddrMValue   shouldBe 300
+      track1(0).addrMRange shouldBe AddrMRange(  0,100)
+      track1(1).addrMRange shouldBe AddrMRange(100,200)
+      track1(2).addrMRange shouldBe AddrMRange(200,300)
 
       track1(0).geometry shouldBe Seq(Point(0.0, 0.0), Point(100.0, 0.0))
       track1(1).geometry shouldBe Seq(Point(100.0, 0.0), Point(200.0, 0.0))
@@ -240,12 +225,9 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
       track1(1).calibrationPointTypes shouldBe (NoCP, UserDefinedCP)
       track1(2).calibrationPointTypes shouldBe (NoCP, NoCP)
 
-      track2(0).startAddrMValue shouldBe 0
-      track2(0).endAddrMValue   shouldBe 100
-      track2(1).startAddrMValue shouldBe 100
-      track2(1).endAddrMValue   shouldBe 200
-      track2(2).startAddrMValue shouldBe 200
-      track2(2).endAddrMValue   shouldBe 300
+      track2(0).addrMRange shouldBe AddrMRange(  0,100)
+      track2(1).addrMRange shouldBe AddrMRange(100,200)
+      track2(2).addrMRange shouldBe AddrMRange(200,300)
 
       track2(0).geometry shouldBe Seq(Point(0.0, 10.0), Point(100.0, 10.0))
       track2(1).geometry shouldBe Seq(Point(100.0, 10.0), Point(200.0, 10.0))
@@ -275,12 +257,9 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
       track2 should have size 4
       udcp should   have size 4
 
-      track1(0).startAddrMValue shouldBe 0
-      track1(0).endAddrMValue   shouldBe 100
-      track1(1).startAddrMValue shouldBe 100
-      track1(1).endAddrMValue   shouldBe 200
-      track1(2).startAddrMValue shouldBe 200
-      track1(2).endAddrMValue   shouldBe 300
+      track1(0).addrMRange shouldBe AddrMRange(  0,100)
+      track1(1).addrMRange shouldBe AddrMRange(100,200)
+      track1(2).addrMRange shouldBe AddrMRange(200,300)
 
       track1(0).geometry shouldBe Seq(Point(0.0, 0.0), Point(100.0, 0.0))
       track1(1).geometry shouldBe Seq(Point(100.0, 0.0), Point(200.0, 0.0))
@@ -290,14 +269,10 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
       track1(1).calibrationPointTypes shouldBe (NoCP, UserDefinedCP)
       track1(2).calibrationPointTypes shouldBe (NoCP, NoCP)
 
-      track2(0).startAddrMValue shouldBe 0
-      track2(0).endAddrMValue   shouldBe 100
-      track2(1).startAddrMValue shouldBe 100
-      track2(1).endAddrMValue   shouldBe 150
-      track2(2).startAddrMValue shouldBe 150
-      track2(2).endAddrMValue   shouldBe 200
-      track2(3).startAddrMValue shouldBe 200
-      track2(3).endAddrMValue   shouldBe 300
+      track2(0).addrMRange shouldBe AddrMRange(  0,100)
+      track2(1).addrMRange shouldBe AddrMRange(100,150)
+      track2(2).addrMRange shouldBe AddrMRange(150,200)
+      track2(3).addrMRange shouldBe AddrMRange(200,300)
 
       track2(0).geometry shouldBe Seq(Point(0.0, 10.0), Point(100.0, 10.0))
       track2(1).geometry shouldBe Seq(Point(100.0, 10.0), Point(150.0, 10.0))
@@ -329,12 +304,9 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
       track2 should have size 4
       udcp should   have size 4
 
-      track1(0).startAddrMValue shouldBe 0
-      track1(0).endAddrMValue   shouldBe 100
-      track1(1).startAddrMValue shouldBe 100
-      track1(1).endAddrMValue   shouldBe 200
-      track1(2).startAddrMValue shouldBe 200
-      track1(2).endAddrMValue   shouldBe 300
+      track1(0).addrMRange shouldBe AddrMRange(  0,100)
+      track1(1).addrMRange shouldBe AddrMRange(100,200)
+      track1(2).addrMRange shouldBe AddrMRange(200,300)
 
       track1(0).geometry shouldBe Seq(Point(0.0, 0.0), Point(100.0, 0.0))
       track1(1).geometry shouldBe Seq(Point(100.0, 0.0), Point(200.0, 0.0))
@@ -344,14 +316,10 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
       track1(1).calibrationPointTypes shouldBe (NoCP, UserDefinedCP)
       track1(2).calibrationPointTypes shouldBe (NoCP, NoCP)
 
-      track2(0).startAddrMValue shouldBe 0
-      track2(0).endAddrMValue   shouldBe 100
-      track2(1).startAddrMValue shouldBe 100
-      track2(1).endAddrMValue   shouldBe 150
-      track2(2).startAddrMValue shouldBe 150
-      track2(2).endAddrMValue   shouldBe 200
-      track2(3).startAddrMValue shouldBe 200
-      track2(3).endAddrMValue   shouldBe 300
+      track2(0).addrMRange shouldBe AddrMRange(  0,100)
+      track2(1).addrMRange shouldBe AddrMRange(100,150)
+      track2(2).addrMRange shouldBe AddrMRange(150,200)
+      track2(3).addrMRange shouldBe AddrMRange(200,300)
 
       track2(0).geometry shouldBe Seq(Point(0.0, 10.0), Point(100.0, 10.0))
       track2(1).geometry shouldBe Seq(Point(100.0, 10.0), Point(150.0, 10.0))
@@ -395,14 +363,10 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
       udcp.head.get.projectLinkId shouldBe track1(1).id
       udcp.last.get.projectLinkId shouldBe track2(1).id
 
-      track1(0).startAddrMValue shouldBe 0
-      track1(0).endAddrMValue   shouldBe 100
-      track1(1).startAddrMValue shouldBe 100
-      track1(1).endAddrMValue   shouldBe 150
-      track1(2).startAddrMValue shouldBe 150
-      track1(2).endAddrMValue   shouldBe 200
-      track1(3).startAddrMValue shouldBe 200
-      track1(3).endAddrMValue   shouldBe 300
+      track1(0).addrMRange shouldBe AddrMRange(  0,100)
+      track1(1).addrMRange shouldBe AddrMRange(100,150)
+      track1(2).addrMRange shouldBe AddrMRange(150,200)
+      track1(3).addrMRange shouldBe AddrMRange(200,300)
 
       track1(0).geometry shouldBe Seq(Point(0.0, 0.0), Point(100.0, 0.0))
       track1(1).geometry shouldBe Seq(Point(100.0, 0.0), Point(150.0, 0.0))
@@ -414,14 +378,10 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
       track1(2).calibrationPointTypes shouldBe (NoCP, UserDefinedCP)
       track1(3).calibrationPointTypes shouldBe (NoCP, NoCP)
 
-      track2(0).startAddrMValue shouldBe 0
-      track2(0).endAddrMValue   shouldBe 100
-      track2(1).startAddrMValue shouldBe 100
-      track2(1).endAddrMValue   shouldBe 150
-      track2(2).startAddrMValue shouldBe 150
-      track2(2).endAddrMValue   shouldBe 200
-      track2(3).startAddrMValue shouldBe 200
-      track2(3).endAddrMValue   shouldBe 300
+      track2(0).addrMRange shouldBe AddrMRange(  0,100)
+      track2(1).addrMRange shouldBe AddrMRange(100,150)
+      track2(2).addrMRange shouldBe AddrMRange(150,200)
+      track2(3).addrMRange shouldBe AddrMRange(200,300)
 
       track2(0).geometry shouldBe Seq(Point(0.0, 10.0), Point(100.0, 10.0))
       track2(1).geometry shouldBe Seq(Point(100.0, 10.0), Point(150.0, 10.0))
@@ -457,12 +417,9 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
       track2 should have size 4
       udcp should   have size 4
 
-      track1(0).startAddrMValue shouldBe 0
-      track1(0).endAddrMValue   shouldBe 100
-      track1(1).startAddrMValue shouldBe 100
-      track1(1).endAddrMValue   shouldBe 200
-      track1(2).startAddrMValue shouldBe 200
-      track1(2).endAddrMValue   shouldBe 300
+      track1(0).addrMRange shouldBe AddrMRange(  0,100)
+      track1(1).addrMRange shouldBe AddrMRange(100,200)
+      track1(2).addrMRange shouldBe AddrMRange(200,300)
 
       track1(0).geometry shouldBe Seq(Point(0.0, 0.0), Point(100.0, 0.0))
       track1(1).geometry shouldBe Seq(Point(200.0, 0.0), Point(100.0, 0.0))
@@ -472,14 +429,10 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
       track1(1).calibrationPointTypes shouldBe (NoCP, UserDefinedCP)
       track1(2).calibrationPointTypes shouldBe (NoCP, NoCP)
 
-      track2(0).startAddrMValue shouldBe 0
-      track2(0).endAddrMValue   shouldBe 100
-      track2(1).startAddrMValue shouldBe 100
-      track2(1).endAddrMValue   shouldBe 150
-      track2(2).startAddrMValue shouldBe 150
-      track2(2).endAddrMValue   shouldBe 200
-      track2(3).startAddrMValue shouldBe 200
-      track2(3).endAddrMValue   shouldBe 300
+      track2(0).addrMRange shouldBe AddrMRange(  0,100)
+      track2(1).addrMRange shouldBe AddrMRange(100,150)
+      track2(2).addrMRange shouldBe AddrMRange(150,200)
+      track2(3).addrMRange shouldBe AddrMRange(200,300)
 
       track2(0).geometry shouldBe Seq(Point(150.0, 10.0), Point( 50.0, 10.0))
       track2(1).geometry shouldBe Seq(Point( 50.0, 10.0), Point(  0.0, 10.0))
@@ -498,12 +451,12 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
 //    val geomTrack1_1 = Seq(Point(0.0, 0.0),   Point(100.0, 0.0))
 //    val geomTrack1_2 = Seq(Point(100.0, 0.0), Point(200.0, 0.0))
 //
-//    val projectLinkTrack1_1 = ProjectLink(1001L, RoadPart(9999, 1), Track.apply(1), Discontinuity.Continuous,   0L, 100L,   0L, 100L, None, None, None, 1L.toString, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), geomTrack1_1, 0L, RoadAddressChangeType.New, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTrack1_1), 0L, 0, 0, reversed = false, None, 86400L)
-//    val projectLinkTrack1_2 = ProjectLink(1002L, RoadPart(9999, 1), Track.apply(1), Discontinuity.Continuous, 100L, 200L, 100L, 200L, None, None, None, 2L.toString, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), geomTrack1_2, 0L, RoadAddressChangeType.New, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTrack1_2), 0L, 0, 0, reversed = false, None, 86400L)
+//    val projectLinkTrack1_1 = ProjectLink(1001L, RoadPart(9999, 1), Track.apply(1), Discontinuity.Continuous, AddrMRange(  0L, 100L), AddrMRange(  0L, 100L), None, None, None, 1L.toString, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), geomTrack1_1, 0L, RoadAddressChangeType.New, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTrack1_1), 0L, 0, 0, reversed = false, None, 86400L)
+//    val projectLinkTrack1_2 = ProjectLink(1002L, RoadPart(9999, 1), Track.apply(1), Discontinuity.Continuous, AddrMRange(100L, 200L), AddrMRange(100L, 200L), None, None, None, 2L.toString, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), geomTrack1_2, 0L, RoadAddressChangeType.New, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTrack1_2), 0L, 0, 0, reversed = false, None, 86400L)
 //
 //    val newLinks = runWithRollback {
 //      TwoTrackRoadUtils.findAndCreateSplitsAtOriginalAddress(99, Seq(projectLinkTrack1_1, projectLinkTrack1_2))
 //    }
 //    newLinks should not be 'defined
 //  }
-}
+    }

@@ -43,26 +43,26 @@ object CalibrationPointsUtils {
   def makeStartCP(roadAddress: RoadAddress) = {
     Some(ProjectCalibrationPoint(roadAddress.linkId,
       if (roadAddress.sideCode == SideCode.TowardsDigitizing) 0.0
-      else GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.startAddrMValue, roadAddress.startCalibrationPointType))
+      else GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.addrMRange.start, roadAddress.startCalibrationPointType))
   }
 
   def makeStartCP(projectLink: ProjectLink) = {
     Some(ProjectCalibrationPoint(projectLink.linkId,
       if (projectLink.sideCode == SideCode.TowardsDigitizing) 0.0
-      else projectLink.geometryLength, projectLink.startAddrMValue, projectLink.startCalibrationPointType))
+      else projectLink.geometryLength, projectLink.addrMRange.start, projectLink.startCalibrationPointType))
   }
 
   def makeEndCP(roadAddress: RoadAddress) = {
     Some(ProjectCalibrationPoint(roadAddress.linkId,
       if (roadAddress.sideCode == SideCode.AgainstDigitizing) 0.0
-      else GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.endAddrMValue, roadAddress.endCalibrationPointType))
+      else GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.addrMRange.end, roadAddress.endCalibrationPointType))
   }
 
   def makeEndCP(projectLink: ProjectLink, userDefinedCalibrationPoint: Option[UserDefinedCalibrationPoint]) = {
     val segmentValue = if (projectLink.sideCode == SideCode.AgainstDigitizing) 0.0 else projectLink.geometryLength
     val addressValue = userDefinedCalibrationPoint match {
-      case Some(userCalibrationPoint) => if (userCalibrationPoint.addressMValue < projectLink.startAddrMValue) projectLink.endAddrMValue else userCalibrationPoint.addressMValue
-      case None => projectLink.endAddrMValue
+      case Some(userCalibrationPoint) => if (userCalibrationPoint.addressMValue < projectLink.addrMRange.start) projectLink.addrMRange.end else userCalibrationPoint.addressMValue
+      case None => projectLink.addrMRange.end
     }
     Some(ProjectCalibrationPoint(projectLink.linkId, segmentValue, addressValue, projectLink.endCalibrationPointType))
   }

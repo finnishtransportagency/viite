@@ -6,7 +6,7 @@ import fi.liikennevirasto.viite.NewIdValue
 import fi.vaylavirasto.viite.dao.Sequences
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point, Vector3d}
 import fi.vaylavirasto.viite.model.CalibrationPointType.{NoCP, RoadAddressCP}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LinkGeomSource, RoadAddressChangeType, RoadPart, SideCode, Track}
+import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinuity, LinkGeomSource, RoadAddressChangeType, RoadPart, SideCode, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.contains
@@ -56,7 +56,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
   }
 
   def dummyProjectLink(id: Long, projectId: Long, linkId: String, roadwayId: Long = 0, roadwayNumber: Long = roadwayNumber1, roadPart: RoadPart = RoadPart(roadNumber1, roadPartNumber1), startAddrMValue: Long, endAddrMValue: Long, startMValue: Double, endMValue: Double, endDate: Option[DateTime] = None, calibrationPoints: (Option[ProjectCalibrationPoint], Option[ProjectCalibrationPoint]) = (None, None), geometry: Seq[Point] = Seq(), status: RoadAddressChangeType, administrativeClass: AdministrativeClass, reversed: Boolean, linearLocationId: Long, connectedLinkId: Option[String] = None, track: Track = Track.Combined): ProjectLink =
-    ProjectLink(id, roadPart, track, Discontinuity.Continuous, startAddrMValue, endAddrMValue, startAddrMValue, endAddrMValue, Some(DateTime.parse("1901-01-01")), endDate, Some("testUser"), linkId, startMValue, endMValue, SideCode.TowardsDigitizing, (if (calibrationPoints._1.isDefined) calibrationPoints._1.get.typeCode else NoCP, if (calibrationPoints._2.isDefined) calibrationPoints._2.get.typeCode else NoCP), (NoCP, NoCP), geometry, projectId, status, administrativeClass, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geometry), roadwayId, linearLocationId, 0, reversed, connectedLinkId = connectedLinkId, 631152000, roadwayNumber, roadAddressLength = Some(endAddrMValue - startAddrMValue))
+    ProjectLink(id, roadPart, track, Discontinuity.Continuous, AddrMRange(startAddrMValue, endAddrMValue), AddrMRange(startAddrMValue, endAddrMValue), Some(DateTime.parse("1901-01-01")), endDate, Some("testUser"), linkId, startMValue, endMValue, SideCode.TowardsDigitizing, (if (calibrationPoints._1.isDefined) calibrationPoints._1.get.typeCode else NoCP, if (calibrationPoints._2.isDefined) calibrationPoints._2.get.typeCode else NoCP), (NoCP, NoCP), geometry, projectId, status, administrativeClass, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geometry), roadwayId, linearLocationId, 0, reversed, connectedLinkId = connectedLinkId, 631152000, roadwayNumber, roadAddressLength = Some(endAddrMValue - startAddrMValue))
 
   private def dummyRoadAddressProject(id: Long, status: ProjectState, reservedParts: Seq[ProjectReservedPart] = List.empty[ProjectReservedPart], coordinates: Option[ProjectCoordinates] = None): Project = {
     Project(id, status, "testProject", "testUser", DateTime.parse("1901-01-01"), "testUser", DateTime.parse("1901-01-01"), DateTime.now(), "additional info here", reservedParts, Seq(), Some("current status info"), coordinates)
@@ -77,12 +77,11 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       projectReservedPartDAO.reserveRoadPart(projectId, RoadPart(roadNumber1, roadPartNumber1), rap.createdBy)
       val projectLink = dummyProjectLink(projectLinkId, projectId, linkId1, roadwayIds.head, roadwayNumber1, RoadPart(roadNumber1, roadPartNumber1), 0, 100, 0.0, 100.0, None, (None, None), Seq(), RoadAddressChangeType.Transfer, AdministrativeClass.State, reversed = false, 0)
       projectLinkDAO.create(Seq(projectLink))
-      val (originalStartAddrM, originalEndStartAddrM) = (projectLink.originalStartAddrMValue, projectLink.originalEndAddrMValue)
-      projectLinkDAO.updateAddrMValues(projectLink.copy(startAddrMValue = 200, endAddrMValue = 300))
+      val (originalStartAddrM, originalEndStartAddrM) = (projectLink.originalAddrMRange.start, projectLink.originalAddrMRange.end)
+      projectLinkDAO.updateAddrMValues(projectLink.copy(addrMRange = AddrMRange(200, 300)))
       val returnedProjectLinks = projectLinkDAO.fetchProjectLinks(projectId)
       returnedProjectLinks.size should be(1)
-      returnedProjectLinks.head.originalStartAddrMValue should be(originalStartAddrM)
-      returnedProjectLinks.head.originalEndAddrMValue should be(originalEndStartAddrM)
+      returnedProjectLinks.head.originalAddrMRange should be(AddrMRange(originalStartAddrM,originalEndStartAddrM))
     }
   }
 
@@ -181,7 +180,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       )
       projectLinkDAO.create(projectLinks)
       val returnedProjectLinks = projectLinkDAO.fetchProjectLinks(id)
-      val biggestProjectLink = returnedProjectLinks.maxBy(_.endAddrMValue)
+      val biggestProjectLink = returnedProjectLinks.maxBy(_.addrMRange.end)
       projectLinkDAO.updateProjectLinkAdministrativeClassDiscontinuity(returnedProjectLinks.map(x => x.id).filterNot(_ == biggestProjectLink.id).toSet, RoadAddressChangeType.Unchanged, "test", 2, None)
       projectLinkDAO.updateProjectLinkAdministrativeClassDiscontinuity(Set(biggestProjectLink.id), RoadAddressChangeType.Unchanged, "test", 2, Some(2))
       val savedProjectLinks = projectLinkDAO.fetchProjectLinks(id)
@@ -217,20 +216,19 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       val header = projectLinks.head
       val administrativeClass = AdministrativeClass.State
       val newDiscontinuty = Discontinuity.ChangingELYCode
-      val newStartAddrMValue = header.startAddrMValue + 1
-      val newEndAddrMValue = header.endAddrMValue + 1
+      val newStartAddrMValue = header.addrMRange.start + 1
+      val newEndAddrMValue   = header.addrMRange.end   + 1
       val newTrack = Track.Unknown
       val newStatus = RoadAddressChangeType.Unknown
 
-      val modifiedProjectLinks = Seq(header.copy(track = newTrack, discontinuity = newDiscontinuty, startAddrMValue = newStartAddrMValue, endAddrMValue = newEndAddrMValue, status = newStatus, administrativeClass = administrativeClass))
+      val modifiedProjectLinks = Seq(header.copy(track = newTrack, discontinuity = newDiscontinuty, addrMRange = AddrMRange(newStartAddrMValue, newEndAddrMValue), status = newStatus, administrativeClass = administrativeClass))
       projectLinkDAO.updateProjectLinks(modifiedProjectLinks, "test", Seq())
 
       val updatedProjectLink = projectLinkDAO.fetchProjectLinks(7081807).filter(link => link.id == header.id).head
 
       updatedProjectLink.administrativeClass should be(administrativeClass)
       updatedProjectLink.discontinuity should be(newDiscontinuty)
-      updatedProjectLink.startAddrMValue should be(newStartAddrMValue)
-      updatedProjectLink.endAddrMValue should be(newEndAddrMValue)
+      updatedProjectLink.addrMRange should be(AddrMRange(newStartAddrMValue,newEndAddrMValue))
       updatedProjectLink.track should be(newTrack)
       updatedProjectLink.status should be(newStatus)
 
@@ -284,7 +282,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       links.size should be(2)
       projectReservedPartDAO.reserveRoadPart(projectId, newRoadPart, "test")
       projectLinkDAO.updateProjectLinkNumbering(projectId, roadPart, RoadAddressChangeType.Renumeration, newRoadPart, "test", 0)
-      projectLinkDAO.updateProjectLinkAdministrativeClassDiscontinuity(Set(links.filter(_.track == Track.LeftSide).maxBy(_.endAddrMValue).id), RoadAddressChangeType.Renumeration, "test", links.filter(_.track == Track.LeftSide).head.administrativeClass.value, Some(Discontinuity.MinorDiscontinuity.value))
+      projectLinkDAO.updateProjectLinkAdministrativeClassDiscontinuity(Set(links.filter(_.track == Track.LeftSide).maxBy(_.addrMRange.end).id), RoadAddressChangeType.Renumeration, "test", links.filter(_.track == Track.LeftSide).head.administrativeClass.value, Some(Discontinuity.MinorDiscontinuity.value))
       val linksAfterUpdate = projectLinkDAO.fetchProjectLinks(projectId)
       linksAfterUpdate.size should be(2)
       linksAfterUpdate.groupBy(p => (p.roadPart)).keys.head should be(newRoadPart)
@@ -310,11 +308,10 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       val header = projectLinks.head
       val newStartAddrMValues = 0
       val newEndAddrMValues = 100
-      projectLinkDAO.updateAddrMValues(header.copy(startAddrMValue = newStartAddrMValues, endAddrMValue = newEndAddrMValues))
+      projectLinkDAO.updateAddrMValues(header.copy(addrMRange = AddrMRange(newStartAddrMValues, newEndAddrMValues)))
 
       val updatedProjectLink = projectLinkDAO.fetchProjectLinks(7081807).filter(link => link.id == header.id).head
-      updatedProjectLink.startAddrMValue should be(newStartAddrMValues)
-      updatedProjectLink.endAddrMValue should be(newEndAddrMValues)
+      updatedProjectLink.addrMRange should be(AddrMRange(newStartAddrMValues,newEndAddrMValues))
     }
   }
 
@@ -351,7 +348,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
 
       projectReservedPartDAO.reserveRoadPart(projectId, RoadPart(roadNumber, roadPartNumber), rap.createdBy)
 
-      val roadAddress = RoadAddress(raId, linearLocationId, RoadPart(roadNumber, roadPartNumber), administrativeClass, track, discontinuity, startAddrMValue, endAddrMValue, Some(DateTime.now), None, None, 12345.toString, startMValue, endMValue, side, 1542205983000L, (None, None), geometry, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 1, Some(DateTime.now), None, None)
+      val roadAddress = RoadAddress(raId, linearLocationId, RoadPart(roadNumber, roadPartNumber), administrativeClass, track, discontinuity, AddrMRange(startAddrMValue, endAddrMValue), Some(DateTime.now), None, None, 12345.toString, startMValue, endMValue, side, 1542205983000L, (None, None), geometry, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 1, Some(DateTime.now), None, None)
 
       projectLinkDAO.updateProjectLinkValues(projectId, roadAddress)
 
@@ -361,8 +358,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       updatedProjectLink.track should be(track)
       updatedProjectLink.discontinuity should be(discontinuity)
       updatedProjectLink.administrativeClass should be(administrativeClass)
-      updatedProjectLink.startAddrMValue should be(startAddrMValue)
-      updatedProjectLink.endAddrMValue should be(endAddrMValue)
+      updatedProjectLink.addrMRange should be(AddrMRange(startAddrMValue,endAddrMValue))
       updatedProjectLink.startMValue should be(startMValue)
       updatedProjectLink.endMValue should be(endMValue)
       updatedProjectLink.sideCode should be(side)
@@ -422,8 +418,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
           roadPart = originalRoadPart1,
           track = originalTrack,
           administrativeClass = originalAdministrativeClass,
-          startAddrMValue = originalStartAddrMValue,
-          endAddrMValue = originalEndAddrMValue,
+          addrMRange = AddrMRange(originalStartAddrMValue,originalEndAddrMValue),
           startMValue = originalStartMValue,
           endMValue = originalEndMValue,
           ely = originalEly,
@@ -449,8 +444,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
         link.track shouldBe originalTrack
         link.discontinuity shouldBe originalDiscontinuity
         link.administrativeClass shouldBe originalAdministrativeClass
-        link.startAddrMValue shouldBe originalStartAddrMValue
-        link.endAddrMValue shouldBe originalEndAddrMValue
+        link.addrMRange shouldBe AddrMRange(originalStartAddrMValue, originalEndAddrMValue)
         link.startMValue shouldBe originalStartMValue
         link.endMValue shouldBe originalEndMValue
         link.status shouldBe RoadAddressChangeType.Termination
