@@ -517,7 +517,7 @@ println(s"fetchAllValidNodesWithJunctions GOT RESULT, of size ${result.size}") /
           }
 
           val addrValuesMap: scala.collection.mutable.Map[Long,(Long, Long)] = scala.collection.mutable.Map()
-          roadaddresses.foreach(r => addrValuesMap += (r.linearLocationId -> (r.startAddrMValue, r.endAddrMValue)))
+          roadaddresses.foreach(r => addrValuesMap += (r.linearLocationId -> (r.addrMRange.start, r.addrMRange.end)))
           logger.info("linear locations size {}, roadaddresses size {}", linearLocations.size, roadaddresses.size)
 
           linearLocations.map(l => Map(

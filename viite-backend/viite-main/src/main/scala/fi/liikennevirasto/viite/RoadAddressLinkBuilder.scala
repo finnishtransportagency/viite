@@ -41,7 +41,7 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
       roadLink.administrativeClass, roadLink.lifecycleStatus, roadLink.linkSource, administrativeClass, roadName,
       municipalityCode, municipalityName, roadLink.modifiedAt, Some(modifiedBy),
       roadAddress.roadPart, roadAddress.track.value,
-      roadAddress.ely, roadAddress.discontinuity.value, roadAddress.startAddrMValue, roadAddress.endAddrMValue,
+      roadAddress.ely, roadAddress.discontinuity.value, roadAddress.addrMRange.start, roadAddress.addrMRange.end,
       roadAddress.startDate.map(finnishDateFormatter.print).getOrElse(""), roadAddress.endDate.map(finnishDateFormatter.print).getOrElse(""),
       roadAddress.startMValue, roadAddress.endMValue, roadAddress.sideCode, roadAddress.startCalibrationPoint, roadAddress.calibrationPoints._2, roadAddress.roadwayNumber, sourceId = roadLink.sourceId)
   }
@@ -51,7 +51,7 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
     val length = GeometryUtils.geometryLength(geom)
     val municipalityCode = 0
     val administrativeClass = roadAddress.administrativeClass
-    RoadAddressLink(roadAddress.id, roadAddress.linearLocationId, roadAddress.linkId, geom, length, AdministrativeClass(1), LifecycleStatus.apply(0), LinkGeomSource.apply(1), administrativeClass, roadAddress.roadName, municipalityCode, "", Some(""), Some(modifiedBy), roadAddress.roadPart, roadAddress.track.value, 0, roadAddress.discontinuity.value, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(finnishDateFormatter.print).getOrElse(""), roadAddress.endDate.map(finnishDateFormatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue, roadAddress.sideCode, roadAddress.startCalibrationPoint, roadAddress.calibrationPoints._2, roadAddress.roadwayNumber, sourceId = "")
+    RoadAddressLink(roadAddress.id, roadAddress.linearLocationId, roadAddress.linkId, geom, length, AdministrativeClass(1), LifecycleStatus.apply(0), LinkGeomSource.apply(1), administrativeClass, roadAddress.roadName, municipalityCode, "", Some(""), Some(modifiedBy), roadAddress.roadPart, roadAddress.track.value, 0, roadAddress.discontinuity.value, roadAddress.addrMRange.start, roadAddress.addrMRange.end, roadAddress.startDate.map(finnishDateFormatter.print).getOrElse(""), roadAddress.endDate.map(finnishDateFormatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue, roadAddress.sideCode, roadAddress.startCalibrationPoint, roadAddress.calibrationPoints._2, roadAddress.roadwayNumber, sourceId = "")
   }
 
   def build(roadLink: RoadLinkLike, unaddressedRoadLink: UnaddressedRoadLink): RoadAddressLink = {
