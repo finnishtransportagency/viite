@@ -425,8 +425,14 @@ println("Threading print test: Now in avoidRestrictions")
     time(logger, s"GET request for /nodes/valid") {
       ApiUtils.avoidRestrictions(apiId, request, params) { params =>
         try {
-          val fetchedNodesWithJunctions = fetchAllValidNodesWithJunctions()
-          validNodesWithJunctionsToApi(fetchedNodesWithJunctions)
+          time(logger, s"fetchAllValidNodesWithJunctions in /nodes/valid") {
+println(s"fetchAllValidNodesWithJunctions in /nodes/valid") // TODO remove when debugging is done. This is ugly!
+            val fetchedNodesWithJunctions = fetchAllValidNodesWithJunctions()
+            time(logger, s"validNodesWithJunctionsToApi in /nodes/valid") {
+println(s"validNodesWithJunctionsToApi in /nodes/valid") // TODO remove when debugging is done. This is ugly!
+              validNodesWithJunctionsToApi(fetchedNodesWithJunctions)
+            }
+          }
         } catch {
           case t: Throwable =>
             //handleCommonIntegrationAPIExceptions(t, getValidNodes.operationId)  // Use if _not_ using avoidRestrictions
