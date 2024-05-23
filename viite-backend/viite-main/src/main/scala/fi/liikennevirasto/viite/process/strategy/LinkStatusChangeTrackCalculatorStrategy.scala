@@ -11,7 +11,7 @@ class LinkStatusChangeTrackCalculatorStrategy extends TrackCalculatorStrategy {
 
   val AdjustmentToleranceMeters = 3L
 
-  override def getStrategyAddress(projectLink: ProjectLink): Long = projectLink.startAddrMValue
+  override def getStrategyAddress(projectLink: ProjectLink): Long = projectLink.addrMRange.start
 
   override def applicableStrategy(headProjectLink: ProjectLink, projectLink: ProjectLink): Boolean = {
     //Will be applied if the link status changes for every status change detected and track is Left or Right
@@ -25,8 +25,8 @@ class LinkStatusChangeTrackCalculatorStrategy extends TrackCalculatorStrategy {
 
     val (lastLeft, lastRight) = (left.last, right.last)
 
-    if (lastRight.endAddrMValue <= lastLeft.endAddrMValue) {
-      val distance = lastRight.toMeters(lastLeft.endAddrMValue - lastRight.endAddrMValue)
+    if (lastRight.addrMRange.end <= lastLeft.addrMRange.end) {
+      val distance = lastRight.toMeters(lastLeft.addrMRange.end - lastRight.addrMRange.end)
       if (distance < AdjustmentToleranceMeters) {
         adjustTwoTracks(startAddress, left, right, userDefinedCalibrationPoint, restLeft, restRight)
       } else {
@@ -34,7 +34,7 @@ class LinkStatusChangeTrackCalculatorStrategy extends TrackCalculatorStrategy {
         adjustTwoTracks(startAddress, newLeft, right, userDefinedCalibrationPoint, newRestLeft, restRight)
       }
     } else {
-      val distance = lastLeft.toMeters(lastRight.endAddrMValue - lastLeft.endAddrMValue)
+      val distance = lastLeft.toMeters(lastRight.addrMRange.end - lastLeft.addrMRange.end)
       if (distance < AdjustmentToleranceMeters) {
         adjustTwoTracks(startAddress, left, right, userDefinedCalibrationPoint, restLeft, restRight)
       } else {
@@ -77,12 +77,12 @@ class TerminationOperationChangeStrategy extends  LinkStatusChangeTrackCalculato
     val (right, restRight) = rightProjectLinks.span(_.status == rightProjectLinks.head.status)
 
     val (lastLeft, lastRight) = (left.last, right.last)
-    if (lastRight.endAddrMValue <= lastLeft.endAddrMValue) {
+    if (lastRight.addrMRange.end <= lastLeft.addrMRange.end) {
       val (newLeft, newRestLeft) = getUntilNearestAddress(leftProjectLinks, lastRight)
-      adjustTwoTrackss(startAddress, Some(lastRight.endAddrMValue), newLeft, right, userDefinedCalibrationPoint, newRestLeft, restRight)
+      adjustTwoTrackss(startAddress, Some(lastRight.addrMRange.end), newLeft, right, userDefinedCalibrationPoint, newRestLeft, restRight)
     } else {
       val (newRight, newRestRight) = getUntilNearestAddress(rightProjectLinks, lastLeft)
-      adjustTwoTrackss(startAddress, Some(lastLeft.endAddrMValue), left, newRight, userDefinedCalibrationPoint, restLeft, newRestRight)
+      adjustTwoTrackss(startAddress, Some(lastLeft.addrMRange.end), left, newRight, userDefinedCalibrationPoint, restLeft, newRestRight)
     }
   }
 }
