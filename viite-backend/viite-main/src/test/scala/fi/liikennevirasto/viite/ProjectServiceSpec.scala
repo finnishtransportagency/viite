@@ -1897,6 +1897,50 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("Test updateRoadwaysAndLinearLocationsWithProjectLinks " +
+    "When ProjectLink is terminated " +
+    "Then linear location with same link id should be expired.") {
+    runWithRollback {
+      // Create roadway
+      val linkId          = 10000.toString
+      val linkId2         = 10001.toString
+      val roadwayNumber   = Sequences.nextRoadwayNumber
+      val roadway  = Roadway(Sequences.nextRoadwayId, roadwayNumber, RoadPart(9999, 1), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, 100, reversed = false, DateTime.now().minusYears(10), None, "test", Some("Test Road"), 1, TerminationCode.NoTermination, DateTime.now().minusYears(10), None)
+
+      roadwayDAO.create(Seq(roadway))
+
+      // Create project
+      val rap = Project(0L, ProjectState.UpdatingToRoadNetwork, "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", roadway.startDate.plusYears(1), DateTime.now(), "Some additional info", Seq(), Seq(), None, elys = Set())
+      val project = projectService.createRoadLinkProject(rap)
+      val projectId = project.id
+      projectReservedPartDAO.reserveRoadPart(projectId, roadway.roadPart, "TestUser")
+
+      // Create linear locations and project links
+      val linearLocation = dummyLinearLocation(Sequences.nextLinearLocationId, roadway.roadwayNumber, 0, linkId, 0.0, 50.0,0L)
+      val linearLocation2 = dummyLinearLocation(Sequences.nextLinearLocationId, roadway.roadwayNumber, 1, linkId2, 50.0, roadway.endAddrMValue,0L)
+      val terminatedProjectLink = ProjectLink(Sequences.nextProjectLinkId, roadway.roadPart, roadway.track, Discontinuity.Continuous, roadway.startAddrMValue, 50L, roadway.startAddrMValue, 50L, Some(DateTime.now().plusMonths(1)), None, Some("test"), linkId, 0.0, 50.0, SideCode.TowardsDigitizing, (RoadAddressCP, RoadAddressCP), (NoCP, NoCP), Seq(Point(0.0, 0.0), Point(0.0, roadway.endAddrMValue)), projectId, RoadAddressChangeType.Termination, roadway.administrativeClass, LinkGeomSource.NormalLinkInterface, roadway.endAddrMValue, roadway.id, linearLocation.id, roadway.ely, reversed = true, None, DateTime.now().minusMonths(10).getMillis, roadway.roadwayNumber, roadway.roadName, None, None, None, None, None)
+      val transferredProjectLink = ProjectLink(Sequences.nextProjectLinkId, roadway.roadPart, roadway.track, Discontinuity.EndOfRoad, 50L, roadway.endAddrMValue, 50L, roadway.endAddrMValue, Some(DateTime.now().plusMonths(1)), None, Some("test"), linkId2, 50.0, roadway.endAddrMValue, SideCode.TowardsDigitizing, (RoadAddressCP, RoadAddressCP), (NoCP, NoCP), Seq(Point(0.0, 0.0), Point(0.0, roadway.endAddrMValue)), projectId, RoadAddressChangeType.Transfer, roadway.administrativeClass, LinkGeomSource.NormalLinkInterface, roadway.endAddrMValue, roadway.id, linearLocation2.id, roadway.ely, reversed = true, None, DateTime.now().minusMonths(10).getMillis, roadway.roadwayNumber, roadway.roadName, None, None, None, None, None)
+
+      linearLocationDAO.create(Seq(linearLocation, linearLocation2))
+      projectLinkDAO.create(Seq(terminatedProjectLink, transferredProjectLink))
+
+      when(mockNodesAndJunctionsService.expireObsoleteNodesAndJunctions(any[Seq[ProjectLink]], any[Option[DateTime]], any[String])).thenReturn(Seq())
+
+      // Run the method to update the project
+      val updatedRoadParts = projectService.updateRoadwaysAndLinearLocationsWithProjectLinks(projectId)
+
+      // Check that the terminated linear location is expired and the transferred linear location is not expired
+      val linearLocationToExpire = linearLocationDAO.fetchByLinkId(Set(linkId))
+      linearLocationToExpire.foreach { ll =>
+        ll.validTo should not be None // Not "null"
+      }
+      val linearLocationToBeValid = linearLocationDAO.fetchByLinkId(Set(linkId2))
+      linearLocationToBeValid.foreach { ll =>
+        ll.validTo should be(None) // Should be "null"
+      }
+    }
+  }
+
+  test("Test updateRoadwaysAndLinearLocationsWithProjectLinks " +
        "When ProjectLinks have a split " +
        "Then split should be merged and geometry points in the same order as before the split.") {
     runWithRollback {
