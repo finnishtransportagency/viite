@@ -1928,7 +1928,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       // Run the method to update the project
       val updatedRoadParts = projectService.updateRoadwaysAndLinearLocationsWithProjectLinks(projectId)
 
-      // Check that the terminated linear location is expired and the unchanged linear location is not expired
+      // Check that the terminated linear location is expired and the transferred linear location is not expired
       val linearLocationToExpire = linearLocationDAO.fetchByLinkId(Set(linkId))
       linearLocationToExpire.foreach { ll =>
         ll.validTo should not be None // Not "null"
