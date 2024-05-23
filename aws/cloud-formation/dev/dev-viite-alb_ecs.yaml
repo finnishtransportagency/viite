@@ -50,7 +50,7 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Join ['', ['/ecs/', !Ref ApplicationName, '-ECS-logs']]
-      RetentionInDays: 14
+      RetentionInDays: 180
 
   # This is a role which is used by the ECS tasks themselves.
   ECSTaskExecutionRole:
