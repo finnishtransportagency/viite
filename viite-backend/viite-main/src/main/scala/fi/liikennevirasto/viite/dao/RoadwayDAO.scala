@@ -8,7 +8,7 @@ import fi.liikennevirasto.viite.model.RoadAddressLinkLike
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import fi.vaylavirasto.viite.dao.{BaseDAO, Queries, Sequences}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point, Vector3d}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, CalibrationPointType, Discontinuity, LinkGeomSource, RoadPart, SideCode, Track}
+import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, CalibrationPointType, Discontinuity, LinkGeomSource, RoadPart, SideCode, Track}
 import fi.vaylavirasto.viite.postgis.MassQuery
 import fi.vaylavirasto.viite.util.DateTimeFormatters.{basicDateFormatter, dateOptTimeFormatter}
 import org.joda.time.DateTime
@@ -131,8 +131,7 @@ trait BaseRoadAddress {
 
   def administrativeClass: AdministrativeClass
 
-  def startAddrMValue: Long
-  def endAddrMValue: Long
+  def addrMRange: AddrMRange
 
   def startDate: Option[DateTime]
   def endDate: Option[DateTime]
@@ -169,7 +168,7 @@ trait BaseRoadAddress {
   }
 
   def liesInBetween(ra: BaseRoadAddress): Boolean = {
-    (startAddrMValue >= ra.startAddrMValue && startAddrMValue <= ra.endAddrMValue) || (endAddrMValue <= ra.endAddrMValue && endAddrMValue >= ra.startAddrMValue)
+    (addrMRange.start >= ra.addrMRange.start && addrMRange.start <= ra.addrMRange.end) || (addrMRange.end <= ra.addrMRange.end && addrMRange.end >= ra.addrMRange.start)
   }
 
   def connected(ra2: BaseRoadAddress): Boolean = {
@@ -264,21 +263,21 @@ trait BaseRoadAddress {
 //TODO the start date and the created by should not be optional on the road address case class
 // Note: Geometry on road address is not directed: it isn't guaranteed to have a direction of digitization or road addressing
 case class RoadAddress(id: Long, linearLocationId: Long, roadPart: RoadPart, administrativeClass: AdministrativeClass, track: Track, discontinuity: Discontinuity,
-                       startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None, endDate: Option[DateTime] = None,
+                       addrMRange: AddrMRange, startDate: Option[DateTime] = None, endDate: Option[DateTime] = None,
                        createdBy: Option[String] = None, linkId: String, startMValue: Double, endMValue: Double, sideCode: SideCode, adjustedTimestamp: Long,
                        calibrationPoints: (Option[ProjectCalibrationPoint], Option[ProjectCalibrationPoint]) = (None, None),
                        geometry: Seq[Point], linkGeomSource: LinkGeomSource,
                        ely: Long, terminated: TerminationCode = TerminationCode.NoTermination, roadwayNumber: Long,
                        validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None, roadName: Option[String] = None) extends BaseRoadAddress {
   def this(id: Long, linearLocationId: Long, roadPart: RoadPart, administrativeClass: AdministrativeClass, track: Track, discontinuity: Discontinuity,
-           startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime], endDate: Option[DateTime],
+           addrMRange: AddrMRange, startDate: Option[DateTime], endDate: Option[DateTime],
            createdBy: Option[String], linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode, adjustedTimestamp: Long,
            calibrationPoints: (Option[ProjectCalibrationPoint], Option[ProjectCalibrationPoint]),
            geometry: Seq[Point], linkGeomSource: LinkGeomSource,
            ely: Long, terminated: TerminationCode, roadwayNumber: Long,
            validFrom: Option[DateTime], validTo: Option[DateTime], roadName: Option[String]) =
    this(id, linearLocationId, roadPart, administrativeClass, track, discontinuity,
-     startAddrMValue, endAddrMValue, startDate, endDate,
+     addrMRange, startDate, endDate,
      createdBy, linkId.toString, startMValue, endMValue, sideCode, adjustedTimestamp,
      calibrationPoints, geometry, linkGeomSource,
      ely, terminated, roadwayNumber,
@@ -313,9 +312,9 @@ case class RoadAddress(id: Long, linearLocationId: Long, roadPart: RoadPart, adm
     *                    |   sA--------eA  |                 => true (3)
     */
   def isBetweenAddresses(rangeStartAddr: Long, rangeEndAddr: Long): Boolean = {
-    (startAddrMValue <= rangeStartAddr && rangeStartAddr <= endAddrMValue) || // (1) rangeStartAddr overlaps with Mvalues
-    (startAddrMValue <=   rangeEndAddr && rangeEndAddr   <= endAddrMValue) || // (2) rangeEndAddr overlaps with Mvalues
-    (startAddrMValue >  rangeStartAddr && rangeEndAddr   >  endAddrMValue)    // (3) MAddresses both within range
+    (addrMRange.start <= rangeStartAddr && rangeStartAddr <= addrMRange.end) || // (1) rangeStartAddr overlaps with Mvalues
+    (addrMRange.start <=   rangeEndAddr && rangeEndAddr   <= addrMRange.end) || // (2) rangeEndAddr overlaps with Mvalues
+    (addrMRange.start >  rangeStartAddr && rangeEndAddr   >  addrMRange.end)    // (3) MAddresses both within range
   }
 
   /** Return true, if the Mvalues of this roadAddress at least partially overlap the given range limits.
@@ -353,12 +352,12 @@ case class RoadAddress(id: Long, linearLocationId: Long, roadPart: RoadPart, adm
   }
 
   private def addrAt(a: Double) = {
-    val coefficient = (endAddrMValue - startAddrMValue) / (endMValue - startMValue)
+    val coefficient = (addrMRange.end - addrMRange.start) / (endMValue - startMValue)
     sideCode match {
       case SideCode.AgainstDigitizing =>
-        endAddrMValue - Math.round((a - startMValue) * coefficient)
+        addrMRange.end - Math.round((a - startMValue) * coefficient)
       case SideCode.TowardsDigitizing =>
-        startAddrMValue + Math.round((a - startMValue) * coefficient)
+        addrMRange.start + Math.round((a - startMValue) * coefficient)
       case _ => throw new InvalidAddressDataException(s"Bad sidecode $sideCode on road address $id (link $linkId)")
     }
   }

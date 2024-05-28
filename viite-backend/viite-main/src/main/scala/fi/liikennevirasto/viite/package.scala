@@ -146,6 +146,7 @@ package object viite {
   val MissingCalibrationPointFromJunctions = s"$IntegrityValidationError: Kalibrointipiste puuttuu liittymästä"
   val MissingRoadwayPointFromTheStart      = s"$IntegrityValidationError: Roadway point puuttuu kohteen alusta"
   val MissingRoadwayPointFromTheEnd        = s"$IntegrityValidationError: Roadway point puuttuu kohteen lopusta"
+  val LinkHasExtraCalibrationPoints        = s"$IntegrityValidationError: Linkillä on ylimääräisiä kalibrointipisteitä"
   val OverlappingRoadwaysOnLinearLocation  = s"$IntegrityValidationError: Liian monta roadwayta lineaarilokaatiolla"
   val InvalidRoadwayLengthTroughHistory    = s"$IntegrityValidationError: Roadwaylla pituuseroja historiassa"
   val OverlappingRoadwayInHistory          = s"$IntegrityValidationError: Tiellä esiintyy päällekkäisiä roadwayta historiassa"

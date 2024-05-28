@@ -425,11 +425,18 @@ println("Threading print test: Now in avoidRestrictions")
     time(logger, s"GET request for /nodes/valid") {
       ApiUtils.avoidRestrictions(apiId, request, params) { params =>
         try {
-          val fetchedNodesWithJunctions = fetchAllValidNodesWithJunctions()
-          validNodesWithJunctionsToApi(fetchedNodesWithJunctions)
+          time(logger, s"fetchAllValidNodesWithJunctions in /nodes/valid") {
+println(s"fetchAllValidNodesWithJunctions in /nodes/valid") // TODO remove when debugging is done. This is ugly!
+            val fetchedNodesWithJunctions = fetchAllValidNodesWithJunctions()
+            time(logger, s"validNodesWithJunctionsToApi in /nodes/valid") {
+println(s"validNodesWithJunctionsToApi in /nodes/valid") // TODO remove when debugging is done. This is ugly!
+              validNodesWithJunctionsToApi(fetchedNodesWithJunctions)
+            }
+          }
         } catch {
           case t: Throwable =>
-            handleCommonIntegrationAPIExceptions(t, getValidNodes.operationId)
+            //handleCommonIntegrationAPIExceptions(t, getValidNodes.operationId)  // Use if _not_ using avoidRestrictions
+            InternalServerError(t.getMessage)                                     // Use if _using_ avoidRestrictions
         }
       }
     }
@@ -481,8 +488,10 @@ println("Threading print test: Now in avoidRestrictions")
   private def fetchAllValidNodesWithJunctions(): Seq[NodeWithJunctions] = {
     val result: Seq[NodeWithJunctions] = APIServiceForNodesAndJunctions.getAllValidNodesWithJunctions
     if (result.isEmpty) {
+println(s"fetchAllValidNodesWithJunctions RETURNED EMPTY")                     // TODO remove when debugging is done. This is ugly!
       Seq.empty[NodeWithJunctions]
     } else {
+println(s"fetchAllValidNodesWithJunctions GOT RESULT, of size ${result.size}") // TODO remove when debugging is done. This is ugly!
       result
     }
   }
@@ -508,7 +517,7 @@ println("Threading print test: Now in avoidRestrictions")
           }
 
           val addrValuesMap: scala.collection.mutable.Map[Long,(Long, Long)] = scala.collection.mutable.Map()
-          roadaddresses.foreach(r => addrValuesMap += (r.linearLocationId -> (r.startAddrMValue, r.endAddrMValue)))
+          roadaddresses.foreach(r => addrValuesMap += (r.linearLocationId -> (r.addrMRange.start, r.addrMRange.end)))
           logger.info("linear locations size {}, roadaddresses size {}", linearLocations.size, roadaddresses.size)
 
           linearLocations.map(l => Map(
@@ -642,14 +651,20 @@ println("Threading print test: Now in avoidRestrictions")
    * @throws Throwable if it is considered a fatal one. */
   def handleCommonIntegrationAPIExceptions(t: Throwable, operationId: Option[String]): Unit = {
     val requestLogString = s"GET request for ${request.getRequestURI}?${request.getQueryString} (${operationId})"
-    logger.info(s"$requestLogString --ENDED in ${t.getClass}--")
+    logger.info(s"$requestLogString --ENDED in ${t.getClass}: ${t.getMessage}--")
     t match {
       case ve: ViiteException =>
         BadRequestWithLoggerWarn(s"Check the given parameters. ${ve.getMessage}", "")
       case iae: IllegalArgumentException =>
         BadRequestWithLoggerWarn(s"$ISOdateTimeDescription. Now got '${request.getQueryString}''", iae.getMessage)
-      case psqle: PSQLException => // TODO remove? This applies when biiiig year (e.g. 2000000) given to DateTime parser. But year now restricted to be less than 100 years in checks before giving to dateTime parsing
-        BadRequestWithLoggerWarn(s"Date out of bounds, check the given dates: ${request.getQueryString}.", s"${psqle.getMessage}")
+      case psqle: PSQLException =>
+        Option(request.getQueryString) match {
+          case None =>   // an api call without parameters - that is, the user has no possibilities to change the outcome
+            BadRequestWithLoggerWarn(s"Data integrity error found by ${request.getRequestURI}: ${psqle.getMessage}")
+          case _ =>
+            // TODO remove? This applies when biiiig year (e.g. 2000000) given to DateTime parser. But year now restricted to be less than 100 years in checks before giving to dateTime parsing
+            BadRequestWithLoggerWarn(s"Date out of bounds, check the given dates: ${request.getQueryString}.", s"${psqle.getMessage}")
+        }
       case nf if NonFatal(nf) =>
         val requestString = s"GET request for ${request.getRequestURI}?${request.getQueryString} ($operationId)"
         haltWithHTTP500WithLoggerError(requestString, nf)
