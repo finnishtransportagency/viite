@@ -22,6 +22,7 @@ case class MissingCalibrationPoint(roadPart: RoadPart, track: Long, addrM: Long,
 case class MissingCalibrationPointFromJunction(missingCalibrationPoint: MissingCalibrationPoint, junctionPointId: Long, junctionNumber: Long, nodeNumber: Long, beforeAfter: BeforeAfter)
 case class MissingRoadwayPoint(roadPart: RoadPart, track: Long, addrM: Long, createdTime: DateTime, createdBy: String)
 case class InvalidRoadwayLength(roadwayNumber: Long, startDate: DateTime, endDate: Option[DateTime], roadPart: RoadPart, track: Long, startAddrM: Long, endAddrM: Long, length: Long, createdBy: String, createdTime: DateTime)
+case class LinksWithExtraCalibrationPoints(linkId: String, roadPart: RoadPart, startCount: Int, endCount: Int, calibrationPointIds: Array[Int])
 
 //TODO better naming case class
 case class OverlappingRoadwayOnLinearLocation(roadway: Roadway, linearLocationId: Long, linkId: String, linearLocationRoadwayNumber: Long, linearLocationStartMeasure: Long, linearLocationEndMeasure: Long, linearLocationCreatedBy: String, linearLocationCreatedTime: DateTime)
@@ -57,6 +58,21 @@ class RoadNetworkDAO extends BaseDAO {
       val createdBy = r.nextString()
 
       MissingCalibrationPointFromJunction(MissingCalibrationPoint(RoadPart(roadNumber, roadPartNumber), track, addrM, createdTime, createdBy),junctionPointId, junctionNumber, nodeNumber, BeforeAfter.apply(beforeAfter))
+    }
+  }
+
+  private implicit val linksWithExtraCalibrationPoints: GetResult[LinksWithExtraCalibrationPoints] = new GetResult[LinksWithExtraCalibrationPoints] {
+    def apply(r: PositionedResult): LinksWithExtraCalibrationPoints = {
+
+      val linkId = r.nextString()
+      val roadNumber = r.nextLong()
+      val roadPartNumber = r.nextLong()
+      val startCount = r.nextInt()
+      val endCount = r.nextInt()
+      val calibrationPointIdsString = r.nextString().replaceAll("[{}]", "") // Remove curly braces
+      val calibrationPointIds = calibrationPointIdsString.split(",").map(_.trim.toInt) // Convert to Array[Int]
+
+      LinksWithExtraCalibrationPoints(linkId, RoadPart(roadNumber, roadPartNumber), startCount, endCount, calibrationPointIds)
     }
   }
 
@@ -402,6 +418,86 @@ class RoadNetworkDAO extends BaseDAO {
          |          r.track,
          |          r.end_addr_m; """.stripMargin
     Q.queryNA[MissingRoadwayPoint](query).iterator.toSeq
+  }
+
+  /**
+   * Construct query to find links with extra calibration points (more than one calibration point on start/end of the same link)
+   * @param roadPartFilter fetch extra calibration points for specific road part
+   * @param sameRoadwayNumber fetch extra calibration points with the same roadway number
+   * @return LinksWithExtraCalibrationPoints query
+   */
+  def constructExtraCalibrationPointQuery(roadPartFilter: Option[RoadPart] = None, sameRoadwayNumber: Boolean = false): String = {
+    val roadPartCondition = roadPartFilter.map { rp =>
+      s"AND RP.ROADWAY_NUMBER IN (SELECT ROADWAY_NUMBER FROM ROADWAY WHERE ROAD_NUMBER = ${rp.roadNumber} AND ROAD_PART_NUMBER = ${rp.partNumber} AND VALID_TO IS NULL AND END_DATE IS NULL)"
+    }.getOrElse("")
+
+    val groupingCondition = if (sameRoadwayNumber) {
+      "GROUP BY CP.LINK_ID, RP.ROADWAY_NUMBER, CP.START_END"
+    } else {
+      "GROUP BY CP.LINK_ID, CP.START_END"
+    }
+
+    s"""
+      SELECT
+        sub.LINK_ID,
+        R.ROAD_NUMBER,
+        R.ROAD_PART_NUMBER,
+        sub.START_END,
+        sub.CALIBRATION_POINT_COUNT,
+        ARRAY_AGG(CP.ID) AS CALIBRATION_POINT_IDS
+      FROM (
+        SELECT
+          CP.LINK_ID,
+          CP.START_END,
+          COUNT(*) AS CALIBRATION_POINT_COUNT
+        FROM
+          CALIBRATION_POINT CP
+        JOIN
+          ROADWAY_POINT RP ON CP.ROADWAY_POINT_ID = RP.ID
+        WHERE
+          CP.VALID_TO IS NULL
+           $roadPartCondition
+        $groupingCondition
+        HAVING
+          COUNT(*) > 1
+      ) sub
+      JOIN
+        CALIBRATION_POINT CP ON sub.LINK_ID = CP.LINK_ID AND sub.START_END = CP.START_END
+      JOIN
+        ROADWAY_POINT RP ON CP.ROADWAY_POINT_ID = RP.ID
+      JOIN
+        ROADWAY R ON RP.ROADWAY_NUMBER = R.ROADWAY_NUMBER
+      WHERE
+        CP.VALID_TO IS NULL
+        AND R.VALID_TO IS NULL
+        AND R.END_DATE IS NULL
+      GROUP BY
+        sub.LINK_ID,
+        sub.START_END,
+        sub.CALIBRATION_POINT_COUNT,
+        R.ROAD_NUMBER,
+        R.ROAD_PART_NUMBER
+      ORDER BY
+        R.ROAD_NUMBER, R.ROAD_PART_NUMBER;
+  """
+  }
+
+  // Function to fetch all links with extra calibration points
+  def fetchLinksWithExtraCalibrationPoints(): Seq[LinksWithExtraCalibrationPoints] = {
+    val query = constructExtraCalibrationPointQuery()
+    Q.queryNA[LinksWithExtraCalibrationPoints](query).iterator.toSeq
+  }
+
+  // Function to fetch links with extra calibration points by road part
+  def fetchLinksWithExtraCalibrationPointsByRoadPart(roadPart: RoadPart): Seq[LinksWithExtraCalibrationPoints] = {
+    val query = constructExtraCalibrationPointQuery(Some(roadPart))
+    Q.queryNA[LinksWithExtraCalibrationPoints](query).iterator.toSeq
+  }
+
+  // Function to fetch all links extra calibration points with the same roadway number
+  def fetchLinksWithExtraCalibrationPointsWithSameRoadwayNumber(): Seq[LinksWithExtraCalibrationPoints] = {
+    val query = constructExtraCalibrationPointQuery(sameRoadwayNumber = true)
+    Q.queryNA[LinksWithExtraCalibrationPoints](query).iterator.toSeq
   }
 
   private val selectOverlappingRoadwayOnLinearLocation =

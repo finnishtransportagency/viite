@@ -6,7 +6,7 @@ import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.util.toProjectLink
 import fi.vaylavirasto.viite.geometry.Point
-import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, LinkGeomSource, RoadAddressChangeType, RoadPart, SideCode, Track}
+import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinuity, LinkGeomSource, RoadAddressChangeType, RoadPart, SideCode, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
@@ -24,7 +24,7 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
 
   private def generateProjectLink(id: Long, geometry: Seq[Point], track: Track = Track.Combined) = {
     //TODO the road address now have the linear location id and as been setted to 1L
-    toProjectLink(rap, RoadAddressChangeType.New)(RoadAddress(id, 1L, RoadPart(5, 1), AdministrativeClass.Unknown, track, Discontinuity.Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), id.toString, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), geometry, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+    toProjectLink(rap, RoadAddressChangeType.New)(RoadAddress(id, 1L, RoadPart(5, 1), AdministrativeClass.Unknown, track, Discontinuity.Continuous, AddrMRange(0L, 0L), Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), id.toString, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), geometry, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
   }
 
   test("Test orderProjectLinksTopologyByGeometry When is not dependent on the links order Then the links should be ordered") {
@@ -320,14 +320,14 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     //                                                                                           (18,0)  (20,0)
     //                        1L          2L                   3L         4L               5L        6L
     val projectLinks = List(
-      generateProjectLink(1L, Seq(Point(1, 1), Point(2, 1), Point(3, 1)), Track.Combined),
-      generateProjectLink(2L, Seq(Point(3, 1), Point(4, 1)), Track.Combined),
-      generateProjectLink(3L, Seq(Point(6, 1), Point(7, 1), Point(8, 1)), Track.Combined).copy(startAddrMValue = 0L, endAddrMValue = 2L),
-      generateProjectLink(4L, Seq(Point(8, 1), Point(10, 1), Point(11, 1)), Track.Combined).copy(startAddrMValue = 2L, endAddrMValue = 5L),
-      generateProjectLink(5L, Seq(Point(16, 1), Point(17, 1), Point(18, 1)), Track.Combined).copy(startAddrMValue = 5L, endAddrMValue = 7L),
-      generateProjectLink(6L, Seq(Point(18, 1), Point(19, 1), Point(20, 1)), Track.Combined).copy(startAddrMValue = 7L, endAddrMValue = 9L),
-      generateProjectLink(7L, Seq(Point(18, 1), Point(18, 0)), Track.RightSide).copy(startAddrMValue = 9L, endAddrMValue = 10L),
-      generateProjectLink(8L, Seq(Point(20, 1), Point(20, 0)), Track.LeftSide).copy(startAddrMValue = 9L, endAddrMValue = 10L)
+      generateProjectLink(1L, Seq(Point( 1, 1), Point( 2, 1), Point( 3, 1)), Track.Combined ),
+      generateProjectLink(2L, Seq(Point( 3, 1), Point( 4, 1)              ), Track.Combined ),
+      generateProjectLink(3L, Seq(Point( 6, 1), Point( 7, 1), Point( 8, 1)), Track.Combined ).copy(addrMRange = AddrMRange(0L,  2L)),
+      generateProjectLink(4L, Seq(Point( 8, 1), Point(10, 1), Point(11, 1)), Track.Combined ).copy(addrMRange = AddrMRange(2L,  5L)),
+      generateProjectLink(5L, Seq(Point(16, 1), Point(17, 1), Point(18, 1)), Track.Combined ).copy(addrMRange = AddrMRange(5L,  7L)),
+      generateProjectLink(6L, Seq(Point(18, 1), Point(19, 1), Point(20, 1)), Track.Combined ).copy(addrMRange = AddrMRange(7L,  9L)),
+      generateProjectLink(7L, Seq(Point(18, 1), Point(18, 0)              ), Track.RightSide).copy(addrMRange = AddrMRange(9L, 10L)),
+      generateProjectLink(8L, Seq(Point(20, 1), Point(20, 0)              ), Track.LeftSide ).copy(addrMRange = AddrMRange(9L, 10L))
     )
     val endPoints = TrackSectionOrder.findChainEndpoints(projectLinks)
     endPoints.size should be (2)
