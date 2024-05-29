@@ -3090,10 +3090,10 @@ Left     ^  ^   Right
 
       val withoutTerminated = projectLinks.filterNot(_.status == RoadAddressChangeType.Termination)
       val recalculated = defaultSectionCalculatorStrategy.assignAddrMValues(Seq(), withoutTerminated, Seq())
-      recalculated.length should be (39)
+      recalculated.length should be (39) // same amount as before calculation (note: includes the terminated projectLinks)
       val sorted = recalculated.sortBy(pl => (pl.originalStartAddrMValue))
       val (terminated, nonTerminated) = sorted.partition(_.status == RoadAddressChangeType.Termination)
-      terminated.size should be (2)
+      terminated.size should be (2) // there should be the same amount of terminated links as before calculation (i.e. no splits needed)
       terminated.filter(_.track == Track.LeftSide).head.startAddrMValue should be (nonTerminated.filter(_.track == Track.LeftSide).last.endAddrMValue) // terminated link should still be "continuous" with the previous unChanged link
       terminated.filter(_.track == Track.RightSide).head.startAddrMValue should be (nonTerminated.filter(_.track == Track.RightSide).last.endAddrMValue)
       val endAddrMValueOnMinorDiscontinuity = nonTerminated.filter(_.discontinuity == Discontinuity.MinorDiscontinuity).map(_.endAddrMValue).distinct
