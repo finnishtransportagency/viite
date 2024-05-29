@@ -165,6 +165,10 @@
       return sessionUsername;
     };
 
+    const getSessionUserRoles = function () {
+      return sessionUserRoles;
+    };
+
     const selectLayer = function (layer, toggleStart, noSave) {
       const tool = layer === 'node' ? ViiteEnumerations.Tool.Unknown.value : ViiteEnumerations.Tool.Default.value;
       setSelectedTool(tool);
@@ -257,6 +261,7 @@
       getSelectionType: getSelectionType,
       selectionTypeIs: selectionTypeIs,
       getSessionUsername: getSessionUsername,
+      getSessionUserRoles: getSessionUserRoles,
       specialSelectionTypes: specialSelectionTypes
     };
   };
