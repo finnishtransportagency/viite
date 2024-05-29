@@ -255,7 +255,7 @@ module.exports = function (grunt) {
   grunt.registerTask('save_deploy_info',
     function () {
       var options = this.options({
-        file: 'conf/revision.properties'
+        file: 'viite-backend/conf/revision.properties'
       });
 
       var data = ('latestDeploy=' + grunt.template.today('dd-mm-yyyy HH:MM:ss'));
