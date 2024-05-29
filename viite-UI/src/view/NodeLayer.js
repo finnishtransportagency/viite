@@ -2,6 +2,7 @@
   root.NodeLayer = function (map, roadLayer, selectedNodesAndJunctions, nodeCollection, roadCollection, applicationModel) {
     Layer.call(this, map);
     var me = this;
+    var userHasPermissionToEdit = _.includes(applicationModel.getSessionUserRoles(), 'viite');
     var directionMarkerVector = new ol.source.Vector({});
     var dblVector = function () {
       return {selected: new ol.source.Vector({}), unselected: new ol.source.Vector({})};
@@ -209,7 +210,10 @@
      */
     var addInteractions = function () {
       addSelectInteractions();
-      addTranslateInteractions();
+      if (userHasPermissionToEdit) {
+        // only let the user move nodes if the user has permission to edit nodes
+        addTranslateInteractions();
+      }
     };
 
     var removeInteractions = function () {
