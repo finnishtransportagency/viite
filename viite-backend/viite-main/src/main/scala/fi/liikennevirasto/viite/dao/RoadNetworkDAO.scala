@@ -22,7 +22,7 @@ case class MissingCalibrationPoint(roadPart: RoadPart, track: Long, addrM: Long,
 case class MissingCalibrationPointFromJunction(missingCalibrationPoint: MissingCalibrationPoint, junctionPointId: Long, junctionNumber: Long, nodeNumber: Long, beforeAfter: BeforeAfter)
 case class MissingRoadwayPoint(roadPart: RoadPart, track: Long, addrM: Long, createdTime: DateTime, createdBy: String)
 case class InvalidRoadwayLength(roadwayNumber: Long, startDate: DateTime, endDate: Option[DateTime], roadPart: RoadPart, track: Long, startAddrM: Long, endAddrM: Long, length: Long, createdBy: String, createdTime: DateTime)
-case class LinksWithExtraCalibrationPoints(linkId: String, roadPart: RoadPart, startCount: Int, endCount: Int, calibrationPointIds: Array[Int])
+case class LinksWithExtraCalibrationPoints(linkId: String, roadPart: RoadPart, startEnd: Int, calibrationPointCount: Int, calibrationPointIds: Array[Int])
 
 //TODO better naming case class
 case class OverlappingRoadwayOnLinearLocation(roadway: Roadway, linearLocationId: Long, linkId: String, linearLocationRoadwayNumber: Long, linearLocationStartMeasure: Long, linearLocationEndMeasure: Long, linearLocationCreatedBy: String, linearLocationCreatedTime: DateTime)
@@ -437,48 +437,57 @@ class RoadNetworkDAO extends BaseDAO {
       "GROUP BY CP.LINK_ID, CP.START_END"
     }
 
+    val selectCondition = if (sameRoadwayNumber) {
+      "RP.ROADWAY_NUMBER,"
+    } else {
+      ""
+    }
+
     s"""
+    WITH sub AS (
       SELECT
-        sub.LINK_ID,
-        R.ROAD_NUMBER,
-        R.ROAD_PART_NUMBER,
-        sub.START_END,
-        sub.CALIBRATION_POINT_COUNT,
-        ARRAY_AGG(CP.ID) AS CALIBRATION_POINT_IDS
-      FROM (
-        SELECT
-          CP.LINK_ID,
-          CP.START_END,
-          COUNT(*) AS CALIBRATION_POINT_COUNT
-        FROM
-          CALIBRATION_POINT CP
-        JOIN
-          ROADWAY_POINT RP ON CP.ROADWAY_POINT_ID = RP.ID
-        WHERE
-          CP.VALID_TO IS NULL
-           $roadPartCondition
-        $groupingCondition
-        HAVING
-          COUNT(*) > 1
-      ) sub
-      JOIN
-        CALIBRATION_POINT CP ON sub.LINK_ID = CP.LINK_ID AND sub.START_END = CP.START_END
+        CP.LINK_ID,
+        $selectCondition
+        CP.START_END,
+        COUNT(DISTINCT CP.ID) AS CALIBRATION_POINT_COUNT
+      FROM
+        CALIBRATION_POINT CP
       JOIN
         ROADWAY_POINT RP ON CP.ROADWAY_POINT_ID = RP.ID
-      JOIN
-        ROADWAY R ON RP.ROADWAY_NUMBER = R.ROADWAY_NUMBER
       WHERE
         CP.VALID_TO IS NULL
-        AND R.VALID_TO IS NULL
-        AND R.END_DATE IS NULL
-      GROUP BY
-        sub.LINK_ID,
-        sub.START_END,
-        sub.CALIBRATION_POINT_COUNT,
-        R.ROAD_NUMBER,
-        R.ROAD_PART_NUMBER
-      ORDER BY
-        R.ROAD_NUMBER, R.ROAD_PART_NUMBER;
+        $roadPartCondition
+      $groupingCondition
+      HAVING
+        COUNT(DISTINCT CP.ID) > 1
+    )
+    SELECT
+      sub.LINK_ID,
+      R.ROAD_NUMBER,
+      R.ROAD_PART_NUMBER,
+      sub.START_END,
+      COUNT(DISTINCT CP.ID) AS CALIBRATION_POINT_COUNT,
+      ARRAY_AGG(DISTINCT CP.ID) AS CALIBRATION_POINT_IDS
+    FROM
+      sub
+    JOIN
+      CALIBRATION_POINT CP ON sub.LINK_ID = CP.LINK_ID AND sub.START_END = CP.START_END
+    JOIN
+      ROADWAY_POINT RP ON CP.ROADWAY_POINT_ID = RP.ID ${if (sameRoadwayNumber) "AND RP.ROADWAY_NUMBER = sub.ROADWAY_NUMBER" else ""}
+    JOIN
+      ROADWAY R ON RP.ROADWAY_NUMBER = R.ROADWAY_NUMBER
+    WHERE
+      CP.VALID_TO IS NULL
+      AND R.VALID_TO IS NULL
+      AND R.END_DATE IS NULL
+    GROUP BY
+      sub.LINK_ID,
+      sub.START_END,
+      sub.CALIBRATION_POINT_COUNT,
+      R.ROAD_NUMBER,
+      R.ROAD_PART_NUMBER
+    ORDER BY
+      R.ROAD_NUMBER, R.ROAD_PART_NUMBER;
   """
   }
 
