@@ -94,8 +94,10 @@ class RoadNetworkValidator {
       throw new RoadNetworkValidationException(s"$MissingCalibrationPointFromTheEnd (tieosa $roadPart)")
     }
     else if (missingCalibrationPointFromJunction.nonEmpty) {
-      logger.warn(s"Found missing calibration points from junctions for road part: $roadPart:\r ${missingCalibrationPointFromJunction.mkString("\r ")}")
-      throw new RoadNetworkValidationException(s"$MissingCalibrationPointFromJunctions (tieosa $roadPart)")
+      missingCalibrationPointFromJunction.foreach { missingPoint =>
+        logger.warn(s"Missing Calibration Point From Junction: RoadPart: ${missingPoint.missingCalibrationPoint.roadPart}, Track: ${missingPoint.missingCalibrationPoint.track}, AddrM: ${missingPoint.missingCalibrationPoint.addrM}, CreatedTime: ${missingPoint.missingCalibrationPoint.createdTime}, CreatedBy: ${missingPoint.missingCalibrationPoint.createdBy}, JunctionPointId: ${missingPoint.junctionPointId}, JunctionNumber: ${missingPoint.junctionNumber}, NodeNumber: ${missingPoint.nodeNumber}, BeforeAfter: ${missingPoint.beforeAfter}")
+      }
+      throw new RoadNetworkValidationException(s"$MissingCalibrationPointFromJunctions (tieosa $roadPart) \r ${missingCalibrationPointFromJunction.mkString("\r ")}")
     }
     else if (extraCalibrationPoints.nonEmpty) {
       logger.warn(s"Found extra calibration points for road part: $roadPart:\r ${extraCalibrationPoints.map(_.toString).mkString("\r ")}")
