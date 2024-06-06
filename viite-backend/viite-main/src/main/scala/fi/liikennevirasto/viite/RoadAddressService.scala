@@ -1004,37 +1004,47 @@ class RoadAddressService(
           if (change.changeType == RoadAddressChangeType.Transfer || change.changeType == RoadAddressChangeType.Unchanged) {
             if (!change.reversed) {
               val rwPoints: Seq[RoadwayPoint] = roadwayPoints.flatMap { rwp =>
+                if (!list.exists(_.id == rwp.id)) { // Check if the point is already in the updated list
+                  val dualRoadwayPointNewAddrM = projectLinkChanges.filter(plc => rwp.roadwayNumber == plc.originalRoadwayNumber && rwp.addrMValue >= plc.originalStartAddr && rwp.addrMValue <= plc.originalEndAddr) match {
+                    case linkChanges: Seq[ProjectRoadLinkChange] if linkChanges.size == 2 && linkChanges.map(_.newRoadwayNumber).distinct.size > 1 =>
+                      val sortedProjectLinkChanges = linkChanges.sortBy(_.originalStartAddr)
+                      val projectRoadLinkChangeBefore = sortedProjectLinkChanges.head
+                      Some(projectRoadLinkChangeBefore.newEndAddr)
+                    case _ => None
+                  }
 
-                val dualRoadwayPointNewAddrM = projectLinkChanges.filter(plc => rwp.roadwayNumber == plc.originalRoadwayNumber && rwp.addrMValue >= plc.originalStartAddr && rwp.addrMValue <= plc.originalEndAddr) match {
-                  case linkChanges: Seq[ProjectRoadLinkChange] if linkChanges.size == 2 && linkChanges.map(_.newRoadwayNumber).distinct.size > 1 =>
-                    val sortedProjectLinkChanges = linkChanges.sortBy(_.originalStartAddr)
-                    val projectRoadLinkChangeBefore = sortedProjectLinkChanges.head
-                    Some(projectRoadLinkChangeBefore.newEndAddr)
-                  case _ => None
+                  val newAddrM = {
+                    if (dualRoadwayPointNewAddrM.isDefined)
+                      dualRoadwayPointNewAddrM.get
+                    else
+                      target.startAddressM.get + (rwp.addrMValue - source.startAddressM.get)
+                  }
+                  updateRoadwayPoint(rwp, newAddrM)
+                } else { // Skip the point if it is already in the updated list
+                  Seq.empty[RoadwayPoint]
                 }
-
-                val newAddrM = {
-                  if (dualRoadwayPointNewAddrM.isDefined)
-                    dualRoadwayPointNewAddrM.get
-                  else
-                    target.startAddressM.get + (rwp.addrMValue - source.startAddressM.get)
-                }
-
-                updateRoadwayPoint(rwp, newAddrM)
               }
               list ++ rwPoints
             } else {
               val rwPoints: Seq[RoadwayPoint] = roadwayPoints.flatMap { rwp =>
-                val newAddrM = target.endAddressM.get - (rwp.addrMValue - source.startAddressM.get)
-                updateRoadwayPoint(rwp, newAddrM)
+                if (!list.exists(_.id == rwp.id)) { // Check if the point is already in the updated list
+                  val newAddrM = target.endAddressM.get - (rwp.addrMValue - source.startAddressM.get)
+                  updateRoadwayPoint(rwp, newAddrM)
+                } else {
+                  Seq.empty[RoadwayPoint]
+                }
               }
               list ++ rwPoints
             }
           } else if (change.changeType == RoadAddressChangeType.Renumeration) {
             if (change.reversed) {
               val rwPoints: Seq[RoadwayPoint] = roadwayPoints.flatMap { rwp =>
-                val newAddrM = Seq(source.endAddressM.get, target.endAddressM.get).max - rwp.addrMValue
-                updateRoadwayPoint(rwp, newAddrM)
+                if (!list.exists(_.id == rwp.id)) { // Check if the point is already in the updated list
+                  val newAddrM = Seq(source.endAddressM.get, target.endAddressM.get).max - rwp.addrMValue
+                  updateRoadwayPoint(rwp, newAddrM)
+                } else { // Skip the point if it is already in the updated list
+                  Seq.empty[RoadwayPoint]
+                }
               }
               list ++ rwPoints
             } else {
@@ -1042,12 +1052,16 @@ class RoadAddressService(
             }
           } else if (change.changeType == RoadAddressChangeType.Termination) {
             val rwPoints: Seq[RoadwayPoint] = roadwayPoints.flatMap { rwp =>
-              val terminatedRoadAddress = terminatedRoadwayNumbersChanges.find(change => change.originalRoadwayNumber == rwp.roadwayNumber &&
-                change.originalStartAddr >= source.startAddressM.get && change.originalEndAddr <= source.endAddressM.get
-              )
-              if (terminatedRoadAddress.isDefined) {
-                updateRoadwayPoint(rwp, rwp.addrMValue)
-              } else Seq()
+              if (!list.exists(_.id == rwp.id)) { // Check if the point is already in the updated list
+                val terminatedRoadAddress = terminatedRoadwayNumbersChanges.find(change => change.originalRoadwayNumber == rwp.roadwayNumber &&
+                  change.originalStartAddr >= source.startAddressM.get && change.originalEndAddr <= source.endAddressM.get
+                )
+                if (terminatedRoadAddress.isDefined) {
+                  updateRoadwayPoint(rwp, rwp.addrMValue)
+                } else Seq.empty[RoadwayPoint]
+              } else { // Skip the point if it is already in the updated list
+                Seq.empty[RoadwayPoint]
+              }
             }
             list ++ rwPoints
           } else list
