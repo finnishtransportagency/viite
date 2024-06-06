@@ -955,6 +955,12 @@ class RoadAddressService(
           else {
             logger.info(s"Skipping roadway points' roadwayNumber (${rwp.roadwayNumber} -> ${newRwp.roadwayNumber}) and addrM (${rwp.addrMValue} -> ${newRwp.addrMValue}) update " +
               s"because a similar roadway point already exists in the database with these values (id: ${existingRoadwayPoint.get.id}, roadwayNumber: ${existingRoadwayPoint.get.roadwayNumber}, addrMValue: ${existingRoadwayPoint.get.addrMValue})")
+            // Expire the junction point related to the existing roadway point
+            val junctionPoints = junctionPointDAO.fetchByRoadwayPointId(rwp.id)
+            junctionPoints.foreach { jp =>
+              logger.info(s"Expiring junction point ${jp.id} related to skipped roadway_point ${rwp.id}")
+              junctionPointDAO.expireById(Seq(jp.id))
+            }
             Seq()
           }
         } else {
