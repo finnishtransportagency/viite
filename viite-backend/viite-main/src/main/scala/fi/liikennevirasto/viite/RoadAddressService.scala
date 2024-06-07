@@ -830,27 +830,27 @@ class RoadAddressService(
 
     // Expire calibration points not applied by project road changes logic
     startCPsToBeExpired.foreach {
-      ll =>
-        val cal = CalibrationPointDAO.fetch(ll.linkId, CalibrationPointLocation.StartOfLink.value)
+      cp =>
+        val cal = CalibrationPointDAO.fetch(cp.linkId, CalibrationPointLocation.StartOfLink.value)
         if (cal.isDefined) {
           CalibrationPointDAO.expireById(Set(cal.get.id))
           logger.info(s"Expiring calibration point id:" + cal.get.id)
           // Check if the expired calibrationpoint needs to be replaced with a JunctionCP
-          CalibrationPointsUtils.createCalibrationPointIfNeeded(ll.roadwayPointId, ll.linkId, CalibrationPointLocation.StartOfLink, CalibrationPointType.JunctionPointCP, username)
+          CalibrationPointsUtils.createCalibrationPointIfNeeded(cp.roadwayPointId, cp.linkId, CalibrationPointLocation.StartOfLink, CalibrationPointType.JunctionPointCP, username)
         } else {
-          logger.error(s"Failed to expire start calibration point for link id: ${ll.linkId}")
+          logger.error(s"Failed to expire start calibration point for link id: ${cp.linkId}")
         }
     }
     endCPsToBeExpired.foreach {
-      ll =>
-        val cal = CalibrationPointDAO.fetch(ll.linkId, CalibrationPointLocation.EndOfLink.value)
+      cp =>
+        val cal = CalibrationPointDAO.fetch(cp.linkId, CalibrationPointLocation.EndOfLink.value)
         if (cal.isDefined) {
           CalibrationPointDAO.expireById(Set(cal.get.id))
           logger.info(s"Expiring calibration point id:" + cal.get.id)
           // Check if the expired calibrationpoint needs to be replaced with a JunctionCP
-          CalibrationPointsUtils.createCalibrationPointIfNeeded(ll.roadwayPointId, ll.linkId, CalibrationPointLocation.EndOfLink, CalibrationPointType.JunctionPointCP, username)
+          CalibrationPointsUtils.createCalibrationPointIfNeeded(cp.roadwayPointId, cp.linkId, CalibrationPointLocation.EndOfLink, CalibrationPointType.JunctionPointCP, username)
         } else {
-          logger.error(s"Failed to expire end calibration point for link id: ${ll.linkId}")
+          logger.error(s"Failed to expire end calibration point for link id: ${cp.linkId}")
         }
     }
 
@@ -955,12 +955,6 @@ class RoadAddressService(
           else {
             logger.info(s"Skipping roadway points' roadwayNumber (${rwp.roadwayNumber} -> ${newRwp.roadwayNumber}) and addrM (${rwp.addrMValue} -> ${newRwp.addrMValue}) update " +
               s"because a similar roadway point already exists in the database with these values (id: ${existingRoadwayPoint.get.id}, roadwayNumber: ${existingRoadwayPoint.get.roadwayNumber}, addrMValue: ${existingRoadwayPoint.get.addrMValue})")
-            // Expire the junction point related to the existing roadway point
-            val junctionPoints = junctionPointDAO.fetchByRoadwayPointId(rwp.id)
-            junctionPoints.foreach { jp =>
-              logger.info(s"Expiring junction point ${jp.id} related to skipped roadway_point ${rwp.id}")
-              junctionPointDAO.expireById(Seq(jp.id))
-            }
             Seq()
           }
         } else {

@@ -908,12 +908,27 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       (nodePointsToTerminate, junctionPointsToTerminate)
     }
 
+    def getJunctionPointsFromObsoleteRoadwayPoints(roadwayPoints: Seq[RoadwayPoint]): Seq[JunctionPoint] = {
+      // Find roadway points that are not on start or end of any project link
+      val obsoleteRoadwayPoints = roadwayPoints.filter { rwp =>
+        val exists = projectLinks.exists(pl => pl.roadwayNumber == rwp.roadwayNumber && (rwp.addrMValue == pl.addrMRange.start || rwp.addrMValue == pl.addrMRange.end))
+        !exists
+      }
+      // Fetch junction points related to obsolete roadway points
+      val obsoleteJunctionPointsFromRoadwayPoints = obsoleteRoadwayPoints.flatMap { rwp =>
+        val junctionPoints = junctionPointDAO.fetchByRoadwayPointId(rwp.id)
+        junctionPoints
+      }
+      obsoleteJunctionPointsFromRoadwayPoints
+    }
+
     def getObsoleteNodePointsAndJunctionPointsByModifiedRoadwayNumbers(roadwayNumbersSection: Seq[Long], terminatedJunctionPoints: Seq[JunctionPoint]): (Seq[NodePoint], Seq[JunctionPoint]) = {
       logger.info(s"Modified roadway number: ${roadwayNumbersSection.toList}")
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers(roadwayNumbersSection)
       val sortedRoadways = roadwayDAO.fetchAllByRoadwayNumbers(roadwayNumbersSection.toSet).sortBy(_.startAddrMValue)
 
       val (startAddrMValue, endAddrMValue) = (sortedRoadways.headOption.map(_.startAddrMValue), sortedRoadways.lastOption.map(_.endAddrMValue))
+      val junctionPointsFromObsoleteRoadwayPoints = getJunctionPointsFromObsoleteRoadwayPoints(roadwayPoints)
 
       val obsoleteNodePoints = sortedRoadways.flatMap { rw =>
         val nodePoints = nodePointDAO.fetchByRoadwayPointIds(roadwayPoints.filter(_.roadwayNumber == rw.roadwayNumber).map(_.id))
@@ -961,9 +976,10 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         }
         affectedJunctionsPoints
       }
+      val allObsoleteJunctionPoints = junctionPointsFromObsoleteRoadwayPoints ++ obsoleteJunctionPoints
       logger.info(s"Obsolete node points : ${obsoleteNodePoints.map(_.id).toSet}")
-      logger.info(s"Obsolete junction points : ${obsoleteJunctionPoints.map(_.id).toSet}")
-      (obsoleteNodePoints, obsoleteJunctionPoints)
+      logger.info(s"Obsolete junction points : ${allObsoleteJunctionPoints.map(_.id).toSet}")
+      (obsoleteNodePoints, allObsoleteJunctionPoints)
     }
 
     def expireJunctionsAndJunctionPoints(junctionPoints: Seq[JunctionPoint]): Seq[Junction] = {
@@ -1048,6 +1064,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         getObsoleteNodePointsAndJunctionPointsByModifiedRoadwayNumbers(modifiedRoadwayNumbers, terminatedJunctionPoints)
       }
     }.values.flatten.toSeq
+
+    logger.info(s"Obsolete points from modified roadways : ${obsoletePointsFromModifiedRoadways.map { case (nodePoints, junctionPoints) => (nodePoints.map(_.id), junctionPoints.map(_.id)) }}")
 
     val obsoleteNodePoints = terminatedNodePoints ++ obsoletePointsFromModifiedRoadways.flatMap(_._1)
     val obsoleteJunctionPoints = terminatedJunctionPoints ++ obsoletePointsFromModifiedRoadways.flatMap(_._2)
