@@ -928,7 +928,6 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       val sortedRoadways = roadwayDAO.fetchAllByRoadwayNumbers(roadwayNumbersSection.toSet).sortBy(_.startAddrMValue)
 
       val (startAddrMValue, endAddrMValue) = (sortedRoadways.headOption.map(_.startAddrMValue), sortedRoadways.lastOption.map(_.endAddrMValue))
-      val junctionPointsFromObsoleteRoadwayPoints = getJunctionPointsFromObsoleteRoadwayPoints(roadwayPoints)
 
       val obsoleteNodePoints = sortedRoadways.flatMap { rw =>
         val nodePoints = nodePointDAO.fetchByRoadwayPointIds(roadwayPoints.filter(_.roadwayNumber == rw.roadwayNumber).map(_.id))
@@ -976,7 +975,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         }
         affectedJunctionsPoints
       }
-      val allObsoleteJunctionPoints = junctionPointsFromObsoleteRoadwayPoints ++ obsoleteJunctionPoints
+      val allObsoleteJunctionPoints = obsoleteJunctionPoints ++ getJunctionPointsFromObsoleteRoadwayPoints(roadwayPoints)
       logger.info(s"Obsolete node points : ${obsoleteNodePoints.map(_.id).toSet}")
       logger.info(s"Obsolete junction points : ${allObsoleteJunctionPoints.map(_.id).toSet}")
       (obsoleteNodePoints, allObsoleteJunctionPoints)
@@ -1064,8 +1063,6 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         getObsoleteNodePointsAndJunctionPointsByModifiedRoadwayNumbers(modifiedRoadwayNumbers, terminatedJunctionPoints)
       }
     }.values.flatten.toSeq
-
-    logger.info(s"Obsolete points from modified roadways : ${obsoletePointsFromModifiedRoadways.map { case (nodePoints, junctionPoints) => (nodePoints.map(_.id), junctionPoints.map(_.id)) }}")
 
     val obsoleteNodePoints = terminatedNodePoints ++ obsoletePointsFromModifiedRoadways.flatMap(_._1)
     val obsoleteJunctionPoints = terminatedJunctionPoints ++ obsoletePointsFromModifiedRoadways.flatMap(_._2)
