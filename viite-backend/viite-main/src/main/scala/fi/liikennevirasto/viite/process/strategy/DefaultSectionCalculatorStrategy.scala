@@ -587,6 +587,8 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
           val adjustedTerminatedLink = termLink.copy(addrMRange = AddrMRange(en, termLink.addrMRange.end), originalAddrMRange = AddrMRange(en, termLink.originalAddrMRange.end))
           val index = terminatedLinks.indexOf(terminatedLinkAfterUnchangedProjectLink.get)
           adjustedTerminated = terminatedLinks.updated(index, adjustedTerminatedLink)
+        } else {
+          adjustedTerminated = terminatedLinks
         }
 
         projectLink.status match {
