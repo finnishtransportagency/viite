@@ -170,30 +170,32 @@ trait TrackCalculatorStrategy {
     //  Find a calibration point annexed to the projectLink Id
     val availableCalibrationPoint = calibrationPoints.get(rightProjectLinks.last.id).orElse(calibrationPoints.get(leftProjectLinks.last.id))
 
-    val startSectionAddress = startAddress.getOrElse(getFixedAddress(leftProjectLinks.head, rightProjectLinks.head)._1)
+    val sectionStartAddress = startAddress.getOrElse(getFixedAddress(leftProjectLinks.head, rightProjectLinks.head)._1)
 
     // With minimum end address we want to maintain existing links' address lengths. Otherwise, average value could cause existing link lengths change.
     def fixedAddress = getFixedAddress(leftProjectLinks.last, rightProjectLinks.last, availableCalibrationPoint)._2
     def fixedMinimimumAddress = Math.max(Math.max(rightProjectLinks.last.addrMRange.start + 1, leftProjectLinks.last.addrMRange.start + 1), fixedAddress)
-    def addressLengthRight = Math.max(0, rightProjectLinks.last.originalAddrMRange.end - rightProjectLinks.last.originalAddrMRange.start)
-    def addressLengthLeft  = Math.max(0, leftProjectLinks.last.originalAddrMRange.end  -  leftProjectLinks.last.originalAddrMRange.start)
+    def originalAddressLengthRight = Math.max(0, rightProjectLinks.last.originalAddrMRange.end - rightProjectLinks.last.originalAddrMRange.start)
+    def originalAddressLengthLeft  = Math.max(0, leftProjectLinks.last.originalAddrMRange.end  -  leftProjectLinks.last.originalAddrMRange.start)
+    def sectionLengthUntilLastProjectLinkRight = rightProjectLinks.last.addrMRange.start - rightProjectLinks.head.addrMRange.start
+    def sectionLengthUntilLastProjectLinkLeft =  leftProjectLinks.last.addrMRange.start  - leftProjectLinks.head.addrMRange.start
 
     val minimumEndAddress = (leftProjectLinks.exists(_.status == RoadAddressChangeType.New), rightProjectLinks.exists(_.status == RoadAddressChangeType.New)) match {
       case (true,true) => fixedMinimimumAddress
-      case (true, false)  => rightProjectLinks.last.addrMRange.start + addressLengthRight
-      case (false, true)  => leftProjectLinks.last.addrMRange.start + addressLengthLeft
+      case (true, false)  => startAddress.getOrElse(0L) + sectionLengthUntilLastProjectLinkRight + originalAddressLengthRight
+      case (false, true)  => startAddress.getOrElse(0L) + sectionLengthUntilLastProjectLinkLeft  + originalAddressLengthLeft
       case (false,false)  =>
-        val leftLength = startSectionAddress + leftProjectLinks.last.addrMRange.end - leftProjectLinks.head.addrMRange.start
-        val rightLength = startSectionAddress + rightProjectLinks.last.addrMRange.end - rightProjectLinks.head.addrMRange.start
+        val leftLength  = sectionStartAddress + (leftProjectLinks.last.addrMRange.end  - leftProjectLinks.head.addrMRange.start)
+        val rightLength = sectionStartAddress + (rightProjectLinks.last.addrMRange.end - rightProjectLinks.head.addrMRange.start)
         averageOfAddressMValues(leftLength, rightLength, rightProjectLinks.head.reversed)
     }
 
-    val (adjustedLeft, adjustedRight) = adjustTwoTracks(rightProjectLinks, leftProjectLinks, startSectionAddress, minimumEndAddress, calibrationPoints)
+    val (adjustedLeft, adjustedRight) = adjustTwoTracks(rightProjectLinks, leftProjectLinks, sectionStartAddress, minimumEndAddress, calibrationPoints)
 
     TrackCalculatorResult(
       setLastEndAddrMValue(adjustedLeft, minimumEndAddress),
       setLastEndAddrMValue(adjustedRight, minimumEndAddress),
-      startSectionAddress, minimumEndAddress,
+      sectionStartAddress, minimumEndAddress,
       restLeftProjectLinks,
       restRightProjectLinks)
   }
