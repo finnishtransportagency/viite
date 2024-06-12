@@ -24,15 +24,19 @@ class RoundaboutSectionCalculatorStrategy extends RoadAddressSectionCalculatorSt
     val (newProjectLinksWithAddressMValues,otherProjectLinks) = mValued.partition(pl => pl.status == RoadAddressChangeType.New)
     val (newLinksWithoutRoadwayNumber, newLinksWithRoadwayNumber) = newProjectLinksWithAddressMValues.partition(npl => npl.status == RoadAddressChangeType.New && (npl.roadwayNumber == NewIdValue || npl.roadwayNumber == 0))
     var mValuedWithRwns = {
-      val newLinksWithRoadwayNumbers = if (newLinksWithoutRoadwayNumber.nonEmpty) {
-        val newRoadwayNumber = Sequences.nextRoadwayNumber
-        newLinksWithoutRoadwayNumber.map(_.copy(roadwayNumber = newRoadwayNumber)) ++ newLinksWithRoadwayNumber
+      val newLinksWithAssignedRoadwayNumbers = if (newLinksWithoutRoadwayNumber.nonEmpty) {
+        val roadwaySections = getContinuousRoadwaySections(newLinksWithoutRoadwayNumber)
+        val linksWithAssignedRoadwayNumbers = roadwaySections.flatMap(section => {
+          val newRoadwayNumber = Sequences.nextRoadwayNumber
+          section.map(pl => pl.copy(roadwayNumber = newRoadwayNumber))
+        })
+        linksWithAssignedRoadwayNumbers ++ newLinksWithRoadwayNumber
       } else newLinksWithRoadwayNumber
 
       val otherLinksWithRoadwayNumbers = if(otherProjectLinks.size > 1) {
         setRoadwaysForOtherThanNewLinks(otherProjectLinks)
       } else otherProjectLinks
-      newLinksWithRoadwayNumbers ++ otherLinksWithRoadwayNumbers
+      newLinksWithAssignedRoadwayNumbers ++ otherLinksWithRoadwayNumbers
     }
 
     val startPl = mValuedWithRwns.minBy(_.addrMRange.start)
@@ -69,24 +73,24 @@ class RoundaboutSectionCalculatorStrategy extends RoadAddressSectionCalculatorSt
     }
   }
 
-  def setRoadwaysForOtherThanNewLinks(projectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
-    def getContinuousRoadwaySections(projectLinks: Seq[ProjectLink]): Seq[Seq[ProjectLink]] = {
-      if (projectLinks.isEmpty) {
-        Seq.empty
-      } else {
-        projectLinks.tail.foldLeft(Seq(Seq(projectLinks.head))) {
-          case (acc, pl) =>
-            val lastSection = acc.last
-            val lastLink = lastSection.last
-            if (lastLink.addrMRange.end == pl.addrMRange.start && lastLink.administrativeClass == pl.administrativeClass && lastLink.ely == pl.ely) {
-              acc.init :+ (lastSection :+ pl) // Add to the current section
-            } else {
-              acc :+ Seq(pl) // Start a new section
-            }
-        }
+  def getContinuousRoadwaySections(projectLinks: Seq[ProjectLink]): Seq[Seq[ProjectLink]] = {
+    if (projectLinks.isEmpty) {
+      Seq.empty
+    } else {
+      projectLinks.tail.foldLeft(Seq(Seq(projectLinks.head))) {
+        case (acc, pl) =>
+          val lastSection = acc.last
+          val lastLink = lastSection.last
+          if (lastLink.addrMRange.end == pl.addrMRange.start && lastLink.administrativeClass == pl.administrativeClass && lastLink.ely == pl.ely) {
+            acc.init :+ (lastSection :+ pl) // Add to the current section
+          } else {
+            acc :+ Seq(pl) // Start a new section
+          }
       }
     }
+  }
 
+  def setRoadwaysForOtherThanNewLinks(projectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
     val groupedByRoadwayNumber = projectLinks.groupBy(_.roadwayNumber)
     val projectLinksWithRoadwayNumbersAssigned = {
       groupedByRoadwayNumber.flatMap(grp => {
