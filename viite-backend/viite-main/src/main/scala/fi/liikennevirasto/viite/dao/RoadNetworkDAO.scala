@@ -432,11 +432,6 @@ class RoadNetworkDAO extends BaseDAO {
         AND r.valid_to IS NULL
         AND r.end_date IS NULL"""
 
-  private val selectAndCountCalibrationPoints =
-    """SELECT scp.link_id, r.road_number, r.road_part_number, scp.start_end,
-              count(DISTINCT cp.id) AS calibration_point_count,
-              array_agg(DISTINCT cp.id) AS calibration_point_ids"""
-
   private val joinGroupAndOrderCalibrationPointData =
     """JOIN
         roadway r ON rp.roadway_number = r.roadway_number
