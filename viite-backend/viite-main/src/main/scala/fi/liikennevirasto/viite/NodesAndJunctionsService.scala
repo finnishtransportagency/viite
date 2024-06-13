@@ -1148,12 +1148,12 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
    * Checks if the provided sequence of junction points meets specific criteria:
    * The sequence must contain exactly two junction points.
    * - As roundabout junctions always have two junction points (before & after), having exactly two
-   * junction points in the sequence implies that there is no corresponding junction point
-   * connected to them as result of termination of a road part.
+   * - junction points in the sequence implies that there is no corresponding junction point of another road part
+   * - connected to them as result of termination.
    *
    * Both junction points must have a non-zero `addrM` value and must belong to roads classified as ramps or roundabouts
    * - The start/end of the roundabout should always have junction with junction points
-   * even without connecting road, resulting in two junction points.
+   * - even without connecting road, resulting in two junction points.
    *
    * @param junctionPointsToCheck A sequence of JunctionPoint objects to be evaluated.
    * @return true if the sequence meets all the specified criteria, otherwise false.
