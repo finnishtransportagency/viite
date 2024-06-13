@@ -947,16 +947,12 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
               val hasMultipleRoadParts = ObsoleteJunctionPointFilters.multipleRoadParts(junctionPointsToCheckForExpiration)
               (isDiscontinuityInSameOwnRoadNumber, hasMultipleRoadParts, isTwoJunctionPointsWithNonZeroAddrM) match {
                 case (true, _, true) => // if there are two roundabout junction points with non-zero addrM, they are obsolete
-                  logger.info(s"Two junction points with non-zero addrM found and rampsAndRoundaboutsDiscontinuityInSameOwnRoadNumber applies")
                   junctionPointsToCheckForExpiration
                 case (true, _, _) => // if there is a discontinuity in the same own road number, no junction points to expire
-                  logger.info(s"Discontinuity in same own road number found and rampsAndRoundaboutsDiscontinuityInSameOwnRoadNumber applies")
                   Seq.empty[JunctionPoint]
                 case (_, true, _) => // if there are multiple road parts, no junction points to expire
-                  logger.info(s"Multiple road parts found and multipleRoadParts applies")
                   Seq.empty[JunctionPoint]
                 case _ =>
-                  logger.info(s"None of the rules apply for ramps and roundabouts")
                   junctionPointsToCheckForExpiration
               }
             }
@@ -1148,7 +1144,20 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       }
     }
 
-    // Two junction points with non-zero addrM value and in the same road part
+  /**
+   * Checks if the provided sequence of junction points meets specific criteria:
+   * The sequence must contain exactly two junction points.
+   * - As roundabout junctions always have two junction points (before & after), having exactly two
+   * junction points in the sequence implies that there is no corresponding junction point
+   * connected to them as result of termination of a road part.
+   *
+   * Both junction points must have a non-zero `addrM` value and must belong to roads classified as ramps or roundabouts
+   * - The start/end of the roundabout should always have junction with junction points
+   * even without connecting road, resulting in two junction points.
+   *
+   * @param junctionPointsToCheck A sequence of JunctionPoint objects to be evaluated.
+   * @return true if the sequence meets all the specified criteria, otherwise false.
+   */
     def twoJunctionPointsWithNonZeroAddrM(junctionPointsToCheck: Seq[JunctionPoint]): Boolean = {
       if (junctionPointsToCheck.size != 2) {
         false
