@@ -124,7 +124,14 @@
                 '</thead>' +
                 '<tbody></tbody></table>');
             linksWithExtraCalibrationPointsOnSameRoadway.forEach((link) => {
-                const startEndText = link.startEnd === 0 ? 'Alku' : (link.startEnd === 1 ? 'Loppu' : link.startEnd);
+                let startEndText;
+                if (link.startEnd === 0) {
+                    startEndText = 'Alku';
+                } else if (link.startEnd === 1) {
+                    startEndText = 'Loppu';
+                } else {
+                    startEndText = link.startEnd;
+                }
                 const tableRow = $(`<tr>
                             <td>${link.linkId}</td>
                             <td>${link.roadNumber}</td>
@@ -152,7 +159,14 @@
                 '</thead>' +
                 '<tbody></tbody></table>');
             linksWithExtraCalibrationPoints.forEach((link) => {
-                const startEndText = link.startEnd === 0 ? 'Alku' : (link.startEnd === 1 ? 'Loppu' : link.startEnd);
+                let startEndText;
+                if (link.startEnd === 0) {
+                    startEndText = 'Alku';
+                } else if (link.startEnd === 1) {
+                    startEndText = 'Loppu';
+                } else {
+                    startEndText = link.startEnd;
+                }
                 const tableRow = $(`<tr>
                             <td>${link.linkId}</td>
                             <td>${link.roadNumber}</td>
