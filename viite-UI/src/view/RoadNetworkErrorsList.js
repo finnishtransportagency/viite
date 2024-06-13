@@ -118,18 +118,26 @@
                 '<th>Linkin Id</th>' +
                 '<th>Tie</th>' +
                 '<th>Osa</th>' +
-                '<th>Kpl/Alku</th>' +
-                '<th>Kpl/Loppu</th>' +
+                '<th>Linkin Alku/Loppu</th>' +
+                '<th>Määrä</th>' +
                 '<th>Kalibrointipisteiden Id:t</th>'+
                 '</thead>' +
                 '<tbody></tbody></table>');
             linksWithExtraCalibrationPointsOnSameRoadway.forEach((link) => {
+                let startEndText;
+                if (link.startEnd === 0) {
+                    startEndText = 'Alku';
+                } else if (link.startEnd === 1) {
+                    startEndText = 'Loppu';
+                } else {
+                    startEndText = link.startEnd;
+                }
                 const tableRow = $(`<tr>
                             <td>${link.linkId}</td>
                             <td>${link.roadNumber}</td>
                             <td>${link.roadPartNumber}</td>
-                            <td>${link.startCount}</td>
-                            <td>${link.endCount}</td>
+                            <td>${startEndText}</td>
+                            <td>${link.calibrationPointCount + ' kpl'}</td>
                             <td>${link.calibrationPoints}</td>
                         </tr>`);
                 table.append(tableRow);
@@ -145,18 +153,26 @@
                 '<th>Linkin Id</th>' +
                 '<th>Tie</th>' +
                 '<th>Osa</th>' +
-                '<th>Kpl/Alku</th>' +
-                '<th>Kpl/Loppu</th>' +
+                '<th>Linkin Alku/Loppu</th>' +
+                '<th>Määrä</th>' +
                 '<th>Kalibrointipisteiden Id:t</th>'+
                 '</thead>' +
                 '<tbody></tbody></table>');
             linksWithExtraCalibrationPoints.forEach((link) => {
+                let startEndText;
+                if (link.startEnd === 0) {
+                    startEndText = 'Alku';
+                } else if (link.startEnd === 1) {
+                    startEndText = 'Loppu';
+                } else {
+                    startEndText = link.startEnd;
+                }
                 const tableRow = $(`<tr>
                             <td>${link.linkId}</td>
                             <td>${link.roadNumber}</td>
                             <td>${link.roadPartNumber}</td>
-                            <td>${link.startCount}</td>
-                            <td>${link.endCount}</td>
+                            <td>${startEndText}</td>
+                            <td>${link.calibrationPointCount + ' kpl'}</td>
                             <td>${link.calibrationPoints}</td>
                         </tr>`);
                 table.append(tableRow);
