@@ -420,7 +420,7 @@ class RoadNetworkDAO extends BaseDAO {
     Q.queryNA[MissingRoadwayPoint](query).iterator.toSeq
   }
 
-  private val commonFromClause =
+  private val calibrationPointJoinAndWhereConditions =
     """FROM
         calibration_point cp
       JOIN
@@ -450,7 +450,9 @@ class RoadNetworkDAO extends BaseDAO {
           """
 
   /**
-   * Fetch links with extra calibration points
+   * Fetch links that have more than one start or end calibration points
+   * The results are grouped by link ID, start/end, and other relevant fields to count and aggregate the calibration points
+   *
    * @param roadPartFilter if defined, filter by road part
    * @return Sequence of LinksWithExtraCalibrationPoints
    */
@@ -466,7 +468,7 @@ class RoadNetworkDAO extends BaseDAO {
         cp.link_id,
         cp.start_end,
         count(DISTINCT cp.id) AS calibration_point_count
-      $commonFromClause
+      $calibrationPointJoinAndWhereConditions
         $roadPartCondition
       GROUP BY
         cp.link_id,
@@ -474,7 +476,9 @@ class RoadNetworkDAO extends BaseDAO {
       HAVING
         count(DISTINCT cp.id) > 1
     )
-    $selectAndCountCalibrationPoints
+    SELECT scp.link_id, r.road_number, r.road_part_number, scp.start_end,
+              count(DISTINCT cp.id) AS calibration_point_count,
+              array_agg(DISTINCT cp.id) AS calibration_point_ids
     FROM
       selectedCalibrationPoints scp
     JOIN
@@ -487,7 +491,9 @@ class RoadNetworkDAO extends BaseDAO {
   }
 
   /**
-   * Fetch links with extra calibration points with same roadway number
+   * Fetch links that have more than one start or end calibration points with the same roadway number
+   * The results are grouped by link ID, start/end, and other relevant fields to count and aggregate the calibration points
+   *
    * @return Sequence of LinksWithExtraCalibrationPoints
    */
   def fetchLinksWithExtraCalibrationPointsWithSameRoadwayNumber(): Seq[LinksWithExtraCalibrationPoints] = {
@@ -500,7 +506,7 @@ class RoadNetworkDAO extends BaseDAO {
         rp.roadway_number,
         cp.start_end,
         count(DISTINCT cp.id) AS calibration_point_count
-      $commonFromClause
+      $calibrationPointJoinAndWhereConditions
       GROUP BY
         cp.link_id,
         rp.roadway_number,
@@ -508,7 +514,9 @@ class RoadNetworkDAO extends BaseDAO {
       HAVING
         count(DISTINCT cp.id) > 1
     )
-    $selectAndCountCalibrationPoints
+    SELECT scp.link_id, r.road_number, r.road_part_number, scp.start_end,
+              count(DISTINCT cp.id) AS calibration_point_count,
+              array_agg(DISTINCT cp.id) AS calibration_point_ids
     FROM
       selectedCalibrationPoints scp
     JOIN
