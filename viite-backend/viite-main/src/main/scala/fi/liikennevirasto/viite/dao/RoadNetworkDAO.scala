@@ -420,92 +420,103 @@ class RoadNetworkDAO extends BaseDAO {
     Q.queryNA[MissingRoadwayPoint](query).iterator.toSeq
   }
 
+  private val commonFromClause =
+    """FROM
+        calibration_point cp
+      JOIN
+        roadway_point rp ON cp.roadway_point_id = rp.id
+      JOIN
+        roadway r ON rp.roadway_number = r.roadway_number
+      WHERE
+        cp.valid_to IS NULL
+        AND r.valid_to IS NULL
+        AND r.end_date IS NULL"""
+
+  private val selectAndCountCalibrationPoints =
+    """SELECT scp.link_id, r.road_number, r.road_part_number, scp.start_end,
+              count(DISTINCT cp.id) AS calibration_point_count,
+              array_agg(DISTINCT cp.id) AS calibration_point_ids"""
+
+  private val joinGroupAndOrderCalibrationPointData =
+    """JOIN
+        roadway r ON rp.roadway_number = r.roadway_number
+      WHERE
+        cp.valid_to IS NULL
+      AND r.valid_to IS NULL
+      AND r.end_date IS NULL
+        GROUP BY scp.link_id, scp.start_end, scp.calibration_point_count, r.road_number, r.road_part_number
+        ORDER BY
+          r.road_number, r.road_part_number
+          """
+
   /**
-   * Construct query to find links with extra calibration points (more than one calibration point on start/end of the same link)
-   * @param roadPartFilter fetch extra calibration points for specific road part
-   * @param sameRoadwayNumber fetch extra calibration points with the same roadway number
-   * @return LinksWithExtraCalibrationPoints query
+   * Fetch links with extra calibration points
+   * @param roadPartFilter if defined, filter by road part
+   * @return Sequence of LinksWithExtraCalibrationPoints
    */
-  def constructExtraCalibrationPointQuery(roadPartFilter: Option[RoadPart] = None, sameRoadwayNumber: Boolean = false): String = {
+  def fetchLinksWithExtraCalibrationPoints(roadPartFilter: Option[RoadPart] = None): Seq[LinksWithExtraCalibrationPoints] = {
     val roadPartCondition = roadPartFilter.map { rp =>
-      s"AND RP.ROADWAY_NUMBER IN (SELECT ROADWAY_NUMBER FROM ROADWAY WHERE ROAD_NUMBER = ${rp.roadNumber} AND ROAD_PART_NUMBER = ${rp.partNumber} AND VALID_TO IS NULL AND END_DATE IS NULL)"
+      s"AND R.ROAD_NUMBER = ${rp.roadNumber} AND R.ROAD_PART_NUMBER = ${rp.partNumber}"
     }.getOrElse("")
 
-    val groupingCondition = if (sameRoadwayNumber) {
-      "GROUP BY CP.LINK_ID, RP.ROADWAY_NUMBER, CP.START_END"
-    } else {
-      "GROUP BY CP.LINK_ID, CP.START_END"
-    }
-
-    val selectCondition = if (sameRoadwayNumber) {
-      "RP.ROADWAY_NUMBER,"
-    } else {
-      ""
-    }
-
-    s"""
-    WITH sub AS (
+    val query =
+      s"""
+    WITH selectedCalibrationPoints AS (
       SELECT
-        CP.LINK_ID,
-        $selectCondition
-        CP.START_END,
-        COUNT(DISTINCT CP.ID) AS CALIBRATION_POINT_COUNT
-      FROM
-        CALIBRATION_POINT CP
-      JOIN
-        ROADWAY_POINT RP ON CP.ROADWAY_POINT_ID = RP.ID
-      WHERE
-        CP.VALID_TO IS NULL
+        cp.link_id,
+        cp.start_end,
+        count(DISTINCT cp.id) AS calibration_point_count
+      $commonFromClause
         $roadPartCondition
-      $groupingCondition
+      GROUP BY
+        cp.link_id,
+        cp.start_end
       HAVING
-        COUNT(DISTINCT CP.ID) > 1
+        count(DISTINCT cp.id) > 1
     )
-    SELECT
-      sub.LINK_ID,
-      R.ROAD_NUMBER,
-      R.ROAD_PART_NUMBER,
-      sub.START_END,
-      COUNT(DISTINCT CP.ID) AS CALIBRATION_POINT_COUNT,
-      ARRAY_AGG(DISTINCT CP.ID) AS CALIBRATION_POINT_IDS
+    $selectAndCountCalibrationPoints
     FROM
-      sub
+      selectedCalibrationPoints scp
     JOIN
-      CALIBRATION_POINT CP ON sub.LINK_ID = CP.LINK_ID AND sub.START_END = CP.START_END
+      calibration_point cp ON scp.link_id = cp.link_id AND scp.start_end = cp.start_end
     JOIN
-      ROADWAY_POINT RP ON CP.ROADWAY_POINT_ID = RP.ID ${if (sameRoadwayNumber) "AND RP.ROADWAY_NUMBER = sub.ROADWAY_NUMBER" else ""}
-    JOIN
-      ROADWAY R ON RP.ROADWAY_NUMBER = R.ROADWAY_NUMBER
-    WHERE
-      CP.VALID_TO IS NULL
-      AND R.VALID_TO IS NULL
-      AND R.END_DATE IS NULL
-    GROUP BY
-      sub.LINK_ID,
-      sub.START_END,
-      sub.CALIBRATION_POINT_COUNT,
-      R.ROAD_NUMBER,
-      R.ROAD_PART_NUMBER
-    ORDER BY
-      R.ROAD_NUMBER, R.ROAD_PART_NUMBER;
-  """
-  }
-
-  // Function to fetch all links with extra calibration points
-  def fetchLinksWithExtraCalibrationPoints(): Seq[LinksWithExtraCalibrationPoints] = {
-    val query = constructExtraCalibrationPointQuery()
+      roadway_point rp ON cp.roadway_point_id = rp.id
+    $joinGroupAndOrderCalibrationPointData;
+    """.stripMargin
     Q.queryNA[LinksWithExtraCalibrationPoints](query).iterator.toSeq
   }
 
-  // Function to fetch links with extra calibration points by road part
-  def fetchLinksWithExtraCalibrationPointsByRoadPart(roadPart: RoadPart): Seq[LinksWithExtraCalibrationPoints] = {
-    val query = constructExtraCalibrationPointQuery(Some(roadPart))
-    Q.queryNA[LinksWithExtraCalibrationPoints](query).iterator.toSeq
-  }
-
-  // Function to fetch all links extra calibration points with the same roadway number
+  /**
+   * Fetch links with extra calibration points with same roadway number
+   * @return Sequence of LinksWithExtraCalibrationPoints
+   */
   def fetchLinksWithExtraCalibrationPointsWithSameRoadwayNumber(): Seq[LinksWithExtraCalibrationPoints] = {
-    val query = constructExtraCalibrationPointQuery(sameRoadwayNumber = true)
+
+    val query =
+      s"""
+    WITH selectedCalibrationPoints AS (
+      SELECT
+        cp.link_id,
+        rp.roadway_number,
+        cp.start_end,
+        count(DISTINCT cp.id) AS calibration_point_count
+      $commonFromClause
+      GROUP BY
+        cp.link_id,
+        rp.roadway_number,
+        cp.start_end
+      HAVING
+        count(DISTINCT cp.id) > 1
+    )
+    $selectAndCountCalibrationPoints
+    FROM
+      selectedCalibrationPoints scp
+    JOIN
+      calibration_point cp ON scp.link_id = cp.link_id AND scp.start_end = cp.start_end
+    JOIN
+      roadway_point rp ON cp.roadway_point_id = rp.id AND rp.roadway_number = scp.roadway_number
+    $joinGroupAndOrderCalibrationPointData;
+    """.stripMargin
     Q.queryNA[LinksWithExtraCalibrationPoints](query).iterator.toSeq
   }
 
