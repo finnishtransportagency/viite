@@ -37,9 +37,17 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     }
 
     def adjustTerminatedStartingLinksToMatch(terminatedRight: Seq[ProjectLink], terminatedLeft: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
-      val averageEndAddrM = Math.abs((terminatedLeft.last.addrMRange.end + terminatedRight.last.addrMRange.end) / 2)
-      val lastTerminatedRight = terminatedRight.last.copy(addrMRange = AddrMRange(terminatedRight.last.addrMRange.start, averageEndAddrM), originalAddrMRange = AddrMRange(terminatedRight.last.originalAddrMRange.start, averageEndAddrM))
-      val lastTerminatedLeft = terminatedLeft.last.copy(addrMRange = AddrMRange(terminatedLeft.last.addrMRange.start, averageEndAddrM), originalAddrMRange = AddrMRange(terminatedLeft.last.originalAddrMRange.start, averageEndAddrM))
+      val averageEndAddrM = (terminatedLeft.last.addrMRange.end + terminatedRight.last.addrMRange.end) / 2
+
+      val addrMRangeRight = AddrMRange(terminatedRight.last.addrMRange.start, averageEndAddrM)
+      val addrMRangeLeft  = AddrMRange(terminatedLeft.last.addrMRange.start, averageEndAddrM)
+
+      val originalAddrMRangeRight = AddrMRange(terminatedRight.last.originalAddrMRange.start, averageEndAddrM)
+      val originalAddrMRangeLeft  = AddrMRange(terminatedLeft.last.originalAddrMRange.start, averageEndAddrM)
+
+      val lastTerminatedRight = terminatedRight.last.copy(addrMRange = addrMRangeRight, originalAddrMRange = originalAddrMRangeRight)
+      val lastTerminatedLeft  = terminatedLeft.last.copy(addrMRange = addrMRangeLeft, originalAddrMRange = originalAddrMRangeLeft)
+
       (terminatedRight.init ++ Seq(lastTerminatedRight), terminatedLeft.init ++ Seq(lastTerminatedLeft))
     }
 
