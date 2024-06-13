@@ -910,9 +910,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
     def getJunctionPointsFromObsoleteRoadwayPoints(roadwayPoints: Seq[RoadwayPoint]): Seq[JunctionPoint] = {
       // Find roadway points that are not on start or end of any project link
-      val obsoleteRoadwayPoints = roadwayPoints.filter { rwp =>
-        val exists = projectLinks.exists(pl => pl.roadwayNumber == rwp.roadwayNumber && (rwp.addrMValue == pl.addrMRange.start || rwp.addrMValue == pl.addrMRange.end))
-        !exists
+      val obsoleteRoadwayPoints = roadwayPoints.filterNot { rwp =>
+        projectLinks.exists(pl => pl.roadwayNumber == rwp.roadwayNumber && (rwp.addrMValue == pl.addrMRange.start || rwp.addrMValue == pl.addrMRange.end))
       }
       // Fetch junction points related to obsolete roadway points
       val obsoleteJunctionPointsFromRoadwayPoints = obsoleteRoadwayPoints.flatMap { rwp =>
