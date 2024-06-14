@@ -649,7 +649,8 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
             projectLink.copy(addrMRange = AddrMRange(st, en))
 
           case RoadAddressChangeType.Unchanged =>
-            projectLink.copy(addrMRange = AddrMRange(st, en), originalAddrMRange = AddrMRange(st, en))
+            val originalAddrMRange = if (projectLink.addrMRange.start == st && projectLink.addrMRange.end == en) projectLink.originalAddrMRange else AddrMRange(st, en)
+            projectLink.copy(addrMRange = AddrMRange(st, en), originalAddrMRange = originalAddrMRange)
 
           case _ => projectLink
         }
