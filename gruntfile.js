@@ -4,33 +4,6 @@ module.exports = function (grunt) {
   var path = require('path');
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
-    env: {
-      options: {},
-      development: {
-        NODE_ENV: 'DEVELOPMENT'
-      },
-      staging: {
-        NODE_ENV: 'STAGING'
-      },
-      testing: {
-        NODE_ENV: 'PRODUCTION'
-      },
-      production: {
-        NODE_ENV: 'PRODUCTION'
-      }
-    },
-    preprocess: {
-      development: {
-        files: {
-          './viite-UI/index.html': './viite-UI/tmpl/index.html'
-        }
-      },
-      production: {
-        files: {
-          './viite-UI/index.html': './viite-UI/tmpl/index.html'
-        }
-      }
-    },
     concat: {
       options: {
         separator: ';'
@@ -111,15 +84,6 @@ module.exports = function (grunt) {
             xforward: false
           },
           {
-            context: '/arcgis',
-            host: 'aineistot.esri.fi',
-            https: true,
-            port: '443',
-            changeOrigin: true,
-            xforward: false,
-            headers: {referer: 'https://aineistot.esri.fi/arcgis/rest/services/Taustakartat/Harmaasavy/MapServer?f=jsapi'}
-          },
-          {
             context: '/rasteripalvelu',
             host: 'localhost',
             port: '8080',
@@ -188,7 +152,12 @@ module.exports = function (grunt) {
       }
     },
     eslint: {
-      src: ['gruntfile.js', 'viite-UI/test/**/*.js', 'viite-UI/src/map/*.js', 'viite-UI/src/modalconfirm/*.js', 'viite-UI/src/model/*.js', 'viite-UI/src/utils/*.js', 'viite-UI/src/view/*.js', 'viite-UI/test_data/*.js', 'viite-UI/src/']
+      src: [
+        'gruntfile.js',
+        'viite-UI/test/**/*.js',
+        'viite-UI/test_data/*.js',
+        'viite-UI/src/'
+      ]
     },
     mocha: {
       viite_unit: {
@@ -216,13 +185,12 @@ module.exports = function (grunt) {
     watch: {
       viite: {
         files: ['<%= eslint.src %>', 'viite-UI/src/**/*.less', 'viite-UI/**/*.html'],
-        tasks: ['eslint', 'env:development', 'preprocess:development', 'less:viitedev', 'mocha:viite_unit', 'configureProxies:viite'],
+        tasks: ['eslint', 'less:viitedev', 'mocha:viite_unit', 'configureProxies:viite'],
         options: {
           livereload: true
         }
       }
-    },
-    exec: {}
+    }
   });
 
   grunt.loadNpmTasks("grunt-terser");
@@ -234,28 +202,22 @@ module.exports = function (grunt) {
   grunt.loadNpmTasks('grunt-contrib-connect');
   grunt.loadNpmTasks('grunt-contrib-clean');
   grunt.loadNpmTasks('grunt-connect-proxy');
-  grunt.loadNpmTasks('grunt-execute');
   grunt.loadNpmTasks('grunt-cache-breaker');
-  grunt.loadNpmTasks('grunt-env');
-  grunt.loadNpmTasks('grunt-preprocess');
-  grunt.loadNpmTasks('grunt-exec');
 
-  var target = grunt.option('target') || 'production';
+  grunt.registerTask('server', ['configureProxies:viite', 'connect:viite', 'less:viitedev', 'watch:viite']);
 
-  grunt.registerTask('server', ['env:development', 'configureProxies:viite', 'preprocess:development', 'connect:viite', 'less:viitedev', 'watch:viite']);
+  grunt.registerTask('test', ['eslint', 'configureProxies:viite', 'connect:viite', 'mocha:viite_unit']);
 
-  grunt.registerTask('test', ['eslint', 'env:development', 'configureProxies:viite', 'preprocess:development', 'connect:viite', 'mocha:viite_unit']);
+  grunt.registerTask('default', ['eslint', 'configureProxies:viite', 'connect:viite', 'mocha:viite_unit', 'clean', 'less:viiteprod', 'concat', 'terser', 'cachebreaker']);
 
-  grunt.registerTask('default', ['eslint', 'env:production', 'configureProxies:viite', 'preprocess:production', 'connect:viite', 'mocha:viite_unit', 'clean', 'less:viiteprod', 'concat', 'terser', 'cachebreaker']);
+  grunt.registerTask('deploy', ['clean', 'less:viiteprod', 'concat', 'terser', 'cachebreaker', 'save_deploy_info']);
 
-  grunt.registerTask('deploy', ['clean', 'env:' + target, 'preprocess:production', 'less:viiteprod', 'concat', 'terser', 'cachebreaker', 'save_deploy_info']);
-
-  grunt.registerTask('unit-test', ['eslint', 'env:development', 'configureProxies:viite', 'preprocess:development', 'connect:viite', 'mocha:viite_unit']);
+  grunt.registerTask('unit-test', ['eslint', 'configureProxies:viite', 'connect:viite', 'mocha:viite_unit']);
 
   grunt.registerTask('save_deploy_info',
     function () {
       var options = this.options({
-        file: 'conf/revision.properties'
+        file: 'viite-backend/conf/revision.properties'
       });
 
       var data = ('latestDeploy=' + grunt.template.today('dd-mm-yyyy HH:MM:ss'));
