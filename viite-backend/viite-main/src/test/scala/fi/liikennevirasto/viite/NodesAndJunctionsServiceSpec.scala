@@ -3819,12 +3819,306 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers(combPLinks.map(_.roadwayNumber)).map(_.id)
 
       val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
-      junctionPointTemplates.length should be(2)
       junctionPointTemplates.count(_.beforeAfter == BeforeAfter.Before) should be(1)
       junctionPointTemplates.count(_.beforeAfter == BeforeAfter.After) should be(1)
 
       val junctions = junctionDAO.fetchTemplatesByRoadwayNumbers(junctionPointTemplates.map(_.roadwayNumber).distinct)
       junctions.size should be(1)
+    }
+  }
+
+  test("Test nodesAndJunctionsService.handleJunctionTemplates When creating a roundabout road part that connects to the same part of the same road number with an EndOfRoad connecting link, " +
+    "and another road part with a different road number connected to it, then junction templates and junction points should be created at the start and endpoints of the roundabout and at the connection points of the connected roads."){
+    runWithRollback {
+      /*
+                0---RL1-->|
+                ^         |
+           RL4  |         |   RL2
+                |         V
+                |<---RL3--0---CR-->
+
+          * Note:
+              0: Illustration where junction points should be created
+              RL: Roundabout Links
+              CR: Connected Road
+               - ConnectedRoad starts from the 10 addrM of the roundabout
+      */
+
+      val roadForRoundabout = 20001
+      val connectedRoad = 46999
+      val part = 1L
+      val projectId = Sequences.nextViiteProjectId
+      val rwId = Sequences.nextRoadwayId
+      val rwId2 = Sequences.nextRoadwayId
+      val llId = Sequences.nextLinearLocationId
+      val rwNumber = Sequences.nextRoadwayNumber
+      val rwNumber2 = Sequences.nextRoadwayNumber
+      val plId = Sequences.nextProjectLinkId
+
+      // geometries for "roundabout" and connected road
+      val roundaboutGeom1 = Seq(Point(5.0, 5.0), Point(10.0, 5.0))
+      val roundaboutGeom2 = Seq(Point(10.0, 5.0), Point(10.0, 0.0))
+      val roundaboutGeom3 = Seq(Point(10.0, 0.0), Point(5.0, 0.0))
+      val roundaboutGeom4 = Seq(Point(5.0, 0.0), Point(5.0, 5.0))
+      val connectingRoadGeom = Seq(Point(10.0, 0.0), Point(15.0, 0.0))
+
+      // project links
+      val roundaboutPLink1 = dummyProjectLink(RoadPart(roadForRoundabout, part), Track.Combined, Discontinuity.Continuous, 0, 5, 0, 5, Some(DateTime.now()), None, 12345.toString, 0, 5, SideCode.TowardsDigitizing, RoadAddressChangeType.New, projectId, AdministrativeClass.State, roundaboutGeom1, rwNumber).copy(id = plId, projectId = projectId, roadwayId = rwId, linearLocationId = llId)
+      val roundaboutPLink2 = dummyProjectLink(RoadPart(roadForRoundabout, part), Track.Combined, Discontinuity.Continuous, 5, 10, 5, 10, Some(DateTime.now()), None, 12346.toString, 0, 5, SideCode.TowardsDigitizing, RoadAddressChangeType.New, projectId, AdministrativeClass.State, roundaboutGeom2, rwNumber).copy(id = plId + 1, projectId = projectId, roadwayId = rwId, linearLocationId = llId + 1)
+      val roundaboutPLink3 = dummyProjectLink(RoadPart(roadForRoundabout, part), Track.Combined, Discontinuity.Continuous, 10, 15, 10, 15, Some(DateTime.now()), None, 12347.toString, 0, 5, SideCode.TowardsDigitizing, RoadAddressChangeType.New, projectId, AdministrativeClass.State, roundaboutGeom3, rwNumber).copy(id = plId + 2, projectId = projectId, roadwayId = rwId, linearLocationId = llId + 2)
+      val roundaboutPLink4 = dummyProjectLink(RoadPart(roadForRoundabout, part), Track.Combined, Discontinuity.EndOfRoad, 15, 20, 15, 20, Some(DateTime.now()), None, 12348.toString, 0, 5, SideCode.TowardsDigitizing, RoadAddressChangeType.New, projectId, AdministrativeClass.State, roundaboutGeom4, rwNumber).copy(id = plId + 3, projectId = projectId, roadwayId = rwId, linearLocationId = llId + 3)
+      val connectedPLink = dummyProjectLink(RoadPart(connectedRoad, part), Track.Combined, Discontinuity.EndOfRoad, 0, 5, 0, 5, Some(DateTime.now()), None, 12350.toString, 0, 5, SideCode.TowardsDigitizing, RoadAddressChangeType.New, projectId, AdministrativeClass.State, connectingRoadGeom, rwNumber2).copy(id = plId + 4, projectId = projectId, roadwayId = rwId2, linearLocationId = llId + 4)
+
+      // project
+      val project = Project(projectId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(), "", Seq(), Seq(), None, None)
+
+      val projectLinks = Seq(roundaboutPLink1, roundaboutPLink2, roundaboutPLink3, roundaboutPLink4, connectedPLink)
+
+      // linear locations
+      val (lc1, rw1): (LinearLocation, Roadway) = Seq(roundaboutPLink1).map(toRoadwayAndLinearLocation).head
+      val (lc2, _): (LinearLocation, Roadway) = Seq(roundaboutPLink2).map(toRoadwayAndLinearLocation).head
+      val (lc3, _): (LinearLocation, Roadway) = Seq(roundaboutPLink3).map(toRoadwayAndLinearLocation).head
+      val (lc4, _): (LinearLocation, Roadway) = Seq(roundaboutPLink4).map(toRoadwayAndLinearLocation).head
+      //connecting roadway
+      val (lc5, rw5): (LinearLocation, Roadway) = Seq(connectedPLink).map(toRoadwayAndLinearLocation).head
+
+      // roadways
+      val rw1WithId = rw1.copy(startAddrMValue = 0, endAddrMValue = 20, ely = 8L)
+      val rw2WithId = rw5.copy(startAddrMValue = 0, endAddrMValue = 5, ely = 8L)
+
+      // linear locations with order number
+      val roundaboutLinearLocation1 = lc1.copy(orderNumber = 1)
+      val roundaboutLinearLocation2 = lc2.copy(orderNumber = 2)
+      val roundaboutLinearLocation3 = lc3.copy(orderNumber = 3)
+      val roundaboutLinearLocation4 = lc4.copy(orderNumber = 4)
+      val connectingLinearLocation = lc5.copy(orderNumber = 1)
+
+      buildTestDataForProject(Some(project), Some(Seq(rw1WithId, rw2WithId)), Some(Seq(roundaboutLinearLocation1, roundaboutLinearLocation2, roundaboutLinearLocation3, roundaboutLinearLocation4, connectingLinearLocation)), Some(projectLinks))
+
+      val projectChanges = List(
+        // Roundabout
+        ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
+          RoadwayChangeInfo(RoadAddressChangeType.New,
+            RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
+            RoadwayChangeSection(Some(roadForRoundabout), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(0L), endAddressM = Some(15L), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
+            Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
+          , DateTime.now),
+        ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
+          RoadwayChangeInfo(RoadAddressChangeType.New,
+            RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
+            RoadwayChangeSection(Some(roadForRoundabout), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(15L), endAddressM = Some(20L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
+            Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 2, 8)
+          , DateTime.now),
+        //Connected road
+        ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
+          RoadwayChangeInfo(RoadAddressChangeType.New,
+            RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
+            RoadwayChangeSection(Some(connectedRoad), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(0L), endAddressM = Some(5L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
+            Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, 8)
+          , DateTime.now)
+      )
+
+      // mock fetches
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq(roundaboutLinearLocation1, roundaboutLinearLocation2, roundaboutLinearLocation3, roundaboutLinearLocation4, connectingLinearLocation))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(Seq(rw1WithId, rw2WithId))
+
+      // roadway changes
+      val mappedProjectRoadwayChanges = projectLinkDAO.fetchProjectLinksChange(projectId)
+
+      // handle roadway points, nodes and junctions
+      roadAddressService.handleRoadwayPointsUpdate(projectChanges, mappedProjectRoadwayChanges)
+      nodesAndJunctionsService.handleNodePoints(projectChanges, projectLinks, mappedProjectRoadwayChanges)
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(projectChanges, projectLinks, mappedProjectRoadwayChanges)
+
+      val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers(projectLinks.map(_.roadwayNumber))
+
+      val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints.map(_.id))
+
+      /* There should be 5 junction point templates:
+       - 4 on the roundabout:
+         - 1 before and 1 after at the start/end of the roundabout
+         - 1 before and 1 after at the point of connection of the connected road
+       - 1 after junction point on the start of the connected road
+       */
+      junctionPointTemplates.length should be(5)
+      junctionPointTemplates.count(_.beforeAfter == BeforeAfter.Before) should be(2)
+      junctionPointTemplates.count(_.beforeAfter == BeforeAfter.After) should be(3)
+
+      val junctions = junctionDAO.fetchTemplatesByRoadwayNumbers(junctionPointTemplates.map(_.roadwayNumber).distinct)
+      junctions.size should be(2) // 1 junction for roundabout start/end and 1 for the connected road
+    }
+  }
+
+  test("Test nodesAndJunctionsService.handleJunctionTemplates When terminating a road part connected to a roundabout, and its junctions and junction points are handled, " + "" +
+    "then only the roundabout's start and endpoint junction and junction point templates should remain.") {
+    runWithRollback {
+
+      /*   Creating roundabout and connecting road:
+
+                0---RL1-->|
+                ^         |
+           RL4  |         |   RL2
+                |         V
+                |<---RL3--0---CR-->
+
+          * Note:
+              0: Illustration where junction points are created
+              RL: Roundabout Links
+              CR: Connected Road
+               - ConnectedRoad starts from the 10 addrM of the roundabout
+      */
+
+      val roadForRoundabout = 20001
+      val connectedRoad = 46999
+      val part = 1L
+      val projectId = Sequences.nextViiteProjectId
+      val rwId = Sequences.nextRoadwayId
+      val rwId2 = Sequences.nextRoadwayId
+      val llId = Sequences.nextLinearLocationId
+      val rwNumber = Sequences.nextRoadwayNumber
+      val rwNumber2 = Sequences.nextRoadwayNumber
+      val plId = Sequences.nextProjectLinkId
+
+      // geometries for "roundabout" and connected road
+      val roundaboutGeom1 = Seq(Point(5.0, 5.0), Point(10.0, 5.0))
+      val roundaboutGeom2 = Seq(Point(10.0, 5.0), Point(10.0, 0.0))
+      val roundaboutGeom3 = Seq(Point(10.0, 0.0), Point(5.0, 0.0))
+      val roundaboutGeom4 = Seq(Point(5.0, 0.0), Point(5.0, 5.0))
+      val connectingRoadGeom = Seq(Point(10.0, 0.0), Point(15.0, 0.0))
+
+      // project links
+      val roundaboutPLink1 = dummyProjectLink(RoadPart(roadForRoundabout, part), Track.Combined, Discontinuity.Continuous, 0, 5, 0, 5, Some(DateTime.now()), None, 12345.toString, 0, 5, SideCode.TowardsDigitizing, RoadAddressChangeType.New, projectId, AdministrativeClass.State, roundaboutGeom1, rwNumber).copy(id = plId, projectId = projectId, roadwayId = rwId, linearLocationId = llId)
+      val roundaboutPLink2 = dummyProjectLink(RoadPart(roadForRoundabout, part), Track.Combined, Discontinuity.Continuous, 5, 10, 5, 10, Some(DateTime.now()), None, 12346.toString, 0, 5, SideCode.TowardsDigitizing, RoadAddressChangeType.New, projectId, AdministrativeClass.State, roundaboutGeom2, rwNumber).copy(id = plId + 1, projectId = projectId, roadwayId = rwId, linearLocationId = llId + 1)
+      val roundaboutPLink3 = dummyProjectLink(RoadPart(roadForRoundabout, part), Track.Combined, Discontinuity.Continuous, 10, 15, 10, 15, Some(DateTime.now()), None, 12347.toString, 0, 5, SideCode.TowardsDigitizing, RoadAddressChangeType.New, projectId, AdministrativeClass.State, roundaboutGeom3, rwNumber).copy(id = plId + 2, projectId = projectId, roadwayId = rwId, linearLocationId = llId + 2)
+      val roundaboutPLink4 = dummyProjectLink(RoadPart(roadForRoundabout, part), Track.Combined, Discontinuity.EndOfRoad, 15, 20, 15, 20, Some(DateTime.now()), None, 12348.toString, 0, 5, SideCode.TowardsDigitizing, RoadAddressChangeType.New, projectId, AdministrativeClass.State, roundaboutGeom4, rwNumber).copy(id = plId + 3, projectId = projectId, roadwayId = rwId, linearLocationId = llId + 3)
+      val connectedPLink = dummyProjectLink(RoadPart(connectedRoad, part), Track.Combined, Discontinuity.EndOfRoad, 0, 5, 0, 5, Some(DateTime.now()), None, 12350.toString, 0, 5, SideCode.TowardsDigitizing, RoadAddressChangeType.New, projectId, AdministrativeClass.State, connectingRoadGeom, rwNumber2).copy(id = plId + 4, projectId = projectId, roadwayId = rwId2, linearLocationId = llId + 4)
+
+      // project
+      val project = Project(projectId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(), "", Seq(), Seq(), None, None)
+
+      val projectLinks = Seq(roundaboutPLink1, roundaboutPLink2, roundaboutPLink3, roundaboutPLink4, connectedPLink)
+
+      // linear locations
+      val (lc1, rw1): (LinearLocation, Roadway) = Seq(roundaboutPLink1).map(toRoadwayAndLinearLocation).head
+      val (lc2, _): (LinearLocation, Roadway) = Seq(roundaboutPLink2).map(toRoadwayAndLinearLocation).head
+      val (lc3, _): (LinearLocation, Roadway) = Seq(roundaboutPLink3).map(toRoadwayAndLinearLocation).head
+      val (lc4, _): (LinearLocation, Roadway) = Seq(roundaboutPLink4).map(toRoadwayAndLinearLocation).head
+      //connecting roadway
+      val (lc5, rw5): (LinearLocation, Roadway) = Seq(connectedPLink).map(toRoadwayAndLinearLocation).head
+
+      // roadways
+      val rw1WithId = rw1.copy(startAddrMValue = 0, endAddrMValue = 20, ely = 8L)
+      val rw2WithId = rw5.copy(startAddrMValue = 0, endAddrMValue = 5, ely = 8L)
+
+      // linear locations with order number
+      val roundaboutLinearLocation1 = lc1.copy(orderNumber = 1)
+      val roundaboutLinearLocation2 = lc2.copy(orderNumber = 2)
+      val roundaboutLinearLocation3 = lc3.copy(orderNumber = 3)
+      val roundaboutLinearLocation4 = lc4.copy(orderNumber = 4)
+      val connectingLinearLocation = lc5.copy(orderNumber = 1)
+
+      buildTestDataForProject(Some(project), Some(Seq(rw1WithId, rw2WithId)), Some(Seq(roundaboutLinearLocation1, roundaboutLinearLocation2, roundaboutLinearLocation3, roundaboutLinearLocation4, connectingLinearLocation)), Some(projectLinks))
+
+      val projectChanges = List(
+        // Roundabout
+        ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
+          RoadwayChangeInfo(RoadAddressChangeType.New,
+            RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
+            RoadwayChangeSection(Some(roadForRoundabout), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(0L), endAddressM = Some(15L), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L)),
+            Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
+          , DateTime.now),
+        ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
+          RoadwayChangeInfo(RoadAddressChangeType.New,
+            RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
+            RoadwayChangeSection(Some(roadForRoundabout), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(15L), endAddressM = Some(20L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
+            Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 2, 8)
+          , DateTime.now),
+        //Connected road
+        ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
+          RoadwayChangeInfo(RoadAddressChangeType.New,
+            RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
+            RoadwayChangeSection(Some(connectedRoad), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(0L), endAddressM = Some(5L), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L)),
+            Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, 8)
+          , DateTime.now)
+      )
+
+      // mock fetches
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq(roundaboutLinearLocation1, roundaboutLinearLocation2, roundaboutLinearLocation3, roundaboutLinearLocation4, connectingLinearLocation))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(Seq(rw1WithId, rw2WithId))
+
+      // roadway changes
+      val mappedProjectRoadwayChanges = projectLinkDAO.fetchProjectLinksChange(projectId)
+
+      // handle roadway points, nodes and junctions
+      roadAddressService.handleRoadwayPointsUpdate(projectChanges, mappedProjectRoadwayChanges)
+      nodesAndJunctionsService.handleNodePoints(projectChanges, projectLinks, mappedProjectRoadwayChanges)
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(projectChanges, projectLinks, mappedProjectRoadwayChanges)
+
+
+      /*  Terminating connected road:
+
+                0---RL1-->|
+                ^         |
+           RL4  |         |   RL2
+                |         V
+                |<---RL3--- -(CR to be terminated)-
+
+          * Note:
+              0: Only one junction should remain after termination of CR
+              RL: Roundabout Links
+              CR: Connected Road
+
+      */
+      val projectId2 = Sequences.nextViiteProjectId
+      val project2 = Project(projectId2, ProjectState.Incomplete, "ProjectTerminatedLinks", "s", DateTime.now(), "", DateTime.now(), DateTime.now(), "", Seq(), Seq(), None, None)
+
+      // project link
+      val terminatedLink = dummyProjectLink(RoadPart(connectedRoad, part), Track.Combined, Discontinuity.EndOfRoad, 0, 5, 0, 5, Some(DateTime.now()), None, 12350.toString, 0, 5, SideCode.TowardsDigitizing, RoadAddressChangeType.Termination, projectId2, AdministrativeClass.State, connectingRoadGeom, rwNumber2).copy(id = plId + 5, projectId = projectId2, roadwayId = rwId2, linearLocationId = llId + 4)
+
+      // project changes
+      val terminatingProjectChanges = List(
+        ProjectRoadwayChange(projectId2, Some("project name"), 8L, "test user", DateTime.now,
+          RoadwayChangeInfo(RoadAddressChangeType.Termination,
+            RoadwayChangeSection(Some(connectedRoad), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(0L), endAddressM = Some(5L), Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
+            RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
+            Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 1, 8), DateTime.now)
+      )
+
+      buildTestDataForProject(Some(project2), None, None, Some(Seq(terminatedLink)))
+
+      // expire linear location and roadway
+      linearLocationDAO.expireByRoadwayNumbers(Set(terminatedLink.roadwayNumber))
+      roadwayDAO.expireHistory(Set(terminatedLink.roadwayId))
+
+      val mappedAfterChanges: Seq[ProjectRoadLinkChange] = projectLinkDAO.fetchProjectLinksChange(projectId2)
+
+      projectLinkDAO.moveProjectLinksToHistory(projectId2)
+      // handle roadway points, nodes and junctions
+      roadAddressService.handleRoadwayPointsUpdate(terminatingProjectChanges, mappedAfterChanges)
+      nodesAndJunctionsService.handleNodePoints(terminatingProjectChanges, Seq(terminatedLink), mappedAfterChanges)
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(terminatingProjectChanges, Seq(terminatedLink), mappedAfterChanges)
+
+      val endDate = Some(project2.startDate.minusDays(1))
+      nodesAndJunctionsService.expireObsoleteNodesAndJunctions(Seq(terminatedLink), endDate)
+
+      // check that the junction points are removed from connected road link's roadway points
+      val connectingLinkRoadwayPointsAfterTermination = roadwayPointDAO.fetchByRoadwayNumbers(Seq(terminatedLink.roadwayNumber))
+      val connectingLinkJunctionPointsAfterTermination: Seq[JunctionPoint] = junctionPointDAO.fetchByRoadwayPointIds(connectingLinkRoadwayPointsAfterTermination.map(_.id))
+      connectingLinkJunctionPointsAfterTermination.length should be(0)
+
+      // check that only roundabout junction points should remain
+      val allRoadwayPointsAfterTermination = roadwayPointDAO.fetchByRoadwayNumbers(projectLinks.map(_.roadwayNumber))
+      val allJunctionPointsAfterTermination: Seq[JunctionPoint] = junctionPointDAO.fetchByRoadwayPointIds(allRoadwayPointsAfterTermination.map(_.id))
+
+      // there should be only 2 junction points:
+      // 1 before and 1 after on the start/end of the roundabout
+      allJunctionPointsAfterTermination.length should be(2)
+      allJunctionPointsAfterTermination.count(_.beforeAfter == BeforeAfter.Before) should be(1)
+      allJunctionPointsAfterTermination.count(_.beforeAfter == BeforeAfter.After) should be(1)
+
+      // only one junction should remain after the termination
+      val allJunctionsAfterTermination = junctionDAO.fetchTemplatesByRoadwayNumbers(allRoadwayPointsAfterTermination.map(_.roadwayNumber).distinct)
+      allJunctionsAfterTermination.size should be(1)
     }
   }
 

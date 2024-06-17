@@ -407,8 +407,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       "linkId" -> link.linkId,
       "roadNumber" -> link.roadPart.roadNumber,
       "roadPartNumber" -> link.roadPart.partNumber,
-      "startCount" -> link.startCount,
-      "endCount" -> link.endCount,
+      "startEnd" -> link.startEnd,
+      "calibrationPointCount" -> link.calibrationPointCount,
       "calibrationPoints" -> link.calibrationPointIds
     )
   }
@@ -418,8 +418,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       "linkId" -> link.linkId,
       "roadNumber" -> link.roadPart.roadNumber,
       "roadPartNumber" -> link.roadPart.partNumber,
-      "startCount" -> link.startCount,
-      "endCount" -> link.endCount,
+      "startEnd" -> link.startEnd,
+      "calibrationPointCount" -> link.calibrationPointCount,
       "calibrationPoints" -> link.calibrationPointIds
     )
   }

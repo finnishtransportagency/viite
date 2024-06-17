@@ -222,7 +222,6 @@
       eventbus.on('userData:fetched', function (userData) {
         if (_.includes(userData.roles, 'viite')) {
           $('#formProjectButton').removeAttr('style');
-          elements.expanded.append(nodeToolSelection.element);
         }
       });
     };
@@ -265,6 +264,7 @@
         roadClassLegend.append(nodeTemplatePicture);
         nodeToolSelection.reset();
         nodeToolSelection.show();
+        elements.expanded.append(nodeToolSelection.element);
       } else {
         container.empty();
         roadClassLegend.append(roadClassLegendEntries);
