@@ -3883,8 +3883,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val (lc5, rw5): (LinearLocation, Roadway) = Seq(connectedPLink).map(toRoadwayAndLinearLocation).head
 
       // roadways
-      val rw1WithId = rw1.copy(startAddrMValue = 0, endAddrMValue = 20, ely = 8L)
-      val rw2WithId = rw5.copy(startAddrMValue = 0, endAddrMValue = 5, ely = 8L)
+      val rw1WithId = rw1.copy(addrMRange = AddrMRange(0, 20), ely = 8L)
+      val rw2WithId = rw5.copy(addrMRange = AddrMRange(0,  5), ely = 8L)
 
       // linear locations with order number
       val roundaboutLinearLocation1 = lc1.copy(orderNumber = 1)
@@ -4007,8 +4007,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val (lc5, rw5): (LinearLocation, Roadway) = Seq(connectedPLink).map(toRoadwayAndLinearLocation).head
 
       // roadways
-      val rw1WithId = rw1.copy(startAddrMValue = 0, endAddrMValue = 20, ely = 8L)
-      val rw2WithId = rw5.copy(startAddrMValue = 0, endAddrMValue = 5, ely = 8L)
+      val rw1WithId = rw1.copy(addrMRange = AddrMRange(0, 20), ely = 8L)
+      val rw2WithId = rw5.copy(addrMRange = AddrMRange(0,  5), ely = 8L)
 
       // linear locations with order number
       val roundaboutLinearLocation1 = lc1.copy(orderNumber = 1)
