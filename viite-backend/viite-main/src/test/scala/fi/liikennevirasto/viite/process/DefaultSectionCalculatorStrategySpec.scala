@@ -3033,9 +3033,9 @@ Left     ^  ^   Right
       )
 
       val roadways = Seq(
-        Roadway(roadwayIdCombinedSection,roadwayNumberCombinedSection,roadPart,AdministrativeClass.Municipality,Track.Combined, Discontinuity.EndOfRoad,696,1042,false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(roadwayIdRightTrack,roadwayNumberRightTrackSection,roadPart,AdministrativeClass.Municipality,Track.RightSide, Discontinuity.Continuous,0,696,false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(roadwayIdLeftTrack,roadwayNumberLeftTrackSection,roadPart,AdministrativeClass.Municipality,Track.LeftSide, Discontinuity.Continuous,0,696,false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None)
+        Roadway(roadwayIdCombinedSection,roadwayNumberCombinedSection,  roadPart,AdministrativeClass.Municipality,Track.Combined,  Discontinuity.EndOfRoad, AddrMRange(696,1042),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(roadwayIdRightTrack,     roadwayNumberRightTrackSection,roadPart,AdministrativeClass.Municipality,Track.RightSide, Discontinuity.Continuous,AddrMRange(  0, 696),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(roadwayIdLeftTrack,      roadwayNumberLeftTrackSection, roadPart,AdministrativeClass.Municipality,Track.LeftSide,  Discontinuity.Continuous,AddrMRange(  0, 696),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None)
       )
 
       val linearlocations = Seq(
