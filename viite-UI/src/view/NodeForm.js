@@ -6,6 +6,8 @@
     var NODE_POINTS_TITLE = 'Solmukohdat';
     var JUNCTIONS_TITLE = 'Liittymät';
     var picker;
+    var userHasPermissionToEdit = _.includes(applicationModel.getSessionUserRoles(), 'viite');
+    var nodeEditingDisabledAttribute = userHasPermissionToEdit ? '' : 'disabled';
 
     var getNodeType = function (nodeValue) {
       var nodeType = _.find(NodeType, function (type) {
@@ -33,7 +35,7 @@
       return '<div class="form-group-node-input-metadata">' +
         '<p class="form-control-static asset-node-data">' +
         '<label class="required">' + labelText + '</label>' +
-        '<input type="text" class="form-control asset-input-node-data" id = "' + id + '"' + property + ' placeholder = "' + placeholder + '" value="' + value + '"/>' +
+        '<input type="text" class="form-control asset-input-node-data" id = "' + id + '"' + property + ' placeholder = "' + placeholder + '" value="' + value + '"' + nodeEditingDisabledAttribute + '/>' +
         '</p></div>';
     };
 
@@ -58,7 +60,7 @@
 
       return '<div class="form-group-node-input-metadata"><p class="form-control-static asset-node-data">' +
         ' <label class="dropdown required">' + labelText + '</label>' +
-        ' <select type="text" class="form-control asset-input-node-data" id="' + id + '">' +
+        ' <select type="text" class="form-control asset-input-node-data" id="' + id + '"' + nodeEditingDisabledAttribute + '>' +
         unknownNodeType +
         addNodeTypeOptions(nodeType) +
         ' </select></p></div>';
@@ -163,12 +165,12 @@
 
       var detachJunctionBox = function (junction) {
         return '<td><input type="checkbox" name="detach-junction-' + junction.id + '" value="' + junction.id + '" id="detach-junction-' + junction.id + '"' +
-          ' data-junction-number=" ' + junction.junctionNumber + ' "></td>';
+          ' data-junction-number=" ' + junction.junctionNumber + ' " ' + nodeEditingDisabledAttribute + '></td>';
       };
 
       var junctionInputNumber = function (junction) {
         return '<td><input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode === 8 || event.keyCode === 9)"' +
-          ' class="form-control junction-number-input" id="junction-number-textbox-' + junction.id + '" junctionId="' + junction.id + '" maxlength="2" value="' + (junction.junctionNumber || '') + '"/></td>';
+          ' class="form-control junction-number-input" id="junction-number-textbox-' + junction.id + '" junctionId="' + junction.id + '" maxlength="2" value="' + (junction.junctionNumber || '') + '"' + nodeEditingDisabledAttribute + '/></td>';
       };
 
 
@@ -413,7 +415,7 @@
         if (_.isEqual(nodePointType, ViiteEnumerations.NodePointType.CalculatedNodePoint)) {
           isDetachable += ' disabled hidden';
         }
-        return '<td><input ' + isDetachable + ' type="checkbox" name="detach-node-point-' + nodePoint.id + '" value="' + nodePoint.id + '" id="detach-node-point-' + nodePoint.id + '"></td>';
+        return '<td><input ' + isDetachable + ' type="checkbox" name="detach-node-point-' + nodePoint.id + '" value="' + nodePoint.id + '" id="detach-node-point-' + nodePoint.id + '"' + nodeEditingDisabledAttribute + '></td>';
       };
 
       var getNodePointsRowsInfo = function (nodePoints) {
@@ -792,7 +794,9 @@
           }));
 
           // add the pen icon next to the address header so user can edit junction addresses
-          $('.junction-address-header').append('<i id="edit-junction-point-addresses" class="btn-pencil-edit fas fa-pencil-alt"></i>');
+          if (userHasPermissionToEdit) {
+            $('.junction-address-header').append('<i id="edit-junction-point-addresses" class="btn-pencil-edit fas fa-pencil-alt"></i>');
+          }
 
           $('.btn-edit-node-save').prop('disabled', formIsInvalid());
 

@@ -193,7 +193,7 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
       val allLinksWithExtraCalPoints = dao.fetchLinksWithExtraCalibrationPoints()
       allLinksWithExtraCalPoints.map(_.linkId) should contain allOf (linkId1, linkId2)
 
-      val linksWithExtraCalibrationPointsByRoadPart = dao.fetchLinksWithExtraCalibrationPointsByRoadPart(roadPart)
+      val linksWithExtraCalibrationPointsByRoadPart = dao.fetchLinksWithExtraCalibrationPoints(Some(roadPart))
       linksWithExtraCalibrationPointsByRoadPart.map(_.linkId) should contain allOf (linkId1, linkId2)
 
     }

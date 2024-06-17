@@ -2,15 +2,16 @@ package fi.liikennevirasto.viite.dao
 
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite._
+import fi.liikennevirasto.viite.dao.LinearLocation.privateLogger
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
 import fi.vaylavirasto.viite.dao.{BaseDAO, LinkDAO, Queries, Sequences}
 import fi.vaylavirasto.viite.geometry.GeometryUtils.scaleToThreeDigits
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.{CalibrationPointType, LinkGeomSource, RoadPart, SideCode}
-import fi.vaylavirasto.viite.postgis.MassQuery.logger
 import fi.vaylavirasto.viite.postgis.{MassQuery, PostGISDatabase}
 import fi.vaylavirasto.viite.util.DateTimeFormatters.dateOptTimeFormatter
 import org.joda.time.DateTime
+import org.slf4j.{Logger, LoggerFactory}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import slick.jdbc.StaticQuery.interpolation
@@ -106,6 +107,10 @@ case class CalibrationPointReference(addrM: Option[Long], typeCode: Option[Calib
 
 object CalibrationPointReference {
   val None: CalibrationPointReference = CalibrationPointReference(Option.empty[Long], Option.empty[CalibrationPointType])
+}
+
+object LinearLocation {
+  val privateLogger: Logger = LoggerFactory.getLogger(getClass) // called from Future; class logger invalid there (diff. thread); we need our own
 }
 
 // Notes:
@@ -451,6 +456,7 @@ class LinearLocationDAO extends BaseDAO {
   }
 
   def fetchCoordinatesForJunction(llIds: Seq[Long], crossingRoads: Seq[RoadwaysForJunction], allLL: Seq[LinearLocation]): Option[Point] = {
+
     val llLength = llIds.length
 
     if (llLength == 2) { //Check whether the geometry's start and endpoints are the same with 2 linear locations.
@@ -478,42 +484,74 @@ class LinearLocationDAO extends BaseDAO {
       }
     }
 
+    llIds.size match {
+      case size if(size>1) => { // must have at least two linear locations for crossing to make any sense
+        queryjunctionCoordinates(llIds)
+      }
+      case _ => {
+        privateLogger.warn(s"fetchCoordinatesForJunction: Not enough llIds (only ${llIds.size}${if(llIds.size==1) "; id " + llIds(0)})")
+        None
+      }
+    }
+  }
+
+  def queryjunctionCoordinates(llIds: Seq[Long]) = {
+
     var intersectionFunction = s""
     var closingBracket = s""
     val precision = MaxDistanceForConnectedLinks
-    var maxCheckedLLs = 8 // The closest point most probably is not further away than 8 LLs. 8 is already quite much.
+    val maxCheckedLLs = 8 // The closest point most probably is not further away than 8 LLs. 8 is already quite much.
 
-    // First two LLs already checked. Find / Check for the closest point within max. maxCheckedLLs more linearLocations
-    for (i <- 2 until math.min(llLength, maxCheckedLLs)) {
-      val llId = llIds(i)
-      // Using ClosestPoint as intersection function, as ST_Intersection sometimes fails to produce a coordinate (not intersecting at all?)
-      intersectionFunction += s"ST_ClosestPoint((SELECT ST_ReducePrecision(ll.geometry, $precision) FROM linear_location ll WHERE ll.id = $llId),"
-      closingBracket += ")"
-    }
-    // Using ClosestPoint as intersection function, as ST_Intersection sometimes fails to produce a coordinate (not intersecting at all?)
-    val intersectionOfTheFirstTwoLLs = s"""
-        ST_ClosestPoint(
-          (SELECT ST_ReducePrecision(ll.geometry, $precision)  FROM linear_location ll  WHERE ll.id = ${llIds(0)}),
-          (SELECT ST_ReducePrecision(ll.geometry, $precision)  FROM linear_location ll  WHERE ll.id = ${llIds(1)})
-        )
-    """
-    val query = {
-      s"""
-         SELECT DISTINCT
-         ST_X(${intersectionFunction} $intersectionOfTheFirstTwoLLs ${closingBracket}) AS xCoord,
-         ST_Y(${intersectionFunction} $intersectionOfTheFirstTwoLLs ${closingBracket}) AS yCoord
+    // build query for finding intersection, or closest points, within the given linear locations. Default algorithm ST_Intersection.
+    def buildCoordinateQuery(coordinateFinderFunction: String = "ST_Intersection"): String = {
+      // First two LLs handled at intersectionOfTheFirstTwoLLs. Find / Check for the point determined by coordinateFinderFunction, within max. maxCheckedLLs linearLocations.
+      for (i <- 2 until math.min(llIds.length, maxCheckedLLs)) {
+        val llId = llIds(i)
+        intersectionFunction += s"$coordinateFinderFunction((SELECT ST_SnapToGrid(ll.geometry, $precision) FROM linear_location ll WHERE ll.id = $llId),"
+        closingBracket += ")"
+      }
+
+      val intersectionOfTheFirstTwoLLs: String =    s"""
+          $coordinateFinderFunction(
+            (SELECT ST_SnapToGrid(ll.geometry, $precision)  FROM linear_location ll  WHERE ll.id = ${llIds(0)}),
+            (SELECT ST_SnapToGrid(ll.geometry, $precision)  FROM linear_location ll  WHERE ll.id = ${llIds(1)})
+          )
       """
+      val query: String =
+        s"""
+           SELECT DISTINCT
+           ST_X(${intersectionFunction} $intersectionOfTheFirstTwoLLs ${closingBracket}) AS xCoord,
+           ST_Y(${intersectionFunction} $intersectionOfTheFirstTwoLLs ${closingBracket}) AS yCoord
+        """
+        query
     }
+
+    val intersectionQuery = buildCoordinateQuery("ST_Intersection")
     try {
-      val res = Q.queryNA[JunctionCoordinate](query).firstOption
+      val res = Q.queryNA[JunctionCoordinate](intersectionQuery).firstOption
       val point: Option[Point] = res.map(junction => Point(scaleToThreeDigits(junction.xCoord), scaleToThreeDigits(junction.yCoord)))
       point
     }
     catch {
+      case e: org.postgresql.util.PSQLException => {
+        // Using ClosestPoint as intersection function, when ST_Intersection failed to produce a coordinate.
+        val closestPointQuery = buildCoordinateQuery("ST_ClosestPoint")
+        try {
+          val res = Q.queryNA[JunctionCoordinate](closestPointQuery).firstOption
+          val point: Option[Point] = res.map(junction => Point(scaleToThreeDigits(junction.xCoord), scaleToThreeDigits(junction.yCoord)))
+          privateLogger.warn(s"${e.getClass} at fetchCoordinatesForJunction: ${e.getMessage}. IntersectionQuery query failed for llIds ${llIds.toList} - got Point (${point}) from closestPointQuery.")
+          point
+        }
+        catch {
+          case e: Exception =>
+              privateLogger.warn(s"${e.getClass} at fetchCoordinatesForJunction: ${e.getMessage}. ClosestPointQuery query failed for llIds ${llIds.toList} - nothing else to try.")
+              throw e
+        }
+      }
       case e: Exception =>
-          logger.error(s"Exception ${e.getClass} at fetchCoordinatesForJunction: ${e.getMessage}.\nThe failing query was:\n$query")
+          privateLogger.warn(s"${e.getClass} at fetchCoordinatesForJunction: ${e.getMessage}. IntersectionQuery query failed for llIds ${llIds.toList} - don't know what else to try.")
           throw e
-    }
+    } // catch
   }
 
   /**
