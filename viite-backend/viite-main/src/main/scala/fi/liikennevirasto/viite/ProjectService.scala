@@ -1685,7 +1685,10 @@ class ProjectService(
   def adjustCalibrationPointsOnProjectLinks(projectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
     projectLinks.map(pl => {
       if (pl.discontinuity != Discontinuity.Continuous ||
-        projectLinks.exists(pl2 =>  pl.originalAddrMRange.end != 0 && pl2.originalAddrMRange.start == pl.originalAddrMRange.end && pl.track != pl2.track)) {
+        projectLinks.exists(pl2 =>  pl.originalAddrMRange.end != 0 && pl2.originalAddrMRange.start == pl.originalAddrMRange.end && pl.track != pl2.track) ||
+        projectLinks.exists(pl2 =>  pl.originalAddrMRange.end != 0 && pl2.originalAddrMRange.start == pl.originalAddrMRange.end && pl.track == pl2.track &&
+          pl.administrativeClass != pl2.administrativeClass))
+      {
         pl.copy(calibrationPointTypes = (pl.calibrationPointTypes._1, CalibrationPointType.RoadAddressCP))
       } else
         pl
