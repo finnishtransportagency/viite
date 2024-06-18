@@ -353,8 +353,8 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     )
 
     val rws         = Seq(
-      Roadway(0, rwn1, RoadPart(1, 1), AdministrativeClass.State, Track.Combined, Discontinuity.Discontinuous, 0, 20, reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 8L, NoTermination),
-      Roadway(1, rwn2, RoadPart(2, 1), AdministrativeClass.State, Track.Combined, Discontinuity.Discontinuous, 0, 10, reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 8L, NoTermination)
+      Roadway(0, rwn1, RoadPart(1, 1), AdministrativeClass.State, Track.Combined, Discontinuity.Discontinuous, AddrMRange(0, 20), reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 8L, NoTermination),
+      Roadway(1, rwn2, RoadPart(2, 1), AdministrativeClass.State, Track.Combined, Discontinuity.Discontinuous, AddrMRange(0, 10), reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 8L, NoTermination)
     )
 
     runWithRollback {
