@@ -701,8 +701,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       projectReservedPartDAO.reserveRoadPart(id, RoadPart(19999, 2), "u")
 
       projectLinkDAO.create(Seq(
-        util.projectLink(0L, 10L, Track.Combined, id, RoadAddressChangeType.Unchanged, RoadPart(19999, 1), discontinuity = Discontinuity.MinorDiscontinuity, 8, 12345.toString, raId, linearLocationId).copy(geometry = roadAddresses.head.geometry),
-        util.projectLink(0L, 10L, Track.Combined, id, RoadAddressChangeType.Unchanged, RoadPart(19999, 2), discontinuity = Discontinuity.EndOfRoad, 8, 12346.toString, raId + 1, linearLocationId + 1).copy(geometry = roadAddresses.last.geometry))
+        util.projectLink(AddrMRange(0L, 10L), Track.Combined, id, RoadAddressChangeType.Unchanged, RoadPart(19999, 1), discontinuity = Discontinuity.MinorDiscontinuity, 8, 12345.toString, raId, linearLocationId).copy(geometry = roadAddresses.head.geometry),
+        util.projectLink(AddrMRange(0L, 10L), Track.Combined, id, RoadAddressChangeType.Unchanged, RoadPart(19999, 2), discontinuity = Discontinuity.EndOfRoad, 8, 12346.toString, raId + 1, linearLocationId + 1).copy(geometry = roadAddresses.last.geometry))
       )
 
 
@@ -749,8 +749,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       projectReservedPartDAO.reserveRoadPart(id, RoadPart(19999, 1), "u")
       projectReservedPartDAO.reserveRoadPart(id, RoadPart(19999, 2), "u")
 
-      projectLinkDAO.create(Seq(util.projectLink(0L, 10L, Track.Combined, id, RoadAddressChangeType.Unchanged, RoadPart(19999, 1), discontinuity = Discontinuity.Continuous, 8, 12345.toString, raId, linearLocationId).copy(geometry = roadAddresses.head.geometry),
-        util.projectLink(0L, 10L, Track.Combined, id, RoadAddressChangeType.Termination, RoadPart(19999, 2), discontinuity = Discontinuity.EndOfRoad, 8, 12346.toString, raId + 1, linearLocationId + 1).copy(geometry = roadAddresses.last.geometry)))
+      projectLinkDAO.create(Seq(util.projectLink(AddrMRange(0L, 10L), Track.Combined, id, RoadAddressChangeType.Unchanged, RoadPart(19999, 1), discontinuity = Discontinuity.Continuous, 8, 12345.toString, raId, linearLocationId).copy(geometry = roadAddresses.head.geometry),
+        util.projectLink(AddrMRange(0L, 10L), Track.Combined, id, RoadAddressChangeType.Termination, RoadPart(19999, 2), discontinuity = Discontinuity.EndOfRoad, 8, 12346.toString, raId + 1, linearLocationId + 1).copy(geometry = roadAddresses.last.geometry)))
 
       when(mockRoadAddressService.getRoadAddressWithRoadPart(RoadPart(19999, 1), false, false, false)).thenReturn(Seq.empty[RoadAddress])
       when(mockRoadAddressService.getRoadAddressWithRoadPart(RoadPart(19999, 2), false, false, false)).thenReturn(Seq.empty[RoadAddress])
@@ -795,8 +795,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       projectReservedPartDAO.reserveRoadPart(id, RoadPart(19999, 2), "u")
 
       projectLinkDAO.create(Seq(
-        util.projectLink(0L, 10L, Track.Combined, id, RoadAddressChangeType.Unchanged,   RoadPart(19999, 1), discontinuity = Discontinuity.Continuous, 8, 12345.toString, raId,     linearLocationId).copy(geometry = roadAddresses.head.geometry),
-        util.projectLink(0L, 10L, Track.Combined, id, RoadAddressChangeType.Termination, RoadPart(19999, 2), discontinuity = Discontinuity.EndOfRoad,  8, 12346.toString, raId + 1, linearLocationId + 1).copy(geometry = roadAddresses.last.geometry)
+        util.projectLink(AddrMRange(0L, 10L), Track.Combined, id, RoadAddressChangeType.Unchanged,   RoadPart(19999, 1), discontinuity = Discontinuity.Continuous, 8, 12345.toString, raId,     linearLocationId).copy(geometry = roadAddresses.head.geometry),
+        util.projectLink(AddrMRange(0L, 10L), Track.Combined, id, RoadAddressChangeType.Termination, RoadPart(19999, 2), discontinuity = Discontinuity.EndOfRoad,  8, 12346.toString, raId + 1, linearLocationId + 1).copy(geometry = roadAddresses.last.geometry)
       ))
 
       when(mockRoadAddressService.getValidRoadAddressParts(19999L, project.startDate)).thenReturn(Seq(1L))
@@ -845,8 +845,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       projectReservedPartDAO.reserveRoadPart(id, RoadPart(19999, 1), "u")
       projectReservedPartDAO.reserveRoadPart(id, RoadPart(19999, 2), "u")
 
-      projectLinkDAO.create(Seq(util.projectLink(0L, 10L, Track.Combined, id, RoadAddressChangeType.Unchanged, RoadPart(19999, 1), discontinuity = Discontinuity.Continuous, 8, 12345.toString, raId, linearLocationId).copy(geometry = roadAddresses.head.geometry),
-        util.projectLink(0L, 10L, Track.Combined, id, RoadAddressChangeType.Termination, RoadPart(19999, 2), discontinuity = Discontinuity.EndOfRoad, 8, 12346.toString, raId + 1, linearLocationId + 1).copy(geometry = roadAddresses.last.geometry)))
+      projectLinkDAO.create(Seq(util.projectLink(AddrMRange(0L, 10L), Track.Combined, id, RoadAddressChangeType.Unchanged, RoadPart(19999, 1), discontinuity = Discontinuity.Continuous, 8, 12345.toString, raId, linearLocationId).copy(geometry = roadAddresses.head.geometry),
+        util.projectLink(AddrMRange(0L, 10L), Track.Combined, id, RoadAddressChangeType.Termination, RoadPart(19999, 2), discontinuity = Discontinuity.EndOfRoad, 8, 12346.toString, raId + 1, linearLocationId + 1).copy(geometry = roadAddresses.last.geometry)))
       when(mockRoadAddressService.getRoadAddressWithRoadPart(RoadPart(19999, 1), false, false, false)).thenReturn(Seq.empty[RoadAddress])
       when(mockRoadAddressService.getRoadAddressWithRoadPart(RoadPart(19999, 2), false, false, false)).thenReturn(Seq.empty[RoadAddress])
 
@@ -889,7 +889,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
         "", Seq(), Seq(), None, None)
       projectDAO.create(project)
       projectReservedPartDAO.reserveRoadPart(id, RoadPart(19999, 2), "u")
-      projectLinkDAO.create(Seq(util.projectLink(0L, 10L, Track.Combined, id, RoadAddressChangeType.Termination, RoadPart(19999, 2), discontinuity = Discontinuity.EndOfRoad, 8, 12346.toString, raId + 1, linearLocationId + 1).copy(geometry = roadAddresses.last.geometry)))
+      projectLinkDAO.create(Seq(util.projectLink(AddrMRange(0L, 10L), Track.Combined, id, RoadAddressChangeType.Termination, RoadPart(19999, 2), discontinuity = Discontinuity.EndOfRoad, 8, 12346.toString, raId + 1, linearLocationId + 1).copy(geometry = roadAddresses.last.geometry)))
       when(mockRoadAddressService.getRoadAddressWithRoadPart(RoadPart(19999, 1), false, false, false)).thenReturn(Seq(roadAddresses.head))
       when(mockRoadAddressService.getRoadAddressWithRoadPart(RoadPart(19999, 1), false, true,  false)).thenReturn(Seq(roadAddresses.head))
       when(mockRoadAddressService.getRoadAddressWithRoadPart(RoadPart(19999, 2), false, false, false)).thenReturn(Seq(roadAddresses.last))
@@ -939,7 +939,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       projectDAO.create(project)
       projectReservedPartDAO.reserveRoadPart(id, RoadPart(19999, 2), "u")
 
-      projectLinkDAO.create(Seq(util.projectLink(0L, 10L, Track.Combined, project.id, RoadAddressChangeType.Termination, roadAddresses.last.roadPart, discontinuity = Discontinuity.EndOfRoad).copy(roadwayId = ra.last.id)))
+      projectLinkDAO.create(Seq(util.projectLink(AddrMRange(0L, 10L), Track.Combined, project.id, RoadAddressChangeType.Termination, roadAddresses.last.roadPart, discontinuity = Discontinuity.EndOfRoad).copy(roadwayId = ra.last.id)))
       val currentProjectLinks = projectLinkDAO.fetchProjectLinks(project.id)
       when(mockRoadAddressService.getRoadAddressWithRoadPart(RoadPart(19999, 1), false, false, false)).thenReturn(Seq(roadAddresses.head))
       when(mockRoadAddressService.getRoadAddressWithRoadPart(RoadPart(19999, 1), false, true,  false)).thenReturn(Seq(roadAddresses.head))
@@ -959,7 +959,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       error1.head.validationError.value should be(projectValidator.ValidationErrorList.TerminationContinuity.value)
 
       projectReservedPartDAO.reserveRoadPart(id, RoadPart(19999, 1), "u")
-      projectLinkDAO.create(Seq(util.projectLink(0L, 10L, Track.Combined, project.id, RoadAddressChangeType.Unchanged).copy(roadPart = roadAddresses.head.roadPart, roadwayId = ra.head.id)))
+      projectLinkDAO.create(Seq(util.projectLink(AddrMRange(0L, 10L), Track.Combined, project.id, RoadAddressChangeType.Unchanged).copy(roadPart = roadAddresses.head.roadPart, roadwayId = ra.head.id)))
       val currentProjectLinks2 = projectLinkDAO.fetchProjectLinks(project.id)
 
       val updProject2 = projectService.fetchProjectById(project.id).get
@@ -1008,7 +1008,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       projectDAO.create(project)
       projectReservedPartDAO.reserveRoadPart(id, RoadPart(19999, 2), "u")
 
-      projectLinkDAO.create(Seq(util.projectLink(0L, 10L, Track.Combined, project.id, RoadAddressChangeType.Termination).copy(roadPart = roadAddresses.last.roadPart, roadwayId = ra.last.id)))
+      projectLinkDAO.create(Seq(util.projectLink(AddrMRange(0L, 10L), Track.Combined, project.id, RoadAddressChangeType.Termination).copy(roadPart = roadAddresses.last.roadPart, roadwayId = ra.last.id)))
       //add new link with same terminated road part (which had EndOfRoad)
       projectLinkDAO.create(Seq(util.toProjectLink(project, RoadAddressChangeType.New)(newRa).copy(roadPart = newRa.roadPart)))
 
@@ -1066,7 +1066,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
         "", Seq(), Seq(), None, None)
       projectDAO.create(project)
       projectReservedPartDAO.reserveRoadPart(id, RoadPart(20000, 2), "u")
-      projectLinkDAO.create(Seq(util.projectLink(0L, 10L, Track.Combined, project.id, RoadAddressChangeType.Termination).copy(roadPart = ra.last.roadPart, roadwayId = ra.last.id)))
+      projectLinkDAO.create(Seq(util.projectLink(AddrMRange(0L, 10L), Track.Combined, project.id, RoadAddressChangeType.Termination).copy(roadPart = ra.last.roadPart, roadwayId = ra.last.id)))
 
       //add new link with same terminated road part (which had EndOfRoad)
       projectReservedPartDAO.reserveRoadPart(id, RoadPart(20000, 3), "u")
@@ -1125,8 +1125,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       projectDAO.create(project)
       projectReservedPartDAO.reserveRoadPart(id, RoadPart(19999, 1), "u")
       projectReservedPartDAO.reserveRoadPart(id, RoadPart(19999, 2), "u")
-      projectLinkDAO.create(Seq(util.projectLink(0L, 10L, Track.Combined, id, RoadAddressChangeType.Termination, RoadPart(19999, 1), discontinuity = Discontinuity.Continuous, 8, 12345.toString, raId, linearLocationId).copy(geometry = roadAddresses.head.geometry),
-        util.projectLink(0L, 10L, Track.Combined, id, RoadAddressChangeType.Termination, RoadPart(19999, 2), discontinuity = Discontinuity.EndOfRoad, 8, 12346.toString, raId + 1, linearLocationId + 1).copy(geometry = roadAddresses.last.geometry)))
+      projectLinkDAO.create(Seq(util.projectLink(AddrMRange(0L, 10L), Track.Combined, id, RoadAddressChangeType.Termination, RoadPart(19999, 1), discontinuity = Discontinuity.Continuous, 8, 12345.toString, raId, linearLocationId).copy(geometry = roadAddresses.head.geometry),
+        util.projectLink(AddrMRange(0L, 10L), Track.Combined, id, RoadAddressChangeType.Termination, RoadPart(19999, 2), discontinuity = Discontinuity.EndOfRoad, 8, 12346.toString, raId + 1, linearLocationId + 1).copy(geometry = roadAddresses.last.geometry)))
       when(mockRoadAddressService.getRoadAddressWithRoadPart(RoadPart(19999, 1), false, false, false)).thenReturn(Seq.empty[RoadAddress])
       when(mockRoadAddressService.getRoadAddressWithRoadPart(RoadPart(19999, 2), false, false, false)).thenReturn(Seq.empty[RoadAddress])
 
@@ -1170,8 +1170,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       projectReservedPartDAO.reserveRoadPart(id, RoadPart(19999, 1), "u")
       projectReservedPartDAO.reserveRoadPart(id, RoadPart(19999, 2), "u")
 
-      projectLinkDAO.create(Seq(util.projectLink(0L, 10L, Track.Combined, id, RoadAddressChangeType.Termination, RoadPart(19999, 1), discontinuity = Discontinuity.Continuous, 8, 12345.toString, raId, linearLocationId).copy(geometry = roadAddresses.head.geometry),
-        util.projectLink(0L, 10L, Track.Combined, id, RoadAddressChangeType.Unchanged, RoadPart(19999, 2), discontinuity = Discontinuity.EndOfRoad, 8, 12346.toString, raId + 1, linearLocationId + 1).copy(geometry = roadAddresses.last.geometry)))
+      projectLinkDAO.create(Seq(util.projectLink(AddrMRange(0L, 10L), Track.Combined, id, RoadAddressChangeType.Termination, RoadPart(19999, 1), discontinuity = Discontinuity.Continuous, 8, 12345.toString, raId, linearLocationId).copy(geometry = roadAddresses.head.geometry),
+        util.projectLink(AddrMRange(0L, 10L), Track.Combined, id, RoadAddressChangeType.Unchanged, RoadPart(19999, 2), discontinuity = Discontinuity.EndOfRoad, 8, 12346.toString, raId + 1, linearLocationId + 1).copy(geometry = roadAddresses.last.geometry)))
       when(mockRoadAddressService.getRoadAddressWithRoadPart(RoadPart(19999, 1), false, false, false)).thenReturn(Seq.empty[RoadAddress])
       when(mockRoadAddressService.getRoadAddressWithRoadPart(RoadPart(19999, 2), false, false, false)).thenReturn(Seq.empty[RoadAddress])
 
@@ -1215,8 +1215,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       projectReservedPartDAO.reserveRoadPart(id, RoadPart(19999, 1), "u")
       projectReservedPartDAO.reserveRoadPart(id, RoadPart(19999, 2), "u")
 
-      projectLinkDAO.create(Seq(util.projectLink(0L, 10L, Track.Combined, id, RoadAddressChangeType.Termination, RoadPart(19999, 1), discontinuity = Discontinuity.Continuous, 8, 12345.toString, raId, linearLocationId).copy(geometry = roadAddresses.head.geometry),
-        util.projectLink(0L, 10L, Track.Combined, id, RoadAddressChangeType.Termination, RoadPart(19999, 2), discontinuity = Discontinuity.EndOfRoad, 8, 12346.toString, raId + 1, linearLocationId + 1).copy(geometry = roadAddresses.last.geometry)))
+      projectLinkDAO.create(Seq(util.projectLink(AddrMRange(0L, 10L), Track.Combined, id, RoadAddressChangeType.Termination, RoadPart(19999, 1), discontinuity = Discontinuity.Continuous, 8, 12345.toString, raId, linearLocationId).copy(geometry = roadAddresses.head.geometry),
+        util.projectLink(AddrMRange(0L, 10L), Track.Combined, id, RoadAddressChangeType.Termination, RoadPart(19999, 2), discontinuity = Discontinuity.EndOfRoad, 8, 12346.toString, raId + 1, linearLocationId + 1).copy(geometry = roadAddresses.last.geometry)))
       when(mockRoadAddressService.getRoadAddressWithRoadPart(RoadPart(19999, 1), false, false, false)).thenReturn(Seq.empty[RoadAddress])
       when(mockRoadAddressService.getRoadAddressWithRoadPart(RoadPart(19999, 2), false, false, false)).thenReturn(Seq.empty[RoadAddress])
 
@@ -1258,8 +1258,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       projectReservedPartDAO.reserveRoadPart(id, RoadPart(19999, 1), "u")
       projectReservedPartDAO.reserveRoadPart(id, RoadPart(19999, 2), "u")
 
-      projectLinkDAO.create(Seq(util.projectLink(0L, 10L, Track.Combined, id, RoadAddressChangeType.Unchanged, RoadPart(19999, 1), discontinuity = Discontinuity.EndOfRoad, 8, 12345.toString, raId, linearLocationId).copy(geometry = roadAddresses.head.geometry),
-        util.projectLink(0L, 10L, Track.Combined, id, RoadAddressChangeType.Unchanged, RoadPart(19999, 2), discontinuity = Discontinuity.EndOfRoad, 8, 12346.toString, raId + 1, linearLocationId + 1).copy(geometry = roadAddresses.last.geometry)))
+      projectLinkDAO.create(Seq(util.projectLink(AddrMRange(0L, 10L), Track.Combined, id, RoadAddressChangeType.Unchanged, RoadPart(19999, 1), discontinuity = Discontinuity.EndOfRoad, 8, 12345.toString, raId, linearLocationId).copy(geometry = roadAddresses.head.geometry),
+        util.projectLink(AddrMRange(0L, 10L), Track.Combined, id, RoadAddressChangeType.Unchanged, RoadPart(19999, 2), discontinuity = Discontinuity.EndOfRoad, 8, 12346.toString, raId + 1, linearLocationId + 1).copy(geometry = roadAddresses.last.geometry)))
       when(mockRoadAddressService.getRoadAddressWithRoadPart(RoadPart(19999, 1), false, false, false)).thenReturn(Seq.empty[RoadAddress])
       when(mockRoadAddressService.getRoadAddressWithRoadPart(RoadPart(19999, 2), false, false, false)).thenReturn(Seq.empty[RoadAddress])
 
@@ -1309,8 +1309,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       projectReservedPartDAO.reserveRoadPart(id, RoadPart(19998, 1), "u")
       projectReservedPartDAO.reserveRoadPart(id, RoadPart(19999, 2), "u")
 
-      projectLinkDAO.create(Seq(util.projectLink(0L, 10L, Track.Combined, id, RoadAddressChangeType.Unchanged, RoadPart(19998, 1), discontinuity = Discontinuity.EndOfRoad, 8, 12345.toString, raId, linearLocationId).copy(geometry = roadAddresses.head.geometry),
-        util.projectLink(0L, 10L, Track.Combined, id, RoadAddressChangeType.Unchanged, RoadPart(19999, 2), discontinuity = Discontinuity.EndOfRoad, 8, 12346.toString, raId + 1, linearLocationId + 1).copy(geometry = roadAddresses.last.geometry)))
+      projectLinkDAO.create(Seq(util.projectLink(AddrMRange(0L, 10L), Track.Combined, id, RoadAddressChangeType.Unchanged, RoadPart(19998, 1), discontinuity = Discontinuity.EndOfRoad, 8, 12345.toString, raId, linearLocationId).copy(geometry = roadAddresses.head.geometry),
+        util.projectLink(AddrMRange(0L, 10L), Track.Combined, id, RoadAddressChangeType.Unchanged, RoadPart(19999, 2), discontinuity = Discontinuity.EndOfRoad, 8, 12346.toString, raId + 1, linearLocationId + 1).copy(geometry = roadAddresses.last.geometry)))
       when(mockRoadAddressService.getRoadAddressWithRoadPart(RoadPart(19999, 1), false, false, false)).thenReturn(Seq.empty[RoadAddress])
       when(mockRoadAddressService.getRoadAddressWithRoadPart(RoadPart(19999, 2), false, false, false)).thenReturn(Seq.empty[RoadAddress])
 
@@ -1497,8 +1497,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       projectReservedPartDAO.reserveRoadPart(id, RoadPart(19999, 2), "u")
 
       projectLinkDAO.create(Seq(
-        util.projectLink(0L, 10L, Track.Combined, id, RoadAddressChangeType.NotHandled,  roadPart = RoadPart(19999, 1), discontinuity = Discontinuity.EndOfRoad, 8, 12345.toString, raId,     linearLocationId    ).copy(geometry = roadAddresses.head.geometry),
-        util.projectLink(0L, 10L, Track.Combined, id, RoadAddressChangeType.Termination, roadPart = RoadPart(19999, 2), discontinuity = Discontinuity.EndOfRoad, 8, 12346.toString, raId + 1, linearLocationId + 1).copy(geometry = roadAddresses.last.geometry)))
+        util.projectLink(AddrMRange(0L, 10L), Track.Combined, id, RoadAddressChangeType.NotHandled,  roadPart = RoadPart(19999, 1), discontinuity = Discontinuity.EndOfRoad, 8, 12345.toString, raId,     linearLocationId    ).copy(geometry = roadAddresses.head.geometry),
+        util.projectLink(AddrMRange(0L, 10L), Track.Combined, id, RoadAddressChangeType.Termination, roadPart = RoadPart(19999, 2), discontinuity = Discontinuity.EndOfRoad, 8, 12346.toString, raId + 1, linearLocationId + 1).copy(geometry = roadAddresses.last.geometry)))
 
       mockEmptyRoadAddressServiceCalls()
 
@@ -1538,10 +1538,10 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       projectLinkDAO.create(
         Seq(
-          util.projectLink( 0L, 10L, Track.Combined, id, RoadAddressChangeType.NotHandled, discontinuity = Discontinuity.Continuous, linkId = 1000.toString, roadwayId = ra.head.id).copy(geometry = roadAddresses.head.geometry),
-          util.projectLink( 0L, 10L, Track.Combined, id, RoadAddressChangeType.Transfer,   discontinuity = Discontinuity.Continuous, linkId = 1000.toString, roadwayId = ra.head.id).copy(geometry = roadAddresses.head.geometry),
-          util.projectLink(10L, 20L, Track.Combined, id, RoadAddressChangeType.NotHandled, discontinuity = Discontinuity.Continuous, linkId = 2000.toString, roadwayId = ra.last.id).copy(geometry = roadAddresses.last.geometry),
-          util.projectLink(10L, 20L, Track.Combined, id, RoadAddressChangeType.Unchanged,  discontinuity = Discontinuity.Continuous, linkId = 2000.toString, roadwayId = ra.last.id).copy(geometry = roadAddresses.last.geometry)
+          util.projectLink(AddrMRange( 0L, 10L), Track.Combined, id, RoadAddressChangeType.NotHandled, discontinuity = Discontinuity.Continuous, linkId = 1000.toString, roadwayId = ra.head.id).copy(geometry = roadAddresses.head.geometry),
+          util.projectLink(AddrMRange( 0L, 10L), Track.Combined, id, RoadAddressChangeType.Transfer,   discontinuity = Discontinuity.Continuous, linkId = 1000.toString, roadwayId = ra.head.id).copy(geometry = roadAddresses.head.geometry),
+          util.projectLink(AddrMRange(10L, 20L), Track.Combined, id, RoadAddressChangeType.NotHandled, discontinuity = Discontinuity.Continuous, linkId = 2000.toString, roadwayId = ra.last.id).copy(geometry = roadAddresses.last.geometry),
+          util.projectLink(AddrMRange(10L, 20L), Track.Combined, id, RoadAddressChangeType.Unchanged,  discontinuity = Discontinuity.Continuous, linkId = 2000.toString, roadwayId = ra.last.id).copy(geometry = roadAddresses.last.geometry)
         ))
 
       val projectLinks = projectLinkDAO.fetchProjectLinks(id, Some(RoadAddressChangeType.NotHandled))
@@ -1619,9 +1619,9 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       // create project links
       projectLinkDAO.create(
         Seq(
-          util.projectLink( 0L, 10L, Track.Combined, projectId, RoadAddressChangeType.New,       discontinuity = Discontinuity.Continuous, linkId = 1000.toString, roadwayId = roadwayId, linearLocationId = linearLocationId    ).copy(originalAddrMRange = AddrMRange( 0,  0), geometry = geometryNew),
-          util.projectLink(10L, 20L, Track.Combined, projectId, RoadAddressChangeType.Unchanged, discontinuity = Discontinuity.Continuous, linkId = 2000.toString, roadwayId = roadwayId, linearLocationId = linearLocationId + 1).copy(originalAddrMRange = AddrMRange( 0, 10), geometry = geometryUnchanged1),
-          util.projectLink(20L, 30L, Track.Combined, projectId, RoadAddressChangeType.Unchanged, discontinuity = Discontinuity.EndOfRoad,  linkId = 3000.toString, roadwayId = roadwayId, linearLocationId = linearLocationId + 2).copy(originalAddrMRange = AddrMRange(10, 20), geometry = geometryUnchanged2)
+          util.projectLink(AddrMRange( 0L, 10L), Track.Combined, projectId, RoadAddressChangeType.New,       discontinuity = Discontinuity.Continuous, linkId = 1000.toString, roadwayId = roadwayId, linearLocationId = linearLocationId    ).copy(originalAddrMRange = AddrMRange( 0,  0), geometry = geometryNew),
+          util.projectLink(AddrMRange(10L, 20L), Track.Combined, projectId, RoadAddressChangeType.Unchanged, discontinuity = Discontinuity.Continuous, linkId = 2000.toString, roadwayId = roadwayId, linearLocationId = linearLocationId + 1).copy(originalAddrMRange = AddrMRange( 0, 10), geometry = geometryUnchanged1),
+          util.projectLink(AddrMRange(20L, 30L), Track.Combined, projectId, RoadAddressChangeType.Unchanged, discontinuity = Discontinuity.EndOfRoad,  linkId = 3000.toString, roadwayId = roadwayId, linearLocationId = linearLocationId + 2).copy(originalAddrMRange = AddrMRange(10, 20), geometry = geometryUnchanged2)
         )
       )
 
@@ -1684,9 +1684,9 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       // create project links
       projectLinkDAO.create(
         Seq(
-          util.projectLink( 0L, 10L, Track.Combined, projectId, RoadAddressChangeType.Unchanged,                               discontinuity = Discontinuity.MinorDiscontinuity, linkId = 1000.toString, roadwayId = roadwayId, linearLocationId = linearLocationId    ).copy(originalAddrMRange = AddrMRange( 0, 10), geometry = geometry1),
-          util.projectLink( 0L, 10L, Track.Combined, projectId, RoadAddressChangeType.Transfer, roadPart = RoadPart(20000, 1), discontinuity = Discontinuity.EndOfRoad,          linkId = 2000.toString, roadwayId = roadwayId, linearLocationId = linearLocationId + 1).copy(originalAddrMRange = AddrMRange(10, 20), geometry = geometry2),
-          util.projectLink(20L, 30L, Track.Combined, projectId, RoadAddressChangeType.Unchanged,                               discontinuity = Discontinuity.EndOfRoad,          linkId = 3000.toString, roadwayId = roadwayId, linearLocationId = linearLocationId + 2).copy(originalAddrMRange = AddrMRange(20, 30), geometry = geometry3)
+          util.projectLink(AddrMRange( 0L, 10L), Track.Combined, projectId, RoadAddressChangeType.Unchanged,                               discontinuity = Discontinuity.MinorDiscontinuity, linkId = 1000.toString, roadwayId = roadwayId, linearLocationId = linearLocationId    ).copy(originalAddrMRange = AddrMRange( 0, 10), geometry = geometry1),
+          util.projectLink(AddrMRange( 0L, 10L), Track.Combined, projectId, RoadAddressChangeType.Transfer, roadPart = RoadPart(20000, 1), discontinuity = Discontinuity.EndOfRoad,          linkId = 2000.toString, roadwayId = roadwayId, linearLocationId = linearLocationId + 1).copy(originalAddrMRange = AddrMRange(10, 20), geometry = geometry2),
+          util.projectLink(AddrMRange(20L, 30L), Track.Combined, projectId, RoadAddressChangeType.Unchanged,                               discontinuity = Discontinuity.EndOfRoad,          linkId = 3000.toString, roadwayId = roadwayId, linearLocationId = linearLocationId + 2).copy(originalAddrMRange = AddrMRange(20, 30), geometry = geometry3)
         )
       )
 
@@ -1737,10 +1737,10 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       projectReservedPartDAO.reserveRoadPart(id, RoadPart(19999, 1), "u")
       projectLinkDAO.create(
         Seq(
-          util.projectLink( 0L, 10L, Track.Combined, id, RoadAddressChangeType.NotHandled, discontinuity = Discontinuity.Continuous, linkId = 1000.toString, roadwayId = ra.head.id).copy(geometry = roadAddresses.head.geometry),
-          util.projectLink( 0L, 10L, Track.Combined, id, RoadAddressChangeType.Transfer,   discontinuity = Discontinuity.Continuous, linkId = 1000.toString, roadwayId = ra.head.id).copy(geometry = roadAddresses.head.geometry),
-          util.projectLink(10L, 20L, Track.Combined, id, RoadAddressChangeType.NotHandled, discontinuity = Discontinuity.EndOfRoad,  linkId = 2000.toString, roadwayId = ra.last.id).copy(geometry = roadAddresses.last.geometry),
-          util.projectLink(10L, 20L, Track.Combined, id, RoadAddressChangeType.Unchanged,  discontinuity = Discontinuity.EndOfRoad,  linkId = 2000.toString, roadwayId = ra.last.id).copy(geometry = roadAddresses.last.geometry)
+          util.projectLink(AddrMRange( 0L, 10L), Track.Combined, id, RoadAddressChangeType.NotHandled, discontinuity = Discontinuity.Continuous, linkId = 1000.toString, roadwayId = ra.head.id).copy(geometry = roadAddresses.head.geometry),
+          util.projectLink(AddrMRange( 0L, 10L), Track.Combined, id, RoadAddressChangeType.Transfer,   discontinuity = Discontinuity.Continuous, linkId = 1000.toString, roadwayId = ra.head.id).copy(geometry = roadAddresses.head.geometry),
+          util.projectLink(AddrMRange(10L, 20L), Track.Combined, id, RoadAddressChangeType.NotHandled, discontinuity = Discontinuity.EndOfRoad,  linkId = 2000.toString, roadwayId = ra.last.id).copy(geometry = roadAddresses.last.geometry),
+          util.projectLink(AddrMRange(10L, 20L), Track.Combined, id, RoadAddressChangeType.Unchanged,  discontinuity = Discontinuity.EndOfRoad,  linkId = 2000.toString, roadwayId = ra.last.id).copy(geometry = roadAddresses.last.geometry)
         ))
 
       mockEmptyRoadAddressServiceCalls()
@@ -1780,8 +1780,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       projectReservedPartDAO.reserveRoadPart(id, RoadPart(19999, 1), "u")
       projectLinkDAO.create(
         Seq(
-          util.projectLink( 0L, 10L, Track.Combined, id, RoadAddressChangeType.NotHandled, discontinuity = Discontinuity.Continuous, linkId = 1000.toString, roadwayId = ra.head.id).copy(geometry = roadAddresses.head.geometry),
-          util.projectLink(10L, 20L, Track.Combined, id, RoadAddressChangeType.Unchanged,  discontinuity = Discontinuity.EndOfRoad,  linkId = 2000.toString, roadwayId = ra.last.id).copy(geometry = roadAddresses.last.geometry)
+          util.projectLink(AddrMRange( 0L, 10L), Track.Combined, id, RoadAddressChangeType.NotHandled, discontinuity = Discontinuity.Continuous, linkId = 1000.toString, roadwayId = ra.head.id).copy(geometry = roadAddresses.head.geometry),
+          util.projectLink(AddrMRange(10L, 20L), Track.Combined, id, RoadAddressChangeType.Unchanged,  discontinuity = Discontinuity.EndOfRoad,  linkId = 2000.toString, roadwayId = ra.last.id).copy(geometry = roadAddresses.last.geometry)
         ))
 
       mockEmptyRoadAddressServiceCalls()
