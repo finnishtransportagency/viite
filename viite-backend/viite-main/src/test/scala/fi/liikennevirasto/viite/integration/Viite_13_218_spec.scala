@@ -1130,8 +1130,8 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
          while (it.hasNext) {
            it.next() match {
              case Seq(cur, next) =>
-               assert(next.startAddrMValue <= next.endAddrMValue)
-               assert(cur.endAddrMValue == next.startAddrMValue)
+               assert(next.addrMRange.start <= next.addrMRange.end)
+               assert(cur.addrMRange.end == next.addrMRange.start)
            }
          }
        }
@@ -1189,8 +1189,8 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
         } ) shouldBe true
 
         val roadAddressCals = cals.filter(_.typeCode == CalibrationPointType.RoadAddressCP).groupBy(_.addrM)
-        roadAddressCals.minBy(_._1)._1 shouldBe currentRws.minBy(_.startAddrMValue).startAddrMValue
-        roadAddressCals.maxBy(_._1)._1 shouldBe currentRws.maxBy(_.endAddrMValue).endAddrMValue
+        roadAddressCals.minBy(_._1)._1 shouldBe currentRws.minBy(_.addrMRange.start).addrMRange.start
+        roadAddressCals.maxBy(_._1)._1 shouldBe currentRws.maxBy(_.addrMRange.end).addrMRange.end
 
         println("All good! :)")
 

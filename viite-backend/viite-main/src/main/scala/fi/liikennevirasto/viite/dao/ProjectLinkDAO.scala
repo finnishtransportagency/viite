@@ -48,7 +48,7 @@ case class ProjectLink(id: Long, roadPart: RoadPart, track: Track, discontinuity
 
   def originalEly: Long = if (roadway.isDefined) roadway.get.ely else ely
 
-  private def isTheLastProjectLinkOnRoadway = roadway.isDefined && this.originalAddrMRange.end == roadway.get.endAddrMValue
+  private def isTheLastProjectLinkOnRoadway = roadway.isDefined && this.originalAddrMRange.end == roadway.get.addrMRange.end
 
   def originalDiscontinuity: Discontinuity = if (isTheLastProjectLinkOnRoadway) roadway.get.discontinuity else if (roadway.isDefined) Discontinuity.Continuous else discontinuity
 
