@@ -274,8 +274,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   def enrichNodePointCoordinates(roadAddressLinks: Seq[RoadAddressLink], nodePoints: Seq[NodePoint]): Seq[NodePoint] = {
       nodePoints.map { np =>
         np.copy(coordinates = np.beforeAfter match {
-          case BeforeAfter.Before if roadAddressLinks.exists(_.endAddressM == np.addrM) => roadAddressLinks.find(_.endAddressM == np.addrM).get.endPoint
-          case BeforeAfter.After if roadAddressLinks.exists(_.startAddressM == np.addrM) => roadAddressLinks.find(_.startAddressM == np.addrM).get.startingPoint
+          case BeforeAfter.Before if roadAddressLinks.exists(_.addrMRange.end   == np.addrM) => roadAddressLinks.find(_.addrMRange.end   == np.addrM).get.endPoint
+          case BeforeAfter.After  if roadAddressLinks.exists(_.addrMRange.start == np.addrM) => roadAddressLinks.find(_.addrMRange.start == np.addrM).get.startingPoint
           case _ => np.coordinates
         })
       }
@@ -284,8 +284,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   def enrichJunctionPointCoordinates(roadAddressLinks: Seq[RoadAddressLink], jPoints: Seq[JunctionPoint]): Seq[JunctionPoint] = {
     jPoints.map { jp =>
       jp.copy(coordinates = jp.beforeAfter match {
-        case BeforeAfter.Before if roadAddressLinks.exists(_.endAddressM == jp.addrM) => roadAddressLinks.find(_.endAddressM == jp.addrM).get.endPoint
-        case BeforeAfter.After if roadAddressLinks.exists(_.startAddressM == jp.addrM) => roadAddressLinks.find(_.startAddressM == jp.addrM).get.startingPoint
+        case BeforeAfter.Before if roadAddressLinks.exists(_.addrMRange.end   == jp.addrM) => roadAddressLinks.find(_.addrMRange.end   == jp.addrM).get.endPoint
+        case BeforeAfter.After  if roadAddressLinks.exists(_.addrMRange.start == jp.addrM) => roadAddressLinks.find(_.addrMRange.start == jp.addrM).get.startingPoint
         case _ => jp.coordinates
       })
     }
