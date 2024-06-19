@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite.process.strategy
 
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.ProjectLink
-import fi.vaylavirasto.viite.model.{RoadAddressChangeType, Track}
+import fi.vaylavirasto.viite.model.{AddrMRange, RoadAddressChangeType, Track}
 
 
 class LinkStatusChangeTrackCalculatorStrategy extends TrackCalculatorStrategy {
@@ -62,7 +62,7 @@ class TerminationOperationChangeStrategy extends  LinkStatusChangeTrackCalculato
     // NEW sections. For example if in one of the sides we have a TRANSFER section it will use the value after recalculate all the existing sections with the original length.
     val endSectionAddress = endAddress.getOrElse(getFixedAddress(adjustedLeft.last, adjustedRight.last, availableCalibrationPoint)._2)
 
-    TrackCalculatorResult(setLastEndAddrMValue(adjustedLeft, endSectionAddress), setLastEndAddrMValue(adjustedRight, endSectionAddress), startSectionAddress, endSectionAddress, restLeftProjectLinks, restRightProjectLinks)
+    TrackCalculatorResult(setLastEndAddrMValue(adjustedLeft, endSectionAddress), setLastEndAddrMValue(adjustedRight, endSectionAddress), AddrMRange(startSectionAddress, endSectionAddress), restLeftProjectLinks, restRightProjectLinks)
   }
 
   override def applicableStrategy(headProjectLink: ProjectLink, projectLink: ProjectLink): Boolean = {

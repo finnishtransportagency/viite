@@ -96,7 +96,7 @@ case class ProjectLink(id: Long, roadPart: RoadPart, track: Track, discontinuity
 
   def calibrationPoints: (Option[ProjectCalibrationPoint], Option[ProjectCalibrationPoint]) = {
     CalibrationPointsUtils.toCalibrationPoints(calibrationPointTypes._1, calibrationPointTypes._2, linkId,
-      startMValue, endMValue, addrMRange.start, addrMRange.end, sideCode)
+      startMValue, endMValue, addrMRange, sideCode)
   }
 
   def hasCalibrationPointAt(addressMValue: Long): Boolean = {

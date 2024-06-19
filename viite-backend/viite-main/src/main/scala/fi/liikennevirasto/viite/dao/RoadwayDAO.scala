@@ -300,21 +300,20 @@ case class RoadAddress(id: Long, linearLocationId: Long, roadPart: RoadPart, adm
   def reversed: Boolean = false
 
     /** Return true, if the AddrMvalues of this roadAddress at least partially overlap the given range limits.
-    * @param rangeStartAddr Minimum startAddress of the road address range to be matched.
-    * @param rangeEndAddr   Maximum   endAddress of the road address range to be matched.
+    * @param range The address range to be matched.
     *
-    *  rs-re: range start - range end
-    *  sA-eA: startAddrMValue-endAddrMValue ot this roadAddress
+    *  rs-re: given range
+    *  sA-eA: start - end of this roadAddress
     *
     *        range:      rs----------------re
     *                sA--|-----eA          |                 => true (1)
     *                    |           sA----|--eA             => true (2)
     *                    |   sA--------eA  |                 => true (3)
     */
-  def isBetweenAddresses(rangeStartAddr: Long, rangeEndAddr: Long): Boolean = {
-    (addrMRange.start <= rangeStartAddr && rangeStartAddr <= addrMRange.end) || // (1) rangeStartAddr overlaps with Mvalues
-    (addrMRange.start <=   rangeEndAddr && rangeEndAddr   <= addrMRange.end) || // (2) rangeEndAddr overlaps with Mvalues
-    (addrMRange.start >  rangeStartAddr && rangeEndAddr   >  addrMRange.end)    // (3) MAddresses both within range
+  def isBetweenAddresses(range: AddrMRange): Boolean = {
+    (addrMRange.start <= range.start && range.start <= addrMRange.end) || // (1) rangeStartAddr overlaps with Mvalues
+    (addrMRange.start <= range.end   && range.end   <= addrMRange.end) || // (2) rangeEndAddr overlaps with Mvalues
+    (addrMRange.start >  range.start && range.end   >  addrMRange.end)    // (3) MAddresses both within range
   }
 
   /** Return true, if the Mvalues of this roadAddress at least partially overlap the given range limits.
@@ -377,10 +376,10 @@ case class RoadAddress(id: Long, linearLocationId: Long, roadPart: RoadPart, adm
 
 case class Roadway(id: Long, roadwayNumber: Long, roadPart: RoadPart, administrativeClass: AdministrativeClass, track: Track, discontinuity: Discontinuity, addrMRange: AddrMRange, reversed: Boolean = false, startDate: DateTime, endDate: Option[DateTime] = None, createdBy: String, roadName: Option[String], ely: Long, terminated: TerminationCode = TerminationCode.NoTermination, validFrom: DateTime = DateTime.now(), validTo: Option[DateTime] = None)
 
-case class TrackForRoadAddressBrowser(ely: Long, roadPart: RoadPart, track: Long, startAddrM: Long, endAddrM: Long, roadAddressLengthM: Long, administrativeClass: Long, startDate: DateTime)
+case class TrackForRoadAddressBrowser(ely: Long, roadPart: RoadPart, track: Long, addrMRange: AddrMRange, roadAddressLengthM: Long, administrativeClass: Long, startDate: DateTime)
 
 case class RoadPartForRoadAddressBrowser(ely: Long, roadPart: RoadPart,
-                                         startAddrM: Long, endAddrM: Long, roadAddressLengthM: Long, startDate: DateTime)
+                                         addrMRange: AddrMRange, roadAddressLengthM: Long, startDate: DateTime)
 
 
 class RoadwayDAO extends BaseDAO {
@@ -790,7 +789,7 @@ class RoadwayDAO extends BaseDAO {
       val administrativeClass = r.nextLong()
       val startDate       = dateOptTimeFormatter.parseDateTime(r.nextDate.toString)
 
-      TrackForRoadAddressBrowser(ely, RoadPart(roadNumber, roadPartNumber), trackCode, startAddrMValue, endAddrMValue, lengthAddrM, administrativeClass, startDate)
+      TrackForRoadAddressBrowser(ely, RoadPart(roadNumber, roadPartNumber), trackCode, AddrMRange(startAddrMValue, endAddrMValue), lengthAddrM, administrativeClass, startDate)
     }
   }
 
@@ -805,7 +804,7 @@ class RoadwayDAO extends BaseDAO {
       val lengthAddrM = r.nextLong()
       val startDate       = dateOptTimeFormatter.parseDateTime(r.nextDate.toString)
 
-      RoadPartForRoadAddressBrowser(ely, RoadPart(roadNumber, roadPartNumber), startAddrMValue, endAddrMValue, lengthAddrM, startDate)
+      RoadPartForRoadAddressBrowser(ely, RoadPart(roadNumber, roadPartNumber), AddrMRange(startAddrMValue, endAddrMValue), lengthAddrM, startDate)
     }
   }
 

@@ -127,7 +127,7 @@ class JunctionPointDAO extends BaseDAO {
       s"""
         $junctionPointQuery
         WHERE JP.VALID_TO IS NULL
-        AND RP.ROADWAY_NUMBER = $roadwayNumber AND RP.ADDR_M in ( $startAddrMValue, $endAddrMValue)
+        AND RP.ROADWAY_NUMBER = $roadwayNumber AND RP.ADDR_M in ($startAddrMValue, $endAddrMValue)
       """
     queryList(query).headOption
   }
