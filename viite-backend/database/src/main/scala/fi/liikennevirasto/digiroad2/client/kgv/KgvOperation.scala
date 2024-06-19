@@ -5,11 +5,13 @@ import fi.liikennevirasto.digiroad2.util.{Parallel, ViiteProperties}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.vaylavirasto.viite.geometry.BoundingRectangle
 import fi.vaylavirasto.viite.model.LinkGeomSource
-import org.apache.http.HttpStatus
-import org.apache.http.client.config.{CookieSpecs, RequestConfig}
-import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet, HttpRequestBase}
-import org.apache.http.client.ClientProtocolException
-import org.apache.http.impl.client.HttpClients
+import org.apache.hc.client5.http.classic.methods.HttpGet
+import org.apache.hc.client5.http.config.RequestConfig
+import org.apache.hc.client5.http.impl.classic.{CloseableHttpResponse, HttpClients}
+import org.apache.hc.client5.http.ClientProtocolException
+import org.apache.hc.client5.http.cookie.StandardCookieSpec
+import org.apache.hc.core5.http.HttpStatus
+import org.apache.hc.core5.http.message.BasicHttpRequest
 import org.json4s.{DefaultFormats, StreamInput}
 import org.json4s.jackson.JsonMethods.parse
 
@@ -81,7 +83,7 @@ trait KgvOperation extends LinkOperationsAbstract{
     URLEncoder.encode(url, "UTF-8")
   }
 
-  protected def addHeaders(request: HttpRequestBase): Unit = {
+  protected def addHeaders(request: BasicHttpRequest): Unit = {
     request.addHeader("X-API-Key", ViiteProperties.kgvApiKey)
     request.addHeader("accept","application/geo+json")
   }
@@ -108,12 +110,12 @@ trait KgvOperation extends LinkOperationsAbstract{
           val client = HttpClients.custom()
                                   .setDefaultRequestConfig(
                                     RequestConfig.custom()
-                                                 .setCookieSpec(CookieSpecs.STANDARD)
+                                                 .setCookieSpec(StandardCookieSpec.RELAXED)
                                                  .build())
                                   .build()
           try {
             response = client.execute(request)
-            val statusCode = response.getStatusLine.getStatusCode
+            val statusCode = response.getCode
             if (statusCode == HttpStatus.SC_OK) {
               val feature = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]]
               Right(
@@ -138,7 +140,7 @@ trait KgvOperation extends LinkOperationsAbstract{
                 }
               )
             } else {
-              Left(LinkOperationError(response.getStatusLine.getReasonPhrase, response.getStatusLine.getStatusCode.toString, url))
+              Left(LinkOperationError(response.getReasonPhrase, response.getCode.toString, url))
             }
           } catch {
                     case e: ClientProtocolException => {

@@ -2,9 +2,10 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.authentication.SessionApi
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
 import javax.servlet.ServletContext
-import org.apache.http.client.config.{CookieSpecs, RequestConfig}
-import org.apache.http.client.methods.HttpGet
-import org.apache.http.impl.client.HttpClientBuilder
+import org.apache.hc.client5.http.classic.methods.HttpGet
+import org.apache.hc.client5.http.config.RequestConfig
+import org.apache.hc.client5.http.cookie.StandardCookieSpec
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder
 import org.scalatra._
 
 import scala.io.Source
@@ -31,7 +32,7 @@ class RasterProxy extends ScalatraServlet {
 
   private val client = HttpClientBuilder.create()
     .setDefaultRequestConfig(RequestConfig.custom()
-      .setCookieSpec(CookieSpecs.STANDARD).build()).build()
+      .setCookieSpec(StandardCookieSpec.RELAXED).build()).build()
 
   get("/wmts/maasto") {
     val uriwithparams = "/wmts/maasto?service=" + params.get("service").get +"&request=" + params.get("request").get
@@ -42,8 +43,8 @@ class RasterProxy extends ScalatraServlet {
     proxyGet.removeHeaders("X-Amzn-Trace-Id")
     proxyGet.removeHeaders("X-Iam-Identity")
     val resp = client.execute(proxyGet)
-    response.setStatus(resp.getStatusLine.getStatusCode)
-    contentType = resp.getEntity.getContentType.getValue
+    response.setStatus(resp.getCode)
+    contentType = resp.getEntity.getContentType
     val data = Source.fromInputStream(resp.getEntity.getContent)
     data.mkString
   }

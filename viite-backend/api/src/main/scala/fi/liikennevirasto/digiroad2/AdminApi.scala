@@ -7,8 +7,8 @@ import fi.liikennevirasto.digiroad2.util.DatabaseMigration
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.util.DataImporter
 import fi.vaylavirasto.viite.util.DateTimeFormatters.ISOdateFormatter
-import org.apache.http.client.methods.HttpGet
-import org.apache.http.impl.client.HttpClientBuilder
+import org.apache.hc.client5.http.classic.methods.HttpGet
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder
 import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, Formats, StringInput}
 import org.scalatra._
@@ -158,7 +158,7 @@ class AdminApi(val dataImporter: DataImporter, implicit val swagger: Swagger) ex
           }
           val client = HttpClientBuilder.create().build
           val response = client.execute(request)
-          val statusCode = response.getStatusLine.getStatusCode
+          val statusCode = response.getCode
           Ok(s"Response status: $statusCode from url: $url\n")
         }
       } catch {
