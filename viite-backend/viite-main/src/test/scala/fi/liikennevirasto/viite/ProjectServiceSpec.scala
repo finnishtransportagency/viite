@@ -133,7 +133,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   )
 
   val roadways = Seq(
-    dummyRoadway(roadwayNumber = 1L, roadPart = RoadPart(1, 1), startAddrM = 0L, endAddrM = 400L, DateTime.now(), None)
+    dummyRoadway(roadwayNumber = 1L, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(0L, 400L), DateTime.now(), None)
   )
 
   val historyRoadLinks = Seq(
@@ -241,13 +241,13 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
                                     discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, roadwayId: Long = 0L, startDate: Option[DateTime] = None) = {
     val id = Sequences.nextViiteProjectId
 
-    def projectLink(startAddrM: Long, endAddrM: Long, track: Track, projectId: Long, status: RoadAddressChangeType = RoadAddressChangeType.NotHandled, roadPart: RoadPart = RoadPart(19999, 1), discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, linkId: String = 0L.toString, roadwayId: Long = 0L, linearLocationId: Long = 0L, startDate: Option[DateTime] = None) = {
-      ProjectLink(NewIdValue, roadPart, track, discontinuity, AddrMRange(startAddrM, endAddrM), AddrMRange(startAddrM, endAddrM), startDate, None, Some("User"), linkId, 0.0, (endAddrM - startAddrM).toDouble, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), Seq(Point(0.0, startAddrM), Point(0.0, endAddrM)), projectId, status, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, (endAddrM - startAddrM).toDouble, roadwayId, linearLocationId, ely, reversed = false, None, 0L)
+    def projectLink(addrMRange: AddrMRange, track: Track, projectId: Long, status: RoadAddressChangeType = RoadAddressChangeType.NotHandled, roadPart: RoadPart = RoadPart(19999, 1), discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, linkId: String = 0L.toString, roadwayId: Long = 0L, linearLocationId: Long = 0L, startDate: Option[DateTime] = None) = {
+      ProjectLink(NewIdValue, roadPart, track, discontinuity, addrMRange, addrMRange, startDate, None, Some("User"), linkId, 0.0, (addrMRange.end - addrMRange.start).toDouble, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), Seq(Point(0.0, addrMRange.start), Point(0.0, addrMRange.end)), projectId, status, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, (addrMRange.end - addrMRange.start).toDouble, roadwayId, linearLocationId, ely, reversed = false, None, 0L)
     }
 
     def withTrack(t: Track): Seq[ProjectLink] = {
       addrM.init.zip(addrM.tail).map { case (st, en) =>
-        projectLink(st, en, t, id, roadAddressChangeType, roadPart, discontinuity, ely, roadwayId = roadwayId, startDate = startDate)
+        projectLink(AddrMRange(st, en), t, id, roadAddressChangeType, roadPart, discontinuity, ely, roadwayId = roadwayId, startDate = startDate)
       }
     }
 
@@ -1997,9 +1997,9 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       val roadAddressProject = Project(projectId, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1970-01-01"), DateTime.now(), "Some additional info", Seq(), Seq(), None, elys = Set())
 
-      val projectLink = dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.EndOfRoad, 0, 100, Some(DateTime.parse("1970-01-01")), None, 12345.toString, 0, 100, SideCode.TowardsDigitizing, RoadAddressChangeType.Unchanged, projectId, AdministrativeClass.State, Seq(Point(0.0, 0.0), Point(0.0, 100.0)))
+      val projectLink = dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.EndOfRoad, AddrMRange(0, 100), Some(DateTime.parse("1970-01-01")), None, 12345.toString, 0, 100, SideCode.TowardsDigitizing, RoadAddressChangeType.Unchanged, projectId, AdministrativeClass.State, Seq(Point(0.0, 0.0), Point(0.0, 100.0)))
 
-      val roadway = dummyRoadway(roadwayNumber =1234l, roadPart = RoadPart(1, 1), startAddrM = 0, endAddrM = 100, startDate = DateTime.now(), endDate = None, roadwayId = roadwayId)
+      val roadway = dummyRoadway(roadwayNumber =1234l, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(0, 100), startDate = DateTime.now(), endDate = None, roadwayId = roadwayId)
 
       roadwayDAO.create(Seq(roadway))
 
@@ -2458,7 +2458,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val projectLinksFromRoadAddresses = roadAddresses.map(ra => toProjectLink(rap)(ra))
 
       val linearLocation = dummyLinearLocation(roadwayNumber, 1, projectLinksFromRoadAddresses.head.linkId, 0.0, 10.0)
-      val roadway = dummyRoadway(roadwayNumber, newRoadPart, 0, 10, DateTime.now(), None, roadwayId)
+      val roadway = dummyRoadway(roadwayNumber, newRoadPart, AddrMRange(0, 10), DateTime.now(), None, roadwayId)
 
       linearLocationDAO.create(Seq(linearLocation))
       roadwayDAO.create(Seq(roadway))
@@ -2630,7 +2630,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val roadnames = Seq(RoadName(srcRoadNumber, srcRoadNumber, testRoadName, startDate = Some(DateTime.now()), createdBy = "Test"))
       RoadNameDAO.create(roadnames)
 
-      val roadways = List(dummyRoadway(0L, RoadPart(srcRoadNumber, 1), 0L, 100L, DateTime.now, Some(DateTime.now)))
+      val roadways = List(dummyRoadway(0L, RoadPart(srcRoadNumber, 1), AddrMRange(0L, 100L), DateTime.now, Some(DateTime.now)))
       roadwayDAO.create(roadways)
 
       val changeInfos = List(
@@ -2721,7 +2721,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val roadnames = Seq(RoadName(srcRoadNumber, srcRoadNumber, testName, startDate = Some(DateTime.now()), createdBy = "Test"))
       RoadNameDAO.create(roadnames)
 
-      val roadways = List(dummyRoadway(0L, RoadPart(srcRoadNumber, 1), 0L, 0L, DateTime.now, Some(DateTime.now)))
+      val roadways = List(dummyRoadway(0L, RoadPart(srcRoadNumber, 1), AddrMRange(0L, 0L), DateTime.now, Some(DateTime.now)))
       roadwayDAO.create(roadways)
 
       val changeInfos = List(
@@ -3621,7 +3621,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
     def withTrack(t: Track): Seq[ProjectLink] = {
       addrM.init.zip(addrM.tail).map { case (st, en) =>
-        projectLink(st, en, t, project.id, roadAddressChangeType, roadPart, discontinuity, ely, roadwayId)
+        projectLink(AddrMRange(st, en), t, project.id, roadAddressChangeType, roadPart, discontinuity, ely, roadwayId)
       }
     }
 
@@ -3653,9 +3653,9 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     project
   }
 
-  private def projectLink(startAddrM: Long, endAddrM: Long, track: Track, projectId: Long, status: RoadAddressChangeType = RoadAddressChangeType.NotHandled,
+  private def projectLink(addrMRange: AddrMRange, track: Track, projectId: Long, status: RoadAddressChangeType = RoadAddressChangeType.NotHandled,
                           roadPart: RoadPart = RoadPart(19999, 1), discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, roadwayId: Long = 0L, linearLocationId: Long = 0L) = {
     val startDate = if (status !== RoadAddressChangeType.New) Some(DateTime.now()) else None
-    ProjectLink(NewIdValue, roadPart, track, discontinuity, AddrMRange(startAddrM, endAddrM), AddrMRange(startAddrM, endAddrM), startDate, None, Some("User"), startAddrM.toString, 0.0, (endAddrM - startAddrM).toDouble, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), Seq(Point(0.0, startAddrM), Point(0.0, endAddrM)), projectId, status, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, (endAddrM - startAddrM).toDouble, roadwayId, linearLocationId, ely, reversed = false, None, 0L)
+    ProjectLink(NewIdValue, roadPart, track, discontinuity, addrMRange, addrMRange, startDate, None, Some("User"), addrMRange.start.toString, 0.0, (addrMRange.end - addrMRange.start).toDouble, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), Seq(Point(0.0, addrMRange.start), Point(0.0, addrMRange.end)), projectId, status, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, (addrMRange.end - addrMRange.start).toDouble, roadwayId, linearLocationId, ely, reversed = false, None, 0L)
   }
 }

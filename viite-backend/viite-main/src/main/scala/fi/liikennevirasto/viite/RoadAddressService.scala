@@ -11,7 +11,7 @@ import fi.liikennevirasto.viite.process.RoadAddressFiller.ChangeSet
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import fi.vaylavirasto.viite.dao.MunicipalityDAO
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.{BeforeAfter, CalibrationPointLocation, CalibrationPointType, Discontinuity, RoadAddressChangeType, RoadLink, RoadPart, SideCode, Track}
+import fi.vaylavirasto.viite.model.{AddrMRange, BeforeAfter, CalibrationPointLocation, CalibrationPointType, Discontinuity, RoadAddressChangeType, RoadLink, RoadPart, SideCode, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -602,18 +602,18 @@ class RoadAddressService(
 
   /**
     * Gets all the road addresses in given road number, road part number and between given address measures.
-    * The road address measures should be in [startAddrM, endAddrM]
+    * The road address measures should be in [addrMRange.start, addrMRange.end]
     *
     * @param roadPart       The road part
     * @param startAddrM     The start address measure
     * @param endAddrM       The end address measure
     * @return Returns road addresses filtered by road section and address measures
     */
-  def getRoadAddressesFiltered(roadPart: RoadPart, startAddrM: Long, endAddrM: Long): Seq[RoadAddress] = {
+  def getRoadAddressesFiltered(roadPart: RoadPart, addrMRange: AddrMRange): Seq[RoadAddress] = {
     withDynSession {
-      val roadwayAddresses = roadwayDAO.fetchAllBySectionAndAddresses(roadPart, Some(startAddrM), Some(endAddrM))
+      val roadwayAddresses = roadwayDAO.fetchAllBySectionAndAddresses(roadPart, Some(addrMRange.start), Some(addrMRange.end))
       val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadwayAddresses)
-      roadAddresses.filter(ra => ra.isBetweenAddresses(startAddrM, endAddrM))
+      roadAddresses.filter(ra => ra.isBetweenAddresses(addrMRange))
     }
   }
 
@@ -994,7 +994,7 @@ class RoadAddressService(
           val filteredProjectLinkChanges = projectLinkChanges.filter(plc => plc.newRoadwayNumber == rwn
             && plc.originalStartAddr >= source.startAddressM.get && plc.originalEndAddr <= source.endAddressM.get)
           if (filteredProjectLinkChanges.nonEmpty) {
-            roadwayPointDAO.fetchByRoadwayNumberAndAddresses(filteredProjectLinkChanges.head.originalRoadwayNumber, source.startAddressM.get, source.endAddressM.get)
+            roadwayPointDAO.fetchByRoadwayNumberAndAddresses(filteredProjectLinkChanges.head.originalRoadwayNumber, AddrMRange(source.startAddressM.get, source.endAddressM.get))
           } else {
             Seq()
           }

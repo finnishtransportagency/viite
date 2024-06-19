@@ -4,24 +4,24 @@ import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.{BaseCalibrationPoint, UserDefinedCalibrationPoint}
 import fi.liikennevirasto.viite.dao._
 import fi.vaylavirasto.viite.geometry.GeometryUtils
-import fi.vaylavirasto.viite.model.{CalibrationPointLocation, CalibrationPointType, SideCode}
+import fi.vaylavirasto.viite.model.{AddrMRange, CalibrationPointLocation, CalibrationPointType, SideCode}
 import org.slf4j.LoggerFactory
 
 object CalibrationPointsUtils {
 
   private val logger = LoggerFactory.getLogger(getClass)
 
-  def toCalibrationPoints(startCalibrationPoint: CalibrationPointType, endCalibrationPoint: CalibrationPointType, linkId: String, startMValue: Double, endMValue: Double, startAddrMValue: Long, endAddrMValue: Long, sideCode: SideCode):
+  def toCalibrationPoints(startCalibrationPoint: CalibrationPointType, endCalibrationPoint: CalibrationPointType, linkId: String, startMValue: Double, endMValue: Double, addrMRange: AddrMRange, sideCode: SideCode):
   (Option[ProjectCalibrationPoint], Option[ProjectCalibrationPoint]) = {
     val length = endMValue - startMValue
     (sideCode: SideCode) match {
       case SideCode.TowardsDigitizing => (
-        if (startCalibrationPoint != CalibrationPointType.NoCP) Some(ProjectCalibrationPoint(linkId, 0.0,    startAddrMValue, startCalibrationPoint)) else None,
-        if (endCalibrationPoint   != CalibrationPointType.NoCP) Some(ProjectCalibrationPoint(linkId, length, endAddrMValue,   endCalibrationPoint  )) else None
+        if (startCalibrationPoint != CalibrationPointType.NoCP) Some(ProjectCalibrationPoint(linkId, 0.0,    addrMRange.start, startCalibrationPoint)) else None,
+        if (endCalibrationPoint   != CalibrationPointType.NoCP) Some(ProjectCalibrationPoint(linkId, length, addrMRange.end,   endCalibrationPoint  )) else None
       )
       case SideCode.AgainstDigitizing => (
-        if (startCalibrationPoint != CalibrationPointType.NoCP) Some(ProjectCalibrationPoint(linkId, length, startAddrMValue, startCalibrationPoint)) else None,
-        if (endCalibrationPoint   != CalibrationPointType.NoCP) Some(ProjectCalibrationPoint(linkId, 0.0,    endAddrMValue,   endCalibrationPoint  )) else None
+        if (startCalibrationPoint != CalibrationPointType.NoCP) Some(ProjectCalibrationPoint(linkId, length, addrMRange.start, startCalibrationPoint)) else None,
+        if (endCalibrationPoint   != CalibrationPointType.NoCP) Some(ProjectCalibrationPoint(linkId, 0.0,    addrMRange.end,   endCalibrationPoint  )) else None
       )
       case SideCode.Unknown => (None, None) // Invalid choice
     }
