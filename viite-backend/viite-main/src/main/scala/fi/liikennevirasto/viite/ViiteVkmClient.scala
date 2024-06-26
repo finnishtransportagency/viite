@@ -1,18 +1,20 @@
 package fi.liikennevirasto.viite
 
+import fi.liikennevirasto.digiroad2.util.ViiteProperties
 import org.apache.hc.client5.http.classic.methods.{HttpGet, HttpPost}
 import org.apache.hc.client5.http.config.RequestConfig
 import org.apache.hc.client5.http.cookie.StandardCookieSpec
 import org.apache.hc.client5.http.entity.UrlEncodedFormEntity
 import org.apache.hc.client5.http.impl.classic.{CloseableHttpResponse, HttpClientBuilder}
-import org.apache.hc.core5.http.NameValuePair
+import org.apache.hc.core5.http.{ClassicHttpResponse, HttpStatus, NameValuePair}
+import org.apache.hc.core5.http.io.HttpClientResponseHandler
 import org.apache.hc.core5.http.message.BasicNameValuePair
 import org.apache.hc.core5.net.URIBuilder
 import org.json4s.{DefaultFormats, StreamInput}
 import org.json4s.jackson.JsonMethods.parse
 import org.slf4j.LoggerFactory
 
-import fi.liikennevirasto.digiroad2.util.ViiteProperties
+import java.io.IOException
 import scala.util.control.NonFatal
 
 
@@ -38,7 +40,7 @@ class ViiteVkmClient {
     * @param params query parameters. Parameters are expected to be unescaped.
     * @return The query result, or VKMError in case the response was http>=400.
     */
-  def get(path: String, params: Map[String, String]): Either[Any, VKMError] = {
+  def get(path: String, params: Map[String, String]): Either[VKMError, Any] = {
 
     val builder = new URIBuilder(getRestEndPoint + path)
 
@@ -48,19 +50,26 @@ class ViiteVkmClient {
 
     val url = builder.build.toString
     val request = new HttpGet(url)
-
     request.addHeader("X-API-Key", ViiteProperties.vkmApiKey)
 
-    val response = client.execute(request)
+    // Create a simple response handler, returning the response body parsed
+    val responseHandler = new HttpClientResponseHandler[Either[VKMError, Any]] {
+      @throws[IOException]
+      override def handleResponse(response: ClassicHttpResponse): Either[VKMError, Any]  = {
+        if (response.getCode == HttpStatus.SC_OK) {
+          val content: Any = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Any]
+          Right(content)
+        } else {
+          Left(VKMError(Map("error" -> "Request returned HTTP Error %d".format(response.getCode)), url))
+        }
+      }
+    }
+
+
     try {
-      if (response.getCode >= 400)
-        return Right(VKMError(Map("error" -> "Request returned HTTP Error %d".format(response.getCode)), url))
-      val content: Any = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Any]
-      Left(content)
+      client.execute(request, responseHandler)
     } catch {
       case e: Exception => Right(VKMError(Map("error" -> e.getMessage), url))
-    } finally {
-      response.close()
     }
   }
 

@@ -6,11 +6,10 @@ import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.vaylavirasto.viite.geometry.BoundingRectangle
 import fi.vaylavirasto.viite.model.LinkGeomSource
 import org.apache.hc.client5.http.classic.methods.HttpGet
-import org.apache.hc.client5.http.config.RequestConfig
-import org.apache.hc.client5.http.impl.classic.{CloseableHttpResponse, HttpClients}
+import org.apache.hc.client5.http.impl.classic.{CloseableHttpClient, HttpClients}
 import org.apache.hc.client5.http.ClientProtocolException
-import org.apache.hc.client5.http.cookie.StandardCookieSpec
-import org.apache.hc.core5.http.HttpStatus
+import org.apache.hc.core5.http.{ClassicHttpResponse, HttpStatus}
+import org.apache.hc.core5.http.io.HttpClientResponseHandler
 import org.apache.hc.core5.http.message.BasicHttpRequest
 import org.json4s.{DefaultFormats, StreamInput}
 import org.json4s.jackson.JsonMethods.parse
@@ -101,71 +100,88 @@ trait KgvOperation extends LinkOperationsAbstract{
       trycounter += 1
       success = true
 
+      /** Extract KGV data from the given http response. Assumes the response is ok, and content readable.
+        * @return The KGV data as FeatureCollection - or None, if cannot be parsed to such. */
+      def getParsedBody(response: ClassicHttpResponse): Option[FeatureCollection] = {
+          val feature = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]]
+          feature("type").toString match {
+            case "Feature" =>
+              Some(FeatureCollection(features = List(convertToFeature(feature))))
+            case "FeatureCollection" => {
+              val links = feature("links").asInstanceOf[List[Map[String, Any]]].map(link =>
+                Link(
+                  link("title").asInstanceOf[String],
+                  link("type").asInstanceOf[String],
+                  link("rel").asInstanceOf[String],
+                  link("href").asInstanceOf[String]))
+              val nextLink     = Try(links.find(_.title == "Next page"    ).get.href).getOrElse("")
+              val previousLink = Try(links.find(_.title == "Previous page").get.href).getOrElse("")
+              val features     = feature("features").asInstanceOf[List[Map[String, Any]]].map(convertToFeature)
+              Some(FeatureCollection(
+                     features = features,
+                     numberReturned = feature("numberReturned").asInstanceOf[BigInt].toInt,
+                     nextPageLink = nextLink,
+                     previousPageLink = previousLink
+              ))
+            }
+            case _ =>
+              None
+          }
+        }
+
       result = time(logger, s"Fetch roadLink features, (try $trycounter)", url = None) {
 
-          val request = new HttpGet(url)
-          addHeaders(request)
+        val httpClient: CloseableHttpClient = HttpClients.createDefault()
 
-          var response: CloseableHttpResponse = null
-          val client = HttpClients.custom()
-                                  .setDefaultRequestConfig(
-                                    RequestConfig.custom()
-                                                 .setCookieSpec(StandardCookieSpec.RELAXED)
-                                                 .build())
-                                  .build()
-          try {
-            response = client.execute(request)
+        // Create a simple response handler, returning the response body parsed, whenever possible
+        val responseHandler = new HttpClientResponseHandler[Either[LinkOperationError, Option[FeatureCollection]]] {
+          @throws[IOException]
+          override def handleResponse(response: ClassicHttpResponse): Either[LinkOperationError, Option[FeatureCollection]]  = {
             val statusCode = response.getCode
             if (statusCode == HttpStatus.SC_OK) {
-              val feature = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]]
-              Right(
-                feature("type").toString match {
-                  case "Feature" => Some(FeatureCollection(features = List(convertToFeature(feature))))
-                  case "FeatureCollection" => {
-                    val links        = feature("links").asInstanceOf[List[Map[String, Any]]].map(link =>
-                      Link(link("title").asInstanceOf[String], link("type").asInstanceOf[String], link("rel").asInstanceOf[String], link("href").asInstanceOf[String]))
-                    val nextLink     = Try(links.find(_.title == "Next page").get.href).getOrElse("")
-                    val previousLink = Try(links.find(_.title == "Previous page").get.href).getOrElse("")
-                    val features     = feature("features").asInstanceOf[List[Map[String, Any]]].map(convertToFeature)
-                    Some(
-                      FeatureCollection(
-                        features = features,
-                        numberReturned = feature("numberReturned").asInstanceOf[BigInt].toInt,
-                        nextPageLink = nextLink,
-                        previousPageLink = previousLink
-                      )
-                    )
-                  }
-                  case _ => None
-                }
-              )
+              Right(getParsedBody(response))
             } else {
               Left(LinkOperationError(response.getReasonPhrase, response.getCode.toString, url))
             }
-          } catch {
-                    case e: ClientProtocolException => {
-                      success = false
-                      logger.error(e.getStackTrace().mkString(";")) // log to one line with ";" sepator
-                      Left(LinkOperationError(e.toString + s"\nURL: $url", ""))
-                    }
-                    case e: IOException => {
-                      success = false
-                      if (trycounter < MaxTries) {
-                        logger.warn(s"fetching $url failed, try $trycounter. IO Exception during KGV fetch. Exception: $e")
-                        Left(LinkOperationError(s"KGV FETCH failure, try $trycounter. IO Exception during KGV fetch. Trying again.", url))
-                      } else // basically, if(trycounter == MaxTries)
-                        Left(LinkOperationError("KGV FETCH failure, tried ten (10) times, giving up. IO Exception during KGV fetch. Check connection to KGV", url))
-                    }
-                    case e: Exception => {
-                      success = false
-                      logger.warn(s"fetching $url failed, try $trycounter. Exception during KGV fetch. Exception: $e")
-                      Left(LinkOperationError(e.toString, ""))
-                    }
-                  } finally {
-                      if (response != null) {
-                        response.close()
-                      }
-                  }
+          }
+        }
+
+        val httpRequest = new HttpGet(url)
+        addHeaders(httpRequest)
+
+        def handleException(exception: Throwable): Left[LinkOperationError, Nothing] = {
+          exception match {
+            case e: ClientProtocolException => {
+              success = false
+              logger.error(e.getStackTrace().mkString(";")) // log to one line with ";" sepator
+              Left(LinkOperationError(e.toString + s"\nURL: $url", ""))
+            }
+            case e: IOException => {
+              success = false
+              if (trycounter < MaxTries) {
+                logger.warn(s"fetching $url failed, try $trycounter. IO Exception during KGV fetch. Exception: $e")
+                Left(LinkOperationError(s"KGV FETCH failure, try $trycounter. IO Exception during KGV fetch. Trying again.", url))
+              } else // basically, if(trycounter == MaxTries)
+                Left(LinkOperationError("KGV FETCH failure, tried ten (10) times, giving up. IO Exception during KGV fetch. Check connection to KGV", url))
+            }
+            case e: Exception => {
+              success = false
+              logger.warn(s"fetching $url failed, try $trycounter. Exception during KGV fetch. Exception: $e")
+              Left(LinkOperationError(e.toString, ""))
+            }
+            case t: Throwable =>
+              success = false
+              logger.warn(s"fetching $url failed, try $trycounter. Throwable during KGV fetch. Throwable: ${t.getMessage}")
+              Left(LinkOperationError(t.toString, ""))
+          }
+        }
+
+        var response: Either[LinkOperationError, Option[FeatureCollection]] = null
+        try {
+          httpClient.execute(httpRequest, responseHandler)
+        } catch {
+          case t: Throwable => handleException(t)
+        }
       }
       result match {
         case Left(_) => time(logger, s"entering round ${trycounter + 1}", noFilter=true, None){}
