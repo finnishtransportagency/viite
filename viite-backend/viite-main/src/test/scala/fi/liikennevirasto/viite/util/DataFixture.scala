@@ -1,7 +1,7 @@
 package fi.liikennevirasto.viite.util
 
 import java.util.Properties
-import com.googlecode.flyway.core.Flyway
+import org.flywaydb.core.Flyway
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.kgv.KgvRoadLink
