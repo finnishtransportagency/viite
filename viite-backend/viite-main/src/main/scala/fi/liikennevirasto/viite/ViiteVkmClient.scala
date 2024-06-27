@@ -1,18 +1,18 @@
 package fi.liikennevirasto.viite
 
-import org.apache.http.NameValuePair
-import org.apache.http.client.entity.UrlEncodedFormEntity
-import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet, HttpPost}
-import org.apache.http.client.utils.URIBuilder
-import org.apache.http.impl.client.HttpClientBuilder
-import org.apache.http.message.BasicNameValuePair
+import org.apache.hc.client5.http.classic.methods.{HttpGet, HttpPost}
+import org.apache.hc.client5.http.config.RequestConfig
+import org.apache.hc.client5.http.cookie.StandardCookieSpec
+import org.apache.hc.client5.http.entity.UrlEncodedFormEntity
+import org.apache.hc.client5.http.impl.classic.{CloseableHttpResponse, HttpClientBuilder}
+import org.apache.hc.core5.http.NameValuePair
+import org.apache.hc.core5.http.message.BasicNameValuePair
+import org.apache.hc.core5.net.URIBuilder
 import org.json4s.{DefaultFormats, StreamInput}
 import org.json4s.jackson.JsonMethods.parse
 import org.slf4j.LoggerFactory
 
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
-import org.apache.http.client.config.{CookieSpecs, RequestConfig}
-
 import scala.util.control.NonFatal
 
 
@@ -31,7 +31,7 @@ class ViiteVkmClient {
 
   private val client = HttpClientBuilder.create()
     .setDefaultRequestConfig(RequestConfig.custom()
-      .setCookieSpec(CookieSpecs.STANDARD).build()).build()
+      .setCookieSpec(StandardCookieSpec.RELAXED).build()).build()
 
   /**
     * Builds http query fom given parts, executes the query, and returns the result (or error if http>=400).
@@ -53,8 +53,8 @@ class ViiteVkmClient {
 
     val response = client.execute(request)
     try {
-      if (response.getStatusLine.getStatusCode >= 400)
-        return Right(VKMError(Map("error" -> "Request returned HTTP Error %d".format(response.getStatusLine.getStatusCode)), url))
+      if (response.getCode >= 400)
+        return Right(VKMError(Map("error" -> "Request returned HTTP Error %d".format(response.getCode)), url))
       val content: Any = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Any]
       Left(content)
     } catch {
@@ -68,11 +68,11 @@ class ViiteVkmClient {
     implicit val formats: DefaultFormats = DefaultFormats
 
     val post = new HttpPost(s"$getRestEndPoint$urlPart")
-    val nameValuePairs = new java.util.ArrayList[NameValuePair]()
+    var nameValuePairs = new java.util.ArrayList[NameValuePair]()
     parameters.foreach { case (key, value) =>
       nameValuePairs.add(new BasicNameValuePair(key, value))
     }
-    post.setEntity(new UrlEncodedFormEntity(nameValuePairs, "UTF-8"))
+    post.setEntity(new UrlEncodedFormEntity(nameValuePairs, java.nio.charset.Charset.forName("UTF-8")))
     post.setHeader("Content-type", "application/x-www-form-urlencoded")
 
     var response: CloseableHttpResponse = null

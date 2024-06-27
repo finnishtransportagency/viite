@@ -20,10 +20,11 @@ object Digiroad2Build extends Build {
   val JodaSlickMapperVersion = "2.2.0" // provides slick 3.1.1, joda-time 2.7, and joda-convert 1.7
 
   val AkkaVersion = "2.5.32" // 2.6.x and up requires Scala 2.12 or greater
-  val HttpClientVersion  = "4.5.14"
-  val NewRelicApiVersion = "8.12.0"
-  val CommonsIOVersion   = "2.16.1"
-  val JsonJacksonVersion = "3.7.0-M11" // 3.7.0-M12 and up: could not find implicit value for evidence parameter of type org.json4s.AsJsonInput[org.json4s.StreamInput] //  4.0.6 last Scala 2.11 version
+  val ApacheHTTPCoreVersion   = "5.2.4"
+  val ApacheHTTPClientVersion = "5.3.1" // depends on httpCore
+  val NewRelicApiVersion    = "8.12.0"
+  val CommonsIOVersion      = "2.16.1"
+  val JsonJacksonVersion    = "3.7.0-M11" // 3.7.0-M12 and up: could not find implicit value for evidence parameter of type org.json4s.AsJsonInput[org.json4s.StreamInput] //  4.0.6 last Scala 2.11 version
   val MockitoCoreVersion    = "4.11.0" // last version working with java8 runtime // 5.0.0 and up requires Java update to Java 11: "java.lang.UnsupportedClassVersionError: org/mockito/Mockito has been compiled by a more recent version of the Java Runtime (class file version 55.0), this version of the Java Runtime only recognizes class file versions up to 52.0"
   val LogbackClassicVersion = "1.3.14" // Java EE version. 1.4.x requires Jakarta instead of JavaEE
   val JettyVersion = "9.2.15.v20160210"
@@ -37,7 +38,8 @@ object Digiroad2Build extends Build {
   val jodaTime       = "joda-time"            %  "joda-time"     % JodaTimeVersion
   val akkaActor      = "com.typesafe.akka"    %% "akka-actor"    % AkkaVersion
   val akkaTestkit    = "com.typesafe.akka"    %% "akka-testkit"  % AkkaVersion
-  val httpClient = "org.apache.httpcomponents" %  "httpclient"   % HttpClientVersion //dep on commons-codec & httpcomponents
+  val httpCore   = "org.apache.httpcomponents.core5"   % "httpcore5"   % ApacheHTTPCoreVersion
+  val httpClient = "org.apache.httpcomponents.client5" % "httpclient5" % ApacheHTTPClientVersion
   val jsonJackson    = "org.json4s"         %% "json4s-jackson"  % JsonJacksonVersion
   val jsonNative     = "org.json4s"         %% "json4s-native"   % JsonJacksonVersion
   val mockitoCore    = "org.mockito"        %  "mockito-core"    % MockitoCoreVersion
@@ -122,6 +124,7 @@ object Digiroad2Build extends Build {
         jodaTime,
         "com.github.tototoshi" %% "slick-joda-mapper" % JodaSlickMapperVersion,
         "com.github.tototoshi" %% "scala-csv"         % "1.3.10",
+        httpCore,
         httpClient,
         "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
         mockitoCore % "test",
@@ -161,6 +164,7 @@ object Digiroad2Build extends Build {
         logbackClassic % "runtime",
         "commons-io" % "commons-io" % CommonsIOVersion,
         "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
+        httpCore,
         httpClient,
         "org.scalatra" %% "scalatra-swagger"  % ScalatraVersion,
         "com.github.nscala-time" %% "nscala-time" % "2.32.0",
@@ -188,6 +192,7 @@ object Digiroad2Build extends Build {
       testOptions in Test += TestOutputOptions,
       libraryDependencies ++= Seq(
         akkaActor,
+        httpCore,
         httpClient,
         "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "compile, test",
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
@@ -235,6 +240,7 @@ object Digiroad2Build extends Build {
         logbackClassic % "runtime",
         "commons-io" % "commons-io" % CommonsIOVersion,
         "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
+        httpCore,
         httpClient,
         "org.scalatra" %% "scalatra-swagger" % ScalatraVersion
       ),
@@ -273,6 +279,7 @@ object Digiroad2Build extends Build {
         logbackClassic % "runtime",
         "commons-io" % "commons-io" % CommonsIOVersion,
         "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
+        httpCore,
         httpClient,
         "org.eclipse.jetty" % "jetty-webapp" % JettyVersion % "container;compile",
         "org.eclipse.jetty" % "jetty-servlets" % JettyVersion % "container;compile",
