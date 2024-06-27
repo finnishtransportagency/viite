@@ -306,7 +306,7 @@ object Digiroad2Build extends Build {
       case x if x.endsWith("about.html") => MergeStrategy.discard
       case x if x.endsWith("env.properties") => MergeStrategy.discard
       case x if x.endsWith("mime.types") => MergeStrategy.last
-      case x if x.endsWith("httpclient-4.5.13.jar:mozilla/public-suffix-list.txt") => MergeStrategy.discard
+      case x if x.endsWith("public-suffix-list.txt") => MergeStrategy.first
       case PathList("META-INF", "io.netty.versions.properties") => MergeStrategy.discard
       case PathList("META-INF", "maven", "com.fasterxml.jackson.core", "jackson-core", _*) => MergeStrategy.discard
       case x if x.endsWith("module-info.class") => MergeStrategy.discard // for logback, and slf4j-api
