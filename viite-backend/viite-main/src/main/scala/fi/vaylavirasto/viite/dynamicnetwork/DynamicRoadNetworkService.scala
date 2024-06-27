@@ -11,10 +11,12 @@ import fi.vaylavirasto.viite.model.{LinkGeomSource, RoadPart, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase
 import fi.vaylavirasto.viite.util.DateTimeFormatters.finnishDateFormatter
 import fi.vaylavirasto.viite.util.ViiteException
-import org.apache.http.client.config.{CookieSpecs, RequestConfig}
-import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet, HttpRequestBase}
-import org.apache.http.impl.client.{CloseableHttpClient, HttpClients}
-import org.apache.http.util.EntityUtils
+import org.apache.hc.client5.http.classic.methods.HttpGet
+import org.apache.hc.client5.http.config.RequestConfig
+import org.apache.hc.client5.http.cookie.StandardCookieSpec
+import org.apache.hc.client5.http.impl.classic.{CloseableHttpClient, CloseableHttpResponse, HttpClients}
+import org.apache.hc.core5.http.io.entity.EntityUtils
+import org.apache.hc.core5.http.message.BasicHttpRequest
 import org.joda.time.DateTime
 import org.json4s.DefaultFormats
 import org.json4s.JsonAST.JArray
@@ -52,7 +54,7 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
   implicit val formats = DefaultFormats
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
-  protected def addHeaders(request: HttpRequestBase): Unit = {
+  protected def addHeaders(request: BasicHttpRequest): Unit = {
     request.addHeader("accept", "application/geo+json")
   }
 
@@ -265,7 +267,7 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
     val client = HttpClients.custom()
       .setDefaultRequestConfig(
         RequestConfig.custom()
-          .setCookieSpec(CookieSpecs.STANDARD)
+          .setCookieSpec(StandardCookieSpec.RELAXED)
           .build())
       .build()
 
