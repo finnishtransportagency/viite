@@ -1,14 +1,14 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.Digiroad2Context.dynamicRoadNetworkService
-
-import java.net.URLDecoder
 import fi.liikennevirasto.digiroad2.util.DatabaseMigration
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.util.DataImporter
 import fi.vaylavirasto.viite.util.DateTimeFormatters.ISOdateFormatter
 import org.apache.hc.client5.http.classic.methods.HttpGet
-import org.apache.hc.client5.http.impl.classic.HttpClientBuilder
+import org.apache.hc.client5.http.impl.classic.HttpClients
+import org.apache.hc.core5.http.ClassicHttpResponse
+import org.apache.hc.core5.http.io.HttpClientResponseHandler
 import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, Formats, StringInput}
 import org.scalatra._
@@ -18,6 +18,8 @@ import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
 import org.slf4j.{Logger, LoggerFactory}
 
+import java.io.IOException
+import java.net.URLDecoder
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -143,6 +145,17 @@ class AdminApi(val dataImporter: DataImporter, implicit val swagger: Swagger) ex
   get("/test_get_request") {
     val urlParam = params.get("url")
     val headersParam = params.get("headers")
+
+    /** Create a response handler, with handleResponse implementation returning the http response status code. */
+    def getResponseHandler(url: String) = {
+      new HttpClientResponseHandler[Int] {
+        @throws[IOException]
+        override def handleResponse(response: ClassicHttpResponse): Int  = {
+          response.getCode
+        }
+      }
+    }
+
     time(logger, "GET request for /test_get_request") {
       try {
         if (urlParam.isEmpty) {
@@ -156,9 +169,8 @@ class AdminApi(val dataImporter: DataImporter, implicit val swagger: Swagger) ex
             val headers = parse(StringInput(URLDecoder.decode(headersParam.get))).values.asInstanceOf[Map[String, String]]
             headers.foreach { case (name, value) => request.addHeader(name, value) }
           }
-          val client = HttpClientBuilder.create().build
-          val response = client.execute(request)
-          val statusCode = response.getCode
+          val client = HttpClients.createDefault()
+          val statusCode = client.execute(request, getResponseHandler(url))
           Ok(s"Response status: $statusCode from url: $url\n")
         }
       } catch {

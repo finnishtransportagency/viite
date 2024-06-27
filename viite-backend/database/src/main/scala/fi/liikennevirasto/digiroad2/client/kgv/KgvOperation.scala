@@ -133,7 +133,7 @@ trait KgvOperation extends LinkOperationsAbstract{
 
         val httpClient: CloseableHttpClient = HttpClients.createDefault()
 
-        // Create a simple response handler, returning the response body parsed, whenever possible
+        /** Create a response handler, with handleResponse implementation returning the response body parsed, whenever possible. */
         val responseHandler = new HttpClientResponseHandler[Either[LinkOperationError, Option[FeatureCollection]]] {
           @throws[IOException]
           override def handleResponse(response: ClassicHttpResponse): Either[LinkOperationError, Option[FeatureCollection]]  = {
@@ -176,7 +176,6 @@ trait KgvOperation extends LinkOperationsAbstract{
           }
         }
 
-        var response: Either[LinkOperationError, Option[FeatureCollection]] = null
         try {
           httpClient.execute(httpRequest, responseHandler)
         } catch {
