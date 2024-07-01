@@ -375,8 +375,8 @@ class RoadAddressService(
           ("kuntakoodi", municipalityId.getOrElse("").toString),
           ("katunimi", street),
           ("katunumero", streetNumber.headOption.getOrElse(defaultStreetNumber.toString)))) match {
-          case Left(result) => Seq(result)
-          case Right(error) => throw new VkmException(error.toString)
+          case Right(result) => Seq(result)
+          case Left(error) => throw new VkmException(error.toString)
         }
         collectResult("street", searchResult)
       case _ => Seq.empty[Map[String, Seq[Any]]]
