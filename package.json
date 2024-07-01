@@ -3,7 +3,6 @@
   "name": "viite",
   "version": "0.0.1",
   "devDependencies": {
-    "chai": "~4.2.0",
     "eslint": "^5.16.0",
     "grunt": "1.6.1",
     "grunt-cache-breaker": "~2.0.1",
@@ -14,17 +13,16 @@
     "grunt-contrib-less": "~3.0.0",
     "grunt-contrib-watch": "~1.1.0",
     "grunt-env": "~1.0.1",
-    "grunt-mocha": "~1.2.0",
+    "grunt-mocha-test": "^0.13.3",
     "grunt-preprocess": "~5.1.0",
     "grunt-terser": "^1.0.0",
     "gruntify-eslint": "^5.0.0",
-    "mocha": "7.2.0",
+    "mocha": "10.5.2",
     "serve-index": "^1.9.1",
     "serve-static": "^1.14.1"
   },
   "dependencies": {
     "backbone": "1.4.0",
-    "chai-jquery": "2.1.0",
     "interactjs": "1.9.7",
     "jquery": "3.6.4",
     "jquery-migrate": "3.3.0",

@@ -1,7 +1,18 @@
-(function (root) {
+(function (root, factory) {
+  // UMD (Universal Module Definition) so the code is compatible with both Node.js and browser environments
+  if (typeof module === 'object' && module.exports) {
+    // Node.js environment
+    module.exports = factory(require('lodash'));
+  } else {
+    // Browser environment
+    root.GeometryUtils = factory(root._);
+  }
+}(this, function (_) {
+
   var subtractVector = function (vector1, vector2) {
     return {x: vector1.x - vector2.x, y: vector1.y - vector2.y};
   };
+
   var unitVector = function (vector) {
     var n = vectorLength(vector);
     return {x: vector.x / n, y: vector.y / n};
@@ -10,15 +21,14 @@
   var vectorLength = function (vector) {
     return Math.sqrt(Math.pow(vector.x, 2) + Math.pow(vector.y, 2));
   };
+
   var distanceOfPoints = function (end, start) {
     return Math.sqrt(Math.pow(end[0] - start[0], 2) + Math.pow(end[1] - start[1], 2));
   };
-  root.distanceOfPoints = distanceOfPoints;
 
   var distanceBetweenPoints = function (end, start) {
     return Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
   };
-  root.distanceBetweenPoints = distanceBetweenPoints;
 
   var radiansToDegrees = function (radians) {
     return radians * (180 / Math.PI);
@@ -31,7 +41,7 @@
     return radiansToDegrees(ret);
   };
 
-  root.calculateMidpointOfLineString = function (lineString) {
+  var calculateMidpointOfLineString = function (lineString) {
     var length = lineString.getLength();
     var vertices = lineString.getCoordinates();
     var firstVertex = _.head(vertices);
@@ -57,7 +67,7 @@
     else return firstVertex;
   };
 
-  root.geometryLength = function (geometry) {
+  var geometryLength = function (geometry) {
     return _.reduce(geometry, function (length, point, index, array) {
       if (index < array.length - 1)
         return length + distanceBetweenPoints(point, array[index + 1]);
@@ -65,5 +75,14 @@
     }, 0.0);
   };
 
-}(window.GeometryUtils = window.GeometryUtils || {}));
-
+  return {
+    subtractVector,
+    unitVector,
+    vectorLength,
+    distanceOfPoints,
+    distanceBetweenPoints,
+    calculateAngleFromNorth,
+    calculateMidpointOfLineString,
+    geometryLength
+  };
+}));
