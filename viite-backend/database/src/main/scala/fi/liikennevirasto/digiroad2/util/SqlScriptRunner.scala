@@ -41,7 +41,7 @@ object SqlScriptRunner {
         try {
           (Q.u + stmt).execute
           i = i+1
-          if (i % 10 == 0)
+          if (i % 500 == 0)
             println("" + i + " / " + stmts.length)
         } catch {
           case e: Exception =>

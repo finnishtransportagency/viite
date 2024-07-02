@@ -5,7 +5,16 @@
 -- - make sure it has the same contents than the old one, including data about this migration.
 -- (Just doing an ALTER NAME is not applicable (tried: ended in an error because the old named table does not exist
 -- anymore after renaming, but Flyway tries to write there), so make a copy instead, and remove the old table at later time in another migration).
-CREATE TABLE IF NOT EXISTS flyway_schema_history AS SELECT * FROM schema_version;
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables WHERE table_name = 'schema_version'
+  )
+  THEN
+    CREATE TABLE IF NOT EXISTS flyway_schema_history AS SELECT * FROM schema_version;
+  END IF;
+END $$;
+
 
 CREATE OR REPLACE FUNCTION flyway_schema_history_table_copy_inserted_row()
 RETURNS TRIGGER AS $$

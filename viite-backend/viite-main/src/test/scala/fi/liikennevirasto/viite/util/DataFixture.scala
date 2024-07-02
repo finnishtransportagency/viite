@@ -209,9 +209,9 @@ object DataFixture {
     // This old version of Flyway tries to drop the postgis extension too, so we clean the database manually instead
     SqlScriptRunner.runScriptInClasspath("/clear-db.sql")
     try {
-      SqlScriptRunner.executeStatement("delete from schema_version where installed_rank > 1")
+      SqlScriptRunner.executeStatement("delete from flyway_schema_history where installed_rank > 1")
     } catch {
-      case e: Exception => println(s"Failed to reset schema_version table: ${e.getMessage}")
+      case e: Exception => println(s"Failed to reset flyway_schema_history table: ${e.getMessage}")
     }
 
   }
