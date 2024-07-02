@@ -20,10 +20,10 @@ object DatabaseMigration {
   def flywayInit(): Unit = {
     val flyway = new Flyway()
     flyway.setDataSource(ds)
-    flyway.setInitVersion("-1")
-    flyway.setInitOnMigrate(true)
+    flyway.setBaselineVersionAsString("-1")
+    flyway.setBaselineOnMigrate(true)
     flyway.setLocations("db.migration")
-    flyway.init()
+    flyway.baseline()
   }
 
 }
