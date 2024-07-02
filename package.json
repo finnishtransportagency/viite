@@ -6,7 +6,7 @@
     "chai": "~4.2.0",
     "eslint": "^5.16.0",
     "grunt": "1.6.1",
-    "grunt-cache-breaker": "~2.0.1",
+    "grunt-cache-bust": "^1.7.0",
     "grunt-connect-proxy": "git+https://github.com/drewzboto/grunt-connect-proxy.git",
     "grunt-contrib-clean": "~2.0.1",
     "grunt-contrib-concat": "2.1.0",

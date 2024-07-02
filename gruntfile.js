@@ -52,32 +52,27 @@ module.exports = function (grunt) {
         }
       }
     },
-    cachebreaker: {
-      indexfile: {
+    cacheBust: {
+      viiteCacheBuster: {
         options: {
-          match: [
-            {
-              // Pattern    // File to hash
-              'style.css': 'viite-UI/components/theme/default/style.css',
-              'pikaday.css': 'node_modules/pikaday/css/pikaday.css',
-              'viite.css': 'dist/css/viite.css',
-              'jquery.min.js': 'node_modules/jquery/dist/jquery.min.js',
-              'jquery-migrate.min.js': 'node_modules/jquery-migrate/dist/jquery-migrate.min.js',
-              'moment.min.js': 'node_modules/moment/min/moment.min.js',
-              'lodash.js': 'node_modules/lodash/lodash.js',
-              'backbone.js': 'node_modules/backbone/backbone.js',
-              'pikaday.js': 'node_modules/pikaday/pikaday.js',
-              'proj4.js': 'node_modules/proj4/dist/proj4.js',
-              'interact.min.js': 'node_modules/interactjs/dist/interact.min.js',
-              'viite.min.js': 'dist/js/viite.js'
-            }
-          ],
-          replacement: 'md5'
+          assets: [
+            'viite-UI/components/theme/default/style.css',
+            'node_modules/pikaday/css/pikaday.css',
+            'dist/css/viite.css',
+            'node_modules/jquery/dist/jquery.min.js',
+            'node_modules/jquery-migrate/dist/jquery-migrate.min.js',
+            'node_modules/moment/min/moment.min.js',
+            'node_modules/lodash/lodash.js',
+            'node_modules/backbone/backbone.js',
+            'node_modules/pikaday/pikaday.js',
+            'node_modules/proj4/dist/proj4.js',
+            'node_modules/interactjs/dist/interact.min.js',
+            'dist/js/viite.js'
+          ]
         },
-        files: {
-          // File where md5 hashes are stored
-          src: ['viite-UI/index.html']
-        }
+        src: ['viite-UI/index.html'],
+        algorithm: 'md5',
+
       }
     },
     clean: ['dist'],
@@ -229,7 +224,7 @@ module.exports = function (grunt) {
   grunt.loadNpmTasks('grunt-contrib-connect');
   grunt.loadNpmTasks('grunt-contrib-clean');
   grunt.loadNpmTasks('grunt-connect-proxy');
-  grunt.loadNpmTasks('grunt-cache-breaker');
+  grunt.loadNpmTasks('grunt-cache-bust');
   grunt.loadNpmTasks('grunt-env');
   grunt.loadNpmTasks('grunt-preprocess');
 
@@ -239,9 +234,9 @@ module.exports = function (grunt) {
 
   grunt.registerTask('test', ['eslint', 'env:development', 'configureProxies:viite', 'preprocess:development', 'connect:viite', 'mocha:viite_unit']);
 
-  grunt.registerTask('default', ['eslint', 'env:production', 'configureProxies:viite', 'preprocess:production', 'connect:viite', 'mocha:viite_unit', 'clean', 'less:viiteprod', 'concat', 'terser', 'cachebreaker']);
+  grunt.registerTask('default', ['eslint', 'env:production', 'configureProxies:viite', 'preprocess:production', 'connect:viite', 'mocha:viite_unit', 'clean', 'less:viiteprod', 'concat', 'terser', 'cacheBust:viiteCacheBuster']);
 
-  grunt.registerTask('deploy', ['clean', 'env:' + target, 'preprocess:production', 'less:viiteprod', 'concat', 'terser', 'cachebreaker', 'save_deploy_info']);
+  grunt.registerTask('deploy', ['clean', 'env:' + target, 'preprocess:production', 'less:viiteprod', 'concat', 'terser', 'cacheBust:viiteCacheBuster', 'save_deploy_info']);
 
   grunt.registerTask('unit-test', ['eslint', 'env:development', 'configureProxies:viite', 'preprocess:development', 'connect:viite', 'mocha:viite_unit']);
 
