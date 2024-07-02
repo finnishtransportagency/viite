@@ -33,9 +33,14 @@ $$ LANGUAGE 'plpgsql';
 
 DO $$
 BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables WHERE table_name = 'schema_version'
+  )
+  THEN
     IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'flyway_schema_table_sync')
     THEN CREATE TRIGGER                FLYWAY_SCHEMA_TABLE_SYNC
          AFTER INSERT                  ON schema_version
          FOR EACH ROW EXECUTE FUNCTION flyway_schema_history_table_copy_inserted_row();
     END IF;
+  END IF;
 END $$;
