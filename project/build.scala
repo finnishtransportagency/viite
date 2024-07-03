@@ -117,7 +117,7 @@ object Digiroad2Build extends Build {
         httpClient,
         "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
         mockitoCore % "test",
-        "org.flywaydb"   % "flyway-core"   % "7.15.0", // Versions "10.0.0"+ available
+        "org.flywaydb"   % "flyway-core"   % "9.22.3", // Upgrading to 10.x requires Java Runtime upgrade. 10.0.0 says: "Flyway has been compiled by a more recent version of the Java Runtime (class file version 61.0), this version of the Java Runtime only recognizes class file versions up to 52.0"
         "org.postgresql" % "postgresql"    % "42.7.3",
         "net.postgis" % "postgis-geometry" % "2023.1.0",
         "net.postgis" % "postgis-jdbc"     % "2023.1.0" // dep postgresql, and from 2.5.0 and up: postgis-geometry
