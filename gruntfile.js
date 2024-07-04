@@ -129,7 +129,6 @@ module.exports = function (grunt) {
             'css/viite.css',
             'js/viite.min.js'
           ]
-          //queryString: true
         },
         cwd: 'dist/',
         src: ['index.html'],
@@ -139,18 +138,18 @@ module.exports = function (grunt) {
     copy: {
       modulesTask: {
         files: [{
-          cwd: './node_modules/',  // set working folder / root to copy
-          src: '**/*',           // copy all files and subfolders
-          dest: 'dist/node_modules',    // destination folder
-          expand: true           // required when using cwd
+          cwd: './node_modules/',    // set working folder / root to copy
+          src: '**/*',               // copy all files and subfolders
+          dest: 'dist/node_modules', // destination folder
+          expand: true               // required when using cwd
         }]
       },
       stylesTask: {
         files: [{
-          cwd: './viite-UI/components/theme/default/',
+          cwd: './viite-UI/components/theme/default/', // set working folder / root to copy
           src: 'style.css',
-          dest: 'dist/css',
-          expand: true
+          dest: 'dist/css',                            // destination folder
+          expand: true                                 // required when using cwd
         }]
       }
     },
