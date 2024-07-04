@@ -1,7 +1,66 @@
 module.exports = function (grunt) {
-  var serveStatic = require('serve-static');
-  var serveIndex = require('serve-index');
-  var path = require('path');
+  const serveStatic = require('serve-static');
+  const serveIndex = require('serve-index');
+  const path = require('path');
+  const { createProxyMiddleware } = require('http-proxy-middleware');
+
+  const apiProxy = createProxyMiddleware({
+    target: 'http://127.0.0.1:8080',
+    changeOrigin: false,
+    pathFilter: '/api',
+    secure: false,
+    xfwd: false
+  });
+
+  const rasteriProxy = createProxyMiddleware({
+    target: 'http://localhost:8080',
+    changeOrigin: true,
+    pathFilter: '/rasteripalvelu',
+    secure: false,
+    xfwd: false
+  });
+
+  const maastokarttaProxy = createProxyMiddleware({
+    target: 'https://api.vaylapilvi.fi:443',
+    changeOrigin: false,
+    pathFilter: '/wmts/maasto',
+    secure: true,
+    xfwd: true,
+    headers: {
+      "X-API-Key": process.env.rasterServiceApiKey,
+      host: 'api.vaylapilvi.fi'
+    },
+    pathRewrite: {
+      '^/wmts/maasto': '/rasteripalvelu-mml/wmts/maasto'
+    }
+  });
+
+  const kiinteistoProxy = createProxyMiddleware({
+    target: 'https://api.vaylapilvi.fi:443',
+    changeOrigin: false,
+    pathFilter: '/wmts/kiinteisto',
+    secure: true,
+    xfwd: true,
+    headers: {
+      "X-API-Key": process.env.rasterServiceApiKey,
+      host: 'api.vaylapilvi.fi'
+    },
+    pathRewrite: {
+      '^/wmts/kiinteisto': '/rasteripalvelu-mml/wmts/kiinteisto'
+    }
+  });
+
+  const testComponentProxy = createProxyMiddleware({
+    target: 'http://localhost:9003',
+    changeOrigin: true,
+    pathFilter: '/test/components',
+    secure: false,
+    xfwd: true,
+    pathRewrite: {
+      '^/test/components': '/components'
+    }
+  });
+
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
     env: {
@@ -102,8 +161,9 @@ module.exports = function (grunt) {
           port: 9003,
           base: ['dist', '.', 'viite-UI'],
           middleware: function (connect, opts) {
-            var _staticPath = path.resolve(opts.base[2]);
-            var config = [
+            const _staticPath = path.resolve(opts.base[2]);
+
+            const middlewares = [
               // Serve static files.
               serveStatic(opts.base[0]),
               serveStatic(opts.base[1]),
@@ -111,71 +171,14 @@ module.exports = function (grunt) {
               // Make empty directories browsable.
               serveIndex(_staticPath)
             ];
-            var proxy = require('grunt-connect-proxy/lib/utils').proxyRequest;
-            config.unshift(proxy);
-            return config;
+            middlewares.unshift(apiProxy);
+            middlewares.unshift(rasteriProxy);
+            middlewares.unshift(maastokarttaProxy);
+            middlewares.unshift(kiinteistoProxy);
+            middlewares.unshift(testComponentProxy);
+            return middlewares;
           }
-        },
-        proxies: [
-          {
-            context: '/api',
-            host: '127.0.0.1',
-            port: '8080',
-            https: false,
-            changeOrigin: false,
-            xforward: false
-          },
-          {
-            context: '/rasteripalvelu',
-            host: 'localhost',
-            port: '8080',
-            https: false,
-            secure: false,
-            changeOrigin: true,
-            xforward: false
-          },
-          {
-            context:'/wmts/maasto',
-            host: 'api.vaylapilvi.fi',
-            port: '443',
-            https: true,
-            changeOrigin: false,
-            xforward: true,
-            headers: {
-                "X-API-Key": process.env.rasterServiceApiKey,
-                host: 'api.vaylapilvi.fi'
-            },
-            rewrite: {
-                '/wmts/maasto':'/rasteripalvelu-mml/wmts/maasto'
-            }
-          },
-          {
-            context:'/wmts/kiinteisto',
-            host: 'api.vaylapilvi.fi',
-            port: '443',
-            https: true,
-            changeOrigin: false,
-            xforward: true,
-            headers: {
-              "X-API-Key": process.env.rasterServiceApiKey,
-              host: 'api.vaylapilvi.fi'
-            },
-            rewrite: {
-              '/wmts/kiinteisto':'/rasteripalvelu-mml/wmts/kiinteisto'
-            }
-          },
-          {
-            context: '/test/components',
-            host: 'localhost',
-            port: '9003',
-            https: false,
-            changeOrigin: true,
-            xforward: true,
-            rewrite: {
-              '^/test/components': '/components'
-            }
-          }
-        ]
+        }
       }
     },
     less: {
@@ -216,7 +219,7 @@ module.exports = function (grunt) {
     watch: {
       viite: {
         files: ['<%= eslint.src %>', 'viite-UI/src/**/*.less', 'viite-UI/**/*.html'],
-        tasks: ['eslint', 'less:viitedev', 'mochaTest:test', 'configureProxies:viite'],
+        tasks: ['eslint', 'less:viitedev', 'mochaTest:test'],
         options: {
           livereload: true
         }
@@ -233,22 +236,21 @@ module.exports = function (grunt) {
   grunt.loadNpmTasks('grunt-contrib-connect');
   grunt.loadNpmTasks('grunt-contrib-clean');
   grunt.loadNpmTasks('grunt-contrib-copy');
-  grunt.loadNpmTasks('grunt-connect-proxy');
   grunt.loadNpmTasks('grunt-cache-bust');
   grunt.loadNpmTasks('grunt-env');
   grunt.loadNpmTasks('grunt-preprocess');
 
   var target = grunt.option('target') || 'production';
 
-  grunt.registerTask('server', ['env:development', 'configureProxies:viite', 'preprocess:development', 'connect:viite', 'less:viitedev', 'watch:viite']);
+  grunt.registerTask('server', ['env:development', 'preprocess:development', 'connect:viite', 'less:viitedev', 'watch:viite']);
 
-  grunt.registerTask('test', ['eslint', 'env:development', 'configureProxies:viite', 'preprocess:development', 'connect:viite', 'mochaTest:test']);
+  grunt.registerTask('test', ['eslint', 'env:development', 'preprocess:development', 'connect:viite', 'mochaTest:test']);
 
-  grunt.registerTask('default', ['eslint', 'env:production', 'configureProxies:viite', 'preprocess:production', 'connect:viite', 'mochaTest:test', 'clean', 'less:viiteprod', 'concat', 'terser', 'cacheBust:viiteCacheBuster']);
+  grunt.registerTask('default', ['eslint', 'env:production', 'preprocess:production', 'connect:viite', 'mochaTest:test', 'clean', 'less:viiteprod', 'concat', 'terser', 'cacheBust:viiteCacheBuster']);
 
   grunt.registerTask('deploy', ['clean', 'env:' + target, 'preprocess:production', 'less:viiteprod', 'concat', 'terser', 'copy', 'cacheBust:viiteCacheBuster', 'save_deploy_info']);
 
-  grunt.registerTask('unit-test', ['eslint', 'env:development', 'configureProxies:viite', 'preprocess:development', 'connect:viite', 'mochaTest:test']);
+  grunt.registerTask('unit-test', ['eslint', 'env:development', 'preprocess:development', 'connect:viite', 'mochaTest:test']);
 
   grunt.registerTask('save_deploy_info',
     function () {
