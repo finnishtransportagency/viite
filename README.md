@@ -47,7 +47,7 @@ by copying the xml-files from the `local-dev/idea-run-configurations` folder to 
 `.idea/runConfigurations` folder (under the project folder). Restart Idea to see the new run configurations.
 
 - Flyway_init.xml
-  - Initialize the database for Flyway by creating the `flyway_schema_history` table
+  - Initialize the database for Flyway by creating the `schema_version` table
 - Fixture_reset_test.xml
   - Empty the database, run the Flyway migrations, populate the database with the test data (required by the unit tests) 
 - Flyway_migrate.xml
