@@ -9,7 +9,7 @@
     "grunt-connect-proxy": "git+https://github.com/drewzboto/grunt-connect-proxy.git",
     "grunt-contrib-clean": "~2.0.1",
     "grunt-contrib-concat": "2.1.0",
-    "grunt-contrib-connect": "4.0.0",
+    "grunt-contrib-connect": "github:gruntjs/grunt-contrib-connect#372ca1417a3ca7cb89dd46024987127804627c24",
     "grunt-contrib-less": "~3.0.0",
     "grunt-contrib-watch": "~1.1.0",
     "grunt-env": "~1.0.1",
