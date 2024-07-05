@@ -192,7 +192,7 @@ object DataFixture {
     val flyway = new Flyway()
     flyway.setDataSource(ds)
     flyway.setLocations("db.migration")
-    flyway.setBaselineVersionAsString("-1")
+    flyway.setInitVersion("-1")
     flyway
   }
 
@@ -209,9 +209,9 @@ object DataFixture {
     // This old version of Flyway tries to drop the postgis extension too, so we clean the database manually instead
     SqlScriptRunner.runScriptInClasspath("/clear-db.sql")
     try {
-      SqlScriptRunner.executeStatement("delete from flyway_schema_history where installed_rank > 1")
+      SqlScriptRunner.executeStatement("delete from schema_version where version_rank > 1")
     } catch {
-      case e: Exception => println(s"Failed to reset flyway_schema_history table: ${e.getMessage}")
+      case e: Exception => println(s"Failed to reset schema_version table: ${e.getMessage}")
     }
 
   }
@@ -244,7 +244,7 @@ object DataFixture {
   }
 
   def flywayInit(): Unit = {
-    flyway.baseline()
+    flyway.init()
   }
 
   def main(args: Array[String]): Unit = {
@@ -257,7 +257,7 @@ object DataFixture {
       println("*************************************************************************************")
       breakable {
         while (true) {
-          val input = scala.io.StdIn.readLine()
+          val input = Console.readLine()
           if (input.trim() == "YES") {
             break()
           }
