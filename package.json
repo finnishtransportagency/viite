@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "backbone": "1.6.0",
-    "interactjs": "1.9.7",
+    "interactjs": "1.10.27",
     "jquery": "3.6.4",
     "jquery-migrate": "3.3.0",
     "lodash": "4.17.21",
