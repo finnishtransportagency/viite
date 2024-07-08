@@ -37,7 +37,7 @@
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.0/xlsx-0.20.0.tgz"
   },
   "engines": {
-    "node": ">=14.21.3"
+    "node": ">=20.15.0"
   },
   "scripts": {
     "test": "grunt test",
