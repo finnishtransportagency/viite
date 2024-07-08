@@ -1,7 +1,15 @@
 <html>
 <head>
     <meta charset="utf-8">
+    <!-- @if NODE_ENV == 'DEVELOPMENT' -->
     <link rel="stylesheet" type="text/css" href="components/theme/default/style.css">
+    <!-- @endif -->
+    <!-- @if NODE_ENV == 'STAGING' -->
+    <link rel="stylesheet" type="text/css" href="css/style.css">
+    <!-- @endif -->
+    <!-- @if NODE_ENV == 'PRODUCTION' -->
+    <link rel="stylesheet" type="text/css" href="css/style.css">
+    <!-- @endif -->
     <link rel="stylesheet" type="text/css" href="node_modules/ol/ol.css">
     <link rel="stylesheet" type="text/css" href="node_modules/pikaday/css/pikaday.css">
     <link rel="stylesheet" type="text/css" href="css/viite.css">

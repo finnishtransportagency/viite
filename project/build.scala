@@ -128,7 +128,7 @@ object Digiroad2Build extends Build {
         httpClient,
         "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
         mockitoCore % "test",
-        "org.flywaydb"   % "flyway-core"   % "5.2.4", // 6.0.0 requires configuration by Flyway.configure. Versions "10.0.0"+ available
+        "org.flywaydb"   % "flyway-core"   % "3.2.1", // 4.0 requires init code changes. Versions "10.0.0"+ available
         "org.postgresql" % "postgresql"    % "42.7.3",
         "net.postgis" % "postgis-geometry" % "2023.1.0",
         "net.postgis" % "postgis-jdbc"     % "2023.1.0" // dep postgresql, and from 2.5.0 and up: postgis-geometry
