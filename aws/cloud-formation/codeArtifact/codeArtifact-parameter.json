@@ -1,0 +1,6 @@
+[
+  {
+    "ParameterKey": "ViiteDevArn",
+    "ParameterValue": "arn:aws:iam::783354560127:role/ViiteAdmin"
+  }
+]
