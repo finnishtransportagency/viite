@@ -43,8 +43,12 @@ object Digiroad2Build extends Build {
   val mockitoCore    = "org.mockito"        %  "mockito-core"    % MockitoCoreVersion
   val logbackClassic = "ch.qos.logback"     % "logback-classic"  % LogbackClassicVersion
 
-  // Get build id to check if executing in aws environment.
-  val awsBuildId: String = scala.util.Properties.envOrElse("CODEBUILD_BUILD_ID", null)
+
+  val codeArtifactRealm = "vayla-viite/viite_maven_packages"
+  val codeArtifactResolver = "vayla-viite--viite_maven_packages"
+  val codeArtifactDomain = "vayla-viite-783354560127.d.codeartifact.eu-west-1.amazonaws.com"
+  val awsCodeArtifactRepoURL: String = "https://vayla-viite-783354560127.d.codeartifact.eu-west-1.amazonaws.com/maven/viite_maven_packages/"
+  val awsCodeArtifactAuthToken: String = scala.sys.env.getOrElse("CODE_ARTIFACT_AUTH_TOKEN", null)
 
   val BaseProjectName = "base"
   lazy val baseJar = Project(
@@ -55,7 +59,9 @@ object Digiroad2Build extends Build {
       name := BaseProjectName,
       version := Version,
       scalaVersion := ScalaVersion,
-      resolvers += Classpaths.typesafeReleases,
+      resolvers += "CodeArtifact" at awsCodeArtifactRepoURL,
+      //externalResolvers := Resolver.withDefaultResolvers(resolvers.value, mavenCentral = false),
+      credentials += Credentials(codeArtifactRealm, codeArtifactDomain, "aws", awsCodeArtifactAuthToken),
       scalacOptions ++= Seq("-unchecked", "-feature"),
       testOptions in Test += TestOutputOptions,
       libraryDependencies ++= Seq(
@@ -66,7 +72,7 @@ object Digiroad2Build extends Build {
   )
 
   val GeoProjectName = "geo"
-  lazy val geoJar = Project (
+  lazy val geoJar = Project(
     GeoProjectName,
     file(s"viite-backend/$GeoProjectName"),
     settings = Defaults.coreDefaultSettings ++ Seq(
@@ -74,25 +80,26 @@ object Digiroad2Build extends Build {
       name := GeoProjectName,
       version := Version,
       scalaVersion := ScalaVersion,
-      resolvers += Classpaths.typesafeReleases,
+      resolvers += "CodeArtifact" at awsCodeArtifactRepoURL,
+      //externalResolvers := Resolver.withDefaultResolvers(resolvers.value, mavenCentral = false),
+      credentials += Credentials(codeArtifactRealm, codeArtifactDomain, "aws", awsCodeArtifactAuthToken),
       scalacOptions ++= Seq("-unchecked", "-feature"),
       testOptions in Test += TestOutputOptions,
       libraryDependencies ++= Seq(
         jodaConvert,
         jodaTime,
         akkaActor,
-//        "javax.media" % "jai_core" % "1.1.3" from "https://repo.osgeo.org/repository/release/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
-        "org.geotools" % "gt-graph"       % GeoToolsVersion from s"https://repo.osgeo.org/repository/release/org/geotools/gt-graph/$GeoToolsVersion/gt-graph-$GeoToolsVersion.jar",
-        "org.geotools" % "gt-main"        % GeoToolsVersion from s"https://repo.osgeo.org/repository/release/org/geotools/gt-main/$GeoToolsVersion/gt-main-$GeoToolsVersion.jar",
-        "org.geotools" % "gt-referencing" % GeoToolsVersion from s"https://repo.osgeo.org/repository/release/org/geotools/gt-referencing/$GeoToolsVersion/gt-referencing-$GeoToolsVersion.jar",
-        "org.geotools" % "gt-metadata"    % GeoToolsVersion from s"https://repo.osgeo.org/repository/release/org/geotools/gt-metadata/$GeoToolsVersion/gt-metadata-$GeoToolsVersion.jar",
-        "org.geotools" % "gt-opengis"   % GeoToolsIFVersion from s"https://repo.osgeo.org/repository/release/org/geotools/gt-opengis/$GeoToolsIFVersion/gt-opengis-$GeoToolsIFVersion.jar",
-        "jgridshift" % "jgridshift" % "1.0" from "https://repo.osgeo.org/repository/release/jgridshift/jgridshift/1.0/jgridshift-1.0.jar",
-        "org.locationtech.jts" % "jts-core" % "1.19.0", // from "https://repo1.maven.org/maven2/org/locationtech/jts/jts-core/1.19.0/jts-core-1.19.0.jar",
-        "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test"
+        "org.geotools" % "gt-graph" % "28.5",
+        "org.geotools" % "gt-main" % "28.5",
+        "org.geotools" % "gt-referencing" % "28.5",
+        "org.geotools" % "gt-metadata" % "28.5",
+        "org.geotools" % "gt-opengis" % "28.5",
+        "jgridshift" % "jgridshift" % "1.0",
+        "org.locationtech.jts" % "jts-core" % "1.19.0",
+        "org.scalatest" % "scalatest_2.11" % "3.0.1" % "test"
       )
     )
-  ) dependsOn (baseJar)
+  ) dependsOn(baseJar)
     
   val DBProjectName = "database"
   lazy val DBJar = Project (
@@ -106,7 +113,9 @@ object Digiroad2Build extends Build {
       //      resolvers ++= Seq(Classpaths.typesafeReleases,
       //        "maven-public" at "http://livibuild04.vally.local/nexus/repository/maven-public/",
       //        "ivy-public"   at "http://livibuild04.vally.local/nexus/repository/ivy-public/"),
-      resolvers += Classpaths.typesafeReleases,
+      resolvers += "CodeArtifact" at awsCodeArtifactRepoURL,
+      //externalResolvers := Resolver.withDefaultResolvers(resolvers.value, mavenCentral = false),
+      credentials += Credentials(codeArtifactRealm, codeArtifactDomain, "aws", awsCodeArtifactAuthToken),
       scalacOptions ++= Seq("-unchecked", "-feature"),
       testOptions in Test ++= (
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
@@ -143,7 +152,9 @@ object Digiroad2Build extends Build {
       name := ViiteMainProjectName,
       version := Version,
       scalaVersion := ScalaVersion,
-      resolvers += Classpaths.typesafeReleases,
+      resolvers += "CodeArtifact" at awsCodeArtifactRepoURL,
+      //externalResolvers := Resolver.withDefaultResolvers(resolvers.value, mavenCentral = false),
+      credentials += Credentials(codeArtifactRealm, codeArtifactDomain, "aws", awsCodeArtifactAuthToken),
       scalacOptions ++= Seq("-unchecked", "-feature"),
       parallelExecution in Test := false,
       testOptions in Test ++= (
@@ -180,7 +191,9 @@ object Digiroad2Build extends Build {
       name := ApiCommonProjectName,
       version := Version,
       scalaVersion := ScalaVersion,
-      resolvers += Classpaths.typesafeReleases,
+      resolvers += "CodeArtifact" at awsCodeArtifactRepoURL,
+      //externalResolvers := Resolver.withDefaultResolvers(resolvers.value, mavenCentral = false),
+      credentials += Credentials(codeArtifactRealm, codeArtifactDomain, "aws", awsCodeArtifactAuthToken),
       scalacOptions ++= Seq("-unchecked", "-feature"),
       //      parallelExecution in Test := false,
       testOptions in Test ++= (
@@ -216,7 +229,9 @@ object Digiroad2Build extends Build {
       name := ApiProjectName,
       version := Version,
       scalaVersion := ScalaVersion,
-      resolvers += Classpaths.typesafeReleases,
+     // resolvers += "CodeArtifact" at awsCodeArtifactRepoURL,
+      //externalResolvers := Resolver.withDefaultResolvers(resolvers.value, mavenCentral = false),
+      credentials += Credentials(codeArtifactRealm, codeArtifactDomain, "aws", awsCodeArtifactAuthToken),
       scalacOptions ++= Seq("-unchecked", "-feature"),
       //      parallelExecution in Test := false,
       testOptions in Test ++= (
@@ -253,7 +268,9 @@ object Digiroad2Build extends Build {
       name := Digiroad2Name,
       version := Version,
       scalaVersion := ScalaVersion,
-      resolvers += Classpaths.typesafeReleases,
+      resolvers += "CodeArtifact" at awsCodeArtifactRepoURL,
+     // externalResolvers := Resolver.withDefaultResolvers(resolvers.value, mavenCentral = false),
+      credentials += Credentials(codeArtifactRealm, codeArtifactDomain, "aws", awsCodeArtifactAuthToken),
       scalacOptions ++= Seq("-unchecked", "-feature"),
       parallelExecution in Test := false,
       fork in (Compile,run) := true,
