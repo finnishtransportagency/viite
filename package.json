@@ -32,7 +32,6 @@
     "pikaday": "1.8.2",
     "proj4": "2.11.0",
     "requirejs": "2.3.6",
-    "web-console-reporter": "1.0.0",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz"
   },
   "engines": {
