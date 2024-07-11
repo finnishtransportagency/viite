@@ -118,7 +118,6 @@ module.exports = function (grunt) {
           assets: [
             'node_modules/pikaday/css/pikaday.css',
             'node_modules/jquery/dist/jquery.min.js',
-            'node_modules/jquery-migrate/dist/jquery-migrate.min.js',
             'node_modules/moment/min/moment.min.js',
             'node_modules/lodash/lodash.js',
             'node_modules/backbone/backbone.js',
