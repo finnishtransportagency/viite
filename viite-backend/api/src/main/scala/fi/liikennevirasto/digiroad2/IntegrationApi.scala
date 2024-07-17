@@ -319,8 +319,8 @@ println("Threading print test: Now in avoidRestrictions")
           "roadNumber" -> r.roadPart.roadNumber,
           "roadPartNumber" -> r.roadPart.partNumber,
           "track" -> r.track.value,
-          "startAddrMValue" -> r.startAddrMValue,
-          "endAddrMValue" -> r.endAddrMValue,
+          "startAddrMValue" -> r.addrMRange.start,
+          "endAddrMValue"   -> r.addrMRange.end,
           "discontinuity" -> r.discontinuity.value,
           "ely" -> r.ely,
           "roadType" -> r.administrativeClass.asRoadTypeValue,
@@ -773,7 +773,7 @@ println(s"fetchAllValidNodesWithJunctions GOT RESULT, of size ${result.size}") /
               roadAddressLink.geometry.reverse
             else
               roadAddressLink.geometry
-            , roadAddressLink.startAddressM, roadAddressLink.endAddressM),
+            , roadAddressLink.addrMRange.start, roadAddressLink.addrMRange.end),
           "id" -> roadAddressLink.id,
           "link_id" -> roadAddressLink.linkId,
           "link_source" -> roadAddressLink.roadLinkSource.value,
@@ -781,8 +781,8 @@ println(s"fetchAllValidNodesWithJunctions GOT RESULT, of size ${result.size}") /
           "road_part_number" -> roadAddressLink.roadPart.partNumber,
           "track_code" -> roadAddressLink.trackCode,
           "side_code" -> roadAddressLink.sideCode.value,
-          "start_addr_m" -> roadAddressLink.startAddressM,
-          "end_addr_m" -> roadAddressLink.endAddressM,
+          "start_addr_m" -> roadAddressLink.addrMRange.start,
+          "end_addr_m"   -> roadAddressLink.addrMRange.end,
           "ely_code" -> roadAddressLink.elyCode,
           "road_type" -> roadAddressLink.administrativeClass.asRoadTypeValue,
           "administrative_class" -> roadAddressLink.administrativeClass.value,

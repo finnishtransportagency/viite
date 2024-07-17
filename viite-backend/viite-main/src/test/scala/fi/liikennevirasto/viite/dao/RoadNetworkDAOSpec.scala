@@ -3,7 +3,7 @@ package fi.liikennevirasto.viite.dao
 import fi.liikennevirasto.viite._
 import fi.vaylavirasto.viite.dao.Sequences
 import fi.vaylavirasto.viite.geometry.Point
-import fi.vaylavirasto.viite.model.{AdministrativeClass, CalibrationPoint, CalibrationPointLocation, CalibrationPointType, Discontinuity, LinkGeomSource, RoadPart, SideCode, Track}
+import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, CalibrationPoint, CalibrationPointLocation, CalibrationPointType, Discontinuity, LinkGeomSource, RoadPart, SideCode, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
@@ -22,7 +22,7 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
 
   private val roadwayNumber1 = 1000000000L
 
-  private val testRoadway1 = Roadway(NewIdValue, roadwayNumber1, roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous,   0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
+  private val testRoadway1 = Roadway(NewIdValue, roadwayNumber1, roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous,   AddrMRange(0, 100), reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
 
   test("Test existence of roadway points from the start and end of the roadway by fetchMissingRoadwayPointsFromStart. Correctly assess both existing, and missing roadway points.") {
     runWithRollback {
@@ -52,8 +52,8 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       val roadwayNumber =  Sequences.nextRoadwayNumber
       val roadPart = RoadPart(10, 1)
-      val roadway1 = Roadway(NewIdValue, roadwayNumber, roadPart,  AdministrativeClass.State, Track.Combined, Discontinuity.Continuous,   0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
-      val roadway2 = Roadway(NewIdValue, roadwayNumber, roadPart,  AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 150, 200, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
+      val roadway1 = Roadway(NewIdValue, roadwayNumber, roadPart,  AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(  0, 100), reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
+      val roadway2 = Roadway(NewIdValue, roadwayNumber, roadPart,  AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(150, 200), reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
 
       roadwayDAO.create(Seq(roadway1, roadway2))
 
@@ -65,8 +65,8 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
   test("Test When there are overlapping roadway rows Then Identify them") {
     runWithRollback {
       val roadPart = RoadPart(10, 1)
-      val roadway1 = Roadway(NewIdValue, Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 1069, 6890, reversed = false, DateTime.parse("1965-01-01"), Some(DateTime.parse("2008-11-14")), "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
-      val roadway2 = Roadway(NewIdValue, Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.RightSide, Discontinuity.Continuous, 5390, 6265, reversed = false, DateTime.parse("2008-01-28"), Some(DateTime.parse("2009-01-27")), "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
+      val roadway1 = Roadway(NewIdValue, Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.Combined,  Discontinuity.Continuous, AddrMRange(1069, 6890), reversed = false, DateTime.parse("1965-01-01"), Some(DateTime.parse("2008-11-14")), "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
+      val roadway2 = Roadway(NewIdValue, Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.RightSide, Discontinuity.Continuous, AddrMRange(5390, 6265), reversed = false, DateTime.parse("2008-01-28"), Some(DateTime.parse("2009-01-27")), "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
 
       roadwayDAO.create(Seq(roadway1, roadway2))
 
@@ -89,8 +89,8 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
 
       linearLocationDAO.create(Seq(linearLocation1, linearLocation2))
 
-      val roadway1 = Roadway(Sequences.nextRoadwayId, roadwayNumber,  RoadPart(roadNumber,  roadPartNumber), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 1000, 1288, reversed = false, DateTime.parse("1965-01-01"), Some(DateTime.parse("2008-11-14")), "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
-      val roadway2 = Roadway(Sequences.nextRoadwayId, roadwayNumber3, RoadPart(roadNumber2, roadPartNumber), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous,    0,  288, reversed = false, DateTime.parse("2022-01-01"), None, "test", Some("TEST ROAD 2"), 1, TerminationCode.NoTermination)
+      val roadway1 = Roadway(Sequences.nextRoadwayId, roadwayNumber,  RoadPart(roadNumber,  roadPartNumber), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(1000, 1288), reversed = false, DateTime.parse("1965-01-01"), Some(DateTime.parse("2008-11-14")), "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
+      val roadway2 = Roadway(Sequences.nextRoadwayId, roadwayNumber3, RoadPart(roadNumber2, roadPartNumber), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(   0,  288), reversed = false, DateTime.parse("2022-01-01"), None, "test", Some("TEST ROAD 2"), 1, TerminationCode.NoTermination)
 
       roadwayDAO.create(Seq(roadway1, roadway2))
 
@@ -117,9 +117,9 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
 
       // Create Roadways with different roadway numbers
       roadwayDAO.create(Seq(
-        Roadway(Sequences.nextRoadwayId, roadwayNumber1, roadPart, AdministrativeClass.State, Track.Combined,Discontinuity.Continuous, 0, 100, false, DateTime.now().minusDays(1), None, "test", Some("Test road"), 9,TerminationCode.NoTermination, DateTime.now().minusDays(1),None),
-        Roadway(Sequences.nextRoadwayId, roadwayNumber2, roadPart, AdministrativeClass.State, Track.Combined,Discontinuity.Continuous, 100, 150, false, DateTime.now().minusDays(1), None, "test", Some("Test road"), 9,TerminationCode.NoTermination, DateTime.now().minusDays(1),None),
-        Roadway(Sequences.nextRoadwayId, roadwayNumber3, roadPart, AdministrativeClass.State, Track.Combined,Discontinuity.EndOfRoad, 150, 200, false, DateTime.now().minusDays(1), None, "test", Some("Test road"), 9,TerminationCode.NoTermination, DateTime.now().minusDays(1),None)
+        Roadway(Sequences.nextRoadwayId, roadwayNumber1, roadPart, AdministrativeClass.State, Track.Combined,Discontinuity.Continuous, AddrMRange(  0, 100), false, DateTime.now().minusDays(1), None, "test", Some("Test road"), 9,TerminationCode.NoTermination, DateTime.now().minusDays(1),None),
+        Roadway(Sequences.nextRoadwayId, roadwayNumber2, roadPart, AdministrativeClass.State, Track.Combined,Discontinuity.Continuous, AddrMRange(100, 150), false, DateTime.now().minusDays(1), None, "test", Some("Test road"), 9,TerminationCode.NoTermination, DateTime.now().minusDays(1),None),
+        Roadway(Sequences.nextRoadwayId, roadwayNumber3, roadPart, AdministrativeClass.State, Track.Combined,Discontinuity.EndOfRoad,  AddrMRange(150, 200), false, DateTime.now().minusDays(1), None, "test", Some("Test road"), 9,TerminationCode.NoTermination, DateTime.now().minusDays(1),None)
       ))
 
       // Create LinearLocations

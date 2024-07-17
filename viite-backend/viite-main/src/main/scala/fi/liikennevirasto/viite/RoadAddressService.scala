@@ -11,7 +11,7 @@ import fi.liikennevirasto.viite.process.RoadAddressFiller.ChangeSet
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import fi.vaylavirasto.viite.dao.MunicipalityDAO
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.{BeforeAfter, CalibrationPointLocation, CalibrationPointType, Discontinuity, RoadAddressChangeType, RoadLink, RoadPart, SideCode, Track}
+import fi.vaylavirasto.viite.model.{AddrMRange, BeforeAfter, CalibrationPointLocation, CalibrationPointType, Discontinuity, RoadAddressChangeType, RoadLink, RoadPart, SideCode, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -341,13 +341,13 @@ class RoadAddressService(
           val track = if (params.size == 4) Some(params(3)) else None
           val ralOption = getRoadAddressLink(RoadPart(roadNumber, roadPart), addressM, track)
           ralOption.foldLeft(Seq.empty[Map[String, Seq[Any]]])((partialResultSeq, ral) => {
-            val roadAddressLinkMValueLengthPercentageFactor = (addressM - ral.startAddressM.toDouble) / (ral.endAddressM.toDouble - ral.startAddressM)
+            val roadAddressLinkMValueLengthPercentageFactor = (addressM - ral.addrMRange.start.toDouble) / (ral.addrMRange.end.toDouble - ral.addrMRange.start)
             val geometryLength = ral.endMValue - ral.startMValue
             val geometryMeasure = roadAddressLinkMValueLengthPercentageFactor * geometryLength
             val point = ral match {
-              case r if (r.startAddressM.toDouble == addressM && r.sideCode == SideCode.TowardsDigitizing) || (r.endAddressM == addressM && r.sideCode == SideCode.AgainstDigitizing) =>
+              case r if (r.addrMRange.start.toDouble == addressM && r.sideCode == SideCode.TowardsDigitizing) || (r.addrMRange.end == addressM && r.sideCode == SideCode.AgainstDigitizing) =>
                 r.geometry.headOption
-              case r if (r.startAddressM.toDouble == addressM && r.sideCode == SideCode.AgainstDigitizing) || (r.endAddressM == addressM && r.sideCode == SideCode.TowardsDigitizing) =>
+              case r if (r.addrMRange.start.toDouble == addressM && r.sideCode == SideCode.AgainstDigitizing) || (r.addrMRange.end == addressM && r.sideCode == SideCode.TowardsDigitizing) =>
                 r.geometry.lastOption
               case r =>
                 val mValue: Double = r.sideCode match {
@@ -375,8 +375,8 @@ class RoadAddressService(
           ("kuntakoodi", municipalityId.getOrElse("").toString),
           ("katunimi", street),
           ("katunumero", streetNumber.headOption.getOrElse(defaultStreetNumber.toString)))) match {
-          case Left(result) => Seq(result)
-          case Right(error) => throw new VkmException(error.toString)
+          case Right(result) => Seq(result)
+          case Left(error) => throw new VkmException(error.toString)
         }
         collectResult("street", searchResult)
       case _ => Seq.empty[Map[String, Seq[Any]]]
@@ -407,7 +407,7 @@ class RoadAddressService(
     *
     * @param roadPart  The road part
     * @param addressM  The addressM that is in between the returned RoadAddress
-    * @return Returns RoadAddressLink in track 0 or 1 or given track which contains dynamically calculated startAddressM and endAddressM
+    * @return Returns RoadAddressLink in track 0 or 1 or given track which contains dynamically calculated addrMRange
     *         and includes detailed geometry in that link fetched dynamically from KGV
     */
   def getRoadAddressLink(roadPart: RoadPart, addressM: Long, track: Option[Long] = None): Option[RoadAddressLink] = {
@@ -420,7 +420,7 @@ class RoadAddressService(
     val roadAddresses = getRoadAddressForSearch(roadPart, addressM, track)
     val roadLinks = roadLinkService.getRoadLinksByLinkIds(linearLocationsLinkIds)
     val rals = RoadAddressFiller.fillTopology(roadLinks, roadAddresses)
-    val filteredRals = rals.filter(al => al.startAddressM <= addressM && al.endAddressM >= addressM && (al.startAddressM != 0 || al.endAddressM != 0))
+    val filteredRals = rals.filter(al => al.addrMRange.start <= addressM && al.addrMRange.end >= addressM && (al.addrMRange.start != 0 || al.addrMRange.end != 0))
     val ral = filteredRals.filter(al => (track.nonEmpty && track.contains(al.trackCode)) || al.trackCode != Track.LeftSide.value)
     ral.headOption
   }
@@ -602,18 +602,18 @@ class RoadAddressService(
 
   /**
     * Gets all the road addresses in given road number, road part number and between given address measures.
-    * The road address measures should be in [startAddrM, endAddrM]
+    * The road address measures should be in [addrMRange.start, addrMRange.end]
     *
     * @param roadPart       The road part
     * @param startAddrM     The start address measure
     * @param endAddrM       The end address measure
     * @return Returns road addresses filtered by road section and address measures
     */
-  def getRoadAddressesFiltered(roadPart: RoadPart, startAddrM: Long, endAddrM: Long): Seq[RoadAddress] = {
+  def getRoadAddressesFiltered(roadPart: RoadPart, addrMRange: AddrMRange): Seq[RoadAddress] = {
     withDynSession {
-      val roadwayAddresses = roadwayDAO.fetchAllBySectionAndAddresses(roadPart, Some(startAddrM), Some(endAddrM))
+      val roadwayAddresses = roadwayDAO.fetchAllBySectionAndAddresses(roadPart, Some(addrMRange.start), Some(addrMRange.end))
       val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadwayAddresses)
-      roadAddresses.filter(ra => ra.isBetweenAddresses(startAddrM, endAddrM))
+      roadAddresses.filter(ra => ra.isBetweenAddresses(addrMRange))
     }
   }
 
@@ -994,7 +994,7 @@ class RoadAddressService(
           val filteredProjectLinkChanges = projectLinkChanges.filter(plc => plc.newRoadwayNumber == rwn
             && plc.originalStartAddr >= source.startAddressM.get && plc.originalEndAddr <= source.endAddressM.get)
           if (filteredProjectLinkChanges.nonEmpty) {
-            roadwayPointDAO.fetchByRoadwayNumberAndAddresses(filteredProjectLinkChanges.head.originalRoadwayNumber, source.startAddressM.get, source.endAddressM.get)
+            roadwayPointDAO.fetchByRoadwayNumberAndAddresses(filteredProjectLinkChanges.head.originalRoadwayNumber, AddrMRange(source.startAddressM.get, source.endAddressM.get))
           } else {
             Seq()
           }

@@ -1,7 +1,66 @@
 module.exports = function (grunt) {
-  var serveStatic = require('serve-static');
-  var serveIndex = require('serve-index');
-  var path = require('path');
+  const serveStatic = require('serve-static');
+  const serveIndex = require('serve-index');
+  const path = require('path');
+  const { createProxyMiddleware } = require('http-proxy-middleware');
+
+  const apiProxy = createProxyMiddleware({
+    target: 'http://127.0.0.1:8080',
+    changeOrigin: false,
+    pathFilter: '/api',
+    secure: false,
+    xfwd: false
+  });
+
+  const rasteriProxy = createProxyMiddleware({
+    target: 'http://localhost:8080',
+    changeOrigin: true,
+    pathFilter: '/rasteripalvelu',
+    secure: false,
+    xfwd: false
+  });
+
+  const maastokarttaProxy = createProxyMiddleware({
+    target: 'https://api.vaylapilvi.fi:443',
+    changeOrigin: false,
+    pathFilter: '/wmts/maasto',
+    secure: true,
+    xfwd: true,
+    headers: {
+      "X-API-Key": process.env.rasterServiceApiKey,
+      host: 'api.vaylapilvi.fi'
+    },
+    pathRewrite: {
+      '^/wmts/maasto': '/rasteripalvelu-mml/wmts/maasto'
+    }
+  });
+
+  const kiinteistoProxy = createProxyMiddleware({
+    target: 'https://api.vaylapilvi.fi:443',
+    changeOrigin: false,
+    pathFilter: '/wmts/kiinteisto',
+    secure: true,
+    xfwd: true,
+    headers: {
+      "X-API-Key": process.env.rasterServiceApiKey,
+      host: 'api.vaylapilvi.fi'
+    },
+    pathRewrite: {
+      '^/wmts/kiinteisto': '/rasteripalvelu-mml/wmts/kiinteisto'
+    }
+  });
+
+  const testComponentProxy = createProxyMiddleware({
+    target: 'http://localhost:9003',
+    changeOrigin: true,
+    pathFilter: '/test/components',
+    secure: false,
+    xfwd: true,
+    pathRewrite: {
+      '^/test/components': '/components'
+    }
+  });
+
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
     env: {
@@ -22,12 +81,12 @@ module.exports = function (grunt) {
     preprocess: {
       development: {
         files: {
-          './viite-UI/index.html': './viite-UI/tmpl/index.html'
+          './dist/index.html': './viite-UI/tmpl/index.html'
         }
       },
       production: {
         files: {
-          './viite-UI/index.html': './viite-UI/tmpl/index.html'
+          './dist/index.html': './viite-UI/tmpl/index.html'
         }
       }
     },
@@ -52,32 +111,45 @@ module.exports = function (grunt) {
         }
       }
     },
-    cachebreaker: {
-      indexfile: {
+    cacheBust: {
+      viiteCacheBuster: {
         options: {
-          match: [
-            {
-              // Pattern    // File to hash
-              'style.css': 'viite-UI/components/theme/default/style.css',
-              'pikaday.css': 'node_modules/pikaday/css/pikaday.css',
-              'viite.css': 'dist/css/viite.css',
-              'jquery.min.js': 'node_modules/jquery/dist/jquery.min.js',
-              'jquery-migrate.min.js': 'node_modules/jquery-migrate/dist/jquery-migrate.min.js',
-              'moment.min.js': 'node_modules/moment/min/moment.min.js',
-              'lodash.js': 'node_modules/lodash/lodash.js',
-              'backbone.js': 'node_modules/backbone/backbone.js',
-              'pikaday.js': 'node_modules/pikaday/pikaday.js',
-              'proj4.js': 'node_modules/proj4/dist/proj4.js',
-              'interact.min.js': 'node_modules/interactjs/dist/interact.min.js',
-              'viite.min.js': 'dist/js/viite.js'
-            }
-          ],
-          replacement: 'md5'
+          baseDir: './dist/',
+          assets: [
+            'node_modules/pikaday/css/pikaday.css',
+            'node_modules/jquery/dist/jquery.min.js',
+            'node_modules/moment/min/moment.min.js',
+            'node_modules/lodash/lodash.js',
+            'node_modules/backbone/backbone.js',
+            'node_modules/pikaday/pikaday.js',
+            'node_modules/proj4/dist/proj4.js',
+            'node_modules/interactjs/dist/interact.min.js',
+            'css/style.css',
+            'css/viite.css',
+            'js/viite.min.js'
+          ]
         },
-        files: {
-          // File where md5 hashes are stored
-          src: ['viite-UI/index.html']
-        }
+        cwd: 'dist/',
+        src: ['index.html'],
+        algorithm: 'md5'
+      }
+    },
+    copy: {
+      modulesTask: {
+        files: [{
+          cwd: './node_modules/',    // set working folder / root to copy
+          src: '**/*',               // copy all files and subfolders
+          dest: 'dist/node_modules', // destination folder
+          expand: true               // required when using cwd
+        }]
+      },
+      stylesTask: {
+        files: [{
+          cwd: './viite-UI/components/theme/default/', // set working folder / root to copy
+          src: 'style.css',
+          dest: 'dist/css',                            // destination folder
+          expand: true                                 // required when using cwd
+        }]
       }
     },
     clean: ['dist'],
@@ -87,8 +159,9 @@ module.exports = function (grunt) {
           port: 9003,
           base: ['dist', '.', 'viite-UI'],
           middleware: function (connect, opts) {
-            var _staticPath = path.resolve(opts.base[2]);
-            var config = [
+            const _staticPath = path.resolve(opts.base[2]);
+
+            const middlewares = [
               // Serve static files.
               serveStatic(opts.base[0]),
               serveStatic(opts.base[1]),
@@ -96,80 +169,14 @@ module.exports = function (grunt) {
               // Make empty directories browsable.
               serveIndex(_staticPath)
             ];
-            var proxy = require('grunt-connect-proxy/lib/utils').proxyRequest;
-            config.unshift(proxy);
-            return config;
+            middlewares.unshift(apiProxy);
+            middlewares.unshift(rasteriProxy);
+            middlewares.unshift(maastokarttaProxy);
+            middlewares.unshift(kiinteistoProxy);
+            middlewares.unshift(testComponentProxy);
+            return middlewares;
           }
-        },
-        proxies: [
-          {
-            context: '/api',
-            host: '127.0.0.1',
-            port: '8080',
-            https: false,
-            changeOrigin: false,
-            xforward: false
-          },
-          {
-            context: '/arcgis',
-            host: 'aineistot.esri.fi',
-            https: true,
-            port: '443',
-            changeOrigin: true,
-            xforward: false,
-            headers: {referer: 'https://aineistot.esri.fi/arcgis/rest/services/Taustakartat/Harmaasavy/MapServer?f=jsapi'}
-          },
-          {
-            context: '/rasteripalvelu',
-            host: 'localhost',
-            port: '8080',
-            https: false,
-            secure: false,
-            changeOrigin: true,
-            xforward: false
-          },
-          {
-            context:'/wmts/maasto',
-            host: 'api.vaylapilvi.fi',
-            port: '443',
-            https: true,
-            changeOrigin: false,
-            xforward: true,
-            headers: {
-                "X-API-Key": process.env.rasterServiceApiKey,
-                host: 'api.vaylapilvi.fi'
-            },
-            rewrite: {
-                '/wmts/maasto':'/rasteripalvelu-mml/wmts/maasto'
-            }
-          },
-          {
-            context:'/wmts/kiinteisto',
-            host: 'api.vaylapilvi.fi',
-            port: '443',
-            https: true,
-            changeOrigin: false,
-            xforward: true,
-            headers: {
-              "X-API-Key": process.env.rasterServiceApiKey,
-              host: 'api.vaylapilvi.fi'
-            },
-            rewrite: {
-              '/wmts/kiinteisto':'/rasteripalvelu-mml/wmts/kiinteisto'
-            }
-          },
-          {
-            context: '/test/components',
-            host: 'localhost',
-            port: '9003',
-            https: false,
-            changeOrigin: true,
-            xforward: true,
-            rewrite: {
-              '^/test/components': '/components'
-            }
-          }
-        ]
+        }
       }
     },
     less: {
@@ -188,69 +195,60 @@ module.exports = function (grunt) {
       }
     },
     eslint: {
-      src: ['gruntfile.js', 'viite-UI/test/**/*.js', 'viite-UI/src/map/*.js', 'viite-UI/src/modalconfirm/*.js', 'viite-UI/src/model/*.js', 'viite-UI/src/utils/*.js', 'viite-UI/src/view/*.js', 'viite-UI/test_data/*.js', 'viite-UI/src/']
+      src: [
+        'gruntfile.js',
+        'viite-UI/test/**/*.js',
+        'viite-UI/test_data/*.js',
+        'viite-UI/src/'
+      ]
     },
-    mocha: {
-      viite_unit: {
+    mochaTest: {
+      test: {
         options: {
-          // mocha options
-          mocha: {
-            ignoreLeaks: false,
-            "debug-brk": (grunt.option('debug-brk')) ? "" : 0
-          },
-
-          // URLs passed through as options
-          urls: ['http://127.0.0.1:9003/test/test-runner.html'],
-
-          // Indicates whether 'mocha.run()' should be executed in
-          // 'bridge.js'
-          run: false,
-          log: true,
-          reporter: 'Spec'
-        }
-      },
-      options: {
-        growlOnSuccess: false
+          reporter: 'spec',
+          //captureFile: 'results.txt', // Optionally capture the reporter output to a file
+          quiet: false, // Optionally suppress output to standard out (defaults to false)
+          clearRequireCache: false, // Optionally clear the require cache before running tests (defaults to false)
+          noFail: false // Optionally set to not fail on failed tests (will still fail on other errors)
+        },
+        src: ['viite-UI/test/unit-tests/*.js']
       }
     },
     watch: {
       viite: {
         files: ['<%= eslint.src %>', 'viite-UI/src/**/*.less', 'viite-UI/**/*.html'],
-        tasks: ['eslint', 'env:development', 'preprocess:development', 'less:viitedev', 'mocha:viite_unit', 'configureProxies:viite'],
+        tasks: ['eslint', 'less:viitedev', 'mochaTest:test'],
         options: {
           livereload: true
         }
       }
-    },
-    exec: {}
+    }
   });
 
   grunt.loadNpmTasks("grunt-terser");
   grunt.loadNpmTasks("gruntify-eslint");
-  grunt.loadNpmTasks('grunt-mocha');
+  grunt.loadNpmTasks('grunt-mocha-test');
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-contrib-less');
   grunt.loadNpmTasks('grunt-contrib-connect');
   grunt.loadNpmTasks('grunt-contrib-clean');
-  grunt.loadNpmTasks('grunt-connect-proxy');
-  grunt.loadNpmTasks('grunt-execute');
-  grunt.loadNpmTasks('grunt-cache-breaker');
+  grunt.loadNpmTasks('grunt-contrib-copy');
+  grunt.loadNpmTasks('grunt-cache-bust');
   grunt.loadNpmTasks('grunt-env');
   grunt.loadNpmTasks('grunt-preprocess');
-  grunt.loadNpmTasks('grunt-exec');
 
   var target = grunt.option('target') || 'production';
 
-  grunt.registerTask('server', ['env:development', 'configureProxies:viite', 'preprocess:development', 'connect:viite', 'less:viitedev', 'watch:viite']);
+  grunt.registerTask('server', ['env:development', 'preprocess:development', 'connect:viite', 'less:viitedev', 'watch:viite']);
 
-  grunt.registerTask('test', ['eslint', 'env:development', 'configureProxies:viite', 'preprocess:development', 'connect:viite', 'mocha:viite_unit']);
+  grunt.registerTask('test', ['eslint', 'env:development', 'preprocess:development', 'connect:viite', 'mochaTest:test']);
 
-  grunt.registerTask('default', ['eslint', 'env:production', 'configureProxies:viite', 'preprocess:production', 'connect:viite', 'mocha:viite_unit', 'clean', 'less:viiteprod', 'concat', 'terser', 'cachebreaker']);
+  grunt.registerTask('default', ['eslint', 'env:production', 'preprocess:production', 'connect:viite', 'mochaTest:test', 'clean', 'less:viiteprod', 'concat', 'terser', 'cacheBust:viiteCacheBuster']);
 
-  grunt.registerTask('deploy', ['clean', 'env:' + target, 'preprocess:production', 'less:viiteprod', 'concat', 'terser', 'cachebreaker', 'save_deploy_info']);
+  grunt.registerTask('deploy', ['clean', 'env:' + target, 'preprocess:production', 'less:viiteprod', 'concat', 'terser', 'copy', 'cacheBust:viiteCacheBuster', 'save_deploy_info']);
 
-  grunt.registerTask('unit-test', ['eslint', 'env:development', 'configureProxies:viite', 'preprocess:development', 'connect:viite', 'mocha:viite_unit']);
+  grunt.registerTask('unit-test', ['eslint', 'env:development', 'preprocess:development', 'connect:viite', 'mochaTest:test']);
 
   grunt.registerTask('save_deploy_info',
     function () {
