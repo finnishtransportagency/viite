@@ -33,6 +33,8 @@ object Digiroad2Build extends Build {
   val GeoToolsVersion     = "28.5" // "29.x" fails api/viite/roadaddress with Internal Server Error // available "31.1"
   val GeoToolsIFVersion   = GeoToolsVersion // Differs from GeoToolsVersion after "29.2"
   val JavaxServletVersion = "4.0.1"
+  val JgridshiftVersion   = "1.0"
+  val JtsCoreVersion      = "1.19.0"
 
   val jodaConvert    = "org.joda"             %  "joda-convert"  % JodaConvertVersion
   val jodaTime       = "joda-time"            %  "joda-time"     % JodaTimeVersion
@@ -45,27 +47,30 @@ object Digiroad2Build extends Build {
   val mockitoCore    = "org.mockito"        %  "mockito-core"    % MockitoCoreVersion
   val logbackClassic = "ch.qos.logback"     % "logback-classic"  % LogbackClassicVersion
 
+  val geoToolsDependencies: Seq[ModuleID] = Seq(
+    "org.geotools" % "gt-graph" % GeoToolsVersion,
+    "org.geotools" % "gt-main" % GeoToolsVersion,
+    "org.geotools" % "gt-referencing" % GeoToolsVersion,
+    "org.geotools" % "gt-metadata" % GeoToolsVersion,
+    "org.geotools" % "gt-opengis" % GeoToolsIFVersion,
+    "jgridshift" % "jgridshift" % JgridshiftVersion
+  )
 
-  val codeArtifactRealm = "vayla-viite/viite_maven_packages"
-  val codeArtifactResolver = "vayla-viite--viite_maven_packages"
-  val codeArtifactDomain = "vayla-viite-783354560127.d.codeartifact.eu-west-1.amazonaws.com"
-  val awsCodeArtifactRepoURL: String = "https://vayla-viite-783354560127.d.codeartifact.eu-west-1.amazonaws.com/maven/viite_maven_packages/"
-  val awsCodeArtifactAuthToken: String = scala.sys.env.getOrElse("CODE_ARTIFACT_AUTH_TOKEN", null)
+  // Common settings for all projects
+  val projectSettings: Seq[Def.Setting[_]] = Seq(
+    organization := Organization,
+    version := Version,
+    scalaVersion := ScalaVersion,
+    scalacOptions ++= Seq("-unchecked", "-feature"),
+    testOptions in Test += TestOutputOptions
+  ) ++ CodeArtifactSettings.settings // chooses the correct resolvers and credentials based on the CODE_ARTIFACT_AUTH_TOKEN environment variable
 
   val BaseProjectName = "base"
   lazy val baseJar = Project(
     BaseProjectName,
     file(s"viite-backend/$BaseProjectName"),
-    settings = Defaults.coreDefaultSettings ++ Seq(
-      organization := Organization,
+    settings = Defaults.coreDefaultSettings ++ projectSettings ++ Seq(
       name := BaseProjectName,
-      version := Version,
-      scalaVersion := ScalaVersion,
-      resolvers += "CodeArtifact" at awsCodeArtifactRepoURL,
-      externalResolvers := Resolver.withDefaultResolvers(resolvers.value, mavenCentral = false),
-      credentials += Credentials(codeArtifactRealm, codeArtifactDomain, "aws", awsCodeArtifactAuthToken),
-      scalacOptions ++= Seq("-unchecked", "-feature"),
-      testOptions in Test += TestOutputOptions,
       libraryDependencies ++= Seq(
         jodaTime, jodaConvert,
         "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test"
@@ -77,51 +82,26 @@ object Digiroad2Build extends Build {
   lazy val geoJar = Project(
     GeoProjectName,
     file(s"viite-backend/$GeoProjectName"),
-    settings = Defaults.coreDefaultSettings ++ Seq(
-      organization := Organization,
+    settings = Defaults.coreDefaultSettings ++ projectSettings ++ Seq(
       name := GeoProjectName,
-      version := Version,
-      scalaVersion := ScalaVersion,
-      resolvers += "CodeArtifact" at awsCodeArtifactRepoURL,
-      externalResolvers := Resolver.withDefaultResolvers(resolvers.value, mavenCentral = false),
-      credentials += Credentials(codeArtifactRealm, codeArtifactDomain, "aws", awsCodeArtifactAuthToken),
-      scalacOptions ++= Seq("-unchecked", "-feature"),
-      testOptions in Test += TestOutputOptions,
       libraryDependencies ++= Seq(
         jodaConvert,
         jodaTime,
         akkaActor,
-        "org.geotools" % "gt-graph" % "28.5",
-        "org.geotools" % "gt-main" % "28.5",
-        "org.geotools" % "gt-referencing" % "28.5",
-        "org.geotools" % "gt-metadata" % "28.5",
-        "org.geotools" % "gt-opengis" % "28.5",
-        "jgridshift" % "jgridshift" % "1.0",
         "org.locationtech.jts" % "jts-core" % "1.19.0",
-        "org.scalatest" % "scalatest_2.11" % "3.0.1" % "test"
-      )
+        "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test"
+      ) ++ CodeArtifactSettings.withFallbackUrls(geoToolsDependencies)
     )
   ) dependsOn(baseJar)
-    
+
   val DBProjectName = "database"
   lazy val DBJar = Project (
     DBProjectName,
     file(s"viite-backend/$DBProjectName"),
-    settings = Defaults.coreDefaultSettings ++ Seq(
-      organization := Organization,
+    settings = Defaults.coreDefaultSettings ++ projectSettings ++ Seq(
       name := DBProjectName,
-      version := Version,
-      scalaVersion := ScalaVersion,
-      //      resolvers ++= Seq(Classpaths.typesafeReleases,
-      //        "maven-public" at "http://livibuild04.vally.local/nexus/repository/maven-public/",
-      //        "ivy-public"   at "http://livibuild04.vally.local/nexus/repository/ivy-public/"),
-      resolvers += "CodeArtifact" at awsCodeArtifactRepoURL,
-      externalResolvers := Resolver.withDefaultResolvers(resolvers.value, mavenCentral = false),
-      credentials += Credentials(codeArtifactRealm, codeArtifactDomain, "aws", awsCodeArtifactAuthToken),
-      scalacOptions ++= Seq("-unchecked", "-feature"),
       testOptions in Test ++= (
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
-      testOptions in Test += TestOutputOptions,
       libraryDependencies ++= Seq(
         "org.apache.commons" % "commons-lang3" % "3.14.0",
         "commons-codec"      % "commons-codec" % "1.17.0",
@@ -150,19 +130,11 @@ object Digiroad2Build extends Build {
   lazy val viiteJar = Project (
     ViiteMainProjectName,
     file(s"viite-backend/$ViiteMainProjectName"),
-    settings = Defaults.coreDefaultSettings ++ Seq(
-      organization := Organization,
+    settings = Defaults.coreDefaultSettings ++ projectSettings ++ Seq(
       name := ViiteMainProjectName,
-      version := Version,
-      scalaVersion := ScalaVersion,
-      resolvers += "CodeArtifact" at awsCodeArtifactRepoURL,
-      //externalResolvers := Resolver.withDefaultResolvers(resolvers.value, mavenCentral = false),
-      credentials += Credentials(codeArtifactRealm, codeArtifactDomain, "aws", awsCodeArtifactAuthToken),
-      scalacOptions ++= Seq("-unchecked", "-feature"),
       parallelExecution in Test := false,
       testOptions in Test ++= (
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
-      testOptions in Test += TestOutputOptions,
       libraryDependencies ++= Seq(
         "org.scalatra" %% "scalatra" % ScalatraVersion,
         "org.scalatra" %% "scalatra-json" % ScalatraVersion,
@@ -190,19 +162,10 @@ object Digiroad2Build extends Build {
   lazy val apiCommonJar = Project (
     ApiCommonProjectName,
     file(s"viite-backend/$ApiCommonProjectName"),
-    settings = Defaults.coreDefaultSettings ++ Seq(
-      organization := Organization,
+    settings = Defaults.coreDefaultSettings ++ projectSettings ++ Seq(
       name := ApiCommonProjectName,
-      version := Version,
-      scalaVersion := ScalaVersion,
-      resolvers += "CodeArtifact" at awsCodeArtifactRepoURL,
-      //externalResolvers := Resolver.withDefaultResolvers(resolvers.value, mavenCentral = false),
-      credentials += Credentials(codeArtifactRealm, codeArtifactDomain, "aws", awsCodeArtifactAuthToken),
-      scalacOptions ++= Seq("-unchecked", "-feature"),
-      //      parallelExecution in Test := false,
       testOptions in Test ++= (
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
-      testOptions in Test += TestOutputOptions,
       libraryDependencies ++= Seq(
         akkaActor,
         httpCore,
@@ -229,19 +192,10 @@ object Digiroad2Build extends Build {
   lazy val ApiJar = Project (
     ApiProjectName,
     file(s"viite-backend/$ApiProjectName"),
-    settings = Defaults.coreDefaultSettings ++ Seq(
-      organization := Organization,
+    settings = Defaults.coreDefaultSettings ++ projectSettings ++ Seq(
       name := ApiProjectName,
-      version := Version,
-      scalaVersion := ScalaVersion,
-      resolvers += "CodeArtifact" at awsCodeArtifactRepoURL,
-      externalResolvers := Resolver.withDefaultResolvers(resolvers.value, mavenCentral = false),
-      credentials += Credentials(codeArtifactRealm, codeArtifactDomain, "aws", awsCodeArtifactAuthToken),
-      scalacOptions ++= Seq("-unchecked", "-feature"),
-      //      parallelExecution in Test := false,
       testOptions in Test ++= (
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
-      testOptions in Test += TestOutputOptions,
       libraryDependencies ++= Seq(
         "org.scalatra" %% "scalatra" % ScalatraVersion,
         "org.scalatra" %% "scalatra-json" % ScalatraVersion,
@@ -266,23 +220,15 @@ object Digiroad2Build extends Build {
   lazy val warProject = Project (
     Digiroad2Name,
     file("."),
-    settings = Defaults.coreDefaultSettings
+    settings = Defaults.coreDefaultSettings ++ projectSettings
       ++ assemblySettings
       ++ net.virtualvoid.sbt.graph.Plugin.graphSettings
       ++ ScalatraPlugin.scalatraWithJRebel ++ Seq(
-      organization := Organization,
       name := Digiroad2Name,
-      version := Version,
-      scalaVersion := ScalaVersion,
-      resolvers += "CodeArtifact" at awsCodeArtifactRepoURL,
-      externalResolvers := Resolver.withDefaultResolvers(resolvers.value, mavenCentral = false),
-      credentials += Credentials(codeArtifactRealm, codeArtifactDomain, "aws", awsCodeArtifactAuthToken),
-      scalacOptions ++= Seq("-unchecked", "-feature"),
       parallelExecution in Test := false,
       fork in (Compile,run) := true,
       testOptions in Test ++= (
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
-      testOptions in Test += TestOutputOptions,
       libraryDependencies ++= Seq(
         "org.scalatra" %% "scalatra" % ScalatraVersion,
         "org.scalatra" %% "scalatra-json" % ScalatraVersion,
