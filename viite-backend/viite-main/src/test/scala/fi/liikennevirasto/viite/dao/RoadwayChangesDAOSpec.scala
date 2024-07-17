@@ -111,11 +111,11 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
       projectReservedPartDAO.reserveRoadPart(projId1, otherRoadSourceRoadPart, "test")
       val reservedParts = projectReservedPartDAO.fetchReservedRoadParts(projId1)
       val project1      = projectDAO.fetchById(projId1).get
-      val rws           = Seq(Roadway(rw1, projectLink1.roadwayNumber, targetRoadPart, AdministrativeClass.Municipality, Track.RightSide, Discontinuity.Continuous,     0, 10, reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 5L, NoTermination),
-                              Roadway(rw2, projectLink2.roadwayNumber, targetRoadPart, AdministrativeClass.Municipality, Track.LeftSide,  Discontinuity.Continuous,     0, 10, reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 5L, NoTermination),
-                              Roadway(rw3, projectLink5.roadwayNumber, targetRoadPart, AdministrativeClass.Municipality, Track.Combined,  Discontinuity.Discontinuous, 10, 20, reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 5L, NoTermination),
-                              Roadway(rw4, projectLink6.roadwayNumber, otherRoadSourceRoadPart, AdministrativeClass.Municipality, Track.LeftSide,  Discontinuity.Discontinuous, 10, 50, reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 5L, NoTermination),
-                              Roadway(rw5, projectLink7.roadwayNumber, otherRoadSourceRoadPart, AdministrativeClass.Municipality, Track.RightSide, Discontinuity.Discontinuous, 10, 50, reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 5L, NoTermination)
+      val rws           = Seq(Roadway(rw1, projectLink1.roadwayNumber, targetRoadPart,          AdministrativeClass.Municipality, Track.RightSide, Discontinuity.Continuous,    AddrMRange( 0, 10), reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 5L, NoTermination),
+                              Roadway(rw2, projectLink2.roadwayNumber, targetRoadPart,          AdministrativeClass.Municipality, Track.LeftSide,  Discontinuity.Continuous,    AddrMRange( 0, 10), reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 5L, NoTermination),
+                              Roadway(rw3, projectLink5.roadwayNumber, targetRoadPart,          AdministrativeClass.Municipality, Track.Combined,  Discontinuity.Discontinuous, AddrMRange(10, 20), reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 5L, NoTermination),
+                              Roadway(rw4, projectLink6.roadwayNumber, otherRoadSourceRoadPart, AdministrativeClass.Municipality, Track.LeftSide,  Discontinuity.Discontinuous, AddrMRange(10, 50), reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 5L, NoTermination),
+                              Roadway(rw5, projectLink7.roadwayNumber, otherRoadSourceRoadPart, AdministrativeClass.Municipality, Track.RightSide, Discontinuity.Discontinuous, AddrMRange(10, 50), reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 5L, NoTermination)
                              )
 
       val roadwayDAO = new RoadwayDAO
@@ -166,7 +166,7 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
       projectDAO.create(rap)
       projectReservedPartDAO.reserveRoadPart(projId1, RoadPart(1, 1), "test")
       val project1   = projectDAO.fetchById(projId1).get
-      val rw         = Seq(Roadway(0, 1111, projectLink4.roadPart, AdministrativeClass.Municipality, Track.Combined, Discontinuity.Discontinuous, 0, 40, reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 5L, NoTermination))
+      val rw         = Seq(Roadway(0, 1111, projectLink4.roadPart, AdministrativeClass.Municipality, Track.Combined, Discontinuity.Discontinuous, AddrMRange(0, 40), reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 5L, NoTermination))
       val roadwayDAO = new RoadwayDAO
       roadwayDAO.create(rw)
       projectLinkDAO.create(Seq(projectLink1, projectLink2, projectLink3, projectLink4))
@@ -200,7 +200,7 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
 
   test("Test query for Roadway_change changes api") {
     runWithRollback {
-      val testRoadway1 = Roadway(NewIdValue, roadwayNumber1, RoadPart(roadNumber1, roadPartNumber1), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, 100, reversed = false, DateTime.parse("2000-01-02"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
+      val testRoadway1 = Roadway(NewIdValue, roadwayNumber1, RoadPart(roadNumber1, roadPartNumber1), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0, 100), reversed = false, DateTime.parse("2000-01-02"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
       val dao = new RoadwayChangesDAO()
       val roadwayDAO = new RoadwayDAO
 
@@ -263,11 +263,11 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
       val initialRoadPart=2
       val transferredRoadPart=1
 
-      val oldroadway1 = Roadway(NewIdValue, roadwayNumber1, RoadPart(roadNumber, initialRoadPart), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 100, 200, reversed = false, DateTime.parse("2000-01-02"), Some(DateTime.parse("2010-01-01")), "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
-      val oldroadway2 = Roadway(NewIdValue, roadwayNumber1, RoadPart(roadNumber, initialRoadPart), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, 100, reversed = false, DateTime.parse("2000-01-02"), Some(DateTime.parse("2010-01-01")), "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
+      val oldroadway1 = Roadway(NewIdValue, roadwayNumber1, RoadPart(roadNumber, initialRoadPart),    AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(100, 200), reversed = false, DateTime.parse("2000-01-02"), Some(DateTime.parse("2010-01-01")), "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
+      val oldroadway2 = Roadway(NewIdValue, roadwayNumber1, RoadPart(roadNumber, initialRoadPart),    AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(  0, 100), reversed = false, DateTime.parse("2000-01-02"), Some(DateTime.parse("2010-01-01")), "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
 
-      val roadway1 = Roadway(NewIdValue, roadwayNumber1,   RoadPart(roadNumber, initialRoadPart),     AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, 100, reversed = false, DateTime.parse("2010-01-02"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
-      val roadway2 = Roadway(NewIdValue, roadwayNumber1+1, RoadPart(roadNumber, transferredRoadPart), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, 100, reversed = false, DateTime.parse("2010-01-02"), None, "test", Some("TEST ROAD 2"), 1, TerminationCode.NoTermination)
+      val roadway1 = Roadway(NewIdValue, roadwayNumber1,   RoadPart(roadNumber, initialRoadPart),     AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(  0, 100), reversed = false, DateTime.parse("2010-01-02"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
+      val roadway2 = Roadway(NewIdValue, roadwayNumber1+1, RoadPart(roadNumber, transferredRoadPart), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(  0, 100), reversed = false, DateTime.parse("2010-01-02"), None, "test", Some("TEST ROAD 2"), 1, TerminationCode.NoTermination)
 
       val roadwayChangesDAO = new RoadwayChangesDAO
       val roadwayDAO = new RoadwayDAO

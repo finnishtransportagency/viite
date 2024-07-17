@@ -160,11 +160,16 @@
                 // Check format ignoring whitespace
                 if (dateutil.isFinnishDateString(dateString.trim())) {
                     const dateObject = moment(dateString, "DD-MM-YYYY").toDate();
-                    if (dateutil.isDateInYearRange(dateObject, ViiteConstants.MIN_YEAR_INPUT, ViiteConstants.MAX_YEAR_INPUT)) {
-                        dateElement.setCustomValidity("");
-                        return true;
+                    if (dateutil.isValidDate(dateObject)){
+                        if (dateutil.isDateInYearRange(dateObject, ViiteConstants.MIN_YEAR_INPUT, ViiteConstants.MAX_YEAR_INPUT)) {
+                            dateElement.setCustomValidity("");
+                            return true;
+                        } else {
+                            dateElement.setCustomValidity("Vuosiluvun tulee olla väliltä " + ViiteConstants.MIN_YEAR_INPUT + " - " + ViiteConstants.MAX_YEAR_INPUT);
+                            return false;
+                        }
                     } else {
-                        dateElement.setCustomValidity("Vuosiluvun tulee olla väliltä " + ViiteConstants.MIN_YEAR_INPUT + " - " + ViiteConstants.MAX_YEAR_INPUT);
+                        dateElement.setCustomValidity("Tarkista päivämäärä!");
                         return false;
                     }
                 } else {

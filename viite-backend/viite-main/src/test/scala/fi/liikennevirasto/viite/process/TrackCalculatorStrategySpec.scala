@@ -30,7 +30,7 @@ class TrackCalculatorStrategySpec extends FunSuite with Matchers {
 
     val leftSideProjectLinks = Seq(projectLinkLeft1, projectLinkLeft2, projectLinkLeft3)
     val rightSideProjectLinks = Seq(projectLinkRight1, projectLinkRight2, projectLinkRight3)
-    val trackCalcResult = TrackCalculatorResult(leftSideProjectLinks, rightSideProjectLinks, 0L, 0L, Seq(), Seq())
+    val trackCalcResult = TrackCalculatorResult(leftSideProjectLinks, rightSideProjectLinks, AddrMRange(0L, 0L), Seq(), Seq())
 
     val (adjustedLeft, adjustedRight) = TrackSectionOrder.setCalibrationPoints(trackCalcResult.leftProjectLinks, trackCalcResult.rightProjectLinks, Map())
 
