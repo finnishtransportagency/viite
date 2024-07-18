@@ -7,14 +7,15 @@ import fi.liikennevirasto.viite.AwsService
 import fi.liikennevirasto.viite.dao.{LinearLocation, LinearLocationDAO, Roadway, RoadwayDAO}
 import fi.vaylavirasto.viite.geometry.GeometryUtils
 import fi.vaylavirasto.viite.geometry.GeometryUtils.scaleToThreeDigits
-import fi.vaylavirasto.viite.model.{LinkGeomSource, RoadPart, Track}
+import fi.vaylavirasto.viite.model.{LinkGeomSource, RoadPart}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase
 import fi.vaylavirasto.viite.util.DateTimeFormatters.finnishDateFormatter
 import fi.vaylavirasto.viite.util.ViiteException
-import org.apache.http.client.config.{CookieSpecs, RequestConfig}
-import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet, HttpRequestBase}
-import org.apache.http.impl.client.{CloseableHttpClient, HttpClients}
-import org.apache.http.util.EntityUtils
+import org.apache.hc.client5.http.classic.methods.HttpGet
+import org.apache.hc.client5.http.impl.classic.{CloseableHttpClient,HttpClients}
+import org.apache.hc.core5.http.{ClassicHttpResponse, HttpStatus}
+import org.apache.hc.core5.http.io.HttpClientResponseHandler
+import org.apache.hc.core5.http.io.entity.EntityUtils
 import org.joda.time.DateTime
 import org.json4s.DefaultFormats
 import org.json4s.JsonAST.JArray
@@ -22,6 +23,7 @@ import org.json4s.jackson.Json
 import org.json4s.jackson.JsonMethods.parse
 import org.slf4j.{Logger, LoggerFactory}
 
+import java.io.IOException
 import scala.collection.mutable.ListBuffer
 
 case class TiekamuRoadLinkChange(oldLinkId: String,
@@ -51,10 +53,6 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
 
   implicit val formats = DefaultFormats
   val logger: Logger = LoggerFactory.getLogger(getClass)
-
-  protected def addHeaders(request: HttpRequestBase): Unit = {
-    request.addHeader("accept", "application/geo+json")
-  }
 
   def tiekamuRoadLinkChangeErrorToMap(tiekamuRoadLinkChangeError: TiekamuRoadLinkChangeError): Map[String, Any] = {
     Map(
@@ -261,15 +259,9 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
 
   def createTiekamuRoadLinkChangeSets(previousDate: DateTime, newDate: DateTime, activeLinearLocations: Seq[LinearLocation]): Seq[TiekamuRoadLinkChange] = {
 
-    var response: CloseableHttpResponse = null
-    val client = HttpClients.custom()
-      .setDefaultRequestConfig(
-        RequestConfig.custom()
-          .setCookieSpec(CookieSpecs.STANDARD)
-          .build())
-      .build()
+    val client = HttpClients.createDefault()
 
-    def extractTiekamuRoadLinkChanges(responseString: String):Seq[TiekamuRoadLinkChange] = {
+    def extractTiekamuRoadLinkChanges(responseString: String): Seq[TiekamuRoadLinkChange] = {
       def getDigitizationChangeValue(newStartMValue: Double, newEndMValue: Double): Boolean = {
         if (newEndMValue < newStartMValue)
           true
@@ -317,6 +309,24 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
       filteredActiveChangeInfos
     }
 
+    /** Create a response handler,  with handleResponse implementation returning the
+      * response body in Right as Seq[TiekamuRoadLinkChanges], or an Exception in Left. */
+    def getResponseHandler(url: String) = {
+      new HttpClientResponseHandler[Either[ViiteException, Seq[TiekamuRoadLinkChange]]] {
+        @throws[IOException]
+        override def handleResponse(response: ClassicHttpResponse): Either[ViiteException, Seq[TiekamuRoadLinkChange]]  = {
+          if (response.getCode == HttpStatus.SC_OK) {
+            val entity = response.getEntity
+            val responseString = EntityUtils.toString(entity, "UTF-8")
+            val tiekamuRoadLinkChanges = extractTiekamuRoadLinkChanges(responseString)
+            Right(tiekamuRoadLinkChanges)
+          } else {
+            Left(ViiteException(s"Request $url returned HTTP ${response.getCode}"))
+          }
+        }
+      }
+    }
+
     def getTiekamuRoadlinkChanges(client: CloseableHttpClient): Seq[TiekamuRoadLinkChange] = {
       time(logger, "Creating TiekamuRoadLinkChange sets") {
         try {
@@ -328,20 +338,25 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
           val url = tiekamuEndpoint ++ tiekamuDateParams ++ tiekamuReturnValueParam
 
           val request = new HttpGet(url)
-          addHeaders(request)
+          request.addHeader("accept", "application/geo+json")
+
           time(logger, "Fetching change set data from Tiekamu") {
-            response = client.execute(request)
+            try {
+              val tiekamuRoadLinkChanges = client.execute(request, getResponseHandler(url))
+              tiekamuRoadLinkChanges match {
+                case Left(t) => throw t
+                case Right(tiekamuRoadLinkChanges) => tiekamuRoadLinkChanges
+              }
+            } catch {
+              case t: Throwable =>
+                logger.warn(s"fetching $url failed. Throwable when fetching TiekamuRoadlinkChanges: ${t.getMessage}")
+                Seq()
+            }
           }
-
-          val entity = response.getEntity
-          val responseString = EntityUtils.toString(entity, "UTF-8")
-          val tiekamuRoadLinkChanges = extractTiekamuRoadLinkChanges(responseString)
-
-          tiekamuRoadLinkChanges
-        } finally {
-          if (response != null) {
-            response.close()
-          }
+        } catch {
+          case t: Throwable =>
+            logger.warn(s"creating query URL failed: ${t.getMessage}")
+            Seq()
         }
       }
     }
@@ -364,9 +379,9 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
     }
 
     def existsConnectingRoadway(roadway: Roadway, otherRoadways: Seq[Roadway]): Boolean = {
-      val startAddrM = roadway.startAddrMValue
-      val endAddrM = roadway.endAddrMValue
-      otherRoadways.map(_.startAddrMValue).contains(endAddrM) || otherRoadways.map(_.endAddrMValue).contains(startAddrM)
+      val startAddrM = roadway.addrMRange.start
+      val endAddrM = roadway.addrMRange.end
+      otherRoadways.map(_.addrMRange.start).contains(endAddrM) || otherRoadways.map(_.addrMRange.end).contains(startAddrM)
     }
 
     def checkRoadAddressContinuityForSingleRoadway(linearLocations: Seq[LinearLocation], change: TiekamuRoadLinkChange): Boolean = {

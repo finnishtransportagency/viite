@@ -1,7 +1,7 @@
 package fi.liikennevirasto.viite.util
 
 import java.util.Properties
-import com.googlecode.flyway.core.Flyway
+import org.flywaydb.core.Flyway
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.kgv.KgvRoadLink
@@ -192,7 +192,7 @@ object DataFixture {
     val flyway = new Flyway()
     flyway.setDataSource(ds)
     flyway.setLocations("db.migration")
-    flyway.setInitVersion("-1")
+    flyway.setBaselineVersionAsString("-1")
     flyway
   }
 
@@ -209,7 +209,7 @@ object DataFixture {
     // This old version of Flyway tries to drop the postgis extension too, so we clean the database manually instead
     SqlScriptRunner.runScriptInClasspath("/clear-db.sql")
     try {
-      SqlScriptRunner.executeStatement("delete from schema_version where version_rank > 1")
+      SqlScriptRunner.executeStatement("delete from schema_version where installed_rank > 1")
     } catch {
       case e: Exception => println(s"Failed to reset schema_version table: ${e.getMessage}")
     }
@@ -244,7 +244,7 @@ object DataFixture {
   }
 
   def flywayInit(): Unit = {
-    flyway.init()
+    flyway.baseline()
   }
 
   def main(args: Array[String]): Unit = {
@@ -257,7 +257,7 @@ object DataFixture {
       println("*************************************************************************************")
       breakable {
         while (true) {
-          val input = Console.readLine()
+          val input = scala.io.StdIn.readLine()
           if (input.trim() == "YES") {
             break()
           }

@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite.model
 
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPoint
 import fi.vaylavirasto.viite.geometry.Point
-import fi.vaylavirasto.viite.model.{AdministrativeClass, CalibrationPointType, LifecycleStatus, LinkGeomSource, RoadAddressChangeType, RoadPart, SideCode}
+import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, CalibrationPointType, LifecycleStatus, LinkGeomSource, RoadAddressChangeType, RoadPart, SideCode}
 import org.joda.time.DateTime
 
 trait ProjectAddressLinkLike extends RoadAddressLinkLike {
@@ -23,8 +23,7 @@ trait ProjectAddressLinkLike extends RoadAddressLinkLike {
   def trackCode: Long
   def elyCode: Long
   def discontinuity: Long
-  def startAddressM: Long
-  def endAddressM: Long
+  def addrMRange: AddrMRange
   def startMValue: Double
   def endMValue: Double
   def sideCode: SideCode
@@ -57,8 +56,7 @@ case class ProjectAddressLink(id                    : Long,
                               trackCode             : Long,
                               elyCode               : Long,
                               discontinuity         : Long,
-                              startAddressM         : Long,
-                              endAddressM           : Long,
+                              addrMRange            : AddrMRange,
                               startMValue           : Double,
                               endMValue             : Double,
                               sideCode              : SideCode,

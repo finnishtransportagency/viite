@@ -60,6 +60,8 @@ class APIServiceForNodesAndJunctions(roadwayDAO: RoadwayDAO, linearLocationDAO: 
     val junctions: Seq[JunctionWithLinearLocation] = getJunctionsWithLinearLocation(validNodeNumbers)
     val currentLinearLocations = getCurrentLinearLocations
     val allCrossingRoads = getCrossingRoads
+println(s"getAllValidNodesWithJunctions got ${nodes.size} nodes, ${validNodeNumbers.size} validNodeNumbers, " +
+  s"${junctions.size} junctions, ${currentLinearLocations.size} currentLinearLocations, and ${allCrossingRoads.size} allCrossingRoads.") // TODO remove when debugging is done. This is ugly!
 
     // 1. Junctions are mapped with calculated coordinate and crossing roads
     // 2. Nodes are mapped with junctions (which include coordinates and crossing roads)

@@ -3,6 +3,7 @@ package fi.liikennevirasto.viite.dao
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
+import fi.vaylavirasto.viite.model.AddrMRange
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -111,11 +112,11 @@ class RoadwayPointDAO extends BaseDAO {
     fetchByRoadwayNumbers(Seq(roadwayNumber))
   }
 
-  def fetchByRoadwayNumberAndAddresses(roadwayNumber: Long, startAddrM: Long, endAddrM: Long): Seq[RoadwayPoint] = {
+  def fetchByRoadwayNumberAndAddresses(roadwayNumber: Long, addrMRange: AddrMRange): Seq[RoadwayPoint] = {
     val query =
       s"""
       SELECT ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, CREATED_TIME, MODIFIED_BY, MODIFIED_TIME
-      from ROADWAY_POINT where ROADWAY_NUMBER= $roadwayNumber and ADDR_M >= $startAddrM and ADDR_M <= $endAddrM
+      from ROADWAY_POINT where ROADWAY_NUMBER= $roadwayNumber and ADDR_M >= ${addrMRange.start} and ADDR_M <= ${addrMRange.end}
        """
     queryList(query)
   }
@@ -139,7 +140,7 @@ class RoadwayPointDAO extends BaseDAO {
       (CalibrationPointsUtils.toCalibrationPointReference(p.startCalibrationPoint),
         CalibrationPointsUtils.toCalibrationPointReference(p.endCalibrationPoint)),
       p.geometry, p.linkGeomSource, p.roadwayNumber, Some(startDate), p.endDate),
-      Roadway(-1000, p.roadwayNumber, p.roadPart, p.administrativeClass, p.track, p.discontinuity, p.startAddrMValue, p.endAddrMValue, p.reversed, startDate, p.endDate,
+      Roadway(-1000, p.roadwayNumber, p.roadPart, p.administrativeClass, p.track, p.discontinuity, p.addrMRange, p.reversed, startDate, p.endDate,
         p.createdBy.getOrElse("-"), p.roadName, p.ely, TerminationCode.NoTermination, DateTime.now(), None))
   }
 
