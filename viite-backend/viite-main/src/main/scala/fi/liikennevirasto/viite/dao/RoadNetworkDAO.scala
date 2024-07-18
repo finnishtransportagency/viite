@@ -4,7 +4,7 @@ import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.vaylavirasto.viite.model.{AdministrativeClass, BeforeAfter, Discontinuity, RoadPart, Track}
+import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, BeforeAfter, Discontinuity, RoadPart, Track}
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import fi.vaylavirasto.viite.dao.BaseDAO
 import fi.vaylavirasto.viite.util.DateTimeFormatters.dateOptTimeFormatter
@@ -22,6 +22,7 @@ case class MissingCalibrationPoint(roadPart: RoadPart, track: Long, addrM: Long,
 case class MissingCalibrationPointFromJunction(missingCalibrationPoint: MissingCalibrationPoint, junctionPointId: Long, junctionNumber: Long, nodeNumber: Long, beforeAfter: BeforeAfter)
 case class MissingRoadwayPoint(roadPart: RoadPart, track: Long, addrM: Long, createdTime: DateTime, createdBy: String)
 case class InvalidRoadwayLength(roadwayNumber: Long, startDate: DateTime, endDate: Option[DateTime], roadPart: RoadPart, track: Long, startAddrM: Long, endAddrM: Long, length: Long, createdBy: String, createdTime: DateTime)
+case class LinksWithExtraCalibrationPoints(linkId: String, roadPart: RoadPart, startEnd: Int, calibrationPointCount: Int, calibrationPointIds: Array[Int])
 
 //TODO better naming case class
 case class OverlappingRoadwayOnLinearLocation(roadway: Roadway, linearLocationId: Long, linkId: String, linearLocationRoadwayNumber: Long, linearLocationStartMeasure: Long, linearLocationEndMeasure: Long, linearLocationCreatedBy: String, linearLocationCreatedTime: DateTime)
@@ -57,6 +58,21 @@ class RoadNetworkDAO extends BaseDAO {
       val createdBy = r.nextString()
 
       MissingCalibrationPointFromJunction(MissingCalibrationPoint(RoadPart(roadNumber, roadPartNumber), track, addrM, createdTime, createdBy),junctionPointId, junctionNumber, nodeNumber, BeforeAfter.apply(beforeAfter))
+    }
+  }
+
+  private implicit val linksWithExtraCalibrationPoints: GetResult[LinksWithExtraCalibrationPoints] = new GetResult[LinksWithExtraCalibrationPoints] {
+    def apply(r: PositionedResult): LinksWithExtraCalibrationPoints = {
+
+      val linkId = r.nextString()
+      val roadNumber = r.nextLong()
+      val roadPartNumber = r.nextLong()
+      val startCount = r.nextInt()
+      val endCount = r.nextInt()
+      val calibrationPointIdsString = r.nextString().replaceAll("[{}]", "") // Remove curly braces
+      val calibrationPointIds = calibrationPointIdsString.split(",").map(_.trim.toInt) // Convert to Array[Int]
+
+      LinksWithExtraCalibrationPoints(linkId, RoadPart(roadNumber, roadPartNumber), startCount, endCount, calibrationPointIds)
     }
   }
 
@@ -115,7 +131,7 @@ class RoadNetworkDAO extends BaseDAO {
       val validTo       = r.nextDateOption.map(d => dateOptTimeFormatter.parseDateTime(d.toString))
       val roadName = r.nextStringOption()
 
-      Roadway(id, roadwayNumber, RoadPart(roadNumber,roadPartNumber), administrativeClass, Track.apply(trackCode), Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, reverted, startDate, endDate, createdBy, roadName, ely, terminated, validFrom, validTo)
+      Roadway(id, roadwayNumber, RoadPart(roadNumber,roadPartNumber), administrativeClass, Track.apply(trackCode), Discontinuity.apply(discontinuity), AddrMRange(startAddrMValue, endAddrMValue), reverted, startDate, endDate, createdBy, roadName, ely, terminated, validFrom, validTo)
     }
   }
 
@@ -149,7 +165,7 @@ class RoadNetworkDAO extends BaseDAO {
       val linearLocationCreatedBy = r.nextString()
       val linearLocationCreatedTime = dateOptTimeFormatter.parseDateTime(r.nextDate.toString)
 
-      OverlappingRoadwayOnLinearLocation(Roadway(id, roadwayNumber, RoadPart(roadNumber,roadPartNumber), administrativeClass, Track.apply(trackCode), Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, reverted, startDate, endDate, createdBy, roadName, ely, terminated, validFrom, validTo),
+      OverlappingRoadwayOnLinearLocation(Roadway(id, roadwayNumber, RoadPart(roadNumber,roadPartNumber), administrativeClass, Track.apply(trackCode), Discontinuity.apply(discontinuity), AddrMRange(startAddrMValue, endAddrMValue), reverted, startDate, endDate, createdBy, roadName, ely, terminated, validFrom, validTo),
         linearLocationId, linkId, linearLocationRoadwayNumber, linearLocationStartMeasure, linearLocationEndMeasure, linearLocationCreatedBy, linearLocationCreatedTime
       )
     }
@@ -402,6 +418,109 @@ class RoadNetworkDAO extends BaseDAO {
          |          r.track,
          |          r.end_addr_m; """.stripMargin
     Q.queryNA[MissingRoadwayPoint](query).iterator.toSeq
+  }
+
+  private val calibrationPointJoinAndWhereConditions =
+    """FROM
+        calibration_point cp
+      JOIN
+        roadway_point rp ON cp.roadway_point_id = rp.id
+      JOIN
+        roadway r ON rp.roadway_number = r.roadway_number
+      WHERE
+        cp.valid_to IS NULL
+        AND r.valid_to IS NULL
+        AND r.end_date IS NULL"""
+
+  private val joinGroupAndOrderCalibrationPointData =
+    """JOIN
+        roadway r ON rp.roadway_number = r.roadway_number
+      WHERE
+        cp.valid_to IS NULL
+      AND r.valid_to IS NULL
+      AND r.end_date IS NULL
+        GROUP BY scp.link_id, scp.start_end, scp.calibration_point_count, r.road_number, r.road_part_number
+        ORDER BY
+          r.road_number, r.road_part_number
+          """
+
+  /**
+   * Fetch links that have more than one start or end calibration points
+   * The results are grouped by link ID, start/end, and other relevant fields to count and aggregate the calibration points
+   *
+   * @param roadPartFilter if defined, filter by road part
+   * @return Sequence of LinksWithExtraCalibrationPoints
+   */
+  def fetchLinksWithExtraCalibrationPoints(roadPartFilter: Option[RoadPart] = None): Seq[LinksWithExtraCalibrationPoints] = {
+    val roadPartCondition = roadPartFilter.map { rp =>
+      s"AND R.ROAD_NUMBER = ${rp.roadNumber} AND R.ROAD_PART_NUMBER = ${rp.partNumber}"
+    }.getOrElse("")
+
+    val query =
+      s"""
+    WITH selectedCalibrationPoints AS (
+      SELECT
+        cp.link_id,
+        cp.start_end,
+        count(DISTINCT cp.id) AS calibration_point_count
+      $calibrationPointJoinAndWhereConditions
+        $roadPartCondition
+      GROUP BY
+        cp.link_id,
+        cp.start_end
+      HAVING
+        count(DISTINCT cp.id) > 1
+    )
+    SELECT scp.link_id, r.road_number, r.road_part_number, scp.start_end,
+              count(DISTINCT cp.id) AS calibration_point_count,
+              array_agg(DISTINCT cp.id) AS calibration_point_ids
+    FROM
+      selectedCalibrationPoints scp
+    JOIN
+      calibration_point cp ON scp.link_id = cp.link_id AND scp.start_end = cp.start_end
+    JOIN
+      roadway_point rp ON cp.roadway_point_id = rp.id
+    $joinGroupAndOrderCalibrationPointData;
+    """.stripMargin
+    Q.queryNA[LinksWithExtraCalibrationPoints](query).iterator.toSeq
+  }
+
+  /**
+   * Fetch links that have more than one start or end calibration points with the same roadway number
+   * The results are grouped by link ID, start/end, and other relevant fields to count and aggregate the calibration points
+   *
+   * @return Sequence of LinksWithExtraCalibrationPoints
+   */
+  def fetchLinksWithExtraCalibrationPointsWithSameRoadwayNumber(): Seq[LinksWithExtraCalibrationPoints] = {
+
+    val query =
+      s"""
+    WITH selectedCalibrationPoints AS (
+      SELECT
+        cp.link_id,
+        rp.roadway_number,
+        cp.start_end,
+        count(DISTINCT cp.id) AS calibration_point_count
+      $calibrationPointJoinAndWhereConditions
+      GROUP BY
+        cp.link_id,
+        rp.roadway_number,
+        cp.start_end
+      HAVING
+        count(DISTINCT cp.id) > 1
+    )
+    SELECT scp.link_id, r.road_number, r.road_part_number, scp.start_end,
+              count(DISTINCT cp.id) AS calibration_point_count,
+              array_agg(DISTINCT cp.id) AS calibration_point_ids
+    FROM
+      selectedCalibrationPoints scp
+    JOIN
+      calibration_point cp ON scp.link_id = cp.link_id AND scp.start_end = cp.start_end
+    JOIN
+      roadway_point rp ON cp.roadway_point_id = rp.id AND rp.roadway_number = scp.roadway_number
+    $joinGroupAndOrderCalibrationPointData;
+    """.stripMargin
+    Q.queryNA[LinksWithExtraCalibrationPoints](query).iterator.toSeq
   }
 
   private val selectOverlappingRoadwayOnLinearLocation =

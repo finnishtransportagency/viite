@@ -13,7 +13,7 @@ import fi.liikennevirasto.viite.model._
 import fi.liikennevirasto.viite.util.DigiroadSerializers
 import fi.vaylavirasto.viite.dao.{RoadName, RoadNameForRoadAddressBrowser}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, BeforeAfter, Discontinuity, LinkGeomSource, NodePointType, NodeType, RoadAddressChangeType, RoadPart, Track}
+import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, BeforeAfter, Discontinuity, LinkGeomSource, NodePointType, NodeType, RoadAddressChangeType, RoadPart, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase
 import fi.vaylavirasto.viite.util.DateTimeFormatters.{ISOdateFormatter, dateSlashFormatter, finnishDateFormatter, finnishDateTimeFormatter, finnishDateCommaTimeFormatter}
 import org.joda.time.DateTime
@@ -340,7 +340,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
   private val getRoadNetworkErrors: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String, Any]]("roadnetworkerrors")
       tags "ViiteAPI - RoadNetworkErrors"
-      summary "Runs road network integrity checks, returning all the found errors, e.g. missing points (roadway p., calibration p.), or roadways' integrity errors"
+      summary "Runs road network integrity checks, returning all the found errors, e.g. missing or extra points (roadway p., calibration p.), or roadways' integrity errors"
     )
   get("/roadnetworkerrors", operation(getRoadNetworkErrors)) {
     time(logger, s"GET request for /roadnetworkerrors") {
@@ -348,6 +348,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
         val missingCalibrationPointsFromTheStart = roadNetworkValidator.getMissingCalibrationPointsFromTheStart
         val missingCalibrationPointsFromTheEnd = roadNetworkValidator.getMissingCalibrationPointsFromTheEnd
         val missingCalibrationPointsFromJunctions = roadNetworkValidator.getMissingCalibrationPointsFromJunctions
+        val linksWithExtraCalibrationPoints = roadNetworkValidator.getLinksWithExtraCalibrationPoints
+        val linksWithExtraCalibrationPointsOnSameRoadway = roadNetworkValidator.getLinksWithExtraCalibrationPointsOnSameRoadway
         val missingRoadwayPointsFromTheStart = roadNetworkValidator.getMissingRoadwayPointsFromTheStart
         val missingRoadwayPointsFromTheEnd = roadNetworkValidator.getMissingRoadwayPointsFromTheEnd
         val invalidRoadwayLengths = roadNetworkValidator.getInvalidRoadwayLengths
@@ -358,6 +360,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
           "missingCalibrationPointsFromStart" -> missingCalibrationPointsFromTheStart.map(cp => missingCalibrationPointToApi(cp)),
           "missingCalibrationPointsFromEnd" -> missingCalibrationPointsFromTheEnd.map(cp => missingCalibrationPointToApi(cp)),
           "missingCalibrationPointsFromJunctions" -> missingCalibrationPointsFromJunctions.map(cp => missingCalibrationPointFromJunctionToApi(cp)),
+          "linksWithExtraCalibrationPoints" -> linksWithExtraCalibrationPoints.map(l => linksWithExtraCalibrationPointsToApi(l)),
+          "linksWithExtraCalibrationPointsOnSameRoadway" -> linksWithExtraCalibrationPointsOnSameRoadway.map(l => linksWithExtraCalibrationPointsOnSameRoadwayToApi(l)),
           "missingRoadwayPointsFromStart" -> missingRoadwayPointsFromTheStart.map(rwp => missingRoadwayPointToApi(rwp)),
           "missingRoadwayPointsFromEnd" -> missingRoadwayPointsFromTheEnd.map(rwp => missingRoadwayPointToApi(rwp)),
           "invalidRoadwayLengths" -> invalidRoadwayLengths.map(rw => invalidRoadwayLengthToApi(rw)),
@@ -398,6 +402,28 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
     )
   }
 
+  def linksWithExtraCalibrationPointsToApi(link: LinksWithExtraCalibrationPoints): Map[String, Any] = {
+    Map(
+      "linkId" -> link.linkId,
+      "roadNumber" -> link.roadPart.roadNumber,
+      "roadPartNumber" -> link.roadPart.partNumber,
+      "startEnd" -> link.startEnd,
+      "calibrationPointCount" -> link.calibrationPointCount,
+      "calibrationPoints" -> link.calibrationPointIds
+    )
+  }
+
+  def linksWithExtraCalibrationPointsOnSameRoadwayToApi(link: LinksWithExtraCalibrationPoints): Map[String, Any] = {
+    Map(
+      "linkId" -> link.linkId,
+      "roadNumber" -> link.roadPart.roadNumber,
+      "roadPartNumber" -> link.roadPart.partNumber,
+      "startEnd" -> link.startEnd,
+      "calibrationPointCount" -> link.calibrationPointCount,
+      "calibrationPoints" -> link.calibrationPointIds
+    )
+  }
+
   def missingRoadwayPointToApi(rwp: MissingRoadwayPoint): Map[String, Any] = {
     Map(
       "roadNumber" -> rwp.roadPart.roadNumber,
@@ -432,8 +458,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       "roadNumber" -> rw.roadPart.roadNumber,
       "roadPartNumber" -> rw.roadPart.partNumber,
       "track" -> rw.track,
-      "startAddrM" -> rw.startAddrMValue,
-      "endAddrM" -> rw.endAddrMValue,
+      "startAddrM" -> rw.addrMRange.start,
+      "endAddrM"   -> rw.addrMRange.end,
       "reversed" -> rw.reversed,
       "discontinuity" -> rw.discontinuity,
       "startDate" -> rw.startDate,
@@ -454,8 +480,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       "roadNumber" -> rw.roadway.roadPart.roadNumber,
       "roadPartNumber" -> rw.roadway.roadPart.partNumber,
       "track" -> rw.roadway.track,
-      "startAddrM" -> rw.roadway.startAddrMValue,
-      "endAddrM" -> rw.roadway.endAddrMValue,
+      "startAddrM" -> rw.roadway.addrMRange.start,
+      "endAddrM"   -> rw.roadway.addrMRange.end,
       "reversed" -> rw.roadway.reversed,
       "discontinuity" -> rw.roadway.discontinuity,
       "startDate" -> rw.roadway.startDate,
@@ -1543,8 +1569,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       "roadPartNumber" -> roadAddressLink.roadPart.partNumber,
       "elyCode" -> roadAddressLink.elyCode,
       "trackCode" -> roadAddressLink.trackCode,
-      "startAddressM" -> roadAddressLink.startAddressM,
-      "endAddressM" -> roadAddressLink.endAddressM,
+      "startAddressM" -> roadAddressLink.addrMRange.start,
+      "endAddressM" -> roadAddressLink.addrMRange.end,
       "discontinuity" -> roadAddressLink.discontinuity,
       "lifecycleStatus" -> roadAddressLink.lifecycleStatus.value,
       "startMValue" -> roadAddressLink.startMValue,
@@ -1711,8 +1737,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       "roadNumber" -> track.roadPart.roadNumber,
       "track" -> track.track,
       "roadPartNumber" -> track.roadPart.partNumber,
-      "startAddrM" -> track.startAddrM,
-      "endAddrM" -> track.endAddrM,
+      "startAddrM" -> track.addrMRange.start,
+      "endAddrM"   -> track.addrMRange.end,
       "lengthAddrM" -> track.roadAddressLengthM,
       "administrativeClass" -> track.administrativeClass,
       "startDate" -> new SimpleDateFormat("dd.MM.yyyy").format(track.startDate.toDate)
@@ -1724,8 +1750,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       "ely" -> roadPart.ely,
       "roadNumber" -> roadPart.roadPart.roadNumber,
       "roadPartNumber" -> roadPart.roadPart.partNumber,
-      "startAddrM" -> roadPart.startAddrM,
-      "endAddrM" -> roadPart.endAddrM,
+      "startAddrM" -> roadPart.addrMRange.start,
+      "endAddrM"   -> roadPart.addrMRange.end,
       "lengthAddrM" -> roadPart.roadAddressLengthM,
       "startDate" -> new SimpleDateFormat("dd.MM.yyyy").format(roadPart.startDate.toDate)
     )
@@ -1823,8 +1849,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
         "roadPartNumber" -> projectAddressLink.roadPart.partNumber,
         "elyCode" -> projectAddressLink.elyCode,
         "trackCode" -> projectAddressLink.trackCode,
-        "startAddressM" -> projectAddressLink.startAddressM,
-        "endAddressM" -> projectAddressLink.endAddressM,
+        "startAddressM" -> projectAddressLink.addrMRange.start,
+        "endAddressM" -> projectAddressLink.addrMRange.end,
         "discontinuity" -> projectAddressLink.discontinuity,
         "lifecycleStatus" -> projectAddressLink.lifecycleStatus.value,
         "startMValue" -> projectAddressLink.startMValue,
@@ -1942,9 +1968,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
     if (links.nonEmpty)
       Some(links.tail.foldLeft(links.head) {
         case (a: RoadAddressLink, b) =>
-          a.copy(startAddressM = Math.min(a.startAddressM, b.startAddressM), endAddressM = Math.max(a.endAddressM, b.endAddressM), startMValue = Math.min(a.startMValue, b.endMValue), sourceId = "").asInstanceOf[T]
+          a.copy(addrMRange = AddrMRange(Math.min(a.addrMRange.start, b.addrMRange.start), Math.max(a.addrMRange.end, b.addrMRange.end)), startMValue = Math.min(a.startMValue, b.endMValue), sourceId = "").asInstanceOf[T]
         case (a: ProjectAddressLink, b) =>
-          a.copy(startAddressM = Math.min(a.startAddressM, b.startAddressM), endAddressM = Math.max(a.endAddressM, b.endAddressM), startMValue = Math.min(a.startMValue, b.endMValue), sourceId = "").asInstanceOf[T]
+          a.copy(addrMRange = AddrMRange(Math.min(a.addrMRange.start, b.addrMRange.start), Math.max(a.addrMRange.end, b.addrMRange.end)), startMValue = Math.min(a.startMValue, b.endMValue), sourceId = "").asInstanceOf[T]
       })
     else
       None

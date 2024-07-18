@@ -1,12 +1,14 @@
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.authentication.SessionApi
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
-import javax.servlet.ServletContext
-import org.apache.http.client.config.{CookieSpecs, RequestConfig}
-import org.apache.http.client.methods.HttpGet
-import org.apache.http.impl.client.HttpClientBuilder
+import org.apache.hc.client5.http.classic.methods.HttpGet
+import org.apache.hc.client5.http.impl.classic.HttpClients
+import org.apache.hc.core5.http.ClassicHttpResponse
+import org.apache.hc.core5.http.io.HttpClientResponseHandler
 import org.scalatra._
 
+import java.io.IOException
+import javax.servlet.ServletContext
 import scala.io.Source
 import scala.language.postfixOps
 
@@ -29,9 +31,20 @@ class ScalatraBootstrap extends LifeCycle {
 
 class RasterProxy extends ScalatraServlet {
 
-  private val client = HttpClientBuilder.create()
-    .setDefaultRequestConfig(RequestConfig.custom()
-      .setCookieSpec(CookieSpecs.STANDARD).build()).build()
+  private val client = HttpClients.createDefault()
+
+  /** Create a response handler, with handleResponse implementation returning the triple
+    * response code, contentType, and response data. */
+  def getResponseHandler = {
+    new HttpClientResponseHandler[(Int, String, String)] {
+      @throws[IOException]
+      override def handleResponse(response: ClassicHttpResponse): (Int, String, String)  = {
+        val data = Source.fromInputStream(response.getEntity.getContent)
+
+        (response.getCode, response.getEntity.getContentType, data.mkString)
+      }
+    }
+  }
 
   get("/wmts/maasto") {
     val uriwithparams = "/wmts/maasto?service=" + params.get("service").get +"&request=" + params.get("request").get
@@ -41,10 +54,9 @@ class RasterProxy extends ScalatraServlet {
     proxyGet.removeHeaders("X-Iam-Accesstoken")
     proxyGet.removeHeaders("X-Amzn-Trace-Id")
     proxyGet.removeHeaders("X-Iam-Identity")
-    val resp = client.execute(proxyGet)
-    response.setStatus(resp.getStatusLine.getStatusCode)
-    contentType = resp.getEntity.getContentType.getValue
-    val data = Source.fromInputStream(resp.getEntity.getContent)
-    data.mkString
+    val (httpStatusCode, httpContentType, resp) = client.execute(proxyGet, getResponseHandler)
+    response.setStatus(httpStatusCode)
+    contentType = httpContentType
+    resp
   }
 }

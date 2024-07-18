@@ -11,31 +11,35 @@ object Digiroad2Build extends Build {
   val Version = "0.1.0-SNAPSHOT"
 
   val ScalaVersion = "2.11.7"
-  val ScalatraVersion = "2.6.5"
-  val ScalaTestVersion = "3.2.0-SNAP7"
+  val ScalatraVersion = "2.6.5" // "2.7.0" requires code changes. // "2.7.1" last scala 2.11 version
+  val ScalaTestVersion = "3.2.0-SNAP7" // "3.2.0-SNAP10" (next scala 2.11 version) requires code changes. "object org.scalatest.prop.Configuration$ not found."
 
   val JodaConvertVersion = "2.2.3" // no dependencies
-  val JodaTimeVersion = "2.12.5" // dep on joda-convert // TODO "Note that from Java SE 8 onwards, users are asked to migrate to java.time (JSR-310) - a core part of the JDK which replaces this project." (from https://mvnrepository.com/artifact/joda-time/joda-time)
-  val SlickVersion = "3.0.0"
+  val JodaTimeVersion = "2.12.7" // dep on joda-convert // TODO "Note that from Java SE 8 onwards, users are asked to migrate to java.time (JSR-310) - a core part of the JDK which replaces this project." (from https://mvnrepository.com/artifact/joda-time/joda-time)
+  val SlickVersion = "3.0.3" // 3.1.x and further requires significant changes in the database code, or library change maybe. // 3.4.x and further requires scala 2.12
   val JodaSlickMapperVersion = "2.2.0" // provides slick 3.1.1, joda-time 2.7, and joda-convert 1.7
 
   val AkkaVersion = "2.5.32" // 2.6.x and up requires Scala 2.12 or greater
-  val HttpClientVersion = "4.5.14"
-  val NewRelicApiVersion = "3.1.1"
-  val CommonsIOVersion = "2.6"
-  val JsonJacksonVersion = "3.7.0-M7" // with "3.7.0-M8" test does not compile
-  val MockitoCoreVersion = "4.11.0" // 5.0.0 and up requires Java update to Java 11: "java.lang.UnsupportedClassVersionError: org/mockito/Mockito has been compiled by a more recent version of the Java Runtime (class file version 55.0), this version of the Java Runtime only recognizes class file versions up to 52.0"
-  val LogbackClassicVersion = "1.3.6" // Java EE version. 1.4.x requires Jakarta instead of JavaEE
+  val ApacheHTTPCoreVersion   = "5.2.4"
+  val ApacheHTTPClientVersion = "5.3.1" // depends on httpCore
+  val NewRelicApiVersion    = "8.12.0"
+  val CommonsIOVersion      = "2.16.1"
+  val JsonJacksonVersion    = "3.7.0-M11" // 3.7.0-M12 and up: could not find implicit value for evidence parameter of type org.json4s.AsJsonInput[org.json4s.StreamInput] //  4.0.6 last Scala 2.11 version
+  val MockitoCoreVersion    = "4.11.0" // last version working with java8 runtime // 5.0.0 and up requires Java update to Java 11: "java.lang.UnsupportedClassVersionError: org/mockito/Mockito has been compiled by a more recent version of the Java Runtime (class file version 55.0), this version of the Java Runtime only recognizes class file versions up to 52.0"
+  val LogbackClassicVersion = "1.3.14" // Java EE version. 1.4.x requires Jakarta instead of JavaEE
   val JettyVersion = "9.2.15.v20160210"
   val TestOutputOptions = Tests.Argument(TestFrameworks.ScalaTest, "-oNCXELOPQRMI") // List only problems, and their summaries. Set suitable logback level to get the effect.
-  val AwsSdkVersion = "2.17.148"
-  val GeoToolsVersion = "28.3"
+  val AwsSdkVersion       = "2.26.7" // "2.17.148"
+  val GeoToolsVersion     = "28.5" // "29.x" fails api/viite/roadaddress with Internal Server Error // available "31.1"
+  val GeoToolsIFVersion   = GeoToolsVersion // Differs from GeoToolsVersion after "29.2"
+  val JavaxServletVersion = "4.0.1"
 
   val jodaConvert    = "org.joda"             %  "joda-convert"  % JodaConvertVersion
   val jodaTime       = "joda-time"            %  "joda-time"     % JodaTimeVersion
   val akkaActor      = "com.typesafe.akka"    %% "akka-actor"    % AkkaVersion
   val akkaTestkit    = "com.typesafe.akka"    %% "akka-testkit"  % AkkaVersion
-  val httpClient = "org.apache.httpcomponents" %  "httpclient"   % HttpClientVersion //dep on commons-codec & httpcomponents
+  val httpCore   = "org.apache.httpcomponents.core5"   % "httpcore5"   % ApacheHTTPCoreVersion
+  val httpClient = "org.apache.httpcomponents.client5" % "httpclient5" % ApacheHTTPClientVersion
   val jsonJackson    = "org.json4s"         %% "json4s-jackson"  % JsonJacksonVersion
   val jsonNative     = "org.json4s"         %% "json4s-native"   % JsonJacksonVersion
   val mockitoCore    = "org.mockito"        %  "mockito-core"    % MockitoCoreVersion
@@ -79,14 +83,14 @@ object Digiroad2Build extends Build {
         jodaConvert,
         jodaTime,
         akkaActor,
-        "javax.media" % "jai_core" % "1.1.3" from "https://repo.osgeo.org/repository/release/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
-        "org.geotools" % "gt-graph" % GeoToolsVersion from s"https://repo.osgeo.org/repository/release/org/geotools/gt-graph/$GeoToolsVersion/gt-graph-$GeoToolsVersion.jar",
-        "org.geotools" % "gt-main" % GeoToolsVersion from s"https://repo.osgeo.org/repository/release/org/geotools/gt-main/$GeoToolsVersion/gt-main-$GeoToolsVersion.jar",
+//        "javax.media" % "jai_core" % "1.1.3" from "https://repo.osgeo.org/repository/release/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
+        "org.geotools" % "gt-graph"       % GeoToolsVersion from s"https://repo.osgeo.org/repository/release/org/geotools/gt-graph/$GeoToolsVersion/gt-graph-$GeoToolsVersion.jar",
+        "org.geotools" % "gt-main"        % GeoToolsVersion from s"https://repo.osgeo.org/repository/release/org/geotools/gt-main/$GeoToolsVersion/gt-main-$GeoToolsVersion.jar",
         "org.geotools" % "gt-referencing" % GeoToolsVersion from s"https://repo.osgeo.org/repository/release/org/geotools/gt-referencing/$GeoToolsVersion/gt-referencing-$GeoToolsVersion.jar",
-        "org.geotools" % "gt-metadata" % GeoToolsVersion from s"https://repo.osgeo.org/repository/release/org/geotools/gt-metadata/$GeoToolsVersion/gt-metadata-$GeoToolsVersion.jar",
-        "org.geotools" % "gt-opengis" % GeoToolsVersion from s"https://repo.osgeo.org/repository/release/org/geotools/gt-opengis/$GeoToolsVersion/gt-opengis-$GeoToolsVersion.jar",
+        "org.geotools" % "gt-metadata"    % GeoToolsVersion from s"https://repo.osgeo.org/repository/release/org/geotools/gt-metadata/$GeoToolsVersion/gt-metadata-$GeoToolsVersion.jar",
+        "org.geotools" % "gt-opengis"   % GeoToolsIFVersion from s"https://repo.osgeo.org/repository/release/org/geotools/gt-opengis/$GeoToolsIFVersion/gt-opengis-$GeoToolsIFVersion.jar",
         "jgridshift" % "jgridshift" % "1.0" from "https://repo.osgeo.org/repository/release/jgridshift/jgridshift/1.0/jgridshift-1.0.jar",
-        "org.locationtech.jts" % "jts-core" % "1.18.2" from "https://repo1.maven.org/maven2/org/locationtech/jts/jts-core/1.18.2/jts-core-1.18.2.jar",
+        "org.locationtech.jts" % "jts-core" % "1.19.0", // from "https://repo1.maven.org/maven2/org/locationtech/jts/jts-core/1.19.0/jts-core-1.19.0.jar",
         "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test"
       )
     )
@@ -103,30 +107,31 @@ object Digiroad2Build extends Build {
       scalaVersion := ScalaVersion,
       //      resolvers ++= Seq(Classpaths.typesafeReleases,
       //        "maven-public" at "http://livibuild04.vally.local/nexus/repository/maven-public/",
-      //        "ivy-public" at "http://livibuild04.vally.local/nexus/repository/ivy-public/"),
+      //        "ivy-public"   at "http://livibuild04.vally.local/nexus/repository/ivy-public/"),
       resolvers += Classpaths.typesafeReleases,
       scalacOptions ++= Seq("-unchecked", "-feature"),
       testOptions in Test ++= (
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
       testOptions in Test += TestOutputOptions,
       libraryDependencies ++= Seq(
-        "org.apache.commons" % "commons-lang3" % "3.2",
-        "commons-codec" % "commons-codec" % "1.15",
-        "com.jolbox" % "bonecp" % "0.8.0.RELEASE",
+        "org.apache.commons" % "commons-lang3" % "3.14.0",
+        "commons-codec"      % "commons-codec" % "1.17.0",
+        "com.jolbox"         % "bonecp"        % "0.8.0.RELEASE",
         "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test",
-        "com.typesafe.slick" %% "slick" % SlickVersion,
+        "com.typesafe.slick" %% "slick"        % SlickVersion,
         jsonJackson,
         jodaConvert,
         jodaTime,
         "com.github.tototoshi" %% "slick-joda-mapper" % JodaSlickMapperVersion,
-        "com.github.tototoshi" %% "scala-csv" % "1.3.5",
+        "com.github.tototoshi" %% "scala-csv"         % "1.3.10",
+        httpCore,
         httpClient,
         "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
         mockitoCore % "test",
-        "com.googlecode.flyway" % "flyway-core" % "2.3.1",
-        "org.postgresql" % "postgresql" % "42.2.28",
-        "net.postgis" % "postgis-geometry" % "2021.1.0",
-        "net.postgis" % "postgis-jdbc" % "2021.1.0" // dep postgresql, and from 2.5.0 and up: postgis-geometry
+        "org.flywaydb"   % "flyway-core"   % "4.0", // Versions "10.0.0"+ available
+        "org.postgresql" % "postgresql"    % "42.7.3",
+        "net.postgis" % "postgis-geometry" % "2023.1.0",
+        "net.postgis" % "postgis-jdbc"     % "2023.1.0" // dep postgresql, and from 2.5.0 and up: postgis-geometry
       ),
       unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf"
     )
@@ -159,10 +164,11 @@ object Digiroad2Build extends Build {
         logbackClassic % "runtime",
         "commons-io" % "commons-io" % CommonsIOVersion,
         "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
+        httpCore,
         httpClient,
         "org.scalatra" %% "scalatra-swagger"  % ScalatraVersion,
         "com.github.nscala-time" %% "nscala-time" % "2.32.0",
-        "software.amazon.awssdk" % "s3" % AwsSdkVersion,
+        "software.amazon.awssdk" % "s3"  % AwsSdkVersion,
         "software.amazon.awssdk" % "sso" % AwsSdkVersion
       ),
       unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf"
@@ -186,6 +192,7 @@ object Digiroad2Build extends Build {
       testOptions in Test += TestOutputOptions,
       libraryDependencies ++= Seq(
         akkaActor,
+        httpCore,
         httpClient,
         "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "compile, test",
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
@@ -199,7 +206,7 @@ object Digiroad2Build extends Build {
         "org.eclipse.jetty" % "jetty-servlets" % JettyVersion % "compile",
         "org.eclipse.jetty" % "jetty-proxy" % JettyVersion % "compile",
         "org.eclipse.jetty" % "jetty-jmx" % JettyVersion % "compile",
-        "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "provided;test" artifacts Artifact("javax.servlet", "jar", "jar")
+        "javax.servlet"     % "javax.servlet-api" % JavaxServletVersion % "provided"
       ),
       unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf"
     )
@@ -224,7 +231,7 @@ object Digiroad2Build extends Build {
         "org.scalatra" %% "scalatra" % ScalatraVersion,
         "org.scalatra" %% "scalatra-json" % ScalatraVersion,
         jsonJackson, jsonNative,
-        "org.scala-lang.modules"   %% "scala-parser-combinators" % "1.1.0",
+        "org.scala-lang.modules"   %% "scala-parser-combinators" % "1.1.2",
         "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test",
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
         "org.scalatra" %% "scalatra-auth" % ScalatraVersion,
@@ -233,8 +240,9 @@ object Digiroad2Build extends Build {
         logbackClassic % "runtime",
         "commons-io" % "commons-io" % CommonsIOVersion,
         "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
+        httpCore,
         httpClient,
-        "org.scalatra" %% "scalatra-swagger"  % ScalatraVersion
+        "org.scalatra" %% "scalatra-swagger" % ScalatraVersion
       ),
       unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf"
     )
@@ -271,11 +279,12 @@ object Digiroad2Build extends Build {
         logbackClassic % "runtime",
         "commons-io" % "commons-io" % CommonsIOVersion,
         "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
+        httpCore,
         httpClient,
         "org.eclipse.jetty" % "jetty-webapp" % JettyVersion % "container;compile",
         "org.eclipse.jetty" % "jetty-servlets" % JettyVersion % "container;compile",
         "org.eclipse.jetty" % "jetty-proxy" % JettyVersion % "container;compile",
-        "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "container;provided;test" artifacts (Artifact("javax.servlet", "jar", "jar"))
+        "javax.servlet"     % "javax.servlet-api" % JavaxServletVersion % "provided"
       )
     )
   ) dependsOn(baseJar, geoJar, DBJar, viiteJar, apiCommonJar, ApiJar) aggregate
@@ -285,8 +294,9 @@ object Digiroad2Build extends Build {
     .enablePlugins(GatlingPlugin)
     .settings(scalaVersion := ScalaVersion)
     .settings(libraryDependencies ++= Seq(
-      "io.gatling.highcharts" % "gatling-charts-highcharts" % "3.9.3" % "test",
-      "io.gatling" % "gatling-test-framework" % "3.9.3" % "test"))
+      "io.gatling.highcharts" % "gatling-charts-highcharts" % "3.11.3" % "test",
+      "io.gatling"            % "gatling-test-framework"    % "3.11.3" % "test"
+    ))
 
   val assemblySettings: Seq[Def.Setting[_]] = sbtassembly.Plugin.assemblySettings ++ Seq(
     mainClass in assembly := Some("fi.liikennevirasto.digiroad2.ProductionServer"),
@@ -296,6 +306,7 @@ object Digiroad2Build extends Build {
       case x if x.endsWith("about.html") => MergeStrategy.discard
       case x if x.endsWith("env.properties") => MergeStrategy.discard
       case x if x.endsWith("mime.types") => MergeStrategy.last
+      case x if x.endsWith("public-suffix-list.txt") => MergeStrategy.first
       case PathList("META-INF", "io.netty.versions.properties") => MergeStrategy.discard
       case PathList("META-INF", "maven", "com.fasterxml.jackson.core", "jackson-core", _*) => MergeStrategy.discard
       case x if x.endsWith("module-info.class") => MergeStrategy.discard // for logback, and slf4j-api

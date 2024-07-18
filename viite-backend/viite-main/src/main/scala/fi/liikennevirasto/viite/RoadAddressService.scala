@@ -11,7 +11,7 @@ import fi.liikennevirasto.viite.process.RoadAddressFiller.ChangeSet
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import fi.vaylavirasto.viite.dao.MunicipalityDAO
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.{BeforeAfter, CalibrationPointLocation, CalibrationPointType, Discontinuity, RoadAddressChangeType, RoadLink, RoadPart, SideCode, Track}
+import fi.vaylavirasto.viite.model.{AddrMRange, BeforeAfter, CalibrationPointLocation, CalibrationPointType, Discontinuity, RoadAddressChangeType, RoadLink, RoadPart, SideCode, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -328,11 +328,11 @@ class RoadAddressService(
           // The params with type long can be MTKID or roadNumber
           val searchResultPoint = roadLinkService.getRoadLinkMiddlePointBySourceId(params.head)
           val partialResultSeq = collectResult("mtkId", Seq(searchResultPoint))
-          val searchResult = getFirstOrEmpty(getRoadAddressWithRoadNumberAddress(params.head).sortBy(address => (address.roadPart.partNumber, address.startAddrMValue)))
+          val searchResult = getFirstOrEmpty(getRoadAddressWithRoadNumberAddress(params.head).sortBy(address => (address.roadPart.partNumber, address.addrMRange.start)))
           collectResult("road", searchResult, partialResultSeq)
         case 2 =>
           collectResult("road", getFirstOrEmpty(getRoadAddressWithRoadNumberParts(params.head, Set(params(1)), Set(Track.Combined, Track.LeftSide, Track.RightSide))
-          .sortBy(address => (address.roadPart.partNumber, address.startAddrMValue))
+          .sortBy(address => (address.roadPart.partNumber, address.addrMRange.start))
         ))
         case 3 | 4 =>
           val roadNumber = params(0)
@@ -341,13 +341,13 @@ class RoadAddressService(
           val track = if (params.size == 4) Some(params(3)) else None
           val ralOption = getRoadAddressLink(RoadPart(roadNumber, roadPart), addressM, track)
           ralOption.foldLeft(Seq.empty[Map[String, Seq[Any]]])((partialResultSeq, ral) => {
-            val roadAddressLinkMValueLengthPercentageFactor = (addressM - ral.startAddressM.toDouble) / (ral.endAddressM.toDouble - ral.startAddressM)
+            val roadAddressLinkMValueLengthPercentageFactor = (addressM - ral.addrMRange.start.toDouble) / (ral.addrMRange.end.toDouble - ral.addrMRange.start)
             val geometryLength = ral.endMValue - ral.startMValue
             val geometryMeasure = roadAddressLinkMValueLengthPercentageFactor * geometryLength
             val point = ral match {
-              case r if (r.startAddressM.toDouble == addressM && r.sideCode == SideCode.TowardsDigitizing) || (r.endAddressM == addressM && r.sideCode == SideCode.AgainstDigitizing) =>
+              case r if (r.addrMRange.start.toDouble == addressM && r.sideCode == SideCode.TowardsDigitizing) || (r.addrMRange.end == addressM && r.sideCode == SideCode.AgainstDigitizing) =>
                 r.geometry.headOption
-              case r if (r.startAddressM.toDouble == addressM && r.sideCode == SideCode.AgainstDigitizing) || (r.endAddressM == addressM && r.sideCode == SideCode.TowardsDigitizing) =>
+              case r if (r.addrMRange.start.toDouble == addressM && r.sideCode == SideCode.AgainstDigitizing) || (r.addrMRange.end == addressM && r.sideCode == SideCode.TowardsDigitizing) =>
                 r.geometry.lastOption
               case r =>
                 val mValue: Double = r.sideCode match {
@@ -375,8 +375,8 @@ class RoadAddressService(
           ("kuntakoodi", municipalityId.getOrElse("").toString),
           ("katunimi", street),
           ("katunumero", streetNumber.headOption.getOrElse(defaultStreetNumber.toString)))) match {
-          case Left(result) => Seq(result)
-          case Right(error) => throw new VkmException(error.toString)
+          case Right(result) => Seq(result)
+          case Left(error) => throw new VkmException(error.toString)
         }
         collectResult("street", searchResult)
       case _ => Seq.empty[Map[String, Seq[Any]]]
@@ -407,7 +407,7 @@ class RoadAddressService(
     *
     * @param roadPart  The road part
     * @param addressM  The addressM that is in between the returned RoadAddress
-    * @return Returns RoadAddressLink in track 0 or 1 or given track which contains dynamically calculated startAddressM and endAddressM
+    * @return Returns RoadAddressLink in track 0 or 1 or given track which contains dynamically calculated addrMRange
     *         and includes detailed geometry in that link fetched dynamically from KGV
     */
   def getRoadAddressLink(roadPart: RoadPart, addressM: Long, track: Option[Long] = None): Option[RoadAddressLink] = {
@@ -420,7 +420,7 @@ class RoadAddressService(
     val roadAddresses = getRoadAddressForSearch(roadPart, addressM, track)
     val roadLinks = roadLinkService.getRoadLinksByLinkIds(linearLocationsLinkIds)
     val rals = RoadAddressFiller.fillTopology(roadLinks, roadAddresses)
-    val filteredRals = rals.filter(al => al.startAddressM <= addressM && al.endAddressM >= addressM && (al.startAddressM != 0 || al.endAddressM != 0))
+    val filteredRals = rals.filter(al => al.addrMRange.start <= addressM && al.addrMRange.end >= addressM && (al.addrMRange.start != 0 || al.addrMRange.end != 0))
     val ral = filteredRals.filter(al => (track.nonEmpty && track.contains(al.trackCode)) || al.trackCode != Track.LeftSide.value)
     ral.headOption
   }
@@ -435,8 +435,8 @@ class RoadAddressService(
   def getRoadAddressForSearch(roadPart: RoadPart, addressM: Long, track: Option[Long] = None): Seq[RoadAddress] = {
     withDynSession {
       val roadways = roadwayDAO.fetchAllBySectionAndAddresses(roadPart, Some(addressM), Some(addressM), track)
-      val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadways).sortBy(_.startAddrMValue)
-      roadAddresses.filter(ra => (track.isEmpty || track.contains(ra.track.value)) && ra.startAddrMValue <= addressM && ra.endAddrMValue >= addressM)
+      val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadways).sortBy(_.addrMRange.start)
+      roadAddresses.filter(ra => (track.isEmpty || track.contains(ra.track.value)) && ra.addrMRange.start <= addressM && ra.addrMRange.end >= addressM)
     }
   }
 
@@ -464,9 +464,9 @@ class RoadAddressService(
             roadwayDAO.fetchAllBySectionAndAddresses(roadPart, None, None)
       }
 
-      val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadways).sortBy(_.startAddrMValue)
+      val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadways).sortBy(_.addrMRange.start)
       if (addressM > 0) {
-        roadAddresses.filter(ra => ra.startAddrMValue >= addressM || ra.endAddrMValue == addressM)
+        roadAddresses.filter(ra => ra.addrMRange.start >= addressM || ra.addrMRange.end == addressM)
       }
       else if(roadAddresses.nonEmpty) Seq(roadAddresses.head) else Seq()
     }
@@ -602,18 +602,18 @@ class RoadAddressService(
 
   /**
     * Gets all the road addresses in given road number, road part number and between given address measures.
-    * The road address measures should be in [startAddrM, endAddrM]
+    * The road address measures should be in [addrMRange.start, addrMRange.end]
     *
     * @param roadPart       The road part
     * @param startAddrM     The start address measure
     * @param endAddrM       The end address measure
     * @return Returns road addresses filtered by road section and address measures
     */
-  def getRoadAddressesFiltered(roadPart: RoadPart, startAddrM: Long, endAddrM: Long): Seq[RoadAddress] = {
+  def getRoadAddressesFiltered(roadPart: RoadPart, addrMRange: AddrMRange): Seq[RoadAddress] = {
     withDynSession {
-      val roadwayAddresses = roadwayDAO.fetchAllBySectionAndAddresses(roadPart, Some(startAddrM), Some(endAddrM))
+      val roadwayAddresses = roadwayDAO.fetchAllBySectionAndAddresses(roadPart, Some(addrMRange.start), Some(addrMRange.end))
       val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadwayAddresses)
-      roadAddresses.filter(ra => ra.isBetweenAddresses(startAddrM, endAddrM))
+      roadAddresses.filter(ra => ra.isBetweenAddresses(addrMRange))
     }
   }
 
@@ -818,44 +818,44 @@ class RoadAddressService(
 
   def handleCalibrationPoints(linearLocations: Iterable[LinearLocation], username: String = "-"): Unit = {
 
-    val startCalibrationPointsToCheck = linearLocations.filter(_.startCalibrationPoint.isDefined)
-    val endCalibrationPointsToCheck = linearLocations.filter(_.endCalibrationPoint.isDefined)
+    val linearLocationsWithStartCP = linearLocations.filter(_.startCalibrationPoint.isDefined)
+    val linearLocationsWithEndCP = linearLocations.filter(_.endCalibrationPoint.isDefined)
 
     // Fetch current linear locations and check which calibration points should be expired
     val currentCPs = CalibrationPointDAO.fetchByLinkId(linearLocations.map(l => l.linkId))
     val currentStartCP = currentCPs.filter(_.startOrEnd == CalibrationPointLocation.StartOfLink)
     val currentEndCP = currentCPs.filter(_.startOrEnd == CalibrationPointLocation.EndOfLink)
-    val startCPsToBeExpired = currentStartCP.filter(c => !startCalibrationPointsToCheck.exists(sc => sc.linkId == c.linkId && (sc.startCalibrationPoint.isDefined && c.startOrEnd == CalibrationPointLocation.StartOfLink)))
-    val endCPsToBeExpired = currentEndCP.filter(c => !endCalibrationPointsToCheck.exists(sc => sc.linkId == c.linkId && (sc.endCalibrationPoint.isDefined && c.startOrEnd == CalibrationPointLocation.EndOfLink)))
+    val startCPsToBeExpired = currentStartCP.filter(c => !linearLocationsWithStartCP.exists(sc => sc.linkId == c.linkId && (sc.startCalibrationPoint.isDefined && c.startOrEnd == CalibrationPointLocation.StartOfLink)))
+    val endCPsToBeExpired = currentEndCP.filter(c => !linearLocationsWithEndCP.exists(sc => sc.linkId == c.linkId && (sc.endCalibrationPoint.isDefined && c.startOrEnd == CalibrationPointLocation.EndOfLink)))
 
     // Expire calibration points not applied by project road changes logic
     startCPsToBeExpired.foreach {
-      ll =>
-        val cal = CalibrationPointDAO.fetch(ll.linkId, CalibrationPointLocation.StartOfLink.value)
+      cp =>
+        val cal = CalibrationPointDAO.fetch(cp.linkId, CalibrationPointLocation.StartOfLink.value)
         if (cal.isDefined) {
           CalibrationPointDAO.expireById(Set(cal.get.id))
           logger.info(s"Expiring calibration point id:" + cal.get.id)
           // Check if the expired calibrationpoint needs to be replaced with a JunctionCP
-          CalibrationPointsUtils.createCalibrationPointIfNeeded(ll.roadwayPointId, ll.linkId, CalibrationPointLocation.StartOfLink, CalibrationPointType.JunctionPointCP, username)
+          CalibrationPointsUtils.createCalibrationPointIfNeeded(cp.roadwayPointId, cp.linkId, CalibrationPointLocation.StartOfLink, CalibrationPointType.JunctionPointCP, username)
         } else {
-          logger.error(s"Failed to expire start calibration point for link id: ${ll.linkId}")
+          logger.error(s"Failed to expire start calibration point for link id: ${cp.linkId}")
         }
     }
     endCPsToBeExpired.foreach {
-      ll =>
-        val cal = CalibrationPointDAO.fetch(ll.linkId, CalibrationPointLocation.EndOfLink.value)
+      cp =>
+        val cal = CalibrationPointDAO.fetch(cp.linkId, CalibrationPointLocation.EndOfLink.value)
         if (cal.isDefined) {
           CalibrationPointDAO.expireById(Set(cal.get.id))
           logger.info(s"Expiring calibration point id:" + cal.get.id)
           // Check if the expired calibrationpoint needs to be replaced with a JunctionCP
-          CalibrationPointsUtils.createCalibrationPointIfNeeded(ll.roadwayPointId, ll.linkId, CalibrationPointLocation.EndOfLink, CalibrationPointType.JunctionPointCP, username)
+          CalibrationPointsUtils.createCalibrationPointIfNeeded(cp.roadwayPointId, cp.linkId, CalibrationPointLocation.EndOfLink, CalibrationPointType.JunctionPointCP, username)
         } else {
-          logger.error(s"Failed to expire end calibration point for link id: ${ll.linkId}")
+          logger.error(s"Failed to expire end calibration point for link id: ${cp.linkId}")
         }
     }
 
     // Check other calibration points
-    startCalibrationPointsToCheck.foreach {
+    linearLocationsWithStartCP.foreach {
       cal =>
         val roadwayPointId =
           roadwayPointDAO.fetch(cal.roadwayNumber, cal.startCalibrationPoint.addrM.get) match {
@@ -867,7 +867,7 @@ class RoadAddressService(
           }
         CalibrationPointsUtils.createCalibrationPointIfNeeded(roadwayPointId, cal.linkId, CalibrationPointLocation.StartOfLink, cal.startCalibrationPointType, username)
     }
-    endCalibrationPointsToCheck.foreach {
+    linearLocationsWithEndCP.foreach {
       cal =>
         val roadwayPointId =
           roadwayPointDAO.fetch(cal.roadwayNumber, cal.endCalibrationPoint.addrM.get) match {
@@ -946,9 +946,17 @@ class RoadAddressService(
       if (roadwayNumberInPoint.isDefined) {
         if (rwp.roadwayNumber != roadwayNumberInPoint.get || rwp.addrMValue != newAddrM) {
           val newRwp = rwp.copy(roadwayNumber = roadwayNumberInPoint.get, addrMValue = newAddrM, modifiedBy = Some(username))
-          logger.info(s"Updating roadway_point ${rwp.id}: (roadwayNumber: ${rwp.roadwayNumber} -> ${newRwp.roadwayNumber}, addr: ${rwp.addrMValue} -> ${newRwp.addrMValue})")
-          roadwayPointDAO.update(newRwp)
-          Seq(newRwp)
+          val existingRoadwayPoint = roadwayPointDAO.fetch(newRwp.roadwayNumber, newRwp.addrMValue)
+          if (existingRoadwayPoint.isEmpty) {
+            logger.info(s"Updating roadway_point ${rwp.id}: (roadwayNumber: ${rwp.roadwayNumber} -> ${newRwp.roadwayNumber}, addr: ${rwp.addrMValue} -> ${newRwp.addrMValue})")
+            roadwayPointDAO.update(newRwp)
+            Seq(newRwp)
+          }
+          else {
+            logger.info(s"Skipping roadway points' roadwayNumber (${rwp.roadwayNumber} -> ${newRwp.roadwayNumber}) and addrM (${rwp.addrMValue} -> ${newRwp.addrMValue}) update " +
+              s"because a similar roadway point already exists in the database with these values (id: ${existingRoadwayPoint.get.id}, roadwayNumber: ${existingRoadwayPoint.get.roadwayNumber}, addrMValue: ${existingRoadwayPoint.get.addrMValue})")
+            Seq()
+          }
         } else {
           Seq()
         }
@@ -986,7 +994,7 @@ class RoadAddressService(
           val filteredProjectLinkChanges = projectLinkChanges.filter(plc => plc.newRoadwayNumber == rwn
             && plc.originalStartAddr >= source.startAddressM.get && plc.originalEndAddr <= source.endAddressM.get)
           if (filteredProjectLinkChanges.nonEmpty) {
-            roadwayPointDAO.fetchByRoadwayNumberAndAddresses(filteredProjectLinkChanges.head.originalRoadwayNumber, source.startAddressM.get, source.endAddressM.get)
+            roadwayPointDAO.fetchByRoadwayNumberAndAddresses(filteredProjectLinkChanges.head.originalRoadwayNumber, AddrMRange(source.startAddressM.get, source.endAddressM.get))
           } else {
             Seq()
           }
@@ -996,37 +1004,47 @@ class RoadAddressService(
           if (change.changeType == RoadAddressChangeType.Transfer || change.changeType == RoadAddressChangeType.Unchanged) {
             if (!change.reversed) {
               val rwPoints: Seq[RoadwayPoint] = roadwayPoints.flatMap { rwp =>
+                if (!list.exists(_.id == rwp.id)) { // Check if the point is already in the updated list
+                  val dualRoadwayPointNewAddrM = projectLinkChanges.filter(plc => rwp.roadwayNumber == plc.originalRoadwayNumber && rwp.addrMValue >= plc.originalStartAddr && rwp.addrMValue <= plc.originalEndAddr) match {
+                    case linkChanges: Seq[ProjectRoadLinkChange] if linkChanges.size == 2 && linkChanges.map(_.newRoadwayNumber).distinct.size > 1 =>
+                      val sortedProjectLinkChanges = linkChanges.sortBy(_.originalStartAddr)
+                      val projectRoadLinkChangeBefore = sortedProjectLinkChanges.head
+                      Some(projectRoadLinkChangeBefore.newEndAddr)
+                    case _ => None
+                  }
 
-                val dualRoadwayPointNewAddrM = projectLinkChanges.filter(plc => rwp.roadwayNumber == plc.originalRoadwayNumber && rwp.addrMValue >= plc.originalStartAddr && rwp.addrMValue <= plc.originalEndAddr) match {
-                  case linkChanges: Seq[ProjectRoadLinkChange] if linkChanges.size == 2 && linkChanges.map(_.newRoadwayNumber).distinct.size > 1 =>
-                    val sortedProjectLinkChanges = linkChanges.sortBy(_.originalStartAddr)
-                    val projectRoadLinkChangeBefore = sortedProjectLinkChanges.head
-                    Some(projectRoadLinkChangeBefore.newEndAddr)
-                  case _ => None
+                  val newAddrM = {
+                    if (dualRoadwayPointNewAddrM.isDefined)
+                      dualRoadwayPointNewAddrM.get
+                    else
+                      target.startAddressM.get + (rwp.addrMValue - source.startAddressM.get)
+                  }
+                  updateRoadwayPoint(rwp, newAddrM)
+                } else { // Skip the point if it is already in the updated list
+                  Seq.empty[RoadwayPoint]
                 }
-
-                val newAddrM = {
-                  if (dualRoadwayPointNewAddrM.isDefined)
-                    dualRoadwayPointNewAddrM.get
-                  else
-                    target.startAddressM.get + (rwp.addrMValue - source.startAddressM.get)
-                }
-
-                updateRoadwayPoint(rwp, newAddrM)
               }
               list ++ rwPoints
             } else {
               val rwPoints: Seq[RoadwayPoint] = roadwayPoints.flatMap { rwp =>
-                val newAddrM = target.endAddressM.get - (rwp.addrMValue - source.startAddressM.get)
-                updateRoadwayPoint(rwp, newAddrM)
+                if (!list.exists(_.id == rwp.id)) { // Check if the point is already in the updated list
+                  val newAddrM = target.endAddressM.get - (rwp.addrMValue - source.startAddressM.get)
+                  updateRoadwayPoint(rwp, newAddrM)
+                } else {
+                  Seq.empty[RoadwayPoint]
+                }
               }
               list ++ rwPoints
             }
           } else if (change.changeType == RoadAddressChangeType.Renumeration) {
             if (change.reversed) {
               val rwPoints: Seq[RoadwayPoint] = roadwayPoints.flatMap { rwp =>
-                val newAddrM = Seq(source.endAddressM.get, target.endAddressM.get).max - rwp.addrMValue
-                updateRoadwayPoint(rwp, newAddrM)
+                if (!list.exists(_.id == rwp.id)) { // Check if the point is already in the updated list
+                  val newAddrM = Seq(source.endAddressM.get, target.endAddressM.get).max - rwp.addrMValue
+                  updateRoadwayPoint(rwp, newAddrM)
+                } else { // Skip the point if it is already in the updated list
+                  Seq.empty[RoadwayPoint]
+                }
               }
               list ++ rwPoints
             } else {
@@ -1034,12 +1052,16 @@ class RoadAddressService(
             }
           } else if (change.changeType == RoadAddressChangeType.Termination) {
             val rwPoints: Seq[RoadwayPoint] = roadwayPoints.flatMap { rwp =>
-              val terminatedRoadAddress = terminatedRoadwayNumbersChanges.find(change => change.originalRoadwayNumber == rwp.roadwayNumber &&
-                change.originalStartAddr >= source.startAddressM.get && change.originalEndAddr <= source.endAddressM.get
-              )
-              if (terminatedRoadAddress.isDefined) {
-                updateRoadwayPoint(rwp, rwp.addrMValue)
-              } else Seq()
+              if (!list.exists(_.id == rwp.id)) { // Check if the point is already in the updated list
+                val terminatedRoadAddress = terminatedRoadwayNumbersChanges.find(change => change.originalRoadwayNumber == rwp.roadwayNumber &&
+                  change.originalStartAddr >= source.startAddressM.get && change.originalEndAddr <= source.endAddressM.get
+                )
+                if (terminatedRoadAddress.isDefined) {
+                  updateRoadwayPoint(rwp, rwp.addrMValue)
+                } else Seq.empty[RoadwayPoint]
+              } else { // Skip the point if it is already in the updated list
+                Seq.empty[RoadwayPoint]
+              }
             }
             list ++ rwPoints
           } else list
@@ -1288,7 +1310,7 @@ object RoadAddressFilters {
   }
 
   def continuousAddress(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
-    curr.endAddrMValue == next.startAddrMValue
+    curr.addrMRange.end == next.addrMRange.start
   }
 
   def discontinuousAddress(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {

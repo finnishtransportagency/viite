@@ -27,6 +27,10 @@
                         showMissingCalibrationPoints(result.missingCalibrationPointsFromStart.concat(result.missingCalibrationPointsFromEnd));
                     if (result.missingCalibrationPointsFromJunctions.length > 0)
                         showMissingCalibrationPointsForJunctions(result.missingCalibrationPointsFromJunctions);
+                    if (result.linksWithExtraCalibrationPointsOnSameRoadway.length > 0)
+                        showLinksWithExtraCalibrationPointsOnSameRoadway(result.linksWithExtraCalibrationPointsOnSameRoadway);
+                    if (result.linksWithExtraCalibrationPoints.length > 0)
+                        showLinksWithExtraCalibrationPoints(result.linksWithExtraCalibrationPoints);
                     if (result.missingRoadwayPointsFromStart.length > 0 || result.missingRoadwayPointsFromEnd.length > 0)
                         showMissingRoadwayPoints(result.missingRoadwayPointsFromStart.concat(result.missingRoadwayPointsFromEnd));
                     if (result.invalidRoadwayLengths.length > 0)
@@ -102,6 +106,76 @@
                                     <td>${cp.junctionPointId}</td>
                                 </tr>`);
                 table.append(string);
+            });
+            contentWrapper.append(table);
+        };
+
+        const showLinksWithExtraCalibrationPointsOnSameRoadway = function (linksWithExtraCalibrationPointsOnSameRoadway) {
+            const contentWrapper = $('#roadNetworkErrorWindowContent');
+            contentWrapper.append('<h3>Linkit joilla on ylimääräisiä kalibrointipisteitä samalla roadwayllä (estää kartan päivittymisen)</h3>');
+            const table = $('<table class="viite-table"> ' +
+                '<thead> ' +
+                '<th>Linkin Id</th>' +
+                '<th>Tie</th>' +
+                '<th>Osa</th>' +
+                '<th>Linkin Alku/Loppu</th>' +
+                '<th>Määrä</th>' +
+                '<th>Kalibrointipisteiden Id:t</th>'+
+                '</thead>' +
+                '<tbody></tbody></table>');
+            linksWithExtraCalibrationPointsOnSameRoadway.forEach((link) => {
+                let startEndText;
+                if (link.startEnd === 0) {
+                    startEndText = 'Alku';
+                } else if (link.startEnd === 1) {
+                    startEndText = 'Loppu';
+                } else {
+                    startEndText = link.startEnd;
+                }
+                const tableRow = $(`<tr>
+                            <td>${link.linkId}</td>
+                            <td>${link.roadNumber}</td>
+                            <td>${link.roadPartNumber}</td>
+                            <td>${startEndText}</td>
+                            <td>${link.calibrationPointCount + ' kpl'}</td>
+                            <td>${link.calibrationPoints}</td>
+                        </tr>`);
+                table.append(tableRow);
+            });
+            contentWrapper.append(table);
+        };
+
+        const showLinksWithExtraCalibrationPoints = function (linksWithExtraCalibrationPoints) {
+            const contentWrapper = $('#roadNetworkErrorWindowContent');
+            contentWrapper.append('<h3>Linkit joilla on ylimääräisiä kalibrointipisteitä</h3>');
+            const table = $('<table class="viite-table"> ' +
+                '<thead> ' +
+                '<th>Linkin Id</th>' +
+                '<th>Tie</th>' +
+                '<th>Osa</th>' +
+                '<th>Linkin Alku/Loppu</th>' +
+                '<th>Määrä</th>' +
+                '<th>Kalibrointipisteiden Id:t</th>'+
+                '</thead>' +
+                '<tbody></tbody></table>');
+            linksWithExtraCalibrationPoints.forEach((link) => {
+                let startEndText;
+                if (link.startEnd === 0) {
+                    startEndText = 'Alku';
+                } else if (link.startEnd === 1) {
+                    startEndText = 'Loppu';
+                } else {
+                    startEndText = link.startEnd;
+                }
+                const tableRow = $(`<tr>
+                            <td>${link.linkId}</td>
+                            <td>${link.roadNumber}</td>
+                            <td>${link.roadPartNumber}</td>
+                            <td>${startEndText}</td>
+                            <td>${link.calibrationPointCount + ' kpl'}</td>
+                            <td>${link.calibrationPoints}</td>
+                        </tr>`);
+                table.append(tableRow);
             });
             contentWrapper.append(table);
         };
