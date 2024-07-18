@@ -8,7 +8,7 @@ phases:
       - export CODE_ARTIFACT_AUTH_TOKEN=$(aws codeartifact get-authorization-token --domain vayla-viite --domain-owner 783354560127 --region eu-west-1 --query authorizationToken --output text)
       - aws codeartifact login --tool npm --repository viite_npm_packages --domain vayla-viite --domain-owner 783354560127
       - npm config set registry https://vayla-viite-783354560127.d.codeartifact.eu-west-1.amazonaws.com/npm/viite_npm_packages/
-      - aws s3 cp s3://sbt-repository-783354560127/sbt-0.13.18.deb /tmp/sbt-0.13.18.deb
+      - aws s3 cp s3://fi-viite-dev/sbt/sbt-0.13.18.deb /tmp/sbt-0.13.18.deb
       - sudo dpkg -i /tmp/sbt-0.13.18.deb
       - npm install
       - npm install -g grunt-cli
