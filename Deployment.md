@@ -36,7 +36,7 @@ Tietokannan rakenne päivitetään automaattisesti buildauksien yhteydessä (ks.
 
 Automaattipäivitys on toteutettu [Flyway](http://flywaydb.org/)-tietokantamigraatiotyökalulla.
 Tietokantamigraatiomääritykset on versioitu `db.migration`-paketissa `database`-projektissa.
-Flyway päivittää tiedon käytössä olevasta migraatioversiosta tietokantaan itseensä; versiotieto löytyy taulusta `schema_version`.
+Flyway päivittää tiedon käytössä olevasta migraatioversiosta tietokantaan itseensä; versiotieto löytyy taulusta `flyway_schema_history`.
 
 Katso lisätietoja [Digiroad-2](README.md) artikkelista.
 
