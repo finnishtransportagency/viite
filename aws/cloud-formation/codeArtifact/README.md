@@ -28,7 +28,7 @@ Replace <profilename> with your AWS profile name.
 
 ## CodeArtifact npm Setup 
 
-Log in to the npm repository:
+Log in to the viite_npm_packages repository:
 
 ```bash
 aws codeartifact login --tool npm --repository viite_npm_packages --domain vayla-viite --domain-owner 783354560127
