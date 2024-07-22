@@ -33,6 +33,8 @@ object Digiroad2Build extends Build {
   val GeoToolsVersion     = "28.5" // "29.x" fails api/viite/roadaddress with Internal Server Error // available "31.1"
   val GeoToolsIFVersion   = GeoToolsVersion // Differs from GeoToolsVersion after "29.2"
   val JavaxServletVersion = "4.0.1"
+  val JgridshiftVersion   = "1.0"
+  val JtsCoreVersion      = "1.19.0"
 
   val jodaConvert    = "org.joda"             %  "joda-convert"  % JodaConvertVersion
   val jodaTime       = "joda-time"            %  "joda-time"     % JodaTimeVersion
@@ -45,21 +47,30 @@ object Digiroad2Build extends Build {
   val mockitoCore    = "org.mockito"        %  "mockito-core"    % MockitoCoreVersion
   val logbackClassic = "ch.qos.logback"     % "logback-classic"  % LogbackClassicVersion
 
-  // Get build id to check if executing in aws environment.
-  val awsBuildId: String = scala.util.Properties.envOrElse("CODEBUILD_BUILD_ID", null)
+  val geoToolsDependencies: Seq[ModuleID] = Seq(
+    "org.geotools" % "gt-graph" % GeoToolsVersion,
+    "org.geotools" % "gt-main" % GeoToolsVersion,
+    "org.geotools" % "gt-referencing" % GeoToolsVersion,
+    "org.geotools" % "gt-metadata" % GeoToolsVersion,
+    "org.geotools" % "gt-opengis" % GeoToolsIFVersion,
+    "jgridshift" % "jgridshift" % JgridshiftVersion
+  )
+
+  // Common settings for all projects
+  val projectSettings: Seq[Def.Setting[_]] = Seq(
+    organization := Organization,
+    version := Version,
+    scalaVersion := ScalaVersion,
+    scalacOptions ++= Seq("-unchecked", "-feature"),
+    testOptions in Test += TestOutputOptions
+  ) ++ CodeArtifactSettings.settings // chooses the correct resolvers and credentials based on the CODE_ARTIFACT_AUTH_TOKEN environment variable
 
   val BaseProjectName = "base"
   lazy val baseJar = Project(
     BaseProjectName,
     file(s"viite-backend/$BaseProjectName"),
-    settings = Defaults.coreDefaultSettings ++ Seq(
-      organization := Organization,
+    settings = Defaults.coreDefaultSettings ++ projectSettings ++ Seq(
       name := BaseProjectName,
-      version := Version,
-      scalaVersion := ScalaVersion,
-      resolvers += Classpaths.typesafeReleases,
-      scalacOptions ++= Seq("-unchecked", "-feature"),
-      testOptions in Test += TestOutputOptions,
       libraryDependencies ++= Seq(
         jodaTime, jodaConvert,
         "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test"
@@ -68,51 +79,29 @@ object Digiroad2Build extends Build {
   )
 
   val GeoProjectName = "geo"
-  lazy val geoJar = Project (
+  lazy val geoJar = Project(
     GeoProjectName,
     file(s"viite-backend/$GeoProjectName"),
-    settings = Defaults.coreDefaultSettings ++ Seq(
-      organization := Organization,
+    settings = Defaults.coreDefaultSettings ++ projectSettings ++ Seq(
       name := GeoProjectName,
-      version := Version,
-      scalaVersion := ScalaVersion,
-      resolvers += Classpaths.typesafeReleases,
-      scalacOptions ++= Seq("-unchecked", "-feature"),
-      testOptions in Test += TestOutputOptions,
       libraryDependencies ++= Seq(
         jodaConvert,
         jodaTime,
         akkaActor,
-//        "javax.media" % "jai_core" % "1.1.3" from "https://repo.osgeo.org/repository/release/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
-        "org.geotools" % "gt-graph"       % GeoToolsVersion from s"https://repo.osgeo.org/repository/release/org/geotools/gt-graph/$GeoToolsVersion/gt-graph-$GeoToolsVersion.jar",
-        "org.geotools" % "gt-main"        % GeoToolsVersion from s"https://repo.osgeo.org/repository/release/org/geotools/gt-main/$GeoToolsVersion/gt-main-$GeoToolsVersion.jar",
-        "org.geotools" % "gt-referencing" % GeoToolsVersion from s"https://repo.osgeo.org/repository/release/org/geotools/gt-referencing/$GeoToolsVersion/gt-referencing-$GeoToolsVersion.jar",
-        "org.geotools" % "gt-metadata"    % GeoToolsVersion from s"https://repo.osgeo.org/repository/release/org/geotools/gt-metadata/$GeoToolsVersion/gt-metadata-$GeoToolsVersion.jar",
-        "org.geotools" % "gt-opengis"   % GeoToolsIFVersion from s"https://repo.osgeo.org/repository/release/org/geotools/gt-opengis/$GeoToolsIFVersion/gt-opengis-$GeoToolsIFVersion.jar",
-        "jgridshift" % "jgridshift" % "1.0" from "https://repo.osgeo.org/repository/release/jgridshift/jgridshift/1.0/jgridshift-1.0.jar",
-        "org.locationtech.jts" % "jts-core" % "1.19.0", // from "https://repo1.maven.org/maven2/org/locationtech/jts/jts-core/1.19.0/jts-core-1.19.0.jar",
+        "org.locationtech.jts" % "jts-core" % "1.19.0",
         "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test"
-      )
+      ) ++ CodeArtifactSettings.withFallbackUrls(geoToolsDependencies)
     )
-  ) dependsOn (baseJar)
-    
+  ) dependsOn(baseJar)
+
   val DBProjectName = "database"
   lazy val DBJar = Project (
     DBProjectName,
     file(s"viite-backend/$DBProjectName"),
-    settings = Defaults.coreDefaultSettings ++ Seq(
-      organization := Organization,
+    settings = Defaults.coreDefaultSettings ++ projectSettings ++ Seq(
       name := DBProjectName,
-      version := Version,
-      scalaVersion := ScalaVersion,
-      //      resolvers ++= Seq(Classpaths.typesafeReleases,
-      //        "maven-public" at "http://livibuild04.vally.local/nexus/repository/maven-public/",
-      //        "ivy-public"   at "http://livibuild04.vally.local/nexus/repository/ivy-public/"),
-      resolvers += Classpaths.typesafeReleases,
-      scalacOptions ++= Seq("-unchecked", "-feature"),
       testOptions in Test ++= (
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
-      testOptions in Test += TestOutputOptions,
       libraryDependencies ++= Seq(
         "org.apache.commons" % "commons-lang3" % "3.14.0",
         "commons-codec"      % "commons-codec" % "1.17.0",
@@ -128,7 +117,7 @@ object Digiroad2Build extends Build {
         httpClient,
         "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
         mockitoCore % "test",
-        "org.flywaydb"   % "flyway-core"   % "4.0", // Versions "10.0.0"+ available
+        "org.flywaydb"   % "flyway-core"   % "4.2.0", // Versions "10.0.0"+ available
         "org.postgresql" % "postgresql"    % "42.7.3",
         "net.postgis" % "postgis-geometry" % "2023.1.0",
         "net.postgis" % "postgis-jdbc"     % "2023.1.0" // dep postgresql, and from 2.5.0 and up: postgis-geometry
@@ -141,17 +130,11 @@ object Digiroad2Build extends Build {
   lazy val viiteJar = Project (
     ViiteMainProjectName,
     file(s"viite-backend/$ViiteMainProjectName"),
-    settings = Defaults.coreDefaultSettings ++ Seq(
-      organization := Organization,
+    settings = Defaults.coreDefaultSettings ++ projectSettings ++ Seq(
       name := ViiteMainProjectName,
-      version := Version,
-      scalaVersion := ScalaVersion,
-      resolvers += Classpaths.typesafeReleases,
-      scalacOptions ++= Seq("-unchecked", "-feature"),
       parallelExecution in Test := false,
       testOptions in Test ++= (
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
-      testOptions in Test += TestOutputOptions,
       libraryDependencies ++= Seq(
         "org.scalatra" %% "scalatra" % ScalatraVersion,
         "org.scalatra" %% "scalatra-json" % ScalatraVersion,
@@ -179,17 +162,10 @@ object Digiroad2Build extends Build {
   lazy val apiCommonJar = Project (
     ApiCommonProjectName,
     file(s"viite-backend/$ApiCommonProjectName"),
-    settings = Defaults.coreDefaultSettings ++ Seq(
-      organization := Organization,
+    settings = Defaults.coreDefaultSettings ++ projectSettings ++ Seq(
       name := ApiCommonProjectName,
-      version := Version,
-      scalaVersion := ScalaVersion,
-      resolvers += Classpaths.typesafeReleases,
-      scalacOptions ++= Seq("-unchecked", "-feature"),
-      //      parallelExecution in Test := false,
       testOptions in Test ++= (
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
-      testOptions in Test += TestOutputOptions,
       libraryDependencies ++= Seq(
         akkaActor,
         httpCore,
@@ -216,17 +192,10 @@ object Digiroad2Build extends Build {
   lazy val ApiJar = Project (
     ApiProjectName,
     file(s"viite-backend/$ApiProjectName"),
-    settings = Defaults.coreDefaultSettings ++ Seq(
-      organization := Organization,
+    settings = Defaults.coreDefaultSettings ++ projectSettings ++ Seq(
       name := ApiProjectName,
-      version := Version,
-      scalaVersion := ScalaVersion,
-      resolvers += Classpaths.typesafeReleases,
-      scalacOptions ++= Seq("-unchecked", "-feature"),
-      //      parallelExecution in Test := false,
       testOptions in Test ++= (
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
-      testOptions in Test += TestOutputOptions,
       libraryDependencies ++= Seq(
         "org.scalatra" %% "scalatra" % ScalatraVersion,
         "org.scalatra" %% "scalatra-json" % ScalatraVersion,
@@ -251,21 +220,15 @@ object Digiroad2Build extends Build {
   lazy val warProject = Project (
     Digiroad2Name,
     file("."),
-    settings = Defaults.coreDefaultSettings
+    settings = Defaults.coreDefaultSettings ++ projectSettings
       ++ assemblySettings
       ++ net.virtualvoid.sbt.graph.Plugin.graphSettings
       ++ ScalatraPlugin.scalatraWithJRebel ++ Seq(
-      organization := Organization,
       name := Digiroad2Name,
-      version := Version,
-      scalaVersion := ScalaVersion,
-      resolvers += Classpaths.typesafeReleases,
-      scalacOptions ++= Seq("-unchecked", "-feature"),
       parallelExecution in Test := false,
       fork in (Compile,run) := true,
       testOptions in Test ++= (
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
-      testOptions in Test += TestOutputOptions,
       libraryDependencies ++= Seq(
         "org.scalatra" %% "scalatra" % ScalatraVersion,
         "org.scalatra" %% "scalatra-json" % ScalatraVersion,
