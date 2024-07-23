@@ -1,0 +1,49 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  Template for CodeArtifact repositories 
+
+Parameters:
+  ViiteDevArn:
+    Description: ARN of dev admin account
+    Type: String
+
+Resources:
+
+  CodeArtifactNpmRepo:
+    Type: 'AWS::CodeArtifact::Repository'
+    Properties:
+      Description: "Repository for Viite build npm packages"
+      DomainName: "vayla-viite"
+      RepositoryName: "viite_npm_packages"
+      PermissionsPolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS:
+                - Ref: ViiteDevArn
+            Action: "codeartifact:*"
+            Resource:
+              Fn::Sub: "arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:repository/vayla-viite/viite_npm_packages"
+      ExternalConnections:
+        - "public:npmjs"
+
+  CodeArtifactMavenRepo:
+    Type: 'AWS::CodeArtifact::Repository'
+    Properties:
+      Description: "Repository for Viite build maven packages"
+      DomainName: "vayla-viite"
+      RepositoryName: "viite_maven_packages"
+      PermissionsPolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS:
+                - Ref: ViiteDevArn
+            Action: "codeartifact:*"
+            Resource:
+              Fn::Sub: "arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:repository/vayla-viite/viite_maven_packages"
+      ExternalConnections:
+        - "public:maven-central"
+
