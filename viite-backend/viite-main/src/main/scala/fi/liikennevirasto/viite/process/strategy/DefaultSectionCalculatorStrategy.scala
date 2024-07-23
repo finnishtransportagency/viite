@@ -787,7 +787,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       val chainEndPoints = TrackSectionOrder.findChainEndpoints(leftLinks)
 
       if (chainEndPoints.isEmpty)
-        throw new MissingTrackException("Missing left track starting project links")
+        throw new MissingTrackException("Tieosalta puuttuu vasen ajorata")
 
       val remainLinks = oldLinks ++ newLinks
       val points = remainLinks.map(pl => pl.getEndPoints)
