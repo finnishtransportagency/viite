@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2.util
 
 import org.flywaydb.core.Flyway
 import fi.vaylavirasto.viite.postgis.PostGISDatabase._
+import org.flywaydb.core.api.configuration.FluentConfiguration
 
 object DatabaseMigration {
 
@@ -10,19 +11,25 @@ object DatabaseMigration {
   }
 
   def migrate(outOfOrder: Boolean = false): Unit = {
-    val flyway = new Flyway()
-    flyway.setDataSource(ds)
-    flyway.setLocations("db.migration")
-    flyway.setOutOfOrder(outOfOrder)
+
+    val flywayConf: FluentConfiguration = Flyway.configure
+    flywayConf.dataSource(ds)
+    flywayConf.locations("db.migration")
+    flywayConf.outOfOrder(outOfOrder)
+
+    val flyway = flywayConf.load()
     flyway.migrate()
   }
 
   def flywayInit(): Unit = {
-    val flyway = new Flyway()
-    flyway.setDataSource(ds)
-    flyway.setBaselineVersionAsString("-1")
-    flyway.setBaselineOnMigrate(true)
-    flyway.setLocations("db.migration")
+
+    val flywayConf: FluentConfiguration = Flyway.configure
+    flywayConf.dataSource(ds)
+    flywayConf.baselineVersion("-1")
+    flywayConf.baselineOnMigrate(true)
+    flywayConf.locations("db.migration")
+
+    val flyway = flywayConf.load()
     flyway.baseline()
   }
 
