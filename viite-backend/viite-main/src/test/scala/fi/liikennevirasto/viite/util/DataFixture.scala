@@ -192,7 +192,7 @@ object DataFixture {
   val flyway: Flyway = {
     val flywayConf: FluentConfiguration = Flyway.configure
     flywayConf.dataSource(ds)
-    flywayConf.locations("db.migration")
+    flywayConf.locations("db/migration")
     flywayConf.baselineVersion("-1")
 
     val flyway = flywayConf.load()
@@ -200,7 +200,7 @@ object DataFixture {
   }
 
   def migrateAll(): Int = {
-    flyway.migrate()
+    flyway.migrate().migrationsExecuted
   }
 
   def repair(): Unit = {
