@@ -14,6 +14,7 @@ import fi.liikennevirasto.viite.util.DataImporter.Conversion
 import fi.vaylavirasto.viite.dao.{MunicipalityDAO, Queries}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase
 import fi.vaylavirasto.viite.postgis.PostGISDatabase.ds
+import org.flywaydb.core.api.configuration.FluentConfiguration
 import org.joda.time.DateTime
 
 import scala.collection.parallel.ForkJoinTaskSupport
@@ -189,10 +190,12 @@ object DataFixture {
   }*/
 
   val flyway: Flyway = {
-    val flyway = new Flyway()
-    flyway.setDataSource(ds)
-    flyway.setLocations("db.migration")
-    flyway.setBaselineVersionAsString("-1")
+    val flywayConf: FluentConfiguration = Flyway.configure
+    flywayConf.dataSource(ds)
+    flywayConf.locations("db.migration")
+    flywayConf.baselineVersion("-1")
+
+    val flyway = flywayConf.load()
     flyway
   }
 
