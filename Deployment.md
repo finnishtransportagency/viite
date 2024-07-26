@@ -35,7 +35,7 @@ Viite:n Postgis-kanta on versioitu.
 Tietokannan rakenne päivitetään automaattisesti buildauksien yhteydessä (ks. `buildspec.yaml`).
 
 Automaattipäivitys on toteutettu [Flyway](http://flywaydb.org/)-tietokantamigraatiotyökalulla.
-Tietokantamigraatiomääritykset on versioitu `db.migration`-paketissa `database`-projektissa.
+Tietokantamigraatiomääritykset on versioitu `db/migration`-paketissa `database`-projektissa.
 Flyway päivittää tiedon käytössä olevasta migraatioversiosta tietokantaan itseensä; versiotieto löytyy taulusta `flyway_schema_history`.
 
 Katso lisätietoja [Digiroad-2](README.md) artikkelista.

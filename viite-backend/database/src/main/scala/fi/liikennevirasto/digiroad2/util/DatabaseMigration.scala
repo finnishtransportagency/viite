@@ -14,7 +14,7 @@ object DatabaseMigration {
 
     val flywayConf: FluentConfiguration = Flyway.configure
     flywayConf.dataSource(ds)
-    flywayConf.locations("db.migration")
+    flywayConf.locations("db/migration")
     flywayConf.outOfOrder(outOfOrder)
 
     val flyway = flywayConf.load()
@@ -27,7 +27,7 @@ object DatabaseMigration {
     flywayConf.dataSource(ds)
     flywayConf.baselineVersion("-1")
     flywayConf.baselineOnMigrate(true)
-    flywayConf.locations("db.migration")
+    flywayConf.locations("db/migration")
 
     val flyway = flywayConf.load()
     flyway.baseline()
