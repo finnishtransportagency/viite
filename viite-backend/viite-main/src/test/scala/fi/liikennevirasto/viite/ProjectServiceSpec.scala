@@ -3605,7 +3605,23 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("Test recalculateProjectLinks() When creating roundabout from New and Transfer links then roadway numbers should be assigned correctly. (three different roadways for the roundabout in this case)") {
-    // Based on real life project on road part 33545/1 and road part 43584/1
+    /**
+     * Based on real life project on road part 33545/1 and road part 43584/1
+     *
+     *          Before (only 46001/1)         After (roundabout created)
+     *                    ^                         ^
+     *                    |                         |  RW2
+     *                    |                         | 1549
+     *               ---->  1591               -----<------   RW4
+     *             /                   RW5   /      63      \
+     *            ^  1571                   v 83         41 ^
+     *  RW0       |                         | 0             |
+     *            \                    RW3  \      22      /  RW4
+     *              -----^ 1549               ----->^-----
+     *                   |                          |  1549
+     *                   |                          |   RW1
+     *                   |                          |
+     */
     runWithRollback{
       val roadPart = RoadPart(46001, 1)
       val roundAboutRoadPart = RoadPart(31000, 1)
