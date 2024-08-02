@@ -3613,7 +3613,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
      *
      *                          Direction -->
      *                                      v Road part changing spot
-     *           5112        5525       6008 0                        160
+     *           5112        5525       6008 0          160
      *               _________          ____ ___________
      *  ...._______/          \_______/                 \_____________....
      *
@@ -3622,7 +3622,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
      *
      *                          Direction -->
      *                                       v Road part changing spot
-     *            5112       5525       6008 0                        160
+     *            5112       5525       6008 0           160
      *               __________          ___ ____________
      *  ....________/          \_______/                 \____________....
      *              \_________/        \____ ___________/
