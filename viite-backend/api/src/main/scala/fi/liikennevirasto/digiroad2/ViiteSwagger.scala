@@ -9,8 +9,7 @@ object ViiteApiInfo extends ApiInfo(title = "VIITE API",
   description = "Docs for VIITE API",
   termsOfServiceUrl = "",
   contact = null,
-  license = null,
-  licenseUrl = ""
+  license = null
 )
 
 class ViiteSwagger extends Swagger(Swagger.SpecVersion, "1.0.0", ViiteApiInfo)

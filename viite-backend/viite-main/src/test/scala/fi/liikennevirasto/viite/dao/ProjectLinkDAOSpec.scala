@@ -11,14 +11,15 @@ import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.contains
 import org.mockito.Mockito.verify
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar.mock
 import org.slf4j.Logger
 
 /**
   * Class to test DB trigger that does not allow reserving already reserved links to project
   */
-class ProjectLinkDAOSpec extends FunSuite with Matchers {
+class ProjectLinkDAOSpec extends AnyFunSuite with Matchers {
 
   val projectDAO = new ProjectDAO
   val projectLinkDAO = new ProjectLinkDAO

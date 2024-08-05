@@ -2,11 +2,13 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.viite.RoadAddressService
 import org.mockito.Mockito.when
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatra.test.scalatest.ScalatraSuite
 
-class SearchApiSpec extends FunSuite with ScalatraSuite {
+class SearchApiSpec extends AnyFunSuite with ScalatraSuite {
+
+  override def header = response.header // IDE nagged about unimplemented variable
 
   val mockRoadAddressService: RoadAddressService = MockitoSugar.mock[RoadAddressService]
 
@@ -90,7 +92,7 @@ class SearchApiSpec extends FunSuite with ScalatraSuite {
     val erroneousMutualOrderingNotification = "Invalid value(s) in measure(s). A measure must be >=0, and start < end. Now got"
 
     get("/road_address?linkId=36be5dec-0496-4292-b260-884664467174:1&startMeasure=950&endMeasure=940") {
-      status should equal(400);
+      status should equal(400)
       response.body should startWith(erroneousMutualOrderingNotification)
     }
   }

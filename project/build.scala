@@ -11,8 +11,8 @@ object Digiroad2Build extends Build {
   val Version = "0.1.0-SNAPSHOT"
 
   val ScalaVersion = "2.11.7"
-  val ScalatraVersion = "2.6.5" // "2.7.0" requires code changes. // "2.7.1" last scala 2.11 version
-  val ScalaTestVersion = "3.2.0-SNAP7" // "3.2.0-SNAP10" (next scala 2.11 version) requires code changes. "object org.scalatest.prop.Configuration$ not found."
+  val ScalatraVersion  = "2.7.1"  // "2.7.1" is the last scala 2.11 version. To upgrade further, upgrade the used Scala version.
+  val ScalaTestVersion = "3.2.19" // at the time of writing, 2024-08, only newer snapshot-versions available
 
   val JodaConvertVersion = "2.2.3" // no dependencies
   val JodaTimeVersion = "2.12.7" // dep on joda-convert // TODO "Note that from Java SE 8 onwards, users are asked to migrate to java.time (JSR-310) - a core part of the JDK which replaces this project." (from https://mvnrepository.com/artifact/joda-time/joda-time)
