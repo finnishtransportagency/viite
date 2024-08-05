@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.viite.RoadAddressService
 import org.mockito.Mockito.when
 import org.scalatest.FunSuite
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatra.test.scalatest.ScalatraSuite
 
 class SearchApiSpec extends FunSuite with ScalatraSuite {

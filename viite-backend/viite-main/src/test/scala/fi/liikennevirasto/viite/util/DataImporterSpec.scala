@@ -5,7 +5,7 @@
 //import fi.liikennevirasto.viite.dao._
 //import org.mockito.Mockito.when
 //import org.scalatest.mockito.MockitoSugar
-//import org.scalatest.{FunSuite, Matchers}
+//import org.scalatest.matchers.should.Matchers
 //import slick.driver.JdbcDriver.backend.Database
 //import Database.dynamicSession
 //import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase

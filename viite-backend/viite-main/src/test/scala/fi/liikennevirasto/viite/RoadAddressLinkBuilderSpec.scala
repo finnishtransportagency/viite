@@ -11,7 +11,7 @@ import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinui
 import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 
 class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
 

@@ -11,7 +11,7 @@ import fi.vaylavirasto.viite.postgis.DbUtils.runUpdateToDb
 import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 import org.joda.time.DateTime
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
-import org.scalatest.mock.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 
 
 class ProjectLinkNameDAOSpec extends FunSuite with Matchers with BeforeAndAfter {

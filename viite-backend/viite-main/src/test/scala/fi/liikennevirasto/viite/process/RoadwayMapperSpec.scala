@@ -7,7 +7,7 @@ import fi.vaylavirasto.viite.model.CalibrationPointType.RoadAddressCP
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinuity, LinkGeomSource, RoadPart, SideCode, Track}
 import org.joda.time.DateTime
 import org.mockito.Mockito.when
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 
 class RoadwayMapperSpec extends FunSuite with Matchers{

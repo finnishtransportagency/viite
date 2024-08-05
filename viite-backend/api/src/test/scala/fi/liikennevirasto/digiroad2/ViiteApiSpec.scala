@@ -18,7 +18,7 @@ import org.json4s.jackson.Serialization.read
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalatest.{BeforeAndAfter, FunSuite}
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatra.test.scalatest.ScalatraSuite
 
 import scala.concurrent.ExecutionContext.Implicits.global

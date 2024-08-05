@@ -16,7 +16,7 @@ import fi.vaylavirasto.viite.postgis.DbUtils.runUpdateToDb
 import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 
 class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
   val mockRoadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
