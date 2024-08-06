@@ -46,7 +46,7 @@ object Digiroad2Build extends Build {
   val jsonJackson    = "org.json4s"         %% "json4s-jackson"  % JsonJacksonVersion
   val jsonNative     = "org.json4s"         %% "json4s-native"   % JsonJacksonVersion
   val mockitoCore    = "org.mockito"        %  "mockito-core"    % MockitoCoreVersion
-  val mockito4X      = "org.scalatestplus"  %% "mockito-4-11"     % Mockito_4_X
+  val mockito4X      = "org.scalatestplus"  %% "mockito-4-11"    % Mockito_4_X
   val logbackClassic = "ch.qos.logback"     % "logback-classic"  % LogbackClassicVersion
 
   val geoToolsDependencies: Seq[ModuleID] = Seq(
@@ -73,7 +73,6 @@ object Digiroad2Build extends Build {
     file(s"viite-backend/$BaseProjectName"),
     settings = Defaults.coreDefaultSettings ++ projectSettings ++ Seq(
       name := BaseProjectName,
-      scalacOptions ++= Seq("-Ylog-classpath"),
       libraryDependencies ++= Seq(
         jodaTime, jodaConvert,
         "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test"
