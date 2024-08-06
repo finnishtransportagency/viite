@@ -26,6 +26,7 @@ object Digiroad2Build extends Build {
   val CommonsIOVersion      = "2.16.1"
   val JsonJacksonVersion    = "3.7.0-M11" // 3.7.0-M12 and up: could not find implicit value for evidence parameter of type org.json4s.AsJsonInput[org.json4s.StreamInput] //  4.0.6 last Scala 2.11 version
   val MockitoCoreVersion    = "4.11.0" // last version working with java8 runtime // 5.0.0 and up requires Java update to Java 11: "java.lang.UnsupportedClassVersionError: org/mockito/Mockito has been compiled by a more recent version of the Java Runtime (class file version 55.0), this version of the Java Runtime only recognizes class file versions up to 52.0"
+  val Mockito_4_X           = "3.2.18.0" // Next versions are based on MockitoCore 5_x; they require newer Java Runtime
   val LogbackClassicVersion = "1.3.14" // Java EE version. 1.4.x requires Jakarta instead of JavaEE
   val JettyVersion = "9.2.15.v20160210"
   val TestOutputOptions = Tests.Argument(TestFrameworks.ScalaTest, "-oNCXELOPQRMI") // List only problems, and their summaries. Set suitable logback level to get the effect.
@@ -45,6 +46,7 @@ object Digiroad2Build extends Build {
   val jsonJackson    = "org.json4s"         %% "json4s-jackson"  % JsonJacksonVersion
   val jsonNative     = "org.json4s"         %% "json4s-native"   % JsonJacksonVersion
   val mockitoCore    = "org.mockito"        %  "mockito-core"    % MockitoCoreVersion
+  val mockito4X      = "org.scalatestplus"  %% "mockito-4-11"    % Mockito_4_X
   val logbackClassic = "ch.qos.logback"     % "logback-classic"  % LogbackClassicVersion
 
   val geoToolsDependencies: Seq[ModuleID] = Seq(
@@ -117,6 +119,7 @@ object Digiroad2Build extends Build {
         httpClient,
         "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
         mockitoCore % "test",
+        mockito4X   % "test",
         "org.flywaydb"   % "flyway-core"   % "9.22.3", // Upgrading to 10.x requires Java Runtime upgrade. 10.0.0 says: "Flyway has been compiled by a more recent version of the Java Runtime (class file version 61.0), this version of the Java Runtime only recognizes class file versions up to 52.0"
         "org.postgresql" % "postgresql"    % "42.7.3",
         "net.postgis" % "postgis-geometry" % "2023.1.0",
@@ -143,6 +146,7 @@ object Digiroad2Build extends Build {
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
         "org.scalatra" %% "scalatra-auth" % ScalatraVersion % "test",
         mockitoCore    % "test",
+        mockito4X      % "test",
         akkaTestkit    % "test",
         logbackClassic % "runtime",
         "commons-io" % "commons-io" % CommonsIOVersion,
@@ -176,6 +180,7 @@ object Digiroad2Build extends Build {
         "org.scalatra" %% "scalatra-auth" % ScalatraVersion,
         "org.scalatra" %% "scalatra-swagger" % ScalatraVersion,
         mockitoCore % "test",
+        mockito4X      % "test",
         jodaConvert,
         jodaTime,
         "org.eclipse.jetty" % "jetty-webapp" % JettyVersion % "compile",
@@ -205,6 +210,7 @@ object Digiroad2Build extends Build {
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
         "org.scalatra" %% "scalatra-auth" % ScalatraVersion,
         mockitoCore    % "test",
+        mockito4X      % "test",
         akkaTestkit    % "test",
         logbackClassic % "runtime",
         "commons-io" % "commons-io" % CommonsIOVersion,
@@ -238,6 +244,7 @@ object Digiroad2Build extends Build {
         "org.scalatra" %% "scalatra-auth" % ScalatraVersion,
         "org.scalatra" %% "scalatra-swagger"  % ScalatraVersion,
         mockitoCore % "test",
+        mockito4X      % "test",
         akkaTestkit % "test",
         logbackClassic % "runtime",
         "commons-io" % "commons-io" % CommonsIOVersion,

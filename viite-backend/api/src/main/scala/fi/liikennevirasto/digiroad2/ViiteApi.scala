@@ -289,7 +289,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
     val roadName = params.get("roadName")
     val startDate = params.get("startDate")
     val endDate = params.get("endDate")
-    time(logger, s"GET request for /roadnames", params=Some(params)) {
+    time(logger, s"GET request for /roadnames", params=Some(params.toMap)) {
       roadNameService.getRoadNames(roadNumber, roadName, optionStringToDateTime(startDate), optionStringToDateTime(endDate)) match {
         case Right(roadNameList) => Map("success" -> true, "roadNameInfo" -> roadNameList.map(roadNameToApi))
         case Left(errorMessage) => Map("success" -> false, "reason" -> errorMessage)
@@ -515,7 +515,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       summary "Returns data for road address browser based on the search criteria"
     )
   get("/roadaddressbrowser", operation(getDataForRoadAddressBrowser)) {
-    time(logger, s"GET request for /roadaddressbrowser", params=Some(params)) {
+    time(logger, s"GET request for /roadaddressbrowser", params=Some(params.toMap)) {
       def validateInputs(situationDate: Option[String], target: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Boolean = {
         def parseDate(dateString: Option[String]): Option[DateTime] = {
           try {
@@ -923,7 +923,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
       val endPart = params("endPart").toLong
       val projDate = DateTime.parse(params("projDate"))
       val projectId = params("projectId").toLong
-      time(logger, s"GET request for /roadlinks/roadaddress/project/validatereservedlink/", params=Some(params)) {
+      time(logger, s"GET request for /roadlinks/roadaddress/project/validatereservedlink/", params=Some(params.toMap)) {
         projectService.checkRoadPartExistsAndReservable(roadNumber, startPart, endPart, projDate, projectId) match {
           case Left(err) => Map("success" -> err)
           case Right((reservedparts, formedparts)) => Map("success" -> "ok", "reservedInfo" -> reservedparts.map(projectReservedPartToApi),
@@ -1303,7 +1303,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
     val roadNumber = params.get("roadNumber").map(_.toLong)
     val minRoadPartNumber = params.get("minRoadPartNumber").map(_.toLong)
     val maxRoadPartNumber = params.get("maxRoadPartNumber").map(_.toLong)
-    time(logger, s"GET request for /nodes", params=Some(params)) {
+    time(logger, s"GET request for /nodes", params=Some(params.toMap)) {
       if (roadNumber.isDefined) {
         nodesAndJunctionsService.getNodesByRoadAttributes(roadNumber.get, minRoadPartNumber, maxRoadPartNumber) match {
           case Right(nodes) => Map("success" -> true, "nodes" -> nodes.map(nodeSearchToApi))
