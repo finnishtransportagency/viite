@@ -7,9 +7,12 @@ import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 import org.joda.time.DateTime
 import org.mockito.Mockito.when
 import org.scalatestplus.mockito.MockitoSugar
-import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
+import org.scalatest.BeforeAndAfter
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-class APIServiceForNodesAndJunctionsSpec extends FunSuite with Matchers with BeforeAndAfter {
+
+class APIServiceForNodesAndJunctionsSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
 
   private val mockLinearLocationDAO = MockitoSugar.mock[LinearLocationDAO]
   private val mockRoadwayDAO = MockitoSugar.mock[RoadwayDAO]

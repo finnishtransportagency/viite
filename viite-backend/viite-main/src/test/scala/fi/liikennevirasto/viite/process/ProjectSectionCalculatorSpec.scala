@@ -15,10 +15,11 @@ import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinui
 import fi.vaylavirasto.viite.postgis.DbUtils.runUpdateToDb
 import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 import org.joda.time.DateTime
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 
-class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
+class ProjectSectionCalculatorSpec extends AnyFunSuite with Matchers {
   val mockRoadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
   private val mockNodesAndJunctionsService = MockitoSugar.mock[NodesAndJunctionsService]
   val mockEventBus: DigiroadEventBus = MockitoSugar.mock[DigiroadEventBus]

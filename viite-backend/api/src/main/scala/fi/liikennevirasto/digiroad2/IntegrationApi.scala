@@ -182,7 +182,7 @@ println("Threading print test: Now in avoidRestrictions")
         currentRoadNetworkSummaryToAPI(roadNetworkSummary)
       } catch {
         case t: Throwable =>
-          handleCommonIntegrationAPIExceptions(t, getRoadNetworkSummary.operationId)
+          handleCommonIntegrationAPIExceptions(t, Some(getRoadNetworkSummary.operationId))
       }
     }
   }
@@ -293,7 +293,7 @@ println("Threading print test: Now in avoidRestrictions")
       }
     } catch {
       case t: Throwable =>
-        handleCommonIntegrationAPIExceptions(t, getRoadNameChanges.operationId)
+        handleCommonIntegrationAPIExceptions(t, Some(getRoadNameChanges.operationId))
     }
   }
 
@@ -336,7 +336,7 @@ println("Threading print test: Now in avoidRestrictions")
         ))
       } catch {
         case t: Throwable =>
-          handleCommonIntegrationAPIExceptions(t, getRoadwayChanges.operationId)
+          handleCommonIntegrationAPIExceptions(t, Some(getRoadwayChanges.operationId))
       }
     }
   }
@@ -372,7 +372,7 @@ println("Threading print test: Now in avoidRestrictions")
       }
     } catch {
       case t: Throwable =>
-        handleCommonIntegrationAPIExceptions(t, getRoadwayChangesChanges.operationId)
+        handleCommonIntegrationAPIExceptions(t, Some(getRoadwayChangesChanges.operationId))
     }
   }
 
@@ -539,7 +539,7 @@ println(s"fetchAllValidNodesWithJunctions GOT RESULT, of size ${result.size}") /
           ))
       } catch {
         case t: Throwable =>
-          handleCommonIntegrationAPIExceptions(t, getLinearLocationChanges.operationId)
+          handleCommonIntegrationAPIExceptions(t, Some(getLinearLocationChanges.operationId))
       }
     }
   }
@@ -571,7 +571,7 @@ println(s"fetchAllValidNodesWithJunctions GOT RESULT, of size ${result.size}") /
         nodesAndJunctionsService.getNodesWithTimeInterval(since, untilOption).map(node => nodeToApi(node))
       } catch {
         case t: Throwable =>
-          handleCommonIntegrationAPIExceptions(t, nodesToGeoJson.operationId)
+          handleCommonIntegrationAPIExceptions(t, Some(nodesToGeoJson.operationId))
       }
     }
   }

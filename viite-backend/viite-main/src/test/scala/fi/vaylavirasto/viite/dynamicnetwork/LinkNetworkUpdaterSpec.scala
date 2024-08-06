@@ -8,9 +8,10 @@ import fi.vaylavirasto.viite.model.{LinkGeomSource, RoadPart}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 import fi.vaylavirasto.viite.util.ViiteException
 import org.joda.time.DateTime
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-class LinkNetworkUpdaterSpec extends FunSuite with Matchers {
+class LinkNetworkUpdaterSpec extends AnyFunSuite with Matchers {
 
 
   val linkNetworkUpdater = new LinkNetworkUpdater() {
