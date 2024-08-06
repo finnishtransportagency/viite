@@ -15,9 +15,11 @@ This guide explains how to set up CodeArtifact for both npm (frontend) and SBT/M
 - Node.js and npm installed (for frontend)
 - SBT installed (for backend)
 
+## CodeArtifact Configuration For Local Development
+
 **Note**: The AWS CodeArtifact AuthToken is valid for 12 hours. You will need to redo next steps every time you choose to use CodeArtifact for packages.
 
-## AWS SSO Login
+### AWS SSO Login
 
 Before setting up CodeArtifact, log in to AWS SSO:
 
@@ -26,7 +28,7 @@ aws sso login --profile <profilename>
 ```
 Replace <profilename> with your AWS profile name.
 
-## CodeArtifact npm Setup 
+### CodeArtifact npm Setup 
 
 Log in to the viite_npm_packages repository:
 
@@ -39,7 +41,7 @@ Install dependencies:
 npm install
 ```
 
-## CodeArtifact SBT/Maven Setup 
+### CodeArtifact SBT/Maven Setup 
 
 #### Setting CodeArtifact Authorization Token
 
