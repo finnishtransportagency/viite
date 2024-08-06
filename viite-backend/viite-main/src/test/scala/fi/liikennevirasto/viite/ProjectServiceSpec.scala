@@ -24,7 +24,7 @@ import org.mockito.Mockito._
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.Answer
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
-import org.scalatest.mock.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import slick.driver.JdbcDriver.backend.Database.dynamicSession   // JdbcBackend#sessionDef
 import slick.jdbc.StaticQuery.interpolation
 

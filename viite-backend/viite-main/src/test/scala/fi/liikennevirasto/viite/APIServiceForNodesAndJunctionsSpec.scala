@@ -6,7 +6,7 @@ import fi.vaylavirasto.viite.model.{LinkGeomSource, NodeType, RoadPart, SideCode
 import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 import org.joda.time.DateTime
 import org.mockito.Mockito.when
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 
 class APIServiceForNodesAndJunctionsSpec extends FunSuite with Matchers with BeforeAndAfter {

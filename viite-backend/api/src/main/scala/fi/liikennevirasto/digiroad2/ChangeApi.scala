@@ -54,7 +54,7 @@ class ChangeApi(roadAddressService: RoadAddressService, nodesAndJunctionsService
         BadRequestWithLoggerWarn(s"'since' cannot be later than 'until'. ${request.getQueryString}", s"(${request.getRequestURI})")
       }
       else {
-        time(logger, s"GET request for /road_numbers", params = Some(params)) {
+        time(logger, s"GET request for /road_numbers", params = Some(params.toMap)) {
           roadNumberToGeoJson(since, roadAddressService.getChanged(since, until))
         }
       }

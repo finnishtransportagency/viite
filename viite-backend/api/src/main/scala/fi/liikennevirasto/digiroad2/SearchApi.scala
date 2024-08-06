@@ -58,7 +58,7 @@ class SearchApi(roadAddressService: RoadAddressService,
     )
   get("/road_address/?", operation(getRoadAddress)) {
     val requestString = s"GET request for ${request.getRequestURI}?${request.getQueryString} (${getRoadAddress.operationId})"
-    time(logger, requestString, params=Some(params)) {
+    time(logger, requestString, params=Some(params.toMap)) {
 
       val linkId = params.getOrElse("linkId", halt(BadRequest("Missing mandatory query parameter 'linkId'"))) //TODO MAKE OTHER REQUIRED PARAMS LIKE THIS!
 

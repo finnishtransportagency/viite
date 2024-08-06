@@ -11,8 +11,8 @@ import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.contains
 import org.mockito.Mockito.verify
-import org.scalatest.mockito.MockitoSugar.mock
 import org.scalatest.{FunSuite, Matchers}
+import org.scalatestplus.mockito.MockitoSugar.mock
 import org.slf4j.Logger
 
 /**
