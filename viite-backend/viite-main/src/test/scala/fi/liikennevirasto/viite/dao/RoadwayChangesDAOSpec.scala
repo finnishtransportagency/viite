@@ -9,13 +9,14 @@ import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinui
 import fi.vaylavirasto.viite.postgis.DbUtils.runUpdateToDb
 import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 import org.joda.time.DateTime
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 
 import java.sql.Timestamp
 
-class RoadwayChangesDAOSpec extends FunSuite with Matchers {
+class RoadwayChangesDAOSpec extends AnyFunSuite with Matchers {
 
   val projectDAO = new ProjectDAO
   private val roadNumber1 = 990

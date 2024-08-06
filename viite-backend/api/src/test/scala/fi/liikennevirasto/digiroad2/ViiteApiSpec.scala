@@ -17,14 +17,17 @@ import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization.read
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
-import org.scalatest.{BeforeAndAfter, FunSuite}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.BeforeAndAfter
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatra.test.scalatest.ScalatraSuite
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class ViiteApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter {
+class ViiteApiSpec extends AnyFunSuite with ScalatraSuite with BeforeAndAfter {
+  override def header = response.header // IDE nagged about unimplemented variable
+
   protected implicit val jsonFormats: Formats = DigiroadSerializers.jsonFormats
 
   val useFrozenLinkInterface = true

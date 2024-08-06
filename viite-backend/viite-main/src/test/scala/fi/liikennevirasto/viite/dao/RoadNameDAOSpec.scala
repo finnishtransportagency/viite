@@ -3,10 +3,11 @@ package fi.liikennevirasto.viite.dao
 import fi.vaylavirasto.viite.dao.{RoadName, RoadNameDAO, RoadNameForRoadAddressBrowser, Sequences}
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinuity, RoadPart, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
-import org.scalatest.{FunSuite, Matchers}
 import org.joda.time.DateTime
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-class RoadNameDAOSpec extends FunSuite with Matchers {
+class RoadNameDAOSpec extends AnyFunSuite with Matchers {
 
   val roadwayDAO = new RoadwayDAO
 

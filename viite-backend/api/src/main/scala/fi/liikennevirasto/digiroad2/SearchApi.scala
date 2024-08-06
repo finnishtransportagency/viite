@@ -153,7 +153,7 @@ class SearchApi(roadAddressService: RoadAddressService,
         roadAddressService.getRoadAddressWithRoadNumber(roadNumber, Track.applyAll(trackCodes)).map(roadAddressMapper)
       }
       catch {
-        case t: Throwable => handleCommonSearchAPIExceptions(t, getRoadAddressWithRoadNumber.operationId)
+        case t: Throwable => handleCommonSearchAPIExceptions(t, Some(getRoadAddressWithRoadNumber.operationId))
       }
 
     }
@@ -184,7 +184,7 @@ class SearchApi(roadAddressService: RoadAddressService,
         roadAddressService.getRoadAddressesFiltered(RoadPart(roadNumber,roadPart)).map(roadAddressMapper)
       }
       catch {
-        case t: Throwable => handleCommonSearchAPIExceptions(t, getRoadAddressWithRoadNumber.operationId)
+        case t: Throwable => handleCommonSearchAPIExceptions(t, Some(getRoadAddressWithRoadNumber.operationId))
       }
 
     }
@@ -219,7 +219,7 @@ class SearchApi(roadAddressService: RoadAddressService,
         roadAddressService.getRoadAddress(RoadPart(roadNumber, roadPart), address, Track.applyOption(track)).map(roadAddressMapper)
       }
       catch {
-        case t: Throwable => handleCommonSearchAPIExceptions(t, getRoadAddressesFiltered2.operationId)
+        case t: Throwable => handleCommonSearchAPIExceptions(t, Some(getRoadAddressesFiltered2.operationId))
       }
 
     }
@@ -257,7 +257,7 @@ class SearchApi(roadAddressService: RoadAddressService,
         roadAddressService.getRoadAddressesFiltered(RoadPart(roadNumber, roadPart), AddrMRange(startAddress, endAddress)).map(roadAddressMapper)
       }
       catch {
-        case t: Throwable => handleCommonSearchAPIExceptions(t, getRoadAddressesFiltered3.operationId)
+        case t: Throwable => handleCommonSearchAPIExceptions(t, Some(getRoadAddressesFiltered3.operationId))
       }
 
     }
@@ -299,7 +299,7 @@ class SearchApi(roadAddressService: RoadAddressService,
         roadAddressService.getRoadAddressByLinkIds(linkIds).map(roadAddressMapper)
       }
       catch {
-        case t: Throwable => handleCommonSearchAPIExceptions(t, getRoadAddressByLinkIds.operationId)
+        case t: Throwable => handleCommonSearchAPIExceptions(t, Some(getRoadAddressByLinkIds.operationId))
       }
 
     }
@@ -339,7 +339,7 @@ class SearchApi(roadAddressService: RoadAddressService,
         roadAddressService.getRoadAddressWithRoadNumberParts(roadNumber, roadParts.toSet, Track.applyAll(tracks)).map(roadAddressMapper)
       }
       catch {
-        case t: Throwable => handleCommonSearchAPIExceptions(t, getRoadAddressWithRoadNumberParts.operationId)
+        case t: Throwable => handleCommonSearchAPIExceptions(t, Some(getRoadAddressWithRoadNumberParts.operationId))
       }
 
     }

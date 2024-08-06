@@ -19,7 +19,7 @@
 //import slick.driver.JdbcDriver.backend.DatabaseDef
 //import slick.jdbc.StaticQuery.{interpolation, _}
 //
-//class DataImporterSpec extends FunSuite with Matchers {
+//class DataImporterSpec extends AnyFunSuite with Matchers {
 //
 //  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 //

@@ -1,12 +1,13 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.client.kgv.{ChangeInfo, ChangeType}
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
 /**
   * Created by venholat on 23.5.2016.
   */
-class ChangeTypeSpec extends FunSuite with Matchers {
+class ChangeTypeSpec extends AnyFunSuite with Matchers {
 
   private def allClasses(changeInfo: ChangeInfo): Seq[Boolean] = {
     Seq(ChangeType.isCreationChange(changeInfo),
