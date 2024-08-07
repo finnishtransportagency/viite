@@ -12,6 +12,14 @@ Clone `viite`-repository from Github
 git clone https://github.com/finnishtransportagency/viite.git
 ```
 
+CodeArtifact Setup (Optional for Local Development)
+-----------------------------
+This project uses AWS CodeArtifact to manage npm and Maven packages. Using CodeArtifact is optional for local development but required for CI/CD pipelines.
+
+To set up CodeArtifact for local development or to switch between CodeArtifact and public repositories, please refer to our [CodeArtifact Setup Guide](aws/cloud-formation/codeArtifact/README.md).
+
+Note: If you choose not to use CodeArtifact, follow the instructions below.
+
 Frontend
 ---------
 Install [node.js](https://nodejs.org/en/download/releases) (Version 14.21.3 works well. You will also get [npm](https://npmjs.org/))   
