@@ -3,10 +3,11 @@ package fi.liikennevirasto.viite.process
 import fi.liikennevirasto.viite.dao._
 import fi.vaylavirasto.viite.geometry.Point
 import fi.vaylavirasto.viite.model.{AdministrativeClass, LifecycleStatus, LinkGeomSource, RoadLink, SideCode, TrafficDirection}
-import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
+import org.scalatest.BeforeAndAfter
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-
-class RoadAddressFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
+class RoadAddressFillerSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
 
   private def dummyLinearLocation(id: Long, roadwayNumber: Long, orderNumber: Long, linkId: String, startMValue: Double, endMValue: Double, yCoordinates: Seq[Double]): LinearLocation =
     dummyLinearLocation(id, roadwayNumber, orderNumber, linkId, startMValue, endMValue, yCoordinates, LinkGeomSource.NormalLinkInterface)

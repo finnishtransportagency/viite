@@ -1,9 +1,10 @@
 package fi.vaylavirasto.viite.model
 
 import fi.vaylavirasto.viite.util.ViiteException
-import org.scalatest._
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-class AddrMRangeSpec extends FunSuite with Matchers {
+class AddrMRangeSpec extends AnyFunSuite with Matchers {
 
   // TODO Test ignored, until start < end requirement can be put into work
   ignore("AddrMRange: AddrMRange construction fails, if given invalid start, end, or if end is not greater than start.") {

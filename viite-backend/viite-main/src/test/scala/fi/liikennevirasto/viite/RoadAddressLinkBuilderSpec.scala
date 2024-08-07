@@ -10,10 +10,11 @@ import fi.vaylavirasto.viite.model.CalibrationPointType.NoCP
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinuity, LifecycleStatus, LinkGeomSource, RoadAddressChangeType, RoadLink, RoadPart, SideCode, Track, TrafficDirection}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 import org.joda.time.DateTime
-import org.scalatest.{FunSuite, Matchers}
-import org.scalatest.mockito.MockitoSugar
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
+import org.scalatestplus.mockito.MockitoSugar
 
-class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
+class RoadAddressLinkBuilderSpec extends AnyFunSuite with Matchers {
 
   private val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   private val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]

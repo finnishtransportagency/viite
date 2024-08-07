@@ -17,15 +17,17 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, when}
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.Answer
-import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
-import org.scalatest.mockito.MockitoSugar
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.BeforeAndAfter
+import org.scalatestplus.mockito.MockitoSugar
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
 import scala.collection.immutable.HashMap
 import scala.collection.mutable.ListBuffer
 import scala.language.postfixOps
 
-class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
+class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter {
   val mockProjectService: ProjectService = MockitoSugar.mock[ProjectService]
   val mockRoadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockDefaultSectionCalculatorStrategy: DefaultSectionCalculatorStrategy = MockitoSugar.mock[DefaultSectionCalculatorStrategy]
