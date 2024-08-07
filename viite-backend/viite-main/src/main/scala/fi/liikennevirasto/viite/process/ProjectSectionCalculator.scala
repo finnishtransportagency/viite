@@ -1,11 +1,10 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.util.{MissingRoadwayNumberException, MissingTrackException}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.process.strategy.RoadAddressSectionCalculatorContext
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinuity, RoadAddressChangeType, RoadPart, SideCode, Track}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, RoadAddressChangeType, RoadPart, SideCode, Track}
 import org.slf4j.LoggerFactory
 
 object ProjectSectionCalculator {

@@ -24,8 +24,7 @@ class ProjectReservedPartDAO extends BaseDAO{
     * or this will fail.
     *
     * @param projectId        Project's id
-    * @param roadNumber       Road number of the reserved part to remove
-    * @param roadPartNumber   Road part number to remove
+    * @param roadPart         Road part of the reserved part to remove
     */
   def removeReservedRoadPartAndChanges(projectId: Long, roadPart: RoadPart): Unit = {
     time(logger, s"Remove reserved road part $roadPart from project $projectId") {

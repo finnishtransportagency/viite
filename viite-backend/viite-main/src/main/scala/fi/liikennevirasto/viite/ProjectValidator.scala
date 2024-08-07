@@ -967,7 +967,7 @@ class ProjectValidator {
      * Validates the discontinuity of the end of a [[RoadAddress]] with the previous road part number from [[getPreviousAndNextRoadParts]].
      * The discontinuity of the previous [[RoadAddress]] is validated with a [[BaseRoadAddress]] from [[allProjectLinks]] or based on the next road part number given by [[getPreviousAndNextRoadParts]]
      *
-     * @param part A road part either formed, terminated or completely transferred in the project
+     * @param roadPart A road part either formed, terminated or completely transferred in the project
      */
     def validateTheEndOfPreviousRoadPart(roadPart: RoadPart): Seq[ValidationErrorDetails] = {
       val (previousRoadPartNumber, nextRoadPartNumber) = getPreviousAndNextRoadParts(roadPart)

@@ -158,9 +158,10 @@ class LinkNetworkUpdaterSpec extends AnyFunSuite with Matchers {
   private val correctChangeType: String = "replace"
   private val correctOldLink: LinkInfo = LinkInfo("oldLink:1", 5.000, correctOldSegment)
   private val correctNewLink: LinkInfo = LinkInfo("newLink:2", 10.000, correctNewSegment)
-  private val correctReplaceInfo: ReplaceInfo = ReplaceInfo("oldLink:1", 0.0, 5.000, "newLink:2", 0.0, 10.000, digitizationChange=false, dummyMeta)
 
   private val dummyMeta = Seq(ViiteMetaData(1,0.0,1.0,1,1,RoadPart(1,1)))
+  private val correctReplaceInfo: ReplaceInfo = ReplaceInfo("oldLink:1", 0.0, 5.000, "newLink:2", 0.0, 10.000, digitizationChange=false, dummyMeta)
+
 
   /** Change builder, to build a single LinkNetworkChange for testing.
    * Change type must be given, but the other values have simple, congruent contents in them as default.

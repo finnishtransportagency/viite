@@ -59,8 +59,8 @@ class ProjectReservedPartDAOSpec extends AnyFunSuite with Matchers {
     )
   }
   private def dummyLinearLocations = Seq(
-    dummyLinearLocation(roadwayNumber = roadwayNumber1, orderNumber = 1L, linkId = linkId1.toString, startMValue = 0.0, endMValue = 10.0),
-    dummyLinearLocation(roadwayNumber = roadwayNumber2, orderNumber = 1L, linkId = linkId2.toString, startMValue = 0.0, endMValue = 10.0))
+    dummyLinearLocation(roadwayNumber = roadwayNumber1, orderNumber = 1L, linkId = linkId1, startMValue = 0.0, endMValue = 10.0),
+    dummyLinearLocation(roadwayNumber = roadwayNumber2, orderNumber = 1L, linkId = linkId2, startMValue = 0.0, endMValue = 10.0))
 
 
 

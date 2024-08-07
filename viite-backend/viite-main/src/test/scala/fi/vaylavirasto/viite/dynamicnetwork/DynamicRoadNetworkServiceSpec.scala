@@ -3,7 +3,7 @@ package fi.vaylavirasto.viite.dynamicnetwork
 import fi.liikennevirasto.digiroad2.client.kgv.KgvRoadLink
 import fi.liikennevirasto.viite.AwsService
 import fi.liikennevirasto.viite.dao._
-import fi.vaylavirasto.viite.dao.{Link, LinkDAO, Sequences}
+import fi.vaylavirasto.viite.dao.Sequences
 import fi.vaylavirasto.viite.geometry.Point
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, CalibrationPoint, CalibrationPointLocation, CalibrationPointType, Discontinuity, LifecycleStatus, LinkGeomSource, RoadLink, RoadPart, SideCode, Track, TrafficDirection}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback

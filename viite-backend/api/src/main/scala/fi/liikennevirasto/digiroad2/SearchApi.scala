@@ -64,9 +64,9 @@ class SearchApi(roadAddressService: RoadAddressService,
 
       try { // Check that the formats of the parameters are ok
         val startMeasureOption = params.get("startMeasure")
-        if (startMeasureOption.isDefined) startMeasureOption.map(_.toDouble) else None
+        if (startMeasureOption.isDefined) startMeasureOption.map(_.toDouble) // else None
         val endMeasureOption = params.get("endMeasure")
-        if (endMeasureOption.isDefined) endMeasureOption.map(_.toDouble) else None
+        if (endMeasureOption.isDefined) endMeasureOption.map(_.toDouble) // else None
       }
       catch {
         case ve: ViiteException =>

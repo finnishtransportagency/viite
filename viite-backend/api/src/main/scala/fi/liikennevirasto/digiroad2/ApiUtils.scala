@@ -12,7 +12,6 @@ import org.scalatra.{ActionResult, BadRequest, Found, Params}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.annotation.tailrec
-import scala.compat.Platform.EOL
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Random, Success}
