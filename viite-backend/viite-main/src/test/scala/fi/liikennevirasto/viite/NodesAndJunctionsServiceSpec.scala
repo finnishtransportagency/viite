@@ -17,14 +17,16 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.Answer
-import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
-import org.scalatest.mockito.MockitoSugar
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.BeforeAndAfter
+import org.scalatestplus.mockito.MockitoSugar
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 
 import scala.util.{Left, Right}
 
-class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
+class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
 
   private val roadNumber1 = 990
   private val roadwayNumber1 = 1000000000L

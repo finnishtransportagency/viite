@@ -8,9 +8,8 @@ class ResourcesApp(implicit val swagger: Swagger) extends ScalatraServlet with N
 object ViiteApiInfo extends ApiInfo(title = "VIITE API",
   description = "Docs for VIITE API",
   termsOfServiceUrl = "",
-  contact = "",
-  license = "",
-  licenseUrl =""
+  contact = null,
+  license = null
 )
 
 class ViiteSwagger extends Swagger(Swagger.SpecVersion, "1.0.0", ViiteApiInfo)

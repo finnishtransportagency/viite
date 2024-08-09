@@ -1,9 +1,10 @@
 package fi.vaylavirasto.viite.geometry
 
 import fi.vaylavirasto.viite.util.ViiteException
-import org.scalatest._
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-class GeometryUtilsSpec extends FunSuite with Matchers {
+class GeometryUtilsSpec extends AnyFunSuite with Matchers {
   test("Test truncateGeometry3D When using a empty geometry Then return a empty geometry") {
     val truncated = GeometryUtils.truncateGeometry3D(Nil, 10, 15)
     truncated should be (Nil)

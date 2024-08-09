@@ -91,12 +91,10 @@ class RoadAddressService(
   }
 
   /**
-    * Returns all linear locations in road part based on roadNumber and roadPartNumber
+    * Returns all linear locations of the given roadPart
     *
-    * @param roadNumber The road number of the road part
-    * @param roadPartNumber The road part number of the road part
+    * @param roadPart The road part, whose linear locations are to be returned
     */
-
   def getLinearLocationsInRoadPart(roadPart: RoadPart): Seq[LinearLocation] = {
 
     // get roadways of the road part
@@ -174,9 +172,9 @@ class RoadAddressService(
   }
 
   /**
-    * Returns all road address links (combination between our roadway, linear location and vvh information) based on road number and road part number
+    * Returns all road address links (combination between our roadway, linear location and KGV information) based on the given road part
     *
-    * @param roadPartNumber : Road part of the road
+    * @param roadPart The road part, whose linear locations are to be returned
     * @return
     */
   def getRoadAddressLinksOfWholeRoadPart(roadPart: RoadPart): Seq[RoadAddressLink] = {
@@ -605,8 +603,7 @@ class RoadAddressService(
     * The road address measures should be in [addrMRange.start, addrMRange.end]
     *
     * @param roadPart       The road part
-    * @param startAddrM     The start address measure
-    * @param endAddrM       The end address measure
+    * @param addrMRange     The address measure range to query
     * @return Returns road addresses filtered by road section and address measures
     */
   def getRoadAddressesFiltered(roadPart: RoadPart, addrMRange: AddrMRange): Seq[RoadAddress] = {

@@ -4,7 +4,6 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.process.strategy.DefaultSectionCalculatorStrategy
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
-import fi.liikennevirasto.viite.ProjectValidationException
 import fi.vaylavirasto.viite.dao.Sequences
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.CalibrationPointType.{JunctionPointCP, NoCP, RoadAddressCP}
@@ -12,9 +11,10 @@ import fi.vaylavirasto.viite.model.LinkGeomSource.{ComplementaryLinkInterface, F
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinuity, LinkGeomSource, RoadAddressChangeType, RoadPart, SideCode, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 import org.joda.time.DateTime
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
+class DefaultSectionCalculatorStrategySpec extends AnyFunSuite with Matchers {
   val defaultSectionCalculatorStrategy = new DefaultSectionCalculatorStrategy
   val roadwayDAO = new RoadwayDAO
   val linearLocationDAO = new LinearLocationDAO

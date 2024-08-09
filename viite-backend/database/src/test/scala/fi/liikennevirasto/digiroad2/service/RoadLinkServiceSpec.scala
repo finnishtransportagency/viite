@@ -9,14 +9,16 @@ import fi.vaylavirasto.viite.model.{AdministrativeClass, LifecycleStatus, RoadLi
 import fi.vaylavirasto.viite.postgis.PostGISDatabase
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
-import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
-import org.scalatest.mockito.MockitoSugar
+import org.scalatest.BeforeAndAfter
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
+import org.scalatestplus.mockito.MockitoSugar
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
 
-class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
+class RoadLinkServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
 
   class TestService(KGVClient: KgvRoadLink, eventBus: DigiroadEventBus = new DummyEventBus, kgvSerializer: KGVSerializer = new DummySerializer)
     extends RoadLinkService(KGVClient, eventBus, kgvSerializer, false) {

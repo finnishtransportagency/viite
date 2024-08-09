@@ -12,7 +12,6 @@ import org.scalatra.{ActionResult, BadRequest, Found, Params}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.annotation.tailrec
-import scala.compat.Platform.EOL
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Random, Success}
@@ -78,7 +77,7 @@ object ApiUtils {
 
   /** Work id formed of request id (i.e. "integration") and query params */
   def getWorkId(requestId: String, params: Params, contentType: String): String = {
-    val sortedParams = params.toSeq.filterNot(param => param._1 == "retry" || param._1 == "queryId").sortBy(_._1)
+    val sortedParams = params.toMap.toSeq.filterNot(param => param._1 == "retry" || param._1 == "queryId").sortBy(_._1)
     val identifiers = Seq(requestId) ++ sortedParams.map(_._2.replaceAll(",", "-"))
     s"${identifiers.mkString("_")}.$contentType"
   }

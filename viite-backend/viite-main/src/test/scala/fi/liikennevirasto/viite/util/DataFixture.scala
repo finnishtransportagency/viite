@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{SqlScriptRunner, ViiteProperties}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.process.{ApplyChangeInfoProcess, ContinuityChecker, RoadwayAddressMapper}
+import fi.liikennevirasto.viite.process.{ApplyChangeInfoProcess, RoadwayAddressMapper}
 import fi.liikennevirasto.viite.util.DataImporter.Conversion
 import fi.vaylavirasto.viite.dao.{MunicipalityDAO, Queries}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase

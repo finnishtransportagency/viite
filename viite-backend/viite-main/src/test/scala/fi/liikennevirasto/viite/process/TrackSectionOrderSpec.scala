@@ -9,9 +9,10 @@ import fi.vaylavirasto.viite.geometry.Point
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinuity, LinkGeomSource, RoadAddressChangeType, RoadPart, SideCode, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 import org.joda.time.DateTime
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-class TrackSectionOrderSpec extends FunSuite with Matchers {
+class TrackSectionOrderSpec extends AnyFunSuite with Matchers {
 
   private def toDummyProjectLink(id: Long, geom: Seq[Point], track: Track = Track.Combined) = {
     dummyProjectLink(RoadPart(1, 1), track, Discontinuity.Continuous, AddrMRange(0, 10), Some(DateTime.now), linkId = id.toString, status = RoadAddressChangeType.NotHandled, geometry = geom)

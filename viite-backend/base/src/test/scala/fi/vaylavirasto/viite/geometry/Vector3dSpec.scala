@@ -1,8 +1,9 @@
 package fi.vaylavirasto.viite.geometry
 
-import org.scalatest._
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-class Vector3dSpec extends FunSuite with Matchers {
+class Vector3dSpec extends AnyFunSuite with Matchers {
 
   val tolerance = 0.00001
 

@@ -5,9 +5,10 @@ import fi.vaylavirasto.viite.dao.Sequences
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, BeforeAfter, Discontinuity, RoadPart, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 import org.joda.time.DateTime
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-class JunctionPointDAOSpec extends FunSuite with Matchers {
+class JunctionPointDAOSpec extends AnyFunSuite with Matchers {
 
   val dao = new JunctionPointDAO
   val junctionDAO = new JunctionDAO

@@ -25,7 +25,7 @@ object ApplyChangeInfoProcess {
     }
 
     /**
-      * Check if the given measure is equal the old end measure with {MaxAllowedMValueError} error margin allowed
+      * Check if the given measure is equal to the old end measure with {MaxAllowedMValueError} error margin allowed
       *
       * @param measure The measure to be compared with old end measure
       * @return Returns true when the given measure match the old end measure

@@ -9,9 +9,10 @@ import fi.vaylavirasto.viite.model.CalibrationPointType.{JunctionPointCP, NoCP, 
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinuity, LinkGeomSource, RoadAddressChangeType, RoadPart, SideCode, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 import org.joda.time.DateTime
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
+class TwoTrackRoadUtilsSpec extends AnyFunSuite with Matchers {
 
   val projectDAO = new ProjectDAO
   val projectLinkDAO = new ProjectLinkDAO

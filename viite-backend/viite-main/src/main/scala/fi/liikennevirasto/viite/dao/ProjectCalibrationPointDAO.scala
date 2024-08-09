@@ -142,7 +142,6 @@ object ProjectCalibrationPointDAO extends BaseDAO {
         Delete From PROJECT_CALIBRATION_POINT
          Where PROJECT_LINK_ID in (${projectLinkIds.mkString(",")})
       """)
-    else 0
   }
 
   def removeAllCalibrationPointsFromProject(projectId: Long): Unit = {

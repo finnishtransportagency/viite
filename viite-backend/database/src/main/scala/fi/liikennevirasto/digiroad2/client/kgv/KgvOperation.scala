@@ -103,7 +103,7 @@ trait KgvOperation extends LinkOperationsAbstract{
       /** Extract KGV data from the given http response. Assumes the response is ok, and content readable.
         * @return The KGV data as FeatureCollection - or None, if cannot be parsed to such. */
       def getParsedBody(response: ClassicHttpResponse): Option[FeatureCollection] = {
-          val feature = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]]
+          val feature = parse(response.getEntity.getContent).values.asInstanceOf[Map[String, Any]]
           feature("type").toString match {
             case "Feature" =>
               Some(FeatureCollection(features = List(convertToFeature(feature))))

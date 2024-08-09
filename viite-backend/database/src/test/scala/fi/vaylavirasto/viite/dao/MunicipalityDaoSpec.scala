@@ -1,13 +1,14 @@
 package fi.vaylavirasto.viite.dao
 
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 
 
 /**
   * Created by pedrosag on 31-10-2016.
   */
-class MunicipalityDaoSpec extends FunSuite with Matchers{
+class MunicipalityDaoSpec extends AnyFunSuite with Matchers{
 
   test("Test getDigiroadMunicipalityToElyMapping When getting all municipalities Then should return some"){
     runWithRollback{

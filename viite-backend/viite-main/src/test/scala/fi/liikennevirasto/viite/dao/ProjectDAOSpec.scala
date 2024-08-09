@@ -7,12 +7,13 @@ import fi.vaylavirasto.viite.model.CalibrationPointType.NoCP
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, CalibrationPointType, Discontinuity, LinkGeomSource, RoadAddressChangeType, RoadPart, SideCode, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 import org.joda.time.DateTime
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
 /**
   * Class to test DB trigger that does not allow reserving already reserved links to project
   */
-class ProjectDAOSpec extends FunSuite with Matchers {
+class ProjectDAOSpec extends AnyFunSuite with Matchers {
 
   val roadwayDAO = new RoadwayDAO
   val projectDAO = new ProjectDAO

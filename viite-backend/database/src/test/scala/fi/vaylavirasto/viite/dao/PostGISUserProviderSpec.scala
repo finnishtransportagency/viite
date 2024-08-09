@@ -4,9 +4,10 @@ import fi.liikennevirasto.digiroad2.user.Configuration
 import fi.vaylavirasto.viite.postgis.DbUtils.runUpdateToDb
 import fi.vaylavirasto.viite.postgis.PostGISDatabase
 import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-class PostGISUserProviderSpec extends FunSuite with Matchers {
+class PostGISUserProviderSpec extends AnyFunSuite with Matchers {
 
   val TestUserName = "userprovidertest"
   val north = 1000

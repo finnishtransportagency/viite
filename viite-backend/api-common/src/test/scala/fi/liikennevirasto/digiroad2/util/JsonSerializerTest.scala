@@ -4,9 +4,10 @@ import fi.liikennevirasto.digiroad2.client.kgv.{ChangeInfo, ChangeType}
 import fi.vaylavirasto.viite.geometry.Point
 import fi.vaylavirasto.viite.model.{AdministrativeClass, RoadLink, TrafficDirection}
 import java.io.File
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-class JsonSerializerTest extends FunSuite with Matchers {
+class JsonSerializerTest extends AnyFunSuite with Matchers {
 
   val serializer = new fi.liikennevirasto.viite.util.JsonSerializer
   test("testWriteReadCachedGeometry") {

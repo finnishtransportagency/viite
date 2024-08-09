@@ -13,12 +13,13 @@ import fi.vaylavirasto.viite.model.SideCode.{AgainstDigitizing, TowardsDigitizin
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinuity, LinkGeomSource, RoadAddressChangeType, RoadPart, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 import org.joda.time.DateTime
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 import org.scalatest.enablers.Definition.definitionOfOption
 
 import scala.collection.immutable
 
-class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
+class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
   val roadwayDAO = new RoadwayDAO
 
   private def createRoadAddress(start: Long, distance: Long, roadwayNumber: Long = 0L) = {

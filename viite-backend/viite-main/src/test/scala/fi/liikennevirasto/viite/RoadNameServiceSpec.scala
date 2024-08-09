@@ -4,9 +4,10 @@ import fi.vaylavirasto.viite.dao.RoadNameDAO
 import fi.vaylavirasto.viite.postgis.DbUtils.runUpdateToDb
 import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 import org.joda.time.DateTime
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-class RoadNameServiceSpec extends FunSuite with Matchers {
+class RoadNameServiceSpec extends AnyFunSuite with Matchers {
   private val roadNameService = new RoadNameService
 
   test("Test roadNameService.getRoadNamesInTX() When searching for a newly create road name by it's road number Then return the entry for said road name.") {

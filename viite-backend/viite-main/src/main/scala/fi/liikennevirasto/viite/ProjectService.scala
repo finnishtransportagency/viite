@@ -203,7 +203,7 @@ class ProjectService(
   }
 
   private def projectFound(roadAddressProject: Project): Option[Project] = {
-    val newRoadAddressProject = 0
+    val newRoadAddressProject = 0L
     if (roadAddressProject.id == newRoadAddressProject) return None
     withDynTransaction {
       fetchProjectById(roadAddressProject.id)
@@ -762,7 +762,7 @@ class ProjectService(
   }
 
   /**
-    * Fetches the projectLink name, first from the project link, if that's not available then search for the road address.
+    * Fetches the projectLink name, first from the project link, and if that's not available then searches for the road address.
     *
     * @param projectLink
     * @return

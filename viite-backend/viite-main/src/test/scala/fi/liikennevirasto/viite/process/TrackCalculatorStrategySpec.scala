@@ -5,9 +5,10 @@ import fi.liikennevirasto.viite.process.strategy.TrackCalculatorResult
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.CalibrationPointType.NoCP
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinuity, LinkGeomSource, RoadAddressChangeType, RoadPart, SideCode, Track}
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-class TrackCalculatorStrategySpec extends FunSuite with Matchers {
+class TrackCalculatorStrategySpec extends AnyFunSuite with Matchers {
   test("Test TrackCalculatorStrategy.setCalibrationPoints() When having different road types between links on same Track Then one calibration point should be created") {
 
     val geomLeft1 = Seq(Point(10.0, 20.0), Point(20.0, 20.0))
