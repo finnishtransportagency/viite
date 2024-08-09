@@ -280,7 +280,7 @@ class RoadwayChangesDAOSpec extends AnyFunSuite with Matchers {
       projectDAO.create(proj)
 
       runUpdateToDb(s"""
-        update project set accepted_date='${new Timestamp(DateTime.now().getMillis())}'
+        update project set accepted_date='${new Timestamp(DateTime.now().getMillis)}'
         where id=$projId
         """.stripMargin)
 
