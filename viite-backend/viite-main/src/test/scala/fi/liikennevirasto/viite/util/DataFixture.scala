@@ -9,11 +9,12 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{SqlScriptRunner, ViiteProperties}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.process.{ApplyChangeInfoProcess, ContinuityChecker, RoadwayAddressMapper}
+import fi.liikennevirasto.viite.process.{ApplyChangeInfoProcess, RoadwayAddressMapper}
 import fi.liikennevirasto.viite.util.DataImporter.Conversion
 import fi.vaylavirasto.viite.dao.{MunicipalityDAO, Queries}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase
 import fi.vaylavirasto.viite.postgis.PostGISDatabase.ds
+import org.flywaydb.core.api.configuration.FluentConfiguration
 import org.joda.time.DateTime
 
 import scala.collection.parallel.ForkJoinTaskSupport
@@ -189,15 +190,17 @@ object DataFixture {
   }*/
 
   val flyway: Flyway = {
-    val flyway = new Flyway()
-    flyway.setDataSource(ds)
-    flyway.setLocations("db.migration")
-    flyway.setBaselineVersionAsString("-1")
+    val flywayConf: FluentConfiguration = Flyway.configure
+    flywayConf.dataSource(ds)
+    flywayConf.locations("db/migration")
+    flywayConf.baselineVersion("-1")
+
+    val flyway = flywayConf.load()
     flyway
   }
 
   def migrateAll(): Int = {
-    flyway.migrate()
+    flyway.migrate().migrationsExecuted
   }
 
   def repair(): Unit = {
@@ -209,9 +212,9 @@ object DataFixture {
     // This old version of Flyway tries to drop the postgis extension too, so we clean the database manually instead
     SqlScriptRunner.runScriptInClasspath("/clear-db.sql")
     try {
-      SqlScriptRunner.executeStatement("delete from schema_version where installed_rank > 1")
+      SqlScriptRunner.executeStatement("delete from flyway_schema_history where installed_rank > 1")
     } catch {
-      case e: Exception => println(s"Failed to reset schema_version table: ${e.getMessage}")
+      case e: Exception => println(s"Failed to reset flyway_schema_history table: ${e.getMessage}")
     }
 
   }

@@ -10,22 +10,24 @@ import fi.liikennevirasto.viite.process.strategy.DefaultSectionCalculatorStrateg
 import fi.liikennevirasto.viite.util._
 import fi.vaylavirasto.viite.dao.Sequences
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, CalibrationPointType, Discontinuity, LifecycleStatus, LinkGeomSource, RoadAddressChangeType, RoadLink, RoadPart, SideCode, Track, TrafficDirection}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, CalibrationPointType, Discontinuity, LifecycleStatus, LinkGeomSource, RoadAddressChangeType, RoadLink, RoadPart, SideCode, Track, TrafficDirection}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, when}
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.Answer
-import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
-import org.scalatest.mockito.MockitoSugar
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.BeforeAndAfter
+import org.scalatestplus.mockito.MockitoSugar
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
 import scala.collection.immutable.HashMap
 import scala.collection.mutable.ListBuffer
 import scala.language.postfixOps
 
-class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
+class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter {
   val mockProjectService: ProjectService = MockitoSugar.mock[ProjectService]
   val mockRoadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockDefaultSectionCalculatorStrategy: DefaultSectionCalculatorStrategy = MockitoSugar.mock[DefaultSectionCalculatorStrategy]

@@ -2,14 +2,15 @@ package fi.liikennevirasto.viite.dao
 
 import fi.liikennevirasto.viite.NewIdValue
 import org.joda.time.DateTime
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.vaylavirasto.viite.dao.Sequences
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, BeforeAfter, Discontinuity, LinkGeomSource, NodePointType, NodeType, RoadPart, SideCode, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 
-class NodePointDAOSpec extends FunSuite with Matchers {
+class NodePointDAOSpec extends AnyFunSuite with Matchers {
 
   val dao = new NodePointDAO
   val nodeDAO = new NodeDAO
