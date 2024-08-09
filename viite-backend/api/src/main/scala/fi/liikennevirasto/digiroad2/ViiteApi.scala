@@ -25,7 +25,6 @@ import org.slf4j.{Logger, LoggerFactory}
 
 import java.text.SimpleDateFormat
 import scala.util.{Left, Right}
-import scala.util.parsing.json.JSON._
 
 /**
   * Created by venholat on 25.8.2016.
@@ -86,12 +85,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val KGVClient: KgvRoadLink,
 
   val logger: Logger = LoggerFactory.getLogger(getClass)
   protected implicit val jsonFormats: Formats = DigiroadSerializers.jsonFormats
-  globalNumberParser = {
-    in =>
-      try in.toLong catch {
-        case _: NumberFormatException => in.toDouble
-      }
-  }
 
   before() {
     contentType = formats("json") + "; charset=utf-8"
