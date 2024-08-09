@@ -352,7 +352,7 @@ class LinkNetworkUpdater {
     if(llKGVRoadLink.size>1) {  throw ViiteException(
         s"SplitLinearLocation: Found more than one link corresponding to linearLocation $linearLocationId to split. Confused. Cannot split."
     )}
-    if(llKGVRoadLink.size==0) {  throw ViiteException(
+    if(llKGVRoadLink.isEmpty) {  throw ViiteException(
         s"SplitLinearLocation: No link corresponding to linearLocation $linearLocationId to split found. Cannot split."
     )}
     val splittingPoint: Option[Point] = GeometryUtils.calculatePointFromLinearReference(llKGVRoadLink.head.geometry, mValueForSplit)

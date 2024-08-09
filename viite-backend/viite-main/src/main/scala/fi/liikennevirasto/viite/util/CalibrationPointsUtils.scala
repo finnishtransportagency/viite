@@ -28,7 +28,7 @@ object CalibrationPointsUtils {
   }
 
   def toCalibrationPoint(ocp: BaseCalibrationPoint): ProjectCalibrationPoint = {
-    ProjectCalibrationPoint(ocp.linkId, ocp.segmentMValue, ocp.addressMValue)
+    ProjectCalibrationPoint(ocp.linkId(), ocp.segmentMValue, ocp.addressMValue)
   }
 
   def toCalibrationPoints(ocp: (Option[BaseCalibrationPoint], Option[BaseCalibrationPoint])): (Option[ProjectCalibrationPoint], Option[ProjectCalibrationPoint]) = {
