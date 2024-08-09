@@ -19,7 +19,7 @@ trait UserProvider {
     }
   }
 
-  def createUser(username: String, config: Configuration)
+  def createUser(username: String, config: Configuration): Unit
   def getUser(username: String): Option[User]
   def saveUser(user: User): User
 }
