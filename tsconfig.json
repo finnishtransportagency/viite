@@ -6,6 +6,10 @@
       "es2020",
       "dom"
     ],
+    "baseUrl": "./aws/cdk",
+    "paths": {
+      "*": ["../../node_modules/*"]
+    },
     "declaration": true,
     "strict": true,
     "noImplicitAny": true,
@@ -25,7 +29,7 @@
     ]
   },
   "exclude": [
-    "node_modules",
+    "./node_modules",
     "cdk.out"
   ]
 }

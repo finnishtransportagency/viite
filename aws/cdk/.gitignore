@@ -1,3 +1,4 @@
+# gitignore for AWS CDK related files
 *.js
 !jest.config.js
 *.d.ts
