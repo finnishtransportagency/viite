@@ -42,7 +42,7 @@ export class ViiteCdkStack extends cdk.Stack {
 
     const gitHubBranch = new CfnParameter(this, 'GitHubBranch', {
       type: 'String',
-      default: 'VIITE-3167-dev-pipeline-test', // for testing purposes
+      default: 'postgis',
       description: 'GitHub branch to use for the pipeline source',
     });
 
