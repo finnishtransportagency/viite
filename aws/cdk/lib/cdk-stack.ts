@@ -138,12 +138,11 @@ export class ViiteCdkStack extends cdk.Stack {
               'grunt deploy',
               'sbt clean',
               'sbt assembly',
-              'docker build -t $REPOSITORY_URI:test -f aws/fargate/Dockerfile .',
+              'docker build -t $REPOSITORY_URI:latest -f aws/fargate/Dockerfile .',
               'docker images -a',
-              //'echo "Pushing the Docker image"',
-              //'docker push $REPOSITORY_URI:test',
-              //'echo "Image URI: $REPOSITORY_URI:test"',
-              //'aws ecs update-service --region eu-west-1 --cluster Viite-ECS-Cluster-Private --service Viite-ECS-Service-Private --force-new-deployment'
+              'echo "Pushing the Docker image"',
+              'docker push $REPOSITORY_URI:latest',
+              'echo "Image URI: $REPOSITORY_URI:latest"',
             ]
           }
         },
@@ -160,6 +159,25 @@ export class ViiteCdkStack extends cdk.Stack {
       timeout: cdk.Duration.minutes(60),
       queuedTimeout: cdk.Duration.minutes(480),
       encryptionKey,
+    });
+
+    // CodeBuild Project for Deploy
+    const deployProject = new codebuild.PipelineProject(this, 'DeployProject', {
+      projectName: 'viite-dev-deploy',
+      environment: {
+        buildImage: codebuild.LinuxBuildImage.STANDARD_5_0,
+        privileged: true,
+      },
+      buildSpec: codebuild.BuildSpec.fromObject({
+        version: '0.2',
+        phases: {
+          build: {
+            commands: [
+              'aws ecs update-service --region eu-west-1 --cluster Viite-ECS-Cluster-Private --service Viite-ECS-Service-Private --force-new-deployment'
+            ]
+          }
+        }
+      })
     });
 
     // Grant permissions to CodeBuild project
@@ -185,11 +203,27 @@ export class ViiteCdkStack extends cdk.Stack {
       ]
     }));
 
-// STS GetServiceBearerToken permission
+    // STS GetServiceBearerToken permission
     buildProject.addToRolePolicy(new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
       actions: ['sts:GetServiceBearerToken'],
       resources: ['*']
+    }));
+
+    // Add ECS permissions to Deploy project
+    deployProject.addToRolePolicy(new iam.PolicyStatement({
+      actions: [
+        'ecs:UpdateService',
+        'ecs:DescribeServices',
+        'ecs:DescribeTaskDefinition',
+        'ecs:DescribeTasks',
+        'ecs:ListTasks',
+        'ecs:ListServices'
+      ],
+      resources: [
+        'arn:aws:ecs:eu-west-1:783354560127:cluster/Viite-ECS-Cluster-Private',
+        'arn:aws:ecs:eu-west-1:783354560127:service/Viite-ECS-Cluster-Private/Viite-ECS-Service-Private'
+      ],
     }));
 
     // CodePipeline
@@ -221,7 +255,17 @@ export class ViiteCdkStack extends cdk.Stack {
               actionName: 'Build',
               project: buildProject,
               input: sourceOutput,
-              outputs: [new codepipeline.Artifact()],
+              outputs: [new codepipeline.Artifact('BuildOutput')],
+            }),
+          ],
+        },
+        {
+          stageName: 'Deploy',
+          actions: [
+            new codepipeline_actions.CodeBuildAction({
+              actionName: 'Deploy',
+              project: deployProject,
+              input: sourceOutput,
             }),
           ],
         },
