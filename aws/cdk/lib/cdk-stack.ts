@@ -7,101 +7,69 @@ import * as codepipeline_actions from 'aws-cdk-lib/aws-codepipeline-actions';
 import * as codebuild from 'aws-cdk-lib/aws-codebuild';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as kms from 'aws-cdk-lib/aws-kms';
-import { CfnParameter } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import {Secret} from "aws-cdk-lib/aws-secretsmanager";
+import { Secret } from "aws-cdk-lib/aws-secretsmanager";
+
+interface ViiteCdkStackProps extends cdk.StackProps {
+  environment: 'Dev' | 'QA';
+  pipelineName: string;
+  buildProjectName: string;
+  gitHubBranch: string;
+  artifactBucketName: string;
+  ecrRepositoryName: string;
+  securityGroupId: string;
+  kmsKeyArn: string;
+  vpcId: string;
+  ecsClusterName: string;
+  ecsServiceName: string;
+}
 
 export class ViiteCdkStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, props: ViiteCdkStackProps) {
     super(scope, id, props);
 
-    // Define parameters
-    const pipelineName = new CfnParameter(this, 'PipelineName', {
-      type: 'String',
-      default: 'viite-dev-pipeline',
-      description: 'Name of the CodePipeline',
-    });
-
-    const buildProjectName = new CfnParameter(this, 'BuildProjectName', {
-      type: 'String',
-      default: 'viite-dev-build',
-      description: 'Name of the CodeBuild project',
-    });
-
-    const gitHubOwner = new CfnParameter(this, 'GitHubOwner', {
-      type: 'String',
-      default: 'finnishtransportagency',
-      description: 'GitHub repository owner',
-    });
-
-    const gitHubRepo = new CfnParameter(this, 'GitHubRepo', {
-      type: 'String',
-      default: 'viite',
-      description: 'GitHub repository name',
-    });
-
-    const gitHubBranch = new CfnParameter(this, 'GitHubBranch', {
-      type: 'String',
-      default: 'postgis',
-      description: 'GitHub branch to use for the pipeline source',
-    });
-
-    const artifactBucketName = new CfnParameter(this, 'ArtifactBucketName', {
-      type: 'String',
-      default: 'fi-viite-dev',
-      description: 'Name of the S3 bucket for artifacts',
-    });
-
-    const ecrRepositoryName = new CfnParameter(this, 'EcrRepositoryName', {
-      type: 'String',
-      default: 'viite',
-      description: 'Name of the ECR repository',
-    });
-
-    const securityGroupId = new CfnParameter(this, 'SecurityGroupId', {
-      type: 'AWS::EC2::SecurityGroup::Id',
-      default: 'sg-0feb523b1d68c19e2',
-      description: 'ID of the security group',
-    });
-
-    const kmsKeyArn = new CfnParameter(this, 'KmsKeyArn', {
-      type: 'String',
-      default: 'arn:aws:kms:eu-west-1:783354560127:alias/aws/s3',
-      description: 'ARN of the KMS key for S3 encryption',
-    });
+    const { environment, pipelineName, buildProjectName, gitHubBranch, artifactBucketName, ecrRepositoryName, securityGroupId, kmsKeyArn, vpcId, ecsClusterName, ecsServiceName } = props;
 
     // Import existing resources
-    const artifactBucket = s3.Bucket.fromBucketName(this, 'ExistingBucket', artifactBucketName.valueAsString);
-    const ecrRepository = ecr.Repository.fromRepositoryName(this, 'ExistingECRRepo', ecrRepositoryName.valueAsString);
-    const vpc = ec2.Vpc.fromLookup(this, 'ExistingVPC', { vpcId: 'vpc-017797e470d94956b' });
+    const artifactBucket = s3.Bucket.fromBucketName(this, 'ExistingBucket', artifactBucketName);
+    const ecrRepository = ecr.Repository.fromRepositoryName(this, 'ExistingECRRepo', ecrRepositoryName);
+    const vpc = ec2.Vpc.fromLookup(this, 'ExistingVPC', {
+      vpcId: vpcId
+    });
     const vpcSubnets = vpc.selectSubnets({
       subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS
     });
-    const securityGroup = ec2.SecurityGroup.fromSecurityGroupId(this, 'ExistingSecurityGroup', securityGroupId.valueAsString);
-    const encryptionKey = kms.Key.fromKeyArn(this, 'EncryptionKey', kmsKeyArn.valueAsString);
+    const securityGroup = ec2.SecurityGroup.fromSecurityGroupId(this, 'ExistingSecurityGroup', securityGroupId);
+    const encryptionKey = kms.Key.fromKeyArn(this, 'EncryptionKey', kmsKeyArn);
 
     // CodeBuild Project
     const buildProject = new codebuild.PipelineProject(this, 'BuildProject', {
-      projectName: buildProjectName.valueAsString,
+      projectName: buildProjectName,
       environment: {
         buildImage: codebuild.LinuxBuildImage.STANDARD_5_0,
         computeType: codebuild.ComputeType.SMALL,
         privileged: true,
         environmentVariables: {
-          bonecpUsername: { value: 'viite_test' },
+          bonecpUsername: { value: '/dev/viite_test.db.username', type: codebuild.BuildEnvironmentVariableType.PARAMETER_STORE },
           bonecpPassword: { value: '/dev/viite_test.db.password', type: codebuild.BuildEnvironmentVariableType.PARAMETER_STORE },
-          bonecpJdbcUrl: { value: 'jdbc:postgresql://vd1bbyq5el8tjd2.c8dj2qlvf50d.eu-west-1.rds.amazonaws.com:5432/test' },
-          vvhRestApiEndPoint: { value: 'https://api.vayla.fi/vvhdata/' },
-          vvhServiceHost: { value: 'haproxy.vayla.fi' },
-          vkmUrl: { value: 'https://api.vaylapilvi.fi' },
+          bonecpJdbcUrl: {
+            value: `/Viite/${environment}/bonecpJdbcUrl`,
+            type: codebuild.BuildEnvironmentVariableType.PARAMETER_STORE
+          },
+          vvhRestApiEndPoint: { value: 'vvhRestApiEndPoint', type: codebuild.BuildEnvironmentVariableType.PARAMETER_STORE },
+          vvhServiceHost: { value: 'vvhServiceHost', type: codebuild.BuildEnvironmentVariableType.PARAMETER_STORE },
+          vkmUrl: { value: 'vkmUrl', type: codebuild.BuildEnvironmentVariableType.PARAMETER_STORE },
           JAVA_OPTS: { value: '-Xms512M -Xmx1024M -Xss1M -XX:+CMSClassUnloadingEnabled' },
-          conversionBonecpJdbcUrl: { value: 'jdbc:postgresql://vd1bbyq5el8tjd2.c8dj2qlvf50d.eu-west-1.rds.amazonaws.com:5432/drkonv' },
-          conversionBonecpUsername: { value: 'drkonv' },
+          conversionBonecpJdbcUrl: { value: '/allEnvs/conversion.url', type: codebuild.BuildEnvironmentVariableType.PARAMETER_STORE },
+          conversionBonecpUsername: { value: '/allEnvs/conversion.username', type: codebuild.BuildEnvironmentVariableType.PARAMETER_STORE },
           conversionBonecpPassword: { value: '/allEnvs/conversion.db.password', type: codebuild.BuildEnvironmentVariableType.PARAMETER_STORE },
-          REPOSITORY_URI: { value: '783354560127.dkr.ecr.eu-west-1.amazonaws.com/viite' },
-          vvhRestApiUsername: { value: 'svc_vvh_viite' },
-          vvhRestApiPassword: { value: '/dev/vvhRestApiPassword', type: codebuild.BuildEnvironmentVariableType.PARAMETER_STORE },
-          kgvEndpoint: { value: 'https://api.vaylapilvi.fi/paikkatiedot/ogc/features/collections' },
+          REPOSITORY_URI: {
+            value: `/Viite/${environment}/repository_uri`,
+            type: codebuild.BuildEnvironmentVariableType.PARAMETER_STORE
+          },
+          vvhRestApiUsername: { value: 'vvhRestApiUsername', type: codebuild.BuildEnvironmentVariableType.PARAMETER_STORE },
+          vvhRestApiPassword: { value: 'vvhRestApiPassword', type: codebuild.BuildEnvironmentVariableType.PARAMETER_STORE },
+          kgvEndpoint: { value: 'kgvEndpoint', type: codebuild.BuildEnvironmentVariableType.PARAMETER_STORE },
           kgvApiKey: { value: 'kgvApiKey', type: codebuild.BuildEnvironmentVariableType.PARAMETER_STORE },
         },
       },
@@ -163,17 +131,21 @@ export class ViiteCdkStack extends cdk.Stack {
 
     // CodeBuild Project for Deploy
     const deployProject = new codebuild.PipelineProject(this, 'DeployProject', {
-      projectName: 'viite-dev-deploy',
+      projectName: `viite-${environment.toLowerCase()}-deploy`,
       environment: {
         buildImage: codebuild.LinuxBuildImage.STANDARD_5_0,
         privileged: true,
+      },
+      environmentVariables: {
+        ECS_CLUSTER: { value: ecsClusterName },
+        ECS_SERVICE: { value: ecsServiceName },
       },
       buildSpec: codebuild.BuildSpec.fromObject({
         version: '0.2',
         phases: {
           build: {
             commands: [
-              'aws ecs update-service --region eu-west-1 --cluster Viite-ECS-Cluster-Private --service Viite-ECS-Service-Private --force-new-deployment'
+              'aws ecs update-service --region eu-west-1 --cluster $ECS_CLUSTER --service $ECS_SERVICE --force-new-deployment'
             ]
           }
         }
@@ -221,8 +193,8 @@ export class ViiteCdkStack extends cdk.Stack {
         'ecs:ListServices'
       ],
       resources: [
-        'arn:aws:ecs:eu-west-1:783354560127:cluster/Viite-ECS-Cluster-Private',
-        'arn:aws:ecs:eu-west-1:783354560127:service/Viite-ECS-Cluster-Private/Viite-ECS-Service-Private'
+        `arn:aws:ecs:${this.region}:${this.account}:cluster/${ecsClusterName}`,
+        `arn:aws:ecs:${this.region}:${this.account}:service/${ecsClusterName}/${ecsServiceName}`
       ],
     }));
 
@@ -230,7 +202,7 @@ export class ViiteCdkStack extends cdk.Stack {
     const sourceOutput = new codepipeline.Artifact();
 
     const pipeline = new codepipeline.Pipeline(this, 'Pipeline', {
-      pipelineName: pipelineName.valueAsString,
+      pipelineName: pipelineName,
       artifactBucket: artifactBucket,
       stages: [
         {
@@ -238,9 +210,9 @@ export class ViiteCdkStack extends cdk.Stack {
           actions: [
             new codepipeline_actions.GitHubSourceAction({
               actionName: 'Source',
-              owner: gitHubOwner.valueAsString,
-              repo: gitHubRepo.valueAsString,
-              branch: gitHubBranch.valueAsString,
+              owner: 'finnishtransportagency',
+              repo: 'viite',
+              branch: gitHubBranch,
               oauthToken: Secret.fromSecretAttributes(this, 'GitHubToken', {
                 secretCompleteArn: 'arn:aws:secretsmanager:eu-west-1:783354560127:secret:github-pat-lUghBp'
               }).secretValue,

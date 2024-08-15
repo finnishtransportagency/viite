@@ -4,21 +4,23 @@ import * as cdk from 'aws-cdk-lib';
 import { ViiteCdkStack } from '../lib/cdk-stack';
 
 const app = new cdk.App();
+
 new ViiteCdkStack(app, 'viite-dev-cicd-pipeline-stack', {
-    /* If you don't specify 'env', this stack will be environment-agnostic.
-    * Account/Region-dependent features and context lookups will not work,
-    * but a single synthesized template can be deployed anywhere. */
 
-    /* Uncomment the next line to specialize this stack for the AWS Account
-     * and Region that are implied by the current CLI configuration. */
     env: {
-        account: process.env.CDK_DEFAULT_ACCOUNT,
-        region: process.env.CDK_DEFAULT_REGION,
+        account: '783354560127',
+        region: 'eu-west-1',
     },
+    environment: 'Dev', // Use 'QA' for the QA environment
+    pipelineName: 'viite-dev-pipeline',
+    buildProjectName: 'viite-dev-build',
+    gitHubBranch: 'postgis',
+    artifactBucketName: 'fi-viite-dev',
+    ecrRepositoryName: 'viite',
+    securityGroupId: 'sg-0feb523b1d68c19e2',
+    kmsKeyArn: 'arn:aws:kms:eu-west-1:783354560127:alias/aws/s3',
+    vpcId: 'vpc-017797e470d94956b',
+    ecsClusterName: 'Viite-ECS-Cluster-Private',
+    ecsServiceName: 'Viite-ECS-Service-Private'
 
-    /* Uncomment the next line if you know exactly what Account and Region you
-     * want to deploy the stack to. */
-    // env: { account: '123456789012', region: 'us-east-1' },
-
-    /* For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html */
 });
