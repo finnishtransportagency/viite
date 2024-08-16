@@ -217,6 +217,7 @@ export class ViiteCdkStack extends cdk.Stack {
                 secretCompleteArn: 'arn:aws:secretsmanager:eu-west-1:783354560127:secret:github-pat-lUghBp'
               }).secretValue,
               output: sourceOutput,
+              ...(environment === 'Dev' ? { gitCloneDepth: 1 } : {}),
             }),
           ],
         },
