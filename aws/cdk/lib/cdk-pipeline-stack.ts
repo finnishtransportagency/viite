@@ -32,6 +32,9 @@ export class ViiteCdkStack extends cdk.Stack {
 
     const { environment, pipelineName, buildProjectName, gitHubBranch, artifactBucketName, ecrRepositoryName, securityGroupId, kmsKeyArn, vpcId, ecsClusterName, ecsServiceName } = props;
 
+    // Add a description for the stack
+    this.templateOptions.description = `Viite CI/CD Pipeline Stack for ${environment} environment including CodeBuild projects, CodePipeline, and associated resources.`;
+
     // Import existing resources
     const artifactBucket = s3.Bucket.fromBucketName(this, 'ExistingBucket', artifactBucketName);
     const ecrRepository = ecr.Repository.fromRepositoryName(this, 'ExistingECRRepo', ecrRepositoryName);
@@ -47,6 +50,7 @@ export class ViiteCdkStack extends cdk.Stack {
     // Create SNS Topic for notifications
     const notificationTopic = new sns.Topic(this, 'PipelineNotificationTopic', {
       topicName: `${pipelineName}-notifications`,
+      displayName: `Viite ${environment} Pipeline Notifications for build failure and deployment success`
     });
 
     // CodeBuild Project
