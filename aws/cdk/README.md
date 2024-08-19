@@ -4,7 +4,7 @@ This project uses AWS CDK with TypeScript to define and deploy CloudFormation st
 
 ## Overview
 
-The CDK code in this project generates CloudFormation templates that define:
+The current CDK code generates CloudFormation templates that define:
 
 1. CodePipeline pipelines for Dev and QA environments
 2. CodeBuild projects for building and testing the Viite application
@@ -12,6 +12,7 @@ The CDK code in this project generates CloudFormation templates that define:
 4. S3 buckets for artifact storage
 5. Connections to the GitHub repository
 6. ECS service update actions for deployment
+7. SNS Notifications for the pipeline
 
 ## Prerequisites
 
