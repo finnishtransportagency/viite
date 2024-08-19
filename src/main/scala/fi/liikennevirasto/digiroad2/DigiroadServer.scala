@@ -67,22 +67,5 @@ trait DigiroadServer {
       java.net.URI.create(url)
     }
 
-    override def sendProxyRequest(clientRequest: HttpServletRequest, proxyResponse: HttpServletResponse, proxyRequest: Request): Unit = {
-
-      logger.debug("Header start")
-      logger.debug(proxyRequest.getHeaders.toString)
-      logger.debug("Header end")
-
-      proxyRequest.getHeaders.remove("X-Iam-Data")
-      proxyRequest.getHeaders.remove("X-Iam-Accesstoken")
-      proxyRequest.getHeaders.remove("X-Amzn-Trace-Id")
-      proxyRequest.getHeaders.remove("X-Iam-Identity")
-
-      proxyRequest.header("X-API-Key", ViiteProperties.rasterServiceApiKey)
-      logger.debug("Header clean start")
-      logger.debug(proxyRequest.getHeaders.toString)
-      logger.debug("Header clean end")
-      super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest)
-    }
   }
 }
