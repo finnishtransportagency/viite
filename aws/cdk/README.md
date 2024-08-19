@@ -1,7 +1,6 @@
 # Viite CI/CD Pipeline CDK Project
 
-This project uses AWS CDK with TypeScript to define and deploy CI/CD pipelines for the Viite application. 
-Currently, CDK is used to create CloudFormation stacks on CI/CD pipelines for Dev and QA environments.
+This project uses AWS CDK with TypeScript to define and deploy CloudFormation stacks for CI/CD pipelines for Dev and QA environments.
 
 ## Overview
 
