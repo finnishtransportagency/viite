@@ -9,6 +9,8 @@ import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as kms from 'aws-cdk-lib/aws-kms';
 import { Construct } from 'constructs';
 import { Secret } from "aws-cdk-lib/aws-secretsmanager";
+import * as codestarnotifications from "aws-cdk-lib/aws-codestarnotifications";
+import * as sns from "aws-cdk-lib/aws-sns";
 
 interface ViiteCdkStackProps extends cdk.StackProps {
   environment: 'Dev' | 'QA';
@@ -41,6 +43,11 @@ export class ViiteCdkStack extends cdk.Stack {
     });
     const securityGroup = ec2.SecurityGroup.fromSecurityGroupId(this, 'ExistingSecurityGroup', securityGroupId);
     const encryptionKey = kms.Key.fromKeyArn(this, 'EncryptionKey', kmsKeyArn);
+
+    // Create SNS Topic for notifications
+    const notificationTopic = new sns.Topic(this, 'PipelineNotificationTopic', {
+      topicName: `${pipelineName}-notifications`,
+    });
 
     // CodeBuild Project
     const buildProject = new codebuild.PipelineProject(this, 'BuildProject', {
@@ -217,7 +224,6 @@ export class ViiteCdkStack extends cdk.Stack {
                 secretCompleteArn: 'arn:aws:secretsmanager:eu-west-1:783354560127:secret:github-pat-lUghBp'
               }).secretValue,
               output: sourceOutput,
-              ...(environment === 'Dev' ? { gitCloneDepth: 1 } : {}),
             }),
           ],
         },
@@ -256,5 +262,27 @@ export class ViiteCdkStack extends cdk.Stack {
       ],
       resources: [buildProject.projectArn]
     }));
+
+    // Create notification rule for CodeBuild failures
+    new codestarnotifications.NotificationRule(this, 'BuildFailureNotification', {
+      source: buildProject,
+      events: ['codebuild-project-build-state-failed'],
+      targets: [notificationTopic],
+      detailType: codestarnotifications.DetailType.BASIC,
+    });
+
+    // Create notification rule for successful deployments
+    new codestarnotifications.NotificationRule(this, 'DeploySuccessNotification', {
+      source: pipeline,
+      events: ['codepipeline-pipeline-stage-execution-succeeded'],
+      targets: [notificationTopic],
+      detailType: codestarnotifications.DetailType.BASIC,
+    });
+
+    // Output the SNS Topic ARN for external reference and subscription management
+    new cdk.CfnOutput(this, 'NotificationTopicArn', {
+      value: notificationTopic.topicArn,
+      description: 'ARN of the SNS Topic for pipeline notifications',
+    });
   }
 }
