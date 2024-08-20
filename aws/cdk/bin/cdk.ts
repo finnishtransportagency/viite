@@ -20,7 +20,6 @@ new ViiteCdkStack(app, 'viite-dev-cicd-pipeline-stack', {
     artifactBucketName: 'fi-viite-dev',
     ecrRepositoryName: 'viite',
     securityGroupId: 'sg-0feb523b1d68c19e2',
-    kmsKeyArn: 'arn:aws:kms:eu-west-1:783354560127:alias/aws/s3',
     vpcId: 'vpc-017797e470d94956b',
     ecsClusterName: 'Viite-ECS-Cluster-Private',
     ecsServiceName: 'Viite-ECS-Service-Private'
@@ -42,7 +41,6 @@ new ViiteCdkStack(app, 'viite-QA-cicd-pipeline-stack', {
     artifactBucketName: 'codepipeline-eu-west-1-165738134933',
     ecrRepositoryName: 'viite-qa',
     securityGroupId: 'sg-0b9b3751179bbf3b1',
-    kmsKeyArn: 'arn:aws:kms:eu-west-1:783354560127:alias/aws/s3',
     vpcId: 'vpc-005d0e40bb418a818',
     ecsClusterName: 'QA-viite-test-ECS-Cluster-Private',
     ecsServiceName: 'QA-viite-test-ECS-Service-Private'

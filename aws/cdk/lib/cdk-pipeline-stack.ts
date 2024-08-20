@@ -20,7 +20,6 @@ interface ViiteCdkStackProps extends cdk.StackProps {
   artifactBucketName: string;
   ecrRepositoryName: string;
   securityGroupId: string;
-  kmsKeyArn: string;
   vpcId: string;
   ecsClusterName: string;
   ecsServiceName: string;
@@ -30,7 +29,7 @@ export class ViiteCdkStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: ViiteCdkStackProps) {
     super(scope, id, props);
 
-    const { environment, pipelineName, buildProjectName, gitHubBranch, artifactBucketName, ecrRepositoryName, securityGroupId, kmsKeyArn, vpcId, ecsClusterName, ecsServiceName } = props;
+    const { environment, pipelineName, buildProjectName, gitHubBranch, artifactBucketName, ecrRepositoryName, securityGroupId, vpcId, ecsClusterName, ecsServiceName } = props;
 
     // Add a description for the stack
     this.templateOptions.description = `Viite CI/CD Pipeline Stack for ${environment} environment including CodeBuild projects, CodePipeline, and associated resources.`;
@@ -45,7 +44,6 @@ export class ViiteCdkStack extends cdk.Stack {
       subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS
     });
     const securityGroup = ec2.SecurityGroup.fromSecurityGroupId(this, 'ExistingSecurityGroup', securityGroupId);
-    const encryptionKey = kms.Key.fromKeyArn(this, 'EncryptionKey', kmsKeyArn);
 
     // Create SNS Topic for notifications
     const notificationTopic = new sns.Topic(this, 'PipelineNotificationTopic', {
@@ -137,7 +135,6 @@ export class ViiteCdkStack extends cdk.Stack {
       securityGroups: [securityGroup],
       timeout: cdk.Duration.minutes(60),
       queuedTimeout: cdk.Duration.minutes(480),
-      encryptionKey,
     });
 
     // CodeBuild Project for Deploy
@@ -166,10 +163,6 @@ export class ViiteCdkStack extends cdk.Stack {
     // Grant permissions to CodeBuild project
     artifactBucket.grantReadWrite(buildProject.role!);
     ecrRepository.grantPullPush(buildProject.role!);
-    buildProject.addToRolePolicy(new iam.PolicyStatement({
-      actions: ['ssm:GetParameter'],
-      resources: ['arn:aws:ssm:*:*:parameter/*'],
-    }));
 
     // CodeArtifact permissions
     buildProject.addToRolePolicy(new iam.PolicyStatement({
