@@ -69,7 +69,7 @@ export class ViiteCdkStack extends cdk.Stack {
           vvhServiceHost: { value: 'vvhServiceHost', type: codebuild.BuildEnvironmentVariableType.PARAMETER_STORE },
           vkmUrl: { value: 'vkmUrl', type: codebuild.BuildEnvironmentVariableType.PARAMETER_STORE },
           JAVA_OPTS: { value: '-Xms512M -Xmx1024M -Xss1M -XX:+CMSClassUnloadingEnabled' },
-          conversionBonecpJdbcUrl: { value: '/allEnvs/conversion.url', type: codebuild.BuildEnvironmentVariableType.PARAMETER_STORE },
+          conversionBonecpJdbcUrl: { value: '/allEnvs/conversion.jdbcUrl', type: codebuild.BuildEnvironmentVariableType.PARAMETER_STORE },
           conversionBonecpUsername: { value: '/allEnvs/conversion.username', type: codebuild.BuildEnvironmentVariableType.PARAMETER_STORE },
           conversionBonecpPassword: { value: '/allEnvs/conversion.db.password', type: codebuild.BuildEnvironmentVariableType.PARAMETER_STORE },
           REPOSITORY_URI: {
