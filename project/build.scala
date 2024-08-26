@@ -205,7 +205,7 @@ object Digiroad2Build extends Build {
         "org.scalatra" %% "scalatra" % ScalatraVersion,
         "org.scalatra" %% "scalatra-json" % ScalatraVersion,
         jsonJackson, jsonNative,
-        "org.scala-lang.modules"   %% "scala-parser-combinators" % "2.2.0",
+        "org.scala-lang.modules"   %% "scala-parser-combinators" % "1.1.2", // Upgrade to 2.0.0 tried in VIITE-3180; ended up to obscure swagger errors
         "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test",
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
         "org.scalatra" %% "scalatra-auth" % ScalatraVersion,
