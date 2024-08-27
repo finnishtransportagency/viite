@@ -6,11 +6,12 @@ import * as codepipeline from 'aws-cdk-lib/aws-codepipeline';
 import * as codepipeline_actions from 'aws-cdk-lib/aws-codepipeline-actions';
 import * as codebuild from 'aws-cdk-lib/aws-codebuild';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
-import * as kms from 'aws-cdk-lib/aws-kms';
+import * as ecs from 'aws-cdk-lib/aws-ecs';
 import { Construct } from 'constructs';
 import { Secret } from "aws-cdk-lib/aws-secretsmanager";
 import * as codestarnotifications from "aws-cdk-lib/aws-codestarnotifications";
 import * as sns from "aws-cdk-lib/aws-sns";
+import {Duration} from "aws-cdk-lib";
 
 interface ViiteCdkStackProps extends cdk.StackProps {
   environment: 'Dev' | 'QA';
@@ -44,11 +45,13 @@ export class ViiteCdkStack extends cdk.Stack {
       subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS
     });
     const securityGroup = ec2.SecurityGroup.fromSecurityGroupId(this, 'ExistingSecurityGroup', securityGroupId);
-
-    // Create SNS Topic for notifications
-    const notificationTopic = new sns.Topic(this, 'PipelineNotificationTopic', {
-      topicName: `${pipelineName}-notifications`,
-      displayName: `Viite ${environment} Pipeline Notifications for build failure and deployment success`
+    const ecsCluster = ecs.Cluster.fromClusterAttributes(this, 'ExistingECSCluster', {
+      clusterName: ecsClusterName,
+      vpc
+    });
+    const ecsService = ecs.FargateService.fromFargateServiceAttributes(this, 'ExistingECSService', {
+      serviceName: ecsServiceName,
+      cluster: ecsCluster,
     });
 
     // CodeBuild Project
@@ -108,6 +111,7 @@ export class ViiteCdkStack extends cdk.Stack {
           },
           build: {
             commands: [
+              'echo Build started on `date`',
               'grunt test',
               'sbt ${1} ${2} "project viite-main" "test:run-main fi.liikennevirasto.viite.util.DataFixture flyway_migrate"',
               'sbt ${1} ${2} "project viite-main" "test:run-main fi.liikennevirasto.viite.util.DataFixture test"',
@@ -116,17 +120,23 @@ export class ViiteCdkStack extends cdk.Stack {
               'sbt clean',
               'sbt assembly',
               'docker build -t $REPOSITORY_URI:latest -f aws/fargate/Dockerfile .',
-              'docker images -a',
+              'docker images -a'
+            ]
+          },
+          post_build: {
+            commands: [
+              'echo Build completed on `date`',
               'echo "Pushing the Docker image"',
               'docker push $REPOSITORY_URI:latest',
               'echo "Image URI: $REPOSITORY_URI:latest"',
+              'printf \'[{"name":"viite","imageUri":"%s"}]\' $REPOSITORY_URI:latest > imagedefinitions.json',
+              'cat imagedefinitions.json'
             ]
           }
         },
         artifacts: {
-          'base-directory': 'dist',
           files: [
-            '**/*'
+            'imagedefinitions.json',
           ]
         }
       }),
@@ -135,29 +145,6 @@ export class ViiteCdkStack extends cdk.Stack {
       securityGroups: [securityGroup],
       timeout: cdk.Duration.minutes(60),
       queuedTimeout: cdk.Duration.minutes(480),
-    });
-
-    // CodeBuild Project for Deploy
-    const deployProject = new codebuild.PipelineProject(this, 'DeployProject', {
-      projectName: `viite-${environment.toLowerCase()}-deploy`,
-      environment: {
-        buildImage: codebuild.LinuxBuildImage.STANDARD_5_0,
-        privileged: true,
-      },
-      environmentVariables: {
-        ECS_CLUSTER: { value: ecsClusterName },
-        ECS_SERVICE: { value: ecsServiceName },
-      },
-      buildSpec: codebuild.BuildSpec.fromObject({
-        version: '0.2',
-        phases: {
-          build: {
-            commands: [
-              'aws ecs update-service --region eu-west-1 --cluster $ECS_CLUSTER --service $ECS_SERVICE --force-new-deployment'
-            ]
-          }
-        }
-      })
     });
 
     // Grant permissions to CodeBuild project
@@ -186,24 +173,9 @@ export class ViiteCdkStack extends cdk.Stack {
       resources: ['*']
     }));
 
-    // Add ECS permissions to Deploy project
-    deployProject.addToRolePolicy(new iam.PolicyStatement({
-      actions: [
-        'ecs:UpdateService',
-        'ecs:DescribeServices',
-        'ecs:DescribeTaskDefinition',
-        'ecs:DescribeTasks',
-        'ecs:ListTasks',
-        'ecs:ListServices'
-      ],
-      resources: [
-        `arn:aws:ecs:${this.region}:${this.account}:cluster/${ecsClusterName}`,
-        `arn:aws:ecs:${this.region}:${this.account}:service/${ecsClusterName}/${ecsServiceName}`
-      ],
-    }));
-
     // CodePipeline
     const sourceOutput = new codepipeline.Artifact();
+    const buildOutput = new codepipeline.Artifact('BuildOutput');
 
     const pipeline = new codepipeline.Pipeline(this, 'Pipeline', {
       pipelineName: pipelineName,
@@ -238,10 +210,11 @@ export class ViiteCdkStack extends cdk.Stack {
         {
           stageName: 'Deploy',
           actions: [
-            new codepipeline_actions.CodeBuildAction({
+            new codepipeline_actions.EcsDeployAction({
               actionName: 'Deploy',
-              project: deployProject,
-              input: sourceOutput,
+              service: ecsService,
+              imageFile: buildOutput.atPath('imagedefinitions.json'),
+              deploymentTimeout: Duration.minutes(20),
             }),
           ],
         },
@@ -259,6 +232,15 @@ export class ViiteCdkStack extends cdk.Stack {
       ],
       resources: [buildProject.projectArn]
     }));
+
+
+    // Create SNS Topic for notifications
+    const notificationTopic = new sns.Topic(this, 'PipelineNotificationTopic', {
+      topicName: `${pipelineName}-notifications`,
+      displayName: `Viite ${environment} Pipeline Notifications`
+    });
+
+
 
     // Create notification rule for CodeBuild failures
     new codestarnotifications.NotificationRule(this, 'BuildFailureNotification', {
