@@ -233,30 +233,37 @@ export class ViiteCdkStack extends cdk.Stack {
       resources: [buildProject.projectArn]
     }));
 
-
     // Create SNS Topic for notifications
     const notificationTopic = new sns.Topic(this, 'PipelineNotificationTopic', {
       topicName: `${pipelineName}-notifications`,
       displayName: `Viite ${environment} Pipeline Notifications`
     });
 
-
-
     // Create notification rule for CodeBuild failures
     new codestarnotifications.NotificationRule(this, 'BuildFailureNotification', {
       source: buildProject,
       events: ['codebuild-project-build-state-failed'],
       targets: [notificationTopic],
-      detailType: codestarnotifications.DetailType.BASIC,
+      detailType: codestarnotifications.DetailType.FULL,
     });
 
-    // Create notification rule for successful deployments
-    new codestarnotifications.NotificationRule(this, 'DeploySuccessNotification', {
+    // Create notification rule for ECS deployment failure
+    new codestarnotifications.NotificationRule(this, 'EcsDeployFailureNotification', {
       source: pipeline,
-      events: ['codepipeline-pipeline-stage-execution-succeeded'],
+      events: ['codepipeline-pipeline-pipeline-execution-failed'],
       targets: [notificationTopic],
-      detailType: codestarnotifications.DetailType.BASIC,
+      detailType: codestarnotifications.DetailType.FULL,
     });
+
+    // Create notification rule for ECS deployment success
+    new codestarnotifications.NotificationRule(this, 'EcsDeploySuccessNotification', {
+      source: pipeline,
+      events: ['codepipeline-pipeline-pipeline-execution-succeeded'],
+      targets: [notificationTopic],
+      detailType: codestarnotifications.DetailType.FULL,
+    });
+
+
 
     // Output the SNS Topic ARN for external reference and subscription management
     new cdk.CfnOutput(this, 'NotificationTopicArn', {
