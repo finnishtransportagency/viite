@@ -28,7 +28,7 @@ object Digiroad2Build extends Build {
   val MockitoCoreVersion    = "4.11.0" // last version working with java8 runtime // 5.0.0 and up requires Java update to Java 11: "java.lang.UnsupportedClassVersionError: org/mockito/Mockito has been compiled by a more recent version of the Java Runtime (class file version 55.0), this version of the Java Runtime only recognizes class file versions up to 52.0"
   val Mockito_4_X           = "3.2.18.0" // Next versions are based on MockitoCore 5_x; they require newer Java Runtime
   val LogbackClassicVersion = "1.3.14" // Java EE version. 1.4.x requires Jakarta instead of JavaEE
-  val JettyVersion          = "9.2.30.v20200428"
+  val JettyVersion          = "9.3.30.v20211001"
   val TestOutputOptions = Tests.Argument(TestFrameworks.ScalaTest, "-oNCXELOPQRMI") // List only problems, and their summaries. Set suitable logback level to get the effect.
   val AwsSdkVersion       = "2.26.7" // "2.17.148"
   val GeoToolsVersion     = "28.5" // "29.x" fails api/viite/roadaddress with Internal Server Error // available "31.1"
@@ -183,10 +183,10 @@ object Digiroad2Build extends Build {
         mockito4X      % "test",
         jodaConvert,
         jodaTime,
-        "org.eclipse.jetty" % "jetty-webapp" % JettyVersion % "compile",
+        "org.eclipse.jetty" % "jetty-webapp"  % JettyVersion % "compile",
         "org.eclipse.jetty" % "jetty-servlets" % JettyVersion % "compile",
-        "org.eclipse.jetty" % "jetty-proxy" % JettyVersion % "compile",
-        "org.eclipse.jetty" % "jetty-jmx" % JettyVersion % "compile",
+        "org.eclipse.jetty" % "jetty-proxy"   % JettyVersion % "compile",
+        "org.eclipse.jetty" % "jetty-jmx"     % JettyVersion % "compile",
         "javax.servlet"     % "javax.servlet-api" % JavaxServletVersion % "provided"
       ),
       unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf"
@@ -251,9 +251,9 @@ object Digiroad2Build extends Build {
         "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
         httpCore,
         httpClient,
-        "org.eclipse.jetty" % "jetty-webapp" % JettyVersion % "container;compile",
+        "org.eclipse.jetty" % "jetty-webapp"   % JettyVersion % "container;compile",
         "org.eclipse.jetty" % "jetty-servlets" % JettyVersion % "container;compile",
-        "org.eclipse.jetty" % "jetty-proxy" % JettyVersion % "container;compile",
+        "org.eclipse.jetty" % "jetty-proxy"    % JettyVersion % "container;compile",
         "javax.servlet"     % "javax.servlet-api" % JavaxServletVersion % "provided"
       )
     )
