@@ -129,7 +129,7 @@ export class ViiteCdkStack extends cdk.Stack {
               'echo "Pushing the Docker image"',
               'docker push $REPOSITORY_URI:latest',
               'echo "Image URI: $REPOSITORY_URI:latest"',
-              'printf \'[{"name":"viite","imageUri":"%s"}]\' $REPOSITORY_URI:latest > imagedefinitions.json',
+              'printf \'[{"name":"Viite","imageUri":"%s"}]\' $REPOSITORY_URI:latest > imagedefinitions.json',
               'cat imagedefinitions.json'
             ]
           }
@@ -239,26 +239,13 @@ export class ViiteCdkStack extends cdk.Stack {
       displayName: `Viite ${environment} Pipeline Notifications`
     });
 
-    // Create notification rule for CodeBuild failures
-    new codestarnotifications.NotificationRule(this, 'BuildFailureNotification', {
-      source: buildProject,
-      events: ['codebuild-project-build-state-failed'],
-      targets: [notificationTopic],
-      detailType: codestarnotifications.DetailType.FULL,
-    });
-
-    // Create notification rule for ECS deployment failure
-    new codestarnotifications.NotificationRule(this, 'EcsDeployFailureNotification', {
+    // Create a single notification rule for the pipeline
+    new codestarnotifications.NotificationRule(this, 'PipelineNotification', {
       source: pipeline,
-      events: ['codepipeline-pipeline-pipeline-execution-failed'],
-      targets: [notificationTopic],
-      detailType: codestarnotifications.DetailType.FULL,
-    });
-
-    // Create notification rule for ECS deployment success
-    new codestarnotifications.NotificationRule(this, 'EcsDeploySuccessNotification', {
-      source: pipeline,
-      events: ['codepipeline-pipeline-pipeline-execution-succeeded'],
+      events: [
+        'codepipeline-pipeline-pipeline-execution-succeeded',
+        'codepipeline-pipeline-pipeline-execution-failed'
+      ],
       targets: [notificationTopic],
       detailType: codestarnotifications.DetailType.FULL,
     });
