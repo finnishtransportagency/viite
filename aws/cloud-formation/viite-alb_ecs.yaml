@@ -173,6 +173,10 @@ Resources:
         - ContainerName: !Ref ApplicationName
           ContainerPort: !Ref ContainerPort
           TargetGroupArn: !Ref TargetGroup
+      DeploymentConfiguration:
+        DeploymentCircuitBreaker:
+          Enable: true
+          Rollback: true
       Tags:
         - Key: Name
           Value: !Join ['-', [!Ref Environment,!Ref ApplicationName, 'ECS-Service']]
