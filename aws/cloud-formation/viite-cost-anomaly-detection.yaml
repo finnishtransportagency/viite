@@ -1,0 +1,37 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'AWS CloudFormation template to set up Cost Anomaly Detection for all resources'
+
+Resources:
+  CostAnomalyDetector:
+    Type: 'AWS::CE::AnomalyMonitor'
+    Properties:
+      MonitorName: 'AllServicesCostAnomalyMonitor'
+      MonitorType: 'DIMENSIONAL'
+      MonitorDimension: 'SERVICE'
+
+  CostAnomalySubscription:
+    Type: 'AWS::CE::AnomalySubscription'
+    Properties:
+      SubscriptionName: 'AllServicesCostAnomalyAlerts'
+      ThresholdExpression: '{
+              "Dimensions": {
+                "Key": "ANOMALY_TOTAL_IMPACT_PERCENTAGE",
+                "MatchOptions": [ "GREATER_THAN_OR_EQUAL" ],
+                "Values": [ "15" ]
+              }
+            }'
+      Frequency: 'DAILY'
+      MonitorArnList:
+        - !Ref CostAnomalyDetector
+      Subscribers:
+        - Address: '{{resolve:ssm:/Viite/developerEmail/1}}'
+          Type: 'EMAIL'
+        - Address: '{{resolve:ssm:/Viite/developerEmail/2}}'
+          Type: 'EMAIL'
+        - Address: '{{resolve:ssm:/Viite/developerEmail/3}}'
+          Type: 'EMAIL'
+
+Outputs:
+  AnomalyMonitorArn:
+    Description: 'ARN of the Cost Anomaly Monitor'
+    Value: !GetAtt CostAnomalyDetector.MonitorArn
