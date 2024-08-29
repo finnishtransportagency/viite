@@ -13,7 +13,13 @@ Resources:
     Type: 'AWS::CE::AnomalySubscription'
     Properties:
       SubscriptionName: 'AllServicesCostAnomalyAlerts'
-      Threshold: 5.0
+      ThresholdExpression: '{
+              "Dimensions": {
+                "Key": "ANOMALY_TOTAL_IMPACT_PERCENTAGE",
+                "MatchOptions": [ "GREATER_THAN_OR_EQUAL" ],
+                "Values": [ "15" ]
+              }
+            }'
       Frequency: 'DAILY'
       MonitorArnList:
         - !Ref CostAnomalyDetector
