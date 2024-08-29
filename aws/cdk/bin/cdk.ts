@@ -5,6 +5,7 @@ import { ViiteCdkStack } from '../lib/cdk-pipeline-stack';
 
 const app = new cdk.App();
 
+// For Dev environment
 new ViiteCdkStack(app, 'viite-dev-cicd-pipeline-stack', {
 
     // cdk <command> viite-dev-cicd-pipeline-stack

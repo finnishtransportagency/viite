@@ -18,7 +18,7 @@ The current CDK code generates CloudFormation templates that define:
 
 Ensure you have the following installed:
 
-- **Node.js** (v14.x or later)
+- **Node.js** (v14.x or later, Viite uses v20) 
 - **AWS CLI**
 - **AWS CDK**: Install with `npm install -g aws-cdk`
 
