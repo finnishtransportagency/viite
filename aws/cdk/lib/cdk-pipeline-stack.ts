@@ -70,9 +70,6 @@ export class ViiteCdkStack extends cdk.Stack {
             value: `/Viite/${environment}/bonecpJdbcUrl`,
             type: codebuild.BuildEnvironmentVariableType.PARAMETER_STORE
           },
-          vvhRestApiEndPoint: { value: 'vvhRestApiEndPoint', type: codebuild.BuildEnvironmentVariableType.PARAMETER_STORE },
-          vvhServiceHost: { value: 'vvhServiceHost', type: codebuild.BuildEnvironmentVariableType.PARAMETER_STORE },
-          vkmUrl: { value: 'vkmUrl', type: codebuild.BuildEnvironmentVariableType.PARAMETER_STORE },
           JAVA_OPTS: { value: '-Xms512M -Xmx1024M -Xss1M -XX:+CMSClassUnloadingEnabled' },
           conversionBonecpJdbcUrl: { value: '/allEnvs/conversion.jdbcUrl', type: codebuild.BuildEnvironmentVariableType.PARAMETER_STORE },
           conversionBonecpUsername: { value: '/allEnvs/conversion.username', type: codebuild.BuildEnvironmentVariableType.PARAMETER_STORE },
@@ -81,8 +78,6 @@ export class ViiteCdkStack extends cdk.Stack {
             value: `/Viite/${environment}/repository_uri`,
             type: codebuild.BuildEnvironmentVariableType.PARAMETER_STORE
           },
-          vvhRestApiUsername: { value: 'vvhRestApiUsername', type: codebuild.BuildEnvironmentVariableType.PARAMETER_STORE },
-          vvhRestApiPassword: { value: 'vvhRestApiPassword', type: codebuild.BuildEnvironmentVariableType.PARAMETER_STORE },
           kgvEndpoint: { value: 'kgvEndpoint', type: codebuild.BuildEnvironmentVariableType.PARAMETER_STORE },
           kgvApiKey: { value: 'kgvApiKey', type: codebuild.BuildEnvironmentVariableType.PARAMETER_STORE },
         },
