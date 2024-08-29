@@ -11,7 +11,9 @@ import { Construct } from 'constructs';
 import { Secret } from "aws-cdk-lib/aws-secretsmanager";
 import * as codestarnotifications from "aws-cdk-lib/aws-codestarnotifications";
 import * as sns from "aws-cdk-lib/aws-sns";
-import {Duration} from "aws-cdk-lib";
+import { Duration} from "aws-cdk-lib";
+import * as ssm from 'aws-cdk-lib/aws-ssm';
+import * as subscriptions from 'aws-cdk-lib/aws-sns-subscriptions';
 
 interface ViiteCdkStackProps extends cdk.StackProps {
   environment: 'Dev' | 'QA';
@@ -233,29 +235,55 @@ export class ViiteCdkStack extends cdk.Stack {
       resources: [buildProject.projectArn]
     }));
 
-    // Create SNS Topic for notifications
-    const notificationTopic = new sns.Topic(this, 'PipelineNotificationTopic', {
-      topicName: `${pipelineName}-notifications`,
-      displayName: `Viite ${environment} Pipeline Notifications`
+    // Create SNS Topic for success notifications
+    const successNotificationTopic = new sns.Topic(this, 'PipelineSuccessNotificationTopic', {
+      topicName: `${pipelineName}-success-notifications`,
+      displayName: `✅ Viite ${environment} Pipeline Success`
     });
 
-    // Create a single notification rule for the pipeline
-    new codestarnotifications.NotificationRule(this, 'PipelineNotification', {
+    // Create SNS Topic for failure notifications
+    const failureNotificationTopic = new sns.Topic(this, 'PipelineFailureNotificationTopic', {
+      topicName: `${pipelineName}-failure-notifications`,
+      displayName: `❌ Viite ${environment} Pipeline Failure`
+    });
+
+    // Create notification rule for pipeline success
+    new codestarnotifications.NotificationRule(this, 'PipelineSuccessNotification', {
       source: pipeline,
-      events: [
-        'codepipeline-pipeline-pipeline-execution-succeeded',
-        'codepipeline-pipeline-pipeline-execution-failed'
-      ],
-      targets: [notificationTopic],
+      events: ['codepipeline-pipeline-pipeline-execution-succeeded'],
+      targets: [successNotificationTopic],
       detailType: codestarnotifications.DetailType.FULL,
     });
 
+    // Create notification rule for pipeline failure
+    new codestarnotifications.NotificationRule(this, 'PipelineFailureNotification', {
+      source: pipeline,
+      events: ['codepipeline-pipeline-pipeline-execution-failed'],
+      targets: [failureNotificationTopic],
+      detailType: codestarnotifications.DetailType.FULL,
+    });
+
+    // Add subscriptions from Parameter Store
+    for (let i = 1; i <= 3; i++) {
+      const emailParam = ssm.StringParameter.fromStringParameterAttributes(this, `DeveloperEmail${i}`, {
+        parameterName: `/Viite/developerEmail/${i}`
+      });
+      const email = emailParam.stringValue;
+
+      successNotificationTopic.addSubscription(new subscriptions.EmailSubscription(email));
+      failureNotificationTopic.addSubscription(new subscriptions.EmailSubscription(email));
+    }
 
 
-    // Output the SNS Topic ARN for external reference and subscription management
-    new cdk.CfnOutput(this, 'NotificationTopicArn', {
-      value: notificationTopic.topicArn,
-      description: 'ARN of the SNS Topic for pipeline notifications',
+    // Output the SNS Topic ARNs for external reference and subscription management
+    new cdk.CfnOutput(this, 'SuccessNotificationTopicArn', {
+      value: successNotificationTopic.topicArn,
+      description: 'ARN of the SNS Topic for pipeline success notifications',
+    });
+
+    new cdk.CfnOutput(this, 'FailureNotificationTopicArn', {
+      value: failureNotificationTopic.topicArn,
+      description: 'ARN of the SNS Topic for pipeline failure notifications',
     });
   }
 }
