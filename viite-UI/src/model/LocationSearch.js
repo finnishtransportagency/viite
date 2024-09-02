@@ -61,7 +61,7 @@
      * @returns {*}
      */
     const getCoordinatesFromSearchInput = function (input) {
-      return backend.getSearchResults(input.search).then(function (coordinateData) {
+      return backend.getSearchResults(input.search.trim()).then(function (coordinateData) {
         const searchResult = [];
         coordinateData.forEach(function (item) {
           let partialResult;
