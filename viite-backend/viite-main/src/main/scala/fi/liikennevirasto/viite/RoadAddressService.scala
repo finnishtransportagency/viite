@@ -312,7 +312,7 @@ class RoadAddressService(
   }
 
   def getSearchResults(searchString: Option[String]): Seq[Map[String, Seq[Any]]] = {
-    logger.debug("getSearchResults")
+    logger.debug(s"getSearchResults, searchString: $searchString")
     val parsedInput = locationInputParser(searchString)
     val searchType = parsedInput.head._1
     val params = parsedInput.head._2
@@ -322,12 +322,13 @@ class RoadAddressService(
         val searchResultPoint = roadLinkService.getMidPointByLinkId(searchString.get)
         collectResult("linkId", Seq(searchResultPoint))
       case "road" => params.size match {
-        case 1 =>
+        case 1 => {
           // The params with type long can be MTKID or roadNumber
           val searchResultPoint = roadLinkService.getRoadLinkMiddlePointBySourceId(params.head)
           val partialResultSeq = collectResult("mtkId", Seq(searchResultPoint))
           val searchResult = getFirstOrEmpty(getRoadAddressWithRoadNumberAddress(params.head).sortBy(address => (address.roadPart.partNumber, address.addrMRange.start)))
           collectResult("road", searchResult, partialResultSeq)
+        }
         case 2 =>
           collectResult("road", getFirstOrEmpty(getRoadAddressWithRoadNumberParts(params.head, Set(params(1)), Set(Track.Combined, Track.LeftSide, Track.RightSide))
           .sortBy(address => (address.roadPart.partNumber, address.addrMRange.start))
@@ -382,20 +383,23 @@ class RoadAddressService(
   }
 
   def locationInputParser(searchStringOption: Option[String]): Map[String, Seq[Long]] = {
-    val searchString = searchStringOption.getOrElse("")
+    val searchString = searchStringOption.getOrElse("").trim
+
+    if (searchString.isEmpty) { Map() } // nothing to parse -> no results.
+
     val linkIdRegex  = """(\w+-\w+-\w+-\w+-\w+:\d+)""".r // Link UUID
     val linkIds      = linkIdRegex.findFirstIn(searchString)
 
-    if (linkIds.nonEmpty)
+    if (linkIds.nonEmpty)  // We found a linkId; interpret as a linkId.
       Map(("linkId", Seq(-1L)))
     else {
       val numRegex = """(\d+)""".r
       val nums     = numRegex.findAllIn(searchString).map(_.toLong).toSeq
       val letterRegex = """([A-Za-zÀ-ÿ])""".r
       val letters = letterRegex.findFirstIn(searchString)
-      if (letters.isEmpty)
+      if (letters.isEmpty) // There are no letters to be found. Not a street, so it must be a road .
         Map(("road", nums))
-      else
+      else // We hade at least one letter (but not a linkId): this must be a street name
         Map(("street", nums))
     }
   }
