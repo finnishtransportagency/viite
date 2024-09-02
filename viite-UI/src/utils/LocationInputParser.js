@@ -14,8 +14,8 @@
   var parse = function (input) {
     var coordinateRegex = /^\s*(\d+)\s*,\s*(\d+)\s*$/;
     var wildLetterRegex = /^(\s*[*]*[A-Za-zÀ-ÿ].*)/;
-    var roadNumberRegex = /^\s*\d*\s*\d*\s*\d*\s*\d+$/;
-    const linkIdRegex   = /^(\w+-\w+-\w+-\w+-\w+:\d+)$/;
+    var roadNumberRegex = /^\s*(\d+(\s+\d+(\s+\d+(\s+\d)?)?)?)\s*$/; // road addr separated with whitespaces.
+    const linkIdRegex   = /^\s*(\w+-\w+-\w+-\w+-\w+:\d+)\s*$/;
 
     var matchedCoordinates = input.match(coordinateRegex);
     if      (matchedCoordinates)            {    return parseCoordinates(matchedCoordinates);  }
