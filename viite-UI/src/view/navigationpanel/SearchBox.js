@@ -1,6 +1,6 @@
 (function (root) {
   root.SearchBox = function (instructionsPopup, locationSearch) {
-    var tooltip = "Hae katuosoitteella, tieosoitteella tai koordinaateilla";
+    var tooltip = "Hae katuosoitteella (esim. 'Aputie 10', 'Aputie, Vihti', tai 'Aputie 10, Vihti'), \ntieosoitteella (esim. '2 1 1000 2', '2/1/1000/2', '2', '2/1' tai '2 1 1000'),\nlinkki-id:llä (esim. '06ad934c-5241-4055-9ae6-71d63190f6d7:1')\ntai koordinaateilla ('P, I', esim. '6673830, 388774')";
     var groupDiv = $('<div id="searchBox" class="panel-group search-box"></div>');
     var coordinatesDiv = $('<div class="panel"></div>');
     var coordinatesText = $('<input type="text" class="location input-sm" placeholder="Osoite tai koordinaatit" title="' + tooltip + '"/>');
