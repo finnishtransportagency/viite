@@ -386,16 +386,16 @@ class RoadAddressService(
     val linkIdRegex  = """(\w+-\w+-\w+-\w+-\w+:\d+)""".r // Link UUID
     val linkIds      = linkIdRegex.findFirstIn(searchString)
 
-    if (linkIds.nonEmpty)
+    if (linkIds.nonEmpty)  // We found a linkId; interpret as a linkId.
       Map(("linkId", Seq(-1L)))
     else {
       val numRegex = """(\d+)""".r
       val nums     = numRegex.findAllIn(searchString).map(_.toLong).toSeq
       val letterRegex = """([A-Za-zÀ-ÿ])""".r
       val letters = letterRegex.findFirstIn(searchString)
-      if (letters.isEmpty)
+      if (letters.isEmpty) // There are no letters to be found. Not a street, so it must be a road .
         Map(("road", nums))
-      else
+      else // We hade at least one letter (but not a linkId): this must be a street name
         Map(("street", nums))
     }
   }

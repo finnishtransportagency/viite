@@ -10,6 +10,7 @@
   }
 }(this, function (_) {
 
+  /* Categorizes input type as 'coordinate', 'road', or 'street', or to be 'invalid'.*/
   var parse = function (input) {
     var coordinateRegex = /^\s*(\d+)\s*,\s*(\d+)\s*$/;
     var wildLetterRegex = /^(\s*[*]*[A-Za-zÀ-ÿ].*)/;
@@ -17,15 +18,11 @@
     const linkIdRegex   = /^(\w+-\w+-\w+-\w+-\w+:\d+)$/;
 
     var matchedCoordinates = input.match(coordinateRegex);
-    if (matchedCoordinates) {
-      return parseCoordinates(matchedCoordinates);
-    } else if (input.match(roadNumberRegex) || input.match(linkIdRegex)) {
-      return {type: 'road', search: input};
-    } else if (input.match(wildLetterRegex)) {
-      return {type: 'street', search: input};
-    } else {
-      return {type: 'invalid'};
-    }
+    if      (matchedCoordinates)            {    return parseCoordinates(matchedCoordinates);  }
+    else if (input.match(roadNumberRegex) ) {    return {type: 'road',   search: input};  }
+    else if (input.match(linkIdRegex)     ) {    return {type: 'road',   search: input};  }
+    else if (input.match(wildLetterRegex) ) {    return {type: 'street', search: input};  }
+    else                                    {    return {type: 'invalid'              };  }
   };
 
   var parseCoordinates = function (coordinates) {
