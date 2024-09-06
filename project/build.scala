@@ -51,6 +51,8 @@ object Digiroad2Build extends Build {
   lazy val apacheHttp  = Seq(httpCore, httpClient)
   lazy val joda        = Seq(jodaConvert, jodaTime)
   lazy val mockitoTest = Seq(mockitoCore, mockito4X)
+  lazy val scalaTestTra= Seq(scalaTest, scalatraTest)
+  lazy val scalatraLibs= Seq(scalatraJson, scalatraAuth, scalatraSwagger)
 
   val geoToolsDependencies: Seq[ModuleID] = Seq(
     "org.geotools" % "gt-graph" % GeoToolsVersion,
@@ -137,20 +139,16 @@ object Digiroad2Build extends Build {
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
       libraryDependencies ++= Seq(
         scalatra,
-        scalatraJson,
+        scalatraJson, scalatraAuth % "test", scalatraSwagger,
         jsonJackson,
-        scalaTest,
-        scalatraTest,
-        scalatraAuth   % "test",
         akkaTestkit    % "test",
         logbackClassic % "runtime",
         commonsIO,
         newRelic,
-        scalatraSwagger,
         "com.github.nscala-time" %% "nscala-time" % "2.32.0",
         "software.amazon.awssdk" % "s3"  % AwsSdkVersion,
         "software.amazon.awssdk" % "sso" % AwsSdkVersion
-      ) ++ mockitoTest
+      ) ++ mockitoTest ++ scalaTestTra
         ++ apacheHttp,
       unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf"
     )
@@ -168,9 +166,6 @@ object Digiroad2Build extends Build {
         akkaActor,
         "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "compile, test",
         scalatraTest,
-        scalatraJson,
-        scalatraAuth,
-        scalatraSwagger,
         "org.eclipse.jetty" % "jetty-webapp"  % JettyVersion % "compile",
         "org.eclipse.jetty" % "jetty-servlets" % JettyVersion % "compile",
         "org.eclipse.jetty" % "jetty-proxy"   % JettyVersion % "compile",
@@ -178,6 +173,7 @@ object Digiroad2Build extends Build {
         "javax.servlet"     % "javax.servlet-api" % JavaxServletVersion % "provided"
       ) ++ apacheHttp
         ++ mockitoTest
+        ++ scalatraLibs
         ++ joda,
       unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf"
     )
@@ -193,18 +189,14 @@ object Digiroad2Build extends Build {
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
       libraryDependencies ++= Seq(
         scalatra,
-        scalatraJson,
         jsonJackson, jsonNative,
         "org.scala-lang.modules"   %% "scala-parser-combinators" % "1.1.2", // Upgrade to 2.0.0 tried in VIITE-3180; ended up to obscure swagger errors
-        scalaTest,
-        scalatraTest,
-        scalatraAuth,
         akkaTestkit    % "test",
         logbackClassic % "runtime",
         commonsIO,
-        newRelic,
-        scalatraSwagger
-      ) ++ mockitoTest
+        newRelic
+      ) ++ mockitoTest ++ scalaTestTra
+        ++ scalatraLibs
         ++ apacheHttp,
       unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf"
     )
@@ -224,12 +216,7 @@ object Digiroad2Build extends Build {
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
       libraryDependencies ++= Seq(
         scalatra,
-        scalatraJson,
         jsonJackson,
-        scalaTest,
-        scalatraTest,
-        scalatraAuth,
-        scalatraSwagger,
         akkaTestkit % "test",
         logbackClassic % "runtime",
         commonsIO,
@@ -238,7 +225,8 @@ object Digiroad2Build extends Build {
         "org.eclipse.jetty" % "jetty-servlets" % JettyVersion % "container;compile",
         "org.eclipse.jetty" % "jetty-proxy"    % JettyVersion % "container;compile",
         "javax.servlet"     % "javax.servlet-api" % JavaxServletVersion % "provided"
-      ) ++ mockitoTest
+      ) ++ mockitoTest ++ scalaTestTra
+        ++ scalatraLibs
         ++ apacheHttp
     )
   ) dependsOn(baseJar, geoJar, DBJar, viiteJar, apiCommonJar, ApiJar) aggregate
