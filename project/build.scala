@@ -38,6 +38,8 @@ object Digiroad2Build extends Build {
   val jsonNative     = "org.json4s"         %% "json4s-native"   % JsonJacksonVersion
   val mockitoCore    = "org.mockito"        %  "mockito-core"    % "4.11.0" // last version working with java8 runtime // 5.0.0 and up requires Java update to Java 11: "java.lang.UnsupportedClassVersionError: org/mockito/Mockito has been compiled by a more recent version of the Java Runtime (class file version 55.0), this version of the Java Runtime only recognizes class file versions up to 52.0"
   val mockito4X      = "org.scalatestplus"  %% "mockito-4-11"    % "3.2.18.0" // Next versions are based on MockitoCore 5_x; they require newer Java Runtime
+  val scalaTest      = "org.scalatest" %  "scalatest_2.11"     % ScalaTestVersion % "test"
+  val scalatraTest    = "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion  % "test"
   val scalatra        = "org.scalatra" %% "scalatra"         % ScalatraVersion
   val scalatraAuth    = "org.scalatra" %% "scalatra-auth"    % ScalatraVersion
   val scalatraJson    = "org.scalatra" %% "scalatra-json"    % ScalatraVersion
@@ -72,7 +74,7 @@ object Digiroad2Build extends Build {
       name := BaseProjectName,
       libraryDependencies ++= Seq(
         jodaTime, jodaConvert,
-        "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test"
+        scalaTest
       )
     )
   )
@@ -88,7 +90,7 @@ object Digiroad2Build extends Build {
         jodaTime,
         akkaActor,
         "org.locationtech.jts" % "jts-core" % "1.19.0",
-        "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test"
+        scalaTest
       ) ++ CodeArtifactSettings.withFallbackUrls(geoToolsDependencies)
     )
   ) dependsOn(baseJar)
@@ -105,7 +107,7 @@ object Digiroad2Build extends Build {
         "org.apache.commons" % "commons-lang3" % "3.14.0",
         "commons-codec"      % "commons-codec" % "1.17.0",
         "com.jolbox"         % "bonecp"        % "0.8.0.RELEASE",
-        "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test",
+        scalaTest,
         "com.typesafe.slick" %% "slick"        % SlickVersion,
         jsonJackson,
         jodaConvert,
@@ -139,8 +141,8 @@ object Digiroad2Build extends Build {
         scalatra,
         scalatraJson,
         jsonJackson,
-        "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test",
-        "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
+        scalaTest,
+        scalatraTest,
         scalatraAuth   % "test",
         mockitoCore    % "test",
         mockito4X      % "test",
@@ -172,7 +174,7 @@ object Digiroad2Build extends Build {
         httpCore,
         httpClient,
         "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "compile, test",
-        "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
+        scalatraTest,
         scalatraJson,
         scalatraAuth,
         scalatraSwagger,
@@ -203,8 +205,8 @@ object Digiroad2Build extends Build {
         scalatraJson,
         jsonJackson, jsonNative,
         "org.scala-lang.modules"   %% "scala-parser-combinators" % "1.1.2", // Upgrade to 2.0.0 tried in VIITE-3180; ended up to obscure swagger errors
-        "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test",
-        "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
+        scalaTest,
+        scalatraTest,
         scalatraAuth,
         mockitoCore    % "test",
         mockito4X      % "test",
@@ -236,8 +238,8 @@ object Digiroad2Build extends Build {
         scalatra,
         scalatraJson,
         jsonJackson,
-        "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test",
-        "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
+        scalaTest,
+        scalatraTest,
         scalatraAuth,
         scalatraSwagger,
         mockitoCore % "test",
