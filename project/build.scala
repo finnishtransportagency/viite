@@ -18,8 +18,6 @@ object Digiroad2Build extends Build {
   val JodaSlickMapperVersion = "2.2.0" // provides slick 3.1.1, joda-time 2.7, and joda-convert 1.7
 
   val AkkaVersion = "2.5.32" // 2.6.x and up requires Scala 2.12 or greater
-  val NewRelicApiVersion    = "8.12.0"
-  val CommonsIOVersion      = "2.16.1"
   val JsonJacksonVersion    = "3.7.0-M11" // 3.7.0-M12 and up: could not find implicit value for evidence parameter of type org.json4s.AsJsonInput[org.json4s.StreamInput] //  4.0.6 last Scala 2.11 version
   val JettyVersion          = "9.3.30.v20211001"
   val TestOutputOptions = Tests.Argument(TestFrameworks.ScalaTest, "-oNCXELOPQRMI") // List only problems, and their summaries. Set suitable logback level to get the effect.
@@ -41,6 +39,8 @@ object Digiroad2Build extends Build {
   val mockitoCore    = "org.mockito"        %  "mockito-core"    % "4.11.0" // last version working with java8 runtime // 5.0.0 and up requires Java update to Java 11: "java.lang.UnsupportedClassVersionError: org/mockito/Mockito has been compiled by a more recent version of the Java Runtime (class file version 55.0), this version of the Java Runtime only recognizes class file versions up to 52.0"
   val mockito4X      = "org.scalatestplus"  %% "mockito-4-11"    % "3.2.18.0" // Next versions are based on MockitoCore 5_x; they require newer Java Runtime
   val logbackClassic = "ch.qos.logback"     % "logback-classic"  % "1.3.14" // Java EE version. 1.4.x requires Jakarta instead of JavaEE
+  val commonsIO      = "commons-io" % "commons-io" % "2.16.1"
+  val newRelic       = "com.newrelic.agent.java" % "newrelic-api" % "8.12.0"
 
   val geoToolsDependencies: Seq[ModuleID] = Seq(
     "org.geotools" % "gt-graph" % GeoToolsVersion,
@@ -110,7 +110,7 @@ object Digiroad2Build extends Build {
         "com.github.tototoshi" %% "scala-csv"         % "2.0.0",
         httpCore,
         httpClient,
-        "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
+        newRelic,
         mockitoCore % "test",
         mockito4X   % "test",
         "org.flywaydb"   % "flyway-core"   % "9.22.3", // Upgrading to 10.x requires Java Runtime upgrade. 10.0.0 says: "Flyway has been compiled by a more recent version of the Java Runtime (class file version 61.0), this version of the Java Runtime only recognizes class file versions up to 52.0"
@@ -142,8 +142,8 @@ object Digiroad2Build extends Build {
         mockito4X      % "test",
         akkaTestkit    % "test",
         logbackClassic % "runtime",
-        "commons-io" % "commons-io" % CommonsIOVersion,
-        "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
+        commonsIO,
+        newRelic,
         httpCore,
         httpClient,
         "org.scalatra" %% "scalatra-swagger"  % ScalatraVersion,
@@ -206,8 +206,8 @@ object Digiroad2Build extends Build {
         mockito4X      % "test",
         akkaTestkit    % "test",
         logbackClassic % "runtime",
-        "commons-io" % "commons-io" % CommonsIOVersion,
-        "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
+        commonsIO,
+        newRelic,
         httpCore,
         httpClient,
         "org.scalatra" %% "scalatra-swagger" % ScalatraVersion
@@ -240,8 +240,8 @@ object Digiroad2Build extends Build {
         mockito4X      % "test",
         akkaTestkit % "test",
         logbackClassic % "runtime",
-        "commons-io" % "commons-io" % CommonsIOVersion,
-        "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
+        commonsIO,
+        newRelic,
         httpCore,
         httpClient,
         "org.eclipse.jetty" % "jetty-webapp"   % JettyVersion % "container;compile",
