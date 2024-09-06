@@ -14,20 +14,13 @@ object Digiroad2Build extends Build {
   val ScalatraVersion  = "2.7.1"  // "2.7.1" is the last scala 2.11 version. To upgrade further, upgrade the used Scala version.
   val ScalaTestVersion = "3.2.19" // at the time of writing, 2024-08, only newer snapshot-versions available
 
-  val JodaConvertVersion = "2.2.3" // no dependencies
-  val JodaTimeVersion = "2.12.7" // dep on joda-convert // TODO "Note that from Java SE 8 onwards, users are asked to migrate to java.time (JSR-310) - a core part of the JDK which replaces this project." (from https://mvnrepository.com/artifact/joda-time/joda-time)
   val SlickVersion = "3.0.3" // 3.1.x and further requires significant changes in the database code, or library change maybe. // 3.4.x and further requires scala 2.12
   val JodaSlickMapperVersion = "2.2.0" // provides slick 3.1.1, joda-time 2.7, and joda-convert 1.7
 
   val AkkaVersion = "2.5.32" // 2.6.x and up requires Scala 2.12 or greater
-  val ApacheHTTPCoreVersion   = "5.2.4"
-  val ApacheHTTPClientVersion = "5.3.1" // depends on httpCore
   val NewRelicApiVersion    = "8.12.0"
   val CommonsIOVersion      = "2.16.1"
   val JsonJacksonVersion    = "3.7.0-M11" // 3.7.0-M12 and up: could not find implicit value for evidence parameter of type org.json4s.AsJsonInput[org.json4s.StreamInput] //  4.0.6 last Scala 2.11 version
-  val MockitoCoreVersion    = "4.11.0" // last version working with java8 runtime // 5.0.0 and up requires Java update to Java 11: "java.lang.UnsupportedClassVersionError: org/mockito/Mockito has been compiled by a more recent version of the Java Runtime (class file version 55.0), this version of the Java Runtime only recognizes class file versions up to 52.0"
-  val Mockito_4_X           = "3.2.18.0" // Next versions are based on MockitoCore 5_x; they require newer Java Runtime
-  val LogbackClassicVersion = "1.3.14" // Java EE version. 1.4.x requires Jakarta instead of JavaEE
   val JettyVersion          = "9.3.30.v20211001"
   val TestOutputOptions = Tests.Argument(TestFrameworks.ScalaTest, "-oNCXELOPQRMI") // List only problems, and their summaries. Set suitable logback level to get the effect.
   val AwsSdkVersion       = "2.26.7" // "2.17.148"
@@ -37,17 +30,17 @@ object Digiroad2Build extends Build {
   val JgridshiftVersion   = "1.0"
   val JtsCoreVersion      = "1.19.0"
 
-  val jodaConvert    = "org.joda"             %  "joda-convert"  % JodaConvertVersion
-  val jodaTime       = "joda-time"            %  "joda-time"     % JodaTimeVersion
+  val jodaConvert    = "org.joda"             %  "joda-convert"  % "2.2.3"  // no dependencies
+  val jodaTime       = "joda-time"            %  "joda-time"     % "2.12.7" // dep on joda-convert // TODO "Note that from Java SE 8 onwards, users are asked to migrate to java.time (JSR-310) - a core part of the JDK which replaces this project." (from https://mvnrepository.com/artifact/joda-time/joda-time)
   val akkaActor      = "com.typesafe.akka"    %% "akka-actor"    % AkkaVersion
   val akkaTestkit    = "com.typesafe.akka"    %% "akka-testkit"  % AkkaVersion
-  val httpCore   = "org.apache.httpcomponents.core5"   % "httpcore5"   % ApacheHTTPCoreVersion
-  val httpClient = "org.apache.httpcomponents.client5" % "httpclient5" % ApacheHTTPClientVersion
+  val httpCore   = "org.apache.httpcomponents.core5"   % "httpcore5"   % "5.2.4"
+  val httpClient = "org.apache.httpcomponents.client5" % "httpclient5" % "5.3.1" // depends on httpCore
   val jsonJackson    = "org.json4s"         %% "json4s-jackson"  % JsonJacksonVersion
   val jsonNative     = "org.json4s"         %% "json4s-native"   % JsonJacksonVersion
-  val mockitoCore    = "org.mockito"        %  "mockito-core"    % MockitoCoreVersion
-  val mockito4X      = "org.scalatestplus"  %% "mockito-4-11"    % Mockito_4_X
-  val logbackClassic = "ch.qos.logback"     % "logback-classic"  % LogbackClassicVersion
+  val mockitoCore    = "org.mockito"        %  "mockito-core"    % "4.11.0" // last version working with java8 runtime // 5.0.0 and up requires Java update to Java 11: "java.lang.UnsupportedClassVersionError: org/mockito/Mockito has been compiled by a more recent version of the Java Runtime (class file version 55.0), this version of the Java Runtime only recognizes class file versions up to 52.0"
+  val mockito4X      = "org.scalatestplus"  %% "mockito-4-11"    % "3.2.18.0" // Next versions are based on MockitoCore 5_x; they require newer Java Runtime
+  val logbackClassic = "ch.qos.logback"     % "logback-classic"  % "1.3.14" // Java EE version. 1.4.x requires Jakarta instead of JavaEE
 
   val geoToolsDependencies: Seq[ModuleID] = Seq(
     "org.geotools" % "gt-graph" % GeoToolsVersion,
