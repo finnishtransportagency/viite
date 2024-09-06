@@ -38,6 +38,10 @@ object Digiroad2Build extends Build {
   val jsonNative     = "org.json4s"         %% "json4s-native"   % JsonJacksonVersion
   val mockitoCore    = "org.mockito"        %  "mockito-core"    % "4.11.0" // last version working with java8 runtime // 5.0.0 and up requires Java update to Java 11: "java.lang.UnsupportedClassVersionError: org/mockito/Mockito has been compiled by a more recent version of the Java Runtime (class file version 55.0), this version of the Java Runtime only recognizes class file versions up to 52.0"
   val mockito4X      = "org.scalatestplus"  %% "mockito-4-11"    % "3.2.18.0" // Next versions are based on MockitoCore 5_x; they require newer Java Runtime
+  val scalatra        = "org.scalatra" %% "scalatra"         % ScalatraVersion
+  val scalatraAuth    = "org.scalatra" %% "scalatra-auth"    % ScalatraVersion
+  val scalatraJson    = "org.scalatra" %% "scalatra-json"    % ScalatraVersion
+  val scalatraSwagger = "org.scalatra" %% "scalatra-swagger" % ScalatraVersion
   val logbackClassic = "ch.qos.logback"     % "logback-classic"  % "1.3.14" // Java EE version. 1.4.x requires Jakarta instead of JavaEE
   val commonsIO      = "commons-io" % "commons-io" % "2.16.1"
   val newRelic       = "com.newrelic.agent.java" % "newrelic-api" % "8.12.0"
@@ -132,12 +136,12 @@ object Digiroad2Build extends Build {
       testOptions in Test ++= (
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
       libraryDependencies ++= Seq(
-        "org.scalatra" %% "scalatra" % ScalatraVersion,
-        "org.scalatra" %% "scalatra-json" % ScalatraVersion,
+        scalatra,
+        scalatraJson,
         jsonJackson,
         "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test",
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
-        "org.scalatra" %% "scalatra-auth" % ScalatraVersion % "test",
+        scalatraAuth   % "test",
         mockitoCore    % "test",
         mockito4X      % "test",
         akkaTestkit    % "test",
@@ -146,7 +150,7 @@ object Digiroad2Build extends Build {
         newRelic,
         httpCore,
         httpClient,
-        "org.scalatra" %% "scalatra-swagger"  % ScalatraVersion,
+        scalatraSwagger,
         "com.github.nscala-time" %% "nscala-time" % "2.32.0",
         "software.amazon.awssdk" % "s3"  % AwsSdkVersion,
         "software.amazon.awssdk" % "sso" % AwsSdkVersion
@@ -169,9 +173,9 @@ object Digiroad2Build extends Build {
         httpClient,
         "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "compile, test",
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
-        "org.scalatra" %% "scalatra-json" % ScalatraVersion,
-        "org.scalatra" %% "scalatra-auth" % ScalatraVersion,
-        "org.scalatra" %% "scalatra-swagger" % ScalatraVersion,
+        scalatraJson,
+        scalatraAuth,
+        scalatraSwagger,
         mockitoCore % "test",
         mockito4X      % "test",
         jodaConvert,
@@ -195,13 +199,13 @@ object Digiroad2Build extends Build {
       testOptions in Test ++= (
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
       libraryDependencies ++= Seq(
-        "org.scalatra" %% "scalatra" % ScalatraVersion,
-        "org.scalatra" %% "scalatra-json" % ScalatraVersion,
+        scalatra,
+        scalatraJson,
         jsonJackson, jsonNative,
         "org.scala-lang.modules"   %% "scala-parser-combinators" % "1.1.2", // Upgrade to 2.0.0 tried in VIITE-3180; ended up to obscure swagger errors
         "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test",
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
-        "org.scalatra" %% "scalatra-auth" % ScalatraVersion,
+        scalatraAuth,
         mockitoCore    % "test",
         mockito4X      % "test",
         akkaTestkit    % "test",
@@ -210,7 +214,7 @@ object Digiroad2Build extends Build {
         newRelic,
         httpCore,
         httpClient,
-        "org.scalatra" %% "scalatra-swagger" % ScalatraVersion
+        scalatraSwagger
       ),
       unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf"
     )
@@ -229,13 +233,13 @@ object Digiroad2Build extends Build {
       testOptions in Test ++= (
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
       libraryDependencies ++= Seq(
-        "org.scalatra" %% "scalatra" % ScalatraVersion,
-        "org.scalatra" %% "scalatra-json" % ScalatraVersion,
+        scalatra,
+        scalatraJson,
         jsonJackson,
         "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test",
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
-        "org.scalatra" %% "scalatra-auth" % ScalatraVersion,
-        "org.scalatra" %% "scalatra-swagger"  % ScalatraVersion,
+        scalatraAuth,
+        scalatraSwagger,
         mockitoCore % "test",
         mockito4X      % "test",
         akkaTestkit % "test",
