@@ -31,7 +31,7 @@ object Digiroad2Build extends Build {
   val jodaConvert    = "org.joda"             %  "joda-convert"  % "2.2.3"  // no dependencies
   val jodaTime       = "joda-time"            %  "joda-time"     % "2.12.7" // dep on joda-convert // TODO "Note that from Java SE 8 onwards, users are asked to migrate to java.time (JSR-310) - a core part of the JDK which replaces this project." (from https://mvnrepository.com/artifact/joda-time/joda-time)
   val akkaActor      = "com.typesafe.akka"    %% "akka-actor"    % AkkaVersion
-  val akkaTestkit    = "com.typesafe.akka"    %% "akka-testkit"  % AkkaVersion
+  val akkaTestkit    = "com.typesafe.akka"    %% "akka-testkit"  % AkkaVersion % "test"
   val httpCore   = "org.apache.httpcomponents.core5"   % "httpcore5"   % "5.2.4"
   val httpClient = "org.apache.httpcomponents.client5" % "httpclient5" % "5.3.1" // depends on httpCore
   val jsonJackson    = "org.json4s"         %% "json4s-jackson"  % JsonJacksonVersion
@@ -44,7 +44,7 @@ object Digiroad2Build extends Build {
   val scalatraAuth    = "org.scalatra" %% "scalatra-auth"    % ScalatraVersion
   val scalatraJson    = "org.scalatra" %% "scalatra-json"    % ScalatraVersion
   val scalatraSwagger = "org.scalatra" %% "scalatra-swagger" % ScalatraVersion
-  val logbackClassic = "ch.qos.logback"     % "logback-classic"  % "1.3.14" // Java EE version. 1.4.x requires Jakarta instead of JavaEE
+  val logbackClassicRuntime = "ch.qos.logback"   % "logback-classic"   % "1.3.14" % "runtime" // Java EE version. 1.4.x requires Jakarta instead of JavaEE
   val commonsIO      = "commons-io" % "commons-io" % "2.16.1"
   val newRelic       = "com.newrelic.agent.java" % "newrelic-api" % "8.12.0"
 
@@ -141,8 +141,8 @@ object Digiroad2Build extends Build {
         scalatra,
         scalatraJson, scalatraAuth % "test", scalatraSwagger,
         jsonJackson,
-        akkaTestkit    % "test",
-        logbackClassic % "runtime",
+        akkaTestkit,
+        logbackClassicRuntime,
         commonsIO,
         newRelic,
         "com.github.nscala-time" %% "nscala-time" % "2.32.0",
@@ -191,8 +191,8 @@ object Digiroad2Build extends Build {
         scalatra,
         jsonJackson, jsonNative,
         "org.scala-lang.modules"   %% "scala-parser-combinators" % "1.1.2", // Upgrade to 2.0.0 tried in VIITE-3180; ended up to obscure swagger errors
-        akkaTestkit    % "test",
-        logbackClassic % "runtime",
+        akkaTestkit,
+        logbackClassicRuntime,
         commonsIO,
         newRelic
       ) ++ mockitoTest ++ scalaTestTra
@@ -217,8 +217,8 @@ object Digiroad2Build extends Build {
       libraryDependencies ++= Seq(
         scalatra,
         jsonJackson,
-        akkaTestkit % "test",
-        logbackClassic % "runtime",
+        akkaTestkit,
+        logbackClassicRuntime,
         commonsIO,
         newRelic,
         "org.eclipse.jetty" % "jetty-webapp"   % JettyVersion % "container;compile",
