@@ -45,8 +45,9 @@ object Digiroad2Build extends Build {
   val scalatraJson    = "org.scalatra" %% "scalatra-json"    % ScalatraVersion
   val scalatraSwagger = "org.scalatra" %% "scalatra-swagger" % ScalatraVersion
   val logbackClassicRuntime = "ch.qos.logback"   % "logback-classic"   % "1.3.14" % "runtime" // Java EE version. 1.4.x requires Jakarta instead of JavaEE
-  val commonsIO      = "commons-io" % "commons-io" % "2.16.1"
-  val newRelic       = "com.newrelic.agent.java" % "newrelic-api" % "8.12.0"
+  val commonsIO      = "commons-io"              % "commons-io"        % "2.16.1"
+  val newRelic       = "com.newrelic.agent.java" % "newrelic-api"      % "8.12.0"
+  val javaxServletApi= "javax.servlet"           % "javax.servlet-api" % JavaxServletVersion % "provided"
 
   lazy val apacheHttp  = Seq(httpCore, httpClient)
   lazy val joda        = Seq(jodaConvert, jodaTime)
@@ -55,11 +56,11 @@ object Digiroad2Build extends Build {
   lazy val scalatraLibs= Seq(scalatraJson, scalatraAuth, scalatraSwagger)
 
   val geoToolsDependencies: Seq[ModuleID] = Seq(
-    "org.geotools" % "gt-graph" % GeoToolsVersion,
-    "org.geotools" % "gt-main" % GeoToolsVersion,
+    "org.geotools" % "gt-graph"       % GeoToolsVersion,
+    "org.geotools" % "gt-main"        % GeoToolsVersion,
     "org.geotools" % "gt-referencing" % GeoToolsVersion,
-    "org.geotools" % "gt-metadata" % GeoToolsVersion,
-    "org.geotools" % "gt-opengis" % GeoToolsIFVersion,
+    "org.geotools" % "gt-metadata"    % GeoToolsVersion,
+    "org.geotools" % "gt-opengis"   % GeoToolsIFVersion,
     "jgridshift" % "jgridshift" % JgridshiftVersion
   )
 
@@ -170,7 +171,7 @@ object Digiroad2Build extends Build {
         "org.eclipse.jetty" % "jetty-servlets" % JettyVersion % "compile",
         "org.eclipse.jetty" % "jetty-proxy"   % JettyVersion % "compile",
         "org.eclipse.jetty" % "jetty-jmx"     % JettyVersion % "compile",
-        "javax.servlet"     % "javax.servlet-api" % JavaxServletVersion % "provided"
+        javaxServletApi
       ) ++ apacheHttp
         ++ mockitoTest
         ++ scalatraLibs
@@ -224,7 +225,7 @@ object Digiroad2Build extends Build {
         "org.eclipse.jetty" % "jetty-webapp"   % JettyVersion % "container;compile",
         "org.eclipse.jetty" % "jetty-servlets" % JettyVersion % "container;compile",
         "org.eclipse.jetty" % "jetty-proxy"    % JettyVersion % "container;compile",
-        "javax.servlet"     % "javax.servlet-api" % JavaxServletVersion % "provided"
+        javaxServletApi
       ) ++ mockitoTest ++ scalaTestTra
         ++ scalatraLibs
         ++ apacheHttp
