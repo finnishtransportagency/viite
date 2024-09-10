@@ -74,10 +74,8 @@ object Digiroad2Build extends Build {
   ) ++ CodeArtifactSettings.settings // chooses the correct resolvers and credentials based on the CODE_ARTIFACT_AUTH_TOKEN environment variable
 
   val BaseProjectName = "base"
-  lazy val baseJar = Project(
-    BaseProjectName,
-    file(s"viite-backend/$BaseProjectName"),
-    settings = Defaults.coreDefaultSettings ++ projectSettings ++ Seq(
+  lazy val baseJar = (project in file(s"viite-backend/$BaseProjectName"))
+    .settings(Defaults.coreDefaultSettings ++ projectSettings ++ Seq(
       name := BaseProjectName,
       libraryDependencies ++= Seq(
         scalaTest
@@ -86,10 +84,8 @@ object Digiroad2Build extends Build {
   )
 
   val GeoProjectName = "geo"
-  lazy val geoJar = Project(
-    GeoProjectName,
-    file(s"viite-backend/$GeoProjectName"),
-    settings = Defaults.coreDefaultSettings ++ projectSettings ++ Seq(
+  lazy val geoJar = (project in file(s"viite-backend/$GeoProjectName"))
+    .settings (Defaults.coreDefaultSettings ++ projectSettings ++ Seq(
       name := GeoProjectName,
       libraryDependencies ++= Seq(
         akkaActor,
@@ -101,10 +97,8 @@ object Digiroad2Build extends Build {
   ) dependsOn(baseJar)
 
   val DBProjectName = "database"
-  lazy val DBJar = Project (
-    DBProjectName,
-    file(s"viite-backend/$DBProjectName"),
-    settings = Defaults.coreDefaultSettings ++ projectSettings ++ Seq(
+  lazy val DBJar = (project in file(s"viite-backend/$DBProjectName"))
+    .settings(Defaults.coreDefaultSettings ++ projectSettings ++ Seq(
       name := DBProjectName,
       testOptions in Test ++= (
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
@@ -130,10 +124,8 @@ object Digiroad2Build extends Build {
   ) dependsOn (baseJar, geoJar)
 
   val ViiteMainProjectName = "viite-main"
-  lazy val viiteJar = Project (
-    ViiteMainProjectName,
-    file(s"viite-backend/$ViiteMainProjectName"),
-    settings = Defaults.coreDefaultSettings ++ projectSettings ++ Seq(
+  lazy val viiteJar = (project in file(s"viite-backend/$ViiteMainProjectName"))
+    .settings(Defaults.coreDefaultSettings ++ projectSettings ++ Seq(
       name := ViiteMainProjectName,
       parallelExecution in Test := false,
       testOptions in Test ++= (
@@ -156,10 +148,8 @@ object Digiroad2Build extends Build {
   ) dependsOn(baseJar, geoJar, DBJar % "compile->compile;test->test")
 
   val ApiCommonProjectName = "api-common"
-  lazy val apiCommonJar = Project (
-    ApiCommonProjectName,
-    file(s"viite-backend/$ApiCommonProjectName"),
-    settings = Defaults.coreDefaultSettings ++ projectSettings ++ Seq(
+  lazy val apiCommonJar = (project in file(s"viite-backend/$ApiCommonProjectName"))
+    .settings(Defaults.coreDefaultSettings ++ projectSettings ++ Seq(
       name := ApiCommonProjectName,
       testOptions in Test ++= (
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
@@ -181,10 +171,8 @@ object Digiroad2Build extends Build {
   ) dependsOn(baseJar, geoJar, DBJar, viiteJar)
 
   val ApiProjectName = "api"
-  lazy val ApiJar = Project (
-    ApiProjectName,
-    file(s"viite-backend/$ApiProjectName"),
-    settings = Defaults.coreDefaultSettings ++ projectSettings ++ Seq(
+  lazy val ApiJar = (project in file(s"viite-backend/$ApiProjectName"))
+    .settings(Defaults.coreDefaultSettings ++ projectSettings ++ Seq(
       name := ApiProjectName,
       testOptions in Test ++= (
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
@@ -203,10 +191,8 @@ object Digiroad2Build extends Build {
     )
   ) dependsOn(baseJar, geoJar, DBJar, viiteJar % "test->test", apiCommonJar % "compile->compile;test->test")
 
-  lazy val warProject = Project (
-    Digiroad2Name,
-    file("."),
-    settings = Defaults.coreDefaultSettings ++ projectSettings
+  lazy val warProject = (project in file("."))
+    .settings(Defaults.coreDefaultSettings ++ projectSettings
       ++ assemblySettings
       ++ net.virtualvoid.sbt.graph.Plugin.graphSettings
       ++ ScalatraPlugin.scalatraWithJRebel ++ Seq(
