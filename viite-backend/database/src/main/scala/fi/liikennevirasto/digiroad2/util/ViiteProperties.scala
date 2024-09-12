@@ -35,6 +35,16 @@ trait ViiteProperties {
 
   def getAuthenticationBasicUsername(baseAuth: String = ""): String
   def getAuthenticationBasicPassword(baseAuth: String = ""): String
+
+  // New ScalikeJDBC properties
+  val scalikeJdbcDriver: String
+  val scalikeJdbcUrl: String
+  val scalikeJdbcUser: String
+  val scalikeJdbcPassword: String
+  val scalikeJdbcPoolInitialSize: Int
+  val scalikeJdbcPoolMaxSize: Int
+  val scalikeJdbcPoolConnectionTimeoutMillis: Long
+  val scalikeJdbcPoolValidationQuery: String
 }
 
 class ViitePropertiesFromEnv extends ViiteProperties {
@@ -75,6 +85,16 @@ class ViitePropertiesFromEnv extends ViiteProperties {
   val dynamicLinkNetworkS3BucketName: String = scala.util.Properties.envOrElse("dynamicLinkNetworkS3BucketName", null)
   val awsConnectionEnabled: Boolean = scala.util.Properties.envOrElse("awsConnectionEnabled", "true").toBoolean
   val apiS3ObjectTTLSeconds: String = scala.util.Properties.envOrElse("apiS3ObjectTTLSeconds", null)
+
+  // ScalikeJDBC property implementations
+  val scalikeJdbcDriver: String = scala.util.Properties.envOrElse("scalikejdbc.jdbc.driver", "org.postgresql.Driver")
+  val scalikeJdbcUrl: String = scala.util.Properties.envOrElse("scalikejdbc.jdbc.url", bonecpJdbcUrl)
+  val scalikeJdbcUser: String = scala.util.Properties.envOrElse("scalikejdbc.jdbc.user", bonecpUsername)
+  val scalikeJdbcPassword: String = scala.util.Properties.envOrElse("scalikejdbc.jdbc.password", bonecpPassword)
+  val scalikeJdbcPoolInitialSize: Int = scala.util.Properties.envOrElse("scalikejdbc.pool.initialSize", "5").toInt
+  val scalikeJdbcPoolMaxSize: Int = scala.util.Properties.envOrElse("scalikejdbc.pool.maxSize", "7").toInt
+  val scalikeJdbcPoolConnectionTimeoutMillis: Long = scala.util.Properties.envOrElse("scalikejdbc.pool.connectionTimeoutMillis", "1000").toLong
+  val scalikeJdbcPoolValidationQuery: String = scala.util.Properties.envOrElse("scalikejdbc.pool.validationQuery", "select 1 as one")
 
   lazy val bonecpProperties: Properties = {
     val props = new Properties()
@@ -183,6 +203,17 @@ class ViitePropertiesFromFile extends ViiteProperties {
   override def getAuthenticationBasicPassword(baseAuth: String = ""): String = {
     envProps.getProperty("authentication." + baseAuth + (if (baseAuth.isEmpty) "" else ".") + "basic.password")
   }
+
+  // New ScalikeJDBC property implementations
+  override val scalikeJdbcDriver: String = envProps.getProperty("scalikejdbc.jdbc.driver", "org.postgresql.Driver")
+  override val scalikeJdbcUrl: String = envProps.getProperty("scalikejdbc.jdbc.url", bonecpJdbcUrl)
+  override val scalikeJdbcUser: String = envProps.getProperty("scalikejdbc.jdbc.user", bonecpUsername)
+  override val scalikeJdbcPassword: String = envProps.getProperty("scalikejdbc.jdbc.password", bonecpPassword)
+  override val scalikeJdbcPoolInitialSize: Int = envProps.getProperty("scalikejdbc.pool.initialSize", "5").toInt
+  override val scalikeJdbcPoolMaxSize: Int = envProps.getProperty("scalikejdbc.pool.maxSize", "7").toInt
+  override val scalikeJdbcPoolConnectionTimeoutMillis: Long = envProps.getProperty("scalikejdbc.pool.connectionTimeoutMillis", "1000").toLong
+  override val scalikeJdbcPoolValidationQuery: String = envProps.getProperty("scalikejdbc.pool.validationQuery", "select 1 as one")
+
 }
 
 /**
@@ -226,6 +257,17 @@ object ViiteProperties {
   lazy val dynamicLinkNetworkS3BucketName: String = properties.dynamicLinkNetworkS3BucketName
   lazy val awsConnectionEnabled: Boolean = properties.awsConnectionEnabled
   lazy val apiS3ObjectTTLSeconds: String = properties.apiS3ObjectTTLSeconds
+
+  // Scalike properties
+  lazy val scalikeJdbcDriver: String = properties.scalikeJdbcDriver
+  lazy val scalikeJdbcUrl: String = properties.scalikeJdbcUrl
+  lazy val scalikeJdbcUser: String = properties.scalikeJdbcUser
+  lazy val scalikeJdbcPassword: String = properties.scalikeJdbcPassword
+  lazy val scalikeJdbcPoolInitialSize: Int = properties.scalikeJdbcPoolInitialSize
+  lazy val scalikeJdbcPoolMaxSize: Int = properties.scalikeJdbcPoolMaxSize
+  lazy val scalikeJdbcPoolConnectionTimeoutMillis: Long = properties.scalikeJdbcPoolConnectionTimeoutMillis
+  lazy val scalikeJdbcPoolValidationQuery: String = properties.scalikeJdbcPoolValidationQuery
+
 
   def getAuthenticationBasicUsername(baseAuth: String = ""): String = properties.getAuthenticationBasicUsername(baseAuth)
   def getAuthenticationBasicPassword(baseAuth: String = ""): String = properties.getAuthenticationBasicPassword(baseAuth)
