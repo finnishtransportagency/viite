@@ -172,7 +172,7 @@ println("Threading print test: Now in avoidRestrictions")
   get("/summary", operation(getRoadNetworkSummary)) {
     contentType = formats("json")
 
-    time(logger, s"Summary:  GET request for /summary", params=Some(params)) {
+    time(logger, s"Summary:  GET request for /summary", params=Some(params.toMap)) {
 
       try {
         val dateOption = dateParameterOptionGetValidOrThrow("date")
@@ -182,7 +182,7 @@ println("Threading print test: Now in avoidRestrictions")
         currentRoadNetworkSummaryToAPI(roadNetworkSummary)
       } catch {
         case t: Throwable =>
-          handleCommonIntegrationAPIExceptions(t, getRoadNetworkSummary.operationId)
+          handleCommonIntegrationAPIExceptions(t, Some(getRoadNetworkSummary.operationId))
       }
     }
   }
@@ -288,12 +288,12 @@ println("Threading print test: Now in avoidRestrictions")
       if(untilOption.isDefined) {
         datesInCorrectOrderOrThrow(since, untilOption.get)
       }
-      time(logger, s"GET request for /roadnames/changes", params = Some(params)) {
+      time(logger, s"GET request for /roadnames/changes", params = Some(params.toMap)) {
         fetchUpdatedRoadNames(since, untilOption)
       }
     } catch {
       case t: Throwable =>
-        handleCommonIntegrationAPIExceptions(t, getRoadNameChanges.operationId)
+        handleCommonIntegrationAPIExceptions(t, Some(getRoadNameChanges.operationId))
     }
   }
 
@@ -309,7 +309,7 @@ println("Threading print test: Now in avoidRestrictions")
   get("/roadway/changes", operation(getRoadwayChanges)) {
     contentType = formats("json")
 
-    time(logger, s"GET request for /roadway/changes", params=Some(params)) {
+    time(logger, s"GET request for /roadway/changes", params=Some(params.toMap)) {
       try {
         val since: DateTime = dateParameterGetValidOrThrow("since")
         val roadways : Seq[Roadway] = fetchUpdatedRoadways(since)
@@ -336,7 +336,7 @@ println("Threading print test: Now in avoidRestrictions")
         ))
       } catch {
         case t: Throwable =>
-          handleCommonIntegrationAPIExceptions(t,getRoadwayChanges.operationId)
+          handleCommonIntegrationAPIExceptions(t, Some(getRoadwayChanges.operationId))
       }
     }
   }
@@ -367,12 +367,12 @@ println("Threading print test: Now in avoidRestrictions")
         datesInCorrectOrderOrThrow(since, untilOption.get)
       }
 
-      time(logger, s"GET request for /roadway_changes/changes", params=Some(params)) {
+      time(logger, s"GET request for /roadway_changes/changes", params=Some(params.toMap)) {
         roadwayChangesToApi(roadAddressService.fetchUpdatedRoadwayChanges(since, untilOption))
       }
     } catch {
       case t: Throwable =>
-        handleCommonIntegrationAPIExceptions(t, getRoadwayChangesChanges.operationId)
+        handleCommonIntegrationAPIExceptions(t, Some(getRoadwayChangesChanges.operationId))
     }
   }
 
@@ -507,7 +507,7 @@ println(s"fetchAllValidNodesWithJunctions GOT RESULT, of size ${result.size}") /
   get("/linear_location/changes", operation(getLinearLocationChanges)) {
     contentType = formats("json")
 
-    time(logger, s"GET request for /linear_location/changes", params=Some(params)) {
+    time(logger, s"GET request for /linear_location/changes", params=Some(params.toMap)) {
         try {
           val since = dateParameterGetValidOrThrow("since")
           val linearLocations: Seq[LinearLocation] = fetchUpdatedLinearLocations(since)
@@ -539,7 +539,7 @@ println(s"fetchAllValidNodesWithJunctions GOT RESULT, of size ${result.size}") /
           ))
       } catch {
         case t: Throwable =>
-          handleCommonIntegrationAPIExceptions(t, getLinearLocationChanges.operationId)
+          handleCommonIntegrationAPIExceptions(t, Some(getLinearLocationChanges.operationId))
       }
     }
   }
@@ -560,7 +560,7 @@ println(s"fetchAllValidNodesWithJunctions GOT RESULT, of size ${result.size}") /
   get(transformers = "/nodes_junctions/changes", operation(nodesToGeoJson)) {
     contentType = formats("json")
 
-    time(logger, s"GET request for /nodes_junctions/changes", params=Some(params)) {
+    time(logger, s"GET request for /nodes_junctions/changes", params=Some(params.toMap)) {
       try {
         val since: DateTime = dateParameterGetValidOrThrow("since")
         val untilOption: Option[DateTime] = dateParameterOptionGetValidOrThrow("until")
@@ -571,7 +571,7 @@ println(s"fetchAllValidNodesWithJunctions GOT RESULT, of size ${result.size}") /
         nodesAndJunctionsService.getNodesWithTimeInterval(since, untilOption).map(node => nodeToApi(node))
       } catch {
         case t: Throwable =>
-          handleCommonIntegrationAPIExceptions(t, nodesToGeoJson.operationId)
+          handleCommonIntegrationAPIExceptions(t, Some(nodesToGeoJson.operationId))
       }
     }
   }

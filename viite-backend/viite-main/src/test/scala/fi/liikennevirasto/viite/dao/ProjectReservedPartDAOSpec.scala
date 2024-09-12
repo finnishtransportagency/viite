@@ -10,12 +10,13 @@ import fi.vaylavirasto.viite.postgis.DbUtils.runUpdateToDb
 import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 import org.joda.time.DateTime
 import org.postgresql.util.PSQLException
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
 /**
   * Class to test DB trigger that does not allow reserving already reserved parts to project
   */
-class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
+class ProjectReservedPartDAOSpec extends AnyFunSuite with Matchers {
 
   val roadwayDAO = new RoadwayDAO
   val linearLocationDAO = new LinearLocationDAO
@@ -58,8 +59,8 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
     )
   }
   private def dummyLinearLocations = Seq(
-    dummyLinearLocation(roadwayNumber = roadwayNumber1, orderNumber = 1L, linkId = linkId1.toString, startMValue = 0.0, endMValue = 10.0),
-    dummyLinearLocation(roadwayNumber = roadwayNumber2, orderNumber = 1L, linkId = linkId2.toString, startMValue = 0.0, endMValue = 10.0))
+    dummyLinearLocation(roadwayNumber = roadwayNumber1, orderNumber = 1L, linkId = linkId1, startMValue = 0.0, endMValue = 10.0),
+    dummyLinearLocation(roadwayNumber = roadwayNumber2, orderNumber = 1L, linkId = linkId2, startMValue = 0.0, endMValue = 10.0))
 
 
 

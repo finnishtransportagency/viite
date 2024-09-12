@@ -6,10 +6,11 @@ import fi.vaylavirasto.viite.geometry.Point
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, CalibrationPoint, CalibrationPointLocation, CalibrationPointType, Discontinuity, LinkGeomSource, RoadPart, SideCode, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 import org.joda.time.DateTime
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
 
-class RoadNetworkDAOSpec extends FunSuite with Matchers {
+class RoadNetworkDAOSpec extends AnyFunSuite with Matchers {
 
   val dao = new RoadNetworkDAO
   val roadwayDAO = new RoadwayDAO

@@ -3,12 +3,13 @@ package fi.liikennevirasto.viite.model
 import fi.vaylavirasto.viite.geometry.Point
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, LifecycleStatus, LinkGeomSource, RoadPart, SideCode}
 // Used in debugging when needed.
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
 /**
   * Created by venholat on 21.10.2016.
   */
-class RoadAddressLinkPartitionerSpec extends FunSuite with Matchers {
+class RoadAddressLinkPartitionerSpec extends AnyFunSuite with Matchers {
   private lazy val roadAddressLinks = Seq(
     makeRoadAddressLink( 1, 0, RoadPart(1, 1)),
     makeRoadAddressLink( 2, 0, RoadPart(1, 1)),

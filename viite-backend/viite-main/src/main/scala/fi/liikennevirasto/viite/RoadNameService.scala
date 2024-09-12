@@ -10,7 +10,7 @@ import scala.util.control.NonFatal
 
 case class RoadNameRow(id: Long, name: String, startDate: String, endDate: Option[String])
 
-class RoadNameService() {
+class RoadNameService {
 
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
