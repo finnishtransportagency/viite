@@ -11,23 +11,15 @@ object Digiroad2Build extends Build {
   val Version = "0.1.0-SNAPSHOT"
 
   val ScalaVersion = "2.11.7"
-  val ScalatraVersion = "2.6.5" // "2.7.0" requires code changes. // "2.7.1" last scala 2.11 version
-  val ScalaTestVersion = "3.2.0-SNAP7" // "3.2.0-SNAP10" (next scala 2.11 version) requires code changes. "object org.scalatest.prop.Configuration$ not found."
+  val ScalatraVersion  = "2.7.1"  // "2.7.1" is the last scala 2.11 version. To upgrade further, upgrade the used Scala version.
+  val ScalaTestVersion = "3.2.19" // at the time of writing, 2024-08, only newer snapshot-versions available
 
-  val JodaConvertVersion = "2.2.3" // no dependencies
-  val JodaTimeVersion = "2.12.7" // dep on joda-convert // TODO "Note that from Java SE 8 onwards, users are asked to migrate to java.time (JSR-310) - a core part of the JDK which replaces this project." (from https://mvnrepository.com/artifact/joda-time/joda-time)
   val SlickVersion = "3.0.3" // 3.1.x and further requires significant changes in the database code, or library change maybe. // 3.4.x and further requires scala 2.12
   val JodaSlickMapperVersion = "2.2.0" // provides slick 3.1.1, joda-time 2.7, and joda-convert 1.7
 
   val AkkaVersion = "2.5.32" // 2.6.x and up requires Scala 2.12 or greater
-  val ApacheHTTPCoreVersion   = "5.2.4"
-  val ApacheHTTPClientVersion = "5.3.1" // depends on httpCore
-  val NewRelicApiVersion    = "8.12.0"
-  val CommonsIOVersion      = "2.16.1"
   val JsonJacksonVersion    = "3.7.0-M11" // 3.7.0-M12 and up: could not find implicit value for evidence parameter of type org.json4s.AsJsonInput[org.json4s.StreamInput] //  4.0.6 last Scala 2.11 version
-  val MockitoCoreVersion    = "4.11.0" // last version working with java8 runtime // 5.0.0 and up requires Java update to Java 11: "java.lang.UnsupportedClassVersionError: org/mockito/Mockito has been compiled by a more recent version of the Java Runtime (class file version 55.0), this version of the Java Runtime only recognizes class file versions up to 52.0"
-  val LogbackClassicVersion = "1.3.14" // Java EE version. 1.4.x requires Jakarta instead of JavaEE
-  val JettyVersion = "9.2.15.v20160210"
+  val JettyVersion          = "9.3.30.v20211001"
   val TestOutputOptions = Tests.Argument(TestFrameworks.ScalaTest, "-oNCXELOPQRMI") // List only problems, and their summaries. Set suitable logback level to get the effect.
   val AwsSdkVersion       = "2.26.7" // "2.17.148"
   val GeoToolsVersion     = "28.5" // "29.x" fails api/viite/roadaddress with Internal Server Error // available "31.1"
@@ -36,23 +28,39 @@ object Digiroad2Build extends Build {
   val JgridshiftVersion   = "1.0"
   val JtsCoreVersion      = "1.19.0"
 
-  val jodaConvert    = "org.joda"             %  "joda-convert"  % JodaConvertVersion
-  val jodaTime       = "joda-time"            %  "joda-time"     % JodaTimeVersion
+  val jodaConvert    = "org.joda"             %  "joda-convert"  % "2.2.3"  // no dependencies
+  val jodaTime       = "joda-time"            %  "joda-time"     % "2.12.7" // dep on joda-convert // TODO "Note that from Java SE 8 onwards, users are asked to migrate to java.time (JSR-310) - a core part of the JDK which replaces this project." (from https://mvnrepository.com/artifact/joda-time/joda-time)
   val akkaActor      = "com.typesafe.akka"    %% "akka-actor"    % AkkaVersion
-  val akkaTestkit    = "com.typesafe.akka"    %% "akka-testkit"  % AkkaVersion
-  val httpCore   = "org.apache.httpcomponents.core5"   % "httpcore5"   % ApacheHTTPCoreVersion
-  val httpClient = "org.apache.httpcomponents.client5" % "httpclient5" % ApacheHTTPClientVersion
+  val akkaTestkit    = "com.typesafe.akka"    %% "akka-testkit"  % AkkaVersion % "test"
+  val httpCore   = "org.apache.httpcomponents.core5"   % "httpcore5"   % "5.2.4"
+  val httpClient = "org.apache.httpcomponents.client5" % "httpclient5" % "5.3.1" // depends on httpCore
   val jsonJackson    = "org.json4s"         %% "json4s-jackson"  % JsonJacksonVersion
   val jsonNative     = "org.json4s"         %% "json4s-native"   % JsonJacksonVersion
-  val mockitoCore    = "org.mockito"        %  "mockito-core"    % MockitoCoreVersion
-  val logbackClassic = "ch.qos.logback"     % "logback-classic"  % LogbackClassicVersion
+  val mockitoCore    = "org.mockito"        %  "mockito-core"    % "4.11.0"   % "test" // last version working with java8 runtime // 5.0.0 and up requires Java update to Java 11: "java.lang.UnsupportedClassVersionError: org/mockito/Mockito has been compiled by a more recent version of the Java Runtime (class file version 55.0), this version of the Java Runtime only recognizes class file versions up to 52.0"
+  val mockito4X      = "org.scalatestplus"  %% "mockito-4-11"    % "3.2.18.0" % "test" // Next versions are based on MockitoCore 5_x; they require newer Java Runtime
+  val scalaTest      = "org.scalatest" %  "scalatest_2.11"     % ScalaTestVersion % "test"
+  val scalatraTest    = "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion  % "test"
+  val scalatra        = "org.scalatra" %% "scalatra"         % ScalatraVersion
+  val scalatraAuth    = "org.scalatra" %% "scalatra-auth"    % ScalatraVersion
+  val scalatraJson    = "org.scalatra" %% "scalatra-json"    % ScalatraVersion
+  val scalatraSwagger = "org.scalatra" %% "scalatra-swagger" % ScalatraVersion
+  val logbackClassicRuntime = "ch.qos.logback"   % "logback-classic"   % "1.3.14" % "runtime" // Java EE version. 1.4.x requires Jakarta instead of JavaEE
+  val commonsIO      = "commons-io"              % "commons-io"        % "2.16.1"
+  val newRelic       = "com.newrelic.agent.java" % "newrelic-api"      % "8.12.0"
+  val javaxServletApi= "javax.servlet"           % "javax.servlet-api" % JavaxServletVersion % "provided"
+
+  lazy val apacheHttp  = Seq(httpCore, httpClient)
+  lazy val joda        = Seq(jodaConvert, jodaTime)
+  lazy val mockitoTest = Seq(mockitoCore, mockito4X)
+  lazy val scalaTestTra= Seq(scalaTest, scalatraTest)
+  lazy val scalatraLibs= Seq(scalatraJson, scalatraAuth, scalatraSwagger)
 
   val geoToolsDependencies: Seq[ModuleID] = Seq(
-    "org.geotools" % "gt-graph" % GeoToolsVersion,
-    "org.geotools" % "gt-main" % GeoToolsVersion,
+    "org.geotools" % "gt-graph"       % GeoToolsVersion,
+    "org.geotools" % "gt-main"        % GeoToolsVersion,
     "org.geotools" % "gt-referencing" % GeoToolsVersion,
-    "org.geotools" % "gt-metadata" % GeoToolsVersion,
-    "org.geotools" % "gt-opengis" % GeoToolsIFVersion,
+    "org.geotools" % "gt-metadata"    % GeoToolsVersion,
+    "org.geotools" % "gt-opengis"   % GeoToolsIFVersion,
     "jgridshift" % "jgridshift" % JgridshiftVersion
   )
 
@@ -72,9 +80,8 @@ object Digiroad2Build extends Build {
     settings = Defaults.coreDefaultSettings ++ projectSettings ++ Seq(
       name := BaseProjectName,
       libraryDependencies ++= Seq(
-        jodaTime, jodaConvert,
-        "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test"
-      )
+        scalaTest
+      ) ++ joda
     )
   )
 
@@ -85,12 +92,11 @@ object Digiroad2Build extends Build {
     settings = Defaults.coreDefaultSettings ++ projectSettings ++ Seq(
       name := GeoProjectName,
       libraryDependencies ++= Seq(
-        jodaConvert,
-        jodaTime,
         akkaActor,
         "org.locationtech.jts" % "jts-core" % "1.19.0",
-        "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test"
+        scalaTest
       ) ++ CodeArtifactSettings.withFallbackUrls(geoToolsDependencies)
+        ++ joda
     )
   ) dependsOn(baseJar)
 
@@ -106,22 +112,19 @@ object Digiroad2Build extends Build {
         "org.apache.commons" % "commons-lang3" % "3.14.0",
         "commons-codec"      % "commons-codec" % "1.17.0",
         "com.jolbox"         % "bonecp"        % "0.8.0.RELEASE",
-        "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test",
+        scalaTest,
         "com.typesafe.slick" %% "slick"        % SlickVersion,
         jsonJackson,
-        jodaConvert,
-        jodaTime,
         "com.github.tototoshi" %% "slick-joda-mapper" % JodaSlickMapperVersion,
-        "com.github.tototoshi" %% "scala-csv"         % "1.3.10",
-        httpCore,
-        httpClient,
-        "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
-        mockitoCore % "test",
+        "com.github.tototoshi" %% "scala-csv"         % "2.0.0",
+        newRelic,
         "org.flywaydb"   % "flyway-core"   % "9.22.3", // Upgrading to 10.x requires Java Runtime upgrade. 10.0.0 says: "Flyway has been compiled by a more recent version of the Java Runtime (class file version 61.0), this version of the Java Runtime only recognizes class file versions up to 52.0"
         "org.postgresql" % "postgresql"    % "42.7.3",
         "net.postgis" % "postgis-geometry" % "2023.1.0",
         "net.postgis" % "postgis-jdbc"     % "2023.1.0" // dep postgresql, and from 2.5.0 and up: postgis-geometry
-      ),
+      ) ++ joda
+        ++ apacheHttp
+        ++ mockitoTest,
       unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf"
     )
   ) dependsOn (baseJar, geoJar)
@@ -136,24 +139,18 @@ object Digiroad2Build extends Build {
       testOptions in Test ++= (
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
       libraryDependencies ++= Seq(
-        "org.scalatra" %% "scalatra" % ScalatraVersion,
-        "org.scalatra" %% "scalatra-json" % ScalatraVersion,
+        scalatra,
+        scalatraJson, scalatraAuth % "test", scalatraSwagger,
         jsonJackson,
-        "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test",
-        "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
-        "org.scalatra" %% "scalatra-auth" % ScalatraVersion % "test",
-        mockitoCore    % "test",
-        akkaTestkit    % "test",
-        logbackClassic % "runtime",
-        "commons-io" % "commons-io" % CommonsIOVersion,
-        "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
-        httpCore,
-        httpClient,
-        "org.scalatra" %% "scalatra-swagger"  % ScalatraVersion,
+        akkaTestkit,
+        logbackClassicRuntime,
+        commonsIO,
+        newRelic,
         "com.github.nscala-time" %% "nscala-time" % "2.32.0",
         "software.amazon.awssdk" % "s3"  % AwsSdkVersion,
         "software.amazon.awssdk" % "sso" % AwsSdkVersion
-      ),
+      ) ++ mockitoTest ++ scalaTestTra
+        ++ apacheHttp,
       unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf"
     )
   ) dependsOn(baseJar, geoJar, DBJar % "compile->compile;test->test")
@@ -168,22 +165,17 @@ object Digiroad2Build extends Build {
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
       libraryDependencies ++= Seq(
         akkaActor,
-        httpCore,
-        httpClient,
         "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "compile, test",
-        "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
-        "org.scalatra" %% "scalatra-json" % ScalatraVersion,
-        "org.scalatra" %% "scalatra-auth" % ScalatraVersion,
-        "org.scalatra" %% "scalatra-swagger" % ScalatraVersion,
-        mockitoCore % "test",
-        jodaConvert,
-        jodaTime,
-        "org.eclipse.jetty" % "jetty-webapp" % JettyVersion % "compile",
+        scalatraTest,
+        "org.eclipse.jetty" % "jetty-webapp"  % JettyVersion % "compile",
         "org.eclipse.jetty" % "jetty-servlets" % JettyVersion % "compile",
-        "org.eclipse.jetty" % "jetty-proxy" % JettyVersion % "compile",
-        "org.eclipse.jetty" % "jetty-jmx" % JettyVersion % "compile",
-        "javax.servlet"     % "javax.servlet-api" % JavaxServletVersion % "provided"
-      ),
+        "org.eclipse.jetty" % "jetty-proxy"   % JettyVersion % "compile",
+        "org.eclipse.jetty" % "jetty-jmx"     % JettyVersion % "compile",
+        javaxServletApi
+      ) ++ apacheHttp
+        ++ mockitoTest
+        ++ scalatraLibs
+        ++ joda,
       unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf"
     )
   ) dependsOn(baseJar, geoJar, DBJar, viiteJar)
@@ -197,22 +189,16 @@ object Digiroad2Build extends Build {
       testOptions in Test ++= (
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
       libraryDependencies ++= Seq(
-        "org.scalatra" %% "scalatra" % ScalatraVersion,
-        "org.scalatra" %% "scalatra-json" % ScalatraVersion,
+        scalatra,
         jsonJackson, jsonNative,
-        "org.scala-lang.modules"   %% "scala-parser-combinators" % "1.1.2",
-        "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test",
-        "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
-        "org.scalatra" %% "scalatra-auth" % ScalatraVersion,
-        mockitoCore    % "test",
-        akkaTestkit    % "test",
-        logbackClassic % "runtime",
-        "commons-io" % "commons-io" % CommonsIOVersion,
-        "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
-        httpCore,
-        httpClient,
-        "org.scalatra" %% "scalatra-swagger" % ScalatraVersion
-      ),
+        "org.scala-lang.modules"   %% "scala-parser-combinators" % "1.1.2", // Upgrade to 2.0.0 tried in VIITE-3180; ended up to obscure swagger errors
+        akkaTestkit,
+        logbackClassicRuntime,
+        commonsIO,
+        newRelic
+      ) ++ mockitoTest ++ scalaTestTra
+        ++ scalatraLibs
+        ++ apacheHttp,
       unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf"
     )
   ) dependsOn(baseJar, geoJar, DBJar, viiteJar % "test->test", apiCommonJar % "compile->compile;test->test")
@@ -230,25 +216,19 @@ object Digiroad2Build extends Build {
       testOptions in Test ++= (
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
       libraryDependencies ++= Seq(
-        "org.scalatra" %% "scalatra" % ScalatraVersion,
-        "org.scalatra" %% "scalatra-json" % ScalatraVersion,
+        scalatra,
         jsonJackson,
-        "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test",
-        "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
-        "org.scalatra" %% "scalatra-auth" % ScalatraVersion,
-        "org.scalatra" %% "scalatra-swagger"  % ScalatraVersion,
-        mockitoCore % "test",
-        akkaTestkit % "test",
-        logbackClassic % "runtime",
-        "commons-io" % "commons-io" % CommonsIOVersion,
-        "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
-        httpCore,
-        httpClient,
-        "org.eclipse.jetty" % "jetty-webapp" % JettyVersion % "container;compile",
+        akkaTestkit,
+        logbackClassicRuntime,
+        commonsIO,
+        newRelic,
+        "org.eclipse.jetty" % "jetty-webapp"   % JettyVersion % "container;compile",
         "org.eclipse.jetty" % "jetty-servlets" % JettyVersion % "container;compile",
-        "org.eclipse.jetty" % "jetty-proxy" % JettyVersion % "container;compile",
-        "javax.servlet"     % "javax.servlet-api" % JavaxServletVersion % "provided"
-      )
+        "org.eclipse.jetty" % "jetty-proxy"    % JettyVersion % "container;compile",
+        javaxServletApi
+      ) ++ mockitoTest ++ scalaTestTra
+        ++ scalatraLibs
+        ++ apacheHttp
     )
   ) dependsOn(baseJar, geoJar, DBJar, viiteJar, apiCommonJar, ApiJar) aggregate
     (baseJar, geoJar, DBJar, viiteJar, apiCommonJar, ApiJar)

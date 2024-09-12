@@ -1,8 +1,7 @@
 package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.viite.dao.{RoadAddress, RoadwayDAO}
-import fi.vaylavirasto.viite.model.{RoadPart, Track}
+import fi.vaylavirasto.viite.model.RoadPart
 
 /**
   * Created by venholat on 15.9.2016.

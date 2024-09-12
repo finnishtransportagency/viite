@@ -3,9 +3,10 @@ package fi.liikennevirasto.viite.dao
 import fi.liikennevirasto.viite.NewIdValue
 import fi.vaylavirasto.viite.model.{CalibrationPoint, CalibrationPointLocation, CalibrationPointType}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-class CalibrationPointDAOSpec extends FunSuite with Matchers {
+class CalibrationPointDAOSpec extends AnyFunSuite with Matchers {
 
   test("Test compare calibration point types When compared Then comparison works correctly") {
     val a = CalibrationPointType.UserDefinedCP

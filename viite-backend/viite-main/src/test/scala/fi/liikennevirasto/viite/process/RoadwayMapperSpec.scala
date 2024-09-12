@@ -7,10 +7,11 @@ import fi.vaylavirasto.viite.model.CalibrationPointType.RoadAddressCP
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinuity, LinkGeomSource, RoadPart, SideCode, Track}
 import org.joda.time.DateTime
 import org.mockito.Mockito.when
-import org.scalatest.mockito.MockitoSugar
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
+import org.scalatestplus.mockito.MockitoSugar
 
-class RoadwayMapperSpec extends FunSuite with Matchers{
+class RoadwayMapperSpec extends AnyFunSuite with Matchers{
 
   val mockRoadwayDAO: RoadwayDAO = MockitoSugar.mock[RoadwayDAO]
   val mockLinearLocationDAO: LinearLocationDAO = MockitoSugar.mock[LinearLocationDAO]

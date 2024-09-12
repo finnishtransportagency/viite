@@ -5,7 +5,6 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.MissingTrackException
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.util._
 import fi.vaylavirasto.viite.dao.{Link, LinkDAO, Sequences}
@@ -15,10 +14,11 @@ import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinui
 import fi.vaylavirasto.viite.postgis.DbUtils.runUpdateToDb
 import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 import org.joda.time.DateTime
-import org.scalatest.{FunSuite, Matchers}
-import org.scalatest.mockito.MockitoSugar
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
+import org.scalatestplus.mockito.MockitoSugar
 
-class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
+class ProjectSectionCalculatorSpec extends AnyFunSuite with Matchers {
   val mockRoadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
   private val mockNodesAndJunctionsService = MockitoSugar.mock[NodesAndJunctionsService]
   val mockEventBus: DigiroadEventBus = MockitoSugar.mock[DigiroadEventBus]
