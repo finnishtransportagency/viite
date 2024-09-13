@@ -1,17 +1,14 @@
 package fi.vaylavirasto.viite.dao
 
 import fi.vaylavirasto.viite.util.DateTimeFormatters.finnishDateFormatter
+
 import java.sql.{Date, Timestamp}
-import com.github.tototoshi.slick.MySQLJodaSupport._ // Required for implicit functions' usage slick.jdbc.SetParameter[org.joda.time.DateTime] sql"""
+import com.github.tototoshi.slick.MySQLJodaSupport._
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import slick.jdbc.StaticQuery.interpolation
-
-case class RoadName(id: Long, roadNumber: Long, roadName: String, startDate: Option[DateTime], endDate: Option[DateTime] = None,
-                    validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None, createdBy: String)
-
-case class RoadNameForRoadAddressBrowser(ely: Long, roadNumber: Long, roadName: String)
+import fi.vaylavirasto.viite.model.{RoadName, RoadNameForRoadAddressBrowser}
 
 object RoadNameDAO extends BaseDAO {
 
