@@ -1,6 +1,7 @@
 package fi.liikennevirasto.viite
 
-import fi.vaylavirasto.viite.dao.{ProjectLinkNameDAO, RoadName, RoadNameDAO, RoadNameForRoadAddressBrowser}
+import fi.vaylavirasto.viite.dao.{ProjectLinkNameDAO, RoadNameDAO, RoadNameScalikeDAO}
+import fi.vaylavirasto.viite.model.{RoadName, RoadNameForRoadAddressBrowser}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase
 import fi.vaylavirasto.viite.util.DateTimeFormatters.finnishDateFormatter
 import org.joda.time.DateTime
