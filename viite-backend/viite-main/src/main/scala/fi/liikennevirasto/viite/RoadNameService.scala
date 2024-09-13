@@ -3,6 +3,7 @@ package fi.liikennevirasto.viite
 import fi.vaylavirasto.viite.dao.{ProjectLinkNameDAO, RoadNameDAO, RoadNameScalikeDAO}
 import fi.vaylavirasto.viite.model.{RoadName, RoadNameForRoadAddressBrowser}
 import fi.vaylavirasto.viite.postgis.PostGISDatabase
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC
 import fi.vaylavirasto.viite.util.DateTimeFormatters.finnishDateFormatter
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -16,6 +17,7 @@ class RoadNameService {
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
   def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
+  def withDynSessionScalike[T](f: => T): T = PostGISDatabaseScalikeJDBC.withDynSession(f)
 
   private val logger = LoggerFactory.getLogger(getClass)
 
@@ -32,8 +34,8 @@ class RoadNameService {
   }
 
   def getRoadNamesForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[RoadNameForRoadAddressBrowser] = {
-    withDynSession {
-      RoadNameDAO.fetchRoadNamesForRoadAddressBrowser(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
+    withDynSessionScalike {
+      RoadNameScalikeDAO.fetchRoadNamesForRoadAddressBrowser(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
     }
   }
 
