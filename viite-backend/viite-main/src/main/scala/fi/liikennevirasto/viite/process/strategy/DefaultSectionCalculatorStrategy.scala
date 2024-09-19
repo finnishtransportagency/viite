@@ -35,21 +35,6 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       (projectLinkListToUpdate.filterNot(projectLink => adjustedProjectLinks.map(_.id).contains(projectLink.id)) ++ adjustedProjectLinks).sortBy(pl => pl.addrMRange.start)
     }
 
-    def adjustTerminatedStartingLinksToMatch(terminatedRight: Seq[ProjectLink], terminatedLeft: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
-      val averageEndAddrM = (terminatedLeft.last.addrMRange.end + terminatedRight.last.addrMRange.end) / 2
-
-      val addrMRangeRight = AddrMRange(terminatedRight.last.addrMRange.start, averageEndAddrM)
-      val addrMRangeLeft  = AddrMRange(terminatedLeft.last.addrMRange.start, averageEndAddrM)
-
-      val originalAddrMRangeRight = AddrMRange(terminatedRight.last.originalAddrMRange.start, averageEndAddrM)
-      val originalAddrMRangeLeft  = AddrMRange(terminatedLeft.last.originalAddrMRange.start, averageEndAddrM)
-
-      val lastTerminatedRight = terminatedRight.last.copy(addrMRange = addrMRangeRight, originalAddrMRange = originalAddrMRangeRight)
-      val lastTerminatedLeft  = terminatedLeft.last.copy(addrMRange = addrMRangeLeft, originalAddrMRange = originalAddrMRangeLeft)
-
-      (terminatedRight.init ++ Seq(lastTerminatedRight), terminatedLeft.init ++ Seq(lastTerminatedLeft))
-    }
-
     /**
      * Sorts project link sequence in to "sections" (i.e. smaller project link sections) that are continuous on a road address level and have the same RoadAddressChangeType.
      *
@@ -221,8 +206,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
 
               val adjustedLeft = leftLinkBeforeTerminationSegment.get.copy(
                 addrMRange = addrMRange,
-                originalAddrMRange = AddrMRange(leftLinkBeforeTerminationSegment.get.originalAddrMRange.start, firstLeftLinkOnSection.originalAddrMRange.start),
-                calibrationPointTypes = (leftLinkBeforeTerminationSegment.get.calibrationPointTypes._1, CalibrationPointType.UserDefinedCP) // add CP so the adjusted addrM wont be changed when the addresses are slided in the next phase of recalculation
+                originalAddrMRange = AddrMRange(leftLinkBeforeTerminationSegment.get.originalAddrMRange.start, firstLeftLinkOnSection.originalAddrMRange.start)
               )
               leftProjectLinks = updateProjectLinkList(leftProjectLinks, Seq(adjustedLeft))
             }
@@ -236,9 +220,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
 
               val adjustedRight = rightLinkBeforeTerminationSegment.get.copy(
                 addrMRange = addrMRange,
-                originalAddrMRange = AddrMRange(rightLinkBeforeTerminationSegment.get.originalAddrMRange.start, firstRightLinkOnSection.originalAddrMRange.start),
-                //calibrationPointTypes = (CalibrationPointType.UserDefinedCP, lastLeftLinkOnSection.calibrationPointTypes._2) // add CP so the adjusted addrM wont be changed when the addresses are slided in the next phase of recalculation
-                calibrationPointTypes = (rightLinkBeforeTerminationSegment.get.calibrationPointTypes._1, CalibrationPointType.UserDefinedCP) // add CP so the adjusted addrM wont be changed when the addresses are slided in the next phase of recalculation
+                originalAddrMRange = AddrMRange(rightLinkBeforeTerminationSegment.get.originalAddrMRange.start, firstRightLinkOnSection.originalAddrMRange.start)
               )
               rightProjectLinks = updateProjectLinkList(rightProjectLinks, Seq(adjustedRight))
             }
@@ -247,9 +229,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
             if (leftLinkAfterTerminationSegment.nonEmpty) {
               // update original value for the next link after termination
               val adjustedLeft = leftLinkAfterTerminationSegment.get.copy(
-                originalAddrMRange = AddrMRange(lastLeftLinkOnSection.originalAddrMRange.end, leftLinkAfterTerminationSegment.get.originalAddrMRange.end),
-                //calibrationPointTypes = (CalibrationPointType.UserDefinedCP, lastLeftLinkOnSection.calibrationPointTypes._2) // add CP so the adjusted addrM wont be changed when the addresses are slided in the next phase of recalculation
-                calibrationPointTypes = (CalibrationPointType.UserDefinedCP, CalibrationPointType.UserDefinedCP) // add CP so the adjusted addrM wont be changed when the addresses are slided in the next phase of recalculation
+                originalAddrMRange = AddrMRange(lastLeftLinkOnSection.originalAddrMRange.end, leftLinkAfterTerminationSegment.get.originalAddrMRange.end)
               )
               leftProjectLinks = updateProjectLinkList(leftProjectLinks, Seq(adjustedLeft))
             }
@@ -257,9 +237,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
             if (rightLinkAfterTerminationSegment.nonEmpty) {
               // update original value for the next link after termination
               val adjustedRight = rightLinkAfterTerminationSegment.get.copy(
-                originalAddrMRange = AddrMRange(lastRightLinkOnSection.originalAddrMRange.end, rightLinkAfterTerminationSegment.get.originalAddrMRange.end),
-                //calibrationPointTypes = (CalibrationPointType.UserDefinedCP, lastRightLinkOnSection.calibrationPointTypes._2) // add CP so the adjusted addrM wont be changed when the addresses are slided in the next phase of recalculation
-                calibrationPointTypes = (CalibrationPointType.UserDefinedCP, CalibrationPointType.UserDefinedCP) // add CP so the adjusted addrM wont be changed when the addresses are slided in the next phase of recalculation
+                originalAddrMRange = AddrMRange(lastRightLinkOnSection.originalAddrMRange.end, rightLinkAfterTerminationSegment.get.originalAddrMRange.end)
               )
               rightProjectLinks = updateProjectLinkList(rightProjectLinks, Seq(adjustedRight))
             }
