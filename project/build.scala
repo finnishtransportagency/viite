@@ -18,7 +18,7 @@ object Digiroad2Build extends Build {
   val JodaSlickMapperVersion = "2.2.0" // provides slick 3.1.1, joda-time 2.7, and joda-convert 1.7
 
   val ScalikeJdbcVersion = "3.4.2" // version for Scala version 2.11 - 2.13
-  val ScalikeJdbcJodaTimeVersion = "3.4.2" // Should match your ScalikeJdbcVersion
+  val ScalikeJdbcJodaTimeVersion = ScalikeJdbcVersion // Should match your ScalikeJdbcVersion
 
   val AkkaVersion = "2.5.32" // 2.6.x and up requires Scala 2.12 or greater
   val JsonJacksonVersion    = "3.7.0-M11" // 3.7.0-M12 and up: could not find implicit value for evidence parameter of type org.json4s.AsJsonInput[org.json4s.StreamInput] //  4.0.6 last Scala 2.11 version
@@ -91,7 +91,6 @@ object Digiroad2Build extends Build {
       libraryDependencies ++= Seq(
         scalaTest
       ) ++ joda
-        ++ scalikeJdbcLibs
     )
   )
 
@@ -176,8 +175,6 @@ object Digiroad2Build extends Build {
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
       libraryDependencies ++= Seq(
         akkaActor,
-        httpCore,
-        httpClient,
         "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "compile, test",
         scalatraTest,
         "org.eclipse.jetty" % "jetty-webapp"  % JettyVersion % "compile",
