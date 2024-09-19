@@ -3,7 +3,7 @@ package fi.vaylavirasto.viite.dao
 import fi.vaylavirasto.viite.util.DateTimeFormatters.finnishDateFormatter
 
 import java.sql.{Date, Timestamp}
-import com.github.tototoshi.slick.MySQLJodaSupport._
+import com.github.tototoshi.slick.MySQLJodaSupport._ // Required for implicit functions' usage slick.jdbc.SetParameter[org.joda.time.DateTime] sql"""
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
