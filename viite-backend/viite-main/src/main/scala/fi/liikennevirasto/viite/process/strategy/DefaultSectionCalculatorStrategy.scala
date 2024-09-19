@@ -89,6 +89,13 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     }
 
     def addOppositeTrackLinksToTerminatedSection(leftSection: Seq[ProjectLink], rightTerminatedSections: Seq[Seq[ProjectLink]], rightTransferredSections: Seq[Seq[ProjectLink]]): Seq[ProjectLink] = {
+      def getOppositeSectionsInRange(sectionStart: Long, sectionEnd: Long, maxAddrDiff: Long, oppositeSections: Seq[Seq[ProjectLink]]): Seq[Seq[ProjectLink]] = {
+        oppositeSections.filter(section =>
+          (Math.abs(sectionStart - section.head.addrMRange.start) < maxAddrDiff) &&
+          (Math.abs(sectionEnd - section.last.addrMRange.end) < maxAddrDiff)
+        )
+      }
+
       if (leftSection.forall(_.track == Track.LeftSide)) {
         val maxAddrDiff = 10L
         val sectionStart = leftSection.minBy(_.addrMRange.start).addrMRange.start
@@ -96,15 +103,8 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         val minStartForOppTrack = sectionStart - maxAddrDiff
         val maxEndForOppTrack = sectionEnd + maxAddrDiff
 
-        val oppTrackTerminatedSectionsInRange = rightTerminatedSections.filter(section =>
-          (Math.abs(sectionStart - section.head.addrMRange.start) < maxAddrDiff) &&
-          (Math.abs(sectionEnd - section.last.addrMRange.end) < maxAddrDiff)
-        )
-
-        val oppTrackTransferredSectionsInRange = rightTransferredSections.filter(section =>
-          (Math.abs(sectionStart - section.head.addrMRange.start) < maxAddrDiff) &&
-          (Math.abs(sectionEnd - section.last.addrMRange.end) < maxAddrDiff)
-        )
+        val oppTrackTerminatedSectionsInRange = getOppositeSectionsInRange(sectionStart, sectionEnd, maxAddrDiff, rightTerminatedSections)
+        val oppTrackTransferredSectionsInRange = getOppositeSectionsInRange(sectionStart, sectionEnd, maxAddrDiff, rightTransferredSections)
 
         if(oppTrackTerminatedSectionsInRange.size == 1) { // if the opposite section is terminated
           leftSection ++ oppTrackTerminatedSectionsInRange.head
