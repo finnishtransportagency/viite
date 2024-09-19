@@ -25,10 +25,10 @@ object PostGISDatabaseScalikeJDBC {
       user = ViiteProperties.scalikeJdbcUser,
       password = ViiteProperties.scalikeJdbcPassword,
       settings = ConnectionPoolSettings( // Default settings for now
-        initialSize = 5,
-        maxSize = 7,
-        connectionTimeoutMillis = 1000L,
-        validationQuery = "select 1 as one"
+        initialSize = ViiteProperties.scalikeJdbcPoolInitialSize,
+        maxSize = ViiteProperties.scalikeJdbcPoolMaxSize,
+        connectionTimeoutMillis = ViiteProperties.scalikeJdbcPoolConnectionTimeoutMillis,
+        validationQuery = ViiteProperties.scalikeJdbcPoolValidationQuery
       )
     )
     ConnectionPool.get()
