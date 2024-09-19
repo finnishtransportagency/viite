@@ -51,31 +51,31 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     }
 
     /**
-     * Sorts terminated project link sequence in to "sections" (i.e. smaller project link sections) that are continuous on a road address level.
+     * Sorts project link sequence in to "sections" (i.e. smaller project link sections) that are continuous on a road address level and have the same RoadAddressChangeType.
      *
-     * @param terminatedProjectLinks Seq[ProjectLink]
-     * @return Continuous terminated sections Seq[Seq[ProjectLink]]
+     * @param projectLinksWithSameStatus Seq[ProjectLink]
+     * @return Continuous sections by RoadAddressChangeType Seq[Seq[ProjectLink]]
      * */
-    def toContinuousTerminatedSections(terminatedProjectLinks: Seq[ProjectLink]): Seq[Seq[ProjectLink]] = {
+    def toContinuousSectionsByStatus(projectLinksWithSameStatus: Seq[ProjectLink], sectionStatus: RoadAddressChangeType): Seq[Seq[ProjectLink]] = {
       var sections = Seq.empty[Seq[ProjectLink]]
       var currentSection = Seq.empty[ProjectLink]
 
-      for (link <- terminatedProjectLinks) {
+      for (link <- projectLinksWithSameStatus) {
         if (currentSection.isEmpty) {
-          // Start a new section with a terminated link
-          if (link.status == RoadAddressChangeType.Termination) {
+          // Start a new section with the given status
+          if (link.status == sectionStatus) {
             currentSection :+= link
           }
         } else {
           // Check if the current link continues the section
           val lastLink = currentSection.last
-          if (link.status == RoadAddressChangeType.Termination && lastLink.addrMRange.end == link.addrMRange.start && lastLink.track == link.track) {
+          if (link.status == sectionStatus && lastLink.addrMRange.end == link.addrMRange.start && lastLink.track == link.track) {
             currentSection :+= link
           } else {
             // If it doesn't match, finalize the current section and start a new one
             sections :+= currentSection
             currentSection = Seq.empty
-            if (link.status == RoadAddressChangeType.Termination) {
+            if (link.status == sectionStatus) {
               currentSection :+= link
             }
           }
@@ -88,45 +88,36 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       sections
     }
 
-    def addOppositeTrackLinksToTerminatedSection(leftSection: Seq[ProjectLink], rightLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
+    def addOppositeTrackLinksToTerminatedSection(leftSection: Seq[ProjectLink], rightTerminatedSections: Seq[Seq[ProjectLink]], rightTransferredSections: Seq[Seq[ProjectLink]]): Seq[ProjectLink] = {
       if (leftSection.forall(_.track == Track.LeftSide)) {
+        val maxAddrDiff = 10L
         val sectionStart = leftSection.minBy(_.addrMRange.start).addrMRange.start
         val sectionEnd = leftSection.maxBy(_.addrMRange.end).addrMRange.end
-        val minStartForOppTrack = sectionStart - 10L
-        val maxEndForOppTrack = sectionEnd + 10L
+        val minStartForOppTrack = sectionStart - maxAddrDiff
+        val maxEndForOppTrack = sectionEnd + maxAddrDiff
 
-        val oppTrackLinksInRange = rightLinks.filter(pl => (
-         (pl.status == RoadAddressChangeType.Termination && pl.addrMRange.start >= minStartForOppTrack) ||
-         (pl.status == RoadAddressChangeType.Transfer && pl.originalAddrMRange.start >= minStartForOppTrack)) &&
-         ((pl.status == RoadAddressChangeType.Termination && pl.addrMRange.end <= maxEndForOppTrack) ||
-         (pl.status == RoadAddressChangeType.Transfer && pl.originalAddrMRange.end <= maxEndForOppTrack))
+        val oppTrackTerminatedSectionsInRange = rightTerminatedSections.filter(section =>
+          (Math.abs(sectionStart - section.head.addrMRange.start) < maxAddrDiff) &&
+          (Math.abs(sectionEnd - section.last.addrMRange.end) < maxAddrDiff)
         )
 
-        if (oppTrackLinksInRange.nonEmpty) {
-          if (oppTrackLinksInRange.forall(_.status == RoadAddressChangeType.Termination))
-            leftSection ++ oppTrackLinksInRange
-          else if (oppTrackLinksInRange.forall(pl => pl.status == RoadAddressChangeType.Transfer && pl.track == Track.Combined)) {
-            leftSection
-          }
-          else if (oppTrackLinksInRange.exists(_.status == RoadAddressChangeType.Transfer) && oppTrackLinksInRange.exists(_.status == RoadAddressChangeType.Termination)) {
-            val termLength = oppTrackLinksInRange.filter(_.status == RoadAddressChangeType.Termination).map(pl => pl.addrMRange.end - pl.addrMRange.start).sum
+        val oppTrackTransferredSectionsInRange = rightTransferredSections.filter(section =>
+          (Math.abs(sectionStart - section.head.addrMRange.start) < maxAddrDiff) &&
+          (Math.abs(sectionEnd - section.last.addrMRange.end) < maxAddrDiff)
+        )
 
-            if ((termLength * 100 / (sectionEnd - sectionStart)) > 95) {
-              val res = leftSection ++ oppTrackLinksInRange.filter(_.status == RoadAddressChangeType.Termination)
-              res
-            } else {
-              throw ViiteException(s"Lakkautetulle osuudelle vasemmalla ajoradalla väliltä ${sectionStart} - ${sectionEnd} ei löytynyt vastakkaiselta ajoradalta A) lakkautettua osuutta, TAI B) nolla ajorataiseksi siirrettyä osuutta. Ota yhteys Viite tukeen tai korjaa projektilinkeille oikeat arvot.")
-            }
-          }
-          else {
-            throw ViiteException(s"Lakkautetulle osuudelle vasemmalla ajoradalla väliltä ${sectionStart} - ${sectionEnd} ei löytynyt vastakkaiselta ajoradalta A) lakkautettua osuutta, TAI B) nolla ajorataiseksi siirrettyä osuutta. Ota yhteys Viite tukeen tai korjaa projektilinkeille oikeat arvot.")
-          }
+        if(oppTrackTerminatedSectionsInRange.size == 1) { // if the opposite section is terminated
+          leftSection ++ oppTrackTerminatedSectionsInRange.head
+        } else if (oppTrackTransferredSectionsInRange.size == 1 && oppTrackTransferredSectionsInRange.head.forall(_.track == Track.Combined)) { // if the opposite section was transferred to combined section
+          leftSection ++ oppTrackTransferredSectionsInRange.head
+        } else if (oppTrackTerminatedSectionsInRange.size > 1) { // if there were more than one opposite terminated sections
+          throw ViiteException(s"Vasemmalle ajoradalle löytyi enemmän kuin yksi vastin pari  lakkautettuja osuuksia vastakkaiselta ajoradalta. Tarkista projekti linkit väliltä ${minStartForOppTrack} - ${maxEndForOppTrack}")
+        }  else if (oppTrackTransferredSectionsInRange.size > 1) {
+          throw ViiteException(s"Vasemmalle ajoradalle löytyi enemmän kuin yksi vastin pari  siirrettyjä osuuksia vastakkaiselta ajoradalta. Tarkista projekti linkit väliltä ${minStartForOppTrack} - ${maxEndForOppTrack}")
+        } else {
+          throw ViiteException(s"Vasemmalle ajoradalle ei löytynyt vastin paria (=lakkautettu tai siirretty osuus) vastakkaiselta ajoradalta. Tarkista projekti linkit väliltä ${minStartForOppTrack} - ${maxEndForOppTrack}")
         }
-        else {
-          leftSection
-        }
-      }
-      else {
+      } else {
         leftSection
       }
     }
@@ -181,9 +172,9 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       var adjustedTerminatedLeftLinks = terminatedLeftLinks
       var adjustedTerminatedRightLinks = terminatedRightLinks
 
-      leftSideTerminatedSections.foreach(section => {
-        val firstLinkInSection = section.minBy(_.addrMRange.start)
-        val lastLinkInSection = section.maxBy(_.addrMRange.end)
+      leftSideTerminatedSections.foreach(leftTerminatedSection => {
+        val firstLinkInSection = leftTerminatedSection.minBy(_.addrMRange.start)
+        val lastLinkInSection = leftTerminatedSection.maxBy(_.addrMRange.end)
 
         // check if the terminated segment needs to be adjusted to same address value at the end of the segment
         // The logic: if the terminated segment creates a discontinuity, then the segment is to be adjusted to match on both tracks at the end of the segment
@@ -191,7 +182,9 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         val followingLink = leftLinksToAdjust.find(pl => pl.originalAddrMRange.start == lastLinkInSection.originalAddrMRange.end)
 
         if ((precedingLink.nonEmpty && precedingLink.get.discontinuity == Discontinuity.MinorDiscontinuity) || (precedingLink.isEmpty && followingLink.nonEmpty && firstLinkInSection.addrMRange.start == 0)) {
-          val completeSection = addOppositeTrackLinksToTerminatedSection(section, rightLinksToAdjust ++ terminatedRightLinks)
+          val rightTerminatedSections = toContinuousSectionsByStatus(terminatedRightLinks, RoadAddressChangeType.Termination)
+          val rightTransferredSections = toContinuousSectionsByStatus(rightLinksToAdjust, RoadAddressChangeType.Transfer)
+          val completeSection = addOppositeTrackLinksToTerminatedSection(leftTerminatedSection, rightTerminatedSections, rightTransferredSections)
           val adjustedSection = adjustTerminatedSectionAddressesToMatch(completeSection)
 
           // if the section was adjusted then there are links after the section that need to be adjusted as well
@@ -310,7 +303,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         var terminatedRightLinks = terminated.filter(_.track != Track.LeftSide).sortBy(_.addrMRange.start)
         var terminatedLeftLinks = terminated.filter(_.track != Track.RightSide).sortBy(_.addrMRange.start)
 
-        val leftSideTerminatedSections = toContinuousTerminatedSections(terminatedLeftLinks)
+        val leftSideTerminatedSections = toContinuousSectionsByStatus(terminatedLeftLinks, RoadAddressChangeType.Termination)
 
         if (leftSideTerminatedSections.nonEmpty) {
           val (adjustedLeft, adjustedRight, adjustedTerminatedLeft, adjustedTerminatedRight) = adjustLinksBeforeAndAfterTerminatedSection(left, right, leftSideTerminatedSections, terminatedRightLinks, terminatedLeftLinks)
