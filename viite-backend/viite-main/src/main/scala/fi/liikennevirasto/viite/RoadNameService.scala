@@ -17,7 +17,8 @@ class RoadNameService {
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
   def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
-  def withDynSessionScalike[T](f: => T): T = PostGISDatabaseScalikeJDBC.withDynSession(f)
+  // TODO better naming for this method?
+  def runWithReadOnlySession[Result](readOnlyOperation: => Result): Result = PostGISDatabaseScalikeJDBC.runWithReadOnlySession(readOnlyOperation)
 
   private val logger = LoggerFactory.getLogger(getClass)
 
@@ -34,7 +35,7 @@ class RoadNameService {
   }
 
   def getRoadNamesForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[RoadNameForRoadAddressBrowser] = {
-    withDynSessionScalike {
+    runWithReadOnlySession {
       RoadNameScalikeDAO.fetchRoadNamesForRoadAddressBrowser(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
     }
   }

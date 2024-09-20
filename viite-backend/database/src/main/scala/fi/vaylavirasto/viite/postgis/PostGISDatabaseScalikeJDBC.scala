@@ -34,14 +34,14 @@ object PostGISDatabaseScalikeJDBC {
     ConnectionPool.get()
   }
 
-  def withDynTransaction[T](f: => T): T = {
+  def runWithTransaction[Result](databaseOperation: => Result): Result = {
     if (transactionOpen.get())
       throw new IllegalThreadStateException("Attempted to open nested transaction")
     else {
       try {
         transactionOpen.set(true)
         DB(connectionPool.borrow()).localTx { implicit session =>
-          f
+          databaseOperation
         }
       } finally {
         transactionOpen.set(false)
@@ -49,14 +49,14 @@ object PostGISDatabaseScalikeJDBC {
     }
   }
 
-  def withDynSession[T](f: => T): T = {
+  def runWithReadOnlySession[Result](readOnlyOperation: => Result): Result = {
     if (transactionOpen.get())
       throw new IllegalThreadStateException("Attempted to open nested session")
     else {
       try {
         transactionOpen.set(true)
         DB(connectionPool.borrow()).readOnly { implicit session =>
-          f
+          readOnlyOperation
         }
       } finally {
         transactionOpen.set(false)
