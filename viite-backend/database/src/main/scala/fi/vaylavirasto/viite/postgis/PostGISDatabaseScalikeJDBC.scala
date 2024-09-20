@@ -12,7 +12,7 @@ object PostGISDatabaseScalikeJDBC {
 
 
   private def initConnectionPool(): ConnectionPool = {
-    Class.forName(ViiteProperties.scalikeJdbcDriver)
+    Class.forName("org.postgresql.Driver")
 
     // Global settings for ScalikeJDBC
     GlobalSettings.loggingSQLAndTime = LoggingSQLAndTimeSettings(
@@ -25,10 +25,10 @@ object PostGISDatabaseScalikeJDBC {
       user = ViiteProperties.scalikeJdbcUser,
       password = ViiteProperties.scalikeJdbcPassword,
       settings = ConnectionPoolSettings( // Default settings for now
-        initialSize = ViiteProperties.scalikeJdbcPoolInitialSize,
-        maxSize = ViiteProperties.scalikeJdbcPoolMaxSize,
-        connectionTimeoutMillis = ViiteProperties.scalikeJdbcPoolConnectionTimeoutMillis,
-        validationQuery = ViiteProperties.scalikeJdbcPoolValidationQuery
+        initialSize = 5,
+        maxSize = 20,
+        connectionTimeoutMillis = 3000L,
+        validationQuery = "select 1 as one"
       )
     )
     ConnectionPool.get()
