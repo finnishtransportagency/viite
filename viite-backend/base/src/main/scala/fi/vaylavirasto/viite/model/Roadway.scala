@@ -21,7 +21,14 @@ case class Roadway(
                     validTo: Option[DateTime] = None
                          )
 
-case class RoadwaysForJunction(jId: Long, roadwayNumber: Long, roadPart: RoadPart, track: Long, addrM: Long, beforeAfter: Long)
+case class RoadwaysForJunction(
+                                jId: Long,
+                                roadwayNumber: Long,
+                                roadPart: RoadPart,
+                                track: Long,
+                                addrM: Long,
+                                beforeAfter: Long
+                              )
 
 sealed trait TerminationCode {
   def value: Int
@@ -34,17 +41,11 @@ object TerminationCode {
     values.find(_.value == intValue).getOrElse(NoTermination)
   }
 
-  case object NoTermination extends TerminationCode {
-    def value = 0
-  }
+  case object NoTermination  extends TerminationCode { def value = 0 }
 
-  case object Termination extends TerminationCode {
-    def value = 1
-  }
+  case object Termination    extends TerminationCode { def value = 1 }
 
-  case object Subsequent extends TerminationCode {
-    def value = 2
-  }
+  case object Subsequent     extends TerminationCode { def value = 2 }
 
   //TODO: Add the rest of the related classes here and remove them from the RoadwayDAO
 }
