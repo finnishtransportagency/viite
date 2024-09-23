@@ -577,8 +577,14 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
               throw new RoadAddressException(NegativeLengthErrorMessage.format(curr.linkId))
             }
             if (curr.status != RoadAddressChangeType.New && (curr.originalTrack == curr.track || curr.track == Track.Combined) && !(Math.abs((curr.addrMRange.end - curr.addrMRange.start) - (curr.originalAddrMRange.end - curr.originalAddrMRange.start)) < maxDiffForChange)) {
-              logger.error(s"Length mismatch. New: ${curr.addrMRange.start} ${curr.addrMRange.end} original: ${curr.originalAddrMRange.start} ${curr.originalAddrMRange.end} linkId: ${curr.linkId}")
-              throw new RoadAddressException(LengthMismatchErrorMessage.format(curr.linkId, maxDiffForChange - 1))
+              val discontinuityErrors = projectValidator.checkProjectContinuity(projectDAO.fetchById(pls.head.projectId).get, pls)
+              if (discontinuityErrors.nonEmpty) {
+                val erroneousLinkIds = discontinuityErrors.flatMap(err => err.affectedLinkIds)
+                throw ViiteException(s"Tarkista jatkuvuus -koodit linkeiltä: ${erroneousLinkIds}")
+              } else {
+                logger.error(s"Length mismatch. New: ${curr.addrMRange.start} ${curr.addrMRange.end} original: ${curr.originalAddrMRange.start} ${curr.originalAddrMRange.end} linkId: ${curr.linkId}")
+                throw new RoadAddressException(LengthMismatchErrorMessage.format(curr.linkId, maxDiffForChange - 1))
+              }
             }
             /* VIITE-2957
             Replacing the above if-statement with the one commented out below enables a user to bypass the RoadAddressException.
