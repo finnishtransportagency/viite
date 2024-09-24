@@ -107,14 +107,19 @@
         }
 
         function toggle() {
+            $('.road-address-browser-modal-overlay').length === 0 ? show() : hide();
+        }
+
+        function show() {
             $('.container').append('<div class="road-address-browser-modal-overlay viite-modal-overlay confirm-modal"><div class="road-address-browser-modal-window"></div></div>');
-            $('.road-address-browser-modal-window').append(roadAddressChangesBrowserWindow.toggle());
+            $('.road-address-browser-modal-window').append(roadAddressChangesBrowserWindow.show());
             bindEvents();
         }
 
         function hide() {
-            $('.road-address-browser-modal-window').append(roadAddressChangesBrowserWindow.toggle());
+            roadAddressChangesBrowserWindow.hide();
             $('.road-address-browser-modal-overlay').remove();
+            clearResultsAndDisableExcelButton();
         }
 
         function exportDataAsExcelFile() {

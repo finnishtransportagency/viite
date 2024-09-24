@@ -311,14 +311,19 @@
         }
 
         function toggle() {
+            $('.road-address-browser-modal-overlay').length ? hide() : show();
+        }
+
+        function show() {
             $('.container').append('<div class="road-address-browser-modal-overlay viite-modal-overlay confirm-modal"><div class="road-address-browser-modal-window"></div></div>');
-            $('.road-address-browser-modal-window').append(roadAddrBrowserWindow.toggle());
+            $('.road-address-browser-modal-window').append(roadAddrBrowserWindow.show());
             bindEvents();
         }
 
         function hide() {
-            $('.road-address-browser-modal-window').append(roadAddrBrowserWindow.toggle());
+            roadAddrBrowserWindow.hide();
             $('.road-address-browser-modal-overlay').remove();
+            clearResultsAndDisableExcelButton();
         }
 
         function exportDataAsExcelFile() {
