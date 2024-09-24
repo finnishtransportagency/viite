@@ -119,7 +119,6 @@
         function hide() {
             roadAddressChangesBrowserWindow.hide();
             $('.road-address-browser-modal-overlay').remove();
-            clearResultsAndDisableExcelButton();
         }
 
         function exportDataAsExcelFile() {

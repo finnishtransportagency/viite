@@ -323,7 +323,6 @@
         function hide() {
             roadAddrBrowserWindow.hide();
             $('.road-address-browser-modal-overlay').remove();
-            clearResultsAndDisableExcelButton();
         }
 
         function exportDataAsExcelFile() {
