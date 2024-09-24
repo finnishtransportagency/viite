@@ -37,7 +37,8 @@
       };
       let lon, lat;
       const addressMValueFixed = _.isUndefined(addressMValue) ? 0 : addressMValue;
-      if ((roadData.startAddrMValue === addressMValueFixed && roadData.sideCode === sideCodes.TowardsDigitizing.value) || (roadData.endAddrMValue === addressMValueFixed && roadData.sideCode === sideCodes.AgainstDigitizing.value)) {
+      if ((roadData.addrMRange.start === addressMValueFixed && roadData.sideCode === sideCodes.TowardsDigitizing.value)
+         || (roadData.addrMRange.end === addressMValueFixed && roadData.sideCode === sideCodes.AgainstDigitizing.value)) {
         lon = roadData.geometry[0].x;
         lat = roadData.geometry[0].y;
       } else {
@@ -60,7 +61,7 @@
      * @returns {*}
      */
     const getCoordinatesFromSearchInput = function (input) {
-      return backend.getSearchResults(input.search).then(function (coordinateData) {
+      return backend.getSearchResults(input.search.trim()).then(function (coordinateData) {
         const searchResult = [];
         coordinateData.forEach(function (item) {
           let partialResult;
@@ -72,7 +73,7 @@
             partialResult.title = `mtkId, ${input.search}`;
           } else if (item && item.road && item.road[0]) {
             const sortedRoad = _.sortBy(_.sortBy(item.road, function (addr) {
-              return addr.startAddrMValue;
+              return addr.addrMRange.start;
             }), function (road) {
               return road.roadPartNumber;
             });
@@ -118,8 +119,8 @@
       const input = LocationInputParser.parse(searchString);
       const resultByInputType = {
         coordinate: resultFromCoordinates,
-        street: geocode,
-        road: getCoordinatesFromSearchInput,
+        street:     geocode,
+        road:       getCoordinatesFromSearchInput,
         invalid: function () {
           return $.Deferred().reject('Syötteestä ei voitu päätellä koordinaatteja, katuosoitetta tai tieosoitetta');
         }

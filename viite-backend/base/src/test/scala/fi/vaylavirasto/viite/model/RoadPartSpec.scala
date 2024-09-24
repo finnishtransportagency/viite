@@ -1,9 +1,10 @@
 package fi.vaylavirasto.viite.model
 
 import fi.vaylavirasto.viite.util.ViiteException
-import org.scalatest._
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-class RoadPartSpec extends FunSuite with Matchers {
+class RoadPartSpec extends AnyFunSuite with Matchers {
 
   test("RoadPart: RoadPart construction succeeds, when given valid road number, and road part number.") {
     noException should be thrownBy (RoadPart(    1,  1))

@@ -124,10 +124,10 @@ trait TrackCalculatorStrategy {
   }
 
   /**
-   * Return the calculated values of the start and end addresses of both left and right links
+   * Return the calculated values of the start, and end addresses of both left and right links
    *
-   * @param leftLink
-   * @param rightLink
+   * @param leftLink  Link of the track 2
+   * @param rightLink Link of the track 1
    * @param userCalibrationPoint
    * @return
    */
