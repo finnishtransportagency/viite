@@ -810,12 +810,11 @@ println(sql)
     }
   }
   /**
-    * Reverses the road part in project. Switches side codes 2 <-> 3, updates calibration points start <-> end,
+    * Reverses the given road part in project. Switches side codes 2 <-> 3, updates calibration points start <-> end,
     * updates track codes 1 <-> 2
     *
     * @param projectId
-    * @param roadNumber
-    * @param roadPartNumber
+    * @param roadPart Road part to be reversed
     */
   def reverseRoadPartDirection(projectId: Long, roadPart: RoadPart): Unit = {
     time(logger, "Reverse road part direction") {

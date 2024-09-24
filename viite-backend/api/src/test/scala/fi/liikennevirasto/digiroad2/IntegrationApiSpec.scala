@@ -5,16 +5,19 @@ import fi.liikennevirasto.viite.dao.ProjectCalibrationPoint
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.vaylavirasto.viite.dao.RoadName
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, LifecycleStatus, LinkGeomSource, NodeType, RoadPart, SideCode}
+import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, LifecycleStatus, LinkGeomSource, RoadPart, SideCode}
 import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, Formats}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
-import org.scalatest.{BeforeAndAfter, FunSuite}
-import org.scalatest.mockito.MockitoSugar
+import org.scalatest.BeforeAndAfter
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatra.test.scalatest.ScalatraSuite
 
-class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter {
+class IntegrationApiSpec extends AnyFunSuite with ScalatraSuite with BeforeAndAfter {
+  override def header = response.header // IDE nagged about unimplemented variable
+
   protected implicit val jsonFormats: Formats = DefaultFormats
 
   val mockRoadAddressService: RoadAddressService = MockitoSugar.mock[RoadAddressService]

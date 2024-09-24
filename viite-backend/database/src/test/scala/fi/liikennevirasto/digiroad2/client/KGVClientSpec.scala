@@ -6,9 +6,10 @@ import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
 import fi.vaylavirasto.viite.model.RoadLink
 import org.geotools.geometry.jts.GeometryBuilder
 import org.locationtech.jts.geom.GeometryFactory
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-class KGVClientSpec extends FunSuite with Matchers {
+class KGVClientSpec extends AnyFunSuite with Matchers {
 
   val geomFact = new GeometryFactory()
   val geomBuilder = new GeometryBuilder(geomFact)

@@ -6,9 +6,10 @@ import fi.liikennevirasto.viite.Dummies._
 import fi.liikennevirasto.viite.process.RoadAddressFiller.ChangeSet
 import fi.vaylavirasto.viite.model.LinkGeomSource.NormalLinkInterface
 import fi.vaylavirasto.viite.model.SideCode
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
+class ApplyChangeInfoProcessSpec extends AnyFunSuite with Matchers {
 
   test("Test applyChange When the road link is lengthened at the start Then linear locations measure should be adjusted") {
 
