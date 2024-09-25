@@ -175,8 +175,9 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         // Or
         // if the terminated segment is at the start of the road part
         // then the segment is to be adjusted to match on both tracks at the start and end of the segment
-        val precedingLink = leftLinksToAdjust.find(pl => pl.originalAddrMRange.end == firstLinkInSection.originalAddrMRange.start)
-        val followingLink = leftLinksToAdjust.find(pl => pl.originalAddrMRange.start == lastLinkInSection.originalAddrMRange.end)
+        val precedingLink = leftLinksToAdjust.find(pl => (pl.originalAddrMRange.end == firstLinkInSection.originalAddrMRange.start) || (pl.status == RoadAddressChangeType.New && pl.addrMRange.end == firstLinkInSection.originalAddrMRange.start))
+        val followingLink = leftLinksToAdjust.find(pl => (pl.originalAddrMRange.start == lastLinkInSection.originalAddrMRange.end) || (pl.status == RoadAddressChangeType.New && pl.addrMRange.start == lastLinkInSection.originalAddrMRange.end))
+
 
         if ((precedingLink.nonEmpty && precedingLink.get.discontinuity == Discontinuity.MinorDiscontinuity) || (precedingLink.isEmpty && followingLink.nonEmpty && firstLinkInSection.addrMRange.start == 0)) {
           val rightTerminatedSections = toContinuousSectionsByStatus(terminatedRightLinks, RoadAddressChangeType.Termination)
