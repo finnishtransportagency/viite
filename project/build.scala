@@ -56,13 +56,14 @@ object Digiroad2Build extends Build {
   val scalikeConfig   = "org.scalikejdbc" %% "scalikejdbc-config" % ScalikeJdbcVersion
   val scalikeJodaTime = "org.scalikejdbc" %% "scalikejdbc-joda-time" % ScalikeJdbcJodaTimeVersion
   val scalikeLogback  = "ch.qos.logback"  %  "logback-classic"    % "1.2.3"
+  val scalikeTest     = "org.scalikejdbc" %% "scalikejdbc-test"   % ScalikeJdbcVersion % "test"
 
-  lazy val apacheHttp  = Seq(httpCore, httpClient)
-  lazy val joda        = Seq(jodaConvert, jodaTime)
-  lazy val mockitoTest = Seq(mockitoCore, mockito4X)
-  lazy val scalaTestTra= Seq(scalaTest, scalatraTest)
-  lazy val scalatraLibs= Seq(scalatraJson, scalatraAuth, scalatraSwagger)
-  lazy val scalikeJdbcLibs = Seq(scalikeJdbc, scalikeConfig, scalikeJodaTime,scalikeLogback)
+  lazy val apacheHttp      = Seq(httpCore, httpClient)
+  lazy val joda            = Seq(jodaConvert, jodaTime)
+  lazy val mockitoTest     = Seq(mockitoCore, mockito4X)
+  lazy val scalaTestTra    = Seq(scalaTest, scalatraTest)
+  lazy val scalatraLibs    = Seq(scalatraJson, scalatraAuth, scalatraSwagger)
+  lazy val scalikeJdbcLibs = Seq(scalikeJdbc, scalikeConfig, scalikeJodaTime, scalikeLogback, scalikeTest)
 
   val geoToolsDependencies: Seq[ModuleID] = Seq(
     "org.geotools" % "gt-graph"       % GeoToolsVersion,
