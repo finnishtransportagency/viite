@@ -25,6 +25,59 @@ object RoadNameScalikeDAO extends ScalikeJDBCBaseDAO {
   private val rn = RoadNameScalike.syntax("rn") // rn is an alias for RoadNameScalike object to be used in queries
   private val rw = RoadwayScalike.syntax("rw")
 
+  // Base query to select all columns from ROAD_NAME table
+  private val selectAllFromRoadNameQuery = sqls"""
+  SELECT ${rn.id}, ${rn.roadNumber}, ${rn.roadName}, ${rn.startDate}, ${rn.endDate},
+         ${rn.validFrom}, ${rn.validTo}, ${rn.createdBy}
+  FROM ${RoadNameScalike.as(rn)}
+"""
+
+  // Method to run select queries for RoadName objects
+  private def queryList(query: SQLSyntax): Seq[RoadName] = {
+    runSelectQuery(sql"$query".map(RoadNameScalike.apply))
+  }
+
+  /**
+   * Get all road names from ROAD_NAME table with road number and optional start and end dates
+   *
+   * @param startDate Optional start date for the road names
+   * @param endDate   Optional end date for the road names
+   * @return List of RoadName objects
+   */
+  def getAllByRoadNumber(roadNumber: Long, startDate: Option[DateTime] = None, endDate: Option[DateTime] = None): Seq[RoadName] = {
+    val query = withHistoryFilter(
+      sqls"""$selectAllFromRoadNameQuery WHERE ${rn.roadNumber} = $roadNumber AND ${rn.validTo} IS NULL""",
+      startDate,
+      endDate
+    )
+    queryList(query)
+  }
+
+  /**
+   * Get all road names from ROAD_NAME table with road name and optional start and end dates
+   *
+   * @param startDate Optional start date for the road names
+   * @param endDate   Optional end date for the road names
+   * @return List of RoadName objects
+   */
+  def getAllByRoadName(roadName: String, startDate: Option[DateTime] = None, endDate: Option[DateTime] = None): Seq[RoadName] = {
+    val baseQuery = sqls"""$selectAllFromRoadNameQuery WHERE ${rn.roadName} = $roadName AND ${rn.validTo} IS NULL"""
+    val query = withHistoryFilter(baseQuery, startDate, endDate)
+    queryList(query)
+  }
+
+  def getAllByRoadNumberAndName(roadNumber: Long, roadName: String, startDate: Option[DateTime] = None, endDate: Option[DateTime] = None): Seq[RoadName] = {
+    val baseQuery = sqls"""$selectAllFromRoadNameQuery WHERE ${rn.roadName} = $roadName AND ${rn.roadNumber} = $roadNumber AND ${rn.validTo} IS NULL"""
+    val query = withHistoryFilter(baseQuery, startDate, endDate)
+    queryList(query)
+  }
+
+  private def withHistoryFilter(query: SQLSyntax, startDate: Option[DateTime], endDate: Option[DateTime]): SQLSyntax = {
+    val startDateQuery = startDate.map(date => sqls"AND ${rn.startDate} >= $date").getOrElse(sqls"")
+    val endDateQuery = endDate.map(date => sqls"AND ${rn.endDate} <= $date").getOrElse(sqls"")
+    sqls"$query $startDateQuery $endDateQuery"
+  }
+
   def fetchRoadNamesForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long],
                                           minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[RoadNameForRoadAddressBrowser] = {
 

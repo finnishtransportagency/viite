@@ -16,6 +16,8 @@ class RoadNameService {
 
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
+  def runWithScalikeTransaction[T](f: => T): T = PostGISDatabaseScalikeJDBC.runWithTransaction(f)
+
   def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
   // TODO better naming for this method?
   def runWithReadOnlySession[Result](readOnlyOperation: => Result): Result = PostGISDatabaseScalikeJDBC.runWithReadOnlySession(readOnlyOperation)
@@ -23,7 +25,7 @@ class RoadNameService {
   private val logger = LoggerFactory.getLogger(getClass)
 
   def getRoadNames(oRoadNumber: Option[String], oRoadName: Option[String], oStartDate: Option[DateTime], oEndDate: Option[DateTime]): Either[String, Seq[RoadName]] = {
-    withDynTransaction {
+    runWithScalikeTransaction {
       getRoadNamesInTX(oRoadNumber, oRoadName, oStartDate, oEndDate)
     }
   }
@@ -80,11 +82,11 @@ class RoadNameService {
     try {
       (oRoadNumber, oRoadName) match {
         case (Some(roadNumber), Some(roadName)) =>
-          Right(RoadNameDAO.getAllByRoadNumberAndName(roadNumber.toLong, roadName, oStartDate, oEndDate))
+          Right(RoadNameScalikeDAO.getAllByRoadNumberAndName(roadNumber.toLong, roadName, oStartDate, oEndDate))
         case (None, Some(roadName)) =>
-          Right(RoadNameDAO.getAllByRoadName(roadName, oStartDate, oEndDate))
+          Right(RoadNameScalikeDAO.getAllByRoadName(roadName, oStartDate, oEndDate))
         case (Some(roadNumber), None) =>
-          Right(RoadNameDAO.getAllByRoadNumber(roadNumber.toLong, oStartDate, oEndDate))
+          Right(RoadNameScalikeDAO.getAllByRoadNumber(roadNumber.toLong, oStartDate, oEndDate))
         case (None, None) => Left("Missing either RoadNumber or RoadName")
       }
     } catch {
