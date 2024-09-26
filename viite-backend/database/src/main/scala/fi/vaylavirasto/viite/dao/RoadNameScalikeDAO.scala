@@ -9,7 +9,7 @@ import scalikejdbc.jodatime.JodaWrappedResultSet.fromWrappedResultSetToJodaWrapp
 object RoadNameScalike extends SQLSyntaxSupport[RoadName] {
   override val tableName = "ROAD_NAME"
 
-  def apply(rs: WrappedResultSet): RoadName = new RoadName(
+  def apply(rs: WrappedResultSet): RoadName = RoadName(
     id = rs.long("id"),
     roadNumber = rs.long("road_number"),
     roadName = rs.string("road_name"),
@@ -18,6 +18,16 @@ object RoadNameScalike extends SQLSyntaxSupport[RoadName] {
     validFrom = rs.jodaDateTimeOpt("valid_from"),
     validTo = rs.jodaDateTimeOpt("valid_to"),
     createdBy = rs.string("created_by")
+  )
+}
+
+object RoadNameForRoadAddressBrowserScalike extends SQLSyntaxSupport[RoadNameForRoadAddressBrowser] {
+  override val tableName = "ROAD_NAME"
+
+  def apply(rs: WrappedResultSet): RoadNameForRoadAddressBrowser = RoadNameForRoadAddressBrowser(
+    ely = rs.long("ely"),
+    roadNumber = rs.long("road_number"),
+    roadName = rs.string("road_name")
   )
 }
 
@@ -115,12 +125,7 @@ object RoadNameScalikeDAO extends ScalikeJDBCBaseDAO {
 
     def fetchRoadNames(queryFilter: SQLSyntax => SQL[Nothing, NoExtractor]): Seq[RoadNameForRoadAddressBrowser] = {
       val query = queryFilter(baseQuery)
-
-      query.map(rs => RoadNameForRoadAddressBrowser(
-        rs.long("ely"),
-        rs.long("road_number"),
-        rs.string("road_name")
-      )).list.apply()
+      query.map(RoadNameForRoadAddressBrowserScalike.apply).list.apply()
     }
 
     fetchRoadNames(withOptionalParameters(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber))
