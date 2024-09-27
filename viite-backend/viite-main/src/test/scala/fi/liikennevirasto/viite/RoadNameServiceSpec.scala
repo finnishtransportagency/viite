@@ -2,101 +2,112 @@ package fi.liikennevirasto.viite
 
 import fi.vaylavirasto.viite.dao.RoadNameDAO
 import fi.vaylavirasto.viite.postgis.DbUtils.runUpdateToDb
+import fi.vaylavirasto.viite.postgis.DbUtilsScalike.runUpdateToDbScalike
 import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollbackScalike
 import org.joda.time.DateTime
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
+import scalikejdbc._
+
 
 class RoadNameServiceSpec extends AnyFunSuite with Matchers {
   private val roadNameService = new RoadNameService
 
-  test("Test roadNameService.getRoadNamesInTX() When searching for a newly create road name by it's road number Then return the entry for said road name.") {
-    runWithRollback {
-      runUpdateToDb("""Insert into ROAD_NAME (ROAD_NUMBER,ROAD_NAME,START_DATE,END_DATE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('999','OTAVA-HIRVENSALMI-LEVÄLAHTI',to_date('01.01.1989','DD.MM.YYYY'),to_date('01.01.1996','DD.MM.YYYY'),to_date('17.01.2006','DD.MM.YYYY'),null,'TR',to_timestamp('14.03.2018 14:14:44','DD.MM.YYYY HH24:MI:SS'))""")
+  val commonTestData = sql"""
+    INSERT INTO ROAD_NAME (ROAD_NUMBER, ROAD_NAME, START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME)
+    VALUES (999, 'Test Road', ${new DateTime()}, null, ${new DateTime()}, null, 'TestUser', ${new DateTime()})
+  """
+
+  test("getRoadNames should return a road name when searching by road number") {
+    runWithRollbackScalike { implicit session: DBSession =>
+      runUpdateToDbScalike(commonTestData)
       val search = roadNameService.getRoadNamesInTX(Some("999"), None, None, None)
       search.isRight should be(true)
       search match {
         case Right(result) =>
           result.size should be(1)
-        case Left(_) => println("should not get here")
+        case Left(_) => fail("should not get here")
       }
     }
   }
 
+
+
   test("Test roadNameService.getRoadNamesInTX() When searching for a newly create road name by it's road number and name Then return the entry for said road name.") {
-    runWithRollback {
-      runUpdateToDb("""Insert into ROAD_NAME (ROAD_NUMBER,ROAD_NAME,START_DATE,END_DATE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('999','OTAVA-HIRVENSALMI-LEVÄLAHTI',to_date('01.01.1989','DD.MM.YYYY'),to_date('01.01.1996','DD.MM.YYYY'),to_date('17.01.2006','DD.MM.YYYY'),null,'TR',to_timestamp('14.03.2018 14:14:44','DD.MM.YYYY HH24:MI:SS'))""")
+    runWithRollbackScalike { implicit session: DBSession =>
+      runUpdateToDbScalike(commonTestData)
       val search = roadNameService.getRoadNamesInTX(Some("999"), Some("OTAVA-HIRVENSALMI-LEVÄLAHTI"), None, None)
       search.isRight should be(true)
       search match {
         case Right(result) =>
           result.size should be(1)
-        case Left(_) => println("should not get here")
+        case Left(_) => fail("should not get here")
       }
     }
   }
 
   test("Test roadNameService.getRoadNamesInTX() When searching for a newly create road name by it's road name Then return the entry for said road name.") {
-    runWithRollback {
-      runUpdateToDb("""Insert into ROAD_NAME (ROAD_NUMBER,ROAD_NAME,START_DATE,END_DATE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('999','OTAVA-HIRVENSALMI-LEVÄLAHTI',to_date('01.01.1989','DD.MM.YYYY'),to_date('01.01.1996','DD.MM.YYYY'),to_date('17.01.2006','DD.MM.YYYY'),null,'TR',to_timestamp('14.03.2018 14:14:44','DD.MM.YYYY HH24:MI:SS'))""")
-      val search = roadNameService.getRoadNamesInTX(Some("999"), Some("OTAVA-HIRVENSALMI-LEVÄLAHTI"), None, None)
+    runWithRollbackScalike { implicit session: DBSession =>
+      runUpdateToDbScalike(commonTestData)
+      val search = roadNameService.getRoadNamesInTX(None, Some("OTAVA-HIRVENSALMI-LEVÄLAHTI"), None, None)
       search.isRight should be(true)
       search match {
         case Right(result) =>
           result.size should be(1)
-        case Left(_) => println("should not get here")
+        case Left(_) => fail("should not get here")
       }
     }
   }
 
   test("Test roadNameService.getRoadNamesInTX() When searching for a newly create road name by it's road number, name and date Then return the entry for said road name.") {
-    runWithRollback {
-      runUpdateToDb("""Insert into ROAD_NAME (ROAD_NUMBER,ROAD_NAME,START_DATE,END_DATE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('999','OTAVA-HIRVENSALMI-LEVÄLAHTI',to_date('01.01.1989','DD.MM.YYYY'),to_date('01.01.1996','DD.MM.YYYY'),to_date('17.01.2006','DD.MM.YYYY'),null,'TR',to_timestamp('14.03.2018 14:14:44','DD.MM.YYYY HH24:MI:SS'))""")
+    runWithRollbackScalike { implicit session: DBSession =>
+      runUpdateToDbScalike(commonTestData)
       val search = roadNameService.getRoadNamesInTX(Some("999"), Some("OTAVA-HIRVENSALMI-LEVÄLAHTI"), Some(DateTime.parse("1988-01-01")), None)
       search.isRight should be(true)
       search match {
         case Right(result) =>
           result.size should be(1)
-        case Left(_) => println("should not get here")
+        case Left(_) => fail("should not get here")
       }
     }
   }
 
   test("Test roadNameService.getRoadNamesInTX() When searching for a newly create road name by it's road number, name and a wrong date Then returns none.") {
-    runWithRollback {
-      runUpdateToDb("""Insert into ROAD_NAME (ROAD_NUMBER,ROAD_NAME,START_DATE,END_DATE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('999','OTAVA-HIRVENSALMI-LEVÄLAHTI',to_date('01.01.1989','DD.MM.YYYY'),to_date('01.01.1996','DD.MM.YYYY'),to_date('17.01.2006','DD.MM.YYYY'),null,'TR',to_timestamp('14.03.2018 14:14:44','DD.MM.YYYY HH24:MI:SS'))""")
+    runWithRollbackScalike { implicit session: DBSession =>
+      runUpdateToDbScalike(commonTestData)
       val search = roadNameService.getRoadNamesInTX(Some("999"), Some("OTAVA-HIRVENSALMI-LEVÄLAHTI"), Some(DateTime.parse("1999-01-01")), None)
       search.isRight should be(true)
       search match {
         case Right(result) =>
           result.size should be(0)
-        case Left(_) => println("should not get here")
+        case Left(_) => fail("should not get here")
       }
     }
   }
 
   test("Test roadNameService.getRoadNamesInTX() When searching for a newly create road name by it's road number, name and a wrong end date Then returns none.") {
-    runWithRollback {
-      runUpdateToDb("""Insert into ROAD_NAME (ROAD_NUMBER,ROAD_NAME,START_DATE,END_DATE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('999','OTAVA-HIRVENSALMI-LEVÄLAHTI',to_date('01.01.1989','DD.MM.YYYY'),to_date('01.01.1996','DD.MM.YYYY'),to_date('17.01.2006','DD.MM.YYYY'),null,'TR',to_timestamp('14.03.2018 14:14:44','DD.MM.YYYY HH24:MI:SS'))""")
+    runWithRollbackScalike { implicit session: DBSession =>
+      runUpdateToDbScalike(commonTestData)
       val search = roadNameService.getRoadNamesInTX(Some("999"), Some("OTAVA-HIRVENSALMI-LEVÄLAHTI"), None, Some(DateTime.parse("1979-01-01")))
       search.isRight should be(true)
       search match {
         case Right(result) =>
           result.size should be(0)
-        case Left(_) => println("should not get here")
+        case Left(_) => fail("should not get here")
       }
     }
   }
 
   test("Test roadNameService.getRoadNamesInTX() When searching for a newly create road name by it's road number, name and  end date Then returns the entry for said road name.") {
-    runWithRollback {
-      runUpdateToDb("""Insert into ROAD_NAME (ROAD_NUMBER,ROAD_NAME,START_DATE,END_DATE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('999','OTAVA-HIRVENSALMI-LEVÄLAHTI',to_date('01.01.1989','DD.MM.YYYY'),to_date('01.01.1996','DD.MM.YYYY'),to_date('17.01.2006','DD.MM.YYYY'),null,'TR',to_timestamp('14.03.2018 14:14:44','DD.MM.YYYY HH24:MI:SS'))""")
+    runWithRollbackScalike { implicit session: DBSession =>
+      runUpdateToDbScalike(commonTestData)
       val search = roadNameService.getRoadNamesInTX(Some("999"), Some("OTAVA-HIRVENSALMI-LEVÄLAHTI"), None, Some(DateTime.parse("1999-01-01")))
       search.isRight should be(true)
       search match {
         case Right(result) =>
           result.size should be(1)
-        case Left(_) => println("should not get here")
+        case Left(_) => fail("should not get here")
       }
     }
   }
