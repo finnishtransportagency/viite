@@ -6,19 +6,22 @@ import org.slf4j.{Logger, LoggerFactory}
 trait ScalikeJDBCBaseDAO {
   protected def logger: Logger = LoggerFactory.getLogger(getClass)
 
-  // Implicit session for database operations
-  implicit val session: DBSession = AutoSession
+  // This method wraps operations in a session if one isn't provided
+  protected def withS[A](f: DBSession => A)(implicit session: DBSession = AutoSession): A = {
+    session match {
+      case AutoSession => DB.autoCommit(f)
+      case _ => f(session)
+    }
+  }
 
-  // TODO Logging enabled for dev purposes
-  // Method to run update queries
-  def runUpdateToDb(updateQuery: SQL[Nothing, NoExtractor]): Int = {
+  // Update methods to use withS
+  def runUpdateToDb(updateQuery: SQL[Nothing, NoExtractor]): Int = withS { implicit session =>
     logger.debug(s"Executing update SQL: ${updateQuery.statement}")
     updateQuery.update.apply()
   }
 
-  // Method to run select queries
-  def runSelectQuery[A](query: SQL[A, HasExtractor]): List[A] = {
-    logger.info(s"Executing select SQL: ${query.statement}")
+  def runSelectQuery[A](query: SQL[A, HasExtractor]): List[A] = withS { implicit session =>
+    logger.info(s"Executing select SQL: ${query.statement}") // TODO Logging enabled for dev purposes
     try {
       val results = query.list.apply()
       logger.info(s"Select query returned ${results.size} results")
