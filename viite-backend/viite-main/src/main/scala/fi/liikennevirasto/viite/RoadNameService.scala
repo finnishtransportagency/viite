@@ -7,7 +7,6 @@ import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC
 import fi.vaylavirasto.viite.util.DateTimeFormatters.finnishDateFormatter
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
-import scalikejdbc.DBSession
 
 import scala.util.control.NonFatal
 
@@ -16,18 +15,15 @@ case class RoadNameRow(id: Long, name: String, startDate: String, endDate: Optio
 class RoadNameService {
 
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
-
-  def runWithScalikeTransaction[T](f: DBSession => T): T = PostGISDatabaseScalikeJDBC.runWithTransaction(f)
-
   def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
-
-  def runWithReadOnlySession[Result](readOnlyOperation: DBSession => Result): Result =
-    PostGISDatabaseScalikeJDBC.runWithReadOnlySession(readOnlyOperation)
+  // ScalikeJDBC versions
+  def runWithScalikeTransaction[T](f: => T): T = PostGISDatabaseScalikeJDBC.runWithTransaction(f)
+  def runWithReadOnlySession[T](f: => T): T = PostGISDatabaseScalikeJDBC.runWithReadOnlySession(f)
 
   private val logger = LoggerFactory.getLogger(getClass)
 
   def getRoadNames(oRoadNumber: Option[String], oRoadName: Option[String], oStartDate: Option[DateTime], oEndDate: Option[DateTime]): Either[String, Seq[RoadName]] = {
-    runWithScalikeTransaction { implicit session =>
+    runWithScalikeTransaction  {
       getRoadNamesInTX(oRoadNumber, oRoadName, oStartDate, oEndDate)
     }
   }
@@ -39,8 +35,8 @@ class RoadNameService {
   }
 
   def getRoadNamesForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[RoadNameForRoadAddressBrowser] = {
-    runWithReadOnlySession { implicit session =>
-      RoadNameScalikeDAO.fetchRoadNamesForRoadAddressBrowser(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)(session)
+    runWithReadOnlySession {
+      RoadNameScalikeDAO.fetchRoadNamesForRoadAddressBrowser(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
     }
   }
 
@@ -80,7 +76,7 @@ class RoadNameService {
     * @param oEndDate    Option end date
     * @return Returns error message as left and right as seq of road names
     */
-  def getRoadNamesInTX(oRoadNumber: Option[String], oRoadName: Option[String], oStartDate: Option[DateTime], oEndDate: Option[DateTime])(implicit session: DBSession): Either[String, Seq[RoadName]] = {
+  def getRoadNamesInTX(oRoadNumber: Option[String], oRoadName: Option[String], oStartDate: Option[DateTime], oEndDate: Option[DateTime]): Either[String, Seq[RoadName]] = {
     try {
       (oRoadNumber, oRoadName) match {
         case (Some(roadNumber), Some(roadName)) =>
@@ -115,6 +111,7 @@ class RoadNameService {
     }
   }
 
+  // TODO Check this methods usage. Only for tests?
   def getUpdatedRoadNamesInTX(since: DateTime, until: Option[DateTime]): Either[String, Seq[RoadName]] = {
     try {
       Right(RoadNameDAO.getUpdatedRoadNames(since, until))

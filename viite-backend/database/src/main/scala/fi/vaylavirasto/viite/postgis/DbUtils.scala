@@ -20,8 +20,11 @@ object DbUtils {
 }
 // ScalikeJDBC version
 object DbUtilsScalike  extends  ScalikeJDBCBaseDAO {
-  def runUpdateToDbScalike(sqlQuery: SQL[Nothing, NoExtractor])(implicit session: DBSession): Int = {
-    sqlQuery.update.apply()
+  // Update methods to use withS
+  def runUpdateToDbTestsScalike(updateQuery: SQL[Nothing, NoExtractor]): Int = withS { implicit session =>
+    logger.debug(s"Executing update SQL: ${updateQuery.statement}")
+    updateQuery.update.apply()
   }
 
 }
+

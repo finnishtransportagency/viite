@@ -2,21 +2,30 @@ package fi.vaylavirasto.viite.dao
 
 import scalikejdbc._
 import org.slf4j.{Logger, LoggerFactory}
+import fi.vaylavirasto.viite.postgis.SessionHolder
 
 trait ScalikeJDBCBaseDAO {
   protected def logger: Logger = LoggerFactory.getLogger(getClass)
 
-  // This method wraps operations in a session if one isn't provided
-  protected def withS[A](f: DBSession => A)(implicit session: DBSession = AutoSession): A = {
-    session match {
-      case AutoSession => DB.autoCommit(f)
-      case _ => f(session)
-    }
-  }
+  /**
+    * Run the given function with the current session.
+    * If session is set, it will be used instead of AutoSession.
+    *
+    * @param f The function to run
+    * @tparam A The return type of the function
+    * @return The result of the function
+    */
+  protected def withS[A](f: DBSession => A): A = f(SessionHolder.getSession)
 
-  // Update methods to use withS
-  def runUpdateToDb(updateQuery: SQL[Nothing, NoExtractor]): Int = withS { implicit session =>
+  def runUpdateToDbScalike(updateQuery: SQL[Nothing, NoExtractor]): Int = withS { implicit session =>
     logger.debug(s"Executing update SQL: ${updateQuery.statement}")
+    try {
+      updateQuery.update.apply()
+    } catch {
+      case e: Exception =>
+        logger.error(s"Error executing query: ${e.getMessage}", e)
+        0
+    }
     updateQuery.update.apply()
   }
 

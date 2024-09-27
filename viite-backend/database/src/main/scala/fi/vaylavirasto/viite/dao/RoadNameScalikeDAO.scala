@@ -43,7 +43,7 @@ object RoadNameScalikeDAO extends ScalikeJDBCBaseDAO {
 """
 
   // Method to run select queries for RoadName objects
-  private def queryList(query: SQLSyntax)(implicit session: DBSession): Seq[RoadName] = {
+  private def queryList(query: SQLSyntax): Seq[RoadName] = {
     runSelectQuery(sql"$query".map(RoadNameScalike.apply))
   }
 
@@ -54,15 +54,14 @@ object RoadNameScalikeDAO extends ScalikeJDBCBaseDAO {
    * @param endDate   Optional end date for the road names
    * @return List of RoadName objects
    */
-  def getAllByRoadNumber(roadNumber: Long, startDate: Option[DateTime] = None, endDate: Option[DateTime] = None)(implicit session: DBSession): Seq[RoadName] = {
+  def getAllByRoadNumber(roadNumber: Long, startDate: Option[DateTime] = None, endDate: Option[DateTime] = None): Seq[RoadName] = {
     val query = withHistoryFilter(
       sqls"""$selectAllFromRoadNameQuery WHERE ${rn.roadNumber} = $roadNumber AND ${rn.validTo} IS NULL""",
       startDate,
       endDate
     )
-    queryList(query)
+    runSelectQuery(sql"$query".map(RoadNameScalike.apply))
   }
-
   /**
    * Get all road names from ROAD_NAME table with road name and optional start and end dates
    *
@@ -70,13 +69,13 @@ object RoadNameScalikeDAO extends ScalikeJDBCBaseDAO {
    * @param endDate   Optional end date for the road names
    * @return List of RoadName objects
    */
-  def getAllByRoadName(roadName: String, startDate: Option[DateTime] = None, endDate: Option[DateTime] = None)(implicit session: DBSession): Seq[RoadName] = {
+  def getAllByRoadName(roadName: String, startDate: Option[DateTime] = None, endDate: Option[DateTime] = None): Seq[RoadName] = {
     val baseQuery = sqls"""$selectAllFromRoadNameQuery WHERE ${rn.roadName} = $roadName AND ${rn.validTo} IS NULL"""
     val query = withHistoryFilter(baseQuery, startDate, endDate)
     queryList(query)
   }
 
-  def getAllByRoadNumberAndName(roadNumber: Long, roadName: String, startDate: Option[DateTime] = None, endDate: Option[DateTime] = None)(implicit session: DBSession): Seq[RoadName] = {
+  def getAllByRoadNumberAndName(roadNumber: Long, roadName: String, startDate: Option[DateTime] = None, endDate: Option[DateTime] = None): Seq[RoadName] = {
     val baseQuery = sqls"""$selectAllFromRoadNameQuery WHERE ${rn.roadName} = $roadName AND ${rn.roadNumber} = $roadNumber AND ${rn.validTo} IS NULL"""
     val query = withHistoryFilter(baseQuery, startDate, endDate)
     queryList(query)
@@ -89,7 +88,7 @@ object RoadNameScalikeDAO extends ScalikeJDBCBaseDAO {
   }
 
   def fetchRoadNamesForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long],
-    minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long])(implicit session: DBSession): Seq[RoadNameForRoadAddressBrowser] = {
+    minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[RoadNameForRoadAddressBrowser] = {
 
     val baseQuery = sqls"""
     SELECT DISTINCT ${rw.ely} AS ely, ${rw.column("road_number")} AS road_number, ${rn.roadName} AS road_name
@@ -123,12 +122,10 @@ object RoadNameScalikeDAO extends ScalikeJDBCBaseDAO {
     """
     }
 
-    def fetchRoadNames(queryFilter: SQLSyntax => SQL[Nothing, NoExtractor]): Seq[RoadNameForRoadAddressBrowser] = {
-      val query = queryFilter(baseQuery)
-      query.map(RoadNameForRoadAddressBrowserScalike.apply).list.apply()
-    }
+    val fullQuery = withOptionalParameters(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)(baseQuery)
 
-    fetchRoadNames(withOptionalParameters(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber))
+    // Use runSelectQuery from ScalikeJDBCBaseDAO to execute the query
+    runSelectQuery(fullQuery.map(RoadNameForRoadAddressBrowserScalike.apply))
   }
 
 }

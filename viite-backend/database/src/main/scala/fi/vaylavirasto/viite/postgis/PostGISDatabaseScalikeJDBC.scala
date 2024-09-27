@@ -1,6 +1,7 @@
 package fi.vaylavirasto.viite.postgis
 
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
+
 import scalikejdbc._
 
 
@@ -34,34 +35,41 @@ object PostGISDatabaseScalikeJDBC {
     ConnectionPool.get()
   }
 
-
-  def runWithTransaction[Result](databaseOperation: DBSession => Result): Result = {
+  def runWithTransaction[Result](databaseOperation: => Result): Result = {
     if (transactionOpen.get())
       throw new IllegalThreadStateException("Attempted to open nested transaction")
-    else {
-      try {
-        transactionOpen.set(true)
-        DB(connectionPool.borrow()).localTx { implicit session =>
-          databaseOperation(session)
+
+    transactionOpen.set(true)
+    try {
+      DB(connectionPool.borrow()).localTx { session =>
+        try {
+          SessionHolder.setSession(session)
+          databaseOperation
+        } finally {
+          SessionHolder.clearSession()
         }
-      } finally {
-        transactionOpen.set(false)
       }
+    } finally {
+      transactionOpen.set(false)
     }
   }
 
-  def runWithReadOnlySession[Result](readOnlyOperation: DBSession => Result): Result = {
+  def runWithReadOnlySession[Result](readOnlyOperation: => Result): Result = {
     if (transactionOpen.get())
       throw new IllegalThreadStateException("Attempted to open nested session")
-    else {
-      try {
-        transactionOpen.set(true)
-        DB(connectionPool.borrow()).readOnly { implicit session =>
-          readOnlyOperation(session)
+
+    transactionOpen.set(true)
+    try {
+      DB(connectionPool.borrow()).readOnly { session =>
+        try {
+          SessionHolder.setSession(session)
+          readOnlyOperation
+        } finally {
+          SessionHolder.clearSession()
         }
-      } finally {
-        transactionOpen.set(false)
       }
+    } finally {
+      transactionOpen.set(false)
     }
   }
 
@@ -71,10 +79,15 @@ object PostGISDatabaseScalikeJDBC {
     else {
       try {
         transactionOpen.set(true)
-        DB(connectionPool.borrow()).localTx { implicit session =>
-          val result = testOperation
-          session.connection.rollback()
-          result
+        DB(connectionPool.borrow()).localTx { session =>
+          SessionHolder.setSession(session)
+          try {
+            val result = testOperation
+            session.connection.rollback()
+            result
+          } finally {
+            SessionHolder.clearSession()
+          }
         }
       } finally {
         transactionOpen.set(false)
