@@ -9,13 +9,12 @@ trait ScalikeJDBCBaseDAO {
 
   /**
     * Run the given function with the current session.
-    * If session is set, it will be used instead of AutoSession.
     *
     * @param f The function to run
     * @tparam A The return type of the function
     * @return The result of the function
     */
-  protected def withS[A](f: DBSession => A): A = f(SessionHolder.getSession)
+  def withS[A](f: DBSession => A): A = f(SessionHolder.getSession)
 
   def runUpdateToDbScalike(updateQuery: SQL[Nothing, NoExtractor]): Int = withS { implicit session =>
     logger.debug(s"Executing update SQL: ${updateQuery.statement}")
