@@ -1814,8 +1814,8 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       "newRoadNumber" -> changeInfo.newRoadAddress.roadPart.roadNumber,
       "newTrack" -> changeInfo.newRoadAddress.track,
       "newRoadPartNumber" -> changeInfo.newRoadAddress.roadPart.partNumber,
-      "newStartAddrM" -> changeInfo.newRoadAddress.startAddrM,
-      "newEndAddrM" -> changeInfo.newRoadAddress.endAddrM,
+      "newStartAddrM" -> changeInfo.newRoadAddress.addrMRange.start,
+      "newEndAddrM" -> changeInfo.newRoadAddress.addrMRange.end,
       "newLength" -> changeInfo.newRoadAddress.length,
       "newAdministrativeClass" -> changeInfo.newRoadAddress.administrativeClass
     )
