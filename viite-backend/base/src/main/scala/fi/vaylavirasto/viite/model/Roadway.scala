@@ -2,7 +2,7 @@ package fi.vaylavirasto.viite.model
 
 import org.joda.time.DateTime
 
-case class Roadway(
+case class RoadwayNew(
                     id: Long,
                     roadwayNumber: Long,
                     roadPart: RoadPart,

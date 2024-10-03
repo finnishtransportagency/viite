@@ -1,9 +1,7 @@
 package fi.liikennevirasto.viite
 
-import fi.vaylavirasto.viite.dao.RoadNameDAO
-import fi.vaylavirasto.viite.postgis.DbUtils.runUpdateToDb
+import fi.vaylavirasto.viite.dao.RoadNameScalikeDAO
 import fi.vaylavirasto.viite.postgis.DbUtilsScalike.runUpdateToDbTestsScalike
-import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollbackScalike
 import org.joda.time.DateTime
 import org.scalatest.funsuite.AnyFunSuite
@@ -122,28 +120,28 @@ class RoadNameServiceSpec extends AnyFunSuite with Matchers {
     }
   }
 
-  test("Test roadNameService.getUpdatedRoadNamesInTX() When using a date where no updates are Then return no updates.") {
-    runWithRollback {
-      val result = roadNameService.getUpdatedRoadNamesInTX(DateTime.parse("3001-01-01"), None)
+  test("Test roadNameService.getUpdatedRoadNames() When using a date where no updates are Then return no updates.") {
+    runWithRollbackScalike {
+      val result = roadNameService.getUpdatedRoadNames(DateTime.parse("3001-01-01"), None)
       result.isRight should be(true)
       result.right.get.size should be(0)
     }
   }
 
   test("Test roadNameService.getUpdatedRoadNamesInTX() When using a date where there is one new road, without history Then returns the updated road name.") {
-    runWithRollback {
-      runUpdateToDb("""Insert into ROAD_NAME (ROAD_NUMBER,ROAD_NAME,START_DATE,END_DATE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('999','ROAD ONE',to_date('02.02.3001','DD.MM.YYYY'),null,to_date('01.01.3001','DD.MM.YYYY'),null,'TR',to_timestamp('01.01.3001 14:14:44','DD.MM.YYYY HH24:MI:SS'))""")
-      val result = roadNameService.getUpdatedRoadNamesInTX(DateTime.parse("3001-01-01"), None)
+    runWithRollbackScalike {
+      runUpdateToDbTestsScalike(sql"""Insert into ROAD_NAME (ROAD_NUMBER,ROAD_NAME,START_DATE,END_DATE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('999','ROAD ONE',to_date('02.02.3001','DD.MM.YYYY'),null,to_date('01.01.3001','DD.MM.YYYY'),null,'TR',to_timestamp('01.01.3001 14:14:44','DD.MM.YYYY HH24:MI:SS'))""")
+      val result = roadNameService.getUpdatedRoadNames(DateTime.parse("3001-01-01"), None)
       result.isRight should be(true)
       result.right.get.size should be(1)
     }
   }
 
   test("Test roadNameService.getUpdatedRoadNamesInTX() When using a date where there is one new road, without history Then returns both the updated road name and the history one.") {
-    runWithRollback {
-      runUpdateToDb("""Insert into ROAD_NAME (ROAD_NUMBER,ROAD_NAME,START_DATE,END_DATE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('999','ROAD ONE',to_date('02.02.3001','DD.MM.YYYY'),null,to_date('01.01.3001','DD.MM.YYYY'),null,'TR',to_timestamp('01.01.3001 14:14:44','DD.MM.YYYY HH24:MI:SS'))""")
-      runUpdateToDb("""Insert into ROAD_NAME (ROAD_NUMBER,ROAD_NAME,START_DATE,END_DATE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('999','OLD NAME',to_date('02.02.2901','DD.MM.YYYY'),to_date('01.01.3001','DD.MM.YYYY'),to_date('01.01.2901','DD.MM.YYYY'),null,'TR',to_timestamp('01.01.2901 12:00:00','DD.MM.YYYY HH24:MI:SS'))""")
-      val result = roadNameService.getUpdatedRoadNamesInTX(DateTime.parse("3001-01-01"), None)
+    runWithRollbackScalike {
+      runUpdateToDbTestsScalike(sql"""Insert into ROAD_NAME (ROAD_NUMBER,ROAD_NAME,START_DATE,END_DATE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('999','ROAD ONE',to_date('02.02.3001','DD.MM.YYYY'),null,to_date('01.01.3001','DD.MM.YYYY'),null,'TR',to_timestamp('01.01.3001 14:14:44','DD.MM.YYYY HH24:MI:SS'))""")
+      runUpdateToDbTestsScalike(sql"""Insert into ROAD_NAME (ROAD_NUMBER,ROAD_NAME,START_DATE,END_DATE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('999','OLD NAME',to_date('02.02.2901','DD.MM.YYYY'),to_date('01.01.3001','DD.MM.YYYY'),to_date('01.01.2901','DD.MM.YYYY'),null,'TR',to_timestamp('01.01.2901 12:00:00','DD.MM.YYYY HH24:MI:SS'))""")
+      val result = roadNameService.getUpdatedRoadNames(DateTime.parse("3001-01-01"), None)
       result.isRight should be(true)
       result.right.get.size should be(2)
     }
@@ -151,10 +149,10 @@ class RoadNameServiceSpec extends AnyFunSuite with Matchers {
 
   test("Test roadNameService.addOrUpdateRoadNamesInTX() and RoadNameDAO.getLatestRoadName() When creating a new road name and setting a end date on the \"current\" one Then returns only the \"current\".") {
     val roadNumber = 99
-    runWithRollback {
-      runUpdateToDb(s"""Insert into ROAD_NAME (ROAD_NUMBER,ROAD_NAME,START_DATE,END_DATE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME)
+    runWithRollbackScalike {
+      runUpdateToDbTestsScalike(sql"""Insert into ROAD_NAME (ROAD_NUMBER,ROAD_NAME,START_DATE,END_DATE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME)
             values ($roadNumber, 'VICTORY RD.', to_date('01.01.1989','DD.MM.YYYY'), null, to_date('01.01.1989','DD.MM.YYYY'), null, 'User', to_timestamp('01.01.1989 14:14:44','DD.MM.YYYY HH24:MI:SS'))""")
-      val search = RoadNameDAO.getLatestRoadName(roadNumber)
+      val search = RoadNameScalikeDAO.getLatestRoadName(roadNumber)
 
       val roadNames = Seq(
         RoadNameRow(search.get.id, "VICTORY RD.", "25.3.2018", Some("27.3.2018")),
@@ -162,7 +160,7 @@ class RoadNameServiceSpec extends AnyFunSuite with Matchers {
       )
       val afterInsert = roadNameService.addOrUpdateRoadNamesInTX(roadNumber, roadNames, "user")
       afterInsert should be(None)
-      val latestAfterInsert = RoadNameDAO.getLatestRoadName(roadNumber)
+      val latestAfterInsert = RoadNameScalikeDAO.getLatestRoadName(roadNumber)
       latestAfterInsert.size should be(1)
       latestAfterInsert.get.roadName should be("Victory Road")
     }
@@ -170,58 +168,58 @@ class RoadNameServiceSpec extends AnyFunSuite with Matchers {
 
   test("Test roadNameService.addOrUpdateRoadNamesInTX() and RoadNameDAO.getLatestRoadName() When updating a name from current one Then said update should expire and create an copy of it, with the new name.") {
     val roadNumber = 99
-    runWithRollback {
-      runUpdateToDb(s"""Insert into ROAD_NAME (ROAD_NUMBER,ROAD_NAME,START_DATE,END_DATE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME)
+    runWithRollbackScalike {
+      runUpdateToDbTestsScalike(sql"""Insert into ROAD_NAME (ROAD_NUMBER,ROAD_NAME,START_DATE,END_DATE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME)
             values ($roadNumber, 'VICTORY RD.', to_date('01.01.1989','DD.MM.YYYY'), null, to_date('01.01.1989','DD.MM.YYYY'), null, 'User', to_timestamp('01.01.1989 14:14:44','DD.MM.YYYY HH24:MI:SS'))""")
-      val search = RoadNameDAO.getLatestRoadName(roadNumber)
+      val search = RoadNameScalikeDAO.getLatestRoadName(roadNumber)
       val roadNames = Seq(
         RoadNameRow(search.get.id, "Victory Road", "27.3.2018", None)
       )
       roadNameService.addOrUpdateRoadNamesInTX(roadNumber, roadNames, "user")
-      val latestAfterInsert = RoadNameDAO.getLatestRoadName(roadNumber)
+      val latestAfterInsert = RoadNameScalikeDAO.getLatestRoadName(roadNumber)
       latestAfterInsert.size should be(1)
       latestAfterInsert.get.roadName should be("Victory Road")
     }
   }
 
   test("Test roadNameService.getUpdatedRoadNamesInTX() When searching in a interval of dates but in said interval there are no names Then return no road names.") {
-    runWithRollback {
-      val result = roadNameService.getUpdatedRoadNamesInTX(DateTime.parse("3001-01-01"), Some(DateTime.parse("3001-01-01")))
+    runWithRollbackScalike {
+      val result = roadNameService.getUpdatedRoadNames(DateTime.parse("3001-01-01"), Some(DateTime.parse("3001-01-01")))
       result.isRight should be(true)
       result.right.get.size should be(0)
     }
   }
 
   test("Test roadNameService.getUpdatedRoadNamesInTX() When searching in a interval of dates but in said interval there is only one name Then return that road names.") {
-    runWithRollback {
-      runUpdateToDb("""Insert into ROAD_NAME (ROAD_NUMBER,ROAD_NAME,START_DATE,END_DATE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('999','ROAD ONE',to_date('02.02.3001','DD.MM.YYYY'),null,to_date('01.01.3001','DD.MM.YYYY'),null,'TR',to_timestamp('01.01.3001 14:14:44','DD.MM.YYYY HH24:MI:SS'))""")
-      val result = roadNameService.getUpdatedRoadNamesInTX(DateTime.parse("3001-01-01"), Some(DateTime.parse("3001-01-02")))
+    runWithRollbackScalike {
+      runUpdateToDbTestsScalike(sql"""Insert into ROAD_NAME (ROAD_NUMBER,ROAD_NAME,START_DATE,END_DATE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('999','ROAD ONE',to_date('02.02.3001','DD.MM.YYYY'),null,to_date('01.01.3001','DD.MM.YYYY'),null,'TR',to_timestamp('01.01.3001 14:14:44','DD.MM.YYYY HH24:MI:SS'))""")
+      val result = roadNameService.getUpdatedRoadNames(DateTime.parse("3001-01-01"), Some(DateTime.parse("3001-01-02")))
       result.isRight should be(true)
       result.right.get.size should be(1)
     }
   }
 
   test("Test roadNameService.getUpdatedRoadNamesInTX() When searching in a interval of dates but the existing road name is outside of the interval Then return no road names.") {
-    runWithRollback {
-      runUpdateToDb("""Insert into ROAD_NAME (ROAD_NUMBER,ROAD_NAME,START_DATE,END_DATE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('999','ROAD ONE',to_date('02.02.3001','DD.MM.YYYY'),null,to_date('01.01.3001','DD.MM.YYYY'),null,'TR',to_timestamp('01.01.3001 14:14:44','DD.MM.YYYY HH24:MI:SS'))""")
-      val result = roadNameService.getUpdatedRoadNamesInTX(DateTime.parse("3001-01-01"), Some(DateTime.parse("3001-01-01")))
+    runWithRollbackScalike {
+      runUpdateToDbTestsScalike(sql"""Insert into ROAD_NAME (ROAD_NUMBER,ROAD_NAME,START_DATE,END_DATE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('999','ROAD ONE',to_date('02.02.3001','DD.MM.YYYY'),null,to_date('01.01.3001','DD.MM.YYYY'),null,'TR',to_timestamp('01.01.3001 14:14:44','DD.MM.YYYY HH24:MI:SS'))""")
+      val result = roadNameService.getUpdatedRoadNames(DateTime.parse("3001-01-01"), Some(DateTime.parse("3001-01-01")))
       result.isRight should be(true)
       result.right.get.size should be(0)
     }
   }
 
   test("Fetch updated road names, one update with history between given dates") {
-    runWithRollback {
-      runUpdateToDb("""Insert into ROAD_NAME (ROAD_NUMBER,ROAD_NAME,START_DATE,END_DATE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('999','ROAD ONE',to_date('02.02.3001','DD.MM.YYYY'),null,to_date('01.01.3001','DD.MM.YYYY'),null,'TR',to_timestamp('01.01.3001 14:14:44','DD.MM.YYYY HH24:MI:SS'))""")
-      runUpdateToDb("""Insert into ROAD_NAME (ROAD_NUMBER,ROAD_NAME,START_DATE,END_DATE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('999','OLD NAME',to_date('02.02.2901','DD.MM.YYYY'),to_date('31.12.3000','DD.MM.YYYY'),to_date('01.01.2901','DD.MM.YYYY'),null,'TR',to_timestamp('01.01.2901 12:00:00','DD.MM.YYYY HH24:MI:SS'))""")
-      val result = roadNameService.getUpdatedRoadNamesInTX(DateTime.parse("3001-01-01"), Some(DateTime.parse("3001-01-02")))
+    runWithRollbackScalike {
+      runUpdateToDbTestsScalike(sql"""Insert into ROAD_NAME (ROAD_NUMBER,ROAD_NAME,START_DATE,END_DATE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('999','ROAD ONE',to_date('02.02.3001','DD.MM.YYYY'),null,to_date('01.01.3001','DD.MM.YYYY'),null,'TR',to_timestamp('01.01.3001 14:14:44','DD.MM.YYYY HH24:MI:SS'))""")
+      runUpdateToDbTestsScalike(sql"""Insert into ROAD_NAME (ROAD_NUMBER,ROAD_NAME,START_DATE,END_DATE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('999','OLD NAME',to_date('02.02.2901','DD.MM.YYYY'),to_date('31.12.3000','DD.MM.YYYY'),to_date('01.01.2901','DD.MM.YYYY'),null,'TR',to_timestamp('01.01.2901 12:00:00','DD.MM.YYYY HH24:MI:SS'))""")
+      val result = roadNameService.getUpdatedRoadNames(DateTime.parse("3001-01-01"), Some(DateTime.parse("3001-01-02")))
       result.isRight should be(true)
       result.right.get.size should be(2)
     }
   }
 
   test("Test RoadNameService.getRoadNameByNumber() When no name exists for a specific road number Then it should return a formatted response instead of None") {
-    runWithRollback {
+    runWithRollbackScalike {
       val result = roadNameService.getRoadNameByNumber(99999, 99999)
       result.contains("roadName") should be (true)
       result("roadName") should be (None)
