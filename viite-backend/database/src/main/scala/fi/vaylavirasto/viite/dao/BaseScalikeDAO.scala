@@ -2,43 +2,26 @@ package fi.vaylavirasto.viite.dao
 
 import scalikejdbc._
 import org.slf4j.{Logger, LoggerFactory}
-import fi.vaylavirasto.viite.postgis.SessionHolder
+import fi.vaylavirasto.viite.postgis.SessionProvider.session // As this is imported here, it is available in all classes that extend this trait
 
 trait ScalikeJDBCBaseDAO {
   protected def logger: Logger = LoggerFactory.getLogger(getClass)
 
-  /**
-    * Run the given function with the current session.
-    *
-    * @param f The function to run
-    * @tparam A The return type of the function
-    * @return The result of the function
-    */
-  def withS[A](f: DBSession => A): A = f(SessionHolder.getSession)
-
-  def runUpdateToDbScalike(updateQuery: SQL[Nothing, NoExtractor]): Int = withS { implicit session =>
-    logger.debug(s"Executing update SQL: ${updateQuery.statement}")
-    try {
-      updateQuery.update.apply()
-    } catch {
-      case e: Exception =>
-        logger.error(s"Error executing query: ${e.getMessage}", e)
-        0
-    }
+  // Methods to run queries using ScalikeJDBC and session provider
+  def runUpdateToDbScalike(updateQuery: SQL[Nothing, NoExtractor]): Int = {
     updateQuery.update.apply()
   }
 
-  def runSelectQuery[A](query: SQL[A, HasExtractor]): List[A] = withS { implicit session =>
-    logger.info(s"Executing select SQL: ${query.statement}") // TODO Logging enabled for dev purposes
-    try {
-      val results = query.list.apply()
-      logger.info(s"Select query returned ${results.size} results")
-      results
-    } catch {
-      case e: Exception =>
-        logger.error(s"Error executing query: ${e.getMessage}", e)
-        List.empty
-    }
+  def runSelectQuery[A](query: SQL[A, HasExtractor]): List[A] = {
+    query.list().apply()
+  }
+
+  def runSelectSingle[A](query: SQL[A, HasExtractor]): Option[A] = {
+    query.single().apply()
+  }
+
+  def runBatchUpdateToDbScalike(query: SQL[Nothing, NoExtractor], batchParams: Seq[Seq[Any]]): List[Int] = {
+    query.batch(batchParams: _*).apply()
   }
 
 }
