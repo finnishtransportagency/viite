@@ -1,19 +1,15 @@
 package fi.vaylavirasto.viite.postgis
 
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
-
 import scalikejdbc._
-
+import SessionProvider._
 
 object PostGISDatabaseScalikeJDBC {
-  private lazy val connectionPool: ConnectionPool = initConnectionPool()
-
-  private val transactionOpen = new ThreadLocal[Boolean] {
-    override def initialValue(): Boolean = false
-  }
+  private val connectionPool: ConnectionPool = initConnectionPool()
 
   private def initConnectionPool(): ConnectionPool = {
-    Class.forName("org.postgresql.Driver")
+    if (!ConnectionPool.isInitialized())
+      Class.forName("org.postgresql.Driver")
 
     // Logging enabled for all queries for development purposes
     GlobalSettings.loggingSQLAndTime = LoggingSQLAndTimeSettings(
@@ -35,62 +31,47 @@ object PostGISDatabaseScalikeJDBC {
     ConnectionPool.get()
   }
 
+  /**
+    * For database operations that modify data only if the whole operation is successful
+    * @param databaseOperation The operation to run
+    * @tparam Result The return type of the operation
+    * @return The result of the operation
+    */
   def runWithTransaction[Result](databaseOperation: => Result): Result = {
-    if (transactionOpen.get())
-      throw new IllegalThreadStateException("Attempted to open nested transaction")
-
-    transactionOpen.set(true)
-    try {
-      DB(connectionPool.borrow()).localTx { session =>
-        try {
-          SessionHolder.setSession(session)
-          databaseOperation
-        } finally {
-          SessionHolder.clearSession()
-        }
+    DB.localTx { session =>
+      withSession(session) {
+        databaseOperation
       }
-    } finally {
-      transactionOpen.set(false)
     }
   }
 
+  /**
+    * For database operations that only read data
+    * @param readOnlyOperation The operation to run
+    * @tparam Result The return type of the operation
+    * @return The result of the operation
+    */
   def runWithReadOnlySession[Result](readOnlyOperation: => Result): Result = {
-    if (transactionOpen.get())
-      throw new IllegalThreadStateException("Attempted to open nested session")
-
-    transactionOpen.set(true)
-    try {
-      DB(connectionPool.borrow()).readOnly { session =>
-        try {
-          SessionHolder.setSession(session)
-          readOnlyOperation
-        } finally {
-          SessionHolder.clearSession()
-        }
+    DB.readOnly { session =>
+      withSession(session) {
+        readOnlyOperation
       }
-    } finally {
-      transactionOpen.set(false)
     }
   }
 
+  /**
+    * For database operations that modify data and should be rolled back after the operation
+    * Used for testing
+    * @param testOperation The operation to run
+    * @tparam Result The return type of the operation
+    * @return The result of the operation
+    */
   def runWithRollbackScalike[Result](testOperation: => Result): Result = {
-    if (transactionOpen.get())
-      throw new IllegalThreadStateException("Attempted to open nested transaction")
-    else {
-      try {
-        transactionOpen.set(true)
-        DB(connectionPool.borrow()).localTx { session =>
-          SessionHolder.setSession(session)
-          try {
-            val result = testOperation
-            session.connection.rollback()
-            result
-          } finally {
-            SessionHolder.clearSession()
-          }
-        }
-      } finally {
-        transactionOpen.set(false)
+    DB.localTx { session: DBSession =>
+      withSession(session) {
+        val result = testOperation
+        session.connection.rollback()
+        result
       }
     }
   }
