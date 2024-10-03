@@ -14,12 +14,23 @@ Resources:
     Properties:
       SubscriptionName: 'AllServicesCostAnomalyAlerts'
       ThresholdExpression: '{
-              "Dimensions": {
-                "Key": "ANOMALY_TOTAL_IMPACT_PERCENTAGE",
-                "MatchOptions": [ "GREATER_THAN_OR_EQUAL" ],
-                "Values": [ "15" ]
-              }
-            }'
+       "And": [
+          {
+            "Dimensions": {
+              "Key": "ANOMALY_TOTAL_IMPACT_ABSOLUTE",
+              "MatchOptions": [ "GREATER_THAN_OR_EQUAL" ],
+              "Values": [ "2" ]
+            }
+          },
+          {
+            "Dimensions": {
+              "Key": "ANOMALY_TOTAL_IMPACT_PERCENTAGE",
+              "MatchOptions": [ "GREATER_THAN_OR_EQUAL" ],
+              "Values": [ "100" ]
+            }
+          }
+        ]
+      }'
       Frequency: 'DAILY'
       MonitorArnList:
         - !Ref CostAnomalyDetector
@@ -32,6 +43,6 @@ Resources:
           Type: 'EMAIL'
 
 Outputs:
-  AnomalyMonitorArn:
-    Description: 'ARN of the Cost Anomaly Monitor'
+  AllServicesAnomalyMonitorArn:
+    Description: 'ARN of the All Services Cost Anomaly Monitor'
     Value: !GetAtt CostAnomalyDetector.MonitorArn

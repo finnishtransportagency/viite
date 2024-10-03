@@ -30,29 +30,23 @@ object CodeArtifactSettings {
     }
   }
 
-  val settings: Seq[Def.Setting[_]] = Seq(
-    resolvers ++= {
-      if (isCodeArtifactConfigured) {
-        Seq("CodeArtifact" at awsCodeArtifactRepoURL) // if the token is set, use the CodeArtifact resolver
-      } else {
-        Seq(
-          Classpaths.typesafeReleases // if the token is not set, use the default resolvers
-        )
-      }
-    },
-    credentials ++= {
-      if (isCodeArtifactConfigured) {
-        Seq(Credentials(codeArtifactRealm, codeArtifactDomain, "aws", sys.env("CODE_ARTIFACT_AUTH_TOKEN")))
-      } else {
-        Seq.empty
-      }
-    },
-    externalResolvers := {
-      if (isCodeArtifactConfigured) {
-        Resolver.withDefaultResolvers(resolvers.value, mavenCentral = false)
-      } else {
-        Resolver.withDefaultResolvers(resolvers.value)
-      }
+  def getLocalLibSettings() = {
+    if (isCodeArtifactConfigured) {
+      settingsLibsFromCodeArtifact // if the token is set, use the CodeArtifact resolver
+    } else {
+      settingsLibsFromDefaultresolvers // if the token is not set, use the default resolvers
     }
+  }
+
+  val settingsLibsFromCodeArtifact: Seq[Def.Setting[_]] = Seq(
+    resolvers        ++= {  Seq("CodeArtifact" at awsCodeArtifactRepoURL)    }, // if the token is set, use the CodeArtifact resolver
+    credentials      ++= {  Seq(Credentials(codeArtifactRealm, codeArtifactDomain, "aws", sys.env("CODE_ARTIFACT_AUTH_TOKEN")))  },
+    externalResolvers := {  Resolver.withDefaultResolvers(resolvers.value, mavenCentral = false)  }
+  )
+
+  val settingsLibsFromDefaultresolvers: Seq[Def.Setting[_]] = Seq(
+    resolvers        ++= {  Seq(Classpaths.typesafeReleases)  }, // if the token is not set, use the default resolvers
+    credentials      ++= {  Seq.empty  },
+    externalResolvers := {  Resolver.withDefaultResolvers(resolvers.value)    }
   )
 }

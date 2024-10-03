@@ -37,8 +37,8 @@
       };
       let lon, lat;
       const addressMValueFixed = _.isUndefined(addressMValue) ? 0 : addressMValue;
-      if ((roadData.startAddrMValue === addressMValueFixed && roadData.sideCode === sideCodes.TowardsDigitizing.value)
-         || (roadData.endAddrMValue === addressMValueFixed && roadData.sideCode === sideCodes.AgainstDigitizing.value)) {
+      if ((roadData.addrMRange.start === addressMValueFixed && roadData.sideCode === sideCodes.TowardsDigitizing.value)
+         || (roadData.addrMRange.end === addressMValueFixed && roadData.sideCode === sideCodes.AgainstDigitizing.value)) {
         lon = roadData.geometry[0].x;
         lat = roadData.geometry[0].y;
       } else {
@@ -73,7 +73,7 @@
             partialResult.title = `mtkId, ${input.search}`;
           } else if (item && item.road && item.road[0]) {
             const sortedRoad = _.sortBy(_.sortBy(item.road, function (addr) {
-              return addr.startAddrMValue;
+              return addr.addrMRange.start;
             }), function (road) {
               return road.roadPartNumber;
             });

@@ -3,9 +3,8 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.viite.{RoadAddressService, RoadNameService}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPoint
 import fi.liikennevirasto.viite.model.RoadAddressLink
-import fi.vaylavirasto.viite.dao.RoadName
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, LifecycleStatus, LinkGeomSource, RoadPart, SideCode}
+import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, LifecycleStatus, LinkGeomSource, RoadName, RoadPart, SideCode}
 import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, Formats}
 import org.mockito.ArgumentMatchers.any
@@ -130,7 +129,7 @@ class IntegrationApiSpec extends AnyFunSuite with ScalatraSuite with BeforeAndAf
   }
 
   test("Test When asking for changes in the roadnames with Since too much in the future Then returns status code 400.") {
-    when(mockRoadNameService.getUpdatedRoadNames(any[DateTime], any[Option[DateTime]])).thenReturn(Right(Seq()))
+    when(mockRoadNameService.getUpdatedRoadNamesInTx(any[DateTime], any[Option[DateTime]])).thenReturn(Right(Seq()))
     get("/roadnames/changes?since=9999-01-01") {
       status should equal(400)
       response.getHeader("Content-Type").toLowerCase should (equal("application/json;charset=utf-8") or equal("application/json; charset=utf-8"))
@@ -138,7 +137,7 @@ class IntegrationApiSpec extends AnyFunSuite with ScalatraSuite with BeforeAndAf
   }
 
   test("Test When asking for changes in the roadnames correctly including the Since but with no data to return Then returns status code 200 and a empty array as the response body.") {
-    when(mockRoadNameService.getUpdatedRoadNames(any[DateTime], any[Option[DateTime]])).thenReturn(Right(Seq()))
+    when(mockRoadNameService.getUpdatedRoadNamesInTx(any[DateTime], any[Option[DateTime]])).thenReturn(Right(Seq()))
     get("/roadnames/changes?since=2099-01-01") { // 2099: "very much in the future". If this test some day in the future fails for the date, just move it forward. (MK, 2023-03)
       status should equal(200)
       // Different Jetty-versions have variation in Content-Type
@@ -148,7 +147,7 @@ class IntegrationApiSpec extends AnyFunSuite with ScalatraSuite with BeforeAndAf
   }
 
   test("Test When asking for changes in the roadnames correctly including the Since but with 1 update to 1 road Then returns status code 200 and a filled array with the info for the road.") {
-    when(mockRoadNameService.getUpdatedRoadNames(any[DateTime], any[Option[DateTime]])).thenReturn(
+    when(mockRoadNameService.getUpdatedRoadNamesInTx(any[DateTime], any[Option[DateTime]])).thenReturn(
       Right(Seq(
         RoadName(1, 2, "MYROAD", date(2018, 2, 2), None, date(2018, 1, 1), None, "MOCK")
       ))
@@ -162,7 +161,7 @@ class IntegrationApiSpec extends AnyFunSuite with ScalatraSuite with BeforeAndAf
   }
 
   test("Test When asking for changes in the roadnames correctly including the Since with many updates to return to 1 road Then returns status code 200 and a filled array with the info for the updates.") {
-    when(mockRoadNameService.getUpdatedRoadNames(any[DateTime], any[Option[DateTime]])).thenReturn(
+    when(mockRoadNameService.getUpdatedRoadNamesInTx(any[DateTime], any[Option[DateTime]])).thenReturn(
       Right(Seq(
         RoadName(3, 2, "MY ROAD", date(2018, 2, 2), None, date(2018, 1, 1), None, "MOCK"),
         RoadName(2, 2, "THEROAD", date(2000, 2, 2), date(2018, 2, 1), date(2018, 1, 1), None, "MOCK"),
@@ -181,7 +180,7 @@ class IntegrationApiSpec extends AnyFunSuite with ScalatraSuite with BeforeAndAf
   }
 
   test("Test When asking for changes in the roadnames correctly including the Since with many updates to return to 2 roads Then returns status code 200 and a filled array with the info for the updates.") {
-    when(mockRoadNameService.getUpdatedRoadNames(any[DateTime], any[Option[DateTime]])).thenReturn(
+    when(mockRoadNameService.getUpdatedRoadNamesInTx(any[DateTime], any[Option[DateTime]])).thenReturn(
       Right(Seq(
         RoadName(4, 3, "ANOTHER ROAD", date(2017, 12, 12), None,             date(2017, 12, 1), None, "MOCK"),
         RoadName(3, 2, "MY ROAD",      date(2018,  2,  2), None,             date(2017, 12, 1), None, "MOCK"),
@@ -207,7 +206,7 @@ class IntegrationApiSpec extends AnyFunSuite with ScalatraSuite with BeforeAndAf
   }
 
   test("Test When asking for changes in the roadnames correctly including the Since with no updates to any road Then returns status code 200 and the returning array should be empty.") {
-    when(mockRoadNameService.getUpdatedRoadNames(any[DateTime], any[Option[DateTime]])).thenReturn(Right(Seq()))
+    when(mockRoadNameService.getUpdatedRoadNamesInTx(any[DateTime], any[Option[DateTime]])).thenReturn(Right(Seq()))
     get("/roadnames/changes?since=2099-01-01&until=2099-01-01") { // 2099: "very much in the future". If this test some day in the future fails for the date, just move it forward. (MK, 2023-03)
       status should equal(200)
       // Different Jetty-versions have variation in Content-Type
@@ -217,7 +216,7 @@ class IntegrationApiSpec extends AnyFunSuite with ScalatraSuite with BeforeAndAf
   }
 
   test("Test When asking for changes in the roadnames correctly including the Since with 1 change to a single road Then returns status code 200 and the returning array should contain that road info.") {
-    when(mockRoadNameService.getUpdatedRoadNames(any[DateTime], any[Option[DateTime]])).thenReturn(
+    when(mockRoadNameService.getUpdatedRoadNamesInTx(any[DateTime], any[Option[DateTime]])).thenReturn(
       Right(Seq(
         RoadName(1, 2, "MYROAD", date(2018, 2, 2), None, date(2018, 1, 1), None, "MOCK")
       ))
@@ -231,7 +230,7 @@ class IntegrationApiSpec extends AnyFunSuite with ScalatraSuite with BeforeAndAf
   }
 
   test("Test When asking for changes in the roadnames correctly including the Since with some changes to a single road Then returns status code 200 and the returning array should contain the multiple road info.") {
-    when(mockRoadNameService.getUpdatedRoadNames(any[DateTime], any[Option[DateTime]])).thenReturn(
+    when(mockRoadNameService.getUpdatedRoadNamesInTx(any[DateTime], any[Option[DateTime]])).thenReturn(
       Right(Seq(
         RoadName(3, 2, "MY ROAD", date(2018, 2, 2), None, date(2018, 1, 1), None, "MOCK"),
         RoadName(2, 2, "THEROAD", date(2000, 2, 2), date(2018, 2, 1), date(2018, 1, 1), None, "MOCK"),
@@ -250,7 +249,7 @@ class IntegrationApiSpec extends AnyFunSuite with ScalatraSuite with BeforeAndAf
   }
 
   test("Test When asking for changes in the roadnames correctly including the Since with some changes to multiple roads Then returns status code 200 and the returning array should contain the multiple road info.") {
-    when(mockRoadNameService.getUpdatedRoadNames(any[DateTime], any[Option[DateTime]])).thenReturn(
+    when(mockRoadNameService.getUpdatedRoadNamesInTx(any[DateTime], any[Option[DateTime]])).thenReturn(
       Right(Seq(
         RoadName(4, 3, "ANOTHER ROAD", date(2017, 12, 12), None, date(2017, 12, 1), None, "MOCK"),
         RoadName(3, 2, "MY ROAD", date(2018, 2, 2), None, date(2017, 12, 1), None, "MOCK"),
