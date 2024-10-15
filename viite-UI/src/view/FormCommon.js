@@ -60,6 +60,66 @@
       setDisabledAndTitleAttributesById("changeDirectionButton", false, '');
     };
 
+    const devAddressEditTool = function(links, project) {
+      const projectEditable = project.statusCode === editableStatus;
+      const startOfSection = Math.min(...links.map((link) => Number(link.startAddressM)));
+      const endOfSection = Math.max(...links.map((link) => Number(link.endAddressM)));
+      const originalStartOfSection = Math.min(...links.map((link) => Number(link.originalStartAddressM)));
+      const originalEndOfSection = Math.max(...links.map((link) => Number(link.originalEndAddressM)));
+
+      return '<div class="dev-address-tool" hidden="true">' +
+          '<div class="dev-address-tool-wrapper">' +
+            '<div>' +
+              '<label>Osoitteiden hallinta (dev työkalu)</label>' +
+            '</div>' +
+            '<label>CP linkin alussa</label>' +
+            '<select class="' + prefix + 'form-control administrativeClassAndRoadName" id="startCPDropdown" size = "1" style="width: 100px !important; display: inline">' +
+              '<option value = "0" selected >NoCp</option>' +
+              '<option value = "1">UserDefinedCP</option>' +
+              '<option value = "2">RoadAddressCP</option>' +
+              '<option value = "3">JunctionPointCP</option>' +
+            '</select>' +
+            '<label>CP linkin lopussa</label>' +
+            '<select class="' + prefix + 'form-control administrativeClassAndRoadName" id="endCPDropdown" size = "1" style="width: 100px !important; display: inline">' +
+              '<option value = "0" selected >NoCp</option>' +
+              '<option value = "1">UserDefinedCP</option>' +
+              '<option value = "2">RoadAddressCP</option>' +
+              '<option value = "3">JunctionPointCP</option>' +
+            '</select>' +
+            '<label>Uusi osoite:</label>' +
+            '<div class="dev-address-field-wrapper">' +
+              '<div class="dev-addressfield">' +
+              '<label>Alku</label>' + addSmallInputNumber('addrStart', (startOfSection), !projectEditable, 5) +
+              '</div>' +
+              '<div class="dev-addressfield">' +
+              '<label>Loppu</label>' + addSmallInputNumber('addrEnd', (endOfSection), !projectEditable, 5) +
+              '</div>' +
+              '<div class="dev-addressfield">' +
+                '<label>Pituus</label>' +
+                '<p id="addrLength" style="color: white">' + (endOfSection -  startOfSection) +'</p>' +
+              '</div>' +
+            '</div>' +
+            '<label>Alkuperäinen osoite:</label>' +
+            '<div class="dev-address-field-wrapper">' +
+              '<div class="dev-addressfield">' +
+              '<label>Alku</label>' + addSmallInputNumber('origAddrStart', (originalStartOfSection), !projectEditable, 5) +
+              '</div>' +
+              '<div class="dev-addressfield">' +
+              '<label>Loppu</label>' + addSmallInputNumber('origAddrEnd', (originalEndOfSection), !projectEditable, 5) +
+              '</div>' +
+              '<div class="dev-addressfield">' +
+              '<label>Alkup. Pituus</label>' +
+              '<p id="origAddrLength" style="color: white">' + (originalEndOfSection -  originalStartOfSection) +'</p>' +
+              '</div>' +
+            '</div>' +
+            '<div>' +
+              '<input type="checkbox" id="newRoadwayNumber" style="margin-right: 10px"/>' +
+              '<label> Uusi Roadway numero valituille linkeille</label>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+    };
+
     const newRoadAddressInfo = function (project, selected, links, road) {
       const roadNumber = road.roadNumber;
       const part = road.roadPartNumber;
@@ -371,6 +431,7 @@
     };
 
     return {
+      devAddressEditTool: devAddressEditTool,
       newRoadAddressInfo: newRoadAddressInfo,
       replaceAddressInfo: replaceAddressInfo,
       administrativeClass: administrativeClassDropdown,
