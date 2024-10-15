@@ -1,5 +1,5 @@
 (function (root) {
-  root.ProjectCollection = function (backend) {
+  root.ProjectCollection = function (backend, startupParameters) {
     var me = this;
     // eslint-disable-next-line no-unused-vars
     var roadAddressProjects = [];
@@ -332,6 +332,29 @@
       var coordinates = applicationModel.getUserGeoLocation();
       var roadAddressProjectForm = $('#roadAddressProjectForm');
       var endDistance = $('#endDistance')[0];
+      const hasDevRights = _.includes(startupParameters.roles, 'dev');
+
+      const startAddrMValue = roadAddressProjectForm.find('#addrStart').length && roadAddressProjectForm.find('#addrStart')[0].value ? Number(roadAddressProjectForm.find('#addrStart')[0].value) : null;
+      const endAddrMValue = roadAddressProjectForm.find('#addrEnd').length && roadAddressProjectForm.find('#addrEnd')[0].value ? Number(roadAddressProjectForm.find('#addrEnd')[0].value) : null;
+      const origStartAddrMValue = roadAddressProjectForm.find('#origAddrStart').length && roadAddressProjectForm.find('#origAddrStart')[0].value ? Number(roadAddressProjectForm.find('#origAddrStart')[0].value) : null;
+      const origEndAddrMValue = roadAddressProjectForm.find('#origAddrEnd').length && roadAddressProjectForm.find('#origAddrEnd')[0].value ? Number(roadAddressProjectForm.find('#origAddrEnd')[0].value) : null;
+      const startCp = roadAddressProjectForm.find('#startCPDropdown').length && roadAddressProjectForm.find('#startCPDropdown')[0].value ? Number(roadAddressProjectForm.find('#startCPDropdown')[0].value) : null;
+      const endCp = roadAddressProjectForm.find('#endCPDropdown').length && roadAddressProjectForm.find('#endCPDropdown')[0].value ? Number(roadAddressProjectForm.find('#endCPDropdown')[0].value) : null;
+      const generateNewRoadwayNumber = roadAddressProjectForm.find('#newRoadwayNumber').length && roadAddressProjectForm.find('#newRoadwayNumber')[0].checked ? roadAddressProjectForm.find('#newRoadwayNumber')[0].checked : null;
+
+      let devToolData = null;
+      if (hasDevRights) {
+        devToolData = {
+          startAddrMValue: startAddrMValue,
+          endAddrMValue: endAddrMValue,
+          originalStartAddrMValue: origStartAddrMValue,
+          originalEndAddrMValue: origEndAddrMValue,
+          startCp: startCp,
+          endCp: endCp,
+          generateNewRoadwayNumber: generateNewRoadwayNumber
+        };
+      };
+
       var reversed = _.chain(changedLinks).map(function (c) {
         return c.reversed;
       }).reduceRight(function (a, b) {
@@ -354,7 +377,8 @@
         userDefinedEndAddressM: userDefinedEndAddressM,
         coordinates: coordinates,
         roadName: roadAddressProjectForm.find('#roadName')[0].value,
-        reversed: reversed
+        reversed: reversed,
+        devToolData: devToolData
       };
       if (dataJson.trackCode === Track.Unknown.value) {
         new ModalConfirm("Tarkista ajoratakoodi");

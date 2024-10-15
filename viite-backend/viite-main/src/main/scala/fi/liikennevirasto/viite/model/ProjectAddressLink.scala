@@ -70,7 +70,8 @@ case class ProjectAddressLink(id                    : Long,
                               originalGeometry      : Option[Seq[Point]] = None,
                               roadwayNumber         : Long = 0,
                               sourceId              : String,
-                              roadAddressRoadPart   : Option[RoadPart] = None
+                              roadAddressRoadPart   : Option[RoadPart] = None,
+                              originalAddrMRange    : Option[AddrMRange] = None
                              ) extends ProjectAddressLinkLike {
   override def partitioningName: String = {
     if (roadPart.roadNumber > 0) // TODO comparing to 0 obsolete, RoadPart does not allow values <1

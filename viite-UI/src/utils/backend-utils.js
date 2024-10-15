@@ -262,6 +262,10 @@
       $.getJSON('api/viite/project/recalculateProject/' + id, callback);
     };
 
+    this.validateProject = function (id, callback) {
+      $.getJSON('api/viite/project/validateProject/' + id, callback);
+    };
+
     this.getJunctionPointEditableStatus = function (ids, jp) {
       $.get('api/viite/junctions/getEditableStatusOfJunctionPoints?ids=' + ids, function (response) {
         eventbus.trigger('junctionPoint:editableStatusFetched', response, jp);
