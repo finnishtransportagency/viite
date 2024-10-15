@@ -1852,6 +1852,13 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
   }
 
   def projectAddressLinkToApi(projectAddressLink: ProjectAddressLink, roadNames: Seq[RoadName] = Seq()): Map[String, Any] = {
+    val originalAddrMRange = {
+      if (projectAddressLink.originalAddrMRange.isDefined) {
+        AddrMRange(projectAddressLink.originalAddrMRange.get.start, projectAddressLink.originalAddrMRange.get.end)
+      } else {
+        AddrMRange(0,0) // projectAddressLinks might be "outside of project scope" i.e. not reserved to project and they dont have originalAddrMRange 'cause their addresses wont change
+      }
+    }
     val roadAddressPart = projectAddressLink.roadAddressRoadPart
     (Map(
         "success" -> true,
@@ -1879,6 +1886,8 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
         "trackCode" -> projectAddressLink.trackCode,
         "startAddressM" -> projectAddressLink.addrMRange.start,
         "endAddressM" -> projectAddressLink.addrMRange.end,
+        "originalStartAddressM" -> originalAddrMRange.start,
+        "originalEndAddressM" -> originalAddrMRange.end,
         "discontinuity" -> projectAddressLink.discontinuity,
         "lifecycleStatus" -> projectAddressLink.lifecycleStatus.value,
         "startMValue" -> projectAddressLink.startMValue,
