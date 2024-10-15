@@ -168,10 +168,6 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
     ProjectLink(id = NewIdValue, roadAddress.roadPart, roadAddress.track, roadAddress.discontinuity, AddrMRange(roadAddress.addrMRange.start, roadAddress.addrMRange.end), AddrMRange(roadAddress.addrMRange.start, roadAddress.addrMRange.end), roadAddress.startDate, roadAddress.endDate, createdBy = Option(project.createdBy), roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue, roadAddress.sideCode, roadAddress.calibrationPointTypes, (roadAddress.startCalibrationPointType, roadAddress.endCalibrationPointType), roadAddress.geometry, project.id, status, AdministrativeClass.State, roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), if (status == RoadAddressChangeType.New) 0 else roadAddress.id, if (status == RoadAddressChangeType.New) 0 else roadAddress.linearLocationId, roadAddress.ely, reversed = false, None, roadAddress.adjustedTimestamp)
   }
 
-  private def toProjectAddressLink(ral: RoadAddressLinkLike): ProjectAddressLink = {
-    ProjectAddressLink(ral.id, ral.linkId, ral.geometry, ral.length, ral.administrativeClassMML, ral.lifecycleStatus, ral.roadLinkSource, ral.administrativeClass, ral.roadName, ral.municipalityCode, ral.municipalityName, ral.modifiedAt, ral.modifiedBy, ral.roadPart, ral.trackCode, ral.elyCode, ral.discontinuity, ral.addrMRange, ral.startMValue, ral.endMValue, ral.sideCode, ral.startCalibrationPoint, ral.endCalibrationPoint, RoadAddressChangeType.Unknown, ral.id, ral.linearLocationId, sourceId = ral.sourceId)
-  }
-
   private def extractTrafficDirection(sideCode: SideCode, track: Track): TrafficDirection = {
     (sideCode, track) match {
       case (_, Track.Combined) => TrafficDirection.BothDirections
