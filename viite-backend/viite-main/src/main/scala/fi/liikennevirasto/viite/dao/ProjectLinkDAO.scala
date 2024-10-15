@@ -18,7 +18,7 @@ import slick.jdbc.StaticQuery.interpolation
 
 //TODO naming SQL conventions
 
-
+case class ProjectLinkDevToolData(startAddrMValue: Option[Long] = None, endAddrMValue: Option[Long] = None, originalStartAddrMValue: Option[Long] = None, originalEndAddrMValue: Option[Long] = None, startCp: Long = 0, endCp: Long = 0, generateNewRoadwayNumber: Boolean = false)
 
 case class ProjectLink(id: Long, roadPart: RoadPart, track: Track, discontinuity: Discontinuity, addrMRange: AddrMRange, originalAddrMRange: AddrMRange, startDate: Option[DateTime] = None, endDate: Option[DateTime] = None, createdBy: Option[String] = None, linkId: String, startMValue: Double, endMValue: Double, sideCode: SideCode,
                        calibrationPointTypes: (CalibrationPointType, CalibrationPointType) = (CalibrationPointType.NoCP, CalibrationPointType.NoCP),
@@ -411,8 +411,8 @@ class ProjectLinkDAO extends BaseDAO {
           projectLinkPS.setLong(8, projectLink.originalAddrMRange.end  )
           projectLinkPS.setString(9, modifier)
           projectLinkPS.setLong(10, projectLink.projectId)
-          projectLinkPS.setInt(11, projectLink.startCalibrationPointType.value)
-          projectLinkPS.setInt(12, projectLink.endCalibrationPointType.value)
+          projectLinkPS.setInt(11, projectLink.calibrationPointTypes._1.value)
+          projectLinkPS.setInt(12, projectLink.calibrationPointTypes._2.value)
           projectLinkPS.setInt(13, projectLink.originalStartCalibrationPointType.value)
           projectLinkPS.setInt(14, projectLink.originalEndCalibrationPointType.value)
           projectLinkPS.setInt(15, projectLink.status.value)

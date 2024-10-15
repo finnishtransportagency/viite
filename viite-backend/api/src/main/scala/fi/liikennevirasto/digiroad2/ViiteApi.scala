@@ -36,8 +36,8 @@ case class RoadAddressProjectExtractor(id: Long, projectEly: Option[Long], statu
                                        additionalInfo: String, reservedPartList: List[RoadPartElyExtractor], formedPartList: List[RoadPartElyExtractor], resolution: Int)
 
 case class RoadAddressProjectLinksExtractor(ids: Set[Long], linkIds: Seq[String], roadAddressChangeType: Int, projectId: Long,
-                                            /*roadPart: RoadPart,*/roadNumber: Long, roadPartNumber: Long, trackCode: Int, discontinuity: Int, roadEly: Long, roadLinkSource: Int, administrativeClass: Int,
-                                            userDefinedEndAddressM: Option[Int], coordinates: ProjectCoordinates, roadName: Option[String], reversed: Option[Boolean])
+                                            /*roadPart: RoadPart,*/ roadNumber: Long, roadPartNumber: Long, trackCode: Int, discontinuity: Int, roadEly: Long, roadLinkSource: Int, administrativeClass: Int,
+                                            userDefinedEndAddressM: Option[Int], coordinates: ProjectCoordinates, roadName: Option[String], reversed: Option[Boolean], devToolData: Option[ProjectLinkDevToolData])
 
 case class RoadPartElyExtractor(roadNumber: Long, roadPartNumber: Long, ely: Long)
 
@@ -990,7 +990,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
         if (links.roadPartNumber == 0)
           throw RoadPartException("Virheellinen tieosanumero")
         logger.debug(s"Creating new links: ${links.linkIds.mkString(",")}")
-        val response = projectService.createProjectLinks(links.linkIds, links.projectId, RoadPart(links.roadNumber, links.roadPartNumber), Track.apply(links.trackCode), Discontinuity.apply(links.discontinuity), AdministrativeClass.apply(links.administrativeClass), LinkGeomSource.apply(links.roadLinkSource), links.roadEly, user.username, links.roadName.getOrElse(halt(BadRequest("Road name is mandatory"))), Some(links.coordinates))
+        val response = projectService.createProjectLinks(links.linkIds, links.projectId, RoadPart(links.roadNumber, links.roadPartNumber), Track.apply(links.trackCode), Discontinuity.apply(links.discontinuity), AdministrativeClass.apply(links.administrativeClass), LinkGeomSource.apply(links.roadLinkSource), links.roadEly, user.username, links.roadName.getOrElse(halt(BadRequest("Road name is mandatory"))), Some(links.coordinates), links.devToolData)
         response.get("success") match {
           case Some(true) =>
             val projectErrors = response.getOrElse("projectErrors", Seq).asInstanceOf[Seq[projectService.projectValidator.ValidationErrorDetails]].map(projectService.projectValidator.errorPartsToApi)
@@ -1032,7 +1032,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
         if (links.roadPartNumber == 0)
           throw RoadPartException("Virheellinen tieosanumero")
         if (projectService.validateLinkTrack(links.trackCode)) {
-          projectService.updateProjectLinks(links.projectId, links.ids, links.linkIds, RoadAddressChangeType.apply(links.roadAddressChangeType), user.username, RoadPart(links.roadNumber, links.roadPartNumber), links.trackCode, links.userDefinedEndAddressM, links.administrativeClass, links.discontinuity, Some(links.roadEly), links.reversed.getOrElse(false), roadName = links.roadName, Some(links.coordinates)) match {
+          projectService.updateProjectLinks(links.projectId, links.ids, links.linkIds, RoadAddressChangeType.apply(links.roadAddressChangeType), user.username, RoadPart(links.roadNumber, links.roadPartNumber), links.trackCode, links.userDefinedEndAddressM, links.administrativeClass, links.discontinuity, Some(links.roadEly), links.reversed.getOrElse(false), roadName = links.roadName, Some(links.coordinates), links.devToolData) match {
             case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
             case None =>
               val projectErrors = projectService.validateProjectByIdHighPriorityOnly(links.projectId).map(projectService.projectValidator.errorPartsToApi)
@@ -1156,6 +1156,36 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
               "target" -> changeInfo.target, "reversed" -> changeInfo.reversed)))
       ).getOrElse(None)
       Map("changeTable" -> changeTableData, "warningMessage" -> warningMessage)
+    }
+  }
+
+ /**
+  * This is for the dev tool VIITE-3203
+  * For running validations without recalculation of the project links
+  * (validations from the recalculation phase included)
+  * */
+  private val validateProject: SwaggerSupportSyntax.OperationBuilder =(
+    apiOperation[Map[String, Any]]("validateProject")
+      .parameters(
+        pathParam[Long]("projectId").description("Id of a project")
+      )
+      tags "ViiteAPI - Project"
+      summary "Given a valid projectId, this will run validations to the project in question."
+    )
+  get("/project/validateProject/:projectId", operation(validateProject)) {
+    val projectId = params("projectId").toLong
+    time(logger, s"GET request for /project/validateProject/$projectId") {
+      try {
+        projectService.runOtherValidations(projectId) // these same are ran in calculation so good to run them here as well
+        val validationErrors = projectService.validateProjectById(projectId).map(projectService.projectValidator.errorPartsToApi)
+        // return validation errors
+        Map("success" -> true, "validationErrors" -> validationErrors)
+      } catch {
+        case ex: ProjectValidationException =>
+          Map("success" -> false, "errorMessage" -> ex.getMessage, "validationErrors" -> ex.getValidationErrors)
+        case ex: Exception =>
+          Map("success" -> false, "errorMessage" -> ex.getMessage)
+      }
     }
   }
 
