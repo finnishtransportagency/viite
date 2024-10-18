@@ -1,7 +1,7 @@
 package fi.liikennevirasto.viite.process.strategy
 
 import fi.liikennevirasto.digiroad2.util.{MissingRoadwayNumberException, MissingTrackException, RoadAddressException}
-import fi.liikennevirasto.viite.{ContinuousAddressCapErrorMessage, LengthMismatchErrorMessage, NegativeLengthErrorMessage, NewIdValue, ProjectValidationException, ProjectValidator, UnsuccessfulRecalculationMessage}
+import fi.liikennevirasto.viite.{AddNewLinksFailed, ContinuousAddressCapErrorMessage, LengthMismatchErrorMessage, NegativeLengthErrorMessage, NewIdValue, ProjectValidationException, ProjectValidator, UnsuccessfulRecalculationMessage, isRamp}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.process._
@@ -150,116 +150,125 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         Seq()
       }
     }
+    def adjustTerminatedStartingLinksToMatch(terminatedRight: Seq[ProjectLink], terminatedLeft: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
+      val averageEndAddrM = (terminatedLeft.last.addrMRange.end + terminatedRight.last.addrMRange.end) / 2
 
-    def adjustLinksBeforeAndAfterTerminatedSection(leftLinksToAdjust: Seq[ProjectLink], rightLinksToAdjust: Seq[ProjectLink], leftSideTerminatedSections: Seq[Seq[ProjectLink]], terminatedRightLinks: Seq[ProjectLink], terminatedLeftLinks: Seq[ProjectLink]) : (Seq[ProjectLink], Seq[ProjectLink], Seq[ProjectLink], Seq[ProjectLink]) = {
-      def adjustAddrMRange(projectLink: ProjectLink, addrMRange: Option[AddrMRange], originalAddrMRange: Option[AddrMRange]): ProjectLink = {
-        projectLink.copy(
-          addrMRange = if (addrMRange.isDefined) addrMRange.get else projectLink.addrMRange,
-          originalAddrMRange = if (originalAddrMRange.isDefined) originalAddrMRange.get else projectLink.originalAddrMRange
-        )
-      }
+      val addrMRangeRight = AddrMRange(terminatedRight.last.addrMRange.start, averageEndAddrM)
+      val addrMRangeLeft  = AddrMRange(terminatedLeft.last.addrMRange.start, averageEndAddrM)
 
-      // initialize project link lists that will be updated during the process
-      var processedLeftProjectLinks = leftLinksToAdjust
-      var processedRightProjectLinks = rightLinksToAdjust
+      val originalAddrMRangeRight = AddrMRange(terminatedRight.last.originalAddrMRange.start, averageEndAddrM)
+      val originalAddrMRangeLeft  = AddrMRange(terminatedLeft.last.originalAddrMRange.start, averageEndAddrM)
+
+      val lastTerminatedRight = terminatedRight.last.copy(addrMRange = addrMRangeRight, originalAddrMRange = originalAddrMRangeRight)
+      val lastTerminatedLeft  = terminatedLeft.last.copy(addrMRange = addrMRangeLeft, originalAddrMRange = originalAddrMRangeLeft)
+
+      (terminatedRight.init ++ Seq(lastTerminatedRight), terminatedLeft.init ++ Seq(lastTerminatedLeft))
+    }
+
+    def handleTerminatedLinks(terminatedLeftLinks: Seq[ProjectLink], terminatedRightLinks: Seq[ProjectLink], leftLinks: Seq[ProjectLink], rightLinks: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink], Seq[ProjectLink], Seq[ProjectLink]) = {
       var processedTerminatedLeftLinks = terminatedLeftLinks
       var processedTerminatedRightLinks = terminatedRightLinks
+      var processedLeftLinks = leftLinks
+      var processedRightLinks = rightLinks
 
-      leftSideTerminatedSections.foreach(leftTerminatedSection => {
-        val firstLinkInSection = leftTerminatedSection.minBy(_.addrMRange.start)
-        val lastLinkInSection = leftTerminatedSection.maxBy(_.addrMRange.end)
+      if (processedTerminatedLeftLinks.exists(_.addrMRange.start == 0) && processedTerminatedRightLinks.exists(_.addrMRange.start == 0)) {
+        val terminatedFromStartLeft  = processedTerminatedLeftLinks.takeWhile(pl => pl.roadwayNumber == processedTerminatedLeftLinks.head.roadwayNumber)
+        val terminatedFromStartRight = processedTerminatedRightLinks.takeWhile(pl => pl.roadwayNumber == processedTerminatedRightLinks.head.roadwayNumber)
 
-        // check if the terminated segment needs to be adjusted to same address value at the end of the segment
-        // The logic:
-        // if the terminated segment creates a minor discontinuity
-        // Or
-        // if the terminated segment is at the start of the road part
-        // then the segment is to be adjusted to match on both tracks at the start and end of the segment
-        val precedingLink = leftLinksToAdjust.find(pl => (pl.originalAddrMRange.end == firstLinkInSection.originalAddrMRange.start) || (pl.status == RoadAddressChangeType.New && pl.addrMRange.end == firstLinkInSection.originalAddrMRange.start))
-        val followingLink = leftLinksToAdjust.find(pl => (pl.originalAddrMRange.start == lastLinkInSection.originalAddrMRange.end) || (pl.status == RoadAddressChangeType.New && pl.addrMRange.start == lastLinkInSection.originalAddrMRange.end))
+        val leftLinkAfterTerminationSegment = processedLeftLinks.find(pl => pl.originalAddrMRange.start == terminatedFromStartLeft.last.originalAddrMRange.end && pl.status != RoadAddressChangeType.New)
+        val rightLinkAfterTerminationSegment = processedRightLinks.find(pl => pl.originalAddrMRange.start == terminatedFromStartRight.last.originalAddrMRange.end && pl.status != RoadAddressChangeType.New)
 
+        // adjust the terminated links to have matching end addresses
+        val (adjustedTerminatedRight, adjustedTerminatedLeft) = adjustTerminatedStartingLinksToMatch(terminatedFromStartRight, terminatedFromStartLeft)
 
-        if ((precedingLink.nonEmpty && precedingLink.get.discontinuity == Discontinuity.MinorDiscontinuity) || (precedingLink.isEmpty && followingLink.nonEmpty && firstLinkInSection.addrMRange.start == 0)) {
-          val rightTerminatedSections = toContinuousSectionsByStatus(terminatedRightLinks, RoadAddressChangeType.Termination)
-          val rightTransferredSections = toContinuousSectionsByStatus(rightLinksToAdjust, RoadAddressChangeType.Transfer)
-          val completeSection = addOppositeTrackLinksToTerminatedSection(leftTerminatedSection, rightTerminatedSections, rightTransferredSections)
-          val adjustedTerminatedSection = adjustTerminatedSectionAddressesToMatch(completeSection)
+        // adjust the links after the termination to have original start address values to be the same as the adjusted terminated end address values
+        if(leftLinkAfterTerminationSegment.nonEmpty) {
+          // update original value for the next link after termination
+          val adjustedLeft = leftLinkAfterTerminationSegment.get.copy(originalAddrMRange = AddrMRange(adjustedTerminatedLeft.last.originalAddrMRange.end, leftLinkAfterTerminationSegment.get.originalAddrMRange.end))
+          processedLeftLinks = updateProjectLinkList(processedLeftLinks, Seq(adjustedLeft))
+        }
 
-          // if the sections' start/end addresses were adjusted then there might be links before/after the section that need to be adjusted as well
-          if (adjustedTerminatedSection.nonEmpty) {
-            // find the original end address so we can use it to search for the link that comes after the adjusted terminated section
-            val lastTerminatedRightLinkOnSection = adjustedTerminatedSection.filter(_.track == Track.RightSide).maxBy(_.addrMRange.end)
-            val lastTerminatedLeftLinkOnSection = adjustedTerminatedSection.filter(_.track == Track.LeftSide).maxBy(_.addrMRange.end)
+        if (rightLinkAfterTerminationSegment.nonEmpty) {
+          // update original value for the next link after termination
+          val adjustedRight = rightLinkAfterTerminationSegment.get.copy(originalAddrMRange = AddrMRange(adjustedTerminatedRight.last.originalAddrMRange.end, rightLinkAfterTerminationSegment.get.originalAddrMRange.end))
+          processedRightLinks = updateProjectLinkList(processedRightLinks, Seq(adjustedRight))
+        }
 
-            val firstTerminatedRightLinkOnSection = adjustedTerminatedSection.filter(_.track == Track.RightSide).minBy(_.addrMRange.start)
-            val firstTerminatedLeftLinkOnSection = adjustedTerminatedSection.filter(_.track == Track.LeftSide).minBy(_.addrMRange.start)
+        processedTerminatedLeftLinks  = updateProjectLinkList(processedTerminatedLeftLinks, adjustedTerminatedLeft)
+        processedTerminatedRightLinks = updateProjectLinkList(processedTerminatedRightLinks, adjustedTerminatedRight)
+      }
 
-            val origStartAddrOfFirstTerminatedRightLink = terminatedRightLinks.find(_.id == firstTerminatedRightLinkOnSection.id).get.originalAddrMRange.start
-            val origStartAddrOfFirstTerminatedLeftLink = terminatedLeftLinks.find(_.id == firstTerminatedLeftLinkOnSection.id).get.originalAddrMRange.start
+      // find minorDiscontinuity links
+      val minorDiscontinuityLinks = (processedRightLinks ++ processedLeftLinks).filter(_.discontinuity == Discontinuity.MinorDiscontinuity)
+      minorDiscontinuityLinks.foreach({ link =>
+        // find links that come after minor discontinuity
+        val continuousAfterDiscontinuity = (processedRightLinks ++ processedLeftLinks).filter(pl => pl.addrMRange.start == link.addrMRange.end)
+        // find the terminated links that were continuous to the link that now comes after discontinuity jump
+        val terminatedLinksBeforeTheContinuousAfterDiscontinuity = continuousAfterDiscontinuity.flatMap(pl => (processedTerminatedLeftLinks ++ processedTerminatedRightLinks).filter(terminated => terminated.track != Track.Combined && terminated.addrMRange.end == pl.originalAddrMRange.start))
+        if (terminatedLinksBeforeTheContinuousAfterDiscontinuity.size == 2) {
+          // calculate the average end address for terminated links
+          val averageEndAddr = terminatedLinksBeforeTheContinuousAfterDiscontinuity.map(_.addrMRange.end).sum / 2
+          val processedTerm = terminatedLinksBeforeTheContinuousAfterDiscontinuity.map(term =>
+            term.copy(addrMRange = AddrMRange(term.addrMRange.start, averageEndAddr), originalAddrMRange = AddrMRange(term.originalAddrMRange.start, averageEndAddr))
+          )
+          val processedAfterDiscontinuityJump = continuousAfterDiscontinuity.map(link =>
+            link.copy(originalAddrMRange = AddrMRange(averageEndAddr, link.originalAddrMRange.end)))
+          val processedLeft = processedAfterDiscontinuityJump.filter(_.track != Track.RightSide)
+          val processedRight = processedAfterDiscontinuityJump.filter(_.track != Track.LeftSide)
+          val processedTermLeft = processedTerm.filter(_.track != Track.RightSide)
+          val processedTermRight = processedTerm.filter(_.track != Track.LeftSide)
 
-            val origEndAddrOfLastRightLink = terminatedRightLinks.find(_.id == lastTerminatedRightLinkOnSection.id).get.originalAddrMRange.end
-            val origEndAddrOfLastLeftLink = terminatedLeftLinks.find(_.id == lastTerminatedLeftLinkOnSection.id).get.originalAddrMRange.end
-
-            val adjustedTerminatedLeftLinks = adjustedTerminatedSection.filter(pl => pl.track == Track.LeftSide)
-            val adjustedTerminatedRightLinks = adjustedTerminatedSection.filter(pl => pl.track == Track.RightSide)
-
-            val leftLinkBeforeTerminationSegment = leftLinksToAdjust.find(pl => pl.originalAddrMRange.end == origStartAddrOfFirstTerminatedLeftLink && pl.status != RoadAddressChangeType.New)
-            val rightLinkBeforeTerminationSegment = rightLinksToAdjust.find(pl => pl.originalAddrMRange.end == origStartAddrOfFirstTerminatedRightLink && pl.status != RoadAddressChangeType.New)
-
-            val leftLinkAfterTerminationSegment = leftLinksToAdjust.find(pl => pl.originalAddrMRange.start == origEndAddrOfLastLeftLink && pl.status != RoadAddressChangeType.New)
-            val rightLinkAfterTerminationSegment = rightLinksToAdjust.find(pl => pl.originalAddrMRange.start == origEndAddrOfLastRightLink && pl.status != RoadAddressChangeType.New)
-
-
-            if (leftLinkBeforeTerminationSegment.nonEmpty) {
-              // set addrMRange and originalAddrMRange values for the previous link before termination segment
-              val addrMRange = if (leftLinkBeforeTerminationSegment.get.status == RoadAddressChangeType.Unchanged)
-                AddrMRange(leftLinkBeforeTerminationSegment.get.addrMRange.start, firstTerminatedLeftLinkOnSection.originalAddrMRange.start)
-               else
-                leftLinkBeforeTerminationSegment.get.addrMRange
-
-              val originalAddrMRange = AddrMRange(leftLinkBeforeTerminationSegment.get.originalAddrMRange.start, firstTerminatedLeftLinkOnSection.originalAddrMRange.start)
-              val adjustedPrecedingLeftLink = adjustAddrMRange(leftLinkBeforeTerminationSegment.get, Some(addrMRange), Some(originalAddrMRange))
-
-              processedLeftProjectLinks = updateProjectLinkList(processedLeftProjectLinks, Seq(adjustedPrecedingLeftLink))
-            }
-
-            if (rightLinkBeforeTerminationSegment.nonEmpty) {
-              // set addrMRange and originalAddrMRange values for the previous link before termination segment
-              val addrMRange = if (rightLinkBeforeTerminationSegment.get.status == RoadAddressChangeType.Unchanged)
-                AddrMRange(rightLinkBeforeTerminationSegment.get.addrMRange.start, firstTerminatedRightLinkOnSection.originalAddrMRange.start)
-              else
-                rightLinkBeforeTerminationSegment.get.addrMRange
-
-              val originalAddrMRange = AddrMRange(rightLinkBeforeTerminationSegment.get.originalAddrMRange.start, firstTerminatedRightLinkOnSection.originalAddrMRange.start)
-              val adjustedPrecedingRightLink = adjustAddrMRange(rightLinkBeforeTerminationSegment.get, Some(addrMRange), Some(originalAddrMRange))
-
-              processedRightProjectLinks = updateProjectLinkList(processedRightProjectLinks, Seq(adjustedPrecedingRightLink))
-            }
-
-            if (leftLinkAfterTerminationSegment.nonEmpty) {
-              // adjust the link after the termination to have original addrMRange.start value to be the same as the adjusted terminated addrMRange.end value
-              val originalAddrMRange = AddrMRange(lastTerminatedLeftLinkOnSection.originalAddrMRange.end, leftLinkAfterTerminationSegment.get.originalAddrMRange.end)
-              val adjustedFollowingLeftLink = adjustAddrMRange(leftLinkAfterTerminationSegment.get, None, Some(originalAddrMRange))
-
-              processedLeftProjectLinks = updateProjectLinkList(processedLeftProjectLinks, Seq(adjustedFollowingLeftLink))
-            }
-
-            if (rightLinkAfterTerminationSegment.nonEmpty) {
-              // adjust the link after the termination to have original addrMRange.start value to be the same as the adjusted terminated addrMRange.end value
-              val originalAddrMRange = AddrMRange(lastTerminatedRightLinkOnSection.originalAddrMRange.end, rightLinkAfterTerminationSegment.get.originalAddrMRange.end)
-              val adjustedFollowingRightLink = adjustAddrMRange(rightLinkAfterTerminationSegment.get, None, Some(originalAddrMRange))
-
-              processedRightProjectLinks = updateProjectLinkList(processedRightProjectLinks, Seq(adjustedFollowingRightLink))
-            }
-            processedTerminatedLeftLinks = updateProjectLinkList(processedTerminatedLeftLinks, adjustedTerminatedLeftLinks)
-            processedTerminatedRightLinks = updateProjectLinkList(processedTerminatedRightLinks, adjustedTerminatedRightLinks)
-          }
+          processedTerminatedLeftLinks = updateProjectLinkList(processedTerminatedLeftLinks, processedTermLeft)
+          processedTerminatedRightLinks = updateProjectLinkList(processedTerminatedRightLinks, processedTermRight)
+          processedLeftLinks = updateProjectLinkList(processedLeftLinks, processedLeft)
+          processedRightLinks = updateProjectLinkList(processedRightLinks, processedRight)
         }
       })
 
-      (processedLeftProjectLinks, processedRightProjectLinks, processedTerminatedLeftLinks, processedTerminatedRightLinks)
-    }
+      val potentialTerminatedLeftLinksToAdjust = processedTerminatedLeftLinks.filter(terminated =>
+        processedLeftLinks.exists(leftLink =>
+          leftLink.discontinuity == Discontinuity.MinorDiscontinuity &&
+            leftLink.originalAddrMRange.end == terminated.originalAddrMRange.start &&
+            leftLink.track == terminated.track
+        )
+      )
 
+      val potentialTerminatedRightLinksToAdjust = processedTerminatedRightLinks.filter(terminated =>
+        processedRightLinks.exists(rightLink =>
+          rightLink.discontinuity == Discontinuity.MinorDiscontinuity &&
+            rightLink.originalAddrMRange.end == terminated.originalAddrMRange.start &&
+            rightLink.track == terminated.track
+        )
+      )
+
+      // Find pairs of links with start values within 10 meters apart
+      val leftAndRightLinkPairs = potentialTerminatedLeftLinksToAdjust.flatMap { leftLink =>
+        potentialTerminatedRightLinksToAdjust
+          .filter(rightLink =>
+            Math.abs(leftLink.addrMRange.start - rightLink.addrMRange.start) <= 10 //check if addrMRange.start values are within 10 meters
+          )
+          .map(rightLink => (leftLink, rightLink)) // Create a pair of links
+      }
+
+      leftAndRightLinkPairs.foreach(pair => {
+        val leftTerminated = pair._1
+        val rightTerminated = pair._2
+        val averageAddrM = (leftTerminated.addrMRange.start + rightTerminated.addrMRange.start) / 2
+        val previousLeftLink = processedLeftLinks.find(_.originalAddrMRange.end == leftTerminated.originalAddrMRange.start)
+        val previousRightLink = processedRightLinks.find(_.originalAddrMRange.end == rightTerminated.originalAddrMRange.start)
+        if (previousLeftLink.nonEmpty && previousRightLink.nonEmpty) {
+          val adjustedTerminatedLeft = leftTerminated.copy(addrMRange = AddrMRange(averageAddrM, leftTerminated.addrMRange.end), originalAddrMRange = AddrMRange(averageAddrM, leftTerminated.originalAddrMRange.end))
+          val adjustedTerminatedRight = rightTerminated.copy(addrMRange = AddrMRange(averageAddrM, rightTerminated.addrMRange.end), originalAddrMRange = AddrMRange(averageAddrM, rightTerminated.originalAddrMRange.end))
+          val adjustedPreviousLeftLink = previousLeftLink.get.copy(originalAddrMRange = AddrMRange(previousLeftLink.get.addrMRange.start, averageAddrM))
+          val adjustedPreviousRightLink = previousRightLink.get.copy(originalAddrMRange = AddrMRange(previousRightLink.get.addrMRange.start, averageAddrM))
+          processedTerminatedLeftLinks = updateProjectLinkList(processedTerminatedLeftLinks, Seq(adjustedTerminatedLeft))
+          processedTerminatedRightLinks = updateProjectLinkList(processedTerminatedRightLinks, Seq(adjustedTerminatedRight))
+          processedLeftLinks = updateProjectLinkList(processedLeftLinks, Seq(adjustedPreviousLeftLink))
+          processedRightLinks = updateProjectLinkList(processedRightLinks, Seq(adjustedPreviousRightLink))
+        }
+      })
+      (processedTerminatedLeftLinks, processedTerminatedRightLinks, processedLeftLinks, processedRightLinks)
+    }
 
     // Group new and old project links by road part
     val groupedNewLinks = newProjectLinks.groupBy(projectLink => (projectLink.roadPart))
@@ -284,22 +293,12 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
        val currStartPoints = findStartingPoints(newLinks, oldLinks, plsOnSameRoadDifferentPart, userCalibrationPoints)
 
         // Order project links by topology
-        var (right, left) = TrackSectionOrder.orderProjectLinksTopologyByGeometry(currStartPoints, newLinks ++ oldLinks)
+        val (right, left) = TrackSectionOrder.orderProjectLinksTopologyByGeometry(currStartPoints, newLinks ++ oldLinks)
 
         // Fetch terminated project links (the addressMValues of terminated links will be adjusted if the project link addrMValues are slid between calibration points)
         val terminated = projectLinkDAO.fetchProjectLinks(left.head.projectId, Some(RoadAddressChangeType.Termination)).filter(_.roadPart == part)
-        var terminatedRightLinks = terminated.filter(_.track != Track.LeftSide).sortBy(_.addrMRange.start)
-        var terminatedLeftLinks = terminated.filter(_.track != Track.RightSide).sortBy(_.addrMRange.start)
-
-        val leftSideTerminatedSections = toContinuousSectionsByStatus(terminatedLeftLinks, RoadAddressChangeType.Termination)
-
-        if (leftSideTerminatedSections.nonEmpty) {
-          val (adjustedLeft, adjustedRight, adjustedTerminatedLeft, adjustedTerminatedRight) = adjustLinksBeforeAndAfterTerminatedSection(left, right, leftSideTerminatedSections, terminatedRightLinks, terminatedLeftLinks)
-          left = adjustedLeft
-          right = adjustedRight
-          terminatedLeftLinks = adjustedTerminatedLeft
-          terminatedRightLinks = adjustedTerminatedRight
-        }
+        val terminatedRightLinks = terminated.filter(_.track != Track.LeftSide).sortBy(_.addrMRange.start)
+        val terminatedLeftLinks = terminated.filter(_.track != Track.RightSide).sortBy(_.addrMRange.start)
 
         // Create combined sections
 
@@ -314,20 +313,24 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         val rightLinks = ProjectSectionMValueCalculator.calculateAddressMValuesForTrack(rightSections, userDefinedCalibrationPointsMap)
         val leftLinks = ProjectSectionMValueCalculator.calculateAddressMValuesForTrack(leftSections, userDefinedCalibrationPointsMap)
 
+        val (recalculatedTerminatedLeft, recalculatedTerminatedRight, processedLeft, processedRight) = handleTerminatedLinks(terminatedLeftLinks, terminatedRightLinks, leftLinks, rightLinks)
+
         // Calculate section address values
         // (creates splits at status changing spots on opposite tracks, adjusts calibration points etc)
-        val calculatedSections = calculateSectionAddressValues(leftLinks, rightLinks, userDefinedCalibrationPointsMap)
+        val calculatedSections = calculateSectionAddressValues(processedLeft, processedRight, userDefinedCalibrationPointsMap)
+        val calculatedLeftLinks = calculatedSections.flatMap(_.left.links)
+        val calculatedRightLinks = calculatedSections.flatMap(_.right.links)
 
-        runCalculationValidations(calculatedSections.flatMap(_.left.links), calculatedSections.flatMap(_.right.links))
+        runCalculationValidations(calculatedLeftLinks, calculatedRightLinks)
 
         val projectLinksResult = {
-          if (calculatedSections.flatMap(_.right.links) == calculatedSections.flatMap(_.left.links))
-            calculatedSections.flatMap(_.right.links)
+          if (calculatedRightLinks == calculatedLeftLinks)
+            calculatedRightLinks
           else {
-            calculatedSections.flatMap(_.right.links) ++ calculatedSections.flatMap(_.left.links).filterNot(_.track == Track.Combined) // Remove duplicated
+            calculatedRightLinks ++ calculatedLeftLinks.filterNot(_.track == Track.Combined) // Remove duplicated
           }
         }
-        projectLinksResult ++ terminatedLeftLinks ++ terminatedRightLinks
+        projectLinksResult ++ recalculatedTerminatedLeft ++ recalculatedTerminatedRight
       } catch {
         case ex @ (_: MissingTrackException | _: MissingRoadwayNumberException) =>
           logger.warn(ex.getMessage)
