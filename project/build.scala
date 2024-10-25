@@ -17,6 +17,9 @@ object Digiroad2Build extends Build {
   val SlickVersion = "3.0.3" // 3.1.x and further requires significant changes in the database code, or library change maybe. // 3.4.x and further requires scala 2.12
   val JodaSlickMapperVersion = "2.2.0" // provides slick 3.1.1, joda-time 2.7, and joda-convert 1.7
 
+  val ScalikeJdbcVersion = "3.4.2" // version for Scala version 2.11 - 2.13
+  val ScalikeJdbcJodaTimeVersion = ScalikeJdbcVersion // Should match your ScalikeJdbcVersion
+
   val AkkaVersion = "2.5.32" // 2.6.x and up requires Scala 2.12 or greater
   val JsonJacksonVersion    = "3.7.0-M11" // 3.7.0-M12 and up: could not find implicit value for evidence parameter of type org.json4s.AsJsonInput[org.json4s.StreamInput] //  4.0.6 last Scala 2.11 version
   val JettyVersion          = "9.3.30.v20211001"
@@ -49,11 +52,19 @@ object Digiroad2Build extends Build {
   val newRelic       = "com.newrelic.agent.java" % "newrelic-api"      % "8.12.0"
   val javaxServletApi= "javax.servlet"           % "javax.servlet-api" % JavaxServletVersion % "provided"
 
-  lazy val apacheHttp  = Seq(httpCore, httpClient)
-  lazy val joda        = Seq(jodaConvert, jodaTime)
-  lazy val mockitoTest = Seq(mockitoCore, mockito4X)
-  lazy val scalaTestTra= Seq(scalaTest, scalatraTest)
-  lazy val scalatraLibs= Seq(scalatraJson, scalatraAuth, scalatraSwagger)
+  val scalikeJdbc     = "org.scalikejdbc" %% "scalikejdbc"     % ScalikeJdbcVersion
+  val scalikeConfig   = "org.scalikejdbc" %% "scalikejdbc-config" % ScalikeJdbcVersion
+  val scalikeJodaTime = "org.scalikejdbc" %% "scalikejdbc-joda-time" % ScalikeJdbcJodaTimeVersion
+  val scalikeLogback  = "ch.qos.logback"  %  "logback-classic"    % "1.2.3"
+  //val scalikeTest     = "org.scalikejdbc" %% "scalikejdbc-test" % ScalikeJdbcVersion % "test"
+  // one  possible way to handle scalatests but need more refactoring of the code
+
+  lazy val apacheHttp      = Seq(httpCore, httpClient)
+  lazy val joda            = Seq(jodaConvert, jodaTime)
+  lazy val mockitoTest     = Seq(mockitoCore, mockito4X)
+  lazy val scalaTestTra    = Seq(scalaTest, scalatraTest)
+  lazy val scalatraLibs    = Seq(scalatraJson, scalatraAuth, scalatraSwagger)
+  lazy val scalikeJdbcLibs = Seq(scalikeJdbc, scalikeConfig, scalikeJodaTime, scalikeLogback)
 
   val geoToolsDependencies: Seq[ModuleID] = Seq(
     "org.geotools" % "gt-graph"       % GeoToolsVersion,
@@ -124,7 +135,8 @@ object Digiroad2Build extends Build {
         "net.postgis" % "postgis-jdbc"     % "2023.1.0" // dep postgresql, and from 2.5.0 and up: postgis-geometry
       ) ++ joda
         ++ apacheHttp
-        ++ mockitoTest,
+        ++ mockitoTest
+        ++ scalikeJdbcLibs,
       unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf"
     )
   ) dependsOn (baseJar, geoJar)
