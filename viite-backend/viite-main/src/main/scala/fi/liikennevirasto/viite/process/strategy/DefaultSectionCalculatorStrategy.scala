@@ -517,6 +517,10 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
               throw new RoadAddressException(NegativeLengthErrorMessage.format(curr.linkId))
             }
             if (curr.status != RoadAddressChangeType.New && (curr.originalTrack == curr.track || curr.track == Track.Combined) && !(Math.abs((curr.addrMRange.end - curr.addrMRange.start) - (curr.originalAddrMRange.end - curr.originalAddrMRange.start)) < maxDiffForChange)) {
+              // Discontinuity errors are checked here because without correct discontinuities set in place
+              // the calculation result might be wrong, so the user is notified to fix discontinuities.
+              // If the discontinuities are set correct and the calculation still has length mismatch,
+              // then throw the length mismatch error.
               val discontinuityErrors = projectValidator.checkProjectContinuity(projectDAO.fetchById(pls.head.projectId).get, pls)
               if (discontinuityErrors.nonEmpty) {
                 val erroneousLinkIds = discontinuityErrors.flatMap(err => err.affectedLinkIds)
@@ -527,6 +531,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
               }
             }
             /* VIITE-2957
+            (Using this work around can lead to roadway errors that need to be fixed afterwards..)
             Replacing the above if-statement with the one commented out below enables a user to bypass the RoadAddressException.
             This may be needed in certain cases.
             Example:
