@@ -1285,62 +1285,74 @@ class ProjectService(
     }
   }
 
-def spreadAddrMValuesToProjectLinks(startAddrM: Long, endAddrM: Long, projectLinks: Seq[ProjectLink], editOriginalValues: Boolean): Seq[ProjectLink] = {
-  def mappedAddressValues(remaining: Seq[ProjectLink], processed: Seq[ProjectLink], startAddr: Double, endAddr: Double, coef: Double, list: Seq[Long], increment: Int, depth: Int = 1): Seq[Long] = {
-    if (remaining.isEmpty) {
-      list
-    } else {
-      val currentProjectLink = remaining.head
-      //increment can also be negative
-      val previewValue = if (remaining.size == 1) {
-        startAddr + Math.round((currentProjectLink.endMValue - currentProjectLink.startMValue) * coef) + increment
-      } else {
-        startAddr + (currentProjectLink.endMValue - currentProjectLink.startMValue) * coef + increment
-      }
+  // Main function that spreads address M values over project links, either modifying original or current address values.
+  def spreadAddrMValuesToProjectLinks(startAddrM: Long, endAddrM: Long, projectLinks: Seq[ProjectLink], editOriginalValues: Boolean): Seq[ProjectLink] = {
 
-      if (depth > 100) {
-        val message = s"mappedAddressValues got in infinite recursion. ProjectLink id = ${currentProjectLink.id}, startMValue = ${currentProjectLink.startMValue}, endMValue = ${currentProjectLink.endMValue}, previewValue = $previewValue, remaining = ${remaining.length}"
-        logger.error(message)
-        if (depth > 105) throw new ViiteException(message)
-      }
+    // Nested function to map address values iteratively/recursively across each ProjectLink.
+    def mappedAddressValues(remaining: Seq[ProjectLink], processed: Seq[ProjectLink], startAddr: Double, endAddr: Double, coef: Double, list: Seq[Long], increment: Int, depth: Int = 1): Seq[Long] = {
 
-      val adjustedList: Seq[Long] = if ((previewValue < endAddrM) && (previewValue > startAddr)) {
-        list :+ Math.round(previewValue)
-      } else if (previewValue <= startAddr) {
-        mappedAddressValues(Seq(remaining.head), processed, list.last, endAddr, coef, list, increment + 1, depth + 1)
-      } else if (previewValue <= endAddrM) {
-        mappedAddressValues(Seq(remaining.head), processed, list.last, endAddr, coef, list, increment - 1, depth + 1)
+      // Base case: If no remaining ProjectLinks, return the final list of address values.
+      if (remaining.isEmpty) {
+        list
       } else {
-        mappedAddressValues(processed.last +: remaining, processed.init, list.init.last, endAddr, coef, list.init, increment - 1, depth + 1)
+        val currentProjectLink = remaining.head  // Get the next ProjectLink to process.
+
+        // Calculate a preview address value based on the coefficient, adjusting increment for rounding if only one link left.
+        val previewValue = if (remaining.size == 1) {
+          startAddr + Math.round((currentProjectLink.endMValue - currentProjectLink.startMValue) * coef) + increment
+        } else {
+          startAddr + (currentProjectLink.endMValue - currentProjectLink.startMValue) * coef + increment
+        }
+
+        // Safety check to prevent infinite recursion; throws error if depth exceeds limit.
+        val warningLimit = 100
+        val limit = 105
+        if (depth > warningLimit) {
+          val message = s"mappedAddressValues got in infinite recursion. ProjectLink id = ${currentProjectLink.id}, startMValue = ${currentProjectLink.startMValue}, endMValue = ${currentProjectLink.endMValue}, previewValue = $previewValue, remaining = ${remaining.length}"
+          logger.error(message)
+          if (depth > limit) throw ViiteException(message)  // Throws exception if recursive depth is excessive.
+        }
+
+        // Adjust the list based on previewValue in relation to endAddrM and startAddr boundaries.
+        val adjustedList: Seq[Long] = if ((previewValue < endAddrM) && (previewValue > startAddr)) {
+          list :+ Math.round(previewValue)  // Add previewValue if within bounds.
+        } else if (previewValue <= startAddr) {
+          // Recursively retry with incremented value if below startAddr.
+          mappedAddressValues(Seq(remaining.head), processed, list.last, endAddr, coef, list, increment + 1, depth + 1)
+        } else if (previewValue <= endAddrM) {
+          // Recursively retry with decremented value if between startAddr and endAddr.
+          mappedAddressValues(Seq(remaining.head), processed, list.last, endAddr, coef, list, increment - 1, depth + 1)
+        } else {
+          // Recursively retry with modified processed and remaining sequences to avoid exceeding boundaries.
+          mappedAddressValues(processed.last +: remaining, processed.init, list.init.last, endAddr, coef, list.init, increment - 1, depth + 1)
+        }
+
+        // Recursive call to process the next ProjectLink with updated parameters and increment depth.
+        mappedAddressValues(remaining.tail, processed :+ remaining.head, previewValue, endAddr, coef, adjustedList, increment, depth + 1)
       }
-      mappedAddressValues(remaining.tail, processed :+ remaining.head, previewValue, endAddr, coef, adjustedList, increment, depth + 1)
+    }
+
+    // Calculate the scaling coefficient for address spreading based on total ProjectLink address range.
+    val coefficient = (endAddrM - startAddrM) / projectLinks.map(pl => pl.endMValue - pl.startMValue).sum
+
+    // Generate the list of addresses spread across ProjectLinks.
+    val addresses = mappedAddressValues(projectLinks.init, Seq(), startAddrM, endAddrM, coefficient, Seq(startAddrM), 0) :+ endAddrM
+
+    // Map each ProjectLink to a new range (either original or current address values) and return the modified sequence.
+    projectLinks.zip(addresses.zip(addresses.tail)).map {
+      case (projectLink, (st, en)) =>
+        if (editOriginalValues)
+          projectLink.copy(originalAddrMRange = AddrMRange(st, en)) // Set original address values.
+        else
+          projectLink.copy(addrMRange = AddrMRange(st, en)) // Set regular address values.
     }
   }
-  val coefficient = (endAddrM - startAddrM) / projectLinks.map(pl => pl.endMValue - pl.startMValue).sum
 
-  val addresses = mappedAddressValues(projectLinks.init, Seq(), startAddrM, endAddrM, coefficient, Seq(startAddrM), 0) :+ endAddrM
-
-  projectLinks.zip(addresses.zip(addresses.tail)).map {
-    case (projectLink, (st, en)) =>
-      if (editOriginalValues)
-        projectLink.copy(originalAddrMRange = AddrMRange(st, en)) // set original address values
-      else
-        projectLink.copy(addrMRange = AddrMRange(st, en)) // set regular address values
-  }
-}
 
 def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
-  def getCp(cp: Long): CalibrationPointType = {
-    cp match {
-      case 0 => CalibrationPointType.NoCP
-      case 1 => CalibrationPointType.UserDefinedCP
-      case 2 => CalibrationPointType.RoadAddressCP
-      case 3 => CalibrationPointType.JunctionPointCP
-    }
-  }
 
-  val startCalibrationPoint = getCp(startCp)
-  val endCalibrationPoint = getCp(endCp)
+  val startCalibrationPoint = CalibrationPointType.apply(startCp.toInt)
+  val endCalibrationPoint = CalibrationPointType.apply(endCp.toInt)
 
   val linksWithStartCPSet = {
     if (startCalibrationPoint != NoCP) {

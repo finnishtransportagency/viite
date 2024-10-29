@@ -334,13 +334,17 @@
       var endDistance = $('#endDistance')[0];
       const hasDevRights = _.includes(startupParameters.roles, 'dev');
 
-      const startAddrMValue = roadAddressProjectForm.find('#addrStart').length && roadAddressProjectForm.find('#addrStart')[0].value ? Number(roadAddressProjectForm.find('#addrStart')[0].value) : null;
-      const endAddrMValue = roadAddressProjectForm.find('#addrEnd').length && roadAddressProjectForm.find('#addrEnd')[0].value ? Number(roadAddressProjectForm.find('#addrEnd')[0].value) : null;
-      const origStartAddrMValue = roadAddressProjectForm.find('#origAddrStart').length && roadAddressProjectForm.find('#origAddrStart')[0].value ? Number(roadAddressProjectForm.find('#origAddrStart')[0].value) : null;
-      const origEndAddrMValue = roadAddressProjectForm.find('#origAddrEnd').length && roadAddressProjectForm.find('#origAddrEnd')[0].value ? Number(roadAddressProjectForm.find('#origAddrEnd')[0].value) : null;
-      const startCp = roadAddressProjectForm.find('#startCPDropdown').length && roadAddressProjectForm.find('#startCPDropdown')[0].value ? Number(roadAddressProjectForm.find('#startCPDropdown')[0].value) : null;
-      const endCp = roadAddressProjectForm.find('#endCPDropdown').length && roadAddressProjectForm.find('#endCPDropdown')[0].value ? Number(roadAddressProjectForm.find('#endCPDropdown')[0].value) : null;
-      const generateNewRoadwayNumber = roadAddressProjectForm.find('#newRoadwayNumber').length && roadAddressProjectForm.find('#newRoadwayNumber')[0].checked ? roadAddressProjectForm.find('#newRoadwayNumber')[0].checked : null;
+      const getValueWithId = function(id) {
+        return roadAddressProjectForm.find(id)[0]?.value ? Number(roadAddressProjectForm.find(id)[0].value) : null;
+      }
+
+      const startAddrMValue = getValueWithId('#addrStart');
+      const endAddrMValue = getValueWithId('#addrEnd');
+      const origStartAddrMValue = getValueWithId('#origAddrStart');
+      const origEndAddrMValue = getValueWithId('#origAddrEnd');
+      const startCp = getValueWithId('#startCPDropdown');
+      const endCp = getValueWithId('#endCPDropdown');
+      const generateNewRoadwayNumber = roadAddressProjectForm.find('#newRoadwayNumber')[0]?.checked || null;
 
       let devToolData = null;
       if (hasDevRights) {

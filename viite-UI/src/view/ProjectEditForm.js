@@ -688,7 +688,7 @@
               // if no validation errors are present, show changes button and remove title
               formCommon.setDisabledAndTitleAttributesById("changes-button", false, "");
             }
-        } // if something went wrong during validation, show error to user
+          } // if something went wrong during validation, show error to the user
           else if ('validationErrors' in response && !_.isEmpty(response.validationErrors)) {
             // set project errors that were returned by the backend validations and write them to user (removes the spinner also)
             projectCollection.setAndWriteProjectErrorsToUser(response.validationErrors);

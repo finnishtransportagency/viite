@@ -411,8 +411,8 @@ class ProjectLinkDAO extends BaseDAO {
           projectLinkPS.setLong(8, projectLink.originalAddrMRange.end  )
           projectLinkPS.setString(9, modifier)
           projectLinkPS.setLong(10, projectLink.projectId)
-          projectLinkPS.setInt(11, projectLink.calibrationPointTypes._1.value)
-          projectLinkPS.setInt(12, projectLink.calibrationPointTypes._2.value)
+          projectLinkPS.setInt(11, projectLink.calibrationPointTypes._1.value) // startCP
+          projectLinkPS.setInt(12, projectLink.calibrationPointTypes._2.value) // endCP
           projectLinkPS.setInt(13, projectLink.originalStartCalibrationPointType.value)
           projectLinkPS.setInt(14, projectLink.originalEndCalibrationPointType.value)
           projectLinkPS.setInt(15, projectLink.status.value)
