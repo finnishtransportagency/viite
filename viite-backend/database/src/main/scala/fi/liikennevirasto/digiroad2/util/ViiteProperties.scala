@@ -36,6 +36,11 @@ trait ViiteProperties {
 
   def getAuthenticationBasicUsername(baseAuth: String = ""): String
   def getAuthenticationBasicPassword(baseAuth: String = ""): String
+
+  // ScalikeJDBC properties
+  val scalikeJdbcUrl: String
+  val scalikeJdbcUser: String
+  val scalikeJdbcPassword: String
 }
 
 class ViitePropertiesFromEnv extends ViiteProperties {
@@ -77,6 +82,10 @@ class ViitePropertiesFromEnv extends ViiteProperties {
   val dynamicLinkNetworkS3BucketName: String = scala.util.Properties.envOrElse("dynamicLinkNetworkS3BucketName", null)
   val awsConnectionEnabled: Boolean = scala.util.Properties.envOrElse("awsConnectionEnabled", "true").toBoolean
   val apiS3ObjectTTLSeconds: String = scala.util.Properties.envOrElse("apiS3ObjectTTLSeconds", null)
+  // ScalikeJDBC property implementations
+  val scalikeJdbcUrl: String = scala.util.Properties.envOrElse("scalikejdbc.jdbc.url", null)
+  val scalikeJdbcUser: String = scala.util.Properties.envOrElse("scalikejdbc.jdbc.user", null)
+  val scalikeJdbcPassword: String = scala.util.Properties.envOrElse("scalikejdbc.jdbc.password", null)
 
   lazy val bonecpProperties: Properties = {
     val props = new Properties()
@@ -154,6 +163,10 @@ class ViitePropertiesFromFile extends ViiteProperties {
   override val dynamicLinkNetworkS3BucketName: String = scala.util.Properties.envOrElse("dynamicLinkNetworkS3BucketName", envProps.getProperty("dynamicLinkNetworkS3BucketName"))
   override val awsConnectionEnabled: Boolean = envProps.getProperty("awsConnectionEnabled", "true").toBoolean
   override val apiS3ObjectTTLSeconds: String = scala.util.Properties.envOrElse("apiS3ObjectTTLSeconds", envProps.getProperty("apiS3ObjectTTLSeconds"))
+  // ScalikeJDBC
+  override val scalikeJdbcUrl: String = scala.util.Properties.envOrElse("scalikeJdbcUrl", envProps.getProperty("scalikejdbc.jdbc.url"))
+  override val scalikeJdbcUser: String = scala.util.Properties.envOrElse("scalikeJdbcUser", envProps.getProperty("scalikejdbc.jdbc.user"))
+  override val scalikeJdbcPassword: String = scala.util.Properties.envOrElse("scalikeJdbcPassword", envProps.getProperty("scalikejdbc.jdbc.password"))
 
   override lazy val bonecpProperties: Properties = {
     val props = new Properties()
@@ -230,6 +243,12 @@ object ViiteProperties {
   lazy val dynamicLinkNetworkS3BucketName: String = properties.dynamicLinkNetworkS3BucketName
   lazy val awsConnectionEnabled: Boolean = properties.awsConnectionEnabled
   lazy val apiS3ObjectTTLSeconds: String = properties.apiS3ObjectTTLSeconds
+
+  // Scalike properties
+  lazy val scalikeJdbcUrl: String = properties.scalikeJdbcUrl
+  lazy val scalikeJdbcUser: String = properties.scalikeJdbcUser
+  lazy val scalikeJdbcPassword: String = properties.scalikeJdbcPassword
+
 
   def getAuthenticationBasicUsername(baseAuth: String = ""): String = properties.getAuthenticationBasicUsername(baseAuth)
   def getAuthenticationBasicPassword(baseAuth: String = ""): String = properties.getAuthenticationBasicPassword(baseAuth)
