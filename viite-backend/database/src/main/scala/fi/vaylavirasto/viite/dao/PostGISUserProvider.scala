@@ -1,61 +1,70 @@
 package fi.vaylavirasto.viite.dao
 
-import slick.driver.JdbcDriver.backend.Database
-import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.user.{Configuration, User, UserProvider}
-import fi.vaylavirasto.viite.geometry.Point
-import fi.vaylavirasto.viite.postgis.PostGISDatabase
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC
 import org.json4s._
 import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization.{read, write}
-import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{GetResult, PositionedResult}
+import scalikejdbc._
+
 
 class PostGISUserProvider extends BaseDAO with UserProvider {
   implicit val formats: Formats = Serialization.formats(NoTypeHints)
-  implicit val getUser: GetResult[User] = new GetResult[User] {
-    def apply(r: PositionedResult) = {
-     User(r.nextLong(), r.nextString(), read[Configuration](r.nextString()))
-    }
-  }
-  implicit val getUserArea: GetResult[Point] = new GetResult[Point] {
-    def apply(r: PositionedResult) = {
-      Point(r.nextDouble(), r.nextDouble(), r.nextDouble())
-    }
+
+  object User extends SQLSyntaxSupport[User]{
+    override val tableName = "service_user"
+    def apply(rs: WrappedResultSet): User = new User(
+      rs.long("id"),
+      rs.string("username"),
+      read[Configuration](rs.string("configuration"))
+    )
   }
 
   def createUser(username: String, config: Configuration): Unit = {
-    PostGISDatabase.withDynSession {
+    PostGISDatabaseScalikeJDBC.runWithAutoCommit {
       runUpdateToDb(
-        s"""insert into service_user (id, username, configuration)""" +
-        s"""values (nextval('service_user_seq'), '${username.toLowerCase}', '${write(config)}')"""
+        sql"""
+        INSERT INTO service_user (id, username, configuration)
+        VALUES (nextval('service_user_seq'), ${username.toLowerCase}, ${write(config)})
+            """
       )
     }
   }
 
   def getUser(username: String): Option[User] = {
     if (username == null) return None
-    PostGISDatabase.withDynSession {
-      val query = s"""select id, username, configuration from service_user where lower(username) = '${username.toLowerCase}'"""
-      sql"""#$query""".as[User].firstOption
+    PostGISDatabaseScalikeJDBC.runWithReadOnlySession {
+      val query =
+        sql"""
+             SELECT id, username, configuration
+             FROM service_user
+             WHERE lower(username) = ${username.toLowerCase}
+             """
+      runSelectSingle(query.map(User.apply))
     }
   }
 
   def saveUser(user: User): User = {
-    PostGISDatabase.withDynSession {
+    PostGISDatabaseScalikeJDBC.runWithAutoCommit {
       runUpdateToDb(
-        s"""
-           |update service_user
-           |set configuration = '${write(user.configuration)}'
-           |where lower(username) = '${user.username.toLowerCase}'
-        """.stripMargin)
+        sql"""
+           UPDATE service_user
+           SET configuration = ${write(user.configuration)}
+           WHERE lower(username) = ${user.username.toLowerCase}
+        """
+      )
       user
     }
   }
 
   def deleteUser(username: String): Unit = {
-    PostGISDatabase.withDynSession {
-      runUpdateToDb(s"""delete from service_user where lower(username) = '${username.toLowerCase}'""")
+    PostGISDatabaseScalikeJDBC.runWithAutoCommit {
+      runUpdateToDb(
+        sql"""
+             DELETE FROM service_user
+             WHERE lower(username) = ${username.toLowerCase}
+             """
+      )
     }
   }
 

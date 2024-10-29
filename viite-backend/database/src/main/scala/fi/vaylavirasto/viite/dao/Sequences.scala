@@ -1,108 +1,123 @@
 package fi.vaylavirasto.viite.dao
 
-import slick.driver.JdbcDriver.backend.Database
-import Database.dynamicSession
-
-object Sequences {
+object Sequences extends BaseDAO {
 
   def nextViitePrimaryKeySeqValue: Long = {
-    Queries.nextViitePrimaryKeyId.as[Long].first
+    runSelectSingleFirstOptionWithType[Long](Queries.nextViitePrimaryKeyId).getOrElse(
+      throw new NoSuchElementException("No value returned for nextViitePrimaryKeyId")
+    )
   }
 
   def nextViiteProjectId: Long = {
-    Queries.nextViiteProjectId.as[Long].first
+    runSelectSingleFirstOptionWithType[Long](Queries.nextViiteProjectId).getOrElse {
+      throw new NoSuchElementException("No value returned for nextViiteProjectId")
+    }
   }
 
   def nextProjectLinkId: Long = {
-    Queries.nextProjectLinkId.as[Long].first
+    runSelectSingleFirstOptionWithType[Long](Queries.nextProjectLinkId).getOrElse {
+      throw new NoSuchElementException("No value returned for nextProjectLinkId")
+    }
   }
 
   def fetchProjectLinkIds(len: Int): List[Long] = {
-    Queries.fetchProjectLinkIds(len)
+    runSelectQuery(Queries.fetchProjectLinkIds(len))
   }
 
   def nextRoadwayId: Long = {
-    Queries.nextRoadwayId.as[Long].first
-  }
-
-  def nextLinearLocationId: Long = {
-    Queries.nextLinearLocationId.as[Long].first
-  }
-
-  def fetchRoadwayIds(len: Int): List[Long] = {
-    Queries.fetchRoadwayIds(len)
-  }
-
-  def fetchLinearLocationIds(len: Int): List[Long] = {
-    Queries.fetchLinearLocationIds(len)
+    runSelectSingleFirstOptionWithType[Long](Queries.nextRoadwayId).getOrElse {
+      throw new NoSuchElementException("No value returned for nextRoadwayId")
+    }
   }
 
   def nextRoadNameId: Long = {
-    Queries.nextRoadNameId.as[Long].first
+    runSelectSingleFirstOptionWithType[Long](Queries.nextRoadNameId).getOrElse {
+      throw new NoSuchElementException("No value returned for nextRoadNameId")
+    }
   }
 
   def nextRoadwayNumber: Long = {
-    Queries.nextRoadwayNumber.as[Long].first
-  }
-
-  def nextRoadNetworkErrorId: Long = {
-    Queries.nextRoadNetworkErrorId.as[Long].first
-  }
-
-  def nextRoadwayChangeLink: Long = {
-    Queries.nextRoadwayChangeLink.as[Long].first
-  }
-
-  def nextPublishedRoadNetworkId: Long = {
-    Queries.nextPublishedRoadNetworkId.as[Long].first
+    runSelectSingleFirstOptionWithType[Long](Queries.nextRoadwayNumber).getOrElse {
+      throw new NoSuchElementException("No value returned for nextRoadwayNumber")
+    }
   }
 
   def nextRoadwayPointId: Long = {
-    Queries.nextRoadwayPointId.as[Long].first
+    runSelectSingleFirstOptionWithType[Long](Queries.nextRoadwayPointId).getOrElse {
+      throw new NoSuchElementException("No value returned for nextRoadwayPointId")
+    }
   }
 
-  def nextCalibrationPointId: Long = {
-    Queries.nextCalibrationPointId.as[Long].first
+  def fetchRoadwayIds(len: Int): List[Long] = {
+    runSelectQuery(Queries.fetchRoadwayIds(len))
   }
 
-  def fetchCalibrationPointIds(len: Int): List[Long] = {
-    Queries.fetchCalibrationPointIds(len)
+  def nextLinearLocationId: Long = {
+    runSelectSingleFirstOptionWithType[Long](Queries.nextLinearLocationId).getOrElse {
+      throw new NoSuchElementException("No value returned for nextLinearLocationId")
+    }
+  }
+
+  def fetchLinearLocationIds(len: Int): List[Long] = {
+    runSelectQuery(Queries.fetchLinearLocationIds(len))
   }
 
   def nextNodeId: Long = {
-    Queries.nextNodeId.as[Long].first
-  }
-
-  def nextNodeNumber: Long = {
-    Queries.nextNodeNumber.as[Long].first
+    runSelectSingleFirstOptionWithType[Long](Queries.nextNodeId).getOrElse {
+      throw new NoSuchElementException("No value returned for nextNodeId")
+    }
   }
 
   def fetchNodeIds(len: Int): List[Long] = {
-    Queries.fetchNodeIds(len)
+    runSelectQuery(Queries.fetchNodeIds(len))
   }
 
   def nextNodePointId: Long = {
-    Queries.nextNodePointId.as[Long].first
+    runSelectSingleFirstOptionWithType[Long](Queries.nextNodePointId).getOrElse {
+      throw new NoSuchElementException("No value returned for nextNodePointId")
+    }
   }
 
-  def fetchJunctionPointIds(len: Int): List[Long] = {
-    Queries.fetchJunctionPointIds(len)
-  }
-
-  def fetchNodePointIds(len: Int): List[Long] = {
-    Queries.fetchNodePointIds(len)
+  def nextNodeNumber: Long = {
+    runSelectSingleFirstOptionWithType[Long](Queries.nextNodeNumber).getOrElse {
+      throw new NoSuchElementException("No value returned for nextNodeNumber")
+    }
   }
 
   def nextJunctionId: Long = {
-    Queries.nextJunctionId.as[Long].first
+    runSelectSingleFirstOptionWithType[Long](Queries.nextJunctionId).getOrElse {
+      throw new NoSuchElementException("No value returned for nextJunctionId")
+    }
   }
 
   def fetchJunctionIds(len: Int): List[Long] = {
-    Queries.fetchJunctionIds(len)
+    runSelectQuery(Queries.fetchJunctionIds(len))
   }
 
   def nextJunctionPointId: Long = {
-    Queries.nextJunctionPointId.as[Long].first
+    runSelectSingleFirstOptionWithType[Long](Queries.nextJunctionPointId).getOrElse {
+      throw new NoSuchElementException("No value returned for nextJunctionPointId")
+    }
+  }
+
+  def fetchJunctionPointIds(len: Int): List[Long] = {
+    runSelectQuery(Queries.fetchJunctionPointIds(len))
+  }
+
+  def fetchNodePointIds(len: Int): List[Long] = {
+    runSelectQuery(Queries.fetchNodePointIds(len))
+  }
+
+  def nextCalibrationPointId: Long = {
+    runSelectSingleFirstOptionWithType[Long](Queries.nextCalibrationPointId).getOrElse {
+      throw new NoSuchElementException("No value returned for nextCalibrationPointId")
+    }
+  }
+
+  def nextRoadwayChangeLink: Long = {
+    runSelectSingleFirstOptionWithType[Long](Queries.nextRoadwayChangeLink).getOrElse {
+      throw new NoSuchElementException("No value returned for nextRoadwayChangeLink")
+    }
   }
 
 }
