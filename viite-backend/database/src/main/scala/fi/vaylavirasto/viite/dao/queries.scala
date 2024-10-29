@@ -1,8 +1,6 @@
 package fi.vaylavirasto.viite.dao
 
-import slick.driver.JdbcDriver.backend.Database
-import Database.dynamicSession
-import slick.jdbc.StaticQuery._
+import scalikejdbc.{HasExtractor, SQL, scalikejdbcSQLInterpolationImplicitDef}
 
 object Queries {
 
@@ -41,42 +39,40 @@ object Queries {
 
   def nextJunctionPointId = sql"select nextval('JUNCTION_POINT_SEQ')"
 
-  def fetchProjectLinkIds(len: Int): List[Long] = {
-    sql"""select nextval('PROJECT_LINK_SEQ') from generate_series(1, $len)""".as[Long].list
+  def fetchRoadwayIds(len: Int): SQL[Long, HasExtractor] = {
+    sql"SELECT nextval('ROADWAY_SEQ') FROM generate_series(1, $len)".map(_.long(1))
   }
 
-  def fetchRoadwayIds(len: Int): List[Long] = {
-    sql"""select nextval('ROADWAY_SEQ') from generate_series(1, $len)""".as[Long].list
+  def fetchNodeIds(len: Int): SQL[Long, HasExtractor] = {
+    sql"""select nextval('NODE_SEQ') from generate_series(1, $len)""".map(_.long(1))
   }
 
-  def fetchCalibrationPointIds(len: Int): List[Long] = {
-    sql"""select nextval('CALIBRATION_POINT_SEQ') from generate_series(1, $len)""".as[Long].list
+  def fetchJunctionIds(len: Int): SQL[Long, HasExtractor] = {
+    sql"""select nextval('JUNCTION_SEQ') from generate_series(1, $len)""".map(_.long(1))
   }
 
-  def fetchNodeIds(len: Int): List[Long] = {
-    sql"""select nextval('NODE_SEQ') from generate_series(1, $len)""".as[Long].list
+  def fetchProjectLinkIds(len: Int): SQL[Long, HasExtractor] = {
+    sql"""select nextval('PROJECT_LINK_SEQ') from generate_series(1, $len)""".map(_.long(1))
   }
 
-  def fetchNodePointIds(len: Int): List[Long] = {
-    sql"""select nextval('NODE_POINT_SEQ') from generate_series(1, $len)""".as[Long].list
+  def fetchCalibrationPointIds(len: Int): SQL[Long, HasExtractor] = {
+    sql"""select nextval('CALIBRATION_POINT_SEQ') from generate_series(1, $len)""".map(_.long(1))
   }
 
-  def fetchJunctionPointIds(len: Int): List[Long] = {
-    sql"""select nextval('JUNCTION_POINT_SEQ') from generate_series(1, $len)""".as[Long].list
+  def fetchNodePointIds(len: Int): SQL[Long, HasExtractor] = {
+    sql"""select nextval('NODE_POINT_SEQ') from generate_series(1, $len)""".map(_.long(1))
   }
 
-  def fetchJunctionIds(len: Int): List[Long] = {
-    sql"""select nextval('JUNCTION_SEQ') from generate_series(1, $len)""".as[Long].list
+  def fetchJunctionPointIds(len: Int): SQL[Long, HasExtractor] = {
+    sql"""select nextval('JUNCTION_POINT_SEQ') from generate_series(1, $len)""".map(_.long(1))
   }
 
-  def fetchLinearLocationIds(len: Int): List[Long] = {
-    sql"""select nextval('LINEAR_LOCATION_SEQ') from generate_series(1, $len)""".as[Long].list
+  def fetchLinearLocationIds(len: Int): SQL[Long, HasExtractor] = {
+    sql"""select nextval('LINEAR_LOCATION_SEQ') from generate_series(1, $len)""".map(_.long(1))
   }
 
-  def getMunicipalities: Seq[Int] = {
-    sql"""
-      select id from municipality
-    """.as[Int].list
+  def fetchMunicipalityIds: SQL[Int, HasExtractor] = {
+    sql"SELECT id FROM municipality".map(_.int(1))
   }
 
 }
