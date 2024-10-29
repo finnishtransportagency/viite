@@ -450,7 +450,7 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
 
         // if there are combined links (A + B = C)
         else if (otherChangesWithSameNewLinkId.nonEmpty) {
-          val oldLinkIds = otherChangesWithSameNewLinkId.map(_.oldLinkId)
+          val oldLinkIds = otherChangesWithSameNewLinkId.map(_.oldLinkId) ++ Seq(change.oldLinkId)
           val oldLinearLocations = linearLocations.filter(ll => oldLinkIds.contains(ll.linkId))
           val roadways = roadwayDAO.fetchAllByRoadwayNumbers(oldLinearLocations.map(_.roadwayNumber).toSet)
           // group the roadways with roadPart and track
