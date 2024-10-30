@@ -2,7 +2,8 @@ package fi.vaylavirasto.viite.dao
 
 import scalikejdbc._
 import org.slf4j.{Logger, LoggerFactory}
-import fi.vaylavirasto.viite.postgis.SessionProvider.session // As this is imported here, it is available in all classes that extend this trait
+import fi.vaylavirasto.viite.postgis.SessionProvider.session
+import fi.vaylavirasto.viite.util.ViiteException
 
 // Methods to run queries using ScalikeJDBC and session provider
 trait BaseDAO {
@@ -45,10 +46,15 @@ trait BaseDAO {
    *
    * @param query SQL query with result type A
    * @tparam A Type to map the result to
-   * @return None if no results found, Some(result) if at least one exists
+   * @return None if no results found, Some(result) if exactly one exists
+   * @throws ViiteException if multiple rows are returned
    */
   def runSelectSingleOption[A](query: SQL[A, HasExtractor]): Option[A] = {
-    query.single().apply()
+    try {
+      query.single().apply()
+    } catch {
+      case e: IllegalStateException => throw ViiteException(e.getMessage)
+    }
   }
 
   /**
@@ -58,45 +64,60 @@ trait BaseDAO {
    * @param query SQL query with result type A
    * @tparam A Type to map the result to
    * @return The first result
+   * @throws ViiteException if no results found or if multiple rows are returned
    */
   def runSelectSingle[A](query: SQL[A, HasExtractor]): A = {
-    query.single().apply().getOrElse(throw new NoSuchElementException("No result found"))
+    try {
+      query.single().apply().getOrElse(
+        throw ViiteException("No result found")
+      )
+    } catch {
+      case e: IllegalStateException => throw ViiteException(e.getMessage)
+    }
   }
 
   /**
-   * Executes a SELECT query and maps the first result using an implicit mapper function.
-   * Useful for queries returning a single column that needs type conversion.
+   * Executes a SELECT query and maps the result using an implicit mapper function.
    * Example use: runSelectSingleFirstOptionWithType[Long](query)
    *
    * @param query SQL query to execute
    * @param mapper Implicit function to convert WrappedResultSet to type T
    * @tparam T Type to map the result to
-   * @return None if no results found, Some(T) if result exists
+   * @return None if no results found, Some(T) if exactly one result exists
+   * @throws ViiteException if multiple rows are returned
    */
   def runSelectSingleFirstOptionWithType[T](query: SQL[Nothing, NoExtractor])(implicit mapper: WrappedResultSet => T): Option[T] = {
-    query.map(mapper).single().apply()
+    try {
+      query.map(mapper).single().apply()
+    } catch {
+      case e: IllegalStateException => throw ViiteException(e.getMessage)
+    }
   }
 
   /**
    * Executes a SELECT query and maps the first result using an implicit mapper function.
-   * Throws NoSuchElementException if no results found.
+   * Example use: runSelectSingleFirstWithType[Long](query)
    *
    * @param query SQL query to execute
    * @param mapper Implicit function to convert WrappedResultSet to type T
    * @tparam T Type to map the result to
-   * @return The first result
+   * @return The mapped result
+   * @throws ViiteException if no results found or if multiple rows are returned
    */
   def runSelectSingleFirstWithType[T](query: SQL[Nothing, NoExtractor])(implicit mapper: WrappedResultSet => T): T = {
-    query.map(mapper).single().apply().getOrElse(
-      throw new NoSuchElementException("No value returned")
-    )
+    try {
+      query.map(mapper).single().apply().getOrElse(
+        throw ViiteException("No value returned")
+      )
+    } catch {
+      case e: IllegalStateException => throw ViiteException(e.getMessage)
+    }
   }
 
   // Implicit conversions for common types
   implicit val longMapper: WrappedResultSet => Long = _.long(1)
   implicit val stringMapper: WrappedResultSet => String = _.string(1)
   implicit val intMapper: WrappedResultSet => Int = _.int(1)
-  //implicit val linkMapper: WrappedResultSet => Link = _.link(1)
   // Add more implicit mappers as needed
 
 }
