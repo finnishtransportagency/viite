@@ -42,7 +42,7 @@ trait KgvCollection {
 }
 
 object KgvCollection {
-  case object Frozen                  extends KgvCollection { def value = "keskilinjavarasto:frozenlinks" }
+  case object Frozen                  extends KgvCollection { def value = "keskilinjavarasto:road_links_20240919" }
   case object Changes                 extends KgvCollection { def value = "keskilinjavarasto:change" }
   case object UnFrozen                extends KgvCollection { def value = "keskilinjavarasto:road_links" }
   case object LinkVersions            extends KgvCollection { def value = "keskilinjavarasto:road_links_versions" }
