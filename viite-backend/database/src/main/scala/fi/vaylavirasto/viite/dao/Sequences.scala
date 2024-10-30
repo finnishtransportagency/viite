@@ -3,21 +3,15 @@ package fi.vaylavirasto.viite.dao
 object Sequences extends BaseDAO {
 
   def nextViitePrimaryKeySeqValue: Long = {
-    runSelectSingleFirstOptionWithType[Long](Queries.nextViitePrimaryKeyId).getOrElse(
-      throw new NoSuchElementException("No value returned for nextViitePrimaryKeyId")
-    )
+    runSelectSingleFirstWithType[Long](Queries.nextViitePrimaryKeyId)
   }
 
   def nextViiteProjectId: Long = {
-    runSelectSingleFirstOptionWithType[Long](Queries.nextViiteProjectId).getOrElse {
-      throw new NoSuchElementException("No value returned for nextViiteProjectId")
-    }
+    runSelectSingleFirstWithType[Long](Queries.nextViiteProjectId)
   }
 
   def nextProjectLinkId: Long = {
-    runSelectSingleFirstOptionWithType[Long](Queries.nextProjectLinkId).getOrElse {
-      throw new NoSuchElementException("No value returned for nextProjectLinkId")
-    }
+    runSelectSingleFirstWithType[Long](Queries.nextProjectLinkId)
   }
 
   def fetchProjectLinkIds(len: Int): List[Long] = {
@@ -25,27 +19,19 @@ object Sequences extends BaseDAO {
   }
 
   def nextRoadwayId: Long = {
-    runSelectSingleFirstOptionWithType[Long](Queries.nextRoadwayId).getOrElse {
-      throw new NoSuchElementException("No value returned for nextRoadwayId")
-    }
+    runSelectSingleFirstWithType[Long](Queries.nextRoadwayId)
   }
 
   def nextRoadNameId: Long = {
-    runSelectSingleFirstOptionWithType[Long](Queries.nextRoadNameId).getOrElse {
-      throw new NoSuchElementException("No value returned for nextRoadNameId")
-    }
+    runSelectSingleFirstWithType[Long](Queries.nextRoadNameId)
   }
 
   def nextRoadwayNumber: Long = {
-    runSelectSingleFirstOptionWithType[Long](Queries.nextRoadwayNumber).getOrElse {
-      throw new NoSuchElementException("No value returned for nextRoadwayNumber")
-    }
+    runSelectSingleFirstWithType[Long](Queries.nextRoadwayNumber)
   }
 
   def nextRoadwayPointId: Long = {
-    runSelectSingleFirstOptionWithType[Long](Queries.nextRoadwayPointId).getOrElse {
-      throw new NoSuchElementException("No value returned for nextRoadwayPointId")
-    }
+    runSelectSingleFirstWithType[Long](Queries.nextRoadwayPointId)
   }
 
   def fetchRoadwayIds(len: Int): List[Long] = {
@@ -53,9 +39,7 @@ object Sequences extends BaseDAO {
   }
 
   def nextLinearLocationId: Long = {
-    runSelectSingleFirstOptionWithType[Long](Queries.nextLinearLocationId).getOrElse {
-      throw new NoSuchElementException("No value returned for nextLinearLocationId")
-    }
+    runSelectSingleFirstWithType[Long](Queries.nextLinearLocationId)
   }
 
   def fetchLinearLocationIds(len: Int): List[Long] = {
@@ -63,9 +47,7 @@ object Sequences extends BaseDAO {
   }
 
   def nextNodeId: Long = {
-    runSelectSingleFirstOptionWithType[Long](Queries.nextNodeId).getOrElse {
-      throw new NoSuchElementException("No value returned for nextNodeId")
-    }
+    runSelectSingleFirstWithType[Long](Queries.nextNodeId)
   }
 
   def fetchNodeIds(len: Int): List[Long] = {
@@ -73,21 +55,15 @@ object Sequences extends BaseDAO {
   }
 
   def nextNodePointId: Long = {
-    runSelectSingleFirstOptionWithType[Long](Queries.nextNodePointId).getOrElse {
-      throw new NoSuchElementException("No value returned for nextNodePointId")
-    }
+    runSelectSingleFirstWithType[Long](Queries.nextNodePointId)
   }
 
   def nextNodeNumber: Long = {
-    runSelectSingleFirstOptionWithType[Long](Queries.nextNodeNumber).getOrElse {
-      throw new NoSuchElementException("No value returned for nextNodeNumber")
-    }
+    runSelectSingleFirstWithType[Long](Queries.nextNodeNumber)
   }
 
   def nextJunctionId: Long = {
-    runSelectSingleFirstOptionWithType[Long](Queries.nextJunctionId).getOrElse {
-      throw new NoSuchElementException("No value returned for nextJunctionId")
-    }
+    runSelectSingleFirstWithType[Long](Queries.nextJunctionId)
   }
 
   def fetchJunctionIds(len: Int): List[Long] = {
@@ -95,9 +71,7 @@ object Sequences extends BaseDAO {
   }
 
   def nextJunctionPointId: Long = {
-    runSelectSingleFirstOptionWithType[Long](Queries.nextJunctionPointId).getOrElse {
-      throw new NoSuchElementException("No value returned for nextJunctionPointId")
-    }
+    runSelectSingleFirstWithType[Long](Queries.nextJunctionPointId)
   }
 
   def fetchJunctionPointIds(len: Int): List[Long] = {
@@ -109,15 +83,11 @@ object Sequences extends BaseDAO {
   }
 
   def nextCalibrationPointId: Long = {
-    runSelectSingleFirstOptionWithType[Long](Queries.nextCalibrationPointId).getOrElse {
-      throw new NoSuchElementException("No value returned for nextCalibrationPointId")
-    }
+    runSelectSingleFirstWithType[Long](Queries.nextCalibrationPointId)
   }
 
   def nextRoadwayChangeLink: Long = {
-    runSelectSingleFirstOptionWithType[Long](Queries.nextRoadwayChangeLink).getOrElse {
-      throw new NoSuchElementException("No value returned for nextRoadwayChangeLink")
-    }
+    runSelectSingleFirstWithType[Long](Queries.nextRoadwayChangeLink)
   }
 
 }
