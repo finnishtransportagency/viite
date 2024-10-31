@@ -20,8 +20,6 @@ object Queries {
 
   def nextRoadwayNumber = sql"select nextval('ROADWAY_NUMBER_SEQ')"
 
-  def nextRoadNetworkErrorId = sql"select nextval('ROAD_NETWORK_ERROR_SEQ')"
-
   def nextRoadwayChangeLink = sql"select nextval('ROADWAY_CHANGE_LINK')"
 
   def nextRoadwayPointId = sql"select nextval('ROADWAY_POINT_SEQ')"
