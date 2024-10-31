@@ -22,11 +22,16 @@ object PostGISDatabaseScalikeJDBC {
   )
 
   /**
-    * For database operations that modify data only if the whole operation is successful
-    * @param databaseOperation The operation to run
-    * @tparam Result The return type of the operation
-    * @return The result of the operation
-    */
+   * Executes `databaseOperation` block within a single transaction, ensuring that all data modifications
+   * are committed only if the entire operation is successful.
+   *
+   * All database actions including nested transactions within `databaseOperation` block are part of the same transaction.
+   * If any action fails, the transaction is rolled back, preventing partial updates and maintaining data integrity.
+   *
+   * @param databaseOperation The operation to run
+   * @tparam Result The return type of the operation
+   * @return The result of the operation
+   */
   def runWithTransaction[Result](databaseOperation: => Result): Result = {
     DB.localTx { session =>
       withSession(session) {
@@ -36,11 +41,16 @@ object PostGISDatabaseScalikeJDBC {
   }
 
   /**
-    * For database operations that only read data
-    * @param readOnlyOperation The operation to run
-    * @tparam Result The return type of the operation
-    * @return The result of the operation
-    */
+   * Executes `readOnlyOperation` within a read-only session.
+   *
+   * Use this method for database operations that only read data.
+   * If a write operation is attempted within this session, a `java.sql.SQLException` will be thrown.
+   *
+   * @param readOnlyOperation The operation to execute.
+   * @tparam Result The return type of the operation.
+   * @return The result of `readOnlyOperation`.
+   * @throws java.sql.SQLException If a write operation is attempted in read-only mode.
+   */
   def runWithReadOnlySession[Result](readOnlyOperation: => Result): Result = {
     DB.readOnly { session =>
       withSession(session) {
@@ -50,11 +60,15 @@ object PostGISDatabaseScalikeJDBC {
   }
 
   /**
-    * For database operations that modify data and should be committed after the operation
-    * @param autoCommitOperation The operation to run
-    * @tparam Result The return type of the operation
-    * @return The result of the operation
-    */
+   * Executes `autoCommitOperation` within an auto-commit session.
+   *
+   * Use this method for database operations that modify data and should be committed immediately after execution.
+   * Each operation is committed individually without an explicit transaction.
+   *
+   * @param autoCommitOperation The operation to run
+   * @tparam Result The return type of the operation
+   * @return The result of the operation
+   */
   def runWithAutoCommit[Result](autoCommitOperation: => Result): Result = {
     DB.autoCommit { session =>
       withSession(session) {
@@ -64,12 +78,15 @@ object PostGISDatabaseScalikeJDBC {
   }
 
   /**
-    * For database operations that modify data and should be rolled back after the operation
-    * Used for testing
-    * @param testOperation The operation to run
-    * @tparam Result The return type of the operation
-    * @return The result of the operation
-    */
+   * Executes `testOperation` within a transaction that is rolled back after execution.
+   *
+   * This method is useful for testing purposes, allowing you to perform data modifications without persisting changes.
+   * After `testOperation` completes, the transaction is rolled back, discarding any data modifications.
+   *
+   * @param testOperation The operation to execute.
+   * @tparam Result The return type of the operation.
+   * @return The result of `testOperation`.
+   */
   def runWithRollback[Result](testOperation: => Result): Result = {
     DB.localTx { session: DBSession =>
       withSession(session) {
