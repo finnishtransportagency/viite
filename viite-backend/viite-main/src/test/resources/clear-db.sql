@@ -30,7 +30,6 @@ drop table if exists project_reserved_road_part cascade;
 drop table if exists published_road_network cascade;
 drop table if exists roadway cascade;
 drop table if exists road_network_error cascade;
-drop table if exists published_roadway cascade;
 drop table if exists project_link cascade;
 drop table if exists roadway_changes_link cascade;
 drop table if exists project_calibration_point cascade;

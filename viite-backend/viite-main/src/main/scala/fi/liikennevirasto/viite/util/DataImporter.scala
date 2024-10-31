@@ -107,10 +107,6 @@ class DataImporter extends BaseDAO{
       println(s"  Deleting ROAD_NETWORK_ERRORs            started at time: ${DateTime.now()}")
       runUpdateToDb(s"""DELETE FROM ROAD_NETWORK_ERROR""")
 
-      /* todo ("Table published_roadwayis no longer in use, and is empty.") */
-      println(s"  Deleting PUBLISHED_ROADWAYs           started at time: ${DateTime.now()}")
-      runUpdateToDb(s"""DELETE FROM PUBLISHED_ROADWAY""")
-
       /* todo ("Table published_road_network is no longer in use, and is empty.") */
       println(s"  Deleting PUBLISHED_ROAD_NETWORKs    started at time: ${DateTime.now()}")
       runUpdateToDb(s"""DELETE FROM PUBLISHED_ROAD_NETWORK""")
