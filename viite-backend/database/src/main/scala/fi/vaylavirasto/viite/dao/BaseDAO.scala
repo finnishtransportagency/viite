@@ -42,7 +42,8 @@ trait BaseDAO {
   }
 
   /**
-   * Executes a SELECT query and returns the first result if any exists.
+   * Executes a SELECT query and returns a single matched row as an Option.
+   * If multiple rows are returned unexpectedly, a runtime exception is thrown.
    *
    * @param query SQL query with result type A
    * @tparam A Type to map the result to
@@ -58,8 +59,8 @@ trait BaseDAO {
   }
 
   /**
-   * Executes a SELECT query and returns the first result.
-   * Throws NoSuchElementException if no results found.
+   * Executes a SELECT query and returns a single matched row.
+   * Throws ViiteException if no results or more than 1 result is found.
    *
    * @param query SQL query with result type A
    * @tparam A Type to map the result to
@@ -77,7 +78,7 @@ trait BaseDAO {
   }
 
   /**
-   * Executes a SELECT query and maps the result using an implicit mapper function.
+   * Executes a SELECT query and maps the single found result Option using an implicit mapper function.
    * Example use: runSelectSingleFirstOptionWithType[Long](query)
    *
    * @param query SQL query to execute
@@ -95,7 +96,8 @@ trait BaseDAO {
   }
 
   /**
-   * Executes a SELECT query and maps the first result using an implicit mapper function.
+   * Executes a SELECT query and maps the single found result using an implicit mapper function.
+   * If no results are found, a ViiteException is thrown.
    * Example use: runSelectSingleFirstWithType[Long](query)
    *
    * @param query SQL query to execute
@@ -115,6 +117,7 @@ trait BaseDAO {
   }
 
   // Implicit conversions for common types
+  // (1) maps the first column of a result set to the desired type
   implicit val longMapper: WrappedResultSet => Long = _.long(1)
   implicit val stringMapper: WrappedResultSet => String = _.string(1)
   implicit val intMapper: WrappedResultSet => Int = _.int(1)
