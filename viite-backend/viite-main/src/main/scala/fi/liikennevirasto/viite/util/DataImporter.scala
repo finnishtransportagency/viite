@@ -111,10 +111,6 @@ class DataImporter extends BaseDAO{
       println(s"  Deleting PUBLISHED_ROADWAYs           started at time: ${DateTime.now()}")
       runUpdateToDb(s"""DELETE FROM PUBLISHED_ROADWAY""")
 
-      /* todo ("Table published_road_network is no longer in use, and is empty.") */
-      println(s"  Deleting PUBLISHED_ROAD_NETWORKs    started at time: ${DateTime.now()}")
-      runUpdateToDb(s"""DELETE FROM PUBLISHED_ROAD_NETWORK""")
-
       println(s"  Deleting LINEAR_LOCATIONs         started at time: ${DateTime.now()}")
       runUpdateToDb(s"""DELETE FROM LINEAR_LOCATION""")
       println(s"  Deleting CALIBRATION_POINTs     started at time: ${DateTime.now()}")
@@ -198,9 +194,6 @@ class DataImporter extends BaseDAO{
     sequenceResetter.resetSequenceToNumber("PROJECT_LINK_NAME_SEQ", 1)
     sequenceResetter.resetSequenceToNumber("ROADWAY_CHANGE_LINK", 1)
     sequenceResetter.resetSequenceToNumber("ROAD_NETWORK_ERROR_SEQ", 1)
-
-    //@deprecated ("Table published_road_network is no longer in use, and is empty.")
-    sequenceResetter.resetSequenceToNumber("PUBLISHED_ROAD_NETWORK_SEQ", 1)
 
     sequenceResetter.resetSequenceToNumber("LINEAR_LOCATION_SEQ", 1)
     sequenceResetter.resetSequenceToNumber("CALIBRATION_POINT_SEQ", 1)
