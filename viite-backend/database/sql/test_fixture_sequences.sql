@@ -80,14 +80,6 @@ create sequence ROADWAY_CHANGE_LINK
   cache 100
   cycle;
 
-drop sequence PUBLISHED_ROAD_NETWORK_SEQ;
-create sequence PUBLISHED_ROAD_NETWORK_SEQ
-  minvalue 1
-  no maxvalue
-  start with 1000000
-  increment by 1
-  cache 100
-  cycle;
 
 drop sequence ROADWAY_POINT_SEQ;
 create sequence ROADWAY_POINT_SEQ
