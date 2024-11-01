@@ -332,13 +332,14 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
         try {
           val previousDateFinnishFormat = finnishDateFormatter.print(previousDate)
           val newDateFinnishFormat = finnishDateFormatter.print(newDate)
-          val tiekamuEndpoint = "https://paikkatietodev.testivaylapilvi.fi/viitekehysmuunnin/tiekamu?"
+          val tiekamuEndpoint = "https://devapi.testivaylapilvi.fi/viitekehysmuunnin/tiekamu?"
           val tiekamuDateParams = s"tilannepvm=${previousDateFinnishFormat}&asti=${newDateFinnishFormat}"
           val tiekamuReturnValueParam = "&palautusarvot=72"
           val url = tiekamuEndpoint ++ tiekamuDateParams ++ tiekamuReturnValueParam
 
           val request = new HttpGet(url)
           request.addHeader("accept", "application/geo+json")
+          request.addHeader("X-API-Key", ViiteProperties.vkmApiKeyDev)
 
           time(logger, "Fetching change set data from Tiekamu") {
             try {
