@@ -1,10 +1,12 @@
 package fi.vaylavirasto.viite.dao
 
-class SequenceResetterDAO extends BaseDAO {
+import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.jdbc.StaticQuery.interpolation
+
+class SequenceResetterDAO {
 
   def resetSequenceToNumber(seqName: String, seqNumber: Long): Unit = {
-    runUpdateToDb(s"""DROP SEQUENCE #$seqName """)
-    runUpdateToDb(s"""CREATE SEQUENCE #$seqName START WITH #$seqNumber CACHE 20 INCREMENT BY 1""")
+    sqlu"""DROP SEQUENCE #$seqName """.execute
+    sqlu"""CREATE SEQUENCE #$seqName START WITH #$seqNumber CACHE 20 INCREMENT BY 1""".execute
   }
 }
-
