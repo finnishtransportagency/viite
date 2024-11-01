@@ -20,13 +20,21 @@ object SessionProvider {
     case s => s
   }
 
-  // Sets the session for the current thread for transaction handling
+  /**
+   * Sets the provided `dbSession` as the current session for the duration of the block `f`,
+   * then restores the previous session. Allows nested session management without affecting outer sessions.
+   *
+   * @param dbSession The `DBSession` to use during `f`.
+   * @param f         The block of code to execute.
+   * @tparam T        The return type of `f`.
+   * @return          The result of executing `f`.
+    */
   def withSession[T](dbSession: DBSession)(f: => T): T = {
     val previousSession = threadLocalSession.get()
     threadLocalSession.set(dbSession)
     try {
       f
-    } finally {
+    } finally { // Restore previous session or Null after block execution.
       threadLocalSession.set(previousSession)
     }
   }
