@@ -212,11 +212,11 @@ class ProjectService(
 
   def fetchPreFillData(linkId: String, projectId: Long): Either[String, PreFillInfo] = {
     withDynSession {
-    val preFillFromProject =
-      parsePreFillData(projectLinkDAO.getProjectLinksByLinkId(linkId).filter(_.projectId == projectId), projectId = projectId)
-    if (preFillFromProject.isRight)
-      preFillFromProject
-    else parsePreFillData(linkId: String, projectId: Long)
+      val preFillFromProject =
+        parsePreFillData(projectLinkDAO.getProjectLinksByLinkId(linkId).filter(_.projectId == projectId), projectId = projectId)
+      if (preFillFromProject.isRight)
+        preFillFromProject
+      else parsePreFillData(linkId: String, projectId: Long)
     }
   }
 
@@ -230,7 +230,7 @@ class ProjectService(
   }
 
   def parsePreFillData(linkId: String, projectId: Long): Either[String, PreFillInfo] = {
-    roadLinkService.getUnderConstructionLinksById(Set(linkId)) match {
+    roadLinkService.getSuravageLinksById(Set(linkId)) match {
       case List((roadNumber, roadPartNumber, municipalitycode)) =>
         preFillRoadName(
           roadNumber,
