@@ -71,6 +71,15 @@ create sequence ROADWAY_NUMBER_SEQ
   cache 100
   cycle;
 
+drop sequence ROAD_NETWORK_ERROR_SEQ;
+create sequence ROAD_NETWORK_ERROR_SEQ
+  minvalue 1
+  no maxvalue
+  start with 1000000
+  increment by 1
+  cache 100
+  cycle;
+
 drop sequence ROADWAY_CHANGE_LINK;
 create sequence ROADWAY_CHANGE_LINK
   minvalue 1
