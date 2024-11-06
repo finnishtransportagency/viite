@@ -91,7 +91,7 @@ class DataImporter extends BaseDAO{
       runUpdateToDb(s"""DELETE FROM ROADWAY_CHANGES_LINK""")
       println(s"  Deleting PROJECT_LINKs                  started at time: ${DateTime.now()}")
       runUpdateToDb(s"""DELETE FROM PROJECT_LINK""")
-      println(s"  Deleting PROJECT_LINK_HISTORY             started at time: ${DateTime.now()}")
+      println(s"  Deleting PROJECT_INK_LHISTORY             started at time: ${DateTime.now()}")
       runUpdateToDb(s"""DELETE FROM PROJECT_LINK_HISTORY""")
       println(s"  Deleting PROJECT_RESERVED_ROAD_PARTs links  started at time: ${DateTime.now()}")
       runUpdateToDb(s"""DELETE FROM PROJECT_RESERVED_ROAD_PART""")
@@ -104,6 +104,16 @@ class DataImporter extends BaseDAO{
 
       println(s"  Deleting ROADWAY_CHANGESs                 started at time: ${DateTime.now()}")
       runUpdateToDb(s"""DELETE FROM ROADWAY_CHANGES WHERE project_id NOT IN (SELECT id FROM PROJECT)""")
+      println(s"  Deleting ROAD_NETWORK_ERRORs            started at time: ${DateTime.now()}")
+      runUpdateToDb(s"""DELETE FROM ROAD_NETWORK_ERROR""")
+
+      /* todo ("Table published_roadwayis no longer in use, and is empty.") */
+      println(s"  Deleting PUBLISHED_ROADWAYs           started at time: ${DateTime.now()}")
+      runUpdateToDb(s"""DELETE FROM PUBLISHED_ROADWAY""")
+
+      /* todo ("Table published_road_network is no longer in use, and is empty.") */
+      println(s"  Deleting PUBLISHED_ROAD_NETWORKs    started at time: ${DateTime.now()}")
+      runUpdateToDb(s"""DELETE FROM PUBLISHED_ROAD_NETWORK""")
 
       println(s"  Deleting LINEAR_LOCATIONs         started at time: ${DateTime.now()}")
       runUpdateToDb(s"""DELETE FROM LINEAR_LOCATION""")
@@ -187,6 +197,10 @@ class DataImporter extends BaseDAO{
     val sequenceResetter = new SequenceResetterDAO()
     sequenceResetter.resetSequenceToNumber("PROJECT_LINK_NAME_SEQ", 1)
     sequenceResetter.resetSequenceToNumber("ROADWAY_CHANGE_LINK", 1)
+    sequenceResetter.resetSequenceToNumber("ROAD_NETWORK_ERROR_SEQ", 1)
+
+    //@deprecated ("Table published_road_network is no longer in use, and is empty.")
+    sequenceResetter.resetSequenceToNumber("PUBLISHED_ROAD_NETWORK_SEQ", 1)
 
     sequenceResetter.resetSequenceToNumber("LINEAR_LOCATION_SEQ", 1)
     sequenceResetter.resetSequenceToNumber("CALIBRATION_POINT_SEQ", 1)
