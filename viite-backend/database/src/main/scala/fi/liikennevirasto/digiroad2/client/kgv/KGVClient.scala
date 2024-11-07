@@ -80,8 +80,16 @@ class KgvRoadLinkClient[T](collection: Option[KgvCollection] = None, linkGeomSou
     queryByLinkIds[LinkType](linkIds)
   }
 
-  def fetchUnderConstructionLinksById(linkIds: Set[String]): List[(Option[Long], Option[Long], Int)] =
-    queryRoadAndPartWithFilter(linkIds, withLifecycleStatusFilter(Set(LifecycleStatus.UnderConstruction.value)))
+  def fetchSuRaVaGeLinksById(linkIds: Set[String]): List[(Option[Long], Option[Long], Int)] =
+    queryRoadAndPartWithFilter(
+      linkIds,
+      withLifecycleStatusFilter(Set(
+        LifecycleStatus.Planned.value,           // SuRaVaGe's Su - suunniteltu. Should be included
+        LifecycleStatus.UnderConstruction.value, // SuRaVaGe's Ra - rakennus[vaihe]. Should be included.
+        LifecycleStatus.InUse.value              // Some of the links end up to be already InUse, before they get their road addresses in Viite
+        // VIITE-3229: Leaving out now: LifecycleStatus.TemporarilyNotInUse, LifecycleStatus.ExpiringSoon, and LifecycleStatus.UnknownLifecycleStatus.
+      ))
+    )
 
   def fetchByLinkIdsF(linkIds: Set[String]): Future[Seq[T]] = Future(fetchByLinkIds(linkIds))
 
