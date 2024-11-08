@@ -160,64 +160,99 @@ class ProjectReservedPartDAO extends BaseDAO{
     (formedByIncrease(projectId, withProjectId)++formedByReduction(projectId, withProjectId)).sortBy(p => p.roadPart)
   }
 
+  /**
+   * Returns formed road parts that were created through increase operations.
+   * The road parts can be either within the specified project or from other projects, based on the withProjectId flag.
+   *
+   * The query:
+   * 1. Filters project links by status (not NotHandled/Termination) and track type (Combined/RightSide)
+   * 2. Calculates new lengths and ELY codes for each road part
+   * 3. Gets discontinuity types at the end of each road part
+   * 4. Identifies the starting link for each road part
+   *
+   * @param projectId The ID of the project
+   * @param withProjectId If true, returns parts from this project; if false, from other projects
+   * @return A sequence of ProjectReservedPart containing formed road part details
+   */
   def formedByIncrease(projectId: Long, withProjectId: Boolean = true): Seq[ProjectReservedPart] = {
-    time(logger, s"Fetch formed road parts for project: $projectId") {
-      val filter = if (withProjectId && projectId != 0) s" rp.project_id = $projectId " else s" rp.project_id != $projectId "
-      val sql =
-        s"""SELECT id, road_number, road_part_number, length_new, ely_new,
-          (SELECT DISCONTINUITY_TYPE FROM PROJECT_LINK pl WHERE pl.project_id = gr.project_id
-            AND pl.road_number = gr.road_number AND pl.road_part_number = gr.road_part_number
-            AND PL.STATUS != ${RoadAddressChangeType.Termination.value} AND PL.TRACK IN (${Track.Combined.value}, ${Track.RightSide.value})
-            AND END_ADDR_M = length_new LIMIT 1) as discontinuity_new,
-          (SELECT LINK_ID FROM PROJECT_LINK pl
-            WHERE pl.project_id = gr.project_id
-            AND pl.road_number = gr.road_number AND pl.road_part_number = gr.road_part_number
-            AND PL.STATUS != ${RoadAddressChangeType.Termination.value} AND PL.TRACK IN (${Track.Combined.value}, ${Track.RightSide.value}) LIMIT 1) as first_link
-          FROM (
-            SELECT rp.id, rp.project_id, rp.road_number, rp.road_part_number,
-          MAX(pl.end_addr_m) as length_new,
-          MAX(pl.ely) as ELY_NEW
-          FROM PROJECT_RESERVED_ROAD_PART rp LEFT JOIN
-          PROJECT_LINK pl ON (pl.project_id = rp.project_id AND pl.road_number = rp.road_number AND
-            pl.road_part_number = rp.road_part_number AND pl.status != ${RoadAddressChangeType.Termination.value})
-          LEFT JOIN Roadway ra ON (ra.Id = pl.Roadway_Id OR (ra.road_number = rp.road_number AND ra.road_part_number = rp.road_part_number AND RA.END_DATE IS NULL AND RA.VALID_TO IS NULL))
-          LEFT JOIN Linear_Location lc ON (lc.Id = pl.Linear_location_id AND lc.valid_to IS NULL)
-          WHERE $filter AND pl.status != ${RoadAddressChangeType.NotHandled.value}
-          GROUP BY rp.id, rp.project_id, rp.ROAD_NUMBER, rp.ROAD_PART_NUMBER
-          ) gr order by gr.road_number, gr.road_part_number"""
-      /* TODO: Convert to Postgis something like this: (maybe done already (LIMIT 1) - have to test!)
-              s"""
-        SELECT id, road_number, road_part_number, length, length_new,
-          ely, ely_new,
-          (SELECT DISCONTINUITY FROM ROADWAY ra WHERE ra.road_number = gr.road_number AND
-          ra.road_part_number = gr.road_part_number AND RA.END_DATE IS NULL AND RA.VALID_TO IS NULL
-          AND END_ADDR_M = gr.length LIMIT 1) as discontinuity,
-          (SELECT DISCONTINUITY_TYPE FROM PROJECT_LINK pl WHERE pl.project_id = gr.project_id
-          AND pl.road_number = gr.road_number AND pl.road_part_number = gr.road_part_number
-          AND PL.STATUS != 5 AND PL.TRACK IN (0,1)
-          AND END_ADDR_M = gr.length_new LIMIT 1) as discontinuity_new,
-          (SELECT LINK_ID FROM PROJECT_LINK pl
-            WHERE pl.project_id = gr.project_id
-            AND pl.road_number = gr.road_number AND pl.road_part_number = gr.road_part_number
-            AND PL.STATUS != 5 AND PL.TRACK IN (0,1) AND pl.START_ADDR_M = 0
-            AND pl.END_ADDR_M > 0 LIMIT 1) as first_link
-          FROM (
-            SELECT rp.id, rp.project_id, rp.road_number, rp.road_part_number,
-              MAX(ra.END_ADDR_M) as length,
-              MAX(pl.END_ADDR_M) as length_new,
-              MAX(ra.ely) as ELY,
-              MAX(pl.ely) as ELY_NEW
-              FROM PROJECT_RESERVED_ROAD_PART rp
-              LEFT JOIN PROJECT_LINK pl ON (pl.project_id = rp.project_id AND pl.road_number = rp.road_number AND pl.road_part_number = rp.road_part_number)
-              LEFT JOIN ROADWAY ra ON ((ra.road_number = rp.road_number AND ra.road_part_number = rp.road_part_number) OR ra.id = pl.ROADWAY_ID)
-              LEFT JOIN LINEAR_LOCATION lc ON (lc.Id = pl.Linear_Location_Id)
-              WHERE
-                rp.road_number = $roadNumber AND rp.road_part_number = $roadPartNumber AND
-                RA.END_DATE IS NULL AND RA.VALID_TO IS NULL AND
-                (PL.STATUS IS NULL OR (PL.STATUS != 5 AND PL.TRACK IN (0,1)))
-              GROUP BY rp.id, rp.project_id, rp.road_number, rp.road_part_number
-              ) gr"""
-       */
+    time(logger, s"Fetch formed road parts by increase for project: $projectId") {
+      val projectFilter = if (withProjectId && projectId != 0) s"rp.project_id = $projectId" else s"rp.project_id != $projectId"
+
+      val sql = s"""
+      WITH pl_filtered AS (
+        SELECT
+          pl.project_id,
+          pl.road_number,
+          pl.road_part_number,
+          pl.end_addr_m,
+          pl.DISCONTINUITY_TYPE,
+          pl.LINK_ID,
+          pl.ely,
+          ROW_NUMBER() OVER (
+            PARTITION BY pl.project_id, pl.road_number, pl.road_part_number
+            ORDER BY pl.LINK_ID
+          ) AS rn_first_link
+        FROM PROJECT_LINK pl
+        WHERE pl.status NOT IN (0, ${RoadAddressChangeType.Termination.value})
+        AND pl.track IN (${Track.Combined.value}, ${Track.RightSide.value})
+      ),
+      max_values AS (
+        SELECT
+          pl.project_id,
+          pl.road_number,
+          pl.road_part_number,
+          MAX(pl.end_addr_m) AS length_new,
+          MAX(pl.ely) AS ely_new
+        FROM pl_filtered pl
+        GROUP BY pl.project_id, pl.road_number, pl.road_part_number
+      ),
+      discontinuity_new AS (
+        SELECT DISTINCT
+          pl.project_id,
+          pl.road_number,
+          pl.road_part_number,
+          pl.DISCONTINUITY_TYPE
+        FROM pl_filtered pl
+        INNER JOIN max_values mv ON
+          pl.project_id = mv.project_id
+          AND pl.road_number = mv.road_number
+          AND pl.road_part_number = mv.road_part_number
+          AND pl.end_addr_m = mv.length_new
+      ),
+      first_link AS (
+        SELECT
+          pl.project_id,
+          pl.road_number,
+          pl.road_part_number,
+          pl.LINK_ID
+        FROM pl_filtered pl
+        WHERE rn_first_link = 1
+      )
+      SELECT
+        rp.id,
+        rp.road_number,
+        rp.road_part_number,
+        mv.length_new,
+        mv.ely_new,
+        dn.DISCONTINUITY_TYPE AS discontinuity_new,
+        fl.LINK_ID AS first_link
+      FROM PROJECT_RESERVED_ROAD_PART rp
+      INNER JOIN max_values mv ON
+        mv.project_id = rp.project_id
+        AND mv.road_number = rp.road_number
+        AND mv.road_part_number = rp.road_part_number
+      LEFT JOIN discontinuity_new dn ON
+        dn.project_id = rp.project_id
+        AND dn.road_number = rp.road_number
+        AND dn.road_part_number = rp.road_part_number
+      LEFT JOIN first_link fl ON
+        fl.project_id = rp.project_id
+        AND fl.road_number = rp.road_number
+        AND fl.road_part_number = rp.road_part_number
+      WHERE $projectFilter
+      ORDER BY rp.road_number, rp.road_part_number
+    """
+
       Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[String])](sql).list.map {
         case (id, road, part, newLength, newEly, newDiscontinuity, startingLinkId) =>
           ProjectReservedPart(id, RoadPart(road, part), None, None, None, newLength, newDiscontinuity.map(Discontinuity.apply), newEly, startingLinkId)
@@ -226,7 +261,7 @@ class ProjectReservedPartDAO extends BaseDAO{
   }
 
   def formedByReduction(projectId: Long, withProjectId: Boolean = true): Seq[ProjectReservedPart] = {
-    time(logger, s"Fetch formed road parts for project: $projectId") {
+    time(logger, s"Fetch formed road parts by reduction for project: $projectId") {
       val filter = if (withProjectId && projectId != 0) s" rp.project_id = $projectId " else s" rp.project_id != $projectId "
       val sql =
         s"""SELECT id, road_number, road_part_number, length_new, ELY_NEW, (SELECT DISCONTINUITY_TYPE FROM PROJECT_LINK pl WHERE pl.project_id = projectid
