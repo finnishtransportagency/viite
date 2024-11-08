@@ -166,6 +166,7 @@ class ProjectReservedPartDAO extends BaseDAO{
    *
    * @param projectId The ID of the project
    * @param withProjectId If true, returns parts from this project; if false, from other projects
+   *  TODO  projectId + withProjectId could be Option[ProjectId] instead ?
    * @return Combined sequence of ProjectReservedPart sorted by road part
    */
   def fetchFormedRoadParts(projectId: Long, withProjectId: Boolean = true): Seq[ProjectReservedPart] = {
@@ -224,8 +225,8 @@ class ProjectReservedPartDAO extends BaseDAO{
           pl.road_part_number,
           pl.DISCONTINUITY_TYPE
         FROM pl_filtered pl
-        INNER JOIN max_values mv ON
-          pl.project_id = mv.project_id
+        INNER JOIN max_values mv
+          ON pl.project_id = mv.project_id
           AND pl.road_number = mv.road_number
           AND pl.road_part_number = mv.road_part_number
           AND pl.end_addr_m = mv.length_new
@@ -248,18 +249,12 @@ class ProjectReservedPartDAO extends BaseDAO{
         dn.DISCONTINUITY_TYPE AS discontinuity_new,
         fl.LINK_ID AS first_link
       FROM PROJECT_RESERVED_ROAD_PART rp
-      INNER JOIN max_values mv ON
-        mv.project_id = rp.project_id
-        AND mv.road_number = rp.road_number
-        AND mv.road_part_number = rp.road_part_number
-      LEFT JOIN discontinuity_new dn ON
-        dn.project_id = rp.project_id
-        AND dn.road_number = rp.road_number
-        AND dn.road_part_number = rp.road_part_number
-      LEFT JOIN first_link fl ON
-        fl.project_id = rp.project_id
-        AND fl.road_number = rp.road_number
-        AND fl.road_part_number = rp.road_part_number
+      INNER JOIN max_values mv
+        ON mv.project_id = rp.project_id AND mv.road_number = rp.road_number AND mv.road_part_number = rp.road_part_number
+      LEFT JOIN discontinuity_new dn
+        ON dn.project_id = rp.project_id AND dn.road_number = rp.road_number AND dn.road_part_number = rp.road_part_number
+      LEFT JOIN first_link fl
+        ON fl.project_id = rp.project_id AND fl.road_number = rp.road_number AND fl.road_part_number = rp.road_part_number
       WHERE $projectFilter
       ORDER BY rp.road_number, rp.road_part_number
     """
