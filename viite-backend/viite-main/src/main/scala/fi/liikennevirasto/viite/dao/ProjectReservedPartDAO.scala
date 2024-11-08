@@ -155,26 +155,37 @@ class ProjectReservedPartDAO extends BaseDAO{
       }
     }
   }
-
-  def fetchFormedRoadParts(projectId: Long, withProjectId: Boolean = true): Seq[ProjectReservedPart] = {
-    (formedByIncrease(projectId, withProjectId)++formedByReduction(projectId, withProjectId)).sortBy(p => p.roadPart)
-  }
-
+  // TODO: Check if this is necessary to be this complex
   /**
-   * Returns formed road parts that were created through increase operations.
-   * The road parts can be either within the specified project or from other projects, based on the withProjectId flag.
+   * Combines and returns both planned road part changes and affected existing road parts.
+   * Returns parts either from the specified project or other projects based on the withProjectId flag.
    *
-   * The query:
-   * 1. Filters project links by status (not NotHandled/Termination) and track type (Combined/RightSide)
-   * 2. Calculates new lengths and ELY codes for each road part
-   * 3. Gets discontinuity types at the end of each road part
-   * 4. Identifies the starting link for each road part
+   * The final result contains:
+   * - New/modified road parts being actively planned
+   * - Existing road parts that are being changed/affected
    *
    * @param projectId The ID of the project
    * @param withProjectId If true, returns parts from this project; if false, from other projects
-   * @return A sequence of ProjectReservedPart containing formed road part details
+   * @return Combined sequence of ProjectReservedPart sorted by road part
    */
-  def formedByIncrease(projectId: Long, withProjectId: Boolean = true): Seq[ProjectReservedPart] = {
+  def fetchFormedRoadParts(projectId: Long, withProjectId: Boolean = true): Seq[ProjectReservedPart] = {
+    (fetchPlannedRoadParts(projectId, withProjectId)++fetchAffectedExistingParts(projectId, withProjectId)).sortBy(p => p.roadPart)
+  }
+
+  /**
+   * Returns road parts that are being actively modified or created in projects.
+   * These represent new and modified road parts in the planning stage.
+   *
+   * The query:
+   * - Filters for project links NOT in status "NotHandled" or "Termination"
+   * - Represents road parts being created or modified through active changes
+   * - Uses CTEs for efficient data gathering of lengths, ELY codes and discontinuity types
+   *
+   * @param projectId The ID of the project
+   * @param withProjectId If true, returns parts from this project; if false, from other projects
+   * @return Sequence of ProjectReservedPart containing planned road part changes
+   */
+  def fetchPlannedRoadParts(projectId: Long, withProjectId: Boolean = true): Seq[ProjectReservedPart] = {
     time(logger, s"Fetch formed road parts by increase for project: $projectId") {
       val projectFilter = if (withProjectId && projectId != 0) s"rp.project_id = $projectId" else s"rp.project_id != $projectId"
 
@@ -260,7 +271,21 @@ class ProjectReservedPartDAO extends BaseDAO{
     }
   }
 
-  def formedByReduction(projectId: Long, withProjectId: Boolean = true): Seq[ProjectReservedPart] = {
+  /**
+   * Returns road parts from the existing road network that are being affected by changes.
+   * These represent existing road infrastructure that will be changed in some way.
+   *
+   * The query:
+   * - Looks specifically for project links with status "NotHandled"
+   * - Focuses on links that exist in current road network (via linear_location and roadway)
+   * - Identifies linear locations not used in other project links
+   * - Represents cases where existing roads are being reduced/removed/changed
+   *
+   * @param projectId The ID of the project
+   * @param withProjectId If true, returns parts from this project; if false, from other projects
+   * @return Sequence of ProjectReservedPart containing affected existing road parts
+   */
+  def fetchAffectedExistingParts(projectId: Long, withProjectId: Boolean = true): Seq[ProjectReservedPart] = {
     time(logger, s"Fetch formed road parts by reduction for project: $projectId") {
       val filter = if (withProjectId && projectId != 0) s" rp.project_id = $projectId " else s" rp.project_id != $projectId "
       val sql =
