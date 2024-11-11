@@ -77,15 +77,15 @@
             <select class="${prefix}form-control administrativeClassAndRoadName" id="startCPDropdown" size="1" style="width: 100px !important; display: inline">
               <option value="0" selected>NoCp</option>
               <option value="1">UserDefinedCP</option>
-              <option value="2">RoadAddressCP</option>
-              <option value="3">JunctionPointCP</option>
+              <option value="2">JunctionPointCP</option>
+              <option value="3">RoadAddressCP</option>
             </select>
             <label>CP linkin lopussa</label>
             <select class="${prefix}form-control administrativeClassAndRoadName" id="endCPDropdown" size="1" style="width: 100px !important; display: inline">
               <option value="0" selected>NoCp</option>
               <option value="1">UserDefinedCP</option>
-              <option value="2">RoadAddressCP</option>
-              <option value="3">JunctionPointCP</option>
+              <option value="2">JunctionPointCP</option>
+              <option value="3">RoadAddressCP</option>
             </select>
             <label>Uusi osoite:</label>
             <div class="dev-address-field-wrapper">
