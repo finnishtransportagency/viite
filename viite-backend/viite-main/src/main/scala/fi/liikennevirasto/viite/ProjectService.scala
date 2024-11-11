@@ -593,26 +593,30 @@ class ProjectService(
 
       if (devToolData.isDefined) {
         val editedData = devToolData.get
-        if (editedData.startAddrMValue.isDefined && editedData.endAddrMValue.isDefined) {
-          val addressesUpdated = spreadAddrMValuesToProjectLinks(editedData.startAddrMValue.get, editedData.endAddrMValue.get, newLinks, editOriginalValues = false)
-          val roadwayNumbersUpdated = {
-            val newRoadwayNumberForNewLinks = Sequences.nextRoadwayNumber
-            addressesUpdated.map(pl => pl.copy(roadwayNumber = newRoadwayNumberForNewLinks))
-          }
+        val addressesProcessed = if (editedData.startAddrMValue.isDefined && editedData.endAddrMValue.isDefined && editedData.endAddrMValue.get != 0) {
+          spreadAddrMValuesToProjectLinks(editedData.startAddrMValue.get, editedData.endAddrMValue.get, createLinks, editOriginalValues = false)
+        } else
+          createLinks
 
-          val statusAndSideCodeUpdated = roadwayNumbersUpdated.map(pl => pl.copy(status = roadAddressChangeType,sideCode = {if (pl.status == RoadAddressChangeType.New) SideCode.TowardsDigitizing else pl.sideCode}))
-          val calibrationPointsUpdated = setCalibrationPoints(editedData.startCp, editedData.endCp, statusAndSideCodeUpdated)
-          val updatedRoadways = {
-            if (editedData.generateNewRoadwayNumber) {
-              val newRoadwayNymber = Sequences.nextRoadwayNumber
-              calibrationPointsUpdated.map(pl => pl.copy(roadwayNumber = newRoadwayNymber))
-            } else {
-              calibrationPointsUpdated
-            }
-          }
-          projectLinkDAO.create(updatedRoadways.map(_.copy(createdBy = Some(user))))
+        val roadwayNumbersUpdated = {
+          val newRoadwayNumberForNewLinks = Sequences.nextRoadwayNumber
+          addressesProcessed.map(pl => pl.copy(roadwayNumber = newRoadwayNumberForNewLinks))
         }
-      } else {
+
+        val statusAndSideCodeUpdated = roadwayNumbersUpdated.map(pl => pl.copy(status = roadAddressChangeType,sideCode = {if (pl.status == RoadAddressChangeType.New) SideCode.TowardsDigitizing else pl.sideCode}))
+
+        val calibrationPointsUpdated = setCalibrationPoints(editedData.startCp, editedData.endCp, statusAndSideCodeUpdated)
+        val updatedRoadways = {
+          if (editedData.generateNewRoadwayNumber) {
+            val newRoadwayNymber = Sequences.nextRoadwayNumber
+            calibrationPointsUpdated.map(pl => pl.copy(roadwayNumber = newRoadwayNymber))
+          } else {
+            calibrationPointsUpdated
+          }
+        }
+        projectLinkDAO.create(updatedRoadways.map(_.copy(createdBy = Some(user))))
+      }
+       else {
         projectLinkDAO.create(createLinks.map(_.copy(createdBy = Some(user))))
       }
       newLinks.flatMap(_.roadName).headOption.flatMap(setProjectRoadName(projectId, newRoadPart.roadNumber, _)).toList.headOption
