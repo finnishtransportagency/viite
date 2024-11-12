@@ -1618,19 +1618,26 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
 
             case RoadAddressChangeType.Transfer =>
               val (reservationNotNeeded, oldRoadPart) = checkAndMakeReservation(projectId, newRoadPart, RoadAddressChangeType.Transfer, toUpdateLinks)
-              val updated = toUpdateLinks.map(l => {
-                val startCP = l.startCalibrationPointType match {
-                  case JunctionPointCP => JunctionPointCP
-                  case UserDefinedCP => UserDefinedCP
-                  case _ => NoCP
-                }
-                val endCP = l.endCalibrationPointType match {
-                  case JunctionPointCP => JunctionPointCP
-                  case UserDefinedCP => UserDefinedCP
-                  case _ => NoCP
-                }
-                l.copy(roadPart = newRoadPart, track = Track.apply(newTrackCode), calibrationPointTypes = (startCP, endCP), status = roadAddressChangeType, administrativeClass = AdministrativeClass.apply(administrativeClass.toInt), ely = ely.getOrElse(l.ely))
-              })
+
+              // VIITE-3203 if dev tool is being used then skip this part.
+              // Reason: Dev tool user might need the RoadAddressCP (that is being erased here, and programmatically recalculated later)
+              val updated = if (devToolData.isEmpty) {
+                toUpdateLinks.map(l => {
+                  val startCP = l.startCalibrationPointType match {
+                    case JunctionPointCP => JunctionPointCP
+                    case UserDefinedCP => UserDefinedCP
+                    case _ => NoCP
+                  }
+                  val endCP = l.endCalibrationPointType match {
+                    case JunctionPointCP => JunctionPointCP
+                    case UserDefinedCP => UserDefinedCP
+                    case _ => NoCP
+                  }
+                  l.copy(roadPart = newRoadPart, track = Track.apply(newTrackCode), calibrationPointTypes = (startCP, endCP), status = roadAddressChangeType, administrativeClass = AdministrativeClass.apply(administrativeClass.toInt), ely = ely.getOrElse(l.ely))
+                })
+              } else
+                toUpdateLinks
+
               val originalAddresses = roadAddressService.getRoadAddressesByRoadwayIds(updated.map(_.roadwayId))
               projectLinkDAO.updateProjectLinks(updated, userName, originalAddresses)
               projectLinkDAO.updateProjectLinkAdministrativeClassDiscontinuity(Set(updated.maxBy(_.addrMRange.end).id), roadAddressChangeType, userName, administrativeClass, Some(discontinuity))
