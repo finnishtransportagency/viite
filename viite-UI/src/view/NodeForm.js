@@ -1,12 +1,12 @@
 (function (root) {
-  root.NodeForm = function (selectedNodesAndJunctions, roadCollection, backend) {
+  root.NodeForm = function (selectedNodesAndJunctions, roadCollection, backend, startupParameters) {
     var formCommon = new FormCommon('node-');
     var NodeType = ViiteEnumerations.NodeType;
 
     var NODE_POINTS_TITLE = 'Solmukohdat';
     var JUNCTIONS_TITLE = 'Liittymät';
     var picker;
-    var userHasPermissionToEdit = _.includes(applicationModel.getSessionUserRoles(), 'viite');
+    var userHasPermissionToEdit = _.includes(startupParameters.roles, 'viite');
     var nodeEditingDisabledAttribute = userHasPermissionToEdit ? '' : 'disabled';
 
     var getNodeType = function (nodeValue) {
