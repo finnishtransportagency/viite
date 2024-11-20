@@ -326,7 +326,7 @@
             const fileNameString = "Viite_" + params.target + "_" + params.situationDate + "_" + params.ely + "_" + params.roadNumber + "_" + params.minRoadPartNumber + "_" + params.maxRoadPartNumber + ".xlsx";
             const fileName = fileNameString.replaceAll("undefined", "-");
             const options = {
-                cellDates: false,  // To prevent Sheetjs from converting dates to avoid unwanted formatting
+                cellDates: false  // To prevent Sheetjs from converting dates to avoid unwanted formatting
             };
 
             let data = [];
