@@ -122,7 +122,7 @@
             const fileNameString = "Viite_" + params.dateTarget + "_" + params.startDate + "_" + params.endDate + "_" + params.ely + "_" + params.roadNumber + "_" + params.minRoadPartNumber + "_" + params.maxRoadPartNumber + ".xlsx";
             const fileName = fileNameString.replaceAll("undefined", "-");
             const options = {
-                cellDates: false,  // To prevent Sheetjs from converting dates to avoid unwanted formatting
+                cellDates: false  // To prevent Sheetjs from converting dates to avoid unwanted formatting
             };
             const wb = XLSX.utils.table_to_book(document.getElementById("roadAddressChangesBrowserTable"), options);
             /* Export to file (start a download) */
