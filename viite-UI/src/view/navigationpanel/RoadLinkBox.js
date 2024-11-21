@@ -11,7 +11,14 @@
       '</div>');
 
     var roadClassLegend = $('<div id="legendDiv" class="panel-section panel-legend linear-asset-legend road-class-legend no-copy"></div>');
+
     var calibrationPointPicture = $('' +
+      '<div class="legend-entry">' +
+      '    <div class="label">Kalibrointipiste</div>' +
+      '    <div class="calibration-point-image"></div>' +
+      '</div>');
+
+    var roadPartStartPointPicture = $('' +
       '<div class="legend-entry">' +
       '    <div class="label">Tieosan alku</div>' +
       '    <div class="calibration-point-image"></div>' +
@@ -269,7 +276,7 @@
         container.empty();
         roadClassLegend.append(roadClassLegendEntries);
         roadClassLegend.append(createLifecycleStatusLegendEntries());
-        roadClassLegend.append(calibrationPointPicture);
+        roadClassLegend.append(roadPartStartPointPicture);
         nodeToolSelection.hide();
       }
     }
