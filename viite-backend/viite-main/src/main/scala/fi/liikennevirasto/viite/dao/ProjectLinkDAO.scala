@@ -18,7 +18,7 @@ import slick.jdbc.StaticQuery.interpolation
 
 //TODO naming SQL conventions
 
-case class ProjectLinkDevToolData(startAddrMValue: Option[Long] = None, endAddrMValue: Option[Long] = None, originalStartAddrMValue: Option[Long] = None, originalEndAddrMValue: Option[Long] = None, startCp: Long = 0, endCp: Long = 0, generateNewRoadwayNumber: Boolean = false)
+case class ProjectLinkDevToolData(startAddrMValue: Option[Long] = None, endAddrMValue: Option[Long] = None, originalStartAddrMValue: Option[Long] = None, originalEndAddrMValue: Option[Long] = None, startCp: Long = 0, endCp: Long = 0, generateNewRoadwayNumber: Boolean = false, editedSideCode: Option[Long] = None)
 
 case class ProjectLink(id: Long, roadPart: RoadPart, track: Track, discontinuity: Discontinuity, addrMRange: AddrMRange, originalAddrMRange: AddrMRange, startDate: Option[DateTime] = None, endDate: Option[DateTime] = None, createdBy: Option[String] = None, linkId: String, startMValue: Double, endMValue: Double, sideCode: SideCode,
                        calibrationPointTypes: (CalibrationPointType, CalibrationPointType) = (CalibrationPointType.NoCP, CalibrationPointType.NoCP),
