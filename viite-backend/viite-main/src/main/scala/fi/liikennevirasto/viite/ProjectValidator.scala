@@ -1581,7 +1581,7 @@ class ProjectValidator {
       } else {
         validationError.message.format(
           if (elyBorderData.nonEmpty)           elyBorderData.get.toSet.mkString(", ")
-          else if (currentRoadPart.nonEmpty) currentRoadPart
+          else if (currentRoadPart.nonEmpty) currentRoadPart.get
           else if (discontinuity.nonEmpty)      discontinuity.get.groupBy(_.value).map(_._2.head.toString).mkString(", ")
           else                                  validationError.message
         )
