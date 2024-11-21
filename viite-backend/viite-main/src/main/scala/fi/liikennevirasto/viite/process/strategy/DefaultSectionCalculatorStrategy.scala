@@ -523,8 +523,8 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
               // then throw the length mismatch error.
               val discontinuityErrors = projectValidator.checkProjectContinuity(projectDAO.fetchById(pls.head.projectId).get, pls)
               if (discontinuityErrors.nonEmpty) {
-                val erroneousLinkIds = discontinuityErrors.flatMap(err => err.affectedLinkIds)
-                throw ViiteException(s"Tarkista jatkuvuuskoodit linkeiltä: ${erroneousLinkIds}")
+                val erroneousLinkIds = discontinuityErrors.flatMap(err => err.affectedLinkIds).mkString(", ")
+                throw ViiteException(s"Tarkista jatkuvuuskoodit linkeiltä: $erroneousLinkIds")
               } else {
                 logger.error(s"Length mismatch. New: ${curr.addrMRange.start} ${curr.addrMRange.end} original: ${curr.originalAddrMRange.start} ${curr.originalAddrMRange.end} linkId: ${curr.linkId}")
                 throw new RoadAddressException(LengthMismatchErrorMessage.format(curr.linkId, maxDiffForChange - 1))
