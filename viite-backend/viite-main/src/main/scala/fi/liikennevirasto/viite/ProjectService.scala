@@ -1548,7 +1548,13 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
                 calibrationPointsUpdated
               }
             }
-            projectLinkDAO.updateProjectLinks(updatedRoadways, userName, originalAddresses)
+            val editedLinks = {
+              if (devToolData.get.editedSideCode.nonEmpty) {
+                updatedRoadways.map(pl => pl.copy(sideCode = SideCode.apply(devToolData.get.editedSideCode.get.toInt)))
+              } else
+                updatedRoadways
+            }
+            projectLinkDAO.updateProjectLinks(editedLinks, userName, originalAddresses)
           }
         }
 

@@ -335,8 +335,9 @@
       const hasDevRights = _.includes(startupParameters.roles, 'dev');
 
       const getValueWithId = function(id) {
-        return roadAddressProjectForm.find(id)[0]?.value ? Number(roadAddressProjectForm.find(id)[0].value) : null;
-      }
+        const element = roadAddressProjectForm.find(id)[0];
+        return element && element.value ? Number(element.value) : null;
+      };
 
       const startAddrMValue = getValueWithId('#addrStart');
       const endAddrMValue = getValueWithId('#addrEnd');
@@ -344,7 +345,10 @@
       const origEndAddrMValue = getValueWithId('#origAddrEnd');
       const startCp = getValueWithId('#startCPDropdown');
       const endCp = getValueWithId('#endCPDropdown');
-      const generateNewRoadwayNumber = roadAddressProjectForm.find('#newRoadwayNumber')[0]?.checked || null;
+      const sideCode = getValueWithId('#sideCodeDropdown');
+      const generateNewRoadwayNumber = roadAddressProjectForm.find('#newRoadwayNumber')[0]
+          ? roadAddressProjectForm.find('#newRoadwayNumber')[0].checked
+          : null;
 
       let devToolData = null;
       if (hasDevRights) {
@@ -355,9 +359,10 @@
           originalEndAddrMValue: origEndAddrMValue,
           startCp: startCp,
           endCp: endCp,
-          generateNewRoadwayNumber: generateNewRoadwayNumber
+          generateNewRoadwayNumber: generateNewRoadwayNumber,
+          editedSideCode: sideCode
         };
-      };
+      }
 
       var reversed = _.chain(changedLinks).map(function (c) {
         return c.reversed;

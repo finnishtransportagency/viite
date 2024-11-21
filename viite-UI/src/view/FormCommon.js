@@ -66,6 +66,18 @@
       const endOfSection = Math.max(...links.map((link) => Number(link.endAddressM)));
       const originalStartOfSection = Math.min(...links.map((link) => Number(link.originalStartAddressM)));
       const originalEndOfSection = Math.max(...links.map((link) => Number(link.originalEndAddressM)));
+      let sideCodeDropDown = '';
+
+      if (links.length == 1) {
+        const sideCodeValue = links[0].sideCode;
+        const label = `<label>Linkin SideCode</label>`;
+        const dropDown = `<select class="${prefix}form-control administrativeClassAndRoadName" id="sideCodeDropdown" size="1" style="width: 100px !important; display: inline">
+          <option ${sideCodeValue === 9 ? 'selected' : ''} value="9">Unknown</option>
+          <option ${sideCodeValue === 2 ? 'selected' : ''} value="2">Towards Digitation</option>
+          <option ${sideCodeValue === 3 ? 'selected' : ''} value="3">Against Digitation</option>
+        </select>`;
+        sideCodeDropDown = label + dropDown;
+      }
 
       return `
         <div class="dev-address-tool" hidden="true">
@@ -117,9 +129,12 @@
               <input type="checkbox" id="newRoadwayNumber" style="margin-right: 10px"/>
               <label> Uusi Roadway numero valituille linkeille</label>
             </div>
+            <div class="dev-sidecode-wrapper">
+                ${sideCodeDropDown}
+            </div>
           </div>
         </div>`;
-    }
+    };
 
 
     const newRoadAddressInfo = function (project, selected, links, road) {
