@@ -350,8 +350,9 @@ case class RoadAddress(id: Long, linearLocationId: Long, roadPart: RoadPart, adm
       validTo.exists(vt => vt.isEqualNow || vt.isBeforeNow)
   }
 
+  /** Get an address value corresponding to the measured values. */
   private def addrAt(a: Double) = {
-    val coefficient = (addrMRange.end - addrMRange.start) / (endMValue - startMValue)
+    val coefficient = (addrMRange.length) / (endMValue - startMValue) // Coefficient telling how many road address meters is a geometry meter.
     sideCode match {
       case SideCode.AgainstDigitizing =>
         addrMRange.end - Math.round((a - startMValue) * coefficient)

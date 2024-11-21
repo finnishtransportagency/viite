@@ -503,7 +503,7 @@ class ProjectServiceLinkSpec extends AnyFunSuite with Matchers with BeforeAndAft
       val mapping = linksRoad259.map(tl => tl -> mappedLinks(tl.linkId)).filterNot(_._2.size > 1)
       mapping.foreach { case (link, l) =>
         val before = l.head
-        before.addrMRange.end - before.addrMRange.start should be(link.addrMRange.end - link.addrMRange.start +- 1)
+        before.addrMRange.length should be(link.addrMRange.length +- 1)
       }
 
       //sum of all link values should persist

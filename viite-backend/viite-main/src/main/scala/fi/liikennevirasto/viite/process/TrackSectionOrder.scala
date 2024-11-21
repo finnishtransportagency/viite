@@ -192,7 +192,7 @@ object TrackSectionOrder {
         val prevAddrM = ready.last.addrMRange.end
         val endAddrM = hit.status match {
           case RoadAddressChangeType.NotHandled | RoadAddressChangeType.Unchanged | RoadAddressChangeType.Transfer | RoadAddressChangeType.Renumeration =>
-            ready.last.addrMRange.end + (hit.addrMRange.end - hit.addrMRange.start)
+            ready.last.addrMRange.end + (hit.addrMRange.length)
           case RoadAddressChangeType.New =>
             prevAddrM + Math.round(hit.geometryLength)
           case _ =>
@@ -211,7 +211,7 @@ object TrackSectionOrder {
         Some(if (firstLink.status == RoadAddressChangeType.New)
           Math.round(firstLink.geometryLength)
         else
-          firstLink.addrMRange.end - firstLink.addrMRange.start),
+          firstLink.addrMRange.length),
       startCalibrationPoint = Some(Some(ProjectCalibrationPoint(firstLink.linkId, 0.0, 0L, firstLink.startCalibrationPointType))),
       endCalibrationPoint = Some(None))), seq.tail)
     if (isCounterClockwise(ordered.map(firstPoint)))
@@ -224,7 +224,7 @@ object TrackSectionOrder {
             Some(if (firstLink.status == RoadAddressChangeType.New)
               Math.round(firstLink.geometryLength)
             else
-              firstLink.addrMRange.end - firstLink.addrMRange.start),
+              firstLink.addrMRange.length),
           startCalibrationPoint = Some(Some(ProjectCalibrationPoint(firstLink.linkId, firstLink.geometryLength, 0L, firstLink.startCalibrationPointType))),
           endCalibrationPoint = Some(None))),
         seq.tail)
