@@ -71,10 +71,10 @@
       if (links.length == 1) {
         const sideCodeValue = links[0].sideCode;
         const label = `<label>Linkin SideCode</label>`;
-        const dropDown = `<select class="${prefix}form-control administrativeClassAndRoadName" id="sideCodeDropdown" size="1" style="width: 100px !important; display: inline">
+        const dropDown = `<select class="${prefix}form-control administrativeClassAndRoadName" id="sideCodeDropdown" size="1" style="width: 130px !important; display: inline">
           <option ${sideCodeValue === 9 ? 'selected' : ''} value="9">Unknown</option>
-          <option ${sideCodeValue === 2 ? 'selected' : ''} value="2">Towards Digitation</option>
-          <option ${sideCodeValue === 3 ? 'selected' : ''} value="3">Against Digitation</option>
+          <option ${sideCodeValue === 2 ? 'selected' : ''} value="2">Towards Digitizing</option>
+          <option ${sideCodeValue === 3 ? 'selected' : ''} value="3">Against Digitizing</option>
         </select>`;
         sideCodeDropDown = label + dropDown;
       }
@@ -85,20 +85,24 @@
             <div>
               <label>Osoitteiden hallinta (dev työkalu)</label>
             </div>
-            <label>CP linkin alussa</label>
-            <select class="${prefix}form-control administrativeClassAndRoadName" id="startCPDropdown" size="1" style="width: 100px !important; display: inline">
-              <option value="0" selected>NoCp</option>
-              <option value="1">UserDefinedCP</option>
-              <option value="2">JunctionPointCP</option>
-              <option value="3">RoadAddressCP</option>
-            </select>
-            <label>CP linkin lopussa</label>
-            <select class="${prefix}form-control administrativeClassAndRoadName" id="endCPDropdown" size="1" style="width: 100px !important; display: inline">
-              <option value="0" selected>NoCp</option>
-              <option value="1">UserDefinedCP</option>
-              <option value="2">JunctionPointCP</option>
-              <option value="3">RoadAddressCP</option>
-            </select>
+            <div class="dev-wrapper-column">
+              <label>CP linkin alussa</label>
+              <select class="${prefix}form-control administrativeClassAndRoadName" id="startCPDropdown" size="1" style="width: 100px !important; display: inline">
+                <option value="0" selected>NoCp</option>
+                <option value="1">UserDefinedCP</option>
+                <option value="2">JunctionPointCP</option>
+                <option value="3">RoadAddressCP</option>
+              </select>
+            </div>
+            <div class="dev-wrapper-column">
+              <label>CP linkin lopussa</label>
+              <select class="${prefix}form-control administrativeClassAndRoadName" id="endCPDropdown" size="1" style="width: 100px !important; display: inline">
+                <option value="0" selected>NoCp</option>
+                <option value="1">UserDefinedCP</option>
+                <option value="2">JunctionPointCP</option>
+                <option value="3">RoadAddressCP</option>
+              </select>
+            </div>
             <label>Uusi osoite:</label>
             <div class="dev-address-field-wrapper">
               <div class="dev-addressfield">
@@ -125,11 +129,11 @@
                 <p id="origAddrLength" style="color: white">${originalEndOfSection - originalStartOfSection}</p>
               </div>
             </div>
-            <div>
+            <div class="dev-wrapper-row">
               <input type="checkbox" id="newRoadwayNumber" style="margin-right: 10px"/>
               <label> Uusi Roadway numero valituille linkeille</label>
             </div>
-            <div class="dev-sidecode-wrapper">
+            <div class="dev-wrapper-column">
                 ${sideCodeDropDown}
             </div>
           </div>
