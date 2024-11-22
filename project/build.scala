@@ -71,7 +71,7 @@ object Digiroad2Build extends Build {
     scalaVersion := ScalaVersion,
     scalacOptions ++= Seq("-unchecked", "-feature"),
     testOptions in Test += TestOutputOptions
-  ) ++ CodeArtifactSettings.settings // chooses the correct resolvers and credentials based on the CODE_ARTIFACT_AUTH_TOKEN environment variable
+  ) ++ CodeArtifactSettings.getLocalLibSettings // chooses the correct resolvers and credentials based on the CODE_ARTIFACT_AUTH_TOKEN environment variable
 
   val BaseProjectName = "base"
   lazy val baseJar = Project(

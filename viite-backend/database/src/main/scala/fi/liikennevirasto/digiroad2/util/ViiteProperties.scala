@@ -14,6 +14,7 @@ trait ViiteProperties {
   val kgvApiKey: String
   val vkmUrl: String
   val vkmApiKey: String
+  val vkmApiKeyDev: String
   val importOnlyCurrent: Boolean
   val authenticationTestMode: Boolean
   val authenticationTestUser: String
@@ -57,6 +58,7 @@ class ViitePropertiesFromEnv extends ViiteProperties {
   val kgvApiKey: String = scala.util.Properties.envOrElse("kgvApiKey", null)
   val vkmUrl: String = scala.util.Properties.envOrElse("vkmUrl", null)
   val vkmApiKey: String = scala.util.Properties.envOrElse("vkmApiKey", null)
+  val vkmApiKeyDev: String = scala.util.Properties.envOrElse("vkmApiKeyDev", null)
   val httpProxySet: Boolean = scala.util.Properties.envOrElse("http.proxySet", "false").toBoolean
   val httpProxyHost: String = scala.util.Properties.envOrElse("http.proxyHost", null)
   val httpNonProxyHosts: String = scala.util.Properties.envOrElse("http.nonProxyHosts", "")
@@ -136,6 +138,7 @@ class ViitePropertiesFromFile extends ViiteProperties {
   override val kgvApiKey: String = scala.util.Properties.envOrElse("kgvApiKey", envProps.getProperty("kgvApiKey"))
   override val vkmUrl: String = scala.util.Properties.envOrElse("vkmUrl", envProps.getProperty("vkmUrl"))
   override val vkmApiKey: String = scala.util.Properties.envOrElse("vkmApiKey", envProps.getProperty("vkmApiKey"))
+  override val vkmApiKeyDev: String = scala.util.Properties.envOrElse("vkmApiKeyDev", envProps.getProperty("vkmApiKeyDev"))
   override val importOnlyCurrent: Boolean = envProps.getProperty("importOnlyCurrent", "false").toBoolean
   override val authenticationTestMode: Boolean = envProps.getProperty("authenticationTestMode", "false").toBoolean
   override val authenticationTestUser: String = envProps.getProperty("authenticationTestUser")
@@ -209,6 +212,7 @@ object ViiteProperties {
   lazy val kgvEndpoint: String = properties.kgvEndpoint
   lazy val vkmUrl: String = properties.vkmUrl
   lazy val vkmApiKey: String = properties.vkmApiKey
+  lazy val vkmApiKeyDev: String = properties.vkmApiKeyDev
   lazy val importOnlyCurrent: Boolean = properties.importOnlyCurrent
   lazy val authenticationTestMode: Boolean = properties.authenticationTestMode
   lazy val authenticationTestUser: String = properties.authenticationTestUser
