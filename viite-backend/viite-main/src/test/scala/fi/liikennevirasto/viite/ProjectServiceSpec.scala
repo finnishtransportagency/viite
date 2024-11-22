@@ -3801,8 +3801,8 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
       )
 
       val precalculatedAddresses = List(
-        (0,79),
-        (79,94),
+        (0,80),
+        (80,94),
         (94,112),
         (112,264),
         (264,332),
@@ -3814,8 +3814,8 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
         (963,1070),
         (1070,1294),
         (1294,1378),
-        (1378,1391),
-        (1391,1519),
+        (1378,1392),
+        (1392,1519),
         (1519,1559),
         (1559,1563),
         (1563,1726),
@@ -3824,12 +3824,12 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
         (3941,4057),
         (4057,4076),
         (4076,4262),
-        (4262,4291),
-        (4291,4309),
-        (4309,4442),
-        (4442,4460),
-        (4460,4473),
-        (4473,4607),
+        (4262,4292),
+        (4292,4310),
+        (4310,4442),
+        (4442,4461),
+        (4461,4474),
+        (4474,4607),
         (4607,4667),
         (4667,4769),
         (4769,4787),
@@ -3848,25 +3848,25 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
         (977,1087),
         (1087,1315),
         (1315,1398),
-        (1398,1413),
-        (1413,1559),
+        (1398,1412),
+        (1412,1559),
         (1559,1563),
         (1563,1662),
         (1662,1722),
         (1722,1757),
         (1757,1801),
         (3941,4056),
-        (4056,4075),
-        (4075,4290),
-        (4290,4308),
-        (4308,4439),
-        (4439,4459),
-        (4459,4472),
-        (4472,4515),
-        (4515,4608),
-        (4608,4667),
-        (4667,4736),
-        (4736,4766),
+        (4056,4074),
+        (4074,4289),
+        (4289,4307),
+        (4307,4438),
+        (4438,4458),
+        (4458,4471),
+        (4471,4515),
+        (4515,4607),
+        (4607,4666),
+        (4666,4735),
+        (4735,4766),
         (4766,4794),
         (4794,4819),
         (4819,4961),
@@ -3879,8 +3879,8 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
         (2192,2278),
         (2278,2337),
         (2337,2397),
-        (2397,2408),
-        (2408,2593),
+        (2397,2407),
+        (2407,2593),
         (2593,2613),
         (2613,2672),
         (2672,2934),
@@ -5256,11 +5256,11 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
 
       val precalculatedAddresses = List(
         (0,137),
-        (137,165),
-        (165,178),
+        (137,166),
+        (166,178),
         (178,198),
-        (198,253),
-        (253,532),
+        (198,254),
+        (254,532),
         (532,550),
         (550,649),
         (649,688),
@@ -5275,17 +5275,17 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
         (3367,3400),
         (3400,3481),
         (3481,3516),
-        (3516,3750),
-        (3750,3764),
-        (3764,3780),
-        (3780,3915),
+        (3516,3751),
+        (3751,3765),
+        (3765,3781),
+        (3781,3915),
         (0,136),
-        (136,160),
-        (160,174),
+        (136,161),
+        (161,174),
         (174,194),
-        (194,243),
-        (243,256),
-        (256,530),
+        (194,244),
+        (244,257),
+        (257,530),
         (530,547),
         (547,648),
         (648,687),
@@ -5299,10 +5299,10 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
         (3350,3366),
         (3366,3400),
         (3400,3481),
-        (3481,3515),
-        (3515,3754),
-        (3754,3768),
-        (3768,3783),
+        (3481,3516),
+        (3516,3755),
+        (3755,3769),
+        (3769,3783),
         (3783,3915),
         (695,937),
         (1170,1482),
@@ -5330,19 +5330,19 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
         (3005,3021),
         (3021,3161),
         (3915,4150),
-        (4150,4214),
-        (4214,4223),
-        (4223,4308),
-        (4308,4361),
-        (4361,4443),
-        (4443,4590),
-        (4590,4672),
-        (4672,4763),
-        (4763,4838),
-        (4838,4851),
-        (4851,4942),
-        (4942,5073),
-        (5073,5144),
+        (4150,4213),
+        (4213,4223),
+        (4223,4307),
+        (4307,4360),
+        (4360,4442),
+        (4442,4589),
+        (4589,4670),
+        (4670,4761),
+        (4761,4836),
+        (4836,4849),
+        (4849,4940),
+        (4940,5072),
+        (5072,5144),
         (5144,5198),
         (5198,5426),
         (5426,5445),
@@ -5386,6 +5386,108 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
 
       addresses should be (precalculatedAddresses)
       terminatedAddresses should be (precalculatedTerminatedAddresses)
+    }
+  }
+  
+  test("Test assignAddrMValues() When Terminating a small section on a two track road in the middle of road part Then the terminated sections should be adjusted to match") {
+    runWithRollback {
+      val roadPart1 = RoadPart(49529,1)
+      val projectId = Sequences.nextViiteProjectId
+      val roadName = Some("testRoad")
+
+      val roadways = Seq(
+        Roadway(85042,262301768,roadPart1,AdministrativeClass.Municipality,Track.RightSide,Discontinuity.EndOfRoad,AddrMRange(0, 1463),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(85415,262301771,roadPart1,AdministrativeClass.Municipality,Track.LeftSide,Discontinuity.EndOfRoad,AddrMRange(0, 1463),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None)
+      )
+
+      val linearLocations = Seq(
+        LinearLocation(468561, 1.0,"3487fcef-80fd-4fce-bca7-2ce43d20aee2:1",0.0,140.424,SideCode.TowardsDigitizing,1698414053000L,(CalibrationPointReference(None,None),CalibrationPointReference(None,None)),List(Point(241065.213,6711661.602,0.0), Point(241005.128,6711788.02,0.0)),FrozenLinkInterface,262301771,Some(DateTime.now().minusDays(2)),None),
+        LinearLocation(468524, 7.0,"649d6b7c-885c-4f0f-b3ae-1f224c15bf07:1",0.0,178.166,SideCode.AgainstDigitizing,1698414053000L,(CalibrationPointReference(None,None),CalibrationPointReference(None,None)),List(Point(240465.328,6711836.817,0.0), Point(240626.95,6711910.652,0.0)),FrozenLinkInterface,262301768,Some(DateTime.now().minusDays(2)),None),
+        LinearLocation(468567, 7.0,"755920c6-366d-4ea8-a2e9-c8848a2bfcac:1",0.0,135.385,SideCode.AgainstDigitizing,1698414053000L,(CalibrationPointReference(None,None),CalibrationPointReference(None,None)),List(Point(240328.277,6711815.517,0.0), Point(240463.163,6711826.951,0.0)),FrozenLinkInterface,262301771,Some(DateTime.now().minusDays(2)),None),
+        LinearLocation(468529, 12.0,"7df2e0c0-6358-43a3-ac47-13ad5c7801e5:1",0.0,63.583,SideCode.AgainstDigitizing,1698414053000L,(CalibrationPointReference(None,None),CalibrationPointReference(None,None)),List(Point(239888.103,6711868.051,0.0), Point(239943.866,6711898.597,0.0)),FrozenLinkInterface,262301768,Some(DateTime.now().minusDays(2)),None),
+        LinearLocation(468528, 11.0,"3467947c-5761-4800-9e77-9bf291947606:1",0.0,316.802,SideCode.TowardsDigitizing,1698414053000L,(CalibrationPointReference(None,None),CalibrationPointReference(None,None)),List(Point(240217.788,6711847.93,0.0), Point(239943.866,6711898.597,0.0)),FrozenLinkInterface,262301768,Some(DateTime.now().minusDays(2)),None),
+        LinearLocation(468571, 11.0,"cc903c1a-5775-4c86-b708-3c42544baca9:1",0.0,8.931,SideCode.AgainstDigitizing,1698414053000L,(CalibrationPointReference(None,None),CalibrationPointReference(None,None)),List(Point(239943.124,6711881.944,0.0), Point(239950.908,6711886.322,0.0)),FrozenLinkInterface,262301771,Some(DateTime.now().minusDays(2)),None),
+        LinearLocation(468564, 4.0,"56382582-5885-4fb2-96ea-705a18933825:1",0.0,12.67,SideCode.AgainstDigitizing,1698414053000L,(CalibrationPointReference(None,None),CalibrationPointReference(None,None)),List(Point(240735.29,6711951.569,0.0), Point(240746.812,6711956.84,0.0)),FrozenLinkInterface,262301771,Some(DateTime.now().minusDays(2)),None),
+        LinearLocation(468527, 10.0,"78a36ab1-1c88-41c4-9844-fdaab0481364:1",0.0,13.155,SideCode.TowardsDigitizing,1698414053000L,(CalibrationPointReference(None,None),CalibrationPointReference(None,None)),List(Point(240229.696,6711842.339,0.0), Point(240217.788,6711847.93,0.0)),FrozenLinkInterface,262301768,Some(DateTime.now().minusDays(2)),None),
+        LinearLocation(468520, 3.0,"422a0e64-2e98-41c1-a167-1473d1cf56f1:1",0.0,108.197,SideCode.TowardsDigitizing,1698414053000L,(CalibrationPointReference(None,None),CalibrationPointReference(None,None)),List(Point(240998.729,6711818.193,0.0), Point(240936.385,6711906.607,0.0)),FrozenLinkInterface,262301768,Some(DateTime.now().minusDays(2)),None),
+        LinearLocation(468530, 13.0,"babbca6c-d545-432d-8c94-0a82fdd410d2:1",0.0,33.621,SideCode.AgainstDigitizing,1698414053000L,(CalibrationPointReference(None,None),CalibrationPointReference(None,None)),List(Point(239858.554,6711852.013,0.0), Point(239888.103,6711868.051,0.0)),FrozenLinkInterface,262301768,Some(DateTime.now().minusDays(2)),None),
+        LinearLocation(468570, 10.0,"e81c10cd-3f5a-4149-8e2b-ac943f7431cf:1",0.0,303.233,SideCode.TowardsDigitizing,1698414053000L,(CalibrationPointReference(None,None),CalibrationPointReference(None,None)),List(Point(240210.751,6711839.164,0.0), Point(239950.908,6711886.322,0.0)),FrozenLinkInterface,262301771,Some(DateTime.now().minusDays(2)),None),
+        LinearLocation(468562, 2.0,"7fa9e40a-6f94-4dde-943f-78c7a489e360:1",0.0,25.577,SideCode.TowardsDigitizing,1698414053000L,(CalibrationPointReference(None,None),CalibrationPointReference(None,None)),List(Point(241005.128,6711788.02,0.0), Point(240991.477,6711809.647,0.0)),FrozenLinkInterface,262301771,Some(DateTime.now().minusDays(2)),None),
+        LinearLocation(468573, 13.0,"5529a438-5cf0-430e-9e81-e2bea9be1c69:1",0.0,34.058,SideCode.AgainstDigitizing,1698414053000L,(CalibrationPointReference(None,None),CalibrationPointReference(None,None)),List(Point(239864.463,6711839.79,0.0), Point(239894.296,6711856.209,0.0)),FrozenLinkInterface,262301771,Some(DateTime.now().minusDays(2)),None),
+        LinearLocation(468526, 9.0,"32b1cef7-f485-4bae-8481-fe452c952f88:1",0.0,102.295,SideCode.TowardsDigitizing,1698414053000L,(CalibrationPointReference(None,None),CalibrationPointReference(None,None)),List(Point(240329.781,6711825.007,0.0), Point(240229.696,6711842.339,0.0)),FrozenLinkInterface,262301768,Some(DateTime.now().minusDays(2)),None),
+        LinearLocation(468523, 6.0,"7b0c9b7f-1623-4224-9bcc-963bda373e85:1",0.0,106.519,SideCode.AgainstDigitizing,1698414053000L,(CalibrationPointReference(None,None),CalibrationPointReference(None,None)),List(Point(240626.95,6711910.652,0.0), Point(240722.738,6711957.225,0.0)),FrozenLinkInterface,262301768,Some(DateTime.now().minusDays(2)),None),
+        LinearLocation(468568, 8.0,"632d0a56-80b7-4f95-a964-221677a7277f:1",0.0,105.49,SideCode.TowardsDigitizing,1698414053000L,(CalibrationPointReference(None,None),CalibrationPointReference(None,None)),List(Point(240328.277,6711815.517,0.0), Point(240224.805,6711832.765,0.0)),FrozenLinkInterface,262301771,Some(DateTime.now().minusDays(2)),None),
+        LinearLocation(468563, 3.0,"c6e8836c-83bf-4266-9626-d863912d67b5:1",0.0,316.358,SideCode.TowardsDigitizing,1698414053000L,(CalibrationPointReference(None,None),CalibrationPointReference(None,None)),List(Point(240991.477,6711809.647,0.0), Point(240746.812,6711956.84,0.0)),FrozenLinkInterface,262301771,Some(DateTime.now().minusDays(2)),None),
+        LinearLocation(468518, 1.0,"c181f1ff-cdc1-42f4-901e-658303a00327:1",0.0,142.091,SideCode.TowardsDigitizing,1698414053000L,(CalibrationPointReference(None,None),CalibrationPointReference(None,None)),List(Point(241080.825,6711666.306,0.0), Point(241015.709,6711792.33,0.0)),FrozenLinkInterface,262301768,Some(DateTime.now().minusDays(2)),None),
+        LinearLocation(468565, 5.0,"90685c0f-c0d2-43b4-b3e4-fa8c2a1e7ace:1",0.0,116.332,SideCode.AgainstDigitizing,1698414053000L,(CalibrationPointReference(None,None),CalibrationPointReference(None,None)),List(Point(240631.624,6711898.782,0.0), Point(240735.29,6711951.569,0.0)),FrozenLinkInterface,262301771,Some(DateTime.now().minusDays(2)),None),
+        LinearLocation(468569, 9.0,"ce915cff-95a6-4243-8d5d-05c51b0e77dd:1",0.0,15.442,SideCode.TowardsDigitizing,1698414053000L,(CalibrationPointReference(None,None),CalibrationPointReference(None,None)),List(Point(240224.805,6711832.765,0.0), Point(240210.751,6711839.164,0.0)),FrozenLinkInterface,262301771,Some(DateTime.now().minusDays(2)),None),
+        LinearLocation(468525, 8.0,"2efa6305-9ea8-4507-9c18-3ee559246bc2:1",0.0,136.083,SideCode.AgainstDigitizing,1698414053000L,(CalibrationPointReference(None,None),CalibrationPointReference(None,None)),List(Point(240329.781,6711825.007,0.0), Point(240465.328,6711836.817,0.0)),FrozenLinkInterface,262301768,Some(DateTime.now().minusDays(2)),None),
+        LinearLocation(468522, 5.0,"8cccf672-17b4-47a4-bc14-29d879a69f2e:1",0.0,10.968,SideCode.AgainstDigitizing,1698414053000L,(CalibrationPointReference(None,None),CalibrationPointReference(None,None)),List(Point(240722.738,6711957.225,0.0), Point(240732.657,6711961.907,0.0)),FrozenLinkInterface,262301768,Some(DateTime.now().minusDays(2)),None),
+        LinearLocation(468521, 4.0,"ecfd4b54-32c1-415c-883c-487e45ee3267:1",0.0,230.491,SideCode.TowardsDigitizing,1698414053000L,(CalibrationPointReference(None,None),CalibrationPointReference(None,None)),List(Point(240936.385,6711906.607,0.0), Point(240732.657,6711961.907,0.0)),FrozenLinkInterface,262301768,Some(DateTime.now().minusDays(2)),None),
+        LinearLocation(468566, 6.0,"7352492d-b444-466f-9538-4522c35fd24b:1",0.0,183.625,SideCode.AgainstDigitizing,1698414053000L,(CalibrationPointReference(None,None),CalibrationPointReference(None,None)),List(Point(240463.163,6711826.951,0.0), Point(240631.624,6711898.782,0.0)),FrozenLinkInterface,262301771,Some(DateTime.now().minusDays(2)),None),
+        LinearLocation(468572, 12.0,"fac68673-2f01-4b7b-8fb1-5faad68afeba:1",0.0,55.201,SideCode.AgainstDigitizing,1698414053000L,(CalibrationPointReference(None,None),CalibrationPointReference(None,None)),List(Point(239894.296,6711856.209,0.0), Point(239943.124,6711881.944,0.0)),FrozenLinkInterface,262301771,Some(DateTime.now().minusDays(2)),None),
+        LinearLocation(468519, 2.0,"cb3ca5ab-4ffe-4e28-b5d1-484a909b9ca7:1",0.0,30.941,SideCode.TowardsDigitizing,1698414053000L,(CalibrationPointReference(None,None),CalibrationPointReference(None,None)),List(Point(241015.709,6711792.33,0.0), Point(240998.729,6711818.193,0.0)),FrozenLinkInterface,262301768,Some(DateTime.now().minusDays(2)),None)
+      )
+
+      val projectLinks = Seq(
+        ProjectLink(Sequences.nextProjectLinkId, roadPart1,Track.LeftSide,Discontinuity.MinorDiscontinuity,AddrMRange(0,141),AddrMRange(0,141),None,None,Some("test"),"3487fcef-80fd-4fce-bca7-2ce43d20aee2:1", 0.0,140.424,SideCode.TowardsDigitizing,(NoCP, NoCP), (NoCP, NoCP),List(Point(241065.213,6711661.602,14.464), Point(241044.3950246294,6711717.648799368,14.356), Point(241029.6260246445,6711746.925799263,14.171), Point(241008.5200246658,6711782.605799116,13.914), Point(241005.1280246694,6711788.019799092,13.89)),projectId,  RoadAddressChangeType.Unchanged,AdministrativeClass.Municipality, FrozenLinkInterface,140.424,85415,468561,2,reversed = false,None,1652179948783L,262301771,roadName,None,None,None,None),
+        ProjectLink(Sequences.nextProjectLinkId, roadPart1,Track.RightSide,Discontinuity.MinorDiscontinuity,AddrMRange(0,141),AddrMRange(0,141),None,None,Some("test"),"c181f1ff-cdc1-42f4-901e-658303a00327:1", 0.0,142.091,SideCode.TowardsDigitizing,(NoCP, NoCP), (NoCP, NoCP),List(Point(241080.825,6711666.306,14.796), Point(241068.1310246072,6711697.117799523,14.641), Point(241048.2930246274,6711737.285799382,14.501), Point(241028.8460246469,6711770.560799248,14.307), Point(241015.7090246602,6711792.329799158,14.08)),projectId,  RoadAddressChangeType.Unchanged,AdministrativeClass.Municipality, FrozenLinkInterface,142.091,85042,468518,2,reversed = false,None,1652179948783L,262301768,roadName,None,None,None,None),
+        ProjectLink(Sequences.nextProjectLinkId, roadPart1,Track.LeftSide,Discontinuity.Continuous,AddrMRange(141,167),AddrMRange(141,167),None,None,Some("test"),"7fa9e40a-6f94-4dde-943f-78c7a489e360:1", 0.0,25.577,SideCode.TowardsDigitizing,(NoCP, NoCP), (NoCP, NoCP),List(Point(241005.128,6711788.02,13.89), Point(240997.8590246766,6711799.862799042,13.639), Point(240991.477,6711809.647,13.428005889575788)),projectId,  RoadAddressChangeType.Termination,AdministrativeClass.Municipality, FrozenLinkInterface,25.577,85415,468562,2,reversed = false,None,1652179948783L,262301771,roadName,None,None,None,None),
+        ProjectLink(Sequences.nextProjectLinkId, roadPart1,Track.RightSide,Discontinuity.Continuous,AddrMRange(141,172),AddrMRange(141,172),None,None,Some("test"),"cb3ca5ab-4ffe-4e28-b5d1-484a909b9ca7:1", 0.0,30.941,SideCode.TowardsDigitizing,(NoCP, NoCP), (NoCP, NoCP),List(Point(241015.709,6711792.33,14.08), Point(241007.2010246686,6711805.601799099,13.907), Point(240998.7290246772,6711818.192799039,13.74)),projectId,  RoadAddressChangeType.Termination,AdministrativeClass.Municipality, FrozenLinkInterface,30.941,85042,468519,2,reversed = false,None,1652179948783L,262301768,roadName,None,None,None,None),
+        ProjectLink(Sequences.nextProjectLinkId, roadPart1,Track.RightSide,Discontinuity.Continuous,AddrMRange(172,279),AddrMRange(172,279),None,None,Some("test"),"422a0e64-2e98-41c1-a167-1473d1cf56f1:1", 0.0,108.197,SideCode.TowardsDigitizing,(NoCP, NoCP), (NoCP, NoCP),List(Point(240998.729,6711818.193,13.74), Point(240984.1590246916,6711839.632798939,13.406), Point(240958.0010247176,6711877.27779876,12.52), Point(240936.385,6711906.607,11.781002494581072)),projectId,  RoadAddressChangeType.Transfer,AdministrativeClass.Municipality, FrozenLinkInterface,108.197,85042,468520,2,reversed = false,None,1652179948783L,262301768,roadName,None,None,None,None),
+        ProjectLink(Sequences.nextProjectLinkId, roadPart1,Track.LeftSide,Discontinuity.Continuous,AddrMRange(167,486),AddrMRange(167,486),None,None,Some("test"),"c6e8836c-83bf-4266-9626-d863912d67b5:1", 0.0,316.358,SideCode.TowardsDigitizing,(NoCP, NoCP), (NoCP, NoCP),List(Point(240991.477,6711809.647,13.428), Point(240983.1710246914,6711822.804798939,13.373), Point(240962.9610247115,6711851.858798804,12.821), Point(240938.5360247357,6711886.293798635,11.936), Point(240919.1720247546,6711911.275798502,11.225), Point(240894.9960247779,6711935.966798341,10.3), Point(240868.5220248029,6711953.174798169,9.322), Point(240838.4580248307,6711964.304797976,8.106), Point(240811.9530248549,6711968.368797809,6.93), Point(240779.0590248843,6711966.253797601,5.454), Point(240749.66802491,6711958.033797421,4.599), Point(240746.812,6711956.84,4.562003809446201)),projectId,  RoadAddressChangeType.Transfer,AdministrativeClass.Municipality, FrozenLinkInterface,316.358,85415,468563,2,reversed = false,None,1652179948783L,262301771,roadName,None,None,None,None),
+        ProjectLink(Sequences.nextProjectLinkId, roadPart1,Track.LeftSide,Discontinuity.Continuous,AddrMRange(486,499),AddrMRange(486,499),None,None,Some("test"),"56382582-5885-4fb2-96ea-705a18933825:1", 0.0,12.67,SideCode.AgainstDigitizing,(NoCP, NoCP), (NoCP, NoCP),List(Point(240735.29,6711951.569,4.547), Point(240746.812,6711956.84,4.5619994849081555)),projectId,  RoadAddressChangeType.Transfer,AdministrativeClass.Municipality, FrozenLinkInterface,12.67,85415,468564,2,reversed = false,None,1652179948783L,262301771,roadName,None,None,None,None),
+        ProjectLink(Sequences.nextProjectLinkId, roadPart1,Track.RightSide,Discontinuity.Continuous,AddrMRange(279,508),AddrMRange(279,508),None,None,Some("test"),"ecfd4b54-32c1-415c-883c-487e45ee3267:1", 0.0,230.491,SideCode.TowardsDigitizing,(NoCP, NoCP), (NoCP, NoCP),List(Point(240936.385,6711906.607,11.781), Point(240920.3150247548,6711925.8957985025,11.151), Point(240903.9860247704,6711940.634798395,10.66), Point(240883.3620247901,6711956.82879826,9.964), Point(240855.2290248161,6711969.668798078,8.89), Point(240829.5130248396,6711976.676797914,7.86), Point(240800.7420248656,6711978.907797733,6.621), Point(240773.3500248899,6711976.054797564,5.548), Point(240751.8550249091,6711970.189797428,4.905), Point(240732.6570249255,6711961.906797313,4.72)),projectId,  RoadAddressChangeType.Transfer,AdministrativeClass.Municipality, FrozenLinkInterface,230.491,85042,468521,2,reversed = false,None,1652179948783L,262301768,roadName,None,None,None,None),
+        ProjectLink(Sequences.nextProjectLinkId, roadPart1,Track.RightSide,Discontinuity.Continuous,AddrMRange(508,519),AddrMRange(508,519),None,None,Some("test"),"8cccf672-17b4-47a4-bc14-29d879a69f2e:1", 0.0,10.968,SideCode.AgainstDigitizing,(NoCP, NoCP), (NoCP, NoCP),List(Point(240722.738,6711957.225,4.771), Point(240732.657,6711961.907,4.72000225980326)),projectId,  RoadAddressChangeType.Transfer,AdministrativeClass.Municipality, FrozenLinkInterface,10.968,85042,468522,2,reversed = false,None,1652179948783L,262301768,roadName,None,None,None,None),
+        ProjectLink(Sequences.nextProjectLinkId, roadPart1,Track.LeftSide,Discontinuity.Continuous,AddrMRange(499,616),AddrMRange(499,616),None,None,Some("test"),"90685c0f-c0d2-43b4-b3e4-fa8c2a1e7ace:1", 0.0,116.332,SideCode.AgainstDigitizing,(NoCP, NoCP), (NoCP, NoCP),List(Point(240631.624,6711898.782,8.873), Point(240673.0780249762,6711919.912796957,6.849), Point(240721.4540249344,6711944.621797251,4.754), Point(240735.29,6711951.569,4.547002368712936)),projectId,  RoadAddressChangeType.Transfer,AdministrativeClass.Municipality, FrozenLinkInterface,116.332,85415,468565,2,reversed = false,None,1652179948783L,262301771,roadName,None,None,None,None),
+        ProjectLink(Sequences.nextProjectLinkId, roadPart1,Track.RightSide,Discontinuity.Continuous,AddrMRange(519,625),AddrMRange(519,625),None,None,Some("test"),"7b0c9b7f-1623-4224-9bcc-963bda373e85:1", 0.0,106.519,SideCode.AgainstDigitizing,(NoCP, NoCP), (NoCP, NoCP),List(Point(240626.95,6711910.652,8.883), Point(240678.4250249724,6711934.921796984,6.426), Point(240719.9100249365,6711955.865797236,4.805), Point(240722.738,6711957.225,4.77100373381075)),projectId,  RoadAddressChangeType.Transfer,AdministrativeClass.Municipality, FrozenLinkInterface,106.519,85042,468523,2,reversed = false,None,1652179948783L,262301768,roadName,None,None,None,None),
+        ProjectLink(Sequences.nextProjectLinkId, roadPart1,Track.LeftSide,Discontinuity.Continuous,AddrMRange(616,801),AddrMRange(616,801),None,None,Some("test"),"7352492d-b444-466f-9538-4522c35fd24b:1", 0.0,183.625,SideCode.AgainstDigitizing,(NoCP, NoCP), (NoCP, NoCP),List(Point(240463.163,6711826.951,10.189), Point(240483.5930251412,6711832.0897958,10.35), Point(240503.9260251233,6711838.604795928,10.532), Point(240529.7390251009,6711849.595796086,10.662), Point(240554.6870250791,6711860.894796236,10.595), Point(240581.9090250554,6711874.378796403,10.338), Point(240607.1480250334,6711887.150796557,9.771), Point(240631.6240250123,6711898.781796706,8.873)),projectId,  RoadAddressChangeType.Transfer,AdministrativeClass.Municipality, FrozenLinkInterface,183.625,85415,468566,2,reversed = false,None,1652179948783L,262301771,roadName,None,None,None,None),
+        ProjectLink(Sequences.nextProjectLinkId, roadPart1,Track.RightSide,Discontinuity.Continuous,AddrMRange(625,802),AddrMRange(625,802),None,None,Some("test"),"649d6b7c-885c-4f0f-b3ae-1f224c15bf07:1", 0.0,178.166,SideCode.AgainstDigitizing,(NoCP, NoCP), (NoCP, NoCP),List(Point(240465.328,6711836.817,10.024), Point(240494.9900251319,6711845.266795866,10.292), Point(240522.7330251076,6711857.255796037,10.605), Point(240582.237025056,6711888.1177964,10.289), Point(240626.95,6711910.652,8.883009632346408)),projectId,  RoadAddressChangeType.Transfer,AdministrativeClass.Municipality, FrozenLinkInterface,178.166,85042,468524,2,reversed = false,None,1652179948783L,262301768,roadName,None,None,None,None),
+        ProjectLink(Sequences.nextProjectLinkId, roadPart1,Track.LeftSide,Discontinuity.Continuous,AddrMRange(801,937),AddrMRange(801,937),None,None,Some("test"),"755920c6-366d-4ea8-a2e9-c8848a2bfcac:1", 0.0,135.385,SideCode.AgainstDigitizing,(NoCP, NoCP), (NoCP, NoCP),List(Point(240328.277,6711815.517,8.982), Point(240395.5490252205,6711820.190795248,9.583), Point(240463.163,6711826.951,10.188997619524418)),projectId,  RoadAddressChangeType.Transfer,AdministrativeClass.Municipality, FrozenLinkInterface,135.385,85415,468567,2,reversed = false,None,1652179948783L,262301771,roadName,None,None,None,None),
+        ProjectLink(Sequences.nextProjectLinkId, roadPart1,Track.RightSide,Discontinuity.Continuous,AddrMRange(802,937),AddrMRange(802,937),None,None,Some("test"),"2efa6305-9ea8-4507-9c18-3ee559246bc2:1", 0.0,136.083,SideCode.AgainstDigitizing,(NoCP, NoCP), (NoCP, NoCP),List(Point(240329.781,6711825.007,8.81), Point(240393.499025223,6711829.306795232,9.38), Point(240465.328,6711836.817,10.02399589585926)),projectId,  RoadAddressChangeType.Transfer,AdministrativeClass.Municipality, FrozenLinkInterface,136.083,85042,468525,2,reversed = false,None,1652179948783L,262301768,roadName,None,None,None,None),
+        ProjectLink(Sequences.nextProjectLinkId, roadPart1,Track.RightSide,Discontinuity.Continuous,AddrMRange(937,1039),AddrMRange(937,1039),None,None,Some("test"),"32b1cef7-f485-4bae-8481-fe452c952f88:1", 0.0,102.295,SideCode.TowardsDigitizing,(NoCP, NoCP), (NoCP, NoCP),List(Point(240329.781,6711825.007,8.81), Point(240303.0640253048,6711825.618794662,8.631), Point(240275.8270253299,6711828.824794487,8.679), Point(240238.3620253649,6711838.681794243,8.951), Point(240229.696,6711842.339,9.052999434871845)),projectId,  RoadAddressChangeType.Transfer,AdministrativeClass.Municipality, FrozenLinkInterface,102.295,85042,468526,2,reversed = false,None,1652179948783L,262301768,roadName,None,None,None,None),
+        ProjectLink(Sequences.nextProjectLinkId, roadPart1,Track.LeftSide,Discontinuity.Continuous,AddrMRange(937,1043),AddrMRange(937,1043),None,None,Some("test"),"632d0a56-80b7-4f95-a964-221677a7277f:1", 0.0,105.49,SideCode.TowardsDigitizing,(NoCP, NoCP), (NoCP, NoCP),List(Point(240328.277,6711815.517,8.982), Point(240287.7730253181,6711817.578794565,8.777), Point(240257.8510253459,6711822.830794375,8.881), Point(240233.8940253683,6711829.1817942215,9.136), Point(240224.805,6711832.765,9.24999823120986)),projectId,  RoadAddressChangeType.Transfer,AdministrativeClass.Municipality, FrozenLinkInterface,105.49,85415,468568,2,reversed = false,None,1652179948783L,262301771,roadName,None,None,None,None),
+        ProjectLink(Sequences.nextProjectLinkId, roadPart1,Track.RightSide,Discontinuity.Continuous,AddrMRange(1039,1052),AddrMRange(1039,1052),None,None,Some("test"),"78a36ab1-1c88-41c4-9844-fdaab0481364:1", 0.0,13.155,SideCode.TowardsDigitizing,(NoCP, NoCP), (NoCP, NoCP),List(Point(240229.696,6711842.339,9.053), Point(240217.788,6711847.93,9.182997852019739)),projectId,  RoadAddressChangeType.Transfer,AdministrativeClass.Municipality, FrozenLinkInterface,13.155,85042,468527,2,reversed = false,None,1652179948783L,262301768,roadName,None,None,None,None),
+        ProjectLink(Sequences.nextProjectLinkId, roadPart1,Track.LeftSide,Discontinuity.Continuous,AddrMRange(1043,1059),AddrMRange(1043,1059),None,None,Some("test"),"ce915cff-95a6-4243-8d5d-05c51b0e77dd:1", 0.0,15.442,SideCode.TowardsDigitizing,(NoCP, NoCP), (NoCP, NoCP),List(Point(240224.805,6711832.765,9.25), Point(240210.751,6711839.164,9.35999844280315)),projectId,  RoadAddressChangeType.Transfer,AdministrativeClass.Municipality, FrozenLinkInterface,15.442,85415,468569,2,reversed = false,None,1652179948783L,262301771,roadName,None,None,None,None),
+        ProjectLink(Sequences.nextProjectLinkId, roadPart1,Track.LeftSide,Discontinuity.Continuous,AddrMRange(1059,1364),AddrMRange(1059,1364),None,None,Some("test"),"e81c10cd-3f5a-4149-8e2b-ac943f7431cf:1", 0.0,303.233,SideCode.TowardsDigitizing,(NoCP, NoCP), (NoCP, NoCP),List(Point(240210.751,6711839.164,9.36), Point(240174.9270254245,6711863.599793829,9.581), Point(240136.4450254619,6711892.128793571,9.889), Point(240113.3060254844,6711909.911793415,10.051), Point(240089.1410255078,6711926.543793254,10.178), Point(240074.6940255215,6711933.8377931565,10.282), Point(240061.7790255337,6711937.677793075,10.44), Point(240051.2940255433,6711937.424793007,10.536), Point(240040.551025553,6711935.254792939,10.639), Point(240029.0420255634,6711931.165792868,10.783), Point(240013.6940255772,6711923.369792774,10.963), Point(239982.3590256045,6711905.603792581,11.231), Point(239950.9080256321,6711886.3217923865,11.132)),projectId,  RoadAddressChangeType.Transfer,AdministrativeClass.Municipality, FrozenLinkInterface,303.233,85415,468570,2,reversed = false,None,1652179948783L,262301771,roadName,None,None,None,None),
+        ProjectLink(Sequences.nextProjectLinkId, roadPart1,Track.RightSide,Discontinuity.Continuous,AddrMRange(1052,1366),AddrMRange(1052,1366),None,None,Some("test"),"3467947c-5761-4800-9e77-9bf291947606:1", 0.0,316.802,SideCode.TowardsDigitizing,(NoCP, NoCP), (NoCP, NoCP),List(Point(240217.788,6711847.93,9.183), Point(240200.1170254013,6711858.362793991,9.247), Point(240178.511025422,6711874.993793849,9.429), Point(240148.7230254511,6711895.847793647,9.722), Point(240124.3040254747,6711914.269793483,9.894), Point(240102.8260254955,6711930.00579334,10.251), Point(240086.0770255115,6711941.008793227,10.625), Point(240068.1770255285,6711947.536793109,10.795), Point(240048.2290255471,6711948.565792982,10.91), Point(240025.9760255671,6711943.201792844,11.085), Point(239998.9900255909,6711929.910792675,11.199), Point(239973.1550256135,6711914.955792517,11.369), Point(239943.8660256394,6711898.596792336,11.301)),projectId,  RoadAddressChangeType.Transfer,AdministrativeClass.Municipality, FrozenLinkInterface,316.802,85042,468528,2,reversed = false,None,1652179948783L,262301768,roadName,None,None,None,None),
+        ProjectLink(Sequences.nextProjectLinkId, roadPart1,Track.LeftSide,Discontinuity.Continuous,AddrMRange(1364,1373),AddrMRange(1364,1373),None,None,Some("test"),"cc903c1a-5775-4c86-b708-3c42544baca9:1", 0.0,8.931,SideCode.AgainstDigitizing,(NoCP, NoCP), (NoCP, NoCP),List(Point(239943.124,6711881.944,11.097), Point(239950.9080256321,6711886.3217923865,11.132)),projectId,  RoadAddressChangeType.Transfer,AdministrativeClass.Municipality, FrozenLinkInterface,8.931,85415,468571,2,reversed = false,None,1652179948783L,262301771,roadName,None,None,None,None),
+        ProjectLink(Sequences.nextProjectLinkId, roadPart1,Track.RightSide,Discontinuity.Continuous,AddrMRange(1366,1429),AddrMRange(1366,1429),None,None,Some("test"),"7df2e0c0-6358-43a3-ac47-13ad5c7801e5:1", 0.0,63.583,SideCode.AgainstDigitizing,(NoCP, NoCP), (NoCP, NoCP),List(Point(239888.103,6711868.051,10.6), Point(239918.9260256615,6711885.176792183,11.017), Point(239943.8660256394,6711898.596792336,11.301)),projectId,  RoadAddressChangeType.Transfer,AdministrativeClass.Municipality, FrozenLinkInterface,63.583,85042,468529,2,reversed = false,None,1652179948783L,262301768,roadName,None,None,None,None),
+        ProjectLink(Sequences.nextProjectLinkId, roadPart1,Track.LeftSide,Discontinuity.Continuous,AddrMRange(1373,1429),AddrMRange(1373,1429),None,None,Some("test"),"fac68673-2f01-4b7b-8fb1-5faad68afeba:1", 0.0,55.201,SideCode.AgainstDigitizing,(NoCP, NoCP), (NoCP, NoCP),List(Point(239894.296,6711856.209,10.656), Point(239931.5950256491,6711875.457792267,11.051), Point(239943.124,6711881.944,11.096998927616202)),projectId,  RoadAddressChangeType.Transfer,AdministrativeClass.Municipality, FrozenLinkInterface,55.201,85415,468572,2,reversed = false,None,1652179948783L,262301771,roadName,None,None,None,None),
+        ProjectLink(Sequences.nextProjectLinkId, roadPart1,Track.LeftSide,Discontinuity.EndOfRoad,AddrMRange(1429,1463),AddrMRange(1429,1463),None,None,Some("test"),"5529a438-5cf0-430e-9e81-e2bea9be1c69:1", 0.0,34.058,SideCode.AgainstDigitizing,(NoCP, NoCP), (NoCP, NoCP),List(Point(239864.463,6711839.79,10.447), Point(239879.4270256952,6711848.352791944,10.553), Point(239894.2960256821,6711856.208792038,10.656)),projectId,  RoadAddressChangeType.Transfer,AdministrativeClass.Municipality, FrozenLinkInterface,34.058,85415,468573,2,reversed = false,None,1652179948783L,262301771,roadName,None,None,None,None),
+        ProjectLink(Sequences.nextProjectLinkId, roadPart1,Track.RightSide,Discontinuity.EndOfRoad,AddrMRange(1429,1463),AddrMRange(1429,1463),None,None,Some("test"),"babbca6c-d545-432d-8c94-0a82fdd410d2:1", 0.0,33.621,SideCode.AgainstDigitizing,(NoCP, NoCP), (NoCP, NoCP),List(Point(239858.554,6711852.013,10.502), Point(239888.1030256887,6711868.050791995,10.6)),projectId,  RoadAddressChangeType.Transfer,AdministrativeClass.Municipality, FrozenLinkInterface,33.621,85042,468530,2,reversed = false,None,1652179948783L,262301768,roadName,None,None,None,None)
+      )
+
+      linearLocationDAO.create(linearLocations)
+      roadwayDAO.create(roadways)
+      projectDAO.create(Project(projectId, ProjectState.Incomplete, "test", "test", DateTime.now(),"test", DateTime.now(), DateTime.now(),"",
+        Seq(
+          ProjectReservedPart(Sequences.nextViitePrimaryKeySeqValue,roadPart1)
+        ),
+        Seq(
+          ProjectReservedPart(Sequences.nextViitePrimaryKeySeqValue,roadPart1)
+        ),
+        None,None,Set(14)))
+      projectReservedPartDAO.reserveRoadPart(projectId, roadPart1, "test")
+      projectLinkDAO.create(projectLinks)
+      projectService.recalculateProjectLinks(projectId, "test", Set(roadPart1))
+
+      val recalculated = projectLinkDAO.fetchProjectLinks(projectId)
+      recalculated.size should be (26)
+
+      val terminated = recalculated.filter(_.status == RoadAddressChangeType.Termination)
+      val terminatedEndAddress = terminated.map(_.addrMRange.end).distinct
+      terminatedEndAddress.size should be (1)
+      terminatedEndAddress.head should be (169)
+
+      val transferred = recalculated.filter(_.status == RoadAddressChangeType.Transfer)
+      val left = transferred.filter(_.track == Track.LeftSide)
+      val right = transferred.filter(_.track == Track.RightSide)
+      val originalStartingAddrLeft = left.minBy(_.addrMRange.start).originalAddrMRange.start
+      val originalStartingAddrRight = right.minBy(_.addrMRange.start).originalAddrMRange.start
+
+      originalStartingAddrLeft should be (originalStartingAddrRight)
+      originalStartingAddrLeft should be (terminatedEndAddress.head)
     }
   }
 
