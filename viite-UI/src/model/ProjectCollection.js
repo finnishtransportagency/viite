@@ -1,5 +1,5 @@
 (function (root) {
-  root.ProjectCollection = function (backend) {
+  root.ProjectCollection = function (backend, startupParameters) {
     var me = this;
     // eslint-disable-next-line no-unused-vars
     var roadAddressProjects = [];
@@ -332,6 +332,38 @@
       var coordinates = applicationModel.getUserGeoLocation();
       var roadAddressProjectForm = $('#roadAddressProjectForm');
       var endDistance = $('#endDistance')[0];
+      const hasDevRights = _.includes(startupParameters.roles, 'dev');
+
+      const getValueWithId = function(id) {
+        const element = roadAddressProjectForm.find(id)[0];
+        return element && element.value ? Number(element.value) : null;
+      };
+
+      const startAddrMValue = getValueWithId('#addrStart');
+      const endAddrMValue = getValueWithId('#addrEnd');
+      const origStartAddrMValue = getValueWithId('#origAddrStart');
+      const origEndAddrMValue = getValueWithId('#origAddrEnd');
+      const startCp = getValueWithId('#startCPDropdown');
+      const endCp = getValueWithId('#endCPDropdown');
+      const sideCode = getValueWithId('#sideCodeDropdown');
+      const generateNewRoadwayNumber = roadAddressProjectForm.find('#newRoadwayNumber')[0]
+          ? roadAddressProjectForm.find('#newRoadwayNumber')[0].checked
+          : null;
+
+      let devToolData = null;
+      if (hasDevRights) {
+        devToolData = {
+          startAddrMValue: startAddrMValue,
+          endAddrMValue: endAddrMValue,
+          originalStartAddrMValue: origStartAddrMValue,
+          originalEndAddrMValue: origEndAddrMValue,
+          startCp: startCp,
+          endCp: endCp,
+          generateNewRoadwayNumber: generateNewRoadwayNumber,
+          editedSideCode: sideCode
+        };
+      }
+
       var reversed = _.chain(changedLinks).map(function (c) {
         return c.reversed;
       }).reduceRight(function (a, b) {
@@ -354,7 +386,8 @@
         userDefinedEndAddressM: userDefinedEndAddressM,
         coordinates: coordinates,
         roadName: roadAddressProjectForm.find('#roadName')[0].value,
-        reversed: reversed
+        reversed: reversed,
+        devToolData: devToolData
       };
       if (dataJson.trackCode === Track.Unknown.value) {
         new ModalConfirm("Tarkista ajoratakoodi");
