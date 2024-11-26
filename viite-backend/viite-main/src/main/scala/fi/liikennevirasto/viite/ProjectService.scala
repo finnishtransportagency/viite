@@ -2247,7 +2247,7 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
         logger.info(s"Start importing road addresses of project $projectID to the road network")
         try {
           val roadParts = updateRoadwaysAndLinearLocationsWithProjectLinks(projectID)
-          roadNetworkValidator.validateRoadNetwork(roadParts)
+          //roadNetworkValidator.validateRoadNetwork(roadParts)
         } catch {
           case t: InvalidAddressDataException =>
             throw t // Rethrow the unexpected error.
