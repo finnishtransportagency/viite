@@ -96,13 +96,16 @@
             }
             else if (results.length <= ViiteConstants.MAX_ROWS_TO_DISPLAY) {
                 roadAddressChangesBrowserWindow.append(table);
-                $('#exportAsExcelFile').prop("disabled", false); // enable Excel download button
+                //TODO VIITE-3269 CSV export to replace old Excel export
+                //$('#exportAsExcelFile').prop("disabled", false); // enable Excel download button
             }
             else {
                 // hide the results and notify user to download result table as Excel file
-                roadAddressChangesBrowserWindow.append($('<p id="tableNotification"><b>Tulostaulu liian suuri, lataa tulokset Excel -taulukkona</b></p>'));
+                //TODO VIITE-3269 CSV export to replace old Excel export
+                //roadAddressChangesBrowserWindow.append($('<p id="tableNotification"><b>Tulostaulu liian suuri, lataa tulokset Excel -taulukkona</b></p>'));
+                roadAddressChangesBrowserWindow.append($('<p id="tableNotification"><b>Tulostaulu liian suuri</b></p>'));
                 roadAddressChangesBrowserWindow.append(table.hide());
-                $('#exportAsExcelFile').prop("disabled", false); // enable Excel download button
+                //$('#exportAsExcelFile').prop("disabled", false); // enable Excel download button
             }
         }
 
@@ -251,7 +254,8 @@
 
         function clearResultsAndDisableExcelButton() {
             $('.road-address-browser-window-results-table').remove(); // empty the result table
-            $('#exportAsExcelFile').prop("disabled", true); //disable Excel download button
+            //TODO VIITE-3269 CSV export to replace old Excel export
+            //$('#exportAsExcelFile').prop("disabled", true); //disable Excel download button
             $('#tableNotification').remove(); // remove notification if present
         }
 
@@ -280,10 +284,11 @@
                 }
             };
 
-            roadAddressChangesBrowserWindow.on('click', '#exportAsExcelFile', function () {
-                exportDataAsExcelFile();
-                return false; // cancel form submission
-            });
+            //TODO VIITE-3269 CSV export to replace old Excel export
+            // roadAddressChangesBrowserWindow.on('click', '#exportAsExcelFile', function () {
+            //     exportDataAsExcelFile();
+            //     return false; // cancel form submission
+            // });
 
             roadAddressChangesBrowserWindow.on('click', 'button.close', function () {
                 hide();
