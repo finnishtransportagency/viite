@@ -477,12 +477,15 @@
 
         function showData(table) {
             roadAddrBrowserWindow.append(table);
-            $('#exportAsExcelFile').prop("disabled", false); // enable Excel download button
+            //TODO VIITE-3269 CSV export to replace old Excel export
+            //$('#exportAsExcelFile').prop("disabled", false); // enable Excel download button
         }
 
         function showTableTooBigNotification() {
-            roadAddrBrowserWindow.append($('<p id="tableNotification"><b>Tulostaulu liian suuri, lataa tulokset Excel-taulukkona</b></p>'));
-            $('#exportAsExcelFile').prop("disabled", false); // enable Excel download button
+            roadAddrBrowserWindow.append($('<p id="tableNotification"><b>Tulostaulu liian suuri</b></p>'));
+            //TODO VIITE-3269 CSV export to replace old Excel export
+            //roadAddrBrowserWindow.append($('<p id="tableNotification"><b>Tulostaulu liian suuri, lataa tulokset Excel-taulukkona</b></p>'));
+            //$('#exportAsExcelFile').prop("disabled", false); // enable Excel download button
         }
 
         function showNoResultsFoundNotification() {
@@ -514,7 +517,8 @@
         function clearResultsAndDisableExcelButton() {
             me.setSearchResults([]); // empty the search results
             $('.road-address-browser-window-results-table').remove(); // empty the result table
-            $('#exportAsExcelFile').prop("disabled", true); //disable Excel download button
+            //TODO VIITE-3269 CSV export to replace old Excel export
+            //$('#exportAsExcelFile').prop("disabled", true); //disable Excel download button
             $('#tableNotification').remove(); // remove notification if present
         }
 
@@ -567,10 +571,11 @@
                 }
             };
 
-            roadAddrBrowserWindow.on('click', '#exportAsExcelFile', function () {
-                exportDataAsExcelFile();
-                return false; // cancel form submission
-            });
+            //TODO VIITE-3269 CSV export to replace old Excel export
+            // roadAddrBrowserWindow.on('click', '#exportAsExcelFile', function () {
+            //     exportDataAsExcelFile();
+            //     return false; // cancel form submission
+            // });
             roadAddrBrowserWindow.on('click', 'button.close', function () {
                 hide();
             });
