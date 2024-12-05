@@ -1,7 +1,7 @@
 package fi.liikennevirasto.viite
 
 import fi.vaylavirasto.viite.dao.{ProjectLinkNameDAO, RoadName, RoadNameDAO, RoadNameForRoadAddressBrowser}
-import fi.vaylavirasto.viite.postgis.PostGISDatabase
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC
 import fi.vaylavirasto.viite.util.DateTimeFormatters.finnishDateFormatter
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -12,26 +12,26 @@ case class RoadNameRow(id: Long, name: String, startDate: String, endDate: Optio
 
 class RoadNameService {
 
-  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
+  def runWithTransaction[T](f: => T): T = PostGISDatabaseScalikeJDBC.runWithTransaction(f)
 
-  def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
+  def runWithReadOnlySession[T](f: => T): T = PostGISDatabaseScalikeJDBC.runWithReadOnlySession(f)
 
   private val logger = LoggerFactory.getLogger(getClass)
 
   def getRoadNames(oRoadNumber: Option[String], oRoadName: Option[String], oStartDate: Option[DateTime], oEndDate: Option[DateTime]): Either[String, Seq[RoadName]] = {
-    withDynTransaction {
+    runWithTransaction {
       getRoadNamesInTX(oRoadNumber, oRoadName, oStartDate, oEndDate)
     }
   }
 
   def addOrUpdateRoadNames(roadNumber: Long, roadNameRows: Seq[RoadNameRow], username: String): Option[String] = {
-    withDynTransaction {
+    runWithTransaction {
       addOrUpdateRoadNamesInTX(roadNumber, roadNameRows, username)
     }
   }
 
   def getRoadNamesForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[RoadNameForRoadAddressBrowser] = {
-    withDynSession {
+    runWithReadOnlySession {
       RoadNameDAO.fetchRoadNamesForRoadAddressBrowser(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
     }
   }
@@ -96,7 +96,7 @@ class RoadNameService {
     * @return Returns error message as left and seq of road names as right
     */
   def getUpdatedRoadNames(since: DateTime, until: Option[DateTime]): Either[String, Seq[RoadName]] = {
-    withDynSession {
+    runWithReadOnlySession {
       try {
         Right(RoadNameDAO.getUpdatedRoadNames(since, until))
       } catch {
@@ -119,7 +119,7 @@ class RoadNameService {
 
   def getRoadNameByNumber(roadNumber: Long, projectID: Long): Map[String, Any] = {
     try {
-      withDynSession {
+      runWithReadOnlySession {
         val currentRoadNames = RoadNameDAO.getCurrentRoadNamesByRoadNumber(roadNumber)
         if (currentRoadNames.isEmpty) {
           val projectRoadNames = ProjectLinkNameDAO.get(roadNumber, projectID)
@@ -141,7 +141,7 @@ class RoadNameService {
   }
 
   def getCurrentRoadNames(roadNumbers: Seq[Long]): Seq[RoadName] = {
-    withDynSession {
+    runWithReadOnlySession {
       RoadNameDAO.getCurrentRoadNamesByRoadNumbers(roadNumbers)
     }
   }
