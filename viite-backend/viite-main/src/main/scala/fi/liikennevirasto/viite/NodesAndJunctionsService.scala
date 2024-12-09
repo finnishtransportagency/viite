@@ -8,7 +8,7 @@ import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
 import fi.vaylavirasto.viite.model.{BeforeAfter, CalibrationPointLocation, CalibrationPointType, Discontinuity, NodePointType, RoadAddressChangeType, Track}
-import fi.vaylavirasto.viite.postgis.PostGISDatabase
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
@@ -17,11 +17,9 @@ import scala.util.control.NonFatal
 
 class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayPointDAO, linearLocationDAO: LinearLocationDAO, nodeDAO: NodeDAO, nodePointDAO: NodePointDAO, junctionDAO: JunctionDAO, junctionPointDAO: JunctionPointDAO, roadwayChangesDAO: RoadwayChangesDAO, projectReservedPartDAO: ProjectReservedPartDAO) {
 
-  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
+  def runWithTransaction[T](f: => T): T = PostGISDatabaseScalikeJDBC.runWithTransaction(f)
 
-  def withDynTransactionNewOrExisting[T](f: => T): T = PostGISDatabase.withDynTransactionNewOrExisting(f)
-
-  def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
+  def runWithReadOnlySession[T](f: => T): T = PostGISDatabaseScalikeJDBC.runWithReadOnlySession(f)
 
   private val logger = LoggerFactory.getLogger(getClass)
 
@@ -91,7 +89,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       })
     }
 
-    withDynTransaction {
+    runWithTransaction {
       val nodeNumber = addOrUpdateNode(node, isObsoleteNode(junctions, nodePoints), username)
 
       val currentNodePoints = nodePointDAO.fetchByNodeNumber(nodeNumber)
@@ -140,7 +138,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     */
 
   def areJunctionPointsOnReservedRoadPart(junctionPointIds: Seq[Long]): Boolean = {
-    withDynSession {
+    runWithReadOnlySession {
       val junctionPoints = junctionPointDAO.fetchByIds(junctionPointIds)
       val roadwayPoints = junctionPoints.map(jp => roadwayPointDAO.fetch(jp.roadwayPointId))
       val roadwayNumbers = roadwayPoints.map(rwp => rwp.roadwayNumber).toSet
@@ -152,7 +150,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
   // TODO remove this function and its usages when VIITE-2524 gets implemented
   def areJunctionPointsOnRoadwayChangingSpot(junctionPointIds: Seq[Long]): Boolean = {
-    withDynSession {
+    runWithReadOnlySession {
       val junctionPoints = junctionPointDAO.fetchByIds(junctionPointIds)
       val roadwayNumbers = junctionPoints.map(jp => jp.roadwayNumber).toSet
       if (roadwayNumbers.size < 2)
@@ -163,7 +161,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   }
 
   def areJunctionPointsOnAdministrativeClassChangingSpot(junctionPointIds: Seq[Long]): Boolean = {
-    withDynSession {
+    runWithReadOnlySession {
       val junctionPoints = junctionPointDAO.fetchByIds(junctionPointIds)
       val roadwayNumbers = junctionPoints.map(jp => jp.roadwayNumber).toSet
       if (roadwayNumbers.size < 2)
@@ -189,7 +187,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
   def addOrUpdateNode(node: Node, isObsoleteNode: Boolean = false, username: String = "-"): Long = {
 
-    withDynTransactionNewOrExisting {
+    runWithTransaction {
       if (node.id == NewIdValue) {
         nodeDAO.create(Seq(node), username).headOption.get
       } else {
@@ -227,19 +225,19 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   }
 
   def getNodesForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[NodeForRoadAddressBrowser] = {
-    withDynSession {
+    runWithReadOnlySession {
       nodeDAO.fetchNodesForRoadAddressBrowser(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
     }
   }
 
   def getJunctionsForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[JunctionForRoadAddressBrowser] = {
-    withDynSession {
+    runWithReadOnlySession {
       junctionDAO.fetchJunctionsForRoadAddressBrowser(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
     }
   }
 
   def getNodesByRoadAttributes(roadNumber: Long, minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Either[String, Seq[(Node, RoadAttributes)]] = {
-    withDynSession {
+    runWithReadOnlySession {
       try {
         // if the result set has more than 50 rows but the road attributes can't be narrowed down, it shows the results anyway
         nodeDAO.fetchByRoadAttributes(roadNumber, minRoadPartNumber, maxRoadPartNumber) match {
@@ -258,7 +256,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   }
 
   def getNodesByBoundingBox(boundingRectangle: BoundingRectangle): Seq[Node] = {
-    withDynSession {
+    runWithReadOnlySession {
       time(logger, "Fetch nodes with junctions") {
         nodeDAO.fetchByBoundingBox(boundingRectangle)
       }
@@ -266,7 +264,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   }
 
   def getJunctionPointsByJunctionIds(junctionIds: Seq[Long]): Seq[JunctionPoint] = {
-    withDynSession {
+    runWithReadOnlySession {
       junctionPointDAO.fetchByJunctionIds(junctionIds)
     }
   }
@@ -292,7 +290,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   }
 
   def getNodesWithJunctionByBoundingBox(boundingRectangle: BoundingRectangle, raLinks: Seq[RoadAddressLink]): Map[Node, (Seq[NodePoint], Map[Junction, Seq[JunctionPoint]])] = {
-    withDynSession {
+    runWithReadOnlySession {
       time(logger, "Fetch nodes with junctions") {
         val junctionsByBoundingBox = getJunctionsByBoundingBox(boundingRectangle, raLinks)
         val nodesByBoundingBox = nodeDAO.fetchByBoundingBox(boundingRectangle)
@@ -331,7 +329,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   }
 
   def getNodesWithTimeInterval(sinceDate: DateTime, untilDate: Option[DateTime]): Map[Option[Node], (Seq[NodePoint], Map[Junction, Seq[JunctionPoint]])] = {
-    withDynSession {
+    runWithReadOnlySession {
       val nodes = nodeDAO.fetchAllByDateRange(sinceDate, untilDate)
       val nodePoints = nodePointDAO.fetchByNodeNumbers(nodes.map(_.nodeNumber))
       val junctions = junctionDAO.fetchJunctionsByValidNodeNumbers(nodes.map(_.nodeNumber))
@@ -354,7 +352,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   }
 
   def getNodePointTemplates(authorizedElys: Seq[Int]): Seq[NodePoint] = {
-    withDynSession {
+    runWithReadOnlySession {
       time(logger, "Fetch node point templates") {
         nodePointDAO.fetchTemplates().filter(template => authorizedElys.contains(template.elyCode))
       }
@@ -362,7 +360,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   }
 
   def getNodePointTemplateById(id: Long): Option[NodePoint] = {
-    withDynSession {
+    runWithReadOnlySession {
       time(logger, "Fetch node point template by id") {
         nodePointDAO.fetchNodePointTemplateById(id)
       }
@@ -370,7 +368,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   }
 
   def getJunctionTemplatesById(id: Long): Option[JunctionTemplate] = {
-    withDynSession {
+    runWithReadOnlySession {
       time(logger, "Fetch junction template by id") {
         junctionDAO.fetchJunctionTemplateById(id)
       }
@@ -378,13 +376,14 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   }
 
   def getJunctionTemplates(authorizedElys: Seq[Int]): Seq[JunctionTemplate] = {
-    withDynSession {
+    runWithReadOnlySession {
       time(logger, "Fetch Junction templates") {
         junctionDAO.fetchTemplates().filter(jt => authorizedElys.contains(jt.elyCode))
       }
     }
   }
 
+  // TODO remove this if it's not used
   def getTemplatesByBoundingBox(boundingRectangle: BoundingRectangle): (Seq[NodePoint], Map[Junction, Seq[JunctionPoint]]) = {
     time(logger, "Fetch NodePoint and Junction + JunctionPoint templates") {
       val junctionPoints = junctionPointDAO.fetchByBoundingBox(boundingRectangle)
@@ -843,7 +842,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   }
 
   def getNodePointTemplatesByBoundingBox(boundingRectangle: BoundingRectangle, raLinks: Seq[RoadAddressLink]): Seq[NodePoint] = {
-    withDynSession {
+   runWithReadOnlySession {
       time(logger, "Fetch nodes point templates") {
 
         val nodePointTemplate = nodePointDAO.fetchTemplatesByBoundingBox(boundingRectangle)
@@ -856,7 +855,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   }
 
   def getJunctionsByBoundingBox(boundingRectangle: BoundingRectangle, raLinks: Seq[RoadAddressLink]): Map[Junction, Seq[JunctionPoint]] = {
-    withDynTransactionNewOrExisting {
+    runWithTransaction{
       time(logger, "Fetch junctions") {
         val junctions: Seq[Junction] = junctionDAO.fetchByBoundingBox(boundingRectangle)
         val junctionPoints: Seq[JunctionPoint] = junctionPointDAO.fetchByJunctionIds(junctions.map(_.id))
@@ -875,7 +874,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   }
 
   def getJunctionTemplatesByBoundingBox(boundingRectangle: BoundingRectangle, raLinks: Seq[RoadAddressLink]): Map[JunctionTemplate, Seq[JunctionPoint]] = {
-    withDynSession {
+    runWithReadOnlySession {
       time(logger, "Fetch junction templates") {
         val junctions: Seq[JunctionTemplate] = junctionDAO.fetchTemplatesByBoundingBox(boundingRectangle)
         val junctionPoints: Seq[JunctionPoint] = junctionPointDAO.fetchByJunctionIds(junctions.map(_.id))
