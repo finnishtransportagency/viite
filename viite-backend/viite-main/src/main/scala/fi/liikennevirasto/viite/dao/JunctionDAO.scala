@@ -5,17 +5,14 @@ import fi.liikennevirasto.viite.NewIdValue
 import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
 import fi.vaylavirasto.viite.model.{NodeType, RoadPart, Track}
-import fi.vaylavirasto.viite.postgis.PostGISDatabase
-import fi.vaylavirasto.viite.util.DateTimeFormatters.dateOptTimeFormatter
+import fi.vaylavirasto.viite.postgis.GeometryDbUtils
 import org.joda.time.DateTime
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
+import scalikejdbc._
+import scalikejdbc.jodatime.JodaWrappedResultSet.fromWrappedResultSetToJodaWrappedResultSet
 
 case class Junction(id: Long, junctionNumber: Option[Long], nodeNumber: Option[Long], startDate: DateTime, endDate: Option[DateTime],
                     validFrom: DateTime, validTo: Option[DateTime], createdBy: String, createdTime: Option[DateTime],
                     junctionPoints: Option[List[JunctionPoint]] = None)
-
-case class JunctionInfo(id: Long, junctionNumber: Option[Long], startDate: DateTime, nodeNumber: Long, nodeName: String)
 
 case class JunctionTemplate(id: Long, startDate: DateTime, roadPart: RoadPart, track: Track, addrM: Long, elyCode: Long, coords: Point = Point(0.0, 0.0))
 
@@ -28,132 +25,132 @@ case class JunctionWithLinearLocation(id: Long, junctionNumber: Option[Long], no
                                       validFrom: DateTime, validTo: Option[DateTime], createdBy: String, createdTime: Option[DateTime], llId: Seq[Long])
 
 class JunctionDAO extends BaseDAO {
+  private val j = Junction.syntax("j")
+  private val rw = Roadway.syntax("rw")
 
-  implicit val getJunction: GetResult[Junction] = new GetResult[Junction] {
-    def apply(r: PositionedResult): Junction = {
-      val id             = r.nextLong()
-      val junctionNumber = r.nextLongOption()
-      val nodeNumber     = r.nextLongOption()
-      val startDate      = dateOptTimeFormatter.parseDateTime(r.nextDate.toString)
-      val endDate        = r.nextDateOption.map(d => dateOptTimeFormatter.parseDateTime(d.toString))
-      val validFrom      = dateOptTimeFormatter.parseDateTime(r.nextDate.toString)
-      val validTo        = r.nextDateOption.map(d => dateOptTimeFormatter.parseDateTime(d.toString))
-      val createdBy      = r.nextString()
-      val createdTime    = r.nextDateOption.map(d => dateOptTimeFormatter.parseDateTime(d.toString))
-      Junction(
-        id, junctionNumber, nodeNumber, startDate, endDate,
-        validFrom, validTo, createdBy, createdTime)
+  object Junction extends SQLSyntaxSupport[Junction] {
+    override val tableName = "junction"
+    override val columns = Seq(
+      "id",
+      "junction_number",
+      "node_number",
+      "start_date",
+      "end_date",
+      "valid_from",
+      "valid_to",
+      "created_by",
+      "created_time"
+    )
+
+    def apply(rs: WrappedResultSet): Junction = new Junction(
+      id = rs.long("id"),
+      junctionNumber = rs.longOpt("junction_number"),
+      nodeNumber = rs.longOpt("node_number"),
+      startDate = rs.jodaDateTime("start_date"),
+      endDate = rs.jodaDateTimeOpt("end_date"),
+      validFrom = rs.jodaDateTime("valid_from"),
+      validTo = rs.jodaDateTimeOpt("valid_to"),
+      createdBy = rs.string("created_by"),
+      createdTime = rs.jodaDateTimeOpt("created_time")
+    )
+  }
+
+  object JunctionTemplate extends SQLSyntaxSupport[JunctionTemplate] {
+
+    def apply(rs: WrappedResultSet): JunctionTemplate = new JunctionTemplate(
+      id = rs.long("id"),
+      startDate = rs.jodaDateTime("start_date"),
+      roadPart = RoadPart(rs.long("road_number"), rs.long("road_part_number")),
+      track = Track(rs.int("track")),
+      addrM = rs.long("addr_m"),
+      elyCode = rs.long("ely")
+    )
+  }
+
+  object JunctionForRoadAddressBrowser extends SQLSyntaxSupport[JunctionForRoadAddressBrowser] {
+
+    def apply(rs: WrappedResultSet): JunctionForRoadAddressBrowser = new JunctionForRoadAddressBrowser(
+      nodeNumber = rs.long("node_number"),
+      nodeCoordinates = Point(rs.long("xcoord"), rs.long("ycoord")),
+      nodeName = rs.stringOpt("name"),
+      nodeType = NodeType(rs.int("type")),
+      startDate = rs.jodaDateTime("start_date"),
+      junctionNumber = rs.longOpt("junction_number"),
+      roadPart = RoadPart(rs.long("road_number"), rs.long("road_part_number")),
+      track = rs.long("track"),
+      addrM = rs.long("addr_m"),
+      beforeAfter = parseBeforeAfterValue(rs.string("beforeafter"))
+    )
+
+    private def parseBeforeAfterValue(beforeAfterToParse: String): Seq[Long] = {
+      beforeAfterToParse.replaceAll("[\\[\\]\\s]","").split(",").map(_.toLong).toSeq
     }
   }
 
-  implicit val getJunctionTemplate: GetResult[JunctionTemplate] = new GetResult[JunctionTemplate] {
-    def apply(r: PositionedResult): JunctionTemplate = {
-      val junctionId = r.nextLong()
-      val startDate = dateOptTimeFormatter.parseDateTime(r.nextDate.toString)
-      val roadNumber = r.nextLong()
-      val roadPartNumber = r.nextLong()
-      val trackCode = r.nextInt()
-      val addrM = r.nextLong()
-      val ely = r.nextLong()
+  object JunctionWithLinearLocation extends SQLSyntaxSupport[JunctionWithLinearLocation] {
 
-      JunctionTemplate(junctionId, startDate, RoadPart(roadNumber, roadPartNumber), Track.apply(trackCode), addrM, ely)
-    }
-  }
-
-  implicit val getJunctionInfo: GetResult[JunctionInfo] = new GetResult[JunctionInfo] {
-    def apply(r: PositionedResult): JunctionInfo = {
-      val id = r.nextLong()
-      val junctionNumber = r.nextLongOption()
-      val nodeNumber = r.nextLong()
-      val startDate = dateOptTimeFormatter.parseDateTime(r.nextDate.toString)
-      val nodeName = r.nextString()
-
-      JunctionInfo(id, junctionNumber, startDate, nodeNumber, nodeName)
-    }
-  }
-
-  implicit val getJunctionForRoadAddressBrowser: GetResult[JunctionForRoadAddressBrowser] = new GetResult[JunctionForRoadAddressBrowser] {
-    def parseBeforeAfterValue(beforeAfterToParse: String): Seq[Long] = {
-      // remove square brackets and spaces from the string i.e "[1, 2]" -> "1,2"
-      val beforeAfterParsed = beforeAfterToParse.replaceAll("[\\[\\]\\s]","")
-      // split the string in to array and convert each character in the array to Long i.e "1,2" -> Seq(1,2)
-      beforeAfterParsed.split(",").map(_.toLong).toSeq
-    }
-
-    def apply(r: PositionedResult): JunctionForRoadAddressBrowser = {
-      val nodeNumber = r.nextLong()
-      val coordX = r.nextLong()
-      val coordY = r.nextLong()
-      val nodeName = r.nextStringOption()
-      val nodeType = NodeType.apply(r.nextInt())
-      val startDate = new DateTime(r.nextDate())
-      val junctionNumber = r.nextLongOption()
-      val roadNumber = r.nextLong()
-      val trackCode = r.nextInt()
-      val roadPartNumber = r.nextLong()
-      val addrM = r.nextLong()
-      val beforeAfter = parseBeforeAfterValue(r.rs.getString("beforeafter"))
-
-      JunctionForRoadAddressBrowser(nodeNumber, Point(coordX, coordY), nodeName, nodeType, startDate, junctionNumber, RoadPart(roadNumber, roadPartNumber), trackCode, addrM, beforeAfter)
-    }
-  }
-
-  implicit val getJunctionWithLinearLocation: GetResult[JunctionWithLinearLocation] = new GetResult[JunctionWithLinearLocation] {
     def parseJsonbAgg(stringToParse: String): Seq[Long] = {
       val res = stringToParse.replaceAll("[\\[\\]\\s]", "")
       res.split(",").map(_.toLong).toSeq
     }
 
-    def apply(r: PositionedResult): JunctionWithLinearLocation = {
-      val id = r.nextLong()
-      val junctionNumber = r.nextLongOption()
-      val nodeNumber = r.nextLongOption()
-      val startDate = dateOptTimeFormatter.parseDateTime(r.nextDate.toString)
-      val endDate = r.nextDateOption.map(d => dateOptTimeFormatter.parseDateTime(d.toString))
-      val validFrom = dateOptTimeFormatter.parseDateTime(r.nextDate.toString)
-      val validTo = r.nextDateOption.map(d => dateOptTimeFormatter.parseDateTime(d.toString))
-      val createdBy = r.nextString()
-      val createdTime = r.nextDateOption.map(d => dateOptTimeFormatter.parseDateTime(d.toString))
-      val llIds: Seq[Long] = parseJsonbAgg(r.rs.getString("ll_id"))
-
-      JunctionWithLinearLocation(id, junctionNumber, nodeNumber, startDate, endDate,
-        validFrom, validTo, createdBy, createdTime, llIds)
-    }
+    def apply(rs: WrappedResultSet): JunctionWithLinearLocation = new JunctionWithLinearLocation(
+      id = rs.long("id"),
+      junctionNumber = rs.longOpt("junction_number"),
+      nodeNumber = rs.longOpt("node_number"),
+      startDate = rs.jodaDateTime("start_date"),
+      endDate = rs.jodaDateTimeOpt("end_date"),
+      validFrom = rs.jodaDateTime("valid_from"),
+      validTo = rs.jodaDateTimeOpt("valid_to"),
+      createdBy = rs.string("created_by"),
+      createdTime = rs.jodaDateTimeOpt("created_time"),
+      llId = parseJsonbAgg(rs.string("ll_id"))
+    )
   }
 
   def fetchJunctionsByNodeNumbersWithLinearLocation(nodeNumbers: Seq[Long]): Seq[JunctionWithLinearLocation] = {
     if (nodeNumbers.isEmpty) {
-      Seq()
+      Seq.empty
     } else {
-      val query =
-        s"""
-    select distinct J.ID, J.JUNCTION_NUMBER, J.NODE_NUMBER, J.START_DATE, J.END_DATE, J.VALID_FROM, J.VALID_TO, J.CREATED_BY, J.CREATED_TIME, jsonb_agg(distinct ll.id) as ll_id
-              FROM JUNCTION J
-              join junction_point jp on j.id = jp.junction_id and jp.valid_to is null
-              join calibration_point cp on jp.roadway_point_id = cp.roadway_point_id and cp.valid_to is null
-              join linear_location ll on cp.link_id = ll.link_id and ll.valid_to is null
-              join roadway_point rp on cp.roadway_point_id = rp.id and rp.roadway_number = ll.roadway_number
-              join roadway r on ll.roadway_number = r.roadway_number and r.valid_to is null and r.end_date is null
-      where j.NODE_NUMBER in (${nodeNumbers.mkString(", ")}) AND j.VALID_TO IS NULL AND j.END_DATE IS NULL
-      group by j.id
-    """
-      Q.queryNA[JunctionWithLinearLocation](query).iterator.toSeq
+      val query = sql"""
+        SELECT DISTINCT j.id, j.junction_number, j.node_number, j.start_date, j.end_date, j.valid_from, j.valid_to, j.created_by, j.created_time, jsonb_agg(DISTINCT ll.id) AS ll_id
+              FROM junction J
+              JOIN junction_point jp ON j.id = jp.junction_id AND jp.valid_to IS NULL
+              JOIN calibration_point cp ON jp.roadway_point_id = cp.roadway_point_id AND cp.valid_to IS NULL
+              JOIN linear_location ll ON cp.link_id = ll.link_id AND ll.valid_to IS NULL
+              JOIN roadway_point rp ON cp.roadway_point_id = rp.id AND rp.roadway_number = ll.roadway_number
+              JOIN roadway r ON ll.roadway_number = r.roadway_number AND r.valid_to IS NULL AND r.end_date IS NULL
+      WHERE j.node_number in ($nodeNumbers) AND j.valid_to IS NULL AND j.end_date IS NULL
+      GROUP BY j.id
+      """
+      runSelectQuery(query.map(JunctionWithLinearLocation.apply))
     }
   }
 
-  private def queryList(query: String): List[Junction] = {
-    Q.queryNA[Junction](query).list.groupBy(_.id).map {
-      case (_, list) =>
-        list.head
-    }.toList
+
+  // Helper method to run select queries for Junction objects
+  private def queryList(query: SQL[Nothing, NoExtractor]): List[Junction] = {
+    runSelectQuery(query.map(Junction.apply))
+      .groupBy(_.id)
+      .map { case (_, list) => list.head }
+      .toList
   }
 
-  private def queryListTemplate(query: String): List[JunctionTemplate] = {
-    Q.queryNA[JunctionTemplate](query).list.groupBy(_.id).map {
-      case (_, list) =>
-        list.minBy(jt => (jt.roadPart.roadNumber, jt.roadPart.partNumber, jt.addrM))
-    }.toList
+  // Helper method to run select queries for JunctionTemplate objects
+  private def queryListTemplate(query: SQL[Nothing, NoExtractor]): List[JunctionTemplate] = {
+    runSelectQuery(query.map(JunctionTemplate.apply))
+      .groupBy(_.id)
+      .map { case (_, list) =>
+        list.minBy(jt => (jt.roadPart.roadNumber, jt.roadPart.partNumber, jt.addrM))}
+      .toList
   }
+
+
+  val selectAllFromJunctionQuery = sqls"""
+    SELECT ${j.id}, ${j.junctionNumber}, ${j.nodeNumber}, ${j.startDate}, ${j.endDate},
+           ${j.validFrom}, ${j.validTo}, ${j.createdBy}, ${j.createdTime}
+    FROM ${Junction.as(j)}
+  """
 
   def fetchJunctionByNodeNumber(nodeNumber: Long): Seq[Junction] = {
     fetchJunctionsByValidNodeNumbers(Seq(nodeNumber))
@@ -163,10 +160,10 @@ class JunctionDAO extends BaseDAO {
     if (nodeNumbers.isEmpty) {
       Seq()
     } else {
-      val query = s"""
-        SELECT ID, JUNCTION_NUMBER, NODE_NUMBER, START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
-          FROM JUNCTION
-          where NODE_NUMBER in (${nodeNumbers.mkString(", ")}) AND VALID_TO IS NULL AND END_DATE IS NULL
+      val query =
+        sql"""
+        $selectAllFromJunctionQuery
+        WHERE ${j.nodeNumber} in ($nodeNumbers) AND ${j.validTo} IS NULL AND ${j.endDate} IS NULL
         """
       queryList(query)
     }
@@ -177,10 +174,9 @@ class JunctionDAO extends BaseDAO {
       List()
     else {
       val query =
-        s"""
-      SELECT ID, JUNCTION_NUMBER, NODE_NUMBER, START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
-      FROM JUNCTION
-      WHERE ID IN (${ids.mkString(", ")}) AND VALID_TO IS NULL AND END_DATE IS NULL
+        sql"""
+      $selectAllFromJunctionQuery
+      WHERE ${j.id} IN (${ids}) AND ${j.validTo} IS NULL AND end_date IS NULL
       """
       queryList(query)
     }
@@ -191,48 +187,47 @@ class JunctionDAO extends BaseDAO {
       List()
     else {
       val query =
-        s"""
-      SELECT ID, JUNCTION_NUMBER, NODE_NUMBER, START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
-      FROM JUNCTION
-      WHERE ID IN (${ids.mkString(", ")})
+        sql"""
+      $selectAllFromJunctionQuery
+      WHERE id IN (${ids})
       """
       queryList(query)
     }
   }
 
   def fetchJunctionByIdWithValidPoints(id: Long): Seq[Junction] = {
-      val query =
-        s"""
-      SELECT j.ID, j.JUNCTION_NUMBER, j.NODE_NUMBER, j.START_DATE, j.END_DATE, j.VALID_FROM, j.VALID_TO, j.CREATED_BY, j.CREATED_TIME
-      FROM JUNCTION j
-      INNER JOIN JUNCTION_POINT jp ON j.ID = jp.JUNCTION_ID AND jp.VALID_TO IS NULL
-      WHERE j.ID = $id AND j.VALID_TO IS NULL AND j.END_DATE IS NULL
+    val query =
+      sql"""
+      SELECT j.id, j.junction_number, j.node_number, j.start_date, j.end_date, j.valid_from, j.valid_to, j.created_by, j.created_time
+      FROM junction j
+      INNER JOIN junction_point jp ON j.id = jp.junction_id AND jp.valid_to IS NULL
+      WHERE j.id = $id AND j.valid_to IS NULL AND j.end_date IS NULL
       """
-      queryList(query)
+    queryList(query)
   }
 
   def fetchTemplates() : Seq[JunctionTemplate] = {
     val query =
-      s"""
-         SELECT DISTINCT j.ID, j.START_DATE, rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rw.TRACK, rp.ADDR_M, rw.ELY
-         FROM JUNCTION j
-         JOIN JUNCTION_POINT jp ON j.ID = jp.JUNCTION_ID AND jp.VALID_TO IS NULL
-         JOIN ROADWAY_POINT rp ON jp.ROADWAY_POINT_ID = rp.ID
-         JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
-            WHERE j.VALID_TO IS NULL AND j.END_DATE IS NULL AND j.NODE_NUMBER IS NULL
+      sql"""
+         SELECT DISTINCT j.id, j.start_date, rw.road_number, rw.road_part_number, rw.track, rp.addr_m, rw.ely
+         FROM junction j
+         JOIN junction_point jp ON j.id = jp.junction_id AND jp.valid_to IS NULL
+         JOIN roadway_point rp ON jp.roadway_point_id = rp.id
+         JOIN roadway rw ON rp.roadway_number = rw.roadway_number AND rw.valid_to IS NULL AND rw.end_date IS NULL
+            WHERE j.valid_to IS NULL AND j.end_date IS NULL AND j.node_number IS NULL
        """
     queryListTemplate(query)
   }
 
   def fetchJunctionTemplateById(id: Long): Option[JunctionTemplate] = {
     val query =
-      s"""
-         SELECT DISTINCT j.ID, j.START_DATE, rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rw.TRACK, rp.ADDR_M, rw.ELY
-         FROM JUNCTION j
-         JOIN JUNCTION_POINT jp ON j.ID = jp.JUNCTION_ID AND jp.VALID_TO IS NULL
-         JOIN ROADWAY_POINT rp ON jp.ROADWAY_POINT_ID = rp.ID
-         JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
-            WHERE j.VALID_TO IS NULL AND j.END_DATE IS NULL AND j.NODE_NUMBER IS NULL
+      sql"""
+         SELECT DISTINCT j.id, j.start_date, rw.road_number, rw.road_part_number, rw.track, rp.addr_m, rw.ely
+         FROM junction j
+         JOIN junction_point jp ON j.id = jp.junction_id AND jp.valid_to IS NULL
+         JOIN roadway_point rp ON jp.roadway_point_id = rp.id
+         JOIN roadway rw ON rp.roadway_number = rw.roadway_number AND rw.valid_to IS NULL AND rw.end_date IS NULL
+            WHERE j.valid_to IS NULL AND j.end_date IS NULL AND j.node_number IS NULL
             AND j.id = $id
        """
     queryListTemplate(query).headOption
@@ -241,14 +236,14 @@ class JunctionDAO extends BaseDAO {
   def fetchTemplatesByRoadwayNumbers(roadwayNumbers: Iterable[Long]) : Seq[JunctionTemplate] = {
     if (roadwayNumbers.nonEmpty) {
       val query =
-        s"""
-         SELECT DISTINCT j.ID, j.START_DATE, rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rw.TRACK, rp.ADDR_M, rw.ELY
-         FROM JUNCTION j
-         JOIN JUNCTION_POINT jp ON j.ID = jp.JUNCTION_ID AND jp.VALID_TO IS NULL
-         JOIN ROADWAY_POINT rp ON jp.ROADWAY_POINT_ID = rp.ID
-         JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
-         WHERE j.VALID_TO IS NULL AND j.END_DATE IS NULL AND j.NODE_NUMBER IS NULL
-           AND rw.ROADWAY_NUMBER IN (${roadwayNumbers.mkString(", ")})
+        sql"""
+         SELECT DISTINCT j.id, j.start_date, rw.road_number, rw.road_part_number, rw.track, rp.addr_m, rw.ely
+         FROM junction j
+         JOIN junction_point jp ON j.id = jp.junction_id AND jp.valid_to IS NULL
+         JOIN roadway_point rp ON jp.roadway_point_id = rp.id
+         JOIN roadway rw ON rp.roadway_number = rw.roadway_number AND rw.valid_to IS NULL AND rw.end_date IS NULL
+         WHERE j.valid_to IS NULL AND j.end_date IS NULL AND j.node_number IS NULL
+           AND rw.roadway_number IN ($roadwayNumbers)
        """
       queryListTemplate(query)
     } else {
@@ -259,13 +254,13 @@ class JunctionDAO extends BaseDAO {
   def fetchExpiredByRoadwayNumbers(roadwayNumbers: Iterable[Long]) : Seq[Junction] = {
     if (roadwayNumbers.nonEmpty) {
       val query =
-        s"""
-         SELECT j.ID, j.JUNCTION_NUMBER, j.NODE_NUMBER, j.START_DATE, j.END_DATE, j.VALID_FROM, j.VALID_TO, j.CREATED_BY, j.CREATED_TIME
-         FROM JUNCTION j
-         JOIN JUNCTION_POINT jp ON j.ID = jp.JUNCTION_ID
-         JOIN ROADWAY_POINT rp ON jp.ROADWAY_POINT_ID = rp.ID
-         JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER
-         WHERE rw.ROADWAY_NUMBER IN (${roadwayNumbers.mkString(", ")})
+        sql"""
+         SELECT j.id, j.junction_number, j.node_number, j.start_date, j.end_date, j.valid_from, j.valid_to, j.created_by, j.created_time
+         FROM junction j
+         JOIN junction_point jp ON j.id = jp.junction_id
+         JOIN roadway_point rp ON jp.roadway_point_id = rp.id
+         JOIN roadway rw ON rp.roadway_number = rw.roadway_number
+         WHERE rw.roadway_number IN (${roadwayNumbers})
         """
       queryList(query)
     } else {
@@ -278,19 +273,19 @@ class JunctionDAO extends BaseDAO {
       val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),
         boundingRectangle.rightTop - boundingRectangle.diagonal.scale(.15))
 
-      val boundingBoxFilter = PostGISDatabase.boundingBoxFilter(extendedBoundingRectangle, "LL.geometry")
+      val boundingBoxFilter = GeometryDbUtils.boundingBoxFilter(extendedBoundingRectangle, sqls"LL.geometry")
 
       val query =
-        s"""
-         SELECT j.ID, j.JUNCTION_NUMBER, j.NODE_NUMBER, j.START_DATE, j.END_DATE, j.VALID_FROM, j.VALID_TO, j.CREATED_BY, j.CREATED_TIME
-         FROM JUNCTION j
-         JOIN JUNCTION_POINT jp ON j.ID = jp.JUNCTION_ID AND jp.VALID_TO IS NULL
-         JOIN ROADWAY_POINT rp ON jp.ROADWAY_POINT_ID = rp.ID
-         JOIN LINEAR_LOCATION LL ON (LL.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND LL.VALID_TO IS NULL)
-         JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
-            WHERE j.VALID_TO IS NULL AND j.END_DATE IS NULL
-            AND $boundingBoxFilter and JP.valid_to is null
-            AND j.NODE_NUMBER IS NOT NULL
+        sql"""
+         SELECT j.id, j.junction_number, j.node_number, j.start_date, j.end_date, j.valid_from, j.valid_to, j.created_by, j.created_time
+         FROM junction j
+         JOIN junction_point jp ON j.id = jp.junction_id AND jp.valid_to IS NULL
+         JOIN roadway_point rp ON jp.roadway_point_id = rp.id
+         JOIN linear_location LL ON (LL.roadway_number = RP.roadway_number AND LL.valid_to IS NULL)
+         JOIN roadway rw ON rp.roadway_number = rw.roadway_number AND rw.valid_to IS NULL AND rw.end_date IS NULL
+            WHERE j.valid_to IS NULL AND j.end_date IS NULL
+            AND $boundingBoxFilter AND JP.valid_to IS NULL
+            AND j.node_number IS NOT NULL
         """
       queryList(query)
     }
@@ -301,79 +296,64 @@ class JunctionDAO extends BaseDAO {
       val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),
         boundingRectangle.rightTop - boundingRectangle.diagonal.scale(.15))
 
-      val boundingBoxFilter = PostGISDatabase.boundingBoxFilter(extendedBoundingRectangle, "LL.geometry")
+      val boundingBoxFilter = GeometryDbUtils.boundingBoxFilter(extendedBoundingRectangle, sqls"LL.geometry")
 
       val query =
-        s"""
-         SELECT DISTINCT j.ID, j.START_DATE, rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rw.TRACK, rp.ADDR_M, rw.ELY
-         FROM JUNCTION j
-         JOIN JUNCTION_POINT jp ON j.ID = jp.JUNCTION_ID AND jp.VALID_TO IS NULL
-         JOIN ROADWAY_POINT rp ON jp.ROADWAY_POINT_ID = rp.ID
-         JOIN LINEAR_LOCATION LL ON (LL.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND LL.VALID_TO IS NULL)
-         JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
-            WHERE j.VALID_TO IS NULL AND j.END_DATE IS NULL AND j.NODE_NUMBER IS NULL
-            AND $boundingBoxFilter and JP.valid_to is null
+        sql"""
+         SELECT DISTINCT j.id, j.start_date, rw.road_number, rw.road_part_number, rw.track, rp.addr_m, rw.ely
+         FROM junction j
+         JOIN junction_point jp ON j.id = jp.junction_id AND jp.valid_to IS NULL
+         JOIN roadway_point rp ON jp.roadway_point_id = rp.id
+         JOIN linear_location LL ON (LL.roadway_number = RP.roadway_number AND LL.valid_to IS NULL)
+         JOIN roadway rw ON rp.roadway_number = rw.roadway_number AND rw.valid_to IS NULL AND rw.end_date IS NULL
+            WHERE j.valid_to IS NULL AND j.end_date IS NULL AND j.node_number IS NULL
+            AND $boundingBoxFilter AND JP.valid_to IS NULL
         """
       queryListTemplate(query)
     }
   }
 
-  def fetchJunctionsForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[JunctionForRoadAddressBrowser] = {
-    def withOptionalParameters(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long])(query: String): String = {
-      val dateCondition = "AND rw.start_date <='" + situationDate.get + "'"
-
-      val elyCondition = {
-        if (ely.nonEmpty)
-          s" AND rw.ely = ${ely.get}"
-        else
-          ""
-      }
-
-      val roadNumberCondition = {
-        if (roadNumber.nonEmpty)
-          s" AND rw.road_number = ${roadNumber.get}"
-        else
-          ""
-      }
-
-      val roadPartCondition = {
-        val parts = (minRoadPartNumber, maxRoadPartNumber)
-        parts match {
-          case (Some(minPart), Some(maxPart)) => s"AND rw.road_part_number BETWEEN $minPart AND $maxPart"
-          case (None, Some(maxPart)) => s"AND rw.road_part_number <= $maxPart"
-          case (Some(minPart), None) => s"AND rw.road_part_number >= $minPart"
-          case _ => ""
-        }
-      }
-
-      s"""$query $dateCondition $elyCondition $roadNumberCondition $roadPartCondition
-        GROUP BY node.node_number, xcoord , ycoord, node.name, node.TYPE, j.start_date, j.junction_number, rw.road_number, rw.track, rw.road_part_number, rp.addr_m
-        ORDER BY rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rp.ADDR_M""".stripMargin
-    }
-
-    def fetchJunctions(queryFilter: String => String): Seq[JunctionForRoadAddressBrowser] = {
-      val query =
-        """
+  def fetchJunctionsForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long],
+                                          minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[JunctionForRoadAddressBrowser] = {
+    val baseQuery =
+      sqls"""
         SELECT node.node_number, ST_X(node.COORDINATES) AS xcoord, ST_Y(node.COORDINATES) AS ycoord, node.name, node.type,
-        j.start_date, j.junction_number, rw.road_number, rw.track, rw.road_part_number, rp.addr_m, json_agg(jp.before_after) as beforeafter
-		    FROM JUNCTION j
-       	JOIN NODE node ON node.node_number = j.node_number AND node.end_date IS NULL AND node.valid_to IS NULL
-       	JOIN JUNCTION_POINT jp ON j.id = jp.junction_id  AND jp.valid_to IS NULL
-        JOIN ROADWAY_POINT rp ON jp.roadway_point_id  = rp.ID
-        JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
-        WHERE j.valid_to is NULL AND j.end_date IS NULL
+        ${j.startDate}, ${j.junctionNumber}, ${rw.column("road_number")}, ${rw.track}, ${rw.column("road_part_number")}, rp.addr_m, json_agg(jp.before_after) as beforeafter
+		    FROM junction j
+       	JOIN node node ON node.node_number = ${j.nodeNumber} AND node.end_date IS NULL AND node.valid_to IS NULL
+       	JOIN junction_point jp ON ${j.id} = jp.junction_id  AND jp.valid_to IS NULL
+        JOIN roadway_point rp ON jp.roadway_point_id  = rp.id
+        JOIN roadway rw ON rp.roadway_number = ${rw.roadwayNumber} AND ${rw.validTo} IS NULL AND ${rw.endDate} IS NULL
+        WHERE ${j.validTo} IS NULL AND ${j.endDate} IS NULL
+    """
+
+    def withOptionalParameters(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long],
+                               maxRoadPartNumber: Option[Long])(baseQuery: SQLSyntax): SQL[Nothing, NoExtractor] = {
+      val dateCast = sqls"CAST(${situationDate.get} AS DATE)" // Scalike doesn't support directly casting to date TODO scalike: Better way to do this as a more reusable solution?
+      val dateCondition = sqls"AND ${rw.startDate} <= $dateCast"
+      val elyCondition = ely.map(e => sqls"AND ${rw.ely} = $e").getOrElse(sqls"")
+      val roadNumberCondition = roadNumber.map(rn => sqls"AND ${rw.column("road_number")} = $rn").getOrElse(sqls"")
+
+      val roadPartCondition = (minRoadPartNumber, maxRoadPartNumber) match {
+        case (Some(minPart), Some(maxPart)) => sqls"AND ${rw.column("road_part_number")} BETWEEN $minPart AND $maxPart"
+        case (None, Some(maxPart)) => sqls"AND ${rw.column("road_part_number")} <= $maxPart"
+        case (Some(minPart), None) => sqls"AND ${rw.column("road_part_number")} >= $minPart"
+        case _ => sqls""
+      }
+
+      sql"""
+        $baseQuery $dateCondition $elyCondition $roadNumberCondition $roadPartCondition
+        GROUP BY node.node_number, xcoord, ycoord, node.name, node.TYPE, ${j.startDate}, ${j.junctionNumber}, ${rw.column("road_number")}, ${rw.track}, ${rw.column("road_part_number")}, rp.addr_m
+        ORDER BY ${rw.column("road_number")}, ${rw.column("road_part_number")}, rp.addr_m
         """
-      val filteredQuery = queryFilter(query)
-      Q.queryNA[JunctionForRoadAddressBrowser](filteredQuery).iterator.toSeq
     }
-    fetchJunctions(withOptionalParameters(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber))
+
+    val fullQuery = withOptionalParameters(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)(baseQuery)
+    runSelectQuery(fullQuery.map(JunctionForRoadAddressBrowser.apply))
+
   }
 
   def create(junctions: Iterable[Junction]): Seq[Long] = {
-
-    val ps = dynamicSession.prepareStatement(
-      """insert into JUNCTION (ID, JUNCTION_NUMBER, NODE_NUMBER, START_DATE, END_DATE, CREATED_BY)
-      values (?, ?, ?, ?, ?, ?)""".stripMargin)
 
     // Set ids for the junctions without one
     val (ready, idLess) = junctions.partition(_.id != NewIdValue)
@@ -382,43 +362,44 @@ class JunctionDAO extends BaseDAO {
       x._1.copy(id = x._2)
     )
 
-    createJunctions.foreach {
-      junction =>
-        ps.setLong(1, junction.id)
-        if (junction.junctionNumber.isDefined) {
-          ps.setLong(2, junction.junctionNumber.get)
-        } else {
-          ps.setNull(2, java.sql.Types.INTEGER)
-        }
-        if (junction.nodeNumber.isDefined) {
-          ps.setLong(3, junction.nodeNumber.get)
-        } else {
-          ps.setNull(3, java.sql.Types.INTEGER)
-        }
-        ps.setDate(4, new java.sql.Date(junction.startDate.getMillis))
-        if (junction.endDate.isDefined) {
-           ps.setDate(5, new java.sql.Date(junction.endDate.get.getMillis))
-        } else {
-          ps.setNull(5, java.sql.Types.DATE)
-        }
-        ps.setString(6, junction.createdBy)
-        ps.addBatch()
+    val batchParams: Iterable[Seq[Any]] = createJunctions.map { junction =>
+      Seq(
+        junction.id,
+        junction.junctionNumber,
+        junction.nodeNumber,
+        new java.sql.Timestamp(junction.startDate.getMillis),
+        junction.endDate.map(d => new java.sql.Timestamp(d.getMillis)).orNull,
+        junction.createdBy
+      )
     }
-    ps.executeBatch()
-    ps.close()
+
+    val query =
+      sql"""
+        insert into junction (id, junction_number, node_number, start_date, end_date, created_by)
+        values (?, ?, ?, ?, ?, ?)
+      """
+
+    runBatchUpdateToDb(query, batchParams.toSeq)
+
+    // Return the ids of the created junctions
     createJunctions.map(_.id).toSeq
   }
 
   /**
-    * Expires junctions (set their valid_to to the current system date).
-    *
-    * @param ids : Iterable[Long] - The ids of the junctions to expire.
-    * @return
-    */
+   * Expires junctions (set their valid_to to the current system date).
+   *
+   * @param ids : Iterable[Long] - The ids of the junctions to expire.
+   * @return
+   */
   def expireById(ids: Iterable[Long]): Unit = {
     if (ids.isEmpty) 0
     else {
-      val query = s"""UPDATE JUNCTION SET VALID_TO = CURRENT_TIMESTAMP WHERE VALID_TO IS NULL AND ID IN (${ids.mkString(", ")})"""
+      val query =
+        sql"""
+            UPDATE junction
+            SET valid_to = CURRENT_TIMESTAMP
+            WHERE valid_to IS NULL AND id IN ($ids)
+            """
       runUpdateToDb(query)
     }
   }
