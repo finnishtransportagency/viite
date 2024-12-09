@@ -6,12 +6,11 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
-import fi.vaylavirasto.viite.dao.Sequences
+import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
 import fi.vaylavirasto.viite.model.CalibrationPointType.{NoCP, RoadAddressCP}
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, BeforeAfter, CalibrationPointLocation, Discontinuity, LinkGeomSource, NodePointType, NodeType, RoadAddressChangeType, RoadPart, SideCode, Track}
-import fi.vaylavirasto.viite.postgis.DbUtils.runUpdateToDb
-import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
@@ -21,12 +20,13 @@ import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.BeforeAndAfter
 import org.scalatestplus.mockito.MockitoSugar
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.StaticQuery.interpolation
+import scalikejdbc._
 
+
+import scala.concurrent.Future
 import scala.util.{Left, Right}
 
-class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
+class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter with BaseDAO {
 
   private val roadNumber1 = 990
   private val roadwayNumber1 = 1000000000L
@@ -52,9 +52,8 @@ class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with Before
   val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
   val roadAddressService: RoadAddressService = new RoadAddressService(mockRoadLinkService, new RoadwayDAO, new LinearLocationDAO, new RoadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, mockRoadwayAddressMapper, mockEventBus, frozenKGV = false) {
 
-    override def withDynSession[T](f: => T): T = f
-
-    override def withDynTransaction[T](f: => T): T = f
+    override def runWithReadOnlySession[T](f: => T): T = f
+    override def runWithTransaction[T](f: => T): T = f
   }
 
   val nodesAndJunctionsService: NodesAndJunctionsService =
@@ -69,9 +68,8 @@ class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with Before
                                   roadwayChangesDAO,
                                   projectReservedPartDAO
                                   ) {
-                                      override def withDynSession[T](f: => T): T = f
-                                      override def withDynTransaction[T](f: => T): T = f
-                                      override def withDynTransactionNewOrExisting[T](f: => T): T = f
+                                      override def runWithReadOnlySession[T](f: => T): T = f
+                                      override def runWithTransaction[T](f: => T): T = f
                                     }
 
   val projectService: ProjectService =
@@ -375,8 +373,8 @@ class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with Before
       val reversedProjectChanges = projectChanges.map(p => p.copy(changeInfo = p.changeInfo.copy(changeType = RoadAddressChangeType.Transfer, source = p.changeInfo.target, reversed = true)))
 
       val mappedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
-      runUpdateToDb("""INSERT INTO LINK (ID) VALUES (12345)""")
-      runUpdateToDb("""INSERT INTO LINK (ID) VALUES (12346)""")
+      runUpdateToDb(sql"""INSERT INTO LINK (ID) VALUES (12345)""")
+      runUpdateToDb(sql"""INSERT INTO LINK (ID) VALUES (12346)""")
       nodesAndJunctionsService.handleJunctionAndJunctionPoints(projectChanges, pls, mappedRoadwayNumbers)
 
       val roadJunctionPoints = junctionPointDAO.fetchByRoadwayPoint(roadway1.roadwayNumber, roadway1.addrMRange.end, BeforeAfter.Before)
@@ -4350,6 +4348,8 @@ class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with Before
             Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 2, 8)
           , DateTime.now)
       )
+      val projectData = projectLinkDAO.fetchProjectLinks(projectId)
+      logger.info(s"Project links before fetching changes: ${projectData.map(pl => s"id: ${pl.id}, roadwayId: ${pl.roadwayId}")}")
       val mappedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       // Creation of nodes and node points
       nodesAndJunctionsService.handleNodePoints(projectChanges, projectLinks, mappedRoadwayNumbers)
@@ -4369,14 +4369,14 @@ class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with Before
         np => {
           if (np.roadwayNumber == roadLink1.roadwayNumber) {
             if (np.addrM == roadLink1.addrMRange.start)
-              runUpdateToDb(s"""UPDATE NODE_POINT SET NODE_NUMBER = $nodeNumber1 WHERE ID = ${np.id}""")
+              runUpdateToDb(sql"""UPDATE NODE_POINT SET NODE_NUMBER = $nodeNumber1 WHERE ID = ${np.id}""")
             else if (np.addrM == roadLink1.addrMRange.end)
-              runUpdateToDb(s"""UPDATE NODE_POINT SET NODE_NUMBER = $nodeNumber2 WHERE ID = ${np.id}""")
+              runUpdateToDb(sql"""UPDATE NODE_POINT SET NODE_NUMBER = $nodeNumber2 WHERE ID = ${np.id}""")
           } else if (np.roadwayNumber == roadLink2.roadwayNumber) {
             if (np.addrM == roadLink2.addrMRange.start)
-              runUpdateToDb(s"""UPDATE NODE_POINT SET NODE_NUMBER = $nodeNumber2 WHERE ID = ${np.id}""")
+              runUpdateToDb(sql"""UPDATE NODE_POINT SET NODE_NUMBER = $nodeNumber2 WHERE ID = ${np.id}""")
             else if (np.addrM == roadLink2.addrMRange.end)
-              runUpdateToDb(s"""UPDATE NODE_POINT SET NODE_NUMBER = $nodeNumber3 WHERE ID = ${np.id}""")
+              runUpdateToDb(sql"""UPDATE NODE_POINT SET NODE_NUMBER = $nodeNumber3 WHERE ID = ${np.id}""")
           }
         }
       )
@@ -4460,9 +4460,9 @@ class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with Before
       nodePointTemplates.foreach(
         np => {
           if (np.addrM == roadLink.addrMRange.start)
-            runUpdateToDb(s"""UPDATE NODE_POINT SET NODE_NUMBER = ${node1.nodeNumber} WHERE ID = ${np.id}""")
+            runUpdateToDb(sql"""UPDATE NODE_POINT SET NODE_NUMBER = ${node1.nodeNumber} WHERE ID = ${np.id}""")
           else if (np.addrM == roadLink.addrMRange.end)
-            runUpdateToDb(s"""UPDATE NODE_POINT SET NODE_NUMBER = ${node2.nodeNumber} WHERE ID = ${np.id}""")
+            runUpdateToDb(sql"""UPDATE NODE_POINT SET NODE_NUMBER = ${node2.nodeNumber} WHERE ID = ${np.id}""")
         }
       )
 
@@ -4554,9 +4554,9 @@ class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with Before
       nodePointTemplates.foreach(
         np => {
           if (np.addrM == roadLink.addrMRange.start)
-            runUpdateToDb(s"""UPDATE NODE_POINT SET NODE_NUMBER = ${node1.nodeNumber} WHERE ID = ${np.id}""")
+            runUpdateToDb(sql"""UPDATE NODE_POINT SET NODE_NUMBER = ${node1.nodeNumber} WHERE ID = ${np.id}""")
           else if (np.addrM == roadLink.addrMRange.end)
-            runUpdateToDb(s"""UPDATE NODE_POINT SET NODE_NUMBER = ${node2.nodeNumber} WHERE ID = ${np.id}""")
+            runUpdateToDb(sql"""UPDATE NODE_POINT SET NODE_NUMBER = ${node2.nodeNumber} WHERE ID = ${np.id}""")
         }
       )
 
@@ -5317,8 +5317,13 @@ class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with Before
       fetched.name should be(node.name)
       fetched.editor should be(node.editor)
       fetched.publishedTime should be(node.publishedTime)
-      val historyRowEndDate = sql"""SELECT END_DATE from NODE
-        WHERE NODE_NUMBER = ${node.nodeNumber} and valid_to is null and end_date is not null""".as[Date].firstOption
+      val historyRowEndDate = runSelectSingleFirstOptionWithType[Date](
+        sql"""
+              SELECT END_DATE
+              FROM NODE
+              WHERE NODE_NUMBER = ${node.nodeNumber} and valid_to is null and end_date is not null
+        """
+      )
       historyRowEndDate should be(None)
     }
   }
@@ -5338,8 +5343,13 @@ class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with Before
       updated.publishedTime should be(None)
       updated.editor should be(None)
       updated.coordinates should be(Point(1, 1))
-      val historyRowEndDate = sql"""SELECT END_DATE from NODE
-        WHERE NODE_NUMBER = ${node.nodeNumber} and valid_to is null and end_date is not null""".as[Date].firstOption
+      val historyRowEndDate = runSelectSingleFirstOptionWithType[Date](
+        sql"""
+              SELECT END_DATE
+              FROM NODE
+              WHERE NODE_NUMBER = ${node.nodeNumber} and valid_to is null and end_date is not null
+              """
+      )
       historyRowEndDate should be(None)
     }
   }
@@ -5361,8 +5371,14 @@ class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with Before
       updated.coordinates should be(Point(1, 1))
       updated.nodeType should be(NodeType.Bridge)
       updated.startDate should be(node.startDate)
-      val historyRowEndDate = sql"""SELECT END_DATE from NODE
-        WHERE NODE_NUMBER = ${node.nodeNumber} and valid_to is null and end_date is not null""".as[Date].firstOption
+      val historyRowEndDate = runSelectSingleFirstOptionWithType[Date](
+        sql"""SELECT END_DATE
+              from NODE
+              WHERE NODE_NUMBER = ${node.nodeNumber}
+              and valid_to is null
+              and end_date is not null
+              """
+      )
       historyRowEndDate should be(None)
     }
   }
@@ -5384,8 +5400,14 @@ class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with Before
       updated.editor should be(None)
       updated.nodeType should be(NodeType.Bridge)
       updated.startDate should not be node.startDate
-      val historyRowEndDate = sql"""SELECT END_DATE from NODE
-        WHERE NODE_NUMBER = ${node.nodeNumber} and valid_to is null and end_date is not null""".as[Date].firstOption
+      val historyRowEndDate = runSelectSingleFirstOptionWithType[Date](
+        sql"""SELECT END_DATE
+              from NODE
+              WHERE NODE_NUMBER = ${node.nodeNumber}
+              and valid_to is null
+              and end_date is not null
+              """
+      )
       historyRowEndDate should not be None
     }
   }
@@ -6075,4 +6097,5 @@ class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with Before
       templatesInMiddleNodes.size should be(0) // There shouldn't be any templates in the 2 nodes
     }
   }
+
 }
