@@ -30,56 +30,45 @@ class JunctionDAO extends BaseDAO {
 
   object Junction extends SQLSyntaxSupport[Junction] {
     override val tableName = "junction"
-    override val columns = Seq(
-      "id",
-      "junction_number",
-      "node_number",
-      "start_date",
-      "end_date",
-      "valid_from",
-      "valid_to",
-      "created_by",
-      "created_time"
-    )
 
     def apply(rs: WrappedResultSet): Junction = new Junction(
-      id = rs.long("id"),
-      junctionNumber = rs.longOpt("junction_number"),
-      nodeNumber = rs.longOpt("node_number"),
-      startDate = rs.jodaDateTime("start_date"),
-      endDate = rs.jodaDateTimeOpt("end_date"),
-      validFrom = rs.jodaDateTime("valid_from"),
-      validTo = rs.jodaDateTimeOpt("valid_to"),
-      createdBy = rs.string("created_by"),
-      createdTime = rs.jodaDateTimeOpt("created_time")
+      id              = rs.long("id"),
+      junctionNumber  = rs.longOpt("junction_number"),
+      nodeNumber      = rs.longOpt("node_number"),
+      startDate       = rs.jodaDateTime("start_date"),
+      endDate         = rs.jodaDateTimeOpt("end_date"),
+      validFrom       = rs.jodaDateTime("valid_from"),
+      validTo         = rs.jodaDateTimeOpt("valid_to"),
+      createdBy       = rs.string("created_by"),
+      createdTime     = rs.jodaDateTimeOpt("created_time")
     )
   }
 
   object JunctionTemplate extends SQLSyntaxSupport[JunctionTemplate] {
 
     def apply(rs: WrappedResultSet): JunctionTemplate = new JunctionTemplate(
-      id = rs.long("id"),
+      id        = rs.long("id"),
       startDate = rs.jodaDateTime("start_date"),
-      roadPart = RoadPart(rs.long("road_number"), rs.long("road_part_number")),
-      track = Track(rs.int("track")),
-      addrM = rs.long("addr_m"),
-      elyCode = rs.long("ely")
+      roadPart  = RoadPart(rs.long("road_number"), rs.long("road_part_number")),
+      track     = Track(rs.int("track")),
+      addrM     = rs.long("addr_m"),
+      elyCode   = rs.long("ely")
     )
   }
 
   object JunctionForRoadAddressBrowser extends SQLSyntaxSupport[JunctionForRoadAddressBrowser] {
 
     def apply(rs: WrappedResultSet): JunctionForRoadAddressBrowser = new JunctionForRoadAddressBrowser(
-      nodeNumber = rs.long("node_number"),
+      nodeNumber      = rs.long("node_number"),
       nodeCoordinates = Point(rs.long("xcoord"), rs.long("ycoord")),
-      nodeName = rs.stringOpt("name"),
-      nodeType = NodeType(rs.int("type")),
-      startDate = rs.jodaDateTime("start_date"),
-      junctionNumber = rs.longOpt("junction_number"),
-      roadPart = RoadPart(rs.long("road_number"), rs.long("road_part_number")),
-      track = rs.long("track"),
-      addrM = rs.long("addr_m"),
-      beforeAfter = parseBeforeAfterValue(rs.string("beforeafter"))
+      nodeName        = rs.stringOpt("name"),
+      nodeType        = NodeType(rs.int("type")),
+      startDate       = rs.jodaDateTime("start_date"),
+      junctionNumber  = rs.longOpt("junction_number"),
+      roadPart        = RoadPart(rs.long("road_number"), rs.long("road_part_number")),
+      track           = rs.long("track"),
+      addrM           = rs.long("addr_m"),
+      beforeAfter     = parseBeforeAfterValue(rs.string("beforeafter"))
     )
 
     private def parseBeforeAfterValue(beforeAfterToParse: String): Seq[Long] = {
@@ -88,23 +77,23 @@ class JunctionDAO extends BaseDAO {
   }
 
   object JunctionWithLinearLocation extends SQLSyntaxSupport[JunctionWithLinearLocation] {
-
+    // Helper method to parse the jsonb_agg string into a Seq[Long]
     def parseJsonbAgg(stringToParse: String): Seq[Long] = {
       val res = stringToParse.replaceAll("[\\[\\]\\s]", "")
       res.split(",").map(_.toLong).toSeq
     }
 
     def apply(rs: WrappedResultSet): JunctionWithLinearLocation = new JunctionWithLinearLocation(
-      id = rs.long("id"),
-      junctionNumber = rs.longOpt("junction_number"),
-      nodeNumber = rs.longOpt("node_number"),
-      startDate = rs.jodaDateTime("start_date"),
-      endDate = rs.jodaDateTimeOpt("end_date"),
-      validFrom = rs.jodaDateTime("valid_from"),
-      validTo = rs.jodaDateTimeOpt("valid_to"),
-      createdBy = rs.string("created_by"),
-      createdTime = rs.jodaDateTimeOpt("created_time"),
-      llId = parseJsonbAgg(rs.string("ll_id"))
+      id              = rs.long("id"),
+      junctionNumber  = rs.longOpt("junction_number"),
+      nodeNumber      = rs.longOpt("node_number"),
+      startDate       = rs.jodaDateTime("start_date"),
+      endDate         = rs.jodaDateTimeOpt("end_date"),
+      validFrom       = rs.jodaDateTime("valid_from"),
+      validTo         = rs.jodaDateTimeOpt("valid_to"),
+      createdBy       = rs.string("created_by"),
+      createdTime     = rs.jodaDateTimeOpt("created_time"),
+      llId            = parseJsonbAgg(rs.string("ll_id"))
     )
   }
 
@@ -146,7 +135,7 @@ class JunctionDAO extends BaseDAO {
   }
 
 
-  val selectAllFromJunctionQuery = sqls"""
+  lazy val selectAllFromJunctionQuery = sqls"""
     SELECT ${j.id}, ${j.junctionNumber}, ${j.nodeNumber}, ${j.startDate}, ${j.endDate},
            ${j.validFrom}, ${j.validTo}, ${j.createdBy}, ${j.createdTime}
     FROM ${Junction.as(j)}
@@ -163,7 +152,9 @@ class JunctionDAO extends BaseDAO {
       val query =
         sql"""
         $selectAllFromJunctionQuery
-        WHERE ${j.nodeNumber} in ($nodeNumbers) AND ${j.validTo} IS NULL AND ${j.endDate} IS NULL
+        WHERE ${j.nodeNumber} IN ($nodeNumbers)
+          AND ${j.validTo} IS NULL
+          AND ${j.endDate} IS NULL
         """
       queryList(query)
     }
@@ -176,7 +167,9 @@ class JunctionDAO extends BaseDAO {
       val query =
         sql"""
       $selectAllFromJunctionQuery
-      WHERE ${j.id} IN (${ids}) AND ${j.validTo} IS NULL AND end_date IS NULL
+      WHERE ${j.id} IN ($ids)
+        AND ${j.validTo} IS NULL
+        AND ${j.endDate} IS NULL
       """
       queryList(query)
     }
@@ -189,7 +182,7 @@ class JunctionDAO extends BaseDAO {
       val query =
         sql"""
       $selectAllFromJunctionQuery
-      WHERE id IN (${ids})
+      WHERE id IN ($ids)
       """
       queryList(query)
     }
@@ -260,7 +253,7 @@ class JunctionDAO extends BaseDAO {
          JOIN junction_point jp ON j.id = jp.junction_id
          JOIN roadway_point rp ON jp.roadway_point_id = rp.id
          JOIN roadway rw ON rp.roadway_number = rw.roadway_number
-         WHERE rw.roadway_number IN (${roadwayNumbers})
+         WHERE rw.roadway_number IN ($roadwayNumbers)
         """
       queryList(query)
     } else {
@@ -343,8 +336,9 @@ class JunctionDAO extends BaseDAO {
 
       sql"""
         $baseQuery $dateCondition $elyCondition $roadNumberCondition $roadPartCondition
-        GROUP BY node.node_number, xcoord, ycoord, node.name, node.TYPE, ${j.startDate}, ${j.junctionNumber}, ${rw.column("road_number")}, ${rw.track}, ${rw.column("road_part_number")}, rp.addr_m
-        ORDER BY ${rw.column("road_number")}, ${rw.column("road_part_number")}, rp.addr_m
+        GROUP BY  node.node_number, xcoord, ycoord, node.name, node.TYPE, ${j.startDate}, ${j.junctionNumber},
+                  ${rw.column("road_number")}, ${rw.track}, ${rw.column("road_part_number")}, rp.addr_m
+        ORDER BY  ${rw.column("road_number")}, ${rw.column("road_part_number")}, rp.addr_m
         """
     }
 
@@ -375,8 +369,8 @@ class JunctionDAO extends BaseDAO {
 
     val query =
       sql"""
-        insert into junction (id, junction_number, node_number, start_date, end_date, created_by)
-        values (?, ?, ?, ?, ?, ?)
+        INSERT INTO junction (id, junction_number, node_number, start_date, end_date, created_by)
+        VALUES (?, ?, ?, ?, ?, ?)
       """
 
     runBatchUpdateToDb(query, batchParams.toSeq)

@@ -16,7 +16,6 @@ case class Node(id: Long, nodeNumber: Long, coordinates: Point, name: Option[Str
                 createdBy: String, createdTime: Option[DateTime], editor: Option[String] = None, publishedTime: Option[DateTime] = None, registrationDate: DateTime)
 
 object Node extends SQLSyntaxSupport[Node] {
-  override val tableName = "NODE"
 
   def apply(rs: WrappedResultSet): Node = Node(
     id = rs.long("id"),
@@ -78,7 +77,7 @@ class NodeDAO extends BaseDAO {
   def fetchByNodeNumber(nodeNumber: Long): Option[Node] = {
     val query = sql"""
       $selectAllFromNodeQuery
-      where NODE_NUMBER = $nodeNumber and valid_to is null and end_date is null
+      where node_number = $nodeNumber and valid_to IS NULL and end_date IS NULL
       """
     querySingle(query)
   }
@@ -86,26 +85,26 @@ class NodeDAO extends BaseDAO {
   def fetchById(nodeId: Long): Option[Node] = {
     val query = sql"""
       $selectAllFromNodeQuery
-      where ID = $nodeId and valid_to is null and end_date is null
+      WHERE id = $nodeId and valid_to IS NULL and end_date IS NULL
       """
     querySingle(query)
   }
 
   def fetchId(nodeNumber: Long): Option[Long] = {
     val query = sql"""
-      SELECT ID
-      from NODE
-      where NODE_NUMBER = $nodeNumber and valid_to is null and end_date is null
+      SELECT id
+      FROM node
+      WHERE node_number = $nodeNumber AND valid_to IS NULL AND end_date IS NULL
       """
     runSelectSingleOption(query.map(_.long("id"))) // Return the id
   }
 
   def fetchLatestId(nodeNumber: Long): Option[Long] = {
     val query = sql"""
-      SELECT ID
-      from NODE
-      where NODE_NUMBER = $nodeNumber and valid_to is null
-      order by created_time desc, end_date desc
+      SELECT id
+      FROM node
+      WHERE node_number = $nodeNumber and valid_to IS NULL
+      ORDER BY created_time DESC, end_date DESC
       """
     runSelectSingleOption(query.map(_.long("id"))) // Return the id
   }
@@ -113,7 +112,8 @@ class NodeDAO extends BaseDAO {
   def fetchAllValidNodes(): Seq[Node] = {
     val query =
       sql"""
-      SELECT n.id, n.node_number, ST_X(n.COORDINATES), ST_Y(n.COORDINATES), n."name", n."type", n.start_date, n.end_date, n.valid_from, n.valid_to, n.created_by, n.created_time, n.editor, n.published_time, n.registration_date
+      SELECT  n.id, n.node_number, ST_X(n.coordinates), ST_Y(n.coordinates), n."name", n."type", n.start_date, n.end_date,
+              n.valid_from, n.valid_to, n.created_by, n.created_time, n.editor, n.published_time, n.registration_date
       FROM node n
       WHERE n.end_date IS NULL AND n.valid_to IS NULL
     """
@@ -124,11 +124,12 @@ class NodeDAO extends BaseDAO {
                                       minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[NodeForRoadAddressBrowser] = {
     val baseQuery =
       sqls"""
-      SELECT DISTINCT rw.ely, rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rp.ADDR_M, node.START_DATE, node.type, node.NAME, ST_X(node.COORDINATES), ST_Y(node.COORDINATES), node.NODE_NUMBER
-		  FROM NODE node
-      JOIN NODE_POINT np ON node.NODE_NUMBER = np.NODE_NUMBER AND np.VALID_TO IS NULL
-      JOIN ROADWAY_POINT rp ON np.ROADWAY_POINT_ID = rp.ID
-      JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS null
+      SELECT DISTINCT rw.ely, rw.road_number, rw.road_part_number, rp.addr_m, node.start_date, node.type, node.name,
+                      ST_X(node.coordinates), ST_Y(node.coordinates), node.node_number
+		  FROM node node
+      JOIN node_POINT np ON node.node_number = np.node_number AND np.valid_to IS NULL
+      JOIN roadway_point rp ON np.roadway_point_id = rp.id
+      JOIN roadway rw ON rp.roadway_number = rw.roadway_number AND rw.valid_to IS NULL AND rw.end_date IS null
       """
 
     def withOptionalParameters(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long],
@@ -147,9 +148,15 @@ class NodeDAO extends BaseDAO {
         }
       }
 
-      sql"""$query WHERE node.VALID_TO IS NULL AND node.END_DATE IS NULL
-        $dateCondition $elyCondition $roadNumberCondition $roadPartCondition
-        ORDER BY rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rp.ADDR_M"""
+      sql"""
+        $query
+        WHERE node.valid_to IS NULL AND node.end_date IS NULL
+        $dateCondition
+        $elyCondition
+        $roadNumberCondition
+        $roadPartCondition
+        ORDER BY rw.road_number, rw.road_part_number, rp.addr_m
+        """
     }
 
     val queryWithOptionalParameters = withOptionalParameters(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)(baseQuery)
@@ -158,30 +165,33 @@ class NodeDAO extends BaseDAO {
 
   def fetchByRoadAttributes(roadNumber: Long, minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[(Node, RoadAttributes)] = {
     val roadCondition = (minRoadPartNumber.isDefined, maxRoadPartNumber.isDefined) match {
-      case (true, true) => sqls"AND rw.ROAD_PART_NUMBER >= ${minRoadPartNumber.get} AND rw.ROAD_PART_NUMBER <= ${maxRoadPartNumber.get}"
-      case (true, _) => sqls"AND rw.ROAD_PART_NUMBER = ${minRoadPartNumber.get}"
-      case (_, true) => sqls"AND rw.ROAD_PART_NUMBER = ${maxRoadPartNumber.get}"
+      case (true, true) => sqls"AND rw.road_part_number >= ${minRoadPartNumber.get} AND rw.road_part_number <= ${maxRoadPartNumber.get}"
+      case (true, _) => sqls"AND rw.road_part_number = ${minRoadPartNumber.get}"
+      case (_, true) => sqls"AND rw.road_part_number = ${maxRoadPartNumber.get}"
       case _ => sqls.empty
     }
 
     val query =
       sql"""
-        SELECT DISTINCT node.ID, node.NODE_NUMBER, ST_X(node.COORDINATES), ST_Y(node.COORDINATES), node.NAME, node.TYPE, node.START_DATE, node.END_DATE, node.VALID_FROM, node.VALID_TO,
-                        node.CREATED_BY, node.CREATED_TIME, node.REGISTRATION_DATE, node.EDITOR, node.PUBLISHED_TIME, rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rp.ADDR_M
-        FROM NODE node
-        JOIN NODE_POINT np ON node.NODE_NUMBER = np.NODE_NUMBER AND np.VALID_TO IS NULL
-        JOIN ROADWAY_POINT rp ON np.ROADWAY_POINT_ID = rp.ID
-        JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
-          WHERE node.VALID_TO IS NULL AND node.END_DATE IS NULL
-          AND rw.ROAD_NUMBER = $roadNumber $roadCondition
-        ORDER BY rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rp.ADDR_M
+        SELECT DISTINCT node.id, node.node_number, ST_X(node.coordinates), ST_Y(node.coordinates), node.name, node.type, node.start_date, node.end_date, node.valid_from, node.valid_to,
+                        node.created_by, node.created_time, node.registration_date, node.editor, node.published_time, rw.road_number, rw.road_part_number, rp.addr_m
+        FROM node
+        JOIN node_POINT np ON node.node_number = np.node_number AND np.valid_to IS NULL
+        JOIN roadway_point rp ON np.roadway_point_id = rp.id
+        JOIN roadway rw ON rp.roadway_number = rw.roadway_number AND rw.valid_to IS NULL AND rw.end_date IS NULL
+          WHERE node.valid_to IS NULL AND node.end_date IS NULL
+          AND rw.road_number = $roadNumber $roadCondition
+        ORDER BY rw.road_number, rw.road_part_number, rp.addr_m
       """
 
     runSelectQuery(query.map(rs => {
       val node = Node.apply(rs)
       val roadAttributes = RoadAttributes(
-        roadPart = RoadPart(rs.long("ROAD_NUMBER"), rs.long("ROAD_PART_NUMBER")),
-        addrMValue = rs.long("ADDR_M")
+        roadPart = RoadPart(
+          rs.long("road_number"),
+          rs.long("road_part_number")
+        ),
+        addrMValue = rs.long("addr_m")
       )
       (node, roadAttributes)
     }))
@@ -189,15 +199,17 @@ class NodeDAO extends BaseDAO {
 
   def publish(id: Long, editor: String = "-"): Unit = {
     runUpdateToDb(sql"""
-        Update NODE Set PUBLISHED_TIME = CURRENT_TIMESTAMP, EDITOR = $editor Where ID = $id
+        UPDATE node SET published_time = CURRENT_TIMESTAMP, editor = $editor WHERE id = $id
     """)
   }
 
   def create(nodes: Iterable[Node], createdBy: String = "-"): Seq[Long] = {
 
     val query =
-      sql"""insert into NODE (ID, NODE_NUMBER, COORDINATES, NAME, TYPE, START_DATE, END_DATE, CREATED_BY, REGISTRATION_DATE)
-      values (?, ?, ST_GeomFromText(?, 3067), ?, ?, ?, ?, ?, ?)"""
+      sql"""
+        INSERT INTO node (id, node_number, coordinates, name, type, start_date, end_date, created_by, registration_date)
+        VALUES (?, ?, ST_GeomFromText(?, 3067), ?, ?, ?, ?, ?, ?)
+      """
 
     // Set ids for the nodes without one
     val (ready, idLess) = nodes.partition(_.id != NewIdValue)
@@ -242,7 +254,7 @@ class NodeDAO extends BaseDAO {
     val query = sql"""
         $selectAllFromNodeQuery
         WHERE $boundingBoxFilter
-        AND END_DATE IS NULL AND VALID_TO IS NULL
+        AND end_date IS NULL AND valid_to IS NULL
     """
     queryList(query)
   }
@@ -258,7 +270,7 @@ class NodeDAO extends BaseDAO {
       0
     else {
       val query = sql"""
-        UPDATE NODE SET valid_to = CURRENT_TIMESTAMP WHERE valid_to IS NULL AND id IN ($ids)
+        UPDATE node SET valid_to = CURRENT_TIMESTAMP WHERE valid_to IS NULL AND id IN ($ids)
       """
       logger.debug(s"******* Expiring nodes by ids: ${ids.mkString(", ")} \n    query: : $query")
       runUpdateToDb(query)
@@ -272,11 +284,11 @@ class NodeDAO extends BaseDAO {
       // TODO - Might be needed to check node point type here - since calculate node points should not be considered to identify empty nodes
       val query = sql"""
           $selectAllFromNodeQuery
-          WHERE END_DATE IS NULL AND VALID_TO IS NULL AND NODE_NUMBER IN ($nodeNumbers)
+          WHERE end_date IS NULL AND valid_to IS NULL AND node_number IN ($nodeNumbers)
           AND NOT EXISTS (
-            SELECT NULL FROM JUNCTION J WHERE N.NODE_NUMBER = J.NODE_NUMBER AND J.VALID_TO IS NULL AND J.END_DATE IS NULL
+            SELECT NULL FROM junction j WHERE n.node_number = J.node_number AND J.valid_to IS NULL AND J.end_date IS NULL
           ) AND NOT EXISTS (
-            SELECT NULL FROM NODE_POINT NP WHERE N.NODE_NUMBER = NP.NODE_NUMBER AND NP.VALID_TO IS NULL AND NP.TYPE IN (${NodePointType.UnknownNodePointType.value}, ${NodePointType.RoadNodePoint.value})
+            SELECT NULL FROM node_point np WHERE n.node_number = np.node_number AND np.valid_to IS NULL AND np.type IN (${NodePointType.UnknownNodePointType.value}, ${NodePointType.RoadNodePoint.value})
           )
       """
       queryList(query)
@@ -285,97 +297,101 @@ class NodeDAO extends BaseDAO {
 
   def fetchAllByDateRange(sinceDate: DateTime, untilDate: Option[DateTime]): Seq[Node] = {
     time(logger, "Fetch nodes by date range") {
-      val untilString = if (untilDate.nonEmpty) s"AND PUBLISHED_TIME <= to_timestamp(${new Timestamp(untilDate.get.getMillis)}, YYYY-MM-DD HH24:MI:SS.FF)" else s""
+      val untilString = if (untilDate.nonEmpty) s"AND published_time <= to_timestamp(${new Timestamp(untilDate.get.getMillis)}, YYYY-MM-DD HH24:MI:SS.FF)" else s""
       val query =
         sql"""
          $selectAllFromNodeQuery
-         WHERE NODE_NUMBER IN (SELECT NODE_NUMBER FROM NODE NC WHERE
-         PUBLISHED_TIME IS NOT NULL AND PUBLISHED_TIME >= to_timestamp(${new Timestamp(sinceDate.getMillis)}, YYYY-MM-DD HH24:MI:SS.FF)
-         $untilString)
-         AND VALID_TO IS NULL
+         WHERE node_number IN (
+              SELECT node_number
+              FROM node NC
+              WHERE published_time IS NOT NULL
+                AND published_time >= to_timestamp(${new Timestamp(sinceDate.getMillis)}, YYYY-MM-DD HH24:MI:SS.FF)
+                $untilString
+                )
+         AND valid_to IS NULL
        """
       queryList(query)
     }
   }
 
-  // This query is designed to work in processing ROADWAY_CHANGES in phase where ROADWAY_CHANGES contains changes but other tables do not contain any updates yet
+  // This query is designed to work in processing roadway_changes in phase where roadway_changes contains changes but other tables do not contain any updates yet
   // First and third union part handles project changes and second and forth part handles terminations
   // First and second union part finds nodes via junctions and third and fourth union find nodes via node_points
   // We find also nodes that have end_date not null to support change detection for tierekisteri for terminated nodes
   def fetchNodeNumbersByProject(projectId: Long): Seq[Long] = {
     val query =
       sql"""
-         SELECT DISTINCT N.NODE_NUMBER
-         FROM NODE N
-         INNER JOIN JUNCTION J
-           ON N.NODE_NUMBER = J.NODE_NUMBER
-         INNER JOIN JUNCTION_POINT JP
-           ON J.ID = JP.JUNCTION_ID
-         INNER JOIN ROADWAY_POINT RP
-           ON JP.ROADWAY_POINT_ID = RP.ID
-         INNER JOIN ROADWAY R
-           ON RP.ROADWAY_NUMBER = R.ROADWAY_NUMBER
-         INNER JOIN ROADWAY_CHANGES RC
-           ON (R.ROAD_NUMBER = RC.NEW_ROAD_NUMBER
-             AND R.ROAD_PART_NUMBER = RC.NEW_ROAD_PART_NUMBER)
-         WHERE RC.PROJECT_ID = $projectId
-         AND R.VALID_TO IS NULL
-         AND R.END_DATE IS NULL
-         AND JP.VALID_TO IS NULL
-         AND N.VALID_TO IS NULL
+         SELECT DISTINCT n.node_number
+         FROM node n
+         INNER JOIN junction j
+           ON n.node_number = J.node_number
+         INNER JOIN junction_point jp
+           ON j.id = jp.junction_id
+         INNER JOIN roadway_point rp
+           ON jp.roadway_point_id = rp.id
+         INNER JOIN roadway r
+           ON rp.roadway_number = r.roadway_number
+         INNER JOIN roadway_changes rc
+           ON (r.road_number = rc.new_road_number
+             AND r.road_part_number = rc.NEW_road_part_number)
+         WHERE rc.project_id = $projectId
+         AND r.valid_to IS NULL
+         AND r.end_date IS NULL
+         AND jp.valid_to IS NULL
+         AND n.valid_to IS NULL
        UNION
-         SELECT DISTINCT N.NODE_NUMBER
-         FROM NODE N
-         INNER JOIN JUNCTION J
-           ON N.NODE_NUMBER = J.NODE_NUMBER
-         INNER JOIN JUNCTION_POINT JP
-           ON J.ID = JP.JUNCTION_ID
-         INNER JOIN ROADWAY_POINT RP
-           ON JP.ROADWAY_POINT_ID = RP.ID
-         INNER JOIN ROADWAY R
-           ON RP.ROADWAY_NUMBER = R.ROADWAY_NUMBER
-         INNER JOIN ROADWAY_CHANGES RC
-           ON (R.ROAD_NUMBER = RC.OLD_ROAD_NUMBER AND RC.NEW_ROAD_NUMBER IS NULL
-             AND R.ROAD_PART_NUMBER = RC.OLD_ROAD_PART_NUMBER)
-         WHERE RC.PROJECT_ID = $projectId
-         AND R.VALID_TO IS NULL
-         AND R.END_DATE IS NULL
-         AND JP.VALID_TO IS NULL
-         AND N.VALID_TO IS NULL
+         SELECT DISTINCT n.node_number
+         FROM node n
+         INNER JOIN junction j
+           ON n.node_number = J.node_number
+         INNER JOIN junction_point jp
+           ON j.id = jp.junction_id
+         INNER JOIN roadway_point rp
+           ON jp.roadway_point_id = rp.id
+         INNER JOIN roadway r
+           ON rp.roadway_number = r.roadway_number
+         INNER JOIN roadway_changes rc
+           ON (r.road_number = rc.old_road_number AND rc.new_road_number IS NULL
+             AND r.road_part_number = rc.old_road_part_number)
+         WHERE rc.project_id = $projectId
+         AND r.valid_to IS NULL
+         AND r.end_date IS NULL
+         AND jp.valid_to IS NULL
+         AND n.valid_to IS NULL
        UNION
-         SELECT DISTINCT N.NODE_NUMBER
-         FROM NODE N
-         INNER JOIN NODE_POINT NP
-           ON N.NODE_NUMBER = NP.NODE_NUMBER
-         INNER JOIN ROADWAY_POINT RP
-           ON NP.ROADWAY_POINT_ID = RP.ID
-         INNER JOIN ROADWAY R
-           ON RP.ROADWAY_NUMBER = R.ROADWAY_NUMBER
-         INNER JOIN ROADWAY_CHANGES RC
-           ON (R.ROAD_NUMBER = RC.NEW_ROAD_NUMBER
-             AND R.ROAD_PART_NUMBER = RC.NEW_ROAD_PART_NUMBER)
-         WHERE RC.PROJECT_ID = $projectId
-         AND R.VALID_TO IS NULL
-         AND R.END_DATE IS NULL
-         AND NP.VALID_TO IS NULL
-         AND N.VALID_TO IS NULL
+         SELECT DISTINCT n.node_number
+         FROM node n
+         INNER JOIN node_point np
+           ON n.node_number = np.node_number
+         INNER JOIN roadway_point rp
+           ON np.roadway_point_id = rp.id
+         INNER JOIN roadway r
+           ON rp.roadway_number = r.roadway_number
+         INNER JOIN roadway_changes rc
+           ON (r.road_number = rc.new_road_number
+             AND r.road_part_number = rc.NEW_road_part_number)
+         WHERE rc.project_id = $projectId
+         AND r.valid_to IS NULL
+         AND r.end_date IS NULL
+         AND np.valid_to IS NULL
+         AND n.valid_to IS NULL
        UNION
-         SELECT DISTINCT N.NODE_NUMBER
-         FROM NODE N
-         INNER JOIN NODE_POINT NP
-           ON N.NODE_NUMBER = NP.NODE_NUMBER
-         INNER JOIN ROADWAY_POINT RP
-           ON NP.ROADWAY_POINT_ID = RP.ID
-         INNER JOIN ROADWAY R
-           ON RP.ROADWAY_NUMBER = R.ROADWAY_NUMBER
-         INNER JOIN ROADWAY_CHANGES RC
-           ON (R.ROAD_NUMBER = RC.OLD_ROAD_NUMBER AND RC.NEW_ROAD_NUMBER IS NULL
-             AND R.ROAD_PART_NUMBER = RC.OLD_ROAD_PART_NUMBER)
-         WHERE RC.PROJECT_ID = $projectId
-         AND R.VALID_TO IS NULL
-         AND R.END_DATE IS NULL
-         AND NP.VALID_TO IS NULL
-         AND N.VALID_TO IS NULL
+         SELECT DISTINCT n.node_number
+         FROM node N
+         INNER JOIN node_point np
+           ON n.node_number = np.node_number
+         INNER JOIN roadway_point rp
+           ON np.roadway_point_id = rp.id
+         INNER JOIN roadway r
+           ON rp.roadway_number = r.roadway_number
+         INNER JOIN roadway_changes rc
+           ON (r.road_number = rc.old_road_number AND rc.new_road_number IS NULL
+             AND r.road_part_number = rc.old_road_part_number)
+         WHERE rc.project_id = $projectId
+         AND r.valid_to IS NULL
+         AND r.end_date IS NULL
+         AND np.valid_to IS NULL
+         AND n.valid_to IS NULL
                """
     runSelectQuery(query.map(rs => rs.long(1)))
   }

@@ -3,9 +3,7 @@ package fi.vaylavirasto.viite.dao
 import org.joda.time.DateTime
 import scalikejdbc._
 import scalikejdbc.jodatime.JodaWrappedResultSet.fromWrappedResultSetToJodaWrappedResultSet
-
 import java.sql.Date
-
 
 case class RoadName(id: Long, roadNumber: Long, roadName: String, startDate: Option[DateTime], endDate: Option[DateTime] = None,
                     validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None, createdBy: String)
@@ -15,14 +13,14 @@ object RoadName extends SQLSyntaxSupport[RoadName] {
   override val tableName = "ROAD_NAME"
 
   def apply(rs: WrappedResultSet): RoadName = RoadName(
-    id = rs.long("id"),
-    roadNumber = rs.long("road_number"),
-    roadName = rs.string("road_name"),
-    startDate = rs.jodaDateTimeOpt("start_date"),
-    endDate = rs.jodaDateTimeOpt("end_date"),
-    validFrom = rs.jodaDateTimeOpt("valid_from"),
-    validTo = rs.jodaDateTimeOpt("valid_to"),
-    createdBy = rs.string("created_by")
+    id          = rs.long("id"),
+    roadNumber  = rs.long("road_number"),
+    roadName    = rs.string("road_name"),
+    startDate   = rs.jodaDateTimeOpt("start_date"),
+    endDate     = rs.jodaDateTimeOpt("end_date"),
+    validFrom   = rs.jodaDateTimeOpt("valid_from"),
+    validTo     = rs.jodaDateTimeOpt("valid_to"),
+    createdBy   = rs.string("created_by")
   )
 }
 case class RoadNameForRoadAddressBrowser(ely: Long, roadNumber: Long, roadName: String)
@@ -31,9 +29,9 @@ object RoadNameForRoadAddressBrowserScalike extends SQLSyntaxSupport[RoadNameFor
   override val tableName = "ROAD_NAME"
 
   def apply(rs: WrappedResultSet): RoadNameForRoadAddressBrowser = RoadNameForRoadAddressBrowser(
-    ely = rs.long("ely"),
-    roadNumber = rs.long("road_number"),
-    roadName = rs.string("road_name")
+    ely         = rs.long("ely"),
+    roadNumber  = rs.long("road_number"),
+    roadName    = rs.string("road_name")
   )
 }
 
@@ -122,7 +120,7 @@ object RoadNameDAO extends BaseDAO {
   def expire(id: Long, username: String): Int = {
     logger.debug(s"Expiring road name with id: $id, username: $username")
     val query = sql"""
-      UPDATE ROAD_NAME
+      UPDATE road_name
       SET valid_to = CURRENT_TIMESTAMP, created_by = $username
       WHERE id = $id
     """
@@ -264,7 +262,10 @@ object RoadNameDAO extends BaseDAO {
         ON rw.road_number = ${rn.roadNumber}
         AND rw.valid_to IS NULL $rwDateCondition
       WHERE ${rn.validTo} IS NULL
-      $roadNameDateCondition $elyCondition $roadNumberCondition $roadPartCondition
+      $roadNameDateCondition
+      $elyCondition
+      $roadNumberCondition
+      $roadPartCondition
       ORDER BY rw.ely, rw.road_number
     """
     }
