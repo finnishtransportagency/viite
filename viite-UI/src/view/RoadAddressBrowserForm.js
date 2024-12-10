@@ -90,7 +90,9 @@
         }
 
         function createExcelDownloadButton() {
-            return '<button id="exportAsExcelFile" class="download-excel btn" disabled>Lataa Excelinä <i class="fas fa-file-excel"></i></button>';
+            //TODO VIITE-3269 CSV export to replace old Excel export
+            //return '<button id="exportAsExcelFile" class="download-excel btn" disabled>Lataa Excelinä <i class="fas fa-file-excel"></i></button>';
+            return '';
         }
 
         function createSearchButton(id) {
