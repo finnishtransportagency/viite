@@ -917,7 +917,7 @@ class RoadwayDAO extends BaseDAO {
       rw.copy(id = newId)
     }
 
-    // Assign roadwayNumber if needed
+    // Create roadway numbers for the new roadways if needed
     val roadwaysWithNumbers = createRoadways.map { roadway =>
       val roadwayNumber = if (roadway.roadwayNumber == NewIdValue) {
         Sequences.nextRoadwayNumber
