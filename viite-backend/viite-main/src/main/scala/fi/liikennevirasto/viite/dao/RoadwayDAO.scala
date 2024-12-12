@@ -1,20 +1,18 @@
 package fi.liikennevirasto.viite.dao
 
-import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.BaseCalibrationPoint
 import fi.liikennevirasto.viite.model.RoadAddressLinkLike
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
-import fi.vaylavirasto.viite.dao.{BaseDAO, Queries, Sequences}
+import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point, Vector3d}
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, CalibrationPointType, Discontinuity, LinkGeomSource, RoadPart, SideCode, Track}
 import fi.vaylavirasto.viite.postgis.MassQuery
 import fi.vaylavirasto.viite.util.DateTimeFormatters.{basicDateFormatter, dateOptTimeFormatter}
 import org.joda.time.DateTime
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
-import slick.jdbc.StaticQuery.interpolation
+import scalikejdbc._
+import scalikejdbc.jodatime.JodaWrappedResultSet.fromWrappedResultSetToJodaWrappedResultSet
 
 sealed trait CalibrationCode {
   def value: Int
@@ -912,47 +910,72 @@ class RoadwayDAO extends BaseDAO {
   }
 
   def create(roadways: Iterable[Roadway]): Seq[Long] = {
-    val roadwayPS = dynamicSession.prepareStatement(
-      """
-        insert into ROADWAY (id, roadway_number, road_number, road_part_number,
-        TRACK, start_addr_m, end_addr_m, reversed, discontinuity, start_date, end_date, created_by,
-        ADMINISTRATIVE_CLASS, ely, terminated) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      """)
+    val column = Roadway.column
     val (ready, idLess) = roadways.partition(_.id != NewIdValue)
-    val plIds = Sequences.fetchRoadwayIds(idLess.size)
-    val createRoadways = ready ++ idLess.zip(plIds).map(x =>
-      x._1.copy(id = x._2)
-    )
-    createRoadways.foreach { case address =>
-      val roadwayNumber = if (address.roadwayNumber == NewIdValue) {
+    val newIds = Sequences.fetchRoadwayIds(idLess.size)
+    val createRoadways = ready ++ idLess.zip(newIds).map { case (rw, newId) =>
+      rw.copy(id = newId)
+    }
+
+    // Assign new roadway numbers to any roadways that don't have one
+    val roadwaysWithNumbers = createRoadways.map { roadway =>
+      val roadwayNumber = if (roadway.roadwayNumber == NewIdValue) {
         Sequences.nextRoadwayNumber
       } else {
-        address.roadwayNumber
+        roadway.roadwayNumber
       }
-      roadwayPS.setLong(1, address.id)
-      roadwayPS.setLong(2, roadwayNumber)
-      roadwayPS.setLong(3, address.roadPart.roadNumber)
-      roadwayPS.setLong(4, address.roadPart.partNumber)
-      roadwayPS.setInt(5, address.track.value)
-      roadwayPS.setLong(6, address.addrMRange.start)
-      roadwayPS.setLong(7, address.addrMRange.end)
-      roadwayPS.setInt(8, if (address.reversed) 1 else 0)
-      roadwayPS.setInt(9, address.discontinuity.value)
-      roadwayPS.setDate(10, new java.sql.Date(address.startDate.getMillis))
-      if (address.endDate.isDefined) {
-        roadwayPS.setDate(11, new java.sql.Date(address.endDate.get.getMillis))
-      } else {
-        roadwayPS.setNull(11, java.sql.Types.DATE)
-      }
-      roadwayPS.setString(12, address.createdBy)
-      roadwayPS.setInt(13, address.administrativeClass.value)
-      roadwayPS.setLong(14, address.ely)
-      roadwayPS.setInt(15, address.terminated.value)
-      roadwayPS.addBatch()
+      roadway.copy(roadwayNumber = roadwayNumber)
     }
-    roadwayPS.executeBatch()
-    roadwayPS.close()
-    createRoadways.map(_.id).toSeq
+
+    // Prepare batch parameters
+    val batchParams: Seq[Seq[Any]] = roadwaysWithNumbers.map { roadway =>
+      Seq(
+        roadway.id,
+        roadway.roadwayNumber,
+        roadway.roadPart.roadNumber,
+        roadway.roadPart.partNumber,
+        roadway.track.value,
+        roadway.addrMRange.start,
+        roadway.addrMRange.end,
+        if (roadway.reversed) 1 else 0,
+        roadway.discontinuity.value,
+        new java.sql.Date(roadway.startDate.getMillis),
+        roadway.endDate.map(date => new java.sql.Date(date.getMillis)).orNull,
+        roadway.createdBy,
+        roadway.administrativeClass.value,
+        roadway.ely,
+        roadway.terminated.value
+      )
+    }.toSeq
+
+    // Construct the SQL insert query
+    val insertQuery = sql"""
+      INSERT INTO ROADWAY (
+        ${column.id},
+        ${column.roadwayNumber},
+        road_number,
+        road_part_number,
+        ${column.track},
+        start_addr_m,
+        end_addr_m,
+        ${column.reversed},
+        ${column.discontinuity},
+        ${column.startDate},
+        ${column.endDate},
+        ${column.createdBy},
+        ${column.administrativeClass},
+        ${column.ely},
+        ${column.terminated}
+      ) VALUES (
+        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+      )
+    """
+
+    // Execute the batch update
+    runBatchUpdateToDb(insertQuery, batchParams)
+
+    // Return the list of IDs
+    roadwaysWithNumbers.map(_.id).toSeq
   }
 
   // TODO Instead of returning Option[(Long, Long, ...)] return Option[RoadPartInfo]
