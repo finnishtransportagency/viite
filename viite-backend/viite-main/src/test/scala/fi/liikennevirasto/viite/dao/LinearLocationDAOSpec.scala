@@ -3,9 +3,10 @@ package fi.liikennevirasto.viite.dao
 import java.sql.BatchUpdateException
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
+import fi.vaylavirasto.viite.dao.Sequences
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, CalibrationPointLocation, CalibrationPointType, Discontinuity, LinkGeomSource, RoadPart, SideCode, Track}
-import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
 import org.joda.time.DateTime
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
@@ -76,7 +77,7 @@ class LinearLocationDAOSpec extends AnyFunSuite with Matchers {
 
     test("Test create When creating new linear location Then read it successfully from the database") {
     runWithRollback {
-      val id = linearLocationDAO.getNextLinearLocationId
+      val id = Sequences.nextLinearLocationId
       val orderNumber = 1
       val linkId = 10L.toString
       val startMValue = 0.0
@@ -126,7 +127,7 @@ class LinearLocationDAOSpec extends AnyFunSuite with Matchers {
 
   test("Test expire When expiring linear location Then linear location validTo should not be empty") {
     runWithRollback {
-      val (id1, id2) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
+      val (id1, id2) = (Sequences.nextLinearLocationId, Sequences.nextLinearLocationId)
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1)))
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = 9999L.toString)))
 
@@ -148,7 +149,7 @@ class LinearLocationDAOSpec extends AnyFunSuite with Matchers {
 
   test("Test expire When expiring linear location by id Then linear location validTo should not be empty") {
     runWithRollback {
-      val (id1, id2) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
+      val (id1, id2) = (Sequences.nextLinearLocationId, Sequences.nextLinearLocationId)
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1)))
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = 9999L.toString)))
 
@@ -172,14 +173,14 @@ class LinearLocationDAOSpec extends AnyFunSuite with Matchers {
 
   test("Test expireByLinkId When expiring linear location with no linkid given Then should return none") {
     runWithRollback {
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = linearLocationDAO.getNextLinearLocationId)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = Sequences.nextLinearLocationId)))
       linearLocationDAO.expireByLinkId(Set()) should be(0)
     }
   }
 
   test("Test expireByLinkId When expiring linear location by linkid Then linear location validTo should not be empty") {
     runWithRollback {
-      val (id1, id2) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
+      val (id1, id2) = (Sequences.nextLinearLocationId, Sequences.nextLinearLocationId)
       val linkId = 1000L.toString
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId)))
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = 9999L.toString)))
@@ -203,7 +204,7 @@ class LinearLocationDAOSpec extends AnyFunSuite with Matchers {
 
   test("Test fetchById When fetching linear location by id Then should return linear location with corresponding id") {
     runWithRollback {
-      val (id1, id2, id3) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
+      val (id1, id2, id3) = (Sequences.nextLinearLocationId, Sequences.nextLinearLocationId, Sequences.nextLinearLocationId)
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = 111111111L.toString)))
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = 222222222L.toString)))
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, linkId = 333333333L.toString)))
@@ -229,7 +230,7 @@ class LinearLocationDAOSpec extends AnyFunSuite with Matchers {
 
   test("Test fetchById When fetching linear location by id Then should return linear location with corresponding id v2") {
     runWithRollback {
-      val (id1, id2, id3) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
+      val (id1, id2, id3) = (Sequences.nextLinearLocationId, Sequences.nextLinearLocationId, Sequences.nextLinearLocationId)
       val (linkId1, linkId2) = (111111111L.toString, 222222222L.toString)
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId1)))
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId1, startMValue = 200.0, endMValue = 300.0)))
@@ -250,7 +251,7 @@ class LinearLocationDAOSpec extends AnyFunSuite with Matchers {
 
   test("Test fetchById When fetching linear location by id including floating Then should return linear locations with corresponding id") {
     runWithRollback {
-      val (id1, id2, id3) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
+      val (id1, id2, id3) = (Sequences.nextLinearLocationId, Sequences.nextLinearLocationId, Sequences.nextLinearLocationId)
       val (linkId1, linkId2) = (111111111L.toString, 222222222L.toString)
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId1)))
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId1, startMValue = 200.0, endMValue = 300.0)))
@@ -289,7 +290,7 @@ class LinearLocationDAOSpec extends AnyFunSuite with Matchers {
 
   test("Test fetchRoadwayByLinkId When fetching roadways by linkid Then should return roadways with corresponding linkids") {
     runWithRollback {
-      val (id1, id2, id3, id4) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
+      val (id1, id2, id3, id4) = (Sequences.nextLinearLocationId, Sequences.nextLinearLocationId, Sequences.nextLinearLocationId, Sequences.nextLinearLocationId)
       val (linkId1, linkId2) = (111111111L.toString, 222222222L.toString)
       val roadwayNumber = 11111111L
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId1, roadwayNumber = roadwayNumber)))
@@ -313,7 +314,7 @@ class LinearLocationDAOSpec extends AnyFunSuite with Matchers {
 
   test("Test fetchRoadwayByLinkId When fetching roadways by linkid including floatings Then should return roadways with corresponding linkids") {
     runWithRollback {
-      val (id1, id2, id3, id4) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
+      val (id1, id2, id3, id4) = (Sequences.nextLinearLocationId, Sequences.nextLinearLocationId, Sequences.nextLinearLocationId, Sequences.nextLinearLocationId)
       val (linkId1, linkId2) = (111111111L.toString, 222222222L.toString)
       val roadwayNumber = 111111L
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId1, roadwayNumber = roadwayNumber)))
@@ -345,7 +346,7 @@ class LinearLocationDAOSpec extends AnyFunSuite with Matchers {
 
   test("Test update When updating linear location values Then new values should be updated") {
     runWithRollback {
-      val (id1, id2) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
+      val (id1, id2) = (Sequences.nextLinearLocationId, Sequences.nextLinearLocationId)
       val (linkId1, linkId2) = (111111111L.toString, 222222222L.toString)
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId1)))
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId2)))
@@ -399,7 +400,7 @@ class LinearLocationDAOSpec extends AnyFunSuite with Matchers {
 
   test("Test update When updating linear location without geometry Then new values should be updated") {
     runWithRollback {
-      val (id1, id2) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
+      val (id1, id2) = (Sequences.nextLinearLocationId, Sequences.nextLinearLocationId)
       val (linkId1, linkId2) = (111111111L.toString, 222222222L.toString)
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId1)))
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId2)))
@@ -441,7 +442,7 @@ class LinearLocationDAOSpec extends AnyFunSuite with Matchers {
 
   test("Test updateGeometry When updating linear location geometry with no flipping of the side code Then geometry should be updated") {
     runWithRollback {
-      val (id1, id2) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
+      val (id1, id2) = (Sequences.nextLinearLocationId, Sequences.nextLinearLocationId)
       val (linkId1, linkId2) = (111111111L.toString, 222222222L.toString)
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId1, geometry = Seq(Point(0.0, 0.0), Point(0.0, 100.0)))))
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId2)))
@@ -475,7 +476,7 @@ class LinearLocationDAOSpec extends AnyFunSuite with Matchers {
 
   test("Test updateGeometry When updating linear location geometry with flipping of the side code Then geometry should be updated") {
     runWithRollback {
-      val (id1, id2) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
+      val (id1, id2) = (Sequences.nextLinearLocationId, Sequences.nextLinearLocationId)
       val (linkId1, linkId2) = (111111111L.toString, 222222222L.toString)
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId1, geometry = Seq(Point(0.0, 0.0), Point(0.0, 100.0)))))
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId2)))
@@ -509,7 +510,7 @@ class LinearLocationDAOSpec extends AnyFunSuite with Matchers {
 
   test("Test updateGeometry When updating linear location geometry with flipping of the side code in horizontal case Then geometry should be updated") {
     runWithRollback {
-      val (id1, id2) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
+      val (id1, id2) = (Sequences.nextLinearLocationId, Sequences.nextLinearLocationId)
       val (linkId1, linkId2) = (111111111L.toString, 222222222L.toString)
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId1, geometry = Seq(Point(0.0, 0.0), Point(100.0, 0.0)))))
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId2)))
@@ -551,7 +552,7 @@ class LinearLocationDAOSpec extends AnyFunSuite with Matchers {
 
   test("Test queryById When querying floating by id Then should return floating with corresponding id") {
     runWithRollback {
-      val id1 = linearLocationDAO.getNextLinearLocationId
+      val id1 = Sequences.nextLinearLocationId
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1)))
       linearLocationDAO.expireByIds(Set(id1))
 
@@ -571,7 +572,7 @@ class LinearLocationDAOSpec extends AnyFunSuite with Matchers {
 
   test("Test getRoadwayNumbersFromLinearLocation When fetching roadwaynumbers from linear locations Then should return roadwaynumbers") {
     runWithRollback {
-      val (id1, id2, id3) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
+      val (id1, id2, id3) = (Sequences.nextLinearLocationId, Sequences.nextLinearLocationId, Sequences.nextLinearLocationId)
       val (roadwayNumber1, roadwayNumber2, roadwayNumber3) = (100000001L, 100000002L, 100000003L)
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, roadwayNumber = roadwayNumber1)))
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, roadwayNumber = roadwayNumber2)))
@@ -584,7 +585,7 @@ class LinearLocationDAOSpec extends AnyFunSuite with Matchers {
 
   test("Test getLinearLocationsByFilter When fetching linear locations with filter withLinkIdAndMeasure Then should return correct linear locations") {
     runWithRollback {
-      val (id1, id2, id3) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
+      val (id1, id2, id3) = (Sequences.nextLinearLocationId, Sequences.nextLinearLocationId, Sequences.nextLinearLocationId)
       val linkId = 111111111L.toString
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId, startMValue = 0.0, endMValue = 100.0)))
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId, startMValue = 100.0, endMValue = 200.0)))
@@ -601,7 +602,7 @@ class LinearLocationDAOSpec extends AnyFunSuite with Matchers {
 
   test("Test getLinearLocationsByFilter When fetching linear locations by withRoadwayNumbers filter Then should return correct linear locations") {
     runWithRollback {
-      val (id1, id2, id3) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
+      val (id1, id2, id3) = (Sequences.nextLinearLocationId, Sequences.nextLinearLocationId, Sequences.nextLinearLocationId)
       val (roadwayNumber1, roadwayNumber2, roadwayNumber3) = (100000001L, 100000002L, 100000003L)
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, roadwayNumber = roadwayNumber1)))
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, roadwayNumber = roadwayNumber2)))
@@ -620,7 +621,7 @@ class LinearLocationDAOSpec extends AnyFunSuite with Matchers {
 
   test("Test fetchByBoundingBox When fetching linear locations with bounding box query Then should return locations in bounding box") {
     runWithRollback {
-      val (id1, id2, id3) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
+      val (id1, id2, id3) = (Sequences.nextLinearLocationId, Sequences.nextLinearLocationId, Sequences.nextLinearLocationId)
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = 111111111L.toString)))
       val linkId = 222222222L.toString
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId, geometry = Seq(Point(1000.0, 1000.0), Point(1100.0, 1000.0)))))
@@ -633,7 +634,7 @@ class LinearLocationDAOSpec extends AnyFunSuite with Matchers {
 
   test("Test fetchByRoadAddress When fetching linear locations Then should return locations in that road address") {
     runWithRollback {
-      val (id1, id2) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
+      val (id1, id2) = (Sequences.nextLinearLocationId, Sequences.nextLinearLocationId)
       val roadwayNumber1 = 11111L
       val roadPart = RoadPart(99999 ,1)
       val linkId1 = 111111111L.toString
@@ -650,7 +651,7 @@ class LinearLocationDAOSpec extends AnyFunSuite with Matchers {
 
   test("Test fetchRoadwayByBoundingBox When fetching roadways with bounding box query Then should return roadways in bounding box") {
     runWithRollback {
-      val (id1, id2, id3) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
+      val (id1, id2, id3) = (Sequences.nextLinearLocationId, Sequences.nextLinearLocationId, Sequences.nextLinearLocationId)
       val roadwayNumber = 11111L
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = 111111111L.toString, roadwayNumber = roadwayNumber)))
       val linkId = 222222222L.toString
@@ -665,7 +666,7 @@ class LinearLocationDAOSpec extends AnyFunSuite with Matchers {
 
   test("Test fetchRoadwayByBoundingBox When fetching roadways by bounding box with roadNumberFilter Then should return correct roadways in bounding box") {
     runWithRollback {
-      val (id1, id2, id3) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
+      val (id1, id2, id3) = (Sequences.nextLinearLocationId, Sequences.nextLinearLocationId, Sequences.nextLinearLocationId)
       val roadwayNumber1 = 11111L
       val roadwayNumber2 = 22222L
       val linkId1 = 111111111L.toString
