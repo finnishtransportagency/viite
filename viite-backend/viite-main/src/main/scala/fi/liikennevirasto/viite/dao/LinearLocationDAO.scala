@@ -308,7 +308,7 @@ class LinearLocationDAO extends BaseDAO {
           val query =
             sql"""
                 $selectFromLinearLocation
-                JOIN $idTableName i on i.id = loc.id
+                JOIN $idTableName i ON i.id = loc.id
                 $validToFilter
               """
           queryList(query)
@@ -428,7 +428,7 @@ class LinearLocationDAO extends BaseDAO {
             $selectFromLinearLocation
             WHERE loc.valid_to IS NULL and loc.roadway_number IN (
               SELECT roadway_number FROM linear_location
-              WHERE valid_to IS NULL and link_id IN ($linkIds)
+              WHERE valid_to IS NULL AND link_id IN ($linkIds)
               )
           """
       queryList(query)
@@ -575,9 +575,9 @@ class LinearLocationDAO extends BaseDAO {
   def expireByIds(ids: Set[Long]): Int = {
     val query =
       sql"""
-          Update LINEAR_LOCATION
-          Set valid_to = current_timestamp
-          WHERE valid_to IS NULL and id in ($ids)
+          UPDATE LINEAR_LOCATION
+          SET valid_to = current_timestamp
+          WHERE valid_to IS NULL AND id IN ($ids)
         """
     if (ids.isEmpty)
       0
@@ -681,7 +681,7 @@ class LinearLocationDAO extends BaseDAO {
   def getRoadwayNumbersFromLinearLocation: Seq[Long] = {
     val query =
       sql"""
-        SELECT distinct(loc.roadway_number)
+        SELECT DISTINCT(loc.roadway_number)
         FROM linear_location loc
         ORDER BY loc.roadway_number ASC
       """
@@ -696,18 +696,19 @@ class LinearLocationDAO extends BaseDAO {
   }
 
   def withLinkIdAndMeasure(linkId: String, startM: Option[Double], endM: Option[Double]): SQLSyntax = {
-    val startFilter = startM.map(s => sqls"AND loc.start_measure <= $s").getOrElse(sqls"")
-    val endFilter = endM.map(e => sqls"AND loc.end_measure >= $e").getOrElse(sqls"")
+    val startFilter = startM.map(s => sqls"AND loc.start_measure  <= $s").getOrElse(sqls"")
+    val endFilter   = endM.map(e   => sqls"AND loc.end_measure    >= $e").getOrElse(sqls"")
 
-    sqls"WHERE loc.link_id = $linkId $startFilter $endFilter ${withValidityCheck()}"
+    sqls"""
+          WHERE loc.link_id = $linkId
+          $startFilter
+          $endFilter
+          AND loc.valid_to IS NULL
+          """
   }
 
   def withRoadwayNumbers(fromRoadwayNumber: Long, toRoadwayNumber: Long): SQLSyntax = {
-    sqls"WHERE loc.roadway_number >= $fromRoadwayNumber AND loc.roadway_number <= $toRoadwayNumber ${withValidityCheck()}"
-  }
-
-  def withValidityCheck(): SQLSyntax = {
-    sqls" AND loc.valid_to IS NULL "
+    sqls"WHERE loc.roadway_number >= $fromRoadwayNumber AND loc.roadway_number <= $toRoadwayNumber"
   }
 
   def fetchByBoundingBox(boundingRectangle: BoundingRectangle): Seq[LinearLocation] = {
@@ -733,13 +734,13 @@ class LinearLocationDAO extends BaseDAO {
       val query =
         sql"""
             $selectFromLinearLocation
-            JOIN ROADWAY rw ON loc.roadway_number = rw.roadway_number
+            JOIN roadway rw ON loc.roadway_number = rw.roadway_number
             WHERE rw.valid_to IS NULL
               AND rw.end_date IS NULL
               AND loc.valid_to IS NULL
-              AND rw.ROAD_NUMBER = ${roadPart.roadNumber}
-              AND rw.ROAD_PART_NUMBER = ${roadPart.partNumber}
-              AND rw.START_ADDR_M <= $addressM AND rw.END_ADDR_M >= $addressM
+              AND rw.road_number = ${roadPart.roadNumber}
+              AND rw.road_part_number = ${roadPart.partNumber}
+              AND rw.start_addr_m <= $addressM AND rw.end_addr_m >= $addressM
               $trackFilter
             ORDER BY loc.ORDER_NUMBER
           """
@@ -766,8 +767,8 @@ class LinearLocationDAO extends BaseDAO {
         sqls"""
               SELECT iloc.roadway_number
               FROM linear_location iloc
-              INNER JOIN ROADWAY ra on ra.roadway_number = iloc.roadway_number
-              WHERE $roadNumberLimitsFilter and iloc.valid_to IS NULL
+              INNER JOIN ROADWAY ra ON ra.roadway_number = iloc.roadway_number
+              WHERE $roadNumberLimitsFilter AND iloc.valid_to IS NULL
               AND $boundingBoxFilter
               """
       }
@@ -831,25 +832,6 @@ class LinearLocationDAO extends BaseDAO {
     queryList(query)
   }
 
-  def fetchCurrentLinearLocationsByMunicipality(municipality: Int): Seq[LinearLocation] = {
-    val query =
-      sql"""
-            $selectFromLinearLocation
-            WHERE loc.valid_to IS NULL AND loc.roadway_number IN (
-              SELECT roadway_number
-              FROM ROADWAY
-              WHERE ely = (
-                SELECT ely_nro
-                FROM municipality
-                WHERE id = $municipality
-                )
-              AND valid_to IS NULL
-              AND end_date IS NULL
-              )
-         """
-    queryList(query)
-  }
-
   def fetchUpdatedSince(sinceDate: DateTime): Seq[LinearLocation] = {
     time(logger, "Fetch linear locations updated since date") {
       val query =
@@ -861,15 +843,6 @@ class LinearLocationDAO extends BaseDAO {
 
       runSelectQuery(query.map(LinearLocation.apply))
     }
-  }
-
-  private def withUpdatedSince(sinceDate: DateTime)(query: String): String = {
-    val sinceString = sinceDate.toString("yyyy-MM-dd")
-    sqls"""$query
-          WHERE loc.valid_from >= to_date($sinceString, 'YYYY-MM-DD')
-            OR (loc.valid_to IS NOT NULL
-            AND loc.valid_to >= to_date($sinceString, 'YYYY-MM-DD'))
-            """
   }
 
   /**

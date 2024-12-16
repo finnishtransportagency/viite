@@ -403,7 +403,8 @@ object Roadway extends SQLSyntaxSupport[Roadway] {
     discontinuity       = Discontinuity(rs.int("discontinuity")),
     addrMRange          = AddrMRange(
       start             = rs.long("start_addr_m"),
-      end               = rs.long("end_addr_m")),
+      end               = rs.long("end_addr_m")
+    ),
     reversed            = rs.boolean("reversed"),
     startDate           = rs.jodaDateTime("start_date"),
     endDate             = rs.jodaDateTimeOpt("end_date"),
@@ -424,11 +425,13 @@ object TrackForRoadAddressBrowser extends SQLSyntaxSupport[TrackForRoadAddressBr
     ely                 = rs.long("ely"),
     roadPart            = RoadPart(
       roadNumber        = rs.long("road_number"),
-      partNumber        = rs.long("road_part_number")),
+      partNumber        = rs.long("road_part_number")
+    ),
     track               = rs.long("track"),
     addrMRange          = AddrMRange(
       start             = rs.long("start_addr_m"),
-      end               = rs.long("end_addr_m")),
+      end               = rs.long("end_addr_m")
+    ),
     roadAddressLengthM  = rs.long("length"),
     administrativeClass = rs.long("administrative_class"),
     startDate           = rs.jodaDateTime("start_date")
@@ -448,7 +451,8 @@ object RoadPartForRoadAddressBrowser extends SQLSyntaxSupport[RoadPartForRoadAdd
     ),
     addrMRange = AddrMRange(
       start            = rs.long("start_addr_m"),
-      end              = rs.long("end_addr_m")),
+      end              = rs.long("end_addr_m")
+    ),
     roadAddressLengthM = rs.long("length"),
     startDate          = rs.jodaDateTime("start_date")
   )
@@ -718,8 +722,7 @@ class RoadwayDAO extends BaseDAO {
             $query
             JOIN $idTableName i ON i.id = a.ROAD_NUMBER
             WHERE a.valid_to IS NULL
-            AND (a.end_date IS NULL
-            OR a.end_date >= CURRENT_DATE)
+            AND (a.end_date IS NULL OR a.end_date >= CURRENT_DATE)
             ORDER BY a.road_number, a.road_part_number, a.start_date
           """
       })
@@ -831,12 +834,9 @@ class RoadwayDAO extends BaseDAO {
     val addressFilter = (startAddrMOption, endAddrMOption) match {
       case (Some(startAddrM), Some(endAddrM)) =>
         sqls"""
-              AND ((a.start_addr_m >= $startAddrM
-              AND a.end_addr_m <= $endAddrM)
-              OR (a.start_addr_m <= $startAddrM
-              AND a.end_addr_m > $startAddrM)
-              OR (a.start_addr_m < $endAddrM
-              AND a.end_addr_m >= $endAddrM))
+              AND ((a.start_addr_m >= $startAddrM AND a.end_addr_m <= $endAddrM)
+              OR (a.start_addr_m <= $startAddrM AND a.end_addr_m > $startAddrM)
+              OR (a.start_addr_m < $endAddrM AND a.end_addr_m >= $endAddrM))
               $trackFilter
               """
       case (Some(startAddrM), _) => sqls"""AND a.end_addr_m > $startAddrM $trackFilter"""
