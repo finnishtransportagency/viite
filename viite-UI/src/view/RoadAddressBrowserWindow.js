@@ -325,13 +325,14 @@
             $('.road-address-browser-modal-overlay').remove();
         }
 
-        function exportDataAsExcelFile() {
+        function exportDataAsCsvFile() {
+            function arrayToCSV(data) {
+                return data.map(row => row.join(";")).join("\n");
+            }
+
             const params = me.getSearchParams();
-            const fileNameString = "Viite_" + params.target + "_" + params.situationDate + "_" + params.ely + "_" + params.roadNumber + "_" + params.minRoadPartNumber + "_" + params.maxRoadPartNumber + ".xlsx";
+            const fileNameString = "Viite_" + params.target + "_" + params.situationDate + "_" + params.ely + "_" + params.roadNumber + "_" + params.minRoadPartNumber + "_" + params.maxRoadPartNumber + ".csv";
             const fileName = fileNameString.replaceAll("undefined", "-");
-            const options = {
-                cellDates: false  // To prevent Sheetjs from converting dates to avoid unwanted formatting
-            };
 
             let data = [];
             switch (params.target) {
@@ -352,22 +353,22 @@
                     break;
                 default:
             }
-            // Create a web worker
-            const worker = new Worker("src/utils/SheetJsWorker.js");
-            // Send data to the web worker to process
-            worker.postMessage([data, options]);
-            applicationModel.addSpinner();
-            worker.onmessage = function(event) { // listen to messages from the web worker
-                const worksheet = event.data;
-                const workbook = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(workbook, worksheet);
-                XLSX.writeFile(workbook, fileName);
-                applicationModel.removeSpinner();
-            };
-            worker.onerror = (event) => {
-                applicationModel.removeSpinner();
-                console.log("There was an error with the web worker!", event.message);
-            };
+            let csvContent = "\uFEFF"; // UTF-8 BOM
+            csvContent += arrayToCSV(data);
+
+            // Create a downloadable CSV file
+            const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;"}); // Create a file like object containing the CSV data
+            const url = URL.createObjectURL(blob); // Create a temporary URL for the file
+            const link = document.createElement("a");
+            link.setAttribute("href", url)
+            link.setAttribute("download", fileName)
+
+            // Append the link and trigger download
+            document.body.appendChild(link);
+            link.click();
+
+            // Cleanup
+            document.body.removeChild(link);
         }
 
         function getData() {
@@ -481,15 +482,12 @@
 
         function showData(table) {
             roadAddrBrowserWindow.append(table);
-            //TODO VIITE-3269 CSV export to replace old Excel export
-            //$('#exportAsExcelFile').prop("disabled", false); // enable Excel download button
+            $('#exportAsCsvFile').prop("disabled", false); // enable CSV download button
         }
 
         function showTableTooBigNotification() {
-            roadAddrBrowserWindow.append($('<p id="tableNotification"><b>Tulostaulu liian suuri</b></p>'));
-            //TODO VIITE-3269 CSV export to replace old Excel export
-            //roadAddrBrowserWindow.append($('<p id="tableNotification"><b>Tulostaulu liian suuri, lataa tulokset Excel-taulukkona</b></p>'));
-            //$('#exportAsExcelFile').prop("disabled", false); // enable Excel download button
+            roadAddrBrowserWindow.append($('<p id="tableNotification"><b>Tulostaulu liian suuri, lataa tulokset CSV-tiedostona</b></p>'));
+            $('#exportAsCsvFile').prop("disabled", false); // enable CSV download button
         }
 
         function showNoResultsFoundNotification() {
@@ -518,11 +516,10 @@
             });
         }
 
-        function clearResultsAndDisableExcelButton() {
+        function clearResultsAndDisableCsvButton() {
             me.setSearchResults([]); // empty the search results
             $('.road-address-browser-window-results-table').remove(); // empty the result table
-            //TODO VIITE-3269 CSV export to replace old Excel export
-            //$('#exportAsExcelFile').prop("disabled", true); //disable Excel download button
+            $('#exportAsCsvFile').prop("disabled", true); //disable CSV download button
             $('#tableNotification').remove(); // remove notification if present
         }
 
@@ -530,7 +527,7 @@
 
             // if any of the input fields change (the input fields are child elements of this wrapper/parent element)
             document.getElementById('roadAddressBrowser').onchange = function () {
-                clearResultsAndDisableExcelButton();
+                clearResultsAndDisableCsvButton();
             };
 
             document.getElementById('roadAddrInputRoad').oninput = function () {
@@ -575,17 +572,16 @@
                 }
             };
 
-            //TODO VIITE-3269 CSV export to replace old Excel export
-            // roadAddrBrowserWindow.on('click', '#exportAsExcelFile', function () {
-            //     exportDataAsExcelFile();
-            //     return false; // cancel form submission
-            // });
+            roadAddrBrowserWindow.on('click', '#exportAsCsvFile', function () {
+                exportDataAsCsvFile();
+                return false; // cancel form submission
+            });
             roadAddrBrowserWindow.on('click', 'button.close', function () {
                 hide();
             });
 
             roadAddrBrowserWindow.on('click', '#fetchRoadAddresses', function () {
-                clearResultsAndDisableExcelButton();
+                clearResultsAndDisableCsvButton();
                 getData();
                 return false; // cancel form submission
             });
