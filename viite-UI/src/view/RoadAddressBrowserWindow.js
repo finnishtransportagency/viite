@@ -327,7 +327,7 @@
 
         function exportDataAsCsvFile() {
             function arrayToCSV(data) {
-                return data.map(row => row.join(";")).join("\n");
+                return data.map((row) => row.join(";")).join("\n");
             }
 
             const params = me.getSearchParams();
@@ -360,8 +360,8 @@
             const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;"}); // Create a file like object containing the CSV data
             const url = URL.createObjectURL(blob); // Create a temporary URL for the file
             const link = document.createElement("a");
-            link.setAttribute("href", url)
-            link.setAttribute("download", fileName)
+            link.setAttribute("href", url);
+            link.setAttribute("download", fileName);
 
             // Append the link and trigger download
             document.body.appendChild(link);
