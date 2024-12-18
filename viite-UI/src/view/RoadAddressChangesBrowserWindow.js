@@ -129,9 +129,9 @@
             const table = document.getElementById("roadAddressChangesBrowserTable");
             let csvContent = "\uFEFF"; // UTF-8 BOM
 
-            for (let row of table.rows) {
-                let rowData = [];
-                for (let cell of row.cells) {
+            for (const row of table.rows) {
+                const rowData = [];
+                for (const cell of row.cells) {
                     rowData.push(cell.innerText);
                 }
                 csvContent += rowData.join(";") + "\n"; // Join cells with commas
@@ -141,8 +141,8 @@
             const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;"}); // Create a file like object containing the CSV data
             const url = URL.createObjectURL(blob); // Create a temporary URL for the file
             const link = document.createElement("a");
-            link.setAttribute("href", url)
-            link.setAttribute("download", fileName)
+            link.setAttribute("href", url);
+            link.setAttribute("download", fileName);
 
             // Append the link and trigger download
             document.body.appendChild(link);
