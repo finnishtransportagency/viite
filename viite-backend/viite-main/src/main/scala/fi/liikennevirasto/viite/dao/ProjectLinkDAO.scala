@@ -268,14 +268,16 @@ class ProjectLinkDAO extends BaseDAO {
     def apply(rs: WrappedResultSet): ProjectLink = {
       // Calculate length of road address to avoid multiple calls to the database
       val roadAddressStartAddrM = rs.longOpt("ra_start_addr_m")
-      val roadAddressEndAddrM = rs.longOpt("ra_end_addr_m")
+      val roadAddressEndAddrM   = rs.longOpt("ra_end_addr_m")
       val roadAddressLength = roadAddressEndAddrM.map { endAddr =>
         endAddr - roadAddressStartAddrM.getOrElse(0L)
       }
 
       new ProjectLink(
         id            = rs.long("id"),
-        roadPart      = RoadPart(rs.long("road_number"), rs.long("road_part_number")),
+        roadPart      = RoadPart(
+          roadNumber  = rs.long("road_number"),
+          partNumber  = rs.long("road_part_number")),
         track         = Track(rs.int("track")),
         discontinuity = Discontinuity(rs.int("discontinuity_type")),
         addrMRange    = AddrMRange(
@@ -321,12 +323,12 @@ class ProjectLinkDAO extends BaseDAO {
           else
             projectRoadwayNumber
         },
-        roadName          = rs.stringOpt("road_name_pl"),
-        roadAddressLength = roadAddressLength,
+        roadName              = rs.stringOpt("road_name_pl"),
+        roadAddressLength     = roadAddressLength,
         roadAddressStartAddrM = roadAddressStartAddrM,
-        roadAddressEndAddrM = roadAddressEndAddrM,
-        roadAddressTrack = rs.intOpt("track").map(Track.apply),
-        roadAddressRoadPart = (rs.longOpt("ra_road_number"), rs.longOpt("ra_road_part_number")) match {
+        roadAddressEndAddrM   = roadAddressEndAddrM,
+        roadAddressTrack      = rs.intOpt("track").map(Track.apply),
+        roadAddressRoadPart   = (rs.longOpt("ra_road_number"), rs.longOpt("ra_road_part_number")) match {
           case (Some(roadNumber), Some(roadPartNumber)) => Some(RoadPart(roadNumber, roadPartNumber))
           case _ => None
         }
