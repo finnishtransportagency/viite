@@ -47,40 +47,45 @@ class ProjectLinkNameDAOSpec extends AnyFunSuite with Matchers with BeforeAndAft
   val mockLinearLocationDAO = MockitoSugar.mock[LinearLocationDAO]
   val mockRoadwayChangesDAO = MockitoSugar.mock[RoadwayChangesDAO]
 
-  val roadAddressServiceRealRoadwayAddressMapper = new RoadAddressService(mockRoadLinkService,
-                                                                          roadwayDAO,
-                                                                          linearLocationDAO,
-                                                                          roadNetworkDAO,
-                                                                          roadwayPointDAO,
-                                                                          nodePointDAO,
-                                                                          junctionPointDAO,
-                                                                          roadwayAddressMapper,
-                                                                          mockEventBus,
-                                                                          frozenKGV = false) {
-
+  val roadAddressServiceRealRoadwayAddressMapper = new RoadAddressService(
+    mockRoadLinkService,
+    roadwayDAO,
+    linearLocationDAO,
+    roadNetworkDAO,
+    roadwayPointDAO,
+    nodePointDAO,
+    junctionPointDAO,
+    roadwayAddressMapper,
+    mockEventBus,
+    frozenKGV = false
+  ) {
     override def runWithReadOnlySession[T](f: => T): T = f
+
     override def runWithTransaction[T](f: => T): T = f
   }
 
-  val projectService = new ProjectService(roadAddressServiceRealRoadwayAddressMapper,
-                                          mockRoadLinkService,
-                                          mockNodesAndJunctionsService,
-                                          roadwayDAO,
-                                          roadwayPointDAO,
-                                          linearLocationDAO,
-                                          projectDAO,
-                                          projectLinkDAO,
-                                          nodeDAO,
-                                          nodePointDAO,
-                                          junctionPointDAO,
-                                          projectReservedPartDAO,
-                                          roadwayChangesDAO,
-                                          roadwayAddressMapper,
-                                          mockEventBus) {
-                                            override def runWithReadOnlySession[T](f: => T): T = f
-                                            override def runWithTransaction[T](f: => T): T = f
-                                            override def runWithFutureTransaction[T](f: => T): Future[T] = Future.successful(f)
-                                          }
+  val projectService = new ProjectService(
+    roadAddressServiceRealRoadwayAddressMapper,
+    mockRoadLinkService,
+    mockNodesAndJunctionsService,
+    roadwayDAO,
+    roadwayPointDAO,
+    linearLocationDAO,
+    projectDAO,
+    projectLinkDAO,
+    nodeDAO,
+    nodePointDAO,
+    junctionPointDAO,
+    projectReservedPartDAO,
+    roadwayChangesDAO,
+    roadwayAddressMapper,
+    mockEventBus) {
+    override def runWithReadOnlySession[T](f: => T): T = f
+
+    override def runWithTransaction[T](f: => T): T = f
+
+    override def runWithFutureTransaction[T](f: => T): Future[T] = Future.successful(f)
+  }
 
   test("Test setProjectRoadName When there is no road/projectlink name and given one new road name Then save should be successful") {
     runWithRollback {
