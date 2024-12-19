@@ -200,7 +200,7 @@ class ProjectLinkDAO extends BaseDAO {
   project_link.roadway_number roadway_number
   from project prj JOIN project_link ON (prj.id = project_link.project_id)
     LEFT JOIN roadway on (roadway.id = project_link.roadway_id)
-    LEFT JOIN Linear_Location ON (Linear_Location.id = project_link.Linear_Location_Id)
+    LEFT JOIN linear_location ON (linear_location.id = project_link.linear_location_id)
     LEFT JOIN road_name rn ON (rn.road_number = project_link.road_number AND rn.end_date IS NULL AND rn.valid_to IS null)
 	  LEFT JOIN project_link_name pln ON (pln.road_number = project_link.road_number AND pln.project_id = project_link.project_id)
 	  """
@@ -257,7 +257,7 @@ class ProjectLinkDAO extends BaseDAO {
           plh.roadway_number AS roadway_number
           FROM project prj JOIN project_link_history plh ON (prj.id = plh.project_id)
             LEFT JOIN roadway ON (roadway.id = plh.roadway_id)
-            LEFT JOIN Linear_Location ON (Linear_Location.id = plh.Linear_Location_Id)
+            LEFT JOIN linear_location ON (linear_location.id = plh.linear_location_id)
             LEFT JOIN road_name rn ON (rn.road_number = plh.road_number AND rn.end_date IS NULL AND rn.valid_to IS null)
         	  LEFT JOIN project_link_name pln ON (pln.road_number = plh.road_number AND pln.project_id = plh.project_id)
      """
@@ -356,7 +356,7 @@ class ProjectLinkDAO extends BaseDAO {
             project_link.roadway_number AS project_roadway_number
           FROM project prj JOIN project_link ON (prj.id = project_link.project_id)
           LEFT JOIN roadway ON (roadway.id = project_link.roadway_id)
-          LEFT JOIN Linear_Location ON (Linear_Location.id = project_link.linear_location_id)
+          LEFT JOIN linear_location ON (linear_location.id = project_link.linear_location_id)
       """
 
   object ProjectRoadLinkChange extends SQLSyntaxSupport [ProjectRoadLinkChange]{
@@ -1076,11 +1076,13 @@ class ProjectLinkDAO extends BaseDAO {
           WHERE project_link.road_part_number=${roadPart.partNumber}
           AND project_link.road_number=${roadPart.roadNumber}
           AND project_link.start_addr_m = (SELECT MIN(project_link.start_addr_m) FROM project_link
-          LEFT JOIN
-          roadway ON ((roadway.road_number = project_link.road_number AND roadway.road_part_number = project_link.road_part_number) OR roadway.id = project_link.roadway_id)
-          LEFT JOIN
-          Linear_Location ON (Linear_Location.id = Project_Link.Linear_Location_Id)
-          WHERE project_link.project_id = $projectId AND ((project_link.road_part_number=${roadPart.partNumber} AND project_link.road_number=${roadPart.roadNumber}) OR project_link.roadway_id = roadway.id))
+          LEFT JOIN roadway ON (
+            (roadway.road_number = project_link.road_number AND roadway.road_part_number = project_link.road_part_number)
+            OR roadway.id = project_link.roadway_id)
+          LEFT JOIN linear_location ON (linear_location.id = project_link.linear_location_id)
+          WHERE project_link.project_id = $projectId
+          AND ((project_link.road_part_number=${roadPart.partNumber}
+          AND project_link.road_number=${roadPart.roadNumber}) OR project_link.roadway_id = roadway.id))
           ORDER BY project_link.road_number, project_link.road_part_number, project_link.start_addr_m, project_link.track
           """
     listQuery(query).headOption
