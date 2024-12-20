@@ -182,10 +182,10 @@ class ProjectLinkDAO extends BaseDAO {
     project_link.ely, project_link.reversed,
     project_link.connected_link_id,
   CASE
-    WHEN status = ${RoadAddressChangeType.NotHandled.value} THEN null
+    WHEN status = ${RoadAddressChangeType.NotHandled.value} THEN NULL
     WHEN status IN (${RoadAddressChangeType.Termination.value}, ${RoadAddressChangeType.Unchanged.value}) THEN roadway.START_DATE
     ELSE prj.start_date END AS start_date,
-  CASE WHEN status = ${RoadAddressChangeType.Termination.value} THEN prj.start_date - 1 ELSE null END as end_date,
+  CASE WHEN status = ${RoadAddressChangeType.Termination.value} THEN prj.start_date - 1 ELSE NULL END as end_date,
   project_link.ADJUSTED_TIMESTAMP,
   CASE
     WHEN rn.road_name IS NOT NULL AND rn.end_date IS NULL AND rn.valid_to IS NULL THEN rn.road_name
@@ -201,7 +201,7 @@ class ProjectLinkDAO extends BaseDAO {
   from project prj JOIN project_link ON (prj.id = project_link.project_id)
     LEFT JOIN roadway on (roadway.id = project_link.roadway_id)
     LEFT JOIN linear_location ON (linear_location.id = project_link.linear_location_id)
-    LEFT JOIN road_name rn ON (rn.road_number = project_link.road_number AND rn.end_date IS NULL AND rn.valid_to IS null)
+    LEFT JOIN road_name rn ON (rn.road_number = project_link.road_number AND rn.end_date IS NULL AND rn.valid_to IS NULL)
 	  LEFT JOIN project_link_name pln ON (pln.road_number = project_link.road_number AND pln.project_id = project_link.project_id)
 	  """
 
@@ -239,10 +239,10 @@ class ProjectLinkDAO extends BaseDAO {
           plh.reversed,
           plh.connected_link_id,
           CASE
-            WHEN status = ${RoadAddressChangeType.NotHandled.value} THEN null
+            WHEN status = ${RoadAddressChangeType.NotHandled.value} THEN NULL
             WHEN status IN (${RoadAddressChangeType.Termination.value}, ${RoadAddressChangeType.Unchanged.value}) THEN roadway.START_DATE
             ELSE prj.start_date END as start_date,
-          CASE WHEN status = ${RoadAddressChangeType.Termination.value} THEN prj.start_date - 1 ELSE null END as end_date,
+          CASE WHEN status = ${RoadAddressChangeType.Termination.value} THEN prj.start_date - 1 ELSE NULL END as end_date,
           plh.adjusted_timestamp,
           CASE
             WHEN rn.road_name IS NOT NULL AND rn.end_date IS NULL AND rn.valid_to IS NULL THEN rn.road_name
@@ -258,7 +258,7 @@ class ProjectLinkDAO extends BaseDAO {
           FROM project prj JOIN project_link_history plh ON (prj.id = plh.project_id)
             LEFT JOIN roadway ON (roadway.id = plh.roadway_id)
             LEFT JOIN linear_location ON (linear_location.id = plh.linear_location_id)
-            LEFT JOIN road_name rn ON (rn.road_number = plh.road_number AND rn.end_date IS NULL AND rn.valid_to IS null)
+            LEFT JOIN road_name rn ON (rn.road_number = plh.road_number AND rn.end_date IS NULL AND rn.valid_to IS NULL)
         	  LEFT JOIN project_link_name pln ON (pln.road_number = plh.road_number AND pln.project_id = plh.project_id)
      """
 
