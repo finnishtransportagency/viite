@@ -4,24 +4,24 @@ import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.client.kgv.FilterOgc.withRoadNumbersFilter
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
 import fi.vaylavirasto.viite.model.{AdministrativeClass, LifecycleStatus, LinkGeomSource, RoadLink, TrafficDirection}
-import fi.vaylavirasto.viite.postgis.PostGISDatabase
-import fi.vaylavirasto.viite.util.DateTimeFormatters.dateOptTimeFormatter
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC
 import org.joda.time.DateTime
 import net.postgis.jdbc.geometry.GeometryBuilder
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
+import org.joda.time.format.DateTimeFormat
+import scalikejdbc._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class ComplementaryLinkDAO extends BaseDAO {
-  val selectFromComplementaryLink =
-    """
-       SELECT id,adminclass,municipalitycode,lifecyclestatus,horizontallength,starttime,versionstarttime,sourcemodificationtime,geometry
+  lazy val selectFromComplementaryLink =
+    sqls"""
+       SELECT id, adminclass, municipalitycode, lifecyclestatus, horizontallength, starttime,
+         versionstarttime, sourcemodificationtime, geometry
        FROM complementary_link_table
     """
 
-  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransactionNewOrExisting(f)
+  def runWithReadOnlySession[T](f: => T): T = PostGISDatabaseScalikeJDBC.runWithReadOnlySession(f)
 
   def extractModifiedAt(attributes: Map[String, Option[DateTime]]): Option[DateTime] = {
     def toLong(anyValue: Option[Any]): Option[Long] = {
@@ -45,29 +45,45 @@ class ComplementaryLinkDAO extends BaseDAO {
     compareDateMillisOptions(lastEditedDate, geometryEditedDate).orElse(createdDate).map(modifiedTime => new DateTime(modifiedTime))
   }
 
-  private implicit val getRoadlink: GetResult[RoadLink] = new GetResult[RoadLink] {
-    def apply(r: PositionedResult): RoadLink = {
-      val UnknownMunicipality = -1
-      val linkId = r.nextString()
-      val administrativeClass = AdministrativeClass(r.nextInt())
-      val municipalityCodeOption = r.nextIntOption()
-      val municipalityCode = if (municipalityCodeOption.isEmpty) UnknownMunicipality else municipalityCodeOption.get
-      val lifecycleStatus = LifecycleStatus(r.nextInt())
-      val length = r.nextDouble()
+  object RoadLink extends SQLSyntaxSupport[RoadLink] {
+    private val UnknownMunicipality = -1
+    private val dateOptTimeFormatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS")
+
+    def apply(rs: WrappedResultSet): RoadLink = {
+      val linkId              = rs.string("id")
+      val administrativeClass = AdministrativeClass(rs.int("administrativeclass"))
+      val municipalityCode    = rs.intOpt("municipalitycode").getOrElse(UnknownMunicipality)
+      val lifecycleStatus     = LifecycleStatus(rs.int("lifecyclestatus"))
+      val length              = rs.double("length")
+
+      // Handle the modified dates
       val modifiedAt = extractModifiedAt(Map(
-        "starttime"              -> r.nextDateOption.map(d => dateOptTimeFormatter.parseDateTime(d.toString)),
-        "versionstarttime"       -> r.nextDateOption.map(d => dateOptTimeFormatter.parseDateTime(d.toString)),
-        "sourcemodificationtime" -> r.nextDateOption.map(d => dateOptTimeFormatter.parseDateTime(d.toString))
+        "starttime"              -> rs.dateOpt("starttime").map(d              => dateOptTimeFormatter.parseDateTime(d.toString)),
+        "versionstarttime"       -> rs.dateOpt("versionstarttime").map(d       => dateOptTimeFormatter.parseDateTime(d.toString)),
+        "sourcemodificationtime" -> rs.dateOpt("sourcemodificationtime").map(d => dateOptTimeFormatter.parseDateTime(d.toString))
       )).map(_.toString())
 
-      val geom = GeometryBuilder.geomFromString(r.nextString())
-      var geometry: Seq[Point] = Seq()
-      for (i <- 1 to geom.numPoints()) {
-        val point = geom.getPoint(i - 1)
-        geometry = geometry :+ Point(point.x, point.y, point.z)
+      // Handle geometry
+      val geomString = rs.string("geometry")
+      val geom = GeometryBuilder.geomFromString(geomString)
+      val geometry = (0 until geom.numPoints()).map { i =>
+        val point = geom.getPoint(i)
+        Point(point.x, point.y, point.z)
       }
 
-      RoadLink(linkId, geometry, length, administrativeClass, TrafficDirection.UnknownDirection, modifiedAt, None, lifecycleStatus, LinkGeomSource.ComplementaryLinkInterface, municipalityCode, "")
+      new RoadLink(
+        linkId              = linkId,
+        geometry            = geometry,
+        length              = length,
+        administrativeClass = administrativeClass,
+        trafficDirection    = TrafficDirection.UnknownDirection,
+        modifiedAt          = modifiedAt,
+        modifiedBy          = None,
+        lifecycleStatus     = lifecycleStatus,
+        linkSource          = LinkGeomSource.ComplementaryLinkInterface,
+        municipalityCode    = municipalityCode,
+        sourceId            = ""
+      )
     }
   }
 
@@ -78,10 +94,13 @@ class ComplementaryLinkDAO extends BaseDAO {
   def fetchByLinkIds(linkIds: Set[String]): List[RoadLink] = {
     if (linkIds.nonEmpty) {
       time(logger, "Fetch complementary data by linkIds") {
-        val sql = s"""$selectFromComplementaryLink WHERE id IN (${linkIds.map(lid => {
-          "'" + lid + "'"
-        }).mkString(", ")})"""
-        withDynTransaction(Q.queryNA[RoadLink](sql).list)
+        val query =
+          sql"""
+              $selectFromComplementaryLink
+              WHERE id IN ($linkIds)
+          """
+        runWithReadOnlySession(runSelectQuery(query.map(RoadLink.apply))
+        )
       }
     } else List()
   }
@@ -95,8 +114,11 @@ class ComplementaryLinkDAO extends BaseDAO {
      */
   def queryByMunicipality(municipality: Int): Seq[RoadLink] = {
     time(logger, s"Fetch complementary data by municipality") {
-      val sql = s"""$selectFromComplementaryLink WHERE municipalitycode = $municipality"""
-      withDynTransaction(Q.queryNA[RoadLink](sql).list)
+      val query = sql"""
+          $selectFromComplementaryLink
+          WHERE municipalitycode = $municipality
+          """
+      runWithReadOnlySession(runSelectQuery(query.map(RoadLink.apply)))
     }
   }
 
@@ -106,8 +128,12 @@ class ComplementaryLinkDAO extends BaseDAO {
   def queryByRoadNumbersAndMunicipality(municipality: Int, roadNumbers: Seq[(Int, Int)]): Seq[RoadLink] = {
     val roadNumberFilters = withRoadNumbersFilter(roadNumbers, includeAllPublicRoads = true)
     time(logger, "Fetch complementary data by road numbers and municipality") {
-      val sql = s"""$selectFromComplementaryLink WHERE municipalitycode = $municipality AND """ + roadNumberFilters
-      withDynTransaction(Q.queryNA[RoadLink](sql).list)
+      val query =
+        sql"""
+          $selectFromComplementaryLink
+          WHERE municipalitycode = $municipality AND roadNumberFilter
+          """
+      runWithReadOnlySession(runSelectQuery(query.map(RoadLink.apply)))
     }
   }
   /**
@@ -120,12 +146,18 @@ class ComplementaryLinkDAO extends BaseDAO {
   /**
     * Returns road links in bounding box area. Municipalities are optional.
     */
-  def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int], filter: Option[String]): Seq[RoadLink] = {
-    val geometry = s"geometry && ST_MakeEnvelope(${bounds.leftBottom.x},${bounds.leftBottom.y},${bounds.rightTop.x},${bounds.rightTop.y},3067)"
-    val municipalityFilter = if (municipalities.nonEmpty) Some(s" AND municipalitycode IN (${municipalities.mkString(",")})") else ""
+  def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int], filter: Option[SQLSyntax]): Seq[RoadLink] = {
+    val geometry = sqls"geometry && ST_MakeEnvelope(${bounds.leftBottom.x},${bounds.leftBottom.y},${bounds.rightTop.x},${bounds.rightTop.y},3067)"
+    val municipalityFilter = if (municipalities.nonEmpty) Some(sqls" AND municipalitycode IN (${municipalities})") else sqls""
+
     time(logger, "Fetch complementary data by road numbers and municipality") {
-      val sql = s"$selectFromComplementaryLink WHERE $geometry " + municipalityFilter + filter.getOrElse("")
-      withDynTransaction(Q.queryNA[RoadLink](sql.trim).list)
+      val query = sql"""
+      $selectFromComplementaryLink
+      WHERE $geometry
+      $municipalityFilter ${filter.getOrElse(sqls"")}
+      """
+
+      runWithReadOnlySession(runSelectQuery(query.map(RoadLink.apply)))
     }
   }
   /**
@@ -136,7 +168,7 @@ class ComplementaryLinkDAO extends BaseDAO {
   }
 
   def fetchWalkwaysByBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[RoadLink]] = {
-    Future(queryByMunicipalitiesAndBounds(bounds, municipalities, Some(" AND roadclass = 12314")))
+    Future(queryByMunicipalitiesAndBounds(bounds, municipalities, Some(sqls" AND roadclass = 12314")))
   }
 
 }

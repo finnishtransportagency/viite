@@ -40,7 +40,7 @@ class PostGISUserProvider extends BaseDAO with UserProvider {
              FROM service_user
              WHERE lower(username) = ${username.toLowerCase}
              """
-      runSelectSingle(query.map(User.apply))
+      runSelectSingleOption(query.map(User.apply))
     }
   }
 

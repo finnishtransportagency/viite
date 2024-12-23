@@ -4,6 +4,7 @@ import scalikejdbc._
 import org.slf4j.{Logger, LoggerFactory}
 import fi.vaylavirasto.viite.postgis.SessionProvider.session
 import fi.vaylavirasto.viite.util.ViiteException
+import java.sql.Date
 
 // Methods to run queries using ScalikeJDBC and session provider
 trait BaseDAO {
@@ -39,6 +40,18 @@ trait BaseDAO {
    */
   def runSelectQuery[A](query: SQL[A, HasExtractor]): List[A] = {
     query.list().apply()
+  }
+
+  /**
+   * Executes a SELECT query and returns the first result.
+   * Example use: runSelectFirst(query.map(rs => rs.A("column_name")))
+   *
+   * @param query SQL query with result type A
+   * @tparam A Type to map the result to
+   * @return The first result as an A Type Option
+   */
+  def runSelectFirst[A](query: SQL[A, HasExtractor]): Option[A] = {
+      query.first().apply()
   }
 
   /**
@@ -121,6 +134,7 @@ trait BaseDAO {
   implicit val longMapper: WrappedResultSet => Long = _.long(1)
   implicit val stringMapper: WrappedResultSet => String = _.string(1)
   implicit val intMapper: WrappedResultSet => Int = _.int(1)
+  implicit val dateTimeMapper: WrappedResultSet => Date = _.date(1)
   // Add more implicit mappers as needed
 
 }

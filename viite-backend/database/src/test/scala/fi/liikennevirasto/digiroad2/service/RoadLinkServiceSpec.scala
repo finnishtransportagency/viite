@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.util.KGVSerializer
 import fi.vaylavirasto.viite.dao.ComplementaryLinkDAO
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
 import fi.vaylavirasto.viite.model.{AdministrativeClass, LifecycleStatus, RoadLink, TrafficDirection}
-import fi.vaylavirasto.viite.postgis.PostGISDatabase
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithReadOnlySession
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfter
@@ -21,16 +21,10 @@ import scala.concurrent.duration.Duration
 class RoadLinkServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
 
   class TestService(KGVClient: KgvRoadLink, eventBus: DigiroadEventBus = new DummyEventBus, kgvSerializer: KGVSerializer = new DummySerializer)
-    extends RoadLinkService(KGVClient, eventBus, kgvSerializer, false) {
-    override def withDynTransaction[T](f: => T): T = f
-    override def withDynSession[T](f: => T): T = f
-  }
+    extends RoadLinkService(KGVClient, eventBus, kgvSerializer, false)
 
   class RoadLinkTestService(KGVClient: KgvRoadLink, eventBus: DigiroadEventBus = new DummyEventBus, kgvSerializer: KGVSerializer = new DummySerializer)
-    extends RoadLinkService(KGVClient, eventBus, kgvSerializer, false) {
-    override def withDynTransaction[T](f: => T): T = f
-    override def withDynSession[T](f: => T): T = f
-  }
+    extends RoadLinkService(KGVClient, eventBus, kgvSerializer, false)
 
   test("Test getRoadLinksByMunicipality() When supplying a specific municipality Id Then return the correct return of a ViiteRoadLink of that Municipality") {
     val municipalityId = 235
@@ -41,7 +35,7 @@ class RoadLinkServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter 
     val mockKGVRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient[RoadLink]]
     val service = new TestService(mockKGVClient)
 
-    PostGISDatabase.withDynTransaction {
+    runWithReadOnlySession {
       when(mockKGVClient.roadLinkData).thenReturn(mockKGVRoadLinkClient)
       when(mockKGVRoadLinkClient.fetchByMunicipality(municipalityId)).thenReturn(Seq(roadLink))
 
@@ -64,7 +58,7 @@ class RoadLinkServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter 
     val mockComplementaryClient = MockitoSugar.mock[ComplementaryLinkDAO]
     val service = new TestService(mockKGVClient)
 
-    PostGISDatabase.withDynTransaction {
+    runWithReadOnlySession {
       when(mockKGVClient.complementaryData).thenReturn(mockComplementaryClient)
       when(mockComplementaryClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq(roadLink)))
 
@@ -93,7 +87,7 @@ class RoadLinkServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter 
     val mockKGVComplementaryClient = MockitoSugar.mock[ComplementaryLinkDAO]
     val service = new TestService(mockKGVClient)
 
-    PostGISDatabase.withDynTransaction {
+    runWithReadOnlySession {
       when(mockKGVClient.complementaryData).thenReturn(mockKGVComplementaryClient)
       when(mockKGVClient.roadLinkData).thenReturn(mockKGVRoadLinkClient)
       when(mockKGVComplementaryClient.fetchByMunicipalityAndRoadNumbersF(any[Int], any[Seq[(Int,Int)]])).thenReturn(Future(roadLinksComp))
@@ -116,7 +110,7 @@ class RoadLinkServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter 
 //    val mockVVHHistoryClient = MockitoSugar.mock[HistoryClient]
 //    val service = new TestService(mockVVHClient)
 //
-//    PostGISDatabase.withDynTransaction {
+//    runWithReadOnlySession {
 //      when(mockVVHClient.historyData).thenReturn(mockVVHHistoryClient)
 //      when(mockVVHHistoryClient.fetchVVHRoadLinkByLinkIdsF(any[Set[Long]])).thenReturn(Future(Seq(firstRoadLink, secondRoadLink)))
 //      val serviceResult = service.getRoadLinksHistoryFromVVH(Set[String](linkId))
@@ -145,7 +139,7 @@ class RoadLinkServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter 
 //    val vvhRoadLink3 = RoadLinkFetched(7.toString, 91, Nil, AdministrativeClass.Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.Planned)
 //    val vvhRoadLink4 = RoadLinkFetched(8.toString, 91, Nil, AdministrativeClass.Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.InUse)
 //
-//    PostGISDatabase.withDynTransaction {
+//    runWithReadOnlySession {
 //      when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
 //      when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
 //      when(mockVVHClient.complementaryData).thenReturn(mockVVHComplementaryClient)
@@ -170,7 +164,7 @@ class RoadLinkServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter 
 //    val mockVVHRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient]
 //    val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
 //    val service = new TestService(mockVVHClient)
-//    PostGISDatabase.withDynTransaction {
+//    runWithReadOnlySession {
 //      when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
 //      when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
 //      when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(boundingBox, Set())).thenReturn(Promise.successful(Seq(changeInfo)).future)
