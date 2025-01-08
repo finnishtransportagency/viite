@@ -86,6 +86,10 @@ object Sequences extends BaseDAO {
     runSelectSingleFirstWithType[Long](Queries.nextCalibrationPointId)
   }
 
+  def nextProjectCalibrationPointId: Long = {
+    runSelectSingleFirstWithType[Long](Queries.nextProjectCalibrationPointId)
+  }
+
   def nextRoadwayChangeLink: Long = {
     runSelectSingleFirstWithType[Long](Queries.nextRoadwayChangeLink)
   }
