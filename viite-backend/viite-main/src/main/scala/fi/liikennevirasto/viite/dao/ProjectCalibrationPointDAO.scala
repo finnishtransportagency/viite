@@ -107,9 +107,8 @@ object ProjectCalibrationPointDAO extends BaseDAO {
   }
 
   def createCalibrationPoint(calibrationPoint: UserDefinedCalibrationPoint): Long = {
-    val nextCalibrationPointId = runSelectSingleFirstOptionWithType[Long](sql"""select nextval('PROJECT_CAL_POINT_id_SEQ')""").getOrElse(
-      throw new IllegalStateException("Could not get next sequence value for calibration point")
-    )
+    val nextCalibrationPointId = Sequences.nextProjectCalibrationPointId
+
     runUpdateToDb(sql"""
       INSERT INTO project_calibration_point (id, project_link_id, project_id, link_m, address_m)
       VALUES ($nextCalibrationPointId, ${calibrationPoint.projectLinkId}, ${calibrationPoint.projectId}, ${calibrationPoint.segmentMValue}, ${calibrationPoint.addressMValue})
