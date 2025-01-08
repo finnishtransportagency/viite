@@ -182,8 +182,8 @@ class ProjectDAO extends BaseDAO {
   def updateProjectStatus(projectId: Long, state: ProjectState): Unit = {
     runUpdateToDb(
       sql"""
-           update project
-           set state=${state.value}
+           UPDATE project
+           SET state=${state.value}
            WHERE id=$projectId
            """
     )
@@ -235,7 +235,7 @@ class ProjectDAO extends BaseDAO {
   def isUniqueName(projectId: Long, projectName: String): Boolean = {
     val query =
       sql"""
-         SELECT *
+         SELECT id
          FROM project
          WHERE UPPER(name)=UPPER($projectName)
          AND state <> ${ProjectState.Deleted.value}
@@ -250,7 +250,7 @@ class ProjectDAO extends BaseDAO {
     val query =
       sql"""
             SELECT id, state, name, created_by, created_date, start_date, modified_by,
-              COALESCE(modified_date, created_date) as modified_date,
+              COALESCE(modified_date, created_date) AS modified_date,
               add_info, status_info, coord_x, coord_y, zoom
             FROM project
             $whereClause

@@ -4,71 +4,73 @@ import scalikejdbc.{HasExtractor, SQL, scalikejdbcSQLInterpolationImplicitDef}
 
 object Queries {
 
-  def nextViiteProjectId = sql"select nextval('viite_project_seq')"
+  def nextViiteProjectId = sql"SELECT nextval('viite_project_seq')"
 
-  def nextProjectLinkId = sql"select nextval('project_link_seq')"
+  def nextProjectLinkId = sql"SELECT nextval('project_link_seq')"
 
-  def nextViitePrimaryKeyId = sql"select nextval('viite_general_seq')"
+  def nextViitePrimaryKeyId = sql"SELECT nextval('viite_general_seq')"
 
-  def nextRoadwayId = sql"select nextval('ROADWAY_SEQ')"
+  def nextRoadwayId = sql"SELECT nextval('roadway_seq')"
 
-  def nextLinearLocationId = sql"select nextval('LINEAR_LOCATION_SEQ')"
+  def nextLinearLocationId = sql"SELECT nextval('linear_location_seq')"
 
-  def nextRoadNameId = sql"select nextval('ROAD_NAME_SEQ')"
+  def nextRoadNameId = sql"SELECT nextval('road_name_seq')"
 
-  def nextRoadwayNumber = sql"select nextval('ROADWAY_NUMBER_SEQ')"
+  def nextRoadwayNumber = sql"SELECT nextval('roadway_number_seq')"
 
-  def nextRoadNetworkErrorId = sql"select nextval('ROAD_NETWORK_ERROR_SEQ')"
+  def nextRoadNetworkErrorId = sql"SELECT nextval('road_network_error_seq')"
 
-  def nextRoadwayChangeLink = sql"select nextval('ROADWAY_CHANGE_LINK')"
+  def nextRoadwayChangeLink = sql"SELECT nextval('roadway_change_link')"
 
   @deprecated ("Table published_road_network is no longer in use, and is empty.")
-  def nextPublishedRoadNetworkId = sql"select nextval('PUBLISHED_ROAD_NETWORK_SEQ')"
+  def nextPublishedRoadNetworkId = sql"SELECT nextval('published_road_network_seq')"
 
-  def nextRoadwayPointId = sql"select nextval('ROADWAY_POINT_SEQ')"
+  def nextRoadwayPointId = sql"SELECT nextval('roadway_point_seq')"
 
-  def nextCalibrationPointId = sql"select nextval('CALIBRATION_POINT_SEQ')"
+  def nextCalibrationPointId = sql"SELECT nextval('calibration_point_seq')"
 
-  def nextNodeId = sql"select nextval('NODE_SEQ')"
+  def nextNodeId = sql"SELECT nextval('node_seq')"
 
-  def nextNodeNumber = sql"select nextval('NODE_NUMBER_SEQ')"
+  def nextNodeNumber = sql"SELECT nextval('node_number_seq')"
 
-  def nextNodePointId = sql"select nextval('NODE_POINT_SEQ')"
+  def nextNodePointId = sql"SELECT nextval('node_point_seq')"
 
-  def nextJunctionId = sql"select nextval('JUNCTION_SEQ')"
+  def nextJunctionId = sql"SELECT nextval('junction_seq')"
 
-  def nextJunctionPointId = sql"select nextval('JUNCTION_POINT_SEQ')"
+  def nextJunctionPointId = sql"SELECT nextval('junction_point_seq')"
+
+  def nextProjectCalibrationPointId = sql"SELECT nextval('project_cal_point_id_seq')"
 
   def fetchRoadwayIds(len: Int): SQL[Long, HasExtractor] = {
-    sql"SELECT nextval('ROADWAY_SEQ') FROM generate_series(1, $len)".map(_.long(1))
+    sql"SELECT nextval('roadway_seq') FROM generate_series(1, $len)".map(_.long(1))
   }
 
   def fetchNodeIds(len: Int): SQL[Long, HasExtractor] = {
-    sql"""select nextval('NODE_SEQ') from generate_series(1, $len)""".map(_.long(1))
+    sql"""SELECT nextval('node_seq') FROM generate_series(1, $len)""".map(_.long(1))
   }
 
   def fetchJunctionIds(len: Int): SQL[Long, HasExtractor] = {
-    sql"""select nextval('JUNCTION_SEQ') from generate_series(1, $len)""".map(_.long(1))
+    sql"""SELECT nextval('junction_seq') FROM generate_series(1, $len)""".map(_.long(1))
   }
 
   def fetchProjectLinkIds(len: Int): SQL[Long, HasExtractor] = {
-    sql"""select nextval('PROJECT_LINK_SEQ') from generate_series(1, $len)""".map(_.long(1))
+    sql"""SELECT nextval('project_link_seq') FROM generate_series(1, $len)""".map(_.long(1))
   }
 
   def fetchCalibrationPointIds(len: Int): SQL[Long, HasExtractor] = {
-    sql"""select nextval('CALIBRATION_POINT_SEQ') from generate_series(1, $len)""".map(_.long(1))
+    sql"""SELECT nextval('calibration_point_seq') FROM generate_series(1, $len)""".map(_.long(1))
   }
 
   def fetchNodePointIds(len: Int): SQL[Long, HasExtractor] = {
-    sql"""select nextval('NODE_POINT_SEQ') from generate_series(1, $len)""".map(_.long(1))
+    sql"""SELECT nextval('node_point_seq') FROM generate_series(1, $len)""".map(_.long(1))
   }
 
   def fetchJunctionPointIds(len: Int): SQL[Long, HasExtractor] = {
-    sql"""select nextval('JUNCTION_POINT_SEQ') from generate_series(1, $len)""".map(_.long(1))
+    sql"""SELECT nextval('junction_point_seq') FROM generate_series(1, $len)""".map(_.long(1))
   }
 
   def fetchLinearLocationIds(len: Int): SQL[Long, HasExtractor] = {
-    sql"""select nextval('LINEAR_LOCATION_SEQ') from generate_series(1, $len)""".map(_.long(1))
+    sql"""SELECT nextval('linear_location_seq') FROM generate_series(1, $len)""".map(_.long(1))
   }
 
   def fetchMunicipalityIds: SQL[Int, HasExtractor] = {

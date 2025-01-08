@@ -20,22 +20,22 @@ class ProjectCalibrationPointDAOSpec extends AnyFunSuite with Matchers with Base
   val projectReservedPartDAO = new ProjectReservedPartDAO
 
   def addTestProjects(): Unit = {
-    runUpdateToDb(sql"""insert into project (id,state,name,created_by, start_date) VALUES (1,0,'testproject','automatedtest', current_date)""")
-    runUpdateToDb(sql"""insert into project (id,state,name,created_by, start_date) VALUES (2,0,'testproject2','automatedtest', current_date)""")
+    runUpdateToDb(sql"""INSERT INTO project (id,state,name,created_by, start_date) VALUES (1,0,'testproject','automatedtest', current_date)""")
+    runUpdateToDb(sql"""INSERT INTO project (id,state,name,created_by, start_date) VALUES (2,0,'testproject2','automatedtest', current_date)""")
   }
 
   def addProjectRoads(): Unit = {
     projectReservedPartDAO.reserveRoadPart(1, RoadPart(1, 1), "TestUser")
     projectReservedPartDAO.reserveRoadPart(2, RoadPart(2, 1), "TestUser")
     runUpdateToDb(sql"""
-          insert into project_link (id,project_id,TRACK,discontinuity_type,road_number,road_part_number,start_addr_M,end_addr_M, original_start_addr_M, original_end_addr_M,created_by,
-            SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE)
+          INSERT INTO project_link (id,project_id,TRACK,discontinuity_type,road_number,road_part_number,start_addr_m,end_addr_m, original_start_addr_m, original_end_addr_m,created_by,
+            side,start_measure,end_measure,link_id,adjusted_timestamp,link_source)
           VALUES (1,1,1,0,1,1,1,1,1,1,'automatedtest',
             1, 0, 208.951, 1610995, 0, 1)
           """)
     runUpdateToDb(sql"""
-          insert into project_link (id,project_id,TRACK,discontinuity_type,road_number,road_part_number,start_addr_M,end_addr_M, original_start_addr_M, original_end_addr_M, created_by,
-            SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE)
+          INSERT INTO project_link (id,project_id,TRACK,discontinuity_type,road_number,road_part_number,start_addr_m,end_addr_m, original_start_addr_m, original_end_addr_m, created_by,
+            side,start_measure,end_measure,link_id,adjusted_timestamp,link_source)
           VALUES (2,2,1,0,2,1,1,1,1,1,'automatedtest',
             1, 0, 208.951, 1610995, 0, 1)
             """)
@@ -48,7 +48,7 @@ class ProjectCalibrationPointDAOSpec extends AnyFunSuite with Matchers with Base
       ProjectCalibrationPointDAO.createCalibrationPoint(1, 1, 0.0, 15)
       ProjectCalibrationPointDAO.createCalibrationPoint(UserDefinedCalibrationPoint(NewIdValue, 2, 2, 1.1, 20))
       val calibrationPointsAmmount = runSelectSingleFirstWithType[Long](
-        sql""" Select count(*) from PROJECT_CALIBRATION_POINT"""
+        sql""" SELECT count(*) FROM PROJECT_CALIBRATION_POINT"""
       )
       calibrationPointsAmmount should be (2)
     }

@@ -1,7 +1,7 @@
 package fi.liikennevirasto.viite.dao
 
 import scalikejdbc._
-import fi.vaylavirasto.viite.dao.BaseDAO
+import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
 import fi.vaylavirasto.viite.model.RoadPart
 
 object ProjectCalibrationPointDAO extends BaseDAO {
@@ -19,13 +19,13 @@ object ProjectCalibrationPointDAO extends BaseDAO {
   case class UserDefinedCalibrationPoint(id: Long, projectLinkId: Long, projectId: Long, segmentMValue: Double, addressMValue: Long) extends CalibrationPointMValues
 
   object UserDefinedCalibrationPoint extends SQLSyntaxSupport[UserDefinedCalibrationPoint] {
-    override val tableName = "PROJECT_CALIBRATION_POINT"
+    override val tableName = "project_calibration_point"
     def apply(rs: WrappedResultSet): UserDefinedCalibrationPoint = UserDefinedCalibrationPoint(
-      id = rs.long("ID"),
-      projectLinkId = rs.long("PROJECT_LINK_ID"),
-      projectId = rs.long("PROJECT_ID"),
-      segmentMValue = rs.double("LINK_M"),
-      addressMValue = rs.long("ADDRESS_M")
+      id            = rs.long("id"),
+      projectLinkId = rs.long("project_link_id"),
+      projectId     = rs.long("project_id"),
+      segmentMValue = rs.double("link_m"),
+      addressMValue = rs.long("address_m")
     )
   }
 
@@ -36,12 +36,17 @@ object ProjectCalibrationPointDAO extends BaseDAO {
       .toList
   }
 
+  lazy val selectAllFromProjectCalibrationPoint =
+    sqls"""
+          SELECT id, project_link_id, project_id, link_m, address_m
+          FROM project_calibration_point
+        """
 
   def findCalibrationPointById(id: Long): Option[UserDefinedCalibrationPoint] = {
     val query =
       sql"""
-          Select * From PROJECT_CALIBRATION_POINT
-          Where ID = $id
+          $selectAllFromProjectCalibrationPoint
+          WHERE id = $id
        """
 
     runSelectSingleOption(query.map(UserDefinedCalibrationPoint.apply))
@@ -50,11 +55,10 @@ object ProjectCalibrationPointDAO extends BaseDAO {
   def findCalibrationPointByRemainingValues(projectLinkId: Long, projectId: Long, segmentMValue: Double, epsilon: Double = 0.1): Seq[UserDefinedCalibrationPoint] = {
     val query =
       sql"""
-         Select ID, PROJECT_LINK_ID, PROJECT_ID, LINK_M, ADDRESS_M
-         From PROJECT_CALIBRATION_POINT
-         Where PROJECT_LINK_ID = $projectLinkId
-         And PROJECT_ID = $projectId
-         And ABS(LINK_M - $segmentMValue) < $epsilon
+         $selectAllFromProjectCalibrationPoint
+         WHERE project_link_id = $projectLinkId
+         AND project_id = $projectId
+         AND ABS(link_m - $segmentMValue) < $epsilon
        """
 
     queryList(query)
@@ -63,15 +67,14 @@ object ProjectCalibrationPointDAO extends BaseDAO {
   def findEndCalibrationPoint(projectLinkId: Long, projectId: Long): Seq[UserDefinedCalibrationPoint] = {
     val query =
       sql"""
-         Select ID, PROJECT_LINK_ID, PROJECT_ID, LINK_M, ADDRESS_M
-         From PROJECT_CALIBRATION_POINT
-         Where PROJECT_LINK_ID = $projectLinkId
-         And PROJECT_ID = $projectId
-         And ADDRESS_M = (
-                          Select Max(Address_M)
-                          from PROJECT_CALIBRATION_POINT
-                          Where PROJECT_LINK_ID = $projectLinkId
-                          And PROJECT_ID = $projectId
+         $selectAllFromProjectCalibrationPoint
+         WHERE project_link_id = $projectLinkId
+         AND project_id = $projectId
+         AND address_m = (
+                          SELECT Max(Address_M)
+                          FROM project_calibration_point
+                          WHERE project_link_id = $projectLinkId
+                          AND project_id = $projectId
                           )
        """
 
@@ -81,10 +84,9 @@ object ProjectCalibrationPointDAO extends BaseDAO {
   def findCalibrationPointsOfRoad(projectId: Long, projectLinkId: Long): Seq[UserDefinedCalibrationPoint] = {
     val query =
       sql"""
-         Select ID, PROJECT_LINK_ID, PROJECT_ID, LINK_M, ADDRESS_M
-         From PROJECT_CALIBRATION_POINT
-         Where PROJECT_LINK_ID = $projectLinkId
-         And PROJECT_ID = $projectId
+         $selectAllFromProjectCalibrationPoint
+         WHERE project_link_id = $projectLinkId
+         AND project_id = $projectId
        """
 
     queryList(query)
@@ -93,73 +95,72 @@ object ProjectCalibrationPointDAO extends BaseDAO {
   def fetchByRoadPart(projectId: Long, roadPart: RoadPart): Seq[UserDefinedCalibrationPoint] = {
     val query =
       sql"""
-         Select PROJECT_CALIBRATION_POINT.ID, PROJECT_LINK_ID, pl.PROJECT_ID, LINK_M, ADDRESS_M
-         From PROJECT_CALIBRATION_POINT
-         JOIN PROJECT_LINK pl
-           ON (pl.ID = PROJECT_CALIBRATION_POINT.PROJECT_LINK_ID)
-         WHERE pl.ROAD_NUMBER = ${roadPart.roadNumber} AND pl.ROAD_PART_NUMBER = ${roadPart.partNumber}
-         AND pl.PROJECT_ID = $projectId
+         SELECT project_calibration_point.id, project_link_id, pl.project_id, link_m, address_m
+         FROM project_calibration_point
+         JOIN project_link pl ON (pl.id = project_calibration_point.project_link_id)
+         WHERE pl.road_number = ${roadPart.roadNumber}
+         AND pl.road_part_number = ${roadPart.partNumber}
+         AND pl.project_id = $projectId
        """
 
     queryList(query)
   }
 
   def createCalibrationPoint(calibrationPoint: UserDefinedCalibrationPoint): Long = {
-    val nextCalibrationPointId = runSelectSingleFirstOptionWithType[Long](sql"""select nextval('PROJECT_CAL_POINT_ID_SEQ')""").getOrElse(
+    val nextCalibrationPointId = runSelectSingleFirstOptionWithType[Long](sql"""select nextval('PROJECT_CAL_POINT_id_SEQ')""").getOrElse(
       throw new IllegalStateException("Could not get next sequence value for calibration point")
     )
     runUpdateToDb(sql"""
-      Insert Into PROJECT_CALIBRATION_POINT (ID, PROJECT_LINK_ID, PROJECT_ID, LINK_M, ADDRESS_M)
-      Values ($nextCalibrationPointId, ${calibrationPoint.projectLinkId}, ${calibrationPoint.projectId}, ${calibrationPoint.segmentMValue}, ${calibrationPoint.addressMValue})
+      INSERT INTO project_calibration_point (id, project_link_id, project_id, link_m, address_m)
+      VALUES ($nextCalibrationPointId, ${calibrationPoint.projectLinkId}, ${calibrationPoint.projectId}, ${calibrationPoint.segmentMValue}, ${calibrationPoint.addressMValue})
       """)
     nextCalibrationPointId
   }
 
   def createCalibrationPoint(projectLinkId: Long, projectId: Long, segmentMValue: Double, addressMValue: Long): Long = {
-    val nextCalibrationPointId = runSelectSingleFirstOptionWithType[Long](sql"""select nextval('PROJECT_CAL_POINT_ID_SEQ')""").getOrElse(
-      throw new IllegalStateException("Could not get next sequence value for calibration point")
-    )
+    val nextCalibrationPointId = Sequences.nextProjectCalibrationPointId
+
     runUpdateToDb(sql"""
-      Insert Into PROJECT_CALIBRATION_POINT (ID, PROJECT_LINK_ID, PROJECT_ID, LINK_M, ADDRESS_M)
-      Values ($nextCalibrationPointId, $projectLinkId, $projectId, $segmentMValue, $addressMValue)
+      INSERT INTO project_calibration_point (id, project_link_id, project_id, link_m, address_m)
+      VALUES ($nextCalibrationPointId, $projectLinkId, $projectId, $segmentMValue, $addressMValue)
       """)
     nextCalibrationPointId
   }
 
   def updateSpecificCalibrationPointMeasures(id: Long, segmentMValue: Double, addressMValue: Long): Unit = {
     runUpdateToDb(sql"""
-        Update PROJECT_CALIBRATION_POINT
-           Set LINK_M = $segmentMValue, ADDRESS_M = $addressMValue
-         Where ID = $id
+        UPDATE project_calibration_point
+        SET link_m = $segmentMValue, address_m = $addressMValue
+        WHERE id = $id
       """)
   }
 
   def removeSpecificCalibrationPoint(id: Long): Unit = {
     runUpdateToDb(sql"""
-        Delete From PROJECT_CALIBRATION_POINT
-         Where ID = $id
+        DELETE FROM project_calibration_point
+        WHERE id = $id
       """)
   }
 
   def removeAllCalibrationPointsFromRoad(projectLinkId: Long, projectId: Long): Unit = {
     runUpdateToDb(sql"""
-        Delete From PROJECT_CALIBRATION_POINT
-         Where PROJECT_LINK_ID = $projectLinkId And PROJECT_ID = $projectId
+        DELETE FROM project_calibration_point
+        WHERE project_link_id = $projectLinkId AND project_id = $projectId
       """)
   }
 
   def removeAllCalibrationPoints(projectLinkIds: Set[Long]): Unit = {
     if (projectLinkIds.nonEmpty)
       runUpdateToDb(sql"""
-        Delete From PROJECT_CALIBRATION_POINT
-         Where PROJECT_LINK_ID in ($projectLinkIds)
+        DELETE FROM project_calibration_point
+        WHERE project_link_id IN ($projectLinkIds)
       """)
   }
 
   def removeAllCalibrationPointsFromProject(projectId: Long): Unit = {
     runUpdateToDb(sql"""
-        Delete From PROJECT_CALIBRATION_POINT
-        Where PROJECT_ID  = $projectId
+        DELETE FROM project_calibration_point
+        WHERE project_id  = $projectId
       """)
   }
 
