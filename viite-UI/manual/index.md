@@ -934,9 +934,9 @@ Huom! Haku saattaa kestää useita sekunteja haettaessa pelkästään tilannepä
 
 Viite palauttaa hakuehtojen perusteella listan kohteita sekä näiden ominaisuustiedot. 
 
-Hakutulokset on mahdollista ladata Excel-taulukkona klikkaamalla "Lataa Excelinä" -painiketta.
+Hakutulokset on mahdollista ladata CSV-tiedostona klikkaamalla "Lataa CSV-tiedostona"-painiketta.
 
-Jos hakutulos on liian suuri (>100 riviä) tarjoaa Viite pelkän Excel-latausmahdollisuuden.
+Jos hakutulos on liian suuri (>100 riviä) tarjoaa Viite pelkän CSV-latausmahdollisuuden.
 
 10.1 Esimerkkejä eri ominaisuustietojen hakutuloksista:
 --------------------------
@@ -957,13 +957,13 @@ _Kuva 10.5: Solmut -hakutulos_
 
 _Kuva 10.6: Liittymät -hakutulos_
 
-![Tiennimet -hakutulos](k78.PNG)
+![Tiennimet -hakutulos](k79.PNG)
 
 _Kuva 10.7: Tiennimet -hakutulos_
 
-![Excel -hakutulos](k79.PNG)
+![CSV -hakutulos](k78.PNG)
 
-_Kuva 10.8: Viite tarjoaa pelkän Excel-tiedoston latausmahdollisuuden mikäli hakutulos on liian suuri_
+_Kuva 10.8: Viite tarjoaa pelkän CSV-tiedoston latausmahdollisuuden mikäli hakutulos on liian suuri_
 
 
 11 Tieosoitemuutosten katselu -työkalu
@@ -1001,9 +1001,9 @@ Huom! Haku saattaa kestää useita sekunteja haettaessa pelkästään alkupäiv�
 
 Viite palauttaa hakuehtojen perusteella listan tieosoitemuutoksia.
 
-Hakutulokset on mahdollista ladata Excel-taulukkona klikkaamalla "Lataa Excelinä" -painiketta.
+Hakutulokset on mahdollista ladata CSV-tiedostona klikkaamalla "Lataa CSV-tiedostona"-painiketta.
 
-Jos hakutulos on liian suuri (>100 riviä) tarjoaa Viite pelkän Excel-latausmahdollisuuden.
+Jos hakutulos on liian suuri (>100 riviä) tarjoaa Viite pelkän CSV-latausmahdollisuuden.
 
 11.2 Esimerkkejä tieosoitemuutosten hakutuloksista:
 --------------------------
@@ -1020,7 +1020,7 @@ _Kuva 11.3: Hakutulos haettaessa tieosoitemuutoksia joiden voimaantulopäivämä
 Ylläolevista kuvista voi huomata, että samoilla parametreilla voi saada aikaiseksi eri hakutuloksia vaihtamalla päivämääräkenttien kohdetta
 
 
-![Excel -hakutulos](k86.png)
+![CSV -hakutulos](k86.png)
 
-_Kuva 11.4: Viite tarjoaa pelkän Excel-tiedoston latausmahdollisuuden mikäli hakutulos on liian suuri_
+_Kuva 11.4: Viite tarjoaa pelkän CSV-tiedoston latausmahdollisuuden mikäli hakutulos on liian suuri_
 
