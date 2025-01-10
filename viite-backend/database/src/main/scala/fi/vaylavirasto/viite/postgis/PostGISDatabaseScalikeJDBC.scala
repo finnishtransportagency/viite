@@ -4,6 +4,9 @@ import fi.liikennevirasto.digiroad2.util.ViiteProperties
 import scalikejdbc._
 import SessionProvider._
 
+import scala.concurrent.{ExecutionContext, Future, blocking}
+
+
 object PostGISDatabaseScalikeJDBC {
   // Load the PostgreSQL driver
   Class.forName("org.postgresql.Driver")
@@ -25,7 +28,7 @@ object PostGISDatabaseScalikeJDBC {
    * Executes `databaseOperation` block within a single transaction, ensuring that all data modifications
    * are committed only if the entire operation is successful.
    *
-   * All database actions including nested transactions within `databaseOperation` block are part of the same transaction.
+   * Uses withSession to handle the session and to prevent nested transactions.
    * If any action fails, the transaction is rolled back, preventing partial updates and maintaining data integrity.
    *
    * @param databaseOperation The operation to run
@@ -36,6 +39,47 @@ object PostGISDatabaseScalikeJDBC {
     DB.localTx { session =>
       withSession(session) {
         databaseOperation
+      }
+    }
+  }
+
+  /**
+   * Executes `databaseOperation` block within the current transaction if one exists,
+   * or creates a new transaction if none exists. Allows transaction reuse.
+   *
+   * If any action fails, the transaction is rolled back, preventing partial updates and maintaining data integrity.
+   *
+   * @param databaseOperation The operation to run
+   * @tparam Result The return type of the operation
+   * @return The result of the operation
+   */
+  def runWithTransactionNewOrExisting[Result](databaseOperation: => Result): Result = {
+    if (SessionProvider.isTransactionOpen) {
+      databaseOperation
+    } else {
+      runWithTransaction(databaseOperation)
+    }
+  }
+
+  /**
+   * Executes `futureOperation` within a transaction that uses Future's completion state as transaction boundary.
+   * Uses withSession to handle the session and to prevent nested transactions.
+   * Transaction is committed if Future completes successfully, rolled back if Future fails.
+   *
+   * @param operation The operation to run wrapped in Future
+   * @param ec ExecutionContext for Future operations
+   * @tparam Result The return type wrapped in Future
+   * @return Future containing the result or error
+   */
+  def runWithFutureTransaction[Result](operation: => Result)
+                                      (implicit ec: ExecutionContext): Future[Result] = {
+    DB.futureLocalTx { session =>
+      Future {
+        blocking {
+          withSession(session) {  // Session setup inside Future block
+            operation
+          }
+        }
       }
     }
   }
