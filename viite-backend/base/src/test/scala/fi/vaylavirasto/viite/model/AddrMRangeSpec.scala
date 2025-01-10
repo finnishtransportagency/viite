@@ -72,7 +72,7 @@ class AddrMRangeSpec extends AnyFunSuite with Matchers {
   //  intercept[ViiteException](AddrMRange(100,0).length) shouldBe a[ViiteException] // creation should fail already.
   }
 
-    test("Test AddrMRange.lengthOption:  Returns the length of this AddrMRange, or None, if this AddrMRange is invalid (or erroneous).") {
+  test("Test AddrMRange.lengthOption:  Returns the length of this AddrMRange, or None, if this AddrMRange is invalid (or erroneous).") {
     AddrMRange(  0,100).lengthOption shouldBe Some(100)
     AddrMRange(100,200).lengthOption shouldBe Some(100)
 
