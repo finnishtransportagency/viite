@@ -1,12 +1,12 @@
 (function (root) {
-  root.NodeForm = function (selectedNodesAndJunctions, roadCollection, backend) {
+  root.NodeForm = function (selectedNodesAndJunctions, roadCollection, backend, startupParameters) {
     var formCommon = new FormCommon('node-');
     var NodeType = ViiteEnumerations.NodeType;
 
     var NODE_POINTS_TITLE = 'Solmukohdat';
     var JUNCTIONS_TITLE = 'Liittymät';
     var picker;
-    var userHasPermissionToEdit = _.includes(applicationModel.getSessionUserRoles(), 'viite');
+    var userHasPermissionToEdit = _.includes(startupParameters.roles, 'viite');
     var nodeEditingDisabledAttribute = userHasPermissionToEdit ? '' : 'disabled';
 
     var getNodeType = function (nodeValue) {
@@ -729,6 +729,7 @@
       });
       rootElement.on('click', '.btn-edit-node-cancel', function () {
         closeNode(true);
+        window.location.hash = '#node';
       });
 
       rootElement.on('click', '#attachToMapNode', function () {
@@ -741,6 +742,7 @@
 
       rootElement.on('click', '.btn-edit-templates-cancel', function () {
         selectedNodesAndJunctions.closeTemplates();
+        window.location.hash = '#node';
       });
 
       rootElement.on('click', '#edit-junction-point-addresses', function () {
@@ -764,7 +766,6 @@
           var junctionsElement = $('#junctions-info-content');
           junctionsElement.html(junctionsTable.toHtmlTemplateTable(templates.junctions));
         }
-        applicationModel.removeSpinner();
       });
 
       eventbus.on('node:selected', function (currentNode, templates) {

@@ -1083,6 +1083,9 @@ class RoadwayDAO extends BaseDAO {
           |FROM   roadwayswithstartaddr s
           |       JOIN roadwayswithendaddr e
           |         ON s.numb = e.numb
+          |         AND s.road_number = e.road_number
+          |         AND s.road_part_number = e.road_part_number
+          |         AND s.track = e.track
           |ORDER  BY s.road_number,
           |          s.road_part_number,
           |          s.start_addr_m,
