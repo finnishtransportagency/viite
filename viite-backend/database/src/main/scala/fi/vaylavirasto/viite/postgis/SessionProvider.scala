@@ -5,13 +5,34 @@ import scalikejdbc._
 
 /**
  * Provides a thread-local session for ScalikeJDBC to handle transactions.
- * When SessionProvider.session is imported, the implicit session is used in queries without the need to pass it as a parameter
- * For DAO classes this is used mainly through the BaseScalikeDAO trait methods (runSelectQuery for example), so the import is not needed
+ *
+ * This object maintains thread-local state for database sessions and transaction status,
+ * ensuring that database operations are properly scoped and preventing nested transactions.
+ *
+ * The session management is used in two ways:
+ * 1. Implicit session access: When SessionProvider.session is imported, queries can use
+ *    the implicit session without explicitly passing it as a parameter
+ * 2. Through BaseScalikeDAO: DAO classes use these sessions via BaseScalikeDAO trait methods
+ *    (e.g., runSelectQuery) without needing direct imports
  */
 object SessionProvider {
+  // Tracks the current database session per thread
   private val threadLocalSession = new ThreadLocal[DBSession]()
 
-  // Implicit session to be used in queries
+  // Tracks whether a transaction is currently open in the current thread
+  private val transactionOpen = new ThreadLocal[Boolean] {
+    override def initialValue(): Boolean = false
+  }
+  def isTransactionOpen: Boolean = transactionOpen.get()
+
+
+  /**
+   * Provides implicit access to the current thread's database session.
+   * This allows ScalikeJDBC queries to automatically use the correct session.
+   *
+   * @throws IllegalStateException if no session is currently set
+   * @return The current DBSession for this thread
+   */
   implicit def session: DBSession = threadLocalSession.get() match {
     case null =>
       val errorMsg = "No DBSession is set. Ensure you are within a transaction or session."
@@ -21,21 +42,28 @@ object SessionProvider {
   }
 
   /**
-   * Sets the provided `dbSession` as the current session for the duration of the block `f`,
-   * then restores the previous session. Allows nested session management without affecting outer sessions.
+   * Executes code block in a database session, preventing nested transactions.
+   * Sets up the session, runs the operation, and ensures cleanup afterwards.
    *
    * @param dbSession The `DBSession` to use during `f`.
    * @param f         The block of code to execute.
    * @tparam T        The return type of `f`.
-   * @return          The result of executing `f`.
-    */
+   * @throws IllegalStateException if called within an existing transaction
+   */
   def withSession[T](dbSession: DBSession)(f: => T): T = {
-    val previousSession = threadLocalSession.get()
-    threadLocalSession.set(dbSession)
+    if (isTransactionOpen) {
+      throw new IllegalStateException("Nested transactions are not allowed")
+    }
     try {
-      f
-    } finally { // Restore previous session or Null after block execution.
-      threadLocalSession.set(previousSession)
+      transactionOpen.set(true)
+      threadLocalSession.set(dbSession)
+      try {
+        f
+      } finally {
+        threadLocalSession.set(null) // Clear the session after the block completes
+      }
+    } finally {
+      transactionOpen.set(false)
     }
   }
 
