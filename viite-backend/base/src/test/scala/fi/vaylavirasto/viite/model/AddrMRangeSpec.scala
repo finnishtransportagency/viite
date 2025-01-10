@@ -60,6 +60,22 @@ class AddrMRangeSpec extends AnyFunSuite with Matchers {
   }
 
 
+  // ------------------------------------------ isRoadPartStart checks ------------------------------------------
+  test("Test AddrMRange.isRoadPartStart: Returns true, if this AddrMRange has zero start, and end greater than zero. Else false.") {
+    // A start of the road has start address == 0, and end address > 0.
+    AddrMRange(0,1).isRoadPartStart shouldBe true
+
+    //Not a start of a road part; does not have a zero start
+    AddrMRange(1,2).isRoadPartStart shouldBe false
+
+    // Invalid range
+    AddrMRange(0,0).isRoadPartStart shouldBe false
+
+    // End address being 0 does not make this a road part start. This is an invalid address range.
+// TODO sub test commented out, until start < end requirement of the AddrMRange object can be put into work
+//    intercept[Exception](AddrMRange(1,0).isRoadPartStart) shouldBe a[ViiteException]
+  }
+
   // -------------------------- Functions returning numeric values, or AddrMRange copies --------------------------
 
   test("Test AddrMRange.length:  Returns the length      of this AddrMRange, or throws ViiteException, if this AddrMRange isUndefined (or erroneous).") {

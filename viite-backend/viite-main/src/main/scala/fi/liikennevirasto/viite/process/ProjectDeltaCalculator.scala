@@ -245,12 +245,12 @@ object ProjectDeltaCalculator {
    * @return Changetable rows
    */
   def generateChangeTableRowsFromProjectLinks(projectLinks: Seq[ProjectLink], allProjectLinks: Seq[ProjectLink]): ChangeTableRows2 = {
-    val startLinks = projectLinks.filter(pl => pl.addrMRange.start == 0).groupBy(pl => {
+    val startLinks = projectLinks.filter(pl => pl.addrMRange.isRoadPartStart).groupBy(pl => {
       (pl.roadPart)})
     val leftAndRightTrackProjectLinks = allProjectLinks.filter(pl => {pl.track != Track.Combined})
     val leftAndRightTrackProjectLinksGroupedByRoadPart = leftAndRightTrackProjectLinks.groupBy(pl => {pl.roadPart})
     val terminatedForAveraging = leftAndRightTrackProjectLinksGroupedByRoadPart.mapValues(pls => {
-        if (pls.exists(pl => pl.status == RoadAddressChangeType.Termination && pl.originalAddrMRange.start == 0)) {
+        if (pls.exists(pl => pl.status == RoadAddressChangeType.Termination && pl.originalAddrMRange.isRoadPartStart)) {
           val (r, l) = pls.partition(_.track == Track.RightSide)
           Seq(sortAndTakeTerminated(r),sortAndTakeTerminated(l)).flatten
       } else
@@ -263,13 +263,13 @@ object ProjectDeltaCalculator {
 
     def groupToSections(pl: ProjectLink): (RoadPart, Track, Boolean) = (pl.originalRoadPart, pl.originalTrack, pl.reversed)
     val grouped =
-      if (allProjectLinks.exists(pl => pl.status == RoadAddressChangeType.Termination && pl.originalAddrMRange.start == 0)) {
+      if (allProjectLinks.exists(pl => pl.status == RoadAddressChangeType.Termination && pl.originalAddrMRange.isRoadPartStart)) {
         val projectLinksWithAveragedReplacements = (averagedStarts ++ projectLinks.filterNot(pl => averagedStarts.map(_.id).contains(pl.id)))
         projectLinksWithAveragedReplacements.sortBy(pl => (pl.roadPart.roadNumber, pl.roadPart.partNumber, pl.originalAddrMRange.start)).groupBy(groupToSections)
       } else
         projectLinks.sortBy(pl => (pl.roadPart.roadNumber, pl.roadPart.partNumber, pl.addrMRange.start)).groupBy(groupToSections)
 
-    val allWithAveraged = if (allProjectLinks.exists(pl => pl.status == RoadAddressChangeType.Termination && pl.originalAddrMRange.start == 0))
+    val allWithAveraged = if (allProjectLinks.exists(pl => pl.status == RoadAddressChangeType.Termination && pl.originalAddrMRange.isRoadPartStart))
       (averagedStarts ++ averagedTerminated ++ allProjectLinks.filterNot(pl => averagedStarts.map(_.id).contains(pl.id) || averagedTerminated.map(_.id).contains(pl.id)))
     else allProjectLinks
 
