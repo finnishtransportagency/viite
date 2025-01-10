@@ -51,7 +51,7 @@ object SessionProvider {
    * @throws IllegalStateException if called within an existing transaction
    */
   def withSession[T](dbSession: DBSession)(f: => T): T = {
-    if (isTransactionOpen) {
+    if (isTransactionOpen && !dbSession.isReadOnly) { // Allow nested transactions for read-only operations
       throw new IllegalStateException("Nested transactions are not allowed")
     }
     try {
