@@ -17,9 +17,11 @@ import scala.util.control.NonFatal
 
 class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayPointDAO, linearLocationDAO: LinearLocationDAO, nodeDAO: NodeDAO, nodePointDAO: NodePointDAO, junctionDAO: JunctionDAO, junctionPointDAO: JunctionPointDAO, roadwayChangesDAO: RoadwayChangesDAO, projectReservedPartDAO: ProjectReservedPartDAO) {
 
-  def runWithTransaction[T](f: => T): T = PostGISDatabaseScalikeJDBC.runWithTransaction(f)
+  def runWithTransaction[T](f: => T): T              = PostGISDatabaseScalikeJDBC.runWithTransaction(f)
 
-  def runWithReadOnlySession[T](f: => T): T = PostGISDatabaseScalikeJDBC.runWithReadOnlySession(f)
+  def runWithTransactionNewOrExisting[T](f: => T): T = PostGISDatabaseScalikeJDBC.runWithTransactionNewOrExisting(f)
+
+  def runWithReadOnlySession[T](f: => T): T          = PostGISDatabaseScalikeJDBC.runWithReadOnlySession(f)
 
   private val logger = LoggerFactory.getLogger(getClass)
 
@@ -187,7 +189,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
   def addOrUpdateNode(node: Node, isObsoleteNode: Boolean = false, username: String = "-"): Long = {
 
-    runWithTransaction {
+    runWithTransactionNewOrExisting {
       if (node.id == NewIdValue) {
         nodeDAO.create(Seq(node), username).headOption.get
       } else {
@@ -855,7 +857,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   }
 
   def getJunctionsByBoundingBox(boundingRectangle: BoundingRectangle, raLinks: Seq[RoadAddressLink]): Map[Junction, Seq[JunctionPoint]] = {
-    runWithTransaction{
+    runWithTransactionNewOrExisting {
       time(logger, "Fetch junctions") {
         val junctions: Seq[Junction] = junctionDAO.fetchByBoundingBox(boundingRectangle)
         val junctionPoints: Seq[JunctionPoint] = junctionPointDAO.fetchByJunctionIds(junctions.map(_.id))

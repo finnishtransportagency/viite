@@ -58,41 +58,43 @@ class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with Before
 
   val nodesAndJunctionsService: NodesAndJunctionsService =
     new NodesAndJunctionsService(
-                                  mockRoadwayDAO,
-                                  roadwayPointDAO,
-                                  mockLinearLocationDAO,
-                                  nodeDAO,
-                                  nodePointDAO,
-                                  junctionDAO,
-                                  junctionPointDAO,
-                                  roadwayChangesDAO,
-                                  projectReservedPartDAO
-                                  ) {
-                                      override def runWithReadOnlySession[T](f: => T): T = f
-                                      override def runWithTransaction[T](f: => T): T = f
-                                    }
+      mockRoadwayDAO,
+      roadwayPointDAO,
+      mockLinearLocationDAO,
+      nodeDAO,
+      nodePointDAO,
+      junctionDAO,
+      junctionPointDAO,
+      roadwayChangesDAO,
+      projectReservedPartDAO
+    ) {
+      override def runWithReadOnlySession[T](f: => T): T = f
+      override def runWithTransaction[T](f: => T): T = f
+      override def runWithTransactionNewOrExisting[T](f: => T): T = f
+    }
 
   val projectService: ProjectService =
     new ProjectService(
-                        roadAddressService,
-                        mockRoadLinkService,
-                        nodesAndJunctionsService,
-                        roadwayDAO,
-                        roadwayPointDAO,
-                        linearLocationDAO,
-                        projectDAO,
-                        projectLinkDAO,
-                        nodeDAO,
-                        nodePointDAO,
-                        junctionPointDAO,
-                        projectReservedPartDAO,
-                        roadwayChangesDAO,
-                        roadwayAddressMapper,
-                        mockEventBus
-                        ) {
-                            override def withDynSession[T](f: => T): T = f
-                            override def withDynTransaction[T](f: => T): T = f
-                          }
+      roadAddressService,
+      mockRoadLinkService,
+      nodesAndJunctionsService,
+      roadwayDAO,
+      roadwayPointDAO,
+      linearLocationDAO,
+      projectDAO,
+      projectLinkDAO,
+      nodeDAO,
+      nodePointDAO,
+      junctionPointDAO,
+      projectReservedPartDAO,
+      roadwayChangesDAO,
+      roadwayAddressMapper,
+      mockEventBus
+    ) {
+      override def runWithReadOnlySession[T](f: => T): T = f
+      override def runWithTransaction[T](f: => T): T = f
+      override def runWithFutureTransaction[T](f: => T): Future[T] = Future.successful(f)
+    }
 
   private val testRoadway1 = Roadway(NewIdValue, roadwayNumber1, RoadPart(roadNumber1, roadPartNumber1), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0, 100), reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
 
@@ -4348,8 +4350,6 @@ class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with Before
             Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 2, 8)
           , DateTime.now)
       )
-      val projectData = projectLinkDAO.fetchProjectLinks(projectId)
-      logger.info(s"Project links before fetching changes: ${projectData.map(pl => s"id: ${pl.id}, roadwayId: ${pl.roadwayId}")}")
       val mappedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       // Creation of nodes and node points
       nodesAndJunctionsService.handleNodePoints(projectChanges, projectLinks, mappedRoadwayNumbers)
@@ -6097,5 +6097,4 @@ class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with Before
       templatesInMiddleNodes.size should be(0) // There shouldn't be any templates in the 2 nodes
     }
   }
-
 }
