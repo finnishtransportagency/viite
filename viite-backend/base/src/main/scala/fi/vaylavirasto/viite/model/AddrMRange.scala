@@ -93,7 +93,7 @@ case class AddrMRange (start: Long, end: Long)// extends Ordered[AddrMRange]
     * @throws ViiteException if this AddrMRange isUndefined, mirrorEndAddrM is non-positive, or start
     *                        or end <!-- TODO "or end" can be removed, when start < end requirement can be set on its place -->
     *                        would get negative when moved. */
-  def mirror(mirrorEndAddrM: Long): AddrMRange = {
+  def mirrorBy(mirrorEndAddrM: Long): AddrMRange = {
     if(this.isUndefined)
       throw ViiteException("Cannot reverse move an undefined address.")
     if(mirrorEndAddrM<=0)
