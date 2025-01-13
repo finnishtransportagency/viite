@@ -4,7 +4,7 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.process.strategy.RoadAddressSectionCalculatorContext
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, RoadAddressChangeType, RoadPart, SideCode, Track}
+import fi.vaylavirasto.viite.model.{RoadAddressChangeType, RoadPart, SideCode, Track}
 import org.slf4j.LoggerFactory
 
 object ProjectSectionCalculator {
@@ -35,9 +35,6 @@ object ProjectSectionCalculator {
       logger.info(s"Finished MValue assignment for ${projectLinks.size} links")
     }
   }
-}
-
-case class RoadwaySection(roadNumber: Long, roadPartNumberStart: Long, roadPartNumberEnd: Long, track: Track, startMAddr: Long, endMAddr: Long, discontinuity: Discontinuity, administrativeClass: AdministrativeClass, ely: Long, reversed: Boolean, roadwayNumber: Long, projectLinks: Seq[ProjectLink]) {
 }
 
 case class TrackSection(roadPart: RoadPart, track: Track,

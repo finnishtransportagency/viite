@@ -93,7 +93,7 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
       start205.size should be(1)
       to205.size should be(1)
       remain205.size should be(1)
-      start205.map(x => (x._1.startMAddr, x._2.startMAddr, x._1.endMAddr, x._2.endMAddr)) should be(Some((0L, 0L, 110L, 110L)))
+      start205.map(x => (x._1.addrMRange.start, x._2.addrMRange.start, x._1.addrMRange.end, x._2.addrMRange.end)) should be(Some((0L, 0L, 110L, 110L)))
     }
   }
 
@@ -103,7 +103,7 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
     implicit val ordering: Ordering[RoadAddress] = Ordering.by(_.addrMRange.end)
     def getMinAddress(pls: Seq[BaseRoadAddress]): Long = pls.minBy(_.addrMRange.start).addrMRange.start
     def getMaxAddress(pls: Seq[BaseRoadAddress]): Long = pls.maxBy(_.addrMRange.end).addrMRange.end
-    def addressTrackChanges(x: (RoadwaySection, RoadwaySection)): (Long, Long, Long, Long, Track, Track) = (x._1.startMAddr, x._2.startMAddr, x._1.endMAddr, x._2.endMAddr, x._1.track, x._2.track)
+    def addressTrackChanges(x: (RoadwaySection, RoadwaySection)): (Long, Long, Long, Long, Track, Track) = (x._1.addrMRange.start, x._2.addrMRange.start, x._1.addrMRange.end, x._2.addrMRange.end, x._1.track, x._2.track)
     def toProjectLinks(transferLinks: IndexedSeq[(RoadAddress, ProjectLink)], track: Track)(implicit addresses: Seq[RoadAddress]): IndexedSeq[ProjectLink] = {
       val roadwayId = transferLinks.head._2.roadwayId
       transferLinks.map(l => {
@@ -162,7 +162,7 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
     implicit val ordering: Ordering[RoadAddress] = Ordering.by(_.addrMRange.end)
     def getMinAddress(pls: Seq[BaseRoadAddress]): Long = pls.minBy(_.addrMRange.start).addrMRange.start
     def getMaxAddress(pls: Seq[BaseRoadAddress]): Long = pls.maxBy(_.addrMRange.end).addrMRange.end
-    def addressTrackChanges(x: (RoadwaySection, RoadwaySection)): (Long, Long, Long, Long, Track, Track) = (x._1.startMAddr, x._2.startMAddr, x._1.endMAddr, x._2.endMAddr, x._1.track, x._2.track)
+    def addressTrackChanges(x: (RoadwaySection, RoadwaySection)): (Long, Long, Long, Long, Track, Track) = (x._1.addrMRange.start, x._2.addrMRange.start, x._1.addrMRange.end, x._2.addrMRange.end, x._1.track, x._2.track)
     def toProjectLinks(transferLinks: IndexedSeq[(RoadAddress, ProjectLink)], track: Track)(implicit addresses: Seq[RoadAddress]): IndexedSeq[ProjectLink] = {
       val roadwayId = transferLinks.head._2.roadwayId
       transferLinks.map(l => {
@@ -243,8 +243,8 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
       correctRoadNumber.get._1.track should be(correctRoadNumber.get._2.track)
       correctRoadNumber.get._1.discontinuity should be(correctRoadNumber.get._2.discontinuity)
       correctRoadNumber.map(x => {
-        (x._1.startMAddr, x._2.startMAddr, x._1.endMAddr, x._2.endMAddr)
-      }) should be(Some((0L, 0L, 110L, 110L)))
+        (x._1.addrMRange, x._2.addrMRange)
+      }) should be(Some((AddrMRange(0L,110L), AddrMRange(0L, 110L))))
     }
   }
 
@@ -289,12 +289,12 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
       adjustedTerminated should have size 2
 
       transferredPaired.map(x => {
-        (x._1.startMAddr, x._2.startMAddr, x._1.endMAddr, x._2.endMAddr)
-      }).foreach(_ should be((0L, 205L, 795L, 1000L)))
+        (x._1.addrMRange, x._2.addrMRange)
+      }).foreach(_ should be(AddrMRange(0L, 795L), AddrMRange(205L, 1000L)))
 
       adjustedTerminated.map(x => {
-        (x.startMAddr, x.endMAddr)
-      }).foreach(_ should be((0L, 205L)))
+        (x.addrMRange)
+      }).foreach(_ should be(AddrMRange(0L, 205L)))
     }
   }
 
@@ -349,16 +349,16 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
       transferredPaired should have size 3
 
       transferredPaired.filter(_._1.roadPartNumberStart == roadPart1.partNumber).map(x => {
-        (x._1.startMAddr, x._2.startMAddr, x._1.endMAddr, x._2.endMAddr)
-      }).foreach(_ should be((0L, 0L, 1301L, 1301L)))
+        (x._1.addrMRange, x._2.addrMRange)
+      }).foreach(_ should be(AddrMRange(0L,1301L), AddrMRange(0L, 1301L)))
 
       transferredPaired.filter(_._1.roadPartNumberStart == roadPart2.partNumber).map(x => {
-        (x._1.startMAddr, x._2.startMAddr, x._1.endMAddr, x._2.endMAddr)
-      }).foreach(_ should be((0L, 1301L, 549L, 1850L)))
+        (x._1.addrMRange, x._2.addrMRange)
+      }).foreach(_ should be(AddrMRange(0L, 549L), AddrMRange(1301L, 1850L)))
 
       transferredPaired.filter(_._1.roadPartNumberStart == roadPart3.partNumber).map(x => {
-        (x._1.startMAddr, x._2.startMAddr, x._1.endMAddr, x._2.endMAddr)
-      }).foreach(_ should be((0L, 1850L, 847L, 2697L)))
+        (x._1.addrMRange, x._2.addrMRange)
+      }).foreach(_ should be(AddrMRange(0L, 847L), AddrMRange(1850L, 2697L)))
 
     }
   }
@@ -485,14 +485,14 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
       transferredPaired  should have size 2
       adjustedTerminated should have size 1
 
-      transferredPaired.filter(_._1.startMAddr == 0) should have size 1
+      transferredPaired.filter(_._1.addrMRange.start == 0) should have size 1
       transferredPaired.map(x => {
-        (x._1.startMAddr, x._2.startMAddr, x._1.endMAddr, x._2.endMAddr, x._1.discontinuity, x._2.discontinuity)
-      }).foreach(_ should (be((0L, 0L, 4403L, 4403L, Discontinuity.Continuous, Discontinuity.EndOfRoad)) or be((4403L, 762L, 8469L, 4828L, Discontinuity.Continuous, Discontinuity.Continuous))))
+        (x._1.addrMRange, x._2.addrMRange, x._1.discontinuity, x._2.discontinuity)
+      }).foreach(_ should (be(AddrMRange(0L, 4403L), AddrMRange(0L, 4403L), Discontinuity.Continuous, Discontinuity.EndOfRoad) or be(AddrMRange(4403L, 8469L), AddrMRange(762L, 4828L), Discontinuity.Continuous, Discontinuity.Continuous)))
 
       adjustedTerminated.map(x => {
-        (x.startMAddr, x.endMAddr)
-      }).foreach(_ should be((0L, 762L)))
+        (x.addrMRange)
+      }).foreach(_ should be(AddrMRange(0L, 762L)))
     }
   }
 
@@ -527,7 +527,7 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
       val transferredPaired = transferred.adjustedSections.zip(transferred.originalSections)
 
       transferredPaired should have size 4
-      val createdTargets = transferredPaired.asInstanceOf[List[(RoadwaySection, RoadwaySection)]].sortBy(rs => (rs._1.startMAddr, rs._1.track.value))
+      val createdTargets = transferredPaired.asInstanceOf[List[(RoadwaySection, RoadwaySection)]].sortBy(rs => (rs._1.addrMRange.start, rs._1.track.value))
       val validTargets = Seq(
         (  0L, 125L, Track.Combined,  Discontinuity.Continuous),
         (125L, 241L, Track.RightSide, Discontinuity.MinorDiscontinuity),
@@ -535,7 +535,7 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
         (241L, 367L, Track.Combined,  Discontinuity.EndOfRoad))
 
       createdTargets.map(x => {
-        (x._1.startMAddr, x._1.endMAddr, x._1.track,x._1.discontinuity)
+        (x._1.addrMRange.start, x._1.addrMRange.end, x._1.track,x._1.discontinuity)
       }).zip(validTargets).foreach(p => p._1 should be(p._2))
     }
   }
@@ -557,18 +557,15 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
 //    val termPart = ProjectDeltaCalculator.partition(terminations)
 //    termPart should have size 2
 //    termPart.foreach(x => {
-//      x.startMAddr should be(0L)
-//      x.endMAddr should be(11L)
+//      x.addrMRange should be(AddrMRange(0L,11L))
 //    })
 //
 //    val transferParts = ProjectDeltaCalculator.partition(transfers).adjustedSections.map(_._1)
 //    transferParts should have size 2
 //    transferParts.foreach(x => {
 //      val (fr, to) = x
-//      fr.startMAddr should be(11L)
-//      to.startMAddr should be(0L)
-//      fr.endMAddr should be(120L)
-//      to.endMAddr should be(109L)
+//      fr.addrMRange should be(AddrMRange(11L,120L))
+//      to.addrMRange should be(AddrMRange(0L,109L))
 //    })
 //  }
 
@@ -589,7 +586,7 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
 
       termPart2 should have size 2
       termPart2.foreach(x => {
-        x.endMAddr should be(120L)
+        x.addrMRange.end should be(120L)
       })
 
       val unchangedParts2 = ProjectDeltaCalculator.generateChangeTableRowsFromProjectLinks(unchanged.map(_._2), unchanged.map(_._2))
@@ -598,8 +595,7 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
       unchangedParts3 should have size 2
       unchangedParts3.foreach(x => {
         val (fr, to) = x
-        fr.startMAddr should be(to.startMAddr)
-        fr.endMAddr should be(to.endMAddr)
+        fr.addrMRange should be(to.addrMRange)
       })
     }
   }
@@ -626,18 +622,17 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
       roadwaySectionPairs should have size 2
       roadwaySectionPairs.foreach(x => {
         val (to, fr) = x
-        (fr.startMAddr == 60 || fr.endMAddr == 60) should be(true)
-        (to.startMAddr == 60 || to.endMAddr == 60) should be(true)
-        if (fr.startMAddr == 0L) fr.administrativeClass should be(AdministrativeClass.Municipality) else fr.administrativeClass should be(AdministrativeClass.State)
-        if (to.startMAddr == 0L) to.administrativeClass should be(AdministrativeClass.Municipality) else to.administrativeClass should be(AdministrativeClass.State)
+        (fr.addrMRange.start == 60 || fr.addrMRange.end == 60) should be(true)
+        (to.addrMRange.start == 60 || to.addrMRange.end == 60) should be(true)
+        if (fr.addrMRange.start == 0L) fr.administrativeClass should be(AdministrativeClass.Municipality) else fr.administrativeClass should be(AdministrativeClass.State)
+        if (to.addrMRange.start == 0L) to.administrativeClass should be(AdministrativeClass.Municipality) else to.administrativeClass should be(AdministrativeClass.State)
       })
 
       val newParts = ProjectDeltaCalculator.partition(newLinks, Seq())
 
       newParts should have size 1
       newParts.foreach(to => {
-        to.startMAddr should be(120)
-        to.endMAddr should be(130)
+        to.addrMRange should be(AddrMRange(120,130))
       })
     }
   }
@@ -668,10 +663,10 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
       uncParts3 should have size 2
       uncParts3.foreach(x => {
         val (to, fr) = x
-        (fr.startMAddr == 60 || fr.endMAddr == 60) should be(true)
-        (to.startMAddr == 60 || to.endMAddr == 60) should be(true)
-        if (fr.startMAddr == 0L) fr.administrativeClass should be(AdministrativeClass.Municipality) else fr.administrativeClass should be(AdministrativeClass.State)
-        if (to.startMAddr == 0L) to.administrativeClass should be(AdministrativeClass.State) else to.administrativeClass should be(AdministrativeClass.State)
+        (fr.addrMRange.start == 60 || fr.addrMRange.end == 60) should be(true)
+        (to.addrMRange.start == 60 || to.addrMRange.end == 60) should be(true)
+        if (fr.addrMRange.start == 0L) fr.administrativeClass should be(AdministrativeClass.Municipality) else fr.administrativeClass should be(AdministrativeClass.State)
+        if (to.addrMRange.start == 0L) to.administrativeClass should be(AdministrativeClass.State) else to.administrativeClass should be(AdministrativeClass.State)
       })
     }
   }
@@ -722,15 +717,15 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
       newpart should have size 1
 
       val (toComb, frComb) = combined.head
-      (frComb.startMAddr == 0 && frComb.endMAddr == 800) should be(true)
-      (toComb.startMAddr == 0 && toComb.endMAddr == 800) should be(true)
+      (frComb.addrMRange.start == 0 && frComb.addrMRange.end == 800) should be(true)
+      (toComb.addrMRange.start == 0 && toComb.addrMRange.end == 800) should be(true)
 
       val (toTrans, frTrans) = transfered.head
-      (frTrans.startMAddr == 800 && frTrans.endMAddr == 1500) should be(true)
-      (toTrans.startMAddr == 800 && toTrans.endMAddr == 1500) should be(true)
+      (frTrans.addrMRange.start == 800 && frTrans.addrMRange.end == 1500) should be(true)
+      (toTrans.addrMRange.start == 800 && toTrans.addrMRange.end == 1500) should be(true)
 
       val (toNew, _) = newpart.head
-      (toNew.startMAddr == 800 && toNew.endMAddr == 1500) should be(true)
+      (toNew.addrMRange.start == 800 && toNew.addrMRange.end == 1500) should be(true)
     }
   }
 
@@ -797,34 +792,34 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
       endOfRoadRight shouldBe defined
 
       val (p1to, p1fr) = endOfRoadRight.get
-      (p1fr.startMAddr == 1524 && p1fr.endMAddr == 1987 && p1fr.track == Track.RightSide) should be(true)
-      (p1to.startMAddr == 0 && p1to.endMAddr == 463 && p1to.track == Track.LeftSide) should be(true)
+      (p1fr.addrMRange.start == 1524 && p1fr.addrMRange.end == 1987 && p1fr.track == Track.RightSide) should be(true) // TODO Refactor to use addrMRange comparisons
+      (p1to.addrMRange.start ==    0 && p1to.addrMRange.end ==  463 && p1to.track == Track.LeftSide)  should be(true)
       // Check address lenght has not changed.
-      p1fr.endMAddr - p1fr.startMAddr should be(p1to.endMAddr - p1to.startMAddr)
+      p1fr.addrMRange.length should be(p1to.addrMRange.length)
 
       val endOfRoadLeft   = uncParts3.find(_._2.track == Track.LeftSide)
       endOfRoadLeft shouldBe defined
 
       val (p2to, p2fr) = endOfRoadLeft.get
-      (p2fr.startMAddr == 1524 && p2fr.endMAddr == 1987 && p2fr.track == Track.LeftSide) should be(true)
-      (p2to.startMAddr == 0 && p2to.endMAddr == 463 && p2to.track == Track.RightSide) should be(true)
-      p2fr.endMAddr - p2fr.startMAddr should be(p2to.endMAddr - p2to.startMAddr)
+      (p2fr.addrMRange.start == 1524 && p2fr.addrMRange.end == 1987 && p2fr.track == Track.LeftSide)  should be(true) // TODO Refactor to use addrMRange comparisons
+      (p2to.addrMRange.start ==    0 && p2to.addrMRange.end ==  463 && p2to.track == Track.RightSide) should be(true)
+      p2fr.addrMRange.length should be(p2to.addrMRange.length)
 
-      val combinedMiddle   = uncParts3.find(_._2.startMAddr == 889)
+      val combinedMiddle   = uncParts3.find(_._2.addrMRange.start == 889)
       combinedMiddle shouldBe defined
 
       val (p4to, p4fr) = combinedMiddle.get
-      (p4fr.startMAddr == 889 && p4fr.endMAddr == 1524 && p4fr.track == Track.Combined) should be(true)
-      (p4to.startMAddr == 463 && p4to.endMAddr == 1098 && p4to.track == Track.Combined) should be(true)
-      p4fr.endMAddr - p4fr.startMAddr should be(p4to.endMAddr - p4to.startMAddr)
+      (p4fr.addrMRange.start == 889 && p4fr.addrMRange.end == 1524 && p4fr.track == Track.Combined) should be(true) // TODO Refactor to use addrMRange comparisons
+      (p4to.addrMRange.start == 463 && p4to.addrMRange.end == 1098 && p4to.track == Track.Combined) should be(true)
+      p4fr.addrMRange.length should be(p4to.addrMRange.length)
 
-      val combinedStart   = uncParts3.find(_._2.startMAddr == 0)
+      val combinedStart   = uncParts3.find(_._2.addrMRange.start == 0)
       combinedStart shouldBe defined
 
       val (p3to, p3fr) = combinedStart.get
-      (p3fr.startMAddr == 0 && p3fr.endMAddr == 889 && p3fr.track == Track.Combined) should be(true)
-      (p3to.startMAddr == 1098 && p3to.endMAddr == 1987 && p3to.track == Track.Combined) should be(true)
-      p3fr.endMAddr - p3fr.startMAddr should be(p3to.endMAddr - p3to.startMAddr)
+      (p3fr.addrMRange.start ==    0 && p3fr.addrMRange.end ==  889 && p3fr.track == Track.Combined) should be(true) // TODO Refactor to use addrMRange comparisons
+      (p3to.addrMRange.start == 1098 && p3to.addrMRange.end == 1987 && p3to.track == Track.Combined) should be(true)
+      p3fr.addrMRange.length should be(p3to.addrMRange.length)
     }
   }
 
@@ -863,16 +858,16 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
       part206 shouldBe defined
 
       val (to205, fr205) = part205.get
-      fr205.startMAddr should be(to205.startMAddr)
-      fr205.endMAddr should be(to205.endMAddr)
+      fr205.addrMRange.start should be(to205.addrMRange.start)
+      fr205.addrMRange.end   should be(to205.addrMRange.end)
       fr205.roadPartNumberStart should be(startRoadPart)
       to205.roadPartNumberStart should be(endRoadPart)
 
       val (to206, fr206) = part206.get
-      fr206.startMAddr should be(0)
-      fr206.endMAddr should be(addressMLength)
-      to206.startMAddr should be(fr205.endMAddr)
-      to206.endMAddr should be(fr205.endMAddr + fr206.endMAddr)
+      fr206.addrMRange.start should be(0)
+      fr206.addrMRange.end   should be(addressMLength)
+      to206.addrMRange.start should be(fr205.addrMRange.end)
+      to206.addrMRange.end   should be(fr205.addrMRange.end + fr206.addrMRange.end)
       fr206.roadPartNumberStart should be(endRoadPart)
       to206.roadPartNumberStart should be(endRoadPart)
     }
@@ -931,8 +926,8 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
 
       partitions2.size should be(1)
       val (to, fr) = partitions2.head
-      fr.startMAddr should be(to.startMAddr)
-      fr.endMAddr should be(to.endMAddr)
+      fr.addrMRange.start should be(to.addrMRange.start)
+      fr.addrMRange.end   should be(to.addrMRange.end)
       fr.ely should be(8)
       to.ely should be(5)
     }
@@ -960,8 +955,8 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
       partitions2.size should be(1)
       partitions2.foreach(p => {
         val (to, fr) = p
-        fr.startMAddr should be(to.startMAddr)
-        fr.endMAddr should be(to.endMAddr)
+        fr.addrMRange.start should be(to.addrMRange.start)
+        fr.addrMRange.end   should be(to.addrMRange.end)
       })
 
       val terminatedPartitions = ProjectDeltaCalculator.generateChangeTableRowsFromProjectLinks(links.filter(_.status == RoadAddressChangeType.Termination), links)
@@ -990,8 +985,8 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
       partitions2.size should be(1)
       partitions2.foreach(p => {
         val (to, fr) = p
-        fr.startMAddr should be(to.startMAddr)
-        fr.endMAddr should be(to.endMAddr)
+        fr.addrMRange.start should be(to.addrMRange.start)
+        fr.addrMRange.end   should be(to.addrMRange.end)
       })
 
       val terminatedPartitions = ProjectDeltaCalculator.generateChangeTableRowsFromProjectLinks(links.filter(_.status == RoadAddressChangeType.Termination), links)
@@ -1052,19 +1047,19 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
 
       /* Check continuities and road addresses. */
       val (to1, fr1) = road205and206Partitions._1.head
-      fr1.startMAddr should be(0)
-      fr1.endMAddr should be(splitAddress)
+      fr1.addrMRange.start should be(0)
+      fr1.addrMRange.end   should be(splitAddress)
       fr1.discontinuity should be(Discontinuity.Continuous)
-      to1.startMAddr should be(0)
-      to1.endMAddr should be(splitAddress)
+      to1.addrMRange.start should be(0)
+      to1.addrMRange.end   should be(splitAddress)
       to1.discontinuity should be(Discontinuity.Continuous)
 
       val (to2, fr2) = road205and206Partitions._2.head
-      fr2.startMAddr should be(splitAddress)
-      fr2.endMAddr should be(120)
+      fr2.addrMRange.start should be(splitAddress)
+      fr2.addrMRange.end   should be(120)
       fr2.discontinuity should be(originalDiscontinuity)
-      to2.startMAddr should be(0)
-      to2.endMAddr should be(splitAddress)
+      to2.addrMRange.start should be(0)
+      to2.addrMRange.end   should be(splitAddress)
       to2.discontinuity should be(newDiscontinuity)
     }
   }
@@ -1091,7 +1086,7 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
       partitions2.size should be(2)
       partitions2.foreach(x => {
         val (to, fr) = x
-        if (fr.startMAddr == 0) {
+        if (fr.addrMRange.start == 0) {
           fr.discontinuity should be(Discontinuity.Continuous)
           to.discontinuity should be(Discontinuity.MinorDiscontinuity)
         } else {
@@ -1152,10 +1147,10 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
       val secondSection = partitionCp.last
       val cutPoint      = projectLinksWithCp.find(_._2.roadwayId == 10L).get._2
 
-      firstSection.startMAddr should be(projectLinksWithCp.head._2.addrMRange.start)
-      firstSection.endMAddr should be(cutPoint.addrMRange.end)
-      secondSection.startMAddr should be(cutPoint.addrMRange.end)
-      secondSection.endMAddr should be(projectLinksWithCp.last._2.addrMRange.end)
+      firstSection.addrMRange.start should be(projectLinksWithCp.head._2.addrMRange.start)
+      firstSection.addrMRange.end   should be(cutPoint.addrMRange.end)
+      secondSection.addrMRange.start should be(cutPoint.addrMRange.end)
+      secondSection.addrMRange.end   should be(projectLinksWithCp.last._2.addrMRange.end)
     }
   }
 
@@ -1178,8 +1173,8 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
       partitionCp.size should be(1)
       val firstSection  = partitionCp.head
 
-      firstSection.startMAddr should be(projectLinksWithCp.head._2.addrMRange.start)
-      firstSection.endMAddr should be(projectLinksWithCp.last._2.addrMRange.end)
+      firstSection.addrMRange.start should be(projectLinksWithCp.head._2.addrMRange.start)
+      firstSection.addrMRange.end   should be(projectLinksWithCp.last._2.addrMRange.end)
     }
   }
 
@@ -1222,23 +1217,23 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
       firstSection  should have(size(1))
       secondSection should have(size(2))
 
-      firstSection.head.startMAddr  should be(maxAddr)
-      firstSection.head.endMAddr    should be(maxAddr + lengthChange)
+      firstSection.head.addrMRange.start  should be(maxAddr)
+      firstSection.head.addrMRange.end    should be(maxAddr + lengthChange)
       firstSection.head.reversed    should be(false)
-      secondSection.head.startMAddr should be(maxAddr + lengthChange)
-      secondSection.head.endMAddr   should be(maxAddr + lengthChange + roadway206.addrMRange.end)
+      secondSection.head.addrMRange.start should be(maxAddr + lengthChange)
+      secondSection.head.addrMRange.end   should be(maxAddr + lengthChange + roadway206.addrMRange.end)
       secondSection.head.reversed   should be(false)
-      secondSection.last.startMAddr should be(0)
-      secondSection.last.endMAddr   should be(maxAddr)
+      secondSection.last.addrMRange.start should be(0)
+      secondSection.last.addrMRange.end   should be(maxAddr)
       secondSection.last.reversed   should be(true)
 
       val originalSections205 = partitioned.originalSections.find(p => p.roadPartNumberStart == 205 && p.roadwayNumber == 0).get
-      originalSections205.startMAddr should be(0)
-      originalSections205.endMAddr   should be(roadway205.addrMRange.end)
+      originalSections205.addrMRange.start should be(0)
+      originalSections205.addrMRange.end   should be(roadway205.addrMRange.end)
 
       val originalSections206 = partitioned.originalSections.find(_.roadPartNumberStart == 206).get
-      originalSections206.startMAddr should be(0)
-      originalSections206.endMAddr   should be(roadway206.addrMRange.end)
+      originalSections206.addrMRange.start should be(0)
+      originalSections206.addrMRange.end   should be(roadway206.addrMRange.end)
     }
   }
 }
