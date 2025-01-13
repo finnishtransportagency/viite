@@ -44,18 +44,6 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
     Roadway(p.roadwayId, p.roadwayNumber, p.roadPart, p.administrativeClass, p.track, p.discontinuity, AddrMRange(ps.head.addrMRange.start, ps.last.addrMRange.end), p.reversed, startDate, p.endDate, p.createdBy.getOrElse("-"), p.roadName, p.ely, TerminationCode.NoTermination, DateTime.now(), None)
   }
 
-  test("Test ProjectDeltaCalculator.partition When executing multiple transfers on single road part Then returns the correct From RoadSection -> To RoadSection mapping.") {
-    val transfer1 = (0 to 10).map(x => (createRoadAddress(x * 10, 10), createTransferProjectLink(x * 10, 10)))
-    val transfer2 = (12 to 15).map(x => (createRoadAddress(x * 10, 10), createTransferProjectLink(x * 10, 10)))
-    val mapping =
-      ProjectDeltaCalculator.partition(transfer1 ++ transfer2).adjustedSections.map(_._1)
-    mapping.foreach { elem =>
-      elem._1.startMAddr should be(elem._2.startMAddr - project.id)
-      elem._1.endMAddr should be(elem._2.endMAddr - project.id)
-      elem._1.track should be(elem._2.track)
-    }
-  }
-
   test("Test ProjectDeltaCalculator.partition When executing a Unchanged and 2 transfer on single road part Then returns the correct From RoadSection -> To RoadSection mapping.") {
     runWithRollback {
       val addresses  = (0 to 10).map(i => {
@@ -1094,40 +1082,6 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
           to.discontinuity should be(Discontinuity.Continuous)
         }
       })
-    }
-  }
-
-  test("Test ProjectDeltaCalculator.partition When executing Multiple transfers with reversal and discontinuity change operations Then returns the correct From RoadSection -> To RoadSection mapping.") {
-    val transfer = Seq((createRoadAddress(0, 502).copy(discontinuity = Discontinuity.MinorDiscontinuity),
-      createTransferProjectLink(1524, 502).copy(reversed = true)),
-      (createRoadAddress(502, 1524),
-        createTransferProjectLink(0, 1524).copy(discontinuity = Discontinuity.MinorDiscontinuity, reversed = true)))
-    val mapping =
-      ProjectDeltaCalculator.partition(transfer).adjustedSections.map(_._1)
-    mapping should have size 2
-    mapping.foreach { case (from, to) =>
-      from.endMAddr - from.startMAddr should be(to.endMAddr - to.startMAddr)
-      if (from.discontinuity != Discontinuity.Continuous)
-        to.discontinuity should be(Discontinuity.Continuous)
-      else
-        to.discontinuity should be(Discontinuity.MinorDiscontinuity)
-    }
-  }
-
-  test("Multiple transfers with reversal and discontinuity") {
-    val transfer = Seq((createRoadAddress(0, 502).copy(discontinuity = Discontinuity.MinorDiscontinuity),
-      createTransferProjectLink(1524, 502).copy(reversed = true)),
-      (createRoadAddress(502, 1524),
-        createTransferProjectLink(0, 1524).copy(discontinuity = Discontinuity.MinorDiscontinuity, reversed = true)))
-    val mapping =
-      ProjectDeltaCalculator.partition(transfer).adjustedSections.map(_._1)
-    mapping should have size 2
-    mapping.foreach { case (from, to) =>
-      from.endMAddr - from.startMAddr should be(to.endMAddr - to.startMAddr)
-      if (from.discontinuity != Discontinuity.Continuous)
-        to.discontinuity should be(Discontinuity.Continuous)
-      else
-        to.discontinuity should be(Discontinuity.MinorDiscontinuity)
     }
   }
 

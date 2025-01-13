@@ -314,69 +314,6 @@ object ProjectDeltaCalculator {
     }
   }
 
-  def partition(transfers: Seq[(RoadAddress, ProjectLink)], allNonTerminatedProjectLinks: Seq[ProjectLink] = Seq()): ChangeTableRows = {
-    def toRoadAddressSection(o: Seq[BaseRoadAddress]) = {
-      o.map(ra =>
-        RoadwaySection(ra.roadPart.roadNumber, ra.roadPart.partNumber, ra.roadPart.partNumber,
-          ra.track, ra.addrMRange.start, ra.addrMRange.end, ra.discontinuity, ra.administrativeClass, ra.ely, ra.reversed, ra.roadwayNumber, Seq()))
-    }
-
-      val trans_ =  transfers.groupBy(x => (x._1.roadPart, x._1.track, x._2.roadPart, x._2.track, x._1.id))
-      val trans_mapped = trans_.mapValues(v => {
-        // If roadpart was reversed, process old roadaddresses in reverse direction.
-        val trans_directed = if (v.exists(_._2.reversed)) v.map(_._1).reverse.zip(v.map(_._2)) else v
-        combinePair(trans_directed.sortBy(_._2.addrMRange.start), allNonTerminatedProjectLinks.filter(pl => {
-          pl.roadPart == v.head._2.roadPart
-        }))
-      })
-
-        val sectioned = trans_mapped.mapValues(v => {
-        val (from, to) = v.unzip
-        toRoadAddressSection(from) -> toRoadAddressSection(to)
-      })
-
-    //adjusted the end of sources
-    val links    = transfers.map(_._2)
-    val sections = sectioned.map(sect => {
-      val (_, (srcToMap, targetToMap)) = sect
-      val target                    = targetToMap.map(t => {
-        t.copy(projectLinks = links.filter(link => {
-          link.roadwayNumber == t.roadwayNumber && link.roadPart.roadNumber == t.roadNumber &&
-          link.roadPart.partNumber == t.roadPartNumberEnd && link.track == t.track && link.ely == t.ely &&
-          link.addrMRange.start >= t.startMAddr && link.addrMRange.end <= t.endMAddr
-        }))
-      })
-      val src                    = srcToMap.map(s => {
-        s.copy(projectLinks = links.filter(link => {
-          link.roadwayNumber == s.roadwayNumber && link.roadPart.roadNumber == s.roadNumber &&
-          link.roadPart.partNumber == s.roadPartNumberStart && link.track == s.track && link.ely == s.ely &&
-          link.originalAddrMRange.start >= s.startMAddr && link.originalAddrMRange.end <= s.endMAddr
-        }))
-      })
-      src.zip(target)
-    }
-    ).flatten
-
-
-    //  adjusted the end of sources
-    val adjustedEndSourceSections = sections.map { case (src, target) =>
-      val possibleExistingSameEndAddrMValue = sections.find {
-        case (_, t) => t.roadNumber == target.roadNumber && t.roadPartNumberStart == target.roadPartNumberStart && t.endMAddr == target.endMAddr && t.track == Track.switch(target.track)
-      }
-      if (possibleExistingSameEndAddrMValue.nonEmpty) {
-        val warningMessage = if (Math.abs(src.endMAddr - possibleExistingSameEndAddrMValue.head._1.endMAddr) > viite.MaxDistanceBetweenTracks)
-          Some(viite.MaxDistanceBetweenTracksWarningMessage)
-        else
-          None
-        ((src.copy(endMAddr = adjustAddressValues(src.endMAddr + possibleExistingSameEndAddrMValue.head._1.endMAddr, src.endMAddr, src.track)), target), warningMessage)
-      } else {
-        ((src, target), None)
-      }
-    }
-
-    ChangeTableRows(adjustedSections = adjustedEndSourceSections, originalSections = sections)
-  }
-
   /** Create grouping for old address parts.
    * Utility function for two track terminated change table address matching.
    *
