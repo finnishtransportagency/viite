@@ -52,13 +52,13 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
       val addresses2 = (11 to 21).map(i => {
         createRoadAddress(i * 10, 10L)
       }).map(a => {
-        a.copy(roadPart = RoadPart(a.roadPart.roadNumber, 206), addrMRange = AddrMRange(a.addrMRange.start - 110L, a.addrMRange.end - 110L))
+        a.copy(roadPart = RoadPart(a.roadPart.roadNumber, 206), addrMRange = a.addrMRange.move(-110L))
       })
       val (transferLinks1, transferLinks2) = addresses2.map(toTransition(project, RoadAddressChangeType.Transfer)).partition(_._2.addrMRange.start == 0L)
       val projectLinks                     = addresses.map(toTransition (project, RoadAddressChangeType.Unchanged)) ++ transferLinks1.map(l => {
         (l._1, l._2.copy(roadPart = RoadPart(l._2.roadPart.roadNumber, 205), addrMRange = AddrMRange(110L, 120L)))
       }) ++ transferLinks2.map(l => {
-        (l._1, l._2.copy(addrMRange = AddrMRange(l._2.addrMRange.start - 10L, l._2.addrMRange.end - 10L)))
+        (l._1, l._2.copy(addrMRange = l._2.addrMRange.move(-10L)))
       })
       val roadway205 = toRoadway(addresses.map (toTransition(project, RoadAddressChangeType.Unchanged)).map(_._2))
       val roadway206 = toRoadway(addresses2.map(toTransition(project, RoadAddressChangeType.Transfer)).map(_._2))

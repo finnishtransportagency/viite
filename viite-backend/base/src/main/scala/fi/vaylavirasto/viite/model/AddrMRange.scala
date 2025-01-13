@@ -62,6 +62,51 @@ case class AddrMRange (start: Long, end: Long)// extends Ordered[AddrMRange]
       None
   }
 
+  /** Returns an AddrMRange moved by given <i>amountM</i>. Both ends get moved the given amount.
+   * @param amountM How many road address metersis this AddrMRange moved.
+   * @throws ViiteException if this AddrMRange isUndefined, or startAddress would get negative when moved. */
+  def move(amountM: Long): AddrMRange = {
+    if(this.isUndefined)
+      throw ViiteException("Cannot move an undefined address.")
+    if(this.start+amountM<0)
+      throw ViiteException(s"Cannot move address range $this that much. Moving it $amountM would cause start address to be negative.")
+    // TODO the end+amountM<0 test seems silly after start already been tested, but must be here as long as start < end requirement of the AddrMRange cannot be put into work
+    if(this.end+amountM<0)
+      throw ViiteException(s"Cannot move address range $this that much. Moving it $amountM would cause end address to be negative.")
+
+    AddrMRange(start + amountM, end + amountM)
+  }
+
+  /** Returns an AddrMRange mirrored within reference range AdddrMRange(0,<i>mirrorEndAddrM</i>).
+    *
+    * Example: mirror AddrMRange(50,200) as it was part of AddrMRange(0,300): get AddrMRange(100,250).
+    * <pre>
+    *                       50                      200
+    *   orig         0       &gt;-------+-------+-------&gt;             300
+    *   ref          &gt;-------+-------+-------+-------+-------+-------&gt;
+    *   ref          &lt;-------+-------+-------+-------+-------+-------&lt;
+    *   mirrored    300      &lt;-------+-------+-------&lt;               0
+    *                        250                  100
+    * </pre>
+    *
+    * @throws ViiteException if this AdddrMRange does not fit within AdddrMRange(0,<i>mirrorEndAddrM</i>).
+    * @throws ViiteException if this AddrMRange isUndefined, mirrorEndAddrM is non-positive, or start
+    *                        or end <!-- TODO "or end" can be removed, when start < end requirement can be set on its place -->
+    *                        would get negative when moved. */
+  def mirror(mirrorEndAddrM: Long): AddrMRange = {
+    if(this.isUndefined)
+      throw ViiteException("Cannot reverse move an undefined address.")
+    if(mirrorEndAddrM<=0)
+      throw ViiteException("Cannot reverse move over a non-positive end point.")
+    if(mirrorEndAddrM-this.end<0)
+      throw ViiteException(s"Cannot mirror address range $this with respect to $mirrorEndAddrM. Reversing would cause the mirrored start address to be negative.")
+    // TODO the end+amountM<0 test seems silly after start already been tested, but must be here as long as start < end requirement of the AddrMRange cannot be put into work
+    if(mirrorEndAddrM-this.start<0)
+      throw ViiteException(s"Cannot mirror address range $this with respect to $mirrorEndAddrM. Reversing would cause the mirrored end address to be negative.")
+
+    AddrMRange(mirrorEndAddrM-end, mirrorEndAddrM-start)
+  }
+
 //  /** Provides [[Ordered]] extension, thus offering comparison operators ==, <, >, <=, and >=.
 //    * @implements [[Ordered.compare]] */
 //  override def compare(that: AddrMRange): Int = (this.startAddrM, this.endAddrM) compare (that.startAddrM, that.endAddrM)
