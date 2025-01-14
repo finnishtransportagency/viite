@@ -340,7 +340,7 @@ class RoadAddressService(
           val track = if (params.size == 4) Some(params(3)) else None
           val ralOption = getRoadAddressLink(RoadPart(roadNumber, roadPart), addressM, track)
           ralOption.foldLeft(Seq.empty[Map[String, Seq[Any]]])((partialResultSeq, ral) => {
-            val roadAddressLinkMValueLengthPercentageFactor = (addressM - ral.addrMRange.start.toDouble) / (ral.addrMRange.end.toDouble - ral.addrMRange.start)
+            val roadAddressLinkMValueLengthPercentageFactor = (addressM - ral.addrMRange.start.toDouble) / ral.addrMRange.length.toDouble
             val geometryLength = ral.endMValue - ral.startMValue
             val geometryMeasure = roadAddressLinkMValueLengthPercentageFactor * geometryLength
             val point = ral match {

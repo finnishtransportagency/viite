@@ -79,7 +79,7 @@ class ProjectValidatorSpec extends AnyFunSuite with Matchers {
   private def projectLink(addrMRange: AddrMRange, track: Track, projectId: Long, status: RoadAddressChangeType = RoadAddressChangeType.NotHandled,
                           roadPart: RoadPart = RoadPart(19999, 1), discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, roadwayId: Long = 0L, linearLocationId: Long = 0L, plRoadwayNumber: Long = NewIdValue): ProjectLink = {
     val startDate = if (status !== RoadAddressChangeType.New) Some(DateTime.now()) else None
-    ProjectLink(NewIdValue, roadPart, track, discontinuity, addrMRange, addrMRange, startDate, None, Some("User"), addrMRange.start.toString, 0.0, (addrMRange.end - addrMRange.start).toDouble, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), Seq(Point(0.0, addrMRange.start), Point(0.0, addrMRange.end)), projectId, status, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, (addrMRange.end - addrMRange.start).toDouble, roadwayId, linearLocationId, ely, reversed = false, None, 0L, roadwayNumber = plRoadwayNumber)
+    ProjectLink(NewIdValue, roadPart, track, discontinuity, addrMRange, addrMRange, startDate, None, Some("User"), addrMRange.start.toString, 0.0, addrMRange.length.toDouble, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), Seq(Point(0.0, addrMRange.start), Point(0.0, addrMRange.end)), projectId, status, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, addrMRange.length.toDouble, roadwayId, linearLocationId, ely, reversed = false, None, 0L, roadwayNumber = plRoadwayNumber)
   }
 
   def toProjectLink(project: Project)(roadAddress: RoadAddress): ProjectLink = {

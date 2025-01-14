@@ -1167,7 +1167,7 @@ class ProjectSectionCalculatorSpec extends AnyFunSuite with Matchers {
       }
 
       output.foreach(pl => {
-        (pl.addrMRange.end - pl.addrMRange.start) should be >= 10L
+        pl.addrMRange.length should be >= 10L
         pl.sideCode should be(SideCode.TowardsDigitizing)
         pl.reversed should be(false)
       }
@@ -1208,7 +1208,7 @@ class ProjectSectionCalculatorSpec extends AnyFunSuite with Matchers {
       }
 
       output.foreach(pl => {
-        (pl.addrMRange.end - pl.addrMRange.start) should be(10L)
+        pl.addrMRange.length should be(10L)
         pl.sideCode should be(SideCode.TowardsDigitizing)
         pl.reversed should be(false)
       }
@@ -1261,7 +1261,7 @@ class ProjectSectionCalculatorSpec extends AnyFunSuite with Matchers {
       }
 
       output.foreach(pl => {
-        (pl.addrMRange.end - pl.addrMRange.start) should be(10L)
+        pl.addrMRange.length should be(10L)
         pl.sideCode should be(SideCode.TowardsDigitizing)
         pl.reversed should be(false)
       }
@@ -1300,7 +1300,7 @@ class ProjectSectionCalculatorSpec extends AnyFunSuite with Matchers {
       }
 
       output.foreach(pl => {
-        (pl.addrMRange.end - pl.addrMRange.start) should be >= 10L
+        pl.addrMRange.length should be >= 10L
         pl.sideCode should be(SideCode.AgainstDigitizing)
         pl.reversed should be(false)
       }
@@ -1340,7 +1340,7 @@ class ProjectSectionCalculatorSpec extends AnyFunSuite with Matchers {
       }
 
       output.foreach(pl => {
-        (pl.addrMRange.end - pl.addrMRange.start) should be >= 10L
+        pl.addrMRange.length should be >= 10L
         pl.sideCode should be(SideCode.AgainstDigitizing)
         pl.reversed should be(false)
       }
@@ -1395,7 +1395,7 @@ class ProjectSectionCalculatorSpec extends AnyFunSuite with Matchers {
       }
 
       output.foreach(pl => {
-        (pl.addrMRange.end - pl.addrMRange.start) should be >= 10L
+        pl.addrMRange.length should be >= 10L
         pl.sideCode should be(SideCode.TowardsDigitizing)
         pl.reversed should be(false)
       }
@@ -1550,7 +1550,7 @@ class ProjectSectionCalculatorSpec extends AnyFunSuite with Matchers {
       }
       /* check positive lengths. */
       output.foreach(pl => {
-        (pl.addrMRange.end - pl.addrMRange.start) should be > 0L
+        pl.addrMRange.length should be > 0L
       })
     }
   }

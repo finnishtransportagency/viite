@@ -2068,7 +2068,7 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
       case _ => ra.ely
     }
 
-    ProjectLink(NewIdValue, ra.roadPart, ra.track, ra.discontinuity, ra.addrMRange, ra.addrMRange, ra.startDate, ra.endDate, Some(project.modifiedBy), ra.linkId, ra.startMValue, ra.endMValue, ra.sideCode, ra.calibrationPointTypes, (ra.startCalibrationPointType, ra.endCalibrationPointType), geometry, project.id, RoadAddressChangeType.NotHandled, ra.administrativeClass, ra.linkGeomSource, GeometryUtils.geometryLength(geometry), ra.id, ra.linearLocationId, newEly, ra.reversed, None, ra.adjustedTimestamp, roadAddressLength = Some(ra.addrMRange.end - ra.addrMRange.start))
+    ProjectLink(NewIdValue, ra.roadPart, ra.track, ra.discontinuity, ra.addrMRange, ra.addrMRange, ra.startDate, ra.endDate, Some(project.modifiedBy), ra.linkId, ra.startMValue, ra.endMValue, ra.sideCode, ra.calibrationPointTypes, (ra.startCalibrationPointType, ra.endCalibrationPointType), geometry, project.id, RoadAddressChangeType.NotHandled, ra.administrativeClass, ra.linkGeomSource, GeometryUtils.geometryLength(geometry), ra.id, ra.linearLocationId, newEly, ra.reversed, None, ra.adjustedTimestamp, roadAddressLength = ra.addrMRange.lengthOption)
   }
 
   private def newProjectLink(rl: RoadLinkLike, project: Project, roadPart: RoadPart, trackCode: Track, discontinuity: Discontinuity, administrativeClass: AdministrativeClass, ely: Long, roadName: String = "") = {
@@ -2577,7 +2577,7 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
                   logger.error(s"Address length negative. linkId: ${curr.linkId}")
                   throw new RoadAddressException(NegativeLengthErrorMessage.format(curr.linkId))
                 }
-                if (curr.status != RoadAddressChangeType.New && (curr.originalTrack == curr.track || curr.track == Track.Combined) && !(Math.abs((curr.addrMRange.end - curr.addrMRange.start) - (curr.originalAddrMRange.end - curr.originalAddrMRange.start)) < maxDiffForChange)) {
+                if (curr.status != RoadAddressChangeType.New && (curr.originalTrack == curr.track || curr.track == Track.Combined) && !(Math.abs(curr.addrMRange.length - curr.originalAddrMRange.length) < maxDiffForChange)) {
                   logger.error(s"Length mismatch. New: ${curr.addrMRange.start} ${curr.addrMRange.end} original: ${curr.originalAddrMRange.start} ${curr.originalAddrMRange.end} linkId: ${curr.linkId}")
                   throw new RoadAddressException(LengthMismatchErrorMessage.format(curr.linkId, maxDiffForChange - 1))
                 }

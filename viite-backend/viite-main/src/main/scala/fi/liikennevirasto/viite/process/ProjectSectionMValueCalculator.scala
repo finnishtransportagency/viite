@@ -26,7 +26,7 @@ object ProjectSectionMValueCalculator {
 
     // Reset the end address measure if have changed
     def resetEndAddrMValue(pl: ProjectLink): ProjectLink = {
-      val endAddrMValue = pl.addrMRange.start + pl.addrMLength
+      val endAddrMValue = pl.addrMRange.start + pl.addrMRange.length
       if (endAddrMValue != pl.addrMRange.end)
         pl.copy(addrMRange = AddrMRange(pl.addrMRange.start, endAddrMValue))
       else
@@ -103,7 +103,7 @@ object ProjectSectionMValueCalculator {
           val someCalibrationPoint: Option[UserDefinedCalibrationPoint] = calibrationPointMap.get(pl.id)
           pl.status match {
             case RoadAddressChangeType.New => if (someCalibrationPoint.nonEmpty) someCalibrationPoint.get.addressMValue else m + Math.abs(pl.geometryLength) * coEff
-            case RoadAddressChangeType.Transfer | RoadAddressChangeType.NotHandled | RoadAddressChangeType.Renumeration | RoadAddressChangeType.Unchanged => m + (pl.originalAddrMRange.end - pl.originalAddrMRange.start)
+            case RoadAddressChangeType.Transfer | RoadAddressChangeType.NotHandled | RoadAddressChangeType.Renumeration | RoadAddressChangeType.Unchanged => m + (pl.originalAddrMRange.length)
             case RoadAddressChangeType.Termination => pl.addrMRange.end
             case _ => throw new InvalidAddressDataException(s"Invalid status found at value assignment ${pl.status}, linkId: ${pl.linkId}")
           }
@@ -116,8 +116,8 @@ object ProjectSectionMValueCalculator {
   def calculateAddressingFactors(seq: Seq[ProjectLink]): TrackAddressingFactors = {
     seq.foldLeft[TrackAddressingFactors](TrackAddressingFactors(0, 0, 0.0)) { case (a, pl) =>
       pl.status match {
-        case RoadAddressChangeType.Unchanged | RoadAddressChangeType.Renumeration => a.copy(unChangedLength = a.unChangedLength + pl.addrMLength)
-        case RoadAddressChangeType.Transfer | RoadAddressChangeType.NotHandled => a.copy(transferLength = a.transferLength + pl.addrMLength)
+        case RoadAddressChangeType.Unchanged | RoadAddressChangeType.Renumeration => a.copy(unChangedLength = a.unChangedLength + pl.addrMRange.length)
+        case RoadAddressChangeType.Transfer  | RoadAddressChangeType.NotHandled   => a.copy(transferLength  = a.transferLength  + pl.addrMRange.length)
         case RoadAddressChangeType.New => a.copy(newLength = a.newLength + pl.geometryLength)
         case RoadAddressChangeType.Termination => a
         case _ => throw new InvalidAddressDataException(s"Invalid status found at factor assignment ${pl.status}, linkId: ${pl.linkId}")
