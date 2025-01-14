@@ -57,7 +57,7 @@ case class ProjectLink(id: Long, roadPart: RoadPart, track: Track, discontinuity
   }
 
   def addrAt(a: Double): Long = {
-    val coefficient = (addrMRange.end - addrMRange.start) / (endMValue - startMValue)
+    val coefficient = (addrMRange.length) / (endMValue - startMValue)
     sideCode match {
       case SideCode.AgainstDigitizing =>
         addrMRange.end - Math.round((a-startMValue) * coefficient)
@@ -65,10 +65,6 @@ case class ProjectLink(id: Long, roadPart: RoadPart, track: Track, discontinuity
         addrMRange.start + Math.round((a-startMValue) * coefficient)
       case _ => throw new InvalidAddressDataException(s"Bad sidecode $sideCode on project link")
     }
-  }
-
-  def addrMLength(): Long = {
-    addrMRange.end - addrMRange.start
   }
 
   def getFirstPoint: Point = {
@@ -80,7 +76,7 @@ case class ProjectLink(id: Long, roadPart: RoadPart, track: Track, discontinuity
   }
 
   def toMeters(address: Long): Double = {
-    val coefficient = (endMValue - startMValue) / (addrMRange.end - addrMRange.start)
+    val coefficient = (endMValue - startMValue) / (addrMRange.length)
     coefficient * address
   }
 

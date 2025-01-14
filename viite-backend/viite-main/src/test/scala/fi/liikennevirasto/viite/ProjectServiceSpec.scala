@@ -241,7 +241,7 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
     val id = Sequences.nextViiteProjectId
 
     def projectLink(addrMRange: AddrMRange, track: Track, projectId: Long, status: RoadAddressChangeType = RoadAddressChangeType.NotHandled, roadPart: RoadPart = RoadPart(19999, 1), discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, linkId: String = 0L.toString, roadwayId: Long = 0L, linearLocationId: Long = 0L, startDate: Option[DateTime] = None) = {
-      ProjectLink(NewIdValue, roadPart, track, discontinuity, addrMRange, addrMRange, startDate, None, Some("User"), linkId, 0.0, (addrMRange.end - addrMRange.start).toDouble, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), Seq(Point(0.0, addrMRange.start), Point(0.0, addrMRange.end)), projectId, status, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, (addrMRange.end - addrMRange.start).toDouble, roadwayId, linearLocationId, ely, reversed = false, None, 0L)
+      ProjectLink(NewIdValue, roadPart, track, discontinuity, addrMRange, addrMRange, startDate, None, Some("User"), linkId, 0.0, addrMRange.length.toDouble, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), Seq(Point(0.0, addrMRange.start), Point(0.0, addrMRange.end)), projectId, status, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, addrMRange.length.toDouble, roadwayId, linearLocationId, ely, reversed = false, None, 0L)
     }
 
     def withTrack(t: Track): Seq[ProjectLink] = {
@@ -1735,7 +1735,7 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
       roadwayDAO.create(Seq(roadway))
 
       // Create project link
-      val roadAddressLength = roadway.addrMRange.end - roadway.addrMRange.start
+      val roadAddressLength = roadway.addrMRange.length
       val projectId = Sequences.nextViiteProjectId
       val newLength = 110.123
       val newEndAddr = 110
@@ -5494,6 +5494,6 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
   private def projectLink(addrMRange: AddrMRange, track: Track, projectId: Long, status: RoadAddressChangeType = RoadAddressChangeType.NotHandled,
                           roadPart: RoadPart = RoadPart(19999, 1), discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, roadwayId: Long = 0L, linearLocationId: Long = 0L) = {
     val startDate = if (status !== RoadAddressChangeType.New) Some(DateTime.now()) else None
-    ProjectLink(NewIdValue, roadPart, track, discontinuity, addrMRange, addrMRange, startDate, None, Some("User"), addrMRange.start.toString, 0.0, (addrMRange.end - addrMRange.start).toDouble, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), Seq(Point(0.0, addrMRange.start), Point(0.0, addrMRange.end)), projectId, status, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, (addrMRange.end - addrMRange.start).toDouble, roadwayId, linearLocationId, ely, reversed = false, None, 0L)
+    ProjectLink(NewIdValue, roadPart, track, discontinuity, addrMRange, addrMRange, startDate, None, Some("User"), addrMRange.start.toString, 0.0, addrMRange.length.toDouble, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), Seq(Point(0.0, addrMRange.start), Point(0.0, addrMRange.end)), projectId, status, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, addrMRange.length.toDouble, roadwayId, linearLocationId, ely, reversed = false, None, 0L)
   }
 }

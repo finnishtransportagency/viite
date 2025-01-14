@@ -59,5 +59,27 @@ class AddrMRangeSpec extends AnyFunSuite with Matchers {
     AddrMRange(1,2).isUndefined shouldBe false
   }
 
+
+  // -------------------------- Functions returning numeric values, or AddrMRange copies --------------------------
+
+  test("Test AddrMRange.length:  Returns the length      of this AddrMRange, or throws ViiteException, if this AddrMRange isUndefined (or erroneous).") {
+    AddrMRange(  0,100).length shouldBe 100
+    AddrMRange(100,200).length shouldBe 100
+
+    // cannot calculate lengths for invalid ranges
+    intercept[ViiteException](AddrMRange(  0,0).length) shouldBe a[ViiteException]
+  // TODO sub test commented out, until start < end requirement of the AddrMRange object can be put into work
+  //  intercept[ViiteException](AddrMRange(100,0).length) shouldBe a[ViiteException] // creation should fail already.
+  }
+
+  test("Test AddrMRange.lengthOption:  Returns the length of this AddrMRange, or None, if this AddrMRange is invalid (or erroneous).") {
+    AddrMRange(  0,100).lengthOption shouldBe Some(100)
+    AddrMRange(100,200).lengthOption shouldBe Some(100)
+
+    // cannot calculate lengths for invalid ranges
+    AddrMRange(  0,  0).lengthOption shouldBe None
+  // TODO sub test commented out, until start < end requirement of the AddrMRange object can be put into work
+  //  intercept[ViiteException](AddrMRange(100,0).lengthOption) shouldBe a[ViiteException] // creation should fail already.
+  }
 }
 

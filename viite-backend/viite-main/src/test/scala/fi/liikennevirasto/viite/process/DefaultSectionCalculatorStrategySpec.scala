@@ -227,7 +227,7 @@ class DefaultSectionCalculatorStrategySpec extends AnyFunSuite with Matchers {
 
         val mx = projectLinksWithAssignedValues.filter(_.addrMRange.start == mdl.head.addrMRange.end)
         mx should have size 1
-        mx.head.addrMRange.end - mx.head.addrMRange.start should be(mx.head.originalAddrMRange.end - mx.head.originalAddrMRange.start)
+        mx.head.addrMRange.length should be(mx.head.originalAddrMRange.length)
       }
     }
 
@@ -642,11 +642,11 @@ class DefaultSectionCalculatorStrategySpec extends AnyFunSuite with Matchers {
       val rwGroups = projectLinksWithAssignedValues.groupBy(pl => (pl.roadwayId, pl.roadwayNumber))
       rwGroups should have size 6
       /* Check roadway lengths of Unchanged and Transferred links are preserved. */
-      val roadwayLengths = Seq(roadway1, roadway2, roadway3).map(rw => rw.id → (rw.addrMRange.end - rw.addrMRange.start)).toMap
-      val calculatedLengths = projectLinksWithAssignedValues.filter(_.track == Track.RightSide).groupBy(_.roadwayId).mapValues(_.map(_.addrMLength()).sum)
+      val roadwayLengths = Seq(roadway1, roadway2, roadway3).map(rw => rw.id → (rw.addrMRange.length)).toMap
+      val calculatedLengths = projectLinksWithAssignedValues.filter(_.track == Track.RightSide).groupBy(_.roadwayId).mapValues(_.map(_.addrMRange.length).sum)
       roadwayLengths.keys.foreach(k => roadwayLengths(k) should be(calculatedLengths(k)))
-      val roadwayLengthsLeft = Seq(roadway4, roadway5).map(rw => rw.id → (rw.addrMRange.end - rw.addrMRange.start)).toMap
-      val calculatedLengthsLeft = projectLinksWithAssignedValues.filter(_.track == Track.LeftSide).groupBy(_.roadwayId).mapValues(_.map(_.addrMLength()).sum)
+      val roadwayLengthsLeft = Seq(roadway4, roadway5).map(rw => rw.id → (rw.addrMRange.length)).toMap
+      val calculatedLengthsLeft = projectLinksWithAssignedValues.filter(_.track == Track.LeftSide).groupBy(_.roadwayId).mapValues(_.map(_.addrMRange.length).sum)
       roadwayLengthsLeft.keys.foreach(k => roadwayLengthsLeft(k) should be(calculatedLengthsLeft(k)))
     }
   }

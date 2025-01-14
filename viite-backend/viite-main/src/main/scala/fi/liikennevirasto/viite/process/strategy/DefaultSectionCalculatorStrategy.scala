@@ -321,7 +321,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         if(originalAddresses.isEmpty || continuousProjectLinks.isEmpty) {
           false
         } else {
-          (continuousProjectLinks.last.addrMRange.end - continuousProjectLinks.head.addrMRange.start) == (originalAddresses.get.addrMRange.end - originalAddresses.get.addrMRange.start)
+          (continuousProjectLinks.last.addrMRange.end - continuousProjectLinks.head.addrMRange.start) == (originalAddresses.get.addrMRange.length)
         }
       }
 
@@ -516,7 +516,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
               logger.error(s"Address length negative. linkId: ${curr.linkId}")
               throw new RoadAddressException(NegativeLengthErrorMessage.format(curr.linkId))
             }
-            if (curr.status != RoadAddressChangeType.New && (curr.originalTrack == curr.track || curr.track == Track.Combined) && !(Math.abs((curr.addrMRange.end - curr.addrMRange.start) - (curr.originalAddrMRange.end - curr.originalAddrMRange.start)) < maxDiffForChange)) {
+            if (curr.status != RoadAddressChangeType.New && (curr.originalTrack == curr.track || curr.track == Track.Combined) && !(Math.abs((curr.addrMRange.length) - (curr.originalAddrMRange.length)) < maxDiffForChange)) {
               // Discontinuity errors are checked here because without correct discontinuities set in place
               // the calculation result might be wrong, so the user is notified to fix discontinuities.
               // If the discontinuities are set correct and the calculation still has length mismatch,
@@ -541,13 +541,13 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
               in length that was greater than 1 on one of the tracks.
             if (curr.status != RoadAddressChangeType.New && (curr.originalTrack == curr.track ||
               curr.track == Track.Combined) &&
-              !(Math.abs((curr.addrMRange.end - curr.addrMRange.start) - (curr.originalEndAddrMValue - curr.originalStartAddrMValue)) < maxDiffForChange)) {
+              !(Math.abs(curr.addrMRange.length - curr.originalAddrMRange.length) < maxDiffForChange)) {
               logger.warn(s"Length mismatch. " +
                 s"Project id: ${curr.projectId} ${projectDAO.fetchById(projectId = curr.projectId).get.name} " +
                 s"New: ${curr.addrMRange.start} ${curr.addrMRange.end} " +
                 s"original: ${curr.originalStartAddrMValue} ${curr.originalEndAddrMValue} " +
                 s"linkId: ${curr.linkId} " +
-                s"length change ${(curr.addrMRange.end - curr.addrMRange.start) - (curr.originalEndAddrMValue - curr.originalStartAddrMValue)}")
+                s"length change ${(curr.addrMRange.length) - (curr.originalAddrMRange.length)}")
             }
             */
           }

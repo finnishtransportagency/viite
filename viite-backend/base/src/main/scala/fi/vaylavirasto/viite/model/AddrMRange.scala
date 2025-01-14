@@ -43,6 +43,22 @@ case class AddrMRange (start: Long, end: Long)// extends Ordered[AddrMRange]
   /** Convenience function. Returns true, if this AddrMRange is invalid (see [[AddrMRange.isInvalid]]). Else false. */
   def isUndefined: Boolean = {  this.isInvalid  }
 
+    // ---------------------------- Functions returning numeric values, or AddrMRange copies ----------------------------
+  /** Returns the length of this AddrMRange for a valid AddrMRange.
+    * @throws ViiteException if this AddrMRange isUndefined. */
+  def length: Long = {
+    if(this.isUndefined)
+      throw new ViiteException(s"No length defined for undefined address range. ")
+    this.end - this.start
+  }
+  /** Returns the length of this AddrMRange for a valid AddrMRange, or None else. */
+  def lengthOption: Option[Long] = {
+    if(this.isValid)
+      Some(this.end - this.start)
+    else
+      None
+  }
+
 //  /** Provides [[Ordered]] extension, thus offering comparison operators ==, <, >, <=, and >=.
 //    * @implements [[Ordered.compare]] */
 //  override def compare(that: AddrMRange): Int = (this.startAddrM, this.endAddrM) compare (that.startAddrM, that.endAddrM)

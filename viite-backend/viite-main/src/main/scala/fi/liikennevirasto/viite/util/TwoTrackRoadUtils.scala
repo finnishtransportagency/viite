@@ -97,7 +97,7 @@ object TwoTrackRoadUtils {
       )
 
     def splitAt(pl: ProjectLink, address: Long, endPoints: Map[Point, ProjectLink]): (ProjectLink, ProjectLink) = {
-      val coefficient = (pl.endMValue - pl.startMValue) / (pl.addrMRange.end - pl.addrMRange.start)
+      val coefficient = (pl.endMValue - pl.startMValue) / pl.addrMRange.length
       val splitMeasure = pl.startMValue + (math.abs(pl.addrMRange.start - address) * coefficient)
       val geometryBeforeSplitPoint  = getGeometryFromSplitMeasure(pl, endPoints, splitMeasure)
       val geometryAfterSplitPoint   = getNewGeometryFromSplitMeasure(pl, endPoints, splitMeasure)
