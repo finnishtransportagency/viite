@@ -54,11 +54,8 @@ object PostGISDatabaseScalikeJDBC {
    * @return The result of the operation
    */
   def runWithTransactionNewOrExisting[Result](databaseOperation: => Result): Result = {
-    if (SessionProvider.isTransactionOpen) {
-      databaseOperation
-    } else {
-      runWithTransaction(databaseOperation)
-    }
+    if (SessionProvider.isTransactionOpen) databaseOperation
+    else runWithTransaction(databaseOperation)
   }
 
   /**
