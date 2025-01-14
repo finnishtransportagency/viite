@@ -43,7 +43,7 @@ object SessionProvider {
 
   /**
    * Executes code block in a database session, preventing nested transactions.
-   * Sets up the session, runs the operation, and ensures cleanup afterwards.
+   * Sets up the session, runs the operation, and ensures cleanup afterwards by restoring previous session.
    *
    * @param dbSession The `DBSession` to use during `f`.
    * @param f         The block of code to execute.
@@ -56,11 +56,12 @@ object SessionProvider {
     }
     try {
       transactionOpen.set(true)
+      val previousSession = threadLocalSession.get()   // Save previous
       threadLocalSession.set(dbSession)
       try {
         f
       } finally {
-        threadLocalSession.set(null) // Clear the session after the block completes
+        threadLocalSession.set(previousSession)        // Restore previous
       }
     } finally {
       transactionOpen.set(false)
