@@ -230,7 +230,7 @@ object RoadwayFiller {
                                ): Seq[Roadway] = {
     if (terminatedProjectLinksInRoadway.isEmpty) Seq.empty[Roadway] else {
       val continuousParts   = terminatedProjectLinksInRoadway.tail.foldLeft((Seq(Seq.empty[ProjectLink]), Seq(terminatedProjectLinksInRoadway.head))) { (x, y) =>
-        if (x._2.last.addrMRange.end == y.addrMRange.start) (x._1, x._2 :+ y) else (x._1 :+ x._2, Seq(y))
+        if (x._2.last.addrMRange.continuesToStartOf(y.addrMRange)) (x._1, x._2 :+ y) else (x._1 :+ x._2, Seq(y))
       }
       val continuousGrouped = (continuousParts._1 :+ continuousParts._2).tail
       continuousGrouped.map(pls => {

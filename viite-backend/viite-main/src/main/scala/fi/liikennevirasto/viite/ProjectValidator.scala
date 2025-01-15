@@ -638,7 +638,7 @@ class ProjectValidator {
   }
 
   def isSameTrack(previous: ProjectLink, currentLink: ProjectLink): Boolean = {
-    previous.track == currentLink.track && previous.addrMRange.end == currentLink.addrMRange.start
+    previous.track == currentLink.track && previous.addrMRange.continuesToStartOf(currentLink.addrMRange)
   }
 
   def getTrackInterval(links: Seq[ProjectLink], track: Track): Seq[ProjectLink] = {
@@ -1291,7 +1291,7 @@ class ProjectValidator {
         if (next.isEmpty)
           false
         else
-          curr.addrMRange.end == next.get.addrMRange.start && curr.connected(next.get)
+          curr.addrMRange.continuesToStartOf(next.get.addrMRange) && curr.connected(next.get)
       }
 
       val discontinuous: Seq[ProjectLink] = roadProjectLinks.groupBy(s => (s.roadPart)).flatMap { g =>
@@ -1322,7 +1322,7 @@ class ProjectValidator {
         if (next.isEmpty)
           false
         else
-          curr.addrMRange.end == next.get.addrMRange.start && curr.connected(next.get)
+          curr.addrMRange.continuesToStartOf(next.get.addrMRange) && curr.connected(next.get)
       }
 
       val discontinuous: Seq[ProjectLink] = roadProjectLinks.groupBy(s => (s.roadPart)).flatMap { g =>
@@ -1384,7 +1384,7 @@ class ProjectValidator {
       val discontinuousErrors = if (isRampValidation) {
         error(project.id, ValidationErrorList.DiscontinuityOnRamp)(roadProjectLinks.filter { pl =>
           // Check that pl has no discontinuity unless on last link and after it the possible project link is connected
-          val nextLink = roadProjectLinks.find(pl2 => pl2.addrMRange.start == pl.addrMRange.end &&
+          val nextLink = roadProjectLinks.find(pl2 => pl2.addrMRange.continuesFromEndOf(pl.addrMRange) &&
             (pl.track == Track.Combined || pl2.track == Track.Combined || pl.track == pl2.track ))
           (nextLink.nonEmpty && pl.discontinuity != Discontinuity.Continuous) ||
             nextLink.exists(pl2 => !pl.connected(pl2))
@@ -1396,7 +1396,7 @@ class ProjectValidator {
 
     def checkDiscontinuityInsideRoadPart: Seq[ValidationErrorDetails] = {
       val discontinuousErrors = error(project.id, ValidationErrorList.DiscontinuityInsideRoadPart)(roadProjectLinks.filter { pl =>
-        val nextLink = roadProjectLinks.find(pl2 => pl2.addrMRange.start == pl.addrMRange.end)
+        val nextLink = roadProjectLinks.find(pl2 => pl2.addrMRange.continuesFromEndOf(pl.addrMRange))
         (nextLink.nonEmpty && pl.discontinuity == Discontinuity.Discontinuous)
       })
       discontinuousErrors.toSeq

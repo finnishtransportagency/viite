@@ -76,6 +76,69 @@ class AddrMRangeSpec extends AnyFunSuite with Matchers {
 //    intercept[Exception](AddrMRange(1,0).isRoadPartStart) shouldBe a[ViiteException]
   }
 
+
+  // ----------------------------------- Connectivity checks -----------------------------------
+  test("Test AddrMRange.continuesToStartOf: Returns true, if this.end == other.start, and both are valid ranges. Else false.") {
+                                                                                    //     100   300
+    //  AddrMRange "A"                          AddrMRange "B"                      //      |AAAAA|
+    AddrMRange(100,300).continuesToStartOf(AddrMRange(  0,100)) shouldBe false      // BBBBB|     |
+    AddrMRange(100,300).continuesToStartOf(AddrMRange(  0, 99)) shouldBe false      // BBBB |     |
+    AddrMRange(100,300).continuesToStartOf(AddrMRange(300,400)) shouldBe true       //      |     *BBBBB   // A continues to start of B
+    AddrMRange(100,300).continuesToStartOf(AddrMRange(301,400)) shouldBe false      //      |     | BBBB
+
+    AddrMRange(100,300).continuesToStartOf(AddrMRange(  0,300)) shouldBe false      // BBBBB|BBBBB|
+    AddrMRange(100,300).continuesToStartOf(AddrMRange(  0,400)) shouldBe false      // BBBBB|BBBBB|BBBBB
+    AddrMRange(100,300).continuesToStartOf(AddrMRange(100,400)) shouldBe false      //      |BBBBB|BBBBB
+    AddrMRange(100,300).continuesToStartOf(AddrMRange(100,300)) shouldBe false      //      |BBBBB|
+
+    //Invalid AddrMRange                                                            //    0    300
+    AddrMRange(  0,300).continuesToStartOf(AddrMRange(  0,  0)) shouldBe false      // (B)|AAAAA|
+    AddrMRange(  0,  0).continuesToStartOf(AddrMRange(  0,300)) shouldBe false      // (A)|BBBBB|
+//    intercept[Exception](AddrMRange(  0,300).continuesToStartOf(AddrMRange(300,300))) shouldBe a[ViiteException]      //    |AAAAA|(B) // TODO add require((  (start!=end) ...) clause to constructor
+//    intercept[Exception](AddrMRange(300,300).continuesToStartOf(AddrMRange(  0,300))) shouldBe a[ViiteException]      //    |BBBBB|(A) // TODO add require((  (start!=end) ...) clause to constructor
+  }
+
+  test("Test AddrMRange.continuesFromEndOf: Returns true, if this.end == other.start, and both are valid ranges. Else false.") {
+                                                                                    //     100   300
+    //  AddrMRange "A"                          AddrMRange "B"                      //      |AAAAA|
+    AddrMRange(100,300).continuesFromEndOf(AddrMRange(  0,100)) shouldBe true       // BBBBB*     |  // A continues from end of B
+    AddrMRange(100,300).continuesFromEndOf(AddrMRange(  0, 99)) shouldBe false      // BBBB |     |
+    AddrMRange(100,300).continuesFromEndOf(AddrMRange(300,400)) shouldBe false      //      |     |BBBBB
+    AddrMRange(100,300).continuesFromEndOf(AddrMRange(301,400)) shouldBe false      //      |     | BBBB
+
+    AddrMRange(100,300).continuesFromEndOf(AddrMRange(  0,300)) shouldBe false      // BBBBB|BBBBB|
+    AddrMRange(100,300).continuesFromEndOf(AddrMRange(  0,400)) shouldBe false      // BBBBB|BBBBB|BBBBB
+    AddrMRange(100,300).continuesFromEndOf(AddrMRange(100,400)) shouldBe false      //      |BBBBB|BBBBB
+    AddrMRange(100,300).continuesFromEndOf(AddrMRange(100,300)) shouldBe false      //      |BBBBB|
+
+    //Invalid AddrMRange
+    AddrMRange(  0,300).continuesFromEndOf(AddrMRange(  0,  0)) shouldBe false      // (B)|AAAAA|
+    AddrMRange(  0,  0).continuesFromEndOf(AddrMRange(  0,300)) shouldBe false      // (A)|BBBBB|
+//    intercept[Exception](AddrMRange(  0,300).continuesFromEndOf(AddrMRange(300,300))) shouldBe a[ViiteException]      //    |AAAAA|(B) // TODO add require((  (start!=end) ...) clause to constructor
+//    intercept[Exception](AddrMRange(300,300).continuesFromEndOf(AddrMRange(  0,300))) shouldBe a[ViiteException]      //    |BBBBB|(A) // TODO add require((  (start!=end) ...) clause to constructor
+  }
+
+  test("Test AddrMRange.isAdjacentTo: Returns true, if this.end == other.start, or this.end == other.start, and both are valid ranges. Else false.") {
+                                                                              //     100   300
+                                                                              //      |AAAAA|
+    AddrMRange(100,300).isAdjacentTo(AddrMRange(  0,100)) shouldBe true       // BBBBB*     |      // is adjacent
+    AddrMRange(100,300).isAdjacentTo(AddrMRange(  0, 99)) shouldBe false      // BBBB |     |      // not connected
+    AddrMRange(100,300).isAdjacentTo(AddrMRange(300,400)) shouldBe true       //      |     *BBBBB // is adjacent
+    AddrMRange(100,300).isAdjacentTo(AddrMRange(301,400)) shouldBe false      //      |     | BBBB // not connected
+
+    AddrMRange(100,300).isAdjacentTo(AddrMRange(  0,300)) shouldBe false      // BBBBB+BBBBB|      // overlaps, not adjacent
+    AddrMRange(100,300).isAdjacentTo(AddrMRange(  0,400)) shouldBe false      // BBBBB+BBBBB+BBBBB // overlaps, not adjacent
+    AddrMRange(100,300).isAdjacentTo(AddrMRange(100,400)) shouldBe false      //      |BBBBB+BBBBB // overlaps, not adjacent
+    AddrMRange(100,300).isAdjacentTo(AddrMRange(100,300)) shouldBe false      //      |BBBBB|      // identical, not adjacent
+
+    //Invalid AddrMRange
+    AddrMRange(  0,300).isAdjacentTo(AddrMRange(  0,  0)) shouldBe false      // (B)|AAAAA|
+    AddrMRange(  0,  0).isAdjacentTo(AddrMRange(  0,300)) shouldBe false      // (A)|BBBBB|
+//    AddrMRange(  0,300).isAdjacentTo(AddrMRange(300,300)) shouldBe false      //    |AAAAA|(B) // TODO add require((  (start!=end) ...) clause to constructor
+//    AddrMRange(300,300).isAdjacentTo(AddrMRange(  0,300)) shouldBe false      //    |BBBBB|(A) // TODO add require((  (start!=end) ...) clause to constructor
+  }
+
+
   // -------------------------- Functions returning numeric values, or AddrMRange copies --------------------------
 
   test("Test AddrMRange.length:  Returns the length      of this AddrMRange, or throws ViiteException, if this AddrMRange isUndefined (or erroneous).") {

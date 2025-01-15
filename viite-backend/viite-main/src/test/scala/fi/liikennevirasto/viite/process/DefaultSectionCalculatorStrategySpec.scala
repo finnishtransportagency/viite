@@ -221,11 +221,11 @@ class DefaultSectionCalculatorStrategySpec extends AnyFunSuite with Matchers {
         fl should have size 1 // only single road part start, and every project link has addresses defined (no invalid addresses)
         fl.head.addrMRange should be(roadways.find(_.addrMRange.isRoadPartStart).get.addrMRange)
 
-        val mdl = projectLinksWithAssignedValues.filter(_.addrMRange.start == fl.head.addrMRange.end)
+        val mdl = projectLinksWithAssignedValues.filter(_.addrMRange.continuesFromEndOf(fl.head.addrMRange))
         mdl should have size 2
         mdl.head.addrMRange.end should be (mdl.last.addrMRange.end)
 
-        val mx = projectLinksWithAssignedValues.filter(_.addrMRange.start == mdl.head.addrMRange.end)
+        val mx = projectLinksWithAssignedValues.filter(_.addrMRange.continuesFromEndOf(mdl.head.addrMRange))
         mx should have size 1
         mx.head.addrMRange.length should be(mx.head.originalAddrMRange.length)
       }
