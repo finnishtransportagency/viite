@@ -79,8 +79,8 @@ class AddrMRangeSpec extends AnyFunSuite with Matchers {
 
   // ----------------------------------- Connectivity checks -----------------------------------
   test("Test AddrMRange.continuesTo: Returns true, if this.end == other.start, and both are valid ranges. Else false.") {
-                                                                                    //     100   300
-    //  AddrMRange "A"                          AddrMRange "B"                      //      |AAAAA|
+                                                                             //     100   300
+    //  AddrMRange "A"                          AddrMRange "B"               //      |AAAAA|
     AddrMRange(100,300).continuesTo(AddrMRange(  0,100)) shouldBe false      // BBBBB|     |
     AddrMRange(100,300).continuesTo(AddrMRange(  0, 99)) shouldBe false      // BBBB |     |
     AddrMRange(100,300).continuesTo(AddrMRange(300,400)) shouldBe true       //      |     *BBBBB   // A continues to start of B
@@ -91,7 +91,7 @@ class AddrMRangeSpec extends AnyFunSuite with Matchers {
     AddrMRange(100,300).continuesTo(AddrMRange(100,400)) shouldBe false      //      |BBBBB|BBBBB
     AddrMRange(100,300).continuesTo(AddrMRange(100,300)) shouldBe false      //      |BBBBB|
 
-    //Invalid AddrMRange                                                            //    0    300
+    //Invalid AddrMRange                                                     //    0    300
     AddrMRange(  0,300).continuesTo(AddrMRange(  0,  0)) shouldBe false      // (B)|AAAAA|
     AddrMRange(  0,  0).continuesTo(AddrMRange(  0,300)) shouldBe false      // (A)|BBBBB|
 //    intercept[Exception](AddrMRange(  0,300).continuesTo(AddrMRange(300,300))) shouldBe a[ViiteException]      //    |AAAAA|(B) // TODO add require((  (start!=end) ...) clause to constructor
@@ -99,8 +99,8 @@ class AddrMRangeSpec extends AnyFunSuite with Matchers {
   }
 
   test("Test AddrMRange.continuesFrom: Returns true, if this.end == other.start, and both are valid ranges. Else false.") {
-                                                                                    //     100   300
-    //  AddrMRange "A"                          AddrMRange "B"                      //      |AAAAA|
+                                                                               //     100   300
+    //  AddrMRange "A"                          AddrMRange "B"                 //      |AAAAA|
     AddrMRange(100,300).continuesFrom(AddrMRange(  0,100)) shouldBe true       // BBBBB*     |  // A continues from end of B
     AddrMRange(100,300).continuesFrom(AddrMRange(  0, 99)) shouldBe false      // BBBB |     |
     AddrMRange(100,300).continuesFrom(AddrMRange(300,400)) shouldBe false      //      |     |BBBBB
