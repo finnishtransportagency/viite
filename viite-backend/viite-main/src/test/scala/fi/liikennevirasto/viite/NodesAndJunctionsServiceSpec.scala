@@ -70,7 +70,6 @@ class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with Before
     ) {
       override def runWithReadOnlySession[T](f: => T): T = f
       override def runWithTransaction[T](f: => T): T = f
-      override def runWithTransactionNewOrExisting[T](f: => T): T = f
     }
 
   val projectService: ProjectService =

@@ -44,21 +44,6 @@ object PostGISDatabaseScalikeJDBC {
   }
 
   /**
-   * Executes `databaseOperation` block within the current transaction if one exists,
-   * or creates a new transaction if none exists. Allows transaction reuse.
-   *
-   * If any action fails, the transaction is rolled back, preventing partial updates and maintaining data integrity.
-   *
-   * @param databaseOperation The operation to run
-   * @tparam Result The return type of the operation
-   * @return The result of the operation
-   */
-  def runWithTransactionNewOrExisting[Result](databaseOperation: => Result): Result = {
-    if (SessionProvider.isTransactionOpen) databaseOperation
-    else runWithTransaction(databaseOperation)
-  }
-
-  /**
    * Executes `futureOperation` within a transaction that uses Future's completion state as transaction boundary.
    * Uses withSession to handle the session and to prevent nested transactions.
    * Transaction is committed if Future completes successfully, rolled back if Future fails.

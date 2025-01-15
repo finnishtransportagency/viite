@@ -9,22 +9,12 @@ import scalikejdbc._
  * This object maintains thread-local state for database sessions and transaction status,
  * ensuring that database operations are properly scoped and preventing nested transactions.
  *
- * The session management is used in two ways:
- * 1. Implicit session access: When SessionProvider.session is imported, queries can use
- *    the implicit session without explicitly passing it as a parameter
- * 2. Through BaseScalikeDAO: DAO classes use these sessions via BaseScalikeDAO trait methods
- *    (e.g., runSelectQuery) without needing direct imports
+ * Ensures database operations run in proper session context and prevents nested transactions.
+ * Sessions are available implicitly when SessionProvider.session is imported or through BaseScalikeDAO methods.
  */
 object SessionProvider {
   // Tracks the current database session per thread
   private val threadLocalSession = new ThreadLocal[DBSession]()
-
-  // Tracks whether a transaction is currently open in the current thread
-  private val transactionOpen = new ThreadLocal[Boolean] {
-    override def initialValue(): Boolean = false
-  }
-  def isTransactionOpen: Boolean = transactionOpen.get()
-
 
   /**
    * Provides implicit access to the current thread's database session.
@@ -45,26 +35,27 @@ object SessionProvider {
    * Executes code block in a database session, preventing nested transactions.
    * Sets up the session, runs the operation, and ensures cleanup afterwards by restoring previous session.
    *
-   * @param dbSession The `DBSession` to use during `f`.
+   * @param newDbSession The `DBSession` to use during `f`.
    * @param f         The block of code to execute.
    * @tparam T        The return type of `f`.
    * @throws IllegalStateException if called within an existing transaction
    */
-  def withSession[T](dbSession: DBSession)(f: => T): T = {
-    if (isTransactionOpen && !dbSession.isReadOnly) { // Allow nested transactions for read-only operations
-      throw new IllegalStateException("Nested transactions are not allowed")
-    }
-    try {
-      transactionOpen.set(true)
-      val previousSession = threadLocalSession.get()   // Save previous
-      threadLocalSession.set(dbSession)
-      try {
-        f
-      } finally {
-        threadLocalSession.set(previousSession)        // Restore previous
+  def withSession[T](newDbSession: DBSession)(f: => T): T = {
+    val currentSession = threadLocalSession.get() // Save the current session to restore it later
+    if (newDbSession.tx.isDefined && currentSession != null) { // New transaction sessions are not allowed inside existing sessions
+      val currentType = currentSession match {
+        case s if s.tx.isDefined => "transaction session"
+        case s if s.isReadOnly => "read-only session"
+        case _ => "autocommit session"
       }
+      throw new IllegalStateException(s"Can't start transaction inside $currentType")
+    }
+
+    try {
+      threadLocalSession.set(newDbSession) // Set the new session
+      f
     } finally {
-      transactionOpen.set(false)
+      threadLocalSession.set(currentSession) // Restore the previous session
     }
   }
 
