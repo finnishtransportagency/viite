@@ -96,40 +96,60 @@
             }
             else if (results.length <= ViiteConstants.MAX_ROWS_TO_DISPLAY) {
                 roadAddressChangesBrowserWindow.append(table);
-                //TODO VIITE-3269 CSV export to replace old Excel export
-                //$('#exportAsExcelFile').prop("disabled", false); // enable Excel download button
+                $('#exportAsCsvFile').prop("disabled", false); // enable CSV download button
             }
             else {
-                // hide the results and notify user to download result table as Excel file
-                //TODO VIITE-3269 CSV export to replace old Excel export
-                //roadAddressChangesBrowserWindow.append($('<p id="tableNotification"><b>Tulostaulu liian suuri, lataa tulokset Excel -taulukkona</b></p>'));
-                roadAddressChangesBrowserWindow.append($('<p id="tableNotification"><b>Tulostaulu liian suuri</b></p>'));
+                // hide the results and notify user to download result table as CSV file
+                roadAddressChangesBrowserWindow.append($('<p id="tableNotification"><b>Tulostaulu liian suuri, lataa tulokset CSV -taulukkona</b></p>'));
                 roadAddressChangesBrowserWindow.append(table.hide());
-                //$('#exportAsExcelFile').prop("disabled", false); // enable Excel download button
+                $('#exportAsCsvFile').prop("disabled", false); // enable CSV download button
             }
         }
 
         function toggle() {
+            $('.road-address-browser-modal-overlay').length === 0 ? show() : hide();
+        }
+
+        function show() {
             $('.container').append('<div class="road-address-browser-modal-overlay viite-modal-overlay confirm-modal"><div class="road-address-browser-modal-window"></div></div>');
-            $('.road-address-browser-modal-window').append(roadAddressChangesBrowserWindow.toggle());
+            $('.road-address-browser-modal-window').append(roadAddressChangesBrowserWindow.show());
             bindEvents();
         }
 
         function hide() {
-            $('.road-address-browser-modal-window').append(roadAddressChangesBrowserWindow.toggle());
+            roadAddressChangesBrowserWindow.hide();
             $('.road-address-browser-modal-overlay').remove();
         }
 
-        function exportDataAsExcelFile() {
+        function exportDataAsCsvFile() {
             const params = me.getSearchParams();
-            const fileNameString = "Viite_" + params.dateTarget + "_" + params.startDate + "_" + params.endDate + "_" + params.ely + "_" + params.roadNumber + "_" + params.minRoadPartNumber + "_" + params.maxRoadPartNumber + ".xlsx";
+            const fileNameString = "Viite_" + params.dateTarget + "_" + params.startDate + "_" + params.endDate + "_" + params.ely + "_" + params.roadNumber + "_" + params.minRoadPartNumber + "_" + params.maxRoadPartNumber + ".csv";
             const fileName = fileNameString.replaceAll("undefined", "-");
-            const options = {
-                cellDates: false  // To prevent Sheetjs from converting dates to avoid unwanted formatting
-            };
-            const wb = XLSX.utils.table_to_book(document.getElementById("roadAddressChangesBrowserTable"), options);
-            /* Export to file (start a download) */
-            XLSX.writeFile(wb, fileName);
+
+            const table = document.getElementById("roadAddressChangesBrowserTable");
+            let csvContent = "\uFEFF"; // UTF-8 BOM
+
+            for (const row of table.rows) {
+                const rowData = [];
+                for (const cell of row.cells) {
+                    rowData.push(cell.innerText);
+                }
+                csvContent += rowData.join(";") + "\n"; // Join cells with commas
+            }
+
+            // Create a downloadable CSV file
+            const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;"}); // Create a file like object containing the CSV data
+            const url = URL.createObjectURL(blob); // Create a temporary URL for the file
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", fileName);
+
+            // Append the link and trigger download
+            document.body.appendChild(link);
+            link.click();
+
+            // Cleanup
+            document.body.removeChild(link);
         }
 
         function getData() {
@@ -252,10 +272,9 @@
             });
         }
 
-        function clearResultsAndDisableExcelButton() {
+        function clearResultsAndDisableCsvButton() {
             $('.road-address-browser-window-results-table').remove(); // empty the result table
-            //TODO VIITE-3269 CSV export to replace old Excel export
-            //$('#exportAsExcelFile').prop("disabled", true); //disable Excel download button
+            $('#exportAsCsvFile').prop("disabled", true); //disable CSV download button
             $('#tableNotification').remove(); // remove notification if present
         }
 
@@ -263,7 +282,7 @@
 
             // if any of the input fields change (the input fields are child elements of this wrapper/parent element)
             document.getElementById('roadAddressChangesBrowser').onchange = function () {
-                clearResultsAndDisableExcelButton();
+                clearResultsAndDisableCsvButton();
             };
 
             document.getElementById('roadAddrChangesInputRoad').oninput = function () {
@@ -283,19 +302,18 @@
                     this.value = this.value.slice(0, ViiteConstants.MAX_LENGTH_FOR_ROAD_PART_NUMBER);
                 }
             };
-
-            //TODO VIITE-3269 CSV export to replace old Excel export
-            // roadAddressChangesBrowserWindow.on('click', '#exportAsExcelFile', function () {
-            //     exportDataAsExcelFile();
-            //     return false; // cancel form submission
-            // });
+            
+            roadAddressChangesBrowserWindow.on('click', '#exportAsCsvFile', function () {
+                exportDataAsCsvFile();
+                return false; // cancel form submission
+            });
 
             roadAddressChangesBrowserWindow.on('click', 'button.close', function () {
                 hide();
             });
 
             roadAddressChangesBrowserWindow.on('click', '#fetchRoadAddressChanges', function () {
-                clearResultsAndDisableExcelButton();
+                clearResultsAndDisableCsvButton();
                 getData();
                 return false; // cancel form submission
             });
