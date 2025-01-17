@@ -43,6 +43,9 @@ case class AddrMRange (start: Long, end: Long)// extends Ordered[AddrMRange]
   /** Convenience function. Returns true, if this AddrMRange is invalid (see [[AddrMRange.isInvalid]]). Else false. */
   def isUndefined: Boolean = {  this.isInvalid  }
 
+  /** Returns true, if this AddrMRange has 0 as start, and >0 as end (that is, it is a valid addrMRange). */
+  def isRoadPartStart:Boolean = {  this.start == 0 && this.end >  0  }
+
     // ---------------------------- Functions returning numeric values, or AddrMRange copies ----------------------------
   /** Returns the length of this AddrMRange for a valid AddrMRange.
     * @throws ViiteException if this AddrMRange isUndefined. */

@@ -45,10 +45,11 @@ object ProjectSectionMValueCalculator {
       pl => {
         val previousLinks = unchanged.filter(isExtensionOf(pl))
         previousLinks.size match {
-          case 0 => pl.addrMRange.start == 0
-          case 1 => true
-          case 2 => pl.track == Track.Combined && previousLinks.map(_.track).toSet == Set(Track.LeftSide, Track.RightSide)
-          case _ => false
+          case 0 => pl.addrMRange.isRoadPartStart // Does not connect from start; must be a road part start.
+          case 1 => true                          // Connects to a single project link from start - this is fine.
+          case 2 => pl.track == Track.Combined && // Connects to two project links - must be a combined track, and connect to one left ...
+                    previousLinks.map(_.track).toSet == Set(Track.LeftSide, Track.RightSide) // ...side, and one right side project link.
+          case _ => false // If there is more than two links connecting from the start, this is a problem
         }
       }))
       throw new InvalidAddressDataException(s"Invalid unchanged link found")

@@ -2563,7 +2563,7 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
        * @param pls Left or right side ProjectLinks with combined to check for continuity of addresses.
        */
       def validateAddresses(pls: Seq[ProjectLink]): Unit = {
-        if (pls.size > 1 && pls.head.originalAddrMRange.start == 0) {
+        if (pls.size > 1 && pls.head.originalAddrMRange.start == 0) { //TODO is this a place for .isRoadPartStart, or is this for undefined addresses?
           val maxDiffForChange = 2 // i.e. caused by average calculation
           val it = pls.sliding(2)
           while (it.hasNext) {

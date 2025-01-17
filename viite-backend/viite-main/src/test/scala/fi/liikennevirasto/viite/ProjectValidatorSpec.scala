@@ -2176,8 +2176,8 @@ Left|      |Right
     runWithRollback {
       val (project, projectLinks) = util.setUpProjectWithLinks(RoadAddressChangeType.New, Seq(0L, 10L, 20L, 30L, 40L), changeTrack = true)
       val inconsistentLinks = projectLinks.map { l =>
-        if (l.addrMRange.start == 0 && l.track == Track.RightSide)
-          l.copy(addrMRange = AddrMRange(5, l.addrMRange.end))
+        if (l.addrMRange.isRoadPartStart && l.track == Track.RightSide) // make the address length of the right
+          l.copy(addrMRange = AddrMRange(5, l.addrMRange.end))          // track shorter than left track by 5m
         else l
       }
 

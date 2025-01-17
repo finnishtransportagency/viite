@@ -3322,13 +3322,13 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
       projectLinkDAO.create(projecLinks)
       projectService.updateRoadwaysAndLinearLocationsWithProjectLinks(project_id)
       val roadways = roadwayDAO.fetchAllByRoadPart(roadPart)
-      val firstRw = roadways.find(r => r.addrMRange.start == 0 && r.track == Track.Combined)
+      val firstRw = roadways.find(r => r.addrMRange.start == 0 && r.track == Track.Combined) // combined track start is unchanged
       firstRw should be ('defined)
-      val secondRw = roadways.find(r => r.addrMRange.end == 785 && r.track == Track.RightSide)
+      val secondRw = roadways.find(r => r.addrMRange.end == 785 && r.track == Track.RightSide) // start of right track is transferred
       secondRw should be ('defined)
-      val thirdRw = roadways.find(r => r.addrMRange.start == 369 && r.addrMRange.end == 1035 && r.track == Track.LeftSide)
+      val thirdRw = roadways.find(r => r.addrMRange.start == 369 && r.addrMRange.end == 1035 && r.track == Track.LeftSide) // left track is new as a whole
       thirdRw should be ('defined)
-      val fourthRw = roadways.find(r => r.addrMRange.start == 785 && r.addrMRange.end == 1035 && r.track == Track.RightSide)
+      val fourthRw = roadways.find(r => r.addrMRange.start == 785 && r.addrMRange.end == 1035 && r.track == Track.RightSide) // end of right track is new
       fourthRw should be ('defined)
     }
   }
