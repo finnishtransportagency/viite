@@ -789,7 +789,7 @@ class DefaultSectionCalculatorStrategySpec extends AnyFunSuite with Matchers {
 
       calculated.foreach(pl => {
         pl.originalTrack      should be(pl.track)
-        pl.originalAddrMRange should be(pl.addrMRange) // TODO do not commit now. Fix in another commit
+        pl.originalAddrMRange should be(AddrMRange(pl.addrMRange.start,pl.addrMRange.end))
       })
 
       calculated.filter(_.addrMRange.start == 0)    should have size 2
