@@ -109,6 +109,10 @@ class AddrMRangeSpec extends AnyFunSuite with Matchers {
     intercept[ViiteException](AddrMRange(  0,100).move(  -1)) shouldBe a[ViiteException]
     intercept[ViiteException](AddrMRange(100,200).move(-101)) shouldBe a[ViiteException]
     intercept[ViiteException](AddrMRange(  0,100).move(-101)) shouldBe a[ViiteException]
+
+    // cannot move too much (mostly to catch overflows etc.)
+    intercept[ViiteException](AddrMRange(  10,  1).move(7654321)) shouldBe a[ViiteException] // try to move the address way more than length of the country -> no go.
+
     // cannot move invalid ranges
     intercept[ViiteException](AddrMRange(  0,  0).move(  1)) shouldBe a[ViiteException]
 // TODO sub test commented out, until start < end requirement of the AddrMRange object can be put into work
@@ -136,6 +140,7 @@ class AddrMRangeSpec extends AnyFunSuite with Matchers {
     AddrMRange(200,300).mirrorBy(300) shouldBe AddrMRange(  0,100)
     AddrMRange(100,200).mirrorBy(300) shouldBe AddrMRange(100,200)
     AddrMRange(  0,300).mirrorBy(300) shouldBe AddrMRange(  0,300)
+
     // cannot reverse move over a non-positive roadpartEndAddrM
     intercept[ViiteException](AddrMRange(  0,100).mirrorBy(  -1)) shouldBe a[ViiteException]
     intercept[ViiteException](AddrMRange(  0,100).mirrorBy(   0)) shouldBe a[ViiteException]
@@ -143,6 +148,7 @@ class AddrMRangeSpec extends AnyFunSuite with Matchers {
     // cannot reverse move range so that it would have a negative start address
     intercept[ViiteException](AddrMRange(  0,100).mirrorBy( 99)) shouldBe a[ViiteException]
     intercept[ViiteException](AddrMRange(100,200).mirrorBy(199)) shouldBe a[ViiteException]
+
     // cannot reverse move invalid ranges
     intercept[ViiteException](AddrMRange(  0,  0).mirrorBy(  1)) shouldBe a[ViiteException]
 // TODO sub test commented out, until start < end requirement of the AddrMRange object can be put into work
