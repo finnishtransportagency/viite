@@ -172,8 +172,8 @@ class DefaultSectionCalculatorStrategySpec extends AnyFunSuite with Matchers {
   }
 
   test("Test defaultSectionCalculatorStrategy.assignAddrMValues() " +
-         "When an existitng road is transferred as a two track part to middle of another road " +
-         "Then calculation should succeed with length change in the middle cause by averaging.") {
+         "When an existing road is transferred as a two track part to the middle of an another road " +
+         "Then calculation should succeed with length change in the middle, caused by averaging.") {
       /*             ____ 22618
                     /    \
               |-----|----|-----| 110
@@ -202,10 +202,10 @@ class DefaultSectionCalculatorStrategySpec extends AnyFunSuite with Matchers {
         )
 
         val linearLocations = Seq(
-          LinearLocation(linearLocationId,1.0,"ad920f09-0ed4-4eb2-86da-5ae8d8f10ec0:1",0.0,135.756,SideCode.AgainstDigitizing,1590620411000L,(CalibrationPointReference(Some(0),Some(RoadAddressCP)),CalibrationPointReference(Some(136),Some(RoadAddressCP))),List(Point(308364.0,6698821.0,0.0), Point(308480.0,6698861.0,0.0)),FrozenLinkInterface,332392368L,Some(DateTime.parse("2021-10-06T00:00:00.000+03:00")),None),
-          LinearLocation(linearLocationId+1,1.0,"f324e593-1bbc-4d3c-8729-1adc527354bf:1",0.0,905.016,SideCode.AgainstDigitizing,1590620411000L,(CalibrationPointReference(Some(0),Some(RoadAddressCP)),CalibrationPointReference(Some(907),Some(JunctionPointCP))),List(Point(308480.0,6698861.0,0.0), Point(309371.0,6699012.0,0.0)),FrozenLinkInterface,7484795L,Some(DateTime.parse("2017-05-08T00:00:00.000+03:00")),None),
-          LinearLocation(linearLocationId+2,1.0,"e168f5ec-0fe5-4520-8d8d-76d33a6972b9:1",0.0,122.719,SideCode.AgainstDigitizing,1590620411000L,(CalibrationPointReference(Some(907),Some(JunctionPointCP)),CalibrationPointReference(Some(1030),Some(JunctionPointCP))),List(Point(308364.0,6698821.0,0.0), Point(308480.0,6698861.0,0.0)),FrozenLinkInterface,7484796L,Some(DateTime.parse("2017-05-08T00:00:00.000+03:00")),None),
-          LinearLocation(linearLocationId+3,1.0,"86f1e841-366d-423e-84a3-cf7703a656ae:1",0.0,11942.218,SideCode.AgainstDigitizing,1590620411000L,(CalibrationPointReference(Some(1030),Some(JunctionPointCP)),CalibrationPointReference(Some(12995),Some(RoadAddressCP))),List(Point(296779.0,6698725.0,0.0), Point(308364.0,6698821.0,0.0)),FrozenLinkInterface,7484797L,Some(DateTime.parse("2017-05-08T00:00:00.000+03:00")),None)
+          LinearLocation(linearLocationId,  1.0,"ad920f09-0ed4-4eb2-86da-5ae8d8f10ec0:1",0.0,  135.756,SideCode.AgainstDigitizing,1590620411000L,(CalibrationPointReference(Some(   0),Some( RoadAddressCP )),CalibrationPointReference(Some(  136),Some( RoadAddressCP ))),List(Point(308364.0,6698821.0,0.0), Point(308480.0,6698861.0,0.0)),FrozenLinkInterface,332392368L,Some(DateTime.parse("2021-10-06T00:00:00.000+03:00")),None),
+          LinearLocation(linearLocationId+1,1.0,"f324e593-1bbc-4d3c-8729-1adc527354bf:1",0.0,  905.016,SideCode.AgainstDigitizing,1590620411000L,(CalibrationPointReference(Some(   0),Some( RoadAddressCP )),CalibrationPointReference(Some(  907),Some(JunctionPointCP))),List(Point(308480.0,6698861.0,0.0), Point(309371.0,6699012.0,0.0)),FrozenLinkInterface,  7484795L,Some(DateTime.parse("2017-05-08T00:00:00.000+03:00")),None),
+          LinearLocation(linearLocationId+2,1.0,"e168f5ec-0fe5-4520-8d8d-76d33a6972b9:1",0.0,  122.719,SideCode.AgainstDigitizing,1590620411000L,(CalibrationPointReference(Some( 907),Some(JunctionPointCP)),CalibrationPointReference(Some( 1030),Some(JunctionPointCP))),List(Point(308364.0,6698821.0,0.0), Point(308480.0,6698861.0,0.0)),FrozenLinkInterface,  7484796L,Some(DateTime.parse("2017-05-08T00:00:00.000+03:00")),None),
+          LinearLocation(linearLocationId+3,1.0,"86f1e841-366d-423e-84a3-cf7703a656ae:1",0.0,11942.218,SideCode.AgainstDigitizing,1590620411000L,(CalibrationPointReference(Some(1030),Some(JunctionPointCP)),CalibrationPointReference(Some(12995),Some( RoadAddressCP ))),List(Point(296779.0,6698725.0,0.0), Point(308364.0,6698821.0,0.0)),FrozenLinkInterface,  7484797L,Some(DateTime.parse("2017-05-08T00:00:00.000+03:00")),None)
         )
 
         projectDAO.create(Project(projectId, ProjectState.Incomplete, "f", createdBy, DateTime.now(), "", DateTime.now(), DateTime.now(),"", Seq(), Seq(), None, None))
@@ -218,8 +218,8 @@ class DefaultSectionCalculatorStrategySpec extends AnyFunSuite with Matchers {
       val projectLinksWithAssignedValues = defaultSectionCalculatorStrategy.assignAddrMValues(projectLinks, Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
 
         val fl = projectLinksWithAssignedValues.filter(_.addrMRange.start == 0)
-        fl should have size 1
-        fl.head.addrMRange.end should be(roadways.find(_.addrMRange.start == 0).get.addrMRange.end)
+        fl should have size 1 // only single road part start, and every project link has addresses defined (no invalid addresses)
+        fl.head.addrMRange should be(roadways.find(_.addrMRange.isRoadPartStart).get.addrMRange)
 
         val mdl = projectLinksWithAssignedValues.filter(_.addrMRange.start == fl.head.addrMRange.end)
         mdl should have size 2

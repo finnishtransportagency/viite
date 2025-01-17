@@ -927,7 +927,8 @@ class ProjectSectionCalculatorSpec extends AnyFunSuite with Matchers {
         case (curr, next) => (curr.discontinuity == Discontinuity.Continuous && curr.addrMRange.end == next.addrMRange.start && curr.connected(next)) || curr.discontinuity == Discontinuity.MinorDiscontinuity
       }
 
-      ((sortedLeft.head.addrMRange.start == 0 && sortedLeft.head.addrMRange.start == 0) || (sortedLeft.last.addrMRange.start == 0 && sortedLeft.last.addrMRange.start == 0)) should be (true)
+      ( (sortedLeft.head.addrMRange.isRoadPartStart && sortedRight.head.addrMRange.isRoadPartStart) ||
+        (sortedLeft.last.addrMRange.isRoadPartStart && sortedRight.last.addrMRange.isRoadPartStart) ) should be (true)
 
     }
   }
@@ -977,7 +978,8 @@ class ProjectSectionCalculatorSpec extends AnyFunSuite with Matchers {
         case (curr, next) => (curr.discontinuity == Discontinuity.Continuous && curr.addrMRange.end == next.addrMRange.start && curr.connected(next)) || curr.discontinuity == Discontinuity.MinorDiscontinuity
       }
 
-      ((sortedLeft.head.addrMRange.start == 0 && sortedLeft.head.addrMRange.start == 0) || (sortedLeft.last.addrMRange.start == 0 && sortedLeft.last.addrMRange.start == 0)) should be (true)
+      ( (sortedLeft.head.addrMRange.isRoadPartStart && sortedRight.head.addrMRange.isRoadPartStart) ||
+        (sortedLeft.last.addrMRange.isRoadPartStart && sortedRight.last.addrMRange.isRoadPartStart) ) should be (true)
 
     }
   }

@@ -1539,10 +1539,12 @@ class ProjectValidator {
       */
     def getNextLinksFromParts(allProjectLinks: Seq[ProjectLink], road: Long, nextProjectPart: Option[Long], nextAddressPart: Option[Long]): Seq[BaseRoadAddress] = {
       if (nextProjectPart.nonEmpty && (nextAddressPart.isEmpty || nextProjectPart.get <= nextAddressPart.get))
-        projectLinkDAO.fetchByProjectRoadPart(RoadPart(road, nextProjectPart.get), project.id).filter(l => RoadAddressChangeType.Termination.value != l.status.value && l.addrMRange.start == 0L)
+        projectLinkDAO.fetchByProjectRoadPart(RoadPart(road, nextProjectPart.get), project.id)
+          .filter(l => RoadAddressChangeType.Termination.value != l.status.value && l.addrMRange.isRoadPartStart) // AddrMRange .isRoadPartStart refactoring: Code before refactoring, start==0, matched undefined addresses, too. Refactored to match road part only.
       else {
         roadAddressService.getRoadAddressesFiltered(RoadPart(road, nextAddressPart.get))
-          .filterNot(rp => allProjectLinks.exists(link => (rp.roadPart != link.roadPart) && rp.linearLocationId == link.linearLocationId)).filter(_.addrMRange.start == 0L)
+          .filterNot(rp => allProjectLinks.exists(link => (rp.roadPart != link.roadPart) && rp.linearLocationId == link.linearLocationId))
+          .filter(_.addrMRange.isRoadPartStart)
       }
     }
 
