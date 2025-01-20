@@ -977,10 +977,10 @@ class RoadAddressService(
         val change = rwc.changeInfo
         val source = change.source
         val target = change.target
-        val terminatedRoadwayNumbersChanges = projectLinkChanges.filter { entry =>
+        val terminatedRoadwayNumbersChanges = projectLinkChanges.filter { entry => // TODO "terminatedRoadwayNumbersChanges" - what is it with this name?
           entry.roadPart.roadNumber == source.roadNumber.get &&
-            (source.startRoadPartNumber.get to source.endRoadPartNumber.get contains entry.roadPart.partNumber) &&
-            entry.originalAddrMRange.start >= source.addrMRange.get.start && entry.originalAddrMRange.end <= source.addrMRange.get.end
+          (source.startRoadPartNumber.get to source.endRoadPartNumber.get contains entry.roadPart.partNumber) &&
+          (entry.originalAddrMRange.isInvalid || source.addrMRange.get.contains(entry.originalAddrMRange)) // TODO invalids preserved in the filter at AddrMRange.contains refactoring, but this functionality seems weird?
         }
         val roadwayNumbers = if (change.changeType == RoadAddressChangeType.Termination) {
           terminatedRoadwayNumbersChanges.map(_.newRoadwayNumber).distinct
@@ -993,7 +993,7 @@ class RoadAddressService(
 
         val roadwayPoints = roadwayNumbers.flatMap { rwn =>
           val filteredProjectLinkChanges = projectLinkChanges.filter(plc => plc.newRoadwayNumber == rwn
-            && plc.originalAddrMRange.start >= source.addrMRange.get.start && plc.originalAddrMRange.end <= source.addrMRange.get.end)
+            && source.addrMRange.get.contains(plc.originalAddrMRange))
           if (filteredProjectLinkChanges.nonEmpty) {
             roadwayPointDAO.fetchByRoadwayNumberAndAddresses(filteredProjectLinkChanges.head.originalRoadwayNumber, AddrMRange(source.addrMRange.get.start, source.addrMRange.get.end))
           } else {
@@ -1055,7 +1055,7 @@ class RoadAddressService(
             val rwPoints: Seq[RoadwayPoint] = roadwayPoints.flatMap { rwp =>
               if (!list.exists(_.id == rwp.id)) { // Check if the point is already in the updated list
                 val terminatedRoadAddress = terminatedRoadwayNumbersChanges.find(change => change.originalRoadwayNumber == rwp.roadwayNumber &&
-                  change.originalAddrMRange.start >= source.addrMRange.get.start && change.originalAddrMRange.end <= source.addrMRange.get.end
+                  source.addrMRange.get.contains(change.originalAddrMRange)
                 )
                 if (terminatedRoadAddress.isDefined) {
                   updateRoadwayPoint(rwp, rwp.addrMValue)

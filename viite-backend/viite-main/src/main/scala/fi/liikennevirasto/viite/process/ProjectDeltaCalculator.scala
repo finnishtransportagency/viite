@@ -183,11 +183,10 @@ object ProjectDeltaCalculator {
     * @param matchers The matcher road address sections
     * @return
     */
-  def matchesFitOnTarget(target: Seq[RoadwaySection], matchers: Seq[RoadwaySection]): Boolean = { // TODO Refactor to use AddrMRange instead of pairs
-    val (targetStartMAddress,  targetEndMAddress ) = (  target.map(_.addrMRange.start).min,   target.map(_.addrMRange.end).max)
-    val (matcherStartMAddress, matcherEndMAddress) = (matchers.map(_.addrMRange.start).min, matchers.map(_.addrMRange.end).max)
-    (targetStartMAddress <= matcherStartMAddress && targetEndMAddress >= matcherStartMAddress) || (targetStartMAddress <= matcherEndMAddress && targetEndMAddress >= matcherEndMAddress) ||
-      (matcherStartMAddress <= targetStartMAddress && matcherEndMAddress >= targetStartMAddress) || (matcherStartMAddress <= targetEndMAddress && matcherEndMAddress >= targetEndMAddress)
+  def matchesFitOnTarget(target: Seq[RoadwaySection], matchers: Seq[RoadwaySection]): Boolean = {
+    val targetAddrMRange  = AddrMRange(  target.map(_.addrMRange.start).min,   target.map(_.addrMRange.end).max)
+    val matcherAddrMRange = AddrMRange(matchers.map(_.addrMRange.start).min, matchers.map(_.addrMRange.end).max)
+    targetAddrMRange.contains(matcherAddrMRange) || matcherAddrMRange.contains(targetAddrMRange)
   }
 
   def partition[T <: BaseRoadAddress](projectLinks: Seq[ProjectLink], allNonTerminatedProjectLinks: Seq[ProjectLink]): Seq[RoadwaySection] = {
@@ -203,7 +202,7 @@ object ProjectDeltaCalculator {
     val result = paired.flatMap { case (key, targetToMap) =>
       val matches = matchingTracks(paired, key)
       val target = targetToMap.map(t => t.copy(projectLinks = projectLinks.filter(link => link.roadPart == RoadPart(t.roadNumber, t.roadPartNumberEnd) && link.track == t.track && link.administrativeClass == t.administrativeClass && link.ely == t.ely &&
-        link.addrMRange.start >= t.addrMRange.start && link.addrMRange.end <= t.addrMRange.end)))
+        t.addrMRange.contains(link.addrMRange))))
       if (matches.nonEmpty && matches.get.lengthCompare(target.length) == 0 && matchesFitOnTarget(target, matches.get)) {
         adjustTrack((target.sortBy(_.addrMRange.start), matches.get.sortBy(_.addrMRange.start)))
       } else
@@ -289,7 +288,7 @@ object ProjectDeltaCalculator {
       val target                    = targetToMap.copy(projectLinks = projectLinks.filter(link => {
           link.roadPart == RoadPart(targetToMap.roadNumber, targetToMap.roadPartNumberEnd) &&
           link.track == targetToMap.track && link.ely == targetToMap.ely &&
-          link.addrMRange.start >= targetToMap.addrMRange.start && link.addrMRange.end <= targetToMap.addrMRange.end
+          targetToMap.addrMRange.contains(link.addrMRange)
         }))
 
       (src,target)

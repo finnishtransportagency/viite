@@ -167,10 +167,6 @@ trait BaseRoadAddress {
     endCalibrationPoint.getOrElse(CalibrationPointType.NoCP) != CalibrationPointType.NoCP
   }
 
-  def liesInBetween(ra: BaseRoadAddress): Boolean = {
-    (addrMRange.start >= ra.addrMRange.start && addrMRange.start <= ra.addrMRange.end) || (addrMRange.end <= ra.addrMRange.end && addrMRange.end >= ra.addrMRange.start)
-  }
-
   def connected(ra2: BaseRoadAddress): Boolean = {
     val currEndPoint = sideCode match {
       case SideCode.AgainstDigitizing => geometry.head
