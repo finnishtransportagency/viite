@@ -8,10 +8,10 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.liikennevirasto.viite.process.strategy.DefaultSectionCalculatorStrategy
 import fi.liikennevirasto.viite.util._
-import fi.vaylavirasto.viite.dao.Sequences
+import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.{AdministrativeClass, CalibrationPointType, Discontinuity, LifecycleStatus, LinkGeomSource, RoadAddressChangeType, RoadLink, RoadPart, SideCode, Track, TrafficDirection}
-import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, when}
@@ -21,13 +21,14 @@ import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.BeforeAndAfter
 import org.scalatestplus.mockito.MockitoSugar
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import scalikejdbc._
 
 import scala.collection.immutable.HashMap
 import scala.collection.mutable.ListBuffer
+import scala.concurrent.Future
 import scala.language.postfixOps
 
-class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter {
+class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter with BaseDAO {
   val mockProjectService: ProjectService = MockitoSugar.mock[ProjectService]
   val mockRoadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockDefaultSectionCalculatorStrategy: DefaultSectionCalculatorStrategy = MockitoSugar.mock[DefaultSectionCalculatorStrategy]
@@ -88,8 +89,9 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter {
                         eventbus_db,
                         frozenTimeAPIServiceEnabled = true
                         ) {
-                            override def withDynSession[T](f: => T): T = f
-                            override def withDynTransaction[T](f: => T): T = f
+                            override def runWithReadOnlySession[T](f: => T): T = f
+                            override def runWithTransaction[T](f: => T): T = f
+                            override def runWithFutureTransaction[T](f: => T): Future[T] = Future.successful(f)
                           }
 
   /* ---db */
@@ -306,12 +308,12 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter {
 
 
 
-        val roadwayPS = dynamicSession.prepareStatement(
-    """
-          insert into ROADWAY (id,roadway_number,road_number,road_part_number,track,start_addr_m,end_addr_m,reversed,discontinuity,
-          start_date,end_date,created_by,administrative_class,ely,terminated,valid_from)
-          values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """)
+        val insertQuery =
+        sql"""
+          INSERT INTO roadway (id,roadway_number,road_number,road_part_number,track,start_addr_m,end_addr_m,reversed,discontinuity,
+            start_date,end_date,created_by,administrative_class,ely,terminated,valid_from)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """
 
         import java.text.SimpleDateFormat
         val DATE_FORMAT = "yyyy-MM-dd"
@@ -346,33 +348,30 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter {
        )
 
        val plIds = Sequences.fetchRoadwayIds(roadways_13_218.size)
-        roadways_13_218.zipWithIndex.foreach { case (address,i) =>
-          roadwayPS.setLong(1, plIds(i))
-          roadwayPS.setLong(2, address.head.asInstanceOf[Number].longValue)//roadway_number
-          roadwayPS.setLong(3, address(1).asInstanceOf[Number].longValue)//road_number
-          roadwayPS.setLong(4, address(2).asInstanceOf[Number].longValue)//road_part_number
-          roadwayPS.setInt(5, address(3).asInstanceOf[Number].intValue())//Track
-          roadwayPS.setLong(6, address(4).asInstanceOf[Number].longValue)//start_addr_m
-          roadwayPS.setLong(7, address(5).asInstanceOf[Number].longValue)//end_addr_m
-          roadwayPS.setInt(8, address(6).asInstanceOf[Number].intValue())//Reversed
-          roadwayPS.setInt(9, address(7).asInstanceOf[Number].intValue())//discontinuity
-          roadwayPS.setDate(10, new java.sql.Date(dateFormat.parse(address(8).toString).getTime))//start_date
-          if (address(9).toString.nonEmpty) {
-            roadwayPS.setDate(11, new java.sql.Date(dateFormat.parse(address(9).toString).getTime))//end_date
-          } else {
-            roadwayPS.setNull(11, java.sql.Types.DATE)
-          }
-          roadwayPS.setString(12, address(10).toString) //created_by
-          roadwayPS.setInt(13, address(11).asInstanceOf[Number].intValue()) //administrative_class
-          roadwayPS.setLong(14, address(12).asInstanceOf[Number].longValue) //ely
-          roadwayPS.setInt(15, address(13).asInstanceOf[Number].intValue()) // terminated
-          roadwayPS.setDate(16, new java.sql.Date(dateTimeFormatLong.parse(address(14).toString).getTime)) //valid_from
-          roadwayPS.addBatch()
-        }
-        roadwayPS.executeBatch()
-        roadwayPS.close()
+       val batchParams = roadways_13_218.zipWithIndex.map { case (address, i) =>
+         Seq(
+           plIds(i),
+           address.head.asInstanceOf[Number].longValue,
+           address(1).asInstanceOf[Number].longValue,
+           address(2).asInstanceOf[Number].longValue,
+           address(3).asInstanceOf[Number].intValue(),
+           address(4).asInstanceOf[Number].longValue,
+           address(5).asInstanceOf[Number].longValue,
+           address(6).asInstanceOf[Number].intValue(),
+           address(7).asInstanceOf[Number].intValue(),
+           new java.sql.Date(dateFormat.parse(address(8).toString).getTime),
+           if (address(9).toString.nonEmpty) new java.sql.Date(dateFormat.parse(address(9).toString).getTime) else null,
+           address(10).toString,
+           address(11).asInstanceOf[Number].intValue(),
+           address(12).asInstanceOf[Number].longValue,
+           address(13).asInstanceOf[Number].intValue(),
+           new java.sql.Date(dateTimeFormatLong.parse(address(14).toString).getTime)
+         )
+       }
 
-        val Li = List(
+       runBatchUpdateToDb(insertQuery, batchParams)
+
+       val Li = List(
           List(7330434,4,1513389783000L),
           List(11910590,4,1599089451000L),
           List(11910502,4,1599089451000L),
@@ -407,19 +406,21 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter {
           List(3227544,4,1513385872000L)
         ).map(l => List(l.head.toString,l(1),l(2)))
 
-        val linkPs = dynamicSession.prepareStatement(
-          """insert into Link (ID, source, adjusted_timestamp)
-             values (?, ?, ?)""".stripMargin)
+        val linkInsertQuery =
+          sql"""
+              INSERT INTO Link (ID, source, adjusted_timestamp)
+              VALUES (?, ?, ?)
+              """
 
-        Li.zipWithIndex.foreach { case (link,i) =>
-          linkPs.setString(1, link.head.asInstanceOf[String])
-          linkPs.setLong(2, link(1).asInstanceOf[Number].longValue)
-          linkPs.setLong(3, link(2).asInstanceOf[Number].longValue)
-          linkPs.addBatch()
-        }
+       val linkBatchParams = Li.map { link =>
+         Seq(
+           link.head.asInstanceOf[String],
+           link(1).asInstanceOf[Number].longValue,
+           link(2).asInstanceOf[Number].longValue
+         )
+       }
 
-        linkPs.executeBatch()
-        linkPs.close()
+       runBatchUpdateToDb(linkInsertQuery, linkBatchParams)
 
         val linearlocations = List(
           List(126019231,1,"3227478",0.000,131.954,3,"512288.7 6838743.26 0 0, 512234.416 6838863.059 0 131.954","2016-03-30 12:03:00.000",creator),
@@ -461,26 +462,28 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter {
         )
 
         val newIds = Sequences.fetchLinearLocationIds(linearlocations.size)
-        val lps = dynamicSession.prepareStatement(
-          """insert into LINEAR_LOCATION (id, ROADWAY_NUMBER, order_number, link_id, start_measure, end_measure, SIDE, geometry, valid_from, created_by)
-      values (?, ?, ?, ?, ?, ?, ?, ST_GeomFromText(?, 3067), ?, ?)""".stripMargin)
+        val lpsInsertQuery =
+          sql"""
+                INSERT INTO Linear_location (id, roadway_number, order_number, link_id, start_measure, end_measure, side, geometry, valid_from, created_by)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ST_GeomFromText(?, 3067), ?, ?)
+                """
 
-        linearlocations.zipWithIndex.foreach { case (location,i) =>
-          lps.setLong(1, newIds(i))
-          lps.setLong(2, location.head.asInstanceOf[Number].longValue)//roadway_number
-          lps.setLong(3, location(1).asInstanceOf[Number].longValue)//order_number
-          lps.setString(4, location(2).asInstanceOf[String])//link_id
-          lps.setDouble(5, location(3).asInstanceOf[Number].doubleValue())//start_measure
-          lps.setDouble(6, location(4).asInstanceOf[Number].doubleValue())//end_measure
-          lps.setInt(7, location(5).asInstanceOf[Number].intValue())//SIDE
-          lps.setString(8, s"""LINESTRING(${location(6)})""") //geometry
-          lps.setDate(9, new java.sql.Date(dateTimeFormatLong.parse(location(7).toString).getTime))//valid_from
-          lps.setString(10, location(8).toString) //created_by
-          lps.addBatch()
+       val lpsBatchParams = linearlocations.zipWithIndex.map { case (location, i) =>
+         Seq(
+           newIds(i),
+           location.head.asInstanceOf[Number].longValue,
+           location(1).asInstanceOf[Number].longValue,
+           location(2).asInstanceOf[String],
+           location(3).asInstanceOf[Number].doubleValue(),
+           location(4).asInstanceOf[Number].doubleValue(),
+           location(5).asInstanceOf[Number].intValue(),
+           s"""LINESTRING(${location(6)})""",
+           new java.sql.Date(dateTimeFormatLong.parse(location(7).toString).getTime),
+           location(8).toString
+          )
         }
 
-        lps.executeBatch()
-        lps.close()
+       runBatchUpdateToDb(lpsInsertQuery, lpsBatchParams)
 
        val roadwayPoints = List(
          List(126019218,0,creator,creator),
@@ -506,22 +509,24 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter {
         )
        val rpIdsAndAddresses = new ListBuffer[(Long, Long)]()
        val newRPIds = (1 to roadwayPoints.size).map(_ => Sequences.nextRoadwayPointId)
-       val rpPs = dynamicSession.prepareStatement(
-          """insert into roadway_point (ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY)
-             values (?, ?, ?, ?, ?)""".stripMargin)
+       val rpPsInsertQuery =
+          sql"""
+              INSERT INTO roadway_point (id, roadway_number, addr_m, created_by, modified_by)
+              VALUES (?, ?, ?, ?, ?)
+              """
 
-        roadwayPoints.zipWithIndex.foreach { case (location,i) =>
-          rpIdsAndAddresses.append((newRPIds(i), location(1).asInstanceOf[Number].longValue))
-          rpPs.setLong(1, newRPIds(i))
-          rpPs.setLong(2, location.head.asInstanceOf[Number].longValue)
-          rpPs.setLong(3, location(1).asInstanceOf[Number].longValue)
-          rpPs.setString(4, location(2).toString)
-          rpPs.setString(5, location(3).toString)
-          rpPs.addBatch()
-        }
+       val rpBatchParams = roadwayPoints.zipWithIndex.map { case (location, i) =>
+         rpIdsAndAddresses.append((newRPIds(i), location(1).asInstanceOf[Number].longValue))
+         Seq(
+           newRPIds(i),
+           location.head.asInstanceOf[Number].longValue,
+           location(1).asInstanceOf[Number].longValue,
+           location(2).toString,
+           location(3).toString
+         )
+       }
 
-        rpPs.executeBatch()
-        rpPs.close()
+        runBatchUpdateToDb(rpPsInsertQuery, rpBatchParams)
 
         val calibrationPoints = List(
           List(64046,"3225257",0,2,creator,126019218,0),
@@ -551,21 +556,24 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter {
         )
 
         val newCPIds = (1 to calibrationPoints.size).map(_ => Sequences.nextCalibrationPointId).toList
-        val cpPs = dynamicSession.prepareStatement(
-          """INSERT INTO CALIBRATION_POINT (ID, ROADWAY_POINT_ID, LINK_ID, START_END, TYPE, CREATED_BY)
-             VALUES (?, ?, ?, ?, ?, ?)""".stripMargin)
-        calibrationPoints.zipWithIndex.foreach { case (cp,i) =>
-          cpPs.setLong(1, newCPIds(i))
-          cpPs.setLong(2, roadwayPointDAO.fetch(cp(5).asInstanceOf[Number].longValue,cp(6).asInstanceOf[Number].longValue).get.id)
-          cpPs.setString(3, cp(1).asInstanceOf[String])
-          cpPs.setInt(4, cp(2).asInstanceOf[Number].intValue())
-          cpPs.setInt(5, cp(3).asInstanceOf[Number].intValue())
-          cpPs.setString(6, cp(4).toString)
-          cpPs.addBatch()
-        }
+        val cpPsInsertQuery =
+          sql"""
+                INSERT INTO calibration_point (id, roadway_point_id, link_id, start_end, type, created_by)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """
 
-        cpPs.executeBatch()
-        cpPs.close()
+       val cpBatchParams = calibrationPoints.zipWithIndex.map { case (cp, i) =>
+         Seq(
+           newCPIds(i),
+           roadwayPointDAO.fetch(cp(5).asInstanceOf[Number].longValue, cp(6).asInstanceOf[Number].longValue).get.id,
+           cp(1).asInstanceOf[String],
+           cp(2).asInstanceOf[Number].intValue(),
+           cp(3).asInstanceOf[Number].intValue(),
+           cp(4).toString
+         )
+       }
+
+        runBatchUpdateToDb(cpPsInsertQuery, cpBatchParams)
 
         val nodes = List(
           List(83619,"511868","6839500","Lentokentänkatu",1,"2017-12-11","a009928","2017-12-11 11:12:47","2017-12-11 11:12:46"),
@@ -574,25 +582,27 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter {
           List(83494,"512694","6838140","Pitkäjärven etl (23)",5,"2015-10-01","HARMB2020","2020-10-15 09:10:01","2015-10-23 12:10:00")
         )
         val newNodeIds = (1 to nodes.size).map(_ => Sequences.nextNodeId).toList
-        val nodePs = dynamicSession.prepareStatement(
-          """INSERT INTO node (ID, node_number, coordinates,name,type,start_date,created_by,valid_from,registration_date )
-                     VALUES (?, ?, ST_GeomFromText(?, 3067), ?, ?, ?, ?, ?, ?)""".stripMargin)
+        val nodeInsertQuery =
+          sql"""
+                INSERT INTO node (ID, node_number, coordinates,name,type,start_date,created_by,valid_from,registration_date )
+                VALUES (?, ?, ST_GeomFromText(?, 3067), ?, ?, ?, ?, ?, ?)
+                """
 
-        nodes.zipWithIndex.foreach { case (location,i) =>
-          nodePs.setLong(1, newNodeIds(i))
-          nodePs.setLong(2, location.head.asInstanceOf[Number].longValue)
-          nodePs.setString(3, s"""POINT(${location(1)} ${location(2)})""") //geometry
-          nodePs.setString(4, location(3).toString)
-          nodePs.setLong(5, location(4).asInstanceOf[Number].longValue)
-          nodePs.setDate(6, new java.sql.Date(dateFormat.parse(location(5).toString).getTime))
-          nodePs.setString(7, location(6).toString)
-          nodePs.setDate(8, new java.sql.Date(dateTimeFormat.parse(location(7).toString).getTime))
-          nodePs.setDate(9, new java.sql.Date(dateTimeFormat.parse(location(8).toString).getTime))
-          nodePs.addBatch()
-        }
+       val nodeBatchParams = nodes.zipWithIndex.map { case (location, i) =>
+         Seq(
+           newNodeIds(i),
+           location.head.asInstanceOf[Number].longValue,
+           s"""POINT(${location(1)} ${location(2)})""", //geometry
+           location(3).toString,
+           location(4).asInstanceOf[Number].longValue,
+           new java.sql.Date(dateFormat.parse(location(5).toString).getTime),
+           location(6).toString,
+           new java.sql.Date(dateTimeFormat.parse(location(7).toString).getTime),
+           new java.sql.Date(dateTimeFormat.parse(location(8).toString).getTime)
+         )
+       }
 
-        nodePs.executeBatch()
-        nodePs.close()
+        runBatchUpdateToDb(nodeInsertQuery, nodeBatchParams)
 
         val nodePoints = List(
           List(2,126019218,0,"2015-10-21 02:10:58","a009928",32467,1),
@@ -602,23 +612,27 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter {
           List(1,126019231,1715,"2020-11-26 08:11:16","HARM2020",32431,2),
           List(1,126019932,2536,"2020-10-15 09:10:01","HARMB2020",83494,1)
         )
-        val newNpIds = (1 to nodePoints.size).map(_ => Sequences.nextNodePointId).toList
-        val npPs = dynamicSession.prepareStatement(
-          """INSERT INTO node_point (ID, before_after, roadway_point_id, valid_from, CREATED_BY, node_number, type)
-             VALUES (?, ?, ?, ?, ?, ?, ?)""".stripMargin)
-        nodePoints.zipWithIndex.foreach { case (np,i) =>
-          npPs.setLong(1, newNpIds(i))
-          npPs.setLong(2, np.head.asInstanceOf[Number].longValue)
-          npPs.setLong(3, roadwayPointDAO.fetch(np(1).asInstanceOf[Number].longValue, np(2).asInstanceOf[Number].longValue).get.id)
-          npPs.setDate(4, new java.sql.Date(dateTimeFormat.parse(np(3).toString).getTime))
-          npPs.setString(5, np(4).toString)
-          npPs.setLong(6, np(5).asInstanceOf[Number].longValue)
-          npPs.setLong(7, np(6).asInstanceOf[Number].longValue)
-          npPs.addBatch()
-        }
 
-        npPs.executeBatch()
-        npPs.close()
+        val newNpIds = (1 to nodePoints.size).map(_ => Sequences.nextNodePointId).toList
+        val npPsInsertQuery =
+          sql"""
+                INSERT INTO node_point (id, before_after, roadway_point_id, valid_from, created_by, node_number, type)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """
+
+       val npBatchParams = nodePoints.zipWithIndex.map { case (np, i) =>
+         Seq(
+           newNpIds(i),
+           np.head.asInstanceOf[Number].longValue,
+           roadwayPointDAO.fetch(np(1).asInstanceOf[Number].longValue, np(2).asInstanceOf[Number].longValue).get.id,
+           new java.sql.Date(dateTimeFormat.parse(np(3).toString).getTime),
+           np(4).toString,
+           np(5).asInstanceOf[Number].longValue,
+           np(6).asInstanceOf[Number].longValue
+         )
+       }
+
+        runBatchUpdateToDb(npPsInsertQuery, npBatchParams)
 
         val junctions = List(
           List(3, "2003-06-30",null,"HARM2020","2020-11-26 08:11:21",32467),
@@ -635,23 +649,27 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter {
           List(4, "2003-06-30",null,"HARM2020","2020-11-26 08:11:21",32467),
           List(8, "2015-10-01",null,"HARM2020","2020-11-26 08:11:21",83494)
         )
-        val newJunctionIds = (1 to junctions.size).map(_ => Sequences.nextJunctionId).toList
-        val junctionPs = dynamicSession.prepareStatement(
-          """INSERT INTO junction (ID, junction_number, start_date, end_date, created_by, valid_from, node_number)
-                             VALUES (?, ?, ?, ?, ?, ?, ?)""".stripMargin)
-        junctions.zipWithIndex.foreach { case (j,i) =>
-          junctionPs.setLong(1, newJunctionIds(i))
-          junctionPs.setLong(2, j.head.asInstanceOf[Number].longValue)
-          junctionPs.setDate(3, new java.sql.Date(dateFormat.parse(j(1).toString).getTime))
-          junctionPs.setDate(4, if (j(2) != null) new java.sql.Date(dateFormat.parse(j(2).toString).getTime) else null)
-          junctionPs.setString(5, j(3).toString)
-          junctionPs.setDate(6, new java.sql.Date(dateTimeFormat.parse(j(4).toString).getTime))
-          junctionPs.setLong(7, j(5).asInstanceOf[Number].longValue)
-          junctionPs.addBatch()
-        }
 
-        junctionPs.executeBatch()
-        junctionPs.close()
+        val newJunctionIds = (1 to junctions.size).map(_ => Sequences.nextJunctionId).toList
+        val junctionInsertQuery =
+          sql"""
+                INSERT INTO junction (id, junction_number, start_date, end_date, created_by, valid_from, node_number)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """
+
+       val junctionBatchParams = junctions.zipWithIndex.map { case (j, i) =>
+         Seq(
+           newJunctionIds(i),
+           j.head.asInstanceOf[Number].longValue,
+           new java.sql.Date(dateFormat.parse(j(1).toString).getTime),
+           if (j(2) != null) new java.sql.Date(dateFormat.parse(j(2).toString).getTime) else null,
+           j(3).toString,
+           new java.sql.Date(dateTimeFormat.parse(j(4).toString).getTime),
+           j(5).asInstanceOf[Number].longValue
+         )
+       }
+
+       runBatchUpdateToDb(junctionInsertQuery, junctionBatchParams)
 
         val junctionPoints = List(
           List(1,148122186,114,4,32467),
@@ -674,21 +692,24 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter {
         )
 
         val newJunctionPointIds = (1 to junctionPoints.size).map(_ => Sequences.nextJunctionPointId).toList
-        val junctionPointPs = dynamicSession.prepareStatement(
-          """INSERT INTO junction_point (ID, before_after, roadway_point_id, junction_id, valid_from, created_by )
-                     VALUES (?, ?, ?, ?, ?, ?)""".stripMargin)
-        junctionPoints.zipWithIndex.foreach { case (jp,i) =>
-          junctionPointPs.setLong(1, newJunctionPointIds(i))
-          junctionPointPs.setLong(2, jp.head.asInstanceOf[Number].longValue)
-          junctionPointPs.setLong(3, roadwayPointDAO.fetch(jp(1).asInstanceOf[Number].longValue,jp(2).asInstanceOf[Number].longValue).get.id)
-          junctionPointPs.setLong(4, junctionDAO_db.fetchJunctionByNodeNumber(jp(4).asInstanceOf[Number].longValue).find(_.junctionNumber.get == jp(3).asInstanceOf[Number].longValue).get.id)
-          junctionPointPs.setDate(5, new java.sql.Date(dateTimeFormat.parse("2020-11-26 08:11:21").getTime))
-          junctionPointPs.setString(6, creator)
-          junctionPointPs.addBatch()
-        }
+        val jpInsertQuery =
+          sql"""
+                INSERT INTO junction_point (id, before_after, roadway_point_id, junction_id, valid_from, created_by )
+                VALUES (?, ?, ?, ?, ?, ?)
+                """
 
-        junctionPointPs.executeBatch()
-        junctionPointPs.close()
+       val jpBatchParams = junctionPoints.zipWithIndex.map { case (jp, i) =>
+         Seq(
+           newJunctionPointIds(i),
+           jp.head.asInstanceOf[Number].longValue,
+           roadwayPointDAO.fetch(jp(1).asInstanceOf[Number].longValue, jp(2).asInstanceOf[Number].longValue).get.id,
+           junctionDAO_db.fetchJunctionByNodeNumber(jp(4).asInstanceOf[Number].longValue).find(_.junctionNumber.get == jp(3).asInstanceOf[Number].longValue).get.id,
+           new java.sql.Date(dateTimeFormat.parse("2020-11-26 08:11:21").getTime),
+           creator
+         )
+       }
+
+        runBatchUpdateToDb(jpInsertQuery, jpBatchParams)
 
 
         val test_road_part = RoadPart(13, 218)

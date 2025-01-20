@@ -30,9 +30,9 @@ class ProjectValidator {
   val junctionPointDAO = new JunctionPointDAO
   val roadAddressService: RoadAddressService = new RoadAddressService(linkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, new RoadwayAddressMapper(roadwayDAO, linearLocationDAO), eventBus, ViiteProperties.kgvRoadlinkFrozen) {
 
-    override def withDynSession[T](f: => T): T = f
+    override def runWithReadOnlySession[T](f: => T): T = f
 
-    override def withDynTransaction[T](f: => T): T = f
+    override def runWithTransaction[T](f: => T): T = f
   }
 
   val projectLinkDAO = new ProjectLinkDAO
@@ -1437,6 +1437,12 @@ class ProjectValidator {
               if (nextProjectPart.isEmpty && nextAddressPart.isEmpty && discontinuity != Discontinuity.EndOfRoad) {
                 error(project.id, ValidationErrorList.MissingEndOfRoad)(Seq(last))
               } else if (!(nextProjectPart.isEmpty && nextAddressPart.isEmpty) && discontinuity == Discontinuity.EndOfRoad) {
+                logger.warn(s"Project ${project.id} has EndofRoad not on last part")
+                logger.warn(s"nextProjectPart: $nextProjectPart")
+                logger.warn(s"nextAddressPart: $nextAddressPart")
+                logger.warn(s"Reserved Parts: ${project.reservedParts.map(_.roadPart).mkString(",")}")
+                logger.warn(s"Formed Parts: ${project.formedParts.map(_.roadPart).mkString(",")}")
+                logger.warn(s"validRoadParts: $validRoadParts")
                 error(project.id, ValidationErrorList.EndOfRoadNotOnLastPart)(Seq(last))
               } else
                 None

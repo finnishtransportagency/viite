@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.viite.dao.{LinksWithExtraCalibrationPoints, InvalidRoadwayLength, MissingCalibrationPoint, MissingCalibrationPointFromJunction, MissingRoadwayPoint, OverlappingRoadwayOnLinearLocation, RoadNetworkDAO, Roadway}
 import fi.vaylavirasto.viite.model.RoadPart
-import fi.vaylavirasto.viite.postgis.PostGISDatabase.withDynSession
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithReadOnlySession
 import org.slf4j.LoggerFactory
 
 class RoadNetworkValidator {
@@ -10,61 +10,61 @@ class RoadNetworkValidator {
   private val logger = LoggerFactory.getLogger(getClass)
 
   def getMissingCalibrationPointsFromTheStart: Seq[MissingCalibrationPoint] = {
-    withDynSession {
+    runWithReadOnlySession {
       roadNetworkDAO.fetchMissingCalibrationPointsFromStart()
     }
   }
 
   def getMissingCalibrationPointsFromTheEnd: Seq[MissingCalibrationPoint] = {
-    withDynSession {
+    runWithReadOnlySession {
       roadNetworkDAO.fetchMissingCalibrationPointsFromEnd()
     }
   }
 
   def getMissingCalibrationPointsFromJunctions: Seq[MissingCalibrationPointFromJunction] = {
-    withDynSession {
+    runWithReadOnlySession {
       roadNetworkDAO.fetchMissingCalibrationPointsFromJunctions()
     }
   }
 
   def getLinksWithExtraCalibrationPoints: Seq[LinksWithExtraCalibrationPoints] = {
-    withDynSession {
+    runWithReadOnlySession {
       roadNetworkDAO.fetchLinksWithExtraCalibrationPoints()
     }
   }
 
   def getLinksWithExtraCalibrationPointsOnSameRoadway: Seq[LinksWithExtraCalibrationPoints] = {
-    withDynSession {
+    runWithReadOnlySession {
       roadNetworkDAO.fetchLinksWithExtraCalibrationPointsWithSameRoadwayNumber()
     }
   }
 
   def getMissingRoadwayPointsFromTheStart: Seq[MissingRoadwayPoint] = {
-    withDynSession {
+    runWithReadOnlySession {
       roadNetworkDAO.fetchMissingRoadwayPointsFromStart()
     }
   }
 
   def getMissingRoadwayPointsFromTheEnd: Seq[MissingRoadwayPoint] = {
-    withDynSession {
+    runWithReadOnlySession {
       roadNetworkDAO.fetchMissingRoadwayPointsFromEnd()
     }
   }
 
   def getInvalidRoadwayLengths: Seq[InvalidRoadwayLength] = {
-    withDynSession {
+    runWithReadOnlySession {
       roadNetworkDAO.fetchInvalidRoadwayLengths()
     }
   }
 
   def getOverlappingRoadwaysInHistory: Seq[Roadway] = {
-    withDynSession {
+    runWithReadOnlySession {
       roadNetworkDAO.fetchOverlappingRoadwaysInHistory()
     }
   }
 
   def getOverlappingRoadwaysOnLinearLocations: Seq[OverlappingRoadwayOnLinearLocation] = {
-    withDynSession {
+    runWithReadOnlySession {
       roadNetworkDAO.fetchOverlappingRoadwaysOnLinearLocations()
     }
   }
