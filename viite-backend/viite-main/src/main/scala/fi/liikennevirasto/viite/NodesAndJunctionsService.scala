@@ -17,9 +17,9 @@ import scala.util.control.NonFatal
 
 class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayPointDAO, linearLocationDAO: LinearLocationDAO, nodeDAO: NodeDAO, nodePointDAO: NodePointDAO, junctionDAO: JunctionDAO, junctionPointDAO: JunctionPointDAO, roadwayChangesDAO: RoadwayChangesDAO, projectReservedPartDAO: ProjectReservedPartDAO) {
 
-  def runWithTransaction[T](f: => T): T = PostGISDatabaseScalikeJDBC.runWithTransaction(f)
+  def runWithTransaction[T](f: => T): T              = PostGISDatabaseScalikeJDBC.runWithTransaction(f)
 
-  def runWithReadOnlySession[T](f: => T): T = PostGISDatabaseScalikeJDBC.runWithReadOnlySession(f)
+  def runWithReadOnlySession[T](f: => T): T          = PostGISDatabaseScalikeJDBC.runWithReadOnlySession(f)
 
   private val logger = LoggerFactory.getLogger(getClass)
 
@@ -186,40 +186,37 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   }
 
   def addOrUpdateNode(node: Node, isObsoleteNode: Boolean = false, username: String = "-"): Long = {
+    if (node.id == NewIdValue) {
+      nodeDAO.create(Seq(node), username).headOption.get
+    } else {
+      val old = nodeDAO.fetchById(node.id)
+      if (old.isDefined) {
+        if (!isObsoleteNode) {
+          val originalStartDate = old.get.startDate.withTimeAtStartOfDay
+          val startDate = node.startDate.withTimeAtStartOfDay
 
-    runWithTransaction {
-      if (node.id == NewIdValue) {
-        nodeDAO.create(Seq(node), username).headOption.get
-      } else {
-        val old = nodeDAO.fetchById(node.id)
-        if (old.isDefined) {
-          if (!isObsoleteNode) {
-            val originalStartDate = old.get.startDate.withTimeAtStartOfDay
-            val startDate = node.startDate.withTimeAtStartOfDay
-
-            // Check that new start date is not earlier than before
-            if (startDate.getMillis < originalStartDate.getMillis) {
-              throw new Exception(NodeStartDateUpdateErrorMessage)
-            }
-
-            if (node.name != old.get.name || old.get.nodeType != node.nodeType || originalStartDate != startDate || old.get.coordinates != node.coordinates) {
-
-              // Invalidate old one
-              nodeDAO.expireById(Seq(old.get.id))
-
-              if (old.get.nodeType != node.nodeType && originalStartDate != startDate) {
-                // Create a new history layer when the node type has changed
-                nodeDAO.create(Seq(old.get.copy(id = NewIdValue, endDate = Some(node.startDate.minusDays(1)))), username)
-              }
-
-              //  Create new node
-              nodeDAO.create(Seq(node.copy(id = NewIdValue)), username)
-            }
+          // Check that new start date is not earlier than before
+          if (startDate.getMillis < originalStartDate.getMillis) {
+            throw new Exception(NodeStartDateUpdateErrorMessage)
           }
-          old.get.nodeNumber
-        } else {
-          throw new Exception(NodeNotFoundErrorMessage)
+
+          if (node.name != old.get.name || old.get.nodeType != node.nodeType || originalStartDate != startDate || old.get.coordinates != node.coordinates) {
+
+            // Invalidate old one
+            nodeDAO.expireById(Seq(old.get.id))
+
+            if (old.get.nodeType != node.nodeType && originalStartDate != startDate) {
+              // Create a new history layer when the node type has changed
+              nodeDAO.create(Seq(old.get.copy(id = NewIdValue, endDate = Some(node.startDate.minusDays(1)))), username)
+            }
+
+            //  Create new node
+            nodeDAO.create(Seq(node.copy(id = NewIdValue)), username)
+          }
         }
+        old.get.nodeNumber
+      } else {
+        throw new Exception(NodeNotFoundErrorMessage)
       }
     }
   }
@@ -855,21 +852,19 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   }
 
   def getJunctionsByBoundingBox(boundingRectangle: BoundingRectangle, raLinks: Seq[RoadAddressLink]): Map[Junction, Seq[JunctionPoint]] = {
-    runWithTransaction{
-      time(logger, "Fetch junctions") {
-        val junctions: Seq[Junction] = junctionDAO.fetchByBoundingBox(boundingRectangle)
-        val junctionPoints: Seq[JunctionPoint] = junctionPointDAO.fetchByJunctionIds(junctions.map(_.id))
+    time(logger, "Fetch junctions") {
+      val junctions: Seq[Junction] = junctionDAO.fetchByBoundingBox(boundingRectangle)
+      val junctionPoints: Seq[JunctionPoint] = junctionPointDAO.fetchByJunctionIds(junctions.map(_.id))
 
-        val groupedRoadLinks: Map[Long, Seq[RoadAddressLink]] = raLinks.groupBy(_.roadwayNumber)
+      val groupedRoadLinks: Map[Long, Seq[RoadAddressLink]] = raLinks.groupBy(_.roadwayNumber)
 
-        val junctionPointsWithCoords = junctionPoints.groupBy(_.roadwayNumber).par.flatMap { case (k, v) =>
-          groupedRoadLinks.get(k).map(rls => enrichJunctionPointCoordinates(rls, v)).getOrElse(v)
-        }.toSeq.seq
+      val junctionPointsWithCoords = junctionPoints.groupBy(_.roadwayNumber).par.flatMap { case (k, v) =>
+        groupedRoadLinks.get(k).map(rls => enrichJunctionPointCoordinates(rls, v)).getOrElse(v)
+      }.toSeq.seq
 
-        junctions.map {
-          junction => (junction, junctionPointsWithCoords.filter(_.junctionId == junction.id))
-        }.toMap
-      }
+      junctions.map {
+        junction => (junction, junctionPointsWithCoords.filter(_.junctionId == junction.id))
+      }.toMap
     }
   }
 
