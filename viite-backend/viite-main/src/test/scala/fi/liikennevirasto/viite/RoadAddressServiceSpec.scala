@@ -812,9 +812,9 @@ class RoadAddressServiceSpec extends AnyFunSuite with Matchers{
 
       // create project link changes that will be handed to the handleRoadwayPointsUpdate function
       val projectLinkChanges = Seq(
-        ProjectRoadLinkChange(Sequences.nextProjectLinkId, newRoadwayId1,llId,     llId,     RoadPart(    0, 0), RoadPart(19510, 1),  0,  0, 0,  5, RoadAddressChangeType.New,      reversed=false, newRoadwayNumber1,      newRoadwayNumber1),
-        ProjectRoadLinkChange(Sequences.nextProjectLinkId, newRoadwayId2,llId + 1, llId + 1, RoadPart(19510, 1), RoadPart(19510, 1),  0, 10, 5, 15, RoadAddressChangeType.Transfer, reversed=false, originalRoadwayNumber1, newRoadwayNumber2),
-        ProjectRoadLinkChange(Sequences.nextProjectLinkId, newRoadwayId3,llId + 2, llId + 2, RoadPart(19510, 1), RoadPart(19527, 1), 10, 20, 0, 10, RoadAddressChangeType.Transfer, reversed=false, originalRoadwayNumber1, newRoadwayNumber3)
+        ProjectRoadLinkChange(Sequences.nextProjectLinkId, newRoadwayId1,llId,     llId,     RoadPart(    0, 0), RoadPart(19510, 1), AddrMRange( 0,  0), AddrMRange(0,  5), RoadAddressChangeType.New,      reversed=false, newRoadwayNumber1,      newRoadwayNumber1),
+        ProjectRoadLinkChange(Sequences.nextProjectLinkId, newRoadwayId2,llId + 1, llId + 1, RoadPart(19510, 1), RoadPart(19510, 1), AddrMRange( 0, 10), AddrMRange(5, 15), RoadAddressChangeType.Transfer, reversed=false, originalRoadwayNumber1, newRoadwayNumber2),
+        ProjectRoadLinkChange(Sequences.nextProjectLinkId, newRoadwayId3,llId + 2, llId + 2, RoadPart(19510, 1), RoadPart(19527, 1), AddrMRange(10, 20), AddrMRange(0, 10), RoadAddressChangeType.Transfer, reversed=false, originalRoadwayNumber1, newRoadwayNumber3)
       )
 
       // create roadway changes that will be handed to the handleRoadwayPointsUpdate function
@@ -929,10 +929,10 @@ class RoadAddressServiceSpec extends AnyFunSuite with Matchers{
 
       // create project link changes that will be handed to the handleRoadwayPointsUpdate function
       val projectLinkChanges = Seq(
-        ProjectRoadLinkChange(Sequences.nextProjectLinkId, originalRoadwayId0,llId,     llId,     RoadPart(19510, 1), RoadPart(19510, 1),  0,  5, 0,  5, RoadAddressChangeType.Unchanged, reversed=false, originalRoadwayNumber0, originalRoadwayNumber0),
-        ProjectRoadLinkChange(Sequences.nextProjectLinkId, originalRoadwayId1,llId + 1, llId + 1, RoadPart(19510, 1), RoadPart(19510, 1),  5, 10, 5, 10, RoadAddressChangeType.Unchanged, reversed=false, originalRoadwayNumber1, newRoadwayNumber1),
-        ProjectRoadLinkChange(Sequences.nextProjectLinkId, originalRoadwayId1,llId + 2, llId + 2, RoadPart(19510, 1), RoadPart(19527, 1), 10, 13, 0,  3, RoadAddressChangeType.Transfer,  reversed=false, originalRoadwayNumber1, newRoadwayNumber2),
-        ProjectRoadLinkChange(Sequences.nextProjectLinkId, originalRoadwayId2,llId + 3, llId + 3, RoadPart(19510, 1), RoadPart(19510, 1),  0, 10, 3, 13, RoadAddressChangeType.Transfer,  reversed=false, originalRoadwayNumber2, originalRoadwayNumber2)
+        ProjectRoadLinkChange(Sequences.nextProjectLinkId, originalRoadwayId0,llId,     llId,     RoadPart(19510, 1), RoadPart(19510, 1), AddrMRange( 0,  5), AddrMRange(0,  5), RoadAddressChangeType.Unchanged, reversed=false, originalRoadwayNumber0, originalRoadwayNumber0),
+        ProjectRoadLinkChange(Sequences.nextProjectLinkId, originalRoadwayId1,llId + 1, llId + 1, RoadPart(19510, 1), RoadPart(19510, 1), AddrMRange( 5, 10), AddrMRange(5, 10), RoadAddressChangeType.Unchanged, reversed=false, originalRoadwayNumber1, newRoadwayNumber1),
+        ProjectRoadLinkChange(Sequences.nextProjectLinkId, originalRoadwayId1,llId + 2, llId + 2, RoadPart(19510, 1), RoadPart(19527, 1), AddrMRange(10, 13), AddrMRange(0,  3), RoadAddressChangeType.Transfer,  reversed=false, originalRoadwayNumber1, newRoadwayNumber2),
+        ProjectRoadLinkChange(Sequences.nextProjectLinkId, originalRoadwayId2,llId + 3, llId + 3, RoadPart(19510, 1), RoadPart(19510, 1), AddrMRange( 0, 10), AddrMRange(3, 13), RoadAddressChangeType.Transfer,  reversed=false, originalRoadwayNumber2, originalRoadwayNumber2)
       )
 
       // create roadway changes that will be handed to the handleRoadwayPointsUpdate function
@@ -1064,7 +1064,7 @@ class RoadAddressServiceSpec extends AnyFunSuite with Matchers{
       roadAddressService.handleRoadwayPointsUpdate(List(roadwayChanges.head, updatedRoadwayChanges), mappedRoadwayChanges.map { rwc =>
         rwc.originalRoadPart.partNumber match {
           case 1 => rwc.copy(originalRoadwayNumber = roadwayNumber1)
-          case 2 => rwc.copy(originalRoadPart = RoadPart(rwc.originalRoadPart.roadNumber, 1), originalStartAddr = 5, originalEndAddr = 20, originalRoadwayNumber = roadwayNumber1)
+          case 2 => rwc.copy(originalRoadPart = RoadPart(rwc.originalRoadPart.roadNumber, 1), originalAddrMRange = AddrMRange(5, 20), originalRoadwayNumber = roadwayNumber1)
           case _ => rwc
         }
       }, "user")

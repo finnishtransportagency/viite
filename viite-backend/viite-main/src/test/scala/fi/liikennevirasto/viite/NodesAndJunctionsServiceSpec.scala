@@ -1481,8 +1481,8 @@ class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with Before
             DateTime.now)).toList
 
         val mappedRoadwayNumbers = Seq(
-          ProjectRoadLinkChange(plId1, 0, 0, llId1, RoadPart(0, 0), RoadPart(46001, 1), 0, 0,  0,  30, RoadAddressChangeType.New, false, 0, roadwayNumber),
-          ProjectRoadLinkChange(plId2, 0, 0, llId2, RoadPart(0, 0), RoadPart(46001, 1), 0, 0, 30, 120, RoadAddressChangeType.New, false, 0, roadwayNumber)
+          ProjectRoadLinkChange(plId1, 0, 0, llId1, RoadPart(0, 0), RoadPart(46001, 1), AddrMRange(0, 0), AddrMRange( 0,  30), RoadAddressChangeType.New, false, 0, roadwayNumber),
+          ProjectRoadLinkChange(plId2, 0, 0, llId2, RoadPart(0, 0), RoadPart(46001, 1), AddrMRange(0, 0), AddrMRange(30, 120), RoadAddressChangeType.New, false, 0, roadwayNumber)
         )
 
         when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(geom1.head, geom1.head), roadNumberLimits)).thenReturn(linearLocations)

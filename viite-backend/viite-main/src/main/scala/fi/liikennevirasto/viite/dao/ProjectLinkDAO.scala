@@ -285,16 +285,14 @@ class ProjectLinkDAO extends BaseDAO {
       val originalRoadPartNumber = r.nextLong()
       val roadNumber = r.nextLong()
       val roadPartNumber = r.nextLong()
-      val originalStartAddrMValue = r.nextLong()
-      val originalEndAddrMValue = r.nextLong()
-      val startAddrM = r.nextLong()
-      val endAddrM = r.nextLong()
+      val originalAddrMRange = AddrMRange(r.nextLong(), r.nextLong())
+      val newAddrMRange = AddrMRange(r.nextLong(), r.nextLong())
       val status = RoadAddressChangeType.apply(r.nextInt())
       val reversed = r.nextBoolean()
       val roadwayNumber = r.nextLong()
       val projectRoadwayNumber = r.nextLong()
 
-      ProjectRoadLinkChange(projectLinkId, roadwayId, originalLinearLocationId, 0, RoadPart(originalRoadNumber, originalRoadPartNumber), RoadPart(originalRoadNumber, originalRoadPartNumber), originalStartAddrMValue, originalEndAddrMValue, startAddrM, endAddrM,
+      ProjectRoadLinkChange(projectLinkId, roadwayId, originalLinearLocationId, 0, RoadPart(originalRoadNumber, originalRoadPartNumber), RoadPart(originalRoadNumber, originalRoadPartNumber), originalAddrMRange, newAddrMRange,
         status, reversed, roadwayNumber, projectRoadwayNumber)
     }
   }
