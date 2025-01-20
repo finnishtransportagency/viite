@@ -78,6 +78,68 @@ class AddrMRangeSpec extends AnyFunSuite with Matchers {
 
 
   // ----------------------------------- Connectivity checks -----------------------------------
+
+  test("Test AddrMRange.isSameAs(AddrMRange): Returns true, if the compared AddrMRanges have same start, and end. Else false") {
+    //                                                                           100    300 // comparison range
+    //AddrMRange "A"                      AddrMRange "B"                  //      |AAAAAA|      //
+    AddrMRange(100,300).isSameAs(AddrMRange(100,300)) shouldBe true       //      |BBBBBB|      // Are the same
+
+    // different either value
+    AddrMRange(100,300).isSameAs(AddrMRange(  0, 99)) shouldBe false      // BBBB |      |      // Do not even touch
+    AddrMRange(100,300).isSameAs(AddrMRange(301,400)) shouldBe false      //      |      | BBBB // Do not even touch
+    AddrMRange(100,300).isSameAs(AddrMRange(  0,100)) shouldBe false      // BBBBB|      |      // Only single point in common
+    AddrMRange(100,300).isSameAs(AddrMRange(300,400)) shouldBe false      //      |      |BBBBB // Only single point in common
+    AddrMRange(100,300).isSameAs(AddrMRange(101,300)) shouldBe false      //      | BBBBB|      // Only single point in common
+    AddrMRange(100,300).isSameAs(AddrMRange(100,299)) shouldBe false      //      |BBBBB |      // Only single point in common
+
+    // undefined range
+    intercept[Exception](AddrMRange(  0,100).isSameAs(AddrMRange(  0,  0))) shouldBe a[ViiteException]
+    intercept[Exception](AddrMRange(  0,  0).isSameAs(AddrMRange(  0,100))) shouldBe a[ViiteException]
+  }
+
+  test("Test AddrMRange.contains: Returns true, if other AddrMRange is fully contained inside <i>this</i>. Else false.") {
+    //                                                                           100    300 // comparison range
+    //AddrMRange "A"                      AddrMRange "B"                  //      |AAAAAA|      //
+    AddrMRange(100,300).contains(AddrMRange(100,300)) shouldBe true       //      |BBBBBB|      // Exactly same. B contained by A. (And vice versa.)
+
+    AddrMRange(100,300).contains(AddrMRange(100,299)) shouldBe true       //      |BBBBB |      // B contained within A
+    AddrMRange(100,300).contains(AddrMRange(101,299)) shouldBe true       //      | BBBB |      // B contained within A
+    AddrMRange(100,300).contains(AddrMRange(101,300)) shouldBe true       //      | BBBBB|      // B contained within A
+
+    AddrMRange(100,300).contains(AddrMRange(  0,100)) shouldBe false      // BBBBB|      |      // Only single point in common
+    AddrMRange(100,300).contains(AddrMRange(300,400)) shouldBe false      //      |      |BBBBB // Only single point in common
+    AddrMRange(100,300).contains(AddrMRange(  0,200)) shouldBe false      // BBBBB|BBB   |      // Partial overlap, but not contained
+    AddrMRange(100,300).contains(AddrMRange(200,400)) shouldBe false      //      |   BBB|BBBBB // Partial overlap, but not contained
+    AddrMRange(100,300).contains(AddrMRange(  0,400)) shouldBe false      // BBBBB|BBBBBB|BBBBB // Overlaps, but not contained
+    AddrMRange(100,300).contains(AddrMRange(  0, 99)) shouldBe false      // BBBB |      |      // Do not even touch
+    AddrMRange(100,300).contains(AddrMRange(301,400)) shouldBe false      //      |      | BBBB // Do not even touch
+
+    // Undefined AddrMRange
+    intercept[Exception](AddrMRange(100,300).contains(AddrMRange(  0,  0))) shouldBe a[ViiteException]
+    intercept[Exception](AddrMRange(  0,  0).contains(AddrMRange(100,300))) shouldBe a[ViiteException]
+  }
+
+  test("Test AddrMRange.overlaps: Returns true, if this AddrMRange has more than single point in common with <i>other</i>. Else false.") {
+                                                                          //     100    300 // comparison range
+    //AddrMRange "A"                      AddrMRange "B"                  //      |AAAAAA|
+    AddrMRange(100,300).overlaps(AddrMRange(100,300)) shouldBe true       //      |BBBBBB|      // Sameness is also overlapping
+    AddrMRange(100,300).overlaps(AddrMRange(100,200)) shouldBe true       //      |BBB   |      // Containment is also overlapping
+    AddrMRange(100,300).overlaps(AddrMRange(101,299)) shouldBe true       //      | BBBB |      // Containment is also overlapping
+    AddrMRange(100,300).overlaps(AddrMRange(200,300)) shouldBe true       //      |   BBB|      // Containment is also overlapping
+    AddrMRange(100,300).overlaps(AddrMRange(  0,101)) shouldBe true       // BBBBB|B     |      // Overlapping over one side
+    AddrMRange(100,300).overlaps(AddrMRange(299,400)) shouldBe true       //      |     B|BBBBB // Overlapping over one side
+    AddrMRange(100,300).overlaps(AddrMRange(  0,400)) shouldBe true       // BBBBB|BBBBBB|BBBBB // Containment is also overlapping
+
+    AddrMRange(100,300).overlaps(AddrMRange(  0, 99)) shouldBe false      // BBBB |      |      // Do not even touch
+    AddrMRange(100,300).overlaps(AddrMRange(301,400)) shouldBe false      //      |      | BBBB // Do not even touch
+    AddrMRange(100,300).overlaps(AddrMRange(  0,100)) shouldBe false      // BBBBB|      |      // Only single point in common
+    AddrMRange(100,300).overlaps(AddrMRange(300,400)) shouldBe false      //      |      |BBBBB // Only single point in common
+
+    // Undefined AddrMRange
+    intercept[Exception](AddrMRange(100,300).overlaps(AddrMRange(  0,  0))) shouldBe a[ViiteException]
+    intercept[Exception](AddrMRange(  0,  0).overlaps(AddrMRange(100,300))) shouldBe a[ViiteException]
+  }
+
   test("Test AddrMRange.continuesTo: Returns true, if this.end == other.start, and both are valid ranges. Else false.") {
                                                                              //     100   300
     //  AddrMRange "A"                          AddrMRange "B"               //      |AAAAA|
