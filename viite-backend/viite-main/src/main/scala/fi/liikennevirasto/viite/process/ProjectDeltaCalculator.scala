@@ -370,7 +370,7 @@ object ProjectDeltaCalculator {
       } else if (longerTrackSeq.head._1.addrMRange.start > shorterTrackSeq.head._1.addrMRange.start && longerTrackSeq.head._1.addrMRange.end == shorterTrackSeq.head._1.addrMRange.end && shorterTrackSeq.head._2 == "terminated") {
           val n = (shorterTrackSeq.head._1.copy(addrMRange = AddrMRange(shorterTrackSeq.head._1.addrMRange.start, longerTrackSeq.head._1.addrMRange.start)), "terminated")
           matchTerminatedTracksOnRoadPart(longerTrackSeq.tail, (shorterTrackSeq.head._1.copy(addrMRange = AddrMRange(longerTrackSeq.head._1.addrMRange.start,shorterTrackSeq.head._1.addrMRange.end)), shorterTrackSeq.head._2) +: shorterTrackSeq.tail, adjustedShorterTrackSeq ++ Seq(n))
-      } else if (longerTrackSeq.head._1.addrMRange.start == shorterTrackSeq.head._1.addrMRange.start && longerTrackSeq.head._1.addrMRange.end == shorterTrackSeq.head._1.addrMRange.end) {
+      } else if (longerTrackSeq.head._1.addrMRange.isSameAs(shorterTrackSeq.head._1.addrMRange)) {
           matchTerminatedTracksOnRoadPart(longerTrackSeq.tail, shorterTrackSeq.tail, adjustedShorterTrackSeq ++ Seq(shorterTrackSeq.head))
       } else if (longerTrackSeq.head._1.addrMRange.start > shorterTrackSeq.head._1.addrMRange.end)
           matchTerminatedTracksOnRoadPart(longerTrackSeq, shorterTrackSeq.tail, adjustedShorterTrackSeq ++ Seq(shorterTrackSeq.head))
