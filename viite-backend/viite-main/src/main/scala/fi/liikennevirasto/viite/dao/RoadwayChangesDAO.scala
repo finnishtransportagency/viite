@@ -543,9 +543,11 @@ class RoadwayChangesDAO extends BaseDAO {
 
     val projectRelatedConditions = elyAndRoadNumberConditions ++ roadPartCondition
 
-    // Combine conditions with AND
-    val dateWhereClause = if (dateConditions.isEmpty) sqls"" else sqls.join(dateConditions, sqls" AND ")
-    val projectWhereClause = if (projectRelatedConditions.isEmpty) sqls"" else sqls.join(projectRelatedConditions, sqls" AND ")
+    // Construct the WHERE clause based on the conditions
+    val whereClause = (dateConditions ++ projectRelatedConditions) match {
+      case Seq() => sqls"" // No conditions
+      case conditions => sqls"WHERE ${sqls.join(conditions, sqls" AND ")}" // Join all conditions with AND
+    }
 
 
     // The final SQL fetches all changes for projects matching the initial criteria
@@ -554,7 +556,7 @@ class RoadwayChangesDAO extends BaseDAO {
         WITH RelevantProjects AS (
           SELECT DISTINCT p.id FROM project p
           JOIN roadway_changes rc ON rc.project_id = p.id
-          WHERE $dateWhereClause AND ($projectWhereClause)
+          $whereClause
         ), AllRelatedRoadwayChanges AS (
           SELECT rc.* FROM roadway_changes rc
           JOIN RelevantProjects rp ON rp.id = rc.project_id
@@ -576,7 +578,6 @@ class RoadwayChangesDAO extends BaseDAO {
 
         ORDER BY p.start_date, rc.new_road_number, rc.new_road_part_number, rc.new_start_addr_m, rc.new_track
       """
-
 
     runSelectQuery(query.map(ChangeInfoForRoadAddressChangesBrowser.apply))
   }
