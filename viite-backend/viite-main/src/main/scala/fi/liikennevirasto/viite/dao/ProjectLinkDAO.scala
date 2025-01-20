@@ -950,7 +950,7 @@ class ProjectLinkDAO extends BaseDAO {
     val geometryString = GeometryDbUtils.createJGeometry(geometry)
     val query = sql"""
                 UPDATE project_link
-                SET modified_date = current_timestamp, geometry = ST_GeomFromText('$geometryString', 3067), connected_link_id = NULL
+                SET modified_date = current_timestamp, geometry = ST_GeomFromText($geometryString, 3067), connected_link_id = NULL
                 WHERE id = $projectLinkId
                 """
 
@@ -988,7 +988,8 @@ class ProjectLinkDAO extends BaseDAO {
               AND project_link.status != ${RoadAddressChangeType.Termination.value}
               """
 
-      val roadPartMaxAddr = runSelectSingleFirstOptionWithType[Long](maxAddrQuery).getOrElse(0L)
+      // Get the max address value of the road part or 0 if not found from the query or the result
+      val roadPartMaxAddr = runSelectFirst(maxAddrQuery.map(rs => rs.longOpt(1).getOrElse(0L))).getOrElse(0L)
 
       val updateProjectLink =
         sql"""
