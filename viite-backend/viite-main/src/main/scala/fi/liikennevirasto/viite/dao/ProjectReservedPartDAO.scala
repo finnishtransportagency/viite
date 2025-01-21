@@ -658,8 +658,7 @@ class ProjectReservedPartDAO extends BaseDAO {
         sql"""
           SELECT 1 WHERE EXISTS(
              SELECT 1
-             FROM project pro,
-             roadway ra
+             FROM project pro, roadway ra
              WHERE  pro.id = $projectId
              AND road_number = ${roadPart.roadNumber}
              AND road_part_number = ${roadPart.partNumber}
@@ -674,7 +673,8 @@ class ProjectReservedPartDAO extends BaseDAO {
               AND pro.road_number = ${roadPart.roadNumber}
               AND pro.road_part_number = ${roadPart.partNumber}
               AND ra.end_date IS NULL
-              )"""
+              )
+              """
       runSelectSingleFirstOptionWithType[Int](query).nonEmpty
     }
   }

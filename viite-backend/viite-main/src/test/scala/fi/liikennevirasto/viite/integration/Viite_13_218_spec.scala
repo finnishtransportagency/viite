@@ -351,21 +351,21 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter wi
        val batchParams = roadways_13_218.zipWithIndex.map { case (address, i) =>
          Seq(
            plIds(i),
-           address.head.asInstanceOf[Number].longValue,
-           address(1).asInstanceOf[Number].longValue,
-           address(2).asInstanceOf[Number].longValue,
-           address(3).asInstanceOf[Number].intValue(),
-           address(4).asInstanceOf[Number].longValue,
-           address(5).asInstanceOf[Number].longValue,
-           address(6).asInstanceOf[Number].intValue(),
-           address(7).asInstanceOf[Number].intValue(),
-           new java.sql.Date(dateFormat.parse(address(8).toString).getTime),
-           if (address(9).toString.nonEmpty) new java.sql.Date(dateFormat.parse(address(9).toString).getTime) else null,
-           address(10).toString,
-           address(11).asInstanceOf[Number].intValue(),
-           address(12).asInstanceOf[Number].longValue,
-           address(13).asInstanceOf[Number].intValue(),
-           new java.sql.Date(dateTimeFormatLong.parse(address(14).toString).getTime)
+           address.head.asInstanceOf[Number].longValue, //roadway_number
+           address(1).asInstanceOf[Number].longValue,   //road_number
+           address(2).asInstanceOf[Number].longValue,   //road_part_number
+           address(3).asInstanceOf[Number].intValue(),  //track
+           address(4).asInstanceOf[Number].longValue,   //start_addr_m
+           address(5).asInstanceOf[Number].longValue,   //end_addr_m
+           address(6).asInstanceOf[Number].intValue(),  //reversed
+           address(7).asInstanceOf[Number].intValue(),  //discontinuity
+           new java.sql.Date(dateFormat.parse(address(8).toString).getTime), //start_date
+           if (address(9).toString.nonEmpty) new java.sql.Date(dateFormat.parse(address(9).toString).getTime) else null, //end_date
+           address(10).toString,                        //created_by
+           address(11).asInstanceOf[Number].intValue(), //administrative_class
+           address(12).asInstanceOf[Number].longValue,  //ely
+           address(13).asInstanceOf[Number].intValue(), //terminated
+           new java.sql.Date(dateTimeFormatLong.parse(address(14).toString).getTime)  //valid_from
          )
        }
 
@@ -470,16 +470,16 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter wi
 
        val lpsBatchParams = linearlocations.zipWithIndex.map { case (location, i) =>
          Seq(
-           newIds(i),
-           location.head.asInstanceOf[Number].longValue,
-           location(1).asInstanceOf[Number].longValue,
-           location(2).asInstanceOf[String],
-           location(3).asInstanceOf[Number].doubleValue(),
-           location(4).asInstanceOf[Number].doubleValue(),
-           location(5).asInstanceOf[Number].intValue(),
-           s"""LINESTRING(${location(6)})""",
-           new java.sql.Date(dateTimeFormatLong.parse(location(7).toString).getTime),
-           location(8).toString
+           newIds(i),                                      // id
+           location.head.asInstanceOf[Number].longValue,   // roadway_number
+           location(1).asInstanceOf[Number].longValue,     // order_number
+           location(2).asInstanceOf[String],               // link_id
+           location(3).asInstanceOf[Number].doubleValue(), // start_measure
+           location(4).asInstanceOf[Number].doubleValue(), // end_measure
+           location(5).asInstanceOf[Number].intValue(),    // side
+           s"""LINESTRING(${location(6)})""",              // geometry
+           new java.sql.Date(dateTimeFormatLong.parse(location(7).toString).getTime), // valid_from
+           location(8).toString                            // created_by
           )
         }
 
