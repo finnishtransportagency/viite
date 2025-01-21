@@ -823,24 +823,24 @@ class RoadAddressServiceSpec extends AnyFunSuite with Matchers{
           projectId, Some(projectName), ely, user, DateTime.now(),
           RoadwayChangeInfo(
             RoadAddressChangeType.New,
-            RoadwayChangeSection(None, None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14L)),
-            RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(0), Some(5), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14)),
+            RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14L)),
+            RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(AddrMRange(0,5)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed=false, 4481L, 14),
           date),
         ProjectRoadwayChange(
           projectId, Some(projectName), ely, user, DateTime.now(),
           RoadwayChangeInfo(
             RoadAddressChangeType.Transfer,
-            RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(0), Some(10), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14)),
-            RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(5), Some(15), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
+            RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(AddrMRange(0,10)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14)),
+            RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(AddrMRange(5,15)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
             Discontinuity.EndOfRoad, AdministrativeClass.State, reversed=false, 4481L, 14),
           date),
         ProjectRoadwayChange(
           projectId, Some(projectName), ely, user, DateTime.now(),
           RoadwayChangeInfo(
             RoadAddressChangeType.Transfer,
-            RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(10), Some(20), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
-            RoadwayChangeSection(Some(19527), Some(0), Some(1), Some(1), Some(0), Some(10), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
+            RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(AddrMRange(10, 20)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
+            RoadwayChangeSection(Some(19527), Some(0), Some(1), Some(1), Some(AddrMRange( 0, 10)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
             Discontinuity.EndOfRoad, AdministrativeClass.State, reversed=false, 4481L, 14),
           date)
       )
@@ -941,32 +941,32 @@ class RoadAddressServiceSpec extends AnyFunSuite with Matchers{
           projectId, Some(projectName), ely, user, DateTime.now(),
           RoadwayChangeInfo(
             RoadAddressChangeType.Unchanged,
-            RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(0), Some(5), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14)),
-            RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(0), Some(5), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14)),
+            RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(AddrMRange(0L, 5L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14)),
+            RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(AddrMRange(0L, 5L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14)),
             Discontinuity.EndOfRoad, AdministrativeClass.State, reversed=false, 4481L, 14),
           date),
         ProjectRoadwayChange(
           projectId, Some(projectName), ely, user, DateTime.now(),
           RoadwayChangeInfo(
             RoadAddressChangeType.Unchanged,
-            RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(5), Some(10), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14)),
-            RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(5), Some(10), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
+            RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(AddrMRange(5L, 10L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14)),
+            RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(AddrMRange(5L, 10L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
             Discontinuity.EndOfRoad, AdministrativeClass.State, reversed=false, 4481L, 14),
           date),
         ProjectRoadwayChange(
           projectId, Some(projectName), ely, user, DateTime.now(),
           RoadwayChangeInfo(
             RoadAddressChangeType.Transfer,
-            RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(10), Some(13), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
-            RoadwayChangeSection(Some(19527), Some(0), Some(1), Some(1), Some(0), Some(3), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14)),
+            RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(AddrMRange(10, 13)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
+            RoadwayChangeSection(Some(19527), Some(0), Some(1), Some(1), Some(AddrMRange( 0,  3)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14)),
             Discontinuity.Continuous, AdministrativeClass.State, reversed=false, 4481L, 14),
           date),
         ProjectRoadwayChange(
           projectId, Some(projectName), ely, user, DateTime.now(),
           RoadwayChangeInfo(
             RoadAddressChangeType.Transfer,
-            RoadwayChangeSection(Some(19527), Some(0), Some(1), Some(1), Some(0), Some(10), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
-            RoadwayChangeSection(Some(19527), Some(0), Some(1), Some(1), Some(3), Some(13), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
+            RoadwayChangeSection(Some(19527), Some(0), Some(1), Some(1), Some(AddrMRange(0, 10)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
+            RoadwayChangeSection(Some(19527), Some(0), Some(1), Some(1), Some(AddrMRange(3, 13)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14)),
             Discontinuity.EndOfRoad, AdministrativeClass.State, reversed=false, 4481L, 14),
           date)
       )
@@ -1057,7 +1057,7 @@ class RoadAddressServiceSpec extends AnyFunSuite with Matchers{
       val roadwayChanges = roadwayChangesDAO.fetchRoadwayChanges(Set(projectId))
 
       when(mockRoadwayDAO.fetchAllBySectionAndTracks(any[RoadPart], any[Set[Track]])).thenReturn(Seq(rw1WithId, rw2WithId))
-      val t1 = roadwayChanges.last.changeInfo.source.copy(startAddressM = Some(5), endAddressM = Some(20), startRoadPartNumber = Some(1), endRoadPartNumber = Some(1))
+      val t1 = roadwayChanges.last.changeInfo.source.copy(addrMRange = Some(AddrMRange(5, 20)), startRoadPartNumber = Some(1), endRoadPartNumber = Some(1))
       val t2 = roadwayChanges.last.changeInfo.copy(source = t1)
       val updatedRoadwayChanges = roadwayChanges.last.copy(changeInfo = t2)
 
