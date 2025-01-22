@@ -7,13 +7,14 @@ import fi.vaylavirasto.viite.model.{AdministrativeClass, LifecycleStatus, LinkGe
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC
 import org.joda.time.DateTime
 import net.postgis.jdbc.geometry.GeometryBuilder
-import org.joda.time.format.DateTimeFormat
 import scalikejdbc._
+import scalikejdbc.jodatime.JodaWrappedResultSet.fromWrappedResultSetToJodaWrappedResultSet
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class ComplementaryLinkDAO extends BaseDAO {
+
   lazy val selectFromComplementaryLink =
     sqls"""
        SELECT id, adminclass, municipalitycode, lifecyclestatus, horizontallength, starttime,
@@ -21,46 +22,22 @@ class ComplementaryLinkDAO extends BaseDAO {
        FROM complementary_link_table
     """
 
-  def runWithReadOnlySession[T](f: => T): T = PostGISDatabaseScalikeJDBC.runWithReadOnlySession(f)
-
-  def extractModifiedAt(attributes: Map[String, Option[DateTime]]): Option[DateTime] = {
-    def toLong(anyValue: Option[Any]): Option[Long] = {
-      anyValue.map(_.asInstanceOf[DateTime].getMillis)
-    }
-    def compareDateMillisOptions(a: Option[Long], b: Option[Long]): Option[Long] = {
-      (a, b) match {
-        case (Some(firstModifiedAt), Some(secondModifiedAt)) =>
-          if (firstModifiedAt > secondModifiedAt)
-            Some(firstModifiedAt)
-          else
-            Some(secondModifiedAt)
-        case (Some(firstModifiedAt), None) => Some(firstModifiedAt)
-        case (None, Some(secondModifiedAt)) => Some(secondModifiedAt)
-        case (None, None) => None
-      }
-    }
-    val createdDate = toLong(attributes("starttime"))
-    val lastEditedDate = toLong(attributes("versionstarttime"))
-    val geometryEditedDate = toLong(attributes("sourcemodificationtime"))
-    compareDateMillisOptions(lastEditedDate, geometryEditedDate).orElse(createdDate).map(modifiedTime => new DateTime(modifiedTime))
-  }
 
   object RoadLink extends SQLSyntaxSupport[RoadLink] {
     private val UnknownMunicipality = -1
-    private val dateOptTimeFormatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS")
 
     def apply(rs: WrappedResultSet): RoadLink = {
       val linkId              = rs.string("id")
-      val administrativeClass = AdministrativeClass(rs.int("administrativeclass"))
+      val administrativeClass = AdministrativeClass(rs.int("adminclass"))
       val municipalityCode    = rs.intOpt("municipalitycode").getOrElse(UnknownMunicipality)
       val lifecycleStatus     = LifecycleStatus(rs.int("lifecyclestatus"))
-      val length              = rs.double("length")
+      val length              = rs.double("horizontallength")
 
       // Handle the modified dates
       val modifiedAt = extractModifiedAt(Map(
-        "starttime"              -> rs.dateOpt("starttime").map(d              => dateOptTimeFormatter.parseDateTime(d.toString)),
-        "versionstarttime"       -> rs.dateOpt("versionstarttime").map(d       => dateOptTimeFormatter.parseDateTime(d.toString)),
-        "sourcemodificationtime" -> rs.dateOpt("sourcemodificationtime").map(d => dateOptTimeFormatter.parseDateTime(d.toString))
+        "starttime"              -> rs.jodaDateTimeOpt("starttime").map(d => new DateTime(d)),
+        "versionstarttime"       -> rs.jodaDateTimeOpt("versionstarttime").map(d => new DateTime(d)),
+        "sourcemodificationtime" -> rs.jodaDateTimeOpt("sourcemodificationtime").map(d => new DateTime(d))
       )).map(_.toString())
 
       // Handle geometry
@@ -85,6 +62,30 @@ class ComplementaryLinkDAO extends BaseDAO {
         sourceId            = ""
       )
     }
+  }
+
+  def runWithReadOnlySession[T](f: => T): T = PostGISDatabaseScalikeJDBC.runWithReadOnlySession(f)
+
+  def extractModifiedAt(attributes: Map[String, Option[DateTime]]): Option[DateTime] = {
+    def toLong(anyValue: Option[Any]): Option[Long] = {
+      anyValue.map(_.asInstanceOf[DateTime].getMillis)
+    }
+    def compareDateMillisOptions(a: Option[Long], b: Option[Long]): Option[Long] = {
+      (a, b) match {
+        case (Some(firstModifiedAt), Some(secondModifiedAt)) =>
+          if (firstModifiedAt > secondModifiedAt)
+            Some(firstModifiedAt)
+          else
+            Some(secondModifiedAt)
+        case (Some(firstModifiedAt), None) => Some(firstModifiedAt)
+        case (None, Some(secondModifiedAt)) => Some(secondModifiedAt)
+        case (None, None) => None
+      }
+    }
+    val createdDate = toLong(attributes("starttime"))
+    val lastEditedDate = toLong(attributes("versionstarttime"))
+    val geometryEditedDate = toLong(attributes("sourcemodificationtime"))
+    compareDateMillisOptions(lastEditedDate, geometryEditedDate).orElse(createdDate).map(modifiedTime => new DateTime(modifiedTime))
   }
 
   def fetchByLinkId(linkId: String): Option[RoadLink] = {

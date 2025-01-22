@@ -11,7 +11,7 @@ import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import fi.vaylavirasto.viite.dao.Sequences
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinuity, LifecycleStatus, LinkGeomSource, RoadAddressChangeType, RoadLink, RoadPart, SideCode, Track, TrafficDirection}
-import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
@@ -55,8 +55,8 @@ class RoadAddressServiceSpec extends AnyFunSuite with Matchers{
                                                                       mockEventBus,
                                                                       frozenKGV = false) {
 
-    override def withDynSession[T](f: => T): T = f
-    override def withDynTransaction[T](f: => T): T = f
+    override def runWithReadOnlySession[T](f: => T): T = f
+    override def runWithTransaction[T](f: => T): T = f
     override val viiteVkmClient: ViiteVkmClient = mockViiteVkmClient
   }
 
@@ -85,10 +85,10 @@ class RoadAddressServiceSpec extends AnyFunSuite with Matchers{
                                           roadwayChangesDAO,
                                           roadwayAddressMapper,
                                           mockEventBus) {
-    override def withDynSession[T](f: => T): T = f
-
-    override def withDynTransaction[T](f: => T): T = f
-  }
+              override def runWithReadOnlySession[T](f: => T): T = f
+              override def runWithTransaction[T](f: => T): T = f
+              override def runWithFutureTransaction[T](f: => T): Future[T] = Future.successful(f)
+              }
 
   private def dummyProject(id: Long, status: ProjectState, reservedParts: Seq[ProjectReservedPart] = List.empty[ProjectReservedPart], coordinates: Option[ProjectCoordinates] = None): Project ={
     Project(id, status, "testProject", "testUser", DateTime.parse("1901-01-01"), "testUser", DateTime.parse("1901-01-01"), DateTime.now(), "additional info here", reservedParts, Seq(), Some("current status info"), coordinates)

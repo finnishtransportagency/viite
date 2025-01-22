@@ -8,7 +8,7 @@ import fi.vaylavirasto.viite.dao.{BaseDAO, LinkDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.GeometryUtils.scaleToThreeDigits
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.{CalibrationPointType, LinkGeomSource, RoadPart, SideCode}
-import fi.vaylavirasto.viite.postgis.{GeometryDbUtils, MassQuery, PostGISDatabase}
+import fi.vaylavirasto.viite.postgis.{GeometryDbUtils, MassQuery}
 import org.joda.time.DateTime
 import org.slf4j.{Logger, LoggerFactory}
 import scalikejdbc._
