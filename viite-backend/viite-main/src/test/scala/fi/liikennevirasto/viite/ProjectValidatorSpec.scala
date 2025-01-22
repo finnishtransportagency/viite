@@ -72,7 +72,6 @@ class ProjectValidatorSpec extends AnyFunSuite with Matchers {
                         ) {
                             override def runWithReadOnlySession[T](f: => T): T = f
                             override def runWithTransaction[T](f: => T): T = f
-                            override def runWithFutureTransaction[T](f: => T): Future[T] = Future.successful(f)
                           }
 
   private val roadwayNumber1 = 1000000000L

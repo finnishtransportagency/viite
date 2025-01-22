@@ -4,7 +4,6 @@ import fi.vaylavirasto.viite.dao.PingDAO
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithReadOnlySession
 import org.scalatra.{InternalServerError, Ok, ScalatraServlet}
 import org.slf4j.LoggerFactory
-import scalikejdbc.DB
 
 class PingApi extends ScalatraServlet {
   private val logger = LoggerFactory.getLogger(getClass)

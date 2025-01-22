@@ -82,7 +82,6 @@ class ProjectServiceLinkSpec extends AnyFunSuite with Matchers with BeforeAndAft
                         ) {
                             override def runWithReadOnlySession[T](f: => T): T = f
                             override def runWithTransaction[T](f: => T): T = f
-                            override def runWithFutureTransaction[T](f: => T): Future[T] = Future.successful(f)
                           }
 
   val projectServiceWithRoadAddressMock: ProjectService =
@@ -105,7 +104,6 @@ class ProjectServiceLinkSpec extends AnyFunSuite with Matchers with BeforeAndAft
                         ) {
                              override def runWithReadOnlySession[T](f: => T): T = f
                              override def runWithTransaction[T](f: => T): T = f
-                             override def runWithFutureTransaction[T](f: => T): Future[T] = Future.successful(f)
                           }
 
   after {

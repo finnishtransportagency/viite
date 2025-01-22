@@ -87,7 +87,6 @@ class RoadAddressServiceSpec extends AnyFunSuite with Matchers{
                                           mockEventBus) {
               override def runWithReadOnlySession[T](f: => T): T = f
               override def runWithTransaction[T](f: => T): T = f
-              override def runWithFutureTransaction[T](f: => T): Future[T] = Future.successful(f)
               }
 
   private def dummyProject(id: Long, status: ProjectState, reservedParts: Seq[ProjectReservedPart] = List.empty[ProjectReservedPart], coordinates: Option[ProjectCoordinates] = None): Project ={

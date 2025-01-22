@@ -83,8 +83,6 @@ class ProjectLinkNameDAOSpec extends AnyFunSuite with Matchers with BeforeAndAft
     override def runWithReadOnlySession[T](f: => T): T = f
 
     override def runWithTransaction[T](f: => T): T = f
-
-    override def runWithFutureTransaction[T](f: => T): Future[T] = Future.successful(f)
   }
 
   test("Test setProjectRoadName When there is no road/projectlink name and given one new road name Then save should be successful") {
