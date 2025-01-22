@@ -11,7 +11,7 @@ import fi.liikennevirasto.viite.util.{StaticTestData, _}
 import fi.vaylavirasto.viite.dao.{ProjectLinkNameDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point, PolyLine}
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, CalibrationPointType, Discontinuity, LifecycleStatus, LinkGeomSource, RoadAddressChangeType, RoadLink, RoadPart, SideCode, Track, TrafficDirection}
-import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, when}
@@ -22,6 +22,7 @@ import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 
+import scala.concurrent.Future
 import scala.util.parsing.json.JSON
 
 class ProjectServiceLinkSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
@@ -57,8 +58,8 @@ class ProjectServiceLinkSpec extends AnyFunSuite with Matchers with BeforeAndAft
                             mockEventBus,
                             frozenKGV = false
                             ) {
-                                override def withDynSession[T](f: => T): T = f
-                                override def withDynTransaction[T](f: => T): T = f
+                                override def runWithReadOnlySession[T](f: => T): T = f
+                                override def runWithTransaction[T](f: => T): T = f
                               }
 
   val projectService: ProjectService =
@@ -79,8 +80,9 @@ class ProjectServiceLinkSpec extends AnyFunSuite with Matchers with BeforeAndAft
                         roadwayAddressMapper,
                         mockEventBus
                         ) {
-                            override def withDynSession[T](f: => T): T = f
-                            override def withDynTransaction[T](f: => T): T = f
+                            override def runWithReadOnlySession[T](f: => T): T = f
+                            override def runWithTransaction[T](f: => T): T = f
+                            override def runWithFutureTransaction[T](f: => T): Future[T] = Future.successful(f)
                           }
 
   val projectServiceWithRoadAddressMock: ProjectService =
@@ -101,8 +103,9 @@ class ProjectServiceLinkSpec extends AnyFunSuite with Matchers with BeforeAndAft
                         roadwayAddressMapper,
                         mockEventBus
                         ) {
-                            override def withDynSession[T](f: => T): T = f
-                            override def withDynTransaction[T](f: => T): T = f
+                             override def runWithReadOnlySession[T](f: => T): T = f
+                             override def runWithTransaction[T](f: => T): T = f
+                             override def runWithFutureTransaction[T](f: => T): Future[T] = Future.successful(f)
                           }
 
   after {
@@ -232,7 +235,7 @@ class ProjectServiceLinkSpec extends AnyFunSuite with Matchers with BeforeAndAft
 
   test("Test projectService.addNewLinksToProject() When adding a nonexistent roadlink to project Then when querying for it it should return that one project link was entered.") {
     runWithRollback {
-      val idr = roadwayDAO.getNextRoadwayId
+      val idr = Sequences.nextRoadwayId
       val id = Sequences.nextViiteProjectId
       val rap = Project(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], Seq(), None)
       val projectLink = toProjectLink(rap, RoadAddressChangeType.New)(RoadAddress(idr, 1, RoadPart(12345, 1), AdministrativeClass.Private, Track.Combined, Discontinuity.Discontinuous, AddrMRange(0L, 10L), Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 1234522L.toString, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 5, NoTermination, 0))
@@ -250,8 +253,8 @@ class ProjectServiceLinkSpec extends AnyFunSuite with Matchers with BeforeAndAft
     when(mockRoadLinkService.getRoadLinksByLinkIds(Set(5175306L.toString))).thenReturn(Seq(roadLink))
     runWithRollback {
 
-      val idr1 = roadwayDAO.getNextRoadwayId
-      val idr2 = roadwayDAO.getNextRoadwayId
+      val idr1 = Sequences.nextRoadwayId
+      val idr2 = Sequences.nextRoadwayId
       val id = Sequences.nextViiteProjectId
       val rap = Project(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], Seq(), None)
       projectDAO.create(rap)
@@ -287,9 +290,9 @@ class ProjectServiceLinkSpec extends AnyFunSuite with Matchers with BeforeAndAft
     val discontinuity = Discontinuity.EndOfRoad
 
     runWithRollback {
-      val idr1 = roadwayDAO.getNextRoadwayId
-      val idr2 = roadwayDAO.getNextRoadwayId
-      val idr3 = roadwayDAO.getNextRoadwayId
+      val idr1 = Sequences.nextRoadwayId
+      val idr2 = Sequences.nextRoadwayId
+      val idr3 = Sequences.nextRoadwayId
       val projectId = Sequences.nextViiteProjectId
       val rap = Project(projectId, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], Seq(), None)
       projectDAO.create(rap)
@@ -337,9 +340,9 @@ class ProjectServiceLinkSpec extends AnyFunSuite with Matchers with BeforeAndAft
     val discontinuity = Discontinuity.EndOfRoad
 
     runWithRollback {
-      val idr1 = roadwayDAO.getNextRoadwayId
-      val idr2 = roadwayDAO.getNextRoadwayId
-      val idr3 = roadwayDAO.getNextRoadwayId
+      val idr1 = Sequences.nextRoadwayId
+      val idr2 = Sequences.nextRoadwayId
+      val idr3 = Sequences.nextRoadwayId
       val projectId = Sequences.nextViiteProjectId
       val rap = Project(projectId, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], Seq(), None)
       projectDAO.create(rap)
@@ -382,7 +385,7 @@ class ProjectServiceLinkSpec extends AnyFunSuite with Matchers with BeforeAndAft
                  "When adding a nonexistent roadlinks to project having minor discontinuities " +
                  "Then when querying should return all fours links entered with discontinuity set to last link.") {
     runWithRollback {
-      val (idr1,idr2,idr3,idr4) = (roadwayDAO.getNextRoadwayId, roadwayDAO.getNextRoadwayId, roadwayDAO.getNextRoadwayId, roadwayDAO.getNextRoadwayId)
+      val (idr1,idr2,idr3,idr4) = (Sequences.nextRoadwayId, Sequences.nextRoadwayId, Sequences.nextRoadwayId, Sequences.nextRoadwayId)
       val id = Sequences.nextViiteProjectId
       val discontinuity = Discontinuity.Discontinuous
       val rap = Project(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], Seq(), None)

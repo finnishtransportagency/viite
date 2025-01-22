@@ -3,7 +3,7 @@ package fi.liikennevirasto.viite
 import fi.liikennevirasto.viite.dao._
 import fi.vaylavirasto.viite.geometry.Point
 import fi.vaylavirasto.viite.model.{LinkGeomSource, NodeType, RoadPart, SideCode}
-import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
 import org.joda.time.DateTime
 import org.mockito.Mockito.when
 import org.scalatestplus.mockito.MockitoSugar
@@ -26,7 +26,7 @@ class APIServiceForNodesAndJunctionsSpec extends AnyFunSuite with Matchers with 
       mockNodeDAO,
       mockJunctionDAO
     )     {
-      override def withDynSession[T](f: => T): T = f
+      override def runWithReadOnlySession[T](f: => T): T = f
     }
 
   test("Test getAllValidNodesWithJunctions When valid nodes and junctions exist Then return valid nodes with only the junctions that are connected to the node and the junction's coordinate pointing to the junction's location (blue circle on the map), leaving the not connected junctions excluded") {

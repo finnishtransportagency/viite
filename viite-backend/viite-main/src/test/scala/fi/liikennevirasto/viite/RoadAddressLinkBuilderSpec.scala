@@ -8,11 +8,13 @@ import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.vaylavirasto.viite.geometry.Point
 import fi.vaylavirasto.viite.model.CalibrationPointType.NoCP
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinuity, LifecycleStatus, LinkGeomSource, RoadAddressChangeType, RoadLink, RoadPart, SideCode, Track, TrafficDirection}
-import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
 import org.joda.time.DateTime
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
+
+import scala.concurrent.Future
 
 class RoadAddressLinkBuilderSpec extends AnyFunSuite with Matchers {
 
@@ -51,8 +53,8 @@ class RoadAddressLinkBuilderSpec extends AnyFunSuite with Matchers {
                             mockEventBus,
                             frozenKGV = false
                             ) {
-                                override def withDynSession[T](f: => T): T = f
-                                override def withDynTransaction[T](f: => T): T = f
+                                override def runWithReadOnlySession[T](f: => T): T = f
+                                override def runWithTransaction[T](f: => T): T = f
                               }
 
   val projectService: ProjectService =
@@ -73,8 +75,9 @@ class RoadAddressLinkBuilderSpec extends AnyFunSuite with Matchers {
                         roadwayAddressMapper,
                         mockEventBus
                         ) {
-                            override def withDynSession[T](f: => T): T = f
-                            override def withDynTransaction[T](f: => T): T = f
+                            override def runWithReadOnlySession[T](f: => T): T = f
+                            override def runWithTransaction[T](f: => T): T = f
+                            override def runWithFutureTransaction[T](f: => T): Future[T] = Future.successful(f)
                           }
 
   val mockRoadAddressLinkBuilder = new RoadAddressLinkBuilder(mockRoadwayDAO, mockLinearLocationDAO)

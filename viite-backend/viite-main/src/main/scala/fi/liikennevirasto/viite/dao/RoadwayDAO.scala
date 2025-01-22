@@ -541,12 +541,6 @@ class RoadwayDAO extends BaseDAO {
     }
   }
 
-  def fetchAllByRoadNumbers(roadNumbers: Set[Long]): Seq[Roadway] = {
-    time(logger, "Fetch roadways by road number") {
-      fetch(withRoadNumbersInValidDate(roadNumbers))
-    }
-  }
-
   /**
    * Will get a collection of Roadways from our database based on the road part given.
    * Also has query modifiers that will inform if it should return history roadways (default value no) or if should get only the end parts (max end address m value, default value no).
@@ -714,28 +708,6 @@ class RoadwayDAO extends BaseDAO {
          """
   }
 
-  private def withRoadNumbersInValidDate(roadNumbers: Set[Long])(query: SQLSyntax): SQL[Nothing, NoExtractor] = {
-    if (roadNumbers.size > 1000) {
-      MassQuery.withIds(roadNumbers)({
-        idTableName =>
-          sql"""
-            $query
-            JOIN $idTableName i ON i.id = a.ROAD_NUMBER
-            WHERE a.valid_to IS NULL
-            AND (a.end_date IS NULL OR a.end_date >= CURRENT_DATE)
-            ORDER BY a.road_number, a.road_part_number, a.start_date
-          """
-      })
-    } else {
-      sql"""
-           $query
-           WHERE a.valid_to IS NULL
-           AND (a.end_date IS NULL OR a.end_date >= current_date)
-           AND a.road_number IN ($roadNumbers)
-           ORDER BY a.road_number, a.road_part_number, a.start_date
-           """
-    }
-  }
 
   /**
    * Defines the portion of the query that will filter the results based on the given road number, road part number and if it should include history roadways or fetch only their end parts.
@@ -771,31 +743,6 @@ class RoadwayDAO extends BaseDAO {
          $historyFilter
          $endPart
          """
-  }
-
-  private def withRoadNumber(road: Long, roadPart: Option[Long], track: Option[Track], mValue: Option[Long])(query: SQLSyntax): SQL[Nothing, NoExtractor] = {
-    val roadPartFilter = roadPart match {
-      case Some(p) => sqls" AND a.road_part_number = $p"
-      case None => sqls""
-    }
-    val trackFilter = track match {
-      case Some(t) => sqls"  AND a.TRACK = $t"
-      case None => sqls""
-    }
-    val mValueFilter = mValue match {
-      case Some(v) => sqls" AND ra.start_addr_M <= $v AND ra.end_addr_M > $v"
-      case None => sqls""
-    }
-
-    sql"""
-          $query
-          WHERE a.road_number = $road
-          $roadPartFilter
-          $trackFilter
-          $mValueFilter
-          AND a.end_date IS NULL
-          AND a.valid_to IS NULL
-          """
   }
 
   private def withRoadwayNumbersAndDate(roadwayNumbers: Set[Long], searchDate: DateTime)(query: SQLSyntax): SQL[Nothing, NoExtractor] = {
@@ -1131,21 +1078,32 @@ class RoadwayDAO extends BaseDAO {
 
   def getRoadPartInfo(roadPart: RoadPart): Option[RoadPartDetail] = {
     val query =
-      sql"""SELECT r.id, l.link_id, r.end_addr_M, r.discontinuity, r.ely,
-            (SELECT Max(ra.start_date) FROM roadway ra Where r.ROAD_PART_NUMBER = ra.ROAD_PART_NUMBER and r.ROAD_NUMBER = ra.ROAD_NUMBER) as start_date,
-            (SELECT Max(ra.end_Date) FROM roadway ra Where r.ROAD_PART_NUMBER = ra.ROAD_PART_NUMBER and r.ROAD_NUMBER = ra.ROAD_NUMBER) as end_date
-          FROM ROADWAY r
-            INNER JOIN LINEAR_LOCATION l on r.ROADWAY_NUMBER = l.ROADWAY_NUMBER
-            INNER JOIN (SELECT  MAX(rm.start_addr_m) as maxstartaddrm FROM ROADWAY rm WHERE rm.road_number=${roadPart.roadNumber} AND rm.road_part_number=${roadPart.partNumber} AND
-              rm.valid_to IS NULL AND rm.end_date IS NULL AND rm.TRACK in (0,1)) ra
-              on r.START_ADDR_M=ra.maxstartaddrm
-          WHERE r.road_number=${roadPart.roadNumber} AND r.road_part_number=${roadPart.partNumber} AND
-            r.valid_to IS NULL AND r.end_date IS NULL AND r.TRACK in (0,1)"""
+      sql"""SELECT r.id, l.link_id, r.end_addr_m, r.discontinuity, r.ely,
+            (SELECT MAX(ra.start_date) FROM roadway ra WHERE r.road_part_number = ra.road_part_number AND r.road_number = ra.road_number) AS start_date,
+            (SELECT MAX(ra.end_date)   FROM roadway ra WHERE r.road_part_number = ra.road_part_number AND r.road_number = ra.road_number) AS end_date
+            FROM roadway r
+            INNER JOIN linear_location l ON r.ROADWAY_NUMBER = l.ROADWAY_NUMBER
+            INNER JOIN (
+              SELECT  MAX(rm.start_addr_m) AS maxstartaddrm
+              FROM roadway rm
+              WHERE rm.road_number=${roadPart.roadNumber}
+              AND rm.road_part_number=${roadPart.partNumber}
+              AND rm.valid_to IS NULL
+              AND rm.end_date IS NULL
+              AND rm.track IN (0,1)
+              ) ra
+            ON r.start_addr_m=ra.maxstartaddrm
+            WHERE r.road_number=${roadPart.roadNumber}
+            AND r.road_part_number=${roadPart.partNumber}
+            AND r.valid_to IS NULL
+            AND r.end_date IS NULL
+            AND r.track IN (0,1)
+            """
 
     runSelectFirst(query.map(rs => RoadPartDetail(
       id            = rs.long("id"),
       linkId        = rs.string("link_id"),
-      endAddrM      = rs.long("end_addr_M"),
+      endAddrM      = rs.long("end_addr_m"),
       discontinuity = rs.long("discontinuity"),
       ely           = rs.long("ely"),
       startDate     = rs.jodaDateTimeOpt("start_date"),
