@@ -62,6 +62,61 @@ case class AddrMRange (start: Long, end: Long)// extends Ordered[AddrMRange]
       None
   }
 
+  /** Returns an AddrMRange moved by given <i>amountM</i>. Both ends get moved the given amount.
+ *
+   * @param amountM How many road address meters is this AddrMRange moved.
+   * @throws ViiteException if this AddrMRange isUndefined, or start
+   *                        or end <!-- TODO "or end" can be removed, when start < end requirement at AddrMRange construction can be set on its place -->
+   *                        would get negative when moved. */
+  def move(amountM: Long): AddrMRange = {
+    if(this.isUndefined)
+      throw ViiteException("Cannot move an undefined address.")
+    if(this.start+amountM<0)
+      throw ViiteException(s"Cannot move address range $this that much. Moving it $amountM would cause start address to be negative.")
+    if(this.end+amountM<0)    // TODO the end+amountM<0 test seems silly after start already been tested, but must be here as long as start < end requirement of the AddrMRange cannot be put into work
+      throw ViiteException(s"Cannot move address range $this that much. Moving it $amountM would cause end address to be negative.")
+    if(this.end+amountM>maxAddrM)
+      throw ViiteException(s"Cannot move address range $this that much. Moving it $amountM would cause start address to be insanely big.")
+    if(this.start+amountM>maxAddrM)    // TODO the start+amountM>maxAddrM test seems silly after end already been tested, but must be here as long as start < end requirement of the AddrMRange cannot be put into work
+      throw ViiteException(s"Cannot move address range $this that much. Moving it $amountM would cause start address to be insanely big.")
+
+    AddrMRange(start + amountM, end + amountM)
+  }
+
+  /** Returns an AddrMRange flipped within reference range AdddrMRange(0,<i>flipLength</i>),
+   * if the resulting AddrMRange would be valid. Otherwise, throws ViiteException.
+   *
+   * @param flipLength The intended address length to use as the flipping point. Most often
+   *                   this is length of the road part this addrMRange is part of.
+   * <pre>
+   * Example: Flip AddrMRange(50,200) as it was part of
+   *          AddrMRange(0,300): get AddrMRange(100,250).
+   *                                      50                      200
+   *   orig                        0       &gt;-------+-------+-------&gt;              300
+   *   ref (the whole road part)   &gt;-------+-------+-------+-------+-------+-------&gt;
+   *
+   *   ref (flipped road part)     &lt;-------+-------+-------+-------+-------+-------&lt;
+   *   flipped                    300      &lt;-------+-------+-------&lt;               0
+   *                                      250                     100
+   * </pre>
+   *
+   * @throws ViiteException if this AdddrMRange does not fit within AdddrMRange(0,<i>flipLength</i>).
+   * @throws ViiteException if this AddrMRange isUndefined, flipLength is non-positive, or start
+   *                        or end <!-- TODO "or end" can be removed, when start < end requirement at AddrMRange construction can be set on its place -->
+   *                        would get negative when moved. */
+  def flipRelativeTo(flipLength: Long): AddrMRange = {
+    if(this.isUndefined)
+      throw ViiteException("Cannot flip an undefined address.")
+    if(flipLength<=0)
+      throw ViiteException("Cannot flip over a non-positive end point.")
+    if(flipLength-this.end<0)
+      throw ViiteException(s"Cannot flip address range $this with respect to $flipLength. Flipping would cause the start address to be negative.")
+    if(flipLength-this.start<0)    // TODO the end+amountM<0 test seems silly after start already been tested, but must be here as long as start < end requirement of the AddrMRange cannot be put into work
+      throw ViiteException(s"Cannot flip address range $this with respect to $flipLength. Flipping would cause the end address to be negative.")
+
+    AddrMRange(flipLength-end, flipLength-start)
+  }
+
 //  /** Provides [[Ordered]] extension, thus offering comparison operators ==, <, >, <=, and >=.
 //    * @implements [[Ordered.compare]] */
 //  override def compare(that: AddrMRange): Int = (this.startAddrM, this.endAddrM) compare (that.startAddrM, that.endAddrM)
