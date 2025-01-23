@@ -86,12 +86,13 @@ case class AddrMRange (start: Long, end: Long)// extends Ordered[AddrMRange]
   /** Returns an AddrMRange flipped within reference range AdddrMRange(0,<i>flipEndAddrM</i>),
    * if the resulting AddrMRange would be valid. Otherwise, throws ViiteException.
    *
-   * @param flipEndAddrM The intended address to use as the flipping point. Most often this is road part address length.
+   * @param flipEndAddrM The intended address to use as the flipping point. Most often this is
+   *                     length of the road part this addrMRange is part of.
    * <pre>
    * Example: Flip AddrMRange(50,200) as it was part of
    *          AddrMRange(0,300): get AddrMRange(100,250).
    *                                      50                      200
-   *   orig                        0       &gt;-------+-------+-------&gt;             300
+   *   orig                        0       &gt;-------+-------+-------&gt;              300
    *   ref (the whole road part)   &gt;-------+-------+-------+-------+-------+-------&gt;
    *
    *   ref (flipped road part)     &lt;-------+-------+-------+-------+-------+-------&lt;
