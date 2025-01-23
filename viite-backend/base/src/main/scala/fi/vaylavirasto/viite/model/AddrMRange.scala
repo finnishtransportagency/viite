@@ -83,11 +83,11 @@ case class AddrMRange (start: Long, end: Long)// extends Ordered[AddrMRange]
     AddrMRange(start + amountM, end + amountM)
   }
 
-  /** Returns an AddrMRange flipped within reference range AdddrMRange(0,<i>flipEndAddrM</i>),
+  /** Returns an AddrMRange flipped within reference range AdddrMRange(0,<i>flipLength</i>),
    * if the resulting AddrMRange would be valid. Otherwise, throws ViiteException.
    *
-   * @param flipEndAddrM The intended address to use as the flipping point. Most often this is
-   *                     length of the road part this addrMRange is part of.
+   * @param flipLength The intended address length to use as the flipping point. Most often
+   *                   this is length of the road part this addrMRange is part of.
    * <pre>
    * Example: Flip AddrMRange(50,200) as it was part of
    *          AddrMRange(0,300): get AddrMRange(100,250).
@@ -100,21 +100,21 @@ case class AddrMRange (start: Long, end: Long)// extends Ordered[AddrMRange]
    *                                      250                     100
    * </pre>
    *
-   * @throws ViiteException if this AdddrMRange does not fit within AdddrMRange(0,<i>flipEndAddrM</i>).
-   * @throws ViiteException if this AddrMRange isUndefined, flipEndAddrM is non-positive, or start
+   * @throws ViiteException if this AdddrMRange does not fit within AdddrMRange(0,<i>flipLength</i>).
+   * @throws ViiteException if this AddrMRange isUndefined, flipLength is non-positive, or start
    *                        or end <!-- TODO "or end" can be removed, when start < end requirement at AddrMRange construction can be set on its place -->
    *                        would get negative when moved. */
-  def flipRelativeTo(flipEndAddrM: Long): AddrMRange = {
+  def flipRelativeTo(flipLength: Long): AddrMRange = {
     if(this.isUndefined)
       throw ViiteException("Cannot flip an undefined address.")
-    if(flipEndAddrM<=0)
+    if(flipLength<=0)
       throw ViiteException("Cannot flip over a non-positive end point.")
-    if(flipEndAddrM-this.end<0)
-      throw ViiteException(s"Cannot flip address range $this with respect to $flipEndAddrM. Flipping would cause the start address to be negative.")
-    if(flipEndAddrM-this.start<0)    // TODO the end+amountM<0 test seems silly after start already been tested, but must be here as long as start < end requirement of the AddrMRange cannot be put into work
-      throw ViiteException(s"Cannot flip address range $this with respect to $flipEndAddrM. Flipping would cause the end address to be negative.")
+    if(flipLength-this.end<0)
+      throw ViiteException(s"Cannot flip address range $this with respect to $flipLength. Flipping would cause the start address to be negative.")
+    if(flipLength-this.start<0)    // TODO the end+amountM<0 test seems silly after start already been tested, but must be here as long as start < end requirement of the AddrMRange cannot be put into work
+      throw ViiteException(s"Cannot flip address range $this with respect to $flipLength. Flipping would cause the end address to be negative.")
 
-    AddrMRange(flipEndAddrM-end, flipEndAddrM-start)
+    AddrMRange(flipLength-end, flipLength-start)
   }
 
 //  /** Provides [[Ordered]] extension, thus offering comparison operators ==, <, >, <=, and >=.

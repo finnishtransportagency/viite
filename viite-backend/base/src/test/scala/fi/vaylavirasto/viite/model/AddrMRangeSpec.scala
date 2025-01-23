@@ -135,7 +135,7 @@ class AddrMRangeSpec extends AnyFunSuite with Matchers {
   }
 
 
-  test("Test AddrMRange.flipRelativeTo:    Returns a flipped copy of this AddrMRange, or throws ViiteException, if this AddrMRange isUndefined, flipEndAddrM is non-positive, or start would get negative when moved.") {
+  test("Test AddrMRange.flipRelativeTo:    Returns a flipped copy of this AddrMRange, or throws ViiteException, if this AddrMRange isUndefined, flipLength is non-positive, or start would get negative when moved.") {
     AddrMRange(  0,100).flipRelativeTo(300) shouldBe AddrMRange(200,300)
     AddrMRange(200,300).flipRelativeTo(300) shouldBe AddrMRange(  0,100)
     AddrMRange(100,200).flipRelativeTo(300) shouldBe AddrMRange(100,200)
