@@ -151,6 +151,11 @@ class RoadLinkService(val kgvClient: KgvRoadLink, val eventbus: DigiroadEventBus
     (links, changes, complementaryLinks)
   }
 
+  def getRoadLinksAndChangesFromVVH(municipality: Int): (Seq[RoadLink], Seq[ChangeInfo]) = {
+    val (roadLinks, changes, _) = reloadRoadLinksWithComplementaryAndChangesFromVVH(municipality)
+    (roadLinks, changes)
+  }
+
   def getRoadLinksWithComplementaryAndChangesFromVVH(municipality: Int): (Seq[RoadLink], Seq[ChangeInfo]) = {
     val (roadLinks, changes, complementaries) = reloadRoadLinksWithComplementaryAndChangesFromVVH(municipality)
     (roadLinks ++ complementaries, changes)

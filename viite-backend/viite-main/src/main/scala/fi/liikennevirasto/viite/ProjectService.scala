@@ -98,7 +98,7 @@ class ProjectService(
                     ) {
 
   def runWithTransaction[T](f: => T): T = PostGISDatabaseScalikeJDBC.runWithTransaction(f)
-  def runWithFutureTransaction[T](f: => T): Future[T] = PostGISDatabaseScalikeJDBC.runWithFutureTransaction(f)
+
   def runWithReadOnlySession[T](f: => T): T = PostGISDatabaseScalikeJDBC.runWithReadOnlySession(f)
 
   private val logger = LoggerFactory.getLogger(getClass)
@@ -1038,10 +1038,12 @@ class ProjectService(
     }
 
     val projectState = getProjectState(projectId)
-    val fetchRoadAddressesByBoundingBoxF = runWithFutureTransaction {
-      val addresses = roadAddressService.getRoadAddressesByBoundingBox(boundingRectangle,
-        roadNumberLimits = roadNumberLimits)
-      addresses.groupBy(_.linkId)
+    val fetchRoadAddressesByBoundingBoxF = Future {
+      runWithTransaction {
+        val addresses = roadAddressService.getRoadAddressesByBoundingBox(boundingRectangle,
+          roadNumberLimits = roadNumberLimits)
+        addresses.groupBy(_.linkId)
+      }
     }
     val fetchProjectLinksF = fetch.projectLinkResultF
     val (regularLinks, complementaryLinks) = time(logger, "Fetch KVG road links") {
@@ -1096,20 +1098,23 @@ class ProjectService(
     * @return
     */
   def fetchProjectRoadLinksLinearGeometry(projectId: Long, boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
-                                          everything: Boolean = false, publicRoads: Boolean = false)
-                                         (implicit ec: ExecutionContext): Seq[ProjectAddressLink] = { // Execution context is needed for the Future
-    val fetchRoadAddressesByBoundingBoxF = runWithFutureTransaction {
-      val addresses = roadAddressService.getRoadAddressesByBoundingBox(boundingRectangle,
-        roadNumberLimits = roadNumberLimits)
-      addresses.groupBy(_.linkId)
+                                          everything: Boolean = false, publicRoads: Boolean = false): Seq[ProjectAddressLink] = {
+    val fetchRoadAddressesByBoundingBoxF = Future {
+      runWithReadOnlySession {
+        val addresses = roadAddressService.getRoadAddressesByBoundingBox(boundingRectangle,
+          roadNumberLimits = roadNumberLimits)
+        addresses.groupBy(_.linkId)
+      }
     }
 
-    val fetchProjectLinksF = runWithFutureTransaction {
-      val projectState = projectDAO.fetchProjectStatus(projectId)
-      if (projectState.isDefined && finalProjectStates.contains(projectState.get.value))
-        projectLinkDAO.fetchProjectLinksHistory(projectId).groupBy(_.linkId)
-      else
-        projectLinkDAO.fetchProjectLinks(projectId).groupBy(_.linkId)
+    val fetchProjectLinksF = Future {
+      runWithReadOnlySession {
+        val projectState = projectDAO.fetchProjectStatus(projectId)
+        if (projectState.isDefined && finalProjectStates.contains(projectState.get.value))
+          projectLinkDAO.fetchProjectLinksHistory(projectId).groupBy(_.linkId)
+        else
+          projectLinkDAO.fetchProjectLinks(projectId).groupBy(_.linkId)
+      }
     }
     val (addresses, projectLinks) = time(logger, "Fetch road addresses by bounding box") {
       Await.result(fetchRoadAddressesByBoundingBoxF.zip(fetchProjectLinksF), Duration.Inf)
@@ -1138,9 +1143,7 @@ class ProjectService(
   def fetchBoundingBoxF(boundingRectangle: BoundingRectangle, projectId: Long, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
                         everything: Boolean = false, publicRoads: Boolean = false): ProjectBoundingBoxResult = {
     ProjectBoundingBoxResult(
-      runWithFutureTransaction{
-        projectLinkDAO.fetchProjectLinks(projectId)
-      },
+      Future(runWithReadOnlySession(projectLinkDAO.fetchProjectLinks(projectId))),
       Future(roadLinkService.getRoadLinks(boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads)),
       if (everything)
         roadLinkService.getComplementaryRoadLinks(boundingRectangle, municipalities)

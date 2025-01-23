@@ -77,7 +77,6 @@ class ProjectSectionCalculatorSpec extends AnyFunSuite with Matchers {
                         ) {
                             override def runWithReadOnlySession[T](f: => T): T = f
                             override def runWithTransaction[T](f: => T): T = f
-                            override def runWithFutureTransaction[T](f: => T): Future[T] = Future.successful(f)
                           }
 
   val projectId = 1

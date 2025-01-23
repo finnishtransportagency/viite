@@ -92,7 +92,6 @@ class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with Before
     ) {
       override def runWithReadOnlySession[T](f: => T): T = f
       override def runWithTransaction[T](f: => T): T = f
-      override def runWithFutureTransaction[T](f: => T): Future[T] = Future.successful(f)
     }
 
   private val testRoadway1 = Roadway(NewIdValue, roadwayNumber1, RoadPart(roadNumber1, roadPartNumber1), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0, 100), reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)

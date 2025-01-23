@@ -80,7 +80,6 @@ class RoadwayFillerSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
                         ) {
                             override def runWithReadOnlySession[T](f: => T): T = f
                             override def runWithTransaction[T](f: => T): T = f
-                            override def runWithFutureTransaction[T](f: => T): Future[T] = Future.successful(f)
                           }
 
   test("Test RoadwayFiller.applyRoadwayChanges() #Confluence: Change in the Middle of the Roadway. " +
