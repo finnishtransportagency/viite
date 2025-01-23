@@ -47,7 +47,7 @@ object GeometryDbUtils {
     s"POINT(${GeometryUtils.scaleToThreeDigits(point.x)} ${GeometryUtils.scaleToThreeDigits(point.y)})"
   }
 
-  def loadJGeometryToGeometry(geometry: Option[Object]): Seq[Point] = {
+  def loadJGeometryToGeometry(geometry: Option[Any]): Seq[Point] = {
     if (geometry.nonEmpty) {
       val pgObject = geometry.get.asInstanceOf[PGobject]
       val geom = GeometryBuilder.geomFromString(pgObject.getValue)

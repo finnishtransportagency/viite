@@ -91,7 +91,6 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter wi
                         ) {
                             override def runWithReadOnlySession[T](f: => T): T = f
                             override def runWithTransaction[T](f: => T): T = f
-                            override def runWithFutureTransaction[T](f: => T): Future[T] = Future.successful(f)
                           }
 
   /* ---db */

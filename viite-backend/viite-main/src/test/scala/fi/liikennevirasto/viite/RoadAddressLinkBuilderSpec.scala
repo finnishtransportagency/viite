@@ -77,7 +77,6 @@ class RoadAddressLinkBuilderSpec extends AnyFunSuite with Matchers {
                         ) {
                             override def runWithReadOnlySession[T](f: => T): T = f
                             override def runWithTransaction[T](f: => T): T = f
-                            override def runWithFutureTransaction[T](f: => T): Future[T] = Future.successful(f)
                           }
 
   val mockRoadAddressLinkBuilder = new RoadAddressLinkBuilder(mockRoadwayDAO, mockLinearLocationDAO)

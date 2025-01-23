@@ -4,8 +4,6 @@ import fi.liikennevirasto.digiroad2.util.ViiteProperties
 import scalikejdbc._
 import SessionProvider._
 
-import scala.concurrent.{ExecutionContext, Future, blocking}
-
 
 object PostGISDatabaseScalikeJDBC {
   // Load the PostgreSQL driver
@@ -18,10 +16,10 @@ object PostGISDatabaseScalikeJDBC {
     password = ViiteProperties.scalikeJdbcPassword
   )
 
-  // Logging enabled for all queries for development purposes
+  // Logging for queries
   GlobalSettings.loggingSQLAndTime = LoggingSQLAndTimeSettings(
-    enabled = true,
-    logLevel = 'info
+    // enabled = true,
+    // logLevel = 'info
   )
 
   /**
@@ -44,29 +42,6 @@ object PostGISDatabaseScalikeJDBC {
   }
 
   /**
-   * Executes `futureOperation` within a transaction that uses Future's completion state as transaction boundary.
-   * Uses withSession to handle the session and to prevent nested transactions.
-   * Transaction is committed if Future completes successfully, rolled back if Future fails.
-   *
-   * @param operation The operation to run wrapped in Future
-   * @param ec ExecutionContext for Future operations
-   * @tparam Result The return type wrapped in Future
-   * @return Future containing the result or error
-   */
-  def runWithFutureTransaction[Result](operation: => Result)
-                                      (implicit ec: ExecutionContext): Future[Result] = {
-    DB.futureLocalTx { session =>
-      Future {
-        blocking {
-          withSession(session) {  // Session setup inside Future block
-            operation
-          }
-        }
-      }
-    }
-  }
-
-  /**
    * Executes `readOnlyOperation` within a read-only session.
    *
    * Use this method for database operations that only read data.
@@ -81,24 +56,6 @@ object PostGISDatabaseScalikeJDBC {
     DB.readOnly { session =>
       withSession(session) {
         readOnlyOperation
-      }
-    }
-  }
-
-  /**
-   * Executes `autoCommitOperation` within an auto-commit session.
-   *
-   * Use this method for database operations that modify data and should be committed immediately after execution.
-   * Each operation is committed individually without an explicit transaction.
-   *
-   * @param autoCommitOperation The operation to run
-   * @tparam Result The return type of the operation
-   * @return The result of the operation
-   */
-  def runWithAutoCommit[Result](autoCommitOperation: => Result): Result = {
-    DB.autoCommit { session =>
-      withSession(session) {
-        autoCommitOperation
       }
     }
   }

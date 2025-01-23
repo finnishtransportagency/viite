@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.vaylavirasto.viite.dao.PingDAO
-import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithReadOnlySession
 import org.scalatra.{InternalServerError, Ok, ScalatraServlet}
 import org.slf4j.LoggerFactory
 
@@ -9,7 +9,7 @@ class PingApi extends ScalatraServlet {
   private val logger = LoggerFactory.getLogger(getClass)
 
   get("/") {
-    PostGISDatabaseScalikeJDBC.runWithReadOnlyImplicitSession { implicit session =>
+    runWithReadOnlySession {
       try {
         val dbTime = PingDAO.getDbTime
         Ok(s"OK (DB Time: $dbTime)\n")
