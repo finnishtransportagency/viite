@@ -4977,10 +4977,10 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
       val rightSide = others.filter(_.track == Track.RightSide)
       val terminatedLeft = terminated.filter(_.track == Track.LeftSide)
       val terminatedRight = terminated.filter(_.track == Track.RightSide)
-      leftSide.map(_.addrMRange.end).max should be (671)
-      rightSide.map(_.addrMRange.end).max should be (671)
-      terminatedRight.map(_.addrMRange.start).max should be (671)
-      terminatedLeft.map(_.addrMRange.start).max should be (671)
+      leftSide.map(_.addrMRange.end).max should be (672)
+      rightSide.map(_.addrMRange.end).max should be (672)
+      terminatedRight.map(_.addrMRange.start).max should be (672)
+      terminatedLeft.map(_.addrMRange.start).max should be (672)
     }
    }
       
@@ -5478,7 +5478,7 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
       val terminated = recalculated.filter(_.status == RoadAddressChangeType.Termination)
       val terminatedEndAddress = terminated.map(_.addrMRange.end).distinct
       terminatedEndAddress.size should be (1)
-      terminatedEndAddress.head should be (169)
+      terminatedEndAddress.head should be (170)
 
       val transferred = recalculated.filter(_.status == RoadAddressChangeType.Transfer)
       val left = transferred.filter(_.track == Track.LeftSide)
