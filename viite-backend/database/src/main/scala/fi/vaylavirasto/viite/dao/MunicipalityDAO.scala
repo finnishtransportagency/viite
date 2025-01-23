@@ -7,6 +7,16 @@ import scalikejdbc._
   */
 object MunicipalityDAO extends BaseDAO {
 
+  def fetchMunicipalityIds: Seq[Int] = {
+    sql"""
+         SELECT id
+         FROM municipality
+         """
+      .map(_.int(1))
+      .list()
+      .apply()
+  }
+
   /** Digiroad's municipality to ELY code mapping.
    * Database ely_nro field naming is from the era when Viite was still part of the Digiroad codebase.
    * For Viite ELY codes, see @getViiteMunicipalityToElyMapping

@@ -73,8 +73,4 @@ object Queries {
     sql"""SELECT nextval('linear_location_seq') FROM generate_series(1, $len)""".map(_.long(1))
   }
 
-  def fetchMunicipalityIds: SQL[Int, HasExtractor] = {
-    sql"SELECT id FROM municipality".map(_.int(1))
-  }
-
 }
