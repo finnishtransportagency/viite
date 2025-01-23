@@ -2,6 +2,7 @@ package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.viite.dao.{ProjectLink, _}
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, CalibrationPointType, Discontinuity, RoadAddressChangeType, RoadPart, Track}
+import fi.vaylavirasto.viite.util.ViiteException
 import org.joda.time.DateTime
 
 import scala.annotation.tailrec
@@ -285,15 +286,18 @@ object ProjectDeltaCalculator {
 
     val sections = sectioned.map(sect => {
       val (src, targetToMap) = sect
-      val target                    = targetToMap.copy(projectLinks = projectLinks.filter(link => {
+      val target = targetToMap.copy(projectLinks = projectLinks.filter(link => {
           link.roadPart == RoadPart(targetToMap.roadNumber, targetToMap.roadPartNumberEnd) &&
           link.track == targetToMap.track && link.ely == targetToMap.ely &&
-          targetToMap.addrMRange.contains(link.addrMRange)
+          (try {
+             targetToMap.addrMRange.contains(link.addrMRange) // TODO fails, if AddrMRange.contains does not allow 0-0 ranges
+           } catch {
+            case e: ViiteException => false
+          })
         }))
 
       (src,target)
-    }
-    )
+    })
 
     ChangeTableRows2(adjustedSections = sections.map(_._2), originalSections = sections.map(_._1))
   }
