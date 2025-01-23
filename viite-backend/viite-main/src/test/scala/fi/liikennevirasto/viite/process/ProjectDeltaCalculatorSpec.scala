@@ -52,13 +52,13 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
       val addresses2 = (11 to 21).map(i => {
         createRoadAddress(i * 10, 10L)
       }).map(a => {
-        a.copy(roadPart = RoadPart(a.roadPart.roadNumber, 206), addrMRange = AddrMRange(a.addrMRange.start - 110L, a.addrMRange.end - 110L))
+        a.copy(roadPart = RoadPart(a.roadPart.roadNumber, 206), addrMRange = a.addrMRange.move(-110L))
       })
       val (transferLinks1, transferLinks2) = addresses2.map(toTransition(project, RoadAddressChangeType.Transfer)).partition(_._2.addrMRange.start == 0L)
       val projectLinks                     = addresses.map(toTransition (project, RoadAddressChangeType.Unchanged)) ++ transferLinks1.map(l => {
         (l._1, l._2.copy(roadPart = RoadPart(l._2.roadPart.roadNumber, 205), addrMRange = AddrMRange(110L, 120L)))
       }) ++ transferLinks2.map(l => {
-        (l._1, l._2.copy(addrMRange = AddrMRange(l._2.addrMRange.start - 10L, l._2.addrMRange.end - 10L)))
+        (l._1, l._2.copy(addrMRange = l._2.addrMRange.move(-10L)))
       })
       val roadway205 = toRoadway(addresses.map (toTransition(project, RoadAddressChangeType.Unchanged)).map(_._2))
       val roadway206 = toRoadway(addresses2.map(toTransition(project, RoadAddressChangeType.Transfer)).map(_._2))
@@ -95,7 +95,7 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
     def toProjectLinks(transferLinks: IndexedSeq[(RoadAddress, ProjectLink)], track: Track)(implicit addresses: Seq[RoadAddress]): IndexedSeq[ProjectLink] = {
       val roadwayId = transferLinks.head._2.roadwayId
       transferLinks.map(l => {
-        l._2.copy(track = track, addrMRange = AddrMRange(addresses.max.addrMRange.end - l._2.addrMRange.end, addresses.max.addrMRange.end - l._2.addrMRange.start), roadwayId = roadwayId, reversed = true)
+        l._2.copy(track = track, addrMRange = l._2.addrMRange.flipRelativeTo(addresses.max.addrMRange.end), roadwayId = roadwayId, reversed = true)
       })
     }
     runWithRollback {
@@ -833,7 +833,7 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
       roadwayDAO.create(Seq(rw1,rw2))
 
       links = links.filter(_.originalAddrMRange.end <= addressMLength) ++ links.filter(_.originalAddrMRange.end > addressMLength).map(pl => {
-        pl.copy(originalAddrMRange = AddrMRange(pl.originalAddrMRange.start - addressMLength, pl.originalAddrMRange.end - addressMLength))
+        pl.copy(originalAddrMRange = pl.originalAddrMRange.move(-addressMLength))
       })
 
       val partitions  = ProjectDeltaCalculator.generateChangeTableRowsFromProjectLinks(links, links)
@@ -883,7 +883,7 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
       roadwayDAO.create(Seq(rw1,rw2))
 
       links = links.map(pl => {
-        pl.copy(addrMRange = AddrMRange(addressMLengthSecond + addressMLengthFirst - pl.addrMRange.end, addressMLengthSecond + addressMLengthFirst - pl.addrMRange.start))
+        pl.copy(addrMRange = pl.addrMRange.flipRelativeTo(addressMLengthSecond + addressMLengthFirst))
       })
       links = links.head.copy(discontinuity = Discontinuity.EndOfRoad) +: links.tail
 
@@ -1019,7 +1019,7 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
       roadwayDAO.create(Seq(roadway205_1, roadway205_2, roadway205_3))
 
       val addressedRoad206Links      = (linksForRoad206rw1 ++ linksForRoad206rw2).map(pl => {
-        pl.copy(addrMRange = AddrMRange(pl.addrMRange.start - splitAddress, pl.addrMRange.end - splitAddress))
+        pl.copy(addrMRange = pl.addrMRange.move(-splitAddress))
       })
 
       val road206Links      = addressedRoad206Links.init :+ addressedRoad206Links.last.copy(discontinuity = newDiscontinuity)
@@ -1035,8 +1035,8 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
 
       /* Check continuities and road addresses. */
       val (to1, fr1) = road205and206Partitions._1.head
-      fr1.addrMRange.start should be(0)
-      fr1.addrMRange.end   should be(splitAddress)
+      fr1.addrMRange.start should be(0)              // TODO refactor to AddrMRanges - the whole file
+      fr1.addrMRange.end   should be(splitAddress)   // TODO refactor to AddrMRanges - the whole file
       fr1.discontinuity should be(Discontinuity.Continuous)
       to1.addrMRange.start should be(0)
       to1.addrMRange.end   should be(splitAddress)
@@ -1148,12 +1148,12 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
       val maxAddr       = transferLinks.last.addrMRange.end
       val lengthChange  = 2
       val reversedTrans = transferLinks.map(pl => {
-        pl.copy(addrMRange = AddrMRange(maxAddr - pl.addrMRange.end, maxAddr - pl.addrMRange.start))
+        pl.copy(addrMRange = pl.addrMRange.flipRelativeTo(maxAddr))
       })
 
       val transferLinks206 = addresses.sortBy(_.addrMRange.start).map(a => {
         val projectLink = toProjectLink(project, RoadAddressChangeType.Transfer)(a)
-        projectLink.copy(addrMRange= AddrMRange(maxAddr + lengthChange + a.addrMRange.start, maxAddr + lengthChange + a.addrMRange.end), roadwayId = 3, reversed = false)
+        projectLink.copy(addrMRange = a.addrMRange.move(maxAddr + lengthChange), roadwayId = 3, reversed = false)
       })
 
       val projectLink = toProjectLink(project, RoadAddressChangeType.New)(addresses.head)

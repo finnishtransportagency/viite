@@ -1061,7 +1061,7 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter {
         val two_track_unchanged_and_transfers = changeProject.get.changeInfoSeq.filter(changeInfo => List(1,3).contains(changeInfo.changeType.value))
 
         // Cross check source/target lengths
-        two_track_unchanged_and_transfers.foreach(t => (t.source.endAddressM.get - t.source.startAddressM.get) should be (t.target.endAddressM.get - t.target.startAddressM.get))
+        two_track_unchanged_and_transfers.foreach(t => (t.source.endAddressM.get - t.source.startAddressM.get) should be (t.target.endAddressM.get - t.target.startAddressM.get)) // TODO refactor source, and target to use AddrMRange
 
         // Value checks
         two_track_nonterminated_sources.foreach(rcs => {

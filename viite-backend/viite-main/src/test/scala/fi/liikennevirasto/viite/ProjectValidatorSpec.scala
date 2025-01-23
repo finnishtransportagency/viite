@@ -2987,7 +2987,7 @@ Left|      |Right
       val newLinksOnly = additionalProjectLinks2.diff(originalProjectLinks)
       val min = newLinksOnly.minBy(_.addrMRange.start).addrMRange.start
       newLinksOnly.foreach(p => {
-        projectLinkDAO.updateAddrMValues(p.copy(addrMRange = AddrMRange(p.addrMRange.start - min, p.addrMRange.end - min), originalAddrMRange = AddrMRange(p.originalAddrMRange.start - min, p.originalAddrMRange.end - min)))
+        projectLinkDAO.updateAddrMValues(p.copy(addrMRange = p.addrMRange.move(-min), originalAddrMRange = p.originalAddrMRange.move(-min)))
       })
       val updatedProjectLinks = projectLinkDAO.fetchProjectLinks(project.id)
       updatedProjectLinks.groupBy(_.ely).size should be(2)
@@ -3009,7 +3009,7 @@ Left|      |Right
       val newLinksOnly = additionalProjectLinks2.diff(originalProjectLinks)
       val min = newLinksOnly.minBy(_.addrMRange.start).addrMRange.start
       newLinksOnly.foreach(p => {
-        projectLinkDAO.updateAddrMValues(p.copy(addrMRange = AddrMRange(p.addrMRange.start - min, p.addrMRange.end - min), originalAddrMRange = AddrMRange(p.originalAddrMRange.start - min, p.originalAddrMRange.end - min)))
+        projectLinkDAO.updateAddrMValues(p.copy(addrMRange = p.addrMRange.move(-min), originalAddrMRange = p.originalAddrMRange.move(-min)))
         runUpdateToDb(s"""UPDATE project_link SET ely = ${scala.util.Random.nextInt(5)} WHERE id = ${p.id}""")
       })
       val updatedProjectLinks = projectLinkDAO.fetchProjectLinks(project.id)
@@ -3035,7 +3035,7 @@ Left|      |Right
       val newLinksOnly = additionalProjectLinks2.diff(originalProjectLinks)
       val min = newLinksOnly.minBy(_.addrMRange.start).addrMRange.start
       newLinksOnly.foreach(p => {
-        projectLinkDAO.updateAddrMValues(p.copy(addrMRange = AddrMRange(p.addrMRange.start - min, p.addrMRange.end - min), originalAddrMRange = AddrMRange(p.originalAddrMRange.start - min, p.originalAddrMRange.end - min)))
+        projectLinkDAO.updateAddrMValues(p.copy(addrMRange = p.addrMRange.move(-min), originalAddrMRange = p.originalAddrMRange.move(-min)))
       })
       val updatedProjectLinks = projectLinkDAO.fetchProjectLinks(project.id)
       mockEmptyRoadAddressServiceCalls()
