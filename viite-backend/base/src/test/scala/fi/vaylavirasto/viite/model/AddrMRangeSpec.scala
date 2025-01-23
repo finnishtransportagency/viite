@@ -135,26 +135,26 @@ class AddrMRangeSpec extends AnyFunSuite with Matchers {
   }
 
 
-  test("Test AddrMRange.mirrorBy:    Returns a mirrored copy of this AddrMRange, or throws ViiteException, if this AddrMRange isUndefined, roadpartEndAddrM is non-positive, or startAddress would get negative when moved.") {
-    AddrMRange(  0,100).mirrorBy(300) shouldBe AddrMRange(200,300)
-    AddrMRange(200,300).mirrorBy(300) shouldBe AddrMRange(  0,100)
-    AddrMRange(100,200).mirrorBy(300) shouldBe AddrMRange(100,200)
-    AddrMRange(  0,300).mirrorBy(300) shouldBe AddrMRange(  0,300)
+  test("Test AddrMRange.flipRelativeTo:    Returns a flipped copy of this AddrMRange, or throws ViiteException, if this AddrMRange isUndefined, flipEndAddrM is non-positive, or start would get negative when moved.") {
+    AddrMRange(  0,100).flipRelativeTo(300) shouldBe AddrMRange(200,300)
+    AddrMRange(200,300).flipRelativeTo(300) shouldBe AddrMRange(  0,100)
+    AddrMRange(100,200).flipRelativeTo(300) shouldBe AddrMRange(100,200)
+    AddrMRange(  0,300).flipRelativeTo(300) shouldBe AddrMRange(  0,300)
 
     // cannot reverse move over a non-positive roadpartEndAddrM
-    intercept[ViiteException](AddrMRange(  0,100).mirrorBy(  -1)) shouldBe a[ViiteException]
-    intercept[ViiteException](AddrMRange(  0,100).mirrorBy(   0)) shouldBe a[ViiteException]
+    intercept[ViiteException](AddrMRange(  0,100).flipRelativeTo( -1)) shouldBe a[ViiteException]
+    intercept[ViiteException](AddrMRange(  0,100).flipRelativeTo(  0)) shouldBe a[ViiteException]
 
     // cannot reverse move range so that it would have a negative start address
-    intercept[ViiteException](AddrMRange(  0,100).mirrorBy( 99)) shouldBe a[ViiteException]
-    intercept[ViiteException](AddrMRange(100,200).mirrorBy(199)) shouldBe a[ViiteException]
+    intercept[ViiteException](AddrMRange(  0,100).flipRelativeTo( 99)) shouldBe a[ViiteException]
+    intercept[ViiteException](AddrMRange(100,200).flipRelativeTo(199)) shouldBe a[ViiteException]
 
-    // cannot reverse move invalid ranges
-    intercept[ViiteException](AddrMRange(  0,  0).mirrorBy(  1)) shouldBe a[ViiteException]
+    // cannot flip invalid ranges
+    intercept[ViiteException](AddrMRange(  0,  0).flipRelativeTo(  1)) shouldBe a[ViiteException]
 // TODO sub test commented out, until start < end requirement of the AddrMRange object can be put into work
-//    intercept[ViiteException](AddrMRange(100,  0).mirrorBy(100)) shouldBe a[ViiteException] // creation should fail already.
+//    intercept[ViiteException](AddrMRange(100,  0).flipRelativeTo(100)) shouldBe a[ViiteException] // creation should fail already.
 // TODO instead we have the following:
-    intercept[ViiteException](AddrMRange(100,  0).mirrorBy( 99)) shouldBe a[ViiteException] // TODO disable, when until start < end requirement of the AddrMRange object can be put into work
+    intercept[ViiteException](AddrMRange(100,  0).flipRelativeTo( 99)) shouldBe a[ViiteException] // TODO disable, when until start < end requirement of the AddrMRange object can be put into work
   }
 }
 

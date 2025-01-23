@@ -95,7 +95,7 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
     def toProjectLinks(transferLinks: IndexedSeq[(RoadAddress, ProjectLink)], track: Track)(implicit addresses: Seq[RoadAddress]): IndexedSeq[ProjectLink] = {
       val roadwayId = transferLinks.head._2.roadwayId
       transferLinks.map(l => {
-        l._2.copy(track = track, addrMRange = l._2.addrMRange.mirrorBy(addresses.max.addrMRange.end), roadwayId = roadwayId, reversed = true)
+        l._2.copy(track = track, addrMRange = l._2.addrMRange.flipRelativeTo(addresses.max.addrMRange.end), roadwayId = roadwayId, reversed = true)
       })
     }
     runWithRollback {
@@ -883,7 +883,7 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
       roadwayDAO.create(Seq(rw1,rw2))
 
       links = links.map(pl => {
-        pl.copy(addrMRange = pl.addrMRange.mirrorBy(addressMLengthSecond + addressMLengthFirst))
+        pl.copy(addrMRange = pl.addrMRange.flipRelativeTo(addressMLengthSecond + addressMLengthFirst))
       })
       links = links.head.copy(discontinuity = Discontinuity.EndOfRoad) +: links.tail
 
@@ -1148,7 +1148,7 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
       val maxAddr       = transferLinks.last.addrMRange.end
       val lengthChange  = 2
       val reversedTrans = transferLinks.map(pl => {
-        pl.copy(addrMRange = pl.addrMRange.mirrorBy(maxAddr))
+        pl.copy(addrMRange = pl.addrMRange.flipRelativeTo(maxAddr))
       })
 
       val transferLinks206 = addresses.sortBy(_.addrMRange.start).map(a => {
