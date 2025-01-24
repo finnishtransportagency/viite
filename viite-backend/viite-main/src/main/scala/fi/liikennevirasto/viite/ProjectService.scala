@@ -562,7 +562,7 @@ class ProjectService(
             val created = TrackSectionOrder.mValueRoundabout(ordered._1 ++ ordered._2)
             val endingM = created.map(_.addrMRange.end).max
             created.map(pl =>
-              if (pl.addrMRange.end == endingM && endingM > 0)
+              if (pl.addrMRange.endsAt(endingM) && endingM > 0)
                 pl.copy(discontinuity = Discontinuity.EndOfRoad)
               else
                 pl.copy(discontinuity = Discontinuity.Continuous))
@@ -1780,7 +1780,7 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
         linkIds.lengthCompare(1) == 0 &&
         sorted.forall(_.sideCode == links.head.sideCode) &&
         sorted.forall(_.track == links.head.track) &&
-        sorted.tail.scanLeft((true, links.head.addrMRange.end)){ (a,b) => (a._2 == b.addrMRange.start, b.addrMRange.end)}.forall(_._1)
+        sorted.tail.scanLeft((true, links.head.addrMRange.end)){ (a,b) => (b.addrMRange.startsAt(a._2), b.addrMRange.end)}.forall(_._1)
     ) {
       val geom = sorted.head.sideCode match {
         case SideCode.AgainstDigitizing => sorted.map(_.geometry).reverse.foldLeft(Seq[Point]())((geometries, ge) => {

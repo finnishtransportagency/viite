@@ -174,8 +174,8 @@ object RoadwayFiller {
     val oldAdministrativeClass = headProjectLink.originalAdministrativeClass
     val noChanges        =  headProjectLink.roadPart == currentRoadway.roadPart &&
                             headProjectLink.track == currentRoadway.track &&
-                            headProjectLink.addrMRange.start == newStartAddressM &&
-                            lastProjectLink.addrMRange.end == newEndAddressM &&
+                            headProjectLink.addrMRange.startsAt(newStartAddressM) &&
+                            lastProjectLink.addrMRange.endsAt(newEndAddressM) &&
                             !reversed &&
                             lastProjectLink.discontinuity == lastProjectLink.originalDiscontinuity &&
                             headProjectLink.administrativeClass == oldAdministrativeClass &&
