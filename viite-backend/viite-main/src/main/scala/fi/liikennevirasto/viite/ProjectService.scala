@@ -1562,7 +1562,7 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
           userDefinedEndAddressM.foreach(addressM => {
             val endSegment                = toUpdateLinks.maxBy(_.addrMRange.end)
             val calibrationPoint          = UserDefinedCalibrationPoint(NewIdValue, endSegment.id, projectId, addressM.toDouble - endSegment.startMValue, addressM)
-            val lastEndSegmentLink        = toUpdateLinks.find(ul => ul.projectId == projectId && ul.addrMRange.continuesToStartOf(endSegment.addrMRange))
+            val lastEndSegmentLink        = toUpdateLinks.find(ul => ul.projectId == projectId && ul.addrMRange.continuesTo(endSegment.addrMRange))
             val calibrationPointIsPresent = lastEndSegmentLink match {
               case Some(projectLink) =>
                 projectLink.hasCalibrationPointAt(calibrationPoint.addressMValue)
@@ -1863,8 +1863,8 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
   def adjustCalibrationPointsOnProjectLinks(projectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
     projectLinks.map(pl => {
       if (pl.discontinuity != Discontinuity.Continuous ||
-        projectLinks.exists(pl2 =>  pl.originalAddrMRange.end != 0 && pl2.originalAddrMRange.continuesFromEndOf(pl.originalAddrMRange) && pl.track != pl2.track) ||
-        projectLinks.exists(pl2 =>  pl.originalAddrMRange.end != 0 && pl2.originalAddrMRange.continuesFromEndOf(pl.originalAddrMRange) && pl.track == pl2.track &&
+        projectLinks.exists(pl2 =>  pl.originalAddrMRange.end != 0 && pl2.originalAddrMRange.continuesFrom(pl.originalAddrMRange) && pl.track != pl2.track) ||
+        projectLinks.exists(pl2 =>  pl.originalAddrMRange.end != 0 && pl2.originalAddrMRange.continuesFrom(pl.originalAddrMRange) && pl.track == pl2.track &&
           pl.administrativeClass != pl2.administrativeClass))
       {
         pl.copy(calibrationPointTypes = (pl.calibrationPointTypes._1, CalibrationPointType.RoadAddressCP))
@@ -2568,7 +2568,7 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
           while (it.hasNext) {
             it.next() match {
               case Seq(curr, next) => {
-                if (!curr.addrMRange.continuesToStartOf(next.addrMRange)) {
+                if (!curr.addrMRange.continuesTo(next.addrMRange)) {
                   logger.error(s"Address not continuous: ${curr.addrMRange.end} ${next.addrMRange.start} linkIds: ${curr.linkId} ${next.linkId}")
                   throw new RoadAddressException(ContinuousAddressCapErrorMessage)
                 }

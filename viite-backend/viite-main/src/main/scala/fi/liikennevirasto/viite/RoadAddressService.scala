@@ -1311,7 +1311,7 @@ object RoadAddressFilters {
   }
 
   def continuousAddress(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
-    curr.addrMRange.continuesToStartOf(next.addrMRange)
+    curr.addrMRange.continuesTo(next.addrMRange)
   }
 
   def discontinuousAddress(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {

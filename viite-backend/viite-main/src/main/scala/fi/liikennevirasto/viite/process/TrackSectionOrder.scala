@@ -40,7 +40,7 @@ object TrackSectionOrder {
       val calculatedEndPoint = if (endPointMinDistance.projectLink.status == RoadAddressChangeType.New && endPointMinDistance.projectLink.addrMRange.end == 0) endPointMinDistance.point else endPointMinDistance.projectLink.endPoint
       val (resultProjectLinkChain, newUnprocessed) =
         if (startPointMinDistance.distance > endPointMinDistance.distance
-          || endPointMinDistance.projectLink.addrMRange.continuesFromEndOf(projectLinkChain.sortedProjectLinks.last.addrMRange)
+          || endPointMinDistance.projectLink.addrMRange.continuesFrom(projectLinkChain.sortedProjectLinks.last.addrMRange)
           && endPointMinDistance.projectLink.addrMRange.end != 0
           && projectLinkChain.sortedProjectLinks.last.addrMRange.end != 0)
         (projectLinkChain.copy(sortedProjectLinks = projectLinkChain.sortedProjectLinks :+ endPointMinDistance.projectLink, endPoint = calculatedEndPoint), unprocessed.filterNot(pl => pl.id == endPointMinDistance.projectLink.id))
@@ -283,7 +283,7 @@ object TrackSectionOrder {
         case 0 => None
         case 1 => connectedLinks.headOption
         case _ =>
-          val nextCandidates = connectedLinks.filter(connectedLink => lastLinkOption.get.addrMRange.continuesToStartOf(connectedLink.addrMRange) && lastLinkOption.get.discontinuity == Discontinuity.Continuous)
+          val nextCandidates = connectedLinks.filter(connectedLink => lastLinkOption.get.addrMRange.continuesTo(connectedLink.addrMRange) && lastLinkOption.get.discontinuity == Discontinuity.Continuous)
           if (nextCandidates.nonEmpty && nextCandidates.size == 1) {
             nextCandidates.headOption
           }

@@ -81,7 +81,7 @@ class RoundaboutSectionCalculatorStrategy extends RoadAddressSectionCalculatorSt
         case (acc, pl) =>
           val lastSection = acc.last
           val lastLink = lastSection.last
-          if (lastLink.addrMRange.continuesToStartOf(pl.addrMRange) && lastLink.administrativeClass == pl.administrativeClass && lastLink.ely == pl.ely) {
+          if (lastLink.addrMRange.continuesTo(pl.addrMRange) && lastLink.administrativeClass == pl.administrativeClass && lastLink.ely == pl.ely) {
             acc.init :+ (lastSection :+ pl) // Add to the current section
           } else {
             acc :+ Seq(pl) // Start a new section

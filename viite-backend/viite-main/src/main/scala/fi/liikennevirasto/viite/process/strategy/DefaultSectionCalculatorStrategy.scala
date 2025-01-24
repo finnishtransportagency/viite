@@ -47,7 +47,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         } else {
           // Check if the current link continues the section
           val lastLink = currentSection.last
-          if (link.status == sectionStatus && lastLink.addrMRange.continuesToStartOf(link.addrMRange) && lastLink.track == link.track) {
+          if (link.status == sectionStatus && lastLink.addrMRange.continuesTo(link.addrMRange) && lastLink.track == link.track) {
             currentSection :+= link
           } else {
             // If it doesn't match, finalize the current section and start a new one
@@ -88,7 +88,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
      */
     def handleTerminatedLinks(terminatedLeftLinks: Seq[ProjectLink], terminatedRightLinks: Seq[ProjectLink], leftLinks: Seq[ProjectLink], rightLinks: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink], Seq[ProjectLink], Seq[ProjectLink]) = {
       def findLinkAfterTerminationSegment(terminatedSegment: Seq[ProjectLink], otherLinks: Seq[ProjectLink]): Option[ProjectLink] = {
-        otherLinks.find(pl => pl.originalAddrMRange.continuesFromEndOf(terminatedSegment.last.originalAddrMRange) && pl.status != RoadAddressChangeType.New)
+        otherLinks.find(pl => pl.originalAddrMRange.continuesFrom(terminatedSegment.last.originalAddrMRange) && pl.status != RoadAddressChangeType.New)
       }
 
       /**
@@ -148,9 +148,9 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       val minorDiscontinuityLinks = (processedRightLinks ++ processedLeftLinks).filter(_.discontinuity == Discontinuity.MinorDiscontinuity)
       minorDiscontinuityLinks.foreach({ link =>
         // find links that come after minor discontinuity
-        val continuousAfterDiscontinuity = (processedRightLinks ++ processedLeftLinks).filter(pl => pl.addrMRange.continuesFromEndOf(link.addrMRange))
+        val continuousAfterDiscontinuity = (processedRightLinks ++ processedLeftLinks).filter(pl => pl.addrMRange.continuesFrom(link.addrMRange))
         // find the terminated links that were continuous to the link that now comes after discontinuity jump
-        val terminatedLinksBeforeTheContinuousAfterDiscontinuity = continuousAfterDiscontinuity.flatMap(pl => (processedTerminatedLeftLinks ++ processedTerminatedRightLinks).filter(terminated => terminated.track != Track.Combined && terminated.addrMRange.continuesToStartOf(pl.originalAddrMRange)))
+        val terminatedLinksBeforeTheContinuousAfterDiscontinuity = continuousAfterDiscontinuity.flatMap(pl => (processedTerminatedLeftLinks ++ processedTerminatedRightLinks).filter(terminated => terminated.track != Track.Combined && terminated.addrMRange.continuesTo(pl.originalAddrMRange)))
         if (terminatedLinksBeforeTheContinuousAfterDiscontinuity.size == 2) {
           // calculate the average end address for terminated links
           val averageEndAddr = terminatedLinksBeforeTheContinuousAfterDiscontinuity.map(_.addrMRange.end).sum / 2
@@ -174,7 +174,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       def findPotentialTerminatedLinkToAdjust(terminatedLink: ProjectLink, otherProjectLinks: Seq[ProjectLink]): Boolean = {
         otherProjectLinks.exists(pl =>
           pl.discontinuity == Discontinuity.MinorDiscontinuity &&
-            pl.originalAddrMRange.continuesToStartOf(terminatedLink.originalAddrMRange) &&
+            pl.originalAddrMRange.continuesTo(terminatedLink.originalAddrMRange) &&
             pl.track == terminatedLink.track
         )
       }
@@ -195,8 +195,8 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         val leftTerminated = pair._1
         val rightTerminated = pair._2
         val averageAddrM = (leftTerminated.addrMRange.start + rightTerminated.addrMRange.start) / 2
-        val previousLeftLink = processedLeftLinks.find(_.originalAddrMRange.continuesToStartOf(leftTerminated.originalAddrMRange))
-        val previousRightLink = processedRightLinks.find(_.originalAddrMRange.continuesToStartOf(rightTerminated.originalAddrMRange))
+        val previousLeftLink = processedLeftLinks.find(_.originalAddrMRange.continuesTo(leftTerminated.originalAddrMRange))
+        val previousRightLink = processedRightLinks.find(_.originalAddrMRange.continuesTo(rightTerminated.originalAddrMRange))
         if (previousLeftLink.nonEmpty && previousRightLink.nonEmpty) {
           val adjustedTerminatedLeft = leftTerminated.copy(addrMRange = AddrMRange(averageAddrM, leftTerminated.addrMRange.end), originalAddrMRange = AddrMRange(averageAddrM, leftTerminated.originalAddrMRange.end))
           val adjustedTerminatedRight = rightTerminated.copy(addrMRange = AddrMRange(averageAddrM, rightTerminated.addrMRange.end), originalAddrMRange = AddrMRange(averageAddrM, rightTerminated.originalAddrMRange.end))
@@ -844,7 +844,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       // Check if the left link is split and has a connected link
       if (splittedLeftLink.isDefined && splittedLeftLink.get.connectedLinkId.isDefined) {
         // Find the new link created after the split
-        val newLink = splittedLeftLinks.find(_.addrMRange.continuesFromEndOf(splittedLeftLink.get.addrMRange)).get
+        val newLink = splittedLeftLinks.find(_.addrMRange.continuesFrom(splittedLeftLink.get.addrMRange)).get
 
         val udcpToUpdate = udcps.find(_.get.projectLinkId == cur._1)
         udcps.filterNot(_.get.projectLinkId == cur._1) :+ Some(udcpToUpdate.get.get.copy(projectLinkId = newLink.id))

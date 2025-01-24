@@ -50,9 +50,9 @@ case class AddrMRange (start: Long, end: Long)// extends Ordered[AddrMRange]
 
   // ----------------------------------- Connectivity checks -----------------------------------
   /** Returns true, if <i>other</i> is right after <i>this</i>, i.e. this.end == other.start, and both are valid ranges. Else false. */
-  def continuesToStartOf(other: AddrMRange): Boolean = {   this.end == other.start && bothAreValid(this,other)  }
+  def continuesTo(other: AddrMRange): Boolean = {   this.end == other.start && bothAreValid(this,other)  }
   /** Returns true, if <i>other</i> is right before <i>this</i>, i.e. this.start == other.end, and both are valid ranges. Else false. */
-  def continuesFromEndOf(other: AddrMRange): Boolean = {   this.start == other.end && bothAreValid(this,other)  }
+  def continuesFrom(other: AddrMRange): Boolean = {   this.start == other.end && bothAreValid(this,other)  }
   /** Returns true, if <i>other</i> is right before or after <i>this</i>, i.e. this.end == other.start, or this.end == other.start, and both are valid ranges. Else false. */
   def isAdjacentTo      (other: AddrMRange): Boolean = {  (this.end == other.start || this.start == other.end) && bothAreValid(this,other)  }
 
