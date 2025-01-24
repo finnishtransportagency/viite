@@ -266,7 +266,7 @@ class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with Before
       val linearLocationId = Sequences.nextLinearLocationId
       val linearLocation = LinearLocation(linearLocationId, 1, 12345.toString, 0L, 10L, SideCode.TowardsDigitizing, 0L, calibrationPoints = (CalibrationPointReference(Some(0)), CalibrationPointReference(Some(10))), geom1, LinkGeomSource.NormalLinkInterface, roadwayNumber, None, None)
       val projectId = Sequences.nextViiteProjectId
-      val plId1 = projectId + 1
+      val plId1 = Sequences.nextProjectLinkId
 
       val project = Project(projectId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
@@ -438,7 +438,7 @@ class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with Before
 
       val projectId = Sequences.nextViiteProjectId
 
-      val link1 = dummyProjectLink(RoadPart(road1000, part), Track.Combined, Discontinuity.EndOfRoad, AddrMRange(0, 10), AddrMRange(0, 10), Some(DateTime.now()), None, 12346.toString, 0, 10, SideCode.TowardsDigitizing, RoadAddressChangeType.Transfer, projectId, AdministrativeClass.State, geom2, roadwayNumber2).copy(id = projectId + 1, roadwayId = rwId2, linearLocationId = linearLocationId2)
+      val link1 = dummyProjectLink(RoadPart(road1000, part), Track.Combined, Discontinuity.EndOfRoad, AddrMRange(0, 10), AddrMRange(0, 10), Some(DateTime.now()), None, 12346.toString, 0, 10, SideCode.TowardsDigitizing, RoadAddressChangeType.Transfer, projectId, AdministrativeClass.State, geom2, roadwayNumber2).copy(id = Sequences.nextProjectLinkId, roadwayId = rwId2, linearLocationId = linearLocationId2)
 
       val project = Project(projectId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
@@ -522,7 +522,7 @@ class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with Before
       val linearLocation2 = LinearLocation(linearLocationId2, 1, 12346.toString, 0L, 10L, SideCode.TowardsDigitizing, 0L, calibrationPoints = (CalibrationPointReference(Some(0L)), CalibrationPointReference(Some(10L))), geom2, LinkGeomSource.NormalLinkInterface, roadwayNumber2, None, None)
       val projectId = Sequences.nextViiteProjectId
 
-      val link1 = dummyProjectLink(RoadPart(road1000, part), Track.Combined, Discontinuity.EndOfRoad, AddrMRange(0, 10), AddrMRange(0, 10), Some(DateTime.now()), None, 12346.toString, 0, 10, SideCode.AgainstDigitizing, RoadAddressChangeType.Transfer, projectId, AdministrativeClass.State, geom2, roadwayNumber2).copy(id = projectId + 1, roadwayId = rwId2, linearLocationId = linearLocationId2)
+      val link1 = dummyProjectLink(RoadPart(road1000, part), Track.Combined, Discontinuity.EndOfRoad, AddrMRange(0, 10), AddrMRange(0, 10), Some(DateTime.now()), None, 12346.toString, 0, 10, SideCode.AgainstDigitizing, RoadAddressChangeType.Transfer, projectId, AdministrativeClass.State, geom2, roadwayNumber2).copy(id = Sequences.nextProjectLinkId, roadwayId = rwId2, linearLocationId = linearLocationId2)
 
       val project = Project(projectId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
@@ -607,7 +607,7 @@ class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with Before
 
       val projectId = Sequences.nextViiteProjectId
 
-      val link1 = dummyProjectLink(RoadPart(road1000, part), Track.Combined, Discontinuity.EndOfRoad, AddrMRange(0, 10), AddrMRange(0, 10), Some(DateTime.now()), None, 12346.toString, 0, 10, SideCode.AgainstDigitizing, RoadAddressChangeType.Transfer, projectId, AdministrativeClass.State, geom2, roadwayNumber1 + 1).copy(id = projectId + 1, roadwayId = rwId2, linearLocationId = linearLocationId2)
+      val link1 = dummyProjectLink(RoadPart(road1000, part), Track.Combined, Discontinuity.EndOfRoad, AddrMRange(0, 10), AddrMRange(0, 10), Some(DateTime.now()), None, 12346.toString, 0, 10, SideCode.AgainstDigitizing, RoadAddressChangeType.Transfer, projectId, AdministrativeClass.State, geom2, roadwayNumber1 + 1).copy(id = Sequences.nextProjectLinkId, roadwayId = rwId2, linearLocationId = linearLocationId2)
 
       val project = Project(projectId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
