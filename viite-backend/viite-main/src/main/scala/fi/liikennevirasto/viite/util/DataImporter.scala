@@ -43,7 +43,9 @@ class DataImporter extends BaseDAO{
 
   def withDynTransaction(f: => Unit): Unit = PostGISDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
-
+  private def runUpdateToDbSlick(updateQuery: String): Int = {
+    sqlu"""#$updateQuery""".buildColl.toList.head //sqlu"""#$updateQuery""".execute
+  }
   def time[A](f: => A): A = {
     val s = System.nanoTime
     val ret = f
@@ -86,53 +88,53 @@ class DataImporter extends BaseDAO{
       disableRoadwayTriggers
       println(s"\nDeleting old Alkulataus tables' data")
       println(s"  Deleting PROJECT_LINK_NAMEs         started at time: ${DateTime.now()}")
-      runUpdateToDb(s"""DELETE FROM PROJECT_LINK_NAME""")
+      runUpdateToDbSlick(s"""DELETE FROM PROJECT_LINK_NAME""")
       println(s"  Deleting ROADWAY_CHANGES              started at time: ${DateTime.now()}")
-      runUpdateToDb(s"""DELETE FROM ROADWAY_CHANGES_LINK""")
+      runUpdateToDbSlick(s"""DELETE FROM ROADWAY_CHANGES_LINK""")
       println(s"  Deleting PROJECT_LINKs                  started at time: ${DateTime.now()}")
-      runUpdateToDb(s"""DELETE FROM PROJECT_LINK""")
+      runUpdateToDbSlick(s"""DELETE FROM PROJECT_LINK""")
       println(s"  Deleting PROJECT_INK_LHISTORY             started at time: ${DateTime.now()}")
-      runUpdateToDb(s"""DELETE FROM PROJECT_LINK_HISTORY""")
+      runUpdateToDbSlick(s"""DELETE FROM PROJECT_LINK_HISTORY""")
       println(s"  Deleting PROJECT_RESERVED_ROAD_PARTs links  started at time: ${DateTime.now()}")
-      runUpdateToDb(s"""DELETE FROM PROJECT_RESERVED_ROAD_PART""")
+      runUpdateToDbSlick(s"""DELETE FROM PROJECT_RESERVED_ROAD_PART""")
 
 
       // Delete other than accepted projects.
       // Accepted states: 0 = ProjectDAO.ProjectState.Accepted; 5 = ProjectState.DeprecatedSaved2ToTR
       println(s"  Deleting PROJECTs (state != 12|5)           started at time: ${DateTime.now()}")
-      runUpdateToDb(s"""DELETE FROM PROJECT WHERE STATE != 12 AND STATE != 5""")
+      runUpdateToDbSlick(s"""DELETE FROM PROJECT WHERE STATE != 12 AND STATE != 5""")
 
       println(s"  Deleting ROADWAY_CHANGESs                 started at time: ${DateTime.now()}")
-      runUpdateToDb(s"""DELETE FROM ROADWAY_CHANGES WHERE project_id NOT IN (SELECT id FROM PROJECT)""")
+      runUpdateToDbSlick(s"""DELETE FROM ROADWAY_CHANGES WHERE project_id NOT IN (SELECT id FROM PROJECT)""")
       println(s"  Deleting ROAD_NETWORK_ERRORs            started at time: ${DateTime.now()}")
-      runUpdateToDb(s"""DELETE FROM ROAD_NETWORK_ERROR""")
+      runUpdateToDbSlick(s"""DELETE FROM ROAD_NETWORK_ERROR""")
 
       /* todo ("Table published_roadwayis no longer in use, and is empty.") */
       println(s"  Deleting PUBLISHED_ROADWAYs           started at time: ${DateTime.now()}")
-      runUpdateToDb(s"""DELETE FROM PUBLISHED_ROADWAY""")
+      runUpdateToDbSlick(s"""DELETE FROM PUBLISHED_ROADWAY""")
 
       /* todo ("Table published_road_network is no longer in use, and is empty.") */
       println(s"  Deleting PUBLISHED_ROAD_NETWORKs    started at time: ${DateTime.now()}")
-      runUpdateToDb(s"""DELETE FROM PUBLISHED_ROAD_NETWORK""")
+      runUpdateToDbSlick(s"""DELETE FROM PUBLISHED_ROAD_NETWORK""")
 
       println(s"  Deleting LINEAR_LOCATIONs         started at time: ${DateTime.now()}")
-      runUpdateToDb(s"""DELETE FROM LINEAR_LOCATION""")
+      runUpdateToDbSlick(s"""DELETE FROM LINEAR_LOCATION""")
       println(s"  Deleting CALIBRATION_POINTs     started at time: ${DateTime.now()}")
-      runUpdateToDb(s"""DELETE FROM CALIBRATION_POINT""")
+      runUpdateToDbSlick(s"""DELETE FROM CALIBRATION_POINT""")
       println(s"  Deleting JUNCTION_POINTs      started at time: ${DateTime.now()}")
-      runUpdateToDb(s"""DELETE FROM JUNCTION_POINT""")
+      runUpdateToDbSlick(s"""DELETE FROM JUNCTION_POINT""")
       println(s"  Deleting NODE_POINTs        started at time: ${DateTime.now()}")
-      runUpdateToDb(s"""DELETE FROM NODE_POINT""")
+      runUpdateToDbSlick(s"""DELETE FROM NODE_POINT""")
       println(s"  Deleting ROADWAY_POINTs   started at time: ${DateTime.now()}")
-      runUpdateToDb(s"""DELETE FROM ROADWAY_POINT""")
+      runUpdateToDbSlick(s"""DELETE FROM ROADWAY_POINT""")
       println(s"  Deleting JUNCTIONs      started at time: ${DateTime.now()}")
-      runUpdateToDb(s"""DELETE FROM JUNCTION""")
+      runUpdateToDbSlick(s"""DELETE FROM JUNCTION""")
       println(s"  Deleting NODEs        started at time: ${DateTime.now()}")
-      runUpdateToDb(s"""DELETE FROM NODE""")
+      runUpdateToDbSlick(s"""DELETE FROM NODE""")
       println(s"  Deleting LINKs      started at time: ${DateTime.now()}")
-      runUpdateToDb(s"""DELETE FROM LINK""")
+      runUpdateToDbSlick(s"""DELETE FROM LINK""")
       println(s"  Deleting ROADWAYs started at time: ${DateTime.now()}")
-      runUpdateToDb(s"""DELETE FROM ROADWAY""")
+      runUpdateToDbSlick(s"""DELETE FROM ROADWAY""")
 
       resetRoadAddressSequences()
 
@@ -141,7 +143,7 @@ class DataImporter extends BaseDAO{
       roadAddressImporter.importRoadAddress()
 
       println(s"\n${DateTime.now()} - Updating terminated roadways information")
-      runUpdateToDb(s"""UPDATE ROADWAY SET TERMINATED = 2
+      runUpdateToDbSlick(s"""UPDATE ROADWAY SET TERMINATED = 2
             WHERE TERMINATED = 0 AND end_date IS NOT null AND EXISTS (SELECT 1 FROM ROADWAY rw
             	WHERE ROADWAY.ROAD_NUMBER = rw.ROAD_NUMBER
             	AND ROADWAY.ROADWAY_NUMBER = rw.ROADWAY_NUMBER
@@ -175,10 +177,10 @@ class DataImporter extends BaseDAO{
       println("\nImporting nodes and junctions started at time: ")
       println(DateTime.now())
 
-      runUpdateToDb(s"""DELETE FROM JUNCTION_POINT""")
-      runUpdateToDb(s"""DELETE FROM NODE_POINT""")
-      runUpdateToDb(s"""DELETE FROM JUNCTION""")
-      runUpdateToDb(s"""DELETE FROM NODE""")
+      runUpdateToDbSlick(s"""DELETE FROM JUNCTION_POINT""")
+      runUpdateToDbSlick(s"""DELETE FROM NODE_POINT""")
+      runUpdateToDbSlick(s"""DELETE FROM JUNCTION""")
+      runUpdateToDbSlick(s"""DELETE FROM NODE""")
       resetNodesAndJunctionSequences()
 
       println(s"${DateTime.now()} - Old nodes and junctions data removed")
@@ -224,7 +226,7 @@ class DataImporter extends BaseDAO{
     println("\nUpdating nodePointTypes started at time: ")
     println(DateTime.now())
 
-    runUpdateToDb(s"""
+    runUpdateToDbSlick(s"""
       UPDATE NODE_POINT NP SET TYPE = (SELECT CASE
           -- [TYPE = 99] Includes expired node points points or points attached to expired nodes
           WHEN (point.VALID_TO IS NOT NULL OR NOT EXISTS (SELECT 1 FROM NODE node
@@ -262,11 +264,11 @@ class DataImporter extends BaseDAO{
   }
 
   def enableRoadwayTriggers(): Unit = {
-    runUpdateToDb(s"""ALTER TABLE ROADWAY ENABLE TRIGGER USER""")
+    runUpdateToDbSlick(s"""ALTER TABLE ROADWAY ENABLE TRIGGER USER""")
   }
 
   def disableRoadwayTriggers(): Unit = {
-    runUpdateToDb(s"""ALTER TABLE ROADWAY DISABLE TRIGGER USER""")
+    runUpdateToDbSlick(s"""ALTER TABLE ROADWAY DISABLE TRIGGER USER""")
   }
 
   /** Resets the roadway sequence to (MAX-of-current-roadway-numbers)+1, or to 1, if no roadways available. */

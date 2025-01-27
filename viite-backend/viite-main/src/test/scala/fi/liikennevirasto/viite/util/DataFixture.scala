@@ -1,8 +1,6 @@
 package fi.liikennevirasto.viite.util
 
-import java.util.Properties
 import org.flywaydb.core.Flyway
-import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.kgv.KgvRoadLink
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -11,12 +9,13 @@ import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.{ApplyChangeInfoProcess, RoadwayAddressMapper}
 import fi.liikennevirasto.viite.util.DataImporter.Conversion
-import fi.vaylavirasto.viite.dao.{MunicipalityDAO, Queries}
-import fi.vaylavirasto.viite.postgis.PostGISDatabase
-import fi.vaylavirasto.viite.postgis.PostGISDatabase.ds
+import fi.vaylavirasto.viite.dao.MunicipalityDAO
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC
 import org.flywaydb.core.api.configuration.FluentConfiguration
 import org.joda.time.DateTime
+import scalikejdbc.ConnectionPool
 
+import javax.sql.DataSource
 import scala.collection.parallel.ForkJoinTaskSupport
 import scala.collection.parallel.immutable.ParSet
 import scala.language.postfixOps
@@ -75,9 +74,6 @@ object DataFixture {
 
   def importComplementaryRoadAddress(): Unit = {
     println(s"\nCommencing complementary road address import at time: ${DateTime.now()}")
-    PostGISDatabase.withDynTransaction {
-      PostGISDatabase.setSessionLanguage()
-    }
     SqlScriptRunner.runViiteScripts(List(
       "insert_complementary_geometry_data.sql"
     ))
@@ -91,9 +87,6 @@ object DataFixture {
 
   def importRoadAddressChangeTestData(): Unit = {
     println(s"\nCommencing road address change test data import at time: ${DateTime.now()}")
-    PostGISDatabase.withDynTransaction {
-      PostGISDatabase.setSessionLanguage()
-    }
     SqlScriptRunner.runViiteScripts(List(
       "insert_road_address_change_test_data.sql"
     ))
@@ -103,8 +96,8 @@ object DataFixture {
 
   private def testIntegrationAPIWithAllMunicipalities(): Unit = {
     println(s"\nStarting fetch for integration API for all municipalities")
-    val municipalities = PostGISDatabase.withDynTransaction {
-      Queries.getMunicipalities
+    val municipalities = PostGISDatabaseScalikeJDBC.runWithReadOnlySession {
+      MunicipalityDAO.fetchMunicipalityIds
     }
     val failedMunicipalities = municipalities.map(
       municipalityCode =>
@@ -140,14 +133,14 @@ object DataFixture {
     val linearLocationDAO = new LinearLocationDAO
 
     val linearLocations =
-      PostGISDatabase.withDynTransaction {
+      PostGISDatabaseScalikeJDBC.runWithTransaction {
         linearLocationDAO.fetchCurrentLinearLocations
       }
 
     println("Total linearLocations " + linearLocations.size)
 
     //get All municipalities and group them for ely
-    PostGISDatabase.withDynTransaction {
+    PostGISDatabaseScalikeJDBC.runWithTransaction {
       MunicipalityDAO.getDigiroadMunicipalityToElyMapping
     }.groupBy(_._2).foreach {
       case (ely, municipalityEly) =>
@@ -190,6 +183,8 @@ object DataFixture {
   }*/
 
   val flyway: Flyway = {
+    PostGISDatabaseScalikeJDBC // Initialize the Database connection
+    val ds: DataSource = ConnectionPool.get().dataSource // Get the DataSource from the ConnectionPool
     val flywayConf: FluentConfiguration = Flyway.configure
     flywayConf.dataSource(ds)
     flywayConf.locations("db/migration")
@@ -233,17 +228,6 @@ object DataFixture {
       "insert_road_names.sql",
       "municipalities.sql"
     ))
-  }
-
-  lazy val postgresDs: BoneCPDataSource = {
-    Class.forName("org.postgresql.Driver")
-    val props = new Properties()
-    props.setProperty("bonecp.jdbcUrl", ViiteProperties.bonecpJdbcUrl)
-    props.setProperty("bonecp.username", "postgres")
-    props.setProperty("bonecp.password", "postgres")
-
-    val cfg = new BoneCPConfig(props)
-    new BoneCPDataSource(cfg)
   }
 
   def flywayInit(): Unit = {
