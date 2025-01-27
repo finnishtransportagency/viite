@@ -56,8 +56,6 @@ case class NodeWithJunctions(node: Node, junctionsWithCoordinates: Seq[JunctionW
 
 class NodeDAO extends BaseDAO {
 
-  private val n = Node.syntax("n")
-
   // Helper method to run select queries for Node objects
   private def queryList(query: SQL[Nothing, NoExtractor]): List[Node] = {
     runSelectQuery(query.map(Node.apply)).groupBy(_.id)
@@ -88,15 +86,6 @@ class NodeDAO extends BaseDAO {
       WHERE id = $nodeId and valid_to IS NULL and end_date IS NULL
       """
     querySingle(query)
-  }
-
-  def fetchId(nodeNumber: Long): Option[Long] = {
-    val query = sql"""
-      SELECT id
-      FROM node
-      WHERE node_number = $nodeNumber AND valid_to IS NULL AND end_date IS NULL
-      """
-    runSelectSingleOption(query.map(_.long("id"))) // Return the id
   }
 
   def fetchLatestId(nodeNumber: Long): Option[Long] = {
@@ -134,7 +123,7 @@ class NodeDAO extends BaseDAO {
 
     def withOptionalParameters(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long],
                                minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long])(query: SQLSyntax): SQL[Nothing, NoExtractor] = {
-      val dateCondition = situationDate.map { date => sqls"AND rw.start_date <= ${date}::date"}.getOrElse(sqls"")
+      val dateCondition = situationDate.map { date => sqls"AND rw.start_date <= $date::date"}.getOrElse(sqls"")
       val elyCondition = ely.map(ely => sqls" AND rw.ely = $ely").getOrElse(sqls"")
       val roadNumberCondition = roadNumber.map(roadNumber => sqls" AND rw.road_number = $roadNumber").getOrElse(sqls"")
 
@@ -265,7 +254,7 @@ class NodeDAO extends BaseDAO {
    * @param ids : Iterable[Long] - The ids of the nodes to expire.
    * @return
    */
-  def expireById(ids: Iterable[Long]): Unit = {
+  def expireById(ids: Iterable[Long]): Int = {
     if (ids.isEmpty)
       0
     else {
