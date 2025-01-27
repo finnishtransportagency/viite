@@ -993,7 +993,7 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter {
         def continuosAddresses(t: Seq[ProjectLink]): ProjectLink = {
           t.sortBy(_.addrMRange.start).tail.foldLeft(t.head) { (cur, next) =>
             assert(next.addrMRange.start <= next.addrMRange.end)
-            assert(cur.addrMRange.end == next.addrMRange.start)
+            assert(cur.addrMRange.continuesTo(next.addrMRange))
             next
           }
         }
@@ -1133,7 +1133,7 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter {
            it.next() match {
              case Seq(cur, next) =>
                assert(next.addrMRange.start <= next.addrMRange.end)
-               assert(cur.addrMRange.end == next.addrMRange.start)
+               assert(cur.addrMRange.continuesTo(next.addrMRange))
            }
          }
        }
@@ -1154,7 +1154,7 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter {
            it.next() match {
              case Seq(cur, next) =>
                assert(next.addrMRange.start <= next.addrMRange.end)
-               assert(cur.addrMRange.end == next.addrMRange.start)
+               assert(cur.addrMRange.continuesTo(next.addrMRange))
            }
          }
        }

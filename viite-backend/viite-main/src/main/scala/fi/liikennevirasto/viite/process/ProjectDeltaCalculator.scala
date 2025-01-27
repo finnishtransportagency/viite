@@ -23,7 +23,7 @@ object ProjectDeltaCalculator {
   private def combineProjectLinks(pl1: ProjectLink, pl2: ProjectLink, allNonTerminatedProjectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
     val sameStatus = pl1.status == pl2.status
     val bothNew = pl1.status == RoadAddressChangeType.New && pl2.status == RoadAddressChangeType.New && pl1.track != Track.Combined && pl2.track != Track.Combined
-    val matchAddr = pl1.addrMRange.end == pl2.addrMRange.start
+    val matchAddr = pl1.addrMRange.continuesTo(pl2.addrMRange)
     val matchContinuity = pl1.discontinuity == Discontinuity.Continuous
     val oppositePl1 = allNonTerminatedProjectLinks.filter( pl => pl.track != pl1.track && pl.track != Track.Combined && (pl.addrMRange.end == pl1.addrMRange.end || (pl.status != RoadAddressChangeType.New && pl1.status != RoadAddressChangeType.New && pl.originalAddrMRange.end == pl1.originalAddrMRange.end)))
     val oppositePl2 = allNonTerminatedProjectLinks.filter( pl => pl.track != pl1.track && pl.track != Track.Combined && (pl.addrMRange.start == pl1.addrMRange.end || (pl.status != RoadAddressChangeType.New && pl1.status != RoadAddressChangeType.New && pl.originalAddrMRange.end == pl1.originalAddrMRange.end)))
@@ -71,7 +71,7 @@ object ProjectDeltaCalculator {
   private def combineTwo[R <: BaseRoadAddress, P <: BaseRoadAddress](tr1: (R, P), tr2: (R, P), allNonTerminatedProjectLinks: Seq[ProjectLink]): Seq[(R, P)] = {
     val (ra1, pl1) = (tr1._1, tr1._2.asInstanceOf[ProjectLink])
     val (ra2, pl2) = (tr2._1, tr2._2.asInstanceOf[ProjectLink])
-    val matchAddr = pl1.addrMRange.end == pl2.addrMRange.start
+    val matchAddr = pl1.addrMRange.continuesTo(pl2.addrMRange)
     val matchContinuity = pl1.discontinuity == Discontinuity.Continuous
     val oppositePl = allNonTerminatedProjectLinks.filter( pl => pl.track != pl1.track && pl.addrMRange.end == pl1.addrMRange.end).filter(_.status != RoadAddressChangeType.Termination)
     val hasCalibrationPoint = ((pl1.track == Track.Combined && pl1.hasCalibrationPointAtEnd) && pl1.hasCalibrationPointCreatedInProject) || (oppositePl.nonEmpty && oppositePl.head.hasCalibrationPointAtEnd && pl1.hasCalibrationPointAtEnd) // Opposite side has user cp
@@ -105,7 +105,7 @@ object ProjectDeltaCalculator {
   val hasUdcp = r1.calibrationPointTypes._2 == CalibrationPointType.UserDefinedCP && r1.status == RoadAddressChangeType.New && r2.status == RoadAddressChangeType.New
 
     val openBasedOnSource = hasCalibrationPoint && r1.hasCalibrationPointCreatedInProject
-    if (r1.addrMRange.end == r2.addrMRange.start)
+    if (r1.addrMRange.continuesTo(r2.addrMRange))
       r1.status match {
         case RoadAddressChangeType.Termination =>
           if (hasCalibrationPoint && r1.roadwayNumber != r2.roadwayNumber)
