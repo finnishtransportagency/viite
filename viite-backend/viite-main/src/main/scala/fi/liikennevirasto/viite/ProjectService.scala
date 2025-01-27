@@ -2674,6 +2674,6 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
 case class ProjectBoundingBoxResult(projectLinkResultF: Future[Seq[ProjectLink]], roadLinkF: Future[Seq[RoadLink]],
                                     complementaryF: Future[Seq[RoadLink]])
 
-case class ProjectRoadLinkChange(id: Long, roadwayId: Long, originalLinearLocationId: Long, linearLocationId: Long, originalRoadPart: RoadPart, roadPart: RoadPart, originalStartAddr: Long, originalEndAddr: Long, newStartAddr: Long, newEndAddr: Long, status: RoadAddressChangeType, reversed: Boolean, originalRoadwayNumber: Long, newRoadwayNumber: Long)
+case class ProjectRoadLinkChange(id: Long, roadwayId: Long, originalLinearLocationId: Long, linearLocationId: Long, originalRoadPart: RoadPart, roadPart: RoadPart, originalAddrMRange: AddrMRange, newAddrMRange: AddrMRange, status: RoadAddressChangeType, reversed: Boolean, originalRoadwayNumber: Long, newRoadwayNumber: Long)
 
 
