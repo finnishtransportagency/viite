@@ -11,9 +11,9 @@ object PostGISDatabaseScalikeJDBC {
 
   // Initialize the connection pool with default settings
   ConnectionPool.singleton(
-    url = ViiteProperties.scalikeJdbcUrl,
-    user = ViiteProperties.scalikeJdbcUser,
-    password = ViiteProperties.scalikeJdbcPassword
+    url = ViiteProperties.bonecpJdbcUrl,
+    user = ViiteProperties.bonecpUsername,
+    password = ViiteProperties.bonecpPassword
   )
 
   // Logging for queries
