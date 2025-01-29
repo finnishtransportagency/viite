@@ -443,9 +443,9 @@ class ProjectServiceLinkSpec extends AnyFunSuite with Matchers with BeforeAndAft
       }
       // Test that for every link there should be the address before it or after it (unless it's the first or last link)
       changedLinks.foreach(l =>
-        (l == changedLinks.head || changedLinks.exists(c => c.addrMRange.end == l.addrMRange.start &&
+        (l == changedLinks.head || changedLinks.exists(c => c.addrMRange.continuesTo(l.addrMRange) &&
           c.track == l.track || (c.track.value * l.track.value == 0))) && (l == changedLinks.last ||
-          changedLinks.exists(c => c.addrMRange.start == l.addrMRange.end &&
+          changedLinks.exists(c => c.addrMRange.continuesFrom(l.addrMRange) &&
             c.track == l.track || (c.track.value * l.track.value == 0))) should be(true)
       )
       adjusted.filterNot(_.isSplit).foreach { l =>

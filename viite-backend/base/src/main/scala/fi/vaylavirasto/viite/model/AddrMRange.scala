@@ -34,6 +34,7 @@ case class AddrMRange (start: Long, end: Long)// extends Ordered[AddrMRange]
 
   private def  bothAreValid(a: AddrMRange, b: AddrMRange): Boolean = { a.isValid && b.isValid }
 
+
   // --------------------------------------- Validity checks ---------------------------------------
   /** A valid address range is one with positive endAddrM. (Construction time checks ensure that start address is at least 0.)
     * Returns true, if this <i>end</i> is greater than zero. Else false. */
@@ -46,7 +47,17 @@ case class AddrMRange (start: Long, end: Long)// extends Ordered[AddrMRange]
   /** Returns true, if this AddrMRange has 0 as start, and >0 as end (that is, it is a valid addrMRange). */
   def isRoadPartStart:Boolean = {  this.start == 0 && this.end >  0  }
 
-    // ---------------------------- Functions returning numeric values, or AddrMRange copies ----------------------------
+
+  // ----------------------------------- Connectivity checks -----------------------------------
+  /** Returns true, if <i>other</i> is right after <i>this</i>, i.e. this.end == other.start, and both are valid ranges. Else false. */
+  def continuesTo(other: AddrMRange): Boolean = {   this.end == other.start && bothAreValid(this,other)  }
+  /** Returns true, if <i>other</i> is right before <i>this</i>, i.e. this.start == other.end, and both are valid ranges. Else false. */
+  def continuesFrom(other: AddrMRange): Boolean = {   this.start == other.end && bothAreValid(this,other)  }
+  /** Returns true, if <i>other</i> is right before or after <i>this</i>, i.e. this.end == other.start, or this.end == other.start, and both are valid ranges. Else false. */
+  def isAdjacentTo      (other: AddrMRange): Boolean = {  (this.end == other.start || this.start == other.end) && bothAreValid(this,other)  }
+
+
+  // ---------------------------- Functions returning numeric values, or AddrMRange copies ----------------------------
   /** Returns the length of this AddrMRange for a valid AddrMRange.
     * @throws ViiteException if this AddrMRange isUndefined. */
   def length: Long = {

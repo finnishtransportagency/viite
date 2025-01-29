@@ -152,8 +152,8 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
   // note, functionality moved here from former ViiteTierekisteriClient at Tierekisteri removal (2021-09)
   val defaultChangeInfo = RoadwayChangeInfo(
     RoadAddressChangeType.apply(2),
-    RoadwayChangeSection(None, None, None, None, None, None, None, None, None),
-    RoadwayChangeSection(Option(403), Option(0), Option(8), Option(0), Option(8), Option(1001),
+    RoadwayChangeSection(None, None, None, None, None, None, None, None),
+    RoadwayChangeSection(Option(403), Option(0), Option(8), Option(0), Option(AddrMRange(8,1001)),
       Option(AdministrativeClass.State), Option(Discontinuity.Continuous), Option(5)),
     Discontinuity.apply(1),
     AdministrativeClass.apply(1),

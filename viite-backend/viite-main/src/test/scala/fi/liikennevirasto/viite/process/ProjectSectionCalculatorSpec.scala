@@ -921,10 +921,10 @@ class ProjectSectionCalculatorSpec extends AnyFunSuite with Matchers {
 
       val (sortedLeft, sortedRight) = (left.sortBy(_.addrMRange.start), right.sortBy(_.addrMRange.start))
       sortedLeft.zip(sortedLeft.tail).forall{
-        case (curr, next) => (curr.discontinuity == Discontinuity.Continuous && curr.addrMRange.end == next.addrMRange.start && curr.connected(next)) || curr.discontinuity == Discontinuity.MinorDiscontinuity
+        case (curr, next) => (curr.discontinuity == Discontinuity.Continuous && curr.addrMRange.continuesTo(next.addrMRange) && curr.connected(next)) || curr.discontinuity == Discontinuity.MinorDiscontinuity
       }
       sortedRight.zip(sortedRight.tail).forall{
-        case (curr, next) => (curr.discontinuity == Discontinuity.Continuous && curr.addrMRange.end == next.addrMRange.start && curr.connected(next)) || curr.discontinuity == Discontinuity.MinorDiscontinuity
+        case (curr, next) => (curr.discontinuity == Discontinuity.Continuous && curr.addrMRange.continuesTo(next.addrMRange) && curr.connected(next)) || curr.discontinuity == Discontinuity.MinorDiscontinuity
       }
 
       ( (sortedLeft.head.addrMRange.isRoadPartStart && sortedRight.head.addrMRange.isRoadPartStart) ||
@@ -972,10 +972,10 @@ class ProjectSectionCalculatorSpec extends AnyFunSuite with Matchers {
 
       val (sortedLeft, sortedRight) = (left.sortBy(_.addrMRange.start), right.sortBy(_.addrMRange.start))
       sortedLeft.zip(sortedLeft.tail).forall{
-        case (curr, next) => (curr.discontinuity == Discontinuity.Continuous && curr.addrMRange.end == next.addrMRange.start && curr.connected(next)) || curr.discontinuity == Discontinuity.MinorDiscontinuity
+        case (curr, next) => (curr.discontinuity == Discontinuity.Continuous && curr.addrMRange.continuesTo(next.addrMRange) && curr.connected(next)) || curr.discontinuity == Discontinuity.MinorDiscontinuity
       }
       sortedRight.zip(sortedRight.tail).forall{
-        case (curr, next) => (curr.discontinuity == Discontinuity.Continuous && curr.addrMRange.end == next.addrMRange.start && curr.connected(next)) || curr.discontinuity == Discontinuity.MinorDiscontinuity
+        case (curr, next) => (curr.discontinuity == Discontinuity.Continuous && curr.addrMRange.continuesTo(next.addrMRange) && curr.connected(next)) || curr.discontinuity == Discontinuity.MinorDiscontinuity
       }
 
       ( (sortedLeft.head.addrMRange.isRoadPartStart && sortedRight.head.addrMRange.isRoadPartStart) ||

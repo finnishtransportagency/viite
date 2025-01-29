@@ -20,7 +20,7 @@ object ProjectSectionMValueCalculator {
   def calculateAddressMValuesForTrack(projectLinks: Seq[ProjectLink], calibrationPoints: Map[Long, UserDefinedCalibrationPoint]): Seq[ProjectLink] = {
     // That is an address connected extension of this
     def isExtensionOf(ext: ProjectLink)(thisPL: ProjectLink) = {
-      thisPL.originalAddrMRange.end == ext.originalAddrMRange.start &&
+      thisPL.originalAddrMRange.continuesTo(ext.originalAddrMRange) &&
         (thisPL.track == ext.track || Set(thisPL.track, ext.track).contains(Track.Combined))
     }
 
