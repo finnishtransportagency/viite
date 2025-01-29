@@ -4655,10 +4655,10 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
      *
      *
      *                    After
-     *  0           21 0      13           153   653        689
+     *  0           22 0      13           153   653        689
      *  ------T------> ------->------------->.....----------->
      *  ------T-------> ----->-------------->.....---------->
-     *  0            21 0    8             150   655       689
+     *  0            22 0    8             150   655       689
      *
      * T = Terminated link
      *
@@ -4796,8 +4796,14 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
       val (terminated, others) = recalculated.partition(_.status == RoadAddressChangeType.Termination)
       val leftTerminated = terminated.filter(_.track == Track.LeftSide)
       val rightTerminated = terminated.filter(_.track == Track.RightSide)
-      leftTerminated.head.addrMRange.end should be (21)
-      rightTerminated.head.addrMRange.end should be (21)
+      val newLeftStartingLink = others.filter(pl => pl.addrMRange.isRoadPartStart && pl.track == Track.LeftSide)
+      val newRightStartingLink = others.filter(pl => pl.addrMRange.isRoadPartStart && pl.track == Track.RightSide)
+      newLeftStartingLink.size should be (1)
+      newLeftStartingLink.head.originalAddrMRange.start should be (22)
+      newRightStartingLink.size should be (1)
+      newRightStartingLink.head.originalAddrMRange.start should be (22)
+      leftTerminated.head.addrMRange.end should be (22)
+      rightTerminated.head.addrMRange.end should be (22)
     }
   }
 
