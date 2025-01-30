@@ -385,7 +385,7 @@ class JunctionDAO extends BaseDAO {
    * @param ids : Iterable[Long] - The ids of the junctions to expire.
    * @return
    */
-  def expireById(ids: Iterable[Long]): Unit = {
+  def expireById(ids: Iterable[Long]): Int = {
     if (ids.isEmpty) 0
     else {
       val query =

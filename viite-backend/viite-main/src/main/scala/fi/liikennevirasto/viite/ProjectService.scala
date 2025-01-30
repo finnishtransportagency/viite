@@ -371,7 +371,7 @@ class ProjectService(
       .map(rp => rp.roadPart -> roadwayDAO.getRoadPartInfo(rp.roadPart))
       .toMap
       .filterNot(_._2.isEmpty)
-      .foreach { case (roadPart, Some(detail)) =>
+      .collect { case (roadPart, Some(detail)) =>
         // Check start date
         detail.startDate.foreach { startDate =>
           // TODO remove this when other systems (esp. Velho) are able to handle corrective projects
