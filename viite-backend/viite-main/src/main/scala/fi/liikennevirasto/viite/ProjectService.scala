@@ -2124,7 +2124,7 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
   }
 
   // TODO New links should be filtered out just in case?
-  def handleTerminations(projectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
+  def adjustTerminations(projectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
 
     def roadPartStartTerminated(projectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
       val (terminated, other) = projectLinks.partition(_.status == RoadAddressChangeType.Termination)
@@ -2202,27 +2202,23 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
 
     time(logger, "Recalculate links") {
       val projectLinks = projectLinkDAO.fetchProjectLinks(projectId)
-      val nonTerminatedProjectLinks = projectLinks.filterNot(_.status == RoadAddressChangeType.Termination)
 
-      var terminatedProjectLinks = new ListBuffer[ProjectLink]()
-      val recalculated = nonTerminatedProjectLinks.groupBy(pl => {
+      val recalculated = projectLinks.groupBy(pl => {
         (pl.roadPart)
       }).flatMap {
         grp =>
           val fusedLinks = getFusedProjectLinks(grp._2)
           val calibrationPoints = ProjectCalibrationPointDAO.fetchByRoadPart(projectId, grp._1)
           val projectLinksWithAdjustedCalibrationPoints = adjustCalibrationPointsOnProjectLinks(fusedLinks)
-          val updatedProjectLinks = handleTerminations(projectLinks.filter(_.status == RoadAddressChangeType.Termination) ++ projectLinksWithAdjustedCalibrationPoints)
-          val recalculatedTerminated = updatedProjectLinks.filter(_.status == RoadAddressChangeType.Termination)
-          val recalculatedNonTerminated = ProjectSectionCalculator.assignAddrMValues(updatedProjectLinks.filterNot(_.status == RoadAddressChangeType.Termination), calibrationPoints)
+          val (adjustedTerminated, adjustedNonTerminated) = adjustTerminations(projectLinksWithAdjustedCalibrationPoints).partition(_.status == RoadAddressChangeType.Termination)
+          val recalculatedNonTerminated = ProjectSectionCalculator.assignAddrMValues(adjustedNonTerminated, calibrationPoints)
 
-          terminatedProjectLinks ++= recalculatedTerminated
-
-          recalculatedNonTerminated.sortBy(_.addrMRange.end)
+          // Add the adjusted terminated links to the recalculated links and sort them by addrMRange.end
+          (recalculatedNonTerminated ++ adjustedTerminated).sortBy(_.addrMRange.end)
       }.toSeq
 
-      val terminatedProjectLinksWithAssignedRoadwayNumbers = assignRoadwayNumbersToTerminatedProjectLinks(nonTerminatedProjectLinks ++ terminatedProjectLinks)
-      val originalAddresses = roadAddressService.getRoadAddressesByRoadwayIds((recalculated ++ terminatedProjectLinks).map(_.roadwayId))
+      val terminatedProjectLinksWithAssignedRoadwayNumbers = assignRoadwayNumbersToTerminatedProjectLinks(recalculated)
+      val originalAddresses = roadAddressService.getRoadAddressesByRoadwayIds((recalculated).map(_.roadwayId))
       projectLinkDAO.updateProjectLinks(recalculated ++ terminatedProjectLinksWithAssignedRoadwayNumbers, userName, originalAddresses)
       val projectLinkIdsToDB = recalculated.map(_.id).diff(projectLinks.map(_.id))
       projectLinkDAO.create(recalculated.filter(pl => projectLinkIdsToDB.contains(pl.id)))
@@ -2252,7 +2248,7 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
   // VIITE-2179
   private def assignRoadwayNumbersToTerminatedProjectLinks(allProjectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
     //getting project link sections by roadway number and track
-    val sectionGroup = allProjectLinks.groupBy(pl => (pl.track, pl.roadwayNumber))
+    val sectionGroup = allProjectLinks.groupBy(pl => (pl.track, pl.roadwayId))
     //check if entire project link section was terminated
     sectionGroup.values.flatMap { pls =>
       if (!pls.forall(_.status == RoadAddressChangeType.Termination)) {
