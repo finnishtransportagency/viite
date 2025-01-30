@@ -2247,7 +2247,8 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
    */
   // VIITE-2179
   private def assignRoadwayNumbersToTerminatedProjectLinks(allProjectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
-    //getting project link sections by roadway number and track
+    //getting project link sections by roadway and track
+    // (use roadway id instead of roadway number because roadway number might have changed already in the recalculation process)
     val sectionGroup = allProjectLinks.groupBy(pl => (pl.track, pl.roadwayId))
     //check if entire project link section was terminated
     sectionGroup.values.flatMap { pls =>
