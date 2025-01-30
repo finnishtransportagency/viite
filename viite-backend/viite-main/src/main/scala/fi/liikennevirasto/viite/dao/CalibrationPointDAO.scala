@@ -116,7 +116,7 @@ object CalibrationPointDAO extends BaseDAO {
          FROM calibration_point cp
          JOIN roadway_point rp ON rp.id = cp.roadway_point_id
          WHERE rp.roadway_number = $roadwayNumber
-         AND rp.addr_m BETWEEN $startAddr AND $endAddr
+         AND rp.addr_m BETWEEN ${addrMRange.start} AND ${addrMRange.end}
          AND cp.valid_to IS NULL
      """
     runSelectQuery(query.map(_.long(1))).toSet

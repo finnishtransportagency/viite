@@ -372,12 +372,12 @@ class ProjectLinkDAO extends BaseDAO {
           partNumber     = rs.long("project_road_part_number")
         ),
         originalAddrMRange    = AddrMRange(
-          startAddr           = rs.long("original_start_addr_m"),
-          endAddr             = rs.long("original_end_addr_m")
+          start           = rs.long("original_start_addr_m"),
+          end             = rs.long("original_end_addr_m")
         ),
         newAddrMRange         = AddrMRange(
-          startAddr           = rs.long("start_addr_m"),
-          endAddr             = rs.long("end_addr_m")
+          start           = rs.long("start_addr_m"),
+          end             = rs.long("end_addr_m")
         ),
         status                = RoadAddressChangeType(rs.int("status")),
         reversed              = rs.boolean("reversed"),
@@ -492,8 +492,8 @@ class ProjectLinkDAO extends BaseDAO {
           pl.originalAddrMRange.end,
           modifier,
           pl.projectId,
-          pl.calibrationPointTypes._1.value) // startCP
-          pl.calibrationPointTypes._2.value) // endCP
+          pl.calibrationPointTypes._1.value, // startCP
+          pl.calibrationPointTypes._2.value, // endCP
           pl.originalStartCalibrationPointType.value,
           pl.originalEndCalibrationPointType.value,
           pl.status.value,
