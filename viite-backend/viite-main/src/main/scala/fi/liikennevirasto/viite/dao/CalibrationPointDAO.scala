@@ -4,7 +4,7 @@ import scalikejdbc._
 import scalikejdbc.interpolation.SQLSyntax.joinWithOr
 import scalikejdbc.jodatime.JodaWrappedResultSet.fromWrappedResultSetToJodaWrappedResultSet
 import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
-import fi.vaylavirasto.viite.model.{CalibrationPoint, CalibrationPointLocation, CalibrationPointType}
+import fi.vaylavirasto.viite.model.{AddrMRange, CalibrationPoint, CalibrationPointLocation, CalibrationPointType}
 import fi.vaylavirasto.viite.util.ViiteException
 
 object CalibrationPointDAO extends BaseDAO {
@@ -110,7 +110,7 @@ object CalibrationPointDAO extends BaseDAO {
     }
   }
 
-  def fetchIdByRoadwayNumberSection(roadwayNumber: Long, startAddr: Long, endAddr: Long): Set[Long] = {
+  def fetchIdByRoadwayNumberSection(roadwayNumber: Long, addrMRange: AddrMRange): Set[Long] = {
     val query =  sql"""
          SELECT cp.id
          FROM calibration_point cp

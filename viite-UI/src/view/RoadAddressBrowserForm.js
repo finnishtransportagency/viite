@@ -33,7 +33,7 @@
                         createRoadPartNumberInputFields("roadAddrChangesInputStartPart", "roadAddrChangesInputEndPart") +
                         '<div class="road-address-browser-form-button-wrapper">' +
                             createSearchButton("fetchRoadAddressChanges") +
-                            createExcelDownloadButton() +
+                            createCsvDownloadButton() +
                         '</div>' +
                 '</form>';
         }
@@ -66,7 +66,7 @@
                         '</div>' +
                         '<div class="road-address-browser-form-button-wrapper">' +
                             createSearchButton("fetchRoadAddresses") +
-                            createExcelDownloadButton() +
+                            createCsvDownloadButton() +
                         '</div>' +
                     '</form>';
         }
@@ -89,8 +89,8 @@
                     '<div class="input-container"><label class="control-label-small">Losa</label><input type="number" min="1" max="999" id="' + idEnd + '"/></div>';
         }
 
-        function createExcelDownloadButton() {
-            return '<button id="exportAsExcelFile" class="download-excel btn" disabled>Lataa Excelinä <i class="fas fa-file-excel"></i></button>';
+        function createCsvDownloadButton() {
+            return '<button id="exportAsCsvFile" class="download-csv btn" disabled>Lataa CSV-tiedostona <i class="fas fa-file-excel"></i></button>';
         }
 
         function createSearchButton(id) {

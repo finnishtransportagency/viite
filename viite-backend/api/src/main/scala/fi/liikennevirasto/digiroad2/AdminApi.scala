@@ -76,6 +76,47 @@ class AdminApi(val dataImporter: DataImporter, implicit val swagger: Swagger) ex
     }
   }
 
+  /** Runs partial initial import, that basically consists of
+    * /import_road_addresses (importRoadAddresses), and
+    * /update_geometry (updateSplittedLinkLinearLocationGeometries).
+    * importRoadAddresses wipes off the db data, gets the new data from drkonv, and processes it into Viite.
+    * updateSplittedLinkLinearLocationGeometries sets the linear location geometries
+    * correctly into the splitted links that consist of multiple linear locations.
+    * @param conversion_table table name to read the conversion data from.
+    */
+  get("/partial_initial_import") {
+    val conversionTable = params.get("conversion_table")
+
+    time(logger, "GET request for /partial_initial_import") {
+
+      var phase = "(Not started yet)"
+
+      try {
+        // First, import the changed (samuutettu) import data
+        phase = "Importing road addresses"
+        logger.info(s"partial_initial_import: $phase starting.")
+        dataImporter.importRoadAddresses(conversionTable)
+        logger.info(s"partial_initial_import: $phase successful.")
+
+        // Then, update the splitted linear locations so that they have correctly splitted geometries
+        phase = "Updating splitted link geometries"
+        logger.info(s"partial_initial_import: $phase starting.")
+        dataImporter.updateLinearLocationGeometry()
+        logger.info(s"partial_initial_import: $phase successful.")
+
+        // Return http-OK, when everything passed without Exceptions.
+        Ok("partial_initial_import successful.\n")
+
+      } catch {
+        // In case of an exception, tell the failing phase for the caller. More details into the log.
+        case e: Exception =>
+          logger.error(s"partial_initial_import: $phase failed.", e)
+          InternalServerError(s"partial_initial_import failed: $phase")
+      }
+
+    }
+  }
+
   get("/update_geometry") {
     time(logger, "GET request for /update_geometry") {
       try {

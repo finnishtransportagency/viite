@@ -427,6 +427,14 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
 
         val linearLocationsWithOldLinkId = linearLocations.filter(_.linkId == oldLinkId)
         val roadAddressedLinkLength = GeometryUtils.scaleToThreeDigits(linearLocationsWithOldLinkId.map(_.endMValue).max - linearLocationsWithOldLinkId.map(_.startMValue).min)
+        
+        // check that the changeset actually has some changes in it
+        if (change.oldLinkId == change.newLinkId &&
+            change.oldStartM == change.newStartM &&
+            change.oldEndM == change.newEndM &&
+            !change.digitizationChange) {
+          tiekamuRoadLinkChangeErrors += TiekamuRoadLinkChangeError("No changes found in the changeset ", change, getMetaData(change, linearLocations))
+        }
 
         // check that there are no "partial" changes to road addressed links, i.e. only part of the link changes and the other part has no changes applied to it.
         if (lengthOfChange != roadAddressedLinkLength) {
@@ -441,7 +449,7 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
 
         // if there are combined links (A + B = C)
         else if (otherChangesWithSameNewLinkId.nonEmpty) {
-          val oldLinkIds = otherChangesWithSameNewLinkId.map(_.oldLinkId)
+          val oldLinkIds = otherChangesWithSameNewLinkId.map(_.oldLinkId) ++ Seq(change.oldLinkId)
           val oldLinearLocations = linearLocations.filter(ll => oldLinkIds.contains(ll.linkId))
           val roadways = roadwayDAO.fetchAllByRoadwayNumbers(oldLinearLocations.map(_.roadwayNumber).toSet)
           // group the roadways with roadPart and track

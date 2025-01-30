@@ -1,5 +1,5 @@
 (function (root) {
-  root.ProjectForm = function (map, projectCollection, selectedProjectLinkProperty, projectLinkLayer) {
+  root.ProjectForm = function (map, projectCollection, selectedProjectLinkProperty, projectLinkLayer, startupParameters) {
     //TODO create uniq project model in ProjectCollection instead using N vars e.g.: project = {id, roads, parts, ely, startingLinkId, publishable, projectErrors}
     var currentProject = false;
     var formCommon = new FormCommon('');
@@ -148,6 +148,10 @@
 
 
     var selectedProjectLinkTemplateDisabledButtons = function (project) {
+      let devToolValidationButton = '';
+      if (_.includes(startupParameters.roles, 'dev')) {
+        devToolValidationButton = '<button id="validate-button" title="" class="validate btn btn-block btn-recalculate" hidden="true">Validoi projekti</button>';
+      }
       return _.template('' +
         '<header>' +
           formCommon.titleWithEditingTool(project) +
@@ -159,6 +163,7 @@
         '</div></div></br></br>' +
         '<footer>' +
         '<div class="project-form form-controls">' +
+          devToolValidationButton +
           formCommon.projectButtonsDisabled() +
           '</div>' +
           '</footer>');

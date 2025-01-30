@@ -362,8 +362,9 @@ case class RoadAddress(id: Long, linearLocationId: Long, roadPart: RoadPart, adm
       validTo.exists(vt => vt.isEqualNow || vt.isBeforeNow)
   }
 
+  /** Get an address value corresponding to the measured values. */
   private def addrAt(a: Double) = {
-    val coefficient = (addrMRange.end - addrMRange.start) / (endMValue - startMValue)
+    val coefficient = (addrMRange.length) / (endMValue - startMValue) // Coefficient telling how many road address meters is a geometry meter.
     sideCode match {
       case SideCode.AgainstDigitizing =>
         addrMRange.end - Math.round((a - startMValue) * coefficient)
@@ -1213,6 +1214,9 @@ class RoadwayDAO extends BaseDAO {
            FROM   roadwayswithstartaddr s
                   JOIN roadwayswithendaddr e
                     ON s.numb = e.numb
+                    AND s.road_number = e.road_number
+                    AND s.road_part_number = e.road_part_number
+                    AND s.track = e.track
            ORDER  BY s.road_number,
                      s.road_part_number,
                      s.start_addr_m,

@@ -17,7 +17,7 @@ import scalikejdbc.jodatime.JodaWrappedResultSet.fromWrappedResultSetToJodaWrapp
 
 //TODO naming SQL conventions
 
-
+case class ProjectLinkDevToolData(startAddrMValue: Option[Long] = None, endAddrMValue: Option[Long] = None, originalStartAddrMValue: Option[Long] = None, originalEndAddrMValue: Option[Long] = None, startCp: Long = 0, endCp: Long = 0, generateNewRoadwayNumber: Boolean = false, editedSideCode: Option[Long] = None)
 
 case class ProjectLink(id: Long, roadPart: RoadPart, track: Track, discontinuity: Discontinuity, addrMRange: AddrMRange, originalAddrMRange: AddrMRange, startDate: Option[DateTime] = None, endDate: Option[DateTime] = None, createdBy: Option[String] = None, linkId: String, startMValue: Double, endMValue: Double, sideCode: SideCode,
                        calibrationPointTypes: (CalibrationPointType, CalibrationPointType) = (CalibrationPointType.NoCP, CalibrationPointType.NoCP),
@@ -56,7 +56,7 @@ case class ProjectLink(id: Long, roadPart: RoadPart, track: Track, discontinuity
   }
 
   def addrAt(a: Double): Long = {
-    val coefficient = (addrMRange.end - addrMRange.start) / (endMValue - startMValue)
+    val coefficient = (addrMRange.length) / (endMValue - startMValue)
     sideCode match {
       case SideCode.AgainstDigitizing =>
         addrMRange.end - Math.round((a-startMValue) * coefficient)
@@ -64,10 +64,6 @@ case class ProjectLink(id: Long, roadPart: RoadPart, track: Track, discontinuity
         addrMRange.start + Math.round((a-startMValue) * coefficient)
       case _ => throw new InvalidAddressDataException(s"Bad sidecode $sideCode on project link")
     }
-  }
-
-  def addrMLength(): Long = {
-    addrMRange.end - addrMRange.start
   }
 
   def getFirstPoint: Point = {
@@ -79,7 +75,7 @@ case class ProjectLink(id: Long, roadPart: RoadPart, track: Track, discontinuity
   }
 
   def toMeters(address: Long): Double = {
-    val coefficient = (endMValue - startMValue) / (addrMRange.end - addrMRange.start)
+    val coefficient = (endMValue - startMValue) / (addrMRange.length)
     coefficient * address
   }
 
@@ -375,10 +371,14 @@ class ProjectLinkDAO extends BaseDAO {
           roadNumber     = rs.long("project_road_number"),
           partNumber     = rs.long("project_road_part_number")
         ),
-        originalStartAddr     = rs.long("original_start_addr_m"),
-        originalEndAddr       = rs.long("original_end_addr_m"),
-        newStartAddr          = rs.long("start_addr_m"),
-        newEndAddr            = rs.long("end_addr_m"),
+        originalAddrMRange    = AddrMRange(
+          startAddr           = rs.long("original_start_addr_m"),
+          endAddr             = rs.long("original_end_addr_m")
+        ),
+        newAddrMRange         = AddrMRange(
+          startAddr           = rs.long("start_addr_m"),
+          endAddr             = rs.long("end_addr_m")
+        ),
         status                = RoadAddressChangeType(rs.int("status")),
         reversed              = rs.boolean("reversed"),
         originalRoadwayNumber = rs.longOpt("original_roadway_number").getOrElse(0L),
@@ -492,8 +492,8 @@ class ProjectLinkDAO extends BaseDAO {
           pl.originalAddrMRange.end,
           modifier,
           pl.projectId,
-          pl.startCalibrationPointType.value,
-          pl.endCalibrationPointType.value,
+          pl.calibrationPointTypes._1.value) // startCP
+          pl.calibrationPointTypes._2.value) // endCP
           pl.originalStartCalibrationPointType.value,
           pl.originalEndCalibrationPointType.value,
           pl.status.value,

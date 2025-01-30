@@ -14,8 +14,11 @@ import scalikejdbc.jodatime.JodaWrappedResultSet.fromWrappedResultSetToJodaWrapp
 import scala.+:
 
 case class RoadwayChangeSection(roadNumber: Option[Long], trackCode: Option[Long], startRoadPartNumber: Option[Long],
-                                endRoadPartNumber: Option[Long], startAddressM: Option[Long], endAddressM: Option[Long],
-                                administrativeClass: Option[AdministrativeClass], discontinuity: Option[Discontinuity], ely: Option[Long])
+                                endRoadPartNumber: Option[Long], addrMRange: Option[AddrMRange],
+                                administrativeClass: Option[AdministrativeClass], discontinuity: Option[Discontinuity], ely: Option[Long]) {
+    def getStartOption: Option[Long] = {  if(addrMRange.isEmpty) None else Some(addrMRange.get.start)  }
+    def getEndOption:   Option[Long] = {  if(addrMRange.isEmpty) None else Some(addrMRange.get.end  )  }
+}
 
 case class RoadwayChangeSectionTR(roadNumber: Option[Long], trackCode: Option[Long], startRoadPartNumber: Option[Long],
                                   endRoadPartNumber: Option[Long], startAddressM: Option[Long], endAddressM: Option[Long])
@@ -117,13 +120,15 @@ case class ChangeInfoForRoadAddressChangesBrowser(startDate: DateTime, changeTyp
 class RoadwayChangesDAO extends BaseDAO {
 
   private def toRoadwayChangeRecipient(row: ChangeRow) = {
-    RoadwayChangeSection(row.targetRoadNumber, row.targetTrackCode, row.targetStartRoadPartNumber, row.targetEndRoadPartNumber, row.targetStartAddressM, row.targetEndAddressM,
+    val addrMRange = if(row.targetStartAddressM.isDefined &&row.targetEndAddressM.isDefined) Some(AddrMRange(row.targetStartAddressM.get, row.targetEndAddressM.get)) else None
+    RoadwayChangeSection(row.targetRoadNumber, row.targetTrackCode, row.targetStartRoadPartNumber, row.targetEndRoadPartNumber, addrMRange,
       Some(AdministrativeClass.apply(row.targetAdministrativeClass.getOrElse(AdministrativeClass("Unknown").value))),
       Some(Discontinuity.apply(row.targetDiscontinuity.getOrElse(Discontinuity.Continuous.value))), Some(row.targetEly))
   }
 
   private def toRoadwayChangeSource(row: ChangeRow) = {
-    RoadwayChangeSection(row.sourceRoadNumber, row.sourceTrackCode, row.sourceStartRoadPartNumber, row.sourceEndRoadPartNumber, row.sourceStartAddressM, row.sourceEndAddressM,
+    val addrMRange = if(row.sourceStartAddressM.isDefined &&row.sourceEndAddressM.isDefined) Some(AddrMRange(row.sourceStartAddressM.get, row.sourceEndAddressM.get)) else None
+    RoadwayChangeSection(row.sourceRoadNumber, row.sourceTrackCode, row.sourceStartRoadPartNumber, row.sourceEndRoadPartNumber, addrMRange,
       Some(AdministrativeClass.apply(row.sourceAdministrativeClass.getOrElse(AdministrativeClass("Unknown").value))),
       Some(Discontinuity.apply(row.sourceDiscontinuity.getOrElse(Discontinuity.Continuous.value))), row.sourceEly)
   }
@@ -223,9 +228,9 @@ class RoadwayChangesDAO extends BaseDAO {
             null,
             roadwaySection.track.value,
             null,
-            roadwaySection.startMAddr,
+            roadwaySection.addrMRange.start,
             null,
-            roadwaySection.endMAddr,
+            roadwaySection.addrMRange.end,
             roadwaySection.discontinuity.value,
             roadwaySection.administrativeClass.value,
             roadwaySection.ely,
@@ -245,9 +250,9 @@ class RoadwayChangesDAO extends BaseDAO {
             null,
             roadwaySection.track.value,
             null,
-            roadwaySection.startMAddr,
+            roadwaySection.addrMRange.start,
             null,
-            roadwaySection.endMAddr,
+            roadwaySection.addrMRange.end,
             null,
             roadwaySection.discontinuity.value,
             roadwaySection.administrativeClass.value,
@@ -268,10 +273,10 @@ class RoadwayChangesDAO extends BaseDAO {
             roadwaySection.roadPartNumberStart,
             roadwaySection.track.value,
             roadwaySection.track.value,
-            roadwaySection.startMAddr,
-            roadwaySection.startMAddr,
-            roadwaySection.endMAddr,
-            roadwaySection.endMAddr,
+            roadwaySection.addrMRange.start,
+            roadwaySection.addrMRange.start,
+            roadwaySection.addrMRange.end,
+            roadwaySection.addrMRange.end,
             roadwaySection.discontinuity.value,
             roadwaySection.administrativeClass.value,
             roadwaySection.ely,
@@ -308,10 +313,10 @@ class RoadwayChangesDAO extends BaseDAO {
         newRoadwaySection.roadPartNumberStart.toInt,
         oldRoadwaySection.track.value,
         newRoadwaySection.track.value,
-        oldRoadwaySection.startMAddr,
-        newRoadwaySection.startMAddr,
-        oldRoadwaySection.endMAddr,
-        newRoadwaySection.endMAddr,
+        oldRoadwaySection.addrMRange.start,
+        newRoadwaySection.addrMRange.start,
+        oldRoadwaySection.addrMRange.end,
+        newRoadwaySection.addrMRange.end,
         newRoadwaySection.discontinuity.value,
         newRoadwaySection.administrativeClass.value,
         newRoadwaySection.ely.toInt,

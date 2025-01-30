@@ -10,7 +10,7 @@ import fi.liikennevirasto.viite.process.strategy.DefaultSectionCalculatorStrateg
 import fi.liikennevirasto.viite.util._
 import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, CalibrationPointType, Discontinuity, LifecycleStatus, LinkGeomSource, RoadAddressChangeType, RoadLink, RoadPart, SideCode, Track, TrafficDirection}
+import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, CalibrationPointType, Discontinuity, LifecycleStatus, LinkGeomSource, RoadAddressChangeType, RoadLink, RoadPart, SideCode, Track, TrafficDirection}
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
@@ -165,7 +165,7 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter wi
         val z = x match {
           case info1: RoadwayChangeInfo => val ss   = (Map[String, Any]() /: info1.source.getClass.getDeclaredFields) { (b, B) => {
             B.setAccessible(true)
-            if (header.size < 11) header = header ++ B.getName
+            if (header.size < 10) header = header ++ B.getName
             val value    = B.get(info1.source)
             val colValue = value match {
               case None => Some("")
@@ -176,14 +176,13 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter wi
           }.asInstanceOf[HashMap.HashTrieMap[String, Option[Any]]].toList.map(t => {
             t._1 -> (if (t._2.isDefined) t._2.get else t._2)
           })
-             val sss  = if (ss.find(_._1 == "startAddressM").get._2.toString.isEmpty) ss.map(t => {
-               (t._1, "")
-             }) else ss
-             val ssss = sss.map(t => {
-               if (t._1 == "endRoadPartNumber" && t._2.toString.nonEmpty) ("length", sss.find(_._1 == "endAddressM").get._2.asInstanceOf[Long] - sss.find(_._1 == "startAddressM").get._2.asInstanceOf[Long]) else t
-             })
-             val s    = List(ssss.head, ssss(6), ssss(5), ssss(2), ssss(8), ssss(3), ssss(7), ssss(1), ssss(4))
-
+            // if "addrMRange" key found, and there isEmpty no value, empty the "addrMRange" key.
+            val sss  = if (ss.find(_._1 == "addrMRange").get._2.toString.isEmpty) ss.map(t => (t._1, "")) else ss
+            val ssss = sss.map(t => {
+              //// replace "endRoadPartNumber" data with "length" data.
+              if (t._1 == "endRoadPartNumber" && t._2.toString.nonEmpty) ("length", sss.find(_._1 == "addrMRange").get._2.asInstanceOf[AddrMRange].length) else t
+            })
+            val s    = List(ssss(5), ssss(4),  ssss(1),ssss(7), ssss(2),  ssss(6), ssss.head, ssss(3))
             val tt   = (Map[String, Any]() /: info1.target.getClass.getDeclaredFields) { (b, B) => {
               B.setAccessible(true)
               val value    = B.get(info1.target)
@@ -196,18 +195,22 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter wi
             }.asInstanceOf[HashMap.HashTrieMap[String, Option[Any]]].toList.map(t => {
               t._1 -> (if (t._2.isDefined) t._2.get else t._2)
             })
-            val ttt  = if (tt.find(_._1 == "startAddressM").get._2.toString.isEmpty) tt.map(t => {
+            val ttt  = if (tt.find(_._1 == "addrMRange").get._2.toString.isEmpty) tt.map(t => {
               (t._1, "")
             }) else tt
             val tttt = ttt.map(t => {
-              if (t._1 == "endRoadPartNumber" && t._2.toString.nonEmpty) ("length", ttt.find(_._1 == "endAddressM").get._2.asInstanceOf[Long] - ttt.find(_._1 == "startAddressM").get._2.asInstanceOf[Long]) else t
+              if (t._1 == "endRoadPartNumber" && t._2.toString.nonEmpty) ("length", ttt.find(_._1 == "addrMRange").get._2.asInstanceOf[AddrMRange].length) else t
             })
-            val t    = List(tttt.head, tttt(6), tttt(5), tttt(2), tttt(8), tttt(3), tttt(7), tttt(1), tttt(4))
+            val t    = List(tttt(5), tttt(4), tttt(1), tttt(7), tttt(2),  tttt(6), tttt.head, tttt(3))
+          //               roadNr     adm     endaddr startPart  ely     endPart  discont. track    startaddr
 
+            // Add changeType as the first, and reversed as the last column for the first (i.e. source) row of the pair
             val T: Map[String, Any] = Map("changeType" -> info1.changeType)
-            val R: Map[String, Any] = Map("reversed" -> info1.reversed)
-
-            List(T.toList ++ s ++ R.toList, Map("" -> "").toList ++ t ++ Map("" -> "").toList)
+            val R: Map[String, Any] = Map("reversed"   -> info1.reversed  )
+            List(
+              T.toList             ++ s ++ R.toList,
+              Map("" -> "").toList ++ t ++ Map("" -> "").toList
+            )
           case _ => List()
         }
         if (z.isEmpty) a else z
@@ -236,7 +239,7 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter wi
         if (z.isEmpty) a else a ++ z
       }
       val fks    = fields.keys.toList
-      s"${List(fks.head, fks(6), "length", fks(2), "roadPartNumber", fks(3), fks(7), fks(1), fks(4)).mkString(" | ")}"
+      s"${List(          fks(5), "length", fks(1), "roadPartNumber", fks(2), fks(6), fks.head, fks(3)).mkString(" | ")}"
     }
   }
 
@@ -262,7 +265,7 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter wi
       val C                                                      = changes.map(c => {
         c.rowValuesToString
       })
-      println(formatTable(Seq(Seq(headers.take(11)) ++ C.flatten)))
+      println(formatTable(Seq(Seq(headers.take(10)) ++ C.flatten)))
     })
   }
 
@@ -1013,7 +1016,7 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter wi
         def continuosAddresses(t: Seq[ProjectLink]): ProjectLink = {
           t.sortBy(_.addrMRange.start).tail.foldLeft(t.head) { (cur, next) =>
             assert(next.addrMRange.start <= next.addrMRange.end)
-            assert(cur.addrMRange.end == next.addrMRange.start)
+            assert(cur.addrMRange.continuesTo(next.addrMRange))
             next
           }
         }
@@ -1081,7 +1084,7 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter wi
         val two_track_unchanged_and_transfers = changeProject.get.changeInfoSeq.filter(changeInfo => List(1,3).contains(changeInfo.changeType.value))
 
         // Cross check source/target lengths
-        two_track_unchanged_and_transfers.foreach(t => (t.source.endAddressM.get - t.source.startAddressM.get) should be (t.target.endAddressM.get - t.target.startAddressM.get))
+        two_track_unchanged_and_transfers.foreach(t => (t.source.addrMRange.get.length) should be (t.target.addrMRange.get.length))
 
         // Value checks
         two_track_nonterminated_sources.foreach(rcs => {
@@ -1094,19 +1097,20 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter wi
         /* Check two tracks has equal start and end addresses on both track sections */
        val two_track_groups: Iterable[Seq[RoadwayChangeSection]] = two_track_nonterminated_sources.filterNot(_.trackCode.get == 0).groupBy(t => t.trackCode).values
        two_track_groups.size should be (2)
-       two_track_groups.head.head.startAddressM.get should be (two_track_groups.last.head.startAddressM.get)
-       two_track_groups.head.last.endAddressM.get should be (two_track_groups.last.last.endAddressM.get)
+       two_track_groups.head.head.getStartOption should be (two_track_groups.last.head.getStartOption)
+       two_track_groups.head.last.getEndOption   should be (two_track_groups.last.last.getEndOption  )
 
         /* Check two track addresses are continuous on each track. */
         def check_two_track_continuous(x: Seq[RoadwayChangeSection]): Unit = {
           Seq(Track.LeftSide, Track.RightSide).foreach(track => {
-            val trackAddresses = x.filterNot(_.trackCode.get == track.value).sortBy(_.startAddressM.get).map(rcs => {
-              (rcs.startAddressM.get, rcs.endAddressM.get)
-            })
-            trackAddresses.tail.foldLeft(trackAddresses.head._2) { (cur, next) =>
-              assert(next._1 < next._2) // StartAddress < EndAddress
-              assert(cur == next._1) // Prev endAddress = next startAddress
-              next._2
+            val trackAddresses = x.filterNot(_.trackCode.get == track.value)
+              .filter(_.addrMRange.isDefined)
+              .sortBy(_.addrMRange.get.start)
+              .map(rcs => {  rcs.addrMRange.get  })
+            trackAddresses.tail.foldLeft(trackAddresses.head.end) { (cur, next) =>
+              assert(next.start < next.end  ) // Everything must be at least of length of 1; start < end
+              assert(      cur == next.start) // The addresses must be continuous; end == next start
+              next.end
             }
           })
         }
@@ -1153,7 +1157,7 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter wi
            it.next() match {
              case Seq(cur, next) =>
                assert(next.addrMRange.start <= next.addrMRange.end)
-               assert(cur.addrMRange.end == next.addrMRange.start)
+               assert(cur.addrMRange.continuesTo(next.addrMRange))
            }
          }
        }
@@ -1174,7 +1178,7 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter wi
            it.next() match {
              case Seq(cur, next) =>
                assert(next.addrMRange.start <= next.addrMRange.end)
-               assert(cur.addrMRange.end == next.addrMRange.start)
+               assert(cur.addrMRange.continuesTo(next.addrMRange))
            }
          }
        }
@@ -1185,7 +1189,7 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter wi
 
         /* Less well tested part below. */
 
-        val calIds = currentRws.flatMap(crw => CalibrationPointDAO.fetchIdByRoadwayNumberSection(crw.roadwayNumber, 0, 5000))
+        val calIds = currentRws.flatMap(crw => CalibrationPointDAO.fetchIdByRoadwayNumberSection(crw.roadwayNumber, AddrMRange(0, 5000)))
         val cals = calIds.map(cpid => CalibrationPointDAO.fetch(cpid))
 
         /* Current roadways should not have any expired calibrations points. */

@@ -270,12 +270,25 @@ class ProjectReservedPartDAO extends BaseDAO {
       runSelectQuery(query.map(ProjectReservedPart.fromReservedQuery))
     }
   }
-
+  // TODO: Check if this is necessary to be this complex
+  /**
+   * Combines and returns both planned road part changes and affected existing road parts.
+   * Returns parts either from the specified project or other projects based on the withProjectId flag.
+   *
+   * The final result contains:
+   * - New/modified road parts being actively planned
+   * - Existing road parts that are being changed/affected
+   *
+   * @param projectId The ID of the project
+   * @param withProjectId If true, returns parts from this project; if false, from other projects
+   *  TODO  projectId + withProjectId could be Option[ProjectId] instead ?
+   * @return Combined sequence of ProjectReservedPart sorted by road part
+   */
   def fetchFormedRoadParts(projectId: Long, withProjectId: Boolean = true): Seq[ProjectReservedPart] = {
-    (formedByIncrease(projectId, withProjectId) ++ formedByReduction(projectId, withProjectId)).sortBy(p => p.roadPart)
+    (fetchPlannedRoadParts(projectId, withProjectId)++fetchAffectedExistingParts(projectId, withProjectId)).sortBy(p => p.roadPart)
   }
 
-  def formedByIncrease(projectId: Long, withProjectId: Boolean = true): Seq[ProjectReservedPart] = {
+  def fetchPlannedRoadParts(projectId: Long, withProjectId: Boolean = true): Seq[ProjectReservedPart] = {
     time(logger, s"Fetch formed road parts for project: $projectId") {
       val projectFilter = if (withProjectId && projectId != 0) sqls"rp.project_id = $projectId" else sqls"rp.project_id != $projectId"
       val query = sql"""
@@ -384,7 +397,7 @@ class ProjectReservedPartDAO extends BaseDAO {
     }
   }
 
-  def formedByReduction(projectId: Long, withProjectId: Boolean = true): Seq[ProjectReservedPart] = {
+  def fetchAffectedExistingParts(projectId: Long, withProjectId: Boolean = true): Seq[ProjectReservedPart] = {
     time(logger, s"Fetch formed road parts for project: $projectId") {
       val filter = if (withProjectId && projectId != 0) sqls" rp.project_id = $projectId " else sqls" rp.project_id != $projectId "
       val query =

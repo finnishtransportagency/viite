@@ -28,7 +28,7 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
       }
 
     //Fix calibration points in history road addresses
-    val addressLength = historyRoadwayAddress.addrMRange.end - historyRoadwayAddress.addrMRange.start
+    val addressLength = historyRoadwayAddress.addrMRange.length
 
     assert(addressLength >= 0)
 
@@ -55,8 +55,8 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
     * @return The address of the history calibration point
     */
   private def calculateAddressHistoryCalibrationPoint(currentRoadwayAddress: Roadway, historyRoadwayAddress: Roadway)(currentCalibrationAddress: Long): Long = {
-    val currentAddressLength = currentRoadwayAddress.addrMRange.end - currentRoadwayAddress.addrMRange.start
-    val historyAddressLength = historyRoadwayAddress.addrMRange.end - historyRoadwayAddress.addrMRange.start
+    val currentAddressLength = currentRoadwayAddress.addrMRange.length
+    val historyAddressLength = historyRoadwayAddress.addrMRange.length
     val calibrationLength = currentCalibrationAddress - currentRoadwayAddress.addrMRange.start
 
     historyRoadwayAddress.addrMRange.start + (historyAddressLength * calibrationLength / currentAddressLength)
