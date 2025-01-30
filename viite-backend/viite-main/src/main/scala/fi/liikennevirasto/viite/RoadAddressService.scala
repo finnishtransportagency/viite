@@ -980,7 +980,7 @@ class RoadAddressService(
         val terminatedRoadwayNumbersChanges = projectLinkChanges.filter { entry => // TODO "terminatedRoadwayNumbersChanges" - what is it with this name?
           entry.roadPart.roadNumber == source.roadNumber.get &&
           (source.startRoadPartNumber.get to source.endRoadPartNumber.get contains entry.roadPart.partNumber) &&
-          (entry.originalAddrMRange.isInvalid || source.addrMRange.get.contains(entry.originalAddrMRange)) // TODO invalids preserved in the filter at AddrMRange.contains refactoring, but this functionality seems weird?
+          (entry.originalAddrMRange.isUndefined || source.addrMRange.get.contains(entry.originalAddrMRange)) // TODO undefined (a.k.a. new address) projectLinkChanges were preserved within the filter at VIITE-3324 (AddrMRange.contains) refactoring, but this functionality seems weird? RoadwayPoints should not ever point to undefined addresses? It is weird they are taken into the filter here?
         }
         val roadwayNumbers = if (change.changeType == RoadAddressChangeType.Termination) {
           terminatedRoadwayNumbersChanges.map(_.newRoadwayNumber).distinct

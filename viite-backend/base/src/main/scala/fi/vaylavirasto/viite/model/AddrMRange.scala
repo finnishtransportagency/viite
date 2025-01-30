@@ -50,26 +50,29 @@ case class AddrMRange (start: Long, end: Long)// extends Ordered[AddrMRange]
 
   // ----------------------------------- Connectivity checks -----------------------------------
   /** Returns true, if the compared AddrMRanges have the same start, and end values, and both are valid ranges. Else false.
-   * @throws ViiteException if either AddrMRange isUndefined. */
-  def isSameAs          (other: AddrMRange): Boolean = {
+   * @throws ViiteException if either AddrMRange isUndefined.
+   */
+  def isSameAs(other: AddrMRange): Boolean = {
     if(!bothAreValid(this,other))
-      throw new ViiteException(s"Cannot define sameness for undefined address range (between $this, $other). ")
+      throw new ViiteException(s"Cannot detect sameness of undefined address range (between $this, $other). ")
     this.start == other.start && this.end  == other.end && bothAreValid(this,other)
   }
 
   /** Returns true, if other AddrMRange fully fits within this AddrMRange, (equal ending points allowed,) and both are valid ranges. Else false.
-   * @throws ViiteException if either AddrMRange isUndefined. */
-  def contains          (other: AddrMRange): Boolean = {
+   * @throws ViiteException if either AddrMRange isUndefined.
+   */
+  def contains(other: AddrMRange): Boolean = {
     if(!bothAreValid(this,other))
-      throw new ViiteException(s"Cannot define containment for undefined address range (between $this, $other). ")
+      throw new ViiteException(s"Cannot detect containment of undefined address range (between $this, $other). ")
     this.start <= other.start && other.end <= this.end && bothAreValid(this,other)
   }
 
   /** Returns true, if this AddrMRange has more than single point in common with <i>other</i>, and both are valid ranges. Else false.
-   * @throws ViiteException if either AddrMRange isUndefined. */
-  def overlaps          (other: AddrMRange): Boolean = {
+   * @throws ViiteException if either AddrMRange isUndefined.
+   */
+  def overlaps(other: AddrMRange): Boolean = {
     if(!bothAreValid(this,other))
-      throw new ViiteException(s"Cannot define sameness for undefined address range (between $this, $other). ")
+      throw new ViiteException(s"Cannot detect overlapping of undefined address range (between $this, $other). ")
     this.start < other.end && this.end > other.start && bothAreValid(this,other)
   }
 
