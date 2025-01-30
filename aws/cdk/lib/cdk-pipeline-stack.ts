@@ -110,8 +110,8 @@ export class ViiteCdkStack extends cdk.Stack {
             commands: [
               'echo Build started on `date`',
               'grunt test',
-              'sbt ${1} ${2} "project viite-main" "test:run-main fi.liikennevirasto.viite.util.DataFixture flyway_migrate"',
-              'sbt ${1} ${2} "project viite-main" "test:run-main fi.liikennevirasto.viite.util.DataFixture test"',
+              'sbt ${1} ${2} "project viiteJar" "test:run-main fi.liikennevirasto.viite.util.DataFixture flyway_migrate"',
+              'sbt ${1} ${2} "project viiteJar" "test:run-main fi.liikennevirasto.viite.util.DataFixture test"',
               'sbt test',
               'grunt deploy',
               'sbt clean',

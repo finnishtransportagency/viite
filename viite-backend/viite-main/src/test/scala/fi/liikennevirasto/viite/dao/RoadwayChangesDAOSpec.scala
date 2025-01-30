@@ -143,8 +143,8 @@ class RoadwayChangesDAOSpec extends AnyFunSuite with Matchers {
       })
 
       changes.foreach(c => {
-        c.changeInfo.source.endAddressM.get should be > c.changeInfo.source.startAddressM.get
-        c.changeInfo.target.endAddressM.get should be > c.changeInfo.target.startAddressM.get
+        c.changeInfo.source.addrMRange.get.end should be > c.changeInfo.source.addrMRange.get.start
+        c.changeInfo.target.addrMRange.get.end should be > c.changeInfo.target.addrMRange.get.start
 
         c.changeInfo.source.startRoadPartNumber.get should be(targetRoadPart.partNumber)
         c.changeInfo.source.administrativeClass.get should be(AdministrativeClass.Municipality)
@@ -186,7 +186,7 @@ class RoadwayChangesDAOSpec extends AnyFunSuite with Matchers {
         c.changeInfo.target.trackCode.get should be(0)
         c.changeInfo.target.ely.get should be(5)
       })
-      val (changesToMunicipality, changesToState) = changes.sortBy(_.changeInfo.orderInChangeTable).partition(_.changeInfo.target.startAddressM.get == 0)
+      val (changesToMunicipality, changesToState) = changes.sortBy(_.changeInfo.orderInChangeTable).partition(_.changeInfo.target.addrMRange.get.start == 0)
       changesToMunicipality.head.changeInfo.source.administrativeClass should be(Some(AdministrativeClass.Municipality))
       changesToMunicipality.head.changeInfo.target.administrativeClass should be(Some(AdministrativeClass.Municipality))
       changesToMunicipality.head.changeInfo.source.discontinuity should be(Some(Discontinuity.Continuous))

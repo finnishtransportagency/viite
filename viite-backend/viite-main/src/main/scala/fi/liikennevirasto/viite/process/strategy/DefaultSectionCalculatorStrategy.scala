@@ -569,7 +569,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
 //
 //    val adjustedProjectLinks = projectLinks.zip(addresses.zip(addresses.tail)).map {
 //      case (projectLink, (st, en)) =>
-//        val terminatedLinkAfterUnchangedProjectLink = terminatedLinks.find(terminated => terminated.originalAddrMRange.start == projectLink.originalAddrMRange.end && projectLink.status == RoadAddressChangeType.Unchanged)
+//        val terminatedLinkAfterUnchangedProjectLink = terminatedLinks.find(terminated => terminated.originalAddrMRange.continuesFrom(projectLink.originalAddrMRange) && projectLink.status == RoadAddressChangeType.Unchanged)
 //
 //        if (terminatedLinkAfterUnchangedProjectLink.nonEmpty) {
 //          val termLink = terminatedLinkAfterUnchangedProjectLink.get
@@ -658,7 +658,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       // Check if the left link is split and has a connected link
       if (splittedLeftLink.isDefined && splittedLeftLink.get.connectedLinkId.isDefined) {
         // Find the new link created after the split
-        val newLink = splittedLeftLinks.find(_.addrMRange.start == splittedLeftLink.get.addrMRange.end).get
+        val newLink = splittedLeftLinks.find(_.addrMRange.continuesFrom(splittedLeftLink.get.addrMRange)).get
 
         val udcpToUpdate = udcps.find(_.get.projectLinkId == cur._1)
         udcps.filterNot(_.get.projectLinkId == cur._1) :+ Some(udcpToUpdate.get.get.copy(projectLinkId = newLink.id))
