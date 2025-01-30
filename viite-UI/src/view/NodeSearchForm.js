@@ -206,7 +206,10 @@
         });
 
         rootElement.on('click', '.junction-template-link', function (event) {
-          eventbus.trigger('nodeSearchTool:clickJunctionTemplate', event.currentTarget.id);
+          // Using window.location.hash with preventDefault instead of eventbus.trigger
+          // to Prevent double event triggering from both click and URL change
+          event.preventDefault();
+          window.location.hash = `node/junctionTemplate/${event.currentTarget.id}`;
         });
       });
     };

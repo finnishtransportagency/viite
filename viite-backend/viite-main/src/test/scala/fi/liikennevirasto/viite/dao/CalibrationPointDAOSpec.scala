@@ -1,7 +1,7 @@
 package fi.liikennevirasto.viite.dao
 
 import fi.liikennevirasto.viite.NewIdValue
-import fi.vaylavirasto.viite.model.{CalibrationPoint, CalibrationPointLocation, CalibrationPointType}
+import fi.vaylavirasto.viite.model.{AddrMRange, CalibrationPoint, CalibrationPointLocation, CalibrationPointType}
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
@@ -111,11 +111,11 @@ class CalibrationPointDAOSpec extends AnyFunSuite with Matchers {
     runWithRollback { // fetches should not write to DB, but just in case...
 
       //fetchIdByRoadwayNumberSection(roadwayNumber, startAddr, endAddr)
-      val CpIdsBoth: Set[Long]  = CalibrationPointDAO.fetchIdByRoadwayNumberSection(39317,    0,4000)
+      val CpIdsBoth: Set[Long]  = CalibrationPointDAO.fetchIdByRoadwayNumberSection(39317, AddrMRange(   0,4000))
       CpIdsBoth.size shouldBe (2)
-      val CpIdsStart: Set[Long] = CalibrationPointDAO.fetchIdByRoadwayNumberSection(39317,    0,1000)
+      val CpIdsStart: Set[Long] = CalibrationPointDAO.fetchIdByRoadwayNumberSection(39317, AddrMRange(   0,1000))
       CpIdsStart.size shouldBe (1)
-      val CpIdsEnd: Set[Long]   = CalibrationPointDAO.fetchIdByRoadwayNumberSection(39317, 1000,4000)
+      val CpIdsEnd: Set[Long]   = CalibrationPointDAO.fetchIdByRoadwayNumberSection(39317, AddrMRange(1000,4000))
       CpIdsEnd.size shouldBe (1)
 
     }

@@ -638,7 +638,7 @@ class ProjectValidator {
   }
 
   def isSameTrack(previous: ProjectLink, currentLink: ProjectLink): Boolean = {
-    previous.track == currentLink.track && previous.addrMRange.end == currentLink.addrMRange.start
+    previous.track == currentLink.track && previous.addrMRange.continuesTo(currentLink.addrMRange)
   }
 
   def getTrackInterval(links: Seq[ProjectLink], track: Track): Seq[ProjectLink] = {
@@ -1291,7 +1291,7 @@ class ProjectValidator {
         if (next.isEmpty)
           false
         else
-          curr.addrMRange.end == next.get.addrMRange.start && curr.connected(next.get)
+          curr.addrMRange.continuesTo(next.get.addrMRange) && curr.connected(next.get)
       }
 
       val discontinuous: Seq[ProjectLink] = roadProjectLinks.groupBy(s => (s.roadPart)).flatMap { g =>
@@ -1322,7 +1322,7 @@ class ProjectValidator {
         if (next.isEmpty)
           false
         else
-          curr.addrMRange.end == next.get.addrMRange.start && curr.connected(next.get)
+          curr.addrMRange.continuesTo(next.get.addrMRange) && curr.connected(next.get)
       }
 
       val discontinuous: Seq[ProjectLink] = roadProjectLinks.groupBy(s => (s.roadPart)).flatMap { g =>
@@ -1384,7 +1384,7 @@ class ProjectValidator {
       val discontinuousErrors = if (isRampValidation) {
         error(project.id, ValidationErrorList.DiscontinuityOnRamp)(roadProjectLinks.filter { pl =>
           // Check that pl has no discontinuity unless on last link and after it the possible project link is connected
-          val nextLink = roadProjectLinks.find(pl2 => pl2.addrMRange.start == pl.addrMRange.end &&
+          val nextLink = roadProjectLinks.find(pl2 => pl2.addrMRange.continuesFrom(pl.addrMRange) &&
             (pl.track == Track.Combined || pl2.track == Track.Combined || pl.track == pl2.track ))
           (nextLink.nonEmpty && pl.discontinuity != Discontinuity.Continuous) ||
             nextLink.exists(pl2 => !pl.connected(pl2))
@@ -1396,7 +1396,7 @@ class ProjectValidator {
 
     def checkDiscontinuityInsideRoadPart: Seq[ValidationErrorDetails] = {
       val discontinuousErrors = error(project.id, ValidationErrorList.DiscontinuityInsideRoadPart)(roadProjectLinks.filter { pl =>
-        val nextLink = roadProjectLinks.find(pl2 => pl2.addrMRange.start == pl.addrMRange.end)
+        val nextLink = roadProjectLinks.find(pl2 => pl2.addrMRange.continuesFrom(pl.addrMRange))
         (nextLink.nonEmpty && pl.discontinuity == Discontinuity.Discontinuous)
       })
       discontinuousErrors.toSeq
@@ -1539,10 +1539,12 @@ class ProjectValidator {
       */
     def getNextLinksFromParts(allProjectLinks: Seq[ProjectLink], road: Long, nextProjectPart: Option[Long], nextAddressPart: Option[Long]): Seq[BaseRoadAddress] = {
       if (nextProjectPart.nonEmpty && (nextAddressPart.isEmpty || nextProjectPart.get <= nextAddressPart.get))
-        projectLinkDAO.fetchByProjectRoadPart(RoadPart(road, nextProjectPart.get), project.id).filter(l => RoadAddressChangeType.Termination.value != l.status.value && l.addrMRange.start == 0L)
+        projectLinkDAO.fetchByProjectRoadPart(RoadPart(road, nextProjectPart.get), project.id)
+          .filter(l => RoadAddressChangeType.Termination.value != l.status.value && l.addrMRange.isRoadPartStart) // AddrMRange .isRoadPartStart refactoring: Code before refactoring, start==0, matched undefined addresses, too. Refactored to match road part only.
       else {
         roadAddressService.getRoadAddressesFiltered(RoadPart(road, nextAddressPart.get))
-          .filterNot(rp => allProjectLinks.exists(link => (rp.roadPart != link.roadPart) && rp.linearLocationId == link.linearLocationId)).filter(_.addrMRange.start == 0L)
+          .filterNot(rp => allProjectLinks.exists(link => (rp.roadPart != link.roadPart) && rp.linearLocationId == link.linearLocationId))
+          .filter(_.addrMRange.isRoadPartStart)
       }
     }
 
@@ -1581,7 +1583,7 @@ class ProjectValidator {
       } else {
         validationError.message.format(
           if (elyBorderData.nonEmpty)           elyBorderData.get.toSet.mkString(", ")
-          else if (currentRoadPart.nonEmpty) currentRoadPart
+          else if (currentRoadPart.nonEmpty) currentRoadPart.get
           else if (discontinuity.nonEmpty)      discontinuity.get.groupBy(_.value).map(_._2.head.toString).mkString(", ")
           else                                  validationError.message
         )

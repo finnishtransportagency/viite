@@ -1,48 +1,47 @@
 (function (application) {
   application.start = function (customBackend, withTileMaps) {
     var backend = customBackend || new Backend();
-    var tileMaps = _.isUndefined(withTileMaps) ? true : withTileMaps;
-    var roadCollection = new RoadCollection(backend);
-    var projectCollection = new ProjectCollection(backend);
-    var roadNameCollection = new RoadNameCollection(backend);
-    var selectedLinkProperty = new SelectedLinkProperty(backend, roadCollection);
-    var selectedProjectLinkProperty = new SelectedProjectLink(projectCollection);
-    var instructionsPopup = new InstructionsPopup(jQuery('.digiroad2'));
-    var projectChangeInfoModel = new ProjectChangeInfoModel(backend);
-    window.applicationModel = new ApplicationModel([selectedLinkProperty]);
-    var nodeCollection = new NodeCollection(backend, new LocationSearch(backend, window.applicationModel));
-    var selectedNodesAndJunctions = new SelectedNodesAndJunctions(nodeCollection);
-    proj4.defs('EPSG:3067', '+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs');
-    ol.proj.proj4.register(proj4);
-
-    var models = {
-      roadCollection: roadCollection,
-      projectCollection: projectCollection,
-      selectedLinkProperty: selectedLinkProperty,
-      selectedProjectLinkProperty: selectedProjectLinkProperty,
-      nodeCollection: nodeCollection,
-      selectedNodesAndJunctions: selectedNodesAndJunctions
-    };
-
-    bindEvents();
-
-    var linkGroups = groupLinks(selectedProjectLinkProperty);
-
-    var projectListModel = new ProjectListModel(projectCollection);
-    var projectChangeTable = new ProjectChangeTable(projectChangeInfoModel, models.projectCollection);
-
-    NavigationPanel.initialize(
-      jQuery('#map-tools'),
-      new SearchBox(
-        instructionsPopup,
-        new LocationSearch(backend, window.applicationModel)
-      ),
-      linkGroups
-    );
-
-
-    backend.getUserRoles();
     backend.getStartupParametersWithCallback(function (startupParameters) {
+      var tileMaps = _.isUndefined(withTileMaps) ? true : withTileMaps;
+      var roadCollection = new RoadCollection(backend);
+      var projectCollection = new ProjectCollection(backend, startupParameters);
+      var roadNameCollection = new RoadNameCollection(backend);
+      var selectedLinkProperty = new SelectedLinkProperty(backend, roadCollection);
+      var selectedProjectLinkProperty = new SelectedProjectLink(projectCollection);
+      var instructionsPopup = new InstructionsPopup(jQuery('.digiroad2'));
+      var projectChangeInfoModel = new ProjectChangeInfoModel(backend);
+      window.applicationModel = new ApplicationModel([selectedLinkProperty]);
+      var nodeCollection = new NodeCollection(backend, new LocationSearch(backend, window.applicationModel));
+      var selectedNodesAndJunctions = new SelectedNodesAndJunctions(nodeCollection);
+      proj4.defs('EPSG:3067', '+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs');
+      ol.proj.proj4.register(proj4);
+
+      var models = {
+        roadCollection: roadCollection,
+        projectCollection: projectCollection,
+        selectedLinkProperty: selectedLinkProperty,
+        selectedProjectLinkProperty: selectedProjectLinkProperty,
+        nodeCollection: nodeCollection,
+        selectedNodesAndJunctions: selectedNodesAndJunctions
+      };
+
+      bindEvents();
+
+      var linkGroups = groupLinks(selectedProjectLinkProperty);
+
+      var projectListModel = new ProjectListModel(projectCollection);
+      var projectChangeTable = new ProjectChangeTable(projectChangeInfoModel, models.projectCollection);
+
+      NavigationPanel.initialize(
+          jQuery('#map-tools'),
+          new SearchBox(
+              instructionsPopup,
+              new LocationSearch(backend, window.applicationModel)
+          ),
+          linkGroups
+      );
+
+      backend.getUserRoles();
       startApplication(backend, models, tileMaps, startupParameters, projectChangeTable, roadNameCollection, projectListModel);
     });
   };
@@ -117,10 +116,10 @@
     new LinkPropertyForm(models.selectedLinkProperty, roadNamingTool, projectListModel, roadAddressBrowser, roadAddressChangesBrowser, startupParameters, roadNetworkErrorsList);
 
     new NodeSearchForm(new InstructionsPopup(jQuery('.digiroad2')), map, models.nodeCollection, backend);
-    new NodeForm(models.selectedNodesAndJunctions, models.roadCollection, backend);
+    new NodeForm(models.selectedNodesAndJunctions, models.roadCollection, backend, startupParameters);
 
-    new ProjectForm(map, models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer);
-    new ProjectEditForm(map, models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend);
+    new ProjectForm(map, models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer, startupParameters);
+    new ProjectEditForm(map, models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend, startupParameters);
 
     var layers = _.merge({
       road: roadLayer,

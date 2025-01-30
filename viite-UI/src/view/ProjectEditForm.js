@@ -1,5 +1,5 @@
 (function (root) {
-  root.ProjectEditForm = function (map, projectCollection, selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend) {
+  root.ProjectEditForm = function (map, projectCollection, selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend, startupParameters) {
     var RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
     var CalibrationCode = ViiteEnumerations.CalibrationCode;
     var editableStatus = [ViiteEnumerations.ProjectStatus.Incomplete.value, ViiteEnumerations.ProjectStatus.Unknown.value];
@@ -16,8 +16,14 @@
 
 
     var showProjectButtonsDisabled = function () {
+      let devToolValidationButton = '';
+      if (_.includes(startupParameters.roles, 'dev')) {
+        devToolValidationButton = '<button id="validate-button" title="" class="validate btn btn-block btn-recalculate" hidden="true">Validoi projekti</button>';
+      }
       return '<div class="project-form form-controls">' +
-          formCommon.projectButtonsDisabled() + '</div>';
+          devToolValidationButton +
+          formCommon.projectButtonsDisabled() +
+          '</div>';
     };
 
     var transitionModifiers = function (targetStatus, currentStatus) {
@@ -108,6 +114,10 @@
     };
 
     var selectionForm = function (project, selection, selected, road) {
+      let devTool = '';
+      if (_.includes(startupParameters.roles, 'dev')) {
+        devTool = formCommon.devAddressEditTool(selected, project);
+      }
       var defaultOption = (selected[0].status === RoadAddressChangeType.NotHandled.value ? RoadAddressChangeType.NotHandled.description : RoadAddressChangeType.Undefined.description);
       return '<form id="roadAddressProjectForm" class="input-unit-combination form-group form-horizontal roadAddressProject">' +
         '<label>Toimenpiteet,' + selection + '</label>' +
@@ -123,6 +133,7 @@
         '</select>' +
         '</div>' +
         formCommon.newRoadAddressInfo(project, selected, selectedProjectLink, road) +
+          devTool +
         '</form>';
     };
 
@@ -205,6 +216,9 @@
           break;
         case RoadAddressChangeType.Numbering.value:
           $("#dropDown_0 option[value=" + RoadAddressChangeType.Numbering.description + "]").attr('selected', 'selected').change();
+          break;
+        case RoadAddressChangeType.Terminated.value:
+          $("#dropDown_0 option[value=" + RoadAddressChangeType.Terminated.description + "]").attr('selected', 'selected').change();
           break;
         default:
           break;
@@ -506,6 +520,7 @@
         $('#discontinuityDropdown').prop('disabled', false);
         $('#administrativeClassDropdown').prop('disabled', false);
         if (this.value === RoadAddressChangeType.Terminated.description) {
+          rootElement.find('.dev-address-tool').prop("hidden", false);
           rootElement.find('.new-road-address').prop("hidden", true);
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
           projectCollection.setDirty(_.map(selectedProjectLink, function (link) {
@@ -521,6 +536,7 @@
           projectCollection.setTmpDirty(projectCollection.getDirty());
           rootElement.find('.project-form button.update').prop("disabled", false);
         } else if (this.value === RoadAddressChangeType.New.description) {
+          rootElement.find('.dev-address-tool').prop("hidden", false);
           projectCollection.setDirty(_.map(selectedProjectLink, function (link) {
             return {
               'id': link.id,
@@ -539,6 +555,7 @@
             rootElement.find('#distanceValue').prop("hidden", false);
           }
         } else if (this.value === RoadAddressChangeType.Unchanged.description) {
+          rootElement.find('.dev-address-tool').prop("hidden", false);
           rootElement.find('.new-road-address').prop("hidden", false);
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
           $('#tie').prop('disabled', true);
@@ -558,6 +575,7 @@
           }));
           projectCollection.setTmpDirty(projectCollection.getDirty());
         } else if (this.value === RoadAddressChangeType.Transfer.description) {
+          rootElement.find('.dev-address-tool').prop("hidden", false);
           projectCollection.setDirty(_.map(selectedProjectLink, function (link) {
             return {
               'id': link.id,
@@ -572,6 +590,7 @@
           rootElement.find('.new-road-address').prop("hidden", false);
           canChangeDirection();
         } else if (this.value === RoadAddressChangeType.Numbering.description) {
+          rootElement.find('.dev-address-tool').prop("hidden", false);
           new ModalConfirm("Numerointi koskee kokonaista tieosaa. Valintaasi on tarvittaessa laajennettu koko tieosalle.");
           $('#trackCodeDropdown').prop('disabled', true);
           $('#discontinuityDropdown').prop('disabled', false);
@@ -591,9 +610,15 @@
           rootElement.find('.project-form button.update').prop("disabled", false);
           canChangeDirection();
         } else if (this.value === RoadAddressChangeType.Revert.description) {
+          rootElement.find('.dev-address-tool').prop("hidden", true);
           rootElement.find('.new-road-address').prop("hidden", true);
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
           rootElement.find('.project-form button.update').prop("disabled", false);
+        }
+        else {
+          rootElement.find('.dev-address-tool').prop("hidden", true);
+          rootElement.find('.new-road-address').prop("hidden", true);
+          rootElement.find('.changeDirectionDiv').prop("hidden", true);
         }
       });
 
@@ -648,6 +673,30 @@
           formCommon.setInformationContent();
           formCommon.setInformationContentText("Validointi ok. Voit tehdä tieosoitteen muutosilmoituksen tai jatkaa muokkauksia.");
         }
+      });
+
+      rootElement.on('click', '.project-form button.validate', function () {
+        var currentProject = projectCollection.getCurrentProject();
+        // add spinner
+        applicationModel.addSpinner();
+        backend.validateProject(currentProject.project.id, function (response) {
+          // validation did not throw exceptions in the backend
+          if (response.success) {
+            // set project errors that were returned by the backend validations and write them to user (removes the spinner also)
+            projectCollection.setAndWriteProjectErrorsToUser(response.validationErrors);
+            if (Object.keys(response.validationErrors).length === 0) {
+              // if no validation errors are present, show changes button and remove title
+              formCommon.setDisabledAndTitleAttributesById("changes-button", false, "");
+            }
+          } // if something went wrong during validation, show error to the user
+          else if ('validationErrors' in response && !_.isEmpty(response.validationErrors)) {
+            // set project errors that were returned by the backend validations and write them to user (removes the spinner also)
+            projectCollection.setAndWriteProjectErrorsToUser(response.validationErrors);
+          } else {
+            new ModalConfirm(response.errorMessage);
+            applicationModel.removeSpinner();
+          }
+        });
       });
 
       // when recalculate button is clicked
@@ -771,6 +820,21 @@
           }
         }
       });
+
+      rootElement.on('input', '#addrStart, #addrEnd', function (event) {
+        const start = Number(document.getElementById("addrStart").value) || 0;
+        const end = Number(document.getElementById("addrEnd").value) || 0;
+        const res = end - start;
+        document.getElementById("addrLength").textContent = res.toString();
+      });
+
+      rootElement.on('input', '#origAddrStart, #origAddrEnd', function (event) {
+        const start = Number(document.getElementById("origAddrStart").value) || 0;
+        const end = Number(document.getElementById("origAddrEnd").value) || 0;
+        const res = end - start;
+        document.getElementById("origAddrLength").textContent = res.toString();
+      });
+
     };
     bindEvents();
   };

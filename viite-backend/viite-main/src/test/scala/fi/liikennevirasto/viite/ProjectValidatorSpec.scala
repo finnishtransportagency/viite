@@ -83,7 +83,7 @@ class ProjectValidatorSpec extends AnyFunSuite with Matchers {
   private def projectLink(addrMRange: AddrMRange, track: Track, projectId: Long, status: RoadAddressChangeType = RoadAddressChangeType.NotHandled,
                           roadPart: RoadPart = RoadPart(19999, 1), discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, roadwayId: Long = 0L, linearLocationId: Long = 0L, plRoadwayNumber: Long = NewIdValue): ProjectLink = {
     val startDate = if (status !== RoadAddressChangeType.New) Some(DateTime.now()) else None
-    ProjectLink(NewIdValue, roadPart, track, discontinuity, addrMRange, addrMRange, startDate, None, Some("User"), addrMRange.start.toString, 0.0, (addrMRange.end - addrMRange.start).toDouble, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), Seq(Point(0.0, addrMRange.start), Point(0.0, addrMRange.end)), projectId, status, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, (addrMRange.end - addrMRange.start).toDouble, roadwayId, linearLocationId, ely, reversed = false, None, 0L, roadwayNumber = plRoadwayNumber)
+    ProjectLink(NewIdValue, roadPart, track, discontinuity, addrMRange, addrMRange, startDate, None, Some("User"), addrMRange.start.toString, 0.0, addrMRange.length.toDouble, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), Seq(Point(0.0, addrMRange.start), Point(0.0, addrMRange.end)), projectId, status, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, addrMRange.length.toDouble, roadwayId, linearLocationId, ely, reversed = false, None, 0L, roadwayNumber = plRoadwayNumber)
   }
 
   def toProjectLink(project: Project)(roadAddress: RoadAddress): ProjectLink = {
@@ -2180,8 +2180,8 @@ Left|      |Right
     runWithRollback {
       val (project, projectLinks) = util.setUpProjectWithLinks(RoadAddressChangeType.New, Seq(0L, 10L, 20L, 30L, 40L), changeTrack = true)
       val inconsistentLinks = projectLinks.map { l =>
-        if (l.addrMRange.start == 0 && l.track == Track.RightSide)
-          l.copy(addrMRange = AddrMRange(5, l.addrMRange.end))
+        if (l.addrMRange.isRoadPartStart && l.track == Track.RightSide) // make the address length of the right
+          l.copy(addrMRange = AddrMRange(5, l.addrMRange.end))          // track shorter than left track by 5m
         else l
       }
 
@@ -3015,7 +3015,7 @@ Left|      |Right
       val newLinksOnly = additionalProjectLinks2.diff(originalProjectLinks)
       val min = newLinksOnly.minBy(_.addrMRange.start).addrMRange.start
       newLinksOnly.foreach(p => {
-        projectLinkDAO.updateAddrMValues(p.copy(addrMRange = AddrMRange(p.addrMRange.start - min, p.addrMRange.end - min), originalAddrMRange = AddrMRange(p.originalAddrMRange.start - min, p.originalAddrMRange.end - min)))
+        projectLinkDAO.updateAddrMValues(p.copy(addrMRange = p.addrMRange.move(-min), originalAddrMRange = p.originalAddrMRange.move(-min)))
       })
       val updatedProjectLinks = projectLinkDAO.fetchProjectLinks(project.id)
       updatedProjectLinks.groupBy(_.ely).size should be(2)
@@ -3037,7 +3037,7 @@ Left|      |Right
       val newLinksOnly = additionalProjectLinks2.diff(originalProjectLinks)
       val min = newLinksOnly.minBy(_.addrMRange.start).addrMRange.start
       newLinksOnly.foreach(p => {
-        projectLinkDAO.updateAddrMValues(p.copy(addrMRange = AddrMRange(p.addrMRange.start - min, p.addrMRange.end - min), originalAddrMRange = AddrMRange(p.originalAddrMRange.start - min, p.originalAddrMRange.end - min)))
+       projectLinkDAO.updateAddrMValues(p.copy(addrMRange = p.addrMRange.move(-min), originalAddrMRange = p.originalAddrMRange.move(-min)))
         runUpdateToDb(
           sql"""
                UPDATE project_link
@@ -3074,7 +3074,7 @@ Left|      |Right
       val newLinksOnly = additionalProjectLinks2.diff(originalProjectLinks)
       val min = newLinksOnly.minBy(_.addrMRange.start).addrMRange.start
       newLinksOnly.foreach(p => {
-        projectLinkDAO.updateAddrMValues(p.copy(addrMRange = AddrMRange(p.addrMRange.start - min, p.addrMRange.end - min), originalAddrMRange = AddrMRange(p.originalAddrMRange.start - min, p.originalAddrMRange.end - min)))
+        projectLinkDAO.updateAddrMValues(p.copy(addrMRange = p.addrMRange.move(-min), originalAddrMRange = p.originalAddrMRange.move(-min)))
       })
       val updatedProjectLinks = projectLinkDAO.fetchProjectLinks(project.id)
       mockEmptyRoadAddressServiceCalls()

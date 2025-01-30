@@ -924,13 +924,14 @@ class ProjectSectionCalculatorSpec extends AnyFunSuite with Matchers {
 
       val (sortedLeft, sortedRight) = (left.sortBy(_.addrMRange.start), right.sortBy(_.addrMRange.start))
       sortedLeft.zip(sortedLeft.tail).forall{
-        case (curr, next) => (curr.discontinuity == Discontinuity.Continuous && curr.addrMRange.end == next.addrMRange.start && curr.connected(next)) || curr.discontinuity == Discontinuity.MinorDiscontinuity
+        case (curr, next) => (curr.discontinuity == Discontinuity.Continuous && curr.addrMRange.continuesTo(next.addrMRange) && curr.connected(next)) || curr.discontinuity == Discontinuity.MinorDiscontinuity
       }
       sortedRight.zip(sortedRight.tail).forall{
-        case (curr, next) => (curr.discontinuity == Discontinuity.Continuous && curr.addrMRange.end == next.addrMRange.start && curr.connected(next)) || curr.discontinuity == Discontinuity.MinorDiscontinuity
+        case (curr, next) => (curr.discontinuity == Discontinuity.Continuous && curr.addrMRange.continuesTo(next.addrMRange) && curr.connected(next)) || curr.discontinuity == Discontinuity.MinorDiscontinuity
       }
 
-      ((sortedLeft.head.addrMRange.start == 0 && sortedLeft.head.addrMRange.start == 0) || (sortedLeft.last.addrMRange.start == 0 && sortedLeft.last.addrMRange.start == 0)) should be (true)
+      ( (sortedLeft.head.addrMRange.isRoadPartStart && sortedRight.head.addrMRange.isRoadPartStart) ||
+        (sortedLeft.last.addrMRange.isRoadPartStart && sortedRight.last.addrMRange.isRoadPartStart) ) should be (true)
 
     }
   }
@@ -974,13 +975,14 @@ class ProjectSectionCalculatorSpec extends AnyFunSuite with Matchers {
 
       val (sortedLeft, sortedRight) = (left.sortBy(_.addrMRange.start), right.sortBy(_.addrMRange.start))
       sortedLeft.zip(sortedLeft.tail).forall{
-        case (curr, next) => (curr.discontinuity == Discontinuity.Continuous && curr.addrMRange.end == next.addrMRange.start && curr.connected(next)) || curr.discontinuity == Discontinuity.MinorDiscontinuity
+        case (curr, next) => (curr.discontinuity == Discontinuity.Continuous && curr.addrMRange.continuesTo(next.addrMRange) && curr.connected(next)) || curr.discontinuity == Discontinuity.MinorDiscontinuity
       }
       sortedRight.zip(sortedRight.tail).forall{
-        case (curr, next) => (curr.discontinuity == Discontinuity.Continuous && curr.addrMRange.end == next.addrMRange.start && curr.connected(next)) || curr.discontinuity == Discontinuity.MinorDiscontinuity
+        case (curr, next) => (curr.discontinuity == Discontinuity.Continuous && curr.addrMRange.continuesTo(next.addrMRange) && curr.connected(next)) || curr.discontinuity == Discontinuity.MinorDiscontinuity
       }
 
-      ((sortedLeft.head.addrMRange.start == 0 && sortedLeft.head.addrMRange.start == 0) || (sortedLeft.last.addrMRange.start == 0 && sortedLeft.last.addrMRange.start == 0)) should be (true)
+      ( (sortedLeft.head.addrMRange.isRoadPartStart && sortedRight.head.addrMRange.isRoadPartStart) ||
+        (sortedLeft.last.addrMRange.isRoadPartStart && sortedRight.last.addrMRange.isRoadPartStart) ) should be (true)
 
     }
   }
@@ -1170,7 +1172,7 @@ class ProjectSectionCalculatorSpec extends AnyFunSuite with Matchers {
       }
 
       output.foreach(pl => {
-        (pl.addrMRange.end - pl.addrMRange.start) should be >= 10L
+        pl.addrMRange.length should be >= 10L
         pl.sideCode should be(SideCode.TowardsDigitizing)
         pl.reversed should be(false)
       }
@@ -1211,7 +1213,7 @@ class ProjectSectionCalculatorSpec extends AnyFunSuite with Matchers {
       }
 
       output.foreach(pl => {
-        (pl.addrMRange.end - pl.addrMRange.start) should be(10L)
+        pl.addrMRange.length should be(10L)
         pl.sideCode should be(SideCode.TowardsDigitizing)
         pl.reversed should be(false)
       }
@@ -1264,7 +1266,7 @@ class ProjectSectionCalculatorSpec extends AnyFunSuite with Matchers {
       }
 
       output.foreach(pl => {
-        (pl.addrMRange.end - pl.addrMRange.start) should be(10L)
+        pl.addrMRange.length should be(10L)
         pl.sideCode should be(SideCode.TowardsDigitizing)
         pl.reversed should be(false)
       }
@@ -1303,7 +1305,7 @@ class ProjectSectionCalculatorSpec extends AnyFunSuite with Matchers {
       }
 
       output.foreach(pl => {
-        (pl.addrMRange.end - pl.addrMRange.start) should be >= 10L
+        pl.addrMRange.length should be >= 10L
         pl.sideCode should be(SideCode.AgainstDigitizing)
         pl.reversed should be(false)
       }
@@ -1343,7 +1345,7 @@ class ProjectSectionCalculatorSpec extends AnyFunSuite with Matchers {
       }
 
       output.foreach(pl => {
-        (pl.addrMRange.end - pl.addrMRange.start) should be >= 10L
+        pl.addrMRange.length should be >= 10L
         pl.sideCode should be(SideCode.AgainstDigitizing)
         pl.reversed should be(false)
       }
@@ -1398,7 +1400,7 @@ class ProjectSectionCalculatorSpec extends AnyFunSuite with Matchers {
       }
 
       output.foreach(pl => {
-        (pl.addrMRange.end - pl.addrMRange.start) should be >= 10L
+        pl.addrMRange.length should be >= 10L
         pl.sideCode should be(SideCode.TowardsDigitizing)
         pl.reversed should be(false)
       }
@@ -1553,7 +1555,7 @@ class ProjectSectionCalculatorSpec extends AnyFunSuite with Matchers {
       }
       /* check positive lengths. */
       output.foreach(pl => {
-        (pl.addrMRange.end - pl.addrMRange.start) should be > 0L
+        pl.addrMRange.length should be > 0L
       })
     }
   }
