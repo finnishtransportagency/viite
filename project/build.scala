@@ -46,7 +46,7 @@ object Digiroad2Build extends Build {
 
   val scalikeJdbc     = "org.scalikejdbc" %% "scalikejdbc"     % ScalikeJdbcVersion
   val scalikeConfig   = "org.scalikejdbc" %% "scalikejdbc-config" % ScalikeJdbcVersion
-  val scalikeJodaTime = "org.scalikejdbc" %% "scalikejdbc-joda-time" % ScalikeJdbcJodaTimeVersion
+  val scalikeJodaTime = "org.scalikejdbc" %% "scalikejdbc-joda-time" % ScalikeJdbcVersion
 
   lazy val apacheHttp      = Seq(httpCore, httpClient)
   lazy val joda            = Seq(jodaConvert, jodaTime)

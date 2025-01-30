@@ -2564,7 +2564,7 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
    * (validations from the recalculation phase included)
    */
   def runOtherValidations(projectId: Long) = {
-    withDynSession {
+    runWithReadOnlySession {
       def throwExceptionWithErrorInfo(errorLinks: Iterable[ProjectLink], msg: String): Nothing = {
         val projectId   = errorLinks.head.projectId
         logger.error(
