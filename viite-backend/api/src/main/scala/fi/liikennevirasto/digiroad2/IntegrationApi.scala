@@ -8,7 +8,7 @@ import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.{RoadAddressService, RoadNameService}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.{AdministrativeClass, SideCode}
-import fi.vaylavirasto.viite.postgis.PostGISDatabase
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC
 import fi.vaylavirasto.viite.util.DateTimeFormatters.dateTimeNoMillisFormatter
 import fi.vaylavirasto.viite.util.ViiteException
 import org.joda.time.DateTime
@@ -390,7 +390,7 @@ println("Threading print test: Now in avoidRestrictions")
               Map(
                 "tie" -> roadwayChangesInfo.old_road_number,
                 "osa" -> roadwayChangesInfo.old_road_part_number,
-                "ajorata" -> roadwayChangesInfo.old_TRACK,
+                "ajorata" -> roadwayChangesInfo.old_track,
                 "etaisyys" -> roadwayChangesInfo.old_start_addr_m,
                 "etaisyys_loppu" -> roadwayChangesInfo.old_end_addr_m,
                 "jatkuvuuskoodi" -> roadwayChangesInfo.old_discontinuity,
@@ -402,7 +402,7 @@ println("Threading print test: Now in avoidRestrictions")
               Map(
                 "tie" -> roadwayChangesInfo.new_road_number,
                 "osa" -> roadwayChangesInfo.new_road_part_number,
-                "ajorata" -> roadwayChangesInfo.new_TRACK,
+                "ajorata" -> roadwayChangesInfo.new_track,
                 "etaisyys" -> roadwayChangesInfo.new_start_addr_m,
                 "etaisyys_loppu" -> roadwayChangesInfo.new_end_addr_m,
                 "jatkuvuuskoodi" -> roadwayChangesInfo.new_discontinuity,
@@ -512,7 +512,7 @@ println(s"fetchAllValidNodesWithJunctions GOT RESULT, of size ${result.size}") /
           val since = dateParameterGetValidOrThrow("since")
           val linearLocations: Seq[LinearLocation] = fetchUpdatedLinearLocations(since)
 
-          val roadaddresses: Seq[RoadAddress] = PostGISDatabase.withDynTransaction {
+          val roadaddresses: Seq[RoadAddress] = PostGISDatabaseScalikeJDBC.runWithReadOnlySession {
             roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations.filter(_.validTo.isEmpty))
           }
 

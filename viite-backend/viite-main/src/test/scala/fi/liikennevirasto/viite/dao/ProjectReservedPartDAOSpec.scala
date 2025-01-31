@@ -7,11 +7,12 @@ import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.CalibrationPointType.NoCP
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, BeforeAfter, CalibrationPointType, Discontinuity, LinkGeomSource, RoadAddressChangeType, RoadPart, SideCode, Track}
 import fi.vaylavirasto.viite.postgis.DbUtils.runUpdateToDb
-import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
 import org.joda.time.DateTime
 import org.postgresql.util.PSQLException
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
+import scalikejdbc.scalikejdbcSQLInterpolationImplicitDef
 
 /**
   * Class to test DB trigger that does not allow reserving already reserved parts to project
@@ -203,7 +204,7 @@ class ProjectReservedPartDAOSpec extends AnyFunSuite with Matchers {
           "TestUser", DateTime.parse("1997-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], Seq(), None)
         projectDAO.create(rap)
         projectReservedPartDAO.isNotAvailableForProject(RoadPart(roadNumber1, roadPartNumber1), id) should be (true)
-        runUpdateToDb(s"""update ROADWAY set valid_to = current_timestamp WHERE road_number = $roadNumber1""")
+        runUpdateToDb(sql"""UPDATE roadway SET valid_to = CURRENT_TIMESTAMP WHERE road_number = $roadNumber1""")
         roadwayDAO.create(Seq(dummyRoadways.head.copy(startDate = DateTime.parse("1975-11-18"))))
         projectReservedPartDAO.isNotAvailableForProject(RoadPart(roadNumber1, roadPartNumber1), id) should be (false)
       }
@@ -280,8 +281,8 @@ class ProjectReservedPartDAOSpec extends AnyFunSuite with Matchers {
       val projectId = 123
       val roadNumber = 99999
       val roadPartNumber = 1
-      runUpdateToDb(s"""INSERT INTO PROJECT VALUES ($projectId, 1, 'Test Project', 'Test', to_date('01.01.2018','DD.MM.YYYY'),'-', to_date('01.01.2018','DD.MM.YYYY'), null, to_date('01.01.2018','DD.MM.YYYY'), null, 0, 0, 0)""")
-      runUpdateToDb(s"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (11111, $roadNumber, $roadPartNumber, $projectId, 'Test')""")
+      runUpdateToDb(sql"""INSERT INTO project VALUES ($projectId, 1, 'Test Project', 'Test', to_date('01.01.2018','DD.MM.YYYY'),'-', to_date('01.01.2018','DD.MM.YYYY'), null, to_date('01.01.2018','DD.MM.YYYY'), null, 0, 0, 0)""")
+      runUpdateToDb(sql"""INSERT INTO project_reserved_road_part VALUES (11111, $roadNumber, $roadPartNumber, $projectId, 'Test')""")
       projectReservedPartDAO.removeReservedRoadPartAndChanges(projectId, RoadPart(roadNumber, roadPartNumber))
       projectReservedPartDAO.fetchReservedRoadParts(projectId).isEmpty should be (true)
     }
@@ -326,14 +327,14 @@ class ProjectReservedPartDAOSpec extends AnyFunSuite with Matchers {
       val projectId = 123
       val roadNumber = 99999
       val roadPartNumber = 1
-      runUpdateToDb(s"""INSERT INTO PROJECT VALUES ($projectId, 1, 'Test Project', 'Test', to_date('01.01.2018','DD.MM.YYYY'),'-',to_date('01.01.2018','DD.MM.YYYY'), null, to_date('01.01.2018','DD.MM.YYYY'), null, 0, 0, 0)""")
-        runUpdateToDb(s"""
-        INSERT INTO PROJECT_LINK_HISTORY
-          (ID, PROJECT_ID, TRACK, DISCONTINUITY_TYPE, ROAD_NUMBER, ROAD_PART_NUMBER, START_ADDR_M, END_ADDR_M,
-          CREATED_BY, MODIFIED_BY, CREATED_DATE, MODIFIED_DATE, STATUS, ADMINISTRATIVE_CLASS, ROADWAY_ID, LINEAR_LOCATION_ID, CONNECTED_LINK_ID,
-          ELY, REVERSED, SIDE, START_MEASURE, END_MEASURE, LINK_ID, ADJUSTED_TIMESTAMP, LINK_SOURCE,
-          GEOMETRY, ORIGINAL_START_ADDR_M, ORIGINAL_END_ADDR_M, ROADWAY_NUMBER,
-          START_CALIBRATION_POINT, END_CALIBRATION_POINT, ORIG_START_CALIBRATION_POINT, ORIG_END_CALIBRATION_POINT)
+      runUpdateToDb(sql"""INSERT INTO project VALUES ($projectId, 1, 'Test Project', 'Test', to_date('01.01.2018','DD.MM.YYYY'),'-',to_date('01.01.2018','DD.MM.YYYY'), null, to_date('01.01.2018','DD.MM.YYYY'), null, 0, 0, 0)""")
+        runUpdateToDb(sql"""
+        INSERT INTO project_link_history
+          (id, project_id, track, discontinuity_type, road_number, road_part_number, start_addr_m, end_addr_m,
+          created_by, modified_by, created_date, modified_date, status, administrative_class, roadway_id, linear_location_id, connected_link_id,
+          ely, reversed, side, start_measure, end_measure, link_id, adjusted_timestamp, link_source,
+          geometry, original_start_addr_m, original_end_addr_m, roadway_number,
+          start_calibration_point, end_calibration_point, orig_start_calibration_point, orig_end_calibration_point)
         VALUES (11111111, $projectId, 0, 1, $roadNumber, $roadPartNumber, 0, 10,
           'Test', 'Test', to_date('01.01.2018','DD.MM.YYYY'), to_date('01.01.2018','DD.MM.YYYY'), 2, 3, 123456, 123458,
           8, 0, null, 2, 0, 10, 99999, 1533576206000, 1,
@@ -351,8 +352,8 @@ class ProjectReservedPartDAOSpec extends AnyFunSuite with Matchers {
       val projectId = 123
       val roadNumber = 99999
       val roadPartNumber = 1
-      runUpdateToDb(s"""INSERT INTO PROJECT VALUES ($projectId, 1, 'Test Project', 'Test', to_date('01.01.2018','DD.MM.YYYY'),'-',to_date('01.01.2018','DD.MM.YYYY'), null, to_date('01.01.2018','DD.MM.YYYY'), null, 0, 0, 0)""")
-      runUpdateToDb(s"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (11111, $roadNumber, $roadPartNumber, $projectId, 'Test')""")
+      runUpdateToDb(sql"""INSERT INTO project VALUES ($projectId, 1, 'Test Project', 'Test', to_date('01.01.2018','DD.MM.YYYY'),'-',to_date('01.01.2018','DD.MM.YYYY'), null, to_date('01.01.2018','DD.MM.YYYY'), null, 0, 0, 0)""")
+      runUpdateToDb(sql"""INSERT INTO project_reserved_road_part VALUES (11111, $roadNumber, $roadPartNumber, $projectId, 'Test')""")
       val fetched = projectReservedPartDAO.fetchReservedRoadParts(projectId)
       fetched.size should be (1)
       fetched.head.roadPart should be (RoadPart(roadNumber, roadPartNumber))
@@ -384,10 +385,10 @@ class ProjectReservedPartDAOSpec extends AnyFunSuite with Matchers {
         val projectId2 = 124
         val roadNumber = 99999
         val roadPartNumber = 1
-        runUpdateToDb(s"""INSERT INTO PROJECT VALUES ($projectId, 1, 'Test Project', 'Test', to_date('01.01.2018','DD.MM.YYYY'),'-', to_date('01.01.2018','DD.MM.YYYY'), null, to_date('01.01.2018','DD.MM.YYYY'), null, 0, 0, 0)""")
-        runUpdateToDb(s"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (11111, $roadNumber, $roadPartNumber, $projectId, 'Test')""")
-        runUpdateToDb(s"""INSERT INTO PROJECT VALUES ($projectId2, 1, 'Test Project', 'Test', to_date('01.01.2018','DD.MM.YYYY'),'-',to_date('01.01.2018','DD.MM.YYYY'), null, to_date('01.01.2018','DD.MM.YYYY'), null, 0, 0, 0)""")
-        runUpdateToDb(s"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (11111, $roadNumber, $roadPartNumber, $projectId2, 'Test')""")
+        runUpdateToDb(sql"""INSERT INTO project VALUES ($projectId, 1, 'Test Project', 'Test', to_date('01.01.2018','DD.MM.YYYY'),'-', to_date('01.01.2018','DD.MM.YYYY'), null, to_date('01.01.2018','DD.MM.YYYY'), null, 0, 0, 0)""")
+        runUpdateToDb(sql"""INSERT INTO project_reserved_road_part VALUES (11111, $roadNumber, $roadPartNumber, $projectId, 'Test')""")
+        runUpdateToDb(sql"""INSERT INTO project VALUES ($projectId2, 1, 'Test Project', 'Test', to_date('01.01.2018','DD.MM.YYYY'),'-',to_date('01.01.2018','DD.MM.YYYY'), null, to_date('01.01.2018','DD.MM.YYYY'), null, 0, 0, 0)""")
+        runUpdateToDb(sql"""INSERT INTO project_reserved_road_part VALUES (11111, $roadNumber, $roadPartNumber, $projectId2, 'Test')""")
       }
       error.getMessage should include("project_reserved_road_part_pk")
     }

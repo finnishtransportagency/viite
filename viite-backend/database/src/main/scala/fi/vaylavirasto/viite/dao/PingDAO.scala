@@ -1,19 +1,19 @@
 package fi.vaylavirasto.viite.dao
 
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
+import fi.vaylavirasto.viite.postgis.SessionProvider.session
+import scalikejdbc._
 
-object PingDAO {
+object PingDAO extends BaseDAO {
 
-  private implicit val getDbTimeRow: GetResult[String] = new GetResult[String] {
-    def apply(r: PositionedResult) = {
-      r.nextString()
-    }
-  }
-
+  // Get the current time from the database
+  // Example how to use ScalikeCDBC on basic level without helper methods
   def getDbTime: String = {
-    val query = "SELECT TO_CHAR(NOW(), 'YYYY-MM-DD HH24:MI:SS')"
-    Q.queryNA[String](query).iterator.toSeq.head
+    sql"""SELECT TO_CHAR(NOW(), 'YYYY-MM-DD HH24:MI:SS')"""
+      .map(rs => rs.string(1)) // Get the first column as a string
+      .single() // single returns the 1 row as an Option
+      .apply() // Execute the query
+      .getOrElse( // Throw an exception if the result is None
+        throw new RuntimeException("Failed to get the current time from the database")
+      )
   }
-
 }

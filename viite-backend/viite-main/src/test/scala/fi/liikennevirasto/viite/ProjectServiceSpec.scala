@@ -12,13 +12,12 @@ import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.{ProjectSectionCalculator, RoadwayAddressMapper}
 import fi.liikennevirasto.viite.process.strategy.DefaultSectionCalculatorStrategy
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
-import fi.vaylavirasto.viite.postgis.DbUtils.runUpdateToDb  // TODO extend BaseDAO instead?
-import fi.vaylavirasto.viite.dao.{ProjectLinkNameDAO, RoadName, RoadNameDAO, Sequences}
+import fi.vaylavirasto.viite.dao.{BaseDAO, ProjectLinkNameDAO, RoadName, RoadNameDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point, PolyLine}
 import fi.vaylavirasto.viite.model.CalibrationPointType.{JunctionPointCP, NoCP, RoadAddressCP, UserDefinedCP}
 import fi.vaylavirasto.viite.model.LinkGeomSource.FrozenLinkInterface
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinuity, LifecycleStatus, LinkGeomSource, RoadAddressChangeType, RoadLink, RoadPart, SideCode, Track, TrafficDirection}
-import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
@@ -28,12 +27,12 @@ import org.scalatest.BeforeAndAfter
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
-import slick.driver.JdbcDriver.backend.Database.dynamicSession   // JdbcBackend#sessionDef
-import slick.jdbc.StaticQuery.interpolation
+import scalikejdbc.scalikejdbcSQLInterpolationImplicitDef
 
 import java.sql.BatchUpdateException
+import scala.concurrent.Future
 
-class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
+class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter with BaseDAO {
   val mockProjectService: ProjectService = MockitoSugar.mock[ProjectService]
   val mockRoadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockRoadAddressService: RoadAddressService = MockitoSugar.mock[RoadAddressService]
@@ -70,15 +69,15 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
 
   val roadAddressService: RoadAddressService = new RoadAddressService(mockRoadLinkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, mockRoadwayAddressMapper, mockEventBus, frozenKGV = false) {
 
-    override def withDynSession[T](f: => T): T = f
+    override def runWithReadOnlySession[T](f: => T): T = f
 
-    override def withDynTransaction[T](f: => T): T = f
+    override def runWithTransaction[T](f: => T): T = f
   }
   val roadAddressServiceRealRoadwayAddressMapper: RoadAddressService = new RoadAddressService(mockRoadLinkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, roadwayAddressMapper, mockEventBus, frozenKGV = false) {
 
-    override def withDynSession[T](f: => T): T = f
+    override def runWithReadOnlySession[T](f: => T): T = f
 
-    override def withDynTransaction[T](f: => T): T = f
+    override def runWithTransaction[T](f: => T): T = f
   }
   val projectService: ProjectService =
     new ProjectService(
@@ -98,8 +97,8 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
                         roadwayAddressMapper,
                         mockEventBus
                         ) {
-                            override def withDynSession[T](f: => T): T = f
-                            override def withDynTransaction[T](f: => T): T = f
+                             override def runWithReadOnlySession[T](f: => T): T = f
+                             override def runWithTransaction[T](f: => T): T = f
                           }
 
   val projectServiceWithRoadAddressMock: ProjectService =
@@ -120,8 +119,8 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
                         roadwayAddressMapper,
                         mockEventBus
                         ) {
-                            override def withDynSession[T](f: => T): T = f
-                            override def withDynTransaction[T](f: => T): T = f
+                            override def runWithReadOnlySession[T](f: => T): T = f
+                            override def runWithTransaction[T](f: => T): T = f
                           }
 
   after {
@@ -290,11 +289,11 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
       val roadAddressProject1 = Project(0, ProjectState.apply(1), "TestProject", "TestUser1", DateTime.now(), "TestUser1", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], Seq(), None, elys = Set())
       projectService.createRoadLinkProject(roadAddressProject1)
 
-      val roadAddressProject2 = Project(0, ProjectState.apply(1), "TESTPROJECT", "TestUser2", DateTime.now(), "TestUser2", DateTime.parse("1902-03-03"), DateTime.now(), "Some other info", List.empty[ProjectReservedPart], Seq(), None, elys = Set())
+      val roadAddressProject2 = Project(0, ProjectState.apply(1), "TESTproject", "TestUser2", DateTime.now(), "TestUser2", DateTime.parse("1902-03-03"), DateTime.now(), "Some other info", List.empty[ProjectReservedPart], Seq(), None, elys = Set())
       val error = intercept[NameExistsException] {
         projectService.createRoadLinkProject(roadAddressProject2)
       }
-      error.getMessage should be("Nimellä TESTPROJECT on jo olemassa projekti. Muuta nimeä.")
+      error.getMessage should be("Nimellä TESTproject on jo olemassa projekti. Muuta nimeä.")
 
       val roadAddressProject3 = Project(0, ProjectState.apply(1), "testproject", "TestUser3", DateTime.now(), "TestUser3", DateTime.parse("1903-03-03"), DateTime.now(), "Some other info", List.empty[ProjectReservedPart], Seq(), None, elys = Set())
       val error2 = intercept[NameExistsException] {
@@ -533,12 +532,10 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
     runWithRollback {
       val projectId = Sequences.nextViiteProjectId
       val rap = Project(projectId, ProjectState.apply(ProjectState.InUpdateQueue.value), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], Seq(), None, elys = Set())
-      runWithRollback {
         projectDAO.create(rap)
         projectService.preserveSingleProjectToBeTakenToRoadNetwork()
         val project = projectService.fetchProjectById(projectId).head
         project.statusInfo.getOrElse("").length should be(0)
-      }
     }
   }
 
@@ -576,7 +573,12 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
       val projectsAfterOperations = projectService.getAllProjects
       projectsAfterOperations.size should be(numberOfProjects)
       projectsAfterOperations.exists(_.get("id").get == project.id) should be(false)
-      val stateCodeForProject = sql"""SELECT state from project where id =  ${project.id}""".as[Int].list
+      val stateCodeForProject = runSelectQuery(
+        sql"""
+             SELECT state
+             FROM project
+             WHERE id =  ${project.id}""".map(rs => rs.int("state"))
+      )
       stateCodeForProject should have size 1
       ProjectState(stateCodeForProject.head) should be(ProjectState.Deleted)
     }
@@ -913,7 +915,7 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
       val user     = "test user"
       val roadAddressProject = Project(testProjectId, Incomplete, "preFill", user, DateTime.now(), user, DateTime.now().plusMonths(2), DateTime.now(), "", Seq(), Seq(), None, None, Set())
 
-      runUpdateToDb(s"""INSERT INTO ROAD_NAME VALUES (nextval('ROAD_NAME_SEQ'), ${roadPart.roadNumber}, 'road name test', TIMESTAMP '2018-03-23 12:26:36.000000', null, TIMESTAMP '2018-03-23 12:26:36.000000', null, 'test user', TIMESTAMP '2018-03-23 12:26:36.000000')""")
+      runUpdateToDb(sql"""INSERT INTO road_name VALUES (nextval('road_name_seq'), ${roadPart.roadNumber}, 'road name test', TIMESTAMP '2018-03-23 12:26:36.000000', NULL, TIMESTAMP '2018-03-23 12:26:36.000000', NULL, 'test user', TIMESTAMP '2018-03-23 12:26:36.000000')""")
       projectReservedPartDAO.reserveRoadPart(testProjectId, roadPart, user)
       val projectLinks = roadwayAddressMapper.getRoadAddressesByRoadway(roadwayDAO.fetchAllByRoadPart(roadPart)).map(toProjectLink(roadAddressProject))
       projectLinkDAO.create(projectLinks)
@@ -929,7 +931,7 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
       val user     = "test user"
       val roadAddressProject = Project(testProjectId, Incomplete, "preFill", user, DateTime.now(), user, DateTime.now().plusMonths(2), DateTime.now(), "", Seq(), Seq(), None, None, Set())
 
-      runUpdateToDb(s""" Insert into project_link_name values (nextval('viite_general_seq'), ${roadAddressProject.id}, ${roadPart.roadNumber}, 'TestRoadName_Project_Link')""")
+      runUpdateToDb(sql""" INSERT INTO project_link_name values (nextval('viite_general_seq'), ${roadAddressProject.id}, ${roadPart.roadNumber}, 'TestRoadName_Project_Link')""")
       projectReservedPartDAO.reserveRoadPart(testProjectId, roadPart, user)
       val projectLinks = roadwayAddressMapper.getRoadAddressesByRoadway(roadwayDAO.fetchAllByRoadPart(roadPart)).map(toProjectLink(roadAddressProject))
       projectLinkDAO.create(projectLinks)
@@ -947,8 +949,8 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
 
       val roadAddressProject = Project(testProjectId, Incomplete, "preFill", user, DateTime.now(), user, DateTime.now().plusMonths(2), DateTime.now(), "", Seq(), Seq(), None, None, Set())
 
-      runUpdateToDb(s"""INSERT INTO ROAD_NAME VALUES (nextval('ROAD_NAME_SEQ'), ${roadPart.roadNumber}, 'road name test', TIMESTAMP '2018-03-23 12:26:36.000000', null, TIMESTAMP '2018-03-23 12:26:36.000000', null, 'test user', TIMESTAMP '2018-03-23 12:26:36.000000')""")
-      runUpdateToDb(s"""INSERT INTO project_link_name values (nextval('viite_general_seq'), ${roadAddressProject.id}, ${roadPart.roadNumber}, 'TestRoadName_Project_Link')""")
+      runUpdateToDb(sql"""INSERT INTO road_name VALUES (nextval('road_name_seq'), ${roadPart.roadNumber}, 'road name test', TIMESTAMP '2018-03-23 12:26:36.000000', NULL, TIMESTAMP '2018-03-23 12:26:36.000000', NULL, 'test user', TIMESTAMP '2018-03-23 12:26:36.000000')""")
+      runUpdateToDb(sql"""INSERT INTO project_link_name VALUES (nextval('viite_general_seq'), ${roadAddressProject.id}, ${roadPart.roadNumber}, 'TestRoadName_Project_Link')""")
       projectReservedPartDAO.reserveRoadPart(testProjectId, roadPart, user)
 
       val projectLinks = roadwayAddressMapper.getRoadAddressesByRoadway(roadwayDAO.fetchAllByRoadPart(roadPart)).map(toProjectLink(roadAddressProject))
@@ -990,7 +992,7 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
   }
 
   test("Test projectService.updateProjectLinks When applying the operation \"Numerointi\" to a road part that is ALREADY reserved in a different project Then return an error message" +
-    "renumber a project link to a road part not reserved with end date null") {
+    "renumber a project link to a road part not reserved with end date NULL") {
     runWithRollback {
       val rap1 = Project(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1963-01-01"), "TestUser", DateTime.parse("1963-01-01"), DateTime.now(), "Some additional info", Seq(), Seq(), None, elys = Set())
       val addr1 = List(ProjectReservedPart(Sequences.nextViitePrimaryKeySeqValue, RoadPart(5, 207), Some(0L), Some(Discontinuity.Continuous), Some(8L), None, None, None, None))
@@ -1098,7 +1100,7 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
       ProjectLinkNameDAO.get(99999L, project.id).get.roadName should be("new name")
 
       val roadLinks = links.map(toRoadLink)
-      runUpdateToDb("""INSERT INTO ROAD_NAME VALUES (nextval('ROAD_NAME_SEQ'), 99999, 'test name', current_date, null, current_date, null, 'test user', current_date)""")
+      runUpdateToDb(sql"""INSERT INTO road_name VALUES (nextval('road_name_seq'), 99999, 'test name', current_date, NULL, current_date, NULL, 'test user', current_date)""")
       val linksToRevert = links.map(l => {
         LinkToRevert(l.id, l.linkId, l.status.value, l.geometry)
       })
@@ -1501,59 +1503,59 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
       // part1
       // track1
 
-      runUpdateToDb("""INSERT INTO LINK (ID) VALUES ('12345')""")
-      runUpdateToDb("""INSERT INTO LINK (ID) VALUES ('12346')""")
-      runUpdateToDb("""INSERT INTO LINK (ID) VALUES ('12347')""")
-      runUpdateToDb("""INSERT INTO LINEAR_LOCATION (ID,ROADWAY_NUMBER,ORDER_NUMBER,LINK_ID,START_MEASURE,END_MEASURE,SIDE,GEOMETRY,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME)
-            VALUES(nextval('LINEAR_LOCATION_SEQ'), 123, 1, '12345', 0, 9, 2, ST_GeomFromText('LINESTRING(5.0 0.0 0 0, 5.0 9.0 0 9)', 3067), TIMESTAMP '2015-12-30 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000')""")
-      runUpdateToDb("""INSERT INTO LINEAR_LOCATION (ID,ROADWAY_NUMBER,ORDER_NUMBER,LINK_ID,START_MEASURE,END_MEASURE,SIDE,GEOMETRY,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME)
-            VALUES(nextval('LINEAR_LOCATION_SEQ'), 123, 2, '12346', 0, 12, 2, ST_GeomFromText('LINESTRING(5.0 9.0 0 9, 5.0 21.0 0 21)', 3067), TIMESTAMP '2015-12-30 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000')""")
-      runUpdateToDb("""INSERT INTO LINEAR_LOCATION (ID,ROADWAY_NUMBER,ORDER_NUMBER,LINK_ID,START_MEASURE,END_MEASURE,SIDE,GEOMETRY,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME)
-            VALUES(nextval('LINEAR_LOCATION_SEQ'), 123, 3, '12347', 0, 5, 2, ST_GeomFromText('LINESTRING(5.0 21.0 0 21, 5.0 26.0 0 26)', 3067), TIMESTAMP '2015-12-30 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000')""")
+      runUpdateToDb(sql"""INSERT INTO link (ID) VALUES ('12345')""")
+      runUpdateToDb(sql"""INSERT INTO link (ID) VALUES ('12346')""")
+      runUpdateToDb(sql"""INSERT INTO link (ID) VALUES ('12347')""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id,roadway_number,order_number,link_id,start_measure,end_measure,side,geometry,valid_from,valid_to,created_by,created_time)
+            VALUES(nextval('linear_location_seq'), 123, 1, '12345', 0, 9, 2, ST_GeomFromText('LINESTRING(5.0 0.0 0 0, 5.0 9.0 0 9)', 3067), TIMESTAMP '2015-12-30 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000')""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id,roadway_number,order_number,link_id,start_measure,end_measure,side,geometry,valid_from,valid_to,created_by,created_time)
+            VALUES(nextval('linear_location_seq'), 123, 2, '12346', 0, 12, 2, ST_GeomFromText('LINESTRING(5.0 9.0 0 9, 5.0 21.0 0 21)', 3067), TIMESTAMP '2015-12-30 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000')""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id,roadway_number,order_number,link_id,start_measure,end_measure,side,geometry,valid_from,valid_to,created_by,created_time)
+            VALUES(nextval('linear_location_seq'), 123, 3, '12347', 0, 5, 2, ST_GeomFromText('LINESTRING(5.0 21.0 0 21, 5.0 26.0 0 26)', 3067), TIMESTAMP '2015-12-30 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000')""")
 
-      runUpdateToDb("""Insert into ROADWAY (ID,ROADWAY_NUMBER,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK,START_ADDR_M,END_ADDR_M,REVERSED,DISCONTINUITY,START_DATE,END_DATE,CREATED_BY,CREATED_TIME,ADMINISTRATIVE_CLASS,ELY,TERMINATED,VALID_FROM,VALID_TO)
-        values (nextval('ROADWAY_SEQ'), 123,9999,1,1,0,26,0,1,to_date('22-10-90','DD-MM-YY'),null,'TR',to_timestamp('21-09-18 12.04.42.970245000','DD-MM-YY HH24.MI.SSXFF'),1,8,0,to_date('16-10-98','DD-MM-YY'),null)""")
+      runUpdateToDb(sql"""INSERT INTO roadway (id,roadway_number,road_number,road_part_number,track,start_addr_m,end_addr_m,reversed,discontinuity,start_date,end_date,created_by,created_time,administrative_class,ely,terminated,valid_from,valid_to)
+        values (nextval('roadway_seq'), 123,9999,1,1,0,26,0,1,to_date('22-10-90','DD-MM-YY'),NULL,'TR',to_timestamp('21-09-18 12.04.42.970245000','DD-MM-YY HH24.MI.SSXFF'),1,8,0,to_date('16-10-98','DD-MM-YY'),NULL)""")
 
 
 
       // track2
-      runUpdateToDb("""INSERT INTO LINK (ID) VALUES ('12348')""")
-      runUpdateToDb("""INSERT INTO LINK (ID) VALUES ('12349')""")
-      runUpdateToDb("""INSERT INTO LINK (ID) VALUES ('12350')""")
-      runUpdateToDb("""INSERT INTO LINK (ID) VALUES ('12351')""")
-      runUpdateToDb("""INSERT INTO LINEAR_LOCATION (ID,ROADWAY_NUMBER,ORDER_NUMBER,LINK_ID,START_MEASURE,END_MEASURE,SIDE,GEOMETRY,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME)
-            VALUES(nextval('LINEAR_LOCATION_SEQ'), 124, 1, '12348', 0, 10, 2, ST_GeomFromText('LINESTRING(0.0 0.0 0 0, 0.0 10.0 0 10)', 3067), TIMESTAMP '2015-12-30 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000')""")
-      runUpdateToDb("""INSERT INTO LINEAR_LOCATION (ID,ROADWAY_NUMBER,ORDER_NUMBER,LINK_ID,START_MEASURE,END_MEASURE,SIDE,GEOMETRY,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME)
-            VALUES(nextval('LINEAR_LOCATION_SEQ'), 124, 2, '12349', 0, 8, 2, ST_GeomFromText('LINESTRING(0.0 10.0 0 10, 0.0 18.0 0 18)', 3067), TIMESTAMP '2015-12-30 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000')""")
-      runUpdateToDb("""INSERT INTO LINEAR_LOCATION (ID,ROADWAY_NUMBER,ORDER_NUMBER,LINK_ID,START_MEASURE,END_MEASURE,SIDE,GEOMETRY,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME)
-            VALUES(nextval('LINEAR_LOCATION_SEQ'), 124, 3, '12350', 0, 5, 2, ST_GeomFromText('LINESTRING(0.0 18.0 0 18, 0.0 23.0 0 23)', 3067), TIMESTAMP '2015-12-30 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000')""")
-      runUpdateToDb("""INSERT INTO LINEAR_LOCATION (ID,ROADWAY_NUMBER,ORDER_NUMBER,LINK_ID,START_MEASURE,END_MEASURE,SIDE,GEOMETRY,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME)
-            VALUES(nextval('LINEAR_LOCATION_SEQ'), 124, 4, '12351', 0, 3, 2, ST_GeomFromText('LINESTRING(0.0 23.0 0 23, 0.0 26.0 0 26)', 3067), TIMESTAMP '2015-12-30 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000')""")
+      runUpdateToDb(sql"""INSERT INTO link (ID) VALUES ('12348')""")
+      runUpdateToDb(sql"""INSERT INTO link (ID) VALUES ('12349')""")
+      runUpdateToDb(sql"""INSERT INTO link (ID) VALUES ('12350')""")
+      runUpdateToDb(sql"""INSERT INTO link (ID) VALUES ('12351')""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id,roadway_number,order_number,link_id,start_measure,end_measure,side,geometry,valid_from,valid_to,created_by,created_time)
+            VALUES(nextval('linear_location_seq'), 124, 1, '12348', 0, 10, 2, ST_GeomFromText('LINESTRING(0.0 0.0 0 0, 0.0 10.0 0 10)', 3067), TIMESTAMP '2015-12-30 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000')""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id,roadway_number,order_number,link_id,start_measure,end_measure,side,geometry,valid_from,valid_to,created_by,created_time)
+            VALUES(nextval('linear_location_seq'), 124, 2, '12349', 0, 8, 2, ST_GeomFromText('LINESTRING(0.0 10.0 0 10, 0.0 18.0 0 18)', 3067), TIMESTAMP '2015-12-30 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000')""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id,roadway_number,order_number,link_id,start_measure,end_measure,side,geometry,valid_from,valid_to,created_by,created_time)
+            VALUES(nextval('linear_location_seq'), 124, 3, '12350', 0, 5, 2, ST_GeomFromText('LINESTRING(0.0 18.0 0 18, 0.0 23.0 0 23)', 3067), TIMESTAMP '2015-12-30 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000')""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id,roadway_number,order_number,link_id,start_measure,end_measure,side,geometry,valid_from,valid_to,created_by,created_time)
+            VALUES(nextval('linear_location_seq'), 124, 4, '12351', 0, 3, 2, ST_GeomFromText('LINESTRING(0.0 23.0 0 23, 0.0 26.0 0 26)', 3067), TIMESTAMP '2015-12-30 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000')""")
 
-      runUpdateToDb("""Insert into ROADWAY (ID,ROADWAY_NUMBER,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK,START_ADDR_M,END_ADDR_M,REVERSED,DISCONTINUITY,START_DATE,END_DATE,CREATED_BY,CREATED_TIME,ADMINISTRATIVE_CLASS,ELY,TERMINATED,VALID_FROM,VALID_TO)
-        values (nextval('ROADWAY_SEQ'), 124,9999,1,2,0,26,0,1,to_date('22-10-90','DD-MM-YY'),null,'TR',to_timestamp('21-09-18 12.04.42.970245000','DD-MM-YY HH24.MI.SSXFF'),1,8,0,to_date('16-10-98','DD-MM-YY'),null)""")
+      runUpdateToDb(sql"""INSERT INTO roadway (id,roadway_number,road_number,road_part_number,track,start_addr_m,end_addr_m,reversed,discontinuity,start_date,end_date,created_by,created_time,administrative_class,ely,terminated,valid_from,valid_to)
+        values (nextval('roadway_seq'), 124,9999,1,2,0,26,0,1,to_date('22-10-90','DD-MM-YY'),NULL,'TR',to_timestamp('21-09-18 12.04.42.970245000','DD-MM-YY HH24.MI.SSXFF'),1,8,0,to_date('16-10-98','DD-MM-YY'),NULL)""")
 
       // part2
       // track1
-      runUpdateToDb("""INSERT INTO LINK (ID) VALUES ('12352')""")
-      runUpdateToDb("""INSERT INTO LINK (ID) VALUES ('12353')""")
-      runUpdateToDb("""INSERT INTO LINEAR_LOCATION (ID,ROADWAY_NUMBER,ORDER_NUMBER,LINK_ID,START_MEASURE,END_MEASURE,SIDE,GEOMETRY,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME)
-            VALUES(nextval('LINEAR_LOCATION_SEQ'), 125, 1, '12352', 0, 2, 2, ST_GeomFromText('LINESTRING(5.0 26.0 0 0, 5.0 28.0 0 2)', 3067), TIMESTAMP '2015-12-30 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000')""")
-      runUpdateToDb("""INSERT INTO LINEAR_LOCATION (ID,ROADWAY_NUMBER,ORDER_NUMBER,LINK_ID,START_MEASURE,END_MEASURE,SIDE,GEOMETRY,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME)
-            VALUES(nextval('LINEAR_LOCATION_SEQ'), 125, 2, '12353', 0, 7, 2, ST_GeomFromText('LINESTRING(5.0 28.0 0 2, 5.0 35.0 0 7)', 3067), TIMESTAMP '2015-12-30 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000')""")
+      runUpdateToDb(sql"""INSERT INTO link (ID) VALUES ('12352')""")
+      runUpdateToDb(sql"""INSERT INTO link (ID) VALUES ('12353')""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id,roadway_number,order_number,link_id,start_measure,end_measure,side,geometry,valid_from,valid_to,created_by,created_time)
+            VALUES(nextval('linear_location_seq'), 125, 1, '12352', 0, 2, 2, ST_GeomFromText('LINESTRING(5.0 26.0 0 0, 5.0 28.0 0 2)', 3067), TIMESTAMP '2015-12-30 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000')""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id,roadway_number,order_number,link_id,start_measure,end_measure,side,geometry,valid_from,valid_to,created_by,created_time)
+            VALUES(nextval('linear_location_seq'), 125, 2, '12353', 0, 7, 2, ST_GeomFromText('LINESTRING(5.0 28.0 0 2, 5.0 35.0 0 7)', 3067), TIMESTAMP '2015-12-30 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000')""")
 
-      runUpdateToDb("""Insert into ROADWAY (ID,ROADWAY_NUMBER,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK,START_ADDR_M,END_ADDR_M,REVERSED,DISCONTINUITY,START_DATE,END_DATE,CREATED_BY,CREATED_TIME,ADMINISTRATIVE_CLASS,ELY,TERMINATED,VALID_FROM,VALID_TO)
-        values (nextval('ROADWAY_SEQ'), 125,9999,2,1,0,7,0,1,to_date('22-10-90','DD-MM-YY'),null,'TR',to_timestamp('21-09-18 12.04.42.970245000','DD-MM-YY HH24.MI.SSXFF'),1,8,0,to_date('16-10-98','DD-MM-YY'),null)""")
+      runUpdateToDb(sql"""INSERT INTO roadway (id,roadway_number,road_number,road_part_number,track,start_addr_m,end_addr_m,reversed,discontinuity,start_date,end_date,created_by,created_time,administrative_class,ely,terminated,valid_from,valid_to)
+        values (nextval('roadway_seq'), 125,9999,2,1,0,7,0,1,to_date('22-10-90','DD-MM-YY'),NULL,'TR',to_timestamp('21-09-18 12.04.42.970245000','DD-MM-YY HH24.MI.SSXFF'),1,8,0,to_date('16-10-98','DD-MM-YY'),NULL)""")
 
       // track2
-      runUpdateToDb("""INSERT INTO LINK (ID) VALUES ('12354')""")
-      runUpdateToDb("""INSERT INTO LINK (ID) VALUES ('12355')""")
-      runUpdateToDb("""INSERT INTO LINEAR_LOCATION (ID,ROADWAY_NUMBER,ORDER_NUMBER,LINK_ID,START_MEASURE,END_MEASURE,SIDE,GEOMETRY,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME)
-            VALUES(nextval('LINEAR_LOCATION_SEQ'), 126, 1, '12354', 0, 3, 2, ST_GeomFromText('LINESTRING(0.0 26.0 0 0, 0.0 29.0 0 3)', 3067), TIMESTAMP '2015-12-30 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000')""")
-      runUpdateToDb("""INSERT INTO LINEAR_LOCATION (ID,ROADWAY_NUMBER,ORDER_NUMBER,LINK_ID,START_MEASURE,END_MEASURE,SIDE,GEOMETRY,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME)
-            VALUES(nextval('LINEAR_LOCATION_SEQ'), 126, 2, '12355', 0, 8, 2, ST_GeomFromText('LINESTRING(0.0 29.0 0 3, 0.0 37.0 0 11)', 3067), TIMESTAMP '2015-12-30 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000')""")
-      runUpdateToDb("""Insert into ROADWAY (ID,ROADWAY_NUMBER,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK,START_ADDR_M,END_ADDR_M,REVERSED,DISCONTINUITY,START_DATE,END_DATE,CREATED_BY,CREATED_TIME,ADMINISTRATIVE_CLASS,ELY,TERMINATED,VALID_FROM,VALID_TO)
-        values (nextval('ROADWAY_SEQ'), 126,9999,2,2,0,11,0,1,to_date('22-10-90','DD-MM-YY'),null,'TR',to_timestamp('21-09-18 12.04.42.970245000','DD-MM-YY HH24.MI.SSXFF'),1,8,0,to_date('16-10-98','DD-MM-YY'),null)""")
+      runUpdateToDb(sql"""INSERT INTO link (ID) VALUES ('12354')""")
+      runUpdateToDb(sql"""INSERT INTO link (ID) VALUES ('12355')""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id,roadway_number,order_number,link_id,start_measure,end_measure,side,geometry,valid_from,valid_to,created_by,created_time)
+            VALUES(nextval('linear_location_seq'), 126, 1, '12354', 0, 3, 2, ST_GeomFromText('LINESTRING(0.0 26.0 0 0, 0.0 29.0 0 3)', 3067), TIMESTAMP '2015-12-30 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000')""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id,roadway_number,order_number,link_id,start_measure,end_measure,side,geometry,valid_from,valid_to,created_by,created_time)
+            VALUES(nextval('linear_location_seq'), 126, 2, '12355', 0, 8, 2, ST_GeomFromText('LINESTRING(0.0 29.0 0 3, 0.0 37.0 0 11)', 3067), TIMESTAMP '2015-12-30 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000')""")
+      runUpdateToDb(sql"""INSERT INTO roadway (id,roadway_number,road_number,road_part_number,track,start_addr_m,end_addr_m,reversed,discontinuity,start_date,end_date,created_by,created_time,administrative_class,ely,terminated,valid_from,valid_to)
+        values (nextval('roadway_seq'), 126,9999,2,2,0,11,0,1,to_date('22-10-90','DD-MM-YY'),NULL,'TR',to_timestamp('21-09-18 12.04.42.970245000','DD-MM-YY HH24.MI.SSXFF'),1,8,0,to_date('16-10-98','DD-MM-YY'),NULL)""")
 
       val project = projectService.createRoadLinkProject(rap)
       val id = project.id
@@ -1618,60 +1620,60 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
 
       // part1
       // track1
-      runUpdateToDb("""INSERT INTO LINK (ID) VALUES ('12345')""")
-      runUpdateToDb("""INSERT INTO LINK (ID) VALUES ('12346')""")
-      runUpdateToDb("""INSERT INTO LINK (ID) VALUES ('12347')""")
-      runUpdateToDb("""INSERT INTO LINEAR_LOCATION (ID,ROADWAY_NUMBER,ORDER_NUMBER,LINK_ID,START_MEASURE,END_MEASURE,SIDE,GEOMETRY,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME)
-            VALUES(nextval('LINEAR_LOCATION_SEQ'), 1234567, 1, '12345', 0, 9, 2, ST_GeomFromText('LINESTRING(5.0 0.0 0 0, 5.0 9.0 0 9)', 3067), TIMESTAMP '2015-12-30 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000')""")
-      runUpdateToDb("""INSERT INTO LINEAR_LOCATION (ID,ROADWAY_NUMBER,ORDER_NUMBER,LINK_ID,START_MEASURE,END_MEASURE,SIDE,GEOMETRY,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME)
-            VALUES(nextval('LINEAR_LOCATION_SEQ'), 1234567, 2, '12346', 0, 12, 2, ST_GeomFromText('LINESTRING(5.0 9.0 0 9, 5.0 21.0 0 21)', 3067), TIMESTAMP '2015-12-30 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000')""")
-      runUpdateToDb("""INSERT INTO LINEAR_LOCATION (ID,ROADWAY_NUMBER,ORDER_NUMBER,LINK_ID,START_MEASURE,END_MEASURE,SIDE,GEOMETRY,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME)
-            VALUES(nextval('LINEAR_LOCATION_SEQ'), 1234567, 3, '12347', 0, 5, 2, ST_GeomFromText('LINESTRING(5.0 21.0 0 21, 5.0 26.0 0 26)', 3067), TIMESTAMP '2015-12-30 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000')""")
+      runUpdateToDb(sql"""INSERT INTO link (ID) VALUES ('12345')""")
+      runUpdateToDb(sql"""INSERT INTO link (ID) VALUES ('12346')""")
+      runUpdateToDb(sql"""INSERT INTO link (ID) VALUES ('12347')""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id,roadway_number,order_number,link_id,start_measure,end_measure,side,geometry,valid_from,valid_to,created_by,created_time)
+            VALUES(nextval('linear_location_seq'), 1234567, 1, '12345', 0, 9, 2, ST_GeomFromText('LINESTRING(5.0 0.0 0 0, 5.0 9.0 0 9)', 3067), TIMESTAMP '2015-12-30 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000')""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id,roadway_number,order_number,link_id,start_measure,end_measure,side,geometry,valid_from,valid_to,created_by,created_time)
+            VALUES(nextval('linear_location_seq'), 1234567, 2, '12346', 0, 12, 2, ST_GeomFromText('LINESTRING(5.0 9.0 0 9, 5.0 21.0 0 21)', 3067), TIMESTAMP '2015-12-30 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000')""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id,roadway_number,order_number,link_id,start_measure,end_measure,side,geometry,valid_from,valid_to,created_by,created_time)
+            VALUES(nextval('linear_location_seq'), 1234567, 3, '12347', 0, 5, 2, ST_GeomFromText('LINESTRING(5.0 21.0 0 21, 5.0 26.0 0 26)', 3067), TIMESTAMP '2015-12-30 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000')""")
 
-      runUpdateToDb("""Insert into ROADWAY (ID,ROADWAY_NUMBER,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK,START_ADDR_M,END_ADDR_M,REVERSED,DISCONTINUITY,START_DATE,END_DATE,CREATED_BY,CREATED_TIME,ADMINISTRATIVE_CLASS,ELY,TERMINATED,VALID_FROM,VALID_TO)
-        values (nextval('ROADWAY_SEQ'), 1234567,9999,1,1,0,26,0,1,to_date('22-10-90','DD-MM-YY'),null,'TR',to_timestamp('21-09-18 12.04.42.970245000','DD-MM-YY HH24.MI.SSXFF'),1,8,0,to_date('16-10-98','DD-MM-YY'),null)""")
+      runUpdateToDb(sql"""INSERT INTO roadway (id,roadway_number,road_number,road_part_number,track,start_addr_m,end_addr_m,reversed,discontinuity,start_date,end_date,created_by,created_time,administrative_class,ely,terminated,valid_from,valid_to)
+        values (nextval('roadway_seq'), 1234567,9999,1,1,0,26,0,1,to_date('22-10-90','DD-MM-YY'),NULL,'TR',to_timestamp('21-09-18 12.04.42.970245000','DD-MM-YY HH24.MI.SSXFF'),1,8,0,to_date('16-10-98','DD-MM-YY'),NULL)""")
 
 
 
       // track2
-      runUpdateToDb("""INSERT INTO LINK (ID) VALUES ('12348')""")
-      runUpdateToDb("""INSERT INTO LINK (ID) VALUES ('12349')""")
-      runUpdateToDb("""INSERT INTO LINK (ID) VALUES ('12350')""")
-      runUpdateToDb("""INSERT INTO LINK (ID) VALUES ('12351')""")
-      runUpdateToDb("""INSERT INTO LINEAR_LOCATION (ID,ROADWAY_NUMBER,ORDER_NUMBER,LINK_ID,START_MEASURE,END_MEASURE,SIDE,GEOMETRY,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME)
-            VALUES(nextval('LINEAR_LOCATION_SEQ'), 1234568, 1, '12348', 0, 10, 2, ST_GeomFromText('LINESTRING(0.0 0.0 0 0, 0.0 10.0 0 10)', 3067), TIMESTAMP '2015-12-30 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000')""")
-      runUpdateToDb("""INSERT INTO LINEAR_LOCATION (ID,ROADWAY_NUMBER,ORDER_NUMBER,LINK_ID,START_MEASURE,END_MEASURE,SIDE,GEOMETRY,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME)
-            VALUES(nextval('LINEAR_LOCATION_SEQ'), 1234568, 2, '12349', 0, 8, 2, ST_GeomFromText('LINESTRING(0.0 10.0 0 10, 0.0 18.0 0 18)', 3067), TIMESTAMP '2015-12-30 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000')""")
-      runUpdateToDb("""INSERT INTO LINEAR_LOCATION (ID,ROADWAY_NUMBER,ORDER_NUMBER,LINK_ID,START_MEASURE,END_MEASURE,SIDE,GEOMETRY,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME)
-            VALUES(nextval('LINEAR_LOCATION_SEQ'), 1234568, 3, '12350', 0, 5, 2, ST_GeomFromText('LINESTRING(0.0 18.0 0 18, 0.0 23.0 0 23)', 3067), TIMESTAMP '2015-12-30 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000')""")
-      runUpdateToDb("""INSERT INTO LINEAR_LOCATION (ID,ROADWAY_NUMBER,ORDER_NUMBER,LINK_ID,START_MEASURE,END_MEASURE,SIDE,GEOMETRY,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME)
-            VALUES(nextval('LINEAR_LOCATION_SEQ'), 1234568, 4, '12351', 0, 3, 2, ST_GeomFromText('LINESTRING(0.0 23.0 0 23, 0.0 26.0 0 26)', 3067), TIMESTAMP '2015-12-30 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000')""")
+      runUpdateToDb(sql"""INSERT INTO link (ID) VALUES ('12348')""")
+      runUpdateToDb(sql"""INSERT INTO link (ID) VALUES ('12349')""")
+      runUpdateToDb(sql"""INSERT INTO link (ID) VALUES ('12350')""")
+      runUpdateToDb(sql"""INSERT INTO link (ID) VALUES ('12351')""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id,roadway_number,order_number,link_id,start_measure,end_measure,side,geometry,valid_from,valid_to,created_by,created_time)
+            VALUES(nextval('linear_location_seq'), 1234568, 1, '12348', 0, 10, 2, ST_GeomFromText('LINESTRING(0.0 0.0 0 0, 0.0 10.0 0 10)', 3067), TIMESTAMP '2015-12-30 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000')""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id,roadway_number,order_number,link_id,start_measure,end_measure,side,geometry,valid_from,valid_to,created_by,created_time)
+            VALUES(nextval('linear_location_seq'), 1234568, 2, '12349', 0, 8, 2, ST_GeomFromText('LINESTRING(0.0 10.0 0 10, 0.0 18.0 0 18)', 3067), TIMESTAMP '2015-12-30 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000')""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id,roadway_number,order_number,link_id,start_measure,end_measure,side,geometry,valid_from,valid_to,created_by,created_time)
+            VALUES(nextval('linear_location_seq'), 1234568, 3, '12350', 0, 5, 2, ST_GeomFromText('LINESTRING(0.0 18.0 0 18, 0.0 23.0 0 23)', 3067), TIMESTAMP '2015-12-30 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000')""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id,roadway_number,order_number,link_id,start_measure,end_measure,side,geometry,valid_from,valid_to,created_by,created_time)
+            VALUES(nextval('linear_location_seq'), 1234568, 4, '12351', 0, 3, 2, ST_GeomFromText('LINESTRING(0.0 23.0 0 23, 0.0 26.0 0 26)', 3067), TIMESTAMP '2015-12-30 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000')""")
 
-      runUpdateToDb("""Insert into ROADWAY (ID,ROADWAY_NUMBER,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK,START_ADDR_M,END_ADDR_M,REVERSED,DISCONTINUITY,START_DATE,END_DATE,CREATED_BY,CREATED_TIME,ADMINISTRATIVE_CLASS,ELY,TERMINATED,VALID_FROM,VALID_TO)
-        values (nextval('ROADWAY_SEQ'), 1234568,9999,1,2,0,26,0,1,to_date('22-10-90','DD-MM-YY'),null,'TR',to_timestamp('21-09-18 12.04.42.970245000','DD-MM-YY HH24.MI.SSXFF'),1,8,0,to_date('16-10-98','DD-MM-YY'),null)""")
+      runUpdateToDb(sql"""INSERT INTO roadway (id,roadway_number,road_number,road_part_number,track,start_addr_m,end_addr_m,reversed,discontinuity,start_date,end_date,created_by,created_time,administrative_class,ely,terminated,valid_from,valid_to)
+        values (nextval('roadway_seq'), 1234568,9999,1,2,0,26,0,1,to_date('22-10-90','DD-MM-YY'),NULL,'TR',to_timestamp('21-09-18 12.04.42.970245000','DD-MM-YY HH24.MI.SSXFF'),1,8,0,to_date('16-10-98','DD-MM-YY'),NULL)""")
 
       // part2
       // track1
-      runUpdateToDb("""INSERT INTO LINK (ID) VALUES ('12352')""")
-      runUpdateToDb("""INSERT INTO LINK (ID) VALUES ('12353')""")
-      runUpdateToDb("""INSERT INTO LINEAR_LOCATION (ID,ROADWAY_NUMBER,ORDER_NUMBER,LINK_ID,START_MEASURE,END_MEASURE,SIDE,GEOMETRY,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME)
-            VALUES(nextval('LINEAR_LOCATION_SEQ'), 1234569, 1, '12352', 0, 2, 2,ST_GeomFromText('LINESTRING(5.0 26.0 0 0, 5.0 28.0 0 2)', 3067), TIMESTAMP '2015-12-30 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000')""")
-      runUpdateToDb("""INSERT INTO LINEAR_LOCATION (ID,ROADWAY_NUMBER,ORDER_NUMBER,LINK_ID,START_MEASURE,END_MEASURE,SIDE,GEOMETRY,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME)
-            VALUES(nextval('LINEAR_LOCATION_SEQ'), 1234569, 2, '12353', 0, 7, 2, ST_GeomFromText('LINESTRING(5.0 28.0 0 2, 5.0 35.0 0 7)', 3067), TIMESTAMP '2015-12-30 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000')""")
+      runUpdateToDb(sql"""INSERT INTO link (ID) VALUES ('12352')""")
+      runUpdateToDb(sql"""INSERT INTO link (ID) VALUES ('12353')""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id,roadway_number,order_number,link_id,start_measure,end_measure,side,geometry,valid_from,valid_to,created_by,created_time)
+            VALUES(nextval('linear_location_seq'), 1234569, 1, '12352', 0, 2, 2,ST_GeomFromText('LINESTRING(5.0 26.0 0 0, 5.0 28.0 0 2)', 3067), TIMESTAMP '2015-12-30 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000')""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id,roadway_number,order_number,link_id,start_measure,end_measure,side,geometry,valid_from,valid_to,created_by,created_time)
+            VALUES(nextval('linear_location_seq'), 1234569, 2, '12353', 0, 7, 2, ST_GeomFromText('LINESTRING(5.0 28.0 0 2, 5.0 35.0 0 7)', 3067), TIMESTAMP '2015-12-30 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000')""")
 
-      runUpdateToDb("""Insert into ROADWAY (ID,ROADWAY_NUMBER,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK,START_ADDR_M,END_ADDR_M,REVERSED,DISCONTINUITY,START_DATE,END_DATE,CREATED_BY,CREATED_TIME,ADMINISTRATIVE_CLASS,ELY,TERMINATED,VALID_FROM,VALID_TO)
-        values (nextval('ROADWAY_SEQ'), 1234569,9999,2,1,0,7,0,1,to_date('22-10-90','DD-MM-YY'),null,'TR',to_timestamp('21-09-18 12.04.42.970245000','DD-MM-YY HH24.MI.SSXFF'),1,8,0,to_date('16-10-98','DD-MM-YY'),null)""")
+      runUpdateToDb(sql"""INSERT INTO roadway (id,roadway_number,road_number,road_part_number,track,start_addr_m,end_addr_m,reversed,discontinuity,start_date,end_date,created_by,created_time,administrative_class,ely,terminated,valid_from,valid_to)
+        values (nextval('roadway_seq'), 1234569,9999,2,1,0,7,0,1,to_date('22-10-90','DD-MM-YY'),NULL,'TR',to_timestamp('21-09-18 12.04.42.970245000','DD-MM-YY HH24.MI.SSXFF'),1,8,0,to_date('16-10-98','DD-MM-YY'),NULL)""")
 
       // track2
-      runUpdateToDb("""INSERT INTO LINK (ID) VALUES ('12354')""")
-      runUpdateToDb("""INSERT INTO LINK (ID) VALUES ('12355')""")
-      runUpdateToDb("""INSERT INTO LINEAR_LOCATION (ID,ROADWAY_NUMBER,ORDER_NUMBER,LINK_ID,START_MEASURE,END_MEASURE,SIDE,GEOMETRY,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME)
-            VALUES(nextval('LINEAR_LOCATION_SEQ'), 1234570, 1, '12354', 0, 3, 2, ST_GeomFromText('LINESTRING(0.0 26.0 0 0, 0.0 29.0 0 3)', 3067), TIMESTAMP '2015-12-30 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000')""")
-      runUpdateToDb("""INSERT INTO LINEAR_LOCATION (ID,ROADWAY_NUMBER,ORDER_NUMBER,LINK_ID,START_MEASURE,END_MEASURE,SIDE,GEOMETRY,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME)
-            VALUES(nextval('LINEAR_LOCATION_SEQ'), 1234570, 2, '12355', 0, 8, 2, ST_GeomFromText('LINESTRING(0.0 29.0 0 3, 0.0 37.0 0 11)', 3067), TIMESTAMP '2015-12-30 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000')""")
+      runUpdateToDb(sql"""INSERT INTO link (ID) VALUES ('12354')""")
+      runUpdateToDb(sql"""INSERT INTO link (ID) VALUES ('12355')""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id,roadway_number,order_number,link_id,start_measure,end_measure,side,geometry,valid_from,valid_to,created_by,created_time)
+            VALUES(nextval('linear_location_seq'), 1234570, 1, '12354', 0, 3, 2, ST_GeomFromText('LINESTRING(0.0 26.0 0 0, 0.0 29.0 0 3)', 3067), TIMESTAMP '2015-12-30 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000')""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id,roadway_number,order_number,link_id,start_measure,end_measure,side,geometry,valid_from,valid_to,created_by,created_time)
+            VALUES(nextval('linear_location_seq'), 1234570, 2, '12355', 0, 8, 2, ST_GeomFromText('LINESTRING(0.0 29.0 0 3, 0.0 37.0 0 11)', 3067), TIMESTAMP '2015-12-30 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000')""")
 
-      runUpdateToDb("""Insert into ROADWAY (ID,ROADWAY_NUMBER,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK,START_ADDR_M,END_ADDR_M,REVERSED,DISCONTINUITY,START_DATE,END_DATE,CREATED_BY,CREATED_TIME,ADMINISTRATIVE_CLASS,ELY,TERMINATED,VALID_FROM,VALID_TO)
-        values (nextval('ROADWAY_SEQ'), 1234570,9999,2,2,0,11,0,1,to_date('22-10-90','DD-MM-YY'),null,'TR',to_timestamp('21-09-18 12.04.42.970245000','DD-MM-YY HH24.MI.SSXFF'),1,8,0,to_date('16-10-98','DD-MM-YY'),null)""")
+      runUpdateToDb(sql"""INSERT INTO roadway (id,roadway_number,road_number,road_part_number,track,start_addr_m,end_addr_m,reversed,discontinuity,start_date,end_date,created_by,created_time,administrative_class,ely,terminated,valid_from,valid_to)
+        values (nextval('roadway_seq'), 1234570,9999,2,2,0,11,0,1,to_date('22-10-90','DD-MM-YY'),NULL,'TR',to_timestamp('21-09-18 12.04.42.970245000','DD-MM-YY HH24.MI.SSXFF'),1,8,0,to_date('16-10-98','DD-MM-YY'),NULL)""")
 
       val project = projectService.createRoadLinkProject(rap)
       val id = project.id
@@ -1930,11 +1932,11 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
       // Check that the terminated linear location is expired and the transferred linear location is not expired
       val linearLocationToExpire = linearLocationDAO.fetchByLinkId(Set(linkId))
       linearLocationToExpire.foreach { ll =>
-        ll.validTo should not be None // Not "null"
+        ll.validTo should not be None // Not "NULL"
       }
       val linearLocationToBeValid = linearLocationDAO.fetchByLinkId(Set(linkId2))
       linearLocationToBeValid.foreach { ll =>
-        ll.validTo should be(None) // Should be "null"
+        ll.validTo should be(None) // Should be "NULL"
       }
     }
   }
@@ -2014,23 +2016,23 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
   test("Test Road names should not have valid road name for any roadnumber after TR response") {
     runWithRollback {
       val projectId = Sequences.nextViiteProjectId
-      runUpdateToDb("""INSERT INTO ROAD_NAME VALUES (nextval('ROAD_NAME_SEQ'), 66666, 'ROAD TEST', TIMESTAMP '2018-03-23 12:26:36.000000', null, TIMESTAMP '2018-03-23 12:26:36.000000', null, 'test user', TIMESTAMP '2018-03-23 12:26:36.000000')""")
+      runUpdateToDb(sql"""INSERT INTO road_name VALUES (nextval('road_name_seq'), 66666, 'ROAD TEST', TIMESTAMP '2018-03-23 12:26:36.000000', NULL, TIMESTAMP '2018-03-23 12:26:36.000000', NULL, 'test user', TIMESTAMP '2018-03-23 12:26:36.000000')""")
 
-      runUpdateToDb(s"""INSERT INTO PROJECT VALUES($projectId, 2, 'test project', 'silari', TIMESTAMP '2018-03-23 11:36:15.000000', '-', TIMESTAMP '2018-03-23 12:26:33.000000', NULL, NULL, NULL, 533406.572, 6994060.048, 12)""")
-      runUpdateToDb(s"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (${Sequences.nextViitePrimaryKeySeqValue}, 66666, 1, $projectId, '-')""")
+      runUpdateToDb(sql"""INSERT INTO project VALUES($projectId, 2, 'test project', 'silari', TIMESTAMP '2018-03-23 11:36:15.000000', '-', TIMESTAMP '2018-03-23 12:26:33.000000', NULL, NULL, NULL, 533406.572, 6994060.048, 12)""")
+      runUpdateToDb(sql"""INSERT INTO project_reserved_road_part VALUES (${Sequences.nextViitePrimaryKeySeqValue}, 66666, 1, $projectId, '-')""")
 
-      runUpdateToDb(s"""INSERT INTO PROJECT_LINK (ID, PROJECT_ID, TRACK, DISCONTINUITY_TYPE, ROAD_NUMBER, ROAD_PART_NUMBER,
-          START_ADDR_M, END_ADDR_M, CREATED_BY, MODIFIED_BY, CREATED_DATE, MODIFIED_DATE, STATUS,
-          ADMINISTRATIVE_CLASS, ROADWAY_ID, LINEAR_LOCATION_ID, CONNECTED_LINK_ID, ELY, REVERSED, SIDE, START_MEASURE, END_MEASURE,
-          LINK_ID, ADJUSTED_TIMESTAMP, LINK_SOURCE, GEOMETRY, ORIGINAL_START_ADDR_M, ORIGINAL_END_ADDR_M, ROADWAY_NUMBER,
-          START_CALIBRATION_POINT, END_CALIBRATION_POINT, ORIG_START_CALIBRATION_POINT, ORIG_END_CALIBRATION_POINT)
+      runUpdateToDb(sql"""INSERT INTO project_link (id, project_id, track, discontinuity_type, road_number, road_part_number,
+          start_addr_m, end_addr_m, created_by, modified_by, created_date, modified_date, status,
+          administrative_class, roadway_id, linear_location_id, connected_link_id, ely, reversed, side, start_measure, end_measure,
+          link_id, adjusted_timestamp, link_source, geometry, original_start_addr_m, original_end_addr_m, roadway_number,
+          start_calibration_point, end_calibration_point, orig_start_calibration_point, orig_end_calibration_point)
         VALUES (${Sequences.nextProjectLinkId}, $projectId, 0, 5, 66666, 1,
           0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2,
           1, NULL, NULL, NULL, 8, 0, NULL, 0, 85.617,
           NULL, 1543328166000, 1, NULL, 0, 0, NULL,
           3, 3, 0, 0)""")
 
-      runUpdateToDb(s"""INSERT INTO PROJECT_LINK_NAME VALUES (nextval('PROJECT_LINK_NAME_SEQ'), $projectId, 66666, 'ROAD TEST')""")
+      runUpdateToDb(sql"""INSERT INTO project_link_name VALUES (nextval('project_link_name_seq'), $projectId, 66666, 'ROAD TEST')""")
       val namesBeforeUpdate = RoadNameDAO.getLatestRoadName(66666)
       val changeInfos = List(
         RoadwayChangeInfo(RoadAddressChangeType.New,
@@ -2086,21 +2088,21 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
   test("Test getLatestRoadName When having no road name for given road number Then road name should not be saved on TR success response if road number > 70.000 (even though it has no name)") {
     runWithRollback {
       val projectId = Sequences.nextViiteProjectId
-      runUpdateToDb(s"""INSERT INTO PROJECT VALUES($projectId, 2, 'test project', 'silari', TIMESTAMP '2018-03-23 11:36:15.000000', '-', TIMESTAMP '2018-03-23 12:26:33.000000', NULL, TIMESTAMP '2018-03-23 00:00:00.000000', NULL, 533406.572, 6994060.048, 12)""")
-      runUpdateToDb(s"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (${Sequences.nextViitePrimaryKeySeqValue}, 70001, 1, $projectId, '-')""")
+      runUpdateToDb(sql"""INSERT INTO project VALUES($projectId, 2, 'test project', 'silari', TIMESTAMP '2018-03-23 11:36:15.000000', '-', TIMESTAMP '2018-03-23 12:26:33.000000', NULL, TIMESTAMP '2018-03-23 00:00:00.000000', NULL, 533406.572, 6994060.048, 12)""")
+      runUpdateToDb(sql"""INSERT INTO project_reserved_road_part VALUES (${Sequences.nextViitePrimaryKeySeqValue}, 70001, 1, $projectId, '-')""")
 
-      runUpdateToDb(s"""INSERT INTO PROJECT_LINK (ID, PROJECT_ID, TRACK, DISCONTINUITY_TYPE, ROAD_NUMBER, ROAD_PART_NUMBER,
-          START_ADDR_M, END_ADDR_M, CREATED_BY, MODIFIED_BY, CREATED_DATE, MODIFIED_DATE, STATUS,
-          ADMINISTRATIVE_CLASS, ROADWAY_ID, LINEAR_LOCATION_ID, CONNECTED_LINK_ID, ELY, REVERSED, SIDE, START_MEASURE, END_MEASURE,
-          LINK_ID, ADJUSTED_TIMESTAMP, LINK_SOURCE, GEOMETRY, ORIGINAL_START_ADDR_M, ORIGINAL_END_ADDR_M, ROADWAY_NUMBER,
-          START_CALIBRATION_POINT, END_CALIBRATION_POINT, ORIG_START_CALIBRATION_POINT, ORIG_END_CALIBRATION_POINT)
+      runUpdateToDb(sql"""INSERT INTO project_link (id, project_id, track, discontinuity_type, road_number, road_part_number,
+          start_addr_m, end_addr_m, created_by, modified_by, created_date, modified_date, status,
+          administrative_class, roadway_id, linear_location_id, connected_link_id, ely, reversed, side, start_measure, end_measure,
+          link_id, adjusted_timestamp, link_source, geometry, original_start_addr_m, original_end_addr_m, roadway_number,
+          start_calibration_point, end_calibration_point, orig_start_calibration_point, orig_end_calibration_point)
         VALUES (${Sequences.nextProjectLinkId}, $projectId, 0, 5, 70001, 1,
           0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 5,
           1, NULL, NULL, NULL, 8, 0, 2, 0, 85.617,
           5170979, 1500079296000, 1, NULL, 0, 86, NULL,
           3, 3, 3, 3)""")
 
-      runUpdateToDb(s"""INSERT INTO PROJECT_LINK_NAME VALUES (nextval('PROJECT_LINK_NAME_SEQ'), $projectId, 70001, NULL)""")
+      runUpdateToDb(sql"""INSERT INTO project_link_name VALUES (nextval('project_link_name_seq'), $projectId, 70001, NULL)""")
       val namesBeforeUpdate = RoadNameDAO.getLatestRoadName(70001)
       namesBeforeUpdate.isEmpty should be(true)
       when(mockNodesAndJunctionsService.expireObsoleteNodesAndJunctions(any[Seq[ProjectLink]], any[Option[DateTime]], any[String])).thenReturn(Seq())
@@ -2117,23 +2119,23 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
   test("Test getLatestRoadName road name exists on TR success response") {
     runWithRollback {
       val projectId = Sequences.nextViiteProjectId
-      runUpdateToDb("""INSERT INTO ROAD_NAME VALUES (nextval('ROAD_NAME_SEQ'), 66666, 'road name test', TIMESTAMP '2018-03-23 12:26:36.000000', null, TIMESTAMP '2018-03-23 12:26:36.000000', null, 'test user', TIMESTAMP '2018-03-23 12:26:36.000000')""")
+      runUpdateToDb(sql"""INSERT INTO road_name VALUES (nextval('road_name_seq'), 66666, 'road name test', TIMESTAMP '2018-03-23 12:26:36.000000', NULL, TIMESTAMP '2018-03-23 12:26:36.000000', NULL, 'test user', TIMESTAMP '2018-03-23 12:26:36.000000')""")
 
-      runUpdateToDb(s"""INSERT INTO PROJECT VALUES($projectId, 2, 'test project', 'silari', TIMESTAMP '2018-03-23 11:36:15.000000', '-', TIMESTAMP '2018-03-23 12:26:33.000000', NULL, TIMESTAMP '2018-03-23 00:00:00.000000', NULL, 533406.572, 6994060.048, 12)""")
-      runUpdateToDb(s"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (${Sequences.nextViitePrimaryKeySeqValue}, 66666, 1, $projectId, '-')""")
+      runUpdateToDb(sql"""INSERT INTO project VALUES($projectId, 2, 'test project', 'silari', TIMESTAMP '2018-03-23 11:36:15.000000', '-', TIMESTAMP '2018-03-23 12:26:33.000000', NULL, TIMESTAMP '2018-03-23 00:00:00.000000', NULL, 533406.572, 6994060.048, 12)""")
+      runUpdateToDb(sql"""INSERT INTO project_reserved_road_part VALUES (${Sequences.nextViitePrimaryKeySeqValue}, 66666, 1, $projectId, '-')""")
 
-      runUpdateToDb(s"""INSERT INTO PROJECT_LINK (ID, PROJECT_ID, TRACK, DISCONTINUITY_TYPE, ROAD_NUMBER, ROAD_PART_NUMBER,
-          START_ADDR_M, END_ADDR_M, CREATED_BY, MODIFIED_BY, CREATED_DATE, MODIFIED_DATE, STATUS,
-          ADMINISTRATIVE_CLASS, ROADWAY_ID, LINEAR_LOCATION_ID, CONNECTED_LINK_ID, ELY, REVERSED, SIDE, START_MEASURE, END_MEASURE,
-          LINK_ID, ADJUSTED_TIMESTAMP, LINK_SOURCE, GEOMETRY, ORIGINAL_START_ADDR_M, ORIGINAL_END_ADDR_M, ROADWAY_NUMBER,
-          START_CALIBRATION_POINT, END_CALIBRATION_POINT, ORIG_START_CALIBRATION_POINT, ORIG_END_CALIBRATION_POINT)
+      runUpdateToDb(sql"""INSERT INTO project_link (id, project_id, track, discontinuity_type, road_number, road_part_number,
+          start_addr_m, end_addr_m, created_by, modified_by, created_date, modified_date, status,
+          administrative_class, roadway_id, linear_location_id, connected_link_id, ely, reversed, side, start_measure, end_measure,
+          link_id, adjusted_timestamp, link_source, geometry, original_start_addr_m, original_end_addr_m, roadway_number,
+          start_calibration_point, end_calibration_point, orig_start_calibration_point, orig_end_calibration_point)
         VALUES (${Sequences.nextProjectLinkId}, $projectId, 0, 5, 66666, 1,
           0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2,
           1, NULL, NULL, NULL, 8, 0, 2, 0, 85.617,
           5170979, 1500079296000, 1, NULL, 0, 86, NULL,
           3, 3, 3, 3)""")
 
-      runUpdateToDb(s"""INSERT INTO PROJECT_LINK_NAME VALUES (nextval('PROJECT_LINK_NAME_SEQ'), $projectId, 66666, 'another road name test')""")
+      runUpdateToDb(sql"""INSERT INTO project_link_name VALUES (nextval('project_link_name_seq'), $projectId, 66666, 'another road name test')""")
 
       val changeInfos = List(
         RoadwayChangeInfo(RoadAddressChangeType.New,
@@ -2158,21 +2160,21 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
   test("Test getLatestRoadName When existing TR success response Then the road name should be saved") {
     runWithRollback {
       val projectId = Sequences.nextViiteProjectId
-      runUpdateToDb(s"""INSERT INTO PROJECT VALUES($projectId, 2, 'test project', 'silari', TIMESTAMP '2018-03-23 11:36:15.000000', '-', TIMESTAMP '2018-03-23 12:26:33.000000', NULL, TIMESTAMP '2018-03-23 00:00:00.000000', NULL, 533406.572, 6994060.048, 12)""")
-      runUpdateToDb(s"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (${Sequences.nextViitePrimaryKeySeqValue}, 66666, 1, $projectId, '-')""")
+      runUpdateToDb(sql"""INSERT INTO project VALUES($projectId, 2, 'test project', 'silari', TIMESTAMP '2018-03-23 11:36:15.000000', '-', TIMESTAMP '2018-03-23 12:26:33.000000', NULL, TIMESTAMP '2018-03-23 00:00:00.000000', NULL, 533406.572, 6994060.048, 12)""")
+      runUpdateToDb(sql"""INSERT INTO project_reserved_road_part VALUES (${Sequences.nextViitePrimaryKeySeqValue}, 66666, 1, $projectId, '-')""")
 
-      runUpdateToDb(s"""INSERT INTO PROJECT_LINK (ID, PROJECT_ID, TRACK, DISCONTINUITY_TYPE, ROAD_NUMBER, ROAD_PART_NUMBER,
+      runUpdateToDb(sql"""INSERT INTO project_link (ID, project_ID, TRACK, DISCONTINUITY_TYPE, ROAD_NUMBER, ROAD_PART_NUMBER,
           START_ADDR_M, END_ADDR_M, CREATED_BY, MODIFIED_BY, CREATED_DATE, MODIFIED_DATE, STATUS,
-          ADMINISTRATIVE_CLASS, ROADWAY_ID, LINEAR_LOCATION_ID, CONNECTED_LINK_ID, ELY, REVERSED, SIDE, START_MEASURE, END_MEASURE,
-          LINK_ID, ADJUSTED_TIMESTAMP, LINK_SOURCE, GEOMETRY, ORIGINAL_START_ADDR_M, ORIGINAL_END_ADDR_M, ROADWAY_NUMBER,
-          START_CALIBRATION_POINT, END_CALIBRATION_POINT, ORIG_START_CALIBRATION_POINT, ORIG_END_CALIBRATION_POINT)
+          ADMINISTRATIVE_CLASS, roadway_ID, linear_location_ID, CONNECTED_link_ID, ELY, REVERSED, SIDE, START_MEASURE, END_MEASURE,
+          link_ID, ADJUSTED_TIMESTAMP, link_SOURCE, GEOMETRY, ORIGINAL_START_ADDR_M, ORIGINAL_END_ADDR_M, roadway_NUMBER,
+          START_calibration_point, END_calibration_point, ORIG_START_calibration_point, ORIG_END_calibration_point)
         VALUES (${Sequences.nextProjectLinkId}, $projectId, 0, 5, 66666, 1,
           0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2,
           1, NULL, NULL, NULL, 8, 0, 2, 0, 85.617,
           5170979, 1500079296000, 1, NULL, 0, 86, NULL,
           3, 3, 3, 3)""")
 
-      runUpdateToDb(s"""INSERT INTO PROJECT_LINK_NAME VALUES (nextval('PROJECT_LINK_NAME_SEQ'), $projectId, 66666, 'road name test')""")
+      runUpdateToDb(sql"""INSERT INTO project_link_name VALUES (nextval('project_link_name_seq'), $projectId, 66666, 'road name test')""")
       val changeInfos = List(
         RoadwayChangeInfo(RoadAddressChangeType.New,
           source = dummyRoadwayChangeSection(Some(RoadPart(66666, 1)), Some(0L), Some(0L), Some(100L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
@@ -2197,34 +2199,34 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
   test("Test getLatestRoadName When existing TR success response Then multiple names should be saved") {
     runWithRollback {
       val projectId = Sequences.nextViiteProjectId
-      runUpdateToDb(s"""INSERT INTO PROJECT VALUES($projectId, 2, 'test project', 'silari', TIMESTAMP '2018-03-23 11:36:15.000000', '-', TIMESTAMP '2018-03-23 12:26:33.000000', NULL, TIMESTAMP '2018-03-23 00:00:00.000000', NULL, 533406.572, 6994060.048, 12)""")
-      runUpdateToDb(s"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (${Sequences.nextViitePrimaryKeySeqValue}, 66666, 1, $projectId, '-')""")
-      runUpdateToDb(s"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (${Sequences.nextViitePrimaryKeySeqValue}, 55555, 1, $projectId, '-')""")
+      runUpdateToDb(sql"""INSERT INTO project VALUES($projectId, 2, 'test project', 'silari', TIMESTAMP '2018-03-23 11:36:15.000000', '-', TIMESTAMP '2018-03-23 12:26:33.000000', NULL, TIMESTAMP '2018-03-23 00:00:00.000000', NULL, 533406.572, 6994060.048, 12)""")
+      runUpdateToDb(sql"""INSERT INTO project_reserved_road_part VALUES (${Sequences.nextViitePrimaryKeySeqValue}, 66666, 1, $projectId, '-')""")
+      runUpdateToDb(sql"""INSERT INTO project_reserved_road_part VALUES (${Sequences.nextViitePrimaryKeySeqValue}, 55555, 1, $projectId, '-')""")
 
-      runUpdateToDb(s"""INSERT INTO PROJECT_LINK (ID, PROJECT_ID, TRACK, DISCONTINUITY_TYPE, ROAD_NUMBER, ROAD_PART_NUMBER,
-          START_ADDR_M, END_ADDR_M, CREATED_BY, MODIFIED_BY, CREATED_DATE, MODIFIED_DATE, STATUS,
-          ADMINISTRATIVE_CLASS, ROADWAY_ID, LINEAR_LOCATION_ID, CONNECTED_LINK_ID, ELY, REVERSED, SIDE, START_MEASURE, END_MEASURE,
-          LINK_ID, ADJUSTED_TIMESTAMP, LINK_SOURCE, GEOMETRY, ORIGINAL_START_ADDR_M, ORIGINAL_END_ADDR_M, ROADWAY_NUMBER,
-          START_CALIBRATION_POINT, END_CALIBRATION_POINT, ORIG_START_CALIBRATION_POINT, ORIG_END_CALIBRATION_POINT)
+      runUpdateToDb(sql"""INSERT INTO project_link (id, project_id, track, discontinuity_type, road_number, road_part_number,
+          start_addr_m, end_addr_m, created_by, modified_by, created_date, modified_date, status,
+          administrative_class, roadway_id, linear_location_id, connected_link_id, ely, reversed, side, start_measure, end_measure,
+          link_id, adjusted_timestamp, link_source, geometry, original_start_addr_m, original_end_addr_m, roadway_number,
+          start_calibration_point, end_calibration_point, orig_start_calibration_point, orig_end_calibration_point)
         VALUES (${Sequences.nextProjectLinkId}, $projectId, 0, 5, 66666, 1,
           0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2,
           1, NULL, NULL, NULL, 8, 0, 2, 0, 85.617,
           5170979, 1500079296000, 1, NULL, 0, 86, NULL,
           3, 3, 3, 3)""")
 
-      runUpdateToDb(s"""INSERT INTO PROJECT_LINK (ID, PROJECT_ID, TRACK, DISCONTINUITY_TYPE, ROAD_NUMBER, ROAD_PART_NUMBER,
-          START_ADDR_M, END_ADDR_M, CREATED_BY, MODIFIED_BY, CREATED_DATE, MODIFIED_DATE, STATUS,
-          ADMINISTRATIVE_CLASS, ROADWAY_ID, LINEAR_LOCATION_ID, CONNECTED_LINK_ID, ELY, REVERSED, SIDE, START_MEASURE, END_MEASURE,
-          LINK_ID, ADJUSTED_TIMESTAMP, LINK_SOURCE, GEOMETRY, ORIGINAL_START_ADDR_M, ORIGINAL_END_ADDR_M, ROADWAY_NUMBER,
-          START_CALIBRATION_POINT, END_CALIBRATION_POINT, ORIG_START_CALIBRATION_POINT, ORIG_END_CALIBRATION_POINT)
+      runUpdateToDb(sql"""INSERT INTO project_link (id, project_id, track, discontinuity_type, road_number, road_part_number,
+          start_addr_m, end_addr_m, created_by, modified_by, created_date, modified_date, status,
+          administrative_class, roadway_id, linear_location_id, connected_link_id, ely, reversed, side, start_measure, end_measure,
+          link_id, adjusted_timestamp, link_source, geometry, original_start_addr_m, original_end_addr_m, roadway_number,
+          start_calibration_point, end_calibration_point, orig_start_calibration_point, orig_end_calibration_point)
         VALUES (${Sequences.nextProjectLinkId}, $projectId, 0, 5, 55555, 1,
           0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2,
           1, NULL, NULL, NULL, 8, 0, 2, 0, 85.617,
           5170980, 1500079296000, 1, NULL, 0, 86, NULL,
           3, 3, 3, 3)""")
 
-      runUpdateToDb(s"""INSERT INTO PROJECT_LINK_NAME VALUES (nextval('PROJECT_LINK_NAME_SEQ'), $projectId, 66666, 'road name test')""")
-      runUpdateToDb(s"""INSERT INTO PROJECT_LINK_NAME VALUES (nextval('PROJECT_LINK_NAME_SEQ'), $projectId, 55555, 'road name test2')""")
+      runUpdateToDb(sql"""INSERT INTO project_link_name VALUES (nextval('project_link_name_seq'), $projectId, 66666, 'road name test')""")
+      runUpdateToDb(sql"""INSERT INTO project_link_name VALUES (nextval('project_link_name_seq'), $projectId, 55555, 'road name test2')""")
       RoadNameDAO.getLatestRoadName(55555).isEmpty should be (true)
       RoadNameDAO.getLatestRoadName(66666).isEmpty should be (true)
       val changeInfos = List(
@@ -2989,98 +2991,98 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
 
   test("Test updateRoadwaysAndLinearLocationsWithProjectLinks When VIITE-2236 situation Then don't violate unique constraint on roadway_point table.") {
     runWithRollback {
-      runUpdateToDb("""Insert into LINK (ID,SOURCE,ADJUSTED_TIMESTAMP,CREATED_TIME) values ('568121','4','1446398762000',to_timestamp('27.12.2019 13:12:50','DD.MM.YYYY HH24:MI:SS'))""")
-      runUpdateToDb("""Insert into LINK (ID,SOURCE,ADJUSTED_TIMESTAMP,CREATED_TIME) values ('7256596','4','1498959782000',to_timestamp('27.12.2019 13:12:50','DD.MM.YYYY HH24:MI:SS'))""")
-      runUpdateToDb("""Insert into LINK (ID,SOURCE,ADJUSTED_TIMESTAMP,CREATED_TIME) values ('7256590','4','1498959782000',to_timestamp('27.12.2019 13:12:50','DD.MM.YYYY HH24:MI:SS'))""")
-      runUpdateToDb("""Insert into LINK (ID,SOURCE,ADJUSTED_TIMESTAMP,CREATED_TIME) values ('7256584','4','1498959782000',to_timestamp('27.12.2019 13:12:50','DD.MM.YYYY HH24:MI:SS'))""")
-      runUpdateToDb("""Insert into LINK (ID,SOURCE,ADJUSTED_TIMESTAMP,CREATED_TIME) values ('7256586','4','1503961971000',to_timestamp('27.12.2019 13:12:50','DD.MM.YYYY HH24:MI:SS'))""")
-      runUpdateToDb("""Insert into LINK (ID,SOURCE,ADJUSTED_TIMESTAMP,CREATED_TIME) values ('7256594','4','1533681057000',to_timestamp('27.12.2019 13:12:50','DD.MM.YYYY HH24:MI:SS'))""")
-      runUpdateToDb("""Insert into LINK (ID,SOURCE,ADJUSTED_TIMESTAMP,CREATED_TIME) values ('568164','4','1449097206000',to_timestamp('27.12.2019 13:12:50','DD.MM.YYYY HH24:MI:SS'))""")
-      runUpdateToDb("""Insert into LINK (ID,SOURCE,ADJUSTED_TIMESTAMP,CREATED_TIME) values ('568122','4','1449097206000',to_timestamp('27.12.2019 13:12:50','DD.MM.YYYY HH24:MI:SS'))""")
+      runUpdateToDb(sql"""INSERT INTO link (id,source,adjusted_timestamp,created_time) values ('568121','4','1446398762000',to_timestamp('27.12.2019 13:12:50','DD.MM.YYYY HH24:MI:SS'))""")
+      runUpdateToDb(sql"""INSERT INTO link (id,source,adjusted_timestamp,created_time) values ('7256596','4','1498959782000',to_timestamp('27.12.2019 13:12:50','DD.MM.YYYY HH24:MI:SS'))""")
+      runUpdateToDb(sql"""INSERT INTO link (id,source,adjusted_timestamp,created_time) values ('7256590','4','1498959782000',to_timestamp('27.12.2019 13:12:50','DD.MM.YYYY HH24:MI:SS'))""")
+      runUpdateToDb(sql"""INSERT INTO link (id,source,adjusted_timestamp,created_time) values ('7256584','4','1498959782000',to_timestamp('27.12.2019 13:12:50','DD.MM.YYYY HH24:MI:SS'))""")
+      runUpdateToDb(sql"""INSERT INTO link (id,source,adjusted_timestamp,created_time) values ('7256586','4','1503961971000',to_timestamp('27.12.2019 13:12:50','DD.MM.YYYY HH24:MI:SS'))""")
+      runUpdateToDb(sql"""INSERT INTO link (id,source,adjusted_timestamp,created_time) values ('7256594','4','1533681057000',to_timestamp('27.12.2019 13:12:50','DD.MM.YYYY HH24:MI:SS'))""")
+      runUpdateToDb(sql"""INSERT INTO link (id,source,adjusted_timestamp,created_time) values ('568164','4','1449097206000',to_timestamp('27.12.2019 13:12:50','DD.MM.YYYY HH24:MI:SS'))""")
+      runUpdateToDb(sql"""INSERT INTO link (id,source,adjusted_timestamp,created_time) values ('568122','4','1449097206000',to_timestamp('27.12.2019 13:12:50','DD.MM.YYYY HH24:MI:SS'))""")
 
-      runUpdateToDb("""Insert into ROADWAY (ID,ROADWAY_NUMBER,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK,START_ADDR_M,END_ADDR_M,REVERSED,DISCONTINUITY,START_DATE,END_DATE,CREATED_BY,CREATED_TIME,ADMINISTRATIVE_CLASS,ELY,TERMINATED,VALID_FROM,VALID_TO) values ('1052907','40998','22006','12','0','0','215','0','5',to_date('01.01.2017','DD.MM.YYYY'),null,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'),'1','2','0',to_date('28.12.2016','DD.MM.YYYY'),null)""")
-      runUpdateToDb("""Insert into ROADWAY (ID,ROADWAY_NUMBER,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK,START_ADDR_M,END_ADDR_M,REVERSED,DISCONTINUITY,START_DATE,END_DATE,CREATED_BY,CREATED_TIME,ADMINISTRATIVE_CLASS,ELY,TERMINATED,VALID_FROM,VALID_TO) values ('1052911','40998','22006','12','0','0','215','0','2',to_date('01.01.1989','DD.MM.YYYY'),to_date('31.12.2016','DD.MM.YYYY'),'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'),'1','2','0',to_date('28.12.2016','DD.MM.YYYY'),null)""")
-      runUpdateToDb("""Insert into ROADWAY (ID,ROADWAY_NUMBER,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK,START_ADDR_M,END_ADDR_M,REVERSED,DISCONTINUITY,START_DATE,END_DATE,CREATED_BY,CREATED_TIME,ADMINISTRATIVE_CLASS,ELY,TERMINATED,VALID_FROM,VALID_TO) values ('1052912','40999','22006','12','0','215','216','0','2',to_date('01.01.1989','DD.MM.YYYY'),to_date('30.12.1997','DD.MM.YYYY'),'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'),'1','2','1',to_date('31.01.2013','DD.MM.YYYY'),null)""")
-      runUpdateToDb("""Insert into ROADWAY (ID,ROADWAY_NUMBER,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK,START_ADDR_M,END_ADDR_M,REVERSED,DISCONTINUITY,START_DATE,END_DATE,CREATED_BY,CREATED_TIME,ADMINISTRATIVE_CLASS,ELY,TERMINATED,VALID_FROM,VALID_TO) values ('1052910','41000','22006','34','0','0','310','0','2',to_date('01.01.1989','DD.MM.YYYY'),null,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'),'1','2','0',to_date('14.06.2016','DD.MM.YYYY'),null)""")
-      runUpdateToDb("""Insert into ROADWAY (ID,ROADWAY_NUMBER,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK,START_ADDR_M,END_ADDR_M,REVERSED,DISCONTINUITY,START_DATE,END_DATE,CREATED_BY,CREATED_TIME,ADMINISTRATIVE_CLASS,ELY,TERMINATED,VALID_FROM,VALID_TO) values ('1052909','6446223','22006','23','0','0','45','0','2',to_date('20.05.2007','DD.MM.YYYY'),null,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'),'1','2','0',to_date('14.06.2016','DD.MM.YYYY'),null)""")
-      runUpdateToDb("""Insert into ROADWAY (ID,ROADWAY_NUMBER,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK,START_ADDR_M,END_ADDR_M,REVERSED,DISCONTINUITY,START_DATE,END_DATE,CREATED_BY,CREATED_TIME,ADMINISTRATIVE_CLASS,ELY,TERMINATED,VALID_FROM,VALID_TO) values ('1052906','6446225','22006','45','0','0','248','0','1',to_date('20.05.2007','DD.MM.YYYY'),null,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'),'1','2','0',to_date('25.01.2017','DD.MM.YYYY'),null)""")
-      runUpdateToDb("""Insert into ROADWAY (ID,ROADWAY_NUMBER,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK,START_ADDR_M,END_ADDR_M,REVERSED,DISCONTINUITY,START_DATE,END_DATE,CREATED_BY,CREATED_TIME,ADMINISTRATIVE_CLASS,ELY,TERMINATED,VALID_FROM,VALID_TO) values ('1052908','166883589','22006','12','0','215','295','0','2',to_date('01.01.2017','DD.MM.YYYY'),null,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'),'1','2','0',to_date('28.12.2016','DD.MM.YYYY'),null)""")
+      runUpdateToDb(sql"""INSERT INTO roadway (id,roadway_number,road_number,road_part_number,track,start_addr_m,end_addr_m,reversed,discontinuity,start_date,end_date,created_by,created_time,administrative_class,ely,terminated,valid_from,valid_to) values ('1052907','40998','22006','12','0','0','215','0','5',to_date('01.01.2017','DD.MM.YYYY'),NULL,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'),'1','2','0',to_date('28.12.2016','DD.MM.YYYY'),NULL)""")
+      runUpdateToDb(sql"""INSERT INTO roadway (id,roadway_number,road_number,road_part_number,track,start_addr_m,end_addr_m,reversed,discontinuity,start_date,end_date,created_by,created_time,administrative_class,ely,terminated,valid_from,valid_to) values ('1052911','40998','22006','12','0','0','215','0','2',to_date('01.01.1989','DD.MM.YYYY'),to_date('31.12.2016','DD.MM.YYYY'),'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'),'1','2','0',to_date('28.12.2016','DD.MM.YYYY'),NULL)""")
+      runUpdateToDb(sql"""INSERT INTO roadway (id,roadway_number,road_number,road_part_number,track,start_addr_m,end_addr_m,reversed,discontinuity,start_date,end_date,created_by,created_time,administrative_class,ely,terminated,valid_from,valid_to) values ('1052912','40999','22006','12','0','215','216','0','2',to_date('01.01.1989','DD.MM.YYYY'),to_date('30.12.1997','DD.MM.YYYY'),'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'),'1','2','1',to_date('31.01.2013','DD.MM.YYYY'),NULL)""")
+      runUpdateToDb(sql"""INSERT INTO roadway (id,roadway_number,road_number,road_part_number,track,start_addr_m,end_addr_m,reversed,discontinuity,start_date,end_date,created_by,created_time,administrative_class,ely,terminated,valid_from,valid_to) values ('1052910','41000','22006','34','0','0','310','0','2',to_date('01.01.1989','DD.MM.YYYY'),NULL,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'),'1','2','0',to_date('14.06.2016','DD.MM.YYYY'),NULL)""")
+      runUpdateToDb(sql"""INSERT INTO roadway (id,roadway_number,road_number,road_part_number,track,start_addr_m,end_addr_m,reversed,discontinuity,start_date,end_date,created_by,created_time,administrative_class,ely,terminated,valid_from,valid_to) values ('1052909','6446223','22006','23','0','0','45','0','2',to_date('20.05.2007','DD.MM.YYYY'),NULL,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'),'1','2','0',to_date('14.06.2016','DD.MM.YYYY'),NULL)""")
+      runUpdateToDb(sql"""INSERT INTO roadway (id,roadway_number,road_number,road_part_number,track,start_addr_m,end_addr_m,reversed,discontinuity,start_date,end_date,created_by,created_time,administrative_class,ely,terminated,valid_from,valid_to) values ('1052906','6446225','22006','45','0','0','248','0','1',to_date('20.05.2007','DD.MM.YYYY'),NULL,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'),'1','2','0',to_date('25.01.2017','DD.MM.YYYY'),NULL)""")
+      runUpdateToDb(sql"""INSERT INTO roadway (id,roadway_number,road_number,road_part_number,track,start_addr_m,end_addr_m,reversed,discontinuity,start_date,end_date,created_by,created_time,administrative_class,ely,terminated,valid_from,valid_to) values ('1052908','166883589','22006','12','0','215','295','0','2',to_date('01.01.2017','DD.MM.YYYY'),NULL,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'),'1','2','0',to_date('28.12.2016','DD.MM.YYYY'),NULL)""")
 
-      runUpdateToDb("""Insert into LINEAR_LOCATION (ID,ROADWAY_NUMBER,ORDER_NUMBER,LINK_ID,START_MEASURE,END_MEASURE,SIDE,GEOMETRY,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('1039046',  '6446225','1','7256596',      0, 248.793,'3', ST_GeomFromText('LINESTRING(267357.266 6789458.693 0 248.793, 267131.966 6789520.79 0 248.793)', 3067),  to_date('25.01.2017','DD.MM.YYYY'),null,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
-      runUpdateToDb("""Insert into LINEAR_LOCATION (ID,ROADWAY_NUMBER,ORDER_NUMBER,LINK_ID,START_MEASURE,END_MEASURE,SIDE,GEOMETRY,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('1039047',    '40998','1', '568164',      0,   7.685,'3', ST_GeomFromText('LINESTRING(267444.126 6789234.9 0 7.685, 267437.206 6789238.158 0 7.685)', 3067),       to_date('28.12.2016','DD.MM.YYYY'),null,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
-      runUpdateToDb("""Insert into LINEAR_LOCATION (ID,ROADWAY_NUMBER,ORDER_NUMBER,LINK_ID,START_MEASURE,END_MEASURE,SIDE,GEOMETRY,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('1039048',    '40998','2','7256584',      0, 171.504,'2', ST_GeomFromText('LINESTRING(267444.126 6789234.9 0 171.504, 267597.461 6789260.633 0 171.504)', 3067),   to_date('28.12.2016','DD.MM.YYYY'),null,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
-      runUpdateToDb("""Insert into LINEAR_LOCATION (ID,ROADWAY_NUMBER,ORDER_NUMBER,LINK_ID,START_MEASURE,END_MEASURE,SIDE,GEOMETRY,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('1039049',    '40998','3','7256586',      0,  38.688,'2', ST_GeomFromText('LINESTRING(267597.461 6789260.633 0 38.688, 267518.603 6789333.458 0 38.688)', 3067),   to_date('28.12.2016','DD.MM.YYYY'),null,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
-      runUpdateToDb("""Insert into LINEAR_LOCATION (ID,ROADWAY_NUMBER,ORDER_NUMBER,LINK_ID,START_MEASURE,END_MEASURE,SIDE,GEOMETRY,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('1039050','166883589','1','7256586', 38.688, 120.135,'2', ST_GeomFromText('LINESTRING(267597.461 6789260.633 0 120.135, 267518.603 6789333.458 0 120.135)', 3067), to_date('28.12.2016','DD.MM.YYYY'),null,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
-      runUpdateToDb("""Insert into LINEAR_LOCATION (ID,ROADWAY_NUMBER,ORDER_NUMBER,LINK_ID,START_MEASURE,END_MEASURE,SIDE,GEOMETRY,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('1039051',  '6446223','1','7256594',      0,  44.211,'3', ST_GeomFromText('LINESTRING(267597.461 6789260.633 0 44.211, 267633.898 6789283.726 0 44.211)', 3067),   to_date('14.06.2016','DD.MM.YYYY'),null,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
-      runUpdateToDb("""Insert into LINEAR_LOCATION (ID,ROADWAY_NUMBER,ORDER_NUMBER,LINK_ID,START_MEASURE,END_MEASURE,SIDE,GEOMETRY,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('1039052',    '41000','1','7256590',      0, 130.538,'2', ST_GeomFromText('LINESTRING(267431.685 6789375.9 0 130.538, 267357.266 6789458.693 0 130.538)', 3067),   to_date('14.06.2016','DD.MM.YYYY'),null,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
-      runUpdateToDb("""Insert into LINEAR_LOCATION (ID,ROADWAY_NUMBER,ORDER_NUMBER,LINK_ID,START_MEASURE,END_MEASURE,SIDE,GEOMETRY,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('1039053',    '41000','2', '568121',      0, 177.547,'3', ST_GeomFromText('LINESTRING(267525.375 6789455.936 0 177.547, 267357.266 6789458.693 0 177.547)', 3067), to_date('14.06.2016','DD.MM.YYYY'),null,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
-      runUpdateToDb("""Insert into LINEAR_LOCATION (ID,ROADWAY_NUMBER,ORDER_NUMBER,LINK_ID,START_MEASURE,END_MEASURE,SIDE,GEOMETRY,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('1039054',    '41000','3', '568122',      0,   9.514,'3', ST_GeomFromText('LINESTRING(267534.612 6789453.659 0 9.514, 267525.375 6789455.936 0 9.514)', 3067),     to_date('14.06.2016','DD.MM.YYYY'),null,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id,roadway_number,order_number,link_id,start_measure,end_measure,side,geometry,valid_from,valid_to,created_by,created_time) VALUES ('1039046',  '6446225','1','7256596',      0, 248.793,'3', ST_GeomFromText('LINESTRING(267357.266 6789458.693 0 248.793, 267131.966 6789520.79 0 248.793)', 3067),  to_date('25.01.2017','DD.MM.YYYY'),NULL,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id,roadway_number,order_number,link_id,start_measure,end_measure,side,geometry,valid_from,valid_to,created_by,created_time) VALUES ('1039047',    '40998','1', '568164',      0,   7.685,'3', ST_GeomFromText('LINESTRING(267444.126 6789234.9 0 7.685, 267437.206 6789238.158 0 7.685)', 3067),       to_date('28.12.2016','DD.MM.YYYY'),NULL,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id,roadway_number,order_number,link_id,start_measure,end_measure,side,geometry,valid_from,valid_to,created_by,created_time) VALUES ('1039048',    '40998','2','7256584',      0, 171.504,'2', ST_GeomFromText('LINESTRING(267444.126 6789234.9 0 171.504, 267597.461 6789260.633 0 171.504)', 3067),   to_date('28.12.2016','DD.MM.YYYY'),NULL,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id,roadway_number,order_number,link_id,start_measure,end_measure,side,geometry,valid_from,valid_to,created_by,created_time) VALUES ('1039049',    '40998','3','7256586',      0,  38.688,'2', ST_GeomFromText('LINESTRING(267597.461 6789260.633 0 38.688, 267518.603 6789333.458 0 38.688)', 3067),   to_date('28.12.2016','DD.MM.YYYY'),NULL,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id,roadway_number,order_number,link_id,start_measure,end_measure,side,geometry,valid_from,valid_to,created_by,created_time) VALUES ('1039050','166883589','1','7256586', 38.688, 120.135,'2', ST_GeomFromText('LINESTRING(267597.461 6789260.633 0 120.135, 267518.603 6789333.458 0 120.135)', 3067), to_date('28.12.2016','DD.MM.YYYY'),NULL,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id,roadway_number,order_number,link_id,start_measure,end_measure,side,geometry,valid_from,valid_to,created_by,created_time) VALUES ('1039051',  '6446223','1','7256594',      0,  44.211,'3', ST_GeomFromText('LINESTRING(267597.461 6789260.633 0 44.211, 267633.898 6789283.726 0 44.211)', 3067),   to_date('14.06.2016','DD.MM.YYYY'),NULL,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id,roadway_number,order_number,link_id,start_measure,end_measure,side,geometry,valid_from,valid_to,created_by,created_time) VALUES ('1039052',    '41000','1','7256590',      0, 130.538,'2', ST_GeomFromText('LINESTRING(267431.685 6789375.9 0 130.538, 267357.266 6789458.693 0 130.538)', 3067),   to_date('14.06.2016','DD.MM.YYYY'),NULL,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id,roadway_number,order_number,link_id,start_measure,end_measure,side,geometry,valid_from,valid_to,created_by,created_time) VALUES ('1039053',    '41000','2', '568121',      0, 177.547,'3', ST_GeomFromText('LINESTRING(267525.375 6789455.936 0 177.547, 267357.266 6789458.693 0 177.547)', 3067), to_date('14.06.2016','DD.MM.YYYY'),NULL,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id,roadway_number,order_number,link_id,start_measure,end_measure,side,geometry,valid_from,valid_to,created_by,created_time) VALUES ('1039054',    '41000','3', '568122',      0,   9.514,'3', ST_GeomFromText('LINESTRING(267534.612 6789453.659 0 9.514, 267525.375 6789455.936 0 9.514)', 3067),     to_date('14.06.2016','DD.MM.YYYY'),NULL,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
 
-      runUpdateToDb("""Insert into ROADWAY_POINT (ID,ROADWAY_NUMBER,ADDR_M,CREATED_BY,CREATED_TIME,MODIFIED_BY,MODIFIED_TIME) values ('1019231','6446225','0','import',to_timestamp('27.12.2019 13:12:50','DD.MM.YYYY HH24:MI:SSXFF'),'import',to_timestamp('27.12.2019 13:12:50','DD.MM.YYYY HH24:MI:SS'))""")
-      runUpdateToDb("""Insert into ROADWAY_POINT (ID,ROADWAY_NUMBER,ADDR_M,CREATED_BY,CREATED_TIME,MODIFIED_BY,MODIFIED_TIME) values ('1019232','6446225','248','import',to_timestamp('27.12.2019 13:12:50','DD.MM.YYYY HH24:MI:SSXFF'),'import',to_timestamp('27.12.2019 13:12:50','DD.MM.YYYY HH24:MI:SS'))""")
-      runUpdateToDb("""Insert into ROADWAY_POINT (ID,ROADWAY_NUMBER,ADDR_M,CREATED_BY,CREATED_TIME,MODIFIED_BY,MODIFIED_TIME) values ('1019233','40998','0','import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SSXFF'),'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
-      runUpdateToDb("""Insert into ROADWAY_POINT (ID,ROADWAY_NUMBER,ADDR_M,CREATED_BY,CREATED_TIME,MODIFIED_BY,MODIFIED_TIME) values ('1019234','166883589','295','import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SSXFF'),'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
-      runUpdateToDb("""Insert into ROADWAY_POINT (ID,ROADWAY_NUMBER,ADDR_M,CREATED_BY,CREATED_TIME,MODIFIED_BY,MODIFIED_TIME) values ('1019235','6446223','0','import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SSXFF'),'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
-      runUpdateToDb("""Insert into ROADWAY_POINT (ID,ROADWAY_NUMBER,ADDR_M,CREATED_BY,CREATED_TIME,MODIFIED_BY,MODIFIED_TIME) values ('1019236','6446223','45','import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SSXFF'),'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
-      runUpdateToDb("""Insert into ROADWAY_POINT (ID,ROADWAY_NUMBER,ADDR_M,CREATED_BY,CREATED_TIME,MODIFIED_BY,MODIFIED_TIME) values ('1019237','41000','0','import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SSXFF'),'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
-      runUpdateToDb("""Insert into ROADWAY_POINT (ID,ROADWAY_NUMBER,ADDR_M,CREATED_BY,CREATED_TIME,MODIFIED_BY,MODIFIED_TIME) values ('1019238','41000','310','import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SSXFF'),'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
-      runUpdateToDb("""Insert into ROADWAY_POINT (ID,ROADWAY_NUMBER,ADDR_M,CREATED_BY,CREATED_TIME,MODIFIED_BY,MODIFIED_TIME) values ('1019239','40998','215','k567997',to_timestamp('27.12.2019 13:26:55','DD.MM.YYYY HH24:MI:SSXFF'),'k567997',to_timestamp('27.12.2019 13:26:55','DD.MM.YYYY HH24:MI:SS'))""")
-      runUpdateToDb("""Insert into ROADWAY_POINT (ID,ROADWAY_NUMBER,ADDR_M,CREATED_BY,CREATED_TIME,MODIFIED_BY,MODIFIED_TIME) values ('1019240','40998','177','k567997',to_timestamp('27.12.2019 13:26:55','DD.MM.YYYY HH24:MI:SSXFF'),'k567997',to_timestamp('27.12.2019 13:26:55','DD.MM.YYYY HH24:MI:SS'))""")
-      runUpdateToDb("""Insert into ROADWAY_POINT (ID,ROADWAY_NUMBER,ADDR_M,CREATED_BY,CREATED_TIME,MODIFIED_BY,MODIFIED_TIME) values ('1019241','41000','275','k567997',to_timestamp('27.12.2019 13:26:55','DD.MM.YYYY HH24:MI:SSXFF'),'k567997',to_timestamp('27.12.2019 13:26:55','DD.MM.YYYY HH24:MI:SS'))""")
-      runUpdateToDb("""Insert into ROADWAY_POINT (ID,ROADWAY_NUMBER,ADDR_M,CREATED_BY,CREATED_TIME,MODIFIED_BY,MODIFIED_TIME) values ('1019242','40998','8','k567997',to_timestamp('27.12.2019 13:26:55','DD.MM.YYYY HH24:MI:SSXFF'),'k567997',to_timestamp('27.12.2019 13:26:55','DD.MM.YYYY HH24:MI:SS'))""")
-      runUpdateToDb("""Insert into ROADWAY_POINT (ID,ROADWAY_NUMBER,ADDR_M,CREATED_BY,CREATED_TIME,MODIFIED_BY,MODIFIED_TIME) values ('1019243','41000','300','k567997',to_timestamp('27.12.2019 13:26:55','DD.MM.YYYY HH24:MI:SSXFF'),'k567997',to_timestamp('27.12.2019 13:26:55','DD.MM.YYYY HH24:MI:SS'))""")
-      runUpdateToDb("""Insert into ROADWAY_POINT (ID,ROADWAY_NUMBER,ADDR_M,CREATED_BY,CREATED_TIME,MODIFIED_BY,MODIFIED_TIME) values ('1019244','41000','127','k567997',to_timestamp('27.12.2019 13:26:55','DD.MM.YYYY HH24:MI:SSXFF'),'k567997',to_timestamp('27.12.2019 13:26:55','DD.MM.YYYY HH24:MI:SS'))""")
+      runUpdateToDb(sql"""INSERT INTO roadway_point (id,roadway_number,addr_m,created_by,created_time,modified_by,modified_time) VALUES ('1019231','6446225','0','import',to_timestamp('27.12.2019 13:12:50','DD.MM.YYYY HH24:MI:SSXFF'),'import',to_timestamp('27.12.2019 13:12:50','DD.MM.YYYY HH24:MI:SS'))""")
+      runUpdateToDb(sql"""INSERT INTO roadway_point (id,roadway_number,addr_m,created_by,created_time,modified_by,modified_time) VALUES ('1019232','6446225','248','import',to_timestamp('27.12.2019 13:12:50','DD.MM.YYYY HH24:MI:SSXFF'),'import',to_timestamp('27.12.2019 13:12:50','DD.MM.YYYY HH24:MI:SS'))""")
+      runUpdateToDb(sql"""INSERT INTO roadway_point (id,roadway_number,addr_m,created_by,created_time,modified_by,modified_time) VALUES ('1019233','40998','0','import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SSXFF'),'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
+      runUpdateToDb(sql"""INSERT INTO roadway_point (id,roadway_number,addr_m,created_by,created_time,modified_by,modified_time) VALUES ('1019234','166883589','295','import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SSXFF'),'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
+      runUpdateToDb(sql"""INSERT INTO roadway_point (id,roadway_number,addr_m,created_by,created_time,modified_by,modified_time) VALUES ('1019235','6446223','0','import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SSXFF'),'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
+      runUpdateToDb(sql"""INSERT INTO roadway_point (id,roadway_number,addr_m,created_by,created_time,modified_by,modified_time) VALUES ('1019236','6446223','45','import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SSXFF'),'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
+      runUpdateToDb(sql"""INSERT INTO roadway_point (id,roadway_number,addr_m,created_by,created_time,modified_by,modified_time) VALUES ('1019237','41000','0','import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SSXFF'),'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
+      runUpdateToDb(sql"""INSERT INTO roadway_point (id,roadway_number,addr_m,created_by,created_time,modified_by,modified_time) VALUES ('1019238','41000','310','import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SSXFF'),'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
+      runUpdateToDb(sql"""INSERT INTO roadway_point (id,roadway_number,addr_m,created_by,created_time,modified_by,modified_time) VALUES ('1019239','40998','215','k567997',to_timestamp('27.12.2019 13:26:55','DD.MM.YYYY HH24:MI:SSXFF'),'k567997',to_timestamp('27.12.2019 13:26:55','DD.MM.YYYY HH24:MI:SS'))""")
+      runUpdateToDb(sql"""INSERT INTO roadway_point (id,roadway_number,addr_m,created_by,created_time,modified_by,modified_time) VALUES ('1019240','40998','177','k567997',to_timestamp('27.12.2019 13:26:55','DD.MM.YYYY HH24:MI:SSXFF'),'k567997',to_timestamp('27.12.2019 13:26:55','DD.MM.YYYY HH24:MI:SS'))""")
+      runUpdateToDb(sql"""INSERT INTO roadway_point (id,roadway_number,addr_m,created_by,created_time,modified_by,modified_time) VALUES ('1019241','41000','275','k567997',to_timestamp('27.12.2019 13:26:55','DD.MM.YYYY HH24:MI:SSXFF'),'k567997',to_timestamp('27.12.2019 13:26:55','DD.MM.YYYY HH24:MI:SS'))""")
+      runUpdateToDb(sql"""INSERT INTO roadway_point (id,roadway_number,addr_m,created_by,created_time,modified_by,modified_time) VALUES ('1019242','40998','8','k567997',to_timestamp('27.12.2019 13:26:55','DD.MM.YYYY HH24:MI:SSXFF'),'k567997',to_timestamp('27.12.2019 13:26:55','DD.MM.YYYY HH24:MI:SS'))""")
+      runUpdateToDb(sql"""INSERT INTO roadway_point (id,roadway_number,addr_m,created_by,created_time,modified_by,modified_time) VALUES ('1019243','41000','300','k567997',to_timestamp('27.12.2019 13:26:55','DD.MM.YYYY HH24:MI:SSXFF'),'k567997',to_timestamp('27.12.2019 13:26:55','DD.MM.YYYY HH24:MI:SS'))""")
+      runUpdateToDb(sql"""INSERT INTO roadway_point (id,roadway_number,addr_m,created_by,created_time,modified_by,modified_time) VALUES ('1019244','41000','127','k567997',to_timestamp('27.12.2019 13:26:55','DD.MM.YYYY HH24:MI:SSXFF'),'k567997',to_timestamp('27.12.2019 13:26:55','DD.MM.YYYY HH24:MI:SS'))""")
 
-      runUpdateToDb("""Insert into CALIBRATION_POINT (ID,ROADWAY_POINT_ID,LINK_ID,START_END,TYPE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('1020345','1019231','7256596','0','3',to_date('27.12.2019','DD.MM.YYYY'),null,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
-      runUpdateToDb("""Insert into CALIBRATION_POINT (ID,ROADWAY_POINT_ID,LINK_ID,START_END,TYPE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('1020346','1019232','7256596','1','3',to_date('27.12.2019','DD.MM.YYYY'),null,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
-      runUpdateToDb("""Insert into CALIBRATION_POINT (ID,ROADWAY_POINT_ID,LINK_ID,START_END,TYPE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('1020347','1019233','568164','0','3',to_date('27.12.2019','DD.MM.YYYY'),null,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
-      runUpdateToDb("""Insert into CALIBRATION_POINT (ID,ROADWAY_POINT_ID,LINK_ID,START_END,TYPE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('1020348','1019234','7256586','1','3',to_date('27.12.2019','DD.MM.YYYY'),null,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
-      runUpdateToDb("""Insert into CALIBRATION_POINT (ID,ROADWAY_POINT_ID,LINK_ID,START_END,TYPE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('1020349','1019235','7256594','0','3',to_date('27.12.2019','DD.MM.YYYY'),null,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
-      runUpdateToDb("""Insert into CALIBRATION_POINT (ID,ROADWAY_POINT_ID,LINK_ID,START_END,TYPE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('1020350','1019236','7256594','1','3',to_date('27.12.2019','DD.MM.YYYY'),null,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
-      runUpdateToDb("""Insert into CALIBRATION_POINT (ID,ROADWAY_POINT_ID,LINK_ID,START_END,TYPE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('1020351','1019237','7256590','0','3',to_date('27.12.2019','DD.MM.YYYY'),null,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
-      runUpdateToDb("""Insert into CALIBRATION_POINT (ID,ROADWAY_POINT_ID,LINK_ID,START_END,TYPE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('1020352','1019238','568122','1','3',to_date('27.12.2019','DD.MM.YYYY'),null,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
+      runUpdateToDb(sql"""INSERT INTO calibration_point (id,roadway_point_id,link_id,start_end,type,valid_from,valid_to,created_by,created_time) VALUES ('1020345','1019231','7256596','0','3',to_date('27.12.2019','DD.MM.YYYY'),NULL,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
+      runUpdateToDb(sql"""INSERT INTO calibration_point (id,roadway_point_id,link_id,start_end,type,valid_from,valid_to,created_by,created_time) VALUES ('1020346','1019232','7256596','1','3',to_date('27.12.2019','DD.MM.YYYY'),NULL,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
+      runUpdateToDb(sql"""INSERT INTO calibration_point (id,roadway_point_id,link_id,start_end,type,valid_from,valid_to,created_by,created_time) VALUES ('1020347','1019233','568164','0','3',to_date('27.12.2019','DD.MM.YYYY'),NULL,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
+      runUpdateToDb(sql"""INSERT INTO calibration_point (id,roadway_point_id,link_id,start_end,type,valid_from,valid_to,created_by,created_time) VALUES ('1020348','1019234','7256586','1','3',to_date('27.12.2019','DD.MM.YYYY'),NULL,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
+      runUpdateToDb(sql"""INSERT INTO calibration_point (id,roadway_point_id,link_id,start_end,type,valid_from,valid_to,created_by,created_time) VALUES ('1020349','1019235','7256594','0','3',to_date('27.12.2019','DD.MM.YYYY'),NULL,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
+      runUpdateToDb(sql"""INSERT INTO calibration_point (id,roadway_point_id,link_id,start_end,type,valid_from,valid_to,created_by,created_time) VALUES ('1020350','1019236','7256594','1','3',to_date('27.12.2019','DD.MM.YYYY'),NULL,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
+      runUpdateToDb(sql"""INSERT INTO calibration_point (id,roadway_point_id,link_id,start_end,type,valid_from,valid_to,created_by,created_time) VALUES ('1020351','1019237','7256590','0','3',to_date('27.12.2019','DD.MM.YYYY'),NULL,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
+      runUpdateToDb(sql"""INSERT INTO calibration_point (id,roadway_point_id,link_id,start_end,type,valid_from,valid_to,created_by,created_time) VALUES ('1020352','1019238','568122','1','3',to_date('27.12.2019','DD.MM.YYYY'),NULL,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.YYYY HH24:MI:SS'))""")
 
-      runUpdateToDb("""Insert into PROJECT (ID,STATE,NAME,CREATED_BY,CREATED_DATE,MODIFIED_BY,MODIFIED_DATE,ADD_INFO,START_DATE,STATUS_INFO,COORD_X,COORD_Y,ZOOM) values ('1000351','2','aa','silari',to_date('27.12.2019','DD.MM.YYYY'),'-',to_date('27.12.2019','DD.MM.YYYY'),null,to_date('01.01.2020','DD.MM.YYYY'),null,267287.82,6789454.18,'12')""")
+      runUpdateToDb(sql"""INSERT INTO project (id,state,name,created_by,created_date,modified_by,modified_date,add_info,start_date,status_info,coord_x,coord_y,zoom) VALUES ('1000351','2','aa','silari',to_date('27.12.2019','DD.MM.YYYY'),'-',to_date('27.12.2019','DD.MM.YYYY'),NULL,to_date('01.01.2020','DD.MM.YYYY'),NULL,267287.82,6789454.18,'12')""")
 
-      runUpdateToDb("""Insert into PROJECT_RESERVED_ROAD_PART (ID,ROAD_NUMBER,ROAD_PART_NUMBER,PROJECT_ID,CREATED_BY) values ('1000366','22006','56','1000351','-')""")
-      runUpdateToDb("""Insert into PROJECT_RESERVED_ROAD_PART (ID,ROAD_NUMBER,ROAD_PART_NUMBER,PROJECT_ID,CREATED_BY) values ('1000365','22006','68','1000351','-')""")
-      runUpdateToDb("""Insert into PROJECT_RESERVED_ROAD_PART (ID,ROAD_NUMBER,ROAD_PART_NUMBER,PROJECT_ID,CREATED_BY) values ('1000352','22006','12','1000351','silari')""")
-      runUpdateToDb("""Insert into PROJECT_RESERVED_ROAD_PART (ID,ROAD_NUMBER,ROAD_PART_NUMBER,PROJECT_ID,CREATED_BY) values ('1000353','22006','23','1000351','silari')""")
-      runUpdateToDb("""Insert into PROJECT_RESERVED_ROAD_PART (ID,ROAD_NUMBER,ROAD_PART_NUMBER,PROJECT_ID,CREATED_BY) values ('1000354','22006','34','1000351','silari')""")
-      runUpdateToDb("""Insert into PROJECT_RESERVED_ROAD_PART (ID,ROAD_NUMBER,ROAD_PART_NUMBER,PROJECT_ID,CREATED_BY) values ('1000369','22006','24','1000351','-')""")
-      runUpdateToDb("""Insert into PROJECT_RESERVED_ROAD_PART (ID,ROAD_NUMBER,ROAD_PART_NUMBER,PROJECT_ID,CREATED_BY) values ('1000355','22006','45','1000351','silari')""")
-      runUpdateToDb("""Insert into PROJECT_RESERVED_ROAD_PART (ID,ROAD_NUMBER,ROAD_PART_NUMBER,PROJECT_ID,CREATED_BY) values ('1000368','22006','67','1000351','-')""")
+      runUpdateToDb(sql"""INSERT INTO project_reserved_road_part (id,road_number,road_part_number,project_id,created_by) VALUES ('1000366','22006','56','1000351','-')""")
+      runUpdateToDb(sql"""INSERT INTO project_reserved_road_part (id,road_number,road_part_number,project_id,created_by) VALUES ('1000365','22006','68','1000351','-')""")
+      runUpdateToDb(sql"""INSERT INTO project_reserved_road_part (id,road_number,road_part_number,project_id,created_by) VALUES ('1000352','22006','12','1000351','silari')""")
+      runUpdateToDb(sql"""INSERT INTO project_reserved_road_part (id,road_number,road_part_number,project_id,created_by) VALUES ('1000353','22006','23','1000351','silari')""")
+      runUpdateToDb(sql"""INSERT INTO project_reserved_road_part (id,road_number,road_part_number,project_id,created_by) VALUES ('1000354','22006','34','1000351','silari')""")
+      runUpdateToDb(sql"""INSERT INTO project_reserved_road_part (id,road_number,road_part_number,project_id,created_by) VALUES ('1000369','22006','24','1000351','-')""")
+      runUpdateToDb(sql"""INSERT INTO project_reserved_road_part (id,road_number,road_part_number,project_id,created_by) VALUES ('1000355','22006','45','1000351','silari')""")
+      runUpdateToDb(sql"""INSERT INTO project_reserved_road_part (id,road_number,road_part_number,project_id,created_by) VALUES ('1000368','22006','67','1000351','-')""")
 
-      //                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  ID,PROJECT_ID,TRACK,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,START_ADDR_M,END_ADDR_M,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,ROAD_TYPE,ROADWAY_ID,LINEAR_LOCATION_ID,CONNECTED_LINK_ID,ELY,REVERSED,SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE,GEOMETRY,ORIGINAL_START_ADDR_M,ORIGINAL_END_ADDR_M,ROADWAY_NUMBER,START_CALIBRATION_POINT,END_CALIBRATION_POINT,ORIG_START_CALIBRATION_POINT,ORIG_END_CALIBRATION_POINT
-      runUpdateToDb("""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,START_ADDR_M,END_ADDR_M,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,ADMINISTRATIVE_CLASS,ROADWAY_ID,LINEAR_LOCATION_ID,CONNECTED_LINK_ID,ELY,REVERSED,SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE,GEOMETRY,ORIGINAL_START_ADDR_M,ORIGINAL_END_ADDR_M,ROADWAY_NUMBER,START_CALIBRATION_POINT,END_CALIBRATION_POINT,ORIG_START_CALIBRATION_POINT,ORIG_END_CALIBRATION_POINT) values ('1000356','1000351','0','2','22006','67','169','177','silari','silari',to_date('27.12.2019','DD.MM.YYYY'),to_date('27.12.2019','DD.MM.YYYY'),'3','1','1052907','1039047',null,'2','1','2',0,7.685,'568164','1449097206000','4',      ST_GeomFromText('LINESTRING(267444.126 6789234.9 53.176999999996, 267440.935 6789235.99 53.2259999999951, 267437.206395653 6789238.15776997 53.2499974535623)', 3067),'0','8','166883765',0,3,0,0)""")
-      runUpdateToDb("""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,START_ADDR_M,END_ADDR_M,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,ADMINISTRATIVE_CLASS,ROADWAY_ID,LINEAR_LOCATION_ID,CONNECTED_LINK_ID,ELY,REVERSED,SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE,GEOMETRY,ORIGINAL_START_ADDR_M,ORIGINAL_END_ADDR_M,ROADWAY_NUMBER,START_CALIBRATION_POINT,END_CALIBRATION_POINT,ORIG_START_CALIBRATION_POINT,ORIG_END_CALIBRATION_POINT) values ('1000357','1000351','0','5','22006','67','0','169','silari','silari',to_date('27.12.2019','DD.MM.YYYY'),to_date('27.12.2019','DD.MM.YYYY'),'3','1','1052907','1039048',null,'2','1','3',0,171.504,'7256584','1498959782000','4',     ST_GeomFromText('LINESTRING(267444.126 6789234.9 53.176999999996, 267464.548 6789227.526 52.8959999999934, 267496.884 6789219.216 52.2939999999944, 267515.938 6789216.916 51.7979999999952, 267535.906 6789218.028 51.1319999999978, 267556.73 6789224.333 50.304999999993, 267574.187 6789234.039 49.5789999999979, 267588.124 6789247.565 49.0240000000049, 267597.460867063 6789260.63281394 48.7730035736591)', 3067),'8','177','166883765',3,3,0,0)""")
-      runUpdateToDb("""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,START_ADDR_M,END_ADDR_M,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,ADMINISTRATIVE_CLASS,ROADWAY_ID,LINEAR_LOCATION_ID,CONNECTED_LINK_ID,ELY,REVERSED,SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE,GEOMETRY,ORIGINAL_START_ADDR_M,ORIGINAL_END_ADDR_M,ROADWAY_NUMBER,START_CALIBRATION_POINT,END_CALIBRATION_POINT,ORIG_START_CALIBRATION_POINT,ORIG_END_CALIBRATION_POINT) values ('1000358','1000351','0','5','22006','56','80','118','silari','silari',to_date('27.12.2019','DD.MM.YYYY'),to_date('27.12.2019','DD.MM.YYYY'),'3','1','1052907','1039049',null,'2','1','3',0,38.688,'7256586','1503961971000','4',     ST_GeomFromText('LINESTRING(267597.461 6789260.633 48.773000000001, 267597.534 6789260.792 48.7719999999972, 267600.106 6789269.768 48.6059999999998, 267600.106 6789280.257 48.4780000000028, 267597.713 6789287.648 48.4360000000015, 267591.642 6789293.381 48.4370000000054, 267589.345139337 6789294.52943033 48.4244527667907)', 3067),'177','215','166883761',3,3,0,0)""")
-      runUpdateToDb("""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,START_ADDR_M,END_ADDR_M,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,ADMINISTRATIVE_CLASS,ROADWAY_ID,LINEAR_LOCATION_ID,CONNECTED_LINK_ID,ELY,REVERSED,SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE,GEOMETRY,ORIGINAL_START_ADDR_M,ORIGINAL_END_ADDR_M,ROADWAY_NUMBER,START_CALIBRATION_POINT,END_CALIBRATION_POINT,ORIG_START_CALIBRATION_POINT,ORIG_END_CALIBRATION_POINT) values ('1000359','1000351','0','5','22006','56','0','80','silari','silari',to_date('27.12.2019','DD.MM.YYYY'),to_date('27.12.2019','DD.MM.YYYY'),'3','1','1052908','1039050',null,'2','1','3',38.688,120.135,'7256586','1503961971000','4', ST_GeomFromText('LINESTRING(267589.345139337 6789294.52943033 48.4244527667907, 267578.828 6789299.788 48.3669999999984, 267559.269 6789308.892 48.2510000000038, 267546.792 6789314.963 48.2390000000014, 267533.979 6789321.707 48.2140000000072, 267524.2 6789327.103 48.226999999999, 267521.164 6789329.463 48.247000000003, 267518.603162863 6789333.45774594 48.2559994276524)', 3067),'215','295','166883589',3,0,0,0)""")
-      runUpdateToDb("""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,START_ADDR_M,END_ADDR_M,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,ADMINISTRATIVE_CLASS,ROADWAY_ID,LINEAR_LOCATION_ID,CONNECTED_LINK_ID,ELY,REVERSED,SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE,GEOMETRY,ORIGINAL_START_ADDR_M,ORIGINAL_END_ADDR_M,ROADWAY_NUMBER,START_CALIBRATION_POINT,END_CALIBRATION_POINT,ORIG_START_CALIBRATION_POINT,ORIG_END_CALIBRATION_POINT) values ('1000360','1000351','0','1','22006','68','0','45','silari','silari',to_date('27.12.2019','DD.MM.YYYY'),to_date('27.12.2019','DD.MM.YYYY'),'3','1','1052909','1039051',null,'2','1','2',0,44.211,'7256594','1533681057000','4',       ST_GeomFromText('LINESTRING(267597.461 6789260.633 48.773000000001, 267603.782 6789267.752 48.6589999999997, 267610.19 6789273.485 48.5580000000045, 267616.597 6789277.869 48.4689999999973, 267623.131 6789280.868 48.4400000000023, 267633.897953407 6789283.72598763 48.4409999956788)', 3067),'0','45','6446223',3,3,0,0)""")
-      runUpdateToDb("""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,START_ADDR_M,END_ADDR_M,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,ADMINISTRATIVE_CLASS,ROADWAY_ID,LINEAR_LOCATION_ID,CONNECTED_LINK_ID,ELY,REVERSED,SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE,GEOMETRY,ORIGINAL_START_ADDR_M,ORIGINAL_END_ADDR_M,ROADWAY_NUMBER,START_CALIBRATION_POINT,END_CALIBRATION_POINT,ORIG_START_CALIBRATION_POINT,ORIG_END_CALIBRATION_POINT) values ('1000361','1000351','0','5','22006','12','0','127','silari','silari',to_date('27.12.2019','DD.MM.YYYY'),to_date('27.12.2019','DD.MM.YYYY'),'3','1','1052910','1039052',null,'2','0','2',0,130.538,'7256590','1498959782000','4',     ST_GeomFromText('LINESTRING(267431.685 6789375.9 48.4470000000001, 267424.673 6789383.39 48.4180000000051, 267415.075 6789389.356 48.448000000004, 267401.067 6789396.879 48.5190000000002, 267384.985 6789404.661 48.6150000000052, 267366.307 6789414.259 48.6889999999985, 267356.079 6789421.259 48.6999999999971, 267351.522 6789425.931 48.7119999999995, 267349.187 6789432.416 48.7799999999988, 267348.928 6789442.533 48.9700000000012, 267352.041 6789450.574 49.1230000000069, 267357.266 6789458.693 49.3099999999977)', 3067),'0','127','166883763',3,3,0,0)""")
-      runUpdateToDb("""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,START_ADDR_M,END_ADDR_M,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,ADMINISTRATIVE_CLASS,ROADWAY_ID,LINEAR_LOCATION_ID,CONNECTED_LINK_ID,ELY,REVERSED,SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE,GEOMETRY,ORIGINAL_START_ADDR_M,ORIGINAL_END_ADDR_M,ROADWAY_NUMBER,START_CALIBRATION_POINT,END_CALIBRATION_POINT,ORIG_START_CALIBRATION_POINT,ORIG_END_CALIBRATION_POINT) values ('1000362','1000351','0','5','22006','23','0','174','silari','silari',to_date('27.12.2019','DD.MM.YYYY'),to_date('27.12.2019','DD.MM.YYYY'),'3','1','1052910','1039053',null,'2','0','3',0,177.547,'568121','1446398762000','4',      ST_GeomFromText('LINESTRING(267525.375 6789455.936 52.7309999999998, 267499.516 6789463.571 52.426999999996, 267458.911 6789473.392 52.0339999999997, 267426.281 6789480.881 51.4360000000015, 267403.97 6789481.494 50.7459999999992, 267378.849 6789475.013 49.9879999999976, 267357.54 6789459.007 49.3179999999993, 267357.266194778 6789458.69322321 49.3100056869441)', 3067),'127','301','166883762',3,0,0,0)""")
-      runUpdateToDb("""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,START_ADDR_M,END_ADDR_M,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,ADMINISTRATIVE_CLASS,ROADWAY_ID,LINEAR_LOCATION_ID,CONNECTED_LINK_ID,ELY,REVERSED,SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE,GEOMETRY,ORIGINAL_START_ADDR_M,ORIGINAL_END_ADDR_M,ROADWAY_NUMBER,START_CALIBRATION_POINT,END_CALIBRATION_POINT,ORIG_START_CALIBRATION_POINT,ORIG_END_CALIBRATION_POINT) values ('1000363','1000351','0','2','22006','23','174','183','silari','silari',to_date('27.12.2019','DD.MM.YYYY'),to_date('27.12.2019','DD.MM.YYYY'),'3','1','1052910','1039054',null,'2','0','3',0,9.514,'568122','1449097206000','4',      ST_GeomFromText('LINESTRING(267534.612 6789453.659 52.7939999999944, 267529.741 6789454.905 52.8300000000017, 267525.375 6789455.936 52.7309999999998)', 3067),'301','310','166883762',0,3,0,0)""")
-      runUpdateToDb("""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,START_ADDR_M,END_ADDR_M,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,ADMINISTRATIVE_CLASS,ROADWAY_ID,LINEAR_LOCATION_ID,CONNECTED_LINK_ID,ELY,REVERSED,SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE,GEOMETRY,ORIGINAL_START_ADDR_M,ORIGINAL_END_ADDR_M,ROADWAY_NUMBER,START_CALIBRATION_POINT,END_CALIBRATION_POINT,ORIG_START_CALIBRATION_POINT,ORIG_END_CALIBRATION_POINT) values ('1000364','1000351','0','2','22006','24','0','248','silari','silari',to_date('27.12.2019','DD.MM.YYYY'),to_date('27.12.2019','DD.MM.YYYY'),'3','1','1052906','1039046',null,'2','1','2',0,248.793,'7256596','1498959782000','4',     ST_GeomFromText('LINESTRING(267357.266 6789458.693 49.3099999999977, 267343.965 6789448.141 49.0489999999991, 267334.962 6789442.665 48.8600000000006, 267328.617 6789440.381 48.7949999999983, 267322.527 6789439.365 48.8000000000029, 267314.914 6789441.141 48.8439999999973, 267303.749 6789445.455 48.976999999999, 267287.508 6789453.576 49.0160000000033, 267268.999 6789462.419 49.2119999999995, 267228.658 6789482.321 49.3870000000024, 267201.225 6789496.844 49.4649999999965, 267167.876 6789511.367 49.7329999999929, 267147.437 6789519.436 49.9670000000042, 267131.966200167 6789520.78998248 50.2599962090907)', 3067),'0','248','6446225',3,3,0,0)""")
+      //                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  ID,project_ID,TRACK,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,START_ADDR_M,END_ADDR_M,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,ROAD_TYPE,roadway_ID,linear_location_ID,CONNECTED_link_ID,ELY,REVERSED,SIDE,START_MEASURE,END_MEASURE,link_ID,ADJUSTED_TIMESTAMP,link_SOURCE,GEOMETRY,ORIGINAL_START_ADDR_M,ORIGINAL_END_ADDR_M,roadway_NUMBER,START_calibration_point,END_calibration_point,ORIG_START_calibration_point,ORIG_END_calibration_point
+      runUpdateToDb(sql"""INSERT INTO project_link (id,project_id,track,discontinuity_type,road_number,road_part_number,start_addr_m,end_addr_m,created_by,modified_by,created_date,modified_date,status,administrative_class,roadway_id,linear_location_id,connected_link_id,ely,reversed,side,start_measure,end_measure,link_id,adjusted_timestamp,link_source,geometry,original_start_addr_m,original_end_addr_m,roadway_number,start_calibration_point,end_calibration_point,orig_start_calibration_point,orig_end_calibration_point) VALUES ('1000356','1000351','0','2','22006','67','169','177','silari','silari',to_date('27.12.2019','DD.MM.YYYY'),to_date('27.12.2019','DD.MM.YYYY'),'3','1','1052907','1039047',NULL,'2','1','2',0,7.685,'568164','1449097206000','4',      ST_GeomFromText('LINESTRING(267444.126 6789234.9 53.176999999996, 267440.935 6789235.99 53.2259999999951, 267437.206395653 6789238.15776997 53.2499974535623)', 3067),'0','8','166883765',0,3,0,0)""")
+      runUpdateToDb(sql"""INSERT INTO project_link (id,project_id,track,discontinuity_type,road_number,road_part_number,start_addr_m,end_addr_m,created_by,modified_by,created_date,modified_date,status,administrative_class,roadway_id,linear_location_id,connected_link_id,ely,reversed,side,start_measure,end_measure,link_id,adjusted_timestamp,link_source,geometry,original_start_addr_m,original_end_addr_m,roadway_number,start_calibration_point,end_calibration_point,orig_start_calibration_point,orig_end_calibration_point) VALUES ('1000357','1000351','0','5','22006','67','0','169','silari','silari',to_date('27.12.2019','DD.MM.YYYY'),to_date('27.12.2019','DD.MM.YYYY'),'3','1','1052907','1039048',NULL,'2','1','3',0,171.504,'7256584','1498959782000','4',     ST_GeomFromText('LINESTRING(267444.126 6789234.9 53.176999999996, 267464.548 6789227.526 52.8959999999934, 267496.884 6789219.216 52.2939999999944, 267515.938 6789216.916 51.7979999999952, 267535.906 6789218.028 51.1319999999978, 267556.73 6789224.333 50.304999999993, 267574.187 6789234.039 49.5789999999979, 267588.124 6789247.565 49.0240000000049, 267597.460867063 6789260.63281394 48.7730035736591)', 3067),'8','177','166883765',3,3,0,0)""")
+      runUpdateToDb(sql"""INSERT INTO project_link (id,project_id,track,discontinuity_type,road_number,road_part_number,start_addr_m,end_addr_m,created_by,modified_by,created_date,modified_date,status,administrative_class,roadway_id,linear_location_id,connected_link_id,ely,reversed,side,start_measure,end_measure,link_id,adjusted_timestamp,link_source,geometry,original_start_addr_m,original_end_addr_m,roadway_number,start_calibration_point,end_calibration_point,orig_start_calibration_point,orig_end_calibration_point) VALUES ('1000358','1000351','0','5','22006','56','80','118','silari','silari',to_date('27.12.2019','DD.MM.YYYY'),to_date('27.12.2019','DD.MM.YYYY'),'3','1','1052907','1039049',NULL,'2','1','3',0,38.688,'7256586','1503961971000','4',     ST_GeomFromText('LINESTRING(267597.461 6789260.633 48.773000000001, 267597.534 6789260.792 48.7719999999972, 267600.106 6789269.768 48.6059999999998, 267600.106 6789280.257 48.4780000000028, 267597.713 6789287.648 48.4360000000015, 267591.642 6789293.381 48.4370000000054, 267589.345139337 6789294.52943033 48.4244527667907)', 3067),'177','215','166883761',3,3,0,0)""")
+      runUpdateToDb(sql"""INSERT INTO project_link (id,project_id,track,discontinuity_type,road_number,road_part_number,start_addr_m,end_addr_m,created_by,modified_by,created_date,modified_date,status,administrative_class,roadway_id,linear_location_id,connected_link_id,ely,reversed,side,start_measure,end_measure,link_id,adjusted_timestamp,link_source,geometry,original_start_addr_m,original_end_addr_m,roadway_number,start_calibration_point,end_calibration_point,orig_start_calibration_point,orig_end_calibration_point) VALUES ('1000359','1000351','0','5','22006','56','0','80','silari','silari',to_date('27.12.2019','DD.MM.YYYY'),to_date('27.12.2019','DD.MM.YYYY'),'3','1','1052908','1039050',NULL,'2','1','3',38.688,120.135,'7256586','1503961971000','4', ST_GeomFromText('LINESTRING(267589.345139337 6789294.52943033 48.4244527667907, 267578.828 6789299.788 48.3669999999984, 267559.269 6789308.892 48.2510000000038, 267546.792 6789314.963 48.2390000000014, 267533.979 6789321.707 48.2140000000072, 267524.2 6789327.103 48.226999999999, 267521.164 6789329.463 48.247000000003, 267518.603162863 6789333.45774594 48.2559994276524)', 3067),'215','295','166883589',3,0,0,0)""")
+      runUpdateToDb(sql"""INSERT INTO project_link (id,project_id,track,discontinuity_type,road_number,road_part_number,start_addr_m,end_addr_m,created_by,modified_by,created_date,modified_date,status,administrative_class,roadway_id,linear_location_id,connected_link_id,ely,reversed,side,start_measure,end_measure,link_id,adjusted_timestamp,link_source,geometry,original_start_addr_m,original_end_addr_m,roadway_number,start_calibration_point,end_calibration_point,orig_start_calibration_point,orig_end_calibration_point) VALUES ('1000360','1000351','0','1','22006','68','0','45','silari','silari',to_date('27.12.2019','DD.MM.YYYY'),to_date('27.12.2019','DD.MM.YYYY'),'3','1','1052909','1039051',NULL,'2','1','2',0,44.211,'7256594','1533681057000','4',       ST_GeomFromText('LINESTRING(267597.461 6789260.633 48.773000000001, 267603.782 6789267.752 48.6589999999997, 267610.19 6789273.485 48.5580000000045, 267616.597 6789277.869 48.4689999999973, 267623.131 6789280.868 48.4400000000023, 267633.897953407 6789283.72598763 48.4409999956788)', 3067),'0','45','6446223',3,3,0,0)""")
+      runUpdateToDb(sql"""INSERT INTO project_link (id,project_id,track,discontinuity_type,road_number,road_part_number,start_addr_m,end_addr_m,created_by,modified_by,created_date,modified_date,status,administrative_class,roadway_id,linear_location_id,connected_link_id,ely,reversed,side,start_measure,end_measure,link_id,adjusted_timestamp,link_source,geometry,original_start_addr_m,original_end_addr_m,roadway_number,start_calibration_point,end_calibration_point,orig_start_calibration_point,orig_end_calibration_point) VALUES ('1000361','1000351','0','5','22006','12','0','127','silari','silari',to_date('27.12.2019','DD.MM.YYYY'),to_date('27.12.2019','DD.MM.YYYY'),'3','1','1052910','1039052',NULL,'2','0','2',0,130.538,'7256590','1498959782000','4',     ST_GeomFromText('LINESTRING(267431.685 6789375.9 48.4470000000001, 267424.673 6789383.39 48.4180000000051, 267415.075 6789389.356 48.448000000004, 267401.067 6789396.879 48.5190000000002, 267384.985 6789404.661 48.6150000000052, 267366.307 6789414.259 48.6889999999985, 267356.079 6789421.259 48.6999999999971, 267351.522 6789425.931 48.7119999999995, 267349.187 6789432.416 48.7799999999988, 267348.928 6789442.533 48.9700000000012, 267352.041 6789450.574 49.1230000000069, 267357.266 6789458.693 49.3099999999977)', 3067),'0','127','166883763',3,3,0,0)""")
+      runUpdateToDb(sql"""INSERT INTO project_link (id,project_id,track,discontinuity_type,road_number,road_part_number,start_addr_m,end_addr_m,created_by,modified_by,created_date,modified_date,status,administrative_class,roadway_id,linear_location_id,connected_link_id,ely,reversed,side,start_measure,end_measure,link_id,adjusted_timestamp,link_source,geometry,original_start_addr_m,original_end_addr_m,roadway_number,start_calibration_point,end_calibration_point,orig_start_calibration_point,orig_end_calibration_point) VALUES ('1000362','1000351','0','5','22006','23','0','174','silari','silari',to_date('27.12.2019','DD.MM.YYYY'),to_date('27.12.2019','DD.MM.YYYY'),'3','1','1052910','1039053',NULL,'2','0','3',0,177.547,'568121','1446398762000','4',      ST_GeomFromText('LINESTRING(267525.375 6789455.936 52.7309999999998, 267499.516 6789463.571 52.426999999996, 267458.911 6789473.392 52.0339999999997, 267426.281 6789480.881 51.4360000000015, 267403.97 6789481.494 50.7459999999992, 267378.849 6789475.013 49.9879999999976, 267357.54 6789459.007 49.3179999999993, 267357.266194778 6789458.69322321 49.3100056869441)', 3067),'127','301','166883762',3,0,0,0)""")
+      runUpdateToDb(sql"""INSERT INTO project_link (id,project_id,track,discontinuity_type,road_number,road_part_number,start_addr_m,end_addr_m,created_by,modified_by,created_date,modified_date,status,administrative_class,roadway_id,linear_location_id,connected_link_id,ely,reversed,side,start_measure,end_measure,link_id,adjusted_timestamp,link_source,geometry,original_start_addr_m,original_end_addr_m,roadway_number,start_calibration_point,end_calibration_point,orig_start_calibration_point,orig_end_calibration_point) VALUES ('1000363','1000351','0','2','22006','23','174','183','silari','silari',to_date('27.12.2019','DD.MM.YYYY'),to_date('27.12.2019','DD.MM.YYYY'),'3','1','1052910','1039054',NULL,'2','0','3',0,9.514,'568122','1449097206000','4',      ST_GeomFromText('LINESTRING(267534.612 6789453.659 52.7939999999944, 267529.741 6789454.905 52.8300000000017, 267525.375 6789455.936 52.7309999999998)', 3067),'301','310','166883762',0,3,0,0)""")
+      runUpdateToDb(sql"""INSERT INTO project_link (id,project_id,track,discontinuity_type,road_number,road_part_number,start_addr_m,end_addr_m,created_by,modified_by,created_date,modified_date,status,administrative_class,roadway_id,linear_location_id,connected_link_id,ely,reversed,side,start_measure,end_measure,link_id,adjusted_timestamp,link_source,geometry,original_start_addr_m,original_end_addr_m,roadway_number,start_calibration_point,end_calibration_point,orig_start_calibration_point,orig_end_calibration_point) VALUES ('1000364','1000351','0','2','22006','24','0','248','silari','silari',to_date('27.12.2019','DD.MM.YYYY'),to_date('27.12.2019','DD.MM.YYYY'),'3','1','1052906','1039046',NULL,'2','1','2',0,248.793,'7256596','1498959782000','4',     ST_GeomFromText('LINESTRING(267357.266 6789458.693 49.3099999999977, 267343.965 6789448.141 49.0489999999991, 267334.962 6789442.665 48.8600000000006, 267328.617 6789440.381 48.7949999999983, 267322.527 6789439.365 48.8000000000029, 267314.914 6789441.141 48.8439999999973, 267303.749 6789445.455 48.976999999999, 267287.508 6789453.576 49.0160000000033, 267268.999 6789462.419 49.2119999999995, 267228.658 6789482.321 49.3870000000024, 267201.225 6789496.844 49.4649999999965, 267167.876 6789511.367 49.7329999999929, 267147.437 6789519.436 49.9670000000042, 267131.966200167 6789520.78998248 50.2599962090907)', 3067),'0','248','6446225',3,3,0,0)""")
 
-      runUpdateToDb("""Insert into PROJECT_LINK_NAME (ID,PROJECT_ID,ROAD_NUMBER,ROAD_NAME) values ('17','1000351','22006','MOMMOLAN RAMPIT')""")
+      runUpdateToDb(sql"""INSERT INTO project_link_name (ID,project_ID,ROAD_NUMBER,road_name) VALUES ('17','1000351','22006','MOMMOLAN RAMPIT')""")
 
-      runUpdateToDb("""Insert into ROADWAY_CHANGES (PROJECT_ID,CHANGE_TYPE,OLD_ROAD_NUMBER,NEW_ROAD_NUMBER,OLD_ROAD_PART_NUMBER,NEW_ROAD_PART_NUMBER,OLD_TRACK,NEW_TRACK,OLD_START_ADDR_M,NEW_START_ADDR_M,OLD_END_ADDR_M,NEW_END_ADDR_M,NEW_DISCONTINUITY,NEW_ADMINISTRATIVE_CLASS,NEW_ELY,OLD_ADMINISTRATIVE_CLASS,OLD_DISCONTINUITY,OLD_ELY,REVERSED,ROADWAY_CHANGE_ID) values ('1000351','3','22006','22006','12','67','0','0','0','0','177','177','2','1','2','1','5','2','1','1000753')""")
-      runUpdateToDb("""Insert into ROADWAY_CHANGES (PROJECT_ID,CHANGE_TYPE,OLD_ROAD_NUMBER,NEW_ROAD_NUMBER,OLD_ROAD_PART_NUMBER,NEW_ROAD_PART_NUMBER,OLD_TRACK,NEW_TRACK,OLD_START_ADDR_M,NEW_START_ADDR_M,OLD_END_ADDR_M,NEW_END_ADDR_M,NEW_DISCONTINUITY,NEW_ADMINISTRATIVE_CLASS,NEW_ELY,OLD_ADMINISTRATIVE_CLASS,OLD_DISCONTINUITY,OLD_ELY,REVERSED,ROADWAY_CHANGE_ID) values ('1000351','3','22006','22006','34','12','0','0','0','0','127','127','5','1','2','1','5','2','0','1000754')""")
-      runUpdateToDb("""Insert into ROADWAY_CHANGES (PROJECT_ID,CHANGE_TYPE,OLD_ROAD_NUMBER,NEW_ROAD_NUMBER,OLD_ROAD_PART_NUMBER,NEW_ROAD_PART_NUMBER,OLD_TRACK,NEW_TRACK,OLD_START_ADDR_M,NEW_START_ADDR_M,OLD_END_ADDR_M,NEW_END_ADDR_M,NEW_DISCONTINUITY,NEW_ADMINISTRATIVE_CLASS,NEW_ELY,OLD_ADMINISTRATIVE_CLASS,OLD_DISCONTINUITY,OLD_ELY,REVERSED,ROADWAY_CHANGE_ID) values ('1000351','3','22006','22006','12','56','0','0','215','0','295','80','5','1','2','1','2','2','1','1000755')""")
-      runUpdateToDb("""Insert into ROADWAY_CHANGES (PROJECT_ID,CHANGE_TYPE,OLD_ROAD_NUMBER,NEW_ROAD_NUMBER,OLD_ROAD_PART_NUMBER,NEW_ROAD_PART_NUMBER,OLD_TRACK,NEW_TRACK,OLD_START_ADDR_M,NEW_START_ADDR_M,OLD_END_ADDR_M,NEW_END_ADDR_M,NEW_DISCONTINUITY,NEW_ADMINISTRATIVE_CLASS,NEW_ELY,OLD_ADMINISTRATIVE_CLASS,OLD_DISCONTINUITY,OLD_ELY,REVERSED,ROADWAY_CHANGE_ID) values ('1000351','3','22006','22006','34','23','0','0','127','0','310','183','2','1','2','1','2','2','0','1000756')""")
-      runUpdateToDb("""Insert into ROADWAY_CHANGES (PROJECT_ID,CHANGE_TYPE,OLD_ROAD_NUMBER,NEW_ROAD_NUMBER,OLD_ROAD_PART_NUMBER,NEW_ROAD_PART_NUMBER,OLD_TRACK,NEW_TRACK,OLD_START_ADDR_M,NEW_START_ADDR_M,OLD_END_ADDR_M,NEW_END_ADDR_M,NEW_DISCONTINUITY,NEW_ADMINISTRATIVE_CLASS,NEW_ELY,OLD_ADMINISTRATIVE_CLASS,OLD_DISCONTINUITY,OLD_ELY,REVERSED,ROADWAY_CHANGE_ID) values ('1000351','3','22006','22006','23','68','0','0','0','0','45','45','1','1','2','1','2','2','1','1000757')""")
-      runUpdateToDb("""Insert into ROADWAY_CHANGES (PROJECT_ID,CHANGE_TYPE,OLD_ROAD_NUMBER,NEW_ROAD_NUMBER,OLD_ROAD_PART_NUMBER,NEW_ROAD_PART_NUMBER,OLD_TRACK,NEW_TRACK,OLD_START_ADDR_M,NEW_START_ADDR_M,OLD_END_ADDR_M,NEW_END_ADDR_M,NEW_DISCONTINUITY,NEW_ADMINISTRATIVE_CLASS,NEW_ELY,OLD_ADMINISTRATIVE_CLASS,OLD_DISCONTINUITY,OLD_ELY,REVERSED,ROADWAY_CHANGE_ID) values ('1000351','3','22006','22006','45','24','0','0','0','0','248','248','2','1','2','1','1','2','1','1000758')""")
-      runUpdateToDb("""Insert into ROADWAY_CHANGES (PROJECT_ID,CHANGE_TYPE,OLD_ROAD_NUMBER,NEW_ROAD_NUMBER,OLD_ROAD_PART_NUMBER,NEW_ROAD_PART_NUMBER,OLD_TRACK,NEW_TRACK,OLD_START_ADDR_M,NEW_START_ADDR_M,OLD_END_ADDR_M,NEW_END_ADDR_M,NEW_DISCONTINUITY,NEW_ADMINISTRATIVE_CLASS,NEW_ELY,OLD_ADMINISTRATIVE_CLASS,OLD_DISCONTINUITY,OLD_ELY,REVERSED,ROADWAY_CHANGE_ID) values ('1000351','3','22006','22006','12','56','0','0','177','80','215','118','5','1','2','1','5','2','1','1000759')""")
+      runUpdateToDb(sql"""INSERT INTO roadway_changes (project_id,change_type,old_road_number,new_road_number,old_road_part_number,new_road_part_number,old_track,new_track,old_start_addr_m,new_start_addr_m,old_end_addr_m,new_end_addr_m,new_discontinuity,new_administrative_class,new_ely,old_administrative_class,old_discontinuity,old_ely,reversed,roadway_change_id) VALUES ('1000351','3','22006','22006','12','67','0','0','0','0','177','177','2','1','2','1','5','2','1','1000753')""")
+      runUpdateToDb(sql"""INSERT INTO roadway_changes (project_id,change_type,old_road_number,new_road_number,old_road_part_number,new_road_part_number,old_track,new_track,old_start_addr_m,new_start_addr_m,old_end_addr_m,new_end_addr_m,new_discontinuity,new_administrative_class,new_ely,old_administrative_class,old_discontinuity,old_ely,reversed,roadway_change_id) VALUES ('1000351','3','22006','22006','34','12','0','0','0','0','127','127','5','1','2','1','5','2','0','1000754')""")
+      runUpdateToDb(sql"""INSERT INTO roadway_changes (project_id,change_type,old_road_number,new_road_number,old_road_part_number,new_road_part_number,old_track,new_track,old_start_addr_m,new_start_addr_m,old_end_addr_m,new_end_addr_m,new_discontinuity,new_administrative_class,new_ely,old_administrative_class,old_discontinuity,old_ely,reversed,roadway_change_id) VALUES ('1000351','3','22006','22006','12','56','0','0','215','0','295','80','5','1','2','1','2','2','1','1000755')""")
+      runUpdateToDb(sql"""INSERT INTO roadway_changes (project_id,change_type,old_road_number,new_road_number,old_road_part_number,new_road_part_number,old_track,new_track,old_start_addr_m,new_start_addr_m,old_end_addr_m,new_end_addr_m,new_discontinuity,new_administrative_class,new_ely,old_administrative_class,old_discontinuity,old_ely,reversed,roadway_change_id) VALUES ('1000351','3','22006','22006','34','23','0','0','127','0','310','183','2','1','2','1','2','2','0','1000756')""")
+      runUpdateToDb(sql"""INSERT INTO roadway_changes (project_id,change_type,old_road_number,new_road_number,old_road_part_number,new_road_part_number,old_track,new_track,old_start_addr_m,new_start_addr_m,old_end_addr_m,new_end_addr_m,new_discontinuity,new_administrative_class,new_ely,old_administrative_class,old_discontinuity,old_ely,reversed,roadway_change_id) VALUES ('1000351','3','22006','22006','23','68','0','0','0','0','45','45','1','1','2','1','2','2','1','1000757')""")
+      runUpdateToDb(sql"""INSERT INTO roadway_changes (project_id,change_type,old_road_number,new_road_number,old_road_part_number,new_road_part_number,old_track,new_track,old_start_addr_m,new_start_addr_m,old_end_addr_m,new_end_addr_m,new_discontinuity,new_administrative_class,new_ely,old_administrative_class,old_discontinuity,old_ely,reversed,roadway_change_id) VALUES ('1000351','3','22006','22006','45','24','0','0','0','0','248','248','2','1','2','1','1','2','1','1000758')""")
+      runUpdateToDb(sql"""INSERT INTO roadway_changes (project_id,change_type,old_road_number,new_road_number,old_road_part_number,new_road_part_number,old_track,new_track,old_start_addr_m,new_start_addr_m,old_end_addr_m,new_end_addr_m,new_discontinuity,new_administrative_class,new_ely,old_administrative_class,old_discontinuity,old_ely,reversed,roadway_change_id) VALUEs ('1000351','3','22006','22006','12','56','0','0','177','80','215','118','5','1','2','1','5','2','1','1000759')""")
 
-      runUpdateToDb("""Insert into ROADWAY_CHANGES_LINK (ROADWAY_CHANGE_ID,PROJECT_ID,PROJECT_LINK_ID) values ('1000753','1000351','1000357')""")
-      runUpdateToDb("""Insert into ROADWAY_CHANGES_LINK (ROADWAY_CHANGE_ID,PROJECT_ID,PROJECT_LINK_ID) values ('1000753','1000351','1000356')""")
-      runUpdateToDb("""Insert into ROADWAY_CHANGES_LINK (ROADWAY_CHANGE_ID,PROJECT_ID,PROJECT_LINK_ID) values ('1000754','1000351','1000361')""")
-      runUpdateToDb("""Insert into ROADWAY_CHANGES_LINK (ROADWAY_CHANGE_ID,PROJECT_ID,PROJECT_LINK_ID) values ('1000755','1000351','1000359')""")
-      runUpdateToDb("""Insert into ROADWAY_CHANGES_LINK (ROADWAY_CHANGE_ID,PROJECT_ID,PROJECT_LINK_ID) values ('1000756','1000351','1000362')""")
-      runUpdateToDb("""Insert into ROADWAY_CHANGES_LINK (ROADWAY_CHANGE_ID,PROJECT_ID,PROJECT_LINK_ID) values ('1000756','1000351','1000363')""")
-      runUpdateToDb("""Insert into ROADWAY_CHANGES_LINK (ROADWAY_CHANGE_ID,PROJECT_ID,PROJECT_LINK_ID) values ('1000757','1000351','1000360')""")
-      runUpdateToDb("""Insert into ROADWAY_CHANGES_LINK (ROADWAY_CHANGE_ID,PROJECT_ID,PROJECT_LINK_ID) values ('1000758','1000351','1000364')""")
-      runUpdateToDb("""Insert into ROADWAY_CHANGES_LINK (ROADWAY_CHANGE_ID,PROJECT_ID,PROJECT_LINK_ID) values ('1000759','1000351','1000358')""")
+      runUpdateToDb(sql"""INSERT INTO roadway_changes_link (roadway_change_id,project_id,project_link_id) VALUES ('1000753','1000351','1000357')""")
+      runUpdateToDb(sql"""INSERT INTO roadway_changes_link (roadway_change_id,project_id,project_link_id) VALUES ('1000753','1000351','1000356')""")
+      runUpdateToDb(sql"""INSERT INTO roadway_changes_link (roadway_change_id,project_id,project_link_id) VALUES ('1000754','1000351','1000361')""")
+      runUpdateToDb(sql"""INSERT INTO roadway_changes_link (roadway_change_id,project_id,project_link_id) VALUES ('1000755','1000351','1000359')""")
+      runUpdateToDb(sql"""INSERT INTO roadway_changes_link (roadway_change_id,project_id,project_link_id) VALUES ('1000756','1000351','1000362')""")
+      runUpdateToDb(sql"""INSERT INTO roadway_changes_link (roadway_change_id,project_id,project_link_id) VALUES ('1000756','1000351','1000363')""")
+      runUpdateToDb(sql"""INSERT INTO roadway_changes_link (roadway_change_id,project_id,project_link_id) VALUES ('1000757','1000351','1000360')""")
+      runUpdateToDb(sql"""INSERT INTO roadway_changes_link (roadway_change_id,project_id,project_link_id) VALUES ('1000758','1000351','1000364')""")
+      runUpdateToDb(sql"""INSERT INTO roadway_changes_link (roadway_change_id,project_id,project_link_id) VALUES ('1000759','1000351','1000358')""")
       when(mockNodesAndJunctionsService.expireObsoleteNodesAndJunctions(any[Seq[ProjectLink]], any[Option[DateTime]], any[String])).thenReturn(Seq())
       projectDAO.updateProjectStatus(1000351, UpdatingToRoadNetwork)
       projectService.updateRoadwaysAndLinearLocationsWithProjectLinks(1000351)
@@ -3283,19 +3285,19 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
       val project_id = Sequences.nextViiteProjectId
 
       /* Check the project layout from the ticket 2699. */
-      runUpdateToDb(s"""INSERT INTO PROJECT VALUES($project_id, 11, 'test project', '$user', TIMESTAMP '2018-03-23 11:36:15.000000', '-', TIMESTAMP '2018-03-23 12:26:33.000000', NULL, TIMESTAMP '2018-03-23 00:00:00.000000', NULL, 564987.0, 6769633.0, 12)""")
-      runUpdateToDb(s"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (${Sequences.nextViitePrimaryKeySeqValue}, 46020, 1, $project_id, '-')""")
-      runUpdateToDb(s"""INSERT INTO roadway (id, roadway_number, road_number, road_part_number, track, start_addr_m, end_addr_m, reversed, discontinuity, start_date, end_date, created_by, created_time, administrative_class, ely, terminated, valid_from, valid_to) VALUES(107964, 335560416, 46020, 1, 0, 0, 785, 0, 1, '2022-01-01', NULL, '$user', '2022-02-17 09:48:15.355', 2, 3, 0, '2022-02-17 09:48:15.355', NULL)""")
-      runUpdateToDb("""INSERT INTO link (id, "source", adjusted_timestamp, created_time) VALUES(2621644, 4, 1634598047000, '2022-02-17 09:48:15.355'),(2621698, 4, 1533863903000, '2022-02-17 09:48:15.355'),(2621642, 4, 1634598047000, '2022-02-17 09:48:15.355'),(2621640, 4, 1634598047000, '2022-02-17 09:48:15.355'),(2621632, 4, 1634598047000, '2022-02-17 09:48:15.355'),(2621636, 4, 1533863903000, '2022-02-17 09:48:15.355'),(2621288, 4, 1533863903000, '2022-02-17 09:48:15.355'),(2621287, 4, 1533863903000, '2022-02-17 09:48:15.355')""")
+      runUpdateToDb(sql"""INSERT INTO project VALUES($project_id, 11, 'test project', $user, TIMESTAMP '2018-03-23 11:36:15.000000', '-', TIMESTAMP '2018-03-23 12:26:33.000000', NULL, TIMESTAMP '2018-03-23 00:00:00.000000', NULL, 564987.0, 6769633.0, 12)""")
+      runUpdateToDb(sql"""INSERT INTO project_reserved_road_part VALUES (${Sequences.nextViitePrimaryKeySeqValue}, 46020, 1, $project_id, '-')""")
+      runUpdateToDb(sql"""INSERT INTO roadway (id, roadway_number, road_number, road_part_number, track, start_addr_m, end_addr_m, reversed, discontinuity, start_date, end_date, created_by, created_time, administrative_class, ely, terminated, valid_from, valid_to) VALUES(107964, 335560416, 46020, 1, 0, 0, 785, 0, 1, '2022-01-01', NULL, $user, '2022-02-17 09:48:15.355', 2, 3, 0, '2022-02-17 09:48:15.355', NULL)""")
+      runUpdateToDb(sql"""INSERT INTO link (id, "source", adjusted_timestamp, created_time) VALUES(2621644, 4, 1634598047000, '2022-02-17 09:48:15.355'),(2621698, 4, 1533863903000, '2022-02-17 09:48:15.355'),(2621642, 4, 1634598047000, '2022-02-17 09:48:15.355'),(2621640, 4, 1634598047000, '2022-02-17 09:48:15.355'),(2621632, 4, 1634598047000, '2022-02-17 09:48:15.355'),(2621636, 4, 1533863903000, '2022-02-17 09:48:15.355'),(2621288, 4, 1533863903000, '2022-02-17 09:48:15.355'),(2621287, 4, 1533863903000, '2022-02-17 09:48:15.355')""")
 
-      runUpdateToDb(s"""INSERT INTO linear_location (id, roadway_number, order_number, link_id, start_measure, end_measure, side, geometry, valid_from, valid_to, created_by, created_time) VALUES(490283, 335560416, 7, 2621644, 0.000,  94.008, 3, 'SRID=3067;LINESTRING ZM(565110.998 6769336.795  90.40499999999884 0, 565028.813 6769382.427  91.38099999999395  94.008)'::public.geometry, '2022-02-17 09:48:15.355', NULL, '$createdBy', '2022-02-17 09:48:15.355')""")
-      runUpdateToDb(s"""INSERT INTO linear_location (id, roadway_number, order_number, link_id, start_measure, end_measure, side, geometry, valid_from, valid_to, created_by, created_time) VALUES(490284, 335560416, 8, 2621698, 0.000, 165.951, 3, 'SRID=3067;LINESTRING ZM(565258.278 6769260.328  82.68899999999849 0, 565110.998 6769336.795  90.40499999999884 165.951)'::public.geometry, '2022-02-17 09:48:15.355', NULL, '$createdBy', '2022-02-17 09:48:15.355')""")
-      runUpdateToDb(s"""INSERT INTO linear_location (id, roadway_number, order_number, link_id, start_measure, end_measure, side, geometry, valid_from, valid_to, created_by, created_time) VALUES(490217, 335560416, 1, 2621642, 0.000, 167.250, 3, 'SRID=3067;LINESTRING ZM(564987.238 6769633.328 102.99000000000524 0, 565123.382 6769720.891 104.16400000000431 167.25)'::public.geometry,  '2022-02-17 09:48:15.355', NULL, '$createdBy', '2022-02-17 09:48:15.355')""")
-      runUpdateToDb(s"""INSERT INTO linear_location (id, roadway_number, order_number, link_id, start_measure, end_measure, side, geometry, valid_from, valid_to, created_by, created_time) VALUES(490282, 335560416, 6, 2621640, 0.000, 155.349, 3, 'SRID=3067;LINESTRING ZM(565028.813 6769382.427  91.38099999999395 0, 564891.659 6769455.379  99.18700000000536 155.349)'::public.geometry, '2022-02-17 09:48:15.355', NULL, '$createdBy', '2022-02-17 09:48:15.355')""")
-      runUpdateToDb(s"""INSERT INTO linear_location (id, roadway_number, order_number, link_id, start_measure, end_measure, side, geometry, valid_from, valid_to, created_by, created_time) VALUES(490218, 335560416, 2, 2621632, 0.000,  81.498, 3, 'SRID=3067;LINESTRING ZM(564948.879 6769561.432 100.8859999999986  0, 564987.238 6769633.328 102.99000000000524  81.498)'::public.geometry, '2022-02-17 09:48:15.355', NULL, '$createdBy', '2022-02-17 09:48:15.355')""")
-      runUpdateToDb(s"""INSERT INTO linear_location (id, roadway_number, order_number, link_id, start_measure, end_measure, side, geometry, valid_from, valid_to, created_by, created_time) VALUES(490219, 335560416, 3, 2621636, 0.000, 101.665, 3, 'SRID=3067;LINESTRING ZM(564900.791 6769471.859  99.14599999999336 0, 564948.879 6769561.432 100.8859999999986  101.665)'::public.geometry, '2022-02-17 09:48:15.355', NULL, '$createdBy', '2022-02-17 09:48:15.355')""")
-      runUpdateToDb(s"""INSERT INTO linear_location (id, roadway_number, order_number, link_id, start_measure, end_measure, side, geometry, valid_from, valid_to, created_by, created_time) VALUES(490220, 335560416, 4, 2621288, 0.000,   7.843, 3, 'SRID=3067;LINESTRING ZM(564896.99  6769464.999  99.18300000000454 0, 564900.791 6769471.859  99.14599999999336   7.843)'::public.geometry, '2022-02-17 09:48:15.355', NULL, '$createdBy', '2022-02-17 09:48:15.355')""")
-      runUpdateToDb(s"""INSERT INTO linear_location (id, roadway_number, order_number, link_id, start_measure, end_measure, side, geometry, valid_from, valid_to, created_by, created_time) VALUES(490281, 335560416, 5, 2621287, 0.000,  10.998, 3, 'SRID=3067;LINESTRING ZM(564891.659 6769455.379  99.18700000000536 0, 564896.99  6769464.999  99.18300000000454  10.998)'::public.geometry, '2022-02-17 09:48:15.355', NULL, '$createdBy', '2022-02-17 09:48:15.355')""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id, roadway_number, order_number, link_id, start_measure, end_measure, side, geometry, valid_from, valid_to, created_by, created_time) VALUES(490283, 335560416, 7, 2621644, 0.000,  94.008, 3, 'SRID=3067;LINESTRING ZM(565110.998 6769336.795  90.40499999999884 0, 565028.813 6769382.427  91.38099999999395  94.008)'::public.geometry, '2022-02-17 09:48:15.355', NULL, $createdBy, '2022-02-17 09:48:15.355')""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id, roadway_number, order_number, link_id, start_measure, end_measure, side, geometry, valid_from, valid_to, created_by, created_time) VALUES(490284, 335560416, 8, 2621698, 0.000, 165.951, 3, 'SRID=3067;LINESTRING ZM(565258.278 6769260.328  82.68899999999849 0, 565110.998 6769336.795  90.40499999999884 165.951)'::public.geometry, '2022-02-17 09:48:15.355', NULL, $createdBy, '2022-02-17 09:48:15.355')""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id, roadway_number, order_number, link_id, start_measure, end_measure, side, geometry, valid_from, valid_to, created_by, created_time) VALUES(490217, 335560416, 1, 2621642, 0.000, 167.250, 3, 'SRID=3067;LINESTRING ZM(564987.238 6769633.328 102.99000000000524 0, 565123.382 6769720.891 104.16400000000431 167.25)'::public.geometry,  '2022-02-17 09:48:15.355', NULL, $createdBy, '2022-02-17 09:48:15.355')""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id, roadway_number, order_number, link_id, start_measure, end_measure, side, geometry, valid_from, valid_to, created_by, created_time) VALUES(490282, 335560416, 6, 2621640, 0.000, 155.349, 3, 'SRID=3067;LINESTRING ZM(565028.813 6769382.427  91.38099999999395 0, 564891.659 6769455.379  99.18700000000536 155.349)'::public.geometry, '2022-02-17 09:48:15.355', NULL, $createdBy, '2022-02-17 09:48:15.355')""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id, roadway_number, order_number, link_id, start_measure, end_measure, side, geometry, valid_from, valid_to, created_by, created_time) VALUES(490218, 335560416, 2, 2621632, 0.000,  81.498, 3, 'SRID=3067;LINESTRING ZM(564948.879 6769561.432 100.8859999999986  0, 564987.238 6769633.328 102.99000000000524  81.498)'::public.geometry, '2022-02-17 09:48:15.355', NULL, $createdBy, '2022-02-17 09:48:15.355')""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id, roadway_number, order_number, link_id, start_measure, end_measure, side, geometry, valid_from, valid_to, created_by, created_time) VALUES(490219, 335560416, 3, 2621636, 0.000, 101.665, 3, 'SRID=3067;LINESTRING ZM(564900.791 6769471.859  99.14599999999336 0, 564948.879 6769561.432 100.8859999999986  101.665)'::public.geometry, '2022-02-17 09:48:15.355', NULL, $createdBy, '2022-02-17 09:48:15.355')""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id, roadway_number, order_number, link_id, start_measure, end_measure, side, geometry, valid_from, valid_to, created_by, created_time) VALUES(490220, 335560416, 4, 2621288, 0.000,   7.843, 3, 'SRID=3067;LINESTRING ZM(564896.99  6769464.999  99.18300000000454 0, 564900.791 6769471.859  99.14599999999336   7.843)'::public.geometry, '2022-02-17 09:48:15.355', NULL, $createdBy, '2022-02-17 09:48:15.355')""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id, roadway_number, order_number, link_id, start_measure, end_measure, side, geometry, valid_from, valid_to, created_by, created_time) VALUES(490281, 335560416, 5, 2621287, 0.000,  10.998, 3, 'SRID=3067;LINESTRING ZM(564891.659 6769455.379  99.18700000000536 0, 564896.99  6769464.999  99.18300000000454  10.998)'::public.geometry, '2022-02-17 09:48:15.355', NULL, $createdBy, '2022-02-17 09:48:15.355')""")
 
       val projecLinks = Seq(
           ProjectLink(1000,roadPart,Track.Combined, Discontinuity.Continuous,AddrMRange(  0, 167),AddrMRange(  0,167),None,None,createdBy,2621642.toString,  0.0,  167.25, SideCode.AgainstDigitizing,(RoadAddressCP,NoCP),(RoadAddressCP,NoCP),List(Point(564987.0,6769633.0,0.0), Point(565123.0,6769720.0,0.0)),project_id,RoadAddressChangeType.Unchanged,AdministrativeClass.Municipality, LinkGeomSource.FrozenLinkInterface,167.25 ,107964,490217,3,false,None,1634598047000L,335562039,roadName),
@@ -3344,20 +3346,20 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
       val project_id = Sequences.nextViiteProjectId
 
       /* Check the project layout from the ticket 2699. */
-      runUpdateToDb(s"""INSERT INTO PROJECT VALUES($project_id, 11, 'test project', '$user', TIMESTAMP '2018-03-23 11:36:15.000000', '-', TIMESTAMP '2018-03-23 12:26:33.000000', NULL, TIMESTAMP '2018-03-23 00:00:00.000000', NULL, 564987.0, 6769633.0, 12)""")
-      runUpdateToDb(s"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (${Sequences.nextViitePrimaryKeySeqValue}, 46020, 1, $project_id, '-')""")
-      runUpdateToDb(s"""INSERT INTO roadway (id, roadway_number, road_number, road_part_number, track, start_addr_m, end_addr_m, reversed, discontinuity, start_date, end_date, created_by, created_time, administrative_class, ely, terminated, valid_from, valid_to) VALUES(107964, 335560416, 46020, 1, 0, 0, 369, 0, 4, '2022-01-01', NULL, '$user', '2022-02-17 09:48:15.355', 2, 3, 0, '2022-02-17 09:48:15.355', NULL)""")
-      runUpdateToDb(s"""INSERT INTO roadway (id, roadway_number, road_number, road_part_number, track, start_addr_m, end_addr_m, reversed, discontinuity, start_date, end_date, created_by, created_time, administrative_class, ely, terminated, valid_from, valid_to) VALUES(1111, 335560417, 46020, 1, 0, 369, 624, 0, 1, '2022-01-01', NULL, '$user', '2022-02-17 09:48:15.355', 2, 3, 0, '2022-02-17 09:48:15.355', NULL)""")
-      runUpdateToDb("""INSERT INTO link (id, "source", adjusted_timestamp, created_time) VALUES(2621644, 4, 1634598047000, '2022-02-17 09:48:15.355'),(2621698, 4, 1533863903000, '2022-02-17 09:48:15.355'),(2621642, 4, 1634598047000, '2022-02-17 09:48:15.355'),(2621640, 4, 1634598047000, '2022-02-17 09:48:15.355'),(2621632, 4, 1634598047000, '2022-02-17 09:48:15.355'),(2621636, 4, 1533863903000, '2022-02-17 09:48:15.355'),(2621288, 4, 1533863903000, '2022-02-17 09:48:15.355'),(2621287, 4, 1533863903000, '2022-02-17 09:48:15.355')""")
+      runUpdateToDb(sql"""INSERT INTO project VALUES($project_id, 11, 'test project', $user, TIMESTAMP '2018-03-23 11:36:15.000000', '-', TIMESTAMP '2018-03-23 12:26:33.000000', NULL, TIMESTAMP '2018-03-23 00:00:00.000000', NULL, 564987.0, 6769633.0, 12)""")
+      runUpdateToDb(sql"""INSERT INTO project_reserved_road_part VALUES (${Sequences.nextViitePrimaryKeySeqValue}, 46020, 1, $project_id, '-')""")
+      runUpdateToDb(sql"""INSERT INTO roadway (id, roadway_number, road_number, road_part_number, track, start_addr_m, end_addr_m, reversed, discontinuity, start_date, end_date, created_by, created_time, administrative_class, ely, terminated, valid_from, valid_to) VALUES(107964, 335560416, 46020, 1, 0, 0, 369, 0, 4, '2022-01-01', NULL, $user, '2022-02-17 09:48:15.355', 2, 3, 0, '2022-02-17 09:48:15.355', NULL)""")
+      runUpdateToDb(sql"""INSERT INTO roadway (id, roadway_number, road_number, road_part_number, track, start_addr_m, end_addr_m, reversed, discontinuity, start_date, end_date, created_by, created_time, administrative_class, ely, terminated, valid_from, valid_to) VALUES(1111, 335560417, 46020, 1, 0, 369, 624, 0, 1, '2022-01-01', NULL, $user, '2022-02-17 09:48:15.355', 2, 3, 0, '2022-02-17 09:48:15.355', NULL)""")
+      runUpdateToDb(sql"""INSERT INTO link (id, "source", adjusted_timestamp, created_time) VALUES(2621644, 4, 1634598047000, '2022-02-17 09:48:15.355'),(2621698, 4, 1533863903000, '2022-02-17 09:48:15.355'),(2621642, 4, 1634598047000, '2022-02-17 09:48:15.355'),(2621640, 4, 1634598047000, '2022-02-17 09:48:15.355'),(2621632, 4, 1634598047000, '2022-02-17 09:48:15.355'),(2621636, 4, 1533863903000, '2022-02-17 09:48:15.355'),(2621288, 4, 1533863903000, '2022-02-17 09:48:15.355'),(2621287, 4, 1533863903000, '2022-02-17 09:48:15.355')""")
 
-      runUpdateToDb(s"""INSERT INTO linear_location (id, roadway_number, order_number, link_id, start_measure, end_measure, side, geometry, valid_from, valid_to, created_by, created_time) VALUES(490283, 335560416, 7, 2621644, 0.000,  94.008, 3, 'SRID=3067;LINESTRING ZM(565110.998 6769336.795  90.40499999999884 0, 565028.813 6769382.427  91.38099999999395  94.008)'::public.geometry, '2022-02-17 09:48:15.355', NULL, '$createdBy', '2022-02-17 09:48:15.355')""")
-      runUpdateToDb(s"""INSERT INTO linear_location (id, roadway_number, order_number, link_id, start_measure, end_measure, side, geometry, valid_from, valid_to, created_by, created_time) VALUES(490284, 335560416, 8, 2621698, 0.000, 165.951, 3, 'SRID=3067;LINESTRING ZM(565258.278 6769260.328  82.68899999999849 0, 565110.998 6769336.795  90.40499999999884 165.951)'::public.geometry, '2022-02-17 09:48:15.355', NULL, '$createdBy', '2022-02-17 09:48:15.355')""")
-      runUpdateToDb(s"""INSERT INTO linear_location (id, roadway_number, order_number, link_id, start_measure, end_measure, side, geometry, valid_from, valid_to, created_by, created_time) VALUES(490217, 335560416, 1, 2621642, 0.000, 167.250, 3, 'SRID=3067;LINESTRING ZM(564987.238 6769633.328 102.99000000000524 0, 565123.382 6769720.891 104.16400000000431 167.25 )'::public.geometry, '2022-02-17 09:48:15.355', NULL, '$createdBy', '2022-02-17 09:48:15.355')""")
-      runUpdateToDb(s"""INSERT INTO linear_location (id, roadway_number, order_number, link_id, start_measure, end_measure, side, geometry, valid_from, valid_to, created_by, created_time) VALUES(490282, 335560416, 6, 2621640, 0.000, 155.349, 3, 'SRID=3067;LINESTRING ZM(565028.813 6769382.427  91.38099999999395 0, 564891.659 6769455.379  99.18700000000536 155.349)'::public.geometry, '2022-02-17 09:48:15.355', NULL, '$createdBy', '2022-02-17 09:48:15.355')""")
-      runUpdateToDb(s"""INSERT INTO linear_location (id, roadway_number, order_number, link_id, start_measure, end_measure, side, geometry, valid_from, valid_to, created_by, created_time) VALUES(490218, 335560416, 2, 2621632, 0.000,  81.498, 3, 'SRID=3067;LINESTRING ZM(564948.879 6769561.432 100.8859999999986  0, 564987.238 6769633.328 102.99000000000524  81.498)'::public.geometry, '2022-02-17 09:48:15.355', NULL, '$createdBy', '2022-02-17 09:48:15.355')""")
-      runUpdateToDb(s"""INSERT INTO linear_location (id, roadway_number, order_number, link_id, start_measure, end_measure, side, geometry, valid_from, valid_to, created_by, created_time) VALUES(490219, 335560416, 3, 2621636, 0.000, 101.665, 3, 'SRID=3067;LINESTRING ZM(564900.791 6769471.859  99.14599999999336 0, 564948.879 6769561.432 100.8859999999986  101.665)'::public.geometry, '2022-02-17 09:48:15.355', NULL, '$createdBy', '2022-02-17 09:48:15.355')""")
-      runUpdateToDb(s"""INSERT INTO linear_location (id, roadway_number, order_number, link_id, start_measure, end_measure, side, geometry, valid_from, valid_to, created_by, created_time) VALUES(490220, 335560416, 4, 2621288, 0.000,   7.843, 3, 'SRID=3067;LINESTRING ZM(564896.99  6769464.999  99.18300000000454 0, 564900.791 6769471.859  99.14599999999336   7.843)'::public.geometry, '2022-02-17 09:48:15.355', NULL, '$createdBy', '2022-02-17 09:48:15.355')""")
-      runUpdateToDb(s"""INSERT INTO linear_location (id, roadway_number, order_number, link_id, start_measure, end_measure, side, geometry, valid_from, valid_to, created_by, created_time) VALUES(490281, 335560416, 5, 2621287, 0.000,  10.998, 3, 'SRID=3067;LINESTRING ZM(564891.659 6769455.379  99.18700000000536 0, 564896.99  6769464.999  99.18300000000454  10.998)'::public.geometry, '2022-02-17 09:48:15.355', NULL, '$createdBy', '2022-02-17 09:48:15.355')""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id, roadway_number, order_number, link_id, start_measure, end_measure, side, geometry, valid_from, valid_to, created_by, created_time) VALUES(490283, 335560416, 7, 2621644, 0.000,  94.008, 3, 'SRID=3067;LINESTRING ZM(565110.998 6769336.795  90.40499999999884 0, 565028.813 6769382.427  91.38099999999395  94.008)'::public.geometry, '2022-02-17 09:48:15.355', NULL, $createdBy, '2022-02-17 09:48:15.355')""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id, roadway_number, order_number, link_id, start_measure, end_measure, side, geometry, valid_from, valid_to, created_by, created_time) VALUES(490284, 335560416, 8, 2621698, 0.000, 165.951, 3, 'SRID=3067;LINESTRING ZM(565258.278 6769260.328  82.68899999999849 0, 565110.998 6769336.795  90.40499999999884 165.951)'::public.geometry, '2022-02-17 09:48:15.355', NULL, $createdBy, '2022-02-17 09:48:15.355')""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id, roadway_number, order_number, link_id, start_measure, end_measure, side, geometry, valid_from, valid_to, created_by, created_time) VALUES(490217, 335560416, 1, 2621642, 0.000, 167.250, 3, 'SRID=3067;LINESTRING ZM(564987.238 6769633.328 102.99000000000524 0, 565123.382 6769720.891 104.16400000000431 167.25 )'::public.geometry, '2022-02-17 09:48:15.355', NULL, $createdBy, '2022-02-17 09:48:15.355')""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id, roadway_number, order_number, link_id, start_measure, end_measure, side, geometry, valid_from, valid_to, created_by, created_time) VALUES(490282, 335560416, 6, 2621640, 0.000, 155.349, 3, 'SRID=3067;LINESTRING ZM(565028.813 6769382.427  91.38099999999395 0, 564891.659 6769455.379  99.18700000000536 155.349)'::public.geometry, '2022-02-17 09:48:15.355', NULL, $createdBy, '2022-02-17 09:48:15.355')""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id, roadway_number, order_number, link_id, start_measure, end_measure, side, geometry, valid_from, valid_to, created_by, created_time) VALUES(490218, 335560416, 2, 2621632, 0.000,  81.498, 3, 'SRID=3067;LINESTRING ZM(564948.879 6769561.432 100.8859999999986  0, 564987.238 6769633.328 102.99000000000524  81.498)'::public.geometry, '2022-02-17 09:48:15.355', NULL, $createdBy, '2022-02-17 09:48:15.355')""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id, roadway_number, order_number, link_id, start_measure, end_measure, side, geometry, valid_from, valid_to, created_by, created_time) VALUES(490219, 335560416, 3, 2621636, 0.000, 101.665, 3, 'SRID=3067;LINESTRING ZM(564900.791 6769471.859  99.14599999999336 0, 564948.879 6769561.432 100.8859999999986  101.665)'::public.geometry, '2022-02-17 09:48:15.355', NULL, $createdBy, '2022-02-17 09:48:15.355')""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id, roadway_number, order_number, link_id, start_measure, end_measure, side, geometry, valid_from, valid_to, created_by, created_time) VALUES(490220, 335560416, 4, 2621288, 0.000,   7.843, 3, 'SRID=3067;LINESTRING ZM(564896.99  6769464.999  99.18300000000454 0, 564900.791 6769471.859  99.14599999999336   7.843)'::public.geometry, '2022-02-17 09:48:15.355', NULL, $createdBy, '2022-02-17 09:48:15.355')""")
+      runUpdateToDb(sql"""INSERT INTO linear_location (id, roadway_number, order_number, link_id, start_measure, end_measure, side, geometry, valid_from, valid_to, created_by, created_time) VALUES(490281, 335560416, 5, 2621287, 0.000,  10.998, 3, 'SRID=3067;LINESTRING ZM(564891.659 6769455.379  99.18700000000536 0, 564896.99  6769464.999  99.18300000000454  10.998)'::public.geometry, '2022-02-17 09:48:15.355', NULL, $createdBy, '2022-02-17 09:48:15.355')""")
 
       val projecLinks = Seq(
         ProjectLink(1000,roadPart,Track.Combined, Discontinuity.Continuous,AddrMRange(  0, 167),AddrMRange(  0, 167),None,None,createdBy,2621642.toString,  0.0,  167.25 ,SideCode.AgainstDigitizing,(RoadAddressCP,NoCP),(RoadAddressCP,NoCP),List(Point(564987.0,6769633.0,0.0), Point(565123.0,6769720.0,0.0)),project_id,RoadAddressChangeType.Unchanged,AdministrativeClass.Municipality, LinkGeomSource.FrozenLinkInterface,167.25 ,107964,490217,3,false,None,1634598047000L,335562039,roadName),
@@ -5496,4 +5498,5 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
     val startDate = if (status !== RoadAddressChangeType.New) Some(DateTime.now()) else None
     ProjectLink(NewIdValue, roadPart, track, discontinuity, addrMRange, addrMRange, startDate, None, Some("User"), addrMRange.start.toString, 0.0, addrMRange.length.toDouble, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), Seq(Point(0.0, addrMRange.start), Point(0.0, addrMRange.end)), projectId, status, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, addrMRange.length.toDouble, roadwayId, linearLocationId, ely, reversed = false, None, 0L)
   }
+
 }

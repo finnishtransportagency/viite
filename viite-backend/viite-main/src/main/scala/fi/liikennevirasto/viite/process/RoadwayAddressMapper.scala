@@ -5,7 +5,7 @@ import fi.liikennevirasto.viite.dao.{LinearLocation, LinearLocationDAO, ProjectC
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import fi.vaylavirasto.viite.geometry.BoundingRectangle
 import fi.vaylavirasto.viite.model.{AddrMRange, Discontinuity, RoadPart, SideCode}
-import fi.vaylavirasto.viite.postgis.PostGISDatabase
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
@@ -21,14 +21,11 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
     * @return The linear location with recalculated calibration points
     */
   private def recalculateHistoryCalibrationPoints(historyRoadwayAddress: Roadway, linearLocations: Seq[LinearLocation]): Seq[LinearLocation] = {
-    val currentRoadwayAddress = (if (PostGISDatabase.isWithinSession) {
-      roadwayDAO.fetchByRoadwayNumber(historyRoadwayAddress.roadwayNumber)
-    } else {
-      PostGISDatabase.withDynSession {
-        roadwayDAO.fetchByRoadwayNumber(historyRoadwayAddress.roadwayNumber)
+    val currentRoadwayAddress = PostGISDatabaseScalikeJDBC.runWithReadOnlySession {
+        roadwayDAO.fetchByRoadwayNumber(historyRoadwayAddress.roadwayNumber).getOrElse(
+          throw new NoSuchElementException(s"Could not find any current road address for roadway ${historyRoadwayAddress.roadwayNumber}")
+        )
       }
-    }).getOrElse(throw new NoSuchElementException(s"Could not find any current road address for roadway ${historyRoadwayAddress.roadwayNumber}"))
-
 
     //Fix calibration points in history road addresses
     val addressLength = historyRoadwayAddress.addrMRange.length

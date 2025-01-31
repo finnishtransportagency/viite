@@ -1,52 +1,58 @@
 package fi.vaylavirasto.viite.dao
 
-import fi.vaylavirasto.viite.util.DateTimeFormatters.dateOptTimeFormatter
 import org.joda.time.DateTime
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
+import scalikejdbc._
+import scalikejdbc.jodatime.JodaWrappedResultSet.fromWrappedResultSetToJodaWrappedResultSet
 
 case class Link(id: String, source: Long, adjustedTimestamp: Long, createdTime: Option[DateTime]){
   def this (id: Long, source: Long, adjustedTimestamp: Long, createdTime: Option[DateTime]) =
    this(id.toString, source, adjustedTimestamp, createdTime)
 }
 
-object LinkDAO extends BaseDAO {
-  implicit val getLink: GetResult[Link] = new GetResult[Link] {
-    def apply(r: PositionedResult): Link = {
-      val id = r.nextString()
-      val source = r.nextLong()
-      val adjustedTimestamp = r.nextLong()
-      val createdTime = r.nextDateOption.map(d => dateOptTimeFormatter.parseDateTime(d.toString))
+object Link extends SQLSyntaxSupport[Link] {
+  override val tableName = "LINK"
 
-      Link(id, source, adjustedTimestamp, createdTime)
-    }
-  }
+  def apply(rs: WrappedResultSet): Link = Link(
+    id                = rs.string("id"),
+    source            = rs.long("source"),
+    adjustedTimestamp = rs.long("adjusted_timestamp"),
+    createdTime       = rs.jodaDateTimeOpt("created_time")
+  )
+}
+
+object LinkDAO extends BaseDAO {
 
   def fetch(id: String): Option[Link] = {
-    val sql = s"""SELECT * FROM LINK where id = '$id'"""
-    Q.queryNA[Link](sql).firstOption
+    val query =
+      sql"""
+          SELECT link.id, link.source, link.adjusted_timestamp, link.created_time
+          FROM link WHERE link.id = $id
+          """
+    runSelectSingleOption(query.map(Link.apply))
   }
-
   def create(id: String, adjustedTimestamp: Long, source: Long): Unit = {
-    runUpdateToDb(s"""
-      insert into LINK (id, source, adjusted_timestamp) values ('$id', $source, $adjustedTimestamp)
+    runUpdateToDb(sql"""
+      INSERT INTO link (id, source, adjusted_timestamp)
+      VALUES           ($id, $source, $adjustedTimestamp)
       """)
   }
 
   def createIfEmptyFetch(id: String, adjustedTimestamp: Long, source: Long): Unit = {
     if (fetch(id).isEmpty) {
-      runUpdateToDb(s"""
-        INSERT INTO LINK (id, source, adjusted_timestamp) values ('$id', $source, $adjustedTimestamp)
+      runUpdateToDb(sql"""
+        INSERT INTO link (id, source, adjusted_timestamp)
+        VALUES ($id, $source, $adjustedTimestamp)
       """)
     }
   }
 
   def fetchMaxAdjustedTimestamp(): Long = {
-    sql"""
-      SELECT max(adjusted_timestamp) FROM link WHERE SOURCE IN (1, 4)
-    """.as[Long].first
-
+    val query = sql"""
+      SELECT max(adjusted_timestamp)
+      FROM link
+      WHERE link.source IN (1, 4)
+    """
+    runSelectSingleFirstWithType[Long](query)
   }
 
 }

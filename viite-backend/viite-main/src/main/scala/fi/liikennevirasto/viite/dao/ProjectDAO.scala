@@ -1,16 +1,13 @@
 package fi.liikennevirasto.viite.dao
 
-import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite._
 import fi.vaylavirasto.viite.dao.BaseDAO
 import fi.vaylavirasto.viite.model.RoadPart
 import org.joda.time.DateTime
-import org.postgresql.jdbc.PgArray
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
+import scalikejdbc._
+import scalikejdbc.jodatime.JodaWrappedResultSet.fromWrappedResultSetToJodaWrappedResultSet
 
-//TODO naming SQL conventions
 
 sealed trait ProjectState {
   def value: Int
@@ -66,196 +63,274 @@ class ProjectDAO extends BaseDAO {
   val projectReservedPartDAO = new ProjectReservedPartDAO
 
   def create(project: Project): Unit = {
-    runUpdateToDb(s"""
-         insert into project (id, state, name, created_by, created_date, start_date ,modified_by, modified_date, add_info, status_info)
-         values (${project.id}, ${project.projectState.value}, '${project.name}', '${project.createdBy}', current_timestamp,
-                '${project.startDate}', '${project.createdBy}', current_timestamp, '${project.additionalInfo}',
-                '${project.statusInfo.getOrElse("")}')
+    runUpdateToDb(sql"""
+         INSERT INTO project (id, state, name, created_by, created_date, start_date ,modified_by, modified_date, add_info, status_info)
+         VALUES (${project.id}, ${project.projectState.value}, ${project.name}, ${project.createdBy}, current_timestamp,
+                ${project.startDate}, ${project.createdBy}, current_timestamp, ${project.additionalInfo},
+                ${project.statusInfo.getOrElse("")})
          """)
   }
 
   def fetchAllIdsByLinkId(linkId: String): Seq[Long] =
     time(logger, """Get projects with given link id""") {
     val query =
-      s"""SELECT P.ID
-            FROM PROJECT P
-            JOIN PROJECT_LINK PL ON P.ID=PL.PROJECT_ID
-            WHERE P.STATE = ${ProjectState.Incomplete.value} AND PL.LINK_ID='$linkId'"""
-    Q.queryNA[Long](query).list
+      sql"""
+            SELECT p.id
+            FROM project p
+            JOIN project_link pl ON p.id=pl.project_id
+            WHERE p.state = ${ProjectState.Incomplete.value} AND pl.link_id=$linkId
+            """
+    runSelectQuery(query.map(_.long(1)))
   }
 
   def update(roadAddressProject: Project): Unit = {
-    runUpdateToDb(s"""
-         update project set state = ${roadAddressProject.projectState.value}, name = '${roadAddressProject.name}',
-                            modified_by = '${roadAddressProject.modifiedBy}', modified_date = current_timestamp,
-                            add_info='${roadAddressProject.additionalInfo}', start_date='${roadAddressProject.startDate}'
-         where id = ${roadAddressProject.id}
+    runUpdateToDb(sql"""
+         UPDATE project
+         SET state = ${roadAddressProject.projectState.value}, name = ${roadAddressProject.name},
+                            modified_by = ${roadAddressProject.modifiedBy}, modified_date = current_timestamp,
+                            add_info = ${roadAddressProject.additionalInfo}, start_date=${roadAddressProject.startDate}
+         WHERE id = ${roadAddressProject.id}
          """)
   }
 
   def fetchProjectElyById(projectId: Long): Seq[Long] = {
     val query =
-      s"""
-         SELECT DISTINCT ELY
+      sql"""
+         SELECT DISTINCT ely
          FROM project_link
          WHERE project_id=$projectId
-         union
-         SELECT DISTINCT ELY
+         UNION
+         SELECT DISTINCT ely
          FROM project_link_history
          WHERE project_id=$projectId
        """
-    Q.queryNA[Long](query).list
+    runSelectQuery(query.map(_.long(1)))
   }
 
   def fetchById(projectId: Long, withNullElyFilter: Boolean = false): Option[Project] = {
     time(logger, "Fetch project by id") {
-      if(withNullElyFilter)
-        fetch(query => s"""$query where id =$projectId and ely is null""").headOption
-      else
-        fetch(query => s"""$query where id =$projectId""").headOption
+      val whereClause = if (withNullElyFilter) {
+        sqls"""WHERE id =$projectId AND ely is null"""
+      } else {
+        sqls"""WHERE id =$projectId"""
+      }
+
+      fetchByCondition(whereClause).headOption
     }
   }
 
   def fetchAllWithoutDeletedFilter(): List[Map[String, Any]] = {
     time(logger, s"Fetch all projects ") {
-      fetchProjects(query => s"""$query WHERE state != ${ProjectState.Deleted.value} order by name, id, elys""")
+      fetchProjects(query => sqls"""$query WHERE state != ${ProjectState.Deleted.value} ORDER BY name, id, elys""")
     }
   }
 
   def fetchAllActiveProjects(): List[Map[String, Any]] = {
     time(logger, s"Fetch all active projects ") {
-      fetchProjects(query => s"""$query WHERE state=${ProjectState.InUpdateQueue.value} OR state=${ProjectState.UpdatingToRoadNetwork.value} OR state=${ProjectState.ErrorInViite.value} OR state=${ProjectState.Incomplete.value} OR (state=${ProjectState.Accepted.value} and modified_date > now() - INTERVAL '2 DAY') order by name, id, elys """)
+      fetchProjects(query =>
+        sqls"""$query
+            WHERE state=${ProjectState.InUpdateQueue.value}
+            OR state=${ProjectState.UpdatingToRoadNetwork.value}
+            OR state=${ProjectState.ErrorInViite.value}
+            OR state=${ProjectState.Incomplete.value}
+            OR (state=${ProjectState.Accepted.value} and modified_date > now() - INTERVAL '2 DAY')
+            ORDER BY name, id, elys
+           """)
     }
   }
 
-  def fetchProjectStatus(projectID: Long): Option[ProjectState] = {
+  def fetchProjectStatus(projectId: Long): Option[ProjectState] = {
     val query =
-      s""" SELECT state
+      sql"""
+            SELECT state
             FROM project
-            WHERE id=$projectID
+            WHERE id=$projectId
    """
-    Q.queryNA[Long](query).firstOption match {
-      case Some(statenumber) => Some(ProjectState.apply(statenumber))
-      case None => None
-    }
+    runSelectSingleFirstOptionWithType[Long](query).map(ProjectState.apply)
   }
 
-  def fetchProjectStates(projectID: Set[Int]): List[(Int,Int)] = {
+  def fetchProjectStates(projectIds: Set[Int]): List[(Int,Int)] = {
     val query =
-      s""" SELECT id,state
+      sql"""
+            SELECT id,state
             FROM project
-            WHERE id in (${projectID.mkString(",")})
+            WHERE id in ($projectIds)
        """
-    Q.queryNA[(Int,Int)](query).list
+       runSelectQuery(query.map(rs => (rs.int(1),rs.int(2))))
   }
 
   def updateProjectStateInfo(stateInfo: String, projectId: Long): Unit = {
-    runUpdateToDb(s"UPDATE PROJECT SET STATUS_INFO = '$stateInfo' WHERE ID= $projectId")
+    runUpdateToDb(
+      sql"""
+           UPDATE project
+           SET status_info = $stateInfo
+           WHERE id = $projectId
+           """
+    )
   }
 
   def updateProjectCoordinates(projectId: Long, coordinates: ProjectCoordinates): Unit = {
-    runUpdateToDb(s"UPDATE PROJECT SET COORD_X = ${coordinates.x},COORD_Y = ${coordinates.y}, ZOOM = ${coordinates.zoom} WHERE ID= $projectId")
+    runUpdateToDb(sql"""
+                    UPDATE project
+                    SET coord_x = ${coordinates.x},coord_y = ${coordinates.y}, zoom = ${coordinates.zoom}
+                    WHERE id = $projectId
+                    """
+                    )
   }
 
 
-  def updateProjectStatus(projectID: Long, state: ProjectState): Unit = {
-    runUpdateToDb(s""" update project set state=${state.value} WHERE id=$projectID""")
+  def updateProjectStatus(projectId: Long, state: ProjectState): Unit = {
+    runUpdateToDb(
+      sql"""
+           UPDATE project
+           SET state=${state.value}
+           WHERE id=$projectId
+           """
+    )
   }
 
-  def updateProjectStatusWithInfo(projectID: Long, state: ProjectState, statusInfo: String): Unit = {
-    runUpdateToDb(s""" update project set state=${state.value}, STATUS_INFO='$statusInfo' WHERE id=$projectID""")
+  def updateProjectStatusWithInfo(projectId: Long, state: ProjectState, statusInfo: String): Unit = {
+    runUpdateToDb(
+      sql"""
+           UPDATE project
+           SET state=${state.value}, STATUS_INFO=$statusInfo
+           WHERE id=$projectId
+           """
+    )
   }
 
-  def changeProjectStatusToAccepted(projectID: Long): Unit = {
-    runUpdateToDb(s""" update project set state=${ProjectState.Accepted.value}, accepted_date=current_timestamp WHERE id=$projectID""")
+  def changeProjectStatusToAccepted(projectId: Long): Unit = {
+    runUpdateToDb(
+      sql"""
+           UPDATE project
+           SET state=${ProjectState.Accepted.value}, accepted_date=current_timestamp
+           WHERE id=$projectId
+           """
+    )
   }
 
   /** Returns an id of a single project waiting for being updated to the road network. */
   def fetchSingleProjectIdWithInUpdateQueueStatus: Option[Long] = {
     val query =
-      s"""
+      sql"""
          SELECT id
          FROM project
          WHERE state=${ProjectState.InUpdateQueue.value}
          LIMIT 1
        """
-    Q.queryNA[Long](query).firstOption
+    runSelectSingleFirstOptionWithType[Long](query)
   }
 
   /** @return projects, that are currently at either <i>InUpdateQueue</i>, or in <i>UpdatingToRoadNetwork</i> ProjectState */
   def fetchProjectIdsWithToBePreservedStatus: List[Long] = {
     val query =
-      s"""
+      sql"""
          SELECT id
          FROM project
          WHERE state=${ProjectState.InUpdateQueue.value} OR state=${ProjectState.UpdatingToRoadNetwork.value}
        """
-    Q.queryNA[Long](query).list
+    runSelectQuery(query.map(_.long(1)))
   }
 
   def isUniqueName(projectId: Long, projectName: String): Boolean = {
     val query =
-      s"""
-         SELECT *
+      sql"""
+         SELECT id
          FROM project
-         WHERE UPPER(name)=UPPER('$projectName') and state<>7
+         WHERE UPPER(name)=UPPER($projectName)
+         AND state <> ${ProjectState.Deleted.value}
          LIMIT 1
        """
-    val projects = Q.queryNA[Long](query).list
+    val projects = runSelectQuery(query.map(_.long(1)))
     projects.isEmpty || projects.contains(projectId)
   }
 
   //TODO: Add accepted date if we want to display it in the user interface
-  private def fetch(queryFilter: String => String): Seq[Project] = {
+  private def fetchByCondition(whereClause: SQLSyntax): Seq[Project] = {
     val query =
-      s"""SELECT id, state, name, created_by, created_date, start_date, modified_by, COALESCE(modified_date, created_date),
-           add_info, status_info, coord_x, coord_y, zoom
-           FROM project"""
+      sql"""
+            SELECT id, state, name, created_by, created_date, start_date, modified_by,
+              COALESCE(modified_date, created_date) AS modified_date,
+              add_info, status_info, coord_x, coord_y, zoom
+            FROM project
+            $whereClause
+           """
 
-    Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String, Option[String], Double, Double, Int)](queryFilter(query)).list.map {
-      case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo, statusInfo, coordX, coordY, zoom) =>
-        val projectState = ProjectState.apply(state)
-        Project(id, projectState, name, createdBy, createdDate, modifiedBy, start_date, modifiedDate,
-          addInfo, Seq(), Seq(), statusInfo, Some(ProjectCoordinates(coordX, coordY, zoom)), Set())
-    }
+    runSelectQuery(query.map(rs => Project(
+      id             = rs.long("id"),
+      projectState   = ProjectState(rs.long("state")),
+      name           = rs.string("name"),
+      createdBy      = rs.string("created_by"),
+      createdDate    = rs.jodaDateTime("created_date"),
+      startDate      = rs.jodaDateTime("start_date"),
+      modifiedBy     = rs.string("modified_by"),
+      dateModified   = rs.jodaDateTime("modified_date"),
+      additionalInfo = rs.string("add_info"),
+      reservedParts  = Seq(),
+      formedParts    = Seq(),
+      statusInfo     = rs.stringOpt("status_info"),
+      coordinates    = {
+        val x        = rs.doubleOpt("coord_x").getOrElse(0.0)
+        val y        = rs.doubleOpt("coord_y").getOrElse(0.0)
+        val z        = rs.intOpt("zoom").getOrElse(0)
+        Some(ProjectCoordinates(x, y, z))
+      },
+      elys           = Set()
+    )))
   }
 
-  implicit val getProjectMap: GetResult[Map[String, Any]] = new GetResult[Map[String, Any]] {
-    def apply(r: PositionedResult): Map[String, Any] = {
-      val status = r.nextLong()
-      Map(
-        "statusCode" -> status,
-        "status" -> ProjectState(status),
-        "statusDescription" -> ProjectState(status).description
-      ) ++
-      Map(
-        "id" -> r.nextLong(),
-        "name" -> r.nextString(),
-        "createdBy" -> r.nextString(),
-        "createdDate" -> r.nextDate().toString,
-        "modifiedBy" -> r.nextString(),
-        "dateModified" -> r.nextDate().toString,
-        "additionalInfo" -> r.nextString(),
-        "startDate" -> r.nextDate().toString,
-        "statusInfo" -> r.nextStringOption(),
-        "coordX" -> r.nextDouble(),
-        "coordY" -> r.nextDouble(),
-        "zoomLevel" -> r.nextInt(),
-        // Elys list from db to Set()
-        "elys" -> r.nextObjectOption().map(_.asInstanceOf[PgArray].getArray.asInstanceOf[Array[Integer]].toSet.asInstanceOf[Set[Int]]).getOrElse(Set())
-      )
-    }
+
+  private def toProjectMap(rs: WrappedResultSet): Map[String, Any] = {
+    val status = rs.long("state")
+
+    Map(
+      "statusCode" -> status,
+      "status" -> ProjectState(status),
+      "statusDescription" -> ProjectState(status).description,
+      "id" -> rs.long("id"),
+      "name" -> rs.string("name"),
+      "createdBy" -> rs.string("created_by"),
+      "createdDate" -> rs.date("created_date").toString,
+      "modifiedBy" -> rs.string("modified_by"),
+      "dateModified" -> rs.date("modified_date").toString,
+      "additionalInfo" -> rs.string("add_info"),
+      "startDate" -> rs.date("start_date").toString,
+      "statusInfo" -> rs.stringOpt("status_info"),
+      "coordX" -> rs.doubleOpt("coord_x").getOrElse(0.0),
+      "coordY" -> rs.doubleOpt("coord_y").getOrElse(0.0),
+      "zoomLevel" -> rs.intOpt("zoom").getOrElse(0),
+      "elys" -> Option(rs.array("elys"))
+        .flatMap(arr => Option(arr.getArray))
+        .map {
+          case a: Array[Array[Integer]] => a(0).map(_.intValue).toSet // Take first array from nested array
+          case a: Array[Integer] => a.map(_.intValue).toSet // Handle normal array
+        }
+        .getOrElse(Set.empty[Int])
+    )
   }
-  private def fetchProjects(queryFilter: String => String): List[Map[String, Any]] = {
-    val query =
-      s"""SELECT state,id,"name",created_by,created_date,modified_by,COALESCE(modified_date, created_date),add_info,start_date,status_info,coord_x,coord_y,zoom,elys FROM project"""
-    Q.queryNA[Map[String, Any]](queryFilter(query)).list
+
+  private def fetchProjects(queryFilter: SQLSyntax => SQLSyntax): List[Map[String, Any]] = {
+    val baseQuery =
+      sqls"""
+           SELECT state,id,"name",created_by,created_date,modified_by,
+            COALESCE(modified_date, created_date) as modified_date,
+            add_info,start_date,status_info,coord_x,coord_y,zoom,elys
+           FROM project
+           """
+    val query = sql"$baseQuery ${queryFilter(SQLSyntax.empty)}"
+
+    runSelectQuery(query.map(toProjectMap))
   }
 
   def updateProjectElys(projectId: Long, elys : Seq[Long]): Int = {
     time(logger, s"Update elys for project $projectId.") {
       if (elys.nonEmpty) {
-        val query   = s"""UPDATE project p set elys = array[${elys.sorted.mkString(",")}] WHERE p.id = $projectId"""
+        val query   =
+          sql"""
+               UPDATE project p
+               SET elys = ARRAY[${elys.sorted.toArray}]::integer[]
+               WHERE p.id = $projectId
+               """
         runUpdateToDb(query)
       } else -1
     }
