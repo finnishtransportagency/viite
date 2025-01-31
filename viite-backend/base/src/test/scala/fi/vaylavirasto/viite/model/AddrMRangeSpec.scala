@@ -89,8 +89,8 @@ class AddrMRangeSpec extends AnyFunSuite with Matchers {
     AddrMRange(100,300).isSameAs(AddrMRange(301,400)) shouldBe false      //      |      | BBBB // Do not even touch
     AddrMRange(100,300).isSameAs(AddrMRange(  0,100)) shouldBe false      // BBBBB|      |      // Only single point in common
     AddrMRange(100,300).isSameAs(AddrMRange(300,400)) shouldBe false      //      |      |BBBBB // Only single point in common
-    AddrMRange(100,300).isSameAs(AddrMRange(101,300)) shouldBe false      //      | BBBBB|      // Only single point in common
-    AddrMRange(100,300).isSameAs(AddrMRange(100,299)) shouldBe false      //      |BBBBB |      // Only single point in common
+    AddrMRange(100,300).isSameAs(AddrMRange(101,300)) shouldBe false      //      | BBBBB|      // Nearly the same but not exactly
+    AddrMRange(100,300).isSameAs(AddrMRange(100,299)) shouldBe false      //      |BBBBB |      // Nearly the same but not exactly
 
     // undefined range
     intercept[Exception](AddrMRange(  0,100).isSameAs(AddrMRange(  0,  0))) shouldBe a[ViiteException]

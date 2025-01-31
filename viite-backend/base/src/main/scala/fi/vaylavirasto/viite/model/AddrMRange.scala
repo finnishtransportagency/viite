@@ -41,7 +41,7 @@ case class AddrMRange (start: Long, end: Long)// extends Ordered[AddrMRange]
   def isValid:     Boolean = {  this.end > 0  }
   /** Returns true, if this AddrMRange has both <i>start</i>, and <i>end</i> zeroes. Else false. */
   def isInvalid:   Boolean = {  this.start == 0 && this.end == 0  }
-  /** Convenience function. Returns true, if this AddrMRange is invalid (see [[AddrMRange.isInvalid]]). Else false. */
+  /** Convenience function. Synonym of isInvalid. Returns true, if this AddrMRange is invalid (see [[AddrMRange.isInvalid]]). Else false. */
   def isUndefined: Boolean = {  this.isInvalid  }
 
   /** Returns true, if this AddrMRange has 0 as start, and >0 as end (that is, it is a valid addrMRange). */
