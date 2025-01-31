@@ -5,7 +5,7 @@ import fi.liikennevirasto.viite.dao.{CalibrationPointDAO, LinearLocationDAO}
 import fi.vaylavirasto.viite.dao.LinkDAO
 import fi.vaylavirasto.viite.geometry.Point
 import fi.vaylavirasto.viite.model.{LinkGeomSource, RoadPart}
-import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
 import fi.vaylavirasto.viite.util.ViiteException
 import org.joda.time.DateTime
 import org.scalatest.funsuite.AnyFunSuite
@@ -16,7 +16,7 @@ class LinkNetworkUpdaterSpec extends AnyFunSuite with Matchers {
 
   val linkNetworkUpdater = new LinkNetworkUpdater() {
     //override def withDynSession[T](f: => T): T = f // overriding functionality: NOP
-    override def withDynTransaction[T](f: => T): T = f // overriding functionality: NOP. We want to rollback.
+    override def runWithTransaction[T](f: => T): T = f // overriding functionality: NOP. We want to rollback.
   }
 
   private val correctChangeTypeJSON : String = """"changeType": "replace""""

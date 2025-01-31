@@ -12,4 +12,12 @@ class PingApiSpec extends AnyFunSuite with ScalatraSuite {
       response.status should be (200)
     }
   }
+
+  test("Ping API should return OK and database time in correct format") {
+    get("/ping") {
+      body should include("OK")
+      body should include("DB Time:")
+      body should fullyMatch regex """OK \(DB Time: \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\)\n"""
+    }
+  }
 }

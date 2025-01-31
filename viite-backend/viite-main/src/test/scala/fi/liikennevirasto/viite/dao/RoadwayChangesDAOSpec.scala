@@ -3,20 +3,18 @@ package fi.liikennevirasto.viite.dao
 import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.util.{projectLinkDAO, projectReservedPartDAO}
-import fi.vaylavirasto.viite.dao.{RoadName, RoadNameDAO, Sequences}
+import fi.vaylavirasto.viite.dao.{BaseDAO, RoadName, RoadNameDAO, Sequences}
 import fi.vaylavirasto.viite.model.CalibrationPointType.{JunctionPointCP, NoCP, RoadAddressCP}
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinuity, LinkGeomSource, RoadAddressChangeType, RoadPart, SideCode, Track}
-import fi.vaylavirasto.viite.postgis.DbUtils.runUpdateToDb
-import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
 import org.joda.time.DateTime
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.StaticQuery.interpolation
+import scalikejdbc._
 
 import java.sql.Timestamp
 
-class RoadwayChangesDAOSpec extends AnyFunSuite with Matchers {
+class RoadwayChangesDAOSpec extends AnyFunSuite with Matchers with BaseDAO {
 
   val projectDAO = new ProjectDAO
   private val roadNumber1 = 990
@@ -27,15 +25,15 @@ class RoadwayChangesDAOSpec extends AnyFunSuite with Matchers {
   }
 
   def addprojects(): Unit = {
-    runUpdateToDb(s"""insert into project (id,state,name,created_by, start_date) VALUES (1,0,'testproject','automatedtest', current_date)""")
-    runUpdateToDb(s"""insert into project (id,state,name,created_by, start_date) VALUES (2,0,'testproject2','automatedtest', current_date)""")
-    runUpdateToDb(s"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (1, 1, 1, 1, '-')""")
-    runUpdateToDb(s"""
-      INSERT INTO PROJECT_LINK (ID, PROJECT_ID, TRACK, DISCONTINUITY_TYPE, ROAD_NUMBER, ROAD_PART_NUMBER,
-        START_ADDR_M, END_ADDR_M, CREATED_BY, MODIFIED_BY, CREATED_DATE, MODIFIED_DATE, STATUS,
-        ADMINISTRATIVE_CLASS, ROADWAY_ID, LINEAR_LOCATION_ID, CONNECTED_LINK_ID, ELY, REVERSED, SIDE, START_MEASURE, END_MEASURE,
-        LINK_ID, ADJUSTED_TIMESTAMP, LINK_SOURCE, GEOMETRY, ORIGINAL_START_ADDR_M, ORIGINAL_END_ADDR_M, ROADWAY_NUMBER,
-        START_CALIBRATION_POINT, END_CALIBRATION_POINT, ORIG_START_CALIBRATION_POINT, ORIG_END_CALIBRATION_POINT)
+    runUpdateToDb(sql"""INSERT INTO project (id,state,name,created_by, start_date) VALUES (1,0,'testproject','automatedtest', current_date)""")
+    runUpdateToDb(sql"""INSERT INTO project (id,state,name,created_by, start_date) VALUES (2,0,'testproject2','automatedtest', current_date)""")
+    runUpdateToDb(sql"""INSERT INTO project_reserved_road_part VALUES (1, 1, 1, 1, '-')""")
+    runUpdateToDb(sql"""
+      INSERT INTO project_link (id, project_id, track, discontinuity_type, road_number, road_part_number,
+        start_addr_m, end_addr_m, created_by, modified_by, created_date, modified_date, status,
+        administrative_class, roadway_id, linear_location_id, connected_link_id, ely, reversed, side, start_measure, end_measure,
+        link_id, adjusted_timestamp, link_source, geometry, original_start_addr_m, original_end_addr_m, roadway_number,
+        start_calibration_point, end_calibration_point, orig_start_calibration_point, orig_end_calibration_point)
       VALUES (1, 1, 0, 5, 1, 1,
         0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 12:26:36.000000', 2,
         1, NULL, NULL, NULL, 8, 0, 2, 0, 85.617,
@@ -50,8 +48,13 @@ class RoadwayChangesDAOSpec extends AnyFunSuite with Matchers {
       val addresses = List(ProjectReservedPart(5:Long, RoadPart(203, 203), Some(6L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
       val project = Project(100,ProjectState.Incomplete,"testiprojekti","Test",DateTime.now(),"Test",DateTime.now(),DateTime.now(),"info",addresses,Seq(),None)
       projectDAO.create(project)
-      runUpdateToDb(s""" insert into ROADWAY_CHANGES(project_id,change_type,new_road_number,new_road_part_number,new_TRACK,new_start_addr_m,new_end_addr_m,new_discontinuity,NEW_ADMINISTRATIVE_CLASS,new_ely, ROADWAY_CHANGE_ID) Values(100,1,6,1,1,0,10.5,1,1,8, 1) """)
-      val projectId = sql"""Select p.id From Project p Inner Join ROADWAY_CHANGES rac on p.id = rac.project_id""".as[Long].first
+      runUpdateToDb(
+        sql"""
+             INSERT INTO roadway_changes(project_id,change_type,new_road_number,new_road_part_number,new_track,new_start_addr_m,new_end_addr_m,new_discontinuity,new_administrative_class,new_ely, roadway_change_id)
+             values(100,1,6,1,1,0,10.5,1,1,8, 1)
+             """
+      )
+      val projectId = runSelectSingleFirstWithType[Long](sql"""Select p.id From Project p Inner Join roadway_changes rac on p.id = rac.project_id""")
       val changesList = new RoadwayChangesDAO().fetchRoadwayChanges(Set(projectId))
       changesList.isEmpty should be(false)
       changesList.head.projectId should be(projectId)
@@ -64,7 +67,13 @@ class RoadwayChangesDAOSpec extends AnyFunSuite with Matchers {
       val project1 = projectDAO.fetchById(1).get
       val reservedParts = Seq(ProjectReservedPart(0, RoadPart(1, 1), Some(0), Some(Discontinuity.Continuous), Some(8L), None, None, None, Some(12345L.toString)))
       new RoadwayChangesDAO().insertDeltaToRoadChangeTable(1, Some(project1.copy(reservedParts = reservedParts)))
-      sql"""Select Project_Id From ROADWAY_CHANGES Where Project_Id In (1)""".as[Long].firstOption.getOrElse(0) should be(1)
+      runSelectSingleFirstOptionWithType[Long](
+        sql"""
+             SELECT project_id
+             FROM roadway_changes
+             WHERE project_id IN (1)
+             """
+      ).getOrElse(0) should be(1)
     }
   }
 
@@ -208,18 +217,18 @@ class RoadwayChangesDAOSpec extends AnyFunSuite with Matchers {
       val rw = roadwayDAO.create(Seq(testRoadway1))
       val rwId = rw.head
 
-      runUpdateToDb(s""" update ROADWAY R SET VALID_FROM = TIMESTAMP '2120-01-02 12:26:36.000000' WHERE ID =  $rwId """)
+      runUpdateToDb(sql""" UPDATE roadway R SET valid_from = TIMESTAMP '2120-01-02 12:26:36.000000' WHERE ID =  $rwId """)
 //    val rws = roadwayDAO.fetchAllByRoadwayId(rw)  // for debug
       val projId1 = Sequences.nextViiteProjectId
       val rap =  dummyProject(projId1, ProjectState.Accepted, List(), None)
       /*val pr =*/ projectDAO.create(rap)
 
-      runUpdateToDb(s"""update project set accepted_date= TIMESTAMP '2120-01-02 12:26:36.000000' where id=$projId1""")
+      runUpdateToDb(sql"""UPDATE project SET accepted_date= TIMESTAMP '2120-01-02 12:26:36.000000' WHERE id=$projId1""")
 //    val pr2 = projectDAO.fetchById(projId1)  // for debug
       val changeType = 2
-      runUpdateToDb(s"""
-                   insert into ROADWAY_CHANGES(project_id,change_type,old_discontinuity,new_discontinuity,OLD_ADMINISTRATIVE_CLASS,NEW_ADMINISTRATIVE_CLASS,old_ely,new_ely, ROADWAY_CHANGE_ID,new_road_number,new_road_part_number,new_start_addr_m,new_end_addr_m)
-                   Values($projId1,$changeType,1,1,1,1,8,8,1,$roadNumber1,$roadPartNumber1,0,10.5)
+      runUpdateToDb(sql"""
+                   INSERT INTO roadway_changes(project_id,change_type,old_discontinuity,new_discontinuity,old_administrative_class,new_administrative_class,old_ely,new_ely, roadway_change_id,new_road_number,new_road_part_number,new_start_addr_m,new_end_addr_m)
+                   VALUES($projId1,$changeType,1,1,1,1,8,8,1,$roadNumber1,$roadPartNumber1,0,10.5)
                    """)
 //    val rwcs = dao.fetchRoadwayChanges(Set(projId1))  // for debug
       val startValidFromDate = DateTime.parse("2120-01-01")
@@ -229,9 +238,9 @@ class RoadwayChangesDAOSpec extends AnyFunSuite with Matchers {
       roadwayChangesInfo.size should be(1)
       roadwayChangesInfo.head.change_type should be(changeType)
 
-      runUpdateToDb(s"""
-                   insert into ROADWAY_CHANGES(project_id,change_type,old_road_number,old_road_part_number,old_TRACK,old_start_addr_m,old_end_addr_m,old_discontinuity,new_discontinuity,OLD_ADMINISTRATIVE_CLASS,NEW_ADMINISTRATIVE_CLASS,old_ely,new_ely, ROADWAY_CHANGE_ID)
-                   Values($projId1,5,$roadNumber1,$roadPartNumber1,1,0,10.5,1,1,1,1,8,8,2)
+      runUpdateToDb(sql"""
+                   INSERT INTO roadway_changes(project_id,change_type,old_road_number,old_road_part_number,old_track,old_start_addr_m,old_end_addr_m,old_discontinuity,new_discontinuity,old_administrative_class,new_administrative_class,old_ely,new_ely, roadway_change_id)
+                   VALUES($projId1,5,$roadNumber1,$roadPartNumber1,1,0,10.5,1,1,1,1,8,8,2)
                    """)
       roadwayChangesInfo = dao.fetchRoadwayChangesInfo(startValidFromDate, Option(endValidFromDate))
       roadwayChangesInfo.size should be(2)
@@ -279,19 +288,19 @@ class RoadwayChangesDAOSpec extends AnyFunSuite with Matchers {
       val proj = dummyProject(projId, ProjectState.Accepted, List(), None)
       projectDAO.create(proj)
 
-      runUpdateToDb(s"""
-        update project set accepted_date='${new Timestamp(DateTime.now().getMillis)}'
-        where id=$projId
-        """.stripMargin)
+      runUpdateToDb(sql"""
+        UPDATE project SET accepted_date=${new Timestamp(DateTime.now().getMillis)}
+        WHERE id=$projId
+        """)
 
       val changeType = 3 //transfer
-      runUpdateToDb(s"""
-        insert into ROADWAY_CHANGES(project_id,change_type,old_road_number,old_road_part_number,old_track,old_start_addr_m,old_end_addr_m,new_road_number,new_road_part_number,new_track,new_start_addr_m,new_end_addr_m,old_discontinuity,new_discontinuity,old_administrative_class,new_administrative_class,old_ely,new_ely, roadway_change_id)
-        values($projId,$changeType,$roadNumber,$initialRoadPart,0,0,100,$roadNumber,$transferredRoadPart,0,0,100,5,5,1,1,8,8,1)
+      runUpdateToDb(sql"""
+        INSERT INTO roadway_changes(project_id,change_type,old_road_number,old_road_part_number,old_track,old_start_addr_m,old_end_addr_m,new_road_number,new_road_part_number,new_track,new_start_addr_m,new_end_addr_m,old_discontinuity,new_discontinuity,old_administrative_class,new_administrative_class,old_ely,new_ely, roadway_change_id)
+        VALUES($projId,$changeType,$roadNumber,$initialRoadPart,0,0,100,$roadNumber,$transferredRoadPart,0,0,100,5,5,1,1,8,8,1)
         """)
-      runUpdateToDb(s"""
-        insert into ROADWAY_CHANGES(project_id,change_type,old_road_number,old_road_part_number,old_track,old_start_addr_m,old_end_addr_m,new_road_number,new_road_part_number,new_track,new_start_addr_m,new_end_addr_m,old_discontinuity,new_discontinuity,old_administrative_class,new_administrative_class,old_ely,new_ely, roadway_change_id)
-        values($projId,$changeType,$roadNumber,$initialRoadPart,0,100,200,$roadNumber,$initialRoadPart,0,0,100,5,5,1,1,8,8,2)
+      runUpdateToDb(sql"""
+        INSERT INTO roadway_changes(project_id,change_type,old_road_number,old_road_part_number,old_track,old_start_addr_m,old_end_addr_m,new_road_number,new_road_part_number,new_track,new_start_addr_m,new_end_addr_m,old_discontinuity,new_discontinuity,old_administrative_class,new_administrative_class,old_ely,new_ely, roadway_change_id)
+        VALUES($projId,$changeType,$roadNumber,$initialRoadPart,0,100,200,$roadNumber,$initialRoadPart,0,0,100,5,5,1,1,8,8,2)
         """)
 
       val startValidFromDate = DateTime.now().minusDays(1)
@@ -324,30 +333,30 @@ class RoadwayChangesDAOSpec extends AnyFunSuite with Matchers {
 
       val dao = new RoadwayChangesDAO()
 
-      runUpdateToDb(s"""insert into ROADWAY_CHANGES(project_id,change_type,old_road_number,old_road_part_number,old_track,old_start_addr_m,old_end_addr_m,
+      runUpdateToDb(sql"""INSERT INTO roadway_changes(project_id,change_type,old_road_number,old_road_part_number,old_track,old_start_addr_m,old_end_addr_m,
                                             new_road_number,new_road_part_number,new_track,new_start_addr_m,new_end_addr_m,old_discontinuity,new_discontinuity,
                                             old_administrative_class,new_administrative_class,old_ely,new_ely, roadway_change_id)
-                                  values($projectId,$changeTypeUnchanged,$roadNumber,$roadPartNumber,$trackCombined,0,607,$roadNumber,$roadPartNumber,
+                                  VALUES($projectId,$changeTypeUnchanged,$roadNumber,$roadPartNumber,$trackCombined,0,607,$roadNumber,$roadPartNumber,
                                          $trackCombined,0,607,$discontinuity,$discontinuity,$adminClass,$adminClass,$ely,$ely,$roadwayChangeId)
           """)
 
-      runUpdateToDb(s"""insert into ROADWAY_CHANGES(project_id,change_type,old_road_number,old_road_part_number,old_track,old_start_addr_m,old_end_addr_m,
+      runUpdateToDb(sql"""INSERT INTO roadway_changes(project_id,change_type,old_road_number,old_road_part_number,old_track,old_start_addr_m,old_end_addr_m,
                                             new_road_number,new_road_part_number,new_track,new_start_addr_m,new_end_addr_m,old_discontinuity,new_discontinuity,
                                             old_administrative_class,new_administrative_class,old_ely,new_ely, roadway_change_id)
-                                  values($projectId,$changeTypeTransfer,$roadNumber,$roadPartNumber,$trackCombined,607,909,$roadNumber,$roadPartNumber,
+                                  VALUES($projectId,$changeTypeTransfer,$roadNumber,$roadPartNumber,$trackCombined,607,909,$roadNumber,$roadPartNumber,
                                          $trackRight,607,909,$discontinuity,$discontinuity,$adminClass,$adminClass,$ely,$ely,$roadwayChangeId + 1)
           """)
 
-      runUpdateToDb(s""" insert into ROADWAY_CHANGES(project_id,change_type,new_road_number,new_road_part_number,old_discontinuity,new_discontinuity,
+      runUpdateToDb(sql""" INSERT INTO roadway_changes(project_id,change_type,new_road_number,new_road_part_number,old_discontinuity,new_discontinuity,
                                             old_administrative_class,new_administrative_class,old_ely,new_ely,new_start_addr_m,new_end_addr_m, new_track,roadway_change_id)
                                    Values($projectId,$changeTypeNew,$roadNumber,$roadPartNumber,$discontinuity,$discontinuity,$adminClass,
                                           $adminClass,$ely,$ely,607,909, $trackLeft, $roadwayChangeId + 2)
           """)
 
-      runUpdateToDb(s"""insert into ROADWAY_CHANGES(project_id,change_type,old_road_number,old_road_part_number,old_track,old_start_addr_m,old_end_addr_m,
+      runUpdateToDb(sql"""INSERT INTO roadway_changes(project_id,change_type,old_road_number,old_road_part_number,old_track,old_start_addr_m,old_end_addr_m,
                                             new_road_number,new_road_part_number,new_track,new_start_addr_m,new_end_addr_m, old_discontinuity,new_discontinuity,
                                             old_administrative_class,new_administrative_class,old_ely,new_ely, roadway_change_id)
-                                  values($projectId,$changeTypeTransfer,$roadNumber,$roadPartNumber,$trackCombined,909,7862,$roadNumber,$roadPartNumber,
+                                  VALUES($projectId,$changeTypeTransfer,$roadNumber,$roadPartNumber,$trackCombined,909,7862,$roadNumber,$roadPartNumber,
                                          $trackCombined,909,7862,$discontinuity,$discontinuity,$adminClass,$adminClass,$ely,$ely,$roadwayChangeId + 3)
           """)
 
@@ -364,7 +373,7 @@ class RoadwayChangesDAOSpec extends AnyFunSuite with Matchers {
                   DateTime.parse("2022-07-07"),"",Seq(),Seq(),None,None)
       )
 
-      runUpdateToDb(s"""update project set accepted_date= TIMESTAMP '2022-07-07 12:26:36.000000' where id=$projectId""")
+      runUpdateToDb(sql"""update project set accepted_date= TIMESTAMP '2022-07-07 12:26:36.000000' where id=$projectId""")
 
       val startDate = "2022-07-05"
       val startDate2 = "2022-06-30"
@@ -403,9 +412,9 @@ class RoadwayChangesDAOSpec extends AnyFunSuite with Matchers {
       val projectStartDate = DateTime.parse("2022-07-01")
       val terminatedRoadNameEndDate = DateTime.parse("2022-06-30") // one day earlier than the termination day of the road
 
-      runUpdateToDb(s"""insert into ROADWAY_CHANGES(project_id,change_type,old_road_number,old_road_part_number,old_track,old_start_addr_m,old_end_addr_m,
+      runUpdateToDb(sql"""INSERT INTO roadway_changes(project_id,change_type,old_road_number,old_road_part_number,old_track,old_start_addr_m,old_end_addr_m,
                                             old_discontinuity,old_administrative_class,old_ely,new_discontinuity,new_ely,new_administrative_class,roadway_change_id)
-                                  values($projectId,$changeTypeTerminated,$roadNumber,$roadPartNumber,$trackCombined,0,1000,
+                                  VALUES($projectId,$changeTypeTerminated,$roadNumber,$roadPartNumber,$trackCombined,0,1000,
                                          $discontinuity,$adminClass,$ely,$discontinuity,$ely,$adminClass,$roadwayChangeId)
           """)
 
@@ -422,7 +431,7 @@ class RoadwayChangesDAOSpec extends AnyFunSuite with Matchers {
           DateTime.parse("2022-07-07"),"",Seq(),Seq(),None,None)
       )
 
-      runUpdateToDb(s"""update project set accepted_date= TIMESTAMP '2022-07-07 12:26:36.000000' where id=$projectId""")
+      runUpdateToDb(sql"""update project set accepted_date= TIMESTAMP '2022-07-07 12:26:36.000000' where id=$projectId""")
 
       val dao = new RoadwayChangesDAO()
       val startDateInput = "2022-06-06"
@@ -452,7 +461,7 @@ class RoadwayChangesDAOSpec extends AnyFunSuite with Matchers {
 
       val dao = new RoadwayChangesDAO()
 
-      runUpdateToDb(s""" insert into ROADWAY_CHANGES(project_id,change_type,new_road_number,new_road_part_number,old_discontinuity,new_discontinuity,
+      runUpdateToDb(sql""" INSERT INTO roadway_changes(project_id,change_type,new_road_number,new_road_part_number,old_discontinuity,new_discontinuity,
                                             old_administrative_class,new_administrative_class,old_ely,new_ely,new_start_addr_m,new_end_addr_m, new_track,roadway_change_id)
                                    Values($projectId,$changeTypeNew,$roadNumber,$roadPartNumber,$discontinuity,$discontinuity,$adminClass,
                                           $adminClass,$ely,$ely,0,1000, $trackCombined, $roadwayChangeId)
@@ -464,7 +473,7 @@ class RoadwayChangesDAOSpec extends AnyFunSuite with Matchers {
       )
 
       // set the accepted date for the project
-      runUpdateToDb(s"""update project set accepted_date= TIMESTAMP '2022-07-07 12:26:36.000000' where id=$projectId""")
+      runUpdateToDb(sql"""update project set accepted_date= TIMESTAMP '2022-07-07 12:26:36.000000' where id=$projectId""")
 
       val startDate = "2022-07-05"
       val dateTargetProjectAccepted = "ProjectAcceptedDate"
@@ -493,9 +502,9 @@ class RoadwayChangesDAOSpec extends AnyFunSuite with Matchers {
 
       val dao = new RoadwayChangesDAO()
 
-      runUpdateToDb(s""" insert into ROADWAY_CHANGES(project_id,change_type,new_road_number,new_road_part_number,old_discontinuity,new_discontinuity,
+      runUpdateToDb(sql""" INSERT INTO roadway_changes(project_id,change_type,new_road_number,new_road_part_number,old_discontinuity,new_discontinuity,
                                             old_administrative_class,new_administrative_class,old_ely,new_ely,new_start_addr_m,new_end_addr_m, new_track,roadway_change_id)
-                                   Values($projectId,$changeTypeNew,$roadNumber,$roadPartNumber,$discontinuity,$discontinuity,$adminClass,
+                                   VALUES($projectId,$changeTypeNew,$roadNumber,$roadPartNumber,$discontinuity,$discontinuity,$adminClass,
                                           $adminClass,$ely,$ely,0,1000, $trackCombined, $roadwayChangeId)
           """)
 
@@ -505,7 +514,7 @@ class RoadwayChangesDAOSpec extends AnyFunSuite with Matchers {
       )
 
       // set the accepted date for the project
-      runUpdateToDb(s"""update project set accepted_date= TIMESTAMP '2022-07-07 12:26:36.000000' where id=$projectId""")
+      runUpdateToDb(sql"""UPDATE project SET accepted_date= TIMESTAMP '2022-07-07 12:26:36.000000' WHERE id=$projectId""")
 
       // create road name history for the road number
       RoadNameDAO.create(
@@ -543,10 +552,10 @@ class RoadwayChangesDAOSpec extends AnyFunSuite with Matchers {
 
       val dao = new RoadwayChangesDAO()
 
-      runUpdateToDb(s"""insert into ROADWAY_CHANGES(project_id,change_type,old_road_number,old_road_part_number,old_track,old_start_addr_m,old_end_addr_m,
+      runUpdateToDb(sql"""INSERT INTO roadway_changes(project_id,change_type,old_road_number,old_road_part_number,old_track,old_start_addr_m,old_end_addr_m,
                                             new_road_number,new_road_part_number,new_track,new_start_addr_m,new_end_addr_m,old_discontinuity,new_discontinuity,
                                             old_administrative_class,new_administrative_class,old_ely,new_ely, roadway_change_id)
-                                  values($projectId,$changeTypeTransfer,$oldRoadNumber,$oldRoadPartNumber,$trackCombined,0,1000,$newRoadNumber,$newRoadPartNumber,
+                                  VALUES($projectId,$changeTypeTransfer,$oldRoadNumber,$oldRoadPartNumber,$trackCombined,0,1000,$newRoadNumber,$newRoadPartNumber,
                                          $trackCombined,0,1000,$discontinuity,$discontinuity,$adminClass,$adminClass,$ely,$ely,$roadwayChangeId)
           """)
 
@@ -563,7 +572,7 @@ class RoadwayChangesDAOSpec extends AnyFunSuite with Matchers {
           DateTime.parse("2022-01-15"),"",Seq(),Seq(),None,None)
       )
       // set the accepted date for the project
-      runUpdateToDb(s"""update project set accepted_date= TIMESTAMP '2022-01-15 12:26:36.000000' where id=$projectId""")
+      runUpdateToDb(sql"""update project set accepted_date= TIMESTAMP '2022-01-15 12:26:36.000000' where id=$projectId""")
 
       val startDate = "2022-01-01"
       val dateTargetProjectAccepted = "ProjectAcceptedDate"
@@ -599,35 +608,35 @@ class RoadwayChangesDAOSpec extends AnyFunSuite with Matchers {
       projectDAO.create(Project(projectId2, ProjectState.Accepted, "Project 2", "tester", projectStartDate.plusDays(10), "tester",
         projectStartDate.plusDays(10), projectEndDate.plusDays(10), "", Seq(), Seq(), None, None))
 
-      runUpdateToDb(s""" insert into ROADWAY_CHANGES(project_id,change_type,new_road_number,new_road_part_number,old_discontinuity,new_discontinuity,
+      runUpdateToDb(sql""" INSERT INTO roadway_changes(project_id,change_type,new_road_number,new_road_part_number,old_discontinuity,new_discontinuity,
                                             old_administrative_class,new_administrative_class,old_ely,new_ely,new_start_addr_m,new_end_addr_m, new_track,roadway_change_id)
-                                   Values($projectId1,$changeTypeNew,$roadNumber,$firstRoadPartNumber,$discontinuity,$discontinuity,$adminClass,
+                                   VALUES ($projectId1,$changeTypeNew,$roadNumber,$firstRoadPartNumber,$discontinuity,$discontinuity,$adminClass,
                                           $adminClass,$ely,$ely,0,1000, $trackCombined, $roadwayChangeId)
                      """)
 
-      runUpdateToDb(s""" insert into ROADWAY_CHANGES(project_id,change_type,new_road_number,new_road_part_number,old_discontinuity,new_discontinuity,
+      runUpdateToDb(sql""" INSERT INTO roadway_changes(project_id,change_type,new_road_number,new_road_part_number,old_discontinuity,new_discontinuity,
                                             old_administrative_class,new_administrative_class,old_ely,new_ely,new_start_addr_m,new_end_addr_m, new_track,roadway_change_id)
-                                   Values($projectId2,$changeTypeUnChanged,$roadNumber,$firstRoadPartNumber,$discontinuity,$discontinuity,$adminClass,
+                                   VALUES ($projectId2,$changeTypeUnChanged,$roadNumber,$firstRoadPartNumber,$discontinuity,$discontinuity,$adminClass,
                                             $adminClass,$ely,$ely,0,1000, $trackCombined, $roadwayChangeId + 1)
                      """)
 
       // Insert roadway_changes with different road_part_number to project2
-      runUpdateToDb(s""" insert into ROADWAY_CHANGES(project_id,change_type,new_road_number,new_road_part_number,old_discontinuity,new_discontinuity,
+      runUpdateToDb(sql""" INSERT INTO roadway_changes(project_id,change_type,new_road_number,new_road_part_number,old_discontinuity,new_discontinuity,
                                             old_administrative_class,new_administrative_class,old_ely,new_ely,new_start_addr_m,new_end_addr_m, new_track,roadway_change_id)
-                                   Values($projectId2,$changeTypeNew,$roadNumber,$secondRoadPartNumber,$discontinuity,$discontinuity,$adminClass,
+                                   VALUES ($projectId2,$changeTypeNew,$roadNumber,$secondRoadPartNumber,$discontinuity,$discontinuity,$adminClass,
                                             $adminClass,$ely,$ely,1000,2000, $trackCombined, $roadwayChangeId + 2)
                      """)
       // Insert new road with new road_number to project1
-      runUpdateToDb(s""" insert into ROADWAY_CHANGES(project_id,change_type,new_road_number,new_road_part_number,old_discontinuity,new_discontinuity,
+      runUpdateToDb(sql""" INSERT INTO roadway_changes(project_id,change_type,new_road_number,new_road_part_number,old_discontinuity,new_discontinuity,
                                             old_administrative_class,new_administrative_class,old_ely,new_ely,new_start_addr_m,new_end_addr_m, new_track,roadway_change_id)
-                                   Values($projectId1,$changeTypeNew,$secondRoadNumber,$firstRoadPartNumber,$discontinuity,$discontinuity,$adminClass,
+                                   VALUES ($projectId1,$changeTypeNew,$secondRoadNumber,$firstRoadPartNumber,$discontinuity,$discontinuity,$adminClass,
                                             $adminClass,$ely,$ely,0,500, $trackCombined, $roadwayChangeId + 3)
                      """)
 
 
       // Update projects to have accepted dates
-      runUpdateToDb(s"""update project set accepted_date= TIMESTAMP '2022-06-30 12:26:36.000000' where id in ($projectId1)""")
-      runUpdateToDb(s"""update project set accepted_date= TIMESTAMP '2022-07-10 12:26:36.000000' where id in ($projectId2)""")
+      runUpdateToDb(sql"""UPDATE project SET accepted_date = TIMESTAMP '2022-06-30 12:26:36.000000' WHERE id IN ($projectId1)""")
+      runUpdateToDb(sql"""UPDATE project SET accepted_date = TIMESTAMP '2022-07-10 12:26:36.000000' WHERE id IN ($projectId2)""")
       val dao = new RoadwayChangesDAO()
 
       // Fetch change infos for the specified roadNumber and roadPartNumber

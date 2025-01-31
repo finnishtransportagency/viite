@@ -9,12 +9,14 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.ProjectState.UpdatingToRoadNetwork
 import fi.liikennevirasto.viite.dao.TerminationCode._
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinuity, RoadAddressChangeType, RoadLink, RoadPart, Track}
-import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
 import org.joda.time.DateTime
 import org.scalatest.BeforeAndAfter
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
+
+import scala.concurrent.Future
 
 class RoadwayFillerSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
 
@@ -54,8 +56,8 @@ class RoadwayFillerSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
                             mockEventBus,
                             frozenKGV = false
                             ) {
-                                override def withDynSession[T](f: => T): T = f
-                                override def withDynTransaction[T](f: => T): T = f
+                                override def runWithReadOnlySession[T](f: => T): T = f
+                                override def runWithTransaction[T](f: => T): T = f
                               }
 
   val projectService: ProjectService =
@@ -76,9 +78,9 @@ class RoadwayFillerSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
                         roadwayAddressMapper,
                         mockEventBus
                         ) {
-                        override def withDynSession[T](f: => T): T = f
-                        override def withDynTransaction[T](f: => T): T = f
-                      }
+                            override def runWithReadOnlySession[T](f: => T): T = f
+                            override def runWithTransaction[T](f: => T): T = f
+                          }
 
   test("Test RoadwayFiller.applyRoadwayChanges() #Confluence: Change in the Middle of the Roadway. " +
                 "When dealing with unchanged addresses with a new administrative class in the middle of them " +
