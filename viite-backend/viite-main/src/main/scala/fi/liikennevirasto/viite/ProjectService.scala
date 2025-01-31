@@ -1872,6 +1872,16 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
         pl
     })
   }
+
+  /**
+   * Takes in project links with same RoadAddressChangeType and divides them in to continuous sections.
+   *
+   * Continuous section has same roadPart, change type / status, track and each project link starts from the
+   * same addrM where the previous project link ended.
+   *
+   * @param projectLinksWithSameStatus Sequence of project links that all share the same status / change type.
+   * @param sectionStatus RoadAddressChangeType i.e. the change type / status of the project links.
+   */
   def toContinuousSectionsByStatus(projectLinksWithSameStatus: Seq[ProjectLink], sectionStatus: RoadAddressChangeType): Seq[Seq[ProjectLink]] = {
     var sections = Seq.empty[Seq[ProjectLink]]
     var currentSection = Seq.empty[ProjectLink]
@@ -1884,7 +1894,10 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
       } else {
         // Check if the current link continues the section
         val lastLink = currentSection.last
-        if (link.status == sectionStatus && lastLink.addrMRange.end == link.addrMRange.start && lastLink.track == link.track) {
+        if (link.roadPart == lastLink.roadPart &&
+            link.status == sectionStatus &&
+            lastLink.addrMRange.end == link.addrMRange.start &&
+            lastLink.track == link.track) {
           currentSection :+= link
         } else {
           // If it doesn't match, finalize the current section and start a new one
@@ -1925,7 +1938,31 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
   }
 
 
+  /**
+   * Adjusts terminated sections on two track road part start to match (if reasonably close to each other) and
+   *  the links that come after the terminated section.
+   *
+   * Example:
+   *
+   *  Terminated:     ==>
+   *  Nonterminated:  -->
+   *
+   *  Before:
+   *
+   *  0       202  250   450
+   *  ========>---->----->
+   *  ======>------->---->
+   *  0     200     260  450
+   *
+   *  After:
+   *
+   *  0       201  250   450
+   *  ========>---->----->
+   *  ======>------->---->
+   *  0     201     260  450
+   */
   def handleTwoTrackRoadPartStartTermination(terminatedLeftSection: Seq[ProjectLink], terminatedRightSection: Seq[ProjectLink], projectLinks: Seq[ProjectLink]): Seq[ProjectLink]= {
+    val maxDiffForTrackEnds = 10 // This number is arbitrary and may require adjustments in the future.
     val lastTerminatedOnLeftSideSection = terminatedLeftSection.last
     val lastTerminatedOnRightSideSection = terminatedRightSection.last
 
@@ -1934,11 +1971,14 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
 
     // Adjust terminated
     val processedLinks: Seq[ProjectLink] = {
-      if (Math.abs(lastTerminatedOnLeftSideSection.addrMRange.end - lastTerminatedOnRightSideSection.addrMRange.end) < 10) {
+      if (Math.abs(lastTerminatedOnLeftSideSection.addrMRange.end - lastTerminatedOnRightSideSection.addrMRange.end) <= maxDiffForTrackEnds) {
+        // Adjust the last terminated links on each track to match
         val (adjustedTerminatedLeft, adjustedTerminatedRight, averageTerminatedStart, averageTerminatedEnd) = adjustTerminatedToMatch(lastTerminatedOnLeftSideSection, lastTerminatedOnRightSideSection)
 
+        // Adjust the link(s) coming right after the terminated links
         (continuousAfterTerminatedLeftOrCombined, continuousAfterTerminatedRightOrCombined) match {
-          // Case: Both are non-empty and both have Track.Combined
+          // Case: Both are non-empty and both have Track.Combined i.e. only one combined link comes after the termination
+          // TODO: Is this obsolete because the two tracks should have already matched at the end (and the combined link coming right after) if it was a track changing spot??
           case (Some(left), Some(right)) if left.track == Track.Combined && right.track == Track.Combined =>
             val adjustedLink = left.copy(
               addrMRange = AddrMRange(averageTerminatedEnd, left.addrMRange.end),
@@ -1971,15 +2011,40 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
     processedLinks
   }
 
+  /**
+   * Adjusts two track terminated sections to match if the termination creates a minor discontinuity.
+   * The minor discontinuity links will also be adjusted to match the start of the terminated section.
+   * if there are links after the adjusted terminated section, those links will also be adjusted to match the end of the adjusted terminated section.
+   *
+   * Example:
+   *
+   *  Terminated:     ==>
+   *  Nonterminated:  -->
+   *
+   *  Before:
+   *
+   *  0      202    250   450
+   *  ------->======>----->
+   *  ------>====>===>---->
+   *  0     200  230 252   450
+   *
+   *  After:
+   *
+   *  0      201    251   450
+   *  ------->======>----->
+   *  ------>====>===>---->
+   *  0     201  230 251  450
+   */
   def handleTwoTrackMiddleTermination(terminatedLeftSections: Seq[Seq[ProjectLink]], terminatedRightSections: Seq[Seq[ProjectLink]], projectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
     /**
-     * Find pairs of minorDiscontinuity links on opposite tracks, close each other
+     * Find pairs of minorDiscontinuity links on opposite tracks, reasonably close to each other.
      */
     def findMinorDiscontinuityLinkPairs(minorDiscontinuityLinks: Seq[ProjectLink]): Seq[(ProjectLink, ProjectLink)] = {
+      val maxDiffForTrackEnds = 10 // This number is arbitrary and may require adjustments in the future.
       minorDiscontinuityLinks.filter(_.track == Track.LeftSide).flatMap { leftLink =>
         minorDiscontinuityLinks.filter(rightLink =>
           rightLink.track == Track.RightSide &&
-            Math.abs(leftLink.addrMRange.end - rightLink.addrMRange.end) <= 10
+            Math.abs(leftLink.addrMRange.end - rightLink.addrMRange.end) <= maxDiffForTrackEnds
         ).map(rightLink => (leftLink, rightLink))
       }
     }
@@ -1990,14 +2055,14 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
     val processedLinks = {
       var updatedProjectLinks = projectLinks
       if (minorDiscontinuityLinkPairs.nonEmpty) {
-        // Process Minor discontinuity lin pairs one by one
+        // Process Minor discontinuity link pairs one by one
         minorDiscontinuityLinkPairs.foreach({ case (leftLink, rightLink) =>
           // Check if there is a terminated section after the minor discontinuity ON BOTH TRACKS
           val leftTerminatedAfterMinorDisc = updatedProjectLinks.find(pl => pl.status == RoadAddressChangeType.Termination && pl.track == leftLink.track && pl.originalAddrMRange.start == leftLink.originalAddrMRange.end)
           val rightTerminatedAfterMinorDisc = updatedProjectLinks.find(pl => pl.status == RoadAddressChangeType.Termination && pl.track == rightLink.track && pl.originalAddrMRange.start == rightLink.originalAddrMRange.end)
 
           if (leftTerminatedAfterMinorDisc.isDefined && rightTerminatedAfterMinorDisc.isDefined) {
-            // Update terminated links to match, the discontinuity links to match and if there are links after terminated section, adjust those aswell
+            // Update terminated links to match, the discontinuity links to match and if there are links after terminated section, adjust those as well
             // Get the terminated sections for both tracks
             val leftTermSect  = terminatedLeftSections.find( section => section.exists(_.id == leftTerminatedAfterMinorDisc.get.id))
             val rightTermSect = terminatedRightSections.find(section => section.exists(_.id == rightTerminatedAfterMinorDisc.get.id))
@@ -2023,7 +2088,7 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
 
             val adjustedTerminatedLeft = {
               if (firstTerminatedLeft == lastTerminatedLeft) {
-                // Same link so update only the on link from both ends
+                // Same link so update the link from both ends
                 val updatedLeft = firstTerminatedLeft.copy(
                   addrMRange          = AddrMRange(averageStartForTermSect, averageEndForTermSect),
                   originalAddrMRange  = AddrMRange(averageStartForTermSect, averageEndForTermSect)
@@ -2032,13 +2097,13 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
               } else {
                 // Update separately
                 val firstLeftUpdated = firstTerminatedLeft.copy(
-                  addrMRange          = AddrMRange(averageStartForTermSect, averageEndForTermSect),
-                  originalAddrMRange  = AddrMRange(averageStartForTermSect, averageEndForTermSect)
+                  addrMRange          = AddrMRange(averageStartForTermSect, firstTerminatedLeft.addrMRange.end),
+                  originalAddrMRange  = AddrMRange(averageStartForTermSect, firstTerminatedLeft.addrMRange.end)
                 )
 
                 val lastLeftUpdated = lastTerminatedLeft.copy(
-                  addrMRange          = AddrMRange(averageStartForTermSect, averageEndForTermSect),
-                  originalAddrMRange  = AddrMRange(averageStartForTermSect, averageEndForTermSect)
+                  addrMRange          = AddrMRange(lastTerminatedLeft.addrMRange.start, averageEndForTermSect),
+                  originalAddrMRange  = AddrMRange(lastTerminatedLeft.addrMRange.start, averageEndForTermSect)
                 )
 
                 Seq(firstLeftUpdated,lastLeftUpdated)
@@ -2057,13 +2122,13 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
               } else {
                 // Update separately
                 val firstRightUpdated = firstTerminatedRight.copy(
-                  addrMRange          = AddrMRange(averageStartForTermSect, averageEndForTermSect),
-                  originalAddrMRange  = AddrMRange(averageStartForTermSect, averageEndForTermSect)
+                  addrMRange          = AddrMRange(averageStartForTermSect, firstTerminatedRight.addrMRange.end),
+                  originalAddrMRange  = AddrMRange(averageStartForTermSect, firstTerminatedRight.addrMRange.end)
                 )
 
                 val lastRightUpdated = lastTerminatedRight.copy(
-                  addrMRange          = AddrMRange(averageStartForTermSect, averageEndForTermSect),
-                  originalAddrMRange  = AddrMRange(averageStartForTermSect, averageEndForTermSect)
+                  addrMRange          = AddrMRange(lastTerminatedRight.addrMRange.start, averageEndForTermSect),
+                  originalAddrMRange  = AddrMRange(lastTerminatedRight.addrMRange.start, averageEndForTermSect)
                 )
 
                 Seq(firstRightUpdated,lastRightUpdated)
@@ -2081,7 +2146,7 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
             val adjustedAfterTermination: Seq[ProjectLink] = Seq(afterLeftTerminatedSection, afterRightTerminatedSection)
               .flatten // Removes None values and keeps only Some(ProjectLink)
               .distinct match {
-              case Seq(combinedLink) => { // Combined
+              case Seq(combinedLink) => { // Combined TODO (Is this obsolete? Addresses should have matched already in track changing spot?)
                 val adjustedCombined = combinedLink.copy(
                   addrMRange          = AddrMRange(averageEndForTermSect, combinedLink.addrMRange.end),
                   originalAddrMRange  = AddrMRange(averageEndForTermSect, combinedLink.originalAddrMRange.end)
@@ -2123,11 +2188,20 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
     processedLinks
   }
 
-  // TODO New links should be filtered out just in case?
+  /**
+   * Adjusts two track terminated sections to match + the surrounding links if needed.
+   * @param projectLinks Sequence of project links to adjust
+   */
   def adjustTerminations(projectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
 
+    /**
+     * Checks if there is a two track termination on road part start.
+     * If there is, then adjusts the terminated tracks to match + the originalAddrMRange start of the links right after the terminated segment.
+     * Else returns the project links unchanged.
+     * @param projectLinks Sequence of project links to adjust
+     */
     def roadPartStartTerminated(projectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
-      val (terminated, other) = projectLinks.partition(_.status == RoadAddressChangeType.Termination)
+      val terminated = projectLinks.filter(_.status == RoadAddressChangeType.Termination)
       val terminatedLeft = terminated.filter(_.track == Track.LeftSide)
       val terminatedRight = terminated.filter(_.track == Track.RightSide)
       // Group terminated links into continuous sections by status
@@ -2151,13 +2225,13 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
     }
 
     def roadPartMiddleTerminated(projectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
-      val (terminated, other) = projectLinks.partition(_.status == RoadAddressChangeType.Termination)
+      val terminated = projectLinks.filter(_.status == RoadAddressChangeType.Termination)
       val terminatedLeft = terminated.filter(_.track == Track.LeftSide)
       val terminatedRight = terminated.filter(_.track == Track.RightSide)
+
       // Group terminated links into continuous sections by status
       val leftTerminatedSections = toContinuousSectionsByStatus(terminatedLeft, RoadAddressChangeType.Termination)
       val rightTerminatedSections = toContinuousSectionsByStatus(terminatedRight, RoadAddressChangeType.Termination)
-
 
       val processedLinks = if (leftTerminatedSections.nonEmpty && rightTerminatedSections.nonEmpty) { // Check if road part start is terminated on both tracks
         handleTwoTrackMiddleTermination(leftTerminatedSections, rightTerminatedSections, projectLinks)
@@ -2175,8 +2249,8 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
     // Check that there are terminated links on both tracks
     val processedLinks: Seq[ProjectLink] = {
       if (existsTerminationsOnTwoDiffTracks(projectLinks)) {
-
         val orderedProjectLinks = projectLinks.sortBy(_.addrMRange.start)
+        
         // List of termination cases
         val terminationCases: List[Seq[ProjectLink] => Seq[ProjectLink]] = List(
           roadPartStartTerminated,
@@ -2185,7 +2259,7 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
         )
 
         // Sequentially apply each case function
-        terminationCases.foldLeft(orderedProjectLinks)((currentLinks, caseFunction) => caseFunction(currentLinks))
+        terminationCases.foldLeft(orderedProjectLinks)((linksAccumulator, caseFunction) => caseFunction(linksAccumulator))
 
       } else {
         // else we return the links unchanged.
