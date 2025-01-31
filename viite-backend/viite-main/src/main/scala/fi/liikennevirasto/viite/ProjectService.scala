@@ -2221,8 +2221,6 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
     * @throws SQLException if there is an error with preserving the reserved project to the db.
     * @throws Exception if an unexpected exception occurred. */
   def preserveSingleProjectToBeTakenToRoadNetwork(): Unit = {
-    logger.info("Checking for projects to be accepted to the road network.")
-
     // Get a project to update to db, if any. Reserved apart from db preserve, to communicate the reservation asap.
     val projectIdOpt: Option[Long] = atomicallyReserveProjectInUpdateQueue
 

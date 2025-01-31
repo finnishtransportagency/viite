@@ -7,12 +7,12 @@ import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import scalikejdbc.scalikejdbcSQLInterpolationImplicitDef
 
-class UserProviderDAOSpec extends AnyFunSuite with Matchers {
+class PostGISUserProviderSpec extends AnyFunSuite with Matchers {
 
   val TestUserName = "userprovidertest"
   val north = 1000
 
-  val provider = new UserProviderDAO
+  val provider = new PostGISUserProvider
 
   test("Test UserProviderDAO.deleteUser(), UserProviderDAO.getUser() and UserProviderDAO.createUser() " +
     "When trying to find a specific user name and creating a user for that user name " +
