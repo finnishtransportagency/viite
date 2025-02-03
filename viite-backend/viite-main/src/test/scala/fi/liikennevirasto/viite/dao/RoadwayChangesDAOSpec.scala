@@ -78,14 +78,15 @@ class RoadwayChangesDAOSpec extends AnyFunSuite with Matchers with BaseDAO {
   }
 
   test("Test RoadwayChangesDAO().insertDeltaToRoadChangeTable() When inserting the results of the delta calculation for a project, the inserted ely code should be the roadway ely instead of project ely") {
-    val newProjectLink = ProjectLink(1, RoadPart(1, 1), Track.Unknown, Discontinuity.Continuous, AddrMRange(0, 0), AddrMRange(0, 0), None, None, None, 0.toString, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), List(), 1, RoadAddressChangeType.New, AdministrativeClass.Unknown, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 5, reversed = false, None, 748800L)
+    val newProjectLink = ProjectLink(1, RoadPart(1, 1), Track.Unknown, Discontinuity.Continuous, AddrMRange(0, 1), AddrMRange(0, 0), None, None, None, 0.toString, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), List(), 1, RoadAddressChangeType.New, AdministrativeClass.Unknown, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 5, reversed = false, None, 748800L)
     runWithRollback {
       addprojects()
       val project1 = projectDAO.fetchById(1).get
       val projectLinks = projectLinkDAO.fetchProjectLinks(1)
       val projectLink1 = projectLinks.head
       val ra = Seq(
-        RoadAddress(12345, projectLink1.linearLocationId, projectLink1.roadPart, projectLink1.administrativeClass, projectLink1.track, projectLink1.discontinuity, projectLink1.addrMRange, projectLink1.startDate, projectLink1.endDate, projectLink1.createdBy, projectLink1.linkId, projectLink1.startMValue, projectLink1.endMValue, projectLink1.sideCode, DateTime.now().getMillis, projectLink1.calibrationPoints, projectLink1.geometry, projectLink1.linkGeomSource, 8, NoTermination, projectLink1.roadwayNumber, None, None, None)
+        RoadAddress(12345, projectLink1.linearLocationId, projectLink1.roadPart, projectLink1.administrativeClass, projectLink1.track, projectLink1.discontinuity, projectLink1.addrMRange, projectLink1.startDate, projectLink1.endDate, projectLink1.createdBy, projectLink1.linkId, projectLink1.startMValue, projectLink1.endMValue, projectLink1.sideCode, DateTime.now().getMillis, projectLink1.calibrationPoints, projectLink1.geometry, projectLink1.linkGeomSource,
+          8 /*ELY*/, NoTermination, projectLink1.roadwayNumber, None, None, None)
       )
       projectLinkDAO.updateProjectLinks(Seq(newProjectLink), project1.createdBy, ra)
       val reservedParts = Seq(ProjectReservedPart(0, RoadPart(1, 1), Some(0), Some(Discontinuity.Continuous), Some(8L), None, None, None, Some(12345L.toString)))
