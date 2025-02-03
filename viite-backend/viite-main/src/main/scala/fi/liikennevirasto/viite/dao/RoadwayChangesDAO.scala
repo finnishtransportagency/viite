@@ -83,11 +83,6 @@ case class RoadwayChangesInfo(roadwayChangeId: Long, startDate: DateTime, accept
                               old_road_number: Long, old_road_part_number: Long, old_track: Long, oldAddrMRange: AddrMRange, old_discontinuity: Long, old_administrative_class: Long, old_ely: Long, // TODO add RoadPart refactoring
                               new_road_number: Long, new_road_part_number: Long, new_track: Long, newAddrMRange: AddrMRange, new_discontinuity: Long, new_administrative_class: Long, new_ely: Long)
 
-case class OldRoadAddress(ely: Long, roadPart: Option[RoadPart], track: Option[Long], // TODO AddrMRange
-                          addrMRange: Option[AddrMRange], length: Option[Long], administrativeClass: Long) {
-  def getStartOption: Option[Long] = {  if(addrMRange.isEmpty) None else Some(addrMRange.get.start)  }
-  def getEndOption:   Option[Long] = {  if(addrMRange.isEmpty) None else Some(addrMRange.get.end  )  }
-}
 object RoadwayChangesInfo  extends SQLSyntaxSupport[RoadwayChangeInfo] {
   def apply(rs: WrappedResultSet): RoadwayChangesInfo = new RoadwayChangesInfo(
     roadwayChangeId = rs.long("roadway_change_id"),
@@ -113,6 +108,11 @@ object RoadwayChangesInfo  extends SQLSyntaxSupport[RoadwayChangeInfo] {
 
 }
 
+case class OldRoadAddress(ely: Long, roadPart: Option[RoadPart], track: Option[Long],
+                          addrMRange: Option[AddrMRange], length: Option[Long], administrativeClass: Long) {
+  def getStartOption: Option[Long] = {  if(addrMRange.isEmpty) None else Some(addrMRange.get.start)  }
+  def getEndOption:   Option[Long] = {  if(addrMRange.isEmpty) None else Some(addrMRange.get.end  )  }
+}
 
 case class NewRoadAddress(ely: Long, roadPart: RoadPart, track: Long, addrMRange: AddrMRange, length: Long, administrativeClass: Long)
 
