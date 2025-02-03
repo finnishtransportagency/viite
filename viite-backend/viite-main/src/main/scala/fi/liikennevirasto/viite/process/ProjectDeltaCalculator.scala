@@ -290,9 +290,9 @@ object ProjectDeltaCalculator {
           link.roadPart == RoadPart(targetToMap.roadNumber, targetToMap.roadPartNumberEnd) &&
           link.track == targetToMap.track && link.ely == targetToMap.ely &&
           (try {
-             targetToMap.addrMRange.contains(link.addrMRange) // TODO fails, if AddrMRange.contains does not allow 0-0 ranges
-           } catch {
-            case e: ViiteException => false
+             targetToMap.addrMRange.contains(link.addrMRange) // Throws, if AddrMRange.contains is fed AddrMRange(0,0) ...
+           } catch {                                         // ... that's why try-catch. We just exclude the 0-0 ...
+            case e: ViiteException => false                 // ... from the filter.
           })
         }))
 
