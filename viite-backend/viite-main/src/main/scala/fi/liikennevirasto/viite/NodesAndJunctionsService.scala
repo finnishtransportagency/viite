@@ -459,7 +459,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
           projectLink.addrMRange.start >= ch.changeInfo.target.addrMRange.get.start &&
           projectLink.addrMRange.end   <= ch.changeInfo.target.addrMRange.get.end   && ch.changeInfo.reversed)
 
-        val originalLink = mappedRoadwayNumbers.find(mpr => projectLink.addrMRange.start == mpr.newAddrMRange.start && projectLink.addrMRange.end == mpr.newAddrMRange.end && mpr.newRoadwayNumber == projectLink.roadwayNumber)
+        val originalLink = mappedRoadwayNumbers.find(mpr => projectLink.addrMRange.isSameAs(mpr.newAddrMRange) && mpr.newRoadwayNumber == projectLink.roadwayNumber)
 
         val existingHeadJunctionPoint = {
           if (originalLink.nonEmpty) {
@@ -802,7 +802,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
               headProjectLink.addrMRange.end   == ch.changeInfo.target.addrMRange.get.end   && ch.changeInfo.reversed)
 
             val headNodePoint: Option[NodePoint] = projectRoadLinkChanges.find { rl =>
-              headProjectLink.addrMRange.start == rl.newAddrMRange.start && headProjectLink.addrMRange.end == rl.newAddrMRange.end && headProjectLink.roadwayNumber == rl.newRoadwayNumber
+              headProjectLink.addrMRange.isSameAs(rl.newAddrMRange) && headProjectLink.roadwayNumber == rl.newRoadwayNumber
             }.flatMap { rl =>
               if (headReversed) {
                 nodePointDAO.fetchRoadAddressNodePoints(Seq(rl.originalRoadwayNumber, headProjectLink.roadwayNumber))
@@ -819,7 +819,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
             val lastReversed = roadwayChanges.exists(ch => ch.changeInfo.target.addrMRange.nonEmpty && lastLink.addrMRange.end == ch.changeInfo.target.addrMRange.get.end && ch.changeInfo.reversed)
 
             val lastNodePoint = projectRoadLinkChanges.find { rl =>
-              lastLink.addrMRange.start == rl.newAddrMRange.start && lastLink.addrMRange.end == rl.newAddrMRange.end && lastLink.roadwayNumber == rl.newRoadwayNumber
+              lastLink.addrMRange.isSameAs(rl.newAddrMRange) && lastLink.roadwayNumber == rl.newRoadwayNumber
             }.flatMap { rl =>
               if (lastReversed) {
                 nodePointDAO.fetchRoadAddressNodePoints(Seq(rl.originalRoadwayNumber, lastLink.roadwayNumber))

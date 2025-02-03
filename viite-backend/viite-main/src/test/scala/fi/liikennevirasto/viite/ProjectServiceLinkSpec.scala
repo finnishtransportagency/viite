@@ -618,7 +618,7 @@ class ProjectServiceLinkSpec extends AnyFunSuite with Matchers with BeforeAndAft
       val geom = JSON.parseFull(points6552).get.asInstanceOf[List[Map[String, Double]]].map(m => Point(m("x"), m("y"), m("z")))
 
 
-      val addProjectAddressLink552 = ProjectAddressLink(NewIdValue, 6552.toString, geom, GeometryUtils.geometryLength(geom), AdministrativeClass.State, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, AdministrativeClass.State, None, 749, "Siilinj√§rvi", Some(DateTime.now().toString()), None, RoadPart(19999, 1), 2L, 8L, 5L, AddrMRange(0L, 0L), 0.0, GeometryUtils.geometryLength(geom), SideCode.TowardsDigitizing, None, None, RoadAddressChangeType.New, 0, 0, sourceId = "", originalAddrMRange = Some(AddrMRange(0L, 0L)))
+      val addProjectAddressLink552 = ProjectAddressLink(NewIdValue, 6552.toString, geom, GeometryUtils.geometryLength(geom), AdministrativeClass.State, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, AdministrativeClass.State, None, 749, "Siilinj‰rvi", Some(DateTime.now().toString()), None, RoadPart(19999, 1), 2L, 8L, 5L, AddrMRange(0L, 0L), 0.0, GeometryUtils.geometryLength(geom), SideCode.TowardsDigitizing, None, None, RoadAddressChangeType.New, 0, 0, sourceId = "", originalAddrMRange = Some(AddrMRange(0L, 0L)))
       val addresses = Seq(addProjectAddressLink552)
       mockForProject(id, addresses)
 
