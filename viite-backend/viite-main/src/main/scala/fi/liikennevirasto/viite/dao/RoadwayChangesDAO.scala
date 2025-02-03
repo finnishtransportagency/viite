@@ -20,20 +20,25 @@ case class RoadwayChangeSection(roadNumber: Option[Long], trackCode: Option[Long
     def getEndOption:   Option[Long] = {  if(addrMRange.isEmpty) None else Some(addrMRange.get.end  )  }
 }
 
-case class RoadwayChangeSectionTR(roadNumber: Option[Long], trackCode: Option[Long], startRoadPartNumber: Option[Long],
-                                  endRoadPartNumber: Option[Long], startAddressM: Option[Long], endAddressM: Option[Long])
-
 case class RoadwayChangeInfo(changeType: RoadAddressChangeType, source: RoadwayChangeSection, target: RoadwayChangeSection,
                              discontinuity: Discontinuity, administrativeClass: AdministrativeClass, reversed: Boolean, orderInChangeTable: Long, ely: Long = -1L)
 
 case class ProjectRoadwayChange(projectId: Long, projectName: Option[String], ely: Long, user: String, changeDate: DateTime, changeInfo: RoadwayChangeInfo, projectStartDate: DateTime)
 
+object ChangeRow {
+    def getAddrMRangeOption(start: Option[Long], end: Option[Long]): Option[AddrMRange] = {
+    (start, end) match {
+      case (Some(start), Some(end)) => Option(AddrMRange(start, end))
+      case _ => None
+    }
+  }
+}
 case class ChangeRow(projectId: Long, projectName: Option[String], createdBy: String, createdDate: Option[DateTime], startDate: Option[DateTime],
                      modifiedBy: String, modifiedDate: Option[DateTime], targetEly: Long, changeType: Int, sourceRoadNumber: Option[Long],
                      sourceTrackCode: Option[Long], sourceStartRoadPartNumber: Option[Long], sourceEndRoadPartNumber: Option[Long],
-                     sourceStartAddressM: Option[Long], sourceEndAddressM: Option[Long], targetRoadNumber: Option[Long],
+                     sourceAddrMRange: Option[AddrMRange], targetRoadNumber: Option[Long],
                      targetTrackCode: Option[Long], targetStartRoadPartNumber: Option[Long], targetEndRoadPartNumber: Option[Long],
-                     targetStartAddressM: Option[Long], targetEndAddressM: Option[Long], targetDiscontinuity: Option[Int],
+                     targetAddrMRange: Option[AddrMRange], targetDiscontinuity: Option[Int],
                      targetAdministrativeClass: Option[Int], sourceAdministrativeClass: Option[Int], sourceDiscontinuity: Option[Int],
                      sourceEly: Option[Long], reversed: Boolean, orderInTable: Long)
 
@@ -53,14 +58,12 @@ object RoadwayChange extends SQLSyntaxSupport[ChangeRow] {
       sourceTrackCode           = rs.longOpt("old_track"),
       sourceStartRoadPartNumber = rs.longOpt("old_road_part_number"),
       sourceEndRoadPartNumber   = rs.longOpt("old_road_part_number"),
-      sourceStartAddressM       = rs.longOpt("old_start_addr_m"),
-      sourceEndAddressM         = rs.longOpt("old_end_addr_m"),
+      sourceAddrMRange          = ChangeRow.getAddrMRangeOption(rs.longOpt("old_start_addr_m"), rs.longOpt("old_end_addr_m")),
       targetRoadNumber          = rs.longOpt("new_road_number"),
       targetTrackCode           = rs.longOpt("new_track"),
       targetStartRoadPartNumber = rs.longOpt("new_road_part_number"),
       targetEndRoadPartNumber   = rs.longOpt("new_road_part_number"),
-      targetStartAddressM       = rs.longOpt("new_start_addr_m"),
-      targetEndAddressM         = rs.longOpt("new_end_addr_m"),
+      targetAddrMRange          = ChangeRow.getAddrMRangeOption(rs.longOpt("new_start_addr_m"), rs.longOpt("new_end_addr_m")),
       targetDiscontinuity       = rs.intOpt("new_discontinuity"),
       targetAdministrativeClass = rs.intOpt("new_administrative_class"),
       sourceAdministrativeClass = rs.intOpt("old_administrative_class"),
@@ -77,8 +80,8 @@ case class ChangeTableRows(adjustedSections: Iterable[((RoadwaySection, RoadwayS
 case class ChangeTableRows2(adjustedSections: Iterable[RoadwaySection], originalSections: Iterable[RoadwaySection])
 
 case class RoadwayChangesInfo(roadwayChangeId: Long, startDate: DateTime, acceptedDate: DateTime, change_type: Long, reversed: Long,
-                              old_road_number: Long, old_road_part_number: Long, old_track: Long, old_start_addr_m: Long, old_end_addr_m: Long, old_discontinuity: Long, old_administrative_class: Long, old_ely: Long,
-                              new_road_number: Long, new_road_part_number: Long, new_track: Long, new_start_addr_m: Long, new_end_addr_m: Long, new_discontinuity: Long, new_administrative_class: Long, new_ely: Long)
+                              old_road_number: Long, old_road_part_number: Long, old_track: Long, oldAddrMRange: AddrMRange, old_discontinuity: Long, old_administrative_class: Long, old_ely: Long, // TODO add RoadPart refactoring
+                              new_road_number: Long, new_road_part_number: Long, new_track: Long, newAddrMRange: AddrMRange, new_discontinuity: Long, new_administrative_class: Long, new_ely: Long)
 
 object RoadwayChangesInfo  extends SQLSyntaxSupport[RoadwayChangeInfo] {
   def apply(rs: WrappedResultSet): RoadwayChangesInfo = new RoadwayChangesInfo(
@@ -90,16 +93,14 @@ object RoadwayChangesInfo  extends SQLSyntaxSupport[RoadwayChangeInfo] {
     old_road_number          = rs.longOpt("old_road_number").getOrElse(0L),
     old_road_part_number     = rs.longOpt("old_road_part_number").getOrElse(0L),
     old_track                = rs.longOpt("old_track").getOrElse(0L),
-    old_start_addr_m         = rs.longOpt("old_start_addr_m").getOrElse(0L),
-    old_end_addr_m           = rs.longOpt("old_end_addr_m").getOrElse(0L),
+    oldAddrMRange            = AddrMRange(rs.longOpt("old_start_addr_m").getOrElse(0L), rs.longOpt("old_end_addr_m").getOrElse(0L)),
     old_discontinuity        = rs.longOpt("old_discontinuity").getOrElse(0L),
     old_administrative_class = rs.longOpt("old_administrative_class").getOrElse(0L),
     old_ely                  = rs.longOpt("old_ely").getOrElse(0L),
     new_road_number          = rs.longOpt("new_road_number").getOrElse(0L),
     new_road_part_number     = rs.longOpt("new_road_part_number").getOrElse(0L),
     new_track                = rs.longOpt("new_track").getOrElse(0L),
-    new_start_addr_m         = rs.longOpt("new_start_addr_m").getOrElse(0L),
-    new_end_addr_m           = rs.longOpt("new_end_addr_m").getOrElse(0L),
+    newAddrMRange            = AddrMRange(rs.longOpt("new_start_addr_m").getOrElse(0L), rs.longOpt("new_end_addr_m").getOrElse(0L)),
     new_discontinuity        = rs.long("new_discontinuity"),
     new_administrative_class = rs.long("new_administrative_class"),
     new_ely                  = rs.long("new_ely")
@@ -108,7 +109,10 @@ object RoadwayChangesInfo  extends SQLSyntaxSupport[RoadwayChangeInfo] {
 }
 
 case class OldRoadAddress(ely: Long, roadPart: Option[RoadPart], track: Option[Long],
-                          startAddrM: Option[Long], endAddrM: Option[Long], length: Option[Long], administrativeClass: Long)
+                          addrMRange: Option[AddrMRange], length: Option[Long], administrativeClass: Long) {
+  def getStartOption: Option[Long] = {  if(addrMRange.isEmpty) None else Some(addrMRange.get.start)  }
+  def getEndOption:   Option[Long] = {  if(addrMRange.isEmpty) None else Some(addrMRange.get.end  )  }
+}
 
 case class NewRoadAddress(ely: Long, roadPart: RoadPart, track: Long, addrMRange: AddrMRange, length: Long, administrativeClass: Long)
 
@@ -120,15 +124,13 @@ case class ChangeInfoForRoadAddressChangesBrowser(startDate: DateTime, changeTyp
 class RoadwayChangesDAO extends BaseDAO {
 
   private def toRoadwayChangeRecipient(row: ChangeRow) = {
-    val addrMRange = if(row.targetStartAddressM.isDefined &&row.targetEndAddressM.isDefined) Some(AddrMRange(row.targetStartAddressM.get, row.targetEndAddressM.get)) else None
-    RoadwayChangeSection(row.targetRoadNumber, row.targetTrackCode, row.targetStartRoadPartNumber, row.targetEndRoadPartNumber, addrMRange,
+    RoadwayChangeSection(row.targetRoadNumber, row.targetTrackCode, row.targetStartRoadPartNumber, row.targetEndRoadPartNumber, row.targetAddrMRange,
       Some(AdministrativeClass.apply(row.targetAdministrativeClass.getOrElse(AdministrativeClass("Unknown").value))),
       Some(Discontinuity.apply(row.targetDiscontinuity.getOrElse(Discontinuity.Continuous.value))), Some(row.targetEly))
   }
 
   private def toRoadwayChangeSource(row: ChangeRow) = {
-    val addrMRange = if(row.sourceStartAddressM.isDefined &&row.sourceEndAddressM.isDefined) Some(AddrMRange(row.sourceStartAddressM.get, row.sourceEndAddressM.get)) else None
-    RoadwayChangeSection(row.sourceRoadNumber, row.sourceTrackCode, row.sourceStartRoadPartNumber, row.sourceEndRoadPartNumber, addrMRange,
+    RoadwayChangeSection(row.sourceRoadNumber, row.sourceTrackCode, row.sourceStartRoadPartNumber, row.sourceEndRoadPartNumber, row.sourceAddrMRange,
       Some(AdministrativeClass.apply(row.sourceAdministrativeClass.getOrElse(AdministrativeClass("Unknown").value))),
       Some(Discontinuity.apply(row.sourceDiscontinuity.getOrElse(Discontinuity.Continuous.value))), row.sourceEly)
   }
@@ -496,8 +498,7 @@ class RoadwayChangesDAO extends BaseDAO {
               None
           },
           track               = rs.longOpt("old_track"),
-          startAddrM          = rs.longOpt("old_start_addr_m"),
-          endAddrM            = rs.longOpt("old_end_addr_m"),
+          addrMRange          = ChangeRow.getAddrMRangeOption(rs.longOpt("old_start_addr_m"), rs.longOpt("old_end_addr_m")),
           length              = rs.longOpt("old_length"),
           administrativeClass = rs.long("old_administrative_class")
         ),
