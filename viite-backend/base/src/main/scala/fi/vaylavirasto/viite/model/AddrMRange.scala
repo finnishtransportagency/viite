@@ -83,7 +83,9 @@ case class AddrMRange (start: Long, end: Long)// extends Ordered[AddrMRange]
   /** Returns true, if <i>other</i> is right before or after <i>this</i>, i.e. this.end == other.start, or this.end == other.start, and both are valid ranges. Else false. */
   def isAdjacentTo      (other: AddrMRange): Boolean = {  (this.end == other.start || this.start == other.end) && bothAreValid(this,other)  }
 
-
+  // ----------------------------------- Comparisons to a single Long address value -----------------------------------
+  def startsAt        (addrM: Long): Boolean = {  this.start == addrM                      && this.isValid  }
+  def endsAt          (addrM: Long): Boolean = {                         this.end == addrM && this.isValid  }
 
   // ---------------------------- Functions returning numeric values, or AddrMRange copies ----------------------------
   /** Returns the length of this AddrMRange for a valid AddrMRange.

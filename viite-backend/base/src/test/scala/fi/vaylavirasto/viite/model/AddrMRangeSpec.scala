@@ -201,6 +201,38 @@ class AddrMRangeSpec extends AnyFunSuite with Matchers {
   }
 
 
+  test("Test AddrMRange.startsAt:         Returns true, if this AddrMRange.start equals addrM. Else false.") {
+                                                          //    |-----| : this AddrMRange, X : addrM value
+    AddrMRange(100,200).startsAt(100) shouldBe true       //    X-----|
+
+    // AddrMRange starts elsewhere but not at the addrM value
+    AddrMRange(100,200).startsAt( 99) shouldBe false      //   X|-----|
+    AddrMRange(100,200).startsAt(101) shouldBe false      //    |X----|
+    AddrMRange(100,200).startsAt(199) shouldBe false      //    |----X|
+    AddrMRange(100,200).startsAt(200) shouldBe false      //    |-----X
+    AddrMRange(100,200).startsAt(201) shouldBe false      //    |-----|X
+
+    //Invalid AddrMRange
+    AddrMRange(  0,  0).startsAt(  0) shouldBe false
+    AddrMRange(  0,  0).startsAt(100) shouldBe false
+  }
+
+  test("Test AddrMRange.endsAt:           Returns true, if this AddrMRange.end   equals addrM. Else false.") {
+                                                        //    |-----| : this AddrMRange, X : addrM value
+    AddrMRange(100,200).endsAt(200) shouldBe true       //    |-----X
+
+    // AddrMRange ends elsewhere but not at the addrM value
+    AddrMRange(100,200).endsAt( 99) shouldBe false      //   X|-----|
+    AddrMRange(100,200).endsAt(100) shouldBe false      //    X-----|
+    AddrMRange(100,200).endsAt(101) shouldBe false      //    |X----|
+    AddrMRange(100,200).endsAt(199) shouldBe false      //    |----X|
+    AddrMRange(100,200).endsAt(201) shouldBe false      //    |-----|X
+
+    //Invalid AddrMRange
+    AddrMRange(  0,  0).endsAt(  0) shouldBe false
+    AddrMRange(  0,  0).endsAt(100) shouldBe false
+  }
+
   // -------------------------- Functions returning numeric values, or AddrMRange copies --------------------------
 
   test("Test AddrMRange.length:  Returns the length      of this AddrMRange, or throws ViiteException, if this AddrMRange isUndefined (or erroneous).") {

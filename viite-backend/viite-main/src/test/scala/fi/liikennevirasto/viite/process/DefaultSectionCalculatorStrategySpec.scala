@@ -2047,7 +2047,7 @@ Left     |  ^   Right
       buildTestDataForProject(Some(project), Some(Seq(roadwayCombined1, roadwayCombined2, roadwayCombined3)), Some(Seq(linearCombined1, linearCombined2, linearCombined3, linearCombined4)), None)
       var assignedValues = defaultSectionCalculatorStrategy.assignAddrMValues(Seq(projectLinkLeft1, projectLinkLeft2), Seq(projectLinkCombined1, projectLinkCombined2,
         projectLinkRight1, projectLinkRight2), Seq.empty[UserDefinedCalibrationPoint])
-      assignedValues = assignedValues.filterNot(_.addrMRange.start == 14) :+  assignedValues.filter(_.addrMRange.start == 14).head.copy(discontinuity = Discontinuity.Continuous)
+      assignedValues = assignedValues.filterNot(_.addrMRange.startsAt(14)) :+  assignedValues.filter(_.addrMRange.start == 14).head.copy(discontinuity = Discontinuity.Continuous)
 
       val (left, right) = assignedValues.filterNot(_.track == Track.Combined).partition(_.track == Track.LeftSide)
       val groupedLeft: ListMap[Long, Seq[ProjectLink]] = ListMap(left.groupBy(_.roadwayNumber).toSeq.sortBy(r => r._2.minBy(_.addrMRange.start).addrMRange.start): _*)
