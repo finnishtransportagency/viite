@@ -1572,6 +1572,13 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
     BoundingRectangle(Point(BBOXList(0), BBOXList(1)), Point(BBOXList(2), BBOXList(3)))
   }
 
+  private def addrMRangeToApi(addrMRange: AddrMRange): Map[String, Long] = {
+    Map(
+        "start" -> addrMRange.start,
+        "end"   -> addrMRange.end
+    )
+  }
+
   private def roadAddressLinkLikeToApi(roadAddressLink: RoadAddressLinkLike): Map[String, Any] = {
     Map(
       "success" -> true,
@@ -1597,8 +1604,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       "roadPartNumber" -> roadAddressLink.roadPart.partNumber,
       "elyCode" -> roadAddressLink.elyCode,
       "trackCode" -> roadAddressLink.trackCode,
-      "startAddressM" -> roadAddressLink.addrMRange.start,
-      "endAddressM" -> roadAddressLink.addrMRange.end,
+      "addrMRange" -> addrMRangeToApi(roadAddressLink.addrMRange),
       "discontinuity" -> roadAddressLink.discontinuity,
       "lifecycleStatus" -> roadAddressLink.lifecycleStatus.value,
       "startMValue" -> roadAddressLink.startMValue,
@@ -1765,8 +1771,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       "roadNumber" -> track.roadPart.roadNumber,
       "track" -> track.track,
       "roadPartNumber" -> track.roadPart.partNumber,
-      "startAddrM" -> track.addrMRange.start,
-      "endAddrM"   -> track.addrMRange.end,
+      "addrMRange" -> addrMRangeToApi(track.addrMRange),
       "lengthAddrM" -> track.roadAddressLengthM,
       "administrativeClass" -> track.administrativeClass,
       "startDate" -> new SimpleDateFormat("dd.MM.yyyy").format(track.startDate.toDate)
@@ -1778,8 +1783,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       "ely" -> roadPart.ely,
       "roadNumber" -> roadPart.roadPart.roadNumber,
       "roadPartNumber" -> roadPart.roadPart.partNumber,
-      "startAddrM" -> roadPart.addrMRange.start,
-      "endAddrM"   -> roadPart.addrMRange.end,
+      "addrMRange" -> addrMRangeToApi(roadPart.addrMRange),
       "lengthAddrM" -> roadPart.roadAddressLengthM,
       "startDate" -> new SimpleDateFormat("dd.MM.yyyy").format(roadPart.startDate.toDate)
     )
@@ -1836,7 +1840,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       "oldRoadNumber"     -> (if(oldPart.nonEmpty) oldPart.get.roadNumber else ""),
       "oldTrack" -> changeInfo.oldRoadAddress.track.getOrElse(""),
       "oldRoadPartNumber" -> (if(oldPart.nonEmpty) oldPart.get.partNumber else ""),
-      "oldStartAddrM" -> changeInfo.oldRoadAddress.getStartOption.getOrElse(""),
+      "oldStartAddrM" -> changeInfo.oldRoadAddress.getStartOption.getOrElse(""), //TODO to addrMRange?
       "oldEndAddrM"   -> changeInfo.oldRoadAddress.getEndOption.getOrElse(""),
       "oldLength" -> changeInfo.oldRoadAddress.length.getOrElse(""),
       "oldAdministrativeClass" -> changeInfo.oldRoadAddress.administrativeClass,
@@ -1844,8 +1848,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       "newRoadNumber" -> changeInfo.newRoadAddress.roadPart.roadNumber,
       "newTrack" -> changeInfo.newRoadAddress.track,
       "newRoadPartNumber" -> changeInfo.newRoadAddress.roadPart.partNumber,
-      "newStartAddrM" -> changeInfo.newRoadAddress.addrMRange.start,
-      "newEndAddrM" -> changeInfo.newRoadAddress.addrMRange.end,
+      "newAddrMRange" -> addrMRangeToApi(changeInfo.newRoadAddress.addrMRange),
       "newLength" -> changeInfo.newRoadAddress.length,
       "newAdministrativeClass" -> changeInfo.newRoadAddress.administrativeClass
     )
@@ -1884,8 +1887,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
         "roadPartNumber" -> projectAddressLink.roadPart.partNumber,
         "elyCode" -> projectAddressLink.elyCode,
         "trackCode" -> projectAddressLink.trackCode,
-        "startAddressM" -> projectAddressLink.addrMRange.start,
-        "endAddressM" -> projectAddressLink.addrMRange.end,
+        "addrMRange" -> addrMRangeToApi(projectAddressLink.addrMRange),
         "originalStartAddressM" -> originalAddrMRange.start,
         "originalEndAddressM" -> originalAddrMRange.end,
         "discontinuity" -> projectAddressLink.discontinuity,
