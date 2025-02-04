@@ -1896,7 +1896,7 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
         val lastLink = currentSection.last
         if (link.roadPart == lastLink.roadPart &&
             link.status == sectionStatus &&
-            lastLink.addrMRange.end == link.addrMRange.start &&
+            lastLink.addrMRange.continuesTo(link.addrMRange) &&
             lastLink.track == link.track) {
           currentSection :+= link
         } else {
@@ -2075,27 +2075,31 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
             val adjustedAfterTermination: Seq[ProjectLink] = Seq(afterLeftTerminatedSection, afterRightTerminatedSection)
               .flatten // Removes None values and keeps only Some(ProjectLink)
               .distinct match {
-              case Seq(combinedLink) => { // Combined TODO (Is this obsolete? Addresses should have matched already in track changing spot?)
-                val adjustedCombinedLink = combinedLink.copy(
-                  addrMRange          = AddrMRange(averageEndForTermSect, combinedLink.addrMRange.end),
-                  originalAddrMRange  = AddrMRange(averageEndForTermSect, combinedLink.originalAddrMRange.end)
-                )
-                Seq(adjustedCombinedLink)
+              // Case: Empty
+              case Seq() =>
+                // Nothing continues after
+                Seq()
+              // Case: Single Combined link
+              case Seq(combinedLink) => {
+                // Combined link so addresses should match already in track changing spot
+                Seq()
               }
-              case Seq(left, right) => { // Two track
-                val adjustedLeftLink = left.copy(
-                  addrMRange          = AddrMRange(averageEndForTermSect, left.addrMRange.end),
-                  originalAddrMRange  = AddrMRange(averageEndForTermSect, left.originalAddrMRange.end)
+              // Case: Two tracks
+              case Seq(leftLink, rightLink) => {
+                // Adjust both links to match with the terminated section end
+                val adjustedLeftLink = leftLink.copy(
+                  addrMRange          = AddrMRange(averageEndForTermSect, leftLink.addrMRange.end),
+                  originalAddrMRange  = AddrMRange(averageEndForTermSect, leftLink.originalAddrMRange.end)
                 )
-                val adjustedRightLink = right.copy(
-                  addrMRange          = AddrMRange(averageEndForTermSect, right.addrMRange.end),
-                  originalAddrMRange  = AddrMRange(averageEndForTermSect, right.originalAddrMRange.end)
+                val adjustedRightLink = rightLink.copy(
+                  addrMRange          = AddrMRange(averageEndForTermSect, rightLink.addrMRange.end),
+                  originalAddrMRange  = AddrMRange(averageEndForTermSect, rightLink.originalAddrMRange.end)
                 )
                 Seq(adjustedLeftLink, adjustedRightLink)
               }
+              // Case: More than two should be an error
               case _ => {
-                // Nothing continues after or Error -> do nothing
-                Seq()
+                throw ViiteException(s"More than two links continue after terminated segment.")
               }
             }
 
@@ -2169,28 +2173,34 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
             val (adjustedTerminatedLeft, adjustedTerminatedRight, averagedAddrMRange) = adjustTerminatedToMatch(lastTerminatedOnLeftSideSection, lastTerminatedOnRightSideSection)
 
             // Adjust the link(s) coming right after the terminated links
-            (continuousAfterTerminatedLeftOrCombined, continuousAfterTerminatedRightOrCombined) match {
-              // Case: Both are non-empty and both have Track.Combined i.e. only one combined link comes after the termination
-              // TODO: Is this obsolete because the two tracks should have already matched at the end (and the combined link coming right after) if it was a track changing spot??
-              case (Some(left), Some(right)) if (left.track == Track.Combined && right.track == Track.Combined) =>
-                val adjustedAddrMRange = AddrMRange(averagedAddrMRange.end, left.addrMRange.end) // picked left.addrMRange.end; right.addrMRange.end would be exactly the same
-                val adjustedCombinedLink = left.copy(addrMRange = adjustedAddrMRange,originalAddrMRange = adjustedAddrMRange)
+            Seq(continuousAfterTerminatedLeftOrCombined, continuousAfterTerminatedRightOrCombined)
+              .flatten
+              .distinct match { // .distinct removes duplicates (combined link can be on both lists)
+              // Case: No links
+              case (Seq()) =>
+                // Just update the terminated links
+                updateProjectLinksList(Seq(adjustedTerminatedLeft, adjustedTerminatedRight), projectLinks)
+                // Case: Single combined link
+              case (Seq(combinedLink)) if combinedLink.track == Track.Combined =>
+                // No need to update the combined link that is continuous after termination, addresses should already match on track changing spot
+                // Just update the terminated links
+                updateProjectLinksList(Seq(adjustedTerminatedLeft, adjustedTerminatedRight), projectLinks)
+                // Case: Two links, one is Track.LeftSide and the other is Track.RightSide
+              case (Seq(left, right)) if left.track == Track.LeftSide && right.track == Track.RightSide  =>
 
-                updateProjectLinksList(Seq(adjustedTerminatedLeft, adjustedTerminatedRight, adjustedCombinedLink), projectLinks)
-
-              // Case: Both are non-empty, one is Track.LeftSide and the other is Track.RightSide
-              case (Some(left), Some(right)) if (left.track == Track.LeftSide && right.track == Track.RightSide) =>
+                // Adjust both links and update the project links list with the adjusted terminated links and the adjusted continuous-after-termination links
                 val adjustedLeftAddrMRange = AddrMRange(averagedAddrMRange.end, left.addrMRange.end)
-                val adjustedLeft = left.copy(addrMRange = adjustedLeftAddrMRange,originalAddrMRange = adjustedLeftAddrMRange)
+                val adjLeftContinuousAfterTerminated = left.copy(addrMRange = adjustedLeftAddrMRange,originalAddrMRange = adjustedLeftAddrMRange)
 
                 val adjustedRightAddrMRange = AddrMRange(averagedAddrMRange.end, right.addrMRange.end)
-                val adjustedRight = right.copy(addrMRange = adjustedRightAddrMRange, originalAddrMRange = adjustedRightAddrMRange)
+                val adjRightContinuousAfterTerminated = right.copy(addrMRange = adjustedRightAddrMRange, originalAddrMRange = adjustedRightAddrMRange)
 
-                updateProjectLinksList(Seq(adjustedTerminatedLeft, adjustedTerminatedRight, adjustedLeft, adjustedRight), projectLinks)
+                updateProjectLinksList(Seq(adjustedTerminatedLeft, adjustedTerminatedRight, adjLeftContinuousAfterTerminated, adjRightContinuousAfterTerminated), projectLinks)
 
-              // Default case: Either one or both are empty
+              // Case: More than two links continue after termination
               case _ =>
-                updateProjectLinksList(Seq(adjustedTerminatedLeft, adjustedTerminatedRight), projectLinks)
+                //updateProjectLinksList(Seq(adjustedTerminatedLeft, adjustedTerminatedRight), projectLinks)
+                throw ViiteException(s"More than two links found to continue after terminated section!")
             }
           } else {
             projectLinks
