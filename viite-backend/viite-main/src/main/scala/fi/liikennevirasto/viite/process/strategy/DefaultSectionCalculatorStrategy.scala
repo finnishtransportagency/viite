@@ -335,7 +335,8 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
               // the calculation result might be wrong, so the user is notified to fix discontinuities.
               // If the discontinuities are set correct and the calculation still has length mismatch,
               // then throw the length mismatch error.
-              val discontinuityErrors = projectValidator.checkProjectContinuity(projectDAO.fetchById(pls.head.projectId).get, pls)
+              val roadPartProjectLinksWithoutTerminated = projectLinkDAO.fetchProjectLinks(pls.head.projectId).filter(pl => pl.roadPart == pls.head.roadPart && pl.status != RoadAddressChangeType.Termination)
+              val discontinuityErrors = projectValidator.checkProjectContinuity(projectDAO.fetchById(pls.head.projectId).get, roadPartProjectLinksWithoutTerminated)
               if (discontinuityErrors.nonEmpty) {
                 val erroneousLinkIds = discontinuityErrors.flatMap(err => err.affectedLinkIds).mkString(", ")
                 throw ViiteException(s"Tarkista jatkuvuuskoodit linkeiltä: $erroneousLinkIds")
