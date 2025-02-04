@@ -2180,12 +2180,12 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
               case (Seq()) =>
                 // Just update the terminated links
                 updateProjectLinksList(Seq(adjustedTerminatedLeft, adjustedTerminatedRight), projectLinks)
-                // Case: Single combined link
+              // Case: Single combined link
               case (Seq(combinedLink)) if combinedLink.track == Track.Combined =>
                 // No need to update the combined link that is continuous after termination, addresses should already match on track changing spot
                 // Just update the terminated links
                 updateProjectLinksList(Seq(adjustedTerminatedLeft, adjustedTerminatedRight), projectLinks)
-                // Case: Two links, one is Track.LeftSide and the other is Track.RightSide
+              // Case: Two links, one is Track.LeftSide and the other is Track.RightSide
               case (Seq(left, right)) if left.track == Track.LeftSide && right.track == Track.RightSide  =>
 
                 // Adjust both links and update the project links list with the adjusted terminated links and the adjusted continuous-after-termination links
