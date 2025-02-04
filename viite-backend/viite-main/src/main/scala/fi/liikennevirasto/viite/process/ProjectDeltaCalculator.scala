@@ -2,7 +2,6 @@ package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.viite.dao.{ProjectLink, _}
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, CalibrationPointType, Discontinuity, RoadAddressChangeType, RoadPart, Track}
-import fi.vaylavirasto.viite.util.ViiteException
 import org.joda.time.DateTime
 
 import scala.annotation.tailrec
