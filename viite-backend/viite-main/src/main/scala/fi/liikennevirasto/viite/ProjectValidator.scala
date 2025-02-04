@@ -9,7 +9,7 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.{RoadwayAddressMapper, TrackSectionOrder}
 import fi.liikennevirasto.viite.process.TrackSectionOrder.findChainEndpoints
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, RoadAddressChangeType, RoadPart, SideCode, Track}
+import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinuity, RoadAddressChangeType, RoadPart, SideCode, Track}
 import fi.vaylavirasto.viite.util.DateTimeFormatters.finnishDateFormatter
 import org.slf4j.LoggerFactory
 
@@ -30,9 +30,9 @@ class ProjectValidator {
   val junctionPointDAO = new JunctionPointDAO
   val roadAddressService: RoadAddressService = new RoadAddressService(linkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, new RoadwayAddressMapper(roadwayDAO, linearLocationDAO), eventBus, ViiteProperties.kgvRoadlinkFrozen) {
 
-    override def withDynSession[T](f: => T): T = f
+    override def runWithReadOnlySession[T](f: => T): T = f
 
-    override def withDynTransaction[T](f: => T): T = f
+    override def runWithTransaction[T](f: => T): T = f
   }
 
   val projectLinkDAO = new ProjectLinkDAO
@@ -675,11 +675,13 @@ class ProjectValidator {
           case (left, right) if left.nonEmpty && right.nonEmpty =>
                 val leftSection      = (projectLinksByAdministrativeClass._1, left.minBy(_.addrMRange.start).addrMRange.start, left.maxBy(_.addrMRange.end).addrMRange.end)
                 val rightSection     = (projectLinksByAdministrativeClass._1, right.minBy(_.addrMRange.start).addrMRange.start, right.maxBy(_.addrMRange.end).addrMRange.end)
-                val startSectionAdrr = Seq(leftSection._2, rightSection._2).max
-                val endSectionAddr   = Seq(leftSection._3, rightSection._3).min
+                val sectionAddrMRange = AddrMRange(
+                  Seq(leftSection._2, rightSection._2).max,
+                  Seq(leftSection._3, rightSection._3).min
+                )
                 if (leftSection != rightSection) {
-                  val criticalLeftLinks  = left.filterNot(link => {link.addrMRange.start >= startSectionAdrr && link.addrMRange.end <= endSectionAddr}).filterNot(link => {right.map(_.addrMRange.start).contains(link.addrMRange.start) || right.map(_.addrMRange.end).contains(link.addrMRange.end)})
-                  val criticalRightLinks = right.filterNot(link => {link.addrMRange.start >= startSectionAdrr && link.addrMRange.end <= endSectionAddr}).filterNot(link => {left.map(_.addrMRange.start).contains(link.addrMRange.start) || left.map(_.addrMRange.end).contains(link.addrMRange.end)})
+                  val criticalLeftLinks  =  left.filterNot(link => sectionAddrMRange.contains(link.addrMRange)).filterNot(link => {right.map(_.addrMRange.start).contains(link.addrMRange.start) || right.map(_.addrMRange.end).contains(link.addrMRange.end)})
+                  val criticalRightLinks = right.filterNot(link => sectionAddrMRange.contains(link.addrMRange)).filterNot(link => { left.map(_.addrMRange.start).contains(link.addrMRange.start) ||  left.map(_.addrMRange.end).contains(link.addrMRange.end)})
                   criticalLeftLinks ++ criticalRightLinks
                 } else Seq.empty[ProjectLink]
             case (left, right) if left.isEmpty || right.isEmpty => left ++ right

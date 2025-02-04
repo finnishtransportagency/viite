@@ -14,7 +14,7 @@ import fi.liikennevirasto.viite.util.DigiroadSerializers
 import fi.vaylavirasto.viite.dao.{RoadName, RoadNameForRoadAddressBrowser}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, BeforeAfter, Discontinuity, LinkGeomSource, NodePointType, NodeType, RoadAddressChangeType, RoadPart, Track}
-import fi.vaylavirasto.viite.postgis.PostGISDatabase
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC
 import fi.vaylavirasto.viite.util.DateTimeFormatters.{ISOdateFormatter, dateSlashFormatter, finnishDateFormatter, finnishDateCommaTimeFormatter}
 import org.joda.time.DateTime
 import org.json4s._
@@ -1201,7 +1201,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
     val projectId = params("projectId").toLong
     time(logger, s"GET request for /project/recalculateProject/$projectId") {
       try {
-        val invalidUnchangedLinkErrors = PostGISDatabase.withDynTransaction {
+        val invalidUnchangedLinkErrors = PostGISDatabaseScalikeJDBC.runWithTransaction {
           val project = projectService.fetchProjectById(projectId).get
           val invalidUnchangedLinkErrors = projectService.projectValidator.checkForInvalidUnchangedLinks(project, projectLinkDAO.fetchProjectLinks(projectId))
           if (invalidUnchangedLinkErrors.isEmpty) {

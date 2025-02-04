@@ -8,7 +8,7 @@ import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.vaylavirasto.viite.dao.Sequences
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, BeforeAfter, Discontinuity, LinkGeomSource, NodePointType, NodeType, RoadPart, SideCode, Track}
-import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
 
 class NodePointDAOSpec extends AnyFunSuite with Matchers {
 

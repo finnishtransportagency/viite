@@ -8,11 +8,11 @@ import fi.liikennevirasto.viite.dao.{LinearLocation, LinearLocationDAO, Roadway,
 import fi.vaylavirasto.viite.geometry.GeometryUtils
 import fi.vaylavirasto.viite.geometry.GeometryUtils.scaleToThreeDigits
 import fi.vaylavirasto.viite.model.{LinkGeomSource, RoadPart}
-import fi.vaylavirasto.viite.postgis.PostGISDatabase
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC
 import fi.vaylavirasto.viite.util.DateTimeFormatters.finnishDateFormatter
 import fi.vaylavirasto.viite.util.ViiteException
 import org.apache.hc.client5.http.classic.methods.HttpGet
-import org.apache.hc.client5.http.impl.classic.{CloseableHttpClient,HttpClients}
+import org.apache.hc.client5.http.impl.classic.{CloseableHttpClient, HttpClients}
 import org.apache.hc.core5.http.{ClassicHttpResponse, HttpStatus}
 import org.apache.hc.core5.http.io.HttpClientResponseHandler
 import org.apache.hc.core5.http.io.entity.EntityUtils
@@ -47,9 +47,8 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
 
   val bucketName: String = ViiteProperties.dynamicLinkNetworkS3BucketName
 
-  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
+  def runWithTransaction[T](f: => T): T = PostGISDatabaseScalikeJDBC.runWithTransaction(f)
 
-  def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
 
   implicit val formats = DefaultFormats
   val logger: Logger = LoggerFactory.getLogger(getClass)
@@ -496,7 +495,7 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
   }
 
   def createChangeSetsAndErrorsList(previousDate: DateTime, newDate: DateTime): (Seq[LinkNetworkChange], Seq[TiekamuRoadLinkChangeError], Seq[TiekamuRoadLinkChange]) = {
-    withDynTransaction {
+    runWithTransaction {
       val activeLinearLocations = linearLocationDAO.fetchActiveLinearLocationsWithRoadAddresses() // get linear locations that are on active road addresses
       val tiekamuRoadLinkChanges = createTiekamuRoadLinkChangeSets(previousDate: DateTime, newDate: DateTime, activeLinearLocations)
 

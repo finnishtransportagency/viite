@@ -12,15 +12,19 @@ import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point, 
 import fi.vaylavirasto.viite.model.CalibrationPointType.NoCP
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinuity, LinkGeomSource, RoadAddressChangeType, RoadPart, SideCode, Track}
 import fi.vaylavirasto.viite.postgis.DbUtils.runUpdateToDb
-import fi.vaylavirasto.viite.postgis.PostGISDatabase
-import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
+import fi.vaylavirasto.viite.postgis.GeometryDbUtils
+import scalikejdbc._
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
-import org.mockito.stubbing.OngoingStubbing
+import org.mockito.invocation.InvocationOnMock
+import org.mockito.stubbing.{Answer, OngoingStubbing}
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
+
+import scala.concurrent.Future
 
 
 class ProjectValidatorSpec extends AnyFunSuite with Matchers {
@@ -66,8 +70,8 @@ class ProjectValidatorSpec extends AnyFunSuite with Matchers {
                         roadwayAddressMapper,
                         mockEventBus
                         ) {
-                            override def withDynSession[T](f: => T): T = f
-                            override def withDynTransaction[T](f: => T): T = f
+                            override def runWithReadOnlySession[T](f: => T): T = f
+                            override def runWithTransaction[T](f: => T): T = f
                           }
 
   private val roadwayNumber1 = 1000000000L
@@ -142,7 +146,7 @@ class ProjectValidatorSpec extends AnyFunSuite with Matchers {
       roadwayDAO.create(rw)
       val roadways = newLinks.map(p => (p.roadPart)).distinct.flatMap(p => roadwayDAO.fetchAllByRoadPart(p))
       newLinks.map(nl => {
-        val roadway = roadways.find(r => r.roadPart == nl.roadPart && r.addrMRange.start == nl.addrMRange.start && r.addrMRange.end == nl.addrMRange.end)
+        val roadway = roadways.find(r => r.roadPart == nl.roadPart && r.addrMRange.isSameAs(nl.addrMRange))
         if (roadway.nonEmpty) {
           nl.copy(roadwayId = roadway.get.id, roadwayNumber = roadway.get.roadwayNumber)
         }
@@ -2232,7 +2236,13 @@ Left|      |Right
       val reservedParts = projectReservedPartDAO.fetchReservedRoadParts(project.id)
       val errors = allLinks.groupBy(l => (l.roadPart)).flatMap(g => projectValidator.checkRoadContinuityCodes(project.copy(reservedParts = reservedParts), g._2).distinct)
       errors.size should be(0)
-      runUpdateToDb("""UPDATE PROJECT_LINK SET DISCONTINUITY_TYPE = 2  WHERE ROAD_NUMBER = 19999 AND ROAD_PART_NUMBER = 1 AND DISCONTINUITY_TYPE <> 1""")
+      runUpdateToDb(sql"""
+             UPDATE project_link
+             SET discontinuity_type = 2
+             WHERE road_number = 19999
+             AND road_part_number = 1
+             AND discontinuity_type <> 1
+             """)
       val linksAfterTransfer = projectLinkDAO.fetchProjectLinks(project.id)
       val errorsAfterTransfer = linksAfterTransfer.groupBy(l => (l.roadPart)).flatMap(g => projectValidator.checkRoadContinuityCodes(project.copy(reservedParts = reservedParts), g._2).distinct)
       linksAfterTransfer.head.connected(linksAfterTransfer.last) should be(true)
@@ -2359,7 +2369,13 @@ Left|      |Right
 
       val errors = allLinks.groupBy(l => (l.roadPart)).flatMap(g => projectValidator.checkRoadContinuityCodes(project.copy(reservedParts = reservedParts, formedParts = formedParts), g._2).distinct)
       errors.size should be(0)
-      runUpdateToDb("""UPDATE PROJECT_LINK SET ROAD_PART_NUMBER = 1, STATUS = 3, START_ADDR_M = 10, END_ADDR_M = 20 WHERE ROAD_NUMBER = 19999 AND ROAD_PART_NUMBER = 2""")
+      runUpdateToDb(
+        sql"""
+             UPDATE project_link
+             SET road_part_number = 1, status = 3, start_addr_m = 10, end_addr_m = 20
+             WHERE road_number = 19999
+             AND road_part_number = 2
+             """)
       val linksAfterTransfer = projectLinkDAO.fetchProjectLinks(project.id).sortBy(_.addrMRange.start)
 
       when(mockRoadAddressService.getValidRoadAddressParts(any[Long], any[DateTime])).thenReturn(Seq(1L, 2L))
@@ -2855,7 +2871,13 @@ Left|      |Right
       val (project, _) = util.setUpProjectWithLinks(RoadAddressChangeType.New, Seq(10L, 20L, 30L), roads = Seq((RoadPart(19999, 1), "Test road")), discontinuity = Discontinuity.Continuous, changeTrack = true)
       projectLinkDAO.create(Seq(util.toProjectLink(project, RoadAddressChangeType.New)(ra.head)))
       projectReservedPartDAO.reserveRoadPart(project.id, RoadPart(19999, 2), "u")
-      runUpdateToDb(s"""UPDATE Project_Link Set Road_part_Number = 2, Discontinuity_type = 1, start_addr_m = 0 , end_addr_m = 10 Where project_id = ${project.id} and end_addr_m = 30""")
+      runUpdateToDb(
+        sql"""
+             UPDATE project_link
+             SET road_part_number = 2, discontinuity_type = 1, start_addr_m = 0 , end_addr_m = 10
+             WHERE project_id = ${project.id}
+             AND end_addr_m = 30
+             """)
       val projectLinks = projectLinkDAO.fetchProjectLinks(project.id)
       val reservedParts = projectReservedPartDAO.fetchReservedRoadParts(project.id)
       val formedParts = projectReservedPartDAO.fetchFormedRoadParts(project.id)
@@ -2871,12 +2893,18 @@ Left|      |Right
       val noErrors = projectValidator.checkRoadContinuityCodes(projectWithReservations, projectLinks)
       noErrors.size should be(0)
 
-      //Should return Discontinuity.Discontinuous to both Project Links, part number = 1
+      // Should return Discontinuity.Discontinuous to both Project Links, part number = 1
       val discontinuousGeom = Seq(Point(40.0, 50.0), Point(60.0, 70.0))
       val geometry = Seq(Point(40.0, 50.0), Point(60.0, 70.0))
-      val lineString: String = PostGISDatabase.createJGeometry(geometry)
-      val geometryQuery = s"ST_GeomFromText('$lineString', 3067)"
-      runUpdateToDb(s"""UPDATE PROJECT_LINK Set GEOMETRY = $geometryQuery Where PROJECT_ID = ${project.id} AND ROAD_PART_NUMBER = 2""")
+      val lineString: String = GeometryDbUtils.createJGeometry(geometry)
+      val geometryQuery = sqls"ST_GeomFromText($lineString, 3067)"
+      runUpdateToDb(
+        sql"""
+             UPDATE project_link
+             SET geometry = $geometryQuery
+             WHERE project_id = ${project.id}
+             AND road_part_number = 2
+             """)
       val errorsAtEnd = projectValidator.checkRoadContinuityCodes(projectWithReservations, projectLinks.map(pl => {
         if (pl.roadPart.partNumber == 2)
           pl.copyWithGeometry(discontinuousGeom)
@@ -3009,14 +3037,25 @@ Left|      |Right
       val newLinksOnly = additionalProjectLinks2.diff(originalProjectLinks)
       val min = newLinksOnly.minBy(_.addrMRange.start).addrMRange.start
       newLinksOnly.foreach(p => {
-        projectLinkDAO.updateAddrMValues(p.copy(addrMRange = p.addrMRange.move(-min), originalAddrMRange = p.originalAddrMRange.move(-min)))
-        runUpdateToDb(s"""UPDATE project_link SET ely = ${scala.util.Random.nextInt(5)} WHERE id = ${p.id}""")
+       projectLinkDAO.updateAddrMValues(p.copy(addrMRange = p.addrMRange.move(-min), originalAddrMRange = p.originalAddrMRange.move(-min)))
+        runUpdateToDb(
+          sql"""
+               UPDATE project_link
+               SET ely = ${scala.util.Random.nextInt(5)}
+               WHERE id = ${p.id}
+               """)
       })
       val updatedProjectLinks = projectLinkDAO.fetchProjectLinks(project.id)
       updatedProjectLinks.map(_.roadwayId)
       mockEmptyRoadAddressServiceCalls()
       updatedProjectLinks.foreach(p =>
-        runUpdateToDb(s"""UPDATE roadway Set ely = 8 Where road_number = ${p.roadPart.roadNumber} and road_part_number = ${p.roadPart.partNumber} """)
+        runUpdateToDb(
+          sql"""
+               UPDATE roadway
+               SET ely = 8
+               WHERE road_number = ${p.roadPart.roadNumber}
+               AND road_part_number = ${p.roadPart.partNumber}
+               """)
       )
       val elyCodeCheck = projectValidator.checkProjectElyCodes(project, updatedProjectLinks)
       elyCodeCheck.size should be(1)

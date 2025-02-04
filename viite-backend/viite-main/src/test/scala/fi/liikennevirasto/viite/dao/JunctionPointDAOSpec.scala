@@ -3,7 +3,7 @@ package fi.liikennevirasto.viite.dao
 import fi.liikennevirasto.viite.NewIdValue
 import fi.vaylavirasto.viite.dao.Sequences
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, BeforeAfter, Discontinuity, RoadPart, Track}
-import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
 import org.joda.time.DateTime
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers

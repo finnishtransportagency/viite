@@ -41,7 +41,7 @@ case class AddrMRange (start: Long, end: Long)// extends Ordered[AddrMRange]
   def isValid:     Boolean = {  this.end > 0  }
   /** Returns true, if this AddrMRange has both <i>start</i>, and <i>end</i> zeroes. Else false. */
   def isInvalid:   Boolean = {  this.start == 0 && this.end == 0  }
-  /** Convenience function. Returns true, if this AddrMRange is invalid (see [[AddrMRange.isInvalid]]). Else false. */
+  /** Convenience function. Synonym of isInvalid. Returns true, if this AddrMRange is invalid (see [[AddrMRange.isInvalid]]). Else false. */
   def isUndefined: Boolean = {  this.isInvalid  }
 
   /** Returns true, if this AddrMRange has 0 as start, and >0 as end (that is, it is a valid addrMRange). */
@@ -49,12 +49,40 @@ case class AddrMRange (start: Long, end: Long)// extends Ordered[AddrMRange]
 
 
   // ----------------------------------- Connectivity checks -----------------------------------
+  /** Returns true, if the compared AddrMRanges have the same start, and end values, and both are valid ranges. Else false.
+   * @throws ViiteException if either AddrMRange isUndefined.
+   */
+  def isSameAs(other: AddrMRange): Boolean = {
+    if(!bothAreValid(this,other))
+      throw new ViiteException(s"Cannot detect sameness of undefined address range (between $this, $other). ")
+    this.start == other.start && this.end  == other.end && bothAreValid(this,other)
+  }
+
+  /** Returns true, if other AddrMRange fully fits within this AddrMRange, (equal ending points allowed,) and both are valid ranges. Else false.
+   * @throws ViiteException if either AddrMRange isUndefined.
+   */
+  def contains(other: AddrMRange): Boolean = {
+    if(!bothAreValid(this,other))
+      throw new ViiteException(s"Cannot detect containment of undefined address range (between $this, $other). ")
+    this.start <= other.start && other.end <= this.end && bothAreValid(this,other)
+  }
+
+  /** Returns true, if this AddrMRange has more than single point in common with <i>other</i>, and both are valid ranges. Else false.
+   * @throws ViiteException if either AddrMRange isUndefined.
+   */
+  def overlaps(other: AddrMRange): Boolean = {
+    if(!bothAreValid(this,other))
+      throw new ViiteException(s"Cannot detect overlapping of undefined address range (between $this, $other). ")
+    this.start < other.end && this.end > other.start && bothAreValid(this,other)
+  }
+
   /** Returns true, if <i>other</i> is right after <i>this</i>, i.e. this.end == other.start, and both are valid ranges. Else false. */
   def continuesTo(other: AddrMRange): Boolean = {   this.end == other.start && bothAreValid(this,other)  }
   /** Returns true, if <i>other</i> is right before <i>this</i>, i.e. this.start == other.end, and both are valid ranges. Else false. */
   def continuesFrom(other: AddrMRange): Boolean = {   this.start == other.end && bothAreValid(this,other)  }
   /** Returns true, if <i>other</i> is right before or after <i>this</i>, i.e. this.end == other.start, or this.end == other.start, and both are valid ranges. Else false. */
   def isAdjacentTo      (other: AddrMRange): Boolean = {  (this.end == other.start || this.start == other.end) && bothAreValid(this,other)  }
+
 
 
   // ---------------------------- Functions returning numeric values, or AddrMRange copies ----------------------------

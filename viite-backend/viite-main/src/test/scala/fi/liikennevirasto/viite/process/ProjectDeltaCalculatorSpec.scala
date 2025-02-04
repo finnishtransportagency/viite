@@ -11,7 +11,7 @@ import fi.vaylavirasto.viite.model.CalibrationPointType.{JunctionPointCP, NoCP, 
 import fi.vaylavirasto.viite.model.LinkGeomSource.{FrozenLinkInterface, NormalLinkInterface}
 import fi.vaylavirasto.viite.model.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinuity, LinkGeomSource, RoadAddressChangeType, RoadPart, Track}
-import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
 import org.joda.time.DateTime
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
