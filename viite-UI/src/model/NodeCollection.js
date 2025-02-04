@@ -64,7 +64,7 @@
     };
 
     /**
-     * Moves to node/junction template location and handles node data loading.
+     * Moves to selected node/junction template location and handles node data loading.
      *
      * Process:
      * 1. Searches location based on road address
@@ -96,55 +96,62 @@
         });
 
         // Fetch node data for the selected location
-        await new Promise((resolve) => {
-          eventbus.once('node:fetched', (fetchedNodesAndJunctions) => {
-            // Handle fetched node data once received
-            if (fetchedNodesAndJunctions && (fetchedNodesAndJunctions.junctionTemplates || fetchedNodesAndJunctions.nodePointTemplates)) {
-              const referencePoint = {
-                // Calculate reference point for template filtering
-                x: parseFloat(result.lon.toFixed(3)),
-                y: parseFloat(result.lat.toFixed(3))
-              };
-
-              const templates = {
-                nodePoints: fetchedNodesAndJunctions.nodePointTemplates,
-                junctions: fetchedNodesAndJunctions.junctionTemplates
-              };
-
-              // Update data in nodeCollection
-              me.setNodes(fetchedNodesAndJunctions.nodes);
-              me.setMapTemplates(templates);
-
-              // Open template form with filtered data matching reference point
-              eventbus.trigger('selectedNodesAndJunctions:openTemplates', {
-                nodePoints: _.filter(templates.nodePoints, function (nodePoint) {
-                  return _.isEqual(nodePoint.coordinates, referencePoint);
-                }),
-                junctions: _.filter(templates.junctions, function (junction) {
-                  return _.some(junction.junctionPoints, function (junctionPoint) {
-                    return _.isEqual(junctionPoint.coordinates, referencePoint);
-                  });
-                })
-              });
-
-              // Update map with new node data
-              eventbus.trigger('node:addNodesToMap', fetchedNodesAndJunctions.nodes, {
-                nodePoints: fetchedNodesAndJunctions.nodePointTemplates,
-                junctions: fetchedNodesAndJunctions.junctionTemplates
-              }, zoomlevels.minZoomForJunctions);
-            }
-            resolve(fetchedNodesAndJunctions);
-          });
-          // Trigger node data fetch for the selected location
-          eventbus.trigger('nodeLayer:fetch');
+        const fetchedNodesAndJunctions = await new Promise((resolve) => {
+          eventbus.trigger('nodeLayer:fetch', resolve);
         });
+
+        if (fetchedNodesAndJunctions && (fetchedNodesAndJunctions.junctionTemplates || fetchedNodesAndJunctions.nodePointTemplates)) {
+          const referencePoint = {
+            // Calculate reference point for template filtering
+            x: parseFloat(result.lon.toFixed(3)),
+            y: parseFloat(result.lat.toFixed(3))
+          };
+
+          const templates = {
+            nodePoints: fetchedNodesAndJunctions.nodePointTemplates,
+            junctions: fetchedNodesAndJunctions.junctionTemplates
+          };
+
+          // Update data in nodeCollection
+          me.setNodes(fetchedNodesAndJunctions.nodes);
+          me.setMapTemplates(templates);
+
+          // Open template form with filtered data matching reference point
+          eventbus.trigger('selectedNodesAndJunctions:openTemplates', {
+            nodePoints: _.filter(templates.nodePoints, function (nodePoint) {
+              return _.isEqual(nodePoint.coordinates, referencePoint);
+            }),
+            junctions: _.filter(templates.junctions, function (junction) {
+              return _.some(junction.junctionPoints, function (junctionPoint) {
+                return _.isEqual(junctionPoint.coordinates, referencePoint);
+              });
+            })
+          });
+
+          // Update map with new node/junction template information
+          eventbus.trigger('node:addNodesToMap', fetchedNodesAndJunctions.nodes, templates, zoomlevels.minZoomForJunctions);
+        }
       } catch (error) {
-        console.error('Operation failed:', error);
+        console.error('Error in moveToLocation:', error);
       } finally {
-        // Ensure spinner is always removed
         applicationModel.removeSpinner('moveToLocation');
       }
     };
+
+    // Fetches nodes and junctions within the given bounding box and zoom level, processes the fetched road links, and triggers the 'node:fetched' event.
+    eventbus.on('node:fetched', function (fetchResult, zoom) {
+      applicationModel.removeSpinner(fetching);
+      var resultNodes = fetchResult.nodes;
+      var templates = {
+        nodePoints: fetchResult.nodePointTemplates,
+        junctions: fetchResult.junctionTemplates
+      };
+
+      me.setNodes(resultNodes);
+      me.setMapTemplates(templates);
+
+      eventbus.trigger('node:addNodesToMap', resultNodes, templates, zoom);
+    });
 
     eventbus.on('node:save', function (node) {
       var fail = function (message) {
