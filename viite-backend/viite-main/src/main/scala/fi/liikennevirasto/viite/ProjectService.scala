@@ -2192,6 +2192,22 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
   def adjustTerminations(projectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
 
     /**
+     * Divide terminated project links in to continuous two track sections.
+     *
+     * (Homogeneous by RoadPart, Track, Status and Continuous by address M values)
+     */
+    def terminatedLinksToToContinuousTwoTrackSections(terminatedLinks: Seq[ProjectLink]) : (Seq[Seq[ProjectLink]], Seq[Seq[ProjectLink]]) = {
+      val terminatedLeft = terminatedLinks.filter(_.track == Track.LeftSide)
+      val terminatedRight = terminatedLinks.filter(_.track == Track.RightSide)
+
+      // Group terminated links into continuous sections by status
+      val leftTerminatedSections = toContinuousSectionsByStatus(terminatedLeft, RoadAddressChangeType.Termination)
+      val rightTerminatedSections = toContinuousSectionsByStatus(terminatedRight, RoadAddressChangeType.Termination)
+
+      (leftTerminatedSections, rightTerminatedSections)
+    }
+
+    /**
      * Checks if there is a two track termination on road part start.
      * If there is, then adjusts the terminated tracks to match + the originalAddrMRange start of the links right after the terminated segment.
      * Else returns the project links unchanged.
@@ -2273,12 +2289,9 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
         processedLinks
       }
 
-      val terminated = projectLinks.filter(_.status == RoadAddressChangeType.Termination)
-      val terminatedLeft = terminated.filter(_.track == Track.LeftSide)
-      val terminatedRight = terminated.filter(_.track == Track.RightSide)
-      // Group terminated links into continuous sections by status
-      val leftTerminatedSections = toContinuousSectionsByStatus(terminatedLeft, RoadAddressChangeType.Termination)
-      val rightTerminatedSections = toContinuousSectionsByStatus(terminatedRight, RoadAddressChangeType.Termination)
+      val terminatedLinks = projectLinks.filter(_.status == RoadAddressChangeType.Termination)
+
+      val (leftTerminatedSections, rightTerminatedSections) = terminatedLinksToToContinuousTwoTrackSections(terminatedLinks)
 
       val roadPartStartTerminatedLefts = leftTerminatedSections.find(section => section.exists(_.addrMRange.isRoadPartStart))
       val roadPartStartTerminatedRights = rightTerminatedSections.find(section => section.exists(_.addrMRange.isRoadPartStart))
@@ -2297,13 +2310,10 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
     }
 
     def roadPartMiddleTerminated(projectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
-      val terminated = projectLinks.filter(_.status == RoadAddressChangeType.Termination)
-      val terminatedLeft = terminated.filter(_.track == Track.LeftSide)
-      val terminatedRight = terminated.filter(_.track == Track.RightSide)
 
-      // Group terminated links into continuous sections by status
-      val leftTerminatedSections = toContinuousSectionsByStatus(terminatedLeft, RoadAddressChangeType.Termination)
-      val rightTerminatedSections = toContinuousSectionsByStatus(terminatedRight, RoadAddressChangeType.Termination)
+      val terminatedLinks = projectLinks.filter(_.status == RoadAddressChangeType.Termination)
+
+      val (leftTerminatedSections, rightTerminatedSections) = terminatedLinksToToContinuousTwoTrackSections(terminatedLinks)
 
       val processedLinks = if (leftTerminatedSections.nonEmpty && rightTerminatedSections.nonEmpty) { // Check if road part start is terminated on both tracks
         handleTwoTrackMiddleTermination(leftTerminatedSections, rightTerminatedSections, projectLinks)
