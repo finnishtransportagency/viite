@@ -285,15 +285,14 @@ object ProjectDeltaCalculator {
 
     val sections = sectioned.map(sect => {
       val (src, targetToMap) = sect
-      val target                    = targetToMap.copy(projectLinks = projectLinks.filter(link => {
+      val target = targetToMap.copy(projectLinks = projectLinks.filter(link => {
           link.roadPart == RoadPart(targetToMap.roadNumber, targetToMap.roadPartNumberEnd) &&
           link.track == targetToMap.track && link.ely == targetToMap.ely &&
           targetToMap.addrMRange.contains(link.addrMRange)
         }))
 
       (src,target)
-    }
-    )
+    })
 
     ChangeTableRows2(adjustedSections = sections.map(_._2), originalSections = sections.map(_._1))
   }
