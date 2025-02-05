@@ -9,7 +9,7 @@ import fi.vaylavirasto.viite.geometry.Point
 import fi.vaylavirasto.viite.model.CalibrationPointType.{JunctionPointCP, NoCP, RoadAddressCP}
 import fi.vaylavirasto.viite.model.LinkGeomSource.{ComplementaryLinkInterface, FrozenLinkInterface}
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinuity, RoadAddressChangeType, RoadPart, SideCode, Track}
-import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
 import org.joda.time.DateTime
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
@@ -38,16 +38,14 @@ class ProjectLinkRecalculationSpec extends AnyFunSuite with Matchers {
 
   val roadAddressService: RoadAddressService = new RoadAddressService(mockRoadLinkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, mockRoadwayAddressMapper, mockEventBus, frozenKGV = false) {
 
-    override def withDynSession[T](f: => T): T = f
-
-    override def withDynTransaction[T](f: => T): T = f
+    override def runWithReadOnlySession[T](f: => T): T = f
+    override def runWithTransaction[T](f: => T): T = f
   }
 
   val roadAddressServiceRealRoadwayAddressMapper: RoadAddressService = new RoadAddressService(mockRoadLinkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, roadwayAddressMapper, mockEventBus, frozenKGV = false) {
 
-    override def withDynSession[T](f: => T): T = f
-
-    override def withDynTransaction[T](f: => T): T = f
+    override def runWithReadOnlySession[T](f: => T): T = f
+    override def runWithTransaction[T](f: => T): T = f
   }
 
   val projectService: ProjectService =
@@ -68,8 +66,8 @@ class ProjectLinkRecalculationSpec extends AnyFunSuite with Matchers {
       roadwayAddressMapper,
       mockEventBus
     ) {
-      override def withDynSession[T](f: => T): T = f
-      override def withDynTransaction[T](f: => T): T = f
+      override def runWithReadOnlySession[T](f: => T): T = f
+      override def runWithTransaction[T](f: => T): T = f
     }
 
   /**
