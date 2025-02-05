@@ -2086,15 +2086,15 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
                 Seq(updatedLeft)
               } else {
                 // Update separately
-                val firstLeftAdjustedAddrMRange = AddrMRange(averageStartForTermSect, firstTerminatedLeft.addrMRange.end)
+                val startAveraged = AddrMRange(averageStartForTermSect, firstTerminatedLeft.addrMRange.end)
                 val firstLeftUpdated = firstTerminatedLeft.copy(
-                  addrMRange          = firstLeftAdjustedAddrMRange,
-                  originalAddrMRange  = firstLeftAdjustedAddrMRange)
+                  addrMRange          = startAveraged,
+                  originalAddrMRange  = startAveraged)
 
-                val lastLeftAdjustedAddrMRange = AddrMRange(lastTerminatedLeft.addrMRange.start, averageEndForTermSect)
+                val endAveraged = AddrMRange(lastTerminatedLeft.addrMRange.start, averageEndForTermSect)
                 val lastLeftUpdated = lastTerminatedLeft.copy(
-                  addrMRange          = lastLeftAdjustedAddrMRange,
-                  originalAddrMRange  = lastLeftAdjustedAddrMRange
+                  addrMRange          = endAveraged,
+                  originalAddrMRange  = endAveraged
                 )
 
                 Seq(firstLeftUpdated,lastLeftUpdated)
@@ -2112,14 +2112,16 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
                 Seq(updatedRight)
               } else {
                 // Update separately
+                val startAveraged = AddrMRange(averageStartForTermSect, firstTerminatedRight.addrMRange.end)
                 val firstRightUpdated = firstTerminatedRight.copy(
-                  addrMRange          = AddrMRange(averageStartForTermSect, firstTerminatedRight.addrMRange.end),
-                  originalAddrMRange  = AddrMRange(averageStartForTermSect, firstTerminatedRight.addrMRange.end)
+                  addrMRange          = startAveraged,
+                  originalAddrMRange  = startAveraged
                 )
 
+                val endAveraged = AddrMRange(lastTerminatedRight.addrMRange.start, averageEndForTermSect)
                 val lastRightUpdated = lastTerminatedRight.copy(
-                  addrMRange          = AddrMRange(lastTerminatedRight.addrMRange.start, averageEndForTermSect),
-                  originalAddrMRange  = AddrMRange(lastTerminatedRight.addrMRange.start, averageEndForTermSect)
+                  addrMRange          = endAveraged,
+                  originalAddrMRange  = endAveraged
                 )
 
                 Seq(firstRightUpdated,lastRightUpdated)
@@ -2311,7 +2313,7 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
       processedLinks
     }
 
-    def existsTerminationsOnTwoDiffTracks(projectLinks: Seq[ProjectLink]): Boolean = {
+    def existsTerminationsOnParallelTracks(projectLinks: Seq[ProjectLink]): Boolean = {
       projectLinks.exists(pl => pl.track == Track.RightSide && pl.status == RoadAddressChangeType.Termination) &&
       projectLinks.exists(pl => pl.track == Track.LeftSide && pl.status == RoadAddressChangeType.Termination)
     }
@@ -2322,7 +2324,7 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
       if (projectLinks.exists(_.status == RoadAddressChangeType.New))
         throw ViiteException(s"New links are not allowed for the process of adjusting terminated two track links!")
 
-      if (existsTerminationsOnTwoDiffTracks(projectLinks)) {
+      if (existsTerminationsOnParallelTracks(projectLinks)) {
         val orderedProjectLinks = projectLinks.sortBy(_.addrMRange.start)
         
         // List of termination cases
