@@ -1984,8 +1984,8 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
    * @returns Adjusted project links and the new AddrMRange of the adjusted project links.
    */
   def adjustTerminatedToMatch(terminatedLeft: ProjectLink, terminatedRight: ProjectLink): (ProjectLink, ProjectLink, AddrMRange) = {
-    val averageStart = Math.round((terminatedLeft.addrMRange.start.toDouble + terminatedRight.addrMRange.start.toDouble) / 2)
-    val averageEnd = Math.round((terminatedLeft.addrMRange.end.toDouble + terminatedRight.addrMRange.end.toDouble) / 2)
+    val averageStart = Math.round((terminatedLeft.addrMRange.start + terminatedRight.addrMRange.start).toDouble / 2)
+    val averageEnd = Math.round((terminatedLeft.addrMRange.end + terminatedRight.addrMRange.end).toDouble / 2)
 
     val averagedAddrMRange = AddrMRange(averageStart, averageEnd)
 
@@ -2063,8 +2063,8 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
             val lastTerminatedLeft  = leftTermSect.get.maxBy(_.addrMRange.end)
             val lastTerminatedRight = rightTermSect.get.maxBy(_.addrMRange.end)
 
-            val averageStartForTermSect = Math.round((firstTerminatedLeft.addrMRange.start.toDouble + firstTerminatedRight.addrMRange.start.toDouble) / 2)
-            val averageEndForTermSect   = Math.round((lastTerminatedLeft.addrMRange.end.toDouble + lastTerminatedRight.addrMRange.end.toDouble) / 2)
+            val averageStartForTermSect = Math.round((firstTerminatedLeft.addrMRange.start + firstTerminatedRight.addrMRange.start).toDouble / 2)
+            val averageEndForTermSect   = Math.round((lastTerminatedLeft.addrMRange.end + lastTerminatedRight.addrMRange.end).toDouble / 2)
 
             val adjustedMinorDiscLeft = leftLink.copy(
               addrMRange          = AddrMRange(leftLink.addrMRange.start, averageStartForTermSect),
@@ -2310,7 +2310,7 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
 
         def adjustTerminatedStartToMatch(terminatedLeftLink: ProjectLink, terminatedRightLink: ProjectLink): (ProjectLink, ProjectLink, Long) = {
           // Calculate the average for terminated section start
-          val averageStart = Math.round((terminatedLeftLink.addrMRange.start.toDouble + terminatedRightLink.addrMRange.start.toDouble) / 2)
+          val averageStart = Math.round((terminatedLeftLink.addrMRange.start + terminatedRightLink.addrMRange.start).toDouble / 2)
           val adjustedTermLeft = terminatedLeftLink.copy(
             addrMRange          = AddrMRange(averageStart, terminatedLeftLink.addrMRange.end),
             originalAddrMRange  = AddrMRange(averageStart, terminatedLeftLink.originalAddrMRange.end)
