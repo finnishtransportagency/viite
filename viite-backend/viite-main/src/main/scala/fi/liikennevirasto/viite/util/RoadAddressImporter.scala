@@ -581,10 +581,12 @@ class RoadAddressImporter(KGVClient: KgvRoadLink, importOptions: ImportOptions) 
             x2, y2, roadwayNumber, SideCode.TowardsDigitizing,
             getCalibrationCode(startCalibrationPoint, endCalibrationPoint, addrMRange), directionFlag)
         } else {
-          new ConversionAddress(roadPart, trackCode, discontinuity, addrMRange, startM, endM, startDate, endDate,
+          new ConversionAddress(
+            roadPart, trackCode, discontinuity, addrMRange, startM, endM, startDate, endDate,
             validFrom, expirationDate, ely, administrativeClass, 0, linkId, userId, x1, y1,
             x2, y2, roadwayNumber, SideCode.AgainstDigitizing,
-            getCalibrationCode(startCalibrationPoint, endCalibrationPoint, addrMRange), directionFlag)
+            getCalibrationCode(startCalibrationPoint, endCalibrationPoint, addrMRange), directionFlag
+          )
         }
       }
     }
