@@ -4366,14 +4366,14 @@ class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with Before
       nodePointTemplates.foreach(
         np => {
           if (np.roadwayNumber == roadLink1.roadwayNumber) {
-            if (np.addrM == roadLink1.addrMRange.start)
+            if (roadLink1.addrMRange.startsAt(np.addrM))
               runUpdateToDb(sql"""UPDATE NODE_POINT SET NODE_NUMBER = $nodeNumber1 WHERE ID = ${np.id}""")
-            else if (np.addrM == roadLink1.addrMRange.end)
+            else if (roadLink1.addrMRange.endsAt(np.addrM))
               runUpdateToDb(sql"""UPDATE NODE_POINT SET NODE_NUMBER = $nodeNumber2 WHERE ID = ${np.id}""")
           } else if (np.roadwayNumber == roadLink2.roadwayNumber) {
-            if (np.addrM == roadLink2.addrMRange.start)
+            if (roadLink2.addrMRange.startsAt(np.addrM))
               runUpdateToDb(sql"""UPDATE NODE_POINT SET NODE_NUMBER = $nodeNumber2 WHERE ID = ${np.id}""")
-            else if (np.addrM == roadLink2.addrMRange.end)
+            else if (roadLink2.addrMRange.endsAt(np.addrM))
               runUpdateToDb(sql"""UPDATE NODE_POINT SET NODE_NUMBER = $nodeNumber3 WHERE ID = ${np.id}""")
           }
         }
@@ -4381,10 +4381,10 @@ class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with Before
 
       val nodePoints = nodePointDAO.fetchByNodeNumbers(Seq(nodeNumber1, nodeNumber2, nodeNumber3))
       nodePoints.length should be(4)
-      nodePoints.exists(node => node.roadwayNumber == roadLink1.roadwayNumber && node.beforeAfter == BeforeAfter.After && node.addrM == roadLink1.addrMRange.start) should be(true)
-      nodePoints.exists(node => node.roadwayNumber == roadLink1.roadwayNumber && node.beforeAfter == BeforeAfter.Before && node.addrM == roadLink1.addrMRange.end) should be(true)
-      nodePoints.exists(node => node.roadwayNumber == roadLink2.roadwayNumber && node.beforeAfter == BeforeAfter.After && node.addrM == roadLink2.addrMRange.start) should be(true)
-      nodePoints.exists(node => node.roadwayNumber == roadLink2.roadwayNumber && node.beforeAfter == BeforeAfter.Before && node.addrM == roadLink2.addrMRange.end) should be(true)
+      nodePoints.exists(node => node.roadwayNumber == roadLink1.roadwayNumber && node.beforeAfter == BeforeAfter.After  && roadLink1.addrMRange.startsAt(node.addrM)) should be(true)
+      nodePoints.exists(node => node.roadwayNumber == roadLink1.roadwayNumber && node.beforeAfter == BeforeAfter.Before && roadLink1.addrMRange.endsAt  (node.addrM)) should be(true)
+      nodePoints.exists(node => node.roadwayNumber == roadLink2.roadwayNumber && node.beforeAfter == BeforeAfter.After  && roadLink2.addrMRange.startsAt(node.addrM)) should be(true)
+      nodePoints.exists(node => node.roadwayNumber == roadLink2.roadwayNumber && node.beforeAfter == BeforeAfter.Before && roadLink2.addrMRange.endsAt  (node.addrM)) should be(true)
 
       val terminatedRoadLink = roadLink2.copy(endDate = Some(DateTime.now().withTimeAtStartOfDay()), projectId = 1, status = RoadAddressChangeType.Termination)
 
@@ -4393,8 +4393,8 @@ class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with Before
       // Test expired node and node points
       val nodePointsAfterExpiration = nodePointDAO.fetchByNodeNumbers(Seq(nodeNumber1, nodeNumber2, nodeNumber3))
       nodePointsAfterExpiration.length should be(2)
-      nodePointsAfterExpiration.exists(node => node.roadwayNumber == roadLink1.roadwayNumber && node.beforeAfter == BeforeAfter.After && node.addrM == roadLink1.addrMRange.start) should be(true)
-      nodePointsAfterExpiration.exists(node => node.roadwayNumber == roadLink1.roadwayNumber && node.beforeAfter == BeforeAfter.Before && node.addrM == roadLink1.addrMRange.end) should be(true)
+      nodePointsAfterExpiration.exists(node => node.roadwayNumber == roadLink1.roadwayNumber && node.beforeAfter == BeforeAfter.After  && roadLink1.addrMRange.startsAt(node.addrM)) should be(true)
+      nodePointsAfterExpiration.exists(node => node.roadwayNumber == roadLink1.roadwayNumber && node.beforeAfter == BeforeAfter.Before && roadLink1.addrMRange.endsAt  (node.addrM)) should be(true)
       nodePointsAfterExpiration.exists(node => node.roadwayNumber == terminatedRoadLink.roadwayNumber) should be(false)
       nodePointsAfterExpiration.exists(node => node.roadwayNumber == terminatedRoadLink.roadwayNumber) should be(false)
     }
@@ -4466,8 +4466,8 @@ class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with Before
 
       val nodePoints = nodePointDAO.fetchByNodeNumbers(Seq(node1.nodeNumber, node2.nodeNumber))
       nodePoints.length should be(2)
-      nodePoints.exists(node => node.roadwayNumber == roadLink.roadwayNumber && node.beforeAfter == BeforeAfter.After && node.addrM == roadLink.addrMRange.start) should be(true)
-      nodePoints.exists(node => node.roadwayNumber == roadLink.roadwayNumber && node.beforeAfter == BeforeAfter.Before && node.addrM == roadLink.addrMRange.end) should be(true)
+      nodePoints.exists(node => node.roadwayNumber == roadLink.roadwayNumber && node.beforeAfter == BeforeAfter.After  && roadLink.addrMRange.startsAt(node.addrM)) should be(true)
+      nodePoints.exists(node => node.roadwayNumber == roadLink.roadwayNumber && node.beforeAfter == BeforeAfter.Before && roadLink.addrMRange.endsAt  (node.addrM)) should be(true)
 
       val roadGeom2 = Seq(Point(100.0, 0.0), Point(250.0, 0.0))
       val unchangedRoadLink = roadLink.copy(status = RoadAddressChangeType.Unchanged)
@@ -4488,8 +4488,8 @@ class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with Before
       // Test expired node and node points
       val nodePointsAfterExpiration = nodePointDAO.fetchByNodeNumbers(Seq(node1.nodeNumber, node2.nodeNumber))
       nodePointsAfterExpiration.length should be(1)
-      nodePointsAfterExpiration.exists(node => node.roadwayNumber == roadLink.roadwayNumber && node.beforeAfter == BeforeAfter.After && node.addrM == roadLink.addrMRange.start) should be(true)
-      nodePointsAfterExpiration.exists(node => node.roadwayNumber == roadLink.roadwayNumber && node.beforeAfter == BeforeAfter.Before && node.addrM == roadLink.addrMRange.end) should be(false)
+      nodePointsAfterExpiration.exists(node => node.roadwayNumber == roadLink.roadwayNumber && node.beforeAfter == BeforeAfter.After  && roadLink.addrMRange.startsAt(node.addrM)) should be(true)
+      nodePointsAfterExpiration.exists(node => node.roadwayNumber == roadLink.roadwayNumber && node.beforeAfter == BeforeAfter.Before && roadLink.addrMRange.endsAt  (node.addrM)) should be(false)
     }
   }
 
@@ -4560,8 +4560,8 @@ class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with Before
 
       val nodePoints = nodePointDAO.fetchByNodeNumbers(Seq(node1.nodeNumber, node2.nodeNumber))
       nodePoints.length should be(2)
-      nodePoints.exists(node => node.roadwayNumber == roadLink.roadwayNumber && node.beforeAfter == BeforeAfter.After && node.addrM == roadLink.addrMRange.start) should be(true)
-      nodePoints.exists(node => node.roadwayNumber == roadLink.roadwayNumber && node.beforeAfter == BeforeAfter.Before && node.addrM == roadLink.addrMRange.end) should be(true)
+      nodePoints.exists(node => node.roadwayNumber == roadLink.roadwayNumber && node.beforeAfter == BeforeAfter.After  && roadLink.addrMRange.startsAt(node.addrM)) should be(true)
+      nodePoints.exists(node => node.roadwayNumber == roadLink.roadwayNumber && node.beforeAfter == BeforeAfter.Before && roadLink.addrMRange.endsAt  (node.addrM)) should be(true)
 
       val roadGeom2 = Seq(Point(0.0, 0.0), Point(100.0, 0.0))
       val newRoadLink = dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(0, 100), AddrMRange(0, 100), Some(DateTime.now()), None, 12346.toString, 0, 100.0, SideCode.TowardsDigitizing, RoadAddressChangeType.New, 0, AdministrativeClass.State, roadGeom2, roadwayNumber + 1)
@@ -4598,8 +4598,8 @@ class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with Before
       // Test expired node and node points
       val nodePointsAfterExpiration = nodePointDAO.fetchByNodeNumbers(Seq(node1.nodeNumber, node2.nodeNumber))
       nodePointsAfterExpiration.length should be(1)
-      nodePointsAfterExpiration.exists(node => node.roadwayNumber == roadLink.roadwayNumber && node.beforeAfter == BeforeAfter.After && node.addrM == roadLink.addrMRange.start) should be(false)
-      nodePointsAfterExpiration.exists(node => node.roadwayNumber == roadLink.roadwayNumber && node.beforeAfter == BeforeAfter.Before && node.addrM == roadLink.addrMRange.end) should be(true)
+      nodePointsAfterExpiration.exists(node => node.roadwayNumber == roadLink.roadwayNumber && node.beforeAfter == BeforeAfter.After &&  roadLink.addrMRange.startsAt(node.addrM)) should be(false)
+      nodePointsAfterExpiration.exists(node => node.roadwayNumber == roadLink.roadwayNumber && node.beforeAfter == BeforeAfter.Before && roadLink.addrMRange.endsAt  (node.addrM)) should be(true)
     }
   }
 
