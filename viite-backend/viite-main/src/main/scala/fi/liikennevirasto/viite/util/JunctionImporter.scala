@@ -1,18 +1,14 @@
 package fi.liikennevirasto.viite.util
 
-import java.sql.{PreparedStatement, Timestamp}
-
-import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
-import Database.dynamicSession
 import fi.liikennevirasto.viite.dao.{NodeDAO, RoadwayPointDAO}
-import fi.vaylavirasto.viite.dao.Sequences
-import fi.vaylavirasto.viite.util.DateTimeFormatters.basicDateFormatter
+import fi.liikennevirasto.viite.util.DataImporter.Conversion.runWithConversionDbReadOnlySession
+import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
 import org.joda.time.DateTime
-import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc._
+import scalikejdbc._
+import scalikejdbc.jodatime.JodaWrappedResultSet.fromWrappedResultSetToJodaWrappedResultSet
 
 
-class JunctionImporter(conversionDatabase: DatabaseDef) {
+class JunctionImporter extends BaseDAO {
 
   val nodeDAO = new NodeDAO
 
@@ -25,47 +21,18 @@ class JunctionImporter(conversionDatabase: DatabaseDef) {
   case class ConversionJunctionPoint(id: Long, beforeOrAfter: Long, roadwayNumberTR: Long, addressMValueTR: Long, junctionTRId: Long,
                                  validFrom: Option[DateTime], validTo: Option[DateTime], createdBy: String, createdTime: Option[DateTime])
 
-  private def insertJunctionStatement(): PreparedStatement =
-    dynamicSession.prepareStatement(sql = "INSERT INTO JUNCTION (ID, JUNCTION_NUMBER, NODE_NUMBER, START_DATE, END_DATE, VALID_FROM, CREATED_BY) VALUES " +
-      " (?, ?, ?, ?, ?, ?, ?)")
 
-  private def insertJunctionPointStatement(): PreparedStatement =
-    dynamicSession.prepareStatement(sql = "INSERT INTO JUNCTION_POINT (ID, BEFORE_AFTER, ROADWAY_POINT_ID, JUNCTION_ID, VALID_FROM, CREATED_BY) VALUES " +
-      " (?, ?, ?, ?, ?, ?) ")
-
-
-  def insertJunction(junctionStatement: PreparedStatement, conversionJunction: ConversionJunction, nodeNumber: Long): Unit ={
-    junctionStatement.setLong(1, conversionJunction.id)
-    junctionStatement.setLong(2, conversionJunction.junctionNumber)
-    junctionStatement.setLong(3, nodeNumber)
-    junctionStatement.setDate(4, new java.sql.Date(conversionJunction.startDate.get.getMillis))
-    if (conversionJunction.endDate.isDefined) {
-      junctionStatement.setDate(5, new java.sql.Date(conversionJunction.endDate.get.getMillis))
-    } else {
-      junctionStatement.setNull(5, java.sql.Types.DATE)
-    }
-    junctionStatement.setTimestamp(6, new java.sql.Timestamp(conversionJunction.validFrom.get.getMillis))
-    junctionStatement.setString(7, conversionJunction.createdBy)
-    junctionStatement.addBatch()
-  }
-
-  def insertJunctionPoint(junctionPointStatement: PreparedStatement, conversionJunctionPoint: ConversionJunctionPoint, junctionId: Long, roadwayPointId: Long): Unit = {
-    junctionPointStatement.setLong(1, Sequences.nextJunctionPointId)
-    junctionPointStatement.setLong(2, conversionJunctionPoint.beforeOrAfter)
-    junctionPointStatement.setLong(3, roadwayPointId)
-    junctionPointStatement.setLong(4, junctionId)
-    junctionPointStatement.setTimestamp(5, new Timestamp(conversionJunctionPoint.validFrom.get.getMillis))
-    junctionPointStatement.setString(6, conversionJunctionPoint.createdBy)
-    junctionPointStatement.addBatch()
-  }
-
+  /**
+   * Main method to import junctions from conversion database to main database
+   * The method fetches all junctions and their points from conversion database
+   * and imports them to main database after creating necessary parameters for batch update
+   */
   def importJunctions(): Unit = {
     println("\n\n\nFetching all junctions from conversion database")
     val conversionJunctions = fetchJunctionsFromConversionTable()
     val conversionJunctionPoints = fetchJunctionPointsFromConversionTable()
-    val junctionPs = insertJunctionStatement()
-    val junctionPointPs = insertJunctionPointStatement()
 
+    // group junctions with their points
     val junctionsWithPoints = conversionJunctions.map(
       junction => {
         val junctionPointsForJunction = conversionJunctionPoints.filter(_.junctionTRId == junction.id)
@@ -73,90 +40,145 @@ class JunctionImporter(conversionDatabase: DatabaseDef) {
       }
     )
 
-    junctionsWithPoints.foreach{
-      conversionJunction =>
-        println(s"Inserting junction with id = ${conversionJunction._1.id} ")
-        insertJunction(junctionPs, conversionJunction._1, conversionJunction._1.nodeNumber)
-
-        conversionJunction._2.foreach{
-          conversionJunctionPoint =>
-            println(s"Inserting junction point with TR id = ${conversionJunctionPoint.id} ")
-            val existingRoadwayPoint = roadwayPointDAO.fetch(conversionJunctionPoint.roadwayNumberTR, conversionJunctionPoint.addressMValueTR)
-            if(existingRoadwayPoint.isEmpty){
-              val newRoadwayPoint = roadwayPointDAO.create(conversionJunctionPoint.roadwayNumberTR, conversionJunctionPoint.addressMValueTR, createdBy = "junction_import")
-              insertJunctionPoint(junctionPointPs, conversionJunctionPoint, conversionJunction._1.id, newRoadwayPoint)
-            }
-            else
-              insertJunctionPoint(junctionPointPs, conversionJunctionPoint, conversionJunction._1.id, existingRoadwayPoint.get.id)
-        }
+    // Collect all junction parameters for batch update
+    val junctionParams = junctionsWithPoints.map { case (junction, _) =>
+      println(s"Processing junction with TR id = ${junction.id} and junction_number = ${junction.junctionNumber}")
+      createJunctionParams(junction)
     }
 
-    junctionPs.executeBatch()
-    junctionPointPs.executeBatch()
-    junctionPs.close()
-    junctionPointPs.close()
+    // Collect all junction point parameters for batch update
+    val junctionPointParams: Seq[Seq[Any]] = junctionsWithPoints.flatMap { case (junction, points) =>
+      points.map { point =>
+        println(s"Processing junction point with TR id = ${point.id} and junction_id = ${point.junctionTRId}")
+
+        // check if roadway point already exists with same roadway number and address m value
+        val existingRoadwayPoint = roadwayPointDAO.fetch(point.roadwayNumberTR, point.addressMValueTR)
+        // Create roadway point if it does not exist and get its id
+        val roadwayPointId = existingRoadwayPoint match {
+          case Some(rwp) => rwp.id
+          case None =>
+            roadwayPointDAO.create(point.roadwayNumberTR, point.addressMValueTR, createdBy = "junction_import")
+        }
+
+        // Create junction point parameters and return them
+        createJunctionPointParams(point, junction.id, roadwayPointId)
+      }
+    }
+
+    // Execute batch updates to main database
+    batchUpdateJunctions(junctionParams)
+    batchUpdateJunctionPoints(junctionPointParams)
+
   }
 
   protected def fetchJunctionsFromConversionTable(): Seq[ConversionJunction] = {
-    conversionDatabase.withDynSession {
-      sql"""SELECT L.ID, LIITTYMANRO, solmunro, TO_CHAR(L.VOIMASSAOLOAIKA_ALKU, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(L.VOIMASSAOLOAIKA_LOPPU, 'YYYY-MM-DD hh:mm:ss'),
-           TO_CHAR(L.MUUTOSPVM, 'YYYY-MM-DD hh:mm:ss'), L.KAYTTAJA, TO_CHAR(L.REKISTEROINTIPVM, 'YYYY-MM-DD hh:mm:ss')
-           FROM LIITTYMA L JOIN SOLMU S ON (ID_SOLMU = S.id)  """
-        .as[ConversionJunction].list
+    runWithConversionDbReadOnlySession {
+      val query = sql"""
+            SELECT l.id, liittymanro, solmunro, TO_CHAR(L.voimassaoloaika_alku, 'YYYY-MM-DD hh:mm:ss'),
+                TO_CHAR(l.voimassaoloaika_loppu, 'YYYY-MM-DD hh:mm:ss'),
+                TO_CHAR(l.muutospvm, 'YYYY-MM-DD hh:mm:ss'), L.kayttaja, TO_CHAR(l.rekisterointipvm, 'YYYY-MM-DD hh:mm:ss')
+            FROM liittyma L JOIN solmu S ON (id_solmu = S.id)
+            """
+        runSelectQuery(query.map(ConversionJunctionScalike.apply))
     }
   }
 
   protected def fetchJunctionPointsFromConversionTable(): Seq[ConversionJunctionPoint] = {
-    conversionDatabase.withDynSession {
-      sql"""SELECT JP.ID, JP.EJ, AP.ID_AJORATA, AP.ETAISYYS, JP.ID_LIITTYMA, TO_CHAR(JP.MUUTOSPVM, 'YYYY-MM-DD hh:mm:ss'), JP.KAYTTAJA, TO_CHAR(JP.REKISTEROINTIPVM, 'YYYY-MM-DD hh:mm:ss')
-           FROM LIITTYMAKOHTA JP
-           JOIN AJORADAN_PISTE AP ON (JP.ID_AJORADAN_PISTE = AP.ID)
-           JOIN LIITTYMA J ON (JP.ID_LIITTYMA = J.ID)
-           WHERE JP.VOIMASSAOLOAIKA_LOPPU IS NULL OR J.VOIMASSAOLOAIKA_LOPPU IS NOT NULL
+    runWithConversionDbReadOnlySession {
+      val query = sql"""
+           SELECT jp.id, jp.ej, ap.id_ajorata, ap.etaisyys, jp.id_liittyma,
+              TO_CHAR(jp.muutospvm, 'YYYY-MM-DD hh:mm:ss'),
+              jp.kayttaja, TO_CHAR(jp.rekisterointipvm, 'YYYY-MM-DD hh:mm:ss')
+           FROM liittymakohta jp
+           JOIN ajoradan_piste ap ON (jp.id_ajoradan_piste = ap.id)
+           JOIN liittyma j ON (jp.id_liittyma = j.id)
+           WHERE jp.voimassaoloaika_loppu IS NULL OR j.voimassaoloaika_loppu IS NOT NULL
       """
-        .as[ConversionJunctionPoint].list
+       runSelectQuery(query.map(ConversionJunctionPointScalike.apply))
     }
   }
 
+  // Create junction parameters for batch update
+  private def createJunctionParams(conversionJunction: ConversionJunction): Seq[Any] = {
+    Seq(
+      conversionJunction.id,
+      conversionJunction.junctionNumber,
+      conversionJunction.nodeNumber,
+      conversionJunction.startDate,
+      conversionJunction.endDate.orNull,
+      conversionJunction.validFrom.get.getMillis,
+      conversionJunction.createdBy
+    )
+  }
 
-  implicit val getConversionJunction: GetResult[ConversionJunction] = new GetResult[ConversionJunction] {
-    def apply(r: PositionedResult): ConversionJunction = {
-      val id = r.nextLong()
-      val junctionNumber = r.nextLong()
-      val nodeNumber = r.nextLong()
-      val startDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
-      val endDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
-      val validFrom = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
-      val createdBy = r.nextString()
-      val createdTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+  private def batchUpdateJunctions(params: Seq[Seq[Any]]): List[Int] = {
+    val insertQuery =
+      sql"""
+            INSERT INTO junction (id, junction_number, node_number, start_date, end_date, valid_from, created_by)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """
 
-      ConversionJunction(id, junctionNumber, nodeNumber, startDate, endDate, validFrom, None, createdBy, createdTime)
+    runBatchUpdateToDb(insertQuery, params)
+  }
+
+  // Create junction point parameters for batch update
+  private def createJunctionPointParams(conversionJunctionPoint: ConversionJunctionPoint, junctionId: Long, roadwayPointId: Long): Seq[Any] = {
+    Seq(
+      Sequences.nextJunctionPointId,
+      conversionJunctionPoint.beforeOrAfter,
+      roadwayPointId,
+      junctionId,
+      conversionJunctionPoint.validFrom.get.getMillis,
+      conversionJunctionPoint.createdBy
+    )
+  }
+
+  private def batchUpdateJunctionPoints(params: Seq[Seq[Any]]): List[Int] = {
+    val insertQuery =
+      sql"""
+            INSERT INTO junction_point (id, before_after, roadway_point_id, junction_id, valid_from, created_by)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """
+
+    runBatchUpdateToDb(insertQuery, params)
+  }
+
+  // Mapper functions for conversion junction and junction point
+  object ConversionJunctionScalike extends SQLSyntaxSupport[ConversionJunction] {
+    def apply(rs: WrappedResultSet): ConversionJunction = {
+      ConversionJunction(
+        id             = rs.long("id"),
+        junctionNumber = rs.long("liittymanro"),
+        nodeNumber     = rs.long("solmunro"),
+        startDate      = rs.jodaDateTimeOpt("voimassaoloaika_alku"),
+        endDate        = rs.jodaDateTimeOpt("voimassaoloaika_loppu"),
+        validFrom      = rs.jodaDateTimeOpt("muutospvm"),
+        validTo        = None,
+        createdBy      = rs.string("kayttaja"),
+        createdTime    = rs.jodaDateTimeOpt("rekisterointipvm")
+      )
     }
   }
 
-  implicit val getConversionNodePoint: GetResult[ConversionJunctionPoint] = new GetResult[ConversionJunctionPoint] {
-    def apply(r: PositionedResult): ConversionJunctionPoint = {
-      val id = r.nextLong()
-      val beforeOrAfterString = r.nextString()
-      val roadwayNumberInTR = r.nextLong()
-      val addressMValueInTR = r.nextLong()
-      val junctionTRId = r.nextLong()
-      val validFrom = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
-      val createdBy = r.nextString()
-      val createdTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
-      val beforeOrAfter = beforeOrAfterString match {
+  object ConversionJunctionPointScalike extends SQLSyntaxSupport[ConversionJunctionPoint] {
+    def apply(rs: WrappedResultSet): ConversionJunctionPoint = {
+      val beforeOrAfter = rs.string("ej") match {
         case "E" => 1
         case "J" => 2
         case _ => 0
       }
-      ConversionJunctionPoint(id, beforeOrAfter, roadwayNumberInTR, addressMValueInTR, junctionTRId, validFrom, None, createdBy, createdTime)
-    }
-  }
 
-  def datePrinter(date: Option[DateTime]): String = {
-    date match {
-      case Some(dt) => basicDateFormatter.print(dt)
-      case None => ""
+      ConversionJunctionPoint(
+        id              = rs.long("id"),
+        beforeOrAfter   = beforeOrAfter,
+        roadwayNumberTR = rs.long("id_aorata"),
+        addressMValueTR = rs.long("etaisyys"),
+        junctionTRId    = rs.long("id_liittyma"),
+        validFrom       = rs.jodaDateTimeOpt("muutospvm"),
+        validTo         = None,
+        createdBy       = rs.string("kayttaja"),
+        createdTime     = rs.jodaDateTimeOpt("rekisterointipvm")
+      )
     }
   }
 
