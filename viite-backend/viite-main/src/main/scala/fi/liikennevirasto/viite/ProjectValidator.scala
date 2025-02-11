@@ -1525,7 +1525,11 @@ class ProjectValidator {
         roadPart =>
           val addresses = roadPart._2.sortBy(_.addrMRange.start)
           val maxEndAddr = addresses.last.addrMRange.end
-          error(project.id, ValidationErrorList.EndOfRoadMiddleOfPart)(addresses.filterNot(_.addrMRange.end == maxEndAddr).filter(_.discontinuity == Discontinuity.EndOfRoad))
+
+          error(project.id, ValidationErrorList.EndOfRoadMiddleOfPart)(addresses
+            .filter(_.discontinuity == Discontinuity.EndOfRoad)
+            .filterNot(a => (a.addrMRange.endsAt(maxEndAddr) || a.addrMRange.isUndefined)) // EndOfRoad OK at end of road. Undefined addresses are not nagged about their Discontinuities - calculate the addresses first.
+          )
       }.toSeq
       endOfRoadErrors.distinct
     }

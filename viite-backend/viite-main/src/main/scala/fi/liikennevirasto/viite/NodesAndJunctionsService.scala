@@ -269,8 +269,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   def enrichNodePointCoordinates(roadAddressLinks: Seq[RoadAddressLink], nodePoints: Seq[NodePoint]): Seq[NodePoint] = {
       nodePoints.map { np =>
         np.copy(coordinates = np.beforeAfter match {
-          case BeforeAfter.Before if roadAddressLinks.exists(_.addrMRange.end   == np.addrM) => roadAddressLinks.find(_.addrMRange.end   == np.addrM).get.endPoint
-          case BeforeAfter.After  if roadAddressLinks.exists(_.addrMRange.start == np.addrM) => roadAddressLinks.find(_.addrMRange.start == np.addrM).get.startingPoint
+          case BeforeAfter.Before if roadAddressLinks.exists(_.addrMRange.endsAt(np.addrM))   => roadAddressLinks.find(_.addrMRange.endsAt(np.addrM)).get.endPoint
+          case BeforeAfter.After  if roadAddressLinks.exists(_.addrMRange.startsAt(np.addrM)) => roadAddressLinks.find(_.addrMRange.startsAt(np.addrM)).get.startingPoint
           case _ => np.coordinates
         })
       }
@@ -279,8 +279,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   def enrichJunctionPointCoordinates(roadAddressLinks: Seq[RoadAddressLink], jPoints: Seq[JunctionPoint]): Seq[JunctionPoint] = {
     jPoints.map { jp =>
       jp.copy(coordinates = jp.beforeAfter match {
-        case BeforeAfter.Before if roadAddressLinks.exists(_.addrMRange.end   == jp.addrM) => roadAddressLinks.find(_.addrMRange.end   == jp.addrM).get.endPoint
-        case BeforeAfter.After  if roadAddressLinks.exists(_.addrMRange.start == jp.addrM) => roadAddressLinks.find(_.addrMRange.start == jp.addrM).get.startingPoint
+        case BeforeAfter.Before if roadAddressLinks.exists(_.addrMRange.endsAt  (jp.addrM)) => roadAddressLinks.find(_.addrMRange.endsAt  (jp.addrM)).get.endPoint
+        case BeforeAfter.After  if roadAddressLinks.exists(_.addrMRange.startsAt(jp.addrM)) => roadAddressLinks.find(_.addrMRange.startsAt(jp.addrM)).get.startingPoint
         case _ => jp.coordinates
       })
     }
@@ -806,10 +806,10 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
             }.flatMap { rl =>
               if (headReversed) {
                 nodePointDAO.fetchRoadAddressNodePoints(Seq(rl.originalRoadwayNumber, headProjectLink.roadwayNumber))
-                .find(np => np.beforeAfter == BeforeAfter.After && np.addrM == rl.newAddrMRange.start)
+                .find(np => np.beforeAfter == BeforeAfter.After && rl.newAddrMRange.startsAt(np.addrM))
               } else {
                 nodePointDAO.fetchRoadAddressNodePoints(Seq(rl.originalRoadwayNumber, headProjectLink.roadwayNumber).distinct)
-                  .find(np => np.beforeAfter == BeforeAfter.After && np.addrM == headProjectLink.addrMRange.start)
+                  .find(np => np.beforeAfter == BeforeAfter.After && headProjectLink.addrMRange.startsAt(np.addrM))
               }
             }
 
@@ -908,7 +908,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     def getJunctionPointsFromObsoleteRoadwayPoints(roadwayPoints: Seq[RoadwayPoint]): Seq[JunctionPoint] = {
       // Find roadway points that are not on start or end of any project link
       val obsoleteRoadwayPoints = roadwayPoints.filterNot { rwp =>
-        projectLinks.exists(pl => pl.roadwayNumber == rwp.roadwayNumber && (rwp.addrMValue == pl.addrMRange.start || rwp.addrMValue == pl.addrMRange.end))
+        projectLinks.exists(pl => pl.roadwayNumber == rwp.roadwayNumber && (pl.addrMRange.startsAt(rwp.addrMValue) || pl.addrMRange.endsAt(rwp.addrMValue))) // TODO BOTH startsAt and endsAt. Need own function?
       }
       // Fetch junction points related to obsolete roadway points
       val obsoleteJunctionPointsFromRoadwayPoints = obsoleteRoadwayPoints.flatMap { rwp =>
@@ -1246,9 +1246,9 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
           .fetchAllBySectionAndTracks(roadPartInfo.roadPart, Set(Track.Combined, Track.RightSide))
           .filter(r => r.addrMRange.start <= addrMValueAVG && addrMValueAVG <= r.addrMRange.end)
           .foreach(avgRoadway => {
-            val beforeAfterValue = if (avgRoadway.addrMRange.end == addrMValueAVG) {
+            val beforeAfterValue = if (avgRoadway.addrMRange.endsAt(addrMValueAVG)) {
               BeforeAfter.Before
-            } else if (avgRoadway.addrMRange.start == addrMValueAVG) {
+            } else if (avgRoadway.addrMRange.startsAt(addrMValueAVG)) {
               BeforeAfter.After
             } else {
               BeforeAfter.UnknownBeforeAfter

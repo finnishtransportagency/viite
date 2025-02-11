@@ -343,9 +343,9 @@ class RoadAddressService(
             val geometryLength = ral.endMValue - ral.startMValue
             val geometryMeasure = roadAddressLinkMValueLengthPercentageFactor * geometryLength
             val point = ral match {
-              case r if (r.addrMRange.start.toDouble == addressM && r.sideCode == SideCode.TowardsDigitizing) || (r.addrMRange.end == addressM && r.sideCode == SideCode.AgainstDigitizing) =>
+              case r if (r.addrMRange.start.toDouble == addressM && r.sideCode == SideCode.TowardsDigitizing) || (r.addrMRange.endsAt(addressM) && r.sideCode == SideCode.AgainstDigitizing) =>
                 r.geometry.headOption
-              case r if (r.addrMRange.start.toDouble == addressM && r.sideCode == SideCode.AgainstDigitizing) || (r.addrMRange.end == addressM && r.sideCode == SideCode.TowardsDigitizing) =>
+              case r if (r.addrMRange.start.toDouble == addressM && r.sideCode == SideCode.AgainstDigitizing) || (r.addrMRange.endsAt(addressM) && r.sideCode == SideCode.TowardsDigitizing) =>
                 r.geometry.lastOption
               case r =>
                 val mValue: Double = r.sideCode match {
@@ -467,7 +467,7 @@ class RoadAddressService(
 
       val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadways).sortBy(_.addrMRange.start)
       if (addressM > 0) {
-        roadAddresses.filter(ra => ra.addrMRange.start >= addressM || ra.addrMRange.end == addressM)
+        roadAddresses.filter(ra => ra.addrMRange.start >= addressM || ra.addrMRange.endsAt(addressM))
       }
       else if(roadAddresses.nonEmpty) Seq(roadAddresses.head) else Seq()
     }

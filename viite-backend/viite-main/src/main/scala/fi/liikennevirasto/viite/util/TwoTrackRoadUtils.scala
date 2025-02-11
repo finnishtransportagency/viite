@@ -57,7 +57,7 @@ object TwoTrackRoadUtils {
               prevPl_othersidePls_udcps._1.init :+ splitted_pls._3.get._1 :+ currentPl
             else prevPl_othersidePls_udcps._1 :+ currentPl,
             (prevPl_othersidePls_udcps._2.filterNot(rl => {
-              splitted_pls_link_id == rl.linkId && rl.addrMRange.start == splitted_pls_link_startAddr
+              splitted_pls_link_id == rl.linkId && rl.addrMRange.startsAt(splitted_pls_link_startAddr)
             }) ++ Seq(pls._1, pls._2))
               .sortBy(_.addrMRange.start), // update udcp:s if new defined
             if (splitted_pls._2.nonEmpty)
@@ -492,7 +492,7 @@ object TwoTrackRoadUtils {
       val roadPart = processed.last.originalRoadPart
       val address  = processed.last.originalAddrMRange.end
       val status   = processed.last.status
-      if (head.originalTrack == track && head.originalRoadPart == roadPart && head.originalAddrMRange.start == address && head.status == status) {
+      if (head.originalTrack == track && head.originalRoadPart == roadPart && head.originalAddrMRange.startsAt(address) && head.status == status) {
         getContinuousOriginalAddressSection(projectLinksToProcess.tail, processed :+ head)
       } else {
         (processed, projectLinksToProcess)
