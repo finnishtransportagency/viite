@@ -379,9 +379,8 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
     }
 
     def existsConnectingRoadway(roadway: Roadway, otherRoadways: Seq[Roadway]): Boolean = {
-      val startAddrM = roadway.addrMRange.start
-      val endAddrM = roadway.addrMRange.end
-      otherRoadways.map(_.addrMRange.start).contains(endAddrM) || otherRoadways.map(_.addrMRange.end).contains(startAddrM)
+      otherRoadways.map(_.addrMRange.start).contains(roadway.addrMRange.end) ||
+      otherRoadways.map(_.addrMRange.end).contains(roadway.addrMRange.start)
     }
 
     def checkRoadAddressContinuityForSingleRoadway(linearLocations: Seq[LinearLocation], change: TiekamuRoadLinkChange): Boolean = {

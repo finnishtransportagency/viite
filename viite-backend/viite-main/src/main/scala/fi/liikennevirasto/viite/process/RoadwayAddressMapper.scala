@@ -63,17 +63,19 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
   }
 
   /**
-    * Map roadway address into road addresses using linear locations in between given start and end address values
+    * Map roadway address into road addresses using linear locations in between given start and end address values, i.e. range.
     *
     * @param roadway         The roadway address
     * @param linearLocations The linear locations in between given start and end address values
-    * @param startAddress    The boundary start address value
-    * @param endAddress      The boundary end address value
+    * @param addrMRange      The boundary address range
     * @return Returns the mapped road addresses
     */
-  private def boundaryAddressMap(roadway: Roadway, linearLocations: Seq[LinearLocation], startAddress: Long, endAddress: Long): Seq[RoadAddress] = {
+  private def boundaryAddressMap(roadway: Roadway, linearLocations: Seq[LinearLocation], addrMRange: AddrMRange): Seq[RoadAddress] = {
 
-    def mappedAddressValues(remaining: Seq[LinearLocation], processed: Seq[LinearLocation], startAddr: Double, endAddr: Double, coef: Double, list: Seq[Long], increment: Int, depth: Int = 1): Seq[Long] = {
+
+    def mappedAddressValues(remaining: Seq[LinearLocation], processed: Seq[LinearLocation],
+                            startAddr: Double, endAddr: Double, /** Note! takes start, and end addresses in as <i>double</i> values! Cannot use AddrMRange! */
+                            coef: Double, list: Seq[Long], increment: Int, depth: Int = 1): Seq[Long] = {
       if (remaining.isEmpty) {
         list
       } else {
@@ -91,11 +93,11 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
           if (depth > 105) throw new RuntimeException(message)
         }
 
-        val adjustedList: Seq[Long] = if ((previewValue < endAddress) && (previewValue > startAddr)) {
+        val adjustedList: Seq[Long] = if ((previewValue < addrMRange.end) && (previewValue > startAddr)) { // TODO VIITE-3349 refactoring to AddrMRange: mixed usage of startAddr, and arrdMRange.end - is this what is intended?
           list :+ Math.round(previewValue)
         } else if (previewValue <= startAddr) {
           mappedAddressValues(Seq(remaining.head), processed, list.last, endAddr, coef, list, increment + 1, depth + 1)
-        } else if (previewValue <= endAddress) {
+        } else if (previewValue <= addrMRange.end) { // TODO VIITE-3349 refactoring to AddrMRange: mixed usage of startAddr two lines above, and arrdMRange.end here - is this what is intended?
           mappedAddressValues(Seq(remaining.head), processed, list.last, endAddr, coef, list, increment - 1, depth + 1)
         } else {
           mappedAddressValues(processed.last +: remaining, processed.init, list.init.last, endAddr, coef, list.init, increment - 1, depth + 1)
@@ -105,11 +107,11 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
 
     }
 
-    val coefficient = (endAddress - startAddress) / linearLocations.map(l => l.endMValue - l.startMValue).sum
+    val coefficient = addrMRange.length / linearLocations.map(l => l.endMValue - l.startMValue).sum
 
     val sortedLinearLocations = linearLocations.sortBy(_.orderNumber)
 
-    val addresses = mappedAddressValues(sortedLinearLocations.init, Seq(), startAddress, endAddress, coefficient, Seq(startAddress), 0) :+ endAddress
+    val addresses = mappedAddressValues(sortedLinearLocations.init, Seq(), addrMRange.start, addrMRange.end, coefficient, Seq(addrMRange.start), 0) :+ addrMRange.end
 
     sortedLinearLocations.zip(addresses.zip(addresses.tail)).map {
       case (linearLocation, (st, en)) =>
@@ -152,10 +154,12 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
 
     val (toProcess, others) = getUntilCalibrationPoint(linearLocations.sortBy(_.orderNumber))
 
-    val startAddrMValue = if (toProcess.head.startCalibrationPoint.isDefined) toProcess.head.startCalibrationPoint.addrM.get else roadway.addrMRange.start
-    val endAddrMValue = if (toProcess.last.endCalibrationPoint.isDefined) toProcess.last.endCalibrationPoint.addrM.get else roadway.addrMRange.end
+    val addrMRange = AddrMRange(
+      if (toProcess.head.startCalibrationPoint.isDefined) toProcess.head.startCalibrationPoint.addrM.get else roadway.addrMRange.start,
+      if (toProcess.last.endCalibrationPoint.isDefined)   toProcess.last.endCalibrationPoint.addrM.get   else roadway.addrMRange.end
+    )
 
-    boundaryAddressMap(roadway, toProcess, startAddrMValue, endAddrMValue) ++ recursiveMapRoadAddresses(roadway, others)
+    boundaryAddressMap(roadway, toProcess, addrMRange) ++ recursiveMapRoadAddresses(roadway, others)
   }
 
   /**

@@ -441,8 +441,8 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       "roadNumber" -> rw.roadPart.roadNumber,
       "roadPartNumber" -> rw.roadPart.partNumber,
       "track" -> rw.track,
-      "startAddrM" -> rw.startAddrM,
-      "endAddrM" -> rw.endAddrM,
+      "startAddrM" -> rw.addrMRange.start,
+      "endAddrM" -> rw.addrMRange.end,
       "length" -> rw.length,
       "createdBy" -> rw.createdBy,
       "createdTime" -> rw.createdTime

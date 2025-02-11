@@ -161,11 +161,10 @@ object TrackSectionOrder {
        Some(Some(...)) = Set to this value
       */
     // TODO Check that this works with André's roundabout case
-    def adjust(pl: ProjectLink, sideCode: Option[SideCode] = None, startAddrMValue: Option[Long] = None,
-               endAddrMValue: Option[Long] = None,
+    def adjust(pl: ProjectLink, sideCode: Option[SideCode] = None, addrMRange: Option[AddrMRange] = None,
                startCalibrationPoint: Option[Option[ProjectCalibrationPoint]] = None,
                endCalibrationPoint: Option[Option[ProjectCalibrationPoint]] = None) = {
-      pl.copy(addrMRange = AddrMRange(startAddrMValue.getOrElse(pl.addrMRange.start), endAddrMValue.getOrElse(pl.addrMRange.end)), sideCode = sideCode.getOrElse(pl.sideCode), calibrationPointTypes = (pl.startCalibrationPointType, pl.endCalibrationPointType))
+      pl.copy(addrMRange = addrMRange.getOrElse(pl.addrMRange), sideCode = sideCode.getOrElse(pl.sideCode), calibrationPointTypes = (pl.startCalibrationPointType, pl.endCalibrationPointType))
     }
 
     def firstPoint(pl: ProjectLink) = {
@@ -198,8 +197,7 @@ object TrackSectionOrder {
           case _ =>
             hit.addrMRange.end
         }
-        recursive(nextPoint, ready ++ Seq(adjust(hit, sideCode = Some(sideCode), startAddrMValue = Some(prevAddrM),
-          endAddrMValue = Some(endAddrM), startCalibrationPoint = Some(None), endCalibrationPoint = Some(None))),
+        recursive(nextPoint, ready ++ Seq(adjust(hit, sideCode = Some(sideCode), addrMRange = Some(AddrMRange(prevAddrM,endAddrM)), startCalibrationPoint = Some(None), endCalibrationPoint = Some(None))),
           unprocessed.filter(_ != hit))
       }
     }
@@ -207,24 +205,17 @@ object TrackSectionOrder {
     val firstLink = seq.head // First link is defined by end user and must be always first
     // Put calibration point at the beginning
     val ordered = recursive(firstLink.geometry.last, Seq(adjust(firstLink, sideCode = Some(SideCode.TowardsDigitizing),
-      startAddrMValue = Some(0L), endAddrMValue =
-        Some(if (firstLink.status == RoadAddressChangeType.New)
-          Math.round(firstLink.geometryLength)
-        else
-          firstLink.addrMRange.length),
-      startCalibrationPoint = Some(Some(ProjectCalibrationPoint(firstLink.linkId, 0.0, 0L, firstLink.startCalibrationPointType))),
-      endCalibrationPoint = Some(None))), seq.tail)
+        addrMRange = Some(AddrMRange(0L, if (firstLink.status == RoadAddressChangeType.New) Math.round(firstLink.geometryLength) else firstLink.addrMRange.length)),
+        startCalibrationPoint = Some(Some(ProjectCalibrationPoint(firstLink.linkId, 0.0, 0L, firstLink.startCalibrationPointType))),
+        endCalibrationPoint = Some(None))),
+      seq.tail)
     if (isCounterClockwise(ordered.map(firstPoint)))
       ordered
     else {
       val reOrdered = recursive(firstLink.geometry.head,
 
         Seq(adjust(firstLink, sideCode = Some(SideCode.AgainstDigitizing),
-          startAddrMValue = Some(0L), endAddrMValue =
-            Some(if (firstLink.status == RoadAddressChangeType.New)
-              Math.round(firstLink.geometryLength)
-            else
-              firstLink.addrMRange.length),
+          addrMRange = Some(AddrMRange(0L, if (firstLink.status == RoadAddressChangeType.New) Math.round(firstLink.geometryLength) else firstLink.addrMRange.length)),
           startCalibrationPoint = Some(Some(ProjectCalibrationPoint(firstLink.linkId, firstLink.geometryLength, 0L, firstLink.startCalibrationPointType))),
           endCalibrationPoint = Some(None))),
         seq.tail)

@@ -48,9 +48,6 @@ case class TrackSection(roadPart: RoadPart, track: Track,
     case  SideCode.AgainstDigitizing => links.last.geometry.head
     case _ => links.last.geometry.last
   }
-  lazy val startAddrM: Long = links.map(_.addrMRange.start).min
-  lazy val endAddrM: Long = links.map(_.addrMRange.end).max
-
 }
 
 case class CombinedSection(startGeometry: Point, endGeometry: Point, geometryLength: Double, left: TrackSection, right: TrackSection) {
