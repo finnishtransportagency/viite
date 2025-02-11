@@ -1,51 +1,68 @@
 package fi.liikennevirasto.viite.util
 
-import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
-import javax.sql.DataSource
-import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
-import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
 import fi.liikennevirasto.digiroad2.client.kgv.KgvRoadLink
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{SqlScriptRunner, ViiteProperties}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.util.DataImporter.Conversion
 import fi.vaylavirasto.viite.dao.{BaseDAO, SequenceResetterDAO}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
-import fi.vaylavirasto.viite.postgis.PostGISDatabase
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC
+import fi.vaylavirasto.viite.postgis.SessionProvider.withSession
 import org.joda.time.DateTime
-import slick.driver
-import slick.driver.JdbcDriver
-import slick.jdbc.StaticQuery.interpolation
+import scalikejdbc._
+
 
 object DataImporter {
 
-  sealed trait ImportDataSet {
-    def database(): DatabaseDef
-  }
+  val ConversionPoolName = Symbol("conversionDb")
 
-  case object Conversion extends ImportDataSet {
-    lazy val dataSource: DataSource = {
-      val cfg = new BoneCPConfig(ViiteProperties.conversionBonecpProperties)
-      new BoneCPDataSource(cfg)
+  object Conversion {
+    def setupConversionPool(): Unit = {
+      ConnectionPool.add(
+        name = ConversionPoolName,
+        url = ViiteProperties.conversionBonecpJdbcUrl,
+        user = ViiteProperties.conversionBonecpUsername,
+        password = ViiteProperties.conversionBonecpPassword
+      )
     }
 
-    def database(): DatabaseDef = Database.forDataSource(dataSource)
+    def database(): NamedDB = {
+      if (!ConnectionPool.isInitialized(ConversionPoolName)) {
+        setupConversionPool()
+      }
+      NamedDB(ConversionPoolName)
+    }
+
+    def runWithConversionDbTransaction(f: => Unit): Unit = {
+      database().localTx { session =>
+        withSession(session) {
+          f
+        }
+      }
+    }
+
+    def runWithConversionDbReadOnlySession[T](f: => T): T = {
+      database().readOnly { session =>
+        withSession(session) {
+          f
+        }
+      }
+    }
   }
 }
 
-class DataImporter extends BaseDAO{
+class DataImporter extends BaseDAO {
+
 
   private lazy val geometryFrozen: Boolean = ViiteProperties.kgvRoadlinkFrozen
 
-  val Modifier = "dr1conversion"
+  // For database operations with the main db:
+  private def runWithMainDbTransaction(f: => Unit): Unit = PostGISDatabaseScalikeJDBC.runWithTransaction(f)
 
-  def withDynTransaction(f: => Unit): Unit = PostGISDatabase.withDynTransaction(f)
-  def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
-  private def runUpdateToDbSlick(updateQuery: String): Int = {
-    sqlu"""#$updateQuery""".buildColl.toList.head //sqlu"""#$updateQuery""".execute
-  }
+  private def runWithMainDBReadOnlySession[T](f: => T): T = PostGISDatabaseScalikeJDBC.runWithReadOnlySession(f)
+
   def time[A](f: => A): A = {
     val s = System.nanoTime
     val ret = f
@@ -74,85 +91,87 @@ class DataImporter extends BaseDAO{
           useFrozenLinkService = geometryFrozen,
           tableName,
           onlyCurrentRoads = ViiteProperties.importOnlyCurrent)
-        importRoadAddressData(Conversion.database(), KGVClient, importOptions)
+        importRoadAddressData(KGVClient, importOptions)
         println(s"Road address import complete at time: ${DateTime.now()}")
     }
   }
 
-  def importRoadAddressData(conversionDatabase: JdbcDriver.backend.DatabaseDef, KGVClient: KgvRoadLink, importOptions: ImportOptions): Unit = {
+  def importRoadAddressData(KGVClient: KgvRoadLink, importOptions: ImportOptions): Unit = {
 
     println(s"\nimportRoadAddressData    started at time:  ${DateTime.now()}")
-    withDynTransaction {
+    runWithMainDbTransaction {
 
       println(s"\nDisabling roadway triggers started at time: ${DateTime.now()}")
       disableRoadwayTriggers
       println(s"\nDeleting old Alkulataus tables' data")
-      println(s"  Deleting PROJECT_LINK_NAMEs         started at time: ${DateTime.now()}")
-      runUpdateToDbSlick(s"""DELETE FROM PROJECT_LINK_NAME""")
-      println(s"  Deleting ROADWAY_CHANGES              started at time: ${DateTime.now()}")
-      runUpdateToDbSlick(s"""DELETE FROM ROADWAY_CHANGES_LINK""")
-      println(s"  Deleting PROJECT_LINKs                  started at time: ${DateTime.now()}")
-      runUpdateToDbSlick(s"""DELETE FROM PROJECT_LINK""")
+      println(s"  Deleting project_link_names         started at time: ${DateTime.now()}")
+      runUpdateToDb(sql"""DELETE FROM project_link_name""")
+      println(s"  Deleting roadway_changes              started at time: ${DateTime.now()}")
+      runUpdateToDb(sql"""DELETE FROM roadway_changes_LINK""")
+      println(s"  Deleting project_links                  started at time: ${DateTime.now()}")
+      runUpdateToDb(sql"""DELETE FROM project_link""")
       println(s"  Deleting PROJECT_INK_LHISTORY             started at time: ${DateTime.now()}")
-      runUpdateToDbSlick(s"""DELETE FROM PROJECT_LINK_HISTORY""")
-      println(s"  Deleting PROJECT_RESERVED_ROAD_PARTs links  started at time: ${DateTime.now()}")
-      runUpdateToDbSlick(s"""DELETE FROM PROJECT_RESERVED_ROAD_PART""")
+      runUpdateToDb(sql"""DELETE FROM project_link_history""")
+      println(s"  Deleting project_reserved_road_parts links  started at time: ${DateTime.now()}")
+      runUpdateToDb(sql"""DELETE FROM project_reserved_road_part""")
 
 
       // Delete other than accepted projects.
       // Accepted states: 0 = ProjectDAO.ProjectState.Accepted; 5 = ProjectState.DeprecatedSaved2ToTR
       println(s"  Deleting PROJECTs (state != 12|5)           started at time: ${DateTime.now()}")
-      runUpdateToDbSlick(s"""DELETE FROM PROJECT WHERE STATE != 12 AND STATE != 5""")
+      runUpdateToDb(sql"""DELETE FROM project WHERE STATE != 12 AND STATE != 5""")
 
-      println(s"  Deleting ROADWAY_CHANGESs                 started at time: ${DateTime.now()}")
-      runUpdateToDbSlick(s"""DELETE FROM ROADWAY_CHANGES WHERE project_id NOT IN (SELECT id FROM PROJECT)""")
-      println(s"  Deleting ROAD_NETWORK_ERRORs            started at time: ${DateTime.now()}")
-      runUpdateToDbSlick(s"""DELETE FROM ROAD_NETWORK_ERROR""")
+      println(s"  Deleting roadway_changess                 started at time: ${DateTime.now()}")
+      runUpdateToDb(
+        sql"""
+               DELETE FROM roadway_changes
+               WHERE project_id NOT IN (SELECT id FROM project)
+               """
+      )
 
-      /* todo ("Table published_roadwayis no longer in use, and is empty.") */
-      println(s"  Deleting PUBLISHED_ROADWAYs           started at time: ${DateTime.now()}")
-      runUpdateToDbSlick(s"""DELETE FROM PUBLISHED_ROADWAY""")
-
-      /* todo ("Table published_road_network is no longer in use, and is empty.") */
-      println(s"  Deleting PUBLISHED_ROAD_NETWORKs    started at time: ${DateTime.now()}")
-      runUpdateToDbSlick(s"""DELETE FROM PUBLISHED_ROAD_NETWORK""")
-
-      println(s"  Deleting LINEAR_LOCATIONs         started at time: ${DateTime.now()}")
-      runUpdateToDbSlick(s"""DELETE FROM LINEAR_LOCATION""")
-      println(s"  Deleting CALIBRATION_POINTs     started at time: ${DateTime.now()}")
-      runUpdateToDbSlick(s"""DELETE FROM CALIBRATION_POINT""")
-      println(s"  Deleting JUNCTION_POINTs      started at time: ${DateTime.now()}")
-      runUpdateToDbSlick(s"""DELETE FROM JUNCTION_POINT""")
-      println(s"  Deleting NODE_POINTs        started at time: ${DateTime.now()}")
-      runUpdateToDbSlick(s"""DELETE FROM NODE_POINT""")
-      println(s"  Deleting ROADWAY_POINTs   started at time: ${DateTime.now()}")
-      runUpdateToDbSlick(s"""DELETE FROM ROADWAY_POINT""")
-      println(s"  Deleting JUNCTIONs      started at time: ${DateTime.now()}")
-      runUpdateToDbSlick(s"""DELETE FROM JUNCTION""")
-      println(s"  Deleting NODEs        started at time: ${DateTime.now()}")
-      runUpdateToDbSlick(s"""DELETE FROM NODE""")
+      println(s"  Deleting linear_locations         started at time: ${DateTime.now()}")
+      runUpdateToDb(sql"""DELETE FROM linear_location""")
+      println(s"  Deleting calibration_points     started at time: ${DateTime.now()}")
+      runUpdateToDb(sql"""DELETE FROM calibration_point""")
+      println(s"  Deleting junction_points      started at time: ${DateTime.now()}")
+      runUpdateToDb(sql"""DELETE FROM junction_point""")
+      println(s"  Deleting node_points        started at time: ${DateTime.now()}")
+      runUpdateToDb(sql"""DELETE FROM node_point""")
+      println(s"  Deleting roadway_points   started at time: ${DateTime.now()}")
+      runUpdateToDb(sql"""DELETE FROM roadway_point""")
+      println(s"  Deleting junctions      started at time: ${DateTime.now()}")
+      runUpdateToDb(sql"""DELETE FROM junction""")
+      println(s"  Deleting nodes        started at time: ${DateTime.now()}")
+      runUpdateToDb(sql"""DELETE FROM node""")
       println(s"  Deleting LINKs      started at time: ${DateTime.now()}")
-      runUpdateToDbSlick(s"""DELETE FROM LINK""")
-      println(s"  Deleting ROADWAYs started at time: ${DateTime.now()}")
-      runUpdateToDbSlick(s"""DELETE FROM ROADWAY""")
+      runUpdateToDb(sql"""DELETE FROM link""")
+      println(s"  Deleting roadways started at time: ${DateTime.now()}")
+      runUpdateToDb(sql"""DELETE FROM roadway""")
 
       resetRoadAddressSequences()
 
+
       println(s"${DateTime.now()} - Old address data removed")
-      val roadAddressImporter = getRoadAddressImporter(conversionDatabase, KGVClient, importOptions)
+
+      val roadAddressImporter = getRoadAddressImporter(KGVClient, importOptions)
       roadAddressImporter.importRoadAddress()
 
+
       println(s"\n${DateTime.now()} - Updating terminated roadways information")
-      runUpdateToDbSlick(s"""UPDATE ROADWAY SET TERMINATED = 2
-            WHERE TERMINATED = 0 AND end_date IS NOT null AND EXISTS (SELECT 1 FROM ROADWAY rw
-            	WHERE ROADWAY.ROAD_NUMBER = rw.ROAD_NUMBER
-            	AND ROADWAY.ROADWAY_NUMBER = rw.ROADWAY_NUMBER
-            	AND ROADWAY.ROAD_PART_NUMBER = rw.ROAD_PART_NUMBER
-            	AND ROADWAY.START_ADDR_M = rw.START_ADDR_M
-            	AND ROADWAY.END_ADDR_M = rw.END_ADDR_M
-            	AND ROADWAY.TRACK = rw.TRACK
-            	AND ROADWAY.END_DATE = rw.start_date - 1
-            	AND rw.VALID_TO IS NULL AND rw.TERMINATED = 1)""")
+      runUpdateToDb(
+        sql"""
+              UPDATE roadway SET terminated = 2
+              WHERE terminated = 0 AND end_date IS NOT NULL AND EXISTS (SELECT 1 FROM roadway rw
+                WHERE roadway.road_number = rw.road_number
+                AND roadway.roadway_number = rw.roadway_number
+                AND roadway.road_part_number = rw.road_part_number
+                AND roadway.start_addr_m = rw.start_addr_m
+                AND roadway.end_addr_m = rw.end_addr_m
+                AND roadway.track = rw.track
+                AND roadway.end_date = rw.start_date - 1
+                AND rw.valid_to IS NULL AND rw.terminated = 1)
+                """
+      )
 
       println(s"\nEnabling roadway triggers    started at time: ${DateTime.now()}")
       enableRoadwayTriggers
@@ -169,24 +188,20 @@ class DataImporter extends BaseDAO{
   }
 
   def importNodesAndJunctions(): Unit = {
-    importNodesAndJunctions(Conversion.database())
-  }
-
-  def importNodesAndJunctions(conversionDatabase: DatabaseDef): Unit = {
-    withDynTransaction {
+    runWithMainDbTransaction {
       println("\nImporting nodes and junctions started at time: ")
       println(DateTime.now())
 
-      runUpdateToDbSlick(s"""DELETE FROM JUNCTION_POINT""")
-      runUpdateToDbSlick(s"""DELETE FROM NODE_POINT""")
-      runUpdateToDbSlick(s"""DELETE FROM JUNCTION""")
-      runUpdateToDbSlick(s"""DELETE FROM NODE""")
+      runUpdateToDb(sql"""DELETE FROM junction_point""")
+      runUpdateToDb(sql"""DELETE FROM node_point""")
+      runUpdateToDb(sql"""DELETE FROM junction""")
+      runUpdateToDb(sql"""DELETE FROM node""")
       resetNodesAndJunctionSequences()
 
       println(s"${DateTime.now()} - Old nodes and junctions data removed")
-      val nodeImporter = getNodeImporter(conversionDatabase)
+      val nodeImporter = getNodeImporter
       nodeImporter.importNodes()
-      val junctionImporter = getJunctionImporter(conversionDatabase)
+      val junctionImporter = getJunctionImporter
       junctionImporter.importJunctions()
       updateNodePointType()
     }
@@ -197,18 +212,18 @@ class DataImporter extends BaseDAO{
     println(DateTime.now())
 
     val sequenceResetter = new SequenceResetterDAO()
-    sequenceResetter.resetSequenceToNumber("PROJECT_LINK_NAME_SEQ", 1)
-    sequenceResetter.resetSequenceToNumber("ROADWAY_CHANGE_LINK", 1)
-    sequenceResetter.resetSequenceToNumber("ROAD_NETWORK_ERROR_SEQ", 1)
+    sequenceResetter.resetSequenceToNumber("project_link_name_seq", 1)
+    sequenceResetter.resetSequenceToNumber("roadway_CHANGE_LINK", 1)
+    sequenceResetter.resetSequenceToNumber("road_network_error_seq", 1)
 
     //@deprecated ("Table published_road_network is no longer in use, and is empty.")
-    sequenceResetter.resetSequenceToNumber("PUBLISHED_ROAD_NETWORK_SEQ", 1)
+    sequenceResetter.resetSequenceToNumber("published_road_network_seq", 1)
 
-    sequenceResetter.resetSequenceToNumber("LINEAR_LOCATION_SEQ", 1)
-    sequenceResetter.resetSequenceToNumber("CALIBRATION_POINT_SEQ", 1)
-    sequenceResetter.resetSequenceToNumber("ROADWAY_POINT_SEQ", 1)
-    sequenceResetter.resetSequenceToNumber("ROADWAY_SEQ", 1)
-    sequenceResetter.resetSequenceToNumber("VIITE_GENERAL_SEQ", 1)
+    sequenceResetter.resetSequenceToNumber("linear_location_seq", 1)
+    sequenceResetter.resetSequenceToNumber("calibration_point_seq", 1)
+    sequenceResetter.resetSequenceToNumber("roadway_point_seq", 1)
+    sequenceResetter.resetSequenceToNumber("roadway_seq", 1)
+    sequenceResetter.resetSequenceToNumber("VIITE_GENERAL_seq", 1)
   }
 
   def resetNodesAndJunctionSequences(): Unit = {
@@ -216,43 +231,46 @@ class DataImporter extends BaseDAO{
     println(DateTime.now())
 
     val sequenceResetter = new SequenceResetterDAO()
-    sequenceResetter.resetSequenceToNumber("JUNCTION_POINT_SEQ", 1)
-    sequenceResetter.resetSequenceToNumber("NODE_POINT_SEQ", 1)
-    sequenceResetter.resetSequenceToNumber("JUNCTION_SEQ", 1)
-    sequenceResetter.resetSequenceToNumber("NODE_SEQ", 1)
+    sequenceResetter.resetSequenceToNumber("junction_point_seq", 1)
+    sequenceResetter.resetSequenceToNumber("node_point_seq", 1)
+    sequenceResetter.resetSequenceToNumber("junction_seq", 1)
+    sequenceResetter.resetSequenceToNumber("node_seq", 1)
   }
 
   private def updateNodePointType(): Unit = {
     println("\nUpdating nodePointTypes started at time: ")
     println(DateTime.now())
 
-    runUpdateToDbSlick(s"""
-      UPDATE NODE_POINT NP SET TYPE = (SELECT CASE
-          -- [TYPE = 99] Includes expired node points points or points attached to expired nodes
-          WHEN (point.VALID_TO IS NOT NULL OR NOT EXISTS (SELECT 1 FROM NODE node
-            WHERE node.NODE_NUMBER = point.NODE_NUMBER AND (node.END_DATE IS NULL AND node.VALID_TO IS NULL))) THEN 99
-          -- [TYPE = 1] Includes templates, points where ADDR_M is equal to START_ADDR_M or END_ADDR_M of the road (road_number, road_part_number and track) and when ADMINISTRATIVE_CLASS changes
-          WHEN point.NODE_NUMBER IS NULL THEN 1 -- node point template
-          WHEN (rp.ADDR_M = (SELECT MIN(roadAddr.START_ADDR_M) FROM ROADWAY roadAddr
-            WHERE roadAddr.ROAD_NUMBER = rw.ROAD_NUMBER AND roadAddr.ROAD_PART_NUMBER = rw.ROAD_PART_NUMBER
-            AND roadAddr.VALID_TO IS NULL AND roadAddr.END_DATE IS NULL)) THEN 1 -- ADDR_M is equal to START_ADDR_M
-          WHEN (rp.ADDR_M = (SELECT MAX(roadAddr.END_ADDR_M) FROM ROADWAY roadAddr
-            WHERE roadAddr.ROAD_NUMBER = rw.ROAD_NUMBER AND roadAddr.ROAD_PART_NUMBER = rw.ROAD_PART_NUMBER
-            AND roadAddr.VALID_TO IS NULL AND roadAddr.END_DATE IS NULL)) THEN 1 -- ADDR_M is equal to END_ADDR_M
-          WHEN ((SELECT DISTINCT(roadAddr.ADMINISTRATIVE_CLASS) FROM ROADWAY roadAddr
-              WHERE roadAddr.ROAD_NUMBER = rw.ROAD_NUMBER AND roadAddr.ROAD_PART_NUMBER = rw.ROAD_PART_NUMBER AND roadAddr.START_ADDR_M = rp.ADDR_M
-              AND roadAddr.VALID_TO IS NULL AND roadAddr.END_DATE IS NULL) !=
-            (SELECT DISTINCT(roadAddr.ADMINISTRATIVE_CLASS) FROM ROADWAY roadAddr
-              WHERE roadAddr.ROAD_NUMBER = rw.ROAD_NUMBER AND roadAddr.ROAD_PART_NUMBER = rw.ROAD_PART_NUMBER AND roadAddr.END_ADDR_M = rp.ADDR_M
-              AND roadAddr.VALID_TO IS NULL AND roadAddr.END_DATE IS NULL)) THEN 1 -- ADMINISTRATIVE_CLASS changed on ADDR_M
-          -- [TYPE = 2]
-          ELSE 2
-        END AS NODE_POINT_TYPE
-        FROM NODE_POINT point
-        LEFT JOIN ROADWAY_POINT rp ON point.ROADWAY_POINT_ID = rp.ID
-        LEFT JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
-          WHERE point.ID = NP.ID
-          LIMIT 1)""")
+    runUpdateToDb(
+      sql"""
+          UPDATE node_point np SET TYPE = (SELECT CASE
+              -- [TYPE = 99] Includes expired node points points or points attached to expired nodes
+              WHEN (point.valid_to IS NOT NULL OR NOT EXISTS (SELECT 1 FROM node node
+                WHERE node.node_number = point.node_number AND (node.end_date IS NULL AND node.valid_to IS NULL))) THEN 99
+              -- [TYPE = 1] Includes templates, points where addr_m is equal to start_addr_m or end_addr_m of the road (road_number, road_part_number and track) and when administrative_class changes
+              WHEN point.node_number IS NULL THEN 1 -- node point template
+              WHEN (rp.addr_m = (SELECT MIN(roadAddr.start_addr_m) FROM roadway roadAddr
+                WHERE roadAddr.road_number = rw.road_number AND roadAddr.road_part_number = rw.road_part_number
+                AND roadAddr.valid_to IS NULL AND roadAddr.end_date IS NULL)) THEN 1 -- addr_m is equal to start_addr_m
+              WHEN (rp.addr_m = (SELECT MAX(roadAddr.end_addr_m) FROM roadway roadAddr
+                WHERE roadAddr.road_number = rw.road_number AND roadAddr.road_part_number = rw.road_part_number
+                AND roadAddr.valid_to IS NULL AND roadAddr.end_date IS NULL)) THEN 1 -- addr_m is equal to end_addr_m
+              WHEN ((SELECT DISTINCT(roadAddr.administrative_class) FROM roadway roadAddr
+                  WHERE roadAddr.road_number = rw.road_number AND roadAddr.road_part_number = rw.road_part_number AND roadAddr.start_addr_m = rp.addr_m
+                  AND roadAddr.valid_to IS NULL AND roadAddr.end_date IS NULL) !=
+                (SELECT DISTINCT(roadAddr.administrative_class) FROM roadway roadAddr
+                  WHERE roadAddr.road_number = rw.road_number AND roadAddr.road_part_number = rw.road_part_number AND roadAddr.end_addr_m = rp.addr_m
+                  AND roadAddr.valid_to IS NULL AND roadAddr.end_date IS NULL)) THEN 1 -- administrative_class changed on addr_m
+              -- [TYPE = 2]
+              ELSE 2
+            END AS node_point_type
+            FROM node_point point
+            LEFT JOIN roadway_point rp ON point.roadway_point_ID = rp.id
+            LEFT JOIN roadway rw ON rp.roadway_number = rw.roadway_number AND rw.valid_to IS NULL AND rw.end_date IS NULL
+              WHERE point.id = np.id
+              LIMIT 1)
+              """
+    )
   }
 
   def updateLinearLocationGeometry(): Unit = {
@@ -264,11 +282,11 @@ class DataImporter extends BaseDAO{
   }
 
   def enableRoadwayTriggers(): Unit = {
-    runUpdateToDbSlick(s"""ALTER TABLE ROADWAY ENABLE TRIGGER USER""")
+    runUpdateToDb(s"""ALTER TABLE ROADWAY ENABLE TRIGGER USER""")
   }
 
   def disableRoadwayTriggers(): Unit = {
-    runUpdateToDbSlick(s"""ALTER TABLE ROADWAY DISABLE TRIGGER USER""")
+    runUpdateToDb(sql"""ALTER TABLE roadway DISABLE TRIGGER USER""")
   }
 
   /** Resets the roadway sequence to (MAX-of-current-roadway-numbers)+1, or to 1, if no roadways available. */
@@ -276,27 +294,35 @@ class DataImporter extends BaseDAO{
     println(s"\nResetting roadway related sequences started at time: ${DateTime.now()}")
 
     val sequenceResetter = new SequenceResetterDAO()
-    sql"""select MAX(ROADWAY_NUMBER) FROM ROADWAY""".as[Long].firstOption match {
+    runSelectSingleFirstOptionWithType[Long](sql"""select MAX(roadway_number) FROM roadway""") match {
       case Some(roadwayNumber) =>
-        sequenceResetter.resetSequenceToNumber("ROADWAY_NUMBER_SEQ", roadwayNumber + 1)
-      case _ => sequenceResetter.resetSequenceToNumber("ROADWAY_NUMBER_SEQ", 1)
+        sequenceResetter.resetSequenceToNumber("roadway_number_seq", roadwayNumber + 1)
+      case _ => sequenceResetter.resetSequenceToNumber("roadway_number_seq", 1)
     }
   }
 
-  protected def getRoadAddressImporter(conversionDatabase: driver.JdbcDriver.backend.DatabaseDef, KGVClient: KgvRoadLink, importOptions: ImportOptions): RoadAddressImporter = {
-    new RoadAddressImporter(conversionDatabase, KGVClient, importOptions)
+  protected def getRoadAddressImporter(KGVClient: KgvRoadLink, importOptions: ImportOptions): RoadAddressImporter = {
+    new RoadAddressImporter(KGVClient, importOptions)
   }
 
-  protected def getNodeImporter(conversionDatabase: DatabaseDef) : NodeImporter = {
-    new NodeImporter(conversionDatabase)
+  protected def getNodeImporter: NodeImporter = {
+    new NodeImporter
   }
 
-  protected def getJunctionImporter(conversionDatabase: DatabaseDef) : JunctionImporter = {
-    new JunctionImporter(conversionDatabase)
+  protected def getJunctionImporter: JunctionImporter = {
+    new JunctionImporter
   }
 
   protected def fetchGroupedLinkIds: Seq[Set[String]] = {
-    val linkIds = sql"""select distinct link_id from linear_location where link_id is not null order by link_id""".as[String].list
+    val query =
+      sql"""
+               SELECT DISTINCT link_id
+               FROM linear_location
+               WHERE link_id IS NOT NULL
+               ORDER BY link_id
+               """
+
+    val linkIds = runSelectQuery(query.map(_.string(1)))
     linkIds.toSet.grouped(25000).toSeq
   }
 
@@ -306,10 +332,12 @@ class DataImporter extends BaseDAO{
     val linkService = new RoadLinkService(KGVClient, eventBus, new DummySerializer, geometryFrozen)
     var changed = 0
     var skipped = 0 /// For log information about update-skipped linear locations, skip due to sameness to the old data
-    val linkIds = withDynSession{ fetchGroupedLinkIds }
+    val linkIds = runWithMainDBReadOnlySession {
+      fetchGroupedLinkIds
+    }
     linkIds.par.foreach {
       case linkIds =>
-        withDynTransaction {
+        runWithMainDbTransaction {
           val roadLinksFromKGV = linkService.getCurrentAndComplementaryRoadLinks(linkIds)
           val unGroupedTopology = linearLocationDAO.fetchByLinkId(roadLinksFromKGV.map(_.linkId).toSet)
           val topologyLocation = unGroupedTopology.groupBy(_.linkId)
@@ -318,7 +346,7 @@ class DataImporter extends BaseDAO{
             segmentsOnViiteDatabase.foreach(segment => {
               val newGeom = GeometryUtils.truncateGeometry3D(roadLink.geometry, segment.startMValue, segment.endMValue)
               if (!segment.geometry.equals(Nil) && !newGeom.equals(Nil)) {
-                if(skipped%100==0 && skipped>0){ // print some progress info, though nothing has been changing for a while
+                if (skipped % 100 == 0 && skipped > 0) { // print some progress info, though nothing has been changing for a while
                   println(s"Skipped geometry updates on $skipped linear locations")
                 }
                 val distanceFromHeadToHead = segment.geometry.head.distance2DTo(newGeom.head)
@@ -329,7 +357,7 @@ class DataImporter extends BaseDAO{
                   (distanceFromHeadToLast > MinDistanceForGeometryUpdate)) ||
                   ((distanceFromLastToHead > MinDistanceForGeometryUpdate) &&
                     (distanceFromLastToLast > MinDistanceForGeometryUpdate))) {
-                  if(skipped>0){
+                  if (skipped > 0) {
                     println(s"Skipped geometry updates on $skipped linear locations (minimal or no change on geometry)")
                     skipped = 0
                   }
@@ -337,15 +365,15 @@ class DataImporter extends BaseDAO{
                   println("Changed geometry on linear location id " + segment.id + " and linkId =" + segment.linkId)
                   changed += 1
                 } else {
-//                  println(s"Skipped geometry update on linear location ID : ${segment.id} and linkId: ${segment.linkId}")
-                  skipped +=1
+                  //                  println(s"Skipped geometry update on linear location ID : ${segment.id} and linkId: ${segment.linkId}")
+                  skipped += 1
                 }
               }
             })
           })
         }
     }
-    if(skipped>0){
+    if (skipped > 0) {
       println(s"Skipped geometry updates on $skipped linear locations")
     }
     println(s"Geometries changed count: $changed")
@@ -361,14 +389,17 @@ class DataImporter extends BaseDAO{
         GeometryUtils.scaleToThreeDigits(last.x),
         GeometryUtils.scaleToThreeDigits(last.y)
       )
+
       val length = GeometryUtils.geometryLength(geometry)
-      val ps = dynamicSession.prepareStatement(
-        "UPDATE LINEAR_LOCATION SET geometry = ST_GeomFromText(?, 3067) WHERE id = ?")
       val lineString = s"LINESTRING($x1 $y1 0.0 0.0, $x2 $y2 0.0 $length)"
-      ps.setString(1, lineString)
-      ps.setLong(2, linearLocationId)
-      ps.addBatch()
-      ps.executeBatch()
+
+      val updateQuery = sql"""
+        UPDATE linear_location
+        SET geometry = ST_GeomFromText($lineString, 3067)
+        WHERE id = $linearLocationId
+      """
+
+      runUpdateToDb(updateQuery)
     }
   }
 
