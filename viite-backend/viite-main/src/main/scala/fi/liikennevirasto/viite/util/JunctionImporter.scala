@@ -18,8 +18,8 @@ class JunctionImporter extends BaseDAO {
                                 endDate: Option[DateTime], validFrom: Option[DateTime], validTo: Option[DateTime],
                                 createdBy: String, createdTime: Option[DateTime])
 
-  case class ConversionJunctionPoint(id: Long, beforeOrAfter: Long, roadwayNumberTR: Long, addressMValueTR: Long, junctionTRId: Long,
-                                 validFrom: Option[DateTime], validTo: Option[DateTime], createdBy: String, createdTime: Option[DateTime])
+  case class ConversionJunctionPoint(id: Long, beforeOrAfter: Long, roadwayNumber: Long, addressMValue: Long, junctionId: Long,
+                                     validFrom: Option[DateTime], validTo: Option[DateTime], createdBy: String, createdTime: Option[DateTime])
 
 
   /**
@@ -35,7 +35,7 @@ class JunctionImporter extends BaseDAO {
     // group junctions with their points
     val junctionsWithPoints = conversionJunctions.map(
       junction => {
-        val junctionPointsForJunction = conversionJunctionPoints.filter(_.junctionTRId == junction.id)
+        val junctionPointsForJunction = conversionJunctionPoints.filter(_.junctionId == junction.id)
         (junction.copy(id = Sequences.nextJunctionId), junctionPointsForJunction)
       }
     )
@@ -49,15 +49,15 @@ class JunctionImporter extends BaseDAO {
     // Collect all junction point parameters for batch update
     val junctionPointParams: Seq[Seq[Any]] = junctionsWithPoints.flatMap { case (junction, points) =>
       points.map { point =>
-        println(s"Processing junction point with TR id = ${point.id} and junction_id = ${point.junctionTRId}")
+        println(s"Processing junction point with TR id = ${point.id} and junction_id = ${point.junctionId}")
 
         // check if roadway point already exists with same roadway number and address m value
-        val existingRoadwayPoint = roadwayPointDAO.fetch(point.roadwayNumberTR, point.addressMValueTR)
+        val existingRoadwayPoint = roadwayPointDAO.fetch(point.roadwayNumber, point.addressMValue)
         // Create roadway point if it does not exist and get its id
         val roadwayPointId = existingRoadwayPoint match {
           case Some(rwp) => rwp.id
           case None =>
-            roadwayPointDAO.create(point.roadwayNumberTR, point.addressMValueTR, createdBy = "junction_import")
+            roadwayPointDAO.create(point.roadwayNumber, point.addressMValue, createdBy = "junction_import")
         }
 
         // Create junction point parameters and return them
@@ -171,9 +171,9 @@ class JunctionImporter extends BaseDAO {
       ConversionJunctionPoint(
         id              = rs.long("id"),
         beforeOrAfter   = beforeOrAfter,
-        roadwayNumberTR = rs.long("id_aorata"),
-        addressMValueTR = rs.long("etaisyys"),
-        junctionTRId    = rs.long("id_liittyma"),
+        roadwayNumber = rs.long("id_aorata"),
+        addressMValue = rs.long("etaisyys"),
+        junctionId    = rs.long("id_liittyma"),
         validFrom       = rs.jodaDateTimeOpt("muutospvm"),
         validTo         = None,
         createdBy       = rs.string("kayttaja"),
