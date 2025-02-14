@@ -242,27 +242,38 @@ object TerminatedTwoTrackSectionSynchronizer {
     /**
      * Find pairs of minorDiscontinuity links on opposite tracks, reasonably close to each other.
      */
-    def findMinorDiscontinuityLinkPairs(minorDiscontinuityLinks: Seq[ProjectLink]): Seq[(ProjectLink, ProjectLink)] = {
+    def findMinorDiscontinuityLinkPairs(minorDiscontinuityLinks: Seq[ProjectLink]): Seq[Seq[ProjectLink]] = {
       val maxDiffForTrackEnds = 10 // This number is arbitrary and may require adjustments in the future.
       minorDiscontinuityLinks.filter(_.track == Track.LeftSide).flatMap { leftLink =>
         minorDiscontinuityLinks.filter(rightLink =>
           rightLink.track == Track.RightSide &&
             Math.abs(leftLink.addrMRange.end - rightLink.addrMRange.end) <= maxDiffForTrackEnds
-        ).map(rightLink => (leftLink, rightLink))
+        ).map(rightLink => Seq(leftLink, rightLink))
       }
     }
 
     val minorDiscontinuityLinks = projectLinks.filter(_.discontinuity == Discontinuity.MinorDiscontinuity)
+    val combinedMinorDiscontinuityLinks = minorDiscontinuityLinks.filter(_.track == Track.Combined)
     val minorDiscontinuityLinkPairs = findMinorDiscontinuityLinkPairs(minorDiscontinuityLinks)
+    val minorDiscontinuitiesToProcess = minorDiscontinuityLinkPairs ++ Seq(combinedMinorDiscontinuityLinks)
 
     val processedLinks = {
       var updatedProjectLinks = projectLinks
-      if (minorDiscontinuityLinkPairs.nonEmpty) {
+      if (minorDiscontinuitiesToProcess.nonEmpty) {
         // Process Minor discontinuity link pairs one by one
-        minorDiscontinuityLinkPairs.foreach({ case (leftLink, rightLink) =>
-          // Check if there is a terminated section after the minor discontinuity ON BOTH TRACKS
-          val leftTerminatedAfterMinorDisc = updatedProjectLinks.find(pl => pl.status == RoadAddressChangeType.Termination && pl.track == leftLink.track && leftLink.originalAddrMRange.continuesTo(pl.originalAddrMRange))
-          val rightTerminatedAfterMinorDisc = updatedProjectLinks.find(pl => pl.status == RoadAddressChangeType.Termination && pl.track == rightLink.track && rightLink.originalAddrMRange.continuesTo(pl.originalAddrMRange))
+        minorDiscontinuitiesToProcess.foreach({ minorDiscontinuityLinks =>
+          // Find terminated sections that are located right after the minor discontinuity link(s)
+          val (leftTerminatedAfterMinorDisc, rightTerminatedAfterMinorDisc) = minorDiscontinuityLinks match {
+            case Seq(combined) =>
+              val leftTerminatedAfterMinorDisc = updatedProjectLinks.find(pl => pl.status == RoadAddressChangeType.Termination && pl.track == Track.LeftSide && combined.originalAddrMRange.continuesTo(pl.originalAddrMRange))
+              val rightTerminatedAfterMinorDisc = updatedProjectLinks.find(pl => pl.status == RoadAddressChangeType.Termination && pl.track == Track.RightSide && combined.originalAddrMRange.continuesTo(pl.originalAddrMRange))
+              (leftTerminatedAfterMinorDisc, rightTerminatedAfterMinorDisc)
+            case Seq(left, right) =>
+              val leftTerminatedAfterMinorDisc = updatedProjectLinks.find(pl => pl.status == RoadAddressChangeType.Termination && pl.track == Track.LeftSide && left.originalAddrMRange.continuesTo(pl.originalAddrMRange))
+              val rightTerminatedAfterMinorDisc = updatedProjectLinks.find(pl => pl.status == RoadAddressChangeType.Termination && pl.track == Track.RightSide && right.originalAddrMRange.continuesTo(pl.originalAddrMRange))
+              (leftTerminatedAfterMinorDisc, rightTerminatedAfterMinorDisc)
+            case _ => (None,None)
+          }
 
           if (leftTerminatedAfterMinorDisc.isDefined && rightTerminatedAfterMinorDisc.isDefined) {
             // Update terminated links to match, the discontinuity links to match and if there are links after terminated section, adjust those as well
@@ -279,15 +290,13 @@ object TerminatedTwoTrackSectionSynchronizer {
             val averageStartForTermSect = Math.round((firstTerminatedLeft.addrMRange.start + firstTerminatedRight.addrMRange.start).toDouble / 2)
             val averageEndForTermSect   = Math.round((lastTerminatedLeft.addrMRange.end + lastTerminatedRight.addrMRange.end).toDouble / 2)
 
-            val adjustedMinorDiscLeft = leftLink.copy(
-              addrMRange          = AddrMRange(leftLink.addrMRange.start, averageStartForTermSect),
-              originalAddrMRange  = AddrMRange(leftLink.originalAddrMRange.start, averageStartForTermSect)
-            )
-
-            val adjustedMinorDiscRight = rightLink.copy(
-              addrMRange          = AddrMRange(rightLink.addrMRange.start, averageStartForTermSect),
-              originalAddrMRange  = AddrMRange(rightLink.originalAddrMRange.start, averageStartForTermSect)
-            )
+            val updatedMinorDiscLinks = {
+              minorDiscontinuityLinks.map(minorDiscLink =>
+                minorDiscLink.copy(
+                  addrMRange          = AddrMRange(minorDiscLink.addrMRange.start, averageStartForTermSect),
+                  originalAddrMRange  = AddrMRange(minorDiscLink.originalAddrMRange.start, averageStartForTermSect)
+                ))
+            }
 
             val adjustedTerminatedLeft = {
               if (firstTerminatedLeft == lastTerminatedLeft) {
@@ -366,7 +375,7 @@ object TerminatedTwoTrackSectionSynchronizer {
             }
 
             updatedProjectLinks = updateProjectLinksList(
-              Seq(adjustedMinorDiscLeft, adjustedMinorDiscRight) ++ adjustedTerminatedLeft ++ adjustedTerminatedRight ++ adjustedAfterTermination,
+              updatedMinorDiscLinks ++ adjustedTerminatedLeft ++ adjustedTerminatedRight ++ adjustedAfterTermination,
               updatedProjectLinks
             )
             updatedProjectLinks
