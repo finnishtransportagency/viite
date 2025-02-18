@@ -923,7 +923,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers(roadwayNumbersSection)
       val sortedRoadways = roadwayDAO.fetchAllByRoadwayNumbers(roadwayNumbersSection.toSet).sortBy(_.addrMRange.start)
 
-      val (startAddrMValue, endAddrMValue) = (sortedRoadways.headOption.map(_.addrMRange.start), sortedRoadways.lastOption.map(_.addrMRange.end))
+      val (startAddrMValues, endAddrMValues) = (sortedRoadways.headOption.map(_.addrMRange.start), sortedRoadways.lastOption.map(_.addrMRange.end))
 
       val obsoleteNodePoints = sortedRoadways.flatMap { rw =>
         val nodePoints = nodePointDAO.fetchByRoadwayPointIds(roadwayPoints.filter(_.roadwayNumber == rw.roadwayNumber).map(_.id))
@@ -931,7 +931,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         rw.track match {
           case Track.LeftSide => nodePoints
           case _ => nodePoints.filterNot { n =>
-            (n.beforeAfter == BeforeAfter.After && startAddrMValue.contains(n.addrM)) || (n.beforeAfter == BeforeAfter.Before && endAddrMValue.contains(n.addrM))
+            (n.beforeAfter == BeforeAfter.After && startAddrMValues.contains(n.addrM)) || (n.beforeAfter == BeforeAfter.Before && endAddrMValues.contains(n.addrM))
           }
         }
       }

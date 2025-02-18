@@ -437,8 +437,8 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, KGVClient: KgvRoadLin
       val roadPartNumber = r.nextLong()
       val trackCode = r.nextLong()
       val discontinuity = r.nextLong()
-      val startAddrM = r.nextLong()
-      val endAddrM = r.nextLong()
+      val startAddrM = r.nextLong() // Conversion addresses might be end > start; do not use AddrMRange here.
+      val endAddrM   = r.nextLong() // Conversion addresses might be end > start; do not use AddrMRange here.
       val startM = r.nextDouble()
       val endM = r.nextDouble()
       val startDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
@@ -479,11 +479,12 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, KGVClient: KgvRoadLin
       }
 
       val roadPart = RoadPart(roadNumber,roadPartNumber)
-      val addrRange = AddrMRange(startAddrM, endAddrM)
       if (startAddrM < endAddrM) {
+        val addrRange = AddrMRange(startAddrM, endAddrM)
         ConversionAddress(roadPart, trackCode, discontinuity, addrRange, startM, endM, startDate, endDateOption, validFrom, expirationDate, ely, administrativeClass, 0, linkId, userId, Option(x1), Option(y1), Option(x2), Option(y2), roadwayNumber, SideCode.TowardsDigitizing, getCalibrationCode(startCalibrationPoint, endCalibrationPoint, addrRange), directionFlag)
       } else {
         //switch startAddrM, endAddrM and set the side code to AgainstDigitizing
+        val addrRange = AddrMRange(endAddrM, startAddrM)
         ConversionAddress(roadPart, trackCode, discontinuity, addrRange, startM, endM, startDate, endDateOption, validFrom, expirationDate, ely, administrativeClass, 0, linkId, userId, Option(x1), Option(y1), Option(x2), Option(y2), roadwayNumber, SideCode.AgainstDigitizing, getCalibrationCode(startCalibrationPoint, endCalibrationPoint, addrRange), directionFlag)
       }
     }

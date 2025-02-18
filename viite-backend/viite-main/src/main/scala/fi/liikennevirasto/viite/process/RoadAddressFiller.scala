@@ -131,7 +131,7 @@ object RoadAddressFiller {
     //TODO check if its needed to create unaddressed road link for part after VIITE-1536
     if (roadAddresses.isEmpty) {
       val unaddressedRoadLink =
-        UnaddressedRoadLink(roadLink.linkId, None, None, AdministrativeClass.Unknown, None, None, Some(0.0), Some(roadLink.length),
+        UnaddressedRoadLink(roadLink.linkId, None, AdministrativeClass.Unknown, None, None, Some(0.0), Some(roadLink.length),
           GeometryUtils.truncateGeometry3D(roadLink.geometry, 0.0, roadLink.length))
 
       Seq(roadAddressLinkBuilder.build(roadLink, unaddressedRoadLink))

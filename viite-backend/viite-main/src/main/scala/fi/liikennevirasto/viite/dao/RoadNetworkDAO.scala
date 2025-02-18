@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite.dao
 
 import org.joda.time.DateTime
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.vaylavirasto.viite.model.{BeforeAfter, RoadPart}
+import fi.vaylavirasto.viite.model.{AddrMRange, BeforeAfter, RoadPart}
 import fi.vaylavirasto.viite.dao.BaseDAO
 import scalikejdbc._
 import scalikejdbc.jodatime.JodaWrappedResultSet.fromWrappedResultSetToJodaWrappedResultSet
@@ -19,7 +19,7 @@ case class RoadwayNetworkSummaryRow
 case class MissingCalibrationPoint(roadPart: RoadPart, track: Long, addrM: Long, createdTime: DateTime, createdBy: String)
 case class MissingCalibrationPointFromJunction(missingCalibrationPoint: MissingCalibrationPoint, junctionPointId: Long, junctionNumber: Long, nodeNumber: Long, beforeAfter: BeforeAfter)
 case class MissingRoadwayPoint(roadPart: RoadPart, track: Long, addrM: Long, createdTime: DateTime, createdBy: String)
-case class InvalidRoadwayLength(roadwayNumber: Long, startDate: DateTime, endDate: Option[DateTime], roadPart: RoadPart, track: Long, startAddrM: Long, endAddrM: Long, length: Long, createdBy: String, createdTime: DateTime)
+case class InvalidRoadwayLength(roadwayNumber: Long, startDate: DateTime, endDate: Option[DateTime], roadPart: RoadPart, track: Long, addrMRange: AddrMRange, length: Long, createdBy: String, createdTime: DateTime)
 case class LinksWithExtraCalibrationPoints(linkId: String, roadPart: RoadPart, startEnd: Int, calibrationPointCount: Int, calibrationPointIds: Array[Long])
 
 //TODO better naming case class
@@ -89,8 +89,10 @@ class RoadNetworkDAO extends BaseDAO {
         partNumber  = rs.long("road_part_number")
       ),
       track         = rs.long("track"),
-      startAddrM    = rs.long("start_addr_m"),
-      endAddrM      = rs.long("end_addr_m"),
+      addrMRange    = AddrMRange(
+        start       = rs.long("start_addr_m"),
+        end         = rs.long("end_addr_m")
+      ),
       length        = rs.long("length"),
       createdBy     = rs.string("created_by"),
       createdTime   = rs.jodaDateTime("created_time")

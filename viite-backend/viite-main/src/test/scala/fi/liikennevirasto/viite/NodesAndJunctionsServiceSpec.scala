@@ -4980,12 +4980,12 @@ class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with Before
   def dummyHorizontalRoad(projectId: Long, numberOfLinearLocations: Int, roadPart: RoadPart, rwNumber: Long, track: Track = Track.Combined, startAddrAt: Long = 0, administrativeClass: AdministrativeClass = AdministrativeClass.State, discontinuity: Discontinuity = Discontinuity.Continuous, firstPointAt: Point = Point(0.0, 0.0), orderNumber: Double = 1.0, linkId: Long = 0, plId: Long = 0, rw: (Long, Option[Roadway]) = (0, None), llId: Long = 0, size: Int = 10): (Seq[ProjectLink], Seq[LinearLocation], Roadway) = {
     val (rwId, roadway) = rw
     val projectLinks = for (i: Int <- 0 until numberOfLinearLocations) yield {
-      val startAddrM = i * size + startAddrAt
-      val endAddrM = startAddrM + size
+      val start = (i * size + startAddrAt)
+      val addrMRange = AddrMRange(start, start + size)
       val startPoint = firstPointAt.x + (i * size)
       val endPoint = startPoint + size
       val geom = Seq(Point(startPoint, firstPointAt.y), Point(endPoint, firstPointAt.y))
-      val projectLink = dummyProjectLink(roadPart, track, if (i == numberOfLinearLocations-1) discontinuity else Discontinuity.Continuous, AddrMRange(startAddrM, endAddrM), AddrMRange(startAddrM, endAddrM), Some(DateTime.now()), None, (linkId + i).toString, 0, size, SideCode.TowardsDigitizing, RoadAddressChangeType.New, projectId, administrativeClass, geom, rwNumber).copy(id = plId + i, roadwayId = rwId, linearLocationId = llId + i)
+      val projectLink = dummyProjectLink(roadPart, track, if (i == numberOfLinearLocations-1) discontinuity else Discontinuity.Continuous, addrMRange, addrMRange, Some(DateTime.now()), None, (linkId + i).toString, 0, size, SideCode.TowardsDigitizing, RoadAddressChangeType.New, projectId, administrativeClass, geom, rwNumber).copy(id = plId + i, roadwayId = rwId, linearLocationId = llId + i)
       projectLink
     }
     val (linearLocations, roadways) = projectLinks.map(toRoadwayAndLinearLocation).unzip
@@ -4997,13 +4997,13 @@ class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with Before
   def dummyVerticalRoad(projectId: Long, numberOfLinearLocations: Int, roadPart: RoadPart, rwNumber: Long, track: Track = Track.Combined, startAddrAt: Long = 0, administrativeClass: AdministrativeClass = AdministrativeClass.State, discontinuity: Discontinuity = Discontinuity.Continuous, firstPointAt: Point = Point(0.0, 0.0), orderNumber: Double = 1.0, linkId: Long = 0, plId: Long = 0, rw: (Long, Option[Roadway]) = (0, None), llId: Long = 0, size: Int = 10): (Seq[ProjectLink], Seq[LinearLocation], Roadway) = {
     val (rwId, roadway) = rw
     val projectLinks = for (i: Int <- 0 until numberOfLinearLocations) yield {
-      val startAddrM = i * size + startAddrAt
-      val endAddrM = startAddrM + size
+      val start = i * size + startAddrAt
+      val addrMRange = AddrMRange(start, start + size)
       val startPoint = firstPointAt.y + (i * size)
       val endPoint = startPoint + size
       val geom = Seq(Point(firstPointAt.x, startPoint), Point(firstPointAt.x, endPoint))
       val discontinuityCode = if ( i === (numberOfLinearLocations - 1) ) { discontinuity } else { Discontinuity.Continuous }
-      dummyProjectLink(roadPart, track, discontinuityCode, AddrMRange(startAddrM, endAddrM), AddrMRange(startAddrM, endAddrM), Some(DateTime.now()), None, (linkId + i).toString, 0, size, SideCode.TowardsDigitizing, RoadAddressChangeType.New, projectId, administrativeClass, geom, rwNumber).copy(id = plId + i, roadwayId = rwId, linearLocationId = llId + i)
+      dummyProjectLink(roadPart, track, discontinuityCode, addrMRange, addrMRange, Some(DateTime.now()), None, (linkId + i).toString, 0, size, SideCode.TowardsDigitizing, RoadAddressChangeType.New, projectId, administrativeClass, geom, rwNumber).copy(id = plId + i, roadwayId = rwId, linearLocationId = llId + i)
     }
     val (linearLocations, roadways) = projectLinks.map(toRoadwayAndLinearLocation).unzip
     val orderedLinearLocations: Seq[LinearLocation] = linearLocations.zipWithIndex.map { case (ll, i) => ll.copy(orderNumber = orderNumber + i) }
