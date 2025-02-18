@@ -1008,10 +1008,7 @@ class RoadwayDAOSpec extends AnyFunSuite with Matchers {
       val result = dao.fetchRoadPartsForRoadAddressBrowser(Some(date), None, Some(roadPart.roadNumber), Some(roadPart.partNumber), Some(roadPart.partNumber))
       result.size should be (1)                               // one road part should always return one result row
       result.head shouldBe a [RoadPartForRoadAddressBrowser]
-      val startAddrM = result.head.addrMRange.start
-      startAddrM should be (0)                                // max endAddrM - min startAddrM
-      val endAddrM = result.head.addrMRange.end
-      endAddrM should be (5239)                               // max endAddrM
+      result.head.addrMRange should be (AddrMRange(0, 5239)) // AddrMRange(max endAddrM - min startAddrM,  max endAddrM)
       val startDate = result.head.startDate
       startDate should be (DateTime.parse("2017-12-15")) // latest date of all of the roadways on the road part
 

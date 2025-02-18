@@ -32,8 +32,7 @@ class TwoTrackRoadUtilsSpec extends AnyFunSuite with Matchers {
     val id = Sequences.nextViiteProjectId
 
     def projectLink(
-                     startAddrM      : Long,
-                     endAddrM        : Long,
+                     addrMRange      : AddrMRange,
                      track           : Track,
                      projectId       : Long,
                      status          : RoadAddressChangeType = RoadAddressChangeType.NotHandled,
@@ -46,15 +45,15 @@ class TwoTrackRoadUtilsSpec extends AnyFunSuite with Matchers {
                      linearLocationId: Long = 0L,
                      startDate       : Option[DateTime] = None
                    ) = {
-      ProjectLink(NewIdValue, roadPart, track, discontinuity, AddrMRange(startAddrM, endAddrM), AddrMRange(startAddrM, endAddrM), startDate, None, Some("User"), linkId, 0.0, (endAddrM - startAddrM).toDouble, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), geom: Seq[Point], projectId, status, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, (endAddrM - startAddrM).toDouble, roadwayId, linearLocationId, ely, reversed = false, None, 0L)
+      ProjectLink(NewIdValue, roadPart, track, discontinuity, addrMRange, addrMRange, startDate, None, Some("User"), linkId, 0.0, addrMRange.length.toDouble, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), geom: Seq[Point], projectId, status, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, addrMRange.length.toDouble, roadwayId, linearLocationId, ely, reversed = false, None, 0L)
     }
 
     def withTrack(testTrack: TestTrack): Seq[ProjectLink] = {
       testTrack.status.zipWithIndex.map {
         case (status, index) =>
-          val (st, en) = (testTrack.geom(index).minBy(_.x).x.toLong, testTrack.geom(index).maxBy(_.x).x.toLong)
+          val addrMRange = AddrMRange(testTrack.geom(index).minBy(_.x).x.toLong, testTrack.geom(index).maxBy(_.x).x.toLong)
 
-          projectLink(st, en, testTrack.track, id, status, roadPart, discontinuity, ely, geom = testTrack.geom(index), linkId = index.toString, roadwayId = roadwayId,
+          projectLink(addrMRange, testTrack.track, id, status, roadPart, discontinuity, ely, geom = testTrack.geom(index), linkId = index.toString, roadwayId = roadwayId,
             startDate = startDate)
       }
     }
