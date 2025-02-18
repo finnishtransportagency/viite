@@ -93,7 +93,7 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
           if (depth > 105) throw new RuntimeException(message)
         }
 
-        val adjustedList: Seq[Long] = if ((previewValue < addrMRange.end) && (previewValue > startAddr)) { // TODO VIITE-3349 refactoring to AddrMRange: mixed usage of startAddr, and arrdMRange.end - is this what is intended?
+        val adjustedList: Seq[Long] = if ((previewValue < addrMRange.end) && (previewValue > startAddr)) { // TODO VIITE-3349 refactoring to AddrMRange: mixed usage of startAddr, and addrMRange.end - is this what is intended?
           list :+ Math.round(previewValue)
         } else if (previewValue <= startAddr) {
           mappedAddressValues(Seq(remaining.head), processed, list.last, endAddr, coef, list, increment + 1, depth + 1)
