@@ -97,7 +97,7 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
           list :+ Math.round(previewValue)
         } else if (previewValue <= startAddr) {
           mappedAddressValues(Seq(remaining.head), processed, list.last, endAddr, coef, list, increment + 1, depth + 1)
-        } else if (previewValue <= addrMRange.end) { // TODO VIITE-3349 refactoring to AddrMRange: mixed usage of startAddr two lines above, and arrdMRange.end here - is this what is intended?
+        } else if (previewValue <= addrMRange.end) { // TODO VIITE-3349 refactoring to AddrMRange: mixed usage of startAddr two lines above, and addrMRange.end here - is this what is intended?
           mappedAddressValues(Seq(remaining.head), processed, list.last, endAddr, coef, list, increment - 1, depth + 1)
         } else {
           mappedAddressValues(processed.last +: remaining, processed.init, list.init.last, endAddr, coef, list.init, increment - 1, depth + 1)
