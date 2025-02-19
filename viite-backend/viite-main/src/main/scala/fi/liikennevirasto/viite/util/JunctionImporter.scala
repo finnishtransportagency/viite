@@ -42,7 +42,7 @@ class JunctionImporter extends BaseDAO {
 
     // Collect all junction parameters for batch update
     val junctionParams = junctionsWithPoints.map { case (junction, _) =>
-      println(s"Processing junction with TR id = ${junction.id} and junction_number = ${junction.junctionNumber}")
+      println(s"Processing junction with id = ${junction.id} and junction_number = ${junction.junctionNumber}")
       createJunctionParams(junction)
     }
 
@@ -105,8 +105,8 @@ class JunctionImporter extends BaseDAO {
       conversionJunction.junctionNumber,
       conversionJunction.nodeNumber,
       conversionJunction.startDate,
-      conversionJunction.endDate.orNull,
-      conversionJunction.validFrom.get.getMillis,
+      conversionJunction.endDate,
+      conversionJunction.validFrom,
       conversionJunction.createdBy
     )
   }
@@ -171,7 +171,7 @@ class JunctionImporter extends BaseDAO {
       ConversionJunctionPoint(
         id              = rs.long("id"),
         beforeOrAfter   = beforeOrAfter,
-        roadwayNumber = rs.long("id_aorata"),
+        roadwayNumber = rs.long("id_ajorata"),
         addressMValue = rs.long("etaisyys"),
         junctionId    = rs.long("id_liittyma"),
         validFrom       = rs.jodaDateTimeOpt("muutospvm"),
