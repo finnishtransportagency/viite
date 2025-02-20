@@ -5,6 +5,8 @@ import fi.vaylavirasto.viite.util.ViiteException
 
 object TerminatedTwoTrackSectionSynchronizer {
 
+  val maxDiffForTrack = 10 // This number is arbitrary and may require adjustments in the future.
+
   /**
    * Adjusts two track terminated sections to match + the surrounding links if needed.
    * @param roadPartProjectLinksWithoutNewLinks Sequence of project links to adjust on a single road part (NOTE! RoadAddressChangeType.New links NOT allowed)
@@ -172,7 +174,6 @@ object TerminatedTwoTrackSectionSynchronizer {
    *  0     202     260  450
    */
   private def handleTwoTrackRoadPartStartTermination(terminatedLeftSection: Seq[ProjectLink], terminatedRightSection: Seq[ProjectLink], projectLinks: Seq[ProjectLink]): Seq[ProjectLink]= {
-    val maxDiffForTrackEnds = 10 // This number is arbitrary and may require adjustments in the future.
     val lastTerminatedOnLeftSideSection = terminatedLeftSection.last
     val lastTerminatedOnRightSideSection = terminatedRightSection.last
 
@@ -182,18 +183,18 @@ object TerminatedTwoTrackSectionSynchronizer {
 
     // Adjust terminated
     val processedLinks: Seq[ProjectLink] = {
-      if (Math.abs(lastTerminatedOnLeftSideSection.addrMRange.end - lastTerminatedOnRightSideSection.addrMRange.end) <= maxDiffForTrackEnds) {
+      if (Math.abs(lastTerminatedOnLeftSideSection.addrMRange.end - lastTerminatedOnRightSideSection.addrMRange.end) <= maxDiffForTrack) {
         // Adjust the last terminated links on each track to match
         val (adjustedTerminatedLeft, adjustedTerminatedRight, averagedAddrMRange) = adjustTerminatedToMatch(lastTerminatedOnLeftSideSection, lastTerminatedOnRightSideSection)
 
         if (continuousAfterTerminatedLeft.isDefined && continuousAfterTerminatedRight.isDefined) {
-          // Adjust both links and update the project links list with the adjusted terminated links and the adjusted continuous-after-termination links
+          // Adjust both links after the terminated section
           val adjustedLeftAddrMRange = AddrMRange(averagedAddrMRange.end, continuousAfterTerminatedLeft.get.originalAddrMRange.end)
           val adjLeftContinuousAfterTerminated = continuousAfterTerminatedLeft.get.copy(originalAddrMRange = adjustedLeftAddrMRange)
 
           val adjustedRightAddrMRange = AddrMRange(averagedAddrMRange.end, continuousAfterTerminatedRight.get.originalAddrMRange.end)
           val adjRightContinuousAfterTerminated = continuousAfterTerminatedRight.get.copy(originalAddrMRange = adjustedRightAddrMRange)
-
+          // Update the project links list with the adjusted terminated links and the adjusted continuous-after-termination links
           updateProjectLinksList(Seq(adjustedTerminatedLeft, adjustedTerminatedRight, adjLeftContinuousAfterTerminated, adjRightContinuousAfterTerminated), projectLinks)
         } else {
           // Just update the terminated links
@@ -223,7 +224,7 @@ object TerminatedTwoTrackSectionSynchronizer {
 
   /**
    * Adjusts two track terminated sections to match if the termination creates a minor discontinuity.
-   * The minor discontinuity links will also be adjusted to match the start of the terminated section.
+   * The minor discontinuity links (links just before the terminated sections) will also be adjusted to match the start of the terminated section.
    * if there are links after the adjusted terminated section, those links will also be adjusted to match the end of the adjusted terminated section.
    *
    * Example:
@@ -250,11 +251,11 @@ object TerminatedTwoTrackSectionSynchronizer {
      * Find pairs of minorDiscontinuity links on opposite tracks, reasonably close to each other.
      */
     def findMinorDiscontinuityLinkPairs(minorDiscontinuityLinks: Seq[ProjectLink]): Seq[Seq[ProjectLink]] = {
-      val maxDiffForTrackEnds = 10 // This number is arbitrary and may require adjustments in the future.
+
       minorDiscontinuityLinks.filter(_.track == Track.LeftSide).flatMap { leftLink =>
         minorDiscontinuityLinks.filter(rightLink =>
           rightLink.track == Track.RightSide &&
-            Math.abs(leftLink.addrMRange.end - rightLink.addrMRange.end) <= maxDiffForTrackEnds
+            Math.abs(leftLink.addrMRange.end - rightLink.addrMRange.end) <= maxDiffForTrack
         ).map(rightLink => Seq(leftLink, rightLink))
       }
     }
@@ -449,13 +450,13 @@ object TerminatedTwoTrackSectionSynchronizer {
       (adjustedPreviousLeftLink, adjustedPreviousRightLink)
     }
 
-    val maxDiffForTrackStarts = 10 // This number is arbitrary and may require adjustments in the future.
+
     val firstLinkOnLeftTermSection  = terminatedLeftSection.minBy(_.addrMRange.start)
     val firstLinkOnRightTermSection =  terminatedRightSection.minBy(_.addrMRange.start)
 
     val processedLinks = {
       if ((firstLinkOnLeftTermSection.addrMRange.start == firstLinkOnRightTermSection.addrMRange.start) || // Address starts' match on first links of terminated section
-        (Math.abs(firstLinkOnLeftTermSection.originalAddrMRange.start - firstLinkOnRightTermSection.originalAddrMRange.start) > maxDiffForTrackStarts)) { // Address starts' are too far away each other
+        (Math.abs(firstLinkOnLeftTermSection.originalAddrMRange.start - firstLinkOnRightTermSection.originalAddrMRange.start) > maxDiffForTrack)) { // Address starts' are too far away each other
         // Return the project links unchanged
         projectLinks
       } else {
