@@ -1563,9 +1563,11 @@ class ProjectLinkRecalculationSpec extends AnyFunSuite with Matchers {
       val newLeftStartingLink = others.filter(pl => pl.addrMRange.isRoadPartStart && pl.track == Track.LeftSide)
       val newRightStartingLink = others.filter(pl => pl.addrMRange.isRoadPartStart && pl.track == Track.RightSide)
       newLeftStartingLink.size should be (1)
-      newLeftStartingLink.head.originalAddrMRange.start should be (22)  // And the remaining links, continuing after termination, should have the same averaged address as the terminated got at end
+      newLeftStartingLink.head.originalAddrMRange should be (AddrMRange(22, 34))  // And the remaining links, continuing after termination, should have the same averaged address as the terminated got at end
+      newLeftStartingLink.head.addrMRange should be (AddrMRange(0, 12))
+
       newRightStartingLink.size should be (1)
-      newRightStartingLink.head.originalAddrMRange.start should be (22) // And the remaining links, continuing after termination, should have the same averaged address as the terminated got at end
-    }
+      newRightStartingLink.head.originalAddrMRange should be (AddrMRange(22, 31)) // And the remaining links, continuing after termination, should have the same averaged address as the terminated got at end
+      newRightStartingLink.head.addrMRange should be (AddrMRange(0, 9))}
   }
 }
