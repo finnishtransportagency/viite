@@ -8,6 +8,13 @@ object TerminatedTwoTrackSectionSynchronizer {
   // The maximum difference that two different tracks (Left and Right) can have at the start or end of addrMRange to be considered parallel.
   private val maxDiffForTracks = 10 // This number is arbitrary and may require adjustments in the future.
 
+  private def calculateAverageAddrM(addrM1: Long, addrM2: Long): Long = {
+    // Since Math.round rounds to the nearest whole number, adding small constant (for example 0.1) ensures that minor precision errors (especially
+    // due to floating-point calculations) do not cause unexpected results.
+    val erroneousRoundingPreventionCoefficient = 0.1
+    Math.round((0.5 * (addrM1 + addrM2)) + erroneousRoundingPreventionCoefficient)
+  }
+
   /**
    * Adjusts two track terminated sections to match + the surrounding links if needed.
    * @param roadPartProjectLinksWithoutNewLinks Sequence of project links to adjust on a single road part (NOTE! RoadAddressChangeType.New links NOT allowed)
@@ -100,8 +107,8 @@ object TerminatedTwoTrackSectionSynchronizer {
    * @returns Adjusted project links and the new averaged AddrMRange of the adjusted project links.
    */
   private def adjustTerminatedToMatch(terminatedLeft: ProjectLink, terminatedRight: ProjectLink): (ProjectLink, ProjectLink, AddrMRange) = {
-    val averageStart = Math.round((terminatedLeft.addrMRange.start + terminatedRight.addrMRange.start).toDouble / 2)
-    val averageEnd = Math.round((terminatedLeft.addrMRange.end + terminatedRight.addrMRange.end).toDouble / 2)
+    val averageStart  = calculateAverageAddrM(terminatedLeft.addrMRange.start, terminatedRight.addrMRange.start)
+    val averageEnd    = calculateAverageAddrM(terminatedLeft.addrMRange.end, terminatedRight.addrMRange.end)
 
     val averagedAddrMRange = AddrMRange(averageStart, averageEnd)
 
@@ -300,8 +307,8 @@ object TerminatedTwoTrackSectionSynchronizer {
             val lastTerminatedLeft  = leftTermSect.get.maxBy(_.addrMRange.end)
             val lastTerminatedRight = rightTermSect.get.maxBy(_.addrMRange.end)
 
-            val averageStartForTermSect = Math.round((firstTerminatedLeft.addrMRange.start + firstTerminatedRight.addrMRange.start).toDouble / 2)
-            val averageEndForTermSect   = Math.round((lastTerminatedLeft.addrMRange.end + lastTerminatedRight.addrMRange.end).toDouble / 2)
+            val averageStartForTermSect = calculateAverageAddrM(firstTerminatedLeft.addrMRange.start, firstTerminatedRight.addrMRange.start)
+            val averageEndForTermSect   = calculateAverageAddrM(lastTerminatedLeft.addrMRange.end, lastTerminatedRight.addrMRange.end)
 
             val updatedMinorDiscLinks = {
               minorDiscontinuityLinks.map(minorDiscLink =>
@@ -363,7 +370,7 @@ object TerminatedTwoTrackSectionSynchronizer {
             updatedProjectLinks
           } else {
             // Nothing to update
-            updatedProjectLinks == updatedProjectLinks
+            updatedProjectLinks = updatedProjectLinks
           }
         })
       } else {
@@ -399,7 +406,7 @@ object TerminatedTwoTrackSectionSynchronizer {
 
     def adjustTerminatedStartToMatch(terminatedLeftLink: ProjectLink, terminatedRightLink: ProjectLink): (ProjectLink, ProjectLink, Long) = {
       // Calculate the average for terminated section start
-      val averageStart = Math.round((terminatedLeftLink.addrMRange.start + terminatedRightLink.addrMRange.start).toDouble / 2)
+      val averageStart = calculateAverageAddrM(terminatedLeftLink.addrMRange.start, terminatedRightLink.addrMRange.start)
       val adjustedTermLeft = terminatedLeftLink.copy(
         addrMRange          = AddrMRange(averageStart, terminatedLeftLink.addrMRange.end),
         originalAddrMRange  = AddrMRange(averageStart, terminatedLeftLink.originalAddrMRange.end)
