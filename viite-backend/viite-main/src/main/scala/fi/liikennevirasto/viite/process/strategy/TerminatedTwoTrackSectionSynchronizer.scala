@@ -7,28 +7,28 @@ object TerminatedTwoTrackSectionSynchronizer {
 
   /**
    * Adjusts two track terminated sections to match + the surrounding links if needed.
-   * @param projectLinks Sequence of project links to adjust on a single road part (NOTE! RoadAddressChangeType.New links NOT allowed)
+   * @param roadPartProjectLinksWithoutNewLinks Sequence of project links to adjust on a single road part (NOTE! RoadAddressChangeType.New links NOT allowed)
    */
-  def adjustTerminations(projectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
+  def adjustTerminations(roadPartProjectLinksWithoutNewLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
     def existsTerminationsOnParallelTracks(projectLinks: Seq[ProjectLink]): Boolean = {
       projectLinks.exists(pl => pl.track == Track.RightSide && pl.status == RoadAddressChangeType.Termination) &&
       projectLinks.exists(pl => pl.track == Track.LeftSide && pl.status == RoadAddressChangeType.Termination)
     }
 
     // Some validations for the project links
-    if (projectLinks.map(_.roadPart).distinct.size > 1) {
-      throw ViiteException(s"Terminated two track links can be adjusted only one road part at a time!")
+    if (roadPartProjectLinksWithoutNewLinks.map(_.roadPart).distinct.size > 1) {
+      throw ViiteException(s"Terminated two track project links can only be adjusted one road part at a time!")
     }
 
-    if (projectLinks.exists(_.status == RoadAddressChangeType.New)) {
-      throw ViiteException(s"New links are not allowed for the process of adjusting terminated two track links!")
+    if (roadPartProjectLinksWithoutNewLinks.exists(_.status == RoadAddressChangeType.New)) {
+      throw ViiteException(s"New project links are not allowed for the process of adjusting terminated two track links!")
     }
 
     val processedLinks: Seq[ProjectLink] = {
 
       // Check that there are terminated links on both tracks
-      if (existsTerminationsOnParallelTracks(projectLinks)) {
-        val orderedProjectLinks = projectLinks.sortBy(_.addrMRange.start)
+      if (existsTerminationsOnParallelTracks(roadPartProjectLinksWithoutNewLinks)) {
+        val orderedProjectLinks = roadPartProjectLinksWithoutNewLinks.sortBy(_.addrMRange.start)
 
         // List of termination cases
         val terminationCases: List[Seq[ProjectLink] => Seq[ProjectLink]] = List(
@@ -42,7 +42,7 @@ object TerminatedTwoTrackSectionSynchronizer {
 
       } else {
         // else we return the links unchanged.
-        projectLinks
+        roadPartProjectLinksWithoutNewLinks
       }
     }
     processedLinks
@@ -91,10 +91,10 @@ object TerminatedTwoTrackSectionSynchronizer {
   }
 
   /**
-   * Adjusts terminated links to match at both ends by averaging the start- and endAddrMs' of the project links.
-   * @param terminatedLeft Left track projectLink to adjust.
-   * @param terminatedRight Right track projectLink adjust.
-   * @returns Adjusted project links and the new AddrMRange of the adjusted project links.
+   * Adjusts terminated project links to have matching averaged start, and end addresses.
+   * @param terminatedLeft Left track terminated projectLink to adjust.
+   * @param terminatedRight Right track terminated projectLink to adjust.
+   * @returns Adjusted project links and the new averaged AddrMRange of the adjusted project links.
    */
   private def adjustTerminatedToMatch(terminatedLeft: ProjectLink, terminatedRight: ProjectLink): (ProjectLink, ProjectLink, AddrMRange) = {
     val averageStart = Math.round((terminatedLeft.addrMRange.start + terminatedRight.addrMRange.start).toDouble / 2)
@@ -149,33 +149,34 @@ object TerminatedTwoTrackSectionSynchronizer {
   }
 
   /**
-   * Adjusts terminated sections on two track road part start to match (if reasonably close to each other) and
-   *  the links that come after the terminated section.
+   * Adjusts terminated sections on two track road part start to have matching addresses (if reasonably close to each other) and
+   *  the project links that come after the terminated section.
    *
    * Example:
    *
    *  Terminated:     ==>
-   *  Nonterminated:  -->
+   *  Transferred:    -->
    *
    *  Before:
    *
-   *  0       202  250   450
+   *  0       203  250   450
    *  ========>---->----->
    *  ======>------->---->
    *  0     200     260  450
    *
    *  After:
    *
-   *  0       201  250   450
+   *  0       202  250   450
    *  ========>---->----->
    *  ======>------->---->
-   *  0     201     260  450
+   *  0     202     260  450
    */
   private def handleTwoTrackRoadPartStartTermination(terminatedLeftSection: Seq[ProjectLink], terminatedRightSection: Seq[ProjectLink], projectLinks: Seq[ProjectLink]): Seq[ProjectLink]= {
     val maxDiffForTrackEnds = 10 // This number is arbitrary and may require adjustments in the future.
     val lastTerminatedOnLeftSideSection = terminatedLeftSection.last
     val lastTerminatedOnRightSideSection = terminatedRightSection.last
 
+    // Compare original addresses here because we are modifying the starting situation
     val continuousAfterTerminatedLeft   = projectLinks.find(pl => pl.track == Track.LeftSide && pl.originalAddrMRange.continuesFrom(lastTerminatedOnLeftSideSection.originalAddrMRange))
     val continuousAfterTerminatedRight  = projectLinks.find(pl => pl.track == Track.RightSide && pl.originalAddrMRange.continuesFrom(lastTerminatedOnRightSideSection.originalAddrMRange))
 
