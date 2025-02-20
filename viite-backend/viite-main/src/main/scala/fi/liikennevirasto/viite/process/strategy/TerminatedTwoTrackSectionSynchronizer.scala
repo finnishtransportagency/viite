@@ -188,11 +188,11 @@ object TerminatedTwoTrackSectionSynchronizer {
 
         if (continuousAfterTerminatedLeft.isDefined && continuousAfterTerminatedRight.isDefined) {
           // Adjust both links and update the project links list with the adjusted terminated links and the adjusted continuous-after-termination links
-          val adjustedLeftAddrMRange = AddrMRange(averagedAddrMRange.end, continuousAfterTerminatedLeft.get.addrMRange.end)
-          val adjLeftContinuousAfterTerminated = continuousAfterTerminatedLeft.get.copy(addrMRange = adjustedLeftAddrMRange,originalAddrMRange = adjustedLeftAddrMRange)
+          val adjustedLeftAddrMRange = AddrMRange(averagedAddrMRange.end, continuousAfterTerminatedLeft.get.originalAddrMRange.end)
+          val adjLeftContinuousAfterTerminated = continuousAfterTerminatedLeft.get.copy(originalAddrMRange = adjustedLeftAddrMRange)
 
-          val adjustedRightAddrMRange = AddrMRange(averagedAddrMRange.end, continuousAfterTerminatedRight.get.addrMRange.end)
-          val adjRightContinuousAfterTerminated = continuousAfterTerminatedRight.get.copy(addrMRange = adjustedRightAddrMRange, originalAddrMRange = adjustedRightAddrMRange)
+          val adjustedRightAddrMRange = AddrMRange(averagedAddrMRange.end, continuousAfterTerminatedRight.get.originalAddrMRange.end)
+          val adjRightContinuousAfterTerminated = continuousAfterTerminatedRight.get.copy(originalAddrMRange = adjustedRightAddrMRange)
 
           updateProjectLinksList(Seq(adjustedTerminatedLeft, adjustedTerminatedRight, adjLeftContinuousAfterTerminated, adjRightContinuousAfterTerminated), projectLinks)
         } else {
