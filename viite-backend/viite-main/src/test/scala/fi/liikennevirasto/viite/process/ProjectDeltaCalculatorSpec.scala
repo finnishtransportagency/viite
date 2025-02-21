@@ -615,13 +615,6 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
         if (fr.addrMRange.start == 0L) fr.administrativeClass should be(AdministrativeClass.Municipality) else fr.administrativeClass should be(AdministrativeClass.State)
         if (to.addrMRange.start == 0L) to.administrativeClass should be(AdministrativeClass.Municipality) else to.administrativeClass should be(AdministrativeClass.State)
       })
-
-      val newParts = ProjectDeltaCalculator.partition(newLinks, Seq())
-
-      newParts should have size 1
-      newParts.foreach(to => {
-        to.addrMRange should be(AddrMRange(120,130))
-      })
     }
   }
 

@@ -10,6 +10,7 @@ import ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.ProjectState._
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink}
 import fi.liikennevirasto.viite.process._
+import fi.liikennevirasto.viite.process.strategy.TerminatedTwoTrackSectionSynchronizer.adjustTerminations
 import fi.vaylavirasto.viite.dao.{LinkDAO, ProjectLinkNameDAO, RoadName, RoadNameDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.CalibrationPointType.{JunctionPointCP, NoCP, UserDefinedCP}
@@ -1937,31 +1938,29 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
 
   def recalculateProjectLinks(projectId: Long, userName: String, roadParts: Set[RoadPart] = Set()): Unit = {
 
-
     logger.info(s"Recalculating project $projectId, parts ${roadParts.mkString(", ")}")
 
     time(logger, "Recalculate links") {
       val projectLinks = projectLinkDAO.fetchProjectLinks(projectId)
-      val nonTerminatedProjectLinks = projectLinks.filterNot(_.status == RoadAddressChangeType.Termination)
 
-      var terminatedProjectLinks = new ListBuffer[ProjectLink]()
-      val recalculated = nonTerminatedProjectLinks.groupBy(pl => {
+      val recalculated = projectLinks.groupBy(pl => {
         (pl.roadPart)
       }).flatMap {
         grp =>
           val fusedLinks = getFusedProjectLinks(grp._2)
           val calibrationPoints = ProjectCalibrationPointDAO.fetchByRoadPart(projectId, grp._1)
           val projectLinksWithAdjustedCalibrationPoints = adjustCalibrationPointsOnProjectLinks(fusedLinks)
-          val recalculatedProjectLinks = ProjectSectionCalculator.assignAddrMValues(projectLinksWithAdjustedCalibrationPoints, calibrationPoints)
-          val (recalculatedNonTerminated, recalculatedTerminated) = recalculatedProjectLinks.partition(pl => pl.status != RoadAddressChangeType.Termination)
+          val (newLinks, notNewLinks) = projectLinksWithAdjustedCalibrationPoints.partition(_.status == RoadAddressChangeType.New)
+          val (adjustedTerminated, adjustedNonTerminated) = adjustTerminations(notNewLinks).partition(_.status == RoadAddressChangeType.Termination)
+          val withoutTerminated = (adjustedNonTerminated ++ newLinks).sortBy(_.addrMRange.start)
+          val recalculatedNonTerminated = ProjectSectionCalculator.assignAddrMValues(withoutTerminated, calibrationPoints)
 
-          terminatedProjectLinks ++= recalculatedTerminated
-
-          recalculatedNonTerminated.sortBy(_.addrMRange.end)
+          // Add the adjusted terminated links to the recalculated links and sort them by addrMRange.end
+          (recalculatedNonTerminated ++ adjustedTerminated).sortBy(_.addrMRange.end)
       }.toSeq
 
-      val terminatedProjectLinksWithAssignedRoadwayNumbers = assignRoadwayNumbersToTerminatedProjectLinks(nonTerminatedProjectLinks ++ terminatedProjectLinks)
-      val originalAddresses = roadAddressService.getRoadAddressesByRoadwayIds((recalculated ++ terminatedProjectLinks).map(_.roadwayId))
+      val terminatedProjectLinksWithAssignedRoadwayNumbers = assignRoadwayNumbersToTerminatedProjectLinks(recalculated)
+      val originalAddresses = roadAddressService.getRoadAddressesByRoadwayIds((recalculated).map(_.roadwayId))
       projectLinkDAO.updateProjectLinks(recalculated ++ terminatedProjectLinksWithAssignedRoadwayNumbers, userName, originalAddresses)
       val projectLinkIdsToDB = recalculated.map(_.id).diff(projectLinks.map(_.id))
       projectLinkDAO.create(recalculated.filter(pl => projectLinkIdsToDB.contains(pl.id)))
@@ -1990,8 +1989,9 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
    */
   // VIITE-2179
   private def assignRoadwayNumbersToTerminatedProjectLinks(allProjectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
-    //getting project link sections by roadway number and track
-    val sectionGroup = allProjectLinks.groupBy(pl => (pl.track, pl.roadwayNumber))
+    //getting project link sections by roadway and track
+    // (use roadway id instead of roadway number because roadway number might have changed already in the recalculation process)
+    val sectionGroup = allProjectLinks.groupBy(pl => (pl.track, pl.roadwayId))
     //check if entire project link section was terminated
     sectionGroup.values.flatMap { pls =>
       if (!pls.forall(_.status == RoadAddressChangeType.Termination)) {
