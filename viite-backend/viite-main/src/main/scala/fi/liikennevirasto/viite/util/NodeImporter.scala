@@ -8,7 +8,8 @@ import scalikejdbc._
 import scalikejdbc.jodatime.JodaWrappedResultSet.fromWrappedResultSetToJodaWrappedResultSet
 
 // TODO: This class has not been used in a long time and it should be removed if there is no need for it. If this will be used, bear in mind that the code is not tested properly after scalikeJDBC migration.
-case class ConversionNode(id: Long, nodeNumber: Long, coordinates: Point, name: Option[String], nodeType: Long, startDate: Option[DateTime], endDate: Option[DateTime], validFrom: Option[DateTime],
+case class ConversionNode(id: Long, nodeNumber: Long, coordinates: Point, name: Option[String], nodeType: Long,
+                          startDate: Option[DateTime], endDate: Option[DateTime], validFrom: Option[DateTime],
                           validTo: Option[DateTime], createdBy: String, registrationDate: Option[DateTime])
 
 case class ConversionNodePoint(id: Long, beforeOrAfter: Long, nodeId: Long, nodeNumber: Long, roadwayNumber: Long, addressMValue: Long,
@@ -37,14 +38,14 @@ class NodeImporter extends BaseDAO {
 
     // Collect all node parameters for batch update
     val nodeParams = nodesWithPoints.map { case (node, _) =>
-      println(s"Processing node with TR id = ${node.id} and node_number = ${node.nodeNumber}")
+      println(s"Processing node with id = ${node.id} and node_number = ${node.nodeNumber}")
       createNodeParams(node)
     }
 
     // Collect all node point parameters for batch update
     val nodePointParams = nodesWithPoints.flatMap { case (node, points) =>
       points.flatMap { point =>
-        println(s"Processing node point with TR id = ${point.id} and node_id = ${point.nodeId} for node_number = ${node.nodeNumber}")
+        println(s"Processing node point with id = ${point.id} and node_id = ${point.nodeId} for node_number = ${node.nodeNumber}")
 
         // check if roadway point already exists with same roadway number and address m value
         val existingRoadwayPoint = roadwayPointDAO.fetch(point.roadwayNumber, point.addressMValue)
