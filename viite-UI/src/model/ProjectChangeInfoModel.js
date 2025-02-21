@@ -1,11 +1,13 @@
 (function (root) {
   root.ProjectChangeInfoModel = function (backend) {
-
-    var roadInfoList = [{
-      endAddressM: 1,
+    var addrMRange = [{
+      start:0,
+      end: 0
+    }];
+    var roadInfoList = [{ // TODO refactor field order, this is dumb order.
       endRoadPartNumber: 0,
       roadNumber: 0,
-      startAddressM: 0,
+      addrMRange: addrMRange,
       startRoadPartNumber: 0,
       trackCode: 0
     }];

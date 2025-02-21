@@ -73,9 +73,9 @@
                                             <td>${results[i].newRoadNumber}</td>
                                             <td>${results[i].newTrack}</td>
                                             <td>${results[i].newRoadPartNumber}</td>
-                                            <td>${results[i].newStartAddrM}</td>
+                                            <td>${results[i].newAddrMRange.start}</td>
                                             <td>${results[i].newRoadPartNumber}</td>
-                                            <td>${results[i].newEndAddrM}</td>
+                                            <td>${results[i].newAddrMRange.end}</td>
                                             <td>${results[i].newLength}</td>
                                             <td>${EnumerationUtils.getAdministrativeClassTextValue(results[i].newAdministrativeClass)}</td>
                                             <td>${results[i].reversed}</td>
