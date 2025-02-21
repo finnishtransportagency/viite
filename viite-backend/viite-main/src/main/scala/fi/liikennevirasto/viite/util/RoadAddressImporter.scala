@@ -290,31 +290,28 @@ class RoadAddressImporter(KGVClient: KgvRoadLink, importOptions: ImportOptions) 
     print(s"${DateTime.now()} - ")
     println("Read %d road links from vvh".format(mappedRoadLinks.size))
 
-    // fetch history road links from KGV and filter out the ones that are already in the mappedRoadLinks
-    val mappedHistoryRoadLinks = fetchHistoryRoadLinksFromKGV(
-      linkIds.filterNot(linkId => mappedRoadLinks.contains(linkId))
-    )
-    print(s"${DateTime.now()} - ")
-    println("Read %d road links history from vvh".format(mappedHistoryRoadLinks.size))
-
     // Batch update links to the main database
-    batchUpdateLinksToDb(mappedRoadLinks.values ++ mappedHistoryRoadLinks.values)
+    batchUpdateLinksToDb(mappedRoadLinks.values)
 
     // Find addresses where:
     // - linkId is 0
     // - or the linkId doesn't exist in current (mappedRoadLinks) or historical (mappedHistoryRoadLinks) road links
-    val suppressedRoadLinks = validConversionAddressesInChunk.filter(ra => ra.linkId == 0 || (mappedRoadLinks.get(ra.linkId).isEmpty && mappedHistoryRoadLinks.get(ra.linkId).isEmpty))
+    val suppressedRoadLinks = validConversionAddressesInChunk.filter(ra => ra.linkId == 0 || mappedRoadLinks.get(ra.linkId).isEmpty)
     suppressedRoadLinks.map(_.roadwayNumber).distinct.foreach {
       roadwayNumber => println(s"Suppressed ROADWAY_NUMBER $roadwayNumber because it contains NULL LINKID values ")
     }
 
+    // Filter addresses to only include those with linkIds in mappedRoadLinks
+    val validLinkAddresses = allConversionAddresses
+      .filter(a => a.expirationDate.isEmpty && mappedRoadLinks.contains(a.linkId))
+      .groupBy(_.linkId)
+
     // Calculate scaling coefficient between measured length and actual geometry length for each link
-    val groupedLinkCoeffs = allConversionAddresses.filter(_.expirationDate.isEmpty).groupBy(_.linkId).mapValues {
-      addresses =>
-        val minM = addresses.map(_.startM).min
-        val maxM = addresses.map(_.endM).max
-        val roadLink = mappedRoadLinks.getOrElse(addresses.head.linkId, mappedHistoryRoadLinks(addresses.head.linkId))
-        GeometryUtils.geometryLength(roadLink.geometry) / (maxM - minM)
+    val groupedLinkCoeffs = validLinkAddresses.map { case (linkId, addresses) =>
+      val minM = addresses.map(_.startM).min
+      val maxM = addresses.map(_.endM).max
+      val roadLink = mappedRoadLinks(linkId)
+      linkId -> (GeometryUtils.geometryLength(roadLink.geometry) / (maxM - minM))
     }
 
     // Split addresses into current and history, excluding suppressed roadways.
