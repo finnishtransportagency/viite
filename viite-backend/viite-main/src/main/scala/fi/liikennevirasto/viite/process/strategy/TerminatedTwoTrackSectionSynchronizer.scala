@@ -352,8 +352,7 @@ object TerminatedTwoTrackSectionSynchronizer {
             }
 
             val updatedMinorDiscLinks = {
-              minorDiscontinuityLinks.map(minorDiscLink =>
-                replaceEndsWith(minorDiscLink, averageStartForTermSect)
+              minorDiscontinuityLinks.map(minorDiscLink => replaceEndsWith(minorDiscLink, averageStartForTermSect)
               )
             }
 
@@ -361,14 +360,8 @@ object TerminatedTwoTrackSectionSynchronizer {
               updatedMinorDiscLinks ++ adjustedTerminatedLeft ++ adjustedTerminatedRight ++ adjustedAfterTermination,
               updatedProjectLinks
             )
-            updatedProjectLinks
-          } else {
-            // Nothing to update
-            updatedProjectLinks = updatedProjectLinks
           }
         })
-      } else {
-        updatedProjectLinks
       }
       updatedProjectLinks
     }
