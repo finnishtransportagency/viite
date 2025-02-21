@@ -418,7 +418,7 @@ object TerminatedTwoTrackSectionSynchronizer {
 
     val processedLinks = {
       if ((firstLinkOnLeftTermSection.addrMRange.start == firstLinkOnRightTermSection.addrMRange.start) || // Address starts match on first links of terminated section
-        areTracksCloseEnoughOnOriginalStartAddrM(firstLinkOnLeftTermSection, firstLinkOnRightTermSection)) { // Address starts are too far away each other
+        !areTracksCloseEnoughOnOriginalStartAddrM(firstLinkOnLeftTermSection, firstLinkOnRightTermSection)) { // Address starts are too far away each other
         // Return the project links unchanged
         projectLinks
       } else {
@@ -441,7 +441,7 @@ object TerminatedTwoTrackSectionSynchronizer {
   }
 
   private def areTracksCloseEnoughOnOriginalStartAddrM(leftLink: ProjectLink, rightLink: ProjectLink): Boolean = {
-    Math.abs(leftLink.originalAddrMRange.start - rightLink.originalAddrMRange.start) > maxDiffForTracks
+    Math.abs(leftLink.originalAddrMRange.start - rightLink.originalAddrMRange.start) <= maxDiffForTracks
   }
 
   private def areTracksCloseEnoughOnEndAddrM(leftLink: ProjectLink, rightLink: ProjectLink): Boolean = {
