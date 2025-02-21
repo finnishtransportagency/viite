@@ -18,6 +18,7 @@ object DataImporter {
 
   val ConversionPoolName = Symbol("conversionDb")
 
+  // Setup the connection pool for the conversion database by adding a named pool to the ConnectionPool object.
   object Conversion {
     def setupConversionPool(): Unit = {
       ConnectionPool.add(
@@ -28,6 +29,7 @@ object DataImporter {
       )
     }
 
+    // Define a NamedDB object for the conversion database to be used for its sessions.
     def database(): NamedDB = {
       if (!ConnectionPool.isInitialized(ConversionPoolName)) {
         setupConversionPool()
@@ -35,14 +37,7 @@ object DataImporter {
       NamedDB(ConversionPoolName)
     }
 
-    def runWithConversionDbTransaction(f: => Unit): Unit = {
-      database().localTx { session =>
-        withSession(session) {
-          f
-        }
-      }
-    }
-
+    // Only read operations are needed/allowed on the conversion database
     def runWithConversionDbReadOnlySession[T](f: => T): T = {
       database().readOnly { session =>
         withSession(session) {
@@ -59,9 +54,9 @@ class DataImporter extends BaseDAO {
   private lazy val geometryFrozen: Boolean = ViiteProperties.kgvRoadlinkFrozen
 
   // For database operations with the main db:
-  private def runWithMainDbTransaction(f: => Unit): Unit = PostGISDatabaseScalikeJDBC.runWithTransaction(f)
+  def runWithMainDbTransaction(f: => Unit): Unit = PostGISDatabaseScalikeJDBC.runWithTransaction(f)
 
-  private def runWithMainDBReadOnlySession[T](f: => T): T = PostGISDatabaseScalikeJDBC.runWithReadOnlySession(f)
+  def runWithMainDBReadOnlySession[T](f: => T): T = PostGISDatabaseScalikeJDBC.runWithReadOnlySession(f)
 
   def time[A](f: => A): A = {
     val s = System.nanoTime
@@ -102,7 +97,7 @@ class DataImporter extends BaseDAO {
     runWithMainDbTransaction {
 
       println(s"\nDisabling roadway triggers started at time: ${DateTime.now()}")
-      disableRoadwayTriggers
+      disableRoadwayTriggers()
       println(s"\nDeleting old Alkulataus tables' data")
       println(s"  Deleting project_link_names         started at time: ${DateTime.now()}")
       runUpdateToDb(sql"""DELETE FROM project_link_name""")
@@ -174,7 +169,7 @@ class DataImporter extends BaseDAO {
       )
 
       println(s"\nEnabling roadway triggers    started at time: ${DateTime.now()}")
-      enableRoadwayTriggers
+      enableRoadwayTriggers()
       roadwaySequenceResetter()
     }
   }
@@ -282,7 +277,7 @@ class DataImporter extends BaseDAO {
   }
 
   def enableRoadwayTriggers(): Unit = {
-    runUpdateToDb(s"""ALTER TABLE ROADWAY ENABLE TRIGGER USER""")
+    runUpdateToDb(sql"""ALTER TABLE ROADWAY ENABLE TRIGGER USER""")
   }
 
   def disableRoadwayTriggers(): Unit = {
@@ -301,7 +296,7 @@ class DataImporter extends BaseDAO {
     }
   }
 
-  protected def getRoadAddressImporter(KGVClient: KgvRoadLink, importOptions: ImportOptions): RoadAddressImporter = {
+  def getRoadAddressImporter(KGVClient: KgvRoadLink, importOptions: ImportOptions): RoadAddressImporter = {
     new RoadAddressImporter(KGVClient, importOptions)
   }
 
@@ -336,7 +331,7 @@ class DataImporter extends BaseDAO {
       fetchGroupedLinkIds
     }
     linkIds.par.foreach {
-      case linkIds =>
+      linkIds =>
         runWithMainDbTransaction {
           val roadLinksFromKGV = linkService.getCurrentAndComplementaryRoadLinks(linkIds)
           val unGroupedTopology = linearLocationDAO.fetchByLinkId(roadLinksFromKGV.map(_.linkId).toSet)
@@ -365,7 +360,7 @@ class DataImporter extends BaseDAO {
                   println("Changed geometry on linear location id " + segment.id + " and linkId =" + segment.linkId)
                   changed += 1
                 } else {
-                  //                  println(s"Skipped geometry update on linear location ID : ${segment.id} and linkId: ${segment.linkId}")
+                  //  println(s"Skipped geometry update on linear location ID : ${segment.id} and linkId: ${segment.linkId}")
                   skipped += 1
                 }
               }
