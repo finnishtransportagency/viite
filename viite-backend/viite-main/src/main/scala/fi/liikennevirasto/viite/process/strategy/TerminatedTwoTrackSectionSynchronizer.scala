@@ -226,7 +226,7 @@ object TerminatedTwoTrackSectionSynchronizer {
 
     val (leftTerminatedSections, rightTerminatedSections) = terminatedLinksToContinuousTwoTrackSections(terminatedLinks)
 
-    val processedLinks = if (leftTerminatedSections.nonEmpty && rightTerminatedSections.nonEmpty) { // Check if road part start is terminated on both tracks
+    val processedLinks = if (leftTerminatedSections.nonEmpty && rightTerminatedSections.nonEmpty) { // Check that there are terminated sections on both tracks
       handleTwoTrackMiddleTermination(leftTerminatedSections, rightTerminatedSections, projectLinks)
     } else
       projectLinks
@@ -235,7 +235,7 @@ object TerminatedTwoTrackSectionSynchronizer {
   }
 
   /**
-   * Adjusts two track terminated sections to match if the termination creates a minor discontinuity.
+   * Adjusts two track terminated sections to match if the preceding link(s) has/have a Discontinuity.MinorDiscontinuity
    * The minor discontinuity links (links just before the terminated sections) will also be adjusted to match the start of the terminated section.
    * if there are links after the adjusted terminated section, those links will also be adjusted to match the end of the adjusted terminated section.
    *
@@ -263,7 +263,6 @@ object TerminatedTwoTrackSectionSynchronizer {
      * Find pairs of minorDiscontinuity links on opposite tracks, reasonably close to each other.
      */
     def findMinorDiscontinuityLinkPairs(minorDiscontinuityLinks: Seq[ProjectLink]): Seq[Seq[ProjectLink]] = {
-
       minorDiscontinuityLinks.filter(_.track == Track.LeftSide).flatMap { leftLink =>
         minorDiscontinuityLinks.filter(rightLink =>
           rightLink.track == Track.RightSide &&
@@ -277,6 +276,10 @@ object TerminatedTwoTrackSectionSynchronizer {
     val minorDiscontinuityLinkPairs = findMinorDiscontinuityLinkPairs(minorDiscontinuityLinks)
     val minorDiscontinuitiesToProcess = minorDiscontinuityLinkPairs ++ Seq(combinedMinorDiscontinuityLinks)
 
+    def findNextLinkBasedOnOriginalAddresses(projectLink: ProjectLink, projectLinks: Seq[ProjectLink]): Option[ProjectLink] = {
+      projectLinks.find(pl => projectLink.originalAddrMRange.continuesTo(pl.originalAddrMRange))
+    }
+
     val processedLinks = {
       var updatedProjectLinks = projectLinks
       if (minorDiscontinuitiesToProcess.nonEmpty) {
@@ -287,12 +290,12 @@ object TerminatedTwoTrackSectionSynchronizer {
           // Find terminated sections that are located right after the minor discontinuity link(s)
           val (leftTerminatedAfterMinorDisc, rightTerminatedAfterMinorDisc) = minorDiscontinuityLinks match {
             case Seq(combined) =>
-              val leftTerminatedAfterMinorDisc = leftUpdatedTerminatedLinks.find(pl => combined.originalAddrMRange.continuesTo(pl.originalAddrMRange))
-              val rightTerminatedAfterMinorDisc = rightUpdatedTerminatedLinks.find(pl => combined.originalAddrMRange.continuesTo(pl.originalAddrMRange))
+              val leftTerminatedAfterMinorDisc  = findNextLinkBasedOnOriginalAddresses(combined, leftUpdatedTerminatedLinks)
+              val rightTerminatedAfterMinorDisc = findNextLinkBasedOnOriginalAddresses(combined, rightUpdatedTerminatedLinks)
               (leftTerminatedAfterMinorDisc, rightTerminatedAfterMinorDisc)
             case Seq(left, right) =>
-              val leftTerminatedAfterMinorDisc = leftUpdatedTerminatedLinks.find(pl => left.originalAddrMRange.continuesTo(pl.originalAddrMRange))
-              val rightTerminatedAfterMinorDisc = rightUpdatedTerminatedLinks.find(pl => right.originalAddrMRange.continuesTo(pl.originalAddrMRange))
+              val leftTerminatedAfterMinorDisc  = findNextLinkBasedOnOriginalAddresses(left, leftUpdatedTerminatedLinks)
+              val rightTerminatedAfterMinorDisc = findNextLinkBasedOnOriginalAddresses(right, rightUpdatedTerminatedLinks)
               (leftTerminatedAfterMinorDisc, rightTerminatedAfterMinorDisc)
             case _ => (None,None)
           }
@@ -352,8 +355,7 @@ object TerminatedTwoTrackSectionSynchronizer {
             }
 
             val updatedMinorDiscLinks = {
-              minorDiscontinuityLinks.map(minorDiscLink => replaceEndsWith(minorDiscLink, averageStartForTermSect)
-              )
+              minorDiscontinuityLinks.map(minorDiscLink => replaceEndsWith(minorDiscLink, averageStartForTermSect))
             }
 
             updatedProjectLinks = updateProjectLinksList(
