@@ -210,7 +210,7 @@ class RoadAddressImporterSpec extends AnyFunSuite with Matchers with BaseDAO wit
 
   test("importTerminatedAddresses should process and batch update addresses correctly") {
     runWithRollback {
-      // Use the last three addresses from testData
+      // Use the last four addresses from testData (terminated ones)
       val terminatedAddresses = testData.takeRight(4)
 
       // Execute the method
