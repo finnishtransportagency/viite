@@ -6,7 +6,7 @@ import fi.vaylavirasto.viite.util.ViiteException
 object TerminatedTwoTrackSectionSynchronizer {
 
   // The maximum difference that two different tracks (Left and Right) can have at the start or end of addrMRange to be considered parallel.
-  private val maxDiffForTracks = 10 // This number is arbitrary and may require adjustments in the future.
+  private val maxDiffForTracks = 10L // This number is arbitrary and may require adjustments in the future.
 
   private def calculateAverageAddrM(addrM1: Long, addrM2: Long): Long = {
     // Since Math.round rounds to the nearest whole number, adding small constant (for example 0.1) ensures that minor precision errors (especially
@@ -283,11 +283,12 @@ object TerminatedTwoTrackSectionSynchronizer {
     val processedLinks = {
       var updatedProjectLinks = projectLinks
       if (minorDiscontinuitiesToProcess.nonEmpty) {
-        // Process Minor discontinuity link pairs one by one
+        // Process Minor discontinuity link sequences one by one
         minorDiscontinuitiesToProcess.foreach({ minorDiscontinuityLinks =>
           val leftUpdatedTerminatedLinks =  updatedProjectLinks.filter(pl => pl.status == RoadAddressChangeType.Termination && pl.track == Track.LeftSide)
           val rightUpdatedTerminatedLinks = updatedProjectLinks.filter(pl => pl.status == RoadAddressChangeType.Termination && pl.track == Track.RightSide)
-          // Find terminated sections that are located right after the minor discontinuity link(s)
+
+          // Find links that come after the minor discontinuity links
           val (leftTerminatedAfterMinorDisc, rightTerminatedAfterMinorDisc) = minorDiscontinuityLinks match {
             case Seq(combined) =>
               val leftTerminatedAfterMinorDisc  = findNextLinkBasedOnOriginalAddresses(combined.originalAddrMRange, leftUpdatedTerminatedLinks)
@@ -300,8 +301,9 @@ object TerminatedTwoTrackSectionSynchronizer {
             case _ => (None,None)
           }
 
+          // If there were links after the minor discontinuity
           if (leftTerminatedAfterMinorDisc.isDefined && rightTerminatedAfterMinorDisc.isDefined) {
-            // Update terminated links to match, the discontinuity links to match and if there are links after terminated section, adjust those as well
+
             // Get the terminated sections for both tracks
             val leftTermSect  = terminatedLeftSections.find( section => section.exists(_.id == leftTerminatedAfterMinorDisc.get.id))
             val rightTermSect = terminatedRightSections.find(section => section.exists(_.id == rightTerminatedAfterMinorDisc.get.id))
@@ -333,6 +335,7 @@ object TerminatedTwoTrackSectionSynchronizer {
               }
             }
 
+            // Update terminated links to match
             val adjustedTerminatedLeft  = adjustTerminatedLinks(firstTerminatedLeft, lastTerminatedLeft)
             val adjustedTerminatedRight = adjustTerminatedLinks(firstTerminatedRight, lastTerminatedRight)
 
@@ -343,7 +346,7 @@ object TerminatedTwoTrackSectionSynchronizer {
             val afterRightTerminatedSection = {
               updatedProjectLinks.find(pl => pl.track != Track.LeftSide && lastTerminatedRight.originalAddrMRange.continuesTo(pl.originalAddrMRange))
             }
-
+            // Adjust links after terminated section
             val adjustedAfterTermination: Seq[ProjectLink] = {
               if (afterLeftTerminatedSection.isDefined && afterRightTerminatedSection.isDefined) {
                 val adjustedLeftLink  = replaceStartsWith(afterLeftTerminatedSection.get, averageEndForTermSect)
@@ -354,6 +357,7 @@ object TerminatedTwoTrackSectionSynchronizer {
               }
             }
 
+            // Adjust minor discontinuity links
             val updatedMinorDiscLinks = {
               minorDiscontinuityLinks.map(minorDiscLink => replaceEndsWith(minorDiscLink, averageStartForTermSect))
             }
@@ -401,11 +405,13 @@ object TerminatedTwoTrackSectionSynchronizer {
       (adjustedTermLeft, adjustedTermRight, averageStart)
     }
 
-    def adjustPreviousLinkEndsToMatch(previousLeftLink: ProjectLink, previousRightLink: ProjectLink, addrMToAdjust: Long): (ProjectLink, ProjectLink) = {
-      // Adjust the previous links' end addresses to match
-      val adjustedPreviousLeftLink = replaceEndsWith(previousLeftLink, addrMToAdjust)
-      val adjustedPreviousRightLink = replaceEndsWith(previousRightLink, addrMToAdjust)
-      (adjustedPreviousLeftLink, adjustedPreviousRightLink)
+    def adjustLinkEndsToMatch(leftLink: ProjectLink, rightLink: ProjectLink, addrMToAdjust: Long): (ProjectLink, ProjectLink) = {
+      // Adjust the link end addresses to match
+      (replaceEndsWith(leftLink, addrMToAdjust), replaceEndsWith(rightLink, addrMToAdjust))
+    }
+
+    def findPreviousLinkBasedOnOriginalAddresses(originalAddrMRange: AddrMRange, projectLinks: Seq[ProjectLink]): Option[ProjectLink] = {
+      projectLinks.find(pl => originalAddrMRange.continuesFrom(pl.originalAddrMRange))
     }
 
     val firstLinkOnLeftTermSection  = terminatedLeftSection.minBy(_.addrMRange.start)
@@ -420,11 +426,11 @@ object TerminatedTwoTrackSectionSynchronizer {
         // Update the first terminated links of the section to match at the start
         val (adjustedTermLeft, adjustedTermRight, averageStartForTerminated) = adjustTerminatedStartToMatch(firstLinkOnLeftTermSection, firstLinkOnRightTermSection)
         // Find previous links if there are any
-        val previousLeftLink = projectLinks.find(pl => pl.track == Track.LeftSide && pl.originalAddrMRange.continuesTo(firstLinkOnLeftTermSection.originalAddrMRange))
-        val previousRightLink = projectLinks.find(pl => pl.track == Track.RightSide && pl.originalAddrMRange.continuesTo(firstLinkOnRightTermSection.originalAddrMRange))
+        val previousLeftLink  = findPreviousLinkBasedOnOriginalAddresses(firstLinkOnLeftTermSection.originalAddrMRange, projectLinks.filter(_.track == Track.LeftSide))
+        val previousRightLink = findPreviousLinkBasedOnOriginalAddresses(firstLinkOnRightTermSection.originalAddrMRange, projectLinks.filter(_.track == Track.RightSide))
         if (previousLeftLink.isDefined && previousRightLink.isDefined) {
           // Update the previous link starts to match
-          val (adjustedPreviousLeftLink, adjustedPreviousRightLink)  = adjustPreviousLinkEndsToMatch(previousLeftLink.get, previousRightLink.get, averageStartForTerminated)
+          val (adjustedPreviousLeftLink, adjustedPreviousRightLink)  = adjustLinkEndsToMatch(previousLeftLink.get, previousRightLink.get, averageStartForTerminated)
           updateProjectLinksList(Seq(adjustedTermLeft, adjustedTermRight, adjustedPreviousLeftLink, adjustedPreviousRightLink), projectLinks)
         } else {
           // No need to update the previous links
