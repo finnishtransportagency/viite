@@ -237,7 +237,7 @@ object TerminatedTwoTrackSectionSynchronizer {
   /**
    * Adjusts two track terminated sections to match if the preceding link(s) has/have a Discontinuity.MinorDiscontinuity
    * The minor discontinuity links (links just before the terminated sections) will also be adjusted to match the start of the terminated section.
-   * if there are links after the adjusted terminated section, those links will also be adjusted to match the end of the adjusted terminated section.
+   * If there are links after the adjusted terminated section, those links will also be adjusted to match the end of the adjusted terminated section.
    *
    * Example:
    *
@@ -276,8 +276,8 @@ object TerminatedTwoTrackSectionSynchronizer {
     val minorDiscontinuityLinkPairs = findMinorDiscontinuityLinkPairs(minorDiscontinuityLinks)
     val minorDiscontinuitiesToProcess = minorDiscontinuityLinkPairs ++ Seq(combinedMinorDiscontinuityLinks)
 
-    def findNextLinkBasedOnOriginalAddresses(projectLink: ProjectLink, projectLinks: Seq[ProjectLink]): Option[ProjectLink] = {
-      projectLinks.find(pl => projectLink.originalAddrMRange.continuesTo(pl.originalAddrMRange))
+    def findNextLinkBasedOnOriginalAddresses(originalAddrMRange: AddrMRange, projectLinks: Seq[ProjectLink]): Option[ProjectLink] = {
+      projectLinks.find(pl => originalAddrMRange.continuesTo(pl.originalAddrMRange))
     }
 
     val processedLinks = {
@@ -290,12 +290,12 @@ object TerminatedTwoTrackSectionSynchronizer {
           // Find terminated sections that are located right after the minor discontinuity link(s)
           val (leftTerminatedAfterMinorDisc, rightTerminatedAfterMinorDisc) = minorDiscontinuityLinks match {
             case Seq(combined) =>
-              val leftTerminatedAfterMinorDisc  = findNextLinkBasedOnOriginalAddresses(combined, leftUpdatedTerminatedLinks)
-              val rightTerminatedAfterMinorDisc = findNextLinkBasedOnOriginalAddresses(combined, rightUpdatedTerminatedLinks)
+              val leftTerminatedAfterMinorDisc  = findNextLinkBasedOnOriginalAddresses(combined.originalAddrMRange, leftUpdatedTerminatedLinks)
+              val rightTerminatedAfterMinorDisc = findNextLinkBasedOnOriginalAddresses(combined.originalAddrMRange, rightUpdatedTerminatedLinks)
               (leftTerminatedAfterMinorDisc, rightTerminatedAfterMinorDisc)
             case Seq(left, right) =>
-              val leftTerminatedAfterMinorDisc  = findNextLinkBasedOnOriginalAddresses(left, leftUpdatedTerminatedLinks)
-              val rightTerminatedAfterMinorDisc = findNextLinkBasedOnOriginalAddresses(right, rightUpdatedTerminatedLinks)
+              val leftTerminatedAfterMinorDisc  = findNextLinkBasedOnOriginalAddresses(left.originalAddrMRange,  leftUpdatedTerminatedLinks)
+              val rightTerminatedAfterMinorDisc = findNextLinkBasedOnOriginalAddresses(right.originalAddrMRange, rightUpdatedTerminatedLinks)
               (leftTerminatedAfterMinorDisc, rightTerminatedAfterMinorDisc)
             case _ => (None,None)
           }
