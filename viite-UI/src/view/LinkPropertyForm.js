@@ -86,7 +86,7 @@
       var length = 0;
       var labelText = selectedLinks.length === 1 ? 'PITUUS' : 'YHTEENLASKETTU PITUUS';
       selectedLinks.forEach((link) => {
-        var linkLength = link.endAddressM - link.startAddressM;
+        var linkLength = link.addrMRange.end - link.addrMRange.start;
         length += linkLength;
       });
       return constructField(labelText, length);
@@ -177,8 +177,8 @@
       var roadNumbers = selectedLinkProperty.count() === 1 ? staticField('TIENUMERO', firstSelectedLinkProperty.roadNumber) : textDynamicField('TIENUMERO', 'roadNumber');
       var roadPartNumbers = isOnlyOneRoadNumberSelected() ? dynamicField('TIEOSANUMERO', 'roadPartNumber') : constructField('TIEOSANUMERO', '');
       var tracks = isOnlyOneRoadAndPartNumberSelected() ? dynamicField('AJORATA', 'trackCode') : constructField('AJORATA', '');
-      var startAddress = isOnlyOneRoadAndPartNumberSelected() ? staticField('ALKUETÄISYYS', linkProperties.startAddressM) : constructField('ALKUETÄISYYS', '');
-      var endAddress = isOnlyOneRoadAndPartNumberSelected() ? staticField('LOPPUETÄISYYS', linkProperties.endAddressM) : constructField('LOPPUETÄISYYS', '');
+      var startAddress = isOnlyOneRoadAndPartNumberSelected() ? staticField('ALKUETÄISYYS', linkProperties.addrMRange.start) : constructField('ALKUETÄISYYS', '');
+      var endAddress   = isOnlyOneRoadAndPartNumberSelected() ? staticField('LOPPUETÄISYYS', linkProperties.addrMRange.end) : constructField('LOPPUETÄISYYS', '');
       var combinedAddrLength = lengthDynamicField();
       var elys = selectedLinkProperty.count() === 1 ? staticField('ELY', firstSelectedLinkProperty.elyCode) : dynamicField('ELY', 'elyCode');
       var administrativeClasses = selectedLinkProperty.count() === 1 ? staticField('HALLINNOLLINEN LUOKKA', firstSelectedLinkProperty.administrativeClassId) : dynamicField('HALLINNOLLINEN LUOKKA', 'administrativeClassId');
@@ -373,15 +373,15 @@
           props.roadNumber = props.roadNumber || '';
           if (linkProperties.roadNumber > 0) {
             props.roadPartNumber = props.roadPartNumber || '';
-            props.startAddressM = props.startAddressM || '0';
+            props.addrMRange.start = props.addrMRange.start || '0';
             props.trackCode = isNaN(parseFloat(props.trackCode)) ? '' : parseFloat(props.trackCode);
           } else {
             props.roadPartNumber = '';
             props.trackCode = '';
-            props.startAddressM = '';
+            props.addrMRange.start = '';
           }
           props.elyCode = isNaN(parseFloat(props.elyCode)) ? '' : props.elyCode;
-          props.endAddressM = props.endAddressM || '';
+          props.addrMRange.end = props.addrMRange.end || '';
           props.discontinuity = props.discontinuity || '';
           props.roadLinkType = props.roadLinkType || '';
           props.roadLinkSource = props.roadLinkSource || '';

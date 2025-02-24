@@ -242,7 +242,7 @@
       return _.filter(roadLinks(), function (road) {
         return road.getData().roadNumber === roadNumber &&
                 road.getData().roadPartNumber === roadPart &&
-                (road.getData().startAddressM === addr || road.getData().endAddressM === addr);
+                (road.getData().addrMRange.start === addr || road.getData().addrMRange.end === addr);
       });
     };
 

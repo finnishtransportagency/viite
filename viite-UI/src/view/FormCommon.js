@@ -62,10 +62,10 @@
 
     const devAddressEditTool = function(links, project) {
       const projectEditable = project.statusCode === editableStatus;
-      const startOfSection = Math.min(...links.map((link) => Number(link.startAddressM)));
-      const endOfSection = Math.max(...links.map((link) => Number(link.endAddressM)));
-      const originalStartOfSection = Math.min(...links.map((link) => Number(link.originalStartAddressM)));
-      const originalEndOfSection = Math.max(...links.map((link) => Number(link.originalEndAddressM)));
+      const startOfSection = Math.min(...links.map((link) => Number(link.addrMRange.start)));
+      const endOfSection   = Math.max(...links.map((link) => Number(link.addrMRange.end)));
+      const originalStartOfSection = Math.min(...links.map((link) => Number(link.originalAddrMRange.start)));
+      const originalEndOfSection   = Math.max(...links.map((link) => Number(link.originalAddrMRange.end)));
       let sideCodeDropDown = '';
 
       if (links.length == 1) {
@@ -297,10 +297,10 @@
       if (selected[0]) {
         const link = selected[0];
         const startM = Math.min.apply(Math, _.map(selected, function (l) {
-          return l.startAddressM;
+          return l.addrMRange.start;
         }));
         const endM = Math.max.apply(Math, _.map(selected, function (l) {
-          return l.endAddressM;
+          return l.addrMRange.end;
         }));
         const div = '<div class="project-edit-selections" style="display:inline-block;padding-left:8px;">' +
           '<div class="project-edit">' +

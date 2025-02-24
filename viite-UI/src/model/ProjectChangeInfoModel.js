@@ -49,7 +49,7 @@
 
     function sortChanges(side, reverse) {
       projectChanges.changeTable.changeInfoSeq = _.sortBy(projectChanges.changeTable.changeInfoSeq,
-        [side + ".roadNumber", side + ".startRoadPartNumber", side + ".startAddressM", side + ".trackCode"]);
+        [side + ".roadNumber", side + ".startRoadPartNumber", side + ".addrMRange.start", side + ".trackCode"]);
       if (reverse) projectChanges.changeTable.changeInfoSeq.reverse();
       return projectChanges;
     }
