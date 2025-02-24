@@ -193,7 +193,7 @@
         },
         zIndex: ViiteEnumerations.ProjectModeZIndex.UnAddressedOther.stroke
       }),
-      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).and('startAddressM').is(0).and('endAddressM').is(0).and('administrativeClassId').is(ViiteEnumerations.AdministrativeClass.PublicRoad.value).use({
+      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).and('addrMRange.start').is(0).and('addrMRange.end').is(0).and('administrativeClassId').is(ViiteEnumerations.AdministrativeClass.PublicRoad.value).use({
         stroke: {
           color: '#646461',
           lineCap: 'round'
@@ -210,7 +210,7 @@
         },
         zIndex: ViiteEnumerations.ProjectModeZIndex.UnAddressedUnderConstructionOther.stroke
       }),
-      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).and('startAddressM').is(0).and('endAddressM').is(0).and('administrativeClassId').is(ViiteEnumerations.AdministrativeClass.PublicRoad.value).and('lifecycleStatus').is(ViiteEnumerations.lifecycleStatus.UnderConstruction.value).use({
+      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).and('addrMRange.start').is(0).and('addrMRange.end').is(0).and('administrativeClassId').is(ViiteEnumerations.AdministrativeClass.PublicRoad.value).and('lifecycleStatus').is(ViiteEnumerations.lifecycleStatus.UnderConstruction.value).use({
         stroke: {
           color: '#ff9900',
           lineCap: 'round'
