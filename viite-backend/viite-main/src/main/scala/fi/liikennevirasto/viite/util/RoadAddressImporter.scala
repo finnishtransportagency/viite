@@ -68,12 +68,11 @@ class RoadAddressImporter(KGVClient: KgvRoadLink, importOptions: ImportOptions) 
    *    - Filtering out suppressed road links
    *    - Calculating scaling coefficients for link lengths
    *    - Splitting addresses into current and historical
-   *      4. Collecting parameters for batch updates:
+   * 4. Collecting parameters for batch updates:
    *    - Linear locations with adjusted measurements
-   *    - Calibration points with associated roadway points
+   *    - Calibration points with associated roadway points are updated immediately
    *    - Roadways from both current and historical addresses
-   *      5. Executing batch updates:
-   *    - Calibration points (includes immediate roadway point inserts)
+   *  5. Executing batch updates:
    *    - Linear locations
    *    - Roadways
    *
@@ -124,7 +123,7 @@ class RoadAddressImporter(KGVClient: KgvRoadLink, importOptions: ImportOptions) 
     val currentMappedConversionAddresses = currentConversionAddresses.groupBy(ra => (ra.roadwayNumber, ra.roadPart, ra.trackCode, ra.startDate, ra.endDate))
     val historyMappedConversionAddresses = historyConversionAddresses.groupBy(ra => (ra.roadwayNumber, ra.roadPart, ra.trackCode, ra.startDate, ra.endDate))
 
-    // First collect all parameters from current addresses by mapping each group to linear locations, roadways and calibration points
+    // First collect all parameters from current addresses by mapping each group to linear locations and roadways
     val (currentLinearLocationParams, currentRoadwayParams) =
       currentMappedConversionAddresses.map { case (_, addresses) =>
         // Sort addresses by start measure
