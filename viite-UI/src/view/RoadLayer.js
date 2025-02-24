@@ -46,8 +46,8 @@
                 '<div class="popup-line-div"><div>Tienumero:&nbsp;</div><div class="selectable">'    + roadData.roadNumber + '</div></div>' +
                 '<div class="popup-line-div"><div>Tieosanumero:&nbsp;</div><div class="selectable">' + roadData.roadPartNumber + '</div></div>' +
                 '<div class="popup-line-div"><div>Ajorata:&nbsp;</div><div class="selectable">'      + roadData.trackCode + '</div></div>' +
-                '<div class="popup-line-div"><div>AET:&nbsp;</div><div class="selectable">'          + roadData.startAddressM + '</div></div>' +
-                '<div class="popup-line-div"><div>LET:&nbsp;</div><div class="selectable">'          + roadData.endAddressM + '</div></div>' +
+                '<div class="popup-line-div"><div>AET:&nbsp;</div><div class="selectable">'          + roadData.addrMRange.start + '</div></div>' +
+                '<div class="popup-line-div"><div>LET:&nbsp;</div><div class="selectable">'          + roadData.addrMRange.end + '</div></div>' +
                 '<div class="popup-line-div"><div>Hall. luokka:&nbsp;</div><div class="selectable">' + displayAdministrativeClass(roadData.administrativeClassId) + '</div></div>';
             const altShiftPressed = event.originalEvent.shiftKey && event.originalEvent.altKey;
             if (altShiftPressed) {

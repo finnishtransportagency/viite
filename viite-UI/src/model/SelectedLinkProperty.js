@@ -55,11 +55,11 @@
       };
       if (isMultiSelect) {
         var endRoadOnSelection = _.chain(selectedData).sortBy(function (sd) {
-          return sd.endAddressM;
+          return sd.addrMRange.end;
         }).last().value();
         var ambiguousFields = ['maxAddressNumberLeft', 'maxAddressNumberRight', 'minAddressNumberLeft', 'minAddressNumberRight',
           'municipalityCode', 'verticalLevel', 'roadNameFi', 'roadNameSe', 'roadNameSm', 'modifiedAt', 'modifiedBy',
-          'endDate', 'discontinuity', 'startAddressM', 'endAddressM'];
+          'endDate', 'discontinuity', 'addrMRange.start', 'addrMRange.end'];
         properties = _.omit(properties, ambiguousFields);
         var latestModified = dateutil.extractLatestModifications(selectedData);
         var municipalityCodes = {municipalityCode: extractUniqueValues(selectedData, 'municipalityCode')};
@@ -69,15 +69,19 @@
 
         // TODO Check that merge was done correctly
         var discontinuity = {discontinuity: parseInt(extractUniqueValues([endRoadOnSelection], 'discontinuity'))};
-        var startAddressM = {startAddressM: _.minBy(_.chain(selectedData).map('startAddressM').uniq().value())};
-        var endAddressM = {endAddressM: _.maxBy(_.chain(selectedData).map('endAddressM').uniq().value())};
+        var addrMRange = {
+          addrMRange: {
+            start: _.minBy(_.chain(selectedData).map('addrMRange.start').uniq().value()),
+            end: _.maxBy(_.chain(selectedData).map('addrMRange.end').uniq().value())
+          }
+        };
 
         var roadNames = {
           roadNameFi: extractUniqueValues(selectedData, 'roadNameFi'),
           roadNameSe: extractUniqueValues(selectedData, 'roadNameSe'),
           roadNameSm: extractUniqueValues(selectedData, 'roadNameSm')
         };
-        properties = _.merge(properties, latestModified, municipalityCodes, verticalLevels, roadPartNumbers, roadNames, elyCodes, startAddressM, endAddressM, discontinuity);
+        properties = _.merge(properties, latestModified, municipalityCodes, verticalLevels, roadPartNumbers, roadNames, elyCodes, addrMRange, discontinuity);
       }
       properties = _.merge(properties, roadLinkSource);
       return properties;
