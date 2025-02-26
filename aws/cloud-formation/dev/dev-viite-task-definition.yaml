@@ -99,14 +99,14 @@ Resources:
             - Name: kgvEndpoint
               Value: 'https://api.vaylapilvi.fi/paikkatiedot/ogc/features/v1/collections'
           Secrets:
-            - Name: db.url
-              ValueFrom: 'arn:aws:ssm:eu-west-1:783354560127:parameter/Viite/Dev/db.url'
-            - Name: db.user
-              ValueFrom: 'arn:aws:ssm:eu-west-1:783354560127:parameter/Viite/Dev/db.user'
+            - Name: db.jdbcUrl
+              ValueFrom: 'arn:aws:ssm:eu-west-1:783354560127:parameter/Viite/Dev/db.jdbcUrl'
+            - Name: db.username
+              ValueFrom: 'arn:aws:ssm:eu-west-1:783354560127:parameter/Viite/Dev/db.username'
             - Name: db.password
               ValueFrom: 'arn:aws:ssm:eu-west-1:783354560127:parameter/Viite/Dev/db.password'
-            - Name: conversion.db.url
-              ValueFrom: 'arn:aws:ssm:eu-west-1:783354560127:parameter/allEnvs/conversion.db.url'
+            - Name: conversion.db.jdbcUrl
+              ValueFrom: 'arn:aws:ssm:eu-west-1:783354560127:parameter/allEnvs/conversion.db.jdbcUrl'
             - Name: conversion.db.username
               ValueFrom: 'arn:aws:ssm:eu-west-1:783354560127:parameter/allEnvs/conversion.db.username'
             - Name: conversion.db.password
