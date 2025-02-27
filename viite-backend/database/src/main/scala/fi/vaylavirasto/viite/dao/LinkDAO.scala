@@ -26,10 +26,26 @@ object LinkDAO extends BaseDAO {
     val query =
       sql"""
           SELECT link.id, link.source, link.adjusted_timestamp, link.created_time
-          FROM link WHERE link.id = $id
+          FROM link
+          WHERE link.id = $id
           """
     runSelectSingleOption(query.map(Link.apply))
   }
+
+  def fetchByLinkIds(ids: Set[String]): Set[Link] = {
+    if (ids.isEmpty) {
+      Set.empty
+    } else {
+      val query =
+        sql"""
+        SELECT link.id, link.source, link.adjusted_timestamp, link.created_time
+        FROM link
+        WHERE link.id IN ($ids)
+      """
+      runSelectQuery(query.map(Link.apply)).toSet
+    }
+  }
+
   def create(id: String, adjustedTimestamp: Long, source: Long): Unit = {
     runUpdateToDb(sql"""
       INSERT INTO link (id, source, adjusted_timestamp)
