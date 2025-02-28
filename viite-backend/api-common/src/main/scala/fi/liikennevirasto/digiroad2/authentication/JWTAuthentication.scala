@@ -67,13 +67,17 @@ trait JWTAuthentication extends Authentication {
         }
 
         userProvider.getUser(username) match {
-          case Some(user) =>
+          case Some(user) if user.isViewer || user.isViiteUser || user.isOperator || user.isDev =>
             jwtLogger.info(s"Authenticated user $username. Has roles: (${
               (if (user.isViiteUser) "user, " else "-, ") +
-                (if (user.isOperator) "operator, " else "-, ") +
-                (if (user.isViewer) "viewer" else "-")
-            }) in Viite.${if (user.isNotInViite) " (User not added in Viite.)" else ""}")
+              (if (user.isOperator) "operator, " else "-, ") +
+              (if (user.isDev) "dev, " else "-, ") +
+              (if (user.isViewer) "viewer" else "-")
+            }) in Viite.")
             user
+          case Some(user) =>
+            jwtLogger.warn(s"User ${user.username} found but has no roles assigned, falling back to viewer permissions")
+            viewerUser
           case None =>
             jwtLogger.warn(s"No user record found for $username, falling back to viewer permissions")
             viewerUser
