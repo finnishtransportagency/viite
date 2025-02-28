@@ -8,7 +8,6 @@ import fi.liikennevirasto.digiroad2.util.{SqlScriptRunner, ViiteProperties}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.{ApplyChangeInfoProcess, RoadwayAddressMapper}
-import fi.liikennevirasto.viite.util.DataImporter.Conversion
 import fi.vaylavirasto.viite.dao.MunicipalityDAO
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC
 import org.flywaydb.core.api.configuration.FluentConfiguration
@@ -57,7 +56,7 @@ object DataFixture {
   }
 
   def importNodesAndJunctions(): Unit = {
-    dataImporter.importNodesAndJunctions(Conversion.database())
+    dataImporter.importNodesAndJunctions()
   }
 
   def updateCalibrationPointTypes(): Unit = {

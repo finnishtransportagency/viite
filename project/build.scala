@@ -107,9 +107,7 @@ object Digiroad2Build extends Build {
         "commons-codec"      % "commons-codec" % "1.17.0",
         "com.jolbox"         % "bonecp"        % "0.8.0.RELEASE",
         scalaTest,
-        "com.typesafe.slick" %% "slick"        % "3.0.3", // 3.1.x and further requires significant changes in the database code, or library change maybe. // 3.4.x and further requires scala 2.12
         jsonJackson,
-        "com.github.tototoshi" %% "slick-joda-mapper" % "2.2.0", // provides slick 3.1.1, joda-time 2.7, and joda-convert 1.7
         "com.github.tototoshi" %% "scala-csv"         % "2.0.0",
         newRelic,
         "org.flywaydb"   % "flyway-core"   % "9.22.3", // Upgrading to 10.x requires Java Runtime upgrade. 10.0.0 says: "Flyway has been compiled by a more recent version of the Java Runtime (class file version 61.0), this version of the Java Runtime only recognizes class file versions up to 52.0"
