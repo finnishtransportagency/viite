@@ -64,20 +64,11 @@ export class ViiteCdkStack extends cdk.Stack {
         computeType: codebuild.ComputeType.SMALL,
         privileged: true,
         environmentVariables: {
-          bonecpUsername: { value: '/dev/viite_test.db.username', type: codebuild.BuildEnvironmentVariableType.PARAMETER_STORE },
-          bonecpPassword: { value: '/dev/viite_test.db.password', type: codebuild.BuildEnvironmentVariableType.PARAMETER_STORE },
-          bonecpJdbcUrl: {
-            value: `/Viite/${environment}/bonecpJdbcUrl`,
-            type: codebuild.BuildEnvironmentVariableType.PARAMETER_STORE
-          },
+          dbUsername: { value: `/Viite/${environment}/.db.username`, type: codebuild.BuildEnvironmentVariableType.PARAMETER_STORE },
+          dbPassword: { value: `/Viite/${environment}/.db.password`, type: codebuild.BuildEnvironmentVariableType.PARAMETER_STORE },
+          dbJdbcUrl:  { value: `/Viite/${environment}/test.db.jdbcUrl`, type: codebuild.BuildEnvironmentVariableType.PARAMETER_STORE },
           JAVA_OPTS: { value: '-Xms512M -Xmx1024M -Xss1M -XX:+CMSClassUnloadingEnabled' },
-          conversionBonecpJdbcUrl: { value: '/allEnvs/conversion.jdbcUrl', type: codebuild.BuildEnvironmentVariableType.PARAMETER_STORE },
-          conversionBonecpUsername: { value: '/allEnvs/conversion.username', type: codebuild.BuildEnvironmentVariableType.PARAMETER_STORE },
-          conversionBonecpPassword: { value: '/allEnvs/conversion.db.password', type: codebuild.BuildEnvironmentVariableType.PARAMETER_STORE },
-          REPOSITORY_URI: {
-            value: `/Viite/${environment}/repository_uri`,
-            type: codebuild.BuildEnvironmentVariableType.PARAMETER_STORE
-          },
+          REPOSITORY_URI: { value: `/Viite/${environment}/repository_uri`, type: codebuild.BuildEnvironmentVariableType.PARAMETER_STORE },
           kgvEndpoint: { value: 'kgvEndpoint', type: codebuild.BuildEnvironmentVariableType.PARAMETER_STORE },
           kgvApiKey: { value: 'kgvApiKey', type: codebuild.BuildEnvironmentVariableType.PARAMETER_STORE },
         },

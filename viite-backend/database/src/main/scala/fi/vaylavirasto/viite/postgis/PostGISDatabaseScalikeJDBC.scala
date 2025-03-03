@@ -9,12 +9,25 @@ object PostGISDatabaseScalikeJDBC {
   // Load the PostgreSQL driver
   Class.forName("org.postgresql.Driver")
 
-  // Initialize the connection pool with default settings
-  ConnectionPool.singleton(
-    url = ViiteProperties.bonecpJdbcUrl,
-    user = ViiteProperties.bonecpUsername,
-    password = ViiteProperties.bonecpPassword
-  )
+  def initializeConnectionPool(): Unit = {
+    try {
+      // Validate properties first
+      if (ViiteProperties.dbJdbcUrl == null || ViiteProperties.dbUsername == null || ViiteProperties.dbPassword == null) {
+        throw new RuntimeException("Database connection properties missing")
+      }
+
+      ConnectionPool.singleton(
+        url = ViiteProperties.dbJdbcUrl,
+        user = ViiteProperties.dbUsername,
+        password = ViiteProperties.dbPassword
+      )
+
+    } catch {
+      case e: Exception => throw new RuntimeException("Can't initialize ScalikeJDBC connection pool for env: " + ViiteProperties.env, e)
+    }
+  }
+
+  initializeConnectionPool()
 
   // Logging for queries
   GlobalSettings.loggingSQLAndTime = LoggingSQLAndTimeSettings(
