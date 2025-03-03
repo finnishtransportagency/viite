@@ -1226,6 +1226,7 @@ class RoadwayDAO extends BaseDAO {
   def fetchRoadPartsForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[RoadPartForRoadAddressBrowser] = {
 
     val dateCondition = situationDate.map(date =>
+      // using ::date to cast the date string to date type
       sqls"AND start_date <= $date::date AND (end_date >= $date::date OR end_date IS NULL)"
     ).getOrElse(sqls"")
 
@@ -1238,7 +1239,7 @@ class RoadwayDAO extends BaseDAO {
         case (Some(minPart), Some(maxPart)) => sqls"AND road_part_number BETWEEN $minPart AND $maxPart"
         case (None, Some(maxPart)) => sqls"AND road_part_number <= $maxPart"
         case (Some(minPart), None) => sqls"AND road_part_number >= $minPart"
-        case _ => ""
+        case _ => sqls""
       }
     }
 
