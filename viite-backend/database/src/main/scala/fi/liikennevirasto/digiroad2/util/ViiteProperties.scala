@@ -18,12 +18,15 @@ trait ViiteProperties {
   val importOnlyCurrent: Boolean
   val authenticationTestMode: Boolean
   val authenticationTestUser: String
-  val bonecpJdbcUrl: String
-  val bonecpUsername: String
-  val bonecpPassword: String
-  val conversionBonecpJdbcUrl: String
-  val conversionBonecpUsername: String
-  val conversionBonecpPassword: String
+
+  // Database properties
+  val dbJdbcUrl: String
+  val dbUsername: String
+  val dbPassword: String
+  val conversionDbJdbcUrl: String
+  val conversionDbUsername: String
+  val conversionDbPassword: String
+
   val latestDeploy: String
   val env: String
   val apiS3BucketName: String
@@ -31,8 +34,6 @@ trait ViiteProperties {
   val awsConnectionEnabled: Boolean
   val apiS3ObjectTTLSeconds: String
 
-  val bonecpProperties: Properties
-  val conversionBonecpProperties: Properties
 
   def getAuthenticationBasicUsername(baseAuth: String = ""): String
   def getAuthenticationBasicPassword(baseAuth: String = ""): String
@@ -59,48 +60,30 @@ class ViitePropertiesFromEnv extends ViiteProperties {
   val vkmUrl: String = scala.util.Properties.envOrElse("vkmUrl", null)
   val vkmApiKey: String = scala.util.Properties.envOrElse("vkmApiKey", null)
   val vkmApiKeyDev: String = scala.util.Properties.envOrElse("vkmApiKeyDev", null)
-  val httpProxySet: Boolean = scala.util.Properties.envOrElse("http.proxySet", "false").toBoolean
-  val httpProxyHost: String = scala.util.Properties.envOrElse("http.proxyHost", null)
-  val httpNonProxyHosts: String = scala.util.Properties.envOrElse("http.nonProxyHosts", "")
   val importOnlyCurrent: Boolean = scala.util.Properties.envOrElse("importOnlyCurrent", "false").toBoolean
   val authenticationTestMode: Boolean = scala.util.Properties.envOrElse("authenticationTestMode", "false").toBoolean
   val authenticationTestUser: String = scala.util.Properties.envOrElse("authenticationTestUser", null)
-  val bonecpJdbcUrl: String = scala.util.Properties.envOrElse("bonecp.jdbcUrl", null)
-  val bonecpUsername: String = scala.util.Properties.envOrElse("bonecp.username", null)
-  val bonecpPassword: String = scala.util.Properties.envOrElse("bonecp.password", null)
-  val conversionBonecpJdbcUrl: String = scala.util.Properties.envOrElse("conversion.bonecp.jdbcUrl", null)
-  val conversionBonecpUsername: String = scala.util.Properties.envOrElse("conversion.bonecp.username", null)
-  val conversionBonecpPassword: String = scala.util.Properties.envOrElse("conversion.bonecp.password", null)
+  // Support both old and new property names with fallback
+  //TODO: Remove old naming when all services are updated
+  val dbJdbcUrl: String = scala.util.Properties.envOrElse("db.jdbcUrl",
+    scala.util.Properties.envOrElse("bonecp.jdbcUrl", null))
+  val dbUsername: String = scala.util.Properties.envOrElse("db.user",
+    scala.util.Properties.envOrElse("bonecp.username", null))
+  val dbPassword: String = scala.util.Properties.envOrElse("db.password",
+    scala.util.Properties.envOrElse("bonecp.password", null))
+  val conversionDbJdbcUrl: String = scala.util.Properties.envOrElse("conversion.db.jdbcUrl",
+    scala.util.Properties.envOrElse("conversion.bonecp.jdbcUrl", null))
+  val conversionDbUsername: String = scala.util.Properties.envOrElse("conversion.db.username",
+    scala.util.Properties.envOrElse("conversion.bonecp.username", null))
+  val conversionDbPassword: String = scala.util.Properties.envOrElse("conversion.db.password",
+    scala.util.Properties.envOrElse("conversion.bonecp.password", null))
+
   val latestDeploy: String = revisionProperties.getProperty("latestDeploy", "-")
   val env: String = scala.util.Properties.envOrElse("env", "Unknown")
   val apiS3BucketName: String = scala.util.Properties.envOrElse("apiS3BucketName", null)
   val dynamicLinkNetworkS3BucketName: String = scala.util.Properties.envOrElse("dynamicLinkNetworkS3BucketName", null)
   val awsConnectionEnabled: Boolean = scala.util.Properties.envOrElse("awsConnectionEnabled", "true").toBoolean
   val apiS3ObjectTTLSeconds: String = scala.util.Properties.envOrElse("apiS3ObjectTTLSeconds", null)
-
-  lazy val bonecpProperties: Properties = {
-    val props = new Properties()
-    try {
-      props.setProperty("bonecp.jdbcUrl", bonecpJdbcUrl)
-      props.setProperty("bonecp.username", bonecpUsername)
-      props.setProperty("bonecp.password", bonecpPassword)
-    } catch {
-      case e: Exception => throw new RuntimeException("Can't load bonecp properties for env: " + env, e)
-    }
-    props
-  }
-
-  lazy val conversionBonecpProperties: Properties = {
-    val props = new Properties()
-    try {
-      props.setProperty("bonecp.jdbcUrl", conversionBonecpJdbcUrl)
-      props.setProperty("bonecp.username", conversionBonecpUsername)
-      props.setProperty("bonecp.password", conversionBonecpPassword)
-    } catch {
-      case e: Exception => throw new RuntimeException("Can't load conversion bonecp properties for env: " + env, e)
-    }
-    props
-  }
 
   def getAuthenticationBasicUsername(baseAuth: String = ""): String = {
     scala.util.Properties.envOrElse("authentication." + baseAuth + (if (baseAuth.isEmpty) "" else ".") + "basic.username", null)
@@ -142,42 +125,44 @@ class ViitePropertiesFromFile extends ViiteProperties {
   override val importOnlyCurrent: Boolean = envProps.getProperty("importOnlyCurrent", "false").toBoolean
   override val authenticationTestMode: Boolean = envProps.getProperty("authenticationTestMode", "false").toBoolean
   override val authenticationTestUser: String = envProps.getProperty("authenticationTestUser")
-  override val bonecpJdbcUrl: String = scala.util.Properties.envOrElse("bonecpJdbcUrl", envProps.getProperty("bonecp.jdbcUrl"))
-  override val bonecpUsername: String = scala.util.Properties.envOrElse("bonecpUsername", envProps.getProperty("bonecp.username"))
-  override val bonecpPassword: String = scala.util.Properties.envOrElse("bonecpPassword", envProps.getProperty("bonecp.password"))
-  override val conversionBonecpJdbcUrl: String = scala.util.Properties.envOrElse("conversionBonecpJdbcUrl", envProps.getProperty("conversion.bonecp.jdbcUrl"))
-  override val conversionBonecpUsername: String = scala.util.Properties.envOrElse("conversionBonecpUsername", envProps.getProperty("conversion.bonecp.username"))
-  override val conversionBonecpPassword: String = scala.util.Properties.envOrElse("conversionBonecpPassword", envProps.getProperty("conversion.bonecp.password"))
+  // Support both old and new property names with fallback
+  // TODO: Remove old naming when all (DEV/QA/PROD) services are updated
+  override val dbJdbcUrl: String =
+    scala.util.Properties.envOrElse("dbJdbcUrl",
+      scala.util.Properties.envOrElse("bonecpJdbcUrl",
+        envProps.getProperty("db.jdbcUrl", envProps.getProperty("bonecp.jdbcUrl"))))
+
+  override val dbUsername: String =
+    scala.util.Properties.envOrElse("dbUsername",
+      scala.util.Properties.envOrElse("bonecpUsername",
+        envProps.getProperty("db.username", envProps.getProperty("bonecp.username"))))
+
+  override val dbPassword: String =
+    scala.util.Properties.envOrElse("dbPassword",
+      scala.util.Properties.envOrElse("bonecpPassword",
+        envProps.getProperty("db.password", envProps.getProperty("bonecp.password"))))
+
+  override val conversionDbJdbcUrl: String =
+    scala.util.Properties.envOrElse("conversionDbJdbcUrl",
+      scala.util.Properties.envOrElse("conversionBonecpJdbcUrl",
+        envProps.getProperty("conversion.db.jdbcUrl", envProps.getProperty("conversion.bonecp.jdbcUrl"))))
+
+  override val conversionDbUsername: String =
+    scala.util.Properties.envOrElse("conversionDbUsername",
+      scala.util.Properties.envOrElse("conversionBonecpUsername",
+        envProps.getProperty("conversion.db.username", envProps.getProperty("conversion.bonecp.username"))))
+
+  override val conversionDbPassword: String =
+    scala.util.Properties.envOrElse("conversionDbPassword",
+      scala.util.Properties.envOrElse("conversionBonecpPassword",
+        envProps.getProperty("conversion.db.password", envProps.getProperty("conversion.bonecp.password"))))
+
   override val latestDeploy: String = revisionProperties.getProperty("latestDeploy", "-")
   override val env: String = envProps.getProperty("env")
   override val apiS3BucketName: String = scala.util.Properties.envOrElse("apiS3BucketName", envProps.getProperty("apiS3BucketName"))
   override val dynamicLinkNetworkS3BucketName: String = scala.util.Properties.envOrElse("dynamicLinkNetworkS3BucketName", envProps.getProperty("dynamicLinkNetworkS3BucketName"))
   override val awsConnectionEnabled: Boolean = envProps.getProperty("awsConnectionEnabled", "true").toBoolean
   override val apiS3ObjectTTLSeconds: String = scala.util.Properties.envOrElse("apiS3ObjectTTLSeconds", envProps.getProperty("apiS3ObjectTTLSeconds"))
-
-  override lazy val bonecpProperties: Properties = {
-    val props = new Properties()
-    try {
-      props.setProperty("bonecp.jdbcUrl", bonecpJdbcUrl)
-      props.setProperty("bonecp.username", bonecpUsername)
-      props.setProperty("bonecp.password", bonecpPassword)
-    } catch {
-      case e: Exception => throw new RuntimeException("Can't load bonecp properties for env: " + env, e)
-    }
-    props
-  }
-
-  override lazy val conversionBonecpProperties: Properties = {
-    val props = new Properties()
-    try {
-      props.setProperty("bonecp.jdbcUrl", conversionBonecpJdbcUrl)
-      props.setProperty("bonecp.username", conversionBonecpUsername)
-      props.setProperty("bonecp.password", conversionBonecpPassword)
-    } catch {
-      case e: Exception => throw new RuntimeException("Can't load conversion bonecp properties for env: " + env, e)
-    }
-    props
-  }
 
   override def getAuthenticationBasicUsername(baseAuth: String = ""): String = {
     envProps.getProperty("authentication." + baseAuth + (if (baseAuth.isEmpty) "" else ".") + "basic.username")
@@ -194,6 +179,7 @@ class ViitePropertiesFromFile extends ViiteProperties {
   */
 object ViiteProperties {
   private val logger = LoggerFactory.getLogger(getClass)
+
   lazy val properties: ViiteProperties = {
     if (getClass.getResource("/env.properties") == null) {
       new ViitePropertiesFromEnv
@@ -216,16 +202,35 @@ object ViiteProperties {
   lazy val importOnlyCurrent: Boolean = properties.importOnlyCurrent
   lazy val authenticationTestMode: Boolean = properties.authenticationTestMode
   lazy val authenticationTestUser: String = properties.authenticationTestUser
-  lazy val bonecpJdbcUrl: String = properties.bonecpJdbcUrl
-  lazy val bonecpUsername: String = properties.bonecpUsername
-  lazy val bonecpPassword: String = properties.bonecpPassword
-  lazy val conversionBonecpJdbcUrl: String = properties.conversionBonecpJdbcUrl
-  lazy val conversionBonecpUsername: String = properties.conversionBonecpUsername
-  lazy val conversionBonecpPassword: String = properties.conversionBonecpPassword
+  // Database properties
+  lazy val dbJdbcUrl: String = properties.dbJdbcUrl
+  lazy val dbUsername: String = properties.dbUsername
+  lazy val dbPassword: String = properties.dbPassword
+  lazy val conversionDbJdbcUrl: String = properties.conversionDbJdbcUrl
+  lazy val conversionDbUsername: String = properties.conversionDbUsername
+  lazy val conversionDbPassword: String = properties.conversionDbPassword
+
+  // Keep old names for backward compatibility - with validation
+  @deprecated("Use dbJdbcUrl instead", "Migration to Scalike")
+  lazy val bonecpJdbcUrl: String = dbJdbcUrl
+
+  @deprecated("Use dbUsername instead", "Migration to Scalike")
+  lazy val bonecpUsername: String = dbUsername
+
+  @deprecated("Use dbPassword instead", "Migration to Scalike")
+  lazy val bonecpPassword: String = dbPassword
+
+  @deprecated("Use conversionDbJdbcUrl instead", "Migration to Scalike")
+  lazy val conversionBonecpJdbcUrl: String = conversionDbJdbcUrl
+
+  @deprecated("Use conversionDbUsername instead", "Migration to Scalike")
+  lazy val conversionBonecpUsername: String = conversionDbUsername
+
+  @deprecated("Use conversionDbPassword instead", "Migration to Scalike")
+  lazy val conversionBonecpPassword: String = conversionDbPassword
+
   lazy val latestDeploy: String = properties.latestDeploy
   lazy val env: String = properties.env
-  lazy val bonecpProperties: Properties = properties.bonecpProperties
-  lazy val conversionBonecpProperties: Properties = properties.conversionBonecpProperties
   lazy val apiS3BucketName: String = properties.apiS3BucketName
   lazy val dynamicLinkNetworkS3BucketName: String = properties.dynamicLinkNetworkS3BucketName
   lazy val awsConnectionEnabled: Boolean = properties.awsConnectionEnabled
