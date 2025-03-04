@@ -1,19 +1,20 @@
 package fi.liikennevirasto.viite.dao
 
 import fi.liikennevirasto.viite._
-import fi.vaylavirasto.viite.dao.Sequences
+import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.CalibrationPointType.NoCP
-import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, CalibrationPointType, Discontinuity, LinkGeomSource, RoadAddressChangeType, RoadPart, SideCode, Track}
+import fi.vaylavirasto.viite.model._
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
 import org.joda.time.DateTime
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
+import scalikejdbc._
 
 /**
   * Class to test DB trigger that does not allow reserving already reserved links to project
   */
-class ProjectDAOSpec extends AnyFunSuite with Matchers {
+class ProjectDAOSpec extends AnyFunSuite with Matchers with BaseDAO{
 
   val roadwayDAO = new RoadwayDAO
   val projectDAO = new ProjectDAO
@@ -209,6 +210,34 @@ class ProjectDAOSpec extends AnyFunSuite with Matchers {
       projectDAO.create(project)
       projectDAO.updateProjectStatus(id, ProjectState.UpdatingToRoadNetwork)
       projectDAO.fetchProjectStatus(id) should be(Some(ProjectState.UpdatingToRoadNetwork))
+    }
+  }
+
+  test("Test updateProjectElys " +
+    "When updating Ely for project " +
+    "Then ely should be updated in correct order and array structure: [1,2]") {
+    runWithRollback {
+      val id = Sequences.nextViiteProjectId
+      val project = dummyProject(id, ProjectState.InUpdateQueue, List(), None)
+      projectDAO.create(project)
+
+      // Update with two ELYs
+      projectDAO.updateProjectElys(id, Seq(2L, 1L))
+
+      // Directly query the database to verify the elys array
+      val query =
+        sql"""
+        SELECT elys
+        FROM project
+        WHERE id = $id
+      """
+      val elysArray = runSelectFirst(query.map(rs => rs.arrayOpt("elys"))).flatten
+
+      // Extract the values from the array
+      val elysValues = elysArray.map(_.getArray.asInstanceOf[Array[Integer]].map(_.intValue))
+
+      // Verify the contents in correct order
+      elysValues.get should contain theSameElementsInOrderAs Array(1, 2)
     }
   }
 }

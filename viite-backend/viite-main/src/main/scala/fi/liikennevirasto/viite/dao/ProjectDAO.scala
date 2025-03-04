@@ -299,13 +299,9 @@ class ProjectDAO extends BaseDAO {
       "coordX" -> rs.doubleOpt("coord_x").getOrElse(0.0),
       "coordY" -> rs.doubleOpt("coord_y").getOrElse(0.0),
       "zoomLevel" -> rs.intOpt("zoom").getOrElse(0),
-      "elys" -> Option(rs.array("elys"))
-        .flatMap(arr => Option(arr.getArray))
-        .map {
-          case a: Array[Array[Integer]] => a(0).map(_.intValue).toSet // Take first array from nested array
-          case a: Array[Integer] => a.map(_.intValue).toSet // Handle normal array
-        }
-        .getOrElse(Set.empty[Int])
+      "elys" -> rs.arrayOpt("elys").map { pgArray =>
+        pgArray.getArray.asInstanceOf[Array[Integer]].map(_.intValue).toSet
+      }.getOrElse(Set.empty[Int])
     )
   }
 
@@ -328,7 +324,7 @@ class ProjectDAO extends BaseDAO {
         val query   =
           sql"""
                UPDATE project p
-               SET elys = ARRAY[${elys.sorted.toArray}]::integer[]
+               SET elys = ${elys.sorted.toArray}::integer[]
                WHERE p.id = $projectId
                """
         runUpdateToDb(query)
