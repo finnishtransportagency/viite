@@ -395,7 +395,7 @@
       }
 
       var changedLink = _.chain(changedLinks).uniq().sortBy(function (cl) {
-        return cl.endAddressM;
+        return cl.addrMRange.end;
       }).last().value();
       var isNewRoad = changedLink.status === RoadAddressChangeType.New.value;
 
