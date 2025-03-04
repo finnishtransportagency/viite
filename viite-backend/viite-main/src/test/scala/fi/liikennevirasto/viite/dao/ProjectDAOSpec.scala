@@ -214,8 +214,8 @@ class ProjectDAOSpec extends AnyFunSuite with Matchers with BaseDAO{
   }
 
   test("Test updateProjectElys " +
-    "When updating Ely for project " +
-    "Then ely should be updated in correct order and array structure: [1,2]") {
+    "When updating ELYs of a project" +
+    "Then ELYs should be in increasing order within an array structure: [1,2]") {
     runWithRollback {
       val id = Sequences.nextViiteProjectId
       val project = dummyProject(id, ProjectState.InUpdateQueue, List(), None)
