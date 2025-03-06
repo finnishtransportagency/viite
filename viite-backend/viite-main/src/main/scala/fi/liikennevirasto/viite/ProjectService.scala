@@ -1580,45 +1580,71 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
         logger.warn(s"Ely-codes for project: $projectId were not updated.")
     }
 
+
+    /**
+     * Updates project links with data from the dev tool.
+     *
+     * This function takes the manually given devToolData, which contains the new address, roadway, and side code information,
+     * and updates the corresponding project links with these values. It also handles the creation of new
+     * roadway numbers if necessary, adjusts status and side codes, and sets calibration points for roadways.
+     *
+     * The function performs the following steps:
+     * 1. If both start and end address M values are defined, it updates the project links with these address values.
+     * 2. If none of the project links are marked as 'New', it updates the original address values.
+     * 3. If all project links are new, it generates a new roadway number for those links.
+     * 4. Updates the status and side code for the project links, adjusting them as necessary based on the change type.
+     * 5. Retrieves the original road addresses corresponding to the updated project links using their roadway IDs.
+     * 6. Sets calibration points based on the provided start and end calibration points.
+     * 7. Optionally generates a new roadway number for all updated links if required by the devToolData.
+     * 8. If an edited side code is provided, it updates the side codes for the project links.
+     * 9. Updates the project links in the database using the `projectLinkDAO.updateProjectLinks` method.
+     *
+     * @param devToolData The development tool data containing the new project link information.
+     * @param projectLinks The sequence of project links to be updated.
+     */
+    def updateProjectLinksWithDevToolData(devToolData: ProjectLinkDevToolData, projectLinks: Seq[ProjectLink]): Unit = {
+      if (devToolData.startAddrMValue.isDefined && devToolData.endAddrMValue.isDefined) {
+        val addressesUpdated = spreadAddrMValuesToProjectLinks(devToolData.startAddrMValue.get, devToolData.endAddrMValue.get, projectLinks, editOriginalValues = false)
+        val origAddressesUpdated = if (projectLinks.forall(_.status != RoadAddressChangeType.New)) {
+          spreadAddrMValuesToProjectLinks(devToolData.originalStartAddrMValue.get, devToolData.originalEndAddrMValue.get, addressesUpdated, editOriginalValues = true)
+        } else {
+          addressesUpdated
+        }
+        val roadwayNumbersUpdated = {
+          if (origAddressesUpdated.forall(_.status == RoadAddressChangeType.New)) {
+            val newRoadwayNumberForNewLinks = Sequences.nextRoadwayNumber
+            origAddressesUpdated.map(pl => pl.copy(roadwayNumber = newRoadwayNumberForNewLinks))
+          } else
+            origAddressesUpdated
+        }
+
+        val statusAndSideCodeUpdated = roadwayNumbersUpdated.map(pl => pl.copy(status = roadAddressChangeType,sideCode = {if (pl.status == RoadAddressChangeType.New && pl.sideCode == SideCode.Unknown) SideCode.TowardsDigitizing else pl.sideCode}))
+        val originalAddresses = roadAddressService.getRoadAddressesByRoadwayIds(statusAndSideCodeUpdated.map(_.roadwayId))
+        val calibrationPointsUpdated = setCalibrationPoints(devToolData.startCp, devToolData.endCp, statusAndSideCodeUpdated)
+        val updatedRoadways = {
+          if (devToolData.generateNewRoadwayNumber) {
+            val newRoadwayNymber = Sequences.nextRoadwayNumber
+            calibrationPointsUpdated.map(pl => pl.copy(roadwayNumber = newRoadwayNymber))
+          } else {
+            calibrationPointsUpdated
+          }
+        }
+        val editedLinks = {
+          if (devToolData.editedSideCode.nonEmpty) {
+            updatedRoadways.map(pl => pl.copy(sideCode = SideCode.apply(devToolData.editedSideCode.get.toInt)))
+          } else
+            updatedRoadways
+        }
+        projectLinkDAO.updateProjectLinks(editedLinks, userName, originalAddresses)
+      }
+    }
+
     try {
       runWithTransaction {
-        val projectLinks = projectLinkDAO.fetchProjectLinksByProjectAndLinkId(ids, linkIds.toSet, projectId)
-        if (devToolData.isDefined) {
-          val editedData = devToolData.get
-          if (editedData.startAddrMValue.isDefined && editedData.endAddrMValue.isDefined) {
-            val addressesUpdated = spreadAddrMValuesToProjectLinks(editedData.startAddrMValue.get, editedData.endAddrMValue.get, projectLinks, editOriginalValues = false)
-            val origAddressesUpdated = if (projectLinks.forall(_.status != RoadAddressChangeType.New)) {
-              spreadAddrMValuesToProjectLinks(editedData.originalStartAddrMValue.get, editedData.originalEndAddrMValue.get, addressesUpdated, editOriginalValues = true)
-            } else {
-              addressesUpdated
-            }
-            val roadwayNumbersUpdated = {
-              if (origAddressesUpdated.forall(_.status == RoadAddressChangeType.New)) {
-                val newRoadwayNumberForNewLinks = Sequences.nextRoadwayNumber
-                origAddressesUpdated.map(pl => pl.copy(roadwayNumber = newRoadwayNumberForNewLinks))
-              } else
-                origAddressesUpdated
-            }
 
-            val statusAndSideCodeUpdated = roadwayNumbersUpdated.map(pl => pl.copy(status = roadAddressChangeType,sideCode = {if (pl.status == RoadAddressChangeType.New && pl.sideCode == SideCode.Unknown) SideCode.TowardsDigitizing else pl.sideCode}))
-            val originalAddresses = roadAddressService.getRoadAddressesByRoadwayIds(statusAndSideCodeUpdated.map(_.roadwayId))
-            val calibrationPointsUpdated = setCalibrationPoints(editedData.startCp, editedData.endCp, statusAndSideCodeUpdated)
-            val updatedRoadways = {
-              if (editedData.generateNewRoadwayNumber) {
-                val newRoadwayNymber = Sequences.nextRoadwayNumber
-                calibrationPointsUpdated.map(pl => pl.copy(roadwayNumber = newRoadwayNymber))
-              } else {
-                calibrationPointsUpdated
-              }
-            }
-            val editedLinks = {
-              if (devToolData.get.editedSideCode.nonEmpty) {
-                updatedRoadways.map(pl => pl.copy(sideCode = SideCode.apply(devToolData.get.editedSideCode.get.toInt)))
-              } else
-                updatedRoadways
-            }
-            projectLinkDAO.updateProjectLinks(editedLinks, userName, originalAddresses)
-          }
+        if (devToolData.isDefined) {
+          val projectLinks = projectLinkDAO.fetchProjectLinksByProjectAndLinkId(ids, linkIds.toSet, projectId)
+          updateProjectLinksWithDevToolData(devToolData.get, projectLinks)
         }
 
         val toUpdateLinks = projectLinkDAO.fetchProjectLinksByProjectAndLinkId(ids, linkIds.toSet, projectId)
@@ -1646,9 +1672,10 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
             case RoadAddressChangeType.Termination =>
               if (devToolData.isDefined) {
                 if (devToolData.get.startAddrMValue.isDefined || devToolData.get.endAddrMValue.isDefined || devToolData.get.originalStartAddrMValue.isDefined || devToolData.get.originalEndAddrMValue.isDefined)
-                  logger.info(s"Skipping termination link reset, because of dev tool given address values...")
+                  logger.info(s"Skipping termination link reset, because of dev tool given addrMRange values...")
               } else {
                 // Reset and update projectLinks to their original state based on road addresses
+                  logger.info(s"Resetting Terminated links...")
                 resetAndUpdateTerminatedProjectLinks(toUpdateLinks)
                 projectLinkDAO.updateProjectLinksStatus(toUpdateLinks.map(_.id).toSet, RoadAddressChangeType.Termination, userName)
               }
