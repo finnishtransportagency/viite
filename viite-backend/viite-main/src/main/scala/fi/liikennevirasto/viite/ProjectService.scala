@@ -1688,24 +1688,37 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
             case RoadAddressChangeType.Transfer =>
               val (reservationNotNeeded, oldRoadPart) = checkAndMakeReservation(projectId, newRoadPart, RoadAddressChangeType.Transfer, toUpdateLinks)
 
-              // VIITE-3203 if dev tool is being used then skip this part.
-              // Reason: Dev tool user might need the RoadAddressCP (that is being erased here, and programmatically recalculated later)
-              val updated = if (devToolData.isEmpty) {
-                toUpdateLinks.map(l => {
-                  val startCP = l.startCalibrationPointType match {
-                    case JunctionPointCP => JunctionPointCP
-                    case UserDefinedCP => UserDefinedCP
-                    case _ => NoCP
+              def removeRoadAddressCPs(projectLink: ProjectLink): (CalibrationPointType, CalibrationPointType) = {
+                logger.info(s"Removing RoadAddressCPs from project links...")
+                val startCP = projectLink.startCalibrationPointType match {
+                  case JunctionPointCP => JunctionPointCP
+                  case UserDefinedCP => UserDefinedCP
+                  case _ => NoCP
+                }
+                val endCP = projectLink.endCalibrationPointType match {
+                  case JunctionPointCP => JunctionPointCP
+                  case UserDefinedCP => UserDefinedCP
+                  case _ => NoCP
+                }
+                (startCP, endCP)
+              }
+
+              val updated = {
+                toUpdateLinks.map(projectLink => {
+                  val (startCP, endCP) = {
+                    if (devToolData.isEmpty) {
+                      // Erased here, and programmatically recalculated later
+                      removeRoadAddressCPs(projectLink)
+                    } else {
+                      // Dev tool user might need the RoadAddressCP (he might want to skip project link recalculation phase where the RoadAddressCP would be programmatically recalculated)
+                      logger.info(s"Skipping RoadAddressCP reset, because dev tool user might need those...")
+                      (projectLink.startCalibrationPointType, projectLink.endCalibrationPointType)
+                    }
                   }
-                  val endCP = l.endCalibrationPointType match {
-                    case JunctionPointCP => JunctionPointCP
-                    case UserDefinedCP => UserDefinedCP
-                    case _ => NoCP
-                  }
-                  l.copy(roadPart = newRoadPart, track = Track.apply(newTrackCode), calibrationPointTypes = (startCP, endCP), status = roadAddressChangeType, administrativeClass = AdministrativeClass.apply(administrativeClass.toInt), ely = ely.getOrElse(l.ely))
+
+                  projectLink.copy(roadPart = newRoadPart, track = Track.apply(newTrackCode), calibrationPointTypes = (startCP, endCP), status = roadAddressChangeType, administrativeClass = AdministrativeClass.apply(administrativeClass.toInt), ely = ely.getOrElse(projectLink.ely))
                 })
-              } else
-                toUpdateLinks
+              }
 
               val originalAddresses = roadAddressService.getRoadAddressesByRoadwayIds(updated.map(_.roadwayId))
               projectLinkDAO.updateProjectLinks(updated, userName, originalAddresses)
