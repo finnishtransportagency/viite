@@ -29,8 +29,8 @@
                     results[i].roadNumber,
                     results[i].track,
                     results[i].roadPartNumber,
-                    results[i].startAddrM,
-                    results[i].endAddrM,
+                    results[i].addrMRange.start,
+                    results[i].addrMRange.end,
                     results[i].lengthAddrM,
                     EnumerationUtils.getAdministrativeClassTextValue(results[i].administrativeClass),
                     results[i].startDate
@@ -67,8 +67,8 @@
                                             <td>${results[i].roadNumber}</td>
                                             <td>${results[i].track}</td>
                                             <td>${results[i].roadPartNumber}</td>
-                                            <td>${results[i].startAddrM}</td>
-                                            <td>${results[i].endAddrM}</td>
+                                            <td>${results[i].addrMRange.start}</td>
+                                            <td>${results[i].addrMRange.end}</td>
                                             <td>${results[i].lengthAddrM}</td>
                                             <td>${EnumerationUtils.getAdministrativeClassTextValue(results[i].administrativeClass)}</td>
                                             <td>${results[i].startDate}</td>
@@ -88,8 +88,8 @@
                     results[i].ely,
                     results[i].roadNumber,
                     results[i].roadPartNumber,
-                    results[i].startAddrM,
-                    results[i].endAddrM,
+                    results[i].addrMRange.start,
+                    results[i].addrMRange.end,
                     results[i].lengthAddrM,
                     results[i].startDate
                 ];
@@ -122,8 +122,8 @@
                                             <td>${results[i].ely}</td>
                                             <td>${results[i].roadNumber}</td>
                                             <td>${results[i].roadPartNumber}</td>
-                                            <td>${results[i].startAddrM}</td>
-                                            <td>${results[i].endAddrM}</td>
+                                            <td>${results[i].addrMRange.start}</td>
+                                            <td>${results[i].addrMRange.end}</td>
                                             <td>${results[i].lengthAddrM}</td>
                                             <td>${results[i].startDate}</td>
                                         </tr>`;

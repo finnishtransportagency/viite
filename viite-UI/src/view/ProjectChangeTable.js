@@ -290,9 +290,9 @@
       return '<td class="project-change-table-dimension">' + changeInfoSeq.target.roadNumber + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.target.trackCode + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.target.startRoadPartNumber + '</td>' +
-        '<td class="project-change-table-dimension">' + changeInfoSeq.target.startAddressM + '</td>' +
-        '<td class="project-change-table-dimension">' + changeInfoSeq.target.endAddressM + '</td>' +
-        '<td class="project-change-table-dimension">' + (changeInfoSeq.target.endAddressM - changeInfoSeq.target.startAddressM) + '</td>' +
+        '<td class="project-change-table-dimension">' + changeInfoSeq.target.addrMRange.start + '</td>' +
+        '<td class="project-change-table-dimension">' + changeInfoSeq.target.addrMRange.end + '</td>' +
+        '<td class="project-change-table-dimension">' + (changeInfoSeq.target.addrMRange.end - changeInfoSeq.target.addrMRange.start) + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.target.discontinuity + '</td>' +
         '<td class="project-change-table-dimension">' + getAdministrativeClassText(changeInfoSeq.target.administrativeClass ) + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.target.ely + '</td>';
@@ -303,9 +303,9 @@
         '<td class="project-change-table-dimension">' + changeInfoSeq.source.roadNumber + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.source.trackCode + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.source.startRoadPartNumber + '</td>' +
-        '<td class="project-change-table-dimension">' + changeInfoSeq.source.startAddressM + '</td>' +
-        '<td class="project-change-table-dimension">' + changeInfoSeq.source.endAddressM + '</td>' +
-        '<td class="project-change-table-dimension">' + (changeInfoSeq.source.endAddressM - changeInfoSeq.source.startAddressM) + '</td>' +
+        '<td class="project-change-table-dimension">' + changeInfoSeq.source.addrMRange.start + '</td>' +
+        '<td class="project-change-table-dimension">' + changeInfoSeq.source.addrMRange.end + '</td>' +
+        '<td class="project-change-table-dimension">' + (changeInfoSeq.source.addrMRange.end - changeInfoSeq.source.addrMRange.start) + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.source.discontinuity + '</td>' +
         '<td class="project-change-table-dimension">' + getAdministrativeClassText(changeInfoSeq.source.administrativeClass ) + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.source.ely + '</td>';

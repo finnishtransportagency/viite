@@ -222,8 +222,8 @@
                                     <td>${rw.roadNumber}</td>
                                     <td>${rw.roadPartNumber}</td>
                                     <td>${rw.track}</td>
-                                    <td>${rw.startAddrM}</td>
-                                    <td>${rw.endAddrM}</td>
+                                    <td>${rw.addrMRange.start}</td>
+                                    <td>${rw.addrMRange.end}</td>
                                     <td>${rw.length}</td>
                                     <td>${rw.roadwayNumber}</td>
                                 </tr>`);
@@ -250,8 +250,8 @@
                                     <td>${rw.roadNumber}</td>
                                     <td>${rw.roadPartNumber}</td>
                                     <td>${rw.track}</td>
-                                    <td>${rw.startAddrM}</td>
-                                    <td>${rw.endAddrM}</td>
+                                    <td>${rw.addrMRange.start}</td>
+                                    <td>${rw.addrMRange.end}</td>
                                     <td>${rw.roadwayNumber}</td>
                                 </tr>`);
                 table.append(tableRow);
@@ -279,8 +279,8 @@
                                     <td>${rw.roadNumber}</td>
                                     <td>${rw.roadPartNumber}</td>
                                     <td>${rw.track}</td>
-                                    <td>${rw.startAddrM}</td>
-                                    <td>${rw.endAddrM}</td>
+                                    <td>${rw.addrMRange.start}</td>
+                                    <td>${rw.addrMRange.end}</td>
                                     <td>${rw.roadwayNumber}</td>
                                     <td>${rw.linearLocationId}</td>
                                     <td>${rw.linkId}</td>

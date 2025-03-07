@@ -9,7 +9,7 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.{RoadwayAddressMapper, TrackSectionOrder}
 import fi.liikennevirasto.viite.process.TrackSectionOrder.findChainEndpoints
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, Discontinuity, RoadAddressChangeType, RoadPart, SideCode, Track}
+import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinuity, RoadAddressChangeType, RoadPart, SideCode, Track}
 import fi.vaylavirasto.viite.util.DateTimeFormatters.finnishDateFormatter
 import org.slf4j.LoggerFactory
 
@@ -30,9 +30,9 @@ class ProjectValidator {
   val junctionPointDAO = new JunctionPointDAO
   val roadAddressService: RoadAddressService = new RoadAddressService(linkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, new RoadwayAddressMapper(roadwayDAO, linearLocationDAO), eventBus, ViiteProperties.kgvRoadlinkFrozen) {
 
-    override def withDynSession[T](f: => T): T = f
+    override def runWithReadOnlySession[T](f: => T): T = f
 
-    override def withDynTransaction[T](f: => T): T = f
+    override def runWithTransaction[T](f: => T): T = f
   }
 
   val projectLinkDAO = new ProjectLinkDAO
@@ -638,7 +638,7 @@ class ProjectValidator {
   }
 
   def isSameTrack(previous: ProjectLink, currentLink: ProjectLink): Boolean = {
-    previous.track == currentLink.track && previous.addrMRange.end == currentLink.addrMRange.start
+    previous.track == currentLink.track && previous.addrMRange.continuesTo(currentLink.addrMRange)
   }
 
   def getTrackInterval(links: Seq[ProjectLink], track: Track): Seq[ProjectLink] = {
@@ -675,11 +675,13 @@ class ProjectValidator {
           case (left, right) if left.nonEmpty && right.nonEmpty =>
                 val leftSection      = (projectLinksByAdministrativeClass._1, left.minBy(_.addrMRange.start).addrMRange.start, left.maxBy(_.addrMRange.end).addrMRange.end)
                 val rightSection     = (projectLinksByAdministrativeClass._1, right.minBy(_.addrMRange.start).addrMRange.start, right.maxBy(_.addrMRange.end).addrMRange.end)
-                val startSectionAdrr = Seq(leftSection._2, rightSection._2).max
-                val endSectionAddr   = Seq(leftSection._3, rightSection._3).min
+                val sectionAddrMRange = AddrMRange(
+                  Seq(leftSection._2, rightSection._2).max,
+                  Seq(leftSection._3, rightSection._3).min
+                )
                 if (leftSection != rightSection) {
-                  val criticalLeftLinks  = left.filterNot(link => {link.addrMRange.start >= startSectionAdrr && link.addrMRange.end <= endSectionAddr}).filterNot(link => {right.map(_.addrMRange.start).contains(link.addrMRange.start) || right.map(_.addrMRange.end).contains(link.addrMRange.end)})
-                  val criticalRightLinks = right.filterNot(link => {link.addrMRange.start >= startSectionAdrr && link.addrMRange.end <= endSectionAddr}).filterNot(link => {left.map(_.addrMRange.start).contains(link.addrMRange.start) || left.map(_.addrMRange.end).contains(link.addrMRange.end)})
+                  val criticalLeftLinks  =  left.filterNot(link => sectionAddrMRange.contains(link.addrMRange)).filterNot(link => {right.map(_.addrMRange.start).contains(link.addrMRange.start) || right.map(_.addrMRange.end).contains(link.addrMRange.end)})
+                  val criticalRightLinks = right.filterNot(link => sectionAddrMRange.contains(link.addrMRange)).filterNot(link => { left.map(_.addrMRange.start).contains(link.addrMRange.start) ||  left.map(_.addrMRange.end).contains(link.addrMRange.end)})
                   criticalLeftLinks ++ criticalRightLinks
                 } else Seq.empty[ProjectLink]
             case (left, right) if left.isEmpty || right.isEmpty => left ++ right
@@ -1291,7 +1293,7 @@ class ProjectValidator {
         if (next.isEmpty)
           false
         else
-          curr.addrMRange.end == next.get.addrMRange.start && curr.connected(next.get)
+          curr.addrMRange.continuesTo(next.get.addrMRange) && curr.connected(next.get)
       }
 
       val discontinuous: Seq[ProjectLink] = roadProjectLinks.groupBy(s => (s.roadPart)).flatMap { g =>
@@ -1322,7 +1324,7 @@ class ProjectValidator {
         if (next.isEmpty)
           false
         else
-          curr.addrMRange.end == next.get.addrMRange.start && curr.connected(next.get)
+          curr.addrMRange.continuesTo(next.get.addrMRange) && curr.connected(next.get)
       }
 
       val discontinuous: Seq[ProjectLink] = roadProjectLinks.groupBy(s => (s.roadPart)).flatMap { g =>
@@ -1384,7 +1386,7 @@ class ProjectValidator {
       val discontinuousErrors = if (isRampValidation) {
         error(project.id, ValidationErrorList.DiscontinuityOnRamp)(roadProjectLinks.filter { pl =>
           // Check that pl has no discontinuity unless on last link and after it the possible project link is connected
-          val nextLink = roadProjectLinks.find(pl2 => pl2.addrMRange.start == pl.addrMRange.end &&
+          val nextLink = roadProjectLinks.find(pl2 => pl2.addrMRange.continuesFrom(pl.addrMRange) &&
             (pl.track == Track.Combined || pl2.track == Track.Combined || pl.track == pl2.track ))
           (nextLink.nonEmpty && pl.discontinuity != Discontinuity.Continuous) ||
             nextLink.exists(pl2 => !pl.connected(pl2))
@@ -1396,7 +1398,7 @@ class ProjectValidator {
 
     def checkDiscontinuityInsideRoadPart: Seq[ValidationErrorDetails] = {
       val discontinuousErrors = error(project.id, ValidationErrorList.DiscontinuityInsideRoadPart)(roadProjectLinks.filter { pl =>
-        val nextLink = roadProjectLinks.find(pl2 => pl2.addrMRange.start == pl.addrMRange.end)
+        val nextLink = roadProjectLinks.find(pl2 => pl2.addrMRange.continuesFrom(pl.addrMRange))
         (nextLink.nonEmpty && pl.discontinuity == Discontinuity.Discontinuous)
       })
       discontinuousErrors.toSeq
@@ -1523,7 +1525,11 @@ class ProjectValidator {
         roadPart =>
           val addresses = roadPart._2.sortBy(_.addrMRange.start)
           val maxEndAddr = addresses.last.addrMRange.end
-          error(project.id, ValidationErrorList.EndOfRoadMiddleOfPart)(addresses.filterNot(_.addrMRange.end == maxEndAddr).filter(_.discontinuity == Discontinuity.EndOfRoad))
+
+          error(project.id, ValidationErrorList.EndOfRoadMiddleOfPart)(addresses
+            .filter(_.discontinuity == Discontinuity.EndOfRoad)
+            .filterNot(a => (a.addrMRange.endsAt(maxEndAddr) || a.addrMRange.isUndefined)) // EndOfRoad OK at end of road. Undefined addresses are not nagged about their Discontinuities - calculate the addresses first.
+          )
       }.toSeq
       endOfRoadErrors.distinct
     }
@@ -1539,10 +1545,12 @@ class ProjectValidator {
       */
     def getNextLinksFromParts(allProjectLinks: Seq[ProjectLink], road: Long, nextProjectPart: Option[Long], nextAddressPart: Option[Long]): Seq[BaseRoadAddress] = {
       if (nextProjectPart.nonEmpty && (nextAddressPart.isEmpty || nextProjectPart.get <= nextAddressPart.get))
-        projectLinkDAO.fetchByProjectRoadPart(RoadPart(road, nextProjectPart.get), project.id).filter(l => RoadAddressChangeType.Termination.value != l.status.value && l.addrMRange.start == 0L)
+        projectLinkDAO.fetchByProjectRoadPart(RoadPart(road, nextProjectPart.get), project.id)
+          .filter(l => RoadAddressChangeType.Termination.value != l.status.value && l.addrMRange.isRoadPartStart) // AddrMRange .isRoadPartStart refactoring: Code before refactoring, start==0, matched undefined addresses, too. Refactored to match road part only.
       else {
         roadAddressService.getRoadAddressesFiltered(RoadPart(road, nextAddressPart.get))
-          .filterNot(rp => allProjectLinks.exists(link => (rp.roadPart != link.roadPart) && rp.linearLocationId == link.linearLocationId)).filter(_.addrMRange.start == 0L)
+          .filterNot(rp => allProjectLinks.exists(link => (rp.roadPart != link.roadPart) && rp.linearLocationId == link.linearLocationId))
+          .filter(_.addrMRange.isRoadPartStart)
       }
     }
 

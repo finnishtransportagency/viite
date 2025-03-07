@@ -73,7 +73,7 @@ trait TrackCalculatorStrategy {
     * @return Returns two project links, the existing one with changed measures and a new one
     */
   protected def splitAt(pl: ProjectLink, address: Long): (ProjectLink, ProjectLink) = {
-    val coefficient = (pl.endMValue - pl.startMValue) / (pl.addrMRange.end - pl.addrMRange.start)
+    val coefficient = (pl.endMValue - pl.startMValue) / pl.addrMRange.length
     val splitMeasure = pl.startMValue + ((pl.addrMRange.start - address) * coefficient)
     (
       pl.copy(geometry = GeometryUtils.truncateGeometry2D(pl.geometry, startMeasure = 0, endMeasure = splitMeasure), geometryLength = splitMeasure, connectedLinkId = Some(pl.linkId)),
@@ -175,8 +175,8 @@ trait TrackCalculatorStrategy {
     // With minimum end address we want to maintain existing links' address lengths. Otherwise, average value could cause existing link lengths change.
     def fixedAddress = getFixedAddress(leftProjectLinks.last, rightProjectLinks.last, availableCalibrationPoint)._2
     def fixedMinimimumAddress = Math.max(Math.max(rightProjectLinks.last.addrMRange.start + 1, leftProjectLinks.last.addrMRange.start + 1), fixedAddress)
-    def originalAddressLengthRight = Math.max(0, rightProjectLinks.last.originalAddrMRange.end - rightProjectLinks.last.originalAddrMRange.start)
-    def originalAddressLengthLeft  = Math.max(0, leftProjectLinks.last.originalAddrMRange.end  -  leftProjectLinks.last.originalAddrMRange.start)
+    def originalAddressLengthRight = Math.max(0, rightProjectLinks.last.originalAddrMRange.length)
+    def originalAddressLengthLeft  = Math.max(0,  leftProjectLinks.last.originalAddrMRange.length)
     def sectionLengthUntilLastProjectLinkRight = rightProjectLinks.last.addrMRange.start - rightProjectLinks.head.addrMRange.start
     def sectionLengthUntilLastProjectLinkLeft =  leftProjectLinks.last.addrMRange.start  - leftProjectLinks.head.addrMRange.start
 

@@ -7,10 +7,9 @@ import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.CalibrationPointType.NoCP
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinuity, LinkGeomSource, RoadAddressChangeType, RoadPart, SideCode, Track}
 import fi.vaylavirasto.viite.postgis.DbUtils.runUpdateToDb
-import fi.vaylavirasto.viite.postgis.PostGISDatabase
 import org.joda.time.DateTime
-import slick.driver.JdbcDriver.backend.Database
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import scalikejdbc.scalikejdbcSQLInterpolationImplicitDef
+
 
 /**
   * Created by venholat on 14.6.2017.
@@ -117,16 +116,25 @@ package object util {
       val nextLinkId = Sequences.nextViitePrimaryKeySeqValue.toString
       val linearLocationId = Sequences.nextLinearLocationId
       val endMeasure = end - start
-      runUpdateToDb(s"""INSERT INTO ROADWAY VALUES (
-                  $roadwayId, 1000000000, ${roadPart.roadNumber}, ${roadPart.partNumber}, $track, $start, $end, 0, ${discontinuity.value}, current_date, NULL,
-                  'test user', to_timestamp('16-10-18 12.03.19.999393000','DD-MM-YY HH24.MI.SSXFF'), 0, $ely, 0, current_date, NULL)""")
+      runUpdateToDb(sql"""
+                    INSERT INTO roadway
+                    VALUES (
+                      $roadwayId, 1000000000, ${roadPart.roadNumber}, ${roadPart.partNumber}, $track, $start, $end, 0,
+                      ${discontinuity.value}, current_date, NULL, 'test user', to_timestamp('16-10-18 12.03.19.999393000','DD-MM-YY HH24.MI.SSXFF'),
+                      0, $ely, 0, current_date, NULL
+                    )
+                    """)
 
-      runUpdateToDb(s"INSERT INTO LINK (ID) VALUES ($nextLinkId)")
+      runUpdateToDb(sql"INSERT INTO link (id) VALUES ($nextLinkId)")
 
       val linestring = s"LINESTRING($start 0 0 0, $end 0 0 $endMeasure)"
-      runUpdateToDb(s"""INSERT INTO LINEAR_LOCATION VALUES (
-                  $linearLocationId, 1000000000, 0, $nextLinkId, 0, $endMeasure, 0, ST_GeomFromText('$linestring', 3067),
-                  current_date, null, 'test user', to_timestamp('16-10-18 12.03.19.999393000','DD-MM-YY HH24.MI.SSXFF'))""".stripMargin)
+      runUpdateToDb(sql"""
+                    INSERT INTO linear_location
+                    VALUES (
+                      $linearLocationId, 1000000000, 0, $nextLinkId, 0, $endMeasure, 0, ST_GeomFromText($linestring, 3067),
+                      current_date, NULL, 'test user', to_timestamp('16-10-18 12.03.19.999393000','DD-MM-YY HH24.MI.SSXFF')
+                    )
+                  """)
       (roadwayId, nextLinkId)
     }
 
@@ -176,7 +184,7 @@ package object util {
   }
 
   def projectLink(addrMRange: AddrMRange, track: Track, projectId: Long, status: RoadAddressChangeType = RoadAddressChangeType.NotHandled, roadPart: RoadPart = RoadPart(19999, 1), discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, linkId: String = "0", roadwayId: Long = 0L, linearLocationId: Long = 0L): ProjectLink = {
-    ProjectLink(NewIdValue, roadPart, track, discontinuity, addrMRange, addrMRange, None, None, Some("User"), linkId, 0.0, (addrMRange.end - addrMRange.start).toDouble, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), Seq(Point(0.0, addrMRange.start), Point(0.0, addrMRange.end)), projectId, status, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, (addrMRange.end - addrMRange.start).toDouble, roadwayId, linearLocationId, ely, reversed = false, None, 0L)
+    ProjectLink(NewIdValue, roadPart, track, discontinuity, addrMRange, addrMRange, None, None, Some("User"), linkId, 0.0, addrMRange.length.toDouble, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), Seq(Point(0.0, addrMRange.start), Point(0.0, addrMRange.end)), projectId, status, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, addrMRange.length.toDouble, roadwayId, linearLocationId, ely, reversed = false, None, 0L)
   }
 
   def toTransition(project: Project, status: RoadAddressChangeType)(roadAddress: RoadAddress): (RoadAddress, ProjectLink) = {
@@ -185,14 +193,14 @@ package object util {
 
   def toProjectLink(project: Project, status: RoadAddressChangeType)(roadAddress: RoadAddress): ProjectLink = {
     if (status == RoadAddressChangeType.New) {
-      ProjectLink(roadAddress.id, roadAddress.roadPart, roadAddress.track, roadAddress.discontinuity, roadAddress.addrMRange, roadAddress.addrMRange, roadAddress.startDate, roadAddress.endDate, createdBy=Option(project.createdBy), roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue, roadAddress.sideCode, roadAddress.calibrationPointTypes, (NoCP, NoCP), roadAddress.geometry, project.id, status, roadAddress.administrativeClass, roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), 0, 0, roadAddress.ely, reversed = false, None, roadAddress.adjustedTimestamp, roadAddressLength = Some(roadAddress.addrMRange.end - roadAddress.addrMRange.start))
+      ProjectLink(roadAddress.id, roadAddress.roadPart, roadAddress.track, roadAddress.discontinuity, roadAddress.addrMRange, roadAddress.addrMRange, roadAddress.startDate, roadAddress.endDate, createdBy=Option(project.createdBy), roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue, roadAddress.sideCode, roadAddress.calibrationPointTypes, (NoCP, NoCP), roadAddress.geometry, project.id, status, roadAddress.administrativeClass, roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), 0, 0, roadAddress.ely, reversed = false, None, roadAddress.adjustedTimestamp, roadAddressLength = roadAddress.addrMRange.lengthOption)
     } else {
-      ProjectLink(roadAddress.id, roadAddress.roadPart, roadAddress.track, roadAddress.discontinuity, roadAddress.addrMRange, roadAddress.addrMRange, roadAddress.startDate, roadAddress.endDate, createdBy=Option(project.createdBy), roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue, roadAddress.sideCode, roadAddress.calibrationPointTypes, (roadAddress.startCalibrationPointType, roadAddress.endCalibrationPointType), roadAddress.geometry, project.id, status, roadAddress.administrativeClass, roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.id, roadAddress.linearLocationId, roadAddress.ely, reversed = false, None, roadAddress.adjustedTimestamp, roadwayNumber = roadAddress.roadwayNumber, roadAddressLength = Some(roadAddress.addrMRange.end - roadAddress.addrMRange.start))
+      ProjectLink(roadAddress.id, roadAddress.roadPart, roadAddress.track, roadAddress.discontinuity, roadAddress.addrMRange, roadAddress.addrMRange, roadAddress.startDate, roadAddress.endDate, createdBy=Option(project.createdBy), roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue, roadAddress.sideCode, roadAddress.calibrationPointTypes, (roadAddress.startCalibrationPointType, roadAddress.endCalibrationPointType), roadAddress.geometry, project.id, status, roadAddress.administrativeClass, roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.id, roadAddress.linearLocationId, roadAddress.ely, reversed = false, None, roadAddress.adjustedTimestamp, roadwayNumber = roadAddress.roadwayNumber, roadAddressLength = roadAddress.addrMRange.lengthOption)
     }
   }
 
   def toProjectLink(project: Project)(roadAddress: RoadAddress): ProjectLink = {
-    ProjectLink(roadAddress.id, roadAddress.roadPart, roadAddress.track, roadAddress.discontinuity, roadAddress.addrMRange, roadAddress.addrMRange, roadAddress.startDate, roadAddress.endDate, createdBy=Option(project.createdBy), roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue, roadAddress.sideCode, roadAddress.calibrationPointTypes, (roadAddress.startCalibrationPointType, roadAddress.endCalibrationPointType), roadAddress.geometry, project.id, RoadAddressChangeType.NotHandled, AdministrativeClass.State, roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.id, roadAddress.linearLocationId, roadAddress.ely, reversed = false, None, roadAddress.adjustedTimestamp, roadAddressLength = Some(roadAddress.addrMRange.end - roadAddress.addrMRange.start))
+    ProjectLink(roadAddress.id, roadAddress.roadPart, roadAddress.track, roadAddress.discontinuity, roadAddress.addrMRange, roadAddress.addrMRange, roadAddress.startDate, roadAddress.endDate, createdBy=Option(project.createdBy), roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue, roadAddress.sideCode, roadAddress.calibrationPointTypes, (roadAddress.startCalibrationPointType, roadAddress.endCalibrationPointType), roadAddress.geometry, project.id, RoadAddressChangeType.NotHandled, AdministrativeClass.State, roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.id, roadAddress.linearLocationId, roadAddress.ely, reversed = false, None, roadAddress.adjustedTimestamp, roadAddressLength = roadAddress.addrMRange.lengthOption)
   }
 
   def backToProjectLink(project: Project)(rl: ProjectAddressLink): ProjectLink = {

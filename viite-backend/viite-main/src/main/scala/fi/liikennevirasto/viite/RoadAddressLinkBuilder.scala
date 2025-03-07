@@ -18,8 +18,8 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
   val eventBus           = new DummyEventBus
   val linkService        = new RoadLinkService(kgvClient, eventBus, new DummySerializer, ViiteProperties.kgvRoadlinkFrozen)
   val roadAddressService: RoadAddressService = new RoadAddressService(linkService, roadwayDAO, linearLocationDAO, new RoadNetworkDAO, new RoadwayPointDAO, new NodePointDAO, new JunctionPointDAO, new RoadwayAddressMapper(roadwayDAO, linearLocationDAO), eventBus, ViiteProperties.kgvRoadlinkFrozen) {
-    override def withDynSession[T](f: => T): T = f
-    override def withDynTransaction[T](f: => T): T = f
+    override def runWithReadOnlySession[T](f: => T): T = f
+    override def runWithTransaction[T](f: => T): T = f
   }
 
   val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)

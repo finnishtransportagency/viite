@@ -294,7 +294,7 @@
             return road;
           }));
           var startAddrFromChangedLinks = _.minBy(_.map(roadPartLinks, function (link) {
-            return link.getData().startAddressM;
+            return link.getData().addrMRange.start;
           }));
           var userDiffFromChangedLinks = userEndAddr - startAddrFromChangedLinks;
           var roadPartGeometries = _.map(roadPartLinks, function (roadPart) {
@@ -395,7 +395,7 @@
       }
 
       var changedLink = _.chain(changedLinks).uniq().sortBy(function (cl) {
-        return cl.endAddressM;
+        return cl.addrMRange.end;
       }).last().value();
       var isNewRoad = changedLink.status === RoadAddressChangeType.New.value;
 

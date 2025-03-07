@@ -199,10 +199,10 @@
         var minAddrByRoadLink = '';
         var maxAddrByRoadLink = '';
         neighbouringRoadLinks.forEach((roadLink) => {
-          if (roadLink.endAddressM === addr) { // road link is before the junction
-            minAddrByRoadLink = roadLink.startAddressM + 1;
-          } else if (roadLink.startAddressM === addr) { // road link is after the junction
-            maxAddrByRoadLink = roadLink.endAddressM - 1;
+          if (roadLink.addrMRange.end === addr) { // road link is before the junction
+            minAddrByRoadLink = roadLink.addrMRange.start + 1;
+          } else if (roadLink.addrMRange.start === addr) { // road link is after the junction
+            maxAddrByRoadLink = roadLink.addrMRange.end - 1;
           }
         });
         return { minAddrByRoadLink, maxAddrByRoadLink };

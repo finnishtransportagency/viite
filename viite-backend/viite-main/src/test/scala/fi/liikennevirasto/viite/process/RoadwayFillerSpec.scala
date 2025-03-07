@@ -9,12 +9,14 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.ProjectState.UpdatingToRoadNetwork
 import fi.liikennevirasto.viite.dao.TerminationCode._
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinuity, RoadAddressChangeType, RoadLink, RoadPart, Track}
-import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
 import org.joda.time.DateTime
 import org.scalatest.BeforeAndAfter
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
+
+import scala.concurrent.Future
 
 class RoadwayFillerSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
 
@@ -54,8 +56,8 @@ class RoadwayFillerSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
                             mockEventBus,
                             frozenKGV = false
                             ) {
-                                override def withDynSession[T](f: => T): T = f
-                                override def withDynTransaction[T](f: => T): T = f
+                                override def runWithReadOnlySession[T](f: => T): T = f
+                                override def runWithTransaction[T](f: => T): T = f
                               }
 
   val projectService: ProjectService =
@@ -76,9 +78,9 @@ class RoadwayFillerSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
                         roadwayAddressMapper,
                         mockEventBus
                         ) {
-                        override def withDynSession[T](f: => T): T = f
-                        override def withDynTransaction[T](f: => T): T = f
-                      }
+                            override def runWithReadOnlySession[T](f: => T): T = f
+                            override def runWithTransaction[T](f: => T): T = f
+                          }
 
   test("Test RoadwayFiller.applyRoadwayChanges() #Confluence: Change in the Middle of the Roadway. " +
                 "When dealing with unchanged addresses with a new administrative class in the middle of them " +
@@ -509,7 +511,7 @@ class RoadwayFillerSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
       leftSide  should have size 2
       rightSide should have size 2
 
-      val (leftSide1, leftSide2) = leftSide.flatMap(_._1).partition(_.addrMRange.start == 0)
+      val (leftSide1, leftSide2) = leftSide.flatMap(_._1).partition(_.addrMRange.isRoadPartStart)
       leftSide1 should have size 1
       leftSide1.head.discontinuity       should be(newProjectLinks.head.discontinuity)
       leftSide1.head.roadwayNumber       should be(newProjectLinks.head.roadwayNumber)
@@ -523,7 +525,7 @@ class RoadwayFillerSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
       leftSide2.head.track               should be(newProjectLinks(1).track)
       leftSide2.head.administrativeClass should be(newProjectLinks(1).administrativeClass)
 
-      val (rightSide1, rightSide2) = rightSide.flatMap(_._1).partition(_.addrMRange.start == 0)
+      val (rightSide1, rightSide2) = rightSide.flatMap(_._1).partition(_.addrMRange.isRoadPartStart)
       rightSide1 should have size 1
       rightSide1.head.discontinuity       should be(newProjectLinks(2).discontinuity)
       rightSide1.head.roadwayNumber       should be(newProjectLinks(2).roadwayNumber)

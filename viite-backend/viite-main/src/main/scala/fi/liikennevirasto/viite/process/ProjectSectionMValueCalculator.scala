@@ -20,13 +20,13 @@ object ProjectSectionMValueCalculator {
   def calculateAddressMValuesForTrack(projectLinks: Seq[ProjectLink], calibrationPoints: Map[Long, UserDefinedCalibrationPoint]): Seq[ProjectLink] = {
     // That is an address connected extension of this
     def isExtensionOf(ext: ProjectLink)(thisPL: ProjectLink) = {
-      thisPL.originalAddrMRange.end == ext.originalAddrMRange.start &&
+      thisPL.originalAddrMRange.continuesTo(ext.originalAddrMRange) &&
         (thisPL.track == ext.track || Set(thisPL.track, ext.track).contains(Track.Combined))
     }
 
     // Reset the end address measure if have changed
     def resetEndAddrMValue(pl: ProjectLink): ProjectLink = {
-      val endAddrMValue = pl.addrMRange.start + pl.addrMLength
+      val endAddrMValue = pl.addrMRange.start + pl.addrMRange.length
       if (endAddrMValue != pl.addrMRange.end)
         pl.copy(addrMRange = AddrMRange(pl.addrMRange.start, endAddrMValue))
       else
@@ -45,10 +45,11 @@ object ProjectSectionMValueCalculator {
       pl => {
         val previousLinks = unchanged.filter(isExtensionOf(pl))
         previousLinks.size match {
-          case 0 => pl.addrMRange.start == 0
-          case 1 => true
-          case 2 => pl.track == Track.Combined && previousLinks.map(_.track).toSet == Set(Track.LeftSide, Track.RightSide)
-          case _ => false
+          case 0 => pl.addrMRange.isRoadPartStart // Does not connect from start; must be a road part start.
+          case 1 => true                          // Connects to a single project link from start - this is fine.
+          case 2 => pl.track == Track.Combined && // Connects to two project links - must be a combined track, and connect to one left ...
+                    previousLinks.map(_.track).toSet == Set(Track.LeftSide, Track.RightSide) // ...side, and one right side project link.
+          case _ => false // If there is more than two links connecting from the start, this is a problem
         }
       }))
       throw new InvalidAddressDataException(s"Invalid unchanged link found")
@@ -103,7 +104,7 @@ object ProjectSectionMValueCalculator {
           val someCalibrationPoint: Option[UserDefinedCalibrationPoint] = calibrationPointMap.get(pl.id)
           pl.status match {
             case RoadAddressChangeType.New => if (someCalibrationPoint.nonEmpty) someCalibrationPoint.get.addressMValue else m + Math.abs(pl.geometryLength) * coEff
-            case RoadAddressChangeType.Transfer | RoadAddressChangeType.NotHandled | RoadAddressChangeType.Renumeration | RoadAddressChangeType.Unchanged => m + (pl.originalAddrMRange.end - pl.originalAddrMRange.start)
+            case RoadAddressChangeType.Transfer | RoadAddressChangeType.NotHandled | RoadAddressChangeType.Renumeration | RoadAddressChangeType.Unchanged => m + (pl.originalAddrMRange.length)
             case RoadAddressChangeType.Termination => pl.addrMRange.end
             case _ => throw new InvalidAddressDataException(s"Invalid status found at value assignment ${pl.status}, linkId: ${pl.linkId}")
           }
@@ -116,8 +117,8 @@ object ProjectSectionMValueCalculator {
   def calculateAddressingFactors(seq: Seq[ProjectLink]): TrackAddressingFactors = {
     seq.foldLeft[TrackAddressingFactors](TrackAddressingFactors(0, 0, 0.0)) { case (a, pl) =>
       pl.status match {
-        case RoadAddressChangeType.Unchanged | RoadAddressChangeType.Renumeration => a.copy(unChangedLength = a.unChangedLength + pl.addrMLength)
-        case RoadAddressChangeType.Transfer | RoadAddressChangeType.NotHandled => a.copy(transferLength = a.transferLength + pl.addrMLength)
+        case RoadAddressChangeType.Unchanged | RoadAddressChangeType.Renumeration => a.copy(unChangedLength = a.unChangedLength + pl.addrMRange.length)
+        case RoadAddressChangeType.Transfer  | RoadAddressChangeType.NotHandled   => a.copy(transferLength  = a.transferLength  + pl.addrMRange.length)
         case RoadAddressChangeType.New => a.copy(newLength = a.newLength + pl.geometryLength)
         case RoadAddressChangeType.Termination => a
         case _ => throw new InvalidAddressDataException(s"Invalid status found at factor assignment ${pl.status}, linkId: ${pl.linkId}")

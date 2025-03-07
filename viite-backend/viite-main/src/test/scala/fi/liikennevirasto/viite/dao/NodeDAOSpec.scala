@@ -1,18 +1,16 @@
 package fi.liikennevirasto.viite.dao
 
 import fi.liikennevirasto.viite.NewIdValue
-import fi.vaylavirasto.viite.dao.Sequences
+import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, BeforeAfter, Discontinuity, NodePointType, NodeType, RoadPart, Track}
-import fi.vaylavirasto.viite.postgis.DbUtils.runUpdateToDb
-import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
 import org.joda.time.DateTime
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
-import slick.driver.JdbcDriver.backend.Database.dynamicSession  // JdbcBackend#sessionDef
-import slick.jdbc.StaticQuery.interpolation
+import scalikejdbc._
 
-class NodeDAOSpec extends AnyFunSuite with Matchers {
+class NodeDAOSpec extends AnyFunSuite with Matchers with BaseDAO {
 
   private val nonExistingRoadNumber = -1
   private val existingRoadNumber = 10
@@ -131,8 +129,20 @@ class NodeDAOSpec extends AnyFunSuite with Matchers {
       val junctionId = junctionDAO.create(Seq(testJunction1)).head
       val ids = junctionPointDAO.create(Seq(testJunctionPoint1.copy(junctionId = junctionId, roadwayPointId = roadwayPointId)))
 
-      runUpdateToDb(s"""INSERT INTO ROADWAY_CHANGES(project_id,change_type,new_road_number,new_road_part_number,new_TRACK,new_start_addr_m,new_end_addr_m,new_discontinuity,NEW_ADMINISTRATIVE_CLASS,new_ely, ROADWAY_CHANGE_ID) Values(100,1,$roadNumber1,$roadPartNumber1,1,0,10.5,1,1,8, 1) """)
-      val projectId = sql"""Select rac.project_id From ROADWAY_CHANGES rac where new_road_number = $roadNumber1 and new_road_part_number = $roadPartNumber1""".as[Long].first
+      runUpdateToDb(
+        sql"""
+             INSERT INTO ROADWAY_CHANGES(project_id,change_type,new_road_number,new_road_part_number,new_TRACK,new_start_addr_m,new_end_addr_m,new_discontinuity,NEW_ADMINISTRATIVE_CLASS,new_ely, ROADWAY_CHANGE_ID)
+             Values(100,1,$roadNumber1,$roadPartNumber1,1,0,10.5,1,1,8, 1)
+             """
+      )
+      val projectId =
+        runSelectSingleFirstWithType[Long](sql"""
+            SELECT rac.project_id
+            FROM ROADWAY_CHANGES rac
+            WHERE new_road_number = $roadNumber1
+            AND new_road_part_number = $roadPartNumber1
+            """
+        )
 
       val nodeNumbers = dao.fetchNodeNumbersByProject(projectId)
 
@@ -156,9 +166,15 @@ class NodeDAOSpec extends AnyFunSuite with Matchers {
       val junctionId = junctionDAO.create(Seq(testJunction1)).head
       val ids = junctionPointDAO.create(Seq(testJunctionPoint1.copy(junctionId = junctionId, roadwayPointId = roadwayPointId)))
 
-      runUpdateToDb(s"""INSERT INTO ROADWAY_CHANGES(project_id,change_type,old_road_number,old_road_part_number,old_TRACK,old_start_addr_m,old_end_addr_m,old_discontinuity,new_discontinuity,OLD_ADMINISTRATIVE_CLASS,NEW_ADMINISTRATIVE_CLASS,old_ely,new_ely, ROADWAY_CHANGE_ID)
-                                   Values(100,2,$roadNumber1,$roadPartNumber1,1,0,10.5,1,1,1,1,8,8, 1) """)
-      val projectId = sql"""Select rac.project_id From ROADWAY_CHANGES rac where old_road_number = $roadNumber1 and old_road_part_number = $roadPartNumber1""".as[Long].first
+      runUpdateToDb(sql"""
+                    INSERT INTO ROADWAY_CHANGES(project_id,change_type,old_road_number,old_road_part_number,old_TRACK,old_start_addr_m,old_end_addr_m,old_discontinuity,new_discontinuity,OLD_ADMINISTRATIVE_CLASS,NEW_ADMINISTRATIVE_CLASS,old_ely,new_ely, ROADWAY_CHANGE_ID)
+                    VALUES (100,2,$roadNumber1,$roadPartNumber1,1,0,10.5,1,1,1,1,8,8, 1)
+                    """)
+      val projectId = runSelectSingleFirstWithType[Long](sql"""
+             SELECT rac.project_id
+             FROM ROADWAY_CHANGES rac
+             WHERE old_road_number = $roadNumber1 AND old_road_part_number = $roadPartNumber1
+          """)
 
       val nodeNumbers = dao.fetchNodeNumbersByProject(projectId)
 
@@ -196,8 +212,8 @@ class NodeDAOSpec extends AnyFunSuite with Matchers {
       val roadwayNumber2 = Sequences.nextRoadwayNumber
       roadwayDAO.create(
         Seq(
-          Roadway(roadwayDAO.getNextRoadwayId, roadwayNumber1, roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, AddrMRange(  0, 300), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
-          Roadway(roadwayDAO.getNextRoadwayId, roadwayNumber2, roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, AddrMRange(300, 500), reversed = false, DateTime.parse("2021-01-01"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination)
+          Roadway(Sequences.nextRoadwayId, roadwayNumber1, roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, AddrMRange(  0, 300), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
+          Roadway(Sequences.nextRoadwayId, roadwayNumber2, roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, AddrMRange(300, 500), reversed = false, DateTime.parse("2021-01-01"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination)
 
         )
       )
