@@ -8,12 +8,15 @@ import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.vaylavirasto.viite.dao.ProjectLinkNameDAO
 import fi.vaylavirasto.viite.model.RoadLink
 import fi.vaylavirasto.viite.postgis.DbUtils.runUpdateToDb
-import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
 import org.joda.time.DateTime
 import org.scalatest.BeforeAndAfter
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
+import scalikejdbc.scalikejdbcSQLInterpolationImplicitDef
+
+import scala.concurrent.Future
 
 
 class ProjectLinkNameDAOSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
@@ -44,40 +47,42 @@ class ProjectLinkNameDAOSpec extends AnyFunSuite with Matchers with BeforeAndAft
   val mockLinearLocationDAO = MockitoSugar.mock[LinearLocationDAO]
   val mockRoadwayChangesDAO = MockitoSugar.mock[RoadwayChangesDAO]
 
-  val roadAddressServiceRealRoadwayAddressMapper = new RoadAddressService(mockRoadLinkService,
-                                                                          roadwayDAO,
-                                                                          linearLocationDAO,
-                                                                          roadNetworkDAO,
-                                                                          roadwayPointDAO,
-                                                                          nodePointDAO,
-                                                                          junctionPointDAO,
-                                                                          roadwayAddressMapper,
-                                                                          mockEventBus,
-                                                                          frozenKGV = false) {
+  val roadAddressServiceRealRoadwayAddressMapper = new RoadAddressService(
+    mockRoadLinkService,
+    roadwayDAO,
+    linearLocationDAO,
+    roadNetworkDAO,
+    roadwayPointDAO,
+    nodePointDAO,
+    junctionPointDAO,
+    roadwayAddressMapper,
+    mockEventBus,
+    frozenKGV = false
+  ) {
+    override def runWithReadOnlySession[T](f: => T): T = f
 
-    override def withDynSession[T](f: => T): T = f
-
-    override def withDynTransaction[T](f: => T): T = f
+    override def runWithTransaction[T](f: => T): T = f
   }
 
-  val projectService = new ProjectService(roadAddressServiceRealRoadwayAddressMapper,
-                                          mockRoadLinkService,
-                                          mockNodesAndJunctionsService,
-                                          roadwayDAO,
-                                          roadwayPointDAO,
-                                          linearLocationDAO,
-                                          projectDAO,
-                                          projectLinkDAO,
-                                          nodeDAO,
-                                          nodePointDAO,
-                                          junctionPointDAO,
-                                          projectReservedPartDAO,
-                                          roadwayChangesDAO,
-                                          roadwayAddressMapper,
-                                          mockEventBus) {
-    override def withDynSession[T](f: => T): T = f
+  val projectService = new ProjectService(
+    roadAddressServiceRealRoadwayAddressMapper,
+    mockRoadLinkService,
+    mockNodesAndJunctionsService,
+    roadwayDAO,
+    roadwayPointDAO,
+    linearLocationDAO,
+    projectDAO,
+    projectLinkDAO,
+    nodeDAO,
+    nodePointDAO,
+    junctionPointDAO,
+    projectReservedPartDAO,
+    roadwayChangesDAO,
+    roadwayAddressMapper,
+    mockEventBus) {
+    override def runWithReadOnlySession[T](f: => T): T = f
 
-    override def withDynTransaction[T](f: => T): T = f
+    override def runWithTransaction[T](f: => T): T = f
   }
 
   test("Test setProjectRoadName When there is no road/projectlink name and given one new road name Then save should be successful") {
@@ -150,9 +155,11 @@ class ProjectLinkNameDAOSpec extends AnyFunSuite with Matchers with BeforeAndAft
       projectDAO.create(rap)
 
       runUpdateToDb(
-        s"""INSERT INTO ROAD_NAME
-           |VALUES (nextval('ROAD_NAME_SEQ'), 99999, 'test name',
-           |current_date, null, current_date, null, 'test user', current_date)""".stripMargin)
+        sql"""
+            INSERT INTO ROAD_NAME
+            VALUES (nextval('ROAD_NAME_SEQ'), 99999, 'test name',
+            current_date, null, current_date, null, 'test user', current_date)
+           """)
 
       val beforeInsert = ProjectLinkNameDAO.get(99999, projectId)
       projectService.setProjectRoadName(projectId, 99999, "test name 2")

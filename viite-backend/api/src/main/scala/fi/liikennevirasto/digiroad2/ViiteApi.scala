@@ -14,7 +14,7 @@ import fi.liikennevirasto.viite.util.DigiroadSerializers
 import fi.vaylavirasto.viite.dao.{RoadName, RoadNameForRoadAddressBrowser}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, BeforeAfter, Discontinuity, LinkGeomSource, NodePointType, NodeType, RoadAddressChangeType, RoadPart, Track}
-import fi.vaylavirasto.viite.postgis.PostGISDatabase
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC
 import fi.vaylavirasto.viite.util.DateTimeFormatters.{ISOdateFormatter, dateSlashFormatter, finnishDateFormatter, finnishDateCommaTimeFormatter}
 import org.joda.time.DateTime
 import org.json4s._
@@ -441,8 +441,8 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       "roadNumber" -> rw.roadPart.roadNumber,
       "roadPartNumber" -> rw.roadPart.partNumber,
       "track" -> rw.track,
-      "startAddrM" -> rw.startAddrM,
-      "endAddrM" -> rw.endAddrM,
+      "startAddrM" -> rw.addrMRange.start,
+      "endAddrM" -> rw.addrMRange.end,
       "length" -> rw.length,
       "createdBy" -> rw.createdBy,
       "createdTime" -> rw.createdTime
@@ -1201,7 +1201,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
     val projectId = params("projectId").toLong
     time(logger, s"GET request for /project/recalculateProject/$projectId") {
       try {
-        val invalidUnchangedLinkErrors = PostGISDatabase.withDynTransaction {
+        val invalidUnchangedLinkErrors = PostGISDatabaseScalikeJDBC.runWithTransaction {
           val project = projectService.fetchProjectById(projectId).get
           val invalidUnchangedLinkErrors = projectService.projectValidator.checkForInvalidUnchangedLinks(project, projectLinkDAO.fetchProjectLinks(projectId))
           if (invalidUnchangedLinkErrors.isEmpty) {
@@ -1572,6 +1572,13 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
     BoundingRectangle(Point(BBOXList(0), BBOXList(1)), Point(BBOXList(2), BBOXList(3)))
   }
 
+  private def addrMRangeToApi(addrMRange: AddrMRange): Map[String, Long] = {
+    Map(
+        "start" -> addrMRange.start,
+        "end"   -> addrMRange.end
+    )
+  }
+
   private def roadAddressLinkLikeToApi(roadAddressLink: RoadAddressLinkLike): Map[String, Any] = {
     Map(
       "success" -> true,
@@ -1597,8 +1604,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       "roadPartNumber" -> roadAddressLink.roadPart.partNumber,
       "elyCode" -> roadAddressLink.elyCode,
       "trackCode" -> roadAddressLink.trackCode,
-      "startAddressM" -> roadAddressLink.addrMRange.start,
-      "endAddressM" -> roadAddressLink.addrMRange.end,
+      "addrMRange" -> addrMRangeToApi(roadAddressLink.addrMRange),
       "discontinuity" -> roadAddressLink.discontinuity,
       "lifecycleStatus" -> roadAddressLink.lifecycleStatus.value,
       "startMValue" -> roadAddressLink.startMValue,
@@ -1765,8 +1771,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       "roadNumber" -> track.roadPart.roadNumber,
       "track" -> track.track,
       "roadPartNumber" -> track.roadPart.partNumber,
-      "startAddrM" -> track.addrMRange.start,
-      "endAddrM"   -> track.addrMRange.end,
+      "addrMRange" -> addrMRangeToApi(track.addrMRange),
       "lengthAddrM" -> track.roadAddressLengthM,
       "administrativeClass" -> track.administrativeClass,
       "startDate" -> new SimpleDateFormat("dd.MM.yyyy").format(track.startDate.toDate)
@@ -1778,8 +1783,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       "ely" -> roadPart.ely,
       "roadNumber" -> roadPart.roadPart.roadNumber,
       "roadPartNumber" -> roadPart.roadPart.partNumber,
-      "startAddrM" -> roadPart.addrMRange.start,
-      "endAddrM"   -> roadPart.addrMRange.end,
+      "addrMRange" -> addrMRangeToApi(roadPart.addrMRange),
       "lengthAddrM" -> roadPart.roadAddressLengthM,
       "startDate" -> new SimpleDateFormat("dd.MM.yyyy").format(roadPart.startDate.toDate)
     )
@@ -1836,16 +1840,15 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       "oldRoadNumber"     -> (if(oldPart.nonEmpty) oldPart.get.roadNumber else ""),
       "oldTrack" -> changeInfo.oldRoadAddress.track.getOrElse(""),
       "oldRoadPartNumber" -> (if(oldPart.nonEmpty) oldPart.get.partNumber else ""),
-      "oldStartAddrM" -> changeInfo.oldRoadAddress.startAddrM.getOrElse(""),
-      "oldEndAddrM" -> changeInfo.oldRoadAddress.endAddrM.getOrElse(""),
+      "oldStartAddrM" -> changeInfo.oldRoadAddress.getStartOption.getOrElse(""), //TODO to addrMRange?
+      "oldEndAddrM"   -> changeInfo.oldRoadAddress.getEndOption.getOrElse(""),
       "oldLength" -> changeInfo.oldRoadAddress.length.getOrElse(""),
       "oldAdministrativeClass" -> changeInfo.oldRoadAddress.administrativeClass,
       "newEly" -> changeInfo.newRoadAddress.ely,
       "newRoadNumber" -> changeInfo.newRoadAddress.roadPart.roadNumber,
       "newTrack" -> changeInfo.newRoadAddress.track,
       "newRoadPartNumber" -> changeInfo.newRoadAddress.roadPart.partNumber,
-      "newStartAddrM" -> changeInfo.newRoadAddress.addrMRange.start,
-      "newEndAddrM" -> changeInfo.newRoadAddress.addrMRange.end,
+      "newAddrMRange" -> addrMRangeToApi(changeInfo.newRoadAddress.addrMRange),
       "newLength" -> changeInfo.newRoadAddress.length,
       "newAdministrativeClass" -> changeInfo.newRoadAddress.administrativeClass
     )
@@ -1884,8 +1887,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
         "roadPartNumber" -> projectAddressLink.roadPart.partNumber,
         "elyCode" -> projectAddressLink.elyCode,
         "trackCode" -> projectAddressLink.trackCode,
-        "startAddressM" -> projectAddressLink.addrMRange.start,
-        "endAddressM" -> projectAddressLink.addrMRange.end,
+        "addrMRange" -> addrMRangeToApi(projectAddressLink.addrMRange),
         "originalStartAddressM" -> originalAddrMRange.start,
         "originalEndAddressM" -> originalAddrMRange.end,
         "discontinuity" -> projectAddressLink.discontinuity,

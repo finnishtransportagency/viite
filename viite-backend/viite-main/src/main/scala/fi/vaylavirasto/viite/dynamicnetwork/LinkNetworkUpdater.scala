@@ -11,7 +11,7 @@ import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.CalibrationPointLocation.{EndOfLink, StartOfLink}
 import fi.vaylavirasto.viite.model.SideCode.TowardsDigitizing
 import fi.vaylavirasto.viite.model.{CalibrationPoint, LinkGeomSource, RoadPart, SideCode}
-import fi.vaylavirasto.viite.postgis.PostGISDatabase
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC
 import fi.vaylavirasto.viite.util.ViiteException
 import org.joda.time.DateTime
 import org.json4s.jackson.JsonMethods
@@ -190,7 +190,7 @@ class LinkNetworkUpdater {
   private implicit val formats: DefaultFormats.type = DefaultFormats // json4s requires this for extract, and extractOpt
 
   // define here, to be able to override from spec file with a no-operation
-  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
+  def runWithTransaction[T](f: => T): T = PostGISDatabaseScalikeJDBC.runWithTransaction(f)
 
   private val linearLocationDAO = new LinearLocationDAO // LinearLocationDAO is a class, for testing possibility (must be able to override db functionality)
   private val kgvClient         = new KgvRoadLink
@@ -281,7 +281,7 @@ class LinkNetworkUpdater {
 
     LogUtils.time(logger, s"Persist LinkNetworkChanges to Viite data structures, change set '${changeMetaData.changeSetName}'") {
       //try { // TODO Informing MML in case of error?
-      withDynTransaction {
+      runWithTransaction {
         changeSet.foreach(change => persistLinkNetworkChange(change, changeMetaData))
       }
       //}

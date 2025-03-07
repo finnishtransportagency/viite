@@ -2,38 +2,38 @@ package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.viite.dao._
 import fi.vaylavirasto.viite.geometry.Point
-import fi.vaylavirasto.viite.postgis.PostGISDatabase
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC
 
 class APIServiceForNodesAndJunctions(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLocationDAO, nodeDAO: NodeDAO, junctionDAO: JunctionDAO) {
 
-  def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
+  def runWithReadOnlySession[T](f: => T): T = PostGISDatabaseScalikeJDBC.runWithReadOnlySession(f)
 
   private def getAllValidNodes: Seq[Node] = {
-    withDynSession {
+    runWithReadOnlySession {
       nodeDAO.fetchAllValidNodes()
     }
   }
 
   private def getJunctionsWithLinearLocation(validNodeNumbers: Seq[Long]): Seq[JunctionWithLinearLocation] = {
-    withDynSession {
+    runWithReadOnlySession {
       junctionDAO.fetchJunctionsByNodeNumbersWithLinearLocation(validNodeNumbers)
     }
   }
 
   private def getCrossingRoads: Seq[RoadwaysForJunction] = {
-    withDynSession {
+    runWithReadOnlySession {
       roadwayDAO.fetchCrossingRoadsInJunction()
     }
   }
 
   private def getCurrentLinearLocations: Seq[LinearLocation] = {
-    withDynSession {
+    runWithReadOnlySession {
       linearLocationDAO.fetchCurrentLinearLocations
     }
   }
 
   private def getCoordinatesForJunction(llIds: Seq[Long], crossingRoads: Seq[RoadwaysForJunction], currentLinearLocations: Seq[LinearLocation]): Option[Point] = {
-    withDynSession {
+    runWithReadOnlySession {
       linearLocationDAO.fetchCoordinatesForJunction(llIds, crossingRoads, currentLinearLocations)
     }
   }

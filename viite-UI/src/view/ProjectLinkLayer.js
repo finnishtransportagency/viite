@@ -457,7 +457,7 @@
           var addMarkersToLayer = function (links, layer) {
             var directionMarkers = _.filter(links, function (projectLink) {
               var acceptedLinks = projectLink.id !== 0;
-              return acceptedLinks && projectLink.sideCode !== SideCode.Unknown.value && projectLink.endAddressM !== 0;
+              return acceptedLinks && projectLink.sideCode !== SideCode.Unknown.value && projectLink.addrMRange.end !== 0;
             });
             _.each(directionMarkers, function (directionLink) {
               cachedMarker.createProjectMarker(directionLink, function (marker) {

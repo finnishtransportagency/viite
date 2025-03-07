@@ -1,13 +1,12 @@
 package fi.liikennevirasto.digiroad2.util
 
-import slick.driver.JdbcDriver.backend.Database
-import Database.dynamicSession
-import fi.vaylavirasto.viite.postgis.PostGISDatabase
-import slick.jdbc.{StaticQuery => Q}
+import fi.vaylavirasto.viite.dao.BaseDAO
+import scalikejdbc._
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC
 
 import scala.io.{BufferedSource, Codec, Source}
 
-object SqlScriptRunner {
+object SqlScriptRunner extends BaseDAO {
   def runScripts(filenames: Seq[String]): Unit = {
     executeStatements(filenames.flatMap(readScriptStatements("./viite-backend/database/sql/", _)))
   }
@@ -36,10 +35,10 @@ object SqlScriptRunner {
   def executeStatements(stmts: Seq[String]): Unit = {
     println("Running " + stmts.length + " statements...")
     var i = 0
-    PostGISDatabase.withDynTransaction {
+    PostGISDatabaseScalikeJDBC.runWithTransaction {
       stmts.foreach { stmt =>
         try {
-          (Q.u + stmt).execute
+          runUpdateToDb(SQL(stmt))
           i = i+1
           if (i % 10 == 0)
             println("" + i + " / " + stmts.length)

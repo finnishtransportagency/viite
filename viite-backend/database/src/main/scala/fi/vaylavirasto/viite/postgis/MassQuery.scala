@@ -2,7 +2,7 @@ package fi.vaylavirasto.viite.postgis
 
 import fi.liikennevirasto.digiroad2.util.LogUtils
 import fi.vaylavirasto.viite.dao.BaseDAO
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import scalikejdbc._
 
 import scala.language.implicitConversions
 
@@ -12,65 +12,68 @@ object MassQuery extends BaseDAO {
   implicit def il(list: Iterable[Long]): LongList = LongList(list)
   implicit def sl(list: Iterable[String]): StringList = StringList(list)
 
-  def withIds[T](ids: LongList)(function: String => T): T = {
+  def withIds[T](ids: LongList)(function: SQLSyntax => T): T = {
     LogUtils.time(logger, s"TEST LOG MassQuery withIds ${ids.list.size}") {
       LogUtils.time(logger, "TEST LOG create TEMP_ID table") {
-        runUpdateToDb(s"""
+        runUpdateToDb(
+          sql"""
           CREATE TEMPORARY TABLE IF NOT EXISTS TEMP_ID (
-            ID BIGINT NOT NULL,
-            CONSTRAINT TEMP_ID_PK PRIMARY KEY (ID)
+            id BIGINT NOT NULL,
+            CONSTRAINT TEMP_ID_PK PRIMARY KEY (id)
           ) ON COMMIT DELETE ROWS
         """)
       }
-      val insertLinkIdPS = dynamicSession.prepareStatement("insert into temp_id (id) values (?)")
 
       LogUtils.time(logger, s"TEST LOG insert into TEMP_ID ${ids.list.size}") {
-        try {
-          //Making sure that the table is empty if called multiple times within a transaction
-          //Emptied at the end of transaction as per TABLE definition above
-          runUpdateToDb(s"TRUNCATE TABLE TEMP_ID")
-          ids.list.foreach { id =>
-            insertLinkIdPS.setLong(1, id)
-            insertLinkIdPS.addBatch()
-          }
-          logger.debug("added {} entries to temporary table", ids.list.size)
-          insertLinkIdPS.executeBatch()
-          function("temp_id")
-        } finally {
-          insertLinkIdPS.close()
-        }
+
+        //Making sure that the table is empty if called multiple times within a transaction
+        //Emptied at the end of transaction as per TABLE definition above
+        runUpdateToDb(sql"TRUNCATE TABLE temp_id")
+
+        val insertQuery = sql"INSERT INTO temp_id (id) VALUES (?)"
+        val batchParams = ids.list.map(id => Seq(id))
+
+        // Execute batch insert
+        runBatchUpdateToDb(insertQuery, batchParams.toSeq)
+
+        logger.debug("added {} entries to temporary table", ids.list.size)
+
+        // Call the function with the temporary table name
+        function(sqls"TEMP_ID")
       }
     }
   }
 
-  def withIds[T](ids: StringList)(function: String => T): T = {
+  def withIds[T](ids: StringList)(function: SQLSyntax => T): T = {
     LogUtils.time(logger, s"TEST LOG MassQuery withIds ${ids.list.size}") {
-      LogUtils.time(logger, "TEST LOG create TEMP_UUID table") {
-        runUpdateToDb(s"""
-          CREATE TEMPORARY TABLE IF NOT EXISTS TEMP_UUID (
-            ID VARCHAR NOT NULL,
-            CONSTRAINT TEMP_UUID_PK PRIMARY KEY (ID)
+      LogUtils.time(logger, "TEST LOG create temp_uuid table") {
+        runUpdateToDb(
+          sql"""
+          CREATE TEMPORARY TABLE IF NOT EXISTS temp_uuid (
+            id VARCHAR NOT NULL,
+            CONSTRAINT temp_uuid_pk PRIMARY KEY (id)
           )
           ON COMMIT DELETE ROWS
         """)
       }
-      val insertLinkIdPS = dynamicSession.prepareStatement("insert into temp_uuid (id) values (?)")
 
-      LogUtils.time(logger, s"TEST LOG insert into TEMP_UUID ${ids.list.size}") {
-        try {
-          //Making sure that the table is empty if called multiple times within a transaction
-          //Emptied at the end of transaction as per TABLE definition above
-          runUpdateToDb(s"TRUNCATE TABLE TEMP_UUID")
-          ids.list.foreach { id =>
-            insertLinkIdPS.setString(1, id)
-            insertLinkIdPS.addBatch()
-          }
-          logger.debug("added {} entries to temporary table", ids.list.size)
-          insertLinkIdPS.executeBatch()
-          function("temp_uuid")
-        } finally {
-          insertLinkIdPS.close()
-        }
+      LogUtils.time(logger, s"TEST LOG insert into temp_uuid ${ids.list.size}") {
+
+        //Making sure that the table is empty if called multiple times within a transaction
+        //Emptied at the end of transaction as per TABLE definition above
+        runUpdateToDb(sql"TRUNCATE TABLE temp_uuid")
+
+        val insertQuery = sql"INSERT INTO temp_uuid (id) VALUES (?)"
+        val batchParams = ids.list.map(id => Seq(id))
+
+        // Execute batch insert
+        runBatchUpdateToDb(insertQuery, batchParams.toSeq)
+
+        logger.debug("added {} entries to temporary table", ids.list.size)
+
+        // Call the function with the temporary table name
+        function(sqls"temp_uuid")
+
       }
     }
   }
