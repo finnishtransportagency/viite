@@ -1581,10 +1581,7 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
     }
 
 
-    /**
-     * Updates project links with data from the dev tool.
-     *
-     * Updates the project links in the database using the `projectLinkDAO.updateProjectLinks` method.
+    /* Adjusts given projectLinks with the data from the development tool and runs the update to the database.
      *
      * @param devToolData The development tool data containing the new project link information.
      * @param projectLinks The sequence of project links to be updated.
