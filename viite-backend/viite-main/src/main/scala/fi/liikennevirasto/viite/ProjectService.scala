@@ -1584,26 +1584,16 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
     /**
      * Updates project links with data from the dev tool.
      *
-     * This function takes the manually given devToolData, which contains the new address, roadway, and side code information,
-     * and updates the corresponding project links with these values. It also handles the creation of new
-     * roadway numbers if necessary, adjusts status and side codes, and sets calibration points for roadways.
-     *
-     * The function performs the following steps:
-     * 1. If both start and end address M values are defined, it updates the given projectLinks with these address values.
-     * 2. If the projectLinks are NOT marked as 'New', it also updates the original address values of the projectLinks.
-     * 3. If the projectLinks are New, it generates a new roadway number for the projectLinks.
-     * 4. Updates the status and side code for the projectLinks, adjusting them as necessary based on the change type.
-     * 5. Retrieves the original road addresses corresponding to the updated project links using their roadway IDs.
-     * 6. Sets calibration points based on the provided start and end calibration points.
-     * 7. Generates a new roadway number for given projectLinks based on the devToolData.generateNewRoadwayNumber boolean.
-     * 8. If an edited side code is provided, it updates the side codes for the project links.
-     * 9. Updates the project links in the database using the `projectLinkDAO.updateProjectLinks` method.
+     * Updates the project links in the database using the `projectLinkDAO.updateProjectLinks` method.
      *
      * @param devToolData The development tool data containing the new project link information.
      * @param projectLinks The sequence of project links to be updated.
      */
     def updateProjectLinksWithDevToolData(devToolData: ProjectLinkDevToolData, projectLinks: Seq[ProjectLink]): Unit = {
 
+      /**
+       * Updates the given projectLinks with address values from devToolData.
+       */
       def adjustAddrMRanges(projectLinks: Seq[ProjectLink]):Seq[ProjectLink] = {
         val addressesUpdated = spreadAddrMValuesToProjectLinks(devToolData.startAddrMValue.get, devToolData.endAddrMValue.get, projectLinks, editOriginalValues = false)
         val origAddressesUpdated = if (projectLinks.forall(_.status != RoadAddressChangeType.New)) {
@@ -1614,6 +1604,10 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
         origAddressesUpdated
       }
 
+      /**
+       *  Assign new roadway number to projectLinks if they are type New,
+       *  otherwise return the links untouched.
+       */
       def adjustRoadwayNumbersForNewLinks(projectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
         val processedLinks = {
           if (projectLinks.forall(_.status == RoadAddressChangeType.New)) {
@@ -1626,6 +1620,9 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
         processedLinks
       }
 
+      /**
+       * Generates new roadway number for projectLinks based on devToolData.generateNewRoadwayNumber boolean value.
+       */
       def adjustRoadwayNumbers(projectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
         val processedLinks = {
           if (devToolData.generateNewRoadwayNumber) {
@@ -1638,13 +1635,15 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
         processedLinks
       }
 
-      def adjustStatusAndSideCodes(projectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
+      /**
+       * Sets the side code to SideCode.TowardsDigitizing for new projectLinks.
+       */
+      def adjustSideCodesForNewLinks(projectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
         projectLinks.map(pl =>
           pl.copy(
-            status    = roadAddressChangeType,
             sideCode  = {
               if (pl.status == RoadAddressChangeType.New && pl.sideCode == SideCode.Unknown)
-                SideCode.TowardsDigitizing
+                SideCode.TowardsDigitizing // TODO is this doing more harm than good? Should we just let it be Unknown and edit the SideCodes separately?
               else
                 pl.sideCode
             }
@@ -1652,10 +1651,23 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
         )
       }
 
+      /**
+       * Sets the status for all given projectLinks.
+       */
+      def adjustStatus(projectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
+        projectLinks.map(_.copy(status = roadAddressChangeType))
+      }
+
+      /**
+       * Sets calibration points based on the provided start and end calibration points.
+       */
       def adjustCalibrationPoints(projectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
         setCalibrationPoints(devToolData.startCp, devToolData.endCp, projectLinks)
       }
 
+      /**
+       * Updates the side codes for the project links if an edited side code is provided.
+       */
       def adjustSideCodes(projectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
         if (devToolData.editedSideCode.nonEmpty) {
           projectLinks.map(pl => pl.copy(sideCode = SideCode.apply(devToolData.editedSideCode.get.toInt)))
@@ -1669,18 +1681,20 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
         adjustAddrMRanges,
         adjustRoadwayNumbersForNewLinks,
         adjustRoadwayNumbers,
-        adjustStatusAndSideCodes,
+        adjustSideCodesForNewLinks,
+        adjustStatus,
         adjustCalibrationPoints,
         adjustSideCodes
       )
 
-      if (devToolData.startAddrMValue.isDefined && devToolData.endAddrMValue.isDefined) {
-        // Sequentially apply each adjustment function
-        val projectLinksWithAdjustedValues = adjustmentFunctions.foldLeft(projectLinks)((linksAccumulator, adjustmentFunction) => adjustmentFunction(linksAccumulator))
+      //TODO Some kind of ordering for New links without addrMRanges.
 
-        val originalAddresses = roadAddressService.getRoadAddressesByRoadwayIds(projectLinksWithAdjustedValues.map(_.roadwayId))
-        projectLinkDAO.updateProjectLinks(projectLinksWithAdjustedValues, userName, originalAddresses)
-      }
+      // Sequentially apply each adjustment function
+      val projectLinksWithAdjustedValues = adjustmentFunctions.foldLeft(projectLinks)((linksAccumulator, adjustmentFunction) => adjustmentFunction(linksAccumulator))
+      // Fetch the original addresses to pass to the updateProjectLinks function
+      val originalAddresses = roadAddressService.getRoadAddressesByRoadwayIds(projectLinksWithAdjustedValues.map(_.roadwayId))
+      // Run the projectLink updates to the database
+      projectLinkDAO.updateProjectLinks(projectLinksWithAdjustedValues, userName, originalAddresses)
     }
 
     try {
