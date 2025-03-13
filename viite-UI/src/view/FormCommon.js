@@ -64,8 +64,8 @@
       const projectEditable = project.statusCode === editableStatus;
       const startOfSection = Math.min(...links.map((link) => Number(link.addrMRange.start)));
       const endOfSection   = Math.max(...links.map((link) => Number(link.addrMRange.end)));
-      const originalStartOfSection = Math.min(...links.map((link) => Number(link.originalAddrMRange.start)));
-      const originalEndOfSection   = Math.max(...links.map((link) => Number(link.originalAddrMRange.end)));
+      const originalStartOfSection = Math.min(...links.map((link) => Number(link.originalStartAddressM)));
+      const originalEndOfSection   = Math.max(...links.map((link) => Number(link.originalEndAddressM)));
       let sideCodeDropDown = '';
 
       if (links.length == 1) {
