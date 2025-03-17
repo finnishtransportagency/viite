@@ -31,9 +31,6 @@ trait ViiteProperties {
   val awsConnectionEnabled: Boolean
   val apiS3ObjectTTLSeconds: String
 
-  val bonecpProperties: Properties
-  val conversionBonecpProperties: Properties
-
   def getAuthenticationBasicUsername(baseAuth: String = ""): String
   def getAuthenticationBasicPassword(baseAuth: String = ""): String
 }
@@ -77,30 +74,6 @@ class ViitePropertiesFromEnv extends ViiteProperties {
   val dynamicLinkNetworkS3BucketName: String = scala.util.Properties.envOrElse("dynamicLinkNetworkS3BucketName", null)
   val awsConnectionEnabled: Boolean = scala.util.Properties.envOrElse("awsConnectionEnabled", "true").toBoolean
   val apiS3ObjectTTLSeconds: String = scala.util.Properties.envOrElse("apiS3ObjectTTLSeconds", null)
-
-  lazy val bonecpProperties: Properties = {
-    val props = new Properties()
-    try {
-      props.setProperty("bonecp.jdbcUrl", bonecpJdbcUrl)
-      props.setProperty("bonecp.username", bonecpUsername)
-      props.setProperty("bonecp.password", bonecpPassword)
-    } catch {
-      case e: Exception => throw new RuntimeException("Can't load bonecp properties for env: " + env, e)
-    }
-    props
-  }
-
-  lazy val conversionBonecpProperties: Properties = {
-    val props = new Properties()
-    try {
-      props.setProperty("bonecp.jdbcUrl", conversionBonecpJdbcUrl)
-      props.setProperty("bonecp.username", conversionBonecpUsername)
-      props.setProperty("bonecp.password", conversionBonecpPassword)
-    } catch {
-      case e: Exception => throw new RuntimeException("Can't load conversion bonecp properties for env: " + env, e)
-    }
-    props
-  }
 
   def getAuthenticationBasicUsername(baseAuth: String = ""): String = {
     scala.util.Properties.envOrElse("authentication." + baseAuth + (if (baseAuth.isEmpty) "" else ".") + "basic.username", null)
@@ -155,30 +128,6 @@ class ViitePropertiesFromFile extends ViiteProperties {
   override val awsConnectionEnabled: Boolean = envProps.getProperty("awsConnectionEnabled", "true").toBoolean
   override val apiS3ObjectTTLSeconds: String = scala.util.Properties.envOrElse("apiS3ObjectTTLSeconds", envProps.getProperty("apiS3ObjectTTLSeconds"))
 
-  override lazy val bonecpProperties: Properties = {
-    val props = new Properties()
-    try {
-      props.setProperty("bonecp.jdbcUrl", bonecpJdbcUrl)
-      props.setProperty("bonecp.username", bonecpUsername)
-      props.setProperty("bonecp.password", bonecpPassword)
-    } catch {
-      case e: Exception => throw new RuntimeException("Can't load bonecp properties for env: " + env, e)
-    }
-    props
-  }
-
-  override lazy val conversionBonecpProperties: Properties = {
-    val props = new Properties()
-    try {
-      props.setProperty("bonecp.jdbcUrl", conversionBonecpJdbcUrl)
-      props.setProperty("bonecp.username", conversionBonecpUsername)
-      props.setProperty("bonecp.password", conversionBonecpPassword)
-    } catch {
-      case e: Exception => throw new RuntimeException("Can't load conversion bonecp properties for env: " + env, e)
-    }
-    props
-  }
-
   override def getAuthenticationBasicUsername(baseAuth: String = ""): String = {
     envProps.getProperty("authentication." + baseAuth + (if (baseAuth.isEmpty) "" else ".") + "basic.username")
   }
@@ -224,8 +173,6 @@ object ViiteProperties {
   lazy val conversionBonecpPassword: String = properties.conversionBonecpPassword
   lazy val latestDeploy: String = properties.latestDeploy
   lazy val env: String = properties.env
-  lazy val bonecpProperties: Properties = properties.bonecpProperties
-  lazy val conversionBonecpProperties: Properties = properties.conversionBonecpProperties
   lazy val apiS3BucketName: String = properties.apiS3BucketName
   lazy val dynamicLinkNetworkS3BucketName: String = properties.dynamicLinkNetworkS3BucketName
   lazy val awsConnectionEnabled: Boolean = properties.awsConnectionEnabled

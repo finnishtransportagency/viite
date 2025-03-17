@@ -16,7 +16,7 @@ class ScalatraBootstrap extends LifeCycle {
 
   implicit val swagger: ViiteSwagger = new ViiteSwagger
 
-  override def init(context: ServletContext) {
+  override def init(context: ServletContext): Unit = {
     context.mount(new SessionApi, "/api/auth/*")
     context.mount(new PingApi, "/api/ping/*")
     context.mount(new AdminApi(Digiroad2Context.dataImporter, swagger), "/api/admin/*")
@@ -40,7 +40,7 @@ class RasterProxy extends ScalatraServlet {
 
   /** Create a response handler, with handleResponse implementation returning the triple
     * response code, contentType, and response data. */
-  def getResponseHandler = {
+  private def getResponseHandler = {
     new HttpClientResponseHandler[(Int, String, String)] {
       @throws[IOException]
       override def handleResponse(response: ClassicHttpResponse): (Int, String, String)  = {

@@ -5,7 +5,7 @@ module.exports = function (grunt) {
   const { createProxyMiddleware } = require('http-proxy-middleware');
 
   const apiProxy = createProxyMiddleware({
-    target: 'http://127.0.0.1:8080',
+    target: 'http://127.0.0.1:9080',
     changeOrigin: false,
     pathFilter: '/api',
     secure: false,
@@ -13,7 +13,7 @@ module.exports = function (grunt) {
   });
 
   const rasteriProxy = createProxyMiddleware({
-    target: 'http://localhost:8080',
+    target: 'http://localhost:9080',
     changeOrigin: true,
     pathFilter: '/rasteripalvelu',
     secure: false,

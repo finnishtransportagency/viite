@@ -41,12 +41,12 @@ object CodeArtifactSettings {
   val settingsLibsFromCodeArtifact: Seq[Def.Setting[_]] = Seq(
     resolvers        ++= {  Seq("CodeArtifact" at awsCodeArtifactRepoURL)    }, // if the token is set, use the CodeArtifact resolver
     credentials      ++= {  Seq(Credentials(codeArtifactRealm, codeArtifactDomain, "aws", sys.env("CODE_ARTIFACT_AUTH_TOKEN")))  },
-    externalResolvers := {  Resolver.withDefaultResolvers(resolvers.value, mavenCentral = false)  }
+    externalResolvers := {  Resolver.combineDefaultResolvers(resolvers.value.toVector, mavenCentral = false)  }
   )
 
   val settingsLibsFromDefaultresolvers: Seq[Def.Setting[_]] = Seq(
     resolvers        ++= {  Seq(Classpaths.typesafeReleases)  }, // if the token is not set, use the default resolvers
     credentials      ++= {  Seq.empty  },
-    externalResolvers := {  Resolver.withDefaultResolvers(resolvers.value)    }
+    externalResolvers := {  Resolver.combineDefaultResolvers(resolvers.value.toVector)    }
   )
 }
