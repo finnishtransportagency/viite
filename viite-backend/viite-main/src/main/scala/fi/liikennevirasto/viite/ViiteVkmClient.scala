@@ -12,10 +12,10 @@ import org.apache.hc.core5.http.message.BasicNameValuePair
 import org.apache.hc.core5.net.URIBuilder
 import org.json4s.{DefaultFormats, StreamInput}
 import org.json4s.jackson.JsonMethods.parse
+import scala.util.control.NonFatal
 import org.slf4j.LoggerFactory
 
 import java.io.IOException
-import scala.util.control.NonFatal
 
 class ViiteVkmClient {
 
@@ -79,12 +79,12 @@ class ViiteVkmClient {
   }
 
   /** Return a response handler, with handleResponse implementation returning the response body parsed */
-  def getResponseHandler(url: String) = {
+  def getResponseHandler(url: String): HttpClientResponseHandler[Either[VKMError, Any]] = {
     new HttpClientResponseHandler[Either[VKMError, Any]] {
       @throws[IOException]
       override def handleResponse(response: ClassicHttpResponse): Either[VKMError, Any]  = {
         if (response.getCode == HttpStatus.SC_OK) {
-          val content: Any = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Any]
+          val content: Any = parse(response.getEntity.getContent).values.asInstanceOf[Any]
           Right(content)
         } else {
           Left(VKMError(Map("error" -> "Request returned HTTP Error %d".format(response.getCode)), url))
