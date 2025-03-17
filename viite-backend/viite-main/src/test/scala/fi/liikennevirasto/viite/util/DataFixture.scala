@@ -236,7 +236,7 @@ object DataFixture {
   def main(args: Array[String]): Unit = {
     import scala.util.control.Breaks._
     val operation = args.headOption
-    val username = ViiteProperties.bonecpUsername
+    val username = ViiteProperties.conversionDbUsername
     if (!"Local".equalsIgnoreCase(ViiteProperties.env) && !operation.getOrElse("").equals("test_integration_api_all_municipalities")) {
       println("*************************************************************************************")
       println("YOU ARE RUNNING FIXTURE RESET AGAINST A NON-DEVELOPER DATABASE, TYPE 'YES' TO PROCEED")
