@@ -1,6 +1,7 @@
 package fi.vaylavirasto.viite.dao
 
 import fi.liikennevirasto.digiroad2.user.{Configuration, User, UserProvider}
+import fi.vaylavirasto.viite.util.ViiteException
 import org.json4s._
 import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization.{read, write}
@@ -28,6 +29,12 @@ class UserProviderDAO extends BaseDAO with UserProvider {
       )
   }
 
+  /**
+   * Get user by username
+   * @param username: String
+   * @return User if found, None if not found
+   * @throws ViiteException if multiple users found with the same username or database error
+   */
   def getUser(username: String): Option[User] = {
     if (username == null) None
     else {
@@ -36,7 +43,15 @@ class UserProviderDAO extends BaseDAO with UserProvider {
          FROM service_user
          WHERE lower(username) = ${username.toLowerCase}
          """
-      runSelectSingleOption(query.map(User.apply))
+
+      try {
+        runSelectSingleOption(query.map(User.apply))
+      } catch {
+        case e: TooManyRowsException =>
+          throw ViiteException(s"Multiple users found with username $username")
+        case e: Exception =>
+          throw ViiteException(s"Database error while retrieving user $username: ${e.getMessage}")
+      }
     }
   }
 

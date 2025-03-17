@@ -13,9 +13,7 @@ case class User(id: Long, username: String, configuration: Configuration) {
   def isViiteUser:         Boolean = configuration.roles(Role.ViiteUser)
   def hasViiteWriteAccess: Boolean = configuration.roles(Role.ViiteUser)
   def isOperator:          Boolean = configuration.roles(Role.Operator)
-  def isNotInViite:        Boolean = {
-    id == 0
-  }
+  def isDev:               Boolean = configuration.roles(Role.Dev)
 
   def getAuthorizedElys : Set[Int] = {
     configuration.authorizedElys
@@ -26,4 +24,5 @@ object Role {
   val Operator = "operator"
   val Viewer = "viewer"
   val ViiteUser = "viite"
+  val Dev = "dev"
 }
