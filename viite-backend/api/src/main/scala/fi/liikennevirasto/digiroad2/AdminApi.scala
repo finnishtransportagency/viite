@@ -207,7 +207,7 @@ class AdminApi(val dataImporter: DataImporter, implicit val swagger: Swagger) ex
           logger.info(s"Testing connection to url: $url")
           val request = new HttpGet(url)
           if (headersParam.isDefined) {
-            val headers = parse(StringInput(URLDecoder.decode(headersParam.get))).values.asInstanceOf[Map[String, String]]
+            val headers = parse(URLDecoder.decode(headersParam.get)).values.asInstanceOf[Map[String, String]]
             headers.foreach { case (name, value) => request.addHeader(name, value) }
           }
           val client = HttpClients.createDefault()
