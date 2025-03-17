@@ -93,7 +93,7 @@ case class RoadwaysForJunction(jId: Long, roadwayNumber: Long, roadPart: RoadPar
 object RoadwaysForJunction extends SQLSyntaxSupport[RoadwaysForJunction] {
 
   def apply(rs: WrappedResultSet): RoadwaysForJunction = new RoadwaysForJunction(
-    jId           = rs.long("j_id"),
+    jId           = rs.long("junction_id"),
     roadwayNumber = rs.long("roadway_number"),
     roadPart      = RoadPart(
       roadNumber  = rs.long("road_number"),
