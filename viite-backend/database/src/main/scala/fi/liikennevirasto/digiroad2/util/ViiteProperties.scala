@@ -79,7 +79,7 @@ class ViitePropertiesFromEnv extends ViiteProperties {
   //
   val dbJdbcUrl: String = scala.util.Properties.envOrElse("db.jdbcUrl",
     scala.util.Properties.envOrElse("bonecp.jdbcUrl", null))
-  val dbUsername: String = scala.util.Properties.envOrElse("db.user",
+  val dbUsername: String = scala.util.Properties.envOrElse("db.username",
     scala.util.Properties.envOrElse("bonecp.username", null))
   val dbPassword: String = scala.util.Properties.envOrElse("db.password",
     scala.util.Properties.envOrElse("bonecp.password", null))
