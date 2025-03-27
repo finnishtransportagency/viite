@@ -16,19 +16,19 @@ class ScalatraBootstrap extends LifeCycle {
 
   implicit val swagger: ViiteSwagger = new ViiteSwagger
 
-  override def init(context: ServletContext) {
+  override def init(context: ServletContext): Unit = {
     context.mount(new SessionApi, "/api/auth/*")
     context.mount(new PingApi, "/api/ping/*")
     context.mount(new AdminApi(Digiroad2Context.dataImporter, swagger), "/api/admin/*")
     context.mount(new IntegrationApi(Digiroad2Context.roadAddressService, Digiroad2Context.roadNameService, swagger), "/api/viite/integration/*")
     context.mount(new ChangeApi(Digiroad2Context.roadAddressService, Digiroad2Context.nodesAndJunctionsService, swagger), "/api/viite/changes/*")
     context.mount(new SearchApi(Digiroad2Context.roadAddressService, swagger), "/api/viite/search/*")
-    context.mount(new ViiteApi(Digiroad2Context.roadLinkService,      Digiroad2Context.kgvRoadLinkClient,
-                               Digiroad2Context.roadAddressService,   Digiroad2Context.projectService,
-                               Digiroad2Context.roadNameService,      Digiroad2Context.nodesAndJunctionsService,
-                               Digiroad2Context.roadNetworkValidator, Digiroad2Context.userProvider,
-                               Digiroad2Context.deploy_date,          swagger),
-                  "/api/viite/*")
+    context.mount(new ViiteApi(Digiroad2Context.roadLinkService, Digiroad2Context.kgvRoadLinkClient,
+      Digiroad2Context.roadAddressService, Digiroad2Context.projectService,
+      Digiroad2Context.roadNameService, Digiroad2Context.nodesAndJunctionsService,
+      Digiroad2Context.roadNetworkValidator, Digiroad2Context.userProvider,
+      Digiroad2Context.deploy_date, swagger),
+      "/api/viite/*")
     context.mount(new ResourcesApp, "/api-docs")
     context.mount(new RasterProxy, "/rasteripalvelu")
   }
@@ -40,7 +40,7 @@ class RasterProxy extends ScalatraServlet {
 
   /** Create a response handler, with handleResponse implementation returning the triple
     * response code, contentType, and response data. */
-  def getResponseHandler = {
+  private def getResponseHandler = {
     new HttpClientResponseHandler[(Int, String, String)] {
       @throws[IOException]
       override def handleResponse(response: ClassicHttpResponse): (Int, String, String)  = {
