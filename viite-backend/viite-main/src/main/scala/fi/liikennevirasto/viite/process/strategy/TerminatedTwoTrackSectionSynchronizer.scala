@@ -104,7 +104,7 @@ object TerminatedTwoTrackSectionSynchronizer {
    * Adjusts terminated project links to have matching end addresses.
    * @param terminatedLeft Left track terminated projectLink to adjust.
    * @param terminatedRight Right track terminated projectLink to adjust.
-   * @returns Adjusted project links and the new averaged endAddressM of the adjusted project links.
+   * @return Adjusted project links and the new averaged endAddressM of the adjusted project links.
    */
   private def adjustTerminatedLinksToMatchAtTheEnd(terminatedLeft: ProjectLink, terminatedRight: ProjectLink): (ProjectLink, ProjectLink, Long) = {
     val averageEnd    = calculateAverageAddrM(terminatedLeft.addrMRange.end, terminatedRight.addrMRange.end)
