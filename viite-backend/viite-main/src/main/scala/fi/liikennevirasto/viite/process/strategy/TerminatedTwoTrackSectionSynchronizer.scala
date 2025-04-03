@@ -101,21 +101,21 @@ object TerminatedTwoTrackSectionSynchronizer {
   }
 
   /**
-   * Adjusts terminated project links to have matching averaged start, and end addresses.
+   * Adjusts terminated project links to have matching end addresses.
    * @param terminatedLeft Left track terminated projectLink to adjust.
    * @param terminatedRight Right track terminated projectLink to adjust.
-   * @returns Adjusted project links and the new averaged AddrMRange of the adjusted project links.
+   * @return Adjusted project links and the new averaged endAddressM of the adjusted project links.
    */
-  private def adjustTerminatedToMatch(terminatedLeft: ProjectLink, terminatedRight: ProjectLink): (ProjectLink, ProjectLink, AddrMRange) = {
-    val averageStart  = calculateAverageAddrM(terminatedLeft.addrMRange.start, terminatedRight.addrMRange.start)
+  private def adjustTerminatedLinksToMatchAtTheEnd(terminatedLeft: ProjectLink, terminatedRight: ProjectLink): (ProjectLink, ProjectLink, Long) = {
     val averageEnd    = calculateAverageAddrM(terminatedLeft.addrMRange.end, terminatedRight.addrMRange.end)
 
-    val averagedAddrMRange = AddrMRange(averageStart, averageEnd)
+    val adjustedLeft  = terminatedLeft.copy(  addrMRange = AddrMRange(terminatedLeft.addrMRange.start, averageEnd),
+                                      originalAddrMRange = AddrMRange(terminatedLeft.originalAddrMRange.start, averageEnd))
 
-    val adjustedLeft  = terminatedLeft.copy( addrMRange = averagedAddrMRange,originalAddrMRange = averagedAddrMRange)
-    val adjustedRight = terminatedRight.copy(addrMRange = averagedAddrMRange,originalAddrMRange = averagedAddrMRange)
+    val adjustedRight = terminatedRight.copy( addrMRange = AddrMRange(terminatedRight.addrMRange.start, averageEnd) ,
+                                      originalAddrMRange = AddrMRange(terminatedRight.originalAddrMRange.start, averageEnd))
 
-    (adjustedLeft, adjustedRight, averagedAddrMRange)
+    (adjustedLeft, adjustedRight, averageEnd)
   }
 
   private def updateProjectLinksList(modifiedProjectLinks: Seq[ProjectLink], projectLinksToUpdate: Seq[ProjectLink]): Seq[ProjectLink] = {
@@ -186,23 +186,23 @@ object TerminatedTwoTrackSectionSynchronizer {
     val lastTerminatedOnRightSideSection = terminatedRightSection.last
 
     // Compare original addresses here because we are modifying the starting situation
-    val continuousAfterTerminatedLeft   = projectLinks.find(pl => pl.track == Track.LeftSide && pl.originalAddrMRange.continuesFrom(lastTerminatedOnLeftSideSection.originalAddrMRange))
-    val continuousAfterTerminatedRight  = projectLinks.find(pl => pl.track == Track.RightSide && pl.originalAddrMRange.continuesFrom(lastTerminatedOnRightSideSection.originalAddrMRange))
+    val continuousAfterTerminatedLeft   = projectLinks.find(pl => pl.track != Track.RightSide && pl.originalAddrMRange.continuesFrom(lastTerminatedOnLeftSideSection.originalAddrMRange))
+    val continuousAfterTerminatedRight  = projectLinks.find(pl => pl.track != Track.LeftSide && pl.originalAddrMRange.continuesFrom(lastTerminatedOnRightSideSection.originalAddrMRange))
 
     // Adjust terminated
     val processedLinks: Seq[ProjectLink] = {
       if (areTracksCloseEnoughOnEndAddrM(lastTerminatedOnLeftSideSection, lastTerminatedOnRightSideSection)) {
-        // Adjust the last terminated links on each track to match
-        val (adjustedTerminatedLeft, adjustedTerminatedRight, averagedAddrMRange) = adjustTerminatedToMatch(lastTerminatedOnLeftSideSection, lastTerminatedOnRightSideSection)
+        // Adjust the last terminated links on each track to match at the end
+        val (adjustedTerminatedLeft, adjustedTerminatedRight, averageEndAddrM) = adjustTerminatedLinksToMatchAtTheEnd(lastTerminatedOnLeftSideSection, lastTerminatedOnRightSideSection)
 
         if (continuousAfterTerminatedLeft.isDefined && continuousAfterTerminatedRight.isDefined) {
           // Adjust both links after the terminated section
-          val adjustedLeftAddrMRange = AddrMRange(averagedAddrMRange.end, continuousAfterTerminatedLeft.get.originalAddrMRange.end)
+          val adjustedLeftAddrMRange = AddrMRange(averageEndAddrM, continuousAfterTerminatedLeft.get.originalAddrMRange.end)
           val adjLeftContinuousAfterTerminated = continuousAfterTerminatedLeft.get.copy(
             originalAddrMRange = adjustedLeftAddrMRange
           )
 
-          val adjustedRightAddrMRange = AddrMRange(averagedAddrMRange.end, continuousAfterTerminatedRight.get.originalAddrMRange.end)
+          val adjustedRightAddrMRange = AddrMRange(averageEndAddrM, continuousAfterTerminatedRight.get.originalAddrMRange.end)
           val adjRightContinuousAfterTerminated = continuousAfterTerminatedRight.get.copy(
             originalAddrMRange = adjustedRightAddrMRange
           )
