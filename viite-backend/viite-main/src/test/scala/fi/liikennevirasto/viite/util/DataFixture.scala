@@ -126,61 +126,6 @@ object DataFixture {
     }
   }
 
-  def applyChangeInformationToRoadAddressLinks(numThreads: Int): Unit = {
-
-    val roadLinkService = new RoadLinkService(KGVClient, new DummyEventBus, new JsonSerializer, geometryFrozen)
-    val linearLocationDAO = new LinearLocationDAO
-
-    val linearLocations =
-      PostGISDatabaseScalikeJDBC.runWithTransaction {
-        linearLocationDAO.fetchCurrentLinearLocations
-      }
-
-    println("Total linearLocations " + linearLocations.size)
-
-    //get All municipalities and group them for ely
-    PostGISDatabaseScalikeJDBC.runWithTransaction {
-      MunicipalityDAO.getDigiroadMunicipalityToElyMapping
-    }.groupBy(_._2).foreach {
-      case (ely, municipalityEly) =>
-
-        //Get All Municipalities
-        val municipalities: ParSet[Long] = municipalityEly.keySet.par
-        println("Total municipalities keys for ely " + ely + " -> " + municipalities.size)
-
-        //For each municipality get all Roadlinks
-        municipalities.tasksupport = new ForkJoinTaskSupport(new scala.concurrent.forkjoin.ForkJoinPool(numThreads))
-        municipalities.foreach { municipality =>
-          println("Start processing municipality %d".format(municipality))
-
-          //Obtain all RoadLink by municipality and change info from VVH
-          val (roadLinks, changedRoadLinks) = roadLinkService.getRoadLinksAndChangesFromVVH(municipality.toInt)
-          val allRoadLinks = roadLinks
-
-          println("Total roadlinks for municipality " + municipality + " -> " + allRoadLinks.size)
-          println("Total of changes for municipality " + municipality + " -> " + changedRoadLinks.size)
-          if (roadLinks.nonEmpty) {
-            try {
-
-              val roadsChanges = ApplyChangeInfoProcess.applyChanges(linearLocations, allRoadLinks, changedRoadLinks)
-              roadAddressService.updateChangeSet(roadsChanges._2)
-              println(s"AppliedChanges for municipality $municipality")
-              println(s"${roadsChanges._2.droppedSegmentIds.size} dropped roads")
-              println(s"${roadsChanges._2.adjustedMValues.size} adjusted m values")
-              println(s"${roadsChanges._2.newLinearLocations.size} new linear locations")
-            } catch {
-              case e: Exception => println("ERR! -> " + e.getMessage)
-            }
-          }
-          println("End processing municipality %d".format(municipality))
-        }
-    }
-  }
-
-  /*private def showFreezeInfo(): Unit = {
-    println("Road link geometry freeze is active; exiting without changes")
-  }*/
-
   val flyway: Flyway = {
     PostGISDatabaseScalikeJDBC // Initialize the Database connection
     val ds: DataSource = ConnectionPool.get().dataSource // Get the DataSource from the ConnectionPool
@@ -263,17 +208,10 @@ object DataFixture {
           throw new Exception("****** Import failed! conversiontable name required as second input ******")
       case Some("import_complementary_road_address") =>
         importComplementaryRoadAddress()
-      /*case Some("update_missing") if geometryFrozen =>
-        showFreezeInfo()*/
       case Some("update_road_addresses_geometry") =>
         updateLinearLocationGeometry()
       case Some("import_road_address_change_test_data") =>
         importRoadAddressChangeTestData()
-      /*case Some("apply_change_information_to_road_address_links") if geometryFrozen =>
-        showFreezeInfo()*/
-      case Some("apply_change_information_to_road_address_links") =>
-        val numThreads = if (args.length > 1) toIntNumber(args(1)) else numberThreads
-        applyChangeInformationToRoadAddressLinks(numThreads)
       case Some("import_road_names") =>
         importRoadNames()
       case Some("test") =>
