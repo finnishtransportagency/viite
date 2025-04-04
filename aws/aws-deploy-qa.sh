@@ -1,7 +1,5 @@
 #!/bin/bash
-# Before running this script you must authenticate through Väylä SAML:
-#
-# python3 aws/login/vaylaAssumeRoleAWSCLI.py --username <Your Väylä username> --account 783354560127 --role ViiteAdmin --region eu-west-1
+# Before running this script you must be authenticated for the AWS CLI through Väylä authentication. See Confluence.
 #
 set -e
 
