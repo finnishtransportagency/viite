@@ -7,10 +7,7 @@
 
 
 # === pre-requisite: Authenticate ===
-# Before running this script you must be authenticated for the AWS CLI through Väylä SAML. From your project root, run:
-#  (Note: when using this from windows, e.g. Bash seems to just hang -> use CMD instead)
-#
-# python3 aws/login/vaylaAssumeRoleAWSCLI.py --username <Your Väylä username> --account 783354560127 --role ViiteAdmin --region eu-west-1
+# Before running this script you must be authenticated for the AWS CLI through Väylä authentication. See Confluence.
 
 
 # === the registration: ===
