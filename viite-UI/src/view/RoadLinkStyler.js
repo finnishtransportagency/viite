@@ -203,7 +203,7 @@
         },
         zIndex: ViiteEnumerations.ViewModeZIndex.UnAddressedOther.stroke
       }),
-      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).and('addrMRange.start').is(0).and('addrMRange.end').is(0).and('administrativeClassId').is(ViiteEnumerations.AdministrativeClass.PublicRoad.value).use({
+      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).and('administrativeClassId').is(ViiteEnumerations.AdministrativeClass.PublicRoad.value).use({
         stroke: {
           color: '#646461',
           lineCap: 'round'
@@ -220,16 +220,16 @@
     ];
 
     const strokeRulesForUnderConstruction = [
-      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).and('lifecycleStatus').is(ViiteEnumerations.lifecycleStatus.UnderConstruction.value).and('administrativeClassId').isNot(ViiteEnumerations.AdministrativeClass.PublicRoad.value).use({
+      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).and('lifecycleStatus').is(ViiteEnumerations.lifecycleStatus.UnderConstruction.value).use({
         stroke: {
-          color: 'rgba(238, 238, 235, 0.75)',
+          color: '#B7B7B5',
           lineCap: 'round'
         },
         zIndex: ViiteEnumerations.ViewModeZIndex.UnAddressedOtherUnderConstruction.stroke
       }),
-      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).and('lifecycleStatus').is(ViiteEnumerations.lifecycleStatus.UnderConstruction.value).and('administrativeClassId').is(ViiteEnumerations.AdministrativeClass.PublicRoad.value).use({
+      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).and('administrativeClassId').is(ViiteEnumerations.AdministrativeClass.PublicRoad.value).and('lifecycleStatus').is(ViiteEnumerations.lifecycleStatus.UnderConstruction.value).use({
         stroke: {
-          color: '#646461',
+          color: '#ff9900',
           lineCap: 'round'
         },
         zIndex: ViiteEnumerations.ViewModeZIndex.UnAddressedStateUnderConstruction.stroke
@@ -322,7 +322,7 @@
     ];
 
     const fillRulesForUnAddressed = [
-      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).and('addrMRange.start').is(0).and('addrMRange.end').is(0).and('administrativeClassId').is(ViiteEnumerations.AdministrativeClass.PublicRoad.value).and('lifecycleStatus').isNot(ViiteEnumerations.lifecycleStatus.UnderConstruction.value).use({
+      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).and('administrativeClassId').is(ViiteEnumerations.AdministrativeClass.PublicRoad.value).and('lifecycleStatus').isNot(ViiteEnumerations.lifecycleStatus.UnderConstruction.value).use({
         stroke: {
           color: '#646461',
           lineCap: 'round'
@@ -346,19 +346,21 @@
     ];
 
     const fillRulesForUnderConstruction = [
-      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).and('roadLinkSource').isNot(ViiteEnumerations.LinkGeomSource.SuravageLinkInterface.value).and('lifecycleStatus').is(ViiteEnumerations.lifecycleStatus.UnderConstruction.value).use({
+      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).and('lifecycleStatus').is(ViiteEnumerations.lifecycleStatus.UnderConstruction.value).use({
         stroke: {
           color: '#000',
           lineCap: 'butt',
-          lineDash: [10, 10]
+          lineDash: [10, 10],
+          opacity: 1
         },
         zIndex: ViiteEnumerations.ViewModeZIndex.UnAddressedOtherUnderConstruction.fill
       }),
-      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).and('addrMRange.start').is(0).and('addrMRange.end').is(0).and('administrativeClassId').is(ViiteEnumerations.AdministrativeClass.PublicRoad.value).and('lifecycleStatus').is(ViiteEnumerations.lifecycleStatus.UnderConstruction.value).use({
+      new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).and('lifecycleStatus').is(ViiteEnumerations.lifecycleStatus.UnderConstruction.value).and('administrativeClassId').is(ViiteEnumerations.AdministrativeClass.PublicRoad.value).use({
         stroke: {
-          color: '#ff9900',
+          color: '#000',
           lineCap: 'butt',
-          lineDash: [10, 10]
+          lineDash: [10, 10],
+          opacity: 1
         },
         zIndex: ViiteEnumerations.ViewModeZIndex.UnAddressedStateUnderConstruction.fill
       })
