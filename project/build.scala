@@ -105,7 +105,6 @@ object Digiroad2Build extends Build {
       libraryDependencies ++= Seq(
         "org.apache.commons" % "commons-lang3" % "3.14.0",
         "commons-codec"      % "commons-codec" % "1.17.0",
-        "com.jolbox"         % "bonecp"        % "0.8.0.RELEASE",
         scalaTest,
         jsonJackson,
         "com.github.tototoshi" %% "scala-csv"         % "2.0.0",
