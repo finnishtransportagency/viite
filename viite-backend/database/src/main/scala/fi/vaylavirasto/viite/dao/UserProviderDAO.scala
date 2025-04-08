@@ -7,8 +7,8 @@ import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization.{read, write}
 import scalikejdbc._
 
-@deprecated("Use UserProviderDAO instead")
-class PostGISUserProvider extends BaseDAO with UserProvider {
+
+class UserProviderDAO extends BaseDAO with UserProvider {
   implicit val formats: Formats = Serialization.formats(NoTypeHints)
 
   object User extends SQLSyntaxSupport[User]{

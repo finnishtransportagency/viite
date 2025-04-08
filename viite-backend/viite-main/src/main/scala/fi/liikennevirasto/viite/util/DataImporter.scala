@@ -23,9 +23,9 @@ object DataImporter {
     def setupConversionPool(): Unit = {
       ConnectionPool.add(
         name = ConversionPoolName,
-        url = ViiteProperties.conversionBonecpJdbcUrl,
-        user = ViiteProperties.conversionBonecpUsername,
-        password = ViiteProperties.conversionBonecpPassword
+        url = ViiteProperties.conversionDbJdbcUrl,
+        user = ViiteProperties.conversionDbUsername,
+        password = ViiteProperties.conversionDbPassword
       )
     }
 
