@@ -563,7 +563,7 @@
   }
 }
 
-.road-network-errors-list-window{
+.generic-window{
   overflow-y: auto;
   background-color: #e3e3e1;
   position: fixed;
@@ -579,7 +579,7 @@
   }
 }
 
-.road-network-errors-list-header {
+.generic-window-header {
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -593,6 +593,51 @@
   p {
     flex-grow: 10;
   }
+}
+
+.navbar {
+  display: flex;
+  border-bottom: 1px solid #ccc;
+  background-color: #eee;
+}
+
+.tab-button {
+  padding: 10px 20px;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+  font-size: 1em;
+  border-right: 1px solid #ccc;
+  transition: background-color 0.2s ease; // Smooth hover
+}
+.tab-button:last-child {
+  border-right: none;
+}
+
+.tab-button:hover {
+  background-color: #ddd;
+}
+
+// Style for the ACTIVE tab button
+.tab-button.active {
+  background-color: #fff;
+  border-bottom: 2px solid #1c70be;
+  font-weight: bold;
+  position: relative; // Helps overlap the main border
+  bottom: -1px; // Overlap the navbar bottom border
+}
+
+.content-area {
+  padding: 20px;
+  flex-grow: 1;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
 }
 
 .road-address-changes-browser-window{

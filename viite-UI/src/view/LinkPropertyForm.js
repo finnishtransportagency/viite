@@ -1,5 +1,5 @@
 (function (root) {
-  root.LinkPropertyForm = function (selectedLinkProperty, roadNamingTool, projectListModel, roadAddressBrowser, roadAddressChangesBrowser, startupParameters, roadNetworkErrorsList) {
+  root.LinkPropertyForm = function (selectedLinkProperty, roadNamingTool, projectListModel, roadAddressBrowser, roadAddressChangesBrowser, startupParameters, roadNetworkErrorsList, adminPanel) {
     var selectionType = ViiteEnumerations.SelectionType;
     var decodedAttributes = [
       {
@@ -277,6 +277,8 @@
       var roadAddressBrowserButton = '<button id="formRoadAddressBrowserButton" class="open-tool-mode-btn btn btn-block btn-primary" style="margin-top: 5px;">Tieosoitteiden katselu</button>';
       var roadAddressChangesBrowserButton = '<button id="formRoadAddressChangesBrowserButton" class="open-tool-mode-btn btn btn-block btn-primary" style="margin-top: 5px;">Tieosoitemuutosten katselu</button>';
       var roadNetworkErrorsListButton = '<button id="formRoadNetworkErrorsListButton" class="open-tool-mode-btn btn btn-block btn-primary" style="margin-top: 5px;">Tieosoiteverkon virheet</button>';
+      var adminPanelButton = '<button id="formAdminPanelButton" class="open-tool-mode-btn btn btn-block btn-primary" style="margin-top: 5px;">Admin paneeli</button>';
+
 
       var toolButtonsDivForViewMode =
           $('<div class="form-initial-state" id="emptyFormDiv">' +
@@ -295,6 +297,10 @@
           roadNetworkErrorsListButton +
           '</div>');
 
+      var adminPanelDiv = $('<div class="form-initial-state" style>' +
+          adminPanelButton +
+          '</div>');
+
       // add buttons for the view mode tools
       rootElement.append(toolButtonsDivForViewMode);
 
@@ -305,6 +311,10 @@
       // if the user has "operator" role then add the button for road network error tool
       if (_.includes(startupParameters.roles, 'operator'))
         rootElement.append(roadNetworkErrorsToolDiv);
+
+      // if the user has "admin" role then add the button for road network error tool
+      if (_.includes(startupParameters.roles, 'admin'))
+        rootElement.append(adminPanelDiv);
 
 
       $('[id=formProjectButton]').click(function () {
@@ -338,6 +348,11 @@
 
       $('[id=formRoadNetworkErrorsListButton]').click(function () {
         roadNetworkErrorsList.showRoadNetworkErrorsListWindow();
+        return false;
+      });
+
+      $('[id=formAdminPanelButton]').click(function () {
+        adminPanel.showAdminPanelWindow();
         return false;
       });
     };
