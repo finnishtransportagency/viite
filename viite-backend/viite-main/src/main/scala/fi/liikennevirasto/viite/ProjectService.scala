@@ -2724,7 +2724,7 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
             it.next() match {
               case Seq(curr, next) => {
                 if (!curr.addrMRange.continuesTo(next.addrMRange)) {
-                  logger.error(s"Address not continuous: ${curr.addrMRange.end} ${next.addrMRange.start} linkIds: ${curr.linkId} ${next.linkId}")
+                  logger.error(s"Address not continuous: ${curr.addrMRange.end} != ${next.addrMRange.start} linkIds: ${curr.linkId} ${next.linkId}")
                   throw new RoadAddressException(ContinuousAddressCapErrorMessage)
                 }
                 if (!(curr.addrMRange.end > curr.addrMRange.start)) {
@@ -2732,7 +2732,7 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
                   throw new RoadAddressException(NegativeLengthErrorMessage.format(curr.linkId))
                 }
                 if (curr.status != RoadAddressChangeType.New && (curr.originalTrack == curr.track || curr.track == Track.Combined) && !(Math.abs(curr.addrMRange.length - curr.originalAddrMRange.length) < maxDiffForChange)) {
-                  logger.error(s"Length mismatch. New: ${curr.addrMRange.start} ${curr.addrMRange.end} original: ${curr.originalAddrMRange.start} ${curr.originalAddrMRange.end} linkId: ${curr.linkId}")
+                  logger.error(s"Length mismatch. LinkId: ${curr.linkId} new: ${curr.addrMRange} (${curr.addrMRange.length}) original: ${curr.originalAddrMRange} (${curr.originalAddrMRange.length})")
                   throw new RoadAddressException(LengthMismatchErrorMessage.format(curr.linkId, maxDiffForChange - 1))
                 }
               }
