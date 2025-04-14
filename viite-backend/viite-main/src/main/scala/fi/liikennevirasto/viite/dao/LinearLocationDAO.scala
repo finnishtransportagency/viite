@@ -486,7 +486,21 @@ class LinearLocationDAO extends BaseDAO {
 
     llIds.size match {
       case size if (size > 1) => { // must have at least two linear locations for crossing to make any sense
-        queryjunctionCoordinates(llIds)
+        var i = 0
+        var shiftedLLids = llIds
+        var result: Option[Point] = None
+        while( i<llIds.size-1 && result==None ) {
+          try {
+            result = queryjunctionCoordinates(shiftedLLids)
+            result
+          } catch {
+            case e: Exception =>
+              shiftedLLids = shiftedLLids.tail :+shiftedLLids.head
+              result = None
+          }
+          i = i + 1
+        }
+        result
       }
       case _ => {
         privateLogger.warn(s"fetchCoordinatesForJunction: Not enough llIds (only ${llIds.size}${if (llIds.size == 1) "; id " + llIds(0)})")
@@ -495,8 +509,7 @@ class LinearLocationDAO extends BaseDAO {
     }
   }
 
-  def queryjunctionCoordinates(llIds: Seq[Long]) = {
-
+  def queryjunctionCoordinates(llIds: Seq[Long]): Option[Point] = {
     var intersectionFunction = sqls""
     var closingBracket = sqls""
     val precision = MaxDistanceForConnectedLinks
@@ -534,8 +547,8 @@ class LinearLocationDAO extends BaseDAO {
       val point: Option[Point] = res.map(junction => Point(scaleToThreeDigits(junction.xCoord), scaleToThreeDigits(junction.yCoord)))
       point
     }
-    catch {
-      case e: org.postgresql.util.PSQLException => {
+    catch { // intersection query did not find any intersecting point.
+      case e @ (_ : org.postgresql.util.PSQLException | _ : scalikejdbc.ResultSetExtractorException) => {
         // Using ClosestPoint as intersection function, when ST_Intersection failed to produce a coordinate.
         val closestPointQuery = buildCoordinateQuery(sqls"ST_ClosestPoint")
         try {
