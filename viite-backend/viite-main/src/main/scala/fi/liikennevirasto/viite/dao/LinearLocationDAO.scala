@@ -459,26 +459,25 @@ class LinearLocationDAO extends BaseDAO {
 
     val llLength = llIds.length
 
-    if (llLength == 2) { //Check whether the geometry's start and endpoints are the same with 2 linear locations.
-      val ll1 = allLL.find(_.id == llIds(0))
-      val ll2 = allLL.find(_.id == llIds(1))
+    // First, special check for 2-track "sausages" where both geometry's start and endpoints are identical.
+    // Separate handling for those, as otherwise the wrong intersecting end point may be returned
+    if (llLength == 2) {
+      val ll1 = allLL.find(_.id == llIds(0)).get
+      val ll2 = allLL.find(_.id == llIds(1)).get
 
-      if (ll1.get.geometry == ll2.get.geometry) {
-        val cr1 = crossingRoads.find(_.roadwayNumber == ll1.get.roadwayNumber)
-        val cr2 = crossingRoads.find(_.roadwayNumber == ll2.get.roadwayNumber)
-
-        val beforeAfter1: Long = cr1.get.beforeAfter
-        val beforeAfter2: Long = cr2.get.beforeAfter
+      if (ll1.geometry == ll2.geometry) {
+        val cr1beforeAfter = crossingRoads.find(_.roadwayNumber == ll1.roadwayNumber).get.beforeAfter
+        val cr2beforeAfter = crossingRoads.find(_.roadwayNumber == ll2.roadwayNumber).get.beforeAfter
 
         var point = Point(0, 0)
 
         point =
-          (if (beforeAfter1 == beforeAfter2) { // If both have same before-after
-            if (beforeAfter1 == 1) ll1.get.getLastPoint
-            else ll2.get.getFirstPoint
+          (if (cr1beforeAfter == cr2beforeAfter) { // If both have same before-after
+            if (cr1beforeAfter == 1) ll1.getLastPoint
+            else ll2.getFirstPoint
           } else {
-            if (beforeAfter1 == 1) ll1.get.getLastPoint
-            else ll2.get.getLastPoint
+            if (cr1beforeAfter == 1) ll1.getLastPoint
+            else ll2.getLastPoint
           })
         return Some(point)
       }
