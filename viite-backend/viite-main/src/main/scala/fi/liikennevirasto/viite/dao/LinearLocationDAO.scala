@@ -484,25 +484,28 @@ class LinearLocationDAO extends BaseDAO {
       }
     }
 
-    llIds.size match {
-      case size if (size > 1) => { // must have at least two linear locations for crossing to make any sense
-        var i = 0
-        var shiftedLLids = llIds
-        var result: Option[Point] = None
-        while( i<llIds.size-1 && result==None ) {
-          try {
-            result = queryjunctionCoordinates(shiftedLLids)
-            result
-          } catch {
-            case e: Exception =>
-              shiftedLLids = shiftedLLids.tail :+shiftedLLids.head
-              result = None
+    llIds match {
+      // Junction coordinates generally make sense only, if there are at least two linear locations in the junction
+      case ids if ids.size > 1 =>
+
+        // Try to find a valid result by rotating the linear location list, and querying for permutations. (Counteract erroneous
+        // data, where all the "connected" linear locations within a junction are not really connected or even close to each other.)
+        val rotations = ids.indices.map(i => ids.drop(i) ++ ids.take(i))
+
+        rotations
+          .view  // proceed to .map, and process only the necessary rotations
+          .map { rotatedIds =>
+            try {
+              queryjunctionCoordinates(rotatedIds)
+            } catch {
+              case _: Exception => None
+            }
           }
-          i = i + 1
-        }
-        result
-      }
+          .collectFirst { case Some(result) => result }
       case _ => {
+        // TODO In the case where there would be a looped single linear location as the last ...
+        // TODO ... linear location of the road, there might be a case for ids.size==1. ...
+        // TODO ... Make the case here, if ever finding one.
         privateLogger.warn(s"fetchCoordinatesForJunction: Not enough llIds (only ${llIds.size}${if (llIds.size == 1) "; id " + llIds(0)})")
         None
       }
