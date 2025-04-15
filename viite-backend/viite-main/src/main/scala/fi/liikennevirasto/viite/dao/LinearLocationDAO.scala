@@ -9,6 +9,7 @@ import fi.vaylavirasto.viite.geometry.GeometryUtils.scaleToThreeDigits
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.{CalibrationPointType, LinkGeomSource, RoadPart, SideCode}
 import fi.vaylavirasto.viite.postgis.{GeometryDbUtils, MassQuery}
+import fi.vaylavirasto.viite.util.ViiteException
 import org.joda.time.DateTime
 import org.slf4j.{Logger, LoggerFactory}
 import scalikejdbc._
@@ -541,18 +542,20 @@ class LinearLocationDAO extends BaseDAO {
           val res = runSelectSingleOption(closestPointQuery.map(JunctionCoordinateScalike.apply))
           //Q.queryNA[JunctionCoordinate](closestPointQuery).firstOption
           val point: Option[Point] = res.map(junction => Point(scaleToThreeDigits(junction.xCoord), scaleToThreeDigits(junction.yCoord)))
-          privateLogger.warn(s"${e.getClass} at fetchCoordinatesForJunction: ${e.getMessage}. IntersectionQuery query failed for llIds ${llIds.toList} - got Point (${point}) from closestPointQuery.")
+          privateLogger.info(s"No intersections for llIds ${llIds.mkString(", ")} - but got (${point.get}) from closestPointQuery.")
           point
         }
         catch {
           case e: Exception =>
-            privateLogger.warn(s"${e.getClass} at fetchCoordinatesForJunction: ${e.getMessage}. ClosestPointQuery query failed for llIds ${llIds.toList} - nothing else to try.")
-            throw e
+            val msg = s"ClosestPointQuery query failed for llIds ${llIds.mkString(", ")} - nothing else to try. Error message: ${e.getClass} at fetchCoordinatesForJunction: ${e.getMessage}."
+            privateLogger.error(msg)
+            throw new ViiteException(msg)
         }
       }
       case e: Exception =>
-        privateLogger.warn(s"${e.getClass} at fetchCoordinatesForJunction: ${e.getMessage}. IntersectionQuery query failed for llIds ${llIds.toList} - don't know what else to try.")
-        throw e
+        val msg = s"IntersectionQuery query failed for llIds ${llIds.mkString(", ")} - don't know what else to try. Error message: ${e.getClass} at fetchCoordinatesForJunction: ${e.getMessage}."
+        privateLogger.error(msg)
+        throw new ViiteException(msg)
     } // catch
   }
 
