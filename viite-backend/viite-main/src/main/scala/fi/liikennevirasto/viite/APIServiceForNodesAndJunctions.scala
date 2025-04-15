@@ -67,6 +67,7 @@ println(s"getAllValidNodesWithJunctions got ${nodes.size} nodes, ${validNodeNumb
     // 2. Nodes are mapped with junctions (which include coordinates and crossing roads)
     // 3. List of all valid nodes and junctions is returned
     val nodesWithJunctions: Seq[NodeWithJunctions] = nodes.map(node => {
+// Useful debug comments. Using print, as AvoidRestriction usage ate the logger messages.
 //      print(s"********Mapping node ${node.nodeNumber} with junctions: ")
 //      val junctionsOfThisNode: Seq[JunctionWithLinearLocation]  = junctions.filter(j => j.nodeNumber.contains(node.nodeNumber))
 //      if(junctionsOfThisNode.size == 0) print("(None)") else print (s"(${junctionsOfThisNode.map(_.id).mkString(", ")})")
@@ -83,11 +84,13 @@ println(s"getAllValidNodesWithJunctions got ${nodes.size} nodes, ${validNodeNumb
             }
           val (x, y) = coordinates match {
             case Some(c) => (c.x, c.y)
-            case None => print("FALLBACK to Point (0.0,0.0)!"); (0.0, 0.0) // If junction's coordinates are not found, return Point(0.0, 0.0) which is later printed as "N/A" in the API
+            case None =>
+              print("FALLBACK to Point (0.0,0.0)!"); // <- Useful debug comment. Using print, as AvoidRestriction usage ate the logger messages.
+              (0.0, 0.0) // If junction's coordinates are not found, return Point(0.0, 0.0) which is later printed as "N/A" in the API
           }
           JunctionWithCoordinateAndCrossingRoads(j.id, j.junctionNumber, j.nodeNumber, j.startDate, j.endDate, j.validFrom, j.validTo, j.createdBy, j.createdTime, x, y, crossingRoads)
       }
-//      println()
+//      println() // <- Useful debug comment. Using print, as AvoidRestriction usage ate the logger messages.
       NodeWithJunctions(node, junctionsWithCoordinates)
     })
     nodesWithJunctions
