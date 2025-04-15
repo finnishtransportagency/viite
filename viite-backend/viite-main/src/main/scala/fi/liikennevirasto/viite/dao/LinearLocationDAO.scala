@@ -484,19 +484,35 @@ class LinearLocationDAO extends BaseDAO {
       }
     }
 
-    llIds.size match {
-      case size if (size > 1) => { // must have at least two linear locations for crossing to make any sense
-        queryjunctionCoordinates(llIds)
-      }
+    llIds match {
+      // Junction coordinates generally make sense only, if there are at least two linear locations in the junction
+      case ids if ids.size > 1 =>
+
+        // Try to find a valid result by rotating the linear location list, and querying for permutations. (Counteract erroneous
+        // data, where all the "connected" linear locations within a junction are not really connected or even close to each other.)
+        val rotations = ids.indices.map(i => ids.drop(i) ++ ids.take(i))
+
+        rotations
+          .view  // proceed to .map, and process only the necessary rotations
+          .map { rotatedIds =>
+            try {
+              queryjunctionCoordinates(rotatedIds)
+            } catch {
+              case _: Exception => None
+            }
+          }
+          .collectFirst { case Some(result) => result }
       case _ => {
+        // TODO In the case where there would be a looped single linear location as the last ...
+        // TODO ... linear location of the road, there might be a case for ids.size==1. ...
+        // TODO ... Make the case here, if ever finding one.
         privateLogger.warn(s"fetchCoordinatesForJunction: Not enough llIds (only ${llIds.size}${if (llIds.size == 1) "; id " + llIds(0)})")
         None
       }
     }
   }
 
-  def queryjunctionCoordinates(llIds: Seq[Long]) = {
-
+  def queryjunctionCoordinates(llIds: Seq[Long]): Option[Point] = {
     var intersectionFunction = sqls""
     var closingBracket = sqls""
     val precision = MaxDistanceForConnectedLinks
@@ -534,8 +550,8 @@ class LinearLocationDAO extends BaseDAO {
       val point: Option[Point] = res.map(junction => Point(scaleToThreeDigits(junction.xCoord), scaleToThreeDigits(junction.yCoord)))
       point
     }
-    catch {
-      case e: org.postgresql.util.PSQLException => {
+    catch { // intersection query did not find any intersecting point.
+      case e @ (_ : org.postgresql.util.PSQLException | _ : scalikejdbc.ResultSetExtractorException) => {
         // Using ClosestPoint as intersection function, when ST_Intersection failed to produce a coordinate.
         val closestPointQuery = buildCoordinateQuery(sqls"ST_ClosestPoint")
         try {
