@@ -3,6 +3,7 @@ package fi.liikennevirasto.viite
 import fi.liikennevirasto.viite.dao._
 import fi.vaylavirasto.viite.geometry.Point
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC
+import fi.vaylavirasto.viite.util.ViiteException
 
 class APIServiceForNodesAndJunctions(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLocationDAO, nodeDAO: NodeDAO, junctionDAO: JunctionDAO) {
 
@@ -38,7 +39,6 @@ class APIServiceForNodesAndJunctions(roadwayDAO: RoadwayDAO, linearLocationDAO: 
     }
   }
 
-
   /**
    * 1. Gets all valid nodes, junctions, linear locations, junctions with linear location id (for connecting purposes), all roads connected to a junction (separated based on junction)
    * 2. Map junctions to nodes
@@ -67,16 +67,30 @@ println(s"getAllValidNodesWithJunctions got ${nodes.size} nodes, ${validNodeNumb
     // 2. Nodes are mapped with junctions (which include coordinates and crossing roads)
     // 3. List of all valid nodes and junctions is returned
     val nodesWithJunctions: Seq[NodeWithJunctions] = nodes.map(node => {
+// Useful debug comments. Using print, as AvoidRestriction usage ate the logger messages.
+//      print(s"********Mapping node ${node.nodeNumber} with junctions: ")
+//      val junctionsOfThisNode: Seq[JunctionWithLinearLocation]  = junctions.filter(j => j.nodeNumber.contains(node.nodeNumber))
+//      if(junctionsOfThisNode.size == 0) print("(None)") else print (s"(${junctionsOfThisNode.map(_.id).mkString(", ")})")
+
       val junctionsWithCoordinates: Seq[JunctionWithCoordinateAndCrossingRoads] = junctions.collect {
         case j if j.nodeNumber.contains(node.nodeNumber) =>
           val crossingRoads: Seq[RoadwaysForJunction] = allCrossingRoads.filter(cr => cr.jId == j.id)
-          val coordinates: Option[Point] = getCoordinatesForJunction(j.llId, crossingRoads, currentLinearLocations)
+          val coordinates: Option[Point] =
+            try {
+               getCoordinatesForJunction(j.llId, crossingRoads, currentLinearLocations)
+            } catch {
+              case e: Exception =>
+                throw ViiteException(s" Node (${node.nodeNumber}, ${node.name}) ${e.getMessage}")
+            }
           val (x, y) = coordinates match {
             case Some(c) => (c.x, c.y)
-            case None => (0.0, 0.0) // If junction's coordinates are not found, return Point(0.0, 0.0) which is later printed as "N/A" in the API
+            case None =>
+              print("FALLBACK to Point (0.0,0.0)!"); // <- Useful debug comment. Using print, as AvoidRestriction usage ate the logger messages.
+              (0.0, 0.0) // If junction's coordinates are not found, return Point(0.0, 0.0) which is later printed as "N/A" in the API
           }
           JunctionWithCoordinateAndCrossingRoads(j.id, j.junctionNumber, j.nodeNumber, j.startDate, j.endDate, j.validFrom, j.validTo, j.createdBy, j.createdTime, x, y, crossingRoads)
       }
+//      println() // <- Useful debug comment. Using print, as AvoidRestriction usage ate the logger messages.
       NodeWithJunctions(node, junctionsWithCoordinates)
     })
     nodesWithJunctions
