@@ -12,4 +12,55 @@ class ArealRoadMaintainerSpec extends AnyFunSuite with Matchers {
     intercept[Exception](ArealRoadMaintainer("1"))       shouldBe a[ViiteException]
   }
 
+
+  //////// ArealRoadMaintainer/EVK tests ////////
+
+    test("Test ArealRoadMaintainer/EVK: test basic ArealRoadMaintainer functionality working") {
+
+      val EVK = ArealRoadMaintainer.getEVK("Pohjanmaa")
+
+      //Testing field access, and values
+      EVK.typeName  shouldBe "EVK"
+      EVK.number    shouldBe 8
+      EVK.name      shouldBe "Pohjanmaa"
+      EVK.shortName shouldBe "POHJ"
+
+      // testing print functionality
+      EVK.toString        shouldBe "EVK 8 Pohjanmaa"
+      EVK.id              shouldBe "EVK8"
+      EVK.id              shouldBe EVK.typeName+EVK.number
+      EVK.toStringVerbose shouldBe "EVK 8 Pohjanmaa"
+      EVK.toStringShort   shouldBe "POHJ"
+      EVK.toStringAll     shouldBe "EVK 8 Pohjanmaa (POHJ)"
+  }
+
+  test("Test ArealRoadMaintainer/EVK: getEVK by id numbers.") {
+    intercept[Exception] (ArealRoadMaintainer.getEVK( 0)) shouldBe a[ViiteException] // No such EVK number -> not found
+                          ArealRoadMaintainer.getEVK( 1)                             // Proper EVK number  -> found
+                          ArealRoadMaintainer.getEVK(10)                             // Proper EVK number  -> found
+    intercept[Exception] (ArealRoadMaintainer.getEVK(11)) shouldBe a[ViiteException] // No such EVK number -> not found
+    intercept[Exception] (ArealRoadMaintainer.getEVK(14)) shouldBe a[ViiteException] // *ELY*-only number  -> not found
+  }
+
+  test("Test ArealRoadMaintainer/EVK: getEVK by string.") {
+    //gets succeed with values corresponding to predefined EVK ARMs
+    val predefEVK1 = ArealRoadMaintainer.getEVK("EVK3")    // Get a pre-defined EVK with existing EVK db name
+    val predefEVK3 = ArealRoadMaintainer.getEVK("Uusimaa") // Get a pre-defined EVK with existing EVK name
+    val predefEVK4 = ArealRoadMaintainer.getEVK("SISS")    // Get a pre-defined EVK with existing EVK shortName
+
+    // gets fail with non-EVK values, even if proper ARMs, but not EVKs
+    val noELY1 = intercept[Exception] (ArealRoadMaintainer.getEVK("ELY3")     )  shouldBe a[ViiteException]  // Try getting a pre-defined EVK with an *ELY* db name
+    val noELY3 = intercept[Exception] (ArealRoadMaintainer.getEVK("Pirkanmaa"))  shouldBe a[ViiteException]  // Try getting a pre-defined EVK with an *ELY*-only name
+    val noELY2 = intercept[Exception] (ArealRoadMaintainer.getEVK("LAP")      )  shouldBe a[ViiteException]  // Try getting a pre-defined EVK with an *ELY* short name
+  }
+
+  test("Test ArealRoadMaintainer/EVK: getEVK existence.") {
+    val testEVK = ArealRoadMaintainer.getEVK(1)
+    case class EVKclone(val name: String, val number: Int, val shortName: String) extends EVK // class to test EVK ArealRoadMaintainer functionality with
+    val testEVKClone = EVKclone("Uusimaa", 1, "UUSI") // A basically proper EVK, but this is not any of our pre-defined instances
+
+    ArealRoadMaintainer.existsEVK(testEVK)      shouldBe true // EVK 1 is found.
+    ArealRoadMaintainer.existsEVK(testEVKClone) shouldBe false // ArealRoadMaintainer does not recognize randomly created EVK clones.
+  }
+
 }
