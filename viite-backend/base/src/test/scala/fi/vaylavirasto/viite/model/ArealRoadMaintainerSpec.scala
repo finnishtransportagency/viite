@@ -63,4 +63,57 @@ class ArealRoadMaintainerSpec extends AnyFunSuite with Matchers {
     ArealRoadMaintainer.existsEVK(testEVKClone) shouldBe false // ArealRoadMaintainer does not recognize randomly created EVK clones.
   }
 
+
+  //////// ArealRoadMaintainer/ELY tests ////////
+
+  test("Test ArealRoadMaintainer/ELY: test basic ArealRoadMaintainer functionality working with ELYs") {
+
+    val ELY = ArealRoadMaintainer.getELY("Pirkanmaa")
+
+    //Testing field access, and values
+    ELY.typeName  shouldBe "ELY"
+    ELY.number    shouldBe 4
+    ELY.name      shouldBe "Pirkanmaa"
+    ELY.shortName shouldBe "PIR"
+
+    // testing print functionality
+
+    ELY.id              shouldBe "ELY4"
+    ELY.id              shouldBe ELY.typeName+ELY.number
+
+    ELY.toString        shouldBe "ELY 4 Pirkanmaa"
+    ELY.toStringVerbose shouldBe "ELY 4 Pirkanmaa"
+    ELY.toStringShort   shouldBe "PIR"
+    ELY.toStringAll     shouldBe "ELY 4 Pirkanmaa (PIR)"
+  }
+
+  test("Test ArealRoadMaintainer/ELY: getELY by id numbers.") {
+    intercept[Exception] (ArealRoadMaintainer.getELY( 0)) shouldBe a[ViiteException] // No such ELY number -> not found
+                          ArealRoadMaintainer.getELY( 1)                             // Proper  ELY number -> found
+                          ArealRoadMaintainer.getELY(14)                             // Proper  ELY number -> found
+    intercept[Exception] (ArealRoadMaintainer.getELY(15)) shouldBe a[ViiteException] // No such ELY number -> not found
+    intercept[Exception] (ArealRoadMaintainer.getELY( 5)) shouldBe a[ViiteException] // *EVK*-only number  -> not found
+  }
+
+  test("Test ArealRoadMaintainer/ELY: getELY by string.") {
+    //gets succeed with values corresponding to predefined ELY ARMs
+    val predefELY1 = ArealRoadMaintainer.getELY("ELY3")    // Get a pre-defined ELY with existing ELY dbName
+    val predefELY3 = ArealRoadMaintainer.getELY("Uusimaa") // Get a pre-defined ELY with existing ELY name
+    val predefELY4 = ArealRoadMaintainer.getELY("VAR")     // Get a pre-defined ELY with existing ELY shortName
+
+    // gets fail with non-ELY values, even if proper ARMs, but not ELYs
+    val noELY1 = intercept[Exception] (ArealRoadMaintainer.getELY("EVK3")     )  shouldBe a[ViiteException]  // Try getting a pre-defined ELY with an *EVK* db name
+    val noELY3 = intercept[Exception] (ArealRoadMaintainer.getELY("Pohjanmaa"))  shouldBe a[ViiteException]  // Try getting a pre-defined ELY with an *EVK*-only name
+    val noELY2 = intercept[Exception] (ArealRoadMaintainer.getELY("LAPP")     )  shouldBe a[ViiteException]  // Try getting a pre-defined ELY with an *EVK* short name
+  }
+
+  test("Test ArealRoadMaintainer/ELY: getELY existence.") {
+    val testELY = ArealRoadMaintainer.getELY(1)
+    case class ELYclone(val name: String, val number: Int, val shortName: String) extends ELY // class to test ELY ArealRoadMaintainer functionality with
+    val testELYClone = ELYclone("Uusimaa", 1, "UUD") // A basically proper ELY, but this is not any of our pre-defined instances
+
+    ArealRoadMaintainer.existsELY(testELY)      shouldBe true  // ELY 1 is found within ArealRoadMaintainer.
+    ArealRoadMaintainer.existsELY(testELYClone) shouldBe false // ArealRoadMaintainer does not recognize randomly created ELY clones.
+  }
+
 }
