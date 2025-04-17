@@ -1,4 +1,7 @@
 (function (root) {
+    let sourcePicker = '';
+    let targetPicker = '';
+
     root.AdminPanel = function (backend) {
         const adminPanelWindow =
             $(
@@ -18,10 +21,29 @@
                 '<button class="tab-button" data-tab="tab4">Tieosoiteverkon virheet</button>' +
                 '</nav>');
 
+        const dynamicLinkNetworkContent =
+            '<div class="dynamic-link-network-content-wrapper">' +
+                '<div class="dynamic-link-network-input-wrapper">' +
+                    '<div class="dynamic-link-network-input">' +
+                        '<label>Nykytilanne</label>' +
+                        '<input type="text" id="sourceDate">' +
+                    '</div>' +
+                    '<p style="font-size: 20px">&#8594</p>' +
+                    '<div class="dynamic-link-network-input">' +
+                        '<label>Tavoite päivämäärä</label>' +
+                        '<input type="text" id="targetDate">' +
+                    '</div>' +
+                    '<button id="updateLinkNetwork" class="btn btn-primary">Päivitä tielinkkiverkko</button>' +
+                '</div>' +
+                '<div>' +
+                    '<p id="dynamicLinkNetworkInfo"></p>' +
+                '</div>' +
+            '</div>';
+
         const contentForTabs = $(
                 '<div class="content-area">' +
                     '<div id="tab1" class="tab-content active">' +
-                        '<p>TODO Dynaamisen verkon hallinta tapahtuu täällä</p>' +
+                        dynamicLinkNetworkContent +
                     '</div>' +
                     '<div id="tab2" class="tab-content">' +
                         '<p>TODO Käyttäjien hallinta tapahtuu täällä</p>' +
@@ -47,11 +69,146 @@
             contentWrapper.append(navBar);
             contentWrapper.append(contentForTabs);
 
+            addDatePickersToInputFields();
+
             bindEvents();
+        };
+
+        const addDatePickersToInputFields = function () {
+            // First get the current road link situation date from the backend
+            backend.getRoadLinkDate(function (roadLinkDate) {
+                // Then add the date pickers to the input fields
+                addDatePickers(roadLinkDate);
+            });
+        };
+
+        const addDatePickers = function(roadLinkDate) {
+
+            const destroyPicker = function (picker) {
+                // Destroy the date picker to prevent infinite recursion
+                // If Pikaday is initialized twice for a single DOM Element, the two instances will create a loop, firing change events back and forth
+                picker.destroy();
+            };
+
+            // Add date pickers to input fields
+            const targetElem = $('#targetDate');
+            const sourceElem = $('#sourceDate');
+
+            const minimumDateObject = dateutil.parseCustomDateString(roadLinkDate.result);
+
+            if (sourcePicker) {
+                destroyPicker(sourcePicker);
+                sourcePicker = '';
+            }
+            if (targetPicker) {
+                destroyPicker(targetPicker);
+                targetPicker = '';
+            }
+
+            sourcePicker = dateutil.addSingleDatePicker(sourceElem, {defaultDate: minimumDateObject, setDefaultDate: true});
+            targetPicker = dateutil.addSingleDatePicker(targetElem).gotoDate(minimumDateObject);
         };
 
         const hideAdminPanelWindow = function () {
             $('.admin-panel-modal-overlay').remove();
+        };
+
+        function validateDate(dateString, dateElement) {
+            // Check format ignoring whitespace
+            if (dateutil.isFinnishDateString(dateString.trim())) {
+                const dateObject = moment(dateString, "DD-MM-YYYY").toDate();
+                if (dateutil.isValidDate(dateObject)){
+                    if (dateutil.isDateInYearRange(dateObject, ViiteConstants.MIN_YEAR_INPUT, ViiteConstants.MAX_YEAR_INPUT)) {
+                        dateElement.setCustomValidity("");
+                        return true;
+                    } else {
+                        dateElement.setCustomValidity("Vuosiluvun tulee olla väliltä " + ViiteConstants.MIN_YEAR_INPUT + " - " + ViiteConstants.MAX_YEAR_INPUT);
+                        return false;
+                    }
+                } else {
+                    dateElement.setCustomValidity("Tarkista päivämäärä!");
+                    return false;
+                }
+            } else {
+                dateElement.setCustomValidity("Päivämäärän tulee olla muodossa pp.kk.vvvv");
+                return false;
+            }
+        }
+
+        function willPassValidations(dateString, dateElement) {
+            return validateDate(dateString, dateElement);
+        }
+
+        /**
+         *  Check that the source date is before the target date.
+         */
+        function reasonableDates(sourceDateObject, sourceDateElem, targetDateObject, targetDateElem) {
+            if (sourceDateObject > targetDateObject) {
+                sourceDateElem.setCustomValidity("Nykytilanteen tulee olla ennen tavoite päivämäärää!");
+                return false;
+            } else {
+                sourceDateElem.setCustomValidity("");
+                return true;
+            }
+        }
+
+        const startRoadLinkNetworkUpdate = function () {
+            // Get the date input elements
+            const sourceDateElem = document.getElementById('sourceDate');
+            const targetDateElem = document.getElementById('targetDate');
+
+            // Get the date input values
+            const sourceDateString = sourceDateElem.value;
+            const targetDateString = targetDateElem.value;
+
+            // Convert date input text to date object
+            const sourceDateObject  = moment(sourceDateString, "DD-MM-YYYY").toDate();
+            const targetDateObject = moment(targetDateString, "DD-MM-YYYY").toDate();
+
+            // Date validations
+            if (!willPassValidations(sourceDateString, sourceDateElem) ||
+                !willPassValidations(targetDateString, targetDateElem) ||
+                !reasonableDates(sourceDateObject, sourceDateElem, targetDateObject, targetDateElem)) {
+                sourceDateElem.reportValidity(); // Display the validation error messages to the user
+                targetDateElem.reportValidity();
+                return; // // Stop execution if validation fails
+            }
+
+            const sourceDateStringISO8601 = dateutil.parseDateToString(sourceDateObject);
+            const targetDateStringISO8601 = dateutil.parseDateToString(targetDateObject);
+
+            const jsonDateData = {
+                sourceDate: sourceDateStringISO8601,
+                targetDate: targetDateStringISO8601
+            };
+
+            backend.startLinkNetworkUpdate(jsonDateData, function(result) {
+                const infoElem = document.getElementById('dynamicLinkNetworkInfo');
+                infoElem.innerText = result.message; // Display the result message to the user
+            });
+        };
+
+        const controlTabs = function (clickedButton, contentWrapper) {
+            // If the clicked button is already active, do nothing
+            if (clickedButton.hasClass('active')) {
+                return;
+            }
+
+            const tabButtons = contentWrapper.find('.navbar .tab-button');
+            const tabContents = contentWrapper.find('.content-area .tab-content');
+
+            // Deactivate all buttons and hide all content panes within this window
+            tabButtons.removeClass('active');
+            tabContents.removeClass('active'); // Hides content with CSS rule
+
+            // Activate the clicked button
+            clickedButton.addClass('active');
+
+            // Activate the corresponding content pane
+            // Construct the ID selector (e.g., #tab1) and find it within the contentWrapper
+            const targetTabId = clickedButton.data('tab'); // Get the value of data-tab="xxx"
+            const targetTabContent = contentWrapper.find('#' + targetTabId);
+            targetTabContent.addClass('active'); // Makes content visible via CSS rule
         };
 
         const bindEvents = function () {
@@ -69,27 +226,11 @@
             contentWrapper.on('click', '.navbar .tab-button', function() {
                 // 'this' refers to the specific .tab-button that was clicked
                 const clickedButton = $(this);
+                controlTabs(clickedButton, contentWrapper);
+            });
 
-                // If the clicked button is already active, do nothing
-                if (clickedButton.hasClass('active')) {
-                    return;
-                }
-
-                const tabButtons = contentWrapper.find('.navbar .tab-button');
-                const tabContents = contentWrapper.find('.content-area .tab-content');
-
-                // Deactivate all buttons and hide all content panes within this window
-                tabButtons.removeClass('active');
-                tabContents.removeClass('active'); // Hides content with CSS rule
-
-                // Activate the clicked button
-                clickedButton.addClass('active');
-
-                // Activate the corresponding content pane
-                // Construct the ID selector (e.g., #tab1) and find it within the contentWrapper
-                const targetTabId = clickedButton.data('tab'); // Get the value of data-tab="xxx"
-                const targetTabContent = contentWrapper.find('#' + targetTabId);
-                targetTabContent.addClass('active'); // Makes content visible via CSS rule
+            $('.generic-window').on('click', '#updateLinkNetwork', function() {
+                startRoadLinkNetworkUpdate();
             });
         };
 

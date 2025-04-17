@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReservedException}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.liikennevirasto.digiroad2.Digiroad2Context.projectLinkDAO
+import fi.liikennevirasto.digiroad2.Digiroad2Context.{dynamicRoadNetworkService, projectLinkDAO}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model._
@@ -15,7 +15,8 @@ import fi.vaylavirasto.viite.dao.{RoadName, RoadNameForRoadAddressBrowser}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, BeforeAfter, Discontinuity, LinkGeomSource, NodePointType, NodeType, RoadAddressChangeType, RoadPart, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC
-import fi.vaylavirasto.viite.util.DateTimeFormatters.{ISOdateFormatter, dateSlashFormatter, finnishDateFormatter, finnishDateCommaTimeFormatter}
+import fi.vaylavirasto.viite.util.DateTimeFormatters.{ISOdateFormatter, dateSlashFormatter, finnishDateCommaTimeFormatter, finnishDateFormatter}
+import fi.vaylavirasto.viite.util.DateUtils.parseStringToDateTime
 import org.joda.time.DateTime
 import org.json4s._
 import org.scalatra._
@@ -24,7 +25,9 @@ import org.scalatra.swagger._
 import org.slf4j.{Logger, LoggerFactory}
 
 import java.text.SimpleDateFormat
+import scala.concurrent.Future
 import scala.util.{Left, Right}
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
   * Created by venholat on 25.8.2016.
@@ -1313,6 +1316,32 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       projectService.getRoadLinkDate
     }
   }
+
+  post("/startLinkNetworkUpdate") {
+    time(logger, "POST request for /startLinkNetworkUpdate") {
+
+      try {
+        val sourceDate = (parsedBody \ "sourceDate").extract[String]
+        val targetDate = (parsedBody \ "targetDate").extract[String]
+
+        val (previousDateTimeObject, newDateTimeObject) = (parseStringToDateTime(sourceDate), parseStringToDateTime(targetDate))
+        Future(dynamicRoadNetworkService.initiateLinkNetworkUpdates(previousDateTimeObject, newDateTimeObject))
+        Map("success" -> true, "message" -> "Tielinkkiverkon päivitys käynnistetty onnistuneesti!")
+
+      } catch {
+        case e: MappingException =>
+          logger.error("Missing or invalid date field in JSON", e)
+          Map("success" -> false, "message" -> s"Missing or invalid date parameter")
+        case ex: IllegalArgumentException =>
+          logger.error("Updating link network failed due to bad date format.", ex)
+          Map("success" -> false, "message" -> s"Unable to parse date, the date should be in yyyy-MM-dd format.")
+        case e: Exception =>
+          logger.error("Updating link network failed.", e)
+          Map("success" -> false, "message" -> s"Updating link network failed: ${e.getMessage}")
+      }
+    }
+  }
+
 
   private val getNodesByRoadAttributes: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String, Any]]("getNodesByRoadAttributes")
