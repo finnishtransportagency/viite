@@ -1,9 +1,10 @@
 #!/bin/bash
-# This script builds a Docker image and pushes it to AWS Dev environments ECR repository.
+# This script builds a Docker image and pushes it to AWS Dev environment ECR repository.
+# It can be used for initial deployment when pipeline is not set up yet.
 # It assumes that the AWS CLI is configured with a profile named "vaylaapp".
 # The script also assumes that the AWS CLI is installed and configured on the machine where it is run.
 # The script uses the AWS CLI to get the account ID and construct the ECR repository URI.
-# It also assumes that the Docker running and that the user has permission to push images to the ECR repository.
+# It also assumes that the Docker is running and that the user has permission to push images to the ECR repository.
 #
 # Before running this script you must authenticate through AWS SSO:
 #
