@@ -96,6 +96,15 @@
     return year + '-' + month + '-' + day;
   };
 
+
+  /**
+   *  Convert string (dd.mm.yyyy) to Date
+   */
+  dateUtils.parseDate = function (str) {
+    const [day, month, year] = str.split('.').map(Number);
+    return new Date(year, month - 1, day); // month is 0-based in JS
+  };
+
   /** Creates a string ("dd.mm.yyyy") from current date */
   dateUtils.getCurrentDateString = function () {
     const today = new Date();

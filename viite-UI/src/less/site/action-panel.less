@@ -643,22 +643,25 @@
 .dynamic-link-network-content-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 20px;
 }
 
 .dynamic-link-network-input {
   display: flex;
   flex-direction: column;
 
-  input {
-    width: 100px;
+  input[readonly] {
+    opacity: 0.7;
+    cursor: pointer;
+    background-color: #f9f9f9;
   }
 }
 
 .dynamic-link-network-input-wrapper {
   display: flex;
   flex-direction: row;
+  align-items: flex-end;
   gap: 20px;
+  padding: 20px;
 }
 
 .update-link-network-button {

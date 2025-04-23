@@ -23,20 +23,21 @@
 
         const dynamicLinkNetworkContent =
             '<div class="dynamic-link-network-content-wrapper">' +
+                '<div>' +
+                    '<p style="padding: 10px; font-size: 14px">Valitse päivämäärät päivittääksesi tielinkkiverkkoa</p>' +
+                    '<p id="dynamicLinkNetworkInfo" style="padding: 10px; font-size: 14px"><span style="visibility: hidden;">Placeholder Text</span></p>' +
+                '</div>' +
                 '<div class="dynamic-link-network-input-wrapper">' +
                     '<div class="dynamic-link-network-input">' +
                         '<label>Nykytilanne</label>' +
-                        '<input type="text" id="sourceDate">' +
+                        '<input type="text" id="sourceDate" readonly>' +
                     '</div>' +
                     '<p style="font-size: 20px">&#8594</p>' +
                     '<div class="dynamic-link-network-input">' +
                         '<label>Tavoite päivämäärä</label>' +
-                        '<input type="text" id="targetDate">' +
+                        '<input type="text" id="targetDate" readonly>' +
                     '</div>' +
-                    '<button id="updateLinkNetwork" class="btn btn-primary">Päivitä tielinkkiverkko</button>' +
-                '</div>' +
-                '<div>' +
-                    '<p id="dynamicLinkNetworkInfo"></p>' +
+                    '<button id="updateLinkNetwork" class="btn btn-primary" style="max-height: 30px">Päivitä tielinkkiverkko</button>' +
                 '</div>' +
             '</div>';
 
@@ -106,7 +107,8 @@
             }
 
             sourcePicker = dateutil.addSingleDatePicker(sourceElem, {defaultDate: minimumDateObject, setDefaultDate: true});
-            targetPicker = dateutil.addSingleDatePicker(targetElem).gotoDate(minimumDateObject);
+            targetPicker = dateutil.addSingleDatePicker(targetElem);
+            targetPicker.gotoDate(minimumDateObject);
         };
 
         const hideAdminPanelWindow = function () {
@@ -119,18 +121,18 @@
                 const dateObject = moment(dateString, "DD-MM-YYYY").toDate();
                 if (dateutil.isValidDate(dateObject)){
                     if (dateutil.isDateInYearRange(dateObject, ViiteConstants.MIN_YEAR_INPUT, ViiteConstants.MAX_YEAR_INPUT)) {
-                        dateElement.setCustomValidity("");
+                        setInfoText("");
                         return true;
                     } else {
-                        dateElement.setCustomValidity("Vuosiluvun tulee olla väliltä " + ViiteConstants.MIN_YEAR_INPUT + " - " + ViiteConstants.MAX_YEAR_INPUT);
+                        setInfoText("Vuosiluvun tulee olla väliltä " + ViiteConstants.MIN_YEAR_INPUT + " - " + ViiteConstants.MAX_YEAR_INPUT);
                         return false;
                     }
                 } else {
-                    dateElement.setCustomValidity("Tarkista päivämäärä!");
+                    setInfoText("Tarkista päivämäärä!");
                     return false;
                 }
             } else {
-                dateElement.setCustomValidity("Päivämäärän tulee olla muodossa pp.kk.vvvv");
+                setInfoText("Päivämäärän tulee olla muodossa pp.kk.vvvv");
                 return false;
             }
         }
@@ -143,11 +145,11 @@
          *  Check that the source date is before the target date.
          */
         function reasonableDates(sourceDateObject, sourceDateElem, targetDateObject, targetDateElem) {
-            if (sourceDateObject > targetDateObject) {
-                sourceDateElem.setCustomValidity("Nykytilanteen tulee olla ennen tavoite päivämäärää!");
+            if (sourceDateObject >= targetDateObject) {
+                setInfoText("Nykytilanteen tulee olla ennen tavoite päivämäärää!");
                 return false;
             } else {
-                sourceDateElem.setCustomValidity("");
+                setInfoText("");
                 return true;
             }
         }
@@ -169,9 +171,7 @@
             if (!willPassValidations(sourceDateString, sourceDateElem) ||
                 !willPassValidations(targetDateString, targetDateElem) ||
                 !reasonableDates(sourceDateObject, sourceDateElem, targetDateObject, targetDateElem)) {
-                sourceDateElem.reportValidity(); // Display the validation error messages to the user
-                targetDateElem.reportValidity();
-                return; // // Stop execution if validation fails
+                return; // Stop execution if validation fails
             }
 
             const sourceDateStringISO8601 = dateutil.parseDateToString(sourceDateObject);
@@ -211,6 +211,37 @@
             targetTabContent.addClass('active'); // Makes content visible via CSS rule
         };
 
+        function dateFieldsFilled() {
+            const sourceDate = document.getElementById('sourceDate');
+            const targetDate = document.getElementById('targetDate');
+            return sourceDate.value.length > 0 && targetDate.value.length > 0;
+        }
+
+        function countDaysBetweenTwoDates(date1Str, date2Str) {
+            const date1 = dateutil.parseDate(date1Str);
+            const date2 = dateutil.parseDate(date2Str);
+            const msPerDay = 1000 * 60 * 60 * 24;
+            const diffTime = date2 - date1;
+            return Math.round(diffTime / msPerDay);
+        }
+
+        function setInfoText(text) {
+            const infoElem = document.getElementById('dynamicLinkNetworkInfo');
+            infoElem.innerText = text;
+        }
+
+        function buildInfoText() {
+            const sourceDate = document.getElementById('sourceDate');
+            const targetDate = document.getElementById('targetDate');
+            const daysBetween = countDaysBetweenTwoDates(sourceDate.value, targetDate.value);
+            return "Olet päivittämässä linkkiverkkoa " + daysBetween + " päivää " + (Math.sign(daysBetween) > 0 ? "eteenpäin." : "taaksepäin. Korjaa päivämäärät!");
+        }
+
+        function notifyUserWithDateChangeInfo() {
+            const text = buildInfoText();
+            setInfoText(text);
+        }
+
         const bindEvents = function () {
 
             $('.generic-window-header').on('click', '#closeAdminPanel', function() {
@@ -232,6 +263,17 @@
             $('.generic-window').on('click', '#updateLinkNetwork', function() {
                 startRoadLinkNetworkUpdate();
             });
+
+            $('.generic-window').on('change', '#targetDate', function() {
+                if (dateFieldsFilled() && reasonableDates())
+                    notifyUserWithDateChangeInfo();
+            });
+
+            $('.generic-window').on('change', '#sourceDate', function() {
+                if (dateFieldsFilled() && reasonableDates())
+                    notifyUserWithDateChangeInfo();
+            });
+
         };
 
         return {
