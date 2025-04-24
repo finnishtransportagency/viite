@@ -17,30 +17,32 @@ sealed trait ArealRoadMaintainer {
 
   val  typeName: String = "DEFAULT-NONE"
   val  typeInfo: String = "Describe your new typeName here"
-  val        id: Int    // An ArealRoadMaintainer must have an id, unique amongs the same typeName
+  val    number: Int    // An ArealRoadMaintainer must have a number, and it must be set to be unique among the same typeName
   val      name: String // An ArealRoadMaintainer must have a human-readable name
   val shortName: String // An ArealRoadMaintainer must have a short name
 
-  assert(typeName!="DEFAULT-NONE","Your implementing trait must override typeName.")
+  assert(typeName!="DEFAULT-NONE", "Your implementing trait must override typeName.")
+  assert(typeInfo!="Describe your new typeName here", "Your implementing trait must override typeInfo.")
 
-  /** Overriging basic toString, printing the ArealRoadMaintainer as a string. */
-  override def toString    : String = {  s"$typeName $id $name"  }
+  /** Returns the id for this ArealRoadMaintainer.
+   * Id is a string consisting of the typeName, and number of this ArealRoadMaintainer.
+   * This in the id we want to save to the database, too. */
+  final def id: String = {  s"$typeName$number"  }
 
-  /** Returns the string describing the ArealRoadMaintainer in the format we want to save it to the database. */
-  final def toDBName       : String = {  s"$typeName$id"            }
-
-  final def toStringVerbose: String = {  s"$typeName $id $name"        }
-  final def toStringShort  : String = {  s"$shortName"                    }
-  final def toStringAll    : String = {  s"$typeName $id $name ($shortName)" }
+  /** Overriding basic toString, printing the ArealRoadMaintainer as a string. */
+  override def toString    : String = {  s"$typeName $number $name"  }
+  final def toStringVerbose: String = {  s"$typeName $number $name"      }
+  final def toStringShort  : String = {  s"$shortName"                       }
+  final def toStringAll    : String = {  s"$typeName $number $name ($shortName)" }
 }
 
 /** Companion object for the abstract ArealRoadMaintainer trait.
- * Defines the ArealRoadMaintainer instances there are, and their access should be through this class. */
+ * Defines the ArealRoadMaintainer instances there are, and access to them is to be done through this companion object. */
 object ArealRoadMaintainer {
 
   /** Getter/constructor.
    * @return an ArealRoadMaintainer, according to the given nameString
-   * @throws ViiteException, if the given string does not correspond to any known ArealRoadMaintainer.
+   * @throws ViiteException, if the given string does not correspond to any known ArealRoadMaintainer instance.
    * @param nameString The string to be interpreted as an ArealRoadMaintainer. */
   def apply(nameString: String): ArealRoadMaintainer = {
                 // If still nothing was found, just throw an error. There is no such thing, afawk.
