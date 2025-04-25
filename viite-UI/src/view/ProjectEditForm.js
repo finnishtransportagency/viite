@@ -750,7 +750,7 @@
         });
       });
 
-      rootElement.on('change input', '.form-control.small-input', function (event) {
+      rootElement.on('input', '.form-control.small-input', function (event) {
         var dropdown_0 = $('#dropDown_0');
         var roadNameField = $('#roadName');
         checkInputs();
