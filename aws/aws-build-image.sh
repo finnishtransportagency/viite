@@ -1,5 +1,5 @@
 #!/bin/bash
 npm install
-grunt deploy
-./sbt assembly
+npx grunt deploy
+sbt clean assembly
 docker build -f aws/fargate/Dockerfile -t viite:latest .
