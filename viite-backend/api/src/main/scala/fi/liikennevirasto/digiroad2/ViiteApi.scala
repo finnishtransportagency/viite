@@ -13,7 +13,7 @@ import fi.liikennevirasto.viite.model._
 import fi.liikennevirasto.viite.util.DigiroadSerializers
 import fi.vaylavirasto.viite.dao.{RoadName, RoadNameForRoadAddressBrowser}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, BeforeAfter, Discontinuity, LinkGeomSource, NodePointType, NodeType, RoadAddressChangeType, RoadPart, Track}
+import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, ArealRoadMaintainer, BeforeAfter, Discontinuity, LinkGeomSource, NodePointType, NodeType, RoadAddressChangeType, RoadPart, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC
 import fi.vaylavirasto.viite.util.DateTimeFormatters.{ISOdateFormatter, dateSlashFormatter, finnishDateFormatter, finnishDateCommaTimeFormatter}
 import org.joda.time.DateTime
@@ -1599,7 +1599,10 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       "roadNameSe" -> "",
       "roadNumber" -> roadAddressLink.roadPart.roadNumber,
       "roadPartNumber" -> roadAddressLink.roadPart.partNumber,
-      "elyCode" -> roadAddressLink.elyCode,
+      "elyCode" -> {
+          if(ArealRoadMaintainer.isELY(roadAddressLink.arealRoadMaintainer)) {  roadAddressLink.arealRoadMaintainer.number }   // TODO VIITE-3424 ely->ArealRoadMaintainer
+          else {  ArealRoadMaintainer.ARMInvalid.name  } // TODO VIITE-3424 ely->ArealRoadMaintainer
+        },
       "trackCode" -> roadAddressLink.trackCode,
       "addrMRange" -> addrMRangeToApi(roadAddressLink.addrMRange),
       "discontinuity" -> roadAddressLink.discontinuity,
@@ -1882,7 +1885,10 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
         "roadNameSe" -> "",
         "roadNumber"     -> projectAddressLink.roadPart.roadNumber,
         "roadPartNumber" -> projectAddressLink.roadPart.partNumber,
-        "elyCode" -> projectAddressLink.elyCode,
+        "elyCode" -> {
+          if(ArealRoadMaintainer.isELY(projectAddressLink.arealRoadMaintainer)) {  projectAddressLink.arealRoadMaintainer.number }   // TODO VIITE-3424 ely->ArealRoadMaintainer
+          else {  ArealRoadMaintainer.ARMInvalid.name  } // TODO VIITE-3424 ely->ArealRoadMaintainer
+        },
         "trackCode" -> projectAddressLink.trackCode,
         "addrMRange" -> addrMRangeToApi(projectAddressLink.addrMRange),
         "originalStartAddressM" -> originalAddrMRange.start,

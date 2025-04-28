@@ -204,7 +204,8 @@ package object util {
   }
 
   def backToProjectLink(project: Project)(rl: ProjectAddressLink): ProjectLink = {
-    ProjectLink(rl.id, rl.roadPart, Track.apply(rl.trackCode.toInt), Discontinuity.apply(rl.discontinuity), rl.addrMRange, rl.addrMRange, None, None, rl.modifiedBy, rl.linkId, rl.startMValue, rl.endMValue, rl.sideCode, (rl.startCalibrationPointType, rl.endCalibrationPointType), (rl.startCalibrationPointType, rl.endCalibrationPointType), rl.geometry, project.id, RoadAddressChangeType.NotHandled, AdministrativeClass.State, rl.roadLinkSource, GeometryUtils.geometryLength(rl.geometry), if (rl.status == RoadAddressChangeType.New) 0 else rl.id, if (rl.status == RoadAddressChangeType.New) 0 else rl.linearLocationId, rl.elyCode, reversed = false, None, rl.roadLinkTimeStamp)
+    ProjectLink(rl.id, rl.roadPart, Track.apply(rl.trackCode.toInt), Discontinuity.apply(rl.discontinuity), rl.addrMRange, rl.addrMRange, None, None, rl.modifiedBy, rl.linkId, rl.startMValue, rl.endMValue, rl.sideCode, (rl.startCalibrationPointType, rl.endCalibrationPointType), (rl.startCalibrationPointType, rl.endCalibrationPointType), rl.geometry, project.id, RoadAddressChangeType.NotHandled, AdministrativeClass.State, rl.roadLinkSource, GeometryUtils.geometryLength(rl.geometry), if (rl.status == RoadAddressChangeType.New) 0 else rl.id, if (rl.status == RoadAddressChangeType.New) 0 else rl.linearLocationId,
+      rl.arealRoadMaintainer.number, reversed = false, None, rl.roadLinkTimeStamp)
   }
 
 }

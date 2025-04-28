@@ -58,6 +58,16 @@ trait ELY extends ArealRoadMaintainer {
  * Defines the ArealRoadMaintainer instances there are, and access to them is to be done through this companion object. */
 object ArealRoadMaintainer {
 
+  /** A dummy / invalid / undefined ArealRoadMaintainer value.
+   *  Ideally no use outside of tests' dummy ARM values. */
+  case object ARMInvalid extends ArealRoadMaintainer {
+    override val typeName = "Invalid ARM"
+    override val typeInfo = "Invalid ARM to be used as a dummy value in tests. Try avoiding otherwise."
+    val number    = 0
+    val name      = "Alustamaton tien vastuutahotieto"
+    val shortName = "NONE"
+  }
+
   /* Create pre-defined EVK instances. */
   case object EVKUusimaa           extends EVK {    val number =  1;  val name = "Uusimaa";           val shortName = "UUSI"    }
   case object EVKLounaisSuomi      extends EVK {    val number =  2;  val name = "Lounais-Suomi";     val shortName = "LOUS"    }
@@ -155,6 +165,15 @@ object ArealRoadMaintainer {
     )
   }
 
+   /** Getter for ELYs only. You may search for an ELY by its id.
+   *
+   * @param id The id we use to identify the correct ELY to be returned.
+   * @return Option[ELY]. The asked ELY in Some(ELY), when found, None else.
+   */
+  def getELYOption(id: String): Option[ELY] = {
+    ELYset.find( _.id == id)
+  }
+
   /** Existance checker for EVKs only.
    *
    * @param evk The EVK to be identified
@@ -177,6 +196,20 @@ object ArealRoadMaintainer {
       case Some(_) => true
       case None    => false
     }
+  }
+
+   /** Checker for ELYs.
+   *
+   * @param arm The ArealRoadMaintainer to be checked, if it is a proper ELY.
+   * @return true, if the arm asked is an ELY, false else. */
+  def isELY(arm: ArealRoadMaintainer): Boolean = {
+    if(arm.typeName!="ELY")
+      false
+    else
+      ELYset.find(_ == arm) match {
+        case Some(_) => true
+        case None    => false
+      }
   }
 
   /**
