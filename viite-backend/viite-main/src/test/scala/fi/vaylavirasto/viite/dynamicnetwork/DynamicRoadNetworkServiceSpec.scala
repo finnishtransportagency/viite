@@ -84,8 +84,10 @@ class DynamicRoadNetworkServiceSpec extends AnyFunSuite with Matchers{
         RoadLink(newLinkId2, newGeometry2, 50.0, AdministrativeClass.State, TrafficDirection.TowardsDigitizing, None, None, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, 9, sourceId = "")
       )
 
+      val complementaryLinks = Seq()
+
       // The testing itself
-      val res = dynamicRoadNetworkService.validateTiekamuRoadLinkChanges(tiekamuRoadLinkChanges,linearlocations, kgvRoadLinks)
+      val res = dynamicRoadNetworkService.validateTiekamuRoadLinkChanges(tiekamuRoadLinkChanges,linearlocations, kgvRoadLinks, complementaryLinks)
       res.length should be (0)
     }
   }
