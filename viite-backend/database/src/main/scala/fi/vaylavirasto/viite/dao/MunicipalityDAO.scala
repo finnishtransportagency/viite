@@ -17,22 +17,6 @@ object MunicipalityDAO extends BaseDAO {
       .apply()
   }
 
-  /** Digiroad's municipality to ELY code mapping.
-   * Database ely_nro field naming is from the era when Viite was still part of the Digiroad codebase.
-   * For Viite ELY codes, see @getViiteMunicipalityToElyMapping
-   * @TODO What if this could be removed? Used only in the Fixture reset, and test spec code. */
-  def getDigiroadMunicipalityToElyMapping: Map[Long, Long] = {
-    sql"""
-      SELECT id, ely_nro
-      FROM municipality
-      ORDER BY ely_nro ASC
-    """
-      .map(rs => rs.long("id") -> rs.long("ely_nro"))
-      .list()
-      .apply()
-      .toMap
-  }
-
 /** Viite municipality to ELY code mapping.
  * Viite ELY codes for each municipality are persisted in the ROAD_MAINTAINER column in the DB.*/
   def getViiteMunicipalityToElyMapping: Map[Long, Long] = {
