@@ -323,7 +323,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         it.next() match {
           case Seq(curr, next) => {
             if (curr.addrMRange.end != next.addrMRange.start) {
-              logger.error(s"Address not continuous: ${curr.addrMRange.end} ${next.addrMRange.start} linkIds: ${curr.linkId} ${next.linkId}")
+              logger.error(s"Address not continuous: ${curr.addrMRange.end} != ${next.addrMRange.start} linkIds: ${curr.linkId} ${next.linkId}")
               throw new RoadAddressException(ContinuousAddressCapErrorMessage)
             }
             if (!(curr.addrMRange.end > curr.addrMRange.start)) {
@@ -341,7 +341,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
                 val erroneousLinkIds = discontinuityErrors.flatMap(err => err.affectedLinkIds).mkString(", ")
                 throw ViiteException(s"Tarkista jatkuvuuskoodit linkeiltä: $erroneousLinkIds")
               } else {
-                logger.error(s"Length mismatch. New: ${curr.addrMRange.start} ${curr.addrMRange.end} original: ${curr.originalAddrMRange.start} ${curr.originalAddrMRange.end} linkId: ${curr.linkId}")
+                logger.error(s"Length mismatch. LinkId: ${curr.linkId} new: ${curr.addrMRange} (${curr.addrMRange.length}) original: ${curr.originalAddrMRange} (${curr.originalAddrMRange.length})")
                 throw new RoadAddressException(LengthMismatchErrorMessage.format(curr.linkId, maxDiffForChange - 1))
               }
             }
@@ -359,8 +359,8 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
               !(Math.abs(curr.addrMRange.length - curr.originalAddrMRange.length) < maxDiffForChange)) {
               logger.warn(s"Length mismatch. " +
                 s"Project id: ${curr.projectId} ${projectDAO.fetchById(projectId = curr.projectId).get.name} " +
-                s"New: ${curr.addrMRange.start} ${curr.addrMRange.end} " +
-                s"original: ${curr.originalStartAddrMValue} ${curr.originalEndAddrMValue} " +
+                s"New: ${curr.addrMRange} " +
+                s"original: ${curr.originalAddrMRange} " +
                 s"linkId: ${curr.linkId} " +
                 s"length change ${(curr.addrMRange.length) - (curr.originalAddrMRange.length)}")
             }
@@ -420,7 +420,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         if (validationErrors.nonEmpty)
           throw new ProjectValidationException(s"Validation errors", validationErrors.map(projectValidator.errorPartsToApi))
         else
-          throw new MissingTrackException(s"Missing track, R: ${rightLinks.size}, L: ${leftLinks.size}")
+          throw new MissingTrackException(s"Missing track, number of links: R: ${rightLinks.size}, L: ${leftLinks.size}")
       }
 
       val ((firstRight, restRight), (firstLeft, restLeft)): ((Seq[ProjectLink], Seq[ProjectLink]), (Seq[ProjectLink], Seq[ProjectLink])) = {
