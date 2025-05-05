@@ -411,6 +411,104 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
       TiekamuRoadLinkErrorMetaData(errorRoadsParts.head, errorRoadways.head.roadwayNumber, errorLinearLocations.map(_.id), errorLink)
     }
 
+    def validateCombinationCases(otherChangesWithSameNewLinkId: Seq[TiekamuRoadLinkChange], change: TiekamuRoadLinkChange, linearLocations: Seq[LinearLocation]): Seq[TiekamuRoadLinkChangeError] = {
+      def areHomogeneous(linearLocations: Seq[LinearLocation]): Boolean = {
+        val roadwayNumbers = linearLocations.map(_.roadwayNumber).toSet
+        val roadways = roadwayDAO.fetchAllByRoadwayNumbers(roadwayNumbers)
+        val roadGroups = roadways.groupBy(rw => (rw.roadPart, rw.track))
+        roadGroups.size == 1
+      }
+
+      def changesInSameRoadway(linearLocations: Seq[LinearLocation]): Boolean = {
+        val roadwayNumbers = linearLocations.map(_.roadwayNumber).toSet
+        val roadways = roadwayDAO.fetchAllByRoadwayNumbers(roadwayNumbers)
+        val roadGroups = roadways.groupBy(rw => (rw.roadPart, rw.track))
+        val singleRoadGroup = roadGroups.head._2
+        singleRoadGroup.map(_.roadwayNumber).distinct.size == 1
+      }
+
+      def homogeneityValidationForCombinationCase(): Seq[TiekamuRoadLinkChangeError] = {
+        val oldLinkIds = otherChangesWithSameNewLinkId.map(_.oldLinkId) :+ change.oldLinkId
+        val oldLinearLocations = linearLocations.filter(ll => oldLinkIds.contains(ll.linkId))
+        val homogeneous = areHomogeneous(oldLinearLocations)
+
+        if (!homogeneous) {
+          Seq(
+            TiekamuRoadLinkChangeError(
+              "Two or more links with non-homogeneous road addresses (road number, road part number, track) cannot merge together.",
+              change,
+              getMetaData(change, linearLocations)
+            )
+          )
+        } else {
+          Seq.empty
+        }
+      }
+
+      def continuityValidationForCombinationCase(): Seq[TiekamuRoadLinkChangeError] = {
+        val oldLinkIds = otherChangesWithSameNewLinkId.map(_.oldLinkId) :+ change.oldLinkId
+        val oldLinearLocations = linearLocations.filter(ll => oldLinkIds.contains(ll.linkId))
+
+        val continuityCheckPassed = if (changesInSameRoadway(oldLinearLocations)) {
+          checkRoadAddressContinuityForSingleRoadway(oldLinearLocations, change)
+        } else {
+          checkRoadAddressContinuityBetweenRoadways(oldLinearLocations, change)
+        }
+
+        if (!continuityCheckPassed) {
+          Seq(
+            TiekamuRoadLinkChangeError(
+              "Road address not continuous, cannot merge links together.",
+              change,
+              getMetaData(change, linearLocations)
+            )
+          )
+        } else {
+          Seq.empty
+        }
+      }
+
+      def crossRoadValidationForCombinationCase(): Seq[TiekamuRoadLinkChangeError] = {
+        val oldLinkIds = otherChangesWithSameNewLinkId.map(_.oldLinkId) :+ change.oldLinkId
+        val oldLinearLocations = linearLocations.filter(ll => oldLinkIds.contains(ll.linkId))
+
+        oldLinearLocations.flatMap { oldLinearLocation =>
+          val connectingOldLinearLocationOpt = oldLinearLocations.find { another =>
+            oldLinearLocation.connected(another)
+          }
+
+          connectingOldLinearLocationOpt.flatMap { connectingOld =>
+            val linearLocationStartAndEndPoints = Seq(oldLinearLocation.getFirstPoint, oldLinearLocation.getLastPoint)
+            val startingPoint = connectingOld.getFirstPoint
+            val endPoint = connectingOld.getLastPoint
+
+            val connectingPoint =
+              if (linearLocationStartAndEndPoints.contains(startingPoint)) startingPoint
+              else endPoint
+
+            val linearLocationsAtPoint = linearLocationDAO.fetchActiveLinearLocationsWithPoint(connectingPoint)
+            val problematicLinearLocations = linearLocationsAtPoint.filterNot(ll =>
+              oldLinearLocations.exists(_.linkId == ll.linkId)
+            )
+
+            if (problematicLinearLocations.nonEmpty) {
+              Some(
+                TiekamuRoadLinkChangeError(
+                  "Links cannot be merged together, found linear location(s) that connect(s) between the two links. (Cross road case)",
+                  change,
+                  getMetaData(change, linearLocationsAtPoint)
+                )
+              )
+            } else {
+              None
+            }
+          }
+        }
+      }
+
+      homogeneityValidationForCombinationCase() ++ continuityValidationForCombinationCase() ++ crossRoadValidationForCombinationCase()
+    }
+
     time(logger, "Validating TiekamuRoadLinkChange sets") {
       var tiekamuRoadLinkChangeErrors = new ListBuffer[TiekamuRoadLinkChangeError]()
       tiekamuRoadLinkChanges.foreach(change => {
@@ -449,25 +547,7 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
 
         // if there are combined links (A + B = C)
         else if (otherChangesWithSameNewLinkId.nonEmpty) {
-          val oldLinkIds = otherChangesWithSameNewLinkId.map(_.oldLinkId) ++ Seq(change.oldLinkId)
-          val oldLinearLocations = linearLocations.filter(ll => oldLinkIds.contains(ll.linkId))
-          val roadways = roadwayDAO.fetchAllByRoadwayNumbers(oldLinearLocations.map(_.roadwayNumber).toSet)
-          // group the roadways with roadPart and track
-          val roadGroups = roadways.groupBy(rw => (rw.roadPart, rw.track))
-          // if there are change infos that combine two or more links but the road address is not homogeneous between those merging links then its an error
-          val isRoadAddressHomogeneous = roadGroups.size < 2
-          val changesInSameRoadway = roadGroups.head._2.map(_.roadwayNumber).distinct.size == 1 // used only when we already know roadGroup has only one item, thus handling .head only is enough
-          isRoadAddressHomogeneous match {
-            case false => tiekamuRoadLinkChangeErrors += TiekamuRoadLinkChangeError("Two or more links with non homogeneous road addresses (road number, road part number, track) cannot merge together", change, getMetaData(change, linearLocations))
-            case true => {
-              changesInSameRoadway match {
-                case true => if (!checkRoadAddressContinuityForSingleRoadway(oldLinearLocations, change))
-                  tiekamuRoadLinkChangeErrors += TiekamuRoadLinkChangeError("Road address not continuous, cannot merge links together", change, getMetaData(change, linearLocations))
-                case false => if (!checkRoadAddressContinuityBetweenRoadways(oldLinearLocations, change))
-                  tiekamuRoadLinkChangeErrors += TiekamuRoadLinkChangeError("Road address not continuous, cannot merge links together", change, getMetaData(change, linearLocations))
-              }
-            }
-          }
+          tiekamuRoadLinkChangeErrors ++= validateCombinationCases(otherChangesWithSameNewLinkId, change, linearLocations)
         }
       })
       tiekamuRoadLinkChangeErrors
