@@ -851,6 +851,21 @@ class LinearLocationDAO extends BaseDAO {
     queryList(query)
   }
 
+  def fetchActiveLinearLocationsWithPoint(point: Point): Seq[LinearLocation] = {
+    val wktPoint = s"POINT(${point.x} ${point.y})"
+    val query =
+      sql"""
+          $selectFromLinearLocation
+          WHERE loc.valid_to IS NULL
+            AND loc.roadway_number IN (
+              SELECT roadway_number FROM roadway
+              WHERE valid_to IS NULL AND end_date IS NULL
+            )
+            AND ST_Intersects(geometry, ST_GeomFromText($wktPoint, 3067))
+       """
+    queryList(query)
+  }
+
   def fetchUpdatedSince(sinceDate: DateTime): Seq[LinearLocation] = {
     time(logger, "Fetch linear locations updated since date") {
       val query =
