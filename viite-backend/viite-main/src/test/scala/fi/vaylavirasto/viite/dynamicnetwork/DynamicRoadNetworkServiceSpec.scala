@@ -112,9 +112,9 @@ class DynamicRoadNetworkServiceSpec extends AnyFunSuite with Matchers{
       val linkA = "testtest-test-test-test-test:a"
       val linkB = "testtest-test-test-test-test:b"
       val newLinkC = "testtest-test-test-test-test:c"
-      val geometryA = Seq(Point(0.0, 0.0), Point(0.0,50.0))
-      val geometryB = Seq(Point(0.0, 50.0), Point(0.0, 100.0))
-      val newGeometryC = Seq(Point(0.0, 0.0), Point(0.0, 100.0))
+      val geometryA = Seq(Point(0.0, 0.0), Point(50.0,0.0))
+      val geometryB = Seq(Point(50.0, 0.0), Point(100.0, 0.0))
+      val newGeometryC = Seq(Point(0.0, 0.0), Point(100.0, 0.0))
       val orderNumber1 = 1.0
       val roadwayNumber1 = Sequences.nextRoadwayNumber
       val roadwayNumber2 = Sequences.nextRoadwayNumber
@@ -190,17 +190,39 @@ class DynamicRoadNetworkServiceSpec extends AnyFunSuite with Matchers{
     }
   }
 
-  test("When Validating invalid TiekamuRoadLinkChanges Then should return TiekamuRoadLinkErrors") {
+  test("When Validating invalid TiekamuRoadLinkChanges (active linear location prevents combination of two links) Then should return TiekamuRoadLinkErrors") {
+    /**
+     * Link change A + B = C
+     * Y = Active linear location
+     *
+     *          Before:
+     *
+     *    A             B
+     * ----------->------------>
+     *            ^
+     *            |
+     *            | Y
+     *            |
+     *
+     *           After:
+     *
+     *             C
+     * ------------------------->
+     *             ^
+     *             |
+     *             | Y
+     *             |
+     */
     runWithRollback {
       val linkId1 = "testtest-test-test-test-test:1"
       val linkId2 = "testtest-test-test-test-test:2"
       val linkId9 = "testtest-test-test-test-test:9"
       val newLinkId1 = "testtest-test-test-test-test:3"
       val newLinkId2 = "testtest-test-test-test-test:4"
-      val geometry1 = Seq(Point(0.0, 0.0), Point(0.0,50.0))
-      val geometry2 = Seq(Point(0.0, 50.0), Point(0.0, 100.0))
-      val newGeometry1 = Seq(Point(0.0, 0.0), Point(0.0, 100.0))
-      val crossingRoadsGeometry = Seq(Point(0.0, 50.0), Point(50.0, 50.0))
+      val geometry1 = Seq(Point(0.0, 0.0), Point(50.0,0.0))
+      val geometry2 = Seq(Point(50.0, 0.0), Point(100.0, 0.0))
+      val newGeometry1 = Seq(Point(0.0, 0.0), Point(100.0, 0.0))
+      val crossingRoadsGeometry = Seq(Point(50.0, 0.0), Point(50.0, 50.0))
       val orderNumber1 = 1.0
       val orderNumber2 = 2.0
       val roadwayNumber1 = Sequences.nextRoadwayNumber
