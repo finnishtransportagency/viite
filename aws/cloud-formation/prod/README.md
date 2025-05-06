@@ -123,7 +123,7 @@ aws cloudformation update-stack \
 ```
 
 ### ECR Repository päivitys
-Päivitä aiemmin julkiastu ECR stack
+Päivitä aiemmin julkaistu ECR stack
 ```
 aws cloudformation update-stack \
 --stack-name [esim. viite-prod-ecr-repository] \
