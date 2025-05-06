@@ -122,6 +122,15 @@ aws cloudformation update-stack \
 --parameters ParameterKey=Environment,ParameterValue=Prod 
 ```
 
+### ECR Repository päivitys
+Päivitä aiemmin julkaistu ECR stack
+```
+aws cloudformation update-stack \
+--stack-name [esim. viite-prod-ecr-repository] \
+--template-body file://aws/cloud-formation/viite-create-ecr-repository.yaml \
+--parameters ParameterKey=Environment,ParameterValue=prod
+```
+
 ### Task definitionin päivitys
 Luo uusi task definition versio
 ```
