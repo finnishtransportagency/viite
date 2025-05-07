@@ -109,7 +109,7 @@ package object viite {
   val UndeterminedLastNewLinkDiscontinuityNotApplied = s"Linkkejä lisätessä ei voitu päätellä viimeistä linkkiä, jolle antaa käyttäjän syöttämä jatkuvuuskoodi. Tarkista jatkuvuuskoodit."
 
   //ELY-code error messages
-  val MultipleElysInPartMessage = s"Samalla tieosalla eri elynumeroita. Tieosan tulee vaihtua ELY-rajalla. Korjaa tieosa- tai elynumeroa."
+  val MultipleARMsInPartMessage = s"Samalla tieosalla eri EVK-/ELY-numeroita. Tieosan tulee vaihtua EVK:n/ELY:n rajalla. Korjaa tieosa- tai EVK/ELY-numeroa."
   val IncorrectOperationTypeOnElyCodeChangeMessage =  s"ELY-koodin muutos ei onnistu, ota yhteyttä pääkäyttäjään."
   val ElyCodeChangeButNoRoadPartChangeMessage = s"ELY-numeromuutos havaittu mutta tieosoitemuutos puuttuu. Tieosanumeron tulee vaihtua ELY-rajalla."
   val ElyCodeChangeButNoElyChangeMessage = s"ELY-numeromuutos havaittu mutta  ${ChangingELYCode.description}(${ChangingELYCode.value}) jatkuvuuskoodi on väärä. ELY:n rajalla jatkuvuuskoodin tulee olla 3."

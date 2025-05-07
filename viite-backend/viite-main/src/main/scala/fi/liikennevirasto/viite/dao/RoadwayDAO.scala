@@ -7,7 +7,7 @@ import fi.liikennevirasto.viite.model.RoadAddressLinkLike
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point, Vector3d}
-import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, CalibrationPointType, Discontinuity, LinkGeomSource, RoadPart, SideCode, Track}
+import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, ArealRoadMaintainer, CalibrationPointType, Discontinuity, LinkGeomSource, RoadPart, SideCode, Track}
 import fi.vaylavirasto.viite.postgis.MassQuery
 import org.joda.time.DateTime
 import scalikejdbc._
@@ -383,7 +383,11 @@ case class RoadAddress(id: Long, linearLocationId: Long, roadPart: RoadPart, adm
   }
 }
 
-case class Roadway(id: Long, roadwayNumber: Long, roadPart: RoadPart, administrativeClass: AdministrativeClass, track: Track, discontinuity: Discontinuity, addrMRange: AddrMRange, reversed: Boolean = false, startDate: DateTime, endDate: Option[DateTime] = None, createdBy: String, roadName: Option[String], ely: Long, terminated: TerminationCode = TerminationCode.NoTermination, validFrom: DateTime = DateTime.now(), validTo: Option[DateTime] = None)
+case class Roadway(id: Long, roadwayNumber: Long,
+                   roadPart: RoadPart, administrativeClass: AdministrativeClass, track: Track, discontinuity: Discontinuity, addrMRange: AddrMRange, reversed: Boolean = false,
+                   startDate: DateTime, endDate: Option[DateTime] = None, createdBy: String, roadName: Option[String],
+                   arealRoadMaintainer: ArealRoadMaintainer, terminated: TerminationCode = TerminationCode.NoTermination,
+                   validFrom: DateTime = DateTime.now(), validTo: Option[DateTime] = None)
 
 object Roadway extends SQLSyntaxSupport[Roadway] {
   override val tableName = "ROADWAY"
@@ -407,7 +411,7 @@ object Roadway extends SQLSyntaxSupport[Roadway] {
     endDate             = rs.jodaDateTimeOpt("end_date"),
     createdBy           = rs.string("created_by"),
     roadName            = rs.stringOpt("road_name"),
-    ely                 = rs.long("ely"),
+    arealRoadMaintainer = ArealRoadMaintainer.getELY(rs.long("ely")), // TODO VIITE-3424 ely->ArealRoadMaintainer
     terminated          = TerminationCode(rs.int("terminated")),
     validFrom           = rs.jodaDateTime("valid_from"),
     validTo             = rs.jodaDateTimeOpt("valid_to")
@@ -1036,7 +1040,7 @@ class RoadwayDAO extends BaseDAO {
         roadway.endDate.map(date => new java.sql.Date(date.getMillis)).orNull,
         roadway.createdBy,
         roadway.administrativeClass.value,
-        roadway.ely,
+        roadway.arealRoadMaintainer.number,  // TODO VIITE-3424 ely->ArealRoadMaintainer
         roadway.terminated.value
       )
     }.toSeq
@@ -1057,13 +1061,13 @@ class RoadwayDAO extends BaseDAO {
         ${column.endDate},
         ${column.createdBy},
         ${column.administrativeClass},
-        ${column.ely},
+        ely,
         ${column.terminated}
       ) VALUES (
         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
       )
     """
-
+   // TODO ^ VIITE-3424 ely->ArealRoadMaintainer
     // Execute the batch update
     runBatchUpdateToDb(insertQuery, batchParams)
 

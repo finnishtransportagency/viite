@@ -8,7 +8,7 @@ import fi.vaylavirasto.viite.dao.Sequences
 import fi.vaylavirasto.viite.geometry.Point
 import fi.vaylavirasto.viite.model.CalibrationPointType.{JunctionPointCP, NoCP, RoadAddressCP}
 import fi.vaylavirasto.viite.model.LinkGeomSource.{ComplementaryLinkInterface, FrozenLinkInterface}
-import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinuity, RoadAddressChangeType, RoadPart, SideCode, Track}
+import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, ArealRoadMaintainer, Discontinuity, RoadAddressChangeType, RoadPart, SideCode, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
 import org.joda.time.DateTime
 import org.scalatest.funsuite.AnyFunSuite
@@ -69,6 +69,9 @@ class ProjectLinkRecalculationSpec extends AnyFunSuite with Matchers {
       override def runWithReadOnlySession[T](f: => T): T = f
       override def runWithTransaction[T](f: => T): T = f
     }
+
+
+  val ELY14 = ArealRoadMaintainer("ELY14")
 
   /**
    * This file is for testing project link recalculation.
@@ -244,14 +247,14 @@ class ProjectLinkRecalculationSpec extends AnyFunSuite with Matchers {
         val roadName = Some("testRoad")
 
         val roadways = Seq(
-          Roadway(140614,52434,roadPart1,AdministrativeClass.Municipality,Track.RightSide,Discontinuity.EndOfRoad,AddrMRange(840, 1509),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-          Roadway(140611,52435,roadPart1,AdministrativeClass.Municipality,Track.LeftSide,Discontinuity.EndOfRoad,AddrMRange(840, 1509),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-          Roadway(140619,310858078,roadPart1,AdministrativeClass.Municipality,Track.Combined,Discontinuity.Continuous,AddrMRange(0, 747),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-          Roadway(140617,335845150,roadPart1,AdministrativeClass.Municipality,Track.Combined,Discontinuity.MinorDiscontinuity,AddrMRange(747, 760),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-          Roadway(140615,335845153,roadPart1,AdministrativeClass.Municipality,Track.RightSide,Discontinuity.Continuous,AddrMRange(760, 833),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-          Roadway(140613,335845154,roadPart1,AdministrativeClass.Municipality,Track.LeftSide,Discontinuity.Continuous,AddrMRange(760, 834),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-          Roadway(140616,335845155,roadPart1,AdministrativeClass.Municipality,Track.RightSide,Discontinuity.Continuous,AddrMRange(833, 840),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-          Roadway(140612,335845157,roadPart1,AdministrativeClass.Municipality,Track.LeftSide,Discontinuity.Continuous,AddrMRange(834, 840),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None)
+          Roadway(140614,    52434,roadPart1,AdministrativeClass.Municipality,Track.RightSide,Discontinuity.EndOfRoad,         AddrMRange(840, 1509),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+          Roadway(140611,    52435,roadPart1,AdministrativeClass.Municipality,Track.LeftSide, Discontinuity.EndOfRoad,         AddrMRange(840, 1509),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+          Roadway(140619,310858078,roadPart1,AdministrativeClass.Municipality,Track.Combined, Discontinuity.Continuous        ,AddrMRange(  0,  747),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+          Roadway(140617,335845150,roadPart1,AdministrativeClass.Municipality,Track.Combined, Discontinuity.MinorDiscontinuity,AddrMRange(747,  760),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+          Roadway(140615,335845153,roadPart1,AdministrativeClass.Municipality,Track.RightSide,Discontinuity.Continuous,        AddrMRange(760,  833),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+          Roadway(140613,335845154,roadPart1,AdministrativeClass.Municipality,Track.LeftSide, Discontinuity.Continuous,        AddrMRange(760,  834),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+          Roadway(140616,335845155,roadPart1,AdministrativeClass.Municipality,Track.RightSide,Discontinuity.Continuous,        AddrMRange(833,  840),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+          Roadway(140612,335845157,roadPart1,AdministrativeClass.Municipality,Track.LeftSide, Discontinuity.Continuous,        AddrMRange(834,  840),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None)
         )
         val linearLocations = Seq(
           LinearLocation(506032, 1.0,"f4054f6a-46cf-42fc-bd48-ea2305ec18dc:2",0.0,6.886,SideCode.TowardsDigitizing,1698414053000L,(CalibrationPointReference(None,None),CalibrationPointReference(None,None)),List(Point(641846.695,6945106.23,0.0), Point(641849.176,6945112.654,0.0)),FrozenLinkInterface,335845155,Some(DateTime.now().minusDays(2)),None),
@@ -325,12 +328,12 @@ class ProjectLinkRecalculationSpec extends AnyFunSuite with Matchers {
         val roadName = Some("testRoad")
 
         val roadways = Seq(
-          Roadway(17421,52383,roadPart1,AdministrativeClass.State,Track.RightSide,Discontinuity.Continuous,AddrMRange(4979, 5070),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-          Roadway(17202,52384,roadPart1,AdministrativeClass.State,Track.LeftSide,Discontinuity.EndOfRoad,AddrMRange(5070, 5405),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-          Roadway(17627,52385,roadPart1,AdministrativeClass.State,Track.RightSide,Discontinuity.EndOfRoad,AddrMRange(5070, 5405),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-          Roadway(19800,54938,roadPart1,AdministrativeClass.State,Track.Combined,Discontinuity.Continuous,AddrMRange(0, 2130),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-          Roadway(70425,148121561,roadPart1,AdministrativeClass.State,Track.Combined,Discontinuity.Continuous,AddrMRange(2130, 4979),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-          Roadway(73223,148127482,roadPart1,AdministrativeClass.State,Track.LeftSide,Discontinuity.Continuous,AddrMRange(4979, 5070),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None)
+          Roadway(17421,    52383,roadPart1,AdministrativeClass.State,Track.RightSide,Discontinuity.Continuous,AddrMRange(4979, 5070),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+          Roadway(17202,    52384,roadPart1,AdministrativeClass.State,Track.LeftSide, Discontinuity.EndOfRoad, AddrMRange(5070, 5405),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+          Roadway(17627,    52385,roadPart1,AdministrativeClass.State,Track.RightSide,Discontinuity.EndOfRoad, AddrMRange(5070, 5405),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+          Roadway(19800,    54938,roadPart1,AdministrativeClass.State,Track.Combined, Discontinuity.Continuous,AddrMRange(   0, 2130),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+          Roadway(70425,148121561,roadPart1,AdministrativeClass.State,Track.Combined, Discontinuity.Continuous,AddrMRange(2130, 4979),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+          Roadway(73223,148127482,roadPart1,AdministrativeClass.State,Track.LeftSide, Discontinuity.Continuous,AddrMRange(4979, 5070),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None)
         ) 
         val linearLocations = Seq(
           LinearLocation(430884, 5.0,"4f2b3194-aa7e-4b1d-979a-7071c11dffa2:2",0.0,187.463,SideCode.AgainstDigitizing,1698414053000L,(CalibrationPointReference(None,None),CalibrationPointReference(None,None)),List(Point(530685.408,6994033.6,0.0), Point(530508.822,6994095.977,0.0)),FrozenLinkInterface,148121561,Some(DateTime.now().minusDays(2)),None),
@@ -432,33 +435,34 @@ class ProjectLinkRecalculationSpec extends AnyFunSuite with Matchers {
       val projectId = Sequences.nextViiteProjectId
       val roadName = Some("testRoad")
 
-      val roadways = Seq(Roadway(117852,57937,roadPart1,AdministrativeClass.Municipality,Track.RightSide,Discontinuity.Continuous,AddrMRange(2940, 2975),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(117860,57939,roadPart1,AdministrativeClass.Municipality,Track.Combined,Discontinuity.Continuous,AddrMRange(574, 945),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(117865,71016,roadPart1,AdministrativeClass.Municipality,Track.Combined,Discontinuity.Continuous,AddrMRange(190, 560),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(117867,75943,roadPart1,AdministrativeClass.Municipality,Track.Combined,Discontinuity.Continuous,AddrMRange(560, 574),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(117853,7756336,roadPart1,AdministrativeClass.Municipality,Track.RightSide,Discontinuity.MinorDiscontinuity,AddrMRange(2975, 3013),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(117872,7756342,roadPart1,AdministrativeClass.Municipality,Track.Combined,Discontinuity.Continuous,AddrMRange(3227, 3234),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(117859,7756348,roadPart1,AdministrativeClass.Municipality,Track.RightSide,Discontinuity.Continuous,AddrMRange(3446, 3740),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(117864,148121719,roadPart1,AdministrativeClass.Municipality,Track.Combined,Discontinuity.Continuous,AddrMRange(2838, 2940),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(117855,148121825,roadPart1,AdministrativeClass.Municipality,Track.RightSide,Discontinuity.Continuous,AddrMRange(0, 190),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(117862,148122014,roadPart1,AdministrativeClass.Municipality,Track.Combined,Discontinuity.Continuous,AddrMRange(3234, 3446),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(117858,148122180,roadPart1,AdministrativeClass.Municipality,Track.RightSide,Discontinuity.MinorDiscontinuity,AddrMRange(3109, 3122),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(117849,148127568,roadPart1,AdministrativeClass.Municipality,Track.LeftSide,Discontinuity.Continuous,AddrMRange(2940, 2975),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(117845,148127769,roadPart1,AdministrativeClass.Municipality,Track.LeftSide,Discontinuity.MinorDiscontinuity,AddrMRange(2975, 3013),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(117847,148127774,roadPart1,AdministrativeClass.Municipality,Track.LeftSide,Discontinuity.Continuous,AddrMRange(3446, 3740),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(117844,148127920,roadPart1,AdministrativeClass.Municipality,Track.LeftSide,Discontinuity.MinorDiscontinuity,AddrMRange(3109, 3122),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(117848,148128162,roadPart1,AdministrativeClass.Municipality,Track.LeftSide,Discontinuity.Continuous,AddrMRange(0, 190),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(117857,202230603,roadPart1,AdministrativeClass.Municipality,Track.RightSide,Discontinuity.Continuous,AddrMRange(3013, 3109),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(117851,202230639,roadPart1,AdministrativeClass.Municipality,Track.LeftSide,Discontinuity.Continuous,AddrMRange(3013, 3109),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(117856,202230671,roadPart1,AdministrativeClass.Municipality,Track.RightSide,Discontinuity.MinorDiscontinuity,AddrMRange(3122, 3227),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(117846,202230706,roadPart1,AdministrativeClass.Municipality,Track.LeftSide,Discontinuity.MinorDiscontinuity,AddrMRange(3122, 3227),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(117868,223786767,roadPart1,AdministrativeClass.Municipality,Track.Combined,Discontinuity.Continuous,AddrMRange(945, 1349),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(117854,261506567,roadPart1,AdministrativeClass.State,Track.RightSide,Discontinuity.Continuous,AddrMRange(3740, 3859),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(117850,261506574,roadPart1,AdministrativeClass.State,Track.LeftSide,Discontinuity.Continuous,AddrMRange(3740, 3859),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(117863,335760989,roadPart1,AdministrativeClass.Municipality,Track.Combined,Discontinuity.Continuous,AddrMRange(1349, 2375),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(117870,335760990,roadPart1,AdministrativeClass.Municipality,Track.Combined,Discontinuity.MinorDiscontinuity,AddrMRange(2375, 2558),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(117861,335760994,roadPart1,AdministrativeClass.Municipality,Track.Combined,Discontinuity.Continuous,AddrMRange(2558, 2769),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(117871,335760995,roadPart1,AdministrativeClass.Municipality,Track.Combined,Discontinuity.Continuous,AddrMRange(2769, 2838),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None)
+      val roadways = Seq(
+        Roadway(117852,    57937,roadPart1,AdministrativeClass.Municipality,Track.RightSide,Discontinuity.Continuous,        AddrMRange(2940, 2975),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(117860,    57939,roadPart1,AdministrativeClass.Municipality,Track.Combined, Discontinuity.Continuous,        AddrMRange( 574,  945),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(117865,    71016,roadPart1,AdministrativeClass.Municipality,Track.Combined, Discontinuity.Continuous,        AddrMRange( 190,  560),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(117867,    75943,roadPart1,AdministrativeClass.Municipality,Track.Combined, Discontinuity.Continuous,        AddrMRange( 560,  574),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(117853,  7756336,roadPart1,AdministrativeClass.Municipality,Track.RightSide,Discontinuity.MinorDiscontinuity,AddrMRange(2975, 3013),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(117872,  7756342,roadPart1,AdministrativeClass.Municipality,Track.Combined, Discontinuity.Continuous,        AddrMRange(3227, 3234),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(117859,  7756348,roadPart1,AdministrativeClass.Municipality,Track.RightSide,Discontinuity.Continuous,        AddrMRange(3446, 3740),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(117864,148121719,roadPart1,AdministrativeClass.Municipality,Track.Combined, Discontinuity.Continuous,        AddrMRange(2838, 2940),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(117855,148121825,roadPart1,AdministrativeClass.Municipality,Track.RightSide,Discontinuity.Continuous,        AddrMRange(   0,  190),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(117862,148122014,roadPart1,AdministrativeClass.Municipality,Track.Combined, Discontinuity.Continuous,        AddrMRange(3234, 3446),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(117858,148122180,roadPart1,AdministrativeClass.Municipality,Track.RightSide,Discontinuity.MinorDiscontinuity,AddrMRange(3109, 3122),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(117849,148127568,roadPart1,AdministrativeClass.Municipality,Track.LeftSide, Discontinuity.Continuous,        AddrMRange(2940, 2975),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(117845,148127769,roadPart1,AdministrativeClass.Municipality,Track.LeftSide, Discontinuity.MinorDiscontinuity,AddrMRange(2975, 3013),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(117847,148127774,roadPart1,AdministrativeClass.Municipality,Track.LeftSide, Discontinuity.Continuous,        AddrMRange(3446, 3740),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(117844,148127920,roadPart1,AdministrativeClass.Municipality,Track.LeftSide, Discontinuity.MinorDiscontinuity,AddrMRange(3109, 3122),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(117848,148128162,roadPart1,AdministrativeClass.Municipality,Track.LeftSide, Discontinuity.Continuous,        AddrMRange(   0,  190),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(117857,202230603,roadPart1,AdministrativeClass.Municipality,Track.RightSide,Discontinuity.Continuous,        AddrMRange(3013, 3109),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(117851,202230639,roadPart1,AdministrativeClass.Municipality,Track.LeftSide, Discontinuity.Continuous,        AddrMRange(3013, 3109),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(117856,202230671,roadPart1,AdministrativeClass.Municipality,Track.RightSide,Discontinuity.MinorDiscontinuity,AddrMRange(3122, 3227),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(117846,202230706,roadPart1,AdministrativeClass.Municipality,Track.LeftSide,Discontinuity.MinorDiscontinuity, AddrMRange(3122, 3227),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(117868,223786767,roadPart1,AdministrativeClass.Municipality,Track.Combined,Discontinuity.Continuous,         AddrMRange( 945, 1349),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(117854,261506567,roadPart1,AdministrativeClass.State,Track.RightSide,Discontinuity.Continuous,               AddrMRange(3740, 3859),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(117850,261506574,roadPart1,AdministrativeClass.State,Track.LeftSide,Discontinuity.Continuous,                AddrMRange(3740, 3859),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(117863,335760989,roadPart1,AdministrativeClass.Municipality,Track.Combined,Discontinuity.Continuous,         AddrMRange(1349, 2375),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(117870,335760990,roadPart1,AdministrativeClass.Municipality,Track.Combined,Discontinuity.MinorDiscontinuity, AddrMRange(2375, 2558),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(117861,335760994,roadPart1,AdministrativeClass.Municipality,Track.Combined,Discontinuity.Continuous,         AddrMRange(2558, 2769),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(117871,335760995,roadPart1,AdministrativeClass.Municipality,Track.Combined,Discontinuity.Continuous,         AddrMRange(2769, 2838),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None)
       )
       val linearLocations = Seq(
         LinearLocation(471800, 1.0,"e3d006d0-7f3a-4e2a-b5e7-6fa07cb219e2:2",0.0,117.491,SideCode.TowardsDigitizing,1698414053000L,(CalibrationPointReference(None,None),CalibrationPointReference(None,None)),List(Point(434444.654,6907497.809,0.0), Point(434394.127,6907603.88,0.0)),FrozenLinkInterface,261506574,Some(DateTime.now().minusDays(2)),None),
@@ -701,13 +705,13 @@ class ProjectLinkRecalculationSpec extends AnyFunSuite with Matchers {
       val roadName = Some("testRoad")
 
       val roadways = Seq(
-        Roadway(108206,191749371,roadPart1,AdministrativeClass.Municipality,Track.RightSide,Discontinuity.Continuous,AddrMRange(0, 228),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(108208,191749958,roadPart1,AdministrativeClass.Municipality,Track.LeftSide,Discontinuity.Continuous,AddrMRange(0, 228),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(108216,335582466,roadPart1,AdministrativeClass.Municipality,Track.Combined,Discontinuity.MinorDiscontinuity,AddrMRange(228, 1532),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(108209,335582469,roadPart1,AdministrativeClass.Municipality,Track.RightSide,Discontinuity.Continuous,AddrMRange(1532, 2656),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(108100,335582470,roadPart1,AdministrativeClass.Municipality,Track.LeftSide,Discontinuity.Continuous,AddrMRange(1532, 2656),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(108215,335582475,roadPart1,AdministrativeClass.Municipality,Track.RightSide,Discontinuity.EndOfRoad,AddrMRange(2656, 2857),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(108203,335582476,roadPart1,AdministrativeClass.Municipality,Track.LeftSide,Discontinuity.EndOfRoad,AddrMRange(2656, 2857),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None)
+        Roadway(108206,191749371,roadPart1,AdministrativeClass.Municipality,Track.RightSide,Discontinuity.Continuous,        AddrMRange(   0,  228),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(108208,191749958,roadPart1,AdministrativeClass.Municipality,Track.LeftSide, Discontinuity.Continuous,        AddrMRange(   0,  228),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(108216,335582466,roadPart1,AdministrativeClass.Municipality,Track.Combined, Discontinuity.MinorDiscontinuity,AddrMRange( 228, 1532),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(108209,335582469,roadPart1,AdministrativeClass.Municipality,Track.RightSide,Discontinuity.Continuous,        AddrMRange(1532, 2656),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(108100,335582470,roadPart1,AdministrativeClass.Municipality,Track.LeftSide, Discontinuity.Continuous,        AddrMRange(1532, 2656),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(108215,335582475,roadPart1,AdministrativeClass.Municipality,Track.RightSide,Discontinuity.EndOfRoad,         AddrMRange(2656, 2857),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(108203,335582476,roadPart1,AdministrativeClass.Municipality,Track.LeftSide, Discontinuity.EndOfRoad,         AddrMRange(2656, 2857),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None)
       )
       
       val linearLocations = Seq(
@@ -889,18 +893,18 @@ class ProjectLinkRecalculationSpec extends AnyFunSuite with Matchers {
       val roadName = Some("testRoad")
 
       val roadways = Seq(
-        Roadway(75213,160582412,roadPart1,AdministrativeClass.Municipality,Track.RightSide,Discontinuity.Continuous,AddrMRange(3110, 3284),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(74607,160589634,roadPart1,AdministrativeClass.Municipality,Track.Combined,Discontinuity.MinorDiscontinuity,AddrMRange(0, 628),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(75407,160589636,roadPart1,AdministrativeClass.Municipality,Track.Combined,Discontinuity.Continuous,AddrMRange(628, 1155),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(75014,160589638,roadPart1,AdministrativeClass.Municipality,Track.Combined,Discontinuity.MinorDiscontinuity,AddrMRange(1155, 1287),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(75303,160589644,roadPart1,AdministrativeClass.Municipality,Track.Combined,Discontinuity.Continuous,AddrMRange(2688, 2916),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(75003,160589646,roadPart1,AdministrativeClass.Municipality,Track.RightSide,Discontinuity.Continuous,AddrMRange(2916, 3110),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(75282,160589649,roadPart1,AdministrativeClass.Municipality,Track.LeftSide,Discontinuity.Continuous,AddrMRange(2916, 3110),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(74923,161305798,roadPart1,AdministrativeClass.Municipality,Track.Combined,Discontinuity.EndOfRoad,AddrMRange(3284, 5709),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(75393,161305865,roadPart1,AdministrativeClass.Municipality,Track.LeftSide,Discontinuity.Continuous,AddrMRange(3110, 3284),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(89084,284576060,roadPart1,AdministrativeClass.Municipality,Track.Combined,Discontinuity.Continuous,AddrMRange(1287, 1580),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(89009,284576076,roadPart1,AdministrativeClass.Municipality,Track.RightSide,Discontinuity.Continuous,AddrMRange(1580, 2688),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(89166,284576084,roadPart1,AdministrativeClass.Municipality,Track.LeftSide,Discontinuity.Continuous,AddrMRange(1580, 2688),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None)
+        Roadway(75213,160582412,roadPart1,AdministrativeClass.Municipality,Track.RightSide,Discontinuity.Continuous,        AddrMRange(3110, 3284),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(74607,160589634,roadPart1,AdministrativeClass.Municipality,Track.Combined, Discontinuity.MinorDiscontinuity,AddrMRange(   0,  628),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(75407,160589636,roadPart1,AdministrativeClass.Municipality,Track.Combined, Discontinuity.Continuous,        AddrMRange( 628, 1155),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(75014,160589638,roadPart1,AdministrativeClass.Municipality,Track.Combined, Discontinuity.MinorDiscontinuity,AddrMRange(1155, 1287),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(75303,160589644,roadPart1,AdministrativeClass.Municipality,Track.Combined, Discontinuity.Continuous,        AddrMRange(2688, 2916),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(75003,160589646,roadPart1,AdministrativeClass.Municipality,Track.RightSide,Discontinuity.Continuous,        AddrMRange(2916, 3110),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(75282,160589649,roadPart1,AdministrativeClass.Municipality,Track.LeftSide, Discontinuity.Continuous,        AddrMRange(2916, 3110),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(74923,161305798,roadPart1,AdministrativeClass.Municipality,Track.Combined, Discontinuity.EndOfRoad,         AddrMRange(3284, 5709),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(75393,161305865,roadPart1,AdministrativeClass.Municipality,Track.LeftSide, Discontinuity.Continuous,        AddrMRange(3110, 3284),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(89084,284576060,roadPart1,AdministrativeClass.Municipality,Track.Combined, Discontinuity.Continuous,        AddrMRange(1287, 1580),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(89009,284576076,roadPart1,AdministrativeClass.Municipality,Track.RightSide,Discontinuity.Continuous,        AddrMRange(1580, 2688),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(89166,284576084,roadPart1,AdministrativeClass.Municipality,Track.LeftSide, Discontinuity.Continuous,        AddrMRange(1580, 2688),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None)
       )
 
       val linearLocations = Seq(
@@ -1089,9 +1093,9 @@ class ProjectLinkRecalculationSpec extends AnyFunSuite with Matchers {
       val roadName = Some("testRoad")
 
       val roadways = Seq(
-        Roadway(135774,225079142,roadPart1,AdministrativeClass.Municipality,Track.Combined,Discontinuity.EndOfRoad,AddrMRange(672, 1018),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(135773,335834748,roadPart1,AdministrativeClass.Municipality,Track.RightSide,Discontinuity.MinorDiscontinuity,AddrMRange(0, 672),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(135772,335834749,roadPart1,AdministrativeClass.Municipality,Track.LeftSide,Discontinuity.MinorDiscontinuity,AddrMRange(0, 672),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None)
+        Roadway(135774,225079142,roadPart1,AdministrativeClass.Municipality,Track.Combined, Discontinuity.EndOfRoad,         AddrMRange(672, 1018),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(135773,335834748,roadPart1,AdministrativeClass.Municipality,Track.RightSide,Discontinuity.MinorDiscontinuity,AddrMRange(  0,  672),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(135772,335834749,roadPart1,AdministrativeClass.Municipality,Track.LeftSide, Discontinuity.MinorDiscontinuity,AddrMRange(  0,  672),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None)
       )
       val linearLocations = Seq(
         LinearLocation(500648, 19.0,"551a410b-aa59-4137-9487-dc43955c2aef:1",0.0,110.485,SideCode.TowardsDigitizing,1698414053000L,(CalibrationPointReference(None,None),CalibrationPointReference(None,None)),List(Point(443633.595,7376191.484,0.0), Point(443677.179,7376292.999,0.0)),FrozenLinkInterface,335834748,Some(DateTime.now().minusDays(2)),None),
@@ -1335,9 +1339,9 @@ class ProjectLinkRecalculationSpec extends AnyFunSuite with Matchers {
       )
 
       val roadways = Seq(
-        Roadway(roadwayIdCombinedSection,roadwayNumberCombinedSection,  roadPart,AdministrativeClass.Municipality,Track.Combined,  Discontinuity.EndOfRoad, AddrMRange(696,1042),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(roadwayIdRightTrack,     roadwayNumberRightTrackSection,roadPart,AdministrativeClass.Municipality,Track.RightSide, Discontinuity.Continuous,AddrMRange(  0, 696),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(roadwayIdLeftTrack,      roadwayNumberLeftTrackSection, roadPart,AdministrativeClass.Municipality,Track.LeftSide,  Discontinuity.Continuous,AddrMRange(  0, 696),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None)
+        Roadway(roadwayIdCombinedSection,roadwayNumberCombinedSection,  roadPart,AdministrativeClass.Municipality,Track.Combined,  Discontinuity.EndOfRoad, AddrMRange(696,1042),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(roadwayIdRightTrack,     roadwayNumberRightTrackSection,roadPart,AdministrativeClass.Municipality,Track.RightSide, Discontinuity.Continuous,AddrMRange(  0, 696),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(roadwayIdLeftTrack,      roadwayNumberLeftTrackSection, roadPart,AdministrativeClass.Municipality,Track.LeftSide,  Discontinuity.Continuous,AddrMRange(  0, 696),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None)
       )
 
       val linearlocations = Seq(
@@ -1431,12 +1435,12 @@ class ProjectLinkRecalculationSpec extends AnyFunSuite with Matchers {
       val roadName = Some("testRoad")
 
       val roadways = Seq(
-        Roadway(8115,46094,roadPart,AdministrativeClass.Municipality,Track.Combined,Discontinuity.Continuous,AddrMRange(710, 1460),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(7313,46095,roadPart,AdministrativeClass.State,Track.Combined,Discontinuity.Continuous,AddrMRange(1460, 1660),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(7576,46096,roadPart,AdministrativeClass.State,Track.Combined,Discontinuity.Continuous,AddrMRange(1660, 2300),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(7817,46097,roadPart,AdministrativeClass.State,Track.Combined,Discontinuity.Continuous,AddrMRange(2300, 4214),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(70547,148121865,roadPart,AdministrativeClass.Municipality,Track.RightSide,Discontinuity.MinorDiscontinuity,AddrMRange(0, 710),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
-        Roadway(74588,148128183,roadPart,AdministrativeClass.Municipality,Track.LeftSide,Discontinuity.MinorDiscontinuity,AddrMRange(0, 710),false,DateTime.now().minusDays(2),None,"test",None,14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None)
+        Roadway( 8115,    46094,roadPart,AdministrativeClass.Municipality,Track.Combined, Discontinuity.Continuous,        AddrMRange( 710, 1460),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway( 7313,    46095,roadPart,AdministrativeClass.State,       Track.Combined, Discontinuity.Continuous,        AddrMRange(1460, 1660),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway( 7576,    46096,roadPart,AdministrativeClass.State,       Track.Combined, Discontinuity.Continuous,        AddrMRange(1660, 2300),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway( 7817,    46097,roadPart,AdministrativeClass.State,       Track.Combined, Discontinuity.Continuous,        AddrMRange(2300, 4214),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(70547,148121865,roadPart,AdministrativeClass.Municipality,Track.RightSide,Discontinuity.MinorDiscontinuity,AddrMRange(   0,  710),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None),
+        Roadway(74588,148128183,roadPart,AdministrativeClass.Municipality,Track.LeftSide, Discontinuity.MinorDiscontinuity,AddrMRange(   0,  710),false,DateTime.now().minusDays(2),None,"test",None,ELY14,TerminationCode.NoTermination,DateTime.now().minusDays(2),None)
       )
 
       val linearLocations = Seq(
