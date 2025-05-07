@@ -468,6 +468,16 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
         }
       }
 
+      def returnCrossRoadValidationError(change: TiekamuRoadLinkChange, linearLocationsAtPoint:Seq[LinearLocation]): Option[TiekamuRoadLinkChangeError] = {
+        Some(
+          TiekamuRoadLinkChangeError(
+            "Links cannot be merged together, found linear location(s) that connect(s) between the two links. (Cross road case)",
+            change,
+            getMetaData(change, linearLocationsAtPoint)
+          )
+        )
+      }
+
       def crossRoadValidationForCombinationCase(): Seq[TiekamuRoadLinkChangeError] = {
         val oldLinkIds = otherChangesWithSameNewLinkId.map(_.oldLinkId) :+ change.oldLinkId
         val oldLinearLocations = linearLocations.filter(ll => oldLinkIds.contains(ll.linkId))
@@ -483,7 +493,7 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
             val endPoint = connectingOld.getLastPoint
 
             val connectingPoint =
-              if (linearLocationStartAndEndPoints.contains(startingPoint)) startingPoint
+              if (linearLocationStartAndEndPoints.exists(p => p.connected(startingPoint))) startingPoint
               else endPoint
 
             val linearLocationsAtPoint = linearLocationDAO.fetchActiveLinearLocationsWithPoint(connectingPoint)
@@ -492,13 +502,29 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
             )
 
             if (problematicLinearLocations.nonEmpty) {
-              Some(
-                TiekamuRoadLinkChangeError(
-                  "Links cannot be merged together, found linear location(s) that connect(s) between the two links. (Cross road case)",
-                  change,
-                  getMetaData(change, linearLocationsAtPoint)
-                )
-              )
+              val changes = problematicLinearLocations.flatMap(ll => {
+                val linkId = ll.linkId
+                tiekamuRoadLinkChanges.filter(ch => ch.oldLinkId == linkId)
+              })
+
+              if (changes.nonEmpty) { // If there are changes to the problematic linear locations then we need further validation
+                // Fetch the new links
+                val kgvLinksForChanges = kgvClient.roadLinkVersionsData.fetchByLinkIds(changes.map(_.newLinkId).toSet)
+                // Get the start and end points
+                val startAndEndPoints = kgvLinksForChanges.flatMap(kgvLink => {
+                  Seq(kgvLink.geometry.head, kgvLink.geometry.last)
+                })
+
+                if (startAndEndPoints.contains(connectingPoint)){ // If the connecting point still has a linear location connected after the days link changes
+                  // Then it is an error
+                  returnCrossRoadValidationError(change, linearLocationsAtPoint)
+                } else {
+                  None
+                }
+              } else { // If there are no changes for the problematic linear location in the same day
+                // Then it is an error
+                returnCrossRoadValidationError(change, linearLocationsAtPoint)
+              }
             } else {
               None
             }

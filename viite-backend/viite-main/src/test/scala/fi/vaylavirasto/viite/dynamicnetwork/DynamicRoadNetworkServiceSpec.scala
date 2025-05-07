@@ -105,7 +105,7 @@ class DynamicRoadNetworkServiceSpec extends AnyFunSuite with Matchers{
      *  -------->---------->
      *
      *          After:
-     *          C
+     *          C (the goal would be to replace A and B with this one)
      *  ------------------->
      */
     runWithRollback {
@@ -305,6 +305,9 @@ class DynamicRoadNetworkServiceSpec extends AnyFunSuite with Matchers{
 
       // The testing itself
       val res = dynamicRoadNetworkService.validateTiekamuRoadLinkChanges(tiekamuRoadLinkChanges,linearlocations, kgvRoadLinks, complementaryLinks)
+      // 2 validation errors
+      // 1 for each link (A and B)
+      // Links cannot be merged together, found linear location(s) that connect(s) between the two links. (Cross road case)
       res.length should be (2)
     }
   }
