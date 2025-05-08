@@ -496,20 +496,24 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
               if (linearLocationStartAndEndPoints.exists(p => p.connected(startingPoint))) startingPoint
               else endPoint
 
+            // Find all the active linear locations that have geometry on the connecting point
             val linearLocationsAtPoint = linearLocationDAO.fetchActiveLinearLocationsWithPoint(connectingPoint)
+            // Filter out the linear locations that are part of the change, leaving only the possibly "problematic" linear locations
+            // that may prevent the combination due to a crossing/junction
             val problematicLinearLocations = linearLocationsAtPoint.filterNot(ll =>
               oldLinearLocations.exists(_.linkId == ll.linkId)
             )
 
             if (problematicLinearLocations.nonEmpty) {
-              val changes = problematicLinearLocations.flatMap(ll => {
+              val problematicLinearLocationChanges = problematicLinearLocations.flatMap(ll => {
                 val linkId = ll.linkId
                 tiekamuRoadLinkChanges.filter(ch => ch.oldLinkId == linkId)
               })
 
-              if (changes.nonEmpty) { // If there are changes to the problematic linear locations then we need further validation
-                // Fetch the new links
-                val kgvLinksForChanges = kgvClient.roadLinkVersionsData.fetchByLinkIds(changes.map(_.newLinkId).toSet)
+              if (problematicLinearLocationChanges.nonEmpty) { // If there are changes to the problematic linear locations then we need further validation
+                // Get the new links from KGV links
+                val newLinkIds = problematicLinearLocationChanges.map(_.newLinkId).toSet
+                val kgvLinksForChanges = kgvRoadLinks.filter(kgvLink => newLinkIds.contains(kgvLink.linkId))
                 // Get the start and end points
                 val startAndEndPoints = kgvLinksForChanges.flatMap(kgvLink => {
                   Seq(kgvLink.geometry.head, kgvLink.geometry.last)
