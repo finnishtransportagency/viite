@@ -891,15 +891,18 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
     }
   }
 
-  test("Test ProjectDeltaCalculator.partition When executing a Unchanged operation but changing it's ELY value Then returns the correct From RoadSection -> To RoadSection mapping, ensuring the new ELY is in effect.") {
+  test("Test ProjectDeltaCalculator.partition When executing a Unchanged operation but changing it's ArealRoadMaintainer value  Then returns the correct From RoadSection -> To RoadSection mapping, ensuring the new ARM is in effect.") {
     runWithRollback {
+      val originalARM = ArealRoadMaintainer.ELYPohjoisSavo
+      val changedARM  = ArealRoadMaintainer.ELYLappi
+
       val addresses   = (0 to 9).map(i => {
         createRoadAddress(i * 12, 12L)
       })
       val links       = addresses.filter(_.addrMRange.end < 61).map(a => {
-        (a, toProjectLink(project, RoadAddressChangeType.Unchanged)(a.copy(ely = 5)).copy(roadwayId = 0))
+        (a, toProjectLink(project, RoadAddressChangeType.Unchanged)(a.copy(ely = changedARM.number)).copy(roadwayId = 0))
       })
-      val roadway205 = toRoadway(links.map(_._2).map(_.copy(ely = 8)))
+      val roadway205 = toRoadway(links.map(_._2).map(_.copy(ely = originalARM.number)))
       roadwayDAO.create(Seq(roadway205))
 
       val partitions  = ProjectDeltaCalculator.generateChangeTableRowsFromProjectLinks(links.map(_._2), links.map(_._2))
@@ -909,8 +912,8 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
       val (to, fr) = partitions2.head
       fr.addrMRange.start should be(to.addrMRange.start)
       fr.addrMRange.end   should be(to.addrMRange.end)
-      fr.ely should be(8)
-      to.ely should be(5)
+      fr.arealRoadMaintainer should be(originalARM)
+      to.arealRoadMaintainer should be(changedARM)
     }
   }
 
@@ -1084,7 +1087,7 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
         createRoadAddress(i * 2, 2L)
       })
       val projectLinksWithCp = addresses.sortBy(_.addrMRange.start).map(a => {
-        val projectLink = toProjectLink(project, RoadAddressChangeType.Unchanged)(a.copy(ely = 5))
+        val projectLink = toProjectLink(project, RoadAddressChangeType.Unchanged)(a.copy(ely = 14))
         if (a.id == 10L) (a.copy(roadwayNumber = 1), projectLink.copy(calibrationPointTypes = (NoCP, UserDefinedCP), roadwayNumber = 1)) else if (a.id > 10L) (a.copy(roadwayNumber = 2), projectLink.copy(roadwayNumber = 2)) else (a.copy(roadwayNumber = 1), projectLink.copy(roadwayNumber = 1))
       })
 
@@ -1107,7 +1110,7 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
         createRoadAddress(i * 2, 2L)
       })
       val projectLinksWithCp = addresses.sortBy(_.addrMRange.start).map(a => {
-        val projectLink = toProjectLink(project, RoadAddressChangeType.Unchanged)(a.copy(ely = 5))
+        val projectLink = toProjectLink(project, RoadAddressChangeType.Unchanged)(a.copy(ely = 14))
         if (a.id == 10L)
           (a.copy(roadwayNumber = 1), projectLink.copy(calibrationPointTypes = (NoCP, JunctionPointCP), roadwayNumber = 1))
         else if (a.id > 10L)

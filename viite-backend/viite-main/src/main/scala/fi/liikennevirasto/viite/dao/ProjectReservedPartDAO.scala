@@ -8,7 +8,9 @@ import scalikejdbc._
 
 //TODO naming SQL conventions
 
-case class ProjectReservedPart(id: Long, roadPart: RoadPart, addressLength: Option[Long] = None, discontinuity: Option[Discontinuity] = None, ely: Option[Long] = None, newLength: Option[Long] = None, newDiscontinuity: Option[Discontinuity] = None, newEly: Option[Long] = None, startingLinkId: Option[String] = None) {
+case class ProjectReservedPart(id: Long, roadPart: RoadPart, addressLength: Option[Long] = None,
+                               discontinuity: Option[Discontinuity] = None, ely: Option[Long] = None, newLength: Option[Long] = None,
+                               newDiscontinuity: Option[Discontinuity] = None, newEly: Option[Long] = None, startingLinkId: Option[String] = None) {
   def holds(baseRoadAddress: BaseRoadAddress): Boolean = {
     roadPart == baseRoadAddress.roadPart
   }

@@ -1,12 +1,14 @@
 package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.viite.dao.{ProjectLink, _}
-import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, CalibrationPointType, Discontinuity, RoadAddressChangeType, RoadPart, Track}
+import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, ArealRoadMaintainer, CalibrationPointType, Discontinuity, RoadAddressChangeType, RoadPart, Track}
 import org.joda.time.DateTime
 
 import scala.annotation.tailrec
 
-case class RoadwaySection(roadNumber: Long, roadPartNumberStart: Long, roadPartNumberEnd: Long, track: Track, addrMRange: AddrMRange, discontinuity: Discontinuity, administrativeClass: AdministrativeClass, ely: Long, reversed: Boolean, roadwayNumber: Long, projectLinks: Seq[ProjectLink]) {
+case class RoadwaySection(roadNumber: Long, roadPartNumberStart: Long, roadPartNumberEnd: Long, track: Track, addrMRange: AddrMRange,
+                          discontinuity: Discontinuity, administrativeClass: AdministrativeClass, arealRoadMaintainer: ArealRoadMaintainer, reversed: Boolean,
+                          roadwayNumber: Long, projectLinks: Seq[ProjectLink]) {
 }
 
 /**
@@ -232,14 +234,20 @@ object ProjectDeltaCalculator {
         pl.roadPart == pls.head.roadPart
       }))
     }).values.flatten.map(pl => {
-      RoadwaySection(pl.originalRoadPart.roadNumber, pl.originalRoadPart.partNumber, pl.originalRoadPart.partNumber, pl.originalTrack, pl.originalAddrMRange, pl.originalDiscontinuity, pl.originalAdministrativeClass, pl.originalEly, pl.reversed, pl.roadwayNumber, Seq()) -> RoadwaySection(pl.roadPart.roadNumber, pl.roadPart.partNumber, pl.roadPart.partNumber, pl.track, pl.addrMRange, pl.discontinuity, pl.administrativeClass, pl.ely, pl.reversed, pl.roadwayNumber, Seq())
+      RoadwaySection(
+        pl.originalRoadPart.roadNumber, pl.originalRoadPart.partNumber, pl.originalRoadPart.partNumber, pl.originalTrack, pl.originalAddrMRange,
+        pl.originalDiscontinuity, pl.originalAdministrativeClass, ArealRoadMaintainer.getELY(pl.originalEly), pl.reversed, pl.roadwayNumber, Seq()
+      ) ->
+        RoadwaySection(pl.roadPart.roadNumber, pl.roadPart.partNumber, pl.roadPart.partNumber, pl.track, pl.addrMRange,
+        pl.discontinuity, pl.administrativeClass, ArealRoadMaintainer.getELY(pl.ely), pl.reversed, pl.roadwayNumber, Seq()
+        )
     }).toSeq
 
     val sections = sectioned.map(sect => {
       val (src, targetToMap) = sect
       val target = targetToMap.copy(projectLinks = projectLinks.filter(link => {
           link.roadPart == RoadPart(targetToMap.roadNumber, targetToMap.roadPartNumberEnd) &&
-          link.track == targetToMap.track && link.ely == targetToMap.ely &&
+          link.track == targetToMap.track && ArealRoadMaintainer.getELY(link.ely) == targetToMap.arealRoadMaintainer &&
           targetToMap.addrMRange.contains(link.addrMRange)
         }))
 
