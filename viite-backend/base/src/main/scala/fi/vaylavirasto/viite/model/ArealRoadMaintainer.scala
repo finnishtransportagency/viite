@@ -25,7 +25,7 @@ sealed trait ArealRoadMaintainer {
   assert(typeInfo!="Describe your new typeName here", "Your implementing trait must override typeInfo.")
 
   /** Returns the id for this ArealRoadMaintainer.
-   * Id is a string consisting of the typeName, and number of this ArealRoadMaintainer.
+   * Id is a string consisting of the typeName and number of this ArealRoadMaintainer.
    * This in the id we want to save to the database, too. */
   final def id: String = {  s"$typeName$number"  }
 
@@ -36,7 +36,7 @@ sealed trait ArealRoadMaintainer {
   final def toStringAll    : String = {  s"$typeName $number $name ($shortName)" }
 }
 
-/** A specialized trait for EVKs, with pre-defined typeName, and typeInfo for them. */
+/** A specialized trait for EVKs, with pre-defined typeName and typeInfo for them. */
 trait EVK extends ArealRoadMaintainer {
   override val typeName: String = "EVK"
   override val typeInfo: String = "Elinvoimakeskus. Vastuussa teiden hallinnoinnista 01.01.2026 alkaen."
@@ -111,7 +111,7 @@ object ArealRoadMaintainer {
 
   /**
    * Getter/constructor.
-   * As the only allowed ArealRoadMaintainers are pre-defined, getter, and "constructor" are the same.
+   * As the only allowed ArealRoadMaintainers are pre-defined, getter and "constructor" are the same.
    *
    * @param nameString The string to be interpreted as an ArealRoadMaintainer.
    * @return an ArealRoadMaintainer, according to the given nameString
