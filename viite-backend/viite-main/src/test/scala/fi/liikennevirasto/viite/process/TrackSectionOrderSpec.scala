@@ -25,7 +25,7 @@ class TrackSectionOrderSpec extends AnyFunSuite with Matchers {
 
   private def generateProjectLink(id: Long, geometry: Seq[Point], track: Track = Track.Combined) = {
     //TODO the road address now have the linear location id and as been setted to 1L
-    toProjectLink(rap, RoadAddressChangeType.New)(RoadAddress(id, 1L, RoadPart(5, 1), AdministrativeClass.Unknown, track, Discontinuity.Continuous, AddrMRange(0L, 0L), Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), id.toString, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), geometry, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+    toProjectLink(rap, RoadAddressChangeType.New)(RoadAddress(id, 1L, RoadPart(5, 1), AdministrativeClass.Unknown, track, Discontinuity.Continuous, AddrMRange(0L, 0L), Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), id.toString, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), geometry, LinkGeomSource.NormalLinkInterface, ArealRoadMaintainer.ELYPohjoisSavo, NoTermination, 0))
   }
 
   test("Test orderProjectLinksTopologyByGeometry When is not dependent on the links order Then the links should be ordered") {

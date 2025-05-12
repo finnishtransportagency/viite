@@ -2,7 +2,7 @@ package fi.liikennevirasto
 
 import fi.liikennevirasto.viite.dao.BaseRoadAddress
 import fi.liikennevirasto.viite.model.RoadAddressLinkLike
-import fi.vaylavirasto.viite.model.Discontinuity.{ChangingELYCode, Discontinuous, EndOfRoad}
+import fi.vaylavirasto.viite.model.Discontinuity.{ChangingArealRoadMaintainer, Discontinuous, EndOfRoad}
 import fi.vaylavirasto.viite.model.{RoadAddressChangeType, SideCode}
 
 package object viite {
@@ -80,7 +80,7 @@ package object viite {
   val NoContinuityCodesAtEndMessage = "Tieosan lopusta puuttuu jatkuvuuskoodi."
   val ConnectedDiscontinuousMessage = "Jatkuva tielinkki on merkitty epäjatkuvaksi, korjaa jatkuu-koodi."
   val DifferingDiscontinuityCodesForTracks = " Tieosan lopussa on yhteensopimattomat jatkuu-koodit. Tarkista jatkuu-koodit."
-  val ElyCodeChangeNotPresent: String = s" Tieosan lopussa ei ole jatkuvuuskoodia " + s""" "${ChangingELYCode.description}" """ + s"(${ChangingELYCode.value})."
+  val ElyCodeChangeNotPresent: String = s" Tieosan lopussa ei ole jatkuvuuskoodia " + s""" "${ChangingArealRoadMaintainer.description}" """ + s"(${ChangingArealRoadMaintainer.value})."
   val HasNotHandledLinksMessage = "%d kpl käsittelemättömiä linkkejä tieosalla %s."
   val ErrorInValidationOfUnchangedLinksMessage = "Ennallaan toimenpidettä ei voi edeltää muu kuin ennallaan-toimenpide."
   val RampDiscontinuityFoundMessage = "Rampin tieosan sisällä on epäjatkuvuuksia. Tarkista Jatkuu-koodit."
@@ -93,8 +93,8 @@ package object viite {
   val DoubleEndOfRoadMessage = s"""Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuolisen tieosan jatkuvuuskoodia "${EndOfRoad.description}" (${EndOfRoad.value}) tulee muuttaa. Tarkasta ja muuta tieosoitteen %s jatkuvuuskoodi."""
   val DiscontinuousCodeOnConnectedRoadPartOutsideMessage = s"""Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuolisen tieosan jatkuvuuskoodia "${Discontinuous.description}" (${Discontinuous.value}) tulee muuttaa. Tarkasta ja muuta tieosoitteen %s jatkuvuuskoodi."""
   val NotDiscontinuousCodeOnDisconnectedRoadPartOutsideMessage = s"""Tekemäsi tieosoitemuutoksen vuoksi projektia edeltävän tieosan päähän muodostuu epäjatkuvuus. Tarkasta ja muuta tieosan %s jatkuvuuskoodi."""
-  val ElyDiscontinuityCodeBeforeProjectButNoElyChangeMessage = s"""Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuolisen tieosan jatkuvuuskoodia "${ChangingELYCode.description}" (${ChangingELYCode.value}) tulee muuttaa. Tarkasta ja muuta tieosoitteen %s jatkuvuuskoodi."""
-  val WrongDiscontinuityBeforeProjectWithElyChangeInProjectMessage = "Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuolisen tieosan ja projektin välillä vaihtuu ELY. Tarkasta ja muuta tieosan %s jatkuvuuskoodi."
+  val ArealRoadMaintainerDiscontinuityBeforeProjectButNoARMChangeMessage = s"""Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuolisen tieosan jatkuvuuskoodia "${ChangingArealRoadMaintainer.description}" (${ChangingArealRoadMaintainer.value}) tulee muuttaa. Tarkasta ja muuta tieosoitteen %s jatkuvuuskoodi."""
+  val WrongDiscontinuityBeforeProjectWithArealRoadMaintainerChangeInProjectMessage = "Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuolisen tieosan ja projektin välillä vaihtuu EVK/ELY. Tarkasta ja muuta tieosan %s jatkuvuuskoodi."
   val WrongDiscontinuityOutsideOfProjectMessage = s"""Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuolisen tieosan %s jatkuvuuskoodi tulee muuttaa."""
   val EndOfRoadMiddleOfPartMessage = s"""Tieosan keskellä olevalla linkillä on jatkuvuuskoodi "${EndOfRoad.description}" (${EndOfRoad.value})."""
   val RoadNotAvailableMessage = s"Tieosaa ei ole varattu projektiin tai se on varattuna toisessa projektissa."
@@ -112,10 +112,10 @@ package object viite {
   val MultipleARMsInPartMessage = s"Samalla tieosalla eri EVK-/ELY-numeroita. Tieosan tulee vaihtua EVK:n/ELY:n rajalla. Korjaa tieosa- tai EVK/ELY-numeroa."
   val IncorrectOperationTypeOnElyCodeChangeMessage =  s"ELY-koodin muutos ei onnistu, ota yhteyttä pääkäyttäjään."
   val ElyCodeChangeButNoRoadPartChangeMessage = s"ELY-numeromuutos havaittu mutta tieosoitemuutos puuttuu. Tieosanumeron tulee vaihtua ELY-rajalla."
-  val ElyCodeChangeButNoElyChangeMessage = s"ELY-numeromuutos havaittu mutta  ${ChangingELYCode.description}(${ChangingELYCode.value}) jatkuvuuskoodi on väärä. ELY:n rajalla jatkuvuuskoodin tulee olla 3."
-  val ElyCodeDiscontinuityChangeButNoElyChangeMessage = s"Tieosan %s lopussa jatkuu-koodiksi määritelty ${ChangingELYCode.description} (${ChangingELYCode.value}), tarkista tieosien %s ja %s ELY-koodit tai korjaa jatkuu-koodia."
-  val ElyCodeChangeButNotOnEndMessage = s"Tieosan keskellä on jatkuu-koodiksi määritelty ${ChangingELYCode.value}, korjaa jatkuu-koodi."
-  val UnpairedElyCodeChangeMessage = s"Tieosan lopussa on vain toiselle ajoradalle määritelty jatkuu-koodiksi ${ChangingELYCode.description} (${ChangingELYCode.value}), korjaa jatkuu-koodi."
+  val ElyCodeChangeButNoElyChangeMessage = s"ELY-numeromuutos havaittu mutta  ${ChangingArealRoadMaintainer.description}(${ChangingArealRoadMaintainer.value}) jatkuvuuskoodi on väärä. ELY:n rajalla jatkuvuuskoodin tulee olla 3."
+  val ElyCodeDiscontinuityChangeButNoElyChangeMessage = s"Tieosan %s lopussa jatkuu-koodiksi määritelty ${ChangingArealRoadMaintainer.description} (${ChangingArealRoadMaintainer.value}), tarkista tieosien %s ja %s EVK-/ELY-koodit tai korjaa jatkuu-koodia."
+  val ElyCodeChangeButNotOnEndMessage = s"Tieosan keskellä on jatkuu-koodiksi määritelty ${ChangingArealRoadMaintainer.value}, korjaa jatkuu-koodi."
+  val UnpairedElyCodeChangeMessage = s"Tieosan lopussa on vain toiselle ajoradalle määritelty jatkuu-koodiksi ${ChangingArealRoadMaintainer.description} (${ChangingArealRoadMaintainer.value}), korjaa jatkuu-koodi."
   val RoadNotReservedMessage = s"Toimenpidettä ei saa tehdä tieosalle, jota ei ole varattu projektiin. Varaa tieosa %s."
   //RoadNetworkChecker error messages
   val ErrorOverlappingRoadAddress = "Road address overlaps another one."
