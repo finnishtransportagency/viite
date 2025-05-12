@@ -3,9 +3,9 @@ package fi.vaylavirasto.viite.dynamicnetwork
 import fi.liikennevirasto.digiroad2.client.kgv.KgvRoadLink
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
-import fi.liikennevirasto.viite.AwsService
+import fi.liikennevirasto.viite.{AwsService, MaxDistanceForConnectedLinks}
 import fi.liikennevirasto.viite.dao.{LinearLocation, LinearLocationDAO, Roadway, RoadwayDAO}
-import fi.vaylavirasto.viite.geometry.GeometryUtils
+import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import fi.vaylavirasto.viite.geometry.GeometryUtils.scaleToThreeDigits
 import fi.vaylavirasto.viite.model.{LinkGeomSource, RoadLink, RoadPart}
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC
@@ -373,63 +373,88 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
 
   def validateTiekamuRoadLinkChanges(tiekamuRoadLinkChanges: Seq[TiekamuRoadLinkChange], linearLocations: Seq[LinearLocation], kgvRoadLinks: Seq[DynamicRoadNetworkService.this.kgvClient.roadLinkVersionsData.LinkType], complementaryLinks: Seq[RoadLink]
                                     ): Seq[TiekamuRoadLinkChangeError] = {
-    def existsConnectingOrderNumber(orderNumbers: Seq[Double], otherOrderNumbers: Seq[Double]): Boolean = {
+
+    def filterByLinkIdAndMValueRange(allLinearLocations: Seq[LinearLocation], linkId: String, filterMvalueMin: Double, filterMvalueMax: Double): List[LinearLocation] = {
+
+      val mustStartBefore = filterMvalueMax - GeometryUtils.DefaultEpsilon
+      val mustEndAfter = filterMvalueMin + GeometryUtils.DefaultEpsilon
+
+      allLinearLocations
+        .filter(ll =>
+          ll.linkId == linkId &&
+            ll.startMValue <= mustStartBefore &&
+            ll.endMValue >= mustEndAfter &&
+            ll.validTo.isEmpty
+        )
+        .sortBy(_.startMValue)
+        .toList
+    }
+
+    def filterActiveLinearLocationsWithPoint(allLinearLocations: Seq[LinearLocation], point: Point): Seq[LinearLocation] = {
+      allLinearLocations
+        .filter(ll =>
+          ll.validTo.isEmpty &&
+            ll.geometry.exists(geomPoint => geomPoint.distance2DTo(point) <= MaxDistanceForConnectedLinks)
+        )
+    }
+
+    def existsConnectingOrderNumber(orderNumbers: Seq[Double], otherOrderNumbers: Set[Double]): Boolean = {
       val min = orderNumbers.min
       val max = orderNumbers.max
       otherOrderNumbers.contains(min - 1) || otherOrderNumbers.contains(max + 1)
     }
 
-    def existsConnectingRoadway(roadway: Roadway, otherRoadways: Seq[Roadway]): Boolean = {
+    def existsConnectingRoadway(roadway: Roadway, otherRoadways: Set[Roadway]): Boolean = {
       otherRoadways.map(_.addrMRange.start).contains(roadway.addrMRange.end) ||
       otherRoadways.map(_.addrMRange.end).contains(roadway.addrMRange.start)
     }
 
     def checkRoadAddressContinuityForSingleRoadway(linearLocations: Seq[LinearLocation], change: TiekamuRoadLinkChange): Boolean = {
       val linLocsGroupedByLinkId = linearLocations.groupBy(_.linkId)
-      val orderNumbers = linearLocationDAO.fetchByLinkIdAndMValueRange(change.oldLinkId, change.oldStartM, change.oldEndM).map(_.orderNumber)
-      val otherOrderNumbers = linLocsGroupedByLinkId.filter(grp => grp._1 != change.oldLinkId).map(_._2.map(_.orderNumber)).toSeq.flatten
+      val orderNumbers = filterByLinkIdAndMValueRange(linearLocations, change.oldLinkId, change.oldStartM, change.oldEndM).map(_.orderNumber)
+      val otherOrderNumbers = linLocsGroupedByLinkId.filter(grp => grp._1 != change.oldLinkId).map(_._2.map(_.orderNumber)).toSet.flatten
       existsConnectingOrderNumber(orderNumbers, otherOrderNumbers)
     }
 
-    def checkRoadAddressContinuityBetweenRoadways(linearLocations: Seq[LinearLocation], change: TiekamuRoadLinkChange): Boolean = {
+    def checkRoadAddressContinuityBetweenRoadways(linearLocations: Seq[LinearLocation], change: TiekamuRoadLinkChange, roadwaysForLinearLocations: Set[Roadway]): Boolean = {
       val linLocsGroupedByLinkId = linearLocations.groupBy(_.linkId)
-      val roadwayNumber = linearLocationDAO.fetchByLinkIdAndMValueRange(change.oldLinkId, change.oldStartM, change.oldEndM).head.roadwayNumber
-      val roadway = roadwayDAO.fetchByRoadwayNumber(roadwayNumber).getOrElse(throw ViiteException(s"No Roadway found for linear location id: ${change.oldLinkId} startM: ${change.oldStartM} endM: ${change.oldEndM}"))
-      val otherRoadwayNumbers = linLocsGroupedByLinkId.filterNot(grp => grp._1 == change.oldLinkId).map(_._2.map(_.roadwayNumber)).toSeq.flatten.toSet
-      val otherRoadways = roadwayDAO.fetchAllByRoadwayNumbers(otherRoadwayNumbers)
+      val roadwayNumber = filterByLinkIdAndMValueRange(linearLocations, change.oldLinkId, change.oldStartM, change.oldEndM).head.roadwayNumber
+      val roadway = roadwaysForLinearLocations.find(_.roadwayNumber == roadwayNumber).getOrElse(throw ViiteException(s"No Roadway found for linear location id: ${change.oldLinkId} startM: ${change.oldStartM} endM: ${change.oldEndM}"))
+      val otherRoadwayNumbers = linLocsGroupedByLinkId.filterNot(grp => grp._1 == change.oldLinkId).map(_._2.map(_.roadwayNumber)).toSet.flatten
+      val otherRoadways = roadwaysForLinearLocations.filter(rw => otherRoadwayNumbers.contains(rw.roadwayNumber)).toSet
       existsConnectingRoadway(roadway, otherRoadways)
     }
 
-    def getMetaData(change: TiekamuRoadLinkChange, activeLinearLocations: Seq[LinearLocation]): TiekamuRoadLinkErrorMetaData = {
+    def getMetaData(change: TiekamuRoadLinkChange, activeLinearLocations: Seq[LinearLocation], roadwaysForLinearLocations: Set[Roadway]): TiekamuRoadLinkErrorMetaData = {
       val errorLink = change.oldLinkId
       val errorLinearLocations = activeLinearLocations.filter(ll => ll.linkId == errorLink)
-      val errorRoadwayNumbers = errorLinearLocations.map(_.roadwayNumber)
-      val errorRoadways = roadwayDAO.fetchAllByRoadwayNumbers(errorRoadwayNumbers.toSet)
+      val errorRoadwayNumbers = errorLinearLocations.map(_.roadwayNumber).toSet
+      val errorRoadways = roadwaysForLinearLocations.filter(rw => errorRoadwayNumbers.contains(rw.roadwayNumber)).toSet
       val errorRoadsParts = errorRoadways.map(r => {
         (r.roadPart)
       })
       TiekamuRoadLinkErrorMetaData(errorRoadsParts.head, errorRoadways.head.roadwayNumber, errorLinearLocations.map(_.id), errorLink)
     }
 
-    def validateCombinationCases(otherChangesWithSameNewLinkId: Seq[TiekamuRoadLinkChange], change: TiekamuRoadLinkChange, linearLocations: Seq[LinearLocation]): Seq[TiekamuRoadLinkChangeError] = {
-      def areHomogeneous(linearLocations: Seq[LinearLocation]): Boolean = {
-        val roadwayNumbers = linearLocations.map(_.roadwayNumber).toSet
-        val roadways = roadwayDAO.fetchAllByRoadwayNumbers(roadwayNumbers)
+    def validateCombinationCases(otherChangesWithSameNewLinkId: Seq[TiekamuRoadLinkChange], change: TiekamuRoadLinkChange, linearLocations: Seq[LinearLocation], roadwaysForLinearLocations: Set[Roadway]): Seq[TiekamuRoadLinkChangeError] = {
+      def areHomogeneous(linearLocations: Set[LinearLocation]): Boolean = {
+        val roadwayNumbers = linearLocations.map(_.roadwayNumber)
+        val roadways = roadwaysForLinearLocations.filter(rw => roadwayNumbers.contains(rw.roadwayNumber))
         val roadGroups = roadways.groupBy(rw => (rw.roadPart, rw.track))
         roadGroups.size == 1
       }
 
       def changesInSameRoadway(linearLocations: Seq[LinearLocation]): Boolean = {
         val roadwayNumbers = linearLocations.map(_.roadwayNumber).toSet
-        val roadways = roadwayDAO.fetchAllByRoadwayNumbers(roadwayNumbers)
+        val roadways = roadwaysForLinearLocations.filter(rw => roadwayNumbers.contains(rw.roadwayNumber))
         val roadGroups = roadways.groupBy(rw => (rw.roadPart, rw.track))
         val singleRoadGroup = roadGroups.head._2
-        singleRoadGroup.map(_.roadwayNumber).distinct.size == 1
+        singleRoadGroup.map(_.roadwayNumber).size == 1
       }
 
       def homogeneityValidationForCombinationCase(): Seq[TiekamuRoadLinkChangeError] = {
-        val oldLinkIds = otherChangesWithSameNewLinkId.map(_.oldLinkId) :+ change.oldLinkId
-        val oldLinearLocations = linearLocations.filter(ll => oldLinkIds.contains(ll.linkId))
+        val oldLinkIds = (otherChangesWithSameNewLinkId.map(_.oldLinkId) :+ change.oldLinkId).toSet
+        val oldLinearLocations = linearLocations.filter(ll => oldLinkIds.contains(ll.linkId)).toSet
         val homogeneous = areHomogeneous(oldLinearLocations)
 
         if (!homogeneous) {
@@ -437,7 +462,7 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
             TiekamuRoadLinkChangeError(
               "Two or more links with non-homogeneous road addresses (road number, road part number, track) cannot merge together.",
               change,
-              getMetaData(change, linearLocations)
+              getMetaData(change, linearLocations, roadwaysForLinearLocations)
             )
           )
         } else {
@@ -446,13 +471,13 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
       }
 
       def continuityValidationForCombinationCase(): Seq[TiekamuRoadLinkChangeError] = {
-        val oldLinkIds = otherChangesWithSameNewLinkId.map(_.oldLinkId) :+ change.oldLinkId
+        val oldLinkIds = (otherChangesWithSameNewLinkId.map(_.oldLinkId) :+ change.oldLinkId).toSet
         val oldLinearLocations = linearLocations.filter(ll => oldLinkIds.contains(ll.linkId))
 
         val continuityCheckPassed = if (changesInSameRoadway(oldLinearLocations)) {
           checkRoadAddressContinuityForSingleRoadway(oldLinearLocations, change)
         } else {
-          checkRoadAddressContinuityBetweenRoadways(oldLinearLocations, change)
+          checkRoadAddressContinuityBetweenRoadways(oldLinearLocations, change, roadwaysForLinearLocations)
         }
 
         if (!continuityCheckPassed) {
@@ -460,7 +485,7 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
             TiekamuRoadLinkChangeError(
               "Road address not continuous, cannot merge links together.",
               change,
-              getMetaData(change, linearLocations)
+              getMetaData(change, linearLocations, roadwaysForLinearLocations)
             )
           )
         } else {
@@ -473,13 +498,13 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
           TiekamuRoadLinkChangeError(
             "Links cannot be merged together, found linear location(s) that connect(s) between the two links. (Cross road case)",
             change,
-            getMetaData(change, linearLocationsAtPoint)
+            getMetaData(change, linearLocationsAtPoint, roadwaysForLinearLocations)
           )
         )
       }
 
       def crossRoadValidationForCombinationCase(): Seq[TiekamuRoadLinkChangeError] = {
-        val oldLinkIds = otherChangesWithSameNewLinkId.map(_.oldLinkId) :+ change.oldLinkId
+        val oldLinkIds = (otherChangesWithSameNewLinkId.map(_.oldLinkId) :+ change.oldLinkId).toSet
         val oldLinearLocations = linearLocations.filter(ll => oldLinkIds.contains(ll.linkId))
 
         oldLinearLocations.flatMap { oldLinearLocation =>
@@ -497,7 +522,7 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
               else endPoint
 
             // Find all the active linear locations that have geometry on the connecting point
-            val linearLocationsAtPoint = linearLocationDAO.fetchActiveLinearLocationsWithPoint(connectingPoint)
+            val linearLocationsAtPoint = filterActiveLinearLocationsWithPoint(linearLocations, connectingPoint)
             // Filter out the linear locations that are part of the change, leaving only the possibly "problematic" linear locations
             // that may prevent the combination due to a crossing/junction
             val problematicLinearLocations = linearLocationsAtPoint.filterNot(ll =>
@@ -540,6 +565,8 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
     }
 
     time(logger, "Validating TiekamuRoadLinkChange sets") {
+      val roadwaysForLinearLocations = roadwayDAO.fetchAllByRoadwayNumbers(linearLocations.map(_.roadwayNumber).toSet).toSet
+
       var tiekamuRoadLinkChangeErrors = new ListBuffer[TiekamuRoadLinkChangeError]()
       tiekamuRoadLinkChanges.foreach(change => {
         val lengthOfChange = GeometryUtils.scaleToThreeDigits(change.oldEndM - change.oldStartM)
@@ -550,7 +577,10 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
         val changesWithNewLinkId = tiekamuRoadLinkChanges.filter(ch => ch.newLinkId == newLinkId)
         val otherChangesWithSameNewLinkId = changesWithNewLinkId.filter(ch => ch.newStartM != newStartM && ch.newEndM != newEndM)
 
-        val newlinkIdChangesLength = GeometryUtils.scaleToThreeDigits(changesWithNewLinkId.map(ch => ch.newEndM).max - changesWithNewLinkId.map(ch => ch.newStartM).min)
+        val (minStartM, maxEndM) = changesWithNewLinkId.foldLeft((Double.MaxValue, Double.MinValue)) {
+          case ((min, max), ch) => (math.min(min, ch.newStartM), math.max(max, ch.newEndM))
+        }
+        val newlinkIdChangesLength = GeometryUtils.scaleToThreeDigits(maxEndM - minStartM)
         val newLink = (kgvRoadLinks ++ complementaryLinks).find(kgvLink => kgvLink.linkId == newLinkId).getOrElse(throw ViiteException(s"Missing new link from KGV/complementary link table. Cannot validate Tiekamu change infos without KGV/complementary road link. LinkId: ${newLinkId}, changeInfo: ${change}"))
 
         val linearLocationsWithOldLinkId = linearLocations.filter(_.linkId == oldLinkId)
@@ -558,10 +588,10 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
         
         // check that the changeset actually has some changes in it
         if (change.oldLinkId == change.newLinkId &&
-            change.oldStartM == change.newStartM &&
-            change.oldEndM == change.newEndM &&
-            !change.digitizationChange) {
-          tiekamuRoadLinkChangeErrors += TiekamuRoadLinkChangeError("No changes found in the changeset ", change, getMetaData(change, linearLocations))
+          change.oldStartM == change.newStartM &&
+          change.oldEndM == change.newEndM &&
+          !change.digitizationChange) {
+          tiekamuRoadLinkChangeErrors += TiekamuRoadLinkChangeError("No changes found in the changeset ", change, getMetaData(change, linearLocations, roadwaysForLinearLocations))
         }
 
         // check that there are no "partial" changes to road addressed links, i.e. only part of the link changes and the other part has no changes applied to it.
@@ -569,15 +599,15 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
           val allChangesWithOldLinkId = tiekamuRoadLinkChanges.filter(_.oldLinkId == oldLinkId)
           val combinedLengthOfChanges = GeometryUtils.scaleToThreeDigits(allChangesWithOldLinkId.map(och => och.oldEndM - och.oldStartM).sum)
           if (combinedLengthOfChanges != roadAddressedLinkLength)
-            tiekamuRoadLinkChangeErrors += TiekamuRoadLinkChangeError("No partial changes allowed. The old link needs to have changes applied to the whole length of the old link", change, getMetaData(change, linearLocations))
+            tiekamuRoadLinkChangeErrors += TiekamuRoadLinkChangeError("No partial changes allowed. The old link needs to have changes applied to the whole length of the old link", change, getMetaData(change, linearLocations, roadwaysForLinearLocations))
         }
         else if (newlinkIdChangesLength != GeometryUtils.scaleToThreeDigits(newLink.length)) {
-          tiekamuRoadLinkChangeErrors += TiekamuRoadLinkChangeError("No partial changes allowed. The new link needs to have changes applied to the whole length of the new link", change, getMetaData(change, linearLocations))
+          tiekamuRoadLinkChangeErrors += TiekamuRoadLinkChangeError("No partial changes allowed. The new link needs to have changes applied to the whole length of the new link", change, getMetaData(change, linearLocations, roadwaysForLinearLocations))
         }
 
         // if there are combined links (A + B = C)
         else if (otherChangesWithSameNewLinkId.nonEmpty) {
-          tiekamuRoadLinkChangeErrors ++= validateCombinationCases(otherChangesWithSameNewLinkId, change, linearLocations)
+          tiekamuRoadLinkChangeErrors ++= validateCombinationCases(otherChangesWithSameNewLinkId, change, linearLocations, roadwaysForLinearLocations)
         }
       })
       tiekamuRoadLinkChangeErrors
