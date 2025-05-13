@@ -45,6 +45,15 @@ trait EVK extends ArealRoadMaintainer {
   val shortName: String
 }
 
+/** A specialized trait for ELYs, with pre-defined typeName and typeInfo for them. */
+trait ELY extends ArealRoadMaintainer {
+  override val typeName: String = "ELY"
+  override val typeInfo: String = "Elinvoima- liikenne ja ympäristökeskus. Vastuussa teiden hallinnoinnista 31.12.2025 saakka."
+  val    number: Int
+  val      name: String
+  val shortName: String
+}
+
 /** Companion object for the abstract ArealRoadMaintainer trait.
  * Defines the ArealRoadMaintainer instances there are, and access to them is to be done through this companion object. */
 object ArealRoadMaintainer {
@@ -61,6 +70,17 @@ object ArealRoadMaintainer {
   case object EVKPohjoisSuomi      extends EVK {    val number =  9;  val name = "Pohjois-Suomi";     val shortName = "POHS"    }
   case object EVKLappi             extends EVK {    val number = 10;  val name = "Lappi";             val shortName = "LAPP"    }
 
+  /* Create pre-defined (traffic responsibility) ELY instances */
+  case object ELYUusimaa           extends ELY {    val number =  1;  val name = "Uusimaa";           val shortName = "UUD"    }
+  case object ELYVarsinaisSuomi    extends ELY {    val number =  2;  val name = "Varsinais-Suomi";   val shortName = "VAR"    }
+  case object ELYKaakkoisSuomi     extends ELY {    val number =  3;  val name = "Kaakkois-Suomi";    val shortName = "KAS"    }
+  case object ELYPirkanmaa         extends ELY {    val number =  4;  val name = "Pirkanmaa";         val shortName = "PIR"    }
+  case object ELYPohjoisSavo       extends ELY {    val number =  8;  val name = "Pohjois-Savo";      val shortName = "POS"    }
+  case object ELYKeskiSuomi        extends ELY {    val number =  9;  val name = "Keski-Suomi";       val shortName = "KES"    }
+  case object ELYEteläPohjanmaa    extends ELY {    val number = 10;  val name = "Etelä-Pohjanmaa";   val shortName = "EPO"    }
+  case object ELYPohjoisPohjanmaa  extends ELY {    val number = 12;  val name = "Pohjois-Pohjanmaa"; val shortName = "POP"    }
+  case object ELYLappi             extends ELY {    val number = 14;  val name = "Lappi";             val shortName = "LAP"    }
+
   /* List of pre-defined EVK instances. These are the only ones Viite accepts. */
   private val EVKset: Set[EVK] = Set[EVK](
     EVKUusimaa,          EVKLounaisSuomi,
@@ -70,14 +90,35 @@ object ArealRoadMaintainer {
     EVKPohjoisSuomi,     EVKLappi
   )
 
+  /* List of pre-defined (traffic responsibility) ELY instances. These are the only ELYs Viite accepts. */
+  private val ELYset = Set[ELY](
+    ELYUusimaa,         ELYVarsinaisSuomi,
+    ELYKaakkoisSuomi,   ELYPirkanmaa,
+    ELYPohjoisSavo,     ELYKeskiSuomi,
+    ELYEteläPohjanmaa,  ELYPohjoisPohjanmaa,
+    ELYLappi
+  )
+
   /** Getter for EVKs only. You may search for an EVK by its number.
    *
    * @param number The number of the EVK you wish to get.
    * @return The EVK asked, when found.
-   **/
+   */
   def getEVK(number: Int): EVK = {
     EVKset.find(_.number == number).getOrElse(
       throw ViiteException(s"Olematon EVK ($number)!")
+        // TODO Either:ify the throw?
+    )
+  }
+
+  /** Getter for ELYs only. You may search for an ELY by its number.
+   *
+   * @param number The number of the ELY you wish to get.
+   * @return The ELY asked, when found.
+   */
+  def getELY(number: Int): ELY = {
+    ELYset.find(_.number == number).getOrElse(
+      throw ViiteException(s"Olematon ELY ($number)!")
         // TODO Either:ify the throw?
     )
   }
@@ -98,12 +139,41 @@ object ArealRoadMaintainer {
     )
   }
 
+  /** Getter for ELYs only. You may search for an ELY by its DBname, name, or shortName.
+   *
+   * @param string The string we use to identify the correct ELY to be returned.
+   * @return The ELY asked, when found.
+   */
+  def getELY(string: String): ELY = {
+    ELYset.find( _.id == string).getOrElse(             // look for "ELY1"
+      ELYset.find(  _.name == string).getOrElse(        // look for "Uusimaa"
+        ELYset.find(_.shortName == string).getOrElse(   // look for "UUD"
+          // TODO Either:ify the throw?
+          throw ViiteException(s"Olematon ELY ('$string')!")   // found nothing resembling the string
+        )
+      )
+    )
+  }
+
   /** Existance checker for EVKs only.
    *
    * @param evk The EVK to be identified
-   * @return true, if the evk asked is a proper EVK, false else. */
+   * @return true, if the evk asked is a proper EVK, false else.
+   */
   def existsEVK(evk: EVK): Boolean = {
     EVKset.find(_ == evk) match {
+      case Some(_) => true
+      case None    => false
+    }
+  }
+
+  /** Existance checker for ELYs only.
+   *
+   * @param ely The ELY to be identified
+   * @return true, if the ely asked is a proper ELY, false else.
+   */
+  def existsELY(ely: ELY): Boolean = {
+    ELYset.find(_ == ely) match {
       case Some(_) => true
       case None    => false
     }
@@ -122,9 +192,11 @@ object ArealRoadMaintainer {
     // Interpret the nameString as it would be in the database: $typeName$number, and find an instance with that.
     // Sole names, or numbers are not unique. And I doubt whether the shortNames either.
     EVKset.find(evk => s"${evk.typeName}${evk.number}" == nameString).getOrElse(
+      ELYset.find(ely => s"${ely.typeName}${ely.number}" == nameString).getOrElse(
                 // If nothing was found, just throw an error. There is no such thing as asked, afawk.
                 throw ViiteException(s"Tuntematon tieverkon ylläpitäjätaho ($nameString)!")
                 // TODO Either:ify the throw?
+      )
     )
   }
 
