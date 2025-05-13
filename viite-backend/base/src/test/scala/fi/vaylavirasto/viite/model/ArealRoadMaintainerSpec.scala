@@ -55,8 +55,9 @@ class ArealRoadMaintainerSpec extends AnyFunSuite with Matchers {
   }
 
   test("Test ArealRoadMaintainer/EVK: getEVK existence.") {
-    val testEVK = ArealRoadMaintainer.getEVK(1)
     case class EVKclone(val name: String, val number: Int, val shortName: String) extends EVK // class to test EVK ArealRoadMaintainer functionality with
+
+    val testEVK = ArealRoadMaintainer.getEVK(1)
     val testEVKClone = EVKclone("Uusimaa", 1, "UUSI") // A basically proper EVK, but this is not any of our pre-defined instances
 
     ArealRoadMaintainer.existsEVK(testEVK)      shouldBe true // EVK 1 is found.

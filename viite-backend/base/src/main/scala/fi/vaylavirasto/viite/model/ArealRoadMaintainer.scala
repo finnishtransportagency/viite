@@ -103,7 +103,7 @@ object ArealRoadMaintainer {
    *
    * @param number The number of the EVK you wish to get.
    * @return The EVK asked, when found.
-   **/
+   */
   def getEVK(number: Int): EVK = {
     EVKset.find(_.number == number).getOrElse(
       throw ViiteException(s"Olematon EVK ($number)!")
@@ -115,7 +115,7 @@ object ArealRoadMaintainer {
    *
    * @param number The number of the ELY you wish to get.
    * @return The ELY asked, when found.
-   **/
+   */
   def getELY(number: Int): ELY = {
     ELYset.find(_.number == number).getOrElse(
       throw ViiteException(s"Olematon ELY ($number)!")
@@ -146,7 +146,7 @@ object ArealRoadMaintainer {
    */
   def getELY(string: String): ELY = {
     ELYset.find( _.id == string).getOrElse(             // look for "ELY1"
-      ELYset.find(   _.name == string).getOrElse(       // look for "Uusimaa"
+      ELYset.find(  _.name == string).getOrElse(        // look for "Uusimaa"
         ELYset.find(_.shortName == string).getOrElse(   // look for "UUD"
           // TODO Either:ify the throw?
           throw ViiteException(s"Olematon ELY ('$string')!")   // found nothing resembling the string
@@ -158,7 +158,8 @@ object ArealRoadMaintainer {
   /** Existance checker for EVKs only.
    *
    * @param evk The EVK to be identified
-   * @return true, if the evk asked is a proper EVK, false else. */
+   * @return true, if the evk asked is a proper EVK, false else.
+   */
   def existsEVK(evk: EVK): Boolean = {
     EVKset.find(_ == evk) match {
       case Some(_) => true
@@ -166,10 +167,11 @@ object ArealRoadMaintainer {
     }
   }
 
-  /** Existance checker  for ELYs only.
+  /** Existance checker for ELYs only.
    *
    * @param ely The ELY to be identified
-   * @return true, if the ely asked is a proper ELY, false else. */
+   * @return true, if the ely asked is a proper ELY, false else.
+   */
   def existsELY(ely: ELY): Boolean = {
     ELYset.find(_ == ely) match {
       case Some(_) => true
