@@ -632,17 +632,22 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
     }
   }
 
-  def initiateLinkNetworkUpdates(previousDate: DateTime, newDate: DateTime): Unit = {
+  def initiateLinkNetworkUpdates(previousDate: DateTime, newDate: DateTime, processDaily: Boolean): Unit = {
     time(logger, s"Link network update from ${previousDate} to ${newDate}") {
       try {
         var currentDateTime = previousDate
         var skippedTiekamuRoadLinkChanges = Seq[TiekamuRoadLinkChange]()
 
-        while (currentDateTime.isBefore(newDate)) {
-          val nextDateTime = currentDateTime.plusDays(1)
-          skippedTiekamuRoadLinkChanges ++= updateLinkNetwork(currentDateTime, nextDateTime)
-          currentDateTime = nextDateTime
+        if (processDaily) {
+          while (currentDateTime.isBefore(newDate)) {
+            val nextDateTime = currentDateTime.plusDays(1)
+            skippedTiekamuRoadLinkChanges ++= updateLinkNetwork(currentDateTime, nextDateTime)
+            currentDateTime = nextDateTime
+          }
+        } else {
+          skippedTiekamuRoadLinkChanges ++= updateLinkNetwork(currentDateTime, newDate)
         }
+
         if (skippedTiekamuRoadLinkChanges.nonEmpty) {
           // SkippedTiekamuRoadLinkChanges-yyyy-MM-dd-yyyy-MM-dd-yyyy-MM-dd:hh:mm:ss (SkippedTiekamuRoadLinkChanges-previousDate-newDate-currentTimeStamp)
           val s3SkippedChangeSetsName = s"SkippedTiekamuRoadLinkChanges-${previousDate.getYear}-${previousDate.getMonthOfYear}-${previousDate.getDayOfMonth}-" +
