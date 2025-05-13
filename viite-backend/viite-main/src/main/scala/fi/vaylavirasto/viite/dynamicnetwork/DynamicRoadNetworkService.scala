@@ -440,7 +440,7 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
       def areHomogeneous(linearLocations: Set[LinearLocation]): Boolean = {
         val roadwayNumbers = linearLocations.map(_.roadwayNumber)
         val roadways = roadwaysForLinearLocations.filter(rw => roadwayNumbers.contains(rw.roadwayNumber))
-        val roadGroups = roadways.groupBy(rw => (rw.roadPart, rw.track))
+        val roadGroups = roadways.groupBy(rw => (rw.roadPart, rw.track)) // We might need to check Administrative class here as well?
         roadGroups.size == 1
       }
 
@@ -577,9 +577,14 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
         val changesWithNewLinkId = tiekamuRoadLinkChanges.filter(ch => ch.newLinkId == newLinkId)
         val otherChangesWithSameNewLinkId = changesWithNewLinkId.filter(ch => ch.newStartM != newStartM && ch.newEndM != newEndM)
 
+        // Fold over the sequence 'changesWithNewLinkId' to calculate the minimum start measure and maximum end measure
+        // Initialize the accumulator with (Double.MaxValue, Double.MinValue) to ensure any actual value will replace them
         val (minStartM, maxEndM) = changesWithNewLinkId.foldLeft((Double.MaxValue, Double.MinValue)) {
           case ((min, max), ch) => (math.min(min, ch.newStartM), math.max(max, ch.newEndM))
         }
+
+        // Calculate the length covered by the new link ID by subtracting minStartM from maxEndM
+        // Then scale the result to three decimal digits using GeometryUtils
         val newlinkIdChangesLength = GeometryUtils.scaleToThreeDigits(maxEndM - minStartM)
         val newLink = (kgvRoadLinks ++ complementaryLinks).find(kgvLink => kgvLink.linkId == newLinkId).getOrElse(throw ViiteException(s"Missing new link from KGV/complementary link table. Cannot validate Tiekamu change infos without KGV/complementary road link. LinkId: ${newLinkId}, changeInfo: ${change}"))
 
