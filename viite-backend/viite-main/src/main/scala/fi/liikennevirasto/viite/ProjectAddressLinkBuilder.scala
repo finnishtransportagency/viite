@@ -22,7 +22,7 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
     val calibrationPoints = pl.calibrationPoints
 
     ProjectAddressLink(pl.id, pl.linkId, pl.geometry, pl.geometryLength, AdministrativeClass.Unknown, LifecycleStatus.UnknownLifecycleStatus, pl.linkGeomSource, pl.administrativeClass, pl.roadName, 0L, "", None, Some("vvh_modified"), pl.roadPart, pl.track.value,
-      ArealRoadMaintainer (s"ELY${pl.ely}"), pl.discontinuity.value, pl.addrMRange, pl.startMValue, pl.endMValue, pl.sideCode, calibrationPoints._1, calibrationPoints._2, pl.status, pl.roadwayId, pl.linearLocationId, pl.reversed, pl.connectedLinkId, originalGeometry, sourceId = "", roadAddressRoadPart = pl.roadAddressRoadPart, roadwayNumber = pl.roadwayNumber, originalAddrMRange = Some(pl.originalAddrMRange))
+      pl.arealRoadMaintainer, pl.discontinuity.value, pl.addrMRange, pl.startMValue, pl.endMValue, pl.sideCode, calibrationPoints._1, calibrationPoints._2, pl.status, pl.roadwayId, pl.linearLocationId, pl.reversed, pl.connectedLinkId, originalGeometry, sourceId = "", roadAddressRoadPart = pl.roadAddressRoadPart, roadwayNumber = pl.roadwayNumber, originalAddrMRange = Some(pl.originalAddrMRange))
   }
 
   @Deprecated
@@ -48,7 +48,7 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
     val calibrationPoints = projectLink.calibrationPoints
 
     build(roadLink, projectLink.id, geom, length, roadPart, trackCode, Some(roadName), municipalityCode, projectLink.administrativeClass, projectLink.discontinuity, projectLink.addrMRange, Some(projectLink.originalAddrMRange), projectLink.startMValue, projectLink.endMValue, projectLink.sideCode, calibrationPoints._1, calibrationPoints._2, projectLink.status, projectLink.roadwayId, projectLink.linearLocationId,
-      ArealRoadMaintainer (s"ELY${projectLink.ely}"), projectLink.reversed, projectLink.connectedLinkId, originalGeometry)
+      projectLink.arealRoadMaintainer, projectLink.reversed, projectLink.connectedLinkId, originalGeometry)
   }
 
   def build(ral: RoadAddressLinkLike): ProjectAddressLink = {
