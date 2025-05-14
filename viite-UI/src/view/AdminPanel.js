@@ -34,7 +34,7 @@
                     '</div>' +
                     '<p style="font-size: 20px">&#8594</p>' +
                     '<div class="dynamic-link-network-input">' +
-                        '<label>Tavoite päivämäärä</label>' +
+                        '<label>Tavoitepäivämäärä</label>' +
                         '<input type="text" id="targetDate" readonly>' +
                     '</div>' +
                     '<label for="processPerDay">Päivä kerrallaan</label>' +
@@ -55,7 +55,7 @@
                         '<p>TODO Alkulatauksen käynnistys tapahtuu täältä</p>' +
                     '</div>' +
                     '<div id="tab4" class="tab-content">' +
-                        '<p>TODO Tieosoiteverkon virheet listaus siirtyy tänne</p>' +
+                        '<p>TODO Tieosoiteverkon virheet listaus siirtyy tänne (ehkä?)</p>' +
                     '</div>' +
                 '</div>'
             );
@@ -117,7 +117,7 @@
             $('.admin-panel-modal-overlay').remove();
         };
 
-        function validateDate(dateString, dateElement) {
+        function willPassValidations(dateString, dateElement) {
             // Check format ignoring whitespace
             if (dateutil.isFinnishDateString(dateString.trim())) {
                 const dateObject = moment(dateString, "DD-MM-YYYY").toDate();
@@ -139,16 +139,12 @@
             }
         }
 
-        function willPassValidations(dateString, dateElement) {
-            return validateDate(dateString, dateElement);
-        }
-
         /**
          *  Check that the source date is before the target date.
          */
         function reasonableDates(sourceDateObject, sourceDateElem, targetDateObject, targetDateElem) {
             if (sourceDateObject >= targetDateObject) {
-                setInfoText("Nykytilanteen tulee olla ennen tavoite päivämäärää!");
+                setInfoText("Nykytilanteen tulee olla ennen tavoitepäivämäärää!");
                 return false;
             } else {
                 setInfoText("");
@@ -166,7 +162,7 @@
             const targetDateString = targetDateElem.value;
 
             // Convert date input text to date object
-            const sourceDateObject  = moment(sourceDateString, "DD-MM-YYYY").toDate();
+            const sourceDateObject = moment(sourceDateString, "DD-MM-YYYY").toDate();
             const targetDateObject = moment(targetDateString, "DD-MM-YYYY").toDate();
 
             // Date validations

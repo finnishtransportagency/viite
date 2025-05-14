@@ -312,7 +312,7 @@
       if (_.includes(startupParameters.roles, 'operator'))
         rootElement.append(roadNetworkErrorsToolDiv);
 
-      // if the user has "admin" role then add the button for road network error tool
+      // if the user has "admin" role then add the button for admin panel
       if (_.includes(startupParameters.roles, 'admin'))
         rootElement.append(adminPanelDiv);
 
