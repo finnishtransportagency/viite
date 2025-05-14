@@ -667,17 +667,29 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
     }
   }
 
-  def initiateLinkNetworkUpdates(previousDate: DateTime, newDate: DateTime): Unit = {
+  /**
+   * Initiates the update process for the link network, either as a single batch job or divided into daily incremental updates.
+   *
+   * @param previousDate   The starting date of the current link network state.
+   * @param newDate        The target date to which the link network should be updated.
+   * @param processPerDay  If true, the update is performed in daily intervals; if false, the entire range is processed as a single batch.
+   */
+  def initiateLinkNetworkUpdates(previousDate: DateTime, newDate: DateTime, processPerDay: Boolean): Unit = {
     time(logger, s"Link network update from ${previousDate} to ${newDate}") {
       try {
-        var currentDateTime = previousDate
+        var currentLinkNetworkStateDate = previousDate
         var skippedTiekamuRoadLinkChanges = Seq[TiekamuRoadLinkChange]()
 
-        while (currentDateTime.isBefore(newDate)) {
-          val nextDateTime = currentDateTime.plusDays(1)
-          skippedTiekamuRoadLinkChanges ++= updateLinkNetwork(currentDateTime, nextDateTime)
-          currentDateTime = nextDateTime
+        if (processPerDay) {
+          while (currentLinkNetworkStateDate.isBefore(newDate)) {
+            val nextDateTime = currentLinkNetworkStateDate.plusDays(1)
+            skippedTiekamuRoadLinkChanges ++= updateLinkNetwork(currentLinkNetworkStateDate, nextDateTime)
+            currentLinkNetworkStateDate = nextDateTime
+          }
+        } else {
+          skippedTiekamuRoadLinkChanges ++= updateLinkNetwork(currentLinkNetworkStateDate, newDate)
         }
+
         if (skippedTiekamuRoadLinkChanges.nonEmpty) {
           // SkippedTiekamuRoadLinkChanges-yyyy-MM-dd-yyyy-MM-dd-yyyy-MM-dd:hh:mm:ss (SkippedTiekamuRoadLinkChanges-previousDate-newDate-currentTimeStamp)
           val s3SkippedChangeSetsName = s"SkippedTiekamuRoadLinkChanges-${previousDate.getYear}-${previousDate.getMonthOfYear}-${previousDate.getDayOfMonth}-" +
