@@ -299,10 +299,10 @@ class AdminApi(val dataImporter: DataImporter, implicit val swagger: Swagger) ex
     (format.parseDateTime(previousDate), format.parseDateTime(newDate))
   }
 
-  def handleUpdate(previousDate: String, newDate: String, processDaily: Boolean): ActionResult = {
+  def handleUpdate(previousDate: String, newDate: String, processPerDay: Boolean): ActionResult = {
     try {
       val (previousDateTimeObject, newDateTimeObject) = validateDateParams(previousDate, newDate)
-      Future(dynamicRoadNetworkService.initiateLinkNetworkUpdates(previousDateTimeObject, newDateTimeObject, processDaily))
+      Future(dynamicRoadNetworkService.initiateLinkNetworkUpdates(previousDateTimeObject, newDateTimeObject, processPerDay))
       Ok("Samuutus käynnistetty")
     } catch {
       case ex: IllegalArgumentException =>
@@ -327,13 +327,13 @@ class AdminApi(val dataImporter: DataImporter, implicit val swagger: Swagger) ex
 
       (previousDate, newDate) match {
         case (Some(previousDate), Some(newDate)) =>
-          params.get("processDaily") match {
-            case Some("true")  => handleUpdate(previousDate, newDate, processDaily = true)
-            case Some("false") => handleUpdate(previousDate, newDate, processDaily = false)
+          params.get("processPerDay") match {
+            case Some("true")  => handleUpdate(previousDate, newDate, processPerDay = true)
+            case Some("false") => handleUpdate(previousDate, newDate, processPerDay = false)
             case Some(invalid) =>
-              logger.error(s"Invalid boolean value for 'processDaily': $invalid")
-              BadRequest(s"Invalid boolean value for 'processDaily': $invalid")
-            case None => handleUpdate(previousDate, newDate, processDaily = false)
+              logger.error(s"Invalid boolean value for 'processPerDay': $invalid")
+              BadRequest(s"Invalid boolean value for 'processPerDay': $invalid")
+            case None => handleUpdate(previousDate, newDate, processPerDay = false)
           }
 
         case _ =>
