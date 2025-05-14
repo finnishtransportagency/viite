@@ -12,6 +12,21 @@ class ArealRoadMaintainerSpec extends AnyFunSuite with Matchers {
     intercept[Exception](ArealRoadMaintainer("1"))       shouldBe a[ViiteException]
   }
 
+  test("Test ArealRoadMaintainer: apply tests. The pre-defined EVKs and ELYS should be found.") {
+
+    ArealRoadMaintainer("EVK1")  // Valid EVK
+    ArealRoadMaintainer("EVK10") // Valid EVK
+
+    intercept[Exception](ArealRoadMaintainer("EVK0"))  shouldBe a[ViiteException] // EVK out of scope
+    intercept[Exception](ArealRoadMaintainer("EVK11")) shouldBe a[ViiteException] // EVK out of scope
+
+    ArealRoadMaintainer("ELY1")  // Valid ELY
+    ArealRoadMaintainer("ELY14") // Valid ELY
+
+    intercept[Exception](ArealRoadMaintainer("ELY0"))  shouldBe a[ViiteException] // ELY out of scope
+    intercept[Exception](ArealRoadMaintainer("ELY13")) shouldBe a[ViiteException] // non-existing ELY
+    intercept[Exception](ArealRoadMaintainer("ELY15")) shouldBe a[ViiteException] // ELY out of scope
+  }
 
   //////// ArealRoadMaintainer/EVK tests ////////
 
