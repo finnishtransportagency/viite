@@ -1321,11 +1321,12 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
     time(logger, "POST request for /startLinkNetworkUpdate") {
 
       try {
-        val sourceDate = (parsedBody \ "sourceDate").extract[String]
-        val targetDate = (parsedBody \ "targetDate").extract[String]
+        val sourceDate    = (parsedBody \ "sourceDate").extract[String]
+        val targetDate    = (parsedBody \ "targetDate").extract[String]
+        val processDaily  = (parsedBody \ "processDaily").extract[Boolean]
 
         val (previousDateTimeObject, newDateTimeObject) = (parseStringToDateTime(sourceDate), parseStringToDateTime(targetDate))
-        Future(dynamicRoadNetworkService.initiateLinkNetworkUpdates(previousDateTimeObject, newDateTimeObject))
+        Future(dynamicRoadNetworkService.initiateLinkNetworkUpdates(previousDateTimeObject, newDateTimeObject, processDaily))
         Map("success" -> true, "message" -> "Tielinkkiverkon päivitys käynnistetty onnistuneesti!")
 
       } catch {

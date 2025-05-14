@@ -37,6 +37,8 @@
                         '<label>Tavoite päivämäärä</label>' +
                         '<input type="text" id="targetDate" readonly>' +
                     '</div>' +
+                    '<label for="processDaily">Päivä kerrallaan</label>' +
+                    '<input type="checkbox" id="processDaily">' +
                     '<button id="updateLinkNetwork" class="btn btn-primary" style="max-height: 30px">Päivitä tielinkkiverkko</button>' +
                 '</div>' +
             '</div>';
@@ -177,9 +179,13 @@
             const sourceDateStringISO8601 = dateutil.parseDateToString(sourceDateObject);
             const targetDateStringISO8601 = dateutil.parseDateToString(targetDateObject);
 
+            const checkBoxElement = document.getElementById('processDaily');
+            const checkboxBoolean = checkBoxElement.checked;
+
             const jsonDateData = {
                 sourceDate: sourceDateStringISO8601,
-                targetDate: targetDateStringISO8601
+                targetDate: targetDateStringISO8601,
+                processDaily: checkboxBoolean
             };
 
             backend.startLinkNetworkUpdate(jsonDateData, function(result) {
