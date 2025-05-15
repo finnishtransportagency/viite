@@ -816,7 +816,7 @@ class RoadwayDAOSpec extends AnyFunSuite with Matchers {
       info.linkId should be(testLinearLocation1.linkId)
       info.endAddrM should be(testRoadway1.addrMRange.end)
       info.discontinuity should be(testRoadway1.discontinuity.value)
-      ArealRoadMaintainer.getELY(info.ely) should be(testRoadway1.arealRoadMaintainer) // TODO VIITE-3424 ely->ArealRoadMaintainer
+      info.arealRoadMaintainer should be(testRoadway1.arealRoadMaintainer)
       info.startDate.getOrElse(fail) should be(testRoadway1.startDate)
       info.endDate should be(None)
     }

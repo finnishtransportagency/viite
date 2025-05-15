@@ -121,37 +121,6 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter wi
     }
   }
 
-
-  /* update errors*/
-  def errorPartsToApi(errorParts: projectService_db.projectValidator.ValidationErrorDetails): Map[String, Any] = {
-    Map("ids" -> errorParts.affectedPlIds,
-      "linkIds" -> errorParts.affectedLinkIds,
-      "errorCode" -> errorParts.validationError.value,
-      "errorMessage" -> errorParts.validationError.message,
-      "info" -> errorParts.optionalInformation,
-      "coordinates" -> errorParts.coordinates,
-      "priority" -> errorParts.validationError.priority
-    )
-  }
-  def projectFormedPartToApi(projectId: Option[Long] = None)(formedRoadPart: ProjectReservedPart): Map[String, Any] = {
-    Map("roadNumber" -> formedRoadPart.roadPart.roadNumber,
-      "roadPartNumber" -> formedRoadPart.roadPart.partNumber,
-      "id" -> formedRoadPart.id,
-      "currentEly" -> formedRoadPart.ely,
-      "currentLength" -> formedRoadPart.addressLength,
-      "currentDiscontinuity" -> formedRoadPart.discontinuity.map(_.description),
-      "newEly" -> formedRoadPart.newEly,
-      "newLength" -> formedRoadPart.newLength,
-      "newDiscontinuity" -> formedRoadPart.newDiscontinuity.map(_.description),
-      "startingLinkId" -> formedRoadPart.startingLinkId,
-      "roadAddresses" -> {
-        projectId match {
-          case None => Seq.empty
-          case _ => projectService_db.getRoadAddressesFromFormedRoadPart(formedRoadPart.roadPart, projectId.get)
-        }
-      }
-    )
-  }
   implicit class CaseClassToString(c: AnyRef) {
     def rowValuesToString: List[List[Any]] = {
       var header = List.empty[Char]
@@ -724,10 +693,10 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter wi
           road_13_218.head.roadPart,
           Some(road_13_218.head.addrMRange.end),
           Some(road_13_218.head.discontinuity),
-          Some(road_13_218.head.arealRoadMaintainer.number),
+          Some(road_13_218.head.arealRoadMaintainer),
           newLength = None,
           newDiscontinuity = None,
-          newEly = None,
+          newArealRoadMaintainer = None,
           startingLinkId = Some(road_13_218.head.linkId))
 
         var links = road_13_218.map(addressToRoadLink)
