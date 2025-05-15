@@ -112,8 +112,9 @@
     var roadAddressBrowser = new RoadAddressBrowserWindow(backend, roadAddressBrowserForm);
     var roadAddressChangesBrowser = new RoadAddressChangesBrowserWindow(backend, roadAddressBrowserForm);
     var roadNetworkErrorsList = new RoadNetworkErrorsList(backend);
+    var adminPanel = new AdminPanel(backend);
 
-    new LinkPropertyForm(models.selectedLinkProperty, roadNamingTool, projectListModel, roadAddressBrowser, roadAddressChangesBrowser, startupParameters, roadNetworkErrorsList);
+    new LinkPropertyForm(models.selectedLinkProperty, roadNamingTool, projectListModel, roadAddressBrowser, roadAddressChangesBrowser, startupParameters, roadNetworkErrorsList, adminPanel);
 
     new NodeSearchForm(new InstructionsPopup(jQuery('.digiroad2')), map, models.nodeCollection, backend);
     new NodeForm(models.selectedNodesAndJunctions, models.roadCollection, backend, startupParameters);

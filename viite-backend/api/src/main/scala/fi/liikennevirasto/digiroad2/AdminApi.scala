@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.util.DatabaseMigration
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.util.DataImporter
 import fi.vaylavirasto.viite.util.DateTimeFormatters.ISOdateFormatter
+import fi.vaylavirasto.viite.util.DateUtils.parseStringToDateTime
 import org.apache.hc.client5.http.classic.methods.HttpGet
 import org.apache.hc.client5.http.impl.classic.HttpClients
 import org.apache.hc.core5.http.ClassicHttpResponse
@@ -295,8 +296,7 @@ class AdminApi(val dataImporter: DataImporter, implicit val swagger: Swagger) ex
   }
 
   def validateDateParams(previousDate: String, newDate: String): (DateTime, DateTime) = {
-    val format = ISOdateFormatter
-    (format.parseDateTime(previousDate), format.parseDateTime(newDate))
+    (parseStringToDateTime(previousDate), parseStringToDateTime(newDate))
   }
 
   def handleUpdate(previousDate: String, newDate: String, processPerDay: Boolean): ActionResult = {

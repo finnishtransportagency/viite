@@ -86,7 +86,7 @@
     dateObject.setDate(dateObject.getDate() + 1);
   };
 
-  /** Converts date object to string "yyyy-mm-dd" */
+  /** Converts date object to string "yyyy-mm-dd" (ISO 8601)*/
   dateUtils.parseDateToString = function (date) {
     const dayInNumber = date.getDate();
     const day = dayInNumber < 10 ? '0' + dayInNumber.toString() : dayInNumber.toString();
@@ -94,6 +94,15 @@
     const month = monthInNumber < 10 ? '0' + monthInNumber.toString() : monthInNumber.toString();
     const year = date.getFullYear().toString();
     return year + '-' + month + '-' + day;
+  };
+
+
+  /**
+   *  Convert string (dd.mm.yyyy) to Date
+   */
+  dateUtils.parseDate = function (str) {
+    const [day, month, year] = str.split('.').map(Number);
+    return new Date(year, month - 1, day); // month is 0-based in JS
   };
 
   /** Creates a string ("dd.mm.yyyy") from current date */
@@ -105,6 +114,38 @@
     const month = monthInNumber < 10 ? '0' + monthInNumber.toString() : monthInNumber.toString();
     const year = today.getFullYear().toString();
     return day + '.' + month + '.' + year;
+  };
+
+
+  /**
+   * Converts a date-time string in the format "DD.MM.YYYY HH:mm:ss" into a JavaScript Date object
+   * or an ISO 8601 string.
+   *
+   * @param {string} input - The date-time string to parse (e.g., "20.09.2024 00:00:00").
+   * @param {boolean} [returnISO=false] - If true, returns an ISO 8601 string instead of a Date object.
+   * @returns {Date|string} - A JavaScript Date object or ISO 8601 string representation.
+   * @throws {Error} - Throws an error if the input is not a string or if the format is invalid.
+   */
+  dateUtils.parseCustomDateString = function (input, returnISO = false) {
+    if (typeof input !== 'string') throw new Error('Input must be a string');
+
+    const trimmedInput = input.trim(); // Remove any leading/trailing whitespace
+
+    // Use regex to handle any whitespace between date and time
+    const [datePart, timePart] = trimmedInput.split(/\s+/);
+
+    if (!datePart || !timePart) throw new Error('Invalid date-time format');
+
+    const [day, month, year] = datePart.split('.').map(Number);
+    const [hours, minutes, seconds] = timePart.split(':').map(Number);
+
+    const dateObj = new Date(year, month - 1, day, hours, minutes, seconds);
+
+    if (isNaN(dateObj.getTime())) {
+      throw new Error('Invalid date');
+    }
+
+    return returnISO ? dateObj.toISOString() : dateObj;
   };
 
 }(window.dateutil = window.dateutil || {}));
