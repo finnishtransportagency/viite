@@ -129,6 +129,14 @@
         '<div class="symbol linear operation-type-unhandeled"></div>' +
         '</div>' +
         createLifecycleStatusLegendEntries() +
+        '</div>' +
+        '<div class="legend-entry">' +
+        '<div class="label"> Osoitteeton (valtio)</div>' +
+        '<div class="symbol linear linear-asset-99"></div>' +
+        '</div>' +
+        '<div class="legend-entry">' +
+        '<div class="label"> Osoitteeton (kunta/yksityinen)</div>' +
+        '<div class="symbol linear linear-asset-11"></div>' +
         '</div>';
     };
 

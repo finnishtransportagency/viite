@@ -1,25 +1,23 @@
 package fi.liikennevirasto.viite
 
 import fi.vaylavirasto.viite.dao.MunicipalityDAO
-import fi.vaylavirasto.viite.postgis.PostGISDatabase
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithReadOnlySession
 
 trait AddressLinkBuilder {
   val RoadNumber = "roadnumber"
 
   /** Viite municipality to ELY code mapping */
-  lazy val municipalityToViiteELYMapping: Map[Long, Long] = if (PostGISDatabase.isWithinSession)
-    MunicipalityDAO.getViiteMunicipalityToElyMapping
-  else
-    PostGISDatabase.withDynSession {
+  def municipalityToViiteELYMapping: Map[Long, Long] = {
+    runWithReadOnlySession {
       MunicipalityDAO.getViiteMunicipalityToElyMapping
     }
+  }
 
-  lazy val municipalityNamesMapping: Map[Long, String] = if (PostGISDatabase.isWithinSession)
-    MunicipalityDAO.getMunicipalityNames
-  else
-    PostGISDatabase.withDynSession {
+  def municipalityNamesMapping: Map[Long, String] = {
+    runWithReadOnlySession {
       MunicipalityDAO.getMunicipalityNames
     }
+  }
 
   protected def toIntNumber(value: Any): Int = {
     try {

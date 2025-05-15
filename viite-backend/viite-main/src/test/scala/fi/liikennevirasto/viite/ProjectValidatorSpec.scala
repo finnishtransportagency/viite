@@ -12,15 +12,19 @@ import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point, 
 import fi.vaylavirasto.viite.model.CalibrationPointType.NoCP
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinuity, LinkGeomSource, RoadAddressChangeType, RoadPart, SideCode, Track}
 import fi.vaylavirasto.viite.postgis.DbUtils.runUpdateToDb
-import fi.vaylavirasto.viite.postgis.PostGISDatabase
-import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
+import fi.vaylavirasto.viite.postgis.GeometryDbUtils
+import scalikejdbc._
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
-import org.mockito.stubbing.OngoingStubbing
+import org.mockito.invocation.InvocationOnMock
+import org.mockito.stubbing.{Answer, OngoingStubbing}
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
+
+import scala.concurrent.Future
 
 
 class ProjectValidatorSpec extends AnyFunSuite with Matchers {
@@ -66,8 +70,8 @@ class ProjectValidatorSpec extends AnyFunSuite with Matchers {
                         roadwayAddressMapper,
                         mockEventBus
                         ) {
-                            override def withDynSession[T](f: => T): T = f
-                            override def withDynTransaction[T](f: => T): T = f
+                            override def runWithReadOnlySession[T](f: => T): T = f
+                            override def runWithTransaction[T](f: => T): T = f
                           }
 
   private val roadwayNumber1 = 1000000000L
@@ -79,7 +83,7 @@ class ProjectValidatorSpec extends AnyFunSuite with Matchers {
   private def projectLink(addrMRange: AddrMRange, track: Track, projectId: Long, status: RoadAddressChangeType = RoadAddressChangeType.NotHandled,
                           roadPart: RoadPart = RoadPart(19999, 1), discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, roadwayId: Long = 0L, linearLocationId: Long = 0L, plRoadwayNumber: Long = NewIdValue): ProjectLink = {
     val startDate = if (status !== RoadAddressChangeType.New) Some(DateTime.now()) else None
-    ProjectLink(NewIdValue, roadPart, track, discontinuity, addrMRange, addrMRange, startDate, None, Some("User"), addrMRange.start.toString, 0.0, (addrMRange.end - addrMRange.start).toDouble, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), Seq(Point(0.0, addrMRange.start), Point(0.0, addrMRange.end)), projectId, status, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, (addrMRange.end - addrMRange.start).toDouble, roadwayId, linearLocationId, ely, reversed = false, None, 0L, roadwayNumber = plRoadwayNumber)
+    ProjectLink(NewIdValue, roadPart, track, discontinuity, addrMRange, addrMRange, startDate, None, Some("User"), addrMRange.start.toString, 0.0, addrMRange.length.toDouble, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), Seq(Point(0.0, addrMRange.start), Point(0.0, addrMRange.end)), projectId, status, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, addrMRange.length.toDouble, roadwayId, linearLocationId, ely, reversed = false, None, 0L, roadwayNumber = plRoadwayNumber)
   }
 
   def toProjectLink(project: Project)(roadAddress: RoadAddress): ProjectLink = {
@@ -142,7 +146,7 @@ class ProjectValidatorSpec extends AnyFunSuite with Matchers {
       roadwayDAO.create(rw)
       val roadways = newLinks.map(p => (p.roadPart)).distinct.flatMap(p => roadwayDAO.fetchAllByRoadPart(p))
       newLinks.map(nl => {
-        val roadway = roadways.find(r => r.roadPart == nl.roadPart && r.addrMRange.start == nl.addrMRange.start && r.addrMRange.end == nl.addrMRange.end)
+        val roadway = roadways.find(r => r.roadPart == nl.roadPart && r.addrMRange.isSameAs(nl.addrMRange))
         if (roadway.nonEmpty) {
           nl.copy(roadwayId = roadway.get.id, roadwayNumber = roadway.get.roadwayNumber)
         }
@@ -414,16 +418,17 @@ class ProjectValidatorSpec extends AnyFunSuite with Matchers {
     runWithRollback {
       val user           = "TestUser"
       val roadPart       = RoadPart(10000, 1)
+      val nonCalcAddrM     = AddrMRange(0,0)
       val project_id     = -1000
       val project        = Project(project_id, ProjectState.Incomplete, "f", user, DateTime.now(), "", DateTime.now(), DateTime.now(), "", Seq(), Seq(), None, None)
       val projectLinks   = Seq(
-        ProjectLink(1001,roadPart,Track.Combined,Discontinuity.Continuous,AddrMRange(0,0),AddrMRange(0,0),None,None,Some(user),5175001.toString,0.0, 72.789,SideCode.Unknown,(NoCP,NoCP),(NoCP,NoCP),List(Point(536938.0,6984394.0,0.0), Point(536865.0,6984398.0,0.0)),project_id,RoadAddressChangeType.New,AdministrativeClass.Municipality,LinkGeomSource.FrozenLinkInterface, 72.789,0,0,8,false,None,1500418814000L,0,Some("testroad"),None,None,None,None,None),
-        ProjectLink(1002,roadPart,Track.Combined,Discontinuity.Continuous,AddrMRange(0,0),AddrMRange(0,0),None,None,Some(user),5174998.toString,0.0, 84.091,SideCode.Unknown,(NoCP,NoCP),(NoCP,NoCP),List(Point(536781.0,6984396.0,0.0), Point(536865.0,6984398.0,0.0)),project_id,RoadAddressChangeType.New,AdministrativeClass.Municipality,LinkGeomSource.FrozenLinkInterface, 84.091,0,0,8,false,None,1500418814000L,0,Some("testroad"),None,None,None,None,None),
-        ProjectLink(1004,roadPart,Track.Combined,Discontinuity.Continuous,AddrMRange(0,0),AddrMRange(0,0),None,None,Some(user),5174545.toString,0.0, 89.803,SideCode.Unknown,(NoCP,NoCP),(NoCP,NoCP),List(Point(536684.0,6984513.0,0.0), Point(536773.0,6984525.0,0.0)),project_id,RoadAddressChangeType.New,AdministrativeClass.Municipality,LinkGeomSource.FrozenLinkInterface, 89.803,0,0,8,false,None,1500418814000L,0,Some("testroad"),None,None,None,None,None),
-        ProjectLink(1005,roadPart,Track.Combined,Discontinuity.Continuous,AddrMRange(0,0),AddrMRange(0,0),None,None,Some(user),5174996.toString,0.0,138.959,SideCode.Unknown,(NoCP,NoCP),(NoCP,NoCP),List(Point(536694.0,6984375.0,0.0), Point(536684.0,6984513.0,0.0)),project_id,RoadAddressChangeType.New,AdministrativeClass.Municipality,LinkGeomSource.FrozenLinkInterface,138.959,0,0,8,false,None,1551999616000L,0,Some("testroad"),None,None,None,None,None),
-        ProjectLink(1006,roadPart,Track.Combined,Discontinuity.Continuous,AddrMRange(0,0),AddrMRange(0,0),None,None,Some(user),5175004.toString,0.0, 41.233,SideCode.Unknown,(NoCP,NoCP),(NoCP,NoCP),List(Point(536653.0,6984373.0,0.0), Point(536694.0,6984375.0,0.0)),project_id,RoadAddressChangeType.New,AdministrativeClass.Municipality,LinkGeomSource.FrozenLinkInterface, 41.233,0,0,8,false,None,1551999616000L,0,Some("testroad"),None,None,None,None,None),
-        ProjectLink(1007,roadPart,Track.Combined,Discontinuity.Continuous,AddrMRange(0,0),AddrMRange(0,0),None,None,Some(user),5174936.toString,0.0,117.582,SideCode.Unknown,(NoCP,NoCP),(NoCP,NoCP),List(Point(536535.0,6984364.0,0.0), Point(536653.0,6984373.0,0.0)),project_id,RoadAddressChangeType.New,AdministrativeClass.Municipality,LinkGeomSource.FrozenLinkInterface,117.582,0,0,8,false,None,1500418814000L,0,Some("testroad"),None,None,None,None,None),
-        ProjectLink(1008,roadPart,Track.Combined,Discontinuity.EndOfRoad, AddrMRange(0,0),AddrMRange(0,0),None,None,Some(user),5174956.toString,0.0, 75.055,SideCode.Unknown,(NoCP,NoCP),(NoCP,NoCP),List(Point(536535.0,6984364.0,0.0), Point(536528.0,6984439.0,0.0)),project_id,RoadAddressChangeType.New,AdministrativeClass.Municipality,LinkGeomSource.FrozenLinkInterface, 75.055,0,0,8,false,None,1500418814000L,0,Some("testroad"),None,None,None,None,None)
+        ProjectLink(1001,roadPart,Track.Combined,Discontinuity.Continuous,nonCalcAddrM,nonCalcAddrM,None,None,Some(user),5175001.toString,0.0, 72.789,SideCode.Unknown,(NoCP,NoCP),(NoCP,NoCP),List(Point(536938.0,6984394.0,0.0), Point(536865.0,6984398.0,0.0)),project_id,RoadAddressChangeType.New,AdministrativeClass.Municipality,LinkGeomSource.FrozenLinkInterface, 72.789,0,0,8,false,None,1500418814000L,0,Some("testroad"),None,None,None,None,None),
+        ProjectLink(1002,roadPart,Track.Combined,Discontinuity.Continuous,nonCalcAddrM,nonCalcAddrM,None,None,Some(user),5174998.toString,0.0, 84.091,SideCode.Unknown,(NoCP,NoCP),(NoCP,NoCP),List(Point(536781.0,6984396.0,0.0), Point(536865.0,6984398.0,0.0)),project_id,RoadAddressChangeType.New,AdministrativeClass.Municipality,LinkGeomSource.FrozenLinkInterface, 84.091,0,0,8,false,None,1500418814000L,0,Some("testroad"),None,None,None,None,None),
+        ProjectLink(1004,roadPart,Track.Combined,Discontinuity.Continuous,nonCalcAddrM,nonCalcAddrM,None,None,Some(user),5174545.toString,0.0, 89.803,SideCode.Unknown,(NoCP,NoCP),(NoCP,NoCP),List(Point(536684.0,6984513.0,0.0), Point(536773.0,6984525.0,0.0)),project_id,RoadAddressChangeType.New,AdministrativeClass.Municipality,LinkGeomSource.FrozenLinkInterface, 89.803,0,0,8,false,None,1500418814000L,0,Some("testroad"),None,None,None,None,None),
+        ProjectLink(1005,roadPart,Track.Combined,Discontinuity.Continuous,nonCalcAddrM,nonCalcAddrM,None,None,Some(user),5174996.toString,0.0,138.959,SideCode.Unknown,(NoCP,NoCP),(NoCP,NoCP),List(Point(536694.0,6984375.0,0.0), Point(536684.0,6984513.0,0.0)),project_id,RoadAddressChangeType.New,AdministrativeClass.Municipality,LinkGeomSource.FrozenLinkInterface,138.959,0,0,8,false,None,1551999616000L,0,Some("testroad"),None,None,None,None,None),
+        ProjectLink(1006,roadPart,Track.Combined,Discontinuity.Continuous,nonCalcAddrM,nonCalcAddrM,None,None,Some(user),5175004.toString,0.0, 41.233,SideCode.Unknown,(NoCP,NoCP),(NoCP,NoCP),List(Point(536653.0,6984373.0,0.0), Point(536694.0,6984375.0,0.0)),project_id,RoadAddressChangeType.New,AdministrativeClass.Municipality,LinkGeomSource.FrozenLinkInterface, 41.233,0,0,8,false,None,1551999616000L,0,Some("testroad"),None,None,None,None,None),
+        ProjectLink(1007,roadPart,Track.Combined,Discontinuity.Continuous,nonCalcAddrM,nonCalcAddrM,None,None,Some(user),5174936.toString,0.0,117.582,SideCode.Unknown,(NoCP,NoCP),(NoCP,NoCP),List(Point(536535.0,6984364.0,0.0), Point(536653.0,6984373.0,0.0)),project_id,RoadAddressChangeType.New,AdministrativeClass.Municipality,LinkGeomSource.FrozenLinkInterface,117.582,0,0,8,false,None,1500418814000L,0,Some("testroad"),None,None,None,None,None),
+        ProjectLink(1008,roadPart,Track.Combined,Discontinuity.EndOfRoad, nonCalcAddrM,nonCalcAddrM,None,None,Some(user),5174956.toString,0.0, 75.055,SideCode.Unknown,(NoCP,NoCP),(NoCP,NoCP),List(Point(536535.0,6984364.0,0.0), Point(536528.0,6984439.0,0.0)),project_id,RoadAddressChangeType.New,AdministrativeClass.Municipality,LinkGeomSource.FrozenLinkInterface, 75.055,0,0,8,false,None,1500418814000L,0,Some("testroad"),None,None,None,None,None)
       )
       projectDAO.create(project)
       projectReservedPartDAO.reserveRoadPart(project_id, roadPart, user)
@@ -442,12 +447,13 @@ class ProjectValidatorSpec extends AnyFunSuite with Matchers {
     runWithRollback {
       val user           = "TestUser"
       val roadPart       = RoadPart(10000, 1)
+      val nonCalcAddrM     = AddrMRange(0,0)
       val project_id     = -1000
       val project        = Project(project_id, ProjectState.Incomplete, "f", user, DateTime.now(), "", DateTime.now(), DateTime.now(), "", Seq(), Seq(), None, None)
       val projectLinks   = Seq(
-        ProjectLink(1001,roadPart,Track.Combined,Discontinuity.Continuous,        AddrMRange(0,0),AddrMRange(0,0),None,None,Some(user),5175001.toString,0.0,72.789,SideCode.Unknown,(NoCP,NoCP),(NoCP,NoCP),List(Point(536938.0,6984394.0,0.0), Point(536865.0,6984398.0,0.0)),project_id,RoadAddressChangeType.New,AdministrativeClass.Municipality, LinkGeomSource.FrozenLinkInterface,72.789,0,0,8,false,None,1500418814000L,0,Some("testroad"),None,None,None,None,None),
-        ProjectLink(1002,roadPart,Track.Combined,Discontinuity.MinorDiscontinuity,AddrMRange(0,0),AddrMRange(0,0),None,None,Some(user),5174998.toString,0.0,84.091,SideCode.Unknown,(NoCP,NoCP),(NoCP,NoCP),List(Point(536781.0,6984396.0,0.0), Point(536865.0,6984398.0,0.0)),project_id,RoadAddressChangeType.New,AdministrativeClass.Municipality, LinkGeomSource.FrozenLinkInterface,84.091,0,0,8,false,None,1500418814000L,0,Some("testroad"),None,None,None,None,None),
-        ProjectLink(1004,roadPart,Track.Combined,Discontinuity.EndOfRoad,         AddrMRange(0,0),AddrMRange(0,0),None,None,Some(user),5174545.toString,0.0,89.803,SideCode.Unknown,(NoCP,NoCP),(NoCP,NoCP),List(Point(536684.0,6984513.0,0.0), Point(536773.0,6984525.0,0.0)),project_id,RoadAddressChangeType.New,AdministrativeClass.Municipality, LinkGeomSource.FrozenLinkInterface,89.803,0,0,8,false,None,1500418814000L,0,Some("testroad"),None,None,None,None,None)
+        ProjectLink(1001,roadPart,Track.Combined,Discontinuity.Continuous,        nonCalcAddrM,nonCalcAddrM,None,None,Some(user),5175001.toString,0.0,72.789,SideCode.Unknown,(NoCP,NoCP),(NoCP,NoCP),List(Point(536938.0,6984394.0,0.0), Point(536865.0,6984398.0,0.0)),project_id,RoadAddressChangeType.New,AdministrativeClass.Municipality, LinkGeomSource.FrozenLinkInterface,72.789,0,0,8,false,None,1500418814000L,0,Some("testroad"),None,None,None,None,None),
+        ProjectLink(1002,roadPart,Track.Combined,Discontinuity.MinorDiscontinuity,nonCalcAddrM,nonCalcAddrM,None,None,Some(user),5174998.toString,0.0,84.091,SideCode.Unknown,(NoCP,NoCP),(NoCP,NoCP),List(Point(536781.0,6984396.0,0.0), Point(536865.0,6984398.0,0.0)),project_id,RoadAddressChangeType.New,AdministrativeClass.Municipality, LinkGeomSource.FrozenLinkInterface,84.091,0,0,8,false,None,1500418814000L,0,Some("testroad"),None,None,None,None,None),
+        ProjectLink(1004,roadPart,Track.Combined,Discontinuity.EndOfRoad,         nonCalcAddrM,nonCalcAddrM,None,None,Some(user),5174545.toString,0.0,89.803,SideCode.Unknown,(NoCP,NoCP),(NoCP,NoCP),List(Point(536684.0,6984513.0,0.0), Point(536773.0,6984525.0,0.0)),project_id,RoadAddressChangeType.New,AdministrativeClass.Municipality, LinkGeomSource.FrozenLinkInterface,89.803,0,0,8,false,None,1500418814000L,0,Some("testroad"),None,None,None,None,None)
       )
       projectDAO.create(project)
       projectReservedPartDAO.reserveRoadPart(project_id, roadPart, user)
@@ -465,13 +471,14 @@ class ProjectValidatorSpec extends AnyFunSuite with Matchers {
     runWithRollback {
       val user           = "TestUser"
       val roadPart       = RoadPart(10000, 1)
+      val nonCalcAddrM     = AddrMRange(0,0)
       val project_id     = -1000
       val project        = Project(project_id, ProjectState.Incomplete, "f", user, DateTime.now(), "", DateTime.now(), DateTime.now(), "", Seq(), Seq(), None, None)
       val projectLinks   = Seq(
-        ProjectLink(1001,roadPart,Track.Combined,Discontinuity.Continuous,        AddrMRange(0,0),AddrMRange(0,0),None,None,Some(user),5175001.toString,0.0, 72.789,SideCode.Unknown,(NoCP,NoCP),(NoCP,NoCP),List(Point(536938.0,6984394.0,0.0), Point(536865.0,6984398.0,0.0)),project_id,RoadAddressChangeType.New,AdministrativeClass.Municipality, LinkGeomSource.FrozenLinkInterface, 72.789,0,0,8,false,None,1500418814000L,0,Some("testroad"),None,None,None,None,None),
-        ProjectLink(1002,roadPart,Track.Combined,Discontinuity.Continuous,        AddrMRange(0,0),AddrMRange(0,0),None,None,Some(user),5174998.toString,0.0, 84.091,SideCode.Unknown,(NoCP,NoCP),(NoCP,NoCP),List(Point(536781.0,6984396.0,0.0), Point(536865.0,6984398.0,0.0)),project_id,RoadAddressChangeType.New,AdministrativeClass.Municipality, LinkGeomSource.FrozenLinkInterface, 84.091,0,0,8,false,None,1500418814000L,0,Some("testroad"),None,None,None,None,None),
-        ProjectLink(1004,roadPart,Track.Combined,Discontinuity.MinorDiscontinuity,AddrMRange(0,0),AddrMRange(0,0),None,None,Some(user),5174545.toString,0.0, 89.803,SideCode.Unknown,(NoCP,NoCP),(NoCP,NoCP),List(Point(536684.0,6984513.0,0.0), Point(536773.0,6984525.0,0.0)),project_id,RoadAddressChangeType.New,AdministrativeClass.Municipality, LinkGeomSource.FrozenLinkInterface, 89.803,0,0,8,false,None,1500418814000L,0,Some("testroad"),None,None,None,None,None),
-        ProjectLink(1005,roadPart,Track.Combined,Discontinuity.EndOfRoad,         AddrMRange(0,0),AddrMRange(0,0),None,None,Some(user),5174996.toString,0.0,138.959,SideCode.Unknown,(NoCP,NoCP),(NoCP,NoCP),List(Point(536694.0,6984375.0,0.0), Point(536684.0,6984513.0,0.0)),project_id,RoadAddressChangeType.New,AdministrativeClass.Municipality, LinkGeomSource.FrozenLinkInterface,138.959,0,0,8,false,None,1551999616000L,0,Some("testroad"),None,None,None,None,None)
+        ProjectLink(1001,roadPart,Track.Combined,Discontinuity.Continuous,        nonCalcAddrM,nonCalcAddrM,None,None,Some(user),5175001.toString,0.0, 72.789,SideCode.Unknown,(NoCP,NoCP),(NoCP,NoCP),List(Point(938.0,394.0,0.0), Point(865.0,398.0,0.0)),project_id,RoadAddressChangeType.New,AdministrativeClass.Municipality, LinkGeomSource.FrozenLinkInterface, 72.789,0,0,8,false,None,1500418814000L,0,Some("testroad"),None,None,None,None,None),
+        ProjectLink(1002,roadPart,Track.Combined,Discontinuity.Continuous,        nonCalcAddrM,nonCalcAddrM,None,None,Some(user),5174998.toString,0.0, 84.091,SideCode.Unknown,(NoCP,NoCP),(NoCP,NoCP),List(Point(781.0,396.0,0.0), Point(865.0,398.0,0.0)),project_id,RoadAddressChangeType.New,AdministrativeClass.Municipality, LinkGeomSource.FrozenLinkInterface, 84.091,0,0,8,false,None,1500418814000L,0,Some("testroad"),None,None,None,None,None),
+        ProjectLink(1004,roadPart,Track.Combined,Discontinuity.MinorDiscontinuity,nonCalcAddrM,nonCalcAddrM,None,None,Some(user),5174545.toString,0.0, 89.803,SideCode.Unknown,(NoCP,NoCP),(NoCP,NoCP),List(Point(684.0,513.0,0.0), Point(773.0,525.0,0.0)),project_id,RoadAddressChangeType.New,AdministrativeClass.Municipality, LinkGeomSource.FrozenLinkInterface, 89.803,0,0,8,false,None,1500418814000L,0,Some("testroad"),None,None,None,None,None),
+        ProjectLink(1005,roadPart,Track.Combined,Discontinuity.EndOfRoad,         nonCalcAddrM,nonCalcAddrM,None,None,Some(user),5174996.toString,0.0,138.959,SideCode.Unknown,(NoCP,NoCP),(NoCP,NoCP),List(Point(694.0,375.0,0.0), Point(684.0,513.0,0.0)),project_id,RoadAddressChangeType.New,AdministrativeClass.Municipality, LinkGeomSource.FrozenLinkInterface,138.959,0,0,8,false,None,1551999616000L,0,Some("testroad"),None,None,None,None,None)
       )
       projectDAO.create(project)
       projectReservedPartDAO.reserveRoadPart(project_id, roadPart, user)
@@ -513,12 +520,13 @@ class ProjectValidatorSpec extends AnyFunSuite with Matchers {
     runWithRollback {
       val user           = "TestUser"
       val roadPart       = RoadPart(10000, 1)
+      val nonCalcAddrM     = AddrMRange(0,0)
       val project_id     = -1000
       val project        = Project(project_id, ProjectState.Incomplete, "f", user, DateTime.now(), "", DateTime.now(), DateTime.now(), "", Seq(), Seq(), None, None)
       val projectLinks   = Seq(
-        ProjectLink(1007,roadPart,Track.Combined,Discontinuity.Continuous,AddrMRange(0,0),AddrMRange(0,0),None,None,Some(user),5174936.toString,0.0,117.582,SideCode.Unknown,(NoCP,NoCP),(NoCP,NoCP),List(Point(536535.0,6984364.0,0.0), Point(536653.0,6984373.0,0.0)),project_id,RoadAddressChangeType.New,AdministrativeClass.Municipality, LinkGeomSource.FrozenLinkInterface,117.582,0,0,8,false,None,1500418814000L,0,Some("testroad"),None,None,None,None,None),
-        ProjectLink(1008,roadPart,Track.Combined,Discontinuity.Continuous,AddrMRange(0,0),AddrMRange(0,0),None,None,Some(user),5174956.toString,0.0, 75.055,SideCode.Unknown,(NoCP,NoCP),(NoCP,NoCP),List(Point(536535.0,6984364.0,0.0), Point(536528.0,6984439.0,0.0)),project_id,RoadAddressChangeType.New,AdministrativeClass.Municipality, LinkGeomSource.FrozenLinkInterface, 75.055,0,0,8,false,None,1500418814000L,0,Some("testroad"),None,None,None,None,None),
-        ProjectLink(1009,roadPart,Track.Combined,Discontinuity.EndOfRoad, AddrMRange(0,0),AddrMRange(0,0),None,None,Some(user),5174584.toString,0.0, 45.762,SideCode.Unknown,(NoCP,NoCP),(NoCP,NoCP),List(Point(536528.0,6984439.0,0.0), Point(536522.0,6984484.0,0.0)),project_id,RoadAddressChangeType.New,AdministrativeClass.Municipality, LinkGeomSource.FrozenLinkInterface, 45.762,0,0,8,false,None,1551999616000L,0,Some("testroad"),None,None,None,None,None)
+        ProjectLink(1007,roadPart,Track.Combined,Discontinuity.Continuous,nonCalcAddrM,nonCalcAddrM,None,None,Some(user),5174936.toString,0.0,117.582,SideCode.Unknown,(NoCP,NoCP),(NoCP,NoCP),List(Point(536535.0,6984364.0,0.0), Point(536653.0,6984373.0,0.0)),project_id,RoadAddressChangeType.New,AdministrativeClass.Municipality, LinkGeomSource.FrozenLinkInterface,117.582,0,0,8,false,None,1500418814000L,0,Some("testroad"),None,None,None,None,None),
+        ProjectLink(1008,roadPart,Track.Combined,Discontinuity.Continuous,nonCalcAddrM,nonCalcAddrM,None,None,Some(user),5174956.toString,0.0, 75.055,SideCode.Unknown,(NoCP,NoCP),(NoCP,NoCP),List(Point(536535.0,6984364.0,0.0), Point(536528.0,6984439.0,0.0)),project_id,RoadAddressChangeType.New,AdministrativeClass.Municipality, LinkGeomSource.FrozenLinkInterface, 75.055,0,0,8,false,None,1500418814000L,0,Some("testroad"),None,None,None,None,None),
+        ProjectLink(1009,roadPart,Track.Combined,Discontinuity.EndOfRoad, nonCalcAddrM,nonCalcAddrM,None,None,Some(user),5174584.toString,0.0, 45.762,SideCode.Unknown,(NoCP,NoCP),(NoCP,NoCP),List(Point(536528.0,6984439.0,0.0), Point(536522.0,6984484.0,0.0)),project_id,RoadAddressChangeType.New,AdministrativeClass.Municipality, LinkGeomSource.FrozenLinkInterface, 45.762,0,0,8,false,None,1551999616000L,0,Some("testroad"),None,None,None,None,None)
       )
       projectDAO.create(project)
       projectReservedPartDAO.reserveRoadPart(project_id, roadPart, user)
@@ -2176,8 +2184,8 @@ Left|      |Right
     runWithRollback {
       val (project, projectLinks) = util.setUpProjectWithLinks(RoadAddressChangeType.New, Seq(0L, 10L, 20L, 30L, 40L), changeTrack = true)
       val inconsistentLinks = projectLinks.map { l =>
-        if (l.addrMRange.start == 0 && l.track == Track.RightSide)
-          l.copy(addrMRange = AddrMRange(5, l.addrMRange.end))
+        if (l.addrMRange.isRoadPartStart && l.track == Track.RightSide) // make the address length of the right
+          l.copy(addrMRange = AddrMRange(5, l.addrMRange.end))          // track shorter than left track by 5m
         else l
       }
 
@@ -2232,7 +2240,13 @@ Left|      |Right
       val reservedParts = projectReservedPartDAO.fetchReservedRoadParts(project.id)
       val errors = allLinks.groupBy(l => (l.roadPart)).flatMap(g => projectValidator.checkRoadContinuityCodes(project.copy(reservedParts = reservedParts), g._2).distinct)
       errors.size should be(0)
-      runUpdateToDb("""UPDATE PROJECT_LINK SET DISCONTINUITY_TYPE = 2  WHERE ROAD_NUMBER = 19999 AND ROAD_PART_NUMBER = 1 AND DISCONTINUITY_TYPE <> 1""")
+      runUpdateToDb(sql"""
+             UPDATE project_link
+             SET discontinuity_type = 2
+             WHERE road_number = 19999
+             AND road_part_number = 1
+             AND discontinuity_type <> 1
+             """)
       val linksAfterTransfer = projectLinkDAO.fetchProjectLinks(project.id)
       val errorsAfterTransfer = linksAfterTransfer.groupBy(l => (l.roadPart)).flatMap(g => projectValidator.checkRoadContinuityCodes(project.copy(reservedParts = reservedParts), g._2).distinct)
       linksAfterTransfer.head.connected(linksAfterTransfer.last) should be(true)
@@ -2359,7 +2373,13 @@ Left|      |Right
 
       val errors = allLinks.groupBy(l => (l.roadPart)).flatMap(g => projectValidator.checkRoadContinuityCodes(project.copy(reservedParts = reservedParts, formedParts = formedParts), g._2).distinct)
       errors.size should be(0)
-      runUpdateToDb("""UPDATE PROJECT_LINK SET ROAD_PART_NUMBER = 1, STATUS = 3, START_ADDR_M = 10, END_ADDR_M = 20 WHERE ROAD_NUMBER = 19999 AND ROAD_PART_NUMBER = 2""")
+      runUpdateToDb(
+        sql"""
+             UPDATE project_link
+             SET road_part_number = 1, status = 3, start_addr_m = 10, end_addr_m = 20
+             WHERE road_number = 19999
+             AND road_part_number = 2
+             """)
       val linksAfterTransfer = projectLinkDAO.fetchProjectLinks(project.id).sortBy(_.addrMRange.start)
 
       when(mockRoadAddressService.getValidRoadAddressParts(any[Long], any[DateTime])).thenReturn(Seq(1L, 2L))
@@ -2855,7 +2875,13 @@ Left|      |Right
       val (project, _) = util.setUpProjectWithLinks(RoadAddressChangeType.New, Seq(10L, 20L, 30L), roads = Seq((RoadPart(19999, 1), "Test road")), discontinuity = Discontinuity.Continuous, changeTrack = true)
       projectLinkDAO.create(Seq(util.toProjectLink(project, RoadAddressChangeType.New)(ra.head)))
       projectReservedPartDAO.reserveRoadPart(project.id, RoadPart(19999, 2), "u")
-      runUpdateToDb(s"""UPDATE Project_Link Set Road_part_Number = 2, Discontinuity_type = 1, start_addr_m = 0 , end_addr_m = 10 Where project_id = ${project.id} and end_addr_m = 30""")
+      runUpdateToDb(
+        sql"""
+             UPDATE project_link
+             SET road_part_number = 2, discontinuity_type = 1, start_addr_m = 0 , end_addr_m = 10
+             WHERE project_id = ${project.id}
+             AND end_addr_m = 30
+             """)
       val projectLinks = projectLinkDAO.fetchProjectLinks(project.id)
       val reservedParts = projectReservedPartDAO.fetchReservedRoadParts(project.id)
       val formedParts = projectReservedPartDAO.fetchFormedRoadParts(project.id)
@@ -2871,12 +2897,18 @@ Left|      |Right
       val noErrors = projectValidator.checkRoadContinuityCodes(projectWithReservations, projectLinks)
       noErrors.size should be(0)
 
-      //Should return Discontinuity.Discontinuous to both Project Links, part number = 1
+      // Should return Discontinuity.Discontinuous to both Project Links, part number = 1
       val discontinuousGeom = Seq(Point(40.0, 50.0), Point(60.0, 70.0))
       val geometry = Seq(Point(40.0, 50.0), Point(60.0, 70.0))
-      val lineString: String = PostGISDatabase.createJGeometry(geometry)
-      val geometryQuery = s"ST_GeomFromText('$lineString', 3067)"
-      runUpdateToDb(s"""UPDATE PROJECT_LINK Set GEOMETRY = $geometryQuery Where PROJECT_ID = ${project.id} AND ROAD_PART_NUMBER = 2""")
+      val lineString: String = GeometryDbUtils.createJGeometry(geometry)
+      val geometryQuery = sqls"ST_GeomFromText($lineString, 3067)"
+      runUpdateToDb(
+        sql"""
+             UPDATE project_link
+             SET geometry = $geometryQuery
+             WHERE project_id = ${project.id}
+             AND road_part_number = 2
+             """)
       val errorsAtEnd = projectValidator.checkRoadContinuityCodes(projectWithReservations, projectLinks.map(pl => {
         if (pl.roadPart.partNumber == 2)
           pl.copyWithGeometry(discontinuousGeom)
@@ -2987,7 +3019,7 @@ Left|      |Right
       val newLinksOnly = additionalProjectLinks2.diff(originalProjectLinks)
       val min = newLinksOnly.minBy(_.addrMRange.start).addrMRange.start
       newLinksOnly.foreach(p => {
-        projectLinkDAO.updateAddrMValues(p.copy(addrMRange = AddrMRange(p.addrMRange.start - min, p.addrMRange.end - min), originalAddrMRange = AddrMRange(p.originalAddrMRange.start - min, p.originalAddrMRange.end - min)))
+        projectLinkDAO.updateAddrMValues(p.copy(addrMRange = p.addrMRange.move(-min), originalAddrMRange = p.originalAddrMRange.move(-min)))
       })
       val updatedProjectLinks = projectLinkDAO.fetchProjectLinks(project.id)
       updatedProjectLinks.groupBy(_.ely).size should be(2)
@@ -3009,14 +3041,25 @@ Left|      |Right
       val newLinksOnly = additionalProjectLinks2.diff(originalProjectLinks)
       val min = newLinksOnly.minBy(_.addrMRange.start).addrMRange.start
       newLinksOnly.foreach(p => {
-        projectLinkDAO.updateAddrMValues(p.copy(addrMRange = AddrMRange(p.addrMRange.start - min, p.addrMRange.end - min), originalAddrMRange = AddrMRange(p.originalAddrMRange.start - min, p.originalAddrMRange.end - min)))
-        runUpdateToDb(s"""UPDATE project_link SET ely = ${scala.util.Random.nextInt(5)} WHERE id = ${p.id}""")
+       projectLinkDAO.updateAddrMValues(p.copy(addrMRange = p.addrMRange.move(-min), originalAddrMRange = p.originalAddrMRange.move(-min)))
+        runUpdateToDb(
+          sql"""
+               UPDATE project_link
+               SET ely = ${scala.util.Random.nextInt(5)}
+               WHERE id = ${p.id}
+               """)
       })
       val updatedProjectLinks = projectLinkDAO.fetchProjectLinks(project.id)
       updatedProjectLinks.map(_.roadwayId)
       mockEmptyRoadAddressServiceCalls()
       updatedProjectLinks.foreach(p =>
-        runUpdateToDb(s"""UPDATE roadway Set ely = 8 Where road_number = ${p.roadPart.roadNumber} and road_part_number = ${p.roadPart.partNumber} """)
+        runUpdateToDb(
+          sql"""
+               UPDATE roadway
+               SET ely = 8
+               WHERE road_number = ${p.roadPart.roadNumber}
+               AND road_part_number = ${p.roadPart.partNumber}
+               """)
       )
       val elyCodeCheck = projectValidator.checkProjectElyCodes(project, updatedProjectLinks)
       elyCodeCheck.size should be(1)
@@ -3035,7 +3078,7 @@ Left|      |Right
       val newLinksOnly = additionalProjectLinks2.diff(originalProjectLinks)
       val min = newLinksOnly.minBy(_.addrMRange.start).addrMRange.start
       newLinksOnly.foreach(p => {
-        projectLinkDAO.updateAddrMValues(p.copy(addrMRange = AddrMRange(p.addrMRange.start - min, p.addrMRange.end - min), originalAddrMRange = AddrMRange(p.originalAddrMRange.start - min, p.originalAddrMRange.end - min)))
+        projectLinkDAO.updateAddrMValues(p.copy(addrMRange = p.addrMRange.move(-min), originalAddrMRange = p.originalAddrMRange.move(-min)))
       })
       val updatedProjectLinks = projectLinkDAO.fetchProjectLinks(project.id)
       mockEmptyRoadAddressServiceCalls()

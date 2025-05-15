@@ -232,26 +232,26 @@
 
     var fillDistanceValues = function (selectedLinks) {
       if (selectedLinks.length === 1 && selectedLinks[0].calibrationCode === CalibrationCode.AtBoth.value) {
-        $('#beginDistance').val(selectedLinks[0].startAddressM);
+        $('#beginDistance').val(selectedLinks[0].addrMRange.start);
         if (isProjectEditable()) {
-            $('#endDistance').prop("readonly", false).val(selectedLinks[0].endAddressM);
+            $('#endDistance').prop("readonly", false).val(selectedLinks[0].addrMRange.end);
         } else {
-          $('#endDistance').val(selectedLinks[0].endAddressM);
+          $('#endDistance').val(selectedLinks[0].addrMRange.end);
         }
       } else {
         var orderedByStartM = _.sortBy(selectedLinks, function (l) {
-          return l.startAddressM;
+          return l.addrMRange.start;
         });
         if (orderedByStartM[0].calibrationCode === CalibrationCode.AtBeginning.value) {
-          $('#beginDistance').val(orderedByStartM[0].startAddressM);
+          $('#beginDistance').val(orderedByStartM[0].addrMRange.start);
         }
         if (orderedByStartM[orderedByStartM.length - 1].calibrationCode === CalibrationCode.AtEnd.value) {
           if (isProjectEditable()) {
-            $('#endDistance').prop("readonly", false).val(orderedByStartM[orderedByStartM.length - 1].endAddressM);
+            $('#endDistance').prop("readonly", false).val(orderedByStartM[orderedByStartM.length - 1].addrMRange.end);
           } else {
-            $('#endDistance').val(orderedByStartM[orderedByStartM.length - 1].endAddressM);
+            $('#endDistance').val(orderedByStartM[orderedByStartM.length - 1].addrMRange.end);
           }
-          endDistanceOriginalValue = orderedByStartM[orderedByStartM.length - 1].endAddressM;
+          endDistanceOriginalValue = orderedByStartM[orderedByStartM.length - 1].addrMRange.end;
         }
       }
     };
@@ -314,11 +314,11 @@
         }
         disableFormInputs();
         const projectLinkMaxByEndAddressM = _.maxBy(selectedProjectLink, function (projectLink) {
-              return projectLink.endAddressM;
+              return projectLink.addrMRange.end;
           });
           // If there are non-calculated new links, display the lowest value of discontinuity in selection (i.e. the most significant).
         var selectedDiscontinuity;
-        if (projectLinkMaxByEndAddressM.endAddressM === 0) {
+        if (projectLinkMaxByEndAddressM.addrMRange.end === 0) {
             selectedDiscontinuity = _.minBy(selectedProjectLink, function (projectLink) {
                 return projectLink.discontinuity;
             }).discontinuity;
@@ -470,13 +470,13 @@
                 changedValue = Number(endDistance.value);
 
             const orderedByStartM = _.sortBy(selectedProjectLink, function (l) {
-                return -l.startAddressM;
+                return -l.addrMRange.start;
             });
 
             // EndDistance is correct and changed.
             return !isNaN(changedValue) &&
                     typeof changedValue === 'number' &&
-                    changedValue !== orderedByStartM[0].endAddressM;
+                    changedValue !== orderedByStartM[0].addrMRange.end;
         };
 
       var cancelChanges = function () {
@@ -750,7 +750,7 @@
         });
       });
 
-      rootElement.on('change input', '.form-control.small-input', function (event) {
+      rootElement.on('input', '.form-control.small-input', function (event) {
         var dropdown_0 = $('#dropDown_0');
         var roadNameField = $('#roadName');
         checkInputs();

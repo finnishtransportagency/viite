@@ -10,7 +10,7 @@ import fi.liikennevirasto.viite.util.{DigiroadSerializers, JsonSerializer}
 import fi.vaylavirasto.viite.dao.ComplementaryLinkDAO
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
 import fi.vaylavirasto.viite.model.{AdministrativeClass, LifecycleStatus, LinkGeomSource, RoadLink, TrafficDirection}
-import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
 import fi.vaylavirasto.viite.util.DateTimeFormatters.finnishDateTimeFormatter
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
@@ -39,12 +39,12 @@ class ViiteApiSpec extends AnyFunSuite with ScalatraSuite with BeforeAndAfter {
   val mockProjectService          : ProjectService           = MockitoSugar.mock[ProjectService]
   val mockNodesAndJunctionsService: NodesAndJunctionsService = MockitoSugar.mock[NodesAndJunctionsService]
   val mockRoadNetworkValidator    : RoadNetworkValidator     = MockitoSugar.mock[RoadNetworkValidator]
-  val roadNameService             : RoadNameService          = new RoadNameService { override def withDynTransaction[T](f: => T): T = runWithRollback(f) }
+  val roadNameService             : RoadNameService          = new RoadNameService { override def runWithTransaction[T](f: => T): T = runWithRollback(f) }
 
   val mockViiteVkmClient: ViiteVkmClient = MockitoSugar.mock[ViiteVkmClient]
 
   val preFilledRoadName = PreFillInfo(1, 2, "roadName", RoadNameSource.RoadAddressSource, -1)
-  private val testProjectId = roadNameService.withDynSession { projectDAO.fetchAllWithoutDeletedFilter().head("id").toString.toLong }
+  private val testProjectId = roadNameService.runWithReadOnlySession { projectDAO.fetchAllWithoutDeletedFilter().head("id").toString.toLong }
 
   when(mockProjectService.fetchPreFillData("6117675", testProjectId)).thenReturn(Right(preFilledRoadName))
   when(mockKgvRoadLink.frozenTimeRoadLinkData).thenReturn(frozenTimeRoadLinkData)
@@ -76,7 +76,7 @@ class ViiteApiSpec extends AnyFunSuite with ScalatraSuite with BeforeAndAfter {
     roadwayPointDAO, linearLocationDAO, projectDAO, new ProjectLinkDAO,
     nodeDAO, nodePointDAO, junctionPointDAO, projectReservedPartDAO, roadwayChangesDAO,
     roadwayAddressMapper, eventbus, useFrozenLinkInterface) {
-    override def withDynTransaction[T](f: => T): T = runWithRollback(f)
+    override def runWithTransaction[T](f: => T): T = runWithRollback(f)
   }
 
   private val viiteApi = new ViiteApi(roadLinkService, mockKgvRoadLink, roadAddressService, projectService, roadNameService, mockNodesAndJunctionsService, mockRoadNetworkValidator, swagger = new ViiteSwagger)
@@ -88,7 +88,7 @@ class ViiteApiSpec extends AnyFunSuite with ScalatraSuite with BeforeAndAfter {
       status should equal(200)
       val links = read[Seq[Seq[Map[String, Any]]]](body)
       links should have size 2
-      links.head.head should have size 33
+      links.head.head should have size 32 // Count of level 1 parameters
     }
   }
 
@@ -97,14 +97,14 @@ class ViiteApiSpec extends AnyFunSuite with ScalatraSuite with BeforeAndAfter {
       status should equal(200)
       val links = read[Seq[Seq[Map[String, Any]]]](body)
       links should have size 1
-      links.head.head should have size 33
+      links.head.head should have size 32 // Count of level 1 parameters
     }
   }
 
   test("Test /roadaddress/linkid/:linkId API call returns json data.") {
     get("/roadaddress/linkid/6117675") {
       status should equal(200)
-      body should equal("""{"modifiedAt":"25.06.2015 03:00:00","linkId":"6117675","startAddressM":0,"roadNameFi":"","roadPartNumber":0,"success":true,"endDate":"","linearLocationId":0,"roadwayNumber":0,"administrativeClassMML":"State","roadwayId":0,"municipalityCode":749,"middlePoint":{"x":6975409.0,"y":528167.8603886453,"z":43.282671305168655},"calibrationCode":0,"roadNumber":0,"trackCode":99,"roadClass":99,"sideCode":9,"points":[{"x":6975409.0,"y":527825.0,"z":85.90899999999965},{"x":6975409.0,"y":528516.0,"z":0.0}],"newGeometry":[{"x":6975409.0,"y":527825.0,"z":85.90899999999965},{"x":6975409.0,"y":528516.0,"z":0.0}],"municipalityName":"Siilinjärvi","startMValue":0.0,"endAddressM":0,"endMValue":691.0,"roadNameSe":"","calibrationPoints":[],"mmlId":"","startDate":"","modifiedBy":"kgv_modified","elyCode":8,"lifecycleStatus":3,"discontinuity":5,"administrativeClassId":1,"roadLinkSource":4}""")
+      body should equal("""{"modifiedAt":"25.06.2015 03:00:00","linkId":"6117675","roadNameFi":"","roadPartNumber":0,"success":true,"endDate":"","linearLocationId":0,"roadwayNumber":0,"administrativeClassMML":"State","roadwayId":0,"municipalityCode":749,"middlePoint":{"x":6975409.0,"y":528167.8603886453,"z":43.282671305168655},"calibrationCode":0,"roadNumber":0,"trackCode":99,"roadClass":99,"sideCode":9,"points":[{"x":6975409.0,"y":527825.0,"z":85.90899999999965},{"x":6975409.0,"y":528516.0,"z":0.0}],"newGeometry":[{"x":6975409.0,"y":527825.0,"z":85.90899999999965},{"x":6975409.0,"y":528516.0,"z":0.0}],"municipalityName":"Siilinjärvi","startMValue":0.0,"endMValue":691.0,"addrMRange":{"start":0,"end":0},"roadNameSe":"","calibrationPoints":[],"mmlId":"","startDate":"","modifiedBy":"kgv_modified","elyCode":8,"lifecycleStatus":3,"discontinuity":5,"administrativeClassId":1,"roadLinkSource":4}""")
     }
   }
 
@@ -138,14 +138,14 @@ class ViiteApiSpec extends AnyFunSuite with ScalatraSuite with BeforeAndAfter {
       status should equal(200)
       body should equal("""{"success":true,"roadNameInfo":[{"name":"HELSINKI-SODANKYLÄ","roadNumber":5,"id":1000000,"startDate":"01.01.1989, 00:00:00"}]}""")
     }
-    get("/roadnames?roadName=%27PORI-TAMPERE%27") {
+    get("/roadnames?roadName=PORI-TAMPERE") {
       status should equal(200)
       body should equal("""{"success":true,"roadNameInfo":[{"name":"PORI-TAMPERE","endDate":"30.09.2001, 00:00:00","roadNumber":11,"id":1000001,"startDate":"01.01.1996, 00:00:00"}]}""")
     }
   }
 
   test("Test /roadlinks/roadname/:roadNumber/:projectID") {
-    roadAddressService.withDynSession {
+    roadAddressService.runWithReadOnlySession {
       // RoadName
       get("/roadlinks/roadname/5/7081807") {
         status should equal(200)

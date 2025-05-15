@@ -3,6 +3,8 @@
   "name": "viite",
   "version": "0.0.1",
   "devDependencies": {
+    "@types/node": "20.14.9",
+    "aws-cdk": "2.151.0",
     "eslint": "^5.16.0",
     "grunt": "1.6.1",
     "grunt-cache-bust": "^1.7.0",
@@ -20,10 +22,14 @@
     "http-proxy-middleware": "^3.0.0",
     "mocha": "10.5.2",
     "serve-index": "^1.9.1",
-    "serve-static": "^1.14.1"
+    "serve-static": "^1.14.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.4"
   },
   "dependencies": {
+    "aws-cdk-lib": "2.151.0",
     "backbone": "1.6.0",
+    "constructs": "^10.0.0",
     "interactjs": "1.10.27",
     "jquery": "3.7.1",
     "lodash": "4.17.21",
@@ -38,6 +44,7 @@
   },
   "scripts": {
     "test": "grunt test",
-    "lint": "eslint gruntfile.js viite-UI/test/**/*.js viite-UI/src/**/*.js viite-UI/test_data/*.js viite-UI/src/"
+    "lint": "eslint gruntfile.js viite-UI/test/**/*.js viite-UI/src/**/*.js viite-UI/test_data/*.js viite-UI/src/",
+    "cdk": "cdk --app \"npx ts-node --prefer-ts-exts aws/cdk/bin/cdk.ts\""
   }
 }

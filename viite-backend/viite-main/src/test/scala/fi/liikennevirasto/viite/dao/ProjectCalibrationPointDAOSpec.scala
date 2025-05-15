@@ -3,37 +3,42 @@ package fi.liikennevirasto.viite.dao
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
+import fi.vaylavirasto.viite.dao.BaseDAO
 import fi.vaylavirasto.viite.model.RoadPart
-import fi.vaylavirasto.viite.postgis.DbUtils.runUpdateToDb
-import fi.vaylavirasto.viite.postgis.PostGISDatabase.runWithRollback
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
-import slick.driver.JdbcDriver.backend.Database.dynamicSession  // JdbcBackend#sessionDef
-import slick.jdbc.StaticQuery.interpolation
+import scalikejdbc._
 
-class ProjectCalibrationPointDAOSpec extends AnyFunSuite with Matchers {
+class ProjectCalibrationPointDAOSpec extends AnyFunSuite with Matchers with BaseDAO {
 
   private val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
 
   val projectReservedPartDAO = new ProjectReservedPartDAO
 
   def addTestProjects(): Unit = {
-    runUpdateToDb(s"""insert into project (id,state,name,created_by, start_date) VALUES (1,0,'testproject','automatedtest', current_date)""")
-    runUpdateToDb(s"""insert into project (id,state,name,created_by, start_date) VALUES (2,0,'testproject2','automatedtest', current_date)""")
+    runUpdateToDb(sql"""INSERT INTO project (id,state,name,created_by, start_date) VALUES (1,0,'testproject','automatedtest', current_date)""")
+    runUpdateToDb(sql"""INSERT INTO project (id,state,name,created_by, start_date) VALUES (2,0,'testproject2','automatedtest', current_date)""")
   }
 
   def addProjectRoads(): Unit = {
     projectReservedPartDAO.reserveRoadPart(1, RoadPart(1, 1), "TestUser")
     projectReservedPartDAO.reserveRoadPart(2, RoadPart(2, 1), "TestUser")
-    runUpdateToDb(s"""insert into project_link (id,project_id,TRACK,discontinuity_type,road_number,road_part_number,start_addr_M,end_addr_M, original_start_addr_M, original_end_addr_M,created_by,
-          SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE) VALUES (1,1,1,0,1,1,1,1,1,1,'automatedtest',
-          1, 0, 208.951, 1610995, 0, 1)""")
-    runUpdateToDb(s"""insert into project_link (id,project_id,TRACK,discontinuity_type,road_number,road_part_number,start_addr_M,end_addr_M, original_start_addr_M, original_end_addr_M, created_by,
-          SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE) VALUES (2,2,1,0,2,1,1,1,1,1,'automatedtest',
-          1, 0, 208.951, 1610995, 0, 1)""")
+    runUpdateToDb(sql"""
+          INSERT INTO project_link (id,project_id,TRACK,discontinuity_type,road_number,road_part_number,start_addr_m,end_addr_m, original_start_addr_m, original_end_addr_m,created_by,
+            side,start_measure,end_measure,link_id,adjusted_timestamp,link_source)
+          VALUES (1,1,1,0,1,1,1,1,1,1,'automatedtest',
+            1, 0, 208.951, 1610995, 0, 1)
+          """)
+    runUpdateToDb(sql"""
+          INSERT INTO project_link (id,project_id,TRACK,discontinuity_type,road_number,road_part_number,start_addr_m,end_addr_m, original_start_addr_m, original_end_addr_m, created_by,
+            side,start_measure,end_measure,link_id,adjusted_timestamp,link_source)
+          VALUES (2,2,1,0,2,1,1,1,1,1,'automatedtest',
+            1, 0, 208.951, 1610995, 0, 1)
+            """)
   }
 
   test("Test createCalibrationPoint of calibration points When creating two calibrations points, Then they should be saved without any problems") {
@@ -42,7 +47,9 @@ class ProjectCalibrationPointDAOSpec extends AnyFunSuite with Matchers {
       addProjectRoads()
       ProjectCalibrationPointDAO.createCalibrationPoint(1, 1, 0.0, 15)
       ProjectCalibrationPointDAO.createCalibrationPoint(UserDefinedCalibrationPoint(NewIdValue, 2, 2, 1.1, 20))
-      val calibrationPointsAmmount = sql""" Select count(*) from PROJECT_CALIBRATION_POINT""".as[Long].first
+      val calibrationPointsAmmount = runSelectSingleFirstWithType[Long](
+        sql""" SELECT count(*) FROM PROJECT_CALIBRATION_POINT"""
+      )
       calibrationPointsAmmount should be (2)
     }
   }
