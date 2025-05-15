@@ -37,10 +37,12 @@
                         '<label>Tavoitepäivämäärä</label>' +
                         '<input type="text" id="targetDate" readonly>' +
                     '</div>' +
-                    '<label for="processPerDay">Päivä kerrallaan</label>' +
-                    '<input type="checkbox" id="processPerDay">' +
-                    '<button id="updateLinkNetwork" class="btn btn-primary" style="max-height: 30px">Päivitä tielinkkiverkko</button>' +
                 '</div>' +
+                '<div class="dynamic-link-network-input-wrapper">' +
+                    '<input type="checkbox" id="processPerDay">' +
+                    '<label for="processPerDay">Päivä kerrallaan</label>' +
+                '</div>' +
+                '<button id="updateLinkNetwork" class="btn btn-primary" style="max-height: 30px; margin: 10px">Päivitä tielinkkiverkko</button>' +
             '</div>';
 
         const contentForTabs = $(
