@@ -162,21 +162,21 @@ class ProjectService(
 
         //reservedParts
         val reserved: Seq[ProjectReservedPart] = if (sortedAddresses.nonEmpty) {
-          val maxARM = sortedAddresses.map(_.arealRoadMaintainer.number).max
+          val maxARM = ArealRoadMaintainer(sortedAddresses.map(_.arealRoadMaintainer.id).max) // Which ever of the selection is as good(?). All within the same reserved part should have same ARM.
           val firstLink = sortedAddresses.head.linkId
           val maxDiscontinuity = sortedAddresses.last.discontinuity
           val maxEndAddr = sortedAddresses.last.addrMRange.end
-          Seq(rp.copy(addressLength = Some(maxEndAddr), discontinuity = Some(maxDiscontinuity), ely = Some(maxARM), startingLinkId = Some(firstLink)))
+          Seq(rp.copy(addressLength = Some(maxEndAddr), discontinuity = Some(maxDiscontinuity), arealRoadMaintainer = Some(maxARM), startingLinkId = Some(firstLink)))
         } else Seq()
 
         //formedParts
         val formed: Seq[ProjectReservedPart] = if (roadPartLinks.nonEmpty) {
           val sortedProjectLinks = roadPartLinks.head._2.sortBy(_.addrMRange.start)
-          val maxARM = sortedProjectLinks.map(_.arealRoadMaintainer.number).max
+          val maxARM = ArealRoadMaintainer(sortedProjectLinks.map(_.arealRoadMaintainer.id).max) // Which ever of the selection is as good(?). All within the same reserved part should have same ARM.
           val firstLink = sortedProjectLinks.head.linkId
           val maxDiscontinuity = sortedProjectLinks.last.discontinuity
           val maxEndAddr = sortedProjectLinks.last.addrMRange.end
-          Seq(rp.copy(newLength = Some(maxEndAddr), newDiscontinuity = Some(maxDiscontinuity), newEly = Some(maxARM), startingLinkId = Some(firstLink)))
+          Seq(rp.copy(newLength = Some(maxEndAddr), newDiscontinuity = Some(maxDiscontinuity), newArealRoadMaintainer = Some(maxARM), startingLinkId = Some(firstLink)))
         } else Seq()
 
         reserved ++ formed
@@ -424,10 +424,10 @@ class ProjectService(
         roadPart = roadPart,
         addressLength = Some(detail.endAddrM),
         discontinuity = Some(Discontinuity.apply(detail.discontinuity.toInt)),
-        ely = Some(detail.ely),
+        arealRoadMaintainer = Some(detail.arealRoadMaintainer),
         newLength = Some(detail.endAddrM),
         newDiscontinuity = Some(Discontinuity.apply(detail.discontinuity.toInt)),
-        newEly = Some(detail.ely),
+        newArealRoadMaintainer = Some(detail.arealRoadMaintainer),
         startingLinkId = Some(detail.linkId)
       )
     }
@@ -1284,7 +1284,7 @@ class ProjectService(
   }
 
   def toReservedRoadPart(roadPart: RoadPart, ARM: ArealRoadMaintainer): ProjectReservedPart = {
-    ProjectReservedPart(0L, roadPart, None, None, Some(ARM.number), None, None, None, None)
+    ProjectReservedPart(0L, roadPart, None, None, Some(ARM), None, None, None, None)
   }
 
 
@@ -2220,7 +2220,7 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
   private def newProjectTemplate(rl: RoadLinkLike, ra: RoadAddress, project: Project): ProjectLink = {
     val geometry = GeometryUtils.truncateGeometry3D(rl.geometry, ra.startMValue, ra.endMValue)
     val newARM = project.reservedParts.find(rp => rp.roadPart == ra.roadPart) match {
-      case Some(rp) => ArealRoadMaintainer.getELY(rp.ely.getOrElse(ra.arealRoadMaintainer.number.toLong))
+      case Some(rp) => rp.arealRoadMaintainer.getOrElse(ra.arealRoadMaintainer)
       case _ => ra.arealRoadMaintainer
     }
 

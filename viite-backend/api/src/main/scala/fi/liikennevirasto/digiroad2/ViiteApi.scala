@@ -1836,7 +1836,6 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       "projectName" -> changeInfo.projectName,
       "projectAcceptedDate" -> new SimpleDateFormat("dd.MM.yyyy").format(changeInfo.projectAcceptedDate.toDate),
       "oldEly" -> ArealRoadMaintainer.getELYNumberOrNA(Some(changeInfo.oldRoadAddress.arealRoadMaintainer)),   // TODO VIITE-3424 oldEly->ArealRoadMaintainer
-
       "oldRoadNumber"     -> (if(oldPart.nonEmpty) oldPart.get.roadNumber else ""),
       "oldTrack" -> changeInfo.oldRoadAddress.track.getOrElse(""),
       "oldRoadPartNumber" -> (if(oldPart.nonEmpty) oldPart.get.partNumber else ""),
@@ -1944,10 +1943,10 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
     Map("roadNumber" -> reservedRoadPart.roadPart.roadNumber,
       "roadPartNumber" -> reservedRoadPart.roadPart.partNumber,
       "id" -> reservedRoadPart.id,
-      "currentEly" -> reservedRoadPart.ely,
+      "currentEly" -> ArealRoadMaintainer.getELYNumberOrNA(reservedRoadPart.arealRoadMaintainer), // TODO VIITE-3424 ely->ArealRoadMaintainer
       "currentLength" -> reservedRoadPart.addressLength,
       "currentDiscontinuity" -> reservedRoadPart.discontinuity.map(_.description),
-      "newEly" -> reservedRoadPart.newEly,
+      "newEly" -> ArealRoadMaintainer.getELYNumberOrNA(reservedRoadPart.newArealRoadMaintainer), // TODO VIITE-3424 ely->ArealRoadMaintainer
       "newLength" -> reservedRoadPart.newLength,
       "newDiscontinuity" -> reservedRoadPart.newDiscontinuity.map(_.description),
       "startingLinkId" -> reservedRoadPart.startingLinkId
@@ -1958,10 +1957,10 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
     Map("roadNumber" -> formedRoadPart.roadPart.roadNumber,
       "roadPartNumber" -> formedRoadPart.roadPart.partNumber,
       "id" -> formedRoadPart.id,
-      "currentEly" -> formedRoadPart.ely,
+      "currentEly" -> ArealRoadMaintainer.getELYNumberOrNA(formedRoadPart.arealRoadMaintainer), // TODO VIITE-3424 ely->ArealRoadMaintainer
       "currentLength" -> formedRoadPart.addressLength,
       "currentDiscontinuity" -> formedRoadPart.discontinuity.map(_.description),
-      "newEly" -> formedRoadPart.newEly,
+      "newEly" -> ArealRoadMaintainer.getELYNumberOrNA(formedRoadPart.newArealRoadMaintainer), // TODO VIITE-3424 ely->ArealRoadMaintainer
       "newLength" -> formedRoadPart.newLength,
       "newDiscontinuity" -> formedRoadPart.newDiscontinuity.map(_.description),
       "startingLinkId" -> formedRoadPart.startingLinkId,
@@ -2061,7 +2060,7 @@ object ProjectConverter {
   }
 
   def toReservedRoadPartEly(rp: RoadPartElyExtractor): ProjectReservedPart = {
-    ProjectReservedPart(0L, RoadPart(rp.roadNumber, rp.roadPartNumber), None, None, Some(rp.ely), None, None, None, None)
+    ProjectReservedPart(0L, RoadPart(rp.roadNumber, rp.roadPartNumber), None, None, Some(ArealRoadMaintainer.getELY(s"ELY${rp.ely}")), None, None, None, None)
   }
 }
 

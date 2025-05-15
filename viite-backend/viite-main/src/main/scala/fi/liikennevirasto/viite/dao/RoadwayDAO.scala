@@ -1075,7 +1075,7 @@ class RoadwayDAO extends BaseDAO {
     roadwaysWithNumbers.map(_.id).toSeq
   }
 
-  case class RoadPartDetail(id: Long, linkId: String, endAddrM: Long, discontinuity: Long, ely: Long, startDate: Option[DateTime], endDate: Option[DateTime])
+  case class RoadPartDetail(id: Long, linkId: String, endAddrM: Long, discontinuity: Long, arealRoadMaintainer: ArealRoadMaintainer, startDate: Option[DateTime], endDate: Option[DateTime])
 
   def getRoadPartInfo(roadPart: RoadPart): Option[RoadPartDetail] = {
     val query =
@@ -1106,7 +1106,7 @@ class RoadwayDAO extends BaseDAO {
       linkId        = rs.string("link_id"),
       endAddrM      = rs.long("end_addr_m"),
       discontinuity = rs.long("discontinuity"),
-      ely           = rs.long("ely"),
+      arealRoadMaintainer = ArealRoadMaintainer(s"ELY${rs.long("ely")}"),
       startDate     = rs.jodaDateTimeOpt("start_date"),
       endDate       = rs.jodaDateTimeOpt("end_date")
     )))
