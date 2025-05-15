@@ -14,19 +14,14 @@ object Digiroad2Build extends Build {
   val ScalatraVersion  = "2.7.1"  // "2.7.1" is the last scala 2.11 version. To upgrade further, upgrade the used Scala version.
   val ScalaTestVersion = "3.2.19" // at the time of writing, 2024-08, only newer snapshot-versions available
 
-  val SlickVersion = "3.0.3" // 3.1.x and further requires significant changes in the database code, or library change maybe. // 3.4.x and further requires scala 2.12
-  val JodaSlickMapperVersion = "2.2.0" // provides slick 3.1.1, joda-time 2.7, and joda-convert 1.7
+  val ScalikeJdbcVersion = "3.4.2" // version for Scala version 2.11 - 2.13
 
   val AkkaVersion = "2.5.32" // 2.6.x and up requires Scala 2.12 or greater
   val JsonJacksonVersion    = "3.7.0-M11" // 3.7.0-M12 and up: could not find implicit value for evidence parameter of type org.json4s.AsJsonInput[org.json4s.StreamInput] //  4.0.6 last Scala 2.11 version
   val JettyVersion          = "9.3.30.v20211001"
-  val TestOutputOptions = Tests.Argument(TestFrameworks.ScalaTest, "-oNCXELOPQRMI") // List only problems, and their summaries. Set suitable logback level to get the effect.
   val AwsSdkVersion       = "2.26.7" // "2.17.148"
   val GeoToolsVersion     = "28.5" // "29.x" fails api/viite/roadaddress with Internal Server Error // available "31.1"
   val GeoToolsIFVersion   = GeoToolsVersion // Differs from GeoToolsVersion after "29.2"
-  val JavaxServletVersion = "4.0.1"
-  val JgridshiftVersion   = "1.0"
-  val JtsCoreVersion      = "1.19.0"
 
   val jodaConvert    = "org.joda"             %  "joda-convert"  % "2.2.3"  // no dependencies
   val jodaTime       = "joda-time"            %  "joda-time"     % "2.12.7" // dep on joda-convert // TODO "Note that from Java SE 8 onwards, users are asked to migrate to java.time (JSR-310) - a core part of the JDK which replaces this project." (from https://mvnrepository.com/artifact/joda-time/joda-time)
@@ -47,13 +42,18 @@ object Digiroad2Build extends Build {
   val logbackClassicRuntime = "ch.qos.logback"   % "logback-classic"   % "1.3.14" % "runtime" // Java EE version. 1.4.x requires Jakarta instead of JavaEE
   val commonsIO      = "commons-io"              % "commons-io"        % "2.16.1"
   val newRelic       = "com.newrelic.agent.java" % "newrelic-api"      % "8.12.0"
-  val javaxServletApi= "javax.servlet"           % "javax.servlet-api" % JavaxServletVersion % "provided"
+  val javaxServletApi= "javax.servlet"           % "javax.servlet-api" % "4.0.1" % "provided"
 
-  lazy val apacheHttp  = Seq(httpCore, httpClient)
-  lazy val joda        = Seq(jodaConvert, jodaTime)
-  lazy val mockitoTest = Seq(mockitoCore, mockito4X)
-  lazy val scalaTestTra= Seq(scalaTest, scalatraTest)
-  lazy val scalatraLibs= Seq(scalatraJson, scalatraAuth, scalatraSwagger)
+  val scalikeJdbc     = "org.scalikejdbc" %% "scalikejdbc"     % ScalikeJdbcVersion
+  val scalikeConfig   = "org.scalikejdbc" %% "scalikejdbc-config" % ScalikeJdbcVersion
+  val scalikeJodaTime = "org.scalikejdbc" %% "scalikejdbc-joda-time" % ScalikeJdbcVersion
+
+  lazy val apacheHttp      = Seq(httpCore, httpClient)
+  lazy val joda            = Seq(jodaConvert, jodaTime)
+  lazy val mockitoTest     = Seq(mockitoCore, mockito4X)
+  lazy val scalaTestTra    = Seq(scalaTest, scalatraTest)
+  lazy val scalatraLibs    = Seq(scalatraJson, scalatraAuth, scalatraSwagger)
+  lazy val scalikeJdbcLibs = Seq(scalikeJdbc, scalikeConfig, scalikeJodaTime)
 
   val geoToolsDependencies: Seq[ModuleID] = Seq(
     "org.geotools" % "gt-graph"       % GeoToolsVersion,
@@ -61,7 +61,7 @@ object Digiroad2Build extends Build {
     "org.geotools" % "gt-referencing" % GeoToolsVersion,
     "org.geotools" % "gt-metadata"    % GeoToolsVersion,
     "org.geotools" % "gt-opengis"   % GeoToolsIFVersion,
-    "jgridshift" % "jgridshift" % JgridshiftVersion
+    "jgridshift" % "jgridshift" % "1.0"
   )
 
   // Common settings for all projects
@@ -70,14 +70,12 @@ object Digiroad2Build extends Build {
     version := Version,
     scalaVersion := ScalaVersion,
     scalacOptions ++= Seq("-unchecked", "-feature"),
-    testOptions in Test += TestOutputOptions
+    testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oNCXELOPQRMI") // List only problems, and their summaries. Set suitable logback level to get the effect.
   ) ++ CodeArtifactSettings.getLocalLibSettings // chooses the correct resolvers and credentials based on the CODE_ARTIFACT_AUTH_TOKEN environment variable
 
   val BaseProjectName = "base"
-  lazy val baseJar = Project(
-    BaseProjectName,
-    file(s"viite-backend/$BaseProjectName"),
-    settings = Defaults.coreDefaultSettings ++ projectSettings ++ Seq(
+  lazy val baseJar = (project in file(s"viite-backend/$BaseProjectName"))
+    .settings(Defaults.coreDefaultSettings ++ projectSettings ++ Seq(
       name := BaseProjectName,
       libraryDependencies ++= Seq(
         scalaTest
@@ -86,10 +84,8 @@ object Digiroad2Build extends Build {
   )
 
   val GeoProjectName = "geo"
-  lazy val geoJar = Project(
-    GeoProjectName,
-    file(s"viite-backend/$GeoProjectName"),
-    settings = Defaults.coreDefaultSettings ++ projectSettings ++ Seq(
+  lazy val geoJar = (project in file(s"viite-backend/$GeoProjectName"))
+    .settings (Defaults.coreDefaultSettings ++ projectSettings ++ Seq(
       name := GeoProjectName,
       libraryDependencies ++= Seq(
         akkaActor,
@@ -101,21 +97,16 @@ object Digiroad2Build extends Build {
   ) dependsOn(baseJar)
 
   val DBProjectName = "database"
-  lazy val DBJar = Project (
-    DBProjectName,
-    file(s"viite-backend/$DBProjectName"),
-    settings = Defaults.coreDefaultSettings ++ projectSettings ++ Seq(
+  lazy val DBJar = (project in file(s"viite-backend/$DBProjectName"))
+    .settings(Defaults.coreDefaultSettings ++ projectSettings ++ Seq(
       name := DBProjectName,
       testOptions in Test ++= (
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
       libraryDependencies ++= Seq(
         "org.apache.commons" % "commons-lang3" % "3.14.0",
         "commons-codec"      % "commons-codec" % "1.17.0",
-        "com.jolbox"         % "bonecp"        % "0.8.0.RELEASE",
         scalaTest,
-        "com.typesafe.slick" %% "slick"        % SlickVersion,
         jsonJackson,
-        "com.github.tototoshi" %% "slick-joda-mapper" % JodaSlickMapperVersion,
         "com.github.tototoshi" %% "scala-csv"         % "2.0.0",
         newRelic,
         "org.flywaydb"   % "flyway-core"   % "9.22.3", // Upgrading to 10.x requires Java Runtime upgrade. 10.0.0 says: "Flyway has been compiled by a more recent version of the Java Runtime (class file version 61.0), this version of the Java Runtime only recognizes class file versions up to 52.0"
@@ -124,16 +115,15 @@ object Digiroad2Build extends Build {
         "net.postgis" % "postgis-jdbc"     % "2023.1.0" // dep postgresql, and from 2.5.0 and up: postgis-geometry
       ) ++ joda
         ++ apacheHttp
-        ++ mockitoTest,
+        ++ mockitoTest
+        ++ scalikeJdbcLibs,
       unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf"
     )
   ) dependsOn (baseJar, geoJar)
 
   val ViiteMainProjectName = "viite-main"
-  lazy val viiteJar = Project (
-    ViiteMainProjectName,
-    file(s"viite-backend/$ViiteMainProjectName"),
-    settings = Defaults.coreDefaultSettings ++ projectSettings ++ Seq(
+  lazy val viiteJar = (project in file(s"viite-backend/$ViiteMainProjectName"))
+    .settings(Defaults.coreDefaultSettings ++ projectSettings ++ Seq(
       name := ViiteMainProjectName,
       parallelExecution in Test := false,
       testOptions in Test ++= (
@@ -156,10 +146,8 @@ object Digiroad2Build extends Build {
   ) dependsOn(baseJar, geoJar, DBJar % "compile->compile;test->test")
 
   val ApiCommonProjectName = "api-common"
-  lazy val apiCommonJar = Project (
-    ApiCommonProjectName,
-    file(s"viite-backend/$ApiCommonProjectName"),
-    settings = Defaults.coreDefaultSettings ++ projectSettings ++ Seq(
+  lazy val apiCommonJar = (project in file(s"viite-backend/$ApiCommonProjectName"))
+    .settings(Defaults.coreDefaultSettings ++ projectSettings ++ Seq(
       name := ApiCommonProjectName,
       testOptions in Test ++= (
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
@@ -181,10 +169,8 @@ object Digiroad2Build extends Build {
   ) dependsOn(baseJar, geoJar, DBJar, viiteJar)
 
   val ApiProjectName = "api"
-  lazy val ApiJar = Project (
-    ApiProjectName,
-    file(s"viite-backend/$ApiProjectName"),
-    settings = Defaults.coreDefaultSettings ++ projectSettings ++ Seq(
+  lazy val ApiJar = (project in file(s"viite-backend/$ApiProjectName"))
+    .settings(Defaults.coreDefaultSettings ++ projectSettings ++ Seq(
       name := ApiProjectName,
       testOptions in Test ++= (
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
@@ -203,10 +189,8 @@ object Digiroad2Build extends Build {
     )
   ) dependsOn(baseJar, geoJar, DBJar, viiteJar % "test->test", apiCommonJar % "compile->compile;test->test")
 
-  lazy val warProject = Project (
-    Digiroad2Name,
-    file("."),
-    settings = Defaults.coreDefaultSettings ++ projectSettings
+  lazy val warProject = (project in file("."))
+    .settings(Defaults.coreDefaultSettings ++ projectSettings
       ++ assemblySettings
       ++ net.virtualvoid.sbt.graph.Plugin.graphSettings
       ++ ScalatraPlugin.scalatraWithJRebel ++ Seq(

@@ -12,7 +12,7 @@ import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import fi.vaylavirasto.viite.dao.MunicipalityDAO
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.{AddrMRange, BeforeAfter, CalibrationPointLocation, CalibrationPointType, Discontinuity, RoadAddressChangeType, RoadLink, RoadPart, SideCode, Track}
-import fi.vaylavirasto.viite.postgis.PostGISDatabase
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
@@ -34,9 +34,8 @@ class RoadAddressService(
                           frozenKGV           : Boolean
                         ) {
 
-  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
-
-  def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
+  def runWithTransaction[T](f: => T): T = PostGISDatabaseScalikeJDBC.runWithTransaction(f)
+  def runWithReadOnlySession[T](f: => T): T = PostGISDatabaseScalikeJDBC.runWithReadOnlySession(f)
 
   private val logger = LoggerFactory.getLogger(getClass)
 
@@ -54,7 +53,7 @@ class RoadAddressService(
   val defaultStreetNumber = 1
 
   private def fetchLinearLocationsByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)] = Seq()): (Seq[LinearLocation], Seq[HistoryRoadLink]) = {
-    val linearLocations = withDynSession {
+    val linearLocations = runWithReadOnlySession {
       time(logger, "Fetch addresses") {
         linearLocationDAO.fetchLinearLocationByBoundingBox(boundingRectangle, roadNumberLimits)
       }
@@ -73,7 +72,7 @@ class RoadAddressService(
     * @return
     */
   def fetchLinearLocationByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)] = Seq()): Seq[LinearLocation] = {
-    withDynSession {
+    runWithReadOnlySession {
       time(logger, "Fetch addresses") {
         linearLocationDAO.fetchLinearLocationByBoundingBox(boundingRectangle, roadNumberLimits)
       }
@@ -133,14 +132,14 @@ class RoadAddressService(
     if (!frozenKGV)
       eventbus.publish("roadAddress:persistChangeSet", changeSet)
 
-    val roadAddresses = withDynSession {
+    val roadAddresses = runWithReadOnlySession {
       roadwayAddressMapper.getRoadAddressesByLinearLocation(adjustedLinearLocations)
     }
     RoadAddressFiller.fillTopology(allRoadLinks, roadAddresses)
   }
 
   def getRoadAddressWithRoadNumberAddress(road: Long): Seq[RoadAddress] = {
-    withDynSession {
+    runWithReadOnlySession {
       roadwayAddressMapper.getRoadAddressesByRoadway(roadwayDAO.fetchAllByRoad(road))
     }
   }
@@ -154,7 +153,7 @@ class RoadAddressService(
     */
   def getRoadAddressLinksByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[RoadAddressLink] = {
 
-    val linearLocations = withDynSession {
+    val linearLocations = runWithReadOnlySession {
       time(logger, "Fetch addresses") {
         linearLocationDAO.fetchLinearLocationByBoundingBox(boundingRectangle, roadNumberLimits)
       }
@@ -179,7 +178,7 @@ class RoadAddressService(
     */
   def getRoadAddressLinksOfWholeRoadPart(roadPart: RoadPart): Seq[RoadAddressLink] = {
 
-    val allLinearLocations = withDynSession {
+    val allLinearLocations = runWithReadOnlySession {
       time(logger, s"Fetch addresses in road part: ${roadPart} ") {
         getLinearLocationsInRoadPart(roadPart)
       }
@@ -222,7 +221,7 @@ class RoadAddressService(
     * @return Returns all the filtered road addresses
     */
   def getRoadAddressesWithLinearGeometry(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[RoadAddressLink] = {
-    val roadAddresses = withDynTransaction {
+    val roadAddresses = runWithTransaction {
       val linearLocations = linearLocationDAO.fetchLinearLocationByBoundingBox(boundingRectangle, roadNumberLimits)
       roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations)
     }
@@ -242,7 +241,7 @@ class RoadAddressService(
   def getAllByMunicipality(municipality: Int, searchDate: Option[DateTime] = None): Seq[RoadAddressLink] = {
     val (roadLinks, _) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality)
 
-    val linearLocations = withDynTransaction {
+    val linearLocations = runWithReadOnlySession {
       time(logger, "Fetch addresses") {
         linearLocationDAO.fetchRoadwayByLinkId(roadLinks.map(_.linkId).toSet)
       }
@@ -254,7 +253,7 @@ class RoadAddressService(
     }
 
 
-    val roadAddresses = withDynTransaction {
+    val roadAddresses = runWithReadOnlySession {
       roadwayAddressMapper.getCurrentRoadAddressesByLinearLocation(adjustedLinearLocations, searchDate)
     }
 
@@ -283,7 +282,7 @@ class RoadAddressService(
    *         of the whole road network.
    */
   def getRoadwayNetworkSummary(date: Option[DateTime] = None): Seq[RoadwayNetworkSummaryRow] = {
-    withDynSession {
+    runWithReadOnlySession {
       roadNetworkDAO.fetchRoadwayNetworkSummary(date)
     }
   }
@@ -294,7 +293,7 @@ class RoadAddressService(
     * @return Returns all the road numbers
     */
   def getRoadNumbers: Seq[Long] = {
-    withDynSession {
+    runWithReadOnlySession {
       roadwayDAO.fetchAllCurrentRoadNumbers()
     }
   }
@@ -340,13 +339,13 @@ class RoadAddressService(
           val track = if (params.size == 4) Some(params(3)) else None
           val ralOption = getRoadAddressLink(RoadPart(roadNumber, roadPart), addressM, track)
           ralOption.foldLeft(Seq.empty[Map[String, Seq[Any]]])((partialResultSeq, ral) => {
-            val roadAddressLinkMValueLengthPercentageFactor = (addressM - ral.addrMRange.start.toDouble) / (ral.addrMRange.end.toDouble - ral.addrMRange.start)
+            val roadAddressLinkMValueLengthPercentageFactor = (addressM - ral.addrMRange.start.toDouble) / ral.addrMRange.length.toDouble
             val geometryLength = ral.endMValue - ral.startMValue
             val geometryMeasure = roadAddressLinkMValueLengthPercentageFactor * geometryLength
             val point = ral match {
-              case r if (r.addrMRange.start.toDouble == addressM && r.sideCode == SideCode.TowardsDigitizing) || (r.addrMRange.end == addressM && r.sideCode == SideCode.AgainstDigitizing) =>
+              case r if (r.addrMRange.start.toDouble == addressM && r.sideCode == SideCode.TowardsDigitizing) || (r.addrMRange.endsAt(addressM) && r.sideCode == SideCode.AgainstDigitizing) =>
                 r.geometry.headOption
-              case r if (r.addrMRange.start.toDouble == addressM && r.sideCode == SideCode.AgainstDigitizing) || (r.addrMRange.end == addressM && r.sideCode == SideCode.TowardsDigitizing) =>
+              case r if (r.addrMRange.start.toDouble == addressM && r.sideCode == SideCode.AgainstDigitizing) || (r.addrMRange.endsAt(addressM) && r.sideCode == SideCode.TowardsDigitizing) =>
                 r.geometry.lastOption
               case r =>
                 val mValue: Double = r.sideCode match {
@@ -361,7 +360,7 @@ class RoadAddressService(
       }
       case "street" =>
         val address = searchString.getOrElse("").split(", ")
-        val municipalityId = withDynSession {
+        val municipalityId = runWithReadOnlySession {
           if (address.size > 1) MunicipalityDAO.getMunicipalityIdByName(address.last.trim).headOption.map(_._1) else None
         }
         val (streetName, streetNumber) = address.head.split(" ").partition(_.matches("\\D+"))
@@ -413,7 +412,7 @@ class RoadAddressService(
     *         and includes detailed geometry in that link fetched dynamically from KGV
     */
   def getRoadAddressLink(roadPart: RoadPart, addressM: Long, track: Option[Long] = None): Option[RoadAddressLink] = {
-    val linearLocations = withDynSession {
+    val linearLocations = runWithReadOnlySession {
       time(logger, "Fetch addresses") {
         linearLocationDAO.fetchByRoadAddress(roadPart, addressM, track)
       }
@@ -435,7 +434,7 @@ class RoadAddressService(
     * @return Returns all the filtered road addresses. Note. RoadAddress has normally shorter length than roadway
     */
   def getRoadAddressForSearch(roadPart: RoadPart, addressM: Long, track: Option[Long] = None): Seq[RoadAddress] = {
-    withDynSession {
+    runWithReadOnlySession {
       val roadways = roadwayDAO.fetchAllBySectionAndAddresses(roadPart, Some(addressM), Some(addressM), track)
       val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadways).sortBy(_.addrMRange.start)
       roadAddresses.filter(ra => (track.isEmpty || track.contains(ra.track.value)) && ra.addrMRange.start <= addressM && ra.addrMRange.end >= addressM)
@@ -452,7 +451,7 @@ class RoadAddressService(
     * @return Returns all the filtered road addresses
     */
   def getRoadAddress(roadPart: RoadPart, addressM: Long, trackOption: Option[Track]): Seq[RoadAddress] = {
-    withDynSession {
+    runWithReadOnlySession {
       val roadways = trackOption match {
         case Some(track) =>
           if (addressM != 0)
@@ -468,7 +467,7 @@ class RoadAddressService(
 
       val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadways).sortBy(_.addrMRange.start)
       if (addressM > 0) {
-        roadAddresses.filter(ra => ra.addrMRange.start >= addressM || ra.addrMRange.end == addressM)
+        roadAddresses.filter(ra => ra.addrMRange.start >= addressM || ra.addrMRange.endsAt(addressM))
       }
       else if(roadAddresses.nonEmpty) Seq(roadAddresses.head) else Seq()
     }
@@ -483,7 +482,7 @@ class RoadAddressService(
     * @return Returns all the filtered road addresses
     */
   def getRoadAddressWithRoadNumber(road: Long, tracks: Set[Track]): Seq[RoadAddress] = {
-    withDynSession {
+    runWithReadOnlySession {
       val roadways = if (tracks.isEmpty)
         roadwayDAO.fetchAllByRoad(road)
       else
@@ -503,7 +502,7 @@ class RoadAddressService(
     * @return Returns all the filtered road addresses
     */
   def getRoadAddressWithRoadNumberParts(road: Long, roadParts: Set[Long], tracks: Set[Track]): Seq[RoadAddress] = {
-    withDynSession {
+    runWithReadOnlySession {
       val roadways = roadwayDAO.fetchAllBySectionsAndTracks(road, roadParts, tracks)
       roadwayAddressMapper.getRoadAddressesByRoadway(roadways)
     }
@@ -520,7 +519,7 @@ class RoadAddressService(
     */
   def getRoadAddressWithRoadPart(roadPart: RoadPart, withHistory: Boolean = false, fetchOnlyEnd: Boolean = false, newTransaction: Boolean = true): Seq[RoadAddress] = {
     if (newTransaction)
-      withDynSession {
+      runWithReadOnlySession {
         val roadways = roadwayDAO.fetchAllByRoadPart(roadPart, withHistory, fetchOnlyEnd)
         roadwayAddressMapper.getRoadAddressesByRoadway(roadways)
       }
@@ -542,7 +541,7 @@ class RoadAddressService(
     * @return Returns all the filtered road addresses
     */
   def getRoadAddressWithLinkIdAndMeasure(linkId: String, startMOption: Option[Double], endMOption: Option[Double]): Seq[RoadAddress] = {
-    withDynSession {
+    runWithReadOnlySession {
       val linearLocations = linearLocationDAO.fetchRoadwayByLinkId(Set(linkId))
       val roadAddresses = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations)
 
@@ -566,15 +565,15 @@ class RoadAddressService(
     * @return Returns road addresses filtered given section
     */
   def getRoadAddressesFiltered(roadPart: RoadPart): Seq[RoadAddress] = {
-    if (PostGISDatabase.isWithinSession) {
+    /*if (PostGISDatabase.isWithinSession) {
       val roadwayAddresses = roadwayDAO.fetchAllBySection(roadPart)
       roadwayAddressMapper.getRoadAddressesByRoadway(roadwayAddresses)
-    } else {
-      withDynSession {
+    } else {*/
+    // Should not be needed with scalikeJDBC
+      runWithReadOnlySession {
         val roadwayAddresses = roadwayDAO.fetchAllBySection(roadPart)
         roadwayAddressMapper.getRoadAddressesByRoadway(roadwayAddresses)
       }
-    }
   }
 
   /**
@@ -585,7 +584,7 @@ class RoadAddressService(
     * @return Returns road addresses filtered given section
     */
   def getValidRoadAddressParts(roadNumber: Long, startDate: DateTime): Seq[Long] = {
-    withDynSession {
+    runWithReadOnlySession {
       roadwayDAO.getValidRoadParts(roadNumber, startDate)
     }
   }
@@ -597,7 +596,7 @@ class RoadAddressService(
     * @return Returns previous road part of the same road, if it exists
     */
   def getPreviousRoadPartNumber(roadPart: RoadPart): Option[Long] = {
-    withDynSession {
+    runWithReadOnlySession {
       roadwayDAO.fetchPreviousRoadPartNumber(roadPart)
     }
   }
@@ -611,7 +610,7 @@ class RoadAddressService(
     * @return Returns road addresses filtered by road section and address measures
     */
   def getRoadAddressesFiltered(roadPart: RoadPart, addrMRange: AddrMRange): Seq[RoadAddress] = {
-    withDynSession {
+    runWithReadOnlySession {
       val roadwayAddresses = roadwayDAO.fetchAllBySectionAndAddresses(roadPart, Some(addrMRange.start), Some(addrMRange.end))
       val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadwayAddresses)
       roadAddresses.filter(ra => ra.isBetweenAddresses(addrMRange))
@@ -625,7 +624,7 @@ class RoadAddressService(
     * @return Returns all filtered the road addresses
     */
   def getRoadAddressByLinkIds(linkIds: Set[String]): Seq[RoadAddress] = {
-    withDynTransaction {
+    runWithReadOnlySession {
       val linearLocations = linearLocationDAO.fetchRoadwayByLinkId(linkIds)
       val roadAddresses = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations)
       roadAddresses.filter(ra => linkIds.contains(ra.linkId))
@@ -644,13 +643,13 @@ class RoadAddressService(
   }
 
   def getTracksForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[TrackForRoadAddressBrowser] = {
-    withDynSession {
+    runWithReadOnlySession {
       roadwayDAO.fetchTracksForRoadAddressBrowser(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
     }
   }
 
   def getRoadPartsForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[RoadPartForRoadAddressBrowser] = {
-    withDynSession {
+    runWithReadOnlySession {
       roadwayDAO.fetchRoadPartsForRoadAddressBrowser(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
     }
   }
@@ -658,13 +657,13 @@ class RoadAddressService(
   def getChangeInfosForRoadAddressChangesBrowser(startDate: Option[String], endDate: Option[String], dateTarget: Option[String],
                                                  ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long],
                                                  maxRoadPartNumber: Option[Long]): Seq[ChangeInfoForRoadAddressChangesBrowser] = {
-    withDynSession {
+    runWithReadOnlySession {
       roadwayChangesDAO.fetchChangeInfosForRoadAddressChangesBrowser(startDate, endDate, dateTarget, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
     }
   }
 
   def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedRoadAddress] = {
-    withDynSession {
+    runWithReadOnlySession {
       val roadwayAddresses = roadwayDAO.fetchAllByDateRange(sinceDate, untilDate)
       val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadwayAddresses)
 
@@ -684,7 +683,7 @@ class RoadAddressService(
   }
 
   def getUpdatedRoadways(sinceDate: DateTime): Either[String, Seq[Roadway]] = {
-    withDynSession {
+    runWithReadOnlySession {
       try {
         val roadways = roadwayDAO.fetchUpdatedSince(sinceDate)
         Right(roadways)
@@ -697,7 +696,7 @@ class RoadAddressService(
   }
 
   def getUpdatedLinearLocations(sinceDate: DateTime): Either[String, Seq[LinearLocation]] = {
-    withDynSession {
+    runWithReadOnlySession {
       try {
         val linearLocations = linearLocationDAO.fetchUpdatedSince(sinceDate)
         Right(linearLocations)
@@ -720,7 +719,7 @@ class RoadAddressService(
 
     val roadlinks = roadLinkService.getAllVisibleRoadLinks(Set(linkId))
 
-    val roadAddresses = withDynSession {
+    val roadAddresses = runWithReadOnlySession {
       val linearLocations = linearLocationDAO.fetchRoadwayByLinkId(Set(linkId))
 
       roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations)
@@ -751,7 +750,7 @@ class RoadAddressService(
 
   def updateChangeSet(changeSet: ChangeSet): Unit = {
 
-    withDynTransaction {
+    runWithTransaction {
       //Getting the linearLocations before the drop
       val linearByRoadwayNumber = linearLocationDAO.fetchByRoadways(changeSet.newLinearLocations.map(_.roadwayNumber).toSet)
 
@@ -806,7 +805,7 @@ class RoadAddressService(
 
   def handleProjectCalibrationPointChanges(linearLocations: Iterable[LinearLocation], username: String = "-", terminated: Seq[ProjectRoadLinkChange] = Seq()): Unit = {
     def handleTerminatedCalibrationPointRoads(pls: Seq[ProjectRoadLinkChange]) = {
-      val ids: Set[Long] = pls.flatMap(p => CalibrationPointDAO.fetchIdByRoadwayNumberSection(p.originalRoadwayNumber, p.originalStartAddr, p.originalEndAddr)).toSet
+      val ids: Set[Long] = pls.flatMap(p => CalibrationPointDAO.fetchIdByRoadwayNumberSection(p.originalRoadwayNumber, p.originalAddrMRange)).toSet
       if (ids.nonEmpty) {
         logger.info(s"Expiring calibration point ids: " + ids.mkString(", "))
         CalibrationPointDAO.expireById(ids)
@@ -900,9 +899,9 @@ class RoadAddressService(
       // get new address for roadway point, new beforeAfter value for node point and junction point and new startOrEnd for calibration point
       val (newAddr, beforeAfter, startOrEnd) = {
         if (projectRoadLinkChangeAfter.reversed)
-          (projectRoadLinkChangeAfter.newEndAddr, BeforeAfter.Before, CalibrationPointLocation.EndOfLink)
+          (projectRoadLinkChangeAfter.newAddrMRange.end, BeforeAfter.Before, CalibrationPointLocation.EndOfLink)
         else
-          (projectRoadLinkChangeAfter.newStartAddr, BeforeAfter.After, CalibrationPointLocation.StartOfLink)
+          (projectRoadLinkChangeAfter.newAddrMRange.start, BeforeAfter.After, CalibrationPointLocation.StartOfLink)
       }
 
       val existingRoadwayPoint = roadwayPointDAO.fetch(projectRoadLinkChangeAfter.newRoadwayNumber, newAddr)
@@ -930,9 +929,9 @@ class RoadAddressService(
     }
 
     def getNewRoadwayNumberInPoint(roadwayPoint: RoadwayPoint): Option[Long] = {
-      projectLinkChanges.filter(plc => roadwayPoint.roadwayNumber == plc.originalRoadwayNumber && roadwayPoint.addrMValue >= plc.originalStartAddr && roadwayPoint.addrMValue <= plc.originalEndAddr) match {
+      projectLinkChanges.filter(plc => roadwayPoint.roadwayNumber == plc.originalRoadwayNumber && roadwayPoint.addrMValue >= plc.originalAddrMRange.start && roadwayPoint.addrMValue <= plc.originalAddrMRange.end) match {
         case linkChanges: Seq[ProjectRoadLinkChange] if linkChanges.size == 2 && linkChanges.map(_.newRoadwayNumber).distinct.size > 1 =>
-          val sortedProjectLinkChanges = linkChanges.sortBy(_.originalStartAddr)
+          val sortedProjectLinkChanges = linkChanges.sortBy(_.originalAddrMRange.start)
           val projectLinkChangeBefore = sortedProjectLinkChanges.head
           val projectLinkChangeAfter: ProjectRoadLinkChange = sortedProjectLinkChanges.last
           handleDualRoadwayPoint(roadwayPoint.id, projectLinkChangeAfter)
@@ -972,15 +971,15 @@ class RoadAddressService(
         RoadAddressChangeType.Transfer, RoadAddressChangeType.Renumeration,
         RoadAddressChangeType.Unchanged, RoadAddressChangeType.Termination
       ).contains(rw.changeInfo.changeType))
-      val updatedRoadwayPoints: Seq[RoadwayPoint] = projectRoadwayChanges.sortBy(_.changeInfo.target.startAddressM).foldLeft(
+      val updatedRoadwayPoints: Seq[RoadwayPoint] = projectRoadwayChanges.sortBy(_.changeInfo.target.getStartOption).foldLeft(
         Seq.empty[RoadwayPoint]) { (list, rwc) =>
         val change = rwc.changeInfo
         val source = change.source
         val target = change.target
-        val terminatedRoadwayNumbersChanges = projectLinkChanges.filter { entry =>
+        val terminatedRoadwayNumbersChanges = projectLinkChanges.filter { entry => // TODO "terminatedRoadwayNumbersChanges" - what is it with this name?
           entry.roadPart.roadNumber == source.roadNumber.get &&
-            (source.startRoadPartNumber.get to source.endRoadPartNumber.get contains entry.roadPart.partNumber) &&
-            entry.originalStartAddr >= source.startAddressM.get && entry.originalEndAddr <= source.endAddressM.get
+          (source.startRoadPartNumber.get to source.endRoadPartNumber.get contains entry.roadPart.partNumber) &&
+          entry.status!=RoadAddressChangeType.New && source.addrMRange.get.contains(entry.originalAddrMRange)
         }
         val roadwayNumbers = if (change.changeType == RoadAddressChangeType.Termination) {
           terminatedRoadwayNumbersChanges.map(_.newRoadwayNumber).distinct
@@ -993,9 +992,9 @@ class RoadAddressService(
 
         val roadwayPoints = roadwayNumbers.flatMap { rwn =>
           val filteredProjectLinkChanges = projectLinkChanges.filter(plc => plc.newRoadwayNumber == rwn
-            && plc.originalStartAddr >= source.startAddressM.get && plc.originalEndAddr <= source.endAddressM.get)
+            && source.addrMRange.get.contains(plc.originalAddrMRange))
           if (filteredProjectLinkChanges.nonEmpty) {
-            roadwayPointDAO.fetchByRoadwayNumberAndAddresses(filteredProjectLinkChanges.head.originalRoadwayNumber, AddrMRange(source.startAddressM.get, source.endAddressM.get))
+            roadwayPointDAO.fetchByRoadwayNumberAndAddresses(filteredProjectLinkChanges.head.originalRoadwayNumber, AddrMRange(source.addrMRange.get.start, source.addrMRange.get.end))
           } else {
             Seq()
           }
@@ -1006,11 +1005,11 @@ class RoadAddressService(
             if (!change.reversed) {
               val rwPoints: Seq[RoadwayPoint] = roadwayPoints.flatMap { rwp =>
                 if (!list.exists(_.id == rwp.id)) { // Check if the point is already in the updated list
-                  val dualRoadwayPointNewAddrM = projectLinkChanges.filter(plc => rwp.roadwayNumber == plc.originalRoadwayNumber && rwp.addrMValue >= plc.originalStartAddr && rwp.addrMValue <= plc.originalEndAddr) match {
+                  val dualRoadwayPointNewAddrM = projectLinkChanges.filter(plc => rwp.roadwayNumber == plc.originalRoadwayNumber && rwp.addrMValue >= plc.originalAddrMRange.start && rwp.addrMValue <= plc.originalAddrMRange.end) match {
                     case linkChanges: Seq[ProjectRoadLinkChange] if linkChanges.size == 2 && linkChanges.map(_.newRoadwayNumber).distinct.size > 1 =>
-                      val sortedProjectLinkChanges = linkChanges.sortBy(_.originalStartAddr)
+                      val sortedProjectLinkChanges = linkChanges.sortBy(_.originalAddrMRange.start)
                       val projectRoadLinkChangeBefore = sortedProjectLinkChanges.head
-                      Some(projectRoadLinkChangeBefore.newEndAddr)
+                      Some(projectRoadLinkChangeBefore.newAddrMRange.end)
                     case _ => None
                   }
 
@@ -1018,7 +1017,7 @@ class RoadAddressService(
                     if (dualRoadwayPointNewAddrM.isDefined)
                       dualRoadwayPointNewAddrM.get
                     else
-                      target.startAddressM.get + (rwp.addrMValue - source.startAddressM.get)
+                      target.addrMRange.get.start + (rwp.addrMValue - source.addrMRange.get.start)
                   }
                   updateRoadwayPoint(rwp, newAddrM)
                 } else { // Skip the point if it is already in the updated list
@@ -1029,7 +1028,7 @@ class RoadAddressService(
             } else {
               val rwPoints: Seq[RoadwayPoint] = roadwayPoints.flatMap { rwp =>
                 if (!list.exists(_.id == rwp.id)) { // Check if the point is already in the updated list
-                  val newAddrM = target.endAddressM.get - (rwp.addrMValue - source.startAddressM.get)
+                  val newAddrM = target.addrMRange.get.end - (rwp.addrMValue - source.addrMRange.get.start)
                   updateRoadwayPoint(rwp, newAddrM)
                 } else {
                   Seq.empty[RoadwayPoint]
@@ -1041,7 +1040,7 @@ class RoadAddressService(
             if (change.reversed) {
               val rwPoints: Seq[RoadwayPoint] = roadwayPoints.flatMap { rwp =>
                 if (!list.exists(_.id == rwp.id)) { // Check if the point is already in the updated list
-                  val newAddrM = Seq(source.endAddressM.get, target.endAddressM.get).max - rwp.addrMValue
+                  val newAddrM = Seq(source.addrMRange.get.end, target.addrMRange.get.end).max - rwp.addrMValue
                   updateRoadwayPoint(rwp, newAddrM)
                 } else { // Skip the point if it is already in the updated list
                   Seq.empty[RoadwayPoint]
@@ -1055,7 +1054,7 @@ class RoadAddressService(
             val rwPoints: Seq[RoadwayPoint] = roadwayPoints.flatMap { rwp =>
               if (!list.exists(_.id == rwp.id)) { // Check if the point is already in the updated list
                 val terminatedRoadAddress = terminatedRoadwayNumbersChanges.find(change => change.originalRoadwayNumber == rwp.roadwayNumber &&
-                  change.originalStartAddr >= source.startAddressM.get && change.originalEndAddr <= source.endAddressM.get
+                  source.addrMRange.get.contains(change.originalAddrMRange)
                 )
                 if (terminatedRoadAddress.isDefined) {
                   updateRoadwayPoint(rwp, rwp.addrMValue)
@@ -1082,7 +1081,7 @@ class RoadAddressService(
   val roadwayChangesDAO = new RoadwayChangesDAO
 
   def fetchUpdatedRoadwayChanges(since: DateTime, until: Option[DateTime]): Seq[RoadwayChangesInfo] = {
-    withDynSession {
+    runWithReadOnlySession {
       roadwayChangesDAO.fetchRoadwayChangesInfo(since, until)
     }
   }
@@ -1311,7 +1310,7 @@ object RoadAddressFilters {
   }
 
   def continuousAddress(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
-    curr.addrMRange.end == next.addrMRange.start
+    curr.addrMRange.continuesTo(next.addrMRange)
   }
 
   def discontinuousAddress(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {

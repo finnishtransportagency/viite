@@ -1,91 +1,115 @@
 package fi.vaylavirasto.viite.dao
 
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
+import scalikejdbc._
 
 case class ProjectLinkName(id: Long, projectId: Long, roadNumber: Long, roadName: String)
 
+object ProjectLinkName extends SQLSyntaxSupport[ProjectLinkName] {
+  override val tableName = "PROJECT_LINK_NAME"
+
+  def apply(rs: WrappedResultSet): ProjectLinkName = ProjectLinkName(
+    id         = rs.long("id"),
+    projectId  = rs.long("project_id"),
+    roadNumber = rs.long("road_number"),
+    roadName   = rs.string("road_name")
+  )
+}
+
 object ProjectLinkNameDAO extends BaseDAO {
+  private val pln = ProjectLinkName.syntax("pln")
 
-  private val ptojectLinkNameQueryBase = s"""select id, project_id, road_number, road_name from project_link_name """
+  private val selectAllFromPLinkName =
+    sqls"""
+          SELECT ${pln.id}, ${pln.projectId}, ${pln.roadNumber}, ${pln.roadName}
+          FROM ${ProjectLinkName.as(pln)}
+    """
 
-  implicit val getProjectLinkNameRow: GetResult[ProjectLinkName] = new GetResult[ProjectLinkName] {
-    def apply(r: PositionedResult) = {
-      val id = r.nextLong()
-      val projectId = r.nextLong()
-      val roadNumber = r.nextLong()
-      val roadName = r.nextString()
-
-      ProjectLinkName(id, projectId, roadNumber, roadName)
-    }
-  }
-
-  private def queryList(query: String) = {
-    Q.queryNA[ProjectLinkName](ptojectLinkNameQueryBase + query).iterator.toSeq
+  private def queryList (query: SQL[Nothing, NoExtractor]): Seq[ProjectLinkName] = {
+    runSelectQuery(query.map(ProjectLinkName.apply))
   }
 
   def get(roadNumber: Long, projectId: Long): Option[ProjectLinkName] = {
-    queryList(s"where road_number = $roadNumber and project_id = $projectId").headOption
+    queryList(
+      sql"""
+        $selectAllFromPLinkName
+        WHERE ${pln.roadNumber} = $roadNumber
+        AND project_id = $projectId
+        """)
+      .headOption
   }
 
   def get(roadNumbers: Set[Long], projectId: Long): Seq[ProjectLinkName] = {
-    val roadNumbersStr = roadNumbers.mkString(",")
-    queryList(s"where road_number in ($roadNumbersStr) and project_id = $projectId")
+    queryList(sql"""
+                    $selectAllFromPLinkName
+                    WHERE road_number IN ($roadNumbers)
+                    AND project_id = $projectId
+                    """)
   }
 
   def create(projectLinkNames: Seq[ProjectLinkName]): Unit = {
-    val projectLinkNamePS = dynamicSession.prepareStatement("insert into project_link_name (id, project_id, road_number, road_name) values values (nextval('project_link_name_seq'), ?, ?, ?)")
-    projectLinkNames.foreach { projectLinkName =>
-      projectLinkNamePS.setLong(1, projectLinkName.projectId)
-      projectLinkNamePS.setLong(2, projectLinkName.roadNumber)
-      projectLinkNamePS.setString(3, projectLinkName.roadName)
-      projectLinkNamePS.addBatch()
+    val insertQuery =
+      sql"""
+            INSERT INTO project_link_name (id, project_id, road_number, road_name)
+            VALUES (NEXTVAL('project_link_name_seq'), ?, ?, ?)
+           """
+
+    val batchParams: Seq[Seq[Any]] = projectLinkNames.map { projectLinkName =>
+      Seq(projectLinkName.projectId, projectLinkName.roadNumber, projectLinkName.roadName)
     }
-    projectLinkNamePS.executeBatch()
-    projectLinkNamePS.close()
+
+    runBatchUpdateToDb(insertQuery, batchParams)
   }
 
   def update(projectLinkNames: Seq[ProjectLinkName]): Unit = {
-    val projectLinkNamePS = dynamicSession.prepareStatement("update project_link_name set road_name = ? where project_id = ? and road_number = ?")
-    projectLinkNames.foreach { projectLinkName =>
-      projectLinkNamePS.setString(1, projectLinkName.roadName)
-      projectLinkNamePS.setLong(2, projectLinkName.projectId)
-      projectLinkNamePS.setLong(3, projectLinkName.roadNumber)
-      projectLinkNamePS.addBatch()
+    val updateQuery =
+      sql"""
+           UPDATE project_link_name
+           SET road_name = ?
+           WHERE project_id = ? AND road_number = ?
+           """
+
+    val batchParams: Seq[Seq[Any]] = projectLinkNames.map { projectLinkName =>
+      Seq(
+        projectLinkName.roadName,
+        projectLinkName.projectId,
+        projectLinkName.roadNumber
+      )
     }
-    projectLinkNamePS.executeBatch()
-    projectLinkNamePS.close()
+
+    runBatchUpdateToDb(updateQuery, batchParams)
   }
 
   def create(projectId: Long, roadNumber: Long, roadName: String): Unit = {
-    runUpdateToDb(s"""
-         insert into project_link_name (id, project_id, road_number, road_name)
-         values (nextval('project_link_name_seq'), $projectId, $roadNumber, '$roadName')
+    runUpdateToDb(sql"""
+         INSERT INTO project_link_name (id, project_id, road_number, road_name)
+         VALUES (nextval('project_link_name_seq'), $projectId, $roadNumber, $roadName)
     """)
   }
 
   def update(projectId: Long, roadNumber: Long, roadName: String): Unit = {
-    runUpdateToDb(s"""
-         update project_link_name set road_name = '$roadName'
-         where project_id = $projectId and road_number = $roadNumber
+    runUpdateToDb(sql"""
+         UPDATE project_link_name set road_name = $roadName
+         WHERE project_id = $projectId and road_number = $roadNumber
     """)
   }
 
   def update(id: Long, roadName: String): Unit = {
-    runUpdateToDb(s"""
-         update project_link_name set road_name = '$roadName' where id = $id
+    runUpdateToDb(sql"""
+         UPDATE project_link_name set road_name = $roadName WHERE id = $id
     """)
   }
 
   def revert(roadNumber: Long, projectId: Long): Unit = {
-    runUpdateToDb(s"""
-        delete from project_link_name
-        where road_number = $roadNumber and project_id = $projectId and (select count(distinct(ROAD_PART_NUMBER))
-        from project_link where road_number = $roadNumber and status != 0) < 2
+    runUpdateToDb(sql"""
+        DELETE FROM project_link_name
+        WHERE road_number = $roadNumber and project_id = $projectId and (select count(distinct(ROAD_PART_NUMBER))
+        FROM project_link WHERE road_number = $roadNumber and status != 0) < 2
     """)
   }
 
   def removeByProject(projectId: Long): Unit = {
-    runUpdateToDb(s"""DELETE FROM PROJECT_LINK_NAME WHERE PROJECT_ID = $projectId""")
+    runUpdateToDb(sql"""DELETE FROM PROJECT_LINK_NAME WHERE PROJECT_ID = $projectId""")
   }
+
+
 }

@@ -21,7 +21,7 @@ object ProjectChangeFiller {
       val pl = enrichedProjectLinks.find(_.id == rlc.id)
       if (pl.isDefined) {
         val pl_ = pl.get
-        Some(rlc.copy(linearLocationId = pl_.linearLocationId, newStartAddr = pl_.addrMRange.start, newEndAddr = pl_.addrMRange.end))
+        Some(rlc.copy(linearLocationId = pl_.linearLocationId, newAddrMRange = pl_.addrMRange))
       }
       else
         None

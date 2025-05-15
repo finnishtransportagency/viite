@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2.authentication
 import javax.servlet.http.HttpServletRequest
 import fi.liikennevirasto.digiroad2.user.{Configuration, User, UserProvider}
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithReadOnlySession
 import org.slf4j.LoggerFactory
 
 trait Authentication extends TestUserSupport {
@@ -14,12 +15,16 @@ trait Authentication extends TestUserSupport {
   def authenticateForApi(request: HttpServletRequest)(implicit userProvider: UserProvider): Unit = {
     userProvider.clearCurrentUser()
     try {
-      userProvider.setCurrentUser(authenticate(request)(userProvider))
+      runWithReadOnlySession {
+        userProvider.setCurrentUser(authenticate(request)(userProvider))
+      }
     } catch {
       case ua: UnauthenticatedException =>
         if (authenticationTestModeEnabled) {
           authLogger.info("Remote user not found, falling back to test mode authentication")
-          userProvider.setCurrentUser(getTestUser(request)(userProvider).getOrElse(viewerUser))
+          runWithReadOnlySession {
+            userProvider.setCurrentUser(getTestUser(request)(userProvider).getOrElse(viewerUser))
+          }
         } else {
           throw ua
         }

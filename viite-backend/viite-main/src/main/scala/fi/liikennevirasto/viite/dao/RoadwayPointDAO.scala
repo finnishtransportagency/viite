@@ -5,9 +5,8 @@ import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
 import fi.vaylavirasto.viite.model.AddrMRange
 import org.joda.time.DateTime
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
+import scalikejdbc._
+import scalikejdbc.jodatime.JodaWrappedResultSet.fromWrappedResultSetToJodaWrappedResultSet
 
 case class RoadwayPoint(id: Long, roadwayNumber: Long, addrMValue: Long, createdBy: String, createdTime: Option[DateTime] = None,
                         modifiedBy: Option[String] = None, modifiedTime: Option[DateTime] = None) {
@@ -17,20 +16,24 @@ case class RoadwayPoint(id: Long, roadwayNumber: Long, addrMValue: Long, created
 
 }
 
+object RoadwayPoint extends SQLSyntaxSupport[RoadwayPoint] {
+  override val tableName = "roadway_point"
+
+  def apply(rs: WrappedResultSet): RoadwayPoint = RoadwayPoint(
+    id            = rs.long("id"),
+    roadwayNumber = rs.long("roadway_number"),
+    addrMValue    = rs.long("addr_m"),
+    createdBy     = rs.string("created_by"),
+    createdTime   = rs.jodaDateTimeOpt("created_time"),
+    modifiedBy    = rs.stringOpt("modified_by"),
+    modifiedTime  = rs.jodaDateTimeOpt("modified_time")
+  )
+}
+
 class RoadwayPointDAO extends BaseDAO {
 
-  implicit val getRoadwayPointRow: GetResult[RoadwayPoint] = new GetResult[RoadwayPoint] {
-    def apply(r: PositionedResult): RoadwayPoint = {
-      val roadwayPointId = r.nextLong()
-      val roadwayNumber = r.nextLong()
-      val addrMValue = r.nextLong()
-      val createdBy = r.nextString()
-      val createdTime = r.nextDateOption().map(d => new DateTime(d.getTime))
-      val modifiedBy = r.nextStringOption()
-      val modifiedTime = r.nextDateOption().map(d => new DateTime(d.getTime))
-
-      RoadwayPoint(roadwayPointId, roadwayNumber, addrMValue, createdBy, createdTime, modifiedBy, modifiedTime)
-    }
+  private def queryList(query: SQL[Nothing, NoExtractor]): Seq[RoadwayPoint] = {
+    runSelectQuery(query.map(RoadwayPoint.apply))
   }
 
   def create(roadwayPoint: RoadwayPoint): Long = {
@@ -39,10 +42,11 @@ class RoadwayPointDAO extends BaseDAO {
     } else {
       roadwayPoint.id
     }
+
     logger.info(s"Insert roadway_point $id (roadwayNumber: ${roadwayPoint.roadwayNumber}, addrM: ${roadwayPoint.addrMValue})")
-    runUpdateToDb(s"""
-      Insert Into ROADWAY_POINT (ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY)
-      Values ($id, ${roadwayPoint.roadwayNumber}, ${roadwayPoint.addrMValue}, '${roadwayPoint.createdBy}', '${roadwayPoint.createdBy}')
+    runUpdateToDb(sql"""
+      INSERT INTO roadway_point (id, roadway_number, addr_m, created_by, modified_by)
+      values ($id, ${roadwayPoint.roadwayNumber}, ${roadwayPoint.addrMValue}, ${roadwayPoint.createdBy}, ${roadwayPoint.createdBy})
       """)
     id
   }
@@ -50,10 +54,10 @@ class RoadwayPointDAO extends BaseDAO {
   def create(roadwayNumber: Long, addrMValue: Long, createdBy: String): Long = {
     val id = Sequences.nextRoadwayPointId
     logger.info(s"Insert roadway_point $id (roadwayNumber: $roadwayNumber, addrM: $addrMValue)")
-    runUpdateToDb(s"""
-      Insert Into ROADWAY_POINT (ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY)
-      Values ($id, $roadwayNumber, $addrMValue, '$createdBy', '$createdBy')
-      """)
+    runUpdateToDb(sql"""
+      INSERT INTO roadway_point (id, roadway_number, addr_m, created_by, modified_by)
+      VALUES ($id, $roadwayNumber, $addrMValue, $createdBy, $createdBy)
+    """)
     id
   }
 
@@ -62,48 +66,72 @@ class RoadwayPointDAO extends BaseDAO {
   }
 
   def update(roadwayPoints: Seq[RoadwayPoint]): Seq[Long] = {
-    val ps = dynamicSession.prepareStatement("update ROADWAY_POINT SET ROADWAY_NUMBER = ?, ADDR_M = ?, MODIFIED_BY = ?, MODIFIED_TIME = current_timestamp WHERE ID = ?")
+    val query =
+      sql"""
+          UPDATE roadway_point
+          SET roadway_number = ?, addr_m = ?, modified_by = ?, modified_time = current_timestamp
+          WHERE id = ?
+         """
 
-    roadwayPoints.foreach {
-      rwPoint =>
-        logger.info(s"Update roadway_point (id: ${rwPoint.id}, roadwayNumber: ${rwPoint.roadwayNumber}, addr: ${rwPoint.addrMValue})")
-        ps.setLong(1, rwPoint.roadwayNumber)
-        ps.setLong(2, rwPoint.addrMValue)
-        ps.setString(3, rwPoint.modifiedBy.getOrElse("-"))
-        ps.setLong(4, rwPoint.id)
-        ps.addBatch()
+    val batchParams = roadwayPoints.map { rwPoint =>
+      Seq(
+        rwPoint.roadwayNumber,
+        rwPoint.addrMValue,
+        rwPoint.modifiedBy.getOrElse("-"),
+        rwPoint.id)
     }
-    ps.executeBatch()
-    ps.close()
-    roadwayPoints.map(_.id)
+
+    runBatchUpdateToDb(query, batchParams)
+
+    roadwayPoints.map(_.id) // return the ids of the updated roadway points
   }
 
   def fetch(id: Long): RoadwayPoint = {
-    sql"""
-      SELECT ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, CREATED_TIME, MODIFIED_BY, MODIFIED_TIME
-      from ROADWAY_POINT
-      where id = $id
-     """.as[RoadwayPoint].first
+    val query = sql"""
+         SELECT id, roadway_number, addr_m, created_by, created_time, modified_by, modified_time
+         FROM roadway_point
+         WHERE id = $id
+        """
+    runSelectSingleOption(query.map(RoadwayPoint.apply)).getOrElse(
+      throw new NoSuchElementException(s"RoadwayPoint with id $id not found")
+    )
   }
 
   def fetch(roadwayNumber: Long, addrM: Long): Option[RoadwayPoint] = {
-    sql"""
-      SELECT ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, CREATED_TIME, MODIFIED_BY, MODIFIED_TIME
-      from ROADWAY_POINT
-      where ROADWAY_NUMBER= $roadwayNumber and ADDR_M = $addrM
-     """.as[RoadwayPoint].firstOption
+    logger.debug(s"Fetching RoadwayPoint with roadwayNumber=$roadwayNumber, addrM=$addrM")
+    val query =
+      sql"""
+       SELECT id, roadway_number, addr_m, created_by, created_time, modified_by, modified_time
+       FROM roadway_point
+       WHERE roadway_number = $roadwayNumber
+       AND addr_m = $addrM
+      """
+    logger.debug(s"Generated SQL: ${query.statement}")
+    try {
+      runSelectSingleOption(query.map(RoadwayPoint.apply))
+    } catch {
+      case e: Exception =>
+        logger.error(s"Error in fetch RoadwayPoint: $e")
+        throw e
+    }
   }
 
   def fetch(points: Seq[(Long, Long)]): Seq[RoadwayPoint] = {
     if (points.isEmpty) {
       Seq()
     } else {
-      val whereClause = points.map(p => s" (roadway_number = ${p._1} and addr_m = ${p._2})").mkString(" where ", " or ", "")
+      val whereConditions = points.map { case (roadwayNumber, addrM) =>
+        sqls"(roadway_number = $roadwayNumber AND addr_m = $addrM)"
+      }
+
+      // joinWithOr is a helper function that joins the SQLSyntax objects with OR
+      val whereClause = sqls"WHERE ${SQLSyntax.joinWithOr(whereConditions: _*)}"
+
       val query =
-        s"""
-      SELECT ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, CREATED_TIME, MODIFIED_BY, MODIFIED_TIME
-      from ROADWAY_POINT $whereClause
-       """
+        sql"""
+       SELECT id, roadway_number, addr_m, created_by, created_time, modified_by, modified_time
+       FROM roadway_point $whereClause
+      """
       queryList(query)
     }
   }
@@ -114,10 +142,13 @@ class RoadwayPointDAO extends BaseDAO {
 
   def fetchByRoadwayNumberAndAddresses(roadwayNumber: Long, addrMRange: AddrMRange): Seq[RoadwayPoint] = {
     val query =
-      s"""
-      SELECT ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, CREATED_TIME, MODIFIED_BY, MODIFIED_TIME
-      from ROADWAY_POINT where ROADWAY_NUMBER= $roadwayNumber and ADDR_M >= ${addrMRange.start} and ADDR_M <= ${addrMRange.end}
-       """
+      sql"""
+         SELECT id, roadway_number, addr_m, created_by, created_time, modified_by, modified_time
+         FROM roadway_point
+         WHERE roadway_number= $roadwayNumber
+         AND addr_m >= ${addrMRange.start}
+         AND addr_m <= ${addrMRange.end}
+          """
     queryList(query)
   }
 
@@ -125,10 +156,12 @@ class RoadwayPointDAO extends BaseDAO {
     if (roadwayNumber.isEmpty) {
       Seq()
     } else {
-      val query = s"""
-        SELECT ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, CREATED_TIME, MODIFIED_BY, MODIFIED_TIME
-          from ROADWAY_POINT where ROADWAY_NUMBER IN (${roadwayNumber.mkString(", ")})
-       """
+      val query =
+        sql"""
+          SELECT id, roadway_number, addr_m, created_by, created_time, modified_by, modified_time
+          FROM roadway_point
+          WHERE roadway_number IN ($roadwayNumber)
+          """
       queryList(query)
     }
   }
@@ -142,10 +175,6 @@ class RoadwayPointDAO extends BaseDAO {
       p.geometry, p.linkGeomSource, p.roadwayNumber, Some(startDate), p.endDate),
       Roadway(-1000, p.roadwayNumber, p.roadPart, p.administrativeClass, p.track, p.discontinuity, p.addrMRange, p.reversed, startDate, p.endDate,
         p.createdBy.getOrElse("-"), p.roadName, p.ely, TerminationCode.NoTermination, DateTime.now(), None))
-  }
-
-  private def queryList(query: String): Seq[RoadwayPoint] = {
-    Q.queryNA[RoadwayPoint](query).list
   }
 
 }
