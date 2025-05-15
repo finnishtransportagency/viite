@@ -60,6 +60,7 @@ module.exports = {
         "LinkPropertyForm": "writable",
         "NodeSearchForm": "writable",
         "RoadNetworkErrorsList": "writable",
+        "AdminPanel": "writable",
         "NodeForm": "writable",
         "ProjectForm": "writable",
         "ProjectEditForm": "writable",

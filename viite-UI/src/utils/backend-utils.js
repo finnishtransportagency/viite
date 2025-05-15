@@ -6,6 +6,18 @@
     var gettingRoadLinks;
     moment.locale('fi');
 
+    this.startLinkNetworkUpdate = _.throttle(function (data, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "POST",
+        url: "api/viite/startLinkNetworkUpdate",
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    }, 1000);
+
     this.getRoadNetworkErrors = _.throttle(function (callback) {
       return $.get('api/viite/roadnetworkerrors', function (data) {
         return _.isFunction(callback) && callback(data);
