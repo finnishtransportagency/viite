@@ -10,7 +10,7 @@ import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.CalibrationPointType.{JunctionPointCP, NoCP, RoadAddressCP, UserDefinedCP}
 import fi.vaylavirasto.viite.model.LinkGeomSource.{FrozenLinkInterface, NormalLinkInterface}
 import fi.vaylavirasto.viite.model.SideCode.{AgainstDigitizing, TowardsDigitizing}
-import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinuity, LinkGeomSource, RoadAddressChangeType, RoadPart, Track}
+import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, ArealRoadMaintainer, Discontinuity, LinkGeomSource, RoadAddressChangeType, RoadPart, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
 import org.joda.time.DateTime
 import org.scalatest.funsuite.AnyFunSuite
@@ -41,7 +41,7 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
   def toRoadway(ps: Seq[ProjectLink]): Roadway = {
     val p = ps.head
     val startDate = p.startDate.getOrElse(DateTime.now()).minusDays(1)
-    Roadway(p.roadwayId, p.roadwayNumber, p.roadPart, p.administrativeClass, p.track, p.discontinuity, AddrMRange(ps.head.addrMRange.start, ps.last.addrMRange.end), p.reversed, startDate, p.endDate, p.createdBy.getOrElse("-"), p.roadName, p.ely, TerminationCode.NoTermination, DateTime.now(), None)
+    Roadway(p.roadwayId, p.roadwayNumber, p.roadPart, p.administrativeClass, p.track, p.discontinuity, AddrMRange(ps.head.addrMRange.start, ps.last.addrMRange.end), p.reversed, startDate, p.endDate, p.createdBy.getOrElse("-"), p.roadName, ArealRoadMaintainer.getELY(p.ely), TerminationCode.NoTermination, DateTime.now(), None)
   }
 
   test("Test ProjectDeltaCalculator.partition When executing a Unchanged and 2 transfer on single road part Then returns the correct From RoadSection -> To RoadSection mapping.") {
@@ -328,7 +328,7 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
       )
 
       roadwayDAO.create(
-        Seq(Roadway(78131,186094356,roadPart1,AdministrativeClass.Municipality,Track.Combined,Discontinuity.EndOfRoad,AddrMRange(0,2697),reversed = false,DateTime.parse("2017-07-02T00:00:00.000+03:00"),None,createdBy,roadName,8,TerminationCode.NoTermination,DateTime.parse("2017-10-16T00:00:00.000+03:00"),None))
+        Seq(Roadway(78131,186094356,roadPart1,AdministrativeClass.Municipality,Track.Combined,Discontinuity.EndOfRoad,AddrMRange(0,2697),reversed = false,DateTime.parse("2017-07-02T00:00:00.000+03:00"),None,createdBy,roadName,ArealRoadMaintainer("ELY8"),TerminationCode.NoTermination,DateTime.parse("2017-10-16T00:00:00.000+03:00"),None))
       )
 
       val transferred = ProjectDeltaCalculator.generateChangeTableRowsFromProjectLinks(projectLinks.filter(_.status != RoadAddressChangeType.Termination), projectLinks)
@@ -361,10 +361,10 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
       val projectId = Sequences.nextViiteProjectId
 
       roadwayDAO.create(Seq(
-        Roadway(30701,64686,RoadPart(18385,1),AdministrativeClass.State,Track.Combined,Discontinuity.Continuous,AddrMRange(   0,2568),reversed = false,DateTime.parse("1933-01-01T00:00:00.000+02:00"),   None,createdBy,roadName,12,TerminationCode.NoTermination,DateTime.parse("1998-10-16T00:00:00.000+03:00"),None),
-        Roadway(30920,64355,roadPart,         AdministrativeClass.State,Track.Combined,Discontinuity.Continuous,AddrMRange(   0,1400),reversed = false,DateTime.parse("1967-01-01T00:00:00.000+02:00"),   None,createdBy,roadName,12,TerminationCode.NoTermination,DateTime.parse("1998-10-16T00:00:00.000+03:00"),None),
-        Roadway(30993,64687,RoadPart(18385,1),AdministrativeClass.State,Track.Combined,Discontinuity.EndOfRoad, AddrMRange(2568,4403),reversed = false,DateTime.parse("1901-01-01T00:00:00.000+01:39:49"),None,createdBy,roadName,12,TerminationCode.NoTermination,DateTime.parse("1998-10-16T00:00:00.000+03:00"),None),
-        Roadway(31341,64356,roadPart         ,AdministrativeClass.State,Track.Combined,Discontinuity.Continuous,AddrMRange(1400,4828),reversed = false,DateTime.parse("1952-01-01T00:00:00.000+02:00"),   None,createdBy,roadName,12,TerminationCode.NoTermination,DateTime.parse("1998-10-16T00:00:00.000+03:00"),None)
+        Roadway(30701,64686,RoadPart(18385,1),AdministrativeClass.State,Track.Combined,Discontinuity.Continuous,AddrMRange(   0,2568),reversed = false,DateTime.parse("1933-01-01T00:00:00.000+02:00"),   None,createdBy,roadName,ArealRoadMaintainer("ELY12"),TerminationCode.NoTermination,DateTime.parse("1998-10-16T00:00:00.000+03:00"),None),
+        Roadway(30920,64355,roadPart,         AdministrativeClass.State,Track.Combined,Discontinuity.Continuous,AddrMRange(   0,1400),reversed = false,DateTime.parse("1967-01-01T00:00:00.000+02:00"),   None,createdBy,roadName,ArealRoadMaintainer("ELY12"),TerminationCode.NoTermination,DateTime.parse("1998-10-16T00:00:00.000+03:00"),None),
+        Roadway(30993,64687,RoadPart(18385,1),AdministrativeClass.State,Track.Combined,Discontinuity.EndOfRoad, AddrMRange(2568,4403),reversed = false,DateTime.parse("1901-01-01T00:00:00.000+01:39:49"),None,createdBy,roadName,ArealRoadMaintainer("ELY12"),TerminationCode.NoTermination,DateTime.parse("1998-10-16T00:00:00.000+03:00"),None),
+        Roadway(31341,64356,roadPart         ,AdministrativeClass.State,Track.Combined,Discontinuity.Continuous,AddrMRange(1400,4828),reversed = false,DateTime.parse("1952-01-01T00:00:00.000+02:00"),   None,createdBy,roadName,ArealRoadMaintainer("ELY12"),TerminationCode.NoTermination,DateTime.parse("1998-10-16T00:00:00.000+03:00"),None)
       ))
 
       val allProjectLinks = Seq(
@@ -820,8 +820,8 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
         (a, toProjectLink(project, RoadAddressChangeType.Transfer)(a.copy(roadPart = RoadPart(a.roadPart.roadNumber, endRoadPart))).copy(roadwayId = 2))
       })
       var links = addressLinks.map(_._2)
-      val rw1 = Roadway(1, 1000, RoadPart(5, startRoadPart), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0, addressMLength), ely = 8, startDate = DateTime.now(), createdBy = "", roadName = None)
-      val rw2 = Roadway(2, 1001, RoadPart(5, endRoadPart  ), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0, addressMLength), ely = 8, startDate = DateTime.now(), createdBy = "", roadName = None)
+      val rw1 = Roadway(1, 1000, RoadPart(5, startRoadPart), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0, addressMLength), arealRoadMaintainer = ArealRoadMaintainer("ELY8"), startDate = DateTime.now(), createdBy = "", roadName = None)
+      val rw2 = Roadway(2, 1001, RoadPart(5, endRoadPart  ), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0, addressMLength), arealRoadMaintainer = ArealRoadMaintainer("ELY8"), startDate = DateTime.now(), createdBy = "", roadName = None)
 
       roadwayDAO.create(Seq(rw1,rw2))
 
@@ -870,8 +870,8 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
       })
 
       var links = addressLinks.map(_._2)
-      val rw1 = Roadway(1, 1000, RoadPart(5, 205), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0, addressMLengthFirst),                        ely = 8, startDate = DateTime.now(), createdBy = "", roadName = None)
-      val rw2 = Roadway(2, 1001, RoadPart(5, 205), AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad,  AddrMRange(0, addressMLengthFirst + addressMLengthSecond), ely = 8, startDate = DateTime.now(), createdBy = "", roadName = None)
+      val rw1 = Roadway(1, 1000, RoadPart(5, 205), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0, addressMLengthFirst),                        arealRoadMaintainer = ArealRoadMaintainer("ELY8"), startDate = DateTime.now(), createdBy = "", roadName = None)
+      val rw2 = Roadway(2, 1001, RoadPart(5, 205), AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad,  AddrMRange(0, addressMLengthFirst + addressMLengthSecond), arealRoadMaintainer = ArealRoadMaintainer("ELY8"), startDate = DateTime.now(), createdBy = "", roadName = None)
 
       roadwayDAO.create(Seq(rw1,rw2))
 

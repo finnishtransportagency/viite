@@ -28,6 +28,19 @@ class ArealRoadMaintainerSpec extends AnyFunSuite with Matchers {
     intercept[Exception](ArealRoadMaintainer("ELY15")) shouldBe a[ViiteException] // ELY out of scope
   }
 
+  test("Test ArealRoadMaintainer: equality tests.") {
+    ArealRoadMaintainer("ELY1")==ArealRoadMaintainer.getELY(1) shouldBe true
+    ArealRoadMaintainer("EVK1")==ArealRoadMaintainer.getEVK(1) shouldBe true
+
+    ArealRoadMaintainer("EVK1")  ==ArealRoadMaintainer("ELY1")   shouldBe false
+    ArealRoadMaintainer.getEVK(1)==ArealRoadMaintainer.getELY(1) shouldBe false
+
+    case class EVKclone(val name: String, val number: Int, val shortName: String) extends EVK
+    val testEVKClone = EVKclone("Uusimaa", 1, "UUD")  // class mimicing EVK Uusimaa
+    testEVKClone==ArealRoadMaintainer.getELY("Uusimaa") shouldBe false
+
+  }
+
   //////// ArealRoadMaintainer/EVK tests ////////
 
     test("Test ArealRoadMaintainer/EVK: test basic ArealRoadMaintainer functionality working") {
@@ -123,8 +136,8 @@ class ArealRoadMaintainerSpec extends AnyFunSuite with Matchers {
     val noELY2 = intercept[Exception] (ArealRoadMaintainer.getELY("LAPP")     )  shouldBe a[ViiteException]  // Try getting a pre-defined ELY with an *EVK* short name
   }
 
-  test("Test ArealRoadMaintainer/ELY: getELY existence.") {
-    val testELY = ArealRoadMaintainer.getELY(1)
+  test("Test ArealRoadMaintainer/ELY: get ELY existence.") {
+    val testELY = ArealRoadMaintainer.ELYUusimaa
     case class ELYclone(val name: String, val number: Int, val shortName: String) extends ELY // class to test ELY ArealRoadMaintainer functionality with
     val testELYClone = ELYclone("Uusimaa", 1, "UUD") // A basically proper ELY, but this is not any of our pre-defined instances
 

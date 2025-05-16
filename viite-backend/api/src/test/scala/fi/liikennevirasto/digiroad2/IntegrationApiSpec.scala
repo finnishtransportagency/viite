@@ -41,7 +41,7 @@ class IntegrationApiSpec extends AnyFunSuite with ScalatraSuite with BeforeAndAf
     val geometry = Seq(Point(0.0, 0.0), Point(1.0, 0.0, 0.5), Point(4.0, 4.0, 1.5))
     // This roadAddressLink has linearLocationId equal to zero, just to compile.
     val roadAdressLink = RoadAddressLink(63298, 0, 5171208.toString, geometry, GeometryUtils.geometryLength(geometry), AdministrativeClass.Municipality, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, AdministrativeClass.Municipality, None, BigInt(0), "", None, None, RoadPart(5, 205), 1,
-      ArealRoadMaintainer.ARMInvalid, 0, AddrMRange(0, 6), "2015-01-01", "2015-12-31", 0.0, 0.0, SideCode.TowardsDigitizing, Some(ProjectCalibrationPoint(120.toString, 1, 2)), None, sourceId = "")
+      ArealRoadMaintainer.ELYUusimaa, 0, AddrMRange(0, 6), "2015-01-01", "2015-12-31", 0.0, 0.0, SideCode.TowardsDigitizing, Some(ProjectCalibrationPoint(120.toString, 1, 2)), None, sourceId = "")
     integrationApi.roadAddressLinksToApi(Seq(roadAdressLink)) should be(Seq(Map(
       "muokattu_viimeksi" -> "",
       "geometryWKT" -> "LINESTRING ZM (0.000 0.000 0.000 0.000, 1.000 0.000 0.500 1.000, 4.000 4.000 1.500 6.000)",
@@ -54,7 +54,7 @@ class IntegrationApiSpec extends AnyFunSuite with ScalatraSuite with BeforeAndAf
       "side_code" -> 2,
       "start_addr_m" -> 0,
       "end_addr_m" -> 6,
-      "ely_code" -> 0,
+      "ely_code" -> 1,
       "road_type" -> 3,
       "administrative_class" -> 2,
       "discontinuity" -> 0,

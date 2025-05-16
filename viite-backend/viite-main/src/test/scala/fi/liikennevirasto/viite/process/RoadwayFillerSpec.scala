@@ -8,7 +8,7 @@ import fi.liikennevirasto.viite.Dummies._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.ProjectState.UpdatingToRoadNetwork
 import fi.liikennevirasto.viite.dao.TerminationCode._
-import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinuity, RoadAddressChangeType, RoadLink, RoadPart, Track}
+import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, ArealRoadMaintainer, Discontinuity, RoadAddressChangeType, RoadLink, RoadPart, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
 import org.joda.time.DateTime
 import org.scalatest.BeforeAndAfter
@@ -135,7 +135,7 @@ class RoadwayFillerSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
                 "When dealing with one unchanged road having no history with administrative class change in the middle " +
                 "Then should return 3 new roadways and one new history row.") {
     runWithRollback {
-      val roadway = dummyRoadway(roadwayNumber = 1L, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(0L, 400L), DateTime.now(), None).copy(discontinuity = Discontinuity.EndOfRoad, ely = 8)
+      val roadway = dummyRoadway(roadwayNumber = 1L, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(0L, 400L), DateTime.now(), None).copy(discontinuity = Discontinuity.EndOfRoad, arealRoadMaintainer = ArealRoadMaintainer("ELY8"))
       roadwayDAO.create(Seq(roadway))
 
       val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(), Seq(ProjectReservedPart(0L, RoadPart(1, 1), None, None, None, None, None, None, None)), Seq(), None)
@@ -177,7 +177,7 @@ class RoadwayFillerSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
                  "Then old roadway is expired and a new is created with new address and old roadway number.") {
     runWithRollback{
       val roadwayNumber = 1L
-      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(0L, 400L), DateTime.now().minusDays(2), None).copy(ely = 8)
+      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(0L, 400L), DateTime.now().minusDays(2), None).copy(arealRoadMaintainer = ArealRoadMaintainer("ELY8"))
       roadwayDAO.create(Seq(roadway))
 
       val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(), Seq(ProjectReservedPart(0L, RoadPart(1, 1), None, None, None, None, None, None, None)), Seq(), None)
@@ -217,7 +217,7 @@ class RoadwayFillerSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
     "Then history row is created and a new row is created with new address and old roadway number.") {
     runWithRollback{
       val roadwayNumber = 1L
-      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(0L, 400L), DateTime.now().minusDays(2), None).copy(ely = 8)
+      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(0L, 400L), DateTime.now().minusDays(2), None).copy(arealRoadMaintainer = ArealRoadMaintainer("ELY8"))
       roadwayDAO.create(Seq(roadway))
 
       val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(), Seq(ProjectReservedPart(0L, RoadPart(1, 1), None, None, None, None, None, None, None)), Seq(), None)
@@ -252,12 +252,13 @@ class RoadwayFillerSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Test RoadwayFiller.applyRoadwayChanges() #Confluence: Transfering the Roadway. " +
-    "When transfering a single roadway to a different ELY" +
+  test("Test RoadwayFiller.applyRoadwayChanges() #Confluence: Transferring the Roadway.  " +
+    "When transferring a single roadway to a different ARM  " +
     "Then history row is created and a new row is created with new address and old roadway number.") {
     runWithRollback{
       val roadwayNumber = 1L
-      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(0L, 400L), DateTime.now().minusDays(2), None).copy(ely = 8)
+      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(0L, 400L), DateTime.now().minusDays(2), None)
+        .copy(arealRoadMaintainer = ArealRoadMaintainer("ELY8"))
       roadwayDAO.create(Seq(roadway))
 
       val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(), Seq(ProjectReservedPart(0L, RoadPart(1, 1), None, None, None, None, None, None, None)), Seq(), None)
@@ -285,12 +286,12 @@ class RoadwayFillerSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
 
       newRoadways.head.roadwayNumber should be(roadwayNumber)
       newRoadways.head.roadwayNumber should be(historyRoadways.head.roadwayNumber)
-      newRoadways.head.ely should be(10)
+      newRoadways.head.arealRoadMaintainer should be(ArealRoadMaintainer("ELY10"))
 
       projectLinks.map(_.addrMRange)  should be(newRoadways.map(_.addrMRange))
 
       historyRoadways.head.addrMRange should be(roadway.addrMRange)
-      historyRoadways.head.ely        should be(8)
+      historyRoadways.head.arealRoadMaintainer should be(ArealRoadMaintainer("ELY8"))
     }
   }
 
@@ -299,7 +300,7 @@ class RoadwayFillerSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
     "Then history row is created and a new row is created with new address and old roadway number.") {
     runWithRollback{
       val roadwayNumber = 1L
-      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(0L, 400L), DateTime.now(), None).copy(ely = 8)
+      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(0L, 400L), DateTime.now(), None).copy(arealRoadMaintainer = ArealRoadMaintainer("ELY8"))
       roadwayDAO.create(Seq(roadway))
 
       val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(), Seq(ProjectReservedPart(0L, RoadPart(1, 1), None, None, None, None, None, None, None)), Seq(), None)
@@ -339,7 +340,7 @@ class RoadwayFillerSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
                  "Then old roadway is unchanged and a new is created with new address and roadway number.") {
     runWithRollback{
       val roadwayNumber = 1L
-      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(100L, 170L), DateTime.now(), None).copy(ely = 8)
+      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(100L, 170L), DateTime.now(), None).copy(arealRoadMaintainer = ArealRoadMaintainer("ELY8"))
       roadwayDAO.create(Seq(roadway))
 
       val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(), Seq(ProjectReservedPart(0L, RoadPart(1, 1), None, None, None, None, None, None, None)), Seq(), None)
@@ -377,7 +378,7 @@ class RoadwayFillerSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
                  "Then two new roadways are created and one expired.") {
     runWithRollback{
       val roadwayNumber = 1L
-      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(0L, 400L), DateTime.now(), None).copy(ely = 8)
+      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(0L, 400L), DateTime.now(), None).copy(arealRoadMaintainer = ArealRoadMaintainer("ELY8"))
       roadwayDAO.create(Seq(roadway))
 
       val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(), Seq(ProjectReservedPart(0L, RoadPart(1, 1), None, None, None, None, None, None, None)), Seq(), None)
@@ -424,7 +425,7 @@ class RoadwayFillerSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
                  "Then three new roadways are created and one expired.") {
     runWithRollback{
       val roadwayNumber = 1L
-      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(0L, 400L), DateTime.now(), None).copy(ely = 8)
+      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(0L, 400L), DateTime.now(), None).copy(arealRoadMaintainer = ArealRoadMaintainer("ELY8"))
       roadwayDAO.create(Seq(roadway))
 
       val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(), Seq(ProjectReservedPart(0L, RoadPart(1, 1), None, None, None, None, None, None, None)), Seq(), None)
@@ -659,7 +660,7 @@ class RoadwayFillerSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
       val roadwayNumber = 99L
       val newRoadwayNumber1 = 1L
       val newRoadwayNumber2 = 2L
-      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(0L, 545L), DateTime.now().minusDays(2), None).copy(ely = 10)
+      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(0L, 545L), DateTime.now().minusDays(2), None).copy(arealRoadMaintainer = ArealRoadMaintainer("ELY10"))
       roadwayDAO.create(Seq(roadway))
 
       val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(), Seq(ProjectReservedPart(0L, RoadPart(1, 1), None, None, None, None, None, None, None)), Seq(), None)
@@ -731,8 +732,8 @@ class RoadwayFillerSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
     runWithRollback {
       val roadwayNumber = 99L
 
-      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 2), addrMRange = AddrMRange(0L, 175L), DateTime.now().minusDays(5), None).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad)
-      val historyRoadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(370L, 545L), DateTime.now().minusDays(10), Some(DateTime.now().minusDays(3)), 1L).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad)
+      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 2), addrMRange = AddrMRange(0L, 175L), DateTime.now().minusDays(5), None).copy(arealRoadMaintainer = ArealRoadMaintainer("ELY10"), discontinuity = Discontinuity.EndOfRoad)
+      val historyRoadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(370L, 545L), DateTime.now().minusDays(10), Some(DateTime.now().minusDays(3)), 1L).copy(arealRoadMaintainer = ArealRoadMaintainer("ELY10"), discontinuity = Discontinuity.EndOfRoad)
       roadwayDAO.create(Seq(roadway, historyRoadway))
 
       val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(), Seq(ProjectReservedPart(0L, RoadPart(1, 2), None, None, None, None, None, None, None)), Seq(), None)
@@ -796,10 +797,10 @@ class RoadwayFillerSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
       val roadwayNumber1 = 99L
       val roadwayNumber2 = 100L
 
-      val roadway1        = dummyRoadway(roadwayNumber = roadwayNumber1, roadPart = RoadPart( 55, 1), addrMRange = AddrMRange(  0L, 120L), DateTime.now().minusDays(5), None).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad)
-      val historyRoadway1 = dummyRoadway(roadwayNumber = roadwayNumber1, roadPart = RoadPart( 55, 1), addrMRange = AddrMRange(370L, 490L), DateTime.now().minusDays(10), Some(DateTime.now().minusDays(3)), 1L).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad)
-      val roadway2        = dummyRoadway(roadwayNumber = roadwayNumber2, roadPart = RoadPart( 56, 1), addrMRange = AddrMRange(  0L,  55L), DateTime.now().minusDays(5), None).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad, id = 52)
-      val historyRoadway2 = dummyRoadway(roadwayNumber = roadwayNumber2, roadPart = RoadPart( 56, 1), addrMRange = AddrMRange(  0L,  55L), DateTime.now().minusDays(10), Some(DateTime.now().minusDays(3)), 1L).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad, id = 53)
+      val roadway1        = dummyRoadway(roadwayNumber = roadwayNumber1, roadPart = RoadPart( 55, 1), addrMRange = AddrMRange(  0L, 120L), DateTime.now().minusDays(5),  None).copy(arealRoadMaintainer = ArealRoadMaintainer("ELY10"), discontinuity = Discontinuity.EndOfRoad)
+      val historyRoadway1 = dummyRoadway(roadwayNumber = roadwayNumber1, roadPart = RoadPart( 55, 1), addrMRange = AddrMRange(370L, 490L), DateTime.now().minusDays(10), Some(DateTime.now().minusDays(3)), 1L).copy(arealRoadMaintainer = ArealRoadMaintainer("ELY10"), discontinuity = Discontinuity.EndOfRoad)
+      val roadway2        = dummyRoadway(roadwayNumber = roadwayNumber2, roadPart = RoadPart( 56, 1), addrMRange = AddrMRange(  0L,  55L), DateTime.now().minusDays(5),  None).copy(arealRoadMaintainer = ArealRoadMaintainer("ELY10"), discontinuity = Discontinuity.EndOfRoad, id = 52)
+      val historyRoadway2 = dummyRoadway(roadwayNumber = roadwayNumber2, roadPart = RoadPart( 56, 1), addrMRange = AddrMRange(  0L,  55L), DateTime.now().minusDays(10), Some(DateTime.now().minusDays(3)), 1L).copy(arealRoadMaintainer = ArealRoadMaintainer("ELY10"), discontinuity = Discontinuity.EndOfRoad, id = 53)
       roadwayDAO.create(Seq(roadway1, historyRoadway1, roadway2, historyRoadway2))
 
       val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(), Seq(ProjectReservedPart(0L, RoadPart(55, 1), None, None, None, None, None, None, None), ProjectReservedPart(0L, RoadPart(56, 1), None, None, None, None, None, None, None)), Seq(), None)
@@ -862,10 +863,10 @@ class RoadwayFillerSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
       val roadwayNumber1 = 99L
       val roadwayNumber2 = 100L
 
-      val roadway1        = dummyRoadway(roadwayNumber = roadwayNumber1, roadPart = RoadPart(55, 1), addrMRange = AddrMRange(  0L, 142L), DateTime.now().minusDays(5), None).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad, id=50)
-      val historyRoadway1 = dummyRoadway(roadwayNumber = roadwayNumber1, roadPart = RoadPart(55, 1), addrMRange = AddrMRange(370L, 512L), DateTime.now().minusDays(10), Some(DateTime.now().minusDays(3)), 1L).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad, id=51)
-      val roadway2        = dummyRoadway(roadwayNumber = roadwayNumber2, roadPart = RoadPart(56, 1), addrMRange = AddrMRange(  0L,  33L), DateTime.now().minusDays(5), None).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad, id = 52)
-      val historyRoadway2 = dummyRoadway(roadwayNumber = roadwayNumber2, roadPart = RoadPart(56, 1), addrMRange = AddrMRange(  0L,  33L), DateTime.now().minusDays(10), Some(DateTime.now().minusDays(3)), 1L).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad, id = 53)
+      val roadway1        = dummyRoadway(roadwayNumber = roadwayNumber1, roadPart = RoadPart(55, 1), addrMRange = AddrMRange(  0L, 142L), DateTime.now().minusDays(5), None).copy(arealRoadMaintainer = ArealRoadMaintainer("ELY10"), discontinuity = Discontinuity.EndOfRoad, id=50)
+      val historyRoadway1 = dummyRoadway(roadwayNumber = roadwayNumber1, roadPart = RoadPart(55, 1), addrMRange = AddrMRange(370L, 512L), DateTime.now().minusDays(10), Some(DateTime.now().minusDays(3)), 1L).copy(arealRoadMaintainer = ArealRoadMaintainer("ELY10"), discontinuity = Discontinuity.EndOfRoad, id=51)
+      val roadway2        = dummyRoadway(roadwayNumber = roadwayNumber2, roadPart = RoadPart(56, 1), addrMRange = AddrMRange(  0L,  33L), DateTime.now().minusDays(5), None).copy(arealRoadMaintainer = ArealRoadMaintainer("ELY10"), discontinuity = Discontinuity.EndOfRoad, id = 52)
+      val historyRoadway2 = dummyRoadway(roadwayNumber = roadwayNumber2, roadPart = RoadPart(56, 1), addrMRange = AddrMRange(  0L,  33L), DateTime.now().minusDays(10), Some(DateTime.now().minusDays(3)), 1L).copy(arealRoadMaintainer = ArealRoadMaintainer("ELY10"), discontinuity = Discontinuity.EndOfRoad, id = 53)
       roadwayDAO.create(Seq(roadway1, historyRoadway1, roadway2, historyRoadway2))
 
       val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(), Seq(ProjectReservedPart(0L, RoadPart(55, 1), None, None, None, None, None, None, None), ProjectReservedPart(0L, RoadPart(56, 1), None, None, None, None, None, None, None)), Seq(), None)
@@ -946,8 +947,8 @@ class RoadwayFillerSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
     runWithRollback {
       val roadwayNumber = 99L
 
-      val roadway        = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 2), addrMRange = AddrMRange(  0L, 175L), DateTime.now().minusDays(5), None).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad)
-      val historyRoadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(370L, 545L), DateTime.now().minusDays(10), Some(DateTime.now().minusDays(3)), 1L).copy(ely = 10, discontinuity = Discontinuity.EndOfRoad)
+      val roadway        = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 2), addrMRange = AddrMRange(  0L, 175L), DateTime.now().minusDays(5), None).copy(arealRoadMaintainer = ArealRoadMaintainer("ELY10"), discontinuity = Discontinuity.EndOfRoad)
+      val historyRoadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(370L, 545L), DateTime.now().minusDays(10), Some(DateTime.now().minusDays(3)), 1L).copy(arealRoadMaintainer = ArealRoadMaintainer("ELY10"), discontinuity = Discontinuity.EndOfRoad)
       roadwayDAO.create(Seq(roadway, historyRoadway))
 
       val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(), Seq(ProjectReservedPart(0L, RoadPart(1, 2), None, None, None, None, None, None, None)), Seq(), None)
@@ -1021,8 +1022,8 @@ class RoadwayFillerSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
     runWithRollback{
       val roadwayNumber = 99L
 
-      val roadway        = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 2), addrMRange = AddrMRange(  0L, 175L), DateTime.now().minusDays(5), None).copy(ely = 10)
-      val historyRoadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(370L, 545L), DateTime.now().minusDays(10), Some(DateTime.now().minusDays(3)), 1L).copy(ely = 10)
+      val roadway        = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 2), addrMRange = AddrMRange(  0L, 175L), DateTime.now().minusDays(5), None).copy(arealRoadMaintainer = ArealRoadMaintainer("ELY10"))
+      val historyRoadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(370L, 545L), DateTime.now().minusDays(10), Some(DateTime.now().minusDays(3)), 1L).copy(arealRoadMaintainer = ArealRoadMaintainer("ELY10"))
       roadwayDAO.create(Seq(roadway, historyRoadway))
 
       val project = dummyProject(UpdatingToRoadNetwork, DateTime.now(), DateTime.now(), DateTime.now(), Seq(ProjectReservedPart(0L, RoadPart(1, 2), None, None, None, None, None, None, None)), Seq(), None)
@@ -1088,10 +1089,10 @@ class RoadwayFillerSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
       val newRoadwayNumber1 = 1L
       val newRoadwayNumber2 = 2L
 
-      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 3), addrMRange = AddrMRange(0L, 175L), DateTime.now().minusDays(5), None, 1L).copy(ely = 10)
+      val roadway = dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 3), addrMRange = AddrMRange(0L, 175L), DateTime.now().minusDays(5), None, 1L).copy(arealRoadMaintainer = ArealRoadMaintainer("ELY10"))
       val historyRoadways = Seq(
-        dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 2), addrMRange = AddrMRange(  0L, 175L), DateTime.now().minusDays(10), Some(DateTime.now().minusDays( 6)), 2L).copy(ely = 10),
-        dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(370L, 545L), DateTime.now().minusDays(20), Some(DateTime.now().minusDays(11)), 3L).copy(ely = 10)
+        dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 2), addrMRange = AddrMRange(  0L, 175L), DateTime.now().minusDays(10), Some(DateTime.now().minusDays( 6)), 2L).copy(arealRoadMaintainer = ArealRoadMaintainer("ELY10")),
+        dummyRoadway(roadwayNumber = roadwayNumber, roadPart = RoadPart(1, 1), addrMRange = AddrMRange(370L, 545L), DateTime.now().minusDays(20), Some(DateTime.now().minusDays(11)), 3L).copy(arealRoadMaintainer = ArealRoadMaintainer("ELY10"))
       )
 
       roadwayDAO.create(Seq(roadway) ++ historyRoadways)
