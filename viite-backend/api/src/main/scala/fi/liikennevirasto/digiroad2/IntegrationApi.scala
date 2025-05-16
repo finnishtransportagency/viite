@@ -7,7 +7,7 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.{RoadAddressService, RoadNameService}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, SideCode}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, ArealRoadMaintainer, SideCode}
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC
 import fi.vaylavirasto.viite.util.DateTimeFormatters.dateTimeNoMillisFormatter
 import fi.vaylavirasto.viite.util.ViiteException
@@ -783,7 +783,7 @@ println(s"fetchAllValidNodesWithJunctions GOT RESULT, of size ${result.size}") /
           "side_code" -> roadAddressLink.sideCode.value,
           "start_addr_m" -> roadAddressLink.addrMRange.start,
           "end_addr_m"   -> roadAddressLink.addrMRange.end,
-          "ely_code" -> roadAddressLink.elyCode,
+          "ely_code" -> ArealRoadMaintainer.getELYOption(roadAddressLink.arealRoadMaintainer.id).getOrElse(0), // TODO VIITE-3424 ely->ArealRoadMaintainer
           "road_type" -> roadAddressLink.administrativeClass.asRoadTypeValue,
           "administrative_class" -> roadAddressLink.administrativeClass.value,
           "discontinuity" -> roadAddressLink.discontinuity,
