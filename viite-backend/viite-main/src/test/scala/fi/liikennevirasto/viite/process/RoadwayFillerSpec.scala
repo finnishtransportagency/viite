@@ -1229,8 +1229,8 @@ class RoadwayFillerSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
       )
 
       val projectLinks = Seq(
-        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(  0L, 100L), Some(DateTime.now()), status = RoadAddressChangeType.Unchanged, administrativeClass = AdministrativeClass.apply(1)).copy(ely = 0, roadwayNumber = roadwayNumber1),
-        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(100L, 300L), Some(DateTime.now()), status = RoadAddressChangeType.Transfer,  administrativeClass = AdministrativeClass.apply(1)).copy(ely = 0, roadwayNumber = roadwayNumber1)
+        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(  0L, 100L), Some(DateTime.now()), status = RoadAddressChangeType.Unchanged, administrativeClass = AdministrativeClass.apply(1)).copy(ely = 1, roadwayNumber = roadwayNumber1),
+        dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(100L, 300L), Some(DateTime.now()), status = RoadAddressChangeType.Transfer,  administrativeClass = AdministrativeClass.apply(1)).copy(ely = 1, roadwayNumber = roadwayNumber1)
       )
 
       val roadwayChanges = roadways.values.map(r => RoadwayFiller.RwChanges(r, Seq.empty[Roadway], projectLinks.filterNot(_.status == RoadAddressChangeType.New))).toSeq
