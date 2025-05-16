@@ -165,7 +165,7 @@ object ArealRoadMaintainer {
     )
   }
 
-   /** Getter for ELYs only. You may search for an ELY by its id.
+  /** Getter for ELYs only. You may search for an ELY by its id.
    *
    * @param id The id we use to identify the correct ELY to be returned.
    * @return Option[ELY]. The asked ELY in Some(ELY), when found, None else.
@@ -198,7 +198,7 @@ object ArealRoadMaintainer {
     }
   }
 
-   /** Checker for ELYs.
+  /** Checker for ELYs.
    *
    * @param arm The ArealRoadMaintainer to be checked, if it is a proper ELY.
    * @return true, if the arm asked is an ELY, false else. */

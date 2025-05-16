@@ -91,6 +91,14 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
   val logger: Logger = LoggerFactory.getLogger(getClass)
   protected implicit val jsonFormats: Formats = DigiroadSerializers.jsonFormats
 
+
+  private def getELYNumberOrNA(armOpt: Option[ArealRoadMaintainer]) = {
+    armOpt match {
+      case Some(arm) => if(ArealRoadMaintainer.isELY(arm)) {  arm.number  } else {  "N/A"  }
+      case None      => "N/A"
+    }
+  }
+
   before() {
     contentType = formats("json") + "; charset=utf-8"
     try {
@@ -1599,10 +1607,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       "roadNameSe" -> "",
       "roadNumber" -> roadAddressLink.roadPart.roadNumber,
       "roadPartNumber" -> roadAddressLink.roadPart.partNumber,
-      "elyCode" -> {
-          if(ArealRoadMaintainer.isELY(roadAddressLink.arealRoadMaintainer)) {  roadAddressLink.arealRoadMaintainer.number }   // TODO VIITE-3424 ely->ArealRoadMaintainer
-          else {  ArealRoadMaintainer.ARMInvalid.name  } // TODO VIITE-3424 ely->ArealRoadMaintainer
-        },
+      "elyCode" -> getELYNumberOrNA(Some(roadAddressLink.arealRoadMaintainer)),   // TODO VIITE-3424 ely->ArealRoadMaintainer
       "trackCode" -> roadAddressLink.trackCode,
       "addrMRange" -> addrMRangeToApi(roadAddressLink.addrMRange),
       "discontinuity" -> roadAddressLink.discontinuity,
@@ -1885,10 +1890,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
         "roadNameSe" -> "",
         "roadNumber"     -> projectAddressLink.roadPart.roadNumber,
         "roadPartNumber" -> projectAddressLink.roadPart.partNumber,
-        "elyCode" -> {
-          if(ArealRoadMaintainer.isELY(projectAddressLink.arealRoadMaintainer)) {  projectAddressLink.arealRoadMaintainer.number }   // TODO VIITE-3424 ely->ArealRoadMaintainer
-          else {  ArealRoadMaintainer.ARMInvalid.name  } // TODO VIITE-3424 ely->ArealRoadMaintainer
-        },
+        "elyCode" -> getELYNumberOrNA(Some(projectAddressLink.arealRoadMaintainer)),   // TODO VIITE-3424 elyCode->ArealRoadMaintainer
         "trackCode" -> projectAddressLink.trackCode,
         "addrMRange" -> addrMRangeToApi(projectAddressLink.addrMRange),
         "originalStartAddressM" -> originalAddrMRange.start,
