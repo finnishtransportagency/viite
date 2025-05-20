@@ -3,7 +3,7 @@ package fi.liikennevirasto.viite.dao
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
-import fi.vaylavirasto.viite.model.AddrMRange
+import fi.vaylavirasto.viite.model.{AddrMRange, ArealRoadMaintainer}
 import org.joda.time.DateTime
 import scalikejdbc._
 import scalikejdbc.jodatime.JodaWrappedResultSet.fromWrappedResultSetToJodaWrappedResultSet
@@ -174,7 +174,7 @@ class RoadwayPointDAO extends BaseDAO {
         CalibrationPointsUtils.toCalibrationPointReference(p.endCalibrationPoint)),
       p.geometry, p.linkGeomSource, p.roadwayNumber, Some(startDate), p.endDate),
       Roadway(-1000, p.roadwayNumber, p.roadPart, p.administrativeClass, p.track, p.discontinuity, p.addrMRange, p.reversed, startDate, p.endDate,
-        p.createdBy.getOrElse("-"), p.roadName, p.ely, TerminationCode.NoTermination, DateTime.now(), None))
+        p.createdBy.getOrElse("-"), p.roadName, ArealRoadMaintainer.getELY(p.ely), TerminationCode.NoTermination, DateTime.now(), None))
   }
 
 }

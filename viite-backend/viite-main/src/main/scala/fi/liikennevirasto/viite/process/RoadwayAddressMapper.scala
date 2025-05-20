@@ -4,7 +4,7 @@ import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao.{LinearLocation, LinearLocationDAO, ProjectCalibrationPoint, ProjectLink, RoadAddress, Roadway, RoadwayDAO}
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import fi.vaylavirasto.viite.geometry.BoundingRectangle
-import fi.vaylavirasto.viite.model.{AddrMRange, Discontinuity, RoadPart, SideCode}
+import fi.vaylavirasto.viite.model.{AddrMRange, ArealRoadMaintainer, Discontinuity, RoadPart, SideCode}
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -127,7 +127,8 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
             address, linearLocation.endCalibrationPointType))
         )
 
-        RoadAddress(roadway.id, linearLocation.id, roadway.roadPart, roadway.administrativeClass, roadway.track, Discontinuity.Continuous, AddrMRange(st, en), Some(roadway.startDate), roadway.endDate, Some(roadway.createdBy), linearLocation.linkId, linearLocation.startMValue, linearLocation.endMValue, linearLocation.sideCode, linearLocation.adjustedTimestamp, calibrationPoints, linearLocation.geometry, linearLocation.linkGeomSource, roadway.ely, roadway.terminated, roadway.roadwayNumber, linearLocation.validFrom, linearLocation.validTo, roadway.roadName)
+        RoadAddress(roadway.id, linearLocation.id, roadway.roadPart, roadway.administrativeClass, roadway.track, Discontinuity.Continuous, AddrMRange(st, en), Some(roadway.startDate), roadway.endDate, Some(roadway.createdBy), linearLocation.linkId, linearLocation.startMValue, linearLocation.endMValue, linearLocation.sideCode, linearLocation.adjustedTimestamp, calibrationPoints, linearLocation.geometry, linearLocation.linkGeomSource,
+          roadway.arealRoadMaintainer.number, roadway.terminated, roadway.roadwayNumber, linearLocation.validFrom, linearLocation.validTo, roadway.roadName)
     }
   }
 

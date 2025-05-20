@@ -34,9 +34,16 @@ sealed trait ArealRoadMaintainer {
   final def toStringVerbose: String = {  s"$typeName $number $name"      }
   final def toStringShort  : String = {  s"$shortName"                       }
   final def toStringAll    : String = {  s"$typeName $number $name ($shortName)" }
+
+
+  override def equals(that: Any): Boolean = that match {
+    case that: ArealRoadMaintainer => {  this.getClass == that.getClass && this.typeName == that.typeName  &&  this.number == that.number  }
+    case _ => false
+  }
+
 }
 
-/** A specialized trait for EVKs, with pre-defined typeName and typeInfo for them. */
+/** A specialized trait for EVKs, with pre-defined typeName, and typeInfo for them. */
 trait EVK extends ArealRoadMaintainer {
   override val typeName: String = "EVK"
   override val typeInfo: String = "Elinvoimakeskus. Vastuussa teiden hallinnoinnista 01.01.2026 alkaen."
@@ -109,6 +116,14 @@ object ArealRoadMaintainer {
     ELYLappi
   )
 
+
+  def getELYNumberOrNA(armOpt: Option[ArealRoadMaintainer]) = {
+    armOpt match {
+      case Some(arm) => if(ArealRoadMaintainer.isELY(arm)) {  arm.number  } else {  "N/A"  }
+      case None      => "N/A"
+    }
+  }
+
   /** Getter for EVKs only. You may search for an EVK by its number.
    *
    * @param number The number of the EVK you wish to get.
@@ -126,6 +141,33 @@ object ArealRoadMaintainer {
    * @param number The number of the ELY you wish to get.
    * @return The ELY asked, when found.
    */
+  @deprecated("Use in the code transition phase in 2025, when old ely structures are being replaced with arealRoadMaintainer structures.\nRemove from code after that - or if there really IS some use for this after that, remove the deprecation warning.")
+  def getELY(number: Long): ELY = {
+    ELYset.find(_.number == number.toInt).getOrElse(
+      throw ViiteException(s"Olematon ELY ($number)!")
+        // TODO Either:ify the throw, if still in use ?
+    )
+  }
+
+
+  /** Getter for ELYs only. You may search for an ELY by its number.
+   *
+   * @param number The number of the ELY you wish to get.
+   * @return The ELY asked, when found, or ARMInvalid, when not.
+   */
+  @deprecated("Use in the code transition phase in 2025, when old ely structures are being replaced with arealRoadMaintainer structures.\nRemove from code after that - or if there really IS some use for this after that, remove the deprecation warning.")
+  def getELYOrARMInvalid(number: Long): ArealRoadMaintainer = {
+    ELYset.find(_.number == number.toInt).getOrElse(
+      ArealRoadMaintainer.ARMInvalid
+    )
+  }
+
+ /** Getter for ELYs only. You may search for an ELY by its number.
+   *
+   * @param number The number of the ELY you wish to get.
+   * @return The ELY asked, when found.
+   */
+  @deprecated("Use in the code transition phase in 2025, when old ely structures are being replaced with arealRoadMaintainer structures.\nRemove from code after that - or if there really IS some use for this after that, remove the deprecation warning.")
   def getELY(number: Int): ELY = {
     ELYset.find(_.number == number).getOrElse(
       throw ViiteException(s"Olematon ELY ($number)!")

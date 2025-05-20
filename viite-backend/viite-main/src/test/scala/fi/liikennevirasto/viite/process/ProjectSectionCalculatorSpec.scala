@@ -10,7 +10,7 @@ import fi.liikennevirasto.viite.util._
 import fi.vaylavirasto.viite.dao.{Link, LinkDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.CalibrationPointType.{JunctionPointCP, NoCP, RoadAddressCP, UserDefinedCP}
-import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinuity, LinkGeomSource, RoadAddressChangeType, RoadPart, SideCode, Track}
+import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, ArealRoadMaintainer, Discontinuity, LinkGeomSource, RoadAddressChangeType, RoadPart, SideCode, Track}
 import fi.vaylavirasto.viite.postgis.DbUtils.runUpdateToDb
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
 import org.joda.time.DateTime
@@ -93,7 +93,7 @@ class ProjectSectionCalculatorSpec extends AnyFunSuite with Matchers {
       p.geometry, p.linkGeomSource,
       p.roadwayNumber, Some(startDate), p.endDate),
       Roadway(p.roadwayId, p.roadwayNumber, p.roadPart, p.administrativeClass, p.track, p.discontinuity, p.addrMRange, p.reversed, startDate, p.endDate,
-        p.createdBy.getOrElse("-"), p.roadName, p.ely, TerminationCode.NoTermination, DateTime.now(), None))
+        p.createdBy.getOrElse("-"), p.roadName, ArealRoadMaintainer.getELY(p.ely), TerminationCode.NoTermination, DateTime.now(), None))
   }
 
   def toRoadwaysAndLinearLocations(pls: Seq[ProjectLink]): (Seq[LinearLocation], Seq[Roadway]) = {
@@ -105,7 +105,7 @@ class ProjectSectionCalculatorSpec extends AnyFunSuite with Matchers {
           CalibrationPointsUtils.toCalibrationPointReference(p.endCalibrationPoint)),
         p.geometry, p.linkGeomSource,
         p.roadwayNumber, Some(startDate), p.endDate), list._2 :+ Roadway(p.roadwayId, p.roadwayNumber, p.roadPart, p.administrativeClass, p.track, p.discontinuity, p.addrMRange, p.reversed, startDate, p.endDate,
-        p.createdBy.getOrElse("-"), p.roadName, p.ely, TerminationCode.NoTermination, DateTime.now(), None))
+        p.createdBy.getOrElse("-"), p.roadName, ArealRoadMaintainer.getELY(p.ely), TerminationCode.NoTermination, DateTime.now(), None))
     }
   }
 
@@ -490,7 +490,7 @@ class ProjectSectionCalculatorSpec extends AnyFunSuite with Matchers {
       val projectLink2 = toProjectLink(rap, RoadAddressChangeType.New)      (RoadAddress(idRoad2.toLong, 0, RoadPart(5, 1), AdministrativeClass.Unknown, Track.RightSide, Discontinuity.Continuous, AddrMRange(0L, 0L), Some(DateTime.parse("1901-01-01")), None, Option("tester"), idRoad2, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), Seq(Point(28,  1), Point(28, 10)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)).copy(projectId = rap.id)
 
       val (linearCombined, rwComb): (LinearLocation, Roadway) = Seq(projectLink0).map(toRoadwayAndLinearLocation).head
-      val rwCombWithId = rwComb.copy(id = roadwayId, ely = 8L)
+      val rwCombWithId = rwComb.copy(id = roadwayId, arealRoadMaintainer = ArealRoadMaintainer(s"ELY8"))
       val linearRightWithId = linearCombined.copy(id = linearLocationId)
       buildTestDataForProject(Some(rap), Some(Seq(rwCombWithId)), Some(Seq(linearRightWithId)), None)
 
@@ -568,9 +568,9 @@ class ProjectSectionCalculatorSpec extends AnyFunSuite with Matchers {
       val (linearCombined1, rwComb1): (LinearLocation, Roadway) = Seq(projectLink0).map(toRoadwayAndLinearLocation).head
       val (linearCombined2, rwComb2): (LinearLocation, Roadway) = Seq(projectLink1).map(toRoadwayAndLinearLocation).head
       val (linearCombined3, rwComb3): (LinearLocation, Roadway) = Seq(projectLink2).map(toRoadwayAndLinearLocation).head
-      val rwComb1WithId = rwComb1.copy(id = roadwayId, ely = 8L)
-      val rwComb2WithId = rwComb2.copy(id = roadwayId+1, ely = 8L)
-      val rwComb3WithId = rwComb3.copy(id = roadwayId+2, ely = 8L)
+      val rwComb1WithId = rwComb1.copy(id = roadwayId,   arealRoadMaintainer = ArealRoadMaintainer("ELY8"))
+      val rwComb2WithId = rwComb2.copy(id = roadwayId+1, arealRoadMaintainer = ArealRoadMaintainer("ELY8"))
+      val rwComb3WithId = rwComb3.copy(id = roadwayId+2, arealRoadMaintainer = ArealRoadMaintainer("ELY8"))
       val linearCombined1WithId = linearCombined1.copy(id = linearLocationId)
       val linearCombined2WithId = linearCombined2.copy(id = linearLocationId+1)
       val linearCombined3WithId = linearCombined3.copy(id = linearLocationId+2)
@@ -613,8 +613,8 @@ class ProjectSectionCalculatorSpec extends AnyFunSuite with Matchers {
 
       val (linearCombined0, rwComb0): (LinearLocation, Roadway) = Seq(projectLink0).map(toRoadwayAndLinearLocation).head
       val (linearCombined3, rwComb3): (LinearLocation, Roadway) = Seq(projectLink3).map(toRoadwayAndLinearLocation).head
-      val rwComb0WithId = rwComb0.copy(id = roadwayId, ely = 8L)
-      val rwComb3WithId = rwComb3.copy(id = roadwayId+3, ely = 8L)
+      val rwComb0WithId = rwComb0.copy(id = roadwayId,   arealRoadMaintainer = ArealRoadMaintainer(s"ELY8"))
+      val rwComb3WithId = rwComb3.copy(id = roadwayId+3, arealRoadMaintainer = ArealRoadMaintainer(s"ELY8"))
       val linearCombined0WithId = linearCombined0.copy(id = linearLocationId)
       val linearCombined3WithId = linearCombined3.copy(id = linearLocationId + 3)
       buildTestDataForProject(Some(rap), Some(Seq(rwComb0WithId, rwComb3WithId)), Some(Seq(linearCombined0WithId, linearCombined3WithId)), None)
@@ -786,9 +786,9 @@ class ProjectSectionCalculatorSpec extends AnyFunSuite with Matchers {
       val (linearLeft2,  _/*rwLeft2*/ ): (LinearLocation, Roadway) = Seq(projectLink5).map(toRoadwayAndLinearLocation).head
       val (linearRight1,    rwRight1  ): (LinearLocation, Roadway) = Seq(projectLink4).map(toRoadwayAndLinearLocation).head
       val (linearRight2, _/*rwRight2*/): (LinearLocation, Roadway) = Seq(projectLink6).map(toRoadwayAndLinearLocation).head
-      val rwCombWithId = rwComb.copy(id = roadwayId, ely = 8L)
-      val rwLeft1And2WithId  =  rwLeft1.copy(id = roadwayId + 7, addrMRange = AddrMRange(projectLink3.addrMRange.start, projectLink5.addrMRange.end), ely = 8L)
-      val rwRight1And2WithId = rwRight1.copy(id = roadwayId + 8, addrMRange = AddrMRange(projectLink4.addrMRange.start, projectLink6.addrMRange.end), ely = 8L)
+      val rwCombWithId = rwComb.copy(id = roadwayId, arealRoadMaintainer = ArealRoadMaintainer("ELY8"))
+      val rwLeft1And2WithId  =  rwLeft1.copy(id = roadwayId + 7, addrMRange = AddrMRange(projectLink3.addrMRange.start, projectLink5.addrMRange.end), arealRoadMaintainer = ArealRoadMaintainer("ELY8"))
+      val rwRight1And2WithId = rwRight1.copy(id = roadwayId + 8, addrMRange = AddrMRange(projectLink4.addrMRange.start, projectLink6.addrMRange.end), arealRoadMaintainer = ArealRoadMaintainer("ELY8"))
       val linearCombinedWithId = linearCombined.copy(id = linearLocationId)
       val linearLeft1WithId  = linearLeft1.copy(id = linearLocationId + 7)
       val linearLeft2WithId  = linearLeft2.copy(id = linearLocationId + 8)
@@ -864,9 +864,9 @@ class ProjectSectionCalculatorSpec extends AnyFunSuite with Matchers {
       val (linearLeft2, _/*rwLeft2*/ ): (LinearLocation, Roadway) = Seq(projectLink5).map(toRoadwayAndLinearLocation).head
       val (linearRight1,   rwRight1  ): (LinearLocation, Roadway) = Seq(projectLink4).map(toRoadwayAndLinearLocation).head
       val (linearRight2,_/*rwRight2*/): (LinearLocation, Roadway) = Seq(projectLink6).map(toRoadwayAndLinearLocation).head
-      val rwCombWithId = rwComb.copy(id = roadwayId, ely = 8L)
-      val rwLeft1And2WithId =   rwLeft1.copy(id = roadwayId + 7, addrMRange = AddrMRange(projectLink3.addrMRange.start, projectLink5.addrMRange.end), ely = 8L)
-      val rwRight1And2WithId = rwRight1.copy(id = roadwayId + 8, addrMRange = AddrMRange(projectLink4.addrMRange.start, projectLink6.addrMRange.end), ely = 8L)
+      val rwCombWithId = rwComb.copy(id = roadwayId, arealRoadMaintainer = ArealRoadMaintainer("ELY8"))
+      val rwLeft1And2WithId =   rwLeft1.copy(id = roadwayId + 7, addrMRange = AddrMRange(projectLink3.addrMRange.start, projectLink5.addrMRange.end), arealRoadMaintainer = ArealRoadMaintainer("ELY8"))
+      val rwRight1And2WithId = rwRight1.copy(id = roadwayId + 8, addrMRange = AddrMRange(projectLink4.addrMRange.start, projectLink6.addrMRange.end), arealRoadMaintainer = ArealRoadMaintainer("ELY8"))
       val linearCombinedWithId = linearCombined.copy(id = linearLocationId)
       val linearLeft1WithId = linearLeft1.copy(id = linearLocationId + 7)
       val linearLeft2WithId = linearLeft2.copy(id = linearLocationId + 8)
@@ -1238,7 +1238,7 @@ class ProjectSectionCalculatorSpec extends AnyFunSuite with Matchers {
       val administrativeClass = AdministrativeClass.State
       val track = Track.Combined
       val roadwayId1 = Sequences.nextRoadwayId
-      val roadway1 = Roadway(roadwayId1, Sequences.nextRoadwayNumber, roadPart, administrativeClass, track, Discontinuity.Continuous, AddrMRange(0L, 10L), reversed = false, DateTime.parse("2000-01-01"), None, "Test", None, 0, NoTermination)
+      val roadway1 = Roadway(roadwayId1, Sequences.nextRoadwayNumber, roadPart, administrativeClass, track, Discontinuity.Continuous, AddrMRange(0L, 10L), reversed = false, DateTime.parse("2000-01-01"), None, "Test", None, ArealRoadMaintainer.ARMInvalid, NoTermination)
       roadwayDAO.create(Seq(roadway1))
 
       val linkId1 = 12345L.toString
@@ -1371,7 +1371,7 @@ class ProjectSectionCalculatorSpec extends AnyFunSuite with Matchers {
       val administrativeClass = AdministrativeClass.Municipality
       val track = Track.Combined
       val roadwayId1 = Sequences.nextRoadwayId
-      val roadway1 = Roadway(roadwayId1, Sequences.nextRoadwayNumber, roadPart, administrativeClass, track, Discontinuity.MinorDiscontinuity, AddrMRange(0L, 10L), reversed = false, DateTime.parse("1901-01-01"), None, "tester", None, 8, NoTermination)
+      val roadway1 = Roadway(roadwayId1, Sequences.nextRoadwayNumber, roadPart, administrativeClass, track, Discontinuity.MinorDiscontinuity, AddrMRange(0L, 10L), reversed = false, DateTime.parse("1901-01-01"), None, "tester", None, ArealRoadMaintainer("ELY8"), NoTermination)
       roadwayDAO.create(Seq(roadway1))
 
       val linkId1 = 12345L.toString

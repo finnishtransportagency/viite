@@ -5,17 +5,18 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.vaylavirasto.viite.geometry.Point
 import fi.vaylavirasto.viite.model.CalibrationPointType.NoCP
-import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinuity, LifecycleStatus, LinkGeomSource, RoadAddressChangeType, RoadLink, RoadPart, SideCode, Track, TrafficDirection}
+import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, ArealRoadMaintainer, Discontinuity, LifecycleStatus, LinkGeomSource, RoadAddressChangeType, RoadLink, RoadPart, SideCode, Track, TrafficDirection}
 import org.joda.time.DateTime
 
 object Dummies {
 
   def dummyRoadway(roadwayNumber: Long, roadPart: RoadPart, addrMRange: AddrMRange, startDate: DateTime, endDate: Option[DateTime], roadwayId: Long = 0L): Roadway = {
-    Roadway(roadwayId, roadwayNumber, roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, addrMRange, reversed = false, startDate, endDate, "user", None, 1L, NoTermination)
+    Roadway(roadwayId, roadwayNumber, roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, addrMRange, reversed = false, startDate, endDate, "user", None,
+      ArealRoadMaintainer("ELY1"), NoTermination)
   }
 
-  def dummyRoadwayChangeSection(roadPart: Option[RoadPart], track: Option[Long], startAddressM: Option[Long], endAddressM: Option[Long], administrativeClass: Option[AdministrativeClass] = Some(AdministrativeClass.State), discontinuity: Option[Discontinuity], ely: Option[Long]): RoadwayChangeSection = {
-    RoadwayChangeSection(Some(roadPart.get.roadNumber), track, Some(roadPart.get.partNumber), Some(roadPart.get.partNumber), Some(AddrMRange(startAddressM.get, endAddressM.get)), administrativeClass, discontinuity, ely)
+  def dummyRoadwayChangeSection(roadPart: Option[RoadPart], track: Option[Long], startAddressM: Option[Long], endAddressM: Option[Long], administrativeClass: Option[AdministrativeClass] = Some(AdministrativeClass.State), discontinuity: Option[Discontinuity], arealRoadMaintainer: Option[ArealRoadMaintainer]): RoadwayChangeSection = {
+    RoadwayChangeSection(Some(roadPart.get.roadNumber), track, Some(roadPart.get.partNumber), Some(roadPart.get.partNumber), Some(AddrMRange(startAddressM.get, endAddressM.get)), administrativeClass, discontinuity, arealRoadMaintainer)
   }
 
   def dummyLinearLocationWithGeometry(id: Long, roadwayNumber: Long, orderNumber: Double, linkId: String, startMValue: Double, endMValue: Double, sideCode: SideCode = SideCode.TowardsDigitizing, geometry: Seq[Point] = Seq()): LinearLocation =

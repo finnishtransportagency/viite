@@ -9,7 +9,7 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.{RoadwayAddressMapper, TrackSectionOrder}
 import fi.liikennevirasto.viite.process.TrackSectionOrder.findChainEndpoints
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinuity, RoadAddressChangeType, RoadPart, SideCode, Track}
+import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, ArealRoadMaintainer, Discontinuity, RoadAddressChangeType, RoadPart, SideCode, Track}
 import fi.vaylavirasto.viite.util.DateTimeFormatters.finnishDateFormatter
 import org.slf4j.LoggerFactory
 
@@ -121,7 +121,7 @@ class ProjectValidator {
       DiscontinuousCodeOnConnectedRoadPartOutside, NotDiscontinuousCodeOnDisconnectedRoadPartOutside, ElyDiscontinuityCodeBeforeProjectButNoElyChange,
       WrongDiscontinuityBeforeProjectWithElyChangeInProject,
       ErrorInValidationOfUnchangedLinks, RoadNotEndingInElyBorder, RoadContinuesInAnotherEly,
-      MultipleElyInPart, IncorrectOperationTypeOnElyCodeChange,
+      MultipleARMInPart, IncorrectOperationTypeOnElyCodeChange,
       ElyCodeChangeButNoRoadPartChange, ElyCodeChangeButNoElyChange, ElyCodeChangeButNotOnEnd, ElyCodeDiscontinuityChangeButNoElyChange, RoadNotReserved, DistinctAdministrativeClassesBetweenTracks, WrongDiscontinuityOutsideOfProject,
       TrackGeometryLengthDeviation, UniformAdminClassOnLink)
 
@@ -314,10 +314,10 @@ class ProjectValidator {
       def notification = true
     }
 
-    case object MultipleElyInPart extends ValidationError {
+    case object MultipleARMInPart extends ValidationError {
       def value = 21
 
-      def message: String = MultipleElysInPartMessage
+      def message: String = MultipleARMsInPartMessage
 
       def notification = true
     }
@@ -468,7 +468,7 @@ class ProjectValidator {
   }
 
   /**
-   * @param affectedPlIds Id's of the project links affected by the validation error.
+   * @param affectedPlIds Ids of the project links affected by the validation error.
    * @param affectedLinkIds linkId's of the project links affected by the validation error.
    * @param coordinates the coordinates where to zoom when the validation error is clicked on the UI.
    * */
@@ -1113,18 +1113,18 @@ class ProjectValidator {
       * B. all links must have the UnChanged Link status
       *
       * @param project             : Project - the project to evaluate
-      * @param groupedProjectLinks : Map[RoadPart, Seq[ProjectLink]) - the project links, grouped by road part
+      * @param groupedProjectLinks : Map[RoadPart, Seq[ProjectLink]] - the project links, grouped by road part
       * @return
       */
-    def checkChangeOfEly(project: Project, groupedProjectLinks: Map[RoadPart, Seq[ProjectLink]]): Seq[ValidationErrorDetails] = {
+    def checkChangeOfARM(project: Project, groupedProjectLinks: Map[RoadPart, Seq[ProjectLink]]): Seq[ValidationErrorDetails] = {
 
-      def prepareValidationErrorDetails(condition: Either[Seq[Long], Seq[RoadAddressChangeType]]): ValidationErrorDetails = {
+      def prepareValidationErrorDetails(condition: Either[Seq[ArealRoadMaintainer], Seq[RoadAddressChangeType]]): ValidationErrorDetails = {
         val (wrongProjectLinks, validationError) = condition match {
-          case Left(originalElys) =>
-            if (originalElys.nonEmpty)
-              (allProjectLinks.filterNot(_.ely == originalElys.head), ValidationErrorList.MultipleElyInPart)
+          case Left(originalARMs) =>
+            if (originalARMs.nonEmpty)
+              (allProjectLinks.filterNot(pl => ArealRoadMaintainer.getELY(pl.ely) == originalARMs.head), ValidationErrorList.MultipleARMInPart)
             else {
-              (allProjectLinks.groupBy(_.ely).map(_._2.maxBy(_.addrMRange.end)).toSeq, ValidationErrorList.MultipleElyInPart)
+              (allProjectLinks.groupBy(pl => ArealRoadMaintainer.getELY(pl.ely)).map(_._2.maxBy(_.addrMRange.end)).toSeq, ValidationErrorList.MultipleARMInPart)
             }
           case Right(roadAddressChangeTypeSeq) =>
             (allProjectLinks.filterNot(pl => roadAddressChangeTypeSeq.contains(pl.status)), ValidationErrorList.IncorrectOperationTypeOnElyCodeChange)
@@ -1159,17 +1159,19 @@ class ProjectValidator {
 
         val tracksWithUnpairedChangeOfEly = twoTrackLinksWithChangeOfEly.flatMap(p => group._2.filter(q => q.addrMRange.end == p.addrMRange.end &&
           q.discontinuity != Discontinuity.ChangingELYCode)).distinct
-        val originalElys = roadways.map(_.ely).distinct
+        val originalArms = roadways.map(_.arealRoadMaintainer).distinct
         val projectLinkElys = group._2.map(_.ely).distinct
 
-        val errors = if (originalElys.nonEmpty || (originalElys.isEmpty && (projectLinkElys.size > 1 || nonLastLinkHasChangeOfEly.nonEmpty || tracksWithUnpairedChangeOfEly.nonEmpty))) {
+        val errors = if (originalArms.nonEmpty || (originalArms.isEmpty && (projectLinkElys.size > 1 || nonLastLinkHasChangeOfEly.nonEmpty || tracksWithUnpairedChangeOfEly.nonEmpty))) {
 
           val multi = if (projectLinkElys.size > 1) {
-            Seq(prepareValidationErrorDetails(Left(originalElys)))
+            Seq(prepareValidationErrorDetails(Left(originalArms)))
           }
           else Seq.empty
 
-          val wrongStatusCode = if (!workableProjectLinks.forall(pl => pl.status == RoadAddressChangeType.Unchanged || pl.status == RoadAddressChangeType.Transfer || pl.status == RoadAddressChangeType.New || pl.status == RoadAddressChangeType.Renumeration) && !originalElys.equals(projectLinkElys)) {
+          val wrongStatusCode = if (!workableProjectLinks.forall(pl =>
+            pl.status == RoadAddressChangeType.Unchanged || pl.status == RoadAddressChangeType.Transfer || pl.status == RoadAddressChangeType.New ||
+            pl.status == RoadAddressChangeType.Renumeration) && !originalArms.equals(projectLinkElys)) {
             Seq(prepareValidationErrorDetails(Right(Seq(RoadAddressChangeType.Unchanged, RoadAddressChangeType.Transfer, RoadAddressChangeType.New, RoadAddressChangeType.Renumeration))))
           }
           else Seq.empty
@@ -1230,7 +1232,7 @@ class ProjectValidator {
         else {
             val roadways = notCalculatedParts.keys.flatMap(rp => roadwayDAO.fetchAllByRoadPart(rp).filter(r => (r.roadPart.isAfter(rp))).sortBy(_.roadPart.partNumber).take(1))
             val existsSameRoadwayDifferentEly = notCalculatedParts.map {
-              case ((roadPart),pls) => (roadPart) -> roadways.exists(r => (r.roadPart.isAfter(roadPart) && r.ely != pls.last.ely))
+              case ((roadPart),pls) => (roadPart) -> roadways.exists(r => (r.roadPart.isAfter(roadPart) && r.arealRoadMaintainer != ArealRoadMaintainer.getELY(pls.last.ely)))
             }
 
             notCalculatedParts.flatMap { case (roadPart, pls) =>
@@ -1252,7 +1254,7 @@ class ProjectValidator {
         g._1 -> g._2.filterNot(_.status == RoadAddressChangeType.Termination)
       }).filterNot(_._2.isEmpty)
       val orderedProjectLinks = ListMap(groupedMinusTerminated.toSeq.sortBy(_._1): _*).asInstanceOf[Map[RoadPart, Seq[ProjectLink]]]
-      val projectLinkElyChangeErrors = checkChangeOfEly(project, orderedProjectLinks)
+      val projectLinkElyChangeErrors = checkChangeOfARM(project, orderedProjectLinks)
       projectLinkElyChangeErrors
     } else Seq.empty[ValidationErrorDetails]
   }

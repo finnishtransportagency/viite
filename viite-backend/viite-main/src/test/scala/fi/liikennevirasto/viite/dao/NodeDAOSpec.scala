@@ -3,7 +3,7 @@ package fi.liikennevirasto.viite.dao
 import fi.liikennevirasto.viite.NewIdValue
 import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
-import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, BeforeAfter, Discontinuity, NodePointType, NodeType, RoadPart, Track}
+import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, ArealRoadMaintainer, BeforeAfter, Discontinuity, NodePointType, NodeType, RoadPart, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
 import org.joda.time.DateTime
 import org.scalatest.funsuite.AnyFunSuite
@@ -27,7 +27,7 @@ class NodeDAOSpec extends AnyFunSuite with Matchers with BaseDAO {
   private val roadNumber1 = 990
   private val roadwayNumber1 = 1000000000L
   private val roadPartNumber1 = 1
-  private val testRoadway1 = Roadway(NewIdValue, roadwayNumber1, RoadPart(roadNumber1, roadPartNumber1), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0, 100), reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
+  private val testRoadway1 = Roadway(NewIdValue, roadwayNumber1, RoadPart(roadNumber1, roadPartNumber1), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0, 100), reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), ArealRoadMaintainer("ELY1"), TerminationCode.NoTermination)
   private val testRoadwayPoint1 = RoadwayPoint(NewIdValue, roadwayNumber1, 0, "Test", None, None, None)
   private val testNode1 = Node(NewIdValue, NewIdValue, Point(100, 100), Some("Test node 1"), NodeType.NormalIntersection,
     DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, "Test", None, registrationDate = new DateTime())
@@ -212,8 +212,8 @@ class NodeDAOSpec extends AnyFunSuite with Matchers with BaseDAO {
       val roadwayNumber2 = Sequences.nextRoadwayNumber
       roadwayDAO.create(
         Seq(
-          Roadway(Sequences.nextRoadwayId, roadwayNumber1, roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, AddrMRange(  0, 300), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
-          Roadway(Sequences.nextRoadwayId, roadwayNumber2, roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, AddrMRange(300, 500), reversed = false, DateTime.parse("2021-01-01"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination)
+          Roadway(Sequences.nextRoadwayId, roadwayNumber1, roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, AddrMRange(  0, 300), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), ArealRoadMaintainer("ELY8"), TerminationCode.NoTermination),
+          Roadway(Sequences.nextRoadwayId, roadwayNumber2, roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, AddrMRange(300, 500), reversed = false, DateTime.parse("2021-01-01"), None, "test", Some("TEST ROAD 1"), ArealRoadMaintainer("ELY8"), TerminationCode.NoTermination)
 
         )
       )

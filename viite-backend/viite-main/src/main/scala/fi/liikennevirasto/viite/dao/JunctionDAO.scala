@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.NewIdValue
 import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
-import fi.vaylavirasto.viite.model.{NodeType, RoadPart, Track}
+import fi.vaylavirasto.viite.model.{ArealRoadMaintainer, NodeType, RoadPart, Track}
 import fi.vaylavirasto.viite.postgis.GeometryDbUtils
 import org.joda.time.DateTime
 import scalikejdbc._
@@ -320,11 +320,11 @@ class JunctionDAO extends BaseDAO {
         WHERE ${j.validTo} IS NULL AND ${j.endDate} IS NULL
     """
 
-    def withOptionalParameters(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long],
+    def withOptionalParameters(situationDate: Option[String], arealRoadMaintainerId: Option[String], roadNumber: Option[Long], minRoadPartNumber: Option[Long],
                                maxRoadPartNumber: Option[Long])(baseQuery: SQLSyntax): SQL[Nothing, NoExtractor] = {
       val dateCast = sqls"CAST(${situationDate.get} AS DATE)" // Scalike doesn't support directly casting to date TODO scalike: Better way to do this as a more reusable solution?
       val dateCondition = sqls"AND ${rw.startDate} <= $dateCast"
-      val elyCondition = ely.map(e => sqls"AND ${rw.ely} = $e").getOrElse(sqls"")
+      val ARMCondition = arealRoadMaintainerId.map(ARMId => sqls"AND ${rw.arealRoadMaintainer} = $ARMId").getOrElse(sqls"")
       val roadNumberCondition = roadNumber.map(rn => sqls"AND ${rw.column("road_number")} = $rn").getOrElse(sqls"")
 
       val roadPartCondition = (minRoadPartNumber, maxRoadPartNumber) match {
@@ -335,14 +335,14 @@ class JunctionDAO extends BaseDAO {
       }
 
       sql"""
-        $baseQuery $dateCondition $elyCondition $roadNumberCondition $roadPartCondition
+        $baseQuery $dateCondition $ARMCondition $roadNumberCondition $roadPartCondition
         GROUP BY  node.node_number, xcoord, ycoord, node.name, node.TYPE, ${j.startDate}, ${j.junctionNumber},
                   ${rw.column("road_number")}, ${rw.track}, ${rw.column("road_part_number")}, rp.addr_m
         ORDER BY  ${rw.column("road_number")}, ${rw.column("road_part_number")}, rp.addr_m
         """
     }
 
-    val fullQuery = withOptionalParameters(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)(baseQuery)
+    val fullQuery = withOptionalParameters(situationDate, ArealRoadMaintainer.getELYOption(s"ELY$ely").map(_.id), roadNumber, minRoadPartNumber, maxRoadPartNumber)(baseQuery)
     runSelectQuery(fullQuery.map(JunctionForRoadAddressBrowser.apply))
 
   }
