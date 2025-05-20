@@ -238,10 +238,10 @@ class RoadwayChangesDAO extends BaseDAO {
             roadwaySection.addrMRange.end,
             roadwaySection.discontinuity.value,
             roadwaySection.administrativeClass.value,
-            roadwaySection.ely,
+            roadwaySection.arealRoadMaintainer.number, // TODO VIITE-3423 change to id when DB column changed
             roadwaySection.administrativeClass.value,
             roadwaySection.discontinuity.value,
-            roadwaySection.ely,
+            roadwaySection.arealRoadMaintainer.number, // TODO VIITE-3423 change to id when DB column changed
             if (roadwaySection.reversed) 1 else 0,
             nextChangeOrderLink
           )
@@ -261,10 +261,10 @@ class RoadwayChangesDAO extends BaseDAO {
             null,
             roadwaySection.discontinuity.value,
             roadwaySection.administrativeClass.value,
-            roadwaySection.ely,
+            roadwaySection.arealRoadMaintainer.number, // TODO VIITE-3423 change to id when DB column changed
             roadwaySection.administrativeClass.value,
             roadwaySection.discontinuity.value,
-            roadwaySection.ely,
+            roadwaySection.arealRoadMaintainer.number, // TODO VIITE-3423 change to id when DB column changed
             if (roadwaySection.reversed) 1 else 0,
             nextChangeOrderLink
           )
@@ -284,10 +284,10 @@ class RoadwayChangesDAO extends BaseDAO {
             roadwaySection.addrMRange.end,
             roadwaySection.discontinuity.value,
             roadwaySection.administrativeClass.value,
-            roadwaySection.ely,
+            roadwaySection.arealRoadMaintainer.number, // TODO VIITE-3423 change to id when DB column changed
             roadwaySection.administrativeClass.value,
             roadwaySection.discontinuity.value,
-            roadwaySection.ely,
+            roadwaySection.arealRoadMaintainer.number, // TODO VIITE-3423 change to id when DB column changed
             if (roadwaySection.reversed) 1 else 0,
             nextChangeOrderLink
           )
@@ -324,10 +324,10 @@ class RoadwayChangesDAO extends BaseDAO {
         newRoadwaySection.addrMRange.end,
         newRoadwaySection.discontinuity.value,
         newRoadwaySection.administrativeClass.value,
-        newRoadwaySection.ely.toInt,
+        newRoadwaySection.arealRoadMaintainer.number, // TODO VIITE-3423 change to id when DB column changed
         oldRoadwaySection.administrativeClass.value,
         oldRoadwaySection.discontinuity.value,
-        oldRoadwaySection.ely.toInt,
+        oldRoadwaySection.arealRoadMaintainer.number, // TODO VIITE-3423 change to id when DB column changed
         if (newRoadwaySection.reversed) 1 else 0,
         nextChangeOrderLink
       )
