@@ -1238,7 +1238,7 @@ class ProjectSectionCalculatorSpec extends AnyFunSuite with Matchers {
       val administrativeClass = AdministrativeClass.State
       val track = Track.Combined
       val roadwayId1 = Sequences.nextRoadwayId
-      val roadway1 = Roadway(roadwayId1, Sequences.nextRoadwayNumber, roadPart, administrativeClass, track, Discontinuity.Continuous, AddrMRange(0L, 10L), reversed = false, DateTime.parse("2000-01-01"), None, "Test", None, ArealRoadMaintainer.getELY(14), NoTermination)
+      val roadway1 = Roadway(roadwayId1, Sequences.nextRoadwayNumber, roadPart, administrativeClass, track, Discontinuity.Continuous, AddrMRange(0L, 10L), reversed = false, DateTime.parse("2000-01-01"), None, "Test", None, ArealRoadMaintainer.ARMInvalid, NoTermination)
       roadwayDAO.create(Seq(roadway1))
 
       val linkId1 = 12345L.toString
@@ -1251,8 +1251,8 @@ class ProjectSectionCalculatorSpec extends AnyFunSuite with Matchers {
 
       val plId = Sequences.nextProjectLinkId
       val projectLink1 = ProjectLink(plId + 1, roadPart, track, roadway1.discontinuity,          AddrMRange( 0L, 10L), roadway1.addrMRange,None, None, None, linkId1, linearLocation1.startMValue, linearLocation1.endMValue, linearLocation1.sideCode, (RoadAddressCP, RoadAddressCP), (RoadAddressCP, RoadAddressCP), linearLocation1.geometry, 0L, RoadAddressChangeType.Transfer, roadway1.administrativeClass, LinkGeomSource.apply(link1.source.intValue()), GeometryUtils.geometryLength(linearLocation1.geometry), roadway1.id, linearLocation1.id, 0, roadway1.reversed, None, 86400L)
-      val projectLink2 = ProjectLink(plId + 2, roadPart, track, Discontinuity.MinorDiscontinuity,AddrMRange( 0L, 10L), AddrMRange(0L, 0L), None, None, None, 12346L.toString, 0.0, 11.2, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), geom2, 0L, RoadAddressChangeType.New, administrativeClass, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom2), 0L, 0, 14, reversed = false, None, 86400L)
-      val projectLink3 = ProjectLink(plId + 3, roadPart, track, Discontinuity.Continuous,        AddrMRange(10L, 20L), AddrMRange(0L, 0L), None, None, None, 12347L.toString, 0.0, 12.3, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), geom3, 0L, RoadAddressChangeType.New, administrativeClass, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom3), 0L, 0, 14, reversed = false, None, 86400L)
+      val projectLink2 = ProjectLink(plId + 2, roadPart, track, Discontinuity.MinorDiscontinuity,AddrMRange( 0L, 10L), AddrMRange(0L, 0L), None, None, None, 12346L.toString, 0.0, 11.2, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), geom2, 0L, RoadAddressChangeType.New, administrativeClass, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom2), 0L, 0, 0, reversed = false, None, 86400L)
+      val projectLink3 = ProjectLink(plId + 3, roadPart, track, Discontinuity.Continuous,        AddrMRange(10L, 20L), AddrMRange(0L, 0L), None, None, None, 12347L.toString, 0.0, 12.3, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), geom3, 0L, RoadAddressChangeType.New, administrativeClass, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom3), 0L, 0, 0, reversed = false, None, 86400L)
 
       val projectLinkSeq = Seq(projectLink1, projectLink2, projectLink3)
 
