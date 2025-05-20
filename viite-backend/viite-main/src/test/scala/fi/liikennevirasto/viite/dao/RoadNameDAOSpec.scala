@@ -1,7 +1,7 @@
 package fi.liikennevirasto.viite.dao
 
 import fi.vaylavirasto.viite.dao.{RoadName, RoadNameDAO, RoadNameForRoadAddressBrowser, Sequences}
-import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinuity, RoadPart, Track}
+import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, ArealRoadMaintainer, Discontinuity, RoadPart, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
 import org.joda.time.DateTime
 import org.scalatest.funsuite.AnyFunSuite
@@ -21,7 +21,7 @@ class RoadNameDAOSpec extends AnyFunSuite with Matchers {
       // create roadway
       roadwayDAO.create(
         Seq(
-          Roadway(Sequences.nextRoadwayId, Sequences.nextRoadwayNumber, RoadPart(roadNumber, roadPartNumber), AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, AddrMRange(0L, 1000L), reversed=false, DateTime.parse(date), None, "test", Some("testRoad"), 1L, validFrom = DateTime.parse(date), validTo = None)
+          Roadway(Sequences.nextRoadwayId, Sequences.nextRoadwayNumber, RoadPart(roadNumber, roadPartNumber), AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, AddrMRange(0L, 1000L), reversed=false, DateTime.parse(date), None, "test", Some("testRoad"), ArealRoadMaintainer("ELY1"), validFrom = DateTime.parse(date), validTo = None)
         )
       )
 
@@ -68,8 +68,8 @@ class RoadNameDAOSpec extends AnyFunSuite with Matchers {
       val roadNumber = 99
       val roadPartNumber = 1
       val roadwayNumber = Sequences.nextRoadwayNumber
-      val ely1 = 1L
-      val ely9 = 9L
+      val ely1 = ArealRoadMaintainer("ELY1")
+      val ely9 = ArealRoadMaintainer("ELY9")
       val situationDate = "2022-12-15"
       val situationDateDayBeforeChanges = "2022-12-14"
 

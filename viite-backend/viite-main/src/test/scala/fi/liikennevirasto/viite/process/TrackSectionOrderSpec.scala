@@ -6,7 +6,7 @@ import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.util.toProjectLink
 import fi.vaylavirasto.viite.geometry.Point
-import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinuity, LinkGeomSource, RoadAddressChangeType, RoadPart, SideCode, Track}
+import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, ArealRoadMaintainer, Discontinuity, LinkGeomSource, RoadAddressChangeType, RoadPart, SideCode, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
 import org.joda.time.DateTime
 import org.scalatest.funsuite.AnyFunSuite
@@ -354,8 +354,8 @@ class TrackSectionOrderSpec extends AnyFunSuite with Matchers {
     )
 
     val rws         = Seq(
-      Roadway(0, rwn1, RoadPart(1, 1), AdministrativeClass.State, Track.Combined, Discontinuity.Discontinuous, AddrMRange(0, 20), reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 8L, NoTermination),
-      Roadway(1, rwn2, RoadPart(2, 1), AdministrativeClass.State, Track.Combined, Discontinuity.Discontinuous, AddrMRange(0, 10), reversed = false, DateTime.parse("2020-01-03"), None, "test", None, 8L, NoTermination)
+      Roadway(0, rwn1, RoadPart(1, 1), AdministrativeClass.State, Track.Combined, Discontinuity.Discontinuous, AddrMRange(0, 20), reversed = false, DateTime.parse("2020-01-03"), None, "test", None, ArealRoadMaintainer("ELY8"), NoTermination),
+      Roadway(1, rwn2, RoadPart(2, 1), AdministrativeClass.State, Track.Combined, Discontinuity.Discontinuous, AddrMRange(0, 10), reversed = false, DateTime.parse("2020-01-03"), None, "test", None, ArealRoadMaintainer("ELY8"), NoTermination)
     )
 
     runWithRollback {

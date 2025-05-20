@@ -257,7 +257,7 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter wi
 
   def prettyPrintLog(roadwayChanges: List[ProjectRoadwayChange]): Unit = {
     roadwayChanges.groupBy(a => {
-      (a.projectId, a.projectName, a.projectStartDate, a.ely)
+      (a.projectId, a.projectName, a.projectStartDate, a.arealRoadMaintainer)
     }).foreach(g => {
       val changes                                                = g._2
       val t1                                                     = changes.head.headerFieldsToString

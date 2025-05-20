@@ -5,7 +5,7 @@ import fi.liikennevirasto.viite.AwsService
 import fi.liikennevirasto.viite.dao._
 import fi.vaylavirasto.viite.dao.Sequences
 import fi.vaylavirasto.viite.geometry.Point
-import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, CalibrationPoint, CalibrationPointLocation, CalibrationPointType, Discontinuity, LifecycleStatus, LinkGeomSource, RoadLink, RoadPart, SideCode, Track, TrafficDirection}
+import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, ArealRoadMaintainer, CalibrationPoint, CalibrationPointLocation, CalibrationPointType, Discontinuity, LifecycleStatus, LinkGeomSource, RoadLink, RoadPart, SideCode, Track, TrafficDirection}
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
 import org.joda.time.DateTime
 import org.scalatest.funsuite.AnyFunSuite
@@ -37,7 +37,7 @@ class DynamicRoadNetworkServiceSpec extends AnyFunSuite with Matchers{
 
       // Create Roadways
       roadwayDAO.create(Seq(
-        Roadway(Sequences.nextRoadwayId, roadwayNumber1, RoadPart(18344, 1), AdministrativeClass.State, Track.Combined,Discontinuity.EndOfRoad, AddrMRange(0, 100), false, DateTime.now().minusDays(1), None, "test", Some("Test road"), 9,TerminationCode.NoTermination, DateTime.now().minusDays(1),None)
+        Roadway(Sequences.nextRoadwayId, roadwayNumber1, RoadPart(18344, 1), AdministrativeClass.State, Track.Combined,Discontinuity.EndOfRoad, AddrMRange(0, 100), false, DateTime.now().minusDays(1), None, "test", Some("Test road"), ArealRoadMaintainer("ELY9"),TerminationCode.NoTermination, DateTime.now().minusDays(1),None)
       ))
 
       // Create LinearLocations
@@ -123,8 +123,8 @@ class DynamicRoadNetworkServiceSpec extends AnyFunSuite with Matchers{
 
       // Create Roadways
       roadwayDAO.create(Seq(
-        Roadway(Sequences.nextRoadwayId, roadwayNumber1, roadPart1, AdministrativeClass.State, Track.Combined,Discontinuity.EndOfRoad, AddrMRange(0, 50), false, DateTime.now().minusDays(1), None, "test", Some("Test road"), 9,TerminationCode.NoTermination, DateTime.now().minusDays(1),None),
-        Roadway(Sequences.nextRoadwayId, roadwayNumber2, roadPart2, AdministrativeClass.State, Track.Combined,Discontinuity.EndOfRoad, AddrMRange(0, 50), false, DateTime.now().minusDays(1), None, "test", Some("Test road"), 9,TerminationCode.NoTermination, DateTime.now().minusDays(1),None)
+        Roadway(Sequences.nextRoadwayId, roadwayNumber1, roadPart1, AdministrativeClass.State, Track.Combined,Discontinuity.EndOfRoad, AddrMRange(0, 50), false, DateTime.now().minusDays(1), None, "test", Some("Test road"), ArealRoadMaintainer.ELYKeskiSuomi,TerminationCode.NoTermination, DateTime.now().minusDays(1),None),
+        Roadway(Sequences.nextRoadwayId, roadwayNumber2, roadPart2, AdministrativeClass.State, Track.Combined,Discontinuity.EndOfRoad, AddrMRange(0, 50), false, DateTime.now().minusDays(1), None, "test", Some("Test road"), ArealRoadMaintainer.ELYKeskiSuomi,TerminationCode.NoTermination, DateTime.now().minusDays(1),None)
       ))
 
       // Create LinearLocations
@@ -230,8 +230,8 @@ class DynamicRoadNetworkServiceSpec extends AnyFunSuite with Matchers{
 
       // Create Roadways
       roadwayDAO.create(Seq(
-        Roadway(Sequences.nextRoadwayId, roadwayNumber1, RoadPart(18344, 1), AdministrativeClass.State, Track.Combined,Discontinuity.EndOfRoad, AddrMRange(0, 100), false, DateTime.now().minusDays(1), None, "test", Some("Test road"), 9,TerminationCode.NoTermination, DateTime.now().minusDays(1),None),
-        Roadway(Sequences.nextRoadwayId, roadwayNumber2, RoadPart(46021, 1), AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, AddrMRange(0,50), false, DateTime.now().minusDays(1), None, "test", Some("Test road"), 9, TerminationCode.NoTermination, DateTime.now().minusDays(1), None)
+        Roadway(Sequences.nextRoadwayId, roadwayNumber1, RoadPart(18344, 1), AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, AddrMRange(0, 100), false, DateTime.now().minusDays(1), None, "test", Some("Test road"), ArealRoadMaintainer.ELYKeskiSuomi, TerminationCode.NoTermination, DateTime.now().minusDays(1),None),
+        Roadway(Sequences.nextRoadwayId, roadwayNumber2, RoadPart(46021, 1), AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, AddrMRange(0,  50), false, DateTime.now().minusDays(1), None, "test", Some("Test road"), ArealRoadMaintainer.ELYKeskiSuomi, TerminationCode.NoTermination, DateTime.now().minusDays(1), None)
       ))
 
       // Create LinearLocations

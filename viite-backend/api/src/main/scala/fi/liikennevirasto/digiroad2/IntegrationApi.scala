@@ -322,7 +322,7 @@ println("Threading print test: Now in avoidRestrictions")
           "startAddrMValue" -> r.addrMRange.start,
           "endAddrMValue"   -> r.addrMRange.end,
           "discontinuity" -> r.discontinuity.value,
-          "ely" -> r.ely,
+          "ely" -> ArealRoadMaintainer.getELYNumberOrNA(Some(r.arealRoadMaintainer)), // TODO VIITE-3424 ely->ArealRoadMaintainer
           "roadType" -> r.administrativeClass.asRoadTypeValue,
           "administrativeClass" -> r.administrativeClass.value,
           "terminated" -> r.terminated.value,
@@ -396,7 +396,7 @@ println("Threading print test: Now in avoidRestrictions")
                 "jatkuvuuskoodi" -> roadwayChangesInfo.old_discontinuity,
                 "tietyyppi" -> AdministrativeClass.apply(roadwayChangesInfo.old_administrative_class).asRoadTypeValue,
                 "hallinnollinen_luokka" -> roadwayChangesInfo.old_administrative_class,
-                "ely" -> roadwayChangesInfo.old_ely
+                "ely" ->  ArealRoadMaintainer.getELYNumberOrNA(Some(roadwayChangesInfo.old_ARM)) // TODO VIITE-3424 ely->ArealRoadMaintainer
               ),
             "kohde" ->
               Map(
@@ -408,7 +408,7 @@ println("Threading print test: Now in avoidRestrictions")
                 "jatkuvuuskoodi" -> roadwayChangesInfo.new_discontinuity,
                 "tietyyppi" -> AdministrativeClass.apply(roadwayChangesInfo.new_administrative_class).asRoadTypeValue,
                 "hallinnollinen_luokka" -> roadwayChangesInfo.new_administrative_class,
-                "ely" -> roadwayChangesInfo.new_ely
+                "ely" -> ArealRoadMaintainer.getELYNumberOrNA(Some(roadwayChangesInfo.new_ARM)) // TODO VIITE-3424 ely->ArealRoadMaintainer
               )
           )
         }
@@ -783,7 +783,7 @@ println(s"fetchAllValidNodesWithJunctions GOT RESULT, of size ${result.size}") /
           "side_code" -> roadAddressLink.sideCode.value,
           "start_addr_m" -> roadAddressLink.addrMRange.start,
           "end_addr_m"   -> roadAddressLink.addrMRange.end,
-          "ely_code" -> ArealRoadMaintainer.getELYOption(roadAddressLink.arealRoadMaintainer.id).getOrElse(0), // TODO VIITE-3424 ely->ArealRoadMaintainer
+          "ely_code" ->ArealRoadMaintainer.getELYNumberOrNA(Some(roadAddressLink.arealRoadMaintainer)), // TODO VIITE-3424 ely->ArealRoadMaintainer
           "road_type" -> roadAddressLink.administrativeClass.asRoadTypeValue,
           "administrative_class" -> roadAddressLink.administrativeClass.value,
           "discontinuity" -> roadAddressLink.discontinuity,
