@@ -1113,10 +1113,10 @@ class ProjectValidator {
       * B. all links must have the UnChanged Link status
       *
       * @param project             : Project - the project to evaluate
-      * @param groupedProjectLinks : Map[RoadPart, Seq[ProjectLink] - the project links, grouped by road part
+      * @param groupedProjectLinks : Map[RoadPart, Seq[ProjectLink]] - the project links, grouped by road part
       * @return
       */
-    def checkChangeOfEly(project: Project, groupedProjectLinks: Map[RoadPart, Seq[ProjectLink]]): Seq[ValidationErrorDetails] = {
+    def checkChangeOfARM(project: Project, groupedProjectLinks: Map[RoadPart, Seq[ProjectLink]]): Seq[ValidationErrorDetails] = {
 
       def prepareValidationErrorDetails(condition: Either[Seq[ArealRoadMaintainer], Seq[RoadAddressChangeType]]): ValidationErrorDetails = {
         val (wrongProjectLinks, validationError) = condition match {
@@ -1254,7 +1254,7 @@ class ProjectValidator {
         g._1 -> g._2.filterNot(_.status == RoadAddressChangeType.Termination)
       }).filterNot(_._2.isEmpty)
       val orderedProjectLinks = ListMap(groupedMinusTerminated.toSeq.sortBy(_._1): _*).asInstanceOf[Map[RoadPart, Seq[ProjectLink]]]
-      val projectLinkElyChangeErrors = checkChangeOfEly(project, orderedProjectLinks)
+      val projectLinkElyChangeErrors = checkChangeOfARM(project, orderedProjectLinks)
       projectLinkElyChangeErrors
     } else Seq.empty[ValidationErrorDetails]
   }

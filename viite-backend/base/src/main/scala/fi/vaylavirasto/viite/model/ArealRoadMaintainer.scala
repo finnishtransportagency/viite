@@ -40,7 +40,6 @@ sealed trait ArealRoadMaintainer {
     case that: ArealRoadMaintainer => {  this.getClass == that.getClass && this.typeName == that.typeName  &&  this.number == that.number  }
     case _ => false
   }
-  override def hashCode(): Int = if (typeName eq null) number else number + 100*typeName.hashCode
 
 }
 
@@ -147,6 +146,19 @@ object ArealRoadMaintainer {
     ELYset.find(_.number == number.toInt).getOrElse(
       throw ViiteException(s"Olematon ELY ($number)!")
         // TODO Either:ify the throw, if still in use ?
+    )
+  }
+
+
+  /** Getter for ELYs only. You may search for an ELY by its number.
+   *
+   * @param number The number of the ELY you wish to get.
+   * @return The ELY asked, when found, or ARMInvalid, when not.
+   */
+  @deprecated("Use in the code transition phase in 2025, when old ely structures are being replaced with arealRoadMaintainer structures.\nRemove from code after that - or if there really IS some use for this after that, remove the deprecation warning.")
+  def getELYOrARMInvalid(number: Long): ArealRoadMaintainer = {
+    ELYset.find(_.number == number.toInt).getOrElse(
+      ArealRoadMaintainer.ARMInvalid
     )
   }
 

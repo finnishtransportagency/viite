@@ -411,7 +411,7 @@ object Roadway extends SQLSyntaxSupport[Roadway] {
     endDate             = rs.jodaDateTimeOpt("end_date"),
     createdBy           = rs.string("created_by"),
     roadName            = rs.stringOpt("road_name"),
-    arealRoadMaintainer = ArealRoadMaintainer.getELY(rs.long("ely")), // TODO VIITE-3424 ely->ArealRoadMaintainer
+    arealRoadMaintainer = ArealRoadMaintainer.getELYOrARMInvalid(rs.long("ely")), // TODO VIITE-3424 ely->ArealRoadMaintainer
     terminated          = TerminationCode(rs.int("terminated")),
     validFrom           = rs.jodaDateTime("valid_from"),
     validTo             = rs.jodaDateTimeOpt("valid_to")
