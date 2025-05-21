@@ -324,7 +324,7 @@ class ProjectLinkDAO extends BaseDAO {
         geometryLength        = rs.double("length"),
         roadwayId             = rs.longOpt("roadway_id").getOrElse(0L),
         linearLocationId      = rs.longOpt("linear_location_id").getOrElse(0L),
-        arealRoadMaintainer   = ArealRoadMaintainer.getELYOption(s"ELY${rs.long("ely")}").getOrElse(ArealRoadMaintainer.ARMInvalid),  // TODO VIITE-3424 ely->ArealRoadMaintainer
+        arealRoadMaintainer   = ArealRoadMaintainer.getELYOrARMInvalid(rs.long("ely")),  // TODO VIITE-3424 ely->ArealRoadMaintainer
         reversed              = rs.boolean("reversed"),
         connectedLinkId       = rs.stringOpt("connected_link_id"),
         linkGeometryTimeStamp = rs.long("adjusted_timestamp"),
@@ -452,7 +452,7 @@ class ProjectLinkDAO extends BaseDAO {
           if (pl.roadwayId == 0) null else pl.roadwayId,
           if (pl.linearLocationId == 0) null else pl.linearLocationId,
           pl.connectedLinkId.orNull,
-          pl.arealRoadMaintainer.number, // TODO VIITE-3423 Change to .id, wher DB columns have been changed
+          pl.arealRoadMaintainer.number, // TODO VIITE-3423 Change to .id, when DB columns have been changed
           pl.roadwayNumber, if (pl.reversed) 1 else 0,
           GeometryDbUtils.createJGeometry(pl.geometry),
           pl.linkId,
@@ -520,7 +520,7 @@ class ProjectLinkDAO extends BaseDAO {
           pl.sideCode.value,
           pl.startMValue,
           pl.endMValue,
-          pl.arealRoadMaintainer.number, // TODO VIITE-3423 Change to .id, wher DB columns have been changed
+          pl.arealRoadMaintainer.number, // TODO VIITE-3423 Change to .id, when DB columns have been changed
           pl.roadwayNumber,
           pl.connectedLinkId.orNull,
           pl.id
@@ -941,7 +941,7 @@ class ProjectLinkDAO extends BaseDAO {
             pl.calibrationPointTypes._1.value,
             pl.calibrationPointTypes._2.value,
             pl.sideCode.value,
-            pl.arealRoadMaintainer.number, // TODO VIITE-3423 Change to .id, wher DB columns have been changed
+            pl.arealRoadMaintainer.number, // TODO VIITE-3423 Change to .id, when DB columns have been changed
             pl.startMValue,
             pl.endMValue,
             RoadAddressChangeType.Termination.value,

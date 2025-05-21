@@ -462,7 +462,7 @@ class ProjectLinkDAOSpec extends AnyFunSuite with Matchers {
       val projectLinks = projectLinkDAO.fetchProjectLinks(projectId)
       val ARM = projectLinks.head.arealRoadMaintainer
       val elyByProject = projectLinkDAO.fetchElyFromProjectLinks(projectId)
-      ARM should be(ArealRoadMaintainer.getELYOption(s"ELY${elyByProject.getOrElse(0)}").getOrElse(ArealRoadMaintainer.ARMInvalid))
+      ARM should be(ArealRoadMaintainer.getELYOrARMInvalid(elyByProject.getOrElse(0)))
     }
   }
   test("Test moveProjectLinksToHistory and getProjectLinksHistory When trying to get ely by project Then it should be returned with success") {
