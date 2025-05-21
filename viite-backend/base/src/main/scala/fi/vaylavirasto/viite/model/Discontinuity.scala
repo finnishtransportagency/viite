@@ -10,7 +10,7 @@ sealed trait Discontinuity {
 }
 
 object Discontinuity {
-  private val values = Set(EndOfRoad, Discontinuous, ChangingELYCode, MinorDiscontinuity, Continuous)
+  private val values = Set(EndOfRoad, Discontinuous, ChangingArealRoadMaintainer, MinorDiscontinuity, Continuous)
 
   def apply(intValue: Int): Discontinuity = {
     values.find(_.value == intValue).getOrElse(Continuous)
@@ -36,10 +36,10 @@ object Discontinuity {
     def description = "Epäjatkuva"
   }
 
-  case object ChangingELYCode extends Discontinuity {
+  case object ChangingArealRoadMaintainer extends Discontinuity {
     def value = 3
 
-    def description = "ELY:n raja"
+    def description = "EVK:n/ELY:n raja"   // TODO VIITE-3423 or would differing ELY, and EVK codes behave better?
   }
 
   case object MinorDiscontinuity extends Discontinuity {

@@ -14,7 +14,7 @@ import fi.liikennevirasto.viite.process.strategy.TerminatedTwoTrackSectionSynchr
 import fi.vaylavirasto.viite.dao.{LinkDAO, ProjectLinkNameDAO, RoadName, RoadNameDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.CalibrationPointType.{JunctionPointCP, NoCP, UserDefinedCP}
-import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, CalibrationPointType, Discontinuity, LinkGeomSource, RoadAddressChangeType, RoadLink, RoadLinkLike, RoadPart, SideCode, Track, TrafficDirection}
+import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, ArealRoadMaintainer, CalibrationPointType, Discontinuity, LinkGeomSource, RoadAddressChangeType, RoadLink, RoadLinkLike, RoadPart, SideCode, Track, TrafficDirection}
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC
 import fi.vaylavirasto.viite.util.DateTimeFormatters.ISOdateFormatter
 import fi.vaylavirasto.viite.util.ViiteException
@@ -162,11 +162,11 @@ class ProjectService(
 
         //reservedParts
         val reserved: Seq[ProjectReservedPart] = if (sortedAddresses.nonEmpty) {
-          val maxEly = sortedAddresses.map(_.ely).max
+          val maxARM = sortedAddresses.map(_.arealRoadMaintainer.number).max
           val firstLink = sortedAddresses.head.linkId
           val maxDiscontinuity = sortedAddresses.last.discontinuity
           val maxEndAddr = sortedAddresses.last.addrMRange.end
-          Seq(rp.copy(addressLength = Some(maxEndAddr), discontinuity = Some(maxDiscontinuity), ely = Some(maxEly), startingLinkId = Some(firstLink)))
+          Seq(rp.copy(addressLength = Some(maxEndAddr), discontinuity = Some(maxDiscontinuity), ely = Some(maxARM), startingLinkId = Some(firstLink)))
         } else Seq()
 
         //formedParts
@@ -1257,7 +1257,7 @@ class ProjectService(
     roadAddresses.foreach(ra =>
       modified.find(modifiedLink => modifiedLink.linkId == ra.linkId) match {
         case Some(modifiedLink) =>
-          checkAndReserve(fetchProjectById(projectId).get, toReservedRoadPart(ra.roadPart, ra.ely))
+          checkAndReserve(fetchProjectById(projectId).get, toReservedRoadPart(ra.roadPart, ra.arealRoadMaintainer))
           if (modifiedLink.geometry.nonEmpty) {
             val kgvGeometry = kgvRoadLinks.find(roadLink => roadLink.linkId == modifiedLink.linkId && roadLink.linkSource == ra.linkGeomSource)
             if (kgvGeometry.nonEmpty) {
@@ -1282,8 +1282,8 @@ class ProjectService(
     }
   }
 
-  def toReservedRoadPart(roadPart: RoadPart, ely: Long): ProjectReservedPart = {
-    ProjectReservedPart(0L, roadPart, None, None, Some(ely), None, None, None, None)
+  def toReservedRoadPart(roadPart: RoadPart, ARM: ArealRoadMaintainer): ProjectReservedPart = {
+    ProjectReservedPart(0L, roadPart, None, None, Some(ARM.number), None, None, None, None)
   }
 
 
@@ -1551,7 +1551,7 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
             calibrationPointTypes = (startCpType, endCpType),
             originalCalibrationPointTypes = (startCpType, startCpType),
             sideCode = ra.sideCode,
-            ely = ra.ely,
+            ely = ra.arealRoadMaintainer.number, // TODO VIITE-3423 change to arm.id when DB column type changed
             discontinuity = ra.discontinuity,
             startMValue = ra.startMValue,
             endMValue = ra.endMValue,
@@ -2219,11 +2219,16 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
   private def newProjectTemplate(rl: RoadLinkLike, ra: RoadAddress, project: Project): ProjectLink = {
     val geometry = GeometryUtils.truncateGeometry3D(rl.geometry, ra.startMValue, ra.endMValue)
     val newEly = project.reservedParts.find(rp => rp.roadPart == ra.roadPart) match {
-      case Some(rp) => rp.ely.getOrElse(ra.ely)
-      case _ => ra.ely
+      case Some(rp) => rp.ely.getOrElse(ra.arealRoadMaintainer.number.toLong)
+      case _ => ra.arealRoadMaintainer.number
     }
 
-    ProjectLink(NewIdValue, ra.roadPart, ra.track, ra.discontinuity, ra.addrMRange, ra.addrMRange, ra.startDate, ra.endDate, Some(project.modifiedBy), ra.linkId, ra.startMValue, ra.endMValue, ra.sideCode, ra.calibrationPointTypes, (ra.startCalibrationPointType, ra.endCalibrationPointType), geometry, project.id, RoadAddressChangeType.NotHandled, ra.administrativeClass, ra.linkGeomSource, GeometryUtils.geometryLength(geometry), ra.id, ra.linearLocationId, newEly, ra.reversed, None, ra.adjustedTimestamp, roadAddressLength = ra.addrMRange.lengthOption)
+    ProjectLink(NewIdValue, ra.roadPart, ra.track, ra.discontinuity, ra.addrMRange, ra.addrMRange,
+      ra.startDate, ra.endDate, Some(project.modifiedBy), ra.linkId, ra.startMValue, ra.endMValue,
+      ra.sideCode, ra.calibrationPointTypes, (ra.startCalibrationPointType, ra.endCalibrationPointType),
+      geometry, project.id, RoadAddressChangeType.NotHandled, ra.administrativeClass, ra.linkGeomSource,
+      GeometryUtils.geometryLength(geometry), ra.id, ra.linearLocationId, newEly, ra.reversed,
+      None, ra.adjustedTimestamp, roadAddressLength = ra.addrMRange.lengthOption)
   }
 
   private def newProjectLink(rl: RoadLinkLike, project: Project, roadPart: RoadPart, trackCode: Track, discontinuity: Discontinuity, administrativeClass: AdministrativeClass, ely: Long, roadName: String = "") = {
@@ -2252,7 +2257,8 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
     val linkIds = links.map(_.linkId).distinct
     val existingRoadAddresses = roadAddressService.getRoadAddressesByRoadwayIds(links.map(_.roadwayId))
     val groupedRoadAddresses = existingRoadAddresses.groupBy(record =>
-      (record.roadwayNumber, record.roadPart, record.track.value, record.startDate, record.endDate, record.linkId, record.administrativeClass, record.ely, record.terminated))
+      (record.roadwayNumber, record.roadPart, record.track.value,
+        record.startDate, record.endDate, record.linkId, record.administrativeClass, record.arealRoadMaintainer, record.terminated))
 
     if (groupedRoadAddresses.size > 1) {
       links

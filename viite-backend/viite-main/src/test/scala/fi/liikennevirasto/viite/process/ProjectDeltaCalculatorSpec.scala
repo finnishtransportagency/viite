@@ -24,7 +24,7 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
 
   private def createRoadAddress(start: Long, distance: Long, roadwayNumber: Long = 0L) = {
     //TODO the road address now have the linear location id and has been set to 1L
-    RoadAddress(id = start, linearLocationId = 1L, roadPart = RoadPart(5, 205), administrativeClass = AdministrativeClass.State, track = Track.Combined, discontinuity = Discontinuity.Continuous, addrMRange = AddrMRange(start, start + distance), linkId = start.toString, startMValue = 0.0, endMValue = distance.toDouble, sideCode = TowardsDigitizing, adjustedTimestamp = 0L, geometry = Seq(Point(0.0, start), Point(0.0, start + distance)), linkGeomSource = NormalLinkInterface, ely = 8, terminated = NoTermination, roadwayNumber = roadwayNumber)
+    RoadAddress(id = start, linearLocationId = 1L, roadPart = RoadPart(5, 205), administrativeClass = AdministrativeClass.State, track = Track.Combined, discontinuity = Discontinuity.Continuous, addrMRange = AddrMRange(start, start + distance), linkId = start.toString, startMValue = 0.0, endMValue = distance.toDouble, sideCode = TowardsDigitizing, adjustedTimestamp = 0L, geometry = Seq(Point(0.0, start), Point(0.0, start + distance)), linkGeomSource = NormalLinkInterface, arealRoadMaintainer = ArealRoadMaintainer.ELYPohjoisSavo, terminated = NoTermination, roadwayNumber = roadwayNumber)
   }
 
   private val project: Project = Project(13L, ProjectState.Incomplete, "foo", "user", DateTime.now(), "user", DateTime.now(),
@@ -35,7 +35,11 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
   }
 
   private def toProjectLinkWithMove(project: Project, status: RoadAddressChangeType)(roadAddress: RoadAddress): ProjectLink = {
-    ProjectLink(roadAddress.id, roadAddress.roadPart, roadAddress.track, roadAddress.discontinuity, AddrMRange(roadAddress.addrMRange.start + project.id, roadAddress.addrMRange.end + project.id), AddrMRange(roadAddress.addrMRange.start + project.id, roadAddress.addrMRange.end + project.id), roadAddress.startDate, roadAddress.endDate, createdBy = Option(project.createdBy), roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue, roadAddress.sideCode, roadAddress.calibrationPointTypes, (roadAddress.startCalibrationPointType, roadAddress.endCalibrationPointType), roadAddress.geometry, project.id, status, roadAddress.administrativeClass, roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.id, roadAddress.linearLocationId, roadAddress.ely, reversed = false, None, 748800L)
+    ProjectLink(roadAddress.id, roadAddress.roadPart, roadAddress.track, roadAddress.discontinuity,
+      AddrMRange(roadAddress.addrMRange.start + project.id, roadAddress.addrMRange.end + project.id), AddrMRange(roadAddress.addrMRange.start + project.id, roadAddress.addrMRange.end + project.id),
+      roadAddress.startDate, roadAddress.endDate, createdBy = Option(project.createdBy), roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue, roadAddress.sideCode,
+      roadAddress.calibrationPointTypes, (roadAddress.startCalibrationPointType, roadAddress.endCalibrationPointType), roadAddress.geometry, project.id, status, roadAddress.administrativeClass,
+      roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.id, roadAddress.linearLocationId, roadAddress.arealRoadMaintainer.number, reversed = false, None, 748800L)
   }
 
   def toRoadway(ps: Seq[ProjectLink]): Roadway = {
@@ -900,7 +904,7 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
         createRoadAddress(i * 12, 12L)
       })
       val links       = addresses.filter(_.addrMRange.end < 61).map(a => {
-        (a, toProjectLink(project, RoadAddressChangeType.Unchanged)(a.copy(ely = changedARM.number)).copy(roadwayId = 0))
+        (a, toProjectLink(project, RoadAddressChangeType.Unchanged)(a.copy(arealRoadMaintainer = changedARM)).copy(roadwayId = 0))
       })
       val roadway205 = toRoadway(links.map(_._2).map(_.copy(ely = originalARM.number)))
       roadwayDAO.create(Seq(roadway205))
@@ -1087,7 +1091,7 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
         createRoadAddress(i * 2, 2L)
       })
       val projectLinksWithCp = addresses.sortBy(_.addrMRange.start).map(a => {
-        val projectLink = toProjectLink(project, RoadAddressChangeType.Unchanged)(a.copy(ely = 14))
+        val projectLink = toProjectLink(project, RoadAddressChangeType.Unchanged)(a.copy(arealRoadMaintainer = ArealRoadMaintainer.ELYLappi))
         if (a.id == 10L) (a.copy(roadwayNumber = 1), projectLink.copy(calibrationPointTypes = (NoCP, UserDefinedCP), roadwayNumber = 1)) else if (a.id > 10L) (a.copy(roadwayNumber = 2), projectLink.copy(roadwayNumber = 2)) else (a.copy(roadwayNumber = 1), projectLink.copy(roadwayNumber = 1))
       })
 
@@ -1110,7 +1114,7 @@ class ProjectDeltaCalculatorSpec extends AnyFunSuite with Matchers {
         createRoadAddress(i * 2, 2L)
       })
       val projectLinksWithCp = addresses.sortBy(_.addrMRange.start).map(a => {
-        val projectLink = toProjectLink(project, RoadAddressChangeType.Unchanged)(a.copy(ely = 14))
+        val projectLink = toProjectLink(project, RoadAddressChangeType.Unchanged)(a.copy(arealRoadMaintainer = ArealRoadMaintainer.ELYLappi))
         if (a.id == 10L)
           (a.copy(roadwayNumber = 1), projectLink.copy(calibrationPointTypes = (NoCP, JunctionPointCP), roadwayNumber = 1))
         else if (a.id > 10L)

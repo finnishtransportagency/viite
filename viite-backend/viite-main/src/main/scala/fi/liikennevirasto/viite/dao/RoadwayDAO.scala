@@ -161,7 +161,7 @@ trait BaseRoadAddress {
 
   def geometry: Seq[Point]
 
-  def ely: Long
+  def arealRoadMaintainer: ArealRoadMaintainer
 
   def linkGeomSource: LinkGeomSource
 
@@ -275,20 +275,20 @@ case class RoadAddress(id: Long, linearLocationId: Long, roadPart: RoadPart, adm
                        createdBy: Option[String] = None, linkId: String, startMValue: Double, endMValue: Double, sideCode: SideCode, adjustedTimestamp: Long,
                        calibrationPoints: (Option[ProjectCalibrationPoint], Option[ProjectCalibrationPoint]) = (None, None),
                        geometry: Seq[Point], linkGeomSource: LinkGeomSource,
-                       ely: Long, terminated: TerminationCode = TerminationCode.NoTermination, roadwayNumber: Long,
+                       arealRoadMaintainer: ArealRoadMaintainer, terminated: TerminationCode = TerminationCode.NoTermination, roadwayNumber: Long,
                        validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None, roadName: Option[String] = None) extends BaseRoadAddress {
   def this(id: Long, linearLocationId: Long, roadPart: RoadPart, administrativeClass: AdministrativeClass, track: Track, discontinuity: Discontinuity,
            addrMRange: AddrMRange, startDate: Option[DateTime], endDate: Option[DateTime],
            createdBy: Option[String], linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode, adjustedTimestamp: Long,
            calibrationPoints: (Option[ProjectCalibrationPoint], Option[ProjectCalibrationPoint]),
            geometry: Seq[Point], linkGeomSource: LinkGeomSource,
-           ely: Long, terminated: TerminationCode, roadwayNumber: Long,
+           arealRoadMaintainer: ArealRoadMaintainer, terminated: TerminationCode, roadwayNumber: Long,
            validFrom: Option[DateTime], validTo: Option[DateTime], roadName: Option[String]) =
    this(id, linearLocationId, roadPart, administrativeClass, track, discontinuity,
      addrMRange, startDate, endDate,
      createdBy, linkId.toString, startMValue, endMValue, sideCode, adjustedTimestamp,
      calibrationPoints, geometry, linkGeomSource,
-     ely, terminated, roadwayNumber,
+     arealRoadMaintainer, terminated, roadwayNumber,
      validFrom, validTo, roadName)
 
   override lazy val startCalibrationPoint: Option[ProjectCalibrationPoint] = calibrationPoints._1

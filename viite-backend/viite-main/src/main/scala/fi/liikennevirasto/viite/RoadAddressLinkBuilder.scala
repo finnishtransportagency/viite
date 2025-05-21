@@ -41,7 +41,7 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
       roadLink.administrativeClass, roadLink.lifecycleStatus, roadLink.linkSource, administrativeClass, roadName,
       municipalityCode, municipalityName, roadLink.modifiedAt, Some(modifiedBy),
       roadAddress.roadPart, roadAddress.track.value,
-      ArealRoadMaintainer(s"ELY${roadAddress.ely}"), roadAddress.discontinuity.value, roadAddress.addrMRange,
+      roadAddress.arealRoadMaintainer, roadAddress.discontinuity.value, roadAddress.addrMRange,
       roadAddress.startDate.map(finnishDateFormatter.print).getOrElse(""), roadAddress.endDate.map(finnishDateFormatter.print).getOrElse(""),
       roadAddress.startMValue, roadAddress.endMValue, roadAddress.sideCode, roadAddress.startCalibrationPoint, roadAddress.calibrationPoints._2, roadAddress.roadwayNumber, sourceId = roadLink.sourceId)
   }
