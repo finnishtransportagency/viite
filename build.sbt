@@ -94,16 +94,21 @@ lazy val baseJar = (project in file(s"viite-backend/$BaseProjectName"))
 
 val GeoProjectName = "geo"
 lazy val geoJar = (project in file(s"viite-backend/$GeoProjectName"))
-  .settings (Defaults.coreDefaultSettings ++ projectSettings ++ Seq(
-    name := GeoProjectName,
-    libraryDependencies ++= Seq(
-      akkaActor,
-      "org.locationtech.jts" % "jts-core" % "1.19.0",
-      scalaTest
-    ) ++ CodeArtifactSettings.withFallbackUrls(geoToolsDependencies)
-      ++ joda
+  .settings(
+    Defaults.coreDefaultSettings ++
+      projectSettings ++
+      CodeArtifactSettings.getLocalLibSettings() ++
+      Seq(
+        name := GeoProjectName,
+        libraryDependencies ++= Seq(
+          akkaActor,
+          "org.locationtech.jts" % "jts-core" % "1.19.0",
+          scalaTest
+        ) ++ CodeArtifactSettings.withFallbackUrls(geoToolsDependencies)
+          ++ joda
+      )
   )
-  ) dependsOn(baseJar)
+  .dependsOn(baseJar)
 
 val DBProjectName = "database"
 lazy val DBJar = (project in file(s"viite-backend/$DBProjectName"))
