@@ -92,7 +92,7 @@ class RoadwayChangesDAOSpec extends AnyFunSuite with Matchers with BaseDAO {
       val projectLink1 = projectLinks.head
       val ra = Seq(
         RoadAddress(12345, projectLink1.linearLocationId, projectLink1.roadPart, projectLink1.administrativeClass, projectLink1.track, projectLink1.discontinuity, projectLink1.addrMRange, projectLink1.startDate, projectLink1.endDate, projectLink1.createdBy, projectLink1.linkId, projectLink1.startMValue, projectLink1.endMValue, projectLink1.sideCode, DateTime.now().getMillis, projectLink1.calibrationPoints, projectLink1.geometry, projectLink1.linkGeomSource,
-          projectARM.number, NoTermination, projectLink1.roadwayNumber, None, None, None)
+          projectARM, NoTermination, projectLink1.roadwayNumber, None, None, None)
       )
       projectLinkDAO.updateProjectLinks(Seq(newProjectLink), project1.createdBy, ra)
       val reservedParts = Seq(ProjectReservedPart(0, RoadPart(1, 1), Some(0), Some(Discontinuity.Continuous), Some(8L), None, None, None, Some(12345L.toString)))

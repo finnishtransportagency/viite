@@ -724,7 +724,7 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter wi
           road_13_218.head.roadPart,
           Some(road_13_218.head.addrMRange.end),
           Some(road_13_218.head.discontinuity),
-          Some(road_13_218.head.ely),
+          Some(road_13_218.head.arealRoadMaintainer.number),
           newLength = None,
           newDiscontinuity = None,
           newEly = None,

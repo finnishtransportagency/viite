@@ -43,7 +43,7 @@ sealed trait ArealRoadMaintainer {
 
 }
 
-/** A specialized trait for EVKs, with pre-defined typeName, and typeInfo for them. */
+/** A specialized trait for EVKs, with pre-defined typeName and typeInfo for them. */
 trait EVK extends ArealRoadMaintainer {
   override val typeName: String = "EVK"
   override val typeInfo: String = "Elinvoimakeskus. Vastuussa teiden hallinnoinnista 01.01.2026 alkaen."

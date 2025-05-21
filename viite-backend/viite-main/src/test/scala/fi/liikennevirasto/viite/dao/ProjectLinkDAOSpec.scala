@@ -216,7 +216,7 @@ class ProjectLinkDAOSpec extends AnyFunSuite with Matchers {
       val projectLinks = projectLinkDAO.fetchProjectLinks(7081807)
       val header = projectLinks.head
       val administrativeClass = AdministrativeClass.State
-      val newDiscontinuty = Discontinuity.ChangingELYCode
+      val newDiscontinuty = Discontinuity.ChangingArealRoadMaintainer
       val newStartAddrMValue = header.addrMRange.start + 1
       val newEndAddrMValue   = header.addrMRange.end   + 1
       val newTrack = Track.Unknown
@@ -350,7 +350,7 @@ class ProjectLinkDAOSpec extends AnyFunSuite with Matchers {
 
       projectReservedPartDAO.reserveRoadPart(projectId, RoadPart(roadNumber, roadPartNumber), rap.createdBy)
 
-      val roadAddress = RoadAddress(raId, linearLocationId, RoadPart(roadNumber, roadPartNumber), administrativeClass, track, discontinuity, addrMRange, Some(DateTime.now), None, None, 12345.toString, startMValue, endMValue, side, 1542205983000L, (None, None), geometry, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 1, Some(DateTime.now), None, None)
+      val roadAddress = RoadAddress(raId, linearLocationId, RoadPart(roadNumber, roadPartNumber), administrativeClass, track, discontinuity, addrMRange, Some(DateTime.now), None, None, 12345.toString, startMValue, endMValue, side, 1542205983000L, (None, None), geometry, LinkGeomSource.NormalLinkInterface, ArealRoadMaintainer.ELYPohjoisSavo, NoTermination, 1, Some(DateTime.now), None, None)
 
       projectLinkDAO.updateProjectLinkValues(projectId, roadAddress)
 
