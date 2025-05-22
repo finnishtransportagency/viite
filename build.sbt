@@ -62,7 +62,7 @@ ThisBuild / assemblyMergeStrategy := {
   case PathList("META-INF", "MANIFEST.MF") => MergeStrategy.discard
   case x if x.endsWith("about.html") => MergeStrategy.discard
   case "env.properties" => MergeStrategy.first
-  case x => MergeStrategy.first
+  case x => MergeStrategy.first // Default fallback
 }
 
 
