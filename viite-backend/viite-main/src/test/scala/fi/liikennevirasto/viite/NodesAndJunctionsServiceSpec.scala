@@ -105,7 +105,7 @@ class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with Before
   private val testRoadwayPoint2 = RoadwayPoint(NewIdValue, roadwayNumber2, 0, "Test", None, None, None)
 
   private val testNodePoint1 = NodePoint(NewIdValue, BeforeAfter.Before, -1, None, NodePointType.UnknownNodePointType, Some(testNode1.startDate), testNode1.endDate,
-    DateTime.parse("2019-01-01"), None, "Test", None, 0, 0, RoadPart(0, 0), Track.Combined, 0)
+    DateTime.parse("2019-01-01"), None, "Test", None, 0, 0, RoadPart(0, 0), Track.Combined, ArealRoadMaintainer.ARMInvalid)
 
   private val testJunction1 = Junction(NewIdValue, None, None, DateTime.parse("2019-01-01"), None,
     DateTime.parse("2019-01-01"), None, "Test", None)
@@ -5863,6 +5863,7 @@ class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with Before
       val crossingroad1 = 2L
       val crossingroad2 = 3L
       val projectId = Sequences.nextViiteProjectId
+      val arm = ArealRoadMaintainer.ELYUusimaa
 
       val rwId1 = Sequences.nextRoadwayId
       val rwId2 = Sequences.nextRoadwayId
@@ -5944,13 +5945,13 @@ class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with Before
       nodeDAO.create(Seq(node1, node2, node3))
 
       //Create NodePoints
-      val np1 = NodePoint(npId1, BeforeAfter.Before, rwpId1, Some(nodeNumber1), NodePointType.RoadNodePoint,       Some(DateTime.parse("2019-01-01")), None, DateTime.parse("2019-01-01"), None, "TestUser", Some(DateTime.parse("2019-01-01")), rwNumber1, 100, RoadPart(1, 1), Track.Combined, 1, Point(100.0, 0.0))
-      val np2 = NodePoint(npId2, BeforeAfter.After,  rwpId2, Some(nodeNumber1), NodePointType.RoadNodePoint,       Some(DateTime.parse("2019-01-01")), None, DateTime.parse("2019-01-01"), None, "TestUser", Some(DateTime.parse("2019-01-01")), rwNumber2,   0, RoadPart(1, 2), Track.Combined, 1, Point(100.0, 0.0))
-      val np3 = NodePoint(npId3, BeforeAfter.Before, rwpId3, Some(nodeNumber2), NodePointType.CalculatedNodePoint, Some(DateTime.parse("2019-01-01")), None, DateTime.parse("2019-01-01"), None, "TestUser", Some(DateTime.parse("2019-01-01")), rwNumber2, 100, RoadPart(1, 2), Track.Combined, 1, Point(200.0, 0.0))
-      val np4 = NodePoint(npId4, BeforeAfter.After,  rwpId3, Some(nodeNumber2), NodePointType.CalculatedNodePoint, Some(DateTime.parse("2019-01-01")), None, DateTime.parse("2019-01-01"), None, "TestUser", Some(DateTime.parse("2019-01-01")), rwNumber2, 100, RoadPart(1, 2), Track.Combined, 1, Point(200.0, 0.0))
-      val np5 = NodePoint(npId5, BeforeAfter.After,  rwpId4, Some(nodeNumber1), NodePointType.RoadNodePoint,       Some(DateTime.parse("2019-01-01")), None, DateTime.parse("2019-01-01"), None, "TestUser", Some(DateTime.parse("2019-01-01")), rwNumber3,   0, RoadPart(3, 1), Track.Combined, 1, Point(100.0, 0.0)) //Tämä puuttuu
-      val np6 = NodePoint(npId6, BeforeAfter.After,  rwpId5, Some(nodeNumber2), NodePointType.RoadNodePoint,       Some(DateTime.parse("2019-01-01")), None, DateTime.parse("2019-01-01"), None, "TestUser", Some(DateTime.parse("2019-01-01")), rwNumber4,   0, RoadPart(4, 1), Track.Combined, 1, Point(200.0, 0.0))
-      val np7 = NodePoint(npId7, BeforeAfter.Before, rwpId7, Some(nodeNumber3), NodePointType.RoadNodePoint,       Some(DateTime.parse("2019-01-01")), None, DateTime.parse("2019-01-01"), None, "TestUser", Some(DateTime.parse("2019-01-01")), rwNumber2, 200, RoadPart(1, 2), Track.Combined, 1, Point(300.0, 0.0)) // 2. Päätien loppu
+      val np1 = NodePoint(npId1, BeforeAfter.Before, rwpId1, Some(nodeNumber1), NodePointType.RoadNodePoint,       Some(DateTime.parse("2019-01-01")), None, DateTime.parse("2019-01-01"), None, "TestUser", Some(DateTime.parse("2019-01-01")), rwNumber1, 100, RoadPart(1, 1), Track.Combined, arm, Point(100.0, 0.0))
+      val np2 = NodePoint(npId2, BeforeAfter.After,  rwpId2, Some(nodeNumber1), NodePointType.RoadNodePoint,       Some(DateTime.parse("2019-01-01")), None, DateTime.parse("2019-01-01"), None, "TestUser", Some(DateTime.parse("2019-01-01")), rwNumber2,   0, RoadPart(1, 2), Track.Combined, arm, Point(100.0, 0.0))
+      val np3 = NodePoint(npId3, BeforeAfter.Before, rwpId3, Some(nodeNumber2), NodePointType.CalculatedNodePoint, Some(DateTime.parse("2019-01-01")), None, DateTime.parse("2019-01-01"), None, "TestUser", Some(DateTime.parse("2019-01-01")), rwNumber2, 100, RoadPart(1, 2), Track.Combined, arm, Point(200.0, 0.0))
+      val np4 = NodePoint(npId4, BeforeAfter.After,  rwpId3, Some(nodeNumber2), NodePointType.CalculatedNodePoint, Some(DateTime.parse("2019-01-01")), None, DateTime.parse("2019-01-01"), None, "TestUser", Some(DateTime.parse("2019-01-01")), rwNumber2, 100, RoadPart(1, 2), Track.Combined, arm, Point(200.0, 0.0))
+      val np5 = NodePoint(npId5, BeforeAfter.After,  rwpId4, Some(nodeNumber1), NodePointType.RoadNodePoint,       Some(DateTime.parse("2019-01-01")), None, DateTime.parse("2019-01-01"), None, "TestUser", Some(DateTime.parse("2019-01-01")), rwNumber3,   0, RoadPart(3, 1), Track.Combined, arm, Point(100.0, 0.0)) //Tämä puuttuu
+      val np6 = NodePoint(npId6, BeforeAfter.After,  rwpId5, Some(nodeNumber2), NodePointType.RoadNodePoint,       Some(DateTime.parse("2019-01-01")), None, DateTime.parse("2019-01-01"), None, "TestUser", Some(DateTime.parse("2019-01-01")), rwNumber4,   0, RoadPart(4, 1), Track.Combined, arm, Point(200.0, 0.0))
+      val np7 = NodePoint(npId7, BeforeAfter.Before, rwpId7, Some(nodeNumber3), NodePointType.RoadNodePoint,       Some(DateTime.parse("2019-01-01")), None, DateTime.parse("2019-01-01"), None, "TestUser", Some(DateTime.parse("2019-01-01")), rwNumber2, 200, RoadPart(1, 2), Track.Combined, arm, Point(300.0, 0.0)) // 2. Päätien loppu
       nodePointDAO.create(List(np1, np2, np3, np4, np5, np6, np7))
 
       //Create junction

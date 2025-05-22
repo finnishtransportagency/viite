@@ -351,7 +351,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   def getNodePointTemplates(authorizedElys: Seq[Int]): Seq[NodePoint] = {
     runWithReadOnlySession {
       time(logger, "Fetch node point templates") {
-        nodePointDAO.fetchTemplates().filter(template => authorizedElys.contains(template.elyCode))
+        nodePointDAO.fetchTemplates().filter(template => authorizedElys.contains(template.arealRoadMaintainer))
       }
     }
   }
@@ -375,7 +375,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   def getJunctionTemplates(authorizedElys: Seq[Int]): Seq[JunctionTemplate] = {
     runWithReadOnlySession {
       time(logger, "Fetch Junction templates") {
-        junctionDAO.fetchTemplates().filter(jt => authorizedElys.contains(jt.elyCode))
+        junctionDAO.fetchTemplates().filter(jt => authorizedElys.contains(jt.arealRoadMaintainer))
       }
     }
   }
@@ -776,7 +776,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
       if (existingCorrect.isEmpty) {
         nodePointDAO.create {
-          Seq(NodePoint(NewIdValue, pos, roadwayPointId, None, NodePointType.RoadNodePoint, None, None, DateTime.now(), None, username, Some(DateTime.now()), projectLink.roadwayNumber, addrM, projectLink.roadPart, projectLink.track, projectLink.arealRoadMaintainer.number))
+          Seq(NodePoint(NewIdValue, pos, roadwayPointId, None, NodePointType.RoadNodePoint, None, None, DateTime.now(), None, username, Some(DateTime.now()), projectLink.roadwayNumber, addrM, projectLink.roadPart, projectLink.track, projectLink.arealRoadMaintainer))
         }
       }
     }

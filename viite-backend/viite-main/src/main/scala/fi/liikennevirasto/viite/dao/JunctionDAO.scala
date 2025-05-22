@@ -14,7 +14,7 @@ case class Junction(id: Long, junctionNumber: Option[Long], nodeNumber: Option[L
                     validFrom: DateTime, validTo: Option[DateTime], createdBy: String, createdTime: Option[DateTime],
                     junctionPoints: Option[List[JunctionPoint]] = None)
 
-case class JunctionTemplate(id: Long, startDate: DateTime, roadPart: RoadPart, track: Track, addrM: Long, elyCode: Long, coords: Point = Point(0.0, 0.0))
+case class JunctionTemplate(id: Long, startDate: DateTime, roadPart: RoadPart, track: Track, addrM: Long, arealRoadMaintainer: ArealRoadMaintainer, coords: Point = Point(0.0, 0.0))
 
 case class JunctionForRoadAddressBrowser(nodeNumber: Long, nodeCoordinates: Point, nodeName: Option[String], nodeType: NodeType, startDate: DateTime, junctionNumber: Option[Long], roadPart: RoadPart, track: Long, addrM: Long, beforeAfter: Seq[Long])
 
@@ -52,7 +52,7 @@ class JunctionDAO extends BaseDAO {
       roadPart  = RoadPart(rs.long("road_number"), rs.long("road_part_number")),
       track     = Track(rs.int("track")),
       addrM     = rs.long("addr_m"),
-      elyCode   = rs.long("ely")
+      arealRoadMaintainer = ArealRoadMaintainer.getELY(rs.long("ely"))
     )
   }
 
