@@ -52,20 +52,18 @@ dependencyOverrides ++= Seq(
 enablePlugins(AssemblyPlugin)
 //enablePlugins(CodeArtifactPlugin)
 
-val assemblySettings: Seq[Def.Setting[_]] = Seq(
-  assembly / mainClass := Some("fi.liikennevirasto.digiroad2.ProductionServer"),
-  assembly / test := {},
-  assembly / assemblyMergeStrategy := {
-    case x if x.endsWith("about.html") => MergeStrategy.discard
-    case x if x.endsWith("src/test/resources/env.properties") => MergeStrategy.first //MergeStrategy.discard
-    case x if x.endsWith("mime.types") => MergeStrategy.last
-    case x if x.endsWith("public-suffix-list.txt") => MergeStrategy.first
-    case PathList("META-INF", "io.netty.versions.properties") => MergeStrategy.discard
-    case PathList("META-INF", "maven", "com.fasterxml.jackson.core", "jackson-core", _*) => MergeStrategy.discard
-    case x if x.endsWith("module-info.class") => MergeStrategy.discard // for logback, and slf4j-api
-    case x => MergeStrategy.first // Default fallback
-  }
-)
+// Define this once, in ThisBuild scope.
+ThisBuild / assemblyMergeStrategy := {
+  case PathList("META-INF", "io.netty.versions.properties") => MergeStrategy.first
+  case "mime.types" => MergeStrategy.first
+  case "mozilla/public-suffix-list.txt" => MergeStrategy.first
+  case x if x.endsWith("module-info.class") => MergeStrategy.discard
+  case PathList("META-INF", "maven", _*) => MergeStrategy.discard
+  case PathList("META-INF", "MANIFEST.MF") => MergeStrategy.discard
+  case x if x.endsWith("about.html") => MergeStrategy.discard
+  case "env.properties" => MergeStrategy.first
+  case x => MergeStrategy.first
+}
 
 
 // Common settings for all projects
@@ -207,9 +205,10 @@ lazy val ApiJar = (project in file(s"viite-backend/$ApiProjectName"))
 lazy val warProject = (project in file("."))
   .enablePlugins(ScalatraPlugin)
   .settings(Defaults.coreDefaultSettings ++ projectSettings
-    ++ assemblySettings
     ++ Seq(
     name := "Viite",
+    assembly / mainClass := Some("fi.liikennevirasto.digiroad2.ProductionServer"),
+    assembly / test := {}, // This prevents tests from running during the assembly task
     parallelExecution in Test := false,
     fork in (Compile,run) := true,
     testOptions in Test ++= (
