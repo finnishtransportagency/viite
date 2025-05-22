@@ -61,7 +61,8 @@ ThisBuild / assemblyMergeStrategy := {
   case PathList("META-INF", "maven", _*) => MergeStrategy.discard
   case PathList("META-INF", "MANIFEST.MF") => MergeStrategy.discard
   case x if x.endsWith("about.html") => MergeStrategy.discard
-  case "env.properties" => MergeStrategy.first
+  // Discard env.properties to ensure environment variables are not overridden by this file in non-local environments
+  case "env.properties" => MergeStrategy.discard
   case x => MergeStrategy.first // Default fallback
 }
 
