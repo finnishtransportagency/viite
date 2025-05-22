@@ -6,7 +6,7 @@ import fi.liikennevirasto.viite.NewIdValue
 import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
 import fi.vaylavirasto.viite.postgis.GeometryDbUtils
-import fi.vaylavirasto.viite.model.{NodePointType, NodeType, RoadPart}
+import fi.vaylavirasto.viite.model.{ArealRoadMaintainer, NodePointType, NodeType, RoadPart}
 import org.joda.time.DateTime
 import scalikejdbc._
 import scalikejdbc.jodatime.JodaWrappedResultSet.fromWrappedResultSetToJodaWrappedResultSet
@@ -37,11 +37,11 @@ object Node extends SQLSyntaxSupport[Node] {
 
 case class RoadAttributes(roadPart: RoadPart, addrMValue: Long)
 
-case class NodeForRoadAddressBrowser(ely: Long, roadPart: RoadPart, addrM: Long, startDate: DateTime, nodeType: NodeType, name: Option[String], nodeCoordinates: Point, nodeNumber: Long)
+case class NodeForRoadAddressBrowser(arealRoadMaintainer: ArealRoadMaintainer, roadPart: RoadPart, addrM: Long, startDate: DateTime, nodeType: NodeType, name: Option[String], nodeCoordinates: Point, nodeNumber: Long)
 
 object NodeForRoadAddressBrowserScalike extends SQLSyntaxSupport[NodeForRoadAddressBrowser] {
   def apply(rs: WrappedResultSet): NodeForRoadAddressBrowser = NodeForRoadAddressBrowser(
-    ely = rs.long("ely"),
+    arealRoadMaintainer = ArealRoadMaintainer.getELY(rs.long("ely")), // TODO VITE-3424 change when DB columns updated
     roadPart = RoadPart(rs.long("road_number"), rs.long("road_part_number")),
     addrM = rs.long("addr_m"),
     startDate = rs.jodaDateTime("start_date"),
