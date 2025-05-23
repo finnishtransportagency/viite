@@ -6,7 +6,7 @@ import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibr
 import fi.vaylavirasto.viite.dao.Sequences
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.CalibrationPointType.{JunctionPointCP, NoCP, UserDefinedCP}
-import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinuity, LinkGeomSource, RoadAddressChangeType, RoadPart, SideCode, Track}
+import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, ArealRoadMaintainer, Discontinuity, LinkGeomSource, RoadAddressChangeType, RoadPart, SideCode, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
 import org.joda.time.DateTime
 import org.scalatest.funsuite.AnyFunSuite
@@ -22,11 +22,11 @@ class TwoTrackRoadUtilsSpec extends AnyFunSuite with Matchers {
                                      testTrack1: TestTrack,
                                      testTrack2: TestTrack
                                    ) = {
-    val roadPart       = RoadPart(19999, 1)
-    val discontinuity  = Discontinuity.Continuous
-    val ely            = 8L
-    val roadwayId      = 0L
-    val startDate      = None
+    val roadPart            = RoadPart(19999, 1)
+    val discontinuity       = Discontinuity.Continuous
+    val arealRoadMaintainer = ArealRoadMaintainer.ELYPohjoisSavo
+    val roadwayId           = 0L
+    val startDate           = None
 
 
     val id = Sequences.nextViiteProjectId
@@ -38,14 +38,14 @@ class TwoTrackRoadUtilsSpec extends AnyFunSuite with Matchers {
                      status          : RoadAddressChangeType = RoadAddressChangeType.NotHandled,
                      roadPart        : RoadPart = RoadPart(19999,1),
                      discontinuity   : Discontinuity = Discontinuity.Continuous,
-                     ely             : Long = 8L,
+                     arealRoadMaintainer: ArealRoadMaintainer = ArealRoadMaintainer.ELYPohjoisSavo,
                      linkId          : String = 0L.toString,
                      geom            : Seq[Point],
                      roadwayId       : Long = 0L,
                      linearLocationId: Long = 0L,
                      startDate       : Option[DateTime] = None
                    ) = {
-      ProjectLink(NewIdValue, roadPart, track, discontinuity, addrMRange, addrMRange, startDate, None, Some("User"), linkId, 0.0, addrMRange.length.toDouble, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), geom: Seq[Point], projectId, status, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, addrMRange.length.toDouble, roadwayId, linearLocationId, ely, reversed = false, None, 0L)
+      ProjectLink(NewIdValue, roadPart, track, discontinuity, addrMRange, addrMRange, startDate, None, Some("User"), linkId, 0.0, addrMRange.length.toDouble, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), geom: Seq[Point], projectId, status, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, addrMRange.length.toDouble, roadwayId, linearLocationId, arealRoadMaintainer, reversed = false, None, 0L)
     }
 
     def withTrack(testTrack: TestTrack): Seq[ProjectLink] = {
@@ -53,7 +53,7 @@ class TwoTrackRoadUtilsSpec extends AnyFunSuite with Matchers {
         case (status, index) =>
           val addrMRange = AddrMRange(testTrack.geom(index).minBy(_.x).x.toLong, testTrack.geom(index).maxBy(_.x).x.toLong)
 
-          projectLink(addrMRange, testTrack.track, id, status, roadPart, discontinuity, ely, geom = testTrack.geom(index), linkId = index.toString, roadwayId = roadwayId,
+          projectLink(addrMRange, testTrack.track, id, status, roadPart, discontinuity, arealRoadMaintainer, geom = testTrack.geom(index), linkId = index.toString, roadwayId = roadwayId,
             startDate = startDate)
       }
     }
@@ -80,9 +80,9 @@ class TwoTrackRoadUtilsSpec extends AnyFunSuite with Matchers {
     val geomTrack1_2 = Seq(Point(100.0, 0.0), Point(200.0, 0.0))
     val geomTrack2   = Seq(Point(0.0, 10.0),  Point(200.0, 10.0))
 
-    val projectLinkTrack1_1 = ProjectLink(1001L, RoadPart(9999, 1), Track.apply(1), Discontinuity.Continuous, AddrMRange(  0L, 100L), AddrMRange(  0L, 100L), None, None, None, 1L.toString, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), geomTrack1_1, 0L, RoadAddressChangeType.Unchanged, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTrack1_1), 0L, 0, 0, reversed = false, None, 86400L)
-    val projectLinkTrack1_2 = ProjectLink(1002L, RoadPart(9999, 1), Track.apply(1), Discontinuity.Continuous, AddrMRange(100L, 200L), AddrMRange(100L, 200L), None, None, None, 2L.toString, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), geomTrack1_2, 0L, RoadAddressChangeType.Unchanged, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTrack1_2), 0L, 0, 0, reversed = false, None, 86400L)
-    val projectLinkTrack2   = ProjectLink(1003L, RoadPart(9999, 1), Track.apply(2), Discontinuity.Continuous, AddrMRange(  0L, 200L), AddrMRange(  0L, 200L), None, None, None, 3L.toString, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), geomTrack2,   0L, RoadAddressChangeType.Unchanged, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTrack2),   0L, 0, 0, reversed = false, None, 86400L)
+    val projectLinkTrack1_1 = ProjectLink(1001L, RoadPart(9999, 1), Track.apply(1), Discontinuity.Continuous, AddrMRange(  0L, 100L), AddrMRange(  0L, 100L), None, None, None, 1L.toString, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), geomTrack1_1, 0L, RoadAddressChangeType.Unchanged, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTrack1_1), 0L, 0, ArealRoadMaintainer.ARMInvalid, reversed = false, None, 86400L)
+    val projectLinkTrack1_2 = ProjectLink(1002L, RoadPart(9999, 1), Track.apply(1), Discontinuity.Continuous, AddrMRange(100L, 200L), AddrMRange(100L, 200L), None, None, None, 2L.toString, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), geomTrack1_2, 0L, RoadAddressChangeType.Unchanged, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTrack1_2), 0L, 0, ArealRoadMaintainer.ARMInvalid, reversed = false, None, 86400L)
+    val projectLinkTrack2   = ProjectLink(1003L, RoadPart(9999, 1), Track.apply(2), Discontinuity.Continuous, AddrMRange(  0L, 200L), AddrMRange(  0L, 200L), None, None, None, 3L.toString, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), geomTrack2,   0L, RoadAddressChangeType.Unchanged, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTrack2),   0L, 0, ArealRoadMaintainer.ARMInvalid, reversed = false, None, 86400L)
 
     val (track1, track2, udcp) = TwoTrackRoadUtils.splitPlsAtStatusChange(Seq(projectLinkTrack1_1, projectLinkTrack1_2), Seq(projectLinkTrack2))
     track1 should have size 2

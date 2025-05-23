@@ -5,6 +5,7 @@ import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.NewIdValue
 import fi.vaylavirasto.viite.dao.Sequences
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point, Vector3d}
+import fi.vaylavirasto.viite.model.ArealRoadMaintainer.{ARMInvalid, ELYKeskiSuomi, ELYPohjoisSavo}
 import fi.vaylavirasto.viite.model.CalibrationPointType.{NoCP, RoadAddressCP}
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, ArealRoadMaintainer, CalibrationPointType, Discontinuity, LinkGeomSource, RoadAddressChangeType, RoadPart, SideCode, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
@@ -57,7 +58,7 @@ class ProjectLinkDAOSpec extends AnyFunSuite with Matchers {
   }
 
   def dummyProjectLink(id: Long, projectId: Long, linkId: String, roadwayId: Long = 0, roadwayNumber: Long = roadwayNumber1, roadPart: RoadPart = RoadPart(roadNumber1, roadPartNumber1), addrMRange: AddrMRange, startMValue: Double, endMValue: Double, endDate: Option[DateTime] = None, calibrationPoints: (Option[ProjectCalibrationPoint], Option[ProjectCalibrationPoint]) = (None, None), geometry: Seq[Point] = Seq(), status: RoadAddressChangeType, administrativeClass: AdministrativeClass, reversed: Boolean, linearLocationId: Long, connectedLinkId: Option[String] = None, track: Track = Track.Combined): ProjectLink =
-    ProjectLink(id, roadPart, track, Discontinuity.Continuous, addrMRange, addrMRange, Some(DateTime.parse("1901-01-01")), endDate, Some("testUser"), linkId, startMValue, endMValue, SideCode.TowardsDigitizing, (if (calibrationPoints._1.isDefined) calibrationPoints._1.get.typeCode else NoCP, if (calibrationPoints._2.isDefined) calibrationPoints._2.get.typeCode else NoCP), (NoCP, NoCP), geometry, projectId, status, administrativeClass, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geometry), roadwayId, linearLocationId, 0, reversed, connectedLinkId = connectedLinkId, 631152000, roadwayNumber, roadAddressLength = addrMRange.lengthOption)
+    ProjectLink(id, roadPart, track, Discontinuity.Continuous, addrMRange, addrMRange, Some(DateTime.parse("1901-01-01")), endDate, Some("testUser"), linkId, startMValue, endMValue, SideCode.TowardsDigitizing, (if (calibrationPoints._1.isDefined) calibrationPoints._1.get.typeCode else NoCP, if (calibrationPoints._2.isDefined) calibrationPoints._2.get.typeCode else NoCP), (NoCP, NoCP), geometry, projectId, status, administrativeClass, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geometry), roadwayId, linearLocationId, ArealRoadMaintainer.ARMInvalid, reversed, connectedLinkId = connectedLinkId, 631152000, roadwayNumber, roadAddressLength = addrMRange.lengthOption)
 
   private def dummyRoadAddressProject(id: Long, status: ProjectState, reservedParts: Seq[ProjectReservedPart] = List.empty[ProjectReservedPart], coordinates: Option[ProjectCoordinates] = None): Project = {
     Project(id, status, "testProject", "testUser", DateTime.parse("1901-01-01"), "testUser", DateTime.parse("1901-01-01"), DateTime.now(), "additional info here", reservedParts, Seq(), Some("current status info"), coordinates)
@@ -254,18 +255,20 @@ class ProjectLinkDAOSpec extends AnyFunSuite with Matchers {
     runWithRollback {
       val projectLinks = projectLinkDAO.fetchProjectLinks(7081807)
       val header = projectLinks.head
+      val updatedARM = if(header.arealRoadMaintainer==ELYPohjoisSavo) {  ELYKeskiSuomi  } else {  ELYPohjoisSavo  }
       val newRoadNumber = 1
       val newRoadPartNumber = 5
       projectReservedPartDAO.reserveRoadPart(7081807, RoadPart(newRoadNumber, newRoadPartNumber), "test")
-      projectLinkDAO.updateProjectLinkNumbering(header.projectId, header.roadPart, header.status, RoadPart(newRoadNumber, newRoadPartNumber), "test", header.ely + 6)
+      projectLinkDAO.updateProjectLinkNumbering(header.projectId, header.roadPart, header.status, RoadPart(newRoadNumber, newRoadPartNumber), "test", updatedARM)
 
       val updatedProjectLink = projectLinkDAO.fetchProjectLinks(7081807).filter(link => link.id == header.id).head
       updatedProjectLink.roadPart should be(RoadPart(newRoadNumber,newRoadPartNumber))
-      updatedProjectLink.ely should be(header.ely + 6)
+      updatedProjectLink.arealRoadMaintainer should be(updatedARM)
     }
   }
 
-  test("Test updateProjectLinkNumbering When changing the discontinuity value of Left track specific id only Then the discontinuity value for that Left track ids should be updated the other should remain") {
+  test("Test updateProjectLinkNumbering When changing the discontinuity value of Left track specific id only " +
+    "Then the discontinuity value for that Left track ids should be updated the other should remain") {
     runWithRollback {
       val roadwayIds = roadwayDAO.create(dummyRoadways)
       val projectId = Sequences.nextViiteProjectId
@@ -282,12 +285,12 @@ class ProjectLinkDAOSpec extends AnyFunSuite with Matchers {
       val links = projectLinkDAO.fetchProjectLinks(projectId)
       links.size should be(2)
       projectReservedPartDAO.reserveRoadPart(projectId, newRoadPart, "test")
-      projectLinkDAO.updateProjectLinkNumbering(projectId, roadPart, RoadAddressChangeType.Renumeration, newRoadPart, "test", 0)
+      projectLinkDAO.updateProjectLinkNumbering(projectId, roadPart, RoadAddressChangeType.Renumeration, newRoadPart, "test", ArealRoadMaintainer.ARMInvalid)
       projectLinkDAO.updateProjectLinkAdministrativeClassDiscontinuity(Set(links.filter(_.track == Track.LeftSide).maxBy(_.addrMRange.end).id), RoadAddressChangeType.Renumeration, "test", links.filter(_.track == Track.LeftSide).head.administrativeClass.value, Some(Discontinuity.MinorDiscontinuity.value))
       val linksAfterUpdate = projectLinkDAO.fetchProjectLinks(projectId)
       linksAfterUpdate.size should be(2)
       linksAfterUpdate.groupBy(p => (p.roadPart)).keys.head should be(newRoadPart)
-      linksAfterUpdate.find(_.track == Track.LeftSide).get.discontinuity should be(Discontinuity.MinorDiscontinuity)
+      linksAfterUpdate.find(_.track == Track.LeftSide ).get.discontinuity should be(Discontinuity.MinorDiscontinuity)
       linksAfterUpdate.find(_.track == Track.RightSide).get.discontinuity should be(Discontinuity.Continuous)
     }
   }
@@ -385,7 +388,7 @@ class ProjectLinkDAOSpec extends AnyFunSuite with Matchers {
       val originalTrack = Track.Combined
       val originalDiscontinuity = Discontinuity.Continuous
       val originalAdministrativeClass = AdministrativeClass.State
-      val originalEly = 1
+      val originalARM = ArealRoadMaintainer.ELYUusimaa
       val originalAddrMRange = AddrMRange(0L, 10L)
       val originalStartMValue = 0.0
       val originalEndMValue = 10.0
@@ -422,7 +425,7 @@ class ProjectLinkDAOSpec extends AnyFunSuite with Matchers {
           addrMRange = originalAddrMRange,
           startMValue = originalStartMValue,
           endMValue = originalEndMValue,
-          ely = originalEly,
+          arealRoadMaintainer = originalARM,
           linearLocationId = pl.linearLocationId,
           id = pl.id
         )
@@ -453,13 +456,13 @@ class ProjectLinkDAOSpec extends AnyFunSuite with Matchers {
     }
   }
 
-  test("Test getElyFromProjectLinks When trying to get ely by project Then it should be returned with success") {
+  test("Test fetchElyFromProjectLinks When trying to get ely by project Then it should be returned with success") {
     runWithRollback {
       val projectId = 7081807
       val projectLinks = projectLinkDAO.fetchProjectLinks(projectId)
-      val ely = projectLinks.head.ely
+      val ARM = projectLinks.head.arealRoadMaintainer
       val elyByProject = projectLinkDAO.fetchElyFromProjectLinks(projectId)
-      ely should be(elyByProject.getOrElse(0))
+      ARM should be(ArealRoadMaintainer.getELYOrARMInvalid(elyByProject.getOrElse(0)))
     }
   }
   test("Test moveProjectLinksToHistory and getProjectLinksHistory When trying to get ely by project Then it should be returned with success") {

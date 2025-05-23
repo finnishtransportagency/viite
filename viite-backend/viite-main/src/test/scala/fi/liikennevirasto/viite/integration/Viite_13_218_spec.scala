@@ -10,7 +10,7 @@ import fi.liikennevirasto.viite.process.strategy.DefaultSectionCalculatorStrateg
 import fi.liikennevirasto.viite.util._
 import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, CalibrationPointType, Discontinuity, LifecycleStatus, LinkGeomSource, RoadAddressChangeType, RoadLink, RoadPart, SideCode, Track, TrafficDirection}
+import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, ArealRoadMaintainer, CalibrationPointType, Discontinuity, LifecycleStatus, LinkGeomSource, RoadAddressChangeType, RoadLink, RoadPart, SideCode, Track, TrafficDirection}
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
@@ -781,7 +781,7 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter wi
         )
 
         for (test_track <- road_tracks_to_test_1) {
-          projectService_db.updateProjectLinks(projectSaved.id, test_track.track_to_test.map(_.id).toSet, List(), roadAddressChangeType = test_track.roadAddressChangeType, userName = projectSaved.name, newRoadPart = test_track.track_to_test.head.roadPart, newTrackCode = test_track.track_to_test.head.track.value, userDefinedEndAddressM = None, administrativeClass = test_track.track_to_test.head.administrativeClass.value, discontinuity = test_track.discontinuity, ely = Some(test_track.track_to_test.head.ely), reversed = false, roadName = Some("Kokkola-Nuijamaa"), coordinates = projectSaved.coordinates)
+          projectService_db.updateProjectLinks(projectSaved.id, test_track.track_to_test.map(_.id).toSet, List(), roadAddressChangeType = test_track.roadAddressChangeType, userName = projectSaved.name, newRoadPart = test_track.track_to_test.head.roadPart, newTrackCode = test_track.track_to_test.head.track.value, userDefinedEndAddressM = None, administrativeClass = test_track.track_to_test.head.administrativeClass.value, discontinuity = test_track.discontinuity, arealRoadMaintainer = Some(test_track.track_to_test.head.arealRoadMaintainer), reversed = false, roadName = Some("Kokkola-Nuijamaa"), coordinates = projectSaved.coordinates)
         }
 
         val terminateLinkIds = List(11910502, 11910505, 3227478, 3227484, 3227486, 11910568, 11910533, 3227482, 3227480, 11910572, 11910587, 11910588, 12017340, 12017341).map(_.toString)
@@ -794,7 +794,7 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter wi
         )
 
         for (test_track <- road_tracks_to_test_2) {
-          projectService_db.updateProjectLinks(projectSaved.id, test_track.track_to_test.map(_.id).toSet, List(), roadAddressChangeType = test_track.roadAddressChangeType, userName = projectSaved.name, newRoadPart = test_track.track_to_test.head.roadPart, newTrackCode = test_track.track_to_test.head.track.value, userDefinedEndAddressM = None, administrativeClass = test_track.track_to_test.head.administrativeClass.value, discontinuity = test_track.track_to_test.last.discontinuity.value, ely = Some(test_track.track_to_test.head.ely), reversed = false, roadName = test_track.track_to_test.last.roadName, coordinates = projectSaved.coordinates)
+          projectService_db.updateProjectLinks(projectSaved.id, test_track.track_to_test.map(_.id).toSet, List(), roadAddressChangeType = test_track.roadAddressChangeType, userName = projectSaved.name, newRoadPart = test_track.track_to_test.head.roadPart, newTrackCode = test_track.track_to_test.head.track.value, userDefinedEndAddressM = None, administrativeClass = test_track.track_to_test.head.administrativeClass.value, discontinuity = test_track.track_to_test.last.discontinuity.value, arealRoadMaintainer = Some(test_track.track_to_test.head.arealRoadMaintainer), reversed = false, roadName = test_track.track_to_test.last.roadName, coordinates = projectSaved.coordinates)
         }
 
         case class New_links_config(
@@ -804,7 +804,7 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter wi
                                      linkIds               : Seq[String],
                                      roadAddressChangeType : RoadAddressChangeType,
                                      projectId             : Long,
-                                     roadEly               : Long,
+                                     roadARM               : ArealRoadMaintainer,
                                      roadLinkSource        : LinkGeomSource,
                                      roadName              : Option[String],
                                      roadPart              : RoadPart,
@@ -820,7 +820,7 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter wi
           linkIds = Seq(11910497, 11910547, 11910527).map(_.toString),
           roadAddressChangeType = RoadAddressChangeType.New,
           projectId = projectSaved.id,
-          roadEly = 8,
+          roadARM = ArealRoadMaintainer.ELYPohjoisSavo,
           roadLinkSource = LinkGeomSource.FrozenLinkInterface,
           roadName = Some("Kokkola-Nuijamaa"),
           roadPart = test_road_part,
@@ -828,7 +828,7 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter wi
           trackCode = Track.RightSide,
           userDefinedEndAddressM = None)
 
-        projectService_db.createProjectLinks(new_links.linkIds, new_links.projectId, new_links.roadPart, new_links.trackCode, new_links.discontinuity, new_links.administrativeClass, new_links.roadLinkSource, new_links.roadEly, projectSaved.createdBy, new_links.roadName.get, new_links.coordinates)
+        projectService_db.createProjectLinks(new_links.linkIds, new_links.projectId, new_links.roadPart, new_links.trackCode, new_links.discontinuity, new_links.administrativeClass, new_links.roadLinkSource, new_links.roadARM, projectSaved.createdBy, new_links.roadName.get, new_links.coordinates)
 
         val new_links_2 = New_links_config(
           coordinates = projectSaved.coordinates,
@@ -837,7 +837,7 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter wi
           linkIds = Seq(11910567).map(_.toString),
           roadAddressChangeType = RoadAddressChangeType.New,
           projectId = projectSaved.id,
-          roadEly = 8,
+          roadARM = ArealRoadMaintainer.ELYPohjoisSavo,
           roadLinkSource = LinkGeomSource.FrozenLinkInterface,
           roadName = Some("Kokkola-Nuijamaa"),
           roadPart = test_road_part,
@@ -845,7 +845,7 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter wi
           trackCode = Track.RightSide,
           userDefinedEndAddressM = None)
 
-        projectService_db.createProjectLinks(new_links_2.linkIds, new_links_2.projectId, new_links_2.roadPart, new_links_2.trackCode, new_links_2.discontinuity, new_links_2.administrativeClass, new_links_2.roadLinkSource, new_links_2.roadEly, projectSaved.createdBy, new_links_2.roadName.get, new_links_2.coordinates)
+        projectService_db.createProjectLinks(new_links_2.linkIds, new_links_2.projectId, new_links_2.roadPart, new_links_2.trackCode, new_links_2.discontinuity, new_links_2.administrativeClass, new_links_2.roadLinkSource, new_links_2.roadARM, projectSaved.createdBy, new_links_2.roadName.get, new_links_2.coordinates)
 
         val transfer_1_links = projectService_db.getProjectLinks(projectSaved.id).filter(x => {
           x.track == Track(1) && x.linkId == 11910585.toString
@@ -855,7 +855,10 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter wi
         )
 
         for (test_track <- transfer_1) {
-          projectService_db.updateProjectLinks(projectSaved.id, test_track.track_to_test.map(_.id).toSet, List(), roadAddressChangeType = test_track.roadAddressChangeType, userName = projectSaved.name, newRoadPart = test_track.track_to_test.head.roadPart, newTrackCode = test_track.track_to_test.head.track.value, userDefinedEndAddressM = None, administrativeClass = test_track.track_to_test.head.administrativeClass.value, discontinuity = test_track.discontinuity, ely = Some(test_track.track_to_test.head.ely), reversed = false, roadName = Some("Kokkola-Nuijamaa"), coordinates = projectSaved.coordinates)
+          projectService_db.updateProjectLinks(projectSaved.id, test_track.track_to_test.map(_.id).toSet, List(), roadAddressChangeType = test_track.roadAddressChangeType,
+            userName = projectSaved.name, newRoadPart = test_track.track_to_test.head.roadPart, newTrackCode = test_track.track_to_test.head.track.value, userDefinedEndAddressM = None,
+            administrativeClass = test_track.track_to_test.head.administrativeClass.value, discontinuity = test_track.discontinuity,
+            arealRoadMaintainer = Some(test_track.track_to_test.head.arealRoadMaintainer), reversed = false, roadName = Some("Kokkola-Nuijamaa"), coordinates = projectSaved.coordinates)
         }
 
         val new_links_3 = New_links_config(
@@ -865,7 +868,7 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter wi
           linkIds = Seq(11910509.toString),
           roadAddressChangeType = RoadAddressChangeType.New,
           projectId = projectSaved.id,
-          roadEly = 8,
+          roadARM = ArealRoadMaintainer.ELYPohjoisSavo,
           roadLinkSource = LinkGeomSource.FrozenLinkInterface,
           roadName = Some("Kokkola-Nuijamaa"),
           roadPart = test_road_part,
@@ -873,7 +876,8 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter wi
           trackCode = Track.RightSide,
           userDefinedEndAddressM = None)
 
-        projectService_db.createProjectLinks(new_links_3.linkIds, new_links_3.projectId, new_links_3.roadPart, new_links_3.trackCode, new_links_3.discontinuity, new_links_3.administrativeClass, new_links_3.roadLinkSource, new_links_3.roadEly, projectSaved.createdBy, new_links_3.roadName.get, new_links_3.coordinates)
+        projectService_db.createProjectLinks(new_links_3.linkIds, new_links_3.projectId, new_links_3.roadPart, new_links_3.trackCode, new_links_3.discontinuity,
+          new_links_3.administrativeClass, new_links_3.roadLinkSource, new_links_3.roadARM, projectSaved.createdBy, new_links_3.roadName.get, new_links_3.coordinates)
 
         val new_links_4 = New_links_config(
           coordinates = projectSaved.coordinates,
@@ -882,7 +886,7 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter wi
           linkIds = Seq(11910589.toString),
           roadAddressChangeType = RoadAddressChangeType.New,
           projectId = projectSaved.id,
-          roadEly = 8,
+          roadARM = ArealRoadMaintainer.ELYPohjoisSavo,
           roadLinkSource = LinkGeomSource.FrozenLinkInterface,
           roadName = Some("Kokkola-Nuijamaa"),
           roadPart = test_road_part,
@@ -890,7 +894,7 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter wi
           trackCode = Track.Combined,
           userDefinedEndAddressM = None)
 
-        projectService_db.createProjectLinks(new_links_4.linkIds, new_links_4.projectId, new_links_4.roadPart, new_links_4.trackCode, new_links_4.discontinuity, new_links_4.administrativeClass, new_links_4.roadLinkSource, new_links_4.roadEly, projectSaved.createdBy, new_links_4.roadName.get, new_links_4.coordinates)
+        projectService_db.createProjectLinks(new_links_4.linkIds, new_links_4.projectId, new_links_4.roadPart, new_links_4.trackCode, new_links_4.discontinuity, new_links_4.administrativeClass, new_links_4.roadLinkSource, new_links_4.roadARM, projectSaved.createdBy, new_links_4.roadName.get, new_links_4.coordinates)
 
 
         val transfer_2_links = projectService_db.getProjectLinks(projectSaved.id).filter(x => {
@@ -901,7 +905,7 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter wi
         )
 
         for (test_track <- transfer_2) {
-          projectService_db.updateProjectLinks(projectSaved.id, test_track.track_to_test.map(_.id).toSet, List(), roadAddressChangeType = test_track.roadAddressChangeType, userName = projectSaved.name, newRoadPart = test_track.track_to_test.head.roadPart, newTrackCode = test_track.track_to_test.head.track.value, userDefinedEndAddressM = None, administrativeClass = test_track.track_to_test.head.administrativeClass.value, discontinuity = test_track.discontinuity, ely = Some(test_track.track_to_test.head.ely), reversed = false, roadName = Some("Kokkola-Nuijamaa"), coordinates = projectSaved.coordinates)
+          projectService_db.updateProjectLinks(projectSaved.id, test_track.track_to_test.map(_.id).toSet, List(), roadAddressChangeType = test_track.roadAddressChangeType, userName = projectSaved.name, newRoadPart = test_track.track_to_test.head.roadPart, newTrackCode = test_track.track_to_test.head.track.value, userDefinedEndAddressM = None, administrativeClass = test_track.track_to_test.head.administrativeClass.value, discontinuity = test_track.discontinuity, arealRoadMaintainer = Some(test_track.track_to_test.head.arealRoadMaintainer), reversed = false, roadName = Some("Kokkola-Nuijamaa"), coordinates = projectSaved.coordinates)
         }
 
         val new_links_5 = New_links_config(
@@ -911,7 +915,7 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter wi
           linkIds = Seq(11910501).map(_.toString),
           roadAddressChangeType = RoadAddressChangeType.New,
           projectId = projectSaved.id,
-          roadEly = 8,
+          roadARM = ArealRoadMaintainer.ELYPohjoisSavo,
           roadLinkSource = LinkGeomSource.FrozenLinkInterface,
           roadName = Some("Kokkola-Nuijamaa"),
           roadPart = test_road_part,
@@ -919,7 +923,7 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter wi
           trackCode = Track.LeftSide,
           userDefinedEndAddressM = None)
 
-        projectService_db.createProjectLinks(new_links_5.linkIds, new_links_5.projectId, new_links_5.roadPart, new_links_5.trackCode, new_links_5.discontinuity, new_links_5.administrativeClass, new_links_5.roadLinkSource, new_links_5.roadEly, projectSaved.createdBy, new_links_5.roadName.get, new_links_5.coordinates)
+        projectService_db.createProjectLinks(new_links_5.linkIds, new_links_5.projectId, new_links_5.roadPart, new_links_5.trackCode, new_links_5.discontinuity, new_links_5.administrativeClass, new_links_5.roadLinkSource, new_links_5.roadARM, projectSaved.createdBy, new_links_5.roadName.get, new_links_5.coordinates)
 
 
         val transfer_3_links = projectService_db.getProjectLinks(projectSaved.id).filter(x => {
@@ -930,7 +934,7 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter wi
         )
 
         for (test_track <- transfer_3) {
-          projectService_db.updateProjectLinks(projectSaved.id, test_track.track_to_test.map(_.id).toSet, List(), roadAddressChangeType = test_track.roadAddressChangeType, userName = projectSaved.name, newRoadPart = test_track.track_to_test.head.roadPart, newTrackCode = test_track.track_to_test.head.track.value, userDefinedEndAddressM = None, administrativeClass = test_track.track_to_test.head.administrativeClass.value, discontinuity = test_track.discontinuity, ely = Some(test_track.track_to_test.head.ely), reversed = false, roadName = Some("Kokkola-Nuijamaa"), coordinates = projectSaved.coordinates)
+          projectService_db.updateProjectLinks(projectSaved.id, test_track.track_to_test.map(_.id).toSet, List(), roadAddressChangeType = test_track.roadAddressChangeType, userName = projectSaved.name, newRoadPart = test_track.track_to_test.head.roadPart, newTrackCode = test_track.track_to_test.head.track.value, userDefinedEndAddressM = None, administrativeClass = test_track.track_to_test.head.administrativeClass.value, discontinuity = test_track.discontinuity, arealRoadMaintainer = Some(test_track.track_to_test.head.arealRoadMaintainer), reversed = false, roadName = Some("Kokkola-Nuijamaa"), coordinates = projectSaved.coordinates)
         }
 
         val new_links_6 = New_links_config(
@@ -940,7 +944,7 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter wi
           linkIds = Seq(11910530, 11910544, 11910546).map(_.toString),
           roadAddressChangeType = RoadAddressChangeType.New,
           projectId = projectSaved.id,
-          roadEly = 8,
+          roadARM = ArealRoadMaintainer.ELYPohjoisSavo,
           roadLinkSource = LinkGeomSource.FrozenLinkInterface,
           roadName = Some("Kokkola-Nuijamaa"),
           roadPart = test_road_part,
@@ -948,7 +952,7 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter wi
           trackCode = Track.LeftSide,
           userDefinedEndAddressM = None)
 
-        projectService_db.createProjectLinks(new_links_6.linkIds, new_links_6.projectId, new_links_6.roadPart, new_links_6.trackCode, new_links_6.discontinuity, new_links_6.administrativeClass, new_links_6.roadLinkSource, new_links_6.roadEly, projectSaved.createdBy, new_links_6.roadName.get, new_links_6.coordinates)
+        projectService_db.createProjectLinks(new_links_6.linkIds, new_links_6.projectId, new_links_6.roadPart, new_links_6.trackCode, new_links_6.discontinuity, new_links_6.administrativeClass, new_links_6.roadLinkSource, new_links_6.roadARM, projectSaved.createdBy, new_links_6.roadName.get, new_links_6.coordinates)
 
         val new_links_7 = New_links_config(
           coordinates = projectSaved.coordinates,
@@ -957,7 +961,7 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter wi
           linkIds = Seq(11910569).map(_.toString),
           roadAddressChangeType = RoadAddressChangeType.New,
           projectId = projectSaved.id,
-          roadEly = 8,
+          roadARM = ArealRoadMaintainer.ELYPohjoisSavo,
           roadLinkSource = LinkGeomSource.FrozenLinkInterface,
           roadName = Some("Kokkola-Nuijamaa"),
           roadPart = test_road_part,
@@ -965,7 +969,7 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter wi
           trackCode = Track.LeftSide,
           userDefinedEndAddressM = None)
 
-        projectService_db.createProjectLinks(new_links_7.linkIds, new_links_7.projectId, new_links_7.roadPart, new_links_7.trackCode, new_links_7.discontinuity, new_links_7.administrativeClass, new_links_7.roadLinkSource, new_links_7.roadEly, projectSaved.createdBy, new_links_7.roadName.get, new_links_7.coordinates)
+        projectService_db.createProjectLinks(new_links_7.linkIds, new_links_7.projectId, new_links_7.roadPart, new_links_7.trackCode, new_links_7.discontinuity, new_links_7.administrativeClass, new_links_7.roadLinkSource, new_links_7.roadARM, projectSaved.createdBy, new_links_7.roadName.get, new_links_7.coordinates)
 
         val new_links_8 = New_links_config(
           coordinates = projectSaved.coordinates,
@@ -974,7 +978,7 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter wi
           linkIds = Seq(11910511).map(_.toString),
           roadAddressChangeType = RoadAddressChangeType.New,
           projectId = projectSaved.id,
-          roadEly = 8,
+          roadARM = ArealRoadMaintainer.ELYPohjoisSavo,
           roadLinkSource = LinkGeomSource.FrozenLinkInterface,
           roadName = Some("Kokkola-Nuijamaa"),
           roadPart = test_road_part,
@@ -982,7 +986,7 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter wi
           trackCode = Track.LeftSide,
           userDefinedEndAddressM = None)
 
-        projectService_db.createProjectLinks(new_links_8.linkIds, new_links_8.projectId, new_links_8.roadPart, new_links_8.trackCode, new_links_8.discontinuity, new_links_8.administrativeClass, new_links_8.roadLinkSource, new_links_8.roadEly, projectSaved.createdBy, new_links_8.roadName.get, new_links_8.coordinates)
+        projectService_db.createProjectLinks(new_links_8.linkIds, new_links_8.projectId, new_links_8.roadPart, new_links_8.trackCode, new_links_8.discontinuity, new_links_8.administrativeClass, new_links_8.roadLinkSource, new_links_8.roadARM, projectSaved.createdBy, new_links_8.roadName.get, new_links_8.coordinates)
 
 
         val transfer_4_links = projectService_db.getProjectLinks(projectSaved.id).filter(x => {
@@ -993,7 +997,7 @@ class Viite_13_218_spec extends AnyFunSuite with Matchers with BeforeAndAfter wi
         )
 
         for (test_track <- transfer_4) {
-          projectService_db.updateProjectLinks(projectSaved.id, test_track.track_to_test.map(_.id).toSet, List(), roadAddressChangeType = test_track.roadAddressChangeType, userName = projectSaved.name, newRoadPart = test_track.track_to_test.head.roadPart, newTrackCode = test_track.track_to_test.head.track.value, userDefinedEndAddressM = None, administrativeClass = test_track.track_to_test.head.administrativeClass.value, discontinuity = test_track.discontinuity, ely = Some(test_track.track_to_test.head.ely), reversed = false, roadName = Some("Kokkola-Nuijamaa"), coordinates = projectSaved.coordinates)
+          projectService_db.updateProjectLinks(projectSaved.id, test_track.track_to_test.map(_.id).toSet, List(), roadAddressChangeType = test_track.roadAddressChangeType, userName = projectSaved.name, newRoadPart = test_track.track_to_test.head.roadPart, newTrackCode = test_track.track_to_test.head.track.value, userDefinedEndAddressM = None, administrativeClass = test_track.track_to_test.head.administrativeClass.value, discontinuity = test_track.discontinuity, arealRoadMaintainer = Some(test_track.track_to_test.head.arealRoadMaintainer), reversed = false, roadName = Some("Kokkola-Nuijamaa"), coordinates = projectSaved.coordinates)
         }
 
         val all_projectlinks = projectService_db.getProjectLinks(projectSaved.id)

@@ -53,7 +53,7 @@ class ProjectDAOSpec extends AnyFunSuite with Matchers with BaseDAO{
     ProjectLink(id, roadPart, Track.Combined, Discontinuity.Continuous, addrMRange, addrMRange,
       Some(DateTime.parse("1901-01-01")), endDate, Some("testUser"), linkId, startMValue, endMValue, SideCode.TowardsDigitizing,
       calibrationPointTypes, (NoCP, NoCP), geometry, projectId, status, administrativeClass, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geometry),
-      roadwayId, linearLocationId, 0, reversed, connectedLinkId = None, 631152000, roadwayNumber, roadAddressLength = Some(addrMRange.length))
+      roadwayId, linearLocationId, ArealRoadMaintainer.ARMInvalid, reversed, connectedLinkId = None, 631152000, roadwayNumber, roadAddressLength = Some(addrMRange.length))
 
   test("Test fetchAllIdsByLinkId When adding some project links for two existing projects Then outcome size of projects for that given linkId should be equal in number") {
     runWithRollback {
