@@ -1106,7 +1106,7 @@ class RoadwayDAO extends BaseDAO {
       linkId        = rs.string("link_id"),
       endAddrM      = rs.long("end_addr_m"),
       discontinuity = rs.long("discontinuity"),
-      arealRoadMaintainer = ArealRoadMaintainer(s"ELY${rs.long("ely")}"),
+      arealRoadMaintainer = ArealRoadMaintainer.getELY(rs.long("ely")),
       startDate     = rs.jodaDateTimeOpt("start_date"),
       endDate       = rs.jodaDateTimeOpt("end_date")
     )))
