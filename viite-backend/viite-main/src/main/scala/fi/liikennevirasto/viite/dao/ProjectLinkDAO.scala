@@ -1281,7 +1281,7 @@ class ProjectLinkDAO extends BaseDAO {
               WHERE project_id = $projectId
               """
       val elys = runSelectQuery(query.map(rs => rs.long("ely"))).sorted // TODO VIITE-3447 replace with ...
-      elys.map(ArealRoadMaintainer.getELY(_))                           // TODO ... ArealRoadMaintainer data field when eligible
+      elys.map(ArealRoadMaintainer.getELYOrARMInvalid(_))               // TODO ... ArealRoadMaintainer data field when eligible
     }
   }
 

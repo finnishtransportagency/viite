@@ -285,7 +285,7 @@ class ProjectLinkDAOSpec extends AnyFunSuite with Matchers {
       val links = projectLinkDAO.fetchProjectLinks(projectId)
       links.size should be(2)
       projectReservedPartDAO.reserveRoadPart(projectId, newRoadPart, "test")
-      projectLinkDAO.updateProjectLinkNumbering(projectId, roadPart, RoadAddressChangeType.Renumeration, newRoadPart, "test", ArealRoadMaintainer.ELYPohjoisSavo)
+      projectLinkDAO.updateProjectLinkNumbering(projectId, roadPart, RoadAddressChangeType.Renumeration, newRoadPart, "test", ArealRoadMaintainer.ARMInvalid)
       projectLinkDAO.updateProjectLinkAdministrativeClassDiscontinuity(Set(links.filter(_.track == Track.LeftSide).maxBy(_.addrMRange.end).id), RoadAddressChangeType.Renumeration, "test", links.filter(_.track == Track.LeftSide).head.administrativeClass.value, Some(Discontinuity.MinorDiscontinuity.value))
       val linksAfterUpdate = projectLinkDAO.fetchProjectLinks(projectId)
       linksAfterUpdate.size should be(2)
