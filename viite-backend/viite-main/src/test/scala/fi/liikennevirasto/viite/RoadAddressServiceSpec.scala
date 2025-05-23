@@ -44,6 +44,9 @@ class RoadAddressServiceSpec extends AnyFunSuite with Matchers{
   val linearLocationDAO = new LinearLocationDAO
   val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
   val mockViiteVkmClient: ViiteVkmClient = MockitoSugar.mock[ViiteVkmClient]
+
+  private val ely8 = ArealRoadMaintainer.ELYPohjoisSavo
+
   val roadAddressService: RoadAddressService = new RoadAddressService(mockRoadLinkService,
                                                                       mockRoadwayDAO,
                                                                       mockLinearLocationDAO,
@@ -628,7 +631,7 @@ class RoadAddressServiceSpec extends AnyFunSuite with Matchers{
       roadwayPointDAO.fetchByRoadwayNumber(rwp)
       }
 
-      val reservedParts = Seq(ProjectReservedPart(0, RoadPart(99, 2), Some(20), Some(Discontinuity.Continuous), Some(8L), None, None, None, Some(12345L.toString)))
+      val reservedParts = Seq(ProjectReservedPart(0, RoadPart(99, 2), Some(20), Some(Discontinuity.Continuous), Some(ely8), None, None, None, Some(12345L.toString)))
 
       val project = projectDAO.fetchById(projectId).get
       roadwayChangesDAO.insertDeltaToRoadChangeTable(projectId, Some(project.copy(reservedParts = reservedParts)))
@@ -735,8 +738,8 @@ class RoadAddressServiceSpec extends AnyFunSuite with Matchers{
       val roadwayPointsBeforeTransferLink = Seq(beforeChangesTransfer).filter(_.status == RoadAddressChangeType.Transfer).map(_.roadwayNumber).distinct.flatMap{ rwp=>
         roadwayPointDAO.fetchByRoadwayNumber(rwp)
       }
-      val reservedParts = Seq(ProjectReservedPart(0, RoadPart(99, 2), Some(20), Some(Discontinuity.Continuous), Some(8L), None, None, None, Some(12345L.toString)))
-      val formedParts = Seq(ProjectReservedPart(0, RoadPart(99, 2), None, None, None, Some(15), Some(Discontinuity.Continuous), Some(8L), Some(12345L.toString)))
+      val reservedParts = Seq(ProjectReservedPart(0, RoadPart(99, 2), Some(20), Some(Discontinuity.Continuous), Some(ely8), None, None, None, Some(12345L.toString)))
+      val formedParts   = Seq(ProjectReservedPart(0, RoadPart(99, 2), None,     None, None, Some(15), Some(Discontinuity.Continuous), Some(ely8), Some(12345L.toString)))
 
       val project = projectDAO.fetchById(projectId).get
       roadwayChangesDAO.insertDeltaToRoadChangeTable(projectId, Some(project.copy(reservedParts = reservedParts, formedParts = formedParts)))
@@ -1050,7 +1053,7 @@ class RoadAddressServiceSpec extends AnyFunSuite with Matchers{
       val afterDualPoint  = afterUpdateProjectLinks.last.copy(roadwayNumber = roadwayNumber3)
       val mappedRoadwayChanges = projectLinkDAO.fetchProjectLinksChange(projectId)
 
-      val reservedParts = Seq(ProjectReservedPart(0, RoadPart(99, 2), Some(20), Some(Discontinuity.Continuous), Some(8L), None, None, None, Some(12345L.toString)))
+      val reservedParts = Seq(ProjectReservedPart(0, RoadPart(99, 2), Some(20), Some(Discontinuity.Continuous), Some(ely8), None, None, None, Some(12345L.toString)))
 
       val project = projectDAO.fetchById(projectId).get
       roadwayChangesDAO.insertDeltaToRoadChangeTable(projectId, Some(project.copy(reservedParts = reservedParts)))
