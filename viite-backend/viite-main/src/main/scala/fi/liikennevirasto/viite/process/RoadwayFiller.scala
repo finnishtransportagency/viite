@@ -112,7 +112,7 @@ object RoadwayFiller {
       val historyRoadways: Seq[Roadway] = changes.historyRoadways
       val projectLinksInRoadway         = changes.projectLinks
       val (terminatedProjectLinks, others) = projectLinksInRoadway.partition(_.status == RoadAddressChangeType.Termination)
-      val ARMChanged                       = if (others.nonEmpty) currentRoadway.arealRoadMaintainer != ArealRoadMaintainer.getELY(others.head.ely) else false
+      val ARMChanged                       = if (others.nonEmpty) currentRoadway.arealRoadMaintainer != others.head.arealRoadMaintainer else false
       val addressChanged                   = if (others.nonEmpty) others.last.addrMRange.end != currentRoadway.addrMRange.end || others.head.addrMRange.start != currentRoadway.addrMRange.start else false
       val adminClassed                     = others.groupBy(pl => AdminClassRwn(pl.administrativeClass, pl.roadwayNumber))
       val project                          = projectDAO.fetchById(projectLinksInRoadway.head.projectId)
@@ -124,7 +124,7 @@ object RoadwayFiller {
           val headPl                          = projectLinkSeq.head
           val lastPl                          = projectLinkSeq.last
           val existingRoadway = Seq(Roadway(NewIdValue, headPl.roadwayNumber, headPl.roadPart, headPl.administrativeClass, headPl.track, lastPl.discontinuity, AddrMRange(headPl.addrMRange.start, lastPl.addrMRange.end), headPl.reversed, currentRoadway.startDate, None, createdBy = headPl.createdBy.get, currentRoadway.roadName,
-            ArealRoadMaintainer(s"ELY${headPl.ely}"), NoTermination)) ++ updateAddrMValuesOfHistoryRows(projectLinkSeq, currentRoadway, historyRoadways).map { historyRoadway =>
+            headPl.arealRoadMaintainer, NoTermination)) ++ updateAddrMValuesOfHistoryRows(projectLinkSeq, currentRoadway, historyRoadways).map { historyRoadway =>
             historyRoadway.copy(id = NewIdValue, roadwayNumber = headPl.roadwayNumber)
           }
 
@@ -155,7 +155,7 @@ object RoadwayFiller {
     rwGroupedProjectLinks.map { case (roadwayNumber, pls) =>
       val head_pl                         = pls.head
       val roadway                         = Roadway(NewIdValue, roadwayNumber, head_pl.roadPart, head_pl.administrativeClass, head_pl.track, pls.last.discontinuity, AddrMRange(head_pl.addrMRange.start, pls.last.addrMRange.end), head_pl.reversed, startDate = head_pl.startDate.get, endDate = head_pl.endDate, createdBy = head_pl.createdBy.get, head_pl.roadName,
-        ArealRoadMaintainer.getELY(head_pl.ely), NoTermination)
+        head_pl.arealRoadMaintainer, NoTermination)
       val projectLinksWithGivenAttributes = pls.map(pl => {
         pl.copy(linearLocationId = if (pl.linearLocationId == 0 || pl.linearLocationId == NewIdValue) Sequences.nextLinearLocationId else pl.linearLocationId, roadwayNumber = roadway.roadwayNumber)
       })
@@ -184,7 +184,7 @@ object RoadwayFiller {
                             !reversed &&
                             lastProjectLink.discontinuity == lastProjectLink.originalDiscontinuity &&
                             headProjectLink.administrativeClass == oldAdministrativeClass &&
-                            ArealRoadMaintainer.getELY(headProjectLink.ely) == currentRoadway.arealRoadMaintainer
+                            headProjectLink.arealRoadMaintainer == currentRoadway.arealRoadMaintainer
 
     val newRoadwayStartDate = if (noChanges) currentRoadway.startDate else projectStartDate
 
@@ -201,7 +201,7 @@ object RoadwayFiller {
                             None,
                             createdBy = headProjectLink.createdBy.get,
                             currentRoadway.roadName,
-                            ArealRoadMaintainer.getELY(headProjectLink.ely),
+                            headProjectLink.arealRoadMaintainer,
                             NoTermination
                           )
 
@@ -357,7 +357,7 @@ object RoadwayFiller {
     val changeTarget = change.changeInfo.target
     val roadwayNumber = if (projectLinks.head.roadwayNumber == NewIdValue || projectLinks.head.roadwayNumber == 0) Sequences.nextRoadwayNumber else projectLinks.head.roadwayNumber
     val targetRoadPart = RoadPart(changeTarget.roadNumber.get, changeTarget.startRoadPartNumber.get)
-    val roadway = Roadway(NewIdValue, roadwayNumber, targetRoadPart, changeTarget.administrativeClass.get, Track.apply(changeTarget.trackCode.get.toInt), changeTarget.discontinuity.get, changeTarget.addrMRange.get, change.changeInfo.reversed, startDate = projectLinks.head.startDate.get, endDate = projectLinks.head.endDate, createdBy = projectLinks.head.createdBy.get, projectLinks.head.roadName, ArealRoadMaintainer.getELY(projectLinks.head.ely), NoTermination)
+    val roadway = Roadway(NewIdValue, roadwayNumber, targetRoadPart, changeTarget.administrativeClass.get, Track.apply(changeTarget.trackCode.get.toInt), changeTarget.discontinuity.get, changeTarget.addrMRange.get, change.changeInfo.reversed, startDate = projectLinks.head.startDate.get, endDate = projectLinks.head.endDate, createdBy = projectLinks.head.createdBy.get, projectLinks.head.roadName, projectLinks.head.arealRoadMaintainer, NoTermination)
    val projectLinksWithGivenAttributes = projectLinks.map(pl => pl.copy(linearLocationId = if(pl.linearLocationId == 0 || pl.linearLocationId == NewIdValue) Sequences.nextLinearLocationId else pl.linearLocationId, roadwayNumber = roadway.roadwayNumber))
     Seq((Seq(roadway), roadwayAddressMapper.mapLinearLocations(roadway, projectLinksWithGivenAttributes), projectLinksWithGivenAttributes))
   }

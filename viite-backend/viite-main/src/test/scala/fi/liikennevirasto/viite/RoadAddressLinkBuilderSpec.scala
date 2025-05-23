@@ -8,7 +8,7 @@ import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.vaylavirasto.viite.geometry.Point
 import fi.vaylavirasto.viite.model.ArealRoadMaintainer.ELYPohjoisSavo
 import fi.vaylavirasto.viite.model.CalibrationPointType.NoCP
-import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinuity, LifecycleStatus, LinkGeomSource, RoadAddressChangeType, RoadLink, RoadPart, SideCode, Track, TrafficDirection}
+import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, ArealRoadMaintainer, Discontinuity, LifecycleStatus, LinkGeomSource, RoadAddressChangeType, RoadLink, RoadPart, SideCode, Track, TrafficDirection}
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
 import org.joda.time.DateTime
 import org.scalatest.funsuite.AnyFunSuite
@@ -111,11 +111,12 @@ class RoadAddressLinkBuilderSpec extends AnyFunSuite with Matchers {
   }
 
   test("Test ProjectAddressLinkBuilder.build() When building project address links from regular project links and road links Then return the build ProjectAddressLinks.") {
-    val unknownProjectLink = ProjectLink(   0,    RoadPart(0, 0), Track.Unknown,  Discontinuity.Continuous, AddrMRange(   0,    0), AddrMRange(   0,    0), None, None, None,       0.toString, 0.0,  0.0, SideCode.Unknown,           (NoCP, NoCP), (NoCP, NoCP), List(),    0, RoadAddressChangeType.NotHandled, AdministrativeClass.Unknown, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 8, reversed = false, None, 85088L)
+    val ely8 = ArealRoadMaintainer.ELYPohjoisSavo
+    val unknownProjectLink = ProjectLink(   0,    RoadPart(0, 0), Track.Unknown,  Discontinuity.Continuous, AddrMRange(   0,    0), AddrMRange(   0,    0), None, None, None,       0.toString, 0.0,  0.0, SideCode.Unknown,           (NoCP, NoCP), (NoCP, NoCP), List(),    0, RoadAddressChangeType.NotHandled, AdministrativeClass.Unknown, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, ely8, reversed = false, None, 85088L)
     val projectLinks =
       Map(
-        1717380L.toString -> ProjectLink(1270, RoadPart(   0, 0), Track.Unknown,  Discontinuity.Continuous, AddrMRange(1021, 1028), AddrMRange(1021, 1028), None, None, None, 1717380.toString, 0.0,  6.0, SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP), List(), 1227, RoadAddressChangeType.NotHandled, AdministrativeClass.Unknown, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 8, reversed = false, None, 85088L),
-        1717374L.toString -> ProjectLink(1259, RoadPart(1130, 0), Track.Combined, Discontinuity.Continuous, AddrMRange( 959, 1021), AddrMRange( 959, 1021), None, None, None, 1717374.toString, 0.0, 61.0, SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP), List(), 1227, RoadAddressChangeType.NotHandled, AdministrativeClass.Unknown, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 8, reversed = false, None, 85088L)
+        1717380L.toString -> ProjectLink(1270, RoadPart(   0, 0), Track.Unknown,  Discontinuity.Continuous, AddrMRange(1021, 1028), AddrMRange(1021, 1028), None, None, None, 1717380.toString, 0.0,  6.0, SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP), List(), 1227, RoadAddressChangeType.NotHandled, AdministrativeClass.Unknown, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, ely8, reversed = false, None, 85088L),
+        1717374L.toString -> ProjectLink(1259, RoadPart(1130, 0), Track.Combined, Discontinuity.Continuous, AddrMRange( 959, 1021), AddrMRange( 959, 1021), None, None, None, 1717374.toString, 0.0, 61.0, SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP), List(), 1227, RoadAddressChangeType.NotHandled, AdministrativeClass.Unknown, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, ely8, reversed = false, None, 85088L)
       )
 
     val roadLinks = Seq(

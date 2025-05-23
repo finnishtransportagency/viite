@@ -236,10 +236,10 @@ object ProjectDeltaCalculator {
     }).values.flatten.map(pl => {
       RoadwaySection(
         pl.originalRoadPart.roadNumber, pl.originalRoadPart.partNumber, pl.originalRoadPart.partNumber, pl.originalTrack, pl.originalAddrMRange,
-        pl.originalDiscontinuity, pl.originalAdministrativeClass, ArealRoadMaintainer.getELY(pl.originalEly), pl.reversed, pl.roadwayNumber, Seq()
+        pl.originalDiscontinuity, pl.originalAdministrativeClass, pl.originalARM, pl.reversed, pl.roadwayNumber, Seq()
       ) ->
         RoadwaySection(pl.roadPart.roadNumber, pl.roadPart.partNumber, pl.roadPart.partNumber, pl.track, pl.addrMRange,
-        pl.discontinuity, pl.administrativeClass, ArealRoadMaintainer.getELY(pl.ely), pl.reversed, pl.roadwayNumber, Seq()
+        pl.discontinuity, pl.administrativeClass, pl.arealRoadMaintainer, pl.reversed, pl.roadwayNumber, Seq()
         )
     }).toSeq
 
@@ -247,7 +247,7 @@ object ProjectDeltaCalculator {
       val (src, targetToMap) = sect
       val target = targetToMap.copy(projectLinks = projectLinks.filter(link => {
           link.roadPart == RoadPart(targetToMap.roadNumber, targetToMap.roadPartNumberEnd) &&
-          link.track == targetToMap.track && ArealRoadMaintainer.getELY(link.ely) == targetToMap.arealRoadMaintainer &&
+          link.track == targetToMap.track && link.arealRoadMaintainer == targetToMap.arealRoadMaintainer &&
           targetToMap.addrMRange.contains(link.addrMRange)
         }))
 
