@@ -162,7 +162,7 @@ class ProjectService(
 
         //reservedParts
         val reserved: Seq[ProjectReservedPart] = if (sortedAddresses.nonEmpty) {
-          val maxARM = ArealRoadMaintainer(sortedAddresses.map(_.arealRoadMaintainer.id).max) // Which ever of the selection is as good(?). All within the same reserved part should have same ARM.
+          val maxARM = sortedAddresses.head.arealRoadMaintainer // Which ever of the selection is as good(?). All within the same reserved part should have same ARM, by the substance rules.
           val firstLink = sortedAddresses.head.linkId
           val maxDiscontinuity = sortedAddresses.last.discontinuity
           val maxEndAddr = sortedAddresses.last.addrMRange.end
@@ -172,7 +172,7 @@ class ProjectService(
         //formedParts
         val formed: Seq[ProjectReservedPart] = if (roadPartLinks.nonEmpty) {
           val sortedProjectLinks = roadPartLinks.head._2.sortBy(_.addrMRange.start)
-          val maxARM = ArealRoadMaintainer(sortedProjectLinks.map(_.arealRoadMaintainer.id).max) // Which ever of the selection is as good(?). All within the same reserved part should have same ARM.
+          val maxARM = sortedProjectLinks.head.arealRoadMaintainer // Which ever of the selection is as good(?). All within the same formed roadPart should have same ARM, by the substance rules.
           val firstLink = sortedProjectLinks.head.linkId
           val maxDiscontinuity = sortedProjectLinks.last.discontinuity
           val maxEndAddr = sortedProjectLinks.last.addrMRange.end

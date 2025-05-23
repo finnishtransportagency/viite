@@ -2060,7 +2060,7 @@ object ProjectConverter {
   }
 
   def toReservedRoadPartEly(rp: RoadPartElyExtractor): ProjectReservedPart = {
-    ProjectReservedPart(0L, RoadPart(rp.roadNumber, rp.roadPartNumber), None, None, Some(ArealRoadMaintainer.getELY(s"ELY${rp.ely}")), None, None, None, None)
+    ProjectReservedPart(0L, RoadPart(rp.roadNumber, rp.roadPartNumber), None, None, Some(ArealRoadMaintainer.getELY(rp.ely)), None, None, None, None)
   }
 }
 
