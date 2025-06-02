@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
 import fi.liikennevirasto.viite.{AwsService, MaxDistanceForConnectedLinks}
 import fi.liikennevirasto.viite.dao.{LinearLocation, LinearLocationDAO, Roadway, RoadwayDAO}
+import fi.vaylavirasto.viite.dao.{ComplementaryLink, ComplementaryLinkDAO}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import fi.vaylavirasto.viite.geometry.GeometryUtils.scaleToThreeDigits
 import fi.vaylavirasto.viite.model.{LinkGeomSource, RoadLink, RoadPart}
@@ -17,7 +18,7 @@ import org.apache.hc.core5.http.{ClassicHttpResponse, HttpStatus}
 import org.apache.hc.core5.http.io.HttpClientResponseHandler
 import org.apache.hc.core5.http.io.entity.EntityUtils
 import org.joda.time.DateTime
-import org.json4s.DefaultFormats
+import org.json4s.{DefaultFormats, JNull, JValue}
 import org.json4s.JsonAST.JArray
 import org.json4s.jackson.Json
 import org.json4s.jackson.JsonMethods.parse
@@ -25,6 +26,7 @@ import org.slf4j.{Logger, LoggerFactory}
 
 import java.io.IOException
 import scala.collection.mutable.ListBuffer
+import scala.util.Try
 
 case class TiekamuRoadLinkChange(oldLinkId: String,
                                  oldStartM: Double,
@@ -52,6 +54,8 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
 
   implicit val formats = DefaultFormats
   val logger: Logger = LoggerFactory.getLogger(getClass)
+
+  val complementaryLinkDAO: ComplementaryLinkDAO = new ComplementaryLinkDAO
 
   def tiekamuRoadLinkChangeErrorToMap(tiekamuRoadLinkChangeError: TiekamuRoadLinkChangeError): Map[String, Any] = {
     Map(
@@ -586,8 +590,27 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
         // Calculate the length covered by the new link ID by subtracting minStartM from maxEndM
         // Then scale the result to three decimal digits using GeometryUtils
         val newlinkIdChangesLength = GeometryUtils.scaleToThreeDigits(maxEndM - minStartM)
-        val newLink = (kgvRoadLinks ++ complementaryLinks).find(kgvLink => kgvLink.linkId == newLinkId).getOrElse(throw ViiteException(s"Missing new link from KGV/complementary link table. Cannot validate Tiekamu change infos without KGV/complementary road link. LinkId: ${newLinkId}, changeInfo: ${change}"))
 
+        val newLinkOption: Option[RoadLink] = {
+          val foundLinkOption = (kgvRoadLinks ++ complementaryLinks).find(kgvLink => kgvLink.linkId == newLinkId)
+          if (foundLinkOption.nonEmpty) {
+            foundLinkOption
+          } else {
+            val complementaryLinkFromVKM = fetchComplementaryLinkFromVKM(newLinkId)
+            if (complementaryLinkFromVKM.nonEmpty) {
+              complementaryLinkDAO.create(complementaryLinkFromVKM.get)
+              val complementaryLinkFromViiteDB = complementaryLinkDAO.fetchByLinkId(newLinkId, readOnlySession = false)
+              complementaryLinkFromViiteDB
+            } else {
+              None
+            }
+          }
+        }
+        if (newLinkOption.isEmpty) {
+          throw ViiteException(s"Missing new link from KGV/complementary link table. Cannot validate Tiekamu change infos without KGV/complementary road link. LinkId: ${newLinkId}, changeInfo: ${change}")
+        }
+
+        val newLink = newLinkOption.get
         val linearLocationsWithOldLinkId = linearLocations.filter(_.linkId == oldLinkId)
         val roadAddressedLinkLength = GeometryUtils.scaleToThreeDigits(linearLocationsWithOldLinkId.map(_.endMValue).max - linearLocationsWithOldLinkId.map(_.startMValue).min)
         
@@ -649,9 +672,10 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
       val oldLinkIds = tiekamuRoadLinkChanges.map(_.oldLinkId).toSet
       // fetch roadLinks from KGV these are used for getting geometry and link lengths
       val kgvRoadLinks = kgvClient.roadLinkVersionsData.fetchByLinkIds(newLinkIds ++ oldLinkIds)
-      val complementaryLinks = kgvClient.complementaryData.fetchByLinkIds(newLinkIds ++ oldLinkIds)
+      val complementaryLinksForValidations = kgvClient.complementaryData.fetchByLinkIds(newLinkIds ++ oldLinkIds)
 
-      val tiekamuRoadLinkChangeErrors = validateTiekamuRoadLinkChanges(tiekamuRoadLinkChanges, activeLinearLocations, kgvRoadLinks, complementaryLinks)
+      val tiekamuRoadLinkChangeErrors = validateTiekamuRoadLinkChanges(tiekamuRoadLinkChanges, activeLinearLocations, kgvRoadLinks, complementaryLinksForValidations)
+
       var skippedTiekamuRoadLinkChanges = Seq.empty[TiekamuRoadLinkChange]
       val (validTiekamuRoadLinkChanges, validActiveLinearLocations) = {
         if (tiekamuRoadLinkChangeErrors.nonEmpty) {
@@ -662,6 +686,9 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
           (tiekamuRoadLinkChanges, activeLinearLocations)
         }
       }
+      // Fetch the complementary links again here because there might be new complementary links added to the database during validations
+      (newLinkIds ++ oldLinkIds).foreach(l => println(s"${l}"))
+      val complementaryLinks = kgvClient.complementaryData.fetchByLinkIds(newLinkIds ++ oldLinkIds)
       val viiteChangeSets = createViiteLinkNetworkChanges(validTiekamuRoadLinkChanges, validActiveLinearLocations, kgvRoadLinks, complementaryLinks)
       (viiteChangeSets, tiekamuRoadLinkChangeErrors, skippedTiekamuRoadLinkChanges)
     }
@@ -739,5 +766,114 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
       }
       skippedTiekamuRoadLinkChanges
     }
+  }
+
+  def fetchComplementaryLinkFromVKM(linkId: String): Option[ComplementaryLink] = {
+
+    def extractFeature(feature: JValue): ComplementaryLink = {
+      implicit val formats: DefaultFormats.type = DefaultFormats
+
+      val props = feature \ "properties"
+      val attributes = props.extract[Map[String, Any]]
+
+      val coordinates = (feature \ "geometry" \ "coordinates").extract[List[List[Double]]]
+      val geometry: Seq[Point] = coordinates.map {
+        case List(x, y, z) => Point(x, y, z)
+        case List(x, y) => Point(x, y, 0.0)
+        case _ => throw new Exception("Unexpected coordinate format")
+      }
+
+      def optStr(key: String): Option[String] = attributes.get(key) match {
+        case Some(null) => None
+        case Some(value) if value == JNull => None
+        case Some(value) =>
+          val str = value.toString
+          if (str == "null" || str.trim.isEmpty) None else Some(str)
+        case None => None
+      }
+
+      def getInt(key: String): Int = Try(attributes(key).toString.toInt).getOrElse(0)
+      def getDouble(key: String): Double = Try(attributes(key).toString.toDouble).getOrElse(0.0)
+      def getDateTime(key: String): DateTime = Try(DateTime.parse(attributes(key).toString)).getOrElse(new DateTime(0))
+
+      ComplementaryLink(
+        id = attributes("id").toString,
+        datasource = getInt("datasource"),
+        adminclass = getInt("adminclass"),
+        municipalitycode = getInt("municipalitycode"),
+        featureclass = getInt("featureclass"),
+        roadclass = getInt("roadclass"),
+        roadnamefin = optStr("roadnamefin"),
+        roadnameswe = optStr("roadnameswe"),
+        roadnamesme = optStr("roadnamesme"),
+        roadnamesmn = optStr("roadnamesmn"),
+        roadnamesms = optStr("roadnamesms"),
+        roadnumber = getInt("roadnumber"),
+        roadpartnumber = getInt("roadpartnumber"),
+        surfacetype = getInt("surfacetype"),
+        lifecyclestatus = getInt("lifecyclestatus"),
+        directiontype = getInt("directiontype"),
+        surfacerelation = getInt("surfacerelation"),
+        xyaccuracy = getDouble("xyaccuracy"),
+        zaccuracy = getDouble("zaccuracy"),
+        horizontallength = getDouble("horizontallength"),
+        addressfromleft = getInt("addressfromleft"),
+        addresstoleft = getInt("addresstoleft"),
+        addressfromright = getInt("addressfromright"),
+        addresstoright = getInt("addresstoright"),
+        starttime = getDateTime("starttime"),
+        versionstarttime = getDateTime("versionstarttime"),
+        sourcemodificationtime = getDateTime("sourcemodificationtime"),
+        geometry = geometry,
+        ajorata = getInt("ajorata"),
+        vvh_id = attributes.getOrElse("vvh_id", "").toString
+      )
+    }
+
+    /** Create a response handler, with handleResponse implementation returning the
+     * response body in Right as Seq[RoadLink], or an Exception in Left. */
+    def getResponseHandler(url: String) = {
+      new HttpClientResponseHandler[Either[ViiteException, Seq[String]]] {
+        @throws[IOException]
+        override def handleResponse(response: ClassicHttpResponse): Either[ViiteException, Seq[String]] = {
+          if (response.getCode == HttpStatus.SC_OK) {
+            val entity = response.getEntity
+            val responseString = EntityUtils.toString(entity, "UTF-8")
+            Right(Seq(responseString))
+          } else {
+            Left(ViiteException(s"Request $url returned HTTP ${response.getCode}"))
+          }
+        }
+      }
+    }
+
+    def getComplementaryLink(linkId: String): Option[ComplementaryLink] = {
+      val endPoint = "https://devapi.testivaylapilvi.fi/viitekehysmuunnin/ogc/collections/lisageometrialinkit/"
+      val params = s"items?filter=id%20in%20(%27${linkId}%27)"
+      val url = endPoint ++ params
+      val client = HttpClients.createDefault()
+      val request = new HttpGet(url)
+      request.addHeader("accept", "application/geo+json")
+      request.addHeader("X-API-Key", ViiteProperties.vkmApiKeyDev)
+
+      try {
+        val response = client.execute(request, getResponseHandler(url))
+        // Extract raw JSON string
+        val rawJsonString = response match {
+          case Right(list) => list.headOption.getOrElse("")
+          case _ => ""
+        }
+        val json = parse(rawJsonString)
+        // Extract the first feature
+        val feature = (json \ "features")(0)
+        val complementaryLink = extractFeature(feature)
+        Some(complementaryLink)
+      } catch {
+        case t: Throwable =>
+          logger.error(s"Fetching complementary link failed. ${t}")
+          throw t
+      }
+    }
+    getComplementaryLink(linkId)
   }
 }
