@@ -1,7 +1,7 @@
 package fi.vaylavirasto.viite.dynamicnetwork
 
 import fi.liikennevirasto.digiroad2.client.kgv.KgvRoadLink
-import fi.liikennevirasto.digiroad2.client.vkm.{TiekamuRoadLinkChange, VKMClient}
+import fi.liikennevirasto.digiroad2.client.vkm.{TiekamuRoadLinkChange, TiekamuRoadLinkChangeError, TiekamuRoadLinkErrorMetaData, VKMClient}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
 import fi.liikennevirasto.viite.{AwsService, MaxDistanceForConnectedLinks}
@@ -19,16 +19,6 @@ import org.json4s.jackson.Json
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.mutable.ListBuffer
-
-
-case class TiekamuRoadLinkChangeError(errorMessage: String,
-                                      change: TiekamuRoadLinkChange,
-                                      metaData: TiekamuRoadLinkErrorMetaData)
-
-case class TiekamuRoadLinkErrorMetaData(roadPart: RoadPart,
-                                        roadwayNumber:Long,
-                                        linearLocationIds: Seq[Long],
-                                        linkId: String)
 
 class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO: RoadwayDAO, val kgvClient: KgvRoadLink, awsService: AwsService, linkNetworkUpdater: LinkNetworkUpdater) {
 
@@ -249,8 +239,6 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
 
   def createTiekamuRoadLinkChangeSets(previousDate: DateTime, newDate: DateTime, activeLinearLocations: Seq[LinearLocation]): Seq[TiekamuRoadLinkChange] = {
 
-    val httpClient = HttpClients.createDefault()
-
     /**
      * Viite is only interested in change infos that affect links that have road addressed roads on them.
      * Therefor we filter out all the unnecessary change infos i.e. unaddressed link change infos
@@ -265,7 +253,7 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
     }
 
     time(logger, "Creating Viite road link change info sets") {
-      val tiekamuRoadLinkChanges = vkmClient.getTiekamuRoadlinkChanges(httpClient, previousDate, newDate)
+      val tiekamuRoadLinkChanges = vkmClient.getTiekamuRoadlinkChanges(previousDate, newDate)
       // filter change infos so that only the ones that target links with road addresses are left
       val roadAddressedRoadLinkChanges = getChangeInfosWithRoadAddress(tiekamuRoadLinkChanges, activeLinearLocations)
 

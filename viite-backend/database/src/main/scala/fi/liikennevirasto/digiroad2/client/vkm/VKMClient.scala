@@ -4,6 +4,7 @@ import fi.liikennevirasto.digiroad2.client.kgv.Extractor.logger
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.vaylavirasto.viite.dao.ComplementaryLink
 import fi.vaylavirasto.viite.geometry.Point
+import fi.vaylavirasto.viite.model.RoadPart
 import fi.vaylavirasto.viite.util.DateTimeFormatters.finnishDateFormatter
 import fi.vaylavirasto.viite.util.ViiteException
 import org.apache.hc.client5.http.classic.methods.{HttpGet, HttpPost}
@@ -32,6 +33,15 @@ case class TiekamuRoadLinkChange(oldLinkId: String,
                                  newStartM: Double,
                                  newEndM: Double,
                                  digitizationChange: Boolean)
+
+case class TiekamuRoadLinkChangeError(errorMessage: String,
+                                      change: TiekamuRoadLinkChange,
+                                      metaData: TiekamuRoadLinkErrorMetaData)
+
+case class TiekamuRoadLinkErrorMetaData(roadPart: RoadPart,
+                                        roadwayNumber:Long,
+                                        linearLocationIds: Seq[Long],
+                                        linkId: String)
 
 case class VKMError(content: Map[String, Any], url: String)
 
@@ -219,7 +229,7 @@ class VKMClient(endPoint: String, apiKey: String) {
     getComplementaryLink(linkId)
   }
 
-  def getTiekamuRoadlinkChanges(client: CloseableHttpClient, previousDate: DateTime, newDate: DateTime): Seq[TiekamuRoadLinkChange] = {
+  def getTiekamuRoadlinkChanges(previousDate: DateTime, newDate: DateTime): Seq[TiekamuRoadLinkChange] = {
 
     /** Create a response handler, with handleResponse implementation returning the
      * response body in Right as Seq[TiekamuRoadLinkChanges], or an Exception in Left. */
