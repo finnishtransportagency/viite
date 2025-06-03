@@ -2,6 +2,7 @@ package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2.DigiroadEventBus
 import fi.liikennevirasto.digiroad2.client.kgv._
+import fi.liikennevirasto.digiroad2.client.vkm.VKMClient
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.viite.Dummies._
 import fi.liikennevirasto.viite.dao._
@@ -43,7 +44,7 @@ class RoadAddressServiceSpec extends AnyFunSuite with Matchers{
   val roadwayDAO = new RoadwayDAO
   val linearLocationDAO = new LinearLocationDAO
   val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
-  val mockViiteVkmClient: ViiteVkmClient = MockitoSugar.mock[ViiteVkmClient]
+  val mockViiteVkmClient: VKMClient = MockitoSugar.mock[VKMClient]
   val roadAddressService: RoadAddressService = new RoadAddressService(mockRoadLinkService,
                                                                       mockRoadwayDAO,
                                                                       mockLinearLocationDAO,
@@ -57,7 +58,7 @@ class RoadAddressServiceSpec extends AnyFunSuite with Matchers{
 
     override def runWithReadOnlySession[T](f: => T): T = f
     override def runWithTransaction[T](f: => T): T = f
-    override val viiteVkmClient: ViiteVkmClient = mockViiteVkmClient
+    override val viiteVkmClient: VKMClient = mockViiteVkmClient
   }
 
   val nodesAndJunctionsService = new NodesAndJunctionsService(mockRoadwayDAO,

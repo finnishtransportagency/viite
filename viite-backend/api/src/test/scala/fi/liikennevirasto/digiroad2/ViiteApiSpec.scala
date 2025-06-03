@@ -4,7 +4,8 @@ import fi.liikennevirasto.digiroad2.client.kgv.{KgvRoadLink, KgvRoadLinkClient}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
-import fi.liikennevirasto.viite.{NodesAndJunctionsService, PreFillInfo, ProjectService, RoadAddressService, RoadNameService, RoadNameSource, RoadNetworkValidator, ViiteVkmClient}
+import fi.liikennevirasto.digiroad2.client.vkm.VKMClient
+import fi.liikennevirasto.viite.{NodesAndJunctionsService, PreFillInfo, ProjectService, RoadAddressService, RoadNameService, RoadNameSource, RoadNetworkValidator}
 import fi.liikennevirasto.viite.dao.ProjectLinkDAO
 import fi.liikennevirasto.viite.util.{DigiroadSerializers, JsonSerializer}
 import fi.vaylavirasto.viite.dao.ComplementaryLinkDAO
@@ -41,7 +42,7 @@ class ViiteApiSpec extends AnyFunSuite with ScalatraSuite with BeforeAndAfter {
   val mockRoadNetworkValidator    : RoadNetworkValidator     = MockitoSugar.mock[RoadNetworkValidator]
   val roadNameService             : RoadNameService          = new RoadNameService { override def runWithTransaction[T](f: => T): T = runWithRollback(f) }
 
-  val mockViiteVkmClient: ViiteVkmClient = MockitoSugar.mock[ViiteVkmClient]
+  val mockViiteVkmClient: VKMClient = MockitoSugar.mock[VKMClient]
 
   val preFilledRoadName = PreFillInfo(1, 2, "roadName", RoadNameSource.RoadAddressSource, -1)
   private val testProjectId = roadNameService.runWithReadOnlySession { projectDAO.fetchAllWithoutDeletedFilter().head("id").toString.toLong }

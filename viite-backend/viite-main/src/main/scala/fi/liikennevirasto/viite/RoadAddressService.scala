@@ -2,8 +2,10 @@ package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.kgv._
+import fi.liikennevirasto.digiroad2.client.vkm.VKMClient
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
+import fi.liikennevirasto.digiroad2.util.ViiteProperties
 import fi.liikennevirasto.viite.dao.{RoadwayPointDAO, _}
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.process._
@@ -41,7 +43,7 @@ class RoadAddressService(
 
   private def roadAddressLinkBuilder = new RoadAddressLinkBuilder(roadwayDAO, linearLocationDAO)
 
-  val viiteVkmClient = new ViiteVkmClient
+  val viiteVkmClient = new VKMClient(ViiteProperties.vkmUrl, ViiteProperties.vkmApiKey)
   class VkmException(response: String) extends RuntimeException(response)
 
   /**
@@ -369,7 +371,7 @@ class RoadAddressService(
         // Pad with plain ' '. Strings expected to be (html-)unescaped, @see viiteVkmClient.get.
         val street = streetName.mkString(" ") + "*"
 
-        searchResult = viiteVkmClient.get("/viitekehysmuunnin/muunna", Map(
+        searchResult = viiteVkmClient.get("/muunna", Map(
           ("kuntakoodi", municipalityId.getOrElse("").toString),
           ("katunimi", street),
           ("katunumero", streetNumber.headOption.getOrElse(defaultStreetNumber.toString)))) match {

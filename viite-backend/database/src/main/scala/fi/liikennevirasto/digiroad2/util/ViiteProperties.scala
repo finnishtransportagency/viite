@@ -13,6 +13,7 @@ trait ViiteProperties {
   val kgvEndpoint       : String
   val kgvApiKey: String
   val vkmUrl: String
+  val vkmUrlDev: String
   val vkmApiKey: String
   val vkmApiKeyDev: String
   val importOnlyCurrent: Boolean
@@ -58,6 +59,7 @@ class ViitePropertiesFromEnv extends ViiteProperties {
   val kgvEndpoint       : String  = scala.util.Properties.envOrElse("kgvEndpoint", null)
   val kgvApiKey: String = scala.util.Properties.envOrElse("kgvApiKey", null)
   val vkmUrl: String = scala.util.Properties.envOrElse("vkmUrl", null)
+  val vkmUrlDev: String = scala.util.Properties.envOrElse("vkmUrlDev", null)
   val vkmApiKey: String = scala.util.Properties.envOrElse("vkmApiKey", null)
   val vkmApiKeyDev: String = scala.util.Properties.envOrElse("vkmApiKeyDev", null)
   val importOnlyCurrent: Boolean = scala.util.Properties.envOrElse("importOnlyCurrent", "false").toBoolean
@@ -132,6 +134,7 @@ class ViitePropertiesFromFile extends ViiteProperties {
   override val kgvEndpoint       : String  = envProps.getProperty("kgvEndpoint", null)
   override val kgvApiKey: String = scala.util.Properties.envOrElse("kgvApiKey", envProps.getProperty("kgvApiKey"))
   override val vkmUrl: String = scala.util.Properties.envOrElse("vkmUrl", envProps.getProperty("vkmUrl"))
+  override val vkmUrlDev: String = scala.util.Properties.envOrElse("vkmUrlDev", envProps.getProperty("vkmUrlDev"))
   override val vkmApiKey: String = scala.util.Properties.envOrElse("vkmApiKey", envProps.getProperty("vkmApiKey"))
   override val vkmApiKeyDev: String = scala.util.Properties.envOrElse("vkmApiKeyDev", envProps.getProperty("vkmApiKeyDev"))
   override val importOnlyCurrent: Boolean = envProps.getProperty("importOnlyCurrent", "false").toBoolean
@@ -221,6 +224,7 @@ object ViiteProperties {
   lazy val kgvApiKey: String  = properties.kgvApiKey
   lazy val kgvEndpoint: String = properties.kgvEndpoint
   lazy val vkmUrl: String = properties.vkmUrl
+  lazy val vkmUrlDev: String = properties.vkmUrlDev
   lazy val vkmApiKey: String = properties.vkmApiKey
   lazy val vkmApiKeyDev: String = properties.vkmApiKeyDev
   lazy val importOnlyCurrent: Boolean = properties.importOnlyCurrent
