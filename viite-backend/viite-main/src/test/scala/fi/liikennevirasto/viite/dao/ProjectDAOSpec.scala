@@ -142,7 +142,7 @@ class ProjectDAOSpec extends AnyFunSuite with Matchers with BaseDAO{
 
 
   test("Test update When Update project info Then should update the project infos such as project name, additional info, startDate") {
-    val reservedPart = ProjectReservedPart(5: Long, RoadPart(203, 203), Some(6L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
+    val reservedPart = ProjectReservedPart(5: Long, RoadPart(203, 203), Some(6L), Some(Discontinuity.apply("jatkuva")), Some(ArealRoadMaintainer.ELYPohjoisSavo), newLength = None, newDiscontinuity = None, newArealRoadMaintainer = None)
     runWithRollback {
       val id = Sequences.nextViiteProjectId
       val rap = dummyProject(id, ProjectState.Incomplete, List(), None)
@@ -185,7 +185,7 @@ class ProjectDAOSpec extends AnyFunSuite with Matchers with BaseDAO{
   test("Test fetchProjectIdsWithToBePreservedStatus " +
     "When project is accepted, but yet waiting to be preserved, or at preserving to Viite DB, " +
     "Then fetchProjectIdsWithToBePreservedStatus should be increased") {
-    val reservedPart = ProjectReservedPart(5: Long, RoadPart(203, 203), Some(6L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
+    val reservedPart = ProjectReservedPart(5: Long, RoadPart(203, 203), Some(6L), Some(Discontinuity.apply("jatkuva")), Some(ArealRoadMaintainer.ELYPohjoisSavo), newLength = None, newDiscontinuity = None, newArealRoadMaintainer = None)
     runWithRollback {
       val startWaitingCount = projectDAO.fetchProjectIdsWithToBePreservedStatus.length
 

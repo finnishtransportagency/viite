@@ -2,15 +2,15 @@ package fi.liikennevirasto.viite.dao
 
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite._
-import fi.vaylavirasto.viite.model.{Discontinuity, RoadAddressChangeType, RoadPart, Track}
+import fi.vaylavirasto.viite.model.{ArealRoadMaintainer, Discontinuity, RoadAddressChangeType, RoadPart, Track}
 import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
 import scalikejdbc._
 
 //TODO naming SQL conventions
 
 case class ProjectReservedPart(id: Long, roadPart: RoadPart, addressLength: Option[Long] = None,
-                               discontinuity: Option[Discontinuity] = None, ely: Option[Long] = None, newLength: Option[Long] = None,
-                               newDiscontinuity: Option[Discontinuity] = None, newEly: Option[Long] = None, startingLinkId: Option[String] = None) {
+                               discontinuity   : Option[Discontinuity] = None, arealRoadMaintainer   : Option[ArealRoadMaintainer] = None, newLength: Option[Long] = None,
+                               newDiscontinuity: Option[Discontinuity] = None, newArealRoadMaintainer: Option[ArealRoadMaintainer] = None, startingLinkId: Option[String] = None) {
   def holds(baseRoadAddress: BaseRoadAddress): Boolean = {
     roadPart == baseRoadAddress.roadPart
   }
@@ -32,13 +32,13 @@ object ProjectReservedPart extends SQLSyntaxSupport[ProjectReservedPart] {
       roadNumber     = rs.long("road_number"),
       partNumber     = rs.long("road_part_number")
     ),
-    addressLength    = rs.longOpt("length"),
-    discontinuity    = rs.longOpt("discontinuity_type").map(Discontinuity.apply),
-    ely              = rs.longOpt("ely"),
-    newLength        = rs.longOpt("length"), // same as addressLength
-    newDiscontinuity = rs.longOpt("discontinuity_type").map(Discontinuity.apply), // same as discontinuity
-    newEly           = rs.longOpt("ely"), // same as ely
-    startingLinkId   = rs.stringOpt("link_id")
+    addressLength     = rs.longOpt("length"),
+    discontinuity      = rs.longOpt("discontinuity_type").map(Discontinuity.apply),
+    arealRoadMaintainer = ArealRoadMaintainer.getELYOption(s"ELY${rs.longOpt("ely")}"),
+    newLength            = rs.longOpt("length"), // same as addressLength
+    newDiscontinuity      = rs.longOpt("discontinuity_type").map(Discontinuity.apply), // same as discontinuity
+    newArealRoadMaintainer = ArealRoadMaintainer.getELYOption(s"ELY${rs.longOpt("ely")}"), // same as ely
+    startingLinkId          = rs.stringOpt("link_id")
   )
 
   // For formed queries - matches original: (None, None, None, newLength, newDiscontinuity, newEly, startingLinkId)
@@ -48,13 +48,13 @@ object ProjectReservedPart extends SQLSyntaxSupport[ProjectReservedPart] {
       roadNumber     = rs.long("road_number"),
       partNumber     = rs.long("road_part_number")
     ),
-    addressLength    = None,
-    discontinuity    = None,
-    ely              = None,
-    newLength        = rs.longOpt("length_new"),
-    newDiscontinuity = rs.longOpt("discontinuity_new").map(Discontinuity.apply),
-    newEly           = rs.longOpt("ely_new"),
-    startingLinkId   = rs.stringOpt("first_link")
+    addressLength     = None,
+    discontinuity      = None,
+    arealRoadMaintainer = None,
+    newLength            = rs.longOpt("length_new"),
+    newDiscontinuity      = rs.longOpt("discontinuity_new").map(Discontinuity.apply),
+    newArealRoadMaintainer = ArealRoadMaintainer.getELYOption(s"ELY${rs.longOpt("ely_new")}"),
+    startingLinkId          = rs.stringOpt("first_link")
   )
 
   // For reserved queries - matches original: (length, discontinuity, ely, None, None, None, startingLinkId)
@@ -64,13 +64,13 @@ object ProjectReservedPart extends SQLSyntaxSupport[ProjectReservedPart] {
       roadNumber     = rs.long("road_number"),
       partNumber     = rs.long("road_part_number")
     ),
-    addressLength    = rs.longOpt("length"),
-    discontinuity    = rs.longOpt("discontinuity").map(Discontinuity.apply),
-    ely              = rs.longOpt("ely"),
-    newLength        = None,
-    newDiscontinuity = None,
-    newEly           = None,
-    startingLinkId   = rs.stringOpt("first_link")
+    addressLength     = rs.longOpt("length"),
+    discontinuity      = rs.longOpt("discontinuity").map(Discontinuity.apply),
+    arealRoadMaintainer = ArealRoadMaintainer.getELYOption(s"ELY${rs.longOpt("ely")}"),
+    newLength            = None,
+    newDiscontinuity      = None,
+    newArealRoadMaintainer = None,
+    startingLinkId          = rs.stringOpt("first_link")
   )
 }
 
