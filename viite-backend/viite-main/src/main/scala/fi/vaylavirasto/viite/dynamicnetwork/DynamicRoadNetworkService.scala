@@ -241,7 +241,7 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
 
     /**
      * Viite is only interested in change infos that affect links that have road addressed roads on them.
-     * Therefor we filter out all the unnecessary change infos i.e. unaddressed link change infos
+     * Therefore we filter out all the unnecessary change infos i.e. unaddressed link change infos
      */
     def getChangeInfosWithRoadAddress(tiekamuRoadLinkChanges: Seq[TiekamuRoadLinkChange], activeLinearLocationsInViite: Seq[LinearLocation]): Seq[TiekamuRoadLinkChange] = {
       val oldLinkIds = tiekamuRoadLinkChanges.map(_.oldLinkId).toSet
