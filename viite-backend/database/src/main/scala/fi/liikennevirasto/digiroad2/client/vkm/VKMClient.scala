@@ -200,7 +200,6 @@ class VKMClient(endPoint: String, apiKey: String) {
     }
 
     def getComplementaryLink(linkId: String): Option[ComplementaryLink] = {
-      //val endPoint = "https://devapi.testivaylapilvi.fi/viitekehysmuunnin"
       val params = s"/ogc/collections/lisageometrialinkit/items?filter=id%20in%20(%27${linkId}%27)"
       val url = endPoint ++ params
       val client = HttpClients.createDefault()

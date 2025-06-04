@@ -70,7 +70,7 @@ class ViiteApiSpec extends AnyFunSuite with ScalatraSuite with BeforeAndAfter {
 
   val roadLinkService: RoadLinkService = new RoadLinkService(mockKgvRoadLink, eventbus, new JsonSerializer, useFrozenLinkInterface)
   val roadAddressService: RoadAddressService = new RoadAddressService(roadLinkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, roadwayAddressMapper, eventbus, useFrozenLinkInterface){
-    override val viiteVkmClient = mockViiteVkmClient
+    override val vkmClient = mockViiteVkmClient
   }
 
   val projectService: ProjectService = new ProjectService(roadAddressService, mockRoadLinkService, mockNodesAndJunctionsService, roadwayDAO,

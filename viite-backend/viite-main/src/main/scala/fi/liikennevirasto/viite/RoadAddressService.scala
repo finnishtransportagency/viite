@@ -43,7 +43,7 @@ class RoadAddressService(
 
   private def roadAddressLinkBuilder = new RoadAddressLinkBuilder(roadwayDAO, linearLocationDAO)
 
-  val viiteVkmClient = new VKMClient(ViiteProperties.vkmUrl, ViiteProperties.vkmApiKey)
+  val vkmClient = new VKMClient(ViiteProperties.vkmUrl, ViiteProperties.vkmApiKey)
   class VkmException(response: String) extends RuntimeException(response)
 
   /**
@@ -371,7 +371,7 @@ class RoadAddressService(
         // Pad with plain ' '. Strings expected to be (html-)unescaped, @see viiteVkmClient.get.
         val street = streetName.mkString(" ") + "*"
 
-        searchResult = viiteVkmClient.get("/muunna", Map(
+        searchResult = vkmClient.get("/muunna", Map(
           ("kuntakoodi", municipalityId.getOrElse("").toString),
           ("katunimi", street),
           ("katunumero", streetNumber.headOption.getOrElse(defaultStreetNumber.toString)))) match {

@@ -58,7 +58,7 @@ class RoadAddressServiceSpec extends AnyFunSuite with Matchers{
 
     override def runWithReadOnlySession[T](f: => T): T = f
     override def runWithTransaction[T](f: => T): T = f
-    override val viiteVkmClient: VKMClient = mockViiteVkmClient
+    override val vkmClient: VKMClient = mockViiteVkmClient
   }
 
   val nodesAndJunctionsService = new NodesAndJunctionsService(mockRoadwayDAO,

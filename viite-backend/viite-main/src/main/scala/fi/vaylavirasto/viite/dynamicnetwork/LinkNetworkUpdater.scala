@@ -662,7 +662,7 @@ class LinkNetworkUpdater {
         val minMValuePointOpt = GeometryUtils.calculatePointFromLinearReference(linkGeomForReplaceInfo, newLlStartMValue) // TODO snap to geometry points? Check not overflowing the link length?
         val maxMValuePointOpt = GeometryUtils.calculatePointFromLinearReference(linkGeomForReplaceInfo, newLlEndMValue)   // TODO snap to geometry points? Check not overflowing the link length?
         if(minMValuePointOpt.isEmpty || maxMValuePointOpt.isEmpty) { // check that we got'em all
-          ViiteException(s"LinkNetworkReplaceChange: Could not get a corresponding point for either of both ends of the " +
+          throw ViiteException(s"LinkNetworkReplaceChange: Could not get a corresponding point for either of both ends of the " +
             s"new linear location referring to the new link  ${change.newLinks.find(_.linkId == ri.newLinkId).get.linkId}.")
         }
 

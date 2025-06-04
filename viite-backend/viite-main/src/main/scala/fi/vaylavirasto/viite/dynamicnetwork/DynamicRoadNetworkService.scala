@@ -477,26 +477,7 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
         // Then scale the result to three decimal digits using GeometryUtils
         val newlinkIdChangesLength = GeometryUtils.scaleToThreeDigits(maxEndM - minStartM)
 
-        val newLinkOption: Option[RoadLink] = {
-          val foundLinkOption = (kgvRoadLinks ++ complementaryLinks).find(kgvLink => kgvLink.linkId == newLinkId)
-          if (foundLinkOption.nonEmpty) {
-            foundLinkOption
-          } else {
-            val complementaryLinkFromVKM = vkmClient.fetchComplementaryLinkFromVKM(newLinkId)
-            if (complementaryLinkFromVKM.nonEmpty) {
-              complementaryLinkDAO.create(complementaryLinkFromVKM.get)
-              val complementaryLinkFromViiteDB = complementaryLinkDAO.fetchByLinkId(newLinkId, readOnlySession = false)
-              complementaryLinkFromViiteDB
-            } else {
-              None
-            }
-          }
-        }
-        if (newLinkOption.isEmpty) {
-          throw ViiteException(s"Missing new link from KGV/complementary link table. Cannot validate Tiekamu change infos without KGV/complementary road link. LinkId: ${newLinkId}, changeInfo: ${change}")
-        }
-
-        val newLink = newLinkOption.get
+        val newLink = (kgvRoadLinks ++ complementaryLinks).find(kgvLink => kgvLink.linkId == newLinkId).getOrElse(throw ViiteException(s"Missing new link from KGV/complementary link table. Cannot validate Tiekamu change infos without KGV/complementary road link. LinkId: ${newLinkId}, changeInfo: ${change}"))
         val linearLocationsWithOldLinkId = linearLocations.filter(_.linkId == oldLinkId)
         val roadAddressedLinkLength = GeometryUtils.scaleToThreeDigits(linearLocationsWithOldLinkId.map(_.endMValue).max - linearLocationsWithOldLinkId.map(_.startMValue).min)
         
@@ -558,9 +539,28 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
       val oldLinkIds = tiekamuRoadLinkChanges.map(_.oldLinkId).toSet
       // fetch roadLinks from KGV these are used for getting geometry and link lengths
       val kgvRoadLinks = kgvClient.roadLinkVersionsData.fetchByLinkIds(newLinkIds ++ oldLinkIds)
-      val complementaryLinksForValidations = kgvClient.complementaryData.fetchByLinkIds(newLinkIds ++ oldLinkIds)
 
-      val tiekamuRoadLinkChangeErrors = validateTiekamuRoadLinkChanges(tiekamuRoadLinkChanges, activeLinearLocations, kgvRoadLinks, complementaryLinksForValidations)
+      val nonExistentNewLinkIds = {
+        val knownLinkIds = (kgvRoadLinks ++ kgvClient.complementaryData.fetchByLinkIds(newLinkIds)).map(_.linkId)
+        newLinkIds.filterNot(newLinkId => knownLinkIds.contains(newLinkId))
+      }
+
+      if (nonExistentNewLinkIds.nonEmpty) {
+        logger.info(s"Some link ids (${nonExistentNewLinkIds}) where not found in KGV or in Viite complementary link table. Searching from VKM next..")
+        nonExistentNewLinkIds.foreach(linkId => {
+          val complementaryLinkFromVKM = vkmClient.fetchComplementaryLinkFromVKM(linkId)
+          if (complementaryLinkFromVKM.nonEmpty) {
+            logger.info(s"Found complementaryLink from VKM: ${complementaryLinkFromVKM.get}, adding to complementary link table in Viite.")
+            complementaryLinkDAO.create(complementaryLinkFromVKM.get)
+          } else {
+            throw ViiteException("Couldn't find new link id in KGV, Viite complementary link table, or VKM complementary links.")
+          }
+        })
+      }
+
+      val complementaryLinks = kgvClient.complementaryData.fetchByLinkIds(newLinkIds ++ oldLinkIds)
+
+      val tiekamuRoadLinkChangeErrors = validateTiekamuRoadLinkChanges(tiekamuRoadLinkChanges, activeLinearLocations, kgvRoadLinks, complementaryLinks)
 
       var skippedTiekamuRoadLinkChanges = Seq.empty[TiekamuRoadLinkChange]
       val (validTiekamuRoadLinkChanges, validActiveLinearLocations) = {
@@ -573,8 +573,6 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
         }
       }
       // Fetch the complementary links again here because there might be new complementary links added to the database during validations
-      (newLinkIds ++ oldLinkIds).foreach(l => println(s"${l}"))
-      val complementaryLinks = kgvClient.complementaryData.fetchByLinkIds(newLinkIds ++ oldLinkIds)
       val viiteChangeSets = createViiteLinkNetworkChanges(validTiekamuRoadLinkChanges, validActiveLinearLocations, kgvRoadLinks, complementaryLinks)
       (viiteChangeSets, tiekamuRoadLinkChangeErrors, skippedTiekamuRoadLinkChanges)
     }
