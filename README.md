@@ -16,7 +16,7 @@ CodeArtifact Setup (Optional for Local Development)
 -----------------------------
 This project uses AWS CodeArtifact to manage npm and Maven packages. Using CodeArtifact is optional for local development but required for CI/CD pipelines.
 
-To set up CodeArtifact for local development or to switch between CodeArtifact and public repositories, please refer to our [CodeArtifact Setup Guide](aws/cloud-formation/codeArtifact/README.md).
+To set up CodeArtifact for local development or to switch between CodeArtifact and public repositories, please refer to our [CodeArtifact Setup Guide](project/README.md).
 
 Note: If you choose not to use CodeArtifact, follow the instructions below.
 
