@@ -20,6 +20,9 @@ class RoadwayChangesDAOSpec extends AnyFunSuite with Matchers with BaseDAO {
   private val roadNumber1 = 990
   private val roadwayNumber1 = 1000000000L
   private val roadPartNumber1 = 1
+  private val ely8  = ArealRoadMaintainer.ELYPohjoisSavo
+  private val ely14 = ArealRoadMaintainer.ELYLappi
+
   private def dummyProject(id: Long, status: ProjectState, reservedParts: Seq[ProjectReservedPart] = List.empty[ProjectReservedPart], coordinates: Option[ProjectCoordinates] = None): Project ={
     Project(id, status, "testProject", "testUser", DateTime.parse("2001-01-01"), "testUser", DateTime.parse("2001-01-01"), DateTime.now(), "additional info here", reservedParts, Seq(), Some("current status info"), coordinates)
   }
@@ -45,7 +48,7 @@ class RoadwayChangesDAOSpec extends AnyFunSuite with Matchers with BaseDAO {
   test("Test RoadwayChangesDAO().fetchRoadwayChanges() When searching for changes on a project with roadway changes Then return said changes."){
     runWithRollback{
       //inserts one case
-      val addresses = List(ProjectReservedPart(5:Long, RoadPart(203, 203), Some(6L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
+      val addresses = List(ProjectReservedPart(5:Long, RoadPart(203, 203), Some(6L), Some(Discontinuity.apply("jatkuva")), Some(ely8), newLength = None, newDiscontinuity = None, newArealRoadMaintainer = None))
       val project = Project(100,ProjectState.Incomplete,"testiprojekti","Test",DateTime.now(),"Test",DateTime.now(),DateTime.now(),"info",addresses,Seq(),None)
       projectDAO.create(project)
       runUpdateToDb(
@@ -65,7 +68,7 @@ class RoadwayChangesDAOSpec extends AnyFunSuite with Matchers with BaseDAO {
     runWithRollback {
       addprojects()
       val project1 = projectDAO.fetchById(1).get
-      val reservedParts = Seq(ProjectReservedPart(0, RoadPart(1, 1), Some(0), Some(Discontinuity.Continuous), Some(8L), None, None, None, Some(12345L.toString)))
+      val reservedParts = Seq(ProjectReservedPart(0, RoadPart(1, 1), Some(0), Some(Discontinuity.Continuous), Some(ely8), None, None, None, Some(12345L.toString)))
       new RoadwayChangesDAO().insertDeltaToRoadChangeTable(1, Some(project1.copy(reservedParts = reservedParts)))
       runSelectSingleFirstOptionWithType[Long](
         sql"""
@@ -95,7 +98,7 @@ class RoadwayChangesDAOSpec extends AnyFunSuite with Matchers with BaseDAO {
           projectARM, NoTermination, projectLink1.roadwayNumber, None, None, None)
       )
       projectLinkDAO.updateProjectLinks(Seq(newProjectLink), project1.createdBy, ra)
-      val reservedParts = Seq(ProjectReservedPart(0, RoadPart(1, 1), Some(0), Some(Discontinuity.Continuous), Some(8L), None, None, None, Some(12345L.toString)))
+      val reservedParts = Seq(ProjectReservedPart(0, RoadPart(1, 1), Some(0), Some(Discontinuity.Continuous), Some(ely8), None, None, None, Some(12345L.toString)))
       val dao = new RoadwayChangesDAO()
       dao.insertDeltaToRoadChangeTable(1, Some(project1.copy(reservedParts = reservedParts)))
       val changes = dao.fetchRoadwayChanges(Set(1))
@@ -107,7 +110,6 @@ class RoadwayChangesDAOSpec extends AnyFunSuite with Matchers with BaseDAO {
 
   test("Test RoadwayChangesDAO().insertDeltaToRoadChangeTable()  When a road is transferred to another road with reverse  Then roadway changetable should have one road reversed and the others roadnumber changed.") {
     val projId1 = 1
-    val ely14 = ArealRoadMaintainer.ELYLappi
     val targetRoadPart          = RoadPart(1,1)
     val otherRoadSourceRoadPart = RoadPart(2,1)
 
@@ -189,7 +191,7 @@ class RoadwayChangesDAOSpec extends AnyFunSuite with Matchers with BaseDAO {
       val roadwayDAO = new RoadwayDAO
       roadwayDAO.create(rw)
       projectLinkDAO.create(Seq(projectLink1, projectLink2, projectLink3, projectLink4))
-      val reservedParts     = Seq(ProjectReservedPart(0, RoadPart(1, 1), Some(0), Some(Discontinuity.Discontinuous), Some(8L), None, None, None, Some(12345L.toString)))
+      val reservedParts     = Seq(ProjectReservedPart(0, RoadPart(1, 1), Some(0), Some(Discontinuity.Discontinuous), Some(ely8), None, None, None, Some(12345L.toString)))
       val roadwayChangesDAO = new RoadwayChangesDAO()
       roadwayChangesDAO.insertDeltaToRoadChangeTable(1, Some(project1.copy(reservedParts = reservedParts)))
 

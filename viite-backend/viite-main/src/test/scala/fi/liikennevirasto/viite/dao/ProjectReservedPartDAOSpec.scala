@@ -237,7 +237,7 @@ class ProjectReservedPartDAOSpec extends AnyFunSuite with Matchers {
       val id = Sequences.nextViiteProjectId
       val projectLinkId = Sequences.nextProjectLinkId
 
-      val reservedParts = Seq(ProjectReservedPart(id: Long, RoadPart(roadNumber1, roadPartNumber1), Some(6L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
+      val reservedParts = Seq(ProjectReservedPart(id: Long, RoadPart(roadNumber1, roadPartNumber1), Some(6L), Some(Discontinuity.apply("jatkuva")), Some(ArealRoadMaintainer.ELYPohjoisSavo), newLength = None, newDiscontinuity = None, newArealRoadMaintainer = None))
       val rap = dummyRoadAddressProject(id, ProjectState.Incomplete, reservedParts, None)
       projectDAO.create(rap)
       projectReservedPartDAO.reserveRoadPart(id, RoadPart(roadNumber1, roadPartNumber1), "TestUser")
