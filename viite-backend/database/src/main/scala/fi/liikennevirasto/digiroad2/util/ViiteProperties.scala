@@ -59,9 +59,9 @@ class ViitePropertiesFromEnv extends ViiteProperties {
   val kgvEndpoint       : String  = scala.util.Properties.envOrElse("kgvEndpoint", null)
   val kgvApiKey: String = scala.util.Properties.envOrElse("kgvApiKey", null)
   val vkmUrl: String = scala.util.Properties.envOrElse("vkmUrl", null)
-  val vkmUrlDev: String = scala.util.Properties.envOrElse("vkmUrlDev", null)
+  val vkmUrlDev: String = scala.util.Properties.envOrElse("vkmUrlDev", null) // Only to be used on Viite dev environment when testing VKM dev data
   val vkmApiKey: String = scala.util.Properties.envOrElse("vkmApiKey", null)
-  val vkmApiKeyDev: String = scala.util.Properties.envOrElse("vkmApiKeyDev", null)
+  val vkmApiKeyDev: String = scala.util.Properties.envOrElse("vkmApiKeyDev", null) // Only to be used on Viite dev environment when testing VKM dev data
   val importOnlyCurrent: Boolean = scala.util.Properties.envOrElse("importOnlyCurrent", "false").toBoolean
   val authenticationTestMode: Boolean = scala.util.Properties.envOrElse("authenticationTestMode", "false").toBoolean
   val authenticationTestUser: String = scala.util.Properties.envOrElse("authenticationTestUser", null)

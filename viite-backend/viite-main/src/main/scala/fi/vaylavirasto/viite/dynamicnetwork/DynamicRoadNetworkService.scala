@@ -26,8 +26,7 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
   val vkmClient = new VKMClient(ViiteProperties.vkmUrlDev, ViiteProperties.vkmApiKeyDev)
 
   def runWithTransaction[T](f: => T): T = PostGISDatabaseScalikeJDBC.runWithTransaction(f)
-
-
+  
   implicit val formats = DefaultFormats
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
@@ -546,7 +545,7 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
       }
 
       if (nonExistentNewLinkIds.nonEmpty) {
-        logger.info(s"Some link ids (${nonExistentNewLinkIds}) where not found in KGV or in Viite complementary link table. Searching from VKM next..")
+        logger.info(s"Some link ids (${nonExistentNewLinkIds}) were not found in KGV or in Viite complementary link table. Searching from VKM next..")
         nonExistentNewLinkIds.foreach(linkId => {
           val complementaryLinkFromVKM = vkmClient.fetchComplementaryLinkFromVKM(linkId)
           if (complementaryLinkFromVKM.nonEmpty) {

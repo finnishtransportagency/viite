@@ -402,7 +402,6 @@ class RoadAddressServiceSpec extends AnyFunSuite with Matchers{
     when(mockLinearLocationDAO.fetchByRoadways(any[Set[Long]])).thenReturn(towardsDigitizingLinearLocation)
     when(mockRoadwayDAO.fetchAllBySectionsAndTracks(any[Long], any[Set[Long]], any[Set[Track]])).thenReturn(roadways)
     when(mockRoadwayDAO.fetchAllBySectionAndAddresses(any[RoadPart], any[Option[Long]], any[Option[Long]], any[Option[Long]])).thenReturn(roadways)
-    when(mockViiteVkmClient.postFormUrlEncoded(any[String], any[Map[String, String]])).thenReturn(searchResults, Seq.empty: _*)
     when(mockViiteVkmClient.get(any[String], any[Map[String, String]])).thenReturn(Right(searchResults))
     when(mockLinearLocationDAO.fetchByRoadAddress(any[RoadPart],any[Long], any[Option[Long]])).thenReturn(towardsDigitizingLinearLocation)
 

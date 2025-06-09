@@ -53,6 +53,15 @@ class VKMClient(endPoint: String, apiKey: String) {
     .setDefaultRequestConfig(RequestConfig.custom()
       .setCookieSpec(StandardCookieSpec.RELAXED).build()).build()
 
+  def close(): Unit = {
+    try {
+      client.close()
+    } catch {
+      case e: IOException =>
+        logger.warn("Failed to close VKM HTTP client", e)
+    }
+  }
+
   /**
    * Builds http query fom given parts, executes the query, and returns the result (or error if http>=400).
    * @param params query parameters. Parameters are expected to be unescaped.
@@ -76,34 +85,6 @@ class VKMClient(endPoint: String, apiKey: String) {
     }
   }
 
-  private def getRestEndPoint: String = {
-    val loadedKeyString = endPoint
-    if (loadedKeyString == null)
-      throw new IllegalArgumentException("Missing property: VKM URL")
-    loadedKeyString
-  }
-
-  def postFormUrlEncoded(urlPart: String, parameters: Map[String, String]): Any = {
-    implicit val formats: DefaultFormats = DefaultFormats
-
-    val url = s"$getRestEndPoint$urlPart"
-    val post = new HttpPost(url)
-    var paramList = new java.util.ArrayList[NameValuePair]()
-    parameters.foreach { case (key, value) =>
-      paramList.add(new BasicNameValuePair(key, value))
-    }
-    post.setEntity(new UrlEncodedFormEntity(paramList, java.nio.charset.Charset.forName("UTF-8")))
-    post.setHeader("Content-type", "application/x-www-form-urlencoded")
-
-    try {
-      client.execute(post, getResponseHandler(url))
-    } catch {
-      case NonFatal(e) =>
-        logger.error(s"VkmClient failed: ${e.getMessage} $url", e)
-        Map(("results","Failed"))
-    }
-  }
-
   /** Return a response handler, with handleResponse implementation returning the response body parsed */
   def getResponseHandler(url: String): HttpClientResponseHandler[Either[VKMError, Any]] = {
     new HttpClientResponseHandler[Either[VKMError, Any]] {
@@ -119,22 +100,25 @@ class VKMClient(endPoint: String, apiKey: String) {
     }
   }
 
-
   def fetchComplementaryLinkFromVKM(linkId: String): Option[ComplementaryLink] = {
 
+    /** Extracts a ComplementaryLink object from a feature */
     def extractFeature(feature: JValue): ComplementaryLink = {
+      // Use default JSON formats for extracting values
       implicit val formats: DefaultFormats.type = DefaultFormats
 
+      // Extract the "properties" part of the feature
       val props = feature \ "properties"
       val attributes = props.extract[Map[String, Any]]
 
+      // Extract and transform the geometry coordinates into Point objects
       val coordinates = (feature \ "geometry" \ "coordinates").extract[List[List[Double]]]
       val geometry: Seq[Point] = coordinates.map {
         case List(x, y, z) => Point(x, y, z)
         case List(x, y) => Point(x, y, 0.0)
         case _ => throw new Exception("Unexpected coordinate format")
       }
-
+      // Helper to extract optional string values from the attribute map
       def optStr(key: String): Option[String] = attributes.get(key) match {
         case Some(null) => None
         case Some(value) if value == JNull => None
@@ -144,10 +128,12 @@ class VKMClient(endPoint: String, apiKey: String) {
         case None => None
       }
 
+      // More helpers to safely extract various types (with fallbacks)
       def getInt(key: String): Int = Try(attributes(key).toString.toInt).getOrElse(0)
       def getDouble(key: String): Double = Try(attributes(key).toString.toDouble).getOrElse(0.0)
       def getDateTime(key: String): DateTime = Try(DateTime.parse(attributes(key).toString)).getOrElse(new DateTime(0))
 
+      // Construct and return the Complementary Link object using extracted values
       ComplementaryLink(
         id = attributes("id").toString,
         datasource = getInt("datasource"),
@@ -216,13 +202,20 @@ class VKMClient(endPoint: String, apiKey: String) {
         }
         val json = parse(rawJsonString)
         // Extract the first feature
-        val feature = (json \ "features")(0)
-        val complementaryLink = extractFeature(feature)
-        Some(complementaryLink)
+        (json \ "features") match {
+          case JArray(features) if features.nonEmpty =>
+            val complementaryLink = extractFeature(features.head)
+            Some(complementaryLink)
+          case _ =>
+            logger.warn(s"No features found for complementary link ID: $linkId")
+            None
+        }
       } catch {
         case t: Throwable =>
           logger.error(s"Fetching complementary link failed. ${t}")
           throw t
+      } finally {
+        client.close()
       }
     }
     getComplementaryLink(linkId)
@@ -285,7 +278,7 @@ class VKMClient(endPoint: String, apiKey: String) {
         val newDateFinnishFormat = finnishDateFormatter.print(newDate)
         val tiekamuEndpoint = endPoint ++ "/tiekamu?"
         val tiekamuDateParams = s"tilannepvm=${previousDateFinnishFormat}&asti=${newDateFinnishFormat}"
-        val tiekamuReturnValueParam = "&palautusarvot=72"
+        val tiekamuReturnValueParam = "&palautusarvot=72" // For more info on the different return options, check the VKM/Tiekamu API docs
         val url = tiekamuEndpoint ++ tiekamuDateParams ++ tiekamuReturnValueParam
 
         val request = new HttpGet(url)
