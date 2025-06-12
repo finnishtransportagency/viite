@@ -43,6 +43,9 @@ lazy val scalaTestTra    = Seq(scalaTest, scalatraTest)
 lazy val scalatraLibs    = Seq(scalatraJson, scalatraAuth, scalatraSwagger)
 lazy val scalikeJdbcLibs = Seq(scalikeJdbc, scalikeConfig, scalikeJodaTime)
 
+// Read environment or system property (with fallback)
+val env: String = sys.props.getOrElse("env", "-").toLowerCase
+
 dependencyOverrides ++= Seq(
   "org.scala-lang.modules" %% "scala-xml" % "1.3.0",
   "org.scalactic" %% "scalactic" % "3.2.17",
@@ -211,7 +214,13 @@ lazy val warProject = (project in file("."))
     assembly / mainClass := Some("fi.liikennevirasto.digiroad2.ProductionServer"),
     assembly / test := {}, // This prevents tests from running during the assembly task
     parallelExecution in Test := false,
-    fork in (Compile,run) := true,
+    // Dynamically set forking based on environment
+    fork in (Compile, run) := {
+      env match {
+        case "local" => false
+        case _ => true
+      }
+    },
     testOptions in Test ++= (
       if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
     libraryDependencies ++= Seq(
