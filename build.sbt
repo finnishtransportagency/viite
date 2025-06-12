@@ -216,10 +216,12 @@ lazy val warProject = (project in file("."))
     parallelExecution in Test := false,
     // Dynamically set forking based on environment
     fork in (Compile, run) := {
-      env match {
+      val forkValue = env match {
         case "local" => false
         case _ => true
       }
+      println(s"[sbt] Environment: '$env' → fork = $forkValue")
+      forkValue
     },
     testOptions in Test ++= (
       if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
