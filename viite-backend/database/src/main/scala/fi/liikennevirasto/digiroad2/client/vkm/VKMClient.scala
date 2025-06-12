@@ -65,7 +65,7 @@ class VKMClient(endPoint: String, apiKey: String) {
   /**
    * Builds http query fom given parts, executes the query, and returns the result (or error if http>=400).
    * @param params query parameters. Parameters are expected to be unescaped.
-   * @return The query result, or VKMError in case the response was http>=400.
+   * @return Either the query result (Right) or a VKMError (Left) if the response status is >= 400.
    */
   def get(path: String, params: Map[String, String]): Either[VKMError, Any] = {
 
@@ -79,9 +79,9 @@ class VKMClient(endPoint: String, apiKey: String) {
     request.addHeader("X-API-Key", apiKey)
 
     try {
-      client.execute(request, getResponseHandler(url))
+      Right(client.execute(request, getResponseHandler(url)))
     } catch {
-      case e: Exception => Right(VKMError(Map("error" -> e.getMessage), url))
+      case e: Exception => Left(VKMError(Map("error" -> e.getMessage), url))
     }
   }
 
