@@ -135,8 +135,8 @@ class JunctionDAOSpec extends AnyFunSuite with Matchers {
       // create node points
       nodePointDAO.create(
         Seq(
-          NodePoint(Sequences.nextNodePointId, BeforeAfter.Before, rwpId,  Some(nodeNumber1), NodePointType.RoadNodePoint, Some(DateTime.parse("1992-10-08")), None, DateTime.parse("1992-10-08"), None, "test", Some(DateTime.parse("1992-10-08")), roadwayNumber1, junctionAddrM, roadPart, Track.Combined, 1, Point(100, 100)),
-          NodePoint(Sequences.nextNodePointId, BeforeAfter.Before, rwpId2, Some(nodeNumber2), NodePointType.RoadNodePoint, Some(DateTime.parse("2021-01-01")), None, DateTime.parse("2021-01-01"), None, "test", Some(DateTime.parse("2021-01-01")), roadwayNumber2, endAddrM,      roadPart, Track.Combined, 1, Point(100, 200))
+          NodePoint(Sequences.nextNodePointId, BeforeAfter.Before, rwpId,  Some(nodeNumber1), NodePointType.RoadNodePoint, Some(DateTime.parse("1992-10-08")), None, DateTime.parse("1992-10-08"), None, "test", Some(DateTime.parse("1992-10-08")), roadwayNumber1, junctionAddrM, roadPart, Track.Combined, ArealRoadMaintainer.ELYUusimaa, Point(100, 100)),
+          NodePoint(Sequences.nextNodePointId, BeforeAfter.Before, rwpId2, Some(nodeNumber2), NodePointType.RoadNodePoint, Some(DateTime.parse("2021-01-01")), None, DateTime.parse("2021-01-01"), None, "test", Some(DateTime.parse("2021-01-01")), roadwayNumber2, endAddrM,      roadPart, Track.Combined, ArealRoadMaintainer.ELYUusimaa, Point(100, 200))
         )
       )
       // create junction
