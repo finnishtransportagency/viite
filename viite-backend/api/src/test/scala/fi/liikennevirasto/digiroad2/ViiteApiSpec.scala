@@ -4,7 +4,8 @@ import fi.liikennevirasto.digiroad2.client.kgv.{KgvRoadLink, KgvRoadLinkClient}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
-import fi.liikennevirasto.viite.{NodesAndJunctionsService, PreFillInfo, ProjectService, RoadAddressService, RoadNameService, RoadNameSource, RoadNetworkValidator, ViiteVkmClient}
+import fi.liikennevirasto.digiroad2.client.vkm.VKMClient
+import fi.liikennevirasto.viite.{NodesAndJunctionsService, PreFillInfo, ProjectService, RoadAddressService, RoadNameService, RoadNameSource, RoadNetworkValidator}
 import fi.liikennevirasto.viite.dao.ProjectLinkDAO
 import fi.liikennevirasto.viite.util.{DigiroadSerializers, JsonSerializer}
 import fi.vaylavirasto.viite.dao.ComplementaryLinkDAO
@@ -41,7 +42,7 @@ class ViiteApiSpec extends AnyFunSuite with ScalatraSuite with BeforeAndAfter {
   val mockRoadNetworkValidator    : RoadNetworkValidator     = MockitoSugar.mock[RoadNetworkValidator]
   val roadNameService             : RoadNameService          = new RoadNameService { override def runWithTransaction[T](f: => T): T = runWithRollback(f) }
 
-  val mockViiteVkmClient: ViiteVkmClient = MockitoSugar.mock[ViiteVkmClient]
+  val mockViiteVkmClient: VKMClient = MockitoSugar.mock[VKMClient]
 
   val preFilledRoadName = PreFillInfo(1, 2, "roadName", RoadNameSource.RoadAddressSource, -1)
   private val testProjectId = roadNameService.runWithReadOnlySession { projectDAO.fetchAllWithoutDeletedFilter().head("id").toString.toLong }
@@ -60,7 +61,7 @@ class ViiteApiSpec extends AnyFunSuite with ScalatraSuite with BeforeAndAfter {
   when(frozenTimeRoadLinkData.fetchByLinkIdsF(any[Set[String]])).thenReturn(Future(Seq(testRoadLink)))
 
   when(complementaryData.fetchByLinkIdsF(any[Set[String]])).thenReturn(Future(Seq()))
-  when(complementaryData.fetchByLinkIds(any[Set[String]])).thenReturn(List())
+  when(complementaryData.fetchByLinkIdsInReadOnlySession(any[Set[String]])).thenReturn(List())
   when(complementaryData.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle],any[Set[Int]])).thenReturn(Future(Seq()))
   when(frozenTimeRoadLinkData.fetchBySourceId(any[Long])).thenReturn(Some(testRoadLink))
   when(frozenTimeRoadLinkData.fetchByRoadNumbersBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]], any[Seq[(Int, Int)]], any[Boolean])).thenReturn(Future(Seq(testRoadLink)))
@@ -69,7 +70,7 @@ class ViiteApiSpec extends AnyFunSuite with ScalatraSuite with BeforeAndAfter {
 
   val roadLinkService: RoadLinkService = new RoadLinkService(mockKgvRoadLink, eventbus, new JsonSerializer, useFrozenLinkInterface)
   val roadAddressService: RoadAddressService = new RoadAddressService(roadLinkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, roadwayAddressMapper, eventbus, useFrozenLinkInterface){
-    override val viiteVkmClient = mockViiteVkmClient
+    override val vkmClient = mockViiteVkmClient
   }
 
   val projectService: ProjectService = new ProjectService(roadAddressService, mockRoadLinkService, mockNodesAndJunctionsService, roadwayDAO,
