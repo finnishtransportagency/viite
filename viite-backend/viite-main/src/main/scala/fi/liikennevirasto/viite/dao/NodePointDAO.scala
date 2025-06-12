@@ -5,7 +5,7 @@ import fi.liikennevirasto.viite.NewIdValue
 import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
 import fi.vaylavirasto.viite.postgis.{GeometryDbUtils, PostGISDatabaseScalikeJDBC}
-import fi.vaylavirasto.viite.model.{AddrMRange, BeforeAfter, NodePointType, RoadPart, Track}
+import fi.vaylavirasto.viite.model.{AddrMRange, ArealRoadMaintainer, BeforeAfter, NodePointType, RoadPart, Track}
 import org.joda.time.DateTime
 import scalikejdbc._
 import scalikejdbc.jodatime.JodaWrappedResultSet.fromWrappedResultSetToJodaWrappedResultSet
@@ -14,7 +14,7 @@ import scalikejdbc.jodatime.JodaWrappedResultSet.fromWrappedResultSetToJodaWrapp
 case class NodePoint(id: Long, beforeAfter: BeforeAfter, roadwayPointId: Long, nodeNumber: Option[Long], nodePointType: NodePointType = NodePointType.UnknownNodePointType,
                      startDate: Option[DateTime], endDate: Option[DateTime], validFrom: DateTime, validTo: Option[DateTime],
                      createdBy: String, createdTime: Option[DateTime], roadwayNumber: Long, addrM : Long,
-                     roadPart: RoadPart, track: Track, elyCode: Long, coordinates: Point = Point(0.0, 0.0))
+                     roadPart: RoadPart, track: Track, arealRoadMaintainer: ArealRoadMaintainer, coordinates: Point = Point(0.0, 0.0))
 
 object NodePoint extends SQLSyntaxSupport[NodePoint] {
   def apply(rs: WrappedResultSet): NodePoint = NodePoint(
@@ -35,8 +35,8 @@ object NodePoint extends SQLSyntaxSupport[NodePoint] {
       roadNumber      = rs.longOpt("road_number").map(l       => l).getOrElse(0L),
       partNumber      = rs.longOpt("road_part_number").map(l  => l).getOrElse(0L)
     ),
-    track             = rs.longOpt("track").map(l  => Track.apply(l.toInt)).getOrElse(Track.Unknown),
-    elyCode           = rs.longOpt("ely").map(l    => l).getOrElse(0L)
+    track               = rs.longOpt("track").map(l  => Track.apply(l.toInt)).getOrElse(Track.Unknown),
+    arealRoadMaintainer = ArealRoadMaintainer.getELYOrARMInvalid(rs.longOpt("ely").getOrElse(0L))
   )
 }
 
@@ -471,13 +471,13 @@ class NodePointDAO extends BaseDAO {
     create(Seq(NodePoint(NewIdValue, beforeAfter, roadwayPointId, Some(nodeNumber), NodePointType.RoadNodePoint,
       None, None, DateTime.now(), None,
       username, Some(DateTime.now()), 0L, 11,
-      RoadPart(0, 0), null, 8)))
+      RoadPart(0, 0), null, ArealRoadMaintainer.ARMInvalid)))
   }
 
   def insertCalculatedNodePoint(roadwayPointId: Long, beforeAfter: BeforeAfter, nodeNumber: Long, username: String): Unit = {
     create(Seq(NodePoint(NewIdValue, beforeAfter, roadwayPointId, Some(nodeNumber), NodePointType.CalculatedNodePoint,
       None, None, DateTime.now(), None,
       username, Some(DateTime.now()), 0L, 11,
-      RoadPart(0, 0), null, 8)))
+      RoadPart(0, 0), null, ArealRoadMaintainer.ARMInvalid)))
   }
 }

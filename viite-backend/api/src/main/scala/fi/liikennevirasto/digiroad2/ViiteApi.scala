@@ -1654,7 +1654,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       "createdBy" -> nodePoint.createdBy,
       "createdTime" -> nodePoint.createdTime,
       "track" -> nodePoint.track.value,
-      "elyCode" -> nodePoint.elyCode,
+      "elyCode" -> ArealRoadMaintainer.getELYNumberOrNA(Some(nodePoint.arealRoadMaintainer)),
       "coordinates" -> Map(
         "x" ->  nodePoint.coordinates.x,
         "y" ->  nodePoint.coordinates.y)
@@ -1671,7 +1671,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       "createdBy" -> nodePoint.createdBy,
       "roadwayNumber" -> nodePoint.roadwayNumber,
       "addrM" -> nodePoint.addrM,
-      "elyCode" -> nodePoint.elyCode,
+      "elyCode" -> ArealRoadMaintainer.getELYNumberOrNA(Some(nodePoint.arealRoadMaintainer)),
       "roadNumber" -> nodePoint.roadPart.roadNumber,
       "roadPartNumber" -> nodePoint.roadPart.partNumber,
       "track" -> nodePoint.track,
@@ -1690,7 +1690,8 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       "roadPartNumber" -> junctionTemplate.roadPart.partNumber,
       "track" -> junctionTemplate.track,
       "addrM" -> junctionTemplate.addrM,
-      "elyCode" -> junctionTemplate.elyCode)
+      "elyCode" -> ArealRoadMaintainer.getELYNumberOrNA(Some(junctionTemplate.arealRoadMaintainer))
+    )
   }
 
   def junctionTemplatesWithPointsToApi(junctionPointTemplate: (JunctionTemplate, Seq[JunctionPoint])) : Map[String, Any] = {
@@ -1790,7 +1791,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
 
   def roadAddressBrowserNodesToApi(node: NodeForRoadAddressBrowser): Map[String, Any] = {
     Map(
-      "ely" -> node.ely,
+      "ely" -> ArealRoadMaintainer.getELYNumberOrNA(Some(node.arealRoadMaintainer)),
       "roadNumber" -> node.roadPart.roadNumber,
       "roadPartNumber" -> node.roadPart.partNumber,
       "addrM" -> node.addrM,
@@ -2115,7 +2116,7 @@ object NodesAndJunctionsConverter {
       NodePoint(nodePoint.id, BeforeAfter.apply(nodePoint.beforeAfter), nodePoint.roadwayPointId, nodePoint.nodeNumber, NodePointType.apply(nodePoint.`type`),
         startDate, endDate, finnishDateFormatter.parseDateTime(nodePoint.validFrom), validTo,
         nodePoint.createdBy, createdTime, nodePoint.roadwayNumber, nodePoint.addrM,
-        RoadPart(nodePoint.roadNumber, nodePoint.roadPartNumber), Track.apply(nodePoint.track), nodePoint.elyCode)
+        RoadPart(nodePoint.roadNumber, nodePoint.roadPartNumber), Track.apply(nodePoint.track), ArealRoadMaintainer.getELY(nodePoint.elyCode))  // TODO VIITE-3424 change when DB column changes ely -> arealRoadMaintainer
     }
   }
 }
