@@ -237,7 +237,7 @@ class RoadAddressImporter(KGVClient: KgvRoadLink, importOptions: ImportOptions) 
   private def fetchRoadLinksFromKGV(linkIds: Set[String]): Map[String, RoadLinkLike] = {
     val KGVRoadLinkClient = if (importOptions.useFrozenLinkService) KGVClient.frozenTimeRoadLinkData else KGVClient.roadLinkData
     linkIds.grouped(4000).flatMap(group =>
-      KGVRoadLinkClient.fetchByLinkIds(group) ++ KGVClient.complementaryData.fetchByLinkIds(group)
+      KGVRoadLinkClient.fetchByLinkIds(group) ++ KGVClient.complementaryData.fetchByLinkIdsInReadOnlySession(group)
     ).toSeq.groupBy(_.linkId).mapValues(_.head)
   }
 

@@ -1,6 +1,7 @@
 package fi.vaylavirasto.viite.dynamicnetwork
 
 import fi.liikennevirasto.digiroad2.client.kgv.KgvRoadLink
+import fi.liikennevirasto.digiroad2.client.vkm.TiekamuRoadLinkChange
 import fi.liikennevirasto.viite.AwsService
 import fi.liikennevirasto.viite.dao._
 import fi.vaylavirasto.viite.dao.Sequences

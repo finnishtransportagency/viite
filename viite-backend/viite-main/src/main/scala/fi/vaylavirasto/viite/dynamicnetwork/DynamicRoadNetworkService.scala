@@ -1,57 +1,36 @@
 package fi.vaylavirasto.viite.dynamicnetwork
 
 import fi.liikennevirasto.digiroad2.client.kgv.KgvRoadLink
+import fi.liikennevirasto.digiroad2.client.vkm.{TiekamuRoadLinkChange, TiekamuRoadLinkChangeError, TiekamuRoadLinkErrorMetaData, VKMClient}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
 import fi.liikennevirasto.viite.{AwsService, MaxDistanceForConnectedLinks}
 import fi.liikennevirasto.viite.dao.{LinearLocation, LinearLocationDAO, Roadway, RoadwayDAO}
+import fi.vaylavirasto.viite.dao.ComplementaryLinkDAO
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import fi.vaylavirasto.viite.geometry.GeometryUtils.scaleToThreeDigits
 import fi.vaylavirasto.viite.model.{LinkGeomSource, RoadLink, RoadPart}
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC
-import fi.vaylavirasto.viite.util.DateTimeFormatters.finnishDateFormatter
 import fi.vaylavirasto.viite.util.ViiteException
-import org.apache.hc.client5.http.classic.methods.HttpGet
-import org.apache.hc.client5.http.impl.classic.{CloseableHttpClient, HttpClients}
-import org.apache.hc.core5.http.{ClassicHttpResponse, HttpStatus}
-import org.apache.hc.core5.http.io.HttpClientResponseHandler
-import org.apache.hc.core5.http.io.entity.EntityUtils
+import org.apache.hc.client5.http.impl.classic.HttpClients
 import org.joda.time.DateTime
 import org.json4s.DefaultFormats
-import org.json4s.JsonAST.JArray
 import org.json4s.jackson.Json
-import org.json4s.jackson.JsonMethods.parse
 import org.slf4j.{Logger, LoggerFactory}
 
-import java.io.IOException
 import scala.collection.mutable.ListBuffer
-
-case class TiekamuRoadLinkChange(oldLinkId: String,
-                                 oldStartM: Double,
-                                 oldEndM: Double,
-                                 newLinkId: String,
-                                 newStartM: Double,
-                                 newEndM: Double,
-                                 digitizationChange: Boolean)
-
-case class TiekamuRoadLinkChangeError(errorMessage: String,
-                                      change: TiekamuRoadLinkChange,
-                                      metaData: TiekamuRoadLinkErrorMetaData)
-
-case class TiekamuRoadLinkErrorMetaData(roadPart: RoadPart,
-                                        roadwayNumber:Long,
-                                        linearLocationIds: Seq[Long],
-                                        linkId: String)
 
 class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO: RoadwayDAO, val kgvClient: KgvRoadLink, awsService: AwsService, linkNetworkUpdater: LinkNetworkUpdater) {
 
   val bucketName: String = ViiteProperties.dynamicLinkNetworkS3BucketName
+  val vkmClient = new VKMClient(ViiteProperties.vkmUrlDev, ViiteProperties.vkmApiKeyDev)
 
   def runWithTransaction[T](f: => T): T = PostGISDatabaseScalikeJDBC.runWithTransaction(f)
-
-
+  
   implicit val formats = DefaultFormats
   val logger: Logger = LoggerFactory.getLogger(getClass)
+
+  val complementaryLinkDAO: ComplementaryLinkDAO = new ComplementaryLinkDAO
 
   def tiekamuRoadLinkChangeErrorToMap(tiekamuRoadLinkChangeError: TiekamuRoadLinkChangeError): Map[String, Any] = {
     Map(
@@ -259,43 +238,6 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
 
   def createTiekamuRoadLinkChangeSets(previousDate: DateTime, newDate: DateTime, activeLinearLocations: Seq[LinearLocation]): Seq[TiekamuRoadLinkChange] = {
 
-    val client = HttpClients.createDefault()
-
-    def extractTiekamuRoadLinkChanges(responseString: String): Seq[TiekamuRoadLinkChange] = {
-      def getDigitizationChangeValue(newStartMValue: Double, newEndMValue: Double): Boolean = {
-        if (newEndMValue < newStartMValue)
-          true
-        else
-          false
-      }
-
-      //TODO REMOVE THESE WHEN IN PRODUCTION THIS IS FOR LOCAL DUMMY JSON
-      //      val localParsedMockJson = parse(responseString.substring(1, responseString.length() - 1))
-      //      val features = (localParsedMockJson \ "features").asInstanceOf[JArray].arr
-
-      // Parse the JSON response
-      val parsedJson = parse(responseString)
-
-      // Extract the "features" field as a sequence of JValue
-      val features = (parsedJson \ "features").asInstanceOf[JArray].arr
-      // Map the JSON objects to the TiekamuRoadLinkChange class
-      val tiekamuRoadLinkChanges = features.map { feature =>
-        val properties = feature \ "properties"
-        val newStartM = (properties \ "m_arvo_alku_kohdepvm").extract[Double]
-        val newEndM = (properties \ "m_arvo_loppu_kohdepvm").extract[Double]
-        TiekamuRoadLinkChange(
-          (properties \ "link_id").extract[String],
-          (properties \ "m_arvo_alku").extract[Double],
-          (properties \ "m_arvo_loppu").extract[Double],
-          (properties \ "link_id_kohdepvm").extract[String],
-          if(newStartM > newEndM) newEndM else newStartM ,
-          if(newEndM < newStartM) newStartM else newEndM,
-          getDigitizationChangeValue(newStartM, newEndM)
-        )
-      }
-      tiekamuRoadLinkChanges
-    }
-
     /**
      * Viite is only interested in change infos that affect links that have road addressed roads on them.
      * Therefore we filter out all the unnecessary change infos i.e. unaddressed link change infos
@@ -309,61 +251,8 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
       filteredActiveChangeInfos
     }
 
-    /** Create a response handler,  with handleResponse implementation returning the
-      * response body in Right as Seq[TiekamuRoadLinkChanges], or an Exception in Left. */
-    def getResponseHandler(url: String) = {
-      new HttpClientResponseHandler[Either[ViiteException, Seq[TiekamuRoadLinkChange]]] {
-        @throws[IOException]
-        override def handleResponse(response: ClassicHttpResponse): Either[ViiteException, Seq[TiekamuRoadLinkChange]]  = {
-          if (response.getCode == HttpStatus.SC_OK) {
-            val entity = response.getEntity
-            val responseString = EntityUtils.toString(entity, "UTF-8")
-            val tiekamuRoadLinkChanges = extractTiekamuRoadLinkChanges(responseString)
-            Right(tiekamuRoadLinkChanges)
-          } else {
-            Left(ViiteException(s"Request $url returned HTTP ${response.getCode}"))
-          }
-        }
-      }
-    }
-
-    def getTiekamuRoadlinkChanges(client: CloseableHttpClient): Seq[TiekamuRoadLinkChange] = {
-      time(logger, "Creating TiekamuRoadLinkChange sets") {
-        try {
-          val previousDateFinnishFormat = finnishDateFormatter.print(previousDate)
-          val newDateFinnishFormat = finnishDateFormatter.print(newDate)
-          val tiekamuEndpoint = "https://devapi.testivaylapilvi.fi/viitekehysmuunnin/tiekamu?"
-          val tiekamuDateParams = s"tilannepvm=${previousDateFinnishFormat}&asti=${newDateFinnishFormat}"
-          val tiekamuReturnValueParam = "&palautusarvot=72"
-          val url = tiekamuEndpoint ++ tiekamuDateParams ++ tiekamuReturnValueParam
-
-          val request = new HttpGet(url)
-          request.addHeader("accept", "application/geo+json")
-          request.addHeader("X-API-Key", ViiteProperties.vkmApiKeyDev)
-
-          time(logger, "Fetching change set data from Tiekamu") {
-            try {
-              val tiekamuRoadLinkChanges = client.execute(request, getResponseHandler(url))
-              tiekamuRoadLinkChanges match {
-                case Left(t) => throw t
-                case Right(tiekamuRoadLinkChanges) => tiekamuRoadLinkChanges
-              }
-            } catch {
-              case t: Throwable =>
-                logger.warn(s"fetching $url failed. Throwable when fetching TiekamuRoadlinkChanges: ${t.getMessage}")
-                Seq()
-            }
-          }
-        } catch {
-          case t: Throwable =>
-            logger.warn(s"creating query URL failed: ${t.getMessage}")
-            Seq()
-        }
-      }
-    }
-
     time(logger, "Creating Viite road link change info sets") {
-      val tiekamuRoadLinkChanges = getTiekamuRoadlinkChanges(client)
+      val tiekamuRoadLinkChanges = vkmClient.getTiekamuRoadlinkChanges(previousDate, newDate)
       // filter change infos so that only the ones that target links with road addresses are left
       val roadAddressedRoadLinkChanges = getChangeInfosWithRoadAddress(tiekamuRoadLinkChanges, activeLinearLocations)
 
@@ -586,8 +475,10 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
         // Calculate the length covered by the new link ID by subtracting minStartM from maxEndM
         // Then scale the result to three decimal digits using GeometryUtils
         val newlinkIdChangesLength = GeometryUtils.scaleToThreeDigits(maxEndM - minStartM)
-        val newLink = (kgvRoadLinks ++ complementaryLinks).find(kgvLink => kgvLink.linkId == newLinkId).getOrElse(throw ViiteException(s"Missing new link from KGV/complementary link table. Cannot validate Tiekamu change infos without KGV/complementary road link. LinkId: ${newLinkId}, changeInfo: ${change}"))
 
+        val newLink = (kgvRoadLinks ++ complementaryLinks).find(kgvLink => kgvLink.linkId == newLinkId).getOrElse(
+          throw ViiteException(s"Missing new link from KGV/complementary link table. Cannot validate Tiekamu change infos without KGV/complementary road link. LinkId: ${newLinkId}, changeInfo: ${change}")
+        )
         val linearLocationsWithOldLinkId = linearLocations.filter(_.linkId == oldLinkId)
         val roadAddressedLinkLength = GeometryUtils.scaleToThreeDigits(linearLocationsWithOldLinkId.map(_.endMValue).max - linearLocationsWithOldLinkId.map(_.startMValue).min)
         
@@ -649,9 +540,29 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
       val oldLinkIds = tiekamuRoadLinkChanges.map(_.oldLinkId).toSet
       // fetch roadLinks from KGV these are used for getting geometry and link lengths
       val kgvRoadLinks = kgvClient.roadLinkVersionsData.fetchByLinkIds(newLinkIds ++ oldLinkIds)
+
+      val nonExistentNewLinkIds = {
+        val knownLinkIds = (kgvRoadLinks ++ kgvClient.complementaryData.fetchByLinkIds(newLinkIds)).map(_.linkId)
+        newLinkIds.filterNot(newLinkId => knownLinkIds.contains(newLinkId))
+      }
+
+      if (nonExistentNewLinkIds.nonEmpty) {
+        logger.info(s"Some link ids (${nonExistentNewLinkIds}) were not found in KGV or in Viite complementary link table. Searching from VKM next..")
+        nonExistentNewLinkIds.foreach(linkId => {
+          val complementaryLinkFromVKM = vkmClient.fetchComplementaryLinkFromVKM(linkId)
+          if (complementaryLinkFromVKM.nonEmpty) {
+            logger.info(s"Found complementaryLink from VKM: ${complementaryLinkFromVKM.get}, adding to complementary link table in Viite.")
+            complementaryLinkDAO.create(complementaryLinkFromVKM.get)
+          } else {
+            throw ViiteException("Couldn't find new link id in KGV, Viite complementary link table, or VKM complementary links.")
+          }
+        })
+      }
+
       val complementaryLinks = kgvClient.complementaryData.fetchByLinkIds(newLinkIds ++ oldLinkIds)
 
       val tiekamuRoadLinkChangeErrors = validateTiekamuRoadLinkChanges(tiekamuRoadLinkChanges, activeLinearLocations, kgvRoadLinks, complementaryLinks)
+
       var skippedTiekamuRoadLinkChanges = Seq.empty[TiekamuRoadLinkChange]
       val (validTiekamuRoadLinkChanges, validActiveLinearLocations) = {
         if (tiekamuRoadLinkChangeErrors.nonEmpty) {
@@ -662,6 +573,7 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
           (tiekamuRoadLinkChanges, activeLinearLocations)
         }
       }
+
       val viiteChangeSets = createViiteLinkNetworkChanges(validTiekamuRoadLinkChanges, validActiveLinearLocations, kgvRoadLinks, complementaryLinks)
       (viiteChangeSets, tiekamuRoadLinkChangeErrors, skippedTiekamuRoadLinkChanges)
     }
