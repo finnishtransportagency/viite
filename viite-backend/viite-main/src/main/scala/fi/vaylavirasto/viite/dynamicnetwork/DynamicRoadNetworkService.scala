@@ -542,8 +542,12 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
       val kgvRoadLinks = kgvClient.roadLinkVersionsData.fetchByLinkIds(newLinkIds ++ oldLinkIds)
 
       val nonExistentNewLinkIds = {
-        val knownLinkIds = (kgvRoadLinks ++ kgvClient.complementaryData.fetchByLinkIds(newLinkIds)).map(_.linkId)
-        newLinkIds.filterNot(newLinkId => knownLinkIds.contains(newLinkId))
+        if (newLinkIds.nonEmpty) {
+          val knownLinkIds = (kgvRoadLinks ++ kgvClient.complementaryData.fetchByLinkIds(newLinkIds)).map(_.linkId)
+          newLinkIds.filterNot(newLinkId => knownLinkIds.contains(newLinkId))
+        } else {
+          Set.empty[String]
+        }
       }
 
       if (nonExistentNewLinkIds.nonEmpty) {
@@ -559,7 +563,13 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
         })
       }
 
-      val complementaryLinks = kgvClient.complementaryData.fetchByLinkIds(newLinkIds ++ oldLinkIds)
+      val complementaryLinks = {
+        if ((newLinkIds ++ oldLinkIds).nonEmpty) {
+          kgvClient.complementaryData.fetchByLinkIds(newLinkIds ++ oldLinkIds)
+        } else {
+          Seq.empty[RoadLink]
+        }
+      }
 
       val tiekamuRoadLinkChangeErrors = validateTiekamuRoadLinkChanges(tiekamuRoadLinkChanges, activeLinearLocations, kgvRoadLinks, complementaryLinks)
 
