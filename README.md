@@ -22,7 +22,7 @@ Note: If you choose not to use CodeArtifact, follow the instructions below.
 
 Frontend
 ---------
-Install [node.js](https://nodejs.org/en/download/releases) (Version 14.21.3 works well. You will also get [npm](https://npmjs.org/))   
+Install [node.js](https://nodejs.org/en/download/releases) (Version 20.15.0 works well. You will also get [npm](https://npmjs.org/))   
 Fetch and install the dependencies needed by the UI
 ```
 npm install
@@ -38,11 +38,16 @@ Install PostGIS by [downloading and installing it from here](https://postgis.net
 by using Docker Compose:
 ```
 cd local-dev/postgis
-docker-compose up
+docker compose up
 ```
 or by running the `local-dev/postgis/start-postgis.sh` script.
 
-PostGIS server can be stopped with the `local-dev/postgis/stop-postgis.sh` script.
+PostGIS server can be stopped with the `local-dev/postgis/stop-postgis.sh` script, 
+
+or with: 
+```
+docker compose down
+ ```
 
 Docker Compose installs and starts the PostGIS database server.
 
@@ -86,7 +91,7 @@ Running the unit tests from Idea:
 
 Running the unit tests from the command line:
 ```
-./sbt test
+sbt test
 ```
 
 Running the backend from Idea:
@@ -94,7 +99,7 @@ Running the backend from Idea:
 
 Running the backend from the command line in the development mode:
 ```
-./sbt '~;container:start; container:reload /'
+sbt run
 ```
 
 When developing locally, backend reads the properties from the
