@@ -1009,7 +1009,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       // Find all segments of the same link
       val sameLinkSegments = allLinks.filter(_.linkId == projectLink.linkId)
 
-      // Find min/max values of ADDRESS measures (not link measures)
+      // Find min/max AddrM values for the same link segments
       val minAddrM = sameLinkSegments.map(_.addrMRange.start).min
       val maxAddrM = sameLinkSegments.map(_.addrMRange.end).max
 

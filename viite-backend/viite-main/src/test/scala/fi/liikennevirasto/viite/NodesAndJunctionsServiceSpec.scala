@@ -4301,7 +4301,7 @@ class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with Before
         ely = 1L
       )
 
-      // Linear locations with exact M-
+      // Linear locations
       // 0-14
       val linearLocation1 = ll1.copy(
         startMValue = llStartM1,
