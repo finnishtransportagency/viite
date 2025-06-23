@@ -12,9 +12,12 @@
 #
 set -e
 
+# set AWS region
+export AWS_REGION="eu-west-1"
 # Set environment
 ENV="dev"
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+
 ECR_REPOSITORY_NAME=viite-${ENV}-ecr-repository
 REPOSITORY_URI=${AWS_ACCOUNT_ID}.dkr.ecr.eu-west-1.amazonaws.com/${ECR_REPOSITORY_NAME}
 
