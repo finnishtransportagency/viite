@@ -1234,11 +1234,12 @@ class ProjectService(
 
   /**
     * Last function on the chain, this is the one that will do all the work.
-    * Firstly we isolate the unique link id's that were modified and we remove all the project links that have them them from the project.
+    * Firstly we isolate the unique link id's that were modified, and we remove all the project links that have them from the project.
     * We use the same link ids we found and fetch the road addresses by combining KGV roadlink information and our roadway+linear location information on the builder.
     * With the road address information we now check that a reservation is possible and reserve them in the project.
     * Afterwards we update the newly reserved project links with the original geometry we obtained previously
-    * If we do still have road address information that do not match the original modified links then we check that a reservation is possible and reserve them in the project and we update those reserved links with the information on the road address.
+    * If we do still have road address information that do not match the original modified links then we check that a reservation is possible
+    * and reserve them in the project and we update those reserved links with the information on the road address.
     * With that done we revert any changes on the road names, when applicable.
     * After all this we come to the conclusion that we have no more road number and road parts for this project then we go ahead and release them.
     *
@@ -1970,19 +1971,23 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
   /**
    * Identifies splits in project links that need to be handled. This only works after the termination or reverting of project links.
    * Splits are identified based on the linear location ID of the project links.
-   * If a split is found where the start and end address M values are the same as the original project link, it is considered unnecessary and should be removed.
+   * If a split is found where the start and end address M values are the same as the original project link (after previous steps in the chain),
+   * it is considered unnecessary and should be removed.
    * @param projectLinks The project links to be evaluated.
    * @return A map of original project links to their corresponding split project links or empty map if no splits to remove are found.
    */
   def identifySplitsToHandle(projectLinks: Seq[ProjectLink]): Map[ProjectLink, Seq[ProjectLink]] = {
-    projectLinks.groupBy(_.linearLocationId).flatMap { case (_, links) =>
-      val originalLink = links.minBy(_.id) // Assuming the first link is always the original
-      val splitsToRemove = links.filter { splitLink =>
-        splitLink.id != originalLink.id &&
-          originalLink.addrMRange == splitLink.addrMRange
+    projectLinks
+      .filter(_.linearLocationId > 0) // Skip links with null/0 linearLocationId
+      .groupBy(_.linearLocationId)
+      .flatMap { case (_, links) =>
+        val originalLink = links.minBy(_.id) // Assuming the first link is always the original
+        val splitsToRemove = links.filter { splitLink =>
+          splitLink.id != originalLink.id &&
+            originalLink.addrMRange == splitLink.addrMRange
+        }
+        if (splitsToRemove.nonEmpty) Some(originalLink -> splitsToRemove) else None
       }
-      if (splitsToRemove.nonEmpty) Some(originalLink -> splitsToRemove) else None
-    }
   }
 
   /**
