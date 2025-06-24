@@ -152,5 +152,5 @@ Flyway migrations can be run by running the task "Flyway migrate"
 or by calling the Viite AdminAPI: <http://localhost:8080/api/admin/flyway_migrate>.
 ("Fixture reset test" does this already.)
 
-[Käyttöönotto ja version päivitys](Deployment.md)
+[Deployment and Infra related instructions](https://github.com/finnishtransportagency/viite-infra?tab=readme-ov-file#viite-infrastructure)
 =================================================
