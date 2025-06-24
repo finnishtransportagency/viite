@@ -66,31 +66,12 @@ class ViitePropertiesFromEnv extends ViiteProperties {
   val authenticationTestMode: Boolean = scala.util.Properties.envOrElse("authenticationTestMode", "false").toBoolean
   val authenticationTestUser: String = scala.util.Properties.envOrElse("authenticationTestUser", null)
 
-  // Database connection properties with fallback mechanism
-  // This code follows this priority order for retrieving each property:
-  // 1. Modern property from environment (e.g., "db.jdbcUrl")
-  // 2. Legacy property from environment (e.g., "bonecp.jdbcUrl")
-  // 3. Null if neither is found
-  //
-  // DEPRECATION NOTICE:
-  // The "bonecp" prefixed properties are legacy names from the BoneCP connection pool.
-  // All services should transition to using the standardized "db.*" property names.
-  //
-  // TODO: After all environments (DEV/QA/PROD) have been updated to use the new
-  // property naming convention, remove the legacy fallbacks to simplify this code.
-  //
-  val dbJdbcUrl: String = scala.util.Properties.envOrElse("db.jdbcUrl",
-    scala.util.Properties.envOrElse("bonecp.jdbcUrl", null))
-  val dbUsername: String = scala.util.Properties.envOrElse("db.username",
-    scala.util.Properties.envOrElse("bonecp.username", null))
-  val dbPassword: String = scala.util.Properties.envOrElse("db.password",
-    scala.util.Properties.envOrElse("bonecp.password", null))
-  val conversionDbJdbcUrl: String = scala.util.Properties.envOrElse("conversion.db.jdbcUrl",
-    scala.util.Properties.envOrElse("conversion.bonecp.jdbcUrl", null))
-  val conversionDbUsername: String = scala.util.Properties.envOrElse("conversion.db.username",
-    scala.util.Properties.envOrElse("conversion.bonecp.username", null))
-  val conversionDbPassword: String = scala.util.Properties.envOrElse("conversion.db.password",
-    scala.util.Properties.envOrElse("conversion.bonecp.password", null))
+  val dbJdbcUrl: String = scala.util.Properties.envOrElse("db.jdbcUrl", null)
+  val dbUsername: String = scala.util.Properties.envOrElse("db.username", null)
+  val dbPassword: String = scala.util.Properties.envOrElse("db.password", null)
+  val conversionDbJdbcUrl: String = scala.util.Properties.envOrElse("conversion.db.jdbcUrl", null)
+  val conversionDbUsername: String = scala.util.Properties.envOrElse("conversion.db.username", null)
+  val conversionDbPassword: String = scala.util.Properties.envOrElse("conversion.db.password", null)
 
   val latestDeploy: String = revisionProperties.getProperty("latestDeploy", "-")
   val env: String = scala.util.Properties.envOrElse("env", "Unknown")
@@ -140,49 +121,13 @@ class ViitePropertiesFromFile extends ViiteProperties {
   override val importOnlyCurrent: Boolean = envProps.getProperty("importOnlyCurrent", "false").toBoolean
   override val authenticationTestMode: Boolean = envProps.getProperty("authenticationTestMode", "false").toBoolean
   override val authenticationTestUser: String = envProps.getProperty("authenticationTestUser")
-  // Property resolution with multiple fallback mechanisms.
-  // The code follows this priority order for each property:
-  // 1. Modern environment variable (e.g., "dbJdbcUrl")
-  // 2. Legacy environment variable (e.g., "bonecpJdbcUrl")
-  // 3. Modern property from config file (e.g., "db.jdbcUrl")
-  // 4. Legacy property from config file (e.g., "bonecp.jdbcUrl")
-  //
-  // DEPRECATION NOTICE:
-  // The "bonecp" prefixed properties are deprecated as part of the migration from
-  // Slick to Scalike the BoneCp connection pool is not used anymore. All services should transition to using the
-  // standardized "db.*" property names.
-  //
-  // TODO: After all environments (DEV/QA/PROD) have been updated to use the new
-  // property names, we should remove the legacy fallbacks to simplify this code.
-  override val dbJdbcUrl: String =
-    scala.util.Properties.envOrElse("dbJdbcUrl",
-      scala.util.Properties.envOrElse("bonecpJdbcUrl",
-        envProps.getProperty("db.jdbcUrl", envProps.getProperty("bonecp.jdbcUrl"))))
-
-  override val dbUsername: String =
-    scala.util.Properties.envOrElse("dbUsername",
-      scala.util.Properties.envOrElse("bonecpUsername",
-        envProps.getProperty("db.username", envProps.getProperty("bonecp.username"))))
-
-  override val dbPassword: String =
-    scala.util.Properties.envOrElse("dbPassword",
-      scala.util.Properties.envOrElse("bonecpPassword",
-        envProps.getProperty("db.password", envProps.getProperty("bonecp.password"))))
-
-  override val conversionDbJdbcUrl: String =
-    scala.util.Properties.envOrElse("conversionDbJdbcUrl",
-      scala.util.Properties.envOrElse("conversionBonecpJdbcUrl",
-        envProps.getProperty("conversion.db.jdbcUrl", envProps.getProperty("conversion.bonecp.jdbcUrl"))))
-
-  override val conversionDbUsername: String =
-    scala.util.Properties.envOrElse("conversionDbUsername",
-      scala.util.Properties.envOrElse("conversionBonecpUsername",
-        envProps.getProperty("conversion.db.username", envProps.getProperty("conversion.bonecp.username"))))
-
-  override val conversionDbPassword: String =
-    scala.util.Properties.envOrElse("conversionDbPassword",
-      scala.util.Properties.envOrElse("conversionBonecpPassword",
-        envProps.getProperty("conversion.db.password", envProps.getProperty("conversion.bonecp.password"))))
+  // Database properties
+  override val dbJdbcUrl: String = scala.util.Properties.envOrElse("dbJdbcUrl", envProps.getProperty("db.jdbcUrl"))
+  override val dbUsername: String = scala.util.Properties.envOrElse("dbUsername",envProps.getProperty("db.username"))
+  override val dbPassword: String = scala.util.Properties.envOrElse("dbPassword", envProps.getProperty("db.password"))
+  override val conversionDbJdbcUrl: String = scala.util.Properties.envOrElse("conversionDbJdbcUrl", envProps.getProperty("conversion.db.jdbcUrl"))
+  override val conversionDbUsername: String = scala.util.Properties.envOrElse("conversionDbUsername", envProps.getProperty("conversion.db.username"))
+  override val conversionDbPassword: String = scala.util.Properties.envOrElse("conversionDbPassword", envProps.getProperty("conversion.db.password"))
 
   override val latestDeploy: String = revisionProperties.getProperty("latestDeploy", "-")
   override val env: String = envProps.getProperty("env")
@@ -237,27 +182,6 @@ object ViiteProperties {
   lazy val conversionDbJdbcUrl: String = properties.conversionDbJdbcUrl
   lazy val conversionDbUsername: String = properties.conversionDbUsername
   lazy val conversionDbPassword: String = properties.conversionDbPassword
-
-  // Legacy property names for backward compatibility during migration to Scalike
-  // These properties are deprecated and will be removed after all services are updated.
-  // New code should use the modern property names (db* and conversionDb*).
-  @deprecated("Use dbJdbcUrl instead of bonecpJdbcUrl", "Migration to Scalike")
-  lazy val bonecpJdbcUrl: String = dbJdbcUrl
-
-  @deprecated("Use dbUsername instead of bonecpUsername", "Migration to Scalike")
-  lazy val bonecpUsername: String = dbUsername
-
-  @deprecated("Use dbPassword instead of bonecpPassword", "Migration to Scalike")
-  lazy val bonecpPassword: String = dbPassword
-
-  @deprecated("Use conversionDbJdbcUrl instead of boncecpConversionDbJdbcUrl", "Migration to Scalike")
-  lazy val conversionBonecpJdbcUrl: String = conversionDbJdbcUrl
-
-  @deprecated("Use conversionDbUsername instead of conversionBonecpUsername", "Migration to Scalike")
-  lazy val conversionBonecpUsername: String = conversionDbUsername
-
-  @deprecated("Use conversionDbPassword instead of conversionBonecpPassword", "Migration to Scalike")
-  lazy val conversionBonecpPassword: String = conversionDbPassword
 
   lazy val latestDeploy: String = properties.latestDeploy
   lazy val env: String = properties.env
