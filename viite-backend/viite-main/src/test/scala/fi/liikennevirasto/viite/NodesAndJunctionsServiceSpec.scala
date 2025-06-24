@@ -4128,11 +4128,13 @@ class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with Before
        * Link eafcd4bc-f1a9-4cad-a4dc-85fd29e5335a:1 (0-15) split into two linear locations:
        *
        *                   |
-       *                   |<- Connecting road 51
-       *                   |
-       * |----0-14->|14-15-V---15-33-->
-       *            ^
-       *         Junction points or calibration points should not be created at the split point, even when
+       *                   |<- Connecting road 51 with minor discontinuity
+       *                   |   connects at 15 addrM, but the geometry is very close to the split point
+       *                   V
+       *  |---------->|----|------------->
+       *  0           14  15            33
+       *              ^
+       *         Junction points or calibration points should not be created at the split point (14), even when
        *         connecting road has minor discontinuity
        */
 
