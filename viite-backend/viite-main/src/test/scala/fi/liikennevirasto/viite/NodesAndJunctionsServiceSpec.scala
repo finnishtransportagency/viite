@@ -22,8 +22,6 @@ import org.scalatest.BeforeAndAfter
 import org.scalatestplus.mockito.MockitoSugar
 import scalikejdbc._
 
-
-import scala.concurrent.Future
 import scala.util.{Left, Right}
 
 class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter with BaseDAO {
@@ -4119,6 +4117,408 @@ class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with Before
       // only one junction should remain after the termination
       val allJunctionsAfterTermination = junctionDAO.fetchTemplatesByRoadwayNumbers(allRoadwayPointsAfterTermination.map(_.roadwayNumber).distinct)
       allJunctionsAfterTermination.size should be(1)
+    }
+  }
+
+  test("Test nodesAndJunctionsService.handleJunctionAndJunctionPoints When one link is split into two linear locations " +
+    "Then junction points or calibration points should not be created at the split point") {
+    runWithRollback {
+      /*
+       * Real scenario (simplified to 0 track) from manual regression testing:
+       * Link eafcd4bc-f1a9-4cad-a4dc-85fd29e5335a:1 (0-15) split into two linear locations:
+       *
+       *                   |
+       *                   |<- Connecting road 51 with minor discontinuity
+       *                   |   connects at 15 addrM, but the geometry is very close to the split point
+       *                   V
+       *  |---------->|----|------------->
+       *  0           14  15            33
+       *              ^
+       *         Junction points or calibration points should not be created at the split point (14), even when
+       *         connecting road has minor discontinuity
+       */
+
+      // Create a local service instance:
+      val testNodesAndJunctionsService = new NodesAndJunctionsService(
+        roadwayDAO,
+        roadwayPointDAO,
+        linearLocationDAO,
+        nodeDAO,
+        nodePointDAO,
+        junctionDAO,
+        junctionPointDAO,
+        roadwayChangesDAO,
+        projectReservedPartDAO
+      )
+
+      val road = 40955L
+      val connectingRoad = 51L
+      val part = 1L
+      val connectingPart = 2L
+      val projectId = Sequences.nextViiteProjectId
+      val rwId1 = Sequences.nextRoadwayId // for fist pl
+      val rwId2and3 = Sequences.nextRoadwayId // for second and third pl
+      val rwIdC = Sequences.nextRoadwayId // for connecting road
+      val llId1 = Sequences.nextLinearLocationId // for fist pl
+      val llId2 = Sequences.nextLinearLocationId // for second pl
+      val llId3 = Sequences.nextLinearLocationId // for third pl
+      val llIdC = Sequences.nextLinearLocationId // for connecting road
+      val rwNumber1 = Sequences.nextRoadwayNumber // First roadway number for first pl
+      val rwNumber2and3 = Sequences.nextRoadwayNumber // Same roadway number for second and third pl
+      val rwNumberC = Sequences.nextRoadwayNumber // for connecting road
+      val plId1 = Sequences.nextProjectLinkId
+      val plId2 = Sequences.nextProjectLinkId
+      val plId3 = Sequences.nextProjectLinkId
+
+      // Actual link IDs
+      val linkId1and2 = "eafcd4bc-f1a9-4cad-a4dc-85fd29e5335a:1"
+      val linkId3 = "7a238410-e6f2-4f24-99d2-e69fd2e276f4:1"
+      val linkIdC = "c1bc136d-2a5f-4ada-ace3-dc509ca56ad8:1"
+
+      // Project Link 1
+      val addrMRange1 = AddrMRange(0, 14)
+      val geom1 = Seq(Point(384727.426, 6671276.382), Point(384738.345, 6671284.973))
+      val llStartM1 = 0.992
+      val llEndM1 = 14.886
+
+      // Project Link 2
+      val addrMRange2 = AddrMRange(14, 15)
+      val geom2 = Seq(Point(384726.646, 6671275.769), Point(384727.426, 6671276.382))
+      val llStartM2 = 0.000
+      val llEndM2 = 0.992
+
+      // Project Link 3
+      val addrMRange3 = AddrMRange(15, 33)
+      val geom3 = Seq(Point(384709.126, 6671269.028), Point(384726.646, 6671275.769))
+      val llStartM3 = 0.000
+      val llEndM3 = 18.772
+
+      // Connecting road link
+      val addrMRangeC = AddrMRange(1688, 1694)
+      val geomC = Seq(Point(384730.423, 6671271.031), Point(384726.646, 6671275.769))
+      val llStartMC = 0.000
+      val llEndMC = 6.059
+
+      // Create the first part (0-14)
+      val projectLink1 = dummyProjectLink(
+        RoadPart(road, part),
+        Track.Combined,
+        Discontinuity.Continuous,
+        addrMRange1,
+        addrMRange1,
+        Some(DateTime.now()),
+        None,
+        linkId1and2,
+        llStartM1,
+        llEndM1,
+        SideCode.AgainstDigitizing,
+        RoadAddressChangeType.Transfer,
+        projectId,
+        AdministrativeClass.Municipality,
+        geom1,
+        rwNumber1
+      ).copy(
+        id = plId1,
+        projectId = projectId,
+        roadwayId = rwId1,
+        linearLocationId = llId1,
+        ely = 1
+      )
+
+      // Create the second part (14-15)
+      val projectLink2 = dummyProjectLink(
+        RoadPart(road, part),
+        Track.Combined,
+        Discontinuity.Continuous,
+        addrMRange2,
+        addrMRange2,
+        Some(DateTime.now()),
+        None,
+        linkId1and2,
+        llStartM2,
+        llEndM2,
+        SideCode.AgainstDigitizing,
+        RoadAddressChangeType.Transfer,
+        projectId,
+        AdministrativeClass.Municipality,
+        geom2,
+        rwNumber2and3
+      ).copy(
+        id = plId2,
+        projectId = projectId,
+        roadwayId = rwId2and3,
+        linearLocationId = llId2,
+        ely = 1
+      )
+
+      // Create ProjectLink 3 (15-33)
+      val projectLink3 = dummyProjectLink(
+        RoadPart(road, part),
+        Track.Combined,
+        Discontinuity.Continuous,
+        addrMRange3,
+        addrMRange3,
+        Some(DateTime.now()),
+        None,
+        linkId3,
+        llStartM3,
+        llEndM3,
+        SideCode.AgainstDigitizing,
+        RoadAddressChangeType.Transfer,
+        projectId,
+        AdministrativeClass.Municipality,
+        geom3,
+        rwNumber2and3
+      ).copy(
+        id = plId3,
+        projectId = projectId,
+        roadwayId = rwId2and3,
+        linearLocationId = llId3,
+        ely = 1
+      )
+
+      val projectLinks = Seq(projectLink1, projectLink2, projectLink3)
+
+      // Create project
+      val project = Project(
+        projectId, ProjectState.Incomplete, "SplitLinkTest", "s", DateTime.now(), "",
+        DateTime.now(), DateTime.now(), "", Seq(), Seq(), None, None
+      )
+
+      // Create roadways with M-value alignment
+      val (ll1, rw1): (LinearLocation, Roadway) = toRoadwayAndLinearLocation(projectLink1)
+      val (ll2, rw2): (LinearLocation, Roadway) = toRoadwayAndLinearLocation(projectLink2)
+      val (ll3, _): (LinearLocation, Roadway) = toRoadwayAndLinearLocation(projectLink3)
+
+      val roadway1 = rw1.copy(
+        roadwayNumber = rwNumber1,
+        addrMRange = addrMRange1,
+        ely = 1L
+      )
+
+      val roadway2 = rw2.copy(
+        id = rwId2and3,
+        roadwayNumber = rwNumber2and3,
+        addrMRange = AddrMRange(14, 33), // both lls combined
+        ely = 1L
+      )
+
+      // Linear locations
+      // 0-14
+      val linearLocation1 = ll1.copy(
+        startMValue = llStartM1,
+        orderNumber = 1,
+        endMValue = llEndM1,
+        roadwayNumber = rwNumber1
+      )
+
+      // 14-15
+      val linearLocation2 = ll2.copy(
+        id = llId2,
+        orderNumber = 1,
+        startMValue = llStartM2,
+        endMValue = llEndM2,
+        roadwayNumber = rwNumber2and3
+      )
+
+      // 15-33
+      val linearLocation3 = ll3.copy(
+        id = llId3,
+        orderNumber = 2,
+        startMValue = llStartM3,
+        endMValue = llEndM3,
+        roadwayNumber = rwNumber2and3
+      )
+
+      // Create existing connecting road (road 51, link c1bc136d-2a5f-4ada-ace3-dc509ca56ad8:1)
+      val existingRoadway = Roadway(
+        rwIdC, rwNumberC, RoadPart(connectingRoad, connectingPart), AdministrativeClass.Municipality,
+        Track.Combined, Discontinuity.MinorDiscontinuity, addrMRangeC, reversed = false,
+        DateTime.now().minusDays(10), None, "test", Some("Road 51"), 1L, TerminationCode.NoTermination
+      )
+
+      // Create linear location for connecting road
+      val connectingLinearLocation = LinearLocation(
+        llIdC,
+        1,
+        linkIdC,
+        llStartMC,
+        llEndMC,
+        SideCode.TowardsDigitizing,
+        10000000000L,
+        (CalibrationPointReference.None, CalibrationPointReference.None),
+        geomC,
+        LinkGeomSource.NormalLinkInterface,
+        rwNumberC,
+        Some(DateTime.now().minusDays(10)),
+        None
+      )
+
+      // Create existing road
+      roadwayDAO.create(Seq(existingRoadway))
+      linearLocationDAO.create(Seq(connectingLinearLocation), "test")
+
+      // Build test data for project with corrected linear locations
+      buildTestDataForProject(
+        Some(project),
+        Some(Seq(roadway1, roadway2)),
+        Some(Seq(linearLocation1, linearLocation2, linearLocation3)),
+        Some(projectLinks)
+      )
+
+      // Create project changes
+      val projectChanges = List(
+        ProjectRoadwayChange(
+          projectId,
+          Some("SplitLinkTest"),
+          1L,
+          "test user",
+          DateTime.now,
+          RoadwayChangeInfo(
+            RoadAddressChangeType.Transfer,
+            RoadwayChangeSection(
+              Some(road),
+              Some(Track.Combined.value.toLong),
+              startRoadPartNumber = Some(part),
+              endRoadPartNumber = Some(part),
+              addrMRange = Some(AddrMRange(0L, 14L)),
+              Some(AdministrativeClass.Municipality),
+              Some(Discontinuity.Continuous),
+              Some(1L)
+            ),
+            RoadwayChangeSection(
+              Some(road),
+              Some(Track.Combined.value.toLong),
+              startRoadPartNumber = Some(part),
+              endRoadPartNumber = Some(part),
+              addrMRange = Some(AddrMRange(0L, 14L)),
+              Some(AdministrativeClass.Municipality),
+              Some(Discontinuity.Continuous),
+              Some(1L)
+            ),
+            Discontinuity.Continuous,
+            AdministrativeClass.Municipality,
+            reversed = false,
+            1,
+            1
+          ),
+          DateTime.now
+        ),
+        ProjectRoadwayChange(
+          projectId,
+          Some("SplitLinkTest"),
+          1L,
+          "test user",
+          DateTime.now,
+          RoadwayChangeInfo(
+            RoadAddressChangeType.Transfer,
+            RoadwayChangeSection(
+              Some(road),
+              Some(Track.Combined.value.toLong),
+              startRoadPartNumber = Some(part),
+              endRoadPartNumber = Some(part),
+              addrMRange = Some(AddrMRange(14L, 15L)),
+              Some(AdministrativeClass.Municipality),
+              Some(Discontinuity.Continuous),
+              Some(1L)
+            ),
+            RoadwayChangeSection(
+              Some(road),
+              Some(Track.Combined.value.toLong),
+              startRoadPartNumber = Some(part),
+              endRoadPartNumber = Some(part),
+              addrMRange = Some(AddrMRange(14L, 15L)),
+              Some(AdministrativeClass.Municipality),
+              Some(Discontinuity.Continuous),
+              Some(1L)
+            ),
+            Discontinuity.Continuous,
+            AdministrativeClass.Municipality,
+            reversed = false,
+            1,
+            1
+          ),
+          DateTime.now
+        ),
+        ProjectRoadwayChange(
+          projectId,
+          Some("SplitLinkTest"),
+          1L,
+          "test user",
+          DateTime.now,
+          RoadwayChangeInfo(
+            RoadAddressChangeType.Transfer,
+            RoadwayChangeSection(
+              Some(road),
+              Some(Track.Combined.value.toLong),
+              startRoadPartNumber = Some(part),
+              endRoadPartNumber = Some(part),
+              addrMRange = Some(AddrMRange(15L, 33L)),
+              Some(AdministrativeClass.Municipality),
+              Some(Discontinuity.Continuous),
+              Some(1L)
+            ),
+            RoadwayChangeSection(
+              Some(road),
+              Some(Track.Combined.value.toLong),
+              startRoadPartNumber = Some(part),
+              endRoadPartNumber = Some(part),
+              addrMRange = Some(AddrMRange(15L, 33L)),
+              Some(AdministrativeClass.Municipality),
+              Some(Discontinuity.Continuous),
+              Some(1L)
+            ),
+            Discontinuity.Continuous,
+            AdministrativeClass.Municipality,
+            reversed = false,
+            1,
+            1
+          ),
+          DateTime.now
+        ),
+      )
+
+      val mappedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
+
+      // Handle roadway points and junctions
+      roadAddressService.handleRoadwayPointsUpdate(projectChanges, mappedRoadwayNumbers)
+      testNodesAndJunctionsService.handleJunctionAndJunctionPoints(projectChanges, projectLinks, mappedRoadwayNumbers)
+
+      // Verify roadway points were created
+      val roadwayPoints1 = roadwayPointDAO.fetchByRoadwayNumber(rwNumber1)
+      val roadwayPoints2 = roadwayPointDAO.fetchByRoadwayNumber(rwNumber2and3)
+
+      val allRoadwayPoints = roadwayPoints1 ++ roadwayPoints2
+      val junctionPoints = junctionPointDAO.fetchByRoadwayPointIds(allRoadwayPoints.map(_.id))
+
+
+      // Verify roadway point was not created at address 14
+      val roadwayPointAt14 = allRoadwayPoints.find(_.addrMValue == 14)
+      roadwayPointAt14 should be(None)
+
+      // Verify junction points were created
+      junctionPoints should not be empty
+
+      // Should NOT have junction point at address 14 (split point)
+      val junctionPointAt14 = junctionPoints.find(jp => jp.addrM == 14)
+      junctionPointAt14 should be(None)
+
+      // Should HAVE junction points at address 15 (true endpoint)
+      val junctionPointsAt15 = junctionPoints.filter(_.addrM == 15)
+      junctionPointsAt15.size should be(2)
+      junctionPointsAt15.map(_.beforeAfter).toSet should be(Set(BeforeAfter.Before, BeforeAfter.After))
+
+      // Verify calibration points
+      val calibrationPoints = CalibrationPointDAO.fetchByLinkId(Seq(linkId1and2))
+      calibrationPoints should not be empty
+
+      // Should NOT have calibration point at address 14
+      val calibrationPointAt14 = calibrationPoints.find(_.addrM == 14)
+      calibrationPointAt14 should be(None)
+
+      // Should HAVE calibration point at address 15
+      val calibrationPointAt15 = calibrationPoints.find(_.addrM == 15)
+      calibrationPointAt15 should be(defined)
     }
   }
 
