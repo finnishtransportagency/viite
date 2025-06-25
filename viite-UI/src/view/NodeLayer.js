@@ -241,8 +241,13 @@
       map.removeInteraction(nodeTranslate);
     };
 
-    // We add the defined interactions to the map.
-    addInteractions();
+
+    // Add the defined interactions to the map after userData has been fetched
+    eventbus.on("userData:fetched", function (userData) {
+      userHasPermissionToEdit = _.includes(userData.roles, 'viite');
+      addInteractions();
+    });
+
 
     var selectFeaturesToHighlight = function (vector, featuresToHighlight, otherFeatures) {
       vector.selected.clear();
