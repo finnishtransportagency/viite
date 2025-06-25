@@ -137,7 +137,7 @@ class RoadAddressImporterSpec extends AnyFunSuite with Matchers with BaseDAO wit
 
     // Setup mock responses
     when(mockKGVRoadLinkClient.fetchByLinkIds(any[Set[String]])).thenReturn(mockRoadLinks)
-    when(mockComplementaryClient.fetchByLinkIds(any[Set[String]])).thenReturn(mockRoadLinks.toList)
+    when(mockComplementaryClient.fetchByLinkIdsInReadOnlySession(any[Set[String]])).thenReturn(mockRoadLinks.toList)
 
     createConversionTableAndPopulateData()
   }

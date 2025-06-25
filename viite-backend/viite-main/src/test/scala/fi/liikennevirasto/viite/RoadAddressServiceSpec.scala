@@ -2,6 +2,7 @@ package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2.DigiroadEventBus
 import fi.liikennevirasto.digiroad2.client.kgv._
+import fi.liikennevirasto.digiroad2.client.vkm.VKMClient
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.viite.Dummies._
 import fi.liikennevirasto.viite.dao._
@@ -43,7 +44,7 @@ class RoadAddressServiceSpec extends AnyFunSuite with Matchers{
   val roadwayDAO = new RoadwayDAO
   val linearLocationDAO = new LinearLocationDAO
   val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
-  val mockViiteVkmClient: ViiteVkmClient = MockitoSugar.mock[ViiteVkmClient]
+  val mockViiteVkmClient: VKMClient = MockitoSugar.mock[VKMClient]
   val roadAddressService: RoadAddressService = new RoadAddressService(mockRoadLinkService,
                                                                       mockRoadwayDAO,
                                                                       mockLinearLocationDAO,
@@ -57,7 +58,7 @@ class RoadAddressServiceSpec extends AnyFunSuite with Matchers{
 
     override def runWithReadOnlySession[T](f: => T): T = f
     override def runWithTransaction[T](f: => T): T = f
-    override val viiteVkmClient: ViiteVkmClient = mockViiteVkmClient
+    override val vkmClient: VKMClient = mockViiteVkmClient
   }
 
   val nodesAndJunctionsService = new NodesAndJunctionsService(mockRoadwayDAO,
@@ -401,7 +402,6 @@ class RoadAddressServiceSpec extends AnyFunSuite with Matchers{
     when(mockLinearLocationDAO.fetchByRoadways(any[Set[Long]])).thenReturn(towardsDigitizingLinearLocation)
     when(mockRoadwayDAO.fetchAllBySectionsAndTracks(any[Long], any[Set[Long]], any[Set[Track]])).thenReturn(roadways)
     when(mockRoadwayDAO.fetchAllBySectionAndAddresses(any[RoadPart], any[Option[Long]], any[Option[Long]], any[Option[Long]])).thenReturn(roadways)
-    when(mockViiteVkmClient.postFormUrlEncoded(any[String], any[Map[String, String]])).thenReturn(searchResults, Seq.empty: _*)
     when(mockViiteVkmClient.get(any[String], any[Map[String, String]])).thenReturn(Right(searchResults))
     when(mockLinearLocationDAO.fetchByRoadAddress(any[RoadPart],any[Long], any[Option[Long]])).thenReturn(towardsDigitizingLinearLocation)
 

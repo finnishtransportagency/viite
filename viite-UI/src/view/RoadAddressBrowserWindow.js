@@ -6,7 +6,7 @@
 
         const roadAddrBrowserWindow = $('<div id="road-address-browser-window" class="form-horizontal road-address-browser-window"></div>').hide();
         const roadAddressChangesBrowserHeader = $(
-            '<div class="road-address-browser-modal-header">' +
+            '<div class="generic-window-header">' +
                 '<p>Tieosoitteiden katselu</p>' +
                 '<a href="manual/index.html#!index.md#10_Tieosoitteiden_katselu_-ty%C3%B6kalu" target="_blank">' +
                     '<button class="btn-manual" title="Avaa käyttöohje">' +
