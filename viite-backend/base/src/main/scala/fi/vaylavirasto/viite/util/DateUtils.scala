@@ -1,5 +1,6 @@
 package fi.vaylavirasto.viite.util
 
+import fi.vaylavirasto.viite.util.DateTimeFormatters.ISOdateFormatter
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter, ISODateTimeFormat}
 
@@ -7,6 +8,8 @@ trait TimeStamps {
   val created: Modification
   val modified: Modification
 }
+
+case class Modification(modificationTime: Option[DateTime], modifier: Option[String])
 
 object DateTimeFormatters {
   val finnishDateTimeFormatter:  DateTimeFormatter = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss")
@@ -19,5 +22,14 @@ object DateTimeFormatters {
   val dateSlashFormatter:        DateTimeFormatter = DateTimeFormat.forPattern("dd/MM/yyyy")
 }
 
-case class Modification(modificationTime: Option[DateTime], modifier: Option[String])
+object DateUtils {
 
+  /**
+   * Tries to parse a string ("yyyy-MM-dd") in to a DateTime object
+   * If the text to parse is invalid, throws IllegalArgumentException
+   */
+  def parseStringToDateTime(date: String): DateTime = {
+    ISOdateFormatter.parseDateTime(date)
+  }
+
+}

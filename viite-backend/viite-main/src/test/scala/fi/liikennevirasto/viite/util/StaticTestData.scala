@@ -7,9 +7,9 @@ import fi.vaylavirasto.viite.geometry.Point
 import fi.vaylavirasto.viite.model.{AdministrativeClass, LifecycleStatus, LinkGeomSource, LinkType, RoadLink, RoadLinkLike, SideCode, TrafficDirection}
 import org.json4s.{CustomSerializer, DefaultFormats, Formats}
 import org.json4s.JsonAST.{JInt, JString}
+import org.json4s.jackson.JsonMethods
 import org.json4s.jackson.Serialization.read
 
-import scala.util.parsing.json.JSON
 
 object StaticTestData {
   val deserializer = new RoadLinkDeserializer
@@ -38,6 +38,9 @@ object StaticTestData {
     links.asInstanceOf[Seq[T]]
   }
 
+
+  // Define an implicit format for case class extraction
+  implicit val formats: Formats = DefaultFormats
 
   private val points                              = Map(
     499824279L -> "[{\"x\": 422875.02, \"y\": 7229113.063, \"z\": 7.827999999994063},{\"x\": 422875.378, \"y\": 7229120.393, \"z\": 7.722999999998137},{\"x\": 422875.689, \"y\": 7229126.299, \"z\": 7.61699999999837},{\"x\": 422876.564, \"y\": 7229133.071, \"z\": 6.966000000000349},{\"x\": 422877.484, \"y\": 7229139.508, \"z\": 6.305999999996857},{\"x\": 422880.059, \"y\": 7229148.521, \"z\": 7.322000000000116},{\"x\": 422883.035, \"y\": 7229157.53, \"z\": 7.198999999993248},{\"x\": 422891.852, \"y\": 7229176.765, \"z\": 6.951000000000931},{\"x\": 422900.435, \"y\": 7229195.119, \"z\": 6.710000000006403},{\"x\": 422909.078, \"y\": 7229213.411, \"z\": 6.584000000002561},{\"x\": 422918.185, \"y\": 7229234.956, \"z\": 6.4100000000034925},{\"x\": 422923.39, \"y\": 7229254.317, \"z\": 6.389999999999418}]",
@@ -218,7 +221,7 @@ object StaticTestData {
     2225913L -> "[{\"x\":535547.2740,\"y\":6982085.6759,\"z\":85.6860},{\"x\":535571.5669,\"y\":6982126.0069,\"z\":85.9309}]",
     2225912L -> "[{\"x\":535569.5949,\"y\":6982145.5280,\"z\":85.8519},{\"x\":535586.0700,\"y\":6982171.8940,\"z\":85.9339},{\"x\":535605.2719,\"y\":6982204.2199,\"z\":85.9089}]"
   )
-  private val geometryMap: Map[String, List[Point]] = points.map(v => v._1.toString -> toGeom(JSON.parseFull(v._2))) //points.mapValues(v => toGeom(JSON.parseFull(v)))
+  private val geometryMap: Map[String, List[Point]] = points.map(v => v._1.toString -> JsonMethods.parse(v._2).extract[List[Point]]) //points.mapValues(v => JsonMethods.parse(v).extract[List[Point]])
 }
 
 class RoadLinkDeserializer extends KGVSerializer {

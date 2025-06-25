@@ -27,7 +27,7 @@ The script does not do testing for the code so it has to be done manually if nec
 First you need to do AWS SSO login using your configured profile:
 ```bash
 #bash/unix
-aws sso login --profile vaylaapp
+aws sso login --profile Viite-dev
 ```
 
 Then you must run the script from viite root directory using command:

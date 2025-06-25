@@ -347,15 +347,14 @@ class LinkNetworkUpdater {
     }
 
     // tarvitsemme linkin geometrian lineaarilokaation päitä varten
-    val llKGVRoadLink //: Seq[DynamicRoadNetworkService.this.kgvClient.roadLinkVersionsData.LinkType]
-                         = kgvClient.roadLinkVersionsData.fetchByLinkIds(Set(llToBeSplit.linkId))
-    if(llKGVRoadLink.size>1) {  throw ViiteException(
+    val llRoadLink = (kgvClient.roadLinkVersionsData.fetchByLinkIds(Set(llToBeSplit.linkId)) ++ kgvClient.complementaryData.fetchByLinkIds(Set(llToBeSplit.linkId)))
+    if(llRoadLink.size>1) {  throw ViiteException(
         s"SplitLinearLocation: Found more than one link corresponding to linearLocation $linearLocationId to split. Confused. Cannot split."
     )}
-    if(llKGVRoadLink.isEmpty) {  throw ViiteException(
+    if(llRoadLink.isEmpty) {  throw ViiteException(
         s"SplitLinearLocation: No link corresponding to linearLocation $linearLocationId to split found. Cannot split."
     )}
-    val splittingPoint: Option[Point] = GeometryUtils.calculatePointFromLinearReference(llKGVRoadLink.head.geometry, mValueForSplit)
+    val splittingPoint: Option[Point] = GeometryUtils.calculatePointFromLinearReference(llRoadLink.head.geometry, mValueForSplit)
 
     //////// Haetaan kaikki saman roadwayn lineaarilokaatiot, orderNumberien myöhempää päivitystä varten (sorttaa orderNumber-järjestykseen) ////////
     val llsAtTheSameRoadway: Seq[LinearLocation] = linearLocationDAO.fetchByRoadways(Set(llToBeSplit.roadwayNumber)).sortBy(_.orderNumber)
@@ -663,7 +662,7 @@ class LinkNetworkUpdater {
         val minMValuePointOpt = GeometryUtils.calculatePointFromLinearReference(linkGeomForReplaceInfo, newLlStartMValue) // TODO snap to geometry points? Check not overflowing the link length?
         val maxMValuePointOpt = GeometryUtils.calculatePointFromLinearReference(linkGeomForReplaceInfo, newLlEndMValue)   // TODO snap to geometry points? Check not overflowing the link length?
         if(minMValuePointOpt.isEmpty || maxMValuePointOpt.isEmpty) { // check that we got'em all
-          ViiteException(s"LinkNetworkReplaceChange: Could not get a corresponding point for either of both ends of the " +
+          throw ViiteException(s"LinkNetworkReplaceChange: Could not get a corresponding point for either of both ends of the " +
             s"new linear location referring to the new link  ${change.newLinks.find(_.linkId == ri.newLinkId).get.linkId}.")
         }
 
@@ -764,7 +763,7 @@ class LinkNetworkUpdater {
         val minMValuePointOpt = GeometryUtils.calculatePointFromLinearReference(change.newLink.geometry, newLlStartMValue) // TODO snap to geometry points? Check not overflowing the link length?
         val maxMValuePointOpt = GeometryUtils.calculatePointFromLinearReference(change.newLink.geometry, newLlEndMValue)   // TODO snap to geometry points? Check not overflowing the link length?
         if(minMValuePointOpt.isEmpty || maxMValuePointOpt.isEmpty) { // check that we got'em all
-          ViiteException(s"LinkNetworkReplaceChange: Could not get a corresponding point for either of both ends of the " +
+          throw ViiteException(s"LinkNetworkReplaceChange: Could not get a corresponding point for either of both ends of the " +
             s"new linear location referring to the new link  ${change.newLink.linkId}.")
         }
 
