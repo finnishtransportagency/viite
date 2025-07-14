@@ -1,6 +1,9 @@
 (function (root) {
   root.NodeLayer = function (map, roadLayer, selectedNodesAndJunctions, nodeCollection, roadCollection, applicationModel) {
     Layer.call(this, map);
+
+    window.ViiteState = window.ViiteState || {}; // Global variable for trackin state like node translation
+
     var me = this;
     var userHasPermissionToEdit = _.includes(applicationModel.getSessionUserRoles(), 'viite');
     var directionMarkerVector = new ol.source.Vector({});
@@ -166,9 +169,10 @@
      * Save initial node position for comparison purposes
      */
     nodeTranslate.on('translatestart', function (evt) {
+      window.ViiteState.isTranslatingNode = true;
       selectedNodesAndJunctions.setStartingCoordinates({
-        x: parseInt(evt.coordinate[0]),
-        y: parseInt(evt.coordinate[1])
+        x: evt.coordinate[0],
+        y: evt.coordinate[1]
       });
     });
 
@@ -176,32 +180,38 @@
      * while translating the new position the 200m limitation need to be verified
      * and stop the node movement when that limitation is not obeyed
      */
+    let event = {};
     nodeTranslate.on('translating', function (evt) {
+      event = evt;
       var coordinates = {
-        x: parseInt(evt.coordinate[0]),
-        y: parseInt(evt.coordinate[1])
+        x: evt.coordinate[0],
+        y: evt.coordinate[1]
       };
       if (GeometryUtils.distanceBetweenPoints(selectedNodesAndJunctions.getStartingCoordinates(), coordinates) < ViiteConstants.MAX_ALLOWED_DISTANCE_FOR_NODES_TO_BE_MOVED) {
         eventbus.trigger('node:displayCoordinates', {
-          x: parseInt(evt.coordinate[0]),
-          y: parseInt(evt.coordinate[1])
+          x: evt.coordinate[0],
+          y: evt.coordinate[1]
         });
       }
     });
 
     nodeTranslate.on('translateend', function (evt) {
-      var coordinates = {
-        x: parseInt(evt.coordinate[0]),
-        y: parseInt(evt.coordinate[1])
-      };
+      window.ViiteState.isTranslatingNode = false;
+      const geometry = evt.features.item(0).getGeometry();
+      let coordinates = geometry.getCoordinates();
+      coordinates = {x: coordinates[0], y: coordinates[1]}; // Format coordinates correctly
+      const startingCoordinates = selectedNodesAndJunctions.getStartingCoordinates();
+
+      // Check if node was moved over 200m
       if (GeometryUtils.distanceBetweenPoints(selectedNodesAndJunctions.getStartingCoordinates(), coordinates) < ViiteConstants.MAX_ALLOWED_DISTANCE_FOR_NODES_TO_BE_MOVED) {
         selectedNodesAndJunctions.setCoordinates(coordinates);
       } else {
-        var startingCoordinates = selectedNodesAndJunctions.getStartingCoordinates();
         eventbus.trigger('node:displayCoordinates', startingCoordinates);
         eventbus.trigger('node:repositionNode', selectedNodesAndJunctions.getCurrentNode(), startingCoordinates);
       }
     });
+
+    // eventbus.on('map:refresh'
 
     /**
      * This will add all the following interactions from the map:
@@ -395,7 +405,7 @@
 
     var createNewNodeMarker = function (coords) {
       var node = {
-        coordinates: {x: parseInt(coords.x), y: parseInt(coords.y)},
+        coordinates: {x: coords.x, y: coords.y},
         type: ViiteEnumerations.NodeType.UnknownNodeType.value,
         nodePoints: [],
         junctions: []

@@ -1,7 +1,9 @@
 (function (root) {
   root.RoadLayer = function (map, roadCollection, selectedLinkProperty, nodeCollection) {
-
     Layer.call(this, map);
+
+    window.ViiteState = window.ViiteState || {}; // Global variable for trackin state like node translation
+
     var me = this;
     var roadLinkStyler = new RoadLinkStyler();
 
@@ -203,7 +205,9 @@
             eventbus.trigger('roadAddressProject:fetch');
             break;
           case 'node':
-            eventbus.trigger('nodeLayer:fetch');
+            // Don't fetch nodes if one is currently being moved (translated)
+            if (window.ViiteState?.isTranslatingNode) break;
+              eventbus.trigger('nodeLayer:fetch');
             break;
           default:
             break;
