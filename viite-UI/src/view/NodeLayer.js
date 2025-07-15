@@ -211,8 +211,6 @@
       }
     });
 
-    // eventbus.on('map:refresh'
-
     /**
      * This will add all the following interactions from the map:
      * - nodeLayerSelectInteraction
