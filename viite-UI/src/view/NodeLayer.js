@@ -15,6 +15,8 @@
     var nodePointTemplateVector = dblVector();
     var junctionTemplateVector = dblVector();
 
+    let selectedNodeStartingCoordinates = null;
+
     var directionMarkerLayer = new ol.layer.Vector({
       source: directionMarkerVector,
       name: 'directionMarkerLayer',
@@ -123,6 +125,9 @@
         return !_.isUndefined(selectionTarget.node);
       });
 
+      // Update starting coordinates before translate happens for precise coordinates
+      selectedNodeStartingCoordinates = selectedNode.node.coordinates;
+
       // select all node point templates in same place.
       var selectedNodePointTemplate = _.find(event.selected, function (selectionTarget) {
         return !_.isUndefined(selectionTarget.nodePointTemplate);
@@ -169,11 +174,7 @@
      * Save initial node position for comparison purposes
      */
     nodeTranslate.on('translatestart', function (evt) {
-      window.ViiteState.isTranslatingNode = true;
-      selectedNodesAndJunctions.setStartingCoordinates({
-        x: evt.coordinate[0],
-        y: evt.coordinate[1]
-      });
+      selectedNodesAndJunctions.setStartingCoordinates(selectedNodeStartingCoordinates);
     });
 
     /**
@@ -205,6 +206,7 @@
       // Check if node was moved over 200m
       if (GeometryUtils.distanceBetweenPoints(selectedNodesAndJunctions.getStartingCoordinates(), coordinates) < ViiteConstants.MAX_ALLOWED_DISTANCE_FOR_NODES_TO_BE_MOVED) {
         selectedNodesAndJunctions.setCoordinates(coordinates);
+        selectedNodeStartingCoordinates = coordinates;
       } else {
         eventbus.trigger('node:displayCoordinates', startingCoordinates);
         eventbus.trigger('node:repositionNode', selectedNodesAndJunctions.getCurrentNode(), startingCoordinates);
@@ -269,6 +271,7 @@
       selectedNodesAndJunctions.closeForm();
       selectedNodesAndJunctions.openNode(node);
       highlightNode(node);
+      selectedNodeStartingCoordinates = node.coordinates;
     };
 
     var attachNode = function (node, templates) {
