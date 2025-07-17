@@ -1,93 +1,99 @@
 (function (root) {
   root.ProjectChangeTable = function (projectChangeInfoModel, projectCollection) {
+    let changeTableOpen = false;
+    const RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
+    const ProjectStatus = ViiteEnumerations.ProjectStatus;
+    let windowMaximized = true;
+    const formCommon = new FormCommon('');
 
-    // change table is not open in the beginning of the project
-    var changeTableOpen = false;
-    var RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
-    var ProjectStatus = ViiteEnumerations.ProjectStatus;
-    var windowMaximized = false;
-    var formCommon = new FormCommon('');
+    const isChangeTableOpen = () => changeTableOpen;
 
-    // checks if change table state is open
-    var isChangeTableOpen = function () {
-      return changeTableOpen;
-    };
-
-    var changeTable =
-      $('<div class="change-table-frame"></div>');
-    // Text about validation success hard-coded now
-    var changeTableHeader = $('<div class="change-table-fixed-header"></div>');
-    changeTableHeader.append('<div class="change-table-header font-resize">Validointi ok. Alla näet muutokset projektissa.</div>');
-    changeTableHeader.append('<button class="close wbtn-close">Sulje <i class="fas fa-window-close"></i></button>');
-    changeTableHeader.append('<button class="max wbtn-max"><span id="buttonText">Suurenna </span><span id="sizeSymbol" style="font-size: 175%;font-weight: 900;">□</span></button>');
-    changeTableHeader.append('<div class="change-table-borders">' +
-      '<div id ="change-table-borders-changetype"></div>' +
-      '<div id ="change-table-borders-source"></div>' +
-      '<div id ="change-table-borders-reversed"></div>' +
-      '<div id ="change-table-borders-target"></div></div>');
-    changeTableHeader.append('<div class="change-table-sections">' +
-      '<label class="change-table-heading-label" id="label-type">Ilmoitus</label>' +
-      '<label class="change-table-heading-label" id="label-source">Nykyosoite<i id="label-source-btn" class="btn-icon sort fas fa-sort"></i></label>' +
-      '<label class="change-table-heading-label" id="label-reverse"></label>' +
-      '<label class="change-table-heading-label" id="label-target">Uusi osoite<i id="label-target-btn" class="btn-icon sort fas fa-sort"></i></label>');
-    changeTableHeader.append('<div class="change-header">' +
-      '<label class="project-change-table-dimension-header">TIE</label>' +
-      '<label class="project-change-table-dimension-header">AJR</label>' +
-      '<label class="project-change-table-dimension-header">OSA</label>' +
-      '<label class="project-change-table-dimension-header">AET</label>' +
-      '<label class="project-change-table-dimension-header">LET</label>' +
-      '<label class="project-change-table-dimension-header">PIT</label>' +
-      '<label class="project-change-table-dimension-header">JATK</label>' +
-      '<label class="project-change-table-dimension-header">HALL</label>' +
-      '<label class="project-change-table-dimension-header">ELY</label>' +
-      '<label class="project-change-table-dimension-header target">KÄÄNTÖ</label>' +
-      '<label class="project-change-table-dimension-header">TIE</label>' +
-      '<label class="project-change-table-dimension-header">AJR</label>' +
-      '<label class="project-change-table-dimension-header">OSA</label>' +
-      '<label class="project-change-table-dimension-header">AET</label>' +
-      '<label class="project-change-table-dimension-header">LET</label>' +
-      '<label class="project-change-table-dimension-header">PIT</label>' +
-      '<label class="project-change-table-dimension-header">JATK</label>' +
-      '<label class="project-change-table-dimension-header">HALL</label>' +
-      '<label class="project-change-table-dimension-header">ELY</label>');
-
-    changeTableHeader.append('<div class="change-table-dimension-headers" style="overflow-y: auto;">' +
-      '<table class="change-table-dimensions">' +
-      '</table>' +
-      '</div>');
-    changeTable.append(changeTableHeader);
+    const changeTable = $(`
+      <div class="change-table-frame">
+        <div class="change-table-fixed-header">
+          <div class="change-table-header font-resize">Validointi OK.</div>
+          <div class="change-table-dimension-headers">
+            <table class="change-table-dimensions">
+              <thead>
+                <tr class="project-change-table-dimension-header">
+                  <th class="project-change-table-dimension-first-h">Ilmoitus</th>
+                  <th colspan="9" id="label-source-header">
+                    Nykyosoite <i id="label-source-btn" class="btn-icon fas fa-sort"></i>
+                  </th>
+                  <th class="project-change-table-dimension-h dimension-reversed"></th>
+                  <th colspan="9" id="label-target-header">
+                    Uusi osoite <i id="label-target-btn" class="btn-icon fas fa-sort"></i>
+                  </th>
+                </tr>
+                <tr class="project-change-table-dimension-header">
+                  <th class="project-change-table-dimension-h"></th>
+                  <th class="project-change-table-dimension-h">TIE</th>
+                  <th class="project-change-table-dimension-h">AJR</th>
+                  <th class="project-change-table-dimension-h">OSA</th>
+                  <th class="project-change-table-dimension-h">AET</th>
+                  <th class="project-change-table-dimension-h">LET</th>
+                  <th class="project-change-table-dimension-h">PIT</th>
+                  <th class="project-change-table-dimension-h">JATK</th>
+                  <th class="project-change-table-dimension-h">HALL</th>
+                  <th class="project-change-table-dimension-h">ELY</th>
+                  <th class="project-change-table-dimension-h dimension-reversed">KÄÄNNETTY</th>
+                  <th class="project-change-table-dimension-h">TIE</th>
+                  <th class="project-change-table-dimension-h">AJR</th>
+                  <th class="project-change-table-dimension-h">OSA</th>
+                  <th class="project-change-table-dimension-h">AET</th>
+                  <th class="project-change-table-dimension-h">LET</th>
+                  <th class="project-change-table-dimension-h">PIT</th>
+                  <th class="project-change-table-dimension-h">JATK</th>
+                  <th class="project-change-table-dimension-h">HALL</th>
+                  <th class="project-change-table-dimension-h">ELY</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    `);
 
     function show() {
       $('.container').append(changeTable);
+      centerTableInViewport();
       resetInteractions();
       interact('.change-table-frame').unset();
       bindEvents();
       getChanges();
-      setTableHeight();
       enableTableInteractions();
+      windowMaximized = true;
+      resizeTable();
     }
 
     function hide() {
-      // set change table state
       changeTableOpen = false;
-      // enable action dropdown, save and cancel buttons
       formCommon.enableFormInteractions();
       $('#information-content').empty();
-      // disable send button and set title attribute
-      $('#send-button').attr('disabled', true);
-      $('#send-button').attr('title', 'Hyväksy yhteenvedon jälkeen');
+      $('#send-button').prop('disabled', true).attr('title', 'Hyväksy yhteenvedon jälkeen');
       $('#recalculate-button').attr('title', 'Etäisyyslukemat on päivitetty');
-      // enable changes button and remove title attribute from it
-      $('#changes-button').attr('disabled', false);
-      $('#changes-button').removeAttr('title');
+      $('#changes-button').prop('disabled', false).removeAttr('title');
       resetInteractions();
       interact('.change-table-frame').unset();
       $('.change-table-frame').remove();
     }
 
+    function centerTableInViewport() {
+      const $table = $('.change-table-frame');
+      const windowWidth = $(window).width();
+      const windowHeight = $(window).height();
+      const tableWidth = $table.outerWidth();
+      const tableHeight = $table.outerHeight();
+      const left = Math.max((windowWidth - tableWidth) / 3, 0);
+      const top = Math.max((windowHeight - tableHeight) / 4, 0);
+
+      $table.css({ position: 'absolute', left: `${left}px`, top: `${top}px` });
+    }
+
     function resetInteractions() {
-      var dragTable = $('.change-table-frame');
-      if (dragTable && dragTable.length > 0) {
+      const dragTable = $('.change-table-frame');
+      if (dragTable.length > 0) {
         dragTable[0].setAttribute('data-x', 0);
         dragTable[0].setAttribute('data-y', 0);
         dragTable.css('transform', 'none');
@@ -95,289 +101,248 @@
     }
 
     function getChangeType(changeTypeValue) {
-      const changeType = _.find(ViiteEnumerations.ChangeType, function (obj) {
-        return obj.value === changeTypeValue;
-      });
+      const changeType = _.find(ViiteEnumerations.ChangeType, obj => obj.value === changeTypeValue);
       return changeType.displayText;
     }
 
+    // Get list of changes made in the project so they can be rendered on the table
     function getChanges() {
-      var currentProject = projectCollection.getCurrentProject();
-      projectChangeInfoModel.getChanges(currentProject.project.id, function () {
-        var source = $('[id=label-source-btn]');
-        var target = $('[id=label-target-btn]');
+      const currentProject = projectCollection.getCurrentProject();
+      projectChangeInfoModel.getChanges(currentProject.project.id, () => {
+        const source = $('#label-source-btn');
+        const target = $('#label-target-btn');
         if (source.hasClass('fa-sort-down') || source.hasClass('fa-sort-up')) {
-          projectChangeInfoModel.sortChanges('source', source.attr('class').match('fa-sort-up'));
+          projectChangeInfoModel.sortChanges('source', source.hasClass('fa-sort-up'));
         } else if (target.hasClass('fa-sort-down') || target.hasClass('fa-sort-up')) {
-          projectChangeInfoModel.sortChanges('target', target.attr('class').match('fa-sort-up'));
+          projectChangeInfoModel.sortChanges('target', target.hasClass('fa-sort-up'));
         }
       });
     }
 
-    function setTableHeight() {
-      var changeTableHeight = parseInt(changeTable.height());
-      var headerHeight = parseInt($('.change-table-header').height()) + parseInt($('.change-table-sections').height()) + parseInt($('.change-header').height());
-      $('.change-table-dimension-headers').height(changeTableHeight - headerHeight - 30);// scroll size = total - header - border
-    }
-
     function showChangeTable(projectChangeData) {
-      var htmlTable = "";
-      var warningM = projectChangeData.warningMessage;
-      if (!_.isUndefined(warningM))
-        new ModalConfirm(warningM);
-      if (!_.isUndefined(projectChangeData) && projectChangeData !== null && !_.isUndefined(projectChangeData.changeTable) && projectChangeData.changeTable !== null) {
-        _.each(projectChangeData.changeTable.changeInfoSeq, function (changeInfoSeq, index) {
-          var rowColorClass = '';
-          if (index % 2 !== 1) {
-            rowColorClass = 'white-row';
-          }
-          htmlTable += '<tr class="row-changes ' + rowColorClass + '">';
-          if (changeInfoSeq.changetype === RoadAddressChangeType.New.value) {
-            htmlTable += getEmptySource(changeInfoSeq);
-          } else {
-            htmlTable += getSourceInfo(changeInfoSeq);
-          }
+      let htmlTable = '';
+      const warningM = projectChangeData.warningMessage;
+      if (warningM) void new ModalConfirm(warningM);
+
+      if (projectChangeData?.changeTable) {
+        _.each(projectChangeData.changeTable.changeInfoSeq, (changeInfoSeq, index) => {
+          const rowColorClass = index % 2 === 0 ? 'white-row' : '';
+          htmlTable += `<tr class="row-changes ${rowColorClass}">`;
+          htmlTable += (changeInfoSeq.changetype === RoadAddressChangeType.New.value)
+              ? getEmptySource(changeInfoSeq)
+              : getSourceInfo(changeInfoSeq);
           htmlTable += getReversed(changeInfoSeq);
-          if (changeInfoSeq.changetype === RoadAddressChangeType.Terminated.value) {
-            htmlTable += getEmptyTarget();
-          } else {
-            htmlTable += getTargetInfo(changeInfoSeq);
-          }
+          htmlTable += (changeInfoSeq.changetype === RoadAddressChangeType.Terminated.value)
+              ? getEmptyTarget()
+              : getTargetInfo(changeInfoSeq);
           htmlTable += '</tr>';
         });
-        setTableHeight();
       }
+
       $('.row-changes').remove();
       $('.change-table-dimensions').append($(htmlTable));
-      // set change table state to open
       changeTableOpen = true;
-      if (projectChangeData && !_.isUndefined(projectChangeData.changeTable)) {
-        var projectDate = new Date(projectChangeData.changeTable.changeDate).toLocaleDateString('fi-FI');
-        $('.change-table-header').html($('<div class="font-resize">Validointi ok. Alla näet muutokset projektissa.</div><div class="font-resize">Alkupäivämäärä: ' + projectDate + '</div>'));
-        var currentProject = projectCollection.getCurrentProject();
-        // disable recalculate button if changetable is open and set title attribute
-        formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Etäisyyslukemia ei voida päivittää yhteenvetotaulukon ollessa auki");
-        // disable changes button if changetable is open and set title attribute
-        formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Yhteenvetotaulukko on jo auki");
-        if ($('.change-table-frame').css('display') === "block" && (currentProject.project.statusCode === ProjectStatus.Incomplete.value)) {
-          //enable send button if changetable is open and remove title attribute
-          formCommon.setDisabledAndTitleAttributesById("send-button", false, "");
+
+      if (projectChangeData?.changeTable) {
+        const projectDate = new Date(projectChangeData.changeTable.changeDate).toLocaleDateString('fi-FI');
+        $('.change-table-header').html(`
+          <div class="left"><p>Validointi OK</p></div>
+          <div class="center"><p>Alkupäivämäärä: ${projectDate}</p></div>
+          <div class="right">
+            <button class="max wbtn-max" aria-label="Toggle Size" title="Suurenna taulukko"><i id="sizeIcon" class="fas fa-expand"></i></button>
+            <button class="close wbtn-close" aria-label="Close"><i id="closeIcon" class="fas fa-times"></i></button>
+          </div>
+        `);
+
+        const currentProject = projectCollection.getCurrentProject();
+        formCommon.setDisabledAndTitleAttributesById('recalculate-button', true, 'Etäisyyslukemia ei voida päivittää yhteenvetotaulukon ollessa auki');
+        formCommon.setDisabledAndTitleAttributesById('changes-button', true, 'Yhteenvetotaulukko on jo auki');
+
+        if ($('.change-table-frame').css('display') === 'block' && currentProject.project.statusCode === ProjectStatus.Incomplete.value) {
+          formCommon.setDisabledAndTitleAttributesById('send-button', false, '');
         }
       } else {
-        $('.change-table-header').html($('<div class="font-resize" style="color: rgb(255, 255, 0)">Tarkista validointitulokset. Yhteenvetotaulukko voi olla puutteellinen.</div>'));
+        $('.change-table-header').html(`
+          <div class="left" style="color: rgb(255, 255, 0); margin: 8px">Tarkista validointitulokset. Yhteenvetotaulukko voi olla puutteellinen.</div>
+          <div class="right">
+            <button class="max wbtn-max" aria-label="Toggle Size" title="Suurenna taulukko"><i id="sizeIcon" class="fas fa-expand"></i></button>
+            <button class="close wbtn-close" aria-label="Close"><i id="closeIcon" class="fas fa-times"></i></button>
+          </div>
+        `);
       }
+      setMinFrameHeight();
+    }
+
+    function setMinFrameHeight() {
+      const $frame = $('.change-table-frame');
+      const $table = $('.change-table-dimensions');
+      const tableHeight = $table.outerHeight();
+      const headerElement = document.querySelector('.change-table-header');
+      const headerHeight = headerElement ? headerElement.offsetHeight : 0;
+      const maxHeight = window.innerHeight * 0.5;
+      const totalHeight = tableHeight + headerHeight;
+
+      $frame.css({ height: `${Math.min(totalHeight, maxHeight)}px` });
     }
 
     function bindEvents() {
       $('.row-changes').remove();
-      eventbus.on('projectChanges:fetched', function (projectChangeData) {
-        showChangeTable(projectChangeData);
+
+      eventbus.on('projectChanges:fetched', showChangeTable);
+
+      changeTable.on('click', 'button.max', () => {
+        resizeTable();
       });
 
-      changeTable.on('click', 'button.max', function () {
-        resetInteractions();
-        $('.font-resize').css('font-size', '18px');
-        if (windowMaximized) {
-          $('.change-table-frame').height('260px');
-          $('.change-table-frame').width('1135px');
-          $('.change-table-frame').css('top', '620px');
-          $('[id=change-table-borders-target]').height('210px');
-          $('[id=change-table-borders-source]').height('210px');
-          $('[id=change-table-borders-reversed]').height('210px');
-          $('[id=change-table-borders-changetype]').height('210px');
-          $('[id=buttonText]').text("Suurenna ");
-          $('[id=sizeSymbol]').text("□");
-          windowMaximized = false;
-        } else {
-          $('.change-table-frame').height('800px');
-          $('.change-table-frame').width('1135px');
-          $('.change-table-frame').css('top', '50px');
-          $('[id=change-table-borders-target]').height('740px');
-          $('[id=change-table-borders-source]').height('750px');
-          $('[id=change-table-borders-reversed]').height('750px');
-          $('[id=change-table-borders-changetype]').height('750px');
-          $('[id=buttonText]').text("Pienennä ");
-          $('[id=sizeSymbol]').text("_");
-          windowMaximized = true;
-        }
-        setTableHeight();
-      });
+      changeTable.on('click', 'button.close', hide);
+      changeTable.on('click', '#label-source-btn, #label-target-btn', e => sortChanges(e.target));
+    }
 
-      changeTable.on('click', 'button.close', function () {
-        hide();
-      });
+    function resizeTable() {
+      const $frame = $('.change-table-frame');
+      const windowWidth = window.innerWidth;
+      const windowHeight = window.innerHeight;
 
-      changeTable.on('click', "i[id^='label-'][id$='-btn']", function (event) {
-        sortChanges(event.target);
-      });
+      if (windowMaximized) {
+        const frameWidth = Math.min(800, windowWidth * 0.7);
+        setMinFrameHeight();
+        const left = (windowWidth - frameWidth) / 3;
+        $frame.css({ width: `${frameWidth}px`, height: '', left: `${left}px`, top: '100px', position: 'absolute' });
+        windowMaximized = false;
+      } else {
+        const frameWidth = Math.min(1550, windowWidth * 0.85);
+        const frameHeight = Math.min(700, windowHeight * 0.8);
+        const left = (windowWidth - frameWidth) / 2;
+        const top = (windowHeight - frameHeight) / 2;
+        $frame.css({ width: `${frameWidth}px`, height: `${frameHeight}px`, left: `${left}px`, top: `${top}px`, position: 'absolute' });
+        windowMaximized = true;
+      }
     }
 
     function sortChanges(btn) {
-      if ($(btn).hasClass('fa-sort-up') || $(btn).hasClass('fa-sort')) {
-        $(btn).removeClass('fa-sort');
-        $(btn).removeClass('fa-sort-up');
-        $(btn).addClass('fa-sort-down');
-      } else {
-        $(btn).removeClass('fa-sort-down');
-        $(btn).addClass('fa-sort-up');
-      }
+      const $btn = $(btn);
+      const idMatch = $btn.attr('id').match(/^label-(source|target)-btn$/);
+      if (!idMatch) return;
 
-      var side = btn.id.match('-(.*)-')[1];
-      var otherBtn = $('[id=label-' + (side === 'source' ? 'target' : 'source') + '-btn');
-      otherBtn.removeClass('fa-sort-down');
-      otherBtn.removeClass('fa-sort-up');
-      otherBtn.addClass('fa-sort');
+      const side = idMatch[1];
+      const isAscending = $btn.hasClass('fa-sort-up');
 
-      var projectChanges = projectChangeInfoModel.sortChanges(side, btn.className.match('fa-sort-up'));
-      eventbus.trigger('projectChanges:fetched', projectChanges);
+      $('.btn-icon').removeClass('fa-sort-up fa-sort-down').addClass('fa-sort');
+      $btn.removeClass('fa-sort');
+      $btn.addClass(isAscending ? 'fa-sort-down' : 'fa-sort-up');
+
+      const sorted = projectChangeInfoModel.sortChanges(side, !isAscending);
+      eventbus.trigger('projectChanges:fetched', sorted);
     }
 
     function getReversed(changeInfoSeq) {
-      return ((changeInfoSeq.reversed) ? '<td class="project-change-table-dimension">&#10004;</td>' : '<td class="project-change-table-dimension"></td>');
+      return `<td class="project-change-table-dimension dimension-reversed">${changeInfoSeq.reversed ? '&#10004;' : ''}</td>`;
     }
 
-    /**
-     Convert administrativeClass number value to text value
-          1   = Valtio
-          2   = Kunta
-          3   = Yksit.
-     default  = Yksit.
-     */
     function getAdministrativeClassText(administrativeClass) {
-      let text;
-      switch(administrativeClass) {
-        case 1:
-          text = "Valtio";
-              break;
-        case 2:
-          text = "Kunta";
-              break;
-        case 3:
-          text = "Yksit.";
-              break;
-        default:
-          text = "Yksit.";
+      switch (administrativeClass) {
+        case 1: return 'Valtio';
+        case 2: return 'Kunta';
+        case 3: return 'Yksit.';
+        default: return 'Yksit.';
       }
-      return text;
     }
 
     function getEmptySource(changeInfoSeq) {
-      return '<td class="project-change-table-dimension-first">' + getChangeType(changeInfoSeq.changetype) + '</td>' +
-        '<td class="project-change-table-dimension"></td>' +
-        '<td class="project-change-table-dimension"></td>' +
-        '<td class="project-change-table-dimension"></td>' +
-        '<td class="project-change-table-dimension"></td>' +
-        '<td class="project-change-table-dimension"></td>' +
-        '<td class="project-change-table-dimension"></td>' +
-        '<td class="project-change-table-dimension"></td>' +
-        '<td class="project-change-table-dimension"></td>' +
-        '<td class="project-change-table-dimension"></td>';
+      return `<td class="project-change-table-dimension-first">${getChangeType(changeInfoSeq.changetype)}</td>` +
+          '<td class="project-change-table-dimension" colspan="9"></td>';
     }
 
     function getEmptyTarget() {
-      return '<td class="project-change-table-dimension"></td>' +
-        '<td class="project-change-table-dimension"></td>' +
-        '<td class="project-change-table-dimension"></td>' +
-        '<td class="project-change-table-dimension"></td>' +
-        '<td class="project-change-table-dimension"></td>' +
-        '<td class="project-change-table-dimension"></td>' +
-        '<td class="project-change-table-dimension"></td>' +
-        '<td class="project-change-table-dimension"></td>' +
-        '<td class="project-change-table-dimension"></td>';
+      return '<td class="project-change-table-dimension" colspan="9"></td>';
     }
 
     function getTargetInfo(changeInfoSeq) {
-      return '<td class="project-change-table-dimension">' + changeInfoSeq.target.roadNumber + '</td>' +
-        '<td class="project-change-table-dimension">' + changeInfoSeq.target.trackCode + '</td>' +
-        '<td class="project-change-table-dimension">' + changeInfoSeq.target.startRoadPartNumber + '</td>' +
-        '<td class="project-change-table-dimension">' + changeInfoSeq.target.addrMRange.start + '</td>' +
-        '<td class="project-change-table-dimension">' + changeInfoSeq.target.addrMRange.end + '</td>' +
-        '<td class="project-change-table-dimension">' + (changeInfoSeq.target.addrMRange.end - changeInfoSeq.target.addrMRange.start) + '</td>' +
-        '<td class="project-change-table-dimension">' + changeInfoSeq.target.discontinuity + '</td>' +
-        '<td class="project-change-table-dimension">' + getAdministrativeClassText(changeInfoSeq.target.administrativeClass ) + '</td>' +
-        '<td class="project-change-table-dimension">' + changeInfoSeq.target.ely + '</td>';
+      const t = changeInfoSeq.target;
+      return `
+        <td class="project-change-table-dimension">${t.roadNumber}</td>
+        <td class="project-change-table-dimension">${t.trackCode}</td>
+        <td class="project-change-table-dimension">${t.startRoadPartNumber}</td>
+        <td class="project-change-table-dimension">${t.addrMRange.start}</td>
+        <td class="project-change-table-dimension">${t.addrMRange.end}</td>
+        <td class="project-change-table-dimension">${t.addrMRange.end - t.addrMRange.start}</td>
+        <td class="project-change-table-dimension">${t.discontinuity}</td>
+        <td class="project-change-table-dimension">${getAdministrativeClassText(t.administrativeClass)}</td>
+        <td class="project-change-table-dimension">${t.ely}</td>
+      `;
     }
 
     function getSourceInfo(changeInfoSeq) {
-      return '<td class="project-change-table-dimension-first">' + getChangeType(changeInfoSeq.changetype) + '</td>' +
-        '<td class="project-change-table-dimension">' + changeInfoSeq.source.roadNumber + '</td>' +
-        '<td class="project-change-table-dimension">' + changeInfoSeq.source.trackCode + '</td>' +
-        '<td class="project-change-table-dimension">' + changeInfoSeq.source.startRoadPartNumber + '</td>' +
-        '<td class="project-change-table-dimension">' + changeInfoSeq.source.addrMRange.start + '</td>' +
-        '<td class="project-change-table-dimension">' + changeInfoSeq.source.addrMRange.end + '</td>' +
-        '<td class="project-change-table-dimension">' + (changeInfoSeq.source.addrMRange.end - changeInfoSeq.source.addrMRange.start) + '</td>' +
-        '<td class="project-change-table-dimension">' + changeInfoSeq.source.discontinuity + '</td>' +
-        '<td class="project-change-table-dimension">' + getAdministrativeClassText(changeInfoSeq.source.administrativeClass ) + '</td>' +
-        '<td class="project-change-table-dimension">' + changeInfoSeq.source.ely + '</td>';
+      const s = changeInfoSeq.source;
+      return `
+        <td class="project-change-table-dimension-first">${getChangeType(changeInfoSeq.changetype)}</td>
+        <td class="project-change-table-dimension">${s.roadNumber}</td>
+        <td class="project-change-table-dimension">${s.trackCode}</td>
+        <td class="project-change-table-dimension">${s.startRoadPartNumber}</td>
+        <td class="project-change-table-dimension">${s.addrMRange.start}</td>
+        <td class="project-change-table-dimension">${s.addrMRange.end}</td>
+        <td class="project-change-table-dimension">${s.addrMRange.end - s.addrMRange.start}</td>
+        <td class="project-change-table-dimension">${s.discontinuity}</td>
+        <td class="project-change-table-dimension">${getAdministrativeClassText(s.administrativeClass)}</td>
+        <td class="project-change-table-dimension">${s.ely}</td>
+      `;
     }
 
     function dragListener(event) {
-      var target = event.target,
-        x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx,
-        y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
-      target.style.transform =
-        'translate(' + x + 'px, ' + y + 'px)';
-      target.style.webkitTransform = target.style.transform;
+      const target = event.target;
+      let x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
+      let y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+      target.style.transform = `translate(${x}px, ${y}px)`;
       target.setAttribute('data-x', x);
       target.setAttribute('data-y', y);
     }
 
+    // Enable dragging and resizing
     function enableTableInteractions() {
-      interact('.change-table-frame').draggable({
-        allowFrom: '.change-table-header',
-        onmove: dragListener,
-        restrict: {
-          restriction: '.container',
-          elementRect: {top: 0, left: 0, bottom: 1, right: 1}
-        }
-      }).resizable({
-        edges: {left: true, right: true, bottom: true, top: true},
-        restrictEdges: {
-          outer: '.container',
-          endOnly: true
-        },
-        restrictSize: {
-          min: {width: 650, height: 300}
-        },
-        inertia: true
-      }).on('resizemove', function (event) {
-        var target = event.target,
-          x = (parseFloat(target.getAttribute('data-x')) || 0),
-          y = (parseFloat(target.getAttribute('data-y')) || 0);
-        target.style.width = event.rect.width + 'px';
-        target.style.height = event.rect.height + 'px';
-        x += event.deltaRect.left;
-        y += event.deltaRect.top;
-        target.style.transform =
-          'translate(' + x + 'px,' + y + 'px)';
-        target.style.webkitTransform = target.style.transform;
-        target.setAttribute('data-x', x);
-        target.setAttribute('data-y', y);
-        var fontResizeElements = $('.font-resize');
-        var newFontSize = (18 * parseInt(target.style.width) / 950) + 'px';
-        fontResizeElements.css('font-size', newFontSize);
-        $('[id=change-table-borders-target]').height(parseFloat(target.style.height) - 50 + 'px');
-        $('[id=change-table-borders-source]').height(parseFloat(target.style.height) - 50 + 'px');
-        $('[id=change-table-borders-reversed]').height(parseFloat(target.style.height) - 50 + 'px');
-        $('[id=change-table-borders-changetype]').height(parseFloat(target.style.height) - 50 + 'px');
-        setTableHeight();
-      });
+      interact('.change-table-frame')
+          .draggable({
+            allowFrom: '.change-table-header',
+            onmove: dragListener,
+            restrict: { restriction: '.container', elementRect: { top: 0, left: 0, bottom: 1, right: 1 } }
+          })
+          .resizable({
+            edges: { left: true, right: true, bottom: true, top: true },
+            restrictEdges: { outer: '.container', endOnly: true },
+            inertia: true
+          })
+          .on('resizemove', function (event) {
+            const target = event.target;
+            let x = (parseFloat(target.getAttribute('data-x')) || 0) + event.deltaRect.left;
+            let y = (parseFloat(target.getAttribute('data-y')) || 0) + event.deltaRect.top;
+            target.style.width = `${event.rect.width}px`;
+            target.style.height = `${event.rect.height}px`;
+            target.style.transform = `translate(${x}px, ${y}px)`;
+            target.setAttribute('data-x', x);
+            target.setAttribute('data-y', y);
+          });
     }
 
-    eventbus.on('projectChangeTable:refresh', function () {
+    eventbus.on('projectChangeTable:refresh', () => {
       getChanges();
       enableTableInteractions();
     });
 
-    eventbus.on('projectChangeTable:hide', function () {
-      hide();
+    eventbus.on('projectChangeTable:hide', hide);
+
+    // Table size toggle button
+    $(document).on('click', '.wbtn-max', function () {
+      const icon = $('#sizeIcon');
+      const button = $(this);
+
+      if (icon.hasClass('fa-expand')) {
+        icon.removeClass('fa-expand').addClass('fa-compress');
+        button.attr('title', 'Pienennä taulukko');
+      } else {
+        icon.removeClass('fa-compress').addClass('fa-expand');
+        button.attr('title', 'Suurenna taulukko');
+      }
     });
 
-    return {
-      show: show,
-      hide: hide,
-      bindEvents: bindEvents,
-      isChangeTableOpen: isChangeTableOpen
-    };
+    return { show, hide, bindEvents, isChangeTableOpen };
   };
 }(this));

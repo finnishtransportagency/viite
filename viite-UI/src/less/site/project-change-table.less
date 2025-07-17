@@ -1,180 +1,141 @@
-// Styles used in project change table //
-
+/* General table wrapper */
 .change-table-frame {
   position: absolute;
-  bottom: 115px;
-  left: 250px;
-  right: 500px;
-  top: 620px;
   background-color: #e3e3e1;
-  z-index: 1020;
-}
-.change-table-header {
-  padding: 10px 250px 10px 10px;
-  border-bottom: 1px solid #171717;
-  border-top-left-radius: 3px;
-  border-top-right-radius: 3px;
-  color: #fff;
-  background-color: #282826;
-  font-size: 150%;
-  font-weight: bold;
-  display: flex;
-  justify-content: space-between;
-}
-.change-table-sections {
-  color: #5a5a57;
-  font-weight: bold;
-  height: @change-table-sections-height;
-  font-size: 15px;
-  background-color: #cbcbc9;
-  display: inline-flex;
-  width: 100%;
-}
-.change-header {
- margin-left: 10%;
-}
-.change-table-heading-label {
-  font-size: 13px;
-  height: 30px;
-  margin-top: 10px;
-  margin-left: 10px;
-  display: inline-block;
-  float: left;
-  text-transform: none;
-}
-#change-table-button-close {
-  float: right;
-  width: 100px;
-  margin-right: 17px;
-  margin-top: 6px;
-}
-.change-table {
-  display: block;
-  height: inherit;
-}
-.change-table-dimensions{
-  width:100%;
-}
-.project-change-table-dimension-header {
-  width: 5.15%;
-  color: #5a5a57;
-  font-weight: bold;
-  font-size: 12px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  text-align: center;
-}
-.target {
-  margin-left: 1%;
-  margin-right: 1%;
+  z-index: 2020;
+  border: 2px solid #282826;
+  border-radius: 3px;
+  min-width: 862px;
+  min-height: 139px;
+  width: 50vw;
+  font-family: Arial, sans-serif;
+  overflow-x: auto;
 }
 
-.project-change-table-dimension-first-h {
-  min-width: 65px;
-  max-width: 65px;
-  font-weight: bold;
-  font-size: 12px;
-  text-transform: uppercase;
-  text-align: center;
-}
-.project-change-table-dimension-h {
-  min-width: 30px;
-  max-width: 30px;
-  height: 28px;
-  color: #5a5a57;
-  font-weight: bold;
-  font-size: 12px;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  text-align: center;
-}
-.project-change-table-dimension-first {
-  min-width: 65px;
-  max-width: 65px;
-  font-weight: bold;
-  font-size: 12px;
-  text-transform: uppercase;
-  text-align: center;
-}
-.project-change-table-dimension {
-  min-width: 30px;
-  max-width: 45px;
-  height: 28px;
-  color: #5a5a57;
-  font-size: 12px;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  text-align: center;
-}
-.change-borders-frames {
-  position: absolute;
-  width: 100%;
-  height: 145px;
-}
-#change-table-borders-changetype {
-  position: absolute;
-  height: @table-borders-height;
-  width: 10%;
-  border-right: 1px solid #a4a4a2;
-  z-index: 1;
-  pointer-events: none;
-}
-#change-table-borders-reversed {
-  position: absolute;
-  height: @table-borders-height;
-  width: 10%;
-  border-right: 1px solid #a4a4a2;
-  z-index: 1;
-  pointer-events: none;
-  padding-left: 47.5%;
-}
-#change-table-borders-source {
-  position: absolute;
-  height: @table-borders-height;
-  width: 42%;
-  border-right: 1px solid #a4a4a2;
-  z-index: 1;
-  pointer-events: none;
-  padding-left: 10%;
-}
-#change-table-borders-target {
-  position: absolute;
-  height: @table-borders-height;
-  width: 32%;
-  z-index: 1;
-  pointer-events: none;
-  padding-left: 68%;
-}
-#label-type {
-  width: 10%;
-}
-#label-reverse {
-  width: 10%;
-}
-#label-source {
-  width: 40%;
-}
-#label-target {
-  width: 45%;
-}
-.dimension-reversed {
+/* Header Bar */
+.change-table-header {
+  position: relative;
+  display: flex;
+  align-items: center;
   padding-right: 8px;
+  background-color: #282826;
+  color: #fff;
+  z-index: 2021;
+  font-weight: bold;
+  font-size: 1.1rem;
 }
+
+.change-table-header .left {
+  flex: 1;
+}
+
+.change-table-header .center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.change-table-header .right {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.btn-icon {
+  margin-left: 5px;
+  cursor: pointer;
+}
+
+/* Table body */
+.change-table-dimension-headers {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.change-table-dimensions {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+/* Column headings */
+.project-change-table-dimension-header th,
+.project-change-table-dimension-h,
+.project-change-table-dimension,
+.project-change-table-dimension-first {
+  border: 1px solid #bbb;
+  padding: 4px;
+  text-align: center;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  max-width: 40px;
+}
+
+.project-change-table-dimension-h {
+  height: 28px;
+  color: #5a5a57;
+  font-weight: bold;
+  overflow: hidden;
+  text-overflow: clip;
+}
+
+.project-change-table-dimension-first-h,
+.project-change-table-dimension-first {
+  width: 70px;
+  min-width: 70px;
+  max-width: 70px;
+  font-weight: bold;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  text-align: center;
+  white-space: nowrap;
+  overflow-x: hidden;
+}
+
+// "Kääntö" column
+.dimension-reversed {
+  width: 80px;
+  min-width: 80px;
+  max-width: 80px;
+  font-weight: bold;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  text-align: center;
+  white-space: nowrap;
+  overflow-x: hidden;
+}
+
+/* Alternating row color */
 .white-row {
-  background-color: #FFFFFF;
+  background-color: #fff;
 }
+
+/* Scrollbar styles */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
-::-webkit-scrollbar-button {
-  background: #888
+
+::-webkit-scrollbar-track {
+  background: #f0f0f0;
+  border-radius: 3px;
 }
-::-webkit-scrollbar-track-piece {
-  background: #888
-}
+
 ::-webkit-scrollbar-thumb {
-  background: #1c7fdd
+  background: #1c7fdd;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #0f6ac4;
+}
+
+::-webkit-scrollbar-button {
+  display: none;
+}
+
+// Thinner header
+.left p {
+  margin: 8px;
 }
