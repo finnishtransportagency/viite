@@ -413,9 +413,44 @@
                     elyElement.setCustomValidity("Ely tai Tie on pakollinen tieto");
             }
 
+            // Validate A-osa and L-osa
+            function validateBeginningAndEndParts () {
+                const aOsa = document.getElementById('roadAddrInputStartPart');
+                const lOsa = document.getElementById('roadAddrInputEndPart');
+
+                const aOsaValue = parseInt(aOsa.value, 10);
+                const lOsaValue = parseInt(lOsa.value, 10);
+
+                const aOsaIsNumber = !isNaN(aOsaValue);
+                const lOsaIsNumber = !isNaN(lOsaValue);
+
+                // If both values are valid numbers, validate the range
+                if (aOsaIsNumber && lOsaIsNumber && aOsaValue > lOsaValue) {
+                    lOsa.setCustomValidity("L-osa ei voi olla pienempi kuin A-osa");
+                    return false;
+                }
+
+                // Clear error if input is valid or values are not both numbers
+                lOsa.setCustomValidity("");
+                return true;
+            }
+
+
+            // Clear A-osa / L-osa error when either value is changed
+            document.getElementById('roadAddrInputStartPart').addEventListener('input', function() {
+                validateBeginningAndEndParts(this.value);
+                this.setCustomValidity("");
+            });
+
+            document.getElementById('roadAddrInputEndPart').addEventListener('input', function() {
+                validateBeginningAndEndParts(this.value);
+                this.setCustomValidity("");
+            });
+
             function willPassValidations() {
                 validateDate(roadAddrSituationDate.value);
                 validateElyAndRoadNumber(ely, roadNumber);
+                validateBeginningAndEndParts();
                 return reportValidations();
             }
 
@@ -436,7 +471,7 @@
                 return params;
             }
 
-            //reset ely and roadAddrSituationDate input fields' custom validity
+            // Reset custom validities (form error notifications)
             ely.setCustomValidity("");
             roadAddrSituationDate.setCustomValidity("");
 
