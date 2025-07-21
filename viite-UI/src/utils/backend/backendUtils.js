@@ -1,9 +1,9 @@
 /* eslint-disable new-cap */
 (function (root) {
   root.Backend = function () {
-    var loadingProject;
+    let loadingProject;
     // var finnishDatePattern = /(\d{2})\.(\d{2})\.(\d{4})/;
-    var gettingRoadLinks;
+    let gettingRoadLinks;
     moment.locale('fi');
 
     this.startLinkNetworkUpdate = _.throttle(function (data, success, failure) {
@@ -37,24 +37,24 @@
     }, 1000);
 
     this.getRoadLinks = createCallbackRequestor(function (params) {
-      var zoom = params.zoom;
-      var boundingBox = params.boundingBox;
+      const zoom = params.zoom;
+      const boundingBox = params.boundingBox;
       return {
         url: 'api/viite/roadaddress?zoom=' + zoom + '&bbox=' + boundingBox
       };
     });
 
     this.getRoadLinksOfWholeRoadPart = createCallbackRequestor(function (params) {
-      var roadNumber = params.roadNumber;
-      var roadPart = params.roadPartNumber;
+      const roadNumber = params.roadNumber;
+      const roadPart = params.roadPartNumber;
       return {
         url: 'api/viite/roadlinks/wholeroadpart/?roadnumber=' + roadNumber + '&roadpart=' + roadPart
       };
     });
 
     this.getNodesAndJunctions = createCallbackRequestor(function (params) {
-      var zoom = params.zoom;
-      var boundingBox = params.boundingBox;
+      const zoom = params.zoom;
+      const boundingBox = params.boundingBox;
       return {
         url: 'api/viite/nodesjunctions?zoom=' + zoom + '&bbox=' + boundingBox
       };
@@ -75,9 +75,9 @@
     });
 
     this.getProjectLinks = createCallbackRequestor(function (params) {
-      var zoom = params.zoom;
-      var boundingBox = params.boundingBox;
-      var projectId = params.projectId;
+      const zoom = params.zoom;
+      const boundingBox = params.boundingBox;
+      const projectId = params.projectId;
       return {
         url: 'api/viite/project/roadlinks?zoom=' + zoom + '&bbox=' + boundingBox + '&id=' + projectId
       };
@@ -297,7 +297,7 @@
     }, 1000);
 
     this.getStartupParametersWithCallback = function (callback) {
-      var url = 'api/viite/startupParameters';
+      const url = 'api/viite/startupParameters';
       $.getJSON(url, callback);
     };
 
@@ -317,15 +317,15 @@
     };
 
     function createCallbackRequestor(getParameters) {
-      var requestor = latestResponseRequestor(getParameters);
+      const requestor = latestResponseRequestor(getParameters);
       return function (parameter, callback) {
         requestor(parameter).then(callback);
       };
     }
 
     function latestResponseRequestor(getParameters) {
-      var deferred;
-      var request;
+      let deferred;
+      let request;
 
       function doRequest() {
         if (request)

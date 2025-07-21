@@ -573,6 +573,9 @@
   margin-left: -450px;
   min-width: 45%;
   height: 500px;
+  border-top-left-radius: @border-radius-base;
+  border-top-right-radius: @border-radius-base;
+  border-color: @gray-darkest;
 
   p {
     margin: 10px;
@@ -587,8 +590,13 @@
   border-bottom: 1px solid @gray-darkest;
   border-top-left-radius: @border-radius-base;
   border-top-right-radius: @border-radius-base;
+  border-color: @gray-darkest;
   color: #fff;
   background-color: @gray-darker-2;
+  position: sticky;
+  top: 0;
+  z-index: 1000; /* Above other content */
+  border-bottom: 1px solid #ccc; /* Optional, for separation */
 
   p {
     flex-grow: 10;
@@ -599,6 +607,10 @@
   display: flex;
   border-bottom: 1px solid #ccc;
   background-color: #eee;
+  position: sticky;
+  top: 40px; /* height of .generic-window-header (adjust if different) */
+  z-index: 999;
+  border-bottom: 1px solid #ddd; /* Optional */
 }
 
 .tab-button {
@@ -628,7 +640,7 @@
 }
 
 .content-area {
-  padding: 20px;
+  padding: 0 20px;
   flex-grow: 1;
 }
 
