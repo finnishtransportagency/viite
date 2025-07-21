@@ -1,0 +1,277 @@
+.user-management-form {
+    margin-bottom: 30px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 20px;
+    background: #f9fafb;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Headings */
+.user-management-content-wrapper h3,
+.user-management-content-wrapper h4 {
+    color: #374151;
+}
+
+.user-management-content-wrapper h3 {
+    margin-bottom: 20px;
+}
+
+.user-management-content-wrapper h4 {
+    margin-bottom: 15px;
+}
+
+/* Form fields */
+.form-group {
+    margin-bottom: 14px;
+    display: flex;
+    flex-direction: column;
+    //min-width: 180px;
+    //max-width: 220px;
+    gap: 8px;
+}
+
+.form-row.vertical-row {
+    display: flex;
+    gap: 14px;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #374151;
+}
+
+.form-control {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    box-sizing: border-box;
+}
+
+.error-message {
+    color: #ef4444;
+    font-size: 12px;
+    margin-top: 4px;
+    display: none;
+}
+
+/* Dropdowns */
+.dropdown-toggle {
+    width: 330px;
+    border: 1px solid #d1d5db;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    background: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dropdown-toggle.roles {
+    width: 200px;
+}
+
+.dropdown-label {
+    font-size: 14px;
+}
+
+.dropdown-content {
+    position: absolute;
+    z-index: 10;
+    background: white;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 8px;
+    margin-top: 4px;
+    min-width: 250px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.hidden {
+    display: none;
+}
+
+.dropdown-content div:hover {
+    background-color: #f3f4f6;
+}
+
+/* Role / ELY items */
+.role-item,
+.ely-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 4px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.role-item input,
+.ely-item input {
+    margin-right: 8px;
+}
+
+.role-item input {
+    margin-top: 2px;
+}
+
+.role-description {
+    font-size: 12px;
+    color: #6b7280;
+    margin-top: 2px;
+}
+
+/* User table */
+.user-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    border: 1px solid #e5e7eb;
+}
+
+.user-table td {
+    text-align: center !important;
+    vertical-align: middle !important;
+    padding: 4px;
+}
+
+.user-table thead {
+    background: #f3f4f6;
+    position: sticky;
+    top: 0;
+}
+
+.user-table th {
+    text-align: left;
+    padding: 12px 4px;
+    border-bottom: 1px solid #e5e7eb;
+    font-weight: 600;
+}
+
+.user-table td input[type="number"] {
+    font-size: 12px;
+    padding: 4px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+}
+
+.coord-input {
+    width: 80px;
+    padding: 2px 4px;
+    border: 1px solid #d1d5db;
+    border-radius: 3px;
+    margin-right: 10px;
+    font-size: 14px !important;
+}
+
+.zoom-input {
+    font-size: 14px !important;
+    width: 50px;
+}
+
+.existing-user-input {
+    height: 37.33px;
+}
+
+.user-management-label {
+    font-size: 14px;
+    margin-right: 1px;
+    vertical-align: middle;
+    //text-align: center;
+}
+
+.table-wrapper {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: white;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.flex-end {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 15px;
+}
+
+/* Form row containers */
+.form-row {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+
+.form-row.horizontal-row {
+    gap: 24px;
+    flex-wrap: nowrap;
+}
+
+.form-row.roles-and-elys {
+    gap: 16px;
+    min-width: 350px;
+}
+
+/* Columns */
+.form-column {
+    flex: 1;
+    flex-direction: column;
+    width: 250px;
+}
+
+/* Coordinates group */
+.coordinates-group {
+    display: flex;
+    flex-direction: column;
+    min-width: 320px;
+    gap: 8px;
+}
+
+/* And adjust the row alignment for better centering */
+.form-row.horizontal-row {
+    gap: 24px;
+    flex-wrap: nowrap;
+    align-items: flex-start; /* Optional: try 'center' if they differ slightly */
+}
+
+.coordinate-wrapper {
+    display: flex;
+    flex-direction: row;
+    gap: 12px;
+    align-items: center;
+    border-top: 0 !important;
+}
+
+.coordinates-group > label {
+    display: block;
+    width: 100%;
+    font-weight: 600;
+}
+
+/* Each coordinate input: label and input horizontally aligned */
+.coordinate-input {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 80px;
+}
+
+.coordinate-input label {
+    min-width: 18px;
+    font-weight: normal;
+    margin: 0;
+}
+
+.form-actions {
+    align-self: flex-end;
+    margin-left: auto;
+    margin-top: 8px;
+}
