@@ -163,7 +163,7 @@
         }
       } else {
         $('.change-table-header').html(`
-          <div class="left" style="color: rgb(255, 255, 0); margin: 8px">Tarkista validointitulokset. Yhteenvetotaulukko voi olla puutteellinen.</div>
+          <div class="left warning">Tarkista validointitulokset. Yhteenvetotaulukko voi olla puutteellinen.</div>
           <div class="right">
             <button class="max wbtn-max" aria-label="Toggle Size" title="Suurenna taulukko"><i id="sizeIcon" class="fas fa-expand"></i></button>
             <button class="close wbtn-close" aria-label="Close"><i id="closeIcon" class="fas fa-times"></i></button>
@@ -198,25 +198,61 @@
       changeTable.on('click', '#label-source-btn, #label-target-btn', e => sortChanges(e.target));
     }
 
+    function updateTableFontSize() {
+      const tableWidth = $('.change-table-dimensions').outerWidth();
+      let fontSize = '0.85rem';
+
+      if (tableWidth > 1250) fontSize = '1.0rem';
+
+      $('.change-table-dimensions').css('font-size', fontSize);
+    }
+
     function resizeTable() {
       const $frame = $('.change-table-frame');
       const windowWidth = window.innerWidth;
       const windowHeight = window.innerHeight;
 
+      // 1. Calculate intended frame width/height
+      let frameWidth, calculatedWidth, frameHeight, left, top;
+      const tableMinWidth = 1050;
+
       if (windowMaximized) {
-        const frameWidth = Math.min(800, windowWidth * 0.7);
-        setMinFrameHeight();
-        const left = (windowWidth - frameWidth) / 3;
-        $frame.css({ width: `${frameWidth}px`, height: '', left: `${left}px`, top: '100px', position: 'absolute' });
-        windowMaximized = false;
+        calculatedWidth = windowWidth * 0.6;
+        frameWidth = calculatedWidth < tableMinWidth ? tableMinWidth : calculatedWidth;
+
       } else {
-        const frameWidth = Math.min(1550, windowWidth * 0.85);
-        const frameHeight = Math.min(700, windowHeight * 0.8);
-        const left = (windowWidth - frameWidth) / 2;
-        const top = (windowHeight - frameHeight) / 2;
-        $frame.css({ width: `${frameWidth}px`, height: `${frameHeight}px`, left: `${left}px`, top: `${top}px`, position: 'absolute' });
-        windowMaximized = true;
+        calculatedWidth = windowWidth * 0.8;
+        frameWidth = calculatedWidth < tableMinWidth ? tableMinWidth : calculatedWidth;
+
       }
+
+      $frame.css({
+        width: `${frameWidth}px`,
+        ...(typeof top !== 'undefined' ? { top: `${top}px` } : {})
+      });
+
+      updateTableFontSize();
+
+      // After browser renders with new font size, set proper table height
+      window.requestAnimationFrame(() => {
+        const tableContentHeight = $('.change-table-dimensions').outerHeight(true);
+        const headerHeight = $('.change-table-header').outerHeight(true);
+        const contentHeight = tableContentHeight + headerHeight;
+
+        if (windowMaximized) {
+          frameHeight = Math.min(contentHeight, windowHeight * 0.8);
+        } else {
+          frameHeight = Math.min(contentHeight, 530);
+        }
+
+        $frame.css({
+          height: `${frameHeight}px`,
+          ...(typeof top !== 'undefined' ? { top: `${top}px` } : {})
+        });
+      });
+
+      // After toggle, flip maximized state
+      windowMaximized = !windowMaximized;
     }
 
     function sortChanges(btn) {
@@ -312,13 +348,24 @@
           })
           .on('resizemove', function (event) {
             const target = event.target;
+            const currentHeight = parseFloat(target.style.height) || target.offsetHeight;
+            const newHeight = currentHeight + event.deltaRect.height;
+
+            const minHeight = 100; // Optional: minimum height allowed
+            const tableContentHeight = $('.change-table-dimensions').outerHeight(true) + $('.change-table-header').outerHeight(true);
+
+            // Restrict resizing so height can't exceed content height
+            const height = Math.max(minHeight, Math.min(newHeight, tableContentHeight));
+
             let x = (parseFloat(target.getAttribute('data-x')) || 0) + event.deltaRect.left;
             let y = (parseFloat(target.getAttribute('data-y')) || 0) + event.deltaRect.top;
+
             target.style.width = `${event.rect.width}px`;
-            target.style.height = `${event.rect.height}px`;
+            target.style.height = `${height}px`;
             target.style.transform = `translate(${x}px, ${y}px)`;
             target.setAttribute('data-x', x);
             target.setAttribute('data-y', y);
+            updateTableFontSize();
           });
     }
 
