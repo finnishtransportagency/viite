@@ -170,19 +170,6 @@
           </div>
         `);
       }
-      setMinFrameHeight();
-    }
-
-    function setMinFrameHeight() {
-      const $frame = $('.change-table-frame');
-      const $table = $('.change-table-dimensions');
-      const tableHeight = $table.outerHeight();
-      const headerElement = document.querySelector('.change-table-header');
-      const headerHeight = headerElement ? headerElement.offsetHeight : 0;
-      const maxHeight = window.innerHeight * 0.5;
-      const totalHeight = tableHeight + headerHeight;
-
-      $frame.css({ height: `${Math.min(totalHeight, maxHeight)}px` });
     }
 
     function bindEvents() {
@@ -213,7 +200,7 @@
       const windowHeight = window.innerHeight;
 
       // 1. Calculate intended frame width/height
-      let frameWidth, calculatedWidth, frameHeight, left, top;
+      let frameWidth, calculatedWidth, frameHeight, top;
       const tableMinWidth = 1050;
 
       if (windowMaximized) {
@@ -232,24 +219,6 @@
       });
 
       updateTableFontSize();
-
-      // After browser renders with new font size, set proper table height
-      window.requestAnimationFrame(() => {
-        const tableContentHeight = $('.change-table-dimensions').outerHeight(true);
-        const headerHeight = $('.change-table-header').outerHeight(true);
-        const contentHeight = tableContentHeight + headerHeight;
-
-        if (windowMaximized) {
-          frameHeight = Math.min(contentHeight, windowHeight * 0.8);
-        } else {
-          frameHeight = Math.min(contentHeight, 530);
-        }
-
-        $frame.css({
-          height: `${frameHeight}px`,
-          ...(typeof top !== 'undefined' ? { top: `${top}px` } : {})
-        });
-      });
 
       // After toggle, flip maximized state
       windowMaximized = !windowMaximized;
