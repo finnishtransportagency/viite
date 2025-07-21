@@ -5,8 +5,8 @@
   z-index: 2020;
   border: 2px solid #282826;
   border-radius: 3px;
-  min-width: 862px;
-  min-height: 139px;
+  min-width: 1050px;
+  min-height: 117px;
   width: 50vw;
   font-family: Arial, sans-serif;
   overflow-x: auto;
@@ -14,7 +14,8 @@
 
 /* Header Bar */
 .change-table-header {
-  position: relative;
+  position: sticky;
+  top: 0;
   display: flex;
   align-items: center;
   padding-right: 8px;
@@ -61,15 +62,14 @@
 
 /* Column headings */
 .project-change-table-dimension-header th,
+.project-change-table-dimension-header td,
 .project-change-table-dimension-h,
 .project-change-table-dimension,
 .project-change-table-dimension-first {
   border: 1px solid #bbb;
   padding: 4px;
   text-align: center;
-  font-size: 0.8rem;
   white-space: nowrap;
-  max-width: 40px;
 }
 
 .project-change-table-dimension-h {
@@ -80,30 +80,21 @@
   text-overflow: clip;
 }
 
+// First column
 .project-change-table-dimension-first-h,
 .project-change-table-dimension-first {
-  width: 70px;
-  min-width: 70px;
-  max-width: 70px;
+  width: 100px;
+  min-width: 100px;
+  max-width: 100px;
   font-weight: bold;
-  font-size: 0.7rem;
   text-transform: uppercase;
-  text-align: center;
-  white-space: nowrap;
-  overflow-x: hidden;
 }
 
 // "Kääntö" column
 .dimension-reversed {
-  width: 80px;
-  min-width: 80px;
-  max-width: 80px;
-  font-weight: bold;
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  text-align: center;
-  white-space: nowrap;
-  overflow-x: hidden;
+  width: 100px;
+  min-width: 100px;
+  max-width: 100px;
 }
 
 /* Alternating row color */
@@ -137,5 +128,10 @@
 
 // Thinner header
 .left p {
+  margin: 8px;
+}
+
+.warning {
+  color: rgb(255, 255, 0);
   margin: 8px;
 }
