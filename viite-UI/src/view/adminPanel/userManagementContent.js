@@ -13,7 +13,7 @@
         North: [6600000, 7800000]
     };
 
-    let hasUnsavedChanges = false;
+    let hasUnsavedChanges = false; // TODO
 
     root.userManagementContent = function () {
         const roles = [
@@ -33,6 +33,17 @@
                     code: ely.shortName
                 };
             });
+        }
+
+        function handleSuccess(message) {
+            console.log(message);
+            alert(message);
+            loadUsers(); // Refresh list after changes
+        }
+
+        function handleFailure(errorMessage) {
+            console.error("Virhe:", errorMessage);
+            alert("Toiminto epäonnistui: " + errorMessage);
         }
 
         function validateUsername(username) {
@@ -77,9 +88,9 @@
         function handleAddUser() {
             const username = document.getElementById('newUserUsername').value.trim();
             const roles = getSelectedRoles('newUserRoles');
-            const zoom = parseInt(document.getElementById('newUserZoom')?.value || DEFAULT_COORDINATES.zoom);
-            const east = parseFloat(document.getElementById('newUserEast')?.value || DEFAULT_COORDINATES.east);
-            const north = parseFloat(document.getElementById('newUserNorth')?.value || DEFAULT_COORDINATES.north);
+            const zoom = parseInt(document.getElementById('newUserZoom').value || DEFAULT_COORDINATES.zoom);
+            const east = parseFloat(document.getElementById('newUserEast').value || DEFAULT_COORDINATES.east);
+            const north = parseFloat(document.getElementById('newUserNorth').value || DEFAULT_COORDINATES.north);
             const elys = getSelectedElys('newUserElys');
 
             const usernameError = validateUsername(username);
@@ -96,12 +107,19 @@
             if (eastError || northError) return;
             if (roles.length === 0) return alert('Valitse vähintään yksi rooli.');
 
-            const userData = { username, roles, zoom, east, north, authorizedElys: elys };
-            console.log('Adding user:', userData);
+            const newUser = {
+                username,
+                roles,
+                zoom,
+                east,
+                north,
+                authorizedElys: elys
+            };
 
-            alert('Käyttäjä lisätty!');
-            resetForm();
-            loadUsers();
+            userManagementBackend.addUser(newUser,
+                () => handleSuccess("Käyttäjä lisätty!"),
+                handleFailure
+            );
         }
 
         let eventsBound = false;
@@ -111,6 +129,14 @@
             eventsBound = true;
 
             const container = document.querySelector(containerSelector);
+
+            const addUserButton = container.querySelector('#addUserButton');
+            if (addUserButton) {
+                addUserButton.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    handleAddUser();
+                });
+            }
 
             container.addEventListener('input', function (e) {
 
@@ -122,7 +148,7 @@
             });
 
             container.addEventListener('change', function (e) {
-                hasUnsavedChanges = true;
+                //hasUnsavedChanges = true; Not working
 
                 if (e.target.type === 'checkbox') {
                     const wrapper = e.target.closest('[data-role-dropdown-id], [data-ely-dropdown-id]');
@@ -131,6 +157,30 @@
                         else updateElyDropdownLabel(wrapper);
                     }
                 }
+            });
+
+            // Toggle checkbox when the entire role row is clicked
+            $(document).on('click', '.clickable-role', function (e) {
+                // Ignore direct clicks on the checkbox itself to avoid double toggling
+                if (e.target.tagName.toLowerCase() === 'input') return;
+
+                const checkboxId = $(this).data('checkbox-id');
+                const $checkbox = $('#' + checkboxId);
+
+                $checkbox.prop('checked', !$checkbox.prop('checked')).trigger('change');
+            });
+
+            // Toggle checkbox when clicking ELY row
+            $(document).on('click', '.clickable-ely', function (e) {
+                const tag = e.target.tagName.toLowerCase();
+
+                // Ignore direct clicks on input or label
+                if (tag === 'input' || tag === 'label') return;
+
+                const checkboxId = $(this).data('checkbox-id');
+                const $checkbox = $('#' + checkboxId);
+
+                $checkbox.prop('checked', !$checkbox.prop('checked')).trigger('change');
             });
         }
 
@@ -158,13 +208,13 @@
                                 <div class="coordinate-input">
                                     <label class="user-management-label" for="newUserNorth">P</label>
                                     <input type="number" class="coord-input form-control" id="newUserNorth" value="7175360" />
-                                    <div id="newUserNorthError" class="error-message"></div>
+                                    <div id="newUserNorthError" class="error-message hidden"></div>
                                 </div>
                     
                                 <div class="coordinate-input">
                                     <label class="user-management-label" for="newUserEast">I</label>
                                     <input type="number" class="coord-input form-control" id="newUserEast" value="440220" />
-                                    <div id="newUserEastError" class="error-message"></div>
+                                    <div id="newUserEastError" class="error-message hidden"></div>
                                 </div>
                     
                                 <div class="coordinate-input">
@@ -203,7 +253,7 @@
                                   <th>Tunnus</th>
                                   <th>Roolit</th>
                                   <th>Zoom</th>
-                                  <th>Koordinaatit</th>
+                                    <th class="centered">Koordinaatit</th>
                                   <th>ELY</th>
                                   <th></th>
                                 </tr>
@@ -229,11 +279,14 @@
                 .join(', ') || 'Valitse roolit';
 
             const roleCheckboxes = roles.map(function (role) {
+                const checkboxId = `${id}-${role.value}`;
+                const isChecked = selectedRoles.includes(role.value);
+
                 return `
-                    <div class="role-item" data-role="${role.value}">
-                        <input type="checkbox" id="${id}-${role.value}" name="${id}" value="${role.value}" ${selectedRoles.includes(role.value) ? 'checked' : ''}>
+                    <div class="role-item clickable-role" data-role="${role.value}" data-checkbox-id="${checkboxId}">
+                        <input type="checkbox" id="${checkboxId}" name="${id}" value="${role.value}" ${isChecked ? 'checked' : ''}>
                         <div>
-                            <label class="user-management-label" for="${id}-${role.value}">${role.label}</label>
+                            <label class="user-management-label" for="${checkboxId}">${role.label}</label>
                             <div class="role-description">${role.desc}</div>
                         </div>
                     </div>
@@ -262,26 +315,30 @@
                 .join(', ') || 'Valitse ELYt';
 
             const elyCheckboxes = elyOptions.map(function (ely) {
+                const checkboxId = `${id}-${ely.value}`;
+                const isChecked = selectedElys.includes(ely.value);
+
                 return `
-                    <div class="ely-item" data-ely="${ely.value}">
-                        <input type="checkbox" id="${id}-${ely.value}" name="${id}" value="${ely.value}" ${selectedElys.includes(ely.value) ? 'checked' : ''}>
-                        <label class="user-management-label" for="${id}-${ely.value}">${ely.label}</label>
-                    </div>
-                `;
+            <div class="ely-item clickable-ely" data-ely="${ely.value}" data-checkbox-id="${checkboxId}">
+                <input type="checkbox" id="${checkboxId}" name="${id}" value="${ely.value}" ${isChecked ? 'checked' : ''}>
+                <label class="user-management-label" for="${checkboxId}">${ely.label}</label>
+            </div>
+        `;
             }).join('');
 
             return `
-                <div class="ely-dropdown-wrapper" data-ely-dropdown-id="${id}">
-                    <div class="dropdown-toggle">
-                        <span class="dropdown-label">${selectedLabels}</span>
-                        <span class="dropdown-arrow">▼</span>
-                    </div>
-                    <div class="dropdown-content hidden">
-                        ${elyCheckboxes}
-                    </div>
-                </div>
-            `;
+        <div class="ely-dropdown-wrapper" data-ely-dropdown-id="${id}">
+            <div class="dropdown-toggle">
+                <span class="dropdown-label">${selectedLabels}</span>
+                <span class="dropdown-arrow">▼</span>
+            </div>
+            <div class="dropdown-content hidden">
+                ${elyCheckboxes}
+            </div>
+        </div>
+    `;
         }
+
 
         function getSelectedRoles(dropdownId) {
             return Array.from(
@@ -332,47 +389,83 @@
         }
 
         function loadUsers() {
-            let mockUsers = [
-                { username: 'u123456', roles: ['admin', 'viite'], zoom: 5, east: 440220, north: 7175360, authorizedElys: [12, 14] },
-                { username: 'u789012', roles: ['operator'], zoom: 3, east: 500000, north: 7000000, authorizedElys: [1, 2, 3] }
-            ];
+            userManagementBackend.getAllUsers(function(users) {
+                const tableBody = document.getElementById('userTableBody');
+                if (!tableBody) return;
 
-            let tableBody = document.getElementById('userTableBody');
-            if (!tableBody) return;
+                tableBody.innerHTML = '';
 
-            tableBody.innerHTML = '';
+                users.forEach(function (user, index) {
+                    let roleDropdownId = 'userRoles-' + index;
+                    let elyDropdownId = 'userElys-' + index;
+                    let row = document.createElement('tr');
+                    row.dataset.username = user.username;
 
-            mockUsers.forEach(function (user, index) {
-                let roleDropdownId = 'userRoles-' + index;
-                let elyDropdownId = 'userElys-' + index;
-                let row = document.createElement('tr');
-                row.dataset.username = user.username;
+                    row.innerHTML = `
+                <td>${user.username}</td>
+                <td>${getRoleDropdownHtml(roleDropdownId, user.roles)}</td>
+                <td><input class="zoom-input existing-user-input form-control" type="number" min="1" max="10" value="${user.zoom}"></td>
+                
+                <td class="coordinate-wrapper">
+                    <label class="user-management-label" for="userNorth-${index}">P:</label>
+                    <input type="number" id="userNorth-${index}" class="coord-input existing-user-input form-control" value="${user.north}">
 
-                row.innerHTML = `
-                    <td>${user.username}</td>
-                    <td>${getRoleDropdownHtml(roleDropdownId, user.roles)}</td>
-                    <td><input class="zoom-input existing-user-input form-control" type="number" min="1" max="10" value="${user.zoom}"></td>
-                    
-                    <td class="coordinate-wrapper">
+                    <label class="user-management-label" for="userEast-${index}">I:</label>
+                    <input type="number" id="userEast-${index}" class="coord-input existing-user-input form-control" value="${user.east}">
+                </td>
 
-                        <label class="user-management-label" for="userNorth-${index}">P:</label>
-                        <input type="number" id="userNorth-${index}" class="coord-input existing-user-input form-control" value="${user.north}">
+                <td>${getElyDropdownHtml(elyDropdownId, user.authorizedElys)}</td>
+                <td><button class="btn-secondary delete-user" data-username="${user.username}">Poista</button></td>
+            `;
+                    tableBody.appendChild(row);
+                });
 
-                        <label class="user-management-label" for="userEast-${index}">I:</label>
-                        <input type="number" id="userEast-${index}" class="coord-input existing-user-input form-control" value="${user.east}">
-
-                    </td>
-
-                    <td>${getElyDropdownHtml(elyDropdownId, user.authorizedElys)}</td>
-                    <td><button class="btn-secondary delete-user" data-username="${user.username}">Poista</button></td>
-                `;
-                tableBody.appendChild(row);
+                // Attach delete handlers
+                document.querySelectorAll('.delete-user').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        const username = this.dataset.username;
+                        if (confirm(`Poistetaanko käyttäjä ${username}?`)) {
+                            userManagementBackend.deleteUser(username,
+                                () => handleSuccess("Käyttäjä poistettu!"),
+                                handleFailure
+                            );
+                        }
+                    });
+                });
             });
         }
 
-        // jQuery dropdown toggle handler - run once globally
+        $('#saveUsersButton').on('click', function () {
+            const usersToUpdate = [];
+
+            $('#userTableBody tr').each(function () {
+                const $row = $(this);
+                const username = $row.data('username');
+                const roles = getSelectedRoles($row.find('[id^="userRoles-"]').attr('id'));
+                const elys = getSelectedElys($row.find('[id^="userElys-"]').attr('id'));
+                const zoom = parseInt($row.find('.zoom-input').val()) || DEFAULT_COORDINATES.zoom;
+                const east = parseFloat($row.find('input[id^="userEast"]').val()) || DEFAULT_COORDINATES.east;
+                const north = parseFloat($row.find('input[id^="userNorth"]').val()) || DEFAULT_COORDINATES.north;
+
+                usersToUpdate.push({
+                    username,
+                    roles,
+                    zoom,
+                    east,
+                    north,
+                    authorizedElys: elys
+                });
+            });
+
+            userManagementBackend.updateUsers(usersToUpdate ,
+                () => handleSuccess("Käyttäjät päivitetty!"),
+                handleFailure
+            );
+        });
+
+        // jQuery dropdown toggle handler
         $(document).on('click', '.dropdown-toggle', function(event) {
-            event.stopPropagation(); // Prevent click bubbling to document
+            event.stopPropagation();
 
             const $wrapper = $(this).closest('[data-role-dropdown-id], [data-ely-dropdown-id]');
             const $content = $wrapper.find('.dropdown-content');
@@ -380,11 +473,15 @@
             // Close other dropdowns first
             $('.dropdown-content').not($content).addClass('hidden');
 
-            // Toggle this dropdown's content visibility
             $content.toggleClass('hidden');
         });
 
-        // Close dropdowns when clicking anywhere outside - run once globally
+        // Keep dropdown open when clicking inside
+        $(document).on('click', '.dropdown-content', function(event) {
+            event.stopPropagation();
+        });
+
+        // Close dropdowns when clicking anywhere outside
         $(document).on('click', function() {
             $('.dropdown-content').addClass('hidden');
         });

@@ -92,7 +92,7 @@
     padding: 8px;
     margin-top: 4px;
     min-width: 250px;
-    max-height: 200px;
+    max-height: 260px;
     overflow-y: auto;
 }
 
@@ -247,8 +247,12 @@
     flex-direction: row;
     gap: 12px;
     align-items: center;
+}
+
+table > tbody > tr:first-child .coordinate-wrapper {
     border-top: 0 !important;
 }
+
 
 .coordinates-group > label {
     display: block;
@@ -274,4 +278,8 @@
     align-self: flex-end;
     margin-left: auto;
     margin-top: 8px;
+}
+
+.centered {
+    text-align: center;
 }
